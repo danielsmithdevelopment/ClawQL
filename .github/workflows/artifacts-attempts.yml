@@ -1,0 +1,53 @@
+# Competition entry under artifacts-attempts/ — local pipeline + judge smoke (no CF creds).
+name: Artifacts attempts
+
+on:
+  push:
+    paths:
+      - "artifacts-attempts/**"
+      - ".github/workflows/artifacts-attempts.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "artifacts-attempts/**"
+      - ".github/workflows/artifacts-attempts.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: artifacts-attempts-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  local-pipeline:
+    name: Packages + judge smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: artifacts-attempts
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: artifacts-attempts/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Test packages
+        run: npm test
+
+      - name: Build (incl. verify CLI)
+        run: npm run build
+
+      - name: Judge smoke (notes + manifest + canary)
+        run: npm run demo:judge-smoke
+
+      - name: Board + MCP tools smoke
+        run: npm run demo:board-mcp-smoke
