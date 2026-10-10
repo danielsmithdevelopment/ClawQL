@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>artifacts-attempts board</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --fg: #e7ecf1;
+        --muted: #8b9aab;
+        --accent: #3d9a6a;
+        --warn: #c9852b;
+        --danger: #c44c4c;
+        --line: #243040;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
+        background:
+          radial-gradient(1200px 600px at 10% -10%, #1a2a22 0%, transparent 55%),
+          radial-gradient(900px 500px at 100% 0%, #1a2433 0%, transparent 50%),
+          var(--bg);
+        color: var(--fg);
+        min-height: 100vh;
+      }
+      main { max-width: 960px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+      h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 0.35rem; }
+      p.lead { color: var(--muted); margin: 0 0 1.75rem; font-size: 0.95rem; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 0.65rem 0.5rem; border-bottom: 1px solid var(--line); font-size: 0.85rem; }
+      th { color: var(--muted); font-weight: 500; }
+      .pill { display: inline-block; padding: 0.1rem 0.45rem; border: 1px solid var(--line); }
+      .ok { color: var(--accent); }
+      .warn { color: var(--warn); }
+      .bad { color: var(--danger); }
+      #status { color: var(--muted); font-size: 0.8rem; margin-top: 1rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>artifacts-attempts</h1>
+      <p class="lead">Live board — task, attempts, evidence, decision. Updates via SSE when the API is wired.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Attempt</th>
+            <th>Status</th>
+            <th>Tests</th>
+            <th>Policy</th>
+            <th>Decision</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <tr><td colspan="5">Waiting for <code>GET /tasks/:id</code>…</td></tr>
+        </tbody>
+      </table>
+      <p id="status">Connect with <code>?task=tsk_…</code></p>
+    </main>
+    <script type="module">
+      const params = new URLSearchParams(location.search);
+      const taskId = params.get("task");
+      const status = document.getElementById("status");
+      const rows = document.getElementById("rows");
+      if (!taskId) {
+        status.textContent = "Add ?task=tsk_… to load a live task.";
+      } else {
+        status.textContent = `Polling ${taskId}`;
+        async function refresh() {
+          const res = await fetch(`/tasks/${taskId}`);
+          if (!res.ok) { status.textContent = `task ${taskId}: ${res.status}`; return; }
+          const data = await res.json();
+          rows.innerHTML = `<tr><td colspan="5"><code>${JSON.stringify(data)}</code></td></tr>`;
+        }
+        refresh();
+        setInterval(refresh, 2000);
+      }
+    </script>
+  </body>
+</html>

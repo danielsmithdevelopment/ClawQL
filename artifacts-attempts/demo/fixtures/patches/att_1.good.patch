@@ -1,0 +1,19 @@
+--- a/src/delivery.js
++++ b/src/delivery.js
+@@ -30,12 +30,12 @@ export async function deliverWebhook(url, payload, opts = {}) {
+     lastError = new Error(`webhook failed: ${res.status}`);
+-    // BUG: no backoff — immediate retry even on 429 with Retry-After.
+-    // Fixed code should:
+-    //   const retryAfter = Number(res.headers.get("retry-after"));
+-    //   const delay = Number.isFinite(retryAfter) ? retryAfter * 1000 : Math.min(1000 * 2 ** (attempt - 1), 8000);
+-    //   await sleep(delay);
+-    void sleep;
+-    void res;
++    const retryAfter = Number(res.headers.get("retry-after"));
++    const delay = Number.isFinite(retryAfter) && retryAfter > 0
++      ? retryAfter * 1000
++      : Math.min(1000 * 2 ** (attempt - 1), 8000);
++    await sleep(delay);
+   }
+   return { ok: false, attempts: maxAttempts, error: lastError?.message ?? "unknown" };
+ }

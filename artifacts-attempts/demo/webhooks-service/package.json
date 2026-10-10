@@ -1,0 +1,12 @@
+{
+  "name": "@artifacts-attempts/webhooks-service",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node src/server.js"
+  }
+}

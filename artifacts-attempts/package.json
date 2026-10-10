@@ -1,0 +1,30 @@
+{
+  "name": "artifacts-attempts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cloudflare Artifacts competition entry: parallel agent attempts, evidence-gated merge, immutable Arweave release",
+  "license": "Apache-2.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "cli/*",
+    "workers/*",
+    "demo/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @artifacts-attempts/notes -w @artifacts-attempts/manifest -w @artifacts-attempts/artifacts-client -w @artifacts-attempts/shared -w @artifacts-attempts/verify",
+    "test": "npm run test -w @artifacts-attempts/notes -w @artifacts-attempts/manifest -w @artifacts-attempts/artifacts-client -w @artifacts-attempts/shared -w @artifacts-attempts/webhooks-service -w @artifacts-attempts/worker-evaluator -w @artifacts-attempts/worker-coordinator -w @artifacts-attempts/worker-intake",
+    "test:notes": "npm run test -w @artifacts-attempts/notes",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "verify": "node cli/verify/dist/cli.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.145.0"
+  }
+}
