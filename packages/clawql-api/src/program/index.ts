@@ -1,3 +1,4 @@
+export * from "./batch-merkle.js";
 export * from "./durable-runner.js";
 export * from "./program-caps.js";
 export * from "./program-ifc.js";

@@ -205,6 +205,33 @@ export type McpGrantKeyStore = {
   readonly revoke: (virtualKeyId: string) => Effect.Effect<void>;
 };
 
+/**
+ * MCP OAuth §3 Client ID Metadata Documents (CIMD) — planned, not wired yet.
+ * Trusted clients present a HTTPS `client_id` URL whose document is fetched and
+ * pinned; only clients on the operator trusted-client list (or CIMD allowlist)
+ * may register dynamically.
+ */
+export type McpTrustedClientRecord = {
+  readonly clientIdUrl: string;
+  readonly redirectUris: readonly string[];
+  readonly trustedAtMs: number;
+  readonly documentSha256?: string;
+};
+
+/**
+ * MCP OAuth §4 device authorization (RFC 8628) — planned, not wired yet.
+ * AS metadata must not advertise `device_authorization_endpoint` until this
+ * grant is implemented on ClawQL (Google's endpoint was stripped for honesty).
+ */
+export type McpDeviceAuthorizationPending = {
+  readonly deviceCode: string;
+  readonly userCode: string;
+  readonly clientId: string;
+  readonly expiresAtMs: number;
+  readonly intervalSec: number;
+  readonly approvedSubject?: string;
+};
+
 /** OAuth AS domain failure — maps to RFC 6749 error codes at the HTTP boundary. */
 export class McpOAuthError extends Data.TaggedError("McpOAuthError")<{
   readonly error: string;

@@ -39,6 +39,7 @@ import {
   substituteProposalRefsEffect,
   type ProposalRefScalar,
 } from "./program-refs.js";
+import { buildBatchMerkleEffect } from "./batch-merkle.js";
 
 export type ProgramSubmitExecuteInput = {
   readonly operationId: string;
@@ -93,6 +94,16 @@ export type SubmitProgramProposalsResult = {
     readonly failed: number;
     readonly dropped: number;
     readonly pending: number;
+  };
+  /**
+   * Merkle root over proposal argsHash digests (ADR 0015 batch approve).
+   * One key-touch may sign this root; each leaf proves inclusion. Not a single
+   * mandate digest covering the batch.
+   */
+  readonly batchMerkle?: {
+    readonly root: string;
+    readonly leafCount: number;
+    readonly digests: readonly { readonly id: string; readonly argsHash: string }[];
   };
   readonly code?: string;
   readonly error?: string;
@@ -644,12 +655,24 @@ export function submitProgramProposalsEffect(
           pending: count("pending"),
         };
         const budget = Math.floor(caps.maxOutputBytes / Math.max(1, advanced.length));
+        const digestRows = advanced
+          .filter((l) => typeof l.argsHash === "string" && l.argsHash.length > 0)
+          .map((l) => ({ id: l.id, argsHash: l.argsHash as string }));
+        const batchMerkle =
+          digestRows.length > 0
+            ? {
+                root: (yield* buildBatchMerkleEffect(digestRows.map((d) => d.argsHash))).root,
+                leafCount: digestRows.length,
+                digests: digestRows,
+              }
+            : undefined;
         const result: SubmitProgramProposalsResult = {
           ok: summary.failed === 0 && summary.dropped === 0,
           complete: summary.pending === 0,
           programId,
           leaves: advanced.map((l) => viewOf(l, budget)),
           summary,
+          batchMerkle,
         };
 
         yield* appendProcessWormEffect({
@@ -661,6 +684,7 @@ export function submitProgramProposalsEffect(
             programId,
             ok: result.ok,
             complete: result.complete,
+            batchMerkleRoot: batchMerkle?.root,
             leaves: advanced.map((l) => ({
               id: l.id,
               operationId: l.operationId,
