@@ -73,6 +73,7 @@ curl -s http://127.0.0.1:8080/v1/chat/completions \
 | `POST`   | `/v1/systemone`             | Alias of `/decision`                                                                |
 | `POST`   | `/v1/decisions`             | OpenAI Decisions API-compatible; fail-closed refusals unless calibrated or opted in |
 | `POST`   | `/decision/eval`            | Bulk multi-backend fan-out eval (recommend cheapest meeting quality bar)            |
+| `POST`   | `/decision/flip-rate`       | Perturbation flip-rate gate (stability before trusting a site/backend)              |
 | `POST`   | `/memory/ingest`            | Vault ingest façade                                                                 |
 | `POST`   | `/memory/search`            | Vault recall façade                                                                 |
 | `GET`    | `/memory`                   | List Memory notes                                                                   |
