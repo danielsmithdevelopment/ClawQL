@@ -12,6 +12,7 @@ import {
   createMemoryMcpClientRegistry,
   createMemoryMcpRefreshStore,
   hashMcpClientSecret,
+  McpOAuthError,
 } from "./mcp-oauth.js";
 
 describe("MCP OAuth §2 grant-as-key", () => {
@@ -172,5 +173,65 @@ describe("MCP OAuth §2 grant-as-key", () => {
     ) as { atr?: { virtualKeyId?: string; sub?: string }; sub?: string };
     expect(payload.atr?.virtualKeyId).toMatch(/^mgr_/);
     expect(payload.atr?.virtualKeyId).not.toBe("svc-bot");
+  });
+
+  it("revokeGrant ends validateToken and refresh for stamped tokens", async () => {
+    process.env.CLAWQL_MCP_OAUTH_GRANT_AS_KEY = "1";
+    const salt = "test-salt";
+    const clients = createMemoryMcpClientRegistry([
+      {
+        clientId: "svc-bot",
+        clientSecretHash: hashMcpClientSecret(salt, "secret"),
+        salt,
+        defaultScope: ["tools:read"],
+        orgId: "org_1",
+      },
+    ]);
+    const server = createMCPOAuthServer(
+      {
+        issuer: "https://mcp.example",
+        signingSecret: "test-signing-secret-at-least-32-bytes!!",
+        resourceAudience: "https://mcp.example/mcp",
+      },
+      clients,
+      createMemoryMcpRefreshStore()
+    );
+    const token = await Effect.runPromise(
+      server.issueToken({
+        grantType: "client_credentials",
+        clientId: "svc-bot",
+        clientSecret: "secret",
+        resource: "https://mcp.example/mcp",
+      })
+    );
+    const atr = await Effect.runPromise(server.validateToken(token.access_token));
+    expect(atr.virtualKeyId).toMatch(/^mgr_/);
+
+    await Effect.runPromise(server.revokeGrant(atr.virtualKeyId!));
+
+    const validateExit = await Effect.runPromiseExit(server.validateToken(token.access_token));
+    expect(validateExit._tag).toBe("Failure");
+    if (validateExit._tag === "Failure" && validateExit.cause._tag === "Fail") {
+      const err = validateExit.cause.error;
+      expect(err).toBeInstanceOf(McpOAuthError);
+      expect((err as McpOAuthError).description).toBe("grant_revoked");
+    }
+
+    expect(token.refresh_token).toBeTruthy();
+    const refreshExit = await Effect.runPromiseExit(
+      server.issueToken({
+        grantType: "refresh_token",
+        clientId: "svc-bot",
+        clientSecret: "secret",
+        refreshToken: token.refresh_token!,
+        resource: "https://mcp.example/mcp",
+      })
+    );
+    expect(refreshExit._tag).toBe("Failure");
+    if (refreshExit._tag === "Failure" && refreshExit.cause._tag === "Fail") {
+      const err = refreshExit.cause.error;
+      expect(err).toBeInstanceOf(McpOAuthError);
+      expect((err as McpOAuthError).description).toBe("grant_revoked");
+    }
   });
 });

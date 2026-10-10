@@ -808,6 +808,7 @@ export class MCPOAuthServer {
             base: claims,
           });
         }
+        yield* this.assertLiveGrant(claims.virtualKeyId, "invalid_grant");
       } else {
         claims = yield* this.buildAtrClaimsEffect(client, scope, {
           subject: `client:${client.clientId}`,
@@ -1003,8 +1004,31 @@ export class MCPOAuthServer {
   }
 
   /**
+   * When grant-as-key is on, reject `mgr_*` virtual keys that are missing or revoked.
+   * Legacy tokens that still stamp `virtualKeyId = clientId` are left alone.
+   */
+  private assertLiveGrant(
+    virtualKeyId: string | undefined,
+    error: "invalid_token" | "invalid_grant" = "invalid_token"
+  ): Effect.Effect<void, McpOAuthError> {
+    return Effect.gen({ self: this }, function* () {
+      if (!this.grantKeyStore || !virtualKeyId?.startsWith("mgr_")) return;
+      const grant = yield* this.grantKeyStore.get(virtualKeyId);
+      if (!grant || grant.revokedAtMs != null) {
+        yield* emitAuthEventEffect(this.eventSink, {
+          type: "MCP_TOKEN_VALIDATION_FAILED",
+          reason: "grant_revoked",
+          timestamp: new Date(this.now()).toISOString(),
+        });
+        return yield* fail(error, "grant_revoked");
+      }
+    });
+  }
+
+  /**
    * Validate Bearer access token; returns ATR claims for Panguard / gateway.
-   * Rejects tokens present in the access-token store as revoked.
+   * Rejects tokens present in the access-token store as revoked, and §2 grants
+   * that were ended via {@link revokeGrant}.
    */
   validateToken(bearerToken: string): Effect.Effect<AtrClaims, McpOAuthError> {
     return Effect.gen({ self: this }, function* () {
@@ -1049,7 +1073,29 @@ export class MCPOAuthServer {
         return yield* fail("invalid_token", "token_revoked");
       }
 
+      yield* this.assertLiveGrant(atr.virtualKeyId, "invalid_token");
       return atr;
+    });
+  }
+
+  /**
+   * End a §2 grant-as-key. Subsequent {@link validateToken} / refresh for tokens
+   * stamped with this `virtualKeyId` fail with `grant_revoked`.
+   */
+  revokeGrant(virtualKeyId: string): Effect.Effect<void> {
+    return Effect.gen({ self: this }, function* () {
+      const id = virtualKeyId?.trim();
+      if (!id || !this.grantKeyStore) return;
+      const existing = yield* this.grantKeyStore.get(id);
+      yield* this.grantKeyStore.revoke(id);
+      yield* emitAuthEventEffect(this.eventSink, {
+        type: "MCP_GRANT_REVOKED",
+        virtualKeyId: id,
+        clientId: existing?.clientId,
+        subject: existing?.subject,
+        reason: "admin_revoke_grant",
+        timestamp: new Date(this.now()).toISOString(),
+      });
     });
   }
 
@@ -1156,6 +1202,7 @@ export class McpOAuthService extends Context.Service<
       clientId?: string;
       clientSecret?: string;
     }) => Effect.Effect<void, McpOAuthError>;
+    readonly revokeGrant: (virtualKeyId: string) => Effect.Effect<void>;
     readonly exchangeIdJag: (
       request: McpTokenRequest
     ) => Effect.Effect<McpTokenResponse, McpOAuthError>;
@@ -1169,6 +1216,7 @@ export function mcpOAuthServiceFromServer(server: MCPOAuthServer) {
     createAuthorizationCode: (request) => server.createAuthorizationCode(request),
     validateToken: (bearerToken) => server.validateToken(bearerToken),
     revokeToken: (input) => server.revokeToken(input),
+    revokeGrant: (virtualKeyId) => server.revokeGrant(virtualKeyId),
     exchangeIdJag: (request) => server.exchangeIdJag(request),
   });
 }

@@ -97,7 +97,7 @@ Implements the authorization-server surface required for MCP clients that obtain
 
 **Protected-resource discovery (shipped):** `GET /.well-known/oauth-protected-resource` on the MCP origin (RFC 9728) plus `WWW-Authenticate: Bearer resource_metadata=…` on unauthenticated `/mcp`. Token/authorize accept RFC 8707 `resource`; access JWTs mint and validate normalized `aud` against `CLAWQL_MCP_OAUTH_RESOURCE_AUDIENCE` (`invalid_target` on mismatch). Marketing discovery (`docs`/`www`) omits a device endpoint unless the MCP AS has RFC 8628 wired (`CLAWQL_MCP_OAUTH_DEVICE_FLOW=1`).
 
-**Grant-as-key (shipped MVP — MCP OAuth §2):** opt-in via `CLAWQL_MCP_OAUTH_GRANT_AS_KEY=1` or an explicit `grantKeyStore`. Records one grant per (subject, client, resource) and stamps that grant's `virtualKeyId` (never the `clientId`) on access tokens. Legacy fallback (flag off): `virtualKeyId = clientId`. See `mcp-grant-key-store.ts`.
+**Grant-as-key (shipped MVP — MCP OAuth §2):** opt-in via `CLAWQL_MCP_OAUTH_GRANT_AS_KEY=1` or an explicit `grantKeyStore`. Records one grant per (subject, client, resource) in SecretStore (when wired from env) and stamps that grant's `virtualKeyId` (never the `clientId`) on access tokens. `revokeGrant(virtualKeyId)` ends the live grant; `validateToken` and refresh reject stamped `mgr_*` tokens with `grant_revoked`. Legacy fallback (flag off): `virtualKeyId = clientId`. See `mcp-grant-key-store.ts`.
 
 **CIMD (shipped — MCP OAuth §3):** `CimdService` + trusted-client store (`mcp-cimd.ts`) fail closed. With `CLAWQL_MCP_OAUTH_CIMD=1`, HTTPS `client_id` URLs are fetched, checked against the operator trusted list (`CLAWQL_MCP_OAUTH_TRUSTED_CLIENTS_JSON` / `_PATH`), and persisted into the live client registry as public clients.
 
