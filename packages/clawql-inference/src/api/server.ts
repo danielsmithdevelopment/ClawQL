@@ -60,6 +60,8 @@ export function createInferenceHttpApp(options: CreateInferenceHttpAppOptions = 
         "/decision",
         "/decision/eval",
         "/v1/decisions/eval",
+        "/decision/flip-rate",
+        "/v1/decisions/flip-rate",
         "/memory",
         "/events",
       ],

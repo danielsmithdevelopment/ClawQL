@@ -62,3 +62,16 @@ export {
   type FanoutEvalResponse,
   type FanoutBackendReport,
 } from "./fanout-eval.js";
+
+export {
+  FlipRateGateService,
+  FlipRateGateLive,
+  makeFlipRateGateLive,
+  runFlipRate,
+  parseFlipRateBody,
+  applyPerturbations,
+  DEFAULT_FLIP_RATE_FAMILIES,
+  type FlipRateRequest,
+  type FlipRateResponse,
+  type FlipRateFamily,
+} from "./flip-rate.js";

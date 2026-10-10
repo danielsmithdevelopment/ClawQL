@@ -28,6 +28,12 @@ import {
   type FanoutEvalResponse,
 } from "./fanout-eval.js";
 import {
+  parseFlipRateBody,
+  runFlipRate,
+  type FlipRateRequest,
+  type FlipRateResponse,
+} from "./flip-rate.js";
+import {
   runDecision,
   type DecisionQuestion,
   type DecisionRequest,
@@ -43,6 +49,8 @@ export type CreateDecisionRouterOptions = {
   callRemote?: (body: OpenAiDecisionCreateRequest) => Promise<OpenAiDecisionCreateResponse>;
   /** Override fan-out eval (tests). */
   evaluate?: (req: FanoutEvalRequest) => Promise<FanoutEvalResponse>;
+  /** Override flip-rate gate (tests). */
+  flipRate?: (req: FlipRateRequest) => Promise<FlipRateResponse>;
 };
 
 function parseQuestions(raw: unknown): DecisionQuestion[] | { error: string } {
@@ -462,6 +470,27 @@ async function handleFanoutEval(
   }
 }
 
+async function handleFlipRate(
+  req: VirtualKeyRequest,
+  res: Response,
+  options: {
+    flipRate: (r: FlipRateRequest) => Promise<FlipRateResponse>;
+  }
+): Promise<void> {
+  const parsed = parseFlipRateBody(req.body);
+  if ("error" in parsed) {
+    sendOpenAiError(res, 400, parsed.error, "invalid_request_error");
+    return;
+  }
+  try {
+    const result = await options.flipRate(parsed);
+    res.json(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    sendOpenAiError(res, 502, message, "server_error");
+  }
+}
+
 export function createDecisionRouter(options: CreateDecisionRouterOptions = {}): express.Router {
   const router = express.Router();
   const env = options.env ?? process.env;
@@ -470,6 +499,7 @@ export function createDecisionRouter(options: CreateDecisionRouterOptions = {}):
     options.evaluate ??
     ((req: FanoutEvalRequest) =>
       runFanoutEval(req, { decide, callRemote: options.callRemote, env }));
+  const flipRate = options.flipRate ?? ((req: FlipRateRequest) => runFlipRate(req, { decide }));
 
   const systemOneHandler = (req: Request, res: Response) =>
     void handleDecide(req as VirtualKeyRequest, res, decide);
@@ -492,6 +522,11 @@ export function createDecisionRouter(options: CreateDecisionRouterOptions = {}):
   router.post("/decision/eval", evalHandler);
   router.post("/v1/decisions/eval", evalHandler);
 
+  const flipHandler = (req: Request, res: Response) =>
+    void handleFlipRate(req as VirtualKeyRequest, res, { flipRate });
+  router.post("/decision/flip-rate", flipHandler);
+  router.post("/v1/decisions/flip-rate", flipHandler);
+
   router.get("/decision", (_req, res) => {
     res.json({
       object: "clawql.decision",
@@ -499,9 +534,10 @@ export function createDecisionRouter(options: CreateDecisionRouterOptions = {}):
       alias: "/v1/systemone",
       openai_compatible: "/v1/decisions",
       fanout_eval: "/decision/eval",
+      flip_rate: "/decision/flip-rate",
       question_types: ["choice", "noul", "predicate", "score"],
       description:
-        "System One choice|noul|score over Fast Decision. OpenAI Decisions clients should use POST /v1/decisions. Bulk fan-out eval: POST /decision/eval.",
+        "System One choice|noul|score over Fast Decision. OpenAI Decisions: POST /v1/decisions. Fan-out eval: POST /decision/eval. Flip-rate gate: POST /decision/flip-rate.",
     });
   });
 
