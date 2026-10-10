@@ -5,10 +5,7 @@ import { resolveAlloyReloadFromEnvEffect } from "../alloy/reload.js";
 import { snapshotRegistriesForAlloyEffect } from "../alloy/from-registry.js";
 import { ObservabilityError } from "../errors.js";
 import { ObservabilityAlertingService } from "../alerting/service.js";
-import {
-  loadSpanFlamegraphEffect,
-  spanFlamegraphUiPathEffect,
-} from "../flame/load-span-flame.js";
+import { loadSpanFlamegraphEffect, spanFlamegraphUiPathEffect } from "../flame/load-span-flame.js";
 import { renderSpanFlamegraphHtmlEffect } from "../flame/span-flame-html.js";
 import type { SpanFlamegraph } from "../flame/span-flame.js";
 import { ObservabilityHealthService } from "../health/scheduler.js";
@@ -379,8 +376,7 @@ export const attachObservabilityHttpRoutes = (
         env
       )
     );
-    const contentType =
-      response.headers?.["content-type"] ?? "application/json; charset=utf-8";
+    const contentType = response.headers?.["content-type"] ?? "application/json; charset=utf-8";
     res.setHeader?.("content-type", contentType);
     const statusRes = res.status(response.status);
     if (contentType.includes("text/html") && typeof statusRes.send === "function") {

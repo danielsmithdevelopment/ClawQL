@@ -261,7 +261,7 @@ export function buildSpanFlamegraphEffect(
       const s = byId.get(id)!;
       const kids = (children.get(id) ?? [])
         .slice()
-        .sort((a, b) => (byId.get(a)!.startMs) - (byId.get(b)!.startMs))
+        .sort((a, b) => byId.get(a)!.startMs - byId.get(b)!.startMs)
         .map((cid) => buildNode(cid, depth + 1));
       return {
         spanId: s.spanId,

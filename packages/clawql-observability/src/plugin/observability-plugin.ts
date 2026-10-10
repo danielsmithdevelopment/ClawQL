@@ -14,10 +14,7 @@ import { resolveAlloyReloadFromEnvEffect } from "../alloy/reload.js";
 import { snapshotRegistriesForAlloyEffect } from "../alloy/from-registry.js";
 import { ObservabilityError } from "../errors.js";
 import { ObservabilityAlertingService } from "../alerting/service.js";
-import {
-  loadSpanFlamegraphEffect,
-  spanFlamegraphUiUrlEffect,
-} from "../flame/load-span-flame.js";
+import { loadSpanFlamegraphEffect, spanFlamegraphUiUrlEffect } from "../flame/load-span-flame.js";
 import { ObservabilityHealthService } from "../health/scheduler.js";
 import { readObservabilityHostConfigEffect } from "../host/config.js";
 import { runObservabilityHostEffect } from "../host/runtime.js";

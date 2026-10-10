@@ -73,9 +73,7 @@ describe("span flamegraph model", () => {
     expect(parsed.traceId).toBe("abc");
     expect(parsed.spans).toHaveLength(2);
     expect(parsed.spans[1]?.parentSpanId).toBe("s1");
-    const graph = await Effect.runPromise(
-      buildSpanFlamegraphEffect(parsed.traceId, parsed.spans)
-    );
+    const graph = await Effect.runPromise(buildSpanFlamegraphEffect(parsed.traceId, parsed.spans));
     expect(graph.totalDurationMs).toBeGreaterThan(0);
   });
 
@@ -115,9 +113,7 @@ describe("span flamegraph model", () => {
     const parsed = await Effect.runPromise(parseTempoTracePayloadEffect(payload));
     expect(parsed.traceId).toBe("otlp-1");
     expect(parsed.spans[0]?.serviceName).toBe("clawql-mcp");
-    const graph = await Effect.runPromise(
-      buildSpanFlamegraphEffect(parsed.traceId, parsed.spans)
-    );
+    const graph = await Effect.runPromise(buildSpanFlamegraphEffect(parsed.traceId, parsed.spans));
     expect(graph.spanCount).toBe(2);
   });
 

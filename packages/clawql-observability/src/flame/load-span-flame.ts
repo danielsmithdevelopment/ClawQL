@@ -8,10 +8,7 @@ import { ObservabilityError } from "../errors.js";
 import type { ObservabilityGovernanceSink } from "../governance/worm.js";
 import { ObservabilityQueryService } from "../query/federation.js";
 import type { FederatedQuerySelection } from "../query/types.js";
-import {
-  ObservabilityAuthError,
-  type ObservabilitySessionContext,
-} from "../scopes.js";
+import { ObservabilityAuthError, type ObservabilitySessionContext } from "../scopes.js";
 import {
   buildSpanFlamegraphEffect,
   demoSpanFlameFixtureEffect,

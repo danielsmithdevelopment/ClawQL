@@ -153,13 +153,14 @@ Wires the Phase 3 library into the MCP host and optional HTTP read API.
 
 Built-in wall-clock span flamegraph for a single distributed trace — distinct from the **token-context** flamegraph at `/mcp-ui/trace` and from **Pyroscope** CPU profiles (`observability_query_profiles`).
 
-| Surface | How |
-| --- | --- |
-| MCP | `observability_span_flamegraph` with `traceId` (or `"demo"` for a fixture) — returns summary + `uiUrl` |
-| HTTP | `GET /observability/flame/trace/:traceId` — HTML timeline + most-self-time; append `?format=json` for harnesses |
+| Surface | How                                                                                                                                |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| MCP     | `observability_span_flamegraph` with `traceId` (or `"demo"` for a fixture) — returns summary + `uiUrl`                             |
+| HTTP    | `GET /observability/flame/trace/:traceId` — HTML timeline + most-self-time; append `?format=json` for harnesses                    |
 | Backend | `ObservabilityQueryService.getTrace` → Tempo `GET /api/traces/{id}` → `parseTempoTracePayloadEffect` / `buildSpanFlamegraphEffect` |
 
 Requires `observability:query_traces` scope. Set `CLAWQL_PUBLIC_ORIGIN` so MCP `uiUrl` is absolute.
+
 - **WORM bridge**: governance events dual-write to process WORM when `CLAWQL_WORM_ENABLED=1`
 - **Health scheduler**: background checks every `CLAWQL_OBSERVABILITY_HEALTH_INTERVAL_MS` (default 60000)
 - **Alloy auto-apply**: set `CLAWQL_OBSERVABILITY_ALLOY_AUTO_APPLY=1` to regenerate River on boot
