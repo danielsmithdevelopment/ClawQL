@@ -126,6 +126,8 @@ Until session labeling lands on execute, program combined-label checks are **str
 
 Not equality. After session labeling, the test may tighten toward equality. Random tasks must show the same reads, the same proposed writes (modulo refs resolution), and program decisions that are never more permissive.
 
+Shipped as `packages/clawql-api/src/program/never-more.differential.test.ts`: 200 random tasks with session IFC on for programs and off for step-by-step, 200 with it on for both (equal decisions required wherever v0 limits don't apply), and laundering / sink fixtures in four plan shapes.
+
 ### Plain proxy mode (key-group scoped)
 
 Harnesses that bring their own code mode need a thin policy-gated entry without ClawQL catalog UX. Spec: [`docs/specs/mcp/plain-proxy-mode-v0.1.md`](../specs/mcp/plain-proxy-mode-v0.1.md).
@@ -186,6 +188,7 @@ Security and honesty first, then cheap wins every client gets, then public claim
 | `source`  | JSON **plan** only: `{ "v": 1, "mode": "parallel"\|"sequential", "calls": [ { "tool": "execute"\|"search", … } ] }` (or a bare call array). Free-form JS is rejected with a fix hint. |
 | Host path | Each call uses the same `search` / `execute` gateway path (gate, session IFC, audit) with a `programId` correlation on WORM metadata.                                                 |
 | Writes    | Rejected when operation risk is not `allow` — agent must use plain `execute` (mandate/resume) or wait for proposed writes.                                                            |
+| IFC       | `CLAWQL_ENABLE_SESSION_IFC=1`: each in-program write is checked against every source the program reads, before the host call, whatever the order or fan-out (`program_ifc_blocked`).  |
 | Caps      | Max source length, max tool calls, timeout, max output bytes (`CLAWQL_PROGRAM_MAX_*` overrides).                                                                                      |
 | Return    | `{ ok, programId, result, calls: [{ operationId, ok, … }], diagnostics }`                                                                                                             |
 
