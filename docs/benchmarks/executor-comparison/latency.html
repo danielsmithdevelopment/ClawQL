@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ClawQL vs Executor — tool-call latency p50</title>
+  <link rel="canonical" href="https://clawql.com/benchmarks/executor-comparison/latency.html"/>
+  <meta name="description" content="Wall-clock MCP tool-call latency: ClawQL 8.413ms p50 vs Executor 75ms (reference)."/>
+  <meta property="og:title" content="ClawQL vs Executor — tool-call latency"/>
+  <meta property="og:description" content="ClawQL execute p50 8.413ms · Executor 75ms (reference) · ~8.91× (vs reference mid)"/>
+  <meta property="og:url" content="https://clawql.com/benchmarks/executor-comparison/latency.html"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,750&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --ink: #0c1a1a;
+      --muted: #3d5454;
+      --paper: #f3f7f5;
+      --card: #ffffff;
+      --claw: #0b6e63;
+      --claw-deep: #084f48;
+      --exec: #b45309;
+      --exec-band: rgba(180, 83, 9, 0.18);
+      --line: #d5e0dc;
+      --font-display: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      --font-body: "Source Sans 3", "Source Sans Pro", "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: var(--font-body);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #d8f0ea 0%, transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, #f6e7d4 0%, transparent 50%),
+        linear-gradient(180deg, #eef5f2 0%, var(--paper) 40%, #e8efec 100%);
+    }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 2rem 1.25rem 3.5rem; }
+    .brand {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 6vw, 3.4rem);
+      font-weight: 750;
+      letter-spacing: -0.03em;
+      margin: 0 0 0.35rem;
+      color: var(--claw-deep);
+      line-height: 1.05;
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.35rem, 3.2vw, 1.75rem);
+      font-weight: 650;
+      margin: 0 0 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    .lead { color: var(--muted); font-size: 1.05rem; margin: 0 0 1.5rem; max-width: 40rem; }
+    .chart {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1.35rem 1.25rem 1.1rem;
+      box-shadow: 0 18px 40px rgba(12, 40, 36, 0.06);
+    }
+    .row {
+      display: grid;
+      grid-template-columns: minmax(140px, 28%) 1fr minmax(72px, auto);
+      gap: 0.65rem 0.85rem;
+      align-items: center;
+      margin: 1rem 0;
+    }
+    .name { font-weight: 700; font-size: 0.98rem; }
+    .sub { display: block; font-weight: 400; color: var(--muted); font-size: 0.78rem; margin-top: 0.15rem; }
+    .track {
+      position: relative;
+      height: 36px;
+      background: #eef3f1;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .bar {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      border-radius: 6px;
+      transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .bar.claw { background: linear-gradient(90deg, var(--claw-deep), var(--claw)); }
+    .bar.exec { background: linear-gradient(90deg, #92400e, var(--exec)); }
+    .band {
+      position: absolute;
+      top: 6px; bottom: 6px;
+      background: var(--exec-band);
+      border-radius: 4px;
+      border: 1px dashed rgba(180, 83, 9, 0.45);
+    }
+    .ms {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      font-size: 1.15rem;
+      text-align: right;
+    }
+    .ms small { display: block; font-weight: 400; color: var(--muted); font-size: 0.72rem; }
+    .score {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      margin: 1.25rem 0 0;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+      font-size: 0.92rem;
+    }
+    .score strong { color: var(--claw-deep); font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+    .honesty {
+      margin: 1.25rem 0 0;
+      padding: 0.85rem 1rem;
+      border-left: 3px solid #94a3b8;
+      color: var(--muted);
+      font-size: 0.88rem;
+      background: rgba(255,255,255,0.55);
+    }
+    .links { margin-top: 1.5rem; font-size: 0.9rem; color: var(--muted); }
+    .links a { color: var(--claw); }
+    @media (max-width: 640px) {
+      .row { grid-template-columns: 1fr; gap: 0.35rem; }
+      .ms { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <p class="brand">ClawQL</p>
+    <h1>Tool-call latency · side by side</h1>
+    <p class="lead">Wall-clock MCP <code>execute</code> p50 on the same chart. Not the token flamegraph — milliseconds to return a tool result.</p>
+
+    <section class="chart" aria-label="Latency comparison chart">
+      <div class="row">
+        <div class="name">ClawQL execute<span class="sub">live · mock upstream · n=25</span></div>
+        <div class="track"><span class="bar claw" style="width:8.41%"></span></div>
+        <div class="ms">8.4<small>p50 · p95 17.5ms</small></div>
+      </div>
+      <div class="row">
+        <div class="name">Executor execute<span class="sub">reference band · wire EXECUTOR_* for live</span></div>
+        <div class="track">
+          <span class="band" style="left:50.00%;width:50.00%" title="50–100ms reference band"></span>
+          <span class="bar exec" style="width:75.00%"></span>
+        </div>
+        <div class="ms">75<small>50–100ms band</small></div>
+      </div>
+      <div class="score">
+        <div>ClawQL p50 <strong>8.4ms</strong></div>
+        <div>Executor p50 <strong>75ms</strong></div>
+        <div>Ratio <strong>~8.91× (vs reference mid)</strong></div>
+        <div>Gateway overhead <strong>7.9ms</strong></div>
+      </div>
+    </section>
+
+    <p class="honesty">
+      Executor bar uses the published warm 50–100ms self-host band until EXECUTOR_BIN/URL is wired for a same-host live arm.
+      ClawQL measured 2026-10-10T20:24:19.259Z (linux/x64, Node v22.14.0).
+      Citation: <a href="https://github.com/UsefulSoftwareCo/executor/issues/1519">UsefulSoftwareCo/executor#1519 — self-hosted warm execution ~50–100ms (not same-host live)</a>.
+      Distinct from <a href="https://clawql.com/mcp-ui/trace/compare/executor">token compare</a>.
+    </p>
+
+    <p class="links">
+      <a href="./latency.json">latency.json</a> ·
+      <a href="./">token benchmark notes</a> ·
+      <a href="https://github.com/danielsmithdevelopment/ClawQL">GitHub</a> ·
+      Reproduce: <code>npm run benchmark:executor-comparison:latency</code>
+       · Live Executor: <code>EXECUTOR_BIN=… npm run benchmark:executor-comparison:latency</code>
+    </p>
+  </main>
+  <script>
+    // Stagger bar grow on load for share demos
+    requestAnimationFrame(() => {
+      document.querySelectorAll(".bar").forEach((el, i) => {
+        const w = el.style.width;
+        el.style.width = "0%";
+        setTimeout(() => { el.style.width = w; }, 80 + i * 120);
+      });
+    });
+  </script>
+</body>
+</html>
