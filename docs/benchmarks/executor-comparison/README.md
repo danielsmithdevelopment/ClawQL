@@ -53,9 +53,10 @@ Related product work: declarative `where` on ClawQL `execute` ([ADR 0015](../../
 
 Token benches above do **not** measure milliseconds. The OTEL span flamegraph **demo** fixture (`demo-mcp-execute`, 120ms) is also synthetic — do not cite it as ClawQL p50.
 
-**Workload tilt (intentional):** ClawQL runs the **heavier** arm; Executor runs the **lighter** arm. If ClawQL still wins, nobody can claim we had an easier path.
+**Equal arms:** both sides return the **same tiny pets JSON** via one MCP `execute`. Headline = **ClawQL gateway overhead** (`execute − direct fetch`) vs **live Executor execute** (same JSON in-process; Executor sandbox has no `fetch`).
 
 ```bash
+<<<<<<< HEAD
 # ClawQL heavy (search+WORM, large execute+where+fields, audit) vs Executor light
 npm run benchmark:executor-comparison:latency
 # → docs/benchmarks/executor-comparison/executor-cmp-latency.json
@@ -94,13 +95,34 @@ Latest measured (n=100, PET_COUNT=800, ~138KB body). **ClawQL arms live; Executo
 
 ```bash
 # Install Executor locally, then remeasure only the Executor arm into the chart:
+=======
+>>>>>>> 81f35429 (bench(latency): equal-arm apples-to-apples ClawQL vs live Executor)
 mkdir -p /tmp/executor-try && cd /tmp/executor-try && npm i executor@latest
-EXECUTOR_BIN=/tmp/executor-try/node_modules/.bin/executor \
+cd /path/to/ClawQL
+LATENCY_ITERS=100 MOCK_DELAY_MS=0 \
+  EXECUTOR_BIN=/tmp/executor-try/node_modules/.bin/executor \
   EXECUTOR_CWD=/tmp/executor-try \
   npm run benchmark:executor-comparison:latency
 ```
 
-**Intentional asymmetry:** ClawQL = live MCP → large mock + filter/project + audit + WORM on search. Executor = live no-op (no upstream, no filter, no audit) — so Executor is expected to be faster in ms; ClawQL is paying for more work and still stays ~10ms p50 for the full heavy turn. `CLAWQL_CAPABILITY_LIFECYCLE=0`, no `panguard-mcp-proxy` / JWT-ATR hop.
+| Arm | Role | What it isolates |
+| --- | --- | --- |
+| `clawql_execute_equal` | equal | MCP execute → tiny same-host mock + `fields` |
+| `direct_http_mock` | control | Bare `fetch` of the same body |
+| **gateway overhead** | **equalized** | execute − direct |
+| `executor_execute_equal` | equal | MCP execute → same pets JSON in-process |
+| `clawql_audit_append` | control | Local ring append |
+
+### Latest local run (equal arms, n=100, live Executor v1.6.10)
+
+| Arm | p50 | p95 | p99 |
+| --- | ---: | ---: | ---: |
+| ClawQL execute e2e | 7.9 ms | 9.4 ms | 10.8 ms |
+| **ClawQL gateway overhead** (equalized) | **7.4 ms** | **8.8 ms** | **9.9 ms** |
+| **Executor execute** (equal JSON) | **3.3 ms** | **6.7 ms** | **17.2 ms** |
+| Direct HTTP mock | 0.4 ms | 0.6 ms | 0.8 ms |
+
+On this host Executor wins p50/p95; ClawQL equalized wins **p99** (9.9 vs 17.2). Do **not** cite the #1519 50–100ms band as measured.
 
 **Shareable page:** [clawql.com/benchmarks/executor-comparison/latency.html](https://clawql.com/benchmarks/executor-comparison/latency.html) · `npm run generate:executor-cmp-latency-html`.
 
@@ -112,7 +134,7 @@ The flamegraph demo’s 120ms total remains a **synthetic fixture**. Schema-deco
 | ----------- | --------------------------------------------- | ----------------------------------- |
 | **Layer 1** | Homepage ~1,044 **and** live MCP `tools/list` | Measured gateway `search`+`execute` |
 | **Layer 2** | Live CLI tool call (no projection)            | Live MCP `execute` + `fields`       |
-| **Latency** | Optional no-op `execute` via `EXECUTOR_*`     | audit + execute vs local mock       |
+| **Latency** | Live equal-arm `execute` (same JSON) via `EXECUTOR_*` | equal-arm execute − direct vs Executor |
 | **862×**    | Not comparable                                | Do not blend                        |
 
 Tokenizer: `cl100k_base`. `focus=input`.

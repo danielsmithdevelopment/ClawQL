@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>ClawQL vs Executor — latency p50 / p95 / p99</title>
+  <title>ClawQL vs Executor — equal-arm latency p50 / p95 / p99</title>
   <link rel="canonical" href="https://clawql.com/benchmarks/executor-comparison/latency.html"/>
-  <meta name="description" content="Wall-clock MCP latency p50/p95/p99. ClawQL heavier arm vs live Executor no-op."/>
-  <meta property="og:title" content="ClawQL vs Executor — p50/p95/p99 latency"/>
-  <meta property="og:description" content="ClawQL heavy turn p50 10.652ms · Executor live same-host 2.959ms · ClawQL heavy ~3.6× Executor live no-op (more work)"/>
+  <meta name="description" content="Apples-to-apples MCP latency: same pets JSON, ClawQL gateway overhead vs live Executor execute."/>
+  <meta property="og:title" content="ClawQL vs Executor — equal-arm latency"/>
+  <meta property="og:description" content="Equalized ClawQL overhead p50 7.414ms · Executor live same-host 3.256ms · ClawQL overhead ~2.28× Executor (equal arm)"/>
   <meta property="og:url" content="https://clawql.com/benchmarks/executor-comparison/latency.html"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -54,7 +54,7 @@
       margin: 0 0 0.5rem;
       letter-spacing: -0.02em;
     }
-    .lead { color: var(--muted); font-size: 1.05rem; margin: 0 0 1.35rem; max-width: 42rem; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin: 0 0 1.35rem; max-width: 44rem; }
     .tilt {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -100,8 +100,9 @@
       vertical-align: middle;
       margin-left: 0.35rem;
     }
-    .badge.heavy { background: #d8f0ea; color: var(--claw-deep); }
-    .badge.light { background: #ffedd5; color: #9a3412; }
+    .badge.equal { background: #d8f0ea; color: var(--claw-deep); }
+    .badge.equalized { background: #c7ebe3; color: var(--claw-deep); }
+    .badge.control { background: #e8eef0; color: #475569; }
     .nums {
       display: flex;
       gap: 0.65rem;
@@ -178,74 +179,36 @@
 <body>
   <main class="wrap">
     <p class="brand">ClawQL</p>
-    <h1>Latency · p50 / p95 / p99</h1>
+    <h1>Equal-arm latency · p50 / p95 / p99</h1>
     <p class="lead">
-      Wall-clock MCP tool latency with <strong>live</strong> numbers where wired.
-      ClawQL runs the <strong>heavier</strong> arm
-      (search + 800-row execute with <code>where</code>/<code>fields</code> + audit + WORM on search).
-      Executor runs the <strong>lighter</strong> arm (live same-host no-op).
+      Apples-to-apples: both sides return the <strong>same tiny pets JSON</strong> via one MCP <code>execute</code>.
+      Headline compares <strong>ClawQL gateway overhead</strong> (execute − same-host mock fetch) to
+      <strong>Executor</strong> (live same-host).
       n=100.
     </p>
 
     <div class="tilt">
       <div>
-        <strong>ClawQL — heavier on purpose</strong>
-        HEAVIER — search (+WORM) + execute(large JSON + where + fields) + audit; heavy_turn times all three together
+        <strong>ClawQL — equal arm</strong>
+        EQUAL — single MCP execute → tiny same-host mock (2 pets), fields projection only. No search bundle, no where, no WORM, no audit in the timed execute sample.
       </div>
       <div>
-        <strong>Executor — lighter arm</strong>
-        LIGHTER — LIVE no-op JS execute via MCP stdio (executor v1.6.10). No upstream HTTP, no filter, no audit.
+        <strong>Executor — equal arm</strong>
+        EQUAL — single MCP execute returning the same pets JSON in-process (Executor sandbox cannot fetch; logical result matched).
       </div>
     </div>
 
-    <section class="chart" aria-label="Latency p50 p95 p99 by tool">
+    <section class="chart" aria-label="Equal-arm latency p50 p95 p99">
       
-      <div class="tool " data-tool="clawql_search">
-        <div class="tool-head">
-          <div class="name">ClawQL search <span class="badge heavy">heavier</span>
-            <span class="sub">catalog resolve + durable WORM</span>
-          </div>
-          <div class="nums">
-            <span><em>p50</em> 1.8</span>
-            <span><em>p95</em> 12.1</span>
-            <span><em>p99</em> 58.0</span>
-            <span class="unit">ms</span>
-          </div>
-        </div>
-        <div class="tracks">
-          
-            <div class="track-row">
-              <span class="p-label">p50</span>
-              <div class="track">
-                
-                <span class="bar claw p50" style="width:2.93%"></span>
-              </div>
-            </div>
-            <div class="track-row">
-              <span class="p-label">p95</span>
-              <div class="track">
-                
-                <span class="bar claw p95" style="width:19.29%"></span>
-              </div>
-            </div>
-            <div class="track-row">
-              <span class="p-label">p99</span>
-              <div class="track">
-                
-                <span class="bar claw p99" style="width:92.59%"></span>
-              </div>
-            </div>
-        </div>
-      </div>
       <div class="tool " data-tool="clawql_execute">
         <div class="tool-head">
-          <div class="name">ClawQL execute <span class="badge heavy">heavier</span>
-            <span class="sub">large mock (800 rows) + where + fields</span>
+          <div class="name">ClawQL execute (e2e) <span class="badge equal">equal</span>
+            <span class="sub">MCP → tiny same-host mock + fields</span>
           </div>
           <div class="nums">
-            <span><em>p50</em> 9.8</span>
-            <span><em>p95</em> 17.0</span>
-            <span><em>p99</em> 21.7</span>
+            <span><em>p50</em> 7.9</span>
+            <span><em>p95</em> 9.4</span>
+            <span><em>p99</em> 10.8</span>
             <span class="unit">ms</span>
           </div>
         </div>
@@ -255,34 +218,108 @@
               <span class="p-label">p50</span>
               <div class="track">
                 
-                <span class="bar claw p50" style="width:15.70%"></span>
+                <span class="bar claw p50" style="width:7.31%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p95</span>
               <div class="track">
                 
-                <span class="bar claw p95" style="width:27.09%"></span>
+                <span class="bar claw p95" style="width:8.71%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p99</span>
               <div class="track">
                 
-                <span class="bar claw p99" style="width:34.61%"></span>
+                <span class="bar claw p99" style="width:10.01%"></span>
               </div>
             </div>
         </div>
       </div>
-      <div class="tool " data-tool="clawql_audit">
+      <div class="tool headline-tool" data-tool="clawql_gateway_overhead">
         <div class="tool-head">
-          <div class="name">ClawQL audit <span class="badge heavy">heavier</span>
-            <span class="sub">ephemeral ring append</span>
+          <div class="name">ClawQL gateway overhead <span class="badge equalized">equalized</span>
+            <span class="sub">execute − direct fetch (apples-to-apples)</span>
           </div>
           <div class="nums">
-            <span><em>p50</em> 0.3</span>
-            <span><em>p95</em> 1.0</span>
-            <span><em>p99</em> 1.3</span>
+            <span><em>p50</em> 7.4</span>
+            <span><em>p95</em> 8.8</span>
+            <span><em>p99</em> 9.9</span>
+            <span class="unit">ms</span>
+          </div>
+        </div>
+        <div class="tracks">
+          
+            <div class="track-row">
+              <span class="p-label">p50</span>
+              <div class="track">
+                
+                <span class="bar claw p50" style="width:6.89%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p95</span>
+              <div class="track">
+                
+                <span class="bar claw p95" style="width:8.16%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p99</span>
+              <div class="track">
+                
+                <span class="bar claw p99" style="width:9.23%"></span>
+              </div>
+            </div>
+        </div>
+      </div>
+      <div class="tool headline-tool" data-tool="executor_execute">
+        <div class="tool-head">
+          <div class="name">Executor execute <span class="badge equal">equal</span>
+            <span class="sub">live · same pets JSON in-process</span>
+          </div>
+          <div class="nums">
+            <span><em>p50</em> 3.3</span>
+            <span><em>p95</em> 6.7</span>
+            <span><em>p99</em> 17.2</span>
+            <span class="unit">ms</span>
+          </div>
+        </div>
+        <div class="tracks">
+          
+            <div class="track-row">
+              <span class="p-label">p50</span>
+              <div class="track">
+                
+                <span class="bar exec p50" style="width:3.03%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p95</span>
+              <div class="track">
+                
+                <span class="bar exec p95" style="width:6.18%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p99</span>
+              <div class="track">
+                
+                <span class="bar exec p99" style="width:15.98%"></span>
+              </div>
+            </div>
+        </div>
+      </div>
+      <div class="tool " data-tool="direct_http">
+        <div class="tool-head">
+          <div class="name">Direct HTTP mock <span class="badge control">control</span>
+            <span class="sub">bare fetch of the same tiny body</span>
+          </div>
+          <div class="nums">
+            <span><em>p50</em> 0.4</span>
+            <span><em>p95</em> 0.6</span>
+            <span><em>p99</em> 0.8</span>
             <span class="unit">ms</span>
           </div>
         </div>
@@ -311,15 +348,15 @@
             </div>
         </div>
       </div>
-      <div class="tool headline-tool" data-tool="clawql_heavy_turn">
+      <div class="tool " data-tool="clawql_audit">
         <div class="tool-head">
-          <div class="name">ClawQL heavy turn <span class="badge heavy">heavier</span>
-            <span class="sub">search + execute + audit (one sample)</span>
+          <div class="name">ClawQL audit <span class="badge control">control</span>
+            <span class="sub">local ring append (no upstream)</span>
           </div>
           <div class="nums">
-            <span><em>p50</em> 10.7</span>
-            <span><em>p95</em> 15.9</span>
-            <span><em>p99</em> 18.2</span>
+            <span><em>p50</em> 0.9</span>
+            <span><em>p95</em> 15.3</span>
+            <span><em>p99</em> 99.6</span>
             <span class="unit">ms</span>
           </div>
         </div>
@@ -329,84 +366,47 @@
               <span class="p-label">p50</span>
               <div class="track">
                 
-                <span class="bar claw p50" style="width:16.99%"></span>
+                <span class="bar claw p50" style="width:2.50%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p95</span>
               <div class="track">
                 
-                <span class="bar claw p95" style="width:25.30%"></span>
+                <span class="bar claw p95" style="width:14.23%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p99</span>
               <div class="track">
                 
-                <span class="bar claw p99" style="width:29.05%"></span>
-              </div>
-            </div>
-        </div>
-      </div>
-      <div class="tool " data-tool="executor_execute">
-        <div class="tool-head">
-          <div class="name">Executor execute <span class="badge light">lighter</span>
-            <span class="sub">live no-op · no upstream</span>
-          </div>
-          <div class="nums">
-            <span><em>p50</em> 3.0</span>
-            <span><em>p95</em> 6.2</span>
-            <span><em>p99</em> 6.9</span>
-            <span class="unit">ms</span>
-          </div>
-        </div>
-        <div class="tracks">
-          
-            <div class="track-row">
-              <span class="p-label">p50</span>
-              <div class="track">
-                
-                <span class="bar exec p50" style="width:4.72%"></span>
-              </div>
-            </div>
-            <div class="track-row">
-              <span class="p-label">p95</span>
-              <div class="track">
-                
-                <span class="bar exec p95" style="width:9.84%"></span>
-              </div>
-            </div>
-            <div class="track-row">
-              <span class="p-label">p99</span>
-              <div class="track">
-                
-                <span class="bar exec p99" style="width:11.06%"></span>
+                <span class="bar claw p99" style="width:92.59%"></span>
               </div>
             </div>
         </div>
       </div>
       <div class="score">
-        <div>Heavy turn p50 <strong>10.7ms</strong></div>
-        <div>Heavy turn p95 <strong>15.9ms</strong></div>
-        <div class="warn">Heavy turn p99 <strong>18.2ms</strong></div>
-        <div>Executor p50 <strong>3.0ms</strong><small style="display:block;color:var(--muted);font-weight:400">live same-host</small></div>
-        <div>Executor p99 <strong>6.9ms</strong></div>
-        <div>Compare <strong>ClawQL heavy ~3.6× Executor live no-op (more work)</strong></div>
+        <div>Equalized ClawQL p50 <strong>7.4ms</strong></div>
+        <div>Equalized ClawQL p95 <strong>8.8ms</strong></div>
+        <div class="">Equalized ClawQL p99 <strong>9.9ms</strong></div>
+        <div>Executor p50 <strong>3.3ms</strong><small style="display:block;color:var(--muted);font-weight:400">live same-host</small></div>
+        <div>Executor p99 <strong>17.2ms</strong></div>
+        <div>Compare <strong>ClawQL overhead ~2.28× Executor (equal arm)</strong></div>
       </div>
     </section>
 
     <div class="honesty">
-      <div><strong>Honesty</strong> — Live Executor no-op p50 2.959ms is faster than ClawQL heavy turn p50 10.652ms — expected: ClawQL is doing more (search+large HTTP+where/fields+audit+WORM). Do not cite the old 50–100ms reference as measured.</div>
+      <div><strong>Honesty</strong> — Live Executor p50 3.256ms is faster than equalized ClawQL gateway overhead p50 7.414ms on this host.</div>
       <ul>
-        <li>ClawQL arm is deliberately heavier than Executor. Compare p50/p95/p99 on the chart; do not claim apples-to-apples equal work.</li>
-        <li>Executor bar is LIVE same-host MCP no-op execute (not the #1519 50–100ms estimate).</li>
-        <li>CLAWQL_WORM_ENABLED=1 (memory). search appends durable WORM; execute skips process WORM (by design); audit is ring-buffer only.</li>
-        <li>CLAWQL_CAPABILITY_LIFECYCLE=0 (throughput path). No panguard-mcp-proxy / JWT-ATR hop.</li>
+        <li>Both arms return the same tiny pets JSON via one MCP execute. ClawQL goes through same-host mock HTTP; that cost is subtracted for the equalized overhead metric.</li>
+        <li>Executor is LIVE equal-arm MCP execute returning the same pets JSON.</li>
+        <li>Raw ClawQL execute e2e p50 7.9ms still includes same-host mock HTTP; equalized row subtracts it.</li>
+        <li>Do not use UsefulSoftwareCo/executor#1519 50–100ms as measured — wire EXECUTOR_BIN for live.</li>
         <li>p99 needs adequate n; default iters=100. Still sensitive to rare GC/scheduling spikes.</li>
       </ul>
       <p style="margin:0.65rem 0 0">
-        Measured 2026-10-10T23:07:20.454Z (linux/x64, Node v22.14.0).
-        LIVE same-host no-op execute (n=100). Lighter than ClawQL heavy: no HTTP, no where/fields, no audit/WORM. ClawQL arms preserved from prior heavy run.
+        Measured 2026-10-10T23:55:07.068Z (linux/x64, Node v22.14.0).
+        Equal arm: MCP execute returns the same pets JSON ClawQL gets from the mock. In-process (Executor has no fetch); ClawQL pays same-host mock HTTP (~subtracted in overhead).
         Distinct from <a href="https://clawql.com/mcp-ui/trace/compare/executor">token compare</a>.
       </p>
     </div>
@@ -415,8 +415,7 @@
       <a href="./latency.json">latency.json</a> ·
       <a href="./">token benchmark notes</a> ·
       <a href="https://github.com/danielsmithdevelopment/ClawQL">GitHub</a> ·
-      Reproduce: <code>npm run benchmark:executor-comparison:latency</code>
-      
+      Reproduce: <code>EXECUTOR_BIN=… npm run benchmark:executor-comparison:latency</code>
     </p>
   </main>
   <script>
