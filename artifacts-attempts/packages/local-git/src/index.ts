@@ -6,6 +6,7 @@ export {
   gitClone,
   headCommit,
   runGit,
+  sanitizeGitArgs,
 } from "./git.js";
 export {
   fetchAndReadNote,

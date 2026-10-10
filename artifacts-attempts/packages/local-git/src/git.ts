@@ -1,21 +1,21 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";
-import { isAbsolute, normalize, resolve, sep } from "node:path";
+import { normalize, resolve, sep } from "node:path";
 
 /** Repo / attempt names only — blocks option-injection via `--upload-pack=…`. */
 const SAFE_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 
+/** Must never appear in argv (CodeQL second-order / upload-pack injection). */
+const FORBIDDEN_ARG = /^(--upload-pack|--receive-pack|--exec)(=|$)/i;
+
 export function assertSafeName(name: string, label = "name"): string {
-  if (!SAFE_NAME.test(name)) {
-    throw new Error(`unsafe ${label}: ${name}`);
-  }
-  if (name.includes("..")) {
+  if (!SAFE_NAME.test(name) || name.includes("..")) {
     throw new Error(`unsafe ${label}: ${name}`);
   }
   return name;
 }
 
-/** Absolute path under root; never starts with `-` (git option injection). */
+/** Absolute path under root; never starts with `-`. */
 export function assertPathUnderRoot(root: string, candidate: string): string {
   const absRoot = resolve(root);
   const abs = resolve(candidate);
@@ -29,17 +29,60 @@ export function assertPathUnderRoot(root: string, candidate: string): string {
   return abs;
 }
 
-export function runGit(cwd: string, args: string[], env: NodeJS.ProcessEnv = {}): string {
-  if (!isAbsolute(cwd) && cwd !== process.cwd()) {
-    // allow relative cwd from callers that already validated; still reject dash
+/**
+ * Validate and return a fresh argv copy. Rejects --upload-pack and unknown
+ * subcommands so CodeQL's second-order command injection cannot reach exec.
+ */
+export function sanitizeGitArgs(args: readonly string[]): string[] {
+  if (args.length === 0) throw new Error("empty git args");
+  const out: string[] = [];
+  for (const raw of args) {
+    if (typeof raw !== "string" || raw.includes("\0")) {
+      throw new Error("invalid git arg");
+    }
+    if (FORBIDDEN_ARG.test(raw)) {
+      throw new Error(`forbidden git arg: ${raw}`);
+    }
+    out.push(raw);
   }
+  const sub = out[0]!;
+  const allowedSubs = new Set([
+    "init",
+    "clone",
+    "config",
+    "add",
+    "commit",
+    "remote",
+    "push",
+    "fetch",
+    "checkout",
+    "reset",
+    "notes",
+    "rev-parse",
+    "apply",
+    "diff",
+    "rebase",
+  ]);
+  if (!allowedSubs.has(sub)) {
+    throw new Error(`git subcommand not allowlisted: ${sub}`);
+  }
+  // Any arg that looks like --upload-pack must already have been rejected;
+  // also reject unknown long options that take an executable path.
+  for (const a of out) {
+    if (/^--[A-Za-z0-9-]+=/.test(a) && FORBIDDEN_ARG.test(a.split("=")[0]! + "=")) {
+      throw new Error(`forbidden git arg: ${a}`);
+    }
+  }
+  return out;
+}
+
+export function runGit(cwd: string, args: readonly string[], env: NodeJS.ProcessEnv = {}): string {
   if (cwd.startsWith("-")) {
     throw new Error(`unsafe git cwd: ${cwd}`);
   }
-  for (const a of args) {
-    if (a.includes("\0")) throw new Error("nul in git args");
-  }
-  return execFileSync("git", args, {
+  const safeArgs = sanitizeGitArgs(args);
+  // safeArgs is a new array produced only after FORBIDDEN_ARG checks.
+  return execFileSync("git", safeArgs, {
     cwd,
     encoding: "utf8",
     env: { ...process.env, GIT_TERMINAL_PROMPT: "0", ...env },

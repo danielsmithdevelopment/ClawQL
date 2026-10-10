@@ -82,6 +82,7 @@
       }
       tr { transition: background 0.25s ease; }
       tr.flash { background: rgba(61, 154, 106, 0.12); }
+      td .sub { color: var(--muted); display: block; margin-top: 0.15rem; }
     </style>
   </head>
   <body>
@@ -119,30 +120,62 @@
         return "";
       }
 
+      function cell(text, className) {
+        const td = document.createElement("td");
+        if (className) td.className = className;
+        td.textContent = text;
+        return td;
+      }
+
       function render(view) {
         const notesByAttempt = new Map();
         for (const n of view.notes ?? []) notesByAttempt.set(n.attemptId, n);
-        rows.innerHTML = (view.attempts ?? [])
-          .map((a) => {
+        rows.replaceChildren();
+        const attempts = view.attempts ?? [];
+        if (!attempts.length) {
+          const tr = document.createElement("tr");
+          const td = document.createElement("td");
+          td.colSpan = 5;
+          td.textContent = `No attempts yet for ${view.task?.id ?? taskId ?? ""}`;
+          tr.appendChild(td);
+          rows.appendChild(tr);
+        } else {
+          for (const a of attempts) {
             const n = notesByAttempt.get(a.id);
-            const tests = n ? `${n.tests.passed}/${n.tests.failed}` : "—";
-            const policy = n ? (n.policy.clean ? "clean" : n.policy.violations.join(", ")) : "—";
-            const hash = n ? n.hash.slice(0, 12) : "—";
-            return `<tr class="flash">
-              <td>${a.id}<br/><span style="color:var(--muted)">${a.fork ?? ""}</span></td>
-              <td class="${tone(a.status)}">${a.status}</td>
-              <td>${tests}</td>
-              <td class="${n && !n.policy.clean ? "bad" : ""}">${policy}</td>
-              <td><code>${hash}</code></td>
-            </tr>`;
-          })
-          .join("") || `<tr><td colspan="5">No attempts yet for ${view.task?.id ?? taskId}</td></tr>`;
-        setTimeout(() => {
-          for (const tr of rows.querySelectorAll("tr")) tr.classList.remove("flash");
-        }, 600);
+            const tr = document.createElement("tr");
+            tr.className = "flash";
+            const idTd = document.createElement("td");
+            idTd.textContent = a.id ?? "";
+            if (a.fork) {
+              const sub = document.createElement("span");
+              sub.className = "sub";
+              sub.textContent = a.fork;
+              idTd.appendChild(sub);
+            }
+            tr.appendChild(idTd);
+            tr.appendChild(cell(a.status ?? "", tone(a.status)));
+            tr.appendChild(cell(n ? `${n.tests.passed}/${n.tests.failed}` : "—"));
+            const policyText = n
+              ? n.policy.clean
+                ? "clean"
+                : (n.policy.violations || []).join(", ")
+              : "—";
+            tr.appendChild(cell(policyText, n && !n.policy.clean ? "bad" : ""));
+            const hashTd = document.createElement("td");
+            const code = document.createElement("code");
+            code.textContent = n ? String(n.hash).slice(0, 12) : "—";
+            hashTd.appendChild(code);
+            tr.appendChild(hashTd);
+            rows.appendChild(tr);
+          }
+          setTimeout(() => {
+            for (const tr of rows.querySelectorAll("tr")) tr.classList.remove("flash");
+          }, 600);
+        }
         if (view.decision?.winner) {
           decisionEl.hidden = false;
-          decisionEl.textContent = `Decision: ${view.decision.winner}` +
+          decisionEl.textContent =
+            `Decision: ${view.decision.winner}` +
             (view.pendingApproval ? " (awaiting approval)" : "") +
             (view.task?.status ? ` · task ${view.task.status}` : "");
         }
@@ -153,13 +186,20 @@
         meta.textContent = "Add ?task=tsk_… to subscribe.";
       } else {
         meta.textContent = `Connecting SSE for ${taskId}…`;
-        const es = new EventSource(`/tasks/${taskId}/stream`);
+        const es = new EventSource(`/tasks/${encodeURIComponent(taskId)}/stream`);
         es.onmessage = (ev) => {
-          try { render(JSON.parse(ev.data)); } catch { /* ignore */ }
+          try {
+            render(JSON.parse(ev.data));
+          } catch {
+            /* ignore */
+          }
         };
-        es.onerror = () => { meta.textContent = `SSE error — falling back to poll`; };
-        // Also poll once in case SSE misses the first event
-        fetch(`/tasks/${taskId}`).then((r) => r.ok ? r.json() : null).then((v) => v && render(v));
+        es.onerror = () => {
+          meta.textContent = "SSE error — falling back to poll";
+        };
+        fetch(`/tasks/${encodeURIComponent(taskId)}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((v) => v && render(v));
       }
     </script>
   </body>

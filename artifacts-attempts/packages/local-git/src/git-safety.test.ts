@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertSafeName, gitClone } from "./git.js";
+import { assertSafeName, gitClone, sanitizeGitArgs } from "./git.js";
 
 describe("git safety", () => {
   it("rejects option-like repo names", () => {
@@ -12,8 +12,18 @@ describe("git safety", () => {
     expect(assertSafeName("tsk_demo-att_1")).toBe("tsk_demo-att_1");
   });
 
+  it("sanitizeGitArgs rejects --upload-pack", () => {
+    expect(() => sanitizeGitArgs(["clone", "--upload-pack=evil", "a", "b"])).toThrow(/forbidden/);
+    expect(sanitizeGitArgs(["clone", "--mirror", "--", "/tmp/a.git", "/tmp/b"])).toEqual([
+      "clone",
+      "--mirror",
+      "--",
+      "/tmp/a.git",
+      "/tmp/b",
+    ]);
+  });
+
   it("gitClone puts paths after --", () => {
-    // smoke: function exists and rejects dash sources without running git
     expect(() => gitClone("/tmp", "-e", "/tmp/x")).toThrow(/must not start/);
   });
 });
