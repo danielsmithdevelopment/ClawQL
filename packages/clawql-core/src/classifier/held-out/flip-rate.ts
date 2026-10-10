@@ -249,7 +249,11 @@ export class HeldOutFlipRateGate extends Context.Service<
   }
 >()("clawql/HeldOutFlipRateGate") {}
 
-export function makeHeldOutFlipRateGateLive(): Layer.Layer<HeldOutFlipRateGate, never, FastDecisionScorer> {
+export function makeHeldOutFlipRateGateLive(): Layer.Layer<
+  HeldOutFlipRateGate,
+  never,
+  FastDecisionScorer
+> {
   return Layer.effect(
     HeldOutFlipRateGate,
     Effect.gen(function* () {
