@@ -117,7 +117,8 @@ type OpenRouterAnswerMap = Record<string, Record<string, unknown>>;
 export function openRouterAnswersToOpenAi(
   answers: OpenRouterAnswerMap,
   model: string,
-  id: string
+  id: string,
+  useSiteId = "search_provider_tool_routing"
 ): OpenAiDecisionCreateResponse {
   const converted: OpenAiDecisionAnswer[] = [];
   for (const [name, raw] of Object.entries(answers)) {
@@ -185,6 +186,7 @@ export function openRouterAnswersToOpenAi(
     },
     calibrated: false,
     escalated: false,
+    use_site_id: useSiteId,
     backend_id: `openrouter/${model}`,
     trace_id: id,
   };
@@ -275,10 +277,13 @@ export function callRemoteOpenRouterDecisionsEffect(
     if (!raw.answers || typeof raw.answers !== "object") {
       return yield* Effect.fail(new Error("OpenRouter decisions response missing answers map"));
     }
+    const useSiteId =
+      body.use_site_id?.trim() || body.useSiteId?.trim() || "search_provider_tool_routing";
     return openRouterAnswersToOpenAi(
       raw.answers,
       raw.model || model,
-      raw.id || `openrouter-dec-${Date.now()}`
+      raw.id || `openrouter-dec-${Date.now()}`,
+      useSiteId
     );
   });
 }
