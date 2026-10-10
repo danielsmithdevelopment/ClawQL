@@ -124,10 +124,10 @@ Labeled cases (same as bulk). Per case: unique plurality among non-null backend 
 
 ## Cost source (spend ledger)
 
-| `costSource`     | Behavior                                                                 |
-| ---------------- | ------------------------------------------------------------------------ |
+| `costSource`         | Behavior                                                              |
+| -------------------- | --------------------------------------------------------------------- |
 | `explicit` (default) | Only backends with `costPerCase` get `costEstimate`                   |
-| `spend_ledger`   | Fill missing `costPerCase` from `spendCosts` or InferenceStore rollup    |
+| `spend_ledger`       | Fill missing `costPerCase` from `spendCosts` or InferenceStore rollup |
 
 USD/call = `(inputTokens * 1e-6 + outputTokens * 3e-6) / calls` (same rates as virtual-key budget). Explicit `costPerCase` always wins. Router loads `spendRollup({ groupBy: "model" })` when `costSource=spend_ledger` and the body omits `spendCosts`.
 
