@@ -82,15 +82,6 @@ Artifact: `executor-cmp-latency.json` — regenerate with the command above. Sha
 
 Latest measured (n=100, PET_COUNT=800, ~138KB body). **ClawQL arms live; Executor arm LIVE** (`executor` npm v1.6.10, MCP stdio no-op on this host):
 
-<<<<<<< HEAD
-| Arm                                          |         p50 |         p95 |         p99 |
-| -------------------------------------------- | ----------: | ----------: | ----------: |
-| ClawQL search (+WORM)                        |      1.8 ms |     12.1 ms |     58.0 ms |
-| ClawQL execute heavy                         |      9.8 ms |     17.0 ms |     21.7 ms |
-| ClawQL audit                                 |      0.3 ms |      1.0 ms |      1.3 ms |
-| **ClawQL heavy turn** (search+execute+audit) | **10.7 ms** | **15.9 ms** | **18.2 ms** |
-| Executor (lighter / reference)               |       75 ms |      100 ms |      100 ms |
-=======
 | Arm | p50 | p95 | p99 | Source |
 | --- | ---: | ---: | ---: | --- |
 | ClawQL search (+WORM) | 1.8 ms | 12.1 ms | 58.0 ms | live |
@@ -98,7 +89,6 @@ Latest measured (n=100, PET_COUNT=800, ~138KB body). **ClawQL arms live; Executo
 | ClawQL audit | 0.3 ms | 1.0 ms | 1.3 ms | live |
 | **ClawQL heavy turn** (search+execute+audit) | **10.7 ms** | **15.9 ms** | **18.2 ms** | live |
 | **Executor execute** (no-op) | **3.0 ms** | **6.2 ms** | **6.9 ms** | **live** |
->>>>>>> 7c78cdb6 (bench(latency): replace Executor reference band with live MCP no-op)
 
 **Not an estimate:** earlier charts used the published warm 50–100ms band ([executor#1519](https://github.com/UsefulSoftwareCo/executor/issues/1519)); that overstated Executor on this host (~25× vs live no-op p50). Always wire `EXECUTOR_BIN` for wall-clock claims.
 
