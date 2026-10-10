@@ -13,7 +13,7 @@ Record only after `npm run demo:record-prep` (or `demo:gate`) prints **GATE PASS
 7. **Merge (45s)** — Winner rebased onto main; re-test green; losers stood down (notes remain).
 8. **Release — never cut (90s)** — Dry-run Arweave dir + `artifacts-verify --local-manifest …`; call out Merkle root + `buildEnvironment.fork/commit`. State that live Turbo is the production swap.
 9. **Canary (30s)** — Open `.local/canary/status.json`: 10% canary + rollback trigger from the manifest (dry-run; live = Workers gradual deploy API).
-10. **Board (45s)** — `board:serve` + `board:hydrate`; live table updates; canary panel shows 10% + rollback trigger.
+10. **Board (45s)** — `board:serve` + `board:hydrate-from` (after a prior demo snapshot); live table updates; canary panel shows 10% + rollback trigger.
 11. **Close (30s)** — Point judges at `docs/JUDGE_RUNBOOK.md`; mention Workers Paid / Artifacts billing Oct 15.
 
 ## Caption note

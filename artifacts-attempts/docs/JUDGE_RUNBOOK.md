@@ -32,10 +32,12 @@ npm test                 # packages + local pipeline
 npm run demo:local       # full run → .local/demo-run
 npm run demo:gate        # optional: 3 consecutive verified runs
 npm run board:serve      # terminal A — http://127.0.0.1:8787/
-npm run board:hydrate    # terminal B — POSTs TaskView, prints board URL
+npm run board:hydrate    # terminal B — run demo + POST TaskView (writes result.json)
+# or, after demo:local / judge-smoke:
+npm run board:hydrate-from   # POST existing result.json without re-running
 ```
 
-Agent tools: `GET http://127.0.0.1:8787/mcp/tools` · Approval UI: `/approve.html?task=…`
+Flow overview: [`ARCHITECTURE.md`](./ARCHITECTURE.md). Agent tools: `GET http://127.0.0.1:8787/mcp/tools` · Approval UI: `/approve.html?task=…`
 
 Open the printed `/?task=tsk_demo` URL. You should see three attempts, `att_3` blocked, winner `att_1`, task `released`.
 
