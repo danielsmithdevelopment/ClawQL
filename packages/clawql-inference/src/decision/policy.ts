@@ -192,7 +192,7 @@ export function refusalsForUncalibratedRemote(opts: {
 
 export function supportedModelsMessage(): Effect.Effect<string> {
   return Effect.succeed(
-    "Supported models: clawql-auto (local-first + escalate), clawql, gliner2, gliner, heuristic, gpt-6-luna"
+    "Supported models: clawql-auto (local-first + escalate), clawql, gliner2, gliner, heuristic, gpt-6-luna, microsoft-decision-1 (via OpenRouter)"
   );
 }
 
@@ -203,7 +203,7 @@ export function modelRejectionMessage(
   return Effect.gen(function* () {
     const supported = yield* supportedModelsMessage();
     if (kind === "microsoft") {
-      return `model '${model}' (Microsoft-Decision-1) is not available on this gateway yet. ${supported}`;
+      return `model '${model}' (Microsoft-Decision-1) requires OPENROUTER_API_KEY (or CLAWQL_DECISIONS_OPENROUTER_API_KEY). ${supported}`;
     }
     return `Invalid model: '${model}'. ${supported}`;
   });

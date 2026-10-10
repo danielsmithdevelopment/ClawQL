@@ -88,10 +88,10 @@ Vendors return probabilities calibrated on **their** distributions. ClawQL owns:
 
 ### Fan-out evaluation service
 
-See [decisions-fanout-eval-v0.1](./decisions-fanout-eval-v0.1.md) — `POST /decision/eval` (bulk mode ships).
+See [decisions-fanout-eval-v0.1](./decisions-fanout-eval-v0.1.md) — `POST /decision/eval` (bulk + disagreement_mining). OpenRouter Decision-1: [decisions-openrouter-decision1-v0.1](./decisions-openrouter-decision1-v0.1.md).
 
-1. **Bulk evaluation** (v0.1) — run every backend on a labeled set; recommend cheapest meeting the quality bar
-2. **Disagreement mining** (follow-on) — unlabeled batch; disagreements → Review labels
+1. **Bulk evaluation** — labeled set; recommend cheapest meeting the quality bar
+2. **Disagreement mining** — unlabeled batch; disagreements → Review (+ optional flip-rate attach)
 3. **Live ensembles** (follow-on) — optional quorum; only when it raises answers-on-its-own
 
 Hygiene: redaction before egress; data-class → permitted backends; per-provider rate limits; vendor terms for publishing comparisons.

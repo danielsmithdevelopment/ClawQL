@@ -41,6 +41,18 @@ export {
 } from "./remote-decisions.js";
 
 export {
+  OpenRouterDecisionsService,
+  OpenRouterDecisionsLive,
+  makeOpenRouterDecisionsLive,
+  callRemoteOpenRouterDecisions,
+  remoteOpenRouterDecisionsAvailable,
+  resolveOpenRouterDecisionsModel,
+  isOpenRouterDecisionBackendId,
+  DEFAULT_OPENROUTER_DECISIONS_MODEL,
+  type CallOpenRouterDecisionsOptions,
+} from "./remote-openrouter-decisions.js";
+
+export {
   DecisionsPolicyService,
   DecisionsPolicyLive,
   LOCAL_DECISION_MODELS,
