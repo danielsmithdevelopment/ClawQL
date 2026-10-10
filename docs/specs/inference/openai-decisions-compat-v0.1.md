@@ -86,13 +86,13 @@ Vendors return probabilities calibrated on **their** distributions. ClawQL owns:
 4. **Escalation** — local → Luna / Decision-1 → human Review
 5. **Backend version pins** — version change → re-prove
 
-### Fan-out evaluation service (follow-on)
+### Fan-out evaluation service
 
-Three modes (see vault / GTM notes):
+See [decisions-fanout-eval-v0.1](./decisions-fanout-eval-v0.1.md) — `POST /decision/eval` (bulk mode ships).
 
-1. **Bulk evaluation** — run every backend on a labeled set; recommend cheapest meeting the quality bar
-2. **Disagreement mining** — unlabeled batch; disagreements → Review labels
-3. **Live ensembles** — optional quorum; only when it raises answers-on-its-own
+1. **Bulk evaluation** (v0.1) — run every backend on a labeled set; recommend cheapest meeting the quality bar
+2. **Disagreement mining** (follow-on) — unlabeled batch; disagreements → Review labels
+3. **Live ensembles** (follow-on) — optional quorum; only when it raises answers-on-its-own
 
 Hygiene: redaction before egress; data-class → permitted backends; per-provider rate limits; vendor terms for publishing comparisons.
 

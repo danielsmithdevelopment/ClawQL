@@ -58,6 +58,8 @@ export function createInferenceHttpApp(options: CreateInferenceHttpAppOptions = 
         "/v1/systemone",
         "/v1/decisions",
         "/decision",
+        "/decision/eval",
+        "/v1/decisions/eval",
         "/memory",
         "/events",
       ],

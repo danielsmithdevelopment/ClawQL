@@ -101,9 +101,9 @@ Remains the MCP HTTP process. Managed-gateway proxy routes `/mcp` → MCP upstre
 
 - Default-on enrichment (needs MaxP-style A/B)
 - Auto-capture of facts from chat traffic
-- Multi-backend fan-out evaluation service (bulk / disagreement mining / live ensembles)
+- Multi-backend fan-out evaluation **disagreement_mining / live ensembles** (bulk ships — [decisions-fanout-eval-v0.1](./decisions-fanout-eval-v0.1.md))
 - Flip-rate perturbation gate before `productionTrusted`
-- Promoting Nimble / Tev1 / Jev / Microsoft-Decision-1 as trusted backends (candidates via held-out)
+- Promoting Nimble / Tev1 / Jev / Microsoft-Decision-1 as trusted backends (candidates via held-out / fan-out)
 - In-process MCP inside the inference Express app
 - Full `clawql-streams` / `stream_subscribe` agent wake loop (change-detection → `stream.changed` already ships)
 - Exposing NATS / JetStream to customers (leaf nodes stay on the fabric, behind `/events`)

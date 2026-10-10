@@ -22,6 +22,12 @@ import {
   remoteLunaAvailable,
 } from "./remote-decisions.js";
 import {
+  parseFanoutEvalBody,
+  runFanoutEval,
+  type FanoutEvalRequest,
+  type FanoutEvalResponse,
+} from "./fanout-eval.js";
+import {
   runDecision,
   type DecisionQuestion,
   type DecisionRequest,
@@ -35,6 +41,8 @@ export type CreateDecisionRouterOptions = {
   decide?: (req: DecisionRequest) => Promise<DecisionResponse>;
   /** Override remote Luna call (tests). */
   callRemote?: (body: OpenAiDecisionCreateRequest) => Promise<OpenAiDecisionCreateResponse>;
+  /** Override fan-out eval (tests). */
+  evaluate?: (req: FanoutEvalRequest) => Promise<FanoutEvalResponse>;
 };
 
 function parseQuestions(raw: unknown): DecisionQuestion[] | { error: string } {
@@ -433,10 +441,35 @@ async function handleOpenAiDecisions(
   }
 }
 
+async function handleFanoutEval(
+  req: VirtualKeyRequest,
+  res: Response,
+  options: {
+    evaluate: (r: FanoutEvalRequest) => Promise<FanoutEvalResponse>;
+  }
+): Promise<void> {
+  const parsed = parseFanoutEvalBody(req.body);
+  if ("error" in parsed) {
+    sendOpenAiError(res, 400, parsed.error, "invalid_request_error");
+    return;
+  }
+  try {
+    const result = await options.evaluate(parsed);
+    res.json(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    sendOpenAiError(res, 502, message, "server_error");
+  }
+}
+
 export function createDecisionRouter(options: CreateDecisionRouterOptions = {}): express.Router {
   const router = express.Router();
   const env = options.env ?? process.env;
   const decide = options.decide ?? runDecision;
+  const evaluate =
+    options.evaluate ??
+    ((req: FanoutEvalRequest) =>
+      runFanoutEval(req, { decide, callRemote: options.callRemote, env }));
 
   const systemOneHandler = (req: Request, res: Response) =>
     void handleDecide(req as VirtualKeyRequest, res, decide);
@@ -454,15 +487,21 @@ export function createDecisionRouter(options: CreateDecisionRouterOptions = {}):
       })
   );
 
+  const evalHandler = (req: Request, res: Response) =>
+    void handleFanoutEval(req as VirtualKeyRequest, res, { evaluate });
+  router.post("/decision/eval", evalHandler);
+  router.post("/v1/decisions/eval", evalHandler);
+
   router.get("/decision", (_req, res) => {
     res.json({
       object: "clawql.decision",
       methods: ["POST"],
       alias: "/v1/systemone",
       openai_compatible: "/v1/decisions",
+      fanout_eval: "/decision/eval",
       question_types: ["choice", "noul", "predicate", "score"],
       description:
-        "System One choice|noul|score over Fast Decision. OpenAI Decisions clients should use POST /v1/decisions.",
+        "System One choice|noul|score over Fast Decision. OpenAI Decisions clients should use POST /v1/decisions. Bulk fan-out eval: POST /decision/eval.",
     });
   });
 
@@ -476,6 +515,7 @@ export function createDecisionRouter(options: CreateDecisionRouterOptions = {}):
         "Uncalibrated answers (including all score answers) return type=refusal unless x-clawql-allow-uncalibrated: 1",
       image_egress:
         "Images require x-clawql-allow-external-images (OPENAI_API_KEY alone is not consent)",
+      fanout_eval: "/v1/decisions/eval",
       description:
         "OpenAI Decisions API-compatible endpoint. clawql-auto = local-first + escalate; gpt-6-luna when keyed + allowed. ClawQL adds calibrated, escalated, use_site_id, backend_id, trace_id.",
     });

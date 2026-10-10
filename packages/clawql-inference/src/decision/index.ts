@@ -51,3 +51,14 @@ export {
   type DecisionsModelKind,
   type RefusalAnswer,
 } from "./policy.js";
+
+export {
+  FanoutEvalService,
+  FanoutEvalLive,
+  makeFanoutEvalLive,
+  runFanoutEval,
+  parseFanoutEvalBody,
+  type FanoutEvalRequest,
+  type FanoutEvalResponse,
+  type FanoutBackendReport,
+} from "./fanout-eval.js";
