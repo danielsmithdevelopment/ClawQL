@@ -320,6 +320,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
               ...emaAdminAuth,
             }
           : undefined,
+      grantAdmin:
+        mcpOAuthRuntime && emaAdminConfigured && mcpOAuthRuntime.config.grantKeyStore != null
+          ? { ...emaAdminAuth }
+          : undefined,
       idJagIssuer: idJagIssuer
         ? {
             service: idJagIssuer.service,
