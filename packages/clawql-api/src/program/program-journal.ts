@@ -7,18 +7,20 @@
  *
  * Backend: append-only JSONL, one file per program in `CLAWQL_PROGRAM_JOURNAL_DIR`
  * (default `$CLAWQL_HOME/program-journal`, else `<os tmpdir>/clawql-program-journal`).
- * An append resolves only after its record is fsync'd. A record torn by a crash
- * mid-append was never acknowledged: `load` ignores it and the next append
- * truncates it away.
+ * An append resolves only after its record is fsync'd. Appends are serialized, so
+ * only the final record can be torn by a crash; it was never acknowledged: `load`
+ * ignores it and the next append truncates it away.
  *
  * celld-shaped stand-in: once the pinned celld build hosts the isolate, the
  * journal moves into the cell's SQLite (LTX, RPO=0) behind this same service.
- * One writer per program — appends are serialized in-process only (same posture
- * as the file pending store).
+ * One writer per program: {@link ProgramJournalApi.withLease} is process-wide;
+ * across processes, one runner per journal directory (same posture as the file
+ * pending store). Journals hold call results — files are 0600 in a 0700 directory
+ * this user owns.
  */
 
 import { createHash } from "node:crypto";
-import { mkdir, open, readFile, type FileHandle } from "node:fs/promises";
+import { mkdir, open, readFile, stat, type FileHandle } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { Clock, Context, Data, Effect, Layer, Semaphore } from "effect";
@@ -27,6 +29,7 @@ import type { ProgramPlan } from "./program-plan.js";
 const FILE_MODE = 0o600;
 const DIR_MODE = 0o700;
 const NEWLINE = 0x0a;
+const TAIL_CHUNK_BYTES = 64 * 1024;
 const PROGRAM_ID_PATTERN = /^prog_[A-Za-z0-9_-]{8,128}$/;
 
 export type ProgramJournalBackend = "file-jsonl";
@@ -57,6 +60,17 @@ export type ProgramJournalNondet = {
   readonly value: unknown;
 };
 
+/**
+ * A call that may have a side effect is about to reach the host. An intent with
+ * no entry means the outcome is unknown — the call must not be re-run.
+ */
+export type ProgramJournalIntent = {
+  readonly index: number;
+  readonly callId: string;
+  readonly operationId: string;
+  readonly startedAt: string;
+};
+
 export type ProgramJournal = {
   readonly programId: string;
   readonly sourceHash: string;
@@ -66,6 +80,7 @@ export type ProgramJournal = {
   readonly status: ProgramJournalStatus;
   readonly entries: readonly ProgramJournalEntry[];
   readonly nondet: readonly ProgramJournalNondet[];
+  readonly intents: readonly ProgramJournalIntent[];
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly lastError?: string;
@@ -80,7 +95,7 @@ export type ProgramJournalCreateInput = {
 
 export class ProgramJournalError extends Data.TaggedError("ProgramJournalError")<{
   readonly programId: string;
-  readonly reason: "invalid_id" | "exists" | "not_found" | "corrupt" | "io";
+  readonly reason: "invalid_id" | "exists" | "not_found" | "corrupt" | "busy" | "io";
   readonly message: string;
 }> {}
 
@@ -97,6 +112,10 @@ export type ProgramJournalApi = {
     programId: string,
     nondet: ProgramJournalNondet
   ) => Effect.Effect<void, ProgramJournalError>;
+  readonly appendIntent: (
+    programId: string,
+    intent: ProgramJournalIntent
+  ) => Effect.Effect<void, ProgramJournalError>;
   /** `null` when no journal (or no acknowledged record) exists for `programId`. */
   readonly load: (programId: string) => Effect.Effect<ProgramJournal | null, ProgramJournalError>;
   readonly markStatus: (
@@ -104,6 +123,14 @@ export type ProgramJournalApi = {
     status: ProgramJournalStatus,
     detail?: { readonly error?: string }
   ) => Effect.Effect<void, ProgramJournalError>;
+  /**
+   * Run `effect` as the only writer of `programId` in this process (fails `busy`
+   * while another fiber holds it). Released however `effect` ends.
+   */
+  readonly withLease: <A, E, R>(
+    programId: string,
+    effect: Effect.Effect<A, E, R>
+  ) => Effect.Effect<A, E | ProgramJournalError, R>;
 };
 
 export class ProgramJournalService extends Context.Service<
@@ -125,6 +152,7 @@ type JournalRecord =
   | CreateRecord
   | { readonly t: "entry"; readonly entry: ProgramJournalEntry; readonly at: string }
   | { readonly t: "nondet"; readonly key: string; readonly value: unknown; readonly at: string }
+  | { readonly t: "intent"; readonly intent: ProgramJournalIntent; readonly at: string }
   | {
       readonly t: "status";
       readonly status: ProgramJournalStatus;
@@ -133,6 +161,9 @@ type JournalRecord =
     };
 
 const STATUSES: ReadonlySet<string> = new Set(["running", "parked", "completed", "failed"]);
+
+/** Journal files with a live writer in this process — shared by every journal instance. */
+const leasedJournalFiles = new Set<string>();
 
 /** Journal directory: explicit dir, else `$CLAWQL_HOME/program-journal`, else OS tmpdir. */
 export function resolveProgramJournalDirEffect(
@@ -210,6 +241,63 @@ async function fsyncDirBestEffort(dir: string): Promise<void> {
   }
 }
 
+function parsesAsJson(text: string): boolean {
+  try {
+    JSON.parse(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Offset of the last newline before `end`, or -1. */
+async function lastNewlineBefore(fh: FileHandle, end: number): Promise<number> {
+  const chunk = Buffer.alloc(Math.max(1, Math.min(TAIL_CHUNK_BYTES, end)));
+  let pos = end;
+  while (pos > 0) {
+    const start = Math.max(0, pos - chunk.length);
+    const { bytesRead } = await fh.read(chunk, 0, pos - start, start);
+    const at = chunk.subarray(0, bytesRead).lastIndexOf(NEWLINE);
+    if (at >= 0) return start + at;
+    pos = start;
+  }
+  return -1;
+}
+
+/**
+ * Bytes covered by acknowledged records. Only the final record can be torn:
+ * unterminated, or — where pages persist out of order — terminated but not JSON.
+ * Reads just the last record, so appends stay linear in journal size.
+ */
+async function acknowledgedLength(fh: FileHandle, size: number): Promise<number> {
+  const lastNewline = await lastNewlineBefore(fh, size);
+  if (lastNewline < 0) return 0;
+  const prevNewline = await lastNewlineBefore(fh, lastNewline);
+  const line = Buffer.alloc(lastNewline - prevNewline - 1);
+  if (line.length > 0) await fh.read(line, 0, line.length, prevNewline + 1);
+  return parsesAsJson(line.toString("utf8")) ? lastNewline + 1 : prevNewline + 1;
+}
+
+function noJournalError(): NodeJS.ErrnoException {
+  return Object.assign(new Error("no acknowledged journal record"), { code: "ENOENT" });
+}
+
+/**
+ * Create the journal directory, refusing one another local user controls: the
+ * default lives under the shared OS tmpdir, and a planted journal would feed
+ * forged results to a resumed program.
+ */
+async function ensureJournalDir(dir: string): Promise<void> {
+  await mkdir(dir, { recursive: true, mode: DIR_MODE });
+  const st = await stat(dir);
+  if (!st.isDirectory()) throw new Error(`${dir} is not a directory`);
+  const uid = process.getuid?.();
+  if (uid !== undefined && st.uid !== uid) {
+    throw new Error(`journal directory ${dir} is owned by uid ${st.uid}, not this user (${uid})`);
+  }
+  if ((st.mode & 0o002) !== 0) throw new Error(`journal directory ${dir} is world-writable`);
+}
+
 async function createJournalFile(path: string, dir: string, record: Buffer): Promise<void> {
   await mkdir(dir, { recursive: true, mode: DIR_MODE });
   let fh: FileHandle;
@@ -217,9 +305,15 @@ async function createJournalFile(path: string, dir: string, record: Buffer): Pro
     fh = await open(path, "wx", FILE_MODE);
   } catch (e: unknown) {
     if (!isErrno(e, "EEXIST")) throw e;
-    // A create torn by a crash left no acknowledged record — reclaim the file.
-    if ((await readFile(path)).includes(NEWLINE)) throw e;
-    fh = await open(path, "w", FILE_MODE);
+    fh = await open(path, "r+");
+    try {
+      // A create torn by a crash left no acknowledged record — reclaim the file.
+      if ((await acknowledgedLength(fh, (await fh.stat()).size)) > 0) throw e;
+      await fh.truncate(0);
+    } catch (inner: unknown) {
+      await fh.close();
+      throw inner;
+    }
   }
   try {
     await writeFully(fh, record, 0);
@@ -230,20 +324,14 @@ async function createJournalFile(path: string, dir: string, record: Buffer): Pro
   await fsyncDirBestEffort(dir);
 }
 
-/** Append one record and fsync; first drops any torn tail so records stay line-aligned. */
+/** Append one record and fsync, first truncating a torn final record. */
 async function appendRecordDurable(path: string, record: Buffer): Promise<void> {
   const fh = await open(path, "r+");
   try {
     const { size } = await fh.stat();
-    let end = size;
-    if (size > 0) {
-      const last = Buffer.alloc(1);
-      await fh.read(last, 0, 1, size - 1);
-      if (last[0] !== NEWLINE) {
-        end = (await readFile(path)).lastIndexOf(NEWLINE) + 1;
-        await fh.truncate(end);
-      }
-    }
+    const end = await acknowledgedLength(fh, size);
+    if (end === 0) throw noJournalError();
+    if (end < size) await fh.truncate(end);
     await writeFully(fh, record, end);
     await fh.sync();
   } finally {
@@ -291,6 +379,20 @@ function isEntry(v: unknown, callCount: number): v is ProgramJournalEntry {
   );
 }
 
+function isIntent(v: unknown, callCount: number): v is ProgramJournalIntent {
+  if (!isObject(v)) return false;
+  const index = v.index;
+  return (
+    typeof index === "number" &&
+    Number.isInteger(index) &&
+    index >= 0 &&
+    index < callCount &&
+    typeof v.callId === "string" &&
+    typeof v.operationId === "string" &&
+    typeof v.startedAt === "string"
+  );
+}
+
 /** Fold journal records; `null` when nothing was acknowledged (torn or empty create). */
 function decodeJournal(
   programId: string,
@@ -298,6 +400,8 @@ function decodeJournal(
 ): ProgramJournal | null | ProgramJournalError {
   // Only newline-terminated records were acknowledged; the final segment is "" or torn.
   const lines = text.split("\n").slice(0, -1);
+  // Same rule as acknowledgedLength: a terminated but unparseable final record is torn.
+  if (lines.length > 0 && !parsesAsJson(lines[lines.length - 1]!)) lines.pop();
   if (lines.length === 0) return null;
   const corrupt = (line: number, why: string) =>
     new ProgramJournalError({
@@ -309,6 +413,7 @@ function decodeJournal(
   let create: CreateRecord | undefined;
   const entries = new Map<number, ProgramJournalEntry>();
   const nondet = new Map<string, unknown>();
+  const intents = new Map<number, ProgramJournalIntent>();
   let status: ProgramJournalStatus = "running";
   let lastError: string | undefined;
   let updatedAt = "";
@@ -332,6 +437,9 @@ function decodeJournal(
     } else if (rec.t === "nondet") {
       if (typeof rec.key !== "string" || !rec.key) return corrupt(line, "invalid nondet key");
       if (!nondet.has(rec.key)) nondet.set(rec.key, rec.value);
+    } else if (rec.t === "intent") {
+      if (!isIntent(rec.intent, create.plan.calls.length)) return corrupt(line, "invalid intent");
+      if (!intents.has(rec.intent.index)) intents.set(rec.intent.index, rec.intent);
     } else if (rec.t === "status") {
       if (typeof rec.status !== "string" || !STATUSES.has(rec.status)) {
         return corrupt(line, "invalid status");
@@ -353,16 +461,28 @@ function decodeJournal(
     status,
     entries: [...entries.values()].sort((a, b) => a.index - b.index),
     nondet: [...nondet.entries()].map(([key, value]) => ({ key, value })),
+    intents: [...intents.values()].sort((a, b) => a.index - b.index),
     createdAt: create.at,
     updatedAt,
     ...(lastError !== undefined ? { lastError } : {}),
   };
 }
 
-/** File (JSONL) journal rooted at `dir`. */
-export function makeFileProgramJournalEffect(dir: string): Effect.Effect<ProgramJournalApi> {
+/** File (JSONL) journal rooted at `dir` — created 0700, refused if another user controls it. */
+export function makeFileProgramJournalEffect(
+  dir: string
+): Effect.Effect<ProgramJournalApi, ProgramJournalError> {
   return Effect.gen(function* () {
     const root = resolve(dir);
+    yield* Effect.tryPromise({
+      try: () => ensureJournalDir(root),
+      catch: (cause) =>
+        new ProgramJournalError({
+          programId: "",
+          reason: "io",
+          message: `program journal directory: ${cause instanceof Error ? cause.message : String(cause)}`,
+        }),
+    });
     const lock = yield* Semaphore.make(1);
     const pathFor = (programId: string) => join(root, `${programId}.jsonl`);
     // An interrupted append must not release the lock while its write is still in flight.
@@ -423,6 +543,7 @@ export function makeFileProgramJournalEffect(dir: string): Effect.Effect<Program
               status: "running",
               entries: [],
               nondet: [],
+              intents: [],
               createdAt: at,
               updatedAt: at,
             };
@@ -432,6 +553,7 @@ export function makeFileProgramJournalEffect(dir: string): Effect.Effect<Program
       appendEntry: (programId, entry) => append(programId, (at) => ({ t: "entry", entry, at })),
       appendNondet: (programId, nondet) =>
         append(programId, (at) => ({ t: "nondet", key: nondet.key, value: nondet.value, at })),
+      appendIntent: (programId, intent) => append(programId, (at) => ({ t: "intent", intent, at })),
       markStatus: (programId, status, detail) =>
         append(programId, (at) => ({
           t: "status",
@@ -458,12 +580,38 @@ export function makeFileProgramJournalEffect(dir: string): Effect.Effect<Program
           if (decoded instanceof ProgramJournalError) return yield* Effect.fail(decoded);
           return decoded;
         }),
+      withLease: <A, E, R>(programId: string, effect: Effect.Effect<A, E, R>) =>
+        Effect.flatMap(validateProgramIdEffect(programId), (id) => {
+          const path = pathFor(id);
+          return Effect.acquireUseRelease(
+            Effect.suspend(() => {
+              if (leasedJournalFiles.has(path)) {
+                return Effect.fail(
+                  new ProgramJournalError({
+                    programId: id,
+                    reason: "busy",
+                    message: `program ${id} is already running in this process`,
+                  })
+                );
+              }
+              leasedJournalFiles.add(path);
+              return Effect.void;
+            }),
+            () => effect,
+            () =>
+              Effect.sync(() => {
+                leasedJournalFiles.delete(path);
+              })
+          );
+        }),
     };
     return api;
   });
 }
 
-export const programJournalFileLayer = (dir: string): Layer.Layer<ProgramJournalService> =>
+export const programJournalFileLayer = (
+  dir: string
+): Layer.Layer<ProgramJournalService, ProgramJournalError> =>
   Layer.effect(
     ProgramJournalService,
     Effect.map(makeFileProgramJournalEffect(dir), (api) => ProgramJournalService.of(api))
@@ -472,7 +620,7 @@ export const programJournalFileLayer = (dir: string): Layer.Layer<ProgramJournal
 /** Journal rooted at {@link resolveProgramJournalDirEffect} for `env`. */
 export const programJournalLayer = (
   env: NodeJS.ProcessEnv = process.env
-): Layer.Layer<ProgramJournalService> =>
+): Layer.Layer<ProgramJournalService, ProgramJournalError> =>
   Layer.effect(
     ProgramJournalService,
     Effect.gen(function* () {
