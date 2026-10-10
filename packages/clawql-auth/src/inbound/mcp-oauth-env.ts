@@ -238,8 +238,7 @@ function loadMcpClientBootstrap(
 
 function loadTrustedClientsFromJson(raw: string): McpTrustedClientRecord[] {
   const parsed = JSON.parse(raw) as
-    | { clients?: McpTrustedClientRecord[] }
-    | McpTrustedClientRecord[];
+    { clients?: McpTrustedClientRecord[] } | McpTrustedClientRecord[];
   const list = Array.isArray(parsed) ? parsed : (parsed.clients ?? []);
   return list.filter(
     (c): c is McpTrustedClientRecord =>

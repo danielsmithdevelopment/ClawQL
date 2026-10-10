@@ -85,7 +85,9 @@ describe("celld-shaped program cell", () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-cell-resume-"));
     const cell = await Effect.runPromise(makeProgramCellEffect(dir));
     const id = "prog_cellresume01";
-    const first = await Effect.runPromise(cell.run({ source: planSource(), programId: id }, host()));
+    const first = await Effect.runPromise(
+      cell.run({ source: planSource(), programId: id }, host())
+    );
     expect(first.ok).toBe(true);
     // Tiny delay so resume is a distinct wall-clock attempt.
     await Effect.runPromise(Effect.sleep(Duration.millis(5)));

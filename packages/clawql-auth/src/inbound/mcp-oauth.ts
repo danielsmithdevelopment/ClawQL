@@ -46,17 +46,11 @@ import {
 } from "./mcp-device-flow.js";
 
 export type McpGrantType =
-  | "authorization_code"
-  | "client_credentials"
-  | "refresh_token"
-  | "id_jag"
-  | "device_code";
+  "authorization_code" | "client_credentials" | "refresh_token" | "id_jag" | "device_code";
 
 /** Wire-format grant types accepted at the token endpoint. */
 export type McpGrantTypeInput =
-  | McpGrantType
-  | typeof ID_JAG_JWT_BEARER_GRANT
-  | typeof DEVICE_CODE_GRANT;
+  McpGrantType | typeof ID_JAG_JWT_BEARER_GRANT | typeof DEVICE_CODE_GRANT;
 
 export type MCPOAuthConfig = {
   issuer: string;
@@ -371,9 +365,7 @@ export class MCPOAuthServer {
   /** True when RFC 8628 device authorization is configured on this AS. */
   isDeviceFlowEnabled(): boolean {
     return Boolean(
-      this.deviceCodeStore &&
-        this.deviceFlowConfig &&
-        this.allowedGrantTypes.has("device_code")
+      this.deviceCodeStore && this.deviceFlowConfig && this.allowedGrantTypes.has("device_code")
     );
   }
 
@@ -443,12 +435,14 @@ export class MCPOAuthServer {
       const code = userCode?.trim();
       const sub = subject?.trim();
       if (!code || !sub) return yield* fail("invalid_request", "missing_user_code_or_subject");
-      yield* this.deviceCodeStore.approve(code, sub).pipe(
-        Effect.mapError(
-          (err: DeviceFlowError) =>
-            new McpOAuthError({ error: err.error, description: err.description })
-        )
-      );
+      yield* this.deviceCodeStore
+        .approve(code, sub)
+        .pipe(
+          Effect.mapError(
+            (err: DeviceFlowError) =>
+              new McpOAuthError({ error: err.error, description: err.description })
+          )
+        );
     });
   }
 
@@ -716,12 +710,14 @@ export class MCPOAuthServer {
       if (!client) return yield* fail("invalid_client");
       yield* this.assertClientSecret(client, request.clientSecret);
 
-      const pending = yield* this.deviceCodeStore.consumeApproved(deviceCode).pipe(
-        Effect.mapError(
-          (err: DeviceFlowError) =>
-            new McpOAuthError({ error: err.error, description: err.description })
-        )
-      );
+      const pending = yield* this.deviceCodeStore
+        .consumeApproved(deviceCode)
+        .pipe(
+          Effect.mapError(
+            (err: DeviceFlowError) =>
+              new McpOAuthError({ error: err.error, description: err.description })
+          )
+        );
       if (pending.clientId !== client.clientId) {
         return yield* fail("invalid_grant", "client_mismatch");
       }
@@ -801,7 +797,10 @@ export class MCPOAuthServer {
       let claims: AtrClaims;
       if (stored.claims) {
         claims = { ...stored.claims, scope };
-        if (this.grantKeyStore && (!claims.virtualKeyId || claims.virtualKeyId === client.clientId)) {
+        if (
+          this.grantKeyStore &&
+          (!claims.virtualKeyId || claims.virtualKeyId === client.clientId)
+        ) {
           claims = yield* this.buildAtrClaimsEffect(client, scope, {
             subject: claims.sub || `client:${client.clientId}`,
             grantType: "client_credentials",

@@ -8,7 +8,11 @@
 import { createHash } from "node:crypto";
 import { Context, Data, Effect, Layer } from "effect";
 import type { SecretStore } from "../stores/types.js";
-import type { McpClientRegistry, McpRegisteredClient, McpTrustedClientRecord } from "./mcp-oauth.js";
+import type {
+  McpClientRegistry,
+  McpRegisteredClient,
+  McpTrustedClientRecord,
+} from "./mcp-oauth.js";
 import type { SecretStoreMcpClientRegistry } from "./mcp-oauth-stores.js";
 
 export class CimdError extends Data.TaggedError("CimdError")<{
@@ -118,9 +122,7 @@ export function parseCimdDocumentEffect(raw: unknown): Effect.Effect<CimdDocumen
       redirect_uris,
       client_name: typeof o.client_name === "string" ? o.client_name : undefined,
       token_endpoint_auth_method:
-        typeof o.token_endpoint_auth_method === "string"
-          ? o.token_endpoint_auth_method
-          : undefined,
+        typeof o.token_endpoint_auth_method === "string" ? o.token_endpoint_auth_method : undefined,
     };
   });
 }
@@ -146,9 +148,7 @@ export function resolveTrustedCimdClientEffect(
         return yield* Effect.fail(new CimdError({ reason: "redirect_uri_not_trusted" }));
       }
     }
-    const documentSha256 = createHash("sha256")
-      .update(JSON.stringify(document))
-      .digest("hex");
+    const documentSha256 = createHash("sha256").update(JSON.stringify(document)).digest("hex");
     return {
       ...trusted,
       documentSha256,

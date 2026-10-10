@@ -14,10 +14,7 @@ import {
   runDurableProgramEffect,
   type DurableProgramInput,
 } from "./durable-runner.js";
-import {
-  makeFileProgramJournalEffect,
-  programJournalLayer,
-} from "./program-journal.js";
+import { makeFileProgramJournalEffect, programJournalLayer } from "./program-journal.js";
 import type { ExecuteProgramResult, ProgramHost } from "./program-runner.js";
 
 export type ProgramCellStorage = {
@@ -63,10 +60,9 @@ export function makeProgramCellEffect(journalDir: string): Effect.Effect<Program
   });
 }
 
-export class ProgramCellService extends Context.Service<
-  ProgramCellService,
-  ProgramCellApi
->()("clawql/ProgramCellService") {}
+export class ProgramCellService extends Context.Service<ProgramCellService, ProgramCellApi>()(
+  "clawql/ProgramCellService"
+) {}
 
 export function programCellLayer(journalDir: string): Layer.Layer<ProgramCellService> {
   return Layer.effect(ProgramCellService, makeProgramCellEffect(journalDir));

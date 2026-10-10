@@ -49,9 +49,7 @@ describe("MCP OAuth §3 CIMD", () => {
       redirectUris: ["https://app.example/cb", "https://app.example/cb2"],
       trustedAtMs: 1,
     };
-    const out = await Effect.runPromise(
-      resolveTrustedCimdClientEffect(clientUrl, doc, trusted)
-    );
+    const out = await Effect.runPromise(resolveTrustedCimdClientEffect(clientUrl, doc, trusted));
     expect(out.documentSha256).toMatch(/^[0-9a-f]{64}$/);
   });
 

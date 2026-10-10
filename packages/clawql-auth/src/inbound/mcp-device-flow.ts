@@ -35,9 +35,7 @@ export type DeviceCodeStore = {
   readonly getByDeviceCode: (
     deviceCode: string
   ) => Effect.Effect<McpDeviceAuthorizationPending | null>;
-  readonly getByUserCode: (
-    userCode: string
-  ) => Effect.Effect<McpDeviceAuthorizationPending | null>;
+  readonly getByUserCode: (userCode: string) => Effect.Effect<McpDeviceAuthorizationPending | null>;
   readonly approve: (userCode: string, subject: string) => Effect.Effect<void, DeviceFlowError>;
   readonly consumeApproved: (
     deviceCode: string
@@ -54,9 +52,7 @@ function formatUserCode(raw: string): string {
   return `${n.slice(0, 4)}-${n.slice(4, 8)}`;
 }
 
-export function createMemoryDeviceCodeStore(
-  now: () => number = Date.now
-): DeviceCodeStore {
+export function createMemoryDeviceCodeStore(now: () => number = Date.now): DeviceCodeStore {
   const byDevice = new Map<string, McpDeviceAuthorizationPending>();
   const byUser = new Map<string, string>();
 
@@ -104,9 +100,7 @@ export function createMemoryDeviceCodeStore(
           );
         }
         if (!rec.approvedSubject) {
-          return yield* Effect.fail(
-            new DeviceFlowError({ error: "authorization_pending" })
-          );
+          return yield* Effect.fail(new DeviceFlowError({ error: "authorization_pending" }));
         }
         byDevice.delete(deviceCode);
         byUser.delete(normalizeUserCode(rec.userCode));
@@ -186,10 +180,7 @@ export function createSecretStoreDeviceCodeStore(
     save: (record) =>
       Effect.gen(function* () {
         const hash = hashDeviceCode(record.deviceCode);
-        yield* store.setSecret(
-          `${MCP_OAUTH_DEVICE_CODE_PREFIX}${hash}`,
-          JSON.stringify(record)
-        );
+        yield* store.setSecret(`${MCP_OAUTH_DEVICE_CODE_PREFIX}${hash}`, JSON.stringify(record));
         yield* store.setSecret(deviceUserPath(record.userCode), hash);
       }).pipe(Effect.orDie),
     getByDeviceCode: (deviceCode) => loadByHash(hashDeviceCode(deviceCode)),
