@@ -22,7 +22,8 @@ Apache-2.0. No private Ontologiql code. Nothing personal goes into a release.
 - Day 2 local pipeline (no Cloudflare creds): [`DAY2.md`](./DAY2.md)  
 - Day 3–6: board, gate, decider, approval path — see `DAY3.md`…`DAY6.md`  
 - Day 7 decider-in-pipeline + dry-run canary: [`DAY7.md`](./DAY7.md)  
-- Day 8 board canary + gate asserts: [`DAY8.md`](./DAY8.md)
+- Day 8 board canary + gate asserts: [`DAY8.md`](./DAY8.md)  
+- Day 9 judge smoke + canary verify: [`DAY9.md`](./DAY9.md)
 
 ### Run the local demo (real git notes + vitest + dry-run release)
 
@@ -31,6 +32,7 @@ cd artifacts-attempts
 npm ci
 npm test                 # includes local-git + pipeline
 npm run demo:local       # one full pipeline run under .local/demo-run
+npm run demo:judge-smoke # one verified demo (notes + manifest + canary)
 npm run demo:gate        # 3 consecutive verified runs (record only after GATE PASS)
 npm run demo:record-prep # alias gate before filming
 npm run board:serve      # http://127.0.0.1:8787/
