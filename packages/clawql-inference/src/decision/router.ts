@@ -22,6 +22,11 @@ import {
   remoteLunaAvailable,
 } from "./remote-decisions.js";
 import {
+  callRemoteOpenRouterDecisions,
+  remoteOpenRouterDecisionsAvailable,
+  resolveOpenRouterDecisionsModel,
+} from "./remote-openrouter-decisions.js";
+import {
   parseFanoutEvalBody,
   runFanoutEval,
   type FanoutEvalRequest,
@@ -47,6 +52,8 @@ export type CreateDecisionRouterOptions = {
   decide?: (req: DecisionRequest) => Promise<DecisionResponse>;
   /** Override remote Luna call (tests). */
   callRemote?: (body: OpenAiDecisionCreateRequest) => Promise<OpenAiDecisionCreateResponse>;
+  /** Override remote OpenRouter Decision-1 call (tests). */
+  callOpenRouter?: (body: OpenAiDecisionCreateRequest) => Promise<OpenAiDecisionCreateResponse>;
   /** Override fan-out eval (tests). */
   evaluate?: (req: FanoutEvalRequest) => Promise<FanoutEvalResponse>;
   /** Override flip-rate gate (tests). */
@@ -221,6 +228,7 @@ function applyRemoteFailClosed(
     backendId: string;
     escalated: boolean;
     traceId: string;
+    backendLabel?: string;
   }
 ): OpenAiDecisionCreateResponse {
   const enriched = enrichRemoteWithClawql(remote, {
@@ -237,7 +245,7 @@ function applyRemoteFailClosed(
       return yield* policy.refusalsForUncalibratedRemote({
         questionNames: opts.questions.map((q) => q.name),
         allowUncalibrated: opts.allowUncalibrated,
-        backendLabel: "gpt-6-luna",
+        backendLabel: opts.backendLabel ?? "gpt-6-luna",
       });
     })
   );
@@ -267,6 +275,7 @@ async function handleOpenAiDecisions(
   options: {
     decide: (r: DecisionRequest) => Promise<DecisionResponse>;
     callRemote?: (body: OpenAiDecisionCreateRequest) => Promise<OpenAiDecisionCreateResponse>;
+    callOpenRouter?: (body: OpenAiDecisionCreateRequest) => Promise<OpenAiDecisionCreateResponse>;
     env: NodeJS.ProcessEnv;
   }
 ): Promise<void> {
@@ -295,7 +304,7 @@ async function handleOpenAiDecisions(
         useSiteId: parsed.request.useSiteId,
       });
       const modelError =
-        modelKind === "local" || modelKind === "luna"
+        modelKind === "local" || modelKind === "luna" || modelKind === "microsoft"
           ? undefined
           : yield* policy.modelRejectionMessage(parsed.model, modelKind);
       return { modelKind, allowUncalibrated, allowImages, modelError };
@@ -308,7 +317,10 @@ async function handleOpenAiDecisions(
   }
 
   const preferRemote = modelKind === "luna" || isLunaModelId(parsed.model);
+  const preferOpenRouter = modelKind === "microsoft";
   const lunaOk = remoteLunaAvailable(options.env);
+  const openRouterOk =
+    Boolean(options.callOpenRouter) || remoteOpenRouterDecisionsAvailable(options.env);
   const isAuto = parsed.model.trim().toLowerCase() === "clawql-auto";
 
   // Images: never treat API key presence as consent.
@@ -364,6 +376,37 @@ async function handleOpenAiDecisions(
     : parsed.request;
 
   try {
+    if (preferOpenRouter) {
+      if (!openRouterOk) {
+        sendOpenAiError(
+          res,
+          503,
+          "model microsoft-decision-1 requires OPENROUTER_API_KEY (or CLAWQL_DECISIONS_OPENROUTER_API_KEY)",
+          "server_error"
+        );
+        return;
+      }
+      const callOr =
+        options.callOpenRouter ?? ((b) => callRemoteOpenRouterDecisions(b, { env: options.env }));
+      const remote = await callOr({
+        ...openAiBody,
+        model: resolveOpenRouterDecisionsModel(parsed.model),
+      });
+      res.json(
+        applyRemoteFailClosed(remote, {
+          questions: parsed.request.questions,
+          allowUncalibrated,
+          model: parsed.model,
+          useSiteId: parsed.request.useSiteId ?? "search_provider_tool_routing",
+          backendId: `openrouter/${resolveOpenRouterDecisionsModel(parsed.model)}`,
+          escalated: false,
+          traceId: randomUUID(),
+          backendLabel: "Microsoft-Decision-1",
+        })
+      );
+      return;
+    }
+
     if ((preferRemote || (parsed.hasImages && allowImages)) && lunaOk) {
       const callRemote =
         options.callRemote ?? ((b) => callRemoteOpenAiDecisions(b, { env: options.env }));
@@ -498,7 +541,12 @@ export function createDecisionRouter(options: CreateDecisionRouterOptions = {}):
   const evaluate =
     options.evaluate ??
     ((req: FanoutEvalRequest) =>
-      runFanoutEval(req, { decide, callRemote: options.callRemote, env }));
+      runFanoutEval(req, {
+        decide,
+        callRemote: options.callRemote,
+        callOpenRouter: options.callOpenRouter,
+        env,
+      }));
   const flipRate = options.flipRate ?? ((req: FlipRateRequest) => runFlipRate(req, { decide }));
 
   const systemOneHandler = (req: Request, res: Response) =>
@@ -513,6 +561,7 @@ export function createDecisionRouter(options: CreateDecisionRouterOptions = {}):
       void handleOpenAiDecisions(req as VirtualKeyRequest, res, {
         decide,
         callRemote: options.callRemote,
+        callOpenRouter: options.callOpenRouter,
         env,
       })
   );

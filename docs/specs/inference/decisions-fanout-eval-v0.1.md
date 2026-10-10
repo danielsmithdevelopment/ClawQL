@@ -122,6 +122,6 @@ Fan-out metrics may **advise** which backend to pin for a site. Deterministic ga
 
 1. ~~`disagreement_mining` mode (unlabeled)~~ — shipped
 2. ~~Flip-rate × fan-out disagreement mining~~ — optional `flipRate` attach on mining
-3. Microsoft-Decision-1 / OpenRouter decision backends as fan-out candidates
+3. ~~Microsoft-Decision-1 / OpenRouter decision backends as fan-out candidates~~ — [decisions-openrouter-decision1-v0.1](./decisions-openrouter-decision1-v0.1.md)
 4. Cost models from virtual-key spend ledger
 5. Live `ensemble` quorum when it raises answers-on-its-own

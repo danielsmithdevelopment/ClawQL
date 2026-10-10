@@ -11,6 +11,12 @@ import type { DecisionQuestion, DecisionRequest, DecisionResponse } from "./serv
 import { runDecision } from "./service.js";
 import type { OpenAiDecisionCreateRequest, OpenAiDecisionCreateResponse } from "./openai-types.js";
 import { callRemoteOpenAiDecisions, remoteLunaAvailable } from "./remote-decisions.js";
+import {
+  callRemoteOpenRouterDecisions,
+  isOpenRouterDecisionBackendId,
+  remoteOpenRouterDecisionsAvailable,
+  resolveOpenRouterDecisionsModel,
+} from "./remote-openrouter-decisions.js";
 import { runFlipRateGate, type FlipRateFamily, type FlipRateDecideFn } from "./flip-rate.js";
 
 export type FanoutEvalMode = "bulk" | "disagreement_mining";
@@ -108,11 +114,16 @@ export type FanoutRemoteFn = (
 ) => Promise<OpenAiDecisionCreateResponse>;
 
 function isLunaBackend(spec: FanoutBackendSpec): boolean {
+  if (isOpenRouterDecisionBackendId(spec.id, spec.model)) return false;
   const id = spec.id.trim().toLowerCase();
   const model = (spec.model ?? "").trim().toLowerCase();
   return (
     id.includes("luna") || id.includes("openai") || model.includes("luna") || model === "gpt-6-luna"
   );
+}
+
+function isOpenRouterBackend(spec: FanoutBackendSpec): boolean {
+  return isOpenRouterDecisionBackendId(spec.id, spec.model);
 }
 
 function selectedAnswer(result: DecisionResponse, questionName: string): string | null {
@@ -421,6 +432,7 @@ export function runFanoutEvalBulk(opts: {
   request: FanoutEvalRequest;
   decide?: FanoutDecideFn;
   callRemote?: FanoutRemoteFn;
+  callOpenRouter?: FanoutRemoteFn;
   env?: NodeJS.ProcessEnv;
 }): Effect.Effect<FanoutEvalResponse> {
   return Effect.gen(function* () {
@@ -433,7 +445,13 @@ export function runFanoutEvalBulk(opts: {
     const callRemote =
       remoteOverride ??
       ((body: OpenAiDecisionCreateRequest) => callRemoteOpenAiDecisions(body, { env }));
+    const openRouterOverride = opts.callOpenRouter;
+    const callOpenRouter =
+      openRouterOverride ??
+      ((body: OpenAiDecisionCreateRequest) => callRemoteOpenRouterDecisions(body, { env }));
     const lunaCallable = Boolean(remoteOverride) || remoteLunaAvailable(env);
+    const openRouterCallable =
+      Boolean(openRouterOverride) || remoteOpenRouterDecisionsAvailable(env);
     const maxWrong = opts.request.qualityBar?.maxWrongAnswers ?? 0;
     const minAnswered = opts.request.qualityBar?.minAnswered ?? 1;
     const traceId = randomUUID();
@@ -450,7 +468,14 @@ export function runFanoutEvalBulk(opts: {
       let skipped = 0;
       let skipReason: string | undefined;
 
-      if (isLunaBackend(backend) && !lunaCallable) {
+      if (isOpenRouterBackend(backend) && !openRouterCallable) {
+        skipped = opts.request.cases.length;
+        skipReason =
+          "OPENROUTER_API_KEY (or CLAWQL_DECISIONS_OPENROUTER_API_KEY) required for Decision-1";
+        for (const c of opts.request.cases) {
+          caseAnswers.push({ caseId: c.caseId, backendId: backend.id, value: null });
+        }
+      } else if (isLunaBackend(backend) && !lunaCallable) {
         skipped = opts.request.cases.length;
         skipReason = "OPENAI_API_KEY (or CLAWQL_DECISIONS_OPENAI_API_KEY) required for Luna";
         for (const c of opts.request.cases) {
@@ -462,7 +487,28 @@ export function runFanoutEvalBulk(opts: {
             c.useSiteId?.trim() || opts.request.useSiteId?.trim() || "search_provider_tool_routing";
           const qName = primaryQuestionName(c);
           let value: string | null;
-          if (isLunaBackend(backend)) {
+          if (isOpenRouterBackend(backend)) {
+            const remote = yield* Effect.tryPromise({
+              try: () =>
+                callOpenRouter({
+                  model: resolveOpenRouterDecisionsModel(backend.model || backend.id),
+                  input: c.state,
+                  questions: questionsToOpenAi(c.questions),
+                  use_site_id: useSiteId,
+                  allow_uncalibrated: true,
+                }),
+              catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+            }).pipe(
+              Effect.catch(() => Effect.succeed(null as OpenAiDecisionCreateResponse | null))
+            );
+            if (!remote) {
+              skipped += 1;
+              skipReason = skipReason ?? "remote OpenRouter Decision-1 call failed";
+              caseAnswers.push({ caseId: c.caseId, backendId: backend.id, value: null });
+              continue;
+            }
+            value = selectedFromOpenAi(remote, qName);
+          } else if (isLunaBackend(backend)) {
             const remote = yield* Effect.tryPromise({
               try: () =>
                 callRemote({
@@ -577,6 +623,7 @@ export function runFanoutEvalDisagreementMining(opts: {
   request: FanoutEvalRequest;
   decide?: FanoutDecideFn;
   callRemote?: FanoutRemoteFn;
+  callOpenRouter?: FanoutRemoteFn;
   env?: NodeJS.ProcessEnv;
 }): Effect.Effect<FanoutEvalResponse> {
   return Effect.gen(function* () {
@@ -591,7 +638,13 @@ export function runFanoutEvalDisagreementMining(opts: {
     const callRemote =
       remoteOverride ??
       ((body: OpenAiDecisionCreateRequest) => callRemoteOpenAiDecisions(body, { env }));
+    const openRouterOverride = opts.callOpenRouter;
+    const callOpenRouter =
+      openRouterOverride ??
+      ((body: OpenAiDecisionCreateRequest) => callRemoteOpenRouterDecisions(body, { env }));
     const lunaCallable = Boolean(remoteOverride) || remoteLunaAvailable(env);
+    const openRouterCallable =
+      Boolean(openRouterOverride) || remoteOpenRouterDecisionsAvailable(env);
     const traceId = randomUUID();
 
     type CaseAnswer = { caseId: string; backendId: string; value: string | null };
@@ -604,7 +657,14 @@ export function runFanoutEvalDisagreementMining(opts: {
       let skipped = 0;
       let skipReason: string | undefined;
 
-      if (isLunaBackend(backend) && !lunaCallable) {
+      if (isOpenRouterBackend(backend) && !openRouterCallable) {
+        skipped = opts.request.cases.length;
+        skipReason =
+          "OPENROUTER_API_KEY (or CLAWQL_DECISIONS_OPENROUTER_API_KEY) required for Decision-1";
+        for (const c of opts.request.cases) {
+          caseAnswers.push({ caseId: c.caseId, backendId: backend.id, value: null });
+        }
+      } else if (isLunaBackend(backend) && !lunaCallable) {
         skipped = opts.request.cases.length;
         skipReason = "OPENAI_API_KEY (or CLAWQL_DECISIONS_OPENAI_API_KEY) required for Luna";
         for (const c of opts.request.cases) {
@@ -616,7 +676,28 @@ export function runFanoutEvalDisagreementMining(opts: {
             c.useSiteId?.trim() || opts.request.useSiteId?.trim() || "search_provider_tool_routing";
           const qName = primaryQuestionName(c);
           let value: string | null;
-          if (isLunaBackend(backend)) {
+          if (isOpenRouterBackend(backend)) {
+            const remote = yield* Effect.tryPromise({
+              try: () =>
+                callOpenRouter({
+                  model: resolveOpenRouterDecisionsModel(backend.model || backend.id),
+                  input: c.state,
+                  questions: questionsToOpenAi(c.questions),
+                  use_site_id: useSiteId,
+                  allow_uncalibrated: true,
+                }),
+              catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+            }).pipe(
+              Effect.catch(() => Effect.succeed(null as OpenAiDecisionCreateResponse | null))
+            );
+            if (!remote) {
+              skipped += 1;
+              skipReason = skipReason ?? "remote OpenRouter Decision-1 call failed";
+              caseAnswers.push({ caseId: c.caseId, backendId: backend.id, value: null });
+              continue;
+            }
+            value = selectedFromOpenAi(remote, qName);
+          } else if (isLunaBackend(backend)) {
             const remote = yield* Effect.tryPromise({
               try: () =>
                 callRemote({
@@ -714,6 +795,7 @@ export function runFanoutEvalEffect(opts: {
   request: FanoutEvalRequest;
   decide?: FanoutDecideFn;
   callRemote?: FanoutRemoteFn;
+  callOpenRouter?: FanoutRemoteFn;
   env?: NodeJS.ProcessEnv;
 }): Effect.Effect<FanoutEvalResponse> {
   return opts.request.mode === "disagreement_mining"
@@ -732,6 +814,7 @@ export function makeFanoutEvalLive(
   opts: {
     decide?: FanoutDecideFn;
     callRemote?: FanoutRemoteFn;
+    callOpenRouter?: FanoutRemoteFn;
     env?: NodeJS.ProcessEnv;
   } = {}
 ): Layer.Layer<FanoutEvalService> {
@@ -741,6 +824,7 @@ export function makeFanoutEvalLive(
         request: req,
         decide: opts.decide,
         callRemote: opts.callRemote,
+        callOpenRouter: opts.callOpenRouter,
         env: opts.env,
       }),
   });
@@ -753,6 +837,7 @@ export function runFanoutEval(
   opts: {
     decide?: FanoutDecideFn;
     callRemote?: FanoutRemoteFn;
+    callOpenRouter?: FanoutRemoteFn;
     env?: NodeJS.ProcessEnv;
   } = {}
 ): Promise<FanoutEvalResponse> {
