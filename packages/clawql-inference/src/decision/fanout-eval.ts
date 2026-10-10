@@ -305,7 +305,7 @@ export function runFanoutEvalBulk(opts: {
         for (const c of opts.request.cases) {
           const useSiteId =
             c.useSiteId?.trim() || opts.request.useSiteId?.trim() || "search_provider_tool_routing";
-          let value: string | null = null;
+          let value: string | null;
           if (isLunaBackend(backend)) {
             const remote = yield* Effect.tryPromise({
               try: () =>
