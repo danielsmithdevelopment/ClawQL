@@ -20,6 +20,14 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const PUBLIC = join(HERE, "../workers/api/public");
 const PORT = Number(process.env.PORT ?? 8787);
 
+type CanaryView = {
+  mode: "dry-run" | "live";
+  canaryPercent: number;
+  rollbackTrigger: string;
+  versionId: string;
+  previousPercent: number;
+};
+
 type TaskView = {
   task: {
     id: string;
@@ -33,6 +41,8 @@ type TaskView = {
   notes: unknown[];
   decision?: DecisionResponse;
   pendingApproval?: boolean;
+  canary?: CanaryView;
+  arweaveId?: string;
 };
 
 const store = new Map<string, TaskView>();

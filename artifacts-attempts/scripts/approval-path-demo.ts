@@ -28,12 +28,22 @@ if (trust.autoMerge) {
   throw new Error("expected uncalibrated path to require approval");
 }
 
+const canarySlice = result.canary.versions.find((v) => v.label === "canary");
+const previousSlice = result.canary.versions.find((v) => v.label === "previous");
 const view = {
   task: { ...result.task, status: "awaiting_approval" },
   attempts: result.attempts,
   notes: result.notes,
   decision: result.decision,
   pendingApproval: true,
+  arweaveId: result.arweaveId,
+  canary: {
+    mode: result.canary.mode,
+    canaryPercent: canarySlice?.percentage ?? result.canaryPercent,
+    previousPercent: previousSlice?.percentage ?? 100 - result.canaryPercent,
+    rollbackTrigger: result.canary.rollbackTrigger,
+    versionId: canarySlice?.versionId ?? "",
+  },
 };
 
 const post = await fetch(`${API}/tasks`, {
