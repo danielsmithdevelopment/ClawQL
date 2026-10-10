@@ -83,25 +83,19 @@ export function defaultCelldBinaryProbe(env: NodeJS.ProcessEnv = process.env): C
       }
 
       const bin = env.CLAWQL_CELLD_BIN?.trim() || "celld";
-      return yield* Effect.tryPromise({
-        try: async (): Promise<CelldBinaryProbeResult> => {
-          try {
-            const { stdout, stderr } = await execFileAsync(bin, ["--version"], {
-              timeout: 4_000,
-              maxBuffer: 64 * 1024,
-              env: process.env,
-            });
-            const version = normalizeVersion(`${stdout}\n${stderr}`);
-            return { present: true, version, path: bin };
-          } catch {
-            return { present: false, version: null, path: null };
-          }
-        },
-        catch: (): CelldBinaryProbeResult => ({
-          present: false,
-          version: null,
-          path: null,
-        }),
+      // Effect.promise: probe failures are values (present:false), not typed errors.
+      return yield* Effect.promise(async (): Promise<CelldBinaryProbeResult> => {
+        try {
+          const { stdout, stderr } = await execFileAsync(bin, ["--version"], {
+            timeout: 4_000,
+            maxBuffer: 64 * 1024,
+            env: process.env,
+          });
+          const version = normalizeVersion(`${stdout}\n${stderr}`);
+          return { present: true, version, path: bin };
+        } catch {
+          return { present: false, version: null, path: null };
+        }
       });
     });
 }
