@@ -40,11 +40,12 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Test packages
-        run: npm test
-
+      # Workspace package.json exports point at dist/; vitest resolves via those exports.
       - name: Build (incl. verify CLI)
         run: npm run build
+
+      - name: Test packages
+        run: npm test
 
       - name: Judge smoke (notes + manifest + canary)
         run: npm run demo:judge-smoke

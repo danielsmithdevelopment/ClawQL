@@ -12,8 +12,8 @@
     "demo/*"
   ],
   "scripts": {
-    "build": "npm run build -w @artifacts-attempts/notes -w @artifacts-attempts/manifest -w @artifacts-attempts/artifacts-client -w @artifacts-attempts/shared -w @artifacts-attempts/local-git -w @artifacts-attempts/pipeline -w @artifacts-attempts/mcp-tools -w @artifacts-attempts/decider -w @artifacts-attempts/verify",
-    "test": "npm run test -w @artifacts-attempts/notes -w @artifacts-attempts/manifest -w @artifacts-attempts/artifacts-client -w @artifacts-attempts/shared -w @artifacts-attempts/webhooks-service -w @artifacts-attempts/worker-evaluator -w @artifacts-attempts/worker-coordinator -w @artifacts-attempts/worker-intake -w @artifacts-attempts/local-git -w @artifacts-attempts/pipeline -w @artifacts-attempts/mcp-tools -w @artifacts-attempts/decider",
+    "build": "npm run build -w @artifacts-attempts/notes -w @artifacts-attempts/manifest -w @artifacts-attempts/artifacts-client -w @artifacts-attempts/shared -w @artifacts-attempts/local-git -w @artifacts-attempts/decider -w @artifacts-attempts/mcp-tools -w @artifacts-attempts/pipeline -w @artifacts-attempts/verify",
+    "test": "npm run test -w @artifacts-attempts/notes -w @artifacts-attempts/manifest -w @artifacts-attempts/artifacts-client -w @artifacts-attempts/shared -w @artifacts-attempts/webhooks-service -w @artifacts-attempts/worker-evaluator -w @artifacts-attempts/worker-coordinator -w @artifacts-attempts/worker-intake -w @artifacts-attempts/local-git -w @artifacts-attempts/decider -w @artifacts-attempts/mcp-tools -w @artifacts-attempts/pipeline",
     "test:local-e2e": "npm run test -w @artifacts-attempts/pipeline",
     "test:notes": "npm run test -w @artifacts-attempts/notes",
     "typecheck": "npm run typecheck --workspaces --if-present",
