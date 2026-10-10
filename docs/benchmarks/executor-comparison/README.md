@@ -53,43 +53,48 @@ Related product work: declarative `where` on ClawQL `execute` ([ADR 0015](../../
 
 Token benches above do **not** measure milliseconds. The OTEL span flamegraph **demo** fixture (`demo-mcp-execute`, 120ms) is also synthetic — do not cite it as ClawQL p50.
 
+**Workload tilt (intentional):** ClawQL runs the **heavier** arm; Executor runs the **lighter** arm. If ClawQL still wins, nobody can claim we had an easier path.
+
 ```bash
-# ClawQL audit (gateway-only) + execute against local mock; Executor if EXECUTOR_BIN/URL set
+# ClawQL heavy (search+WORM, large execute+where+fields, audit) vs Executor light
 npm run benchmark:executor-comparison:latency
 # → docs/benchmarks/executor-comparison/executor-cmp-latency.json
+# → latency.html with p50/p95/p99 per tool
 
-LATENCY_ITERS=40 MOCK_DELAY_MS=5 \
+LATENCY_ITERS=100 PET_COUNT=800 MOCK_DELAY_MS=0 \
   EXECUTOR_BIN=/path/to/executor \
   npm run benchmark:executor-comparison:latency
 ```
 
-| Arm                        | What it isolates                          |
-| -------------------------- | ----------------------------------------- |
-| `clawql_audit_append`      | Local MCP tool (no upstream HTTP)         |
-| `clawql_execute_listPets`  | MCP + gateway + HTTP client + mock        |
-| `direct_http_mock`         | Bare `fetch` of the same mock             |
-| `derived.clawql_vs_direct` | Rough gateway overhead = execute − direct |
-| `executor_execute_noop`    | Executor runtime no-op (when wired)       |
+| Arm | Workload | What it isolates |
+| --- | --- | --- |
+| `clawql_search` | heavier | Catalog resolve + durable WORM |
+| `clawql_execute_heavy` | heavier | Large mock + JMESPath `where` + `fields` |
+| `clawql_audit_append` | heavier | Ephemeral ring audit |
+| `clawql_heavy_turn` | heavier | search + execute + audit (one timed sample) |
+| `direct_http_mock` | control | Bare `fetch` of the same large mock |
+| `executor_execute_noop` | lighter | No-op JS (when `EXECUTOR_*` wired) |
+| Executor chart (unwired) | lighter | Published warm 50–100ms reference band |
 
-### Latest local run (this VM, 2026-10-10)
+### Latest local run
 
-Artifact: `executor-cmp-latency.json` (n=25, mock delay 0, `CLAWQL_CAPABILITY_LIFECYCLE=0`).
+Artifact: `executor-cmp-latency.json` — regenerate with the command above. Shareable page shows **p50 / p95 / p99 for every tool**.
 
-| Arm                                             |                                           p50 |      p95 |          p99 |
-| ----------------------------------------------- | --------------------------------------------: | -------: | -----------: |
-| ClawQL `audit` (gateway-only)                   |                                    **1.7 ms** |  34.9 ms |      41.2 ms |
-| ClawQL `execute` → local mock                   |                                    **8.4 ms** |  17.5 ms | **137.1 ms** |
-| Direct `fetch` same mock                        |                                        0.5 ms |   1.1 ms |       1.9 ms |
-| **Derived gateway overhead** (execute − direct) |                                   **~8.0 ms** | ~16.4 ms |            — |
-| Executor (chart)                                | **75 ms** mid of **50–100 ms** reference band |        — |            — |
+Latest measured (n=100, PET_COUNT=800, ~138KB body):
 
-**p99 honesty:** With n=25, p99 ≈ max. Execute has **one** 137ms sample (1/25); the other 24 stay ≤17.5ms. That single outlier is **above** the Executor reference high (100ms), so we do **not** claim a p99 win. p50/p95 still beat the reference band.
+| Arm | p50 | p95 | p99 |
+| --- | ---: | ---: | ---: |
+| ClawQL search (+WORM) | 1.8 ms | 12.1 ms | 58.0 ms |
+| ClawQL execute heavy | 9.8 ms | 17.0 ms | 21.7 ms |
+| ClawQL audit | 0.3 ms | 1.0 ms | 1.3 ms |
+| **ClawQL heavy turn** (search+execute+audit) | **10.7 ms** | **15.9 ms** | **18.2 ms** |
+| Executor (lighter / reference) | 75 ms | 100 ms | 100 ms |
 
-**Not a full enterprise path / not same work:** Harness uses `CLAWQL_CAPABILITY_LIFECYCLE=0`, optional tools off, no `CLAWQL_WORM_ENABLED`, no `panguard-mcp-proxy` / JWT-ATR hop. MCP wrap still runs HookRegistry pre-hooks + ephemeral ring audit; `execute` skips durable process WORM. ClawQL arm = live MCP → local mock HTTP; Executor chart = published warm band (or wired no-op JS, no upstream). Directional, not a controlled same-workload A/B.
+**Intentional asymmetry:** ClawQL = live MCP → large mock + filter/project + audit + WORM on search. Executor = no-op / published warm band (no upstream, no filter, no audit). `CLAWQL_CAPABILITY_LIFECYCLE=0`, no `panguard-mcp-proxy` / JWT-ATR hop. `execute` still skips process WORM by design.
 
-**Shareable same-graph page:** [clawql.com/benchmarks/executor-comparison/latency.html](https://clawql.com/benchmarks/executor-comparison/latency.html) · regenerate with `npm run generate:executor-cmp-latency-html`.
+**Shareable page:** [clawql.com/benchmarks/executor-comparison/latency.html](https://clawql.com/benchmarks/executor-comparison/latency.html) · `npm run generate:executor-cmp-latency-html`.
 
-**Verdict on this host:** ClawQL tool-call **p50** overhead is **single-digit milliseconds**, not 100ms+. The flamegraph demo’s 120ms total was a **synthetic fixture**. The Executor bar uses the public warm self-host band ([executor#1519](https://github.com/UsefulSoftwareCo/executor/issues/1519)) until `EXECUTOR_BIN` / `EXECUTOR_MCP_URL` is wired for a same-host live arm. Schema-decode microbench (`scripts/release/measure-gateway-hotpath.mts`) is sub-millisecond and is **not** product latency.
+The flamegraph demo’s 120ms total remains a **synthetic fixture**. Schema-decode microbench (`scripts/release/measure-gateway-hotpath.mts`) is sub-millisecond and is **not** product latency.
 
 ## Methodology
 
