@@ -10,11 +10,10 @@
 import { Context, Effect, Layer } from "effect";
 import {
   DURABLE_PROGRAM_HONESTY,
-  resumeProgramEffect,
-  runDurableProgramEffect,
+  executeDurableProgramEffect,
   type DurableProgramInput,
 } from "./durable-runner.js";
-import { makeFileProgramJournalEffect, programJournalLayer } from "./program-journal.js";
+import { makeFileProgramJournalEffect } from "./program-journal.js";
 import type { ExecuteProgramResult, ProgramHost } from "./program-runner.js";
 
 export type ProgramCellStorage = {
@@ -48,14 +47,9 @@ export function makeProgramCellEffect(journalDir: string): Effect.Effect<Program
     return {
       honesty: `${DURABLE_PROGRAM_HONESTY} celld-shaped journal dir=${journalDir}`,
       journalDir,
-      run: (input, host) =>
-        runDurableProgramEffect(input, host, env, {
-          sessionId: input.sessionId,
-        }).pipe(Effect.provide(programJournalLayer(env))),
+      run: (input, host) => executeDurableProgramEffect(input, host, env),
       resume: (programId, host, sessionId) =>
-        resumeProgramEffect(programId, host, env, { sessionId }).pipe(
-          Effect.provide(programJournalLayer(env))
-        ),
+        executeDurableProgramEffect({ programId, sessionId }, host, env),
     };
   });
 }
