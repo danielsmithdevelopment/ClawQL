@@ -40,8 +40,8 @@ describe.skipIf(!local)("demo-run (local-git witnesses)", () => {
       const manifest = JSON.parse(readFileSync(result.manifestPath, "utf8"));
       expect(
         verifyBundleAgainstManifest(manifest, [
-          { path: "delivery.js", bytes: readFileSync(join(root, "main-wt/src/delivery.js")) },
-          { path: "package.json", bytes: readFileSync(join(root, "main-wt/package.json")) },
+          { path: "delivery.js", bytes: readFileSync(join(root, "artifacts/main-wt/src/delivery.js")) },
+          { path: "package.json", bytes: readFileSync(join(root, "artifacts/main-wt/package.json")) },
         ])
       ).toEqual({ ok: true });
       expect(manifest.policy.canaryPercent).toBe(10);

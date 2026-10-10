@@ -52,7 +52,8 @@ function applyPatch(worktree: string, patchPath: string): void {
 function runTests(worktree: string): { passed: number; failed: number; command: string } {
   const command = "npm test";
   try {
-    execFileSync("npm", ["install", "--no-fund", "--no-audit"], {
+    // vitest 4 peer graph can trip npm arborist (edgesOut); legacy-peer-deps is required.
+    execFileSync("npm", ["install", "--no-fund", "--no-audit", "--legacy-peer-deps"], {
       cwd: worktree,
       stdio: "pipe",
       encoding: "utf8",
@@ -99,7 +100,8 @@ export async function runLocalDemo(opts: {
   const client = createLocalGitClient(join(opts.root, "artifacts"));
   const demoSrc = join(REPO_ROOT, "demo/webhooks-service");
   client.seedFromDirectory("webhooks-service", demoSrc);
-  const seedWt = join(opts.root, "seed-wt");
+  // Worktrees must stay under client.root (path sandbox for git argv).
+  const seedWt = join(client.root, "seed-wt");
   client.worktreeCheckout("webhooks-service", seedWt);
   const baseCommit = headCommit(seedWt);
 
@@ -127,7 +129,7 @@ export async function runLocalDemo(opts: {
     await client.fork(task.repo, fork);
     const tok = await client.createToken(fork, "write", 7200);
     tokens.set(p.id, tok.plaintext);
-    const wt = join(opts.root, "wt", p.id);
+    const wt = join(client.root, "wt", p.id);
     client.worktreeCheckout(fork, wt);
     applyPatch(wt, p.patch);
     const commit = client.pushWorktree(fork, wt, tok.plaintext);
@@ -144,7 +146,7 @@ export async function runLocalDemo(opts: {
   let prev: string | null = null;
   const notes: EvidenceNote[] = [];
   for (const attempt of attempts) {
-    const wt = join(opts.root, "wt", attempt.id);
+    const wt = join(client.root, "wt", attempt.id);
     const patch = patches.find((x) => x.id === attempt.id)!;
     const tests = runTests(wt);
     const hosts = hostsFromAttempt(attempt.id, patch.patch);
@@ -167,7 +169,7 @@ export async function runLocalDemo(opts: {
       client,
       attempt.fork,
       attempt.latestCommit!,
-      join(opts.root, "scratch")
+      join(client.root, "scratch")
     );
     if (!fetched || fetched.hash !== note.hash) {
       throw new Error(`git notes witness failed for ${attempt.id}`);
@@ -207,7 +209,7 @@ export async function runLocalDemo(opts: {
 
   task.status = "merging";
 
-  const mainWt = join(opts.root, "main-wt");
+  const mainWt = join(client.root, "main-wt");
   client.worktreeCheckout("webhooks-service", mainWt);
   runGit(mainWt, ["remote", "add", "winner", client.barePath(`${task.id}-${decision.winner}`)]);
   runGit(mainWt, ["fetch", "winner"]);

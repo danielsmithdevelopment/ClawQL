@@ -9,7 +9,15 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import type { ArtifactsClient, ArtifactsRepoMeta, ArtifactsToken } from "@artifacts-attempts/artifacts-client";
-import { ensureDir, headCommit, initBare, runGit } from "./git.js";
+import {
+  assertPathUnderRoot,
+  assertSafeName,
+  ensureDir,
+  gitClone,
+  headCommit,
+  initBare,
+  runGit,
+} from "./git.js";
 
 export type LocalGitClient = ArtifactsClient & {
   root: string;
@@ -23,7 +31,7 @@ export type LocalGitClient = ArtifactsClient & {
 type StoredToken = ArtifactsToken & { repo: string };
 
 function shouldCopy(src: string): boolean {
-  if (src.includes(`${join("")}node_modules${join("")}`) || src.includes("/node_modules/") || src.endsWith("/node_modules")) {
+  if (src.includes("/node_modules/") || src.endsWith("/node_modules") || src.includes("\\node_modules\\")) {
     return false;
   }
   if (src.includes("/.git/") || src.endsWith("/.git") || src.endsWith("\\.git")) return false;
@@ -31,38 +39,44 @@ function shouldCopy(src: string): boolean {
 }
 
 export function createLocalGitClient(root: string): LocalGitClient {
-  ensureDir(root);
-  ensureDir(join(root, "repos"));
-  ensureDir(join(root, "tokens"));
+  const absRoot = assertPathUnderRoot(root, root);
+  ensureDir(absRoot);
+  ensureDir(join(absRoot, "repos"));
+  ensureDir(join(absRoot, "tokens"));
 
-  const barePath = (name: string) => join(root, "repos", `${name}.git`);
+  const barePath = (name: string) => {
+    const safe = assertSafeName(name, "repo");
+    return assertPathUnderRoot(absRoot, join(absRoot, "repos", `${safe}.git`));
+  };
 
   function authorize(repo: string, tokenPlaintext: string, need: "read" | "write"): void {
-    const dir = join(root, "tokens", repo);
-    if (!existsSync(dir)) throw new Error(`unknown repo tokens: ${repo}`);
+    const safeRepo = assertSafeName(repo, "repo");
+    const dir = join(absRoot, "tokens", safeRepo);
+    if (!existsSync(dir)) throw new Error(`unknown repo tokens: ${safeRepo}`);
     for (const id of readdirSync(dir)) {
       const raw = JSON.parse(readFileSync(join(dir, id), "utf8")) as StoredToken;
       if (raw.plaintext !== tokenPlaintext) continue;
-      if (raw.repo !== repo) throw new Error("token repo mismatch");
+      if (raw.repo !== safeRepo) throw new Error("token repo mismatch");
       if (need === "write" && raw.scope !== "write") throw new Error("read token cannot write");
       if (Date.parse(raw.expiresAt) < Date.now()) throw new Error("token expired");
       return;
     }
-    throw new Error(`push refused: token not valid for ${repo}`);
+    throw new Error(`push refused: token not valid for ${safeRepo}`);
   }
 
   return {
-    root,
+    root: absRoot,
     barePath,
     authorize,
 
     seedFromDirectory(name, sourceDir) {
-      const bare = barePath(name);
+      const safe = assertSafeName(name, "repo");
+      const bare = barePath(safe);
       if (existsSync(bare)) {
-        return { name, remote: bare, defaultBranch: "main" };
+        return { name: safe, remote: bare, defaultBranch: "main" };
       }
       initBare(bare);
-      const tmp = join(root, ".seed", name);
+      const tmp = assertPathUnderRoot(absRoot, join(absRoot, ".seed", safe));
       rmSync(tmp, { recursive: true, force: true });
       mkdirSync(tmp, { recursive: true });
       cpSync(sourceDir, tmp, { recursive: true, filter: shouldCopy });
@@ -73,12 +87,13 @@ export function createLocalGitClient(root: string): LocalGitClient {
       runGit(tmp, ["commit", "-m", "seed"]);
       runGit(tmp, ["remote", "add", "origin", bare]);
       runGit(tmp, ["push", "-u", "origin", "main"]);
-      return { name, remote: bare, defaultBranch: "main" };
+      return { name: safe, remote: bare, defaultBranch: "main" };
     },
 
     async create(name) {
-      initBare(barePath(name));
-      return { name, remote: barePath(name), defaultBranch: "main" };
+      const safe = assertSafeName(name, "repo");
+      initBare(barePath(safe));
+      return { name: safe, remote: barePath(safe), defaultBranch: "main" };
     },
 
     async fork(source, name) {
@@ -86,27 +101,28 @@ export function createLocalGitClient(root: string): LocalGitClient {
       if (!existsSync(src)) throw new Error(`source missing: ${source}`);
       const dest = barePath(name);
       if (existsSync(dest)) throw new Error(`fork exists: ${name}`);
-      runGit(root, ["clone", "--mirror", src, dest]);
-      return { name, remote: dest, defaultBranch: "main" };
+      gitClone(absRoot, src, dest, { mirror: true });
+      return { name: assertSafeName(name, "repo"), remote: dest, defaultBranch: "main" };
     },
 
     async createToken(repo, scope, ttlSeconds) {
-      if (!existsSync(barePath(repo))) throw new Error(`repo missing: ${repo}`);
+      const safe = assertSafeName(repo, "repo");
+      if (!existsSync(barePath(safe))) throw new Error(`repo missing: ${safe}`);
       const id = `tok_${Math.random().toString(16).slice(2, 10)}`;
       const token: StoredToken = {
-        plaintext: `local_${repo}_${scope}_${id}`,
+        plaintext: `local_${safe}_${scope}_${id}`,
         expiresAt: new Date(Date.now() + ttlSeconds * 1000).toISOString(),
         scope,
-        repo,
+        repo: safe,
       };
-      const dir = join(root, "tokens", repo);
+      const dir = join(absRoot, "tokens", safe);
       mkdirSync(dir, { recursive: true });
       writeFileSync(join(dir, id), JSON.stringify(token, null, 2));
       return token;
     },
 
     async list() {
-      return readdirSync(join(root, "repos"))
+      return readdirSync(join(absRoot, "repos"))
         .filter((n) => n.endsWith(".git"))
         .map((n) => n.replace(/\.git$/, ""));
     },
@@ -117,27 +133,29 @@ export function createLocalGitClient(root: string): LocalGitClient {
 
     worktreeCheckout(repo, dest) {
       const remote = barePath(repo);
-      if (existsSync(dest)) {
-        runGit(dest, ["fetch", "origin"]);
-        runGit(dest, ["checkout", "main"]);
-        runGit(dest, ["reset", "--hard", "origin/main"]);
+      const absDest = assertPathUnderRoot(absRoot, dest);
+      if (existsSync(absDest)) {
+        runGit(absDest, ["fetch", "origin"]);
+        runGit(absDest, ["checkout", "main"]);
+        runGit(absDest, ["reset", "--hard", "origin/main"]);
       } else {
-        runGit(root, ["clone", remote, dest]);
-        runGit(dest, ["config", "user.email", "agent@local"]);
-        runGit(dest, ["config", "user.name", "agent"]);
+        gitClone(absRoot, remote, absDest);
+        runGit(absDest, ["config", "user.email", "agent@local"]);
+        runGit(absDest, ["config", "user.name", "agent"]);
       }
-      return headCommit(dest);
+      return headCommit(absDest);
     },
 
     pushWorktree(repo, worktree, tokenPlaintext) {
       authorize(repo, tokenPlaintext, "write");
-      runGit(worktree, ["push", "origin", "HEAD:main"]);
+      const absWt = assertPathUnderRoot(absRoot, worktree);
+      runGit(absWt, ["push", "origin", "HEAD:main"]);
       try {
-        runGit(worktree, ["push", "origin", "refs/notes/commits"]);
+        runGit(absWt, ["push", "origin", "refs/notes/commits"]);
       } catch {
         /* optional until notes exist */
       }
-      return headCommit(worktree);
+      return headCommit(absWt);
     },
   };
 }
