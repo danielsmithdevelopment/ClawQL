@@ -54,15 +54,19 @@ import {
   buildConsoleLinkEffect,
   consoleLinkEnabled,
   plainProxyEnabled,
+  parkedMandateStatusEffect,
+  PendingExecutionLive,
   programsEnabled,
   runProgramEffect,
   searchClawqlDocsEffect,
+  submitProgramProposalsEffect,
   type CustomSourceKind,
   type ProgramHost,
+  type ProgramSubmitHost,
 } from "clawql-api";
 import { z } from "zod";
 import { attachChatgptExtensions } from "clawql-chatgpt-extensions";
-import { getClawqlApi } from "../composition/clawql-api-adapters.js";
+import { currentLoadSpecEffect, getClawqlApi } from "../composition/clawql-api-adapters.js";
 import { resolvePluginCompositionFlags } from "../composition/resolve-plugin-flags.js";
 import { handleCacheToolInput } from "./clawql-cache.js";
 import { handleAuditToolInput } from "./clawql-audit.js";
@@ -218,8 +222,12 @@ export const executeProgramToolZodShape = {
     .describe(
       "v0 JSON plan text (not free-form JS): " +
         '{ "v": 1, "mode": "parallel"|"sequential", "calls": [ ' +
-        '{ "tool": "execute", "operationId": "...", "args": {} } | ' +
-        '{ "tool": "search", "query": "..." } ] }. ' +
+        '{ "id": "A", "tool": "execute", "operationId": "...", "args": {} } | ' +
+        '{ "tool": "search", "query": "..." } ], ' +
+        '"proposals": [ { "id": "W1", "operationId": "...", "args": { "title": { "$ref": "A.result.title" } } } ] }. ' +
+        "Calls are reads; proposals are writes the program returns but never runs. " +
+        "$ref targets a read call (<id>.result.<path>) or an earlier proposal (<id>.args.<path> / <id>.result.<path>, " +
+        "the latter filled when submitted) and must resolve to one string, number, boolean, or null. " +
         "Honesty: v0 plan runner; OpenCode vendor is next."
     ),
   timeoutMs: z
@@ -259,22 +267,27 @@ function makeMcpProgramHost(): ProgramHost {
           ),
         catch: (e) => (e instanceof Error ? e : new Error(String(e))),
       }),
-    resolveRisk: (operationId) =>
-      Effect.tryPromise({
-        try: async () => {
-          const { operations } = await loadSpec();
-          const op = operations.find((o) => o.id === operationId);
-          if (!op) return { found: false as const };
-          return {
-            found: true as const,
-            policy: op.risk?.policy,
-            risk: op.risk,
-            operation: op,
-          };
-        },
-        catch: (e) => (e instanceof Error ? e : new Error(String(e))),
-      }),
+    resolveRisk: resolveProgramOperationEffect,
   };
+}
+
+/** Risk and catalog facts for an operationId, from the same spec execute runs against. */
+function resolveProgramOperationEffect(operationId: string) {
+  return Effect.gen(function* () {
+    const load = yield* currentLoadSpecEffect;
+    const { operations } = yield* Effect.tryPromise({
+      try: () => load(),
+      catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+    });
+    const op = operations.find((o) => o.id === operationId);
+    if (!op) return { found: false as const };
+    return {
+      found: true as const,
+      policy: op.risk?.policy,
+      risk: op.risk,
+      operation: op,
+    };
+  });
 }
 
 /** MCP `execute_program` — read-only JSON plan runner (ADR 0015 v0). */
@@ -294,6 +307,61 @@ export async function handleExecuteProgramToolInput(
           typeof o.sessionId === "string" ? o.sessionId : process.env.CLAWQL_SESSION_ID?.trim(),
       },
       makeMcpProgramHost()
+    )
+  );
+  return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
+}
+
+/** Zod shape for optional Core `submit_program_proposals` (CLAWQL_ENABLE_PROGRAMS). */
+export const submitProgramProposalsToolZodShape = {
+  programId: z.string().describe("programId (prog_…) returned by execute_program"),
+  proposals: z
+    .array(z.record(z.string(), z.unknown()))
+    .optional()
+    .describe(
+      "result.proposals from execute_program. Omit while this server still holds the program; " +
+        "when given for a stored program it must match exactly."
+    ),
+} as const;
+
+/**
+ * Proposals run through the same ExecuteService path as MCP `execute` (gate, risk,
+ * session IFC, mandate park, audit). Parked leaves are only re-checked here: approval
+ * stays with Review / `resume`.
+ */
+function makeMcpProgramSubmitHost(): ProgramSubmitHost {
+  return {
+    execute: (input, _ctx) =>
+      Effect.tryPromise({
+        try: () =>
+          getClawqlApi().run(
+            Effect.gen(function* () {
+              const execute = yield* ExecuteService;
+              return yield* execute.execute(input);
+            })
+          ),
+        catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+      }),
+    lookup: resolveProgramOperationEffect,
+    pendingStatus: (executionId) =>
+      parkedMandateStatusEffect(executionId).pipe(Effect.provide(PendingExecutionLive)),
+  };
+}
+
+/** MCP `submit_program_proposals` — run a program's proposals through normal execute (ADR 0015). */
+export async function handleSubmitProgramProposalsToolInput(
+  raw: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  const o = (raw ?? {}) as Record<string, unknown>;
+  const result = await Effect.runPromise(
+    submitProgramProposalsEffect(
+      {
+        programId: typeof o.programId === "string" ? o.programId : "",
+        proposals: o.proposals,
+        sessionId:
+          typeof o.sessionId === "string" ? o.sessionId : process.env.CLAWQL_SESSION_ID?.trim(),
+      },
+      makeMcpProgramSubmitHost()
     )
   );
   return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
@@ -467,11 +535,21 @@ export function registerTools(server: McpServer) {
   if (programsEnabled()) {
     server.tool(
       "execute_program",
-      "Run a read-only JSON plan of parallel/sequential search+execute calls in one round trip (ADR 0015 v0 plan runner; OpenCode vendor is next). Writes rejected — use plain execute or future proposed writes. Enable with CLAWQL_ENABLE_PROGRAMS=1.",
+      "Run a read-only JSON plan of parallel/sequential search+execute calls in one round trip (ADR 0015 v0 plan runner; OpenCode vendor is next). Writes never run inside a program: list them in plan.proposals and they come back resolved (with $ref values filled and the argsHash a mandate would bind) for submit_program_proposals or plain execute. Enable with CLAWQL_ENABLE_PROGRAMS=1.",
       executeProgramToolZodShape,
       wrapRegisteredMcpToolHandler("execute_program", handleExecuteProgramToolInput)
     );
     registeredNames.push("execute_program");
+    server.tool(
+      "submit_program_proposals",
+      "Run the proposals an execute_program call returned, in plan order, each through the normal execute path (gate, risk, session IFC, mandate park, audit) — not atomic. Fills <id>.result refs from earlier proposals' results. Each leaf ends ran, failed, dropped, or pending (e.g. mandate_required); call again with the same programId after approving in Review to continue — settled leaves never run twice.",
+      submitProgramProposalsToolZodShape,
+      wrapRegisteredMcpToolHandler(
+        "submit_program_proposals",
+        handleSubmitProgramProposalsToolInput
+      )
+    );
+    registeredNames.push("submit_program_proposals");
   }
 
   // ADR 0015: dedicated docs search (Core `search` also merges kind:doc when an index exists).

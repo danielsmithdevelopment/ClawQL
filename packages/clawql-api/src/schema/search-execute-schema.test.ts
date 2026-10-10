@@ -89,6 +89,13 @@ describe("SearchInputSchema / ExecuteInputSchema", () => {
     expect(decoded).not.toHaveProperty("unexpected");
   });
 
+  it("never decodes host-only approvedExecutionId from execute arguments", async () => {
+    const decoded = await Effect.runPromise(
+      decodeExecuteInput({ operationId: "issues.create", args: {}, approvedExecutionId: "pex_1" })
+    );
+    expect(decoded).not.toHaveProperty("approvedExecutionId");
+  });
+
   it("decodes resume with executionId only", async () => {
     const decoded = await Effect.runPromise(decodeResumeInput({ executionId: "pex_1" }));
     expect(decoded.executionId).toBe("pex_1");

@@ -1,7 +1,8 @@
 /**
  * Read-only program mode enablement (ADR 0015).
  *
- * Register MCP `execute_program` only when `CLAWQL_ENABLE_PROGRAMS=1`.
+ * Register MCP `execute_program` and `submit_program_proposals` only when
+ * `CLAWQL_ENABLE_PROGRAMS=1`.
  * v0 is a host-callback **plan runner** (JSON plans), not a full OpenCode
  * AST interpreter — see docs/adr/0015-program-mode-alongside-search-execute.md.
  */
@@ -14,7 +15,7 @@ function envTruthy(v: string | undefined): boolean {
   return t === "1" || t === "true" || t === "yes";
 }
 
-/** Whether the Core `execute_program` MCP tool should register. Default off. */
+/** Whether the Core program MCP tools should register. Default off. */
 export function programsEnabledEffect(
   env: NodeJS.ProcessEnv = process.env
 ): Effect.Effect<boolean> {

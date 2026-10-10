@@ -66,9 +66,9 @@ Programs may read freely (subject to the same redacted view the model would get)
 
 | Constraint           | Rule                                                                                                                                                                                              |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Scope                | A placeholder may only point to an **earlier proposal in the same set**.                                                                                                                          |
-| Shape                | Resolve to a **single value** (e.g. an id string), not a whole object.                                                                                                                            |
-| Path limits          | Cap reference path **depth** and **size** (exact caps in implementation; fail closed when exceeded).                                                                                              |
+| Scope                | A placeholder may only point to a read call of the same plan (`<call>.result…`) or an **earlier proposal in the same set** (`<proposal>.args…` / `<proposal>.result…`).                           |
+| Shape                | Resolve to a **single value** (string, number, boolean, or null — e.g. an id), not a whole object or array.                                                                                       |
+| Path limits          | Path depth ≤ 8 segments, `$ref` ≤ 256 characters, resolved string ≤ 4,096 characters, ≤ 32 refs per proposal; fail closed when exceeded.                                                          |
 | Untrusted resolution | Resolved values often come from untrusted content (inbound email id, webhook payload). After resolution, arguments go through the **full** gate, risk, and redaction checks like any other write. |
 | Digest binding       | `MandateArgsMatch` binds the digest of **post-resolution** args, never the template with placeholders.                                                                                            |
 
@@ -172,7 +172,7 @@ Security and honesty first, then cheap wins every client gets, then public claim
 1. Catalog improvements + fair suite (steps 1–2 above).
 2. Session IFC on execute (step 3); Lean theorems + differential.
 3. **v0** read-only plan runner (shipped); then **v1 durable code mode on celld** — benchmark multi-step **fan-out** and **cross-source joins** (not filter-only).
-4. Proposed writes with proposal refs, combined-label IFC, then batch Merkle approve (TLA+ green first).
+4. Proposed writes with proposal refs, combined-label IFC (shipped on the v0 runner), then batch Merkle approve (TLA+ green first).
 5. Tighten “never more” toward equality where honest once session labeling lands.
 6. Journaled replay **inside celld cells** (see durable code mode); proposal refs remain the gateway-side path for approvable writes until the crash demo holds.
 7. Rerun Executor comparison against Executor v2 once its code mode ships; replace simulated program-filter with live.
@@ -181,18 +181,26 @@ Security and honesty first, then cheap wins every client gets, then public claim
 
 **v0 plan runner.** Not a JS interpreter. What ships now:
 
-| Item      | Detail                                                                                                                                                                                |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Flag      | `CLAWQL_ENABLE_PROGRAMS=1` (default off)                                                                                                                                              |
-| MCP tool  | `execute_program` — args `{ source, timeoutMs? }`                                                                                                                                     |
-| `source`  | JSON **plan** only: `{ "v": 1, "mode": "parallel"\|"sequential", "calls": [ { "tool": "execute"\|"search", … } ] }` (or a bare call array). Free-form JS is rejected with a fix hint. |
-| Host path | Each call uses the same `search` / `execute` gateway path (gate, session IFC, audit) with a `programId` correlation on WORM metadata.                                                 |
-| Writes    | Rejected when operation risk is not `allow` — agent must use plain `execute` (mandate/resume) or wait for proposed writes.                                                            |
-| IFC       | `CLAWQL_ENABLE_SESSION_IFC=1`: each in-program write is checked against every source the program reads, before the host call, whatever the order or fan-out (`program_ifc_blocked`).  |
-| Caps      | Max source length, max tool calls, timeout, max output bytes (`CLAWQL_PROGRAM_MAX_*` overrides).                                                                                      |
-| Return    | `{ ok, programId, result, calls: [{ operationId, ok, … }], diagnostics }`                                                                                                             |
+| Item      | Detail                                                                                                                                                                                                                                                                                                       |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Flag      | `CLAWQL_ENABLE_PROGRAMS=1` (default off)                                                                                                                                                                                                                                                                     |
+| MCP tool  | `execute_program` — args `{ source, timeoutMs? }`                                                                                                                                                                                                                                                            |
+| `source`  | JSON **plan** only: `{ "v": 1, "mode": "parallel"\|"sequential", "calls": [ { "tool": "execute"\|"search", … } ] }` (or a bare call array). Free-form JS is rejected with a fix hint.                                                                                                                        |
+| Host path | Each call uses the same `search` / `execute` gateway path (gate, session IFC, audit) with a `programId` correlation on WORM metadata.                                                                                                                                                                        |
+| Writes    | Never run inside a program: a call whose operation risk is not `allow` fails with `program_write_rejected`. List writes in `plan.proposals` instead.                                                                                                                                                         |
+| Proposals | `{ "id", "operationId", "args", "fields"?, "where"? }` with `$ref` placeholders (constraints above). Returned resolved: `ready` (bound `argsHash`), `deferred`, or `rejected`.                                                                                                                               |
+| Submit    | `submit_program_proposals { programId }` runs them in plan order through normal `execute`; leaves `ran` / `failed` / `dropped` / `pending`; call again after approving in Review.                                                                                                                            |
+| IFC       | `CLAWQL_ENABLE_SESSION_IFC=1`: each in-program write is checked against every source the program reads, before the host call, whatever the order or fan-out (`program_ifc_blocked`); each proposal's destination against session ∪ program labels before it is returned (`ifc_blocked`) and again at submit. |
+| Caps      | Max source length, max tool calls, timeout, max output bytes, max proposals (`CLAWQL_PROGRAM_MAX_*` overrides).                                                                                                                                                                                              |
+| Return    | `{ ok, programId, result: { mode, results, proposals? }, calls: [{ operationId, ok, … }], diagnostics }`                                                                                                                                                                                                     |
 
-See [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md) (`execute_program`). Implementation: `packages/clawql-api/src/program/`.
+See [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md) (`execute_program`, `submit_program_proposals`). Implementation: `packages/clawql-api/src/program/`.
+
+**Proposed writes in v0 — limits.**
+
+- Each `mandate` proposal parks its own mandate, bound to its post-resolution digest; batch approval over a signed root is not wired yet.
+- Dependent chains continue through Review: approve, then submit again so the batch consumes the approval and fills `<proposal>.result` refs. `resume` returns its result only to its caller, so dependents of a leaf approved through `resume` are dropped (`result_unavailable`).
+- Stored proposals are process-local and session-scoped, and live as long as a parked mandate. On another replica the client passes the echoed proposals, which then run like plain `execute` calls there; the program's labels do not travel with them, just as session labels (also process-local) do not.
 
 ### Durable code mode on celld (program mode step 2 — not a me-too)
 

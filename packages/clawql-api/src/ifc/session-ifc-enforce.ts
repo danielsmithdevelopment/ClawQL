@@ -70,26 +70,42 @@ export type SessionIfcBlock = {
   readonly operationId: string;
   readonly sessionKey: string;
   readonly sessionLabels: string[];
+  /** Labels of everything a program read, when the write is a program proposal. */
+  readonly programLabels?: string[];
   readonly destLabels: string[];
   readonly fix: string;
 };
 
+/** Operation fields the write gate reads. */
+export type SessionIfcOperation = Pick<
+  Operation,
+  "id" | "specLabel" | "method" | "riskHints" | "nativeGraphQL"
+>;
+
 /**
  * Before a mutating execute: fail closed when session labels may not flow to dest.
  * Returns a block payload, or `null` when allowed / IFC disabled / read op.
+ *
+ * `programLabels` (ADR 0015 § Program memory) joins the session union so a program's
+ * proposals are checked against everything it read, even under another session key.
+ * `destLabels` replaces the operation's destination (an empty set accepts no labels).
  */
 export function checkSessionIfcWriteSync(opts: {
-  readonly operation: Operation;
+  readonly operation: SessionIfcOperation;
   readonly sessionId?: string;
   readonly env?: NodeJS.ProcessEnv;
+  readonly programLabels?: Iterable<Label>;
+  readonly destLabels?: ReadonlySet<Label>;
 }): SessionIfcBlock | null {
   const env = opts.env ?? process.env;
   if (!envTruthy(env.CLAWQL_ENABLE_SESSION_IFC)) return null;
   if (isReadOperation(opts.operation)) return null;
 
   const sessionKey = resolveSessionLabelKey(opts.sessionId, env);
-  const fromUnion = getSessionLabelsSync(sessionKey);
-  const destLabels = destLabelsForOperation(opts.operation);
+  const sessionLabels = getSessionLabelsSync(sessionKey);
+  const programLabels = opts.programLabels === undefined ? undefined : new Set(opts.programLabels);
+  const fromUnion = new Set([...sessionLabels, ...(programLabels ?? [])]);
+  const destLabels = opts.destLabels ?? destLabelsForOperation(opts.operation);
   const config = parseIfcFlowConfigJson(env.CLAWQL_SESSION_IFC_ALLOWED);
   if (mayFlow(fromUnion, destLabels, config)) return null;
 
@@ -100,7 +116,8 @@ export function checkSessionIfcWriteSync(opts: {
       "Session information-flow policy blocked this write: accumulated read labels may not flow to the destination (ADR 0015).",
     operationId: opts.operation.id,
     sessionKey,
-    sessionLabels: [...fromUnion].sort(),
+    sessionLabels: [...sessionLabels].sort(),
+    ...(programLabels ? { programLabels: [...programLabels].sort() } : {}),
     destLabels: [...destLabels].sort(),
     fix: "Use a destination that accepts these labels, clear the session, or disable CLAWQL_ENABLE_SESSION_IFC (not recommended in production).",
   };
@@ -127,9 +144,11 @@ export function accumulateSessionIfcReadSync(opts: {
 
 /** Effect wrappers for domain consistency. */
 export const checkSessionIfcWriteEffect = (opts: {
-  readonly operation: Operation;
+  readonly operation: SessionIfcOperation;
   readonly sessionId?: string;
   readonly env?: NodeJS.ProcessEnv;
+  readonly programLabels?: Iterable<Label>;
+  readonly destLabels?: ReadonlySet<Label>;
 }): Effect.Effect<SessionIfcBlock | null> => Effect.sync(() => checkSessionIfcWriteSync(opts));
 
 export const accumulateSessionIfcReadEffect = (opts: {

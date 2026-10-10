@@ -47,7 +47,7 @@ describe("createRegisteredMcpServer", () => {
     }
   });
 
-  it("registers execute_program only when programs are enabled (ADR 0015)", () => {
+  it("registers execute_program and submit_program_proposals only when programs are enabled (ADR 0015)", () => {
     const saved = process.env.CLAWQL_ENABLE_PROGRAMS;
     try {
       delete process.env.CLAWQL_ENABLE_PROGRAMS;
@@ -55,6 +55,7 @@ describe("createRegisteredMcpServer", () => {
       const offReg = (off as unknown as { _registeredTools: Record<string, { enabled?: boolean }> })
         ._registeredTools;
       expect(offReg.execute_program).toBeUndefined();
+      expect(offReg.submit_program_proposals).toBeUndefined();
 
       process.env.CLAWQL_ENABLE_PROGRAMS = "1";
       const on = createRegisteredMcpServer({ name: "clawql-prog-on", version: "0.0.0" });
@@ -62,6 +63,8 @@ describe("createRegisteredMcpServer", () => {
         ._registeredTools;
       expect(onReg.execute_program).toBeDefined();
       expect(onReg.execute_program?.enabled).not.toBe(false);
+      expect(onReg.submit_program_proposals).toBeDefined();
+      expect(onReg.submit_program_proposals?.enabled).not.toBe(false);
     } finally {
       if (saved === undefined) delete process.env.CLAWQL_ENABLE_PROGRAMS;
       else process.env.CLAWQL_ENABLE_PROGRAMS = saved;

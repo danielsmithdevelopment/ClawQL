@@ -2,13 +2,15 @@
  * Read-only program runner (ADR 0015 v0) — host-callback JSON plan executor.
  *
  * Governing rule: a program may never see or do more than individual
- * search/execute calls. Writes (risk policy mandate/block) are rejected with a
- * fix hint pointing at future proposed writes or plain `execute`.
+ * search/execute calls. Writes (risk policy mandate/block) are rejected as calls;
+ * a plan proposes them instead (`proposals`), and the gateway runs them later
+ * through normal execute (see program-proposals.ts / program-submit.ts).
  */
 
 import { randomBytes } from "node:crypto";
 import { appendProcessWormEffect } from "clawql-audit";
 import { Context, Duration, Effect, Layer, Option } from "effect";
+import { resolveSessionLabelKey } from "../ifc/session-label-store.js";
 import type { ExecuteInputDecoded, SearchInputDecoded } from "../schema/search-execute-schema.js";
 import type { OperationRisk, OperationRiskPolicy } from "../risk/operation-risk-types.js";
 import {
@@ -23,7 +25,14 @@ import {
   type ProgramPlan,
   type ProgramPlanCall,
   type ProgramPlanMode,
+  type ProgramPlanProposal,
 } from "./program-plan.js";
+import {
+  currentProgramProposalStoreEffect,
+  programProposalRecordTtlMsEffect,
+  type ProgramProposalRecord,
+} from "./program-proposal-store.js";
+import { resolveProgramProposalsEffect, type ResolvedProposal } from "./program-proposals.js";
 
 export type ProgramHostExecuteResult = {
   readonly content: readonly { readonly type: "text"; readonly text: string }[];
@@ -128,6 +137,9 @@ export type ExecuteProgramDiagnostics = {
   /** Machine-readable refusal code (durable runner), e.g. `program_not_found`. */
   readonly code?: string;
   readonly durable?: DurableProgramDiagnostics;
+  readonly proposalCount?: number;
+  /** How returned proposals get run (they never run inside the program). */
+  readonly nextStep?: string;
 };
 
 export type ExecuteProgramResult = {
@@ -185,7 +197,10 @@ const HONESTY =
   "v0 plan runner; OpenCode vendor is next. source must be a JSON plan of parallel/sequential read executes — not free-form JS.";
 
 const WRITE_REJECT_HINT =
-  "Programs may not perform writes in v0. Use plain execute (with mandate/resume) for mutating operations, or wait for proposed writes (ADR 0015).";
+  'Programs never perform writes. Move this call to plan.proposals ({ "id": "W1", "operationId": "...", "args": {} }) and submit them afterwards, or use plain execute (with mandate/resume).';
+
+const PROPOSALS_NEXT_STEP =
+  "Programs never run writes. Submit with submit_program_proposals { programId } (or run each ready proposal with execute); every proposal goes through gate, risk, session IFC, and mandate like a plain execute.";
 
 export function newProgramIdEffect(): Effect.Effect<string> {
   return Effect.sync(() => `prog_${randomBytes(12).toString("hex")}`);
@@ -289,21 +304,35 @@ function failResult(
   };
 }
 
-/** Reject plans that exceed the tool-call cap (checked again when a journal resumes). */
+function planProposals(plan: ProgramPlan): readonly ProgramPlanProposal[] {
+  return plan.proposals ?? [];
+}
+
+/** Reject plans that exceed the tool-call or proposal cap (checked again when a journal resumes). */
 export function checkProgramPlanCapsEffect(
   plan: ProgramPlan,
   caps: ProgramCaps
 ): Effect.Effect<PreparedProgramPlan> {
-  return Effect.sync(() =>
-    plan.calls.length > caps.maxToolCalls
-      ? {
-          ok: false as const,
-          mode: plan.mode,
-          error: `plan exceeds max tool calls (${plan.calls.length} > ${caps.maxToolCalls})`,
-          fixHint: "Split into multiple programs or raise CLAWQL_PROGRAM_MAX_TOOL_CALLS.",
-        }
-      : { ok: true as const, plan }
-  );
+  return Effect.sync(() => {
+    if (plan.calls.length > caps.maxToolCalls) {
+      return {
+        ok: false as const,
+        mode: plan.mode,
+        error: `plan exceeds max tool calls (${plan.calls.length} > ${caps.maxToolCalls})`,
+        fixHint: "Split into multiple programs or raise CLAWQL_PROGRAM_MAX_TOOL_CALLS.",
+      };
+    }
+    const proposals = planProposals(plan).length;
+    if (proposals > caps.maxProposals) {
+      return {
+        ok: false as const,
+        mode: plan.mode,
+        error: `plan exceeds max proposals (${proposals} > ${caps.maxProposals})`,
+        fixHint: "Split into multiple programs or raise CLAWQL_PROGRAM_MAX_PROPOSALS.",
+      };
+    }
+    return { ok: true as const, plan };
+  });
 }
 
 /** Validate `source` against caps and decode the v0 JSON plan. */
@@ -326,12 +355,12 @@ export function prepareProgramPlanEffect(
     }
     const plan = planOrErr as Exclude<typeof planOrErr, { ok: false }>;
 
-    if (plan.calls.length === 0) {
+    if (plan.calls.length === 0 && planProposals(plan).length === 0) {
       return {
         ok: false as const,
         mode: plan.mode,
         error: "plan.calls is empty",
-        fixHint: "Add at least one read execute or search call.",
+        fixHint: "Add at least one read execute or search call, or a proposal.",
       };
     }
     return yield* checkProgramPlanCapsEffect(plan, caps);
@@ -388,6 +417,7 @@ export function runProgramPlanEffect<E = never>(
     const started = input.startedAtMs ?? Date.now();
     const { programId, plan, timeoutMs, maxOutputBytes, hooks } = input;
     const honesty = input.honesty ?? HONESTY;
+    const env = input.env ?? process.env;
 
     yield* appendProcessWormEffect({
       type: "TOOL_CALL_ATTEMPT",
@@ -403,7 +433,7 @@ export function runProgramPlanEffect<E = never>(
       },
     }).pipe(Effect.catch(() => Effect.void));
 
-    const gatedHost = yield* programIfcHostEffect(plan, host, input.env ?? process.env);
+    const gatedHost = yield* programIfcHostEffect(plan, host, env);
 
     const runOne = (call: ProgramPlanCall, index: number): Effect.Effect<ProgramCallOutcome> =>
       Effect.gen(function* () {
@@ -628,7 +658,27 @@ export function runProgramPlanEffect<E = never>(
             return acc;
           });
 
-    const timed = yield* Effect.timeoutOption(body, Duration.millis(timeoutMs));
+    const proposalPlan = planProposals(plan);
+    const work = Effect.gen(function* () {
+      const runOut = yield* body;
+      if (proposalPlan.length === 0) return { runOut, resolved: undefined };
+      const resolved = yield* resolveProgramProposalsEffect({
+        proposals: proposalPlan,
+        calls: runOut.map((r) => ({
+          id: r.record.id ?? `call_${r.record.index}`,
+          tool: r.record.tool,
+          operationId: r.record.operationId,
+          ok: r.record.ok,
+          value: r.value,
+        })),
+        lookup: gatedHost.resolveRisk,
+        sessionId: input.sessionId,
+        env,
+      });
+      return { runOut, resolved };
+    });
+
+    const timed = yield* Effect.timeoutOption(work, Duration.millis(timeoutMs));
     const elapsedMs = Date.now() - started;
     if (Option.isNone(timed)) {
       return failResult(programId, [], {
@@ -641,10 +691,10 @@ export function runProgramPlanEffect<E = never>(
         honesty,
       });
     }
-    const runOut = timed.value;
+    const { runOut, resolved } = timed.value;
 
     const calls = runOut.map((r) => r.record);
-    const allOk = calls.every((c) => c.ok);
+    const callsOk = calls.every((c) => c.ok);
     const results = runOut.map((r) => ({
       id: r.record.id ?? `call_${r.record.index}`,
       tool: r.record.tool,
@@ -652,7 +702,40 @@ export function runProgramPlanEffect<E = never>(
       ok: r.record.ok,
       value: r.value,
     }));
-    const { result, truncated } = truncateResult({ mode: plan.mode, results }, maxOutputBytes);
+    const { result: readResult, truncated } = truncateResult(
+      { mode: plan.mode, results },
+      maxOutputBytes
+    );
+
+    const resolvedProposals = resolved?.proposals ?? [];
+    if (
+      resolvedProposals.length > 0 &&
+      utf8ByteLength(JSON.stringify(resolvedProposals)) > maxOutputBytes
+    ) {
+      return failResult(programId, calls, {
+        callCount: calls.length,
+        elapsedMs,
+        mode: plan.mode,
+        proposalCount: resolvedProposals.length,
+        error: `proposals exceed max output bytes (${maxOutputBytes})`,
+        fixHint: "Propose fewer or smaller writes, or raise CLAWQL_PROGRAM_MAX_OUTPUT_BYTES.",
+        honesty,
+      });
+    }
+    const proposals =
+      resolvedProposals.length === 0
+        ? resolvedProposals
+        : yield* recordProgramProposalsEffect({
+            programId,
+            sessionId: input.sessionId,
+            env,
+            programLabels: resolved?.programLabels ?? [],
+            proposals: resolvedProposals,
+          });
+    const allOk = callsOk && proposals.every((p) => p.status !== "rejected");
+    // Proposals stay outside the read-result truncation; their size is capped above.
+    const result =
+      proposals.length > 0 ? { ...(readResult as Record<string, unknown>), proposals } : readResult;
 
     yield* appendProcessWormEffect({
       type: "TOOL_CALL_RESULT",
@@ -665,6 +748,17 @@ export function runProgramPlanEffect<E = never>(
         callCount: calls.length,
         truncated,
         interpreter: "plan-runner-v0",
+        ...(proposals.length > 0
+          ? {
+              proposalCount: proposals.length,
+              proposals: proposals.map((p) => ({
+                id: p.id,
+                operationId: p.operationId,
+                status: p.status,
+                argsHash: p.argsHash,
+              })),
+            }
+          : {}),
         ...input.auditMetadata,
       },
     }).pipe(Effect.catch(() => Effect.void));
@@ -682,12 +776,54 @@ export function runProgramPlanEffect<E = never>(
         callCount: calls.length,
         elapsedMs,
         truncated: truncated || undefined,
-        error: allOk ? undefined : "one or more program calls failed",
+        ...(proposals.length > 0
+          ? { proposalCount: proposals.length, nextStep: PROPOSALS_NEXT_STEP }
+          : {}),
+        error: allOk
+          ? undefined
+          : callsOk
+            ? "one or more proposals were rejected"
+            : "one or more program calls failed",
         fixHint: allOk
           ? undefined
-          : "Inspect calls[].error / status; fall back to single search/execute as needed.",
+          : callsOk
+            ? "Inspect result.proposals[].error / fixHint; rejected proposals are never submitted."
+            : "Inspect calls[].error / status; fall back to single search/execute as needed.",
       },
     };
+  });
+}
+
+/**
+ * Keep a program's proposals for submit_program_proposals. The first record for a
+ * programId wins, so a resumed (durable) program never resets leaves already submitted.
+ */
+function recordProgramProposalsEffect(opts: {
+  readonly programId: string;
+  readonly sessionId?: string;
+  readonly env: NodeJS.ProcessEnv;
+  readonly programLabels: ProgramProposalRecord["programLabels"];
+  readonly proposals: readonly ResolvedProposal[];
+}): Effect.Effect<readonly ResolvedProposal[]> {
+  return Effect.gen(function* () {
+    const store = yield* currentProgramProposalStoreEffect;
+    const owner = resolveSessionLabelKey(opts.sessionId, opts.env);
+    const now = Date.now();
+    const ttlMs = yield* programProposalRecordTtlMsEffect(opts.env);
+    const stored = yield* store.withProgramLock(
+      owner,
+      opts.programId,
+      store.putIfAbsent({
+        programId: opts.programId,
+        owner,
+        createdAtMs: now,
+        expiresAtMs: now + ttlMs,
+        programLabels: opts.programLabels,
+        proposals: opts.proposals,
+        leaves: {},
+      })
+    );
+    return stored.proposals;
   });
 }
 

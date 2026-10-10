@@ -10,6 +10,9 @@ export const PROGRAM_MAX_SOURCE_LENGTH = 32_768;
 /** Max host tool calls (search + execute) per program. */
 export const PROGRAM_MAX_TOOL_CALLS = 16;
 
+/** Max proposed writes per program (returned for the gateway to run later). */
+export const PROGRAM_MAX_PROPOSALS = 16;
+
 /** Default wall-clock timeout when `timeoutMs` omitted. */
 export const PROGRAM_DEFAULT_TIMEOUT_MS = 30_000;
 
@@ -25,6 +28,7 @@ export type ProgramCaps = {
   readonly defaultTimeoutMs: number;
   readonly maxTimeoutMs: number;
   readonly maxOutputBytes: number;
+  readonly maxProposals: number;
 };
 
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
@@ -50,6 +54,7 @@ export function resolveProgramCapsEffect(
     ),
     maxTimeoutMs: parsePositiveInt(env.CLAWQL_PROGRAM_MAX_TIMEOUT_MS, PROGRAM_MAX_TIMEOUT_MS),
     maxOutputBytes: parsePositiveInt(env.CLAWQL_PROGRAM_MAX_OUTPUT_BYTES, PROGRAM_MAX_OUTPUT_BYTES),
+    maxProposals: parsePositiveInt(env.CLAWQL_PROGRAM_MAX_PROPOSALS, PROGRAM_MAX_PROPOSALS),
   }));
 }
 

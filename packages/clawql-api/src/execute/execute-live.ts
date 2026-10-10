@@ -53,6 +53,7 @@ export function makeExecuteLive(loadSpecFn: LoadSpecFn = loadSpec): Layer.Layer<
               args,
               fields: input.fields,
               where: input.where,
+              approvedExecutionId: input.approvedExecutionId,
             },
             loadSpecFn
           );
