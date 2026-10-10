@@ -54,6 +54,7 @@ After `demo:local`, the dry-run manifest path is printed / under `.local/demo-ru
 | Policy | `att_3` calls `https://evil.example` → blocked |
 | Decision | calibrated → auto-merge; OpenAI-shaped → approval then continue |
 | Release | Merkle verify of dry-run manifest |
+| Canary | `.local/canary/status.json` percentage split + rollback trigger (live = Workers gradual deploy API) |
 
 ## Decisions endpoint
 

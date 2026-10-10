@@ -32,6 +32,9 @@ describe("local demo pipeline", () => {
       expect(manifest.buildEnvironment.fork).toBe("tsk_demo-att_1");
       expect(manifest.policy.canaryPercent).toBe(10);
       expect(result.canaryPercent).toBe(10);
+      expect(result.canary.mode).toBe("dry-run");
+      expect(result.canary.versions.find((v) => v.label === "canary")?.percentage).toBe(10);
+      expect(result.canary.rollbackTrigger).toContain("error_rate");
 
       const files = [
         {

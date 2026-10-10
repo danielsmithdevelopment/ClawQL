@@ -15,14 +15,16 @@ import {
   writeEvidenceNote,
   writeNotesJsonl,
 } from "@artifacts-attempts/local-git";
+import {
+  applyDecision,
+  buildWinnerRequest,
+  localCalibratedDecision,
+  localOpenAIShapedDecision,
+} from "@artifacts-attempts/decider";
 import { verifyBundleAgainstManifest } from "@artifacts-attempts/manifest";
 import { sealEvidenceNote, verifyEvidenceChain, type EvidenceNote } from "@artifacts-attempts/notes";
-import {
-  shouldAutoMerge,
-  type Attempt,
-  type DecisionResponse,
-  type Task,
-} from "@artifacts-attempts/shared";
+import { type Attempt, type DecisionResponse, type Task } from "@artifacts-attempts/shared";
+import { writeCanaryStatus, type CanaryStatus } from "./canary.js";
 import { prepareRelease } from "./release-step.js";
 import { checkPolicy } from "./policy.js";
 
@@ -41,6 +43,8 @@ export type LocalDemoResult = {
   manifestPath: string;
   notesPath: string;
   canaryPercent: number;
+  canaryStatusPath: string;
+  canary: CanaryStatus;
 };
 
 function applyPatch(worktree: string, patchPath: string): void {
@@ -187,20 +191,30 @@ export async function runLocalDemo(opts: {
     throw new Error("expected att_3 blocked by policy");
   }
 
+  // Build the same /v1/decisions request shape the live decider posts.
+  void buildWinnerRequest({
+    prompt: task.prompt,
+    choices: notes.map((n) => ({
+      value: n.attemptId,
+      description: n.policy.clean
+        ? `tests ${n.tests.passed}/${n.tests.failed}, policy clean, diff +${n.diff.insertions}/-${n.diff.deletions}`
+        : `blocked: ${n.policy.violations.join(", ")}`,
+    })),
+  });
+
   const decision: DecisionResponse =
     opts.decisionsMode === "openai"
-      ? { winner: "att_1", confidence: 0.99 }
-      : { winner: "att_1", calibrated: true, confidence: 0.96 };
+      ? localOpenAIShapedDecision("att_1")
+      : localCalibratedDecision("att_1");
 
   const winnerNote = notes.find((n) => n.attemptId === decision.winner)!;
-  const trust = shouldAutoMerge({
-    decision,
-    winnerTestsFailed: winnerNote.tests.failed,
-    winnerPolicyClean: winnerNote.policy.clean,
+  const trust = applyDecision(decision, {
+    testsFailed: winnerNote.tests.failed,
+    policyClean: winnerNote.policy.clean,
   });
 
   let approvalUsed = false;
-  if (!trust.auto) {
+  if (!trust.autoMerge) {
     if (opts.approveIfNeeded === false) {
       throw new Error(`awaiting approval: ${trust.reason}`);
     }
@@ -248,6 +262,14 @@ export async function runLocalDemo(opts: {
 
   const notesPath = join(opts.root, "notes.jsonl");
   writeNotesJsonl(notesPath, notes);
+
+  const canaryStatusPath = join(opts.root, ".local/canary/status.json");
+  const canary = writeCanaryStatus(canaryStatusPath, {
+    canaryPercent,
+    versionId: `ver_${mainCommit.slice(0, 12)}`,
+    rollbackTrigger: release.manifest.policy.rollback.trigger,
+  });
+
   task.status = "released";
 
   return {
@@ -255,12 +277,14 @@ export async function runLocalDemo(opts: {
     attempts,
     notes,
     decision,
-    autoMerge: trust.auto,
+    autoMerge: trust.autoMerge,
     approvalUsed,
     mainCommit,
     arweaveId: release.arweaveId,
     manifestPath,
     notesPath,
     canaryPercent,
+    canaryStatusPath,
+    canary,
   };
 }
