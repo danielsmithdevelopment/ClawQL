@@ -31,6 +31,8 @@ export function resolveSessionLabelKey(
   if (keyId) return `apikey:${keyId}`;
   const apiKey = env.CLAWQL_API_KEY?.trim();
   if (apiKey) {
+    // Opaque session partition fingerprint — not password storage/verification.
+    // codeql[js/insufficient-password-hash]: session key id only; secret not stored for later verify.
     const digest = createHash("sha256").update(apiKey).digest("hex").slice(0, 16);
     return `apikey-hash:${digest}`;
   }

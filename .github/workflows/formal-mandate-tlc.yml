@@ -45,6 +45,9 @@ jobs:
       - name: Run mandate TLC dual configs
         run: bash scripts/formal/run-mandate-tlc.sh
 
+      - name: Run batch Merkle mandate TLC (ADR 0015)
+        run: bash scripts/formal/run-batch-mandate-tlc.sh
+
       - name: Run event-delivery TLC dual configs
         run: |
           set -euo pipefail
