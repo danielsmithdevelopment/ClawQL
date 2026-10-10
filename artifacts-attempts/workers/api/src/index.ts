@@ -3,7 +3,7 @@
  * Local/demo: in-memory task-store. Production: coordinator DO + decider.
  */
 
-import { dispatchTool, type ToolContext } from "@artifacts-attempts/mcp-tools";
+import { dispatchTool, TOOL_NAMES, type ToolContext } from "@artifacts-attempts/mcp-tools";
 import { shouldAutoMerge, type DecisionResponse } from "@artifacts-attempts/shared";
 import { getTaskView, putTaskView, subscribe, type TaskView } from "./task-store.js";
 
@@ -114,6 +114,13 @@ export default {
       return json({
         arweaveId: id,
         note: "Serve manifest from R2 / dry-run .local/arweave in deploy wiring",
+      });
+    }
+
+    if (request.method === "GET" && url.pathname === "/mcp/tools") {
+      return json({
+        tools: TOOL_NAMES.map((name) => ({ name })),
+        note: "Also callable via ClawQL gateway if configured; demo does not require it.",
       });
     }
 

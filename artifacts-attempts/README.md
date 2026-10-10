@@ -28,11 +28,12 @@ cd artifacts-attempts
 npm ci
 npm test                 # includes local-git + pipeline
 npm run demo:local       # one full pipeline run under .local/demo-run
+npm run demo:gate        # 3 consecutive verified runs (record only after GATE PASS)
 npm run board:serve      # http://127.0.0.1:8787/
 npm run board:hydrate    # POSTs results; open /?task=tsk_demo
 ```
 
-Judges: [`docs/JUDGE_RUNBOOK.md`](./docs/JUDGE_RUNBOOK.md). Video scenes: [`docs/VIDEO_SCRIPT.md`](./docs/VIDEO_SCRIPT.md).
+Judges: [`docs/JUDGE_RUNBOOK.md`](./docs/JUDGE_RUNBOOK.md) · Video: [`docs/VIDEO_SCRIPT.md`](./docs/VIDEO_SCRIPT.md) · Submit: [`docs/SUBMISSION.md`](./docs/SUBMISSION.md).
 
 Live Cloudflare Artifacts / Turbo Arweave remain gated on account credentials (`ATTEMPTS_E2E=1`).
 

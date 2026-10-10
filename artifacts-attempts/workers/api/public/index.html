@@ -105,6 +105,7 @@
       </table>
       <div id="decision" class="decision" hidden></div>
       <p id="meta"></p>
+      <p id="approveLink" style="margin-top:0.75rem;font-size:0.8rem;"></p>
     </main>
     <script type="module">
       const params = new URLSearchParams(location.search);
@@ -112,6 +113,7 @@
       const rows = document.getElementById("rows");
       const meta = document.getElementById("meta");
       const decisionEl = document.getElementById("decision");
+      const approveLink = document.getElementById("approveLink");
 
       function tone(status) {
         if (status === "won" || status === "evaluated") return "ok";
@@ -180,6 +182,14 @@
             (view.task?.status ? ` · task ${view.task.status}` : "");
         }
         meta.textContent = `task ${view.task?.id ?? ""} · ${new Date().toISOString()}`;
+        if (taskId) {
+          approveLink.replaceChildren();
+          const a = document.createElement("a");
+          a.href = `/approve.html?task=${encodeURIComponent(taskId)}`;
+          a.style.color = "var(--muted)";
+          a.textContent = "Open approval page →";
+          approveLink.appendChild(a);
+        }
       }
 
       if (!taskId) {
