@@ -57,7 +57,11 @@ import {
   parkedMandateStatusEffect,
   PendingExecutionLive,
   programsEnabled,
+  durableProgramsEnabled,
   runProgramEffect,
+  executeDurableProgramEffect,
+  accumulateSessionIfcReadEffect,
+  sessionIfcEnabledEffect,
   searchClawqlDocsEffect,
   submitProgramProposalsEffect,
   type CustomSourceKind,
@@ -215,27 +219,54 @@ function docsSearchToolEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return v === "1" || v === "true" || v === "yes";
 }
 
+const EXECUTE_PROGRAM_SOURCE_DESCRIPTION =
+  "v0 JSON plan text (not free-form JS): " +
+  '{ "v": 1, "mode": "parallel"|"sequential", "calls": [ ' +
+  '{ "id": "A", "tool": "execute", "operationId": "...", "args": {} } | ' +
+  '{ "tool": "search", "query": "..." } ], ' +
+  '"proposals": [ { "id": "W1", "operationId": "...", "args": { "title": { "$ref": "A.result.title" } } } ] }. ' +
+  "Calls are reads; proposals are writes the program returns but never runs. " +
+  "$ref targets a read call (<id>.result.<path>) or an earlier proposal (<id>.args.<path> / <id>.result.<path>, " +
+  "the latter filled when submitted) and must resolve to one string, number, boolean, or null. " +
+  "Honesty: v0 plan runner; OpenCode vendor is next.";
+
 /** Zod shape for optional Core `execute_program` (CLAWQL_ENABLE_PROGRAMS). */
 export const executeProgramToolZodShape = {
-  source: z
-    .string()
-    .describe(
-      "v0 JSON plan text (not free-form JS): " +
-        '{ "v": 1, "mode": "parallel"|"sequential", "calls": [ ' +
-        '{ "id": "A", "tool": "execute", "operationId": "...", "args": {} } | ' +
-        '{ "tool": "search", "query": "..." } ], ' +
-        '"proposals": [ { "id": "W1", "operationId": "...", "args": { "title": { "$ref": "A.result.title" } } } ] }. ' +
-        "Calls are reads; proposals are writes the program returns but never runs. " +
-        "$ref targets a read call (<id>.result.<path>) or an earlier proposal (<id>.args.<path> / <id>.result.<path>, " +
-        "the latter filled when submitted) and must resolve to one string, number, boolean, or null. " +
-        "Honesty: v0 plan runner; OpenCode vendor is next."
-    ),
+  source: z.string().describe(EXECUTE_PROGRAM_SOURCE_DESCRIPTION),
   timeoutMs: z
     .number()
     .int()
     .positive()
     .optional()
     .describe("Wall-clock timeout in ms (capped by CLAWQL_PROGRAM_MAX_TIMEOUT_MS)."),
+} as const;
+
+/** `execute_program` shape when CLAWQL_ENABLE_DURABLE_PROGRAMS=1: resume by programId. */
+export const durableExecuteProgramToolZodShape = {
+  source: z
+    .string()
+    .optional()
+    .describe(
+      `${EXECUTE_PROGRAM_SOURCE_DESCRIPTION} Required to start a program; omit it to resume ` +
+        "one by programId (when given on resume it must match)."
+    ),
+  programId: z
+    .string()
+    .optional()
+    .describe(
+      "Durable program id (prog_…) from an earlier execute_program. With a journal: resume " +
+        "it (journaled calls replay, not re-run). With source and an unused id: start a " +
+        "program under that id. Omit to start a program under a new id."
+    ),
+  timeoutMs: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe(
+      "Wall-clock timeout in ms for this attempt (capped by CLAWQL_PROGRAM_MAX_TIMEOUT_MS); " +
+        "a timed-out program parks and can be resumed."
+    ),
 } as const;
 
 /**
@@ -268,6 +299,18 @@ function makeMcpProgramHost(): ProgramHost {
         catch: (e) => (e instanceof Error ? e : new Error(String(e))),
       }),
     resolveRisk: resolveProgramOperationEffect,
+    // Session IFC labels live in process memory: a replayed read labels the session
+    // again, whatever its outcome (an extra label only makes later writes stricter).
+    replayed: (call) =>
+      Effect.gen(function* () {
+        if (call.tool !== "execute" || call.operationId === undefined) return;
+        if (!(yield* sessionIfcEnabledEffect())) return;
+        const info = yield* resolveProgramOperationEffect(call.operationId);
+        if (!info.found) {
+          return yield* Effect.fail(new Error(`Unknown operationId: ${call.operationId}`));
+        }
+        yield* accumulateSessionIfcReadEffect({ operation: info.operation, success: true });
+      }),
   };
 }
 
@@ -290,24 +333,31 @@ function resolveProgramOperationEffect(operationId: string) {
   });
 }
 
-/** MCP `execute_program` — read-only JSON plan runner (ADR 0015 v0). */
+/**
+ * MCP `execute_program` — JSON plan runner (ADR 0015 v0). With
+ * CLAWQL_ENABLE_DURABLE_PROGRAMS=1 the program is journaled and resumable by `programId`.
+ */
 export async function handleExecuteProgramToolInput(
   raw: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
   const o = (raw ?? {}) as Record<string, unknown>;
-  const source = typeof o.source === "string" ? o.source : "";
+  const source = typeof o.source === "string" ? o.source : undefined;
   const timeoutMs =
     typeof o.timeoutMs === "number" && Number.isFinite(o.timeoutMs) ? o.timeoutMs : undefined;
+  const sessionId =
+    typeof o.sessionId === "string" ? o.sessionId : process.env.CLAWQL_SESSION_ID?.trim();
   const result = await Effect.runPromise(
-    runProgramEffect(
-      {
-        source,
-        timeoutMs,
-        sessionId:
-          typeof o.sessionId === "string" ? o.sessionId : process.env.CLAWQL_SESSION_ID?.trim(),
-      },
-      makeMcpProgramHost()
-    )
+    durableProgramsEnabled()
+      ? executeDurableProgramEffect(
+          {
+            source,
+            programId: typeof o.programId === "string" ? o.programId : undefined,
+            timeoutMs,
+            sessionId,
+          },
+          makeMcpProgramHost()
+        )
+      : runProgramEffect({ source: source ?? "", timeoutMs, sessionId }, makeMcpProgramHost())
   );
   return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
 }
@@ -533,12 +583,21 @@ export function registerTools(server: McpServer) {
 
   // ADR 0015 program mode v0: read-only JSON plan runner (not full OpenCode interpreter).
   if (programsEnabled()) {
-    server.tool(
-      "execute_program",
-      "Run a read-only JSON plan of parallel/sequential search+execute calls in one round trip (ADR 0015 v0 plan runner; OpenCode vendor is next). Writes never run inside a program: list them in plan.proposals and they come back resolved (with $ref values filled and the argsHash a mandate would bind) for submit_program_proposals or plain execute. Enable with CLAWQL_ENABLE_PROGRAMS=1.",
-      executeProgramToolZodShape,
-      wrapRegisteredMcpToolHandler("execute_program", handleExecuteProgramToolInput)
-    );
+    if (durableProgramsEnabled()) {
+      server.tool(
+        "execute_program",
+        "Run a read-only JSON plan of parallel/sequential search+execute calls in one round trip, durably (ADR 0015 v0 plan runner). Writes never run inside a program: list them in plan.proposals and they come back resolved (with $ref values filled and the argsHash a mandate would bind) for submit_program_proposals or plain execute. Each completed call is journaled (fsync) before the program moves on; a crashed or timed-out program resumes with execute_program { programId }: journaled calls replay and are not re-run, and a non-read call (risk policy allow) in flight when it stopped resumes as outcome_unknown. Honesty: the durable journal is a celld-shaped file (JSONL) stand-in until the celld pin hosts the isolate; not free-form JS. Enabled by CLAWQL_ENABLE_DURABLE_PROGRAMS=1.",
+        durableExecuteProgramToolZodShape,
+        wrapRegisteredMcpToolHandler("execute_program", handleExecuteProgramToolInput)
+      );
+    } else {
+      server.tool(
+        "execute_program",
+        "Run a read-only JSON plan of parallel/sequential search+execute calls in one round trip (ADR 0015 v0 plan runner; OpenCode vendor is next). Writes never run inside a program: list them in plan.proposals and they come back resolved (with $ref values filled and the argsHash a mandate would bind) for submit_program_proposals or plain execute. Enable with CLAWQL_ENABLE_PROGRAMS=1.",
+        executeProgramToolZodShape,
+        wrapRegisteredMcpToolHandler("execute_program", handleExecuteProgramToolInput)
+      );
+    }
     registeredNames.push("execute_program");
     server.tool(
       "submit_program_proposals",

@@ -70,6 +70,52 @@ describe("createRegisteredMcpServer", () => {
       else process.env.CLAWQL_ENABLE_PROGRAMS = saved;
     }
   });
+
+  it("CLAWQL_ENABLE_DURABLE_PROGRAMS registers execute_program resumable by programId, and submit_program_proposals (ADR 0015)", () => {
+    const savedPrograms = process.env.CLAWQL_ENABLE_PROGRAMS;
+    const savedDurable = process.env.CLAWQL_ENABLE_DURABLE_PROGRAMS;
+    type Registered = {
+      enabled?: boolean;
+      description?: string;
+      inputSchema?: {
+        safeParse: (value: unknown) => { success: boolean };
+        shape?: Record<string, { description?: string }>;
+      };
+    };
+    const registeredTools = (name: string) =>
+      (
+        createRegisteredMcpServer({ name, version: "0.0.0" }) as unknown as {
+          _registeredTools: Record<string, Registered>;
+        }
+      )._registeredTools;
+    const resumeOnly = { programId: "prog_0123456789abcdef" };
+    try {
+      delete process.env.CLAWQL_ENABLE_PROGRAMS;
+      process.env.CLAWQL_ENABLE_DURABLE_PROGRAMS = "1";
+      const durableTools = registeredTools("clawql-prog-durable");
+      const durable = durableTools.execute_program;
+      expect(durable).toBeDefined();
+      expect(durable?.enabled).not.toBe(false);
+      expect(durable?.description).toContain(
+        "durable journal is a celld-shaped file (JSONL) stand-in until the celld pin hosts the isolate"
+      );
+      expect(durable?.inputSchema?.safeParse(resumeOnly).success).toBe(true);
+      expect(durable?.inputSchema?.shape?.source?.description).toContain('"proposals"');
+      expect(durableTools.submit_program_proposals).toBeDefined();
+      expect(durableTools.submit_program_proposals?.enabled).not.toBe(false);
+
+      delete process.env.CLAWQL_ENABLE_DURABLE_PROGRAMS;
+      process.env.CLAWQL_ENABLE_PROGRAMS = "1";
+      const v0 = registeredTools("clawql-prog-v0").execute_program;
+      expect(v0?.description).not.toContain("durable journal");
+      expect(v0?.inputSchema?.safeParse(resumeOnly).success).toBe(false);
+    } finally {
+      if (savedPrograms === undefined) delete process.env.CLAWQL_ENABLE_PROGRAMS;
+      else process.env.CLAWQL_ENABLE_PROGRAMS = savedPrograms;
+      if (savedDurable === undefined) delete process.env.CLAWQL_ENABLE_DURABLE_PROGRAMS;
+      else process.env.CLAWQL_ENABLE_DURABLE_PROGRAMS = savedDurable;
+    }
+  });
 });
 
 describe("ensureClawqlApi / createRegisteredMcpServerAsync", () => {
