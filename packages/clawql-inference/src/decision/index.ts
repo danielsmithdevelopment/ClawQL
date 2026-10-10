@@ -70,10 +70,21 @@ export {
   makeFanoutEvalLive,
   runFanoutEval,
   parseFanoutEvalBody,
+  resolveFanoutCostPerCase,
+  spendCostsFromRows,
   type FanoutEvalRequest,
   type FanoutEvalResponse,
   type FanoutBackendReport,
 } from "./fanout-eval.js";
+
+export {
+  FanoutSpendCostService,
+  FanoutSpendCostLive,
+  buildSpendCostLookup,
+  costPerCallFromSpendRow,
+  lookupSpendCostPerCase,
+  type FanoutCostSource,
+} from "./spend-cost.js";
 
 export {
   FlipRateGateService,

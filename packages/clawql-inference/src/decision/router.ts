@@ -29,9 +29,11 @@ import {
 import {
   parseFanoutEvalBody,
   runFanoutEval,
+  spendCostsFromRows,
   type FanoutEvalRequest,
   type FanoutEvalResponse,
 } from "./fanout-eval.js";
+import { createInferenceStore } from "../store/create.js";
 import {
   parseFlipRateBody,
   runFlipRate,
@@ -497,6 +499,7 @@ async function handleFanoutEval(
   res: Response,
   options: {
     evaluate: (r: FanoutEvalRequest) => Promise<FanoutEvalResponse>;
+    env: NodeJS.ProcessEnv;
   }
 ): Promise<void> {
   const parsed = parseFanoutEvalBody(req.body);
@@ -505,7 +508,19 @@ async function handleFanoutEval(
     return;
   }
   try {
-    const result = await options.evaluate(parsed);
+    let request = parsed;
+    if (
+      parsed.costSource === "spend_ledger" &&
+      (!parsed.spendCosts || parsed.spendCosts.size === 0)
+    ) {
+      const store = createInferenceStore({ env: options.env });
+      if (store) {
+        const rows = await store.spendRollup({ groupBy: "model" });
+        const spendCosts = Effect.runSync(spendCostsFromRows(rows));
+        request = { ...parsed, spendCosts };
+      }
+    }
+    const result = await options.evaluate(request);
     res.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -567,7 +582,7 @@ export function createDecisionRouter(options: CreateDecisionRouterOptions = {}):
   );
 
   const evalHandler = (req: Request, res: Response) =>
-    void handleFanoutEval(req as VirtualKeyRequest, res, { evaluate });
+    void handleFanoutEval(req as VirtualKeyRequest, res, { evaluate, env });
   router.post("/decision/eval", evalHandler);
   router.post("/v1/decisions/eval", evalHandler);
 
