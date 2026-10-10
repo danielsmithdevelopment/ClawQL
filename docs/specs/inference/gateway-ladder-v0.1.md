@@ -20,8 +20,9 @@ Shared virtual key, budgets, WORM/audit identity across rungs.
 
 - **Canonical:** `POST /decision`
 - **Alias:** `POST /v1/systemone` (TypeSafe / Ollama / OpenRouter System One wire shape)
-- **Request:** System One `state` + `questions` (`choice` | `noul`; `score` deferred) **plus** ClawQL: `useSiteId`, and `escalation` (`mode`: `abstain` | `escalate`, optional `model`)
-- **Response:** decisions with per-option probabilities, `calibrated`, `abstained`, `escalated`, `backendId`, `traceId`
+- **Request:** System One `state` + `questions` (`choice` | `noul` | `score`) **plus** ClawQL: `useSiteId`, and `escalation` (`mode`: `abstain` | `escalate`, optional `model`)
+- **OpenAI-compatible:** `POST /v1/decisions` — see [openai-decisions-compat-v0.1.md](./openai-decisions-compat-v0.1.md)
+- **Response:** decisions with per-option probabilities (and `score` weighted level index), `calibrated`, `abstained`, `escalated`, `backendId`, `traceId`
 - **Lifecycle:** exploratory sites escalate by default and never label scores as calibrated confidence. Only `search_provider_tool_routing` ships `productionTrusted` at 8.0.0 (GLiNER Decide path). Trust does not transfer across backends.
 - **Honesty:** stub / uncalibrated backends → `calibrated: false`; never invent confidence meaning.
 
@@ -47,8 +48,9 @@ Shared virtual key, budgets, WORM/audit identity across rungs.
 
 ## `/decision` System One
 
-- Supported question types: `choice`, `noul`
-- `score` → **400** with an explicit “not supported yet” message on both `/decision` and `/v1/systemone` (no silent failure)
+- Supported question types: `choice`, `noul` (alias `predicate`), `score`
+- `score` returns a probability-weighted average of ordered level indices (OpenAI Decisions parity)
+- SDK drop-in: `POST /v1/decisions` with OpenAI request/response shapes + ClawQL trust fields
 
 ## `/events`
 
@@ -99,8 +101,9 @@ Remains the MCP HTTP process. Managed-gateway proxy routes `/mcp` → MCP upstre
 
 - Default-on enrichment (needs MaxP-style A/B)
 - Auto-capture of facts from chat traffic
-- `score` System One questions (calibrate levels before averaging)
-- Promoting Nimble / Tev1 / Jev as trusted backends (candidates only via future eval)
+- Multi-backend fan-out evaluation **disagreement_mining / live ensembles** (bulk ships — [decisions-fanout-eval-v0.1](./decisions-fanout-eval-v0.1.md))
+- Flip-rate perturbation gate before `productionTrusted`
+- Promoting Nimble / Tev1 / Jev / Microsoft-Decision-1 as trusted backends (candidates via held-out / fan-out)
 - In-process MCP inside the inference Express app
 - Full `clawql-streams` / `stream_subscribe` agent wake loop (change-detection → `stream.changed` already ships)
 - Exposing NATS / JetStream to customers (leaf nodes stay on the fabric, behind `/events`)

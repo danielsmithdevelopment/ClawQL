@@ -40,11 +40,13 @@ export function postDecision(req: Request): Effect.Effect<NextResponse, unknown,
 
     const site = body.site ?? "pii-check";
     const q = (body.question ?? body.text ?? "").toLowerCase();
+    // Score questions are supported (OpenAI Decisions / System One parity).
     if (/\bscore\b/.test(q) || q.includes("rate from")) {
-      return NextResponse.json(
-        { error: "use choice or noul", message: "use choice or noul" },
-        { status: 400 },
-      );
+      return NextResponse.json({
+        object: "clawql.decision",
+        calibrated: false,
+        answers: [{ type: "score", name: "severity", score: 1.0, abstained: false }],
+      });
     }
 
     const cfg = world.decisionSites[site] ?? {
@@ -139,10 +141,11 @@ export function getDecision(req: Request): Effect.Effect<NextResponse, unknown, 
     }
     const url = new URL(req.url);
     if (url.searchParams.get("question")?.toLowerCase().includes("score")) {
-      return NextResponse.json(
-        { error: "use choice or noul", message: "use choice or noul" },
-        { status: 400 },
-      );
+      return NextResponse.json({
+        object: "clawql.decision",
+        calibrated: false,
+        answers: [{ type: "score", name: "severity", score: 1.0 }],
+      });
     }
     const world = getWorld();
     return NextResponse.json({

@@ -1,6 +1,6 @@
 # ClawQL Cloud E2E catalog
 
-197 catalog IDs (`catalog/scenarios.ts`) exercised by Playwright under `specs/`.
+199 catalog IDs (`catalog/scenarios.ts`) exercised by Playwright under `specs/`.
 
 ## Pass-when rule (portable suite)
 
@@ -22,7 +22,7 @@ Never treat Manual NFC skips as passes.
 npm run test:e2e:cloud:catalog
 ```
 
-Fails if any catalog ID is missing from its tier’s specs, appears in the wrong tier, or is double-counted across files. That is how `37 + 158 + 2 = 197` stays honest (not “161 Nightly titles”).
+Fails if any catalog ID is missing from its tier’s specs, appears in the wrong tier, or is double-counted across files. That is how `37 + 160 + 2 = 199` stays honest (not “161 Nightly titles”).
 
 ## Production builds
 

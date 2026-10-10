@@ -5,7 +5,7 @@ import { E2eHarness, runE2eEffect } from "@/lib/managed/e2e/service";
 
 export const dynamic = "force-dynamic";
 
-/** Companion to /decision — score questions return 400 (GW-13). */
+/** Companion to /decision — score questions are supported (GW-13). */
 export async function POST(req: Request) {
   return runE2eEffect(
     Effect.gen(function* () {
@@ -19,12 +19,13 @@ export async function POST(req: Request) {
       })) as { question?: string; text?: string };
       const q = `${body.question ?? ""} ${body.text ?? ""}`.toLowerCase();
       if (/\bscore\b/.test(q)) {
-        return NextResponse.json(
-          { error: "use choice or noul", message: "use choice or noul" },
-          { status: 400 },
-        );
+        return NextResponse.json({
+          object: "clawql.decision",
+          calibrated: false,
+          answers: [{ type: "score", name: "severity", score: 1.0, abstained: false }],
+        });
       }
       return NextResponse.json({ ok: true, system: "one" });
-    }),
+    })
   );
 }
