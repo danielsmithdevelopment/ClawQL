@@ -20,8 +20,47 @@ function usage(): never {
   console.error(`Usage:
   artifacts-verify --notes <notes.jsonl>
   artifacts-verify --local-manifest <manifest.json> --bundle-dir <dir>
+  artifacts-verify --canary <status.json> [--percent 10]
   artifacts-verify <arweave-tx-id> [--gateway <url>] [--bundle-dir <dir>]`);
   process.exit(2);
+}
+
+function verifyCanaryFile(path: string, expectPercent: number): void {
+  const status = JSON.parse(readFileSync(path, "utf8")) as {
+    mode?: string;
+    strategy?: string;
+    versions?: Array<{ label: string; percentage: number }>;
+    rollbackTrigger?: string;
+  };
+  if (status.mode !== "dry-run" && status.mode !== "live") {
+    console.error("FAIL canary: mode must be dry-run or live");
+    process.exit(1);
+  }
+  if (status.strategy !== "percentage") {
+    console.error("FAIL canary: strategy must be percentage");
+    process.exit(1);
+  }
+  const canary = status.versions?.find((v) => v.label === "canary");
+  if (!canary) {
+    console.error("FAIL canary: missing canary version slice");
+    process.exit(1);
+  }
+  if (canary.percentage !== expectPercent) {
+    console.error(`FAIL canary: ${canary.percentage}% !== ${expectPercent}%`);
+    process.exit(1);
+  }
+  const previous = status.versions?.find((v) => v.label === "previous");
+  if (previous && previous.percentage + canary.percentage !== 100) {
+    console.error("FAIL canary: version percentages must total 100");
+    process.exit(1);
+  }
+  if (!status.rollbackTrigger?.includes("error_rate")) {
+    console.error("FAIL canary: rollbackTrigger must mention error_rate");
+    process.exit(1);
+  }
+  console.log(
+    `OK canary mode=${status.mode} percent=${canary.percentage} rollback=${status.rollbackTrigger}`
+  );
 }
 
 function loadBundleDir(dir: string): BundleFile[] {
@@ -53,6 +92,17 @@ async function main(argv: string[]): Promise<void> {
       process.exit(1);
     }
     console.log(`OK notes chain (${notes.length} notes)`);
+    return;
+  }
+
+  if (argv.includes("--canary")) {
+    const idx = argv.indexOf("--canary");
+    const path = argv[idx + 1];
+    if (!path) usage();
+    const pIdx = argv.indexOf("--percent");
+    const expectPercent = pIdx >= 0 ? Number(argv[pIdx + 1]) : 10;
+    if (!Number.isFinite(expectPercent)) usage();
+    verifyCanaryFile(path, expectPercent);
     return;
   }
 

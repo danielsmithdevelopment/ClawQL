@@ -15,6 +15,7 @@ Deadline: **October 14, 2026**. Artifacts billing starts October 15 (Workers Pai
 cd artifacts-attempts
 npm ci
 npm test
+npm run demo:judge-smoke   # optional fast check
 npm run demo:record-prep   # 3 consecutive verified local demos
 ```
 

@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { writeCanaryStatus } from "./canary.js";
+import { assertCanaryStatus, writeCanaryStatus } from "./canary.js";
 
 const roots: string[] = [];
 afterEach(() => {
@@ -29,5 +29,7 @@ describe("writeCanaryStatus", () => {
     ]);
     expect(status.rollbackTrigger).toBe("error_rate > 1%");
     expect(JSON.parse(readFileSync(path, "utf8")).versions[1].percentage).toBe(10);
+    expect(assertCanaryStatus(status)).toEqual({ ok: true });
+    expect(assertCanaryStatus(status, { expectPercent: 25 }).ok).toBe(false);
   });
 });

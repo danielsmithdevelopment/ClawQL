@@ -1,6 +1,6 @@
 # Demo video checklist (5–10 min)
 
-Record only after `npm run demo:local` succeeds **three times in a row**. Every scene is a live run or a screen recording of one — no mocked steps.
+Record only after `npm run demo:record-prep` (or `demo:gate`) prints **GATE PASS**. Every scene is a live run or a screen recording of one — no mocked steps. Judges can warm up with `npm run demo:judge-smoke`.
 
 ## Scenes
 

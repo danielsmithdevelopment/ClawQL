@@ -15,6 +15,16 @@ Apache-2.0. No mocked pipeline steps in the demo path: local mode uses **real gi
 
 ## Local demo (default for judges without CF)
 
+### 5-minute path
+
+```bash
+cd artifacts-attempts
+npm ci
+npm run demo:judge-smoke   # one demo + verify notes/manifest/canary
+```
+
+### Full path (recording / thorough)
+
 ```bash
 cd artifacts-attempts
 npm ci
@@ -47,6 +57,8 @@ Canary dry-run (same numbers the board shows after `board:hydrate`):
 
 ```bash
 cat .local/demo-run/.local/canary/status.json
+# or:
+node cli/verify/dist/cli.js --canary .local/demo-run/.local/canary/status.json
 # expect mode dry-run, canary 10%, rollbackTrigger mentions error_rate
 ```
 
