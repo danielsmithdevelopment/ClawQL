@@ -39,6 +39,8 @@ export { MCP_OAUTH_PROTECTED_RESOURCE_PATH };
 export const ID_JAG_ISSUER_JWKS_PATH = "/.well-known/id-jag-jwks.json";
 export const ID_JAG_ISSUE_PATH = "/oauth/id-jag/issue";
 export const MCP_OAUTH_CLIENTS_ADMIN_PATH = "/oauth/ema/clients";
+/** Admin DELETE for MCP OAuth §2 grant-as-key (`mgr_*` virtualKeyId). */
+export const MCP_OAUTH_GRANTS_ADMIN_PATH = "/oauth/grants";
 
 export type McpOAuthAdminAuth = {
   /** Static `CLAWQL_API_KEY` (legacy). */
@@ -76,6 +78,11 @@ export type AttachMcpOAuthRoutesOptions = {
   mcpClientsAdmin?: McpOAuthAdminAuth & {
     registry: SecretStoreMcpClientRegistry;
   };
+  /**
+   * When set (and AS has grant-as-key), enables
+   * `DELETE /oauth/grants/:virtualKeyId` to end a live §2 grant.
+   */
+  grantAdmin?: McpOAuthAdminAuth;
   /** Include minimal OAuth AS discovery at GET /.well-known/oauth-authorization-server */
   wellKnown?: {
     issuer: string;
@@ -863,6 +870,28 @@ export function attachMcpOAuthRoutes(
       void assertMcpOAuthAdmin(req, res, admin).then((ok) => {
         if (!ok) return;
         void Effect.runPromise(registry.deleteClient(routeParam(req, "clientId")))
+          .then(() => res.status(204).end())
+          .catch((err: unknown) => {
+            oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
+          });
+      });
+    });
+  }
+
+  if (server && options.grantAdmin) {
+    const grantAdmin = options.grantAdmin;
+    const grantsBase = MCP_OAUTH_GRANTS_ADMIN_PATH;
+
+    app.delete(`${grantsBase}/:virtualKeyId`, mcpOAuthRouteRateLimit, (req, res) => {
+      if (!enforceMcpOAuthRateLimit(req, res)) return;
+      void assertMcpOAuthAdmin(req, res, grantAdmin).then((ok) => {
+        if (!ok) return;
+        const virtualKeyId = routeParam(req, "virtualKeyId");
+        if (!virtualKeyId.startsWith("mgr_")) {
+          oauthError(res, 400, "invalid_request", "virtualKeyId_must_be_mgr_grant");
+          return;
+        }
+        void Effect.runPromise(server.revokeGrant(virtualKeyId))
           .then(() => res.status(204).end())
           .catch((err: unknown) => {
             oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));

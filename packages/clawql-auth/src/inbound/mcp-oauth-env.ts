@@ -419,6 +419,8 @@ export function createMcpOAuthForTests(input: {
   eventSink?: AuthEventSink;
   /** When true, wires RFC 8628 device flow (store + verification URI). */
   deviceFlow?: boolean | { verificationUri: string };
+  /** When true, wires SecretStore-backed MCP OAuth §2 grant-as-key. */
+  grantAsKey?: boolean;
 }): Effect.Effect<McpOAuthRuntime> {
   return Effect.gen(function* () {
     const secretStore = createMemorySecretStore();
@@ -447,6 +449,9 @@ export function createMcpOAuthForTests(input: {
       authCodeStore: createMemoryMcpAuthorizationCodeStore(),
       accessTokenStore: createSecretStoreMcpAccessTokenStore(secretStore),
       eventSink: input.eventSink,
+      ...(input.grantAsKey
+        ? { grantKeyStore: createSecretStoreMcpGrantKeyStore(secretStore) }
+        : {}),
       ...(deviceFlowEnabled
         ? {
             deviceCodeStore: createMemoryDeviceCodeStore(),
