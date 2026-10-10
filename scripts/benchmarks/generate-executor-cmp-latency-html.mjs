@@ -62,6 +62,7 @@ function buildChartEnvelope(report) {
       label: "Executor execute (no-op)",
       p50_ms: execArm.noop.p50_ms,
       p95_ms: execArm.noop.p95_ms,
+      p99_ms: execArm.noop.p99_ms ?? execArm.noop.max_ms,
       band_low_ms: execArm.noop.min_ms,
       band_high_ms: execArm.noop.p95_ms,
       endpoint: execArm.endpoint,
@@ -72,8 +73,11 @@ function buildChartEnvelope(report) {
   }
 
   const clawqlP50 = clawqlExecute.p50_ms;
+  const clawqlP99 = clawqlExecute.p99_ms ?? clawqlExecute.max_ms;
   const ratio =
     clawqlP50 > 0 ? Number((executorSeries.p50_ms / clawqlP50).toFixed(2)) : null;
+  const execHigh = executorSeries.band_high_ms ?? executorSeries.p50_ms;
+  const p99BeatsExecutorHigh = clawqlP99 != null && clawqlP99 < execHigh;
 
   return {
     suite: "executor-cmp-latency-chart",
@@ -81,12 +85,15 @@ function buildChartEnvelope(report) {
     measuredAt: report.measuredAt,
     host: report.host,
     config: report.config,
+    pathFlags: report.pathFlags ?? null,
     series: {
       clawql_execute: {
         source: "live",
         label: "ClawQL execute",
         p50_ms: clawqlExecute.p50_ms,
         p95_ms: clawqlExecute.p95_ms,
+        p99_ms: clawqlP99,
+        max_ms: clawqlExecute.max_ms,
         band_low_ms: clawqlExecute.min_ms,
         band_high_ms: clawqlExecute.p95_ms,
         citation: "MCP stdio → listPets against local mock (same host)",
@@ -96,6 +103,7 @@ function buildChartEnvelope(report) {
         label: "ClawQL audit (local)",
         p50_ms: clawqlAudit.p50_ms,
         p95_ms: clawqlAudit.p95_ms,
+        p99_ms: clawqlAudit.p99_ms ?? clawqlAudit.max_ms,
       },
       clawql_overhead: overhead
         ? {
@@ -110,9 +118,11 @@ function buildChartEnvelope(report) {
     },
     headline: {
       clawql_p50_ms: clawqlP50,
+      clawql_p99_ms: clawqlP99,
       executor_p50_ms: executorSeries.p50_ms,
       ratio_executor_over_clawql: ratio,
       executor_source: executorSeries.source,
+      p99_beats_executor_band_high: p99BeatsExecutorHigh,
     },
     honesty: {
       ...report.honesty,
@@ -122,6 +132,10 @@ function buildChartEnvelope(report) {
           : "Executor bar is live no-op execute on this host.",
       notTokenFlamegraph:
         "Distinct from /mcp-ui/trace/compare/executor (token context). This page is wall-clock ms.",
+      p99VsExecutor:
+        p99BeatsExecutorHigh
+          ? `ClawQL p99 ${clawqlP99}ms stays under the Executor reference high (${execHigh}ms).`
+          : `ClawQL p99 ${clawqlP99}ms exceeds the Executor reference high (${execHigh}ms) — with n=${report.config?.iters ?? "?"}, p99≈max from one outlier; p50/p95 still win.`,
     },
   };
 }
@@ -264,6 +278,9 @@ function renderHtml(chart) {
       font-size: 0.88rem;
       background: rgba(255,255,255,0.55);
     }
+    .honesty ul { margin: 0.45rem 0 0; padding-left: 1.1rem; }
+    .honesty li { margin: 0.3rem 0; }
+    .warn { color: #92400e; }
     .links { margin-top: 1.5rem; font-size: 0.9rem; color: var(--muted); }
     .links a { color: var(--claw); }
     @media (max-width: 640px) {
@@ -302,6 +319,7 @@ function renderHtml(chart) {
       </div>
       <div class="score">
         <div>ClawQL p50 <strong>${claw.p50_ms.toFixed(1)}ms</strong></div>
+        <div>ClawQL p99 <strong class="${chart.headline.p99_beats_executor_band_high ? "" : "warn"}">${claw.p99_ms != null ? claw.p99_ms.toFixed(1) : "—"}ms</strong></div>
         <div>Executor p50 <strong>${exec.p50_ms.toFixed(0)}ms</strong></div>
         <div>Ratio <strong>${escapeHtml(ratioLabel)}</strong></div>
         ${
@@ -312,12 +330,20 @@ function renderHtml(chart) {
       </div>
     </section>
 
-    <p class="honesty">
-      ${escapeHtml(chart.honesty.executorReference)}
-      ClawQL measured ${escapeHtml(chart.measuredAt)} (${escapeHtml(chart.host?.platform ?? "")}/${escapeHtml(chart.host?.arch ?? "")}, Node ${escapeHtml(chart.host?.node ?? "")}).
-      ${exec.source === "reference" ? `Citation: <a href="${escapeHtml(exec.url)}">${escapeHtml(exec.citation)}</a>.` : escapeHtml(exec.citation || "")}
-      Distinct from <a href="https://clawql.com/mcp-ui/trace/compare/executor">token compare</a>.
-    </p>
+    <div class="honesty">
+      <div><strong>Honesty</strong> — ${escapeHtml(chart.honesty.p99VsExecutor)}</div>
+      <ul>
+        <li>${escapeHtml(chart.honesty.executorReference)}</li>
+        <li>${escapeHtml(chart.honesty.workloadMismatch || chart.honesty.applesToApples || "")}</li>
+        <li>${escapeHtml(chart.honesty.notFullEnterprisePath || "")}</li>
+        <li>${escapeHtml(chart.honesty.p99Caveat || "")}</li>
+      </ul>
+      <p style="margin:0.65rem 0 0">
+        ClawQL measured ${escapeHtml(chart.measuredAt)} (${escapeHtml(chart.host?.platform ?? "")}/${escapeHtml(chart.host?.arch ?? "")}, Node ${escapeHtml(chart.host?.node ?? "")}).
+        ${exec.source === "reference" ? `Citation: <a href="${escapeHtml(exec.url)}">${escapeHtml(exec.citation)}</a>.` : escapeHtml(exec.citation || "")}
+        Distinct from <a href="https://clawql.com/mcp-ui/trace/compare/executor">token compare</a>.
+      </p>
+    </div>
 
     <p class="links">
       <a href="./latency.json">latency.json</a> ·

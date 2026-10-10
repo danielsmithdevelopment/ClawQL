@@ -75,29 +75,21 @@ LATENCY_ITERS=40 MOCK_DELAY_MS=5 \
 
 Artifact: `executor-cmp-latency.json` (n=25, mock delay 0, `CLAWQL_CAPABILITY_LIFECYCLE=0`).
 
-<<<<<<< HEAD
+| Arm | p50 | p95 | p99 |
+| --- | ---: | ---: | ---: |
+| ClawQL `audit` (gateway-only) | **1.7 ms** | 34.9 ms | 41.2 ms |
+| ClawQL `execute` → local mock | **8.4 ms** | 17.5 ms | **137.1 ms** |
+| Direct `fetch` same mock | 0.5 ms | 1.1 ms | 1.9 ms |
+| **Derived gateway overhead** (execute − direct) | **~8.0 ms** | ~16.4 ms | — |
+| Executor (chart) | **75 ms** mid of **50–100 ms** reference band | — | — |
 
-| Arm                                             |                                                     p50 |      p95 |
-| ----------------------------------------------- | ------------------------------------------------------: | -------: |
-| ClawQL `audit` (gateway-only)                   |                                              **1.7 ms** |  34.9 ms |
-| ClawQL `execute` → local mock                   |                                              **8.4 ms** |  17.5 ms |
-| Direct `fetch` same mock                        |                                                  0.5 ms |   1.1 ms |
-| **Derived gateway overhead** (execute − direct) |                                             **~8.0 ms** | ~16.4 ms |
-| Executor no-op                                  | _not wired_ (`EXECUTOR_BIN` / `EXECUTOR_MCP_URL` unset) |          |
-| =======                                         |
-| Arm                                             |                                                     p50 |      p95 |
-| ---                                             |                                                    ---: |     ---: |
-| ClawQL `audit` (gateway-only)                   |                                              **1.7 ms** |  34.9 ms |
-| ClawQL `execute` → local mock                   |                                              **8.4 ms** |  17.5 ms |
-| Direct `fetch` same mock                        |                                                  0.5 ms |   1.1 ms |
-| **Derived gateway overhead** (execute − direct) |                                             **~8.0 ms** | ~16.4 ms |
-| Executor (chart)                                |           **75 ms** mid of **50–100 ms** reference band |        — |
+**p99 honesty:** With n=25, p99 ≈ max. Execute has **one** 137ms sample (1/25); the other 24 stay ≤17.5ms. That single outlier is **above** the Executor reference high (100ms), so we do **not** claim a p99 win. p50/p95 still beat the reference band.
 
-> > > > > > > de5c8344 (feat(bench): shareable ClawQL vs Executor latency bar chart)
+**Not a full enterprise path / not same work:** Harness uses `CLAWQL_CAPABILITY_LIFECYCLE=0`, optional tools off, no `CLAWQL_WORM_ENABLED`, no `panguard-mcp-proxy` / JWT-ATR hop. MCP wrap still runs HookRegistry pre-hooks + ephemeral ring audit; `execute` skips durable process WORM. ClawQL arm = live MCP → local mock HTTP; Executor chart = published warm band (or wired no-op JS, no upstream). Directional, not a controlled same-workload A/B.
 
 **Shareable same-graph page:** [clawql.com/benchmarks/executor-comparison/latency.html](https://clawql.com/benchmarks/executor-comparison/latency.html) · regenerate with `npm run generate:executor-cmp-latency-html`.
 
-**Verdict on this host:** ClawQL tool-call overhead is **single-digit milliseconds**, not 100ms+. The flamegraph demo’s 120ms total was a **synthetic fixture**. The Executor bar uses the public warm self-host band ([executor#1519](https://github.com/UsefulSoftwareCo/executor/issues/1519)) until `EXECUTOR_BIN` / `EXECUTOR_MCP_URL` is wired for a same-host live arm. Schema-decode microbench (`scripts/release/measure-gateway-hotpath.mts`) is sub-millisecond and is **not** product latency.
+**Verdict on this host:** ClawQL tool-call **p50** overhead is **single-digit milliseconds**, not 100ms+. The flamegraph demo’s 120ms total was a **synthetic fixture**. The Executor bar uses the public warm self-host band ([executor#1519](https://github.com/UsefulSoftwareCo/executor/issues/1519)) until `EXECUTOR_BIN` / `EXECUTOR_MCP_URL` is wired for a same-host live arm. Schema-decode microbench (`scripts/release/measure-gateway-hotpath.mts`) is sub-millisecond and is **not** product latency.
 
 ## Methodology
 

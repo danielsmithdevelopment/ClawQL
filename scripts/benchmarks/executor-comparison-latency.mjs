@@ -57,6 +57,8 @@ function summarize(samples) {
     n: sorted.length,
     p50_ms: Number(percentile(sorted, 50).toFixed(3)),
     p95_ms: Number(percentile(sorted, 95).toFixed(3)),
+    // With small n, p99 collapses to max (ceil(0.99*n)-1 → last index).
+    p99_ms: Number(percentile(sorted, 99).toFixed(3)),
     mean_ms: Number((sum / sorted.length).toFixed(3)),
     min_ms: Number(sorted[0].toFixed(3)),
     max_ms: Number(sorted[sorted.length - 1].toFixed(3)),
@@ -141,6 +143,8 @@ function clawqlEnv(measureHome, specPath, apiBase) {
     CLAWQL_BUNDLED_OFFLINE: "1",
     CLAWQL_TIER: "gateway",
     // Latency microbench: measure gateway+HTTP, not capability-lifecycle denials.
+    // Not a production enterprise path: no durable WORM, no Panguard sidecar,
+    // lifecycle off (avoids CAPABILITY_WRITE_INTERCEPTED without grants).
     CLAWQL_CAPABILITY_LIFECYCLE: "0",
     CLAWQL_ENABLE_MEMORY: "0",
     CLAWQL_ENABLE_DOCUMENTS: "0",
@@ -152,6 +156,7 @@ function clawqlEnv(measureHome, specPath, apiBase) {
     CLAWQL_ENABLE_GOOGLE: "0",
     CLAWQL_ENABLE_AWS: "0",
   };
+  // Leave CLAWQL_WORM_ENABLED unset (off) — execute wrap already skips process WORM.
   for (const key of [
     "CLAWQL_PROVIDER",
     "CLAWQL_BUNDLED_PROVIDERS",
@@ -380,6 +385,24 @@ async function main() {
           "docs/benchmarks/executor-comparison/executor-cmp-*.json measure tokens, not wall clock.",
         applesToApples:
           "Compare clawql_audit_append (local) and clawql_execute overhead vs executor_execute_noop when wired.",
+        notFullEnterprisePath:
+          "Harness sets CLAWQL_CAPABILITY_LIFECYCLE=0 and optional tools off. " +
+          "MCP wrap still runs HookRegistry pre-hooks + ephemeral ring audit, but execute skips durable " +
+          "process WORM, WORM is not enabled, and there is no panguard-mcp-proxy / JWT-ATR sidecar hop.",
+        workloadMismatch:
+          "ClawQL arm is live MCP execute → local mock HTTP. Executor chart bar is a published warm " +
+          "50–100ms reference (or, when wired, a no-op JS execute with no upstream). Not the same work.",
+        p99Caveat:
+          "With small n, p99 ≈ max. A single GC/scheduling outlier can exceed the Executor reference high.",
+      },
+      pathFlags: {
+        CLAWQL_TIER: "gateway",
+        CLAWQL_CAPABILITY_LIFECYCLE: "0",
+        CLAWQL_WORM_ENABLED: "unset",
+        panguard_sidecar: false,
+        durable_worm_on_execute: false,
+        ephemeral_ring_audit: true,
+        hook_registry_pre_call: true,
       },
       arms: {
         clawql_audit_append: clawql.audit,

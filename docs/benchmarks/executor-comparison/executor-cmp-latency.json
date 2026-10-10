@@ -14,7 +14,10 @@
   "honesty": {
     "flamegraphDemo120ms": "Synthetic fixture in clawql-observability demo-mcp-execute — NOT a measured ClawQL p50.",
     "tokenBenchmarks": "docs/benchmarks/executor-comparison/executor-cmp-*.json measure tokens, not wall clock.",
-    "applesToApples": "Compare clawql_audit_append (local) and clawql_execute overhead vs executor_execute_noop when wired."
+    "applesToApples": "Compare clawql_audit_append (local) and clawql_execute overhead vs executor_execute_noop when wired.",
+    "notFullEnterprisePath": "Harness sets CLAWQL_CAPABILITY_LIFECYCLE=0 and optional tools off. MCP wrap still runs HookRegistry pre-hooks + ephemeral ring audit, but execute skips durable process WORM, WORM is not enabled, and there is no panguard-mcp-proxy / JWT-ATR sidecar hop.",
+    "workloadMismatch": "ClawQL arm is live MCP execute → local mock HTTP. Executor chart bar is a published warm 50–100ms reference (or, when wired, a no-op JS execute with no upstream). Not the same work.",
+    "p99Caveat": "With small n, p99 ≈ max. A single GC/scheduling outlier can exceed the Executor reference high."
   },
   "arms": {
     "clawql_audit_append": {
@@ -51,7 +54,8 @@
         2.476,
         0.703,
         0.69
-      ]
+      ],
+      "p99_ms": 41.19
     },
     "clawql_execute_listPets": {
       "label": "clawql_execute_listPets",
@@ -87,7 +91,8 @@
         7.026,
         7.46,
         7.269
-      ]
+      ],
+      "p99_ms": 137.125
     },
     "direct_http_mock": {
       "label": "direct_http_mock",
@@ -123,7 +128,8 @@
         0.379,
         0.464,
         0.552
-      ]
+      ],
+      "p99_ms": 1.895
     },
     "executor": {
       "wired": false,
@@ -146,5 +152,14 @@
     "mean_ms": 0.112,
     "min_ms": 0.101,
     "max_ms": 0.172
+  },
+  "pathFlags": {
+    "CLAWQL_TIER": "gateway",
+    "CLAWQL_CAPABILITY_LIFECYCLE": "0",
+    "CLAWQL_WORM_ENABLED": "unset",
+    "panguard_sidecar": false,
+    "durable_worm_on_execute": false,
+    "ephemeral_ring_audit": true,
+    "hook_registry_pre_call": true
   }
 }
