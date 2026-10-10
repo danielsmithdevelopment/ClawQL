@@ -24,6 +24,7 @@
     "demo:record-prep": "npx tsx scripts/record-prep.ts",
     "board:serve": "npx tsx scripts/local-api-server.ts",
     "board:hydrate": "npx tsx scripts/hydrate-board.ts",
+    "board:hydrate-from": "npx tsx scripts/hydrate-from.ts",
     "verify": "node cli/verify/dist/cli.js"
   },
   "engines": {

@@ -1,11 +1,13 @@
 #!/usr/bin/env npx tsx
 import { join } from "node:path";
 import { runLocalDemo } from "@artifacts-attempts/pipeline";
+import { toBoardTaskView, writeDemoSnapshot } from "./board-view.js";
 
 const root = process.env.ATTEMPTS_LOCAL_ROOT ?? join(process.cwd(), ".local/demo-run");
 const mode = process.env.DECISIONS_MODE === "openai" ? "openai" : "calibrated";
 
 const result = await runLocalDemo({ root, decisionsMode: mode, approveIfNeeded: true });
+const snapPath = writeDemoSnapshot(root, result, toBoardTaskView(result));
 console.log(
   JSON.stringify(
     {
@@ -21,9 +23,11 @@ console.log(
       notesPath: result.notesPath,
       canaryPercent: result.canaryPercent,
       canaryStatusPath: result.canaryStatusPath,
+      snapshot: snapPath,
       verifyNotes: `node cli/verify/dist/cli.js --notes ${result.notesPath}`,
       verifyRelease: `node cli/verify/dist/cli.js --local-manifest ${result.manifestPath} --bundle-dir <main-wt files>`,
-      board: "npm run board:serve && npm run board:hydrate",
+      verifyCanary: `node cli/verify/dist/cli.js --canary ${result.canaryStatusPath}`,
+      board: "npm run board:serve && npm run board:hydrate-from",
     },
     null,
     2

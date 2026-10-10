@@ -21,7 +21,7 @@ record-prep OK — you may record.
 
 Next:
   1. npm run board:serve
-  2. npm run board:hydrate   (or demo:approval-path for the approval scene)
+  2. npm run board:hydrate-from   (or board:hydrate / demo:approval-path)
   3. Show .local/demo-gate/run-3/.local/canary/status.json (or board canary panel)
   4. Follow docs/VIDEO_SCRIPT.md
   5. Submit per docs/SUBMISSION.md

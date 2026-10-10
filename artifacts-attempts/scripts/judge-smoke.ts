@@ -10,6 +10,7 @@ import { execFileSync } from "node:child_process";
 import { copyFileSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { assertCanaryStatus, runLocalDemo, type CanaryStatus } from "@artifacts-attempts/pipeline";
+import { toBoardTaskView, writeDemoSnapshot } from "./board-view.js";
 
 const root = process.env.ATTEMPTS_LOCAL_ROOT ?? join(process.cwd(), ".local/judge-smoke");
 
@@ -57,6 +58,7 @@ async function main(): Promise<void> {
   const canary = JSON.parse(readFileSync(result.canaryStatusPath, "utf8")) as CanaryStatus;
   const check = assertCanaryStatus(canary);
   if (!check.ok) throw new Error(check.reason);
+  const snapPath = writeDemoSnapshot(root, result, toBoardTaskView(result));
 
   console.log(
     JSON.stringify(
@@ -68,7 +70,8 @@ async function main(): Promise<void> {
         notesPath: result.notesPath,
         manifestPath: result.manifestPath,
         canaryStatusPath: result.canaryStatusPath,
-        board: "npm run board:serve && npm run board:hydrate",
+        snapshot: snapPath,
+        board: `npm run board:serve && ATTEMPTS_LOCAL_ROOT=${root} npm run board:hydrate-from`,
         next: ["docs/JUDGE_RUNBOOK.md", "docs/VIDEO_SCRIPT.md", "npm run demo:record-prep"],
       },
       null,
