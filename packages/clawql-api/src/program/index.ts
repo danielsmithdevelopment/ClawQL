@@ -1,4 +1,7 @@
+export * from "./durable-runner.js";
 export * from "./program-caps.js";
+export * from "./program-ifc.js";
+export * from "./program-journal.js";
 export * from "./program-mode.js";
 export * from "./program-plan.js";
 export * from "./program-proposal-store.js";

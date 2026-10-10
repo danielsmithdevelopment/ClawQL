@@ -118,6 +118,8 @@ export type DurableProgramDiagnostics = {
   readonly resumed: boolean;
   readonly replayedCalls: number;
   readonly executedCalls: number;
+  /** Writes in flight when an earlier attempt stopped — reported, never re-run. */
+  readonly outcomeUnknownCalls: number;
   readonly journaledCalls: number;
   /** Wall clock of the first attempt (a journaled nondeterministic value). */
   readonly startedAt?: string;
