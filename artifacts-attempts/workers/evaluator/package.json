@@ -1,0 +1,14 @@
+{
+  "name": "@artifacts-attempts/worker-evaluator",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@artifacts-attempts/notes": "0.1.0",
+    "@artifacts-attempts/shared": "0.1.0"
+  }
+}
