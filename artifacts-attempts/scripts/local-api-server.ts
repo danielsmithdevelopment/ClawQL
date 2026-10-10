@@ -13,7 +13,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
-import { dispatchTool, type ToolContext } from "@artifacts-attempts/mcp-tools";
+import { dispatchTool, TOOL_NAMES, type ToolContext } from "@artifacts-attempts/mcp-tools";
 import { shouldAutoMerge, type DecisionResponse } from "@artifacts-attempts/shared";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -181,6 +181,24 @@ async function handler(req: IncomingMessage, res: ServerResponse): Promise<void>
     view.task = { ...view.task, status: "failed" };
     put(view);
     sendJson(res, { ok: true, status: "failed" });
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/mcp/tools") {
+    sendJson(res, {
+      tools: TOOL_NAMES.map((name) => ({
+        name,
+        description:
+          name === "task_get"
+            ? "Task prompt, base commit, caller fork"
+            : name === "attempt_status"
+              ? "Each attempt status + latest evidence summary"
+              : name === "evidence_get"
+                ? "Full evidence note for a commit"
+                : "Claim file paths to surface overlap early",
+      })),
+      note: "Also callable via ClawQL gateway if configured; demo does not require it.",
+    });
     return;
   }
 

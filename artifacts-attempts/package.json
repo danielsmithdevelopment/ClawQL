@@ -18,6 +18,7 @@
     "test:notes": "npm run test -w @artifacts-attempts/notes",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "demo:local": "npx tsx scripts/run-local-demo.ts",
+    "demo:gate": "npx tsx scripts/demo-gate.ts",
     "board:serve": "npx tsx scripts/local-api-server.ts",
     "board:hydrate": "npx tsx scripts/hydrate-board.ts",
     "verify": "node cli/verify/dist/cli.js"

@@ -36,11 +36,11 @@ describe("local demo pipeline", () => {
       const files = [
         {
           path: "delivery.js",
-          bytes: readFileSync(join(root, "artifacts/main-wt/src/delivery.js")),
+          bytes: readFileSync(join(root, "main-wt/src/delivery.js")),
         },
         {
           path: "package.json",
-          bytes: readFileSync(join(root, "artifacts/main-wt/package.json")),
+          bytes: readFileSync(join(root, "main-wt/package.json")),
         },
       ];
       expect(verifyBundleAgainstManifest(manifest, files)).toEqual({ ok: true });

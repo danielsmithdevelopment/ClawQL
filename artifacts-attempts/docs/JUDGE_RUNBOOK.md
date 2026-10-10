@@ -20,9 +20,12 @@ cd artifacts-attempts
 npm ci
 npm test                 # packages + local pipeline
 npm run demo:local       # full run → .local/demo-run
+npm run demo:gate        # optional: 3 consecutive verified runs
 npm run board:serve      # terminal A — http://127.0.0.1:8787/
 npm run board:hydrate    # terminal B — POSTs TaskView, prints board URL
 ```
+
+Agent tools: `GET http://127.0.0.1:8787/mcp/tools` · Approval UI: `/approve.html?task=…`
 
 Open the printed `/?task=tsk_demo` URL. You should see three attempts, `att_3` blocked, winner `att_1`, task `released`.
 
@@ -38,7 +41,7 @@ node cli/verify/dist/cli.js \
   --bundle-dir <see manifest artifacts paths / main-wt files>
 ```
 
-After `demo:local`, the dry-run manifest path is printed / under `.local/demo-run/.local/arweave/<id>/manifest.json`. Bundle files used in the demo are `artifacts/main-wt/src/delivery.js` and `package.json` (paths relative to the demo root).
+After `demo:local`, the dry-run manifest path is printed / under `.local/demo-run/.local/arweave/<id>/manifest.json`. Bundle files used in the demo are `main-wt/src/delivery.js` and `main-wt/package.json` (paths relative to the demo root).
 
 ### What “real” means here
 
