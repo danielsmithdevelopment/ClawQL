@@ -5,6 +5,7 @@ export {
   ensureDir,
   gitClone,
   headCommit,
+  rejectLeadingDoubleDash,
   runGit,
   sanitizeGitArgs,
 } from "./git.js";

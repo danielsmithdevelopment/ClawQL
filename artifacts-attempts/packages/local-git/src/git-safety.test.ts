@@ -12,8 +12,8 @@ describe("git safety", () => {
     expect(assertSafeName("tsk_demo-att_1")).toBe("tsk_demo-att_1");
   });
 
-  it("sanitizeGitArgs rejects --upload-pack", () => {
-    expect(() => sanitizeGitArgs(["clone", "--upload-pack=evil", "a", "b"])).toThrow(/forbidden/);
+  it("sanitizeGitArgs rejects --upload-pack via DoubleDash guard", () => {
+    expect(() => sanitizeGitArgs(["clone", "--upload-pack=evil", "a", "b"])).toThrow(/starts with --/);
     expect(sanitizeGitArgs(["clone", "--mirror", "--", "/tmp/a.git", "/tmp/b"])).toEqual([
       "clone",
       "--mirror",
