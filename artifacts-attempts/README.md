@@ -16,22 +16,21 @@ Apache-2.0. No private Ontologiql code. Nothing personal goes into a release.
 8. Workers gradual deploy at the manifest canary %  
 9. Live board page
 
-## Day-1 status
+## Status
 
-See [`DAY1.md`](./DAY1.md) for the six Artifacts constraint checks and locked product decisions.
+- Day 1 checks + packages: [`DAY1.md`](./DAY1.md)  
+- Day 2 local pipeline (no Cloudflare creds): [`DAY2.md`](./DAY2.md)
 
-Shipped today (local witnesses):
+### Run the local demo (real git notes + vitest + dry-run release)
 
-- `packages/notes` — RFC 8785 evidence hash chain + tests  
-- `packages/manifest` — Merkle release manifest + tests  
-- `packages/artifacts-client` — binding + REST + memory test double  
-- `packages/shared` — Task/Attempt contracts + trust rule  
-- `cli/verify` — `--notes` / `--local-manifest` / Arweave fetch  
-- `demo/webhooks-service` — real retry-storm bug + suite  
-- Worker skeletons: api, coordinator, intake, evaluator, decider, merge-queue, release  
-- Replay patches under `demo/fixtures/patches/`
+```bash
+cd artifacts-attempts
+npm ci
+npm test                 # includes local-git + pipeline
+npm run demo:local       # one full pipeline run under .local/demo-run
+```
 
-Not yet (Days 2–5): live Artifacts forks, Sandbox test runs, DO storage, Arweave upload, e2e against real witnesses, demo video.
+Live Cloudflare Artifacts / Turbo Arweave remain gated on account credentials (`ATTEMPTS_E2E=1`).
 
 ## Decisions for judges
 

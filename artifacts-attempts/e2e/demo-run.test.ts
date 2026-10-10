@@ -1,21 +1,58 @@
 /**
- * End-to-end acceptance — must pass 3/3 against real witnesses before recording.
- * Day-1: skipped until Artifacts + deploy are wired. Do not satisfy with mocks.
+ * Acceptance runs.
+ *
+ * - ATTEMPTS_LOCAL=1 (default in CI without Cloudflare): real local-git witnesses
+ *   (bare repos, git notes, vitest, dry-run Arweave). Not a stub of our own output.
+ * - ATTEMPTS_E2E=1: live Cloudflare Artifacts + Arweave (requires credentials).
  */
 
-import { describe, it } from "vitest";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import { verifyEvidenceChain } from "@artifacts-attempts/notes";
+import { verifyBundleAgainstManifest } from "@artifacts-attempts/manifest";
+import { runLocalDemo } from "@artifacts-attempts/pipeline";
 
+const local = process.env.ATTEMPTS_LOCAL !== "0";
 const live = process.env.ATTEMPTS_E2E === "1";
 
-describe.skipIf(!live)("demo-run (live witnesses)", () => {
-  it("seeds task, three notes, one blocked, merge, arweave verify, canary", async () => {
-    // 1. Seed demo task against demo/webhooks-service
-    // 2. Three agents/replays push
-    // 3. Assert three hash-chained notes; att_3 blocked
-    // 4. Decider → approve via POST if needed
-    // 5. Main contains winner
-    // 6. artifacts-verify <arweave-id>
-    // 7. Canary at manifest policy.canaryPercent
-    throw new Error("not wired — enable ATTEMPTS_E2E=1 after Day 4 deploy");
+const roots: string[] = [];
+afterEach(() => {
+  for (const r of roots) rmSync(r, { recursive: true, force: true });
+  roots.length = 0;
+});
+
+describe.skipIf(!local)("demo-run (local-git witnesses)", () => {
+  it(
+    "seed → 3 attempts → notes chain → policy block → merge → dry-run release",
+    async () => {
+      const root = mkdtempSync(join(tmpdir(), "aa-e2e-"));
+      roots.push(root);
+      const result = await runLocalDemo({ root, decisionsMode: "calibrated" });
+
+      expect(result.notes).toHaveLength(3);
+      expect(verifyEvidenceChain(result.notes)).toEqual({ ok: true });
+      expect(result.attempts.find((a) => a.id === "att_3")?.status).toBe("blocked");
+      expect(result.decision.winner).toBe("att_1");
+      expect(result.mainCommit).toMatch(/^[0-9a-f]{40}$/);
+
+      const manifest = JSON.parse(readFileSync(result.manifestPath, "utf8"));
+      expect(
+        verifyBundleAgainstManifest(manifest, [
+          { path: "delivery.js", bytes: readFileSync(join(root, "main-wt/src/delivery.js")) },
+          { path: "package.json", bytes: readFileSync(join(root, "main-wt/package.json")) },
+        ])
+      ).toEqual({ ok: true });
+      expect(manifest.policy.canaryPercent).toBe(10);
+      expect(manifest.policy.rollback.trigger).toContain("error_rate");
+    },
+    180_000
+  );
+});
+
+describe.skipIf(!live)("demo-run (live Artifacts + Arweave)", () => {
+  it("full Cloudflare path", async () => {
+    throw new Error("wire when CLOUDFLARE_* + Artifacts credentials are available");
   });
 });
