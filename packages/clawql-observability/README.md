@@ -146,8 +146,20 @@ APIs: `queryLogs` (LogQL), `queryMetrics` (PromQL), `queryTraces` (TraceQL), `qu
 
 Wires the Phase 3 library into the MCP host and optional HTTP read API.
 
-- **MCP tools** (when `CLAWQL_ENABLE_OBSERVABILITY=1` or CRD `observability.enabled`): `observability_query_logs`, `observability_query_metrics`, `observability_query_traces`, `observability_query_profiles`, `observability_health`, `observability_apply_alloy_config`
-- **HTTP routes** (same flag): `GET /observability/health`, `POST /observability/query/*`, `POST /observability/alloy/apply` — optional `CLAWQL_OBSERVABILITY_API_KEY`
+- **MCP tools** (when `CLAWQL_ENABLE_OBSERVABILITY=1` or CRD `observability.enabled`): `observability_query_logs`, `observability_query_metrics`, `observability_query_traces`, `observability_query_profiles`, `observability_span_flamegraph`, `observability_health`, `observability_apply_alloy_config`
+- **HTTP routes** (same flag): `GET /observability/health`, `GET /observability/flame/trace/:traceId` (HTML or `?format=json` OTEL span flamegraph from Tempo), `POST /observability/query/*`, `POST /observability/alloy/apply` — optional `CLAWQL_OBSERVABILITY_API_KEY`
+
+### OTEL span flamegraph (Tempo)
+
+Built-in wall-clock span flamegraph for a single distributed trace — distinct from the **token-context** flamegraph at `/mcp-ui/trace` and from **Pyroscope** CPU profiles (`observability_query_profiles`).
+
+| Surface | How |
+| --- | --- |
+| MCP | `observability_span_flamegraph` with `traceId` (or `"demo"` for a fixture) — returns summary + `uiUrl` |
+| HTTP | `GET /observability/flame/trace/:traceId` — HTML timeline + most-self-time; append `?format=json` for harnesses |
+| Backend | `ObservabilityQueryService.getTrace` → Tempo `GET /api/traces/{id}` → `parseTempoTracePayloadEffect` / `buildSpanFlamegraphEffect` |
+
+Requires `observability:query_traces` scope. Set `CLAWQL_PUBLIC_ORIGIN` so MCP `uiUrl` is absolute.
 - **WORM bridge**: governance events dual-write to process WORM when `CLAWQL_WORM_ENABLED=1`
 - **Health scheduler**: background checks every `CLAWQL_OBSERVABILITY_HEALTH_INTERVAL_MS` (default 60000)
 - **Alloy auto-apply**: set `CLAWQL_OBSERVABILITY_ALLOY_AUTO_APPLY=1` to regenerate River on boot

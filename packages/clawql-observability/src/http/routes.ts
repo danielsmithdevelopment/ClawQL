@@ -5,6 +5,12 @@ import { resolveAlloyReloadFromEnvEffect } from "../alloy/reload.js";
 import { snapshotRegistriesForAlloyEffect } from "../alloy/from-registry.js";
 import { ObservabilityError } from "../errors.js";
 import { ObservabilityAlertingService } from "../alerting/service.js";
+import {
+  loadSpanFlamegraphEffect,
+  spanFlamegraphUiPathEffect,
+} from "../flame/load-span-flame.js";
+import { renderSpanFlamegraphHtmlEffect } from "../flame/span-flame-html.js";
+import type { SpanFlamegraph } from "../flame/span-flame.js";
 import { ObservabilityHealthService } from "../health/scheduler.js";
 import { resolveTelemetrySigningKeyLayer } from "../secrets/telemetry-signing-key.js";
 import { signTelemetryJwtWithResolvedKeyEffect } from "../telemetry-token.js";
@@ -39,9 +45,15 @@ const json = (status: number, body: unknown): ObservabilityHttpResponse => ({
   body,
 });
 
-const parseUrl = (url: string): { pathname: string } => {
+const html = (status: number, body: string): ObservabilityHttpResponse => ({
+  status,
+  headers: { "content-type": "text/html; charset=utf-8" },
+  body,
+});
+
+const parseUrl = (url: string): { pathname: string; searchParams: URLSearchParams } => {
   const u = new URL(url, "http://localhost");
-  return { pathname: u.pathname };
+  return { pathname: u.pathname, searchParams: u.searchParams };
 };
 
 export const authorizeObservabilityApiKeyEffect = (
@@ -100,8 +112,61 @@ export const handleObservabilityHttpRequestEffect = (
       return json(401, { error: authErr });
     }
 
-    const { pathname } = parseUrl(req.url);
+    const { pathname, searchParams } = parseUrl(req.url);
     const session = yield* resolveObservabilitySessionForRuntimeEffect(env);
+
+    const flameMatch = pathname.match(/^\/observability\/flame\/trace\/([^/]+)$/);
+    if (req.method === "GET" && flameMatch) {
+      const traceId = decodeURIComponent(flameMatch[1] ?? "");
+      const wantJson = searchParams.get("format") === "json";
+      type FlameGraph = SpanFlamegraph & { readonly providerId: string | null };
+      type FlameLoadResult =
+        | { readonly ok: true; readonly graph: FlameGraph }
+        | { readonly ok: false; readonly reason: string };
+      const loaded = yield* Effect.tryPromise({
+        try: async (): Promise<FlameLoadResult> => {
+          try {
+            const graph = await runObservabilityHostEffect(
+              loadSpanFlamegraphEffect({ session, traceId }),
+              env
+            );
+            return { ok: true, graph };
+          } catch (cause) {
+            const reason =
+              cause instanceof ObservabilityAuthError || cause instanceof ObservabilityError
+                ? cause.reason
+                : cause instanceof Error
+                  ? cause.message
+                  : "span flamegraph load failed";
+            return { ok: false, reason };
+          }
+        },
+        catch: (cause) =>
+          new ObservabilityError({
+            reason: "span flamegraph load failed",
+            cause,
+          }),
+      });
+      if (!loaded.ok) {
+        return wantJson
+          ? json(502, { error: "span_flamegraph_failed", reason: loaded.reason })
+          : html(
+              502,
+              `<!doctype html><html><body><h1>Span flamegraph failed</h1><p>${loaded.reason}</p></body></html>`
+            );
+      }
+      const flame = loaded.graph;
+      const uiPath = yield* spanFlamegraphUiPathEffect(flame.traceId);
+      if (wantJson) {
+        return json(200, {
+          ...flame,
+          uiPath,
+          format: "otel-span-flamegraph",
+        });
+      }
+      const page = yield* renderSpanFlamegraphHtmlEffect(flame, { uiPath });
+      return html(200, page);
+    }
 
     if (req.method === "GET" && pathname === "/observability/health") {
       const snapshot = yield* Effect.tryPromise({
@@ -277,6 +342,14 @@ export const handleObservabilityHttpRequestEffect = (
     )
   );
 
+type ObservabilityExpressRes = {
+  status: (code: number) => {
+    json: (body: unknown) => void;
+    send?: (body: unknown) => void;
+  };
+  setHeader?: (name: string, value: string) => void;
+};
+
 /** Express-style mount helper for governed observability HTTP read/configure routes. */
 export const attachObservabilityHttpRoutes = (
   app: {
@@ -293,7 +366,7 @@ export const attachObservabilityHttpRoutes = (
       headers: ObservabilityHttpRequest["headers"];
       body?: unknown;
     },
-    res: { status: (code: number) => { json: (body: unknown) => void } }
+    res: ObservabilityExpressRes
   ) => {
     const response = await Effect.runPromise(
       handleObservabilityHttpRequestEffect(
@@ -306,10 +379,21 @@ export const attachObservabilityHttpRoutes = (
         env
       )
     );
-    res.status(response.status).json(response.body);
+    const contentType =
+      response.headers?.["content-type"] ?? "application/json; charset=utf-8";
+    res.setHeader?.("content-type", contentType);
+    const statusRes = res.status(response.status);
+    if (contentType.includes("text/html") && typeof statusRes.send === "function") {
+      statusRes.send(response.body);
+      return;
+    }
+    statusRes.json(response.body);
   };
 
   app.get("/observability/health", (req, res) => {
+    void send(req as Parameters<typeof send>[0], res as Parameters<typeof send>[1]);
+  });
+  app.get("/observability/flame/trace/:traceId", (req, res) => {
     void send(req as Parameters<typeof send>[0], res as Parameters<typeof send>[1]);
   });
   app.post("/observability/query/logs", (req, res) => {

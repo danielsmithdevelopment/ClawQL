@@ -7,6 +7,12 @@ All notable changes to this package are documented here. The package uses [Seman
 
 ---
 
+## Unreleased
+
+### Added
+
+- **OTEL span flamegraph** (Tempo / LGTM+): `ObservabilityQueryService.getTrace` → Tempo `GET /api/traces/{id}`; parse Jaeger or OTLP payloads; build self-time tree; HTML + JSON at `GET /observability/flame/trace/:traceId`; MCP tool `observability_span_flamegraph` (supports `traceId: "demo"`). Distinct from `/mcp-ui/trace` token flamegraphs and Pyroscope CPU profiles.
+
 ## [0.1.0] — 2026-09-01 (first npm publish)
 
 **First public release.** Nothing was published to npm before this version. In-tree development used internal **phase** labels (Phase 1–5) and a temporary `0.7.0` workspace version that tracked implementation progress — not semver releases. **0.1.0** ships the full stack built through Phase 5.

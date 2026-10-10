@@ -14,6 +14,10 @@ import { resolveAlloyReloadFromEnvEffect } from "../alloy/reload.js";
 import { snapshotRegistriesForAlloyEffect } from "../alloy/from-registry.js";
 import { ObservabilityError } from "../errors.js";
 import { ObservabilityAlertingService } from "../alerting/service.js";
+import {
+  loadSpanFlamegraphEffect,
+  spanFlamegraphUiUrlEffect,
+} from "../flame/load-span-flame.js";
 import { ObservabilityHealthService } from "../health/scheduler.js";
 import { readObservabilityHostConfigEffect } from "../host/config.js";
 import { runObservabilityHostEffect } from "../host/runtime.js";
@@ -65,6 +69,23 @@ export const observabilityQueryProfilesSchema = {
   query: z.string().min(1).describe("Pyroscope profile query."),
   timeRange: z.object(timeRangeSchema),
   selection: z.object(selectionSchema).optional(),
+};
+
+export const observabilitySpanFlamegraphSchema = {
+  traceId: z
+    .string()
+    .min(1)
+    .describe(
+      'Tempo / OTEL trace id, or "demo" for the built-in MCP execute fixture (no Tempo required).'
+    ),
+  selection: z.object(selectionSchema).optional(),
+  mostSelfLimit: z
+    .number()
+    .int()
+    .positive()
+    .max(50)
+    .optional()
+    .describe("Max rows in most-self-time table (default 12)."),
 };
 
 export const observabilityApplyAlloySchema = {
@@ -230,6 +251,63 @@ export function createObservabilityPlugin(
                 Effect.gen(function* () {
                   const query = yield* ObservabilityQueryService;
                   return yield* query.queryProfiles(session, args as ProfileQueryRequest);
+                }),
+                env
+              );
+              return textToolResult(result);
+            } catch (err) {
+              return errorToolResult(err);
+            }
+          },
+        });
+
+        yield* api.registerMcpTool({
+          name: "observability_span_flamegraph",
+          schema: observabilitySpanFlamegraphSchema,
+          handler: async (args) => {
+            try {
+              const typed = args as {
+                traceId: string;
+                selection?: TraceQueryRequest["selection"];
+                mostSelfLimit?: number;
+              };
+              logObservabilityTool("observability_span_flamegraph", {
+                traceIdLen: typed.traceId.length,
+              });
+              const session = await Effect.runPromise(
+                resolveObservabilitySessionForRuntimeEffect(env)
+              );
+              const result = await runObservabilityHostEffect(
+                Effect.gen(function* () {
+                  const graph = yield* loadSpanFlamegraphEffect({
+                    session,
+                    traceId: typed.traceId,
+                    selection: typed.selection,
+                    mostSelfLimit: typed.mostSelfLimit,
+                  });
+                  const uiUrl = yield* spanFlamegraphUiUrlEffect(graph.traceId, env);
+                  return {
+                    format: "otel-span-flamegraph" as const,
+                    uiUrl,
+                    uiPath: `/observability/flame/trace/${encodeURIComponent(graph.traceId)}`,
+                    providerId: graph.providerId,
+                    traceId: graph.traceId,
+                    totalDurationMs: graph.totalDurationMs,
+                    spanCount: graph.spanCount,
+                    serviceCount: graph.serviceCount,
+                    services: graph.services,
+                    mostSelfTime: graph.mostSelfTime,
+                    honesty: graph.honesty,
+                    /** Compact roots (depth-limited summary for agents; full tree via uiUrl JSON). */
+                    roots: graph.roots.map((r) => ({
+                      spanId: r.spanId,
+                      name: r.name,
+                      serviceName: r.serviceName,
+                      durationMs: r.durationMs,
+                      selfMs: r.selfMs,
+                      childCount: r.children.length,
+                    })),
+                  };
                 }),
                 env
               );
