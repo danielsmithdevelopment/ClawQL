@@ -1,4 +1,4 @@
-.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up operator-install operator-status desktop-dev desktop-dist-mac desktop-dist-win desktop-dist-linux bootstrap-vault-eso local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-celld-template-tests helm-vault-secrets-template-tests helm-team-sync-template-tests helm-docling-template-tests helm-idp-template-tests helm-operator-template-tests helm-managed-gateway-template-tests compose-lending-config-test compose-vertical-config-test compose-tier1-config-test distribution-npm-pack-test mcp-docker-workspace-test kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway smoke-localhost-uis smoke-nats-idp-webhooks verify-vault-policy verify-mcp-core-tools-local
+.PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up operator-install operator-status desktop-dev desktop-dist-mac desktop-dist-win desktop-dist-linux mobile-dev mobile-test bootstrap-vault-eso local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-celld-template-tests helm-vault-secrets-template-tests helm-team-sync-template-tests helm-docling-template-tests helm-idp-template-tests helm-operator-template-tests helm-managed-gateway-template-tests compose-lending-config-test compose-vertical-config-test compose-tier1-config-test distribution-npm-pack-test mcp-docker-workspace-test kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway smoke-localhost-uis smoke-nats-idp-webhooks verify-vault-policy verify-mcp-core-tools-local
 
 # Validate manifests/charts/clawql-mcp (requires helm on PATH)
 helm-lint:
@@ -140,6 +140,13 @@ desktop-dist-win:
 
 desktop-dist-linux:
 	@cd apps/desktop && npm install && npm run dist:linux
+
+# ClawQL mobile (Expo) — fixture mode by default
+mobile-dev:
+	@cd apps/mobile && npm install && npm start
+
+mobile-test:
+	@cd apps/mobile && npm install && npm test && npm run typecheck
 
 # Verify ClawQL GHCR container packages are **public**
 ghcr-packages-public:

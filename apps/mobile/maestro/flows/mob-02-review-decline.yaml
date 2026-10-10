@@ -1,0 +1,20 @@
+# MOB-02 — Open a request and Decline
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-review"
+- assertVisible:
+    id: "review-queue-screen"
+- tapOn:
+    id: "review-item-rev_change"
+- assertVisible:
+    id: "review-detail-screen"
+- assertVisible:
+    id: "exact-change"
+- tapOn:
+    id: "review-decline"
+- assertVisible:
+    id: "review-note"
