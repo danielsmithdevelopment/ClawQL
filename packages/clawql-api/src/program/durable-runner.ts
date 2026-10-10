@@ -59,7 +59,7 @@ import {
 } from "./program-runner.js";
 
 export const DURABLE_PROGRAM_HONESTY =
-  "v0 plan runner with a durable journal: a celld-shaped file (JSONL) stand-in until the celld pin hosts the isolate. Journaled calls replay on resume and are not re-run; a write in flight when the program stopped resumes as outcome_unknown. source must be a JSON plan, not free-form JS.";
+  "v0 plan runner with a durable journal: a celld-shaped file (JSONL) stand-in until the celld pin hosts the isolate. Journaled calls replay on resume and are not re-run; a non-read call in flight when the program stopped resumes as outcome_unknown. source must be a JSON plan, not free-form JS.";
 
 /** Nondeterministic value journaled on the first attempt and replayed on every resume. */
 export const NONDET_STARTED_AT = "clock.startedAt";
@@ -68,7 +68,7 @@ const PARKED_HINT =
   "Resume with execute_program { programId }: journaled calls replay and are not re-run. Raise timeoutMs (capped) if a single call needs longer.";
 
 const OUTCOME_UNKNOWN_REASON =
-  "A write was in flight when the program stopped; it is not re-run (at most once).";
+  "A non-read call was in flight when the program stopped; it is not re-run (at most once).";
 
 const OUTCOME_UNKNOWN_HINT =
   "Check the provider for the side effect before retrying it with plain execute.";
