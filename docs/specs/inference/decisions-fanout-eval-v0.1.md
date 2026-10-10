@@ -86,6 +86,6 @@ Fan-out metrics may **advise** which backend to pin for a site. Deterministic ga
 ## Follow-ons
 
 1. `disagreement_mining` mode (unlabeled)
-2. Flip-rate / perturbation robustness gate before `productionTrusted`
+2. Flip-rate × fan-out disagreement mining (flip-rate already gates held-out `productionTrusted`)
 3. Microsoft-Decision-1 / OpenRouter decision backends as fan-out candidates
 4. Cost models from virtual-key spend ledger
