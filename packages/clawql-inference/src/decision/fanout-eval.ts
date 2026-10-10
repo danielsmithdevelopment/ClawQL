@@ -2,6 +2,7 @@
  * Multi-backend decisions fan-out evaluation (v0.1).
  * - bulk: labeled cases → recommend cheapest backend meeting honesty bar
  * - disagreement_mining: unlabeled batch → emit cross-backend disagreements for Review
+ * - ensemble: labeled majority quorum — recommend only when it raises answers-on-its-own
  * Optional flip-rate attach on mining disagreements (fan-out × flip coupling).
  */
 
@@ -19,7 +20,9 @@ import {
 } from "./remote-openrouter-decisions.js";
 import { runFlipRateGate, type FlipRateFamily, type FlipRateDecideFn } from "./flip-rate.js";
 
-export type FanoutEvalMode = "bulk" | "disagreement_mining";
+export type FanoutEvalMode = "bulk" | "disagreement_mining" | "ensemble";
+
+export const ENSEMBLE_BACKEND_ID = "ensemble";
 
 export type FanoutExpectedAnswer = {
   readonly name: string;
@@ -93,6 +96,15 @@ export type FanoutDisagreement = {
   readonly flipRate?: FanoutDisagreementFlipRate;
 };
 
+export type FanoutEnsembleSummary = {
+  readonly backendId: typeof ENSEMBLE_BACKEND_ID;
+  readonly answersOnItsOwn: number;
+  readonly bestSingleAnswersOnItsOwn: number;
+  /** True only when ensemble answersOnItsOwn strictly beats every single backend. */
+  readonly raisesAnswersOnItsOwn: boolean;
+  readonly quorum: "majority";
+};
+
 export type FanoutEvalResponse = {
   readonly object: "clawql.decision.fanout_eval";
   readonly mode: FanoutEvalMode;
@@ -104,6 +116,7 @@ export type FanoutEvalResponse = {
   readonly disagreements: readonly FanoutDisagreement[];
   /** Alias count for Review queues — same length as `disagreements`. */
   readonly reviewCount: number;
+  readonly ensemble?: FanoutEnsembleSummary;
   readonly traceId: string;
   readonly caseCount: number;
 };
@@ -236,8 +249,8 @@ function parseQuestions(
 export function parseFanoutEvalBody(body: unknown): FanoutEvalRequest | { error: string } {
   if (!body || typeof body !== "object") return { error: "JSON body required" };
   const b = body as Record<string, unknown>;
-  if (b.mode !== "bulk" && b.mode !== "disagreement_mining") {
-    return { error: "mode must be 'bulk' or 'disagreement_mining' (ensemble is a follow-on)" };
+  if (b.mode !== "bulk" && b.mode !== "disagreement_mining" && b.mode !== "ensemble") {
+    return { error: "mode must be 'bulk', 'disagreement_mining', or 'ensemble'" };
   }
   const mode = b.mode as FanoutEvalMode;
   if (!Array.isArray(b.cases) || b.cases.length === 0) {
@@ -273,9 +286,11 @@ export function parseFanoutEvalBody(body: unknown): FanoutEvalRequest | { error:
     const questions = questionsOrErr;
 
     let expected: FanoutExpectedAnswer[] | undefined;
-    if (mode === "bulk") {
+    if (mode === "bulk" || mode === "ensemble") {
       if (!Array.isArray(c.expected) || c.expected.length === 0) {
-        return { error: `case ${caseId}: expected answers required for bulk mode` };
+        return {
+          error: `case ${caseId}: expected answers required for ${mode} mode`,
+        };
       }
       expected = [];
       for (const eRaw of c.expected) {
@@ -343,7 +358,7 @@ export function parseFanoutEvalBody(body: unknown): FanoutEvalRequest | { error:
     backends,
     useSiteId: typeof b.useSiteId === "string" ? b.useSiteId : undefined,
     qualityBar:
-      mode === "bulk"
+      mode === "bulk" || mode === "ensemble"
         ? {
             maxWrongAnswers:
               typeof qb.maxWrongAnswers === "number" ? qb.maxWrongAnswers : undefined,
@@ -352,6 +367,35 @@ export function parseFanoutEvalBody(body: unknown): FanoutEvalRequest | { error:
         : undefined,
     flipRate,
   };
+}
+
+/** Unique plurality among answering backends; abstain on ties or <2 answers. */
+export function majorityQuorumVote(
+  answers: Readonly<Record<string, string | null>>
+): Effect.Effect<string | null> {
+  return Effect.sync(() => {
+    const counts = new Map<string, number>();
+    for (const v of Object.values(answers)) {
+      if (v === null) continue;
+      counts.set(v, (counts.get(v) ?? 0) + 1);
+    }
+    let answering = 0;
+    let best: string | null = null;
+    let bestN = 0;
+    let tie = false;
+    for (const [v, n] of counts) {
+      answering += n;
+      if (n > bestN) {
+        best = v;
+        bestN = n;
+        tie = false;
+      } else if (n === bestN) {
+        tie = true;
+      }
+    }
+    if (answering < 2 || tie || best === null) return null;
+    return best;
+  });
 }
 
 function primaryQuestionName(c: FanoutEvalCase): string {
@@ -436,9 +480,10 @@ export function runFanoutEvalBulk(opts: {
   env?: NodeJS.ProcessEnv;
 }): Effect.Effect<FanoutEvalResponse> {
   return Effect.gen(function* () {
-    if (opts.request.mode !== "bulk") {
-      return yield* Effect.die(new Error("runFanoutEvalBulk requires mode=bulk"));
+    if (opts.request.mode !== "bulk" && opts.request.mode !== "ensemble") {
+      return yield* Effect.die(new Error("runFanoutEvalBulk requires mode=bulk|ensemble"));
     }
+    const labeledMode = opts.request.mode;
     const env = opts.env ?? process.env;
     const decide = opts.decide ?? runDecision;
     const remoteOverride = opts.callRemote;
@@ -606,13 +651,72 @@ export function runFanoutEvalBulk(opts: {
       };
     }
 
+    let ensemble: FanoutEnsembleSummary | undefined;
+    let finalReports = reports;
+    if (labeledMode === "ensemble") {
+      const byCase = new Map<string, Record<string, string | null>>();
+      for (const row of caseAnswers) {
+        const bag = byCase.get(row.caseId) ?? {};
+        bag[row.backendId] = row.value;
+        byCase.set(row.caseId, bag);
+      }
+      let answered = 0;
+      let correct = 0;
+      let wrong = 0;
+      let abstained = 0;
+      for (const c of opts.request.cases) {
+        const vote = yield* majorityQuorumVote(byCase.get(c.caseId) ?? {});
+        if (vote === null) {
+          abstained += 1;
+          continue;
+        }
+        answered += 1;
+        const expectedAnswer = c.expected?.[0]?.answer;
+        if (expectedAnswer !== undefined && vote === expectedAnswer) correct += 1;
+        else wrong += 1;
+      }
+      const meetsQualityBar = wrong <= maxWrong && answered >= minAnswered;
+      const answersOnItsOwn = meetsQualityBar ? correct : 0;
+      const costEstimate = reports.reduce((sum, r) => sum + (r.costEstimate ?? 0), 0);
+      const ensembleReport: FanoutBackendReport = {
+        backendId: ENSEMBLE_BACKEND_ID,
+        model: "majority-quorum",
+        answered,
+        correct,
+        wrong,
+        abstained,
+        skipped: 0,
+        answersOnItsOwn,
+        meetsQualityBar,
+        costEstimate,
+      };
+      finalReports = [...reports, ensembleReport];
+      const bestSingleAnswersOnItsOwn = reports.reduce((m, r) => Math.max(m, r.answersOnItsOwn), 0);
+      const raisesAnswersOnItsOwn = answersOnItsOwn > bestSingleAnswersOnItsOwn;
+      ensemble = {
+        backendId: ENSEMBLE_BACKEND_ID,
+        answersOnItsOwn,
+        bestSingleAnswersOnItsOwn,
+        raisesAnswersOnItsOwn,
+        quorum: "majority",
+      };
+      // Fail-closed: never recommend ensemble unless it strictly raises honesty.
+      if (raisesAnswersOnItsOwn && meetsQualityBar) {
+        recommendation = {
+          backendId: ENSEMBLE_BACKEND_ID,
+          reason: `Majority quorum raises answersOnItsOwn (${answersOnItsOwn} > best single ${bestSingleAnswersOnItsOwn})`,
+        };
+      }
+    }
+
     return {
       object: "clawql.decision.fanout_eval" as const,
-      mode: "bulk" as const,
-      reports,
+      mode: labeledMode,
+      reports: finalReports,
       recommendation,
       disagreements,
       reviewCount: disagreements.length,
+      ensemble,
       traceId,
       caseCount: opts.request.cases.length,
     };
@@ -800,7 +904,7 @@ export function runFanoutEvalEffect(opts: {
 }): Effect.Effect<FanoutEvalResponse> {
   return opts.request.mode === "disagreement_mining"
     ? runFanoutEvalDisagreementMining(opts)
-    : runFanoutEvalBulk(opts);
+    : runFanoutEvalBulk(opts); // bulk + ensemble
 }
 
 export class FanoutEvalService extends Context.Service<

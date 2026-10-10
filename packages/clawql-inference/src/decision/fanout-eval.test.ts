@@ -1,5 +1,5 @@
 /**
- * Fan-out evaluation — bulk recommend + disagreement_mining Review queue.
+ * Fan-out evaluation — bulk recommend, disagreement_mining Review, ensemble quorum.
  */
 
 import { createServer, request, type Server } from "node:http";
@@ -7,8 +7,9 @@ import { once } from "node:events";
 import { describe, expect, it } from "vitest";
 import express from "express";
 import { createDecisionRouter } from "./router.js";
-import { runFanoutEval } from "./fanout-eval.js";
+import { ENSEMBLE_BACKEND_ID, majorityQuorumVote, runFanoutEval } from "./fanout-eval.js";
 import type { DecisionRequest, DecisionResponse } from "./service.js";
+import { Effect } from "effect";
 
 function closeHttpServer(server: Server): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -311,6 +312,160 @@ describe("fan-out eval disagreement_mining", () => {
     expect(result.disagreements[0]?.flipRate).toBeDefined();
     expect(result.disagreements[0]?.flipRate?.passed).toBe(true);
     expect(result.disagreements[0]?.flipRate?.baseline).toBe("billing");
+  });
+
+  it("majority quorum abstains on ties and requires ≥2 answers", async () => {
+    expect(await Effect.runPromise(majorityQuorumVote({ a: "billing", b: "shipping" }))).toBe(null);
+    expect(await Effect.runPromise(majorityQuorumVote({ a: "billing" }))).toBe(null);
+    expect(
+      await Effect.runPromise(majorityQuorumVote({ a: "billing", b: "billing", c: "shipping" }))
+    ).toBe("billing");
+  });
+
+  it("ensemble recommends only when quorum raises answersOnItsOwn", async () => {
+    const usage = {
+      input_tokens: 1,
+      output_tokens: 1,
+      total_tokens: 2,
+      input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+      output_tokens_details: { reasoning_tokens: 0 },
+    };
+    const remoteChoice = (choice: string, model: string, backend_id: string) => ({
+      id: "decision_remote",
+      object: "decision" as const,
+      model,
+      created: 1,
+      answers: [
+        {
+          type: "choice" as const,
+          name: "department",
+          choice,
+          confidence: 0.9,
+          probabilities: [{ value: choice, probability: 0.9 }],
+        },
+      ],
+      usage,
+      calibrated: false,
+      escalated: false,
+      use_site_id: "search_provider_tool_routing",
+      backend_id,
+      trace_id: "r",
+    });
+
+    // Each single backend misses a different case → AOIO=0; majority recovers all three.
+    const cases = [
+      { ...billingCase, caseId: "c1", state: "charged twice case one" },
+      { ...billingCase, caseId: "c2", state: "charged twice case two" },
+      { ...billingCase, caseId: "c3", state: "charged twice case three" },
+    ];
+    const localByCase: Record<string, string> = {
+      c1: "shipping",
+      c2: "billing",
+      c3: "billing",
+    };
+    const lunaByCase: Record<string, string> = {
+      c1: "billing",
+      c2: "shipping",
+      c3: "billing",
+    };
+    const d1ByCase: Record<string, string> = {
+      c1: "billing",
+      c2: "billing",
+      c3: "shipping",
+    };
+
+    const raised = await runFanoutEval(
+      {
+        mode: "ensemble",
+        cases,
+        backends: [
+          { id: "local", model: "clawql", costPerCase: 0 },
+          { id: "openai/gpt-6-luna", model: "gpt-6-luna", costPerCase: 0.01 },
+          {
+            id: "microsoft-decision-1",
+            model: "microsoft-decision-1",
+            costPerCase: 0.02,
+          },
+        ],
+        qualityBar: { maxWrongAnswers: 0, minAnswered: 1 },
+      },
+      {
+        env: {},
+        decide: async (req) => {
+          const caseId = req.sessionId?.split(":").pop() ?? "c1";
+          const answer = localByCase[caseId] ?? "billing";
+          return {
+            object: "clawql.decision",
+            answers: [
+              {
+                name: "department",
+                type: "choice",
+                answer,
+                abstained: false,
+                escalated: false,
+                calibrated: false,
+                backendId: "local",
+                useSiteId: "search_provider_tool_routing",
+              },
+            ],
+            traceId: "stub",
+            escalated: false,
+            calibrated: false,
+            backendId: "local",
+          };
+        },
+        callRemote: async (body) => {
+          const caseId = String(body.input).includes("case two")
+            ? "c2"
+            : String(body.input).includes("case three")
+              ? "c3"
+              : "c1";
+          return remoteChoice(lunaByCase[caseId]!, "gpt-6-luna", "openai/gpt-6-luna");
+        },
+        callOpenRouter: async (body) => {
+          const caseId = String(body.input).includes("case two")
+            ? "c2"
+            : String(body.input).includes("case three")
+              ? "c3"
+              : "c1";
+          return remoteChoice(
+            d1ByCase[caseId]!,
+            "microsoft/microsoft-decision-1",
+            "openrouter/microsoft/microsoft-decision-1"
+          );
+        },
+      }
+    );
+
+    expect(raised.mode).toBe("ensemble");
+    expect(raised.ensemble?.raisesAnswersOnItsOwn).toBe(true);
+    expect(raised.recommendation?.backendId).toBe(ENSEMBLE_BACKEND_ID);
+    const ensembleReport = raised.reports.find((r) => r.backendId === ENSEMBLE_BACKEND_ID);
+    expect(ensembleReport?.correct).toBe(3);
+    expect(ensembleReport?.wrong).toBe(0);
+    expect(
+      raised.reports.filter((r) => r.backendId !== ENSEMBLE_BACKEND_ID).every((r) => r.wrong === 1)
+    ).toBe(true);
+
+    // When a single backend is already perfect, ensemble must not displace cheapest single.
+    const noRaise = await runFanoutEval(
+      {
+        mode: "ensemble",
+        cases: [billingCase],
+        backends: [
+          { id: "local-cheap", model: "clawql", costPerCase: 0 },
+          { id: "openai/gpt-6-luna", model: "gpt-6-luna", costPerCase: 1 },
+        ],
+        qualityBar: { maxWrongAnswers: 0, minAnswered: 1 },
+      },
+      {
+        env: {},
+        decide: decideBilling,
+        callRemote: async () => remoteChoice("billing", "gpt-6-luna", "openai/gpt-6-luna"),
+      }
+    );
+    expect(noRaise.ensemble?.raisesAnswersOnItsOwn).toBe(false);
+    expect(noRaise.recommendation?.backendId).toBe("local-cheap");
   });
 
   it("POST /decision/eval rejects labeled cases in disagreement_mining", async () => {

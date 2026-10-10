@@ -1,8 +1,8 @@
-# Decisions fan-out evaluation — v0.1 (bulk + disagreement_mining)
+# Decisions fan-out evaluation — v0.1 (bulk + disagreement_mining + ensemble)
 
 **Status:** shipping  
 **Package:** `clawql-inference`  
-**Related:** [openai-decisions-compat-v0.1](./openai-decisions-compat-v0.1.md) · [decisions-flip-rate-gate-v0.1](./decisions-flip-rate-gate-v0.1.md) · [gateway-ladder-v0.1](./gateway-ladder-v0.1.md) · [[Inference gateway GTM ladder]]
+**Related:** [openai-decisions-compat-v0.1](./openai-decisions-compat-v0.1.md) · [decisions-flip-rate-gate-v0.1](./decisions-flip-rate-gate-v0.1.md) · [decisions-openrouter-decision1-v0.1](./decisions-openrouter-decision1-v0.1.md) · [gateway-ladder-v0.1](./gateway-ladder-v0.1.md) · [[Inference gateway GTM ladder]]
 
 ## Why
 
@@ -18,11 +18,11 @@ OpenAI SDK clients stay on `POST /v1/decisions`. Eval is a ClawQL control-plane 
 
 ## Modes
 
-| Mode                  | v0.1  | Behavior                                                                                    |
-| --------------------- | ----- | ------------------------------------------------------------------------------------------- |
-| `bulk`                | yes   | Run every requested backend on a labeled set; recommend cheapest that meets the quality bar |
-| `disagreement_mining` | yes   | Unlabeled batch; emit cross-backend disagreements for Review                                |
-| `ensemble`            | later | Live quorum only when it raises answers-on-its-own                                          |
+| Mode                  | v0.1 | Behavior                                                                                    |
+| --------------------- | ---- | ------------------------------------------------------------------------------------------- |
+| `bulk`                | yes  | Run every requested backend on a labeled set; recommend cheapest that meets the quality bar |
+| `disagreement_mining` | yes  | Unlabeled batch; emit cross-backend disagreements for Review                                |
+| `ensemble`            | yes  | Majority quorum over backends; recommend **only** when it raises answers-on-its-own         |
 
 ## Bulk request
 
@@ -118,10 +118,14 @@ Even in `bulk`, cases where selected answers differ across backends are listed u
 
 Fan-out metrics may **advise** which backend to pin for a site. Deterministic gates and spec-derived risk stay authoritative. Flip-rate attach on mining does **not** replace held-out `productionTrusted` (see [decisions-flip-rate-gate-v0.1](./decisions-flip-rate-gate-v0.1.md)).
 
+## Ensemble
+
+Labeled cases (same as bulk). Per case: unique plurality among non-null backend answers (≥2 answering; ties abstain). Synthetic `ensemble` report is appended. Recommendation is `ensemble` **only** when `answersOnItsOwn` strictly exceeds every single backend; otherwise keep cheapest single meeting the bar (fail-closed — never ship a quorum that does not raise honesty).
+
 ## Follow-ons
 
 1. ~~`disagreement_mining` mode (unlabeled)~~ — shipped
 2. ~~Flip-rate × fan-out disagreement mining~~ — optional `flipRate` attach on mining
 3. ~~Microsoft-Decision-1 / OpenRouter decision backends as fan-out candidates~~ — [decisions-openrouter-decision1-v0.1](./decisions-openrouter-decision1-v0.1.md)
 4. Cost models from virtual-key spend ledger
-5. Live `ensemble` quorum when it raises answers-on-its-own
+5. ~~Live `ensemble` quorum when it raises answers-on-its-own~~ — shipped
