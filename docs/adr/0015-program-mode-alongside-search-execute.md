@@ -162,7 +162,7 @@ Security and honesty first, then cheap wins every client gets, then public claim
 1. **Fair benchmark before Executor v2** — program-filter arm (simulated until live), ≥10 tasks incl. multi-step, measure outputs. Artifact: `docs/benchmarks/executor-comparison/executor-cmp-fair-suite.json`.
 2. **Wins that need no programs** — `where` on execute; search COMPLETE/PARTIAL; typed signatures; fix-named errors; truncation marker; `console_link` (or Core `clawql_console`); search over ClawQL’s own docs.
 3. **Session-level information flow on execute** — closes existing laundering; programs depend on it, so it ships before them.
-4. **MCP OAuth** — strip misleading Google device endpoint from AS metadata (done); §1 discovery/audience (shipped); §2 grant-as-key (`CLAWQL_MCP_OAUTH_GRANT_AS_KEY`); §3 CIMD fetch→registry (`CLAWQL_MCP_OAUTH_CIMD=1` + trusted-client bootstrap); §4 RFC 8628 device flow with SecretStore-backed codes (`CLAWQL_MCP_OAUTH_DEVICE_FLOW=1`).
+4. **MCP OAuth** — strip misleading Google device endpoint from AS metadata (done); §1 discovery/audience (shipped); §2 grant-as-key (`CLAWQL_MCP_OAUTH_GRANT_AS_KEY=1` → SecretStore-backed grant rows); §3 CIMD fetch→registry (`CLAWQL_MCP_OAUTH_CIMD=1` + trusted-client bootstrap); §4 RFC 8628 device flow with SecretStore-backed codes (`CLAWQL_MCP_OAUTH_DEVICE_FLOW=1`).
 5. **Plain proxy mode** — scoped by key group, for harnesses that bring their own code mode.
 6. **Program mode** — each step behind its gate: ADR 0015 → read-only programs in celld (benchmark must justify promotion) → proposed writes with refs → batch approval (TLA+) → IFC rule (Lean) → “never more” differential.
 7. **Then mobile** — governed company-inbox demo as the answer to Executor apps when ready.
@@ -210,7 +210,7 @@ OpenCode’s `@opencode-ai/codemode` is an elegant **in-process** AST interprete
 
 **Lead claim (only when earned):** “code mode that survives a crash” — not “a competitor to OpenCode.”
 
-**Stand-in today:** with `CLAWQL_ENABLE_DURABLE_PROGRAMS=1` the v0 plan runner journals to a celld-shaped file (JSONL) stand-in with the same replay contract (Program mode v0 → Durable / Journal rows). `ProgramCellService` (`celld-program-cell.ts`) is the cell-shaped façade over that journal (run/resume); it is not a pinned celld V8 isolate or SQLite/LTX path, and the earned-claim sequence below still gates any crash claim.
+**Stand-in today:** with `CLAWQL_ENABLE_DURABLE_PROGRAMS=1` the v0 plan runner journals to a celld-shaped file (JSONL) stand-in with the same replay contract (Program mode v0 → Durable / Journal rows). `ProgramCellService` (`celld-program-cell.ts`) is the cell-shaped façade over that journal (run/resume); `celld-pin.ts` reports pin readiness (`CELLD_VERSION=v0.4.0` + `CLAWQL_PROGRAM_CELLD_ISOLATE=1`) and folds that honesty into the cell façade — it does not spawn an isolate. Not a pinned celld V8 / SQLite/LTX path yet; the earned-claim sequence below still gates any crash claim.
 
 | Advantage vs in-process interpreter | How celld supplies it                                                                                                                                            |
 | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |

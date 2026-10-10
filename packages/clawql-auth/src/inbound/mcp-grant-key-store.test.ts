@@ -1,7 +1,9 @@
 import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
+import { createMemorySecretStore } from "../stores/memory.js";
 import {
   createMemoryMcpGrantKeyStore,
+  createSecretStoreMcpGrantKeyStore,
   grantAsKeyEnabled,
   stampGrantVirtualKeyIdEffect,
 } from "./mcp-grant-key-store.js";
@@ -92,6 +94,47 @@ describe("MCP OAuth §2 grant-as-key", () => {
     expect(grantAsKeyEnabled({}, true)).toBe(true);
     expect(grantAsKeyEnabled({ CLAWQL_MCP_OAUTH_GRANT_AS_KEY: "0" }, true)).toBe(false);
     expect(grantAsKeyEnabled({ CLAWQL_MCP_OAUTH_GRANT_AS_KEY: "1" }, false)).toBe(true);
+  });
+
+  it("SecretStore grant-as-key survives across store instances", async () => {
+    const secrets = createMemorySecretStore();
+    const storeA = createSecretStoreMcpGrantKeyStore(secrets, () => 3_000);
+    const first = await Effect.runPromise(
+      storeA.getOrCreate({
+        subject: "user-ss",
+        clientId: "claude-desktop",
+        resource: "https://mcp.example/mcp",
+        scope: ["read"],
+        grantType: "authorization_code",
+      })
+    );
+    const storeB = createSecretStoreMcpGrantKeyStore(secrets, () => 3_001);
+    const again = await Effect.runPromise(
+      storeB.getOrCreate({
+        subject: "user-ss",
+        clientId: "claude-desktop",
+        resource: "https://mcp.example/mcp",
+        scope: ["write"],
+        grantType: "authorization_code",
+      })
+    );
+    expect(again.virtualKeyId).toBe(first.virtualKeyId);
+    expect(again.createdAtMs).toBe(3_000);
+
+    await Effect.runPromise(storeB.revoke(first.virtualKeyId));
+    const storeC = createSecretStoreMcpGrantKeyStore(secrets, () => 4_000);
+    const afterRevoke = await Effect.runPromise(
+      storeC.getOrCreate({
+        subject: "user-ss",
+        clientId: "claude-desktop",
+        resource: "https://mcp.example/mcp",
+        scope: ["read"],
+        grantType: "authorization_code",
+      })
+    );
+    expect(afterRevoke.virtualKeyId).not.toBe(first.virtualKeyId);
+    const revoked = await Effect.runPromise(storeC.get(first.virtualKeyId));
+    expect(revoked?.revokedAtMs).toBe(3_001);
   });
 
   it("client_credentials access token stamps mgr_ virtualKeyId, not clientId", async () => {

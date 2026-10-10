@@ -5,8 +5,9 @@
  * stamped on access tokens; it is never the OAuth `clientId`.
  */
 
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { Effect } from "effect";
+import type { SecretStore } from "../stores/types.js";
 import type { McpGrantKeyRecord, McpGrantKeyStore, McpGrantType } from "./mcp-oauth.js";
 
 export type McpGrantKeyCreateInput = Omit<
@@ -14,8 +15,25 @@ export type McpGrantKeyCreateInput = Omit<
   "virtualKeyId" | "createdAtMs" | "revokedAtMs"
 >;
 
+export const MCP_OAUTH_GRANT_KEY_PREFIX = "mcp-oauth/grant-keys/";
+export const MCP_OAUTH_GRANT_LIVE_PREFIX = "mcp-oauth/grant-live/";
+
 function compositeKey(subject: string, clientId: string, resource: string | undefined): string {
   return `${subject}\u0000${clientId}\u0000${resource ?? ""}`;
+}
+
+function compositeHash(subject: string, clientId: string, resource: string | undefined): string {
+  return createHash("sha256")
+    .update(compositeKey(subject, clientId, resource))
+    .digest("hex");
+}
+
+function grantPath(virtualKeyId: string): string {
+  return `${MCP_OAUTH_GRANT_KEY_PREFIX}${virtualKeyId}`;
+}
+
+function livePath(subject: string, clientId: string, resource: string | undefined): string {
+  return `${MCP_OAUTH_GRANT_LIVE_PREFIX}${compositeHash(subject, clientId, resource)}`;
 }
 
 function newVirtualKeyId(): string {
@@ -63,6 +81,63 @@ export function createMemoryMcpGrantKeyStore(now: () => number = Date.now): McpG
           liveByComposite.delete(key);
         }
       }),
+  };
+}
+
+/**
+ * SecretStore-backed grant-as-key store (survives process restart).
+ * Live composite index stores only the `virtualKeyId` (opaque); grant rows are JSON.
+ */
+export function createSecretStoreMcpGrantKeyStore(
+  store: SecretStore,
+  now: () => number = Date.now
+): McpGrantKeyStore {
+  const load = (virtualKeyId: string) =>
+    Effect.gen(function* () {
+      const raw = yield* store.getSecret(grantPath(virtualKeyId));
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw) as McpGrantKeyRecord;
+      } catch {
+        return null;
+      }
+    }).pipe(Effect.orDie);
+
+  return {
+    getOrCreate: (grant) =>
+      Effect.gen(function* () {
+        const live = yield* store.getSecret(
+          livePath(grant.subject, grant.clientId, grant.resource)
+        );
+        if (live) {
+          const existing = yield* load(live);
+          if (existing && existing.revokedAtMs == null) return existing;
+        }
+        const record: McpGrantKeyRecord = {
+          ...grant,
+          virtualKeyId: newVirtualKeyId(),
+          createdAtMs: now(),
+        };
+        yield* store.setSecret(grantPath(record.virtualKeyId), JSON.stringify(record));
+        yield* store.setSecret(
+          livePath(grant.subject, grant.clientId, grant.resource),
+          record.virtualKeyId
+        );
+        return record;
+      }).pipe(Effect.orDie),
+    get: (virtualKeyId) => load(virtualKeyId),
+    revoke: (virtualKeyId) =>
+      Effect.gen(function* () {
+        const existing = yield* load(virtualKeyId);
+        if (!existing || existing.revokedAtMs != null) return;
+        const revoked: McpGrantKeyRecord = { ...existing, revokedAtMs: now() };
+        yield* store.setSecret(grantPath(virtualKeyId), JSON.stringify(revoked));
+        const liveKey = livePath(existing.subject, existing.clientId, existing.resource);
+        const live = yield* store.getSecret(liveKey);
+        if (live === virtualKeyId) {
+          yield* store.deleteSecret(liveKey);
+        }
+      }).pipe(Effect.orDie),
   };
 }
 

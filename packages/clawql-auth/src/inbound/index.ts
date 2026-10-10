@@ -33,7 +33,10 @@ export {
   type McpDeviceAuthorizationPending,
 } from "./mcp-oauth.js";
 export {
+  MCP_OAUTH_GRANT_KEY_PREFIX,
+  MCP_OAUTH_GRANT_LIVE_PREFIX,
   createMemoryMcpGrantKeyStore,
+  createSecretStoreMcpGrantKeyStore,
   grantAsKeyEnabled,
   stampGrantVirtualKeyIdEffect,
 } from "./mcp-grant-key-store.js";
