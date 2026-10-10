@@ -12,7 +12,7 @@ import {
 
 describe("MCP OAuth §4 device flow", () => {
   it("issues device_code + user_code and completes after approve", async () => {
-    let t = 1_000;
+    const t = 1_000;
     const store = createMemoryDeviceCodeStore(() => t);
     const issued = await Effect.runPromise(
       createDeviceAuthorizationEffect(
@@ -75,7 +75,7 @@ describe("MCP OAuth §4 device flow", () => {
 
   it("SecretStore device-code store survives across store instances", async () => {
     const secrets = createMemorySecretStore();
-    let t = 1_000;
+    const t = 1_000;
     const storeA = createSecretStoreDeviceCodeStore(secrets, () => t);
     const issued = await Effect.runPromise(
       createDeviceAuthorizationEffect(
