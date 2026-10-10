@@ -95,6 +95,8 @@ packages/clawql-auth/
 
 Implements the authorization-server surface required for MCP clients that obtain tokens against ClawQL (distinct from OIDC _consumer_ mode, which verifies customer IdP JWTs).
 
+**Protected-resource discovery (shipped):** `GET /.well-known/oauth-protected-resource` on the MCP origin (RFC 9728) plus `WWW-Authenticate: Bearer resource_metadata=…` on unauthenticated `/mcp`. Token/authorize accept RFC 8707 `resource`; access JWTs mint and validate normalized `aud` against `CLAWQL_MCP_OAUTH_RESOURCE_AUDIENCE` (`invalid_target` on mismatch). Marketing discovery (`docs`/`www`) intentionally omits Google `device_authorization_endpoint` / `device_code` until the MCP AS ships RFC 8628.
+
 ```typescript
 import { createHash, randomUUID } from "node:crypto";
 import { Effect } from "effect";

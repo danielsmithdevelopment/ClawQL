@@ -365,6 +365,26 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         )
       );
       if (!result.ok) {
+        // MCP OAuth discovery challenge (RFC 9728): clients follow resource_metadata
+        // to the protected-resource doc on this MCP origin.
+        if (mcpOAuthRuntime) {
+          const { buildMcpWwwAuthenticateHeaderEffect, resolvePublicOriginEffect } =
+            await import("clawql-auth");
+          const origin = await Effect.runPromise(
+            resolvePublicOriginEffect({
+              proto: req.get("x-forwarded-proto") ?? req.protocol,
+              host: req.get("host") ?? "localhost",
+            })
+          );
+          const wwwAuth = await Effect.runPromise(
+            buildMcpWwwAuthenticateHeaderEffect({
+              resourceMetadataUrl: `${origin}/.well-known/oauth-protected-resource`,
+              error: "invalid_token",
+              errorDescription: result.error,
+            })
+          );
+          res.setHeader("WWW-Authenticate", wwwAuth);
+        }
         res.status(401).json({ error: result.error });
         return;
       }

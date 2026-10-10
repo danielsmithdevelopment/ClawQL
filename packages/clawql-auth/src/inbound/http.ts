@@ -21,11 +21,18 @@ import type { EmaConnectorRegistry } from "./ema-connector-registry.js";
 import type { IdJagIssuerService } from "./id-jag-issuer.js";
 import type { SecretStoreMcpClientRegistry } from "./mcp-oauth-stores.js";
 import { createMcpOAuthRateLimiter, enforceMcpOAuthRateLimit } from "./oauth-rate-limit.js";
+import {
+  MCP_OAUTH_PROTECTED_RESOURCE_PATH,
+  buildMcpProtectedResourceMetadataEffect,
+  resolveMcpResourceIdentifierEffect,
+  resolvePublicOriginEffect,
+} from "./protected-resource.js";
 import { Context, Effect } from "effect";
 
 export const MCP_OAUTH_TOKEN_PATH = "/oauth/token";
 export const MCP_OAUTH_AUTHORIZE_PATH = "/oauth/authorize";
 export const MCP_OAUTH_REVOKE_PATH = "/oauth/revoke";
+export { MCP_OAUTH_PROTECTED_RESOURCE_PATH };
 export const ID_JAG_ISSUER_JWKS_PATH = "/.well-known/id-jag-jwks.json";
 export const ID_JAG_ISSUE_PATH = "/oauth/id-jag/issue";
 export const MCP_OAUTH_CLIENTS_ADMIN_PATH = "/oauth/ema/clients";
@@ -64,6 +71,10 @@ export type AttachMcpOAuthRoutesOptions = {
   wellKnown?: {
     issuer: string;
     resourceAudience?: string;
+    /** MCP path used when deriving resource id from request origin (default `/mcp`). */
+    mcpPath?: string;
+    resourceName?: string;
+    resourceDocumentation?: string;
   };
   /** When set, publishes GET /.well-known/jwks.json and `jwks_uri` in discovery. */
   jwks?: { keys: import("jose").JWK[] };
@@ -159,6 +170,7 @@ export function parseMcpOAuthTokenBody(body: TokenBody): McpTokenRequest {
     code: body.code?.trim(),
     codeVerifier: body.code_verifier?.trim() || body.codeVerifier?.trim(),
     redirectUri: body.redirect_uri?.trim() || body.redirectUri?.trim(),
+    resource: body.resource?.trim(),
   };
 }
 
@@ -171,6 +183,7 @@ function mapIssueTokenError(err: unknown): { status: number; error: string; desc
     if (code === "invalid_grant") return { status: 400, error: code, description };
     if (code === "invalid_scope") return { status: 400, error: code, description };
     if (code === "invalid_request") return { status: 400, error: code, description };
+    if (code === "invalid_target") return { status: 400, error: code, description };
     if (code === "invalid_token") return { status: 401, error: code, description };
     return { status: 500, error: "server_error", description };
   }
@@ -184,6 +197,7 @@ function mapIssueTokenError(err: unknown): { status: number; error: string; desc
   if (code === "invalid_grant") return { status: 400, error: code, description };
   if (code === "invalid_scope") return { status: 400, error: code, description };
   if (code === "invalid_request") return { status: 400, error: code, description };
+  if (code === "invalid_target") return { status: 400, error: code, description };
   return { status: 500, error: "server_error", description: message };
 }
 
@@ -274,6 +288,7 @@ export async function handleMcpOAuthAuthorizeRequest(
   const codeChallengeMethod = queryParam(req, "code_challenge_method") ?? "S256";
   const state = queryParam(req, "state");
   const scope = parseScope(queryParam(req, "scope"));
+  const resource = queryParam(req, "resource");
 
   if (codeChallengeMethod !== "S256") {
     oauthError(res, 400, "invalid_request", "code_challenge_method_must_be_S256");
@@ -289,6 +304,7 @@ export async function handleMcpOAuthAuthorizeRequest(
         codeChallengeMethod: "S256",
         scope,
         state,
+        resource,
         claims,
       })
     );
@@ -475,43 +491,91 @@ export function attachMcpOAuthRoutes(
 
   if (options.wellKnown && server) {
     const discoveryPath = "/.well-known/oauth-authorization-server";
+    const scopesSupported = ["execute", "search", "memory", "mcp:tools"];
     app.get(discoveryPath, (req, res) => {
-      const proto = req.get("x-forwarded-proto") ?? req.protocol;
-      const host = req.get("host") ?? "localhost";
-      const origin = `${proto}://${host}`.replace(/\/$/, "");
-      const issuer = options.wellKnown!.issuer.replace(/\/$/, "");
-      const tokenEndpoint = `${origin}${tokenPath}`;
-      const supported = server.getSupportedGrantTypes();
-      const authCodeEnabled = supportsAuthCode && supported.includes("authorization_code");
+      void (async () => {
+        const origin = await Effect.runPromise(
+          resolvePublicOriginEffect({
+            proto: req.get("x-forwarded-proto") ?? req.protocol,
+            host: req.get("host") ?? "localhost",
+          })
+        );
+        const issuer = options.wellKnown!.issuer.replace(/\/$/, "");
+        const tokenEndpoint = `${origin}${tokenPath}`;
+        const supported = server.getSupportedGrantTypes();
+        const authCodeEnabled = supportsAuthCode && supported.includes("authorization_code");
 
-      res.setHeader("Content-Type", "application/json; charset=utf-8");
-      res.setHeader("Cache-Control", "public, max-age=300");
-      res.status(200).json({
-        issuer,
-        token_endpoint: tokenEndpoint,
-        revocation_endpoint: `${origin}${revokePath}`,
-        ...(authCodeEnabled
-          ? {
-              authorization_endpoint: `${origin}${authorizePath}`,
-              code_challenge_methods_supported: ["S256"],
-            }
-          : {}),
-        grant_types_supported: grantTypesForDiscovery(supported),
-        token_endpoint_auth_methods_supported: [
-          "client_secret_post",
-          "client_secret_basic",
-          "none",
-        ],
-        scopes_supported: ["execute", "search", "memory", "mcp:tools"],
-        ...(options.jwks?.keys.length ? { jwks_uri: `${origin}/.well-known/jwks.json` } : {}),
-        agent_auth: {
-          identity_assertion: {
-            assertion_types_supported: ["urn:ietf:params:oauth:token-type:id-jag"],
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.setHeader("Cache-Control", "public, max-age=300");
+        res.status(200).json({
+          issuer,
+          token_endpoint: tokenEndpoint,
+          revocation_endpoint: `${origin}${revokePath}`,
+          ...(authCodeEnabled
+            ? {
+                authorization_endpoint: `${origin}${authorizePath}`,
+                code_challenge_methods_supported: ["S256"],
+              }
+            : {}),
+          grant_types_supported: grantTypesForDiscovery(supported),
+          token_endpoint_auth_methods_supported: [
+            "client_secret_post",
+            "client_secret_basic",
+            "none",
+          ],
+          scopes_supported: scopesSupported,
+          ...(options.jwks?.keys.length ? { jwks_uri: `${origin}/.well-known/jwks.json` } : {}),
+          agent_auth: {
+            identity_assertion: {
+              assertion_types_supported: ["urn:ietf:params:oauth:token-type:id-jag"],
+            },
           },
-        },
-        ...(options.wellKnown!.resourceAudience
-          ? { resource_audience: options.wellKnown!.resourceAudience }
-          : {}),
+          ...(options.wellKnown!.resourceAudience
+            ? { resource_audience: options.wellKnown!.resourceAudience }
+            : {}),
+        });
+      })().catch((err: unknown) => {
+        console.error("[clawql-auth] GET oauth-authorization-server error:", err);
+        if (!res.headersSent) {
+          oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
+        }
+      });
+    });
+
+    // RFC 9728 — served from the MCP origin (not docs/www marketing hosts).
+    app.get(MCP_OAUTH_PROTECTED_RESOURCE_PATH, (req, res) => {
+      void (async () => {
+        const origin = await Effect.runPromise(
+          resolvePublicOriginEffect({
+            proto: req.get("x-forwarded-proto") ?? req.protocol,
+            host: req.get("host") ?? "localhost",
+          })
+        );
+        const issuer = options.wellKnown!.issuer.replace(/\/$/, "");
+        const resource = await Effect.runPromise(
+          resolveMcpResourceIdentifierEffect({
+            origin,
+            mcpPath: options.wellKnown!.mcpPath,
+            configuredResource: options.wellKnown!.resourceAudience,
+          })
+        );
+        const body = await Effect.runPromise(
+          buildMcpProtectedResourceMetadataEffect({
+            resource,
+            authorizationServers: [issuer],
+            scopesSupported,
+            resourceName: options.wellKnown!.resourceName ?? "ClawQL MCP",
+            resourceDocumentation: options.wellKnown!.resourceDocumentation,
+          })
+        );
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.setHeader("Cache-Control", "public, max-age=300");
+        res.status(200).json(body);
+      })().catch((err: unknown) => {
+        console.error("[clawql-auth] GET oauth-protected-resource error:", err);
+        if (!res.headersSent) {
+          oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
+        }
       });
     });
   }
