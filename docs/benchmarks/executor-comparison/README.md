@@ -64,22 +64,22 @@ LATENCY_ITERS=100 MOCK_DELAY_MS=0 \
   npm run benchmark:executor-comparison:latency
 ```
 
-| Arm | Role | What it isolates |
-| --- | --- | --- |
-| `clawql_execute_equal` | equal | MCP execute → tiny same-host mock + `fields` |
-| `direct_http_mock` | control | Bare `fetch` of the same body |
-| **gateway overhead** | **equalized** | execute − direct |
-| `executor_execute_equal` | equal | MCP execute → same pets JSON in-process |
-| `clawql_audit_append` | control | Local ring append |
+| Arm                      | Role          | What it isolates                             |
+| ------------------------ | ------------- | -------------------------------------------- |
+| `clawql_execute_equal`   | equal         | MCP execute → tiny same-host mock + `fields` |
+| `direct_http_mock`       | control       | Bare `fetch` of the same body                |
+| **gateway overhead**     | **equalized** | execute − direct                             |
+| `executor_execute_equal` | equal         | MCP execute → same pets JSON in-process      |
+| `clawql_audit_append`    | control       | Local ring append                            |
 
 ### Latest local run (equal arms, n=100, live Executor v1.6.10)
 
-| Arm | p50 | p95 | p99 |
-| --- | ---: | ---: | ---: |
-| ClawQL execute e2e | 7.9 ms | 9.4 ms | 10.8 ms |
-| **ClawQL gateway overhead** (equalized) | **7.4 ms** | **8.8 ms** | **9.9 ms** |
-| **Executor execute** (equal JSON) | **3.3 ms** | **6.7 ms** | **17.2 ms** |
-| Direct HTTP mock | 0.4 ms | 0.6 ms | 0.8 ms |
+| Arm                                     |        p50 |        p95 |         p99 |
+| --------------------------------------- | ---------: | ---------: | ----------: |
+| ClawQL execute e2e                      |     7.9 ms |     9.4 ms |     10.8 ms |
+| **ClawQL gateway overhead** (equalized) | **7.4 ms** | **8.8 ms** |  **9.9 ms** |
+| **Executor execute** (equal JSON)       | **3.3 ms** | **6.7 ms** | **17.2 ms** |
+| Direct HTTP mock                        |     0.4 ms |     0.6 ms |      0.8 ms |
 
 On this host Executor wins p50/p95; ClawQL equalized wins **p99** (9.9 vs 17.2). Do **not** cite the #1519 50–100ms band as measured.
 
@@ -89,12 +89,12 @@ The flamegraph demo’s 120ms total remains a **synthetic fixture**. Schema-deco
 
 ## Methodology
 
-| Dimension   | Executor                                      | ClawQL                              |
-| ----------- | --------------------------------------------- | ----------------------------------- |
-| **Layer 1** | Homepage ~1,044 **and** live MCP `tools/list` | Measured gateway `search`+`execute` |
-| **Layer 2** | Live CLI tool call (no projection)            | Live MCP `execute` + `fields`       |
+| Dimension   | Executor                                              | ClawQL                                 |
+| ----------- | ----------------------------------------------------- | -------------------------------------- |
+| **Layer 1** | Homepage ~1,044 **and** live MCP `tools/list`         | Measured gateway `search`+`execute`    |
+| **Layer 2** | Live CLI tool call (no projection)                    | Live MCP `execute` + `fields`          |
 | **Latency** | Live equal-arm `execute` (same JSON) via `EXECUTOR_*` | equal-arm execute − direct vs Executor |
-| **862×**    | Not comparable                                | Do not blend                        |
+| **862×**    | Not comparable                                        | Do not blend                           |
 
 Tokenizer: `cl100k_base`. `focus=input`.
 
