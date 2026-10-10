@@ -90,6 +90,7 @@ describe("createInferenceHttpApp", () => {
       expect(discovery.status).toBe(200);
       const disc = discovery.body as { endpoints: string[]; ladder: string[] };
       expect(disc.endpoints).toContain("/events");
+      expect(disc.endpoints).toContain("/v1/decisions");
       expect(disc.ladder).toEqual(["/v1", "/mcp", "/memory", "/decision", "/events"]);
 
       const eventsMeta = await httpJson(`http://127.0.0.1:${address.port}/events`);
