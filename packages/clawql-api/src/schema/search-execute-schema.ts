@@ -33,6 +33,14 @@ export const EXECUTE_FIELDS_DESCRIPTION =
   "Optional response fields to return. Fewer fields = smaller context window usage. " +
   "Omit to get a sensible default. E.g. ['name', 'uri', 'latestReadyRevision']";
 
+/** Max length for execute `where` JMESPath (must match where-filter caps). */
+export const EXECUTE_WHERE_MAX_LENGTH = 512;
+
+export const EXECUTE_WHERE_DESCRIPTION =
+  "Optional JMESPath evaluated server-side on the provider JSON after fetch, " +
+  "before fields projection. Filter arrays (e.g. [?state=='open']) or extract " +
+  "(e.g. user.login). Max 512 chars; invalid expressions fail closed.";
+
 /** MCP `search` tool arguments — Effect Schema (source of truth). */
 export const SearchInputSchema = Schema.Struct({
   query: Schema.String.annotate({ description: SEARCH_QUERY_DESCRIPTION }),
@@ -54,6 +62,11 @@ export const ExecuteInputSchema = Schema.Struct({
   }),
   fields: Schema.optional(
     Schema.Array(Schema.String).annotate({ description: EXECUTE_FIELDS_DESCRIPTION })
+  ),
+  where: Schema.optional(
+    Schema.String.pipe(Schema.check(Schema.isMaxLength(EXECUTE_WHERE_MAX_LENGTH))).annotate({
+      description: EXECUTE_WHERE_DESCRIPTION,
+    })
   ),
 });
 

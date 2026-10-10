@@ -126,16 +126,20 @@ export function getOAuthAuthorizationServerMetadata(): Record<string, unknown> {
     oidc.grant_types_supported as string[] | undefined,
   )
 
+  // Intentionally omit `device_authorization_endpoint` until ClawQL ships RFC 8628
+  // on the MCP AS. Google's device endpoint (in OIDC defaults) must not appear here —
+  // it misleads clients into thinking ClawQL supports device flow today.
   return {
     issuer: oidc.issuer,
     authorization_endpoint: oidc.authorization_endpoint,
     token_endpoint: oidc.token_endpoint,
     jwks_uri: oidc.jwks_uri,
     revocation_endpoint: oidc.revocation_endpoint,
-    device_authorization_endpoint: oidc.device_authorization_endpoint,
     scopes_supported: oidc.scopes_supported,
     response_types_supported: oidc.response_types_supported,
-    grant_types_supported: grantTypes,
+    grant_types_supported: grantTypes.filter(
+      (g) => g !== 'urn:ietf:params:oauth:grant-type:device_code',
+    ),
     token_endpoint_auth_methods_supported:
       oidc.token_endpoint_auth_methods_supported,
     code_challenge_methods_supported: oidc.code_challenge_methods_supported,

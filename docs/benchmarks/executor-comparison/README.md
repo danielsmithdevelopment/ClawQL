@@ -20,6 +20,35 @@ _“394 is the fairest apples-to-apples parity comparison to their published sin
 **Post sentence for Layer 2:**  
 _“Same task, same repo: Executor’s live `pulls.list` returned 143,466 tokens of raw JSON; ClawQL’s live `execute` with `fields: [title, number]` returned 907. Executor has no output projection today.”_
 
+### What 110× does and does not mean
+
+Almost the entire combined ratio is Layer 2 (~158×). ClawQL’s win is **result shaping** (`fields`), not a smaller tool schema — live Executor `execute` is already thinner (115 vs 394). OpenCode-style code mode (and Executor v2) closes that Layer 2 gap by filtering in a program before the result returns to the model. Once that arm exists, expect ~parity near a thousand tokens on their side; remaining difference is Layer 1. Publish that fair arm yourself rather than waiting for the rebuttal.
+
+| Proved today                                                                         | Not proved                                              |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| Result shaping dominates tool-definition size                                        | Permanent 110× vs code-mode executors                   |
+| ClawQL gets the saving on one structured call (no interpreter, full per-call policy) | That single-call listing is a fair multi-step benchmark |
+
+### Fair comparison (shipped)
+
+| Arm                                     | Meaning                                                                                                 | Script / artifact                                                          |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Executor raw                            | Full REST / CLI dump (unfair vs `fields`)                                                               | `executor-cmp-001`                                                         |
+| **Executor program-filter (simulated)** | Same fields as ClawQL, projected from the raw payload — stand-in for code-mode filter until Executor v2 | `executor-cmp-001` field `executorProgramFilterSimulated` + **fair suite** |
+| ClawQL                                  | `execute` + `fields` (+ `where`)                                                                        | both                                                                       |
+
+```bash
+# 12-task suite: single-call, large-list filter, fan-out, cross-source join; input + output tokens
+npm run benchmark:executor-comparison:fair
+# → docs/benchmarks/executor-comparison/executor-cmp-fair-suite.json
+```
+
+On single-source projected tasks, **program-filter ≈ ClawQL (~1×)** — that is the honest post-code-mode picture. The old ~110× / ~158× headline is raw dump vs projection only; keep it labeled as such.
+
+Still TODO when Executor v2 ships: replace the simulated program-filter arm with a **live** Executor program call; regenerate the static compare page (`npm run generate:executor-cmp-static`).
+
+Related product work: declarative `where` on ClawQL `execute` ([ADR 0015](../../adr/0015-program-mode-alongside-search-execute.md)).
+
 ## Methodology
 
 | Dimension   | Executor                                      | ClawQL                              |

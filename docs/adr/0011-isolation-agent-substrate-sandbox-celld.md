@@ -106,6 +106,7 @@ As of this writing, Agent Substrate is open source and generally available for *
 - **Positive:** Credible K8s-native isolation for untrusted code; clear permanent split with celld; WORM visibility into suspend/resume.
 - **Negative / follow-ups:** Production allowlist reconfirmation; egress-gateway vs payments signer evaluation; Kata remains maintained as fallback until Agent Substrate is the default everywhere operators need.
 - **Non-goals:** Replacing celld with Agent Substrate; claiming Agent Substrate's published benchmarks as ClawQL-measured until validated on our clusters.
+- **Follow-on:** Confined program-mode interpreters ([ADR 0015](./0015-program-mode-alongside-search-execute.md)) run in celld with ClawQL-set memory/CPU/timeout/call/output caps — not in `clawql-sandbox`.
 
 ---
 

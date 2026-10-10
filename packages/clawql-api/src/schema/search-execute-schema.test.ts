@@ -32,6 +32,30 @@ describe("SearchInputSchema / ExecuteInputSchema", () => {
     expect(decoded.fields).toEqual(["name"]);
   });
 
+  it("decodes optional where JMESPath", async () => {
+    const decoded = await Effect.runPromise(
+      decodeExecuteInput({
+        operationId: "pulls/list",
+        args: {},
+        fields: ["number", "title"],
+        where: "[?state=='open']",
+      })
+    );
+    expect(decoded.where).toBe("[?state=='open']");
+  });
+
+  it("rejects where longer than 512 characters", async () => {
+    await expect(
+      Effect.runPromise(
+        decodeExecuteInput({
+          operationId: "pulls/list",
+          args: {},
+          where: "x".repeat(513),
+        })
+      )
+    ).rejects.toThrow();
+  });
+
   it("rejects execute without operationId", async () => {
     await expect(Effect.runPromise(decodeExecuteInput({ args: {} }))).rejects.toThrow(
       /operationId/i
@@ -63,6 +87,13 @@ describe("SearchInputSchema / ExecuteInputSchema", () => {
     );
     expect(decoded).toEqual({ query: "list jobs", limit: 5 });
     expect(decoded).not.toHaveProperty("unexpected");
+  });
+
+  it("never decodes host-only approvedExecutionId from execute arguments", async () => {
+    const decoded = await Effect.runPromise(
+      decodeExecuteInput({ operationId: "issues.create", args: {}, approvedExecutionId: "pex_1" })
+    );
+    expect(decoded).not.toHaveProperty("approvedExecutionId");
   });
 
   it("decodes resume with executionId only", async () => {

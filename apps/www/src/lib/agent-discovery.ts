@@ -162,16 +162,21 @@ export function getOpenIdConfiguration(): Record<string, unknown> {
 
 export function getOAuthAuthorizationServerMetadata(): Record<string, unknown> {
   const oidc = getOpenIdConfiguration()
+  const grantTypes = Array.isArray(oidc.grant_types_supported)
+    ? (oidc.grant_types_supported as string[]).filter(
+        (g) => g !== 'urn:ietf:params:oauth:grant-type:device_code',
+      )
+    : oidc.grant_types_supported
+  // Omit Google device_authorization_endpoint until ClawQL MCP AS ships RFC 8628.
   return {
     issuer: oidc.issuer,
     authorization_endpoint: oidc.authorization_endpoint,
     token_endpoint: oidc.token_endpoint,
     jwks_uri: oidc.jwks_uri,
     revocation_endpoint: oidc.revocation_endpoint,
-    device_authorization_endpoint: oidc.device_authorization_endpoint,
     scopes_supported: oidc.scopes_supported,
     response_types_supported: oidc.response_types_supported,
-    grant_types_supported: oidc.grant_types_supported,
+    grant_types_supported: grantTypes,
     token_endpoint_auth_methods_supported: oidc.token_endpoint_auth_methods_supported,
     code_challenge_methods_supported: oidc.code_challenge_methods_supported,
   }

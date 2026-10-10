@@ -10,11 +10,13 @@ with crash-after-consume leaving **`outcome_unknown`** (never silently retried).
 
 ## Files
 
-| File | Role |
-| --- | --- |
-| `MandateLifecycle.tla` | Spec — states, actions, invariants |
-| `MandateLifecycle.cfg` | TLC — **atomic** target (`WeakConsume = FALSE`); must pass |
-| `MandateLifecycleWeak.cfg` | TLC — **legacy race** (`WeakConsume = TRUE`); must *fail* Safety |
+| File                       | Role                                                                 |
+| -------------------------- | -------------------------------------------------------------------- |
+| `MandateLifecycle.tla`     | Spec — states, actions, invariants                                   |
+| `MandateLifecycle.cfg`     | TLC — **atomic** target (`WeakConsume = FALSE`); must pass           |
+| `MandateLifecycleWeak.cfg` | TLC — **legacy race** (`WeakConsume = TRUE`); must _fail_ Safety     |
+| `BatchMandate.tla`         | ADR 0015 — batch Merkle root approve + inclusion consume             |
+| `BatchMandate.cfg`         | TLC — Safety must pass (`./scripts/formal/run-batch-mandate-tlc.sh`) |
 
 ## Invariants (target)
 
@@ -42,16 +44,16 @@ Expect: atomic config exit 0; weak config exit ≠ 0 with `Safety` / `AtMostOneS
 
 ## Mapping to code
 
-| Spec | Code |
-| --- | --- |
-| `Park` | `PendingExecutionService.park` |
-| `Approve` / `Decline` | `decide` |
-| `TamperPendingDigest` | args change while pending (digest re-bind) |
-| `Consume` | `tryConsumeApprovedEffect` / `tryConsumeApprovedMandate` |
-| `SideEffect` | execute body after consume |
-| `Finalize` | `markCompleted` |
-| Digests | `hashPendingArgsEffect` / `args-hash.ts` |
-| Idempotency | `mandateIdempotencyKey(executionId)` for Stripe etc. |
+| Spec                  | Code                                                     |
+| --------------------- | -------------------------------------------------------- |
+| `Park`                | `PendingExecutionService.park`                           |
+| `Approve` / `Decline` | `decide`                                                 |
+| `TamperPendingDigest` | args change while pending (digest re-bind)               |
+| `Consume`             | `tryConsumeApprovedEffect` / `tryConsumeApprovedMandate` |
+| `SideEffect`          | execute body after consume                               |
+| `Finalize`            | `markCompleted`                                          |
+| Digests               | `hashPendingArgsEffect` / `args-hash.ts`                 |
+| Idempotency           | `mandateIdempotencyKey(executionId)` for Stripe etc.     |
 
 ## Audit hunt (production)
 

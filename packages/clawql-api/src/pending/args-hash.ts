@@ -27,14 +27,20 @@ export type PendingArgsPayload = {
   readonly operationId: string;
   readonly args: Record<string, unknown>;
   readonly fields?: readonly string[];
+  /** JMESPath `where` bound into the mandate digest (same care as `fields`). */
+  readonly where?: string;
 };
 
 export const hashPendingArgsEffect = (payload: PendingArgsPayload): Effect.Effect<string> =>
   Effect.sync(() => {
+    // Include `where` only when set so digests for legacy parked rows (no where)
+    // stay stable; when present it binds like `fields` for mandate resume.
+    const where = payload.where?.trim() ? payload.where : undefined;
     const body = canonicalizeForHash({
       operationId: payload.operationId,
       args: payload.args,
       fields: payload.fields ?? null,
+      ...(where !== undefined ? { where } : {}),
     });
     const digest = createHash("sha256").update(body, "utf8").digest("hex");
     return `sha256:${digest}`;
