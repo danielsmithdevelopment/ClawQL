@@ -76,6 +76,7 @@ LATENCY_ITERS=40 MOCK_DELAY_MS=5 \
 Artifact: `executor-cmp-latency.json` (n=25, mock delay 0, `CLAWQL_CAPABILITY_LIFECYCLE=0`).
 
 <<<<<<< HEAD
+
 | Arm                                             |                                                     p50 |      p95 |
 | ----------------------------------------------- | ------------------------------------------------------: | -------: |
 | ClawQL `audit` (gateway-only)                   |                                              **1.7 ms** |  34.9 ms |
@@ -83,15 +84,16 @@ Artifact: `executor-cmp-latency.json` (n=25, mock delay 0, `CLAWQL_CAPABILITY_LI
 | Direct `fetch` same mock                        |                                                  0.5 ms |   1.1 ms |
 | **Derived gateway overhead** (execute − direct) |                                             **~8.0 ms** | ~16.4 ms |
 | Executor no-op                                  | _not wired_ (`EXECUTOR_BIN` / `EXECUTOR_MCP_URL` unset) |          |
-=======
-| Arm | p50 | p95 |
-| --- | ---: | ---: |
-| ClawQL `audit` (gateway-only) | **1.7 ms** | 34.9 ms |
-| ClawQL `execute` → local mock | **8.4 ms** | 17.5 ms |
-| Direct `fetch` same mock | 0.5 ms | 1.1 ms |
-| **Derived gateway overhead** (execute − direct) | **~8.0 ms** | ~16.4 ms |
-| Executor (chart) | **75 ms** mid of **50–100 ms** reference band | — |
->>>>>>> de5c8344 (feat(bench): shareable ClawQL vs Executor latency bar chart)
+| =======                                         |
+| Arm                                             |                                                     p50 |      p95 |
+| ---                                             |                                                    ---: |     ---: |
+| ClawQL `audit` (gateway-only)                   |                                              **1.7 ms** |  34.9 ms |
+| ClawQL `execute` → local mock                   |                                              **8.4 ms** |  17.5 ms |
+| Direct `fetch` same mock                        |                                                  0.5 ms |   1.1 ms |
+| **Derived gateway overhead** (execute − direct) |                                             **~8.0 ms** | ~16.4 ms |
+| Executor (chart)                                |           **75 ms** mid of **50–100 ms** reference band |        — |
+
+> > > > > > > de5c8344 (feat(bench): shareable ClawQL vs Executor latency bar chart)
 
 **Shareable same-graph page:** [clawql.com/benchmarks/executor-comparison/latency.html](https://clawql.com/benchmarks/executor-comparison/latency.html) · regenerate with `npm run generate:executor-cmp-latency-html`.
 
