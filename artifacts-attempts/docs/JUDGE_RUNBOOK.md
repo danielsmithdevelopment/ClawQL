@@ -41,7 +41,7 @@ node cli/verify/dist/cli.js \
   --bundle-dir <see manifest artifacts paths / main-wt files>
 ```
 
-After `demo:local`, the dry-run manifest path is printed / under `.local/demo-run/.local/arweave/<id>/manifest.json`. Bundle files used in the demo are `main-wt/src/delivery.js` and `main-wt/package.json` (paths relative to the demo root).
+After `demo:local`, the dry-run manifest path is printed / under `.local/demo-run/.local/arweave/<id>/manifest.json`. Bundle files used in the demo are `artifacts/main-wt/src/delivery.js` and `artifacts/main-wt/package.json` (paths relative to the demo root).
 
 ### What “real” means here
 

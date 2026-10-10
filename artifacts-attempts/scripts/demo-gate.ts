@@ -34,8 +34,8 @@ async function oneRun(i: number): Promise<void> {
   });
   const bundle = join(root, "bundle-check");
   mkdirSync(bundle, { recursive: true });
-  copyFileSync(join(root, "main-wt/src/delivery.js"), join(bundle, "delivery.js"));
-  copyFileSync(join(root, "main-wt/package.json"), join(bundle, "package.json"));
+  copyFileSync(join(root, "artifacts/main-wt/src/delivery.js"), join(bundle, "delivery.js"));
+  copyFileSync(join(root, "artifacts/main-wt/package.json"), join(bundle, "package.json"));
   execFileSync(
     "node",
     ["cli/verify/dist/cli.js", "--local-manifest", result.manifestPath, "--bundle-dir", bundle],
