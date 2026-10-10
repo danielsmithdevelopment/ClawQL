@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@artifacts-attempts/mcp-tools": "0.1.0",
     "@artifacts-attempts/shared": "0.1.0"
   }
 }

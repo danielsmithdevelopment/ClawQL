@@ -3,8 +3,11 @@
  * Local/demo: in-memory task-store. Production: coordinator DO + decider.
  */
 
+import { dispatchTool, type ToolContext } from "@artifacts-attempts/mcp-tools";
 import { shouldAutoMerge, type DecisionResponse } from "@artifacts-attempts/shared";
 import { getTaskView, putTaskView, subscribe, type TaskView } from "./task-store.js";
+
+const claimedByTask = new Map<string, Map<string, string>>();
 
 export interface Env {
   ASSETS?: { fetch(request: Request): Promise<Response> };
@@ -112,6 +115,27 @@ export default {
         arweaveId: id,
         note: "Serve manifest from R2 / dry-run .local/arweave in deploy wiring",
       });
+    }
+
+    if (request.method === "POST" && url.pathname === "/mcp/tools/call") {
+      const body = (await request.json()) as {
+        taskId: string;
+        attemptId: string;
+        name: string;
+        arguments?: Record<string, unknown>;
+      };
+      const view = getTaskView(body.taskId);
+      if (!view) return new Response("Not found", { status: 404 });
+      const claimed = claimedByTask.get(body.taskId) ?? new Map<string, string>();
+      claimedByTask.set(body.taskId, claimed);
+      const ctx: ToolContext = {
+        task: view.task,
+        attempts: view.attempts,
+        notes: view.notes,
+        selfAttemptId: body.attemptId,
+        claimedPaths: claimed,
+      };
+      return json(dispatchTool(ctx, body.name, body.arguments ?? {}));
     }
 
     if (url.pathname === "/healthz") {

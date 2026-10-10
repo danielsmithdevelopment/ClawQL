@@ -3,45 +3,91 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>artifacts-attempts board</title>
+    <title>artifacts-attempts</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@600;700&display=swap" rel="stylesheet" />
     <style>
       :root {
-        --bg: #0f1419;
-        --fg: #e7ecf1;
+        --bg: #101418;
+        --fg: #e8eef4;
         --muted: #8b9aab;
         --accent: #3d9a6a;
         --warn: #c9852b;
         --danger: #c44c4c;
         --line: #243040;
+        --panel: rgba(20, 28, 36, 0.72);
       }
       * { box-sizing: border-box; }
       body {
         margin: 0;
-        font-family: "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
-        background:
-          radial-gradient(1200px 600px at 10% -10%, #1a2a22 0%, transparent 55%),
-          radial-gradient(900px 500px at 100% 0%, #1a2433 0%, transparent 50%),
-          var(--bg);
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
         color: var(--fg);
         min-height: 100vh;
+        background:
+          radial-gradient(900px 480px at 0% 0%, #1b2e24 0%, transparent 55%),
+          radial-gradient(700px 420px at 100% 10%, #1a2433 0%, transparent 50%),
+          linear-gradient(180deg, #0c1014 0%, var(--bg) 40%, #0e151c 100%);
       }
-      main { max-width: 960px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
-      h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 0.35rem; }
-      p.lead { color: var(--muted); margin: 0 0 1.75rem; font-size: 0.95rem; }
-      table { width: 100%; border-collapse: collapse; }
-      th, td { text-align: left; padding: 0.65rem 0.5rem; border-bottom: 1px solid var(--line); font-size: 0.85rem; }
+      main { max-width: 980px; margin: 0 auto; padding: 2.75rem 1.25rem 4rem; }
+      .brand {
+        font-family: Syne, system-ui, sans-serif;
+        font-size: clamp(2rem, 4vw, 2.75rem);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        margin: 0 0 0.4rem;
+        opacity: 0;
+        animation: rise 0.7s ease forwards;
+      }
+      .lead {
+        color: var(--muted);
+        margin: 0 0 1.75rem;
+        max-width: 40rem;
+        line-height: 1.45;
+        opacity: 0;
+        animation: rise 0.7s ease 0.08s forwards;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel);
+        backdrop-filter: blur(8px);
+        opacity: 0;
+        animation: rise 0.7s ease 0.16s forwards;
+      }
+      th, td {
+        text-align: left;
+        padding: 0.7rem 0.65rem;
+        border-bottom: 1px solid var(--line);
+        font-size: 0.82rem;
+        vertical-align: top;
+      }
       th { color: var(--muted); font-weight: 500; }
-      .pill { display: inline-block; padding: 0.1rem 0.45rem; border: 1px solid var(--line); }
       .ok { color: var(--accent); }
       .warn { color: var(--warn); }
       .bad { color: var(--danger); }
-      #status { color: var(--muted); font-size: 0.8rem; margin-top: 1rem; }
+      #meta { color: var(--muted); font-size: 0.78rem; margin-top: 1rem; }
+      .decision {
+        margin: 1.25rem 0 0;
+        padding: 0.85rem 1rem;
+        border-left: 3px solid var(--accent);
+        background: rgba(61, 154, 106, 0.08);
+        font-size: 0.85rem;
+        opacity: 0;
+        animation: rise 0.7s ease 0.24s forwards;
+      }
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      tr { transition: background 0.25s ease; }
+      tr.flash { background: rgba(61, 154, 106, 0.12); }
     </style>
   </head>
   <body>
     <main>
-      <h1>artifacts-attempts</h1>
-      <p class="lead">Live board — task, attempts, evidence, decision. Updates via SSE when the API is wired.</p>
+      <h1 class="brand">artifacts-attempts</h1>
+      <p class="lead">One task, three attempts, evidence-gated merge, immutable release. Board updates live over SSE.</p>
       <table>
         <thead>
           <tr>
@@ -49,32 +95,71 @@
             <th>Status</th>
             <th>Tests</th>
             <th>Policy</th>
-            <th>Decision</th>
+            <th>Evidence</th>
           </tr>
         </thead>
         <tbody id="rows">
-          <tr><td colspan="5">Waiting for <code>GET /tasks/:id</code>…</td></tr>
+          <tr><td colspan="5">Add <code>?task=tsk_…</code> or POST a view to <code>/tasks</code>.</td></tr>
         </tbody>
       </table>
-      <p id="status">Connect with <code>?task=tsk_…</code></p>
+      <div id="decision" class="decision" hidden></div>
+      <p id="meta"></p>
     </main>
     <script type="module">
       const params = new URLSearchParams(location.search);
       const taskId = params.get("task");
-      const status = document.getElementById("status");
       const rows = document.getElementById("rows");
-      if (!taskId) {
-        status.textContent = "Add ?task=tsk_… to load a live task.";
-      } else {
-        status.textContent = `Polling ${taskId}`;
-        async function refresh() {
-          const res = await fetch(`/tasks/${taskId}`);
-          if (!res.ok) { status.textContent = `task ${taskId}: ${res.status}`; return; }
-          const data = await res.json();
-          rows.innerHTML = `<tr><td colspan="5"><code>${JSON.stringify(data)}</code></td></tr>`;
+      const meta = document.getElementById("meta");
+      const decisionEl = document.getElementById("decision");
+
+      function tone(status) {
+        if (status === "won" || status === "evaluated") return "ok";
+        if (status === "blocked" || status === "failed") return "bad";
+        if (status === "working") return "warn";
+        return "";
+      }
+
+      function render(view) {
+        const notesByAttempt = new Map();
+        for (const n of view.notes ?? []) notesByAttempt.set(n.attemptId, n);
+        rows.innerHTML = (view.attempts ?? [])
+          .map((a) => {
+            const n = notesByAttempt.get(a.id);
+            const tests = n ? `${n.tests.passed}/${n.tests.failed}` : "—";
+            const policy = n ? (n.policy.clean ? "clean" : n.policy.violations.join(", ")) : "—";
+            const hash = n ? n.hash.slice(0, 12) : "—";
+            return `<tr class="flash">
+              <td>${a.id}<br/><span style="color:var(--muted)">${a.fork ?? ""}</span></td>
+              <td class="${tone(a.status)}">${a.status}</td>
+              <td>${tests}</td>
+              <td class="${n && !n.policy.clean ? "bad" : ""}">${policy}</td>
+              <td><code>${hash}</code></td>
+            </tr>`;
+          })
+          .join("") || `<tr><td colspan="5">No attempts yet for ${view.task?.id ?? taskId}</td></tr>`;
+        setTimeout(() => {
+          for (const tr of rows.querySelectorAll("tr")) tr.classList.remove("flash");
+        }, 600);
+        if (view.decision?.winner) {
+          decisionEl.hidden = false;
+          decisionEl.textContent = `Decision: ${view.decision.winner}` +
+            (view.pendingApproval ? " (awaiting approval)" : "") +
+            (view.task?.status ? ` · task ${view.task.status}` : "");
         }
-        refresh();
-        setInterval(refresh, 2000);
+        meta.textContent = `task ${view.task?.id ?? ""} · ${new Date().toISOString()}`;
+      }
+
+      if (!taskId) {
+        meta.textContent = "Add ?task=tsk_… to subscribe.";
+      } else {
+        meta.textContent = `Connecting SSE for ${taskId}…`;
+        const es = new EventSource(`/tasks/${taskId}/stream`);
+        es.onmessage = (ev) => {
+          try { render(JSON.parse(ev.data)); } catch { /* ignore */ }
+        };
+        es.onerror = () => { meta.textContent = `SSE error — falling back to poll`; };
+        // Also poll once in case SSE misses the first event
+        fetch(`/tasks/${taskId}`).then((r) => r.ok ? r.json() : null).then((v) => v && render(v));
       }
     </script>
   </body>
