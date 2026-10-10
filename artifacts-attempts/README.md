@@ -29,8 +29,10 @@ npm ci
 npm test                 # includes local-git + pipeline
 npm run demo:local       # one full pipeline run under .local/demo-run
 npm run demo:gate        # 3 consecutive verified runs (record only after GATE PASS)
+npm run demo:record-prep # alias gate before filming
 npm run board:serve      # http://127.0.0.1:8787/
 npm run board:hydrate    # POSTs results; open /?task=tsk_demo
+npm run demo:approval-path  # uncalibrated → approve (board must be up)
 ```
 
 Judges: [`docs/JUDGE_RUNBOOK.md`](./docs/JUDGE_RUNBOOK.md) · Video: [`docs/VIDEO_SCRIPT.md`](./docs/VIDEO_SCRIPT.md) · Submit: [`docs/SUBMISSION.md`](./docs/SUBMISSION.md).
