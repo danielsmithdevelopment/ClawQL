@@ -9,10 +9,7 @@ import { Context, Effect, Layer } from "effect";
 import type { DecisionQuestion, DecisionRequest, DecisionResponse } from "./service.js";
 import { runDecision } from "./service.js";
 import type { OpenAiDecisionCreateRequest, OpenAiDecisionCreateResponse } from "./openai-types.js";
-import {
-  callRemoteOpenAiDecisions,
-  remoteLunaAvailable,
-} from "./remote-decisions.js";
+import { callRemoteOpenAiDecisions, remoteLunaAvailable } from "./remote-decisions.js";
 
 export type FanoutEvalMode = "bulk";
 
@@ -93,10 +90,7 @@ function isLunaBackend(spec: FanoutBackendSpec): boolean {
   const id = spec.id.trim().toLowerCase();
   const model = (spec.model ?? "").trim().toLowerCase();
   return (
-    id.includes("luna") ||
-    id.includes("openai") ||
-    model.includes("luna") ||
-    model === "gpt-6-luna"
+    id.includes("luna") || id.includes("openai") || model.includes("luna") || model === "gpt-6-luna"
   );
 }
 
@@ -183,7 +177,8 @@ export function parseFanoutEvalBody(body: unknown): FanoutEvalRequest | { error:
 
   const cases: FanoutEvalCase[] = [];
   for (const raw of b.cases) {
-    if (!raw || typeof raw !== "object") return { error: "each case requires caseId, state, questions, expected" };
+    if (!raw || typeof raw !== "object")
+      return { error: "each case requires caseId, state, questions, expected" };
     const c = raw as Record<string, unknown>;
     const caseId = typeof c.caseId === "string" ? c.caseId.trim() : "";
     const state = typeof c.state === "string" ? c.state.trim() : "";
@@ -254,7 +249,10 @@ export function parseFanoutEvalBody(body: unknown): FanoutEvalRequest | { error:
     });
   }
 
-  const qb = b.qualityBar && typeof b.qualityBar === "object" ? (b.qualityBar as Record<string, unknown>) : {};
+  const qb =
+    b.qualityBar && typeof b.qualityBar === "object"
+      ? (b.qualityBar as Record<string, unknown>)
+      : {};
   return {
     mode: "bulk",
     cases,
@@ -278,7 +276,8 @@ export function runFanoutEvalBulk(opts: {
     const decide = opts.decide ?? runDecision;
     const remoteOverride = opts.callRemote;
     const callRemote =
-      remoteOverride ?? ((body: OpenAiDecisionCreateRequest) => callRemoteOpenAiDecisions(body, { env }));
+      remoteOverride ??
+      ((body: OpenAiDecisionCreateRequest) => callRemoteOpenAiDecisions(body, { env }));
     const lunaCallable = Boolean(remoteOverride) || remoteLunaAvailable(env);
     const maxWrong = opts.request.qualityBar?.maxWrongAnswers ?? 0;
     const minAnswered = opts.request.qualityBar?.minAnswered ?? 1;
@@ -320,7 +319,9 @@ export function runFanoutEvalBulk(opts: {
                   allow_uncalibrated: true,
                 }),
               catch: (e) => (e instanceof Error ? e : new Error(String(e))),
-            }).pipe(Effect.catch(() => Effect.succeed(null as OpenAiDecisionCreateResponse | null)));
+            }).pipe(
+              Effect.catch(() => Effect.succeed(null as OpenAiDecisionCreateResponse | null))
+            );
             if (!remote) {
               skipped += 1;
               skipReason = skipReason ?? "remote Luna call failed";
@@ -435,11 +436,13 @@ export class FanoutEvalService extends Context.Service<
   }
 >()("clawql/inference/FanoutEvalService") {}
 
-export function makeFanoutEvalLive(opts: {
-  decide?: FanoutDecideFn;
-  callRemote?: FanoutRemoteFn;
-  env?: NodeJS.ProcessEnv;
-} = {}): Layer.Layer<FanoutEvalService> {
+export function makeFanoutEvalLive(
+  opts: {
+    decide?: FanoutDecideFn;
+    callRemote?: FanoutRemoteFn;
+    env?: NodeJS.ProcessEnv;
+  } = {}
+): Layer.Layer<FanoutEvalService> {
   return Layer.succeed(FanoutEvalService, {
     evaluate: (req) =>
       runFanoutEvalBulk({

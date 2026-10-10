@@ -10,19 +10,19 @@ Vendors return probabilities on **their** distributions. ClawQL’s pitch is: _b
 
 ## Endpoint
 
-| Path                 | Shape                         | Notes                                      |
-| -------------------- | ----------------------------- | ------------------------------------------ |
-| `POST /decision/eval` | ClawQL fan-out eval request  | Operator / CI surface (not OpenAI-shaped)  |
+| Path                  | Shape                       | Notes                                     |
+| --------------------- | --------------------------- | ----------------------------------------- |
+| `POST /decision/eval` | ClawQL fan-out eval request | Operator / CI surface (not OpenAI-shaped) |
 
 OpenAI SDK clients stay on `POST /v1/decisions`. Eval is a ClawQL control-plane tool.
 
 ## Modes
 
-| Mode                   | v0.1 | Behavior                                                                 |
-| ---------------------- | ---- | ------------------------------------------------------------------------ |
-| `bulk`                 | yes  | Run every requested backend on a labeled set; recommend cheapest that meets the quality bar |
-| `disagreement_mining`  | later | Unlabeled batch; emit disagreements for Review                           |
-| `ensemble`             | later | Live quorum only when it raises answers-on-its-own                       |
+| Mode                  | v0.1  | Behavior                                                                                    |
+| --------------------- | ----- | ------------------------------------------------------------------------------------------- |
+| `bulk`                | yes   | Run every requested backend on a labeled set; recommend cheapest that meets the quality bar |
+| `disagreement_mining` | later | Unlabeled batch; emit disagreements for Review                                              |
+| `ensemble`            | later | Live quorum only when it raises answers-on-its-own                                          |
 
 ## Bulk request
 
@@ -57,15 +57,15 @@ OpenAI SDK clients stay on `POST /v1/decisions`. Eval is a ClawQL control-plane 
 
 ## Metrics (per backend)
 
-| Field               | Meaning                                                              |
-| ------------------- | -------------------------------------------------------------------- |
-| `answered`          | Non-abstain answers produced                                         |
-| `correct`           | Answered and matched expected                                        |
-| `wrong`             | Answered and mismatched expected                                     |
-| `abstained`         | Soft abstain / no answer                                             |
-| `answersOnItsOwn`   | `correct` when `wrong <= maxWrongAnswers` (else 0) — honesty bar     |
-| `meetsQualityBar`   | `wrong <= maxWrongAnswers` and `answered >= minAnswered`             |
-| `costEstimate`      | `costPerCase * cases.length` when `costPerCase` provided             |
+| Field             | Meaning                                                          |
+| ----------------- | ---------------------------------------------------------------- |
+| `answered`        | Non-abstain answers produced                                     |
+| `correct`         | Answered and matched expected                                    |
+| `wrong`           | Answered and mismatched expected                                 |
+| `abstained`       | Soft abstain / no answer                                         |
+| `answersOnItsOwn` | `correct` when `wrong <= maxWrongAnswers` (else 0) — honesty bar |
+| `meetsQualityBar` | `wrong <= maxWrongAnswers` and `answered >= minAnswered`         |
+| `costEstimate`    | `costPerCase * cases.length` when `costPerCase` provided         |
 
 **Recommendation:** among backends that `meetsQualityBar`, pick lowest `costEstimate` (ties → first listed). If none meet the bar, omit `recommendation` and report why.
 
