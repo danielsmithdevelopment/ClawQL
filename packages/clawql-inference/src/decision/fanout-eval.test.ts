@@ -1,5 +1,5 @@
 /**
- * Fan-out evaluation (bulk) — recommend cheapest backend meeting quality bar.
+ * Fan-out evaluation — bulk recommend + disagreement_mining Review queue.
  */
 
 import { createServer, request, type Server } from "node:http";
@@ -199,6 +199,141 @@ describe("fan-out eval bulk", () => {
         body: JSON.stringify({ mode: "ensemble", cases: [], backends: [] }),
       });
       expect(bad.status).toBe(400);
+    } finally {
+      await closeHttpServer(server);
+    }
+  });
+});
+
+const miningCase = {
+  caseId: "billing-1",
+  state: "I was charged twice for my order.",
+  questions: billingCase.questions,
+};
+
+describe("fan-out eval disagreement_mining", () => {
+  it("emits Review disagreements for unlabeled cross-backend splits", async () => {
+    const result = await runFanoutEval(
+      {
+        mode: "disagreement_mining",
+        cases: [miningCase],
+        backends: [
+          { id: "local-a", model: "clawql" },
+          { id: "openai/gpt-6-luna", model: "gpt-6-luna" },
+        ],
+      },
+      {
+        env: {},
+        decide: decideBilling,
+        callRemote: async () => ({
+          id: "decision_remote",
+          object: "decision",
+          model: "gpt-6-luna",
+          created: 1,
+          answers: [
+            {
+              type: "choice",
+              name: "department",
+              choice: "shipping",
+              confidence: 0.9,
+              probabilities: [{ value: "shipping", probability: 0.9 }],
+            },
+          ],
+          usage: {
+            input_tokens: 1,
+            output_tokens: 1,
+            total_tokens: 2,
+            input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+            output_tokens_details: { reasoning_tokens: 0 },
+          },
+          calibrated: false,
+          escalated: false,
+          use_site_id: "search_provider_tool_routing",
+          backend_id: "openai/gpt-6-luna",
+          trace_id: "r",
+        }),
+      }
+    );
+
+    expect(result.mode).toBe("disagreement_mining");
+    expect(result.recommendation).toBeUndefined();
+    expect(result.reviewCount).toBe(1);
+    expect(result.disagreements).toHaveLength(1);
+    expect(result.disagreements[0]?.answers["local-a"]).toBe("billing");
+    expect(result.disagreements[0]?.answers["openai/gpt-6-luna"]).toBe("shipping");
+    expect(result.reports.every((r) => r.meetsQualityBar === false)).toBe(true);
+  });
+
+  it("attaches flip-rate on disagreed cases when flipRate is set", async () => {
+    const result = await runFanoutEval(
+      {
+        mode: "disagreement_mining",
+        cases: [miningCase],
+        backends: [
+          { id: "local-a", model: "clawql" },
+          { id: "openai/gpt-6-luna", model: "gpt-6-luna" },
+        ],
+        flipRate: { maxFlipRate: 0.1, families: ["synonym"] },
+      },
+      {
+        env: {},
+        decide: decideBilling,
+        callRemote: async () => ({
+          id: "decision_remote",
+          object: "decision",
+          model: "gpt-6-luna",
+          created: 1,
+          answers: [
+            {
+              type: "choice",
+              name: "department",
+              choice: "shipping",
+              confidence: 0.9,
+              probabilities: [{ value: "shipping", probability: 0.9 }],
+            },
+          ],
+          usage: {
+            input_tokens: 1,
+            output_tokens: 1,
+            total_tokens: 2,
+            input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+            output_tokens_details: { reasoning_tokens: 0 },
+          },
+          calibrated: false,
+          escalated: false,
+          use_site_id: "search_provider_tool_routing",
+          backend_id: "openai/gpt-6-luna",
+          trace_id: "r",
+        }),
+      }
+    );
+
+    expect(result.disagreements[0]?.flipRate).toBeDefined();
+    expect(result.disagreements[0]?.flipRate?.passed).toBe(true);
+    expect(result.disagreements[0]?.flipRate?.baseline).toBe("billing");
+  });
+
+  it("POST /decision/eval rejects labeled cases in disagreement_mining", async () => {
+    const app = express();
+    app.use(express.json());
+    app.use(createDecisionRouter({ env: {}, decide: decideBilling }));
+    const server = createServer(app);
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("expected port");
+
+    try {
+      const res = await httpJson(`http://127.0.0.1:${address.port}/decision/eval`, {
+        method: "POST",
+        body: JSON.stringify({
+          mode: "disagreement_mining",
+          backends: [{ id: "local" }, { id: "openai/gpt-6-luna", model: "gpt-6-luna" }],
+          cases: [billingCase],
+        }),
+      });
+      expect(res.status).toBe(400);
+      expect(JSON.stringify(res.body)).toMatch(/unlabeled/);
     } finally {
       await closeHttpServer(server);
     }
