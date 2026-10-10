@@ -157,7 +157,8 @@ export function parseFlipRateBody(body: unknown): FlipRateRequest | { error: str
 
   const cases: FlipRateCase[] = [];
   for (const raw of b.cases) {
-    if (!raw || typeof raw !== "object") return { error: "each case requires caseId, state, questions" };
+    if (!raw || typeof raw !== "object")
+      return { error: "each case requires caseId, state, questions" };
     const c = raw as Record<string, unknown>;
     const caseId = typeof c.caseId === "string" ? c.caseId.trim() : "";
     const state = typeof c.state === "string" ? c.state.trim() : "";
@@ -250,9 +251,7 @@ export function runFlipRateGate(opts: {
         catch: (e) => (e instanceof Error ? e : new Error(String(e))),
       }).pipe(Effect.catch(() => Effect.succeed(null as DecisionResponse | null)));
 
-      const baseline = baselineResult
-        ? selectedAnswer(baselineResult, questionName)
-        : null;
+      const baseline = baselineResult ? selectedAnswer(baselineResult, questionName) : null;
 
       const perturbations = applyPerturbations(c.state, families);
       const details: FlipRatePerturbationResult[] = [];
@@ -327,9 +326,11 @@ export class FlipRateGateService extends Context.Service<
   }
 >()("clawql/inference/FlipRateGateService") {}
 
-export function makeFlipRateGateLive(opts: {
-  decide?: FlipRateDecideFn;
-} = {}): Layer.Layer<FlipRateGateService> {
+export function makeFlipRateGateLive(
+  opts: {
+    decide?: FlipRateDecideFn;
+  } = {}
+): Layer.Layer<FlipRateGateService> {
   return Layer.succeed(FlipRateGateService, {
     evaluate: (req) => runFlipRateGate({ request: req, decide: opts.decide }),
   });

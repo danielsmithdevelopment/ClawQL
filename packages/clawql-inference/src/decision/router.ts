@@ -499,8 +499,7 @@ export function createDecisionRouter(options: CreateDecisionRouterOptions = {}):
     options.evaluate ??
     ((req: FanoutEvalRequest) =>
       runFanoutEval(req, { decide, callRemote: options.callRemote, env }));
-  const flipRate =
-    options.flipRate ?? ((req: FlipRateRequest) => runFlipRate(req, { decide }));
+  const flipRate = options.flipRate ?? ((req: FlipRateRequest) => runFlipRate(req, { decide }));
 
   const systemOneHandler = (req: Request, res: Response) =>
     void handleDecide(req as VirtualKeyRequest, res, decide);

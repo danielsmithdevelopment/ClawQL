@@ -10,9 +10,9 @@ Held-out accuracy alone is not enough for `productionTrusted`. Microsoft-style d
 
 ## Endpoint
 
-| Path                      | Notes                                      |
-| ------------------------- | ------------------------------------------ |
-| `POST /decision/flip-rate` | Operator / CI surface (ClawQL-shaped)     |
+| Path                       | Notes                                 |
+| -------------------------- | ------------------------------------- |
+| `POST /decision/flip-rate` | Operator / CI surface (ClawQL-shaped) |
 
 ## Request
 
@@ -42,24 +42,24 @@ Held-out accuracy alone is not enough for `productionTrusted`. Microsoft-style d
 
 ## Perturbation families (v0.1)
 
-| Family        | Transforms                                              |
-| ------------- | ------------------------------------------------------- |
-| `whitespace`  | collapse runs, trim, leading/trailing pad                |
-| `case`        | lower, upper, title-ish first-token capitalize           |
-| `punctuation` | strip trailing `!?.`, lightly add `?`                    |
-| `synonym`     | small closed swap list (`charged`↔`billed`, etc.)        |
+| Family        | Transforms                                        |
+| ------------- | ------------------------------------------------- |
+| `whitespace`  | collapse runs, trim, leading/trailing pad         |
+| `case`        | lower, upper, title-ish first-token capitalize    |
+| `punctuation` | strip trailing `!?.`, lightly add `?`             |
+| `synonym`     | small closed swap list (`charged`↔`billed`, etc.) |
 
 Families are deterministic (no RNG) so CI is reproducible.
 
 ## Metrics
 
-| Field            | Meaning                                                                 |
-| ---------------- | ----------------------------------------------------------------------- |
-| `baseline`       | Answer on original `state` (null if abstained)                          |
-| `perturbations`  | Count of applied transforms that produced a comparable answer           |
-| `flips`          | Perturbations whose answer ≠ baseline                                   |
-| `flipRate`       | `flips / perturbations` (0 when no comparable perturbations)            |
-| `passed`         | `flipRate <= maxFlipRate` and baseline answered                         |
+| Field           | Meaning                                                       |
+| --------------- | ------------------------------------------------------------- |
+| `baseline`      | Answer on original `state` (null if abstained)                |
+| `perturbations` | Count of applied transforms that produced a comparable answer |
+| `flips`         | Perturbations whose answer ≠ baseline                         |
+| `flipRate`      | `flips / perturbations` (0 when no comparable perturbations)  |
+| `passed`        | `flipRate <= maxFlipRate` and baseline answered               |
 
 Suite-level `passed` requires every case passed (fail-closed).
 
