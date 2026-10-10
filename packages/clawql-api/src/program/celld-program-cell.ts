@@ -8,6 +8,7 @@
  */
 
 import { Context, Effect, Layer } from "effect";
+import { celldPinStatusEffect } from "./celld-pin.js";
 import {
   DURABLE_PROGRAM_HONESTY,
   executeDurableProgramEffect,
@@ -44,8 +45,9 @@ export function makeProgramCellEffect(journalDir: string): Effect.Effect<Program
     // Ensure the journal root exists (0700) before the first run/resume.
     yield* makeFileProgramJournalEffect(journalDir).pipe(Effect.catch(() => Effect.void));
     const env = { ...process.env, CLAWQL_PROGRAM_JOURNAL_DIR: journalDir };
+    const pin = yield* celldPinStatusEffect(env);
     return {
-      honesty: `${DURABLE_PROGRAM_HONESTY} celld-shaped journal dir=${journalDir}`,
+      honesty: `${DURABLE_PROGRAM_HONESTY} celld-shaped journal dir=${journalDir}; ${pin.honesty}`,
       journalDir,
       run: (input, host) => executeDurableProgramEffect(input, host, env),
       resume: (programId, host, sessionId) =>

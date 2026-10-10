@@ -48,6 +48,7 @@ import {
   createMemoryDeviceCodeStore,
   createSecretStoreDeviceCodeStore,
 } from "./mcp-device-flow.js";
+import { createSecretStoreMcpGrantKeyStore, grantAsKeyEnabled } from "./mcp-grant-key-store.js";
 import {
   loadMcpOAuthSigningFromEnvEffect,
   mcpOAuthSigningConfigured,
@@ -355,6 +356,8 @@ export function createMcpOAuthFromEnv(
       env.CLAWQL_MCP_OAUTH_DEVICE_VERIFICATION_URI?.trim() ||
       `${issuer.replace(/\/$/, "")}/oauth/device`;
 
+    const grantAsKey = grantAsKeyEnabled(env, false);
+
     const config: MCPOAuthConfig = {
       issuer,
       signing,
@@ -365,6 +368,7 @@ export function createMcpOAuthFromEnv(
       authCodeStore,
       accessTokenStore,
       eventSink,
+      ...(grantAsKey ? { grantKeyStore: createSecretStoreMcpGrantKeyStore(secretStore) } : {}),
       ...(deviceFlowEnabled
         ? {
             deviceCodeStore: createSecretStoreDeviceCodeStore(secretStore),

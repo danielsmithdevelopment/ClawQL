@@ -58,6 +58,8 @@ describe("celld-shaped program cell", () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-cell-"));
     const cell = await Effect.runPromise(makeProgramCellEffect(dir));
     expect(cell.honesty).toContain("celld-shaped");
+    expect(cell.honesty).toContain("file-journal");
+    expect(cell.honesty).toContain("v0.4.0");
     expect(cell.journalDir).toBe(dir);
 
     const result = await Effect.runPromise(
