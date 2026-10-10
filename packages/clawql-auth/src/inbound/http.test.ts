@@ -12,6 +12,7 @@ import {
   MCP_OAUTH_AUTHORIZE_PATH,
   MCP_OAUTH_DEVICE_AUTHORIZATION_PATH,
   MCP_OAUTH_DEVICE_VERIFY_PATH,
+  MCP_OAUTH_GRANTS_ADMIN_PATH,
   MCP_OAUTH_PROTECTED_RESOURCE_PATH,
   MCP_OAUTH_REVOKE_PATH,
   MCP_OAUTH_TOKEN_PATH,
@@ -28,6 +29,7 @@ async function withTestApp(
     resolveAuthorizeClaims?: true;
     redirectUri?: string;
     deviceFlow?: boolean;
+    grantAsKey?: boolean;
   }
 ): Promise<void> {
   const idpSecret = "test-idp-hs256-secret-at-least-32-chars!!";
@@ -42,6 +44,7 @@ async function withTestApp(
       issuer: "https://auth.clawql.test",
       signingSecret,
       resourceAudience: audience,
+      grantAsKey: options?.grantAsKey,
       deviceFlow: options?.deviceFlow
         ? { verificationUri: "https://auth.clawql.test/oauth/device" }
         : undefined,
@@ -98,6 +101,7 @@ async function withTestApp(
     mcpClientsAdmin: options?.adminApiKey
       ? { registry: runtime.clientRegistry, adminApiKey: options.adminApiKey }
       : undefined,
+    grantAdmin: options?.adminApiKey ? { adminApiKey: options.adminApiKey } : undefined,
   });
 
   const server = app.listen(0);
@@ -525,6 +529,41 @@ describe("attachMcpOAuthRoutes", () => {
         expect(del.status).toBe(204);
       },
       { adminApiKey: "admin-test-key" }
+    );
+  });
+
+  it("DELETE /oauth/grants/:virtualKeyId ends grant-as-key tokens", async () => {
+    await withTestApp(
+      async (baseUrl, runtime) => {
+        const issued = await Effect.runPromise(
+          runtime.server.issueToken({
+            grantType: "client_credentials",
+            clientId: "cline-agent",
+            clientSecret: "client-secret-value",
+            resource: "https://mcp.clawql.test/",
+          })
+        );
+        const atr = await Effect.runPromise(runtime.server.validateToken(issued.access_token));
+        expect(atr.virtualKeyId).toMatch(/^mgr_/);
+
+        const bad = await fetch(`${baseUrl}${MCP_OAUTH_GRANTS_ADMIN_PATH}/not-a-grant`, {
+          method: "DELETE",
+          headers: { "x-api-key": "admin-test-key" },
+        });
+        expect(bad.status).toBe(400);
+
+        const del = await fetch(`${baseUrl}${MCP_OAUTH_GRANTS_ADMIN_PATH}/${atr.virtualKeyId}`, {
+          method: "DELETE",
+          headers: { "x-api-key": "admin-test-key" },
+        });
+        expect(del.status).toBe(204);
+
+        const validateExit = await Effect.runPromiseExit(
+          runtime.server.validateToken(issued.access_token)
+        );
+        expect(validateExit._tag).toBe("Failure");
+      },
+      { adminApiKey: "admin-test-key", grantAsKey: true }
     );
   });
 
