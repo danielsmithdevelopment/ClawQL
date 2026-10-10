@@ -56,47 +56,6 @@ Token benches above do **not** measure milliseconds. The OTEL span flamegraph **
 **Equal arms:** both sides return the **same tiny pets JSON** via one MCP `execute`. Headline = **ClawQL gateway overhead** (`execute − direct fetch`) vs **live Executor execute** (same JSON in-process; Executor sandbox has no `fetch`).
 
 ```bash
-<<<<<<< HEAD
-# ClawQL heavy (search+WORM, large execute+where+fields, audit) vs Executor light
-npm run benchmark:executor-comparison:latency
-# → docs/benchmarks/executor-comparison/executor-cmp-latency.json
-# → latency.html with p50/p95/p99 per tool
-
-LATENCY_ITERS=100 PET_COUNT=800 MOCK_DELAY_MS=0 \
-  EXECUTOR_BIN=/path/to/executor \
-  npm run benchmark:executor-comparison:latency
-```
-
-| Arm                      | Workload | What it isolates                            |
-| ------------------------ | -------- | ------------------------------------------- |
-| `clawql_search`          | heavier  | Catalog resolve + durable WORM              |
-| `clawql_execute_heavy`   | heavier  | Large mock + JMESPath `where` + `fields`    |
-| `clawql_audit_append`    | heavier  | Ephemeral ring audit                        |
-| `clawql_heavy_turn`      | heavier  | search + execute + audit (one timed sample) |
-| `direct_http_mock`       | control  | Bare `fetch` of the same large mock         |
-| `executor_execute_noop`  | lighter  | No-op JS (when `EXECUTOR_*` wired)          |
-| Executor chart (unwired) | lighter  | Published warm 50–100ms reference band      |
-
-### Latest local run
-
-Artifact: `executor-cmp-latency.json` — regenerate with the command above. Shareable page shows **p50 / p95 / p99 for every tool**.
-
-Latest measured (n=100, PET_COUNT=800, ~138KB body). **ClawQL arms live; Executor arm LIVE** (`executor` npm v1.6.10, MCP stdio no-op on this host):
-
-| Arm                                          |         p50 |         p95 |         p99 | Source   |
-| -------------------------------------------- | ----------: | ----------: | ----------: | -------- |
-| ClawQL search (+WORM)                        |      1.8 ms |     12.1 ms |     58.0 ms | live     |
-| ClawQL execute heavy                         |      9.8 ms |     17.0 ms |     21.7 ms | live     |
-| ClawQL audit                                 |      0.3 ms |      1.0 ms |      1.3 ms | live     |
-| **ClawQL heavy turn** (search+execute+audit) | **10.7 ms** | **15.9 ms** | **18.2 ms** | live     |
-| **Executor execute** (no-op)                 |  **3.0 ms** |  **6.2 ms** |  **6.9 ms** | **live** |
-
-**Not an estimate:** earlier charts used the published warm 50–100ms band ([executor#1519](https://github.com/UsefulSoftwareCo/executor/issues/1519)); that overstated Executor on this host (~25× vs live no-op p50). Always wire `EXECUTOR_BIN` for wall-clock claims.
-
-```bash
-# Install Executor locally, then remeasure only the Executor arm into the chart:
-=======
->>>>>>> 81f35429 (bench(latency): equal-arm apples-to-apples ClawQL vs live Executor)
 mkdir -p /tmp/executor-try && cd /tmp/executor-try && npm i executor@latest
 cd /path/to/ClawQL
 LATENCY_ITERS=100 MOCK_DELAY_MS=0 \
