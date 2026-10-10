@@ -3,7 +3,8 @@
  *
  * **Session key** (documented for operators / Lean differential):
  * Prefer explicit `sessionId` argument, then `CLAWQL_SESSION_ID`, then
- * `CLAWQL_API_KEY_ID`, then a stable prefix of `CLAWQL_API_KEY`, else `"default"`.
+ * `CLAWQL_API_KEY_ID`, else `"default"`. Do not derive a partition from the
+ * raw `CLAWQL_API_KEY` secret (hosts should set session id or key id).
  * This matches “one MCP session per API key / connection” when the host binds
  * `CLAWQL_SESSION_ID` (or key id) for the connection.
  *
@@ -12,7 +13,6 @@
  * cannot see that. Do not claim cross-session IFC from this store alone.
  */
 
-import { createHash } from "node:crypto";
 import { Context, Effect, Layer } from "effect";
 import type { Label } from "./labels.js";
 
@@ -29,13 +29,6 @@ export function resolveSessionLabelKey(
   if (fromEnv) return fromEnv;
   const keyId = env.CLAWQL_API_KEY_ID?.trim();
   if (keyId) return `apikey:${keyId}`;
-  const apiKey = env.CLAWQL_API_KEY?.trim();
-  if (apiKey) {
-    // Opaque session partition fingerprint — not password storage/verification.
-    // codeql[js/insufficient-password-hash]: session key id only; secret not stored for later verify.
-    const digest = createHash("sha256").update(apiKey).digest("hex").slice(0, 16);
-    return `apikey-hash:${digest}`;
-  }
   return "default";
 }
 
