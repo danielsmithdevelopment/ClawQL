@@ -99,9 +99,9 @@ Implements the authorization-server surface required for MCP clients that obtain
 
 **Grant-as-key (shipped MVP — MCP OAuth §2):** opt-in via `CLAWQL_MCP_OAUTH_GRANT_AS_KEY=1` or an explicit `grantKeyStore`. Records one grant per (subject, client, resource) and stamps that grant's `virtualKeyId` (never the `clientId`) on access tokens. Legacy fallback (flag off): `virtualKeyId = clientId`. See `mcp-grant-key-store.ts`.
 
-**CIMD (shipped MVP — MCP OAuth §3):** `CimdService` + trusted-client store (`mcp-cimd.ts`) fail closed: HTTPS `client_id` URL documents must match the operator trusted list and redirect allowlist. Dynamic fetch/register into the live client registry is the next product step.
+**CIMD (shipped — MCP OAuth §3):** `CimdService` + trusted-client store (`mcp-cimd.ts`) fail closed. With `CLAWQL_MCP_OAUTH_CIMD=1`, HTTPS `client_id` URLs are fetched, checked against the operator trusted list (`CLAWQL_MCP_OAUTH_TRUSTED_CLIENTS_JSON` / `_PATH`), and persisted into the live client registry as public clients.
 
-**Device flow (shipped MVP — MCP OAuth §4, RFC 8628):** ClawQL AS `POST /oauth/device_authorization`, user verify at `/oauth/device`, token poll with `urn:ietf:params:oauth:grant-type:device_code`. AS metadata advertises `device_authorization_endpoint` only when a device store is wired (env `CLAWQL_MCP_OAUTH_DEVICE_FLOW=1` or test/config). Google's endpoint remains stripped for honesty.
+**Device flow (shipped — MCP OAuth §4, RFC 8628):** ClawQL AS `POST /oauth/device_authorization`, user verify at `/oauth/device`, token poll with `urn:ietf:params:oauth:grant-type:device_code`. AS metadata advertises `device_authorization_endpoint` only when wired (`CLAWQL_MCP_OAUTH_DEVICE_FLOW=1`). Device codes persist in SecretStore (hashed at rest). Google's endpoint remains stripped for honesty.
 
 ```typescript
 import { createHash, randomUUID } from "node:crypto";

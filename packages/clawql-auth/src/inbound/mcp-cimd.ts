@@ -7,7 +7,9 @@
 
 import { createHash } from "node:crypto";
 import { Context, Data, Effect, Layer } from "effect";
-import type { McpTrustedClientRecord } from "./mcp-oauth.js";
+import type { SecretStore } from "../stores/types.js";
+import type { McpClientRegistry, McpRegisteredClient, McpTrustedClientRecord } from "./mcp-oauth.js";
+import type { SecretStoreMcpClientRegistry } from "./mcp-oauth-stores.js";
 
 export class CimdError extends Data.TaggedError("CimdError")<{
   readonly reason: string;
@@ -26,6 +28,16 @@ export type TrustedClientStore = {
   readonly list: () => Effect.Effect<readonly McpTrustedClientRecord[]>;
 };
 
+/** Fetch a CIMD JSON document (injectable for tests). */
+export type CimdDocumentFetch = (clientIdUrl: string) => Effect.Effect<unknown, CimdError>;
+
+export const MCP_OAUTH_TRUSTED_CLIENT_PREFIX = "mcp-oauth/trusted-clients/";
+
+function trustedClientPath(clientIdUrl: string): string {
+  const key = createHash("sha256").update(clientIdUrl).digest("hex");
+  return `${MCP_OAUTH_TRUSTED_CLIENT_PREFIX}${key}`;
+}
+
 export function createMemoryTrustedClientStore(
   initial: readonly McpTrustedClientRecord[] = []
 ): TrustedClientStore {
@@ -37,6 +49,42 @@ export function createMemoryTrustedClientStore(
         map.set(record.clientIdUrl, record);
       }),
     list: () => Effect.sync(() => [...map.values()]),
+  };
+}
+
+/** SecretStore-backed trusted-client list (operator allowlist). */
+export function createSecretStoreTrustedClientStore(store: SecretStore): TrustedClientStore {
+  return {
+    get: (clientIdUrl) =>
+      Effect.gen(function* () {
+        const raw = yield* store.getSecret(trustedClientPath(clientIdUrl));
+        if (!raw) return null;
+        try {
+          const parsed = JSON.parse(raw) as McpTrustedClientRecord;
+          return parsed.clientIdUrl === clientIdUrl ? parsed : null;
+        } catch {
+          return null;
+        }
+      }).pipe(Effect.orDie),
+    upsert: (record) =>
+      store
+        .setSecret(trustedClientPath(record.clientIdUrl), JSON.stringify(record))
+        .pipe(Effect.orDie),
+    list: () =>
+      Effect.gen(function* () {
+        const paths = yield* store.listSecrets(MCP_OAUTH_TRUSTED_CLIENT_PREFIX);
+        const out: McpTrustedClientRecord[] = [];
+        for (const path of paths) {
+          const raw = yield* store.getSecret(path);
+          if (!raw) continue;
+          try {
+            out.push(JSON.parse(raw) as McpTrustedClientRecord);
+          } catch {
+            /* skip corrupt */
+          }
+        }
+        return out;
+      }).pipe(Effect.orDie),
   };
 }
 
@@ -108,6 +156,101 @@ export function resolveTrustedCimdClientEffect(
   });
 }
 
+/**
+ * HTTPS GET of `client_id` URL. Fail closed on non-2xx, redirects, or non-HTTPS final URL.
+ */
+export function defaultCimdDocumentFetch(clientIdUrl: string): Effect.Effect<unknown, CimdError> {
+  return Effect.tryPromise({
+    try: async () => {
+      const res = await fetch(clientIdUrl, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        redirect: "error",
+        signal: AbortSignal.timeout(5_000),
+      });
+      if (!res.ok) {
+        throw new Error(`http_${res.status}`);
+      }
+      const finalUrl = res.url || clientIdUrl;
+      if (!isHttpsClientIdUrl(finalUrl) || finalUrl !== clientIdUrl) {
+        throw new Error("url_mismatch");
+      }
+      return (await res.json()) as unknown;
+    },
+    catch: (cause) =>
+      new CimdError({
+        reason: cause instanceof Error ? cause.message : "fetch_failed",
+      }),
+  });
+}
+
+/** Default scopes for public CIMD clients registered from a trusted document. */
+export const CIMD_DEFAULT_SCOPES = ["execute", "search", "mcp:tools"] as const;
+
+/**
+ * Fetch + validate CIMD, then materialize a public {@link McpRegisteredClient}.
+ * Does not persist — callers that own a writable registry should `saveClient`.
+ */
+export function resolveCimdRegisteredClientEffect(
+  clientIdUrl: string,
+  trustedStore: TrustedClientStore,
+  fetchDocument: CimdDocumentFetch = defaultCimdDocumentFetch,
+  defaultScope: readonly string[] = CIMD_DEFAULT_SCOPES
+): Effect.Effect<McpRegisteredClient, CimdError> {
+  return Effect.gen(function* () {
+    if (!isHttpsClientIdUrl(clientIdUrl)) {
+      return yield* Effect.fail(new CimdError({ reason: "client_id_not_https_url" }));
+    }
+    const raw = yield* fetchDocument(clientIdUrl);
+    const doc = yield* parseCimdDocumentEffect(raw);
+    const trusted = yield* trustedStore.get(clientIdUrl);
+    const resolved = yield* resolveTrustedCimdClientEffect(clientIdUrl, doc, trusted);
+    yield* trustedStore.upsert(resolved);
+    return {
+      clientId: clientIdUrl,
+      defaultScope: [...defaultScope],
+      redirectUris: [...doc.redirect_uris],
+      defaultRole: "operator",
+    } satisfies McpRegisteredClient;
+  });
+}
+
+/**
+ * Client registry that falls back to CIMD fetch for HTTPS `client_id` URLs.
+ * When `writable` is set, successful resolutions are persisted for subsequent lookups.
+ */
+export function createCimdClientRegistry(
+  base: McpClientRegistry,
+  trustedStore: TrustedClientStore,
+  options?: {
+    readonly fetchDocument?: CimdDocumentFetch;
+    readonly writable?: SecretStoreMcpClientRegistry;
+    readonly defaultScope?: readonly string[];
+  }
+): McpClientRegistry {
+  const fetchDocument = options?.fetchDocument ?? defaultCimdDocumentFetch;
+  const defaultScope = options?.defaultScope ?? CIMD_DEFAULT_SCOPES;
+  return {
+    getClient: (clientId) =>
+      Effect.gen(function* () {
+        const existing = yield* base.getClient(clientId);
+        if (existing) return existing;
+        if (!isHttpsClientIdUrl(clientId)) return null;
+        const registered = yield* resolveCimdRegisteredClientEffect(
+          clientId,
+          trustedStore,
+          fetchDocument,
+          defaultScope
+        ).pipe(Effect.catch(() => Effect.succeed(null)));
+        if (!registered) return null;
+        if (options?.writable) {
+          yield* options.writable.saveClient(registered);
+        }
+        return registered;
+      }),
+  };
+}
+
 export class CimdService extends Context.Service<
   CimdService,
   {
@@ -115,10 +258,16 @@ export class CimdService extends Context.Service<
       clientIdUrl: string,
       documentJson: unknown
     ) => Effect.Effect<McpTrustedClientRecord, CimdError>;
+    readonly resolveRegistered: (
+      clientIdUrl: string
+    ) => Effect.Effect<McpRegisteredClient, CimdError>;
   }
 >()("clawql/CimdService") {}
 
-export function cimdServiceLayer(store: TrustedClientStore): Layer.Layer<CimdService> {
+export function cimdServiceLayer(
+  store: TrustedClientStore,
+  fetchDocument: CimdDocumentFetch = defaultCimdDocumentFetch
+): Layer.Layer<CimdService> {
   return Layer.succeed(
     CimdService,
     CimdService.of({
@@ -131,6 +280,8 @@ export function cimdServiceLayer(store: TrustedClientStore): Layer.Layer<CimdSer
           const trusted = yield* store.get(clientIdUrl);
           return yield* resolveTrustedCimdClientEffect(clientIdUrl, doc, trusted);
         }),
+      resolveRegistered: (clientIdUrl) =>
+        resolveCimdRegisteredClientEffect(clientIdUrl, store, fetchDocument),
     })
   );
 }

@@ -1,8 +1,10 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
+import { createMemorySecretStore } from "../stores/memory.js";
 import {
   createDeviceAuthorizationEffect,
   createMemoryDeviceCodeStore,
+  createSecretStoreDeviceCodeStore,
   DeviceFlowError,
   deviceFlowServiceLayer,
   DeviceFlowService,
@@ -69,5 +71,23 @@ describe("MCP OAuth §4 device flow", () => {
       }).pipe(Effect.provide(layer))
     );
     expect(result).toBe("alice");
+  });
+
+  it("SecretStore device-code store survives across store instances", async () => {
+    const secrets = createMemorySecretStore();
+    let t = 1_000;
+    const storeA = createSecretStoreDeviceCodeStore(secrets, () => t);
+    const issued = await Effect.runPromise(
+      createDeviceAuthorizationEffect(
+        storeA,
+        { verificationUri: "https://mcp.example/device", now: () => t },
+        "cli"
+      )
+    );
+    await Effect.runPromise(storeA.approve(issued.user_code, "bob"));
+
+    const storeB = createSecretStoreDeviceCodeStore(secrets, () => t);
+    const done = await Effect.runPromise(storeB.consumeApproved(issued.device_code));
+    expect(done.approvedSubject).toBe("bob");
   });
 });

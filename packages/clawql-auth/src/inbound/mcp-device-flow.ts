@@ -7,10 +7,14 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { Context, Data, Effect, Layer } from "effect";
+import type { SecretStore } from "../stores/types.js";
 import type { McpDeviceAuthorizationPending } from "./mcp-oauth.js";
 
 /** Wire-format grant type for RFC 8628 device code exchange. */
 export const DEVICE_CODE_GRANT = "urn:ietf:params:oauth:grant-type:device_code" as const;
+
+export const MCP_OAUTH_DEVICE_CODE_PREFIX = "mcp-oauth/device-codes/";
+export const MCP_OAUTH_DEVICE_USER_PREFIX = "mcp-oauth/device-users/";
 
 export class DeviceFlowError extends Data.TaggedError("DeviceFlowError")<{
   readonly error: string;
@@ -153,6 +157,96 @@ export function createDeviceAuthorizationEffect(
 /** Opaque hash for correlating device codes in audit without storing raw codes. */
 export function hashDeviceCode(deviceCode: string): string {
   return createHash("sha256").update(deviceCode).digest("hex");
+}
+
+function deviceUserPath(userCode: string): string {
+  return `${MCP_OAUTH_DEVICE_USER_PREFIX}${normalizeUserCode(userCode)}`;
+}
+
+/**
+ * SecretStore-backed device-code store (durable across process restarts).
+ * Device codes are hashed at rest; user-code index stores the hash only.
+ */
+export function createSecretStoreDeviceCodeStore(
+  store: SecretStore,
+  now: () => number = Date.now
+): DeviceCodeStore {
+  const loadByHash = (hash: string) =>
+    Effect.gen(function* () {
+      const raw = yield* store.getSecret(`${MCP_OAUTH_DEVICE_CODE_PREFIX}${hash}`);
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw) as McpDeviceAuthorizationPending;
+      } catch {
+        return null;
+      }
+    }).pipe(Effect.orDie);
+
+  return {
+    save: (record) =>
+      Effect.gen(function* () {
+        const hash = hashDeviceCode(record.deviceCode);
+        yield* store.setSecret(
+          `${MCP_OAUTH_DEVICE_CODE_PREFIX}${hash}`,
+          JSON.stringify(record)
+        );
+        yield* store.setSecret(deviceUserPath(record.userCode), hash);
+      }).pipe(Effect.orDie),
+    getByDeviceCode: (deviceCode) => loadByHash(hashDeviceCode(deviceCode)),
+    getByUserCode: (userCode) =>
+      Effect.gen(function* () {
+        const hash = yield* store.getSecret(deviceUserPath(userCode));
+        if (!hash) return null;
+        return yield* loadByHash(hash);
+      }).pipe(Effect.orDie),
+    approve: (userCode, subject) =>
+      Effect.gen(function* () {
+        const hash = yield* store.getSecret(deviceUserPath(userCode)).pipe(Effect.orDie);
+        if (!hash) {
+          return yield* Effect.fail(
+            new DeviceFlowError({ error: "invalid_grant", description: "unknown_user_code" })
+          );
+        }
+        const rec = yield* loadByHash(hash);
+        if (!rec) {
+          return yield* Effect.fail(
+            new DeviceFlowError({ error: "invalid_grant", description: "unknown_user_code" })
+          );
+        }
+        if (rec.expiresAtMs <= now()) {
+          return yield* Effect.fail(
+            new DeviceFlowError({ error: "expired_token", description: "device_code_expired" })
+          );
+        }
+        const updated = { ...rec, approvedSubject: subject };
+        yield* store
+          .setSecret(`${MCP_OAUTH_DEVICE_CODE_PREFIX}${hash}`, JSON.stringify(updated))
+          .pipe(Effect.orDie);
+      }),
+    consumeApproved: (deviceCode) =>
+      Effect.gen(function* () {
+        const hash = hashDeviceCode(deviceCode);
+        const rec = yield* loadByHash(hash);
+        if (!rec) {
+          return yield* Effect.fail(
+            new DeviceFlowError({ error: "invalid_grant", description: "unknown_device_code" })
+          );
+        }
+        if (rec.expiresAtMs <= now()) {
+          yield* store.deleteSecret(`${MCP_OAUTH_DEVICE_CODE_PREFIX}${hash}`).pipe(Effect.orDie);
+          yield* store.deleteSecret(deviceUserPath(rec.userCode)).pipe(Effect.orDie);
+          return yield* Effect.fail(
+            new DeviceFlowError({ error: "expired_token", description: "device_code_expired" })
+          );
+        }
+        if (!rec.approvedSubject) {
+          return yield* Effect.fail(new DeviceFlowError({ error: "authorization_pending" }));
+        }
+        yield* store.deleteSecret(`${MCP_OAUTH_DEVICE_CODE_PREFIX}${hash}`).pipe(Effect.orDie);
+        yield* store.deleteSecret(deviceUserPath(rec.userCode)).pipe(Effect.orDie);
+        return rec;
+      }),
+  };
 }
 
 export class DeviceFlowService extends Context.Service<

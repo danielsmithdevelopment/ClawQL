@@ -1,14 +1,20 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
+import { createMemorySecretStore } from "../stores/memory.js";
 import {
   CimdError,
+  createCimdClientRegistry,
   createMemoryTrustedClientStore,
+  createSecretStoreTrustedClientStore,
   cimdServiceLayer,
   CimdService,
   isHttpsClientIdUrl,
   parseCimdDocumentEffect,
+  resolveCimdRegisteredClientEffect,
   resolveTrustedCimdClientEffect,
 } from "./mcp-cimd.js";
+import { createMemoryMcpClientRegistry } from "./mcp-oauth.js";
+import { createSecretStoreMcpClientRegistry } from "./mcp-oauth-stores.js";
 
 describe("MCP OAuth §3 CIMD", () => {
   const clientUrl = "https://app.example/oauth/client.json";
@@ -58,5 +64,57 @@ describe("MCP OAuth §3 CIMD", () => {
       }).pipe(Effect.provide(cimdServiceLayer(store)), Effect.flip)
     );
     expect(err.reason).toBe("client_not_trusted");
+  });
+
+  it("fetches CIMD and registers a public client when trusted", async () => {
+    const trusted = createMemoryTrustedClientStore([
+      {
+        clientIdUrl: clientUrl,
+        redirectUris: ["https://app.example/cb"],
+        trustedAtMs: 1,
+      },
+    ]);
+    const fetchDocument = () => Effect.succeed(doc);
+    const registered = await Effect.runPromise(
+      resolveCimdRegisteredClientEffect(clientUrl, trusted, fetchDocument)
+    );
+    expect(registered.clientId).toBe(clientUrl);
+    expect(registered.redirectUris).toEqual(["https://app.example/cb"]);
+    expect(registered.clientSecretHash).toBeUndefined();
+  });
+
+  it("CimdClientRegistry persists resolved clients into writable registry", async () => {
+    const secrets = createMemorySecretStore();
+    const writable = createSecretStoreMcpClientRegistry(secrets);
+    const trusted = createMemoryTrustedClientStore([
+      {
+        clientIdUrl: clientUrl,
+        redirectUris: ["https://app.example/cb"],
+        trustedAtMs: 1,
+      },
+    ]);
+    const base = createMemoryMcpClientRegistry([]);
+    const registry = createCimdClientRegistry(base, trusted, {
+      writable,
+      fetchDocument: () => Effect.succeed(doc),
+    });
+    const first = await Effect.runPromise(registry.getClient(clientUrl));
+    expect(first?.clientId).toBe(clientUrl);
+    const persisted = await Effect.runPromise(writable.getClient(clientUrl));
+    expect(persisted?.redirectUris).toEqual(["https://app.example/cb"]);
+  });
+
+  it("SecretStore trusted-client store round-trips", async () => {
+    const secrets = createMemorySecretStore();
+    const store = createSecretStoreTrustedClientStore(secrets);
+    await Effect.runPromise(
+      store.upsert({
+        clientIdUrl: clientUrl,
+        redirectUris: ["https://app.example/cb"],
+        trustedAtMs: 42,
+      })
+    );
+    const got = await Effect.runPromise(store.get(clientUrl));
+    expect(got?.trustedAtMs).toBe(42);
   });
 });
