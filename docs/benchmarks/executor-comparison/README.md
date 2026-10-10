@@ -75,13 +75,13 @@ LATENCY_ITERS=40 MOCK_DELAY_MS=5 \
 
 Artifact: `executor-cmp-latency.json` (n=25, mock delay 0, `CLAWQL_CAPABILITY_LIFECYCLE=0`).
 
-| Arm | p50 | p95 | p99 |
-| --- | ---: | ---: | ---: |
-| ClawQL `audit` (gateway-only) | **1.7 ms** | 34.9 ms | 41.2 ms |
-| ClawQL `execute` → local mock | **8.4 ms** | 17.5 ms | **137.1 ms** |
-| Direct `fetch` same mock | 0.5 ms | 1.1 ms | 1.9 ms |
-| **Derived gateway overhead** (execute − direct) | **~8.0 ms** | ~16.4 ms | — |
-| Executor (chart) | **75 ms** mid of **50–100 ms** reference band | — | — |
+| Arm                                             |                                           p50 |      p95 |          p99 |
+| ----------------------------------------------- | --------------------------------------------: | -------: | -----------: |
+| ClawQL `audit` (gateway-only)                   |                                    **1.7 ms** |  34.9 ms |      41.2 ms |
+| ClawQL `execute` → local mock                   |                                    **8.4 ms** |  17.5 ms | **137.1 ms** |
+| Direct `fetch` same mock                        |                                        0.5 ms |   1.1 ms |       1.9 ms |
+| **Derived gateway overhead** (execute − direct) |                                   **~8.0 ms** | ~16.4 ms |            — |
+| Executor (chart)                                | **75 ms** mid of **50–100 ms** reference band |        — |            — |
 
 **p99 honesty:** With n=25, p99 ≈ max. Execute has **one** 137ms sample (1/25); the other 24 stay ≤17.5ms. That single outlier is **above** the Executor reference high (100ms), so we do **not** claim a p99 win. p50/p95 still beat the reference band.
 
