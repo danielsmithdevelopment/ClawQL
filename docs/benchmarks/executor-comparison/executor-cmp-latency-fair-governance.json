@@ -1,0 +1,117 @@
+{
+  "suite": "executor-cmp-latency-fair",
+  "measuredAt": "2026-10-11T01:04:20.502Z",
+  "versions": {
+    "clawql": {
+      "version": "8.0.0",
+      "commit": "003bdc313a55511a8023440fda81a2844696c50f",
+      "branch": "cursor/executor-latency-side-by-side-a621"
+    },
+    "executor": {
+      "version": "1.6.10",
+      "bin": "/tmp/executor-try/node_modules/.bin/executor"
+    },
+    "node": "v22.14.0",
+    "measuredAt": "2026-10-11T01:04:20.502Z"
+  },
+  "config": {
+    "iters": 1000,
+    "warmup": 50,
+    "runs": 1,
+    "mock_delay_ms": 0,
+    "schedule": "interleaved_closed_loop",
+    "arrival_ms": null,
+    "governance_worm_memory": true,
+    "panguard_sidecar": false,
+    "transport": "stdio_both",
+    "same_host": true,
+    "body_bytes": 98,
+    "fields": [
+      "pets"
+    ]
+  },
+  "method": {
+    "definition": "gateway_cost = MCP_execute_wall − upstream_cost. ClawQL upstream_cost = paired same-host mock fetch (execute_i − direct_i). Executor upstream_cost = 0 (in-process return of identical JSON; no fetch).",
+    "interleaving": "Each round: ClawQL execute → Executor execute → direct fetch. Drift hits both.",
+    "notTotalVsOverhead": "Not comparing ClawQL overhead to Executor total-with-upstream. Executor equal arm has no upstream; subtracting 0 is the same definition.",
+    "coordinatedOmission": "Closed-loop back-to-back (serial agent tool-call model). Do not claim load-test tail without LATENCY_OPEN_LOOP=1.",
+    "framing": "Lead with absolute ClawQL oversight cost (p50/p999). Executor ratio is supporting evidence."
+  },
+  "primary_run": {
+    "runIndex": 0,
+    "mode": "closed_loop",
+    "arrival_ms": null,
+    "arms": {
+      "clawql_execute_e2e": {
+        "label": "clawql_execute_e2e",
+        "n": 1000,
+        "p50_ms": 2.154,
+        "p95_ms": 2.706,
+        "p99_ms": 3.704,
+        "p999_ms": 8.2,
+        "mean_ms": 2.219,
+        "min_ms": 1.654,
+        "max_ms": 8.2
+      },
+      "executor_execute": {
+        "label": "executor_execute",
+        "n": 1000,
+        "p50_ms": 2.449,
+        "p95_ms": 3.852,
+        "p99_ms": 5.043,
+        "p999_ms": 9.197,
+        "mean_ms": 2.652,
+        "min_ms": 1.622,
+        "max_ms": 9.197
+      },
+      "direct_http": {
+        "label": "direct_http",
+        "n": 1000,
+        "p50_ms": 0.415,
+        "p95_ms": 0.5,
+        "p99_ms": 0.604,
+        "p999_ms": 2.425,
+        "mean_ms": 0.425,
+        "min_ms": 0.315,
+        "max_ms": 2.425
+      },
+      "clawql_gateway_cost": {
+        "label": "clawql_gateway_cost",
+        "n": 1000,
+        "p50_ms": 1.731,
+        "p95_ms": 2.292,
+        "p99_ms": 3.222,
+        "p999_ms": 7.653,
+        "mean_ms": 1.794,
+        "min_ms": 0.134,
+        "max_ms": 7.653
+      },
+      "executor_gateway_cost": {
+        "label": "executor_gateway_cost",
+        "n": 1000,
+        "p50_ms": 2.449,
+        "p95_ms": 3.852,
+        "p99_ms": 5.043,
+        "p999_ms": 9.197,
+        "mean_ms": 2.652,
+        "min_ms": 1.622,
+        "max_ms": 9.197
+      }
+    },
+    "ratios": {
+      "p50": 1.41,
+      "p99": 1.57,
+      "p999": 1.2
+    },
+    "headline_absolute_ms": {
+      "clawql_oversight_p50_ms": 1.731,
+      "clawql_oversight_p999_ms": 7.653,
+      "note": "Absolute cost of ClawQL oversight path (execute − paired mock). Primary publish framing — holds regardless of Executor."
+    }
+  },
+  "spread": null,
+  "publish_lines": {
+    "absolute": "Risk gates, ring audit, hooks and field projection add 1.731 ms at p50 and 7.653 ms at p999 (durable WORM memory on).",
+    "vs_executor_supporting": "Supporting: interleaved equal-arm Executor gateway_cost p50 2.449 ms (ratio 1.41× at p50)."
+  }
+}
