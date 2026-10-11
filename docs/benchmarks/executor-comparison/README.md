@@ -175,7 +175,14 @@ Latest board (`executor-cmp-comprehensive.json`):
 | At 32 clients: p99 / rps             |   **29 ms / 2419** |           153 ms / 291 | ClawQL holds SLO; Executor breaks                 |
 | Stdio process chaos                  |                  8 |                      8 | Honesty baseline (tie at max tried)               |
 
-**ClawQL ceiling** (same SLO p99≤100ms, clawql-only ramp, this VM): power-of-two bracket held **128** / broke **256**; binary refine pins **last ok = 135**, **first break = 136** (p99 ~126ms). Artifact: `executor-cmp-chaos-clawql-ceiling-refine.json`. (8 replicas broke earlier here — host RSS/CPU contention, not a claim that fewer replicas are always better.)
+**Ceilings** (same SLO p99≤100ms, this VM; binary refine tol=1):
+
+| Arm | Model | Last ok | First break | Artifact |
+| --- | --- | ---: | ---: | --- |
+| **ClawQL** | 4× HTTP + NATS sticky assign | **135** | **136** (p99 ~126ms) | `executor-cmp-chaos-clawql-ceiling-refine.json` |
+| **Executor** | N× stdio process-per-client | **19** | **20** (p99 ~115ms) | `executor-cmp-chaos-executor-ceiling-refine.json` |
+
+Boundary noise is ~±1 client near the SLO. (8 ClawQL replicas broke earlier here — host RSS/CPU contention.)
 
 Honesty: scale-out is the **product** path (fixed gateway replicas, NATS queue-group session placement — same shape as fabric VG workers). Executor comparison uses their natural process-per-client stdio model. Layer-1 schema richness stays. p999 from short comprehensive iters is exploratory — publish latency tails from `latency-fair` 10k×3. **Panguard off**. Hold publicizing until RAM gap is closed or scoped.
 
