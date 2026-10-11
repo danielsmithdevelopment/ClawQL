@@ -12,6 +12,12 @@ import {
 } from '@/lib/managed/nav'
 import { cn } from '@/lib/utils'
 
+function navTestId(href: ManagedNavItem['href']): string {
+  if (href === '/') return 'managed-nav-home'
+  if (href === '/console/audit' || href === '/audit') return 'managed-nav-audit'
+  return `managed-nav-${href.slice(1)}`
+}
+
 function NavLink({ item }: { item: ManagedNavItem }) {
   const pathname = usePathname()
   const active = isManagedNavActive(pathname, item.href)
@@ -19,7 +25,7 @@ function NavLink({ item }: { item: ManagedNavItem }) {
   return (
     <Link
       href={item.href}
-      data-testid={`managed-nav-${item.href === '/' ? 'home' : item.href.slice(1)}`}
+      data-testid={navTestId(item.href)}
       className={cn(
         'relative flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors',
         active

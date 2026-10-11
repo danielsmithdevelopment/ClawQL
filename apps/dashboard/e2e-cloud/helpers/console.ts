@@ -18,7 +18,7 @@ export const SIDEBAR_ROUTES = [
   { href: '/skills', testId: 'managed-nav-skills', crumb: 'Skills' },
   { href: '/memory', testId: 'managed-nav-memory', crumb: 'Memory' },
   { href: '/connections', testId: 'managed-nav-connections', crumb: 'Connections' },
-  { href: '/audit', testId: 'managed-nav-audit', crumb: 'Audit' },
+  { href: '/console/audit', testId: 'managed-nav-audit', crumb: 'Audit' },
   { href: '/team', testId: 'managed-nav-team', crumb: 'Team' },
   { href: '/usage', testId: 'managed-nav-usage', crumb: 'Usage' },
   { href: '/settings', testId: 'managed-nav-settings', crumb: 'Settings' },

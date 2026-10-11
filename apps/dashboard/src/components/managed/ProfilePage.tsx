@@ -329,7 +329,7 @@ export function ProfilePage() {
                 </button>
               ))}
             </div>
-            <Link href="/audit" className="mt-3 inline-block text-xs text-sky-700 hover:underline">
+            <Link href="/console/audit" className="mt-3 inline-block text-xs text-sky-700 hover:underline">
               Your activity in the audit log
             </Link>
           </section>

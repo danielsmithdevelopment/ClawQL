@@ -157,7 +157,7 @@ export function SessionsPage() {
           </section>
           <p className="mt-4 text-xs text-slate-600">
             Every step is in the audit log, and the chain verifies.{' '}
-            <Link href="/audit" className="text-sky-700 hover:underline">
+            <Link href="/console/audit" className="text-sky-700 hover:underline">
               Open in Audit
             </Link>
           </p>

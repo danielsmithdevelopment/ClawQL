@@ -151,7 +151,7 @@ export function HomePage() {
                 <StatusDot tone="ok" /> Live
               </span>
             </h2>
-            <Link href="/audit" className="text-xs font-medium text-sky-700 hover:underline">
+            <Link href="/console/audit" className="text-xs font-medium text-sky-700 hover:underline">
               Open audit log
             </Link>
           </div>
