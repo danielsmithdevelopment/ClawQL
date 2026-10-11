@@ -2,6 +2,10 @@
 
 Native desktop app wrapping the ClawQL dashboard: **Provider secrets** (local `~/.ClawQL/vault/providers.json`) and **Agent Chat** (OpenClaw bridge).
 
+> **No code-signing or store accounts needed for local work.**  
+> See **[LOCAL.md](LOCAL.md)** — `npm run dev` / `make desktop-dev`.  
+> Signing is only for publishing installers later.
+
 | Platform | Artifact | Script |
 | -------- | -------- | ------ |
 | macOS 13+ | `.dmg` | `npm run dist:mac` |

@@ -54,6 +54,8 @@
     "eas:android-internal": "eas build --profile production --platform android",
     "eas:submit:ios": "eas submit --platform ios --profile production --latest",
     "eas:submit:android": "eas submit --platform android --profile production --latest",
-    "store:check": "node scripts/store-check.mjs"
+    "store:check": "node scripts/store-check.mjs",
+    "local:ready": "node scripts/local-ready.mjs",
+    "local:web-export": "EXPO_PUBLIC_CLAWQL_FIXTURE=1 expo export --platform web --output-dir dist-web"
   }
 }

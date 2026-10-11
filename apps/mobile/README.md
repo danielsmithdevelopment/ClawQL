@@ -4,6 +4,10 @@ Expo Router app for **phone-native** approval: system-browser sign-in (no localh
 
 Everything else opens the web console.
 
+> **No Apple / Google / EAS signup required for local work.**  
+> See **[LOCAL.md](LOCAL.md)** — `npm start` → **Continue with fixture session**.  
+> Store enrollment is optional and deferred (`store/DAY0-CHECKLIST.md`).
+
 ## Why this exists
 
 Apple rejects thin website wrappers. This app ships the PhoneApprove surface from the managed console fixtures:

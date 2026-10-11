@@ -14,8 +14,9 @@ User-facing apps.
 cd apps/dashboard && npm install && npm run dev   # http://localhost:3040
 make desktop-dev                                 # Electron + dashboard + OpenClaw bridge
 make desktop-dist-linux                          # or desktop-dist-mac / desktop-dist-win
-cd apps/mobile && npm install && npm start        # Expo (fixture mode by default)
-cd apps/mobile && npm run store:check             # App Store / Play packaging preflight
+cd apps/mobile && npm install && npm start        # Expo fixture mode — no store signup
+cd apps/mobile && npm run local:ready             # confirm local path (no Apple/Google)
+cd apps/mobile && npm run store:check             # optional: packaging preflight (when ready)
 cd apps/www && npm install && npm run dev         # http://localhost:3000
 cd apps/docs && npm install && npm run dev        # http://localhost:3000 (docs site)
 ```

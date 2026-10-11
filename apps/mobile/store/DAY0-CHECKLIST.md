@@ -1,5 +1,7 @@
 # Store Day-0 checklist (human + agent)
 
+**Defer this entire list until you are ready to enroll.** Local fixture development does not need it — use [`../LOCAL.md`](../LOCAL.md) instead.
+
 Complete before first TestFlight / Play internal upload. Items marked **agent** can be verified in-repo; **human** needs Apple/Google accounts.
 
 ## Accounts & identity
