@@ -96,7 +96,7 @@ export class ObservedInferenceGateway implements InferenceGateway {
       );
 
       if (request.virtualKeyId) {
-        const cost = estimateCostUsd(response.usage);
+        const cost = estimateCostUsd(response.usage, resolvedModelId);
         await recordKeySpend(request.virtualKeyId, cost, this.env);
       }
 

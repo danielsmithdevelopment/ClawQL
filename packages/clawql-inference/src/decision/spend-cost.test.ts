@@ -15,7 +15,7 @@ import { runFanoutEval } from "./fanout-eval.js";
 import type { DecisionRequest, DecisionResponse } from "./service.js";
 
 describe("spend-cost ledger", () => {
-  it("averages USD per call from token rollups", async () => {
+  it("averages USD per call from provider-priced token rollups", async () => {
     const cost = await Effect.runPromise(
       costPerCallFromSpendRow({
         key: "gpt-6-luna",
@@ -24,9 +24,12 @@ describe("spend-cost ledger", () => {
         outputTokens: 1_000_000,
       })
     );
-    const expected =
-      (2_000_000 * SPEND_INPUT_USD_PER_TOKEN + 1_000_000 * SPEND_OUTPUT_USD_PER_TOKEN) / 2;
+    // gpt-6-luna estimate: $2.5 / $10 per 1M → (2M*2.5e-6 + 1M*1e-5) / 2
+    const expected = (2_000_000 * (2.5 / 1_000_000) + 1_000_000 * (10 / 1_000_000)) / 2;
     expect(cost).toBeCloseTo(expected, 10);
+    expect(cost).toBeGreaterThan(
+      (2_000_000 * SPEND_INPUT_USD_PER_TOKEN + 1_000_000 * SPEND_OUTPUT_USD_PER_TOKEN) / 2
+    );
   });
 
   it("indexes leaf model ids for backend matching", async () => {
@@ -41,8 +44,9 @@ describe("spend-cost ledger", () => {
     const byFull = await Effect.runPromise(
       lookupSpendCostPerCase({ id: "openai/gpt-6-luna" }, lookup)
     );
-    expect(byLeaf).toBeCloseTo(1, 6); // 10M * 1e-6 / 10 = 1
-    expect(byFull).toBeCloseTo(1, 6);
+    // 10M input @ $2.5/1M / 10 calls = $2.50
+    expect(byLeaf).toBeCloseTo(2.5, 6);
+    expect(byFull).toBeCloseTo(2.5, 6);
   });
 
   it("fan-out spend_ledger fills missing costPerCase for recommendation", async () => {
@@ -143,7 +147,20 @@ describe("spend-cost ledger", () => {
     const local = result.reports.find((r) => r.backendId === "local");
     const luna = result.reports.find((r) => r.backendId === "openai/gpt-6-luna");
     expect(local?.costEstimate).toBe(0);
-    expect(luna?.costEstimate).toBeCloseTo(1, 6);
+    // 10M input @ $2.5/1M / 10 calls = $2.50 per case
+    expect(luna?.costEstimate).toBeCloseTo(2.5, 6);
     expect(result.recommendation?.backendId).toBe("local");
+  });
+
+  it("unknown model keys keep historic $1/$3 per 1M fallback", async () => {
+    const cost = await Effect.runPromise(
+      costPerCallFromSpendRow({
+        key: "acme/mystery-model",
+        calls: 1,
+        inputTokens: 1_000_000,
+        outputTokens: 0,
+      })
+    );
+    expect(cost).toBeCloseTo(SPEND_INPUT_USD_PER_TOKEN * 1_000_000, 10);
   });
 });

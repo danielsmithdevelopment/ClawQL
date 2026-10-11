@@ -1,11 +1,22 @@
+import { Effect } from "effect";
 import type { InferenceUsage } from "../gateway.js";
+import {
+  DEFAULT_INPUT_USD_PER_TOKEN,
+  DEFAULT_OUTPUT_USD_PER_TOKEN,
+  estimateCostUsdEffect,
+} from "./pricing.js";
 
-/** Rough USD estimate for budget enforcement (no provider-specific pricing yet). */
-export function estimateCostUsd(usage: InferenceUsage | undefined): number {
-  if (!usage) return 0;
-  const input = usage.inputTokens * 0.000_001;
-  const output = usage.outputTokens * 0.000_003;
-  return input + output;
+export { DEFAULT_INPUT_USD_PER_TOKEN, DEFAULT_OUTPUT_USD_PER_TOKEN };
+
+/**
+ * Host-boundary façade for VK spend recording.
+ * Prefer {@link estimateCostUsdEffect} / {@link TokenPricingService} in Effect code.
+ */
+export function estimateCostUsd(
+  usage: InferenceUsage | undefined,
+  modelOrProviderKey?: string
+): number {
+  return Effect.runSync(estimateCostUsdEffect(usage, modelOrProviderKey));
 }
 
 export function isBudgetExceeded(spentUsd: number, budgetUsd: number | undefined): boolean {
