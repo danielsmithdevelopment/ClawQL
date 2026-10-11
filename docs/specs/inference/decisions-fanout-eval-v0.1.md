@@ -129,7 +129,7 @@ Labeled cases (same as bulk). Per case: unique plurality among non-null backend 
 | `explicit` (default) | Only backends with `costPerCase` get `costEstimate`                   |
 | `spend_ledger`       | Fill missing `costPerCase` from `spendCosts` or InferenceStore rollup |
 
-USD/call = `(inputTokens * 1e-6 + outputTokens * 3e-6) / calls` (same rates as virtual-key budget). Explicit `costPerCase` always wins. Router loads `spendRollup({ groupBy: "model" })` when `costSource=spend_ledger` and the body omits `spendCosts`.
+USD/call = `(inputTokens * inputRate + outputTokens * outputRate) / calls` where rates come from provider/model pricing (`keys/pricing.ts`). Unknown models keep the historic `$1/$3` per 1M-token fallback (same as virtual-key budget default). Explicit `costPerCase` always wins. Router loads `spendRollup({ groupBy: "model" })` when `costSource=spend_ledger` and the body omits `spendCosts`.
 
 ## Follow-ons
 
@@ -138,3 +138,4 @@ USD/call = `(inputTokens * 1e-6 + outputTokens * 3e-6) / calls` (same rates as v
 3. ~~Microsoft-Decision-1 / OpenRouter decision backends as fan-out candidates~~ — [decisions-openrouter-decision1-v0.1](./decisions-openrouter-decision1-v0.1.md)
 4. ~~Cost models from virtual-key spend ledger~~ — shipped (`costSource=spend_ledger`)
 5. ~~Live `ensemble` quorum when it raises answers-on-its-own~~ — shipped
+6. ~~Provider-specific pricing for spend-ledger / VK budgets~~ — shipped (`TokenPricingService`)

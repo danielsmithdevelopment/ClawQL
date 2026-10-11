@@ -101,7 +101,7 @@ Remains the MCP HTTP process. Managed-gateway proxy routes `/mcp` → MCP upstre
 
 - Default-on enrichment (needs MaxP-style A/B)
 - Auto-capture of facts from chat traffic
-- Provider-specific pricing for spend-ledger cost models (rough USD rates ship — [decisions-fanout-eval-v0.1](./decisions-fanout-eval-v0.1.md))
+- ~~Provider-specific pricing for spend-ledger cost models~~ — shipped (`keys/pricing.ts` / `TokenPricingService`; unknown models keep historic $1/$3 per 1M — [decisions-fanout-eval-v0.1](./decisions-fanout-eval-v0.1.md))
 - Promoting Nimble / Tev1 / Jev / Microsoft-Decision-1 as **trusted** backends (Decision-1 is a fan-out / `/v1/decisions` candidate via OpenRouter — [decisions-openrouter-decision1-v0.1](./decisions-openrouter-decision1-v0.1.md); trust still requires held-out + flip-rate)
 
 - In-process MCP inside the inference Express app
