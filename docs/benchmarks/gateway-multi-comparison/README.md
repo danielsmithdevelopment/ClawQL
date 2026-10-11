@@ -6,6 +6,8 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | --- | --- |
 | [`gateway-multi-cmp-10k.json`](./gateway-multi-cmp-10k.json) | Interleaved latency / gateway_cost / RSS (n=10 000) |
 | [`gateway-multi-cmp-chaos-slim.json`](./gateway-multi-cmp-chaos-slim.json) | Chaos ceilings — **single-instance / stdio equal-arm** (not cross-topology) |
+| [`gateway-multi-cmp-bun-10k.json`](./gateway-multi-cmp-bun-10k.json) | **Node vs Bun** same Core binary — Ready RSS / under-load RSS / latency (n=10 000) |
+| [`gateway-multi-cmp-bun-chaos.json`](./gateway-multi-cmp-bun-chaos.json) | **Node vs Bun** chaos until-break (topology A) |
 | [`gateway-multi-multiturn.json`](./gateway-multi-multiturn.json) | **12-turn I/O tokens + task success** on a fat catalog |
 | [`gateway-multi-multiturn-24.json`](./gateway-multi-multiturn-24.json) | Same board at N=24 (compounding check) |
 
@@ -170,6 +172,45 @@ MT_TURNS=12 CATALOG_TOOL_COUNT=40 \
 
 ---
 
+## Node vs Bun runtime (same Core binary)
+
+Drop-in experiment: `clawql` (Node v22.14.0) vs `clawql_bun` (Bun 1.4.3) — same `dist/server.js`, same equal-arm env, only the JS runtime binary changes (`MULTI_ARMS=clawql,clawql_bun`, optional `BUN_BIN`).
+
+### Board — n=10 000 interleaved
+
+| Arm | Ready RSS | Under-load med RSS | e2e p50 / p99 / **p999** (ms) | Gateway cost p50 / **p999** |
+| --- | ---: | ---: | ---: | ---: |
+| **ClawQL (Node)** | 232 MB | 413 MB | 0.99 / 3.13 / 6.70 | 0.76 / 6.19 |
+| **ClawQL (Bun)** | **180 MB** (−22%) | **296 MB** (−28%) | **0.74 / 2.56 / 6.28** | **0.52 / 5.78** |
+
+### Chaos — topology A until-break
+
+| Arm | last_ok / first_break | Break reason | Ready RSS |
+| --- | ---: | --- | ---: |
+| ClawQL (Node) | **75 / 76** | p99 101 ms | 231 MB |
+| ClawQL (Bun) | 64 / 65 | p99 121 ms | **181 MB** |
+
+### Verdict (switch vs Rust pain)
+
+- **Compelling for RSS + p50 cost** as a low-rewrite lever: ~¼ less Ready RSS, ~¼ less under-load median, ~25–30% lower gateway_cost p50 — without touching the Effect/TS codebase.
+- **Not a concurrency win** on this host (Bun broke slightly earlier). Do not sell Bun as a chaos ceiling upgrade.
+- **Still not Go-parity** — MCPJungle under-load ~152 MB / chaos min ~97 MB. Bun shrinks the Node tax; it does not replace a thin native multiplexer.
+- **Operational pain is real but bounded** (native addons, CI matrix, production support) — usually less than a Rust rewrite of the governed path. Treat Bun as an optional runtime track, not the RSS endgame.
+
+```bash
+BUN_BIN=~/.bun/bin/bun \
+  MULTI_ARMS=clawql,clawql_bun MULTI_ITERS=10000 MULTI_SKIP_CHAOS=1 \
+  MULTI_OUT=gateway-multi-cmp-bun-10k.json \
+  npm run benchmark:gateway-multi-comparison
+
+BUN_BIN=~/.bun/bin/bun \
+  MULTI_ARMS=clawql,clawql_bun MULTI_ITERS=100 MULTI_CHAOS_UNTIL_BREAK=1 \
+  MULTI_CHAOS_MAX=512 MULTI_OUT=gateway-multi-cmp-bun-chaos.json \
+  npm run benchmark:gateway-multi-comparison
+```
+
+---
+
 ## RSS — admit the loss
 
 ClawQL is the **heaviest serious arm** on this board:
@@ -180,7 +221,7 @@ ClawQL is the **heaviest serious arm** on this board:
 | Chaos min / med | 259 / 342 | 97 / 109 | Single-instance |
 | 10k under-load median | ~427 MB | ~152 MB | V8 watermark under interleaved load |
 
-Levers landed: INSTANCE_SPEC slim Core, lazy optional imports, WORM ring cap, session catalog max. Remaining: further lazy `clawql-api` deps, post-GC steady-state RSS arm, Node heap tuning. **If RSS stays high, say so** — hiding a memory loss costs more than admitting it. Scale-out multiplies RSS; concurrency claims must price that in.
+Levers landed: INSTANCE_SPEC slim Core, lazy optional imports, WORM ring cap, session catalog max. **Bun runtime** trims Ready ~22% / under-load ~28% without a rewrite (see [Node vs Bun](#node-vs-bun-runtime-same-core-binary)) — still not MCPJungle-class. Remaining: further lazy `clawql-api` deps, post-GC steady-state RSS arm, Node heap tuning. **If RSS stays high, say so** — hiding a memory loss costs more than admitting it. Scale-out multiplies RSS; concurrency claims must price that in.
 
 ---
 
@@ -204,8 +245,9 @@ Default `MULTI_ARMS` / `MT_ARMS` omit both.
 5. **Chaos checkpoints** — board JSON flushed after latency and after each arm (survives host OOM mid-refine).
 6. **Multiturn fairness** — deterministic `task_success`; classic Layer1-once is primary; re-list demoted. No simulated Executor “filter” arm on the publish board (settled: gateway has no response-side projection).
 7. **Chaos until-break + topology tags** — `MULTI_CHAOS_UNTIL_BREAK`; reports carry `topology` so cross-topology claims fail the honesty check.
+8. **`clawql_bun` runtime arm** — same Core binary under Bun; board artifacts `gateway-multi-cmp-bun-10k.json` / `gateway-multi-cmp-bun-chaos.json`.
 
-**Next:** topology B (4× behind LB) for every arm before any scale-out claim; optional real-model task-success arm; RSS heap profile / lazy `clawql-api` if we want to close the memory loss. Date/version stamps on published executor-cmp pages (housekeeping).
+**Next:** topology B (4× behind LB) for every arm before any scale-out claim; optional real-model task-success arm; RSS heap profile / lazy `clawql-api` if we want to close the memory loss beyond Bun. Date/version stamps on published executor-cmp pages (housekeeping).
 
 ---
 
