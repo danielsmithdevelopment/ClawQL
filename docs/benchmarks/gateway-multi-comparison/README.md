@@ -15,13 +15,12 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 
 | Claim | Status | Bound |
 | --- | --- | --- |
-| **Fewest tokens among MCP aggregators / fat gateways with equal task success** | **Primary** — classic Layer1-once + Σ Layer2 @12; all arms `task_success` PASS | ClawQL **20.5k** vs MCPJungle **35.3k** (1.72×) and fat Executor **53.7k** (2.61×) |
-| **vs Executor code-mode filter** | **Loss on combined tokens** — admit it | `executor_filter` **8.8k** (0.43× ClawQL): same result tok (723) but no per-turn `search` tax and smaller Layer1 schema. Publish as “governed gateway vs program filter,” not a token win. |
+| **Fewest tokens among MCP aggregators + live Executor with equal task success** | **Primary** — classic Layer1-once + Σ Layer2 @12; all arms `task_success` PASS | ClawQL **20.5k** vs MCPJungle **35.3k** (1.72×) and Executor **53.7k** (2.61×). Layer 2 is the win — same gap as [Both Sides of Context Compression](https://pragmaticvectors.com/posts/both-sides-of-context-compression). |
 | **Lowest governed gateway cost** | **Supported** on n=10k — ClawQL gateway_cost p50 **0.70 ms** vs Executor **2.36 ms** | Same equal-arm pets upstream contract |
 | **Latency competitive with the fastest aggregators while doing more per call** | **Supported** — ClawQL best p50; MCPJungle best p999; essentially a tie at the top | Read with [path matrix](#path-matrix-what-each-arm-does) |
 | **Scale-out concurrency win** | **Not claimed yet** | Only after same-topology boards (1-instance **and** 4-replica behind LB) for every arm, pushed until break |
 
-Coherent publish line: **most efficient governed gateway** (vs aggregators + vs Executor’s governed cost) — not “fewest tokens against every code-mode peer.”
+Coherent publish line: **most efficient governed gateway** — output projection at the gateway layer (`fields`/`where`), which live Executor does not provide (measured full REST pass-through; see blog + `executor-cmp-001.live.json`).
 
 Do **not** cite “135 vs 19” (ClawQL NATS 4-replica vs Executor process-per-client) as a same-board concurrency win.
 
@@ -37,7 +36,7 @@ Latency at n=10 000 is essentially a tie among the top three. ClawQL’s figur
 | Operation risk / policy | ✓ (ALLOW_NO_ENFORCEMENT in bench) | — | — | — |
 | Ephemeral audit ring | ✓ | — | — | — |
 | Output redaction hooks | ✓ (available; unused on pets) | — | — | — |
-| Result projection (`where`/`fields`) | ✓ | code-mode only (`executor_filter`) | — | — |
+| Result projection (`where`/`fields`) | ✓ (gateway-enforced) | ✗ (pass-through; no gateway projection) | — | — |
 | Upstream HTTP to equal mock | ✓ | ✗ (sandbox; upstream=0) | ✓ | ✓ |
 | Multi-tool catalog discovery | search (server-side) | N/A (code) | full `tools/list` | full `tools/list` |
 
@@ -144,22 +143,20 @@ Single-tool p50 is a thin slice. The category ClawQL is built for is **multi-tur
 | Fat result | Nested `items[]` + `meta`/`history` (~2411 tok/turn raw) |
 | ClawQL path | `search` → `execute` with `where=items` + `fields=["id","name","status"]` |
 | Aggregators | Full `tools/list` once (classic) + raw fat `callTool` |
-| Executor (fat) | `execute` code returns the same fat JSON |
-| Executor (filter) | `execute` code maps to the same `{id,name,status}` fields — **fair code-mode peer** |
+| Executor | `execute` code returns the same fat JSON (matches measured live path: full payload pass-through; no gateway `fields`) |
 | Task success | Deterministic: every turn’s rows must match expected available inventory for that partition |
 | Turns | **12** unique partitions (see also N=24 artifact) |
+
+**Settled (do not reopen):** Executor’s live Layer 2 is unmodified API JSON — [Both Sides of Context Compression](https://pragmaticvectors.com/posts/both-sides-of-context-compression), `executor-cmp-001.live.json` (143,466 tok `pulls.list`). A hand-written program that maps to slim fields is **not** Executor and must not appear on this board as Executor. Codemode gateways compress input; response-side field selection at the gateway layer is ClawQL’s differentiator.
 
 ### Board @ N=12 (classic: Layer1 once + Σ Layer2) — re-measured
 
 | Arm | Layer1 once (tok) | Mean Layer2 (tok) | Mean **result** tok | Combined @12 | Task success |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | **ClawQL** | **297** (search+execute) | **1687** | **723** | **20 539** | **PASS** |
-| Executor (fat) | 90 | 4465 | 4465 | 53 668 (2.61×) | **PASS** |
-| Executor (filter) | 90 | **723** | **723** | **8 764 (0.43×)** | **PASS** |
+| Executor | 90 | 4465 | 4465 | 53 668 (2.61×) | **PASS** |
 | MCPJungle | 5840 | 2457 | 2457 | 35 322 (1.72×) | **PASS** |
 | agentgateway | 5520 | 2457 | 2457 | 35 002 (1.70×) | **PASS** |
-
-**Read correctly:** result tokens tie ClawQL ↔ `executor_filter` (723). Combined favors Executor filter because ClawQL pays ~964 tok/turn of `search` + a larger execute schema. That is the Rhys objection — surface it, don’t bury it. Token win holds vs **aggregators** and **fat** Executor under equal task success.
 
 Primary publish column is **classic** (Layer1 once). **Re-list every turn** is secondary — most clients cache tool lists; lazy clients shrink aggregator Layer1 further. Secondary numbers remain in the JSON for sensitivity analysis.
 
@@ -167,7 +164,7 @@ Primary publish column is **classic** (Layer1 once). **Re-list every turn** is s
 
 ```bash
 MT_TURNS=12 CATALOG_TOOL_COUNT=40 \
-  MT_ARMS=clawql,executor,executor_filter,mcpjungle,agentgateway \
+  MT_ARMS=clawql,executor,mcpjungle,agentgateway \
   npm run benchmark:gateway-multi-multiturn
 ```
 
@@ -205,10 +202,10 @@ Default `MULTI_ARMS` / `MT_ARMS` omit both.
 3. **WORM memory ring cap** — `CLAWQL_WORM_MEMORY_MAX_ENTRIES` (default 10 000).
 4. **Session catalog eviction** — `CLAWQL_CAPABILITY_SESSION_MAX` (default 256).
 5. **Chaos checkpoints** — board JSON flushed after latency and after each arm (survives host OOM mid-refine).
-6. **Multiturn fairness** — `executor_filter` arm + deterministic `task_success`; classic Layer1-once is primary; re-list demoted.
+6. **Multiturn fairness** — deterministic `task_success`; classic Layer1-once is primary; re-list demoted. No simulated Executor “filter” arm on the publish board (settled: gateway has no response-side projection).
 7. **Chaos until-break + topology tags** — `MULTI_CHAOS_UNTIL_BREAK`; reports carry `topology` so cross-topology claims fail the honesty check.
 
-**Next:** topology B (4× behind LB) for every arm before any scale-out claim; optional LLM-as-judge when a model key is available; RSS heap profile / lazy `clawql-api` if we want to close the memory loss.
+**Next:** topology B (4× behind LB) for every arm before any scale-out claim; optional real-model task-success arm; RSS heap profile / lazy `clawql-api` if we want to close the memory loss. Date/version stamps on published executor-cmp pages (housekeeping).
 
 ---
 

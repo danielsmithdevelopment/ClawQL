@@ -111,7 +111,7 @@ const PATH_MATRIX = {
     operation_risk_policy: false,
     ephemeral_audit_ring: false,
     output_redaction_hooks: false,
-    result_projection: "code_mode_optional",
+    result_projection: false, // measured: full payload pass-through; no gateway fields
     upstream_http_equal_mock: false,
     catalog_discovery: "n_a_code_execute",
   },

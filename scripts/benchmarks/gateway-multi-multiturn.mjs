@@ -7,9 +7,9 @@
  *     raw fat tool results each turn
  *   - ClawQL: Layer1 = search+execute schemas only; Layer2 = search hit +
  *     execute with fields projection against mirrored OpenAPI
- *   - Executor (fat): Layer1 = execute schema; Layer2 = fat JSON via code
- *   - Executor (filter): same execute schema; program maps to {id,name,status}
- *     — fair code-mode peer for ClawQL projection
+ *   - Executor: Layer1 = execute schema; Layer2 = fat JSON via code
+ *     (matches measured live path — full payload pass-through; no gateway
+ *     fields. See pragmaticvectors.com/posts/both-sides-of-context-compression)
  *
  * Cumulative (primary = classic):
  *   turn_n = Layer1_once + sum(Layer2_i for i=1..n)
@@ -29,10 +29,13 @@
  *
  * Env:
  *   MT_TURNS (default 12)  CATALOG_TOOL_COUNT (default 40)
- *   MT_ARMS=clawql,executor,executor_filter,mcpjungle,agentgateway
+ *   MT_ARMS=clawql,executor,mcpjungle,agentgateway
  *   MT_LIMIT (rows per turn, default 25)
  *   MT_OUT (default gateway-multi-multiturn.json)
  *   MT_INCLUDE_CF=1 only for nested CF experiments (off publish board)
+ *
+ * Note: do NOT put a hand-written slim-return program on the publish board as
+ * "Executor". That is not gateway projection and contradicts the settled blog.
  */
 
 import { existsSync, readFileSync, readdirSync, openSync, closeSync } from "node:fs";
@@ -63,8 +66,8 @@ const INCLUDE_CF =
 const ARMS = (
   process.env.MT_ARMS ??
   (INCLUDE_CF
-    ? "clawql,executor,executor_filter,mcpjungle,agentgateway,contextforge"
-    : "clawql,executor,executor_filter,mcpjungle,agentgateway")
+    ? "clawql,executor,mcpjungle,agentgateway,contextforge"
+    : "clawql,executor,mcpjungle,agentgateway")
 )
   .split(",")
   .map((s) => s.trim())
@@ -887,8 +890,9 @@ function categoryWinNarrative(arms, ratios) {
     "Category story: most efficient governed gateway — multi-turn I/O tokens with equal task success.",
     "1. Primary model — classic Layer1 once + Σ Layer2 (clients that cache tools/list).",
     "2. Input side — ClawQL Layer1 is search+execute only; aggregators pay the full fat tools/list once.",
-    "3. Output side — ClawQL fields projection; fair peer is executor_filter (code-mode same fields).",
+    "3. Output side — ClawQL gateway fields/where projection; Executor measured path is full payload pass-through.",
     "4. Re-list-every-turn is secondary sensitivity only (most clients cache; lazy clients shrink aggregators further).",
+    "5. Settled: do not label a hand-written slim-return program as Executor (Both Sides of Context Compression).",
   ];
   const clawOk = arms.clawql?.task_success?.ok;
   if (clawOk === false) {
@@ -910,15 +914,8 @@ function categoryWinNarrative(arms, ratios) {
   }
   if (ratios.executor) {
     lines.push(
-      `Measured vs Executor fat @N=${TURNS}: classic ${ratios.executor.vs_clawql_combined_classic}× ` +
-        `(fat return; Layer1 schema still smaller).`
-    );
-  }
-  if (ratios.executor_filter) {
-    const r = ratios.executor_filter.vs_clawql_combined_classic;
-    lines.push(
-      `Measured vs Executor filter @N=${TURNS}: classic ${r}× ` +
-        `(same result fields via code-mode — ${Number(r) < 1 ? "Executor wins combined; ClawQL pays search tax — admit it" : "ClawQL wins combined"}).`
+      `Measured vs Executor @N=${TURNS}: classic ${ratios.executor.vs_clawql_combined_classic}× ` +
+        `(fat return — matches live Layer 2 pass-through; Layer1 schema still smaller).`
     );
   }
   lines.push("RSS is a loss among serious arms — admit or fix before memory claims.");
@@ -1028,7 +1025,7 @@ async function main() {
         fat_result_tokens_partition_1: fatTok,
         slim_fields_tokens_partition_1: slimTok,
         projection_ratio: +(fatTok / Math.max(1, slimTok)).toFixed(2),
-        note: "Same underlying rows; ClawQL where+fields and executor_filter project to {id,name,status}; fat Executor/aggregators return full envelope",
+        note: "Same underlying rows; ClawQL where+fields project to {id,name,status}; Executor/aggregators return full envelope (Executor: no gateway projection — settled)",
       },
       board,
       ratios_vs_clawql: ratios,
@@ -1058,8 +1055,8 @@ async function main() {
         "Fat catalog equal-arm: N MCP tools mirrored as N OpenAPI operationIds.",
         "PRIMARY: classic Layer1_once + sum(Layer2) with deterministic task_success.",
         "SECONDARY: tools_list_every_turn — most clients cache ListTools; do not lead with this multiplier.",
-        "executor_filter: code-mode maps to same {id,name,status} fields as ClawQL projection.",
-        "executor (fat): returns full envelope — shows unfiltered program cost, not the fairest peer.",
+        "Executor Layer2 is fat JSON — matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
+        "Do not publish a hand-written slim-return program as Executor.",
         "ContextForge/MetaMCP off publish board by default.",
         "Not a latency board; see gateway-multi-cmp-10k.json for interleaved p999.",
         "RSS is a loss among serious arms — admit plainly.",
