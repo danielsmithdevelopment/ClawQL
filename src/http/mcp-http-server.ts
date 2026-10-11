@@ -215,7 +215,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (!options.skipSpecPreload) {
     await loadSpec();
     await preloadSchemaFieldCacheFromDisk();
-    await validateOrDegradeObsidianVaultAtStartup();
+    const { resolvePluginCompositionFlags } = await import("../composition/resolve-plugin-flags.js");
+    if (resolvePluginCompositionFlags().enableMemory) {
+      await validateOrDegradeObsidianVaultAtStartup();
+    }
   }
 
   const mcpPath = options.mcpPath?.trim() || process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;

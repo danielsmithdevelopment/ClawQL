@@ -1,9 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import { loadSpecEffect } from "clawql-api";
-import { getObsidianVaultPath } from "clawql-memory/vault/config";
 import { Effect } from "effect";
 import { inferSpecMode } from "../onboarding/spec-mode.js";
 import { getClawqlHome, getLocalProvidersVaultPath } from "../onboarding/paths.js";
+import { resolvePluginCompositionFlags } from "../composition/resolve-plugin-flags.js";
 
 export type StartupSummary = {
   specMode: string;
@@ -38,11 +38,21 @@ export function buildStartupSummaryEffect(): Effect.Effect<StartupSummary, Error
     const vaultPath = getLocalProvidersVaultPath();
     const hasVaultFile = existsSync(vaultPath);
 
+    let memoryVault: string | null = null;
+    if (resolvePluginCompositionFlags().enableMemory) {
+      // Lazy: clawql-memory stays out of Core-only / equal-arm cold graphs.
+      const { getObsidianVaultPath } = yield* Effect.tryPromise({
+        try: () => import("clawql-memory/vault/config"),
+        catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+      });
+      memoryVault = getObsidianVaultPath() ?? (existsSync(home) ? home : null);
+    }
+
     return {
       specMode: inferSpecMode(),
       vendorCount: vendors.length,
       vendors: vendors.slice(0, 12),
-      memoryVault: getObsidianVaultPath() ?? (existsSync(home) ? home : null),
+      memoryVault,
       providerSecrets: countLocalProviderSecrets(),
       providerVaultPath: hasVaultFile ? vaultPath : null,
     };
