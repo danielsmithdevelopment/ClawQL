@@ -41,6 +41,10 @@ Default model pin: `microsoft/microsoft-decision-1`.
 
 `POST /decision/flip-rate` accepts `model=microsoft-decision-1` (or `backendId`) so the perturbation suite calls OpenRouter Decision-1. Fan-out mining attach supports the same pin via `flipRate.model`. Results are operator/CI reports only — they do **not** light `calibrated` or held-out `productionTrusted`.
 
+## Routing held-out candidate rung
+
+Convert frozen v0.4 routing held-out (+ frontier labels) → fan-out cases via `heldOutCasesToFanout`, then `buildDecision1CandidateReport` runs bulk (local + Decision-1) and flip-rate with the Decision-1 pin. Artifact template: `packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/decision1-v04-routing-candidate-TEMPLATE.json`. Readout: `DECISION1_V04_CANDIDATE_READOUT.md`. Verdict always carries `productionTrustedClaim: false`.
+
 ## Fan-out example
 
 ```json
