@@ -1,14 +1,21 @@
 /**
  * Fan-out costEstimate from virtual-key / inference spend ledger (v0.1).
- * Uses the same rough USD rates as keys/budget.ts until provider pricing lands.
+ * Token→USD uses provider/model rates from keys/pricing (historic $1/$3 fallback).
  */
 
 import { Context, Effect, Layer } from "effect";
+import {
+  DEFAULT_INPUT_USD_PER_TOKEN,
+  DEFAULT_OUTPUT_USD_PER_TOKEN,
+  resolveTokenRates,
+  usdFromTokenCountsWithRates,
+} from "../keys/pricing.js";
 import type { SpendRow } from "../store/types.js";
 
-/** Match keys/budget estimateCostUsd rates. */
-export const SPEND_INPUT_USD_PER_TOKEN = 0.000_001;
-export const SPEND_OUTPUT_USD_PER_TOKEN = 0.000_003;
+/** @deprecated Prefer resolveTokenRates — kept for test/compat aliases of default rates. */
+export const SPEND_INPUT_USD_PER_TOKEN = DEFAULT_INPUT_USD_PER_TOKEN;
+/** @deprecated Prefer resolveTokenRates — kept for test/compat aliases of default rates. */
+export const SPEND_OUTPUT_USD_PER_TOKEN = DEFAULT_OUTPUT_USD_PER_TOKEN;
 
 export type FanoutCostSource = "explicit" | "spend_ledger";
 
@@ -21,18 +28,20 @@ export type SpendCostBackendRef = {
 
 export function usdFromTokenCounts(
   inputTokens: number,
-  outputTokens: number
+  outputTokens: number,
+  modelOrProviderKey?: string
 ): Effect.Effect<number> {
-  return Effect.sync(
-    () => inputTokens * SPEND_INPUT_USD_PER_TOKEN + outputTokens * SPEND_OUTPUT_USD_PER_TOKEN
-  );
+  return Effect.gen(function* () {
+    const rates = yield* resolveTokenRates(modelOrProviderKey);
+    return yield* usdFromTokenCountsWithRates(inputTokens, outputTokens, rates);
+  });
 }
 
-/** Average USD per call for a spend rollup row. */
+/** Average USD per call for a spend rollup row (row.key = model or provider). */
 export function costPerCallFromSpendRow(row: SpendRow): Effect.Effect<number> {
   return Effect.gen(function* () {
     if (row.calls <= 0) return 0;
-    const usd = yield* usdFromTokenCounts(row.inputTokens, row.outputTokens);
+    const usd = yield* usdFromTokenCounts(row.inputTokens, row.outputTokens, row.key);
     return usd / row.calls;
   });
 }

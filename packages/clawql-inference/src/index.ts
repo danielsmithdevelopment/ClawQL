@@ -336,6 +336,18 @@ export {
   type InferenceKeysRevokeOptions,
 } from "./cli/keys.js";
 export { loadKeysConfig, resolveVirtualKeysPath } from "./keys/config.js";
+export { estimateCostUsd } from "./keys/budget.js";
+export {
+  TokenPricingService,
+  TokenPricingLive,
+  resolveTokenRates,
+  estimateCostUsdEffect,
+  DEFAULT_INPUT_USD_PER_TOKEN,
+  DEFAULT_OUTPUT_USD_PER_TOKEN,
+  type TokenRates,
+  type TokenRatesPerMillion,
+  type PricingSource,
+} from "./keys/pricing.js";
 export {
   createVirtualKey,
   createVirtualKeyEffect,
