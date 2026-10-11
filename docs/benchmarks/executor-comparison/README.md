@@ -154,26 +154,26 @@ EXECUTOR_BIN=… EXECUTOR_CWD=… \
 # → docs/benchmarks/executor-comparison/executor-cmp-comprehensive.json
 ```
 
-| Dimension | What it measures |
-| --- | --- |
-| **Latency** | Interleaved equal-arm p50/p95/p99/p999 (paired gateway cost) |
-| **CPU / RAM** | `/proc` samples of both MCP server PIDs during latency phase |
-| **Tokens** | `cl100k_base` tools/list schemas + equal-arm results + fat-list projection contrast |
+| Dimension           | What it measures                                                                                     |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Latency**         | Interleaved equal-arm p50/p95/p99/p999 (paired gateway cost)                                         |
+| **CPU / RAM**       | `/proc` samples of both MCP server PIDs during latency phase                                         |
+| **Tokens**          | `cl100k_base` tools/list schemas + equal-arm results + fat-list projection contrast                  |
 | **Chaos (primary)** | **NATS scale-out**: ClawQL K HTTP replicas + queue-group sticky assign vs Executor N stdio processes |
-| **Chaos (honesty)** | Stdio process-per-client ramp + single-process HTTP multiplex |
+| **Chaos (honesty)** | Stdio process-per-client ramp + single-process HTTP multiplex                                        |
 
 Latest board (`executor-cmp-comprehensive.json`):
 
-| Dimension | ClawQL | Executor | Note |
-| --- | ---: | ---: | --- |
-| Gateway p50 / p99 (ms) | **1.31 / 3.09** | 2.57 / 5.69 | Win (exploratory n=200) |
-| CPU % median | 32.9 | 31.6 | Near-parity |
-| RSS MB median | 363 | 243 | Still lose — next lever |
-| `execute` schema tokens | 178 | 90 | Intentional rich surface — not trimmed for parity |
-| Fat lean vs full dump tokens | **2804** | 9122 | Win (`fields`) |
-| **NATS scale-out sustained clients** | **32** (4 workers) | **16** (broke @32 p99) | **Win** — primary chaos arm |
-| At 32 clients: p99 / rps | **29 ms / 2419** | 153 ms / 291 | ClawQL holds SLO; Executor breaks |
-| Stdio process chaos | 8 | 8 | Honesty baseline (tie at max tried) |
+| Dimension                            |             ClawQL |               Executor | Note                                              |
+| ------------------------------------ | -----------------: | ---------------------: | ------------------------------------------------- |
+| Gateway p50 / p99 (ms)               |    **1.31 / 3.09** |            2.57 / 5.69 | Win (exploratory n=200)                           |
+| CPU % median                         |               32.9 |                   31.6 | Near-parity                                       |
+| RSS MB median                        |                363 |                    243 | Still lose — next lever                           |
+| `execute` schema tokens              |                178 |                     90 | Intentional rich surface — not trimmed for parity |
+| Fat lean vs full dump tokens         |           **2804** |                   9122 | Win (`fields`)                                    |
+| **NATS scale-out sustained clients** | **32** (4 workers) | **16** (broke @32 p99) | **Win** — primary chaos arm                       |
+| At 32 clients: p99 / rps             |   **29 ms / 2419** |           153 ms / 291 | ClawQL holds SLO; Executor breaks                 |
+| Stdio process chaos                  |                  8 |                      8 | Honesty baseline (tie at max tried)               |
 
 Honesty: scale-out is the **product** path (fixed gateway replicas, NATS queue-group session placement — same shape as fabric VG workers). Executor comparison uses their natural process-per-client stdio model. Layer-1 schema richness stays. p999 from short comprehensive iters is exploratory — publish latency tails from `latency-fair` 10k×3. **Panguard off**. Hold publicizing until RAM gap is closed or scoped.
 
