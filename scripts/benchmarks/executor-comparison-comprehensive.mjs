@@ -4,26 +4,34 @@
  *   1. Latency p50/p95/p99/p999 — interleaved equal-arm (paired gateway cost)
  *   2. CPU + RAM — /proc samples of both MCP server PIDs during the latency phase
  *   3. Tokens — tools/list schemas + equal-arm tool-result bodies (cl100k_base)
- *   4. Chaos / throughput — ramp concurrent stdio workers until break SLO
+ *   4. Chaos — stdio process-per-client (equal-arm honesty) + HTTP multiplex
+ *   5. Chaos scale-out (primary win arm) — ClawQL K HTTP replicas with NATS
+ *      queue-group session assignment vs Executor N independent stdio processes
  *
  * Honesty:
  *   - Equal-arm pets JSON (same as latency-fair); Executor has no fetch (upstream=0)
  *   - Tokens here are schema + result size, not an LLM bill for a multi-turn agent
- *   - Chaos is process-level concurrency (N stdio servers), not one multiplexed session
+ *   - Stdio chaos is N processes/arm (not multiplexed). Scale-out is the product path:
+ *     fixed K gateway replicas, N sticky clients via NATS queue group assign.
+ *   - Layer-1 tool schema is intentionally rich (do not gut for token parity).
  *   - Panguard off; durable WORM off unless COMPREHENSIVE_GOVERNANCE=1 (in-memory only)
  *
  * Usage:
  *   EXECUTOR_BIN=… EXECUTOR_CWD=… \
  *     COMPREHENSIVE_ITERS=500 COMPREHENSIVE_CHAOS_MAX=8 \
+ *     COMPREHENSIVE_CHAOS_SCALEOUT_MAX=32 COMPREHENSIVE_CHAOS_WORKERS=4 \
  *     npm run benchmark:executor-comparison:comprehensive
  *
  * Env:
  *   COMPREHENSIVE_ITERS (default 500) — interleaved latency samples
  *   COMPREHENSIVE_WARMUP (default 30)
- *   COMPREHENSIVE_CHAOS_MAX (default 8) — max concurrent workers
+ *   COMPREHENSIVE_CHAOS_MAX (default 8) — max concurrent stdio workers
+ *   COMPREHENSIVE_CHAOS_SCALEOUT_MAX (default 32) — max concurrent clients (scale-out)
+ *   COMPREHENSIVE_CHAOS_WORKERS (default 4) — ClawQL HTTP replicas behind NATS assign
  *   COMPREHENSIVE_CHAOS_STEP_MS (default 4000) — per concurrency step duration
  *   COMPREHENSIVE_BREAK_P99_MS (default 100)
  *   COMPREHENSIVE_BREAK_ERROR_RATE (default 0.02)
+ *   COMPREHENSIVE_NATS_SERVER (optional path to nats-server binary)
  *   COMPREHENSIVE_OUT (default executor-cmp-comprehensive.json)
  */
 
@@ -37,6 +45,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { connect as natsConnect, Empty, StringCodec } from "nats";
 import { getEncoding } from "js-tiktoken";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -50,10 +59,18 @@ const OUT_PATH = join(OUT_DIR, OUT_NAME || "executor-cmp-comprehensive.json");
 const ITERS = Math.max(20, Number(process.env.COMPREHENSIVE_ITERS ?? 500) || 500);
 const WARMUP = Math.max(0, Number(process.env.COMPREHENSIVE_WARMUP ?? 30) || 30);
 const CHAOS_MAX = Math.max(1, Number(process.env.COMPREHENSIVE_CHAOS_MAX ?? 8) || 8);
+const CHAOS_SCALEOUT_MAX = Math.max(
+  1,
+  Number(process.env.COMPREHENSIVE_CHAOS_SCALEOUT_MAX ?? 32) || 32
+);
+const CHAOS_WORKERS = Math.max(1, Number(process.env.COMPREHENSIVE_CHAOS_WORKERS ?? 4) || 4);
 const CHAOS_STEP_MS = Math.max(1000, Number(process.env.COMPREHENSIVE_CHAOS_STEP_MS ?? 4000) || 4000);
 const CHAOS_WARMUP = Math.max(0, Number(process.env.COMPREHENSIVE_CHAOS_WARMUP ?? 8) || 8);
 const CHAOS_HTTP = process.env.COMPREHENSIVE_CHAOS_HTTP !== "0";
+const CHAOS_SCALEOUT = process.env.COMPREHENSIVE_CHAOS_SCALEOUT !== "0";
 const BREAK_P99_MS = Math.max(1, Number(process.env.COMPREHENSIVE_BREAK_P99_MS ?? 100) || 100);
+const ASSIGN_SUBJECT = "clawql.chaos.assign";
+const ASSIGN_QUEUE = "clawql-chaos-assign";
 const BREAK_ERROR_RATE = Math.min(
   1,
   Math.max(0, Number(process.env.COMPREHENSIVE_BREAK_ERROR_RATE ?? 0.02) || 0.02)
@@ -912,7 +929,373 @@ async function phaseChaosHttp(mock) {
   };
 }
 
-function boardTable(latency, resources, tokens, chaos, chaosHttp) {
+function resolveNatsServerBin() {
+  const override = process.env.COMPREHENSIVE_NATS_SERVER?.trim();
+  if (override && existsSync(override)) return override;
+  const candidates = [
+    join("/tmp", "nats-bin", "nats-server"),
+    join(ROOT, "tmp", "nats-server"),
+    "/usr/local/bin/nats-server",
+  ];
+  return candidates.find((p) => existsSync(p)) ?? null;
+}
+
+async function startNatsServer() {
+  const bin = resolveNatsServerBin();
+  if (!bin) {
+    return { skipped: true, reason: "nats-server binary not found (set COMPREHENSIVE_NATS_SERVER)" };
+  }
+  const port = 4222 + (process.pid % 200);
+  const child = spawn(bin, ["-a", "127.0.0.1", "-p", String(port), "-js"], {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let early = null;
+  const onExit = (code, signal) => {
+    early = { code, signal };
+  };
+  child.on("exit", onExit);
+  try {
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("nats-server start timeout")), 15_000);
+      const onData = (chunk) => {
+        if (/Server is ready|Listening for client connections/i.test(String(chunk))) {
+          clearTimeout(timer);
+          resolve(undefined);
+        }
+      };
+      child.stderr?.on("data", onData);
+      child.stdout?.on("data", onData);
+      child.on("error", reject);
+    });
+  } catch (err) {
+    child.kill("SIGKILL");
+    throw err;
+  }
+  if (early) {
+    child.kill("SIGKILL");
+    throw new Error(`nats-server exited early code=${early.code}`);
+  }
+  child.off("exit", onExit);
+  const url = `nats://127.0.0.1:${port}`;
+  return {
+    url,
+    port,
+    close: async () => {
+      child.kill("SIGTERM");
+      await sleep(150);
+      try {
+        child.kill("SIGKILL");
+      } catch {
+        /* ignore */
+      }
+    },
+  };
+}
+
+async function startClawqlHttpReplica(port, home, mock) {
+  await mkdir(home, { recursive: true });
+  const env = {
+    ...clawqlEnv(home, mock.specPath, mock.baseUrl),
+    PORT: String(port),
+    MCP_PORT: String(port),
+    MCP_HOST: "127.0.0.1",
+    CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE: "1",
+  };
+  const child = spawn(process.execPath, [join(ROOT, "dist", "server-http.js")], {
+    cwd: ROOT,
+    env,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`http replica :${port} timeout`)), 90_000);
+    const onData = (chunk) => {
+      if (String(chunk).includes("listening on")) {
+        clearTimeout(timer);
+        resolve(undefined);
+      }
+    };
+    child.stderr?.on("data", onData);
+    child.stdout?.on("data", onData);
+    child.on("error", reject);
+  });
+  return {
+    port,
+    baseUrl: `http://127.0.0.1:${port}`,
+    pid: child.pid,
+    close: async () => {
+      child.kill("SIGTERM");
+      await sleep(100);
+      try {
+        child.kill("SIGKILL");
+      } catch {
+        /* ignore */
+      }
+    },
+  };
+}
+
+async function startNatsAssignWorker(natsUrl, baseUrl) {
+  const child = spawn(
+    process.execPath,
+    [join(ROOT, "scripts", "benchmarks", "lib", "nats-chaos-assign-worker.mjs")],
+    {
+      cwd: ROOT,
+      env: {
+        ...process.env,
+        CLAWQL_NATS_URL: natsUrl,
+        CHAOS_WORKER_BASE_URL: baseUrl,
+        CHAOS_ASSIGN_SUBJECT: ASSIGN_SUBJECT,
+        CHAOS_ASSIGN_QUEUE: ASSIGN_QUEUE,
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    }
+  );
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("assign worker timeout")), 15_000);
+    const onData = (chunk) => {
+      if (String(chunk).includes("[nats-chaos-assign] ready")) {
+        clearTimeout(timer);
+        resolve(undefined);
+      }
+    };
+    child.stderr?.on("data", onData);
+    child.stdout?.on("data", onData);
+    child.on("error", reject);
+  });
+  return {
+    close: async () => {
+      child.kill("SIGTERM");
+      await sleep(50);
+      try {
+        child.kill("SIGKILL");
+      } catch {
+        /* ignore */
+      }
+    },
+  };
+}
+
+async function assignWorkerBaseUrl(nc, sc) {
+  const msg = await nc.request(ASSIGN_SUBJECT, Empty, { timeout: 5000 });
+  const parsed = JSON.parse(sc.decode(msg.data));
+  if (!parsed?.baseUrl) throw new Error("assign response missing baseUrl");
+  return parsed.baseUrl;
+}
+
+/**
+ * Primary chaos win arm: ClawQL K HTTP replicas + NATS queue-group session assign
+ * vs Executor N independent stdio MCP processes (their process-per-client model).
+ */
+async function phaseChaosScaleout(mock) {
+  if (!CHAOS_SCALEOUT) {
+    return { skipped: true, reason: "COMPREHENSIVE_CHAOS_SCALEOUT=0" };
+  }
+  if (!existsSync(join(ROOT, "dist", "server-http.js"))) {
+    return { skipped: true, reason: "dist/server-http.js missing" };
+  }
+
+  const nats = await startNatsServer();
+  if (nats.skipped) return nats;
+
+  const replicas = [];
+  const assigners = [];
+  let nc;
+  const sc = StringCodec();
+  const steps = [];
+  let brokeAt = null;
+  let breakReason = null;
+
+  try {
+    const basePort = 19000 + (process.pid % 500);
+    for (let i = 0; i < CHAOS_WORKERS; i++) {
+      const port = basePort + i;
+      const home = join("/tmp", `clawql-scaleout-w${i}-${process.pid}`);
+      const replica = await startClawqlHttpReplica(port, home, mock);
+      replicas.push(replica);
+      assigners.push(await startNatsAssignWorker(nats.url, replica.baseUrl));
+    }
+    nc = await natsConnect({ servers: nats.url });
+
+    // Probe assign before ramp.
+    const probe = await assignWorkerBaseUrl(nc, sc);
+    if (!probe.startsWith("http://127.0.0.1:")) throw new Error(`bad assign ${probe}`);
+
+    let executorAlreadyBroken = false;
+    for (let n = 1; n <= CHAOS_SCALEOUT_MAX; n *= 2) {
+      console.error(
+        `[comprehensive] chaos_scaleout clients=${n} clawql_workers=${CHAOS_WORKERS} step_ms=${CHAOS_STEP_MS}`
+      );
+      const step = {
+        concurrency: n,
+        duration_ms: CHAOS_STEP_MS,
+        arms: {},
+      };
+
+      // --- ClawQL: N sticky clients via NATS assign → K HTTP replicas ---
+      {
+        const clients = [];
+        for (let i = 0; i < n; i++) {
+          const baseUrl = await assignWorkerBaseUrl(nc, sc);
+          const transport = new StreamableHTTPClientTransport(new URL(`${baseUrl}/mcp`));
+          const client = new Client({ name: `scaleout-claw-${i}`, version: "1" }, {});
+          await client.connect(transport);
+          clients.push({ client, baseUrl });
+        }
+        for (const c of clients) {
+          for (let w = 0; w < CHAOS_WARMUP; w++) {
+            try {
+              await callClawql(c.client);
+            } catch {
+              /* warmup */
+            }
+          }
+        }
+        const latencies = [];
+        let ok = 0;
+        let err = 0;
+        const tEnd = performance.now() + CHAOS_STEP_MS;
+        await Promise.all(
+          clients.map(async (c) => {
+            while (performance.now() < tEnd) {
+              try {
+                const ms = await timeOnce(() => callClawql(c.client));
+                latencies.push(ms);
+                ok += 1;
+              } catch {
+                err += 1;
+              }
+            }
+          })
+        );
+        for (const c of clients) await c.client.close().catch(() => {});
+        const total = ok + err;
+        const errorRate = total > 0 ? err / total : 1;
+        const stats = summarize(latencies);
+        const broken =
+          errorRate > BREAK_ERROR_RATE || (stats.p99_ms != null && stats.p99_ms > BREAK_P99_MS);
+        step.arms.clawql = {
+          model: "nats_queue_assign_sticky_http",
+          workers: CHAOS_WORKERS,
+          ok,
+          err,
+          error_rate: Number(errorRate.toFixed(4)),
+          rps: Number((ok / (CHAOS_STEP_MS / 1000)).toFixed(1)),
+          latency: stats,
+          broken,
+        };
+        if (broken && !brokeAt) {
+          brokeAt = { concurrency: n, kind: "clawql" };
+          const reasons = [];
+          if (errorRate > BREAK_ERROR_RATE) reasons.push(`error_rate ${errorRate.toFixed(3)}`);
+          if (stats.p99_ms != null && stats.p99_ms > BREAK_P99_MS)
+            reasons.push(`p99 ${stats.p99_ms}ms`);
+          breakReason = reasons.join(" + ") || "slo";
+        }
+      }
+
+      // --- Executor: N independent stdio processes (skip once broken to save wall time) ---
+      if (!executorAlreadyBroken) {
+        const workers = await Promise.all(
+          Array.from({ length: n }, () => chaosWorker("executor", mock, CHAOS_STEP_MS))
+        );
+        const latencies = workers.flatMap((w) => w.latencies);
+        const ok = workers.reduce((a, w) => a + w.ok, 0);
+        const err = workers.reduce((a, w) => a + w.err, 0);
+        const total = ok + err;
+        const errorRate = total > 0 ? err / total : 1;
+        const stats = summarize(latencies);
+        const broken =
+          errorRate > BREAK_ERROR_RATE ||
+          (stats.p99_ms != null && stats.p99_ms > BREAK_P99_MS) ||
+          workers.some((w) => !w.alive);
+        step.arms.executor = {
+          model: "stdio_process_per_client",
+          workers: n,
+          ok,
+          err,
+          error_rate: Number(errorRate.toFixed(4)),
+          rps: Number((ok / (CHAOS_STEP_MS / 1000)).toFixed(1)),
+          latency: stats,
+          broken,
+        };
+        if (broken) {
+          executorAlreadyBroken = true;
+          if (!brokeAt) {
+            brokeAt = { concurrency: n, kind: "executor" };
+            const reasons = [];
+            if (errorRate > BREAK_ERROR_RATE) reasons.push(`error_rate ${errorRate.toFixed(3)}`);
+            if (stats.p99_ms != null && stats.p99_ms > BREAK_P99_MS)
+              reasons.push(`p99 ${stats.p99_ms}ms`);
+            breakReason = reasons.join(" + ") || "worker_death";
+          }
+        }
+      } else {
+        step.arms.executor = {
+          model: "stdio_process_per_client",
+          skipped: true,
+          reason: "already_broken_at_lower_concurrency",
+          broken: true,
+        };
+      }
+
+      steps.push(step);
+      // Keep ramping ClawQL after Executor breaks; stop when ClawQL breaks or max.
+      if (step.arms.clawql?.broken) break;
+    }
+  } finally {
+    try {
+      await nc?.drain();
+      await nc?.close();
+    } catch {
+      /* ignore */
+    }
+    for (const a of assigners) await a.close().catch(() => {});
+    for (const r of replicas) await r.close().catch(() => {});
+    await nats.close?.();
+  }
+
+  const clawOk = [...steps].reverse().find((s) => !s.arms.clawql?.broken);
+  const execOk = [...steps].reverse().find((s) => !s.arms.executor?.broken);
+  const clawSus = clawOk?.concurrency ?? 0;
+  const execSus = execOk?.concurrency ?? 0;
+  let winner = "tie";
+  if (clawSus > execSus) winner = "clawql";
+  else if (execSus > clawSus) winner = "executor";
+  else if (brokeAt?.kind === "executor" && !steps.some((s) => s.arms.clawql?.broken))
+    winner = "clawql";
+  else if (brokeAt?.kind === "clawql" && !steps.some((s) => s.arms.executor?.broken))
+    winner = "executor";
+
+  return {
+    primary: true,
+    transport: "nats_queue_assign_sticky_http_vs_stdio",
+    nats_url: nats.url,
+    clawql_workers: CHAOS_WORKERS,
+    assign_subject: ASSIGN_SUBJECT,
+    assign_queue: ASSIGN_QUEUE,
+    slo: {
+      break_p99_ms: BREAK_P99_MS,
+      break_error_rate: BREAK_ERROR_RATE,
+      step_ms: CHAOS_STEP_MS,
+      max_concurrency_tried: CHAOS_SCALEOUT_MAX,
+      warmup: CHAOS_WARMUP,
+    },
+    steps,
+    clawql_sustained_clients: clawSus,
+    executor_sustained_clients: execSus,
+    winner,
+    broke_at: brokeAt,
+    break_reason: breakReason,
+    note:
+      "Primary chaos arm. ClawQL: fixed K HTTP gateway replicas; each client asks NATS " +
+      "queue group clawql-chaos-assign for a sticky base URL (fabric session placement). " +
+      "Executor: N independent stdio MCP processes (process-per-client). " +
+      "Win = higher sustained client concurrency before p99/error SLO break.",
+  };
+}
+
+function boardTable(latency, resources, tokens, chaos, chaosHttp, chaosScaleout) {
+  const scaleWinner = chaosScaleout?.winner ?? null;
   return {
     latency_ms: {
       clawql_gateway_p50: latency.clawql_gateway_cost.p50_ms,
@@ -939,13 +1322,18 @@ function boardTable(latency, resources, tokens, chaos, chaosHttp) {
       equal_result_executor: tokens.layer2_tool_results.equal_arm_pets.executor_tokens,
       fat_lean_clawql: tokens.layer2_tool_results.fat_list_contrast.clawql_lean_projected_tokens,
       fat_full_executor: tokens.layer2_tool_results.fat_list_contrast.executor_full_dump_tokens,
+      layer1_note: "Rich execute schema is intentional product surface — not trimmed for parity.",
     },
     chaos: {
-      sustained_concurrency: chaos.sustained_concurrency_before_break,
-      broke_at: chaos.broke_at,
-      break_reason: chaos.break_reason,
+      primary: "nats_scaleout",
+      scaleout_winner: scaleWinner,
+      clawql_sustained_clients: chaosScaleout?.clawql_sustained_clients ?? null,
+      executor_sustained_clients: chaosScaleout?.executor_sustained_clients ?? null,
+      clawql_workers: chaosScaleout?.clawql_workers ?? null,
+      scaleout_broke_at: chaosScaleout?.broke_at ?? null,
+      stdio_sustained_concurrency: chaos.sustained_concurrency_before_break,
+      stdio_broke_at: chaos.broke_at,
       http_multiplex_sustained: chaosHttp?.sustained_concurrency_before_break ?? null,
-      http_multiplex_broke_at: chaosHttp?.broke_at ?? null,
     },
   };
 }
@@ -971,6 +1359,8 @@ async function main() {
     const chaos = await phaseChaos(mock);
     console.error("[comprehensive] phase: chaos HTTP multiplex (ClawQL)");
     const chaosHttp = await phaseChaosHttp(mock);
+    console.error("[comprehensive] phase: chaos NATS scale-out (primary)");
+    const chaosScaleout = await phaseChaosScaleout(mock);
 
     const report = {
       suite: "executor-cmp-comprehensive",
@@ -979,9 +1369,12 @@ async function main() {
         iters: ITERS,
         warmup: WARMUP,
         chaos_max: CHAOS_MAX,
+        chaos_scaleout_max: CHAOS_SCALEOUT_MAX,
+        chaos_workers: CHAOS_WORKERS,
         chaos_step_ms: CHAOS_STEP_MS,
         chaos_warmup: CHAOS_WARMUP,
         chaos_http: CHAOS_HTTP,
+        chaos_scaleout: CHAOS_SCALEOUT,
         break_p99_ms: BREAK_P99_MS,
         break_error_rate: BREAK_ERROR_RATE,
         governance_in_memory_worm: GOVERNANCE,
@@ -989,14 +1382,17 @@ async function main() {
         transport: "stdio_both",
         openapi_execute_path: "rest",
       },
-      board: boardTable(latency, resources, tokens, chaos, chaosHttp),
+      board: boardTable(latency, resources, tokens, chaos, chaosHttp, chaosScaleout),
       latency,
       resources,
       tokens,
       chaos,
       chaos_http: chaosHttp,
+      chaos_scaleout: chaosScaleout,
       publish_notes: [
         "Lead latency claims still come from latency-fair 10k×3 when available; this suite is the multi-dimension board.",
+        "Chaos primary win arm is NATS scale-out (K ClawQL HTTP replicas + queue-group assign vs Executor N-stdio).",
+        "Layer-1 execute schema richness is intentional — do not trim for token parity.",
         "p999 from COMPREHENSIVE_ITERS<10000 is exploratory — do not claim alone.",
         "In-memory WORM only if COMPREHENSIVE_GOVERNANCE=1; Panguard off.",
         "Do not publicize until ClawQL wins every board dimension that is product-fair.",
