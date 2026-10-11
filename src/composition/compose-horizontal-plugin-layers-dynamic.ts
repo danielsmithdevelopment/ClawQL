@@ -13,7 +13,6 @@ import {
   type ClawQLApiRuntimeError,
   type ClawQLApiRuntimeServices,
 } from "clawql-api";
-import { natsConfiguredForConsumer } from "clawql-automation/nats/env";
 import {
   optionalFlagsFromHorizontalTierSpec,
   type ClawQLHorizontalTierSpec,
@@ -37,6 +36,23 @@ function loadPlugin<T>(specifier: string): Effect.Effect<T, ClawQLError> {
   });
 }
 
+/** Env-only NATS consumer probe — avoid static-importing clawql-automation for the check. */
+function natsConsumerWantedFromEnv(): boolean {
+  const truthy = (v: string | undefined): boolean => {
+    const t = v?.trim().toLowerCase();
+    return t === "1" || t === "true" || t === "yes";
+  };
+  if (!process.env.CLAWQL_NATS_URL?.trim()) return false;
+  if (!truthy(process.env.CLAWQL_NATS_JETSTREAM) || !truthy(process.env.CLAWQL_NATS_ENABLE_CONSUMER)) {
+    return false;
+  }
+  return (
+    truthy(process.env.CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW) ||
+    truthy(process.env.CLAWQL_NATS_CONSUMER_IDP_PIPELINE) ||
+    truthy(process.env.CLAWQL_NATS_CONSUMER_CONESHARE_FOLLOWUP)
+  );
+}
+
 /**
  * Effect that builds horizontal Layers via dynamic import of only enabled packages.
  */
@@ -45,7 +61,7 @@ export function composeHorizontalPluginLayersDynamicEffect(
   options: ComposeHorizontalPluginLayersOptions = {}
 ): Effect.Effect<readonly HorizLayer[], ClawQLError> {
   return Effect.gen(function* () {
-    const includeNatsWorker = options.includeNatsWorker ?? natsConfiguredForConsumer();
+    const includeNatsWorker = options.includeNatsWorker ?? natsConsumerWantedFromEnv();
     const layers: HorizLayer[] = [];
 
     if (flags.enableMemory) {

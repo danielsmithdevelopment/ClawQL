@@ -41,6 +41,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { getEncoding } from "js-tiktoken";
+import { clawqlEqualArmEnv } from "./lib/clawql-bench-env.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const LIB = join(ROOT, "scripts", "benchmarks", "lib");
@@ -338,42 +339,8 @@ async function timeOnce(fn) {
 }
 
 function clawqlEnv(home, specPath, apiBase) {
-  const env = {
-    ...process.env,
-    CLAWQL_HOME: home,
-    CLAWQL_OBSIDIAN_VAULT_PATH: home,
-    CLAWQL_SPEC_PATH: specPath,
-    CLAWQL_API_BASE_URL: apiBase,
-    CLAWQL_BUNDLED_OFFLINE: "1",
-    CLAWQL_TIER: "gateway",
-    CLAWQL_CAPABILITY_LIFECYCLE: "0",
-    CLAWQL_ENABLE_MEMORY: "0",
-    CLAWQL_ENABLE_DOCUMENTS: "0",
-    CLAWQL_ENABLE_ONYX: "0",
-    CLAWQL_ENABLE_SANDBOX: "0",
-    CLAWQL_ENABLE_SCHEDULE: "0",
-    CLAWQL_ENABLE_NOTIFY: "0",
-    CLAWQL_ENABLE_OBSERVABILITY: "0",
-    CLAWQL_ENABLE_GOOGLE: "0",
-    CLAWQL_ENABLE_AWS: "0",
-    CLAWQL_ALLOW_NO_ENFORCEMENT: "1",
-    CLAWQL_OPENAPI_EXECUTE_PATH: "rest",
-  };
-  for (const key of [
-    "CLAWQL_PROVIDER",
-    "CLAWQL_BUNDLED_PROVIDERS",
-    "CLAWQL_INSTANCE_SPEC",
-    "CLAWQL_INSTANCE_SPEC_FILE",
-    "CLAWQL_SPEC_URL",
-    "CLAWQL_SPEC_PATHS",
-    "CLAWQL_DISCOVERY_URL",
-  ]) {
-    delete env[key];
-  }
-  delete env.CLAWQL_WORM_ENABLED;
-  delete env.CLAWQL_WORM_LOCAL;
-  delete env.CLAWQL_WORM_REMOTE;
-  return env;
+  // 8.0: ENABLE_* ignored without INSTANCE_SPEC; CLAWQL_TIER=gateway is not a preset.
+  return clawqlEqualArmEnv({ home, specPath, apiBase });
 }
 
 async function connectClawqlStdio(env) {
