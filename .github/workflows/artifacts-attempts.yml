@@ -40,6 +40,15 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: ShellCheck agent harness
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+          shellcheck agents/run-attempt.sh
+
+      - name: Film preflight (tree + scripts)
+        run: npm run demo:film-preflight
+
       # Workspace package.json exports point at dist/; vitest resolves via those exports.
       - name: Build (incl. verify CLI)
         run: npm run build

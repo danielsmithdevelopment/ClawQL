@@ -17,8 +17,9 @@ Readiness matrix: [`STATUS.md`](./STATUS.md).
 cd artifacts-attempts
 npm ci
 npm test
-npm run demo:judge-smoke   # optional fast check
-npm run demo:record-prep   # 3 consecutive verified local demos
+npm run demo:film-preflight  # tree + scripts
+npm run demo:judge-smoke     # optional fast check
+npm run demo:record-prep     # 3 consecutive verified local demos
 ```
 
 Only start recording after `demo:record-prep` / `demo:gate` prints `GATE PASS`.
