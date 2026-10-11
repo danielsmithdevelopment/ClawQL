@@ -1,0 +1,26 @@
+# MOB-08 — Answer a decision HITL item and use review filters
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-review"
+- assertVisible:
+    id: "review-queue-screen"
+- tapOn:
+    id: "filter-decision"
+- tapOn:
+    id: "review-item-rev_decision"
+- assertVisible:
+    id: "decision-body"
+- tapOn:
+    id: "decision-choice-refund-request"
+- tapOn:
+    id: "review-submit-answer"
+- assertVisible:
+    id: "review-note"
+- tapOn:
+    id: "tab-activity"
+- assertVisible:
+    id: "activity-screen"

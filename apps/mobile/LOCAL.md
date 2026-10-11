@@ -18,10 +18,17 @@ Sign-in screen → **Continue with fixture session** (or **App Store reviewer de
 
 | Surface | Local without signup |
 | ------- | -------------------- |
-| Home queue + spend | ✅ fixtures |
-| Review decline / approve (reviewer biometric) | ✅ |
+| Home queue + spend + recent activity | ✅ fixtures |
+| Review filters (change / source / decision / skill) | ✅ |
+| Approve with simulated NFC (fixture session) | ✅ no YubiKey needed |
+| Approve with reviewer-demo biometrics | ✅ |
+| Decision answer / skip / ask teammate | ✅ |
+| Skill promote / decline | ✅ |
+| Outcome-unknown mark applied / retry with key | ✅ |
+| Activity feed (after decisions) | ✅ |
+| Pull-to-refresh on Home / Review / Activity | ✅ |
 | Profile keys, revoke, delete-account UI | ✅ |
-| Deep link parsing / Maestro MOB-01…06 | ✅ (sim/emulator or web) |
+| Deep link parsing / Maestro MOB-01…07 | ✅ (sim/emulator or web) |
 | Unit tests | `npm test` |
 | Packaging preflight (no upload) | `npm run store:check` |
 

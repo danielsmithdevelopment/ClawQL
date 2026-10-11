@@ -16,8 +16,11 @@ describe("mobile domain schemas", () => {
         source: "fixture",
       })
     );
-    expect(decoded.items[0]?.id).toBe("rev_change");
-    expect(decoded.items[0]?.exactChange?.[1]?.after).toBe("$52,000.00");
+    expect(decoded.items.find((i) => i.id === "rev_skill")?.kind).toBe("skill");
+    const change = decoded.items.find((i) => i.id === "rev_change");
+    expect(change?.exactChange?.[1]?.after).toBe("$52,000.00");
+    const decision = decoded.items.find((i) => i.id === "rev_decision");
+    expect(decision?.decisionChoices?.[0]?.label).toBe("Billing question");
   });
 
   it("decodes session including reviewer demo flag", async () => {

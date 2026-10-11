@@ -1,4 +1,5 @@
 import type {
+  ActivityEvent,
   ConnectedApp,
   HomeSpend,
   NotificationPrefs,
@@ -31,6 +32,25 @@ export const REVIEWER_DEMO_SESSION: MobileSession = {
 
 export const FIXTURE_REVIEW_ITEMS: readonly ReviewItem[] = [
   {
+    id: "rev_skill",
+    kind: "skill",
+    kindLabel: "SKILL",
+    title: "Promote reconcile-amendment",
+    badge: "New",
+    badgeTone: "ok",
+    listMeta: "Learned by legal-ops agent, 2 min ago",
+    statusLine: "Ready to promote",
+    statusTone: "ok",
+    skillSummary: "Learned from 6 sessions by legal-ops agent.",
+    skillEvidence: [
+      "19 of 20 held-out tasks",
+      "Stayed in bounds, 20 runs",
+      "12 of 12 adversarial runs",
+      "Code checks clean",
+      "Instructions scanned",
+    ],
+  },
+  {
     id: "rev_change",
     kind: "change",
     kindLabel: "CHANGE",
@@ -47,6 +67,27 @@ export const FIXTURE_REVIEW_ITEMS: readonly ReviewItem[] = [
       { field: "Contract", now: "Northwind MSA ct_4471", after: "—" },
       { field: "Annual value", now: "$48,500.00", after: "$52,000.00" },
       { field: "Effective", now: "Jan 1, 2026", after: "Nov 1, 2026" },
+    ],
+  },
+  {
+    id: "rev_change_unknown",
+    kind: "change",
+    kindLabel: "CHANGE",
+    title: "Apply CRM contact merge",
+    badge: "Outcome unknown",
+    badgeTone: "danger",
+    listMeta: "crm-sync agent, for Dana Reyes",
+    statusLine: "Consumed >60s ago · no finalize",
+    statusTone: "danger",
+    changeStatus: "outcome_unknown",
+    idempotencyCapable: true,
+    idempotencyKey: "idem_crm_merge_4821",
+    needsOutcomeAttention: true,
+    operationId: "merge_contacts",
+    digest: "9a1f…c2e0",
+    exactChange: [
+      { field: "Primary", now: "ct_1201", after: "ct_1201 (keep)" },
+      { field: "Duplicate", now: "ct_1888", after: "merged → ct_1201" },
     ],
   },
   {
@@ -70,6 +111,14 @@ export const FIXTURE_REVIEW_ITEMS: readonly ReviewItem[] = [
     listMeta: "ticket-triage, 52 min ago",
     statusLine: "For the Support group",
     statusTone: "neutral",
+    decisionSite: "ticket-triage",
+    decisionQuote: 'Ticket #48213: "I was charged twice for October — can you fix this?"',
+    decisionChoices: [
+      { label: "Billing question", score: "0.48" },
+      { label: "Refund request", score: "0.44" },
+      { label: "Account access", score: "0.05" },
+      { label: "Other", score: "0.03" },
+    ],
   },
 ];
 
@@ -124,3 +173,25 @@ export const FIXTURE_NOTIFICATION_PREFS: NotificationPrefs = {
   email: false,
   morningDigest: true,
 };
+
+/** Seed activity so Home / Activity tabs are never empty on first open. */
+export const FIXTURE_ACTIVITY: readonly ActivityEvent[] = [
+  {
+    id: "act_seed_1",
+    atMs: Date.now() - 3_600_000,
+    title: "Approved Linear source proposal",
+    detail: "nfc_security_key · digest a91c…",
+    kind: "source",
+    decision: "approve",
+    reviewId: "rev_source_prior",
+  },
+  {
+    id: "act_seed_2",
+    atMs: Date.now() - 7_200_000,
+    title: "Answered ticket-triage",
+    detail: "Refund request",
+    kind: "decision",
+    decision: "answer",
+    reviewId: "rev_decision_prior",
+  },
+];

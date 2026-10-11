@@ -2,13 +2,15 @@ import { vi } from "vitest";
 
 vi.mock("expo-constants", () => ({
   default: {
-    expoConfig: {
-      extra: {
-        clawqlApiBase: "https://cloud.clawql.com",
-        clawqlAuthIssuer: "https://cloud.clawql.com",
-        fixtureMode: true,
-        reviewerBiometricDemo: false,
-      },
+    get expoConfig() {
+      return {
+        extra: {
+          clawqlApiBase: "https://cloud.clawql.com",
+          clawqlAuthIssuer: "https://cloud.clawql.com",
+          fixtureMode: process.env.EXPO_PUBLIC_CLAWQL_FIXTURE !== "0",
+          reviewerBiometricDemo: false,
+        },
+      };
     },
   },
 }));

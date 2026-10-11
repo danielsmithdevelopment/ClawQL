@@ -26,11 +26,17 @@ export function loadMobileConfigEffect(): Effect.Effect<MobileConfig> {
       (typeof extra.clawqlAuthIssuer === "string" && extra.clawqlAuthIssuer) ||
       process.env.EXPO_PUBLIC_CLAWQL_AUTH_ISSUER ||
       apiBase;
+    // Env wins when set: "0"/"false" forces live NFC path even if extra was baked true.
+    const envFixture = process.env.EXPO_PUBLIC_CLAWQL_FIXTURE;
     const fixtureMode =
-      extra.fixtureMode === true || process.env.EXPO_PUBLIC_CLAWQL_FIXTURE === "1";
+      envFixture === "0" || envFixture === "false"
+        ? false
+        : extra.fixtureMode === true || envFixture === "1";
+    const envReviewer = process.env.EXPO_PUBLIC_CLAWQL_REVIEWER_BIOMETRIC;
     const reviewerBiometricDemo =
-      extra.reviewerBiometricDemo === true ||
-      process.env.EXPO_PUBLIC_CLAWQL_REVIEWER_BIOMETRIC === "1";
+      envReviewer === "0" || envReviewer === "false"
+        ? false
+        : extra.reviewerBiometricDemo === true || envReviewer === "1";
     return {
       apiBase: apiBase.replace(/\/$/, ""),
       authIssuer: authIssuer.replace(/\/$/, ""),

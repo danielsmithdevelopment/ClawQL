@@ -56,6 +56,20 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-06-sign-out.yaml",
   },
   {
+    id: "MOB-07",
+    run: "Maestro",
+    title: "Approve via fixture simulated NFC (no hardware)",
+    passWhen: "Fixture session Approves a change; activity records fixture-nfc attestation",
+    flow: "maestro/flows/mob-07-approve-fixture-nfc.yaml",
+  },
+  {
+    id: "MOB-08",
+    run: "Maestro",
+    title: "Answer a decision and filter the review queue",
+    passWhen: "Decision leaves queue after Submit answer; Decisions filter shows remaining count",
+    flow: "maestro/flows/mob-08-decision-and-filter.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',

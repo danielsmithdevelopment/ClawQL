@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import {
   ActivityIndicator,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Switch,
@@ -25,9 +26,13 @@ export function Screen({ children, style, ...rest }: ViewProps) {
 export function ScreenScroll({
   children,
   testID,
+  refreshing,
+  onRefresh,
 }: {
   children: ReactNode;
   testID?: string;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }) {
   return (
     <Screen testID={testID}>
@@ -35,10 +40,84 @@ export function ScreenScroll({
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: space.xl, flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl
+              refreshing={Boolean(refreshing)}
+              onRefresh={onRefresh}
+              tintColor={colors.accent}
+              colors={[colors.accent]}
+            />
+          ) : undefined
+        }
       >
         {children}
       </ScrollView>
     </Screen>
+  );
+}
+
+export function FilterChip({
+  label,
+  selected,
+  onPress,
+  testID,
+  count,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  testID?: string;
+  count?: number;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      testID={testID}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.chip,
+        selected && styles.chipSelected,
+        pressed && { opacity: 0.7 },
+      ]}
+    >
+      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+        {label}
+        {typeof count === "number" ? ` ${count}` : ""}
+      </Text>
+    </Pressable>
+  );
+}
+
+export function ChoiceRow({
+  label,
+  score,
+  selected,
+  onPress,
+  testID,
+}: {
+  label: string;
+  score?: string;
+  selected: boolean;
+  onPress: () => void;
+  testID?: string;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      testID={testID}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.choiceRow,
+        selected && styles.choiceRowSelected,
+        pressed && { opacity: 0.8 },
+      ]}
+    >
+      <Body style={{ flex: 1, fontWeight: selected ? "700" : "500" }}>{label}</Body>
+      {score ? <Meta style={{ fontFamily: "SpaceMono" }}>{score}</Meta> : null}
+    </Pressable>
   );
 }
 
@@ -272,5 +351,43 @@ const styles = StyleSheet.create({
     paddingVertical: space.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
+  },
+  chip: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  chipSelected: {
+    backgroundColor: colors.ink,
+    borderColor: colors.ink,
+  },
+  chipText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.inkMuted,
+  },
+  chipTextSelected: {
+    color: "#fff",
+  },
+  choiceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    marginBottom: 8,
+    backgroundColor: colors.card,
+  },
+  choiceRowSelected: {
+    borderColor: colors.ink,
+    backgroundColor: "#EEF2FF",
   },
 });

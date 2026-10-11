@@ -6,13 +6,15 @@
  * - Android: Credential Manager public-key + NFC CTAP
  *
  * Until those modules are linked via Expo config plugins, NFC path returns
- * `nfc_module_unavailable` except when the session is the App Store reviewer demo
- * (device biometrics), which is audit-tagged `device_biometric_reviewer_demo`.
+ * `nfc_module_unavailable` except when:
+ * - session is the App Store reviewer demo (device biometrics), or
+ * - EXPO_PUBLIC_CLAWQL_FIXTURE=1 (simulated NFC for local/Maestro without hardware).
  */
 import * as LocalAuthentication from "expo-local-authentication";
 import { Context, Data, Effect, Layer } from "effect";
 
 import type { MobileSession } from "../domain/schemas";
+import { loadMobileConfigEffect } from "./config";
 
 export type ApprovalMethod = "nfc_security_key" | "device_biometric_reviewer_demo";
 
@@ -22,6 +24,8 @@ export type ApprovalAttestation = {
   readonly requestId: string;
   readonly digest?: string;
   readonly auditedAsReviewerDemo: boolean;
+  /** True when fixture mode simulated NFC (no hardware). */
+  readonly simulatedFixture: boolean;
 };
 
 export class SecurityKeyError extends Data.TaggedError("SecurityKeyError")<{
@@ -89,6 +93,7 @@ export function approveWithSecurityKeyEffect(input: {
         requestId: input.requestId,
         digest: input.digest,
         auditedAsReviewerDemo: false,
+        simulatedFixture: false,
       };
     }
 
@@ -97,11 +102,24 @@ export function approveWithSecurityKeyEffect(input: {
       return yield* approveWithDeviceBiometricEffect(input);
     }
 
+    // Local / Maestro fixture mode — simulate NFC so Approve works without hardware or store signup.
+    const config = yield* loadMobileConfigEffect();
+    if (config.fixtureMode || input.session.accessToken.startsWith("fixture-")) {
+      return {
+        method: "nfc_security_key" as const,
+        attestation: `fixture-nfc:${input.requestId}:${Date.now()}`,
+        requestId: input.requestId,
+        digest: input.digest,
+        auditedAsReviewerDemo: false,
+        simulatedFixture: true,
+      };
+    }
+
     return yield* Effect.fail(
       new SecurityKeyError({
         reason: "nfc_module_unavailable",
         detail:
-          "Link clawql-nfc-security-key native module, or use the reviewer demo org for biometric approve.",
+          "Link clawql-nfc-security-key native module, use fixture mode, or use the reviewer demo org for biometric approve.",
       })
     );
   });
@@ -131,6 +149,7 @@ export function approveWithDeviceBiometricEffect(input: {
         requestId: input.requestId,
         digest: input.digest,
         auditedAsReviewerDemo: true,
+        simulatedFixture: false,
       };
     }
     const result = yield* Effect.tryPromise({
@@ -157,6 +176,7 @@ export function approveWithDeviceBiometricEffect(input: {
       requestId: input.requestId,
       digest: input.digest,
       auditedAsReviewerDemo: true,
+      simulatedFixture: false,
     };
   });
 }

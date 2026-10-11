@@ -5,6 +5,7 @@
 import { Context, Data, Effect, Layer, Ref } from "effect";
 
 import {
+  FIXTURE_ACTIVITY,
   FIXTURE_CONNECTED_APPS,
   FIXTURE_KEYS,
   FIXTURE_NOTIFICATION_PREFS,
@@ -13,11 +14,14 @@ import {
 } from "../domain/fixtures";
 import {
   AccountDeletionResult,
+  ActivityEvent,
+  ActivityListResponse,
   ConnectedApp,
   HomeSpend,
   NotificationPrefs,
   ReviewDecision,
   ReviewItem,
+  ReviewKind,
   ReviewListResponse,
   SecurityKey,
   decodeUnknownEffect,
@@ -34,6 +38,7 @@ type MutableState = {
   items: ReviewItem[];
   connectedApps: ConnectedApp[];
   notificationPrefs: NotificationPrefs;
+  activity: ActivityEvent[];
   deleted: boolean;
 };
 
@@ -41,6 +46,7 @@ const stateRef = Ref.makeUnsafe<MutableState>({
   items: [...FIXTURE_REVIEW_ITEMS],
   connectedApps: [...FIXTURE_CONNECTED_APPS],
   notificationPrefs: { ...FIXTURE_NOTIFICATION_PREFS },
+  activity: [...FIXTURE_ACTIVITY],
   deleted: false,
 });
 
@@ -52,14 +58,39 @@ function authHeaders(session: MobileSession): Record<string, string> {
   };
 }
 
+function isFixtureSession(session: MobileSession, fixtureMode: boolean): boolean {
+  return fixtureMode || session.accessToken.startsWith("fixture-");
+}
+
+function nextActivityId(): string {
+  return `act_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function activityTitle(item: ReviewItem, decision: ReviewDecision, answer?: string): string {
+  if (decision === "answer") return `Answered ${item.decisionSite ?? item.title}`;
+  if (decision === "skip") return `Skipped ${item.title}`;
+  if (decision === "ask_teammate") return `Asked teammate about ${item.title}`;
+  if (decision === "approve" && item.kind === "skill") return `Promoted ${item.title}`;
+  if (decision === "approve") return `Approved ${item.title}`;
+  if (decision === "decline") return `Declined ${item.title}`;
+  if (decision === "mark_applied") return `Marked applied · ${item.title}`;
+  if (decision === "mark_not_applied") return `Marked not applied · ${item.title}`;
+  if (decision === "retry_with_key") return `Keyed retry · ${item.title}`;
+  return `${decision} · ${item.title}${answer ? ` · ${answer}` : ""}`;
+}
+
 export function listReviewEffect(
-  session: MobileSession
+  session: MobileSession,
+  filter?: { kind?: ReviewKind | "all" }
 ): Effect.Effect<ReviewListResponse, MobileApiError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
-    if (config.fixtureMode || session.accessToken.startsWith("fixture-")) {
+    if (isFixtureSession(session, config.fixtureMode)) {
       const state = yield* Ref.get(stateRef);
-      return { items: state.items, source: "fixture" as const };
+      const kind = filter?.kind;
+      const items =
+        !kind || kind === "all" ? state.items : state.items.filter((i) => i.kind === kind);
+      return { items, source: "fixture" as const };
     }
     const res = yield* Effect.tryPromise({
       try: async () => {
@@ -75,17 +106,31 @@ export function listReviewEffect(
           status: (cause as { status?: number })?.status,
         }),
     });
-    return yield* decodeUnknownEffect(ReviewListResponse, res).pipe(
+    const decoded = yield* decodeUnknownEffect(ReviewListResponse, res).pipe(
       Effect.mapError((e) => new MobileApiError({ reason: e.message }))
     );
+    const kind = filter?.kind;
+    if (!kind || kind === "all") return decoded;
+    return { ...decoded, items: decoded.items.filter((i) => i.kind === kind) };
+  });
+}
+
+export function getReviewByIdEffect(
+  session: MobileSession,
+  id: string
+): Effect.Effect<ReviewItem | null, MobileApiError> {
+  return Effect.gen(function* () {
+    const list = yield* listReviewEffect(session);
+    return list.items.find((i) => i.id === id) ?? null;
   });
 }
 
 export function decideReviewEffect(input: {
   session: MobileSession;
   id: string;
-  kind: "change" | "source";
+  kind: ReviewKind;
   decision: ReviewDecision;
+  answer?: string;
   approvalProof?: {
     method: "nfc_security_key" | "device_biometric_reviewer_demo";
     attestation?: string;
@@ -93,18 +138,37 @@ export function decideReviewEffect(input: {
 }): Effect.Effect<{ ok: true; id: string; status: string }, MobileApiError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
-    if (config.fixtureMode || input.session.accessToken.startsWith("fixture-")) {
+    if (isFixtureSession(input.session, config.fixtureMode)) {
+      const state = yield* Ref.get(stateRef);
+      const item = state.items.find((i) => i.id === input.id);
+      if (!item) {
+        return yield* Effect.fail(new MobileApiError({ reason: "not_found", status: 404 }));
+      }
+      const leaveInQueue = input.decision === "retry_with_key";
+      const detail =
+        input.answer ??
+        input.approvalProof?.method ??
+        (input.approvalProof?.attestation?.startsWith("fixture-nfc:")
+          ? "fixture_simulated_nfc"
+          : input.decision);
+      const event: ActivityEvent = {
+        id: nextActivityId(),
+        atMs: Date.now(),
+        title: activityTitle(item, input.decision, input.answer),
+        detail: String(detail),
+        kind: item.kind,
+        decision: input.decision,
+        reviewId: item.id,
+      };
       yield* Ref.update(stateRef, (s) => ({
         ...s,
-        items:
-          input.decision === "retry_with_key"
-            ? s.items
-            : s.items.filter((i) => i.id !== input.id),
+        items: leaveInQueue ? s.items : s.items.filter((i) => i.id !== input.id),
+        activity: [event, ...s.activity].slice(0, 50),
       }));
       return {
         ok: true as const,
         id: input.id,
-        status: input.decision,
+        status: input.decision === "answer" ? (input.answer ?? "answer") : input.decision,
       };
     }
     const res = yield* Effect.tryPromise({
@@ -116,6 +180,7 @@ export function decideReviewEffect(input: {
             id: input.id,
             kind: input.kind,
             decision: input.decision,
+            answer: input.answer,
             approvalProof: input.approvalProof,
           }),
         });
@@ -132,12 +197,26 @@ export function decideReviewEffect(input: {
   });
 }
 
+export function listActivityEffect(
+  session: MobileSession
+): Effect.Effect<ActivityListResponse, MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      const state = yield* Ref.get(stateRef);
+      return { events: state.activity, source: "fixture" as const };
+    }
+    // Live activity comes from the audit surface; until wired, return empty.
+    return { events: [], source: "live" as const };
+  });
+}
+
 export function getHomeSpendEffect(
   session: MobileSession
 ): Effect.Effect<HomeSpend, MobileApiError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
-    if (config.fixtureMode || session.accessToken.startsWith("fixture-")) {
+    if (isFixtureSession(session, config.fixtureMode)) {
       return FIXTURE_SPEND;
     }
     const res = yield* Effect.tryPromise({
@@ -170,7 +249,7 @@ export function listConnectedAppsEffect(
 ): Effect.Effect<readonly ConnectedApp[], MobileApiError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
-    if (config.fixtureMode || session.accessToken.startsWith("fixture-")) {
+    if (isFixtureSession(session, config.fixtureMode)) {
       const state = yield* Ref.get(stateRef);
       return state.connectedApps;
     }
@@ -184,7 +263,7 @@ export function revokeConnectedAppEffect(input: {
 }): Effect.Effect<void, MobileApiError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
-    if (config.fixtureMode || input.session.accessToken.startsWith("fixture-")) {
+    if (isFixtureSession(input.session, config.fixtureMode)) {
       yield* Ref.update(stateRef, (s) => ({
         ...s,
         connectedApps: s.connectedApps.filter((a) => a.clientId !== input.clientId),
@@ -233,8 +312,13 @@ export function deleteAccountEffect(
 ): Effect.Effect<AccountDeletionResult, MobileApiError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
-    if (config.fixtureMode || session.accessToken.startsWith("fixture-")) {
-      yield* Ref.update(stateRef, (s) => ({ ...s, deleted: true, items: [] }));
+    if (isFixtureSession(session, config.fixtureMode)) {
+      yield* Ref.update(stateRef, (s) => ({
+        ...s,
+        deleted: true,
+        items: [],
+        activity: [],
+      }));
       return {
         ok: true,
         jobId: "adj_fixture_delete",
@@ -279,6 +363,7 @@ export function resetFixtureStateEffect(): Effect.Effect<void> {
     items: [...FIXTURE_REVIEW_ITEMS],
     connectedApps: [...FIXTURE_CONNECTED_APPS],
     notificationPrefs: { ...FIXTURE_NOTIFICATION_PREFS },
+    activity: [...FIXTURE_ACTIVITY],
     deleted: false,
   });
 }
@@ -289,18 +374,27 @@ export class MobileApi extends Context.Service<
   typeof CLAWQL_MOBILE_API_TAG,
   {
     readonly listReview: (
-      session: MobileSession
+      session: MobileSession,
+      filter?: { kind?: ReviewKind | "all" }
     ) => Effect.Effect<ReviewListResponse, MobileApiError>;
+    readonly getReviewById: (
+      session: MobileSession,
+      id: string
+    ) => Effect.Effect<ReviewItem | null, MobileApiError>;
     readonly decideReview: (input: {
       session: MobileSession;
       id: string;
-      kind: "change" | "source";
+      kind: ReviewKind;
       decision: ReviewDecision;
+      answer?: string;
       approvalProof?: {
         method: "nfc_security_key" | "device_biometric_reviewer_demo";
         attestation?: string;
       };
     }) => Effect.Effect<{ ok: true; id: string; status: string }, MobileApiError>;
+    readonly listActivity: (
+      session: MobileSession
+    ) => Effect.Effect<ActivityListResponse, MobileApiError>;
     readonly getHomeSpend: (
       session: MobileSession
     ) => Effect.Effect<HomeSpend, MobileApiError>;
@@ -329,7 +423,9 @@ export class MobileApi extends Context.Service<
 
 export const MobileApiLive = Layer.succeed(MobileApi, {
   listReview: listReviewEffect,
+  getReviewById: getReviewByIdEffect,
   decideReview: decideReviewEffect,
+  listActivity: listActivityEffect,
   getHomeSpend: getHomeSpendEffect,
   listSecurityKeys: listSecurityKeysEffect,
   listConnectedApps: listConnectedAppsEffect,

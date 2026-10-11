@@ -5,13 +5,18 @@ import { FIXTURE_SESSION, REVIEWER_DEMO_SESSION } from "../../domain/fixtures";
 import {
   decideReviewEffect,
   deleteAccountEffect,
+  getReviewByIdEffect,
+  listActivityEffect,
   listReviewEffect,
   resetFixtureStateEffect,
   revokeConnectedAppEffect,
 } from "../api";
 import { approveWithSecurityKeyEffect } from "../nfc-security-key";
 import { parseApprovalDeepLinkEffect } from "../push";
-import { installMockNfcModuleEffect, clearMockNfcModuleEffect } from "../../../modules/clawql-nfc-security-key/src";
+import {
+  installMockNfcModuleEffect,
+  clearMockNfcModuleEffect,
+} from "../../../modules/clawql-nfc-security-key/src";
 
 describe("mobile API fixture mode", () => {
   beforeEach(async () => {
@@ -21,12 +26,13 @@ describe("mobile API fixture mode", () => {
 
   afterEach(async () => {
     await Effect.runPromise(clearMockNfcModuleEffect());
+    process.env.EXPO_PUBLIC_CLAWQL_FIXTURE = "1";
   });
 
   it("lists review queue and declines a change", async () => {
     const list = await Effect.runPromise(listReviewEffect(FIXTURE_SESSION));
     expect(list.items.length).toBeGreaterThan(0);
-    const id = list.items[0]!.id;
+    const id = list.items.find((i) => i.kind === "change")!.id;
     await Effect.runPromise(
       decideReviewEffect({
         session: FIXTURE_SESSION,
@@ -37,6 +43,89 @@ describe("mobile API fixture mode", () => {
     );
     const after = await Effect.runPromise(listReviewEffect(FIXTURE_SESSION));
     expect(after.items.find((i) => i.id === id)).toBeUndefined();
+  });
+
+  it("filters review queue by kind", async () => {
+    const skills = await Effect.runPromise(
+      listReviewEffect(FIXTURE_SESSION, { kind: "skill" })
+    );
+    expect(skills.items.every((i) => i.kind === "skill")).toBe(true);
+    expect(skills.items[0]?.id).toBe("rev_skill");
+  });
+
+  it("gets a review item by id", async () => {
+    const item = await Effect.runPromise(
+      getReviewByIdEffect(FIXTURE_SESSION, "rev_decision")
+    );
+    expect(item?.kind).toBe("decision");
+    expect(item?.decisionChoices?.length).toBeGreaterThan(0);
+  });
+
+  it("answers a decision and records activity", async () => {
+    await Effect.runPromise(
+      decideReviewEffect({
+        session: FIXTURE_SESSION,
+        id: "rev_decision",
+        kind: "decision",
+        decision: "answer",
+        answer: "Refund request",
+      })
+    );
+    const list = await Effect.runPromise(listReviewEffect(FIXTURE_SESSION));
+    expect(list.items.find((i) => i.id === "rev_decision")).toBeUndefined();
+    const activity = await Effect.runPromise(listActivityEffect(FIXTURE_SESSION));
+    expect(activity.events[0]?.decision).toBe("answer");
+    expect(activity.events[0]?.detail).toBe("Refund request");
+  });
+
+  it("promotes a skill with simulated fixture NFC", async () => {
+    const attestation = await Effect.runPromise(
+      approveWithSecurityKeyEffect({
+        session: FIXTURE_SESSION,
+        requestId: "rev_skill",
+      })
+    );
+    expect(attestation.method).toBe("nfc_security_key");
+    expect(attestation.simulatedFixture).toBe(true);
+    expect(attestation.attestation).toMatch(/^fixture-nfc:/);
+
+    const res = await Effect.runPromise(
+      decideReviewEffect({
+        session: FIXTURE_SESSION,
+        id: "rev_skill",
+        kind: "skill",
+        decision: "approve",
+        approvalProof: {
+          method: attestation.method,
+          attestation: attestation.attestation,
+        },
+      })
+    );
+    expect(res.status).toBe("approve");
+  });
+
+  it("handles outcome_unknown mark_applied and retry_with_key", async () => {
+    await Effect.runPromise(
+      decideReviewEffect({
+        session: FIXTURE_SESSION,
+        id: "rev_change_unknown",
+        kind: "change",
+        decision: "retry_with_key",
+      })
+    );
+    let list = await Effect.runPromise(listReviewEffect(FIXTURE_SESSION));
+    expect(list.items.find((i) => i.id === "rev_change_unknown")).toBeDefined();
+
+    await Effect.runPromise(
+      decideReviewEffect({
+        session: FIXTURE_SESSION,
+        id: "rev_change_unknown",
+        kind: "change",
+        decision: "mark_applied",
+      })
+    );
+    list = await Effect.runPromise(listReviewEffect(FIXTURE_SESSION));
+    expect(list.items.find((i) => i.id === "rev_change_unknown")).toBeUndefined();
   });
 
   it("revokes a connected app and deletes the account", async () => {
@@ -85,10 +174,16 @@ describe("mobile API fixture mode", () => {
     expect(res.status).toBe("approve");
   });
 
-  it("production session fails NFC when module missing", async () => {
+  it("production session fails NFC when module missing and fixture off", async () => {
+    process.env.EXPO_PUBLIC_CLAWQL_FIXTURE = "0";
+    const prodSession = {
+      ...FIXTURE_SESSION,
+      accessToken: "live-access-token",
+      reviewerDemo: false,
+    };
     const exit = await Effect.runPromiseExit(
       approveWithSecurityKeyEffect({
-        session: FIXTURE_SESSION,
+        session: prodSession,
         requestId: "rev_change",
       })
     );
@@ -114,5 +209,6 @@ describe("mobile API fixture mode", () => {
     );
     expect(attestation.method).toBe("nfc_security_key");
     expect(attestation.attestation).toContain("cred");
+    expect(attestation.simulatedFixture).toBe(false);
   });
 });
