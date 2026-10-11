@@ -68,6 +68,8 @@ const CHAOS_STEP_MS = Math.max(1000, Number(process.env.COMPREHENSIVE_CHAOS_STEP
 const CHAOS_WARMUP = Math.max(0, Number(process.env.COMPREHENSIVE_CHAOS_WARMUP ?? 8) || 8);
 const CHAOS_HTTP = process.env.COMPREHENSIVE_CHAOS_HTTP !== "0";
 const CHAOS_SCALEOUT = process.env.COMPREHENSIVE_CHAOS_SCALEOUT !== "0";
+/** Skip Executor arm — find ClawQL client ceiling only (faster ramp). */
+const CHAOS_SCALEOUT_CLAWQL_ONLY = process.env.COMPREHENSIVE_CHAOS_SCALEOUT_CLAWQL_ONLY === "1";
 const BREAK_P99_MS = Math.max(1, Number(process.env.COMPREHENSIVE_BREAK_P99_MS ?? 100) || 100);
 const ASSIGN_SUBJECT = "clawql.chaos.assign";
 const ASSIGN_QUEUE = "clawql-chaos-assign";
@@ -1193,8 +1195,15 @@ async function phaseChaosScaleout(mock) {
         }
       }
 
-      // --- Executor: N independent stdio processes (skip once broken to save wall time) ---
-      if (!executorAlreadyBroken) {
+      // --- Executor: N independent stdio processes (skip once broken / clawql-only ceiling) ---
+      if (CHAOS_SCALEOUT_CLAWQL_ONLY) {
+        step.arms.executor = {
+          model: "stdio_process_per_client",
+          skipped: true,
+          reason: "COMPREHENSIVE_CHAOS_SCALEOUT_CLAWQL_ONLY=1",
+          broken: null,
+        };
+      } else if (!executorAlreadyBroken) {
         const workers = await Promise.all(
           Array.from({ length: n }, () => chaosWorker("executor", mock, CHAOS_STEP_MS))
         );
@@ -1411,6 +1420,7 @@ async function main() {
         chaos_warmup: CHAOS_WARMUP,
         chaos_http: CHAOS_HTTP,
         chaos_scaleout: CHAOS_SCALEOUT,
+        chaos_scaleout_clawql_only: CHAOS_SCALEOUT_CLAWQL_ONLY,
         break_p99_ms: BREAK_P99_MS,
         break_error_rate: BREAK_ERROR_RATE,
         governance_in_memory_worm: GOVERNANCE,
