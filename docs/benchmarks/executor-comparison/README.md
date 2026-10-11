@@ -85,45 +85,23 @@ ClawQL equalized wins **p50 / p95 / p99** on this host (~**2.3×** faster at p50
 
 **How:** microbench pinned uncached OpenAPI→GraphQL schema build at ≈ **5.6 ms** (REST ≈ **0.55 ms**). Default `CLAWQL_OPENAPI_EXECUTE_PATH=auto` prefers **REST** for plain `fields`; nested `{…}` selection still uses Omnigraph with a warm schema cache (~0.01 ms).
 
-### Large-n run (n=10,000, p999, same equal arms)
+**Treat sequential n=100 / sequential n=10k as exploratory only** (not interleaved; ratio inflated). Comparison-page numbers come from the **fair harness** below.
+
+### Fair harness (publishable)
 
 ```bash
-LATENCY_ITERS=10000 LATENCY_WARMUP=50 LATENCY_KEEP_SAMPLES=0 \
-  LATENCY_OUT=executor-cmp-latency-10k.json \
-  EXECUTOR_BIN=… EXECUTOR_CWD=… \
-  node scripts/benchmarks/executor-comparison-latency.mjs
-# → docs/benchmarks/executor-comparison/executor-cmp-latency-10k.json
-# → latency-10k.html (via LATENCY_JSON=… LATENCY_HTML_OUT=latency-10k.html generate)
-```
-
-| Arm                         |         p50 |         p95 |         p99 |         p999 |
-| --------------------------- | ----------: | ----------: | ----------: | -----------: |
-| ClawQL execute e2e          |     0.74 ms |     1.28 ms |     2.27 ms |      5.27 ms |
-| **ClawQL gateway overhead** | **0.64 ms** | **0.92 ms** | **1.70 ms** |  **2.34 ms** |
-| **Executor execute**        | **1.97 ms** | **3.60 ms** | **5.11 ms** | **14.95 ms** |
-| Direct HTTP mock            |     0.09 ms |     0.36 ms |     0.57 ms |      2.93 ms |
-
-At n=10k, equalized ClawQL is ~**3.1×** faster at p50 and ~**6.4×** at p999 vs live Executor (same host; long run also warms both sides). p999 needs large n — with 10k samples the 99.9th is ~10 observations.
-
-**Treat sequential n=100 / n=10k as exploratory.** Before the comparison page leads on Executor ratios, use the **fair harness** below (interleaved, paired overhead, versions, multi-run, optional open-loop / WORM).
-
-### Fair harness (method critique checklist)
-
-```bash
-# Interleaved closed-loop, paired overhead, 3 runs → spread
+# Claimable p50/p95/p99 + p999: interleaved, paired, ≥10k/run × 3 runs
 EXECUTOR_BIN=… EXECUTOR_CWD=… \
-  LATENCY_ITERS=2000 LATENCY_RUNS=3 LATENCY_KEEP_SAMPLES=0 \
+  LATENCY_ITERS=10000 LATENCY_RUNS=3 LATENCY_KEEP_SAMPLES=0 \
+  LATENCY_OUT=executor-cmp-latency-fair-10k.json \
   npm run benchmark:executor-comparison:latency-fair
 
-# Open-loop tail (coordinated-omission aware; fixed arrival)
-LATENCY_OPEN_LOOP=1 LATENCY_ARRIVAL_MS=3 LATENCY_ITERS=2000 \
-  npm run benchmark:executor-comparison:latency-fair
-
-# Governance arm (durable WORM memory; Panguard still off unless wired)
-LATENCY_GOVERNANCE=1 LATENCY_ITERS=1000 \
+# In-memory WORM arm (not the production durable backend; Panguard off)
+LATENCY_GOVERNANCE=1 LATENCY_ITERS=1000 LATENCY_RUNS=3 \
   npm run benchmark:executor-comparison:latency-fair
 ```
 
+<<<<<<< HEAD
 | Critique                               | Fair harness response                                                                                                                                                                                                                                                       |
 | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **1. Same definition?**                | `gateway_cost = MCP_execute − upstream`. ClawQL: **paired** `execute_i − direct_i`. Executor: upstream **= 0** (same JSON in-process; sandbox cannot fetch). Not “total with upstream vs overhead.”                                                                         |
@@ -131,25 +109,56 @@ LATENCY_GOVERNANCE=1 LATENCY_ITERS=1000 \
 | **3. Interleave + versions + spread?** | Each round: ClawQL → Executor → direct. `LATENCY_RUNS≥3` reports min/median/max of p50/p999.                                                                                                                                                                                |
 | **4. Coordinated omission?**           | Closed-loop = serial agent tool-call model. Tail-under-load needs `LATENCY_OPEN_LOOP=1` (`*_from_schedule` includes lateness). Use arrival ≥ round time (e.g. 15 ms) so the pipeline is not permanently backlogged; saturated arrival (e.g. 3 ms) only proves queue growth. |
 | **Governance?**                        | `LATENCY_GOVERNANCE=1` enables durable WORM (memory). Panguard sidecar is a separate wire-up — do not imply it is on.                                                                                                                                                       |
+=======
+| Critique | Response |
+| --- | --- |
+| **1. Same definition?** | `gateway_cost = MCP_execute − upstream`. ClawQL: **paired** `execute_i − direct_i`. Executor: upstream **= 0** (same JSON in-process). |
+| **2. Same machine / transport?** | Both **local stdio**, same host. Report **Executor v1.6.10** (rerun when v2 ships). |
+| **3. Interleave + spread?** | Round: ClawQL → Executor → direct. Publish **min…median…max across ≥3 runs**. |
+| **4. p999 stability?** | Publish **p50 / p95 / p99** from interleaved multi-run. Claim **p999 only** from interleaved **n≥10,000/run** with multi-run spread (n=2k p999 is noise). |
+| **Governance?** | `LATENCY_GOVERNANCE=1` = **in-memory WORM** only — not the production durable write path. Always label **Panguard off** unless wired. |
+>>>>>>> 600ea254 (docs(bench): publish-safe framing — p99 not noisy p999; in-memory WORM)
 
-#### Fair results (this VM — use these over sequential n=10k for claims)
+#### Publishable results (Executor **v1.6.10**, ClawQL **8.0.0**)
 
-Interleaved closed-loop, n=2000/run × **3 runs**, Executor **v1.6.10**, ClawQL **8.0.0** (`executor-cmp-latency-fair.json`):
+**Lead line (matches harness):**
 
+<<<<<<< HEAD
 | Metric                    | min … median … max across runs |
 | ------------------------- | ------------------------------ |
 | ClawQL gateway_cost p50   | **1.07 … 1.10 … 1.11 ms**      |
 | ClawQL gateway_cost p999  | **6.4 … 7.2 … 8.1 ms**         |
 | Executor gateway_cost p50 | 2.23 … 2.27 … 2.37 ms          |
 | Ratio (Exec/Claw) p50     | **2.02 … 2.07 … 2.22×**        |
+=======
+> On local stdio, with arms interleaved and each call paired against a direct call, ClawQL's risk gates, ring audit, hooks and field projection add **0.89 ms** at p50 and **2.5 ms** at p99 (three-run p50 range **0.88–0.90 ms**, n=10,000/run). p999 across three runs: **5.7–8.1 ms** (median **6.2 ms**). With the **in-memory** audit chain also on (n=1,000, single run — p50/p99 only): **1.7 ms** at p50, **3.2 ms** at p99. **Panguard off.** Executor v1.6.10 on the same harness: about **2.5×** higher at p50.
+>>>>>>> 600ea254 (docs(bench): publish-safe framing — p99 not noisy p999; in-memory WORM)
 
-Open-loop arrival **15 ms** (n=2000): oversight p50 **1.33 ms**, p999 **4.2 ms**; Executor from-schedule p999 still higher (`executor-cmp-latency-fair-openloop-15ms.json`).
+Interleaved closed-loop, **n=10,000/run × 3 runs** (`executor-cmp-latency-fair-10k.json`):
 
-Governance (durable WORM memory on, n=1000): oversight p50 **1.73 ms**, p999 **7.7 ms** — still under Executor p50 on this host; ratio ~**1.4×** (`executor-cmp-latency-fair-governance.json`). **Panguard not in path.**
+| Arm | p50 (min…med…max) | p95 | p99 | p999 (min…med…max) |
+| --- | ---: | ---: | ---: | ---: |
+| **ClawQL gateway cost** | **0.88…0.89…0.90** | **1.45…1.48…1.48** | **2.46…2.50…2.51** | **5.7…6.2…8.1** |
+| **Executor gateway cost** | **2.20…2.20…2.20** | **3.64…3.66…3.70** | **4.62…4.94…5.06** | **9.1…9.6…16.0** |
+| Direct HTTP mock (primary run) | 0.28 | 0.43 | 0.52 | 2.40 |
+| ClawQL execute e2e (primary run) | 1.16 | 1.81 | 2.82 | 6.07 |
 
-**Publish framing (preferred):** lead with absolute oversight cost, Executor ratio as supporting evidence:
+Ratio Exec/Claw p50 across runs: **2.46…2.48…2.51×**.
 
-> Risk gates, ring audit, hooks and field projection add **~1.1 ms** at p50 and **~7 ms** at p999 (interleaved, 3-run median band). With durable WORM memory: **~1.7 ms** p50 / **~7.7 ms** p999.
+Earlier n=2,000×3 series (`executor-cmp-latency-fair.json`) — use for p50/p95/p99 cross-check only; **do not claim p999** from it:
+
+| ClawQL gateway | p50 | p95 | p99 |
+| --- | ---: | ---: | ---: |
+| 3-run spread (ms) | 1.07…1.10…1.11 | 1.57…1.63…1.68 | 2.54…2.64…2.68 |
+
+**In-memory WORM** (not production durable backend), n=1,000 single run, **Panguard off** (`executor-cmp-latency-fair-governance.json`):
+
+| Arm | p50 | p95 | p99 |
+| --- | ---: | ---: | ---: |
+| ClawQL gateway cost (in-memory WORM) | 1.73 ms | 2.29 ms | 3.22 ms |
+| Executor gateway cost (same run) | 2.45 ms | 3.85 ms | 5.04 ms |
+
+Do not cite p999 from the in-memory WORM arm until interleaved n≥10k × ≥3 runs.
 
 **Shareable page:** [clawql.com/benchmarks/executor-comparison/latency.html](https://clawql.com/benchmarks/executor-comparison/latency.html) · `npm run generate:executor-cmp-latency-html`.
 

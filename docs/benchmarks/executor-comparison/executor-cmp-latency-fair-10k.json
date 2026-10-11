@@ -1,0 +1,366 @@
+{
+  "suite": "executor-cmp-latency-fair",
+  "measuredAt": "2026-10-11T01:18:51.477Z",
+  "versions": {
+    "clawql": {
+      "version": "8.0.0",
+      "commit": "b358bd0501057a3e743343f9d766b40bed29234d",
+      "branch": "cursor/executor-latency-side-by-side-a621"
+    },
+    "executor": {
+      "version": "1.6.10",
+      "bin": "/tmp/executor-try/node_modules/.bin/executor"
+    },
+    "node": "v22.14.0",
+    "measuredAt": "2026-10-11T01:18:51.477Z"
+  },
+  "config": {
+    "iters": 10000,
+    "warmup": 50,
+    "runs": 3,
+    "mock_delay_ms": 0,
+    "schedule": "interleaved_closed_loop",
+    "arrival_ms": null,
+    "governance_worm_memory": false,
+    "panguard_sidecar": false,
+    "transport": "stdio_both",
+    "same_host": true,
+    "body_bytes": 98,
+    "fields": [
+      "pets"
+    ]
+  },
+  "method": {
+    "definition": "gateway_cost = MCP_execute_wall − upstream_cost. ClawQL upstream_cost = paired same-host mock fetch (execute_i − direct_i). Executor upstream_cost = 0 (in-process return of identical JSON; no fetch).",
+    "interleaving": "Each round: ClawQL execute → Executor execute → direct fetch. Drift hits both.",
+    "notTotalVsOverhead": "Not comparing ClawQL overhead to Executor total-with-upstream. Executor equal arm has no upstream; subtracting 0 is the same definition.",
+    "coordinatedOmission": "Closed-loop back-to-back (serial agent tool-call model). Do not claim load-test tail without LATENCY_OPEN_LOOP=1.",
+    "framing": "Lead with absolute ClawQL oversight cost (p50/p999). Executor ratio is supporting evidence."
+  },
+  "primary_run": {
+    "runIndex": 0,
+    "mode": "closed_loop",
+    "arrival_ms": null,
+    "arms": {
+      "clawql_execute_e2e": {
+        "label": "clawql_execute_e2e",
+        "n": 10000,
+        "p50_ms": 1.16,
+        "p95_ms": 1.807,
+        "p99_ms": 2.818,
+        "p999_ms": 6.065,
+        "mean_ms": 1.243,
+        "min_ms": 0.689,
+        "max_ms": 9.825
+      },
+      "executor_execute": {
+        "label": "executor_execute",
+        "n": 10000,
+        "p50_ms": 2.202,
+        "p95_ms": 3.639,
+        "p99_ms": 4.616,
+        "p999_ms": 9.112,
+        "mean_ms": 2.398,
+        "min_ms": 1.449,
+        "max_ms": 12.856
+      },
+      "direct_http": {
+        "label": "direct_http",
+        "n": 10000,
+        "p50_ms": 0.275,
+        "p95_ms": 0.432,
+        "p99_ms": 0.521,
+        "p999_ms": 2.395,
+        "mean_ms": 0.297,
+        "min_ms": 0.15,
+        "max_ms": 3.946
+      },
+      "clawql_gateway_cost": {
+        "label": "clawql_gateway_cost",
+        "n": 10000,
+        "p50_ms": 0.876,
+        "p95_ms": 1.451,
+        "p99_ms": 2.501,
+        "p999_ms": 5.72,
+        "mean_ms": 0.947,
+        "min_ms": -2.63,
+        "max_ms": 9.178
+      },
+      "executor_gateway_cost": {
+        "label": "executor_gateway_cost",
+        "n": 10000,
+        "p50_ms": 2.202,
+        "p95_ms": 3.639,
+        "p99_ms": 4.616,
+        "p999_ms": 9.112,
+        "mean_ms": 2.398,
+        "min_ms": 1.449,
+        "max_ms": 12.856
+      }
+    },
+    "ratios": {
+      "p50": 2.51,
+      "p99": 1.85,
+      "p999": 1.59
+    },
+    "headline_absolute_ms": {
+      "clawql_oversight_p50_ms": 0.876,
+      "clawql_oversight_p999_ms": 5.72,
+      "note": "Absolute cost of ClawQL oversight path (execute − paired mock). Primary publish framing — holds regardless of Executor."
+    }
+  },
+  "runs": [
+    {
+      "runIndex": 0,
+      "mode": "closed_loop",
+      "arrival_ms": null,
+      "arms": {
+        "clawql_execute_e2e": {
+          "label": "clawql_execute_e2e",
+          "n": 10000,
+          "p50_ms": 1.16,
+          "p95_ms": 1.807,
+          "p99_ms": 2.818,
+          "p999_ms": 6.065,
+          "mean_ms": 1.243,
+          "min_ms": 0.689,
+          "max_ms": 9.825
+        },
+        "executor_execute": {
+          "label": "executor_execute",
+          "n": 10000,
+          "p50_ms": 2.202,
+          "p95_ms": 3.639,
+          "p99_ms": 4.616,
+          "p999_ms": 9.112,
+          "mean_ms": 2.398,
+          "min_ms": 1.449,
+          "max_ms": 12.856
+        },
+        "direct_http": {
+          "label": "direct_http",
+          "n": 10000,
+          "p50_ms": 0.275,
+          "p95_ms": 0.432,
+          "p99_ms": 0.521,
+          "p999_ms": 2.395,
+          "mean_ms": 0.297,
+          "min_ms": 0.15,
+          "max_ms": 3.946
+        },
+        "clawql_gateway_cost": {
+          "label": "clawql_gateway_cost",
+          "n": 10000,
+          "p50_ms": 0.876,
+          "p95_ms": 1.451,
+          "p99_ms": 2.501,
+          "p999_ms": 5.72,
+          "mean_ms": 0.947,
+          "min_ms": -2.63,
+          "max_ms": 9.178
+        },
+        "executor_gateway_cost": {
+          "label": "executor_gateway_cost",
+          "n": 10000,
+          "p50_ms": 2.202,
+          "p95_ms": 3.639,
+          "p99_ms": 4.616,
+          "p999_ms": 9.112,
+          "mean_ms": 2.398,
+          "min_ms": 1.449,
+          "max_ms": 12.856
+        }
+      },
+      "ratios": {
+        "p50": 2.51,
+        "p99": 1.85,
+        "p999": 1.59
+      },
+      "headline_absolute_ms": {
+        "clawql_oversight_p50_ms": 0.876,
+        "clawql_oversight_p999_ms": 5.72,
+        "note": "Absolute cost of ClawQL oversight path (execute − paired mock). Primary publish framing — holds regardless of Executor."
+      }
+    },
+    {
+      "runIndex": 1,
+      "mode": "closed_loop",
+      "arrival_ms": null,
+      "arms": {
+        "clawql_execute_e2e": {
+          "label": "clawql_execute_e2e",
+          "n": 10000,
+          "p50_ms": 1.144,
+          "p95_ms": 1.759,
+          "p99_ms": 2.772,
+          "p999_ms": 6.521,
+          "mean_ms": 1.226,
+          "min_ms": 0.692,
+          "max_ms": 13.243
+        },
+        "executor_execute": {
+          "label": "executor_execute",
+          "n": 10000,
+          "p50_ms": 2.199,
+          "p95_ms": 3.695,
+          "p99_ms": 4.944,
+          "p999_ms": 9.596,
+          "mean_ms": 2.402,
+          "min_ms": 1.457,
+          "max_ms": 21.558
+        },
+        "direct_http": {
+          "label": "direct_http",
+          "n": 10000,
+          "p50_ms": 0.261,
+          "p95_ms": 0.323,
+          "p99_ms": 0.388,
+          "p999_ms": 2.843,
+          "mean_ms": 0.267,
+          "min_ms": 0.149,
+          "max_ms": 9.41
+        },
+        "clawql_gateway_cost": {
+          "label": "clawql_gateway_cost",
+          "n": 10000,
+          "p50_ms": 0.887,
+          "p95_ms": 1.482,
+          "p99_ms": 2.51,
+          "p999_ms": 6.245,
+          "mean_ms": 0.959,
+          "min_ms": -7.936,
+          "max_ms": 12.869
+        },
+        "executor_gateway_cost": {
+          "label": "executor_gateway_cost",
+          "n": 10000,
+          "p50_ms": 2.199,
+          "p95_ms": 3.695,
+          "p99_ms": 4.944,
+          "p999_ms": 9.596,
+          "mean_ms": 2.402,
+          "min_ms": 1.457,
+          "max_ms": 21.558
+        }
+      },
+      "ratios": {
+        "p50": 2.48,
+        "p99": 1.97,
+        "p999": 1.54
+      },
+      "headline_absolute_ms": {
+        "clawql_oversight_p50_ms": 0.887,
+        "clawql_oversight_p999_ms": 6.245,
+        "note": "Absolute cost of ClawQL oversight path (execute − paired mock). Primary publish framing — holds regardless of Executor."
+      }
+    },
+    {
+      "runIndex": 2,
+      "mode": "closed_loop",
+      "arrival_ms": null,
+      "arms": {
+        "clawql_execute_e2e": {
+          "label": "clawql_execute_e2e",
+          "n": 10000,
+          "p50_ms": 1.149,
+          "p95_ms": 1.751,
+          "p99_ms": 2.743,
+          "p999_ms": 8.351,
+          "mean_ms": 1.234,
+          "min_ms": 0.713,
+          "max_ms": 22.551
+        },
+        "executor_execute": {
+          "label": "executor_execute",
+          "n": 10000,
+          "p50_ms": 2.204,
+          "p95_ms": 3.657,
+          "p99_ms": 5.055,
+          "p999_ms": 16.011,
+          "mean_ms": 2.408,
+          "min_ms": 1.431,
+          "max_ms": 27.178
+        },
+        "direct_http": {
+          "label": "direct_http",
+          "n": 10000,
+          "p50_ms": 0.259,
+          "p95_ms": 0.322,
+          "p99_ms": 0.383,
+          "p999_ms": 2.48,
+          "mean_ms": 0.265,
+          "min_ms": 0.146,
+          "max_ms": 9.718
+        },
+        "clawql_gateway_cost": {
+          "label": "clawql_gateway_cost",
+          "n": 10000,
+          "p50_ms": 0.896,
+          "p95_ms": 1.477,
+          "p99_ms": 2.462,
+          "p999_ms": 8.097,
+          "mean_ms": 0.969,
+          "min_ms": -8.709,
+          "max_ms": 21.918
+        },
+        "executor_gateway_cost": {
+          "label": "executor_gateway_cost",
+          "n": 10000,
+          "p50_ms": 2.204,
+          "p95_ms": 3.657,
+          "p99_ms": 5.055,
+          "p999_ms": 16.011,
+          "mean_ms": 2.408,
+          "min_ms": 1.431,
+          "max_ms": 27.178
+        }
+      },
+      "ratios": {
+        "p50": 2.46,
+        "p99": 2.05,
+        "p999": 1.98
+      },
+      "headline_absolute_ms": {
+        "clawql_oversight_p50_ms": 0.896,
+        "clawql_oversight_p999_ms": 8.097,
+        "note": "Absolute cost of ClawQL oversight path (execute − paired mock). Primary publish framing — holds regardless of Executor."
+      }
+    }
+  ],
+  "spread": {
+    "clawql_gateway_p50_ms": {
+      "min": 0.876,
+      "median": 0.887,
+      "max": 0.896,
+      "n": 3
+    },
+    "clawql_gateway_p999_ms": {
+      "min": 5.72,
+      "median": 6.245,
+      "max": 8.097,
+      "n": 3
+    },
+    "executor_gateway_p50_ms": {
+      "min": 2.199,
+      "median": 2.202,
+      "max": 2.204,
+      "n": 3
+    },
+    "executor_gateway_p999_ms": {
+      "min": 9.112,
+      "median": 9.596,
+      "max": 16.011,
+      "n": 3
+    },
+    "ratio_p50": {
+      "min": 2.46,
+      "median": 2.48,
+      "max": 2.51,
+      "n": 3
+    }
+  },
+  "publish_lines": {
+    "absolute": "Risk gates, ring audit, hooks and field projection add 0.876 ms at p50 and 5.72 ms at p999 (ephemeral ring; durable WORM off).",
+    "vs_executor_supporting": "Supporting: interleaved equal-arm Executor gateway_cost p50 2.202 ms (ratio 2.51× at p50)."
+  }
+}
