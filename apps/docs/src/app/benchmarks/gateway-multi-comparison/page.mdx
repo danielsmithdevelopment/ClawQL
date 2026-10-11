@@ -27,7 +27,7 @@ Baseline definitions are pinned to **agentgateway’s `tools/list` serialization
 
 On **this board**, ClawQL is the only measured gateway that **reduces** tokens vs a fair no-gateway baseline (~41% @12 via projection + server-side discovery). Thin aggregators **match** that baseline. Bound: Bifrost / mcp-gateway were **not** tested.
 
-**Executor +18 666:** same `items`/`partition` as the mock; excess is pretty-printed JSON (~1.8×). Compacted ≈ 29 572 @12 — still no Layer2 win vs ClawQL. See [`executor-vs-mock-compare.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/gateway-multi-comparison/executor-vs-mock-compare.json).
+**Executor:** definitions save **5 430**; pretty-printed results add **24 096**; net **+18 666**. Compacted = **29 572** (5 430 below baseline); ClawQL still leads by **9 033**. Discovery column is **0** because the harness hands `execute` fixture-return code (no search step) — that favors Executor vs ClawQL’s charged 11 568 discovery. See [`executor-vs-mock-compare.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/gateway-multi-comparison/executor-vs-mock-compare.json).
 
 **Next lever:** discovery is 11 568 tokens (56% of ClawQL’s total) — leaner search signatures (~300 tok/turn ≈ −8k @12) and/or `execute` by operation ID when ops recur.
 

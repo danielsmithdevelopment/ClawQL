@@ -328,14 +328,33 @@ ${breakdownRows}
       )}) — slightly more verbose wrapped schema text, not another token kind.
     </p>
 
-    <h3>Executor “adds tokens” — verified</h3>
+    <h3>Executor — generous framing (verified)</h3>
     <p>
-      Measured Executor results are ~1.8× aggregator/direct (~4 465 vs ~2 457 tok/turn). Byte-check on turn&nbsp;1:
-      <code>JSON.parse</code> of the Executor MCP text yields the <strong>same</strong> <code>items</code> + <code>partition</code> as the shared mock / in-process fixture
-      (<code>compact(JSON.stringify(parse(exec))) === fixture</code>). The excess is <strong>pretty-printed JSON</strong>
-      (indented newlines in Executor’s returned text), not unequal data and not an extra envelope of fields.
-      Compacted equivalent @12 ≈ <strong>29 572</strong> (90 defs + 29 482 results) — still no Layer2 win vs ClawQL’s 20 539.
-      The pretty-print tax is real for agents that see that MCP text; do not publish “Executor invents payload” — publish “same data, indented serialization.”
+      Measured net vs baseline: <strong>+${fmt(
+        (board.executor?.combined_at_n || 0) - (direct?.combined_at_n || 0)
+      )}</strong>. Split that fairly:
+    </p>
+    <ul>
+      <li><strong>Code-mode definitions save ${fmt(
+        (direct?.definitions_tokens || 0) - (board.executor?.definitions_tokens || 0)
+      )}</strong> over 12 turns (5 520 → 90) — Executor’s design gets this right.</li>
+      <li><strong>Pretty-printed results add ${fmt(
+        (board.executor?.result_tokens_sum || 0) - (direct?.result_tokens_sum || 0)
+      )}</strong> (53 578 − 29 482) — same <code>items</code>/<code>partition</code> as the shared mock; turn-1
+        <code>compact(JSON.stringify(parse(exec))) === fixture</code>. A compact JSON return would erase that tax.</li>
+      <li><strong>Net: +${fmt(
+        (board.executor?.combined_at_n || 0) - (direct?.combined_at_n || 0)
+      )}</strong> measured. Compacted equivalent @12 = <strong>29 572</strong> (90 + 29 482) —
+        <em>5 430 below</em> baseline. ClawQL still leads that generous figure by <strong>9 033</strong>
+        (29 572 − 20 539) because projection is the difference either way.</li>
+    </ul>
+    <p>
+      <strong>Discovery column = 0 — why:</strong> this arm is a single <code>execute</code> call per turn with
+      <em>harness-authored code</em> that returns the equal-arm fixture in-process (sandbox cannot <code>fetch</code>).
+      It does <strong>not</strong> run a search/discovery step. ClawQL is charged 11 568 discovery tokens because its
+      measured path is <code>search</code> → <code>execute</code>. That inequality favors Executor; if a future arm
+      counted Executor search-then-call discovery, its combined would only get worse. Zero here is “harness handed
+      the operation,” not “Executor has free discovery.”
     </p>
 
     <h3>Where ClawQL’s next token win is</h3>
@@ -378,7 +397,7 @@ ${costRows}
       <li><strong>ClawQL</strong> — only <em>measured</em> arm that reduces tokens vs the fair baseline (~${
         saved != null ? fmt(saved) : "—"
       } @12, ~41%) via projection; pays discovery tokens + ~${latTax ?? "—"} ms flow p50 and RSS. Untested: Bifrost, mcp-gateway.</li>
-      <li><strong>Executor</strong> — tiny definitions; measured results larger because return text is pretty-printed same JSON (see verification above); slowest flow p50 here.</li>
+      <li><strong>Executor</strong> — defs save ~5.4k; pretty-print adds ~24k (net +18.7k measured / compacted −5.4k vs baseline). Discovery=0 by harness design (see above). Slowest flow p50 here.</li>
     </ul>
 
     <h2>3. Why move ClawQL from Node to Bun</h2>

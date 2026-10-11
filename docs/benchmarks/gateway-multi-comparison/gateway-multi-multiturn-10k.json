@@ -220,8 +220,17 @@
         "measured_turn1_tokens": 4419,
         "compacted_combined_at_12_estimate": 29572,
         "note": "Executor MCP text is indented JSON of the same fatPayload as the shared mock; not unequal data.",
-        "artifact": "executor-vs-mock-compare.json"
-      }
+        "artifact": "executor-vs-mock-compare.json",
+        "defs_saved_vs_baseline": 5430,
+        "pretty_print_added_vs_compact_results": 24096,
+        "net_vs_baseline_measured": 18666,
+        "compacted_combined_at_12": 29572,
+        "compacted_below_baseline": 5430,
+        "clawql_lead_vs_compacted_executor": 9033,
+        "discovery_tokens_sum": 0,
+        "discovery_note": "Zero because harness calls execute once/turn with authored fixture-return code; no search/discovery step. Favors Executor vs ClawQL search\u2192execute (11568 discovery)."
+      },
+      "discovery_equalization_note": "Zero because harness calls execute once/turn with authored fixture-return code; no search/discovery step. Favors Executor vs ClawQL search\u2192execute (11568 discovery)."
     },
     "mcpjungle": {
       "runtime": null,
@@ -3964,7 +3973,9 @@
     "ClawQL discovery is 11568 (56% of 20539) \u2014 next levers: leaner search signatures; execute-by-operationId when ops recur.",
     "Executor Layer2 inflation vs mock verified: same items/partition; excess is pretty-printed JSON (compact stringify matches fixture byte-for-byte).",
     "Publish bound: only four gateways on this board \u2014 Bifrost/mcp-gateway untested; do not claim whole category.",
-    "On this board ClawQL is the only measured arm that reduces tokens vs fair baseline (~41% @12)."
+    "On this board ClawQL is the only measured arm that reduces tokens vs fair baseline (~41% @12).",
+    "Executor framing: defs save 5430; pretty-print results add 24096; net +18666. Compacted 29572 (\u22125430 vs baseline); ClawQL leads compacted by 9033.",
+    "Executor discovery=0: harness-authored execute returns fixture (no search). Inequality favors Executor vs ClawQL charged discovery."
   ],
   "ratios_vs_direct": {
     "direct": {},
@@ -4055,7 +4066,7 @@
     }
   },
   "mergedAt": "2026-10-11T19:47:57.836716Z",
-  "correctedAt": "2026-10-11T22:35:18.090Z",
+  "correctedAt": "2026-10-11T22:39:21.144Z",
   "token_model": {
     "combined": "definitions + sum(discovery) + sum(results)",
     "direct_definitions": "pinned to agentgateway's tools/list serialization of the 40 catalog ops",

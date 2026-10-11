@@ -172,7 +172,9 @@ Artifact: [`gateway-multi-multiturn-10k.json`](./gateway-multi-multiturn-10k.jso
 
 ClawQL check: 297 + 11 568 + 8 674 = **20 539** (mean discovery 964/turn · mean result 723/turn). Aggregators **match** (or nearly match) the fair baseline — they do **not** add a separate “schema tax.” On **this board** ClawQL is the only measured arm that **reduces** tokens vs that baseline (~14.5k @12, ~41%) via projection. Bun keeps token wins and cuts Node multiturn RSS ~50%.
 
-**Executor “+18 666” verified:** turn-1 MCP text parses to the **same** `items`/`partition` as the shared mock fixture; `JSON.stringify(parse(exec), compact) === fixture` (7 655 chars). Excess is **pretty-printed JSON** (~1.8× tokens), not unequal data. Compacted equivalent @12 ≈ **29 572** (90 + 29 482). Artifacts: [`executor-vs-mock-compare.json`](./executor-vs-mock-compare.json).
+**Executor framing (verified):** code-mode definitions **save 5 430** (5 520 → 90). Pretty-printed results **add 24 096** (53 578 − 29 482) — same data as the mock (`compact(parse(exec)) === fixture`). **Net +18 666** measured. Compacted @12 = **29 572** (5 430 *below* baseline); ClawQL still leads that by **9 033**. Artifact: [`executor-vs-mock-compare.json`](./executor-vs-mock-compare.json).
+
+**Executor discovery = 0:** harness calls `execute` once per turn with authored code that returns the fixture (no search step; sandbox has no `fetch`). ClawQL pays 11 568 for measured `search`→`execute`. Inequality favors Executor; say so on the page.
 
 **Claim bound:** four gateways measured. Bifrost / mcp-gateway (compact meta-tool shortlist) **not** on this board — do not claim the whole category until they are.
 
