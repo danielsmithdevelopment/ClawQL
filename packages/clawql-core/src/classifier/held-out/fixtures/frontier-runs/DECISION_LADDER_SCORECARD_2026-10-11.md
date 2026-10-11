@@ -17,10 +17,10 @@ Honest readout after merging spend-ledger → provider pricing → Decision-1 fl
 Artifact: [`decision1-v04-routing-candidate.json`](./decision1-v04-routing-candidate.json)  
 Source: workflow run filledAt `2026-10-11T19:27:22.240Z`, `flipFamilies=["synonym"]`, `openRouterKeyed=true`.
 
-| Backend        | Answered | Correct | Wrong | Meets quality bar |
-| -------------- | -------- | ------- | ----- | ----------------- |
-| local (stub)   | 8/40     | 6       | 2     | no                |
-| Decision-1     | 40/40    | 40      | 0     | **yes**           |
+| Backend      | Answered | Correct | Wrong | Meets quality bar |
+| ------------ | -------- | ------- | ----- | ----------------- |
+| local (stub) | 8/40     | 6       | 2     | no                |
+| Decision-1   | 40/40    | 40      | 0     | **yes**           |
 
 - **Bulk recommendation:** `openrouter/microsoft/microsoft-decision-1` (first backend with maxWrong=0).
 - **Flip-rate (synonym):** passed — 40 cases, 0 flips, `maxFlipRate=0.1`.
