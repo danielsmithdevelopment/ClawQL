@@ -113,18 +113,18 @@ LATENCY_GOVERNANCE=1 LATENCY_ITERS=1000 LATENCY_RUNS=3 \
 
 **Lead line (matches harness):**
 
-> On local stdio, with arms interleaved and each call paired against a direct call, ClawQL's risk gates, ring audit, hooks and field projection add **0.89 ms** at p50 and **2.5 ms** at p99 (three-run p50 range **0.88–0.90 ms**, n=10,000/run). p999 across three runs: **5.7–8.1 ms** (median **6.2 ms**). With the **in-memory** audit chain also on (n=1,000, single run — p50/p99 only): **1.7 ms** at p50, **3.2 ms** at p99. **Panguard off.** Executor v1.6.10 on the same harness: about **2.5×** higher at p50.
+> On local stdio, with arms interleaved and each call paired against a direct call, ClawQL's risk gates, ring audit, hooks and field projection add **0.88 ms** at p50 and **2.35 ms** at p99 (three-run p50 range **0.86–0.89 ms**, n=10,000/run). p999 across three runs: **5.3–6.2 ms** (median **5.4 ms**). With the **in-memory** audit chain also on (n=1,000, single run — p50/p99 only): **1.7 ms** at p50, **3.2 ms** at p99. **Panguard off.** Executor v1.6.10 on the same harness: about **2.5×** higher at p50. **Hold public claims until remaining board gaps (RAM / Layer-1 schema tokens) close.**
 
-Interleaved closed-loop, **n=10,000/run × 3 runs** (`executor-cmp-latency-fair-10k.json`):
+Interleaved closed-loop, **n=10,000/run × 3 runs** (`executor-cmp-latency-fair-10k.json`, post lean-schema + REST-prefer remeasure):
 
 | Arm                              |  p50 (min…med…max) |                p95 |                p99 | p999 (min…med…max) |
 | -------------------------------- | -----------------: | -----------------: | -----------------: | -----------------: |
-| **ClawQL gateway cost**          | **0.88…0.89…0.90** | **1.45…1.48…1.48** | **2.46…2.50…2.51** |    **5.7…6.2…8.1** |
-| **Executor gateway cost**        | **2.20…2.20…2.20** | **3.64…3.66…3.70** | **4.62…4.94…5.06** |   **9.1…9.6…16.0** |
-| Direct HTTP mock (primary run)   |               0.28 |               0.43 |               0.52 |               2.40 |
-| ClawQL execute e2e (primary run) |               1.16 |               1.81 |               2.82 |               6.07 |
+| **ClawQL gateway cost**          | **0.86…0.88…0.89** | **1.41…1.45…1.45** | **2.32…2.35…2.42** |    **5.3…5.4…6.2** |
+| **Executor gateway cost**        | **2.17…2.18…2.20** | **3.69…3.72…3.73** | **4.75…4.83…4.85** |    **8.8…9.1…9.9** |
+| Direct HTTP mock (primary run)   |               0.27 |               0.42 |               0.51 |               2.53 |
+| ClawQL execute e2e (primary run) |               1.13 |               1.78 |               2.71 |               6.58 |
 
-Ratio Exec/Claw p50 across runs: **2.46…2.48…2.51×**.
+Ratio Exec/Claw p50 across runs: **2.46…2.47…2.57×**.
 
 Earlier n=2,000×3 series (`executor-cmp-latency-fair.json`) — use for p50/p95/p99 cross-check only; **do not claim p999** from it:
 
@@ -159,7 +159,19 @@ EXECUTOR_BIN=… EXECUTOR_CWD=… \
 | **Tokens**    | `cl100k_base` tools/list schemas + equal-arm results + fat-list projection contrast |
 | **Chaos**     | Ramp concurrent stdio workers (1→2→4→…) until error-rate or p99 SLO breaks          |
 
-Honesty: chaos is **N independent stdio processes**, not one multiplexed session. p999 from `COMPREHENSIVE_ITERS<10000` is exploratory — publish latency tails from `latency-fair` 10k×3. In-memory WORM only if `COMPREHENSIVE_GOVERNANCE=1`; **Panguard off**.
+Latest board (`executor-cmp-comprehensive.json`, REST-prefer equal-arm, chaos warmup + HTTP multiplex):
+
+| Dimension | ClawQL | Executor | Note |
+| --- | ---: | ---: | --- |
+| Gateway p50 / p99 (ms) | **1.17 / 5.17** | 2.47 / 7.68 | Win (exploratory n=500) |
+| CPU % median | 31.7 | 29.8 | Near-parity |
+| RSS MB median | 368 | 253 | Still lose — next lever |
+| `execute` schema tokens | **178** (was 323) | 90 | Improved; still lose |
+| Fat lean vs full dump tokens | **2804** | 9122 | Win (`fields`) |
+| Stdio chaos sustained | **8** (was break@8) | 8 | Tie at max tried |
+| HTTP multiplex sustained | **8** | n/a | ClawQL-only shared-process arm |
+
+Honesty: stdio chaos is **N independent processes** (warmup excluded from stats). HTTP multiplex is ClawQL-only. p999 from `COMPREHENSIVE_ITERS<10000` is exploratory — publish latency tails from `latency-fair` 10k×3. In-memory WORM only if `COMPREHENSIVE_GOVERNANCE=1`; **Panguard off**. Do not publicize until RAM + Layer-1 schema tokens are won or honestly scoped.
 
 **Shareable page:** [clawql.com/benchmarks/executor-comparison/latency.html](https://clawql.com/benchmarks/executor-comparison/latency.html) · `npm run generate:executor-cmp-latency-html`.
 

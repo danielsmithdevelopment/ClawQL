@@ -1,10 +1,10 @@
 {
   "suite": "executor-cmp-latency-fair",
-  "measuredAt": "2026-10-11T01:02:54.381Z",
+  "measuredAt": "2026-10-11T02:07:32.539Z",
   "versions": {
     "clawql": {
       "version": "8.0.0",
-      "commit": "003bdc313a55511a8023440fda81a2844696c50f",
+      "commit": "2e2bea754a116942c6e2d9438364ba2777f366b7",
       "branch": "cursor/executor-latency-side-by-side-a621"
     },
     "executor": {
@@ -12,12 +12,12 @@
       "bin": "/tmp/executor-try/node_modules/.bin/executor"
     },
     "node": "v22.14.0",
-    "measuredAt": "2026-10-11T01:02:54.381Z"
+    "measuredAt": "2026-10-11T02:07:32.539Z"
   },
   "config": {
-    "iters": 2000,
+    "iters": 1000,
     "warmup": 50,
-    "runs": 3,
+    "runs": 1,
     "mock_delay_ms": 0,
     "schedule": "interleaved_closed_loop",
     "arrival_ms": null,
@@ -44,323 +44,75 @@
     "arms": {
       "clawql_execute_e2e": {
         "label": "clawql_execute_e2e",
-        "n": 2000,
-        "p50_ms": 1.459,
-        "p95_ms": 2.023,
-        "p99_ms": 3.057,
-        "p999_ms": 8.644,
-        "mean_ms": 1.527,
-        "min_ms": 0.974,
-        "max_ms": 11.909
+        "n": 1000,
+        "p50_ms": 1.566,
+        "p95_ms": 2.1,
+        "p99_ms": 3.029,
+        "p999_ms": 9.055,
+        "mean_ms": 1.644,
+        "min_ms": 1.116,
+        "max_ms": 9.055
       },
       "executor_execute": {
         "label": "executor_execute",
-        "n": 2000,
-        "p50_ms": 2.374,
-        "p95_ms": 3.861,
-        "p99_ms": 5.302,
-        "p999_ms": 11.51,
-        "mean_ms": 2.584,
-        "min_ms": 1.617,
-        "max_ms": 12.44
+        "n": 1000,
+        "p50_ms": 2.375,
+        "p95_ms": 4.007,
+        "p99_ms": 4.984,
+        "p999_ms": 11.646,
+        "mean_ms": 2.586,
+        "min_ms": 1.643,
+        "max_ms": 11.646
       },
       "direct_http": {
         "label": "direct_http",
-        "n": 2000,
-        "p50_ms": 0.377,
-        "p95_ms": 0.504,
-        "p99_ms": 0.65,
-        "p999_ms": 2.325,
-        "mean_ms": 0.396,
-        "min_ms": 0.233,
-        "max_ms": 2.885
+        "n": 1000,
+        "p50_ms": 0.408,
+        "p95_ms": 0.528,
+        "p99_ms": 0.709,
+        "p999_ms": 2.703,
+        "mean_ms": 0.428,
+        "min_ms": 0.297,
+        "max_ms": 2.703
       },
       "clawql_gateway_cost": {
         "label": "clawql_gateway_cost",
-        "n": 2000,
-        "p50_ms": 1.068,
-        "p95_ms": 1.574,
-        "p99_ms": 2.637,
-        "p999_ms": 8.087,
-        "mean_ms": 1.131,
-        "min_ms": -1.774,
-        "max_ms": 11.408
+        "n": 1000,
+        "p50_ms": 1.147,
+        "p95_ms": 1.667,
+        "p99_ms": 2.577,
+        "p999_ms": 8.39,
+        "mean_ms": 1.216,
+        "min_ms": -1.048,
+        "max_ms": 8.39
       },
       "executor_gateway_cost": {
         "label": "executor_gateway_cost",
-        "n": 2000,
-        "p50_ms": 2.374,
-        "p95_ms": 3.861,
-        "p99_ms": 5.302,
-        "p999_ms": 11.51,
-        "mean_ms": 2.584,
-        "min_ms": 1.617,
-        "max_ms": 12.44
+        "n": 1000,
+        "p50_ms": 2.375,
+        "p95_ms": 4.007,
+        "p99_ms": 4.984,
+        "p999_ms": 11.646,
+        "mean_ms": 2.586,
+        "min_ms": 1.643,
+        "max_ms": 11.646
       }
     },
     "ratios": {
-      "p50": 2.22,
-      "p99": 2.01,
-      "p999": 1.42
+      "p50": 2.07,
+      "p99": 1.93,
+      "p999": 1.39
     },
     "headline_absolute_ms": {
-      "clawql_oversight_p50_ms": 1.068,
-      "clawql_oversight_p999_ms": 8.087,
+      "clawql_oversight_p50_ms": 1.147,
+      "clawql_oversight_p999_ms": 8.39,
       "note": "Absolute cost of ClawQL oversight path (execute − paired mock). Primary publish framing — holds regardless of Executor."
     }
   },
-  "runs": [
-    {
-      "runIndex": 0,
-      "mode": "closed_loop",
-      "arrival_ms": null,
-      "arms": {
-        "clawql_execute_e2e": {
-          "label": "clawql_execute_e2e",
-          "n": 2000,
-          "p50_ms": 1.459,
-          "p95_ms": 2.023,
-          "p99_ms": 3.057,
-          "p999_ms": 8.644,
-          "mean_ms": 1.527,
-          "min_ms": 0.974,
-          "max_ms": 11.909
-        },
-        "executor_execute": {
-          "label": "executor_execute",
-          "n": 2000,
-          "p50_ms": 2.374,
-          "p95_ms": 3.861,
-          "p99_ms": 5.302,
-          "p999_ms": 11.51,
-          "mean_ms": 2.584,
-          "min_ms": 1.617,
-          "max_ms": 12.44
-        },
-        "direct_http": {
-          "label": "direct_http",
-          "n": 2000,
-          "p50_ms": 0.377,
-          "p95_ms": 0.504,
-          "p99_ms": 0.65,
-          "p999_ms": 2.325,
-          "mean_ms": 0.396,
-          "min_ms": 0.233,
-          "max_ms": 2.885
-        },
-        "clawql_gateway_cost": {
-          "label": "clawql_gateway_cost",
-          "n": 2000,
-          "p50_ms": 1.068,
-          "p95_ms": 1.574,
-          "p99_ms": 2.637,
-          "p999_ms": 8.087,
-          "mean_ms": 1.131,
-          "min_ms": -1.774,
-          "max_ms": 11.408
-        },
-        "executor_gateway_cost": {
-          "label": "executor_gateway_cost",
-          "n": 2000,
-          "p50_ms": 2.374,
-          "p95_ms": 3.861,
-          "p99_ms": 5.302,
-          "p999_ms": 11.51,
-          "mean_ms": 2.584,
-          "min_ms": 1.617,
-          "max_ms": 12.44
-        }
-      },
-      "ratios": {
-        "p50": 2.22,
-        "p99": 2.01,
-        "p999": 1.42
-      },
-      "headline_absolute_ms": {
-        "clawql_oversight_p50_ms": 1.068,
-        "clawql_oversight_p999_ms": 8.087,
-        "note": "Absolute cost of ClawQL oversight path (execute − paired mock). Primary publish framing — holds regardless of Executor."
-      }
-    },
-    {
-      "runIndex": 1,
-      "mode": "closed_loop",
-      "arrival_ms": null,
-      "arms": {
-        "clawql_execute_e2e": {
-          "label": "clawql_execute_e2e",
-          "n": 2000,
-          "p50_ms": 1.408,
-          "p95_ms": 2.013,
-          "p99_ms": 2.951,
-          "p999_ms": 7.544,
-          "mean_ms": 1.487,
-          "min_ms": 0.96,
-          "max_ms": 8.323
-        },
-        "executor_execute": {
-          "label": "executor_execute",
-          "n": 2000,
-          "p50_ms": 2.266,
-          "p95_ms": 3.714,
-          "p99_ms": 5.345,
-          "p999_ms": 10.167,
-          "mean_ms": 2.474,
-          "min_ms": 1.538,
-          "max_ms": 12.017
-        },
-        "direct_http": {
-          "label": "direct_http",
-          "n": 2000,
-          "p50_ms": 0.304,
-          "p95_ms": 0.405,
-          "p99_ms": 0.51,
-          "p999_ms": 2.871,
-          "mean_ms": 0.319,
-          "min_ms": 0.183,
-          "max_ms": 2.895
-        },
-        "clawql_gateway_cost": {
-          "label": "clawql_gateway_cost",
-          "n": 2000,
-          "p50_ms": 1.097,
-          "p95_ms": 1.679,
-          "p99_ms": 2.68,
-          "p999_ms": 7.247,
-          "mean_ms": 1.168,
-          "min_ms": -1.554,
-          "max_ms": 7.932
-        },
-        "executor_gateway_cost": {
-          "label": "executor_gateway_cost",
-          "n": 2000,
-          "p50_ms": 2.266,
-          "p95_ms": 3.714,
-          "p99_ms": 5.345,
-          "p999_ms": 10.167,
-          "mean_ms": 2.474,
-          "min_ms": 1.538,
-          "max_ms": 12.017
-        }
-      },
-      "ratios": {
-        "p50": 2.07,
-        "p99": 1.99,
-        "p999": 1.4
-      },
-      "headline_absolute_ms": {
-        "clawql_oversight_p50_ms": 1.097,
-        "clawql_oversight_p999_ms": 7.247,
-        "note": "Absolute cost of ClawQL oversight path (execute − paired mock). Primary publish framing — holds regardless of Executor."
-      }
-    },
-    {
-      "runIndex": 2,
-      "mode": "closed_loop",
-      "arrival_ms": null,
-      "arms": {
-        "clawql_execute_e2e": {
-          "label": "clawql_execute_e2e",
-          "n": 2000,
-          "p50_ms": 1.378,
-          "p95_ms": 1.909,
-          "p99_ms": 2.831,
-          "p999_ms": 6.669,
-          "mean_ms": 1.443,
-          "min_ms": 0.979,
-          "max_ms": 6.737
-        },
-        "executor_execute": {
-          "label": "executor_execute",
-          "n": 2000,
-          "p50_ms": 2.233,
-          "p95_ms": 3.6,
-          "p99_ms": 4.562,
-          "p999_ms": 12.192,
-          "mean_ms": 2.416,
-          "min_ms": 1.518,
-          "max_ms": 15.464
-        },
-        "direct_http": {
-          "label": "direct_http",
-          "n": 2000,
-          "p50_ms": 0.274,
-          "p95_ms": 0.326,
-          "p99_ms": 0.395,
-          "p999_ms": 2.042,
-          "mean_ms": 0.278,
-          "min_ms": 0.177,
-          "max_ms": 2.182
-        },
-        "clawql_gateway_cost": {
-          "label": "clawql_gateway_cost",
-          "n": 2000,
-          "p50_ms": 1.107,
-          "p95_ms": 1.631,
-          "p99_ms": 2.543,
-          "p999_ms": 6.406,
-          "mean_ms": 1.165,
-          "min_ms": -0.991,
-          "max_ms": 6.465
-        },
-        "executor_gateway_cost": {
-          "label": "executor_gateway_cost",
-          "n": 2000,
-          "p50_ms": 2.233,
-          "p95_ms": 3.6,
-          "p99_ms": 4.562,
-          "p999_ms": 12.192,
-          "mean_ms": 2.416,
-          "min_ms": 1.518,
-          "max_ms": 15.464
-        }
-      },
-      "ratios": {
-        "p50": 2.02,
-        "p99": 1.79,
-        "p999": 1.9
-      },
-      "headline_absolute_ms": {
-        "clawql_oversight_p50_ms": 1.107,
-        "clawql_oversight_p999_ms": 6.406,
-        "note": "Absolute cost of ClawQL oversight path (execute − paired mock). Primary publish framing — holds regardless of Executor."
-      }
-    }
-  ],
-  "spread": {
-    "clawql_gateway_p50_ms": {
-      "min": 1.068,
-      "median": 1.097,
-      "max": 1.107,
-      "n": 3
-    },
-    "clawql_gateway_p999_ms": {
-      "min": 6.406,
-      "median": 7.247,
-      "max": 8.087,
-      "n": 3
-    },
-    "executor_gateway_p50_ms": {
-      "min": 2.233,
-      "median": 2.266,
-      "max": 2.374,
-      "n": 3
-    },
-    "executor_gateway_p999_ms": {
-      "min": 10.167,
-      "median": 11.51,
-      "max": 12.192,
-      "n": 3
-    },
-    "ratio_p50": {
-      "min": 2.02,
-      "median": 2.07,
-      "max": 2.22,
-      "n": 3
-    }
-  },
+  "spread": null,
   "publish_lines": {
-    "absolute": "Risk gates, ring audit, hooks and field projection add 1.068 ms at p50 and 8.087 ms at p999 (ephemeral ring; durable WORM off).",
-    "vs_executor_supporting": "Supporting: interleaved equal-arm Executor gateway_cost p50 2.374 ms (ratio 2.22× at p50)."
+    "absolute": "On local stdio, interleaved + paired: risk gates, ring audit, hooks and field projection add 1.147 ms at p50 and 2.577 ms at p99 (p999 not claimed at n=1000; need interleaved n≥10000 × ≥3 runs). Ephemeral ring audit; in-memory/production WORM off. Panguard off.",
+    "vs_executor_supporting": "Supporting: Executor 1.6.10 on same harness — gateway_cost p50 2.375 ms (ratio 2.07× at p50). Rerun when Executor v2 ships.",
+    "p999_policy": "Publish p50/p95/p99 from interleaved multi-run. Claim p999 only from interleaved n≥10000/run with spread across runs."
   }
 }
