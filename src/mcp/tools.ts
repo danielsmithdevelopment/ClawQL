@@ -70,25 +70,99 @@ import {
   type ProgramSubmitHost,
 } from "clawql-api";
 import { z } from "zod";
-import { attachChatgptExtensions } from "clawql-chatgpt-extensions";
 import { currentLoadSpecEffect, getClawqlApi } from "../composition/clawql-api-adapters.js";
 import { resolvePluginCompositionFlags } from "../composition/resolve-plugin-flags.js";
 import { handleCacheToolInput } from "./clawql-cache.js";
 import { handleAuditToolInput } from "./clawql-audit.js";
-import {
-  configureAutomationPluginDeps,
-  handleNotifyToolInput,
-  SLACK_NOTIFY_OPERATION_ID,
-} from "clawql-automation/plugin";
-import {
-  configureDocumentsPluginDeps,
-  handleKnowledgeSearchOnyxToolInput,
-} from "clawql-documents/plugin";
-import { configureMemoryOnyxSearch } from "clawql-memory/recall/onyx-recall";
 import { wrapRegisteredMcpToolHandler } from "./mcp-tool-wrap.js";
-import { configureHomeSyncHooks } from "../composition/configure-home-sync.js";
-import { handleMemorySyncToolInput, memorySyncToolSchema } from "../home-sync/memory-sync.js";
 import { noteProcessRegisteredCapabilityTools } from "clawql-core";
+
+/** Lazily loaded when INSTANCE_SPEC/tier enables the matching surface (§11.1 zero-import). */
+type ChatgptExtMod = typeof import("clawql-chatgpt-extensions");
+type MemorySyncMod = typeof import("../home-sync/memory-sync.js");
+
+let optionalToolDepsWired = false;
+let chatgptExtensionsMod: ChatgptExtMod | null = null;
+let memorySyncMod: MemorySyncMod | null = null;
+
+/**
+ * Dynamic-import optional packages only when composition flags enable them.
+ * Call from {@link createRegisteredMcpServerAsync} before {@link registerTools}.
+ */
+export async function wireOptionalToolDeps(): Promise<void> {
+  if (optionalToolDepsWired) return;
+  optionalToolDepsWired = true;
+  const flags = resolvePluginCompositionFlags();
+
+  const needAutomation =
+    flags.enableSchedule ||
+    flags.enableNotify ||
+    flags.enableWorkflow ||
+    flags.enableArgoCd ||
+    flags.enableHitlLabelStudio;
+  const needDocuments = flags.enableDocuments || flags.enableOnyxKnowledge;
+  const needMemory = flags.enableMemory;
+
+  let handleKnowledgeSearchOnyxToolInput:
+    | ((params: unknown) => Promise<{ content: { type: "text"; text: string }[] }>)
+    | null = null;
+
+  if (needDocuments) {
+    const docs = await import("clawql-documents/plugin");
+    docs.configureDocumentsPluginDeps({
+      execute: (params) => handleClawqlExecuteToolInput(params),
+      onPipelineHop: async (event) => {
+        try {
+          const { publishDocumentPipelineHopEvent } =
+            await import("clawql-automation/nats/publish-hooks");
+          await publishDocumentPipelineHopEvent({
+            correlation_id: event.correlation_id,
+            hop: {
+              index: event.hop.index,
+              stage: event.hop.stage,
+              operationId: event.hop.operationId,
+              ok: event.hop.ok,
+              skipped: event.hop.skipped,
+              error: event.hop.error,
+            },
+          });
+        } catch {
+          /* NATS publish optional */
+        }
+      },
+    });
+    handleKnowledgeSearchOnyxToolInput = (params) =>
+      docs.handleKnowledgeSearchOnyxToolInput(params);
+  }
+
+  if (needAutomation) {
+    const auto = await import("clawql-automation/plugin");
+    auto.configureAutomationPluginDeps({
+      execute: (params) => handleClawqlExecuteToolInput(params),
+    });
+  }
+
+  if (needMemory) {
+    if (flags.enableOnyxKnowledge && handleKnowledgeSearchOnyxToolInput) {
+      const { configureMemoryOnyxSearch } = await import("clawql-memory/recall/onyx-recall");
+      configureMemoryOnyxSearch((params) => handleKnowledgeSearchOnyxToolInput!(params));
+    }
+    const { configureHomeSyncHooks } = await import("../composition/configure-home-sync.js");
+    configureHomeSyncHooks();
+    memorySyncMod = await import("../home-sync/memory-sync.js");
+  }
+
+  if (flags.enableChatgptExtensions) {
+    chatgptExtensionsMod = await import("clawql-chatgpt-extensions");
+  }
+}
+
+/** Test helper — allow re-wiring after env/flag changes. */
+export function resetOptionalToolDepsForTests(): void {
+  optionalToolDepsWired = false;
+  chatgptExtensionsMod = null;
+  memorySyncMod = null;
+}
 
 export { executeOutputFields, projectRestByFields } from "clawql-api";
 
@@ -188,7 +262,24 @@ export async function handleSourcesProposeToolInput(
   );
 }
 
-export { SLACK_NOTIFY_OPERATION_ID, handleNotifyToolInput };
+/**
+ * Lazy notify façade — keeps clawql-automation out of the cold import graph.
+ * Wires execute deps on first use (tests + rare direct callers).
+ */
+export async function handleNotifyToolInput(
+  raw: unknown
+): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
+  const auto = await import("clawql-automation/plugin");
+  auto.configureAutomationPluginDeps({
+    execute: (params) => handleClawqlExecuteToolInput(params),
+  });
+  return auto.handleNotifyToolInput(raw as Parameters<typeof auto.handleNotifyToolInput>[0]);
+}
+
+export async function getSlackNotifyOperationId(): Promise<string> {
+  const auto = await import("clawql-automation/plugin");
+  return auto.SLACK_NOTIFY_OPERATION_ID;
+}
 
 /** Zod shape for Core `console_link` (gated by CLAWQL_ENABLE_CONSOLE_LINK). */
 export const consoleLinkToolZodShape = {
@@ -455,32 +546,6 @@ export async function handleDocsSearchToolInput(
   };
 }
 
-configureAutomationPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
-configureDocumentsPluginDeps({
-  execute: (params) => handleClawqlExecuteToolInput(params),
-  onPipelineHop: async (event) => {
-    try {
-      const { publishDocumentPipelineHopEvent } =
-        await import("clawql-automation/nats/publish-hooks");
-      await publishDocumentPipelineHopEvent({
-        correlation_id: event.correlation_id,
-        hop: {
-          index: event.hop.index,
-          stage: event.hop.stage,
-          operationId: event.hop.operationId,
-          ok: event.hop.ok,
-          skipped: event.hop.skipped,
-          error: event.hop.error,
-        },
-      });
-    } catch {
-      /* NATS publish optional */
-    }
-  },
-});
-configureMemoryOnyxSearch((params) => handleKnowledgeSearchOnyxToolInput(params));
-configureHomeSyncHooks();
-
 /** Register MCP tools declared by composed plugins (Memory, Documents, Automation, Sandbox, Ouroboros, …). */
 function registerPluginMcpTools(server: McpServer): void {
   for (const tool of getClawqlApi().listMcpTools()) {
@@ -631,26 +696,39 @@ export function registerTools(server: McpServer) {
   if (resolvePluginCompositionFlags().enableChatgptExtensions) {
     // ChatGPT-only surfaces: settings always; UI tools when host supports MCP Apps.
     // Non-ChatGPT clients still connect — UI tools use app-only visibility / capability omit.
-    const attached = attachChatgptExtensions(server);
-    if (attached.attached) {
-      registeredNames.push(
-        "clawql_settings_read",
-        "clawql_settings_update",
-        "clawql_mentions_search",
-        "clawql_evidence",
-        "clawql_console",
-        "clawql_open_file"
+    // Requires {@link wireOptionalToolDeps} (async factory) so the package is not a static import.
+    if (chatgptExtensionsMod) {
+      const attached = chatgptExtensionsMod.attachChatgptExtensions(server);
+      if (attached.attached) {
+        registeredNames.push(
+          "clawql_settings_read",
+          "clawql_settings_update",
+          "clawql_mentions_search",
+          "clawql_evidence",
+          "clawql_console",
+          "clawql_open_file"
+        );
+      }
+    } else {
+      console.error(
+        "[tools] enableChatgptExtensions but wireOptionalToolDeps() was not awaited — ChatGPT extensions skipped"
       );
     }
   }
 
   if (resolvePluginCompositionFlags().enableMemory) {
-    server.tool(
-      "memory_sync",
-      memorySyncToolSchema,
-      wrapRegisteredMcpToolHandler("memory_sync", handleMemorySyncToolInput)
-    );
-    registeredNames.push("memory_sync");
+    if (memorySyncMod) {
+      server.tool(
+        "memory_sync",
+        memorySyncMod.memorySyncToolSchema,
+        wrapRegisteredMcpToolHandler("memory_sync", memorySyncMod.handleMemorySyncToolInput)
+      );
+      registeredNames.push("memory_sync");
+    } else {
+      console.error(
+        "[tools] enableMemory but wireOptionalToolDeps() was not awaited — memory_sync skipped"
+      );
+    }
   }
 
   // Capability lifecycle default-on: seed unbound sessions with tools actually
