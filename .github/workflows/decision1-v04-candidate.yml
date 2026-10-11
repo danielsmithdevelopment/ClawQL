@@ -133,6 +133,10 @@ jobs:
       - name: Install
         run: npm ci
 
+      # Script imports clawql-core/classifier from package exports (needs dist/).
+      - name: Build clawql-core
+        run: npm run build -w clawql-merkle -w clawql-core
+
       - name: Run Decision-1 v0.4 candidate
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
