@@ -17,6 +17,8 @@ export type TaskView = {
   notes: EvidenceNote[];
   decision?: DecisionResponse;
   pendingApproval?: boolean;
+  autoMerge?: boolean;
+  trustReason?: string;
   canary?: CanaryView;
   arweaveId?: string;
 };

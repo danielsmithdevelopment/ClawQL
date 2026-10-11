@@ -25,7 +25,8 @@ Apache-2.0. No private Ontologiql code. Nothing personal goes into a release.
 - Day 8 board canary + gate asserts: [`DAY8.md`](./DAY8.md)  
 - Day 9 judge smoke + canary verify: [`DAY9.md`](./DAY9.md)  
 - Day 10 hydrate-from + architecture: [`DAY10.md`](./DAY10.md)  
-- Day 11 CI + board MCP smoke: [`DAY11.md`](./DAY11.md)
+- Day 11 CI + board MCP smoke: [`DAY11.md`](./DAY11.md)  
+- Day 12 status + board trust: [`DAY12.md`](./DAY12.md) · [`docs/STATUS.md`](./docs/STATUS.md)
 
 ### Run the local demo (real git notes + vitest + dry-run release)
 

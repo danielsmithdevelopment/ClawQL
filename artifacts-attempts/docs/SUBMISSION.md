@@ -2,6 +2,8 @@
 
 Deadline: **October 14, 2026**. Artifacts billing starts October 15 (Workers Paid).
 
+Readiness matrix: [`STATUS.md`](./STATUS.md).
+
 ## Required by Cloudflare
 
 - [ ] 5–10 minute demo video (scenes in [`VIDEO_SCRIPT.md`](./VIDEO_SCRIPT.md))

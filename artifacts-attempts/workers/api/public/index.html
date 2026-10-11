@@ -192,9 +192,15 @@
         }
         if (view.decision?.winner) {
           decisionEl.hidden = false;
+          const trust =
+            typeof view.trustReason === "string"
+              ? ` · trust ${view.trustReason}` +
+                (view.autoMerge === true ? " (auto-merge)" : view.autoMerge === false ? " (approval)" : "")
+              : "";
           decisionEl.textContent =
             `Decision: ${view.decision.winner}` +
             (view.pendingApproval ? " (awaiting approval)" : "") +
+            trust +
             (view.task?.status ? ` · task ${view.task.status}` : "") +
             (view.arweaveId ? ` · release ${view.arweaveId}` : "");
         } else {

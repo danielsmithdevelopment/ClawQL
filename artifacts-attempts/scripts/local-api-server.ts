@@ -41,6 +41,8 @@ type TaskView = {
   notes: unknown[];
   decision?: DecisionResponse;
   pendingApproval?: boolean;
+  autoMerge?: boolean;
+  trustReason?: string;
   canary?: CanaryView;
   arweaveId?: string;
 };
