@@ -16,6 +16,8 @@ As of Day 12 (local path). Deadline **Oct 14, 2026**. Artifacts billing starts *
 | Judge docs | [`JUDGE_RUNBOOK.md`](./JUDGE_RUNBOOK.md), [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`VIDEO_SCRIPT.md`](./VIDEO_SCRIPT.md) |
 | Public-repo extract notes | [`STANDALONE.md`](./STANDALONE.md) |
 | Film preflight | `npm run demo:film-preflight` |
+| Gradual-deploy request builder (offline) | `buildGradualDeployRequest` in pipeline |
+| FAQ | [`FAQ.md`](./FAQ.md) |
 | CI (path-filtered) | `.github/workflows/artifacts-attempts.yml` |
 
 ## Blocked on credentials / human steps

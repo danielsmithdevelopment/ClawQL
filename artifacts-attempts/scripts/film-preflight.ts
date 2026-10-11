@@ -21,6 +21,7 @@ const required = [
   "docs/SUBMISSION.md",
   "docs/STATUS.md",
   "docs/STANDALONE.md",
+  "docs/FAQ.md",
   "agents/run-attempt.sh",
   "demo/fixtures/patches/att_1.good.patch",
   "demo/fixtures/patches/att_2.partial.patch",

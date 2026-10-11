@@ -27,7 +27,8 @@ Apache-2.0. No private Ontologiql code. Nothing personal goes into a release.
 - Day 10 hydrate-from + architecture: [`DAY10.md`](./DAY10.md)  
 - Day 11 CI + board MCP smoke: [`DAY11.md`](./DAY11.md)  
 - Day 12 status + board trust: [`DAY12.md`](./DAY12.md) · [`docs/STATUS.md`](./docs/STATUS.md)  
-- Day 13 standalone + film preflight: [`DAY13.md`](./DAY13.md) · [`docs/STANDALONE.md`](./docs/STANDALONE.md)
+- Day 13 standalone + film preflight: [`DAY13.md`](./DAY13.md) · [`docs/STANDALONE.md`](./docs/STANDALONE.md)  
+- Day 14 gradual-deploy builder + FAQ: [`DAY14.md`](./DAY14.md) · [`docs/FAQ.md`](./docs/FAQ.md)
 
 ### Run the local demo (real git notes + vitest + dry-run release)
 

@@ -40,7 +40,7 @@ npm run board:hydrate    # terminal B — run demo + POST TaskView (writes resul
 npm run board:hydrate-from   # POST existing result.json without re-running
 ```
 
-Flow overview: [`ARCHITECTURE.md`](./ARCHITECTURE.md). Agent tools: `GET http://127.0.0.1:8787/mcp/tools` · Approval UI: `/approve.html?task=…`
+Flow overview: [`ARCHITECTURE.md`](./ARCHITECTURE.md) · FAQ: [`FAQ.md`](./FAQ.md). Agent tools: `GET http://127.0.0.1:8787/mcp/tools` · Approval UI: `/approve.html?task=…`
 
 Open the printed `/?task=tsk_demo` URL. You should see three attempts, `att_3` blocked, winner `att_1`, task `released`.
 
