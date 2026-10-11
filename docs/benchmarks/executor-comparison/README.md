@@ -74,16 +74,16 @@ LATENCY_ITERS=100 MOCK_DELAY_MS=0 \
 
 ### Latest local run (equal arms, n=100, live Executor v1.6.10)
 
-| Arm                                     |        p50 |        p95 |         p99 |
-| --------------------------------------- | ---------: | ---------: | ----------: |
-| ClawQL execute e2e                      |     7.9 ms |     9.4 ms |     10.8 ms |
-| **ClawQL gateway overhead** (equalized) | **7.4 ms** | **8.8 ms** |  **9.9 ms** |
-| **Executor execute** (equal JSON)       | **3.3 ms** | **6.7 ms** | **17.2 ms** |
-| Direct HTTP mock                        |     0.4 ms |     0.6 ms |      0.8 ms |
+| Arm                                     |        p50 |        p95 |        p99 |
+| --------------------------------------- | ---------: | ---------: | ---------: |
+| ClawQL execute e2e                      |     1.8 ms |     2.7 ms |     4.2 ms |
+| **ClawQL gateway overhead** (equalized) | **1.3 ms** | **2.1 ms** | **3.4 ms** |
+| **Executor execute** (equal JSON)       | **3.0 ms** | **5.5 ms** | **5.9 ms** |
+| Direct HTTP mock                        |     0.4 ms |     0.5 ms |     0.8 ms |
 
-On this host Executor wins p50/p95; ClawQL equalized wins **p99** (9.9 vs 17.2). Do **not** cite the #1519 50–100ms band as measured.
+ClawQL equalized wins **p50 / p95 / p99** on this host (~**2.3×** faster at p50). Risk gates / hooks / audit remain on the path. Do **not** cite the #1519 50–100ms band as measured.
 
-**Hot-path win (TS/Effect):** microbench showed uncached OpenAPI→GraphQL schema build ≈ **5.6 ms** of the residual (REST ≈ **0.55 ms** for the same HTTP). Default `CLAWQL_OPENAPI_EXECUTE_PATH=auto` now prefers **REST** for plain `fields` (nested `{…}` selection still uses Omnigraph; schemas are cached). Re-run the latency harness after that change before citing board-wide wins.
+**How:** microbench pinned uncached OpenAPI→GraphQL schema build at ≈ **5.6 ms** (REST ≈ **0.55 ms**). Default `CLAWQL_OPENAPI_EXECUTE_PATH=auto` prefers **REST** for plain `fields`; nested `{…}` selection still uses Omnigraph with a warm schema cache (~0.01 ms).
 
 **Shareable page:** [clawql.com/benchmarks/executor-comparison/latency.html](https://clawql.com/benchmarks/executor-comparison/latency.html) · `npm run generate:executor-cmp-latency-html`.
 
