@@ -27,12 +27,13 @@
  *     node scripts/benchmarks/gateway-multi-comparison.mjs
  *
  * Env:
- *   MULTI_ARMS=clawql,executor,mcpjungle,agentgateway
+ *   MULTI_ARMS=clawql,clawql_bun,executor,mcpjungle,agentgateway
  *   MULTI_ITERS (default 10000)  MULTI_WARMUP (default 100)
  *   MULTI_CHAOS_MAX (default 32)  MULTI_CHAOS_UNTIL_BREAK=1
  *   MULTI_CHAOS_HARD_MAX (default 1024)  MULTI_CHAOS_STEP_MS (default 3000)
  *   MULTI_BREAK_P99_MS (default 100)  MULTI_BREAK_ERROR_RATE (default 0.02)
  *   MULTI_REFINE=1  MULTI_OUT=gateway-multi-cmp.json
+ *   BUN_BIN (optional; default ~/.bun/bin/bun or PATH)
  *   MCPJUNGLE_BIN  AGENTGATEWAY_BIN  MULTI_INCLUDE_CF=1
  */
 
@@ -105,6 +106,18 @@ const PATH_MATRIX = {
     result_projection: true,
     upstream_http_equal_mock: true,
     catalog_discovery: "search_server_side",
+    js_runtime: "node",
+  },
+  clawql_bun: {
+    auth_capability_gate: true,
+    operation_risk_policy: true,
+    ephemeral_audit_ring: true,
+    output_redaction_hooks: true,
+    result_projection: true,
+    upstream_http_equal_mock: true,
+    catalog_discovery: "search_server_side",
+    js_runtime: "bun",
+    note: "Same ClawQL slim Core binary (dist/server.js); only the JS runtime changes.",
   },
   executor: {
     auth_capability_gate: false,
@@ -408,17 +421,50 @@ function clawqlEnv(home, specPath, apiBase) {
   return clawqlEqualArmEnv({ home, specPath, apiBase });
 }
 
-async function connectClawqlStdio(env) {
-  const transport = new StdioClientTransport({
+function resolveBunBin() {
+  return resolveBin("BUN_BIN", [
+    join(process.env.HOME || "", ".bun/bin/bun"),
+    "/usr/local/bin/bun",
+    "/home/ubuntu/.bun/bin/bun",
+  ]);
+}
+
+function resolveClawqlJsRuntime(runtime = "node") {
+  const server = join(ROOT, "dist", "server.js");
+  if (runtime === "bun") {
+    const bun = resolveBunBin();
+    if (!bun) {
+      throw new Error("clawql_bun requires bun (set BUN_BIN or install to ~/.bun/bin/bun)");
+    }
+    const ver = spawnSync(bun, ["--version"], { encoding: "utf8" }).stdout?.trim() || null;
+    return {
+      runtime: "bun",
+      runtimeVersion: ver,
+      command: bun,
+      args: [server],
+    };
+  }
+  return {
+    runtime: "node",
+    runtimeVersion: process.version,
     command: process.execPath,
-    args: [join(ROOT, "dist", "server.js")],
+    args: [server],
+  };
+}
+
+async function connectClawqlStdio(env, { runtime = "node", name = "multi-clawql" } = {}) {
+  const js = resolveClawqlJsRuntime(runtime);
+  const t0 = performance.now();
+  const transport = new StdioClientTransport({
+    command: js.command,
+    args: js.args,
     cwd: ROOT,
     stderr: "pipe",
     env,
   });
-  const client = new Client({ name: "multi-clawql", version: "1" }, {});
+  const client = new Client({ name, version: "1" }, {});
   const ready = new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("clawql Ready timeout")), 90_000);
+    const timer = setTimeout(() => reject(new Error(`clawql Ready timeout (${js.runtime})`)), 90_000);
     transport.stderr?.on("data", (chunk) => {
       if (chunk.toString().includes("[clawql-mcp] Ready")) {
         clearTimeout(timer);
@@ -428,10 +474,16 @@ async function connectClawqlStdio(env) {
   });
   await client.connect(transport);
   await ready;
+  const readyMs = Number((performance.now() - t0).toFixed(1));
+  const pid = transportPid(transport);
   return {
     client,
     transport,
-    pid: transportPid(transport),
+    pid,
+    ready_ms: readyMs,
+    runtime: js.runtime,
+    runtimeVersion: js.runtimeVersion,
+    rss_mb_ready: pid != null ? readTreeRssMb(pid) : null,
     close: async () => {
       await client.close().catch(() => {});
     },
@@ -588,8 +640,14 @@ async function measureInterleaved(liveArms, mockBaseUrl) {
         model: c.arm.model,
         ok: true,
         version: c.arm.version ?? null,
+        runtime: c.arm.runtime ?? c.conn.runtime ?? null,
+        runtimeVersion: c.arm.runtimeVersion ?? c.conn.runtimeVersion ?? null,
         mcp_url: c.arm.mcpUrl ?? null,
         tool_name: invoked?.name ?? null,
+        startup: {
+          ready_ms: c.conn.ready_ms ?? null,
+          rss_mb_ready: c.conn.rss_mb_ready ?? null,
+        },
         latency: {
           e2e: summarize(series[c.arm.id].e2e),
           direct_http: summarize(direct),
@@ -755,8 +813,10 @@ async function chaosWithRefine(armHooks) {
 
 /* -------------------- arm starters -------------------- */
 
-function makeClawqlLiveArm(mock) {
-  const home = join("/tmp", `multi-clawql-${process.pid}`);
+function makeClawqlLiveArm(mock, { runtime = "node", id = null } = {}) {
+  const js = resolveClawqlJsRuntime(runtime);
+  const armId = id || (runtime === "bun" ? "clawql_bun" : "clawql");
+  const home = join("/tmp", `multi-${armId}-${process.pid}`);
   mkdirSync(home, { recursive: true });
   const env = clawqlEnv(home, mock.specPath, mock.baseUrl);
   const call = async (client) => {
@@ -767,14 +827,17 @@ function makeClawqlLiveArm(mock) {
     if (res.isError) throw new Error(toolText(res));
     return toolText(res);
   };
+  const connect = () => connectClawqlStdio(env, { runtime, name: `multi-${armId}` });
   return {
-    id: "clawql",
-    model: "stdio_mcp_openapi_execute",
+    id: armId,
+    model: `stdio_mcp_openapi_execute_${js.runtime}`,
+    runtime: js.runtime,
+    runtimeVersion: js.runtimeVersion,
     invokedToolName: "execute",
     gatewayCostFromDirect: true,
-    connect: () => connectClawqlStdio(env),
+    connect,
     call,
-    chaosHooks: { id: "clawql", connect: () => connectClawqlStdio(env), call },
+    chaosHooks: { id: armId, connect, call },
   };
 }
 
@@ -1206,6 +1269,10 @@ function boardFromArms(arms) {
       continue;
     }
     rows[id] = {
+      runtime: a.runtime ?? null,
+      runtime_version: a.runtimeVersion ?? null,
+      ready_ms: a.startup?.ready_ms ?? null,
+      rss_mb_ready: a.startup?.rss_mb_ready ?? null,
       latency_e2e_ms: a.latency?.e2e,
       gateway_cost_ms: a.latency?.gateway_cost,
       rss_mb_min: a.resources?.rss_mb?.min ?? null,
@@ -1240,12 +1307,24 @@ async function main() {
     for (const arm of ARMS) {
       console.log(`[multi] prepare ${arm}`);
       try {
-        if (arm === "clawql") {
+        if (arm === "clawql" || arm === "clawql_bun") {
           if (!existsSync(join(ROOT, "dist", "server.js"))) {
-            arms.clawql = { skipped: true, reason: "dist/server.js missing" };
+            arms[arm] = { skipped: true, reason: "dist/server.js missing" };
             continue;
           }
-          live.push(makeClawqlLiveArm(mock));
+          if (arm === "clawql_bun" && !resolveBunBin()) {
+            arms.clawql_bun = {
+              skipped: true,
+              reason: "bun not found (set BUN_BIN or install to ~/.bun/bin/bun)",
+            };
+            continue;
+          }
+          live.push(
+            makeClawqlLiveArm(mock, {
+              runtime: arm === "clawql_bun" ? "bun" : "node",
+              id: arm,
+            })
+          );
         } else if (arm === "executor") {
           if (!process.env.EXECUTOR_BIN?.trim()) {
             arms.executor = { skipped: true, reason: "EXECUTOR_BIN unset" };
@@ -1316,6 +1395,9 @@ async function main() {
       suite: "gateway-multi-comparison",
       measuredAt: new Date().toISOString(),
       node: process.version,
+      bun: resolveBunBin()
+        ? spawnSync(resolveBunBin(), ["--version"], { encoding: "utf8" }).stdout?.trim() || null
+        : null,
       partial,
       topology: TOPOLOGY,
       path_matrix: PATH_MATRIX,
@@ -1347,6 +1429,7 @@ async function main() {
         "Primary token metric: invoked_tool_schema_tokens (not full tools/list).",
         "Chaos: topology A only (single-instance). Claim only vs same topology. MULTI_CHAOS_UNTIL_BREAK pushes past power-of-two ceiling until break.",
         "path_matrix: ClawQL latency includes risk/audit/projection; aggregators do almost none of that.",
+        "clawql_bun: same dist/server.js + equal-arm env as clawql; only the JS runtime binary changes (Node vs Bun).",
         "ContextForge/MetaMCP off publish board by default (nested CF / Docker).",
         "RSS: ClawQL is heaviest serious arm — admit the loss; do not hide under-load median.",
         "Checkpoint writes after latency and after each chaos arm (survives OOM mid-chaos).",
