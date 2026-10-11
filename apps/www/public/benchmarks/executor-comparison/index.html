@@ -21,16 +21,18 @@
     pre { padding: 0.85rem 1rem; overflow: auto; }
     ul { padding-left: 1.2rem; }
     .callout { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; padding: 0.85rem 1rem; border-radius: 8px; margin: 1rem 0; }
+    .warn { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; padding: 0.75rem 1rem; border-radius: 8px; margin: 1rem 0; font-size: 0.95rem; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <p class="meta"><a href="https://clawql.com/">← clawql.com</a> · <a href="https://pragmaticvectors.com/posts/both-sides-of-context-compression/">Both Sides of Context Compression</a></p>
+    <p class="meta"><a href="https://clawql.com/">← clawql.com</a> · <a href="https://pragmaticvectors.com/posts/both-sides-of-context-compression/">Both Sides of Context Compression</a> · <a href="https://docs.clawql.com/benchmarks/executor-comparison">Full methodology (docs)</a></p>
     <h1>Executor.sh comparison (executor-cmp-001)</h1>
     <p class="lead">Side-by-side token comparison against <a href="https://executor.sh/">executor.sh</a> on a GitHub PR list — the benchmark behind the PragmaticVectors post.</p>
     <p class="meta">Tokenizer: <code>cl100k_base</code>. <code>focus=input</code> (model output omitted from headline ratios).</p>
+    <p class="meta"><strong>Provenance:</strong> measured <strong>2026-08-27</strong> · <strong>N=1</strong> (single action) · artifact <code>executor-cmp-001.live.json</code> · ClawQL Layer1 as measured (<strong>394</strong> tok) · Executor live MCP execute-only (<strong>115</strong> tok; package version not recorded in this artifact).</p>
 
-    <h2>Headline numbers (live, <code>vercel/next.js</code>)</h2>
+    <h2>Headline numbers (live, <code>vercel/next.js</code>, N=1)</h2>
     <table>
       <thead><tr><th>Layer</th><th>Executor</th><th>ClawQL</th><th>Notes</th></tr></thead>
       <tbody>
@@ -39,7 +41,15 @@
         <tr><td><strong>Combined</strong></td><td><strong>144,510</strong> (pub L1) / <strong>143,581</strong> (live L1)</td><td><strong>1,301</strong></td><td><strong>111×</strong> / <strong>110×</strong></td></tr>
       </tbody>
     </table>
-    <p>Layer 2 is <strong>100%</strong> of Executor's input and <strong>70%</strong> of ClawQL's on this task.</p>
+    <p>Layer 2 is <strong>100%</strong> of Executor's input and <strong>70%</strong> of ClawQL's on this task. Executor has <strong>no gateway output projection</strong> — measured path returns full REST JSON.</p>
+
+    <div class="warn">
+      <strong>Sample size:</strong> headline is <strong>N=1</strong>.
+      Across N=5: uniform pulls climb <strong>110×→148×</strong>; mixed surfaces land at <strong>66×</strong> at N=5
+      (<a href="https://docs.clawql.com/benchmarks/executor-comparison">methodology</a> · artifacts linked below).
+      <br/><br/>
+      <strong>Results-side cost:</strong> both approaches pay some tokens to shrink results — ClawQL's <code>fields</code>/<code>where</code> args (few tokens, server-enforced) vs any model-authored filter code (output tokens, not guaranteed). Headline uses <code>focus=input</code>; the flamegraph's <em>include outputs</em> toggle shows model-output tokens.
+    </div>
 
     <div class="callout">
       <strong>Live flamegraph (tokens):</strong>
@@ -68,6 +78,7 @@ BENCHMARK_LIVE=1 CMP_GITHUB_REPO=vercel/next.js CMP_PER_PAGE=30 \
 
     <h2>Raw artifacts (repo)</h2>
     <ul>
+      <li><a href="https://docs.clawql.com/benchmarks/executor-comparison">Full methodology (docs.clawql.com)</a></li>
       <li><a href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/executor-comparison/README.md">Methodology README</a></li>
       <li><a href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/executor-comparison/executor-cmp-001.live.json">executor-cmp-001.live.json</a></li>
       <li><a href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/executor-comparison/executor-cmp-002b.uniform-pulls.live.json">Uniform N=5</a></li>
@@ -80,6 +91,7 @@ BENCHMARK_LIVE=1 CMP_GITHUB_REPO=vercel/next.js CMP_PER_PAGE=30 \
       <li><strong>862×</strong> multi-provider workflow — different metric; do not blend into this comparison</li>
       <li>Fixture <strong>953 vs 23</strong> — harness sanity only, not for headlines</li>
       <li>ClawQL <strong>883</strong> / <strong>3,548</strong> — context tiers, not Executor chart parity</li>
+      <li>That Executor provides gateway-layer response projection — it does not (measured full REST pass-through)</li>
     </ul>
   </div>
 </body>

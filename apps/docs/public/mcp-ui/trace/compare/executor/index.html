@@ -48,16 +48,19 @@
 </head>
 <body>
   <div class="fg-wrap" style="max-width:1100px">
-    <p class="fg-nav"><a href="https://docs.clawql.com/mcp/mcp-ui">← MCP UI docs</a> · <a href="https://clawql.com/benchmarks/executor-comparison">Methodology</a> · <a href="https://clawql.com/mcp-ui/trace/compare/executor">canonical URL</a></p>
+    <p class="fg-nav"><a href="https://docs.clawql.com/mcp/mcp-ui">← MCP UI docs</a> · <a href="https://docs.clawql.com/benchmarks/executor-comparison">Methodology</a> · <a href="https://clawql.com/mcp-ui/trace/compare/executor">canonical URL</a></p>
     <h1>Executor.sh vs ClawQL — executor-cmp-001 (live)</h1>
     <p class="fg-meta">Same task · vercel/next.js pulls.list · cl100k_base · Layer 1 tool defs + Layer 2 tool result · focus=input by default</p>
     
     <div class="fg-methodology">
+    <p><strong>Provenance:</strong> measured <strong>2026-08-27</strong> · N=<strong>1</strong> (single action) · artifact <code>docs/benchmarks/executor-comparison/executor-cmp-001.live.json</code> · ClawQL Layer1 as measured (<strong>394</strong> tok search+execute) · Executor live MCP execute-only (<strong>115</strong> tok; package version not recorded in this artifact).</p>
     <p><strong>Layer 1 (tool definitions):</strong> Right column uses <strong>115 tok</strong> from our <em>live</em> Executor MCP install (<code>execute</code> only). <a href="https://executor.sh/">executor.sh</a> publishes <strong>~1,044 tok</strong> for their codemode chart — a different measurement. ClawQL measured <strong>394 tok</strong> (search+execute codemode). <strong>394 is smaller than the published Executor figure, not smaller than live execute-only 115.</strong></p>
-    <p><strong>Layer 2 (tool result):</strong> Layer 2 is <strong>100%</strong> of Executor's input and <strong>70%</strong> of ClawQL's — almost the entire Executor bill is uncacheable tool payload after <code>pulls.list</code>.</p>
+    <p><strong>Layer 2 (tool result):</strong> Layer 2 is <strong>100%</strong> of Executor's input and <strong>70%</strong> of ClawQL's — almost the entire Executor bill is uncacheable tool payload after <code>pulls.list</code>. Executor has <strong>no gateway output projection</strong>; the measured path returns full REST JSON (see <a href="https://pragmaticvectors.com/posts/both-sides-of-context-compression">Both Sides of Context Compression</a>).</p>
+    <p><strong>Sample size:</strong> headline is <strong>N=1</strong>. Across N=5: uniform pulls climb <strong>110×→148×</strong>; mixed surfaces land at <strong>66×</strong> at N=5 (see methodology).</p>
+    <p><strong>Results-side cost:</strong> both approaches pay some tokens to shrink results — ClawQL's <code>fields</code>/<code>where</code> args (few tokens, server-enforced) vs any model-authored filter code (output tokens, not guaranteed). Headline ratios use <code>focus=input</code>; toggle <em>include outputs</em> to see model-output tokens.</p>
     <p class="fg-meta" style="margin:0.5rem 0 0">Matched conditions: cl100k_base · focus=input (default) · executor-cmp-001 live · vercel/next.js</p>
   </div>
-    <div class="fg-callout"><strong>Combined (L1+L2, input only):</strong> Executor <strong>143,581</strong> vs ClawQL <strong>1,301</strong> = <strong>110×</strong> (live Executor L1 115). With Executor's published homepage L1 (~1,044), combined would be <strong>111×</strong> (144,510 vs 1,301). Layer 2 alone: <strong>158×</strong> (143,466 vs 907). Model output omitted — same discipline as the built-in compressed vs fat demos.</div>
+    <div class="fg-callout"><strong>Combined (L1+L2, input only, N=1):</strong> Executor <strong>143,581</strong> vs ClawQL <strong>1,301</strong> = <strong>110×</strong> (live Executor L1 115). With Executor's published homepage L1 (~1,044), combined would be <strong>111×</strong> (144,510 vs 1,301). Layer 2 alone: <strong>158×</strong> (143,466 vs 907). Model output omitted — same discipline as the built-in compressed vs fat demos. <strong>N=5 range:</strong> uniform 110×→148× · mixed →66×.</div>
     <div class="fg-legend"><span><span class="fg-swatch" style="background:#0f766e"></span>Harness prompt</span>
 <span><span class="fg-swatch" style="background:#0369a1"></span>Vault / system-seed</span>
 <span><span class="fg-swatch" style="background:#7c3aed"></span>Tool schema</span>
