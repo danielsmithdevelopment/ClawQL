@@ -21,6 +21,7 @@ Held-out accuracy alone is not enough for `productionTrusted`. Microsoft-style d
   "useSiteId": "search_provider_tool_routing",
   "maxFlipRate": 0.1,
   "families": ["whitespace", "case", "punctuation", "synonym"],
+  "model": "microsoft-decision-1",
   "cases": [
     {
       "caseId": "billing-1",
@@ -39,6 +40,8 @@ Held-out accuracy alone is not enough for `productionTrusted`. Microsoft-style d
   ]
 }
 ```
+
+Optional `model` / `backendId` pins the decide path (e.g. `microsoft-decision-1` → OpenRouter). Response echoes `backendId` / `model`. Missing OpenRouter key → HTTP **503**. This is **measure-only** — it does not set `calibrated` or light held-out `productionTrusted`.
 
 ## Perturbation families (v0.1)
 
@@ -67,7 +70,7 @@ Suite-level `passed` requires every case passed (fail-closed).
 
 v0.1 operator endpoint **reports** pass/fail for CI. Held-out `productionTrusted` in `clawql-core` also requires the flip-rate gate: each case query is perturbed, re-scored via `FastDecisionScorer`, and suite pass needs every case at or under `maxFlipRate` (default `0.1`). Opt out for wiring-only runs: `CLAWQL_FLIP_RATE_GATE=0`.
 
-Fan-out eval may later attach flip-rate as a secondary column before recommending a backend.
+Fan-out `disagreement_mining` may attach flip-rate per disagreed case (`flipRate.model` pins Decision-1 when measuring that remote).
 
 ## Gate caution
 

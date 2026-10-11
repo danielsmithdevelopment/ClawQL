@@ -7,7 +7,12 @@ import { once } from "node:events";
 import { describe, expect, it } from "vitest";
 import express from "express";
 import { createDecisionRouter } from "./router.js";
-import { applyPerturbations, runFlipRate } from "./flip-rate.js";
+import {
+  applyPerturbations,
+  resolveFlipRateBackend,
+  runFlipRate,
+} from "./flip-rate.js";
+import type { OpenAiDecisionCreateRequest, OpenAiDecisionCreateResponse } from "./openai-types.js";
 import type { DecisionRequest, DecisionResponse } from "./service.js";
 
 function closeHttpServer(server: Server): Promise<void> {
@@ -165,15 +170,114 @@ describe("flip-rate gate", () => {
         }),
       });
       expect(res.status).toBe(200);
-      const body = res.body as { object: string; passed: boolean };
+      const body = res.body as { object: string; passed: boolean; backendId: string };
       expect(body.object).toBe("clawql.decision.flip_rate");
       expect(body.passed).toBe(true);
+      expect(body.backendId).toBe("local");
 
       const bad = await httpJson(`http://127.0.0.1:${address.port}/v1/decisions/flip-rate`, {
         method: "POST",
         body: JSON.stringify({ cases: [] }),
       });
       expect(bad.status).toBe(400);
+    } finally {
+      await closeHttpServer(server);
+    }
+  });
+
+  it("resolves microsoft-decision-1 model pin to OpenRouter backend", () => {
+    const backend = resolveFlipRateBackend({
+      cases: [caseBody],
+      model: "microsoft-decision-1",
+    });
+    expect(backend.kind).toBe("openrouter");
+    if (backend.kind === "openrouter") {
+      expect(backend.model).toBe("microsoft/microsoft-decision-1");
+      expect(backend.backendId).toBe("openrouter/microsoft/microsoft-decision-1");
+    }
+  });
+
+  it("pins Decision-1 flip-rate through callOpenRouter (measure-only)", async () => {
+    let calls = 0;
+    const callOpenRouter = async (
+      body: OpenAiDecisionCreateRequest
+    ): Promise<OpenAiDecisionCreateResponse> => {
+      calls += 1;
+      expect(body.model).toBe("microsoft/microsoft-decision-1");
+      expect(body.allow_uncalibrated).toBe(true);
+      return {
+        id: "r",
+        object: "decision",
+        model: "microsoft/microsoft-decision-1",
+        created: 1,
+        answers: [
+          {
+            type: "choice",
+            name: "department",
+            choice: "billing",
+            confidence: 0.9,
+            probabilities: [{ value: "billing", probability: 0.9 }],
+          },
+        ],
+        usage: {
+          input_tokens: 1,
+          output_tokens: 1,
+          total_tokens: 2,
+          input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+          output_tokens_details: { reasoning_tokens: 0 },
+        },
+        calibrated: false,
+        escalated: false,
+        use_site_id: "search_provider_tool_routing",
+        backend_id: "openrouter/microsoft/microsoft-decision-1",
+        trace_id: "t",
+      };
+    };
+
+    const result = await runFlipRate(
+      {
+        cases: [caseBody],
+        model: "microsoft-decision-1",
+        maxFlipRate: 0.1,
+        families: ["synonym"],
+      },
+      {
+        decide: flakyDecide,
+        callOpenRouter,
+        env: { OPENROUTER_API_KEY: "sk-test" },
+      }
+    );
+
+    expect(result.passed).toBe(true);
+    expect(result.backendId).toBe("openrouter/microsoft/microsoft-decision-1");
+    expect(result.model).toBe("microsoft/microsoft-decision-1");
+    expect(result.reports[0]?.baseline).toBe("billing");
+    expect(result.reports[0]?.flips).toBe(0);
+    expect(calls).toBeGreaterThan(1);
+    // Never claim calibration from remote flip-rate.
+    expect(result.object).toBe("clawql.decision.flip_rate");
+  });
+
+  it("POST /decision/flip-rate with Decision-1 pin fails closed without key", async () => {
+    const app = express();
+    app.use(express.json());
+    app.use(createDecisionRouter({ env: {}, decide: stableDecide }));
+    const server = createServer(app);
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("expected port");
+
+    try {
+      const res = await httpJson(`http://127.0.0.1:${address.port}/decision/flip-rate`, {
+        method: "POST",
+        body: JSON.stringify({
+          cases: [caseBody],
+          model: "microsoft-decision-1",
+          families: ["whitespace"],
+        }),
+      });
+      expect(res.status).toBe(503);
     } finally {
       await closeHttpServer(server);
     }

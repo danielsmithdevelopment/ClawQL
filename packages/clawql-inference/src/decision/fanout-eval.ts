@@ -64,6 +64,12 @@ export type FanoutQualityBar = {
 export type FanoutFlipRateAttach = {
   readonly maxFlipRate?: number;
   readonly families?: readonly FlipRateFamily[];
+  /**
+   * Optional decide pin (e.g. `microsoft-decision-1`) so mining measures the
+   * remote under test rather than local Fast Decision.
+   */
+  readonly model?: string;
+  readonly backendId?: string;
 };
 
 export type FanoutEvalRequest = {
@@ -360,9 +366,20 @@ export function parseFanoutEvalBody(body: unknown): FanoutEvalRequest | { error:
         families.push(f as FlipRateFamily);
       }
     }
+    const flipModel =
+      typeof fr.model === "string" && fr.model.trim()
+        ? fr.model.trim()
+        : typeof fr.backendId === "string" && fr.backendId.trim()
+          ? fr.backendId.trim()
+          : undefined;
     flipRate = {
       maxFlipRate: typeof fr.maxFlipRate === "number" ? fr.maxFlipRate : undefined,
       families,
+      model: flipModel,
+      backendId:
+        typeof fr.backendId === "string" && fr.backendId.trim()
+          ? fr.backendId.trim()
+          : undefined,
     };
   }
 
@@ -476,6 +493,8 @@ function attachFlipRateToDisagreements(opts: {
   cases: readonly FanoutEvalCase[];
   flipRate: FanoutFlipRateAttach;
   decide: FlipRateDecideFn;
+  callOpenRouter?: FanoutRemoteFn;
+  env?: NodeJS.ProcessEnv;
   useSiteId?: string;
 }): Effect.Effect<readonly FanoutDisagreement[]> {
   return Effect.gen(function* () {
@@ -500,9 +519,26 @@ function attachFlipRateToDisagreements(opts: {
           useSiteId: opts.useSiteId,
           maxFlipRate: opts.flipRate.maxFlipRate,
           families: opts.flipRate.families,
+          model: opts.flipRate.model,
+          backendId: opts.flipRate.backendId,
         },
         decide: opts.decide,
-      });
+        callOpenRouter: opts.callOpenRouter,
+        env: opts.env,
+      }).pipe(
+        Effect.catch(() =>
+          Effect.succeed({
+            object: "clawql.decision.flip_rate" as const,
+            maxFlipRate: opts.flipRate.maxFlipRate ?? 0.1,
+            families: opts.flipRate.families ?? [],
+            caseCount: 1,
+            passed: false,
+            reports: [],
+            traceId: "flip-rate-attach-error",
+            backendId: "local",
+          })
+        )
+      );
       const caseReport = report.reports[0];
       out.push({
         ...d,
@@ -931,6 +967,8 @@ export function runFanoutEvalDisagreementMining(opts: {
           cases: opts.request.cases,
           flipRate: opts.request.flipRate,
           decide,
+          callOpenRouter,
+          env,
           useSiteId: opts.request.useSiteId,
         })),
       ];
