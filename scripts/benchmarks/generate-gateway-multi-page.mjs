@@ -7,6 +7,11 @@
  * Reads gateway-multi-multiturn-10k.json (+ optional pets Bun boards) and writes:
  *   docs/benchmarks/gateway-multi-comparison/index.html
  *   apps/www/public/benchmarks/gateway-multi-comparison/{index.html,board.json}
+ *
+ * Token model (rebuildable):
+ *   combined = definitions + Σ discovery + Σ results
+ * Direct baseline includes catalog tool definitions (agent still needs them
+ * without a gateway) + fat HTTP results — aggregators match that surface.
  */
 
 import { mkdir, readFile, writeFile, copyFile } from "node:fs/promises";
@@ -25,7 +30,7 @@ const OUT_DOCS = join(DIR, "index.html");
 const OUT_WWW_DIR = join(ROOT, "apps", "www", "public", "benchmarks", "gateway-multi-comparison");
 const OUT_WWW_HTML = join(OUT_WWW_DIR, "index.html");
 const OUT_WWW_JSON = join(OUT_WWW_DIR, "board.json");
-const CANONICAL = "https://clawql.com/benchmarks/gateway-multi-comparison";
+const CANONICAL = "https://clawql.com/benchmarks/gateway-multi-comparison/";
 
 function esc(s) {
   return String(s)
@@ -67,6 +72,14 @@ async function loadJson(path) {
   return JSON.parse(await readFile(path, "utf8"));
 }
 
+function vsDirectLabel(id, b, direct) {
+  if (id === "direct") return "baseline";
+  const delta = b.combined_at_n - direct.combined_at_n;
+  if (Math.abs(delta) < 50) return "matches baseline";
+  if (delta < 0) return `saves ${fmt(-delta)}`;
+  return `+${fmt(delta)}`;
+}
+
 function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun }) {
   const board = mt.board;
   const ratios = mt.ratios_vs_clawql || {};
@@ -74,25 +87,29 @@ function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun }) {
   const direct = board.direct;
   const claw = board.clawql;
   const bun = board.clawql_bun;
-  const measuredAt = mt.mergedAt || mt.measuredAt;
+  const measuredAt = mt.correctedAt || mt.mergedAt || mt.measuredAt;
   const iters = mt.config?.iters ?? 10000;
   const turns = mt.config?.turns ?? 12;
+  const saved = claw && direct ? direct.combined_at_n - claw.combined_at_n : null;
+  const latTax =
+    claw && direct?.flow_e2e_ms?.p50_ms != null
+      ? (claw.flow_e2e_ms.p50_ms - direct.flow_e2e_ms.p50_ms).toFixed(1)
+      : null;
 
-  const tokenRows = ids
+  const breakdownRows = ids
     .map((id) => {
       const b = board[id];
-      const r = ratios[id] || {};
-      const delta = id === "direct" ? 0 : b.combined_at_n - direct.combined_at_n;
-      const deltaLabel =
-        id === "direct" ? "baseline" : delta < 0 ? `saves ${fmt(-delta)}` : `+${fmt(delta)}`;
+      const defs = b.definitions_tokens ?? b.layer1_once_tokens;
+      const disc = b.discovery_tokens_sum ?? 0;
+      const res = b.result_tokens_sum ?? Math.round((b.mean_result_tokens || 0) * turns);
+      const rebuild = b.combined_rebuild ?? defs + disc + res;
+      const ok = rebuild === b.combined_at_n ? "✓" : "≠";
       const hl = id.startsWith("clawql") ? ' class="hl"' : "";
-      return `<tr${hl}><td>${esc(armLabel(id))}</td><td>${fmt(b.layer1_once_tokens)}</td><td>${fmt(
-        b.mean_layer2_tokens,
-        1
-      )}</td><td><strong>${fmt(b.combined_at_n)}</strong></td><td>${fmt(
-        b.mean_result_tokens,
-        1
-      )}</td><td>${esc(deltaLabel)}</td><td>${b.task_success_ok ? "PASS" : "FAIL"}</td></tr>`;
+      return `<tr${hl}><td>${esc(armLabel(id))}</td><td>${fmt(defs)}</td><td>${fmt(
+        disc
+      )}</td><td>${fmt(res)}</td><td><strong>${fmt(b.combined_at_n)}</strong></td><td>${esc(
+        vsDirectLabel(id, b, direct)
+      )}</td><td>${ok}</td></tr>`;
     })
     .join("\n");
 
@@ -134,12 +151,6 @@ function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun }) {
         }
       : null;
 
-  const saved = claw && direct ? direct.combined_at_n - claw.combined_at_n : null;
-  const latTax =
-    claw && direct
-      ? (claw.flow_e2e_ms.p50_ms - direct.flow_e2e_ms.p50_ms).toFixed(1)
-      : null;
-
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -147,7 +158,7 @@ function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun }) {
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Gateway multi-arm comparison · ClawQL</title>
   <link rel="canonical" href="${CANONICAL}"/>
-  <meta name="description" content="Equal-arm MCP gateway board: ClawQL vs MCPJungle, agentgateway, Executor, and a no-gateway direct HTTP baseline — tokens, latency, RSS, and why Bun."/>
+  <meta name="description" content="Equal-arm MCP gateway board: ClawQL vs MCPJungle, agentgateway, Executor, and a no-gateway direct HTTP baseline with catalog definitions — tokens, latency, RSS, and why Bun."/>
   <style>
     :root {
       --ink: #14201c;
@@ -172,7 +183,7 @@ function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun }) {
       font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
       line-height: 1.55;
     }
-    .wrap { max-width: 920px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
     .meta { color: var(--muted); font-size: 0.92rem; font-family: ui-sans-serif, system-ui, sans-serif; }
     .meta a { color: var(--accent); }
     h1 {
@@ -187,18 +198,18 @@ function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun }) {
       letter-spacing: -0.01em;
     }
     h3 { font-size: 1.05rem; margin: 1.4rem 0 0.4rem; font-family: ui-sans-serif, system-ui, sans-serif; }
-    .lead { font-size: 1.15rem; color: #24352f; max-width: 46rem; }
+    .lead { font-size: 1.15rem; color: #24352f; max-width: 48rem; }
     a { color: var(--accent); }
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       margin: 0.75rem 0 1.1rem;
       background: var(--card);
       border: 1px solid var(--line);
       font-family: ui-sans-serif, system-ui, sans-serif;
     }
-    th, td { text-align: left; padding: 0.45rem 0.55rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th, td { text-align: left; padding: 0.45rem 0.5rem; border-bottom: 1px solid var(--line); vertical-align: top; }
     th { background: #f1eee6; font-weight: 650; }
     td:nth-child(n+2), th:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; }
     tr.hl td { background: var(--hl); }
@@ -244,15 +255,22 @@ function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun }) {
     pre { padding: 0.9rem 1rem; overflow: auto; border: 1px solid var(--line); }
     ul { padding-left: 1.2rem; }
     .brand { font-family: ui-sans-serif, system-ui, sans-serif; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.78rem; color: var(--accent); }
+    .eq { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88rem; background: var(--card); border: 1px solid var(--line); padding: 0.75rem 1rem; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <p class="meta"><a href="https://clawql.com/">← clawql.com</a> · <a href="/benchmarks">Benchmarks</a> · <a href="https://pragmaticvectors.com/posts/both-sides-of-context-compression/">Both Sides of Context Compression</a></p>
+    <p class="meta"><a href="https://clawql.com/">← clawql.com</a> · <a href="/benchmarks/">Benchmarks</a> · <a href="https://docs.clawql.com/benchmarks/gateway-multi-comparison">docs mirror</a></p>
     <p class="brand">ClawQL</p>
     <h1>Gateway comparison board</h1>
-    <p class="lead">Equal-arm 12-step inventory workflow across MCP gateways — plus a <strong>no-gateway direct HTTP</strong> baseline so you can see what each gateway saves in tokens and what it costs in latency and memory.</p>
-    <p class="meta">Measured ${esc(measuredAt)} · ${fmt(iters)} flows × ${fmt(turns)} turns/arm · tokenizer <code>cl100k_base</code> · task_success deterministic inventory check</p>
+    <p class="lead">Equal-arm 12-step inventory workflow across MCP gateways — plus a <strong>no-gateway direct HTTP</strong> baseline that still counts <em>catalog tool definitions</em> (an agent calling 40 ops without a gateway still needs them).</p>
+    <p class="meta">Measured ${esc(measuredAt)} · ${fmt(iters)} flows × ${fmt(turns)} turns/arm · tokenizer <code>cl100k_base</code> · task_success deterministic</p>
+
+    <div class="warn">
+      <strong>Deploy status:</strong> this HTML ships in <code>apps/www/public/benchmarks/gateway-multi-comparison/</code>.
+      <code>https://clawql.com/benchmarks/gateway-multi-comparison/</code> stays 404 until the www GitHub Pages deploy that includes this branch merges.
+      Prefer the trailing-slash URL (Next <code>trailingSlash: true</code>). Docs path: <code>docs.clawql.com/benchmarks/gateway-multi-comparison</code> after docs deploy.
+    </div>
 
     <div class="grid">
       <div class="stat"><span>ClawQL tokens @12 vs direct</span><b>${saved != null ? `−${fmt(saved)}` : "—"}</b></div>
@@ -260,35 +278,56 @@ function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun }) {
       <div class="stat"><span>Bun multiturn RSS vs Node</span><b>${
         bun && claw ? `${fmt(bun.rss_mb_median, 0)} / ${fmt(claw.rss_mb_median, 0)} MB` : "—"
       }</b></div>
-      <div class="stat"><span>Classic token lead vs MCPJungle</span><b>${
-        ratios.mcpjungle?.vs_clawql_combined_classic != null
-          ? `${ratios.mcpjungle.vs_clawql_combined_classic}×`
-          : "—"
-      }</b></div>
+      <div class="stat"><span>agentgateway vs direct tokens</span><b>match</b></div>
     </div>
 
     <div class="callout">
       <strong>Publish line:</strong> most efficient <em>governed</em> gateway — fewest multi-turn I/O tokens with equal task success.
-      ClawQL wins tokens by keeping catalog discovery server-side and projecting results (<code>where</code>/<code>fields</code>).
-      Direct HTTP is fastest and has no gateway RSS, but returns fat bodies (and no capability/audit path).
+      ClawQL wins by keeping catalog discovery server-side (<code>search</code>) and projecting results (<code>where</code>/<code>fields</code>).
+      Thin aggregators <strong>match</strong> a fair no-gateway baseline (definitions + fat bodies); they do not invent an extra “schema tax” beyond what any agent needs.
     </div>
 
-    <h2>1. Tokens — what the model pays</h2>
-    <p>Primary metric: <strong>classic</strong> Layer1 once + Σ Layer2 over 12 turns. Direct has Layer1 = 0 (no MCP <code>tools/list</code>) and fat JSON every turn.</p>
+    <h2>1. Tokens — rebuild every total</h2>
+    <p class="eq">combined @12 = <strong>definitions</strong> + <strong>Σ discovery</strong> + <strong>Σ results</strong></p>
+    <ul>
+      <li><strong>Definitions</strong> — tool/OpenAPI schemas once (classic Layer1). Direct uses the same catalog <code>tools/list</code> surface aggregators expose.</li>
+      <li><strong>Discovery</strong> — per-turn search/hit text (ClawQL only; 0 for others).</li>
+      <li><strong>Results</strong> — tool/HTTP response tokens across 12 turns.</li>
+    </ul>
     <table>
       <thead>
         <tr>
-          <th>Arm</th><th>L1 once</th><th>Mean L2</th><th>Combined @12</th><th>Mean result</th><th>vs direct</th><th>Success</th>
+          <th>Arm</th>
+          <th>Definitions</th>
+          <th>Σ Discovery</th>
+          <th>Σ Results</th>
+          <th>Combined @12</th>
+          <th>vs direct</th>
+          <th>Σ=?</th>
         </tr>
       </thead>
       <tbody>
-${tokenRows}
+${breakdownRows}
       </tbody>
     </table>
-    <p class="meta">ClawQL / Bun <strong>save</strong> tokens vs raw HTTP because gateway projection shrinks Layer2. Aggregators <strong>add</strong> a fat schema dump (Layer1) on top of the same fat bodies direct already returns. Executor adds the largest Layer2 (full pass-through code result).</p>
+    <p class="meta">
+      ClawQL check: ${fmt(claw?.definitions_tokens)} + ${fmt(claw?.discovery_tokens_sum)} + ${fmt(
+        claw?.result_tokens_sum
+      )} = <strong>${fmt(claw?.combined_at_n)}</strong>
+      (mean discovery ${fmt(claw?.mean_discovery_tokens, 1)}/turn · mean result ${fmt(
+        claw?.mean_result_tokens,
+        1
+      )}/turn).
+      Direct = ${fmt(direct?.definitions_tokens)} defs + ${fmt(
+        direct?.result_tokens_sum
+      )} fat results = <strong>${fmt(direct?.combined_at_n)}</strong>.
+      agentgateway matches that total; MCPJungle is +${fmt(
+        (board.mcpjungle?.combined_at_n || 0) - (direct?.combined_at_n || 0)
+      )} from a slightly larger wrapped schema dump.
+    </p>
 
     <h2>2. Cost of the gateway — latency &amp; memory</h2>
-    <p>Same 10 000 × 12-turn board. Flow e2e = one full 12-step workflow. RSS is gateway process tree under load (direct has no gateway process).</p>
+    <p>Same 10 000 × 12-turn board. Flow e2e = one full 12-step workflow. Direct has no gateway process RSS (definitions are counted for tokens only).</p>
     <table>
       <thead>
         <tr>
@@ -302,10 +341,12 @@ ${costRows}
 
     <h3>How to read the trade</h3>
     <ul>
-      <li><strong>Direct HTTP</strong> — cheapest latency, zero gateway RSS, fat tokens. No MCP auth/audit/projection.</li>
-      <li><strong>ClawQL</strong> — only arm that <em>reduces</em> tokens vs direct (~${saved != null ? fmt(saved) : "—"} @12) while keeping task success. Pays ~${latTax ?? "—"} ms flow p50 and Node RSS.</li>
-      <li><strong>MCPJungle / agentgateway</strong> — fast multiplexers; they do <em>not</em> shrink payloads, so they cost schema tokens vs direct for little Layer2 benefit.</li>
-      <li><strong>Executor</strong> — smallest Layer1 schema, largest Layer2 (full JSON pass-through); slowest flow p50 here.</li>
+      <li><strong>Direct HTTP</strong> — lowest latency, no gateway RSS; tokens = catalog definitions + fat bodies (fair agent baseline).</li>
+      <li><strong>agentgateway / MCPJungle</strong> — match (or nearly match) that token total; fast multiplexers; they do <em>not</em> shrink Layer2.</li>
+      <li><strong>ClawQL</strong> — only arm that <em>reduces</em> tokens vs the fair baseline (~${
+        saved != null ? fmt(saved) : "—"
+      } @12) via projection; pays discovery tokens + ~${latTax ?? "—"} ms flow p50 and RSS.</li>
+      <li><strong>Executor</strong> — tiny definitions, largest results (full pass-through); slowest flow p50 here.</li>
     </ul>
 
     <h2>3. Why move ClawQL from Node to Bun</h2>
@@ -349,13 +390,12 @@ ${
         }</td><td>not a Bun win</td></tr>
       </tbody>
     </table>`
-    : "    <p class=\"meta\">Pets Bun boards not found beside this artifact — see repo <code>gateway-multi-cmp-ts7-*-10k.json</code>.</p>"
+    : "    <p class=\"meta\">Pets Bun boards not found beside this artifact.</p>"
 }
     <div class="warn">
       <strong>Bun is the low-pain lever, not the endgame.</strong>
       It keeps the Effect/TS governed path and buys ~¼ less Ready RSS and much better multiturn RSS/p50.
       It does <em>not</em> reach MCPJungle-class memory or beat Node on every chaos/p999 sample.
-      A Rust rewrite would hurt more and might close more of the native gap later — Bun is the optional runtime track now.
     </div>
 
     <h2>Reproduce</h2>
@@ -370,18 +410,18 @@ npm run generate:gateway-multi-page</pre>
 
     <h2>Raw artifacts</h2>
     <ul>
-      <li><a href="./gateway-multi-multiturn-10k.json">gateway-multi-multiturn-10k.json</a> — this board</li>
+      <li><a href="./gateway-multi-multiturn-10k.json">gateway-multi-multiturn-10k.json</a></li>
       <li><a href="./gateway-multi-cmp-ts7-node-10k.json">ts7 Node pets 10k</a> · <a href="./gateway-multi-cmp-ts7-bun-10k.json">ts7 Bun pets 10k</a></li>
-      <li><a href="./gateway-multi-cmp-ts7-node-chaos.json">ts7 Node chaos</a> · <a href="./gateway-multi-cmp-ts7-bun-chaos.json">ts7 Bun chaos</a></li>
       <li><a href="./README.md">Methodology README</a></li>
     </ul>
 
     <h2>What not to claim</h2>
     <ul>
-      <li>Do not mix this topology-A stdio/HTTP board with NATS 4-replica concurrency ceilings.</li>
-      <li>Do not call a hand-written slim-return program “Executor” — live Executor is full pass-through.</li>
-      <li>Do not hide ClawQL RSS — admit the memory loss; Bun shrinks it, Go-thin proxies still win RAM.</li>
-      <li>Token wins require <code>task_success</code> — projection must keep the facts the agent needs.</li>
+      <li>Do not say aggregators add a “schema tax” vs a zero-definition baseline — that baseline was unfair.</li>
+      <li>Do not link <code>clawql.com/benchmarks/…</code> until www Pages deploy includes this folder.</li>
+      <li>Do not mix topology-A ceilings with NATS 4-replica concurrency.</li>
+      <li>Do not hide ClawQL RSS; Bun shrinks it, Go-thin proxies still win RAM.</li>
+      <li>Token wins require <code>task_success</code>.</li>
     </ul>
     <p class="meta">Host-bound numbers; re-run on a dedicated bench host before external publish.</p>
   </div>
@@ -393,8 +433,11 @@ npm run generate:gateway-multi-page</pre>
 async function main() {
   const mt = await loadJson(MT_JSON);
   if (!mt?.board) throw new Error(`missing board in ${MT_JSON}`);
-  if (!mt.board.direct) {
-    console.warn("warning: board has no `direct` arm — page will omit baseline savings");
+  if (!mt.board.direct) throw new Error("board missing direct arm");
+  if (!(mt.board.direct.definitions_tokens > 0)) {
+    throw new Error(
+      "direct.definitions_tokens must be > 0 (catalog definitions). Re-measure or patch board JSON."
+    );
   }
   const petsNode = await loadJson(PETS_NODE);
   const petsBun = await loadJson(PETS_BUN);
@@ -405,7 +448,6 @@ async function main() {
   await mkdir(OUT_WWW_DIR, { recursive: true });
   await writeFile(OUT_WWW_HTML, html);
   await writeFile(OUT_WWW_JSON, JSON.stringify(mt, null, 2));
-  // Copy key JSON siblings for relative links from www public
   for (const name of [
     "gateway-multi-multiturn-10k.json",
     "gateway-multi-cmp-ts7-node-10k.json",
@@ -419,7 +461,11 @@ async function main() {
   }
   console.log(`wrote ${OUT_DOCS}`);
   console.log(`wrote ${OUT_WWW_HTML}`);
-  console.log(`wrote ${OUT_WWW_JSON}`);
+  console.log(
+    `direct=${mt.board.direct.combined_at_n} clawql_saved=${
+      mt.board.direct.combined_at_n - mt.board.clawql.combined_at_n
+    }`
+  );
 }
 
 main().catch((e) => {

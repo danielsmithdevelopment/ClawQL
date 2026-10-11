@@ -14,7 +14,8 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`gateway-multi-cmp-ts7-bun-chaos.json`](./gateway-multi-cmp-ts7-bun-chaos.json) | **TS7 + Bun** chaos until-break |
 | [`gateway-multi-multiturn.json`](./gateway-multi-multiturn.json) | **12-turn I/O tokens + task success** on a fat catalog |
 | [`gateway-multi-multiturn-24.json`](./gateway-multi-multiturn-24.json) | Same board at N=24 (compounding check) |
-| [`gateway-multi-multiturn-10k.json`](./gateway-multi-multiturn-10k.json) | **10 000 × 12-turn** flows — tokens + latency + RSS + task_success |
+| [`gateway-multi-multiturn-10k.json`](./gateway-multi-multiturn-10k.json) | **10 000 × 12-turn** flows — tokens + latency + RSS + task_success (+ **direct** baseline) |
+| [`index.html`](./index.html) | Dedicated comparison page (competitors, Bun rationale, vs direct) |
 
 ---
 
@@ -138,27 +139,44 @@ MULTI_ITERS=100 MULTI_SKIP_CHAOS=0 MULTI_CHAOS_UNTIL_BREAK=1 MULTI_CHAOS_MAX=512
 
 ---
 
+## Dedicated page
+
+Shareable board (competitors + fair direct baseline + Bun rationale):
+
+- [`index.html`](./index.html) · ships under `apps/www/public/benchmarks/gateway-multi-comparison/` (live at [clawql.com/benchmarks/gateway-multi-comparison/](https://clawql.com/benchmarks/gateway-multi-comparison/) after www Pages deploy merges; prefer trailing slash)
+- Docs mirror: `docs.clawql.com/benchmarks/gateway-multi-comparison` after docs deploy
+- Regenerate: `npm run generate:gateway-multi-page`
+
+**Do not link the marketing/docs URLs until deploy is confirmed** — both currently 404 until this branch’s www/docs publish lands.
+
 ## 12-step multiturn × 10 000 flows (tokens + latency + RSS)
 
-Equal-arm fat catalog (40 tools). Each arm completes **10 000** full **12-turn** flows on one warm connection. Tokens from flow 1 (deterministic); latency/RSS/task_success over all 120 000 turns/arm.
+Equal-arm fat catalog (40 tools). Each arm completes **10 000** full **12-turn** flows on one warm connection. Tokens from flow 1 (deterministic); latency/RSS/task_success over all turns/arm.
 
-Artifact: [`gateway-multi-multiturn-10k.json`](./gateway-multi-multiturn-10k.json) (smoke: [`gateway-multi-multiturn-iters20-smoke.json`](./gateway-multi-multiturn-iters20-smoke.json)).
+**Token model (rebuildable):** `combined @12 = definitions + Σ discovery + Σ results`.
 
-| Arm | L1 once | Mean L2 | Combined @12 | Mean result | Flow e2e p50 / **p999** (ms) | Turn p50 / **p999** | RSS med MB | Task success |
+**`direct`** = no MCP gateway — raw HTTP fat bodies **plus** catalog tool definitions once (same `tools/list` surface aggregators expose). An agent calling 40 ops without a gateway still needs those schemas in context. Latency/RSS remain “no gateway process.”
+
+Artifact: [`gateway-multi-multiturn-10k.json`](./gateway-multi-multiturn-10k.json) (smoke: [`gateway-multi-multiturn-direct-defs-smoke.json`](./gateway-multi-multiturn-direct-defs-smoke.json)).
+
+| Arm | Definitions | Σ Discovery | Σ Results | Combined @12 | vs direct | Flow e2e p50 / **p999** (ms) | RSS med MB | Task success |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| **ClawQL (Node)** | **297** | **1687** | **20 539** | **723** | 18.2 / 56.8 | 1.38 / 5.14 | 678 | **PASS** (1.0) |
-| **ClawQL (Bun)** | **297** | **1687** | **20 539** | **723** | **15.0 / 35.0** | **1.12 / 4.82** | **337** | **PASS** (1.0) |
-| Executor | 90 | 4465 | 53 668 (2.61×) | 4465 | 64.4 / 106.6 | 5.03 / 16.98 | 213 | **PASS** (1.0) |
-| MCPJungle | 5840 | 2457 | 35 322 (1.72×) | 2457 | 15.4 / 135.0 | 1.18 / 3.84 | **153** | **PASS** (1.0) |
-| agentgateway | 5520 | 2457 | 35 002 (1.70×) | 2457 | **13.6** / 330.9 | **1.01** / 3.54 | 214 | **PASS** (1.0) |
+| Direct HTTP | 5 520 | 0 | 29 482 | **35 002** | baseline | **2.2 / 9.4** | — | **PASS** |
+| **ClawQL (Node)** | **297** | **11 568** | **8 674** | **20 539** | **−14 463** | 18.2 / 56.8 | 678 | **PASS** |
+| **ClawQL (Bun)** | **297** | **11 568** | **8 674** | **20 539** | **−14 463** | **15.0 / 35.0** | **337** | **PASS** |
+| Executor | 90 | 0 | 53 578 | 53 668 | +18 666 | 64.4 / 106.6 | 213 | **PASS** |
+| MCPJungle | 5 840 | 0 | 29 482 | 35 322 | +320 | 15.4 / 135.0 | **153** | **PASS** |
+| agentgateway | 5 520 | 0 | 29 482 | **35 002** | **match** | **13.6** / 330.9 | 214 | **PASS** |
 
-Primary publish column remains **classic tokens @12 with task_success**. Bun matches Node tokens; wins flow/turn latency and cuts multiturn RSS ~50% vs Node on this board. Aggregators still win raw RSS; ClawQL still wins I/O tokens.
+ClawQL check: 297 + 11 568 + 8 674 = **20 539** (mean discovery 964/turn · mean result 723/turn). Aggregators **match** (or nearly match) the fair baseline — they do **not** add a separate “schema tax” beyond the definitions any agent needs. ClawQL is the only arm that **reduces** tokens vs that baseline (~14.5k @12) via projection. Bun keeps token wins and cuts Node multiturn RSS ~50%.
 
 ```bash
 MT_TURNS=12 MT_ITERS=10000 CATALOG_TOOL_COUNT=40 \
-  MT_ARMS=clawql,clawql_bun,executor,mcpjungle,agentgateway \
+  MT_ARMS=direct,clawql,clawql_bun,executor,mcpjungle,agentgateway \
   MT_OUT=gateway-multi-multiturn-10k.json \
   npm run benchmark:gateway-multi-multiturn
+
+npm run generate:gateway-multi-page
 ```
 
 ## Category win — 12-turn I/O tokens (fat catalog)

@@ -1,0 +1,680 @@
+{
+  "suite": "gateway-multi-multiturn",
+  "measuredAt": "2026-10-11T20:55:09.441Z",
+  "node": "v22.14.0",
+  "bun": "1.4.3",
+  "config": {
+    "turns": 12,
+    "iters": 5,
+    "catalog_tool_count": 40,
+    "limit": 25,
+    "where": "items",
+    "fields": [
+      "id",
+      "name",
+      "status"
+    ],
+    "arms": [
+      "direct"
+    ],
+    "tokenizer": "cl100k_base",
+    "progress_every": 5
+  },
+  "equal_arm": {
+    "fat_result_tokens_partition_1": 2411,
+    "slim_fields_tokens_partition_1": 353,
+    "projection_ratio": 6.83,
+    "note": "Same underlying rows; ClawQL where+fields project to {id,name,status}; Executor/aggregators return full envelope (Executor: no gateway projection — settled)"
+  },
+  "board": {
+    "direct": {
+      "runtime": null,
+      "runtime_version": null,
+      "ready_ms": null,
+      "rss_mb_ready": null,
+      "rss_mb_min": null,
+      "rss_mb_median": null,
+      "rss_mb_max": null,
+      "definitions_tokens": 5520,
+      "discovery_tokens_sum": 0,
+      "mean_discovery_tokens": 0,
+      "result_tokens_sum": 29482,
+      "mean_result_tokens": 2456.8,
+      "layer1_once_tokens": 5520,
+      "mean_layer2_tokens": 2456.8,
+      "combined_at_n": 35002,
+      "combined_rebuild": 35002,
+      "combined_relist_every_turn_at_n": 29482,
+      "flows": 5,
+      "turns_per_flow": 12,
+      "total_turns": 60,
+      "flow_e2e_ms": {
+        "n": 5,
+        "p50_ms": 7.656,
+        "p95_ms": 183.334,
+        "p99_ms": 183.334,
+        "p999_ms": 183.334,
+        "mean_ms": 42.88,
+        "min_ms": 7.14,
+        "max_ms": 183.334
+      },
+      "turn_latency_ms": {
+        "n": 60,
+        "p50_ms": 0.551,
+        "p95_ms": 2.115,
+        "p99_ms": 14.1,
+        "p999_ms": 14.1,
+        "mean_ms": 1.005,
+        "min_ms": 0.479,
+        "max_ms": 14.1
+      },
+      "call_errors": 0,
+      "task_success_ok": true,
+      "task_success_rate": 1
+    }
+  },
+  "ratios_vs_clawql": {
+    "baseline": "direct"
+  },
+  "task_success": {
+    "direct": {
+      "turns_ok": 60,
+      "turns_total": 60,
+      "flows": 5,
+      "turns_per_flow": 12,
+      "ok": true,
+      "rate": 1
+    }
+  },
+  "cumulative_table": {
+    "direct": [
+      {
+        "n": 1,
+        "combined": 7931,
+        "layer2Cumulative": 2411
+      },
+      {
+        "n": 2,
+        "combined": 10392,
+        "layer2Cumulative": 4872
+      },
+      {
+        "n": 3,
+        "combined": 12853,
+        "layer2Cumulative": 7333
+      },
+      {
+        "n": 4,
+        "combined": 15314,
+        "layer2Cumulative": 9794
+      },
+      {
+        "n": 5,
+        "combined": 17775,
+        "layer2Cumulative": 12255
+      },
+      {
+        "n": 6,
+        "combined": 20236,
+        "layer2Cumulative": 14716
+      },
+      {
+        "n": 7,
+        "combined": 22697,
+        "layer2Cumulative": 17177
+      },
+      {
+        "n": 8,
+        "combined": 25158,
+        "layer2Cumulative": 19638
+      },
+      {
+        "n": 9,
+        "combined": 27619,
+        "layer2Cumulative": 22099
+      },
+      {
+        "n": 10,
+        "combined": 30080,
+        "layer2Cumulative": 24560
+      },
+      {
+        "n": 11,
+        "combined": 32541,
+        "layer2Cumulative": 27021
+      },
+      {
+        "n": 12,
+        "combined": 35002,
+        "layer2Cumulative": 29482
+      }
+    ]
+  },
+  "arms": {
+    "direct": {
+      "id": "direct",
+      "model": "raw_http_catalog_fat_plus_definitions",
+      "runtime": null,
+      "runtimeVersion": null,
+      "layer1": {
+        "once_schema_tokens": 5520,
+        "tools_count": 40,
+        "note": "Catalog tool definitions once (same surface as aggregator tools/list). Agent calling 40 ops without a gateway still needs these in context. Hot path is raw HTTP — no gateway RSS."
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "GET /catalog/001",
+          "search_tokens": 0,
+          "result_tokens": 2411,
+          "result_chars": 7655,
+          "layer2_classic": 2411,
+          "layer2_relist_every_turn": 2411,
+          "latency_ms": 14.1,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway — fat HTTP body; definitions counted once as catalog tools/list"
+        },
+        {
+          "n": 2,
+          "tool": "GET /catalog/002",
+          "search_tokens": 0,
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 2.993,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway — fat HTTP body; definitions counted once as catalog tools/list"
+        },
+        {
+          "n": 3,
+          "tool": "GET /catalog/003",
+          "search_tokens": 0,
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 2.115,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway — fat HTTP body; definitions counted once as catalog tools/list"
+        },
+        {
+          "n": 4,
+          "tool": "GET /catalog/004",
+          "search_tokens": 0,
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 1.277,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway — fat HTTP body; definitions counted once as catalog tools/list"
+        },
+        {
+          "n": 5,
+          "tool": "GET /catalog/005",
+          "search_tokens": 0,
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 1.701,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway — fat HTTP body; definitions counted once as catalog tools/list"
+        },
+        {
+          "n": 6,
+          "tool": "GET /catalog/006",
+          "search_tokens": 0,
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 1.271,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway — fat HTTP body; definitions counted once as catalog tools/list"
+        },
+        {
+          "n": 7,
+          "tool": "GET /catalog/007",
+          "search_tokens": 0,
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 1.871,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway — fat HTTP body; definitions counted once as catalog tools/list"
+        },
+        {
+          "n": 8,
+          "tool": "GET /catalog/008",
+          "search_tokens": 0,
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 1.169,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway — fat HTTP body; definitions counted once as catalog tools/list"
+        },
+        {
+          "n": 9,
+          "tool": "GET /catalog/009",
+          "search_tokens": 0,
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 2.837,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway — fat HTTP body; definitions counted once as catalog tools/list"
+        },
+        {
+          "n": 10,
+          "tool": "GET /catalog/010",
+          "search_tokens": 0,
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 1.438,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway — fat HTTP body; definitions counted once as catalog tools/list"
+        },
+        {
+          "n": 11,
+          "tool": "GET /catalog/011",
+          "search_tokens": 0,
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 1.573,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway — fat HTTP body; definitions counted once as catalog tools/list"
+        },
+        {
+          "n": 12,
+          "tool": "GET /catalog/012",
+          "search_tokens": 0,
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 1.135,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway — fat HTTP body; definitions counted once as catalog tools/list"
+        }
+      ],
+      "iters": 5,
+      "call_errors": 0,
+      "task_success_agg": {
+        "ok": 60,
+        "total": 60
+      },
+      "resources": {
+        "label": "direct",
+        "pid": null,
+        "n": 0,
+        "rss_mb": {
+          "min": null,
+          "median": null,
+          "max": null
+        }
+      },
+      "startup": {
+        "ready_ms": null,
+        "rss_mb_ready": null
+      },
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2411,
+          "layer2Cumulative": 2411,
+          "combined": 7931,
+          "layer2ShareOfCombined": 30.4
+        },
+        {
+          "n": 2,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 4872,
+          "combined": 10392,
+          "layer2ShareOfCombined": 46.9
+        },
+        {
+          "n": 3,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 7333,
+          "combined": 12853,
+          "layer2ShareOfCombined": 57.1
+        },
+        {
+          "n": 4,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 9794,
+          "combined": 15314,
+          "layer2ShareOfCombined": 64
+        },
+        {
+          "n": 5,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 12255,
+          "combined": 17775,
+          "layer2ShareOfCombined": 68.9
+        },
+        {
+          "n": 6,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 14716,
+          "combined": 20236,
+          "layer2ShareOfCombined": 72.7
+        },
+        {
+          "n": 7,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 17177,
+          "combined": 22697,
+          "layer2ShareOfCombined": 75.7
+        },
+        {
+          "n": 8,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 19638,
+          "combined": 25158,
+          "layer2ShareOfCombined": 78.1
+        },
+        {
+          "n": 9,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 22099,
+          "combined": 27619,
+          "layer2ShareOfCombined": 80
+        },
+        {
+          "n": 10,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 24560,
+          "combined": 30080,
+          "layer2ShareOfCombined": 81.6
+        },
+        {
+          "n": 11,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 27021,
+          "combined": 32541,
+          "layer2ShareOfCombined": 83
+        },
+        {
+          "n": 12,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 29482,
+          "combined": 35002,
+          "layer2ShareOfCombined": 84.2
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2411,
+          "layer2Cumulative": 2411,
+          "combined": 2411,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 4872,
+          "combined": 4872,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 7333,
+          "combined": 7333,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 9794,
+          "combined": 9794,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 12255,
+          "combined": 12255,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 14716,
+          "combined": 14716,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 17177,
+          "combined": 17177,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 19638,
+          "combined": 19638,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 22099,
+          "combined": 22099,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 24560,
+          "combined": 24560,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 27021,
+          "combined": 27021,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 29482,
+          "combined": 29482,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 60,
+        "turns_total": 60,
+        "flows": 5,
+        "turns_per_flow": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "runtime": null,
+        "runtime_version": null,
+        "ready_ms": null,
+        "rss_mb_ready": null,
+        "rss_mb_min": null,
+        "rss_mb_median": null,
+        "rss_mb_max": null,
+        "definitions_tokens": 5520,
+        "discovery_tokens_sum": 0,
+        "mean_discovery_tokens": 0,
+        "result_tokens_sum": 29482,
+        "mean_result_tokens": 2456.8,
+        "layer1_once_tokens": 5520,
+        "mean_layer2_tokens": 2456.8,
+        "combined_at_n": 35002,
+        "combined_rebuild": 35002,
+        "combined_relist_every_turn_at_n": 29482,
+        "flows": 5,
+        "turns_per_flow": 12,
+        "total_turns": 60,
+        "flow_e2e_ms": {
+          "n": 5,
+          "p50_ms": 7.656,
+          "p95_ms": 183.334,
+          "p99_ms": 183.334,
+          "p999_ms": 183.334,
+          "mean_ms": 42.88,
+          "min_ms": 7.14,
+          "max_ms": 183.334
+        },
+        "turn_latency_ms": {
+          "n": 60,
+          "p50_ms": 0.551,
+          "p95_ms": 2.115,
+          "p99_ms": 14.1,
+          "p999_ms": 14.1,
+          "mean_ms": 1.005,
+          "min_ms": 0.479,
+          "max_ms": 14.1
+        },
+        "call_errors": 0,
+        "task_success_ok": true,
+        "task_success_rate": 1
+      }
+    }
+  },
+  "errors": {},
+  "category_win": [
+    "Category story: most efficient governed gateway — multi-turn I/O tokens with equal task success.",
+    "1. Primary model — classic Layer1 once + Σ Layer2 (clients that cache tools/list).",
+    "2. Input side — ClawQL Layer1 is search+execute only; aggregators pay the full fat tools/list once.",
+    "3. Output side — ClawQL gateway fields/where projection; Executor measured path is full payload pass-through.",
+    "4. Re-list-every-turn is secondary sensitivity only (most clients cache; lazy clients shrink aggregators further).",
+    "5. Settled: do not label a hand-written slim-return program as Executor (Both Sides of Context Compression).",
+    "RSS is a loss among serious arms — admit or fix before memory claims."
+  ],
+  "primary_metric": "classic_layer1_once_plus_sum_layer2_with_task_success",
+  "secondary_metric": "tools_list_every_turn_sensitivity",
+  "honesty": [
+    "Fat catalog equal-arm: N MCP tools mirrored as N OpenAPI operationIds.",
+    "PRIMARY tokens: classic Layer1_once + sum(Layer2) with deterministic task_success (tokens from flow 1; spot-stable).",
+    "MT_ITERS=5: each arm completes that many full 12-turn flows on one warm connection.",
+    "Also reports flow e2e + per-turn latency percentiles and RSS (do not drop these for publish).",
+    "direct: no MCP gateway — raw HTTP fat catalog; Layer1=0. Prices token savings vs latency/RSS tax of each gateway.",
+    "SECONDARY: tools_list_every_turn — measured once on flow 1; most clients cache ListTools.",
+    "Executor Layer2 is fat JSON — matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
+    "Do not publish a hand-written slim-return program as Executor.",
+    "clawql_bun: same dist/server.js as clawql; only JS runtime changes.",
+    "ContextForge/MetaMCP off publish board by default.",
+    "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",
+    "RSS is a loss among serious arms — admit plainly."
+  ]
+}

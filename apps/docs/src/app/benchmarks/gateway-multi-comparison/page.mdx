@@ -1,23 +1,27 @@
 # Gateway multi-arm comparison
 
-Equal-arm **12-step** inventory workflow across MCP gateways — plus a **no-gateway direct HTTP** baseline so you can see what each gateway saves in tokens and what it costs in latency and memory. {{ className: 'lead' }}
+Equal-arm **12-step** inventory workflow across MCP gateways — plus a **no-gateway direct HTTP** baseline that still counts **catalog tool definitions** (an agent calling 40 ops without a gateway still needs them). {{ className: 'lead' }}
 
-The shareable board (tables, Bun rationale, reproduce commands) lives on the static page:
+The shareable board (rebuildable token breakdown, Bun rationale, reproduce commands) lives on the static page after www deploy:
 
-**[clawql.com/benchmarks/gateway-multi-comparison](https://clawql.com/benchmarks/gateway-multi-comparison)** · local mirror under `apps/www/public/benchmarks/gateway-multi-comparison/`.
+**[clawql.com/benchmarks/gateway-multi-comparison/](https://clawql.com/benchmarks/gateway-multi-comparison/)** · local mirror under `apps/www/public/benchmarks/gateway-multi-comparison/`.
+
+> **Deploy note:** marketing and docs URLs stay 404 until the www/docs publish that includes this folder merges. Prefer the trailing-slash marketing URL (`trailingSlash: true`). Confirm both are live before linking externally.
 
 ## Headline (10 000 × 12 turns)
 
-| Arm | Combined tokens @12 | vs direct | Flow e2e p50 | RSS med |
-| --- | ---: | ---: | ---: | ---: |
-| Direct HTTP (no MCP) | 29 482 | baseline | **2.2 ms** | — |
-| **ClawQL (Bun)** | **20 539** | **−8 943** | 15.0 ms | 337 MB |
-| **ClawQL (Node)** | **20 539** | **−8 943** | 18.2 ms | 678 MB |
-| MCPJungle | 35 322 | +5 840 | 15.4 ms | **153 MB** |
-| agentgateway | 35 002 | +5 520 | 13.6 ms | 214 MB |
-| Executor | 53 668 | +24 186 | 64.4 ms | 213 MB |
+`combined = definitions + Σ discovery + Σ results`
 
-ClawQL is the only measured gateway that **reduces** tokens vs raw HTTP (projection + server-side discovery). Aggregators add a fat `tools/list` on top of the same fat bodies. Bun keeps those token wins and cuts Node’s multiturn RSS/p50 tax.
+| Arm | Definitions | Σ Discovery | Σ Results | Combined @12 | vs direct | Flow e2e p50 | RSS med |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Direct HTTP (no MCP) | 5 520 | 0 | 29 482 | **35 002** | baseline | **2.2 ms** | — |
+| **ClawQL (Bun)** | **297** | **11 568** | **8 674** | **20 539** | **−14 463** | 15.0 ms | 337 MB |
+| **ClawQL (Node)** | **297** | **11 568** | **8 674** | **20 539** | **−14 463** | 18.2 ms | 678 MB |
+| agentgateway | 5 520 | 0 | 29 482 | **35 002** | **match** | 13.6 ms | 214 MB |
+| MCPJungle | 5 840 | 0 | 29 482 | 35 322 | +320 | 15.4 ms | **153 MB** |
+| Executor | 90 | 0 | 53 578 | 53 668 | +18 666 | 64.4 ms | 213 MB |
+
+ClawQL is the only measured gateway that **reduces** tokens vs a fair no-gateway baseline (projection + server-side discovery). Thin aggregators **match** that baseline — they do not invent an extra “schema tax.” Bun keeps those token wins and cuts Node’s multiturn RSS/p50 tax.
 
 ## Why Bun
 

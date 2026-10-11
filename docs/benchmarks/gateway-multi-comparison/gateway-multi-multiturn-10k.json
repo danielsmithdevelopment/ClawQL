@@ -40,10 +40,10 @@
       "rss_mb_min": null,
       "rss_mb_median": null,
       "rss_mb_max": null,
-      "layer1_once_tokens": 0,
+      "layer1_once_tokens": 5520,
       "mean_layer2_tokens": 2456.8,
       "mean_result_tokens": 2456.8,
-      "combined_at_n": 29482,
+      "combined_at_n": 35002,
       "combined_relist_every_turn_at_n": 29482,
       "flows": 10000,
       "turns_per_flow": 12,
@@ -70,7 +70,12 @@
       },
       "call_errors": 0,
       "task_success_ok": true,
-      "task_success_rate": 1
+      "task_success_rate": 1,
+      "definitions_tokens": 5520,
+      "discovery_tokens_sum": 0,
+      "mean_discovery_tokens": 0.0,
+      "result_tokens_sum": 29482,
+      "combined_rebuild": 35002
     },
     "clawql": {
       "runtime": "node",
@@ -110,7 +115,12 @@
       },
       "call_errors": 0,
       "task_success_ok": true,
-      "task_success_rate": 1
+      "task_success_rate": 1,
+      "definitions_tokens": 297,
+      "discovery_tokens_sum": 11568,
+      "mean_discovery_tokens": 964.0,
+      "result_tokens_sum": 8674,
+      "combined_rebuild": 20539
     },
     "clawql_bun": {
       "runtime": "bun",
@@ -150,7 +160,12 @@
       },
       "call_errors": 0,
       "task_success_ok": true,
-      "task_success_rate": 1
+      "task_success_rate": 1,
+      "definitions_tokens": 297,
+      "discovery_tokens_sum": 11568,
+      "mean_discovery_tokens": 964.0,
+      "result_tokens_sum": 8674,
+      "combined_rebuild": 20539
     },
     "executor": {
       "runtime": null,
@@ -190,7 +205,12 @@
       },
       "call_errors": 0,
       "task_success_ok": true,
-      "task_success_rate": 1
+      "task_success_rate": 1,
+      "definitions_tokens": 90,
+      "discovery_tokens_sum": 0,
+      "mean_discovery_tokens": 0.0,
+      "result_tokens_sum": 53578,
+      "combined_rebuild": 53668
     },
     "mcpjungle": {
       "runtime": null,
@@ -230,7 +250,12 @@
       },
       "call_errors": 0,
       "task_success_ok": true,
-      "task_success_rate": 1
+      "task_success_rate": 1,
+      "definitions_tokens": 5840,
+      "discovery_tokens_sum": 0,
+      "mean_discovery_tokens": 0.0,
+      "result_tokens_sum": 29482,
+      "combined_rebuild": 35322
     },
     "agentgateway": {
       "runtime": null,
@@ -270,75 +295,112 @@
       },
       "call_errors": 0,
       "task_success_ok": true,
-      "task_success_rate": 1
+      "task_success_rate": 1,
+      "definitions_tokens": 5520,
+      "discovery_tokens_sum": 0,
+      "mean_discovery_tokens": 0.0,
+      "result_tokens_sum": 29482,
+      "combined_rebuild": 35002
     }
   },
   "ratios_vs_clawql": {
     "baseline": "clawql",
     "direct": {
-      "vs_clawql_combined_classic": 1.44,
-      "vs_clawql_mean_result": 3.4,
-      "vs_clawql_flow_e2e_p50": 0.12,
-      "vs_direct_combined_classic": 1.0,
-      "token_delta_vs_direct": 0,
-      "flow_e2e_p50_delta_ms_vs_direct": 0
-    },
-    "clawql_bun": {
-      "vs_clawql_combined_classic": 1.0,
-      "vs_clawql_mean_result": 1.0,
-      "vs_clawql_flow_e2e_p50": 0.82,
-      "vs_direct_combined_classic": 0.7,
-      "token_delta_vs_direct": -8943,
-      "tokens_saved_vs_direct": 8943,
-      "tokens_added_vs_direct": 0,
-      "flow_e2e_p50_delta_ms_vs_direct": 12.841,
-      "flow_e2e_p50_ratio_vs_direct": 6.91,
-      "rss_mb_median": 337.09
-    },
-    "executor": {
-      "vs_clawql_combined_classic": 2.61,
-      "vs_clawql_mean_result": 6.18,
-      "vs_clawql_flow_e2e_p50": 3.53,
-      "vs_direct_combined_classic": 1.82,
-      "token_delta_vs_direct": 24186,
-      "tokens_saved_vs_direct": 0,
-      "tokens_added_vs_direct": 24186,
-      "flow_e2e_p50_delta_ms_vs_direct": 62.178,
-      "flow_e2e_p50_ratio_vs_direct": 29.61,
-      "rss_mb_median": 213.48
-    },
-    "mcpjungle": {
-      "vs_clawql_combined_classic": 1.72,
-      "vs_clawql_mean_result": 3.4,
-      "vs_clawql_flow_e2e_p50": 0.84,
-      "vs_direct_combined_classic": 1.2,
-      "token_delta_vs_direct": 5840,
-      "tokens_saved_vs_direct": 0,
-      "tokens_added_vs_direct": 5840,
-      "flow_e2e_p50_delta_ms_vs_direct": 13.216,
-      "flow_e2e_p50_ratio_vs_direct": 7.08,
-      "rss_mb_median": 152.55
-    },
-    "agentgateway": {
       "vs_clawql_combined_classic": 1.7,
-      "vs_clawql_mean_result": 3.4,
-      "vs_clawql_flow_e2e_p50": 0.75,
-      "vs_direct_combined_classic": 1.19,
-      "token_delta_vs_direct": 5520,
-      "tokens_saved_vs_direct": 0,
-      "tokens_added_vs_direct": 5520,
-      "flow_e2e_p50_delta_ms_vs_direct": 11.455,
-      "flow_e2e_p50_ratio_vs_direct": 6.27,
-      "rss_mb_median": 214.08
+      "vs_clawql_flow_e2e_p50": 0.12
     },
     "clawql": {
-      "vs_direct_combined_classic": 0.7,
-      "token_delta_vs_direct": -8943,
-      "tokens_saved_vs_direct": 8943,
+      "vs_direct_combined_classic": 0.59,
+      "token_delta_vs_direct": -14463,
+      "tokens_saved_vs_direct": 14463,
       "tokens_added_vs_direct": 0,
       "flow_e2e_p50_delta_ms_vs_direct": 16.055,
       "flow_e2e_p50_ratio_vs_direct": 8.39,
-      "rss_mb_median": 677.93
+      "rss_mb_median": 677.93,
+      "vs_direct_note": "saves_tokens_vs_baseline",
+      "breakdown_check": {
+        "definitions": 297,
+        "discovery_sum": 11568,
+        "results_sum": 8674,
+        "sum": 20539,
+        "matches_combined": true
+      }
+    },
+    "clawql_bun": {
+      "vs_clawql_combined_classic": 1.0,
+      "vs_clawql_flow_e2e_p50": 0.82,
+      "vs_direct_combined_classic": 0.59,
+      "token_delta_vs_direct": -14463,
+      "tokens_saved_vs_direct": 14463,
+      "tokens_added_vs_direct": 0,
+      "flow_e2e_p50_delta_ms_vs_direct": 12.841,
+      "flow_e2e_p50_ratio_vs_direct": 6.91,
+      "rss_mb_median": 337.09,
+      "vs_direct_note": "saves_tokens_vs_baseline",
+      "breakdown_check": {
+        "definitions": 297,
+        "discovery_sum": 11568,
+        "results_sum": 8674,
+        "sum": 20539,
+        "matches_combined": true
+      }
+    },
+    "executor": {
+      "vs_clawql_combined_classic": 2.61,
+      "vs_clawql_flow_e2e_p50": 3.53,
+      "vs_direct_combined_classic": 1.53,
+      "token_delta_vs_direct": 18666,
+      "tokens_saved_vs_direct": 0,
+      "tokens_added_vs_direct": 18666,
+      "flow_e2e_p50_delta_ms_vs_direct": 62.178,
+      "flow_e2e_p50_ratio_vs_direct": 29.61,
+      "rss_mb_median": 213.48,
+      "vs_direct_note": "adds_tokens_vs_baseline",
+      "breakdown_check": {
+        "definitions": 90,
+        "discovery_sum": 0,
+        "results_sum": 53578,
+        "sum": 53668,
+        "matches_combined": true
+      }
+    },
+    "mcpjungle": {
+      "vs_clawql_combined_classic": 1.72,
+      "vs_clawql_flow_e2e_p50": 0.84,
+      "vs_direct_combined_classic": 1.01,
+      "token_delta_vs_direct": 320,
+      "tokens_saved_vs_direct": 0,
+      "tokens_added_vs_direct": 320,
+      "flow_e2e_p50_delta_ms_vs_direct": 13.216,
+      "flow_e2e_p50_ratio_vs_direct": 7.08,
+      "rss_mb_median": 152.55,
+      "vs_direct_note": "adds_tokens_vs_baseline",
+      "breakdown_check": {
+        "definitions": 5840,
+        "discovery_sum": 0,
+        "results_sum": 29482,
+        "sum": 35322,
+        "matches_combined": true
+      }
+    },
+    "agentgateway": {
+      "vs_clawql_combined_classic": 1.7,
+      "vs_clawql_flow_e2e_p50": 0.75,
+      "vs_direct_combined_classic": 1.0,
+      "token_delta_vs_direct": 0,
+      "tokens_saved_vs_direct": 0,
+      "tokens_added_vs_direct": 0,
+      "flow_e2e_p50_delta_ms_vs_direct": 11.455,
+      "flow_e2e_p50_ratio_vs_direct": 6.27,
+      "rss_mb_median": 214.08,
+      "vs_direct_note": "matches_baseline",
+      "breakdown_check": {
+        "definitions": 5520,
+        "discovery_sum": 0,
+        "results_sum": 29482,
+        "sum": 35002,
+        "matches_combined": true
+      }
     }
   },
   "task_success": {
@@ -768,13 +830,13 @@
   "arms": {
     "direct": {
       "id": "direct",
-      "model": "raw_http_catalog_fat_no_mcp",
+      "model": "raw_http_catalog_fat_plus_definitions",
       "runtime": null,
       "runtimeVersion": null,
       "layer1": {
-        "once_schema_tokens": 0,
-        "tools_count": 0,
-        "note": "No MCP tools/list \u2014 agent talks HTTP directly to the mock API"
+        "once_schema_tokens": 5520,
+        "tools_count": 40,
+        "note": "Catalog tool definitions once (same surface as aggregator tools/list). Agent calling 40 ops without a gateway still needs these in context. Hot path is raw HTTP \u2014 no gateway RSS."
       },
       "perTurn": [
         {
@@ -792,7 +854,8 @@
             "expected": 25,
             "failures": []
           },
-          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)",
+          "search_tokens": 0
         },
         {
           "n": 2,
@@ -809,7 +872,8 @@
             "expected": 25,
             "failures": []
           },
-          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)",
+          "search_tokens": 0
         },
         {
           "n": 3,
@@ -826,7 +890,8 @@
             "expected": 25,
             "failures": []
           },
-          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)",
+          "search_tokens": 0
         },
         {
           "n": 4,
@@ -843,7 +908,8 @@
             "expected": 25,
             "failures": []
           },
-          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)",
+          "search_tokens": 0
         },
         {
           "n": 5,
@@ -860,7 +926,8 @@
             "expected": 25,
             "failures": []
           },
-          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)",
+          "search_tokens": 0
         },
         {
           "n": 6,
@@ -877,7 +944,8 @@
             "expected": 25,
             "failures": []
           },
-          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)",
+          "search_tokens": 0
         },
         {
           "n": 7,
@@ -894,7 +962,8 @@
             "expected": 25,
             "failures": []
           },
-          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)",
+          "search_tokens": 0
         },
         {
           "n": 8,
@@ -911,7 +980,8 @@
             "expected": 25,
             "failures": []
           },
-          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)",
+          "search_tokens": 0
         },
         {
           "n": 9,
@@ -928,7 +998,8 @@
             "expected": 25,
             "failures": []
           },
-          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)",
+          "search_tokens": 0
         },
         {
           "n": 10,
@@ -945,7 +1016,8 @@
             "expected": 25,
             "failures": []
           },
-          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)",
+          "search_tokens": 0
         },
         {
           "n": 11,
@@ -962,7 +1034,8 @@
             "expected": 25,
             "failures": []
           },
-          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)",
+          "search_tokens": 0
         },
         {
           "n": 12,
@@ -979,7 +1052,8 @@
             "expected": 25,
             "failures": []
           },
-          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)",
+          "search_tokens": 0
         }
       ],
       "iters": 10000,
@@ -1006,99 +1080,99 @@
       "cumulative_classic": [
         {
           "n": 1,
-          "layer1Once": 0,
+          "layer1Once": 5520,
           "layer2ThisTurn": 2411,
           "layer2Cumulative": 2411,
-          "combined": 2411,
-          "layer2ShareOfCombined": 100
+          "combined": 7931,
+          "layer2ShareOfCombined": 30.4
         },
         {
           "n": 2,
-          "layer1Once": 0,
+          "layer1Once": 5520,
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 4872,
-          "combined": 4872,
-          "layer2ShareOfCombined": 100
+          "combined": 10392,
+          "layer2ShareOfCombined": 46.9
         },
         {
           "n": 3,
-          "layer1Once": 0,
+          "layer1Once": 5520,
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 7333,
-          "combined": 7333,
-          "layer2ShareOfCombined": 100
+          "combined": 12853,
+          "layer2ShareOfCombined": 57.1
         },
         {
           "n": 4,
-          "layer1Once": 0,
+          "layer1Once": 5520,
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 9794,
-          "combined": 9794,
-          "layer2ShareOfCombined": 100
+          "combined": 15314,
+          "layer2ShareOfCombined": 64.0
         },
         {
           "n": 5,
-          "layer1Once": 0,
+          "layer1Once": 5520,
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 12255,
-          "combined": 12255,
-          "layer2ShareOfCombined": 100
+          "combined": 17775,
+          "layer2ShareOfCombined": 68.9
         },
         {
           "n": 6,
-          "layer1Once": 0,
+          "layer1Once": 5520,
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 14716,
-          "combined": 14716,
-          "layer2ShareOfCombined": 100
+          "combined": 20236,
+          "layer2ShareOfCombined": 72.7
         },
         {
           "n": 7,
-          "layer1Once": 0,
+          "layer1Once": 5520,
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 17177,
-          "combined": 17177,
-          "layer2ShareOfCombined": 100
+          "combined": 22697,
+          "layer2ShareOfCombined": 75.7
         },
         {
           "n": 8,
-          "layer1Once": 0,
+          "layer1Once": 5520,
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 19638,
-          "combined": 19638,
-          "layer2ShareOfCombined": 100
+          "combined": 25158,
+          "layer2ShareOfCombined": 78.1
         },
         {
           "n": 9,
-          "layer1Once": 0,
+          "layer1Once": 5520,
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 22099,
-          "combined": 22099,
-          "layer2ShareOfCombined": 100
+          "combined": 27619,
+          "layer2ShareOfCombined": 80.0
         },
         {
           "n": 10,
-          "layer1Once": 0,
+          "layer1Once": 5520,
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 24560,
-          "combined": 24560,
-          "layer2ShareOfCombined": 100
+          "combined": 30080,
+          "layer2ShareOfCombined": 81.6
         },
         {
           "n": 11,
-          "layer1Once": 0,
+          "layer1Once": 5520,
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 27021,
-          "combined": 27021,
-          "layer2ShareOfCombined": 100
+          "combined": 32541,
+          "layer2ShareOfCombined": 83.0
         },
         {
           "n": 12,
-          "layer1Once": 0,
+          "layer1Once": 5520,
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 29482,
-          "combined": 29482,
-          "layer2ShareOfCombined": 100
+          "combined": 35002,
+          "layer2ShareOfCombined": 84.2
         }
       ],
       "cumulative_tools_list_every_turn": [
@@ -1108,7 +1182,7 @@
           "layer2ThisTurn": 2411,
           "layer2Cumulative": 2411,
           "combined": 2411,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 2,
@@ -1116,7 +1190,7 @@
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 4872,
           "combined": 4872,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 3,
@@ -1124,7 +1198,7 @@
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 7333,
           "combined": 7333,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 4,
@@ -1132,7 +1206,7 @@
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 9794,
           "combined": 9794,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 5,
@@ -1140,7 +1214,7 @@
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 12255,
           "combined": 12255,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 6,
@@ -1148,7 +1222,7 @@
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 14716,
           "combined": 14716,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 7,
@@ -1156,7 +1230,7 @@
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 17177,
           "combined": 17177,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 8,
@@ -1164,7 +1238,7 @@
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 19638,
           "combined": 19638,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 9,
@@ -1172,7 +1246,7 @@
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 22099,
           "combined": 22099,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 10,
@@ -1180,7 +1254,7 @@
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 24560,
           "combined": 24560,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 11,
@@ -1188,7 +1262,7 @@
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 27021,
           "combined": 27021,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 12,
@@ -1196,7 +1270,7 @@
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 29482,
           "combined": 29482,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         }
       ],
       "task_success": {
@@ -1215,11 +1289,6 @@
         "rss_mb_min": null,
         "rss_mb_median": null,
         "rss_mb_max": null,
-        "layer1_once_tokens": 0,
-        "mean_layer2_tokens": 2456.8,
-        "mean_result_tokens": 2456.8,
-        "combined_at_n": 29482,
-        "combined_relist_every_turn_at_n": 29482,
         "flows": 10000,
         "turns_per_flow": 12,
         "total_turns": 120000,
@@ -1245,7 +1314,17 @@
         },
         "call_errors": 0,
         "task_success_ok": true,
-        "task_success_rate": 1
+        "task_success_rate": 1,
+        "definitions_tokens": 5520,
+        "discovery_tokens_sum": 0,
+        "mean_discovery_tokens": 0.0,
+        "result_tokens_sum": 29482,
+        "mean_result_tokens": 2456.8,
+        "layer1_once_tokens": 5520,
+        "mean_layer2_tokens": 2456.8,
+        "combined_at_n": 35002,
+        "combined_rebuild": 35002,
+        "combined_relist_every_turn_at_n": 29482
       }
     },
     "clawql": {
@@ -1664,7 +1743,7 @@
           "layer2ThisTurn": 1641,
           "layer2Cumulative": 1641,
           "combined": 1641,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 2,
@@ -1672,7 +1751,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 3332,
           "combined": 3332,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 3,
@@ -1680,7 +1759,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 5023,
           "combined": 5023,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 4,
@@ -1688,7 +1767,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 6714,
           "combined": 6714,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 5,
@@ -1696,7 +1775,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 8405,
           "combined": 8405,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 6,
@@ -1704,7 +1783,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 10096,
           "combined": 10096,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 7,
@@ -1712,7 +1791,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 11787,
           "combined": 11787,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 8,
@@ -1720,7 +1799,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 13478,
           "combined": 13478,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 9,
@@ -1728,7 +1807,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 15169,
           "combined": 15169,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 10,
@@ -1736,7 +1815,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 16860,
           "combined": 16860,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 11,
@@ -1744,7 +1823,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 18551,
           "combined": 18551,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 12,
@@ -1752,7 +1831,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 20242,
           "combined": 20242,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         }
       ],
       "task_success": {
@@ -1771,11 +1850,6 @@
         "rss_mb_min": 358.81,
         "rss_mb_median": 677.93,
         "rss_mb_max": 680.13,
-        "layer1_once_tokens": 297,
-        "mean_layer2_tokens": 1686.8,
-        "mean_result_tokens": 722.8,
-        "combined_at_n": 20539,
-        "combined_relist_every_turn_at_n": 20242,
         "flows": 10000,
         "turns_per_flow": 12,
         "total_turns": 120000,
@@ -1801,7 +1875,17 @@
         },
         "call_errors": 0,
         "task_success_ok": true,
-        "task_success_rate": 1
+        "task_success_rate": 1,
+        "definitions_tokens": 297,
+        "discovery_tokens_sum": 11568,
+        "mean_discovery_tokens": 964.0,
+        "result_tokens_sum": 8674,
+        "mean_result_tokens": 722.8,
+        "layer1_once_tokens": 297,
+        "mean_layer2_tokens": 1686.8,
+        "combined_at_n": 20539,
+        "combined_rebuild": 20539,
+        "combined_relist_every_turn_at_n": 20242
       }
     },
     "clawql_bun": {
@@ -2220,7 +2304,7 @@
           "layer2ThisTurn": 1641,
           "layer2Cumulative": 1641,
           "combined": 1641,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 2,
@@ -2228,7 +2312,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 3332,
           "combined": 3332,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 3,
@@ -2236,7 +2320,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 5023,
           "combined": 5023,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 4,
@@ -2244,7 +2328,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 6714,
           "combined": 6714,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 5,
@@ -2252,7 +2336,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 8405,
           "combined": 8405,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 6,
@@ -2260,7 +2344,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 10096,
           "combined": 10096,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 7,
@@ -2268,7 +2352,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 11787,
           "combined": 11787,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 8,
@@ -2276,7 +2360,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 13478,
           "combined": 13478,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 9,
@@ -2284,7 +2368,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 15169,
           "combined": 15169,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 10,
@@ -2292,7 +2376,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 16860,
           "combined": 16860,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 11,
@@ -2300,7 +2384,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 18551,
           "combined": 18551,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 12,
@@ -2308,7 +2392,7 @@
           "layer2ThisTurn": 1691,
           "layer2Cumulative": 20242,
           "combined": 20242,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         }
       ],
       "task_success": {
@@ -2327,11 +2411,6 @@
         "rss_mb_min": 299.67,
         "rss_mb_median": 337.09,
         "rss_mb_max": 371.27,
-        "layer1_once_tokens": 297,
-        "mean_layer2_tokens": 1686.8,
-        "mean_result_tokens": 722.8,
-        "combined_at_n": 20539,
-        "combined_relist_every_turn_at_n": 20242,
         "flows": 10000,
         "turns_per_flow": 12,
         "total_turns": 120000,
@@ -2357,7 +2436,17 @@
         },
         "call_errors": 0,
         "task_success_ok": true,
-        "task_success_rate": 1
+        "task_success_rate": 1,
+        "definitions_tokens": 297,
+        "discovery_tokens_sum": 11568,
+        "mean_discovery_tokens": 964.0,
+        "result_tokens_sum": 8674,
+        "mean_result_tokens": 722.8,
+        "layer1_once_tokens": 297,
+        "mean_layer2_tokens": 1686.8,
+        "combined_at_n": 20539,
+        "combined_rebuild": 20539,
+        "combined_relist_every_turn_at_n": 20242
       }
     },
     "executor": {
@@ -2606,7 +2695,7 @@
           "layer2ThisTurn": 4419,
           "layer2Cumulative": 4419,
           "combined": 4509,
-          "layer2ShareOfCombined": 98
+          "layer2ShareOfCombined": 98.0
         },
         {
           "n": 2,
@@ -2614,7 +2703,7 @@
           "layer2ThisTurn": 4469,
           "layer2Cumulative": 8888,
           "combined": 8978,
-          "layer2ShareOfCombined": 99
+          "layer2ShareOfCombined": 99.0
         },
         {
           "n": 3,
@@ -2704,7 +2793,7 @@
           "layer2ThisTurn": 4419,
           "layer2Cumulative": 4419,
           "combined": 4419,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 2,
@@ -2712,7 +2801,7 @@
           "layer2ThisTurn": 4469,
           "layer2Cumulative": 8888,
           "combined": 8888,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 3,
@@ -2720,7 +2809,7 @@
           "layer2ThisTurn": 4469,
           "layer2Cumulative": 13357,
           "combined": 13357,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 4,
@@ -2728,7 +2817,7 @@
           "layer2ThisTurn": 4469,
           "layer2Cumulative": 17826,
           "combined": 17826,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 5,
@@ -2736,7 +2825,7 @@
           "layer2ThisTurn": 4469,
           "layer2Cumulative": 22295,
           "combined": 22295,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 6,
@@ -2744,7 +2833,7 @@
           "layer2ThisTurn": 4469,
           "layer2Cumulative": 26764,
           "combined": 26764,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 7,
@@ -2752,7 +2841,7 @@
           "layer2ThisTurn": 4469,
           "layer2Cumulative": 31233,
           "combined": 31233,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 8,
@@ -2760,7 +2849,7 @@
           "layer2ThisTurn": 4469,
           "layer2Cumulative": 35702,
           "combined": 35702,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 9,
@@ -2768,7 +2857,7 @@
           "layer2ThisTurn": 4469,
           "layer2Cumulative": 40171,
           "combined": 40171,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 10,
@@ -2776,7 +2865,7 @@
           "layer2ThisTurn": 4469,
           "layer2Cumulative": 44640,
           "combined": 44640,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 11,
@@ -2784,7 +2873,7 @@
           "layer2ThisTurn": 4469,
           "layer2Cumulative": 49109,
           "combined": 49109,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 12,
@@ -2792,7 +2881,7 @@
           "layer2ThisTurn": 4469,
           "layer2Cumulative": 53578,
           "combined": 53578,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         }
       ],
       "task_success": {
@@ -2811,11 +2900,6 @@
         "rss_mb_min": 194.01,
         "rss_mb_median": 213.48,
         "rss_mb_max": 226.75,
-        "layer1_once_tokens": 90,
-        "mean_layer2_tokens": 4464.8,
-        "mean_result_tokens": 4464.8,
-        "combined_at_n": 53668,
-        "combined_relist_every_turn_at_n": 53578,
         "flows": 10000,
         "turns_per_flow": 12,
         "total_turns": 120000,
@@ -2841,7 +2925,17 @@
         },
         "call_errors": 0,
         "task_success_ok": true,
-        "task_success_rate": 1
+        "task_success_rate": 1,
+        "definitions_tokens": 90,
+        "discovery_tokens_sum": 0,
+        "mean_discovery_tokens": 0.0,
+        "result_tokens_sum": 53578,
+        "mean_result_tokens": 4464.8,
+        "layer1_once_tokens": 90,
+        "mean_layer2_tokens": 4464.8,
+        "combined_at_n": 53668,
+        "combined_rebuild": 53668,
+        "combined_relist_every_turn_at_n": 53578
       }
     },
     "mcpjungle": {
@@ -3186,7 +3280,7 @@
           "layer2ThisTurn": 8251,
           "layer2Cumulative": 8251,
           "combined": 8251,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 2,
@@ -3194,7 +3288,7 @@
           "layer2ThisTurn": 8301,
           "layer2Cumulative": 16552,
           "combined": 16552,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 3,
@@ -3202,7 +3296,7 @@
           "layer2ThisTurn": 8301,
           "layer2Cumulative": 24853,
           "combined": 24853,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 4,
@@ -3210,7 +3304,7 @@
           "layer2ThisTurn": 8301,
           "layer2Cumulative": 33154,
           "combined": 33154,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 5,
@@ -3218,7 +3312,7 @@
           "layer2ThisTurn": 8301,
           "layer2Cumulative": 41455,
           "combined": 41455,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 6,
@@ -3226,7 +3320,7 @@
           "layer2ThisTurn": 8301,
           "layer2Cumulative": 49756,
           "combined": 49756,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 7,
@@ -3234,7 +3328,7 @@
           "layer2ThisTurn": 8301,
           "layer2Cumulative": 58057,
           "combined": 58057,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 8,
@@ -3242,7 +3336,7 @@
           "layer2ThisTurn": 8301,
           "layer2Cumulative": 66358,
           "combined": 66358,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 9,
@@ -3250,7 +3344,7 @@
           "layer2ThisTurn": 8301,
           "layer2Cumulative": 74659,
           "combined": 74659,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 10,
@@ -3258,7 +3352,7 @@
           "layer2ThisTurn": 8301,
           "layer2Cumulative": 82960,
           "combined": 82960,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 11,
@@ -3266,7 +3360,7 @@
           "layer2ThisTurn": 8301,
           "layer2Cumulative": 91261,
           "combined": 91261,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 12,
@@ -3274,7 +3368,7 @@
           "layer2ThisTurn": 8301,
           "layer2Cumulative": 99562,
           "combined": 99562,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         }
       ],
       "task_success": {
@@ -3293,11 +3387,6 @@
         "rss_mb_min": 107.29,
         "rss_mb_median": 152.55,
         "rss_mb_max": 153.06,
-        "layer1_once_tokens": 5840,
-        "mean_layer2_tokens": 2456.8,
-        "mean_result_tokens": 2456.8,
-        "combined_at_n": 35322,
-        "combined_relist_every_turn_at_n": 99562,
         "flows": 10000,
         "turns_per_flow": 12,
         "total_turns": 120000,
@@ -3323,7 +3412,17 @@
         },
         "call_errors": 0,
         "task_success_ok": true,
-        "task_success_rate": 1
+        "task_success_rate": 1,
+        "definitions_tokens": 5840,
+        "discovery_tokens_sum": 0,
+        "mean_discovery_tokens": 0.0,
+        "result_tokens_sum": 29482,
+        "mean_result_tokens": 2456.8,
+        "layer1_once_tokens": 5840,
+        "mean_layer2_tokens": 2456.8,
+        "combined_at_n": 35322,
+        "combined_rebuild": 35322,
+        "combined_relist_every_turn_at_n": 99562
       }
     },
     "agentgateway": {
@@ -3594,7 +3693,7 @@
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 9794,
           "combined": 15314,
-          "layer2ShareOfCombined": 64
+          "layer2ShareOfCombined": 64.0
         },
         {
           "n": 5,
@@ -3634,7 +3733,7 @@
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 22099,
           "combined": 27619,
-          "layer2ShareOfCombined": 80
+          "layer2ShareOfCombined": 80.0
         },
         {
           "n": 10,
@@ -3650,7 +3749,7 @@
           "layer2ThisTurn": 2461,
           "layer2Cumulative": 27021,
           "combined": 32541,
-          "layer2ShareOfCombined": 83
+          "layer2ShareOfCombined": 83.0
         },
         {
           "n": 12,
@@ -3668,7 +3767,7 @@
           "layer2ThisTurn": 7931,
           "layer2Cumulative": 7931,
           "combined": 7931,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 2,
@@ -3676,7 +3775,7 @@
           "layer2ThisTurn": 7981,
           "layer2Cumulative": 15912,
           "combined": 15912,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 3,
@@ -3684,7 +3783,7 @@
           "layer2ThisTurn": 7981,
           "layer2Cumulative": 23893,
           "combined": 23893,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 4,
@@ -3692,7 +3791,7 @@
           "layer2ThisTurn": 7981,
           "layer2Cumulative": 31874,
           "combined": 31874,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 5,
@@ -3700,7 +3799,7 @@
           "layer2ThisTurn": 7981,
           "layer2Cumulative": 39855,
           "combined": 39855,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 6,
@@ -3708,7 +3807,7 @@
           "layer2ThisTurn": 7981,
           "layer2Cumulative": 47836,
           "combined": 47836,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 7,
@@ -3716,7 +3815,7 @@
           "layer2ThisTurn": 7981,
           "layer2Cumulative": 55817,
           "combined": 55817,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 8,
@@ -3724,7 +3823,7 @@
           "layer2ThisTurn": 7981,
           "layer2Cumulative": 63798,
           "combined": 63798,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 9,
@@ -3732,7 +3831,7 @@
           "layer2ThisTurn": 7981,
           "layer2Cumulative": 71779,
           "combined": 71779,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 10,
@@ -3740,7 +3839,7 @@
           "layer2ThisTurn": 7981,
           "layer2Cumulative": 79760,
           "combined": 79760,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 11,
@@ -3748,7 +3847,7 @@
           "layer2ThisTurn": 7981,
           "layer2Cumulative": 87741,
           "combined": 87741,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         },
         {
           "n": 12,
@@ -3756,7 +3855,7 @@
           "layer2ThisTurn": 7981,
           "layer2Cumulative": 95722,
           "combined": 95722,
-          "layer2ShareOfCombined": 100
+          "layer2ShareOfCombined": 100.0
         }
       ],
       "task_success": {
@@ -3775,11 +3874,6 @@
         "rss_mb_min": 183.6,
         "rss_mb_median": 214.08,
         "rss_mb_max": 214.52,
-        "layer1_once_tokens": 5520,
-        "mean_layer2_tokens": 2456.8,
-        "mean_result_tokens": 2456.8,
-        "combined_at_n": 35002,
-        "combined_relist_every_turn_at_n": 95722,
         "flows": 10000,
         "turns_per_flow": 12,
         "total_turns": 120000,
@@ -3805,7 +3899,17 @@
         },
         "call_errors": 0,
         "task_success_ok": true,
-        "task_success_rate": 1
+        "task_success_rate": 1,
+        "definitions_tokens": 5520,
+        "discovery_tokens_sum": 0,
+        "mean_discovery_tokens": 0.0,
+        "result_tokens_sum": 29482,
+        "mean_result_tokens": 2456.8,
+        "layer1_once_tokens": 5520,
+        "mean_layer2_tokens": 2456.8,
+        "combined_at_n": 35002,
+        "combined_rebuild": 35002,
+        "combined_relist_every_turn_at_n": 95722
       }
     }
   },
@@ -3837,60 +3941,107 @@
     "ContextForge/MetaMCP off publish board by default.",
     "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",
     "RSS is a loss among serious arms \u2014 admit plainly.",
-    "direct: no MCP gateway \u2014 raw HTTP fat catalog; Layer1=0. Prices token savings vs latency/RSS tax.",
-    "Merged direct-10k solo run into prior gateway 10k board (same equal-arm mock contract)."
+    "Merged direct-10k solo run into prior gateway 10k board (same equal-arm mock contract).",
+    "CORRECTED: direct Layer1 = catalog tool definitions once (agent still needs 40-op schemas without a gateway).",
+    "Aggregators roughly match that baseline (definitions + fat results); they do not add a separate \"schema tax\" beyond the definitions any agent needs.",
+    "ClawQL combined = definitions + \u03a3 discovery(search) + \u03a3 projected results \u2014 see board.*_tokens breakdown columns.",
+    "Do not claim marketing URL is live until apps/www public/benchmarks is deployed (GitHub Pages).",
+    "ClawQL combined = definitions + \u03a3 discovery(search) + \u03a3 results; rebuild columns on the dedicated page."
   ],
   "ratios_vs_direct": {
-    "direct": {
-      "vs_direct_combined_classic": 1.0,
-      "token_delta_vs_direct": 0,
-      "flow_e2e_p50_delta_ms_vs_direct": 0
-    },
-    "clawql_bun": {
-      "vs_direct_combined_classic": 0.7,
-      "token_delta_vs_direct": -8943,
-      "tokens_saved_vs_direct": 8943,
-      "tokens_added_vs_direct": 0,
-      "flow_e2e_p50_delta_ms_vs_direct": 12.841,
-      "flow_e2e_p50_ratio_vs_direct": 6.91,
-      "rss_mb_median": 337.09
-    },
-    "executor": {
-      "vs_direct_combined_classic": 1.82,
-      "token_delta_vs_direct": 24186,
-      "tokens_saved_vs_direct": 0,
-      "tokens_added_vs_direct": 24186,
-      "flow_e2e_p50_delta_ms_vs_direct": 62.178,
-      "flow_e2e_p50_ratio_vs_direct": 29.61,
-      "rss_mb_median": 213.48
-    },
-    "mcpjungle": {
-      "vs_direct_combined_classic": 1.2,
-      "token_delta_vs_direct": 5840,
-      "tokens_saved_vs_direct": 0,
-      "tokens_added_vs_direct": 5840,
-      "flow_e2e_p50_delta_ms_vs_direct": 13.216,
-      "flow_e2e_p50_ratio_vs_direct": 7.08,
-      "rss_mb_median": 152.55
-    },
-    "agentgateway": {
-      "vs_direct_combined_classic": 1.19,
-      "token_delta_vs_direct": 5520,
-      "tokens_saved_vs_direct": 0,
-      "tokens_added_vs_direct": 5520,
-      "flow_e2e_p50_delta_ms_vs_direct": 11.455,
-      "flow_e2e_p50_ratio_vs_direct": 6.27,
-      "rss_mb_median": 214.08
-    },
+    "direct": {},
     "clawql": {
-      "vs_direct_combined_classic": 0.7,
-      "token_delta_vs_direct": -8943,
-      "tokens_saved_vs_direct": 8943,
+      "vs_direct_combined_classic": 0.59,
+      "token_delta_vs_direct": -14463,
+      "tokens_saved_vs_direct": 14463,
       "tokens_added_vs_direct": 0,
       "flow_e2e_p50_delta_ms_vs_direct": 16.055,
       "flow_e2e_p50_ratio_vs_direct": 8.39,
-      "rss_mb_median": 677.93
+      "rss_mb_median": 677.93,
+      "vs_direct_note": "saves_tokens_vs_baseline",
+      "breakdown_check": {
+        "definitions": 297,
+        "discovery_sum": 11568,
+        "results_sum": 8674,
+        "sum": 20539,
+        "matches_combined": true
+      }
+    },
+    "clawql_bun": {
+      "vs_direct_combined_classic": 0.59,
+      "token_delta_vs_direct": -14463,
+      "tokens_saved_vs_direct": 14463,
+      "tokens_added_vs_direct": 0,
+      "flow_e2e_p50_delta_ms_vs_direct": 12.841,
+      "flow_e2e_p50_ratio_vs_direct": 6.91,
+      "rss_mb_median": 337.09,
+      "vs_direct_note": "saves_tokens_vs_baseline",
+      "breakdown_check": {
+        "definitions": 297,
+        "discovery_sum": 11568,
+        "results_sum": 8674,
+        "sum": 20539,
+        "matches_combined": true
+      }
+    },
+    "executor": {
+      "vs_direct_combined_classic": 1.53,
+      "token_delta_vs_direct": 18666,
+      "tokens_saved_vs_direct": 0,
+      "tokens_added_vs_direct": 18666,
+      "flow_e2e_p50_delta_ms_vs_direct": 62.178,
+      "flow_e2e_p50_ratio_vs_direct": 29.61,
+      "rss_mb_median": 213.48,
+      "vs_direct_note": "adds_tokens_vs_baseline",
+      "breakdown_check": {
+        "definitions": 90,
+        "discovery_sum": 0,
+        "results_sum": 53578,
+        "sum": 53668,
+        "matches_combined": true
+      }
+    },
+    "mcpjungle": {
+      "vs_direct_combined_classic": 1.01,
+      "token_delta_vs_direct": 320,
+      "tokens_saved_vs_direct": 0,
+      "tokens_added_vs_direct": 320,
+      "flow_e2e_p50_delta_ms_vs_direct": 13.216,
+      "flow_e2e_p50_ratio_vs_direct": 7.08,
+      "rss_mb_median": 152.55,
+      "vs_direct_note": "adds_tokens_vs_baseline",
+      "breakdown_check": {
+        "definitions": 5840,
+        "discovery_sum": 0,
+        "results_sum": 29482,
+        "sum": 35322,
+        "matches_combined": true
+      }
+    },
+    "agentgateway": {
+      "vs_direct_combined_classic": 1.0,
+      "token_delta_vs_direct": 0,
+      "tokens_saved_vs_direct": 0,
+      "tokens_added_vs_direct": 0,
+      "flow_e2e_p50_delta_ms_vs_direct": 11.455,
+      "flow_e2e_p50_ratio_vs_direct": 6.27,
+      "rss_mb_median": 214.08,
+      "vs_direct_note": "matches_baseline",
+      "breakdown_check": {
+        "definitions": 5520,
+        "discovery_sum": 0,
+        "results_sum": 29482,
+        "sum": 35002,
+        "matches_combined": true
+      }
     }
   },
-  "mergedAt": "2026-10-11T19:47:57.836716Z"
+  "mergedAt": "2026-10-11T19:47:57.836716Z",
+  "correctedAt": "2026-10-11T20:57:29.419Z",
+  "token_model": {
+    "combined": "definitions + sum(discovery) + sum(results)",
+    "direct_definitions": "catalog tools/list once (same surface as aggregator Layer1)",
+    "discovery": "per-turn search/hit text (ClawQL); 0 for other arms",
+    "results": "tool/HTTP response tokens across turns"
+  }
 }

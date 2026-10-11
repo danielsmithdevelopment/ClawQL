@@ -770,10 +770,34 @@ function buildCumulative(layer1Once, layer2PerTurn) {
 }
 
 /**
- * No-MCP baseline: raw HTTP to the equal-arm catalog mock (fat JSON).
- * Same 12 partitions / args as aggregator tool calls — prices gateway tax.
+ * Measure equal-arm catalog tool definitions (same surface aggregators expose).
+ * An agent without a gateway still needs these schemas in context.
+ */
+async function measureCatalogDefinitionTokens() {
+  const transport = new StdioClientTransport({
+    command: process.execPath,
+    args: [CATALOG_MCP],
+    cwd: ROOT,
+    stderr: "pipe",
+    env: { ...process.env, CATALOG_TOOL_COUNT: String(TOOL_COUNT) },
+  });
+  const client = new Client({ name: "mt-direct-defs", version: "1" }, {});
+  try {
+    await client.connect(transport);
+    const listed = await client.listTools();
+    return measureLayer1FromTools(listed.tools);
+  } finally {
+    await client.close().catch(() => {});
+  }
+}
+
+/**
+ * No-MCP baseline: raw HTTP fat results + catalog tool definitions once.
+ * Definitions match aggregator tools/list (agent still needs the 40 ops).
+ * Latency/RSS remain "no gateway process" — only HTTP to the mock.
  */
 async function runDirectHttpArm(mock, turns) {
+  const defs = await measureCatalogDefinitionTokens();
   const flowE2e = [];
   const turnLat = [];
   let perTurn = null;
@@ -812,6 +836,7 @@ async function runDirectHttpArm(mock, turns) {
         thisPerTurn.push({
           n: turn.n,
           tool: `GET /catalog/${part}`,
+          search_tokens: 0,
           result_tokens: resultTok,
           result_chars: text.length,
           layer2_classic: resultTok,
@@ -819,7 +844,7 @@ async function runDirectHttpArm(mock, turns) {
           latency_ms: Number(ms.toFixed(3)),
           ok,
           task_success: success,
-          note: "No MCP gateway — fat equal-arm HTTP body (aggregator Layer2 shape)",
+          note: "No MCP gateway — fat HTTP body; definitions counted once as catalog tools/list",
         });
       }
     }
@@ -832,13 +857,16 @@ async function runDirectHttpArm(mock, turns) {
 
   return {
     id: "direct",
-    model: "raw_http_catalog_fat_no_mcp",
+    model: "raw_http_catalog_fat_plus_definitions",
     runtime: null,
     runtimeVersion: null,
     layer1: {
-      once_schema_tokens: 0,
-      tools_count: 0,
-      note: "No MCP tools/list — agent talks HTTP directly to the mock API",
+      once_schema_tokens: defs.schema_tokens,
+      tools_count: defs.tools_count,
+      note:
+        "Catalog tool definitions once (same surface as aggregator tools/list). " +
+        "Agent calling 40 ops without a gateway still needs these in context. " +
+        "Hot path is raw HTTP — no gateway RSS.",
     },
     perTurn,
     iters: ITERS,
@@ -1174,7 +1202,10 @@ function summarizeArm(arm) {
   const last = classic[classic.length - 1];
   const lastRelist = relist[relist.length - 1];
   const meanL2 = classicL2.reduce((a, b) => a + b, 0) / classicL2.length;
-  const meanResult = arm.perTurn.reduce((a, t) => a + t.result_tokens, 0) / arm.perTurn.length;
+  const sumResult = arm.perTurn.reduce((a, t) => a + (t.result_tokens || 0), 0);
+  const sumDiscovery = arm.perTurn.reduce((a, t) => a + (t.search_tokens || 0), 0);
+  const meanResult = sumResult / arm.perTurn.length;
+  const meanDiscovery = sumDiscovery / arm.perTurn.length;
   const flowLat = summarizeMs(arm.flow_e2e_ms || []);
   const turnLat = summarizeMs(arm.turn_latency_ms || []);
   const agg = arm.task_success_agg || {
@@ -1189,6 +1220,8 @@ function summarizeArm(arm) {
     ok: agg.ok === agg.total && agg.total > 0,
     rate: Number((agg.ok / Math.max(1, agg.total)).toFixed(4)),
   };
+  // Rebuildable classic total: definitions + Σ discovery + Σ results (= L1 + Σ L2).
+  const combinedRebuild = l1 + sumDiscovery + sumResult;
   return {
     ...arm,
     // Drop raw sample arrays from serialized arm body — board keeps summaries.
@@ -1205,10 +1238,16 @@ function summarizeArm(arm) {
       rss_mb_min: arm.resources?.rss_mb?.min ?? null,
       rss_mb_median: arm.resources?.rss_mb?.median ?? null,
       rss_mb_max: arm.resources?.rss_mb?.max ?? null,
-      layer1_once_tokens: l1,
-      mean_layer2_tokens: Number(meanL2.toFixed(1)),
+      // Token breakdown (rebuild combined_at_n from these three)
+      definitions_tokens: l1,
+      discovery_tokens_sum: sumDiscovery,
+      mean_discovery_tokens: Number(meanDiscovery.toFixed(1)),
+      result_tokens_sum: sumResult,
       mean_result_tokens: Number(meanResult.toFixed(1)),
+      layer1_once_tokens: l1, // alias of definitions_tokens
+      mean_layer2_tokens: Number(meanL2.toFixed(1)),
       combined_at_n: last.combined,
+      combined_rebuild: combinedRebuild,
       combined_relist_every_turn_at_n: lastRelist.combined,
       flows: arm.iters ?? 1,
       turns_per_flow: arm.perTurn.length,
