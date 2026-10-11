@@ -1,0 +1,162 @@
+# Decision-1 measure fill on frozen v0.4 routing held-out (not productionTrusted).
+#
+# Triggers:
+#   - Marker PR/push: packages/clawql-core/src/classifier/held-out/.run-decision1-v04-candidate
+#     First non-comment line = `v0.4-routing-fresh` (only suite supported today).
+#   - workflow_dispatch
+#
+# Secrets:
+#   OPENROUTER_API_KEY — required for Decision-1 bulk + flip-rate (skip-notice when absent)
+#
+# Artifact: decision1-v04-routing-candidate.json (measure-only; productionTrustedClaim=false)
+
+name: Decision-1 v0.4 candidate measure
+
+on:
+  workflow_dispatch:
+    inputs:
+      flip_families:
+        description: Comma-separated flip families (default synonym to bound spend)
+        required: true
+        default: synonym
+        type: string
+  pull_request:
+    paths:
+      - "packages/clawql-core/src/classifier/held-out/.run-decision1-v04-candidate"
+      - ".github/workflows/decision1-v04-candidate.yml"
+      - "scripts/run-decision1-v04-candidate.mts"
+  push:
+    branches: [main]
+    paths:
+      - "packages/clawql-core/src/classifier/held-out/.run-decision1-v04-candidate"
+      - ".github/workflows/decision1-v04-candidate.yml"
+      - "scripts/run-decision1-v04-candidate.mts"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: decision1-v04-candidate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Credential gate
+    runs-on: ubuntu-latest
+    outputs:
+      can_run: ${{ steps.gate.outputs.can_run }}
+      skip_reason: ${{ steps.gate.outputs.skip_reason }}
+      flip_families: ${{ steps.gate.outputs.flip_families }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - id: marker
+        run: |
+          set -euo pipefail
+          MARKER="packages/clawql-core/src/classifier/held-out/.run-decision1-v04-candidate"
+          SUITE=""
+          if [ -f "${MARKER}" ]; then
+            SUITE="$(awk 'NF && $1 !~ /^#/ { print $1; exit }' "${MARKER}" || true)"
+          fi
+          {
+            echo "suite=${SUITE}"
+            if [ -n "${SUITE}" ]; then
+              echo "present=true"
+            else
+              echo "present=false"
+            fi
+          } >>"$GITHUB_OUTPUT"
+
+      - id: secret
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+            echo "has_openrouter=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "has_openrouter=false" >>"$GITHUB_OUTPUT"
+          fi
+
+      - id: gate
+        env:
+          HAS_OR: ${{ steps.secret.outputs.has_openrouter }}
+          EVENT_NAME: ${{ github.event_name }}
+          MARKER_SUITE: ${{ steps.marker.outputs.suite }}
+          MARKER_PRESENT: ${{ steps.marker.outputs.present }}
+          INPUT_FAMILIES: ${{ inputs.flip_families || 'synonym' }}
+        run: |
+          set -euo pipefail
+          CAN=true
+          REASON=""
+          FAMILIES="${INPUT_FAMILIES}"
+
+          if [ "${EVENT_NAME}" = "pull_request" ] || [ "${EVENT_NAME}" = "push" ]; then
+            if [ "${MARKER_PRESENT}" != "true" ]; then
+              CAN=false
+              REASON="marker absent/empty"
+            elif [ "${MARKER_SUITE}" != "v0.4-routing-fresh" ]; then
+              CAN=false
+              REASON="marker suite must be v0.4-routing-fresh (got '${MARKER_SUITE}')"
+            fi
+          fi
+
+          if [ "${HAS_OR}" != "true" ]; then
+            CAN=false
+            REASON="${REASON:+$REASON; }OPENROUTER_API_KEY missing"
+          fi
+
+          {
+            echo "can_run=${CAN}"
+            echo "skip_reason=${REASON}"
+            echo "flip_families=${FAMILIES}"
+          } >>"$GITHUB_OUTPUT"
+          if [ "${CAN}" = "true" ]; then
+            echo "::notice::Decision-1 v0.4 candidate measure will run (families=${FAMILIES})"
+          else
+            echo "::notice::skip — ${REASON}"
+          fi
+
+  measure:
+    name: Bulk + flip-rate measure
+    needs: gate
+    if: needs.gate.outputs.can_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # Script imports clawql-core/classifier from package exports (needs dist/).
+      - name: Build clawql-core
+        run: npm run build -w clawql-merkle -w clawql-core
+
+      - name: Run Decision-1 v0.4 candidate
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          CLAWQL_DECISION1_FLIP_FAMILIES: ${{ needs.gate.outputs.flip_families }}
+          OUT: ${{ github.workspace }}/decision1-v04-routing-candidate.json
+        run: npx tsx scripts/run-decision1-v04-candidate.mts
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: decision1-v04-routing-candidate
+          path: decision1-v04-routing-candidate.json
+          if-no-files-found: error
+
+  skip-notice:
+    name: Skip notice
+    needs: gate
+    if: needs.gate.outputs.can_run != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::notice::Decision-1 v0.4 candidate skipped — ${{ needs.gate.outputs.skip_reason }}"
+          echo "Install OPENROUTER_API_KEY as a repo Actions secret and set the marker to v0.4-routing-fresh."
