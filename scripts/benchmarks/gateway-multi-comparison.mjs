@@ -924,13 +924,36 @@ async function startContextforge() {
     "utf8"
   );
 
+  // ContextForge's MCP client is picky with bare Node StreamableHTTP; use MCPJungle
+  // as a stable local StreamableHTTP adapter in front of equal-arm stdio pets.
+  const mjBin = resolveBin("MCPJUNGLE_BIN", ["/tmp/gw-bins/mcpjungle", join(ROOT, "tmp/gw-bins/mcpjungle")]);
+  if (!mjBin) throw new Error("MCPJUNGLE_BIN required as ContextForge upstream adapter");
   const fs = await import("node:fs");
-  const petsLog = fs.openSync(join(work, "pets-http.log"), "w");
-  const pets = spawn(process.execPath, [PETS_MCP, "--http", "--port", String(petsPort)], {
+  const petsLog = fs.openSync(join(work, "mcpjungle-upstream.log"), "w");
+  const confPath = join(work, "pets-stdio.json");
+  await writeFile(
+    confPath,
+    JSON.stringify({
+      name: "pets",
+      transport: "stdio",
+      command: process.execPath,
+      args: [PETS_MCP],
+      session_mode: "stateful",
+    })
+  );
+  const pets = spawn(
+    mjBin,
+    ["start", "--host", "127.0.0.1", "--port", String(petsPort), "--sqlite-db-path", join(work, "mj.db")],
+    { cwd: work, stdio: ["ignore", petsLog, petsLog] }
+  );
+  await waitHttpOk(`http://127.0.0.1:${petsPort}/`, { timeoutMs: 60_000 });
+  const regMj = spawnSync(mjBin, ["register", "-c", confPath, "--registry", `http://127.0.0.1:${petsPort}`, "--force"], {
+    encoding: "utf8",
     cwd: work,
-    stdio: ["ignore", petsLog, petsLog],
   });
-  await waitHttpOk(`http://127.0.0.1:${petsPort}/mcp`, { timeoutMs: 30_000 });
+  if (regMj.status !== 0) {
+    throw new Error(`mcpjungle upstream register failed: ${regMj.stderr || regMj.stdout}`);
+  }
 
   const gLog = fs.openSync(join(work, "gateway.log"), "w");
   const gateway = spawn(
@@ -945,6 +968,9 @@ async function startContextforge() {
         SSRF_ALLOW_LOCALHOST: "true",
         SSRF_ALLOW_PRIVATE_NETWORKS: "true",
         CSRF_ENABLED: "false",
+        RATE_LIMITING_ENABLED: "false",
+        TOOL_RATE_LIMIT: "100000",
+        RATE_LIMIT_MEDIUM_RPM: "100000",
         MCPGATEWAY_UI_ENABLED: "false",
         MCPGATEWAY_ADMIN_API_ENABLED: "true",
         PLATFORM_ADMIN_EMAIL: "admin@example.com",
@@ -1055,7 +1081,7 @@ async function startContextforge() {
 
   return {
     id: "contextforge",
-    model: "virtual_mcp_server_over_http_pets",
+    model: "virtual_mcp_server_over_mcpjungle_stdio_pets",
     version: "mcp-contextforge-gateway (uvx)",
     mcpUrl,
     pid: gateway.pid,
