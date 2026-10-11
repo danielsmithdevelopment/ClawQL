@@ -89,7 +89,10 @@ export function createSharedCapabilityCatalogLayer(): Layer.Layer<
   SessionCatalogService | PromotionStore | CapabilityRegisterIntercept
 > {
   return Layer.mergeAll(
-    Layer.succeed(SessionCatalogService, makeInMemorySessionCatalogService()),
+    Layer.succeed(
+      SessionCatalogService,
+      makeInMemorySessionCatalogService({ maxSessions: undefined /* env default */ })
+    ),
     Layer.succeed(PromotionStore, makeInMemoryPromotionStore()),
     Layer.succeed(CapabilityRegisterIntercept, makeCapabilityRegisterIntercept())
   );

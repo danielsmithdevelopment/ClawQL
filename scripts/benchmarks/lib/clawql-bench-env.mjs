@@ -45,6 +45,8 @@ export function clawqlEqualArmEnv({ home, specPath, apiBase, baseEnv = process.e
     CLAWQL_CAPABILITY_LIFECYCLE: "0",
     CLAWQL_ALLOW_NO_ENFORCEMENT: "1",
     CLAWQL_OPENAPI_EXECUTE_PATH: "rest",
+    // Bounded ephemeral ring — keep audit on, avoid retaining fat summaries under microbench load.
+    CLAWQL_AUDIT_MAX_ENTRIES: "64",
   };
   for (const key of [
     "CLAWQL_PROVIDER",
