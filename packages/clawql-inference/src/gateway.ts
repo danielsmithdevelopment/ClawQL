@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import type { ModelEscalationDecision } from "./routing/types.js";
 import type { FallbackAttempt } from "./fallback/types.js";
 import { parseModelId } from "./providers/parse-model-id.js";
@@ -9,7 +10,7 @@ import { withInferenceTracing } from "./observability/traced-gateway.js";
 import { createInferenceStore } from "./store/create.js";
 import type { InferenceStore } from "./store/types.js";
 import { withSemanticCache, type WithSemanticCacheOptions } from "./cache/cached-gateway.js";
-import { createSemanticCacheStore } from "./cache/postgres-pgvector-store.js";
+import { createSemanticCacheStoreEffect } from "./cache/postgres-pgvector-store.js";
 import { loadSemanticCacheConfig } from "./cache/types.js";
 import { InMemorySemanticCacheStore } from "./cache/in-memory.js";
 import { loadFallbackConfig } from "./fallback/config.js";
@@ -183,31 +184,40 @@ export function createInferenceGateway(
   return composeInferenceGateway(inner, resolved);
 }
 
-/** Async gateway bootstrap — selects Postgres pgvector semantic cache when configured. */
+/** Effect-primary gateway bootstrap — selects Postgres pgvector semantic cache when configured. */
+export function createInferenceGatewayEffect(
+  options: CreateInferenceGatewayOptions = {}
+): Effect.Effect<InferenceGateway, Error> {
+  return Effect.gen(function* () {
+    const resolved = withRuntimePolicyEnv(options);
+    const env = resolved.env;
+    const providers =
+      resolved.providers ??
+      createProviderRegistry({
+        env,
+        plugins: resolved.providerPlugins ?? composeDefaultProviderPlugins(),
+      });
+    const inner = new ConfiguredInferenceGateway(providers);
+
+    let semanticOptions = resolved.semanticCache;
+    if (semanticOptions !== false && !semanticOptions?.cache) {
+      const config = semanticOptions?.config ?? loadSemanticCacheConfig(env);
+      if (config.enabled) {
+        semanticOptions = {
+          ...semanticOptions,
+          config,
+          cache: yield* createSemanticCacheStoreEffect(config, env),
+        };
+      }
+    }
+
+    return composeInferenceGateway(inner, { ...resolved, semanticCache: semanticOptions });
+  });
+}
+
+/** Promise façade. */
 export async function createInferenceGatewayAsync(
   options: CreateInferenceGatewayOptions = {}
 ): Promise<InferenceGateway> {
-  const resolved = withRuntimePolicyEnv(options);
-  const env = resolved.env;
-  const providers =
-    resolved.providers ??
-    createProviderRegistry({
-      env,
-      plugins: resolved.providerPlugins ?? composeDefaultProviderPlugins(),
-    });
-  const inner = new ConfiguredInferenceGateway(providers);
-
-  let semanticOptions = resolved.semanticCache;
-  if (semanticOptions !== false && !semanticOptions?.cache) {
-    const config = semanticOptions?.config ?? loadSemanticCacheConfig(env);
-    if (config.enabled) {
-      semanticOptions = {
-        ...semanticOptions,
-        config,
-        cache: await createSemanticCacheStore(config, env),
-      };
-    }
-  }
-
-  return composeInferenceGateway(inner, { ...resolved, semanticCache: semanticOptions });
+  return Effect.runPromise(createInferenceGatewayEffect(options));
 }

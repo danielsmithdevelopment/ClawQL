@@ -208,7 +208,11 @@ See also [`clawql-celld.md`](./clawql-celld.md) § fleet / bucket layout.
 
 ### 4.1 The correct scaling unit: cells within nodes, not pods per request
 
-**This is not 1M pods, or anything close to it.** A "node" is one running celld process, one per machine — you provision a small, fixed number of these (2–5 to start, sized for peak concurrent-resident-cell memory, not per-request throughput). A "cell" is an individual Durable Object — thousands of cells share a small number of already-running celld processes. Per celld's own v0.2 release, shared isolates bring a resident cell down to ~471KB, supporting up to ~2,500 resident cells per node at ~1.2GB.
+**This is not 1M pods, or anything close to it.** A "node" is one running celld process, one per machine — you provision a small, fixed number of these (2–5 to start, sized for peak concurrent-resident-cell memory, not per-request throughput). A "cell" is an individual Durable Object — thousands of cells share a small number of already-running celld processes.
+
+Do **not** quote celld v0.2's ~471 KB/resident-cell figure as current. That number is a v0.2 shared-isolate density claim. Upstream is past 0.5.x (GitHub latest **v0.6.1** as of 2026-10-01). celld.dev still publishes **0.47 MB RAM per resident cell / ~2,500 cells per 8 GB node** as a project-authored density table; celld's own `docs/README.md` currently plans **1,000 resident cells per 8 GB node**. Those are not the same measurement, and **ClawQL has not re-measured process RSS per resident cell on the current celld release** — size nodes from a live `/state` RSS + `resident_cells` sample, not from this paragraph.
+
+The **~350 KB** figure in [`clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) is a **compressed TEE audit payload** estimate (5,000 WORM entries), not celld resident memory. Do not mix the two.
 
 A burst of 1M events spins up (up to) 1M short-lived cells across your existing few nodes — an in-memory, sub-millisecond operation _inside already-running processes_ — not 1M new processes, pods, or EC2 instances. Most complete their work in milliseconds and are immediately eligible for hibernation/eviction, freeing memory for the next wave.
 

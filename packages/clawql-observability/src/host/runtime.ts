@@ -75,7 +75,7 @@ const bootObservabilityHostEffect = (env: NodeJS.ProcessEnv) =>
       outputPath: config.alloyOutputPath,
       reload,
     });
-  }).pipe(Effect.catchAll(() => Effect.void));
+  }).pipe(Effect.catch(() => Effect.void));
 
 let hostRuntime: ManagedRuntime.ManagedRuntime<
   ObservabilityHostServices,

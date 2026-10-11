@@ -64,7 +64,7 @@ export type AchTopupResult = {
 const TOPUP_META_KEY = "clawql_credit_topup";
 
 /** Effect service: Financial Connections link + ACH debit → credit ledger. */
-export class AchTopupService extends Context.Tag("clawql/AchTopupService")<
+export class AchTopupService extends Context.Service<
   AchTopupService,
   {
     readonly createBankLinkSession: (
@@ -74,7 +74,7 @@ export class AchTopupService extends Context.Tag("clawql/AchTopupService")<
       input: CreateAchTopupInput
     ) => Effect.Effect<AchTopupResult, AchTopupError | StripeNotConfigured | StripeApiError>;
   }
->() {}
+>()("clawql/AchTopupService") {}
 
 export function achTopupLiveLayer(
   env: NodeJS.ProcessEnv = process.env
@@ -116,7 +116,7 @@ export function achTopupLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             return {
               id,
               clientSecret: `${id}_secret_dry`,
@@ -146,7 +146,7 @@ export function achTopupLiveLayer(
                 correlationId: input.correlationId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
           if (!session.client_secret) {
             return yield* Effect.fail(
               new AchTopupError({
@@ -203,7 +203,7 @@ export function achTopupLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             const settled = yield* credits
               .settleTopup({
                 tenantId,
@@ -282,7 +282,7 @@ export function achTopupLiveLayer(
                 correlationId: input.correlationId ?? pi.id,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
 
           let settledImmediately = false;
           if (pi.status === "succeeded") {

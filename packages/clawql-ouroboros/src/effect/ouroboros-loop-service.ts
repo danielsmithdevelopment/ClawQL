@@ -22,7 +22,7 @@ export function resetOuroborosLoopDepsForTests(): void {
 }
 
 /** Effect service for the Ouroboros evolutionary loop. */
-export class OuroborosLoopService extends Context.Tag("clawql/OuroborosLoopService")<
+export class OuroborosLoopService extends Context.Service<
   OuroborosLoopService,
   {
     readonly run: (
@@ -31,7 +31,7 @@ export class OuroborosLoopService extends Context.Tag("clawql/OuroborosLoopServi
     ) => Effect.Effect<LoopResult, OuroborosError>;
     readonly getLoop: () => ReturnType<typeof buildEvolutionaryLoop>["loop"];
   }
->() {}
+>()("clawql/OuroborosLoopService") {}
 
 export function ouroborosLoopLiveLayer(): Layer.Layer<OuroborosLoopService> {
   return Layer.succeed(

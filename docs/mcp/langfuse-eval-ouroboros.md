@@ -4,7 +4,7 @@
 
 ## 1. What ClawQL provides
 
-When **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** and **`CLAWQL_ENABLE_OUROBOROS=1`**:
+When **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** and **`CLAWQL_ENABLE_OUROBOROS_TOOLS=1`** (or instance/tier `ouroboros.enabled: true`; 8.0 demotion — the MCP tool is nested under this gate, default off):
 
 | Surface                                         | Purpose                                                    |
 | ----------------------------------------------- | ---------------------------------------------------------- |
@@ -43,15 +43,15 @@ sequenceDiagram
 
 ## 3. Configuration reference
 
-| Variable                          | Default | Notes                                         |
-| --------------------------------- | ------- | --------------------------------------------- |
-| `CLAWQL_ENABLE_LANGFUSE_EVAL`     | off     | Registers webhook + MCP tool (with Ouroboros) |
-| `CLAWQL_ENABLE_OUROBOROS`         | off     | Required for lineage load / apply             |
-| `CLAWQL_LANGFUSE_WEBHOOK_TOKEN`   | unset   | **Required** when `NODE_ENV=production`       |
-| `CLAWQL_LANGFUSE_EVAL_MIN_SCORE`  | `0.8`   | Threshold for propose vs ticket               |
-| `CLAWQL_LANGFUSE_EVAL_AUTO_APPLY` | off     | `1` / `true` / `yes` to mutate seeds          |
+| Variable                          | Default | Notes                                                                                                           |
+| --------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------- |
+| `CLAWQL_ENABLE_LANGFUSE_EVAL`     | off     | Registers webhook always; MCP tool only when the harness gate below is also on                                  |
+| `CLAWQL_ENABLE_OUROBOROS_TOOLS`   | off     | Harness gate — required for the MCP tool (webhook works without it); or instance/tier `ouroboros.enabled: true` |
+| `CLAWQL_LANGFUSE_WEBHOOK_TOKEN`   | unset   | **Required** when `NODE_ENV=production`                                                                         |
+| `CLAWQL_LANGFUSE_EVAL_MIN_SCORE`  | `0.8`   | Threshold for propose vs ticket                                                                                 |
+| `CLAWQL_LANGFUSE_EVAL_AUTO_APPLY` | off     | `1` / `true` / `yes` to mutate seeds                                                                            |
 
-Helm: **`enableLangfuseEval: true`** (pairs with **`enableOuroboros: true`**). Inject **`CLAWQL_LANGFUSE_WEBHOOK_TOKEN`** via **`extraEnv`** / **`envFromSecret`**.
+Helm: **`enableLangfuseEval: true`** (pair with **`enableOuroboros: true`** to also register the MCP tool — 8.0 demotion, both default off). Inject **`CLAWQL_LANGFUSE_WEBHOOK_TOKEN`** via **`extraEnv`** / **`envFromSecret`**.
 
 ## 4. Webhook payload shapes
 

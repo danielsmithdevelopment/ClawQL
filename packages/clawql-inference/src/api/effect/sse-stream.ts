@@ -1,4 +1,4 @@
-import { Chunk, Effect, Stream } from "effect";
+import { Effect, Stream } from "effect";
 import type { InferenceResponse } from "../../gateway.js";
 
 export type OpenAiSseChunk = {
@@ -74,8 +74,7 @@ export function openAiCompletionChunkStream(
 /** Collect OpenAI SSE chunks via Effect.Stream (for tests and non-HTTP callers). */
 export function collectOpenAiCompletionChunks(
   input: OpenAiCompletionStreamInput
-): Effect.Effect<readonly OpenAiSseChunk[], unknown> {
-  return Stream.runCollect(openAiCompletionChunkStream(input)).pipe(
-    Effect.map(Chunk.toReadonlyArray)
-  );
+): Effect.Effect<Array<OpenAiSseChunk>, unknown> {
+  // Effect v4 `Stream.runCollect` yields `Array<A>` (no Chunk wrapper).
+  return Stream.runCollect(openAiCompletionChunkStream(input));
 }

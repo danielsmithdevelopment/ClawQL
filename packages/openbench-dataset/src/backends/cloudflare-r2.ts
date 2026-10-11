@@ -5,6 +5,7 @@
  * R2 S3 access-key secrets required when CLOUDFLARE_API_TOKEN is set.
  */
 
+import { Effect } from "effect";
 import type { DatasetBackend } from "./types.js";
 
 export const DEFAULT_OPENBENCH_TRACES_BUCKET = "clawql-openbench-traces";
@@ -69,8 +70,82 @@ export type EnsureBucketResult = {
 };
 
 /**
- * Idempotent R2 bucket ensure via Cloudflare REST (mirrors home-sync ensure).
+ * Idempotent R2 bucket ensure via Cloudflare REST (Effect primary).
  */
+export function ensureR2BucketViaCloudflareApiEffect(opts: {
+  accountId: string;
+  token: string;
+  bucket: string;
+  locationHint?: string;
+  dryRun?: boolean;
+  fetchFn?: typeof fetch;
+}): Effect.Effect<EnsureBucketResult, Error> {
+  return Effect.gen(function* () {
+    const fetchFn = opts.fetchFn ?? fetch;
+    const base = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(opts.accountId)}/r2/buckets`;
+    const headers = {
+      Authorization: `Bearer ${opts.token}`,
+      "Content-Type": "application/json",
+    };
+
+    const getRes = yield* Effect.tryPromise({
+      try: () => fetchFn(`${base}/${encodeURIComponent(opts.bucket)}`, { method: "GET", headers }),
+      catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+    });
+    if (getRes.ok) {
+      return { bucket: opts.bucket, created: false, method: "already-exists" as const };
+    }
+    if (getRes.status !== 404 && getRes.status !== 400) {
+      const body = yield* Effect.tryPromise({
+        try: () => getRes.text(),
+        catch: () => "",
+      }).pipe(Effect.catch(() => Effect.succeed("")));
+      return yield* Effect.fail(
+        new Error(
+          `Cloudflare R2 get bucket failed (${getRes.status}): ${body.slice(0, 300) || getRes.statusText}`
+        )
+      );
+    }
+
+    if (opts.dryRun) {
+      return { bucket: opts.bucket, created: true, method: "cloudflare-api" as const };
+    }
+
+    const payload: Record<string, string> = { name: opts.bucket };
+    const hint = opts.locationHint?.trim() || DEFAULT_R2_LOCATION_HINT;
+    if (hint) payload.locationHint = hint.toLowerCase();
+
+    const createRes = yield* Effect.tryPromise({
+      try: () =>
+        fetchFn(base, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload),
+        }),
+      catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+    });
+    if (createRes.ok || createRes.status === 409) {
+      if (createRes.status === 409) {
+        return { bucket: opts.bucket, created: false, method: "already-exists" as const };
+      }
+      return { bucket: opts.bucket, created: true, method: "cloudflare-api" as const };
+    }
+    const body = yield* Effect.tryPromise({
+      try: () => createRes.text(),
+      catch: () => "",
+    }).pipe(Effect.catch(() => Effect.succeed("")));
+    if (/already exists|10004|conflict/i.test(body)) {
+      return { bucket: opts.bucket, created: false, method: "already-exists" as const };
+    }
+    return yield* Effect.fail(
+      new Error(
+        `Cloudflare R2 create bucket failed (${createRes.status}): ${body.slice(0, 400) || createRes.statusText}`
+      )
+    );
+  });
+}
+
+/** Promise façade for callers that still await bucket ensure. */
 export async function ensureR2BucketViaCloudflareApi(opts: {
   accountId: string;
   token: string;
@@ -79,54 +154,7 @@ export async function ensureR2BucketViaCloudflareApi(opts: {
   dryRun?: boolean;
   fetchFn?: typeof fetch;
 }): Promise<EnsureBucketResult> {
-  const fetchFn = opts.fetchFn ?? fetch;
-  const base = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(opts.accountId)}/r2/buckets`;
-  const headers = {
-    Authorization: `Bearer ${opts.token}`,
-    "Content-Type": "application/json",
-  };
-
-  const getRes = await fetchFn(`${base}/${encodeURIComponent(opts.bucket)}`, {
-    method: "GET",
-    headers,
-  });
-  if (getRes.ok) {
-    return { bucket: opts.bucket, created: false, method: "already-exists" };
-  }
-  if (getRes.status !== 404 && getRes.status !== 400) {
-    const body = await getRes.text().catch(() => "");
-    throw new Error(
-      `Cloudflare R2 get bucket failed (${getRes.status}): ${body.slice(0, 300) || getRes.statusText}`
-    );
-  }
-
-  if (opts.dryRun) {
-    return { bucket: opts.bucket, created: true, method: "cloudflare-api" };
-  }
-
-  const payload: Record<string, string> = { name: opts.bucket };
-  const hint = opts.locationHint?.trim() || DEFAULT_R2_LOCATION_HINT;
-  if (hint) payload.locationHint = hint.toLowerCase();
-
-  const createRes = await fetchFn(base, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(payload),
-  });
-  if (createRes.ok || createRes.status === 409) {
-    return {
-      bucket: opts.bucket,
-      created: createRes.status !== 409,
-      method: createRes.status === 409 ? "already-exists" : "cloudflare-api",
-    };
-  }
-  const body = await createRes.text().catch(() => "");
-  if (/already exists|10004|conflict/i.test(body)) {
-    return { bucket: opts.bucket, created: false, method: "already-exists" };
-  }
-  throw new Error(
-    `Cloudflare R2 create bucket failed (${createRes.status}): ${body.slice(0, 400) || createRes.statusText}`
-  );
+  return Effect.runPromise(ensureR2BucketViaCloudflareApiEffect(opts));
 }
 
 /** Put objects with CLOUDFLARE_API_TOKEN (Workers R2 Storage Write). Max 300 MB/object. */
@@ -144,25 +172,44 @@ export class CloudflareR2RestBackend implements DatasetBackend {
     this.fetchFn = config.fetchFn ?? fetch;
   }
 
-  async putObject(key: string, body: string | Buffer, contentType?: string): Promise<void> {
-    const buf = typeof body === "string" ? Buffer.from(body, "utf8") : body;
-    const url =
-      `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(this.accountId)}` +
-      `/r2/buckets/${encodeURIComponent(this.bucket)}/objects/${encodeR2ObjectKey(key)}`;
-    const res = await this.fetchFn(url, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        "Content-Type": contentType ?? "application/octet-stream",
-      },
-      // Node fetch accepts Uint8Array; avoid relying on Buffer as BodyInit.
-      body: new Uint8Array(buf),
+  putObjectEffect(
+    key: string,
+    body: string | Buffer,
+    contentType?: string
+  ): Effect.Effect<void, Error> {
+    const self = this;
+    return Effect.gen(function* () {
+      const buf = typeof body === "string" ? Buffer.from(body, "utf8") : body;
+      const url =
+        `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(self.accountId)}` +
+        `/r2/buckets/${encodeURIComponent(self.bucket)}/objects/${encodeR2ObjectKey(key)}`;
+      const res = yield* Effect.tryPromise({
+        try: () =>
+          self.fetchFn(url, {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${self.token}`,
+              "Content-Type": contentType ?? "application/octet-stream",
+            },
+            body: new Uint8Array(buf),
+          }),
+        catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+      });
+      if (!res.ok) {
+        const text = yield* Effect.tryPromise({
+          try: () => res.text(),
+          catch: () => "",
+        }).pipe(Effect.catch(() => Effect.succeed("")));
+        return yield* Effect.fail(
+          new Error(
+            `Cloudflare R2 put object failed (${res.status}) key=${key}: ${text.slice(0, 300) || res.statusText}`
+          )
+        );
+      }
     });
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      throw new Error(
-        `Cloudflare R2 put object failed (${res.status}) key=${key}: ${text.slice(0, 300) || res.statusText}`
-      );
-    }
+  }
+
+  async putObject(key: string, body: string | Buffer, contentType?: string): Promise<void> {
+    return Effect.runPromise(this.putObjectEffect(key, body, contentType));
   }
 }

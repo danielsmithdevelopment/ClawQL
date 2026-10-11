@@ -34,7 +34,7 @@ export type OffRampSessionResult = {
 };
 
 /** Effect service for consumer crypto→fiat off-ramp widget sessions. */
-export class ConsumerOffRampService extends Context.Tag("clawql/ConsumerOffRampService")<
+export class ConsumerOffRampService extends Context.Service<
   ConsumerOffRampService,
   {
     readonly createSession: (input: {
@@ -48,7 +48,7 @@ export class ConsumerOffRampService extends Context.Tag("clawql/ConsumerOffRampS
       correlationId?: string;
     }) => Effect.Effect<OffRampSessionResult, OffRampError>;
   }
->() {}
+>()("clawql/ConsumerOffRampService") {}
 
 function buildMoonpaySellUrl(input: {
   apiKey: string;
@@ -173,7 +173,7 @@ export function consumerOffRampLiveLayer(
                 creatorId: input.creatorId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
 
           return {
             id,

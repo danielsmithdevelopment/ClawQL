@@ -61,7 +61,7 @@ export const registerAgentInstanceOnStart = (
     });
   }).pipe(
     Effect.provide(agentInstanceRegistryLiveLayer(resolveHome(config))),
-    Effect.catchAll(() => Effect.void),
+    Effect.catch(() => Effect.void),
     Effect.asVoid
   );
 };
@@ -118,7 +118,7 @@ export const heartbeatAgentInstanceOnHealth = (
     });
   }).pipe(
     Effect.provide(agentInstanceRegistryLiveLayer(resolveHome(config))),
-    Effect.catchAll(() => Effect.void),
+    Effect.catch(() => Effect.void),
     Effect.asVoid
   );
 };

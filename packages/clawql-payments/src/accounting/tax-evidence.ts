@@ -37,7 +37,7 @@ export type BuildTaxEvidencePackOptions = {
 };
 
 /** @deprecated Prefer TaxEvidenceService.build — Promise façade retained for legacy callers. */
-export async function buildTaxEvidencePack(
+async function buildTaxEvidencePackImpl(
   options: BuildTaxEvidencePackOptions
 ): Promise<TaxEvidencePack> {
   const env = options.env ?? process.env;
@@ -98,6 +98,22 @@ export async function buildTaxEvidencePack(
   };
 }
 
+export function buildTaxEvidencePackEffect(
+  options: BuildTaxEvidencePackOptions
+): Effect.Effect<TaxEvidencePack, Error> {
+  return Effect.tryPromise({
+    try: () => buildTaxEvidencePackImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link buildTaxEvidencePackEffect} for Effect callers. */
+export async function buildTaxEvidencePack(
+  options: BuildTaxEvidencePackOptions
+): Promise<TaxEvidencePack> {
+  return Effect.runPromise(buildTaxEvidencePackEffect(options));
+}
+
 export function formatTaxEvidenceMarkdown(pack: TaxEvidencePack): string {
   const lines = [
     `# Tax evidence pack — ${pack.taxYear}`,
@@ -123,7 +139,7 @@ export function formatTaxEvidenceMarkdown(pack: TaxEvidencePack): string {
 }
 
 /** @deprecated Prefer TaxEvidenceService.write — Promise façade retained for legacy callers. */
-export async function writeTaxEvidencePack(
+async function writeTaxEvidencePackImpl(
   pack: TaxEvidencePack,
   env: NodeJS.ProcessEnv = process.env,
   outputDir?: string
@@ -135,6 +151,26 @@ export async function writeTaxEvidencePack(
   await writeFile(jsonPath, `${JSON.stringify(pack, null, 2)}\n`, "utf8");
   await writeFile(mdPath, formatTaxEvidenceMarkdown(pack), "utf8");
   return { jsonPath, mdPath };
+}
+
+export function writeTaxEvidencePackEffect(
+  pack: TaxEvidencePack,
+  env: NodeJS.ProcessEnv = process.env,
+  outputDir?: string
+): Effect.Effect<{ jsonPath: string; mdPath: string }, Error> {
+  return Effect.tryPromise({
+    try: () => writeTaxEvidencePackImpl(pack, env, outputDir),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link writeTaxEvidencePackEffect} for Effect callers. */
+export async function writeTaxEvidencePack(
+  pack: TaxEvidencePack,
+  env: NodeJS.ProcessEnv = process.env,
+  outputDir?: string
+): Promise<{ jsonPath: string; mdPath: string }> {
+  return Effect.runPromise(writeTaxEvidencePackEffect(pack, env, outputDir));
 }
 
 /** @internal test helper */
@@ -151,7 +187,7 @@ export class TaxEvidenceError extends Data.TaggedError("TaxEvidenceError")<{
  * Effect surface over 1099-style tax evidence packs (WORM audit → JSON/Markdown).
  * Evidence only — never an IRS/CRA e-file; `build` refuses when the audit chain fails.
  */
-export class TaxEvidenceService extends Context.Tag("clawql/TaxEvidenceService")<
+export class TaxEvidenceService extends Context.Service<
   TaxEvidenceService,
   {
     readonly build: (
@@ -163,7 +199,7 @@ export class TaxEvidenceService extends Context.Tag("clawql/TaxEvidenceService")
     ) => Effect.Effect<{ jsonPath: string; mdPath: string }, TaxEvidenceError>;
     readonly formatMarkdown: (pack: TaxEvidencePack) => Effect.Effect<string, TaxEvidenceError>;
   }
->() {}
+>()("clawql/TaxEvidenceService") {}
 
 export function taxEvidenceLiveLayer(
   env: NodeJS.ProcessEnv = process.env

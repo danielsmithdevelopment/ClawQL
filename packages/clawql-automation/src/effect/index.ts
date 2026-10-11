@@ -22,3 +22,17 @@ export {
   runAutomationEffect,
   type AutomationServices,
 } from "./automation-effect-runtime.js";
+export { WorkflowK8sService, workflowK8sLiveLayer } from "../workflow/k8s-client.js";
+export {
+  suspendWorkflowEffect,
+  resumeWorkflowEffect,
+  maybeResumeWorkflowFromHitlEffect,
+  resumeWorkflowFromHitlRefEffect,
+} from "../workflow/suspend-resume.js";
+export { maybeNotifyWorkflowTerminalEffect } from "../workflow/workflow-notify.js";
+export { runVaultDailyDigestEffect } from "../workflow/vault-digest/run-vault-digest.js";
+export {
+  ensureWorkflowStreamEffect,
+  publishWorkflowEventEffect,
+  publishDocumentEventEffect,
+} from "../nats/client.js";

@@ -69,7 +69,7 @@ const writeHeadscaleConfigTemplate = (
       return path;
     },
     catch: () => headscaleConfigPath(),
-  }).pipe(Effect.catchAll(() => Effect.succeed(headscaleConfigPath())));
+  }).pipe(Effect.catch(() => Effect.succeed(headscaleConfigPath())));
 
 /** Stand up or record Headscale control-plane settings (spec §4). */
 export const bootstrapHeadscale = (
@@ -85,7 +85,7 @@ export const bootstrapHeadscale = (
     if (headscaleCli && isLocalControlPlane(config.controlPlaneHost)) {
       yield* spawnCollect("headscale", ["namespaces", "create", namespace], {
         timeoutMs: 30_000,
-      }).pipe(Effect.catchAll(() => Effect.succeed(undefined)));
+      }).pipe(Effect.catch(() => Effect.succeed(undefined)));
       bootstrapped = true;
     }
 

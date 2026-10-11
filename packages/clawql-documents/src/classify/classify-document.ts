@@ -80,7 +80,7 @@ export type ClassifierHttpResponse = {
 };
 
 /** POST to remote classifier; pure HTTP IO (no result shaping). */
-export async function postClassifierHttp(
+async function postClassifierHttpImpl(
   input: ClassifyDocumentInput,
   baseUrl: string
 ): Promise<ClassifierHttpResponse> {
@@ -140,15 +140,29 @@ export function parseClassifierHttpResponse(
 }
 
 /** Promise façade — prefer {@link executeClassifyDocumentEffect} for Effect callers. */
-export async function classifyDocument(
-  input: ClassifyDocumentInput
-): Promise<ClassifyDocumentResult> {
+async function classifyDocumentImpl(input: ClassifyDocumentInput): Promise<ClassifyDocumentResult> {
   const baseUrl = classifierBaseUrl();
   if (!baseUrl) {
     return heuristicClassify(input);
   }
   const response = await postClassifierHttp(input, baseUrl);
   return parseClassifierHttpResponse(input, response);
+}
+
+export function classifyDocumentEffect(
+  input: ClassifyDocumentInput
+): Effect.Effect<ClassifyDocumentResult, Error> {
+  return Effect.tryPromise({
+    try: () => classifyDocumentImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link classifyDocumentEffect} for Effect callers. */
+export async function classifyDocument(
+  input: ClassifyDocumentInput
+): Promise<ClassifyDocumentResult> {
+  return Effect.runPromise(classifyDocumentEffect(input));
 }
 
 export async function handleClassifyDocumentToolInput(
@@ -183,4 +197,23 @@ export async function handleClassifyDocumentToolInput(
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
   };
+}
+
+/** POST to remote classifier (Effect-primary). */
+export function postClassifierHttpEffect(
+  input: ClassifyDocumentInput,
+  baseUrl: string
+): Effect.Effect<ClassifierHttpResponse, Error> {
+  return Effect.tryPromise({
+    try: () => postClassifierHttpImpl(input, baseUrl),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade for callers that still await classifier HTTP. */
+export async function postClassifierHttp(
+  input: ClassifyDocumentInput,
+  baseUrl: string
+): Promise<ClassifierHttpResponse> {
+  return Effect.runPromise(postClassifierHttpEffect(input, baseUrl));
 }

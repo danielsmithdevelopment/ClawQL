@@ -11,7 +11,7 @@ export type ScheduleWorkerTick = () => Promise<number>;
 
 export type ScheduleWorkerHandle = {
   readonly stop: () => void;
-  readonly fiber: Fiber.RuntimeFiber<never, never>;
+  readonly fiber: Fiber.Fiber<never, never>;
 };
 
 /**
@@ -32,7 +32,7 @@ export function startScheduleWorkerFiberEffect(
       }
       yield* Ref.set(busy, true);
       yield* automationFromPromise(() => tick()).pipe(
-        Effect.catchAllCause((cause) =>
+        Effect.catchCause((cause) =>
           Effect.sync(() => {
             const squashed = Cause.squash(cause);
             let msg: string;
@@ -59,9 +59,9 @@ export function startScheduleWorkerFiberEffect(
     });
 
     const loop = Effect.forever(
-      Effect.sleep(Duration.millis(pollMs)).pipe(Effect.zipRight(maybeTick))
+      Effect.sleep(Duration.millis(pollMs)).pipe(Effect.andThen(maybeTick))
     );
-    const fiber = yield* Effect.forkDaemon(loop);
+    const fiber = yield* Effect.forkDetach(loop);
     return {
       fiber,
       stop: () => {

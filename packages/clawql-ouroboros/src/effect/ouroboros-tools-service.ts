@@ -19,7 +19,7 @@ import {
 } from "./ouroboros-tools-effect.js";
 
 /** Effect service for Ouroboros MCP tool bodies. */
-export class OuroborosToolsService extends Context.Tag("clawql/OuroborosToolsService")<
+export class OuroborosToolsService extends Context.Service<
   OuroborosToolsService,
   {
     readonly createSeedFromDocument: (
@@ -68,7 +68,7 @@ export class OuroborosToolsService extends Context.Tag("clawql/OuroborosToolsSer
       OuroborosEventStoreService
     >;
   }
->() {}
+>()("clawql/OuroborosToolsService") {}
 
 export function ouroborosToolsLiveLayer(): Layer.Layer<OuroborosToolsService> {
   return Layer.succeed(

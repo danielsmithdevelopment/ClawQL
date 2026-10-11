@@ -10,7 +10,7 @@ import { OuroborosLoopService } from "./ouroboros-loop-service.js";
 import { ouroborosFromPromise } from "./ouroboros-effect-utils.js";
 
 /** Effect service for the Ouroboros seeds background poller. */
-export class OuroborosPollerService extends Context.Tag("clawql/OuroborosPollerService")<
+export class OuroborosPollerService extends Context.Service<
   OuroborosPollerService,
   {
     readonly start: (
@@ -19,7 +19,7 @@ export class OuroborosPollerService extends Context.Tag("clawql/OuroborosPollerS
       options?: SeedPollerOptions
     ) => Effect.Effect<{ stop: () => void }, never, OuroborosLoopService>;
   }
->() {}
+>()("clawql/OuroborosPollerService") {}
 
 export function ouroborosPollerLiveLayer(): Layer.Layer<OuroborosPollerService> {
   return Layer.succeed(

@@ -7,6 +7,7 @@
  */
 
 import { jsonToStruct, structToJson } from "./mcp-protobuf-struct.js";
+import { Effect } from "effect";
 
 /** Handlers for fulfilling `ServerInitiatedRequest` entries (MCP JSON-RPC–shaped inputs/outputs). */
 export type DependentHandlers = {
@@ -180,7 +181,7 @@ function elicitRequestProtoToMcpParams(req: Record<string, unknown>): Record<str
 /**
  * Fulfill a `dependent_requests` map from a protobuf response. Returns `dependent_responses` entries keyed the same way.
  */
-export async function fulfillDependentRequests(
+async function fulfillDependentRequestsImpl(
   dependentRequests: Record<string, Record<string, unknown>>,
   handlers: DependentHandlers
 ): Promise<Record<string, Record<string, unknown>>> {
@@ -222,6 +223,24 @@ export async function fulfillDependentRequests(
   return out;
 }
 
+export function fulfillDependentRequestsEffect(
+  dependentRequests: Record<string, Record<string, unknown>>,
+  handlers: DependentHandlers
+): Effect.Effect<Record<string, Record<string, unknown>>, Error> {
+  return Effect.tryPromise({
+    try: () => fulfillDependentRequestsImpl(dependentRequests, handlers),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link fulfillDependentRequestsEffect} for Effect callers. */
+export async function fulfillDependentRequests(
+  dependentRequests: Record<string, Record<string, unknown>>,
+  handlers: DependentHandlers
+): Promise<Record<string, Record<string, unknown>>> {
+  return Effect.runPromise(fulfillDependentRequestsEffect(dependentRequests, handlers));
+}
+
 function mergeDependentResponses(
   previous: Record<string, unknown> | undefined,
   newBatch: Record<string, Record<string, unknown>>
@@ -237,7 +256,7 @@ function mergeDependentResponses(
  * @param invoke - Calls the gRPC method with `{ common: merged }` and returns the full response object.
  * @param handlers - User code that implements MCP client capabilities for server-initiated work.
  */
-export async function runUnaryWithDependents<T extends UnaryWithCommon>(
+async function runUnaryWithDependentsImpl<T extends UnaryWithCommon>(
   initialCommon: Record<string, unknown>,
   invoke: (common: Record<string, unknown>) => Promise<T>,
   handlers: DependentHandlers,
@@ -262,6 +281,28 @@ export async function runUnaryWithDependents<T extends UnaryWithCommon>(
     };
   }
   throw new Error("runUnaryWithDependents: maxRounds exceeded");
+}
+
+export function runUnaryWithDependentsEffect<T extends UnaryWithCommon>(
+  initialCommon: Record<string, unknown>,
+  invoke: (common: Record<string, unknown>) => Promise<T>,
+  handlers: DependentHandlers,
+  options?: { maxRounds?: number }
+): Effect.Effect<T, Error> {
+  return Effect.tryPromise({
+    try: () => runUnaryWithDependentsImpl(initialCommon, invoke, handlers, options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runUnaryWithDependentsEffect} for Effect callers. */
+export async function runUnaryWithDependents<T extends UnaryWithCommon>(
+  initialCommon: Record<string, unknown>,
+  invoke: (common: Record<string, unknown>) => Promise<T>,
+  handlers: DependentHandlers,
+  options?: { maxRounds?: number }
+): Promise<T> {
+  return Effect.runPromise(runUnaryWithDependentsEffect(initialCommon, invoke, handlers, options));
 }
 
 /** Parse `resume_data` Struct to a plain object (optional echo / continuation state). */

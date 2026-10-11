@@ -59,6 +59,8 @@
 }
 
 :root {
+  --cloud-sidebar: #12182b;
+  --cloud-canvas: #eef0f4;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -125,6 +127,35 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* Managed cloud.clawql.com — light console over navy sidebar tokens */
+.managed {
+  --background: #eef0f4;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #12182b;
+  --primary-foreground: #f8fafc;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #0f172a;
+  --muted: #e8ebf0;
+  --muted-foreground: #64748b;
+  --accent: #e8ebf0;
+  --accent-foreground: #0f172a;
+  --border: #d8dee8;
+  --input: #d8dee8;
+  --ring: #94a3b8;
+  --sidebar: #12182b;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-primary: #f8fafc;
+  --sidebar-primary-foreground: #12182b;
+  --sidebar-accent: #1c2438;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: rgb(255 255 255 / 10%);
+  --sidebar-ring: #94a3b8;
 }
 
 @layer base {

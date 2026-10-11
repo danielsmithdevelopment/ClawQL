@@ -52,12 +52,12 @@ export function resolveFacilitatorAuthHeaders(
 }
 
 /** Effect service for x402 runtime configuration (network, facilitator, wallet). */
-export class X402RuntimeConfigService extends Context.Tag("clawql/X402RuntimeConfigService")<
+export class X402RuntimeConfigService extends Context.Service<
   X402RuntimeConfigService,
   {
     readonly load: () => Effect.Effect<X402RuntimeConfig, X402Error>;
   }
->() {}
+>()("clawql/X402RuntimeConfigService") {}
 
 export function x402RuntimeConfigLiveLayer(
   env: NodeJS.ProcessEnv = process.env

@@ -30,7 +30,14 @@
 4. **Skills-unified search** — operations and skills in one ranker; Agent Seer cold-start scenarios.
 5. **Gateway + web/data/MCP UI** — Managed Edge Gateway, `clawql-web`, DuckDB `data_*`, PixelDrop / HTMX playground.
 6. **Observability + audit** — `clawql-observability` LGTM+/Faro; merkle/audit WORM wedge; simulated TEE.
-7. **Credits / Effect** — hosted compliance (P2P off by default), HATEOAS auth gate, Effect-primary auth/payments.
+7. **Network + analytics** — `clawql-network` mesh CLI; `clawql-analytics` docs adapter; workspace **`0.1.0`** first-publish policy.
+8. **Learn / 8.0 docs** — migrate-to-8 guide, Streams/IDP labs, Security/OSV sidebar, `/security/status`.
+9. **Streams celld** — celld **v0.4.0** Lab 5 + Helm; AgentSessionDO MCP/memory/adapter/audit-LTX path; BurstWatch / AWS burst path.
+10. **Fast Decision + capability lifecycle** — GLiNER2/Decide classifier; default-on capability gate; gateway ladder `/decision` + `/events`.
+11. **Risk / HITL** — operation-risk-from-spec; execute pause/resume for mandates.
+12. **Purge honesty** — PageIndex + CodeGraph removed; ouroboros agent tools opt-in; Docling-default converters.
+13. **Credits / Effect** — hosted compliance (P2P off by default), HATEOAS auth gate, Effect-primary auth/payments; self-serve Stripe.
+14. **Effect v4.0.0** — singular `effect` + `@effect/opentelemetry`; `Context.Service` / `Result` / Schema v4 ([#1197](https://github.com/danielsmithdevelopment/ClawQL/pull/1197)).
 
 ### Why it matters
 
@@ -46,7 +53,7 @@ Regulated and air-gapped installs should not wake up with Cloudflare/GitHub/Slac
 
 Shipped **clawql-mcp 8.0.0** (semver-**major**).
 
-Headlines: **available ≠ loaded** providers · **`ProviderPlugin` hard break** · enforcement **opt-in** · skills-unified search · LGTM+/Faro observability · Managed Edge Gateway.
+Headlines: **available ≠ loaded** providers · **`ProviderPlugin` hard break** · enforcement **opt-in** · **Effect v4** · skills-unified search · LGTM+/Faro observability · Streams **celld** · `clawql-network` + analytics · Learn/migrate-to-8 docs · Managed Edge Gateway.
 
 Pin `@8` · migrate: docs/getting-started/migrate-to-8.0.md · npm: clawql-mcp@8.0.0
 
@@ -66,7 +73,7 @@ We open-source an Agentic Gateway (MCP search/execute over OpenAPI + vault memor
 2. Legacy `Plugin` bridge removed — `ProviderPlugin` / `StandaloneSkillPlugin` only.
 3. Tool-scope enforcement default off (opt in Panguard proxy; boot warns if none).
 
-Also: skills-unified search, Agent Seer scenarios, Managed Edge Gateway, clawql-web/data, LGTM+/Faro observability, audit/TEE wedge, OpenBench B-7.
+Also: skills-unified search, Agent Seer scenarios, Managed Edge Gateway, clawql-web/data, LGTM+/Faro observability, clawql-network/analytics, Streams celld v0.4.0, audit/TEE wedge, Learn docs for 8.0 migration, OpenBench B-7.
 
 npm: `clawql-mcp@8.0.0`  
 Notes: https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/release/RELEASE_NOTES_v8.0.0.md  

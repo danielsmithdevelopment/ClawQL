@@ -108,7 +108,7 @@ Golden fixture: `src/alloy/__fixtures__/lgtm-default.river.golden`.
 
 ## Phase 3c — Query federation (Effect-native)
 
-Governed read facade over registered backends. All IO is Effect (`Context.Tag` + `Layer`); HTTP goes through `TelemetryQueryTransport` so tests substitute a Layer instead of mocking `fetch`.
+Governed read facade over registered backends. All IO is Effect (`Context.Service` + `Layer`); HTTP goes through `TelemetryQueryTransport` so tests substitute a Layer instead of mocking `fetch`.
 
 ```typescript
 import { Effect, Layer } from "effect";

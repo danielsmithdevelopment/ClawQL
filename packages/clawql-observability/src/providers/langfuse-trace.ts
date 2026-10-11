@@ -7,7 +7,7 @@ import type { ProviderConfig, TraceProvider } from "./types.js";
 export const LANGFUSE_TRACE_PROVIDER_ID = "langfuse-otel";
 
 export const createLangfuseTraceProvider = (): TraceProvider => {
-  const configRef = Ref.unsafeMake<ProviderConfig>(defaultLangfuseProviderConfig());
+  const configRef = Ref.makeUnsafe<ProviderConfig>(defaultLangfuseProviderConfig());
 
   return {
     id: LANGFUSE_TRACE_PROVIDER_ID,

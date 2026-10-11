@@ -80,4 +80,4 @@ export const registerBuiltinLgtmProvidersEffect = (): Effect.Effect<
       yield* pyroscope.initialize(defaultPyroscopeProviderConfig());
       yield* profileRegistry.register(pyroscope, defaultPyroscopeProviderConfig());
     }
-  }).pipe(Effect.catchAll(() => Effect.void));
+  }).pipe(Effect.catch(() => Effect.void));

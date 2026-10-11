@@ -6,7 +6,7 @@ import type { ProviderConfig, TraceProvider } from "./types.js";
 export const LGTM_TEMPO_PROVIDER_ID = "lgtm-tempo";
 
 export const createTempoTraceProvider = (): TraceProvider => {
-  const configRef = Ref.unsafeMake<ProviderConfig>(defaultTempoProviderConfig());
+  const configRef = Ref.makeUnsafe<ProviderConfig>(defaultTempoProviderConfig());
 
   return {
     id: LGTM_TEMPO_PROVIDER_ID,

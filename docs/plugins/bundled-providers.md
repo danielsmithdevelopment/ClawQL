@@ -6,7 +6,7 @@ status: default-available
 package: providers/ (on-disk specs)
 order: 5
 prev: documents
-next: automation
+next: toolkits
 ---
 
 # Bundled providers
@@ -59,8 +59,10 @@ Only **`CLAWQL_ENABLE_DOCUMENTS=0`** trims the document/IDP vendor set from **`a
 1. `CLAWQL_SPEC_PATHS`
 2. `CLAWQL_BUNDLED_PROVIDERS`
 3. Instance `providers` (`CLAWQL_INSTANCE_SPEC`)
-4. `CLAWQL_PROVIDER` (merged pack or single vendor)
-5. **Empty** stack when nothing else is set
+4. Instance `toolkit` (when `providers` is absent — see [toolkits](./toolkits.md))
+5. `CLAWQL_PROVIDER` (merged pack or single vendor; wins over `CLAWQL_TOOLKIT`)
+6. `CLAWQL_TOOLKIT` (named packaging → pack / enabled)
+7. **Empty** stack when nothing else is set
 
 Single-spec mode (`CLAWQL_SPEC_PATH`, `CLAWQL_PROVIDER=cloudflare`, …) bypasses the merge rules above.
 

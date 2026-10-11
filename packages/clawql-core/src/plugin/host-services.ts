@@ -16,12 +16,12 @@ import {
 
 export type PluginHostServices = {
   readonly layer: Layer.Layer<PluginInstallServices, never, never>;
-  readonly hookRegistry: Context.Tag.Service<typeof HookRegistry>;
-  readonly skillRegistry: Context.Tag.Service<typeof SkillRegistry>;
-  readonly worm: Context.Tag.Service<typeof WormAuditSink>;
+  readonly hookRegistry: Context.Service.Shape<typeof HookRegistry>;
+  readonly skillRegistry: Context.Service.Shape<typeof SkillRegistry>;
+  readonly worm: Context.Service.Shape<typeof WormAuditSink>;
 };
 
-function extractService<I, S>(tag: Context.Tag<I, S>, layer: Layer.Layer<I, never, never>): S {
+function extractService<I, S>(tag: Context.Service<I, S>, layer: Layer.Layer<I, never, never>): S {
   return Effect.runSync(
     Effect.gen(function* () {
       return yield* tag;
@@ -31,7 +31,7 @@ function extractService<I, S>(tag: Context.Tag<I, S>, layer: Layer.Layer<I, neve
 
 /** Build long-lived install services (HookRegistry shared with the MCP proxy pipeline). */
 export function createInMemoryPluginHostServices(options?: {
-  readonly worm?: Context.Tag.Service<typeof WormAuditSink>;
+  readonly worm?: Context.Service.Shape<typeof WormAuditSink>;
   /** Defaults to NoopVaultSeedLive — pass MemoryVaultSeedLive from clawql-memory when vault is configured. */
   readonly vaultSeedLayer?: Layer.Layer<import("./provider-types.js").VaultSeedPort, never, never>;
 }): PluginHostServices {

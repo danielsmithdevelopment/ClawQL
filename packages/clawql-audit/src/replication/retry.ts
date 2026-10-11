@@ -23,7 +23,7 @@ export const withRetry = <A>(
     for (let attempt = 1; attempt <= retry.maxAttempts; attempt++) {
       const result = yield* effect().pipe(
         Effect.map((value) => ({ ok: true as const, value })),
-        Effect.catchAll((err) => Effect.succeed({ ok: false as const, err }))
+        Effect.catch((err) => Effect.succeed({ ok: false as const, err }))
       );
       if (result.ok) return result.value;
       last = result.err;

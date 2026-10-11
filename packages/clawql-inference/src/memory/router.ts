@@ -150,7 +150,13 @@ export function createMemoryRouter(options: CreateMemoryRouterOptions = {}): exp
   router.delete("/memory/:slug", async (req: VirtualKeyRequest, res: Response) => {
     const raw = req.params.slug;
     const slug = Array.isArray(raw) ? (raw[0] ?? "") : (raw ?? "");
-    const result = await erase(slug, scopeFromReq(req));
+    const principal =
+      req.virtualKey?.id?.trim() ||
+      (typeof req.headers["x-clawql-principal"] === "string"
+        ? req.headers["x-clawql-principal"].trim()
+        : "") ||
+      "anonymous";
+    const result = await erase(slug, scopeFromReq(req), principal);
     if (!result.ok) {
       sendOpenAiError(res, result.status, result.error, "invalid_request_error");
       return;

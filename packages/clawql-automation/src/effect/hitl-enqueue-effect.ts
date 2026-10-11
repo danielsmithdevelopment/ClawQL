@@ -6,7 +6,7 @@
 import { Effect } from "effect";
 import {
   getHitlLabelStudioRestConfig,
-  labelStudioImportTasks,
+  labelStudioImportTasksEffect,
   mergeHitlMetadata,
   type HitlLabelStudioEnqueueParams,
 } from "../hitl/label-studio.js";
@@ -49,8 +49,11 @@ export function executeHitlEnqueueLabelStudioEffect(
       const msg = e instanceof Error ? e.message : "invalid predictions payload";
       return mcpJson({ ok: false, error: msg });
     }
-    const result = yield* automationFromPromise(() =>
-      labelStudioImportTasks(cfg.baseUrl, cfg.apiToken, params.project_id, payload)
+    const result = yield* labelStudioImportTasksEffect(
+      cfg.baseUrl,
+      cfg.apiToken,
+      params.project_id,
+      payload
     );
 
     if (!result.ok) {

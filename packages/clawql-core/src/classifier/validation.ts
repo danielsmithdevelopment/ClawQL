@@ -54,9 +54,7 @@ const DEFAULT_BUCKETS: readonly { readonly lo: number; readonly hi: number }[] =
   { lo: 0.9, hi: 1.0001 },
 ];
 
-export class FastDecisionValidationService extends Context.Tag(
-  "clawql/FastDecisionValidationService"
-)<
+export class FastDecisionValidationService extends Context.Service<
   FastDecisionValidationService,
   {
     readonly evaluate: (
@@ -65,7 +63,7 @@ export class FastDecisionValidationService extends Context.Tag(
       criteria?: ValidationCriteria
     ) => Effect.Effect<CorrectnessCalibrationReport>;
   }
->() {}
+>()("clawql/FastDecisionValidationService") {}
 
 function pickTop(scores: readonly FastDecisionScore[]): FastDecisionScore | undefined {
   if (scores.length === 0) return undefined;

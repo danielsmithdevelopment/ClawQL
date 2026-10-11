@@ -39,14 +39,14 @@
   },
   "dependencies": {
     "@firecrawl/anydoc": "^0.2.4",
-    "@firecrawl/pdf-inspector": "1.19.0",
+    "@firecrawl/pdf-inspector": "1.25.2",
     "clawql-api": "0.1.0",
     "clawql-core": "0.1.0",
     "clawql-memory": "0.1.0",
     "clawql-web": "0.1.0",
-    "effect": "^3.21.4",
+    "effect": "4.0.0",
     "node-html-markdown": "^2.0.0",
-    "zod": "4.3.6"
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

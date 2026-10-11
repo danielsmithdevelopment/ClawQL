@@ -5,6 +5,7 @@
 
 import { maybePresidioRedactText, presidioEnabled } from "../presidio/client.js";
 import { maybePrivacyFilterRedactText, privacyFilterEnabled } from "../privacy-filter/client.js";
+import { Effect } from "effect";
 
 /** True when any gateway redaction layer is enabled. */
 export function gatewayRedactionEnabled(): boolean {
@@ -15,7 +16,7 @@ export function gatewayRedactionEnabled(): boolean {
  * Apply enabled layers in order: Presidio first, then local Privacy Filter as backup
  * for spans Presidio missed.
  */
-export async function maybeGatewayRedactText(text: string): Promise<string> {
+async function maybeGatewayRedactTextImpl(text: string): Promise<string> {
   let out = text;
   if (presidioEnabled()) {
     out = await maybePresidioRedactText(out);
@@ -26,10 +27,22 @@ export async function maybeGatewayRedactText(text: string): Promise<string> {
   return out;
 }
 
+export function maybeGatewayRedactTextEffect(text: string): Effect.Effect<string, Error> {
+  return Effect.tryPromise({
+    try: () => maybeGatewayRedactTextImpl(text),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link maybeGatewayRedactTextEffect} for Effect callers. */
+export async function maybeGatewayRedactText(text: string): Promise<string> {
+  return Effect.runPromise(maybeGatewayRedactTextEffect(text));
+}
+
 /**
  * Redact string fields in a JSON-like tool payload (shallow + nested).
  */
-export async function gatewayRedactPayload(value: unknown): Promise<unknown> {
+async function gatewayRedactPayloadImpl(value: unknown): Promise<unknown> {
   if (typeof value === "string") {
     return maybeGatewayRedactText(value);
   }
@@ -44,4 +57,16 @@ export async function gatewayRedactPayload(value: unknown): Promise<unknown> {
     return out;
   }
   return value;
+}
+
+export function gatewayRedactPayloadEffect(value: unknown): Effect.Effect<unknown, Error> {
+  return Effect.tryPromise({
+    try: () => gatewayRedactPayloadImpl(value),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link gatewayRedactPayloadEffect} for Effect callers. */
+export async function gatewayRedactPayload(value: unknown): Promise<unknown> {
+  return Effect.runPromise(gatewayRedactPayloadEffect(value));
 }

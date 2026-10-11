@@ -9,6 +9,10 @@ export {
 } from "./gate.js";
 export {
   setupX402Wallet,
+  setupX402WalletEffect,
+  X402WalletError,
+  X402WalletService,
+  x402WalletLiveLayer,
   type X402Asset,
   type X402WalletSetupInput,
   type X402WalletSetupResult,

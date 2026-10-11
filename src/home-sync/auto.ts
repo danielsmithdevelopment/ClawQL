@@ -1,5 +1,6 @@
-import { runSyncPull, runSyncPush } from "./engine.js";
-import { loadResolvedHomeSyncConfig } from "./config.js";
+import { Effect } from "effect";
+import { runSyncPullEffect, runSyncPushEffect } from "./engine.js";
+import { loadResolvedHomeSyncConfigEffect } from "./config.js";
 
 function envInt(key: string, def: number): number {
   const v = process.env[key]?.trim();
@@ -78,7 +79,7 @@ function armPushTimer(delayMs: number): void {
   pushTimer = setTimeout(
     () => {
       pushTimer = null;
-      void tryAutoPush({ force: false });
+      void Effect.runPromise(tryAutoPushEffect({ force: false }));
     },
     Math.max(0, delayMs)
   );
@@ -91,82 +92,123 @@ export function scheduleAutoPushAfterIngest(): void {
   armPushTimer(debounceMs());
 }
 
+function tryAutoPushEffect(opts: { force: boolean }): Effect.Effect<void> {
+  return Effect.gen(function* () {
+    if (!pushDirty) return;
+    if (pushInFlight) return;
+
+    if (!opts.force) {
+      const wait = Math.max(0, minIntervalMs() - (Date.now() - lastPushMs));
+      if (wait > 0) {
+        armPushTimer(wait);
+        return;
+      }
+    }
+
+    pushInFlight = true;
+    yield* Effect.gen(function* () {
+      yield* loadResolvedHomeSyncConfigEffect();
+      const result = yield* runSyncPushEffect({});
+      pushDirty = false;
+      lastPushMs = Date.now();
+      if (result.uploaded > 0) {
+        console.error(
+          `[clawql-mcp] team sync auto-push: uploaded ${result.uploaded} file(s) to ${result.provider}://${result.bucket}/${result.prefix}`
+        );
+      }
+    }).pipe(
+      Effect.catch((e: unknown) =>
+        Effect.sync(() => {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error(`[clawql-mcp] team sync auto-push failed: ${msg}`);
+          // Keep dirty so a later ingest / shutdown flush can retry.
+        })
+      ),
+      Effect.ensuring(
+        Effect.sync(() => {
+          pushInFlight = false;
+        })
+      )
+    );
+  });
+}
+
 /**
  * Cancel timers and push now if there are pending writes (shutdown / explicit flush).
  * Ignores the min-interval throttle so short-lived processes do not drop notes.
  */
-export async function flushPendingAutoPush(): Promise<void> {
-  if (!autoPushExplicitlyEnabled()) return;
-  clearPushTimer();
-  if (!pushDirty && !pushInFlight) return;
-  await tryAutoPush({ force: true });
+export function flushPendingAutoPushEffect(): Effect.Effect<void> {
+  return Effect.gen(function* () {
+    if (!autoPushExplicitlyEnabled()) return;
+    clearPushTimer();
+    if (!pushDirty && !pushInFlight) return;
+    yield* tryAutoPushEffect({ force: true });
+  });
 }
 
-async function tryAutoPush(opts: { force: boolean }): Promise<void> {
-  if (!pushDirty) return;
-  if (pushInFlight) return;
-
-  if (!opts.force) {
-    const wait = Math.max(0, minIntervalMs() - (Date.now() - lastPushMs));
-    if (wait > 0) {
-      armPushTimer(wait);
-      return;
-    }
-  }
-
-  pushInFlight = true;
-  try {
-    await loadResolvedHomeSyncConfig();
-    const result = await runSyncPush({});
-    pushDirty = false;
-    lastPushMs = Date.now();
-    if (result.uploaded > 0) {
-      console.error(
-        `[clawql-mcp] team sync auto-push: uploaded ${result.uploaded} file(s) to ${result.provider}://${result.bucket}/${result.prefix}`
-      );
-    }
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.error(`[clawql-mcp] team sync auto-push failed: ${msg}`);
-    // Keep dirty so a later ingest / shutdown flush can retry.
-  } finally {
-    pushInFlight = false;
-  }
+/** Promise façade for process shutdown / hosts. */
+export async function flushPendingAutoPush(): Promise<void> {
+  return Effect.runPromise(flushPendingAutoPushEffect());
 }
 
 /** Throttled pull before memory_recall when CLAWQL_SYNC_AUTO_PULL=1. */
+export function maybeAutoPullBeforeRecallEffect(): Effect.Effect<void> {
+  return Effect.gen(function* () {
+    if (!autoPullEnabled()) return;
+    const minPullMs = envInt("CLAWQL_SYNC_AUTO_PULL_MIN_MS", 60_000);
+    const now = Date.now();
+    if (pullInFlight || now - lastPullMs < minPullMs) return;
+    pullInFlight = true;
+    lastPullMs = now;
+    yield* Effect.gen(function* () {
+      yield* loadResolvedHomeSyncConfigEffect();
+      const result = yield* runSyncPullEffect({});
+      if (result.downloaded > 0) {
+        console.error(
+          `[clawql-mcp] team sync auto-pull: downloaded ${result.downloaded} file(s) before recall`
+        );
+      }
+    }).pipe(
+      Effect.catch((e: unknown) =>
+        Effect.sync(() => {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error(`[clawql-mcp] team sync auto-pull failed: ${msg}`);
+        })
+      ),
+      Effect.ensuring(
+        Effect.sync(() => {
+          pullInFlight = false;
+        })
+      )
+    );
+  });
+}
+
+/** Promise façade for MCP recall host edge. */
 export async function maybeAutoPullBeforeRecall(): Promise<void> {
-  if (!autoPullEnabled()) return;
-  const minPullMs = envInt("CLAWQL_SYNC_AUTO_PULL_MIN_MS", 60_000);
-  const now = Date.now();
-  if (pullInFlight || now - lastPullMs < minPullMs) return;
-  pullInFlight = true;
-  lastPullMs = now;
-  try {
-    await loadResolvedHomeSyncConfig();
-    const result = await runSyncPull({});
-    if (result.downloaded > 0) {
-      console.error(
-        `[clawql-mcp] team sync auto-pull: downloaded ${result.downloaded} file(s) before recall`
-      );
-    }
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.error(`[clawql-mcp] team sync auto-pull failed: ${msg}`);
-  } finally {
-    pullInFlight = false;
-  }
+  return Effect.runPromise(maybeAutoPullBeforeRecallEffect());
 }
 
 /** Optional pull on MCP startup (CLAWQL_SYNC_AUTO_PULL_ON_START=1). */
+export function runAutoPullOnStartupEffect(): Effect.Effect<void> {
+  return Effect.gen(function* () {
+    if (!envFlagOn("CLAWQL_SYNC_AUTO_PULL_ON_START")) return;
+    yield* Effect.gen(function* () {
+      yield* loadResolvedHomeSyncConfigEffect();
+      const result = yield* runSyncPullEffect({});
+      console.error(`[clawql-mcp] team sync startup pull: downloaded ${result.downloaded} file(s)`);
+    }).pipe(
+      Effect.catch((e: unknown) =>
+        Effect.sync(() => {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error(`[clawql-mcp] team sync startup pull failed: ${msg}`);
+        })
+      )
+    );
+  });
+}
+
+/** Promise façade for MCP process start. */
 export async function runAutoPullOnStartup(): Promise<void> {
-  if (!envFlagOn("CLAWQL_SYNC_AUTO_PULL_ON_START")) return;
-  try {
-    await loadResolvedHomeSyncConfig();
-    const result = await runSyncPull({});
-    console.error(`[clawql-mcp] team sync startup pull: downloaded ${result.downloaded} file(s)`);
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.error(`[clawql-mcp] team sync startup pull failed: ${msg}`);
-  }
+  return Effect.runPromise(runAutoPullOnStartupEffect());
 }

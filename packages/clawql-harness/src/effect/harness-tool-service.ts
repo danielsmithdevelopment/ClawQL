@@ -4,17 +4,14 @@ import type { HarnessRegistryState } from "../registry.js";
 import { invokeHarnessTool, listHarnessTools } from "../tool-bridge.js";
 import type { HarnessPluginError, HarnessTool } from "../types.js";
 
-export class HarnessToolService extends Context.Tag("clawql/HarnessToolService")<
-  HarnessToolService,
-  {
+export class HarnessToolService extends Context.Service<HarnessToolService, {
     readonly listTools: (state: HarnessRegistryState) => Effect.Effect<readonly HarnessTool[]>;
     readonly invokeTool: (
       state: HarnessRegistryState,
       toolName: string,
       args?: Record<string, unknown>
     ) => Effect.Effect<unknown, HarnessPluginError, WORMAuditTrailService>;
-  }
->() {}
+  }>()("clawql/HarnessToolService") {}
 
 export const HarnessToolServiceLive = Layer.succeed(
   HarnessToolService,

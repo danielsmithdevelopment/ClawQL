@@ -1,7 +1,8 @@
+import { Effect } from "effect";
 import type { ModelTierMap } from "./types.js";
 import { TierEscalationRouter } from "./tier-escalation-router.js";
 import type { AdaptiveRouter } from "./types.js";
-import { loadTierMapOverrides, mergeTierMap } from "../finetune/tier-registry.js";
+import { loadTierMapOverridesEffect, mergeTierMap } from "../finetune/tier-registry.js";
 
 export interface ModelEscalationConfig {
   /** When false and no model pin, model escalation is disabled. */
@@ -52,18 +53,27 @@ export function loadModelEscalationConfig(
   };
 }
 
-/** Async variant that merges tier-map.json overrides from $CLAWQL_HOME/Inference. */
+/** Effect-primary variant that merges tier-map.json overrides from $CLAWQL_HOME/Inference. */
+export function loadModelEscalationConfigEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<ModelEscalationConfig, Error> {
+  return Effect.gen(function* () {
+    const overrides = yield* loadTierMapOverridesEffect(env);
+    const modelPin = env.CLAWQL_INFERENCE_MODEL_PIN?.trim() || undefined;
+    const enabled = parseTruthy(env.CLAWQL_INFERENCE_ROUTING_ENABLED) || modelPin !== undefined;
+    return {
+      enabled,
+      tierMap: readTierMap(env, overrides),
+      modelPin,
+    };
+  });
+}
+
+/** Promise façade. */
 export async function loadModelEscalationConfigAsync(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<ModelEscalationConfig> {
-  const overrides = await loadTierMapOverrides(env);
-  const modelPin = env.CLAWQL_INFERENCE_MODEL_PIN?.trim() || undefined;
-  const enabled = parseTruthy(env.CLAWQL_INFERENCE_ROUTING_ENABLED) || modelPin !== undefined;
-  return {
-    enabled,
-    tierMap: readTierMap(env, overrides),
-    modelPin,
-  };
+  return Effect.runPromise(loadModelEscalationConfigEffect(env));
 }
 
 /** Create a tier escalation router when model escalation is enabled or a model pin is set. */

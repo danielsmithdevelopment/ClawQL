@@ -1,0 +1,218 @@
+{
+  "suite": "executor-cmp-latency-chart",
+  "mode": "equal",
+  "canonical": "https://clawql.com/benchmarks/executor-comparison/latency-10k.html",
+  "measuredAt": "2026-10-11T00:51:28.887Z",
+  "host": {
+    "node": "v22.14.0",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "config": {
+    "iters": 10000,
+    "warmup": 50,
+    "mock_delay_ms": 0,
+    "pet_count": 2,
+    "body_bytes": 98,
+    "equal_payload": {
+      "pets": [
+        {
+          "id": 1,
+          "name": "Ada",
+          "status": "available"
+        },
+        {
+          "id": 2,
+          "name": "Grace",
+          "status": "available"
+        }
+      ]
+    },
+    "fields": [
+      "pets"
+    ],
+    "where": null
+  },
+  "pathFlags": {
+    "CLAWQL_TIER": "gateway",
+    "CLAWQL_CAPABILITY_LIFECYCLE": "0",
+    "CLAWQL_WORM_ENABLED": "unset",
+    "panguard_sidecar": false,
+    "durable_worm": false,
+    "ephemeral_ring_audit": true,
+    "hook_registry_pre_call": true,
+    "where_and_fields": "fields_only",
+    "mode": "equal"
+  },
+  "workloadTilt": {
+    "mode": "equal",
+    "clawql": "EQUAL — single MCP execute → tiny same-host mock (2 pets), fields projection only. No search bundle, no where, no WORM, no audit in the timed execute sample.",
+    "executor": "EQUAL — single MCP execute returning the same pets JSON in-process (Executor sandbox cannot fetch; logical result matched).",
+    "intent": "Apples-to-apples: same result shape, one MCP execute each. Headline uses ClawQL gateway overhead (execute − direct) vs Executor execute."
+  },
+  "tools": [
+    {
+      "id": "clawql_execute",
+      "source": "live",
+      "label": "ClawQL execute (e2e)",
+      "workload": "equal",
+      "subtitle": "MCP → tiny same-host mock + fields",
+      "p50_ms": 0.736,
+      "p95_ms": 1.278,
+      "p99_ms": 2.269,
+      "p999_ms": 5.265,
+      "min_ms": 0.55,
+      "max_ms": 27.687,
+      "n": 10000
+    },
+    {
+      "id": "clawql_gateway_overhead",
+      "source": "derived",
+      "label": "ClawQL gateway overhead",
+      "workload": "equalized",
+      "subtitle": "execute − direct fetch (apples-to-apples)",
+      "p50_ms": 0.643,
+      "p95_ms": 0.918,
+      "p99_ms": 1.702,
+      "p999_ms": 2.339,
+      "headline": true
+    },
+    {
+      "id": "executor_execute",
+      "source": "live",
+      "label": "Executor execute",
+      "workload": "equal",
+      "subtitle": "live · same pets JSON in-process",
+      "p50_ms": 1.965,
+      "p95_ms": 3.602,
+      "p99_ms": 5.105,
+      "p999_ms": 14.952,
+      "min_ms": 1.327,
+      "max_ms": 26.817,
+      "n": 10000,
+      "endpoint": "stdio:/tmp/executor-try/node_modules/.bin/executor mcp",
+      "citation": "Equal arm: MCP execute returns the same pets JSON ClawQL gets from the mock. In-process (Executor has no fetch); ClawQL pays same-host mock HTTP (~subtracted in overhead).",
+      "headline": true
+    },
+    {
+      "id": "direct_http",
+      "source": "live",
+      "label": "Direct HTTP mock",
+      "workload": "control",
+      "subtitle": "bare fetch of the same tiny body",
+      "p50_ms": 0.093,
+      "p95_ms": 0.36,
+      "p99_ms": 0.567,
+      "p999_ms": 2.926,
+      "min_ms": 0.055,
+      "max_ms": 3.894,
+      "n": 10000
+    },
+    {
+      "id": "clawql_audit",
+      "source": "live",
+      "label": "ClawQL audit",
+      "workload": "control",
+      "subtitle": "local ring append (no upstream)",
+      "p50_ms": 0.09,
+      "p95_ms": 0.323,
+      "p99_ms": 0.968,
+      "p999_ms": 2.457,
+      "min_ms": 0.068,
+      "max_ms": 145.993,
+      "n": 10000
+    }
+  ],
+  "series": {
+    "clawql_execute": {
+      "source": "live",
+      "label": "ClawQL execute",
+      "p50_ms": 0.736,
+      "p95_ms": 1.278,
+      "p99_ms": 2.269,
+      "p999_ms": 5.265,
+      "min_ms": 0.55,
+      "max_ms": 27.687,
+      "n": 10000,
+      "citation": "MCP stdio → listPets equal tiny mock"
+    },
+    "clawql_gateway_overhead": {
+      "source": "derived",
+      "label": "ClawQL gateway overhead",
+      "p50_ms": 0.643,
+      "p95_ms": 0.918,
+      "p99_ms": 1.702,
+      "p999_ms": 2.339,
+      "citation": "execute − direct_http (same mock)"
+    },
+    "clawql_audit": {
+      "source": "live",
+      "label": "ClawQL audit",
+      "p50_ms": 0.09,
+      "p95_ms": 0.323,
+      "p99_ms": 0.968,
+      "p999_ms": 2.457,
+      "min_ms": 0.068,
+      "max_ms": 145.993,
+      "n": 10000
+    },
+    "direct_http": {
+      "source": "live",
+      "label": "Direct HTTP",
+      "p50_ms": 0.093,
+      "p95_ms": 0.36,
+      "p99_ms": 0.567,
+      "p999_ms": 2.926,
+      "min_ms": 0.055,
+      "max_ms": 3.894,
+      "n": 10000
+    },
+    "executor": {
+      "id": "executor_execute",
+      "source": "live",
+      "label": "Executor execute",
+      "workload": "equal",
+      "subtitle": "live · same pets JSON in-process",
+      "p50_ms": 1.965,
+      "p95_ms": 3.602,
+      "p99_ms": 5.105,
+      "p999_ms": 14.952,
+      "min_ms": 1.327,
+      "max_ms": 26.817,
+      "n": 10000,
+      "endpoint": "stdio:/tmp/executor-try/node_modules/.bin/executor mcp",
+      "citation": "Equal arm: MCP execute returns the same pets JSON ClawQL gets from the mock. In-process (Executor has no fetch); ClawQL pays same-host mock HTTP (~subtracted in overhead)."
+    }
+  },
+  "headline": {
+    "clawql_p50_ms": 0.643,
+    "clawql_p95_ms": 0.918,
+    "clawql_p99_ms": 1.702,
+    "clawql_p999_ms": 2.339,
+    "clawql_arm": "gateway_overhead",
+    "clawql_execute_e2e_p50_ms": 0.736,
+    "executor_p50_ms": 1.965,
+    "executor_p95_ms": 3.602,
+    "executor_p99_ms": 5.105,
+    "executor_p999_ms": 14.952,
+    "ratio_executor_over_clawql": 3.06,
+    "ratio_clawql_over_executor": 0.33,
+    "executor_source": "live",
+    "clawql_faster_p50": true,
+    "p50_beats_executor_band_low": true,
+    "p99_beats_executor_band_high": true,
+    "p999_beats_executor": true
+  },
+  "honesty": {
+    "flamegraphDemo120ms": "Synthetic fixture in clawql-observability demo-mcp-execute — NOT a measured ClawQL p50.",
+    "tokenBenchmarks": "docs/benchmarks/executor-comparison/executor-cmp-*.json measure tokens, not wall clock.",
+    "equalArms": "Both arms return the same tiny pets JSON via one MCP execute. ClawQL goes through same-host mock HTTP; that cost is subtracted for the equalized overhead metric.",
+    "notHeavyTilt": "Previous heavy-tilt chart (800-row where/fields + search/WORM + audit) was retired for this page.",
+    "referenceBand": "Do not use UsefulSoftwareCo/executor#1519 50–100ms as measured — wire EXECUTOR_BIN for live.",
+    "p99Caveat": "p99 needs adequate n; default iters=100. Still sensitive to rare GC/scheduling spikes.",
+    "p999Caveat": "p999 (99.9th) needs large n — prefer LATENCY_ITERS≥1000 (10000 gives ~10 tail samples). Max still informative for rare spikes.",
+    "executorReference": "Executor is LIVE equal-arm MCP execute returning the same pets JSON.",
+    "notTokenFlamegraph": "Distinct from /mcp-ui/trace/compare/executor (token context). This page is wall-clock ms.",
+    "p99VsExecutor": "Equalized ClawQL gateway overhead p50 0.643ms beats live Executor p50 1.965ms on the same result shape."
+  }
+}

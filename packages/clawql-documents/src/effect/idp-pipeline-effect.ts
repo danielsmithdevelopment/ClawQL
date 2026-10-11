@@ -4,7 +4,7 @@
  * IO (execute, sleep, Merkle, hooks) stays behind {@link documentsFromPromise} / Effect.sleep.
  */
 
-import { Duration, Effect, Either } from "effect";
+import { Duration, Effect, Result } from "effect";
 import type { McpToolResult } from "clawql-core";
 import {
   DEFAULT_IDP_PIPELINE,
@@ -229,7 +229,7 @@ export function runIdpPipelineEffect(
 
       while (attempts <= maxRetries) {
         attempts++;
-        const execEither = yield* Effect.either(
+        const execEither = yield* Effect.result(
           documentsFromPromise(() =>
             options.execute({
               operationId: step.operationId,
@@ -238,8 +238,8 @@ export function runIdpPipelineEffect(
           )
         );
 
-        if (Either.isRight(execEither)) {
-          const text = mcpResultText(execEither.right);
+        if (Result.isSuccess(execEither)) {
+          const text = mcpResultText(execEither.success);
           const parsed = parseExecuteText(text);
           if (parsed.ok) {
             ok = true;
@@ -252,8 +252,9 @@ export function runIdpPipelineEffect(
           error = parsed.error ?? "execute returned error payload";
           excerpt = parsed.excerpt;
         } else {
-          const cause = execEither.left.cause;
-          error = cause instanceof Error ? cause.message : String(cause ?? execEither.left.reason);
+          const fail = execEither.failure;
+          const cause = fail.cause;
+          error = cause instanceof Error ? cause.message : String(cause ?? fail.reason);
         }
 
         if (attempts <= maxRetries && retryDelayMs > 0) {

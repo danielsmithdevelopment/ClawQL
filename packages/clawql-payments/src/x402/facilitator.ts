@@ -40,7 +40,7 @@ export async function settleViaFacilitator(
   );
 }
 
-export async function verifyViaConfiguredFacilitator(input: {
+async function verifyViaConfiguredFacilitatorImpl(input: {
   paymentPayload: X402PaymentPayloadV2;
   paymentRequirements: X402PaymentRequirements;
   env?: NodeJS.ProcessEnv;
@@ -58,4 +58,26 @@ export async function verifyViaConfiguredFacilitator(input: {
     env: input.env,
     fetchImpl: input.fetchImpl,
   });
+}
+
+export function verifyViaConfiguredFacilitatorEffect(input: {
+  paymentPayload: X402PaymentPayloadV2;
+  paymentRequirements: X402PaymentRequirements;
+  env?: NodeJS.ProcessEnv;
+  fetchImpl?: typeof fetch;
+}): Effect.Effect<X402FacilitatorVerifyResult, Error> {
+  return Effect.tryPromise({
+    try: () => verifyViaConfiguredFacilitatorImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link verifyViaConfiguredFacilitatorEffect} for Effect callers. */
+export async function verifyViaConfiguredFacilitator(input: {
+  paymentPayload: X402PaymentPayloadV2;
+  paymentRequirements: X402PaymentRequirements;
+  env?: NodeJS.ProcessEnv;
+  fetchImpl?: typeof fetch;
+}): Promise<X402FacilitatorVerifyResult> {
+  return Effect.runPromise(verifyViaConfiguredFacilitatorEffect(input));
 }

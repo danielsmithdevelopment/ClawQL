@@ -1,8 +1,9 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { Effect } from "effect";
 import type { DatasetBackend, S3CompatibleConfig } from "./types.js";
 import {
   CloudflareR2RestBackend,
-  ensureR2BucketViaCloudflareApi,
+  ensureR2BucketViaCloudflareApiEffect,
   resolveCloudflareApiToken,
   resolveOpenBenchTracesBucket,
   resolveR2AccountId,
@@ -27,15 +28,28 @@ export class S3CompatibleBackend implements DatasetBackend {
     });
   }
 
+  putObjectEffect(
+    key: string,
+    body: string | Buffer,
+    contentType?: string
+  ): Effect.Effect<void, Error> {
+    const self = this;
+    return Effect.tryPromise({
+      try: () =>
+        self.client.send(
+          new PutObjectCommand({
+            Bucket: self.bucket,
+            Key: key.replace(/^\//, ""),
+            Body: typeof body === "string" ? Buffer.from(body, "utf8") : body,
+            ContentType: contentType ?? "application/octet-stream",
+          })
+        ).then(() => undefined),
+      catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+    });
+  }
+
   async putObject(key: string, body: string | Buffer, contentType?: string): Promise<void> {
-    await this.client.send(
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: key.replace(/^\//, ""),
-        Body: typeof body === "string" ? Buffer.from(body, "utf8") : body,
-        ContentType: contentType ?? "application/octet-stream",
-      })
-    );
+    return Effect.runPromise(this.putObjectEffect(key, body, contentType));
   }
 }
 
@@ -98,67 +112,76 @@ export type ResolveDurableBackendOptions = {
 
 /**
  * Prefer existing R2 S3 keys when set; otherwise Cloudflare API token alone
- * (ensure bucket + REST put) — same secrets path as `clawql sync ensure`.
+ * (ensure bucket + REST put) — Effect primary.
  */
+export function resolveDurableBackendFromEnvEffect(
+  opts: ResolveDurableBackendOptions = {}
+): Effect.Effect<ResolveDurableBackendResult, Error> {
+  return Effect.gen(function* () {
+    const env = opts.env ?? process.env;
+    const bucket = resolveOpenBenchTracesBucket(env);
+    const account = resolveR2AccountId(env);
+    const token = resolveCloudflareApiToken(env);
+    const s3 = resolveR2ConfigFromEnv(env);
+
+    if (s3.ok) {
+      let ensure: EnsureBucketResult | undefined;
+      if (!opts.skipEnsure && token && account) {
+        ensure = yield* ensureR2BucketViaCloudflareApiEffect({
+          accountId: account,
+          token,
+          bucket,
+          fetchFn: opts.fetchFn,
+        });
+      }
+      return {
+        ok: true as const,
+        backend: new S3CompatibleBackend(s3.config),
+        bucket,
+        transport: "s3" as const,
+        ensure,
+      };
+    }
+
+    if (token && account) {
+      let ensure: EnsureBucketResult | undefined;
+      if (!opts.skipEnsure) {
+        ensure = yield* ensureR2BucketViaCloudflareApiEffect({
+          accountId: account,
+          token,
+          bucket,
+          fetchFn: opts.fetchFn,
+        });
+      }
+      return {
+        ok: true as const,
+        backend: new CloudflareR2RestBackend({
+          accountId: account,
+          apiToken: token,
+          bucket,
+          fetchFn: opts.fetchFn,
+        }),
+        bucket,
+        transport: "cloudflare-api" as const,
+        ensure,
+      };
+    }
+
+    const missing = new Set<string>();
+    if (!account) missing.add("CLOUDFLARE_ACCOUNT_ID|CLAWQL_R2_ACCOUNT_ID");
+    if (!token) {
+      missing.add("CLOUDFLARE_API_TOKEN|CLAWQL_CLOUDFLARE_API_TOKEN");
+      for (const m of s3.ok ? [] : s3.missing) {
+        if (!m.includes("ACCOUNT")) missing.add(m);
+      }
+    }
+    return { ok: false as const, missing: [...missing] };
+  });
+}
+
+/** Promise façade for callers that still await durable-backend resolution. */
 export async function resolveDurableBackendFromEnv(
   opts: ResolveDurableBackendOptions = {}
 ): Promise<ResolveDurableBackendResult> {
-  const env = opts.env ?? process.env;
-  const bucket = resolveOpenBenchTracesBucket(env);
-  const account = resolveR2AccountId(env);
-  const token = resolveCloudflareApiToken(env);
-  const s3 = resolveR2ConfigFromEnv(env);
-
-  if (s3.ok) {
-    let ensure: EnsureBucketResult | undefined;
-    if (!opts.skipEnsure && token && account) {
-      ensure = await ensureR2BucketViaCloudflareApi({
-        accountId: account,
-        token,
-        bucket,
-        fetchFn: opts.fetchFn,
-      });
-    }
-    return {
-      ok: true,
-      backend: new S3CompatibleBackend(s3.config),
-      bucket,
-      transport: "s3",
-      ensure,
-    };
-  }
-
-  if (token && account) {
-    let ensure: EnsureBucketResult | undefined;
-    if (!opts.skipEnsure) {
-      ensure = await ensureR2BucketViaCloudflareApi({
-        accountId: account,
-        token,
-        bucket,
-        fetchFn: opts.fetchFn,
-      });
-    }
-    return {
-      ok: true,
-      backend: new CloudflareR2RestBackend({
-        accountId: account,
-        apiToken: token,
-        bucket,
-        fetchFn: opts.fetchFn,
-      }),
-      bucket,
-      transport: "cloudflare-api",
-      ensure,
-    };
-  }
-
-  const missing = new Set<string>();
-  if (!account) missing.add("CLOUDFLARE_ACCOUNT_ID|CLAWQL_R2_ACCOUNT_ID");
-  if (!token) {
-    missing.add("CLOUDFLARE_API_TOKEN|CLAWQL_CLOUDFLARE_API_TOKEN");
-    for (const m of s3.ok ? [] : s3.missing) {
-      if (!m.includes("ACCOUNT")) missing.add(m);
-    }
-  }
-  return { ok: false, missing: [...missing] };
+  return Effect.runPromise(resolveDurableBackendFromEnvEffect(opts));
 }

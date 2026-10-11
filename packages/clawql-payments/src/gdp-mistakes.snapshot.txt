@@ -1,0 +1,11 @@
+no proof at all
+  TS2554 Expected 3 arguments, but got 2.
+
+a raw id is not a named value; name it first
+  TS2345 Argument of type 'UserId' is not assignable to parameter of type 'Named<N, UserId>'.
+
+the proof is about user A, not user B
+  TS2345 Argument of type 'VerifiedCheckoutSessionUser<N>' is not assignable to parameter of type 'VerifiedCheckoutSessionUser<M>'.
+
+wrong proof kind
+  TS2345 Argument of type 'BogusProof<N>' is not assignable to parameter of type 'VerifiedCheckoutSessionUser<N>'.

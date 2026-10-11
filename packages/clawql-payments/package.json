@@ -106,22 +106,26 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@gdp-ts/core": "^0.1.0",
     "clawql-agents": "0.1.0",
     "clawql-api": "0.1.0",
     "clawql-audit": "0.1.0",
     "clawql-auth": "0.1.0",
     "clawql-core": "0.1.0",
+    "clawql-gdp": "0.1.0",
     "clawql-network": "0.1.0",
-    "effect": "^3.21.4",
+    "effect": "4.0.0",
     "nats": "^2.29.3",
     "pg": "^8.21.0",
     "qrcode": "^1.5.4",
     "stripe": "^22.6.2",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "clawql-memory": "0.1.0",
+    "clawql-supabase": "0.1.0"
   },
   "optionalDependencies": {
     "mppx": "^0.8.14",
-    "viem": "^2.56.8"
+    "viem": "^2.57.2"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

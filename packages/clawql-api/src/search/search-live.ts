@@ -29,7 +29,7 @@ export function makeSearchLive(
 /** Helper for hosts that already hold a SkillRegistry service. */
 export function makeSearchLiveWithSkills(
   loadSpecFn: LoadSpecFn,
-  skillRegistry: Context.Tag.Service<typeof SkillRegistry>
+  skillRegistry: Context.Service.Shape<typeof SkillRegistry>
 ): Layer.Layer<SearchService> {
   return makeSearchLive(loadSpecFn, { skillRegistry });
 }

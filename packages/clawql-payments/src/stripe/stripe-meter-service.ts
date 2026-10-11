@@ -57,7 +57,7 @@ export function buildInferenceMeterIdentifier(input: {
 }
 
 /** Effect service for Stripe meter events and inference usage reporting. */
-export class StripeMeterService extends Context.Tag("clawql/StripeMeterService")<
+export class StripeMeterService extends Context.Service<
   StripeMeterService,
   {
     readonly resolveMeterConfig: (
@@ -73,7 +73,7 @@ export class StripeMeterService extends Context.Tag("clawql/StripeMeterService")
       ConfigError | PaymentError | StripeApiError | StripeNotConfigured
     >;
   }
->() {}
+>()("clawql/StripeMeterService") {}
 
 export function stripeMeterLiveLayer(
   env: NodeJS.ProcessEnv = process.env

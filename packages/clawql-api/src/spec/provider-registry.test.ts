@@ -94,7 +94,7 @@ describe("provider-registry", () => {
     );
   });
 
-  it("resolves all-providers to every bundled vendor plus google and aws", async () => {
+  it("resolves all-providers to every bundled vendor plus google and aws, except opt-in-only converters", async () => {
     const items = await resolveBundledProviderGroup("all-providers");
     expect(items).toBeDefined();
     expect(items!.length).toBeGreaterThan(100);
@@ -104,7 +104,11 @@ describe("provider-registry", () => {
     expect(labels.has("github")).toBe(true);
     expect(labels.has("notion")).toBe(true);
     expect(labels.has("paperless")).toBe(true);
-    expect(labels.has("tika")).toBe(true);
+    expect(labels.has("docling")).toBe(true);
+    // 8.0 converter cut: JVM/LibreOffice converters stay opt-in-only, not in the default merge.
+    expect(labels.has("tika")).toBe(false);
+    expect(labels.has("gotenberg")).toBe(false);
+    expect(labels.has("stirling")).toBe(false);
     expect(labels.has("onyx")).toBe(true);
     expect(labels.has("linear")).toBe(true);
     expect(labels.has("cloudflare")).toBe(true);

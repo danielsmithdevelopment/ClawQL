@@ -37,7 +37,7 @@ function freezePath(sessionId: string, tenantId: string, agentId: string): strin
   return `${FREEZE_PREFIX}/${sessionId}/${tenantId}/${agentId}`;
 }
 
-export class X402SignerService extends Context.Tag("clawql/X402SignerService")<
+export class X402SignerService extends Context.Service<
   X402SignerService,
   {
     readonly sign: (
@@ -55,7 +55,7 @@ export class X402SignerService extends Context.Tag("clawql/X402SignerService")<
       agentId: string
     ) => Effect.Effect<boolean, X402Error | SecretStoreError>;
   }
->() {}
+>()("clawql/X402SignerService") {}
 
 export type X402SignerLayerOptions = {
   readonly secretStore?: SecretStore;

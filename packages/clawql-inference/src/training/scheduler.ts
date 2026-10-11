@@ -1,4 +1,5 @@
 import type { TrainingConfig } from "./types.js";
+import { Effect } from "effect";
 
 export type ArgoContainerTemplate = {
   name: string;
@@ -163,7 +164,7 @@ export function buildTrainingWorkflow(config: TrainingConfig): ArgoWorkflow {
  * Submit training workflow to Argo.
  * Scaffold: returns a local run id when Argo client is not configured.
  */
-export async function scheduleTrainingRun(config: TrainingConfig): Promise<string> {
+async function scheduleTrainingRunImpl(config: TrainingConfig): Promise<string> {
   const workflow = buildTrainingWorkflow(config);
   const endpoint = process.env.CLAWQL_ARGO_ENDPOINT?.trim();
   if (!endpoint) {
@@ -172,4 +173,16 @@ export async function scheduleTrainingRun(config: TrainingConfig): Promise<strin
   throw new Error(
     `Argo submit not implemented yet (endpoint=${endpoint}). Use buildTrainingWorkflow() to inspect the DAG.`
   );
+}
+
+export function scheduleTrainingRunEffect(config: TrainingConfig): Effect.Effect<string, Error> {
+  return Effect.tryPromise({
+    try: () => scheduleTrainingRunImpl(config),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link scheduleTrainingRunEffect} for Effect callers. */
+export async function scheduleTrainingRun(config: TrainingConfig): Promise<string> {
+  return Effect.runPromise(scheduleTrainingRunEffect(config));
 }

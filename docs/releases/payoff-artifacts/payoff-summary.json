@@ -1,0 +1,62 @@
+{
+  "scanners": {
+    "syft": "anchore/syft:v1.19.0",
+    "trivy": "ghcr.io/aquasecurity/trivy:0.59.1"
+  },
+  "image": "clawql-mcp runtime (docker/Dockerfile --target runtime)",
+  "before": {
+    "label": "pre",
+    "sha": "578e7e77fab252e8cae245623f836d1f4488c7c2",
+    "image_size_bytes": 374827527,
+    "image_size_mib": 357.46,
+    "compressed_tar_gz_bytes": 372129937,
+    "compressed_tar_gz_mib": 354.89,
+    "syft_components_total": 626,
+    "syft_components_by_type": {
+      "library": 624,
+      "application": 1,
+      "operating-system": 1
+    },
+    "cves": {
+      "CRITICAL": 0,
+      "HIGH": 3,
+      "MEDIUM": 33
+    },
+    "cves_chm": 36,
+    "cve_unique_pkg_vuln": 36
+  },
+  "after": {
+    "label": "post",
+    "sha": "d6b432e1",
+    "image_size_bytes": 366897798,
+    "image_size_mib": 349.9,
+    "compressed_tar_gz_bytes": 364777899,
+    "compressed_tar_gz_mib": 347.88,
+    "syft_components_total": 616,
+    "syft_components_by_type": {
+      "library": 614,
+      "application": 1,
+      "operating-system": 1
+    },
+    "cves": {
+      "CRITICAL": 0,
+      "HIGH": 2,
+      "MEDIUM": 32
+    },
+    "cves_chm": 34,
+    "cve_unique_pkg_vuln": 34
+  },
+  "delta": {
+    "image_size_bytes": -7929729,
+    "image_size_mib": -7.56,
+    "compressed_tar_gz_bytes": -7352038,
+    "compressed_tar_gz_mib": -7.01,
+    "syft_components_total": -10,
+    "cves_chm": -2,
+    "cves": {
+      "CRITICAL": 0,
+      "HIGH": -1,
+      "MEDIUM": -1
+    }
+  }
+}

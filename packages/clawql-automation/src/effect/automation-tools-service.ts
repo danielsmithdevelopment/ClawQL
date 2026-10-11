@@ -10,7 +10,7 @@ import {
 } from "./automation-tools-effect.js";
 
 /** Effect service for automation MCP tools (notify, schedule, workflow, argocd). */
-export class AutomationToolsService extends Context.Tag("clawql/AutomationToolsService")<
+export class AutomationToolsService extends Context.Service<
   AutomationToolsService,
   {
     readonly notify: (params: NotifySlackInput) => Effect.Effect<McpTextResult, AutomationError>;
@@ -18,7 +18,7 @@ export class AutomationToolsService extends Context.Tag("clawql/AutomationToolsS
     readonly workflow: (params: unknown) => Effect.Effect<McpTextResult, AutomationError>;
     readonly argocd: (params: unknown) => Effect.Effect<McpTextResult, AutomationError>;
   }
->() {}
+>()("clawql/AutomationToolsService") {}
 
 export function automationToolsLiveLayer(): Layer.Layer<AutomationToolsService> {
   return Layer.succeed(

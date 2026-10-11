@@ -33,9 +33,7 @@ export type WatchDispatchResult = {
   readonly driftReports: readonly MeshAtrDriftReport[];
 };
 
-export class BurstWatchStub extends Context.Tag("clawql/BurstWatchStub")<
-  BurstWatchStub,
-  {
+export class BurstWatchStub extends Context.Service<BurstWatchStub, {
     readonly enqueue: (event: WatchEvent) => Effect.Effect<void>;
     readonly drain: (args?: {
       readonly atrAllows?: PolicyAllowSet;
@@ -43,10 +41,9 @@ export class BurstWatchStub extends Context.Tag("clawql/BurstWatchStub")<
       readonly placement?: PlacementRequest;
     }) => Effect.Effect<WatchDispatchResult>;
     readonly snapshotQueue: () => Effect.Effect<readonly WatchEvent[]>;
-  }
->() {}
+  }>()("clawql/BurstWatchStub") {}
 
-export function makeBurstWatchStub(): Effect.Effect<Context.Tag.Service<typeof BurstWatchStub>> {
+export function makeBurstWatchStub(): Effect.Effect<Context.Service.Shape<typeof BurstWatchStub>> {
   return Effect.gen(function* () {
     const queue = yield* Ref.make<WatchEvent[]>([]);
     return {

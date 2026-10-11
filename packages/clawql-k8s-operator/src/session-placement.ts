@@ -120,13 +120,10 @@ export function bridgeMeshDenial(event: MeshDenialEvent): BridgedMeshDenial {
   };
 }
 
-export class SessionPlacementService extends Context.Tag("clawql/SessionPlacementService")<
-  SessionPlacementService,
-  {
+export class SessionPlacementService extends Context.Service<SessionPlacementService, {
     readonly place: (req: PlacementRequest) => Effect.Effect<PlacementDecision>;
     readonly bridgeDenial: (event: MeshDenialEvent) => Effect.Effect<BridgedMeshDenial>;
-  }
->() {}
+  }>()("clawql/SessionPlacementService") {}
 
 export const SessionPlacementServiceLive: Layer.Layer<SessionPlacementService> = Layer.succeed(
   SessionPlacementService,

@@ -12,7 +12,7 @@ export const defaultLokiProviderConfig = (): ProviderConfig => ({
 });
 
 export const createLokiLogProvider = (): LogProvider => {
-  const configRef = Ref.unsafeMake<ProviderConfig>(defaultLokiProviderConfig());
+  const configRef = Ref.makeUnsafe<ProviderConfig>(defaultLokiProviderConfig());
 
   return {
     id: LGTM_LOKI_PROVIDER_ID,

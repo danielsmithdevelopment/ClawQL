@@ -40,9 +40,7 @@ const defaultStore: MutableDraftStore = {
   activeVersionId: null,
 };
 
-export class DraftStoreService extends Context.Tag("clawql/webmcp-draft/DraftStoreService")<
-  DraftStoreService,
-  {
+export class DraftStoreService extends Context.Service<DraftStoreService, {
     /** Stub stores are process-local — restart loses unreviewed drafts with no durable error. */
     readonly durability: "ephemeral" | "durable";
     readonly putCandidates: (
@@ -73,8 +71,7 @@ export class DraftStoreService extends Context.Tag("clawql/webmcp-draft/DraftSto
       readonly publishedBy: string;
     }) => Effect.Effect<PublishedWebMcpVersion, WebMcpPublishVersionNotFoundError>;
     readonly resetForTests: () => Effect.Effect<void>;
-  }
->() {}
+  }>()("clawql/webmcp-draft/DraftStoreService") {}
 
 function resolveTool(candidate: StoredDraftCandidate): ProposedWebMcpTool {
   if (!candidate.editedTool) return candidate.proposedTool;

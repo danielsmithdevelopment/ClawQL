@@ -23,7 +23,12 @@ export function createVirtualKeyAuthMiddleware(
     }
 
     const path = req.path;
-    if (path === "/healthz" || path === "/v1") {
+    if (
+      path === "/healthz" ||
+      path === "/v1" ||
+      path === "/events/inbound" ||
+      path.startsWith("/events/inbound/")
+    ) {
       next();
       return;
     }

@@ -82,8 +82,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -118,7 +118,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Decide spend before npm/OpenRouter so a missing/removed sentinel is a no-op green check.
       - name: Select corpus and scale
         id: corpus
@@ -168,7 +168,7 @@ jobs:
               echo "run_agent=0"
             fi
           } >> "$GITHUB_OUTPUT"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: ${{ steps.corpus.outputs.run_agent == '1' || steps.corpus.outputs.run_displacement == '1' }}
         with:
           node-version: "22"
@@ -285,7 +285,7 @@ jobs:
     # Frontier × 27 Q × 2 arms × 3 trials + indexing
     timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Decide whether to spend
         id: gate
         run: |
@@ -315,7 +315,7 @@ jobs:
             cat /tmp/or-key.json || true
             exit 1
           fi
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         if: ${{ steps.gate.outputs.run == '1' }}
         with:
           python-version: "3.12"
@@ -393,7 +393,7 @@ jobs:
     # Frontier × 18 Q × 3 arms × tool loops
     timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Decide whether to spend
         id: gate
         run: |
@@ -448,7 +448,7 @@ jobs:
               is_free_tier: pick(data,["is_free_tier","isFreeTier"]),
             }));
           ' || true
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: ${{ steps.gate.outputs.run == '1' }}
         with:
           node-version: "22"
@@ -569,7 +569,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Decide whether to spend
         id: gate
         run: |
@@ -588,7 +588,7 @@ jobs:
             echo "OPENROUTER_API_KEY secret required for rerank-grid"
             exit 1
           fi
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         if: ${{ steps.gate.outputs.run == '1' }}
         with:
           python-version: "3.12"
@@ -627,7 +627,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Decide whether to spend
         id: gate
         run: |
@@ -646,7 +646,7 @@ jobs:
             echo "OPENROUTER_API_KEY secret required for gap-diagnose"
             exit 1
           fi
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         if: ${{ steps.gate.outputs.run == '1' }}
         with:
           python-version: "3.12"

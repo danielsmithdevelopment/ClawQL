@@ -14,7 +14,9 @@ export {
   defaultContainmentConfig,
   dedupePaths,
   loadContainmentConfig,
+  loadContainmentConfigEffect,
   saveContainmentConfig,
+  saveContainmentConfigEffect,
   sandboxPaths,
   resolvedAllowedPaths,
   resolvedDeniedPaths,
@@ -36,21 +38,28 @@ export {
 export {
   claudeSandboxSettingsFromConfig,
   writeClaudeSandboxSettings,
+  writeClaudeSandboxSettingsEffect,
   type ClaudeSandboxSettings,
 } from "../claude-sandbox-settings.js";
 
 export {
   verifySeatbeltContainment,
+  verifySeatbeltContainmentEffect,
   writeVerifyResult,
+  writeVerifyResultEffect,
   type ContainmentCheck,
   type ContainmentVerifyResult,
 } from "../seatbelt-containment.js";
 
 export {
   runSandboxInit,
+  runSandboxInitEffect,
   runSandboxVerify,
+  runSandboxVerifyEffect,
   ensureHarnessSandboxGate,
+  ensureHarnessSandboxGateEffect,
   sandboxDoctorCheck,
+  sandboxDoctorCheckEffect,
   execProfileForContainment,
   harnessProfilePathFor,
   type SandboxInitOptions,

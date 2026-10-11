@@ -6,7 +6,7 @@ import type { ProfileProvider, ProviderConfig } from "./types.js";
 export const LGTM_PYROSCOPE_PROVIDER_ID = "lgtm-pyroscope";
 
 export const createPyroscopeProfileProvider = (): ProfileProvider => {
-  const configRef = Ref.unsafeMake<ProviderConfig>(defaultPyroscopeProviderConfig());
+  const configRef = Ref.makeUnsafe<ProviderConfig>(defaultPyroscopeProviderConfig());
 
   return {
     id: LGTM_PYROSCOPE_PROVIDER_ID,

@@ -126,11 +126,11 @@ const expectAllow = (
       sessionId: session.sessionId,
       agentName: session.agentName,
       virtualKeyId: session.virtualKeyId,
-    }).pipe(Effect.either);
-    if (gated._tag === "Right") {
+    }).pipe(Effect.result);
+    if (gated._tag === "Success") {
       return { passed: true, detail: `${toolName} allowed under ATR` };
     }
-    const err = gated.left;
+    const err = gated.failure;
     const reason = err instanceof PanguardDenyError ? err.reason : String(err);
     return { passed: false, detail: `${toolName} unexpectedly denied: ${reason}` };
   });
@@ -155,9 +155,9 @@ const expectDeny = (
       sessionId: session.sessionId,
       agentName: session.agentName,
       virtualKeyId: session.virtualKeyId,
-    }).pipe(Effect.either);
-    if (gated._tag === "Left") {
-      const err = gated.left;
+    }).pipe(Effect.result);
+    if (gated._tag === "Failure") {
+      const err = gated.failure;
       if (err instanceof PanguardDenyError) {
         return { passed: true, detail: `${toolName} denied (${err.reason})` };
       }

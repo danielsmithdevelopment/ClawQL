@@ -286,7 +286,7 @@ export function runHeldOutValidationSuite(
   });
 }
 
-export class FastDecisionHeldOutRunner extends Context.Tag("clawql/FastDecisionHeldOutRunner")<
+export class FastDecisionHeldOutRunner extends Context.Service<
   FastDecisionHeldOutRunner,
   {
     readonly runSuite: (
@@ -294,7 +294,7 @@ export class FastDecisionHeldOutRunner extends Context.Tag("clawql/FastDecisionH
       criteria?: ValidationCriteria
     ) => Effect.Effect<readonly HeldOutValidationRunReport[]>;
   }
->() {}
+>()("clawql/FastDecisionHeldOutRunner") {}
 
 export function makeFastDecisionHeldOutRunnerLive(): Layer.Layer<
   FastDecisionHeldOutRunner,

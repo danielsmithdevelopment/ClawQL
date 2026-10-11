@@ -5,6 +5,7 @@ import {
   revokeVirtualKey,
 } from "../keys/store.js";
 import { loadKeysConfig, resolveVirtualKeysPath } from "../keys/config.js";
+import { Effect } from "effect";
 
 export type InferenceKeysCreateOptions = {
   team?: string;
@@ -15,7 +16,7 @@ export type InferenceKeysCreateOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runInferenceKeysCreate(
+async function runInferenceKeysCreateImpl(
   options: InferenceKeysCreateOptions = {}
 ): Promise<number> {
   if (!options.team?.trim()) {
@@ -65,14 +66,28 @@ export async function runInferenceKeysCreate(
   return 0;
 }
 
+export function runInferenceKeysCreateEffect(
+  options: InferenceKeysCreateOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runInferenceKeysCreateImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runInferenceKeysCreateEffect} for Effect callers. */
+export async function runInferenceKeysCreate(
+  options: InferenceKeysCreateOptions = {}
+): Promise<number> {
+  return Effect.runPromise(runInferenceKeysCreateEffect(options));
+}
+
 export type InferenceKeysListOptions = {
   json?: boolean;
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runInferenceKeysList(
-  options: InferenceKeysListOptions = {}
-): Promise<number> {
+async function runInferenceKeysListImpl(options: InferenceKeysListOptions = {}): Promise<number> {
   const env = options.env ?? process.env;
   const config = loadKeysConfig(env);
   const keys = listVirtualKeys(env).map(redactVirtualKey);
@@ -105,13 +120,29 @@ export async function runInferenceKeysList(
   return 0;
 }
 
+export function runInferenceKeysListEffect(
+  options: InferenceKeysListOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runInferenceKeysListImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runInferenceKeysListEffect} for Effect callers. */
+export async function runInferenceKeysList(
+  options: InferenceKeysListOptions = {}
+): Promise<number> {
+  return Effect.runPromise(runInferenceKeysListEffect(options));
+}
+
 export type InferenceKeysRevokeOptions = {
   id?: string;
   json?: boolean;
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runInferenceKeysRevoke(
+async function runInferenceKeysRevokeImpl(
   options: InferenceKeysRevokeOptions = {}
 ): Promise<number> {
   if (!options.id?.trim()) {
@@ -133,4 +164,20 @@ export async function runInferenceKeysRevoke(
 
   console.log(`Revoked ${result.key.id} (saved to ${result.path})`);
   return 0;
+}
+
+export function runInferenceKeysRevokeEffect(
+  options: InferenceKeysRevokeOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runInferenceKeysRevokeImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runInferenceKeysRevokeEffect} for Effect callers. */
+export async function runInferenceKeysRevoke(
+  options: InferenceKeysRevokeOptions = {}
+): Promise<number> {
+  return Effect.runPromise(runInferenceKeysRevokeEffect(options));
 }

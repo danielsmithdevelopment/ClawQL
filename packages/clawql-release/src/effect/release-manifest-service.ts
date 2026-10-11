@@ -1,6 +1,6 @@
 import { Context, Data, Effect, Layer } from "effect";
-import { collectReleaseManifest } from "../collect.js";
-import { verifyReleaseManifest } from "../verify.js";
+import { collectReleaseManifestEffect } from "../collect.js";
+import { verifyReleaseManifestEffect } from "../verify.js";
 import type { CollectOptions, ReleaseManifestV01, VerifyResult } from "../types.js";
 
 export class ReleaseManifestError extends Data.TaggedError("ReleaseManifestError")<{
@@ -8,7 +8,7 @@ export class ReleaseManifestError extends Data.TaggedError("ReleaseManifestError
   readonly cause?: unknown;
 }> {}
 
-export class ReleaseManifestService extends Context.Tag("clawql/ReleaseManifestService")<
+export class ReleaseManifestService extends Context.Service<
   ReleaseManifestService,
   {
     readonly collect: (
@@ -20,22 +20,22 @@ export class ReleaseManifestService extends Context.Tag("clawql/ReleaseManifestS
       options?: { workspaceRoot?: string }
     ) => Effect.Effect<VerifyResult, ReleaseManifestError>;
   }
->() {}
-
-const fromPromise = <A>(reason: string, task: () => Promise<A>) =>
-  Effect.tryPromise({
-    try: task,
-    catch: (cause) => new ReleaseManifestError({ reason, cause }),
-  });
+>()("clawql/ReleaseManifestService") {}
 
 export const ReleaseManifestServiceLive = Layer.succeed(
   ReleaseManifestService,
   ReleaseManifestService.of({
     collect: (options) =>
-      fromPromise("collect release manifest failed", () => collectReleaseManifest(options)),
+      collectReleaseManifestEffect(options).pipe(
+        Effect.mapError(
+          (cause) => new ReleaseManifestError({ reason: "collect release manifest failed", cause })
+        )
+      ),
     verify: (manifestPath, bundleDir, options) =>
-      fromPromise("verify release manifest failed", () =>
-        verifyReleaseManifest(manifestPath, bundleDir, options)
+      verifyReleaseManifestEffect(manifestPath, bundleDir, options).pipe(
+        Effect.mapError(
+          (cause) => new ReleaseManifestError({ reason: "verify release manifest failed", cause })
+        )
       ),
   })
 );

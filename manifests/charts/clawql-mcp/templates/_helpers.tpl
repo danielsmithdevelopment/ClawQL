@@ -501,6 +501,7 @@ Helm enable* / providers values map here — not CLAWQL_ENABLE_* for horizontal 
   "data" (dict "enabled" (.Values.enableData | default false))
   "web" (dict "enabled" (.Values.enableWeb | default false))
   "ouroboros" (dict
+    "enabled" (.Values.enableOuroboros | default false)
     "langfuseEval" (dict "enabled" (.Values.enableLangfuseEval | default false))
   )
  -}}

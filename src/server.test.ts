@@ -96,17 +96,22 @@ describe("server (stdio)", () => {
       expect(names.has("memory_ingest")).toBe(true);
       expect(names.has("memory_recall")).toBe(true);
       expect(names.has("memory_sync")).toBe(true);
-      expect(names.has("ingest_external_knowledge")).toBe(true);
+      expect(names.has("ingest_external_knowledge")).toBe(false);
       expect(names.has("cache")).toBe(true);
       expect(names.has("audit")).toBe(true);
+      expect(names.has("sources_propose")).toBe(true);
+      expect(names.has("sources_approve")).toBe(false);
+      expect(names.has("supabase_verify_session")).toBe(false);
+      expect(names.has("supabase_checkout_handoff")).toBe(false);
       expect(names.has("notify")).toBe(false);
       expect(names.has("hitl_enqueue_label_studio")).toBe(false);
       expect(names.has("knowledge_search_onyx")).toBe(false);
-      expect(names.has("ouroboros_create_seed_from_document")).toBe(true);
-      expect(names.has("ouroboros_run_evolutionary_loop")).toBe(true);
-      expect(names.has("ouroboros_get_lineage_status")).toBe(true);
-      expect(names.has("ouroboros_measure_drift")).toBe(true);
-      expect(names.has("clawql_think")).toBe(true);
+      // 8.0 demotion: ouroboros_* / clawql_think default OFF (no CLAWQL_ENABLE_OUROBOROS_TOOLS).
+      expect(names.has("ouroboros_create_seed_from_document")).toBe(false);
+      expect(names.has("ouroboros_run_evolutionary_loop")).toBe(false);
+      expect(names.has("ouroboros_get_lineage_status")).toBe(false);
+      expect(names.has("ouroboros_measure_drift")).toBe(false);
+      expect(names.has("clawql_think")).toBe(false);
     } finally {
       await client.close();
     }
@@ -173,12 +178,37 @@ describe("server (stdio)", () => {
     }
   }, 30_000);
 
-  it("exposes ouroboros_* tools by default via clawql-harness (no CLAWQL_ENABLE_OUROBOROS)", async () => {
+  it("hides ouroboros_* / clawql_think by default (8.0 demotion, no CLAWQL_ENABLE_OUROBOROS_TOOLS)", async () => {
     // Regression: load-env.ts loads $CLAWQL_HOME/clawql.env with override:false.
-    // Isolated CLAWQL_HOME must still get harness Ouroboros tools (always on).
+    // Isolated CLAWQL_HOME must still get the default-off posture (no stale env leak).
     const names = await listToolNames(
       isolatedStdioChildEnv(minimalSpec),
       "clawql-stdio-home-isolated"
+    );
+    expect(names.has("ouroboros_create_seed_from_document")).toBe(false);
+    expect(names.has("clawql_think")).toBe(false);
+  }, 20_000);
+
+  it("registers ouroboros_* / clawql_think when CLAWQL_ENABLE_OUROBOROS_TOOLS=1", async () => {
+    const names = await listToolNames(
+      isolatedStdioChildEnv(minimalSpec, {
+        CLAWQL_ENABLE_OUROBOROS_TOOLS: "1",
+      }),
+      "clawql-stdio-ouroboros-tools-env-on"
+    );
+    expect(names.has("ouroboros_create_seed_from_document")).toBe(true);
+    expect(names.has("ouroboros_run_evolutionary_loop")).toBe(true);
+    expect(names.has("ouroboros_get_lineage_status")).toBe(true);
+    expect(names.has("ouroboros_measure_drift")).toBe(true);
+    expect(names.has("clawql_think")).toBe(true);
+  }, 20_000);
+
+  it("registers ouroboros_* / clawql_think when instance spec enables ouroboros.enabled", async () => {
+    const names = await listToolNames(
+      isolatedStdioChildEnv(minimalSpec, {
+        CLAWQL_INSTANCE_SPEC: instanceSpecWith({ ouroboros: { enabled: true } }),
+      }),
+      "clawql-stdio-ouroboros-tools-instance-on"
     );
     expect(names.has("ouroboros_create_seed_from_document")).toBe(true);
     expect(names.has("clawql_think")).toBe(true);
@@ -202,8 +232,30 @@ describe("server (stdio)", () => {
       "clawql-stdio-data-on"
     );
     expect(names.has("data_query")).toBe(true);
-    expect(names.has("clawql_sql")).toBe(true);
+    expect(names.has("clawql_sql")).toBe(false);
     expect(names.has("data_ingest")).toBe(true);
+  }, 20_000);
+
+  it("registers clawql_sql alias when CLAWQL_ENABLE_CLAWQL_SQL_ALIAS=1 with data on", async () => {
+    const names = await listToolNames(
+      isolatedStdioChildEnv(minimalSpec, {
+        CLAWQL_INSTANCE_SPEC: instanceSpecWith({ data: { enabled: true } }),
+        CLAWQL_ENABLE_CLAWQL_SQL_ALIAS: "1",
+      }),
+      "clawql-stdio-data-sql-alias"
+    );
+    expect(names.has("data_query")).toBe(true);
+    expect(names.has("clawql_sql")).toBe(true);
+  }, 20_000);
+
+  it("registers ingest_external_knowledge when CLAWQL_EXTERNAL_INGEST=1", async () => {
+    const names = await listToolNames(
+      isolatedStdioChildEnv(minimalSpec, {
+        CLAWQL_EXTERNAL_INGEST: "1",
+      }),
+      "clawql-stdio-external-ingest-on"
+    );
+    expect(names.has("ingest_external_knowledge")).toBe(true);
   }, 20_000);
 
   it("hides memory_ingest and memory_recall when instance spec disables memory", async () => {
@@ -263,6 +315,7 @@ describe("server (stdio)", () => {
   it("stdio ouroboros_run_evolutionary_loop routes through internal execute hint", async () => {
     const childEnv = isolatedStdioChildEnv(minimalSpec, {
       CLAWQL_OBSIDIAN_VAULT_PATH: mkdtempSync(join(tmpdir(), "clawql-vault-")),
+      CLAWQL_INSTANCE_SPEC: instanceSpecWith({ ouroboros: { enabled: true } }),
     });
 
     const transport = new StdioClientTransport({

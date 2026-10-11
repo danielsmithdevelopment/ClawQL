@@ -1,27 +1,25 @@
 /**
  * Native Effect.gen staging for sandbox_exec:
  * parse backend env → resolve backend (capability probes) → dispatch IO → shape MCP content.
- * Backend runtimes (Kata / Docker / Seatbelt / bridge) stay behind {@link sandboxFromPromise}.
  */
 
 import { Effect } from "effect";
-import { callAgentSubstrateSandbox } from "../agent-substrate/index.js";
+import { callAgentSubstrateSandboxEffect } from "../agent-substrate/index.js";
 import {
-  parseExplicitSandboxBackendEnv,
-  resolveSandboxBackendChoice,
+  parseExplicitSandboxBackendEnvEffect,
+  resolveSandboxBackendChoiceEffect,
   type ExplicitSandboxBackend,
 } from "../backend-selection.js";
-import { callSandboxBridge } from "../bridge-client.js";
-import { callDockerSandbox } from "../container.js";
-import { callKataSandbox } from "../kata-kubernetes.js";
-import { callMacosSeatbeltSandbox } from "../macos-seatbelt.js";
+import { callSandboxBridgeEffect } from "../bridge-client.js";
+import { callDockerSandboxEffect } from "../container.js";
+import { callKataSandboxEffect } from "../kata-kubernetes.js";
+import { callMacosSeatbeltSandboxEffect } from "../macos-seatbelt.js";
 import type {
   SandboxBridgeResponse,
   SandboxCodeToolInput,
   SandboxExecBackendKind,
 } from "../types.js";
 import { SandboxError } from "./sandbox-errors.js";
-import { sandboxFromPromise } from "./sandbox-effect-utils.js";
 
 export type SandboxExecResult = {
   content: { type: "text"; text: string }[];
@@ -36,29 +34,42 @@ function mcpText(result: SandboxBridgeResponse): SandboxExecResult {
   };
 }
 
-/** Dispatch to the selected sandbox backend (IO edge). */
+/** Dispatch to the selected sandbox backend (Effect primary). */
+export function runSandboxBackendEffect(
+  backend: SandboxExecBackendKind,
+  input: SandboxCodeToolInput
+): Effect.Effect<SandboxBridgeResponse> {
+  if (backend === "agent-substrate") return callAgentSubstrateSandboxEffect(input);
+  if (backend === "kata") return callKataSandboxEffect(input);
+  if (backend === "macos-seatbelt") return callMacosSeatbeltSandboxEffect(input);
+  if (backend === "docker") return callDockerSandboxEffect(input);
+  return callSandboxBridgeEffect(input).pipe(
+    Effect.map((r) => ({ ...r, backend: "bridge" as const }))
+  );
+}
+
+/** Promise façade for callers that still await backend dispatch. */
 export async function runSandboxBackend(
   backend: SandboxExecBackendKind,
   input: SandboxCodeToolInput
 ): Promise<SandboxBridgeResponse> {
-  if (backend === "agent-substrate") return callAgentSubstrateSandbox(input);
-  if (backend === "kata") return callKataSandbox(input);
-  if (backend === "macos-seatbelt") return callMacosSeatbeltSandbox(input);
-  if (backend === "docker") return callDockerSandbox(input);
-  return { ...(await callSandboxBridge(input)), backend: "bridge" };
+  return Effect.runPromise(runSandboxBackendEffect(backend, input));
 }
 
 /**
  * sandbox_exec pipeline as Effect.gen.
- * Capability probes + backend execute use {@link sandboxFromPromise}; shaping is sync.
+ * Capability probes + backend execute are Effect programs end-to-end.
  */
 export function executeSandboxExecEffect(
   input: SandboxCodeToolInput,
   opts?: { explicitBackend?: ExplicitSandboxBackend }
 ): Effect.Effect<SandboxExecResult, SandboxError> {
   return Effect.gen(function* () {
-    const explicit = opts?.explicitBackend ?? parseExplicitSandboxBackendEnv();
-    const choice = yield* sandboxFromPromise(() => resolveSandboxBackendChoice(explicit));
+    const explicit =
+      opts?.explicitBackend !== undefined
+        ? opts.explicitBackend
+        : yield* parseExplicitSandboxBackendEnvEffect();
+    const choice = yield* resolveSandboxBackendChoiceEffect(explicit);
     if (!choice.ok) {
       return mcpText({
         stdout: "",
@@ -68,7 +79,7 @@ export function executeSandboxExecEffect(
         error: choice.error,
       });
     }
-    const result = yield* sandboxFromPromise(() => runSandboxBackend(choice.backend, input));
+    const result = yield* runSandboxBackendEffect(choice.backend, input);
     return mcpText(result);
   });
 }

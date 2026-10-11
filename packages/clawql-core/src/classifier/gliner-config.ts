@@ -18,12 +18,12 @@ export type GlinerScorerConfig = {
 /** Live routing path — Decide cutover (v0.6 spend). See DECIDE_V05_SCORE_ONCE_CLOSEOUT.md. */
 export const DEFAULT_GLINER_MODEL_ID = "fastino/GLiNER2.5-Decide";
 
-export class GlinerScorerConfigService extends Context.Tag("clawql/GlinerScorerConfig")<
+export class GlinerScorerConfigService extends Context.Service<
   GlinerScorerConfigService,
   {
     readonly get: () => Effect.Effect<GlinerScorerConfig>;
   }
->() {}
+>()("clawql/GlinerScorerConfig") {}
 
 /** Read env at call time (tests can mutate process.env). */
 export function readGlinerScorerConfigFromEnv(): GlinerScorerConfig {

@@ -63,7 +63,7 @@ export class InfisicalStore extends PathSecretStore {
   }
 
   private accessToken(): Effect.Effect<string, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       if (this.token && this.token.expiresAtMs > Date.now() + 30_000) {
         return this.token.accessToken;
       }
@@ -99,7 +99,7 @@ export class InfisicalStore extends PathSecretStore {
   }
 
   getSecret(path: string): Effect.Effect<string | null, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const token = yield* this.accessToken();
       const name = this.secretName(path);
       const url = new URL(`${this.opts.endpoint}/v3/secrets/raw/${encodeURIComponent(name)}`);
@@ -127,7 +127,7 @@ export class InfisicalStore extends PathSecretStore {
   }
 
   setSecret(path: string, value: string): Effect.Effect<void, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const token = yield* this.accessToken();
       const name = this.secretName(path);
       const body = {
@@ -162,7 +162,7 @@ export class InfisicalStore extends PathSecretStore {
   }
 
   deleteSecret(path: string): Effect.Effect<void, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const token = yield* this.accessToken();
       const name = this.secretName(path);
       const url = new URL(`${this.opts.endpoint}/v3/secrets/raw/${encodeURIComponent(name)}`);
@@ -188,7 +188,7 @@ export class InfisicalStore extends PathSecretStore {
   }
 
   listSecrets(prefix: string): Effect.Effect<string[], SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const token = yield* this.accessToken();
       const url = new URL(`${this.opts.endpoint}/v3/secrets/raw`);
       url.searchParams.set("workspaceId", this.opts.projectId);

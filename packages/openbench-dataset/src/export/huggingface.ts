@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { OpenBenchTraceV1 } from "../schema/types.js";
+import { Effect } from "effect";
 
 export type ExportOptions = {
   traces: OpenBenchTraceV1[];
@@ -14,11 +15,11 @@ export type ExportOptions = {
 /**
  * Write a Hugging Face–friendly directory: data.jsonl + dataset_card.md stub.
  */
-export async function exportHuggingFaceDataset(opts: ExportOptions): Promise<{
+async function exportHuggingFaceDatasetImpl(opts: ExportOptions): Promise<{
   jsonlPath: string;
   cardPath: string;
   count: number;
-}> {
+}>  {
   let rows = opts.traces;
   if (opts.trainingOnly !== false) {
     rows = rows.filter((t) => t.suitable_for_training);
@@ -62,4 +63,24 @@ Please cite the OpenBenchTrace schema version (\`1.1\`) and the dataset release 
 `;
   await writeFile(cardPath, card, "utf8");
   return { jsonlPath, cardPath, count: rows.length };
+}
+
+export function exportHuggingFaceDatasetEffect(opts: ExportOptions): Effect.Effect<{
+  jsonlPath: string;
+  cardPath: string;
+  count: number;
+}, Error> {
+  return Effect.tryPromise({
+    try: () => exportHuggingFaceDatasetImpl(opts),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link exportHuggingFaceDatasetEffect} for Effect callers. */
+export async function exportHuggingFaceDataset(opts: ExportOptions): Promise<{
+  jsonlPath: string;
+  cardPath: string;
+  count: number;
+}>  {
+  return Effect.runPromise(exportHuggingFaceDatasetEffect(opts));
 }

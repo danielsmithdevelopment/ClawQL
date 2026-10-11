@@ -10,6 +10,7 @@ import Ajv2020Import from "ajv/dist/2020.js";
 import type { ErrorObject } from "ajv";
 import { defaultOntologySearchRoots, loadOntologyEntities } from "./load.js";
 import type { LoadedOntologyEntity, OntologyIssue, OntologyLintResult } from "./types.js";
+import { Effect } from "effect";
 
 // ajv CJS/ESM interop — runtime default is constructable; types expose a namespace.
 const Ajv2020 = (Ajv2020Import as unknown as { default?: new (opts?: object) => AjvLike }).default
@@ -168,7 +169,7 @@ export type LintOntologyOptions = {
  * Validate ontology entity YAML/JSON files.
  * If `paths` is empty, searches `.clawql/ontology/entities` then `docs/examples/ontology/entities`.
  */
-export async function lintOntology(opts: LintOntologyOptions = {}): Promise<OntologyLintResult> {
+async function lintOntologyImpl(opts: LintOntologyOptions = {}): Promise<OntologyLintResult> {
   const rootDir = resolve(opts.rootDir ?? process.cwd());
   const schemaPath = resolve(opts.schemaPath ?? defaultEntitySchemaPath(rootDir));
   const search =
@@ -238,4 +239,18 @@ export async function lintOntology(opts: LintOntologyOptions = {}): Promise<Onto
     entities: loaded.map((l) => l.entity.metadata?.name).filter(Boolean) as string[],
     issues,
   };
+}
+
+export function lintOntologyEffect(
+  opts: LintOntologyOptions = {}
+): Effect.Effect<OntologyLintResult, Error> {
+  return Effect.tryPromise({
+    try: () => lintOntologyImpl(opts),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link lintOntologyEffect} for Effect callers. */
+export async function lintOntology(opts: LintOntologyOptions = {}): Promise<OntologyLintResult> {
+  return Effect.runPromise(lintOntologyEffect(opts));
 }

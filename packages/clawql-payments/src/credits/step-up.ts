@@ -46,7 +46,7 @@ export class CreditsStepUpError extends Data.TaggedError("CreditsStepUpError")<{
  * Effect surface over per-tenant TOTP step-up enrollment.
  * Backed by the shared clawql-auth {@link StepUpStoreService}; tenantId maps to subjectId.
  */
-export class CreditsStepUpService extends Context.Tag("clawql/CreditsStepUpService")<
+export class CreditsStepUpService extends Context.Service<
   CreditsStepUpService,
   {
     readonly getEnrollment: (
@@ -69,7 +69,7 @@ export class CreditsStepUpService extends Context.Tag("clawql/CreditsStepUpServi
       token: string | undefined
     ) => Effect.Effect<void, CreditsStepUpError>;
   }
->() {}
+>()("clawql/CreditsStepUpService") {}
 
 /**
  * Live step-up service backed by the shared clawql-auth store at the payments path.

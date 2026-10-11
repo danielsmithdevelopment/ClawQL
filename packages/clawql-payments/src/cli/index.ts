@@ -21,6 +21,7 @@ export {
   runPaymentsStripeMeterReport,
   runPaymentsStripeCatalogEnsure,
   runPaymentsStripeCatalogValidate,
+  runPaymentsStripeCheckoutCreate,
   type PaymentsStripeCustomerCreateOptions,
   type PaymentsStripeInvoiceCreateOptions,
   type PaymentsStripeSetupOptions,
@@ -29,6 +30,7 @@ export {
   type PaymentsStripeMeterReportOptions,
   type PaymentsStripeCatalogEnsureOptions,
   type PaymentsStripeCatalogValidateOptions,
+  type PaymentsStripeCheckoutCreateOptions,
 } from "./stripe.js";
 export {
   runPaymentsX402WalletSetup,

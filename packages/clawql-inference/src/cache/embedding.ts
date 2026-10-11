@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 export type EmbeddingConfig = {
   baseUrl: string;
   model: string;
@@ -6,6 +8,10 @@ export type EmbeddingConfig = {
 
 const DEFAULT_BASE = "https://api.openai.com/v1";
 const DEFAULT_MODEL = "text-embedding-3-small";
+
+function asError(e: unknown): Error {
+  return e instanceof Error ? e : new Error(String(e));
+}
 
 export function resolveInferenceEmbeddingConfig(
   env: NodeJS.ProcessEnv = process.env
@@ -34,33 +40,64 @@ export function cosineSimilarity(a: Float32Array, b: Float32Array): number {
   return dot / denom;
 }
 
+export function embedTextsEffect(
+  texts: string[],
+  config: EmbeddingConfig
+): Effect.Effect<Float32Array[], Error> {
+  return Effect.gen(function* () {
+    if (!texts.length) return [];
+    const res = yield* Effect.tryPromise({
+      try: () =>
+        fetch(`${config.baseUrl}/embeddings`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${config.apiKey}`,
+          },
+          body: JSON.stringify({ model: config.model, input: texts }),
+        }),
+      catch: asError,
+    });
+    if (!res.ok) {
+      const errText = yield* Effect.tryPromise({
+        try: async () => (await res.text().catch(() => "")).slice(0, 400),
+        catch: () => new Error("failed to read embeddings error body"),
+      }).pipe(Effect.orElseSucceed(() => ""));
+      return yield* Effect.fail(new Error(`embeddings HTTP ${res.status}: ${errText}`));
+    }
+    const json = yield* Effect.tryPromise({
+      try: () =>
+        res.json() as Promise<{
+          data?: Array<{ embedding?: number[]; index?: number }>;
+        }>,
+      catch: asError,
+    });
+    const rows = [...(json.data ?? [])].sort((x, y) => (x.index ?? 0) - (y.index ?? 0));
+    return rows.map((row) => Float32Array.from(row.embedding ?? []));
+  });
+}
+
+/** Promise façade. */
 export async function embedTexts(
   texts: string[],
   config: EmbeddingConfig
 ): Promise<Float32Array[]> {
-  if (!texts.length) return [];
-  const res = await fetch(`${config.baseUrl}/embeddings`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({ model: config.model, input: texts }),
-  });
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "");
-    throw new Error(`embeddings HTTP ${res.status}: ${errText.slice(0, 400)}`);
-  }
-  const json = (await res.json()) as {
-    data?: Array<{ embedding?: number[]; index?: number }>;
-  };
-  const rows = [...(json.data ?? [])].sort((x, y) => (x.index ?? 0) - (y.index ?? 0));
-  return rows.map((row) => Float32Array.from(row.embedding ?? []));
+  return Effect.runPromise(embedTextsEffect(texts, config));
 }
 
+export function embedQueryEffect(
+  text: string,
+  config: EmbeddingConfig
+): Effect.Effect<Float32Array, Error> {
+  return Effect.gen(function* () {
+    const vectors = yield* embedTextsEffect([text], config);
+    return vectors[0] ?? new Float32Array(0);
+  });
+}
+
+/** Promise façade. */
 export async function embedQuery(text: string, config: EmbeddingConfig): Promise<Float32Array> {
-  const vectors = await embedTexts([text], config);
-  return vectors[0] ?? new Float32Array(0);
+  return Effect.runPromise(embedQueryEffect(text, config));
 }
 
 export type Embedder = {

@@ -33,6 +33,9 @@ describe("managed gateway materials", () => {
     expect(state.team).toBe("demo");
     expect(state.urls.mcp).toBe("http://127.0.0.1:18080/mcp");
     expect(state.urls.inference).toBe("http://127.0.0.1:18080/v1");
+    expect(state.urls.memory).toBe("http://127.0.0.1:18080/memory");
+    expect(state.urls.decision).toBe("http://127.0.0.1:18080/decision");
+    expect(state.urls.events).toBe("http://127.0.0.1:18080/events");
     expect(secret.startsWith("clawql-vk-")).toBe(true);
 
     const policy = await readFile(join(home, "Inference", "policy.yaml"), "utf8");

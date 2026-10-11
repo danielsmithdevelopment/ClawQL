@@ -141,7 +141,7 @@ export const recordMcpToolCallAuditEffect = (event: McpToolAuditEvent): Effect.E
       },
       catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
     }).pipe(
-      Effect.catchAll((err) =>
+      Effect.catch((err) =>
         Effect.sync(() => {
           console.error("[clawql-mcp-tool-audit] append failed:", err.message);
         })

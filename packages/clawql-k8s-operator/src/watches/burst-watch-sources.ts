@@ -77,22 +77,19 @@ export type BurstWatchSourcesHandle = {
   readonly startedCount: number;
 };
 
-export class BurstWatchSourcesService extends Context.Tag("clawql/BurstWatchSourcesService")<
-  BurstWatchSourcesService,
-  {
+export class BurstWatchSourcesService extends Context.Service<BurstWatchSourcesService, {
     readonly start: (
-      stub: Context.Tag.Service<typeof BurstWatchStub>,
+      stub: Context.Service.Shape<typeof BurstWatchStub>,
       options?: BurstWatchSourcesOptions
     ) => Effect.Effect<BurstWatchSourcesHandle>;
-  }
->() {}
+  }>()("clawql/BurstWatchSourcesService") {}
 
 export function makeBurstWatchSourcesService(
-  pod: Context.Tag.Service<typeof PodInformerService>,
-  nodeClaim: Context.Tag.Service<typeof NodeClaimInformerService>,
-  istioTail?: Context.Tag.Service<typeof IstioAccessLogTailService>,
-  fleet?: Context.Tag.Service<typeof CelldFleetHealthService>
-): Context.Tag.Service<typeof BurstWatchSourcesService> {
+  pod: Context.Service.Shape<typeof PodInformerService>,
+  nodeClaim: Context.Service.Shape<typeof NodeClaimInformerService>,
+  istioTail?: Context.Service.Shape<typeof IstioAccessLogTailService>,
+  fleet?: Context.Service.Shape<typeof CelldFleetHealthService>
+): Context.Service.Shape<typeof BurstWatchSourcesService> {
   return {
     start: (stub, options) =>
       Effect.gen(function* () {
@@ -210,14 +207,14 @@ export function makeBurstWatchSourcesService(
                     }
                     return yield* parseCelldLeaseSnapshotJson(raw);
                   });
-            const leasesOrErr = yield* Effect.either(leasesResult);
-            if (leasesOrErr._tag === "Left") {
+            const leasesOrErr = yield* Effect.result(leasesResult);
+            if (leasesOrErr._tag === "Failure") {
               statuses.push({
                 id: "celld-fleet-health",
                 started: false,
-                detail: `invalid lease snapshot: ${leasesOrErr.left.reason}`,
+                detail: `invalid lease snapshot: ${leasesOrErr.failure.reason}`,
               });
-            } else if (leasesOrErr.right.length === 0 && !options?.celldExpectedNodeIds?.length) {
+            } else if (leasesOrErr.success.length === 0 && !options?.celldExpectedNodeIds?.length) {
               statuses.push({
                 id: "celld-fleet-health",
                 started: false,
@@ -225,7 +222,7 @@ export function makeBurstWatchSourcesService(
               });
             } else {
               const report = yield* fleet.check({
-                leases: leasesOrErr.right,
+                leases: leasesOrErr.success,
                 expectedNodeIds: options?.celldExpectedNodeIds,
                 sourceNote:
                   options?.celldFleetSourceNote ??
@@ -237,7 +234,7 @@ export function makeBurstWatchSourcesService(
               statuses.push({
                 id: "celld-fleet-health",
                 started: true,
-                detail: `evaluated leases=${leasesOrErr.right.length} findings=${report.findings.length}`,
+                detail: `evaluated leases=${leasesOrErr.success.length} findings=${report.findings.length}`,
               });
             }
           }

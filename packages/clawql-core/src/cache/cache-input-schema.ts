@@ -3,7 +3,7 @@
  * Tagged union replaces Zod `superRefine` and matches {@link CacheOperationInput}.
  */
 
-import { Effect, ParseResult, Schema } from "effect";
+import { Effect, Schema, SchemaIssue } from "effect";
 import type { CacheOperationInput } from "./types.js";
 
 export const CACHE_OPERATION_DESCRIPTION =
@@ -18,19 +18,25 @@ export const CACHE_QUERY_DESCRIPTION = "For search: case-insensitive substring m
 export const CACHE_LIMIT_DESCRIPTION =
   "For list/search: max results (defaults: list 100, search 50).";
 
-const CacheKey = Schema.String.pipe(Schema.minLength(1), Schema.maxLength(2048)).annotations({
+const CacheKey = Schema.String.pipe(
+  Schema.check(Schema.isMinLength(1)),
+  Schema.check(Schema.isMaxLength(2048))
+).annotate({
   description: CACHE_KEY_DESCRIPTION,
 });
 
-const CacheLimit = Schema.Number.pipe(Schema.int(), Schema.between(1, 1000)).annotations({
+const CacheLimit = Schema.Number.pipe(
+  Schema.check(Schema.isInt()),
+  Schema.check(Schema.isBetween({ minimum: 1, maximum: 1000 }))
+).annotate({
   description: CACHE_LIMIT_DESCRIPTION,
 });
 
-export const CacheInputSchema = Schema.Union(
+export const CacheInputSchema = Schema.Union([
   Schema.Struct({
     operation: Schema.Literal("set"),
     key: CacheKey,
-    value: Schema.String.annotations({ description: CACHE_VALUE_DESCRIPTION }),
+    value: Schema.String.annotate({ description: CACHE_VALUE_DESCRIPTION }),
   }),
   Schema.Struct({
     operation: Schema.Literal("get"),
@@ -43,7 +49,7 @@ export const CacheInputSchema = Schema.Union(
   Schema.Struct({
     operation: Schema.Literal("list"),
     prefix: Schema.optional(
-      Schema.String.pipe(Schema.maxLength(2048)).annotations({
+      Schema.String.pipe(Schema.check(Schema.isMaxLength(2048))).annotate({
         description: CACHE_PREFIX_DESCRIPTION,
       })
     ),
@@ -51,12 +57,15 @@ export const CacheInputSchema = Schema.Union(
   }),
   Schema.Struct({
     operation: Schema.Literal("search"),
-    query: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(512)).annotations({
+    query: Schema.String.pipe(
+      Schema.check(Schema.isMinLength(1)),
+      Schema.check(Schema.isMaxLength(512))
+    ).annotate({
       description: CACHE_QUERY_DESCRIPTION,
     }),
     limit: Schema.optional(CacheLimit),
-  })
-).annotations({ description: CACHE_OPERATION_DESCRIPTION });
+  }),
+]).annotate({ description: CACHE_OPERATION_DESCRIPTION });
 
 export type CacheInputDecoded = Schema.Schema.Type<typeof CacheInputSchema>;
 
@@ -64,10 +73,11 @@ export type CacheInputDecoded = Schema.Schema.Type<typeof CacheInputSchema>;
 const _cacheInputAssignability: CacheInputDecoded extends CacheOperationInput ? true : false = true;
 void _cacheInputAssignability;
 
-function formatParseError(err: ParseResult.ParseError): Error {
-  return new Error(ParseResult.TreeFormatter.formatErrorSync(err));
+function formatParseError(err: Schema.SchemaError): Error {
+  const formatted = SchemaIssue.makeFormatterStandardSchemaV1()(err.issue);
+  return new Error(JSON.stringify(formatted.issues));
 }
 
 export function decodeCacheInput(raw: unknown): Effect.Effect<CacheInputDecoded, Error> {
-  return Schema.decodeUnknown(CacheInputSchema)(raw).pipe(Effect.mapError(formatParseError));
+  return Schema.decodeUnknownEffect(CacheInputSchema)(raw).pipe(Effect.mapError(formatParseError));
 }

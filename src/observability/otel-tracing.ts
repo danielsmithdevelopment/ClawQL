@@ -7,6 +7,7 @@
  */
 
 import { trace, SpanStatusCode, type Span } from "@opentelemetry/api";
+import { Effect } from "effect";
 
 function envTruthy(v: string | undefined): boolean {
   if (v === undefined) return false;
@@ -27,11 +28,11 @@ function hasOtlpEndpointConfigured(): boolean {
 
 export type OtelShutdownFn = () => Promise<void>;
 
-/**
- * Registers a **`NodeTracerProvider`** + OTLP HTTP exporter when the feature flag and an OTLP endpoint are set.
- * Safe to call multiple times — initializes at most once.
- */
-export async function maybeInitOtelTracing(): Promise<OtelShutdownFn | undefined> {
+function asError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+async function maybeInitOtelTracingImpl(): Promise<OtelShutdownFn | undefined> {
   if (!otelTracingFeatureEnabled()) return undefined;
   if (!hasOtlpEndpointConfigured()) {
     console.error(
@@ -77,6 +78,22 @@ export async function maybeInitOtelTracing(): Promise<OtelShutdownFn | undefined
 
   console.error(`[clawql] OTLP tracing enabled (service.name=${serviceName}).`);
   return shutdown;
+}
+
+/**
+ * Registers a **`NodeTracerProvider`** + OTLP HTTP exporter when the feature flag and an OTLP endpoint are set.
+ * Safe to call multiple times — initializes at most once.
+ */
+export function maybeInitOtelTracingEffect(): Effect.Effect<OtelShutdownFn | undefined, Error> {
+  return Effect.tryPromise({
+    try: () => maybeInitOtelTracingImpl(),
+    catch: asError,
+  });
+}
+
+/** Promise façade for MCP/HTTP process start. */
+export async function maybeInitOtelTracing(): Promise<OtelShutdownFn | undefined> {
+  return Effect.runPromise(maybeInitOtelTracingEffect());
 }
 
 /**

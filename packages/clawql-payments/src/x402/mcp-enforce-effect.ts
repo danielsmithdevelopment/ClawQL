@@ -59,5 +59,8 @@ export function mcpX402BeforeCallToolEffect(
       );
     }
     return yield* Effect.fail(new X402McpPaymentDeniedError(result.reason, result.resource));
-  }).pipe(Effect.provide(paymentsServicesLiveLayer(env)));
+  }).pipe(
+    Effect.asVoid,
+    Effect.provide(paymentsServicesLiveLayer(env))
+  ) as unknown as Effect.Effect<void, Error>;
 }

@@ -14,15 +14,16 @@ import {
   type BucketLocationConstraint,
   type S3ClientConfig,
 } from "@aws-sdk/client-s3";
-import { readLocalProvidersVault } from "../provider-vault/local-store.js";
+import { Effect } from "effect";
+import { readLocalProvidersVaultEffect } from "../provider-vault/local-store.js";
 import { getLocalProvidersVaultPath } from "../onboarding/paths.js";
 import {
   parseSyncProvider,
   resolveHomeSyncConfig,
   resolveSyncCredentials,
   resolveSyncEndpoint,
-  writeSyncConfigFile,
-  readSyncConfigFile,
+  readSyncConfigFileEffect,
+  writeSyncConfigFileEffect,
 } from "./config.js";
 import { getSyncConfigPath } from "./paths.js";
 import { syncProviderProfile } from "./providers.js";
@@ -85,27 +86,49 @@ export function defaultEnsurePrefix(): string {
   return envTrim("CLAWQL_SYNC_PREFIX") ?? DEFAULT_SYNC_PREFIX;
 }
 
-async function vaultData(home?: string): Promise<Record<string, string>> {
-  const vault = await readLocalProvidersVault(getLocalProvidersVaultPath(home));
-  return vault?.data ?? {};
+function asError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
 }
 
+function vaultDataEffect(home?: string): Effect.Effect<Record<string, string>, Error> {
+  return Effect.gen(function* () {
+    const vault = yield* readLocalProvidersVaultEffect(getLocalProvidersVaultPath(home));
+    return vault?.data ?? {};
+  });
+}
+
+export function resolveCloudflareApiTokenEffect(
+  home?: string
+): Effect.Effect<string | undefined, Error> {
+  return Effect.gen(function* () {
+    return (
+      envTrim("CLAWQL_CLOUDFLARE_API_TOKEN") ??
+      envTrim("CLOUDFLARE_API_TOKEN") ??
+      (yield* vaultDataEffect(home)).cloudflareApiToken
+    );
+  });
+}
+
+/** Promise façade — prefer {@link resolveCloudflareApiTokenEffect}. */
 export async function resolveCloudflareApiToken(home?: string): Promise<string | undefined> {
-  return (
-    envTrim("CLAWQL_CLOUDFLARE_API_TOKEN") ??
-    envTrim("CLOUDFLARE_API_TOKEN") ??
-    (await vaultData(home)).cloudflareApiToken
-  );
+  return Effect.runPromise(resolveCloudflareApiTokenEffect(home));
 }
 
+export function resolveR2AccountIdEffect(home?: string): Effect.Effect<string | undefined, Error> {
+  return Effect.gen(function* () {
+    const vault = yield* vaultDataEffect(home);
+    return (
+      envTrim("CLAWQL_R2_ACCOUNT_ID") ??
+      envTrim("CLAWQL_CLOUDFLARE_ACCOUNT_ID") ??
+      envTrim("CLOUDFLARE_ACCOUNT_ID") ??
+      vault.cloudflareAccountId
+    );
+  });
+}
+
+/** Promise façade — prefer {@link resolveR2AccountIdEffect}. */
 export async function resolveR2AccountId(home?: string): Promise<string | undefined> {
-  const vault = await vaultData(home);
-  return (
-    envTrim("CLAWQL_R2_ACCOUNT_ID") ??
-    envTrim("CLAWQL_CLOUDFLARE_ACCOUNT_ID") ??
-    envTrim("CLOUDFLARE_ACCOUNT_ID") ??
-    vault.cloudflareAccountId
-  );
+  return Effect.runPromise(resolveR2AccountIdEffect(home));
 }
 
 function isNotFoundError(e: unknown): boolean {
@@ -223,7 +246,7 @@ async function headOrCreateViaS3(opts: {
 
 type CloudflareApiResult = { created: boolean; method: EnsureBucketMethod };
 
-export async function ensureR2BucketViaCloudflareApi(opts: {
+async function ensureR2BucketViaCloudflareApiImpl(opts: {
   accountId: string;
   token: string;
   bucket: string;
@@ -282,6 +305,32 @@ export async function ensureR2BucketViaCloudflareApi(opts: {
   );
 }
 
+export function ensureR2BucketViaCloudflareApiEffect(opts: {
+  accountId: string;
+  token: string;
+  bucket: string;
+  locationHint?: string;
+  dryRun?: boolean;
+  fetchFn?: typeof fetch;
+}): Effect.Effect<CloudflareApiResult, Error> {
+  return Effect.tryPromise({
+    try: () => ensureR2BucketViaCloudflareApiImpl(opts),
+    catch: asError,
+  });
+}
+
+/** Promise façade — prefer {@link ensureR2BucketViaCloudflareApiEffect}. */
+export async function ensureR2BucketViaCloudflareApi(opts: {
+  accountId: string;
+  token: string;
+  bucket: string;
+  locationHint?: string;
+  dryRun?: boolean;
+  fetchFn?: typeof fetch;
+}): Promise<CloudflareApiResult> {
+  return Effect.runPromise(ensureR2BucketViaCloudflareApiEffect(opts));
+}
+
 function gcsEnsureError(): Error {
   return new Error(
     "GCS bucket auto-create is not supported (HMAC keys cannot create buckets). " +
@@ -292,111 +341,125 @@ function gcsEnsureError(): Error {
 /**
  * Ensure the team vault bucket exists and write `$CLAWQL_HOME/sync.json`.
  */
-export async function ensureSyncBucket(
+export function ensureSyncBucketEffect(
   opts: EnsureBucketOptions = {}
-): Promise<EnsureBucketResult> {
-  const home = opts.home;
-  const provider = parseSyncProvider(opts.provider ?? envTrim("CLAWQL_SYNC_PROVIDER") ?? "r2");
-  if (provider === "gcs") {
-    throw gcsEnsureError();
-  }
-
-  const existing = home
-    ? await readSyncConfigFile(getSyncConfigPath(home))
-    : await readSyncConfigFile();
-  const bucket = normalizeBucketName(
-    opts.bucket?.trim() || existing?.bucket || defaultEnsureBucketName(provider)
-  );
-  if (!bucket) {
-    throw new Error("Bucket name is empty after normalization");
-  }
-  const prefixRaw = opts.prefix ?? existing?.prefix ?? defaultEnsurePrefix();
-  const prefix =
-    prefixRaw.endsWith("/") || !prefixRaw ? prefixRaw || DEFAULT_SYNC_PREFIX : `${prefixRaw}/`;
-  const dryRun = Boolean(opts.dryRun);
-  const configPath = getSyncConfigPath(home);
-  const location =
-    opts.location?.trim() || envTrim("CLAWQL_SYNC_LOCATION") || DEFAULT_R2_LOCATION_HINT;
-
-  let created = false;
-  let method: EnsureBucketMethod = "config-only";
-
-  if (provider === "r2" || provider === "s3") {
-    // 1) Prefer S3-compatible Head/Create when sync (or AWS) keys are present.
-    try {
-      const { client, region } = buildS3ClientForEnsure(
-        provider,
-        bucket,
-        home,
-        opts.createS3Client
-      );
-      const s3Result = await headOrCreateViaS3({
-        client,
-        bucket,
-        region,
-        provider,
-        dryRun,
-      });
-      if (s3Result) {
-        created = s3Result.created;
-        method = s3Result.method;
-      }
-    } catch {
-      // Missing sync credentials — try Cloudflare API for R2 next.
+): Effect.Effect<EnsureBucketResult, Error> {
+  return Effect.gen(function* () {
+    const home = opts.home;
+    const provider = parseSyncProvider(opts.provider ?? envTrim("CLAWQL_SYNC_PROVIDER") ?? "r2");
+    if (provider === "gcs") {
+      return yield* Effect.fail(gcsEnsureError());
     }
 
-    if (method === "config-only" && provider === "r2") {
-      const token = await resolveCloudflareApiToken(home);
-      const accountId = await resolveR2AccountId(home);
-      if (!token) {
-        throw new Error(
-          "Cannot ensure R2 bucket — need either (A) R2 S3 API keys with Admin CreateBucket " +
-            "(CLAWQL_SYNC_ACCESS_KEY_ID / CLAWQL_SYNC_SECRET_ACCESS_KEY) that can Head/Create, or " +
-            "(B) CLOUDFLARE_API_TOKEN / CLAWQL_CLOUDFLARE_API_TOKEN with Workers R2 Storage Write, " +
-            "plus CLAWQL_R2_ACCOUNT_ID."
-        );
-      }
-      if (!accountId) {
-        throw new Error(
-          "Cannot ensure R2 bucket — set CLAWQL_R2_ACCOUNT_ID (Cloudflare account id)."
-        );
-      }
-      const cf = await ensureR2BucketViaCloudflareApi({
-        accountId,
-        token,
-        bucket,
-        locationHint: location,
-        dryRun,
-        fetchFn: opts.fetchFn,
-      });
-      created = cf.created;
-      method = cf.method;
-    } else if (method === "config-only" && provider === "s3") {
-      throw new Error(
-        "Cannot ensure S3 bucket — set CLAWQL_AWS_ACCESS_KEY_ID / CLAWQL_AWS_SECRET_ACCESS_KEY " +
-          "(or CLAWQL_SYNC_*) with s3:CreateBucket + s3:ListBucket (HeadBucket), " +
-          "plus CLAWQL_AWS_REGION or CLAWQL_SYNC_REGION."
-      );
+    const existing = yield* readSyncConfigFileEffect(
+      home ? getSyncConfigPath(home) : getSyncConfigPath()
+    );
+    const bucket = normalizeBucketName(
+      opts.bucket?.trim() || existing?.bucket || defaultEnsureBucketName(provider)
+    );
+    if (!bucket) {
+      return yield* Effect.fail(new Error("Bucket name is empty after normalization"));
     }
-  }
+    const prefixRaw = opts.prefix ?? existing?.prefix ?? defaultEnsurePrefix();
+    const prefix =
+      prefixRaw.endsWith("/") || !prefixRaw ? prefixRaw || DEFAULT_SYNC_PREFIX : `${prefixRaw}/`;
+    const dryRun = Boolean(opts.dryRun);
+    const configPath = getSyncConfigPath(home);
+    const location =
+      opts.location?.trim() || envTrim("CLAWQL_SYNC_LOCATION") || DEFAULT_R2_LOCATION_HINT;
 
-  if (!opts.skipWriteConfig && !dryRun) {
-    const config: HomeSyncConfigFile = {
-      version: 1,
+    let created = false;
+    let method: EnsureBucketMethod = "config-only";
+
+    if (provider === "r2" || provider === "s3") {
+      // 1) Prefer S3-compatible Head/Create when sync (or AWS) keys are present.
+      const s3Outcome = yield* Effect.tryPromise({
+        try: async () => {
+          const { client, region } = buildS3ClientForEnsure(
+            provider,
+            bucket,
+            home,
+            opts.createS3Client
+          );
+          return headOrCreateViaS3({
+            client,
+            bucket,
+            region,
+            provider,
+            dryRun,
+          });
+        },
+        catch: asError,
+      }).pipe(Effect.catch(() => Effect.succeed(null)));
+      if (s3Outcome) {
+        created = s3Outcome.created;
+        method = s3Outcome.method;
+      }
+
+      if (method === "config-only" && provider === "r2") {
+        const token = yield* resolveCloudflareApiTokenEffect(home);
+        const accountId = yield* resolveR2AccountIdEffect(home);
+        if (!token) {
+          return yield* Effect.fail(
+            new Error(
+              "Cannot ensure R2 bucket — need either (A) R2 S3 API keys with Admin CreateBucket " +
+                "(CLAWQL_SYNC_ACCESS_KEY_ID / CLAWQL_SYNC_SECRET_ACCESS_KEY) that can Head/Create, or " +
+                "(B) CLOUDFLARE_API_TOKEN / CLAWQL_CLOUDFLARE_API_TOKEN with Workers R2 Storage Write, " +
+                "plus CLAWQL_R2_ACCOUNT_ID."
+            )
+          );
+        }
+        if (!accountId) {
+          return yield* Effect.fail(
+            new Error("Cannot ensure R2 bucket — set CLAWQL_R2_ACCOUNT_ID (Cloudflare account id).")
+          );
+        }
+        const cf = yield* ensureR2BucketViaCloudflareApiEffect({
+          accountId,
+          token,
+          bucket,
+          locationHint: location,
+          dryRun,
+          fetchFn: opts.fetchFn,
+        });
+        created = cf.created;
+        method = cf.method;
+      } else if (method === "config-only" && provider === "s3") {
+        return yield* Effect.fail(
+          new Error(
+            "Cannot ensure S3 bucket — set CLAWQL_AWS_ACCESS_KEY_ID / CLAWQL_AWS_SECRET_ACCESS_KEY " +
+              "(or CLAWQL_SYNC_*) with s3:CreateBucket + s3:ListBucket (HeadBucket), " +
+              "plus CLAWQL_AWS_REGION or CLAWQL_SYNC_REGION."
+          )
+        );
+      }
+    }
+
+    if (!opts.skipWriteConfig && !dryRun) {
+      const config: HomeSyncConfigFile = {
+        version: 1,
+        provider,
+        bucket,
+        prefix,
+      };
+      yield* writeSyncConfigFileEffect(config, configPath);
+    }
+
+    return {
       provider,
       bucket,
       prefix,
+      created,
+      method,
+      dryRun,
+      configPath,
     };
-    await writeSyncConfigFile(config, configPath);
-  }
+  });
+}
 
-  return {
-    provider,
-    bucket,
-    prefix,
-    created,
-    method,
-    dryRun,
-    configPath,
-  };
+/** Promise façade — prefer {@link ensureSyncBucketEffect}. */
+export async function ensureSyncBucket(
+  opts: EnsureBucketOptions = {}
+): Promise<EnsureBucketResult> {
+  return Effect.runPromise(ensureSyncBucketEffect(opts));
 }

@@ -8,7 +8,7 @@ describe("tailcat adapter (dev shim)", () => {
 
   afterEach(async () => {
     for (const handle of handles.splice(0)) {
-      await Effect.runPromise(handle.stop().pipe(Effect.catchAll(() => Effect.void)));
+      await Effect.runPromise(handle.stop().pipe(Effect.catch(() => Effect.void)));
     }
   });
 

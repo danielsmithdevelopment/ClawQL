@@ -18,11 +18,11 @@ import { loadSpec, registerSpecCacheShutdownHooks } from "clawql-api";
 import { createRegisteredMcpServerAsync } from "./mcp-server-factory.js";
 import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { validateOrDegradeObsidianVaultAtStartup } from "../host/vault-config.js";
-import { registerPostgresPoolShutdownHooks } from "clawql-memory/vector/pgvector";
 import { registerClawqlApiShutdownHooks } from "../composition/clawql-api-adapters.js";
 import { maybeInitOtelTracing } from "../observability/otel-tracing.js";
 import { ensureProcessWormHostBooted } from "../composition/process-worm-host.js";
 import { maybeVerifyReleaseManifestAtStartup } from "../host/release-manifest-startup.js";
+import { resolvePluginCompositionFlags } from "../composition/resolve-plugin-flags.js";
 
 /** Warm specs after Ready; failures are logged and do not kill the process. */
 async function warmSpecCacheInBackground(): Promise<void> {
@@ -41,10 +41,17 @@ export async function startStdioMcpServer(): Promise<void> {
   await maybeInitOtelTracing();
   await maybeVerifyReleaseManifestAtStartup();
   registerSpecCacheShutdownHooks();
-  registerPostgresPoolShutdownHooks();
+  // pgvector hooks live in clawql-memory — only load when memory composition is on.
+  if (resolvePluginCompositionFlags().enableMemory) {
+    const { registerPostgresPoolShutdownHooks } = await import("clawql-memory/vector/pgvector");
+    registerPostgresPoolShutdownHooks();
+  }
   registerClawqlApiShutdownHooks();
   await ensureProcessWormHostBooted();
-  await validateOrDegradeObsidianVaultAtStartup();
+  // Skip vault package entirely when memory composition is off (equal-arm / Core-only).
+  if (resolvePluginCompositionFlags().enableMemory) {
+    await validateOrDegradeObsidianVaultAtStartup();
+  }
 
   const server = await createRegisteredMcpServerAsync({
     name: "cloudrun-mcp",

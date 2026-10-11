@@ -78,6 +78,8 @@ Tests use `topologyFixedLayer` / empty `$CLAWQL_HOME` registries — not a produ
 
 ## 4. UI shape
 
+**Kit:** TypeScript + shadcn in [`apps/dashboard`](../../../apps/dashboard/) for **both** self-hosted and managed `cloud.clawql.com` ([ADR 0012](../../adr/0012-console-typescript-shadcn.md)). Topology **data** still comes from `packages/clawql-payments/src/dashboard/`; do not build a Catalyst (or second) console for billing/org/keys.
+
 ```
 Dashboard
 ├── Plan & Billing

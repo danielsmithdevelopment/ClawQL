@@ -14,19 +14,14 @@ export type BoundExecuteResult = {
  * `clawql-api` installs an ExecuteService-backed implementation at API boot.
  * Forms execute in-core via HTTP form submit when `formAction` is present.
  */
-export class BoundOperationInvoker extends Context.Tag(
-  "clawql/webmcp-draft/BoundOperationInvoker"
-)<
-  BoundOperationInvoker,
-  {
+export class BoundOperationInvoker extends Context.Service<BoundOperationInvoker, {
     readonly invoke: (
       binding: BoundOperation,
       args: Readonly<Record<string, unknown>>
     ) => Effect.Effect<unknown, Error>;
-  }
->() {}
+  }>()("clawql/webmcp-draft/BoundOperationInvoker") {}
 
-const notConfiguredImpl: Context.Tag.Service<typeof BoundOperationInvoker> = {
+const notConfiguredImpl: Context.Service.Shape<typeof BoundOperationInvoker> = {
   invoke: (binding) =>
     Effect.fail(
       new Error(
@@ -36,10 +31,10 @@ const notConfiguredImpl: Context.Tag.Service<typeof BoundOperationInvoker> = {
 };
 
 /** Mutable host hook — `clawql-api` replaces this at createClawQLApi boot. */
-let hostInvokerImpl: Context.Tag.Service<typeof BoundOperationInvoker> = notConfiguredImpl;
+let hostInvokerImpl: Context.Service.Shape<typeof BoundOperationInvoker> = notConfiguredImpl;
 
 export const installBoundOperationInvoker = (
-  impl: Context.Tag.Service<typeof BoundOperationInvoker>
+  impl: Context.Service.Shape<typeof BoundOperationInvoker>
 ): void => {
   hostInvokerImpl = impl;
 };

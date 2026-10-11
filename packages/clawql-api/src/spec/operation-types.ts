@@ -2,6 +2,8 @@
  * Shared operation shape for Discovery-derived and native OpenAPI specs.
  */
 
+import type { OperationRisk, OperationRiskHints } from "../risk/operation-risk-types.js";
+
 /** Set on `Operation.requestBody` when the spec uses an inline JSON schema (no `components/schemas` ref). */
 export const INLINE_OPENAPI_REQUEST_BODY = "__clawql_inline_request_body__";
 
@@ -27,6 +29,13 @@ export interface Operation {
   specIndex?: number;
   /** Short label for search results, e.g. `compute-v1`. */
   specLabel?: string;
+  /**
+   * Spec-derived risk (set at load). Surfaced in `search` and `execute` refusals.
+   * @see docs/specs/risk/operation-risk-from-spec-v0.1.md
+   */
+  risk?: OperationRisk;
+  /** Load-time hints for the risk classifier (MCP annotations, gRPC side-effect markers). */
+  riskHints?: OperationRiskHints;
   /**
    * When set, `execute` uses this path instead of OpenAPI→GraphQL or REST.
    * Omitted or `openapi` keeps legacy behavior.

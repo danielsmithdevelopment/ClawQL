@@ -1,11 +1,12 @@
 import { loadFallbackConfig, resolveFallbackChainsPath } from "../fallback/config.js";
+import { Effect } from "effect";
 
 export type InferenceFallbackShowOptions = {
   json?: boolean;
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runInferenceFallbackShow(
+async function runInferenceFallbackShowImpl(
   options: InferenceFallbackShowOptions = {}
 ): Promise<number> {
   const env = options.env ?? process.env;
@@ -38,4 +39,20 @@ export async function runInferenceFallbackShow(
     console.log("No fallback chains configured.");
   }
   return 0;
+}
+
+export function runInferenceFallbackShowEffect(
+  options: InferenceFallbackShowOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runInferenceFallbackShowImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runInferenceFallbackShowEffect} for Effect callers. */
+export async function runInferenceFallbackShow(
+  options: InferenceFallbackShowOptions = {}
+): Promise<number> {
+  return Effect.runPromise(runInferenceFallbackShowEffect(options));
 }

@@ -17,7 +17,7 @@ export const appendInferenceAuditToProcessWormEffect = (
     correlationId: entry.correlationId,
     payload: entry.payload as unknown as Record<string, unknown>,
   }).pipe(
-    Effect.catchAll(() => Effect.void),
+    Effect.catch(() => Effect.void),
     Effect.asVoid
   );
 

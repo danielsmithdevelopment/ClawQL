@@ -18,6 +18,7 @@ cd apps/docs && node scripts/sync-clawql-plugin-pages.mjs
 | `codegraph.md`         | `/plugins/codegraph`         | Removed in 8.0              |
 | `documents.md`         | `/plugins/documents`         | Default on                  |
 | `bundled-providers.md` | `/plugins/bundled-providers` | Default install stack       |
+| `toolkits.md`          | `/plugins/toolkits`          | Named pack + ATR packaging  |
 | `automation.md`        | `/plugins/automation`        | Opt in                      |
 | `sandbox.md`           | `/plugins/sandbox`           | Opt in                      |
 | `data.md`              | `/plugins/data`              | Opt in                      |

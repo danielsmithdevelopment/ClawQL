@@ -19,6 +19,10 @@ export type ProvisionOrgInput = {
   /** Optional Stripe ids when webhook already created customer/subscription. */
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
+  /** Stripe Checkout Session id — used for idempotent webhook provision. */
+  stripeCheckoutSessionId?: string;
+  /** Internal ClawQL user id (`usr_…`) when signup used a linked identity store. */
+  clawqlUserId?: string;
   /** Enterprise: additional seats to invite at provision time. */
   additionalMemberEmails?: readonly string[];
   /** Optional SSO domains (defaults to owner email domain when present). */
@@ -40,6 +44,8 @@ export type ProvisionOrgResult = {
   planId: ClawqlPlanId;
   billingMode: OrgBillingMode;
   createdVia: OrgCreatedVia;
+  /** True when this call was a webhook/session replay and did not mint a new key. */
+  idempotentReplay?: boolean;
 };
 
 export type ReportUsageToStripeInput = {

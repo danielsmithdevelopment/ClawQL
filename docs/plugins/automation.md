@@ -4,8 +4,8 @@ description: schedule, notify, workflow, and argocd MCP tools from clawql-automa
 slug: automation
 status: opt-in
 package: clawql-automation
-order: 6
-prev: bundled-providers
+order: 7
+prev: toolkits
 next: sandbox
 ---
 

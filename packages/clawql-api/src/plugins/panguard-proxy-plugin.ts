@@ -46,7 +46,7 @@ function atrBlockHook(): LifecycleHook {
             yield* Effect.gen(function* () {
               const input = yield* wormInputFromPanguardAllow({ toolName });
               yield* appendProcessWormEffect(input);
-            }).pipe(Effect.catchAll(() => Effect.void));
+            }).pipe(Effect.catch(() => Effect.void));
           }
           return ok;
         }
@@ -59,7 +59,7 @@ function atrBlockHook(): LifecycleHook {
           yield* Effect.gen(function* () {
             const input = yield* wormInputFromPanguardDeny({ toolName, reason });
             yield* appendProcessWormEffect(input);
-          }).pipe(Effect.catchAll(() => Effect.void));
+          }).pipe(Effect.catch(() => Effect.void));
           const denied: HookResult = { allow: false, denyReason: reason };
           return denied;
         }
@@ -67,7 +67,7 @@ function atrBlockHook(): LifecycleHook {
           yield* Effect.gen(function* () {
             const input = yield* wormInputFromPanguardAllow({ toolName });
             yield* appendProcessWormEffect(input);
-          }).pipe(Effect.catchAll(() => Effect.void));
+          }).pipe(Effect.catch(() => Effect.void));
         }
         const ok: HookResult = { allow: true };
         return ok;

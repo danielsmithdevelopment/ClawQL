@@ -45,14 +45,14 @@ export abstract class PathSecretStore implements SecretStore {
   abstract listSecrets(prefix: string): Effect.Effect<string[], SecretStoreError>;
 
   getOAuthToken(providerId: string): Effect.Effect<TokenSet | null, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const raw = yield* this.getSecret(oauthPath(providerId));
       return parseJson<TokenSet>(raw);
     });
   }
 
   setOAuthToken(providerId: string, token: TokenSet): Effect.Effect<void, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const next: TokenSet = {
         ...token,
         providerId,
@@ -64,7 +64,7 @@ export abstract class PathSecretStore implements SecretStore {
   }
 
   markRequiresReauth(providerId: string): Effect.Effect<void, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const current = (yield* this.getOAuthToken(providerId)) ?? {
         accessToken: "",
         expiresAtMs: 0,
@@ -79,7 +79,7 @@ export abstract class PathSecretStore implements SecretStore {
   }
 
   getAPIKeyRecord(keyId: string): Effect.Effect<APIKeyRecord | null, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const raw = yield* this.getSecret(apiKeyPath(keyId));
       return parseJson<APIKeyRecord>(raw);
     });
@@ -90,7 +90,7 @@ export abstract class PathSecretStore implements SecretStore {
   }
 
   setRevokedAt(keyId: string, revokedAt: Date): Effect.Effect<void, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const current = yield* this.getAPIKeyRecord(keyId);
       if (!current) {
         return yield* Effect.fail(new SecretStoreError({ reason: `api_key_not_found:${keyId}` }));
@@ -107,14 +107,14 @@ export abstract class PathSecretStore implements SecretStore {
   }
 
   getNonce(nonce: string): Effect.Effect<NonceRecord | null, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const raw = yield* this.getSecret(noncePath(nonce));
       return parseJson<NonceRecord>(raw);
     });
   }
 
   markNonceConsumed(nonce: string): Effect.Effect<void, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const current = yield* this.getNonce(nonce);
       if (!current) {
         return yield* Effect.fail(new SecretStoreError({ reason: `nonce_not_found:${nonce}` }));
@@ -134,7 +134,7 @@ export abstract class PathSecretStore implements SecretStore {
   }
 
   getDomainChallenge(domain: string): Effect.Effect<DomainChallenge | null, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const raw = yield* this.getSecret(domainChallengePath(domain));
       return parseJson<DomainChallenge>(raw);
     });

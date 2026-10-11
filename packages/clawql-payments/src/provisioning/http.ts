@@ -5,17 +5,39 @@
  *
  * Auth: `Authorization: Bearer <CLAWQL_CPC_PROVISION_TOKEN>`.
  * If the token env is unset, routes respond 503 (disabled).
+ *
+ * Self-serve Checkout Session creation is separate: `POST {base}/checkout/session`
+ * is public (no CPC bearer) when `CLAWQL_SELF_SERVE_CHECKOUT=1`; otherwise 503.
  */
 
 import type { Express, Request, Response, NextFunction } from "express";
 import { Effect } from "effect";
+import { name, UserId } from "clawql-gdp";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
 import { isClawqlPlanId } from "../plans/tiers.js";
 import { provisionOrgInputFromCheckoutSession } from "./checkout-handoff.js";
+import {
+  checkoutIdentityLayer,
+  resolveCheckoutSessionIdentityEffect,
+  resolveExistingSessionIdentityEffect,
+  supabaseSelfServeCheckoutEnabledEffect,
+} from "./checkout-identity.js";
+import {
+  AccountDeletionIncompleteError,
+  AccountDeletionService,
+} from "./account-deletion-service.js";
 import { ProvisionOrgService } from "./provision-org-service.js";
 import { ReportUsageService } from "./report-usage.js";
 import type { ProvisionOrgInput, ReportUsageToStripeInput } from "./types.js";
 import type { OrgBillingMode, OrgCreatedVia } from "../credits/org.js";
+import { verifiedCheckoutSessionUserEffect } from "../proofs/verified-checkout-session-user.js";
+import {
+  createCheckoutSessionWithVerifiedUserEffect,
+  createStripeCheckoutSession,
+  type CheckoutBillingMode,
+  type CheckoutSessionPlan,
+} from "../stripe/checkout-session.js";
+import { StripeNotConfiguredError } from "../stripe/errors.js";
 
 export type AttachProvisioningRoutesOptions = {
   /** Mount prefix (default `/payments`). */
@@ -58,6 +80,44 @@ function isBillingMode(v: unknown): v is OrgBillingMode {
 
 function isCreatedVia(v: unknown): v is OrgCreatedVia {
   return v === "self_serve" || v === "enterprise_sales";
+}
+
+function isSelfServeCheckoutEnabled(env: NodeJS.ProcessEnv): boolean {
+  const v = env.CLAWQL_SELF_SERVE_CHECKOUT?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes" || v === "on";
+}
+
+function parseCheckoutSessionBody(body: unknown):
+  | {
+      plan: CheckoutSessionPlan;
+      orgName: string;
+      ownerEmail: string;
+      successUrl: string;
+      cancelUrl: string;
+      billingMode?: CheckoutBillingMode;
+    }
+  | { error: string } {
+  if (!body || typeof body !== "object") return { error: "JSON body required" };
+  const b = body as Record<string, unknown>;
+  const plan = typeof b.plan === "string" ? b.plan.trim() : "";
+  if (plan !== "pro" && plan !== "team") return { error: "plan must be pro|team" };
+  const orgName = typeof b.orgName === "string" ? b.orgName.trim() : "";
+  const ownerEmail = typeof b.ownerEmail === "string" ? b.ownerEmail.trim() : "";
+  const successUrl = typeof b.successUrl === "string" ? b.successUrl.trim() : "";
+  const cancelUrl = typeof b.cancelUrl === "string" ? b.cancelUrl.trim() : "";
+  if (!orgName) return { error: "orgName is required" };
+  if (!ownerEmail) return { error: "ownerEmail is required" };
+  if (!successUrl) return { error: "successUrl is required" };
+  if (!cancelUrl) return { error: "cancelUrl is required" };
+  let billingMode: CheckoutBillingMode | undefined;
+  if (b.billingMode !== undefined) {
+    if (b.billingMode !== "stripe_checkout" && b.billingMode !== "hybrid") {
+      return { error: "billingMode must be stripe_checkout|hybrid" };
+    }
+    billingMode = b.billingMode;
+  }
+  // Intentionally ignore any client-supplied supabaseUserId / clawqlUserId.
+  return { plan, orgName, ownerEmail, successUrl, cancelUrl, billingMode };
 }
 
 function parseProvisionBody(body: unknown): ProvisionOrgInput | { error: string } {
@@ -120,6 +180,90 @@ export function attachProvisioningRoutes(
   const base = (options.basePath ?? "/payments").replace(/\/$/, "") || "/payments";
   const auth = requireProvisionToken(env);
 
+  // Public self-serve Checkout (no CPC bearer). Gated by CLAWQL_SELF_SERVE_CHECKOUT=1.
+  const checkoutCors = (_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    next();
+  };
+  app.options(`${base}/checkout/session`, checkoutCors, (_req, res) => {
+    res.status(204).end();
+  });
+  app.post(`${base}/checkout/session`, checkoutCors, (req, res) => {
+    void (async () => {
+      if (!isSelfServeCheckoutEnabled(env)) {
+        res.status(503).json({
+          error: "Self-serve Checkout disabled — set CLAWQL_SELF_SERVE_CHECKOUT=1",
+        });
+        return;
+      }
+      const parsed = parseCheckoutSessionBody(req.body);
+      if ("error" in parsed) {
+        res.status(400).json({ error: parsed.error });
+        return;
+      }
+      try {
+        // Never trust client-supplied supabaseUserId — bind only via verified JWT + gdp-ts proof.
+        // parseCheckoutSessionBody already drops those client fields.
+        const checkout = parsed;
+        const supabaseOn = Effect.runSync(supabaseSelfServeCheckoutEnabledEffect(env));
+        let session;
+        if (supabaseOn) {
+          const token = bearerToken(req);
+          if (!token) {
+            res.status(401).json({
+              error: "Authorization Bearer token required (Supabase access token)",
+            });
+            return;
+          }
+          const identity = await Effect.runPromise(
+            resolveCheckoutSessionIdentityEffect(token, env, parsed.ownerEmail).pipe(
+              Effect.provide(checkoutIdentityLayer(env))
+            )
+          );
+          session = await runPaymentsEffect(
+            Effect.gen(function* () {
+              return yield* name(UserId(identity.claims.sub), (namedUser) =>
+                Effect.gen(function* () {
+                  const proof = yield* verifiedCheckoutSessionUserEffect(namedUser, {
+                    sub: identity.claims.sub,
+                  });
+                  if (!proof) {
+                    return yield* Effect.fail(
+                      new Error("VerifiedCheckoutSessionUser proof failed")
+                    );
+                  }
+                  return yield* createCheckoutSessionWithVerifiedUserEffect(namedUser, proof, {
+                    ...checkout,
+                    clawqlUserId: identity.user.userId,
+                    env,
+                  });
+                })
+              );
+            }),
+            env
+          );
+        } else {
+          session = await createStripeCheckoutSession({ ...checkout, env });
+        }
+        res.status(201).json(session);
+      } catch (err) {
+        if (err instanceof StripeNotConfiguredError) {
+          res.status(503).json({ error: err.message });
+          return;
+        }
+        const message = err instanceof Error ? err.message : String(err);
+        // Effect FiberFailure often embeds StripeNotConfigured in the name/message.
+        if (/StripeNotConfigured/i.test(message) || /StripeNotConfigured/i.test(String(err))) {
+          res.status(503).json({ error: message });
+          return;
+        }
+        res.status(500).json({ error: message });
+      }
+    })();
+  });
+
   app.post(`${base}/provision-org`, auth, (req, res) => {
     void (async () => {
       const parsed = parseProvisionBody(req.body);
@@ -179,6 +323,107 @@ export function attachProvisioningRoutes(
         res.status(201).json(result);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
+        res.status(500).json({ error: message });
+      }
+    })();
+  });
+
+  app.options(`${base}/account/delete`, checkoutCors, (_req, res) => {
+    res.status(204).end();
+  });
+  app.options(`${base}/account/delete/resume`, checkoutCors, (_req, res) => {
+    res.status(204).end();
+  });
+  app.post(`${base}/account/delete`, checkoutCors, (req, res) => {
+    void (async () => {
+      const supabaseOn = Effect.runSync(supabaseSelfServeCheckoutEnabledEffect(env));
+      if (!supabaseOn) {
+        res.status(503).json({ error: "Account deletion requires Supabase Auth" });
+        return;
+      }
+      const token = bearerToken(req);
+      if (!token) {
+        res.status(401).json({
+          error: "Authorization Bearer token required (Supabase access token)",
+        });
+        return;
+      }
+      try {
+        const identity = await Effect.runPromise(
+          resolveExistingSessionIdentityEffect(token, env).pipe(
+            Effect.provide(checkoutIdentityLayer(env))
+          )
+        );
+        const result = await runPaymentsEffect(
+          Effect.gen(function* () {
+            const svc = yield* AccountDeletionService;
+            return yield* svc.deleteAccount({
+              clawqlUserId: identity.user.userId,
+              env,
+            });
+          }),
+          env
+        );
+        res.status(200).json({ ok: true, ...result });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (/reauthentication required/i.test(message)) {
+          res.status(403).json({ error: message, reauthenticationRequired: true });
+          return;
+        }
+        if (err instanceof AccountDeletionIncompleteError) {
+          res.status(500).json({
+            ok: false,
+            resumable: true,
+            error: err.reason,
+            jobId: err.job.jobId,
+            status: err.job.status,
+            steps: err.job.steps,
+          });
+          return;
+        }
+        if (/unknown ClawQL user|anonymous-role|JWT/i.test(message)) {
+          res.status(401).json({ error: message });
+          return;
+        }
+        res.status(500).json({ error: message });
+      }
+    })();
+  });
+  app.post(`${base}/account/delete/resume`, checkoutCors, (req, res) => {
+    void (async () => {
+      const body = (req.body ?? {}) as { jobId?: unknown };
+      const jobId = typeof body.jobId === "string" ? body.jobId.trim() : "";
+      if (!jobId) {
+        res.status(400).json({ error: "jobId is required" });
+        return;
+      }
+      try {
+        const result = await runPaymentsEffect(
+          Effect.gen(function* () {
+            const svc = yield* AccountDeletionService;
+            return yield* svc.resumeDeletion(jobId);
+          }),
+          env
+        );
+        res.status(200).json({ ok: true, ...result });
+      } catch (err) {
+        if (err instanceof AccountDeletionIncompleteError) {
+          res.status(500).json({
+            ok: false,
+            resumable: true,
+            error: err.reason,
+            jobId: err.job.jobId,
+            status: err.job.status,
+            steps: err.job.steps,
+          });
+          return;
+        }
+        const message = err instanceof Error ? err.message : String(err);
+        if (/unknown deletion job|invalid deletion job/i.test(message)) {
+          res.status(404).json({ error: message });
+          return;
+        }
         res.status(500).json({ error: message });
       }
     })();

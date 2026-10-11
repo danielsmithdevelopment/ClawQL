@@ -9,10 +9,10 @@ import { argocdToolEnabled } from "../argocd/env.js";
 import {
   argocdDisabledResponse,
   parseArgocdToolParams,
-  runArgocdParsedOperation,
+  runArgocdParsedOperationEffect,
 } from "../argocd/argocd.js";
 import { AutomationError } from "./automation-errors.js";
-import { automationFromPromise, type McpTextResult } from "./automation-effect-utils.js";
+import { type McpTextResult } from "./automation-effect-utils.js";
 
 function softJson(obj: unknown): McpTextResult {
   return { content: [{ type: "text", text: JSON.stringify(obj, null, 2) }] };
@@ -20,7 +20,7 @@ function softJson(obj: unknown): McpTextResult {
 
 /**
  * Argo CD tool pipeline as Effect.gen.
- * Parse is sync; K8s IO stays behind {@link automationFromPromise}.
+ * Parse is sync; K8s IO is Effect-primary via {@link runArgocdParsedOperationEffect}.
  */
 export function executeArgocdToolCoreEffect(
   params: unknown
@@ -33,6 +33,6 @@ export function executeArgocdToolCoreEffect(
     if (!parsed.ok) {
       return softJson({ ok: false, error: parsed.error });
     }
-    return yield* automationFromPromise(() => runArgocdParsedOperation(parsed.value));
+    return yield* runArgocdParsedOperationEffect(parsed.value);
   });
 }

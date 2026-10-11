@@ -61,8 +61,12 @@ describe("skill search ranking", () => {
     expect(merged.some((h) => h.kind === "skill")).toBe(true);
     const formatted = JSON.parse(formatSearchResults(merged)) as {
       results: { kind: string }[];
+      catalogStatus: string;
+      message: string;
     };
     expect(formatted.results.every((r) => r.kind === "operation" || r.kind === "skill")).toBe(true);
+    expect(formatted.catalogStatus).toBe("complete");
+    expect(formatted.message).toBe("COMPLETE");
   });
 
   it("scoreSkillIndexEntry boosts name and description", () => {

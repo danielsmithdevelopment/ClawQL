@@ -26,6 +26,7 @@ import type {
 } from "./types.js";
 import { buildCatalogFromUpstream, connectUpstream, type UpstreamConnection } from "./upstream.js";
 import { attachWebSocketSurface, DEFAULT_WS_PATH } from "./websocket.js";
+import { Effect } from "effect";
 
 export type McpApiAdapterRequest = Request & {
   mcpAtr?: VerifiedMcpAdapterAtr;
@@ -301,9 +302,9 @@ function attachRefreshTimer(
  * Point at any MCP server (stdio | Streamable HTTP | gRPC) and serve
  * OpenAPI + GraphQL + Streamable HTTP `/mcp` + WebSocket `/ws` + (optional) gRPC for the same tools.
  */
-export async function startMcpApiAdapter(
+async function startMcpApiAdapterImpl(
   options: McpApiAdapterOptions
-): Promise<StartedMcpApiAdapter> {
+): Promise<StartedMcpApiAdapter>  {
   const mcpPath = resolveMcpPath(options.mcpPath);
   const wsPath = resolveWsPath(options.wsPath);
   const mcpUiPath = resolveMcpUiPath(options.mcpUiPath);
@@ -388,13 +389,29 @@ export async function startMcpApiAdapter(
   };
 }
 
+export function startMcpApiAdapterEffect(
+  options: McpApiAdapterOptions
+): Effect.Effect<StartedMcpApiAdapter, Error> {
+  return Effect.tryPromise({
+    try: () => startMcpApiAdapterImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link startMcpApiAdapterEffect} for Effect callers. */
+export async function startMcpApiAdapter(
+  options: McpApiAdapterOptions
+): Promise<StartedMcpApiAdapter>  {
+  return Effect.runPromise(startMcpApiAdapterEffect(options));
+}
+
 /** @deprecated Prefer {@link startMcpApiAdapter}. */
 export const startMcpGateway = startMcpApiAdapter;
 
 /** @deprecated Prefer {@link startMcpApiAdapter} with `upstream: { kind: "grpc", address }`. */
-export async function startMcpOpenApiGateway(
+async function startMcpOpenApiGatewayImpl(
   options: McpOpenApiGatewayOptions
-): Promise<StartedMcpApiAdapter> {
+): Promise<StartedMcpApiAdapter>  {
   return startMcpApiAdapter({
     ...options,
     upstream: {
@@ -404,4 +421,20 @@ export async function startMcpOpenApiGateway(
     },
     grpcListen: false,
   });
+}
+
+export function startMcpOpenApiGatewayEffect(
+  options: McpOpenApiGatewayOptions
+): Effect.Effect<StartedMcpApiAdapter, Error> {
+  return Effect.tryPromise({
+    try: () => startMcpOpenApiGatewayImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link startMcpOpenApiGatewayEffect} for Effect callers. */
+export async function startMcpOpenApiGateway(
+  options: McpOpenApiGatewayOptions
+): Promise<StartedMcpApiAdapter>  {
+  return Effect.runPromise(startMcpOpenApiGatewayEffect(options));
 }

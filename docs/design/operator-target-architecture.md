@@ -797,7 +797,7 @@ memory:
 
 **`confidenceThreshold`:** Entities extracted with confidence below this value are not written to the graph. Lower values create more nodes (higher recall, lower precision). Higher values create fewer, more reliable nodes. 0.78 is the recommended starting point; tune based on your domain's extraction quality.
 
-**`tokenBudget`:** The memory recall system uses PageIndex to synthesise a response within this token budget before returning it to the caller. This prevents context window overflow when a recall matches many nodes. Increase for models with large context windows; decrease for cost-sensitive deployments.
+**`tokenBudget`:** Cap tokens returned from memory recall (vault / vector / optional Onyx) before the response goes back to the caller. This prevents context window overflow when a recall matches many nodes. Increase for models with large context windows; decrease for cost-sensitive deployments. (PageIndex was removed in 8.0.)
 
 ### 4.6 `spec.sandbox`
 

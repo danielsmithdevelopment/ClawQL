@@ -26,9 +26,9 @@ import {
   normalizeCloudflarePayHandle,
 } from "./config.js";
 import {
-  getVirtualWallet,
-  listVirtualWallets,
-  upsertVirtualWallet,
+  getVirtualWalletEffect,
+  listVirtualWalletsEffect,
+  upsertVirtualWalletEffect,
   type CloudflareVirtualWalletRecord,
 } from "./store.js";
 
@@ -53,7 +53,7 @@ export type CloudflareVirtualWalletResult = CloudflareVirtualWalletRecord & {
 };
 
 /** Effect service for Cloudflare Wallets identity + Virtual Wallets. */
-export class CloudflareWalletService extends Context.Tag("clawql/CloudflareWalletService")<
+export class CloudflareWalletService extends Context.Service<
   CloudflareWalletService,
   {
     readonly resolveHandle: (input: {
@@ -82,7 +82,7 @@ export class CloudflareWalletService extends Context.Tag("clawql/CloudflareWalle
       agentId?: string;
     }) => Effect.Effect<CloudflareVirtualWalletResult[], CloudflareWalletError>;
   }
->() {}
+>()("clawql/CloudflareWalletService") {}
 
 function toResult(record: CloudflareVirtualWalletRecord): CloudflareVirtualWalletResult {
   const remaining = Math.max(0, record.allowanceUsd - record.spentUsd);
@@ -210,11 +210,12 @@ export function cloudflareWalletLiveLayer(
             dryRun: true,
           };
 
-          const saved = yield* Effect.tryPromise({
-            try: () => upsertVirtualWallet(env, record),
-            catch: (cause) =>
-              new CloudflareWalletError({ reason: "failed to persist virtual wallet", cause }),
-          });
+          const saved = yield* upsertVirtualWalletEffect(env, record).pipe(
+            Effect.mapError(
+              (cause) =>
+                new CloudflareWalletError({ reason: "failed to persist virtual wallet", cause })
+            )
+          );
 
           yield* audit
             .append(
@@ -248,11 +249,12 @@ export function cloudflareWalletLiveLayer(
               })
             );
           }
-          const record = yield* Effect.tryPromise({
-            try: () => getVirtualWallet(env, input.walletId),
-            catch: (cause) =>
-              new CloudflareWalletError({ reason: "failed to load virtual wallet", cause }),
-          });
+          const record = yield* getVirtualWalletEffect(env, input.walletId).pipe(
+            Effect.mapError(
+              (cause) =>
+                new CloudflareWalletError({ reason: "failed to load virtual wallet", cause })
+            )
+          );
           if (!record) {
             return yield* Effect.fail(
               new CloudflareWalletError({ reason: `wallet not found: ${input.walletId}` })
@@ -274,11 +276,12 @@ export function cloudflareWalletLiveLayer(
               })
             );
           }
-          const existing = yield* Effect.tryPromise({
-            try: () => getVirtualWallet(env, input.walletId),
-            catch: (cause) =>
-              new CloudflareWalletError({ reason: "failed to load virtual wallet", cause }),
-          });
+          const existing = yield* getVirtualWalletEffect(env, input.walletId).pipe(
+            Effect.mapError(
+              (cause) =>
+                new CloudflareWalletError({ reason: "failed to load virtual wallet", cause })
+            )
+          );
           if (!existing) {
             return yield* Effect.fail(
               new CloudflareWalletError({ reason: `wallet not found: ${input.walletId}` })
@@ -291,11 +294,12 @@ export function cloudflareWalletLiveLayer(
             updatedAt: now,
             credentialHint: undefined,
           };
-          const saved = yield* Effect.tryPromise({
-            try: () => upsertVirtualWallet(env, revoked),
-            catch: (cause) =>
-              new CloudflareWalletError({ reason: "failed to revoke virtual wallet", cause }),
-          });
+          const saved = yield* upsertVirtualWalletEffect(env, revoked).pipe(
+            Effect.mapError(
+              (cause) =>
+                new CloudflareWalletError({ reason: "failed to revoke virtual wallet", cause })
+            )
+          );
 
           yield* audit
             .append(
@@ -327,11 +331,12 @@ export function cloudflareWalletLiveLayer(
               })
             );
           }
-          const rows = yield* Effect.tryPromise({
-            try: () => listVirtualWallets(env, { agentId: input?.agentId }),
-            catch: (cause) =>
-              new CloudflareWalletError({ reason: "failed to list virtual wallets", cause }),
-          });
+          const rows = yield* listVirtualWalletsEffect(env, { agentId: input?.agentId }).pipe(
+            Effect.mapError(
+              (cause) =>
+                new CloudflareWalletError({ reason: "failed to list virtual wallets", cause })
+            )
+          );
           return rows.map(toResult);
         });
 

@@ -65,7 +65,7 @@ export type CreateClawQLApiOptions = {
 export type ClawQLApiHandle = {
   readonly registry: PluginRegistry;
   /** Shared with plugin install, `skills_list`/`skills_get`, and `search` ranking. */
-  readonly skillRegistry: Context.Tag.Service<typeof SkillRegistry>;
+  readonly skillRegistry: Context.Service.Shape<typeof SkillRegistry>;
   readonly hookRegistry: PluginRegistry["hookRegistry"];
   /** Shared WORM sink for hooks (session / model / tool). */
   readonly worm: PluginRegistry["worm"];

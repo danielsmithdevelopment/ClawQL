@@ -113,7 +113,7 @@ export class HashiCorpVaultStore extends PathSecretStore {
   }
 
   getSecret(path: string): Effect.Effect<string | null, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const res = yield* this.request({
         method: "GET",
         url: this.dataUrl(path),
@@ -131,7 +131,7 @@ export class HashiCorpVaultStore extends PathSecretStore {
   }
 
   setSecret(path: string, value: string): Effect.Effect<void, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const res = yield* this.request({
         method: "POST",
         url: this.dataUrl(path),
@@ -147,7 +147,7 @@ export class HashiCorpVaultStore extends PathSecretStore {
   }
 
   deleteSecret(path: string): Effect.Effect<void, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const metaUrl = `${this.endpoint}/v1/${this.mount}/metadata/${this.logicalPath(path)}`;
       const res = yield* this.request({
         method: "DELETE",
@@ -164,7 +164,7 @@ export class HashiCorpVaultStore extends PathSecretStore {
   }
 
   listSecrets(prefix: string): Effect.Effect<string[], SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const res = yield* this.request({
         method: "GET",
         url: this.metadataListUrl(prefix),

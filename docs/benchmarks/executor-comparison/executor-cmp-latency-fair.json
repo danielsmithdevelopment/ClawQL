@@ -1,0 +1,118 @@
+{
+  "suite": "executor-cmp-latency-fair",
+  "measuredAt": "2026-10-11T02:07:32.539Z",
+  "versions": {
+    "clawql": {
+      "version": "8.0.0",
+      "commit": "2e2bea754a116942c6e2d9438364ba2777f366b7",
+      "branch": "cursor/executor-latency-side-by-side-a621"
+    },
+    "executor": {
+      "version": "1.6.10",
+      "bin": "/tmp/executor-try/node_modules/.bin/executor"
+    },
+    "node": "v22.14.0",
+    "measuredAt": "2026-10-11T02:07:32.539Z"
+  },
+  "config": {
+    "iters": 1000,
+    "warmup": 50,
+    "runs": 1,
+    "mock_delay_ms": 0,
+    "schedule": "interleaved_closed_loop",
+    "arrival_ms": null,
+    "governance_worm_memory": false,
+    "panguard_sidecar": false,
+    "transport": "stdio_both",
+    "same_host": true,
+    "body_bytes": 98,
+    "fields": [
+      "pets"
+    ]
+  },
+  "method": {
+    "definition": "gateway_cost = MCP_execute_wall − upstream_cost. ClawQL upstream_cost = paired same-host mock fetch (execute_i − direct_i). Executor upstream_cost = 0 (in-process return of identical JSON; no fetch).",
+    "interleaving": "Each round: ClawQL execute → Executor execute → direct fetch. Drift hits both.",
+    "notTotalVsOverhead": "Not comparing ClawQL overhead to Executor total-with-upstream. Executor equal arm has no upstream; subtracting 0 is the same definition.",
+    "coordinatedOmission": "Closed-loop back-to-back (serial agent tool-call model). Do not claim load-test tail without LATENCY_OPEN_LOOP=1.",
+    "framing": "Lead with absolute ClawQL oversight cost (p50/p999). Executor ratio is supporting evidence."
+  },
+  "primary_run": {
+    "runIndex": 0,
+    "mode": "closed_loop",
+    "arrival_ms": null,
+    "arms": {
+      "clawql_execute_e2e": {
+        "label": "clawql_execute_e2e",
+        "n": 1000,
+        "p50_ms": 1.566,
+        "p95_ms": 2.1,
+        "p99_ms": 3.029,
+        "p999_ms": 9.055,
+        "mean_ms": 1.644,
+        "min_ms": 1.116,
+        "max_ms": 9.055
+      },
+      "executor_execute": {
+        "label": "executor_execute",
+        "n": 1000,
+        "p50_ms": 2.375,
+        "p95_ms": 4.007,
+        "p99_ms": 4.984,
+        "p999_ms": 11.646,
+        "mean_ms": 2.586,
+        "min_ms": 1.643,
+        "max_ms": 11.646
+      },
+      "direct_http": {
+        "label": "direct_http",
+        "n": 1000,
+        "p50_ms": 0.408,
+        "p95_ms": 0.528,
+        "p99_ms": 0.709,
+        "p999_ms": 2.703,
+        "mean_ms": 0.428,
+        "min_ms": 0.297,
+        "max_ms": 2.703
+      },
+      "clawql_gateway_cost": {
+        "label": "clawql_gateway_cost",
+        "n": 1000,
+        "p50_ms": 1.147,
+        "p95_ms": 1.667,
+        "p99_ms": 2.577,
+        "p999_ms": 8.39,
+        "mean_ms": 1.216,
+        "min_ms": -1.048,
+        "max_ms": 8.39
+      },
+      "executor_gateway_cost": {
+        "label": "executor_gateway_cost",
+        "n": 1000,
+        "p50_ms": 2.375,
+        "p95_ms": 4.007,
+        "p99_ms": 4.984,
+        "p999_ms": 11.646,
+        "mean_ms": 2.586,
+        "min_ms": 1.643,
+        "max_ms": 11.646
+      }
+    },
+    "ratios": {
+      "p50": 2.07,
+      "p99": 1.93,
+      "p999": 1.39
+    },
+    "headline_absolute_ms": {
+      "clawql_oversight_p50_ms": 1.147,
+      "clawql_oversight_p999_ms": 8.39,
+      "note": "Absolute cost of ClawQL oversight path (execute − paired mock). Primary publish framing — holds regardless of Executor."
+    }
+  },
+  "spread": null,
+  "publish_lines": {
+    "absolute": "On local stdio, interleaved + paired: risk gates, ring audit, hooks and field projection add 1.147 ms at p50 and 2.577 ms at p99 (p999 not claimed at n=1000; need interleaved n≥10000 × ≥3 runs). Ephemeral ring audit; in-memory/production WORM off. Panguard off.",
+    "vs_executor_supporting": "Supporting: Executor 1.6.10 on same harness — gateway_cost p50 2.375 ms (ratio 2.07× at p50). Rerun when Executor v2 ships.",
+    "p999_policy": "Publish p50/p95/p99 from interleaved multi-run. Claim p999 only from interleaved n≥10000/run with spread across runs."
+  }
+}

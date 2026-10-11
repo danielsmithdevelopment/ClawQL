@@ -41,7 +41,7 @@ spec:
                   number: {{ .Values.documentPipeline.paperless.service.port }}
 ---
 {{- end }}
-{{- if and .Values.documentPipeline.enabled .Values.providerIngress.stirling.enabled }}
+{{- if and .Values.documentPipeline.enabled .Values.documentPipeline.stirling.enabled .Values.providerIngress.stirling.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -119,7 +119,7 @@ spec:
                   number: {{ .Values.documentPipeline.docling.service.port }}
 ---
 {{- end }}
-{{- if and .Values.documentPipeline.enabled .Values.providerIngress.tika.enabled }}
+{{- if and .Values.documentPipeline.enabled .Values.documentPipeline.tika.enabled .Values.providerIngress.tika.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -158,7 +158,7 @@ spec:
                   number: {{ .Values.documentPipeline.tika.service.port }}
 ---
 {{- end }}
-{{- if and .Values.documentPipeline.enabled .Values.providerIngress.gotenberg.enabled }}
+{{- if and .Values.documentPipeline.enabled .Values.documentPipeline.gotenberg.enabled .Values.providerIngress.gotenberg.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

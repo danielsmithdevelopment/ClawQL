@@ -41,7 +41,7 @@ export type FastDecisionScoreRequest = {
   readonly capabilityOntology?: CapabilityOntology;
 };
 
-export class FastDecisionScorer extends Context.Tag("clawql/FastDecisionScorer")<
+export class FastDecisionScorer extends Context.Service<
   FastDecisionScorer,
   {
     readonly score: (
@@ -50,7 +50,7 @@ export class FastDecisionScorer extends Context.Tag("clawql/FastDecisionScorer")
     /** Backend id recorded in WORM metadata (gliner2, needle3-stub, heuristic, …). */
     readonly backendId: () => string;
   }
->() {}
+>()("clawql/FastDecisionScorer") {}
 
 function clamp01(n: number): number {
   if (Number.isNaN(n)) return 0;
@@ -210,7 +210,7 @@ export function scoreViaGlinerHttp(
       clearTimeout(timer);
     }
   }).pipe(
-    Effect.catchAll(() =>
+    Effect.catch(() =>
       Effect.sync(() => ({
         scores: heuristicScores(request),
         source: "fallback-heuristic" as const,

@@ -4,7 +4,7 @@
  */
 
 import { spawn } from "node:child_process";
-import { Effect } from "effect";
+import { Context, Effect } from "effect";
 
 import type { AuthEventSink } from "../audit/auth-events.js";
 import { createAuthEventSinkFromEnv } from "../audit/auth-worm-sink.js";
@@ -33,7 +33,7 @@ import {
 } from "./mcp-oauth-signing.js";
 
 export type IdJagIssuerRuntime = {
-  service: IdJagIssuerService["Type"];
+  service: Context.Service.Shape<typeof IdJagIssuerService>;
   connectors: EmaConnectorRegistry;
   material: IdJagIssuerOrgMaterial;
   /** Layer C signer when TEE env flags / host inject `assertionSigner`. */
@@ -166,8 +166,10 @@ export function createIdJagIssuerFromEnv(options: {
 
     const orgId = env.CLAWQL_ID_JAG_ISSUER_ORG_ID?.trim() || env.CLAWQL_DEFAULT_ORG_ID?.trim();
     if (!orgId) {
-      return yield* Effect.dieMessage(
-        "CLAWQL_ID_JAG_ISSUER_ENABLED requires CLAWQL_ID_JAG_ISSUER_ORG_ID (or CLAWQL_DEFAULT_ORG_ID)"
+      return yield* Effect.die(
+        new Error(
+          "CLAWQL_ID_JAG_ISSUER_ENABLED requires CLAWQL_ID_JAG_ISSUER_ORG_ID (or CLAWQL_DEFAULT_ORG_ID)"
+        )
       );
     }
 

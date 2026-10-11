@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile, readdir, stat } from "node:fs/promises";
 import { join, basename } from "node:path";
 import { commandExists, isDryRun, runCommand } from "../exec.js";
 import { sha256FileHex } from "../hash.js";
+import { Effect } from "effect";
 
 export type IpfsStageResult = {
   cid: string;
@@ -36,7 +37,7 @@ async function hashDirectory(dir: string): Promise<string> {
  * Stage a release bundle directory on IPFS. Falls back to a local content-addressed
  * store under `.clawql/ipfs-staging/` when the IPFS daemon/CLI is unavailable or dry-run.
  */
-export async function stageBundleToIpfs(
+async function stageBundleToIpfsImpl(
   bundleDir: string,
   opts: { rootDir: string; dryRun?: boolean; apiUrl?: string } = { rootDir: "." }
 ): Promise<IpfsStageResult> {
@@ -93,7 +94,7 @@ export async function stageBundleToIpfs(
   };
 }
 
-export async function resolveLocalIpfsStaging(
+async function resolveLocalIpfsStagingImpl(
   rootDir: string,
   cid: string
 ): Promise<string | undefined> {
@@ -105,4 +106,43 @@ export async function resolveLocalIpfsStaging(
   } catch {
     return undefined;
   }
+}
+
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Stage a release bundle on IPFS or local content-addressed store (Effect-primary). */
+export function stageBundleToIpfsEffect(
+  bundleDir: string,
+  opts: { rootDir: string; dryRun?: boolean; apiUrl?: string } = { rootDir: "." }
+): Effect.Effect<IpfsStageResult, Error> {
+  return Effect.tryPromise({ try: () => stageBundleToIpfsImpl(bundleDir, opts), catch: fsError });
+}
+
+/** Promise façade for callers that still await IPFS staging. */
+export async function stageBundleToIpfs(
+  bundleDir: string,
+  opts: { rootDir: string; dryRun?: boolean; apiUrl?: string } = { rootDir: "." }
+): Promise<IpfsStageResult> {
+  return Effect.runPromise(stageBundleToIpfsEffect(bundleDir, opts));
+}
+
+/** Resolve a local IPFS staging path by CID (Effect-primary). */
+export function resolveLocalIpfsStagingEffect(
+  rootDir: string,
+  cid: string
+): Effect.Effect<string | undefined, Error> {
+  return Effect.tryPromise({
+    try: () => resolveLocalIpfsStagingImpl(rootDir, cid),
+    catch: fsError,
+  });
+}
+
+/** Promise façade for callers that still await local IPFS resolve. */
+export async function resolveLocalIpfsStaging(
+  rootDir: string,
+  cid: string
+): Promise<string | undefined> {
+  return Effect.runPromise(resolveLocalIpfsStagingEffect(rootDir, cid));
 }

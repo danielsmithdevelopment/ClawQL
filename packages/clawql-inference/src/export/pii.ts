@@ -1,33 +1,63 @@
 import { gatewayRedactionEnabled, maybeGatewayRedactText } from "clawql-api";
+import { Effect, Exit } from "effect";
 import type { PiiScrubMode } from "./types.js";
 
-export async function scrubExportLine(line: string, mode: PiiScrubMode): Promise<string> {
-  if (mode === "off") return line;
-  if (!gatewayRedactionEnabled()) return line;
-  try {
-    const parsed = JSON.parse(line) as unknown;
-    const scrubbed = await scrubJsonValue(parsed);
-    return JSON.stringify(scrubbed);
-  } catch {
-    return maybeGatewayRedactText(line);
-  }
+function asError(e: unknown): Error {
+  return e instanceof Error ? e : new Error(String(e));
 }
 
-async function scrubJsonValue(value: unknown): Promise<unknown> {
+function scrubJsonValueEffect(value: unknown): Effect.Effect<unknown, Error> {
   if (typeof value === "string") {
-    return maybeGatewayRedactText(value);
+    return Effect.tryPromise({ try: () => maybeGatewayRedactText(value), catch: asError });
   }
   if (Array.isArray(value)) {
-    return Promise.all(value.map((v) => scrubJsonValue(v)));
+    return Effect.gen(function* () {
+      const out: unknown[] = [];
+      for (const v of value) {
+        out.push(yield* scrubJsonValueEffect(v));
+      }
+      return out;
+    });
   }
   if (value && typeof value === "object") {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      out[k] = await scrubJsonValue(v);
-    }
-    return out;
+    return Effect.gen(function* () {
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        out[k] = yield* scrubJsonValueEffect(v);
+      }
+      return out;
+    });
   }
-  return value;
+  return Effect.succeed(value);
+}
+
+export function scrubExportLineEffect(
+  line: string,
+  mode: PiiScrubMode
+): Effect.Effect<string, Error> {
+  return Effect.gen(function* () {
+    if (mode === "off") return line;
+    if (!gatewayRedactionEnabled()) return line;
+    const parseExit = yield* Effect.exit(
+      Effect.try({
+        try: () => JSON.parse(line) as unknown,
+        catch: asError,
+      })
+    );
+    if (Exit.isFailure(parseExit)) {
+      return yield* Effect.tryPromise({
+        try: () => maybeGatewayRedactText(line),
+        catch: asError,
+      });
+    }
+    const scrubbed = yield* scrubJsonValueEffect(parseExit.value);
+    return JSON.stringify(scrubbed);
+  });
+}
+
+/** Promise façade. */
+export async function scrubExportLine(line: string, mode: PiiScrubMode): Promise<string> {
+  return Effect.runPromise(scrubExportLineEffect(line, mode));
 }
 
 export function resolvePiiScrubMode(noPiiScrub?: boolean): PiiScrubMode {

@@ -61,7 +61,7 @@ export function executeMemoryIngestCoreEffect(
         correlationId: effective.correlationId ?? effective.sessionId,
       });
     }).pipe(
-      Effect.catchAll((err) =>
+      Effect.catch((err) =>
         Effect.sync(() => {
           console.error(`[clawql-mcp] OKF log.md append failed: ${err.reason}`);
         })

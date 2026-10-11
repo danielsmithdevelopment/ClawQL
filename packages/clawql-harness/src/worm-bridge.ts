@@ -8,6 +8,6 @@ export const verifyHarnessWormTrail = (
 ): Effect.Effect<boolean, never, WORMAuditTrailService> =>
   Effect.gen(function* () {
     const worm = yield* WORMAuditTrailService;
-    const report = yield* worm.verify().pipe(Effect.catchAll(() => Effect.succeed(null)));
+    const report = yield* worm.verify().pipe(Effect.catch(() => Effect.succeed(null)));
     return report?.valid === true;
   });

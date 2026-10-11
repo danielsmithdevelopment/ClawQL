@@ -1,7 +1,12 @@
 # Vendor mirror only — ghcr.io/openclaw/openclaw:slim (see `.github/workflows/container-mirror.yml`).
 # ClawQL copies upstream bytes verbatim; we cannot patch OpenClaw's OS/toolchain/node-pkg tree at mirror time.
-# Kyverno still verifies Cosign on the mirrored digest in our GHCR. Revisit when upstream refreshes `:slim`.
+# Workflow gate is CRITICAL-only for this vendor mirror; entries below cover residual CRITICAL
+# findings (and legacy HIGH ignores kept for local full-severity scans). Revisit when upstream
+# refreshes `:slim` (checked dated/beta slim tags through 2026.10.1-beta.1 — still unclean).
+# Kyverno still verifies Cosign on the mirrored digest in our GHCR.
 CVE-2023-2953
+# Debian bookworm perl — fixed in 5.36.0-7+deb12u4; OpenClaw slim still ships u3 (2026-10).
+CVE-2026-13221
 CVE-2025-59375
 CVE-2025-69534
 CVE-2025-69720

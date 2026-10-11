@@ -184,7 +184,7 @@ export const resolveFinancialToolNamesEffect = (
 ): Effect.Effect<readonly string[]> => Effect.sync(() => resolveFinancialToolNames(env));
 
 /** Effect service wrapping tool-access policy for DI in gateway / MCP hosts. */
-export class AuthPolicyService extends Context.Tag("clawql/AuthPolicyService")<
+export class AuthPolicyService extends Context.Service<
   AuthPolicyService,
   {
     readonly assertToolAccess: (
@@ -199,7 +199,7 @@ export class AuthPolicyService extends Context.Tag("clawql/AuthPolicyService")<
     readonly claimsHaveMfa: (claims: AtrClaims) => Effect.Effect<boolean>;
     readonly isFinancialTool: (toolName: string) => Effect.Effect<boolean>;
   }
->() {}
+>()("clawql/AuthPolicyService") {}
 
 export function authPolicyServiceFromEnv(env: NodeJS.ProcessEnv = process.env) {
   return AuthPolicyService.of({

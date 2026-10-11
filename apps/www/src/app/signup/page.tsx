@@ -1,7 +1,7 @@
 import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
 import { InstallCommand } from '@/components/elements/install-command'
 import { Section } from '@/components/elements/section'
-import { WaitlistSignupForm } from '@/components/elements/waitlist-signup-form'
+import { SignupCtaForm } from '@/components/elements/signup-cta-form'
 import { ArrowNarrowRightIcon } from '@/components/icons/arrow-narrow-right-icon'
 import { CheckmarkIcon } from '@/components/icons/checkmark-icon'
 import { IdpStageCard, ToolCard } from '@/components/sections/clawql-marketing'
@@ -9,6 +9,7 @@ import { Feature, FeaturesThreeColumn } from '@/components/sections/features-thr
 import { HeroSimpleCentered } from '@/components/sections/hero-simple-centered'
 import { idpPipelineStages, mcpToolTiers } from '@/lib/marketing'
 import { hostedFreeTrial, pricing } from '@/lib/pricing'
+import { isSelfServeCheckoutConfigured } from '@/lib/self-serve-checkout'
 import { pageMetadata } from '@/lib/seo'
 import { site } from '@/lib/site'
 
@@ -20,26 +21,41 @@ export const metadata = pageMetadata({
 })
 
 export default function Page() {
+  const selfServe = isSelfServeCheckoutConfigured()
   return (
     <>
       <HeroSimpleCentered
         id="signup-hero"
-        headline="Request early access or book a demo"
+        headline={selfServe ? hostedFreeTrial.headline : 'Request early access or book a demo'}
         subheadline={
           <p>
-            ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI. Land with
-            OpenAI-compatible inference and MCP; expand into memory, Dedicated Virtual Gateway governance, and Edge
-            Gateways on every laptop. Self-host free on Apache 2.0, or join the managed waitlist for early access. Real
-            estate teams: see the{' '}
-            <a href="/industries/real-estate#demo-pitch" className="underline">
-              one-paragraph pitch
-            </a>{' '}
-            to forward before your demo. Hosted evaluation targets the Developer experience ({hostedFreeTrial.durationDays}
-            -day window once provisioned). Gateway from {pricing.developer.monthlyPrice}/mo, Teams{' '}
-            {pricing.teams.monthlyPrice}/mo, IDP bundle from {pricing.starter.monthlyPrice}/mo.
+            {selfServe ? (
+              <>
+                {hostedFreeTrial.subheadline} Gateway from {pricing.developer.monthlyPrice}/mo, Teams{' '}
+                {pricing.teams.monthlyPrice}/mo, IDP bundle from {pricing.starter.monthlyPrice}/mo.
+                Real estate teams: see the{' '}
+                <a href="/industries/real-estate#demo-pitch" className="underline">
+                  one-paragraph pitch
+                </a>{' '}
+                to forward before your demo.
+              </>
+            ) : (
+              <>
+                ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI. Land with
+                OpenAI-compatible inference and MCP; expand into memory, Dedicated Virtual Gateway governance, and Edge
+                Gateways on every laptop. Self-host free on Apache 2.0, or join the managed waitlist for early access. Real
+                estate teams: see the{' '}
+                <a href="/industries/real-estate#demo-pitch" className="underline">
+                  one-paragraph pitch
+                </a>{' '}
+                to forward before your demo. Hosted evaluation targets the Developer experience ({hostedFreeTrial.durationDays}
+                -day window once provisioned). Gateway from {pricing.developer.monthlyPrice}/mo, Teams{' '}
+                {pricing.teams.monthlyPrice}/mo, IDP bundle from {pricing.starter.monthlyPrice}/mo.
+              </>
+            )}
           </p>
         }
-        cta={<WaitlistSignupForm className="mx-auto" />}
+        cta={<SignupCtaForm className="mx-auto" />}
       />
 
       <Section

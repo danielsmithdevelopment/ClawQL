@@ -6,7 +6,8 @@ Markdown drafts for publication on [pragmaticvectors.com](https://pragmaticvecto
 - `clawql-buzz-nostr.md` — ClawQL + Buzz / Nostr
 - `clawql-security.md` — When Agents Escape — Part 6: The Defense Layer
 - `memory-finds-ontology-decides.md` — **Memory Finds. Ontology Decides.** (OpenBench B-7 / clawql-ontology) — published: [pragmaticvectors.com/posts/memory-finds-ontology-decides](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/)
-- **`agent-memory-stack-corrections.md`** — edit brief for live [agent-memory-stack](https://pragmaticvectors.com/posts/agent-memory-stack/) (hybrid defaults + PageIndex heading-tree vs LLM routing). Apply on site ASAP.
+- **`agent-memory-stack.md`** — **paste-ready 8.0 rewrite** for live [agent-memory-stack](https://pragmaticvectors.com/posts/agent-memory-stack/) (vault + vector + optional Onyx; PageIndex/CodeGraph removed). **Operator: paste over CMS before 8.0.0 tag.**
+- **`agent-memory-stack-corrections.md`** — edit brief / checklist if doing a surgical CMS edit instead of full replace.
 - **`mcp-api-adapter.md`** — **Eight Surfaces, One Catalog** → publish at [pragmaticvectors.com/posts/mcp-api-adapter/](https://pragmaticvectors.com/posts/mcp-api-adapter/); redirect old `/posts/mcp-api-adapter-five-surfaces/` here
 - **`extractbench-long-documents.md`** — **Long Documents Don't Need Bigger Context Windows** (ExtractBench × ClawQL IDP; draft until scores land) → [pragmaticvectors.com/posts/extractbench-long-documents/](https://pragmaticvectors.com/posts/extractbench-long-documents/)
 - **`query-method-rfc-10008.md`** — **The HTTP method that should have existed years ago** (RFC 10008 QUERY × DAOS transport + mcp-api-adapter) → publish at [pragmaticvectors.com/posts/query-method-rfc-10008/](https://pragmaticvectors.com/posts/query-method-rfc-10008/)

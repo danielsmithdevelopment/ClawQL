@@ -1,0 +1,64 @@
+{
+  "name": "clawql-supabase",
+  "version": "0.1.0",
+  "description": "ClawQL Supabase Auth provider plugin — managed clawql.com signup → Stripe Checkout → provisionOrg handoff",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./plugin": {
+      "types": "./dist/plugin/index.d.ts",
+      "import": "./dist/plugin/index.js",
+      "require": "./dist/plugin/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsup",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config ../../vitest.config.ts packages/clawql-supabase"
+  },
+  "dependencies": {
+    "clawql-api": "0.1.0",
+    "clawql-core": "0.1.0",
+    "effect": "4.0.0",
+    "jose": "^6.2.12"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsup": "^8.3.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
+    "directory": "packages/clawql-supabase"
+  },
+  "keywords": [
+    "clawql",
+    "supabase",
+    "auth",
+    "signup",
+    "identity"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

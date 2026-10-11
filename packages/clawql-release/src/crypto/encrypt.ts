@@ -1,5 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
+import { Effect } from "effect";
 
 export type EncryptedBlob = {
   algorithm: "chacha20-poly1305";
@@ -38,28 +39,62 @@ export function decryptBuffer(blob: Omit<EncryptedBlob, "keyHex"> & { keyHex: st
   return Buffer.concat([decipher.update(data), decipher.final()]);
 }
 
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Encrypt a file to path (Effect-primary). */
+export function encryptFileToPathEffect(
+  srcPath: string,
+  destPath: string,
+  key?: Buffer
+): Effect.Effect<EncryptedBlob, Error> {
+  return Effect.tryPromise({
+    try: async () => {
+      const plaintext = await readFile(srcPath);
+      const blob = encryptBuffer(plaintext, key);
+      await writeFile(destPath, Buffer.from(blob.ciphertextHex, "hex"));
+      return blob;
+    },
+    catch: fsError,
+  });
+}
+
+/** Promise façade for callers that still await file encryption. */
 export async function encryptFileToPath(
   srcPath: string,
   destPath: string,
   key?: Buffer
 ): Promise<EncryptedBlob> {
-  const plaintext = await readFile(srcPath);
-  const blob = encryptBuffer(plaintext, key);
-  await writeFile(destPath, Buffer.from(blob.ciphertextHex, "hex"));
-  return blob;
+  return Effect.runPromise(encryptFileToPathEffect(srcPath, destPath, key));
 }
 
+/** Decrypt a file from path (Effect-primary). */
+export function decryptFileFromPathEffect(
+  encPath: string,
+  destPath: string,
+  blob: { algorithm: "chacha20-poly1305"; nonceHex: string; keyHex: string }
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: async () => {
+      const ciphertext = await readFile(encPath);
+      const plain = decryptBuffer({
+        algorithm: blob.algorithm,
+        nonceHex: blob.nonceHex,
+        ciphertextHex: ciphertext.toString("hex"),
+        keyHex: blob.keyHex,
+      });
+      await writeFile(destPath, plain);
+    },
+    catch: fsError,
+  });
+}
+
+/** Promise façade for callers that still await file decryption. */
 export async function decryptFileFromPath(
   encPath: string,
   destPath: string,
   blob: { algorithm: "chacha20-poly1305"; nonceHex: string; keyHex: string }
 ): Promise<void> {
-  const ciphertext = await readFile(encPath);
-  const plain = decryptBuffer({
-    algorithm: blob.algorithm,
-    nonceHex: blob.nonceHex,
-    ciphertextHex: ciphertext.toString("hex"),
-    keyHex: blob.keyHex,
-  });
-  await writeFile(destPath, plain);
+  return Effect.runPromise(decryptFileFromPathEffect(encPath, destPath, blob));
 }

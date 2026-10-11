@@ -68,14 +68,14 @@ export class ExecuteBatchError extends Data.TaggedError("ExecuteBatchError")<{
   readonly cause?: unknown;
 }> {}
 
-export class ExecuteBatchRegistry extends Context.Tag("clawql/ExecuteBatchRegistry")<
+export class ExecuteBatchRegistry extends Context.Service<
   ExecuteBatchRegistry,
   {
     readonly register: (script: ExecuteBatchScript) => Effect.Effect<void, never>;
     readonly get: (name: string) => Effect.Effect<ExecuteBatchScript | undefined, never>;
     readonly list: () => Effect.Effect<readonly string[], never>;
   }
->() {}
+>()("clawql/ExecuteBatchRegistry") {}
 
 export function createMemoryExecuteBatchRegistryLayer(
   seed: readonly ExecuteBatchScript[] = []

@@ -1,0 +1,39 @@
+# Cloud E2E Compose honesty stacks — Keycloak realm + multi-gateway/NATS kill.
+name: Cloud E2E Compose
+
+on:
+  pull_request:
+    paths:
+      - "apps/dashboard/e2e-cloud/compose/**"
+      - "apps/dashboard/e2e-cloud/helpers/keycloak.ts"
+      - "apps/dashboard/e2e-cloud/helpers/compose.ts"
+      - ".github/workflows/cloud-e2e-compose.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/dashboard/e2e-cloud/compose/**"
+      - "apps/dashboard/e2e-cloud/helpers/keycloak.ts"
+      - "apps/dashboard/e2e-cloud/helpers/compose.ts"
+      - ".github/workflows/cloud-e2e-compose.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloud-e2e-compose-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compose-smoke:
+    name: Keycloak + multi-gateway compose smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Docker info
+        run: docker version && docker compose version
+
+      - name: Run Cloud E2E compose smoke
+        run: bash apps/dashboard/e2e-cloud/compose/smoke-compose.sh

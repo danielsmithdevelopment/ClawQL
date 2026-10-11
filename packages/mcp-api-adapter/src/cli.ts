@@ -5,6 +5,7 @@ import { resolveListTraceCallsFromEnv } from "./inference-trace-bridge.js";
 import { startMcpApiAdapter } from "./server.js";
 import { connectUpstream } from "./upstream.js";
 import type { UpstreamOptions } from "./types.js";
+import { Effect } from "effect";
 
 function envFirst(...keys: string[]): string | undefined {
   for (const key of keys) {
@@ -333,10 +334,22 @@ async function runServe(argv: string[]): Promise<void> {
   process.on("SIGTERM", () => void shutdown());
 }
 
-export async function runCli(argv: string[]): Promise<void> {
+async function runCliImpl(argv: string[]): Promise<void>  {
   if (argv[0] === "gen-cli") {
     await runGenCli(argv.slice(1));
     return;
   }
   await runServe(argv);
+}
+
+export function runCliEffect(argv: string[]): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => runCliImpl(argv),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runCliEffect} for Effect callers. */
+export async function runCli(argv: string[]): Promise<void>  {
+  return Effect.runPromise(runCliEffect(argv));
 }

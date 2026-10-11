@@ -114,6 +114,29 @@ Use existing `StripeBillingService` patterns for upgrade / cancel. Map Price ids
 4. With meter flag on, `org report-usage --overage 1` writes `USAGE_REPORTED_TO_BILLING` and a Stripe meter event.
 5. Credits top-up still settles into ledger without meter events.
 
+### Self-serve Checkout (gap #5)
+
+Create a live subscription Checkout Session with CPC metadata (see [self-serve-stripe-checkout-v0.1](../specs/billing/self-serve-stripe-checkout-v0.1.md)):
+
+```bash
+export STRIPE_SECRET_KEY=sk_test_...
+export STRIPE_PRO_PRICE_ID=price_...
+export STRIPE_TEAM_PRICE_ID=price_...
+export CLAWQL_SELF_SERVE_CHECKOUT=1   # enables POST /payments/checkout/session
+
+clawql payments stripe checkout create \
+  --plan pro \
+  --org-name Acme \
+  --email owner@acme.com \
+  --success-url https://clawql.com/signup/thanks/ \
+  --cancel-url https://clawql.com/signup/ \
+  --json
+```
+
+HTTP (no CPC bearer): `POST /payments/checkout/session` with JSON `{ plan, orgName, ownerEmail, successUrl, cancelUrl }`.
+
+www: set `NEXT_PUBLIC_CLAWQL_SELF_SERVE_CHECKOUT=1` and `NEXT_PUBLIC_CLAWQL_CHECKOUT_API` to that endpoint URL so `/signup` shows the Pro Checkout form instead of the FormSubmit waitlist.
+
 ---
 
 ## Related

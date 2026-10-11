@@ -30,11 +30,27 @@ import {
   verifyIdJagAssertionEffect,
   type EmaConfigStore,
 } from "./id-jag.js";
+import { normalizeResourceIdEffect, resolveTokenAudienceEffect } from "./protected-resource.js";
+import {
+  createMemoryMcpGrantKeyStore,
+  grantAsKeyEnabled,
+  stampGrantVirtualKeyIdEffect,
+} from "./mcp-grant-key-store.js";
+import {
+  DEVICE_CODE_GRANT,
+  createDeviceAuthorizationEffect,
+  type DeviceAuthorizationResponse,
+  type DeviceCodeStore,
+  type DeviceFlowConfig,
+  DeviceFlowError,
+} from "./mcp-device-flow.js";
 
-export type McpGrantType = "authorization_code" | "client_credentials" | "refresh_token" | "id_jag";
+export type McpGrantType =
+  "authorization_code" | "client_credentials" | "refresh_token" | "id_jag" | "device_code";
 
 /** Wire-format grant types accepted at the token endpoint. */
-export type McpGrantTypeInput = McpGrantType | typeof ID_JAG_JWT_BEARER_GRANT;
+export type McpGrantTypeInput =
+  McpGrantType | typeof ID_JAG_JWT_BEARER_GRANT | typeof DEVICE_CODE_GRANT;
 
 export type MCPOAuthConfig = {
   issuer: string;
@@ -50,8 +66,9 @@ export type MCPOAuthConfig = {
   eventSink?: AuthEventSink;
   now?: () => number;
   /**
-   * Default ClawQL MCP resource audience for ID-JAG assertions when org config
-   * does not override `audience`.
+   * Canonical MCP protected-resource identifier / access-token `aud`
+   * (RFC 8707 + RFC 9728). Also the default ID-JAG assertion audience when org
+   * config does not override `audience`.
    */
   resourceAudience?: string;
   /** Org-level EMA config (IdP JWKS, group→scope mappings). Required for `id_jag`. */
@@ -65,6 +82,19 @@ export type MCPOAuthConfig = {
   accessTokenStore?: McpAccessTokenStore;
   /** Auth code TTL seconds (default 300). */
   authCodeTtlSeconds?: number;
+  /**
+   * MCP OAuth §2 grant-as-key store. When set (or when
+   * `CLAWQL_MCP_OAUTH_GRANT_AS_KEY` is on), access tokens stamp a
+   * per-(subject, client, resource) `virtualKeyId` that is never the `clientId`.
+   */
+  grantKeyStore?: McpGrantKeyStore;
+  /**
+   * MCP OAuth §4 RFC 8628 device-code store. When set, `device_code` is accepted
+   * and AS metadata may advertise `device_authorization_endpoint`.
+   */
+  deviceCodeStore?: DeviceCodeStore;
+  /** Verification URI + TTLs for §4 device authorization (required with deviceCodeStore). */
+  deviceFlow?: DeviceFlowConfig;
 };
 
 export type McpRegisteredClient = {
@@ -97,6 +127,10 @@ export type McpTokenRequest = {
   codeVerifier?: string;
   /** Must match the redirect_uri used at authorize time. */
   redirectUri?: string;
+  /** RFC 8707 resource indicator — must match {@link MCPOAuthConfig.resourceAudience} when set. */
+  resource?: string;
+  /** RFC 8628 device code from `/oauth/device_authorization`. */
+  deviceCode?: string;
 };
 
 export type McpAuthorizeRequest = {
@@ -106,6 +140,8 @@ export type McpAuthorizeRequest = {
   codeChallengeMethod?: "S256";
   scope?: string[];
   state?: string;
+  /** RFC 8707 resource indicator bound into the auth code + access-token `aud`. */
+  resource?: string;
   /** ATR claims already resolved from the human/session (API key / OIDC / MCP JWT). */
   claims: AtrClaims;
 };
@@ -140,6 +176,8 @@ export type McpRefreshRecord = {
    * does not collapse the human subject back to the client id).
    */
   claims?: AtrClaims;
+  /** RFC 8707 resource / access-token audience preserved across refresh. */
+  resource?: string;
 };
 
 export type McpRefreshStore = {
@@ -160,6 +198,62 @@ export type McpAccessTokenStore = {
   save: (accessTokenHash: string, record: McpAccessTokenRecord) => Effect.Effect<void>;
   get: (accessTokenHash: string) => Effect.Effect<McpAccessTokenRecord | null>;
   revoke: (accessTokenHash: string) => Effect.Effect<void>;
+};
+
+/**
+ * MCP OAuth §2 grant-as-key.
+ *
+ * One grant per (subject, client, resource). Access tokens stamp the grant's
+ * `virtualKeyId` (never the OAuth `clientId`) so budgets, entitlements, revoke
+ * and audit are per person (or per machine client for `client_credentials`).
+ */
+export type McpGrantKeyRecord = {
+  /** Stamped as ATR `virtualKeyId`; never the `clientId`. */
+  readonly virtualKeyId: string;
+  /** Subject the grant was consented for (ATR `sub`). */
+  readonly subject: string;
+  readonly clientId: string;
+  /** Normalized RFC 8707 resource the grant is bound to (§1 access-token `aud`). */
+  readonly resource?: string;
+  readonly orgId?: string;
+  readonly scope: readonly string[];
+  readonly grantType: Exclude<McpGrantType, "refresh_token">;
+  readonly createdAtMs: number;
+  readonly revokedAtMs?: number;
+};
+
+/** §2 store contract: one live grant per (subject, client, resource); revoking it ends its tokens. */
+export type McpGrantKeyStore = {
+  readonly getOrCreate: (
+    grant: Omit<McpGrantKeyRecord, "virtualKeyId" | "createdAtMs" | "revokedAtMs">
+  ) => Effect.Effect<McpGrantKeyRecord>;
+  readonly get: (virtualKeyId: string) => Effect.Effect<McpGrantKeyRecord | null>;
+  readonly revoke: (virtualKeyId: string) => Effect.Effect<void>;
+};
+
+/**
+ * MCP OAuth §3 Client ID Metadata Documents (CIMD).
+ * Trusted clients present a HTTPS `client_id` URL whose document is fetched and
+ * pinned; only clients on the operator trusted-client list may resolve (see mcp-cimd.ts).
+ */
+export type McpTrustedClientRecord = {
+  readonly clientIdUrl: string;
+  readonly redirectUris: readonly string[];
+  readonly trustedAtMs: number;
+  readonly documentSha256?: string;
+};
+
+/**
+ * MCP OAuth §4 device authorization (RFC 8628) pending record.
+ * AS metadata advertises `device_authorization_endpoint` only when a store is wired.
+ */
+export type McpDeviceAuthorizationPending = {
+  readonly deviceCode: string;
+  readonly userCode: string;
+  readonly clientId: string;
+  readonly expiresAtMs: number;
+  readonly intervalSec: number;
+  readonly approvedSubject?: string;
 };
 
 /** OAuth AS domain failure — maps to RFC 6749 error codes at the HTTP boundary. */
@@ -209,6 +303,7 @@ function toKey(secret: string | Uint8Array): Uint8Array {
 
 function normalizeGrantType(grantType: McpGrantTypeInput): McpGrantType {
   if (grantType === ID_JAG_JWT_BEARER_GRANT) return "id_jag";
+  if (grantType === DEVICE_CODE_GRANT) return "device_code";
   return grantType;
 }
 
@@ -223,6 +318,10 @@ export class MCPOAuthServer {
   private readonly emaConfigStore?: EmaConfigStore;
   private readonly authCodeStore?: McpAuthorizationCodeStore;
   private readonly accessTokenStore: McpAccessTokenStore;
+  private readonly grantKeyStore?: McpGrantKeyStore;
+  private readonly grantAsKey: boolean;
+  private readonly deviceCodeStore?: DeviceCodeStore;
+  private readonly deviceFlowConfig?: DeviceFlowConfig;
 
   constructor(
     private readonly config: MCPOAuthConfig,
@@ -234,6 +333,7 @@ export class MCPOAuthServer {
     this.authCodeTtlSeconds = config.authCodeTtlSeconds ?? 300;
     const defaults: McpGrantType[] = ["client_credentials", "refresh_token", "id_jag"];
     if (config.authCodeStore) defaults.push("authorization_code");
+    if (config.deviceCodeStore && config.deviceFlow) defaults.push("device_code");
     this.allowedGrantTypes = new Set(config.allowedGrantTypes ?? defaults);
     this.eventSink = config.eventSink ?? noopAuthEventSink;
     this.now = config.now ?? Date.now;
@@ -241,6 +341,15 @@ export class MCPOAuthServer {
     this.emaConfigStore = config.emaConfigStore;
     this.authCodeStore = config.authCodeStore;
     this.accessTokenStore = config.accessTokenStore ?? createMemoryMcpAccessTokenStore();
+    const explicitStore = config.grantKeyStore != null;
+    this.grantAsKey = grantAsKeyEnabled(process.env, explicitStore);
+    this.grantKeyStore = this.grantAsKey
+      ? (config.grantKeyStore ?? createMemoryMcpGrantKeyStore(this.now))
+      : undefined;
+    this.deviceCodeStore = config.deviceCodeStore;
+    this.deviceFlowConfig = config.deviceFlow
+      ? { ...config.deviceFlow, now: config.deviceFlow.now ?? this.now }
+      : undefined;
   }
 
   /** JWKS for RS256 verification (empty for HS256). */
@@ -248,13 +357,20 @@ export class MCPOAuthServer {
     return this.signing.jwks;
   }
 
-  /** Grant types this AS will accept (includes `authorization_code` when a code store is wired). */
+  /** Grant types this AS will accept (includes `authorization_code` / `device_code` when wired). */
   getSupportedGrantTypes(): McpGrantType[] {
     return [...this.allowedGrantTypes];
   }
 
+  /** True when RFC 8628 device authorization is configured on this AS. */
+  isDeviceFlowEnabled(): boolean {
+    return Boolean(
+      this.deviceCodeStore && this.deviceFlowConfig && this.allowedGrantTypes.has("device_code")
+    );
+  }
+
   issueToken(request: McpTokenRequest): Effect.Effect<McpTokenResponse, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const grantType = normalizeGrantType(request.grantType);
       if (!this.allowedGrantTypes.has(grantType)) {
         return yield* fail("unsupported_grant_type", String(request.grantType));
@@ -272,7 +388,61 @@ export class MCPOAuthServer {
       if (grantType === "authorization_code") {
         return yield* this.exchangeAuthorizationCode(request);
       }
+      if (grantType === "device_code") {
+        return yield* this.exchangeDeviceCode(request);
+      }
       return yield* fail("unsupported_grant_type");
+    });
+  }
+
+  /**
+   * RFC 8628 device authorization request — issues `device_code` + `user_code`.
+   */
+  createDeviceAuthorization(
+    clientId: string
+  ): Effect.Effect<DeviceAuthorizationResponse, McpOAuthError> {
+    return Effect.gen({ self: this }, function* () {
+      if (!this.deviceCodeStore || !this.deviceFlowConfig) {
+        return yield* fail("invalid_request", "device_authorization_not_configured");
+      }
+      if (!this.allowedGrantTypes.has("device_code")) {
+        return yield* fail("unsupported_grant_type", "device_code");
+      }
+      const id = clientId?.trim();
+      if (!id) return yield* fail("invalid_client");
+      const client = yield* this.clients.getClient(id);
+      if (!client) return yield* fail("invalid_client");
+      return yield* createDeviceAuthorizationEffect(
+        this.deviceCodeStore,
+        this.deviceFlowConfig,
+        client.clientId
+      );
+    });
+  }
+
+  /**
+   * Operator/user approval of a pending device `user_code` (after login).
+   * ClawQL is not a login IdP — caller supplies ATR claims from API key / OIDC / MCP JWT.
+   */
+  approveDeviceAuthorization(
+    userCode: string,
+    subject: string
+  ): Effect.Effect<void, McpOAuthError> {
+    return Effect.gen({ self: this }, function* () {
+      if (!this.deviceCodeStore) {
+        return yield* fail("invalid_request", "device_authorization_not_configured");
+      }
+      const code = userCode?.trim();
+      const sub = subject?.trim();
+      if (!code || !sub) return yield* fail("invalid_request", "missing_user_code_or_subject");
+      yield* this.deviceCodeStore
+        .approve(code, sub)
+        .pipe(
+          Effect.mapError(
+            (err: DeviceFlowError) =>
+              new McpOAuthError({ error: err.error, description: err.description })
+          )
+        );
     });
   }
 
@@ -283,7 +453,7 @@ export class MCPOAuthServer {
   createAuthorizationCode(
     request: McpAuthorizeRequest
   ): Effect.Effect<McpAuthorizeResult, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       if (!this.authCodeStore) {
         return yield* fail("invalid_request", "authorization_code_not_configured");
       }
@@ -309,6 +479,8 @@ export class MCPOAuthServer {
         return yield* fail("invalid_request", "redirect_uri_not_registered");
       }
 
+      const resource = yield* this.resolveAudience(request.resource);
+
       const scope =
         request.scope?.length && request.scope.length > 0
           ? intersectScopes(
@@ -330,6 +502,7 @@ export class MCPOAuthServer {
         codeChallengeMethod: "S256",
         scope,
         claims: { ...request.claims, scope },
+        ...(resource ? { resource } : {}),
         expiresAtMs: nowMs + this.authCodeTtlSeconds * 1000,
         createdAtMs: nowMs,
       });
@@ -350,7 +523,7 @@ export class MCPOAuthServer {
   private exchangeAuthorizationCode(
     request: McpTokenRequest
   ): Effect.Effect<McpTokenResponse, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       if (!this.authCodeStore) {
         return yield* fail("invalid_request", "authorization_code_not_configured");
       }
@@ -389,10 +562,17 @@ export class MCPOAuthServer {
         : stored.scope;
       if (scope.length === 0) return yield* fail("invalid_scope");
 
-      const claims: AtrClaims = { ...stored.claims, scope };
+      const resource = yield* this.resolveAudience(request.resource ?? stored.resource);
+      const claims = yield* this.buildAtrClaimsEffect(client, scope, {
+        subject: stored.claims.sub || request.clientId.trim(),
+        grantType: "authorization_code",
+        resource,
+        base: { ...stored.claims, scope },
+      });
       return yield* this.mintTokens(request.clientId.trim(), claims, scope, {
         grantType: "authorization_code",
         includeRefresh: true,
+        resource,
         audit: {
           subjectId: claims.sub,
           orgId: claims.orgId,
@@ -407,7 +587,7 @@ export class MCPOAuthServer {
    * Zero per-user consent — scope derives from admin-configured IdP group mappings.
    */
   exchangeIdJag(request: McpTokenRequest): Effect.Effect<McpTokenResponse, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       if (!request.assertion?.trim()) {
         return yield* fail("invalid_request", "missing assertion");
       }
@@ -466,12 +646,27 @@ export class MCPOAuthServer {
         return yield* fail("invalid_scope");
       }
 
-      const finalClaims: AtrClaims = { ...claims, scope };
       const clientId = request.clientId?.trim() || verified.sub;
+      // ID-JAG assertion `aud` may be multi-valued; access-token `aud` is a single resource id.
+      const fallbackResource = Array.isArray(audience) ? audience[0] : audience;
+      const resource = yield* this.resolveAudience(request.resource ?? fallbackResource);
+      let finalClaims: AtrClaims = { ...claims, scope };
+      if (this.grantKeyStore) {
+        const virtualKeyId = yield* stampGrantVirtualKeyIdEffect(this.grantKeyStore, {
+          subject: verified.sub,
+          clientId,
+          resource,
+          orgId: verified.orgId ?? claims.orgId,
+          scope,
+          grantType: "id_jag",
+        });
+        finalClaims = { ...finalClaims, virtualKeyId };
+      }
 
       return yield* this.mintTokens(clientId, finalClaims, scope, {
         grantType: "id_jag",
         includeRefresh: false,
+        resource,
         audit: {
           subjectId: verified.sub,
           orgId: verified.orgId,
@@ -500,20 +695,71 @@ export class MCPOAuthServer {
     });
   }
 
+  private exchangeDeviceCode(
+    request: McpTokenRequest
+  ): Effect.Effect<McpTokenResponse, McpOAuthError> {
+    return Effect.gen({ self: this }, function* () {
+      if (!this.deviceCodeStore) {
+        return yield* fail("invalid_request", "device_authorization_not_configured");
+      }
+      const deviceCode = request.deviceCode?.trim();
+      if (!deviceCode) return yield* fail("invalid_request", "missing_device_code");
+      if (!request.clientId?.trim()) return yield* fail("invalid_client");
+
+      const client = yield* this.clients.getClient(request.clientId.trim());
+      if (!client) return yield* fail("invalid_client");
+      yield* this.assertClientSecret(client, request.clientSecret);
+
+      const pending = yield* this.deviceCodeStore
+        .consumeApproved(deviceCode)
+        .pipe(
+          Effect.mapError(
+            (err: DeviceFlowError) =>
+              new McpOAuthError({ error: err.error, description: err.description })
+          )
+        );
+      if (pending.clientId !== client.clientId) {
+        return yield* fail("invalid_grant", "client_mismatch");
+      }
+      const subject = pending.approvedSubject?.trim();
+      if (!subject) return yield* fail("authorization_pending");
+
+      const scope = request.scope?.length ? request.scope : client.defaultScope;
+      const resource = yield* this.resolveAudience(request.resource);
+      const claims = yield* this.buildAtrClaimsEffect(client, scope, {
+        subject,
+        grantType: "device_code",
+        resource,
+      });
+      return yield* this.mintTokens(client.clientId, claims, scope, {
+        grantType: "device_code",
+        includeRefresh: true,
+        resource,
+        audit: { subjectId: subject, orgId: client.orgId, role: claims.role },
+      });
+    });
+  }
+
   private issueClientCredentials(
     request: McpTokenRequest
   ): Effect.Effect<McpTokenResponse, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       if (!request.clientId) return yield* fail("invalid_client");
       const client = yield* this.clients.getClient(request.clientId);
       if (!client) return yield* fail("invalid_client");
       yield* this.assertClientSecret(client, request.clientSecret);
 
       const scope = request.scope?.length ? request.scope : client.defaultScope;
-      const claims = this.buildAtrClaims(client, scope);
+      const resource = yield* this.resolveAudience(request.resource);
+      const claims = yield* this.buildAtrClaimsEffect(client, scope, {
+        subject: `client:${client.clientId}`,
+        grantType: "client_credentials",
+        resource,
+      });
       return yield* this.mintTokens(client.clientId, claims, scope, {
         grantType: "client_credentials",
         includeRefresh: true,
+        resource,
       });
     });
   }
@@ -521,7 +767,7 @@ export class MCPOAuthServer {
   private refreshAccessToken(
     request: McpTokenRequest
   ): Effect.Effect<McpTokenResponse, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       if (!request.clientId) return yield* fail("invalid_client");
       if (!request.refreshToken) return yield* fail("invalid_request");
       const hash = hashRefreshToken(request.refreshToken);
@@ -547,13 +793,34 @@ export class MCPOAuthServer {
         : stored.scope;
       if (scope.length === 0) return yield* fail("invalid_scope");
 
-      const claims: AtrClaims = stored.claims
-        ? { ...stored.claims, scope }
-        : this.buildAtrClaims(client, scope);
+      const resource = yield* this.resolveAudience(request.resource ?? stored.resource);
+      let claims: AtrClaims;
+      if (stored.claims) {
+        claims = { ...stored.claims, scope };
+        if (
+          this.grantKeyStore &&
+          (!claims.virtualKeyId || claims.virtualKeyId === client.clientId)
+        ) {
+          claims = yield* this.buildAtrClaimsEffect(client, scope, {
+            subject: claims.sub || `client:${client.clientId}`,
+            grantType: "client_credentials",
+            resource,
+            base: claims,
+          });
+        }
+        yield* this.assertLiveGrant(claims.virtualKeyId, "invalid_grant");
+      } else {
+        claims = yield* this.buildAtrClaimsEffect(client, scope, {
+          subject: `client:${client.clientId}`,
+          grantType: "client_credentials",
+          resource,
+        });
+      }
 
       const response = yield* this.mintTokens(client.clientId, claims, scope, {
         grantType: "refresh_token",
         includeRefresh: true,
+        resource,
         audit: {
           subjectId: claims.sub,
           orgId: claims.orgId,
@@ -583,15 +850,63 @@ export class MCPOAuthServer {
     return Effect.void;
   }
 
-  private buildAtrClaims(client: McpRegisteredClient, scope: string[]): AtrClaims {
-    return {
-      sub: client.clientId,
-      role: client.defaultRole ?? "operator",
-      scope,
-      orgId: client.orgId,
-      tenantId: client.orgId,
-      virtualKeyId: client.clientId,
-    };
+  /**
+   * RFC 8707: bind access-token `aud` to the canonical MCP resource.
+   * Rejects a mismatched `resource` parameter when a canonical audience is configured.
+   */
+  private resolveAudience(
+    requestedResource: string | undefined
+  ): Effect.Effect<string | undefined, McpOAuthError> {
+    return resolveTokenAudienceEffect(requestedResource, this.config.resourceAudience).pipe(
+      Effect.mapError(
+        () =>
+          new McpOAuthError({
+            error: "invalid_target",
+            description: "resource_mismatch",
+          })
+      )
+    );
+  }
+
+  /**
+   * Build ATR claims, stamping §2 grant `virtualKeyId` when grant-as-key is on.
+   * Legacy fallback (flag off): `virtualKeyId = clientId`.
+   */
+  private buildAtrClaimsEffect(
+    client: McpRegisteredClient,
+    scope: string[],
+    opts: {
+      readonly subject: string;
+      readonly grantType: Exclude<McpGrantType, "refresh_token">;
+      readonly resource?: string;
+      readonly base?: AtrClaims;
+    }
+  ): Effect.Effect<AtrClaims> {
+    return Effect.gen({ self: this }, function* () {
+      const base: AtrClaims = opts.base ?? {
+        sub: opts.subject.startsWith("client:") ? client.clientId : opts.subject,
+        role: client.defaultRole ?? "operator",
+        scope,
+        orgId: client.orgId,
+        tenantId: client.orgId,
+      };
+      if (!this.grantKeyStore) {
+        return {
+          ...base,
+          scope,
+          virtualKeyId: base.virtualKeyId ?? client.clientId,
+        };
+      }
+      const virtualKeyId = yield* stampGrantVirtualKeyIdEffect(this.grantKeyStore, {
+        subject: opts.subject,
+        clientId: client.clientId,
+        resource: opts.resource,
+        orgId: base.orgId ?? client.orgId,
+        scope,
+        grantType: opts.grantType,
+      });
+      return { ...base, scope, virtualKeyId };
+    });
   }
 
   private mintTokens(
@@ -601,6 +916,8 @@ export class MCPOAuthServer {
     options: {
       grantType: string;
       includeRefresh: boolean;
+      /** RFC 8707 / access-token `aud`. */
+      resource?: string;
       audit?: {
         subjectId?: string;
         orgId?: string;
@@ -611,12 +928,14 @@ export class MCPOAuthServer {
       };
     }
   ): Effect.Effect<McpTokenResponse, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const expiresAt = this.now() + this.tokenTtlSeconds * 1000;
       const jti = randomBytes(12).toString("hex");
+      const rawAudience = options.resource?.trim() || this.config.resourceAudience?.trim();
+      const audience = rawAudience ? yield* normalizeResourceIdEffect(rawAudience) : undefined;
       const accessToken = yield* Effect.tryPromise({
-        try: () =>
-          new SignJWT({
+        try: () => {
+          let jwt = new SignJWT({
             atr: claims,
             scope: scope.join(" "),
             jti,
@@ -628,8 +947,10 @@ export class MCPOAuthServer {
             .setSubject(claims.sub)
             .setIssuer(this.config.issuer)
             .setIssuedAt(Math.floor(this.now() / 1000))
-            .setExpirationTime(Math.floor(expiresAt / 1000))
-            .sign(this.signing.signKey),
+            .setExpirationTime(Math.floor(expiresAt / 1000));
+          if (audience) jwt = jwt.setAudience(audience);
+          return jwt.sign(this.signing.signKey);
+        },
         catch: (cause) =>
           new McpOAuthError({
             error: "server_error",
@@ -652,6 +973,7 @@ export class MCPOAuthServer {
           scope,
           expiresAtMs: this.now() + this.refreshTokenTtlSeconds * 1000,
           claims: { ...claims, scope },
+          ...(audience ? { resource: audience } : {}),
         });
       }
 
@@ -682,16 +1004,42 @@ export class MCPOAuthServer {
   }
 
   /**
+   * When grant-as-key is on, reject `mgr_*` virtual keys that are missing or revoked.
+   * Legacy tokens that still stamp `virtualKeyId = clientId` are left alone.
+   */
+  private assertLiveGrant(
+    virtualKeyId: string | undefined,
+    error: "invalid_token" | "invalid_grant" = "invalid_token"
+  ): Effect.Effect<void, McpOAuthError> {
+    return Effect.gen({ self: this }, function* () {
+      if (!this.grantKeyStore || !virtualKeyId?.startsWith("mgr_")) return;
+      const grant = yield* this.grantKeyStore.get(virtualKeyId);
+      if (!grant || grant.revokedAtMs != null) {
+        yield* emitAuthEventEffect(this.eventSink, {
+          type: "MCP_TOKEN_VALIDATION_FAILED",
+          reason: "grant_revoked",
+          timestamp: new Date(this.now()).toISOString(),
+        });
+        return yield* fail(error, "grant_revoked");
+      }
+    });
+  }
+
+  /**
    * Validate Bearer access token; returns ATR claims for Panguard / gateway.
-   * Rejects tokens present in the access-token store as revoked.
+   * Rejects tokens present in the access-token store as revoked, and §2 grants
+   * that were ended via {@link revokeGrant}.
    */
   validateToken(bearerToken: string): Effect.Effect<AtrClaims, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
+      const rawAud = this.config.resourceAudience?.trim();
+      const expectedAud = rawAud ? yield* normalizeResourceIdEffect(rawAud) : undefined;
       const atr = yield* Effect.tryPromise({
         try: async () => {
           const { payload } = await jwtVerify(bearerToken, this.signing.verifyKey, {
             issuer: this.config.issuer,
             algorithms: [this.signing.algorithm],
+            ...(expectedAud ? { audience: expectedAud } : {}),
           });
           const claims = payload.atr as AtrClaims | undefined;
           if (!claims || typeof claims !== "object" || !claims.sub) {
@@ -725,7 +1073,29 @@ export class MCPOAuthServer {
         return yield* fail("invalid_token", "token_revoked");
       }
 
+      yield* this.assertLiveGrant(atr.virtualKeyId, "invalid_token");
       return atr;
+    });
+  }
+
+  /**
+   * End a §2 grant-as-key. Subsequent {@link validateToken} / refresh for tokens
+   * stamped with this `virtualKeyId` fail with `grant_revoked`.
+   */
+  revokeGrant(virtualKeyId: string): Effect.Effect<void> {
+    return Effect.gen({ self: this }, function* () {
+      const id = virtualKeyId?.trim();
+      if (!id || !this.grantKeyStore) return;
+      const existing = yield* this.grantKeyStore.get(id);
+      yield* this.grantKeyStore.revoke(id);
+      yield* emitAuthEventEffect(this.eventSink, {
+        type: "MCP_GRANT_REVOKED",
+        virtualKeyId: id,
+        clientId: existing?.clientId,
+        subject: existing?.subject,
+        reason: "admin_revoke_grant",
+        timestamp: new Date(this.now()).toISOString(),
+      });
     });
   }
 
@@ -738,7 +1108,7 @@ export class MCPOAuthServer {
     clientId?: string;
     clientSecret?: string;
   }): Effect.Effect<void, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const token = input.token?.trim();
       if (!token) return yield* fail("invalid_request", "missing token");
 
@@ -816,7 +1186,7 @@ export function createMCPOAuthServer(
 
 export const CLAWQL_MCP_OAUTH_SERVICE_TAG = "clawql/McpOAuthService" as const;
 
-export class McpOAuthService extends Context.Tag(CLAWQL_MCP_OAUTH_SERVICE_TAG)<
+export class McpOAuthService extends Context.Service<
   McpOAuthService,
   {
     readonly server: MCPOAuthServer;
@@ -832,11 +1202,12 @@ export class McpOAuthService extends Context.Tag(CLAWQL_MCP_OAUTH_SERVICE_TAG)<
       clientId?: string;
       clientSecret?: string;
     }) => Effect.Effect<void, McpOAuthError>;
+    readonly revokeGrant: (virtualKeyId: string) => Effect.Effect<void>;
     readonly exchangeIdJag: (
       request: McpTokenRequest
     ) => Effect.Effect<McpTokenResponse, McpOAuthError>;
   }
->() {}
+>()(CLAWQL_MCP_OAUTH_SERVICE_TAG) {}
 
 export function mcpOAuthServiceFromServer(server: MCPOAuthServer) {
   return McpOAuthService.of({
@@ -845,6 +1216,7 @@ export function mcpOAuthServiceFromServer(server: MCPOAuthServer) {
     createAuthorizationCode: (request) => server.createAuthorizationCode(request),
     validateToken: (bearerToken) => server.validateToken(bearerToken),
     revokeToken: (input) => server.revokeToken(input),
+    revokeGrant: (virtualKeyId) => server.revokeGrant(virtualKeyId),
     exchangeIdJag: (request) => server.exchangeIdJag(request),
   });
 }
@@ -912,3 +1284,4 @@ export function createMemoryMcpAccessTokenStore(): McpAccessTokenStore & {
 }
 
 export { ID_JAG_JWT_BEARER_GRANT } from "./id-jag.js";
+export { DEVICE_CODE_GRANT } from "./mcp-device-flow.js";

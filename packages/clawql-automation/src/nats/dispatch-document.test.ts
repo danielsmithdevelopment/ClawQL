@@ -26,14 +26,22 @@ vi.mock("../workflow/env.js", () => ({
   workflowToolEnabled: () => true,
 }));
 
-vi.mock("../workflow/suspend-resume.js", () => ({
-  parseHitlWorkflowRef: (hitl: unknown) => {
-    const h = hitl as { workflow?: { namespace: string; name: string } };
-    if (h?.workflow?.namespace && h?.workflow?.name) return h.workflow;
-    return undefined;
-  },
-  resumeWorkflowFromHitlRef: resumeMock,
-}));
+vi.mock("../workflow/suspend-resume.js", async () => {
+  const { Effect } = await import("effect");
+  return {
+    parseHitlWorkflowRef: (hitl: unknown) => {
+      const h = hitl as { workflow?: { namespace: string; name: string } };
+      if (h?.workflow?.namespace && h?.workflow?.name) return h.workflow;
+      return undefined;
+    },
+    resumeWorkflowFromHitlRef: resumeMock,
+    resumeWorkflowFromHitlRefEffect: (hitl: unknown) =>
+      Effect.tryPromise({
+        try: () => resumeMock(hitl),
+        catch: (cause) => cause,
+      }),
+  };
+});
 
 vi.mock("./publish-hooks.js", () => ({
   publishDocumentPipelineHopEvent: vi.fn(async () => true),

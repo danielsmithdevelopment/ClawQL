@@ -2,9 +2,10 @@
 # Ordered IDP hop smoke against docker-compose.idp-smoke.yml.
 # Invoked by smoke-idp-pipeline-b23.sh when IDP_SMOKE_TIER=compose|live.
 #
-# Pipeline order (DEFAULT_IDP_PIPELINE):
-#   1 nextcloud_download  2 docling  3 tika  4 gotenberg  5 stirling
-#   6 paperless  7 onyx  8 nextcloud_upload  9 coneshare
+# Pipeline order — Docling is the sole DEFAULT_IDP_PIPELINE converter as of 8.0 (stage 2, primary):
+#   1 nextcloud_download  2 docling (primary converter)  6 paperless  7 onyx  8 nextcloud_upload  9 coneshare
+# Opt-in-only converter stages (8.0 converter cut — not in DEFAULT_IDP_PIPELINE, skipped unless
+# IDP_SMOKE_INCLUDE_CONVERTERS=1): 3 tika  4 gotenberg  5 stirling
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -49,8 +50,14 @@ if [[ "${IDP_SMOKE_INCLUDE_DOCLING:-0}" == "1" ]]; then
   PROFILES+=(--profile docling)
 fi
 
+# Opt-in-only converters (8.0 converter cut) — off by default; Docling is the primary/default converter.
+CONVERTERS_INCLUDED="${IDP_SMOKE_INCLUDE_CONVERTERS:-0}"
+
 echo "== Compose IDP stack up (staggered: core → paperless → nextcloud) =="
 # Stagger boots so Paperless migrate + Nextcloud install do not fight for RAM on GHA.
+# Note: paperless-ngx depends_on tika/gotenberg in docker-compose.idp-smoke.yml (OCR ingest path), so those
+# containers still start as compose dependencies even when IDP_SMOKE_INCLUDE_CONVERTERS=0 — only the
+# stage_tika/stage_gotenberg/stage_stirling *checks* below are opt-in (8.0 converter cut: Docling is primary).
 docker compose -f "${COMPOSE_FILE}" "${PROFILES[@]}" up -d \
   tika gotenberg stirling redis postgres
 docker compose -f "${COMPOSE_FILE}" "${PROFILES[@]}" up -d paperless-ngx
@@ -95,9 +102,13 @@ dump_compose_diag() {
 }
 
 # --- Health waits ---
+# Tika/Gotenberg/Stirling are opt-in-only (8.0 converter cut) — their health does not gate ok_core.
+# Paperless's OCR path still depends on tika/gotenberg being reachable, so we wait for them best-effort
+# (paperless health itself is the gating check below), but a slow/unhealthy converter alone no longer fails
+# the whole compose smoke.
 ok_core=1
-wait_http "http://127.0.0.1:9998/version" 45 || ok_core=0
-wait_http "http://127.0.0.1:3000/health" 45 || ok_core=0
+wait_http "http://127.0.0.1:9998/version" 45 || true
+wait_http "http://127.0.0.1:3000/health" 45 || true
 # Stirling may need longer first boot
 stirling_ok=0
 for _ in $(seq 1 90); do
@@ -108,7 +119,9 @@ for _ in $(seq 1 90); do
   fi
   sleep 2
 done
-[[ "${stirling_ok}" == "1" ]] || ok_core=0
+if [[ "${CONVERTERS_INCLUDED}" == "1" ]]; then
+  [[ "${stirling_ok}" == "1" ]] || ok_core=0
+fi
 
 # Paperless: docker healthcheck hits `/` successfully; `/api/` status codes vary by version.
 # Prefer container health, fall back to host HTTP on `/` or `/api/`.
@@ -151,10 +164,10 @@ fi
 if [[ "${ok_core}" != "1" ]]; then
   dump_compose_diag
   record FAIL compose_stack_health \
-    "tika/gotenberg/stirling=${stirling_ok} paperless=${paperless_ok}(health=${pl_health:-?} api=${last_api:-?} root=${last_root:-?}) nextcloud=${nextcloud_ok}"
+    "stirling(opt-in checked)=${stirling_ok} paperless=${paperless_ok}(health=${pl_health:-?} api=${last_api:-?} root=${last_root:-?}) nextcloud=${nextcloud_ok}"
   exit 1
 fi
-record OK compose_stack_health "tika gotenberg stirling paperless nextcloud"
+record OK compose_stack_health "paperless nextcloud (converters opt-in only; see IDP_SMOKE_INCLUDE_CONVERTERS)"
 
 # --- Stage 1: nextcloud_download (upload fixture then download) ---
 NC_USER="admin"
@@ -196,60 +209,75 @@ else
   record SKIP stage_docling "set IDP_SMOKE_INCLUDE_DOCLING=1 (large ~4GiB image) or DOCLING_BASE_URL"
 fi
 
-# --- Stage 3: tika ---
-code="$(curl -sS -o "${WORK}/tika-out.txt" -w '%{http_code}' \
-  -X PUT "http://127.0.0.1:9998/tika" \
-  -H "Accept: text/plain" \
-  -H "Content-Type: text/plain" \
-  --data-binary @"${FIXTURE_TXT}" || true)"
-if [[ "${code}" == "200" && -s "${WORK}/tika-out.txt" ]]; then
-  record OK stage_tika
-else
-  record FAIL stage_tika "HTTP ${code}"
-fi
-
-# --- Stage 4: gotenberg (HTML → PDF) ---
+# --- Stage 3: tika (opt-in-only converter — 8.0 converter cut; not in DEFAULT_IDP_PIPELINE) ---
 cat >"${WORK}/smoke.html" <<HTML
 <html><body><h1>ClawQL IDP B2.3</h1><p>SSN 123-45-6789 correlation ${CORR}</p></body></html>
 HTML
-code="$(curl -sS -o "${WORK}/smoke.pdf" -w '%{http_code}' \
-  -X POST "http://127.0.0.1:3000/forms/chromium/convert/html" \
-  -F "files=@${WORK}/smoke.html;filename=index.html" || true)"
-if [[ "${code}" == "200" && -s "${WORK}/smoke.pdf" ]]; then
-  # Prefer LibreOffice path used by DEFAULT_IDP_PIPELINE when chromium works as smoke stand-in
-  record OK stage_gotenberg "chromium html→pdf ($(wc -c <"${WORK}/smoke.pdf") bytes)"
+if [[ "${CONVERTERS_INCLUDED}" == "1" ]]; then
+  code="$(curl -sS -o "${WORK}/tika-out.txt" -w '%{http_code}' \
+    -X PUT "http://127.0.0.1:9998/tika" \
+    -H "Accept: text/plain" \
+    -H "Content-Type: text/plain" \
+    --data-binary @"${FIXTURE_TXT}" || true)"
+  if [[ "${code}" == "200" && -s "${WORK}/tika-out.txt" ]]; then
+    record OK stage_tika
+  else
+    record FAIL stage_tika "HTTP ${code}"
+  fi
 else
-  # Fallback: libreoffice convert endpoint with the html renamed .odt won't work;
-  # try libreoffice with a tiny docx isn't available — fail clearly.
-  record FAIL stage_gotenberg "HTTP ${code}"
+  record SKIP stage_tika "opt-in only (8.0 converter cut) — set IDP_SMOKE_INCLUDE_CONVERTERS=1"
 fi
 
-# --- Stage 5: stirling auto-redact ---
-code="$(curl -sS -o "${WORK}/redacted.pdf" -w '%{http_code}' \
-  -X POST "http://127.0.0.1:18080/api/v1/security/auto-redact" \
-  -F "fileInput=@${WORK}/smoke.pdf;type=application/pdf" \
-  -F "listOfText=SSN|123-45-6789" \
-  -F "useRegex=true" \
-  -F "wholeWordSearch=false" \
-  -F "redactColor=#000000" \
-  -F "customPadding=0.1" \
-  -F "convertPDFToImage=false" || true)"
-if [[ "${code}" == "200" && -s "${WORK}/redacted.pdf" ]]; then
-  record OK stage_stirling "auto-redact ($(wc -c <"${WORK}/redacted.pdf") bytes)"
-else
-  # Some Stirling builds need X-API-KEY even when empty login; retry once without list regex
-  code2="$(curl -sS -o "${WORK}/redacted.pdf" -w '%{http_code}' \
-    -X POST "http://127.0.0.1:18080/api/v1/security/auto-redact" \
-    -H "X-API-KEY: " \
-    -F "fileInput=@${WORK}/smoke.pdf;type=application/pdf" \
-    -F "listOfText=123-45-6789" \
-    -F "useRegex=false" \
-    -F "wholeWordSearch=true" || true)"
-  if [[ "${code2}" == "200" && -s "${WORK}/redacted.pdf" ]]; then
-    record OK stage_stirling "auto-redact retry ($(wc -c <"${WORK}/redacted.pdf") bytes)"
+# --- Stage 4: gotenberg (opt-in-only converter — 8.0 converter cut; not in DEFAULT_IDP_PIPELINE) ---
+if [[ "${CONVERTERS_INCLUDED}" == "1" ]]; then
+  code="$(curl -sS -o "${WORK}/smoke.pdf" -w '%{http_code}' \
+    -X POST "http://127.0.0.1:3000/forms/chromium/convert/html" \
+    -F "files=@${WORK}/smoke.html;filename=index.html" || true)"
+  if [[ "${code}" == "200" && -s "${WORK}/smoke.pdf" ]]; then
+    # Prefer LibreOffice path used by the opt-in converter pipeline override when chromium works as smoke stand-in
+    record OK stage_gotenberg "chromium html→pdf ($(wc -c <"${WORK}/smoke.pdf") bytes)"
   else
-    record FAIL stage_stirling "HTTP ${code}/${code2}"
+    # Fallback: libreoffice convert endpoint with the html renamed .odt won't work;
+    # try libreoffice with a tiny docx isn't available — fail clearly.
+    record FAIL stage_gotenberg "HTTP ${code}"
   fi
+else
+  record SKIP stage_gotenberg "opt-in only (8.0 converter cut) — set IDP_SMOKE_INCLUDE_CONVERTERS=1"
+  # Minimal valid single-page PDF so downstream paperless/nextcloud-upload stages still have an artifact
+  # to work with when Gotenberg (opt-in-only) is skipped.
+  printf '%%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 100]>>endobj\nxref\n0 4\n0000000000 65535 f \ntrailer<</Size 4/Root 1 0 R>>\n%%%%EOF\n' >"${WORK}/smoke.pdf"
+fi
+
+# --- Stage 5: stirling auto-redact (opt-in-only converter — 8.0 converter cut; not in DEFAULT_IDP_PIPELINE) ---
+if [[ "${CONVERTERS_INCLUDED}" == "1" ]]; then
+  code="$(curl -sS -o "${WORK}/redacted.pdf" -w '%{http_code}' \
+    -X POST "http://127.0.0.1:18080/api/v1/security/auto-redact" \
+    -F "fileInput=@${WORK}/smoke.pdf;type=application/pdf" \
+    -F "listOfText=SSN|123-45-6789" \
+    -F "useRegex=true" \
+    -F "wholeWordSearch=false" \
+    -F "redactColor=#000000" \
+    -F "customPadding=0.1" \
+    -F "convertPDFToImage=false" || true)"
+  if [[ "${code}" == "200" && -s "${WORK}/redacted.pdf" ]]; then
+    record OK stage_stirling "auto-redact ($(wc -c <"${WORK}/redacted.pdf") bytes)"
+  else
+    # Some Stirling builds need X-API-KEY even when empty login; retry once without list regex
+    code2="$(curl -sS -o "${WORK}/redacted.pdf" -w '%{http_code}' \
+      -X POST "http://127.0.0.1:18080/api/v1/security/auto-redact" \
+      -H "X-API-KEY: " \
+      -F "fileInput=@${WORK}/smoke.pdf;type=application/pdf" \
+      -F "listOfText=123-45-6789" \
+      -F "useRegex=false" \
+      -F "wholeWordSearch=true" || true)"
+    if [[ "${code2}" == "200" && -s "${WORK}/redacted.pdf" ]]; then
+      record OK stage_stirling "auto-redact retry ($(wc -c <"${WORK}/redacted.pdf") bytes)"
+    else
+      record FAIL stage_stirling "HTTP ${code}/${code2}"
+    fi
+  fi
+else
+  record SKIP stage_stirling "opt-in only (8.0 converter cut) — set IDP_SMOKE_INCLUDE_CONVERTERS=1"
 fi
 
 # --- Stage 6: paperless archive ---
@@ -607,15 +635,15 @@ out = {
     "source": "idp-pipeline-b23-ordered",
     "compose_included": [
         "nextcloud",
-        "tika",
-        "gotenberg",
-        "stirling",
         "paperless",
         "onyx",
         "coneshare",
     ],
     "external_or_optional": {
-        "docling": "IDP_SMOKE_INCLUDE_DOCLING=1 or DOCLING_BASE_URL",
+        "docling": "primary default converter — IDP_SMOKE_INCLUDE_DOCLING=1 or DOCLING_BASE_URL",
+        "tika": "opt-in-only (8.0 converter cut) — IDP_SMOKE_INCLUDE_CONVERTERS=1",
+        "gotenberg": "opt-in-only (8.0 converter cut) — IDP_SMOKE_INCLUDE_CONVERTERS=1",
+        "stirling": "opt-in-only (8.0 converter cut) — IDP_SMOKE_INCLUDE_CONVERTERS=1",
     },
 }
 Path(out_dir, "pipeline-smoke.json").write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")

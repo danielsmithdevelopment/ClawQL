@@ -6,6 +6,7 @@
 import { join } from "node:path";
 import {
   createIssuedApiKeyStoreLayer,
+  IdentityStoreService,
   IssuedApiKeyStoreService,
   type ApiKeyStoreError,
 } from "clawql-auth";
@@ -14,10 +15,8 @@ import { buildOrgMemberAddedEntry, buildOrgProvisionedEntry } from "../audit/eve
 import { resolveIssuedApiKeysPath } from "../config/paths.js";
 import { isCreditsEnabled } from "../credits/config.js";
 import {
-  createOrg,
-  getOrg,
-  inviteOrgMember,
-  patchOrgBilling,
+  OrgCreditsError,
+  OrgCreditsService,
   poolTenantIdForOrg,
   type OrgRecord,
 } from "../credits/org.js";
@@ -38,7 +37,7 @@ export class ProvisionOrgError extends Data.TaggedError("ProvisionOrgError")<{
   readonly cause?: unknown;
 }> {}
 
-export class ProvisionOrgService extends Context.Tag("clawql/ProvisionOrgService")<
+export class ProvisionOrgService extends Context.Service<
   ProvisionOrgService,
   {
     readonly provisionOrg: (
@@ -48,7 +47,7 @@ export class ProvisionOrgService extends Context.Tag("clawql/ProvisionOrgService
       ProvisionOrgError | PaymentError | ApiKeyStoreError | LedgerError
     >;
   }
->() {}
+>()("clawql/ProvisionOrgService") {}
 
 function parseProvisionInput(input: ProvisionOrgInput): Effect.Effect<
   {
@@ -87,12 +86,23 @@ function parseProvisionInput(input: ProvisionOrgInput): Effect.Effect<
   });
 }
 
+function mapOrgCreditsError(cause: OrgCreditsError, fallback: string): ProvisionOrgError {
+  return new ProvisionOrgError({
+    reason: cause.reason || fallback,
+    cause,
+  });
+}
+
 export function provisionOrgLiveLayer(
   env: NodeJS.ProcessEnv = process.env
 ): Layer.Layer<
   ProvisionOrgService,
   never,
-  PaymentAuditService | IssuedApiKeyStoreService | CreditsLedgerService
+  | PaymentAuditService
+  | IssuedApiKeyStoreService
+  | CreditsLedgerService
+  | OrgCreditsService
+  | IdentityStoreService
 > {
   return Layer.effect(
     ProvisionOrgService,
@@ -100,6 +110,8 @@ export function provisionOrgLiveLayer(
       const audit = yield* PaymentAuditService;
       const apiKeys = yield* IssuedApiKeyStoreService;
       const ledger = yield* CreditsLedgerService;
+      const orgs = yield* OrgCreditsService;
+      const identities = yield* IdentityStoreService;
 
       const provisionOrg = (input: ProvisionOrgInput) =>
         Effect.gen(function* () {
@@ -113,62 +125,71 @@ export function provisionOrgLiveLayer(
           }
 
           const parsed = yield* parseProvisionInput(input);
-          const existing = yield* Effect.tryPromise({
-            try: () => getOrg(parsed.orgId, runEnv),
-            catch: (cause) => new ProvisionOrgError({ reason: "Failed to load org store", cause }),
-          });
+
+          if (input.stripeCheckoutSessionId?.trim()) {
+            const prior = yield* orgs
+              .findByCheckoutSessionId(input.stripeCheckoutSessionId.trim())
+              .pipe(
+                Effect.mapError((cause) =>
+                  mapOrgCreditsError(cause, "Failed to look up checkout session")
+                )
+              );
+            if (prior) {
+              return {
+                orgId: prior.orgId,
+                poolTenantId: prior.poolTenantId || poolTenantIdForOrg(prior.orgId),
+                ownerMemberTenantId: parsed.ownerMemberTenantId,
+                planId: input.planId,
+                billingMode: input.billingMode,
+                createdVia: input.createdVia,
+                idempotentReplay: true,
+              } satisfies ProvisionOrgResult;
+            }
+          }
+
+          const existing = yield* orgs
+            .get(parsed.orgId)
+            .pipe(
+              Effect.mapError((cause) => mapOrgCreditsError(cause, "Failed to load org store"))
+            );
 
           let org: OrgRecord;
           if (existing) {
-            org = yield* Effect.tryPromise({
-              try: () =>
-                patchOrgBilling(
-                  {
-                    orgId: parsed.orgId,
-                    planId: input.planId,
-                    billingMode: input.billingMode,
-                    createdVia: input.createdVia,
-                    stripeCustomerId: input.stripeCustomerId,
-                    stripeSubscriptionId: input.stripeSubscriptionId,
-                    seatLimit: input.seatLimit,
-                  },
-                  runEnv
-                ),
-              catch: (cause) =>
-                new ProvisionOrgError({
-                  reason: cause instanceof Error ? cause.message : "patchOrgBilling failed",
-                  cause,
-                }),
-            });
+            org = yield* orgs
+              .patchBilling({
+                orgId: parsed.orgId,
+                planId: input.planId,
+                billingMode: input.billingMode,
+                createdVia: input.createdVia,
+                stripeCustomerId: input.stripeCustomerId,
+                stripeSubscriptionId: input.stripeSubscriptionId,
+                stripeCheckoutSessionId: input.stripeCheckoutSessionId,
+                seatLimit: input.seatLimit,
+              })
+              .pipe(
+                Effect.mapError((cause) => mapOrgCreditsError(cause, "patchOrgBilling failed"))
+              );
           } else {
             const domains = defaultAllowedEmailDomains(
               parsed.ownerEmail,
               input.allowedEmailDomains
             );
-            org = yield* Effect.tryPromise({
-              try: () =>
-                createOrg(
-                  {
-                    orgId: parsed.orgId,
-                    displayName: parsed.displayName,
-                    billingAdminTenantId: parsed.ownerMemberTenantId,
-                    billingAdminEmail: parsed.ownerEmail,
-                    planId: input.planId,
-                    seatLimit: input.seatLimit,
-                    allowedEmailDomains: domains,
-                    createdVia: input.createdVia,
-                    billingMode: input.billingMode,
-                    stripeCustomerId: input.stripeCustomerId,
-                    stripeSubscriptionId: input.stripeSubscriptionId,
-                  },
-                  runEnv
-                ),
-              catch: (cause) =>
-                new ProvisionOrgError({
-                  reason: cause instanceof Error ? cause.message : "createOrg failed",
-                  cause,
-                }),
-            });
+            org = yield* orgs
+              .create({
+                orgId: parsed.orgId,
+                displayName: parsed.displayName,
+                billingAdminTenantId: parsed.ownerMemberTenantId,
+                billingAdminEmail: parsed.ownerEmail,
+                planId: input.planId,
+                seatLimit: input.seatLimit,
+                allowedEmailDomains: domains,
+                createdVia: input.createdVia,
+                billingMode: input.billingMode,
+                stripeCustomerId: input.stripeCustomerId,
+                stripeSubscriptionId: input.stripeSubscriptionId,
+                stripeCheckoutSessionId: input.stripeCheckoutSessionId,
+              })
+              .pipe(Effect.mapError((cause) => mapOrgCreditsError(cause, "createOrg failed")));
           }
 
           yield* ledger.getAccount(org.poolTenantId);
@@ -177,25 +198,19 @@ export function provisionOrgLiveLayer(
           for (const rawEmail of input.additionalMemberEmails ?? []) {
             const email = rawEmail.trim().toLowerCase();
             if (!email || email === parsed.ownerEmail) continue;
-            org = yield* Effect.tryPromise({
-              try: () =>
-                inviteOrgMember(
-                  {
-                    orgId: org.orgId,
-                    actorTenantId: parsed.ownerMemberTenantId,
-                    email,
-                    allocationRoleId: "employee",
-                    orgRole: "member",
-                  },
-                  runEnv
-                ),
-              catch: (cause) =>
-                new ProvisionOrgError({
-                  reason:
-                    cause instanceof Error ? cause.message : `inviteOrgMember failed for ${email}`,
-                  cause,
-                }),
-            });
+            org = yield* orgs
+              .inviteMember({
+                orgId: org.orgId,
+                actorTenantId: parsed.ownerMemberTenantId,
+                email,
+                allocationRoleId: "employee",
+                orgRole: "member",
+              })
+              .pipe(
+                Effect.mapError((cause) =>
+                  mapOrgCreditsError(cause, `inviteOrgMember failed for ${email}`)
+                )
+              );
             const member = org.members.find((m) => m.email === email);
             if (member) {
               yield* ledger.getAccount(member.memberTenantId);
@@ -212,7 +227,17 @@ export function provisionOrgLiveLayer(
 
           let apiKey: string | undefined;
           let apiKeyId: string | undefined;
-          if (!input.skipApiKey) {
+          const activeKeys = yield* apiKeys.listActive({ orgId: org.orgId });
+          const ownerAlreadyHasKey = activeKeys.some(
+            (k) => k.subjectId === parsed.ownerMemberTenantId
+          );
+          const skipApiKey =
+            input.skipApiKey === true ||
+            (Boolean(existing) && ownerAlreadyHasKey) ||
+            (Boolean(existing) &&
+              Boolean(input.stripeCheckoutSessionId) &&
+              existing?.stripeCheckoutSessionId === input.stripeCheckoutSessionId);
+          if (!skipApiKey) {
             const issued = yield* apiKeys.issue({
               subjectId: parsed.ownerMemberTenantId,
               orgId: org.orgId,
@@ -245,6 +270,20 @@ export function provisionOrgLiveLayer(
             );
           }
 
+          if (input.clawqlUserId?.trim()) {
+            yield* identities
+              .recordOrgId({ userId: input.clawqlUserId.trim(), orgId: org.orgId })
+              .pipe(Effect.catch(() => Effect.void));
+            if (input.stripeCustomerId?.trim()) {
+              yield* identities
+                .recordStripeCustomerId({
+                  userId: input.clawqlUserId.trim(),
+                  stripeCustomerId: input.stripeCustomerId.trim(),
+                })
+                .pipe(Effect.catch(() => Effect.void));
+            }
+          }
+
           return {
             orgId: org.orgId,
             poolTenantId: org.poolTenantId || poolTenantIdForOrg(org.orgId),
@@ -254,6 +293,7 @@ export function provisionOrgLiveLayer(
             planId: input.planId,
             billingMode: input.billingMode,
             createdVia: input.createdVia,
+            idempotentReplay: Boolean(existing) && skipApiKey,
           } satisfies ProvisionOrgResult;
         });
 

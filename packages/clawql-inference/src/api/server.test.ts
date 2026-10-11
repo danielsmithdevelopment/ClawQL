@@ -86,6 +86,17 @@ describe("createInferenceHttpApp", () => {
       expect(health.status).toBe(200);
       expect(health.body).toEqual({ status: "ok", service: "clawql-inference" });
 
+      const discovery = await httpJson(`http://127.0.0.1:${address.port}/v1`);
+      expect(discovery.status).toBe(200);
+      const disc = discovery.body as { endpoints: string[]; ladder: string[] };
+      expect(disc.endpoints).toContain("/events");
+      expect(disc.endpoints).toContain("/v1/decisions");
+      expect(disc.ladder).toEqual(["/v1", "/mcp", "/memory", "/decision", "/events"]);
+
+      const eventsMeta = await httpJson(`http://127.0.0.1:${address.port}/events`);
+      expect(eventsMeta.status).toBe(200);
+      expect((eventsMeta.body as { object: string }).object).toBe("clawql.events");
+
       const models = await httpJson(`http://127.0.0.1:${address.port}/v1/models`);
       expect(models.status).toBe(200);
       const modelList = models.body as { data: Array<{ id: string }> };

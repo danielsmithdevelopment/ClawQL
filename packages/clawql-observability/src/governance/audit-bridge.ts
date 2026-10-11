@@ -28,7 +28,7 @@ const appendObservabilityGovernanceToProcessWorm = (
     yield* appendProcessWormEffect(input);
   }).pipe(
     Effect.asVoid,
-    Effect.catchAll(() => Effect.void)
+    Effect.catch(() => Effect.void)
   );
 
 /**

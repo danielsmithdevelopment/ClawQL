@@ -91,7 +91,7 @@ export type CashoutResult = {
 };
 
 /** Effect service for agent credits, staged deposits, and cash-out. */
-export class AgentCompensationService extends Context.Tag("clawql/AgentCompensationService")<
+export class AgentCompensationService extends Context.Service<
   AgentCompensationService,
   {
     readonly getAccount: (agentId: string) => Effect.Effect<AgentAccount, CompensationError>;
@@ -158,7 +158,7 @@ export class AgentCompensationService extends Context.Tag("clawql/AgentCompensat
       recruitmentId?: string;
     }) => Effect.Effect<DepositResult, CompensationError>;
   }
->() {}
+>()("clawql/AgentCompensationService") {}
 
 export function agentCompensationLiveLayer(
   env: NodeJS.ProcessEnv = process.env
@@ -319,7 +319,7 @@ export function agentCompensationLiveLayer(
                 correlationId: record.correlationId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
           return toStaged(record, input.amountUsd);
         });
 
@@ -387,7 +387,7 @@ export function agentCompensationLiveLayer(
                 correlationId: record.correlationId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
           return {
             actionId: record.actionId,
             confirmationCode: record.confirmationCode,
@@ -477,7 +477,7 @@ export function agentCompensationLiveLayer(
                 correlationId: record.correlationId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
           return {
             agentId: record.agentId,
             kind: asset === "funds" ? ("deposit_funds" as const) : ("deposit_credits" as const),
@@ -532,7 +532,7 @@ export function agentCompensationLiveLayer(
                     cause,
                   })
               ),
-              Effect.catchAll((err) =>
+              Effect.catch((err) =>
                 Effect.gen(function* () {
                   // Debit already applied — restore ledger so failed cash-out is not a silent loss.
                   yield* accounts
@@ -542,7 +542,7 @@ export function agentCompensationLiveLayer(
                       fundsUsd: source === "funds" ? amountUsd : 0,
                       tenantId: record.tenantId,
                     })
-                    .pipe(Effect.catchAll(() => Effect.void));
+                    .pipe(Effect.catch(() => Effect.void));
                   return yield* Effect.fail(err);
                 })
               )
@@ -566,7 +566,7 @@ export function agentCompensationLiveLayer(
                 correlationId: record.correlationId ?? record.actionId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
 
           return {
             agentId: record.agentId,
@@ -627,7 +627,7 @@ export function agentCompensationLiveLayer(
                       correlationId: record.correlationId,
                     })
                   )
-                  .pipe(Effect.catchAll(() => Effect.void));
+                  .pipe(Effect.catch(() => Effect.void));
               } else {
                 yield* audit
                   .appendEntry(
@@ -643,14 +643,14 @@ export function agentCompensationLiveLayer(
                       correlationId: record.correlationId,
                     })
                   )
-                  .pipe(Effect.catchAll(() => Effect.void));
+                  .pipe(Effect.catch(() => Effect.void));
               }
               return yield* Effect.fail(err);
             });
 
           const executed: DepositResult | CashoutResult = yield* (
             runExecute as Effect.Effect<DepositResult | CashoutResult, CompensationError>
-          ).pipe(Effect.catchAll((err) => emitFailure(err)));
+          ).pipe(Effect.catch((err) => emitFailure(err)));
 
           const updated: PendingActionRecord = {
             ...record,
@@ -697,7 +697,7 @@ export function agentCompensationLiveLayer(
                 correlationId: record.correlationId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
           return { actionId: record.actionId, status: "cancelled" as const };
         });
 
@@ -756,7 +756,7 @@ export function agentCompensationLiveLayer(
                 correlationId: input.correlationId ?? input.recruitmentId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
           return {
             agentId: input.agentId.trim(),
             kind:

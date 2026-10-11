@@ -4,6 +4,14 @@ This page summarizes how ClawQL **builds**, **proves**, and **enforces** contain
 
 **Looking for OAuth / MCP authentication?** See **[Authentication](/auth)** — inbound vs outbound, token refresh, EMA / ID-JAG, and how that differs from supply-chain controls on this page.
 
+## Formal methods (mandates & approval policy)
+
+The mandate protocol is model-checked with TLA+, including crash and expiry boundaries, and the approval policy rules are proved in Lean and differential-tested against production. Managed multi-node gateways consume mandates through a **Postgres** conditional update (same semantics as the model), not per-node SQLite. Evidence: [ADR 0014](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0014-formal-methods-tla-lean.md), [`formal/tla/mandate/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/formal/tla/mandate), [`formal/lean/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/formal/lean).
+
+Event delivery is **at-least-once with a stable event ID** — receivers that drop duplicates **process** each event once (not “delivered once” over HTTP). See [`formal/tla/events/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/formal/tla/events).
+
+Managed WORM double-execute hunt: owner **Daniel Smith**, due **2026-10-09** — result recorded in ADR 0014 before launch history claims.
+
 ## Agentic AI security curriculum (32 modules)
 
 **On this site:** [Security status — verifiable scan history](/security/status) — append-only Trivy/OSV CI records, SBOM artifact links, and Cosign verify commands (not self-reported badges). Disclosure: [SECURITY.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/SECURITY.md).

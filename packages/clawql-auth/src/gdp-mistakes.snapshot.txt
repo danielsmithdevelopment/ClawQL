@@ -1,0 +1,23 @@
+no proof at all
+  TS2554 Expected 4-5 arguments, but got 1.
+
+a raw id is not a named value; name it first
+  TS2345 Argument of type 'UserId' is not assignable to parameter of type 'Named<N, UserId>'.
+
+the proof is about user A, not user B
+  TS2345 Argument of type 'RecentSignIn<N>' is not assignable to parameter of type 'RecentSignIn<M>'.
+
+wrong proof kind
+  TS2345 Argument of type 'BogusProof<N>' is not assignable to parameter of type 'RecentSignIn<N>'.
+
+no proof at all
+  TS2554 Expected 5 arguments, but got 4.
+
+a raw id is not a named value; name it first
+  TS2345 Argument of type 'OrgId' is not assignable to parameter of type 'Named<M, OrgId>'.
+
+the proof is about org A, not org B
+  TS2345 Argument of type 'IssuerAuthorized<N, M>' is not assignable to parameter of type 'IssuerAuthorized<N, O>'.
+
+wrong proof kind
+  TS2345 Argument of type 'BogusProof<N>' is not assignable to parameter of type 'IssuerAuthorized<N, M>'.

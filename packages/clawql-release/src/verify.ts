@@ -7,9 +7,10 @@ import { readManifestFile } from "./manifest.js";
 import { verifyOntologySchemaPin } from "./ontology-schema.js";
 import { fetchArweaveBundle } from "./permanence/arweave.js";
 import type { VerifyResult, ReleaseManifestV01 } from "./types.js";
+import { Effect } from "effect";
 import { mkdir } from "node:fs/promises";
 
-export async function verifyReleaseManifest(
+async function verifyReleaseManifestImpl(
   manifestPath: string,
   bundleDir?: string,
   options?: { workspaceRoot?: string }
@@ -114,7 +115,7 @@ export async function verifyReleaseManifest(
   return { ok: errors.length === 0, errors, warnings, manifest };
 }
 
-export async function verifyReleaseBundle(
+async function verifyReleaseBundleImpl(
   bundleDir: string,
   workspaceRoot?: string
 ): Promise<VerifyResult> {
@@ -124,7 +125,7 @@ export async function verifyReleaseBundle(
 }
 
 /** Verify a local path, manifest file, or Arweave transaction id. */
-export async function verifyReleaseTarget(
+async function verifyReleaseTargetImpl(
   target: string,
   options: { rootDir?: string; outDir?: string } = {}
 ): Promise<VerifyResult> {
@@ -178,3 +179,63 @@ async function verifyArtifactSignature(
 }
 
 export type { ReleaseManifestV01 };
+
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Verify a release manifest against its bundle (Effect-primary). */
+export function verifyReleaseManifestEffect(
+  manifestPath: string,
+  bundleDir?: string,
+  options?: { workspaceRoot?: string }
+): Effect.Effect<VerifyResult, Error> {
+  return Effect.tryPromise({
+    try: () => verifyReleaseManifestImpl(manifestPath, bundleDir, options),
+    catch: fsError,
+  });
+}
+
+/** Promise façade for callers that still await manifest verify. */
+export async function verifyReleaseManifest(
+  manifestPath: string,
+  bundleDir?: string,
+  options?: { workspaceRoot?: string }
+): Promise<VerifyResult> {
+  return Effect.runPromise(verifyReleaseManifestEffect(manifestPath, bundleDir, options));
+}
+
+/** Verify a release bundle directory (Effect-primary). */
+export function verifyReleaseBundleEffect(
+  bundleDir: string,
+  workspaceRoot?: string
+): Effect.Effect<VerifyResult, Error> {
+  return Effect.tryPromise({
+    try: () => verifyReleaseBundleImpl(bundleDir, workspaceRoot),
+    catch: fsError,
+  });
+}
+
+/** Promise façade for callers that still await bundle verify. */
+export async function verifyReleaseBundle(
+  bundleDir: string,
+  workspaceRoot?: string
+): Promise<VerifyResult> {
+  return Effect.runPromise(verifyReleaseBundleEffect(bundleDir, workspaceRoot));
+}
+
+/** Verify a local path, manifest file, or Arweave tx id (Effect-primary). */
+export function verifyReleaseTargetEffect(
+  target: string,
+  options: { rootDir?: string; outDir?: string } = {}
+): Effect.Effect<VerifyResult, Error> {
+  return Effect.tryPromise({ try: () => verifyReleaseTargetImpl(target, options), catch: fsError });
+}
+
+/** Promise façade for callers that still await target verify. */
+export async function verifyReleaseTarget(
+  target: string,
+  options: { rootDir?: string; outDir?: string } = {}
+): Promise<VerifyResult> {
+  return Effect.runPromise(verifyReleaseTargetEffect(target, options));
+}

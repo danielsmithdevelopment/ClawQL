@@ -12,6 +12,7 @@ import { stripVaultFrontmatter } from "../vault/markdown.js";
 
 /** Re-export for tests and callers that imported from this module. */
 export { extractWikilinkTargets } from "../vault/markdown.js";
+import { Effect } from "effect";
 
 export type OntologySchemaName = string;
 
@@ -86,9 +87,9 @@ export type MemoryRecallResult = {
   sourcesUsed?: MemoryRecallSource[];
   /**
    * Lexical vault ranker used when `vault` was queried.
-   * `idf` = default (#801); `bm25` = Okapi BM25 when `CLAWQL_MEMORY_VAULT_RANKER=bm25`.
+   * `idf` = only mode (#801) — `bm25` was eval-only and removed in 8.0.0 (wash vs IDF).
    */
-  vaultRanker?: "idf" | "bm25";
+  vaultRanker?: "idf";
   /** Per-source skip reasons (disabled, missing index, missing inject, …). */
   sourceNotes?: Partial<Record<MemoryRecallSource, string>>;
   truncated?: boolean;
@@ -211,8 +212,22 @@ export {
 } from "./harvey-lab-enrich.js";
 
 /** @deprecated Prefer {@link runMemoryRecall} — routes through Effect services. */
-export async function executeMemoryRecall(input: MemoryRecallInput): Promise<MemoryRecallResult> {
+async function executeMemoryRecallImpl(input: MemoryRecallInput): Promise<MemoryRecallResult> {
   return runMemoryRecall(input);
+}
+
+export function executeMemoryRecallEffect(
+  input: MemoryRecallInput
+): Effect.Effect<MemoryRecallResult, Error> {
+  return Effect.tryPromise({
+    try: () => executeMemoryRecallImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link executeMemoryRecallEffect} for Effect callers. */
+export async function executeMemoryRecall(input: MemoryRecallInput): Promise<MemoryRecallResult> {
+  return Effect.runPromise(executeMemoryRecallEffect(input));
 }
 
 /** Recall body (vault path already resolved) — delegates to Effect core program. */

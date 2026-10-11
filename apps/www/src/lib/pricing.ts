@@ -1,3 +1,5 @@
+import { isSelfServeCheckoutConfigured } from './self-serve-checkout'
+
 export type BillingPeriod = 'Monthly' | 'Yearly'
 
 /** Gateway + memory tiers (no IDP bundle). */
@@ -17,14 +19,26 @@ export type PricingPlanName = (typeof pricingPlanNames)[number]
 export const unlimitedExecutionsTagline =
   'Unlimited MCP executions on every hosted tier — no caps, no overage, no meter.'
 
-/** Hosted entry point — waitlist / early access (FormSubmit), not an instant self-serve trial. */
-export const hostedFreeTrial = {
+/** Hosted entry point — waitlist by default; Stripe Checkout copy when self-serve env is set. */
+const hostedFreeTrialWaitlist = {
   durationDays: 14,
   headline: 'Request early access',
   subheadline:
     'Join the managed hosting waitlist for Developer-tier evaluation — persistent vault memory, unlimited executions, global edge endpoint. Self-host free today while slots open.',
   noCreditCard: true,
 } as const
+
+const hostedFreeTrialSelfServe = {
+  durationDays: 14,
+  headline: 'Start Pro with Stripe Checkout',
+  subheadline:
+    'Subscribe to managed Developer (Pro) hosting — persistent vault memory, unlimited executions, global edge endpoint. Org provisions automatically after payment.',
+  noCreditCard: false,
+} as const
+
+export const hostedFreeTrial = isSelfServeCheckoutConfigured()
+  ? hostedFreeTrialSelfServe
+  : hostedFreeTrialWaitlist
 
 /** Gateway-tier hosting benefits (customer-facing; no provider names). */
 export const gatewayEdgeHostingFeature = 'Global edge-hosted MCP endpoint'

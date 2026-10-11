@@ -35,7 +35,7 @@ function readBody(req: IncomingMessage): Promise<unknown> {
 }
 
 export const startAuditHttpServer = (
-  trail: Context.Tag.Service<typeof WORMAuditTrailService>,
+  trail: Context.Service.Shape<typeof WORMAuditTrailService>,
   options: { port: number; apiKey: string }
 ): Effect.Effect<AuditHttpServerHandle, AuditError> =>
   Effect.tryPromise({

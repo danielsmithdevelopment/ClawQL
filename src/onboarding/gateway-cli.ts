@@ -42,6 +42,9 @@ export type ManagedGatewayState = {
     gateway: string;
     mcp: string;
     inference: string;
+    memory: string;
+    decision: string;
+    events: string;
     healthz: string;
   };
   pids?: {
@@ -222,6 +225,9 @@ function buildUrls(port: number) {
     gateway,
     mcp: `${gateway}/mcp`,
     inference: `${gateway}/v1`,
+    memory: `${gateway}/memory`,
+    decision: `${gateway}/decision`,
+    events: `${gateway}/events`,
     healthz: `${gateway}/healthz`,
   };
 }
@@ -489,6 +495,9 @@ function printCreateResult(state: ManagedGatewayState, secret: string, json: boo
   console.log(`  Team:          ${state.team}`);
   console.log(`  MCP URL:       ${state.urls.mcp}`);
   console.log(`  Inference URL: ${state.urls.inference}`);
+  console.log(`  Memory URL:    ${state.urls.memory}`);
+  console.log(`  Decision URL:  ${state.urls.decision}`);
+  console.log(`  Events URL:    ${state.urls.events}`);
   console.log(`  Health:        ${state.urls.healthz}`);
   console.log("");
   console.log("Virtual key (shown once):");
@@ -594,6 +603,9 @@ export async function runGatewayStatus(options: GatewayCliOptions = {}): Promise
   console.log(`healthy: ${healthy}`);
   console.log(`mcp: ${state.urls.mcp}`);
   console.log(`inference: ${state.urls.inference}`);
+  console.log(`memory: ${state.urls.memory}`);
+  console.log(`decision: ${state.urls.decision}`);
+  console.log(`events: ${state.urls.events}`);
   console.log(`healthz: ${state.urls.healthz}`);
   console.log(`virtualKeyId: ${state.virtualKeyId}`);
   console.log(`home: ${state.home}`);

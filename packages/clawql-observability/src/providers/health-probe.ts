@@ -38,7 +38,7 @@ export const probeEndpointHealthEffect = (input: {
           cause,
         }),
     }).pipe(
-      Effect.catchAll(() => Effect.succeed(undefined as Response | undefined))
+      Effect.catch(() => Effect.succeed(undefined as Response | undefined))
     );
 
     if (!response) {

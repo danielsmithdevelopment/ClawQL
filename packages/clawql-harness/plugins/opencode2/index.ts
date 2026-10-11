@@ -66,7 +66,7 @@ const loadOpenCodeSdk = (): Effect.Effect<LoadedSdk | null, never> =>
       }
     },
     catch: (err) => err,
-  }).pipe(Effect.catchAll(() => Effect.succeed(null)));
+  }).pipe(Effect.catch(() => Effect.succeed(null)));
 
 /**
  * `createOpencode` spawns bare `opencode` via cross-spawn — needs CLI on PATH.
@@ -113,7 +113,7 @@ function allocateEphemeralPort(): Effect.Effect<number, never> {
         });
       }),
     catch: (err) => err,
-  }).pipe(Effect.catchAll(() => Effect.succeed(0)));
+  }).pipe(Effect.catch(() => Effect.succeed(0)));
 }
 
 const ensureEmbedded = (state: OpenCode2State): Effect.Effect<OpencodeHandle | null, never> =>
@@ -144,7 +144,7 @@ const ensureEmbedded = (state: OpenCode2State): Effect.Effect<OpencodeHandle | n
       catch: (err) => err,
     }).pipe(
       Effect.map((handle) => ({ handle, error: null as string | null })),
-      Effect.catchAll((err) =>
+      Effect.catch((err) =>
         Effect.succeed({
           handle: null as OpencodeHandle | null,
           error: `OpenCode2 createOpencode failed: ${err instanceof Error ? err.message : String(err)}`,

@@ -41,6 +41,7 @@ function toIndexEntry(
     digest,
     pluginId,
     applicability: skill.applicability ?? "query-matched",
+    audience: skill.audience === "operator" ? "operator" : "agent",
     source,
     ...(source === "provider" && options?.scopeTokens ? { scopeTokens: options.scopeTokens } : {}),
   };

@@ -53,7 +53,15 @@ clawql sources add --kind cli --command mytool --args "--json" --name "My CLI"
 
 clawql sources list
 clawql sources remove other-mcp
+
+# Agent-safe propose (preview by default; --commit parks for human approve)
+clawql sources propose https://example.com/openapi.json --name "Example API"
+clawql sources propose https://example.com/openapi.json --commit
+clawql sources approve psp_…
+clawql sources decline psp_…
 ```
+
+MCP tool **`sources_propose`** parks a proposal for a **person** to approve (`clawql sources approve` / console). **`sources_approve` is not an MCP tool** — the proposing agent cannot approve its own source. Propose never sets `trusted: true`. Single-party human add remains `clawql sources add`.
 
 **Restart `clawql-mcp`** (or reconnect your MCP client) after adding or removing sources.
 

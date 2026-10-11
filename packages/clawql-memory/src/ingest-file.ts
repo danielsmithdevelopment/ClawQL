@@ -5,6 +5,7 @@
 import { readFile, realpath, stat } from "node:fs/promises";
 import { isAbsolute, resolve, sep } from "node:path";
 import { cwd } from "node:process";
+import { Effect } from "effect";
 
 const DEFAULT_MAX_BYTES = 10_000_000;
 
@@ -30,7 +31,7 @@ export function getMemoryIngestFileMaxBytes(): number {
  * Comma- or newline-separated absolute directory prefixes. If unset, the only
  * allowed root is the process current working directory (resolved).
  */
-export async function getMemoryIngestFileRootsReal(): Promise<string[]> {
+async function getMemoryIngestFileRootsRealImpl(): Promise<string[]> {
   const raw = process.env.CLAWQL_MEMORY_INGEST_FILE_ROOTS?.trim();
   const parts = raw
     ? raw
@@ -56,11 +57,23 @@ export async function getMemoryIngestFileRootsReal(): Promise<string[]> {
   }
 }
 
+export function getMemoryIngestFileRootsRealEffect(): Effect.Effect<string[], Error> {
+  return Effect.tryPromise({
+    try: () => getMemoryIngestFileRootsRealImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link getMemoryIngestFileRootsRealEffect} for Effect callers. */
+export async function getMemoryIngestFileRootsReal(): Promise<string[]> {
+  return Effect.runPromise(getMemoryIngestFileRootsRealEffect());
+}
+
 /**
  * Resolves @param userPath (absolute or relative to `process.cwd()`), checks it is
  * a regular file under an allowed root, and returns UTF-8 text.
  */
-export async function readToolOutputsFileForIngest(
+async function readToolOutputsFileForIngestImpl(
   userPath: string
 ): Promise<
   | { ok: true; text: string; displayPath: string; absolutePath: string }
@@ -144,4 +157,27 @@ export async function readToolOutputsFileForIngest(
 
   const displayPath = t;
   return { ok: true, text, displayPath, absolutePath: realFile };
+}
+
+export function readToolOutputsFileForIngestEffect(
+  userPath: string
+): Effect.Effect<
+  | { ok: true; text: string; displayPath: string; absolutePath: string }
+  | { ok: false; error: string },
+  Error
+> {
+  return Effect.tryPromise({
+    try: () => readToolOutputsFileForIngestImpl(userPath),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link readToolOutputsFileForIngestEffect} for Effect callers. */
+export async function readToolOutputsFileForIngest(
+  userPath: string
+): Promise<
+  | { ok: true; text: string; displayPath: string; absolutePath: string }
+  | { ok: false; error: string }
+> {
+  return Effect.runPromise(readToolOutputsFileForIngestEffect(userPath));
 }

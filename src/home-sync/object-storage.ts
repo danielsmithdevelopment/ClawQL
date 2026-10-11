@@ -4,8 +4,9 @@ import {
   S3Client,
   type S3ClientConfig,
 } from "@aws-sdk/client-s3";
+import { Effect } from "effect";
 import {
-  loadResolvedHomeSyncConfig,
+  loadResolvedHomeSyncConfigEffect,
   resolveSyncCredentials,
   resolveSyncEndpoint,
 } from "./config.js";
@@ -18,6 +19,10 @@ export type ObjectStorageClient = {
   getBytes(key: string): Promise<Buffer | null>;
   putBytes(key: string, body: Buffer, contentType?: string): Promise<void>;
 };
+
+function asError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
 
 async function streamToBuffer(body: unknown): Promise<Buffer> {
   if (!body) return Buffer.alloc(0);
@@ -103,21 +108,44 @@ export function createObjectStorageClient(config: ResolvedHomeSyncConfig): Objec
   };
 }
 
+export function createDefaultObjectStorageClientEffect(): Effect.Effect<
+  { client: ObjectStorageClient; config: ResolvedHomeSyncConfig },
+  Error
+> {
+  return Effect.gen(function* () {
+    const config = yield* loadResolvedHomeSyncConfigEffect();
+    return { client: createObjectStorageClient(config), config };
+  });
+}
+
+/** Promise façade — prefer {@link createDefaultObjectStorageClientEffect}. */
 export async function createDefaultObjectStorageClient(): Promise<{
   client: ObjectStorageClient;
   config: ResolvedHomeSyncConfig;
 }> {
-  const config = await loadResolvedHomeSyncConfig();
-  return { client: createObjectStorageClient(config), config };
+  return Effect.runPromise(createDefaultObjectStorageClientEffect());
 }
 
+export function fetchRemoteManifestEffect(
+  client: ObjectStorageClient,
+  config: ResolvedHomeSyncConfig
+): Effect.Effect<SyncManifest | null, Error> {
+  return Effect.tryPromise({
+    try: async () => {
+      const raw = await client.getJson<SyncManifest>(config.manifestKey);
+      if (!raw || raw.version !== 1 || typeof raw.files !== "object") return null;
+      return raw;
+    },
+    catch: asError,
+  });
+}
+
+/** Promise façade — prefer {@link fetchRemoteManifestEffect}. */
 export async function fetchRemoteManifest(
   client: ObjectStorageClient,
   config: ResolvedHomeSyncConfig
 ): Promise<SyncManifest | null> {
-  const raw = await client.getJson<SyncManifest>(config.manifestKey);
-  if (!raw || raw.version !== 1 || typeof raw.files !== "object") return null;
-  return raw;
+  return Effect.runPromise(fetchRemoteManifestEffect(client, config));
 }
 
 export function contentTypeForRelPath(relPath: string): string {

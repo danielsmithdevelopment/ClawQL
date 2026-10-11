@@ -132,12 +132,12 @@ describe("credits P2P transfer", () => {
             toTenantId: "solo",
             amountCents: 50,
           })
-          .pipe(Effect.either);
+          .pipe(Effect.result);
       })
     );
-    expect(same._tag).toBe("Left");
-    if (same._tag === "Left") {
-      expect(same.left.reason).toMatch(/same tenant/i);
+    expect(same._tag).toBe("Failure");
+    if (same._tag === "Failure") {
+      expect(same.failure.reason).toMatch(/same tenant/i);
     }
 
     const over = await runPaymentsEffect(
@@ -149,12 +149,12 @@ describe("credits P2P transfer", () => {
             toTenantId: "other",
             amountCents: 9999,
           })
-          .pipe(Effect.either);
+          .pipe(Effect.result);
       })
     );
-    expect(over._tag).toBe("Left");
-    if (over._tag === "Left") {
-      expect(over.left.reason).toMatch(/Insufficient credits/i);
+    expect(over._tag).toBe("Failure");
+    if (over._tag === "Failure") {
+      expect(over.failure.reason).toMatch(/Insufficient credits/i);
     }
   });
 
@@ -230,10 +230,10 @@ describe("credits P2P transfer", () => {
             actionId: staged.actionId,
             code: staged.confirmationCode,
           })
-          .pipe(Effect.either);
+          .pipe(Effect.result);
       })
     );
-    expect(denied._tag).toBe("Left");
+    expect(denied._tag).toBe("Failure");
 
     const totp = Effect.runSync(generateTotp(enrolled.enrollment.secretBase32));
     const ok = await runPaymentsEffect(

@@ -2,6 +2,9 @@
  * Vault walk operations: OKF v0.2 migrate, lint, and simple query.
  */
 
+import { Effect } from "effect";
+import { MemoryError } from "../effect/memory-errors.js";
+import { memoryFromPromise } from "../effect/memory-effect-utils.js";
 import { readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { getObsidianVaultPath } from "../vault/config.js";
@@ -74,48 +77,57 @@ export type MigrateResult = {
 };
 
 /** Non-destructive OKF v0.2 frontmatter migration across the vault. */
+export function migrateVaultToOkfV02Effect(
+  opts: VaultOpsOptions = {}
+): Effect.Effect<MigrateResult, MemoryError> {
+  return memoryFromPromise(async () => {
+    const version = (opts.okfVersion ?? "0.2").trim();
+    if (version !== "0.2" && version !== OKF_FORMAT_VERSION) {
+      throw new Error(`Unsupported --okf-version ${JSON.stringify(version)} (only 0.2)`);
+    }
+    const vault = resolveVault(opts);
+    const root = scanRoot(opts);
+    const maxFiles = opts.maxFiles ?? 50_000;
+    const notes = await loadVaultNotes(vault, root, maxFiles);
+    const files: string[] = [];
+    let migrated = 0;
+    let unchanged = 0;
+
+    for (const note of notes) {
+      const titleFallback = basename(note.rel).replace(/\.(md|cqk)$/i, "");
+      const next = migrateOkfFrontmatterToV02(note.text, titleFallback);
+      if (next === note.text) {
+        unchanged++;
+        continue;
+      }
+      migrated++;
+      files.push(note.rel);
+      if (!opts.dryRun) {
+        await writeVaultTextFileAtomic(vault, note.rel, next);
+        await emitMemoryWormEvent({
+          kind: "MEMORY_MIGRATED",
+          at: new Date().toISOString(),
+          path: note.rel,
+          detail: { okf_version: OKF_FORMAT_VERSION },
+        });
+      }
+    }
+
+    return {
+      ok: true,
+      vault,
+      scanned: notes.length,
+      migrated,
+      unchanged,
+      dryRun: Boolean(opts.dryRun),
+      files,
+    };
+  });
+}
+
+/** Promise façade. */
 export async function migrateVaultToOkfV02(opts: VaultOpsOptions = {}): Promise<MigrateResult> {
-  const version = (opts.okfVersion ?? "0.2").trim();
-  if (version !== "0.2" && version !== OKF_FORMAT_VERSION) {
-    throw new Error(`Unsupported --okf-version ${JSON.stringify(version)} (only 0.2)`);
-  }
-  const vault = resolveVault(opts);
-  const root = scanRoot(opts);
-  const maxFiles = opts.maxFiles ?? 50_000;
-  const notes = await loadVaultNotes(vault, root, maxFiles);
-  const files: string[] = [];
-  let migrated = 0;
-  let unchanged = 0;
-
-  for (const note of notes) {
-    const titleFallback = basename(note.rel).replace(/\.(md|cqk)$/i, "");
-    const next = migrateOkfFrontmatterToV02(note.text, titleFallback);
-    if (next === note.text) {
-      unchanged++;
-      continue;
-    }
-    migrated++;
-    files.push(note.rel);
-    if (!opts.dryRun) {
-      await writeVaultTextFileAtomic(vault, note.rel, next);
-      await emitMemoryWormEvent({
-        kind: "MEMORY_MIGRATED",
-        at: new Date().toISOString(),
-        path: note.rel,
-        detail: { okf_version: OKF_FORMAT_VERSION },
-      });
-    }
-  }
-
-  return {
-    ok: true,
-    vault,
-    scanned: notes.length,
-    migrated,
-    unchanged,
-    dryRun: Boolean(opts.dryRun),
-    files,
-  };
+  return Effect.runPromise(migrateVaultToOkfV02Effect(opts));
 }
 
 export type LintResult = {
@@ -128,54 +140,63 @@ export type LintResult = {
 };
 
 /** Lint all vault notes for OKF v0.2 trust-signal issues. */
-export async function lintVaultOkf(opts: VaultOpsOptions = {}): Promise<LintResult> {
-  const vault = resolveVault(opts);
-  const root = scanRoot(opts);
-  const maxFiles = opts.maxFiles ?? 50_000;
-  const notes = await loadVaultNotes(vault, root, maxFiles);
-  const issues: OkfLintIssue[] = [];
-  const stalePaths: string[] = [];
+export function lintVaultOkfEffect(
+  opts: VaultOpsOptions = {}
+): Effect.Effect<LintResult, MemoryError> {
+  return memoryFromPromise(async () => {
+    const vault = resolveVault(opts);
+    const root = scanRoot(opts);
+    const maxFiles = opts.maxFiles ?? 50_000;
+    const notes = await loadVaultNotes(vault, root, maxFiles);
+    const issues: OkfLintIssue[] = [];
+    const stalePaths: string[] = [];
 
-  for (const note of notes) {
-    const requireWorm = opts.requireWormRef === true || note.rel.toLowerCase().endsWith(".cqk");
-    const fileIssues = lintOkfMarkdown(note.text, {
-      path: note.rel,
-      checkStale: opts.checkStale !== false,
-      requireWormRef: requireWorm,
-      knownAgentIds: opts.knownAgentIds,
-    });
-    for (const issue of fileIssues) {
-      issues.push(issue);
-      if (issue.code === "okf.stale_after_passed") stalePaths.push(note.rel);
+    for (const note of notes) {
+      const requireWorm = opts.requireWormRef === true || note.rel.toLowerCase().endsWith(".cqk");
+      const fileIssues = lintOkfMarkdown(note.text, {
+        path: note.rel,
+        checkStale: opts.checkStale !== false,
+        requireWormRef: requireWorm,
+        knownAgentIds: opts.knownAgentIds,
+      });
+      for (const issue of fileIssues) {
+        issues.push(issue);
+        if (issue.code === "okf.stale_after_passed") stalePaths.push(note.rel);
+      }
     }
-  }
 
-  const errors = issues.filter((i) => i.severity === "error");
-  let openPrBodies: LintResult["openPrBodies"];
-  if (opts.openPrs && stalePaths.length > 0) {
-    openPrBodies = [...new Set(stalePaths)].map((path) => ({
-      path,
-      title: `chore(vault): review stale OKF entry ${path}`,
-      body: [
-        `## Stale OKF entry`,
-        ``,
-        `\`${path}\` has \`stale_after\` in the past while \`status\` is still \`current\`.`,
-        ``,
-        `Please review: set \`status: stale|superseded|retracted\`, update content, or extend \`stale_after\`.`,
-        ``,
-        `Generated by \`clawql memory lint --check-stale --open-prs\`.`,
-      ].join("\n"),
-    }));
-  }
+    const errors = issues.filter((i) => i.severity === "error");
+    let openPrBodies: LintResult["openPrBodies"];
+    if (opts.openPrs && stalePaths.length > 0) {
+      openPrBodies = [...new Set(stalePaths)].map((path) => ({
+        path,
+        title: `chore(vault): review stale OKF entry ${path}`,
+        body: [
+          `## Stale OKF entry`,
+          ``,
+          `\`${path}\` has \`stale_after\` in the past while \`status\` is still \`current\`.`,
+          ``,
+          `Please review: set \`status: stale|superseded|retracted\`, update content, or extend \`stale_after\`.`,
+          ``,
+          `Generated by \`clawql memory lint --check-stale --open-prs\`.`,
+        ].join("\n"),
+      }));
+    }
 
-  return {
-    ok: errors.length === 0,
-    vault,
-    scanned: notes.length,
-    issues,
-    stalePaths: [...new Set(stalePaths)],
-    openPrBodies,
-  };
+    return {
+      ok: errors.length === 0,
+      vault,
+      scanned: notes.length,
+      issues,
+      stalePaths: [...new Set(stalePaths)],
+      openPrBodies,
+    };
+  });
+}
+
+/** Promise façade. */
+export async function lintVaultOkf(opts: VaultOpsOptions = {}): Promise<LintResult> {
+  return Effect.runPromise(lintVaultOkfEffect(opts));
 }
 
 type QueryRow = {
@@ -228,69 +249,86 @@ export type QueryResult = {
 };
 
 /** Query vault notes by simple OKF frontmatter filters. */
-export async function queryVaultOkf(opts: VaultOpsOptions = {}): Promise<QueryResult> {
-  const vault = resolveVault(opts);
-  const root = scanRoot(opts);
-  const maxFiles = opts.maxFiles ?? 50_000;
-  const notes = await loadVaultNotes(vault, root, maxFiles);
-  const rows: QueryRow[] = [];
+export function queryVaultOkfEffect(
+  opts: VaultOpsOptions = {}
+): Effect.Effect<QueryResult, MemoryError> {
+  return memoryFromPromise(async () => {
+    const vault = resolveVault(opts);
+    const root = scanRoot(opts);
+    const maxFiles = opts.maxFiles ?? 50_000;
+    const notes = await loadVaultNotes(vault, root, maxFiles);
+    const rows: QueryRow[] = [];
 
-  for (const note of notes) {
-    const fm = parseVaultFrontmatter(note.text);
-    const verified =
-      fm.verified && typeof fm.verified === "object" && !Array.isArray(fm.verified)
-        ? (fm.verified as Record<string, unknown>)
-        : undefined;
-    const row: QueryRow = {
-      path: note.rel,
-      type: typeof fm.type === "string" ? fm.type : undefined,
-      status: typeof fm.status === "string" ? (fm.status as OkfStatus) : undefined,
-      verifiedBy: typeof verified?.by === "string" ? verified.by : undefined,
-      title: typeof fm.title === "string" ? fm.title : undefined,
-      correlationId: typeof fm.correlation_id === "string" ? fm.correlation_id : undefined,
-    };
-    if (matchSimpleFilter(row, opts.filter ?? "")) {
-      rows.push(row);
+    for (const note of notes) {
+      const fm = parseVaultFrontmatter(note.text);
+      const verified =
+        fm.verified && typeof fm.verified === "object" && !Array.isArray(fm.verified)
+          ? (fm.verified as Record<string, unknown>)
+          : undefined;
+      const row: QueryRow = {
+        path: note.rel,
+        type: typeof fm.type === "string" ? fm.type : undefined,
+        status: typeof fm.status === "string" ? (fm.status as OkfStatus) : undefined,
+        verifiedBy: typeof verified?.by === "string" ? verified.by : undefined,
+        title: typeof fm.title === "string" ? fm.title : undefined,
+        correlationId: typeof fm.correlation_id === "string" ? fm.correlation_id : undefined,
+      };
+      if (matchSimpleFilter(row, opts.filter ?? "")) {
+        rows.push(row);
+      }
     }
-  }
 
-  return { ok: true, vault, count: rows.length, rows };
+    return { ok: true, vault, count: rows.length, rows };
+  });
+}
+
+/** Promise façade. */
+export async function queryVaultOkf(opts: VaultOpsOptions = {}): Promise<QueryResult> {
+  return Effect.runPromise(queryVaultOkfEffect(opts));
 }
 
 /** Build a map of correlation_id → OKF trust fields for export filtering. */
-export async function loadOkfTrustByCorrelationId(opts: VaultOpsOptions = {}): Promise<
-  Map<
-    string,
-    {
-      path: string;
-      status?: string;
-      verifiedBy?: string;
-      staleAfter?: string;
-    }
-  >
-> {
-  const vault = resolveVault(opts);
-  const root = scanRoot(opts);
-  const maxFiles = opts.maxFiles ?? 50_000;
-  const notes = await loadVaultNotes(vault, root, maxFiles);
-  const map = new Map<
-    string,
-    { path: string; status?: string; verifiedBy?: string; staleAfter?: string }
-  >();
-  for (const note of notes) {
-    const fm = parseVaultFrontmatter(note.text);
-    const cid = typeof fm.correlation_id === "string" ? fm.correlation_id.trim() : "";
-    if (!cid) continue;
-    const verified =
-      fm.verified && typeof fm.verified === "object" && !Array.isArray(fm.verified)
-        ? (fm.verified as Record<string, unknown>)
-        : undefined;
-    map.set(cid, {
-      path: note.rel,
-      status: typeof fm.status === "string" ? fm.status : undefined,
-      verifiedBy: typeof verified?.by === "string" ? verified.by : undefined,
-      staleAfter: typeof fm.stale_after === "string" ? fm.stale_after : undefined,
-    });
+export type OkfTrustByCorrelation = Map<
+  string,
+  {
+    path: string;
+    status?: string;
+    verifiedBy?: string;
+    staleAfter?: string;
   }
-  return map;
+>;
+
+export function loadOkfTrustByCorrelationIdEffect(
+  opts: VaultOpsOptions = {}
+): Effect.Effect<OkfTrustByCorrelation, MemoryError> {
+  return memoryFromPromise(async () => {
+    const vault = resolveVault(opts);
+    const root = scanRoot(opts);
+    const maxFiles = opts.maxFiles ?? 50_000;
+    const notes = await loadVaultNotes(vault, root, maxFiles);
+    const map: OkfTrustByCorrelation = new Map();
+    for (const note of notes) {
+      const fm = parseVaultFrontmatter(note.text);
+      const cid = typeof fm.correlation_id === "string" ? fm.correlation_id.trim() : "";
+      if (!cid) continue;
+      const verified =
+        fm.verified && typeof fm.verified === "object" && !Array.isArray(fm.verified)
+          ? (fm.verified as Record<string, unknown>)
+          : undefined;
+      map.set(cid, {
+        path: note.rel,
+        status: typeof fm.status === "string" ? fm.status : undefined,
+        verifiedBy: typeof verified?.by === "string" ? verified.by : undefined,
+        staleAfter: typeof fm.stale_after === "string" ? fm.stale_after : undefined,
+      });
+    }
+    return map;
+  });
+}
+
+/** Promise façade. */
+export async function loadOkfTrustByCorrelationId(
+  opts: VaultOpsOptions = {}
+): Promise<OkfTrustByCorrelation> {
+  return Effect.runPromise(loadOkfTrustByCorrelationIdEffect(opts));
 }

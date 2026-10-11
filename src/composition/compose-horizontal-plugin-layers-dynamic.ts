@@ -13,7 +13,6 @@ import {
   type ClawQLApiRuntimeError,
   type ClawQLApiRuntimeServices,
 } from "clawql-api";
-import { natsConfiguredForConsumer } from "clawql-automation/nats/env";
 import {
   optionalFlagsFromHorizontalTierSpec,
   type ClawQLHorizontalTierSpec,
@@ -37,6 +36,23 @@ function loadPlugin<T>(specifier: string): Effect.Effect<T, ClawQLError> {
   });
 }
 
+/** Env-only NATS consumer probe — avoid static-importing clawql-automation for the check. */
+function natsConsumerWantedFromEnv(): boolean {
+  const truthy = (v: string | undefined): boolean => {
+    const t = v?.trim().toLowerCase();
+    return t === "1" || t === "true" || t === "yes";
+  };
+  if (!process.env.CLAWQL_NATS_URL?.trim()) return false;
+  if (!truthy(process.env.CLAWQL_NATS_JETSTREAM) || !truthy(process.env.CLAWQL_NATS_ENABLE_CONSUMER)) {
+    return false;
+  }
+  return (
+    truthy(process.env.CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW) ||
+    truthy(process.env.CLAWQL_NATS_CONSUMER_IDP_PIPELINE) ||
+    truthy(process.env.CLAWQL_NATS_CONSUMER_CONESHARE_FOLLOWUP)
+  );
+}
+
 /**
  * Effect that builds horizontal Layers via dynamic import of only enabled packages.
  */
@@ -45,7 +61,7 @@ export function composeHorizontalPluginLayersDynamicEffect(
   options: ComposeHorizontalPluginLayersOptions = {}
 ): Effect.Effect<readonly HorizLayer[], ClawQLError> {
   return Effect.gen(function* () {
-    const includeNatsWorker = options.includeNatsWorker ?? natsConfiguredForConsumer();
+    const includeNatsWorker = options.includeNatsWorker ?? natsConsumerWantedFromEnv();
     const layers: HorizLayer[] = [];
 
     if (flags.enableMemory) {
@@ -59,6 +75,7 @@ export function composeHorizontalPluginLayersDynamicEffect(
       }>("clawql-documents/plugin");
       layers.push(
         mod.makeDocumentsLayer({
+          enableExternalIngest: flags.externalIngestPreview,
           enableOnyx: flags.enableOnyxKnowledge,
           enableIdpPipeline: flags.enableIdpPipeline,
           enableIdpClassifier: flags.enableIdpClassifier,
@@ -100,8 +117,10 @@ export function composeHorizontalPluginLayersDynamicEffect(
     }
 
     if (flags.enableData) {
-      const mod = yield* loadPlugin<{ makeDataLayer: () => HorizLayer }>("clawql-data/plugin");
-      layers.push(mod.makeDataLayer());
+      const mod = yield* loadPlugin<{
+        makeDataLayer: (opts?: Record<string, unknown>) => HorizLayer;
+      }>("clawql-data/plugin");
+      layers.push(mod.makeDataLayer({ enableClawqlSqlAlias: flags.enableClawqlSqlAlias }));
     }
 
     if (flags.enableWeb) {
@@ -129,18 +148,27 @@ export function composeHorizontalPluginLayersDynamicEffect(
       layers.push(mod.makeOntologyLayer({ enableWrites: flags.enableOntologyWrites }));
     }
 
-    // Ouroboros always via clawql-harness (same as static compose).
-    const harness = yield* loadPlugin<{
-      makeHarnessLayer: (opts: { plugins: unknown[] }) => HorizLayer;
-      createOuroborosHarnessPlugin: (opts: { enableLangfuseEval: boolean }) => unknown;
-    }>("clawql-harness/plugin");
-    layers.push(
-      harness.makeHarnessLayer({
-        plugins: [
-          harness.createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval }),
-        ],
-      })
-    );
+    if (flags.enableSupabase) {
+      const mod = yield* loadPlugin<{ makeSupabaseLayer: () => HorizLayer }>(
+        "clawql-supabase/plugin"
+      );
+      layers.push(mod.makeSupabaseLayer());
+    }
+
+    // Ouroboros / clawql_think (8.0 demotion): opt-in via enableOuroborosTools (same as static compose).
+    if (flags.enableOuroborosTools) {
+      const harness = yield* loadPlugin<{
+        makeHarnessLayer: (opts: { plugins: unknown[] }) => HorizLayer;
+        createOuroborosHarnessPlugin: (opts: { enableLangfuseEval: boolean }) => unknown;
+      }>("clawql-harness/plugin");
+      layers.push(
+        harness.makeHarnessLayer({
+          plugins: [
+            harness.createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval }),
+          ],
+        })
+      );
+    }
 
     return layers;
   });

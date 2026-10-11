@@ -61,7 +61,7 @@ export class VaultwardenStore extends PathSecretStore {
 
   getSecret(path: string): Effect.Effect<string | null, SecretStoreError> {
     if (this.opts.mode === "cache") return this.cache.getSecret(path);
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       yield* this.assertHttpReady();
       const res = yield* Effect.tryPromise({
         try: () =>
@@ -97,7 +97,7 @@ export class VaultwardenStore extends PathSecretStore {
 
   setSecret(path: string, value: string): Effect.Effect<void, SecretStoreError> {
     if (this.opts.mode === "cache") return this.cache.setSecret(path, value);
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       yield* this.assertHttpReady();
       const res = yield* Effect.tryPromise({
         try: () =>
@@ -134,7 +134,7 @@ export class VaultwardenStore extends PathSecretStore {
 
   listSecrets(prefix: string): Effect.Effect<string[], SecretStoreError> {
     if (this.opts.mode === "cache") return this.cache.listSecrets(prefix);
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       yield* this.assertHttpReady();
       const res = yield* Effect.tryPromise({
         try: () =>

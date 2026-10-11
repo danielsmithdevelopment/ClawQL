@@ -132,7 +132,7 @@ export function defaultPathForUrl(urlStr: string): string {
  * Returns UTF-8 `body` for markdown formatting plus raw `bytes` for
  * pdf-inspector / anydoc classification before Docling.
  */
-export async function fetchUrlResource(urlStr: string): Promise<{
+async function fetchUrlResourceImpl(urlStr: string): Promise<{
   body: string;
   bytes: Uint8Array;
   contentType: string | null;
@@ -151,7 +151,7 @@ export async function fetchUrlResource(urlStr: string): Promise<{
 export type PlannedMarkdownDoc = { rel: string; markdown: string };
 
 /** Validate + optional Presidio redact for Markdown documents. */
-export async function prepareMarkdownDocuments(
+async function prepareMarkdownDocumentsImpl(
   documents: ExternalIngestDocumentInput[],
   vault: string
 ): Promise<{
@@ -188,7 +188,7 @@ export async function prepareMarkdownDocuments(
   return { planned, docErrors };
 }
 
-export async function writePlannedMarkdownDocuments(
+async function writePlannedMarkdownDocumentsImpl(
   vault: string,
   planned: PlannedMarkdownDoc[]
 ): Promise<void> {
@@ -199,7 +199,7 @@ export async function writePlannedMarkdownDocuments(
   });
 }
 
-export async function writeUrlIngestNote(
+async function writeUrlIngestNoteImpl(
   vault: string,
   targetRel: string,
   finalUrl: string,
@@ -446,4 +446,104 @@ export async function runIngestExternalKnowledge(
   const { runDocumentsEffect, documentsIngestProgram } =
     await import("../effect/documents-effect-runtime.js");
   return runDocumentsEffect(documentsIngestProgram(input));
+}
+
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Fetch a URL for external ingest (Effect-primary). */
+export function fetchUrlResourceEffect(urlStr: string): Effect.Effect<
+  {
+    body: string;
+    bytes: Uint8Array;
+    contentType: string | null;
+    finalUrl: string;
+  },
+  Error
+> {
+  return Effect.tryPromise({ try: () => fetchUrlResourceImpl(urlStr), catch: fsError });
+}
+
+/** Promise façade for callers that still await URL fetch. */
+export async function fetchUrlResource(urlStr: string): Promise<{
+  body: string;
+  bytes: Uint8Array;
+  contentType: string | null;
+  finalUrl: string;
+}> {
+  return Effect.runPromise(fetchUrlResourceEffect(urlStr));
+}
+
+/** Validate + optional Presidio redact for Markdown documents (Effect-primary). */
+export function prepareMarkdownDocumentsEffect(
+  documents: ExternalIngestDocumentInput[],
+  vault: string
+): Effect.Effect<
+  { planned: PlannedMarkdownDoc[]; docErrors: { path: string; error: string }[] },
+  Error
+> {
+  return Effect.tryPromise({
+    try: () => prepareMarkdownDocumentsImpl(documents, vault),
+    catch: fsError,
+  });
+}
+
+/** Promise façade for callers that still await markdown prepare. */
+export async function prepareMarkdownDocuments(
+  documents: ExternalIngestDocumentInput[],
+  vault: string
+): Promise<{
+  planned: PlannedMarkdownDoc[];
+  docErrors: { path: string; error: string }[];
+}> {
+  return Effect.runPromise(prepareMarkdownDocumentsEffect(documents, vault));
+}
+
+/** Write planned markdown documents into the vault (Effect-primary). */
+export function writePlannedMarkdownDocumentsEffect(
+  vault: string,
+  planned: PlannedMarkdownDoc[]
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => writePlannedMarkdownDocumentsImpl(vault, planned),
+    catch: fsError,
+  });
+}
+
+/** Promise façade for callers that still await vault markdown writes. */
+export async function writePlannedMarkdownDocuments(
+  vault: string,
+  planned: PlannedMarkdownDoc[]
+): Promise<void> {
+  return Effect.runPromise(writePlannedMarkdownDocumentsEffect(vault, planned));
+}
+
+/** Write a URL ingest note into the vault (Effect-primary). */
+export function writeUrlIngestNoteEffect(
+  vault: string,
+  targetRel: string,
+  finalUrl: string,
+  body: string,
+  contentType: string | null,
+  bytes?: Uint8Array
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => writeUrlIngestNoteImpl(vault, targetRel, finalUrl, body, contentType, bytes),
+    catch: fsError,
+  });
+}
+
+/** Promise façade for callers that still await URL ingest note writes. */
+export async function writeUrlIngestNote(
+  vault: string,
+  targetRel: string,
+  finalUrl: string,
+  body: string,
+  contentType: string | null,
+  bytes?: Uint8Array
+): Promise<void> {
+  return Effect.runPromise(
+    writeUrlIngestNoteEffect(vault, targetRel, finalUrl, body, contentType, bytes)
+  );
 }

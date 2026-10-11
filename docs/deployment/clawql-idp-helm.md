@@ -37,7 +37,7 @@ Create `clawql-provider-env` with tokens your profile needs (`PAPERLESS_API_TOKE
 
 Under `clawql-mcp:` in `values-idp-full.yaml`:
 
-- **Document pipeline** — Docling (layout), Tika, Gotenberg, Stirling, Paperless
+- **Document pipeline** — Docling (layout, sole default converter as of 8.0), Paperless, plus opt-in-only Tika/Gotenberg/Stirling explicitly re-enabled in this full profile (upstream default is off — see [purge inventory spec](../releases/8.0.0-purge-inventory-spec-v0.1.md))
 - **OpenClaw + dashboard** — Agent Chat bridge
 - **Workflow + Argo CD MCP** — `enableWorkflow`, `enableArgoCd` (RBAC only; controllers are BYO)
 - **NATS JetStream** + **document workers** — publish + `nats.worker.idpPipeline` / `coneshareFollowup` (see [nats-idp-e2e.md](../runbooks/nats-idp-e2e.md))

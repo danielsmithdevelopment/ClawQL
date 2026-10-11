@@ -58,6 +58,7 @@ export type PaymentEventKind =
   | "ORG_PROVISIONED"
   | "ORG_MEMBER_ADDED"
   | "ORG_PLAN_CHANGED"
+  | "ACCOUNT_DELETED"
   | "USAGE_REPORTED_TO_BILLING";
 
 export type PaymentProvider =
@@ -1210,6 +1211,27 @@ export function buildOrgPlanChangedEntry(input: {
       plan: input.toPlan,
       org_id: input.orgId,
       resource: input.fromPlan,
+    },
+  });
+}
+
+export function buildAccountDeletedEntry(input: {
+  userIdHash: string;
+  orgIdsHash: string;
+  supabaseSubjectHash: string;
+  stripeCustomerHash: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "ACCOUNT_DELETED",
+    summary: `Account deleted (hashed refs only)`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "billing",
+      tenant_id: `sha256:${input.userIdHash}`,
+      org_id: input.orgIdsHash,
+      resource: input.supabaseSubjectHash,
+      reason: input.stripeCustomerHash,
     },
   });
 }

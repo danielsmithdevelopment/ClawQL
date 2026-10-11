@@ -13,7 +13,7 @@ import {
 } from "./oidc.js";
 import type { AtrClaims, AuthHeaderSource } from "./gateway.js";
 
-export class OidcAuthService extends Context.Tag("clawql/OidcAuthService")<
+export class OidcAuthService extends Context.Service<
   OidcAuthService,
   {
     /** Verify a bearer token and map it to ATR claims. */
@@ -26,7 +26,7 @@ export class OidcAuthService extends Context.Tag("clawql/OidcAuthService")<
       headers: AuthHeaderSource
     ) => Effect.Effect<AtrClaims | undefined, OidcAuthError>;
   }
->() {}
+>()("clawql/OidcAuthService") {}
 
 export function oidcAuthServiceFromConfig(config: OidcAuthConfig) {
   return OidcAuthService.of({

@@ -7,4 +7,5 @@ export {
   handleDataQueryToolInput,
   handleDataIngestToolInput,
   handleDataStatusToolInput,
+  type CreateDataPluginOptions,
 } from "./data-plugin.js";

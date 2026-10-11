@@ -57,7 +57,7 @@ export type StagedCreditTransfer = {
 };
 
 /** Prepaid USD credit balances for tenants (local ledger + WORM). */
-export class CreditsService extends Context.Tag("clawql/CreditsService")<
+export class CreditsService extends Context.Service<
   CreditsService,
   {
     readonly getBalance: (tenantId: string) => Effect.Effect<CreditAccount, CreditsError>;
@@ -111,7 +111,7 @@ export class CreditsService extends Context.Tag("clawql/CreditsService")<
       totp?: string;
     }) => Effect.Effect<CreditTransferResult, CreditsError>;
   }
->() {}
+>()("clawql/CreditsService") {}
 
 export function creditsLiveLayer(
   env: NodeJS.ProcessEnv = process.env
@@ -181,7 +181,7 @@ export function creditsLiveLayer(
                 correlationId: input.correlationId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
           return entry;
         });
 
@@ -209,7 +209,7 @@ export function creditsLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
           }
           return result;
         });
@@ -243,7 +243,7 @@ export function creditsLiveLayer(
                 correlationId: input.correlationId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
           return entry;
         });
 
@@ -285,7 +285,7 @@ export function creditsLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             yield* audit
               .appendEntry(
                 buildCreditTransferReceivedEntry({
@@ -297,7 +297,7 @@ export function creditsLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
           }
           return result;
         });
@@ -470,7 +470,7 @@ export function creditsLiveLayer(
           if (requestId) {
             yield* requestsSvc
               .markPaid({ requestId, transferId: result.transferId })
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
           }
 
           return result;

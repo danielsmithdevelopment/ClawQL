@@ -13,7 +13,16 @@ import { writeMcpConfigFile, type McpWriteTarget } from "./mcp-config-write.js";
 import { runSecretsList, runSecretsSet } from "./secrets-cli.js";
 import { onboardExitCode, runOnboard } from "./onboard.js";
 import { runOperatorStatus } from "./operator-cli.js";
-import { runSourcesAdd, runSourcesList, runSourcesRemove } from "./sources-cli.js";
+import {
+  runSourcesAdd,
+  runSourcesApprove,
+  runSourcesDecline,
+  runSourcesList,
+  runSourcesPropose,
+  runSourcesRemove,
+} from "./sources-cli.js";
+import { runToolkitList, runToolkitShow } from "./toolkit-cli.js";
+import { runResume } from "./resume-cli.js";
 import { runHarness, runHarnessNonInteractive, type HarnessId } from "./harness-cli.js";
 import {
   parseImageDigestFlags,
@@ -87,6 +96,7 @@ import {
   runPaymentsStripeMeterReportCmd,
   runPaymentsStripeCatalogEnsureCmd,
   runPaymentsStripeCatalogValidateCmd,
+  runPaymentsStripeCheckoutCreateCmd,
   runPaymentsUsageReportCmd,
   runPaymentsX402GateCmd,
   runPaymentsX402GateListCmd,
@@ -176,6 +186,8 @@ type Command =
   | "onboard"
   | "operator"
   | "sources"
+  | "toolkit"
+  | "resume"
   | "release"
   | "ontology"
   | "memory"
@@ -250,6 +262,7 @@ function parse(argv: string[]): {
     else if (a === "--no-topups") flags.noTopUps = true;
     else if (a === "--no-meter") flags.noMeter = true;
     else if (a === "--force") flags.force = true;
+    else if (a === "--decline") flags.decline = true;
     else if (a === "--provider") flags.provider = argv[++i] ?? "";
     else if (a === "--bucket") flags.bucket = argv[++i] ?? "";
     else if (a === "--project") flags.project = argv[++i] ?? "";
@@ -318,6 +331,9 @@ function parse(argv: string[]): {
     else if (a === "--email") flags.email = argv[++i] ?? "";
     else if (a === "--customer") flags.customer = argv[++i] ?? "";
     else if (a === "--plan") flags.plan = argv[++i] ?? "";
+    else if (a === "--org-name") flags.orgName = argv[++i] ?? "";
+    else if (a === "--success-url") flags.successUrl = argv[++i] ?? "";
+    else if (a === "--cancel-url") flags.cancelUrl = argv[++i] ?? "";
     else if (a === "--amount") flags.amount = argv[++i] ?? "";
     else if (a === "--payment-method") flags.paymentMethodId = argv[++i] ?? "";
     else if (a === "--return-url") flags.returnUrl = argv[++i] ?? "";
@@ -423,6 +439,7 @@ function parse(argv: string[]): {
     cmd === "secrets" ||
     cmd === "operator" ||
     cmd === "sources" ||
+    cmd === "toolkit" ||
     cmd === "release" ||
     cmd === "ontology" ||
     cmd === "memory" ||
@@ -439,6 +456,7 @@ function parse(argv: string[]): {
     cmd === "secrets" ||
     cmd === "operator" ||
     cmd === "sources" ||
+    cmd === "toolkit" ||
     cmd === "sync" ||
     cmd === "sandbox" ||
     cmd === "network" ||
@@ -470,8 +488,11 @@ Usage:
   clawql secrets set <github|slack|linear|…> [value]
   clawql mcp-config [--json] [--write cursor|claude-desktop] [--http] [--url http://host/mcp]
   clawql sources list | add <url> [--name NAME] [--kind openapi|discovery|graphql|grpc|mcp|cli|webmcp] | remove <id>
+  clawql sources propose <url> [--name NAME] [--kind KIND] [--commit] | approve <psp_…> | decline <psp_…>
   clawql sources add --kind cli --command <bin> [--args a,b] [--name NAME]
   clawql sources add --kind webmcp <https-url> [--name NAME] [--webmcp-cdp-url http://127.0.0.1:9222]
+  clawql toolkit list | show <id>
+  clawql resume <executionId> | clawql resume --decline <executionId>
   clawql release init | collect | manifest | publish | verify <path>
   clawql ontology lint [--dir PATH] [files...] | generate --out DIR [--dir PATH]
   clawql ontology init | create-entity <Name> | import --pack legal
@@ -493,7 +514,7 @@ Usage:
   clawql inference finetune status --job-id <id> | register --job-id <id> --tier frugal --alias <model>
   clawql inference finetune refit --bundle <task_latent.pt|dir> --target-model <model> --output <dir>
   clawql payments plan show | upgrade --tier team | usage report [--month YYYY-MM]
-  clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create | catalog ensure [--dry-run] | catalog validate | webhook verify
+  clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create | catalog ensure [--dry-run] | catalog validate | checkout create --plan pro --org-name X --email Y --success-url U --cancel-url U | webhook verify
   clawql payments x402 wallet setup --address 0x... | gate --tool knowledge_search --price 0.001 | verify | reconcile
   clawql payments payout connect create --email creator@x.com | connect link --account acct_xxx | create --amount 25 | prefer --creator id --method bank
   clawql payments ramp fund create --limit 500 | card issue --user-id U --limit 100 | agent-card issue --user-id U --amount 25
@@ -757,6 +778,17 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (cmd === "resume") {
+    const home = typeof flags.home === "string" && flags.home ? flags.home : undefined;
+    const executionId = rest[0] ?? subcmd;
+    process.exitCode = await runResume({
+      executionId,
+      decline: Boolean(flags.decline),
+      home,
+    });
+    return;
+  }
+
   if (cmd === "sources") {
     const home = typeof flags.home === "string" && flags.home ? flags.home : undefined;
     if (subcmd === "list") {
@@ -799,9 +831,55 @@ async function main(): Promise<void> {
       });
       return;
     }
+    if (subcmd === "propose") {
+      const url = rest[0];
+      process.exitCode = await runSourcesPropose({
+        url: url ?? "",
+        name: typeof flags.name === "string" ? flags.name : undefined,
+        kind: typeof flags.kind === "string" ? (flags.kind as never) : undefined,
+        id: typeof flags.id === "string" ? flags.id : undefined,
+        commit: Boolean(flags.commit),
+        home,
+      });
+      return;
+    }
+    if (subcmd === "approve") {
+      const id = rest[0];
+      if (!id) {
+        console.error("Usage: clawql sources approve <proposalId>");
+        process.exitCode = 1;
+        return;
+      }
+      process.exitCode = await runSourcesApprove(id, home);
+      return;
+    }
+    if (subcmd === "decline") {
+      const id = rest[0];
+      if (!id) {
+        console.error("Usage: clawql sources decline <proposalId>");
+        process.exitCode = 1;
+        return;
+      }
+      process.exitCode = await runSourcesDecline(id, home);
+      return;
+    }
     console.error(
-      "Usage: clawql sources list | clawql sources add <url> | clawql sources remove <id>"
+      "Usage: clawql sources list | add <url> | propose <url> [--commit] | approve <psp_…> | decline <psp_…> | remove <id>"
     );
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "toolkit") {
+    if (subcmd === "list") {
+      process.exitCode = await runToolkitList();
+      return;
+    }
+    if (subcmd === "show") {
+      process.exitCode = await runToolkitShow(rest[0] ?? "");
+      return;
+    }
+    console.error("Usage: clawql toolkit list | show <id>");
     process.exitCode = 1;
     return;
   }
@@ -1274,6 +1352,9 @@ async function main(): Promise<void> {
       json: Boolean(flags.json),
       email: typeof flags.email === "string" ? flags.email : undefined,
       name: typeof flags.name === "string" ? flags.name : undefined,
+      orgName: typeof flags.orgName === "string" ? flags.orgName : undefined,
+      successUrl: typeof flags.successUrl === "string" ? flags.successUrl : undefined,
+      cancelUrl: typeof flags.cancelUrl === "string" ? flags.cancelUrl : undefined,
       customer: typeof flags.customer === "string" ? flags.customer : undefined,
       plan: typeof flags.plan === "string" ? flags.plan : undefined,
       amount: Number.isFinite(amount) ? amount : undefined,
@@ -1526,8 +1607,12 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsStripeCatalogValidateCmd(paymentsOpts);
         return;
       }
+      if (stripeAction === "checkout" && rest[1] === "create") {
+        process.exitCode = await runPaymentsStripeCheckoutCreateCmd(paymentsOpts);
+        return;
+      }
       console.error(
-        "Usage: clawql payments stripe setup | customer create | subscription create | invoice create | meter report | catalog ensure|validate | webhook listen | webhook verify"
+        "Usage: clawql payments stripe setup | customer create | subscription create | invoice create | meter report | catalog ensure|validate | checkout create | webhook listen | webhook verify"
       );
       process.exitCode = 1;
       return;

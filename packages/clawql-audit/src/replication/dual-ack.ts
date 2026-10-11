@@ -38,7 +38,7 @@ export class DualAckReplicator {
 
       const remoteOk = yield* withRetry(() => remote.write(sealed), retry).pipe(
         Effect.map(() => true as const),
-        Effect.catchAll(() => Effect.succeed(false as const))
+        Effect.catch(() => Effect.succeed(false as const))
       );
 
       if (remoteOk) {

@@ -6,6 +6,9 @@
  * mode it is an audit/logging hint — filters drive retrieval.
  */
 
+import { Effect } from "effect";
+import { MemoryError } from "../effect/memory-errors.js";
+import { memoryFromPromise } from "../effect/memory-effect-utils.js";
 import { readVaultTextFile } from "../vault/utils.js";
 import { stripVaultFrontmatter } from "../vault/markdown.js";
 import type { FieldConfidence } from "./clawql-fields.js";
@@ -459,37 +462,48 @@ async function runDynamicOntologyRecall(
   }
 }
 
+export function runOntologyRecallEffect(
+  vault: string,
+  input: OntologyRecallInput
+): Effect.Effect<OntologyRecallResult | OntologyRecallFailure, MemoryError> {
+  return memoryFromPromise(async () => {
+    if (ontologyDbExplicitlyDisabled()) {
+      return {
+        ok: false,
+        error: "CLAWQL_ONTOLOGY_DB=0; ontology.db sync disabled",
+        errorType: "ontology_disabled",
+      };
+    }
+    if (!ontologyDbEnabled()) {
+      return {
+        ok: false,
+        error:
+          "CLAWQL_ONTOLOGY_DB disabled or vault not configured (set CLAWQL_OBSIDIAN_VAULT_PATH)",
+        errorType: "ontology_disabled",
+      };
+    }
+    if (isDynamicOntologySchema(input.schema)) {
+      return runDynamicOntologyRecall(vault, input);
+    }
+
+    if (isLegalOntologySchema(input.schema)) {
+      return runLegalLayerOneRecall(vault, { ...input, schema: input.schema });
+    }
+
+    return {
+      ok: false,
+      error: `Unknown ontology schema '${input.schema}'`,
+      errorType: "ontology_unsupported_schema",
+    };
+  });
+}
+
+/** Promise façade. */
 export async function runOntologyRecall(
   vault: string,
   input: OntologyRecallInput
 ): Promise<OntologyRecallResult | OntologyRecallFailure> {
-  if (ontologyDbExplicitlyDisabled()) {
-    return {
-      ok: false,
-      error: "CLAWQL_ONTOLOGY_DB=0; ontology.db sync disabled",
-      errorType: "ontology_disabled",
-    };
-  }
-  if (!ontologyDbEnabled()) {
-    return {
-      ok: false,
-      error: "CLAWQL_ONTOLOGY_DB disabled or vault not configured (set CLAWQL_OBSIDIAN_VAULT_PATH)",
-      errorType: "ontology_disabled",
-    };
-  }
-  if (isDynamicOntologySchema(input.schema)) {
-    return runDynamicOntologyRecall(vault, input);
-  }
-
-  if (isLegalOntologySchema(input.schema)) {
-    return runLegalLayerOneRecall(vault, { ...input, schema: input.schema });
-  }
-
-  return {
-    ok: false,
-    error: `Unknown ontology schema '${input.schema}'`,
-    errorType: "ontology_unsupported_schema",
-  };
+  return Effect.runPromise(runOntologyRecallEffect(vault, input));
 }
 
 /** True when recall should take the structured ontology path. */

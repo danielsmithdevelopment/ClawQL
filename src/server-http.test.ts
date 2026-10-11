@@ -573,11 +573,12 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
   );
 
   it(
-    "streamable HTTP listTools includes ouroboros_* via clawql-harness by default (#141)",
+    "streamable HTTP listTools hides ouroboros_* / clawql_think by default (8.0 demotion)",
     async () => {
       const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-ouroboros-"));
       const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
       delete process.env.CLAWQL_ENABLE_OUROBOROS;
+      delete process.env.CLAWQL_ENABLE_OUROBOROS_TOOLS;
       process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
       await mkdir(join(vaultDir, "Memory"), { recursive: true });
       resetOptionalToolHttpTestState();
@@ -588,6 +589,48 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
           const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
           const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
           const client = new Client({ name: "vitest-http-ouroboros", version: "1.0.0" }, {});
+          await client.connect(transport);
+          try {
+            const { tools } = await client.listTools();
+            const names = new Set(tools.map((t) => t.name));
+            expect(names.has("ouroboros_create_seed_from_document")).toBe(false);
+            expect(names.has("ouroboros_run_evolutionary_loop")).toBe(false);
+            expect(names.has("ouroboros_get_lineage_status")).toBe(false);
+            expect(names.has("ouroboros_measure_drift")).toBe(false);
+            expect(names.has("clawql_think")).toBe(false);
+          } finally {
+            await closeMcpClient(client);
+          }
+        }, FAST_HTTP_APP_OPTS);
+      } finally {
+        await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+        if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+        else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
+        resetSpecCache();
+        resetSchemaFieldCache();
+        resetClawqlApiForTests();
+      }
+    },
+    STREAMABLE_HTTP_TEST_TIMEOUT_MS
+  );
+
+  it(
+    "streamable HTTP listTools includes ouroboros_* / clawql_think when CLAWQL_ENABLE_OUROBOROS_TOOLS=1 or instance ouroboros.enabled",
+    async () => {
+      const vaultDir = mkdtempSync(join(tmpdir(), "clawql-http-ouroboros-on-"));
+      const savedInstance = process.env.CLAWQL_INSTANCE_SPEC;
+      const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
+      process.env.CLAWQL_INSTANCE_SPEC = instanceSpecWith({ ouroboros: { enabled: true } });
+      process.env.CLAWQL_OBSIDIAN_VAULT_PATH = vaultDir;
+      await mkdir(join(vaultDir, "Memory"), { recursive: true });
+      resetOptionalToolHttpTestState();
+      try {
+        await withHttpServer(async (base) => {
+          const { StreamableHTTPClientTransport } =
+            await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+          const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+          const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`));
+          const client = new Client({ name: "vitest-http-ouroboros-on", version: "1.0.0" }, {});
           await client.connect(transport);
           try {
             const { tools } = await client.listTools();
@@ -603,6 +646,8 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
         }, FAST_HTTP_APP_OPTS);
       } finally {
         await rm(vaultDir, { recursive: true, force: true }).catch(() => {});
+        if (savedInstance === undefined) delete process.env.CLAWQL_INSTANCE_SPEC;
+        else process.env.CLAWQL_INSTANCE_SPEC = savedInstance;
         if (savedVault === undefined) delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
         else process.env.CLAWQL_OBSIDIAN_VAULT_PATH = savedVault;
         resetSpecCache();

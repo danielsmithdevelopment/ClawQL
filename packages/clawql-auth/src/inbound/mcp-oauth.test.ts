@@ -76,6 +76,72 @@ describe("MCPOAuthServer", () => {
     expect(events.some((e) => e.type === "MCP_TOKEN_ISSUED")).toBe(true);
   });
 
+  it("mints aud from resourceAudience and rejects mismatched resource / foreign aud", async () => {
+    const audience = "https://mcp.clawql.test/mcp";
+    const salt = randomBytes(8).toString("hex");
+    const clientSecret = "client-secret-value";
+    const clients = createMemoryMcpClientRegistry([
+      {
+        clientId: "cline-agent",
+        salt,
+        clientSecretHash: hashMcpClientSecret(salt, clientSecret),
+        defaultScope: ["execute", "search"],
+        orgId: "acme",
+      },
+    ]);
+    const server = createMCPOAuthServer(
+      {
+        issuer: "https://auth.clawql.test",
+        signingSecret: secret,
+        resourceAudience: audience,
+      },
+      clients,
+      createMemoryMcpRefreshStore()
+    );
+
+    const token = await Effect.runPromise(
+      server.issueToken({
+        grantType: "client_credentials",
+        clientId: "cline-agent",
+        clientSecret,
+        resource: audience,
+      })
+    );
+    const claims = await Effect.runPromise(server.validateToken(token.access_token));
+    expect(claims.sub).toBe("cline-agent");
+
+    await expect(
+      Effect.runPromise(
+        server.issueToken({
+          grantType: "client_credentials",
+          clientId: "cline-agent",
+          clientSecret,
+          resource: "https://other.example/mcp",
+        })
+      )
+    ).rejects.toThrow(/invalid_target|resource_mismatch/);
+
+    const foreign = createMCPOAuthServer(
+      {
+        issuer: "https://auth.clawql.test",
+        signingSecret: secret,
+        resourceAudience: "https://other.example/mcp",
+      },
+      clients,
+      createMemoryMcpRefreshStore()
+    );
+    const foreignTok = await Effect.runPromise(
+      foreign.issueToken({
+        grantType: "client_credentials",
+        clientId: "cline-agent",
+        clientSecret,
+      })
+    );
+    await expect(Effect.runPromise(server.validateToken(foreignTok.access_token))).rejects.toThrow(
+      /invalid_token/
+    );
+  });
+
   it("rotates refresh tokens and rejects reused hashes", async () => {
     const { server, clientSecret, refreshStore } = setup();
     const first = await Effect.runPromise(

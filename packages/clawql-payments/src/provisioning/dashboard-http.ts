@@ -5,7 +5,12 @@
 
 import type { Express, Request, Response } from "express";
 import { Effect } from "effect";
-import { IssuedApiKeyStoreService } from "clawql-auth";
+import {
+  IssuedApiKeyStoreService,
+  issueApiKeyWithProofEffect,
+  issuerAuthorizedEffect,
+} from "clawql-auth";
+import { name, OrgId, PrincipalId } from "clawql-gdp";
 import { listPaymentAuditEntries } from "../audit/worm.js";
 import { findOrgsForTenant, getOrg } from "../credits/org.js";
 import { getOrgUnifiedSpendSummary } from "../credits/org-spend.js";
@@ -219,13 +224,28 @@ export function attachCpcDashboardRoutes(
         if (opts.revokeKeyId) {
           yield* store.revoke(opts.revokeKeyId);
         }
-        return yield* store.issue({
+        const issueInput = {
           subjectId: actorTenantId,
           orgId,
-          role: "billing_admin",
+          role: "billing_admin" as const,
           scope: apiKeyScopesForPlan(planId),
           label: opts.revokeKeyId ? `rotated:${opts.revokeKeyId}` : `dashboard:${orgId}`,
-        });
+        };
+        return yield* name(PrincipalId(actorTenantId), OrgId(orgId), (issuer, namedOrg) =>
+          Effect.gen(function* () {
+            const proof = yield* issuerAuthorizedEffect(issuer, namedOrg, {
+              issuerPrincipalId: actorTenantId,
+              orgId,
+              billingAdminTenantIds: org.billingAdminTenantIds,
+            });
+            if (!proof) {
+              return yield* Effect.fail(
+                new Error("IssuerAuthorized proof failed (billing admin gate)")
+              );
+            }
+            return yield* issueApiKeyWithProofEffect(store, issuer, namedOrg, proof, issueInput);
+          })
+        );
       }),
       env
     );

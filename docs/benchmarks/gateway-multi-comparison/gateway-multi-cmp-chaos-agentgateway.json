@@ -1,0 +1,47 @@
+{
+  "suite": "gateway-multi-comparison",
+  "measuredAt": "2026-10-11T13:21:24.272Z",
+  "node": "v22.14.0",
+  "partial": false,
+  "config": {
+    "iters": 50,
+    "warmup": 10,
+    "equal_upstream": true,
+    "interleaved": true,
+    "skip_chaos": false,
+    "chaos_max": 128,
+    "chaos_step_ms": 2000,
+    "break_p99_ms": 100,
+    "break_error_rate": 0.02,
+    "refine": false,
+    "arms": [
+      "agentgateway"
+    ]
+  },
+  "board": {
+    "agentgateway": {
+      "skipped": true,
+      "reason": "Error: timeout waiting for http://127.0.0.1:42147/mcp: fetch failed\n    at waitHttpOk (file:///workspace/scripts/benchmarks/gateway-multi-comparison.mjs:444:9)\n    at async startAgentgateway (file:///workspace/scripts/benchmarks/gateway-multi-comparison.mjs:849:3)\n    at async main (file:///workspace/scripts/benchmarks/gateway-multi-comparison.mjs:1193:22)"
+    }
+  },
+  "arms": {
+    "agentgateway": {
+      "skipped": true,
+      "reason": "Error: timeout waiting for http://127.0.0.1:42147/mcp: fetch failed\n    at waitHttpOk (file:///workspace/scripts/benchmarks/gateway-multi-comparison.mjs:444:9)\n    at async startAgentgateway (file:///workspace/scripts/benchmarks/gateway-multi-comparison.mjs:849:3)\n    at async main (file:///workspace/scripts/benchmarks/gateway-multi-comparison.mjs:1193:22)",
+      "error": true
+    }
+  },
+  "errors": {
+    "agentgateway": "timeout waiting for http://127.0.0.1:42147/mcp: fetch failed"
+  },
+  "honesty": [
+    "Equal-arm pets JSON across all arms.",
+    "EQUAL_UPSTREAM: shared mock HTTP /pets — ClawQL OpenAPI, aggregator list_pets fetch, Executor fetch-when-allowed; gateway_cost = e2e − paired direct.",
+    "Latency schedule: interleaved closed-loop across live arms (n≥10000 recommended for p999).",
+    "Primary token metric: invoked_tool_schema_tokens (not full tools/list).",
+    "Chaos optional (MULTI_SKIP_CHAOS); when on: concurrent clients until p99>SLO / error_rate.",
+    "Panguard / durable WORM off. MetaMCP skipped without Docker.",
+    "Hold publicizing until ClawQL RAM narrative closed or scoped.",
+    "Checkpoint writes after latency and after each chaos arm (survives OOM mid-chaos)."
+  ]
+}

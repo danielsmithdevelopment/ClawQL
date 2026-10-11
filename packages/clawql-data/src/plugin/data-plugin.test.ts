@@ -17,12 +17,24 @@ function installPluginMcpTools(plugin: ProviderPlugin, api: ClawQLPluginRegistra
 }
 
 describe("createDataPlugin", () => {
-  it("registers data_query, clawql_sql, data_ingest, and data_status", () => {
+  it("registers data_query, data_ingest, and data_status by default (no clawql_sql twin)", () => {
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
     const plugin = createDataPlugin();
     expect(plugin.id).toBe(DATA_PLUGIN_ID);
     installPluginMcpTools(plugin, api);
+    expect(
+      registry
+        .list()
+        .map((t) => t.name)
+        .sort()
+    ).toEqual(["data_ingest", "data_query", "data_status"]);
+  });
+
+  it("registers clawql_sql alias when enableClawqlSqlAlias is true", () => {
+    const registry = new McpToolRegistry();
+    const api = registry.registrationApi();
+    installPluginMcpTools(createDataPlugin({ enableClawqlSqlAlias: true }), api);
     expect(
       registry
         .list()

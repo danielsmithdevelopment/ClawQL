@@ -7,7 +7,7 @@ ClawQL production code that **can** be Effect-based **must** be Effect-based. Th
 Every `packages/*` workspace **must**:
 
 - declare `effect` in `dependencies` or `peerDependencies`
-- ship at least one `Context.Tag` + `Layer` service under `src/`
+- ship at least one `Context.Service` + `Layer` service under `src/` (Effect v4; not v3 `Context.Tag`)
 
 CI enforces this via `npm run check:effect-every-package`. New packages without Effect fail the build.
 
@@ -16,7 +16,7 @@ CI enforces this via `npm run check:effect-every-package`. New packages without 
 - Domain IO (fs, net, DB, crypto that participates in workflows)
 - Orchestration, policy gates, config reads used by domain code
 - URL/HTML builders, sync crypto helpers, env flag readers — expose as `Effect` (`Effect.sync` / `Effect.succeed` / service methods), not bare functions returning plain values as the primary API
-- Multi-step workflows — `Effect.gen` + `Context.Tag` / `Layer`
+- Multi-step workflows — `Effect.gen` + `Context.Service` / `Layer`
 
 ## Only exception: forced host boundary
 
@@ -33,7 +33,7 @@ Types-only modules (interfaces, type aliases) are not executable code and need n
 
 ## Required shape
 
-- Prefer `Context.Tag` + `Layer` with methods returning `Effect.Effect<A, E, R>`
+- Prefer `Context.Service` + `Layer` with methods returning `Effect.Effect<A, E, R>`
 - Absolute external IO (fs/fetch/SDK) only via `Effect.tryPromise` / `*FromPromise` **inside** Effect programs
 - Tests use Layers / `Effect.provide` — do not invent Promise-only domain APIs for tests
 

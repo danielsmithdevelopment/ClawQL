@@ -1,4 +1,5 @@
 import type { ChatMessage } from "../gateway.js";
+import { Effect } from "effect";
 
 /** OpenAI chat-format overhead per message (cl100k_base cookbook). */
 const TOKENS_PER_MESSAGE = 3;
@@ -22,7 +23,7 @@ function tokenizeEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
  * Attach cl100k_base token counts to chat messages for flamegraph / export.
  * No-op when CLAWQL_INFERENCE_TOKENIZE=0 or js-tiktoken unavailable.
  */
-export async function tokenizeChatMessagesAsync(
+async function tokenizeChatMessagesAsyncImpl(
   messages: ChatMessage[],
   env: NodeJS.ProcessEnv = process.env
 ): Promise<ChatMessage[]> {
@@ -33,6 +34,24 @@ export async function tokenizeChatMessagesAsync(
     ...msg,
     tokens: TOKENS_PER_MESSAGE + enc.encode(msg.content).length,
   }));
+}
+
+export function tokenizeChatMessagesAsyncEffect(
+  messages: ChatMessage[],
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<ChatMessage[], Error> {
+  return Effect.tryPromise({
+    try: () => tokenizeChatMessagesAsyncImpl(messages, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link tokenizeChatMessagesAsyncEffect} for Effect callers. */
+export async function tokenizeChatMessagesAsync(
+  messages: ChatMessage[],
+  env: NodeJS.ProcessEnv = process.env
+): Promise<ChatMessage[]> {
+  return Effect.runPromise(tokenizeChatMessagesAsyncEffect(messages, env));
 }
 
 /** Sync best-effort: returns messages unchanged unless tokens already set. */

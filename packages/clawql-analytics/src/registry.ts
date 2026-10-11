@@ -8,7 +8,7 @@ import type {
   RegisteredProvider,
 } from "./types.js";
 
-export class AnalyticsRegistryService extends Context.Tag("clawql/AnalyticsRegistryService")<
+export class AnalyticsRegistryService extends Context.Service<
   AnalyticsRegistryService,
   {
     readonly register: (
@@ -26,7 +26,7 @@ export class AnalyticsRegistryService extends Context.Tag("clawql/AnalyticsRegis
       config: ProviderConfig
     ) => Effect.Effect<void, AnalyticsError>;
   }
->() {}
+>()("clawql/AnalyticsRegistryService") {}
 
 export function createAnalyticsRegistryLayer(
   initial?: AnalyticsRegistrySnapshot

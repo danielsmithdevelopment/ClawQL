@@ -2,7 +2,11 @@
  * Typed MEMORY_* WORM / audit event kinds (Convergence Week / OKF v0.2).
  * Emitted alongside vault lifecycle transitions so compliance queries can
  * join trust signals without walking git history alone.
+ *
+ * Domain emit path is Effect-primary; Promise façade for erase/MCP edges.
  */
+
+import { Effect } from "effect";
 
 export const MEMORY_WORM_EVENT_KINDS = [
   "MEMORY_INGESTED",
@@ -44,15 +48,23 @@ export function registerMemoryWormSink(sink: MemoryWormSink): () => void {
   };
 }
 
-/** Emit a MEMORY_* event to all registered sinks (best-effort). */
-export async function emitMemoryWormEvent(event: MemoryWormEvent): Promise<void> {
-  for (const sink of sinks) {
-    try {
-      await sink(event);
-    } catch {
-      /* never fail the vault write path on audit sink errors */
+/** Emit a MEMORY_* event to all registered sinks (best-effort) — Effect primary. */
+export function emitMemoryWormEventEffect(event: MemoryWormEvent): Effect.Effect<void> {
+  return Effect.gen(function* () {
+    for (const sink of sinks) {
+      yield* Effect.tryPromise({
+        try: async () => {
+          await sink(event);
+        },
+        catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+      }).pipe(Effect.ignore);
     }
-  }
+  });
+}
+
+/** Promise façade. */
+export async function emitMemoryWormEvent(event: MemoryWormEvent): Promise<void> {
+  return Effect.runPromise(emitMemoryWormEventEffect(event));
 }
 
 export function memoryWormEventFromStatus(input: {

@@ -37,7 +37,18 @@ import {
   type MCPOAuthServer,
   type McpOAuthError,
   type McpRegisteredClient,
+  type McpTrustedClientRecord,
 } from "./mcp-oauth.js";
+import {
+  createCimdClientRegistry,
+  createSecretStoreTrustedClientStore,
+  type TrustedClientStore,
+} from "./mcp-cimd.js";
+import {
+  createMemoryDeviceCodeStore,
+  createSecretStoreDeviceCodeStore,
+} from "./mcp-device-flow.js";
+import { createSecretStoreMcpGrantKeyStore, grantAsKeyEnabled } from "./mcp-grant-key-store.js";
 import {
   loadMcpOAuthSigningFromEnvEffect,
   mcpOAuthSigningConfigured,
@@ -137,7 +148,7 @@ function loadEmaBootstrapConfigs(
         try: () => loadEmaOrgsFromJson(inline),
         catch: (cause) => cause,
       }).pipe(
-        Effect.catchAll((cause) =>
+        Effect.catch((cause) =>
           isMcpOAuthBootstrapStrict(env)
             ? Effect.fail(new McpOAuthBootstrapError({ source: "CLAWQL_EMA_ORGS_JSON", cause }))
             : warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_JSON", cause).pipe(
@@ -152,7 +163,7 @@ function loadEmaBootstrapConfigs(
         try: () => loadEmaOrgsFromJsonFile(path),
         catch: (cause) => cause,
       }).pipe(
-        Effect.catchAll((cause) =>
+        Effect.catch((cause) =>
           isMcpOAuthBootstrapStrict(env)
             ? Effect.fail(new McpOAuthBootstrapError({ source: "CLAWQL_EMA_ORGS_PATH", cause }))
             : warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_PATH", cause).pipe(
@@ -171,7 +182,7 @@ function loadEmaBootstrapConfigs(
         },
         catch: (cause) => cause,
       }).pipe(
-        Effect.catchAll((cause) =>
+        Effect.catch((cause) =>
           isMcpOAuthBootstrapStrict(env)
             ? Effect.fail(new McpOAuthBootstrapError({ source: "CLAWQL_EMA_ORGS_FILE", cause }))
             : warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_FILE", cause).pipe(
@@ -194,7 +205,7 @@ function loadMcpClientBootstrap(
         try: () => loadMcpClientsFromJson(inline),
         catch: (cause) => cause,
       }).pipe(
-        Effect.catchAll((cause) =>
+        Effect.catch((cause) =>
           isMcpOAuthBootstrapStrict(env)
             ? Effect.fail(
                 new McpOAuthBootstrapError({ source: "CLAWQL_MCP_OAUTH_CLIENTS_JSON", cause })
@@ -211,7 +222,7 @@ function loadMcpClientBootstrap(
         try: () => loadMcpClientsFromJsonFile(path),
         catch: (cause) => cause,
       }).pipe(
-        Effect.catchAll((cause) =>
+        Effect.catch((cause) =>
           isMcpOAuthBootstrapStrict(env)
             ? Effect.fail(
                 new McpOAuthBootstrapError({ source: "CLAWQL_MCP_OAUTH_CLIENTS_PATH", cause })
@@ -223,6 +234,80 @@ function loadMcpClientBootstrap(
       );
     }
     return [];
+  });
+}
+
+function loadTrustedClientsFromJson(raw: string): McpTrustedClientRecord[] {
+  const parsed = JSON.parse(raw) as
+    { clients?: McpTrustedClientRecord[] } | McpTrustedClientRecord[];
+  const list = Array.isArray(parsed) ? parsed : (parsed.clients ?? []);
+  return list.filter(
+    (c): c is McpTrustedClientRecord =>
+      typeof c?.clientIdUrl === "string" &&
+      Array.isArray(c.redirectUris) &&
+      typeof c.trustedAtMs === "number"
+  );
+}
+
+function loadTrustedClientsBootstrap(
+  env: NodeJS.ProcessEnv
+): Effect.Effect<McpTrustedClientRecord[], McpOAuthBootstrapError> {
+  return Effect.gen(function* () {
+    const inline = env.CLAWQL_MCP_OAUTH_TRUSTED_CLIENTS_JSON?.trim();
+    if (inline) {
+      return yield* Effect.try({
+        try: () => loadTrustedClientsFromJson(inline),
+        catch: (cause) => cause,
+      }).pipe(
+        Effect.catch((cause) =>
+          isMcpOAuthBootstrapStrict(env)
+            ? Effect.fail(
+                new McpOAuthBootstrapError({
+                  source: "CLAWQL_MCP_OAUTH_TRUSTED_CLIENTS_JSON",
+                  cause,
+                })
+              )
+            : warnIfMcpOAuthBootstrapInvalid("CLAWQL_MCP_OAUTH_TRUSTED_CLIENTS_JSON", cause).pipe(
+                Effect.as([] as McpTrustedClientRecord[])
+              )
+        )
+      );
+    }
+    const path = env.CLAWQL_MCP_OAUTH_TRUSTED_CLIENTS_PATH?.trim();
+    if (path) {
+      return yield* Effect.try({
+        try: () => loadTrustedClientsFromJson(readFileSync(path, "utf8")),
+        catch: (cause) => cause,
+      }).pipe(
+        Effect.catch((cause) =>
+          isMcpOAuthBootstrapStrict(env)
+            ? Effect.fail(
+                new McpOAuthBootstrapError({
+                  source: "CLAWQL_MCP_OAUTH_TRUSTED_CLIENTS_PATH",
+                  cause,
+                })
+              )
+            : warnIfMcpOAuthBootstrapInvalid("CLAWQL_MCP_OAUTH_TRUSTED_CLIENTS_PATH", cause).pipe(
+                Effect.as([] as McpTrustedClientRecord[])
+              )
+        )
+      );
+    }
+    return [];
+  });
+}
+
+function bootstrapTrustedClientsEffect(
+  store: TrustedClientStore,
+  clients: readonly McpTrustedClientRecord[]
+): Effect.Effect<number> {
+  return Effect.gen(function* () {
+    let n = 0;
+    for (const client of clients) {
+      yield* store.upsert(client);
+      n += 1;
+    }
+    return n;
   });
 }
 
@@ -266,6 +351,13 @@ export function createMcpOAuthFromEnv(
 
     const authCodeStore = createSecretStoreMcpAuthorizationCodeStore(secretStore);
 
+    const deviceFlowEnabled = envFlag("CLAWQL_MCP_OAUTH_DEVICE_FLOW", env);
+    const verificationUri =
+      env.CLAWQL_MCP_OAUTH_DEVICE_VERIFICATION_URI?.trim() ||
+      `${issuer.replace(/\/$/, "")}/oauth/device`;
+
+    const grantAsKey = grantAsKeyEnabled(env, false);
+
     const config: MCPOAuthConfig = {
       issuer,
       signing,
@@ -276,9 +368,26 @@ export function createMcpOAuthFromEnv(
       authCodeStore,
       accessTokenStore,
       eventSink,
+      ...(grantAsKey ? { grantKeyStore: createSecretStoreMcpGrantKeyStore(secretStore) } : {}),
+      ...(deviceFlowEnabled
+        ? {
+            deviceCodeStore: createSecretStoreDeviceCodeStore(secretStore),
+            deviceFlow: { verificationUri },
+          }
+        : {}),
     };
 
-    const server = createMCPOAuthServer(config, clients, refreshStore);
+    const cimdEnabled = envFlag("CLAWQL_MCP_OAUTH_CIMD", env);
+    let effectiveClients = clients;
+    if (cimdEnabled) {
+      const trustedStore = createSecretStoreTrustedClientStore(secretStore);
+      yield* bootstrapTrustedClientsEffect(trustedStore, yield* loadTrustedClientsBootstrap(env));
+      effectiveClients = createCimdClientRegistry(clients, trustedStore, {
+        writable: clientRegistry,
+      });
+    }
+
+    const server = createMCPOAuthServer(config, effectiveClients, refreshStore);
 
     const idJagIssuer = yield* createIdJagIssuerFromEnv({
       env,
@@ -308,6 +417,10 @@ export function createMcpOAuthForTests(input: {
   clients?: McpRegisteredClient[];
   emaOrgs?: EmaOrgConfig[];
   eventSink?: AuthEventSink;
+  /** When true, wires RFC 8628 device flow (store + verification URI). */
+  deviceFlow?: boolean | { verificationUri: string };
+  /** When true, wires SecretStore-backed MCP OAuth §2 grant-as-key. */
+  grantAsKey?: boolean;
 }): Effect.Effect<McpOAuthRuntime> {
   return Effect.gen(function* () {
     const secretStore = createMemorySecretStore();
@@ -320,6 +433,13 @@ export function createMcpOAuthForTests(input: {
       overwrite: true,
     });
 
+    const deviceFlowOpt = input.deviceFlow;
+    const deviceFlowEnabled = Boolean(deviceFlowOpt);
+    const verificationUri =
+      typeof deviceFlowOpt === "object" && deviceFlowOpt.verificationUri
+        ? deviceFlowOpt.verificationUri
+        : "https://auth.clawql.test/oauth/device";
+
     const config: MCPOAuthConfig = {
       issuer: input.issuer,
       signingSecret: input.signingSecret,
@@ -329,6 +449,15 @@ export function createMcpOAuthForTests(input: {
       authCodeStore: createMemoryMcpAuthorizationCodeStore(),
       accessTokenStore: createSecretStoreMcpAccessTokenStore(secretStore),
       eventSink: input.eventSink,
+      ...(input.grantAsKey
+        ? { grantKeyStore: createSecretStoreMcpGrantKeyStore(secretStore) }
+        : {}),
+      ...(deviceFlowEnabled
+        ? {
+            deviceCodeStore: createMemoryDeviceCodeStore(),
+            deviceFlow: { verificationUri },
+          }
+        : {}),
     };
     const server = createMCPOAuthServer(
       config,

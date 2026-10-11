@@ -3,7 +3,7 @@
 **Status:** Shipped (June 2026)  
 **Canonical operator reference:** **[`docs/dashboard/agent-chat.md`](../dashboard/agent-chat.md)** — API, SSE, vault schema, agent JSON contract, deployment, troubleshooting.
 
-**Scope:** Agent Chat panel in `apps/dashboard/` using shadcn/ui **MessageScroller**, **Message**, **Bubble**, **Attachment**, and **Marker** ([June 2026 chat components](https://ui.shadcn.com/docs/changelog/2026-06-chat-components)).
+**Scope:** Agent Chat panel in `apps/dashboard/` using shadcn/ui **MessageScroller**, **Message**, **Bubble**, **Attachment**, and **Marker** ([June 2026 chat components](https://ui.shadcn.com/docs/changelog/2026-06-chat-components)). This is the product-console kit for self-host **and** managed `cloud.clawql.com` — not Catalyst ([ADR 0012](../adr/0012-console-typescript-shadcn.md)).
 
 **Related:** [IDP Platform](../vision/clawql-idp-platform.md) · [Dashboard README](../../apps/dashboard/README.md) · [OpenClaw IDP profile](../openclaw/openclaw-idp-skill-profile.md)
 

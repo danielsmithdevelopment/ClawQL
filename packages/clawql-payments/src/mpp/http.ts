@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { renderMppOpenApiJson, type BuildMppOpenApiOptions } from "./openapi.js";
+import { Effect } from "effect";
 
 export const MPP_OPENAPI_PATH = "/openapi.json";
 
@@ -7,7 +8,7 @@ export type AttachMppOpenApiOptions = BuildMppOpenApiOptions & {
   maxAgeSeconds?: number;
 };
 
-export async function handleMppOpenApiRequest(
+async function handleMppOpenApiRequestImpl(
   req: Request,
   res: Response,
   options: AttachMppOpenApiOptions = {}
@@ -27,6 +28,26 @@ export async function handleMppOpenApiRequest(
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", `public, max-age=${maxAge}`);
   res.status(200).send(body);
+}
+
+export function handleMppOpenApiRequestEffect(
+  req: Request,
+  res: Response,
+  options: AttachMppOpenApiOptions = {}
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => handleMppOpenApiRequestImpl(req, res, options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link handleMppOpenApiRequestEffect} for Effect callers. */
+export async function handleMppOpenApiRequest(
+  req: Request,
+  res: Response,
+  options: AttachMppOpenApiOptions = {}
+): Promise<void> {
+  return Effect.runPromise(handleMppOpenApiRequestEffect(req, res, options));
 }
 
 export function attachMppOpenApiRoutes(app: Express, options: AttachMppOpenApiOptions = {}): void {

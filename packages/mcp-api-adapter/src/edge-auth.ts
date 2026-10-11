@@ -11,6 +11,7 @@ import {
   type JWTPayload,
   type JWTVerifyGetKey,
 } from "jose";
+import { Effect } from "effect";
 
 export type McpApiAdapterJwtAuthOptions = {
   /** ClawQL AS JWKS URL (e.g. `https://mcp.example.com/.well-known/jwks.json`). */
@@ -105,11 +106,11 @@ export function edgeAuthConfigured(options: McpApiAdapterEdgeAuthOptions): boole
  * Accept static API key (exact match) or a ClawQL-issued MCP Bearer JWT.
  * Returns verified ATR for JWT, a sentinel admin ATR for API key, or null.
  */
-export async function resolveEdgeCredential(
+async function resolveEdgeCredentialImpl(
   presented: string | undefined,
   options: McpApiAdapterEdgeAuthOptions,
   verifyJwt?: ((token: string) => Promise<VerifiedMcpAdapterAtr>) | null
-): Promise<VerifiedMcpAdapterAtr | null> {
+): Promise<VerifiedMcpAdapterAtr | null>  {
   if (!presented?.trim()) return null;
   const token = presented.trim();
   const apiKey = options.apiKey?.trim();
@@ -128,14 +129,54 @@ export async function resolveEdgeCredential(
   }
 }
 
+export function resolveEdgeCredentialEffect(
+  presented: string | undefined,
+  options: McpApiAdapterEdgeAuthOptions,
+  verifyJwt?: ((token: string) => Promise<VerifiedMcpAdapterAtr>) | null
+): Effect.Effect<VerifiedMcpAdapterAtr | null, Error> {
+  return Effect.tryPromise({
+    try: () => resolveEdgeCredentialImpl(presented, options, verifyJwt),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resolveEdgeCredentialEffect} for Effect callers. */
+export async function resolveEdgeCredential(
+  presented: string | undefined,
+  options: McpApiAdapterEdgeAuthOptions,
+  verifyJwt?: ((token: string) => Promise<VerifiedMcpAdapterAtr>) | null
+): Promise<VerifiedMcpAdapterAtr | null>  {
+  return Effect.runPromise(resolveEdgeCredentialEffect(presented, options, verifyJwt));
+}
+
 /**
  * Accept static API key (exact match) or a ClawQL-issued MCP Bearer JWT.
  * Returns true when the credential is valid.
  */
+async function verifyEdgeCredentialImpl(
+  presented: string | undefined,
+  options: McpApiAdapterEdgeAuthOptions,
+  verifyJwt?: ((token: string) => Promise<VerifiedMcpAdapterAtr>) | null
+): Promise<boolean>  {
+  return (await resolveEdgeCredential(presented, options, verifyJwt)) != null;
+}
+
+export function verifyEdgeCredentialEffect(
+  presented: string | undefined,
+  options: McpApiAdapterEdgeAuthOptions,
+  verifyJwt?: ((token: string) => Promise<VerifiedMcpAdapterAtr>) | null
+): Effect.Effect<boolean, Error> {
+  return Effect.tryPromise({
+    try: () => verifyEdgeCredentialImpl(presented, options, verifyJwt),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link verifyEdgeCredentialEffect} for Effect callers. */
 export async function verifyEdgeCredential(
   presented: string | undefined,
   options: McpApiAdapterEdgeAuthOptions,
   verifyJwt?: ((token: string) => Promise<VerifiedMcpAdapterAtr>) | null
-): Promise<boolean> {
-  return (await resolveEdgeCredential(presented, options, verifyJwt)) != null;
+): Promise<boolean>  {
+  return Effect.runPromise(verifyEdgeCredentialEffect(presented, options, verifyJwt));
 }

@@ -22,7 +22,7 @@ export class AgentSubstrateError extends Data.TaggedError("AgentSubstrateError")
   readonly cause?: unknown;
 }> {}
 
-export class AgentSubstrateService extends Context.Tag("clawql/AgentSubstrateService")<
+export class AgentSubstrateService extends Context.Service<
   AgentSubstrateService,
   {
     readonly config: () => AgentSubstrateConfig;
@@ -39,7 +39,7 @@ export class AgentSubstrateService extends Context.Tag("clawql/AgentSubstrateSer
       input: SandboxCodeToolInput
     ) => Effect.Effect<AgentSubstrateExecResult, AgentSubstrateError, AgentSubstrateWormSink>;
   }
->() {}
+>()("clawql/AgentSubstrateService") {}
 
 type SessionStore = Map<string, AgentSubstrateSession>;
 

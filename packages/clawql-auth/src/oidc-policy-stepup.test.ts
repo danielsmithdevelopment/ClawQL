@@ -37,7 +37,7 @@ function resolveClaimsUnion(headers: Record<string, string | string[] | undefine
   return Effect.runPromise(
     resolveAtrClaimsFromHeadersEffect(headers, Effect.runSync(loadGatewayAuthConfig())).pipe(
       Effect.map((claims) => ({ ok: true as const, claims })),
-      Effect.catchAll((err) => Effect.succeed({ ok: false as const, error: err.reason }))
+      Effect.catch((err) => Effect.succeed({ ok: false as const, error: err.reason }))
     )
   );
 }

@@ -3,8 +3,7 @@
  * Appends are best-effort — never fail domain callers.
  */
 
-import { Context, Effect } from "effect";
-import type { Semaphore } from "effect/Effect";
+import { Context, Effect, Semaphore } from "effect";
 import type { WORMAppendInput, WORMEntry } from "./entry.js";
 import { AuditError } from "./errors.js";
 import {
@@ -14,10 +13,10 @@ import {
 } from "./env-config.js";
 import { createWORMAuditTrailEffect, WORMAuditTrailService } from "./trail.js";
 
-type TrailSvc = Context.Tag.Service<typeof WORMAuditTrailService>;
+type TrailSvc = Context.Service.Shape<typeof WORMAuditTrailService>;
 
 let trailSvc: TrailSvc | null = null;
-let appendSem: Semaphore | null = null;
+let appendSem: Semaphore.Semaphore | null = null;
 let bootState: "idle" | "booting" | "ready" | "disabled" | "failed" = "idle";
 let bootFiber: Promise<TrailSvc | null> | null = null;
 let defaultSession = "clawql-host";
@@ -67,7 +66,7 @@ export const bootProcessWormFromEnvEffect = (
 
     bootFiber = Effect.runPromise(
       Effect.gen(function* () {
-        const sem = yield* Effect.makeSemaphore(1);
+        const sem = yield* Semaphore.make(1);
         const svc = yield* createWORMAuditTrailEffect(config);
         appendSem = sem;
         trailSvc = svc;
@@ -108,7 +107,7 @@ export const appendProcessWormEffect = (input: WORMAppendInput): Effect.Effect<W
       .withPermits(1)(svc.append(body))
       .pipe(
         Effect.map((e) => e as WORMEntry | null),
-        Effect.catchAll((err) =>
+        Effect.catch((err: AuditError) =>
           Effect.sync(() => {
             if (process.env.CLAWQL_WORM_DEBUG?.trim() === "1") {
               process.stderr.write(`[clawql-audit] process WORM append failed: ${err.reason}\n`);
@@ -127,7 +126,7 @@ export const stopProcessWormEffect = (): Effect.Effect<void> =>
     bootFiber = null;
     bootState = "idle";
     if (svc) {
-      yield* svc.stop().pipe(Effect.catchAll(() => Effect.void));
+      yield* svc.stop().pipe(Effect.catch(() => Effect.void));
     }
   });
 
@@ -138,7 +137,7 @@ export async function bootProcessWormFromEnv(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<TrailSvc | null> {
   return Effect.runPromise(
-    bootProcessWormFromEnvEffect(env).pipe(Effect.catchAll(() => Effect.succeed(null)))
+    bootProcessWormFromEnvEffect(env).pipe(Effect.catch(() => Effect.succeed(null)))
   );
 }
 

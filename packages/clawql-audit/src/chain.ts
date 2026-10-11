@@ -6,7 +6,7 @@ import { recomputeEntryHash } from "./seal.js";
 import { DEFAULT_CBOR_CHAIN_METADATA, formatAtIndex, type ChainMetadata } from "./serialization.js";
 import type { LocalStorageBackend } from "./storage/types.js";
 
-export class HashChain extends Context.Tag("clawql-audit/HashChain")<
+export class HashChain extends Context.Service<
   HashChain,
   {
     readonly metadata: () => Effect.Effect<ChainMetadata>;
@@ -15,7 +15,7 @@ export class HashChain extends Context.Tag("clawql-audit/HashChain")<
     readonly update: (entry: WORMEntry) => Effect.Effect<void, AuditError>;
     readonly verify: (entries: readonly WORMEntry[]) => Effect.Effect<ChainVerifyResult>;
   }
->() {}
+>()("clawql-audit/HashChain") {}
 
 export const makeHashChainLayer = (
   metadata: ChainMetadata = DEFAULT_CBOR_CHAIN_METADATA

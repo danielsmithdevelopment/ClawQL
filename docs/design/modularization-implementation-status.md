@@ -220,7 +220,7 @@ interface Plugin {
 
 - **`AutomationPlugin`** (`createAutomationPlugin` in `clawql-automation`) — registers `schedule` / `notify` / `workflow` when enabled; starts schedule worker in `onRegister`. Argo **`workflow`** is opt-in (`CLAWQL_ENABLE_WORKFLOW=1`) ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [workflow-tool-argo.md](workflow-tool-argo.md)).
 - **`SandboxPlugin`** (`createSandboxPlugin` in `clawql-sandbox`) — registers `sandbox_exec` via `makeSandboxLayer()` when `CLAWQL_ENABLE_SANDBOX=1`.
-- **`OuroborosPlugin`** (`createOuroborosPlugin` in `clawql-ouroboros`) — registers `ouroboros_*` via `makeOuroborosLayer()` when `CLAWQL_ENABLE_OUROBOROS=1`; Postgres pool shutdown in `onRegister` / `onTeardown`.
+- **`OuroborosPlugin` / harness** — agent-facing `ouroboros_*` / `clawql_think` register via `clawql-harness` when `CLAWQL_ENABLE_OUROBOROS_TOOLS=1` (or instance/tier `ouroboros.enabled`); Postgres pool shutdown in `onRegister` / `onTeardown`.
 
 ### 6.2 Target (third-party + vertical plugins)
 
@@ -299,25 +299,25 @@ These vision items are **not** done by package extraction alone:
 
 ## 9. References
 
-| Doc                                                                       | Use when                                  |
-| ------------------------------------------------------------------------- | ----------------------------------------- |
-| [ClawQL plugin model](./clawql-plugin-model.md)                           | Horizontal plugins, MCP tool registration |
-| [Plugin registry](../reference/clawql-plugin-registry.md)                 | Shipped vs planned plugins, enable flags  |
-| [Master enablement guide](../vision/clawql-master-enablement-guide.md)    | Platform intent, 6-layer model            |
-| [Modularization v2](../vision/clawql-modularization-v2.md)                | Target package boundaries, gateway design |
-| [Effect + plugin plan](./effect-ts-modularization-rearchitecture-plan.md) | Effect phases, plugin checklist, CI       |
-| [Vision & roadmap](../vision/clawql-vision-roadmap.md)                    | Public shipped vs planned table           |
-| [MCP tools](../mcp/mcp-tools.md)                                          | Operator-facing tool matrix               |
-| [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)       | Package delivery epic                     |
-| [Immutable releases](https://docs.clawql.com/vision/immutable-releases)   | Layer 0 manifest commands, CI             |
-| [Getting started](https://docs.clawql.com/getting-started)                | Auth, PageIndex, Presidio, Tier 1 Compose |
-| [clawql-operator-helm](../deployment/clawql-operator-helm.md)             | Operator scaffold install                 |
+| Doc                                                                       | Use when                                                  |
+| ------------------------------------------------------------------------- | --------------------------------------------------------- |
+| [ClawQL plugin model](./clawql-plugin-model.md)                           | Horizontal plugins, MCP tool registration                 |
+| [Plugin registry](../reference/clawql-plugin-registry.md)                 | Shipped vs planned plugins, enable flags                  |
+| [Master enablement guide](../vision/clawql-master-enablement-guide.md)    | Platform intent, 6-layer model                            |
+| [Modularization v2](../vision/clawql-modularization-v2.md)                | Target package boundaries, gateway design                 |
+| [Effect + plugin plan](./effect-ts-modularization-rearchitecture-plan.md) | Effect phases, plugin checklist, CI                       |
+| [Vision & roadmap](../vision/clawql-vision-roadmap.md)                    | Public shipped vs planned table                           |
+| [MCP tools](../mcp/mcp-tools.md)                                          | Operator-facing tool matrix                               |
+| [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)       | Package delivery epic                                     |
+| [Immutable releases](https://docs.clawql.com/vision/immutable-releases)   | Layer 0 manifest commands, CI                             |
+| [Getting started](https://docs.clawql.com/getting-started)                | Auth, Presidio, Tier 1 Compose (PageIndex removed in 8.0) |
+| [clawql-operator-helm](../deployment/clawql-operator-helm.md)             | Operator scaffold install                                 |
 
 ---
 
 ## 10. Phase 1 exit — complete (7.0.0)
 
-**Shipped (7.0):** release manifest verification, dashboard custom sources, **`clawql-auth`**, **`clawql-pageindex`**, Presidio gateway hooks, Tier 1 Docker Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)).
+**Shipped (7.0):** release manifest verification, dashboard custom sources, **`clawql-auth`**, Presidio gateway hooks, Tier 1 Docker Compose ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)). (`clawql-pageindex` shipped in 7.x and was **purged in 8.0**.)
 
 **Next (Phase 2):** third-party vertical plugins, full Operator NL ops, contract test suite expansion, transport-only npm split.
 

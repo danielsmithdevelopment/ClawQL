@@ -44,8 +44,8 @@ describe("Goose adapter", () => {
           path: "/etc/passwd",
           atrScope: atr,
           sessionId: s.sessionId,
-        }).pipe(Effect.either);
-        expect(denied._tag).toBe("Left");
+        }).pipe(Effect.result);
+        expect(denied._tag).toBe("Failure");
       }).pipe(Effect.provide(layer))
     );
   });
@@ -95,11 +95,11 @@ describe("OpenHands budget enforcer", () => {
             outputTokens: 40,
             costUsd: 0.01,
           })
-          .pipe(Effect.either);
+          .pipe(Effect.result);
       }).pipe(Effect.provide(layer))
     );
 
-    expect(result._tag).toBe("Left");
+    expect(result._tag).toBe("Failure");
     const verified = await Effect.runPromise(
       Effect.gen(function* () {
         const worm = yield* WORMAuditTrailService;

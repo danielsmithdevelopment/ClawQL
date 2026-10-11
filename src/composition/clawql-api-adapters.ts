@@ -13,13 +13,16 @@ import {
 } from "clawql-api";
 import { defaultPaymentsProxyPlugins } from "clawql-payments/plugin";
 import { closeOuroborosPgPool } from "clawql-ouroboros/plugin";
-import { closePostgresVectorPool } from "clawql-memory/vector/pgvector";
+import { closePostgresVectorPoolEffect } from "clawql-memory/vector/pgvector";
 import { createRequire } from "node:module";
 import { Effect } from "effect";
-import { composeHorizontalPluginLayersDynamic } from "./compose-horizontal-plugin-layers-dynamic.js";
+import { composeHorizontalPluginLayersDynamicEffect } from "./compose-horizontal-plugin-layers-dynamic.js";
 import { composeHorizontalPluginLayersStatic } from "./compose-horizontal-plugin-layers-static.js";
 import { attachActiveOtelParent, makeEffectOtelTracerLayer } from "./effect-otel-bridge.js";
-import { disposeProcessWormHost, ensureProcessWormHostBooted } from "./process-worm-host.js";
+import {
+  disposeProcessWormHostEffect,
+  ensureProcessWormHostBootedEffect,
+} from "./process-worm-host.js";
 import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
 
 const requireFromHere = createRequire(import.meta.url);
@@ -37,12 +40,19 @@ function resolveLoadSpec(): LoadSpecFn {
   return loadSpecOverride ?? loadSpec;
 }
 
+/** The spec loader search/execute run against (honors {@link setLoadSpecForTests}). */
+export const currentLoadSpecEffect: Effect.Effect<LoadSpecFn> = Effect.sync(resolveLoadSpec);
+
 function buildExecuteLive() {
   return makeExecuteLive(resolveLoadSpec());
 }
 
 let apiHandle: ClawQLApiHandle | undefined;
 let ensureApiPromise: Promise<ClawQLApiHandle> | undefined;
+
+function asError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
 
 function buildClawqlApiOptions(
   pluginLayers: CreateClawQLApiOptions["pluginLayers"],
@@ -66,13 +76,6 @@ function buildClawqlApi(
   vaultSeedLayer?: CreateClawQLApiOptions["vaultSeedLayer"]
 ): ClawQLApiHandle {
   return createClawQLApi(buildClawqlApiOptions(pluginLayers, vaultSeedLayer));
-}
-
-async function buildClawqlApiAsync(
-  pluginLayers: CreateClawQLApiOptions["pluginLayers"],
-  vaultSeedLayer?: CreateClawQLApiOptions["vaultSeedLayer"]
-): Promise<ClawQLApiHandle> {
-  return createClawQLApiAsync(buildClawqlApiOptions(pluginLayers, vaultSeedLayer));
 }
 
 async function resolveVaultSeedLayer(): Promise<
@@ -102,20 +105,16 @@ function resolveVaultSeedLayerSync(): CreateClawQLApiOptions["vaultSeedLayer"] |
   return undefined;
 }
 
-/**
- * Async production bootstrap — composes horizontal tiers via dynamic import so disabled
- * packages are not statically loaded. Safe to call multiple times; returns existing handle.
- */
-export async function ensureClawqlApi(): Promise<ClawQLApiHandle> {
+async function ensureClawqlApiImpl(): Promise<ClawQLApiHandle> {
   if (apiHandle) return apiHandle;
   if (ensureApiPromise) return ensureApiPromise;
   ensureApiPromise = (async () => {
-    void ensureProcessWormHostBooted().catch(() => undefined);
-    const pluginLayers = await composeHorizontalPluginLayersDynamic(
-      resolvePluginCompositionFlags()
+    void Effect.runPromise(ensureProcessWormHostBootedEffect()).catch(() => undefined);
+    const pluginLayers = await Effect.runPromise(
+      composeHorizontalPluginLayersDynamicEffect(resolvePluginCompositionFlags())
     );
     const vaultSeedLayer = await resolveVaultSeedLayer();
-    apiHandle = await buildClawqlApiAsync(pluginLayers, vaultSeedLayer);
+    apiHandle = await createClawQLApiAsync(buildClawqlApiOptions(pluginLayers, vaultSeedLayer));
     return apiHandle;
   })();
   try {
@@ -125,11 +124,27 @@ export async function ensureClawqlApi(): Promise<ClawQLApiHandle> {
   }
 }
 
+/**
+ * Async production bootstrap — composes horizontal tiers via dynamic import so disabled
+ * packages are not statically loaded. Safe to call multiple times; returns existing handle.
+ */
+export function ensureClawqlApiEffect(): Effect.Effect<ClawQLApiHandle, Error> {
+  return Effect.tryPromise({
+    try: () => ensureClawqlApiImpl(),
+    catch: asError,
+  });
+}
+
+/** Promise façade for transport hosts that cannot yield* Effects. */
+export async function ensureClawqlApi(): Promise<ClawQLApiHandle> {
+  return Effect.runPromise(ensureClawqlApiEffect());
+}
+
 /** Process-wide ClawQL API runtime (search/execute + plugin registry). */
 export function getClawqlApi(): ClawQLApiHandle {
   if (!apiHandle) {
     // Fire-and-forget: durable WORM when CLAWQL_WORM_ENABLED=1 (does not block API build).
-    void ensureProcessWormHostBooted().catch(() => undefined);
+    void Effect.runPromise(ensureProcessWormHostBootedEffect()).catch(() => undefined);
     apiHandle = buildClawqlApi(
       composeHorizontalPluginLayersStatic(resolvePluginCompositionFlags()),
       resolveVaultSeedLayerSync()
@@ -138,11 +153,7 @@ export function getClawqlApi(): ClawQLApiHandle {
   return apiHandle;
 }
 
-/**
- * Dispose plugins, ManagedRuntime, and shared IO pools.
- * Safe to call multiple times; next {@link getClawqlApi} rebuilds a fresh runtime.
- */
-export async function disposeClawqlApi(): Promise<void> {
+async function disposeClawqlApiImpl(): Promise<void> {
   const handle = apiHandle;
   apiHandle = undefined;
   ensureApiPromise = undefined;
@@ -150,10 +161,26 @@ export async function disposeClawqlApi(): Promise<void> {
     await handle.dispose().catch(() => undefined);
   }
   await Promise.all([
-    closePostgresVectorPool().catch(() => undefined),
+    Effect.runPromise(closePostgresVectorPoolEffect()).catch(() => undefined),
     closeOuroborosPgPool().catch(() => undefined),
-    disposeProcessWormHost().catch(() => undefined),
+    Effect.runPromise(disposeProcessWormHostEffect()).catch(() => undefined),
   ]);
+}
+
+/**
+ * Dispose plugins, ManagedRuntime, and shared IO pools.
+ * Safe to call multiple times; next {@link getClawqlApi} rebuilds a fresh runtime.
+ */
+export function disposeClawqlApiEffect(): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => disposeClawqlApiImpl(),
+    catch: asError,
+  });
+}
+
+/** Promise façade for process shutdown. */
+export async function disposeClawqlApi(): Promise<void> {
+  return Effect.runPromise(disposeClawqlApiEffect());
 }
 
 /** Test helper — next getClawqlApi() builds a fresh runtime. */
@@ -176,22 +203,35 @@ export function registerClawqlApiShutdownHooks(): void {
 }
 
 /** Run HookRegistry pre-execute hooks (Panguard, capability lifecycle, x402, …). */
+export function runMcpProxyBeforeCallToolEffect(
+  toolName: string,
+  args: unknown,
+  opts?: { readonly sessionId?: string; readonly atrScopeTokens?: readonly string[] }
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () =>
+      getClawqlApi().run(
+        Effect.gen(function* () {
+          const pipeline = yield* McpProxyPipeline;
+          yield* pipeline.runBeforeCallTool({
+            toolName,
+            args,
+            sessionId: opts?.sessionId,
+            atrScopeTokens: opts?.atrScopeTokens,
+          });
+        })
+      ),
+    catch: asError,
+  });
+}
+
+/** Promise façade for MCP CallTool host edge. */
 export async function runMcpProxyBeforeCallTool(
   toolName: string,
   args: unknown,
   opts?: { readonly sessionId?: string; readonly atrScopeTokens?: readonly string[] }
 ): Promise<void> {
-  await getClawqlApi().run(
-    Effect.gen(function* () {
-      const pipeline = yield* McpProxyPipeline;
-      yield* pipeline.runBeforeCallTool({
-        toolName,
-        args,
-        sessionId: opts?.sessionId,
-        atrScopeTokens: opts?.atrScopeTokens,
-      });
-    })
-  );
+  return Effect.runPromise(runMcpProxyBeforeCallToolEffect(toolName, args, opts));
 }
 
 export type { ExecuteClawqlOperationParams, LoadedSpec, LoadSpecFn };

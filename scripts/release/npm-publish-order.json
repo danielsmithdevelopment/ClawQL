@@ -2,6 +2,7 @@
   "description": "Topological publish order for clawql-* workspace packages. Publish each row before the next; clawql-mcp is last.",
   "packages": [
     "clawql-merkle",
+    "clawql-gdp",
     "clawql-audit",
     "clawql-core",
     "clawql-auth",
@@ -9,6 +10,7 @@
     "clawql-tee",
     "clawql-agents",
     "clawql-api",
+    "clawql-supabase",
     "clawql-network",
     "clawql-memory",
     "clawql-ontology",
@@ -28,16 +30,13 @@
     "clawql-operator",
     "clawql-mcp"
   ],
-  "localPackExtras": [
-    "mcp-grpc-transport"
-  ],
-  "localPackExtrasAfter": [
-    "mcp-api-adapter"
-  ],
+  "localPackExtras": ["mcp-grpc-transport"],
+  "localPackExtrasAfter": ["mcp-api-adapter"],
   "notes": [
     "Each clawql-* package uses independent semver. Do NOT lockstep package versions to clawql-mcp.",
     "clawql-mcp (root) version line: 8.0.0 in-tree for this major (npm still 7.2.0 until tag). Workspace clawql-* libs: first publish 0.1.0 (see docs/release/clawql-workspace-package-versioning.md). clawql-ouroboros in-tree 0.1.1 matches npm.",
     "clawql-merkle + clawql-audit form the standalone WORM wedge; publish before clawql-core so a soft-fail on core still lands merkle/audit.",
+    "clawql-gdp after clawql-merkle (no clawql-* deps; Effect + @gdp-ts/core only) — required before clawql-auth / api / memory / payments / mcp-events / inference.",
     "mcp-grpc-transport, mcp-api-adapter, and panguard-mcp-bridge publish on their own cadence.",
     "localPackExtras install before clawql-* packages (e.g. mcp-grpc-transport for clawql-mcp peers).",
     "localPackExtrasAfter install after clawql-* packages (e.g. mcp-api-adapter optional peer clawql-inference).",
@@ -55,6 +54,7 @@
     "clawql-tee after clawql-auth (optional peer; ID-JAG TEE bridge).",
     "Monorepo clawql-mcp line is 8.0.0; workspace clawql-* libraries publish at 0.1.0 first release unless already on npm (ouroboros 0.1.1, mcp-grpc-transport 1.0.0). Apply: node scripts/release/apply-package-npm-versions.mjs",
     "Wedge-only CI: .github/workflows/npm-publish-audit-wedge.yml (workflow_dispatch).",
-    "clawql-analytics after clawql-auth (and clawql-audit) \u2014 docs pageview adapter; not a clawql-mcp runtime dep."
+    "clawql-analytics after clawql-auth (and clawql-audit) \u2014 docs pageview adapter; not a clawql-mcp runtime dep.",
+    "clawql-supabase after clawql-api (depends on clawql-api + clawql-core) \u2014 managed signup Auth provider plugin; clawql-mcp depends on it for horizontal composition."
   ]
 }

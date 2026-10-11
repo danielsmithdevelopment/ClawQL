@@ -4,6 +4,7 @@
  */
 
 import type { WebBrowserProvider, SearchOptions, SearchResponse } from "../interfaces.js";
+import { Effect } from "effect";
 
 function extractResultsFromText(query: string, text: string, limit: number): SearchResponse["results"] {
   const results: SearchResponse["results"] = [];
@@ -32,11 +33,11 @@ function extractResultsFromText(query: string, text: string, limit: number): Sea
   return results.slice(0, limit);
 }
 
-export async function browserAsSearch(
+async function browserAsSearchImpl(
   query: string,
   browser: WebBrowserProvider,
   options?: SearchOptions
-): Promise<SearchResponse> {
+): Promise<SearchResponse>  {
   const limit = options?.limit ?? 5;
   const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
   const page = await browser.fetch(searchUrl, {
@@ -51,4 +52,24 @@ export async function browserAsSearch(
     fallbackReason: "no_search_provider_configured",
     results: extractResultsFromText(query, text, limit),
   };
+}
+
+export function browserAsSearchEffect(
+  query: string,
+  browser: WebBrowserProvider,
+  options?: SearchOptions
+): Effect.Effect<SearchResponse, Error> {
+  return Effect.tryPromise({
+    try: () => browserAsSearchImpl(query, browser, options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link browserAsSearchEffect} for Effect callers. */
+export async function browserAsSearch(
+  query: string,
+  browser: WebBrowserProvider,
+  options?: SearchOptions
+): Promise<SearchResponse>  {
+  return Effect.runPromise(browserAsSearchEffect(query, browser, options));
 }

@@ -138,7 +138,7 @@ function tryMcpOAuthValidator(
     if (!validator) return null;
     const token = extractBearer(headers);
     if (!token) return null;
-    return yield* validator(token).pipe(Effect.catchAll(() => Effect.succeed(null)));
+    return yield* validator(token).pipe(Effect.catch(() => Effect.succeed(null)));
   });
 }
 

@@ -1,4 +1,5 @@
 import type { ClawQLInstanceSpecV1Alpha1 } from "../spec/clawql-instance-v1alpha1.js";
+import { Effect } from "effect";
 
 export type McpRolloutTarget = {
   deploymentName: string;
@@ -28,7 +29,7 @@ export type AppsV1PatchDeployment = {
 };
 
 /** Trigger rolling restart via pod template annotation (same pattern as kubectl rollout restart). */
-export async function rolloutMcpDeployment(
+async function rolloutMcpDeploymentImpl(
   target: McpRolloutTarget,
   apps: AppsV1PatchDeployment
 ): Promise<void> {
@@ -51,4 +52,22 @@ export async function rolloutMcpDeployment(
     fieldManager: "clawql-operator",
     force: true,
   });
+}
+
+export function rolloutMcpDeploymentEffect(
+  target: McpRolloutTarget,
+  apps: AppsV1PatchDeployment
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => rolloutMcpDeploymentImpl(target, apps),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link rolloutMcpDeploymentEffect} for Effect callers. */
+export async function rolloutMcpDeployment(
+  target: McpRolloutTarget,
+  apps: AppsV1PatchDeployment
+): Promise<void> {
+  return Effect.runPromise(rolloutMcpDeploymentEffect(target, apps));
 }

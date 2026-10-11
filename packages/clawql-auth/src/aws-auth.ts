@@ -194,7 +194,7 @@ export const awsSigningHostEffect = (url: URL): Effect.Effect<string> =>
   Effect.sync(() => awsSigningHost(url));
 
 /** Effect service exposing AWS bundled-provider helpers for DI in execute hosts. */
-export class AwsAuthHelpers extends Context.Tag("clawql/AwsAuthHelpers")<
+export class AwsAuthHelpers extends Context.Service<
   AwsAuthHelpers,
   {
     readonly isAwsSpecLabel: (label: string) => Effect.Effect<boolean>;
@@ -208,7 +208,7 @@ export class AwsAuthHelpers extends Context.Tag("clawql/AwsAuthHelpers")<
     readonly applyQueryActionPath: (url: URL, pathTemplate: string) => Effect.Effect<void>;
     readonly signingHost: (url: URL) => Effect.Effect<string>;
   }
->() {}
+>()("clawql/AwsAuthHelpers") {}
 
 /** Live AWS helpers service backed by `process.env`. */
 export const AwsAuthHelpersLive = Layer.succeed(

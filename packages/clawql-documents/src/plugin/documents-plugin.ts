@@ -51,6 +51,11 @@ export async function handleIngestExternalKnowledgeToolInput(
 }
 
 export type CreateDocumentsPluginOptions = {
+  /**
+   * Register `ingest_external_knowledge` when `CLAWQL_EXTERNAL_INGEST=1`.
+   * Default off — vault writes use `memory_ingest` (8.0 verb-twin demotion).
+   */
+  readonly enableExternalIngest?: boolean;
   /** Register `knowledge_search_onyx` when `CLAWQL_ENABLE_ONYX=1` (requires documents tier). */
   readonly enableOnyx?: boolean;
   /** Register `run_idp_pipeline` when `CLAWQL_ENABLE_IDP_PIPELINE=1` ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)). */
@@ -66,6 +71,7 @@ export type CreateDocumentsPluginOptions = {
 };
 
 export function createDocumentsPlugin(options: CreateDocumentsPluginOptions = {}): ProviderPlugin {
+  const enableExternalIngest = options.enableExternalIngest ?? false;
   const enableOnyx = options.enableOnyx ?? false;
   const enableIdpPipeline = options.enableIdpPipeline ?? false;
   const enableIdpClassifier = options.enableIdpClassifier ?? false;
@@ -78,11 +84,13 @@ export function createDocumentsPlugin(options: CreateDocumentsPluginOptions = {}
     description: "External knowledge ingest, Onyx search, and IDP document tools",
     register: (api) =>
       Effect.gen(function* () {
-        yield* api.registerMcpTool({
-          name: "ingest_external_knowledge",
-          schema: ingestExternalKnowledgeToolZodShape,
-          handler: (args) => handleIngestExternalKnowledgeToolInput(args),
-        });
+        if (enableExternalIngest) {
+          yield* api.registerMcpTool({
+            name: "ingest_external_knowledge",
+            schema: ingestExternalKnowledgeToolZodShape,
+            handler: (args) => handleIngestExternalKnowledgeToolInput(args),
+          });
+        }
         if (enableOnyx) {
           yield* api.registerMcpTool({
             name: "knowledge_search_onyx",

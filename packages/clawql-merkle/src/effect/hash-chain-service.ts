@@ -10,7 +10,7 @@ import {
   type HashChainVerifyResult,
 } from "../hash-chain.js";
 
-export class HashChainService extends Context.Tag("clawql/HashChainService")<
+export class HashChainService extends Context.Service<
   HashChainService,
   {
     readonly canonicalJson: (value: unknown) => Effect.Effect<string>;
@@ -24,7 +24,7 @@ export class HashChainService extends Context.Tag("clawql/HashChainService")<
     readonly verify: (links: readonly HashChainLink[]) => Effect.Effect<HashChainVerifyResult>;
     readonly isHashChained: (value: unknown) => Effect.Effect<boolean>;
   }
->() {}
+>()("clawql/HashChainService") {}
 
 export const HashChainServiceLive = Layer.succeed(
   HashChainService,

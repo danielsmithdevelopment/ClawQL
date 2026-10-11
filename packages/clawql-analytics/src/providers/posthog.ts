@@ -114,7 +114,7 @@ export function createPostHogProvider(): AnalyticsProvider {
             }),
         }).pipe(
           Effect.as({ status: "healthy" as const }),
-          Effect.catchAll((err) =>
+          Effect.catch((err) =>
             Effect.succeed({
               status: "down" as const,
               details: err.reason,

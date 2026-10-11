@@ -4,6 +4,7 @@
  */
 
 import type { BrowserStep, PageContent } from "../../interfaces.js";
+import { Effect } from "effect";
 
 type CdpResponse = {
   id?: number;
@@ -26,10 +27,10 @@ export type CdpSessionClient = {
 };
 
 /** Resolve `http(s)://host:9222` → browser WebSocket debugger URL, or pass through `ws(s):`. */
-export async function resolveCdpWebSocketUrl(
+async function resolveCdpWebSocketUrlImpl(
   cdpUrl: string,
   fetchImpl: typeof fetch = fetch
-): Promise<string> {
+): Promise<string>  {
   const trimmed = cdpUrl.trim();
   if (trimmed.startsWith("ws://") || trimmed.startsWith("wss://")) {
     return trimmed;
@@ -47,7 +48,25 @@ export async function resolveCdpWebSocketUrl(
   return body.webSocketDebuggerUrl.trim();
 }
 
-export async function connectCdpWithSessions(wsUrl: string): Promise<CdpSessionClient> {
+export function resolveCdpWebSocketUrlEffect(
+  cdpUrl: string,
+  fetchImpl: typeof fetch = fetch
+): Effect.Effect<string, Error> {
+  return Effect.tryPromise({
+    try: () => resolveCdpWebSocketUrlImpl(cdpUrl, fetchImpl),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resolveCdpWebSocketUrlEffect} for Effect callers. */
+export async function resolveCdpWebSocketUrl(
+  cdpUrl: string,
+  fetchImpl: typeof fetch = fetch
+): Promise<string>  {
+  return Effect.runPromise(resolveCdpWebSocketUrlEffect(cdpUrl, fetchImpl));
+}
+
+async function connectCdpWithSessionsImpl(wsUrl: string): Promise<CdpSessionClient>  {
   const ws = new WebSocket(wsUrl);
   await new Promise<void>((resolve, reject) => {
     const t = setTimeout(() => reject(new Error("CDP WebSocket connect timeout")), 15_000);
@@ -129,6 +148,18 @@ export async function connectCdpWithSessions(wsUrl: string): Promise<CdpSessionC
   };
 }
 
+export function connectCdpWithSessionsEffect(wsUrl: string): Effect.Effect<CdpSessionClient, Error> {
+  return Effect.tryPromise({
+    try: () => connectCdpWithSessionsImpl(wsUrl),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link connectCdpWithSessionsEffect} for Effect callers. */
+export async function connectCdpWithSessions(wsUrl: string): Promise<CdpSessionClient>  {
+  return Effect.runPromise(connectCdpWithSessionsEffect(wsUrl));
+}
+
 async function withTargetSession<T>(
   cdpUrl: string,
   fetchImpl: typeof fetch,
@@ -168,11 +199,11 @@ function waitForLoadEvent(browser: CdpSessionClient, timeoutMs: number): Promise
   });
 }
 
-export async function cdpNavigateAndGetContent(
+async function cdpNavigateAndGetContentImpl(
   cdpUrl: string,
   url: string,
   options: { timeoutMs?: number; fetchImpl?: typeof fetch; providerId?: string } = {}
-): Promise<PageContent> {
+): Promise<PageContent>  {
   const fetchImpl = options.fetchImpl ?? fetch;
   const timeoutMs = options.timeoutMs ?? 30_000;
   const provider = options.providerId ?? "chromium";
@@ -203,11 +234,31 @@ export async function cdpNavigateAndGetContent(
   });
 }
 
-export async function cdpScreenshot(
+export function cdpNavigateAndGetContentEffect(
+  cdpUrl: string,
+  url: string,
+  options: { timeoutMs?: number; fetchImpl?: typeof fetch; providerId?: string } = {}
+): Effect.Effect<PageContent, Error> {
+  return Effect.tryPromise({
+    try: () => cdpNavigateAndGetContentImpl(cdpUrl, url, options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link cdpNavigateAndGetContentEffect} for Effect callers. */
+export async function cdpNavigateAndGetContent(
+  cdpUrl: string,
+  url: string,
+  options: { timeoutMs?: number; fetchImpl?: typeof fetch; providerId?: string } = {}
+): Promise<PageContent>  {
+  return Effect.runPromise(cdpNavigateAndGetContentEffect(cdpUrl, url, options));
+}
+
+async function cdpScreenshotImpl(
   cdpUrl: string,
   url: string,
   options: { timeoutMs?: number; fetchImpl?: typeof fetch } = {}
-): Promise<Uint8Array> {
+): Promise<Uint8Array>  {
   const fetchImpl = options.fetchImpl ?? fetch;
   const timeoutMs = options.timeoutMs ?? 30_000;
 
@@ -222,12 +273,32 @@ export async function cdpScreenshot(
   });
 }
 
-export async function cdpInteract(
+export function cdpScreenshotEffect(
+  cdpUrl: string,
+  url: string,
+  options: { timeoutMs?: number; fetchImpl?: typeof fetch } = {}
+): Effect.Effect<Uint8Array, Error> {
+  return Effect.tryPromise({
+    try: () => cdpScreenshotImpl(cdpUrl, url, options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link cdpScreenshotEffect} for Effect callers. */
+export async function cdpScreenshot(
+  cdpUrl: string,
+  url: string,
+  options: { timeoutMs?: number; fetchImpl?: typeof fetch } = {}
+): Promise<Uint8Array>  {
+  return Effect.runPromise(cdpScreenshotEffect(cdpUrl, url, options));
+}
+
+async function cdpInteractImpl(
   cdpUrl: string,
   url: string,
   steps: BrowserStep[],
   options: { timeoutMs?: number; fetchImpl?: typeof fetch; providerId?: string } = {}
-): Promise<PageContent> {
+): Promise<PageContent>  {
   const fetchImpl = options.fetchImpl ?? fetch;
   const timeoutMs = options.timeoutMs ?? 30_000;
   const provider = options.providerId ?? "chromium";
@@ -282,4 +353,26 @@ export async function cdpInteract(
       provider,
     };
   });
+}
+
+export function cdpInteractEffect(
+  cdpUrl: string,
+  url: string,
+  steps: BrowserStep[],
+  options: { timeoutMs?: number; fetchImpl?: typeof fetch; providerId?: string } = {}
+): Effect.Effect<PageContent, Error> {
+  return Effect.tryPromise({
+    try: () => cdpInteractImpl(cdpUrl, url, steps, options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link cdpInteractEffect} for Effect callers. */
+export async function cdpInteract(
+  cdpUrl: string,
+  url: string,
+  steps: BrowserStep[],
+  options: { timeoutMs?: number; fetchImpl?: typeof fetch; providerId?: string } = {}
+): Promise<PageContent>  {
+  return Effect.runPromise(cdpInteractEffect(cdpUrl, url, steps, options));
 }

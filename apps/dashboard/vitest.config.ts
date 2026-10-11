@@ -13,7 +13,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'e2e-cloud/catalog/**/*.test.ts'],
     pool: 'forks',
   },
 })

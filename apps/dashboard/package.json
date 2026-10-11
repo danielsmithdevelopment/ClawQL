@@ -12,6 +12,10 @@
     "catalog": "node scripts/generate-env-catalog.mjs && node scripts/generate-provider-catalog.mjs",
     "test:e2e": "playwright test",
     "test:e2e:k8s": "CLAWQL_DASHBOARD_E2E=1 playwright test",
+    "test:e2e:cloud": "CLAWQL_E2E_HARNESS=1 playwright test -c e2e-cloud/playwright.config.mjs --project=smoke",
+    "test:e2e:cloud:nightly": "CLAWQL_E2E_HARNESS=1 playwright test -c e2e-cloud/playwright.config.mjs --project=nightly",
+    "test:e2e:cloud:once": "CLAWQL_E2E_HARNESS=1 CLAWQL_CLOUD_E2E_REPEAT=1 playwright test -c e2e-cloud/playwright.config.mjs --project=smoke",
+    "test:e2e:cloud:catalog": "vitest run e2e-cloud/catalog/scenarios.test.ts",
     "test": "vitest run && npm run test:scripts",
     "test:unit": "vitest run",
     "test:scripts": "node --test scripts/openclaw-chat-enrich.test.mjs scripts/openclaw-reply-from-json.test.mjs",
@@ -25,9 +29,12 @@
     "@tailwindcss/postcss": "^4.2.2",
     "class-variance-authority": "^0.7.1",
     "clawql-api": "file:../../packages/clawql-api",
+    "clawql-auth": "file:../../packages/clawql-auth",
+    "clawql-payments": "file:../../packages/clawql-payments",
     "clsx": "^2.1.1",
+    "effect": "^4.0.0",
     "lucide-react": "^0.562.0",
-    "next": "16.3.6",
+    "next": "16.3.8",
     "postcss": "8.5.23",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -44,7 +51,7 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "eslint": "^9.39.0",
-    "eslint-config-next": "16.3.3",
+    "eslint-config-next": "16.3.8",
     "vitest": "4.1.11"
   },
   "overrides": {
@@ -60,12 +67,16 @@
     "hono": "4.13.12",
     "ip-address": "10.7.1",
     "body-parser": "2.3.0",
-    "sharp": "0.35.4",
+    "sharp": "0.35.5",
+    "@modelcontextprotocol/sdk": "1.32.1",
     "postcss": "8.5.23",
+    "postcss-selector-parser": "7.1.6",
     "nanoid": "3.3.18",
     "undici": "7.29.1",
     "next": {
       "postcss": "8.5.23"
-    }
+    },
+    "proxy-addr": "2.0.8",
+    "source-map-js": "1.2.2"
   }
 }

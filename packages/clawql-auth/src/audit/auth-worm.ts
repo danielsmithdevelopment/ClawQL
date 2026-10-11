@@ -140,7 +140,7 @@ function loadDatabaseSync(): DatabaseSyncCtor {
   }
 }
 
-export class AuthWormService extends Context.Tag("clawql/AuthWormService")<
+export class AuthWormService extends Context.Service<
   AuthWormService,
   {
     readonly append: (event: AuthEvent) => Effect.Effect<AuthWormRecord, AuthWormError>;
@@ -148,9 +148,9 @@ export class AuthWormService extends Context.Tag("clawql/AuthWormService")<
     readonly verify: () => Effect.Effect<AuthWormVerifyResult, AuthWormError>;
     readonly reset: () => Effect.Effect<void, AuthWormError>;
   }
->() {}
+>()("clawql/AuthWormService") {}
 
-function memoryAuthWormBackend(): AuthWormService["Type"] {
+function memoryAuthWormBackend(): Context.Service.Shape<typeof AuthWormService> {
   let records: AuthWormRecord[] = [];
   return AuthWormService.of({
     append: (event) =>
@@ -178,7 +178,7 @@ function memoryAuthWormBackend(): AuthWormService["Type"] {
   });
 }
 
-function sqliteAuthWormBackend(path: string): AuthWormService["Type"] {
+function sqliteAuthWormBackend(path: string): Context.Service.Shape<typeof AuthWormService> {
   mkdirSync(dirname(path), { recursive: true });
   const DatabaseSync = loadDatabaseSync();
   const db = new DatabaseSync(path);
@@ -297,7 +297,10 @@ export function authWormLayerFromEnv(
   if (defaultLayer && defaultLayerKey === key) return defaultLayer;
 
   if (mode === "off") {
-    defaultLayer = Layer.die(new AuthWormError({ reason: "auth_audit_store_off" }));
+    defaultLayer = Layer.effect(
+      AuthWormService,
+      Effect.die(new AuthWormError({ reason: "auth_audit_store_off" }))
+    );
     defaultLayerKey = key;
     return defaultLayer;
   }
@@ -315,7 +318,10 @@ export function authWormLayerForTests(
   mode: AuthWormStoreMode = "memory"
 ): Layer.Layer<AuthWormService> {
   if (mode === "off") {
-    return Layer.die(new AuthWormError({ reason: "auth_audit_store_off" }));
+    return Layer.effect(
+      AuthWormService,
+      Effect.die(new AuthWormError({ reason: "auth_audit_store_off" }))
+    );
   }
   const service =
     mode === "memory" ? memoryAuthWormBackend() : sqliteAuthWormBackend(defaultAuthAuditDbPath());

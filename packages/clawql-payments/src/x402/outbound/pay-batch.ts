@@ -184,7 +184,7 @@ export function runOutboundX402PayBatchEffect(
           body: method === "GET" || method === "HEAD" ? undefined : input.body,
         }),
       catch: (cause) => new X402Error({ reason: "probe_fetch_failed", cause }),
-    }).pipe(Effect.catchAll(() => Effect.succeed(null as Response | null)));
+    }).pipe(Effect.catch(() => Effect.succeed(null as Response | null)));
 
     if (!probe) {
       return failResult(mkBatch({ success: false }), "network_error", "probe_failed");
@@ -194,7 +194,7 @@ export function runOutboundX402PayBatchEffect(
       const body = yield* Effect.tryPromise({
         try: () => probe.text(),
         catch: () => new X402Error({ reason: "probe_body_read_failed" }),
-      }).pipe(Effect.catchAll(() => Effect.succeed("")));
+      }).pipe(Effect.catch(() => Effect.succeed("")));
       return {
         ok: true as const,
         status: probe.status,
@@ -206,7 +206,7 @@ export function runOutboundX402PayBatchEffect(
     const probeBody = yield* Effect.tryPromise({
       try: () => probe.text(),
       catch: () => new X402Error({ reason: "probe_body_read_failed" }),
-    }).pipe(Effect.catchAll(() => Effect.succeed("")));
+    }).pipe(Effect.catch(() => Effect.succeed("")));
 
     const terms = parsePaymentRequired(probeBody, probe.headers);
     if (!terms) {
@@ -224,7 +224,7 @@ export function runOutboundX402PayBatchEffect(
 
     const quoteOrErr = yield* quoteFromTerms(terms).pipe(
       Effect.map((q) => ({ ok: true as const, q })),
-      Effect.catchAll((err: OutboundPolicyError) =>
+      Effect.catch((err: OutboundPolicyError) =>
         Effect.succeed({ ok: false as const, reason: err.reason })
       )
     );
@@ -247,7 +247,7 @@ export function runOutboundX402PayBatchEffect(
         hitlApproval: input.hitlApproval,
       },
     }).pipe(
-      Effect.catchAll((err: OutboundPolicyError) =>
+      Effect.catch((err: OutboundPolicyError) =>
         Effect.succeed({
           result: {
             allow: false as const,
@@ -314,7 +314,7 @@ export function runOutboundX402PayBatchEffect(
 
     const reserveOk = yield* counters.reserve(counterKey, quote.amountUsdc).pipe(
       Effect.as(true as const),
-      Effect.catchAll(() => Effect.succeed(false as const))
+      Effect.catch(() => Effect.succeed(false as const))
     );
     if (!reserveOk) {
       return failResult(
@@ -327,11 +327,11 @@ export function runOutboundX402PayBatchEffect(
     const signer = yield* X402SignerService;
     const frozen = yield* signer
       .isFrozen(input.sessionId, input.tenantId, input.agentId)
-      .pipe(Effect.catchAll(() => Effect.succeed(true)));
+      .pipe(Effect.catch(() => Effect.succeed(true)));
     if (frozen) {
       yield* counters
         .releaseReserved(counterKey, quote.amountUsdc)
-        .pipe(Effect.catchAll(() => Effect.void));
+        .pipe(Effect.catch(() => Effect.void));
       return failResult(mkBatch({ success: false, payment: paymentStub() }), "signer_frozen");
     }
 
@@ -346,7 +346,7 @@ export function runOutboundX402PayBatchEffect(
       })
       .pipe(
         Effect.map((s) => ({ ok: true as const, s })),
-        Effect.catchAll((err) =>
+        Effect.catch((err) =>
           Effect.succeed({
             ok: false as const,
             reason: String((err as { reason?: string }).reason ?? err),
@@ -357,7 +357,7 @@ export function runOutboundX402PayBatchEffect(
     if (!signedOrFail.ok) {
       yield* counters
         .releaseReserved(counterKey, quote.amountUsdc)
-        .pipe(Effect.catchAll(() => Effect.void));
+        .pipe(Effect.catch(() => Effect.void));
       return failResult(
         mkBatch({ success: false, payment: paymentStub() }),
         "sign_failed",
@@ -381,12 +381,12 @@ export function runOutboundX402PayBatchEffect(
           body: method === "GET" || method === "HEAD" ? undefined : input.body,
         }),
       catch: (cause) => new X402Error({ reason: "paid_fetch_failed", cause }),
-    }).pipe(Effect.catchAll(() => Effect.succeed(null as Response | null)));
+    }).pipe(Effect.catch(() => Effect.succeed(null as Response | null)));
 
     if (!paid) {
       yield* signer
         .freezeForSession(input.sessionId, input.tenantId, input.agentId, "timeout_after_sign")
-        .pipe(Effect.catchAll(() => Effect.void));
+        .pipe(Effect.catch(() => Effect.void));
       return failResult(
         mkBatch({
           success: false,
@@ -423,7 +423,7 @@ export function runOutboundX402PayBatchEffect(
           });
         },
         catch: (cause) => new X402Error({ reason: "facilitator_verify_failed", cause }),
-      }).pipe(Effect.catchAll(() => Effect.succeed(null as Response | null)));
+      }).pipe(Effect.catch(() => Effect.succeed(null as Response | null)));
 
       if (!verifyRes) {
         yield* signer
@@ -433,7 +433,7 @@ export function runOutboundX402PayBatchEffect(
             input.agentId,
             "facilitator_unreachable_after_sign"
           )
-          .pipe(Effect.catchAll(() => Effect.void));
+          .pipe(Effect.catch(() => Effect.void));
         return failResult(
           mkBatch({
             success: false,
@@ -447,12 +447,12 @@ export function runOutboundX402PayBatchEffect(
       const verifyJson = yield* Effect.tryPromise({
         try: () => verifyRes.json() as Promise<{ isValid?: boolean; invalidReason?: string }>,
         catch: () => new X402Error({ reason: "facilitator_json_failed" }),
-      }).pipe(Effect.catchAll(() => Effect.succeed({ isValid: false as boolean })));
+      }).pipe(Effect.catch(() => Effect.succeed({ isValid: false as boolean })));
 
       if (!verifyJson.isValid) {
         yield* counters
           .releaseReserved(counterKey, quote.amountUsdc)
-          .pipe(Effect.catchAll(() => Effect.void));
+          .pipe(Effect.catch(() => Effect.void));
         return failResult(
           mkBatch({
             success: false,
@@ -467,7 +467,7 @@ export function runOutboundX402PayBatchEffect(
     if (paid.status === 402) {
       yield* counters
         .releaseReserved(counterKey, quote.amountUsdc)
-        .pipe(Effect.catchAll(() => Effect.void));
+        .pipe(Effect.catch(() => Effect.void));
       return failResult(
         mkBatch({
           success: false,
@@ -481,11 +481,11 @@ export function runOutboundX402PayBatchEffect(
     const paidBody = yield* Effect.tryPromise({
       try: () => paid.text(),
       catch: () => new X402Error({ reason: "paid_body_read_failed" }),
-    }).pipe(Effect.catchAll(() => Effect.succeed("")));
+    }).pipe(Effect.catch(() => Effect.succeed("")));
 
     yield* counters
       .settleReserved(counterKey, quote.amountUsdc)
-      .pipe(Effect.catchAll(() => Effect.void));
+      .pipe(Effect.catch(() => Effect.void));
 
     const store = yield* OutboundPolicyStoreService;
     yield* store.markOutboundEnabled(input.tenantId, evaluated.policyVersionId);
@@ -500,7 +500,7 @@ export function runOutboundX402PayBatchEffect(
       }),
     };
   }).pipe(
-    Effect.catchAllDefect(() =>
+    Effect.catchDefect(() =>
       Effect.succeed(
         failResult(
           batchBase({

@@ -41,6 +41,9 @@ bun.lockb
 # Test / coverage
 coverage/
 .nyc_output/
+**/test-results/
+**/playwright-report/
+apps/dashboard/e2e-cloud/results/
 
 # ESLint / Prettier (local + CI caches)
 .eslintcache
@@ -89,3 +92,4 @@ benchmarks/pageindex-ab/results/
 # Managed Edge Gateway local runtime
 docs/examples/managed-gateway/.env
 docs/examples/managed-gateway/data/
+*.unsuppressed.tmp.ts

@@ -31,7 +31,7 @@ export class ClientCredentialsFlow {
   constructor(private readonly fetchImpl: typeof fetch = fetch) {}
 
   getToken(config: ClientCredentialsConfig): Effect.Effect<StoredOAuthToken, OAuthFlowError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const fetchFn = config.fetchImpl ?? this.fetchImpl;
       const body = new URLSearchParams({
         grant_type: "client_credentials",
@@ -59,7 +59,7 @@ export class ClientCredentialsFlow {
         const detail = yield* Effect.tryPromise({
           try: () => response.text(),
           catch: () => undefined,
-        }).pipe(Effect.catchAll(() => Effect.succeed("")));
+        }).pipe(Effect.catch(() => Effect.succeed("")));
         return yield* Effect.fail(
           new OAuthFlowError({
             reason: `Client credentials token request failed: ${response.status}${detail ? ` ${detail.slice(0, 200)}` : ""}`,
@@ -105,20 +105,18 @@ export function createClientCredentialsFlow(fetchImpl?: typeof fetch): ClientCre
   return new ClientCredentialsFlow(fetchImpl);
 }
 
-export class ClientCredentialsFlowService extends Context.Tag(
-  "clawql/ClientCredentialsFlowService"
-)<
+export class ClientCredentialsFlowService extends Context.Service<
   ClientCredentialsFlowService,
   {
     readonly getToken: (
       config: ClientCredentialsConfig
     ) => Effect.Effect<StoredOAuthToken, OAuthFlowError>;
   }
->() {}
+>()("clawql/ClientCredentialsFlowService") {}
 
 export function clientCredentialsFlowServiceFromFlow(
   flow: ClientCredentialsFlow
-): ClientCredentialsFlowService["Type"] {
+): Context.Service.Shape<typeof ClientCredentialsFlowService> {
   return ClientCredentialsFlowService.of({
     getToken: (config) => flow.getToken(config),
   });

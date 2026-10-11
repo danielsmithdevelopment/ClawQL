@@ -156,7 +156,7 @@ export function sendSignedEvent(
         },
         body
       ).pipe(
-        Effect.catchAll((err) =>
+        Effect.catch((err) =>
           Effect.succeed({
             ok: false,
             status: 0,

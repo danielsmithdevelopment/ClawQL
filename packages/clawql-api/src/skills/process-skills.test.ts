@@ -88,4 +88,37 @@ describe("skills MCP tool handlers", () => {
     expect(body.ok).toBe(true);
     expect(body.skill?.body).toContain("Body text.");
   });
+
+  it("omits operator-audience skills from default skills_list and skills_get", async () => {
+    await registerProcessSkills("clawql-supabase", [
+      {
+        skillId: "supabase-managed-signup",
+        name: "Supabase managed signup",
+        description: "Operator runbook",
+        content: "# Operator signup",
+        applicability: "query-matched",
+        audience: "operator",
+      },
+      {
+        skillId: "agent-ok",
+        content: "# Agent skill",
+        applicability: "query-matched",
+      },
+    ]);
+    const listed = await handleSkillsListToolInput({});
+    const listBody = JSON.parse(listed.content[0]?.text ?? "{}") as {
+      ok: boolean;
+      skills: { skillId: string }[];
+    };
+    expect(listBody.ok).toBe(true);
+    expect(listBody.skills.map((s) => s.skillId)).toEqual(["agent-ok"]);
+
+    const hidden = await handleSkillsGetToolInput({ skillId: "supabase-managed-signup" });
+    const hiddenBody = JSON.parse(hidden.content[0]?.text ?? "{}") as {
+      ok: boolean;
+      error?: string;
+    };
+    expect(hiddenBody.ok).toBe(false);
+    expect(hiddenBody.error).toContain("supabase-managed-signup");
+  });
 });

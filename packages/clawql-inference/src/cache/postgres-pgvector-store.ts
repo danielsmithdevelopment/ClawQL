@@ -1,4 +1,5 @@
 import type pg from "pg";
+import { Effect } from "effect";
 import { ensureInferenceSchema, getInferencePgPool } from "../store/postgres-pool.js";
 import type {
   SemanticCacheConfig,
@@ -8,6 +9,10 @@ import type {
   SemanticCacheStore,
 } from "./types.js";
 import { parseVectorText, toVectorLiteral } from "./vector.js";
+
+function asError(e: unknown): Error {
+  return e instanceof Error ? e : new Error(String(e));
+}
 
 /** Distributed semantic cache backed by Postgres pgvector (Layer 5). */
 export class PostgresSemanticCacheStore implements SemanticCacheStore {
@@ -179,27 +184,40 @@ export function resolveSemanticCacheBackend(
   return "memory";
 }
 
+export function createSemanticCacheStoreEffect(
+  config: SemanticCacheConfig,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<SemanticCacheStore, Error> {
+  return Effect.gen(function* () {
+    const backend = resolveSemanticCacheBackend(env);
+    if (backend === "postgres") {
+      const pool = getInferencePgPool(env);
+      if (!pool) {
+        console.warn(
+          "[clawql-inference] CLAWQL_INFERENCE_SEMANTIC_CACHE_BACKEND=postgres but no inference DB configured; using in-memory cache"
+        );
+      } else {
+        return new PostgresSemanticCacheStore(pool, config, env);
+      }
+    }
+
+    const { InMemorySemanticCacheStore } = yield* Effect.tryPromise({
+      try: () => import("./in-memory.js"),
+      catch: asError,
+    });
+    return new InMemorySemanticCacheStore({
+      enabled: config.enabled,
+      threshold: config.threshold,
+      ttlMs: config.ttlMs,
+      maxEntries: config.maxEntries,
+    });
+  });
+}
+
+/** Promise façade. */
 export async function createSemanticCacheStore(
   config: SemanticCacheConfig,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<SemanticCacheStore> {
-  const backend = resolveSemanticCacheBackend(env);
-  if (backend === "postgres") {
-    const pool = getInferencePgPool(env);
-    if (!pool) {
-      console.warn(
-        "[clawql-inference] CLAWQL_INFERENCE_SEMANTIC_CACHE_BACKEND=postgres but no inference DB configured; using in-memory cache"
-      );
-    } else {
-      return new PostgresSemanticCacheStore(pool, config, env);
-    }
-  }
-
-  const { InMemorySemanticCacheStore } = await import("./in-memory.js");
-  return new InMemorySemanticCacheStore({
-    enabled: config.enabled,
-    threshold: config.threshold,
-    ttlMs: config.ttlMs,
-    maxEntries: config.maxEntries,
-  });
+  return Effect.runPromise(createSemanticCacheStoreEffect(config, env));
 }

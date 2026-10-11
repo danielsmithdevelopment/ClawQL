@@ -402,9 +402,7 @@ export function evaluateOutboundPayment(
 }
 
 /** Effect service wrapping policy load + evaluate for DI. */
-export class OutboundPaymentPolicyService extends Context.Tag(
-  "clawql/OutboundPaymentPolicyService"
-)<
+export class OutboundPaymentPolicyService extends Context.Service<
   OutboundPaymentPolicyService,
   {
     readonly load: (
@@ -416,7 +414,7 @@ export class OutboundPaymentPolicyService extends Context.Tag(
       action: OutboundPaymentAction
     ) => Effect.Effect<OutboundSpendDecision, OutboundPolicyError>;
   }
->() {}
+>()("clawql/OutboundPaymentPolicyService") {}
 
 export const OutboundPaymentPolicyServiceLive = Layer.succeed(
   OutboundPaymentPolicyService,

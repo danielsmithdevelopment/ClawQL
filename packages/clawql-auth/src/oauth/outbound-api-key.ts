@@ -52,7 +52,7 @@ export class OutboundAPIKeyManager {
     providerId: string,
     sessionId: string
   ): Effect.Effect<string, OutboundApiKeyError | unknown> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const path = this.pathTemplate.replaceAll("{providerId}", providerId);
       const key = yield* this.options.secrets.getSecret(path);
       if (!key) {
@@ -87,9 +87,7 @@ export function createOutboundAPIKeyManager(
   return new OutboundAPIKeyManager(options);
 }
 
-export class OutboundAPIKeyManagerService extends Context.Tag(
-  "clawql/OutboundAPIKeyManagerService"
-)<
+export class OutboundAPIKeyManagerService extends Context.Service<
   OutboundAPIKeyManagerService,
   {
     readonly getKey: (
@@ -97,11 +95,11 @@ export class OutboundAPIKeyManagerService extends Context.Tag(
       sessionId: string
     ) => Effect.Effect<string, OutboundApiKeyError | unknown>;
   }
->() {}
+>()("clawql/OutboundAPIKeyManagerService") {}
 
 export function outboundAPIKeyManagerServiceFromManager(
   manager: OutboundAPIKeyManager
-): OutboundAPIKeyManagerService["Type"] {
+): Context.Service.Shape<typeof OutboundAPIKeyManagerService> {
   return OutboundAPIKeyManagerService.of({
     getKey: (providerId, sessionId) => manager.getKey(providerId, sessionId),
   });

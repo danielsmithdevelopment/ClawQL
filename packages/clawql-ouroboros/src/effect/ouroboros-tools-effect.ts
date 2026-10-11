@@ -112,7 +112,7 @@ export function executeMeasureDriftEffect(
     }
 
     return { ok: true as const, report: payload, seedId: rootSeedId };
-  }).pipe(Effect.catchAll((err) => Effect.succeed(measureDriftFailure(err))));
+  }).pipe(Effect.catch((err) => Effect.succeed(measureDriftFailure(err))));
 }
 
 export type ProposeSeedRevisionResult = Awaited<
@@ -160,7 +160,7 @@ export function executeProposeSeedRevisionFromEvalEffect(
       })
     );
   }).pipe(
-    Effect.catchAll((err) =>
+    Effect.catch((err) =>
       Effect.succeed({
         ok: false as const,
         error: taggedFailureMessage(err),

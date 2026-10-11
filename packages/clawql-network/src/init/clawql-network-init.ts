@@ -94,7 +94,7 @@ export const initNetworking = (
           endpoint: handle.endpoint,
           started: true as const,
         })),
-        Effect.catchAll(() =>
+        Effect.catch(() =>
           Effect.succeed({
             region,
             endpoint: "",

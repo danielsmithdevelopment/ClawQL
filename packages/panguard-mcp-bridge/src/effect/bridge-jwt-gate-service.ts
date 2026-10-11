@@ -10,15 +10,12 @@ export class BridgeJwtGateError extends Data.TaggedError("BridgeJwtGateError")<{
   readonly cause?: unknown;
 }> {}
 
-export class BridgeJwtGateService extends Context.Tag("clawql/BridgeJwtGateService")<
-  BridgeJwtGateService,
-  {
+export class BridgeJwtGateService extends Context.Service<BridgeJwtGateService, {
     readonly isEnabled: () => Effect.Effect<boolean>;
     readonly verifyAuthorizationHeader: (
       authorization: string | undefined
     ) => Effect.Effect<BridgeJwtVerifyResult, BridgeJwtGateError>;
-  }
->() {}
+  }>()("clawql/BridgeJwtGateService") {}
 
 export const BridgeJwtGateServiceLive = Layer.succeed(
   BridgeJwtGateService,

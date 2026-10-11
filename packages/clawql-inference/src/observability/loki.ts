@@ -57,7 +57,7 @@ export const pushInferenceRecordToLokiEffect = (
     });
   }).pipe(
     Effect.provide(lokiLogPushLiveLayer(env)),
-    Effect.catchAll((err) =>
+    Effect.catch((err) =>
       Effect.sync(() => {
         console.error("[clawql-inference-loki] push failed:", err.reason);
       })

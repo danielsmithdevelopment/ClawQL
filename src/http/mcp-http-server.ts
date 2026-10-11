@@ -43,7 +43,6 @@ import {
   getVaultStartupStatus,
   validateOrDegradeObsidianVaultAtStartup,
 } from "../host/vault-config.js";
-import { registerPostgresPoolShutdownHooks } from "clawql-memory/vector/pgvector";
 import { type ClawqlOptionalToolFlags } from "clawql-api";
 import { resolvePluginCompositionFlags } from "../composition/resolve-plugin-flags.js";
 import { getNativeProtocolMetricsSnapshot, nativeProtocolMetricsEnabled } from "clawql-api";
@@ -216,7 +215,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (!options.skipSpecPreload) {
     await loadSpec();
     await preloadSchemaFieldCacheFromDisk();
-    await validateOrDegradeObsidianVaultAtStartup();
+    const { resolvePluginCompositionFlags } = await import("../composition/resolve-plugin-flags.js");
+    if (resolvePluginCompositionFlags().enableMemory) {
+      await validateOrDegradeObsidianVaultAtStartup();
+    }
   }
 
   const mcpPath = options.mcpPath?.trim() || process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;
@@ -272,7 +274,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   const resolveEmaAdminClaims = (req: import("express").Request) =>
     resolveAtrClaimsFromHeadersEffect(req.headers, gatewayAuthConfig).pipe(
       Effect.map((claims) => claims),
-      Effect.catchAll(() => Effect.succeed(null as AtrClaims | null))
+      Effect.catch(() => Effect.succeed(null as AtrClaims | null))
     );
 
   const emaAdminAuth = {
@@ -320,6 +322,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
               ...emaAdminAuth,
             }
           : undefined,
+      grantAdmin:
+        mcpOAuthRuntime && emaAdminConfigured && mcpOAuthRuntime.config.grantKeyStore != null
+          ? { ...emaAdminAuth }
+          : undefined,
       idJagIssuer: idJagIssuer
         ? {
             service: idJagIssuer.service,
@@ -361,10 +367,30 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       const result = await Effect.runPromise(
         resolveAtrClaimsFromHeadersEffect(req.headers, gatewayAuthConfig).pipe(
           Effect.map((claims) => ({ ok: true, claims }) as const),
-          Effect.catchAll((err) => Effect.succeed({ ok: false, error: err.reason } as const))
+          Effect.catch((err) => Effect.succeed({ ok: false, error: err.reason } as const))
         )
       );
       if (!result.ok) {
+        // MCP OAuth discovery challenge (RFC 9728): clients follow resource_metadata
+        // to the protected-resource doc on this MCP origin.
+        if (mcpOAuthRuntime) {
+          const { buildMcpWwwAuthenticateHeaderEffect, resolvePublicOriginEffect } =
+            await import("clawql-auth");
+          const origin = await Effect.runPromise(
+            resolvePublicOriginEffect({
+              proto: req.get("x-forwarded-proto") ?? req.protocol,
+              host: req.get("host") ?? "localhost",
+            })
+          );
+          const wwwAuth = await Effect.runPromise(
+            buildMcpWwwAuthenticateHeaderEffect({
+              resourceMetadataUrl: `${origin}/.well-known/oauth-protected-resource`,
+              error: "invalid_token",
+              errorDescription: result.error,
+            })
+          );
+          res.setHeader("WWW-Authenticate", wwwAuth);
+        }
         res.status(401).json({ error: result.error });
         return;
       }
@@ -794,11 +820,17 @@ export async function startMcpHttpServer(): Promise<void> {
   await maybeInitOtelTracing();
   await maybeVerifyReleaseManifestAtStartup();
   registerSpecCacheShutdownHooks();
-  registerPostgresPoolShutdownHooks();
+  const { resolvePluginCompositionFlags } = await import("../composition/resolve-plugin-flags.js");
+  if (resolvePluginCompositionFlags().enableMemory) {
+    const { registerPostgresPoolShutdownHooks } = await import("clawql-memory/vector/pgvector");
+    registerPostgresPoolShutdownHooks();
+  }
   const { ensureClawqlApi, registerClawqlApiShutdownHooks } =
     await import("../composition/clawql-api-adapters.js");
   registerClawqlApiShutdownHooks();
   await ensureClawqlApi();
+  const { wireOptionalToolDeps } = await import("../mcp/tools.js");
+  await wireOptionalToolDeps();
   const { configureMcpEventsProcessEmitter } = await import("../mcp/mcp-events-host.js");
   configureMcpEventsProcessEmitter();
   const { ensureProcessWormHostBooted } = await import("../composition/process-worm-host.js");

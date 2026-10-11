@@ -1,4 +1,4 @@
-import { Context, Effect, Either, Layer } from "effect";
+import { Context, Effect, Result, Layer } from "effect";
 import { PaymentsConfigService } from "../config/payments-config-service.js";
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
 import { ConfigError, X402Error } from "../errors/payment-errors.js";
@@ -63,7 +63,7 @@ export type X402Settlement = {
 };
 
 /** Effect service for x402 gate enforcement and settlement reconciliation. */
-export class X402EnforcementService extends Context.Tag("clawql/X402EnforcementService")<
+export class X402EnforcementService extends Context.Service<
   X402EnforcementService,
   {
     readonly enforceGate: (
@@ -77,7 +77,7 @@ export class X402EnforcementService extends Context.Tag("clawql/X402EnforcementS
       correlationId?: string;
     }) => Effect.Effect<X402Settlement, never>;
   }
->() {}
+>()("clawql/X402EnforcementService") {}
 
 export function x402EnforcementLiveLayer(): Layer.Layer<
   X402EnforcementService,
@@ -118,7 +118,7 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
           )
           .pipe(
             Effect.asVoid,
-            Effect.catchAll(() => Effect.void)
+            Effect.catch(() => Effect.void)
           );
 
       const reconcileSettlement = (input: {
@@ -147,7 +147,7 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
                 correlationId: input.correlationId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
           return settlement;
         });
 
@@ -257,10 +257,10 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
                 env,
                 fetchImpl: input.fetchImpl,
               })
-              .pipe(Effect.either);
+              .pipe(Effect.result);
 
-            if (Either.isLeft(verification)) {
-              const err = verification.left;
+            if (Result.isFailure(verification)) {
+              const err = verification.failure;
               const reason =
                 err instanceof MppVerificationError
                   ? err.reason
@@ -284,10 +284,10 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
 
             return {
               action: "allow" as const,
-              payer: verification.right.payer,
+              payer: verification.success.payer,
               resource: gate.resource,
-              mppReceipt: verification.right.receipt,
-              mppReceiptHeader: verification.right.receiptHeader,
+              mppReceipt: verification.success.receipt,
+              mppReceiptHeader: verification.success.receiptHeader,
             };
           }
 

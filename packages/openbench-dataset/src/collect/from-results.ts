@@ -6,6 +6,7 @@ import type { OpenBenchTraceV1 } from "../schema/types.js";
 import { TraceWriter } from "../writer/trace-writer.js";
 import { LocalFsBackend } from "../backends/types.js";
 import { scrubJsonValue, scrubTextLocal } from "../scrub/local.js";
+import { Effect } from "effect";
 
 export type CollectFromResultsOptions = {
   artifactDir: string;
@@ -78,13 +79,13 @@ function correlationMatches(
 /**
  * Build OpenBenchTrace pack under `$artifactDir/dataset/` from OpenBench results.json.
  */
-export async function collectFromResults(opts: CollectFromResultsOptions): Promise<{
+async function collectFromResultsImpl(opts: CollectFromResultsOptions): Promise<{
   datasetDir: string;
   traceCount: number;
   suitableCount: number;
   callStoreRecords: number;
   manifestId: string;
-}> {
+}>  {
   const resultsPath = join(opts.artifactDir, "results.json");
   const results = JSON.parse(await readFile(resultsPath, "utf8")) as Record<string, unknown>;
   const taskId = opts.taskId || String(results.task || "unknown");
@@ -253,6 +254,30 @@ export async function collectFromResults(opts: CollectFromResultsOptions): Promi
     callStoreRecords: callRecords.length,
     manifestId,
   };
+}
+
+export function collectFromResultsEffect(opts: CollectFromResultsOptions): Effect.Effect<{
+  datasetDir: string;
+  traceCount: number;
+  suitableCount: number;
+  callStoreRecords: number;
+  manifestId: string;
+}, Error> {
+  return Effect.tryPromise({
+    try: () => collectFromResultsImpl(opts),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link collectFromResultsEffect} for Effect callers. */
+export async function collectFromResults(opts: CollectFromResultsOptions): Promise<{
+  datasetDir: string;
+  traceCount: number;
+  suitableCount: number;
+  callStoreRecords: number;
+  manifestId: string;
+}>  {
+  return Effect.runPromise(collectFromResultsEffect(opts));
 }
 
 export function sha256Buffer(buf: Buffer): string {

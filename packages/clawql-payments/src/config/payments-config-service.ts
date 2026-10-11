@@ -8,7 +8,7 @@ import { PaymentsConfigSchema, type PaymentsConfig } from "./schema.js";
 export { PaymentsConfigSchema, type PaymentsConfig };
 
 /** Effect service for `payments.json` persistence. */
-export class PaymentsConfigService extends Context.Tag("clawql/PaymentsConfigService")<
+export class PaymentsConfigService extends Context.Service<
   PaymentsConfigService,
   {
     readonly load: () => Effect.Effect<PaymentsConfig, ConfigError>;
@@ -17,7 +17,7 @@ export class PaymentsConfigService extends Context.Tag("clawql/PaymentsConfigSer
       patch: Partial<PaymentsConfig>
     ) => Effect.Effect<{ config: PaymentsConfig; path: string }, ConfigError>;
   }
->() {}
+>()("clawql/PaymentsConfigService") {}
 
 function parsePaymentsConfig(raw: string): PaymentsConfig {
   return PaymentsConfigSchema.parse(JSON.parse(raw));

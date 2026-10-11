@@ -11,9 +11,7 @@ import {
 import type { BurstArchitectureWORMEntryType } from "../worm-types.js";
 import { BURST_ARCHITECTURE_WORM_ENTRY_TYPES } from "../worm-types.js";
 
-export class BurstOperatorService extends Context.Tag("clawql/BurstOperatorService")<
-  BurstOperatorService,
-  {
+export class BurstOperatorService extends Context.Service<BurstOperatorService, {
     readonly detectDrift: (
       meshAllows: PolicyAllowSet,
       atrAllows: PolicyAllowSet
@@ -21,8 +19,7 @@ export class BurstOperatorService extends Context.Tag("clawql/BurstOperatorServi
     readonly wormEntryTypes: () => Effect.Effect<readonly BurstArchitectureWORMEntryType[]>;
     readonly placeSessionCell: (req: PlacementRequest) => Effect.Effect<PlacementDecision>;
     readonly bridgeMeshDenial: (event: MeshDenialEvent) => Effect.Effect<BridgedMeshDenial>;
-  }
->() {}
+  }>()("clawql/BurstOperatorService") {}
 
 export const BurstOperatorServiceLive = Layer.succeed(
   BurstOperatorService,

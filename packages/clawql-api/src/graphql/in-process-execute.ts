@@ -11,13 +11,14 @@ import {
   resolveGraphQLFieldFromSchema,
 } from "./execute-helpers.js";
 import { buildGraphQLSchema } from "./schema-builder.js";
+import { Effect } from "effect";
 
 export type InProcessGraphQLResult = { ok: true; data: unknown } | { ok: false; error: string };
 
 /**
  * Execute the GraphQL field that maps to `op`, with the same document shape as MCP `execute`.
  */
-export async function executeOperationGraphQL(
+async function executeOperationGraphQLImpl(
   openapi: object,
   baseUrl: string,
   op: Operation,
@@ -76,4 +77,30 @@ export async function executeOperationGraphQL(
       : undefined;
 
   return { ok: true, data: rootData };
+}
+
+export function executeOperationGraphQLEffect(
+  openapi: object,
+  baseUrl: string,
+  op: Operation,
+  rawArgs: Record<string, unknown>,
+  fieldsSelectionString: string
+): Effect.Effect<InProcessGraphQLResult, Error> {
+  return Effect.tryPromise({
+    try: () => executeOperationGraphQLImpl(openapi, baseUrl, op, rawArgs, fieldsSelectionString),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link executeOperationGraphQLEffect} for Effect callers. */
+export async function executeOperationGraphQL(
+  openapi: object,
+  baseUrl: string,
+  op: Operation,
+  rawArgs: Record<string, unknown>,
+  fieldsSelectionString: string
+): Promise<InProcessGraphQLResult> {
+  return Effect.runPromise(
+    executeOperationGraphQLEffect(openapi, baseUrl, op, rawArgs, fieldsSelectionString)
+  );
 }

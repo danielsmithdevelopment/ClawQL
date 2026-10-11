@@ -4,12 +4,13 @@
  * CLAWQL_WORM_ENABLED=1 enables the process trail.
  * CLAWQL_WORM_LOCAL=memory|sqlite|postgres (default: sqlite when path set, else memory)
  * CLAWQL_WORM_REMOTE=memory|s3 (default: memory)
+ * CLAWQL_WORM_MEMORY_MAX_ENTRIES — ring cap for memory backend (default 10000; 0 = unbounded)
  * CLAWQL_WORM_SQLITE_PATH, CLAWQL_WORM_POSTGRES_URL, CLAWQL_WORM_S3_* for backends
  */
 
 import { Effect } from "effect";
 import { AuditError } from "./errors.js";
-import { MemoryBackend } from "./storage/memory.js";
+import { MemoryBackend, memoryBackendMaxEntriesFromEnv } from "./storage/memory.js";
 import { PostgresBackend } from "./storage/postgres.js";
 import { S3Backend } from "./storage/s3.js";
 import { SQLiteBackend } from "./storage/sqlite.js";
@@ -52,7 +53,9 @@ function makeLocal(env: NodeJS.ProcessEnv): Effect.Effect<LocalStorageBackend, A
           : envTrim(env, "CLAWQL_WORM_POSTGRES_URL")
             ? "postgres"
             : "memory");
-      if (mode === "memory") return new MemoryBackend();
+      if (mode === "memory") {
+        return new MemoryBackend({ maxEntries: memoryBackendMaxEntriesFromEnv(env) });
+      }
       if (mode === "sqlite") {
         const path = envTrim(env, "CLAWQL_WORM_SQLITE_PATH") ?? "./data/clawql-worm.sqlite";
         return new SQLiteBackend({ path });
@@ -78,7 +81,9 @@ function makeRemote(env: NodeJS.ProcessEnv): Effect.Effect<StorageBackend, Audit
   return Effect.try({
     try: () => {
       const mode = envTrim(env, "CLAWQL_WORM_REMOTE") ?? "memory";
-      if (mode === "memory") return new MemoryBackend();
+      if (mode === "memory") {
+        return new MemoryBackend({ maxEntries: memoryBackendMaxEntriesFromEnv(env) });
+      }
       if (mode === "s3") {
         const bucket = envTrim(env, "CLAWQL_WORM_S3_BUCKET");
         if (!bucket) {

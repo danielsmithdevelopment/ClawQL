@@ -69,13 +69,13 @@ _Full design: [Modularization v2.1](./clawql-modularization-v2.md) · [Token eff
 ## V. Layer 3: Memory 2.0 (Persistence-First)
 
 - **Documents**: Full pipeline with Presidio redaction before any persistence.
-- **Storage**: Vault (files) + Graph + vectorless PageIndex (deterministic hierarchical recall) + optional semantic layer.
+- **Storage (8.0):** Vault (files) + vector recall + optional Onyx. PageIndex and CodeGraph were purged after graded evals failed the ship bar — see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md). Vectify-style redesign is [post-8.0 backlog](../backlog/post-8.0-vectify-pageindex.md).
 - Every node is Merkle-stamped. Recalls are filtered by ATRClaims.
 - Supports semantic + structural caching and history distillation for long sessions.
 
 ## VI. Layer 4: Ouroboros (Strategic Coordination)
 
-**Shipped today:** [`clawql-ouroboros`](../ouroboros/clawql-ouroboros.md) — specification-first seeds, evolutionary loop, ontology convergence gates, optional MCP tools when `CLAWQL_ENABLE_OUROBOROS=1`.
+**Shipped today:** [`clawql-ouroboros`](../ouroboros/clawql-ouroboros.md) — specification-first seeds, evolutionary loop, ontology convergence gates; agent-facing MCP tools are **opt-in** via `CLAWQL_ENABLE_OUROBOROS_TOOLS=1` (or instance/tier `ouroboros.enabled: true`).
 
 **Roadmap (DAOS coordination — not shipped yet):**
 

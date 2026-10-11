@@ -4,7 +4,10 @@
  */
 
 import type { PoolClient } from "pg";
+import { Effect } from "effect";
 import { embeddingVectorDimension } from "../embedding/embedding.js";
+import { MemoryError } from "../effect/memory-errors.js";
+import { memoryFromPromise } from "../effect/memory-effect-utils.js";
 
 /** Bump when adding a new migration step. */
 export const PG_HYBRID_MEMORY_SCHEMA_VERSION = 2;
@@ -23,7 +26,15 @@ async function currentMigrationVersion(client: PoolClient): Promise<number> {
  * Apply pending migrations inside an optional outer transaction.
  * Safe to call on every pool checkout path (idempotent DDL).
  */
-export async function runPostgresHybridMemoryMigrations(client: PoolClient): Promise<void> {
+export function runPostgresHybridMemoryMigrationsEffect(
+  client: PoolClient
+): Effect.Effect<void, MemoryError> {
+  return memoryFromPromise(async () => {
+    await runPostgresHybridMemoryMigrationsBody(client);
+  });
+}
+
+async function runPostgresHybridMemoryMigrationsBody(client: PoolClient): Promise<void> {
   await client.query(`
     CREATE TABLE IF NOT EXISTS clawql_pg_schema_migrations (
       version INTEGER PRIMARY KEY,
@@ -88,4 +99,9 @@ export async function runPostgresHybridMemoryMigrations(client: PoolClient): Pro
       `clawql Postgres migrations incomplete: at v${v}, expected ${PG_HYBRID_MEMORY_SCHEMA_VERSION}`
     );
   }
+}
+
+/** Promise façade. */
+export async function runPostgresHybridMemoryMigrations(client: PoolClient): Promise<void> {
+  return Effect.runPromise(runPostgresHybridMemoryMigrationsEffect(client));
 }

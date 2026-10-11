@@ -119,20 +119,15 @@ export function mapKarpenterLifecycle(
   });
 }
 
-export class KarpenterLifecycleWatchService extends Context.Tag(
-  "clawql/KarpenterLifecycleWatchService"
-)<
-  KarpenterLifecycleWatchService,
-  {
+export class KarpenterLifecycleWatchService extends Context.Service<KarpenterLifecycleWatchService, {
     readonly map: (rec: KarpenterLifecycleRecord) => Effect.Effect<KarpenterLifecycleMapped>;
     readonly ingest: (records: readonly KarpenterLifecycleRecord[]) => Effect.Effect<{
       readonly mapped: readonly KarpenterLifecycleMapped[];
       readonly watchEvents: readonly WatchEvent[];
     }>;
-  }
->() {}
+  }>()("clawql/KarpenterLifecycleWatchService") {}
 
-export function makeKarpenterLifecycleWatchService(): Context.Tag.Service<
+export function makeKarpenterLifecycleWatchService(): Context.Service.Shape<
   typeof KarpenterLifecycleWatchService
 > {
   return {
@@ -156,7 +151,7 @@ export const KarpenterLifecycleWatchLive: Layer.Layer<KarpenterLifecycleWatchSer
 
 /** Push mapped Karpenter events onto BurstWatchStub. */
 export function enqueueKarpenterRecordsToStub(
-  stub: Context.Tag.Service<typeof BurstWatchStub>,
+  stub: Context.Service.Shape<typeof BurstWatchStub>,
   records: readonly KarpenterLifecycleRecord[]
 ): Effect.Effect<
   { readonly enqueued: number; readonly wormTypes: readonly OperatorLifecycleWORMEntryType[] },

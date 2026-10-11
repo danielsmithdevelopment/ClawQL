@@ -212,7 +212,7 @@ export function executeMemoryRecallCoreEffect(
     let indexSurvey: OkfIndexSurvey | undefined;
     let indexFirstBodyLoad = false;
     let bodiesLoaded = 0;
-    let vaultRankerMode: "idf" | "bm25" | undefined;
+    let vaultRankerMode: "idf" | undefined;
 
     if (wantVault || wantVector) {
       const useIndexFirst = indexFirstRecallEnabled();
@@ -268,7 +268,7 @@ export function executeMemoryRecallCoreEffect(
           continue;
         }
         const text = yield* memoryFromPromise(() => readVaultTextFile(vault, rel)).pipe(
-          Effect.catchAll(() => Effect.succeed(undefined))
+          Effect.catch(() => Effect.succeed(undefined))
         );
         if (text === undefined) continue;
         // OKF v0.2 — never surface retracted knowledge; down-weight stale/superseded.
@@ -280,11 +280,11 @@ export function executeMemoryRecallCoreEffect(
       bodiesLoaded = files.length;
       scannedFiles = restrictBodies ? mdFiles.length : files.length;
 
-      // Lexical ranker: IDF+log-TF (default) or Okapi BM25 via CLAWQL_MEMORY_VAULT_RANKER.
+      // Lexical ranker: corpus IDF + log-TF (only mode — bm25 removed in 8.0.0).
       let rankerStats: VaultRankerStats | undefined;
       if (wantVault) {
         vaultRankerMode = yield* resolveVaultRankerModeEffect();
-        rankerStats = yield* buildVaultRankerStatsEffect(corpusTexts, vaultRankerMode);
+        rankerStats = yield* buildVaultRankerStatsEffect(corpusTexts);
       }
       const catalogScoreByPath = new Map<string, number>();
       if (indexSurvey) {
@@ -380,7 +380,7 @@ export function executeMemoryRecallCoreEffect(
           if (sim < minVectorSimLoad) continue;
           if (textByRel.has(p)) continue;
           const text = yield* memoryFromPromise(() => readVaultTextFile(vault, p)).pipe(
-            Effect.catchAll(() => Effect.succeed(undefined))
+            Effect.catch(() => Effect.succeed(undefined))
           );
           if (text === undefined) continue;
           const fm = parseVaultFrontmatter(text);
@@ -391,8 +391,7 @@ export function executeMemoryRecallCoreEffect(
         }
         // Recompute lexical scores over the expanded body set.
         if (wantVault) {
-          const mode2 = vaultRankerMode ?? (yield* resolveVaultRankerModeEffect());
-          const stats2 = yield* buildVaultRankerStatsEffect(corpusTexts, mode2);
+          const stats2 = yield* buildVaultRankerStatsEffect(corpusTexts);
           for (const f of files) {
             const fm = parseVaultFrontmatter(f.text);
             let score = scoreWithVaultRanker(query, f.text, stats2);
@@ -610,7 +609,7 @@ export function executeMemoryRecallCoreEffect(
           sourcesUsed,
         },
       });
-    }).pipe(Effect.catchAll(() => Effect.void));
+    }).pipe(Effect.catch(() => Effect.void));
 
     return yield* memoryFromPromise(async () => {
       const { maybeEnrichHarveyLabRecall } = await import("../recall/harvey-lab-enrich.js");

@@ -91,7 +91,7 @@ The chat panel uses [shadcn/ui June 2026 chat components](https://ui.shadcn.com/
 
 Initialized via `npx shadcn@latest init` in `apps/dashboard/`; headless scroll logic from `@shadcn/react/message-scroller`.
 
-**Theme:** zinc/orange dashboard palette; shadcn `--primary` overridden to orange in `.dark` ([`apps/dashboard/src/styles/tailwind.css`](../../apps/dashboard/src/styles/tailwind.css)).
+**Theme:** zinc/orange dashboard palette; shadcn `--primary` overridden to orange in `.dark` ([`apps/dashboard/src/styles/tailwind.css`](../../apps/dashboard/src/styles/tailwind.css)). Managed **`cloud.clawql.com`** uses this same kit ([ADR 0012](../adr/0012-console-typescript-shadcn.md)).
 
 ---
 

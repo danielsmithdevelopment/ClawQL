@@ -10,6 +10,7 @@ import {
   FastDecisionDefaultStackLive,
   FastDecisionScorer,
   FastDecisionTestStackLive,
+  routingCatalogAlignedForProductionTrust,
   runFastDecision,
   seedBuiltinUseSites,
   type FastDecisionCandidate,
@@ -17,7 +18,10 @@ import {
   type FastDecisionResult,
 } from "clawql-core/classifier";
 
-/** Use sites that may return calibrated=true at 8.0.0 launch. */
+/** Use sites that may return calibrated=true at 8.0.0 launch *once* the live
+ * default MCP catalog matches the frozen routing digest. Catalog drift
+ * (`routingCatalogAlignedForProductionTrust`) currently forces calibrated=false.
+ */
 export const PRODUCTION_TRUSTED_USE_SITES: ReadonlySet<string> = new Set([
   "search_provider_tool_routing",
 ]);
@@ -33,6 +37,8 @@ export type DecisionChoiceQuestion = {
   readonly type: "choice";
   readonly name: string;
   readonly options: readonly DecisionChoiceOption[];
+  /** OpenAI Decisions optional instructions (folded into scoring context). */
+  readonly instructions?: string;
 };
 
 export type DecisionNoulQuestion = {
@@ -41,7 +47,20 @@ export type DecisionNoulQuestion = {
   readonly statement: string;
 };
 
-export type DecisionQuestion = DecisionChoiceQuestion | DecisionNoulQuestion;
+export type DecisionScoreLevel = {
+  readonly label: string;
+  readonly description?: string;
+};
+
+export type DecisionScoreQuestion = {
+  readonly type: "score";
+  readonly name: string;
+  readonly levels: readonly DecisionScoreLevel[];
+  readonly instructions?: string;
+};
+
+export type DecisionQuestion =
+  DecisionChoiceQuestion | DecisionNoulQuestion | DecisionScoreQuestion;
 
 export type DecisionRequest = {
   readonly state: string;
@@ -59,9 +78,11 @@ export type DecisionRequest = {
 
 export type DecisionAnswer = {
   readonly name: string;
-  readonly type: "choice" | "noul";
+  readonly type: "choice" | "noul" | "score";
   readonly answer?: string;
   readonly probability?: number;
+  /** Probability-weighted average of ordered level indices (score questions). */
+  readonly score?: number;
   readonly options?: Array<{ id: string; probability: number }>;
   readonly abstained: boolean;
   readonly escalated: boolean;
@@ -82,12 +103,12 @@ export type DecisionResponse = {
   readonly escalationModel?: string;
 };
 
-export class DecisionGatewayService extends Context.Tag("clawql/inference/DecisionGatewayService")<
+export class DecisionGatewayService extends Context.Service<
   DecisionGatewayService,
   {
     readonly decide: (req: DecisionRequest) => Effect.Effect<DecisionResponse>;
   }
->() {}
+>()("clawql/inference/DecisionGatewayService") {}
 
 // Runtime R varies between GLiNER (prod) and heuristic (tests); keep loose.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -150,6 +171,21 @@ function candidatesFromChoice(q: DecisionChoiceQuestion): FastDecisionCandidate[
   });
 }
 
+function candidatesFromScore(q: DecisionScoreQuestion): FastDecisionCandidate[] {
+  return q.levels.map((level, index) => {
+    const text = level.description?.trim() || level.label;
+    return {
+      candidateId: level.label,
+      features: {
+        label: text,
+        description: text,
+        name: level.label,
+        levelIndex: index,
+      },
+    };
+  });
+}
+
 function noulCandidates(statement: string): FastDecisionCandidate[] {
   return [
     {
@@ -161,6 +197,30 @@ function noulCandidates(statement: string): FastDecisionCandidate[] {
       features: { label: "false", description: `Negation: ${statement}` },
     },
   ];
+}
+
+function weightedLevelScore(
+  levels: readonly DecisionScoreLevel[],
+  options: Array<{ id: string; probability: number }>
+): number {
+  return options.reduce((acc, o) => {
+    const idx = levels.findIndex((l) => l.label === o.id);
+    const levelIndex = idx >= 0 ? idx : 0;
+    return acc + levelIndex * o.probability;
+  }, 0);
+}
+
+function queryForQuestion(state: string, question: DecisionQuestion): string {
+  if (question.type === "choice" && question.instructions?.trim()) {
+    return `${question.instructions.trim()}\n\n${state}`;
+  }
+  if (question.type === "score" && question.instructions?.trim()) {
+    return `${question.instructions.trim()}\n\n${state}`;
+  }
+  if (question.type === "noul") {
+    return state;
+  }
+  return state;
 }
 
 function softmaxNormalize(scores: readonly { candidateId: string; confidence: number }[]) {
@@ -181,7 +241,9 @@ function mapResult(opts: {
   escalationMode: DecisionEscalationMode;
 }): DecisionAnswer {
   const calibrated =
-    PRODUCTION_TRUSTED_USE_SITES.has(opts.useSiteId) && opts.backendId === "gliner2";
+    PRODUCTION_TRUSTED_USE_SITES.has(opts.useSiteId) &&
+    opts.backendId === "gliner2" &&
+    routingCatalogAlignedForProductionTrust();
   const abstained = opts.result.outcome === "below_threshold_fallback";
   const escalated = abstained && opts.escalationMode === "escalate";
   const options = softmaxNormalize(opts.result.scores);
@@ -201,6 +263,24 @@ function mapResult(opts: {
       selectedConfidence: opts.result.selectedConfidence,
       thresholdApplied: opts.result.thresholdApplied,
       options,
+    };
+  }
+
+  if (opts.question.type === "score") {
+    // Ordinal score calibration does not exist yet — never inherit choice-site trust.
+    return {
+      name: opts.question.name,
+      type: "score",
+      answer: abstained ? undefined : opts.result.selectedCandidateId,
+      score: weightedLevelScore(opts.question.levels, options),
+      options,
+      abstained,
+      escalated,
+      calibrated: false,
+      backendId: opts.backendId,
+      useSiteId: opts.useSiteId,
+      selectedConfidence: opts.result.selectedConfidence,
+      thresholdApplied: opts.result.thresholdApplied,
     };
   }
 
@@ -238,16 +318,20 @@ export const DecisionGatewayLive = Layer.succeed(DecisionGatewayService, {
         const candidates =
           question.type === "choice"
             ? candidatesFromChoice(question)
-            : noulCandidates(question.statement);
+            : question.type === "score"
+              ? candidatesFromScore(question)
+              : noulCandidates(question.statement);
         const extrasKey = extrasKeyForUseSite(useSiteId);
+        const query = queryForQuestion(req.state, question);
         const ctx: FastDecisionContext = {
           sessionId: req.sessionId ?? `decision:${traceId}`,
           agentId: req.agentId,
-          query: req.state,
+          query,
           extras: {
             [extrasKey]: candidates,
-            text: req.state,
+            text: query,
             decisionQuestion: question.name,
+            decisionQuestionType: question.type,
             virtualKeyId: req.virtualKeyId,
             team: req.team,
             traceId,

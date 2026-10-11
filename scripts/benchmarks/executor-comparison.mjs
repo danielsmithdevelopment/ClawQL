@@ -508,26 +508,55 @@ async function clawqlLiveExecuteProjected(task) {
   }
 }
 
+/** Project list items to the same fields ClawQL would return (code-mode stand-in). */
+function projectExecutorProgramFilter(items, fields) {
+  if (!Array.isArray(items)) return items;
+  return items.map((item) => {
+    if (item === null || typeof item !== "object" || Array.isArray(item)) return item;
+    const out = {};
+    for (const f of fields) {
+      if (Object.prototype.hasOwnProperty.call(item, f)) out[f] = item[f];
+    }
+    return out;
+  });
+}
+
 async function measureLayer2ToolResults(task) {
   if (!LIVE) {
     const fx = await loadGithubPrFixture();
     const executorPayload = fx.fullRest;
     const clawqlPayload = filterProjectedForTask(fx.fullRest, fx.projected, task);
+    const programFilterPayload = projectExecutorProgramFilter(
+      executorPayload,
+      task.projectionFields ?? task.requiredOutputFields
+    );
     const executorText = JSON.stringify(executorPayload);
     const clawqlText = JSON.stringify(clawqlPayload);
+    const programFilterText = JSON.stringify(programFilterPayload);
     return {
       source: "fixture",
       publishableAsLive: false,
       executorSdkWired: false,
+      focus: ["input", "output"],
       executor: {
         toolResultTokens: countTokens(executorText),
+        outputTokens: countTokens(clawqlText),
         rawResultFieldCount: countTopLevelKeysPerItem(executorPayload),
         itemCount: executorPayload.length,
         requiredFieldCount: task.requiredOutputFields.length,
         note: "FIXTURE — simulates Executor: full REST JSON enters context (no projection).",
       },
+      executorProgramFilterSimulated: {
+        toolResultTokens: countTokens(programFilterText),
+        outputTokens: countTokens(programFilterText),
+        simulated: true,
+        itemCount: programFilterPayload.length,
+        note:
+          "FIXTURE — fair arm: same fields as ClawQL, projected from raw REST. Stand-in for Executor code-mode filter.",
+      },
       clawql: {
         toolResultTokens: countTokens(clawqlText),
+        outputTokens: countTokens(clawqlText),
         rawResultFieldCount: countTopLevelKeysPerItem(clawqlPayload),
         itemCount: clawqlPayload.length,
         requiredFieldCount: task.requiredOutputFields.length,
@@ -544,10 +573,16 @@ async function measureLayer2ToolResults(task) {
   let executorSdkWired = false;
   let liveListMeta = null;
 
+  let programFilterItems = [];
   if (executorCli?.ok) {
     executorSdkWired = true;
+    programFilterItems = projectExecutorProgramFilter(
+      executorCli.items,
+      task.projectionFields ?? task.requiredOutputFields
+    );
     executorArm = {
       toolResultTokens: executorCli.toolResultTokens,
+      outputTokens: countTokens(JSON.stringify(programFilterItems)),
       rawResultFieldCount: countTopLevelKeysPerItem(executorCli.items),
       itemCount: executorCli.items.length,
       requiredFieldCount: task.requiredOutputFields.length,
@@ -562,8 +597,13 @@ async function measureLayer2ToolResults(task) {
       githubAuth: liveList.auth,
       githubUrl: liveList.url,
     };
+    programFilterItems = projectExecutorProgramFilter(
+      liveList.items,
+      task.projectionFields ?? task.requiredOutputFields
+    );
     executorArm = {
       toolResultTokens: countTokens(liveList.text),
+      outputTokens: countTokens(JSON.stringify(programFilterItems)),
       rawResultFieldCount: countTopLevelKeysPerItem(liveList.items),
       itemCount: liveList.items.length,
       requiredFieldCount: task.requiredOutputFields.length,
@@ -573,10 +613,13 @@ async function measureLayer2ToolResults(task) {
     };
   }
 
+  const programFilterText = JSON.stringify(programFilterItems);
+
   return {
     source: executorSdkWired ? "live_executor_cli+clawql" : "live_github+clawql",
     publishableAsLive: true,
     executorSdkWired,
+    focus: ["input", "output"],
     live: {
       repo: task.params.repo,
       perPage: task.params.perPage,
@@ -585,8 +628,18 @@ async function measureLayer2ToolResults(task) {
       ...liveListMeta,
     },
     executor: executorArm,
+    executorProgramFilterSimulated: {
+      toolResultTokens: countTokens(programFilterText),
+      outputTokens: countTokens(programFilterText),
+      simulated: true,
+      itemCount: programFilterItems.length,
+      note:
+        "Fair arm: project Executor/raw payload to the same fields as ClawQL. " +
+        "Stand-in for Executor code-mode filter until a live program arm exists.",
+    },
     clawql: {
       toolResultTokens: countTokens(clawqlText),
+      outputTokens: countTokens(clawqlText),
       rawResultFieldCount: countTopLevelKeysPerItem(
         Array.isArray(clawqlLive.parsed) ? clawqlLive.parsed : []
       ),
@@ -670,22 +723,33 @@ function buildReport(clawqlLayer1, layer2, analysis862x, executorLiveLayer1) {
 
   const layer2Ratio =
     layer2.executor.toolResultTokens / Math.max(1, layer2.clawql.toolResultTokens);
+  const programFilterTokens = layer2.executorProgramFilterSimulated?.toolResultTokens;
+  const programFilterRatio =
+    programFilterTokens != null
+      ? programFilterTokens / Math.max(1, layer2.clawql.toolResultTokens)
+      : null;
 
   return {
     task: TASK,
-    matchedConditions: MATCHED_CONDITIONS,
+    matchedConditions: {
+      ...MATCHED_CONDITIONS,
+      focus: ["input", "output"],
+      fairProgramFilterArm: true,
+    },
     executorPublishedReference: EXECUTOR_PUBLISHED_REFERENCE,
     layer1,
     layer2: {
-      focus: "input",
+      focus: ["input", "output"],
       split: "tool_result",
       ...layer2,
       ratioExecutorRawVsClawqlProjected: +layer2Ratio.toFixed(2),
+      ratioExecutorProgramFilterVsClawqlProjected:
+        programFilterRatio != null ? +programFilterRatio.toFixed(2) : null,
       interpretation: layer2.publishableAsLive
         ? layer2.executorSdkWired
-          ? "LIVE Layer 2: real Executor CLI tool result vs live ClawQL projected execute."
-          : "LIVE Layer 2: raw GitHub (Executor stand-in) vs ClawQL projected execute. Set EXECUTOR_BIN for real Executor."
-        : "FIXTURE Layer 2 — not for public headlines. Re-run with BENCHMARK_LIVE=1.",
+          ? "LIVE Layer 2: real Executor CLI tool result vs live ClawQL projected execute; program-filter arm is simulated projection of the same payload."
+          : "LIVE Layer 2: raw GitHub (Executor stand-in) vs ClawQL projected execute; program-filter arm is simulated. Set EXECUTOR_BIN for real Executor."
+        : "FIXTURE Layer 2 — includes fair program-filter arm. Re-run with BENCHMARK_LIVE=1 for live raw sizes.",
     },
     benchmark862x: analysis862x,
     generatedAt: new Date().toISOString(),
@@ -736,12 +800,24 @@ function printReport(report) {
       `(${l2.executor.rawResultFieldCount} top-level fields/item, ${l2.executor.itemCount} items)`
   );
   console.log(`  note: ${l2.executor.note}`);
+  if (l2.executorProgramFilterSimulated) {
+    console.log(
+      `Executor program-filter (simulated): ${l2.executorProgramFilterSimulated.toolResultTokens} tok ` +
+        `(${l2.executorProgramFilterSimulated.itemCount} items) — fair arm`
+    );
+    console.log(`  note: ${l2.executorProgramFilterSimulated.note}`);
+  }
   console.log(
     `ClawQL arm (projected):  ${l2.clawql.toolResultTokens} tok ` +
       `(${l2.clawql.rawResultFieldCount} fields/item, ${l2.clawql.itemCount} items)`
   );
   console.log(`  note: ${l2.clawql.note}`);
-  console.log(`Ratio: ${l2.ratioExecutorRawVsClawqlProjected}x`);
+  console.log(`Ratio raw/clawql: ${l2.ratioExecutorRawVsClawqlProjected}x`);
+  if (l2.ratioExecutorProgramFilterVsClawqlProjected != null) {
+    console.log(
+      `Ratio program-filter/clawql: ${l2.ratioExecutorProgramFilterVsClawqlProjected}x (expect ~1×)`
+    );
+  }
   console.log(`→ ${l2.interpretation}`);
   console.log();
 

@@ -5,8 +5,9 @@
  * - Local file (JSON or YAML OpenAPI 3 / Swagger 2), or
  * - URL to fetch the same, or
  * - Google Discovery document URL, or
- * - **Opt-in** bundled packs via instance `providers` (`pack` / `enabled`) or legacy
- *   **`CLAWQL_PROVIDER`** / **`CLAWQL_BUNDLED_PROVIDERS`** / **`CLAWQL_SPEC_PATHS`**.
+ * - **Opt-in** bundled packs via instance `providers` (`pack` / `enabled`), named
+ *   **`toolkit`** / **`CLAWQL_TOOLKIT`**, or legacy **`CLAWQL_PROVIDER`** /
+ *   **`CLAWQL_BUNDLED_PROVIDERS`** / **`CLAWQL_SPEC_PATHS`**.
  * - **No-config default:** empty provider stack (native GraphQL/gRPC only when configured) —
  *   catalog stays available; nothing is auto-loaded.
  *
@@ -40,6 +41,10 @@ import {
   readProvidersCompositionFromEnv,
   type ClawqlProvidersComposition,
 } from "../config/providers-composition.js";
+import {
+  readToolkitIdFromInstanceEnvEffect,
+  resolveToolkitToProvidersComposition,
+} from "../toolkits/index.js";
 import {
   listBundledProviderGroupIds,
   listBundledProviderIds,
@@ -514,10 +519,24 @@ async function buildLoadedSpec(raw: unknown): Promise<LoadedSpec> {
 /**
  * Load a local OpenAPI / Discovery / Swagger file by absolute path (build scripts).
  */
-export async function loadOpenAPIFromAbsolutePath(absolutePath: string): Promise<LoadedSpec> {
+async function loadOpenAPIFromAbsolutePathImpl(absolutePath: string): Promise<LoadedSpec> {
   const text = await readFile(absolutePath, "utf-8");
   const raw = parseSpecText(text);
   return buildLoadedSpec(raw);
+}
+
+export function loadOpenAPIFromAbsolutePathEffect(
+  absolutePath: string
+): Effect.Effect<LoadedSpec, Error> {
+  return Effect.tryPromise({
+    try: () => loadOpenAPIFromAbsolutePathImpl(absolutePath),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadOpenAPIFromAbsolutePathEffect} for Effect callers. */
+export async function loadOpenAPIFromAbsolutePath(absolutePath: string): Promise<LoadedSpec> {
+  return Effect.runPromise(loadOpenAPIFromAbsolutePathEffect(absolutePath));
 }
 
 // ─────────────────────────────────────────────
@@ -669,10 +688,31 @@ async function resolveMultiSpecItems(): Promise<ProviderGroupItem[] | "empty" | 
     return items.length === 0 ? "empty" : items;
   }
 
+  // Instance toolkit when providers key is absent.
+  const instanceToolkitId = Effect.runSync(readToolkitIdFromInstanceEnvEffect());
+  if (instanceToolkitId) {
+    const composition = Effect.runSync(resolveToolkitToProvidersComposition(instanceToolkitId));
+    const items = await resolveItemsFromProvidersComposition(composition);
+    return items.length === 0 ? "empty" : items;
+  }
+
+  const toolkitEnv = process.env.CLAWQL_TOOLKIT?.trim().toLowerCase();
+
   if (providerRaw) {
+    if (toolkitEnv) {
+      console.warn(
+        `[spec-loader] CLAWQL_PROVIDER="${providerRaw}" set; ignoring CLAWQL_TOOLKIT="${toolkitEnv}"`
+      );
+    }
     if (providerRaw === "none") return "empty";
     const grouped = await resolveBundledProviderGroup(providerRaw);
     if (grouped) return grouped;
+  }
+
+  if (toolkitEnv) {
+    const composition = Effect.runSync(resolveToolkitToProvidersComposition(toolkitEnv));
+    const items = await resolveItemsFromProvidersComposition(composition);
+    return items.length === 0 ? "empty" : items;
   }
 
   // Deprecated env add-ons alone no longer imply the curated pack.
@@ -900,7 +940,7 @@ async function loadSpecUncached(): Promise<LoadedSpec> {
   return loaded;
 }
 
-export async function loadSpec(): Promise<LoadedSpec> {
+async function loadSpecImpl(): Promise<LoadedSpec> {
   if (cachedSpec) return cachedSpec;
   const generation = loadGeneration;
   if (!loadInFlight) {
@@ -918,6 +958,18 @@ export async function loadSpec(): Promise<LoadedSpec> {
       });
   }
   return loadInFlight;
+}
+
+export function loadSpecEffect(): Effect.Effect<LoadedSpec, Error> {
+  return Effect.tryPromise({
+    try: () => loadSpecImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadSpecEffect} for Effect callers. */
+export async function loadSpec(): Promise<LoadedSpec> {
+  return Effect.runPromise(loadSpecEffect());
 }
 
 /**

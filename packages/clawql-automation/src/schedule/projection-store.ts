@@ -10,6 +10,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { Effect } from "effect";
 import { MAX_PROJECTION_STORE_BYTES, screenStoredText } from "./change-detect.js";
 
 const ENC_PREFIX = "enc1.";
@@ -188,25 +189,38 @@ export function isEncryptedProjectionBlob(stored: string | null | undefined): bo
 
 /**
  * Screen + gateway-redact (same path as delivered MCP Events) + encrypt for retention.
- * Returns null when over size budget.
+ * Returns null when over size budget — Effect primary.
  */
+export function prepareProjectionForStoreEffect(
+  projection: unknown,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<string | null, Error> {
+  return Effect.tryPromise({
+    try: async () => {
+      const screened = screenStoredValue(projection);
+      let redacted: unknown = screened;
+      try {
+        const { gatewayRedactPayload } = await import("clawql-api");
+        redacted = await gatewayRedactPayload(screened);
+      } catch {
+        /* redaction optional if clawql-api unavailable */
+      }
+      const json = JSON.stringify(redacted);
+      if (Buffer.byteLength(json, "utf8") > MAX_PROJECTION_STORE_BYTES) {
+        return null;
+      }
+      return encryptProjectionJson(json, env);
+    },
+    catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+  });
+}
+
+/** Promise façade. */
 export async function prepareProjectionForStore(
   projection: unknown,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<string | null> {
-  const screened = screenStoredValue(projection);
-  let redacted: unknown = screened;
-  try {
-    const { gatewayRedactPayload } = await import("clawql-api");
-    redacted = await gatewayRedactPayload(screened);
-  } catch {
-    /* redaction optional if clawql-api unavailable */
-  }
-  const json = JSON.stringify(redacted);
-  if (Buffer.byteLength(json, "utf8") > MAX_PROJECTION_STORE_BYTES) {
-    return null;
-  }
-  return encryptProjectionJson(json, env);
+  return Effect.runPromise(prepareProjectionForStoreEffect(projection, env));
 }
 
 /** Load plaintext projection object from DB blob (encrypted or legacy plain). */

@@ -91,7 +91,17 @@ export async function handleDataStatusToolInput() {
   return textResult(status);
 }
 
-export function createDataPlugin(): ProviderPlugin {
+export type CreateDataPluginOptions = {
+  /**
+   * Register legacy MCP name `clawql_sql` as an alias of `data_query`.
+   * Default off (8.0 verb-twin demotion). Harvey LAB remaps via `lab-mcp-proxy.mjs`;
+   * set `CLAWQL_ENABLE_CLAWQL_SQL_ALIAS=1` for direct MCP clients that still call `clawql_sql`.
+   */
+  readonly enableClawqlSqlAlias?: boolean;
+};
+
+export function createDataPlugin(options: CreateDataPluginOptions = {}): ProviderPlugin {
+  const enableClawqlSqlAlias = options.enableClawqlSqlAlias ?? false;
   return defineRegisteringProviderPlugin({
     id: DATA_PLUGIN_ID,
     version: "0.1.0",
@@ -103,11 +113,13 @@ export function createDataPlugin(): ProviderPlugin {
           schema: dataQuerySchema,
           handler: (args) => handleDataQueryToolInput(args as { sql: string }),
         });
-        yield* api.registerMcpTool({
-          name: "clawql_sql",
-          schema: dataQuerySchema,
-          handler: (args) => handleDataQueryToolInput(args as { sql: string }),
-        });
+        if (enableClawqlSqlAlias) {
+          yield* api.registerMcpTool({
+            name: "clawql_sql",
+            schema: dataQuerySchema,
+            handler: (args) => handleDataQueryToolInput(args as { sql: string }),
+          });
+        }
         yield* api.registerMcpTool({
           name: "data_ingest",
           schema: dataIngestSchema,

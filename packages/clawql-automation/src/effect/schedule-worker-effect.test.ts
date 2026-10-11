@@ -1,4 +1,5 @@
-import { Deferred, Duration, Effect, Fiber, Ref, TestClock, TestContext } from "effect";
+import { Deferred, Duration, Effect, Fiber, Ref } from "effect";
+import { TestClock } from "effect/testing";
 import { describe, expect, it } from "vitest";
 import { startScheduleWorkerFiberEffect } from "./schedule-worker-effect.js";
 
@@ -14,7 +15,7 @@ describe("startScheduleWorkerFiberEffect", () => {
         yield* TestClock.adjust(Duration.millis(12));
         expect(ticks.n).toBe(1);
         yield* Fiber.interrupt(handle.fiber);
-      }).pipe(Effect.provide(TestContext.TestContext))
+      }).pipe(Effect.provide(TestClock.layer()))
     );
   });
 
@@ -47,7 +48,7 @@ describe("startScheduleWorkerFiberEffect", () => {
         expect(yield* Ref.get(started)).toBe(2);
 
         yield* Fiber.interrupt(handle.fiber);
-      }).pipe(Effect.provide(TestContext.TestContext))
+      }).pipe(Effect.provide(TestClock.layer()))
     );
   });
 
@@ -65,7 +66,7 @@ describe("startScheduleWorkerFiberEffect", () => {
         yield* TestClock.adjust(Duration.millis(12));
         expect(errors.some((e) => e.includes("tick boom"))).toBe(true);
         yield* Fiber.interrupt(handle.fiber);
-      }).pipe(Effect.provide(TestContext.TestContext))
+      }).pipe(Effect.provide(TestClock.layer()))
     );
   });
 });

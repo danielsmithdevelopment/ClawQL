@@ -28,7 +28,7 @@ import {
   type CreatorPayoutPreference,
   type PayoutMethod,
 } from "./preferences.js";
-import { UsdcSendError, sendUsdcPayout } from "./usdc-send.js";
+import { sendUsdcPayoutEffect } from "./usdc-send.js";
 
 export class PayoutError extends Data.TaggedError("PayoutError")<{
   readonly reason: string;
@@ -62,7 +62,7 @@ export type PayoutResult = {
 };
 
 /** Effect service for Stripe Connect onboarding + creator payouts. */
-export class PayoutService extends Context.Tag("clawql/PayoutService")<
+export class PayoutService extends Context.Service<
   PayoutService,
   {
     readonly createConnectAccount: (input: {
@@ -102,7 +102,7 @@ export class PayoutService extends Context.Tag("clawql/PayoutService")<
       creatorId: string
     ) => Effect.Effect<CreatorPayoutPreference | undefined, PayoutError>;
   }
->() {}
+>()("clawql/PayoutService") {}
 
 export function payoutLiveLayer(
   env: NodeJS.ProcessEnv = process.env
@@ -156,7 +156,7 @@ export function payoutLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             if (input.creatorId?.trim()) {
               yield* prefs
                 .set({
@@ -195,7 +195,7 @@ export function payoutLiveLayer(
                 correlationId: input.correlationId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
           if (input.creatorId?.trim()) {
             yield* prefs
               .set({
@@ -335,7 +335,7 @@ export function payoutLiveLayer(
                   creatorId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             yield* audit
               .appendEntry(
                 buildPayoutPaidEntry({
@@ -347,7 +347,7 @@ export function payoutLiveLayer(
                   creatorId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             return {
               id,
               status: "paid",
@@ -363,24 +363,14 @@ export function payoutLiveLayer(
             const usdcEnv = isPayoutsDryRun(env)
               ? ({ ...env, CLAWQL_PAYOUTS_USDC_DRY_RUN: "1" } as NodeJS.ProcessEnv)
               : env;
-            const sent = yield* Effect.tryPromise({
-              try: () =>
-                sendUsdcPayout(
-                  {
-                    to: usdcWallet!,
-                    amountUsd: amountCents / 100,
-                    correlationId: input.correlationId,
-                  },
-                  usdcEnv
-                ),
-              catch: (cause) =>
-                cause instanceof UsdcSendError
-                  ? new PayoutError({ reason: cause.reason, cause })
-                  : new PayoutError({
-                      reason: cause instanceof Error ? cause.message : "USDC send failed",
-                      cause,
-                    }),
-            });
+            const sent = yield* sendUsdcPayoutEffect(
+              {
+                to: usdcWallet!,
+                amountUsd: amountCents / 100,
+                correlationId: input.correlationId,
+              },
+              usdcEnv
+            ).pipe(Effect.mapError((cause) => new PayoutError({ reason: cause.reason, cause })));
             const id = sent.txHash;
             yield* audit
               .appendEntry(
@@ -394,7 +384,7 @@ export function payoutLiveLayer(
                   creatorId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             // PAYOUT_PAID only after receipt confirmation (or dry-run). Skip-receipt → submitted.
             if (sent.confirmed) {
               yield* audit
@@ -408,7 +398,7 @@ export function payoutLiveLayer(
                     creatorId,
                   })
                 )
-                .pipe(Effect.catchAll(() => Effect.void));
+                .pipe(Effect.catch(() => Effect.void));
             }
             return {
               id,
@@ -451,7 +441,7 @@ export function payoutLiveLayer(
                   creatorId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             return {
               id: transfer.id,
               status: transfer.reversed ? "reversed" : "pending",
@@ -470,7 +460,7 @@ export function payoutLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             return yield* Effect.fail(
               cause instanceof PayoutError ||
                 cause instanceof StripeApiError ||

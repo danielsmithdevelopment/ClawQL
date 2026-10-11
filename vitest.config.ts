@@ -14,14 +14,20 @@ export default defineConfig({
     dedupe: ["graphql"],
     alias: {
       graphql: graphqlMain,
+      "clawql-api/graphql/in-process-execute": `${configDir}/packages/clawql-api/src/graphql/in-process-execute.ts`,
     },
   },
   test: {
     environment: "node",
+    /** Classify risk without refusing execute (Slack/Onyx POST fixtures). */
+    env: {
+      CLAWQL_OPERATION_RISK_ENFORCE: "0",
+    },
     include: [
       "src/**/*.test.ts",
       "packages/mcp-grpc-transport/src/**/*.test.ts",
       "packages/clawql-merkle/src/**/*.test.ts",
+      "packages/clawql-gdp/src/**/*.test.ts",
       "packages/clawql-audit/src/**/*.test.ts",
       "packages/clawql-observability/src/**/*.test.ts",
       "packages/clawql-analytics/src/**/*.test.ts",
@@ -36,6 +42,7 @@ export default defineConfig({
       "packages/clawql-documents/src/**/*.test.ts",
       "packages/clawql-automation/src/**/*.test.ts",
       "packages/clawql-sandbox/src/**/*.test.ts",
+      "packages/clawql-supabase/src/**/*.test.ts",
       "packages/clawql-network/src/**/*.test.ts",
       "packages/clawql-mcp-events/src/**/*.test.ts",
       "packages/clawql-data/src/**/*.test.ts",

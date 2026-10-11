@@ -149,7 +149,7 @@ export function createSpendCapEnforceOutboundHook(): LifecycleHook {
         args,
       }).pipe(
         Effect.map((evaluated) => evaluated.result),
-        Effect.catchAll((err: OutboundPolicyError) =>
+        Effect.catch((err: OutboundPolicyError) =>
           Effect.succeed({
             allow: false,
             denyReason: err.reason,

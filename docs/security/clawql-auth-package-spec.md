@@ -95,6 +95,14 @@ packages/clawql-auth/
 
 Implements the authorization-server surface required for MCP clients that obtain tokens against ClawQL (distinct from OIDC _consumer_ mode, which verifies customer IdP JWTs).
 
+**Protected-resource discovery (shipped):** `GET /.well-known/oauth-protected-resource` on the MCP origin (RFC 9728) plus `WWW-Authenticate: Bearer resource_metadata=…` on unauthenticated `/mcp`. Token/authorize accept RFC 8707 `resource`; access JWTs mint and validate normalized `aud` against `CLAWQL_MCP_OAUTH_RESOURCE_AUDIENCE` (`invalid_target` on mismatch). Marketing discovery (`docs`/`www`) omits a device endpoint unless the MCP AS has RFC 8628 wired (`CLAWQL_MCP_OAUTH_DEVICE_FLOW=1`).
+
+**Grant-as-key (shipped MVP — MCP OAuth §2):** opt-in via `CLAWQL_MCP_OAUTH_GRANT_AS_KEY=1` or an explicit `grantKeyStore`. Records one grant per (subject, client, resource) in SecretStore (when wired from env) and stamps that grant's `virtualKeyId` (never the `clientId`) on access tokens. `revokeGrant(virtualKeyId)` ends the live grant; `validateToken` and refresh reject stamped `mgr_*` tokens with `grant_revoked`. Admin HTTP: `DELETE /oauth/grants/:virtualKeyId` (when `grantAdmin` is attached). Legacy fallback (flag off): `virtualKeyId = clientId`. See `mcp-grant-key-store.ts`.
+
+**CIMD (shipped — MCP OAuth §3):** `CimdService` + trusted-client store (`mcp-cimd.ts`) fail closed. With `CLAWQL_MCP_OAUTH_CIMD=1`, HTTPS `client_id` URLs are fetched, checked against the operator trusted list (`CLAWQL_MCP_OAUTH_TRUSTED_CLIENTS_JSON` / `_PATH`), and persisted into the live client registry as public clients.
+
+**Device flow (shipped — MCP OAuth §4, RFC 8628):** ClawQL AS `POST /oauth/device_authorization`, user verify at `/oauth/device`, token poll with `urn:ietf:params:oauth:grant-type:device_code`. AS metadata advertises `device_authorization_endpoint` only when wired (`CLAWQL_MCP_OAUTH_DEVICE_FLOW=1`). Device codes persist in SecretStore (hashed at rest). Google's endpoint remains stripped for honesty.
+
 ```typescript
 import { createHash, randomUUID } from "node:crypto";
 import { Effect } from "effect";
@@ -369,7 +377,7 @@ buildPasskeyAuthenticatorSelection({ requirement: "hardware-only" });
 buildPasskeyAuthenticatorSelection({ requirement: "biometric-only" });
 ```
 
-ClawQL never touches biometric raw data; private keys remain in Secure Enclave / TPM / the hardware token. Prefer IdP passkeys for human SSO; inject `WebAuthnStepUpVerifier` when hosts need ClawQL-side step-up. See [`clawql-auth-oidc-stepup.md`](./clawql-auth-oidc-stepup.md#passkeys-face-id--touch-id--yubikey).
+ClawQL never touches biometric raw data; private keys remain in Secure Enclave / TPM / the hardware token. Prefer IdP passkeys for human SSO; inject `WebAuthnStepUpVerifier` when hosts need ClawQL-side step-up. **Product priority:** challenge-bound WebAuthn step-up for mandates / source approve / account delete / API key issue — not a YubiKey-branded feature. Binding build (server-side challenge↔canonical hash, UV required, AAGUID/counter policy, `StepUpVerified` mint-after-verify, WORM evidence): [`clawql-auth-oidc-stepup.md`](./clawql-auth-oidc-stepup.md#challenge-bound-step-up-binding-build).
 
 ---
 

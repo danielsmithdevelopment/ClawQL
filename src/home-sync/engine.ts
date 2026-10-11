@@ -1,10 +1,11 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { absPathForRel, collectLocalSyncFiles } from "./collect.js";
+import { Effect } from "effect";
+import { absPathForRel, collectLocalSyncFilesEffect } from "./collect.js";
 import {
   contentTypeForRelPath,
-  createDefaultObjectStorageClient,
-  fetchRemoteManifest,
+  createDefaultObjectStorageClientEffect,
+  fetchRemoteManifestEffect,
 } from "./object-storage.js";
 import { objectKeyForRelPath } from "./paths.js";
 import type {
@@ -20,6 +21,20 @@ export type SyncRunOptions = {
   dryRun?: boolean;
   force?: boolean;
 };
+
+export type SyncStatusResult = {
+  config: ResolvedHomeSyncConfig;
+  localCount: number;
+  remoteCount: number;
+  inSync: number;
+  localOnly: string[];
+  remoteOnly: string[];
+  conflicts: string[];
+};
+
+function asError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
 
 function planPush(
   local: Map<string, { sha256: string }>,
@@ -123,82 +138,106 @@ async function applyDownloads(
   return count;
 }
 
-async function writeRemoteManifest(
+function writeRemoteManifestEffect(
   client: ObjectStorageClient,
   config: ResolvedHomeSyncConfig,
   home: string,
   dryRun: boolean
-): Promise<void> {
-  const files = await collectLocalSyncFiles(home, config.include);
-  const manifest: SyncManifest = {
-    version: 1,
-    updatedAt: new Date().toISOString(),
-    files: Object.fromEntries(files),
-  };
-  if (dryRun) return;
-  await client.putJson(config.manifestKey, manifest);
+): Effect.Effect<void, Error> {
+  return Effect.gen(function* () {
+    const files = yield* collectLocalSyncFilesEffect(home, config.include);
+    const manifest: SyncManifest = {
+      version: 1,
+      updatedAt: new Date().toISOString(),
+      files: Object.fromEntries(files),
+    };
+    if (dryRun) return;
+    yield* Effect.tryPromise({
+      try: () => client.putJson(config.manifestKey, manifest),
+      catch: asError,
+    });
+  });
 }
 
+export function runSyncPushEffect(opts: SyncRunOptions = {}): Effect.Effect<SyncRunResult, Error> {
+  return Effect.gen(function* () {
+    const { client, config } = yield* createDefaultObjectStorageClientEffect();
+    const local = yield* collectLocalSyncFilesEffect(config.home, config.include);
+    const remote = yield* fetchRemoteManifestEffect(client, config);
+    const localHashes = new Map([...local.entries()].map(([k, v]) => [k, { sha256: v.sha256 }]));
+    const actions = planPush(localHashes, remote, Boolean(opts.force));
+    const dryRun = Boolean(opts.dryRun);
+    const uploaded = yield* Effect.tryPromise({
+      try: () => applyUploads(client, config, config.home, actions, dryRun),
+      catch: asError,
+    });
+    if (!dryRun) yield* writeRemoteManifestEffect(client, config, config.home, false);
+    return summarize(config, actions, uploaded, 0, dryRun);
+  });
+}
+
+/** Promise façade — prefer {@link runSyncPushEffect}. */
 export async function runSyncPush(opts: SyncRunOptions = {}): Promise<SyncRunResult> {
-  const { client, config } = await createDefaultObjectStorageClient();
-  const local = await collectLocalSyncFiles(config.home, config.include);
-  const remote = await fetchRemoteManifest(client, config);
-  const localHashes = new Map([...local.entries()].map(([k, v]) => [k, { sha256: v.sha256 }]));
-  const actions = planPush(localHashes, remote, Boolean(opts.force));
-  const dryRun = Boolean(opts.dryRun);
-  const uploaded = await applyUploads(client, config, config.home, actions, dryRun);
-  if (!dryRun) await writeRemoteManifest(client, config, config.home, false);
-  return summarize(config, actions, uploaded, 0, dryRun);
+  return Effect.runPromise(runSyncPushEffect(opts));
 }
 
+export function runSyncPullEffect(opts: SyncRunOptions = {}): Effect.Effect<SyncRunResult, Error> {
+  return Effect.gen(function* () {
+    const { client, config } = yield* createDefaultObjectStorageClientEffect();
+    const local = yield* collectLocalSyncFilesEffect(config.home, config.include);
+    const remote = yield* fetchRemoteManifestEffect(client, config);
+    const localHashes = new Map([...local.entries()].map(([k, v]) => [k, { sha256: v.sha256 }]));
+    const actions = planPull(localHashes, remote, Boolean(opts.force));
+    const dryRun = Boolean(opts.dryRun);
+    const downloaded = yield* Effect.tryPromise({
+      try: () => applyDownloads(client, config, config.home, actions, dryRun, remote),
+      catch: asError,
+    });
+    return summarize(config, actions, 0, downloaded, dryRun);
+  });
+}
+
+/** Promise façade — prefer {@link runSyncPullEffect}. */
 export async function runSyncPull(opts: SyncRunOptions = {}): Promise<SyncRunResult> {
-  const { client, config } = await createDefaultObjectStorageClient();
-  const local = await collectLocalSyncFiles(config.home, config.include);
-  const remote = await fetchRemoteManifest(client, config);
-  const localHashes = new Map([...local.entries()].map(([k, v]) => [k, { sha256: v.sha256 }]));
-  const actions = planPull(localHashes, remote, Boolean(opts.force));
-  const dryRun = Boolean(opts.dryRun);
-  const downloaded = await applyDownloads(client, config, config.home, actions, dryRun, remote);
-  return summarize(config, actions, 0, downloaded, dryRun);
+  return Effect.runPromise(runSyncPullEffect(opts));
 }
 
-export async function runSyncStatus(): Promise<{
-  config: ResolvedHomeSyncConfig;
-  localCount: number;
-  remoteCount: number;
-  inSync: number;
-  localOnly: string[];
-  remoteOnly: string[];
-  conflicts: string[];
-}> {
-  const { client, config } = await createDefaultObjectStorageClient();
-  const local = await collectLocalSyncFiles(config.home, config.include);
-  const remote = await fetchRemoteManifest(client, config);
-  const remoteFiles = remote?.files ?? {};
-  const localOnly: string[] = [];
-  const remoteOnly: string[] = [];
-  const conflicts: string[] = [];
-  let inSync = 0;
+export function runSyncStatusEffect(): Effect.Effect<SyncStatusResult, Error> {
+  return Effect.gen(function* () {
+    const { client, config } = yield* createDefaultObjectStorageClientEffect();
+    const local = yield* collectLocalSyncFilesEffect(config.home, config.include);
+    const remote = yield* fetchRemoteManifestEffect(client, config);
+    const remoteFiles = remote?.files ?? {};
+    const localOnly: string[] = [];
+    const remoteOnly: string[] = [];
+    const conflicts: string[] = [];
+    let inSync = 0;
 
-  for (const [path, entry] of local) {
-    const r = remoteFiles[path];
-    if (!r) localOnly.push(path);
-    else if (r.sha256 === entry.sha256) inSync += 1;
-    else conflicts.push(path);
-  }
-  for (const path of Object.keys(remoteFiles)) {
-    if (!local.has(path)) remoteOnly.push(path);
-  }
+    for (const [path, entry] of local) {
+      const r = remoteFiles[path];
+      if (!r) localOnly.push(path);
+      else if (r.sha256 === entry.sha256) inSync += 1;
+      else conflicts.push(path);
+    }
+    for (const path of Object.keys(remoteFiles)) {
+      if (!local.has(path)) remoteOnly.push(path);
+    }
 
-  return {
-    config,
-    localCount: local.size,
-    remoteCount: Object.keys(remoteFiles).length,
-    inSync,
-    localOnly,
-    remoteOnly,
-    conflicts,
-  };
+    return {
+      config,
+      localCount: local.size,
+      remoteCount: Object.keys(remoteFiles).length,
+      inSync,
+      localOnly,
+      remoteOnly,
+      conflicts,
+    };
+  });
+}
+
+/** Promise façade — prefer {@link runSyncStatusEffect}. */
+export async function runSyncStatus(): Promise<SyncStatusResult> {
+  return Effect.runPromise(runSyncStatusEffect());
 }
 
 function summarize(
@@ -246,7 +285,7 @@ export function formatSyncResult(result: SyncRunResult, mode: "push" | "pull"): 
   return lines.join("\n");
 }
 
-export function formatSyncStatus(status: Awaited<ReturnType<typeof runSyncStatus>>): string {
+export function formatSyncStatus(status: SyncStatusResult): string {
   const { config } = status;
   const lines: string[] = [
     `Team sync: ${config.provider}://${config.bucket}/${config.prefix ?? ""}`,
