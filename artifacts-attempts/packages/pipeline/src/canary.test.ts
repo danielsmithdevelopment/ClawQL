@@ -2,7 +2,12 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { assertCanaryStatus, writeCanaryStatus } from "./canary.js";
+import {
+  assertCanaryStatus,
+  buildGradualDeployRequest,
+  gradualDeployUrl,
+  writeCanaryStatus,
+} from "./canary.js";
 
 const roots: string[] = [];
 afterEach(() => {
@@ -31,5 +36,22 @@ describe("writeCanaryStatus", () => {
     expect(JSON.parse(readFileSync(path, "utf8")).versions[1].percentage).toBe(10);
     expect(assertCanaryStatus(status)).toEqual({ ok: true });
     expect(assertCanaryStatus(status, { expectPercent: 25 }).ok).toBe(false);
+  });
+
+  it("builds Workers gradual deploy request body totaling 100%", () => {
+    const body = buildGradualDeployRequest({
+      canaryPercent: 10,
+      versionId: "ver_new",
+      previousVersionId: "ver_old",
+    });
+    expect(body.strategy).toBe("percentage");
+    expect(body.versions.reduce((s, v) => s + v.percentage, 0)).toBe(100);
+    expect(body.versions).toEqual([
+      { version_id: "ver_old", percentage: 90 },
+      { version_id: "ver_new", percentage: 10 },
+    ]);
+    expect(gradualDeployUrl("acct", "script")).toContain(
+      "/accounts/acct/workers/scripts/script/deployments"
+    );
   });
 });

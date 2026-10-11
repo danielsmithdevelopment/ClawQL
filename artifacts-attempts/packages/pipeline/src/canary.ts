@@ -50,6 +50,46 @@ export function writeCanaryStatus(
   return status;
 }
 
+/**
+ * Cloudflare Workers gradual deployment request body (no network).
+ * POST /accounts/{account_id}/workers/scripts/{script_name}/deployments
+ * @see https://developers.cloudflare.com/workers/configuration/versions-and-deployments/gradual-deployments/
+ */
+export type GradualDeployRequest = {
+  strategy: "percentage";
+  versions: Array<{ version_id: string; percentage: number }>;
+};
+
+export function buildGradualDeployRequest(input: {
+  canaryPercent: number;
+  versionId: string;
+  previousVersionId?: string;
+}): GradualDeployRequest {
+  if (input.canaryPercent < 0 || input.canaryPercent > 100) {
+    throw new Error(`canaryPercent out of range: ${input.canaryPercent}`);
+  }
+  const previous = 100 - input.canaryPercent;
+  return {
+    strategy: "percentage",
+    versions: [
+      {
+        version_id: input.previousVersionId ?? "prev_stable",
+        percentage: previous,
+      },
+      {
+        version_id: input.versionId,
+        percentage: input.canaryPercent,
+      },
+    ],
+  };
+}
+
+/** URL path for the deployments API (fill account_id + script_name). */
+export function gradualDeployUrl(accountId: string, scriptName: string): string {
+  if (!accountId || !scriptName) throw new Error("accountId and scriptName required");
+  return `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/workers/scripts/${encodeURIComponent(scriptName)}/deployments`;
+}
+
 /** Validate a canary status payload (gate / verify / judge smoke). */
 export function assertCanaryStatus(
   status: CanaryStatus,
