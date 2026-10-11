@@ -18,6 +18,11 @@
       "import": "./dist/mcp/tool-shape-log.js",
       "require": "./dist/mcp/tool-shape-log.cjs"
     },
+    "./graphql/in-process-execute": {
+      "types": "./dist/graphql/in-process-execute.d.ts",
+      "import": "./dist/graphql/in-process-execute.js",
+      "require": "./dist/graphql/in-process-execute.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

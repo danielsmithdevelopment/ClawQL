@@ -11,7 +11,7 @@ import { createServer, type Server } from "node:http";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { executeOperationGraphQL } from "clawql-api";
+import { executeOperationGraphQL } from "clawql-api/graphql/in-process-execute";
 import * as restOperation from "clawql-api";
 import { loadSpec, resetSpecCache } from "clawql-api";
 import { executeOutputFields, handleNotifyToolInput, resetSchemaFieldCache } from "./mcp/tools.js";

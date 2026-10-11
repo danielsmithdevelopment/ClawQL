@@ -33,9 +33,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { performance } from "node:perf_hooks";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { getEncoding } from "js-tiktoken";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -50,6 +51,8 @@ const ITERS = Math.max(20, Number(process.env.COMPREHENSIVE_ITERS ?? 500) || 500
 const WARMUP = Math.max(0, Number(process.env.COMPREHENSIVE_WARMUP ?? 30) || 30);
 const CHAOS_MAX = Math.max(1, Number(process.env.COMPREHENSIVE_CHAOS_MAX ?? 8) || 8);
 const CHAOS_STEP_MS = Math.max(1000, Number(process.env.COMPREHENSIVE_CHAOS_STEP_MS ?? 4000) || 4000);
+const CHAOS_WARMUP = Math.max(0, Number(process.env.COMPREHENSIVE_CHAOS_WARMUP ?? 8) || 8);
+const CHAOS_HTTP = process.env.COMPREHENSIVE_CHAOS_HTTP !== "0";
 const BREAK_P99_MS = Math.max(1, Number(process.env.COMPREHENSIVE_BREAK_P99_MS ?? 100) || 100);
 const BREAK_ERROR_RATE = Math.min(
   1,
@@ -387,6 +390,8 @@ function clawqlEnv(home, specPath, apiBase) {
     CLAWQL_ENABLE_GOOGLE: "0",
     CLAWQL_ENABLE_AWS: "0",
     CLAWQL_ALLOW_NO_ENFORCEMENT: "1",
+    // Equal-arm / chaos: force REST so Omnigraph never loads in these processes.
+    CLAWQL_OPENAPI_EXECUTE_PATH: "rest",
   };
   for (const key of [
     "CLAWQL_PROVIDER",
@@ -627,6 +632,7 @@ async function phaseTokens(mock) {
 
 /**
  * One chaos worker: own stdio MCP process, closed-loop execute for `durationMs`.
+ * Warmup calls are excluded from latency / error SLO (cold-start must not dominate p99).
  */
 async function chaosWorker(kind, mock, durationMs) {
   const home = join("/tmp", `clawql-chaos-${kind}-${process.pid}-${Math.random().toString(16).slice(2)}`);
@@ -640,8 +646,16 @@ async function chaosWorker(kind, mock, durationMs) {
   const latencies = [];
   let ok = 0;
   let err = 0;
-  const tEnd = performance.now() + durationMs;
   try {
+    for (let i = 0; i < CHAOS_WARMUP; i++) {
+      try {
+        if (kind === "clawql") await callClawql(conn.client);
+        else await callExecutor(conn.client);
+      } catch {
+        /* warmup errors ignored */
+      }
+    }
+    const tEnd = performance.now() + durationMs;
     while (performance.now() < tEnd) {
       try {
         const ms = await timeOnce(async () => {
@@ -735,12 +749,170 @@ async function phaseChaos(mock) {
     broke_at: brokeAt,
     break_reason: breakReason,
     note:
-      "Each concurrency level spawns N independent stdio MCP processes per arm for step_ms. " +
-      "Break = error_rate or p99 SLO. Not a single multiplexed session.",
+      `Each concurrency level spawns N independent stdio MCP processes per arm for step_ms ` +
+      `(warmup=${CHAOS_WARMUP} excluded from stats). Break = error_rate or p99 SLO. ` +
+      "Not a single multiplexed session — see chaos_http for shared-process ClawQL load.",
   };
 }
 
-function boardTable(latency, resources, tokens, chaos) {
+/**
+ * ClawQL-only: one Streamable HTTP MCP process, N concurrent clients (multiplexed load tail).
+ * Executor has no equal HTTP arm here — reported separately from stdio process-chaos.
+ */
+async function phaseChaosHttp(mock) {
+  if (!CHAOS_HTTP) {
+    return { skipped: true, reason: "COMPREHENSIVE_CHAOS_HTTP=0" };
+  }
+  if (!existsSync(join(ROOT, "dist", "server-http.js"))) {
+    return { skipped: true, reason: "dist/server-http.js missing" };
+  }
+
+  const home = join("/tmp", `clawql-chaos-http-${process.pid}`);
+  await mkdir(home, { recursive: true });
+  const port = 18000 + (process.pid % 1000);
+  const env = {
+    ...clawqlEnv(home, mock.specPath, mock.baseUrl),
+    PORT: String(port),
+    MCP_PORT: String(port),
+    MCP_HOST: "127.0.0.1",
+    CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE: "1",
+  };
+  const child = spawn(process.execPath, [join(ROOT, "dist", "server-http.js")], {
+    cwd: ROOT,
+    env,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let earlyExit = null;
+  const onEarlyExit = (code, signal) => {
+    earlyExit = { code, signal };
+  };
+  child.on("exit", onEarlyExit);
+  try {
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("clawql-http Ready timeout")), 90_000);
+      const onData = (chunk) => {
+        if (String(chunk).includes("listening on")) {
+          clearTimeout(timer);
+          resolve(undefined);
+        }
+      };
+      child.stderr?.on("data", onData);
+      child.stdout?.on("data", onData);
+      child.on("error", reject);
+    });
+  } catch (err) {
+    child.kill("SIGKILL");
+    throw err;
+  }
+  if (earlyExit) {
+    child.kill("SIGKILL");
+    throw new Error(`clawql-http exited early code=${earlyExit.code}`);
+  }
+
+  const sampler = new ResourceSampler("clawql_http", child.pid);
+  sampler.start(100);
+  const steps = [];
+  let brokeAt = null;
+  let breakReason = null;
+  let resources;
+  try {
+    for (let n = 1; n <= CHAOS_MAX; n *= 2) {
+      console.error(`[comprehensive] chaos_http concurrency=${n} step_ms=${CHAOS_STEP_MS}`);
+      const clients = [];
+      for (let i = 0; i < n; i++) {
+        const transport = new StreamableHTTPClientTransport(
+          new URL(`http://127.0.0.1:${port}/mcp`)
+        );
+        const client = new Client({ name: `chaos-http-${i}`, version: "1" }, {});
+        await client.connect(transport);
+        clients.push({ client, transport });
+      }
+      for (const c of clients) {
+        for (let w = 0; w < CHAOS_WARMUP; w++) {
+          try {
+            await callClawql(c.client);
+          } catch {
+            /* warmup */
+          }
+        }
+      }
+      const latencies = [];
+      let ok = 0;
+      let err = 0;
+      const tEnd = performance.now() + CHAOS_STEP_MS;
+      await Promise.all(
+        clients.map(async (c) => {
+          while (performance.now() < tEnd) {
+            try {
+              const ms = await timeOnce(() => callClawql(c.client));
+              latencies.push(ms);
+              ok += 1;
+            } catch {
+              err += 1;
+            }
+          }
+        })
+      );
+      for (const c of clients) {
+        await c.client.close().catch(() => {});
+      }
+      const total = ok + err;
+      const errorRate = total > 0 ? err / total : 1;
+      const stats = summarize(latencies);
+      const broken =
+        errorRate > BREAK_ERROR_RATE || (stats.p99_ms != null && stats.p99_ms > BREAK_P99_MS);
+      steps.push({
+        concurrency: n,
+        ok,
+        err,
+        error_rate: Number(errorRate.toFixed(4)),
+        rps: Number((ok / (CHAOS_STEP_MS / 1000)).toFixed(1)),
+        latency: stats,
+        broken,
+      });
+      if (broken && !brokeAt) {
+        brokeAt = { concurrency: n };
+        const reasons = [];
+        if (errorRate > BREAK_ERROR_RATE) reasons.push(`error_rate ${errorRate.toFixed(3)}`);
+        if (stats.p99_ms != null && stats.p99_ms > BREAK_P99_MS)
+          reasons.push(`p99 ${stats.p99_ms}ms`);
+        breakReason = reasons.join(" + ") || "slo";
+        break;
+      }
+    }
+  } finally {
+    resources = sampler.stop();
+    child.off("exit", onEarlyExit);
+    child.kill("SIGTERM");
+    await sleep(200);
+    try {
+      child.kill("SIGKILL");
+    } catch {
+      /* ignore */
+    }
+  }
+  const lastOk = [...steps].reverse().find((s) => !s.broken);
+  return {
+    transport: "streamable_http_multiplex",
+    slo: {
+      break_p99_ms: BREAK_P99_MS,
+      break_error_rate: BREAK_ERROR_RATE,
+      step_ms: CHAOS_STEP_MS,
+      max_concurrency_tried: CHAOS_MAX,
+      warmup: CHAOS_WARMUP,
+    },
+    steps,
+    sustained_concurrency_before_break: lastOk?.concurrency ?? 0,
+    broke_at: brokeAt,
+    break_reason: breakReason,
+    resources,
+    note:
+      "One ClawQL HTTP MCP process; N concurrent Streamable HTTP clients. " +
+      "Not equal-arm vs Executor (stdio-only). Measures shared-process load tail.",
+  };
+}
+
+function boardTable(latency, resources, tokens, chaos, chaosHttp) {
   return {
     latency_ms: {
       clawql_gateway_p50: latency.clawql_gateway_cost.p50_ms,
@@ -772,6 +944,8 @@ function boardTable(latency, resources, tokens, chaos) {
       sustained_concurrency: chaos.sustained_concurrency_before_break,
       broke_at: chaos.broke_at,
       break_reason: chaos.break_reason,
+      http_multiplex_sustained: chaosHttp?.sustained_concurrency_before_break ?? null,
+      http_multiplex_broke_at: chaosHttp?.broke_at ?? null,
     },
   };
 }
@@ -793,8 +967,10 @@ async function main() {
     const { latency, resources } = await phaseLatencyAndResources(mock);
     console.error("[comprehensive] phase: tokens");
     const tokens = await phaseTokens(mock);
-    console.error("[comprehensive] phase: chaos throughput ramp");
+    console.error("[comprehensive] phase: chaos throughput ramp (stdio)");
     const chaos = await phaseChaos(mock);
+    console.error("[comprehensive] phase: chaos HTTP multiplex (ClawQL)");
+    const chaosHttp = await phaseChaosHttp(mock);
 
     const report = {
       suite: "executor-cmp-comprehensive",
@@ -804,21 +980,26 @@ async function main() {
         warmup: WARMUP,
         chaos_max: CHAOS_MAX,
         chaos_step_ms: CHAOS_STEP_MS,
+        chaos_warmup: CHAOS_WARMUP,
+        chaos_http: CHAOS_HTTP,
         break_p99_ms: BREAK_P99_MS,
         break_error_rate: BREAK_ERROR_RATE,
         governance_in_memory_worm: GOVERNANCE,
         panguard: false,
         transport: "stdio_both",
+        openapi_execute_path: "rest",
       },
-      board: boardTable(latency, resources, tokens, chaos),
+      board: boardTable(latency, resources, tokens, chaos, chaosHttp),
       latency,
       resources,
       tokens,
       chaos,
+      chaos_http: chaosHttp,
       publish_notes: [
         "Lead latency claims still come from latency-fair 10k×3 when available; this suite is the multi-dimension board.",
         "p999 from COMPREHENSIVE_ITERS<10000 is exploratory — do not claim alone.",
         "In-memory WORM only if COMPREHENSIVE_GOVERNANCE=1; Panguard off.",
+        "Do not publicize until ClawQL wins every board dimension that is product-fair.",
         `Executor ${versions.executor.version ?? "?"} — rerun when v2 ships.`,
       ],
     };

@@ -226,6 +226,7 @@ function clawqlEnv(measureHome, specPath, apiBase, governance) {
     CLAWQL_ENABLE_OBSERVABILITY: "0",
     CLAWQL_ENABLE_GOOGLE: "0",
     CLAWQL_ENABLE_AWS: "0",
+    CLAWQL_OPENAPI_EXECUTE_PATH: "rest",
     CLAWQL_ALLOW_NO_ENFORCEMENT: "1",
   };
   for (const key of [

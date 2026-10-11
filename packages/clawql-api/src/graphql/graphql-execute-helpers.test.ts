@@ -7,6 +7,7 @@ import {
   operationIdToGraphQLName,
   operationIdToRunStyleName,
   resolveGraphQLFieldFromSchema,
+  sanitizeNameForGraphQL,
 } from "clawql-api";
 import type { Operation } from "clawql-api";
 
@@ -66,5 +67,14 @@ describe("graphql-execute-helpers", () => {
     expect(discoveryTypeToGraphQL("string")).toBe("String");
     expect(discoveryTypeToGraphQL("integer", true)).toBe("Int!");
     expect(discoveryTypeToGraphQL("unknown")).toBe("String");
+  });
+
+  it("sanitizeNameForGraphQL matches Mesh field-name rules (no @graphql-mesh/utils import)", () => {
+    expect(sanitizeNameForGraphQL("foo-bar")).toBe("foo_bar");
+    expect(sanitizeNameForGraphQL("123abc")).toBe("_123abc");
+    expect(sanitizeNameForGraphQL("a.b")).toBe("a_b");
+    expect(sanitizeNameForGraphQL("$ref")).toBe("_DOLLAR_ref");
+    expect(sanitizeNameForGraphQL("__typename")).toBe("_0typename");
+    expect(sanitizeNameForGraphQL("Query")).toBe("Query_");
   });
 });
