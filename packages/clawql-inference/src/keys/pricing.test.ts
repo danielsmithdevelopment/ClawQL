@@ -53,7 +53,10 @@ describe("token pricing", () => {
   });
 
   it("budget façade passes model key through", () => {
-    const cheap = estimateCostUsd({ inputTokens: 1_000_000, outputTokens: 0 }, "openai/gpt-4o-mini");
+    const cheap = estimateCostUsd(
+      { inputTokens: 1_000_000, outputTokens: 0 },
+      "openai/gpt-4o-mini"
+    );
     const flat = estimateCostUsd({ inputTokens: 1_000_000, outputTokens: 0 });
     expect(cheap).toBeCloseTo(0.15, 6);
     expect(flat).toBeCloseTo(1, 6);

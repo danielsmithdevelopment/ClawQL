@@ -89,10 +89,7 @@ const PROVIDER_RATES_PER_1M: Readonly<Record<string, TokenRatesPerMillion>> = {
   clawql: ZERO,
 };
 
-function perMillionToTokenRates(
-  rates: TokenRatesPerMillion,
-  source: PricingSource
-): TokenRates {
+function perMillionToTokenRates(rates: TokenRatesPerMillion, source: PricingSource): TokenRates {
   return {
     inputUsdPerToken: rates.inputUsdPer1M / 1_000_000,
     outputUsdPerToken: rates.outputUsdPer1M / 1_000_000,
@@ -121,10 +118,7 @@ function providerFromKey(key: string): string | undefined {
 export function resolveTokenRates(modelOrProviderKey?: string): Effect.Effect<TokenRates> {
   return Effect.sync(() => {
     if (!modelOrProviderKey || !modelOrProviderKey.trim()) {
-      return perMillionToTokenRates(
-        { inputUsdPer1M: 1, outputUsdPer1M: 3 },
-        "default"
-      );
+      return perMillionToTokenRates({ inputUsdPer1M: 1, outputUsdPer1M: 3 }, "default");
     }
     const key = modelOrProviderKey.trim().toLowerCase();
     if (isLocalKey(key)) {
@@ -144,10 +138,7 @@ export function resolveTokenRates(modelOrProviderKey?: string): Effect.Effect<To
     const providerHit = PROVIDER_RATES_PER_1M[provider];
     if (providerHit) return perMillionToTokenRates(providerHit, "provider");
 
-    return perMillionToTokenRates(
-      { inputUsdPer1M: 1, outputUsdPer1M: 3 },
-      "default"
-    );
+    return perMillionToTokenRates({ inputUsdPer1M: 1, outputUsdPer1M: 3 }, "default");
   });
 }
 
