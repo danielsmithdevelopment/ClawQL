@@ -1234,34 +1234,11 @@ async function main() {
       }
     }
 
-    if (live.length) {
-      const measured = await measureInterleaved(live, mock.baseUrl);
-      for (const [id, row] of Object.entries(measured)) {
-        arms[id] = row;
-      }
-      if (!SKIP_CHAOS) {
-        for (const arm of live) {
-          if (!arm.chaosHooks) continue;
-          console.log(`[multi] chaos ${arm.id}`);
-          try {
-            arms[arm.id].chaos = await chaosWithRefine(arm.chaosHooks);
-          } catch (e) {
-            arms[arm.id].chaos = { error: String(e?.message || e) };
-          }
-        }
-      } else {
-        for (const arm of live) {
-          if (arms[arm.id]) {
-            arms[arm.id].chaos = { skipped: true, reason: "MULTI_SKIP_CHAOS=1 (latency/p999 focus)" };
-          }
-        }
-      }
-    }
-
-    const report = {
+    const buildReport = (partial = false) => ({
       suite: "gateway-multi-comparison",
       measuredAt: new Date().toISOString(),
       node: process.version,
+      partial,
       config: {
         iters: ITERS,
         warmup: WARMUP,
@@ -1288,9 +1265,42 @@ async function main() {
         "Chaos optional (MULTI_SKIP_CHAOS); when on: concurrent clients until p99>SLO / error_rate.",
         "Panguard / durable WORM off. MetaMCP skipped without Docker.",
         "Hold publicizing until ClawQL RAM narrative closed or scoped.",
+        "Checkpoint writes after latency and after each chaos arm (survives OOM mid-chaos).",
       ],
+    });
+
+    const checkpoint = async (label) => {
+      await writeFile(OUT_PATH, JSON.stringify(buildReport(true), null, 2));
+      console.log(`[multi] checkpoint ${label} → ${OUT_PATH}`);
     };
 
+    if (live.length) {
+      const measured = await measureInterleaved(live, mock.baseUrl);
+      for (const [id, row] of Object.entries(measured)) {
+        arms[id] = row;
+      }
+      await checkpoint("after-latency");
+      if (!SKIP_CHAOS) {
+        for (const arm of live) {
+          if (!arm.chaosHooks) continue;
+          console.log(`[multi] chaos ${arm.id}`);
+          try {
+            arms[arm.id].chaos = await chaosWithRefine(arm.chaosHooks);
+          } catch (e) {
+            arms[arm.id].chaos = { error: String(e?.message || e) };
+          }
+          await checkpoint(`after-chaos-${arm.id}`);
+        }
+      } else {
+        for (const arm of live) {
+          if (arms[arm.id]) {
+            arms[arm.id].chaos = { skipped: true, reason: "MULTI_SKIP_CHAOS=1 (latency/p999 focus)" };
+          }
+        }
+      }
+    }
+
+    const report = buildReport(false);
     await writeFile(OUT_PATH, JSON.stringify(report, null, 2));
     console.log(`\n[multi] wrote ${OUT_PATH}`);
     console.log(JSON.stringify(report.board, null, 2));
