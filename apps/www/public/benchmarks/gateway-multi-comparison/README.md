@@ -170,7 +170,11 @@ Artifact: [`gateway-multi-multiturn-10k.json`](./gateway-multi-multiturn-10k.jso
 
 † Baseline defs = agentgateway’s serialization of the 40 catalog tools (exact match by construction).
 
-ClawQL check: 297 + 11 568 + 8 674 = **20 539** (mean discovery 964/turn · mean result 723/turn). Aggregators **match** (or nearly match) the fair baseline — they do **not** add a separate “schema tax.” ClawQL is the only arm that **reduces** tokens vs that baseline (~14.5k @12) via projection. Bun keeps token wins and cuts Node multiturn RSS ~50%.
+ClawQL check: 297 + 11 568 + 8 674 = **20 539** (mean discovery 964/turn · mean result 723/turn). Aggregators **match** (or nearly match) the fair baseline — they do **not** add a separate “schema tax.” On **this board** ClawQL is the only measured arm that **reduces** tokens vs that baseline (~14.5k @12, ~41%) via projection. Bun keeps token wins and cuts Node multiturn RSS ~50%.
+
+**Executor “+18 666” verified:** turn-1 MCP text parses to the **same** `items`/`partition` as the shared mock fixture; `JSON.stringify(parse(exec), compact) === fixture` (7 655 chars). Excess is **pretty-printed JSON** (~1.8× tokens), not unequal data. Compacted equivalent @12 ≈ **29 572** (90 + 29 482). Artifacts: [`executor-vs-mock-compare.json`](./executor-vs-mock-compare.json).
+
+**Claim bound:** four gateways measured. Bifrost / mcp-gateway (compact meta-tool shortlist) **not** on this board — do not claim the whole category until they are.
 
 **Next ClawQL token lever — discovery (11 568 = 56% of combined):** leaner search hits (~300 tok/turn would cut ~8k @12), and/or skip search when the agent already knows the operation (`execute` by operation ID; measure op-repeat rate). Neither touches projection.
 

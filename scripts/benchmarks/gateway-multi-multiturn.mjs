@@ -1148,7 +1148,7 @@ async function runExecutorArm(turns, { filter = false } = {}) {
             task_success: success,
             note: filter
               ? "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
-              : "Fat equal-arm JSON via code; no fields projection",
+              : "Fat equal-arm JSON via code; Executor MCP text is pretty-printed same payload (see executor-vs-mock-compare.json)",
           });
         }
       }

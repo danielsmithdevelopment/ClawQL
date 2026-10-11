@@ -210,7 +210,18 @@
       "discovery_tokens_sum": 0,
       "mean_discovery_tokens": 0,
       "result_tokens_sum": 53578,
-      "combined_rebuild": 53668
+      "combined_rebuild": 53668,
+      "result_inflation": {
+        "kind": "pretty_printed_json",
+        "verified": true,
+        "items_equal_fixture": true,
+        "compact_equals_fixture_chars": 7655,
+        "measured_turn1_chars": 16317,
+        "measured_turn1_tokens": 4419,
+        "compacted_combined_at_12_estimate": 29572,
+        "note": "Executor MCP text is indented JSON of the same fatPayload as the shared mock; not unequal data.",
+        "artifact": "executor-vs-mock-compare.json"
+      }
     },
     "mcpjungle": {
       "runtime": null,
@@ -3950,7 +3961,10 @@
     "ClawQL combined = definitions + Σ discovery(search) + Σ results; rebuild columns on the dedicated page.",
     "Baseline definitions use agentgateway's tools/list serialization of the 40 catalog ops (exact match by construction).",
     "MCPJungle +320 = 5840 − 5520 definitions only (more verbose wrapped schema text).",
-    "ClawQL discovery is 11568 (56% of 20539) — next levers: leaner search signatures; execute-by-operationId when ops recur."
+    "ClawQL discovery is 11568 (56% of 20539) — next levers: leaner search signatures; execute-by-operationId when ops recur.",
+    "Executor Layer2 inflation vs mock verified: same items/partition; excess is pretty-printed JSON (compact stringify matches fixture byte-for-byte).",
+    "Publish bound: only four gateways on this board — Bifrost/mcp-gateway untested; do not claim whole category.",
+    "On this board ClawQL is the only measured arm that reduces tokens vs fair baseline (~41% @12)."
   ],
   "ratios_vs_direct": {
     "direct": {},
@@ -4041,7 +4055,7 @@
     }
   },
   "mergedAt": "2026-10-11T19:47:57.836716Z",
-  "correctedAt": "2026-10-11T22:27:35.431Z",
+  "correctedAt": "2026-10-11T22:35:18.090Z",
   "token_model": {
     "combined": "definitions + sum(discovery) + sum(results)",
     "direct_definitions": "pinned to agentgateway's tools/list serialization of the 40 catalog ops",

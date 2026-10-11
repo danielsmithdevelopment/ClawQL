@@ -282,9 +282,9 @@ function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun }) {
     </div>
 
     <div class="callout">
-      <strong>Publish line:</strong> most efficient <em>governed</em> gateway — fewest multi-turn I/O tokens with equal task success.
-      ClawQL wins by keeping catalog discovery server-side (<code>search</code>) and projecting results (<code>where</code>/<code>fields</code>).
-      Thin aggregators <strong>match</strong> a fair no-gateway baseline (definitions + fat bodies); they do not invent an extra “schema tax” beyond what any agent needs.
+      <strong>Publish line (this board):</strong> among the measured arms, ClawQL is the only gateway that <em>reduces</em> multi-turn I/O tokens vs a fair no-gateway baseline — via server-side <code>search</code> and result projection (<code>where</code>/<code>fields</code>).
+      Thin aggregators <strong>match</strong> that baseline; they do not invent an extra “schema tax.”
+      Bound: four gateways here — Bifrost / mcp-gateway (compact meta-tool designs) were <strong>not</strong> measured; do not claim the whole category until they are.
     </div>
 
     <h2>1. Tokens — rebuild every total</h2>
@@ -328,6 +328,16 @@ ${breakdownRows}
       )}) — slightly more verbose wrapped schema text, not another token kind.
     </p>
 
+    <h3>Executor “adds tokens” — verified</h3>
+    <p>
+      Measured Executor results are ~1.8× aggregator/direct (~4 465 vs ~2 457 tok/turn). Byte-check on turn&nbsp;1:
+      <code>JSON.parse</code> of the Executor MCP text yields the <strong>same</strong> <code>items</code> + <code>partition</code> as the shared mock / in-process fixture
+      (<code>compact(JSON.stringify(parse(exec))) === fixture</code>). The excess is <strong>pretty-printed JSON</strong>
+      (indented newlines in Executor’s returned text), not unequal data and not an extra envelope of fields.
+      Compacted equivalent @12 ≈ <strong>29 572</strong> (90 defs + 29 482 results) — still no Layer2 win vs ClawQL’s 20 539.
+      The pretty-print tax is real for agents that see that MCP text; do not publish “Executor invents payload” — publish “same data, indented serialization.”
+    </p>
+
     <h3>Where ClawQL’s next token win is</h3>
     <p>
       Discovery is <strong>${fmt(claw?.discovery_tokens_sum)}</strong> tokens —
@@ -365,10 +375,10 @@ ${costRows}
     <ul>
       <li><strong>Direct HTTP</strong> — lowest latency, no gateway RSS; tokens = catalog definitions + fat bodies (fair agent baseline).</li>
       <li><strong>agentgateway / MCPJungle</strong> — match (or nearly match) that token total; fast multiplexers; they do <em>not</em> shrink Layer2.</li>
-      <li><strong>ClawQL</strong> — only arm that <em>reduces</em> tokens vs the fair baseline (~${
+      <li><strong>ClawQL</strong> — only <em>measured</em> arm that reduces tokens vs the fair baseline (~${
         saved != null ? fmt(saved) : "—"
-      } @12) via projection; pays discovery tokens + ~${latTax ?? "—"} ms flow p50 and RSS.</li>
-      <li><strong>Executor</strong> — tiny definitions, largest results (full pass-through); slowest flow p50 here.</li>
+      } @12, ~41%) via projection; pays discovery tokens + ~${latTax ?? "—"} ms flow p50 and RSS. Untested: Bifrost, mcp-gateway.</li>
+      <li><strong>Executor</strong> — tiny definitions; measured results larger because return text is pretty-printed same JSON (see verification above); slowest flow p50 here.</li>
     </ul>
 
     <h2>3. Why move ClawQL from Node to Bun</h2>
@@ -440,6 +450,8 @@ npm run generate:gateway-multi-page</pre>
     <h2>What not to claim</h2>
     <ul>
       <li>Do not say aggregators add a “schema tax” vs a zero-definition baseline — that baseline was unfair.</li>
+      <li>Do not say Executor invents extra payload fields — verified same data; excess is pretty-print formatting.</li>
+      <li>Do not claim “only gateway in the category that saves tokens” — this board has four gateways; Bifrost / mcp-gateway untested.</li>
       <li>Do not link <code>clawql.com/benchmarks/…</code> until www Pages deploy includes this folder.</li>
       <li>Do not mix topology-A ceilings with NATS 4-replica concurrency.</li>
       <li>Do not hide ClawQL RSS; Bun shrinks it, Go-thin proxies still win RAM.</li>
@@ -476,6 +488,7 @@ async function main() {
     "gateway-multi-cmp-ts7-bun-10k.json",
     "gateway-multi-cmp-ts7-node-chaos.json",
     "gateway-multi-cmp-ts7-bun-chaos.json",
+    "executor-vs-mock-compare.json",
     "README.md",
   ]) {
     const src = join(DIR, name);
