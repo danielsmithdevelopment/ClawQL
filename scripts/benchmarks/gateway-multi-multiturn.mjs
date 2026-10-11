@@ -915,9 +915,10 @@ function categoryWinNarrative(arms, ratios) {
     );
   }
   if (ratios.executor_filter) {
+    const r = ratios.executor_filter.vs_clawql_combined_classic;
     lines.push(
-      `Measured vs Executor filter @N=${TURNS}: classic ${ratios.executor_filter.vs_clawql_combined_classic}× ` +
-        `(same fields via code-mode — the peer Rhys will cite).`
+      `Measured vs Executor filter @N=${TURNS}: classic ${r}× ` +
+        `(same result fields via code-mode — ${Number(r) < 1 ? "Executor wins combined; ClawQL pays search tax — admit it" : "ClawQL wins combined"}).`
     );
   }
   lines.push("RSS is a loss among serious arms — admit or fix before memory claims.");

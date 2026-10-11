@@ -15,10 +15,13 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 
 | Claim | Status | Bound |
 | --- | --- | --- |
-| **Fewest tokens over a multi-turn task with equal task success** | **Primary** — classic Layer1-once + Σ Layer2 @12; requires `task_success` pass on every arm | Holds vs aggregators + fat Executor; **must hold vs `executor_filter`** after re-run |
+| **Fewest tokens among MCP aggregators / fat gateways with equal task success** | **Primary** — classic Layer1-once + Σ Layer2 @12; all arms `task_success` PASS | ClawQL **20.5k** vs MCPJungle **35.3k** (1.72×) and fat Executor **53.7k** (2.61×) |
+| **vs Executor code-mode filter** | **Loss on combined tokens** — admit it | `executor_filter` **8.8k** (0.43× ClawQL): same result tok (723) but no per-turn `search` tax and smaller Layer1 schema. Publish as “governed gateway vs program filter,” not a token win. |
 | **Lowest governed gateway cost** | **Supported** on n=10k — ClawQL gateway_cost p50 **0.70 ms** vs Executor **2.36 ms** | Same equal-arm pets upstream contract |
 | **Latency competitive with the fastest aggregators while doing more per call** | **Supported** — ClawQL best p50; MCPJungle best p999; essentially a tie at the top | Read with [path matrix](#path-matrix-what-each-arm-does) |
 | **Scale-out concurrency win** | **Not claimed yet** | Only after same-topology boards (1-instance **and** 4-replica behind LB) for every arm, pushed until break |
+
+Coherent publish line: **most efficient governed gateway** (vs aggregators + vs Executor’s governed cost) — not “fewest tokens against every code-mode peer.”
 
 Do **not** cite “135 vs 19” (ClawQL NATS 4-replica vs Executor process-per-client) as a same-board concurrency win.
 
@@ -49,7 +52,7 @@ At n=10 000: ClawQL fastest at **p50**; MCPJungle fastest at **p999**. That is
 | **Multi-turn I/O tokens (classic)** | **Lead** vs aggregators (~1.7× combined @12) and fat Executor (~2.6×). Re-list-every-turn is **secondary** (most clients cache `tools/list`; lazy clients shrink aggregator schema cost further). |
 | **Task success** | Deterministic inventory checks in harness (`task_success`); LLM-as-judge optional when a model key is present. Publish only if ClawQL success ≥ peers. |
 | **Latency e2e / gateway_cost** | **Win on governed cost**; e2e competitive (best p50, near-tie p999). |
-| **Chaos (single-instance equal-arm)** | **Win vs Executor** — ClawQL **63/64** vs Executor **23/24**. **Loss / incomplete vs aggregators** — MCPJungle **≥128** (not broken yet); agentgateway **≥64** (refine OOM). Do not claim aggregator concurrency wins. |
+| **Chaos (single-instance equal-arm)** | **Win vs Executor** — ClawQL **63/64** vs Executor **23/24**. **Loss vs MCPJungle** — **204/205**. **Tie vs agentgateway** — **62/63**. Do not claim aggregator concurrency wins. |
 | **RSS** | **Loss among serious arms** — ClawQL cold Ready ~**232 MB**, chaos min ~**259 MB**, under-load median ~**427 MB** vs MCPJungle ~**148–152 MB**. Scale-out multiplies the gap. Admit it; profile heap before claiming memory wins. |
 | **ContextForge / MetaMCP** | **Off the publish board.** ContextForge was previously nested behind MCPJungle (inflates latency/RSS/chaos). MetaMCP needs Docker. Re-add only with native REST/virtualization (CF → `/pets` direct) or a real MetaMCP run. |
 
@@ -96,16 +99,16 @@ At n=10 000: ClawQL fastest at **p50**; MCPJungle fastest at **p999**. That is
 
 **Claim only within the same topology.** Push every arm until it **actually breaks** (`MULTI_CHAOS_UNTIL_BREAK=1`, raise `MULTI_CHAOS_MAX`). Stopping at 128 without a break is incomplete for concurrency claims.
 
-### Board A — slim composition (p99≤100 ms)
+### Board A — slim composition (p99≤100 ms), until-break
 
 | Arm | Topology | last_ok / first_break | Break reason | RSS min / med (MB) |
 | --- | --- | ---: | --- | ---: |
 | **ClawQL** | stdio 1× | **63 / 64** | p99 106 ms | **259 / 342** |
 | Executor | stdio 1× | 23 / 24 | p99 102 ms | 397 / 422 |
-| MCPJungle | HTTP 1× | **≥128** / — | (no break ≤128 — **incomplete**) | **97 / 109** |
-| agentgateway | HTTP 1× | ≥64 / ≤128 | power-of-two; refine OOM | 189 / 191 |
+| MCPJungle | HTTP 1× | **204 / 205** | p99 112 ms | **97 / 97** |
+| agentgateway | HTTP 1× | **62 / 63** | p99 111 ms | — |
 
-On equal single-instance footing, **aggregators currently lead concurrency** until we push them past break. ClawQL’s publishable chaos claim here is **vs Executor only** (~2.7× clients).
+On equal single-instance footing: **MCPJungle leads concurrency** (204); ClawQL ≈ agentgateway (~63); Executor trails (23). Publishable chaos claim on this board is **vs Executor only** (~2.7× clients) — not vs MCPJungle.
 
 ### Latency / chaos run
 
@@ -146,15 +149,17 @@ Single-tool p50 is a thin slice. The category ClawQL is built for is **multi-tur
 | Task success | Deterministic: every turn’s rows must match expected available inventory for that partition |
 | Turns | **12** unique partitions (see also N=24 artifact) |
 
-### Board @ N=12 (classic: Layer1 once + Σ Layer2)
+### Board @ N=12 (classic: Layer1 once + Σ Layer2) — re-measured
 
 | Arm | Layer1 once (tok) | Mean Layer2 (tok) | Mean **result** tok | Combined @12 | Task success |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| **ClawQL** | **297** (search+execute only) | **1687** | **723** | **20 539** | required |
-| Executor (fat) | 90 | 4465 | 4465 | 53 668 (2.61×) | required |
-| Executor (filter) | 90 | *(re-measure)* | slim ≈ ClawQL result | *(re-measure)* | required |
-| MCPJungle | 5840 | 2457 | 2457 | 35 322 (1.72×) | required |
-| agentgateway | 5520 | 2457 | 2457 | 35 002 (1.70×) | required |
+| **ClawQL** | **297** (search+execute) | **1687** | **723** | **20 539** | **PASS** |
+| Executor (fat) | 90 | 4465 | 4465 | 53 668 (2.61×) | **PASS** |
+| Executor (filter) | 90 | **723** | **723** | **8 764 (0.43×)** | **PASS** |
+| MCPJungle | 5840 | 2457 | 2457 | 35 322 (1.72×) | **PASS** |
+| agentgateway | 5520 | 2457 | 2457 | 35 002 (1.70×) | **PASS** |
+
+**Read correctly:** result tokens tie ClawQL ↔ `executor_filter` (723). Combined favors Executor filter because ClawQL pays ~964 tok/turn of `search` + a larger execute schema. That is the Rhys objection — surface it, don’t bury it. Token win holds vs **aggregators** and **fat** Executor under equal task success.
 
 Primary publish column is **classic** (Layer1 once). **Re-list every turn** is secondary — most clients cache tool lists; lazy clients shrink aggregator Layer1 further. Secondary numbers remain in the JSON for sensitivity analysis.
 
@@ -203,7 +208,7 @@ Default `MULTI_ARMS` / `MT_ARMS` omit both.
 6. **Multiturn fairness** — `executor_filter` arm + deterministic `task_success`; classic Layer1-once is primary; re-list demoted.
 7. **Chaos until-break + topology tags** — `MULTI_CHAOS_UNTIL_BREAK`; reports carry `topology` so cross-topology claims fail the honesty check.
 
-**Next:** push MCPJungle/agentgateway past break on topology A; run topology B (4×) for all arms; re-measure multiturn with `executor_filter` + task_success; optional LLM-judge when a model key is available.
+**Next:** topology B (4× behind LB) for every arm before any scale-out claim; optional LLM-as-judge when a model key is available; RSS heap profile / lazy `clawql-api` if we want to close the memory loss.
 
 ---
 
