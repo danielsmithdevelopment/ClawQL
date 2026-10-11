@@ -103,6 +103,7 @@
     "benchmark:executor-comparison:uniform": "npm run build && node scripts/benchmarks/executor-comparison-uniform-pulls.mjs",
     "benchmark:executor-comparison:fair": "node scripts/benchmarks/executor-comparison-fair-suite.mjs",
     "benchmark:executor-comparison:latency": "npm run build && node scripts/benchmarks/executor-comparison-latency.mjs",
+    "benchmark:executor-comparison:latency-fair": "node scripts/benchmarks/executor-comparison-latency-fair.mjs",
     "generate:executor-cmp-latency-html": "node scripts/benchmarks/generate-executor-cmp-latency-html.mjs",
     "generate:executor-cmp-static": "npm run generate:executor-cmp-static -w mcp-api-adapter",
     "openbench:validate": "python3 benchmarks/openbench/validate_tasks.py",
