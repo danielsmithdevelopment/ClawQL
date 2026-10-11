@@ -64,7 +64,18 @@ async function runHttp(port) {
 
   const http = createServer(async (req, res) => {
     try {
-      await transport.handleRequest(req, res);
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      const raw = Buffer.concat(chunks);
+      let parsedBody;
+      if (raw.length) {
+        try {
+          parsedBody = JSON.parse(raw.toString("utf8"));
+        } catch {
+          parsedBody = undefined;
+        }
+      }
+      await transport.handleRequest(req, res, parsedBody);
     } catch (err) {
       if (!res.headersSent) {
         res.writeHead(500, { "content-type": "application/json" });
