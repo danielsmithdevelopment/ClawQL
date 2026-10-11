@@ -529,7 +529,8 @@ async function measureInterleaved(liveArms, mockBaseUrl) {
       for (const c of conns) {
         const e2e = series[c.arm.id].e2e;
         if (e2e.length === direct.length) {
-          const useCost = EQUAL_UPSTREAM || c.arm.gatewayCostFromDirect;
+          // Only subtract direct when this arm actually paid the shared HTTP hop.
+          const useCost = c.arm.gatewayCostFromDirect === true;
           series[c.arm.id].gateway.push(useCost ? e2e[e2e.length - 1] - d : e2e[e2e.length - 1]);
         }
       }
@@ -549,7 +550,7 @@ async function measureInterleaved(liveArms, mockBaseUrl) {
         tools.tools[0];
       const resultText = await c.arm.call(c.conn.client);
       const resources = c.sampler.stop();
-      const useCost = EQUAL_UPSTREAM || c.arm.gatewayCostFromDirect;
+      const useCost = c.arm.gatewayCostFromDirect === true;
       out[c.arm.id] = {
         id: c.arm.id,
         model: c.arm.model,
