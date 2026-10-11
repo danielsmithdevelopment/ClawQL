@@ -70,14 +70,18 @@ const CHAOS_HTTP = process.env.COMPREHENSIVE_CHAOS_HTTP !== "0";
 const CHAOS_SCALEOUT = process.env.COMPREHENSIVE_CHAOS_SCALEOUT !== "0";
 /** Skip Executor arm — find ClawQL client ceiling only (faster ramp). */
 const CHAOS_SCALEOUT_CLAWQL_ONLY = process.env.COMPREHENSIVE_CHAOS_SCALEOUT_CLAWQL_ONLY === "1";
+/** Skip ClawQL arm — find Executor stdio ceiling only (faster ramp). */
+const CHAOS_SCALEOUT_EXECUTOR_ONLY = process.env.COMPREHENSIVE_CHAOS_SCALEOUT_EXECUTOR_ONLY === "1";
 /**
- * After power-of-two bracket (last_ok … first_break), binary-search the ClawQL
- * client count. Default on for clawql-only; set COMPREHENSIVE_CHAOS_SCALEOUT_REFINE=0 to skip.
+ * After power-of-two bracket (last_ok … first_break), binary-search client counts.
+ * Default on for clawql-only / executor-only; set COMPREHENSIVE_CHAOS_SCALEOUT_REFINE=0 to skip.
  */
 const CHAOS_SCALEOUT_REFINE =
   process.env.COMPREHENSIVE_CHAOS_SCALEOUT_REFINE === "0"
     ? false
-    : process.env.COMPREHENSIVE_CHAOS_SCALEOUT_REFINE === "1" || CHAOS_SCALEOUT_CLAWQL_ONLY;
+    : process.env.COMPREHENSIVE_CHAOS_SCALEOUT_REFINE === "1" ||
+      CHAOS_SCALEOUT_CLAWQL_ONLY ||
+      CHAOS_SCALEOUT_EXECUTOR_ONLY;
 /** Stop refine when (first_break − last_ok) ≤ this (default 1 = exact integer). */
 const CHAOS_SCALEOUT_REFINE_TOLERANCE = Math.max(
   1,
@@ -1097,6 +1101,38 @@ async function assignWorkerBaseUrl(nc, sc) {
   return parsed.baseUrl;
 }
 
+/** One Executor scale-out step: N independent stdio MCP processes. */
+async function measureExecutorScaleoutClients(mock, n) {
+  const workers = await Promise.all(
+    Array.from({ length: n }, () => chaosWorker("executor", mock, CHAOS_STEP_MS))
+  );
+  const latencies = workers.flatMap((w) => w.latencies);
+  const ok = workers.reduce((a, w) => a + w.ok, 0);
+  const err = workers.reduce((a, w) => a + w.err, 0);
+  const total = ok + err;
+  const errorRate = total > 0 ? err / total : 1;
+  const stats = summarize(latencies);
+  const broken =
+    errorRate > BREAK_ERROR_RATE ||
+    (stats.p99_ms != null && stats.p99_ms > BREAK_P99_MS) ||
+    workers.some((w) => !w.alive);
+  const reasons = [];
+  if (errorRate > BREAK_ERROR_RATE) reasons.push(`error_rate ${errorRate.toFixed(3)}`);
+  if (stats.p99_ms != null && stats.p99_ms > BREAK_P99_MS) reasons.push(`p99 ${stats.p99_ms}ms`);
+  if (workers.some((w) => !w.alive)) reasons.push("worker_death");
+  return {
+    model: "stdio_process_per_client",
+    workers: n,
+    ok,
+    err,
+    error_rate: Number(errorRate.toFixed(4)),
+    rps: Number((ok / (CHAOS_STEP_MS / 1000)).toFixed(1)),
+    latency: stats,
+    broken,
+    break_reason: broken ? reasons.join(" + ") || "slo" : null,
+  };
+}
+
 /** One ClawQL scale-out step: N sticky MCP clients → K replicas via NATS assign. */
 async function measureClawqlScaleoutClients(nc, sc, n) {
   const clients = [];
@@ -1167,7 +1203,10 @@ async function phaseChaosScaleout(mock) {
     return { skipped: true, reason: "dist/server-http.js missing" };
   }
 
-  const nats = await startNatsServer();
+  const needClawqlReplicas = !CHAOS_SCALEOUT_EXECUTOR_ONLY;
+  const nats = needClawqlReplicas
+    ? await startNatsServer()
+    : { skipped: false, url: null, close: async () => {} };
   if (nats.skipped) return nats;
 
   const replicas = [];
@@ -1175,27 +1214,30 @@ async function phaseChaosScaleout(mock) {
   let nc;
   const sc = StringCodec();
   const steps = [];
-  const refineSteps = [];
+  const refineStepsClawql = [];
+  const refineStepsExecutor = [];
   let brokeAt = null;
   let breakReason = null;
   let refine = null;
+  let refineExecutor = null;
 
   try {
-    const basePort = 19000 + (process.pid % 500);
-    for (let i = 0; i < CHAOS_WORKERS; i++) {
-      const port = basePort + i;
-      const home = join("/tmp", `clawql-scaleout-w${i}-${process.pid}`);
-      const replica = await startClawqlHttpReplica(port, home, mock);
-      replicas.push(replica);
-      assigners.push(await startNatsAssignWorker(nats.url, replica.baseUrl));
+    if (needClawqlReplicas) {
+      const basePort = 19000 + (process.pid % 500);
+      for (let i = 0; i < CHAOS_WORKERS; i++) {
+        const port = basePort + i;
+        const home = join("/tmp", `clawql-scaleout-w${i}-${process.pid}`);
+        const replica = await startClawqlHttpReplica(port, home, mock);
+        replicas.push(replica);
+        assigners.push(await startNatsAssignWorker(nats.url, replica.baseUrl));
+      }
+      nc = await natsConnect({ servers: nats.url });
+      const probe = await assignWorkerBaseUrl(nc, sc);
+      if (!probe.startsWith("http://127.0.0.1:")) throw new Error(`bad assign ${probe}`);
     }
-    nc = await natsConnect({ servers: nats.url });
-
-    // Probe assign before ramp.
-    const probe = await assignWorkerBaseUrl(nc, sc);
-    if (!probe.startsWith("http://127.0.0.1:")) throw new Error(`bad assign ${probe}`);
 
     let executorAlreadyBroken = false;
+    let clawqlAlreadyBroken = false;
     for (let n = 1; n <= CHAOS_SCALEOUT_MAX; n *= 2) {
       console.error(
         `[comprehensive] chaos_scaleout clients=${n} clawql_workers=${CHAOS_WORKERS} step_ms=${CHAOS_STEP_MS}`
@@ -1207,10 +1249,29 @@ async function phaseChaosScaleout(mock) {
         arms: {},
       };
 
-      step.arms.clawql = await measureClawqlScaleoutClients(nc, sc, n);
-      if (step.arms.clawql.broken && !brokeAt) {
-        brokeAt = { concurrency: n, kind: "clawql" };
-        breakReason = step.arms.clawql.break_reason;
+      if (CHAOS_SCALEOUT_EXECUTOR_ONLY) {
+        step.arms.clawql = {
+          model: "nats_queue_assign_sticky_http",
+          skipped: true,
+          reason: "COMPREHENSIVE_CHAOS_SCALEOUT_EXECUTOR_ONLY=1",
+          broken: null,
+        };
+      } else if (!clawqlAlreadyBroken) {
+        step.arms.clawql = await measureClawqlScaleoutClients(nc, sc, n);
+        if (step.arms.clawql.broken) {
+          clawqlAlreadyBroken = true;
+          if (!brokeAt) {
+            brokeAt = { concurrency: n, kind: "clawql" };
+            breakReason = step.arms.clawql.break_reason;
+          }
+        }
+      } else {
+        step.arms.clawql = {
+          model: "nats_queue_assign_sticky_http",
+          skipped: true,
+          reason: "already_broken_at_lower_concurrency",
+          broken: true,
+        };
       }
 
       // --- Executor: N independent stdio processes (skip once broken / clawql-only ceiling) ---
@@ -1222,38 +1283,12 @@ async function phaseChaosScaleout(mock) {
           broken: null,
         };
       } else if (!executorAlreadyBroken) {
-        const workers = await Promise.all(
-          Array.from({ length: n }, () => chaosWorker("executor", mock, CHAOS_STEP_MS))
-        );
-        const latencies = workers.flatMap((w) => w.latencies);
-        const ok = workers.reduce((a, w) => a + w.ok, 0);
-        const err = workers.reduce((a, w) => a + w.err, 0);
-        const total = ok + err;
-        const errorRate = total > 0 ? err / total : 1;
-        const stats = summarize(latencies);
-        const broken =
-          errorRate > BREAK_ERROR_RATE ||
-          (stats.p99_ms != null && stats.p99_ms > BREAK_P99_MS) ||
-          workers.some((w) => !w.alive);
-        step.arms.executor = {
-          model: "stdio_process_per_client",
-          workers: n,
-          ok,
-          err,
-          error_rate: Number(errorRate.toFixed(4)),
-          rps: Number((ok / (CHAOS_STEP_MS / 1000)).toFixed(1)),
-          latency: stats,
-          broken,
-        };
-        if (broken) {
+        step.arms.executor = await measureExecutorScaleoutClients(mock, n);
+        if (step.arms.executor.broken) {
           executorAlreadyBroken = true;
           if (!brokeAt) {
             brokeAt = { concurrency: n, kind: "executor" };
-            const reasons = [];
-            if (errorRate > BREAK_ERROR_RATE) reasons.push(`error_rate ${errorRate.toFixed(3)}`);
-            if (stats.p99_ms != null && stats.p99_ms > BREAK_P99_MS)
-              reasons.push(`p99 ${stats.p99_ms}ms`);
-            breakReason = reasons.join(" + ") || "worker_death";
+            breakReason = step.arms.executor.break_reason;
           }
         }
       } else {
@@ -1266,15 +1301,87 @@ async function phaseChaosScaleout(mock) {
       }
 
       steps.push(step);
-      // Keep ramping ClawQL after Executor breaks; stop when ClawQL breaks or max.
-      if (step.arms.clawql?.broken) break;
+      // Stop when both arms have broken (or the only active arm has).
+      const clawDone = CHAOS_SCALEOUT_EXECUTOR_ONLY || clawqlAlreadyBroken || step.arms.clawql?.broken;
+      const execDone = CHAOS_SCALEOUT_CLAWQL_ONLY || executorAlreadyBroken || step.arms.executor?.broken;
+      if (clawDone && execDone) break;
+    }
+
+    // Binary-search Executor between last_ok and first_break.
+    const execLastOk = [...steps]
+      .reverse()
+      .find((s) => s.arms.executor && !s.arms.executor.skipped && !s.arms.executor.broken);
+    const execFirstBreak = steps.find(
+      (s) => s.arms.executor && !s.arms.executor.skipped && s.arms.executor.broken
+    );
+    if (
+      CHAOS_SCALEOUT_REFINE &&
+      !CHAOS_SCALEOUT_CLAWQL_ONLY &&
+      execLastOk &&
+      execFirstBreak &&
+      execFirstBreak.concurrency - execLastOk.concurrency > CHAOS_SCALEOUT_REFINE_TOLERANCE
+    ) {
+      let lo = execLastOk.concurrency;
+      let hi = execFirstBreak.concurrency;
+      console.error(
+        `[comprehensive] chaos_scaleout refine executor binary-search lo=${lo} hi=${hi} tol=${CHAOS_SCALEOUT_REFINE_TOLERANCE}`
+      );
+      while (hi - lo > CHAOS_SCALEOUT_REFINE_TOLERANCE) {
+        const mid = Math.floor((lo + hi) / 2);
+        if (mid <= lo || mid >= hi) break;
+        console.error(
+          `[comprehensive] chaos_scaleout refine executor clients=${mid} (lo=${lo} hi=${hi})`
+        );
+        const exec = await measureExecutorScaleoutClients(mock, mid);
+        const step = {
+          concurrency: mid,
+          duration_ms: CHAOS_STEP_MS,
+          phase: "binary_refine_executor",
+          arms: {
+            clawql: {
+              model: "nats_queue_assign_sticky_http",
+              skipped: true,
+              reason: "refine_executor_only",
+              broken: null,
+            },
+            executor: exec,
+          },
+        };
+        refineStepsExecutor.push(step);
+        steps.push(step);
+        if (exec.broken) hi = mid;
+        else lo = mid;
+      }
+      refineExecutor = {
+        method: "binary_search",
+        tolerance: CHAOS_SCALEOUT_REFINE_TOLERANCE,
+        bracket_from_power_of_two: {
+          last_ok: execLastOk.concurrency,
+          first_break: execFirstBreak.concurrency,
+        },
+        last_ok_clients: lo,
+        first_break_clients: hi,
+        break_reason_at_first_break:
+          refineStepsExecutor.find((s) => s.concurrency === hi)?.arms.executor?.break_reason ??
+          execFirstBreak.arms.executor.break_reason,
+        steps: refineStepsExecutor,
+      };
+      console.error(
+        `[comprehensive] chaos_scaleout refine executor done last_ok=${lo} first_break=${hi}`
+      );
     }
 
     // Binary-search ClawQL client count between last_ok and first_break.
-    const lastOkStep = [...steps].reverse().find((s) => !s.arms.clawql?.broken);
-    const firstBreakStep = steps.find((s) => s.arms.clawql?.broken);
+    const lastOkStep = [...steps]
+      .filter((s) => s.phase === "power_of_two" || s.phase === "binary_refine")
+      .reverse()
+      .find((s) => s.arms.clawql && !s.arms.clawql.skipped && !s.arms.clawql.broken);
+    const firstBreakStep = steps.find(
+      (s) => s.arms.clawql && !s.arms.clawql.skipped && s.arms.clawql.broken
+    );
     if (
       CHAOS_SCALEOUT_REFINE &&
+      !CHAOS_SCALEOUT_EXECUTOR_ONLY &&
       lastOkStep &&
       firstBreakStep &&
       firstBreakStep.concurrency - lastOkStep.concurrency > CHAOS_SCALEOUT_REFINE_TOLERANCE
@@ -1282,13 +1389,13 @@ async function phaseChaosScaleout(mock) {
       let lo = lastOkStep.concurrency;
       let hi = firstBreakStep.concurrency;
       console.error(
-        `[comprehensive] chaos_scaleout refine binary-search lo=${lo} hi=${hi} tol=${CHAOS_SCALEOUT_REFINE_TOLERANCE}`
+        `[comprehensive] chaos_scaleout refine clawql binary-search lo=${lo} hi=${hi} tol=${CHAOS_SCALEOUT_REFINE_TOLERANCE}`
       );
       while (hi - lo > CHAOS_SCALEOUT_REFINE_TOLERANCE) {
         const mid = Math.floor((lo + hi) / 2);
         if (mid <= lo || mid >= hi) break;
         console.error(
-          `[comprehensive] chaos_scaleout refine clients=${mid} (lo=${lo} hi=${hi}) workers=${CHAOS_WORKERS}`
+          `[comprehensive] chaos_scaleout refine clawql clients=${mid} (lo=${lo} hi=${hi}) workers=${CHAOS_WORKERS}`
         );
         const claw = await measureClawqlScaleoutClients(nc, sc, mid);
         const step = {
@@ -1305,7 +1412,7 @@ async function phaseChaosScaleout(mock) {
             },
           },
         };
-        refineSteps.push(step);
+        refineStepsClawql.push(step);
         steps.push(step);
         if (claw.broken) {
           hi = mid;
@@ -1324,10 +1431,10 @@ async function phaseChaosScaleout(mock) {
         },
         last_ok_clients: lo,
         first_break_clients: hi,
-        steps: refineSteps,
+        steps: refineStepsClawql,
       };
       console.error(
-        `[comprehensive] chaos_scaleout refine done last_ok=${lo} first_break=${hi} (${breakReason ?? "n/a"})`
+        `[comprehensive] chaos_scaleout refine clawql done last_ok=${lo} first_break=${hi} (${breakReason ?? "n/a"})`
       );
     }
   } finally {
@@ -1347,9 +1454,20 @@ async function phaseChaosScaleout(mock) {
     .reverse()
     .find((s) => s.arms.executor && !s.arms.executor.skipped && !s.arms.executor.broken);
   const clawSus = refine?.last_ok_clients ?? clawOk?.concurrency ?? 0;
-  const execSus = execOk?.concurrency ?? 0;
+  const execSus = refineExecutor?.last_ok_clients ?? execOk?.concurrency ?? 0;
+  // Prefer refined break points over coarse power-of-two brokeAt.
   if (refine?.first_break_clients != null) {
     brokeAt = { concurrency: refine.first_break_clients, kind: "clawql" };
+    breakReason =
+      refine.steps?.find((s) => s.concurrency === refine.first_break_clients)?.arms.clawql
+        ?.break_reason ?? breakReason;
+  }
+  if (refineExecutor?.first_break_clients != null) {
+    // Keep ClawQL as primary broke_at when both refined; still record executor refine.
+    if (!refine?.first_break_clients) {
+      brokeAt = { concurrency: refineExecutor.first_break_clients, kind: "executor" };
+      breakReason = refineExecutor.break_reason_at_first_break ?? breakReason;
+    }
   }
   let winner = "tie";
   let winReason = "equal_sustained";
@@ -1406,13 +1524,19 @@ async function phaseChaosScaleout(mock) {
       warmup: CHAOS_WARMUP,
     },
     steps,
-    refine,
+    refine: refine ?? null,
+    refine_executor: refineExecutor ?? null,
     clawql_sustained_clients: clawSus,
     executor_sustained_clients: execSus,
     winner,
     win_reason: winReason,
     broke_at: brokeAt,
     break_reason: breakReason,
+    executor_first_break_clients:
+      refineExecutor?.first_break_clients ??
+      steps.find((s) => s.arms.executor && !s.arms.executor.skipped && s.arms.executor.broken)
+        ?.concurrency ??
+      null,
     note:
       "Primary chaos arm. ClawQL: fixed K HTTP gateway replicas; each client asks NATS " +
       "queue group clawql-chaos-assign for a sticky base URL (fabric session placement). " +
@@ -1505,6 +1629,7 @@ async function main() {
         chaos_http: CHAOS_HTTP,
         chaos_scaleout: CHAOS_SCALEOUT,
         chaos_scaleout_clawql_only: CHAOS_SCALEOUT_CLAWQL_ONLY,
+        chaos_scaleout_executor_only: CHAOS_SCALEOUT_EXECUTOR_ONLY,
         chaos_scaleout_refine: CHAOS_SCALEOUT_REFINE,
         chaos_scaleout_refine_tolerance: CHAOS_SCALEOUT_REFINE_TOLERANCE,
         break_p99_ms: BREAK_P99_MS,
