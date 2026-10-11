@@ -1,6 +1,6 @@
 {
   "suite": "gateway-multi-comparison",
-  "measuredAt": "2026-10-11T06:28:37.625Z",
+  "measuredAt": "2026-10-11T07:15:02.196Z",
   "node": "v22.14.0",
   "config": {
     "iters": 10000,
@@ -17,37 +17,36 @@
       "clawql",
       "executor",
       "mcpjungle",
-      "agentgateway",
-      "contextforge"
+      "agentgateway"
     ]
   },
   "board": {
     "clawql": {
       "latency_e2e_ms": {
         "n": 10000,
-        "p50_ms": 1.081,
-        "p95_ms": 2.625,
-        "p99_ms": 4.738,
-        "p999_ms": 9.66,
-        "mean_ms": 1.284,
-        "min_ms": 0.829,
-        "max_ms": 31.324
+        "p50_ms": 1.022,
+        "p95_ms": 1.95,
+        "p99_ms": 3.824,
+        "p999_ms": 7.408,
+        "mean_ms": 1.183,
+        "min_ms": 0.767,
+        "max_ms": 9.72
       },
       "gateway_cost_ms": {
         "n": 10000,
-        "p50_ms": 0.813,
-        "p95_ms": 2.26,
-        "p99_ms": 4.447,
-        "p999_ms": 9.413,
-        "mean_ms": 0.913,
-        "min_ms": -7.165,
-        "max_ms": 28.845
+        "p50_ms": 0.703,
+        "p95_ms": 1.509,
+        "p99_ms": 3.477,
+        "p999_ms": 6.867,
+        "mean_ms": 0.771,
+        "min_ms": -9.224,
+        "max_ms": 9.38
       },
-      "rss_mb_median": 316.91,
-      "cpu_pct_median": 6.79,
+      "rss_mb_median": 426.97,
+      "cpu_pct_median": 17.82,
       "invoked_tool_schema_tokens": 178,
-      "schema_tokens_full_list": 5334,
-      "tools_count": 18,
+      "schema_tokens_full_list": 1189,
+      "tools_count": 8,
       "equal_result_tokens": 59,
       "chaos_last_ok": null,
       "chaos_first_break": null,
@@ -56,26 +55,26 @@
     "executor": {
       "latency_e2e_ms": {
         "n": 10000,
-        "p50_ms": 2.579,
-        "p95_ms": 5.316,
-        "p99_ms": 7.213,
-        "p999_ms": 11.783,
-        "mean_ms": 3.024,
-        "min_ms": 1.903,
-        "max_ms": 55.908
+        "p50_ms": 2.358,
+        "p95_ms": 5.116,
+        "p99_ms": 6.605,
+        "p999_ms": 11.486,
+        "mean_ms": 2.802,
+        "min_ms": 1.566,
+        "max_ms": 24.201
       },
       "gateway_cost_ms": {
         "n": 10000,
-        "p50_ms": 2.579,
-        "p95_ms": 5.316,
-        "p99_ms": 7.213,
-        "p999_ms": 11.783,
-        "mean_ms": 3.024,
-        "min_ms": 1.903,
-        "max_ms": 55.908
+        "p50_ms": 2.358,
+        "p95_ms": 5.116,
+        "p99_ms": 6.605,
+        "p999_ms": 11.486,
+        "mean_ms": 2.802,
+        "min_ms": 1.566,
+        "max_ms": 24.201
       },
-      "rss_mb_median": 235.69,
-      "cpu_pct_median": 13.71,
+      "rss_mb_median": 210.2,
+      "cpu_pct_median": 21.86,
       "invoked_tool_schema_tokens": 90,
       "schema_tokens_full_list": 2243,
       "tools_count": 7,
@@ -87,26 +86,26 @@
     "mcpjungle": {
       "latency_e2e_ms": {
         "n": 10000,
-        "p50_ms": 1.382,
-        "p95_ms": 3.449,
-        "p99_ms": 5.419,
-        "p999_ms": 9.583,
-        "mean_ms": 1.665,
-        "min_ms": 1.026,
-        "max_ms": 39.78
+        "p50_ms": 1.338,
+        "p95_ms": 2.718,
+        "p99_ms": 4.356,
+        "p999_ms": 6.86,
+        "mean_ms": 1.54,
+        "min_ms": 0.958,
+        "max_ms": 21.449
       },
       "gateway_cost_ms": {
         "n": 10000,
-        "p50_ms": 1.115,
-        "p95_ms": 3.149,
-        "p99_ms": 5.158,
-        "p999_ms": 8.603,
-        "mean_ms": 1.294,
-        "min_ms": -6.409,
-        "max_ms": 39.424
+        "p50_ms": 1.017,
+        "p95_ms": 2.288,
+        "p99_ms": 3.994,
+        "p999_ms": 6.521,
+        "mean_ms": 1.129,
+        "min_ms": -8.703,
+        "max_ms": 21.094
       },
-      "rss_mb_median": 148.24,
-      "cpu_pct_median": 5.09,
+      "rss_mb_median": 151.91,
+      "cpu_pct_median": 15.71,
       "invoked_tool_schema_tokens": 46,
       "schema_tokens_full_list": 46,
       "tools_count": 1,
@@ -118,59 +117,28 @@
     "agentgateway": {
       "latency_e2e_ms": {
         "n": 10000,
-        "p50_ms": 1.201,
-        "p95_ms": 3.17,
-        "p99_ms": 5.543,
-        "p999_ms": 10.207,
-        "mean_ms": 1.477,
-        "min_ms": 0.835,
-        "max_ms": 60.337
+        "p50_ms": 1.165,
+        "p95_ms": 2.377,
+        "p99_ms": 4.208,
+        "p999_ms": 7.286,
+        "mean_ms": 1.367,
+        "min_ms": 0.841,
+        "max_ms": 9.697
       },
       "gateway_cost_ms": {
         "n": 10000,
-        "p50_ms": 0.929,
-        "p95_ms": 2.887,
-        "p99_ms": 5.263,
-        "p999_ms": 9.849,
-        "mean_ms": 1.106,
-        "min_ms": -7.103,
-        "max_ms": 60.096
+        "p50_ms": 0.838,
+        "p95_ms": 1.938,
+        "p99_ms": 3.809,
+        "p999_ms": 6.867,
+        "mean_ms": 0.955,
+        "min_ms": -9.116,
+        "max_ms": 9.354
       },
-      "rss_mb_median": 217.79,
-      "cpu_pct_median": 3.93,
+      "rss_mb_median": 214.55,
+      "cpu_pct_median": 12.19,
       "invoked_tool_schema_tokens": 37,
       "schema_tokens_full_list": 37,
-      "tools_count": 1,
-      "equal_result_tokens": 28,
-      "chaos_last_ok": null,
-      "chaos_first_break": null,
-      "chaos_break_reason": null
-    },
-    "contextforge": {
-      "latency_e2e_ms": {
-        "n": 10000,
-        "p50_ms": 16.013,
-        "p95_ms": 20.376,
-        "p99_ms": 24.87,
-        "p999_ms": 225.333,
-        "mean_ms": 17.114,
-        "min_ms": 13.952,
-        "max_ms": 373.066
-      },
-      "gateway_cost_ms": {
-        "n": 10000,
-        "p50_ms": 15.697,
-        "p95_ms": 20.015,
-        "p99_ms": 24.197,
-        "p999_ms": 224.947,
-        "mean_ms": 16.743,
-        "min_ms": 7.852,
-        "max_ms": 372.76
-      },
-      "rss_mb_median": 701.45,
-      "cpu_pct_median": 58.11,
-      "invoked_tool_schema_tokens": 47,
-      "schema_tokens_full_list": 47,
       "tools_count": 1,
       "equal_result_tokens": 28,
       "chaos_last_ok": null,
@@ -189,59 +157,59 @@
       "latency": {
         "e2e": {
           "n": 10000,
-          "p50_ms": 1.081,
-          "p95_ms": 2.625,
-          "p99_ms": 4.738,
-          "p999_ms": 9.66,
-          "mean_ms": 1.284,
-          "min_ms": 0.829,
-          "max_ms": 31.324
+          "p50_ms": 1.022,
+          "p95_ms": 1.95,
+          "p99_ms": 3.824,
+          "p999_ms": 7.408,
+          "mean_ms": 1.183,
+          "min_ms": 0.767,
+          "max_ms": 9.72
         },
         "direct_http": {
           "n": 10000,
-          "p50_ms": 0.248,
-          "p95_ms": 0.471,
-          "p99_ms": 3.518,
-          "p999_ms": 6.012,
-          "mean_ms": 0.371,
-          "min_ms": 0.207,
-          "max_ms": 8.14
+          "p50_ms": 0.307,
+          "p95_ms": 0.575,
+          "p99_ms": 3.31,
+          "p999_ms": 5.463,
+          "mean_ms": 0.412,
+          "min_ms": 0.234,
+          "max_ms": 10.515
         },
         "gateway_cost": {
           "n": 10000,
-          "p50_ms": 0.813,
-          "p95_ms": 2.26,
-          "p99_ms": 4.447,
-          "p999_ms": 9.413,
-          "mean_ms": 0.913,
-          "min_ms": -7.165,
-          "max_ms": 28.845
+          "p50_ms": 0.703,
+          "p95_ms": 1.509,
+          "p99_ms": 3.477,
+          "p999_ms": 6.867,
+          "mean_ms": 0.771,
+          "min_ms": -9.224,
+          "max_ms": 9.38
         },
         "call_errors": 0,
-        "note": "gateway_cost = e2e \u2212 paired direct HTTP /pets (interleaved equal-arm)",
+        "note": "gateway_cost = e2e − paired direct HTTP /pets (interleaved equal-arm)",
         "schedule": "interleaved_closed_loop"
       },
       "resources": {
         "label": "clawql",
-        "pid": 194357,
-        "n": 2544,
+        "pid": 200814,
+        "n": 755,
         "rss_mb": {
-          "min": 257.12,
-          "median": 316.91,
-          "max": 370.27
+          "min": 261.44,
+          "median": 426.97,
+          "max": 509.97
         },
         "cpu_pct": {
-          "min": 5.82,
-          "median": 6.79,
-          "max": 208.79,
-          "mean": 8.54
+          "min": 15.25,
+          "median": 17.82,
+          "max": 236.62,
+          "mean": 21.27
         }
       },
       "tokens": {
         "invoked_tool_name": "execute",
         "invoked_tool_schema_tokens": 178,
-        "tools_list_count": 18,
-        "tools_list_schema_tokens": 5334,
+        "tools_list_count": 8,
+        "tools_list_schema_tokens": 1189,
         "equal_result_tokens": 59,
         "tool_names": [
           "search",
@@ -251,21 +219,11 @@
           "audit",
           "skills_list",
           "skills_get",
-          "sources_propose",
-          "memory_ingest",
-          "memory_recall",
-          "read_around",
-          "clawql_settings_read",
-          "clawql_settings_update",
-          "clawql_mentions_search",
-          "clawql_evidence",
-          "clawql_console",
-          "clawql_open_file",
-          "memory_sync"
+          "sources_propose"
         ],
         "note": "Primary board uses invoked_tool_schema_tokens (apples-to-apples); tools_list_* is secondary surface size."
       },
-      "pid": 194357,
+      "pid": 200814,
       "chaos": {
         "skipped": true,
         "reason": "MULTI_SKIP_CHAOS=1 (latency/p999 focus)"
@@ -281,52 +239,52 @@
       "latency": {
         "e2e": {
           "n": 10000,
-          "p50_ms": 2.579,
-          "p95_ms": 5.316,
-          "p99_ms": 7.213,
-          "p999_ms": 11.783,
-          "mean_ms": 3.024,
-          "min_ms": 1.903,
-          "max_ms": 55.908
+          "p50_ms": 2.358,
+          "p95_ms": 5.116,
+          "p99_ms": 6.605,
+          "p999_ms": 11.486,
+          "mean_ms": 2.802,
+          "min_ms": 1.566,
+          "max_ms": 24.201
         },
         "direct_http": {
           "n": 10000,
-          "p50_ms": 0.248,
-          "p95_ms": 0.471,
-          "p99_ms": 3.518,
-          "p999_ms": 6.012,
-          "mean_ms": 0.371,
-          "min_ms": 0.207,
-          "max_ms": 8.14
+          "p50_ms": 0.307,
+          "p95_ms": 0.575,
+          "p99_ms": 3.31,
+          "p999_ms": 5.463,
+          "mean_ms": 0.412,
+          "min_ms": 0.234,
+          "max_ms": 10.515
         },
         "gateway_cost": {
           "n": 10000,
-          "p50_ms": 2.579,
-          "p95_ms": 5.316,
-          "p99_ms": 7.213,
-          "p999_ms": 11.783,
-          "mean_ms": 3.024,
-          "min_ms": 1.903,
-          "max_ms": 55.908
+          "p50_ms": 2.358,
+          "p95_ms": 5.116,
+          "p99_ms": 6.605,
+          "p999_ms": 11.486,
+          "mean_ms": 2.802,
+          "min_ms": 1.566,
+          "max_ms": 24.201
         },
         "call_errors": 0,
-        "note": "gateway_cost \u2248 e2e (no equal-upstream subtraction)",
+        "note": "gateway_cost ≈ e2e (no equal-upstream subtraction)",
         "schedule": "interleaved_closed_loop"
       },
       "resources": {
         "label": "executor",
-        "pid": 194368,
-        "n": 2539,
+        "pid": 200825,
+        "n": 747,
         "rss_mb": {
-          "min": 217.82,
-          "median": 235.69,
-          "max": 260.1
+          "min": 172.75,
+          "median": 210.2,
+          "max": 232.14
         },
         "cpu_pct": {
-          "min": 0,
-          "median": 13.71,
-          "max": 13.83,
-          "mean": 13.49
+          "min": 4.93,
+          "median": 21.86,
+          "max": 23.52,
+          "mean": 21.77
         }
       },
       "tokens": {
@@ -346,7 +304,7 @@
         ],
         "note": "Primary board uses invoked_tool_schema_tokens (apples-to-apples); tools_list_* is secondary surface size."
       },
-      "pid": 194368,
+      "pid": 200825,
       "chaos": {
         "skipped": true,
         "reason": "MULTI_SKIP_CHAOS=1 (latency/p999 focus)"
@@ -357,57 +315,57 @@
       "model": "streamable_http_gateway_stdio_upstream+shared_http_upstream",
       "ok": true,
       "version": null,
-      "mcp_url": "http://127.0.0.1:37147/mcp",
+      "mcp_url": "http://127.0.0.1:34737/mcp",
       "tool_name": "pets__list_pets",
       "latency": {
         "e2e": {
           "n": 10000,
-          "p50_ms": 1.382,
-          "p95_ms": 3.449,
-          "p99_ms": 5.419,
-          "p999_ms": 9.583,
-          "mean_ms": 1.665,
-          "min_ms": 1.026,
-          "max_ms": 39.78
+          "p50_ms": 1.338,
+          "p95_ms": 2.718,
+          "p99_ms": 4.356,
+          "p999_ms": 6.86,
+          "mean_ms": 1.54,
+          "min_ms": 0.958,
+          "max_ms": 21.449
         },
         "direct_http": {
           "n": 10000,
-          "p50_ms": 0.248,
-          "p95_ms": 0.471,
-          "p99_ms": 3.518,
-          "p999_ms": 6.012,
-          "mean_ms": 0.371,
-          "min_ms": 0.207,
-          "max_ms": 8.14
+          "p50_ms": 0.307,
+          "p95_ms": 0.575,
+          "p99_ms": 3.31,
+          "p999_ms": 5.463,
+          "mean_ms": 0.412,
+          "min_ms": 0.234,
+          "max_ms": 10.515
         },
         "gateway_cost": {
           "n": 10000,
-          "p50_ms": 1.115,
-          "p95_ms": 3.149,
-          "p99_ms": 5.158,
-          "p999_ms": 8.603,
-          "mean_ms": 1.294,
-          "min_ms": -6.409,
-          "max_ms": 39.424
+          "p50_ms": 1.017,
+          "p95_ms": 2.288,
+          "p99_ms": 3.994,
+          "p999_ms": 6.521,
+          "mean_ms": 1.129,
+          "min_ms": -8.703,
+          "max_ms": 21.094
         },
         "call_errors": 0,
-        "note": "gateway_cost = e2e \u2212 paired direct HTTP /pets (interleaved equal-arm)",
+        "note": "gateway_cost = e2e − paired direct HTTP /pets (interleaved equal-arm)",
         "schedule": "interleaved_closed_loop"
       },
       "resources": {
         "label": "mcpjungle",
-        "pid": 194197,
-        "n": 2539,
+        "pid": 200740,
+        "n": 747,
         "rss_mb": {
-          "min": 28.76,
-          "median": 148.24,
-          "max": 149.86
+          "min": 29.11,
+          "median": 151.91,
+          "max": 154.03
         },
         "cpu_pct": {
           "min": 0,
-          "median": 5.09,
-          "max": 15.48,
-          "mean": 5.36
+          "median": 15.71,
+          "max": 43.52,
+          "mean": 16.32
         }
       },
       "tokens": {
@@ -421,7 +379,7 @@
         ],
         "note": "Primary board uses invoked_tool_schema_tokens (apples-to-apples); tools_list_* is secondary surface size."
       },
-      "pid": 194197,
+      "pid": 200740,
       "chaos": {
         "skipped": true,
         "reason": "MULTI_SKIP_CHAOS=1 (latency/p999 focus)"
@@ -432,57 +390,57 @@
       "model": "streamable_http_gateway_stdio_upstream+shared_http_upstream",
       "ok": true,
       "version": "{\n  \"version\": \"1.6.0\",\n  \"git_revision\": \"ea5608642b9d5c94c5baf5fd9f2f9849b808e963\",\n  \"rust_version\": \"1.99.0\",\n  \"build_profile\": \"release\",\n  \"build_target\": \"x86_64-unknown-linux-musl\",\n  \"crypto_backend\": \"aws-lc-rs\",\n  \"crypto_fips\": false\n}",
-      "mcp_url": "http://127.0.0.1:41289/mcp",
+      "mcp_url": "http://127.0.0.1:34129/mcp",
       "tool_name": "list_pets",
       "latency": {
         "e2e": {
           "n": 10000,
-          "p50_ms": 1.201,
-          "p95_ms": 3.17,
-          "p99_ms": 5.543,
-          "p999_ms": 10.207,
-          "mean_ms": 1.477,
-          "min_ms": 0.835,
-          "max_ms": 60.337
+          "p50_ms": 1.165,
+          "p95_ms": 2.377,
+          "p99_ms": 4.208,
+          "p999_ms": 7.286,
+          "mean_ms": 1.367,
+          "min_ms": 0.841,
+          "max_ms": 9.697
         },
         "direct_http": {
           "n": 10000,
-          "p50_ms": 0.248,
-          "p95_ms": 0.471,
-          "p99_ms": 3.518,
-          "p999_ms": 6.012,
-          "mean_ms": 0.371,
-          "min_ms": 0.207,
-          "max_ms": 8.14
+          "p50_ms": 0.307,
+          "p95_ms": 0.575,
+          "p99_ms": 3.31,
+          "p999_ms": 5.463,
+          "mean_ms": 0.412,
+          "min_ms": 0.234,
+          "max_ms": 10.515
         },
         "gateway_cost": {
           "n": 10000,
-          "p50_ms": 0.929,
-          "p95_ms": 2.887,
-          "p99_ms": 5.263,
-          "p999_ms": 9.849,
-          "mean_ms": 1.106,
-          "min_ms": -7.103,
-          "max_ms": 60.096
+          "p50_ms": 0.838,
+          "p95_ms": 1.938,
+          "p99_ms": 3.809,
+          "p999_ms": 6.867,
+          "mean_ms": 0.955,
+          "min_ms": -9.116,
+          "max_ms": 9.354
         },
         "call_errors": 0,
-        "note": "gateway_cost = e2e \u2212 paired direct HTTP /pets (interleaved equal-arm)",
+        "note": "gateway_cost = e2e − paired direct HTTP /pets (interleaved equal-arm)",
         "schedule": "interleaved_closed_loop"
       },
       "resources": {
         "label": "agentgateway",
-        "pid": 194228,
-        "n": 2537,
+        "pid": 200771,
+        "n": 745,
         "rss_mb": {
-          "min": 179.12,
-          "median": 217.79,
-          "max": 217.98
+          "min": 176.64,
+          "median": 214.55,
+          "max": 216.13
         },
         "cpu_pct": {
           "min": 0,
-          "median": 3.93,
-          "max": 4.84,
-          "mean": 3.98
+          "median": 12.19,
+          "max": 17.19,
+          "mean": 12.31
         }
       },
       "tokens": {
@@ -496,82 +454,7 @@
         ],
         "note": "Primary board uses invoked_tool_schema_tokens (apples-to-apples); tools_list_* is secondary surface size."
       },
-      "pid": 194228,
-      "chaos": {
-        "skipped": true,
-        "reason": "MULTI_SKIP_CHAOS=1 (latency/p999 focus)"
-      }
-    },
-    "contextforge": {
-      "id": "contextforge",
-      "model": "virtual_mcp_server_over_mcpjungle_stdio_pets+shared_http_upstream",
-      "ok": true,
-      "version": "mcp-contextforge-gateway (uvx)",
-      "mcp_url": "http://127.0.0.1:38291/servers/4a4d60f1a6414e8e9c520ad8753aaf9f/mcp",
-      "tool_name": "pets-pets-list-pets",
-      "latency": {
-        "e2e": {
-          "n": 10000,
-          "p50_ms": 16.013,
-          "p95_ms": 20.376,
-          "p99_ms": 24.87,
-          "p999_ms": 225.333,
-          "mean_ms": 17.114,
-          "min_ms": 13.952,
-          "max_ms": 373.066
-        },
-        "direct_http": {
-          "n": 10000,
-          "p50_ms": 0.248,
-          "p95_ms": 0.471,
-          "p99_ms": 3.518,
-          "p999_ms": 6.012,
-          "mean_ms": 0.371,
-          "min_ms": 0.207,
-          "max_ms": 8.14
-        },
-        "gateway_cost": {
-          "n": 10000,
-          "p50_ms": 15.697,
-          "p95_ms": 20.015,
-          "p99_ms": 24.197,
-          "p999_ms": 224.947,
-          "mean_ms": 16.743,
-          "min_ms": 7.852,
-          "max_ms": 372.76
-        },
-        "call_errors": 0,
-        "note": "gateway_cost = e2e \u2212 paired direct HTTP /pets (interleaved equal-arm)",
-        "schedule": "interleaved_closed_loop"
-      },
-      "resources": {
-        "label": "contextforge",
-        "pid": 194317,
-        "n": 2528,
-        "rss_mb": {
-          "min": 698.29,
-          "median": 701.45,
-          "max": 705.71
-        },
-        "cpu_pct": {
-          "min": 0,
-          "median": 58.11,
-          "max": 59.42,
-          "mean": 56.91
-        }
-      },
-      "tokens": {
-        "invoked_tool_name": "pets-pets-list-pets",
-        "invoked_tool_schema_tokens": 47,
-        "tools_list_count": 1,
-        "tools_list_schema_tokens": 47,
-        "equal_result_tokens": 28,
-        "tool_names": [
-          "pets-pets-list-pets"
-        ],
-        "note": "Primary board uses invoked_tool_schema_tokens (apples-to-apples); tools_list_* is secondary surface size."
-      },
-      "pid": 194317,
+      "pid": 200771,
       "chaos": {
         "skipped": true,
         "reason": "MULTI_SKIP_CHAOS=1 (latency/p999 focus)"
@@ -581,12 +464,10 @@
   "errors": {},
   "honesty": [
     "Equal-arm pets JSON across all arms.",
-    "EQUAL_UPSTREAM: shared mock HTTP /pets for ClawQL OpenAPI + aggregator list_pets fetch; gateway_cost = e2e \u2212 paired direct.",
-    "Executor: static equal JSON (fetch disabled in sandbox) \u2014 upstream_cost=0; gateway_cost \u2248 e2e (latency-fair methodology).",
-    "Latency: interleaved closed-loop across live arms; n=10000 for p999.",
-    "Primary token metric: invoked_tool_schema_tokens (execute / list_pets).",
-    "ContextForge: MCPJungle StreamableHTTP adapter (nested hop disclosed).",
-    "Chaos skipped on this run (MULTI_SKIP_CHAOS=1).",
+    "EQUAL_UPSTREAM: shared mock HTTP /pets — ClawQL OpenAPI, aggregator list_pets fetch, Executor fetch-when-allowed; gateway_cost = e2e − paired direct.",
+    "Latency schedule: interleaved closed-loop across live arms (n≥10000 recommended for p999).",
+    "Primary token metric: invoked_tool_schema_tokens (not full tools/list).",
+    "Chaos optional (MULTI_SKIP_CHAOS); when on: concurrent clients until p99>SLO / error_rate.",
     "Panguard / durable WORM off. MetaMCP skipped without Docker.",
     "Hold publicizing until ClawQL RAM narrative closed or scoped."
   ]
