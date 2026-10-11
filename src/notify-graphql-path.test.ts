@@ -46,6 +46,7 @@ describe("notify GraphQL execute path (#138)", () => {
       "CLAWQL_PROVIDER",
       "CLAWQL_SPEC_PATHS",
       "CLAWQL_SLACK_TOKEN",
+      "CLAWQL_OPENAPI_EXECUTE_PATH",
       "CLAWQL_API_BASE_URL",
       "API_BASE_URL",
       "CLAWQL_TEST_SLACK_FETCH_STUB",
@@ -61,6 +62,8 @@ describe("notify GraphQL execute path (#138)", () => {
     delete process.env.CLAWQL_PROVIDER;
     delete process.env.CLAWQL_SPEC_PATHS;
     process.env.CLAWQL_SLACK_TOKEN = "xoxb-test-not-a-real-token";
+    // Force legacy GraphQL-first so this suite still covers Omnigraph (#138).
+    process.env.CLAWQL_OPENAPI_EXECUTE_PATH = "graphql";
     delete process.env.CLAWQL_API_BASE_URL;
     delete process.env.API_BASE_URL;
     delete process.env.CLAWQL_TEST_SLACK_FETCH_STUB;

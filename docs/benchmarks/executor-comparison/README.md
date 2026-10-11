@@ -83,6 +83,8 @@ LATENCY_ITERS=100 MOCK_DELAY_MS=0 \
 
 On this host Executor wins p50/p95; ClawQL equalized wins **p99** (9.9 vs 17.2). Do **not** cite the #1519 50–100ms band as measured.
 
+**Hot-path win (TS/Effect):** microbench showed uncached OpenAPI→GraphQL schema build ≈ **5.6 ms** of the residual (REST ≈ **0.55 ms** for the same HTTP). Default `CLAWQL_OPENAPI_EXECUTE_PATH=auto` now prefers **REST** for plain `fields` (nested `{…}` selection still uses Omnigraph; schemas are cached). Re-run the latency harness after that change before citing board-wide wins.
+
 **Shareable page:** [clawql.com/benchmarks/executor-comparison/latency.html](https://clawql.com/benchmarks/executor-comparison/latency.html) · `npm run generate:executor-cmp-latency-html`.
 
 The flamegraph demo’s 120ms total remains a **synthetic fixture**. Schema-decode microbench (`scripts/release/measure-gateway-hotpath.mts`) is sub-millisecond and is **not** product latency.

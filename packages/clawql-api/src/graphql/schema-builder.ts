@@ -1,6 +1,9 @@
 /**
  * Builds a live GraphQL schema from OpenAPI 3 via **@omnigraph/openapi**
  * (GraphQL Mesh OpenAPI handler). Resolvers proxy to upstream REST with auth headers.
+ *
+ * Schemas are cached per (openapi object identity × baseUrl × auth headers) so
+ * hot-path `execute` does not rebuild Omnigraph on every call (~5–6ms on a tiny spec).
  */
 
 import loadGraphQLSchemaFromOpenAPI from "@omnigraph/openapi";
@@ -14,18 +17,70 @@ interface SchemaResult {
   contextValue: Record<string, unknown>;
 }
 
+const openapiIdentity = new WeakMap<object, number>();
+let nextOpenapiId = 1;
+const schemaCache = new Map<string, SchemaResult>();
+/** In-flight builds keyed the same as {@link schemaCache} (single-flight). */
+const schemaInFlight = new Map<string, Promise<SchemaResult>>();
+
+function openapiCacheId(openapi: object): number {
+  let id = openapiIdentity.get(openapi);
+  if (id === undefined) {
+    id = nextOpenapiId++;
+    openapiIdentity.set(openapi, id);
+  }
+  return id;
+}
+
+function schemaCacheKey(openapi: object, baseUrl: string, headers: Record<string, string>): string {
+  const hdr = Object.keys(headers)
+    .sort()
+    .map((k) => `${k}=${headers[k]}`)
+    .join("&");
+  return `${openapiCacheId(openapi)}\0${baseUrl}\0${hdr}`;
+}
+
+/** Drop cached Omnigraph schemas (tests / auth rotation). */
+export function resetGraphQLSchemaCacheEffect(): Effect.Effect<void> {
+  return Effect.sync(() => {
+    schemaCache.clear();
+    schemaInFlight.clear();
+  });
+}
+
+/** Promise façade for tests and host boundaries. */
+export function resetGraphQLSchemaCache(): void {
+  Effect.runSync(resetGraphQLSchemaCacheEffect());
+}
+
 async function buildGraphQLSchemaImpl(openapi: object, baseUrl: string): Promise<SchemaResult> {
   const headers = Effect.runSync(mergedAuthHeadersEffect());
+  const key = schemaCacheKey(openapi, baseUrl, headers);
+  const hit = schemaCache.get(key);
+  if (hit) return hit;
 
-  const schema = await loadGraphQLSchemaFromOpenAPI("ClawQL", {
-    source: openapi as never,
-    endpoint: baseUrl,
-    cwd: getPackageRoot(),
-    operationHeaders: Object.keys(headers).length > 0 ? headers : undefined,
-    ignoreErrorResponses: true,
-  });
+  const pending = schemaInFlight.get(key);
+  if (pending) return pending;
 
-  return { schema, contextValue: {} };
+  const build = (async (): Promise<SchemaResult> => {
+    const schema = await loadGraphQLSchemaFromOpenAPI("ClawQL", {
+      source: openapi as never,
+      endpoint: baseUrl,
+      cwd: getPackageRoot(),
+      operationHeaders: Object.keys(headers).length > 0 ? headers : undefined,
+      ignoreErrorResponses: true,
+    });
+    const result: SchemaResult = { schema, contextValue: {} };
+    schemaCache.set(key, result);
+    return result;
+  })();
+
+  schemaInFlight.set(key, build);
+  try {
+    return await build;
+  } finally {
+    schemaInFlight.delete(key);
+  }
 }
 
 export function buildGraphQLSchemaEffect(

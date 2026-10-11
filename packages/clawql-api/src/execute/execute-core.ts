@@ -18,6 +18,7 @@ import {
 } from "../pending/pending-execution-service.js";
 import { mandateArgsMatchEffect, type MandateArgsMatch } from "../proofs/mandate-args-match.js";
 import { defaultFields, executeOutputFields } from "./field-projection.js";
+import { preferRestOpenApiExecuteEffect } from "./openapi-execute-path.js";
 import { serializeExecuteResultEffect } from "./result-truncation.js";
 import { unknownOperationIdErrorEffect } from "./suggest-operation-ids.js";
 import { shapeExecuteDataEffect, WhereFilterError } from "./where-filter.js";
@@ -360,6 +361,25 @@ export function executeClawqlOperationEffect(
               error: rest.error,
               specLabel: op.specLabel ?? null,
               hint: "application/octet-stream execute uses REST only; GraphQL projection is skipped.",
+            })
+          );
+        }
+        return yield* shapedSuccessContent(rest.data, outputFields, where);
+      }
+
+      // Plain `fields` keys: REST (same shaping as multi-spec). Nested GraphQL
+      // selection sets still use Omnigraph; schemas are cached per openapi+baseUrl.
+      const useRest = yield* preferRestOpenApiExecuteEffect(operationId, outputFields);
+      if (useRest) {
+        const rest = yield* fromPromise(() =>
+          executeRestOperation(op as Operation, args, openapiForOp)
+        );
+        if (!rest.ok) {
+          return yield* textContentEffect(
+            JSON.stringify({
+              error: rest.error,
+              specLabel: op.specLabel ?? null,
+              hint: "OpenAPI execute used REST (CLAWQL_OPENAPI_EXECUTE_PATH=auto|rest).",
             })
           );
         }
