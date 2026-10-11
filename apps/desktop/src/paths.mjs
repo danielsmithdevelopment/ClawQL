@@ -6,12 +6,13 @@ import { fileURLToPath } from 'node:url'
 export const DASHBOARD_PORT = 3040
 export const BRIDGE_PORT = 8787
 
+/** `import.meta.url` of `src/main.mjs` — URL `..` is the file's directory parent. */
 export function repoRootFromMain(mainUrl) {
-  return resolve(fileURLToPath(new URL('../../../..', mainUrl)))
+  return resolve(fileURLToPath(new URL('../../..', mainUrl)))
 }
 
 export function desktopRootFromMain(mainUrl) {
-  return resolve(fileURLToPath(new URL('../..', mainUrl)))
+  return resolve(fileURLToPath(new URL('..', mainUrl)))
 }
 
 export function clawqlHome() {

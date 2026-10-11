@@ -43,8 +43,8 @@ app.whenReady().then(async () => {
   }
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0 && mainWindow) {
-      void createWindow(mainWindow.webContents.getURL())
+    if (BrowserWindow.getAllWindows().length === 0) {
+      void createWindow(`http://127.0.0.1:3040`)
     }
   })
 })
