@@ -79,7 +79,16 @@
               task: view.task?.id,
               status: view.task?.status,
               pendingApproval: view.pendingApproval,
+              autoMerge: view.autoMerge,
+              trustReason: view.trustReason,
               decision: view.decision,
+              canary: view.canary
+                ? {
+                    mode: view.canary.mode,
+                    canaryPercent: view.canary.canaryPercent,
+                    rollbackTrigger: view.canary.rollbackTrigger,
+                  }
+                : undefined,
               attempts: (view.attempts ?? []).map((a) => ({
                 id: a.id,
                 status: a.status,

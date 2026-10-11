@@ -26,7 +26,8 @@ Apache-2.0. No private Ontologiql code. Nothing personal goes into a release.
 - Day 9 judge smoke + canary verify: [`DAY9.md`](./DAY9.md)  
 - Day 10 hydrate-from + architecture: [`DAY10.md`](./DAY10.md)  
 - Day 11 CI + board MCP smoke: [`DAY11.md`](./DAY11.md)  
-- Day 12 status + board trust: [`DAY12.md`](./DAY12.md) · [`docs/STATUS.md`](./docs/STATUS.md)
+- Day 12 status + board trust: [`DAY12.md`](./DAY12.md) · [`docs/STATUS.md`](./docs/STATUS.md)  
+- Day 13 standalone + film preflight: [`DAY13.md`](./DAY13.md) · [`docs/STANDALONE.md`](./docs/STANDALONE.md)
 
 ### Run the local demo (real git notes + vitest + dry-run release)
 
@@ -36,6 +37,7 @@ npm ci
 npm test                 # includes local-git + pipeline
 npm run demo:local       # one full pipeline run under .local/demo-run
 npm run demo:judge-smoke # one verified demo (notes + manifest + canary)
+npm run demo:film-preflight  # fast tree/scripts check before filming
 npm run demo:gate        # 3 consecutive verified runs (record only after GATE PASS)
 npm run demo:record-prep # alias gate before filming
 npm run board:serve      # http://127.0.0.1:8787/
