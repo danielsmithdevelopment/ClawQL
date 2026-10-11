@@ -36,13 +36,11 @@ describe("openapi execute path", () => {
 
   it("auto prefers REST for plain fields and GraphQL for nested", async () => {
     const env = { CLAWQL_OPENAPI_EXECUTE_PATH: "auto" };
+    expect(await Effect.runPromise(preferRestOpenApiExecuteEffect("listPets", ["pets"], env))).toBe(
+      true
+    );
     expect(
-      await Effect.runPromise(preferRestOpenApiExecuteEffect("listPets", ["pets"], env))
-    ).toBe(true);
-    expect(
-      await Effect.runPromise(
-        preferRestOpenApiExecuteEffect("listPets", ["pets { id }"], env)
-      )
+      await Effect.runPromise(preferRestOpenApiExecuteEffect("listPets", ["pets { id }"], env))
     ).toBe(false);
   });
 

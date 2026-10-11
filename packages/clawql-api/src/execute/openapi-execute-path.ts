@@ -34,9 +34,7 @@ export function selectionNeedsInProcessGraphQLEffect(
   outputFields: readonly string[] | undefined
 ): Effect.Effect<boolean> {
   return Effect.sync(() => {
-    const selection = outputFields?.length
-      ? outputFields.join("\n")
-      : defaultFields(operationId);
+    const selection = outputFields?.length ? outputFields.join("\n") : defaultFields(operationId);
     return selection.includes("{");
   });
 }
