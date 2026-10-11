@@ -22,9 +22,7 @@ export type AgentInstanceRegistryFile = {
   readonly instances: Record<string, AgentInstanceRecord>;
 };
 
-export class AgentInstanceRegistryService extends Context.Tag(
-  "clawql-agents/AgentInstanceRegistryService"
-)<
+export class AgentInstanceRegistryService extends Context.Service<
   AgentInstanceRegistryService,
   {
     readonly registerAgentInstance: (
@@ -37,7 +35,7 @@ export class AgentInstanceRegistryService extends Context.Tag(
     ) => Effect.Effect<AgentInstanceRecord | null>;
     readonly listAgentInstances: (orgId: string) => Effect.Effect<readonly AgentInstanceRecord[]>;
   }
->() {}
+>()("clawql-agents/AgentInstanceRegistryService") {}
 
 function defaultHome(): string {
   const raw = process.env.CLAWQL_HOME?.trim();
@@ -72,7 +70,7 @@ const loadFile = (path: string): Effect.Effect<AgentInstanceRegistryFile> =>
       return { version: 1 as const, instances: parsed.instances };
     },
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-  }).pipe(Effect.catchAll(() => Effect.succeed(emptyFile())));
+  }).pipe(Effect.catch(() => Effect.succeed(emptyFile())));
 
 const saveFile = (path: string, file: AgentInstanceRegistryFile): Effect.Effect<void> =>
   Effect.tryPromise({
@@ -84,7 +82,7 @@ const saveFile = (path: string, file: AgentInstanceRegistryFile): Effect.Effect<
       });
     },
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-  }).pipe(Effect.catchAll(() => Effect.void));
+  }).pipe(Effect.catch(() => Effect.void));
 
 const refreshStatuses = (
   file: AgentInstanceRegistryFile,

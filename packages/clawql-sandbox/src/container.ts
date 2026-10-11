@@ -7,6 +7,7 @@ import { spawn } from "node:child_process";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { Effect } from "effect";
 import type { SandboxBridgeResponse, SandboxCodeToolInput, SandboxLanguage } from "./types.js";
 import { defaultPersistence, parseTimeoutMs, resolveSandboxId, snippetFilename } from "./shared.js";
 
@@ -60,99 +61,133 @@ function extraDockerArgs(): string[] {
   return raw.split(/\s+/).filter(Boolean);
 }
 
-function spawnDockerRun(
+function spawnDockerRunEffect(
   bin: string,
   args: string[],
   timeoutMs: number
-): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  return new Promise((resolvePromise, rejectPromise) => {
-    const child = spawn(bin, args, {
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    let stdout = "";
-    let stderr = "";
-    child.stdout?.on("data", (d: Buffer) => {
-      stdout += d.toString("utf8");
-    });
-    child.stderr?.on("data", (d: Buffer) => {
-      stderr += d.toString("utf8");
-    });
-    const t = setTimeout(() => {
-      child.kill("SIGKILL");
-    }, timeoutMs);
-    child.on("error", (err) => {
-      clearTimeout(t);
-      rejectPromise(err);
-    });
-    child.on("close", (code) => {
-      clearTimeout(t);
-      resolvePromise({ stdout, stderr, exitCode: code ?? -1 });
-    });
+): Effect.Effect<{ stdout: string; stderr: string; exitCode: number }, Error> {
+  return Effect.tryPromise({
+    try: () =>
+      new Promise<{ stdout: string; stderr: string; exitCode: number }>(
+        (resolvePromise, rejectPromise) => {
+          const child = spawn(bin, args, {
+            stdio: ["ignore", "pipe", "pipe"],
+          });
+          let stdout = "";
+          let stderr = "";
+          child.stdout?.on("data", (d: Buffer) => {
+            stdout += d.toString("utf8");
+          });
+          child.stderr?.on("data", (d: Buffer) => {
+            stderr += d.toString("utf8");
+          });
+          const t = setTimeout(() => {
+            child.kill("SIGKILL");
+          }, timeoutMs);
+          child.on("error", (err) => {
+            clearTimeout(t);
+            rejectPromise(err);
+          });
+          child.on("close", (code) => {
+            clearTimeout(t);
+            resolvePromise({ stdout, stderr, exitCode: code ?? -1 });
+          });
+        }
+      ),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
   });
 }
 
+/**
+ * Run a sandbox_exec snippet via Docker/Podman CLI.
+ * Soft-fails into {@link SandboxBridgeResponse} (Effect success channel).
+ */
+export function callDockerSandboxEffect(
+  input: SandboxCodeToolInput
+): Effect.Effect<SandboxBridgeResponse> {
+  return Effect.gen(function* () {
+    const persistenceMode = input.persistenceMode ?? defaultPersistence();
+    const sandboxId = resolveSandboxId(persistenceMode, input.sessionId);
+    const workspace = workspaceRootFor(sandboxId);
+    const timeoutMs = parseTimeoutMs(input.timeoutMs);
+    const snippetPath = path.join(workspace, snippetFilename(input.language));
+    const bin = dockerBin();
+    const net = dockerNetwork();
+    const image = imageForLanguage(input.language);
+    const inner = innerArgv(input.language);
+
+    const absWorkspace = path.resolve(workspace);
+    const volArg = `${absWorkspace}:${CONTAINER_WORKSPACE}`;
+
+    const runArgs = [
+      "run",
+      "--rm",
+      "--network",
+      net,
+      "-v",
+      volArg,
+      "-w",
+      CONTAINER_WORKSPACE,
+      ...extraDockerArgs(),
+      image,
+      ...inner,
+    ];
+
+    const cleanup =
+      persistenceMode === "ephemeral"
+        ? Effect.tryPromise({
+            try: () => rm(workspace, { recursive: true, force: true }),
+            catch: () => undefined,
+          }).pipe(Effect.catch(() => Effect.void))
+        : Effect.void;
+
+    const run = Effect.gen(function* () {
+      yield* Effect.tryPromise({
+        try: () => mkdir(workspace, { recursive: true }),
+        catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+      });
+      yield* Effect.tryPromise({
+        try: () => writeFile(snippetPath, input.code, "utf8"),
+        catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+      });
+
+      const { stdout, stderr, exitCode } = yield* spawnDockerRunEffect(bin, runArgs, timeoutMs);
+      const ok = exitCode === 0;
+      return {
+        stdout,
+        stderr,
+        exitCode,
+        success: ok,
+        sandboxId,
+        backend: "docker" as const,
+        ...(ok ? {} : { error: stderr.trim() || stdout.trim() || `exit ${exitCode}` }),
+      } satisfies SandboxBridgeResponse;
+    });
+
+    return yield* run.pipe(
+      Effect.catch((e: unknown) => {
+        const msg = e instanceof Error ? e.message : String(e);
+        let hint = msg;
+        if (msg.includes("ENOENT")) {
+          hint = `${bin} not found (${hint}). Install Docker / OrbStack / Podman or set CLAWQL_SANDBOX_DOCKER_BIN.`;
+        }
+        return Effect.succeed({
+          stdout: "",
+          stderr: "",
+          exitCode: -1,
+          success: false,
+          backend: "docker" as const,
+          error: hint,
+        } satisfies SandboxBridgeResponse);
+      }),
+      Effect.ensuring(cleanup)
+    );
+  });
+}
+
+/** Promise façade for callers that still await the Docker backend. */
 export async function callDockerSandbox(
   input: SandboxCodeToolInput
 ): Promise<SandboxBridgeResponse> {
-  const persistenceMode = input.persistenceMode ?? defaultPersistence();
-  const sandboxId = resolveSandboxId(persistenceMode, input.sessionId);
-  const workspace = workspaceRootFor(sandboxId);
-  const timeoutMs = parseTimeoutMs(input.timeoutMs);
-  const snippetPath = path.join(workspace, snippetFilename(input.language));
-  const bin = dockerBin();
-  const net = dockerNetwork();
-  const image = imageForLanguage(input.language);
-  const inner = innerArgv(input.language);
-
-  const absWorkspace = path.resolve(workspace);
-  const volArg = `${absWorkspace}:${CONTAINER_WORKSPACE}`;
-
-  const runArgs = [
-    "run",
-    "--rm",
-    "--network",
-    net,
-    "-v",
-    volArg,
-    "-w",
-    CONTAINER_WORKSPACE,
-    ...extraDockerArgs(),
-    image,
-    ...inner,
-  ];
-
-  try {
-    await mkdir(workspace, { recursive: true });
-    await writeFile(snippetPath, input.code, "utf8");
-
-    const { stdout, stderr, exitCode } = await spawnDockerRun(bin, runArgs, timeoutMs);
-    const ok = exitCode === 0;
-    return {
-      stdout,
-      stderr,
-      exitCode,
-      success: ok,
-      sandboxId,
-      backend: "docker",
-      ...(ok ? {} : { error: stderr.trim() || stdout.trim() || `exit ${exitCode}` }),
-    };
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    let hint = msg;
-    if (msg.includes("ENOENT")) {
-      hint = `${bin} not found (${hint}). Install Docker / OrbStack / Podman or set CLAWQL_SANDBOX_DOCKER_BIN.`;
-    }
-    return {
-      stdout: "",
-      stderr: "",
-      exitCode: -1,
-      success: false,
-      backend: "docker",
-      error: hint,
-    };
-  } finally {
-    if (persistenceMode === "ephemeral") {
-      await rm(workspace, { recursive: true, force: true });
-    }
-  }
+  return Effect.runPromise(callDockerSandboxEffect(input));
 }

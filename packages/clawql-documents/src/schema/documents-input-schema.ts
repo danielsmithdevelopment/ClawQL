@@ -3,7 +3,7 @@
  * Thin Zod edges: {@link ./documents-zod-edge.js}.
  */
 
-import { Effect, ParseResult, Schema } from "effect";
+import { Effect, Schema, SchemaIssue } from "effect";
 
 // --- ingest_external_knowledge ---
 
@@ -21,25 +21,30 @@ export const INGEST_URL_DESCRIPTION =
   "HTTPS URL to fetch when source is url and CLAWQL_EXTERNAL_INGEST_FETCH=1 (opt-in network).";
 
 const ExternalIngestDocumentSchema = Schema.Struct({
-  path: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(512)).annotations({
+  path: Schema.String.pipe(
+    Schema.check(Schema.isMinLength(1)),
+    Schema.check(Schema.isMaxLength(512))
+  ).annotate({
     description: INGEST_DOCUMENT_PATH_DESCRIPTION,
   }),
-  markdown: Schema.String.pipe(Schema.maxLength(2_097_152)).annotations({
+  markdown: Schema.String.pipe(Schema.check(Schema.isMaxLength(2_097_152))).annotate({
     description: INGEST_DOCUMENT_MARKDOWN_DESCRIPTION,
   }),
 });
 
 export const IngestExternalKnowledgeInputSchema = Schema.Struct({
-  source: Schema.optional(Schema.String.annotations({ description: INGEST_SOURCE_DESCRIPTION })),
-  dryRun: Schema.optional(Schema.Boolean.annotations({ description: INGEST_DRY_RUN_DESCRIPTION })),
-  scope: Schema.optional(Schema.String.annotations({ description: INGEST_SCOPE_DESCRIPTION })),
+  source: Schema.optional(Schema.String.annotate({ description: INGEST_SOURCE_DESCRIPTION })),
+  dryRun: Schema.optional(Schema.Boolean.annotate({ description: INGEST_DRY_RUN_DESCRIPTION })),
+  scope: Schema.optional(Schema.String.annotate({ description: INGEST_SCOPE_DESCRIPTION })),
   documents: Schema.optional(
     Schema.mutable(Schema.Array(ExternalIngestDocumentSchema))
-      .pipe(Schema.maxItems(50))
-      .annotations({ description: INGEST_DOCUMENTS_DESCRIPTION })
+      .pipe(Schema.check(Schema.isMaxLength(50)))
+      .annotate({ description: INGEST_DOCUMENTS_DESCRIPTION })
   ),
   url: Schema.optional(
-    Schema.String.pipe(Schema.maxLength(2048)).annotations({ description: INGEST_URL_DESCRIPTION })
+    Schema.String.pipe(Schema.check(Schema.isMaxLength(2048))).annotate({
+      description: INGEST_URL_DESCRIPTION,
+    })
   ),
 });
 
@@ -65,34 +70,35 @@ export const ONYX_FIELDS_DESCRIPTION =
   "Optional top-level JSON keys to keep from the Onyx response (same as execute `fields`).";
 
 export const KnowledgeSearchOnyxInputSchema = Schema.Struct({
-  query: Schema.String.pipe(Schema.minLength(1)).annotations({
+  query: Schema.String.pipe(Schema.check(Schema.isMinLength(1))).annotate({
     description: ONYX_QUERY_DESCRIPTION,
   }),
   num_hits: Schema.optional(
-    Schema.Number.pipe(Schema.int(), Schema.between(1, 100)).annotations({
+    Schema.Number.pipe(
+      Schema.check(Schema.isInt()),
+      Schema.check(Schema.isBetween({ minimum: 1, maximum: 100 }))
+    ).annotate({
       description: ONYX_NUM_HITS_DESCRIPTION,
     })
   ),
   include_content: Schema.optional(
-    Schema.Boolean.annotations({ description: ONYX_INCLUDE_CONTENT_DESCRIPTION })
+    Schema.Boolean.annotate({ description: ONYX_INCLUDE_CONTENT_DESCRIPTION })
   ),
-  stream: Schema.optional(Schema.Boolean.annotations({ description: ONYX_STREAM_DESCRIPTION })),
+  stream: Schema.optional(Schema.Boolean.annotate({ description: ONYX_STREAM_DESCRIPTION })),
   run_query_expansion: Schema.optional(
-    Schema.Boolean.annotations({ description: ONYX_RUN_QUERY_EXPANSION_DESCRIPTION })
+    Schema.Boolean.annotate({ description: ONYX_RUN_QUERY_EXPANSION_DESCRIPTION })
   ),
   hybrid_alpha: Schema.optional(
-    Schema.Number.annotations({ description: ONYX_HYBRID_ALPHA_DESCRIPTION })
+    Schema.Number.annotate({ description: ONYX_HYBRID_ALPHA_DESCRIPTION })
   ),
   filters: Schema.optional(
-    Schema.Record({ key: Schema.String, value: Schema.Unknown }).annotations({
+    Schema.Record(Schema.String, Schema.Unknown).annotate({
       description: ONYX_FILTERS_DESCRIPTION,
     })
   ),
-  tenant_id: Schema.optional(
-    Schema.String.annotations({ description: ONYX_TENANT_ID_DESCRIPTION })
-  ),
+  tenant_id: Schema.optional(Schema.String.annotate({ description: ONYX_TENANT_ID_DESCRIPTION })),
   fields: Schema.optional(
-    Schema.mutable(Schema.Array(Schema.String)).annotations({
+    Schema.mutable(Schema.Array(Schema.String)).annotate({
       description: ONYX_FIELDS_DESCRIPTION,
     })
   ),
@@ -130,7 +136,7 @@ export const IDP_FROM_STEP_DESCRIPTION =
   "Inclusive start index into DEFAULT_IDP_PIPELINE (0-based).";
 export const IDP_TO_STEP_DESCRIPTION = "Inclusive end index into DEFAULT_IDP_PIPELINE (0-based).";
 
-const IdpStageSchema = Schema.Literal(
+const IdpStageSchema = Schema.Literals([
   "nextcloud",
   "docling",
   "tika",
@@ -138,55 +144,61 @@ const IdpStageSchema = Schema.Literal(
   "stirling",
   "paperless",
   "onyx",
-  "coneshare"
-);
+  "coneshare",
+]);
 
 export const RunIdpPipelineInputSchema = Schema.Struct({
-  dry_run: Schema.optional(Schema.Boolean.annotations({ description: IDP_DRY_RUN_DESCRIPTION })),
+  dry_run: Schema.optional(Schema.Boolean.annotate({ description: IDP_DRY_RUN_DESCRIPTION })),
   correlation_id: Schema.optional(
-    Schema.String.annotations({ description: IDP_CORRELATION_ID_DESCRIPTION })
+    Schema.String.annotate({ description: IDP_CORRELATION_ID_DESCRIPTION })
   ),
   document_path: Schema.optional(
-    Schema.String.annotations({ description: IDP_DOCUMENT_PATH_DESCRIPTION })
+    Schema.String.annotate({ description: IDP_DOCUMENT_PATH_DESCRIPTION })
   ),
   processed_path: Schema.optional(
-    Schema.String.annotations({ description: IDP_PROCESSED_PATH_DESCRIPTION })
+    Schema.String.annotate({ description: IDP_PROCESSED_PATH_DESCRIPTION })
   ),
   document_url: Schema.optional(
-    Schema.String.annotations({ description: IDP_DOCUMENT_URL_DESCRIPTION })
+    Schema.String.annotate({ description: IDP_DOCUMENT_URL_DESCRIPTION })
   ),
   redact_list: Schema.optional(
-    Schema.String.annotations({ description: IDP_REDACT_LIST_DESCRIPTION })
+    Schema.String.annotate({ description: IDP_REDACT_LIST_DESCRIPTION })
   ),
-  pdf_base64: Schema.optional(
-    Schema.String.annotations({ description: IDP_PDF_BASE64_DESCRIPTION })
-  ),
+  pdf_base64: Schema.optional(Schema.String.annotate({ description: IDP_PDF_BASE64_DESCRIPTION })),
   step_args: Schema.optional(
-    Schema.Record({
-      key: Schema.String,
-      value: Schema.Record({ key: Schema.String, value: Schema.Unknown }),
-    }).annotations({ description: IDP_STEP_ARGS_DESCRIPTION })
+    Schema.Record(Schema.String, Schema.Record(Schema.String, Schema.Unknown)).annotate({
+      description: IDP_STEP_ARGS_DESCRIPTION,
+    })
   ),
   skip_stages: Schema.optional(
-    Schema.mutable(Schema.Array(IdpStageSchema)).annotations({
+    Schema.mutable(Schema.Array(IdpStageSchema)).annotate({
       description: IDP_SKIP_STAGES_DESCRIPTION,
     })
   ),
   stop_on_error: Schema.optional(
-    Schema.Boolean.annotations({ description: IDP_STOP_ON_ERROR_DESCRIPTION })
+    Schema.Boolean.annotate({ description: IDP_STOP_ON_ERROR_DESCRIPTION })
   ),
   max_retries: Schema.optional(
-    Schema.Number.pipe(Schema.int(), Schema.between(0, 10)).annotations({
+    Schema.Number.pipe(
+      Schema.check(Schema.isInt()),
+      Schema.check(Schema.isBetween({ minimum: 0, maximum: 10 }))
+    ).annotate({
       description: IDP_MAX_RETRIES_DESCRIPTION,
     })
   ),
   from_step: Schema.optional(
-    Schema.Number.pipe(Schema.int(), Schema.greaterThanOrEqualTo(0)).annotations({
+    Schema.Number.pipe(
+      Schema.check(Schema.isInt()),
+      Schema.check(Schema.isGreaterThanOrEqualTo(0))
+    ).annotate({
       description: IDP_FROM_STEP_DESCRIPTION,
     })
   ),
   to_step: Schema.optional(
-    Schema.Number.pipe(Schema.int(), Schema.greaterThanOrEqualTo(0)).annotations({
+    Schema.Number.pipe(
+      Schema.check(Schema.isInt()),
+      Schema.check(Schema.isGreaterThanOrEqualTo(0))
+    ).annotate({
       description: IDP_TO_STEP_DESCRIPTION,
     })
   ),
@@ -205,18 +217,18 @@ export const CLASSIFY_MIN_CONFIDENCE_DESCRIPTION =
   "Confidence threshold for needs_hitl (default CLASSIFIER_MIN_CONFIDENCE env or 0.85).";
 
 export const ClassifyDocumentInputSchema = Schema.Struct({
-  doc_id: Schema.optional(Schema.String.annotations({ description: CLASSIFY_DOC_ID_DESCRIPTION })),
+  doc_id: Schema.optional(Schema.String.annotate({ description: CLASSIFY_DOC_ID_DESCRIPTION })),
   docling_md: Schema.optional(
-    Schema.String.annotations({ description: CLASSIFY_DOCLING_MD_DESCRIPTION })
+    Schema.String.annotate({ description: CLASSIFY_DOCLING_MD_DESCRIPTION })
   ),
   docling_json: Schema.optional(
-    Schema.Record({ key: Schema.String, value: Schema.Unknown }).annotations({
+    Schema.Record(Schema.String, Schema.Unknown).annotate({
       description: CLASSIFY_DOCLING_JSON_DESCRIPTION,
     })
   ),
-  text: Schema.optional(Schema.String.annotations({ description: CLASSIFY_TEXT_DESCRIPTION })),
+  text: Schema.optional(Schema.String.annotate({ description: CLASSIFY_TEXT_DESCRIPTION })),
   min_confidence: Schema.optional(
-    Schema.Number.pipe(Schema.between(0, 1)).annotations({
+    Schema.Number.pipe(Schema.check(Schema.isBetween({ minimum: 0, maximum: 1 }))).annotate({
       description: CLASSIFY_MIN_CONFIDENCE_DESCRIPTION,
     })
   ),
@@ -243,47 +255,53 @@ export const EXTRACT_WRITE_HTML_DESCRIPTION =
 export const EXTRACT_DOC_ID_DESCRIPTION = "Stable id for artifact file names and audit.";
 
 const ExtractionExampleSchema = Schema.Struct({
-  extraction_class: Schema.String.pipe(Schema.minLength(1)),
-  extraction_text: Schema.String.pipe(Schema.minLength(1)),
-  attributes: Schema.optional(Schema.Record({ key: Schema.String, value: Schema.Unknown })),
+  extraction_class: Schema.String.pipe(Schema.check(Schema.isMinLength(1))),
+  extraction_text: Schema.String.pipe(Schema.check(Schema.isMinLength(1))),
+  attributes: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
 });
 
 const ExtractExampleSchema = Schema.Struct({
-  text: Schema.String.pipe(Schema.minLength(1)),
-  extractions: Schema.mutable(Schema.Array(ExtractionExampleSchema)).pipe(Schema.minItems(1)),
+  text: Schema.String.pipe(Schema.check(Schema.isMinLength(1))),
+  extractions: Schema.mutable(Schema.Array(ExtractionExampleSchema)).pipe(
+    Schema.check(Schema.isMinLength(1))
+  ),
 });
 
 export const ExtractDocumentInputSchema = Schema.Struct({
-  text: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(2_097_152)).annotations({
+  text: Schema.String.pipe(
+    Schema.check(Schema.isMinLength(1)),
+    Schema.check(Schema.isMaxLength(2_097_152))
+  ).annotate({
     description: EXTRACT_TEXT_DESCRIPTION,
   }),
   prompt_description: Schema.optional(
-    Schema.String.pipe(Schema.minLength(1), Schema.maxLength(8192)).annotations({
+    Schema.String.pipe(
+      Schema.check(Schema.isMinLength(1)),
+      Schema.check(Schema.isMaxLength(8192))
+    ).annotate({
       description: EXTRACT_PROMPT_DESCRIPTION,
     })
   ),
   schema_preset: Schema.optional(
-    Schema.Literal("w2", "title_commitment", "purchase_agreement", "buyer_offer").annotations({
+    Schema.Literals(["w2", "title_commitment", "purchase_agreement", "buyer_offer"]).annotate({
       description: EXTRACT_SCHEMA_PRESET_DESCRIPTION,
     })
   ),
   examples: Schema.optional(
     Schema.mutable(Schema.Array(ExtractExampleSchema))
-      .pipe(Schema.maxItems(20))
-      .annotations({ description: EXTRACT_EXAMPLES_DESCRIPTION })
+      .pipe(Schema.check(Schema.isMaxLength(20)))
+      .annotate({ description: EXTRACT_EXAMPLES_DESCRIPTION })
   ),
-  model_id: Schema.optional(
-    Schema.String.annotations({ description: EXTRACT_MODEL_ID_DESCRIPTION })
-  ),
+  model_id: Schema.optional(Schema.String.annotate({ description: EXTRACT_MODEL_ID_DESCRIPTION })),
   backend: Schema.optional(
-    Schema.Literal("openrouter", "ollama", "openai_compatible").annotations({
+    Schema.Literals(["openrouter", "ollama", "openai_compatible"]).annotate({
       description: EXTRACT_BACKEND_DESCRIPTION,
     })
   ),
   write_html: Schema.optional(
-    Schema.Boolean.annotations({ description: EXTRACT_WRITE_HTML_DESCRIPTION })
+    Schema.Boolean.annotate({ description: EXTRACT_WRITE_HTML_DESCRIPTION })
   ),
-  doc_id: Schema.optional(Schema.String.annotations({ description: EXTRACT_DOC_ID_DESCRIPTION })),
+  doc_id: Schema.optional(Schema.String.annotate({ description: EXTRACT_DOC_ID_DESCRIPTION })),
 });
 
 export type ExtractDocumentInputDecoded = Schema.Schema.Type<typeof ExtractDocumentInputSchema>;
@@ -299,30 +317,36 @@ export const INSPECT_PDF_MODE_DESCRIPTION =
 export const INSPECT_PDF_INCLUDE_MARKDOWN_DESCRIPTION =
   "When mode is full, include markdown in the response (default true). Set false for routing-only payloads.";
 
-export const InspectPdfInputSchema = Schema.Union(
+export const InspectPdfInputSchema = Schema.Union([
   Schema.Struct({
-    path: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(4096)).annotations({
+    path: Schema.String.pipe(
+      Schema.check(Schema.isMinLength(1)),
+      Schema.check(Schema.isMaxLength(4096))
+    ).annotate({
       description: INSPECT_PDF_PATH_DESCRIPTION,
     }),
     mode: Schema.optional(
-      Schema.Literal("detect", "full").annotations({ description: INSPECT_PDF_MODE_DESCRIPTION })
+      Schema.Literals(["detect", "full"]).annotate({ description: INSPECT_PDF_MODE_DESCRIPTION })
     ),
     include_markdown: Schema.optional(
-      Schema.Boolean.annotations({ description: INSPECT_PDF_INCLUDE_MARKDOWN_DESCRIPTION })
+      Schema.Boolean.annotate({ description: INSPECT_PDF_INCLUDE_MARKDOWN_DESCRIPTION })
     ),
   }),
   Schema.Struct({
-    base64: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(140_000_000)).annotations({
+    base64: Schema.String.pipe(
+      Schema.check(Schema.isMinLength(1)),
+      Schema.check(Schema.isMaxLength(140_000_000))
+    ).annotate({
       description: INSPECT_PDF_BASE64_DESCRIPTION,
     }),
     mode: Schema.optional(
-      Schema.Literal("detect", "full").annotations({ description: INSPECT_PDF_MODE_DESCRIPTION })
+      Schema.Literals(["detect", "full"]).annotate({ description: INSPECT_PDF_MODE_DESCRIPTION })
     ),
     include_markdown: Schema.optional(
-      Schema.Boolean.annotations({ description: INSPECT_PDF_INCLUDE_MARKDOWN_DESCRIPTION })
+      Schema.Boolean.annotate({ description: INSPECT_PDF_INCLUDE_MARKDOWN_DESCRIPTION })
     ),
-  })
-);
+  }),
+]);
 
 export type InspectPdfInputDecoded = Schema.Schema.Type<typeof InspectPdfInputSchema>;
 
@@ -337,45 +361,58 @@ export const CONVERT_DOCUMENT_FORMAT_DESCRIPTION =
 export const CONVERT_DOCUMENT_INCLUDE_MARKDOWN_DESCRIPTION =
   "Include markdown in the response (default true). Set false for routing-only payloads.";
 
-export const ConvertDocumentInputSchema = Schema.Union(
+export const ConvertDocumentInputSchema = Schema.Union([
   Schema.Struct({
-    path: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(4096)).annotations({
+    path: Schema.String.pipe(
+      Schema.check(Schema.isMinLength(1)),
+      Schema.check(Schema.isMaxLength(4096))
+    ).annotate({
       description: CONVERT_DOCUMENT_PATH_DESCRIPTION,
     }),
     format: Schema.optional(
-      Schema.String.pipe(Schema.minLength(1), Schema.maxLength(32)).annotations({
+      Schema.String.pipe(
+        Schema.check(Schema.isMinLength(1)),
+        Schema.check(Schema.isMaxLength(32))
+      ).annotate({
         description: CONVERT_DOCUMENT_FORMAT_DESCRIPTION,
       })
     ),
     include_markdown: Schema.optional(
-      Schema.Boolean.annotations({ description: CONVERT_DOCUMENT_INCLUDE_MARKDOWN_DESCRIPTION })
+      Schema.Boolean.annotate({ description: CONVERT_DOCUMENT_INCLUDE_MARKDOWN_DESCRIPTION })
     ),
   }),
   Schema.Struct({
-    base64: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(140_000_000)).annotations({
+    base64: Schema.String.pipe(
+      Schema.check(Schema.isMinLength(1)),
+      Schema.check(Schema.isMaxLength(140_000_000))
+    ).annotate({
       description: CONVERT_DOCUMENT_BASE64_DESCRIPTION,
     }),
     format: Schema.optional(
-      Schema.String.pipe(Schema.minLength(1), Schema.maxLength(32)).annotations({
+      Schema.String.pipe(
+        Schema.check(Schema.isMinLength(1)),
+        Schema.check(Schema.isMaxLength(32))
+      ).annotate({
         description: CONVERT_DOCUMENT_FORMAT_DESCRIPTION,
       })
     ),
     include_markdown: Schema.optional(
-      Schema.Boolean.annotations({ description: CONVERT_DOCUMENT_INCLUDE_MARKDOWN_DESCRIPTION })
+      Schema.Boolean.annotate({ description: CONVERT_DOCUMENT_INCLUDE_MARKDOWN_DESCRIPTION })
     ),
-  })
-);
+  }),
+]);
 
 export type ConvertDocumentInputDecoded = Schema.Schema.Type<typeof ConvertDocumentInputSchema>;
 
-function formatParseError(err: ParseResult.ParseError): Error {
-  return new Error(ParseResult.TreeFormatter.formatErrorSync(err));
+function formatParseError(err: Schema.SchemaError): Error {
+  const formatted = SchemaIssue.makeFormatterStandardSchemaV1()(err.issue);
+  return new Error(JSON.stringify(formatted.issues));
 }
 
 export function decodeIngestExternalKnowledgeInput(
   raw: unknown
 ): Effect.Effect<IngestExternalKnowledgeInputDecoded, Error> {
-  return Schema.decodeUnknown(IngestExternalKnowledgeInputSchema)(raw).pipe(
+  return Schema.decodeUnknownEffect(IngestExternalKnowledgeInputSchema)(raw).pipe(
     Effect.mapError(formatParseError)
   );
 }
@@ -383,7 +420,7 @@ export function decodeIngestExternalKnowledgeInput(
 export function decodeKnowledgeSearchOnyxInput(
   raw: unknown
 ): Effect.Effect<KnowledgeSearchOnyxInputDecoded, Error> {
-  return Schema.decodeUnknown(KnowledgeSearchOnyxInputSchema)(raw).pipe(
+  return Schema.decodeUnknownEffect(KnowledgeSearchOnyxInputSchema)(raw).pipe(
     Effect.mapError(formatParseError)
   );
 }
@@ -391,7 +428,7 @@ export function decodeKnowledgeSearchOnyxInput(
 export function decodeRunIdpPipelineInput(
   raw: unknown
 ): Effect.Effect<RunIdpPipelineInputDecoded, Error> {
-  return Schema.decodeUnknown(RunIdpPipelineInputSchema)(raw).pipe(
+  return Schema.decodeUnknownEffect(RunIdpPipelineInputSchema)(raw).pipe(
     Effect.mapError(formatParseError)
   );
 }
@@ -399,7 +436,7 @@ export function decodeRunIdpPipelineInput(
 export function decodeClassifyDocumentInput(
   raw: unknown
 ): Effect.Effect<ClassifyDocumentInputDecoded, Error> {
-  return Schema.decodeUnknown(ClassifyDocumentInputSchema)(raw).pipe(
+  return Schema.decodeUnknownEffect(ClassifyDocumentInputSchema)(raw).pipe(
     Effect.mapError(formatParseError)
   );
 }
@@ -407,19 +444,21 @@ export function decodeClassifyDocumentInput(
 export function decodeExtractDocumentInput(
   raw: unknown
 ): Effect.Effect<ExtractDocumentInputDecoded, Error> {
-  return Schema.decodeUnknown(ExtractDocumentInputSchema)(raw).pipe(
+  return Schema.decodeUnknownEffect(ExtractDocumentInputSchema)(raw).pipe(
     Effect.mapError(formatParseError)
   );
 }
 
 export function decodeInspectPdfInput(raw: unknown): Effect.Effect<InspectPdfInputDecoded, Error> {
-  return Schema.decodeUnknown(InspectPdfInputSchema)(raw).pipe(Effect.mapError(formatParseError));
+  return Schema.decodeUnknownEffect(InspectPdfInputSchema)(raw).pipe(
+    Effect.mapError(formatParseError)
+  );
 }
 
 export function decodeConvertDocumentInput(
   raw: unknown
 ): Effect.Effect<ConvertDocumentInputDecoded, Error> {
-  return Schema.decodeUnknown(ConvertDocumentInputSchema)(raw).pipe(
+  return Schema.decodeUnknownEffect(ConvertDocumentInputSchema)(raw).pipe(
     Effect.mapError(formatParseError)
   );
 }

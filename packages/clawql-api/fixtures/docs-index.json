@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "baseUrl": "https://docs.clawql.com",
+  "entries": [
+    {
+      "url": "/learn/memory",
+      "title": "Memory and Obsidian vault",
+      "content": "memory_ingest memory_recall vault Obsidian CLAWQL_OBSIDIAN_VAULT_PATH durable notes wikilinks"
+    },
+    {
+      "url": "/mcp/mcp-tools",
+      "title": "MCP tools reference",
+      "content": "search execute cache audit console_link skills_list sandbox_exec notify schedule"
+    },
+    {
+      "url": "/adr/0015-program-mode",
+      "title": "ADR 0015 Program mode alongside search and execute",
+      "content": "program mode session information-flow labels IFC mayFlow celld proposed writes"
+    },
+    {
+      "url": "/security/mcp-proxy-jwt-atr",
+      "title": "MCP proxy JWT ATR",
+      "content": "JWT ATR scope tokens intercepting proxy defense in depth enterprise"
+    },
+    {
+      "url": "/learn/code-mode",
+      "title": "Code Mode search and execute",
+      "content": "lazy catalog fields projection where JMESPath truncation COMPLETE PARTIAL"
+    }
+  ]
+}

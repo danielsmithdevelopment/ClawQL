@@ -36,12 +36,17 @@ export type ClawQLHorizontalTierSpec = {
     readonly writes?: { readonly enabled?: boolean };
   };
   readonly ouroboros?: {
-    /** @deprecated Ignored — Ouroboros tools always load via clawql-harness. */
+    /**
+     * (8.0 demotion): maps to `enableOuroborosTools` — gates agent-facing `ouroboros_*` /
+     * `clawql_think` MCP tools. Default false. Server-side Ouroboros lifecycle is unaffected.
+     */
     readonly enabled?: boolean;
     readonly langfuseEval?: { readonly enabled?: boolean };
   };
   readonly observability?: { readonly enabled?: boolean };
   readonly chatgptExtensions?: { readonly enabled?: boolean };
+  /** Supabase Auth provider (`clawql-supabase`) for managed signup. */
+  readonly supabase?: { readonly enabled?: boolean };
 };
 
 const toggle = z.object({ enabled: z.boolean().optional() }).strict().optional();
@@ -93,6 +98,7 @@ const instanceBodyForFlagsSchema = z
       .optional(),
     observability: toggle,
     chatgptExtensions: toggle,
+    supabase: toggle,
   })
   .passthrough();
 
@@ -177,10 +183,10 @@ export function optionalFlagsFromHorizontalTierSpec(
     enableNotify: false,
     enableWorkflow: false,
     enableArgoCd: false,
-    enableVision: false,
     enableOnyxKnowledge: false,
     enableSandbox: false,
     enableData: false,
+    enableClawqlSqlAlias: false,
     enableWeb: false,
     enableOntology: false,
     enableOntologyWrites: false,
@@ -192,11 +198,13 @@ export function optionalFlagsFromHorizontalTierSpec(
     enablePdfInspector: false,
     enableAnydoc: false,
     enableLangfuseEval: false,
+    enableOuroborosTools: false,
     enableObservability: false,
     enableChatgptExtensions: true,
     enableGoogle: false,
     enableCloudflare: true,
     enableAws: false,
+    enableSupabase: false,
   };
   return {
     ...d,
@@ -220,8 +228,10 @@ export function optionalFlagsFromHorizontalTierSpec(
     enableOntology: tierEnabled(spec.ontology, d.enableOntology),
     enableOntologyWrites: tierEnabled(spec.ontology?.writes, d.enableOntologyWrites),
     enableLangfuseEval: tierEnabled(spec.ouroboros?.langfuseEval, d.enableLangfuseEval),
+    enableOuroborosTools: tierEnabled(spec.ouroboros, d.enableOuroborosTools),
     enableObservability: tierEnabled(spec.observability, d.enableObservability),
     enableChatgptExtensions: tierEnabled(spec.chatgptExtensions, d.enableChatgptExtensions),
+    enableSupabase: tierEnabled(spec.supabase, d.enableSupabase),
   };
 }
 
@@ -277,6 +287,7 @@ function mergeHorizontal(
     },
     observability: mergeToggle(base.observability, override.observability),
     chatgptExtensions: mergeToggle(base.chatgptExtensions, override.chatgptExtensions),
+    supabase: mergeToggle(base.supabase, override.supabase),
   };
 }
 
@@ -314,7 +325,14 @@ export function readInstanceBodyForFlagsFromEnv(
 
 function transportFromEnv(
   env: NodeJS.ProcessEnv
-): Pick<ClawqlOptionalToolFlags, "enableGrpc" | "enableGrpcReflection" | "externalIngestPreview"> {
+): Pick<
+  ClawqlOptionalToolFlags,
+  | "enableGrpc"
+  | "enableGrpcReflection"
+  | "externalIngestPreview"
+  | "enableClawqlSqlAlias"
+  | "enableOuroborosTools"
+> {
   const t = (v: string | undefined) => {
     const s = v?.trim().toLowerCase();
     return s === "1" || s === "true" || s === "yes";
@@ -323,6 +341,10 @@ function transportFromEnv(
     enableGrpc: t(env.ENABLE_GRPC),
     enableGrpcReflection: t(env.ENABLE_GRPC_REFLECTION),
     externalIngestPreview: env.CLAWQL_EXTERNAL_INGEST?.trim() === "1",
+    enableClawqlSqlAlias: t(env.CLAWQL_ENABLE_CLAWQL_SQL_ALIAS),
+    // (8.0 demotion) CLAWQL_ENABLE_OUROBOROS_TOOLS=1 opts in regardless of instance/tier config —
+    // instance/tier ouroboros.enabled: true is OR'd in below as the config-authoritative path.
+    enableOuroborosTools: t(env.CLAWQL_ENABLE_OUROBOROS_TOOLS),
   };
 }
 
@@ -354,13 +376,22 @@ export function resolveCompositionFlagsFromEnv(
     enableCloudflare: true,
   } as const;
 
+  // CLAWQL_ENABLE_OUROBOROS_TOOLS=1 is a global opt-in that ORs on top of the resolved
+  // instance/tier/legacy flags — it must never turn an instance-enabled flag back off.
+  const orInOuroborosToolsOverride = (
+    resolved: ClawqlOptionalToolFlags
+  ): ClawqlOptionalToolFlags => ({
+    ...resolved,
+    ...transport,
+    enableOuroborosTools: resolved.enableOuroborosTools || transport.enableOuroborosTools,
+  });
+
   const instance = readInstanceBodyForFlagsFromEnv(env);
   if (instance) {
     const tier = instance.tier ?? tierFromEnv(env);
     const merged = mergeHorizontal(TIER_PRESET_HORIZONTAL[tier], instance);
     return {
-      ...optionalFlagsFromHorizontalTierSpec(merged, baseDefaults),
-      ...transport,
+      ...orInOuroborosToolsOverride(optionalFlagsFromHorizontalTierSpec(merged, baseDefaults)),
       ...providerStack,
     };
   }
@@ -368,16 +399,16 @@ export function resolveCompositionFlagsFromEnv(
   if (env.CLAWQL_TIER?.trim()) {
     const tier = tierFromEnv(env);
     return {
-      ...optionalFlagsFromHorizontalTierSpec(TIER_PRESET_HORIZONTAL[tier], baseDefaults),
-      ...transport,
+      ...orInOuroborosToolsOverride(
+        optionalFlagsFromHorizontalTierSpec(TIER_PRESET_HORIZONTAL[tier], baseDefaults)
+      ),
       ...providerStack,
     };
   }
 
   if (legacyEnvFlags) {
     return {
-      ...legacyEnvFlags,
-      ...transport,
+      ...orInOuroborosToolsOverride(legacyEnvFlags),
       ...providerStack,
     };
   }

@@ -4,6 +4,7 @@
  */
 
 import { executeConvertDocument } from "../anydoc/convert-document.js";
+import { Effect } from "effect";
 import { anydocToolEnabled } from "../anydoc/env.js";
 import { executeInspectPdf } from "../pdf-inspector/inspect-pdf.js";
 import { pdfInspectorToolEnabled } from "../pdf-inspector/env.js";
@@ -58,7 +59,7 @@ function base64Body(bytes: Uint8Array, preface: string): string {
 }
 
 /** Attempt local classify/convert; otherwise preserve raw bytes as base64. */
-export async function enrichBinaryUrlIngest(
+async function enrichBinaryUrlIngestImpl(
   bytes: Uint8Array,
   contentType: string | null,
   sourceUrl: string
@@ -197,4 +198,25 @@ export function buildEnrichedUrlIngestNote(
   }
   lines.push("---", "", enriched.bodyMarkdown.trimEnd(), "");
   return lines.join("\n");
+}
+
+/** Attempt local classify/convert for binary URL ingest (Effect-primary). */
+export function enrichBinaryUrlIngestEffect(
+  bytes: Uint8Array,
+  contentType: string | null,
+  sourceUrl: string
+): Effect.Effect<BinaryEnrichResult, Error> {
+  return Effect.tryPromise({
+    try: () => enrichBinaryUrlIngestImpl(bytes, contentType, sourceUrl),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade for callers that still await binary URL enrich. */
+export async function enrichBinaryUrlIngest(
+  bytes: Uint8Array,
+  contentType: string | null,
+  sourceUrl: string
+): Promise<BinaryEnrichResult> {
+  return Effect.runPromise(enrichBinaryUrlIngestEffect(bytes, contentType, sourceUrl));
 }

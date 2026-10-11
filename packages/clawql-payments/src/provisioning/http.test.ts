@@ -144,4 +144,65 @@ describe("attachProvisioningRoutes", () => {
       expect(body.orgId).toBe("checkoutco");
     });
   });
+
+  it("returns 503 for checkout/session when self-serve flag unset", async () => {
+    await withApp(env, async (base) => {
+      const res = await fetch(`${base}/payments/checkout/session`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          plan: "pro",
+          orgName: "Acme",
+          ownerEmail: "a@acme.com",
+          successUrl: "https://example.com/ok",
+          cancelUrl: "https://example.com/cancel",
+        }),
+      });
+      expect(res.status).toBe(503);
+      const body = (await res.json()) as { error: string };
+      expect(body.error).toMatch(/CLAWQL_SELF_SERVE_CHECKOUT/);
+    });
+  });
+
+  it("validates checkout/session body when self-serve enabled", async () => {
+    const selfServeEnv = { ...env, CLAWQL_SELF_SERVE_CHECKOUT: "1" };
+    await withApp(selfServeEnv, async (base) => {
+      const res = await fetch(`${base}/payments/checkout/session`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ plan: "pro" }),
+      });
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { error: string };
+      expect(body.error).toMatch(/orgName/);
+    });
+  });
+
+  it("requires a Supabase bearer when the plugin is enabled and ignores client supabaseUserId", async () => {
+    const selfServeEnv = {
+      ...env,
+      CLAWQL_SELF_SERVE_CHECKOUT: "1",
+      CLAWQL_ENABLE_SUPABASE: "1",
+      CLAWQL_SUPABASE_URL: "https://proj.supabase.co",
+      CLAWQL_SUPABASE_JWT_SECRET: "test-supabase-jwt-secret-32chars!!",
+      CLAWQL_SUPABASE_JWKS_URL: "",
+    };
+    await withApp(selfServeEnv, async (base) => {
+      const missing = await fetch(`${base}/payments/checkout/session`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          plan: "pro",
+          orgName: "Acme",
+          ownerEmail: "a@acme.com",
+          successUrl: "https://example.com/ok",
+          cancelUrl: "https://example.com/cancel",
+          supabaseUserId: "victim-user-id",
+        }),
+      });
+      expect(missing.status).toBe(401);
+      const cors = missing.headers.get("access-control-allow-headers") ?? "";
+      expect(cors.toLowerCase()).toContain("authorization");
+    });
+  });
 });

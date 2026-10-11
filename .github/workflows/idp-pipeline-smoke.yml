@@ -4,7 +4,11 @@
 # Stubbed OpenBench orchestration remains `idp-safe-pipeline-lite` (retired WIN) —
 # that does NOT replace this smoke.
 #
-# - pull_request (path-filtered): always runs **compose** (Tika + Gotenberg)
+# 8.0 converter cut: Docling is the sole DEFAULT_IDP_PIPELINE converter. Tika/Gotenberg/Stirling stages are
+# opt-in-only in the compose tier (IDP_SMOKE_INCLUDE_CONVERTERS=1, set below) so this workflow keeps covering
+# them even though they are no longer part of the default/recommended surface.
+#
+# - pull_request (path-filtered): always runs **compose** (Docling primary; Tika/Gotenberg/Stirling opt-in checks)
 # - schedule: weekly compose
 # - workflow_dispatch: offline | compose | live
 # - Never burns OpenBench `pr_active` tokens
@@ -27,7 +31,7 @@ on:
   workflow_dispatch:
     inputs:
       tier:
-        description: "offline = Helm+vitest; compose = + Tika/Gotenberg; live = + remote webhooks"
+        description: "offline = Helm+vitest; compose = + Docling (primary) + opt-in Tika/Gotenberg/Stirling checks; live = + remote webhooks"
         required: true
         type: choice
         options:
@@ -110,6 +114,9 @@ jobs:
           CONESHARE_API_TOKEN: ${{ secrets.CONESHARE_API_TOKEN }}
           DOCLING_BASE_URL: ${{ secrets.DOCLING_BASE_URL }}
           IDP_SMOKE_OUT_DIR: ${{ github.workspace }}/artifacts/idp-b23-smoke
+          # Opt-in-only converters (8.0 converter cut) — keep CI coverage of Tika/Gotenberg/Stirling even
+          # though they are no longer the default/recommended surface.
+          IDP_SMOKE_INCLUDE_CONVERTERS: "1"
         run: bash scripts/dev/smoke-idp-pipeline-b23.sh
 
       - name: Upload smoke artifacts

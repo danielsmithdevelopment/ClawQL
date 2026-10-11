@@ -11,8 +11,9 @@ COPY package.json package-lock.json ./
 COPY packages ./packages
 COPY infra/pulumi/package.json ./infra/pulumi/package.json
 RUN npm ci
-# Analytics DTS needs auth + audit types; audit needs merkle.
+# Analytics DTS needs auth + audit types; auth needs gdp; audit needs merkle.
 RUN npm run build -w clawql-merkle \
+  && npm run build -w clawql-gdp \
   && npm run build -w clawql-audit \
   && npm run build -w clawql-auth \
   && npm run build -w clawql-analytics
@@ -47,9 +48,13 @@ RUN npm run build
 
 FROM node:25-alpine AS runner
 WORKDIR /app
+# Runtime starts with `node` (standalone). Stock/global npm ships undici<=6.28.0 and
+# brace-expansion<=5.0.9 (Trivy HIGH CVE-2026-19534 / CVE-2026-102276/102278) and is unused
+# here — remove the toolchain from the final image instead of ignoring those CVEs.
 RUN apk upgrade --no-cache \
-  && npm install -g npm@11 \
-  && npm cache clean --force
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
+  && rm -rf /usr/lib/node_modules/npm /usr/bin/npm /usr/bin/npx \
+  && npm --version >/dev/null 2>&1 && exit 1 || true
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0

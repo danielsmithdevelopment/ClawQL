@@ -9,6 +9,7 @@ import type { Operation } from "./operation-types.js";
 import { normalizeOperationId } from "./spec-kind.js";
 import type { CustomSourceEntry } from "./custom-sources-types.js";
 import { registerMcpToolBinding } from "./mcp-source-registry.js";
+import { Effect } from "effect";
 
 async function connectMcpClient(entry: CustomSourceEntry): Promise<Client> {
   const client = new Client({ name: "clawql-mcp-source", version: "1.0.0" }, {});
@@ -36,7 +37,8 @@ async function connectMcpClient(entry: CustomSourceEntry): Promise<Client> {
 function toolToOperation(
   entry: CustomSourceEntry,
   toolName: string,
-  description: string
+  description: string,
+  annotations?: { readOnlyHint?: boolean; destructiveHint?: boolean }
 ): Operation {
   const id = normalizeOperationId("mcp", entry.id, toolName);
   return {
@@ -57,6 +59,11 @@ function toolToOperation(
     scopes: [],
     specLabel: entry.id,
     protocolKind: "mcp",
+    riskHints: {
+      mcpSourceId: entry.id,
+      mcpReadOnlyHint: annotations?.readOnlyHint === true ? true : undefined,
+      mcpDestructiveHint: annotations?.destructiveHint === true ? true : undefined,
+    },
     nativeMcp: {
       sourceId: entry.id,
       toolName,
@@ -64,7 +71,7 @@ function toolToOperation(
   };
 }
 
-export async function loadMcpSourceOperations(entries: CustomSourceEntry[]): Promise<Operation[]> {
+async function loadMcpSourceOperationsImpl(entries: CustomSourceEntry[]): Promise<Operation[]> {
   const mcpEntries = entries.filter((e) => e.kind === "mcp");
   const ops: Operation[] = [];
 
@@ -78,7 +85,15 @@ export async function loadMcpSourceOperations(entries: CustomSourceEntry[]): Pro
           toolName: tool.name,
           client,
         });
-        ops.push(toolToOperation(entry, tool.name, tool.description ?? ""));
+        const ann = (
+          tool as { annotations?: { readOnlyHint?: boolean; destructiveHint?: boolean } }
+        ).annotations;
+        ops.push(
+          toolToOperation(entry, tool.name, tool.description ?? "", {
+            readOnlyHint: ann?.readOnlyHint,
+            destructiveHint: ann?.destructiveHint,
+          })
+        );
       }
       console.error(
         `[spec-loader] MCP source "${entry.id}": ${tools.length} tool(s) from ${entry.mcpUrl ?? entry.mcpCommand}`
@@ -92,4 +107,18 @@ export async function loadMcpSourceOperations(entries: CustomSourceEntry[]): Pro
   }
 
   return ops;
+}
+
+export function loadMcpSourceOperationsEffect(
+  entries: CustomSourceEntry[]
+): Effect.Effect<Operation[], Error> {
+  return Effect.tryPromise({
+    try: () => loadMcpSourceOperationsImpl(entries),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadMcpSourceOperationsEffect} for Effect callers. */
+export async function loadMcpSourceOperations(entries: CustomSourceEntry[]): Promise<Operation[]> {
+  return Effect.runPromise(loadMcpSourceOperationsEffect(entries));
 }

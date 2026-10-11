@@ -15,13 +15,14 @@ import {
   isClawqlPlanId,
   type ClawqlPlanId,
 } from "../plans/index.js";
+import { Effect } from "effect";
 
 export type PaymentsPlanShowOptions = {
   json?: boolean;
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsPlanShow(options: PaymentsPlanShowOptions = {}): Promise<number> {
+async function runPaymentsPlanShowImpl(options: PaymentsPlanShowOptions = {}): Promise<number> {
   const env = options.env ?? process.env;
   const config = await loadPaymentsConfig(env);
   const entitlements = entitlementsFromPlan(config.plan);
@@ -49,6 +50,20 @@ export async function runPaymentsPlanShow(options: PaymentsPlanShowOptions = {})
   return 0;
 }
 
+export function runPaymentsPlanShowEffect(
+  options: PaymentsPlanShowOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsPlanShowImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsPlanShowEffect} for Effect callers. */
+export async function runPaymentsPlanShow(options: PaymentsPlanShowOptions = {}): Promise<number> {
+  return Effect.runPromise(runPaymentsPlanShowEffect(options));
+}
+
 export type PaymentsPlanUpgradeOptions = {
   tier?: string;
   tenantId?: string;
@@ -56,7 +71,7 @@ export type PaymentsPlanUpgradeOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsPlanUpgrade(
+async function runPaymentsPlanUpgradeImpl(
   options: PaymentsPlanUpgradeOptions = {}
 ): Promise<number> {
   if (!options.tier?.trim() || !isClawqlPlanId(options.tier)) {
@@ -92,13 +107,29 @@ export async function runPaymentsPlanUpgrade(
   return 0;
 }
 
+export function runPaymentsPlanUpgradeEffect(
+  options: PaymentsPlanUpgradeOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsPlanUpgradeImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsPlanUpgradeEffect} for Effect callers. */
+export async function runPaymentsPlanUpgrade(
+  options: PaymentsPlanUpgradeOptions = {}
+): Promise<number> {
+  return Effect.runPromise(runPaymentsPlanUpgradeEffect(options));
+}
+
 export type PaymentsUsageReportOptions = {
   month?: string;
   json?: boolean;
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsUsageReport(
+async function runPaymentsUsageReportImpl(
   options: PaymentsUsageReportOptions = {}
 ): Promise<number> {
   const env = options.env ?? process.env;
@@ -117,12 +148,28 @@ export async function runPaymentsUsageReport(
   return 0;
 }
 
+export function runPaymentsUsageReportEffect(
+  options: PaymentsUsageReportOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsUsageReportImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsUsageReportEffect} for Effect callers. */
+export async function runPaymentsUsageReport(
+  options: PaymentsUsageReportOptions = {}
+): Promise<number> {
+  return Effect.runPromise(runPaymentsUsageReportEffect(options));
+}
+
 export type PaymentsSpendReportOptions = {
   groupBy?: SpendGroupBy;
   json?: boolean;
 };
 
-export async function runPaymentsSpendReport(
+async function runPaymentsSpendReportImpl(
   options: PaymentsSpendReportOptions = {}
 ): Promise<number> {
   const report = buildSpendReport(
@@ -145,6 +192,22 @@ export async function runPaymentsSpendReport(
   return 0;
 }
 
+export function runPaymentsSpendReportEffect(
+  options: PaymentsSpendReportOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsSpendReportImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsSpendReportEffect} for Effect callers. */
+export async function runPaymentsSpendReport(
+  options: PaymentsSpendReportOptions = {}
+): Promise<number> {
+  return Effect.runPromise(runPaymentsSpendReportEffect(options));
+}
+
 export type PaymentsAuditOptions = {
   correlationId?: string;
   limit?: number;
@@ -152,7 +215,7 @@ export type PaymentsAuditOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsAudit(options: PaymentsAuditOptions = {}): Promise<number> {
+async function runPaymentsAuditImpl(options: PaymentsAuditOptions = {}): Promise<number> {
   const entries = options.correlationId
     ? await loadAuditByCorrelationId(options.correlationId, options.limit ?? 100)
     : await listPaymentAuditEntries(options.limit ?? 100);
@@ -174,7 +237,21 @@ export async function runPaymentsAudit(options: PaymentsAuditOptions = {}): Prom
   return 0;
 }
 
-export async function runPaymentsAuditVerify(options: PaymentsAuditOptions = {}): Promise<number> {
+export function runPaymentsAuditEffect(
+  options: PaymentsAuditOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsAuditImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsAuditEffect} for Effect callers. */
+export async function runPaymentsAudit(options: PaymentsAuditOptions = {}): Promise<number> {
+  return Effect.runPromise(runPaymentsAuditEffect(options));
+}
+
+async function runPaymentsAuditVerifyImpl(options: PaymentsAuditOptions = {}): Promise<number> {
   const env = options.env ?? process.env;
   const result = await verifyPaymentAuditLog(env);
 
@@ -198,4 +275,18 @@ export async function runPaymentsAuditVerify(options: PaymentsAuditOptions = {})
     console.error(`  … and ${result.issues.length - 20} more`);
   }
   return 1;
+}
+
+export function runPaymentsAuditVerifyEffect(
+  options: PaymentsAuditOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsAuditVerifyImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsAuditVerifyEffect} for Effect callers. */
+export async function runPaymentsAuditVerify(options: PaymentsAuditOptions = {}): Promise<number> {
+  return Effect.runPromise(runPaymentsAuditVerifyEffect(options));
 }

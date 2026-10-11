@@ -53,7 +53,9 @@ function isInferencePath(path) {
     path === "/memory" ||
     path.startsWith("/memory/") ||
     path === "/decision" ||
-    path.startsWith("/decision/")
+    path.startsWith("/decision/") ||
+    path === "/events" ||
+    path.startsWith("/events/")
   );
 }
 
@@ -69,6 +71,7 @@ const server = http.createServer((req, res) => {
         inference: "/v1",
         memory: "/memory",
         decision: "/decision",
+        events: "/events",
       })
     );
     return;
@@ -85,13 +88,13 @@ const server = http.createServer((req, res) => {
   res.end(
     JSON.stringify({
       error: "not_found",
-      hint: "Use /mcp, /v1, /memory, /decision, or /healthz",
+      hint: "Use /mcp, /v1, /memory, /decision, /events, or /healthz",
     })
   );
 });
 
 server.listen(listenPort, listenHost, () => {
   console.log(
-    `clawql managed-gateway proxy on http://${listenHost}:${listenPort} (mcp→${mcpUpstream}, inference→${inferenceUpstream} [/v1|/memory|/decision])`
+    `clawql managed-gateway proxy on http://${listenHost}:${listenPort} (mcp→${mcpUpstream}, inference→${inferenceUpstream} [/v1|/memory|/decision|/events])`
   );
 });

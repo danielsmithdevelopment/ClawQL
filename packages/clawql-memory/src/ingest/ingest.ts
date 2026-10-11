@@ -20,6 +20,7 @@ import {
   resolveOkfType,
 } from "../okf/frontmatter.js";
 import { DEFAULT_OKF_MEMORY_TYPE } from "../okf/types.js";
+import { Effect } from "effect";
 
 export { slugifyTitle, extractIngestHashes };
 export type { EnterpriseCitation } from "./enterprise-citations.js";
@@ -278,7 +279,7 @@ export type PreparedMemoryIngest =
  * Resolve toolOutputs file, normalize citations, and optional Presidio redact.
  * Pure orchestration helpers for the Effect ingest pipeline (IO at the edges).
  */
-export async function prepareMemoryIngestEffectiveInput(
+async function prepareMemoryIngestEffectiveInputImpl(
   input: MemoryIngestInput
 ): Promise<PreparedMemoryIngest> {
   const title = input.title?.trim();
@@ -310,8 +311,24 @@ export async function prepareMemoryIngestEffectiveInput(
   return { ok: true, title, effective, fileProvenance };
 }
 
+export function prepareMemoryIngestEffectiveInputEffect(
+  input: MemoryIngestInput
+): Effect.Effect<PreparedMemoryIngest, Error> {
+  return Effect.tryPromise({
+    try: () => prepareMemoryIngestEffectiveInputImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link prepareMemoryIngestEffectiveInputEffect} for Effect callers. */
+export async function prepareMemoryIngestEffectiveInput(
+  input: MemoryIngestInput
+): Promise<PreparedMemoryIngest> {
+  return Effect.runPromise(prepareMemoryIngestEffectiveInputEffect(input));
+}
+
 /** Vault Markdown write only (under write lock). No index / embedding post-sync. */
-export async function writeMemoryIngestPage(
+async function writeMemoryIngestPageImpl(
   vault: string,
   title: string,
   effective: MemoryIngestInput,
@@ -435,6 +452,28 @@ export async function writeMemoryIngestPage(
   });
 }
 
+export function writeMemoryIngestPageEffect(
+  vault: string,
+  title: string,
+  effective: MemoryIngestInput,
+  fileProvenance?: string
+): Effect.Effect<MemoryIngestResult, Error> {
+  return Effect.tryPromise({
+    try: () => writeMemoryIngestPageImpl(vault, title, effective, fileProvenance),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link writeMemoryIngestPageEffect} for Effect callers. */
+export async function writeMemoryIngestPage(
+  vault: string,
+  title: string,
+  effective: MemoryIngestInput,
+  fileProvenance?: string
+): Promise<MemoryIngestResult> {
+  return Effect.runPromise(writeMemoryIngestPageEffect(vault, title, effective, fileProvenance));
+}
+
 /** Public async facade for vault ingest (MCP tools, scripts, automation). */
 export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
   const { runMemoryEffect, memoryIngestProgram } =
@@ -443,8 +482,22 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
 }
 
 /** @deprecated Prefer {@link runMemoryIngest} — routes through Effect services. */
-export async function executeMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
+async function executeMemoryIngestImpl(input: MemoryIngestInput): Promise<MemoryIngestResult> {
   return runMemoryIngest(input);
+}
+
+export function executeMemoryIngestEffect(
+  input: MemoryIngestInput
+): Effect.Effect<MemoryIngestResult, Error> {
+  return Effect.tryPromise({
+    try: () => executeMemoryIngestImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link executeMemoryIngestEffect} for Effect callers. */
+export async function executeMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
+  return Effect.runPromise(executeMemoryIngestEffect(input));
 }
 
 /**

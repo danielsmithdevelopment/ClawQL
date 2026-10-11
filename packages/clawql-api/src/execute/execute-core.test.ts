@@ -5,11 +5,18 @@ import type { LoadedSpec } from "../spec/spec-loader.js";
 import { executeClawqlOperation, executeClawqlOperationEffect } from "./execute-core.js";
 import { makeExecuteLive } from "./execute-live.js";
 
+const emptyOpenapi = {
+  openapi: "3.0.0",
+  info: { title: "t", version: "1" },
+  paths: {},
+  components: { schemas: {} },
+} as const;
+
 const emptySpec = (): Promise<LoadedSpec> =>
   Promise.resolve({
     operations: [],
     rawSource: {},
-    openapi: { openapi: "3.0.0", info: { title: "t", version: "1" }, paths: {} },
+    openapi: emptyOpenapi,
     multi: false,
   });
 
@@ -19,8 +26,48 @@ describe("executeClawqlOperationEffect", () => {
       executeClawqlOperationEffect({ operationId: "missing.op", args: {} }, emptySpec)
     );
     expect(content).toHaveLength(1);
-    const body = JSON.parse(content[0]!.text) as { error: string };
+    const body = JSON.parse(content[0]!.text) as { error: string; fix?: string };
     expect(body.error).toContain('Unknown operationId: "missing.op"');
+    expect(body.fix).toBeTruthy();
+  });
+
+  it("suggests closest operationIds when catalog has near matches", async () => {
+    const withOps = (): Promise<LoadedSpec> =>
+      Promise.resolve({
+        operations: [
+          {
+            id: "github.pulls.get",
+            method: "GET",
+            path: "/pulls/{id}",
+            flatPath: "/pulls/{id}",
+            resource: "pulls",
+            description: "Get a pull request",
+            parameters: {},
+          },
+          {
+            id: "github.pulls.list",
+            method: "GET",
+            path: "/pulls",
+            flatPath: "/pulls",
+            resource: "pulls",
+            description: "List pull requests",
+            parameters: {},
+          },
+        ] as LoadedSpec["operations"],
+        rawSource: {},
+        openapi: emptyOpenapi,
+        multi: false,
+      });
+    const content = await Effect.runPromise(
+      executeClawqlOperationEffect({ operationId: "github.pulls.gett", args: {} }, withOps)
+    );
+    const body = JSON.parse(content[0]!.text) as {
+      error: string;
+      suggestions?: string[];
+      fix?: string;
+    };
+    expect(body.suggestions?.[0]).toBe("github.pulls.get");
+    expect(body.fix).toMatch(/Did you mean/i);
   });
 
   it("promise boundary matches Effect program output", async () => {

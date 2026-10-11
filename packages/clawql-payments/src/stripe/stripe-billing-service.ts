@@ -1,7 +1,9 @@
 import { Context, Effect, Layer } from "effect";
+import { type Named, type UserId } from "clawql-gdp";
 import { getPlanDefinition, type ClawqlPlanId } from "../plans/tiers.js";
 import { PaymentsConfigService } from "../config/payments-config-service.js";
 import type { ConfigError } from "../errors/payment-errors.js";
+import type { VerifiedCheckoutSessionUser } from "../proofs/verified-checkout-session-user.js";
 import { isStripeConfigured } from "./stripe-client-service.js";
 import { StripeApiError, StripeNotConfigured } from "./stripe-errors.js";
 import { StripeClientService, stripeTryPromise } from "./stripe-client-service.js";
@@ -69,8 +71,89 @@ export type PortalSessionInput = {
   env?: NodeJS.ProcessEnv;
 };
 
-function resolvePriceId(plan: ClawqlPlanId): Effect.Effect<string, StripeNotConfigured> {
-  const priceId = getPlanDefinition(plan).stripe_price_id;
+export type CheckoutSessionPlan = "pro" | "team";
+
+export type CheckoutBillingMode = "stripe_checkout" | "hybrid";
+
+export type CheckoutSessionInput = {
+  plan: CheckoutSessionPlan;
+  orgName: string;
+  ownerEmail: string;
+  successUrl: string;
+  cancelUrl: string;
+  billingMode?: CheckoutBillingMode;
+  /** Internal ClawQL user id (`usr_…`) — CPC tenant. Never a client-supplied supabase id. */
+  clawqlUserId?: string;
+  /**
+   * @deprecated Ignored. Binding `clawql_supabase_user_id` requires
+   * {@link createCheckoutSessionWithVerifiedUserEffect} + VerifiedCheckoutSessionUser proof.
+   */
+  supabaseUserId?: string;
+  env?: NodeJS.ProcessEnv;
+};
+
+/** Checkout input without the deprecated raw supabaseUserId field. */
+export type CheckoutSessionVerifiedInput = Omit<CheckoutSessionInput, "supabaseUserId">;
+
+export type CheckoutSessionResult = {
+  id: string;
+  url: string;
+  plan: CheckoutSessionPlan;
+  priceId: string;
+};
+
+/** CPC metadata for self-serve Checkout → provisionOrg (stripe-products-ops §4). */
+export function buildCheckoutSessionMetadata(input: {
+  orgName: string;
+  plan: CheckoutSessionPlan;
+  ownerEmail: string;
+  billingMode?: CheckoutBillingMode;
+  clawqlUserId?: string;
+}): Record<string, string> {
+  const meta: Record<string, string> = {
+    clawql_provision_org: "1",
+    clawql_org_name: input.orgName.trim(),
+    clawql_plan: input.plan,
+    clawql_billing_mode: input.billingMode ?? "stripe_checkout",
+    clawql_owner_email: input.ownerEmail.trim(),
+  };
+  const clawqlUserId = input.clawqlUserId?.trim();
+  if (clawqlUserId) {
+    meta.clawql_user_id = clawqlUserId;
+  }
+  return meta;
+}
+
+/**
+ * Sensitive: binds clawql_supabase_user_id. Demands VerifiedCheckoutSessionUser
+ * about the exact named user (gdp-ts).
+ */
+export function buildCheckoutSessionMetadataWithVerifiedUser<U>(
+  user: Named<U, UserId>,
+  _proof: VerifiedCheckoutSessionUser<U>,
+  input: {
+    orgName: string;
+    plan: CheckoutSessionPlan;
+    ownerEmail: string;
+    billingMode?: CheckoutBillingMode;
+    clawqlUserId?: string;
+  }
+): Record<string, string> {
+  return {
+    ...buildCheckoutSessionMetadata(input),
+    clawql_supabase_user_id: user.value,
+  };
+}
+
+function resolvePriceId(
+  plan: ClawqlPlanId,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<string, StripeNotConfigured> {
+  const fromPlan = getPlanDefinition(plan).stripe_price_id?.trim();
+  const envKey =
+    plan === "pro" ? "STRIPE_PRO_PRICE_ID" : plan === "team" ? "STRIPE_TEAM_PRICE_ID" : null;
+  const fromEnv = envKey ? env[envKey]?.trim() : undefined;
+  const priceId = fromPlan || fromEnv || null;
   if (!priceId) {
     return Effect.fail(
       new StripeNotConfigured({
@@ -82,7 +165,7 @@ function resolvePriceId(plan: ClawqlPlanId): Effect.Effect<string, StripeNotConf
 }
 
 /** Effect service for Stripe billing setup and CRUD helpers. */
-export class StripeBillingService extends Context.Tag("clawql/StripeBillingService")<
+export class StripeBillingService extends Context.Service<
   StripeBillingService,
   {
     readonly setup: (
@@ -101,8 +184,19 @@ export class StripeBillingService extends Context.Tag("clawql/StripeBillingServi
     readonly createPortalSession: (
       input: PortalSessionInput
     ) => Effect.Effect<{ url: string; customerId: string }, StripeApiError | StripeNotConfigured>;
+    readonly createCheckoutSession: (
+      input: CheckoutSessionInput
+    ) => Effect.Effect<CheckoutSessionResult, StripeApiError | StripeNotConfigured>;
+    readonly createCheckoutSessionWithVerifiedUser: <U>(
+      user: Named<U, UserId>,
+      proof: VerifiedCheckoutSessionUser<U>,
+      input: CheckoutSessionVerifiedInput
+    ) => Effect.Effect<CheckoutSessionResult, StripeApiError | StripeNotConfigured>;
+    readonly deleteCustomer: (
+      customerId: string
+    ) => Effect.Effect<void, StripeApiError | StripeNotConfigured>;
   }
->() {}
+>()("clawql/StripeBillingService") {}
 
 export function stripeBillingLiveLayer(
   env: NodeJS.ProcessEnv = process.env
@@ -156,7 +250,7 @@ export function stripeBillingLiveLayer(
       const createSubscription = (input: StripeSubscriptionInput) =>
         Effect.gen(function* () {
           const client = yield* stripeClient.getClient();
-          const priceId = yield* resolvePriceId(input.plan);
+          const priceId = yield* resolvePriceId(input.plan, input.env ?? env);
           const subscription = yield* stripeTryPromise("stripe subscription create failed", () =>
             client.subscriptions.create({
               customer: input.customerId,
@@ -229,13 +323,173 @@ export function stripeBillingLiveLayer(
           return { url: session.url, customerId: input.customerId };
         });
 
+      const validateCheckoutInput = (input: CheckoutSessionVerifiedInput) =>
+        Effect.gen(function* () {
+          const orgName = input.orgName?.trim() ?? "";
+          const ownerEmail = input.ownerEmail?.trim() ?? "";
+          const successUrl = input.successUrl?.trim() ?? "";
+          const cancelUrl = input.cancelUrl?.trim() ?? "";
+          if (!orgName) {
+            return yield* Effect.fail(
+              new StripeApiError({ reason: "orgName is required for Checkout Session" })
+            );
+          }
+          if (!ownerEmail) {
+            return yield* Effect.fail(
+              new StripeApiError({ reason: "ownerEmail is required for Checkout Session" })
+            );
+          }
+          if (!successUrl) {
+            return yield* Effect.fail(
+              new StripeApiError({ reason: "successUrl is required for Checkout Session" })
+            );
+          }
+          if (!cancelUrl) {
+            return yield* Effect.fail(
+              new StripeApiError({ reason: "cancelUrl is required for Checkout Session" })
+            );
+          }
+          if (input.plan !== "pro" && input.plan !== "team") {
+            return yield* Effect.fail(
+              new StripeApiError({ reason: 'plan must be "pro" or "team"' })
+            );
+          }
+          const billingMode = input.billingMode ?? "stripe_checkout";
+          if (billingMode !== "stripe_checkout" && billingMode !== "hybrid") {
+            return yield* Effect.fail(
+              new StripeApiError({
+                reason: 'billingMode must be "stripe_checkout" or "hybrid"',
+              })
+            );
+          }
+          return {
+            orgName,
+            ownerEmail,
+            successUrl,
+            cancelUrl,
+            plan: input.plan,
+            billingMode,
+            clawqlUserId: input.clawqlUserId?.trim() || undefined,
+            runEnv: input.env ?? env,
+          } as const;
+        });
+
+      const createCheckoutWithMetadata = (
+        validated: {
+          orgName: string;
+          ownerEmail: string;
+          successUrl: string;
+          cancelUrl: string;
+          plan: CheckoutSessionPlan;
+          billingMode: CheckoutBillingMode;
+          clawqlUserId?: string;
+          runEnv: NodeJS.ProcessEnv;
+        },
+        metadata: Record<string, string>
+      ) =>
+        Effect.gen(function* () {
+          const client = yield* stripeClient.getClient();
+          const priceId = yield* resolvePriceId(validated.plan, validated.runEnv);
+          const session = yield* stripeTryPromise("stripe checkout session create failed", () =>
+            client.checkout.sessions.create({
+              mode: "subscription",
+              customer_email: validated.ownerEmail,
+              line_items: [{ price: priceId, quantity: 1 }],
+              success_url: validated.successUrl,
+              cancel_url: validated.cancelUrl,
+              metadata,
+              subscription_data: { metadata },
+            })
+          );
+          if (!session.id || !session.url) {
+            return yield* Effect.fail(
+              new StripeApiError({
+                reason: "Stripe Checkout Session create did not return id and url",
+              })
+            );
+          }
+          return {
+            id: session.id,
+            url: session.url,
+            plan: validated.plan,
+            priceId,
+          };
+        });
+
+      /** Non-supabase path — never binds clawql_supabase_user_id (raw supabaseUserId ignored). */
+      const createCheckoutSession = (input: CheckoutSessionInput) =>
+        Effect.gen(function* () {
+          const validated = yield* validateCheckoutInput(input);
+          const metadata = buildCheckoutSessionMetadata({
+            orgName: validated.orgName,
+            plan: validated.plan,
+            ownerEmail: validated.ownerEmail,
+            billingMode: validated.billingMode,
+            clawqlUserId: validated.clawqlUserId,
+          });
+          return yield* createCheckoutWithMetadata(validated, metadata);
+        });
+
+      /**
+       * Sensitive: Checkout with clawql_supabase_user_id. Demands
+       * VerifiedCheckoutSessionUser about the named user (gdp-ts).
+       */
+      const createCheckoutSessionWithVerifiedUser = <U>(
+        user: Named<U, UserId>,
+        proof: VerifiedCheckoutSessionUser<U>,
+        input: CheckoutSessionVerifiedInput
+      ) =>
+        Effect.gen(function* () {
+          const validated = yield* validateCheckoutInput(input);
+          const metadata = buildCheckoutSessionMetadataWithVerifiedUser(user, proof, {
+            orgName: validated.orgName,
+            plan: validated.plan,
+            ownerEmail: validated.ownerEmail,
+            billingMode: validated.billingMode,
+            clawqlUserId: validated.clawqlUserId,
+          });
+          return yield* createCheckoutWithMetadata(validated, metadata);
+        });
+
+      const deleteCustomer = (customerId: string) =>
+        Effect.gen(function* () {
+          const id = customerId.trim();
+          if (!id) {
+            return yield* Effect.fail(new StripeApiError({ reason: "customerId is required" }));
+          }
+          const client = yield* stripeClient.getClient();
+          yield* stripeTryPromise("stripe customer delete failed", () => client.customers.del(id));
+        });
+
       return StripeBillingService.of({
         setup,
         createCustomer,
         createSubscription,
         createInvoice,
         createPortalSession,
+        createCheckoutSession,
+        createCheckoutSessionWithVerifiedUser,
+        deleteCustomer,
       });
     })
   );
+}
+
+/**
+ * Free-function entry: create Checkout Session bound to a verified named user.
+ * Demands VerifiedCheckoutSessionUser (gdp-ts).
+ */
+export function createCheckoutSessionWithVerifiedUserEffect<U>(
+  user: Named<U, UserId>,
+  proof: VerifiedCheckoutSessionUser<U>,
+  input: CheckoutSessionVerifiedInput
+): Effect.Effect<
+  CheckoutSessionResult,
+  StripeApiError | StripeNotConfigured,
+  StripeBillingService
+> {
+  return Effect.gen(function* () {
+    const billing = yield* StripeBillingService;
+    return yield* billing.createCheckoutSessionWithVerifiedUser(user, proof, input);
+  });
 }

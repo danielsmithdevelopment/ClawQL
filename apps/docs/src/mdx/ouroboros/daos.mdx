@@ -74,7 +74,7 @@ Memory &#x26; Documents
 
 Persistent hybrid knowledge + semantic pruning + pre-pruning snapshots
 
-clawql-memory, clawql-documents, PageIndex
+clawql-memory, clawql-documents (PageIndex / CodeGraph removed in 8.0 — Vectify-style redesign is post-8.0 backlog)
 
 4
 
@@ -654,7 +654,7 @@ EXECUTED is never externally visible — it is an internal transition that compl
 
 5. Layer 3: Memory 2.0
 
-Hybrid Vault + Graph + PageIndex storage with mandatory Presidio redaction before persistence. Every node carries a Merkle root. Recalls are filtered by ATRClaims with explicit purpose for cross-vertical access.
+Hybrid Vault + vector (+ optional Onyx) storage with mandatory Presidio redaction before persistence. PageIndex and CodeGraph were removed in 8.0; Vectify-style hierarchical redesign is post-8.0 backlog. Every node carries a Merkle root. Recalls are filtered by ATRClaims with explicit purpose for cross-vertical access.
 
 5.1 Semantic Pruning
 
@@ -1110,7 +1110,7 @@ Shipped and available today:
 
 MCP transport layer (stdio/HTTP/gRPC)
 
-clawql-ouroboros evolutionary loop library (seeds, ontology convergence gates, optional MCP tools when CLAWQL_ENABLE_OUROBOROS=1) — not DAOS NSV/SGDOP coordination
+clawql-ouroboros evolutionary loop library (seeds, ontology convergence gates; agent tools opt-in via CLAWQL_ENABLE_OUROBOROS_TOOLS) — not DAOS NSV/SGDOP coordination
 
 Layer 0 tooling: clawql-release, Arweave bundling, Manifest v1.1 schema draft
 

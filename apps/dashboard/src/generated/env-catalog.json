@@ -28,6 +28,14 @@
           "sensitive": false
         },
         {
+          "key": "CLAWQL_INSTANCE_SPEC",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_TOOLKIT",
+          "sensitive": false
+        },
+        {
           "key": "CLAWQL_BUNDLED_OFFLINE",
           "sensitive": false
         },
@@ -38,8 +46,16 @@
       ]
     },
     {
-      "title": "2. Native GraphQL / gRPC (merged into search + execute; ADR 0002)",
+      "title": "2. Custom provider endpoints (advanced — prefer CLAWQL_PROVIDER for bundled vendors)",
       "keys": [
+        {
+          "key": "CLAWQL_PROVIDER",
+          "sensitive": false
+        },
+        {
+          "key": "LINEAR_API_KEY",
+          "sensitive": true
+        },
         {
           "key": "CLAWQL_GRAPHQL_URL",
           "sensitive": false
@@ -155,6 +171,18 @@
           "sensitive": true
         },
         {
+          "key": "DOCLING_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "DOCLING_API_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_BUNDLED_PROVIDERS",
+          "sensitive": false
+        },
+        {
           "key": "STIRLING_BASE_URL",
           "sensitive": false
         },
@@ -169,14 +197,6 @@
         {
           "key": "TIKA_BASE_URL",
           "sensitive": false
-        },
-        {
-          "key": "DOCLING_BASE_URL",
-          "sensitive": false
-        },
-        {
-          "key": "DOCLING_API_KEY",
-          "sensitive": true
         },
         {
           "key": "GOTENBERG_BASE_URL",
@@ -207,6 +227,14 @@
           "sensitive": true
         },
         {
+          "key": "CLAWQL_ENABLE_NEXTCLOUD_WEBHOOK",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN",
+          "sensitive": true
+        },
+        {
           "key": "CONESHARE_BASE_URL",
           "sensitive": false
         },
@@ -223,7 +251,31 @@
           "sensitive": true
         },
         {
+          "key": "CLAWQL_CONESHARE_WEBHOOK_RESUME_WORKFLOW",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CONESHARE_NOTIFY_CHANNEL",
+          "sensitive": false
+        },
+        {
           "key": "CLAWQL_ENABLE_IDP_PIPELINE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_IDP_REDACT_LIST",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_IDP_REQUIRE_STIRLING_REDACT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_IDP_PIPELINE_RUN_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_MCP_INTERNAL_URL",
           "sensitive": false
         },
         {
@@ -232,6 +284,14 @@
         },
         {
           "key": "CLAWQL_ENABLE_LANGEXTRACT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_PDF_INSPECTOR",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_ANYDOC",
           "sensitive": false
         },
         {
@@ -251,12 +311,36 @@
           "sensitive": false
         },
         {
+          "key": "CLAWQL_PDF_INSPECTOR_FILE_ROOTS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ANYDOC_FILE_ROOTS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PDF_INSPECTOR_LOCAL_MIN_CONFIDENCE",
+          "sensitive": false
+        },
+        {
           "key": "OPENROUTER_API_KEY",
           "sensitive": true
         },
         {
           "key": "OLLAMA_BASE_URL",
           "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MLX_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MLX_MODEL",
+          "sensitive": false
+        },
+        {
+          "key": "MLX_API_KEY",
+          "sensitive": true
         },
         {
           "key": "LANGEXTRACT_MODE",
@@ -308,6 +392,10 @@
           "sensitive": false
         },
         {
+          "key": "CLAWQL_ENABLE_OBSERVABILITY",
+          "sensitive": false
+        },
+        {
           "key": "CLAWQL_OBSERVABILITY_PROFILE",
           "sensitive": false
         },
@@ -341,6 +429,14 @@
         },
         {
           "key": "CLAWQL_LOKI_JOB",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_LOKI_INFERENCE_JOB",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_AUDIT_TOOL_CALLS",
           "sensitive": false
         },
         {
@@ -421,11 +517,15 @@
           "sensitive": false
         },
         {
-          "key": "CLAWQL_ENABLE_PAGEINDEX",
+          "key": "CLAWQL_MEMORY_RECALL_HYBRID_ONYX",
           "sensitive": false
         },
         {
-          "key": "CLAWQL_PAGEINDEX_PATH",
+          "key": "CLAWQL_MEMORY_RECALL_ONYX_LIMIT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_VAULT_RANKER",
           "sensitive": false
         },
         {
@@ -435,6 +535,194 @@
         {
           "key": "CLAWQL_API_KEY",
           "sensitive": true
+        },
+        {
+          "key": "CLAWQL_AUTH_API_KEY_STORE_PATH",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_AUTH_ISSUED_API_KEYS",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_HOME",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MCP_TRUSTED_SOURCES",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_OPERATION_RISK_ENFORCE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PENDING_EXECUTION_TTL_HOURS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PENDING_SOURCE_TTL_HOURS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_AUTH_OIDC_JWKS_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_AUTH_OIDC_ISSUER",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_AUTH_OIDC_AUDIENCE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ID_JAG_ISSUER_ENABLED",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ID_JAG_ISSUER_ORG_ID",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ID_JAG_TEE_SIGNER",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ID_JAG_TEE_SIGN_CMD",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_TEE_PLATFORM",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_TEE_STRICT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_TEE_DEBUG",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_ENABLED",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_LOCAL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_SQLITE_PATH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_POSTGRES_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_REMOTE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_S3_BUCKET",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_S3_ENDPOINT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_S3_ACCESS_KEY_ID",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_S3_SECRET_ACCESS_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_WORM_SESSION_ID",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_AGENT_NAME",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_RECONCILE_MS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_MERKLE_BATCH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_HTTP_PORT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_AUDIT_API_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_WORM_TEE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_TEE_PLATFORM",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_TEE_PRIVATE_KEY_PEM_PATH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_TEE_PUBLIC_KEY_PEM_PATH",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_PANGUARD_ALLOW",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_WORM_DEBUG",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PASSKEY_ENABLED",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PASSKEY_RP_ID",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PASSKEY_ORIGIN",
+          "sensitive": false
+        },
+        {
+          "key": "TELEGRAM_BOT_TOKEN",
+          "sensitive": true
+        },
+        {
+          "key": "YOUR_TELEGRAM_USER_ID",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_OAUTH_REAUTH_BASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_OUTBOUND_REAUTH_NOTIFY",
+          "sensitive": false
         },
         {
           "key": "CLAWQL_ENABLE_PRESIDIO",
@@ -453,6 +741,22 @@
           "sensitive": false
         },
         {
+          "key": "CLAWQL_ENABLE_PRIVACY_FILTER",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PRIVACY_FILTER_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PRIVACY_FILTER_FAILURE_POLICY",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PRIVACY_FILTER_MODEL",
+          "sensitive": false
+        },
+        {
           "key": "CLAWQL_MEMORY_INGEST_FILE",
           "sensitive": false
         },
@@ -462,6 +766,86 @@
         },
         {
           "key": "CLAWQL_MEMORY_INGEST_FILE_MAX_BYTES",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SYNC_PROVIDER",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SYNC_BUCKET",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SYNC_PREFIX",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_R2_ACCOUNT_ID",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SYNC_ACCESS_KEY_ID",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SYNC_SECRET_ACCESS_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_AWS_ACCESS_KEY_ID",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_AWS_SECRET_ACCESS_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_AWS_REGION",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_GCS_HMAC_ACCESS_ID",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_GCS_HMAC_SECRET",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_SYNC_ENDPOINT",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SYNC_REGION",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SYNC_AUTO",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SYNC_AUTO_DEBOUNCE_MS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SYNC_AUTO_PUSH_MIN_MS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SYNC_AUTO_PULL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SYNC_AUTO_PULL_MIN_MS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SYNC_AUTO_PULL_ON_START",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_BUNDLED_PROVIDERS",
           "sensitive": false
         },
         {
@@ -479,6 +863,26 @@
         {
           "key": "CLAWQL_ENABLE_AWS",
           "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_SUPABASE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SUPABASE_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SUPABASE_JWT_SECRET",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_SUPABASE_JWKS_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SUPABASE_ANON_KEY",
+          "sensitive": true
         },
         {
           "key": "CLAWQL_EXTERNAL_INGEST",
@@ -590,6 +994,38 @@
           "sensitive": false
         },
         {
+          "key": "CLAWQL_NATS_CONSUMER_IDP_PIPELINE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_CONSUMER_CONESHARE_FOLLOWUP",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_CONSUMER_IDP_DURABLE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_CONSUMER_CONESHARE_DURABLE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_AGENT_BRIDGE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_AGENT_BRIDGE_DURABLE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MCP_HTTP_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_NATS_AGENT_BRIDGE_NOTIFY_CHANNEL",
+          "sensitive": false
+        },
+        {
           "key": "CLAWQL_NATS_SUBJECT_WORKFLOW",
           "sensitive": false
         },
@@ -626,7 +1062,7 @@
           "sensitive": false
         },
         {
-          "key": "CLAWQL_ENABLE_OUROBOROS",
+          "key": "CLAWQL_ENABLE_OUROBOROS_TOOLS",
           "sensitive": false
         },
         {
@@ -710,6 +1146,14 @@
           "sensitive": false
         },
         {
+          "key": "CLAWQL_MEMORY_OKF_INDEX",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_MEMORY_OKF_LOG",
+          "sensitive": false
+        },
+        {
           "key": "CLAWQL_MEMORY_DB",
           "sensitive": false
         },
@@ -782,7 +1226,95 @@
           "sensitive": false
         },
         {
+          "key": "CLAWQL_CREDITS_ENABLED",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CREDITS_HATEOAS_BASE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_COMPENSATION_APPROVAL_BASE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CREDITS_PHONE_REQUIRE_VERIFIED",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CREDITS_PHONE_DEFAULT_CC",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CREDITS_INVITE_EMAIL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CREDITS_INVITE_EMAIL_DRY_RUN",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CREDITS_INVITE_EMAIL_PROVIDER",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CREDITS_INVITE_EMAIL_FROM",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CREDITS_INVITE_EMAIL_RESEND_API_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "CLAWQL_CREDITS_INVITE_EMAIL_WEBHOOK_URL",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_PAYMENTS_MCP_TOOLS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_SELF_SERVE_CHECKOUT",
+          "sensitive": false
+        },
+        {
+          "key": "STRIPE_SECRET_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "STRIPE_PRO_PRICE_ID",
+          "sensitive": false
+        },
+        {
+          "key": "STRIPE_TEAM_PRICE_ID",
+          "sensitive": false
+        },
+        {
+          "key": "NEXT_PUBLIC_CLAWQL_SELF_SERVE_CHECKOUT",
+          "sensitive": false
+        },
+        {
+          "key": "NEXT_PUBLIC_CLAWQL_CHECKOUT_API",
+          "sensitive": false
+        },
+        {
           "key": "CLAWQL_ENABLE_SANDBOX",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_DATA",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_ENABLE_CLAWQL_SQL_ALIAS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_DATA_ENGINE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_DATA_PATH",
           "sensitive": false
         },
         {
@@ -868,6 +1400,31 @@
       ]
     },
     {
+      "title": "Cloudflare Wallets (identity + capped Virtual Wallets)",
+      "keys": [
+        {
+          "key": "CLAWQL_CLOUDFLARE_WALLETS",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CLOUDFLARE_WALLETS_HANDLE",
+          "sensitive": false
+        },
+        {
+          "key": "CLAWQL_CLOUDFLARE_WALLETS_DRY_RUN",
+          "sensitive": false
+        },
+        {
+          "key": "CLOUDFLARE_WALLETS_API_BASE",
+          "sensitive": false
+        },
+        {
+          "key": "CLOUDFLARE_WALLETS_API_TOKEN",
+          "sensitive": true
+        }
+      ]
+    },
+    {
       "title": "Workflow test toggles",
       "keys": [
         {
@@ -913,6 +1470,10 @@
         },
         {
           "key": "OPENROUTER_API_KEY",
+          "sensitive": true
+        },
+        {
+          "key": "DEEPSEEK_API_KEY",
           "sensitive": true
         }
       ]

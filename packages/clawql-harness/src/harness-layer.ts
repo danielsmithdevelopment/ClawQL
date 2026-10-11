@@ -117,7 +117,7 @@ export function makeHarnessLayer(
           }),
         onTeardown: () =>
           Effect.gen(function* () {
-            yield* harness.teardown().pipe(Effect.catchAll(() => Effect.void));
+            yield* harness.teardown().pipe(Effect.catch(() => Effect.void));
             if (activeHarness === harness) activeHarness = null;
             if (includesOuroboros) {
               resetOuroborosContextForTests();

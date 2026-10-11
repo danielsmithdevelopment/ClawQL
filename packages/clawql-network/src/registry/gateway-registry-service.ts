@@ -21,14 +21,14 @@ export type GatewayRegistryFile = {
   readonly gateways: Record<string, GatewayRecord>;
 };
 
-export class GatewayRegistryService extends Context.Tag("clawql-network/GatewayRegistryService")<
+export class GatewayRegistryService extends Context.Service<
   GatewayRegistryService,
   {
     readonly registerGateway: (input: RegisterGatewayInput) => Effect.Effect<GatewayRecord>;
     readonly heartbeat: (gatewayId: string, orgId: string) => Effect.Effect<GatewayRecord | null>;
     readonly listMeshPeers: (orgId: string) => Effect.Effect<readonly GatewayRecord[]>;
   }
->() {}
+>()("clawql-network/GatewayRegistryService") {}
 
 export const gatewayRegistryPath = (orgId: string, home?: string): string =>
   join(networkRoot(home ?? defaultClawqlHome()), "registry", "orgs", orgId, "gateways.json");
@@ -57,7 +57,7 @@ const loadFile = (path: string): Effect.Effect<GatewayRegistryFile> =>
       return { version: 1 as const, gateways: parsed.gateways };
     },
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-  }).pipe(Effect.catchAll(() => Effect.succeed(emptyFile())));
+  }).pipe(Effect.catch(() => Effect.succeed(emptyFile())));
 
 const saveFile = (path: string, file: GatewayRegistryFile): Effect.Effect<void> =>
   Effect.tryPromise({
@@ -69,7 +69,7 @@ const saveFile = (path: string, file: GatewayRegistryFile): Effect.Effect<void> 
       });
     },
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-  }).pipe(Effect.catchAll(() => Effect.void));
+  }).pipe(Effect.catch(() => Effect.void));
 
 const refreshStatuses = (file: GatewayRegistryFile, nowMs: number): GatewayRegistryFile => {
   const gateways: Record<string, GatewayRecord> = {};

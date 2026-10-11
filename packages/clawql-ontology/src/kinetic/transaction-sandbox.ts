@@ -21,6 +21,7 @@ import {
   updateContractValue,
   type FixtureContract,
 } from "../fixture-store.js";
+import { Effect } from "effect";
 
 export type KineticWriteRequest = {
   tool: string;
@@ -105,7 +106,7 @@ function moneyDelta(before: unknown, next: unknown): number | undefined {
 /**
  * Run one native kinetic write with ATR + optional MEDIUM mandate gate.
  */
-export async function runKineticTransaction(req: KineticWriteRequest): Promise<KineticWriteResult> {
+async function runKineticTransactionImpl(req: KineticWriteRequest): Promise<KineticWriteResult> {
   const claims = req.claims === undefined ? resolveKineticAtrClaimsForRuntime() : req.claims;
   const atr = checkKineticWriteAllowed(claims);
   const before =
@@ -204,11 +205,39 @@ export async function runKineticTransaction(req: KineticWriteRequest): Promise<K
   }
 }
 
+export function runKineticTransactionEffect(
+  req: KineticWriteRequest
+): Effect.Effect<KineticWriteResult, Error> {
+  return Effect.tryPromise({
+    try: () => runKineticTransactionImpl(req),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runKineticTransactionEffect} for Effect callers. */
+export async function runKineticTransaction(req: KineticWriteRequest): Promise<KineticWriteResult> {
+  return Effect.runPromise(runKineticTransactionEffect(req));
+}
+
 /** @deprecated prefer {@link runKineticTransaction} */
+async function runLowKineticTransactionImpl(req: KineticWriteRequest): Promise<KineticWriteResult> {
+  return runKineticTransaction(req);
+}
+
+export function runLowKineticTransactionEffect(
+  req: KineticWriteRequest
+): Effect.Effect<KineticWriteResult, Error> {
+  return Effect.tryPromise({
+    try: () => runLowKineticTransactionImpl(req),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runLowKineticTransactionEffect} for Effect callers. */
 export async function runLowKineticTransaction(
   req: KineticWriteRequest
 ): Promise<KineticWriteResult> {
-  return runKineticTransaction(req);
+  return Effect.runPromise(runLowKineticTransactionEffect(req));
 }
 
 export { resolveChangeLimit };

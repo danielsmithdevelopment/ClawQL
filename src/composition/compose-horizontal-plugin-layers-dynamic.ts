@@ -59,6 +59,7 @@ export function composeHorizontalPluginLayersDynamicEffect(
       }>("clawql-documents/plugin");
       layers.push(
         mod.makeDocumentsLayer({
+          enableExternalIngest: flags.externalIngestPreview,
           enableOnyx: flags.enableOnyxKnowledge,
           enableIdpPipeline: flags.enableIdpPipeline,
           enableIdpClassifier: flags.enableIdpClassifier,
@@ -100,8 +101,10 @@ export function composeHorizontalPluginLayersDynamicEffect(
     }
 
     if (flags.enableData) {
-      const mod = yield* loadPlugin<{ makeDataLayer: () => HorizLayer }>("clawql-data/plugin");
-      layers.push(mod.makeDataLayer());
+      const mod = yield* loadPlugin<{
+        makeDataLayer: (opts?: Record<string, unknown>) => HorizLayer;
+      }>("clawql-data/plugin");
+      layers.push(mod.makeDataLayer({ enableClawqlSqlAlias: flags.enableClawqlSqlAlias }));
     }
 
     if (flags.enableWeb) {
@@ -129,18 +132,27 @@ export function composeHorizontalPluginLayersDynamicEffect(
       layers.push(mod.makeOntologyLayer({ enableWrites: flags.enableOntologyWrites }));
     }
 
-    // Ouroboros always via clawql-harness (same as static compose).
-    const harness = yield* loadPlugin<{
-      makeHarnessLayer: (opts: { plugins: unknown[] }) => HorizLayer;
-      createOuroborosHarnessPlugin: (opts: { enableLangfuseEval: boolean }) => unknown;
-    }>("clawql-harness/plugin");
-    layers.push(
-      harness.makeHarnessLayer({
-        plugins: [
-          harness.createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval }),
-        ],
-      })
-    );
+    if (flags.enableSupabase) {
+      const mod = yield* loadPlugin<{ makeSupabaseLayer: () => HorizLayer }>(
+        "clawql-supabase/plugin"
+      );
+      layers.push(mod.makeSupabaseLayer());
+    }
+
+    // Ouroboros / clawql_think (8.0 demotion): opt-in via enableOuroborosTools (same as static compose).
+    if (flags.enableOuroborosTools) {
+      const harness = yield* loadPlugin<{
+        makeHarnessLayer: (opts: { plugins: unknown[] }) => HorizLayer;
+        createOuroborosHarnessPlugin: (opts: { enableLangfuseEval: boolean }) => unknown;
+      }>("clawql-harness/plugin");
+      layers.push(
+        harness.makeHarnessLayer({
+          plugins: [
+            harness.createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval }),
+          ],
+        })
+      );
+    }
 
     return layers;
   });

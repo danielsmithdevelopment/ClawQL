@@ -47,7 +47,7 @@
     "@aws-sdk/client-s3": "^3.1127.0",
     "cbor": "^10.0.12",
     "clawql-merkle": "0.1.0",
-    "effect": "^3.21.4",
+    "effect": "4.0.0",
     "qrcode": "^1.5.4",
     "raptorq": "^1.7.24"
   },

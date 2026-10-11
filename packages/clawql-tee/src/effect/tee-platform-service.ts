@@ -7,7 +7,7 @@ import {
   TeePlatformError,
 } from "../platform.js";
 
-export class TeePlatformService extends Context.Tag("clawql/TeePlatformService")<
+export class TeePlatformService extends Context.Service<
   TeePlatformService,
   {
     readonly resolvePlatform: (
@@ -15,7 +15,7 @@ export class TeePlatformService extends Context.Tag("clawql/TeePlatformService")
     ) => Effect.Effect<TeePlatformAdapter, TeePlatformError>;
     readonly isStrict: (env?: NodeJS.ProcessEnv) => Effect.Effect<boolean>;
   }
->() {}
+>()("clawql/TeePlatformService") {}
 
 export const TeePlatformServiceLive = Layer.succeed(
   TeePlatformService,

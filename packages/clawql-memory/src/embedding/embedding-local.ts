@@ -3,6 +3,10 @@
  * No API key, no Ollama daemon — model downloads once into a cache dir on first use.
  */
 
+import { Effect } from "effect";
+import { MemoryError } from "../effect/memory-errors.js";
+import { memoryFromPromise } from "../effect/memory-effect-utils.js";
+
 export const DEFAULT_LOCAL_EMBEDDING_MODEL = "Xenova/all-MiniLM-L6-v2";
 /** all-MiniLM-L6-v2 output width. */
 export const DEFAULT_LOCAL_EMBEDDING_DIMENSION = 384;
@@ -57,18 +61,28 @@ async function loadPipeline(model: string): Promise<LocalEmbedFn> {
   return embed;
 }
 
+export function embedTextsLocalEffect(
+  texts: string[],
+  model: string
+): Effect.Effect<{ vectors: Float32Array[]; model: string; dimension: number }, MemoryError> {
+  return memoryFromPromise(async () => {
+    if (texts.length === 0) {
+      return { vectors: [], model, dimension: 0 };
+    }
+    const embed = await loadPipeline(model);
+    const vectors = await embed(texts);
+    const dimension = vectors[0]?.length ?? 0;
+    if (vectors.length !== texts.length) {
+      throw new Error("local embedding: batch size mismatch");
+    }
+    return { vectors, model, dimension };
+  });
+}
+
+/** Promise façade. */
 export async function embedTextsLocal(
   texts: string[],
   model: string
 ): Promise<{ vectors: Float32Array[]; model: string; dimension: number }> {
-  if (texts.length === 0) {
-    return { vectors: [], model, dimension: 0 };
-  }
-  const embed = await loadPipeline(model);
-  const vectors = await embed(texts);
-  const dimension = vectors[0]?.length ?? 0;
-  if (vectors.length !== texts.length) {
-    throw new Error("local embedding: batch size mismatch");
-  }
-  return { vectors, model, dimension };
+  return Effect.runPromise(embedTextsLocalEffect(texts, model));
 }

@@ -38,6 +38,7 @@ jobs:
         run: |
           npm ci
           npm run build -w clawql-merkle
+          npm run build -w clawql-gdp
           npm run build -w clawql-audit
           npm run build -w clawql-auth
           npm run build -w clawql-analytics

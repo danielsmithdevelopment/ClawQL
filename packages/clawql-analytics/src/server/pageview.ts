@@ -54,7 +54,7 @@ const bootRuntime = (): Effect.Effect<AnalyticsRuntime | null> =>
 
     runtime = createAnalyticsLayer(registryLayer);
     return runtime;
-  }).pipe(Effect.catchAll(() => Effect.succeed(null)));
+  }).pipe(Effect.catch(() => Effect.succeed(null)));
 
 export const capturePageviewEffect = (event: PageviewEvent): Effect.Effect<void> =>
   Effect.gen(function* () {
@@ -64,7 +64,7 @@ export const capturePageviewEffect = (event: PageviewEvent): Effect.Effect<void>
       const analytics = yield* AnalyticsService;
       yield* analytics.pageview(event);
     }).pipe(Effect.provide(layer));
-  }).pipe(Effect.catchAll(() => Effect.void));
+  }).pipe(Effect.catch(() => Effect.void));
 
 /** Thin host façade for Next.js route handlers. */
 export async function capturePageview(event: PageviewEvent): Promise<void> {

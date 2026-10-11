@@ -5,8 +5,8 @@
  *
  * Effect-primary: {@link OAuthTokenStoreService} + {@link createOAuthTokenStoreLayer} mirror
  * {@link GatewayAuthService} / {@link IdJagIssuerService}. The in-flight refresh dedup uses a
- * `Map<OAuthTokenKey, Fiber.RuntimeFiber<...>>` — an Effect-native replacement for the
- * `Map<OAuthTokenKey, Promise<...>>` mutex — with `Effect.forkDaemon` + `Fiber.join` so all
+ * `Map<OAuthTokenKey, Fiber.Fiber<...>>` — an Effect-native replacement for the
+ * `Map<OAuthTokenKey, Promise<...>>` mutex — with `Effect.forkDetach` + `Fiber.join` so all
  * concurrent waiters share the same underlying refresh fiber.
  */
 
@@ -67,10 +67,7 @@ function emitEffect(sink: AuthEventSink, event: AuthEvent): Effect.Effect<void> 
 }
 
 export class OAuthTokenStore {
-  private readonly refreshLock = new Map<
-    OAuthTokenKey,
-    Fiber.RuntimeFiber<StoredOAuthToken, unknown>
-  >();
+  private readonly refreshLock = new Map<OAuthTokenKey, Fiber.Fiber<StoredOAuthToken, unknown>>();
   private readonly proactiveRefreshMs: number;
   private readonly now: () => number;
   private readonly eventSink: AuthEventSink;
@@ -94,7 +91,7 @@ export class OAuthTokenStore {
   getValidToken(
     key: OAuthTokenKey
   ): Effect.Effect<StoredOAuthToken, ReauthRequiredError | unknown> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const current = yield* this.options.persistence.load(key);
       if (!current) {
         const providerId = this.resolveProviderId(key);
@@ -106,9 +103,7 @@ export class OAuthTokenStore {
           timestamp: new Date(this.now()).toISOString(),
         });
         if (this.options.markRequiresReauth) {
-          yield* this.options
-            .markRequiresReauth(providerId)
-            .pipe(Effect.catchAll(() => Effect.void));
+          yield* this.options.markRequiresReauth(providerId).pipe(Effect.catch(() => Effect.void));
         }
         const reauthUrl = this.options.buildReauthUrl
           ? yield* this.options.buildReauthUrl({ providerId, tokenKey: key, reason: "no_token" })
@@ -120,7 +115,7 @@ export class OAuthTokenStore {
           reauthUrl,
         });
         if (this.options.onReauthRequired) {
-          yield* this.options.onReauthRequired(error).pipe(Effect.catchAll(() => Effect.void));
+          yield* this.options.onReauthRequired(error).pipe(Effect.catch(() => Effect.void));
         }
         return yield* Effect.fail(error);
       }
@@ -138,14 +133,14 @@ export class OAuthTokenStore {
     key: OAuthTokenKey,
     current: StoredOAuthToken
   ): Effect.Effect<StoredOAuthToken, ReauthRequiredError | unknown> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const inflight = this.refreshLock.get(key);
       if (inflight) return yield* Fiber.join(inflight);
 
       const providerId = this.resolveProviderId(key);
 
       const refreshEffect: Effect.Effect<StoredOAuthToken, ReauthRequiredError | unknown> =
-        Effect.gen(this, function* () {
+        Effect.gen({ self: this }, function* () {
           const next = yield* this.options.refresh(key, current);
           yield* this.options.persistence.save(key, next);
           yield* emitEffect(this.eventSink, {
@@ -157,8 +152,8 @@ export class OAuthTokenStore {
           });
           return next;
         }).pipe(
-          Effect.catchAll((err) =>
-            Effect.gen(this, function* () {
+          Effect.catch((err) =>
+            Effect.gen({ self: this }, function* () {
               const errorCode = oauthErrorCode(err);
               const requiresReauth = errorCode === "invalid_grant";
               yield* emitEffect(this.eventSink, {
@@ -180,7 +175,7 @@ export class OAuthTokenStore {
                 if (this.options.markRequiresReauth) {
                   yield* this.options
                     .markRequiresReauth(providerId)
-                    .pipe(Effect.catchAll(() => Effect.void));
+                    .pipe(Effect.catch(() => Effect.void));
                 }
                 const reauthUrl = this.options.buildReauthUrl
                   ? yield* this.options.buildReauthUrl({
@@ -196,9 +191,7 @@ export class OAuthTokenStore {
                   reauthUrl,
                 });
                 if (this.options.onReauthRequired) {
-                  yield* this.options
-                    .onReauthRequired(error)
-                    .pipe(Effect.catchAll(() => Effect.void));
+                  yield* this.options.onReauthRequired(error).pipe(Effect.catch(() => Effect.void));
                 }
                 return yield* Effect.fail(error);
               }
@@ -208,7 +201,7 @@ export class OAuthTokenStore {
           Effect.ensuring(Effect.sync(() => this.refreshLock.delete(key)))
         );
 
-      const fiber = yield* Effect.forkDaemon(refreshEffect);
+      const fiber = yield* Effect.forkDetach(refreshEffect);
       this.refreshLock.set(key, fiber);
       return yield* Fiber.join(fiber);
     });
@@ -219,7 +212,7 @@ export function createOAuthTokenStore(options: OAuthTokenStoreOptions): OAuthTok
   return new OAuthTokenStore(options);
 }
 
-export class OAuthTokenStoreService extends Context.Tag("clawql/OAuthTokenStoreService")<
+export class OAuthTokenStoreService extends Context.Service<
   OAuthTokenStoreService,
   {
     readonly isExpiringSoon: (expiresAtMs: number, nowMs?: number) => boolean;
@@ -231,11 +224,11 @@ export class OAuthTokenStoreService extends Context.Tag("clawql/OAuthTokenStoreS
       current: StoredOAuthToken
     ) => Effect.Effect<StoredOAuthToken, ReauthRequiredError | unknown>;
   }
->() {}
+>()("clawql/OAuthTokenStoreService") {}
 
 export function oauthTokenStoreServiceFromStore(
   store: OAuthTokenStore
-): OAuthTokenStoreService["Type"] {
+): Context.Service.Shape<typeof OAuthTokenStoreService> {
   return OAuthTokenStoreService.of({
     isExpiringSoon: (expiresAtMs, nowMs) => store.isExpiringSoon(expiresAtMs, nowMs),
     getValidToken: (key) => store.getValidToken(key),

@@ -6,8 +6,9 @@ import { readdir } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 import { slugifyTitle } from "../ingest/slug.js";
 import { stripVaultFrontmatter } from "./markdown.js";
+import { Effect } from "effect";
 
-export async function listVaultMarkdownRelPaths(
+async function listVaultMarkdownRelPathsImpl(
   vaultAbs: string,
   subRel: string,
   maxFiles: number
@@ -33,6 +34,26 @@ export async function listVaultMarkdownRelPaths(
   }
   await walk(subRel.replace(/\\/g, "/").replace(/^\/+/, ""));
   return out;
+}
+
+export function listVaultMarkdownRelPathsEffect(
+  vaultAbs: string,
+  subRel: string,
+  maxFiles: number
+): Effect.Effect<string[], Error> {
+  return Effect.tryPromise({
+    try: () => listVaultMarkdownRelPathsImpl(vaultAbs, subRel, maxFiles),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link listVaultMarkdownRelPathsEffect} for Effect callers. */
+export async function listVaultMarkdownRelPaths(
+  vaultAbs: string,
+  subRel: string,
+  maxFiles: number
+): Promise<string[]> {
+  return Effect.runPromise(listVaultMarkdownRelPathsEffect(vaultAbs, subRel, maxFiles));
 }
 
 function extractFirstH1Title(markdown: string): string | undefined {

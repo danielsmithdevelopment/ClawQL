@@ -105,11 +105,33 @@ export {
   runInferenceFinetuneRefit,
   type InferenceFinetuneOptions,
 } from "./cli/finetune.js";
-export { runInferenceExport, type RunInferenceExportOptions } from "./export/run-export.js";
+export {
+  runInferenceExport,
+  runInferenceExportEffect,
+  exportRecordsEffect,
+  type RunInferenceExportOptions,
+} from "./export/run-export.js";
+export { scrubExportLineEffect } from "./export/pii.js";
 export type { ExportFormat, DatasetManifest } from "./export/types.js";
-export { submitFinetuneJob, getFinetuneJobStatus, registerFinetuneModel } from "./finetune/jobs.js";
+export {
+  submitFinetuneJob,
+  submitFinetuneJobEffect,
+  getFinetuneJobStatus,
+  getFinetuneJobStatusEffect,
+  registerFinetuneModel,
+  registerFinetuneModelEffect,
+  FinetuneJobsService,
+  finetuneJobsLiveLayer,
+} from "./finetune/jobs.js";
 export type { FinetuneJob, FinetuneProvider } from "./finetune/types.js";
-export { registerModelToTier, loadTierMapOverrides } from "./finetune/tier-registry.js";
+export {
+  registerModelToTier,
+  registerModelToTierEffect,
+  loadTierMapOverrides,
+  loadTierMapOverridesEffect,
+  FinetuneTierRegistryService,
+  finetuneTierRegistryLiveLayer,
+} from "./finetune/tier-registry.js";
 
 export {
   buildModelEscalationAuditEntry,
@@ -131,8 +153,13 @@ export {
   runInferencePipelineWorker,
 } from "./cli/pipeline.js";
 export { AGENT_COORDINATION_DRIFT_TRIPWIRE } from "./routing/tier-escalation-router.js";
-export { loadPipelineConfig, savePipelineConfig } from "./pipeline/config.js";
-export { runPipelineOnce } from "./pipeline/run.js";
+export {
+  loadPipelineConfig,
+  loadPipelineConfigEffect,
+  savePipelineConfig,
+  savePipelineConfigEffect,
+} from "./pipeline/config.js";
+export { runPipelineOnce, runPipelineOnceEffect } from "./pipeline/run.js";
 export type { InferencePipelineConfig } from "./pipeline/types.js";
 
 export { parseModelId } from "./providers/parse-model-id.js";
@@ -217,6 +244,22 @@ export {
   type MemoryListEntry,
 } from "./memory/index.js";
 
+export {
+  EventsGatewayService,
+  EventsGatewayLive,
+  createEventsRouter,
+  runEventsGatewayList,
+  runEventsGatewaySubscribe,
+  runEventsGatewayUnsubscribe,
+  runEventsGatewayGetSubscription,
+  runEventsGatewayListSubscriptions,
+  runEventsGatewayUnsubscribeById,
+  runEventsGatewayReplayStream,
+  runEventsGatewaySubscribeStream,
+  runEventsGatewayInbound,
+  type EventsGatewayListInput,
+} from "./events/index.js";
+
 export { runInferenceServe } from "./cli/serve.js";
 export { runInferenceComplete, type InferenceCompleteOptions } from "./cli/complete.js";
 export { runInferenceCacheStatus, type InferenceCacheStatusOptions } from "./cli/cache.js";
@@ -228,6 +271,7 @@ export {
 } from "./cache/cached-gateway.js";
 export {
   createSemanticCacheStore,
+  createSemanticCacheStoreEffect,
   resolveSemanticCacheBackend,
   PostgresSemanticCacheStore,
   type SemanticCacheBackend,
@@ -238,7 +282,12 @@ export {
   type SemanticCacheConfig,
   type SemanticCacheStats,
 } from "./cache/types.js";
-export { cosineSimilarity, resolveInferenceEmbeddingConfig } from "./cache/embedding.js";
+export {
+  cosineSimilarity,
+  resolveInferenceEmbeddingConfig,
+  embedTextsEffect,
+  embedQueryEffect,
+} from "./cache/embedding.js";
 export { buildCacheSignatureText, hashSystemPrompt } from "./cache/signature.js";
 export {
   EmbedderService,
@@ -289,10 +338,16 @@ export {
 export { loadKeysConfig, resolveVirtualKeysPath } from "./keys/config.js";
 export {
   createVirtualKey,
+  createVirtualKeyEffect,
   revokeVirtualKey,
+  revokeVirtualKeyEffect,
   listVirtualKeys,
   keysEnforcementActive,
   redactVirtualKey,
+  saveVirtualKeyStoreEffect,
+  recordKeySpendEffect,
+  VirtualKeyStoreService,
+  virtualKeyStoreLiveLayer,
 } from "./keys/store.js";
 export { validateVirtualKey, extractPresentedApiKey } from "./keys/validate.js";
 export { createVirtualKeyAuthMiddleware, type VirtualKeyRequest } from "./api/auth.js";
@@ -308,10 +363,12 @@ export {
 export { runInferencePolicyShow, type InferencePolicyShowOptions } from "./cli/policy.js";
 export {
   evaluateAgentCoordination,
+  evaluateAgentCoordinationEffect,
   type AgentCoordinationEvaluation,
 } from "./coordination/trigger.js";
 export {
   invokeAgentCoordination,
+  invokeAgentCoordinationEffect,
   type AgentCoordinationResult,
   type AgentCoordinationMode,
 } from "./coordination/hermes-adapter.js";
@@ -319,7 +376,11 @@ export { PostgresInferenceStore } from "./store/postgres.js";
 export {
   getInferencePgPool,
   ensureInferenceSchema,
+  ensureInferenceSchemaEffect,
   closeInferencePgPool,
+  closeInferencePgPoolEffect,
+  InferencePgPoolService,
+  inferencePgPoolLiveLayer,
 } from "./store/postgres-pool.js";
 export { cronMatchesUtc } from "./pipeline/cron.js";
 export {

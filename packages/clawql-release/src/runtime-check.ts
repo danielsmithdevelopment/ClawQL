@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import { readReleaseConfig } from "./config.js";
 import { releaseBundleDir } from "./manifest.js";
 import { verifyReleaseManifest } from "./verify.js";
+import { Effect } from "effect";
 
 export type ReleaseManifestCheckStatus = "ok" | "warn" | "fail" | "skip";
 
@@ -63,7 +64,7 @@ function expectedBundlePath(
   return join(releaseBundleDir(rootDir, tag, outputDir), "manifest.json");
 }
 
-export async function checkReleaseManifest(
+async function checkReleaseManifestImpl(
   options: CheckReleaseManifestOptions
 ): Promise<ReleaseManifestCheckResult> {
   const rootDir = options.rootDir ?? process.cwd();
@@ -147,7 +148,7 @@ export function isReleaseManifestStrict(): boolean {
  * When `CLAWQL_RELEASE_MANIFEST` is set, verify before MCP serves traffic.
  * Fails closed in production (`NODE_ENV=production`) or when `CLAWQL_RELEASE_MANIFEST_STRICT=1`.
  */
-export async function enforceReleaseManifestAtStartup(options: {
+async function enforceReleaseManifestAtStartupImpl(options: {
   explicitPath?: string;
   version?: string;
   rootDir?: string;
@@ -178,4 +179,43 @@ export async function enforceReleaseManifestAtStartup(options: {
   if (check.status === "fail") {
     throw new Error(check.message);
   }
+}
+
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Doctor / startup check against a release manifest (Effect-primary). */
+export function checkReleaseManifestEffect(
+  options: CheckReleaseManifestOptions
+): Effect.Effect<ReleaseManifestCheckResult, Error> {
+  return Effect.tryPromise({ try: () => checkReleaseManifestImpl(options), catch: fsError });
+}
+
+/** Promise façade for callers that still await release manifest checks. */
+export async function checkReleaseManifest(
+  options: CheckReleaseManifestOptions
+): Promise<ReleaseManifestCheckResult> {
+  return Effect.runPromise(checkReleaseManifestEffect(options));
+}
+
+/** Enforce CLAWQL_RELEASE_MANIFEST at MCP startup (Effect-primary). */
+export function enforceReleaseManifestAtStartupEffect(options: {
+  explicitPath?: string;
+  version?: string;
+  rootDir?: string;
+}): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => enforceReleaseManifestAtStartupImpl(options),
+    catch: fsError,
+  });
+}
+
+/** Promise façade for MCP hosts that still await startup enforcement. */
+export async function enforceReleaseManifestAtStartup(options: {
+  explicitPath?: string;
+  version?: string;
+  rootDir?: string;
+}): Promise<void> {
+  return Effect.runPromise(enforceReleaseManifestAtStartupEffect(options));
 }

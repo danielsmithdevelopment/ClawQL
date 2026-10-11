@@ -4,9 +4,9 @@ This page summarizes how ClawQL selects specs, loads auth, and enables optional 
 
 ## Feature tiers (architecture diagram)
 
-![ClawQL Feature Tiers — Core, Memory/Documents (default-on, opt-out), Sandbox/Automation (default-off, opt-in); Ouroboros always via clawql-harness](images/clawql-feature-tiers.png)
+![ClawQL Feature Tiers — Core, Memory/Documents (default-on, opt-out), Sandbox/Automation/Ouroboros (default-off, opt-in)](images/clawql-feature-tiers.png)
 
-ClawQL groups capabilities into three bands. This matches the **layer diagram** above (**ClawQL Core** vs default-on opt-out vs default-off opt-in). **Ouroboros** tools are always registered via **`clawql-harness`** (not the default-off band). The diagram is revised when new modules ship (for example future **`clawql-web3`**); the sections below remain authoritative for env and registration behavior.
+ClawQL groups capabilities into three bands. This matches the **layer diagram** above (**ClawQL Core** vs default-on opt-out vs default-off opt-in). As of 8.0, **Ouroboros** tools (`ouroboros_*` / `clawql_think`) live in the **default-off, opt-in** band via **`clawql-harness`** — no additive agent-loop proof yet, demoted (not purged). The diagram is revised when new modules ship (for example future **`clawql-web3`**); the sections below remain authoritative for env and registration behavior.
 
 ### ClawQL Core (always on — no opt-out)
 
@@ -49,7 +49,7 @@ Set **`1`** / **`true`** / **`yes`** where noted:
 
 > **Removed in 8.0:** `codegraph_*` / `CLAWQL_ENABLE_CODEGRAPH` (Track B retest tied vs grep) — see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md) and [post-8.0 CodeGraph backlog](../backlog/post-8.0-codegraph-revisit.md).
 
-**ClawQL Ouroboros (always on):** **`clawql_think`**, **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**, **`ouroboros_measure_drift`** register via **`clawql-harness`** (`createOuroborosHarnessPlugin` / `makeHarnessLayer`). Optional Postgres: **`CLAWQL_OUROBOROS_DATABASE_URL`**. Langfuse eval: **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`**. **`CLAWQL_ENABLE_OUROBOROS`** is **deprecated** as a registration gate (may still appear in Helm as unused/legacy).
+**ClawQL Ouroboros (opt-in, 8.0 demotion):** **`clawql_think`**, **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**, **`ouroboros_measure_drift`** register via **`clawql-harness`** (`createOuroborosHarnessPlugin` / `makeHarnessLayer`) only when **`CLAWQL_ENABLE_OUROBOROS_TOOLS=1`** or instance/tier `ouroboros.enabled: true` — default **off**; no additive agent-loop proof yet. Server-side Ouroboros capability lifecycle and the `clawql-ouroboros` / `clawql-harness` packages stay regardless. Optional Postgres: **`CLAWQL_OUROBOROS_DATABASE_URL`**. Langfuse eval: **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** (nested under the harness gate above). **`CLAWQL_ENABLE_OUROBOROS`** (old name) is **deleted** — not resurrected as the gate; **`CLAWQL_ENABLE_OUROBOROS_TOOLS`** is the new one.
 
 **`workflow`** — durable **Argo Workflows** pipelines (template-ref **`submit`**, **`wait`**, **`get`**, **`logs`**, suspend/resume, cron, artifacts). Implemented in **`clawql-automation`** / **`AutomationPlugin`**. Helm: **`enableWorkflow: true`** + **`workflow.namespaceAllowlist`**. Operator guide: [`docs/mcp/workflow-tool.md`](../mcp/workflow-tool.md).
 
@@ -139,8 +139,8 @@ ClawQL picks the best internal connection per provider (**gRPC → GraphQL → O
 See **[Feature tiers](#feature-tiers-architecture-diagram)** first. Quick list:
 
 - **Default on, opt out:** `CLAWQL_ENABLE_MEMORY`, `CLAWQL_ENABLE_DOCUMENTS` — set `0` / `false` / `no` to hide tools or trim default **`all-providers`** (documents).
-- **Default off, opt in:** `CLAWQL_ENABLE_SCHEDULE`, `CLAWQL_ENABLE_NOTIFY`, `CLAWQL_ENABLE_WORKFLOW`, `CLAWQL_ENABLE_ONYX`, `CLAWQL_ENABLE_LANGFUSE_EVAL`.
-- **Deprecated (not a registration gate):** `CLAWQL_ENABLE_OUROBOROS` — Ouroboros tools always load via `clawql-harness`.
+- **Default off, opt in:** `CLAWQL_ENABLE_SCHEDULE`, `CLAWQL_ENABLE_NOTIFY`, `CLAWQL_ENABLE_WORKFLOW`, `CLAWQL_ENABLE_ONYX`, `CLAWQL_ENABLE_LANGFUSE_EVAL`, `CLAWQL_ENABLE_OUROBOROS_TOOLS` (8.0 demotion — `ouroboros_*` / `clawql_think`, or instance/tier `ouroboros.enabled: true`), `CLAWQL_ENABLE_OBSERVABILITY` (operator LGTM+ query/apply — not agent-loop reasoning).
+- **Deleted, not resurrected:** `CLAWQL_ENABLE_OUROBOROS` (old name) — the new gate is `CLAWQL_ENABLE_OUROBOROS_TOOLS` above.
 
 ## `.env` loading and canonical `CLAWQL_*` names
 

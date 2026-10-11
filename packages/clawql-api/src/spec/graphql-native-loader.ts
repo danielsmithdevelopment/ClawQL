@@ -170,7 +170,7 @@ async function loadOne(cfg: GraphQLSourceConfig): Promise<Operation[]> {
 }
 
 /** Exported for tests with injected configs. */
-export async function loadGraphqlNativeOperationsFromConfigs(
+async function loadGraphqlNativeOperationsFromConfigsImpl(
   configs: GraphQLSourceConfig[]
 ): Promise<Operation[]> {
   const out: Operation[] = [];
@@ -184,6 +184,34 @@ export async function loadGraphqlNativeOperationsFromConfigs(
   return out;
 }
 
-export async function loadGraphqlNativeOperations(): Promise<Operation[]> {
+export function loadGraphqlNativeOperationsFromConfigsEffect(
+  configs: GraphQLSourceConfig[]
+): Effect.Effect<Operation[], Error> {
+  return Effect.tryPromise({
+    try: () => loadGraphqlNativeOperationsFromConfigsImpl(configs),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadGraphqlNativeOperationsFromConfigsEffect} for Effect callers. */
+export async function loadGraphqlNativeOperationsFromConfigs(
+  configs: GraphQLSourceConfig[]
+): Promise<Operation[]> {
+  return Effect.runPromise(loadGraphqlNativeOperationsFromConfigsEffect(configs));
+}
+
+async function loadGraphqlNativeOperationsImpl(): Promise<Operation[]> {
   return loadGraphqlNativeOperationsFromConfigs(parseGraphQLSourcesEnv());
+}
+
+export function loadGraphqlNativeOperationsEffect(): Effect.Effect<Operation[], Error> {
+  return Effect.tryPromise({
+    try: () => loadGraphqlNativeOperationsImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadGraphqlNativeOperationsEffect} for Effect callers. */
+export async function loadGraphqlNativeOperations(): Promise<Operation[]> {
+  return Effect.runPromise(loadGraphqlNativeOperationsEffect());
 }

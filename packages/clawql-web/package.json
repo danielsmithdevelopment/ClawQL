@@ -1,7 +1,7 @@
 {
   "name": "clawql-web",
   "version": "0.1.0",
-  "description": "ClawQL web access: pluggable search + browser providers (Tavily, Brave, SearXNG, OpenSearch, Kitesurf, Chromium, Firecrawl) with search\u2192browser fallback and MCP tools",
+  "description": "ClawQL web access: pluggable search + browser providers (Tavily, Brave, SearXNG, OpenSearch, Kitesurf, Chromium, Firecrawl) with search→browser fallback and MCP tools",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -30,8 +30,8 @@
   "dependencies": {
     "clawql-api": "0.1.0",
     "clawql-core": "0.1.0",
-    "effect": "^3.21.4",
-    "zod": "4.3.6"
+    "effect": "4.0.0",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

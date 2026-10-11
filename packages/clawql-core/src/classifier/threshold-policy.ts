@@ -19,9 +19,7 @@ export type FastDecisionThresholdPolicy = {
   readonly rationale: string;
 };
 
-export class FastDecisionThresholdPolicyService extends Context.Tag(
-  "clawql/FastDecisionThresholdPolicyService"
-)<
+export class FastDecisionThresholdPolicyService extends Context.Service<
   FastDecisionThresholdPolicyService,
   {
     readonly get: (useSiteId: string) => Effect.Effect<FastDecisionThresholdPolicy | undefined>;
@@ -40,7 +38,7 @@ export class FastDecisionThresholdPolicyService extends Context.Tag(
       readonly hardFallbackRequired: boolean;
     }>;
   }
->() {}
+>()("clawql/FastDecisionThresholdPolicyService") {}
 
 /** §9 illustrative defaults — callers may override per deployment. */
 export const DEFAULT_THRESHOLD_POLICIES: readonly FastDecisionThresholdPolicy[] = [

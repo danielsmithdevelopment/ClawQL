@@ -3,7 +3,7 @@ import { getClawqlCacheMaxEntries, getClawqlCacheMaxValueBytes } from "./config.
 import { createLruCacheStore, getDefaultLruCacheStore, type LruCacheStore } from "./lru-store.js";
 import type { CacheOperationInput, CacheOperationResult } from "./types.js";
 
-export class CacheService extends Context.Tag("clawql/CacheService")<
+export class CacheService extends Context.Service<
   CacheService,
   {
     readonly getMaxValueBytes: () => number;
@@ -11,7 +11,7 @@ export class CacheService extends Context.Tag("clawql/CacheService")<
     readonly execute: (input: CacheOperationInput) => Effect.Effect<CacheOperationResult>;
     readonly resetForTests: () => Effect.Effect<void>;
   }
->() {}
+>()("clawql/CacheService") {}
 
 function serviceFromStore(store: LruCacheStore) {
   return CacheService.of({

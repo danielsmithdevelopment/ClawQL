@@ -8,9 +8,7 @@ export class OpenBenchDatasetError extends Data.TaggedError("OpenBenchDatasetErr
   readonly cause?: unknown;
 }> {}
 
-export class OpenBenchDatasetService extends Context.Tag("clawql/OpenBenchDatasetService")<
-  OpenBenchDatasetService,
-  {
+export class OpenBenchDatasetService extends Context.Service<OpenBenchDatasetService, {
     readonly assertTraceShape: (trace: OpenBenchTraceV1) => Effect.Effect<void, OpenBenchDatasetError>;
     readonly sha256Json: (value: unknown) => Effect.Effect<string, OpenBenchDatasetError>;
     readonly scrubText: (text: string, fields: Set<string>) => Effect.Effect<string, OpenBenchDatasetError>;
@@ -18,8 +16,7 @@ export class OpenBenchDatasetService extends Context.Tag("clawql/OpenBenchDatase
       value: unknown,
       fields?: Set<string>
     ) => Effect.Effect<unknown, OpenBenchDatasetError>;
-  }
->() {}
+  }>()("clawql/OpenBenchDatasetService") {}
 
 export const OpenBenchDatasetServiceLive = Layer.succeed(
   OpenBenchDatasetService,

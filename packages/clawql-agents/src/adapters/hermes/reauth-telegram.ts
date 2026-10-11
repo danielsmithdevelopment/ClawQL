@@ -69,7 +69,7 @@ export function createTelegramReauthNotifier(
           const detail = yield* Effect.tryPromise({
             try: () => response.text(),
             catch: () => "",
-          }).pipe(Effect.catchAll(() => Effect.succeed("")));
+          }).pipe(Effect.catch(() => Effect.succeed("")));
           return yield* Effect.fail(
             new ReauthNotifyError({
               reason: `telegram_http_${response.status}${detail ? `: ${detail.slice(0, 200)}` : ""}`,

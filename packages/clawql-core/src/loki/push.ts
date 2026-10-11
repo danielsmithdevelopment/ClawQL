@@ -73,12 +73,12 @@ const performLokiPush = (req: LokiPushRequest): Effect.Effect<void, LokiPushErro
       }),
   });
 
-export class LokiLogPush extends Context.Tag("clawql/core/LokiLogPush")<
+export class LokiLogPush extends Context.Service<
   LokiLogPush,
   {
     readonly push: (input: LokiLogLine) => Effect.Effect<void, LokiPushError>;
   }
->() {}
+>()("clawql/core/LokiLogPush") {}
 
 export function lokiLogPushLiveLayer(
   env: NodeJS.ProcessEnv = process.env
@@ -111,7 +111,7 @@ export function forkPushLokiLogLine(
       yield* loki.push(input);
     }).pipe(
       Effect.provide(lokiLogPushLiveLayer(env)),
-      Effect.catchAll((err) =>
+      Effect.catch((err) =>
         Effect.sync(() => {
           console.error(logLabel, "push failed:", err.reason);
         })

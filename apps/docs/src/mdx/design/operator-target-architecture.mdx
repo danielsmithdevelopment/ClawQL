@@ -1044,7 +1044,7 @@ maxGraphNodes: 250000 # Trigger pruning when graph exceeds this size
 
 confidenceThreshold: Entities extracted with confidence below this value are not written to the graph. Lower values create more nodes (higher recall, lower precision). Higher values create fewer, more reliable nodes. 0.78 is the recommended starting point; tune based on your domain's extraction quality.
 
-tokenBudget: The memory recall system uses PageIndex to synthesise a response within this token budget before returning it to the caller. This prevents context window overflow when a recall matches many nodes. Increase for models with large context windows; decrease for cost-sensitive deployments.
+tokenBudget: Cap on synthesized recall context returned to the caller (vault + vector + optional Onyx). Prevents context-window overflow when a recall matches many nodes. Increase for models with large context windows; decrease for cost-sensitive deployments. (Heading-tree PageIndex was purged in 8.0.)
 
 4.6 spec.sandbox
 

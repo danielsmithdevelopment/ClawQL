@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ClawQL vs Executor — equal-arm latency p50 / p95 / p99</title>
+  <link rel="canonical" href="https://clawql.com/benchmarks/executor-comparison/latency.html"/>
+  <meta name="description" content="Apples-to-apples MCP latency: same pets JSON, ClawQL gateway overhead vs live Executor execute."/>
+  <meta property="og:title" content="ClawQL vs Executor — equal-arm latency"/>
+  <meta property="og:description" content="Equalized ClawQL overhead p50 1.341ms · Executor live same-host 3.032ms · 2.26× — ClawQL overhead faster"/>
+  <meta property="og:url" content="https://clawql.com/benchmarks/executor-comparison/latency.html"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,750&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --ink: #0c1a1a;
+      --muted: #3d5454;
+      --paper: #f3f7f5;
+      --card: #ffffff;
+      --claw: #0b6e63;
+      --claw-deep: #084f48;
+      --exec: #b45309;
+      --exec-band: rgba(180, 83, 9, 0.18);
+      --line: #d5e0dc;
+      --font-display: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      --font-body: "Source Sans 3", "Source Sans Pro", "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: var(--font-body);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #d8f0ea 0%, transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, #f6e7d4 0%, transparent 50%),
+        linear-gradient(180deg, #eef5f2 0%, var(--paper) 40%, #e8efec 100%);
+    }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 2rem 1.25rem 3.5rem; }
+    .brand {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 6vw, 3.4rem);
+      font-weight: 750;
+      letter-spacing: -0.03em;
+      margin: 0 0 0.35rem;
+      color: var(--claw-deep);
+      line-height: 1.05;
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.35rem, 3.2vw, 1.75rem);
+      font-weight: 650;
+      margin: 0 0 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    .lead { color: var(--muted); font-size: 1.05rem; margin: 0 0 1.35rem; max-width: 44rem; }
+    .tilt {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin: 0 0 1.25rem;
+    }
+    .tilt div {
+      background: rgba(255,255,255,0.7);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.75rem 0.9rem;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .tilt strong { display: block; color: var(--ink); margin-bottom: 0.2rem; font-size: 0.95rem; }
+    .chart {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1.1rem 1.15rem 0.85rem;
+      box-shadow: 0 18px 40px rgba(12, 40, 36, 0.06);
+    }
+    .tool { padding: 0.85rem 0; border-bottom: 1px solid var(--line); }
+    .tool:last-child { border-bottom: 0; }
+    .tool.headline-tool { background: rgba(11, 110, 99, 0.05); margin: 0 -0.55rem; padding: 0.85rem 0.55rem; border-radius: 8px; border-bottom: 0; }
+    .tool-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: flex-start;
+      margin-bottom: 0.55rem;
+    }
+    .name { font-weight: 700; font-size: 0.98rem; }
+    .sub { display: block; font-weight: 400; color: var(--muted); font-size: 0.78rem; margin-top: 0.15rem; }
+    .badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.12rem 0.4rem;
+      border-radius: 4px;
+      vertical-align: middle;
+      margin-left: 0.35rem;
+    }
+    .badge.equal { background: #d8f0ea; color: var(--claw-deep); }
+    .badge.equalized { background: #c7ebe3; color: var(--claw-deep); }
+    .badge.control { background: #e8eef0; color: #475569; }
+    .nums {
+      display: flex;
+      gap: 0.65rem;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+    .nums em { font-style: normal; color: var(--muted); font-weight: 600; font-size: 0.72rem; margin-right: 0.2rem; }
+    .nums .unit { color: var(--muted); font-weight: 500; }
+    .track-row {
+      display: grid;
+      grid-template-columns: 2.2rem 1fr;
+      gap: 0.45rem;
+      align-items: center;
+      margin: 0.28rem 0;
+    }
+    .p-label { font-size: 0.72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+    .track {
+      position: relative;
+      height: 14px;
+      background: #eef3f1;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .bar {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      border-radius: 4px;
+      transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .bar.claw { background: linear-gradient(90deg, var(--claw-deep), var(--claw)); }
+    .bar.claw.p95 { opacity: 0.78; }
+    .bar.claw.p99 { opacity: 0.55; }
+    .bar.exec { background: linear-gradient(90deg, #92400e, var(--exec)); }
+    .bar.exec.p95 { opacity: 0.78; }
+    .bar.exec.p99 { opacity: 0.55; }
+    .band {
+      position: absolute;
+      top: 2px; bottom: 2px;
+      background: var(--exec-band);
+      border-radius: 3px;
+      border: 1px dashed rgba(180, 83, 9, 0.45);
+    }
+    .score {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      margin: 1.1rem 0 0;
+      padding-top: 0.9rem;
+      border-top: 1px solid var(--line);
+      font-size: 0.92rem;
+    }
+    .score strong { color: var(--claw-deep); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+    .score .warn strong { color: #92400e; }
+    .honesty {
+      margin: 1.25rem 0 0;
+      padding: 0.85rem 1rem;
+      border-left: 3px solid #94a3b8;
+      color: var(--muted);
+      font-size: 0.88rem;
+      background: rgba(255,255,255,0.55);
+    }
+    .honesty ul { margin: 0.45rem 0 0; padding-left: 1.1rem; }
+    .honesty li { margin: 0.3rem 0; }
+    .links { margin-top: 1.5rem; font-size: 0.9rem; color: var(--muted); }
+    .links a { color: var(--claw); }
+    @media (max-width: 720px) {
+      .tilt { grid-template-columns: 1fr; }
+      .tool-head { flex-direction: column; gap: 0.4rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <p class="brand">ClawQL</p>
+    <h1>Equal-arm latency · p50 / p95 / p99</h1>
+    <p class="lead">
+      Apples-to-apples: both sides return the <strong>same tiny pets JSON</strong> via one MCP <code>execute</code>.
+      Headline compares <strong>ClawQL gateway overhead</strong> (execute − same-host mock fetch) to
+      <strong>Executor</strong> (live same-host).
+      n=100.
+    </p>
+
+    <div class="tilt">
+      <div>
+        <strong>ClawQL — equal arm</strong>
+        EQUAL — single MCP execute → tiny same-host mock (2 pets), fields projection only. No search bundle, no where, no WORM, no audit in the timed execute sample.
+      </div>
+      <div>
+        <strong>Executor — equal arm</strong>
+        EQUAL — single MCP execute returning the same pets JSON in-process (Executor sandbox cannot fetch; logical result matched).
+      </div>
+    </div>
+
+    <section class="chart" aria-label="Equal-arm latency p50 p95 p99">
+      
+      <div class="tool " data-tool="clawql_execute">
+        <div class="tool-head">
+          <div class="name">ClawQL execute (e2e) <span class="badge equal">equal</span>
+            <span class="sub">MCP → tiny same-host mock + fields</span>
+          </div>
+          <div class="nums">
+            <span><em>p50</em> 1.8</span>
+            <span><em>p95</em> 2.7</span>
+            <span><em>p99</em> 4.2</span>
+            
+            <span class="unit">ms</span>
+          </div>
+        </div>
+        <div class="tracks">
+          
+            <div class="track-row">
+              <span class="p-label">p50</span>
+              <div class="track">
+                
+                <span class="bar claw p50" style="width:5.21%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p95</span>
+              <div class="track">
+                
+                <span class="bar claw p95" style="width:7.99%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p99</span>
+              <div class="track">
+                
+                <span class="bar claw p99" style="width:12.35%"></span>
+              </div>
+            </div>
+        </div>
+      </div>
+      <div class="tool headline-tool" data-tool="clawql_gateway_overhead">
+        <div class="tool-head">
+          <div class="name">ClawQL gateway overhead <span class="badge equalized">equalized</span>
+            <span class="sub">execute − direct fetch (apples-to-apples)</span>
+          </div>
+          <div class="nums">
+            <span><em>p50</em> 1.3</span>
+            <span><em>p95</em> 2.1</span>
+            <span><em>p99</em> 3.4</span>
+            
+            <span class="unit">ms</span>
+          </div>
+        </div>
+        <div class="tracks">
+          
+            <div class="track-row">
+              <span class="p-label">p50</span>
+              <div class="track">
+                
+                <span class="bar claw p50" style="width:3.98%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p95</span>
+              <div class="track">
+                
+                <span class="bar claw p95" style="width:6.37%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p99</span>
+              <div class="track">
+                
+                <span class="bar claw p99" style="width:10.09%"></span>
+              </div>
+            </div>
+        </div>
+      </div>
+      <div class="tool headline-tool" data-tool="executor_execute">
+        <div class="tool-head">
+          <div class="name">Executor execute <span class="badge equal">equal</span>
+            <span class="sub">live · same pets JSON in-process</span>
+          </div>
+          <div class="nums">
+            <span><em>p50</em> 3.0</span>
+            <span><em>p95</em> 5.5</span>
+            <span><em>p99</em> 5.9</span>
+            
+            <span class="unit">ms</span>
+          </div>
+        </div>
+        <div class="tracks">
+          
+            <div class="track-row">
+              <span class="p-label">p50</span>
+              <div class="track">
+                
+                <span class="bar exec p50" style="width:9.00%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p95</span>
+              <div class="track">
+                
+                <span class="bar exec p95" style="width:16.37%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p99</span>
+              <div class="track">
+                
+                <span class="bar exec p99" style="width:17.46%"></span>
+              </div>
+            </div>
+        </div>
+      </div>
+      <div class="tool " data-tool="direct_http">
+        <div class="tool-head">
+          <div class="name">Direct HTTP mock <span class="badge control">control</span>
+            <span class="sub">bare fetch of the same tiny body</span>
+          </div>
+          <div class="nums">
+            <span><em>p50</em> 0.4</span>
+            <span><em>p95</em> 0.5</span>
+            <span><em>p99</em> 0.8</span>
+            
+            <span class="unit">ms</span>
+          </div>
+        </div>
+        <div class="tracks">
+          
+            <div class="track-row">
+              <span class="p-label">p50</span>
+              <div class="track">
+                
+                <span class="bar claw p50" style="width:2.50%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p95</span>
+              <div class="track">
+                
+                <span class="bar claw p95" style="width:2.50%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p99</span>
+              <div class="track">
+                
+                <span class="bar claw p99" style="width:2.50%"></span>
+              </div>
+            </div>
+        </div>
+      </div>
+      <div class="tool " data-tool="clawql_audit">
+        <div class="tool-head">
+          <div class="name">ClawQL audit <span class="badge control">control</span>
+            <span class="sub">local ring append (no upstream)</span>
+          </div>
+          <div class="nums">
+            <span><em>p50</em> 0.6</span>
+            <span><em>p95</em> 14.1</span>
+            <span><em>p99</em> 31.2</span>
+            
+            <span class="unit">ms</span>
+          </div>
+        </div>
+        <div class="tracks">
+          
+            <div class="track-row">
+              <span class="p-label">p50</span>
+              <div class="track">
+                
+                <span class="bar claw p50" style="width:2.50%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p95</span>
+              <div class="track">
+                
+                <span class="bar claw p95" style="width:41.88%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p99</span>
+              <div class="track">
+                
+                <span class="bar claw p99" style="width:92.59%"></span>
+              </div>
+            </div>
+        </div>
+      </div>
+      <div class="score">
+        <div>Equalized ClawQL p50 <strong>1.3ms</strong></div>
+        <div>Equalized ClawQL p95 <strong>2.1ms</strong></div>
+        <div class="">Equalized ClawQL p99 <strong>3.4ms</strong></div>
+        <div>Executor p50 <strong>3.0ms</strong><small style="display:block;color:var(--muted);font-weight:400">live same-host</small></div>
+        <div>Executor p99 <strong>5.9ms</strong></div>
+        <div>Compare <strong>2.26× — ClawQL overhead faster</strong></div>
+      </div>
+    </section>
+
+    <div class="honesty">
+      <div><strong>Honesty</strong> — Equalized ClawQL gateway overhead p50 1.341ms beats live Executor p50 3.032ms on the same result shape.</div>
+      <ul>
+        <li>Both arms return the same tiny pets JSON via one MCP execute. ClawQL goes through same-host mock HTTP; that cost is subtracted for the equalized overhead metric.</li>
+        <li>Executor is LIVE equal-arm MCP execute returning the same pets JSON.</li>
+        <li>Raw ClawQL execute e2e p50 1.8ms still includes same-host mock HTTP; equalized row subtracts it.</li>
+        <li>Do not use UsefulSoftwareCo/executor#1519 50–100ms as measured — wire EXECUTOR_BIN for live.</li>
+        <li>p99 needs adequate n; default iters=100. Still sensitive to rare GC/scheduling spikes.</li>
+      </ul>
+      <p style="margin:0.65rem 0 0">
+        Measured 2026-10-11T00:31:37.146Z (linux/x64, Node v22.14.0).
+        Equal arm: MCP execute returns the same pets JSON ClawQL gets from the mock. In-process (Executor has no fetch); ClawQL pays same-host mock HTTP (~subtracted in overhead).
+        Distinct from <a href="https://clawql.com/mcp-ui/trace/compare/executor">token compare</a>.
+      </p>
+    </div>
+
+    <p class="links">
+      <a href="./latency.json">latency.json</a> ·
+      <a href="./">token benchmark notes</a> ·
+      <a href="https://github.com/danielsmithdevelopment/ClawQL">GitHub</a> ·
+      Reproduce: <code>EXECUTOR_BIN=… npm run benchmark:executor-comparison:latency</code>
+    </p>
+  </main>
+  <script>
+    requestAnimationFrame(() => {
+      document.querySelectorAll(".bar").forEach((el, i) => {
+        const w = el.style.width;
+        el.style.width = "0%";
+        setTimeout(() => { el.style.width = w; }, 60 + i * 40);
+      });
+    });
+  </script>
+</body>
+</html>

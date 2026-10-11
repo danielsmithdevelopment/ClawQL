@@ -1,3 +1,5 @@
+import { identityStoreLiveLayer } from "clawql-auth";
+import { SupabaseAuthServiceLive } from "clawql-supabase";
 import { AuditLive } from "clawql-core";
 import { Cause, Effect, Exit, Layer } from "effect";
 import { paymentsConfigLiveLayer } from "../config/payments-config-service.js";
@@ -29,6 +31,13 @@ import { creditsActivityLiveLayer } from "../credits/activity.js";
 import { creditsInviteEmailLiveLayer } from "../credits/invite-email.js";
 import { creditsStepUpLiveLayer } from "../credits/step-up.js";
 import { achTopupLiveLayer } from "../credits/ach-topup-service.js";
+import { orgCreditsLiveLayer } from "../credits/org.js";
+import { orgSpendLiveLayer } from "../credits/org-spend.js";
+import { orgWaterfallLiveLayer } from "../credits/org-waterfall.js";
+import { orgMetricsLiveLayer } from "../credits/org-metrics.js";
+import { usdcSendLiveLayer } from "../payouts/usdc-send.js";
+import { cloudflareWalletStoreLiveLayer } from "../cloudflare-wallets/store.js";
+import { x402WalletLiveLayer } from "../x402/wallet.js";
 import { pendingActionsLiveLayer } from "../compensation/pending-actions.js";
 import { compensationAccountsLiveLayer } from "../compensation/accounts.js";
 import { agentCompensationLiveLayer } from "../compensation/agent-compensation-service.js";
@@ -53,6 +62,8 @@ import {
   provisionOrgLiveLayer,
   reportUsageLiveLayer,
 } from "../provisioning/index.js";
+import { accountDeletionLiveLayer } from "../provisioning/account-deletion-service.js";
+import { accountDeletionJobStoreLiveLayer } from "../provisioning/account-deletion-job-store.js";
 import { topologyLiveLayer } from "../dashboard/topology-service.js";
 
 export type PaymentsServices =
@@ -99,6 +110,13 @@ export type PaymentsServices =
   | import("../credits/invite-email.js").CreditsInviteEmailService
   | import("../credits/step-up.js").CreditsStepUpService
   | import("../credits/ach-topup-service.js").AchTopupService
+  | import("../credits/org.js").OrgCreditsService
+  | import("../credits/org-spend.js").OrgSpendService
+  | import("../credits/org-waterfall.js").OrgWaterfallService
+  | import("../credits/org-metrics.js").OrgMetricsService
+  | import("../payouts/usdc-send.js").UsdcSendService
+  | import("../cloudflare-wallets/store.js").CloudflareWalletStoreService
+  | import("../x402/wallet.js").X402WalletService
   | import("../compensation/pending-actions.js").PendingActionsService
   | import("../compensation/accounts.js").CompensationAccountsService
   | import("../compensation/agent-compensation-service.js").AgentCompensationService
@@ -106,8 +124,12 @@ export type PaymentsServices =
   | import("../credits/deduction-event-bus.js").DeductionEventBus
   | import("../provisioning/provision-org-service.js").ProvisionOrgService
   | import("../provisioning/report-usage.js").ReportUsageService
+  | import("../provisioning/account-deletion-service.js").AccountDeletionService
+  | import("../provisioning/account-deletion-job-store.js").AccountDeletionJobStoreService
   | import("../dashboard/topology-service.js").TopologyService
-  | import("clawql-auth").IssuedApiKeyStoreService;
+  | import("clawql-auth").IssuedApiKeyStoreService
+  | import("clawql-auth").IdentityStoreService
+  | import("clawql-supabase").SupabaseAuthService;
 
 const layerCache = new Map<string, Layer.Layer<PaymentsServices>>();
 
@@ -193,15 +215,38 @@ export function paymentsServicesLiveLayer(
   const stripeBilling = stripeBillingLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(stripeClient, config))
   );
+  const orgCredits = orgCreditsLiveLayer(env);
+  const orgSpend = orgSpendLiveLayer(env);
+  const orgWaterfall = orgWaterfallLiveLayer(env);
+  const orgMetrics = orgMetricsLiveLayer(env);
+  const usdcSend = usdcSendLiveLayer(env);
+  const cloudflareWalletStore = cloudflareWalletStoreLiveLayer(env);
+  const x402Wallet = x402WalletLiveLayer().pipe(Layer.provide(config));
   const issuedApiKeys = issuedApiKeyStoreLiveLayer(env);
+  const identities = identityStoreLiveLayer(env);
+  const supabaseAuth = SupabaseAuthServiceLive;
   const provisioning = provisionOrgLiveLayer(env).pipe(
-    Layer.provide(Layer.mergeAll(audit, issuedApiKeys, ledger))
+    Layer.provide(Layer.mergeAll(audit, issuedApiKeys, ledger, orgCredits, identities))
   );
   const reportUsage = reportUsageLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(stripeMeter, usage, audit))
   );
   const stripeWebhook = stripeWebhookLiveLayer().pipe(
     Layer.provide(Layer.mergeAll(config, audit, ledger, provisioning))
+  );
+  const deletionJobs = accountDeletionJobStoreLiveLayer(env);
+  const accountDeletion = accountDeletionLiveLayer().pipe(
+    Layer.provide(
+      Layer.mergeAll(
+        identities,
+        orgCredits,
+        issuedApiKeys,
+        audit,
+        stripeBilling,
+        supabaseAuth,
+        deletionJobs
+      )
+    )
   );
   const topology = topologyLiveLayer(env);
 
@@ -223,8 +268,12 @@ export function paymentsServicesLiveLayer(
     stripeMeter,
     stripeBilling,
     issuedApiKeys,
+    identities,
+    supabaseAuth,
     provisioning,
     reportUsage,
+    deletionJobs,
+    accountDeletion,
     topology,
     ap2,
     acp,
@@ -253,6 +302,13 @@ export function paymentsServicesLiveLayer(
     stepUp,
     credits,
     achTopup,
+    orgCredits,
+    orgSpend,
+    orgWaterfall,
+    orgMetrics,
+    usdcSend,
+    cloudflareWalletStore,
+    x402Wallet,
     pendingActions,
     compensationAccounts,
     compensation,

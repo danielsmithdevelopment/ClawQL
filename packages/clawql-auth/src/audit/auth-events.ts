@@ -108,6 +108,15 @@ export type AuthEvent =
       accessTokenHash?: string;
     }
   | {
+      /** MCP OAuth §2 — live grant ended; tokens stamped with this virtualKeyId must fail validate. */
+      type: "MCP_GRANT_REVOKED";
+      virtualKeyId: string;
+      clientId?: string;
+      subject?: string;
+      reason: string;
+      timestamp: string;
+    }
+  | {
       type: "MCP_TOKEN_VALIDATION_FAILED";
       reason: string;
       timestamp: string;
@@ -164,7 +173,7 @@ export function composeAuthEventSinks(...sinks: AuthEventSink[]): AuthEventSink 
   return (event) =>
     Effect.gen(function* () {
       for (const sink of sinks) {
-        yield* sink(event).pipe(Effect.catchAll(() => Effect.void));
+        yield* sink(event).pipe(Effect.catch(() => Effect.void));
       }
     });
 }
@@ -179,7 +188,7 @@ export function emitAuthEventEffect(
     const result = sink(event);
     // Effect-primary sinks return Effect; sync push-style test sinks return void.
     if (result != null && Effect.isEffect(result)) {
-      yield* result.pipe(Effect.catchAll(() => Effect.void));
+      yield* result.pipe(Effect.catch(() => Effect.void));
     }
   });
 }

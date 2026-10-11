@@ -144,11 +144,13 @@
     "@xenova/transformers": "^2.17.2",
     "clawql-api": "0.1.0",
     "clawql-core": "0.1.0",
-    "effect": "^3.21.4",
+    "effect": "4.0.0",
     "fflate": "^0.8.2",
     "pg": "^8.21.0",
     "sql.js": "^1.14.1",
-    "zod": "4.3.6"
+    "zod": "4.6.5",
+    "clawql-gdp": "0.1.0",
+    "@gdp-ts/core": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

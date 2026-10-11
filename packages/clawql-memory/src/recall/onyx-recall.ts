@@ -8,6 +8,7 @@ import {
 } from "../ingest/enterprise-citations.js";
 import { envFlagTruthy } from "./recall-sources.js";
 import type { NormalizedRecallHit, RecallFollowUpHint } from "./recall-sources.js";
+import { Effect } from "effect";
 
 export type MemoryOnyxSearchFn = (input: {
   query: string;
@@ -36,7 +37,7 @@ export type OnyxRecallSupplement = {
 };
 
 /** Query Onyx via injected execute when configured; otherwise return followUp only. */
-export async function recallOnyxSupplement(input: {
+async function recallOnyxSupplementImpl(input: {
   query: string;
   limit?: number;
 }): Promise<OnyxRecallSupplement> {
@@ -103,6 +104,24 @@ export async function recallOnyxSupplement(input: {
       skipped: `Onyx recall failed: ${msg}`,
     };
   }
+}
+
+export function recallOnyxSupplementEffect(input: {
+  query: string;
+  limit?: number;
+}): Effect.Effect<OnyxRecallSupplement, Error> {
+  return Effect.tryPromise({
+    try: () => recallOnyxSupplementImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link recallOnyxSupplementEffect} for Effect callers. */
+export async function recallOnyxSupplement(input: {
+  query: string;
+  limit?: number;
+}): Promise<OnyxRecallSupplement> {
+  return Effect.runPromise(recallOnyxSupplementEffect(input));
 }
 
 function envInt(key: string, def: number): number {

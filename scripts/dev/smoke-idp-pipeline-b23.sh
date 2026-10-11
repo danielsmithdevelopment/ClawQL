@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # B-2.3 IDP pipeline smoke — scheduled / dispatch only (not OpenBench pr_active).
 #
+# 8.0 converter cut: Docling is the sole DEFAULT_IDP_PIPELINE converter. Tika/Gotenberg/Stirling stages are
+# opt-in-only (SKIP in the compose tier unless IDP_SMOKE_INCLUDE_CONVERTERS=1) — they are no longer required
+# for a passing smoke run. See docs/releases/8.0.0-purge-inventory-spec-v0.1.md.
+#
 # Tiers:
 #   offline   Helm NATS IDP templates + vitest pipeline dry_run + plan artifact
 #   compose   offline + ordered hops on docker-compose.idp-smoke.yml
@@ -10,6 +14,7 @@
 #   bash scripts/dev/smoke-idp-pipeline-b23.sh
 #   IDP_SMOKE_TIER=compose bash scripts/dev/smoke-idp-pipeline-b23.sh
 #   IDP_SMOKE_INCLUDE_DOCLING=1 IDP_SMOKE_TIER=compose bash scripts/dev/smoke-idp-pipeline-b23.sh
+#   IDP_SMOKE_INCLUDE_CONVERTERS=1 IDP_SMOKE_TIER=compose bash scripts/dev/smoke-idp-pipeline-b23.sh  # opt-in Tika/Gotenberg/Stirling checks
 #   IDP_SMOKE_TIER=live CLAWQL_HTTP_BASE=… CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN=… \
 #     bash scripts/dev/smoke-idp-pipeline-b23.sh
 set -euo pipefail
@@ -75,14 +80,12 @@ out_dir, tier, corr = sys.argv[1], sys.argv[2], sys.argv[3]
 stages = [
     "nextcloud_download",
     "docling",
-    "tika",
-    "gotenberg",
-    "stirling",
     "paperless",
     "onyx",
     "nextcloud_upload",
     "coneshare",
 ]
+opt_in_converter_stages = ["tika", "gotenberg", "stirling"]
 out = {
     "ok": True,
     "tier": tier,
@@ -91,8 +94,13 @@ out = {
     "dryRunOnly": True,
     "stages_planned": stages,
     "stages_passed": len(stages),
+    "opt_in_converter_stages": opt_in_converter_stages,
     "source": "idp-pipeline-b23-smoke",
-    "note": "Plan inventory only — live vendor hops require compose/live tier + secrets.",
+    "note": (
+        "Plan inventory only — live vendor hops require compose/live tier + secrets. "
+        "8.0 converter cut: Docling is the sole default converter; tika/gotenberg/stirling are "
+        "opt-in-only (compose tier IDP_SMOKE_INCLUDE_CONVERTERS=1) and no longer part of this plan."
+    ),
 }
 Path(out_dir, "pipeline-smoke.json").write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
 print(f"wrote {out_dir}/pipeline-smoke.json")

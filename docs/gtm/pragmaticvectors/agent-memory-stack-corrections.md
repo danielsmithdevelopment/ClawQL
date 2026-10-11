@@ -1,10 +1,10 @@
 # Corrections: The Complete Agent Memory Stack
 
 **Live post:** [pragmaticvectors.com/posts/agent-memory-stack](https://pragmaticvectors.com/posts/agent-memory-stack/)  
-**Status:** correction draft for republish — **Layer 3 PageIndex and CodeGraph both removed from product in 8.0**; apply ASAP so the live post no longer presents either as an active stack layer.  
-**Evidence:** eval / purge [`docs/releases/8.0.0-purge-inventory-spec-v0.1.md`](../../releases/8.0.0-purge-inventory-spec-v0.1.md) · backlog [`docs/backlog/post-8.0-vectify-pageindex.md`](../../backlog/post-8.0-vectify-pageindex.md) · [`docs/backlog/post-8.0-codegraph-revisit.md`](../../backlog/post-8.0-codegraph-revisit.md) · code `packages/clawql-memory/src/recall/recall-sources.ts`
+**Status:** **BLOCKING for 8.0.0 public content** — live page still presents the five-layer stack (Layer 3 PageIndex, Layer 4 CodeGraph) and “queries across active layers simultaneously” as of **2026-10-03**. In-repo Learn/docs pages already reflect the purge.  
+**Paste-ready draft:** [`agent-memory-stack.md`](./agent-memory-stack.md) — operator: replace the live CMS body with that file (or apply the must-fix list below). PragmaticVectors is not deployed from this repo.
 
-There is no in-repo full draft of this essay (only outbound links). Use this file as the edit brief for the live page.
+**Evidence:** eval / purge [`docs/releases/8.0.0-purge-inventory-spec-v0.1.md`](../../releases/8.0.0-purge-inventory-spec-v0.1.md) · backlog [`docs/backlog/post-8.0-vectify-pageindex.md`](../../backlog/post-8.0-vectify-pageindex.md) · [`docs/backlog/post-8.0-codegraph-revisit.md`](../../backlog/post-8.0-codegraph-revisit.md) · code `packages/clawql-memory/src/recall/recall-sources.ts`
 
 ## Must-fix claims
 
@@ -15,7 +15,6 @@ There is no in-repo full draft of this essay (only outbound links). Use this fil
 **Ship today (8.0):** omit-`sources` resolves to **`vault` + `vector` only**. Onyx joins that default set only when:
 
 - `CLAWQL_MEMORY_RECALL_HYBRID_ONYX=1`, or
-- master `CLAWQL_MEMORY_RECALL_HYBRID=1`, or
 - the caller passes explicit `sources: [...]`.
 
 **PageIndex and CodeGraph are both removed in 8.0** (tools, hybrid flags, `pageindex.db.json` sync, and the `clawql-codegraph` package). Do not describe either as a live layer. Hybrid PageIndex was opt-in since introduction ([#653](https://github.com/danielsmithdevelopment/ClawQL/pull/653), [#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806)) and measured harmful as a merge (−7.8 pts; 13/13 displaced). Track A fair test tied Net=4 → no Vectify port; see [post-8.0 Vectify backlog](../../backlog/post-8.0-vectify-pageindex.md). CodeGraph's Track B retest tied Net=0 vs working grep → `tie_purge`; see [post-8.0 CodeGraph backlog](../../backlog/post-8.0-codegraph-revisit.md).
@@ -47,6 +46,8 @@ There is no in-repo full draft of this essay (only outbound links). Use this fil
 
 ## Checklist before republish
 
+Covered by [`agent-memory-stack.md`](./agent-memory-stack.md) — tick when the **live** CMS page matches:
+
 - [ ] Remove or rewrite "runs both simultaneously" as a present-tense default claim
 - [ ] **Remove Layer 3 PageIndex** from the live stack diagram / prose (or mark removed in 8.0)
 - [ ] **Remove CodeGraph** from the live stack diagram / prose (or mark removed in 8.0)
@@ -56,3 +57,4 @@ There is no in-repo full draft of this essay (only outbound links). Use this fil
 - [ ] Link OpenBench tooling WINs as "tools work," not "retrieval superiority"
 - [ ] Drop `CLAWQL_ENABLE_PAGEINDEX` / hybrid PageIndex / `pageindex_*` as operator guidance
 - [ ] Drop `CLAWQL_ENABLE_CODEGRAPH` / hybrid CodeGraph / `codegraph_*` as operator guidance
+- [ ] **Live URL** verified after paste (fetch homepage blurb + post no longer lists five layers)

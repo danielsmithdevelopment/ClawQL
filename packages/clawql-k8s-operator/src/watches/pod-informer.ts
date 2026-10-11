@@ -21,9 +21,7 @@ export type PodInformerHandle = {
   readonly source: "kubernetes-watch";
 };
 
-export class PodInformerService extends Context.Tag("clawql/PodInformerService")<
-  PodInformerService,
-  {
+export class PodInformerService extends Context.Service<PodInformerService, {
     /** Start watching pods; fails with reason when kubeconfig / cluster unavailable. */
     readonly start: (
       options: PodInformerOptions
@@ -31,8 +29,7 @@ export class PodInformerService extends Context.Tag("clawql/PodInformerService")
       PodInformerHandle,
       { readonly _tag: "PodInformerUnavailable"; readonly reason: string }
     >;
-  }
->() {}
+  }>()("clawql/PodInformerService") {}
 
 function nodeLoadsFromPods(
   pods: ReadonlyArray<{
@@ -60,7 +57,7 @@ function nodeLoadsFromPods(
  * Live implementation — dynamic-imports @kubernetes/client-node so unit tests
  * without the dep graph still load the package (dep is declared).
  */
-export function makeKubernetesPodInformer(): Context.Tag.Service<typeof PodInformerService> {
+export function makeKubernetesPodInformer(): Context.Service.Shape<typeof PodInformerService> {
   return {
     start: (options) =>
       Effect.tryPromise({
@@ -165,8 +162,8 @@ export const UnavailablePodInformerLive: Layer.Layer<PodInformerService> = Layer
  * Wired for BurstWatchStub via onEvent → enqueue.
  */
 export function startPodInformerOrNull(
-  informer: Context.Tag.Service<typeof PodInformerService>,
-  stub: Context.Tag.Service<typeof BurstWatchStub>,
+  informer: Context.Service.Shape<typeof PodInformerService>,
+  stub: Context.Service.Shape<typeof BurstWatchStub>,
   options?: Omit<PodInformerOptions, "onEvent">
 ): Effect.Effect<PodInformerHandle | null> {
   return informer
@@ -174,5 +171,5 @@ export function startPodInformerOrNull(
       ...options,
       onEvent: (event) => stub.enqueue(event),
     })
-    .pipe(Effect.catchAll(() => Effect.succeed(null)));
+    .pipe(Effect.catch(() => Effect.succeed(null)));
 }

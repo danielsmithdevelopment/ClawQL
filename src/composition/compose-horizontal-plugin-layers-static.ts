@@ -19,6 +19,7 @@ import { makeDataLayer } from "clawql-data/plugin";
 import { makeWebLayer } from "clawql-web/plugin";
 import { makeObservabilityLayer } from "clawql-observability/plugin";
 import { makeChatgptExtensionsLayer } from "clawql-chatgpt-extensions/plugin";
+import { makeSupabaseLayer } from "clawql-supabase/plugin";
 import {
   optionalFlagsFromHorizontalTierSpec,
   type ClawQLHorizontalTierSpec,
@@ -48,6 +49,7 @@ export function composeHorizontalPluginLayersStatic(
   if (flags.enableDocuments) {
     layers.push(
       makeDocumentsLayer({
+        enableExternalIngest: flags.externalIngestPreview,
         enableOnyx: flags.enableOnyxKnowledge,
         enableIdpPipeline: flags.enableIdpPipeline,
         enableIdpClassifier: flags.enableIdpClassifier,
@@ -80,7 +82,7 @@ export function composeHorizontalPluginLayersStatic(
     layers.push(makeSandboxLayer());
   }
   if (flags.enableData) {
-    layers.push(makeDataLayer());
+    layers.push(makeDataLayer({ enableClawqlSqlAlias: flags.enableClawqlSqlAlias }));
   }
   if (flags.enableWeb) {
     layers.push(makeWebLayer());
@@ -94,12 +96,17 @@ export function composeHorizontalPluginLayersStatic(
   if (flags.enableOntology) {
     layers.push(makeOntologyLayer({ enableWrites: flags.enableOntologyWrites }));
   }
-  // Ouroboros is always a clawql-harness plugin (no env / tier enable gate).
-  layers.push(
-    makeHarnessLayer({
-      plugins: [createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval })],
-    })
-  );
+  if (flags.enableSupabase) {
+    layers.push(makeSupabaseLayer());
+  }
+  // Ouroboros / clawql_think (8.0 demotion): opt-in via enableOuroborosTools.
+  if (flags.enableOuroborosTools) {
+    layers.push(
+      makeHarnessLayer({
+        plugins: [createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval })],
+      })
+    );
+  }
   return layers;
 }
 

@@ -4,6 +4,8 @@ Marketing site for [ClawQL](https://github.com/danielsmithdevelopment/ClawQL). L
 
 Built with the [Tailwind Plus](https://tailwindcss.com/plus) Oatmeal kit (Tailwind CSS v4 + Elements). Unused kit copies (`pages/`, sibling `components/`) were removed; the Next app is this directory.
 
+**Product console is not this app.** Self-hosted and managed (`cloud.clawql.com`) consoles are TypeScript + shadcn in [`apps/dashboard/`](../dashboard/) — [ADR 0012](../../docs/adr/0012-console-typescript-shadcn.md). Keep Catalyst out of the OSS dashboard.
+
 ## Quick start
 
 ```bash
@@ -19,7 +21,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | Route             | Purpose                                                              |
 | ----------------- | -------------------------------------------------------------------- |
 | `/`               | Homepage — MCP tool tiers, IDP pipeline, case studies, FAQs, pricing |
-| `/signup`         | Managed accounts waitlist                                            |
+| `/signup`         | Managed waitlist, or Stripe Checkout when self-serve env is set      |
 | `/pricing`        | Full pricing tiers and comparison table                              |
 | `/about`          | Mission and ecosystem overview                                       |
 | `/privacy-policy` | Privacy policy                                                       |

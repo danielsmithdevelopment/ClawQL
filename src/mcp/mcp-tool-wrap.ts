@@ -21,8 +21,16 @@ export const WORM_AUDIT_SKIP_TOOLS = new Set(["audit", "cache"]);
 function clawqlPolicyBlockMessage(err: unknown): string | null {
   if (!err || typeof err !== "object") return null;
   const rec = err as { _tag?: string; reason?: unknown; message?: unknown; cause?: unknown };
-  if (typeof rec.reason === "string" && rec.reason.includes("Panguard policy blocked")) {
-    return rec.reason;
+  // ClawQLError / tagged policy failures often have empty Error.message — surface `reason`.
+  if (typeof rec.reason === "string" && rec.reason.trim() !== "") {
+    const reason = rec.reason.trim();
+    if (
+      reason.includes("Panguard policy blocked") ||
+      reason.includes("CAPABILITY_WRITE_INTERCEPTED") ||
+      rec._tag === "ClawQLError"
+    ) {
+      return reason;
+    }
   }
   if (typeof rec.message === "string" && rec.message.includes("Panguard policy blocked")) {
     return rec.message;
@@ -35,7 +43,7 @@ function emitPanguardDenyTelemetryEffect(toolName: string, reason: string): Effe
   return Effect.gen(function* () {
     const lokiPushUrl = yield* resolvePanguardTelemetryLokiUrlEffect();
     yield* emitPanguardTelemetryEffect({ toolName, verdict: "deny", reason }, { lokiPushUrl });
-  }).pipe(Effect.catchAll(() => Effect.void));
+  }).pipe(Effect.catch(() => Effect.void));
 }
 
 function argKeysFromToolArgs(args: unknown): string[] {
@@ -74,7 +82,7 @@ function appendMcpToolAttemptEffect(toolName: string, args: unknown): Effect.Eff
       source: "mcp",
     });
     yield* appendProcessWormEffect(input);
-  }).pipe(Effect.catchAll(() => Effect.void));
+  }).pipe(Effect.catch(() => Effect.void));
 }
 
 function appendMcpToolResultEffect(
@@ -93,7 +101,7 @@ function appendMcpToolResultEffect(
       source: "mcp",
     });
     yield* appendProcessWormEffect(input);
-  }).pipe(Effect.catchAll(() => Effect.void));
+  }).pipe(Effect.catch(() => Effect.void));
 }
 
 /**

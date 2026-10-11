@@ -5,6 +5,9 @@
  * Uses sql.js (WASM) like memory.db so installs work with npm ci --ignore-scripts.
  */
 
+import { Effect } from "effect";
+import { MemoryError } from "../effect/memory-errors.js";
+import { memoryFromPromise } from "../effect/memory-effect-utils.js";
 import { createRequire } from "node:module";
 import { mkdir, open, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join } from "node:path";
@@ -68,53 +71,63 @@ export function resolveOntologyDatabasePath(vaultRoot: string): string {
  * Exclusive cooperative lock for ontology.db writes / lazy vault sync.
  * Combines an on-disk lock (cross-process) with an in-process queue (same event loop).
  */
+export function withOntologyWriteLockEffect<A, E>(
+  vaultRoot: string,
+  fn: () => Effect.Effect<A, E>
+): Effect.Effect<A, E | MemoryError> {
+  return memoryFromPromise(async () => {
+    const key = resolveOntologyDatabasePath(vaultRoot);
+    const prev = ontologyLocks.get(key) ?? Promise.resolve();
+    let release!: () => void;
+    const gate = new Promise<void>((r) => {
+      release = r;
+    });
+    const chained = prev.then(() => gate);
+    ontologyLocks.set(key, chained);
+
+    await prev.catch(() => undefined);
+
+    const lockPath = resolveVaultPath(vaultRoot, ONTOLOGY_LOCK_NAME);
+    let handle: Awaited<ReturnType<typeof open>> | null = null;
+    try {
+      await mkdir(dirname(lockPath), { recursive: true });
+      for (let i = 0; i < LOCK_MAX_ATTEMPTS; i++) {
+        try {
+          handle = await open(lockPath, "wx");
+          break;
+        } catch {
+          await new Promise((r) => setTimeout(r, LOCK_POLL_MS));
+        }
+      }
+      if (!handle) {
+        throw new Error(
+          `Ontology write lock timeout after ${LOCK_MAX_ATTEMPTS * LOCK_POLL_MS}ms: ${lockPath}`
+        );
+      }
+      return await Effect.runPromise(fn() as Effect.Effect<A, never>);
+    } finally {
+      if (handle) {
+        await handle.close();
+        try {
+          await unlink(lockPath);
+        } catch {
+          /* ignore */
+        }
+      }
+      release();
+      if (ontologyLocks.get(key) === chained) {
+        ontologyLocks.delete(key);
+      }
+    }
+  }) as Effect.Effect<A, E | MemoryError>;
+}
+
+/** Promise façade — `fn` may remain Promise-based for sync host edges under lock. */
 export async function withOntologyWriteLock<T>(
   vaultRoot: string,
   fn: () => Promise<T>
 ): Promise<T> {
-  const key = resolveOntologyDatabasePath(vaultRoot);
-  const prev = ontologyLocks.get(key) ?? Promise.resolve();
-  let release!: () => void;
-  const gate = new Promise<void>((r) => {
-    release = r;
-  });
-  const chained = prev.then(() => gate);
-  ontologyLocks.set(key, chained);
-
-  await prev.catch(() => undefined);
-
-  const lockPath = resolveVaultPath(vaultRoot, ONTOLOGY_LOCK_NAME);
-  let handle: Awaited<ReturnType<typeof open>> | null = null;
-  try {
-    await mkdir(dirname(lockPath), { recursive: true });
-    for (let i = 0; i < LOCK_MAX_ATTEMPTS; i++) {
-      try {
-        handle = await open(lockPath, "wx");
-        break;
-      } catch {
-        await new Promise((r) => setTimeout(r, LOCK_POLL_MS));
-      }
-    }
-    if (!handle) {
-      throw new Error(
-        `Ontology write lock timeout after ${LOCK_MAX_ATTEMPTS * LOCK_POLL_MS}ms: ${lockPath}`
-      );
-    }
-    return await fn();
-  } finally {
-    if (handle) {
-      await handle.close();
-      try {
-        await unlink(lockPath);
-      } catch {
-        /* ignore */
-      }
-    }
-    release();
-    if (ontologyLocks.get(key) === chained) {
-      ontologyLocks.delete(key);
-    }
-  }
+  return Effect.runPromise(withOntologyWriteLockEffect(vaultRoot, () => memoryFromPromise(fn)));
 }
 
 function isoNow(): string {
@@ -228,33 +241,42 @@ export type OntologyDbHandle = {
   close: () => void;
 };
 
+export function openOntologyDbEffect(
+  vaultRoot: string
+): Effect.Effect<OntologyDbHandle | null, MemoryError> {
+  return memoryFromPromise(async () => {
+    if (process.env.CLAWQL_ONTOLOGY_DB === "0") return null;
+    const path = resolveOntologyDatabasePath(vaultRoot);
+    await mkdir(dirname(path), { recursive: true });
+    const SQL = await loadSqlJs();
+    let db: Database;
+    try {
+      const buf = await readFile(path);
+      db = new SQL.Database(buf);
+    } catch {
+      db = new SQL.Database();
+    }
+    migrate(db);
+
+    const persist = async () => {
+      const data = db.export();
+      const tmp = `${path}.${process.pid}.tmp`;
+      await writeFile(tmp, Buffer.from(data));
+      await rename(tmp, path);
+    };
+
+    return {
+      db,
+      path,
+      persist,
+      close: () => db.close(),
+    };
+  });
+}
+
+/** Promise façade. */
 export async function openOntologyDb(vaultRoot: string): Promise<OntologyDbHandle | null> {
-  if (process.env.CLAWQL_ONTOLOGY_DB === "0") return null;
-  const path = resolveOntologyDatabasePath(vaultRoot);
-  await mkdir(dirname(path), { recursive: true });
-  const SQL = await loadSqlJs();
-  let db: Database;
-  try {
-    const buf = await readFile(path);
-    db = new SQL.Database(buf);
-  } catch {
-    db = new SQL.Database();
-  }
-  migrate(db);
-
-  const persist = async () => {
-    const data = db.export();
-    const tmp = `${path}.${process.pid}.tmp`;
-    await writeFile(tmp, Buffer.from(data));
-    await rename(tmp, path);
-  };
-
-  return {
-    db,
-    path,
-    persist,
-    close: () => db.close(),
-  };
+  return Effect.runPromise(openOntologyDbEffect(vaultRoot));
 }
 
 export function countMatters(db: Database): number {

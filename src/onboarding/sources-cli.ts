@@ -1,16 +1,20 @@
 /**
- * `clawql sources` — add/list/remove user integrations from URL or CLI/MCP config.
+ * `clawql sources` — add/list/remove/propose/approve user integrations from URL or CLI/MCP config.
  */
 
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { Effect } from "effect";
 import {
+  approveSourceEffect,
   cacheCustomSourceBody,
   detectSourceFromUrl,
   ensureSourceCacheDir,
+  proposeSourceEffect,
   readCustomSourcesFile,
   removeCustomSource,
   resetSpecCache,
+  resolveOperatorPrincipalEffect,
   slugifySourceId,
   upsertCustomSource,
   type CustomSourceEntry,
@@ -74,6 +78,96 @@ export async function runSourcesRemove(id: string, home?: string): Promise<numbe
   resetSpecCache();
   console.log(`Removed source: ${id}`);
   return 0;
+}
+
+export type SourcesProposeOptions = {
+  url: string;
+  name?: string;
+  kind?: CustomSourceKind;
+  id?: string;
+  /** When true, park a proposal (dryRun: false). Default preview-only. */
+  commit?: boolean;
+  home?: string;
+};
+
+export async function runSourcesPropose(options: SourcesProposeOptions): Promise<number> {
+  const home = options.home ?? getClawqlHome();
+  const url = options.url?.trim();
+  if (!url) {
+    console.error("Usage: clawql sources propose <url> [--name NAME] [--kind KIND] [--commit]");
+    return 1;
+  }
+  try {
+    const preview = await Effect.runPromise(
+      Effect.gen(function* () {
+        const proposedBy = yield* resolveOperatorPrincipalEffect();
+        return yield* proposeSourceEffect({
+          url,
+          name: options.name,
+          kind: options.kind,
+          id: options.id,
+          dryRun: !options.commit,
+          home,
+          proposedBy,
+        });
+      })
+    );
+    console.log(JSON.stringify(preview, null, 2));
+    if (!preview.dryRun && preview.approval) {
+      console.error(`Approve: ${preview.approval.cli}`);
+      console.error(`Decline: ${preview.approval.declineCli}`);
+    }
+    return 0;
+  } catch (e: unknown) {
+    console.error(e instanceof Error ? e.message : e);
+    return 1;
+  }
+}
+
+export async function runSourcesApprove(proposalId: string, home?: string): Promise<number> {
+  const h = home ?? getClawqlHome();
+  try {
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const approvedBy = yield* resolveOperatorPrincipalEffect();
+        return yield* approveSourceEffect({
+          proposalId,
+          decision: "approve",
+          home: h,
+          resetSpecCache,
+          approvedBy,
+        });
+      })
+    );
+    console.log(JSON.stringify(result, null, 2));
+    console.error("Restart clawql-mcp (or your MCP client) to index the new source.");
+    return 0;
+  } catch (e: unknown) {
+    console.error(e instanceof Error ? e.message : e);
+    return 1;
+  }
+}
+
+export async function runSourcesDecline(proposalId: string, home?: string): Promise<number> {
+  const h = home ?? getClawqlHome();
+  try {
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const approvedBy = yield* resolveOperatorPrincipalEffect();
+        return yield* approveSourceEffect({
+          proposalId,
+          decision: "decline",
+          home: h,
+          approvedBy,
+        });
+      })
+    );
+    console.log(JSON.stringify(result, null, 2));
+    return 0;
+  } catch (e: unknown) {
+    console.error(e instanceof Error ? e.message : e);
+    return 1;
+  }
 }
 
 export async function runSourcesAdd(options: SourcesAddOptions): Promise<number> {

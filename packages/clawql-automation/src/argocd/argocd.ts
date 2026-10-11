@@ -3,6 +3,7 @@
  */
 
 import { z } from "zod";
+import { Effect } from "effect";
 import { KubeConfig, CustomObjectsApi } from "@kubernetes/client-node";
 import {
   ARGO_CD_CRD,
@@ -11,6 +12,8 @@ import {
   resolveArgocdNamespace,
   getArgocdKubeconfigPath,
 } from "./env.js";
+import { automationFromPromise } from "../effect/automation-effect-utils.js";
+import type { AutomationError } from "../effect/automation-errors.js";
 
 export const argocdToolSchema = {
   operation: z.enum(["list", "get", "sync"]).describe("list | get | sync Argo CD Applications."),
@@ -201,12 +204,21 @@ async function getApplication(namespace: string, name: string): Promise<ArgoCdAp
   return res as ArgoCdApplicationObject;
 }
 
+export function dispatchArgocdToolCoreEffect(
+  params: unknown
+): Effect.Effect<{ content: { type: "text"; text: string }[] }, AutomationError> {
+  return Effect.gen(function* () {
+    const parsedSoft = parseArgocdToolParams(params);
+    if (!parsedSoft.ok) return jsonResponse({ ok: false, error: parsedSoft.error });
+    return yield* runArgocdParsedOperationEffect(parsedSoft.value);
+  });
+}
+
+/** Promise façade. */
 export async function dispatchArgocdToolCore(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
-  const parsedSoft = parseArgocdToolParams(params);
-  if (!parsedSoft.ok) return jsonResponse({ ok: false, error: parsedSoft.error });
-  return runArgocdParsedOperation(parsedSoft.value);
+  return Effect.runPromise(dispatchArgocdToolCoreEffect(params));
 }
 
 export type ArgocdParsedInput = z.infer<typeof argocdInputSchema>;
@@ -222,25 +234,27 @@ export function parseArgocdToolParams(
   return { ok: true, value: result.data };
 }
 
-/** K8s CRD list/get/sync for a Zod-validated payload. */
-export async function runArgocdParsedOperation(
+/** K8s CRD list/get/sync for a Zod-validated payload — Effect primary. */
+export function runArgocdParsedOperationEffect(
   parsed: ArgocdParsedInput
-): Promise<{ content: { type: "text"; text: string }[] }> {
-  try {
-    const customObjects = await getArgocdK8sClient();
+): Effect.Effect<{ content: { type: "text"; text: string }[] }, AutomationError> {
+  return Effect.gen(function* () {
+    const customObjects = yield* automationFromPromise(() => getArgocdK8sClient());
     switch (parsed.operation) {
       case "list": {
         const nsCheck = requireNamespace(parsed.namespace);
         if (!nsCheck.ok) return jsonResponse({ ok: false, error: nsCheck.error });
         const limit = parsed.limit ?? 50;
-        const res = (await customObjects.listNamespacedCustomObject({
-          group: ARGO_CD_CRD.group,
-          version: ARGO_CD_CRD.version,
-          namespace: nsCheck.namespace,
-          plural: ARGO_CD_CRD.applicationPlural,
-          labelSelector: parsed.label_selector,
-          limit,
-        })) as { items?: ArgoCdApplicationObject[] };
+        const res = (yield* automationFromPromise(() =>
+          customObjects.listNamespacedCustomObject({
+            group: ARGO_CD_CRD.group,
+            version: ARGO_CD_CRD.version,
+            namespace: nsCheck.namespace,
+            plural: ARGO_CD_CRD.applicationPlural,
+            labelSelector: parsed.label_selector,
+            limit,
+          })
+        )) as { items?: ArgoCdApplicationObject[] };
         const applications = (res.items ?? []).map((a) =>
           mapApplicationToSummary(a, nsCheck.namespace)
         );
@@ -254,7 +268,9 @@ export async function runArgocdParsedOperation(
       case "get": {
         const nsCheck = requireNamespace(parsed.namespace);
         if (!nsCheck.ok) return jsonResponse({ ok: false, error: nsCheck.error });
-        const app = await getApplication(nsCheck.namespace, parsed.name!);
+        const app = yield* automationFromPromise(() =>
+          getApplication(nsCheck.namespace, parsed.name!)
+        );
         return jsonResponse({
           ok: true,
           operation: "get",
@@ -270,7 +286,9 @@ export async function runArgocdParsedOperation(
         }
         const nsCheck = requireNamespace(parsed.namespace);
         if (!nsCheck.ok) return jsonResponse({ ok: false, error: nsCheck.error });
-        const existing = await getApplication(nsCheck.namespace, parsed.name!);
+        const existing = yield* automationFromPromise(() =>
+          getApplication(nsCheck.namespace, parsed.name!)
+        );
         const body: ArgoCdApplicationObject = {
           ...existing,
           operation: {
@@ -282,14 +300,16 @@ export async function runArgocdParsedOperation(
             initiatedBy: { username: "clawql-mcp" },
           },
         };
-        const updated = (await customObjects.replaceNamespacedCustomObject({
-          group: ARGO_CD_CRD.group,
-          version: ARGO_CD_CRD.version,
-          namespace: nsCheck.namespace,
-          plural: ARGO_CD_CRD.applicationPlural,
-          name: parsed.name!,
-          body,
-        })) as ArgoCdApplicationObject;
+        const updated = (yield* automationFromPromise(() =>
+          customObjects.replaceNamespacedCustomObject({
+            group: ARGO_CD_CRD.group,
+            version: ARGO_CD_CRD.version,
+            namespace: nsCheck.namespace,
+            plural: ARGO_CD_CRD.applicationPlural,
+            name: parsed.name!,
+            body,
+          })
+        )) as ArgoCdApplicationObject;
         return jsonResponse({
           ok: true,
           operation: "sync",
@@ -298,10 +318,26 @@ export async function runArgocdParsedOperation(
         });
       }
     }
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    return jsonResponse({ ok: false, operation: parsed.operation, error: message });
-  }
+  }).pipe(
+    Effect.catch((error: unknown) => {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error && "reason" in error
+            ? String((error as { reason: unknown }).reason)
+            : String(error);
+      return Effect.succeed(
+        jsonResponse({ ok: false, operation: parsed.operation, error: message })
+      );
+    })
+  );
+}
+
+/** Promise façade. */
+export async function runArgocdParsedOperation(
+  parsed: ArgocdParsedInput
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  return Effect.runPromise(runArgocdParsedOperationEffect(parsed));
 }
 
 /**
@@ -311,11 +347,10 @@ export async function executeArgocdToolCore(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
   const { executeArgocdToolCoreEffect } = await import("../effect/argocd-effect.js");
-  const { Effect } = await import("effect");
   return Effect.runPromise(executeArgocdToolCoreEffect(params));
 }
 
-/** Public async facade for argocd MCP tool. */
+/** Promise façade for argocd MCP tool host edge. */
 export async function handleArgocdToolInput(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {

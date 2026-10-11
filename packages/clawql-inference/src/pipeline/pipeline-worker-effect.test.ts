@@ -1,4 +1,5 @@
-import { Duration, Effect, Fiber, TestClock, TestContext } from "effect";
+import { Duration, Effect, Fiber } from "effect";
+import { TestClock } from "effect/testing";
 import { describe, expect, it } from "vitest";
 import { startPipelineWorkerFiberEffect } from "./pipeline-worker-effect.js";
 
@@ -17,7 +18,7 @@ describe("startPipelineWorkerFiberEffect", () => {
         yield* TestClock.adjust(Duration.millis(12));
         expect(ticks.n).toBeGreaterThan(afterFirst);
         yield* Fiber.interrupt(handle.fiber);
-      }).pipe(Effect.provide(TestContext.TestContext))
+      }).pipe(Effect.provide(TestClock.layer()))
     );
   });
 });

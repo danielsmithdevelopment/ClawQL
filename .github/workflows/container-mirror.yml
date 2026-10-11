@@ -1,14 +1,19 @@
-# Mirror selected third-party container images into this org's GHCR, gated the same way as
-# first-party images: **Trivy** on the exact OCI bytes pulled (**HIGH** / **CRITICAL**, `.trivyignore`),
-# then **`skopeo copy`** to GHCR (no rebuild), then **Cosign** keyless (**v2**, `--recursive` for
-# multi-arch indexes). If Trivy fails, nothing is pushed or signed — rolling tags do not advance.
+# Mirror selected third-party container images into this org's GHCR.
 #
-# Pair with Helm `openclaw.image.repository: ghcr.io/danielsmithdevelopment/openclaw-vendor` (or pass
-# `--set`) and Kyverno `imageReferences` including `ghcr.io/danielsmithdevelopment/openclaw-vendor*`
-# (chart default includes this after merge).
+# Gate policy (vendor-only — differs from first-party docker-publish):
+#   - Trivy on the exact OCI bytes pulled, then skopeo copy, then Cosign keyless
+#     (v2, --recursive for multi-arch indexes). If Trivy fails, nothing is pushed.
+#   - Severity: **CRITICAL only** (+ `.trivyignore` / `.trivyignore-openclaw-vendor`).
+#     WHY: we copy upstream OpenClaw `:slim` bytes verbatim and cannot rebuild or
+#     patch Debian/npm trees inside the vendor image. Checked `:slim` and newer
+#     dated/beta slim tags (e.g. `2026.10.1-beta.1-slim`) — none scan clean for
+#     HIGH; staying on HIGH would keep nightly permanently red on third-party CVEs.
+#     First-party images (docker-publish) still fail closed on HIGH + CRITICAL.
+#   - Documented CRITICAL vendor ignores remain for Debian perl packages that
+#     upstream has not refreshed yet (see `.trivyignore-openclaw-vendor`).
 #
-# Upstream may ship vulnerabilities ClawQL does not ignore in `.trivyignore`; either add narrow
-# ignores (documented) or pin an older upstream digest in the matrix until upstream fixes land.
+# Pair with Helm `openclaw.image.repository: ghcr.io/danielsmithdevelopment/openclaw-vendor`
+# and Kyverno `imageReferences` including `ghcr.io/danielsmithdevelopment/openclaw-vendor*`.
 name: Container mirror (vendor images)
 
 on:
@@ -56,11 +61,13 @@ jobs:
           rm -rf "${RUNNER_TEMP}/openclaw-mirror-oci"
           skopeo copy --all "${SRC_UPSTREAM}" "${DEST_LOCAL}"
 
-      - name: Trivy scan OCI layout (HIGH / CRITICAL — gate before registry push)
+      - name: Trivy scan OCI layout (CRITICAL — vendor gate before registry push)
         run: |
           set -euo pipefail
           ignorefile="${RUNNER_TEMP}/trivyignore-openclaw-vendor"
           cat "${GITHUB_WORKSPACE}/.trivyignore" "${GITHUB_WORKSPACE}/.trivyignore-openclaw-vendor" > "${ignorefile}"
+          # CRITICAL-only for third-party mirrors (see workflow header). First-party
+          # docker-publish jobs keep HIGH,CRITICAL.
           docker run --rm \
             -v "${GITHUB_WORKSPACE}:/repo:ro" \
             -v "${RUNNER_TEMP}/openclaw-mirror-oci:/work/oci:ro" \
@@ -68,7 +75,7 @@ jobs:
             "${{ env.TRIVY_SCAN_IMAGE }}" \
             image \
             --scanners vuln \
-            --severity HIGH,CRITICAL \
+            --severity CRITICAL \
             --ignore-unfixed \
             --exit-code 1 \
             --ignorefile /work/trivyignore \

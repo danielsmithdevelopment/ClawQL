@@ -118,7 +118,7 @@ export class AuthorizationCodeFlow {
   }
 
   startFlow(config: AuthCodeConfig): Effect.Effect<AuthFlowStart, unknown> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const codeVerifier = yield* generateCodeVerifierEffect();
       const codeChallenge = yield* generateCodeChallengeEffect(codeVerifier);
       const state = yield* generateOAuthStateEffect();
@@ -152,7 +152,7 @@ export class AuthorizationCodeFlow {
     state: string,
     config?: Partial<AuthCodeConfig>
   ): Effect.Effect<StoredOAuthToken, AuthCodeError | OAuthFlowError | unknown> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const flowState = yield* this.options.persistence.getFlowState(state);
       if (!flowState) {
         return yield* Effect.fail(new AuthCodeError({ reason: "INVALID_STATE" }));
@@ -249,9 +249,7 @@ export function createAuthorizationCodeFlow(
   return new AuthorizationCodeFlow(options);
 }
 
-export class AuthorizationCodeFlowService extends Context.Tag(
-  "clawql/AuthorizationCodeFlowService"
-)<
+export class AuthorizationCodeFlowService extends Context.Service<
   AuthorizationCodeFlowService,
   {
     readonly startFlow: (config: AuthCodeConfig) => Effect.Effect<AuthFlowStart, unknown>;
@@ -261,11 +259,11 @@ export class AuthorizationCodeFlowService extends Context.Tag(
       config?: Partial<AuthCodeConfig>
     ) => Effect.Effect<StoredOAuthToken, AuthCodeError | OAuthFlowError | unknown>;
   }
->() {}
+>()("clawql/AuthorizationCodeFlowService") {}
 
 export function authorizationCodeFlowServiceFromFlow(
   flow: AuthorizationCodeFlow
-): AuthorizationCodeFlowService["Type"] {
+): Context.Service.Shape<typeof AuthorizationCodeFlowService> {
   return AuthorizationCodeFlowService.of({
     startFlow: (config) => flow.startFlow(config),
     handleCallback: (code, state, config) => flow.handleCallback(code, state, config),

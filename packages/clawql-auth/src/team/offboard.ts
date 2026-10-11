@@ -53,7 +53,7 @@ export function offboardSubjectEffect(
       for (const providerId of input.oauthProviderIds) {
         yield* options.secretStore
           .markRequiresReauth(providerId)
-          .pipe(Effect.catchAll(() => Effect.void));
+          .pipe(Effect.catch(() => Effect.void));
         oauthMarked.push(providerId);
         yield* emitAuthEventEffect(options.eventSink, {
           type: "OAUTH_REAUTH_REQUIRED",

@@ -40,9 +40,13 @@ RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends \
   && apt-get install -y --no-install-recommends ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
-  && npm install -g npm@11 \
   && npm install -g @panguard-ai/panguard-mcp-proxy@0.1.2 \
-  && npm cache clean --force
+  && npm cache clean --force \
+  # Runtime uses `node` only. Drop global npm so Trivy does not fail on npm-bundled
+  # undici<=6.28.0 / brace-expansion<=5.0.9 (CVE-2026-19534 / CVE-2026-102276/102278).
+  # Keep @panguard-ai/panguard-mcp-proxy under the global node_modules tree.
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
+  && npm --version >/dev/null 2>&1 && exit 1 || true
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages/mcp-grpc-transport ./packages/mcp-grpc-transport

@@ -17,6 +17,7 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import type { WebAuditEvent } from "../audit-types.js";
+import { Effect } from "effect";
 
 export const WEB_AUDIT_GENESIS_HASH =
   "0000000000000000000000000000000000000000000000000000000000000000";
@@ -258,9 +259,7 @@ export function getWebWormStore(env: NodeJS.ProcessEnv = process.env): WebWormSt
   return defaultStore;
 }
 
-export async function resetWebWormStoreForTests(
-  env: NodeJS.ProcessEnv = process.env
-): Promise<void> {
+async function resetWebWormStoreForTestsImpl(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   if (defaultStore) await defaultStore.reset();
   defaultStore = null;
   defaultMode = null;
@@ -270,7 +269,23 @@ export async function resetWebWormStoreForTests(
   }
 }
 
-export async function appendWebWormEvent(
+export function resetWebWormStoreForTestsEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => resetWebWormStoreForTestsImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resetWebWormStoreForTestsEffect} for Effect callers. */
+export async function resetWebWormStoreForTests(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<void> {
+  return Effect.runPromise(resetWebWormStoreForTestsEffect(env));
+}
+
+async function appendWebWormEventImpl(
   event: WebAuditEvent,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<WebWormRecord | null> {
@@ -279,7 +294,25 @@ export async function appendWebWormEvent(
   return store.append(event);
 }
 
-export async function listWebWormRecords(
+export function appendWebWormEventEffect(
+  event: WebAuditEvent,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<WebWormRecord | null, Error> {
+  return Effect.tryPromise({
+    try: () => appendWebWormEventImpl(event, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link appendWebWormEventEffect} for Effect callers. */
+export async function appendWebWormEvent(
+  event: WebAuditEvent,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<WebWormRecord | null> {
+  return Effect.runPromise(appendWebWormEventEffect(event, env));
+}
+
+async function listWebWormRecordsImpl(
   limit = 100,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<WebWormRecord[]> {
@@ -288,7 +321,25 @@ export async function listWebWormRecords(
   return store.list(limit);
 }
 
-export async function verifyWebWormLog(
+export function listWebWormRecordsEffect(
+  limit = 100,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<WebWormRecord[], Error> {
+  return Effect.tryPromise({
+    try: () => listWebWormRecordsImpl(limit, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link listWebWormRecordsEffect} for Effect callers. */
+export async function listWebWormRecords(
+  limit = 100,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<WebWormRecord[]> {
+  return Effect.runPromise(listWebWormRecordsEffect(limit, env));
+}
+
+async function verifyWebWormLogImpl(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<WebAuditVerifyResult> {
   const store = getWebWormStore(env);
@@ -296,4 +347,20 @@ export async function verifyWebWormLog(
     return { ok: true, records: 0, head_hash: WEB_AUDIT_GENESIS_HASH, issues: [] };
   }
   return store.verify();
+}
+
+export function verifyWebWormLogEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<WebAuditVerifyResult, Error> {
+  return Effect.tryPromise({
+    try: () => verifyWebWormLogImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link verifyWebWormLogEffect} for Effect callers. */
+export async function verifyWebWormLog(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<WebAuditVerifyResult> {
+  return Effect.runPromise(verifyWebWormLogEffect(env));
 }

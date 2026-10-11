@@ -2,10 +2,11 @@
  * Document JetStream dispatch — IDP inbox → run_idp_pipeline, Coneshare → resume/notify.
  */
 
+import { Effect } from "effect";
 import { workflowToolEnabled } from "../workflow/env.js";
 import {
   parseHitlWorkflowRef,
-  resumeWorkflowFromHitlRef,
+  resumeWorkflowFromHitlRefEffect,
   type HitlWorkflowRef,
 } from "../workflow/suspend-resume.js";
 import type { DocumentEventEnvelope } from "./envelope.js";
@@ -132,18 +133,37 @@ async function runIdpPipelineFromPayload(
   }
 }
 
-/** Dispatch inbox / pipeline.requested → `run_idp_pipeline`. */
+/** Dispatch inbox / pipeline.requested → `run_idp_pipeline` — Effect primary. */
+export function dispatchDocumentInboxEventEffect(
+  envelope: DocumentEventEnvelope
+): Effect.Effect<{ ok: boolean; error?: string }> {
+  return Effect.gen(function* () {
+    if (!natsConsumerIdpPipelineEnabled()) {
+      return { ok: true };
+    }
+    if (envelope.event_type !== "inbox.arrived" && envelope.event_type !== "pipeline.requested") {
+      return { ok: false, error: `unexpected event_type: ${envelope.event_type}` };
+    }
+    const result = yield* Effect.tryPromise({
+      try: () => runIdpPipelineFromPayload(envelope.payload, envelope.correlation_id),
+      catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+    });
+    return { ok: result.ok, error: result.error };
+  }).pipe(
+    Effect.catch((e: unknown) =>
+      Effect.succeed({
+        ok: false,
+        error: e instanceof Error ? e.message : String(e),
+      })
+    )
+  );
+}
+
+/** Promise façade. */
 export async function dispatchDocumentInboxEvent(
   envelope: DocumentEventEnvelope
 ): Promise<{ ok: boolean; error?: string }> {
-  if (!natsConsumerIdpPipelineEnabled()) {
-    return { ok: true };
-  }
-  if (envelope.event_type !== "inbox.arrived" && envelope.event_type !== "pipeline.requested") {
-    return { ok: false, error: `unexpected event_type: ${envelope.event_type}` };
-  }
-  const result = await runIdpPipelineFromPayload(envelope.payload, envelope.correlation_id);
-  return { ok: result.ok, error: result.error };
+  return Effect.runPromise(dispatchDocumentInboxEventEffect(envelope));
 }
 
 async function maybeNotifyConeshare(envelope: DocumentEventEnvelope): Promise<void> {
@@ -172,38 +192,50 @@ async function maybeNotifyConeshare(envelope: DocumentEventEnvelope): Promise<vo
   }
 }
 
-/** Dispatch Coneshare viewer events → optional Argo resume + Slack notify. */
+/** Dispatch Coneshare viewer events → optional Argo resume + Slack notify — Effect primary. */
+export function dispatchConeshareViewerEventEffect(
+  envelope: DocumentEventEnvelope
+): Effect.Effect<{ ok: boolean; error?: string }> {
+  return Effect.gen(function* () {
+    if (!natsConsumerConeshareFollowupEnabled()) {
+      return { ok: true };
+    }
+    if (envelope.event_type !== "coneshare.viewer") {
+      return { ok: false, error: `unexpected event_type: ${envelope.event_type}` };
+    }
+
+    yield* Effect.tryPromise({
+      try: () => maybeNotifyConeshare(envelope),
+      catch: () => undefined as unknown as Error,
+    }).pipe(Effect.ignore);
+
+    const ref = workflowRefFromDocument(envelope);
+    if (!ref) {
+      return { ok: true };
+    }
+    if (!natsConsumerResumeWorkflowEnabled() || !workflowToolEnabled()) {
+      return { ok: true };
+    }
+
+    const hitlPayload = envelope.payload?.clawql_share ?? { workflow: ref };
+    const result = yield* resumeWorkflowFromHitlRefEffect(hitlPayload);
+    if (!result.attempted) {
+      return { ok: true };
+    }
+    if (result.ok) {
+      return { ok: true };
+    }
+    const err = result.error ?? "resume failed";
+    if (/no active suspend/i.test(err) || /already completed/i.test(err)) {
+      return { ok: true };
+    }
+    return { ok: false, error: err };
+  });
+}
+
+/** Promise façade. */
 export async function dispatchConeshareViewerEvent(
   envelope: DocumentEventEnvelope
 ): Promise<{ ok: boolean; error?: string }> {
-  if (!natsConsumerConeshareFollowupEnabled()) {
-    return { ok: true };
-  }
-  if (envelope.event_type !== "coneshare.viewer") {
-    return { ok: false, error: `unexpected event_type: ${envelope.event_type}` };
-  }
-
-  await maybeNotifyConeshare(envelope);
-
-  const ref = workflowRefFromDocument(envelope);
-  if (!ref) {
-    return { ok: true };
-  }
-  if (!natsConsumerResumeWorkflowEnabled() || !workflowToolEnabled()) {
-    return { ok: true };
-  }
-
-  const hitlPayload = envelope.payload?.clawql_share ?? { workflow: ref };
-  const result = await resumeWorkflowFromHitlRef(hitlPayload);
-  if (!result.attempted) {
-    return { ok: true };
-  }
-  if (result.ok) {
-    return { ok: true };
-  }
-  const err = result.error ?? "resume failed";
-  if (/no active suspend/i.test(err) || /already completed/i.test(err)) {
-    return { ok: true };
-  }
-  return { ok: false, error: err };
+  return Effect.runPromise(dispatchConeshareViewerEventEffect(envelope));
 }

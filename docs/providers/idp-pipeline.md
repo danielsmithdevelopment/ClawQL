@@ -1,8 +1,10 @@
 # IDP document pipeline (bundled providers)
 
-ClawQL ships **eight bundled document vendors** for intelligent document processing (IDP). Agents compose them with **`search`** → **`execute`**; the dashboard chat bridge maps tool calls to IDP cards; Helm can co-deploy the services in-cluster.
+ClawQL ships **five bundled document vendors** for intelligent document processing (IDP) by default. Agents compose them with **`search`** → **`execute`**; the dashboard chat bridge maps tool calls to IDP cards; Helm can co-deploy the services in-cluster.
 
-**Canonical recipe:** `DEFAULT_IDP_PIPELINE` in **`packages/clawql-documents`** (`idp-pipeline.ts`) — Nextcloud intake → Docling (layout parse) or Tika → Gotenberg → Stirling → Paperless → Onyx → Nextcloud sync → Coneshare share/VDR.
+**8.0 converter cut:** Docling is the **sole default converter** — Tika, Gotenberg, and Stirling moved to **opt-in only** (`CLAWQL_BUNDLED_PROVIDERS=tika,gotenberg,stirling` and/or `documentPipeline.{tika,gotenberg,stirling}.enabled=true` in Helm). Their OpenAPI specs still ship in `providers/`; they are simply no longer part of the default/recommended surface. See [purge inventory spec — "Document convert"](../releases/8.0.0-purge-inventory-spec-v0.1.md).
+
+**Canonical recipe:** `DEFAULT_IDP_PIPELINE` in **`packages/clawql-documents`** (`idp-pipeline.ts`) — Nextcloud intake → Docling (layout parse) → Paperless → Onyx → Nextcloud sync → Coneshare share/VDR. Custom `pipeline` overrides on `run_idp_pipeline` can still reinstate Tika/Gotenberg/Stirling stages — the stage type and operationId lookup keep supporting them.
 
 **Related:** [IDP Platform vision](../vision/clawql-idp-platform.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Slack-first IDP runbook](../openclaw/slack-first-idp-runbook.md) · [Requirements matrix](../roadmap/idp-master-requirements-matrix.md) · [Umbrella Helm](../deployment/clawql-idp-helm.md) · [Observability bundle](../observability/README.md) · [Agent chat contract](../dashboard/agent-chat.md) · [Helm `clawql-mcp`](../../manifests/charts/clawql-mcp/README.md)
 
@@ -17,23 +19,25 @@ ClawQL supports **self-hosted** (full data sovereignty via Helm) and **managed h
 ## Stack overview
 
 ```text
-Nextcloud (inbox) → convert_document (anydoc) / inspect_pdf → Docling (layout OCR) / Tika → Gotenberg → Stirling → Paperless → Onyx → Nextcloud (processed) → Coneshare (VDR)
+Nextcloud (inbox) → convert_document (anydoc, opt-in) / inspect_pdf (opt-in) → Docling (layout OCR, default) → Paperless → Onyx → Nextcloud (processed) → Coneshare (VDR)
 ```
 
-| Stage | Provider id | Role | Helm block |
-| ----- | ----------- | ---- | ---------- |
-| Intake / sync | **`nextcloud`** | WebDAV + OCS shares | `idpCollaboration.nextcloud` |
-| Fast convert (optional) | **`convert_document`** (in-process) | Firecrawl anydoc — Office/PDF/CSV → GFM; OCR → Docling | `enableAnydoc` |
-| PDF route (optional) | **`inspect_pdf`** (in-process) | Firecrawl pdf-inspector — TextBased → local markdown; scanned → Docling | `enablePdfInspector` |
-| Layout parse | **`docling`** | Layout-aware OCR + tables (forms, W-2) | `documentPipeline.docling` (opt-in; large CPU image) |
-| Extract | **`tika`** | Text + metadata from 1,000+ formats | `documentPipeline.tika` |
-| Normalize | **`gotenberg`** | Office/HTML → PDF | `documentPipeline.gotenberg` |
-| Redact / fix PDF | **`stirling`** | PII redaction, split/merge | `documentPipeline.stirling` |
-| Archive | **`paperless`** (self-hosted optional) or **ClawQL archive layer** (Nextcloud + Postgres + Onyx — default / hosted) | DMS or native archive | `documentPipeline.paperless` (optional) · `idpCollaboration.nextcloud` |
-| Enterprise search | **`onyx`** | Hybrid search + ingestion API | `onyx.enabled` |
-| Secure sharing | **`coneshare`** | VDR, share links, viewer webhook | `idpCollaboration.coneshare` |
+Opt-in-only converters (not in the default recipe, specs still bundled for `CLAWQL_BUNDLED_PROVIDERS=…`): `tika`, `gotenberg`, `stirling`.
 
-All eight ids are in **`BUNDLED_DOCUMENT_VENDOR_IDS`** — included in default **`all-providers`** unless **`CLAWQL_ENABLE_DOCUMENTS=0`**.
+| Stage | Provider id | Role | Helm block | Default |
+| ----- | ----------- | ---- | ---------- | ------- |
+| Intake / sync | **`nextcloud`** | WebDAV + OCS shares | `idpCollaboration.nextcloud` | on (when `idpCollaboration.enabled`) |
+| Fast convert (opt-in) | **`convert_document`** (in-process) | Firecrawl anydoc — Office/PDF/CSV → GFM; OCR → Docling | `enableAnydoc` | off — flag-gated, not recommended |
+| PDF route (opt-in) | **`inspect_pdf`** (in-process) | Firecrawl pdf-inspector — TextBased → local markdown; scanned → Docling | `enablePdfInspector` | off — needs a unique job (e.g. signature/metadata) before auto-keep |
+| Layout parse (sole default converter) | **`docling`** | Layout-aware OCR + tables (forms, W-2) | `documentPipeline.docling` | **on** |
+| Extract (opt-in only) | **`tika`** | Text + metadata from 1,000+ formats | `documentPipeline.tika` | off |
+| Normalize (opt-in only) | **`gotenberg`** | Office/HTML → PDF | `documentPipeline.gotenberg` | off |
+| Redact / fix PDF (opt-in only) | **`stirling`** | PII redaction, split/merge | `documentPipeline.stirling` | off |
+| Archive | **`paperless`** (self-hosted optional) or **ClawQL archive layer** (Nextcloud + Postgres + Onyx — default / hosted) | DMS or native archive | `documentPipeline.paperless` (optional) · `idpCollaboration.nextcloud` | on |
+| Enterprise search | **`onyx`** | Hybrid search + ingestion API | `onyx.enabled` | off (flag) |
+| Secure sharing | **`coneshare`** | VDR, share links, viewer webhook | `idpCollaboration.coneshare` | off |
+
+Non-converter ids (**`coneshare`**, **`docling`**, **`nextcloud`**, **`onyx`**, **`paperless`**) are in **`BUNDLED_DOCUMENT_VENDOR_IDS`** — included in default **`all-providers`** unless **`CLAWQL_ENABLE_DOCUMENTS=0`**. **`tika`** / **`gotenberg`** / **`stirling`** keep bundled OpenAPI specs but are excluded from `all-providers` unconditionally — pull one back explicitly with **`CLAWQL_BUNDLED_PROVIDERS=tika,gotenberg,stirling,…`**.
 
 ---
 
@@ -77,20 +81,28 @@ Automated multi-hop execution is available via MCP **`run_idp_pipeline`** when *
 
 **Umbrella chart (recommended for full IDP):** [`clawql-idp-helm.md`](../deployment/clawql-idp-helm.md) — `helm install` with **`values-idp-full.yaml`**.
 
-**Base chart (`clawql-mcp`)** — document pipeline (Docling opt-in, Tika, Gotenberg, Stirling, Paperless + stores):
+**Base chart (`clawql-mcp`)** — document pipeline (Docling **default-on**, Paperless + stores; Tika/Gotenberg/Stirling opt-in):
 
 ```yaml
 documentPipeline:
   enabled: true
   docling:
-    enabled: true   # opt-in — large CPU image; layout parse for forms/W-2
+    enabled: true   # sole default converter as of 8.0 — on by default; large CPU image
+  # Opt-in only — flip any to true to re-deploy that JVM/LibreOffice converter:
+  # tika:
+  #   enabled: true
+  # gotenberg:
+  #   enabled: true
+  # stirling:
+  #   enabled: true
   classifier:
     enabled: true   # reference HTTP classifier ([#248]); build/push sample image first
   langextract:
     enabled: true   # reference LangExtract sidecar ([#246])
 enableDocuments: true
-enableAnydoc: true
-enablePdfInspector: true
+# Opt-in-only code paths — not part of the recommended stack; need a named job to re-promote:
+enableAnydoc: false
+enablePdfInspector: false
 enableIdpClassifier: true
 enableLangextract: true
 enableIdpPipeline: true
@@ -119,7 +131,7 @@ idpCollaboration:
     externalUrl: ""         # or point at coneshare-compose
 ```
 
-The MCP Deployment receives **`TIKA_BASE_URL`**, **`GOTENBERG_BASE_URL`**, **`STIRLING_BASE_URL`**, **`PAPERLESS_BASE_URL`**, **`ONYX_BASE_URL`**, **`NEXTCLOUD_BASE_URL`**, **`CONESHARE_BASE_URL`** when the corresponding subcharts are enabled. Chart-managed Secrets inject **`PAPERLESS_API_TOKEN`**, **`STIRLING_API_KEY`**, **`NEXTCLOUD_USERNAME`**, **`NEXTCLOUD_APP_PASSWORD`**, **`CONESHARE_API_TOKEN`** for **`execute`** auth.
+The MCP Deployment receives **`DOCLING_BASE_URL`**, **`PAPERLESS_BASE_URL`**, **`ONYX_BASE_URL`**, **`NEXTCLOUD_BASE_URL`**, **`CONESHARE_BASE_URL`** when the corresponding subcharts are enabled, plus **`TIKA_BASE_URL`** / **`GOTENBERG_BASE_URL`** / **`STIRLING_BASE_URL`** when their now-opt-in `documentPipeline.{tika,gotenberg,stirling}.enabled` flags are flipped to **`true`**. Chart-managed Secrets inject **`PAPERLESS_API_TOKEN`**, **`STIRLING_API_KEY`**, **`NEXTCLOUD_USERNAME`**, **`NEXTCLOUD_APP_PASSWORD`**, **`CONESHARE_API_TOKEN`** for **`execute`** auth.
 
 **Docker Desktop:** **`make local-k8s-up`** uses **`values-docker-desktop.yaml`** — document pipeline + Onyx + Nextcloud on by default; Coneshare ingress is reserved for external URL wiring.
 
@@ -146,20 +158,25 @@ Refresh committed OpenAPI from live instances: **`npm run fetch-provider-specs`*
 
 ## DEFAULT_IDP_PIPELINE operationIds
 
-Reference sequence (agents fill paths/ids in **`args`**):
+Reference sequence (agents fill paths/ids in **`args`**) — Docling is the sole default converter hop:
 
 | Step | operationId |
 | ---- | ----------- |
 | Download inbox | `nextcloud::nextcloud_webdav_download` |
 | Layout parse | `docling::docling_convert_source` |
-| Extract | `tika::tika_parse_put` |
-| Convert | `gotenberg::post_forms_libreoffice_convert` |
-| Redact | `stirling::redactPdfAuto` |
 | Archive | `paperless::documents_post_document_create` |
 | Index | `onyx::upsert_ingestion_doc` |
 | Upload processed | `nextcloud::nextcloud_webdav_upload` |
 | Data room | `coneshare::coneshare_datarooms_create` |
 | Share link | `coneshare::coneshare_share_links_create` |
+
+**Opt-in converter stages** (not in `DEFAULT_IDP_PIPELINE`, but still valid in a custom `pipeline` override on `run_idp_pipeline` — the `IdpPipelineStage` type and `idpStageFromOperationId` lookup keep supporting them):
+
+| Step | operationId |
+| ---- | ----------- |
+| Extract (Tika) | `tika::tika_parse_put` |
+| Convert (Gotenberg) | `gotenberg::post_forms_libreoffice_convert` |
+| Redact (Stirling) | `stirling::redactPdfAuto` |
 
 Discover variants with **`search`** (e.g. manual Stirling redaction → `stirling::redactPdfManual`).
 

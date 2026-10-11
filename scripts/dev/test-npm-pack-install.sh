@@ -65,12 +65,13 @@ resolve_pkg() {
   return 1
 }
 
-for name in clawql-api clawql-auth clawql-merkle clawql-core clawql-audit clawql-agents clawql-memory clawql-ontology clawql-web clawql-documents clawql-automation clawql-sandbox clawql-inference clawql-payments clawql-ouroboros clawql-harness clawql-chatgpt-extensions clawql-operator clawql-release mcp-grpc-transport; do
+for name in clawql-gdp clawql-api clawql-auth clawql-merkle clawql-core clawql-audit clawql-agents clawql-memory clawql-ontology clawql-web clawql-documents clawql-automation clawql-sandbox clawql-supabase clawql-inference clawql-payments clawql-ouroboros clawql-harness clawql-chatgpt-extensions clawql-operator clawql-release mcp-grpc-transport; do
   resolve_pkg "${name}"
 done
 
 cd "${PKG_ROOT}"
 node --input-type=module <<'NODE'
+import "clawql-gdp";
 import "clawql-api";
 import "clawql-merkle";
 import "clawql-core";

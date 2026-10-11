@@ -20,7 +20,8 @@ Advertise `capabilities.events` and implement `events/list`, `events/subscribe`,
 | Webhook delivery + challenge (Standard Webhooks)                                          | `gap` / `terminated` control notifications            |
 | Durable subscription store (JSON file)                                                    | Postgres-backed multi-replica store                   |
 | Live event catalog (seven events)                                                         | Dynamic OpenAPI-derived event schemas                 |
-| Schedule projection-hash → `stream.changed` (watch_fields, 304, capped diff, 429 backoff) | NATS / WebSocket native stream sources                |
+| Schedule projection-hash → `stream.changed` (watch_fields, 304, capped diff, 429 backoff) | NATS exposed to customers (JetStream stays internal)  |
+| HTTP `/events` door (catalog, subscriptions, SSE, inbound) into the **same** system       | A second event catalog or subscription store          |
 | SSRF-hardened callbacks + enterprise allowlist / PII redact / caps                        | Custom connect-to-IP TLS agent (stretch)              |
 | Access recheck + instruction screening + feedback-loop detector                           | Full Panguard ATR integration (host wires)            |
 | WORM append hooks (optional host)                                                         | Mandatory dual-ack WORM                               |
@@ -113,3 +114,35 @@ At-rest AES-256-GCM for schedule projections requires a key from the environment
 - Package: subscribe/deliver/unsubscribe, challenge `-32015`, SSRF, allowlist, 410, revoke, feedback loop, **per-event producer → signed delivery**.
 - Schedule: `detectProjectedChange` / `detectSyntheticBodyChange` baseline vs change; volatile-field immunity; capped diffs.
 - **Blocking release gate:** ChatGPT live pass — [`mcp-events-chatgpt-checklist.md`](./mcp-events-chatgpt-checklist.md) (RC image **digest**-pinned; per-event real trigger + delivery for all seven events with **eventId + WORM** evidence; `stream.changed` precision/negative; `schedule.paused` + Reconnect sources) and [`docs/release/v8.0.0-checklist.md`](../../release/v8.0.0-checklist.md).
+- HTTP `/events` parity: MCP-created subscriptions appear under `GET /events/subscriptions`; `/events`-created subscriptions share the store and catalog with `events/list`; both doors receive identical signed webhook bodies.
+
+## 9. HTTP `/events` (same system)
+
+Canonical gateway paths (locked for 8.0.0) live on `clawql-inference` and wrap this package. See [`docs/specs/inference/gateway-ladder-v0.1.md`](../inference/gateway-ladder-v0.1.md).
+
+| Method   | Path                        | Same as                                    |
+| -------- | --------------------------- | ------------------------------------------ |
+| `GET`    | `/events/catalog`           | `events/list`                              |
+| `POST`   | `/events/subscriptions`     | `events/subscribe`                         |
+| `GET`    | `/events/subscriptions`     | store list (no secrets)                    |
+| `DELETE` | `/events/subscriptions/:id` | `events/unsubscribe` by id                 |
+| `GET`    | `/events/stream`            | CloudEvents SSE; `Last-Event-ID` → seq     |
+| `POST`   | `/events/inbound/{source}`  | GitHub / Stripe / Figma → `stream.changed` |
+
+SSE uses CloudEvents 1.0 (`com.clawql.<name>`). Webhook deliveries stay on the ChatGPT MCP Events JSON body. Inbound webhooks are untrusted data (`source` + `topic` = `inbound:{provider}`, `untrusted: true`); they do not add an eighth catalog type.
+
+**Inbound opt-in (required):** `stream.changed` still means “a watched projection changed” for existing ChatGPT automations. Inbound webhooks **must not** fan out to those subscribers. Delivery matches only when `arguments.source` is set to `inbound:github` / `inbound:stripe` / `inbound:figma` / `inbound:*`. Omit `source` (default) → projection/schedule traffic only.
+
+## 10. NATS JetStream
+
+`/events` and MCP Events are two delivery surfaces on one stream:
+
+1. Producers publish once to `clawql.events.<type>.<tenant>` after redaction.
+2. Webhook sender, SSE fan-out, and MCP delivery are consumers.
+3. SSE `Last-Event-ID` maps to the JetStream sequence (in-process buffer is the single-process stand-in).
+4. `Nats-Msg-Id` = event id so JetStream drops duplicate publishes; webhook retries keep the same id.
+5. CloudEvents uses the official NATS binding — the `/events` envelope travels unchanged.
+6. Inbound webhooks publish into the same stream after signature verify.
+7. Never expose NATS to customers. Per-tenant NATS accounts stay internal; edge gateways may connect as leaf nodes.
+8. Event streams belong on the erase path; set retention limits because JetStream persists at rest.
+9. **Managed multi-replica release requirement:** wire `EventStreamPublisher` to JetStream (`CLAWQL_EVENTS_REQUIRE_JETSTREAM=1` / `CLAWQL_CONSOLE_SURFACE=managed`). Webhook delivery workers use queue group `clawql-events-webhook` for exactly-once delivery across replicas. Without JetStream, SSE resume and webhook dedupe break across gateway replicas — fail-closed at service construction when required.

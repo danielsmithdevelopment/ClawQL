@@ -25,7 +25,7 @@ export const networkDoctorCheck = (home?: string): Effect.Effect<NetworkDoctorCh
     const headscale = yield* commandAvailable("headscale");
     const tailcat = yield* resolveTailcatBinary().pipe(
       Effect.map(() => true),
-      Effect.catchAll(() => Effect.succeed(false))
+      Effect.catch(() => Effect.succeed(false))
     );
 
     const parts = [

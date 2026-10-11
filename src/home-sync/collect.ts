@@ -1,8 +1,13 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
+import { Effect } from "effect";
 import { ALWAYS_EXCLUDE_REL } from "./paths.js";
 import type { SyncFileEntry } from "./types.js";
+
+function asError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
 
 async function sha256File(absPath: string): Promise<string> {
   const buf = await readFile(absPath);
@@ -59,25 +64,38 @@ async function walkDir(
   }
 }
 
-/** Collect syncable files under CLAWQL_HOME. */
+/** Collect syncable files under CLAWQL_HOME (Effect-primary). */
+export function collectLocalSyncFilesEffect(
+  home: string,
+  include: string[]
+): Effect.Effect<Map<string, SyncFileEntry>, Error> {
+  return Effect.tryPromise({
+    try: async () => {
+      const out = new Map<string, SyncFileEntry>();
+      for (const item of include) {
+        const rel = item.replace(/\\/g, "/").replace(/^\/+/, "");
+        if (!rel || isExcludedRel(rel)) continue;
+        const abs = join(home, rel);
+        const st = await stat(abs).catch((e: unknown) => {
+          if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return null;
+          throw e;
+        });
+        if (!st) continue;
+        if (st.isDirectory()) await walkDir(abs, home, out);
+        else if (st.isFile()) await walkFile(abs, home, out);
+      }
+      return out;
+    },
+    catch: asError,
+  });
+}
+
+/** Promise façade — prefer {@link collectLocalSyncFilesEffect}. */
 export async function collectLocalSyncFiles(
   home: string,
   include: string[]
 ): Promise<Map<string, SyncFileEntry>> {
-  const out = new Map<string, SyncFileEntry>();
-  for (const item of include) {
-    const rel = item.replace(/\\/g, "/").replace(/^\/+/, "");
-    if (!rel || isExcludedRel(rel)) continue;
-    const abs = join(home, rel);
-    const st = await stat(abs).catch((e: unknown) => {
-      if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return null;
-      throw e;
-    });
-    if (!st) continue;
-    if (st.isDirectory()) await walkDir(abs, home, out);
-    else if (st.isFile()) await walkFile(abs, home, out);
-  }
-  return out;
+  return Effect.runPromise(collectLocalSyncFilesEffect(home, include));
 }
 
 export function absPathForRel(home: string, relPath: string): string {

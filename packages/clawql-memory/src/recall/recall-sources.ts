@@ -35,12 +35,9 @@ export function envFlagTruthy(key: string): boolean {
   return v === "1" || v === "true" || v === "yes";
 }
 
-/** Env-gated hybrid Onyx merge into memory_recall defaults. */
+/** Env-gated Onyx merge into memory_recall defaults (named job — not the removed master hybrid). */
 export function hybridOnyxRecallEnabled(): boolean {
-  return (
-    envFlagTruthy("CLAWQL_MEMORY_RECALL_HYBRID_ONYX") ||
-    envFlagTruthy("CLAWQL_MEMORY_RECALL_HYBRID")
-  );
+  return envFlagTruthy("CLAWQL_MEMORY_RECALL_HYBRID_ONYX");
 }
 
 /**

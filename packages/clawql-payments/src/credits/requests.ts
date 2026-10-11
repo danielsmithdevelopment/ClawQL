@@ -444,10 +444,24 @@ async function markMoneyRequestPaidImpl(
 }
 
 /** Private IO helper backing {@link CreditsRequestsService.reset}. */
+async function resetMoneyRequestsForTestsImpl(env: NodeJS.ProcessEnv = process.env): Promise<void> {
+  await saveFile(emptyFile(), env);
+}
+
+export function resetMoneyRequestsForTestsEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => resetMoneyRequestsForTestsImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resetMoneyRequestsForTestsEffect} for Effect callers. */
 export async function resetMoneyRequestsForTests(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<void> {
-  await saveFile(emptyFile(), env);
+  return Effect.runPromise(resetMoneyRequestsForTestsEffect(env));
 }
 
 export class RequestsError extends Data.TaggedError("RequestsError")<{
@@ -466,7 +480,7 @@ type MarkAcceptedInput = {
 type MarkPaidInput = { requestId: string; transferId: string };
 
 /** Effect surface over money requests / invoices. */
-export class CreditsRequestsService extends Context.Tag("clawql/CreditsRequestsService")<
+export class CreditsRequestsService extends Context.Service<
   CreditsRequestsService,
   {
     readonly get: (requestId: string) => Effect.Effect<MoneyRequest | undefined, RequestsError>;
@@ -487,7 +501,7 @@ export class CreditsRequestsService extends Context.Tag("clawql/CreditsRequestsS
     ) => Effect.Effect<MoneyRequest | undefined, RequestsError>;
     readonly reset: () => Effect.Effect<void, RequestsError>;
   }
->() {}
+>()("clawql/CreditsRequestsService") {}
 
 export function creditsRequestsLiveLayer(
   env: NodeJS.ProcessEnv = process.env
@@ -537,10 +551,10 @@ export function creditsRequestsLiveLayer(
             payerEmail = normalizeEmail(to);
             const resolved = yield* directory
               .resolveRecipient(to, { forceEmail: true })
-              .pipe(Effect.either);
-            if (resolved._tag === "Right") {
-              payerTenantId = resolved.right.tenantId;
-              payerHandle = resolved.right.handle;
+              .pipe(Effect.result);
+            if (resolved._tag === "Success") {
+              payerTenantId = resolved.success.tenantId;
+              payerHandle = resolved.success.handle;
             } else {
               invite = true;
             }

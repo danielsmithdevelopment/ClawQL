@@ -141,7 +141,7 @@ export const hitlLabelStudioToolSchema = {
     .describe("Optional provenance object stored under data.clawql_hitl.provenance."),
 };
 
-export async function handleScheduleToolInput(
+async function handleScheduleToolInputImpl(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
   const p = params as {
@@ -159,13 +159,45 @@ export async function handleScheduleToolInput(
   return runScheduleTool(params);
 }
 
-export async function handleNotifyToolInput(
+export function handleScheduleToolInputEffect(
+  params: unknown
+): Effect.Effect<{ content: { type: "text"; text: string }[] }, Error> {
+  return Effect.tryPromise({
+    try: () => handleScheduleToolInputImpl(params),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link handleScheduleToolInputEffect} for Effect callers. */
+export async function handleScheduleToolInput(
+  params: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  return Effect.runPromise(handleScheduleToolInputEffect(params));
+}
+
+async function handleNotifyToolInputImpl(
   params: NotifySlackInput
 ): Promise<{ content: { type: "text"; text: string }[] }> {
   return runNotifySlack(params);
 }
 
-export async function handleWorkflowToolInput(
+export function handleNotifyToolInputEffect(
+  params: NotifySlackInput
+): Effect.Effect<{ content: { type: "text"; text: string }[] }, Error> {
+  return Effect.tryPromise({
+    try: () => handleNotifyToolInputImpl(params),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link handleNotifyToolInputEffect} for Effect callers. */
+export async function handleNotifyToolInput(
+  params: NotifySlackInput
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  return Effect.runPromise(handleNotifyToolInputEffect(params));
+}
+
+async function handleWorkflowToolInputImpl(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
   const p = params as { operation?: string; namespace?: string; name?: string };
@@ -177,7 +209,23 @@ export async function handleWorkflowToolInput(
   return runWorkflowTool(params);
 }
 
-export async function handleArgocdToolInput(
+export function handleWorkflowToolInputEffect(
+  params: unknown
+): Effect.Effect<{ content: { type: "text"; text: string }[] }, Error> {
+  return Effect.tryPromise({
+    try: () => handleWorkflowToolInputImpl(params),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link handleWorkflowToolInputEffect} for Effect callers. */
+export async function handleWorkflowToolInput(
+  params: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  return Effect.runPromise(handleWorkflowToolInputEffect(params));
+}
+
+async function handleArgocdToolInputImpl(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
   const p = params as { operation?: string; namespace?: string; name?: string };
@@ -187,6 +235,22 @@ export async function handleArgocdToolInput(
     nameLen: p.name?.length,
   });
   return runArgocdTool(params);
+}
+
+export function handleArgocdToolInputEffect(
+  params: unknown
+): Effect.Effect<{ content: { type: "text"; text: string }[] }, Error> {
+  return Effect.tryPromise({
+    try: () => handleArgocdToolInputImpl(params),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link handleArgocdToolInputEffect} for Effect callers. */
+export async function handleArgocdToolInput(
+  params: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  return Effect.runPromise(handleArgocdToolInputEffect(params));
 }
 
 export type CreateAutomationPluginOptions = {

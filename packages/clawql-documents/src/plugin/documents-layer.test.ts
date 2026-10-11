@@ -13,7 +13,7 @@ describe("makeDocumentsLayer", () => {
     const api = createClawQLApi({
       plugins: [],
       executeLayer,
-      pluginLayers: [makeDocumentsLayer()],
+      pluginLayers: [makeDocumentsLayer({ enableExternalIngest: true })],
     });
     expect(api.registry.list().some((p) => p.id === DOCUMENTS_PLUGIN_ID)).toBe(true);
     expect(api.listMcpTools().map((t) => t.name)).toContain("ingest_external_knowledge");

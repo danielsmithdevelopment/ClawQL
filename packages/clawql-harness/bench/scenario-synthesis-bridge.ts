@@ -36,15 +36,35 @@ export async function synthesizeBenchmarkTasks(
 }
 
 /** Convenience: tools-only entry for plugin authors. */
-export async function coldStartTasksFromTools(
+async function coldStartTasksFromToolsImpl(
   pluginId: string,
   tools: readonly ToolDefinition[],
   options?: Omit<ScenarioSynthesisRequest, "pluginId" | "tools">
-): Promise<readonly BenchmarkTask[]> {
+): Promise<readonly BenchmarkTask[]>  {
   return synthesizeBenchmarkTasks({
     pluginId,
     tools,
     gradedComplexity: options?.gradedComplexity ?? ["simple", "multi-tool"],
     multiTurn: options?.multiTurn ?? true,
   });
+}
+
+export function coldStartTasksFromToolsEffect(
+  pluginId: string,
+  tools: readonly ToolDefinition[],
+  options?: Omit<ScenarioSynthesisRequest, "pluginId" | "tools">
+): Effect.Effect<readonly BenchmarkTask[], Error> {
+  return Effect.tryPromise({
+    try: () => coldStartTasksFromToolsImpl(pluginId, tools, options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link coldStartTasksFromToolsEffect} for Effect callers. */
+export async function coldStartTasksFromTools(
+  pluginId: string,
+  tools: readonly ToolDefinition[],
+  options?: Omit<ScenarioSynthesisRequest, "pluginId" | "tools">
+): Promise<readonly BenchmarkTask[]>  {
+  return Effect.runPromise(coldStartTasksFromToolsEffect(pluginId, tools, options));
 }

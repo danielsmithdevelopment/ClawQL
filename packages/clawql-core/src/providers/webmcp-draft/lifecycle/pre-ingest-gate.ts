@@ -64,12 +64,12 @@ export const webMcpDraftPreIngestHook: LifecycleHook = {
       }
       const gated = yield* preIngestGate(tool).pipe(
         Effect.provide(DraftStoreLive),
-        Effect.either
+        Effect.result
       );
-      if (gated._tag === "Left") {
+      if (gated._tag === "Failure") {
         return {
           allow: false,
-          denyReason: gated.left.reason,
+          denyReason: gated.failure.reason,
         } satisfies HookResult;
       }
       return { allow: true } satisfies HookResult;

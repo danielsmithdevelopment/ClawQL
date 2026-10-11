@@ -10,11 +10,14 @@
  * Disabling them requires an explicit break-glass flag (tests / emergencies only).
  */
 
+import { Effect } from "effect";
 import { getObsidianVaultPath } from "../vault/config.js";
+import { MemoryError } from "../effect/memory-errors.js";
+import { memoryFromPromise } from "../effect/memory-effect-utils.js";
 import {
   DEFAULT_LOCAL_EMBEDDING_DIMENSION,
   DEFAULT_LOCAL_EMBEDDING_MODEL,
-  embedTextsLocal,
+  embedTextsLocalEffect,
 } from "./embedding-local.js";
 
 export type EmbeddingProvider = "local" | "http";
@@ -284,21 +287,39 @@ async function embedTextsHttp(
 }
 
 /**
- * Embed texts via local ONNX (default) or OpenAI-compatible HTTP.
+ * Embed texts via local ONNX (default) or OpenAI-compatible HTTP — Effect primary.
  */
+export function embedTextsEffect(
+  texts: string[],
+  config: EmbeddingConfig
+): Effect.Effect<{ vectors: Float32Array[]; model: string; dimension: number }, MemoryError> {
+  if (config.provider === "local") {
+    return embedTextsLocalEffect(texts, config.model);
+  }
+  return memoryFromPromise(() => embedTextsHttp(texts, config));
+}
+
+/** Promise façade. */
 export async function embedTexts(
   texts: string[],
   config: EmbeddingConfig
 ): Promise<{ vectors: Float32Array[]; model: string; dimension: number }> {
-  if (config.provider === "local") {
-    return embedTextsLocal(texts, config.model);
-  }
-  return embedTextsHttp(texts, config);
+  return Effect.runPromise(embedTextsEffect(texts, config));
 }
 
+export function embedQueryEffect(
+  text: string,
+  config: EmbeddingConfig
+): Effect.Effect<Float32Array, MemoryError> {
+  return Effect.gen(function* () {
+    const { vectors } = yield* embedTextsEffect([text], config);
+    return vectors[0] ?? new Float32Array(0);
+  });
+}
+
+/** Promise façade. */
 export async function embedQuery(text: string, config: EmbeddingConfig): Promise<Float32Array> {
-  const { vectors } = await embedTexts([text], config);
-  return vectors[0] ?? new Float32Array(0);
+  return Effect.runPromise(embedQueryEffect(text, config));
 }
 
 export type ChunkWithEmbedding = {

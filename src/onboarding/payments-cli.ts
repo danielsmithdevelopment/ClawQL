@@ -17,6 +17,7 @@ import {
   runPaymentsStripeMeterReport,
   runPaymentsStripeCatalogEnsure,
   runPaymentsStripeCatalogValidate,
+  runPaymentsStripeCheckoutCreate,
   runPaymentsUsageReport,
   runPaymentsX402Gate,
   runPaymentsX402GateList,
@@ -197,6 +198,12 @@ export type PaymentsCliOptions = {
   noTopUps?: boolean;
   /** Skip Billing Meter + metered Price when ensuring Stripe catalog. */
   noMeter?: boolean;
+  /** Self-serve Checkout: organization display name. */
+  orgName?: string;
+  /** Self-serve Checkout: success redirect URL. */
+  successUrl?: string;
+  /** Self-serve Checkout: cancel redirect URL. */
+  cancelUrl?: string;
   /** Enterprise org id (`clawql payments org …`). */
   orgId?: string;
   /** Billing admin / actor tenant for org admin commands. */
@@ -341,6 +348,20 @@ export async function runPaymentsStripeCatalogValidateCmd(
   options: PaymentsCliOptions = {}
 ): Promise<number> {
   return runPaymentsStripeCatalogValidate({
+    json: options.json,
+  });
+}
+
+export async function runPaymentsStripeCheckoutCreateCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsStripeCheckoutCreate({
+    plan: options.plan,
+    orgName: options.orgName ?? options.name,
+    email: options.email,
+    successUrl: options.successUrl,
+    cancelUrl: options.cancelUrl,
+    billingMode: options.billingMode,
     json: options.json,
   });
 }

@@ -324,6 +324,12 @@ const KIND_MAP: Record<PaymentEventKind, Classified> = {
     taxTreatment: "non_taxable",
     counterpartyKind: "customer",
   },
+  ACCOUNT_DELETED: {
+    direction: "internal",
+    category: "other",
+    taxTreatment: "non_taxable",
+    counterpartyKind: "customer",
+  },
   USAGE_REPORTED_TO_BILLING: {
     direction: "internal",
     category: "usage_revenue",

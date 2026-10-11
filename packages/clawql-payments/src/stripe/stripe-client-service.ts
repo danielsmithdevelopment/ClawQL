@@ -7,14 +7,14 @@ function resolveStripeSecretKey(env: NodeJS.ProcessEnv): string | undefined {
 }
 
 /** Effect service for Stripe SDK client lifecycle. */
-export class StripeClientService extends Context.Tag("clawql/StripeClientService")<
+export class StripeClientService extends Context.Service<
   StripeClientService,
   {
     readonly isConfigured: () => boolean;
     readonly getClient: () => Effect.Effect<Stripe, StripeNotConfigured>;
     readonly getClientOptional: () => Stripe | null;
   }
->() {}
+>()("clawql/StripeClientService") {}
 
 export function isStripeConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
   return Boolean(resolveStripeSecretKey(env));

@@ -9,7 +9,7 @@ import {
   type MerkleSnapshot,
 } from "../merkle-tree.js";
 
-export class MerkleService extends Context.Tag("clawql/MerkleService")<
+export class MerkleService extends Context.Service<
   MerkleService,
   {
     readonly buildSnapshot: (rows: readonly MerkleDocumentRow[]) => Effect.Effect<MerkleSnapshot>;
@@ -25,7 +25,7 @@ export class MerkleService extends Context.Tag("clawql/MerkleService")<
       proof: readonly Buffer[]
     ) => Effect.Effect<boolean>;
   }
->() {}
+>()("clawql/MerkleService") {}
 
 export const MerkleServiceLive = Layer.succeed(
   MerkleService,

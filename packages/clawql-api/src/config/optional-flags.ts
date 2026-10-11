@@ -28,8 +28,9 @@ const rawOptionalFlagsSchema = z.object({
   /** Default on: `memory_ingest` / `memory_recall`. Set `0` / `false` / `no` to unregister. */
   CLAWQL_ENABLE_MEMORY: z.string().optional(),
   /**
-   * Default on: document pipeline — bundled tika / docling / gotenberg / paperless / stirling / onyx / **nextcloud** / **coneshare** in **`all-providers`**, plus
-   * **`ingest_external_knowledge`** and (with **`CLAWQL_ENABLE_ONYX`**) **`knowledge_search_onyx`**. Set `0` to opt out.
+   * Default on: document tier — Docling + archive/collab vendors in **`all-providers`**;
+   * optional IDP / Anydoc / pdf-inspector tools. **`ingest_external_knowledge`** needs
+   * **`CLAWQL_EXTERNAL_INGEST=1`**. Set `0` to opt out of the document tier.
    */
   CLAWQL_ENABLE_DOCUMENTS: z.string().optional(),
   CLAWQL_ENABLE_SCHEDULE: z.string().optional(),
@@ -38,7 +39,6 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_WORKFLOW: z.string().optional(),
   /** ([#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244)): Argo CD `argocd` MCP tool. Default false. */
   CLAWQL_ENABLE_ARGO_CD: z.string().optional(),
-  CLAWQL_ENABLE_VISION: z.string().optional(),
   CLAWQL_ENABLE_ONYX: z.string().optional(),
   CLAWQL_ENABLE_SANDBOX: z.string().optional(),
   /**
@@ -46,6 +46,12 @@ const rawOptionalFlagsSchema = z.object({
    * register with `CLAWQL_ENABLE_DATA=1`. Not Python duckdb and not chDB.
    */
   CLAWQL_ENABLE_DATA: z.string().optional(),
+  /**
+   * Legacy MCP name `clawql_sql` as alias of `data_query`. Default false —
+   * set `CLAWQL_ENABLE_CLAWQL_SQL_ALIAS=1` when a client allowlists `clawql_sql` directly
+   * (Harvey LAB remaps via `lab-mcp-proxy.mjs` and does not need this).
+   */
+  CLAWQL_ENABLE_CLAWQL_SQL_ALIAS: z.string().optional(),
   /** Web search/fetch MCP tools (`web_*`). Auto-on when a provider/key is set; `0` forces off. */
   CLAWQL_ENABLE_WEB: z.string().optional(),
   CLAWQL_WEB_SEARCH_PROVIDER: z.string().optional(),
@@ -91,6 +97,12 @@ const rawOptionalFlagsSchema = z.object({
   /** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): Langfuse eval webhook + `ouroboros_propose_seed_revision_from_eval`. Default false. */
   CLAWQL_ENABLE_LANGFUSE_EVAL: z.string().optional(),
   /**
+   * (8.0 demotion): agent-facing `ouroboros_*` / `clawql_think` MCP tools via `clawql-harness`.
+   * Default **false** — no additive agent-loop proof yet. Server-side Ouroboros lifecycle and
+   * the `clawql-ouroboros` / `clawql-harness` packages stay regardless of this flag.
+   */
+  CLAWQL_ENABLE_OUROBOROS_TOOLS: z.string().optional(),
+  /**
    * Governed observability MCP tools + HTTP read API (query federation, health, Alloy apply).
    * Default false — register with `CLAWQL_ENABLE_OBSERVABILITY=1`.
    */
@@ -119,6 +131,11 @@ const rawOptionalFlagsSchema = z.object({
    * Does **not** gate **`all-providers`** (that preset always includes AWS).
    */
   CLAWQL_ENABLE_AWS: z.string().optional(),
+  /**
+   * Supabase Auth provider plugin (`clawql-supabase`) for managed clawql.com signup.
+   * Default false — register with `CLAWQL_ENABLE_SUPABASE=1` (+ URL + JWKS, secret fallback).
+   */
+  CLAWQL_ENABLE_SUPABASE: z.string().optional(),
 });
 
 export type ClawqlOptionalToolFlags = {
@@ -126,7 +143,10 @@ export type ClawqlOptionalToolFlags = {
   enableGrpc: boolean;
   /** `ENABLE_GRPC_REFLECTION` — server reflection for grpcurl. */
   enableGrpcReflection: boolean;
-  /** `CLAWQL_EXTERNAL_INGEST=1` — `ingest_external_knowledge` (Markdown import + optional URL fetch). */
+  /**
+   * `CLAWQL_EXTERNAL_INGEST=1` — register `ingest_external_knowledge` (bulk Markdown + optional URL fetch).
+   * Default off; vault writes use `memory_ingest` (8.0 verb-twin demotion).
+   */
   externalIngestPreview: boolean;
   /**
    * Durable **vault** tools **`memory_ingest`** / **`memory_recall`**. Default **true** (set **`CLAWQL_ENABLE_MEMORY=0`**
@@ -134,8 +154,9 @@ export type ClawqlOptionalToolFlags = {
    */
   enableMemory: boolean;
   /**
-   * Document stack: default merge includes tika, gotenberg, paperless, stirling, onyx, nextcloud, coneshare; registers **`ingest_external_knowledge`**;
-   * pairs with **`knowledge_search_onyx`** when **`CLAWQL_ENABLE_ONYX=1`**. Set **`CLAWQL_ENABLE_DOCUMENTS=0`** to opt out.
+   * Document stack: Docling + archive/collab vendors in `all-providers`; optional IDP/Anydoc/pdf-inspector tools.
+   * `ingest_external_knowledge` registers only when **`CLAWQL_EXTERNAL_INGEST=1`**.
+   * Set **`CLAWQL_ENABLE_DOCUMENTS=0`** to opt out of the document tier.
    */
   enableDocuments: boolean;
   /**
@@ -155,10 +176,6 @@ export type ClawqlOptionalToolFlags = {
    */
   enableArgoCd: boolean;
   /**
-   * Planned (#78): `vision` / `multimodal` tool. Default false until implemented.
-   */
-  enableVision: boolean;
-  /**
    * ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)): `knowledge_search_onyx` — wrapper over bundled Onyx search. Default false.
    */
   enableOnyxKnowledge: boolean;
@@ -171,6 +188,11 @@ export type ClawqlOptionalToolFlags = {
    * Default false — register with **`CLAWQL_ENABLE_DATA=1`**.
    */
   enableData: boolean;
+  /**
+   * Register legacy **`clawql_sql`** alias of **`data_query`**. Default false —
+   * **`CLAWQL_ENABLE_CLAWQL_SQL_ALIAS=1`**.
+   */
+  enableClawqlSqlAlias: boolean;
   /**
    * MCP **`web_search` / `web_fetch` / `web_screenshot` / `web_interact`** (`clawql-web`).
    * Default false unless `CLAWQL_ENABLE_WEB=1` or a web provider/API key is configured.
@@ -217,6 +239,12 @@ export type ClawqlOptionalToolFlags = {
    */
   enableLangfuseEval: boolean;
   /**
+   * (8.0 demotion): agent-facing `ouroboros_*` / `clawql_think` MCP tools. Default **false** —
+   * register with **`CLAWQL_ENABLE_OUROBOROS_TOOLS=1`** or instance/tier `ouroboros.enabled: true`.
+   * Server-side Ouroboros capability lifecycle and `clawql-harness` plugin loading stay unaffected.
+   */
+  enableOuroborosTools: boolean;
+  /**
    * Governed observability MCP tools (`observability_query_*`, health, Alloy apply) + optional HTTP read API.
    * Default false — register with **`CLAWQL_ENABLE_OBSERVABILITY=1`**.
    */
@@ -237,6 +265,11 @@ export type ClawqlOptionalToolFlags = {
    * Adds AWS to the **default install stack**. Default **false** (opt in).
    */
   enableAws: boolean;
+  /**
+   * Supabase Auth provider plugin (`clawql-supabase`) — managed signup middleware (no MCP tools).
+   * Default false — `CLAWQL_ENABLE_SUPABASE=1`.
+   */
+  enableSupabase: boolean;
 };
 
 function resolveEnableWeb(raw: z.infer<typeof rawOptionalFlagsSchema>): boolean {
@@ -267,10 +300,10 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableNotify: envTruthy(raw.CLAWQL_ENABLE_NOTIFY),
     enableWorkflow: envTruthy(raw.CLAWQL_ENABLE_WORKFLOW),
     enableArgoCd: envTruthy(raw.CLAWQL_ENABLE_ARGO_CD),
-    enableVision: envTruthy(raw.CLAWQL_ENABLE_VISION),
     enableOnyxKnowledge: envTruthy(raw.CLAWQL_ENABLE_ONYX),
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
     enableData: envTruthy(raw.CLAWQL_ENABLE_DATA),
+    enableClawqlSqlAlias: envTruthy(raw.CLAWQL_ENABLE_CLAWQL_SQL_ALIAS),
     enableWeb: resolveEnableWeb(raw),
     enableOntology:
       envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY) || envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY_WRITES),
@@ -283,11 +316,13 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enablePdfInspector: envTruthy(raw.CLAWQL_ENABLE_PDF_INSPECTOR),
     enableAnydoc: envTruthy(raw.CLAWQL_ENABLE_ANYDOC),
     enableLangfuseEval: envTruthy(raw.CLAWQL_ENABLE_LANGFUSE_EVAL),
+    enableOuroborosTools: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS_TOOLS),
     enableObservability: envTruthy(raw.CLAWQL_ENABLE_OBSERVABILITY),
     enableChatgptExtensions: envTruthyWithDefault(raw.CLAWQL_ENABLE_CHATGPT_EXTENSIONS, true),
     enableGoogle: envTruthy(raw.CLAWQL_ENABLE_GOOGLE),
     enableCloudflare: envTruthyWithDefault(raw.CLAWQL_ENABLE_CLOUDFLARE, true),
     enableAws: envTruthy(raw.CLAWQL_ENABLE_AWS),
+    enableSupabase: envTruthy(raw.CLAWQL_ENABLE_SUPABASE),
   };
 }
 
@@ -326,10 +361,10 @@ export function basePluginCompositionFlags(): ClawqlOptionalToolFlags {
     enableNotify: false,
     enableWorkflow: false,
     enableArgoCd: false,
-    enableVision: false,
     enableOnyxKnowledge: false,
     enableSandbox: false,
     enableData: false,
+    enableClawqlSqlAlias: false,
     enableWeb: false,
     enableOntology: false,
     enableOntologyWrites: false,
@@ -341,10 +376,12 @@ export function basePluginCompositionFlags(): ClawqlOptionalToolFlags {
     enablePdfInspector: false,
     enableAnydoc: false,
     enableLangfuseEval: false,
+    enableOuroborosTools: false,
     enableObservability: false,
     enableChatgptExtensions: true,
     enableGoogle: false,
     enableCloudflare: true,
     enableAws: false,
+    enableSupabase: false,
   };
 }

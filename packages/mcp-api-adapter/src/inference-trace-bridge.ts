@@ -4,6 +4,7 @@
  */
 
 import type { TraceCallRecord } from "./mcp-ui-trace.js";
+import { Effect } from "effect";
 
 /** Minimal inference record shape (matches clawql-inference InferenceRecord). */
 export type InferenceRecordLike = {
@@ -67,9 +68,9 @@ function inferenceTraceEnabled(env: NodeJS.ProcessEnv): boolean {
  * When clawql-inference is installed and store env is configured, return
  * `listTraceCalls` for `startMcpApiAdapter` / CLI.
  */
-export async function resolveListTraceCallsFromEnv(
+async function resolveListTraceCallsFromEnvImpl(
   env: NodeJS.ProcessEnv = process.env
-): Promise<((sessionId: string) => Promise<TraceCallRecord[]>) | undefined> {
+): Promise<((sessionId: string) => Promise<TraceCallRecord[]>) | undefined>  {
   if (!inferenceTraceEnabled(env)) return undefined;
 
   let createInferenceStore: (
@@ -90,6 +91,22 @@ export async function resolveListTraceCallsFromEnv(
     getByCorrelationId: (correlationId) =>
       store.getByCorrelationId(correlationId) as Promise<InferenceRecordLike[]>,
   });
+}
+
+export function resolveListTraceCallsFromEnvEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<((sessionId: string) => Promise<TraceCallRecord[]>) | undefined, Error> {
+  return Effect.tryPromise({
+    try: () => resolveListTraceCallsFromEnvImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resolveListTraceCallsFromEnvEffect} for Effect callers. */
+export async function resolveListTraceCallsFromEnv(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<((sessionId: string) => Promise<TraceCallRecord[]>) | undefined>  {
+  return Effect.runPromise(resolveListTraceCallsFromEnvEffect(env));
 }
 
 export function liveTraceTokenizationMeta(): {

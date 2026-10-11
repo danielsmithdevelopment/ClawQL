@@ -4,7 +4,7 @@
  * No nested {@link runMemoryEffect} / {@link runDocumentsEffect}.
  */
 
-import { Effect, Either } from "effect";
+import { Effect, Result } from "effect";
 import {
   MemoryDbService,
   VaultConfigService,
@@ -13,10 +13,10 @@ import {
 } from "clawql-memory/plugin";
 import {
   evaluateExternalIngestPrelude,
-  fetchUrlResource,
+  fetchUrlResourceEffect,
   prepareMarkdownDocuments,
   writePlannedMarkdownDocuments,
-  writeUrlIngestNote,
+  writeUrlIngestNoteEffect,
   type ExternalIngestInput,
   type ExternalIngestResult,
 } from "../ingest/external-ingest.js";
@@ -74,13 +74,21 @@ export function executeExternalIngestCoreEffect(
         } satisfies ExternalIngestResult;
       }
 
-      const fetchEither = yield* Effect.either(
-        documentsFromPromise(() => fetchUrlResource(prelude.url))
+      const fetchEither = yield* Effect.result(
+        fetchUrlResourceEffect(prelude.url).pipe(
+          Effect.mapError(
+            (cause) =>
+              new DocumentsError({
+                reason: cause instanceof Error ? cause.message : String(cause),
+                cause,
+              })
+          )
+        )
       );
-      if (Either.isLeft(fetchEither)) {
-        const cause = fetchEither.left.cause;
-        const msg =
-          cause instanceof Error ? cause.message : String(cause ?? fetchEither.left.reason);
+      if (Result.isFailure(fetchEither)) {
+        const fail = fetchEither.failure;
+        const cause = fail.cause;
+        const msg = cause instanceof Error ? cause.message : String(cause ?? fail.reason);
         return {
           ok: false,
           enabled: true,
@@ -90,15 +98,21 @@ export function executeExternalIngestCoreEffect(
         } satisfies ExternalIngestResult;
       }
 
-      const resource = fetchEither.right;
-      yield* documentsFromPromise(() =>
-        writeUrlIngestNote(
-          prelude.vault,
-          prelude.targetRel,
-          resource.finalUrl,
-          resource.body,
-          resource.contentType,
-          resource.bytes
+      const resource = fetchEither.success;
+      yield* writeUrlIngestNoteEffect(
+        prelude.vault,
+        prelude.targetRel,
+        resource.finalUrl,
+        resource.body,
+        resource.contentType,
+        resource.bytes
+      ).pipe(
+        Effect.mapError(
+          (cause) =>
+            new DocumentsError({
+              reason: cause instanceof Error ? cause.message : String(cause),
+              cause,
+            })
         )
       );
       yield* vaultWritePostSyncEffect(prelude.vault);

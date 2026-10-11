@@ -18,10 +18,31 @@ import { SessionCatalogError, SessionCatalogService } from "./session-catalog.js
 import type { SessionCatalog } from "./types.js";
 
 /**
+ * Capabilities agents are never issued — human/operator-only paths.
+ * Filtered from session seed even if env or process registration lists them.
+ */
+export const AGENT_NEVER_ISSUED_CAPABILITIES: readonly string[] = [
+  "sources_approve",
+  "supabase_verify_session",
+  "supabase_checkout_handoff",
+];
+
+const AGENT_NEVER_ISSUED = new Set<string>(AGENT_NEVER_ISSUED_CAPABILITIES);
+
+function omitAgentNeverIssued(names: readonly string[]): string[] {
+  return [
+    ...new Set(names.map((t) => t.trim()).filter((t) => Boolean(t) && !AGENT_NEVER_ISSUED.has(t))),
+  ];
+}
+
+/**
  * Default seed when ATR tokens are absent — Core MCP surface that is always
  * (or commonly) registered. Operators expand via CLAWQL_CAPABILITY_SESSION_SEED
  * or real ATR claims. Process-registered tools (see noteProcessRegisteredCapabilityTools)
  * are unioned when neither ATR nor SESSION_SEED is set.
+ *
+ * `memory_sync` stays: it is a Cloud Agent vault-reconcile job, not a human gate.
+ * `sources_approve` is never seeded — approval is CLI/console/phone under operator credentials.
  */
 export const DEFAULT_CAPABILITY_SESSION_SEED: readonly string[] = [
   "search",
@@ -30,6 +51,7 @@ export const DEFAULT_CAPABILITY_SESSION_SEED: readonly string[] = [
   "audit",
   "skills_list",
   "skills_get",
+  "sources_propose",
   "memory_recall",
   "memory_ingest",
   "memory_sync",
@@ -43,26 +65,23 @@ export const DEFAULT_CAPABILITY_SESSION_SEED: readonly string[] = [
 /** Process-local MCP tool names published by the host after registerTools. */
 const processRegisteredTools = new Set<string>();
 
-export class CapabilityProcessToolSurface extends Context.Tag(
-  "clawql/CapabilityProcessToolSurface"
-)<
+export class CapabilityProcessToolSurface extends Context.Service<
   CapabilityProcessToolSurface,
   {
     readonly note: (names: readonly string[]) => Effect.Effect<void>;
     readonly list: () => Effect.Effect<readonly string[]>;
     readonly clear: () => Effect.Effect<void>;
   }
->() {}
+>()("clawql/CapabilityProcessToolSurface") {}
 
-export function makeCapabilityProcessToolSurface(): Context.Tag.Service<
+export function makeCapabilityProcessToolSurface(): Context.Service.Shape<
   typeof CapabilityProcessToolSurface
 > {
   return {
     note: (names) =>
       Effect.sync(() => {
-        for (const n of names) {
-          const t = n.trim();
-          if (t) processRegisteredTools.add(t);
+        for (const n of omitAgentNeverIssued(names)) {
+          processRegisteredTools.add(n);
         }
       }),
     list: () => Effect.sync(() => [...processRegisteredTools]),
@@ -94,24 +113,17 @@ export function resolveCapabilitySessionSeed(
 ): Effect.Effect<readonly string[]> {
   return Effect.sync(() => {
     if (atrTokens && atrTokens.length > 0) {
-      return [...new Set(atrTokens.map((t) => t.trim()).filter(Boolean))];
+      return omitAgentNeverIssued(atrTokens);
     }
     const fromEnv = process.env.CLAWQL_CAPABILITY_SESSION_SEED?.trim();
     if (fromEnv) {
-      return [
-        ...new Set(
-          fromEnv
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean)
-        ),
-      ];
+      return omitAgentNeverIssued(fromEnv.split(","));
     }
-    return [...new Set([...DEFAULT_CAPABILITY_SESSION_SEED, ...processRegisteredTools])];
+    return omitAgentNeverIssued([...DEFAULT_CAPABILITY_SESSION_SEED, ...processRegisteredTools]);
   });
 }
 
-export class CapabilityCatalogBootstrap extends Context.Tag("clawql/CapabilityCatalogBootstrap")<
+export class CapabilityCatalogBootstrap extends Context.Service<
   CapabilityCatalogBootstrap,
   {
     /**
@@ -122,11 +134,11 @@ export class CapabilityCatalogBootstrap extends Context.Tag("clawql/CapabilityCa
       readonly atrTokens?: readonly string[] | null;
     }) => Effect.Effect<SessionCatalog, SessionCatalogError>;
   }
->() {}
+>()("clawql/CapabilityCatalogBootstrap") {}
 
 export function makeCapabilityCatalogBootstrap(
-  catalogs: Context.Tag.Service<typeof SessionCatalogService>
-): Context.Tag.Service<typeof CapabilityCatalogBootstrap> {
+  catalogs: Context.Service.Shape<typeof SessionCatalogService>
+): Context.Service.Shape<typeof CapabilityCatalogBootstrap> {
   return {
     ensureBound: (args) =>
       Effect.gen(function* () {

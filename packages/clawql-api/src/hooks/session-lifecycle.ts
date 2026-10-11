@@ -13,8 +13,8 @@ import type { Context } from "effect";
 import { Effect } from "effect";
 
 export type SessionLifecycleOptions = {
-  readonly hookRegistry: Context.Tag.Service<typeof HookRegistry>;
-  readonly worm: Context.Tag.Service<typeof WormAuditSink>;
+  readonly hookRegistry: Context.Service.Shape<typeof HookRegistry>;
+  readonly worm: Context.Service.Shape<typeof WormAuditSink>;
   readonly sessionId: string;
   readonly atrScopeTokens?: readonly string[];
 };
@@ -37,7 +37,7 @@ function fireSessionEvent(
       { stopOnDeny: false }
     ).pipe(
       Effect.provideService(WormAuditSink, options.worm),
-      Effect.catchAll(() => Effect.void)
+      Effect.catch(() => Effect.void)
     );
   });
 }

@@ -1,0 +1,815 @@
+{
+  "suite": "executor-cmp-comprehensive",
+  "versions": {
+    "clawql": {
+      "version": "8.0.0",
+      "commit": "6a89371ae0419830de46aa327e23912ceba5b6de"
+    },
+    "executor": {
+      "version": "1.6.10",
+      "bin": "/tmp/executor-try/node_modules/.bin/executor"
+    },
+    "node": "v22.14.0",
+    "measuredAt": "2026-10-11T02:23:03.096Z"
+  },
+  "config": {
+    "iters": 200,
+    "warmup": 15,
+    "chaos_max": 8,
+    "chaos_scaleout_max": 32,
+    "chaos_workers": 4,
+    "chaos_step_ms": 3500,
+    "chaos_warmup": 8,
+    "chaos_http": true,
+    "chaos_scaleout": true,
+    "break_p99_ms": 100,
+    "break_error_rate": 0.02,
+    "governance_in_memory_worm": false,
+    "panguard": false,
+    "transport": "stdio_both",
+    "openapi_execute_path": "rest"
+  },
+  "board": {
+    "latency_ms": {
+      "clawql_gateway_p50": 1.309,
+      "clawql_gateway_p95": 1.851,
+      "clawql_gateway_p99": 3.088,
+      "clawql_gateway_p999": 3.319,
+      "executor_p50": 2.566,
+      "executor_p95": 4.563,
+      "executor_p99": 5.69,
+      "executor_p999": 6.14
+    },
+    "cpu_pct_median": {
+      "clawql": 32.93,
+      "executor": 31.58
+    },
+    "ram_rss_mb_median": {
+      "clawql": 363.11,
+      "executor": 243.49
+    },
+    "tokens": {
+      "clawql_execute_schema": 178,
+      "executor_execute_schema": 90,
+      "equal_result_clawql": 59,
+      "equal_result_executor": 59,
+      "fat_lean_clawql": 2804,
+      "fat_full_executor": 9122,
+      "layer1_note": "Rich execute schema is intentional product surface — not trimmed for parity."
+    },
+    "chaos": {
+      "primary": "nats_scaleout",
+      "scaleout_winner": "clawql",
+      "scaleout_win_reason": "higher_sustained_clients",
+      "clawql_sustained_clients": 32,
+      "executor_sustained_clients": 16,
+      "clawql_workers": 4,
+      "scaleout_broke_at": {
+        "concurrency": 32,
+        "kind": "executor"
+      },
+      "stdio_sustained_concurrency": 8,
+      "stdio_broke_at": null,
+      "http_multiplex_sustained": 8
+    }
+  },
+  "latency": {
+    "clawql_execute_e2e": {
+      "n": 200,
+      "p50_ms": 1.789,
+      "p95_ms": 2.372,
+      "p99_ms": 3.634,
+      "p999_ms": 3.787,
+      "mean_ms": 1.867,
+      "min_ms": 1.442,
+      "max_ms": 3.787
+    },
+    "executor_execute": {
+      "n": 200,
+      "p50_ms": 2.566,
+      "p95_ms": 4.563,
+      "p99_ms": 5.69,
+      "p999_ms": 6.14,
+      "mean_ms": 2.883,
+      "min_ms": 1.868,
+      "max_ms": 6.14
+    },
+    "direct_http": {
+      "n": 200,
+      "p50_ms": 0.466,
+      "p95_ms": 1.907,
+      "p99_ms": 3.852,
+      "p999_ms": 4.101,
+      "mean_ms": 0.64,
+      "min_ms": 0.374,
+      "max_ms": 4.101
+    },
+    "clawql_gateway_cost": {
+      "n": 200,
+      "p50_ms": 1.309,
+      "p95_ms": 1.851,
+      "p99_ms": 3.088,
+      "p999_ms": 3.319,
+      "mean_ms": 1.227,
+      "min_ms": -2.335,
+      "max_ms": 3.319
+    },
+    "executor_gateway_cost": {
+      "n": 200,
+      "p50_ms": 2.566,
+      "p95_ms": 4.563,
+      "p99_ms": 5.69,
+      "p999_ms": 6.14,
+      "mean_ms": 2.883,
+      "min_ms": 1.868,
+      "max_ms": 6.14
+    },
+    "method": "Interleaved ClawQL→Executor→direct; clawql_gateway_cost = execute_i − direct_i; Executor upstream=0"
+  },
+  "resources": {
+    "clawql": {
+      "label": "clawql_mcp",
+      "pid": 154521,
+      "n": 24,
+      "rss_mb": {
+        "min": 362.26,
+        "median": 363.11,
+        "max": 363.2
+      },
+      "cpu_pct": {
+        "min": 31.18,
+        "median": 32.93,
+        "max": 38.93,
+        "mean": 33.34
+      }
+    },
+    "executor": {
+      "label": "executor_mcp",
+      "pid": 154532,
+      "n": 24,
+      "rss_mb": {
+        "min": 235.16,
+        "median": 243.49,
+        "max": 262.67
+      },
+      "cpu_pct": {
+        "min": 18.45,
+        "median": 31.58,
+        "max": 35.33,
+        "mean": 31.2
+      }
+    }
+  },
+  "tokens": {
+    "tokenizer": "cl100k_base",
+    "layer1_tool_schemas": {
+      "clawql_all_tools_tokens": 5334,
+      "clawql_execute_tool_tokens": 178,
+      "clawql_tool_count": 18,
+      "executor_all_tools_tokens": 2243,
+      "executor_execute_tool_tokens": 90,
+      "executor_tool_count": 7,
+      "note": "Schema tokens are agent context cost to discover tools — not per-call result size."
+    },
+    "layer2_tool_results": {
+      "equal_arm_pets": {
+        "clawql_tokens": 59,
+        "executor_tokens": 59,
+        "note": "Same tiny JSON — token parity expected; ClawQL still paid fields shaping."
+      },
+      "fat_list_contrast": {
+        "clawql_full_fields_pets_tokens": 12809,
+        "clawql_lean_projected_tokens": 2804,
+        "executor_full_dump_tokens": 9122,
+        "ratio_executor_over_clawql_lean": 3.25,
+        "note": "Lean projection is the ClawQL fields win (id/name/status). Executor full dump is what agents get without program-filter / code mode."
+      }
+    }
+  },
+  "chaos": {
+    "slo": {
+      "break_p99_ms": 100,
+      "break_error_rate": 0.02,
+      "step_ms": 3500,
+      "max_concurrency_tried": 8
+    },
+    "steps": [
+      {
+        "concurrency": 1,
+        "duration_ms": 3500,
+        "arms": {
+          "clawql": {
+            "ok": 2679,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 765.4,
+            "latency": {
+              "n": 2679,
+              "p50_ms": 1.117,
+              "p95_ms": 1.937,
+              "p99_ms": 2.962,
+              "p999_ms": 36.045,
+              "mean_ms": 1.305,
+              "min_ms": 0.786,
+              "max_ms": 106.058
+            },
+            "rss_mb_max_across_workers": 393.94,
+            "cpu_pct_mean_across_workers": 135.09,
+            "broken": false,
+            "break_checks": {
+              "error_rate_gt": 0.02,
+              "p99_ms_gt": 100
+            }
+          },
+          "executor": {
+            "ok": 1578,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 450.9,
+            "latency": {
+              "n": 1578,
+              "p50_ms": 1.998,
+              "p95_ms": 3.614,
+              "p99_ms": 4.887,
+              "p999_ms": 10.037,
+              "mean_ms": 2.217,
+              "min_ms": 1.368,
+              "max_ms": 10.934
+            },
+            "rss_mb_max_across_workers": 256.26,
+            "cpu_pct_mean_across_workers": 44.36,
+            "broken": false,
+            "break_checks": {
+              "error_rate_gt": 0.02,
+              "p99_ms_gt": 100
+            }
+          }
+        }
+      },
+      {
+        "concurrency": 2,
+        "duration_ms": 3500,
+        "arms": {
+          "clawql": {
+            "ok": 5584,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 1595.4,
+            "latency": {
+              "n": 5584,
+              "p50_ms": 0.977,
+              "p95_ms": 1.99,
+              "p99_ms": 3.919,
+              "p999_ms": 39.31,
+              "mean_ms": 1.253,
+              "min_ms": 0.726,
+              "max_ms": 181.39
+            },
+            "rss_mb_max_across_workers": 414.69,
+            "cpu_pct_mean_across_workers": 126.68,
+            "broken": false,
+            "break_checks": {
+              "error_rate_gt": 0.02,
+              "p99_ms_gt": 100
+            }
+          },
+          "executor": {
+            "ok": 2410,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 688.6,
+            "latency": {
+              "n": 2410,
+              "p50_ms": 2.502,
+              "p95_ms": 4.849,
+              "p99_ms": 6.039,
+              "p999_ms": 14.808,
+              "mean_ms": 2.904,
+              "min_ms": 1.471,
+              "max_ms": 16.777
+            },
+            "rss_mb_max_across_workers": 259.51,
+            "cpu_pct_mean_across_workers": 37.54,
+            "broken": false,
+            "break_checks": {
+              "error_rate_gt": 0.02,
+              "p99_ms_gt": 100
+            }
+          }
+        }
+      },
+      {
+        "concurrency": 4,
+        "duration_ms": 3500,
+        "arms": {
+          "clawql": {
+            "ok": 6869,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 1962.6,
+            "latency": {
+              "n": 6869,
+              "p50_ms": 1.412,
+              "p95_ms": 3.642,
+              "p99_ms": 7.987,
+              "p999_ms": 82.079,
+              "mean_ms": 2.036,
+              "min_ms": 0.794,
+              "max_ms": 262.064
+            },
+            "rss_mb_max_across_workers": 384.82,
+            "cpu_pct_mean_across_workers": 88.24,
+            "broken": false,
+            "break_checks": {
+              "error_rate_gt": 0.02,
+              "p99_ms_gt": 100
+            }
+          },
+          "executor": {
+            "ok": 2664,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 761.1,
+            "latency": {
+              "n": 2664,
+              "p50_ms": 4.926,
+              "p95_ms": 9.13,
+              "p99_ms": 11.476,
+              "p999_ms": 17.769,
+              "mean_ms": 5.259,
+              "min_ms": 1.737,
+              "max_ms": 23.947
+            },
+            "rss_mb_max_across_workers": 273.1,
+            "cpu_pct_mean_across_workers": 28.91,
+            "broken": false,
+            "break_checks": {
+              "error_rate_gt": 0.02,
+              "p99_ms_gt": 100
+            }
+          }
+        }
+      },
+      {
+        "concurrency": 8,
+        "duration_ms": 3500,
+        "arms": {
+          "clawql": {
+            "ok": 5501,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 1571.7,
+            "latency": {
+              "n": 5501,
+              "p50_ms": 3.087,
+              "p95_ms": 8.865,
+              "p99_ms": 35.844,
+              "p999_ms": 317.082,
+              "mean_ms": 5.09,
+              "min_ms": 0.885,
+              "max_ms": 580.867
+            },
+            "rss_mb_max_across_workers": 369.96,
+            "cpu_pct_mean_across_workers": 48.11,
+            "broken": false,
+            "break_checks": {
+              "error_rate_gt": 0.02,
+              "p99_ms_gt": 100
+            }
+          },
+          "executor": {
+            "ok": 2668,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 762.3,
+            "latency": {
+              "n": 2668,
+              "p50_ms": 9.727,
+              "p95_ms": 17.845,
+              "p99_ms": 21.758,
+              "p999_ms": 32.844,
+              "mean_ms": 10.504,
+              "min_ms": 1.865,
+              "max_ms": 78.835
+            },
+            "rss_mb_max_across_workers": 274.36,
+            "cpu_pct_mean_across_workers": 20.8,
+            "broken": false,
+            "break_checks": {
+              "error_rate_gt": 0.02,
+              "p99_ms_gt": 100
+            }
+          }
+        }
+      }
+    ],
+    "sustained_concurrency_before_break": 8,
+    "broke_at": null,
+    "break_reason": null,
+    "note": "Each concurrency level spawns N independent stdio MCP processes per arm for step_ms (warmup=8 excluded from stats). Break = error_rate or p99 SLO. Not a single multiplexed session — see chaos_http for shared-process ClawQL load."
+  },
+  "chaos_http": {
+    "transport": "streamable_http_multiplex",
+    "slo": {
+      "break_p99_ms": 100,
+      "break_error_rate": 0.02,
+      "step_ms": 3500,
+      "max_concurrency_tried": 8,
+      "warmup": 8
+    },
+    "steps": [
+      {
+        "concurrency": 1,
+        "ok": 1341,
+        "err": 0,
+        "error_rate": 0,
+        "rps": 383.1,
+        "latency": {
+          "n": 1341,
+          "p50_ms": 2.426,
+          "p95_ms": 3.428,
+          "p99_ms": 4.382,
+          "p999_ms": 11.465,
+          "mean_ms": 2.609,
+          "min_ms": 1.901,
+          "max_ms": 114.746
+        },
+        "broken": false
+      },
+      {
+        "concurrency": 2,
+        "ok": 2447,
+        "err": 0,
+        "error_rate": 0,
+        "rps": 699.1,
+        "latency": {
+          "n": 2447,
+          "p50_ms": 2.641,
+          "p95_ms": 4.388,
+          "p99_ms": 7.233,
+          "p999_ms": 10.707,
+          "mean_ms": 2.861,
+          "min_ms": 1.951,
+          "max_ms": 11.062
+        },
+        "broken": false
+      },
+      {
+        "concurrency": 4,
+        "ok": 3137,
+        "err": 0,
+        "error_rate": 0,
+        "rps": 896.3,
+        "latency": {
+          "n": 3137,
+          "p50_ms": 4.239,
+          "p95_ms": 6.395,
+          "p99_ms": 11.224,
+          "p999_ms": 14.795,
+          "mean_ms": 4.466,
+          "min_ms": 2.399,
+          "max_ms": 15.79
+        },
+        "broken": false
+      },
+      {
+        "concurrency": 8,
+        "ok": 3489,
+        "err": 0,
+        "error_rate": 0,
+        "rps": 996.9,
+        "latency": {
+          "n": 3489,
+          "p50_ms": 7.441,
+          "p95_ms": 11.298,
+          "p99_ms": 15.92,
+          "p999_ms": 27.793,
+          "mean_ms": 8.029,
+          "min_ms": 2.442,
+          "max_ms": 29.838
+        },
+        "broken": false
+      }
+    ],
+    "sustained_concurrency_before_break": 8,
+    "broke_at": null,
+    "break_reason": null,
+    "resources": {
+      "label": "clawql_http",
+      "pid": 155157,
+      "n": 145,
+      "rss_mb": {
+        "min": 286.86,
+        "median": 525.25,
+        "max": 650.31
+      },
+      "cpu_pct": {
+        "min": 91.37,
+        "median": 104.48,
+        "max": 173.88,
+        "mean": 104.99
+      }
+    },
+    "note": "One ClawQL HTTP MCP process; N concurrent Streamable HTTP clients. Not equal-arm vs Executor (stdio-only). Measures shared-process load tail."
+  },
+  "chaos_scaleout": {
+    "primary": true,
+    "transport": "nats_queue_assign_sticky_http_vs_stdio",
+    "nats_url": "nats://127.0.0.1:4330",
+    "clawql_workers": 4,
+    "assign_subject": "clawql.chaos.assign",
+    "assign_queue": "clawql-chaos-assign",
+    "slo": {
+      "break_p99_ms": 100,
+      "break_error_rate": 0.02,
+      "step_ms": 3500,
+      "max_concurrency_tried": 32,
+      "warmup": 8
+    },
+    "steps": [
+      {
+        "concurrency": 1,
+        "duration_ms": 3500,
+        "arms": {
+          "clawql": {
+            "model": "nats_queue_assign_sticky_http",
+            "workers": 4,
+            "ok": 1485,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 424.3,
+            "latency": {
+              "n": 1485,
+              "p50_ms": 2.179,
+              "p95_ms": 2.994,
+              "p99_ms": 4.284,
+              "p999_ms": 9.699,
+              "mean_ms": 2.353,
+              "min_ms": 1.724,
+              "max_ms": 120.408
+            },
+            "broken": false
+          },
+          "executor": {
+            "model": "stdio_process_per_client",
+            "workers": 1,
+            "ok": 1510,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 431.4,
+            "latency": {
+              "n": 1510,
+              "p50_ms": 1.938,
+              "p95_ms": 4.214,
+              "p99_ms": 7.364,
+              "p999_ms": 13.407,
+              "mean_ms": 2.318,
+              "min_ms": 1.375,
+              "max_ms": 24.472
+            },
+            "broken": false
+          }
+        }
+      },
+      {
+        "concurrency": 2,
+        "duration_ms": 3500,
+        "arms": {
+          "clawql": {
+            "model": "nats_queue_assign_sticky_http",
+            "workers": 4,
+            "ok": 3252,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 929.1,
+            "latency": {
+              "n": 3252,
+              "p50_ms": 1.918,
+              "p95_ms": 3.501,
+              "p99_ms": 5.675,
+              "p999_ms": 11.349,
+              "mean_ms": 2.151,
+              "min_ms": 1.4,
+              "max_ms": 17.491
+            },
+            "broken": false
+          },
+          "executor": {
+            "model": "stdio_process_per_client",
+            "workers": 2,
+            "ok": 2398,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 685.1,
+            "latency": {
+              "n": 2398,
+              "p50_ms": 2.414,
+              "p95_ms": 5.164,
+              "p99_ms": 6.557,
+              "p999_ms": 16.006,
+              "mean_ms": 2.92,
+              "min_ms": 1.37,
+              "max_ms": 22.286
+            },
+            "broken": false
+          }
+        }
+      },
+      {
+        "concurrency": 4,
+        "duration_ms": 3500,
+        "arms": {
+          "clawql": {
+            "model": "nats_queue_assign_sticky_http",
+            "workers": 4,
+            "ok": 4146,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 1184.6,
+            "latency": {
+              "n": 4146,
+              "p50_ms": 2.958,
+              "p95_ms": 5.954,
+              "p99_ms": 8.919,
+              "p999_ms": 20.938,
+              "mean_ms": 3.375,
+              "min_ms": 1.732,
+              "max_ms": 29.26
+            },
+            "broken": false
+          },
+          "executor": {
+            "model": "stdio_process_per_client",
+            "workers": 4,
+            "ok": 2411,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 688.9,
+            "latency": {
+              "n": 2411,
+              "p50_ms": 5.412,
+              "p95_ms": 10.433,
+              "p99_ms": 16.608,
+              "p999_ms": 31.919,
+              "mean_ms": 5.815,
+              "min_ms": 1.655,
+              "max_ms": 42.371
+            },
+            "broken": false
+          }
+        }
+      },
+      {
+        "concurrency": 8,
+        "duration_ms": 3500,
+        "arms": {
+          "clawql": {
+            "model": "nats_queue_assign_sticky_http",
+            "workers": 4,
+            "ok": 5832,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 1666.3,
+            "latency": {
+              "n": 5832,
+              "p50_ms": 4.288,
+              "p95_ms": 9.03,
+              "p99_ms": 14.414,
+              "p999_ms": 30.757,
+              "mean_ms": 4.802,
+              "min_ms": 1.695,
+              "max_ms": 37.074
+            },
+            "broken": false
+          },
+          "executor": {
+            "model": "stdio_process_per_client",
+            "workers": 8,
+            "ok": 2479,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 708.3,
+            "latency": {
+              "n": 2479,
+              "p50_ms": 10.668,
+              "p95_ms": 19.211,
+              "p99_ms": 26.435,
+              "p999_ms": 41.961,
+              "mean_ms": 11.322,
+              "min_ms": 2.713,
+              "max_ms": 43.05
+            },
+            "broken": false
+          }
+        }
+      },
+      {
+        "concurrency": 16,
+        "duration_ms": 3500,
+        "arms": {
+          "clawql": {
+            "model": "nats_queue_assign_sticky_http",
+            "workers": 4,
+            "ok": 7118,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 2033.7,
+            "latency": {
+              "n": 7118,
+              "p50_ms": 7.182,
+              "p95_ms": 14.271,
+              "p99_ms": 20.816,
+              "p999_ms": 31.728,
+              "mean_ms": 7.872,
+              "min_ms": 2.095,
+              "max_ms": 33.708
+            },
+            "broken": false
+          },
+          "executor": {
+            "model": "stdio_process_per_client",
+            "workers": 16,
+            "ok": 2027,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 579.1,
+            "latency": {
+              "n": 2027,
+              "p50_ms": 25.978,
+              "p95_ms": 47.321,
+              "p99_ms": 60.182,
+              "p999_ms": 97.986,
+              "mean_ms": 27.746,
+              "min_ms": 2.179,
+              "max_ms": 133.387
+            },
+            "broken": false
+          }
+        }
+      },
+      {
+        "concurrency": 32,
+        "duration_ms": 3500,
+        "arms": {
+          "clawql": {
+            "model": "nats_queue_assign_sticky_http",
+            "workers": 4,
+            "ok": 8467,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 2419.1,
+            "latency": {
+              "n": 8467,
+              "p50_ms": 12.703,
+              "p95_ms": 21.76,
+              "p99_ms": 29.023,
+              "p999_ms": 44.767,
+              "mean_ms": 13.243,
+              "min_ms": 2.471,
+              "max_ms": 51.55
+            },
+            "broken": false
+          },
+          "executor": {
+            "model": "stdio_process_per_client",
+            "workers": 32,
+            "ok": 1017,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 290.6,
+            "latency": {
+              "n": 1017,
+              "p50_ms": 112.411,
+              "p95_ms": 137.859,
+              "p99_ms": 152.621,
+              "p999_ms": 364.078,
+              "mean_ms": 112.32,
+              "min_ms": 14.14,
+              "max_ms": 624.743
+            },
+            "broken": true
+          }
+        }
+      }
+    ],
+    "clawql_sustained_clients": 32,
+    "executor_sustained_clients": 16,
+    "winner": "clawql",
+    "win_reason": "higher_sustained_clients",
+    "broke_at": {
+      "concurrency": 32,
+      "kind": "executor"
+    },
+    "break_reason": "p99 152.621ms",
+    "note": "Primary chaos arm. ClawQL: fixed K HTTP gateway replicas; each client asks NATS queue group clawql-chaos-assign for a sticky base URL (fabric session placement). Executor: N independent stdio MCP processes (process-per-client). Win = higher sustained clients before SLO break; at equal cap, higher rps with ≤ p99."
+  },
+  "publish_notes": [
+    "Lead latency claims still come from latency-fair 10k×3 when available; this suite is the multi-dimension board.",
+    "Chaos primary win arm is NATS scale-out (K ClawQL HTTP replicas + queue-group assign vs Executor N-stdio).",
+    "Layer-1 execute schema richness is intentional — do not trim for token parity.",
+    "p999 from COMPREHENSIVE_ITERS<10000 is exploratory — do not claim alone.",
+    "In-memory WORM only if COMPREHENSIVE_GOVERNANCE=1; Panguard off.",
+    "Do not publicize until ClawQL wins every board dimension that is product-fair.",
+    "Executor 1.6.10 — rerun when v2 ships."
+  ]
+}

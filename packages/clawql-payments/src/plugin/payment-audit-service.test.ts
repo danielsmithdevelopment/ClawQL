@@ -4,7 +4,7 @@ import {
   getDefaultAuditRingBuffer,
   resetDefaultAuditRingBufferForTests,
 } from "clawql-core";
-import { Effect, Either, Layer } from "effect";
+import { Effect, Result, Layer } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 import { buildX402PaymentReceivedEntry } from "../audit/events.js";
 import { PaymentAuditService, paymentAuditLiveLayer } from "./payment-audit-service.js";
@@ -107,11 +107,11 @@ describe("PaymentAuditService", () => {
     });
 
     const result = await Effect.runPromise(
-      program.pipe(Effect.provide(Layer.succeed(PaymentAuditService, broken)), Effect.either)
+      program.pipe(Effect.provide(Layer.succeed(PaymentAuditService, broken)), Effect.result)
     );
-    expect(Either.isLeft(result)).toBe(true);
-    if (Either.isLeft(result)) {
-      expect(result.left).toBeInstanceOf(PaymentError);
+    expect(Result.isFailure(result)).toBe(true);
+    if (Result.isFailure(result)) {
+      expect(result.failure).toBeInstanceOf(PaymentError);
     }
   });
 });

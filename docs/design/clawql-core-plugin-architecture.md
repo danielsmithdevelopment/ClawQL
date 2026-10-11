@@ -351,6 +351,7 @@ export interface SkillDefinition {
   purposeTrace?: string;
   // Only for standalone skills (provider-bundled skills inherit tool-scope).
   applicability?: "always" | "query-matched";
+  audience?: "agent" | "operator"; // default agent; operator skills stay out of skills_list
 }
 ```
 

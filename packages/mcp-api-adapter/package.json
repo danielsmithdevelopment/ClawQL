@@ -46,9 +46,9 @@
   "homepage": "https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-api-adapter#readme",
   "dependencies": {
     "@grpc/grpc-js": "^1.14.5",
-    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@modelcontextprotocol/sdk": "^1.31.0",
     "busboy": "^1.6.0",
-    "effect": "^3.21.4",
+    "effect": "4.0.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.0",
     "graphql": "^16.14.0",
@@ -65,7 +65,7 @@
     "js-tiktoken": "^1.0.21",
     "typescript": "^6.0.3",
     "vitest": "^5.0.0",
-    "zod": "^3.24.0"
+    "zod": "^4.6.5"
   },
   "peerDependencies": {
     "clawql-inference": "0.1.0"

@@ -5,6 +5,7 @@
 
 import { readdir, readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
+import { Effect } from "effect";
 import type { OkfTrustLookup } from "./filter.js";
 
 function parseSimpleFrontmatter(markdown: string): Record<string, unknown> {
@@ -58,8 +59,19 @@ async function walkMd(abs: string, rel: string, maxFiles: number, out: string[])
   }
 }
 
-/** Load correlation_id → OKF trust fields from a vault directory. */
-export async function loadOkfTrustByCorrelationIdFromVault(
+/** Load correlation_id → OKF trust fields from a vault directory (Effect primary). */
+export function loadOkfTrustByCorrelationIdFromVaultEffect(
+  vaultAbs: string,
+  scanRoot = "Memory",
+  maxFiles = 50_000
+): Effect.Effect<OkfTrustLookup, Error> {
+  return Effect.tryPromise({
+    try: () => loadOkfTrustByCorrelationIdFromVaultImpl(vaultAbs, scanRoot, maxFiles),
+    catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+  });
+}
+
+async function loadOkfTrustByCorrelationIdFromVaultImpl(
   vaultAbs: string,
   scanRoot = "Memory",
   maxFiles = 50_000
@@ -97,6 +109,17 @@ export async function loadOkfTrustByCorrelationIdFromVault(
     });
   }
   return map;
+}
+
+/** Promise façade. */
+export async function loadOkfTrustByCorrelationIdFromVault(
+  vaultAbs: string,
+  scanRoot = "Memory",
+  maxFiles = 50_000
+): Promise<OkfTrustLookup> {
+  return Effect.runPromise(
+    loadOkfTrustByCorrelationIdFromVaultEffect(vaultAbs, scanRoot, maxFiles)
+  );
 }
 
 export function resolveVaultPathForExport(

@@ -74,8 +74,8 @@ describe("createClawQLApi", () => {
   });
 
   it("pluginLayers register synchronously and keep Scope until dispose", async () => {
-    const finalizerRan = Ref.unsafeMake(false);
-    const pluginLayer = Layer.scopedDiscard(
+    const finalizerRan = Ref.makeUnsafe(false);
+    const pluginLayer = Layer.effectDiscard(
       Effect.gen(function* () {
         const claw = yield* ClawQLApi;
         yield* claw.registerPlugin(emptyProviderPlugin("from-plugin-layer"));

@@ -40,7 +40,7 @@ Cloudflare Wallets announces **stable agent identity + capped delegated spend** 
            AgentCompensationService        PayoutService / Offramp
 ```
 
-Same Effect pattern as Ramp: `Context.Tag("clawql/CloudflareWalletService")` → `paymentsServicesLiveLayer` → WORM via `PaymentAuditService` → optional MCP tools behind `CLAWQL_PAYMENTS_MCP_TOOLS=1`.
+Same Effect pattern as Ramp: `Context.Service` `"clawql/CloudflareWalletService"` → `paymentsServicesLiveLayer` → WORM via `PaymentAuditService` → optional MCP tools behind `CLAWQL_PAYMENTS_MCP_TOOLS=1`.
 
 ## What ships now (prep)
 

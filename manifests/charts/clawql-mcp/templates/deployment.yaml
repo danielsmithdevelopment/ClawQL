@@ -252,6 +252,20 @@ spec:
             - name: CLAWQL_OUROBOROS_DATABASE_URL
               value: {{ .Values.ouroborosDatabaseUrl | quote }}
             {{- end }}
+            {{- if .Values.pendingDatabaseUrl }}
+            - name: CLAWQL_PENDING_DATABASE_URL
+              value: {{ .Values.pendingDatabaseUrl | quote }}
+            - name: CLAWQL_PENDING_STORE
+              value: "postgres"
+            {{- end }}
+            {{- if or .Values.pendingRequirePostgres (gt (int .Values.replicaCount) 1) .Values.managedGateway.enabled }}
+            - name: CLAWQL_PENDING_REQUIRE_POSTGRES
+              value: "1"
+            {{- if gt (int .Values.replicaCount) 1 }}
+            - name: CLAWQL_GATEWAY_REPLICAS
+              value: {{ .Values.replicaCount | quote }}
+            {{- end }}
+            {{- end }}
             {{- if and .Values.ouroborosPostgres.enabled (not .Values.ouroborosDatabaseUrl) }}
             - name: CLAWQL_OUROBOROS_DB_HOST
               value: {{ include "clawql-mcp.ouroborosPostgresName" . | quote }}
@@ -301,8 +315,10 @@ spec:
             {{- end }}
             {{- end }}
             {{- if .Values.documentPipeline.enabled }}
+            {{- if .Values.documentPipeline.tika.enabled }}
             - name: TIKA_BASE_URL
               value: "http://{{ include "clawql-mcp.tikaName" . }}:{{ .Values.documentPipeline.tika.service.port }}"
+            {{- end }}
             {{- if .Values.documentPipeline.docling.enabled }}
             - name: DOCLING_BASE_URL
               value: "http://{{ include "clawql-mcp.doclingName" . }}:{{ .Values.documentPipeline.docling.service.port }}"
@@ -323,10 +339,14 @@ spec:
             - name: CLAWQL_PRIVACY_FILTER_FAILURE_POLICY
               value: "warn"
             {{- end }}
+            {{- if .Values.documentPipeline.gotenberg.enabled }}
             - name: GOTENBERG_BASE_URL
               value: "http://{{ include "clawql-mcp.gotenbergName" . }}:{{ .Values.documentPipeline.gotenberg.service.port }}"
+            {{- end }}
+            {{- if .Values.documentPipeline.stirling.enabled }}
             - name: STIRLING_BASE_URL
               value: "http://{{ include "clawql-mcp.stirlingName" . }}:{{ .Values.documentPipeline.stirling.service.port }}"
+            {{- end }}
             {{- if .Values.documentPipeline.paperless.enabled }}
             - name: PAPERLESS_BASE_URL
               value: "http://{{ include "clawql-mcp.paperlessName" . }}:{{ .Values.documentPipeline.paperless.service.port }}"

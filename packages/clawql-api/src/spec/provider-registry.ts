@@ -8,6 +8,7 @@ import { readFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 import { getClawqlOptionalToolFlags } from "../config/optional-flags.js";
 import { getPackageRoot } from "./package-root.js";
+import { Effect } from "effect";
 
 /** REST / Discovery bundled spec under `providers/`. */
 export interface BundledOpenApiProvider {
@@ -295,7 +296,7 @@ async function resolveAwsTop50Items(): Promise<ProviderGroupItem[]> {
  * Use **`CLAWQL_BUNDLED_PROVIDERS`** in `spec-loader`; there is no other default
  * custom merge — only this list, path list, or **`all-providers`**.
  */
-export async function resolveItemsFromBundledProviderEnvList(
+async function resolveItemsFromBundledProviderEnvListImpl(
   raw: string
 ): Promise<ProviderGroupItem[]> {
   const parts = raw
@@ -356,6 +357,22 @@ export async function resolveItemsFromBundledProviderEnvList(
   return out;
 }
 
+export function resolveItemsFromBundledProviderEnvListEffect(
+  raw: string
+): Effect.Effect<ProviderGroupItem[], Error> {
+  return Effect.tryPromise({
+    try: () => resolveItemsFromBundledProviderEnvListImpl(raw),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resolveItemsFromBundledProviderEnvListEffect} for Effect callers. */
+export async function resolveItemsFromBundledProviderEnvList(
+  raw: string
+): Promise<ProviderGroupItem[]> {
+  return Effect.runPromise(resolveItemsFromBundledProviderEnvListEffect(raw));
+}
+
 /**
  * In a merged load, `specLabel` is each Google Cloud API slug from the bundled manifest (e.g. `container-v1`) or
  * one of these non-Google bundled vendor ids (`BUNDLED_PROVIDERS` keys; Google Cloud uses the manifest, not a single file here).
@@ -366,19 +383,32 @@ export const BUNDLED_MERGED_VENDOR_LABELS: readonly string[] =
 /**
  * Local document / conversion / archive / enterprise search stack. Omitted from the default **`all-providers`**
  * merge when **`CLAWQL_ENABLE_DOCUMENTS=0`**. **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list these ids explicitly.
+ *
+ * **8.0 converter cut:** Docling is the sole bundled converter — **`gotenberg`**, **`stirling`**, and **`tika`**
+ * are no longer bundled by default (see `docs/releases/8.0.0-purge-inventory-spec-v0.1.md` — "Document convert"
+ * row). Their OpenAPI specs still live under `providers/` and remain selectable via explicit
+ * **`CLAWQL_BUNDLED_PROVIDERS=gotenberg,stirling,tika,…`** for operators who need those JVM/LibreOffice hops.
  */
 export const BUNDLED_DOCUMENT_VENDOR_IDS: readonly string[] = [
   "coneshare",
   "docling",
-  "gotenberg",
   "nextcloud",
   "onyx",
   "paperless",
-  "stirling",
-  "tika",
 ];
 
 const BUNDLED_DOCUMENT_VENDOR_SET = new Set(BUNDLED_DOCUMENT_VENDOR_IDS);
+
+/**
+ * Converter stacks that keep OpenAPI specs bundled (and remain selectable via
+ * **`CLAWQL_BUNDLED_PROVIDERS=tika,gotenberg,stirling`**) but are **not** part of the default/recommended
+ * surface — Docling is the sole default converter as of 8.0. Omitted from `all-providers` unconditionally
+ * (not gated by **`CLAWQL_ENABLE_DOCUMENTS`**, since they are opt-in regardless of the document stack toggle).
+ * See `docs/releases/8.0.0-purge-inventory-spec-v0.1.md` — "Document convert" row.
+ */
+export const OPT_IN_DOCUMENT_CONVERTER_IDS: readonly string[] = ["gotenberg", "stirling", "tika"];
+
+const OPT_IN_DOCUMENT_CONVERTER_SET = new Set(OPT_IN_DOCUMENT_CONVERTER_IDS);
 
 /**
  * Opinionated curated pack — **`CLAWQL_PROVIDER=default`** / instance `providers.pack: "default"`.
@@ -398,8 +428,23 @@ export const DEFAULT_BUNDLED_PROVIDER_IDS: readonly string[] = [
  * Cloud add-ons (google/aws) are **not** appended via env flags — list them in `providers.enabled`
  * or use pack **`all-providers`** / **`CLAWQL_PROVIDER=google|aws`**.
  */
-export async function resolveDefaultBundledProvidersItems(): Promise<ProviderGroupItem[]> {
+async function resolveDefaultBundledProvidersItemsImpl(): Promise<ProviderGroupItem[]> {
   return resolveItemsFromBundledProviderEnvList(DEFAULT_BUNDLED_PROVIDER_IDS.join(","));
+}
+
+export function resolveDefaultBundledProvidersItemsEffect(): Effect.Effect<
+  ProviderGroupItem[],
+  Error
+> {
+  return Effect.tryPromise({
+    try: () => resolveDefaultBundledProvidersItemsImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resolveDefaultBundledProvidersItemsEffect} for Effect callers. */
+export async function resolveDefaultBundledProvidersItems(): Promise<ProviderGroupItem[]> {
+  return Effect.runPromise(resolveDefaultBundledProvidersItemsEffect());
 }
 
 async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
@@ -411,6 +456,7 @@ async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
   ];
   const allowDocuments = flags.enableDocuments;
   const labels = BUNDLED_MERGED_VENDOR_LABELS.filter((id) => {
+    if (OPT_IN_DOCUMENT_CONVERTER_SET.has(id)) return false;
     if (!allowDocuments && BUNDLED_DOCUMENT_VENDOR_SET.has(id)) return false;
     return true;
   });
@@ -449,8 +495,11 @@ export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   default: { resolve: resolveDefaultBundledProvidersItems },
   "default-providers": { resolve: resolveDefaultBundledProvidersItems },
   /**
-   * Literally every bundled vendor plus Google top-50 and AWS top-50. Only **`CLAWQL_ENABLE_DOCUMENTS=0`**
-   * trims the document/IDP stack. Opt in with **`CLAWQL_PROVIDER=all-providers`** / `providers.pack: "all-providers"`.
+   * Every bundled vendor plus Google top-50 and AWS top-50, **except** opt-in-only JVM/LibreOffice converters
+   * (**`gotenberg`** / **`stirling`** / **`tika`** — see {@link OPT_IN_DOCUMENT_CONVERTER_IDS}), which stay out
+   * even when documents are enabled. **`CLAWQL_ENABLE_DOCUMENTS=0`** additionally trims the rest of the
+   * document/IDP stack. Opt in with **`CLAWQL_PROVIDER=all-providers`** / `providers.pack: "all-providers"`.
+   * Pull a converter back explicitly with **`CLAWQL_BUNDLED_PROVIDERS=tika,gotenberg,stirling,…`**.
    */
   "all-providers": { resolve: resolveAllBundledProvidersItems },
 };
@@ -475,7 +524,7 @@ const REMOVED_BUNDLED_PROVIDER_GROUP_IDS: Readonly<Record<string, string>> = {
     "The google-top50 preset id was removed in 7.0.0. Use CLAWQL_PROVIDER=google or CLAWQL_BUNDLED_PROVIDERS=google.",
 };
 
-export async function resolveBundledProviderGroup(
+async function resolveBundledProviderGroupImpl(
   raw: string | undefined
 ): Promise<ProviderGroupItem[] | undefined> {
   if (!raw?.trim()) return undefined;
@@ -510,4 +559,20 @@ export async function resolveBundledProviderGroup(
       label: p.id,
     };
   });
+}
+
+export function resolveBundledProviderGroupEffect(
+  raw: string | undefined
+): Effect.Effect<ProviderGroupItem[] | undefined, Error> {
+  return Effect.tryPromise({
+    try: () => resolveBundledProviderGroupImpl(raw),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resolveBundledProviderGroupEffect} for Effect callers. */
+export async function resolveBundledProviderGroup(
+  raw: string | undefined
+): Promise<ProviderGroupItem[] | undefined> {
+  return Effect.runPromise(resolveBundledProviderGroupEffect(raw));
 }

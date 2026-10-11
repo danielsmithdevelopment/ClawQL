@@ -14,6 +14,7 @@ import {
   DEFAULT_PROVIDER_SECRET_NAME,
   type AuthExpectationsPayload,
 } from "./auth-expectations.js";
+import { Effect } from "effect";
 
 export const CLAWQL_INSTANCE_CRD = {
   group: "clawql.io",
@@ -66,7 +67,7 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
-export async function reconcileClawqlInstance(
+async function reconcileClawqlInstanceImpl(
   instance: ClawQLInstanceObject,
   core: ReconcileCoreV1
 ): Promise<ReconcileResult> {
@@ -195,6 +196,24 @@ export async function reconcileClawqlInstance(
     },
     mcpRollout: resolveMcpRolloutTarget(namespace, name, spec),
   };
+}
+
+export function reconcileClawqlInstanceEffect(
+  instance: ClawQLInstanceObject,
+  core: ReconcileCoreV1
+): Effect.Effect<ReconcileResult, Error> {
+  return Effect.tryPromise({
+    try: () => reconcileClawqlInstanceImpl(instance, core),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link reconcileClawqlInstanceEffect} for Effect callers. */
+export async function reconcileClawqlInstance(
+  instance: ClawQLInstanceObject,
+  core: ReconcileCoreV1
+): Promise<ReconcileResult> {
+  return Effect.runPromise(reconcileClawqlInstanceEffect(instance, core));
 }
 
 async function reconcileProviderSecrets(

@@ -398,7 +398,9 @@ documentPipeline:
       limits:
         cpu: "2"
         memory: 6Gi
+  # 8.0 converter cut defaults these to off upstream; local dev full-stack testing still exercises them explicitly.
   tika:
+    enabled: true
     resources:
       requests:
         cpu: 15m
@@ -407,6 +409,7 @@ documentPipeline:
         cpu: 300m
         memory: 512Mi
   gotenberg:
+    enabled: true
     resources:
       requests:
         cpu: 15m
@@ -415,6 +418,7 @@ documentPipeline:
         cpu: 500m
         memory: 768Mi
   stirling:
+    enabled: true
     # Same value as Stirling `API_KEY`; chart also stores `STIRLING_API_KEY` on the shared doc-pipeline Secret for MCP.
     auth:
       apiKey: clawql-local-stirling-dev
