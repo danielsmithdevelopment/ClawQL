@@ -22,6 +22,7 @@
     "schedule": "interleaved_closed_loop",
     "arrival_ms": null,
     "governance_worm_memory": true,
+    "governance_label": "in-memory WORM (not production durable backend)",
     "panguard_sidecar": false,
     "transport": "stdio_both",
     "same_host": true,
