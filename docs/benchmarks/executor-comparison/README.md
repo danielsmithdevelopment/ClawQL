@@ -101,15 +101,6 @@ LATENCY_GOVERNANCE=1 LATENCY_ITERS=1000 LATENCY_RUNS=3 \
   npm run benchmark:executor-comparison:latency-fair
 ```
 
-<<<<<<< HEAD
-| Critique                               | Fair harness response                                                                                                                                                                                                                                                       |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1. Same definition?**                | `gateway_cost = MCP_execute − upstream`. ClawQL: **paired** `execute_i − direct_i`. Executor: upstream **= 0** (same JSON in-process; sandbox cannot fetch). Not “total with upstream vs overhead.”                                                                         |
-| **2. Same machine / transport?**       | Both **local stdio**, same host, same mock for ClawQL/direct. Records ClawQL commit + Executor npm version.                                                                                                                                                                 |
-| **3. Interleave + versions + spread?** | Each round: ClawQL → Executor → direct. `LATENCY_RUNS≥3` reports min/median/max of p50/p999.                                                                                                                                                                                |
-| **4. Coordinated omission?**           | Closed-loop = serial agent tool-call model. Tail-under-load needs `LATENCY_OPEN_LOOP=1` (`*_from_schedule` includes lateness). Use arrival ≥ round time (e.g. 15 ms) so the pipeline is not permanently backlogged; saturated arrival (e.g. 3 ms) only proves queue growth. |
-| **Governance?**                        | `LATENCY_GOVERNANCE=1` enables durable WORM (memory). Panguard sidecar is a separate wire-up — do not imply it is on.                                                                                                                                                       |
-=======
 | Critique | Response |
 | --- | --- |
 | **1. Same definition?** | `gateway_cost = MCP_execute − upstream`. ClawQL: **paired** `execute_i − direct_i`. Executor: upstream **= 0** (same JSON in-process). |
@@ -117,22 +108,12 @@ LATENCY_GOVERNANCE=1 LATENCY_ITERS=1000 LATENCY_RUNS=3 \
 | **3. Interleave + spread?** | Round: ClawQL → Executor → direct. Publish **min…median…max across ≥3 runs**. |
 | **4. p999 stability?** | Publish **p50 / p95 / p99** from interleaved multi-run. Claim **p999 only** from interleaved **n≥10,000/run** with multi-run spread (n=2k p999 is noise). |
 | **Governance?** | `LATENCY_GOVERNANCE=1` = **in-memory WORM** only — not the production durable write path. Always label **Panguard off** unless wired. |
->>>>>>> 600ea254 (docs(bench): publish-safe framing — p99 not noisy p999; in-memory WORM)
 
 #### Publishable results (Executor **v1.6.10**, ClawQL **8.0.0**)
 
 **Lead line (matches harness):**
 
-<<<<<<< HEAD
-| Metric                    | min … median … max across runs |
-| ------------------------- | ------------------------------ |
-| ClawQL gateway_cost p50   | **1.07 … 1.10 … 1.11 ms**      |
-| ClawQL gateway_cost p999  | **6.4 … 7.2 … 8.1 ms**         |
-| Executor gateway_cost p50 | 2.23 … 2.27 … 2.37 ms          |
-| Ratio (Exec/Claw) p50     | **2.02 … 2.07 … 2.22×**        |
-=======
 > On local stdio, with arms interleaved and each call paired against a direct call, ClawQL's risk gates, ring audit, hooks and field projection add **0.89 ms** at p50 and **2.5 ms** at p99 (three-run p50 range **0.88–0.90 ms**, n=10,000/run). p999 across three runs: **5.7–8.1 ms** (median **6.2 ms**). With the **in-memory** audit chain also on (n=1,000, single run — p50/p99 only): **1.7 ms** at p50, **3.2 ms** at p99. **Panguard off.** Executor v1.6.10 on the same harness: about **2.5×** higher at p50.
->>>>>>> 600ea254 (docs(bench): publish-safe framing — p99 not noisy p999; in-memory WORM)
 
 Interleaved closed-loop, **n=10,000/run × 3 runs** (`executor-cmp-latency-fair-10k.json`):
 
