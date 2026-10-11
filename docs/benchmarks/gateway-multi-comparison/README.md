@@ -8,6 +8,10 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`gateway-multi-cmp-chaos-slim.json`](./gateway-multi-cmp-chaos-slim.json) | Chaos ceilings — **single-instance / stdio equal-arm** (not cross-topology) |
 | [`gateway-multi-cmp-bun-10k.json`](./gateway-multi-cmp-bun-10k.json) | **Node vs Bun** same Core binary — Ready RSS / under-load RSS / latency (n=10 000) |
 | [`gateway-multi-cmp-bun-chaos.json`](./gateway-multi-cmp-bun-chaos.json) | **Node vs Bun** chaos until-break (topology A) |
+| [`gateway-multi-cmp-ts7-node-10k.json`](./gateway-multi-cmp-ts7-node-10k.json) | **TS7 + Node** ClawQL n=10k |
+| [`gateway-multi-cmp-ts7-bun-10k.json`](./gateway-multi-cmp-ts7-bun-10k.json) | **TS7 + Bun** ClawQL n=10k |
+| [`gateway-multi-cmp-ts7-node-chaos.json`](./gateway-multi-cmp-ts7-node-chaos.json) | **TS7 + Node** chaos until-break |
+| [`gateway-multi-cmp-ts7-bun-chaos.json`](./gateway-multi-cmp-ts7-bun-chaos.json) | **TS7 + Bun** chaos until-break |
 | [`gateway-multi-multiturn.json`](./gateway-multi-multiturn.json) | **12-turn I/O tokens + task success** on a fat catalog |
 | [`gateway-multi-multiturn-24.json`](./gateway-multi-multiturn-24.json) | Same board at N=24 (compounding check) |
 
@@ -171,6 +175,32 @@ MT_TURNS=12 CATALOG_TOOL_COUNT=40 \
 ```
 
 ---
+
+## TS7 rebuild — Node vs Bun (decision board)
+
+Toolchain: **TypeScript 7.0.2** Go-native `tsc` (`@typescript/native`) + `@typescript/typescript6` for eslint/tsup API. Same rebuilt `dist/server.js`; only the JS runtime changes between arms. Sequential solo-arm runs (not interleaved with peers).
+
+Artifacts: [`gateway-multi-cmp-ts7-node-10k.json`](./gateway-multi-cmp-ts7-node-10k.json), [`gateway-multi-cmp-ts7-bun-10k.json`](./gateway-multi-cmp-ts7-bun-10k.json), [`gateway-multi-cmp-ts7-node-chaos.json`](./gateway-multi-cmp-ts7-node-chaos.json), [`gateway-multi-cmp-ts7-bun-chaos.json`](./gateway-multi-cmp-ts7-bun-chaos.json).
+
+### n=10 000
+
+| Arm | Ready RSS | Under-load med | e2e p50 / p99 / **p999** | Gateway cost p50 / **p999** |
+| --- | ---: | ---: | ---: | ---: |
+| **Node** v22.14 | 234 MB | 409 MB | 0.76 / 2.53 / **5.10** | 0.60 / 4.75 |
+| **Bun** 1.4.3 | **179 MB** (−23%) | **309 MB** (−25%) | **0.34 / 1.88 / 5.52** | **0.20 / 5.16** |
+
+### Chaos until-break
+
+| Arm | last_ok / first_break | Break |
+| --- | ---: | --- |
+| Node | **70 / 71** | p99 115 ms |
+| Bun | 62 / 63 | p99 102 ms |
+
+### Decision inputs
+
+- Bun wins Ready/under-load RSS and **p50** latency/cost hard (−55% e2e p50, −67% cost p50).
+- Bun does **not** win p999 on this host (Node 5.10 vs Bun 5.52) or chaos ceiling.
+- Still not MCPJungle-class RSS. Compiler upgrade (TS7) is CI/DX only — these boards are the runtime comparison.
 
 ## Node vs Bun runtime (same Core binary)
 
