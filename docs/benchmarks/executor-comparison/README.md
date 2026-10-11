@@ -96,12 +96,12 @@ LATENCY_ITERS=10000 LATENCY_WARMUP=50 LATENCY_KEEP_SAMPLES=0 \
 # → latency-10k.html (via LATENCY_JSON=… LATENCY_HTML_OUT=latency-10k.html generate)
 ```
 
-| Arm | p50 | p95 | p99 | p999 |
-| --- | ---: | ---: | ---: | ---: |
-| ClawQL execute e2e | 0.74 ms | 1.28 ms | 2.27 ms | 5.27 ms |
-| **ClawQL gateway overhead** | **0.64 ms** | **0.92 ms** | **1.70 ms** | **2.34 ms** |
-| **Executor execute** | **1.97 ms** | **3.60 ms** | **5.11 ms** | **14.95 ms** |
-| Direct HTTP mock | 0.09 ms | 0.36 ms | 0.57 ms | 2.93 ms |
+| Arm                         |         p50 |         p95 |         p99 |         p999 |
+| --------------------------- | ----------: | ----------: | ----------: | -----------: |
+| ClawQL execute e2e          |     0.74 ms |     1.28 ms |     2.27 ms |      5.27 ms |
+| **ClawQL gateway overhead** | **0.64 ms** | **0.92 ms** | **1.70 ms** |  **2.34 ms** |
+| **Executor execute**        | **1.97 ms** | **3.60 ms** | **5.11 ms** | **14.95 ms** |
+| Direct HTTP mock            |     0.09 ms |     0.36 ms |     0.57 ms |      2.93 ms |
 
 At n=10k, equalized ClawQL is ~**3.1×** faster at p50 and ~**6.4×** at p999 vs live Executor (same host; long run also warms both sides). p999 needs large n — with 10k samples the 99.9th is ~10 observations.
 
