@@ -87,11 +87,16 @@ const DEFAULT_BACKENDS = [
   },
 ] as const;
 
-const HONESTY = [
+const HONESTY: readonly string[] = [
   "measure-only — reuses fan-out bulk + flip-rate model pin",
   "bulk correctness is exact option id match (not twin-aware held-out scoring)",
   "does not light calibrated or held-out productionTrusted (still GLiNER2-only)",
-] as const;
+];
+
+type FlipOrSkip =
+  | { readonly kind: "ok"; readonly flip: FlipRateResponse }
+  | { readonly kind: "skipped"; readonly reason: string }
+  | { readonly kind: "error"; readonly error: string };
 
 export function buildDecision1CandidateReport(
   deps: Decision1CandidateDeps
@@ -129,13 +134,16 @@ export function buildDecision1CandidateReport(
           env: deps.env,
         }));
 
-    const bulk = yield* Effect.tryPromise({
+    const bulkOrErr: FanoutEvalResponse | { error: string } = yield* Effect.tryPromise({
       try: () => runBulk(bulkReq),
       catch: (e) => (e instanceof Error ? e : new Error(String(e))),
     }).pipe(
-      Effect.catch((e) => Effect.succeed({ error: `bulk fan-out failed: ${e.message}` } as const))
+      Effect.catch((e): Effect.Effect<FanoutEvalResponse | { error: string }> =>
+        Effect.succeed({ error: `bulk fan-out failed: ${e.message}` })
+      )
     );
-    if ("error" in bulk) return bulk;
+    if ("error" in bulkOrErr) return bulkOrErr;
+    const bulk = bulkOrErr;
 
     const maxFlipRate = deps.maxFlipRate ?? 0.1;
     const flipFamilies = deps.flipFamilies ?? ["whitespace", "case", "punctuation", "synonym"];
@@ -149,7 +157,7 @@ export function buildDecision1CandidateReport(
 
     const runFlip = deps.runFlip ?? runFlipRate;
     const allowMissing = deps.allowMissingOpenRouter !== false;
-    const flipOrSkip = yield* Effect.tryPromise({
+    const flipOrSkip: FlipOrSkip = yield* Effect.tryPromise({
       try: () =>
         runFlip(flipReq, {
           decide: deps.decide,
@@ -158,26 +166,23 @@ export function buildDecision1CandidateReport(
         }),
       catch: (e) => (e instanceof Error ? e : new Error(String(e))),
     }).pipe(
-      Effect.map((flip) => ({ kind: "ok" as const, flip })),
-      Effect.catch((e) => {
+      Effect.map((flip): FlipOrSkip => ({ kind: "ok", flip })),
+      Effect.catch((e): Effect.Effect<FlipOrSkip> => {
         const msg = e.message;
         if (allowMissing && /OPENROUTER_API_KEY/i.test(msg)) {
-          return Effect.succeed({
-            kind: "skipped" as const,
-            reason: msg,
-          });
+          return Effect.succeed({ kind: "skipped", reason: msg });
         }
-        return Effect.succeed({ kind: "error" as const, error: `flip-rate failed: ${msg}` });
+        return Effect.succeed({ kind: "error", error: `flip-rate failed: ${msg}` });
       })
     );
     if (flipOrSkip.kind === "error") return { error: flipOrSkip.error };
 
-    const honesty = [...HONESTY];
+    const honesty: string[] = [...HONESTY];
     if (flipOrSkip.kind === "skipped") {
       honesty.push(`flip-rate skipped: ${flipOrSkip.reason}`);
     }
 
-    const flipRateBlock =
+    const flipRateBlock: Decision1CandidateReport["flipRate"] =
       flipOrSkip.kind === "ok"
         ? {
             model: flipOrSkip.flip.model ?? "microsoft/microsoft-decision-1",
@@ -193,12 +198,12 @@ export function buildDecision1CandidateReport(
             maxFlipRate,
             passed: false,
             caseCount: flipCases.length,
-            reports: [] as FlipRateResponse["reports"],
+            reports: [],
             skipped: true,
             skipReason: flipOrSkip.reason,
           };
 
-    return {
+    const report: Decision1CandidateReport = {
       protocol: DECISION1_CANDIDATE_PROTOCOL,
       evalSuite: suite.suiteId,
       labelCount: suite.cases.length,
@@ -217,7 +222,8 @@ export function buildDecision1CandidateReport(
         calibratedClaim: false,
         citeAs: "Decision-1 routing candidate readout — not a trusted path",
       },
-    } satisfies Decision1CandidateReport;
+    };
+    return report;
   });
 }
 
