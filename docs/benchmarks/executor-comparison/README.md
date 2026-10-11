@@ -101,13 +101,13 @@ LATENCY_GOVERNANCE=1 LATENCY_ITERS=1000 LATENCY_RUNS=3 \
   npm run benchmark:executor-comparison:latency-fair
 ```
 
-| Critique | Response |
-| --- | --- |
-| **1. Same definition?** | `gateway_cost = MCP_execute − upstream`. ClawQL: **paired** `execute_i − direct_i`. Executor: upstream **= 0** (same JSON in-process). |
-| **2. Same machine / transport?** | Both **local stdio**, same host. Report **Executor v1.6.10** (rerun when v2 ships). |
-| **3. Interleave + spread?** | Round: ClawQL → Executor → direct. Publish **min…median…max across ≥3 runs**. |
-| **4. p999 stability?** | Publish **p50 / p95 / p99** from interleaved multi-run. Claim **p999 only** from interleaved **n≥10,000/run** with multi-run spread (n=2k p999 is noise). |
-| **Governance?** | `LATENCY_GOVERNANCE=1` = **in-memory WORM** only — not the production durable write path. Always label **Panguard off** unless wired. |
+| Critique                         | Response                                                                                                                                                  |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Same definition?**          | `gateway_cost = MCP_execute − upstream`. ClawQL: **paired** `execute_i − direct_i`. Executor: upstream **= 0** (same JSON in-process).                    |
+| **2. Same machine / transport?** | Both **local stdio**, same host. Report **Executor v1.6.10** (rerun when v2 ships).                                                                       |
+| **3. Interleave + spread?**      | Round: ClawQL → Executor → direct. Publish **min…median…max across ≥3 runs**.                                                                             |
+| **4. p999 stability?**           | Publish **p50 / p95 / p99** from interleaved multi-run. Claim **p999 only** from interleaved **n≥10,000/run** with multi-run spread (n=2k p999 is noise). |
+| **Governance?**                  | `LATENCY_GOVERNANCE=1` = **in-memory WORM** only — not the production durable write path. Always label **Panguard off** unless wired.                     |
 
 #### Publishable results (Executor **v1.6.10**, ClawQL **8.0.0**)
 
@@ -117,27 +117,27 @@ LATENCY_GOVERNANCE=1 LATENCY_ITERS=1000 LATENCY_RUNS=3 \
 
 Interleaved closed-loop, **n=10,000/run × 3 runs** (`executor-cmp-latency-fair-10k.json`):
 
-| Arm | p50 (min…med…max) | p95 | p99 | p999 (min…med…max) |
-| --- | ---: | ---: | ---: | ---: |
-| **ClawQL gateway cost** | **0.88…0.89…0.90** | **1.45…1.48…1.48** | **2.46…2.50…2.51** | **5.7…6.2…8.1** |
-| **Executor gateway cost** | **2.20…2.20…2.20** | **3.64…3.66…3.70** | **4.62…4.94…5.06** | **9.1…9.6…16.0** |
-| Direct HTTP mock (primary run) | 0.28 | 0.43 | 0.52 | 2.40 |
-| ClawQL execute e2e (primary run) | 1.16 | 1.81 | 2.82 | 6.07 |
+| Arm                              |  p50 (min…med…max) |                p95 |                p99 | p999 (min…med…max) |
+| -------------------------------- | -----------------: | -----------------: | -----------------: | -----------------: |
+| **ClawQL gateway cost**          | **0.88…0.89…0.90** | **1.45…1.48…1.48** | **2.46…2.50…2.51** |    **5.7…6.2…8.1** |
+| **Executor gateway cost**        | **2.20…2.20…2.20** | **3.64…3.66…3.70** | **4.62…4.94…5.06** |   **9.1…9.6…16.0** |
+| Direct HTTP mock (primary run)   |               0.28 |               0.43 |               0.52 |               2.40 |
+| ClawQL execute e2e (primary run) |               1.16 |               1.81 |               2.82 |               6.07 |
 
 Ratio Exec/Claw p50 across runs: **2.46…2.48…2.51×**.
 
 Earlier n=2,000×3 series (`executor-cmp-latency-fair.json`) — use for p50/p95/p99 cross-check only; **do not claim p999** from it:
 
-| ClawQL gateway | p50 | p95 | p99 |
-| --- | ---: | ---: | ---: |
+| ClawQL gateway    |            p50 |            p95 |            p99 |
+| ----------------- | -------------: | -------------: | -------------: |
 | 3-run spread (ms) | 1.07…1.10…1.11 | 1.57…1.63…1.68 | 2.54…2.64…2.68 |
 
 **In-memory WORM** (not production durable backend), n=1,000 single run, **Panguard off** (`executor-cmp-latency-fair-governance.json`):
 
-| Arm | p50 | p95 | p99 |
-| --- | ---: | ---: | ---: |
+| Arm                                  |     p50 |     p95 |     p99 |
+| ------------------------------------ | ------: | ------: | ------: |
 | ClawQL gateway cost (in-memory WORM) | 1.73 ms | 2.29 ms | 3.22 ms |
-| Executor gateway cost (same run) | 2.45 ms | 3.85 ms | 5.04 ms |
+| Executor gateway cost (same run)     | 2.45 ms | 3.85 ms | 5.04 ms |
 
 Do not cite p999 from the in-memory WORM arm until interleaved n≥10k × ≥3 runs.
 
