@@ -141,6 +141,26 @@ Earlier n=2,000×3 series (`executor-cmp-latency-fair.json`) — use for p50/p95
 
 Do not cite p999 from the in-memory WORM arm until interleaved n≥10k × ≥3 runs.
 
+### Comprehensive board (latency + CPU + RAM + tokens + chaos)
+
+One harness for the multi-dimension comparison:
+
+```bash
+EXECUTOR_BIN=… EXECUTOR_CWD=… \
+  COMPREHENSIVE_ITERS=500 COMPREHENSIVE_CHAOS_MAX=8 \
+  npm run benchmark:executor-comparison:comprehensive
+# → docs/benchmarks/executor-comparison/executor-cmp-comprehensive.json
+```
+
+| Dimension | What it measures |
+| --- | --- |
+| **Latency** | Interleaved equal-arm p50/p95/p99/p999 (paired gateway cost) |
+| **CPU / RAM** | `/proc` samples of both MCP server PIDs during latency phase |
+| **Tokens** | `cl100k_base` tools/list schemas + equal-arm results + fat-list projection contrast |
+| **Chaos** | Ramp concurrent stdio workers (1→2→4→…) until error-rate or p99 SLO breaks |
+
+Honesty: chaos is **N independent stdio processes**, not one multiplexed session. p999 from `COMPREHENSIVE_ITERS<10000` is exploratory — publish latency tails from `latency-fair` 10k×3. In-memory WORM only if `COMPREHENSIVE_GOVERNANCE=1`; **Panguard off**.
+
 **Shareable page:** [clawql.com/benchmarks/executor-comparison/latency.html](https://clawql.com/benchmarks/executor-comparison/latency.html) · `npm run generate:executor-cmp-latency-html`.
 
 The flamegraph demo’s 120ms total remains a **synthetic fixture**. Schema-decode microbench (`scripts/release/measure-gateway-hotpath.mts`) is sub-millisecond and is **not** product latency.
