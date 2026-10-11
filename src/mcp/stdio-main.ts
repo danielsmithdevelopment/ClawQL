@@ -48,7 +48,10 @@ export async function startStdioMcpServer(): Promise<void> {
   }
   registerClawqlApiShutdownHooks();
   await ensureProcessWormHostBooted();
-  await validateOrDegradeObsidianVaultAtStartup();
+  // Skip vault package entirely when memory composition is off (equal-arm / Core-only).
+  if (resolvePluginCompositionFlags().enableMemory) {
+    await validateOrDegradeObsidianVaultAtStartup();
+  }
 
   const server = await createRegisteredMcpServerAsync({
     name: "cloudrun-mcp",
