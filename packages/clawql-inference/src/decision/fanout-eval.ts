@@ -19,6 +19,13 @@ import {
   resolveOpenRouterDecisionsModel,
 } from "./remote-openrouter-decisions.js";
 import { runFlipRateGate, type FlipRateFamily, type FlipRateDecideFn } from "./flip-rate.js";
+import {
+  buildSpendCostLookup,
+  lookupSpendCostPerCase,
+  parseSpendCostsRecord,
+  type FanoutCostSource,
+} from "./spend-cost.js";
+import type { SpendRow } from "../store/types.js";
 
 export type FanoutEvalMode = "bulk" | "disagreement_mining" | "ensemble";
 
@@ -66,6 +73,13 @@ export type FanoutEvalRequest = {
   readonly useSiteId?: string;
   readonly qualityBar?: FanoutQualityBar;
   readonly flipRate?: FanoutFlipRateAttach;
+  /**
+   * `spend_ledger` fills missing `costPerCase` from `spendCosts` / injected ledger.
+   * Default `explicit` — only backends with costPerCase get costEstimate.
+   */
+  readonly costSource?: FanoutCostSource;
+  /** Inline spend-ledger snapshot (model id → USD per call). */
+  readonly spendCosts?: ReadonlyMap<string, number>;
 };
 
 export type FanoutBackendReport = {
@@ -352,6 +366,16 @@ export function parseFanoutEvalBody(body: unknown): FanoutEvalRequest | { error:
     };
   }
 
+  let costSource: FanoutCostSource | undefined;
+  if (b.costSource !== undefined) {
+    if (b.costSource !== "explicit" && b.costSource !== "spend_ledger") {
+      return { error: "costSource must be 'explicit' or 'spend_ledger'" };
+    }
+    costSource = b.costSource;
+  }
+  const spendParsed = Effect.runSync(parseSpendCostsRecord(b.spendCosts));
+  if ("error" in spendParsed) return spendParsed;
+
   return {
     mode,
     cases,
@@ -366,7 +390,32 @@ export function parseFanoutEvalBody(body: unknown): FanoutEvalRequest | { error:
           }
         : undefined,
     flipRate,
+    costSource,
+    spendCosts: spendParsed.size > 0 ? spendParsed : undefined,
   };
+}
+
+/** Resolve per-case USD for a backend (explicit costPerCase wins over spend ledger). */
+export function resolveFanoutCostPerCase(
+  backend: FanoutBackendSpec,
+  opts: {
+    costSource?: FanoutCostSource;
+    spendCosts?: ReadonlyMap<string, number>;
+  } = {}
+): Effect.Effect<number | undefined> {
+  return Effect.gen(function* () {
+    if (typeof backend.costPerCase === "number") return backend.costPerCase;
+    if (opts.costSource !== "spend_ledger") return undefined;
+    if (!opts.spendCosts || opts.spendCosts.size === 0) return undefined;
+    return yield* lookupSpendCostPerCase(backend, opts.spendCosts);
+  });
+}
+
+/** Build spendCosts map from InferenceStore spendRollup rows. */
+export function spendCostsFromRows(
+  rows: readonly SpendRow[]
+): Effect.Effect<ReadonlyMap<string, number>> {
+  return buildSpendCostLookup(rows);
 }
 
 /** Unique plurality among answering backends; abstain on ties or <2 answers. */
@@ -610,10 +659,12 @@ export function runFanoutEvalBulk(opts: {
 
       const meetsQualityBar = wrong <= maxWrong && answered >= minAnswered && skipped === 0;
       const answersOnItsOwn = meetsQualityBar ? correct : 0;
+      const unitCost = yield* resolveFanoutCostPerCase(backend, {
+        costSource: opts.request.costSource,
+        spendCosts: opts.request.spendCosts,
+      });
       const costEstimate =
-        typeof backend.costPerCase === "number"
-          ? backend.costPerCase * opts.request.cases.length
-          : undefined;
+        typeof unitCost === "number" ? unitCost * opts.request.cases.length : undefined;
 
       reports.push({
         backendId: backend.id,
@@ -850,10 +901,12 @@ export function runFanoutEvalDisagreementMining(opts: {
         }
       }
 
+      const unitCost = yield* resolveFanoutCostPerCase(backend, {
+        costSource: opts.request.costSource,
+        spendCosts: opts.request.spendCosts,
+      });
       const costEstimate =
-        typeof backend.costPerCase === "number"
-          ? backend.costPerCase * opts.request.cases.length
-          : undefined;
+        typeof unitCost === "number" ? unitCost * opts.request.cases.length : undefined;
 
       reports.push({
         backendId: backend.id,

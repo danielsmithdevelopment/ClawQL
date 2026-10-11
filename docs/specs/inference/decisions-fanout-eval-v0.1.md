@@ -122,10 +122,19 @@ Fan-out metrics may **advise** which backend to pin for a site. Deterministic ga
 
 Labeled cases (same as bulk). Per case: unique plurality among non-null backend answers (≥2 answering; ties abstain). Synthetic `ensemble` report is appended. Recommendation is `ensemble` **only** when `answersOnItsOwn` strictly exceeds every single backend; otherwise keep cheapest single meeting the bar (fail-closed — never ship a quorum that does not raise honesty).
 
+## Cost source (spend ledger)
+
+| `costSource`         | Behavior                                                              |
+| -------------------- | --------------------------------------------------------------------- |
+| `explicit` (default) | Only backends with `costPerCase` get `costEstimate`                   |
+| `spend_ledger`       | Fill missing `costPerCase` from `spendCosts` or InferenceStore rollup |
+
+USD/call = `(inputTokens * 1e-6 + outputTokens * 3e-6) / calls` (same rates as virtual-key budget). Explicit `costPerCase` always wins. Router loads `spendRollup({ groupBy: "model" })` when `costSource=spend_ledger` and the body omits `spendCosts`.
+
 ## Follow-ons
 
 1. ~~`disagreement_mining` mode (unlabeled)~~ — shipped
 2. ~~Flip-rate × fan-out disagreement mining~~ — optional `flipRate` attach on mining
 3. ~~Microsoft-Decision-1 / OpenRouter decision backends as fan-out candidates~~ — [decisions-openrouter-decision1-v0.1](./decisions-openrouter-decision1-v0.1.md)
-4. Cost models from virtual-key spend ledger
+4. ~~Cost models from virtual-key spend ledger~~ — shipped (`costSource=spend_ledger`)
 5. ~~Live `ensemble` quorum when it raises answers-on-its-own~~ — shipped
