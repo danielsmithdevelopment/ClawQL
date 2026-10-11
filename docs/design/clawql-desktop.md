@@ -20,21 +20,21 @@ flowchart LR
   UI --> VAULT
 ```
 
-| Layer       | Technology                                                                                            |
-| ----------- | ----------------------------------------------------------------------------------------------------- |
-| Shell       | Electron 35                                                                                           |
-| UI          | `apps/dashboard/` Next.js 16 (standalone bundle)                                                      |
-| Secrets     | `CLAWQL_DESKTOP_MODE=1` → `/api/local/providers`                                                      |
-| Chat        | `openclaw-chat-bridge.mjs` → `openclaw agent`                                                         |
-| Persistence | `CLAWQL_OBSIDIAN_VAULT_PATH` (default `~/.ClawQL`)                                                    |
+| Layer       | Technology                                         |
+| ----------- | -------------------------------------------------- |
+| Shell       | Electron 35                                        |
+| UI          | `apps/dashboard/` Next.js 16 (standalone bundle)   |
+| Secrets     | `CLAWQL_DESKTOP_MODE=1` → `/api/local/providers`   |
+| Chat        | `openclaw-chat-bridge.mjs` → `openclaw agent`      |
+| Persistence | `CLAWQL_OBSIDIAN_VAULT_PATH` (default `~/.ClawQL`) |
 
 ## Platform artifacts
 
-| OS | Builder target | Output |
-| -- | -------------- | ------ |
-| macOS | `dmg` | `ClawQL-<version>.dmg` |
-| Windows | `nsis` | `ClawQL-Setup-<version>.exe` |
-| Linux | `AppImage`, `deb` | `ClawQL-<version>.AppImage` / `.deb` |
+| OS      | Builder target    | Output                               |
+| ------- | ----------------- | ------------------------------------ |
+| macOS   | `dmg`             | `ClawQL-<version>.dmg`               |
+| Windows | `nsis`            | `ClawQL-Setup-<version>.exe`         |
+| Linux   | `AppImage`, `deb` | `ClawQL-<version>.AppImage` / `.deb` |
 
 ```bash
 cd apps/desktop && npm install && npm run dist:mac    # or dist:win / dist:linux / dist:all
@@ -56,11 +56,11 @@ cd apps/desktop && npm install && npm run dist:mac    # or dist:win / dist:linux
 
 ## Signing / distribution
 
-| Platform | Release bar |
-| -------- | ----------- |
-| macOS | Developer ID + notarization before clawql.com download |
-| Windows | Authenticode recommended (SmartScreen) |
-| Linux | Unsigned AppImage/deb acceptable for v0.1 site downloads |
+| Platform | Release bar                                              |
+| -------- | -------------------------------------------------------- |
+| macOS    | Developer ID + notarization before clawql.com download   |
+| Windows  | Authenticode recommended (SmartScreen)                   |
+| Linux    | Unsigned AppImage/deb acceptable for v0.1 site downloads |
 
 ## Roadmap
 
