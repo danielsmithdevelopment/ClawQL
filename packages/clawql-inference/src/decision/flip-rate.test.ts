@@ -7,11 +7,7 @@ import { once } from "node:events";
 import { describe, expect, it } from "vitest";
 import express from "express";
 import { createDecisionRouter } from "./router.js";
-import {
-  applyPerturbations,
-  resolveFlipRateBackend,
-  runFlipRate,
-} from "./flip-rate.js";
+import { applyPerturbations, resolveFlipRateBackend, runFlipRate } from "./flip-rate.js";
 import type { OpenAiDecisionCreateRequest, OpenAiDecisionCreateResponse } from "./openai-types.js";
 import type { DecisionRequest, DecisionResponse } from "./service.js";
 

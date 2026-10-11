@@ -6,10 +6,7 @@
 
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Layer } from "effect";
-import type {
-  OpenAiDecisionCreateRequest,
-  OpenAiDecisionCreateResponse,
-} from "./openai-types.js";
+import type { OpenAiDecisionCreateRequest, OpenAiDecisionCreateResponse } from "./openai-types.js";
 import {
   callRemoteOpenRouterDecisions,
   isOpenRouterDecisionBackendId,

@@ -377,9 +377,7 @@ export function parseFanoutEvalBody(body: unknown): FanoutEvalRequest | { error:
       families,
       model: flipModel,
       backendId:
-        typeof fr.backendId === "string" && fr.backendId.trim()
-          ? fr.backendId.trim()
-          : undefined,
+        typeof fr.backendId === "string" && fr.backendId.trim() ? fr.backendId.trim() : undefined,
     };
   }
 
