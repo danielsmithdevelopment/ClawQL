@@ -152,12 +152,12 @@ EXECUTOR_BIN=… EXECUTOR_CWD=… \
 # → docs/benchmarks/executor-comparison/executor-cmp-comprehensive.json
 ```
 
-| Dimension | What it measures |
-| --- | --- |
-| **Latency** | Interleaved equal-arm p50/p95/p99/p999 (paired gateway cost) |
-| **CPU / RAM** | `/proc` samples of both MCP server PIDs during latency phase |
-| **Tokens** | `cl100k_base` tools/list schemas + equal-arm results + fat-list projection contrast |
-| **Chaos** | Ramp concurrent stdio workers (1→2→4→…) until error-rate or p99 SLO breaks |
+| Dimension     | What it measures                                                                    |
+| ------------- | ----------------------------------------------------------------------------------- |
+| **Latency**   | Interleaved equal-arm p50/p95/p99/p999 (paired gateway cost)                        |
+| **CPU / RAM** | `/proc` samples of both MCP server PIDs during latency phase                        |
+| **Tokens**    | `cl100k_base` tools/list schemas + equal-arm results + fat-list projection contrast |
+| **Chaos**     | Ramp concurrent stdio workers (1→2→4→…) until error-rate or p99 SLO breaks          |
 
 Honesty: chaos is **N independent stdio processes**, not one multiplexed session. p999 from `COMPREHENSIVE_ITERS<10000` is exploratory — publish latency tails from `latency-fair` 10k×3. In-memory WORM only if `COMPREHENSIVE_GOVERNANCE=1`; **Panguard off**.
 
