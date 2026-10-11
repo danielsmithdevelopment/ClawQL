@@ -1,14 +1,19 @@
 #!/usr/bin/env node
 /**
- * Multi-gateway equal-arm board: ClawQL vs Executor vs MCPJungle vs agentgateway
- * vs ContextForge (+ MetaMCP when Docker is available).
+ * Multi-gateway equal-arm board: ClawQL vs Executor vs MCPJungle vs agentgateway.
+ * ContextForge / MetaMCP are off the publish board by default (nested CF inflates
+ * numbers; MetaMCP needs Docker). Opt in explicitly if experimenting.
  *
  * Per arm (when runnable):
  *   - Latency p50/p95/p99/p999 (interleaved with direct HTTP pets mock when applicable)
  *   - CPU + RAM (/proc tree samples during latency)
  *   - Tokens — tools/list schemas + equal-arm tool result (cl100k_base)
  *   - Chaos ceiling — concurrent clients until p99>SLO or error_rate>threshold,
- *     then binary refine (tol=1)
+ *     then binary refine (tol=1). MULTI_CHAOS_UNTIL_BREAK keeps doubling past
+ *     MULTI_CHAOS_MAX until break or MULTI_CHAOS_HARD_MAX.
+ *
+ * Topology: this harness measures single-instance / process-per-client (A).
+ * Do not mix claims with NATS 4-replica ceilings (topology B).
  *
  * Equal-arm contract:
  *   - Payload = two-pet JSON (same as executor-comparison comprehensive)
@@ -22,12 +27,13 @@
  *     node scripts/benchmarks/gateway-multi-comparison.mjs
  *
  * Env:
- *   MULTI_ARMS=clawql,executor,mcpjungle,agentgateway,contextforge,metamcp
- *   MULTI_ITERS (default 200)  MULTI_WARMUP (default 20)
- *   MULTI_CHAOS_MAX (default 32)  MULTI_CHAOS_STEP_MS (default 3000)
+ *   MULTI_ARMS=clawql,executor,mcpjungle,agentgateway
+ *   MULTI_ITERS (default 10000)  MULTI_WARMUP (default 100)
+ *   MULTI_CHAOS_MAX (default 32)  MULTI_CHAOS_UNTIL_BREAK=1
+ *   MULTI_CHAOS_HARD_MAX (default 1024)  MULTI_CHAOS_STEP_MS (default 3000)
  *   MULTI_BREAK_P99_MS (default 100)  MULTI_BREAK_ERROR_RATE (default 0.02)
  *   MULTI_REFINE=1  MULTI_OUT=gateway-multi-cmp.json
- *   MCPJUNGLE_BIN  AGENTGATEWAY_BIN  CONTEXTFORGE_SKIP=1
+ *   MCPJUNGLE_BIN  AGENTGATEWAY_BIN  MULTI_INCLUDE_CF=1
  */
 
 import { existsSync, readFileSync, readdirSync, mkdirSync, writeFileSync, openSync, closeSync } from "node:fs";
@@ -65,10 +71,69 @@ const BREAK_ERROR_RATE = Math.min(
 );
 const REFINE = process.env.MULTI_REFINE !== "0";
 const REFINE_TOL = Math.max(1, Number(process.env.MULTI_REFINE_TOLERANCE ?? 1) || 1);
-const ARMS = (process.env.MULTI_ARMS ?? "clawql,executor,mcpjungle,agentgateway,contextforge,metamcp")
+const CHAOS_UNTIL_BREAK =
+  process.env.MULTI_CHAOS_UNTIL_BREAK === "1" ||
+  process.env.MULTI_CHAOS_UNTIL_BREAK === "true";
+const CHAOS_HARD_MAX = Math.max(
+  CHAOS_MAX,
+  Number(process.env.MULTI_CHAOS_HARD_MAX ?? 1024) || 1024
+);
+const INCLUDE_CF =
+  process.env.MULTI_INCLUDE_CF === "1" || process.env.MULTI_INCLUDE_CF === "true";
+const DEFAULT_ARMS = INCLUDE_CF
+  ? "clawql,executor,mcpjungle,agentgateway,contextforge"
+  : "clawql,executor,mcpjungle,agentgateway";
+const ARMS = (process.env.MULTI_ARMS ?? DEFAULT_ARMS)
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+
+/** Topology A — this harness. Do not claim vs NATS 4-replica without a B board. */
+const TOPOLOGY = {
+  id: "A_single_instance",
+  label: "single-instance / process-per-client (ClawQL+Executor stdio; aggregators 1× HTTP)",
+  replicas: 1,
+  note: "Scale-out (4 replicas behind LB) is topology B — claim only within the same topology.",
+};
+
+const PATH_MATRIX = {
+  clawql: {
+    auth_capability_gate: true,
+    operation_risk_policy: true,
+    ephemeral_audit_ring: true,
+    output_redaction_hooks: true,
+    result_projection: true,
+    upstream_http_equal_mock: true,
+    catalog_discovery: "search_server_side",
+  },
+  executor: {
+    auth_capability_gate: false,
+    operation_risk_policy: false,
+    ephemeral_audit_ring: false,
+    output_redaction_hooks: false,
+    result_projection: "code_mode_optional",
+    upstream_http_equal_mock: false,
+    catalog_discovery: "n_a_code_execute",
+  },
+  mcpjungle: {
+    auth_capability_gate: "optional",
+    operation_risk_policy: false,
+    ephemeral_audit_ring: false,
+    output_redaction_hooks: false,
+    result_projection: false,
+    upstream_http_equal_mock: true,
+    catalog_discovery: "full_tools_list",
+  },
+  agentgateway: {
+    auth_capability_gate: "optional",
+    operation_risk_policy: false,
+    ephemeral_audit_ring: false,
+    output_redaction_hooks: false,
+    result_projection: false,
+    upstream_http_equal_mock: true,
+    catalog_discovery: "full_tools_list",
+  },
+};
 
 const EQUAL_PAYLOAD = {
   pets: [
@@ -613,7 +678,8 @@ async function chaosWithRefine(armHooks) {
   let lastOk = 0;
   let firstBreak = null;
   let breakReason = null;
-  for (let n = 1; n <= CHAOS_MAX; n *= 2) {
+  const powerMax = CHAOS_UNTIL_BREAK ? CHAOS_HARD_MAX : CHAOS_MAX;
+  for (let n = 1; n <= powerMax; n *= 2) {
     console.log(`[multi] chaos ${armHooks.id} clients=${n}`);
     const step = await chaosClients({
       n,
@@ -628,8 +694,10 @@ async function chaosWithRefine(armHooks) {
       break;
     }
     lastOk = n;
+    if (!CHAOS_UNTIL_BREAK && n >= CHAOS_MAX) break;
   }
   let refine = null;
+  let incomplete = false;
   if (REFINE && firstBreak != null && firstBreak - lastOk > REFINE_TOL) {
     let lo = lastOk;
     let hi = firstBreak;
@@ -664,14 +732,24 @@ async function chaosWithRefine(armHooks) {
     };
   } else if (firstBreak == null) {
     firstBreak = null;
+    incomplete = true;
   }
   return {
+    topology: TOPOLOGY,
     slo: { break_p99_ms: BREAK_P99_MS, break_error_rate: BREAK_ERROR_RATE, step_ms: CHAOS_STEP_MS },
+    until_break: CHAOS_UNTIL_BREAK,
+    chaos_max: CHAOS_MAX,
+    chaos_hard_max: CHAOS_HARD_MAX,
     steps,
     refine,
     last_ok_clients: lastOk,
     first_break_clients: firstBreak,
     break_reason: breakReason,
+    incomplete_no_break: incomplete,
+    honesty:
+      incomplete
+        ? `No break at ≤${lastOk} clients — concurrency claim incomplete until arm breaks (raise MULTI_CHAOS_HARD_MAX / MULTI_CHAOS_UNTIL_BREAK=1).`
+        : "Broke within topology A — comparable only to other A ceilings.",
   };
 }
 
@@ -1239,6 +1317,8 @@ async function main() {
       measuredAt: new Date().toISOString(),
       node: process.version,
       partial,
+      topology: TOPOLOGY,
+      path_matrix: PATH_MATRIX,
       config: {
         iters: ITERS,
         warmup: WARMUP,
@@ -1246,11 +1326,14 @@ async function main() {
         interleaved: true,
         skip_chaos: SKIP_CHAOS,
         chaos_max: CHAOS_MAX,
+        chaos_until_break: CHAOS_UNTIL_BREAK,
+        chaos_hard_max: CHAOS_HARD_MAX,
         chaos_step_ms: CHAOS_STEP_MS,
         break_p99_ms: BREAK_P99_MS,
         break_error_rate: BREAK_ERROR_RATE,
         refine: REFINE,
         arms: ARMS,
+        include_contextforge: INCLUDE_CF,
       },
       board: boardFromArms(arms),
       arms,
@@ -1258,13 +1341,14 @@ async function main() {
       honesty: [
         "Equal-arm pets JSON across all arms.",
         EQUAL_UPSTREAM
-          ? "EQUAL_UPSTREAM: shared mock HTTP /pets — ClawQL OpenAPI, aggregator list_pets fetch, Executor fetch-when-allowed; gateway_cost = e2e − paired direct."
+          ? "EQUAL_UPSTREAM: shared mock HTTP /pets — ClawQL OpenAPI, aggregator list_pets fetch, Executor static upstream=0; gateway_cost = e2e − paired direct when hop paid."
           : "EQUAL_UPSTREAM off: aggregators/Executor may be upstream≈0; ClawQL still hits HTTP.",
         "Latency schedule: interleaved closed-loop across live arms (n≥10000 recommended for p999).",
         "Primary token metric: invoked_tool_schema_tokens (not full tools/list).",
-        "Chaos optional (MULTI_SKIP_CHAOS); when on: concurrent clients until p99>SLO / error_rate.",
-        "Panguard / durable WORM off. MetaMCP skipped without Docker.",
-        "Hold publicizing until ClawQL RAM narrative closed or scoped.",
+        "Chaos: topology A only (single-instance). Claim only vs same topology. MULTI_CHAOS_UNTIL_BREAK pushes past power-of-two ceiling until break.",
+        "path_matrix: ClawQL latency includes risk/audit/projection; aggregators do almost none of that.",
+        "ContextForge/MetaMCP off publish board by default (nested CF / Docker).",
+        "RSS: ClawQL is heaviest serious arm — admit the loss; do not hide under-load median.",
         "Checkpoint writes after latency and after each chaos arm (survives OOM mid-chaos).",
       ],
     });

@@ -1,20 +1,24 @@
 #!/usr/bin/env node
 /**
- * Multi-gateway 10+ turn token board (input + output).
+ * Multi-gateway 10+ turn token board (input + output + task success).
  *
  * Equal-arm fat catalog (N tools, verbose schemas, fat default results):
- *   - Aggregators (MCPJungle / agentgateway [/ ContextForge]): full tools/list
- *     + raw fat tool results each turn
+ *   - Aggregators (MCPJungle / agentgateway): full tools/list once (classic) +
+ *     raw fat tool results each turn
  *   - ClawQL: Layer1 = search+execute schemas only; Layer2 = search hit +
  *     execute with fields projection against mirrored OpenAPI
- *   - Executor: Layer1 = execute schema; Layer2 = fat JSON via code execute
- *     (no server-side fields projection)
+ *   - Executor (fat): Layer1 = execute schema; Layer2 = fat JSON via code
+ *   - Executor (filter): same execute schema; program maps to {id,name,status}
+ *     — fair code-mode peer for ClawQL projection
  *
- * Cumulative (focus=input+output, classic):
+ * Cumulative (primary = classic):
  *   turn_n = Layer1_once + sum(Layer2_i for i=1..n)
  *
  * Secondary model (tools_list_every_turn): aggregators re-pay tools/list each
- * turn — common when agents do not cache ListTools.
+ * turn — most clients cache ListTools; demoted from publish headline.
+ *
+ * Task success: deterministic inventory check each turn (expected available
+ * rows for the partition). Optional MT_LLM_JUDGE=1 when a model key exists.
  *
  * Usage:
  *   EXECUTOR_BIN=… EXECUTOR_CWD=… \
@@ -25,10 +29,10 @@
  *
  * Env:
  *   MT_TURNS (default 12)  CATALOG_TOOL_COUNT (default 40)
- *   MT_ARMS=clawql,executor,mcpjungle,agentgateway[,contextforge]
+ *   MT_ARMS=clawql,executor,executor_filter,mcpjungle,agentgateway
  *   MT_LIMIT (rows per turn, default 25)
  *   MT_OUT (default gateway-multi-multiturn.json)
- *   MT_INCLUDE_CF=1 to add ContextForge (slow / nested)
+ *   MT_INCLUDE_CF=1 only for nested CF experiments (off publish board)
  */
 
 import { existsSync, readFileSync, readdirSync, openSync, closeSync } from "node:fs";
@@ -59,8 +63,8 @@ const INCLUDE_CF =
 const ARMS = (
   process.env.MT_ARMS ??
   (INCLUDE_CF
-    ? "clawql,executor,mcpjungle,agentgateway,contextforge"
-    : "clawql,executor,mcpjungle,agentgateway")
+    ? "clawql,executor,executor_filter,mcpjungle,agentgateway,contextforge"
+    : "clawql,executor,executor_filter,mcpjungle,agentgateway")
 )
   .split(",")
   .map((s) => s.trim())
@@ -211,6 +215,71 @@ function slimPayload(partitionIndex, limit = LIMIT) {
     name: r.name,
     status: r.status,
   }));
+}
+
+/** Parse tool text into JSON (raw or MCP-wrapped). */
+function parseResultJson(text) {
+  if (text == null || text === "") return null;
+  const raw = String(text).trim();
+  try {
+    return JSON.parse(raw);
+  } catch {
+    /* try first JSON value in blob */
+  }
+  const start = raw.search(/[\[{]/);
+  if (start < 0) return null;
+  try {
+    return JSON.parse(raw.slice(start));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Deterministic task success: agent asked for available inventory rows with
+ * id/name/status for the partition. Projection must not drop those facts.
+ */
+function scoreTaskSuccess(text, partitionIndex, limit = LIMIT) {
+  const expected = slimPayload(partitionIndex, limit);
+  const parsed = parseResultJson(text);
+  const failures = [];
+  if (parsed == null) {
+    return { ok: false, matched: 0, expected: expected.length, failures: ["unparseable_json"] };
+  }
+  let rows = null;
+  if (Array.isArray(parsed)) rows = parsed;
+  else if (Array.isArray(parsed?.items)) rows = parsed.items;
+  else if (Array.isArray(parsed?.result)) rows = parsed.result;
+  else if (Array.isArray(parsed?.data)) rows = parsed.data;
+  else if (parsed && typeof parsed === "object" && Array.isArray(parsed.pets)) rows = parsed.pets;
+  if (!rows) {
+    return { ok: false, matched: 0, expected: expected.length, failures: ["no_row_array"] };
+  }
+  const byId = new Map();
+  for (const r of rows) {
+    if (r && (r.id != null || r.ID != null)) byId.set(Number(r.id ?? r.ID), r);
+  }
+  let matched = 0;
+  for (const exp of expected) {
+    const got = byId.get(exp.id);
+    if (!got) {
+      failures.push(`missing_id_${exp.id}`);
+      continue;
+    }
+    const nameOk = String(got.name ?? "") === exp.name;
+    const statusOk = String(got.status ?? "") === exp.status;
+    if (!nameOk || !statusOk) {
+      failures.push(`mismatch_id_${exp.id}`);
+      continue;
+    }
+    matched++;
+  }
+  return {
+    ok: matched === expected.length && failures.length === 0,
+    matched,
+    expected: expected.length,
+    failures: failures.slice(0, 8),
+  };
 }
 
 function buildTurns() {
@@ -588,9 +657,10 @@ async function runAggregatorArm(gw, turns) {
       const ms = performance.now() - t0;
       if (res.isError) throw new Error(`${gw.id} ${name}: ${toolText(res).slice(0, 300)}`);
       const text = toolText(res);
-      // Optional: re-list cost for every-turn model
+      // Secondary sensitivity: re-list cost (most clients cache — demoted from headline)
       const relist = await conn.client.listTools();
       const relistTok = relist.tools.reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
+      const success = scoreTaskSuccess(text, turn.partition, turn.args.limit);
       perTurn.push({
         n: turn.n,
         tool: name,
@@ -601,6 +671,7 @@ async function runAggregatorArm(gw, turns) {
         layer2_relist_every_turn: relistTok + countTokens(text),
         latency_ms: Number(ms.toFixed(3)),
         ok: true,
+        task_success: success,
       });
     }
     return {
@@ -609,7 +680,7 @@ async function runAggregatorArm(gw, turns) {
       layer1: {
         once_schema_tokens: l1.schema_tokens,
         tools_count: l1.tools_count,
-        note: "Full tools/list dump (fat catalog surface)",
+        note: "Full tools/list dump (fat catalog surface); classic counts Layer1 once",
       },
       perTurn,
       skipped: false,
@@ -655,6 +726,7 @@ async function runClawqlArm(mock, turns) {
       const execText = toolText(execRes);
       const searchTok = countTokens(searchText);
       const resultTok = countTokens(execText);
+      const success = scoreTaskSuccess(execText, turn.partition, turn.args.limit);
       perTurn.push({
         n: turn.n,
         tool: turn.operationId,
@@ -667,6 +739,7 @@ async function runClawqlArm(mock, turns) {
         layer2_relist_every_turn: searchTok + resultTok, // no tools/list dump
         latency_ms: Number(ms.toFixed(3)),
         ok: true,
+        task_success: success,
       });
     }
     return {
@@ -687,24 +760,31 @@ async function runClawqlArm(mock, turns) {
   }
 }
 
-async function runExecutorArm(turns) {
+async function runExecutorArm(turns, { filter = false } = {}) {
   const conn = await connectExecutor();
+  const armId = filter ? "executor_filter" : "executor";
   try {
     const listed = await conn.client.listTools();
     const executeTool = listed.tools.find((t) => t.name === "execute");
     const l1Tokens = executeTool ? countTokens(JSON.stringify(executeTool)) : 0;
     const perTurn = [];
     for (const turn of turns) {
-      const payload = fatPayload(turn.partition, turn.args.limit);
-      const code = `return ${JSON.stringify(payload)};`;
+      const payload = filter
+        ? slimPayload(turn.partition, turn.args.limit)
+        : fatPayload(turn.partition, turn.args.limit);
+      // Code-mode filter: program projects to same fields as ClawQL where+fields.
+      const code = filter
+        ? `const fat = ${JSON.stringify(fatPayload(turn.partition, turn.args.limit))}; return fat.items.map((r) => ({ id: r.id, name: r.name, status: r.status }));`
+        : `return ${JSON.stringify(payload)};`;
       const t0 = performance.now();
       const res = await conn.client.callTool({
         name: "execute",
         arguments: { code, timeoutMs: 30_000 },
       });
       const ms = performance.now() - t0;
-      if (res.isError) throw new Error(`executor: ${toolText(res).slice(0, 300)}`);
+      if (res.isError) throw new Error(`${armId}: ${toolText(res).slice(0, 300)}`);
       const text = toolText(res);
+      const success = scoreTaskSuccess(text, turn.partition, turn.args.limit);
       perTurn.push({
         n: turn.n,
         tool: "execute",
@@ -714,12 +794,17 @@ async function runExecutorArm(turns) {
         layer2_relist_every_turn: countTokens(text),
         latency_ms: Number(ms.toFixed(3)),
         ok: true,
-        note: "Fat equal-arm JSON via code; no fields projection",
+        task_success: success,
+        note: filter
+          ? "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
+          : "Fat equal-arm JSON via code; no fields projection",
       });
     }
     return {
-      id: "executor",
-      model: "stdio_mcp_code_execute_fat_static",
+      id: armId,
+      model: filter
+        ? "stdio_mcp_code_execute_fields_filter"
+        : "stdio_mcp_code_execute_fat_static",
       layer1: {
         once_schema_tokens: l1Tokens,
         tools_count: executeTool ? 1 : listed.tools.length,
@@ -751,10 +836,18 @@ function summarizeArm(arm) {
   const meanResult = arm.perTurn.reduce((a, t) => a + t.result_tokens, 0) / arm.perTurn.length;
   const meanLat =
     arm.perTurn.reduce((a, t) => a + (t.latency_ms || 0), 0) / arm.perTurn.length;
+  const successTurns = arm.perTurn.filter((t) => t.task_success?.ok).length;
+  const taskSuccess = {
+    turns_ok: successTurns,
+    turns_total: arm.perTurn.length,
+    ok: successTurns === arm.perTurn.length,
+    rate: Number((successTurns / Math.max(1, arm.perTurn.length)).toFixed(3)),
+  };
   return {
     ...arm,
     cumulative_classic: classic,
     cumulative_tools_list_every_turn: relist,
+    task_success: taskSuccess,
     board: {
       layer1_once_tokens: l1,
       mean_layer2_tokens: Number(meanL2.toFixed(1)),
@@ -763,6 +856,8 @@ function summarizeArm(arm) {
       combined_relist_every_turn_at_n: lastRelist.combined,
       mean_latency_ms: Number(meanLat.toFixed(3)),
       turns: arm.perTurn.length,
+      task_success_ok: taskSuccess.ok,
+      task_success_rate: taskSuccess.rate,
     },
   };
 }
@@ -789,30 +884,43 @@ function ratioBoard(arms) {
 
 function categoryWinNarrative(arms, ratios) {
   const lines = [
-    "Category win levers (multi-turn I/O tokens, not single-tool p50):",
-    "1. Input side — ClawQL Layer1 is search+execute only; aggregators pay the full fat tools/list.",
-    "2. Output side — ClawQL fields projection shrinks Layer2; aggregators/Executor return fat JSON.",
-    "3. Compounding — ratio climbs with N as uncacheable Layer2 dominates; ClawQL keeps both sides small.",
+    "Category story: most efficient governed gateway — multi-turn I/O tokens with equal task success.",
+    "1. Primary model — classic Layer1 once + Σ Layer2 (clients that cache tools/list).",
+    "2. Input side — ClawQL Layer1 is search+execute only; aggregators pay the full fat tools/list once.",
+    "3. Output side — ClawQL fields projection; fair peer is executor_filter (code-mode same fields).",
+    "4. Re-list-every-turn is secondary sensitivity only (most clients cache; lazy clients shrink aggregators further).",
   ];
+  const clawOk = arms.clawql?.task_success?.ok;
+  if (clawOk === false) {
+    lines.push("HOLD: ClawQL task_success failed — do not claim token wins.");
+  } else if (clawOk) {
+    lines.push("ClawQL deterministic task_success: PASS.");
+  }
   if (ratios.mcpjungle) {
     lines.push(
-      `Measured vs MCPJungle @N=${TURNS}: classic ${ratios.mcpjungle.vs_clawql_combined_classic}×, ` +
-        `relist-every-turn ${ratios.mcpjungle.vs_clawql_combined_relist_every_turn}×.`
+      `Measured vs MCPJungle @N=${TURNS}: classic ${ratios.mcpjungle.vs_clawql_combined_classic}× ` +
+        `(relist secondary ${ratios.mcpjungle.vs_clawql_combined_relist_every_turn}×).`
     );
   }
   if (ratios.agentgateway) {
     lines.push(
-      `Measured vs agentgateway @N=${TURNS}: classic ${ratios.agentgateway.vs_clawql_combined_classic}×, ` +
-        `relist-every-turn ${ratios.agentgateway.vs_clawql_combined_relist_every_turn}×.`
+      `Measured vs agentgateway @N=${TURNS}: classic ${ratios.agentgateway.vs_clawql_combined_classic}× ` +
+        `(relist secondary ${ratios.agentgateway.vs_clawql_combined_relist_every_turn}×).`
     );
   }
   if (ratios.executor) {
     lines.push(
-      `Measured vs Executor @N=${TURNS}: classic ${ratios.executor.vs_clawql_combined_classic}× ` +
-        `(Executor wins Layer1 schema size but loses Layer2 without fields).`
+      `Measured vs Executor fat @N=${TURNS}: classic ${ratios.executor.vs_clawql_combined_classic}× ` +
+        `(fat return; Layer1 schema still smaller).`
     );
   }
-  lines.push("Hold public single-tool latency claims until RSS gap vs Executor is closed/scoped.");
+  if (ratios.executor_filter) {
+    lines.push(
+      `Measured vs Executor filter @N=${TURNS}: classic ${ratios.executor_filter.vs_clawql_combined_classic}× ` +
+        `(same fields via code-mode — the peer Rhys will cite).`
+    );
+  }
+  lines.push("RSS is a loss among serious arms — admit or fix before memory claims.");
   return lines;
 }
 
@@ -854,7 +962,13 @@ async function main() {
             rawArms.executor = { skipped: true, reason: "EXECUTOR_BIN unset" };
             continue;
           }
-          rawArms.executor = await runExecutorArm(turns);
+          rawArms.executor = await runExecutorArm(turns, { filter: false });
+        } else if (arm === "executor_filter") {
+          if (!process.env.EXECUTOR_BIN?.trim()) {
+            rawArms.executor_filter = { skipped: true, reason: "EXECUTOR_BIN unset" };
+            continue;
+          }
+          rawArms.executor_filter = await runExecutorArm(turns, { filter: true });
         } else if (arm === "mcpjungle") {
           const gw = await startMcpjungleCatalog();
           gateways.push(gw);
@@ -913,10 +1027,15 @@ async function main() {
         fat_result_tokens_partition_1: fatTok,
         slim_fields_tokens_partition_1: slimTok,
         projection_ratio: +(fatTok / Math.max(1, slimTok)).toFixed(2),
-        note: "Same underlying rows; ClawQL where=items + fields=['id','name','status'] vs aggregator/Executor fat envelope JSON",
+        note: "Same underlying rows; ClawQL where+fields and executor_filter project to {id,name,status}; fat Executor/aggregators return full envelope",
       },
       board,
       ratios_vs_clawql: ratios,
+      task_success: Object.fromEntries(
+        Object.entries(arms)
+          .filter(([, a]) => a?.task_success)
+          .map(([id, a]) => [id, a.task_success])
+      ),
       cumulative_table: Object.fromEntries(
         Object.entries(arms)
           .filter(([, a]) => a?.cumulative_classic)
@@ -932,30 +1051,34 @@ async function main() {
       arms,
       errors,
       category_win: narrative,
+      primary_metric: "classic_layer1_once_plus_sum_layer2_with_task_success",
+      secondary_metric: "tools_list_every_turn_sensitivity",
       honesty: [
         "Fat catalog equal-arm: N MCP tools mirrored as N OpenAPI operationIds.",
-        "Classic cumulative: Layer1_once + sum(Layer2). ClawQL Layer2 includes search+execute each turn.",
-        "tools_list_every_turn: aggregators re-count full ListTools each turn (no schema cache).",
-        "Executor Layer2 is fat static JSON (sandbox); no fields projection — honest product gap.",
+        "PRIMARY: classic Layer1_once + sum(Layer2) with deterministic task_success.",
+        "SECONDARY: tools_list_every_turn — most clients cache ListTools; do not lead with this multiplier.",
+        "executor_filter: code-mode maps to same {id,name,status} fields as ClawQL projection.",
+        "executor (fat): returns full envelope — shows unfiltered program cost, not the fairest peer.",
+        "ContextForge/MetaMCP off publish board by default.",
         "Not a latency board; see gateway-multi-cmp-10k.json for interleaved p999.",
-        "Hold publicizing until ClawQL RSS narrative closed/scoped.",
+        "RSS is a loss among serious arms — admit plainly.",
       ],
     };
 
     await writeFile(OUT_PATH, JSON.stringify(report, null, 2));
     console.log(`\n[mt] wrote ${OUT_PATH}`);
-    console.log("\n=== Multi-turn cumulative (classic Layer1 once + sum L2) ===\n");
-    console.log("arm | L1 once | mean L2 | combined@N | mean result tok");
+    console.log("\n=== Multi-turn cumulative (PRIMARY: classic Layer1 once + sum L2) ===\n");
+    console.log("arm | L1 once | mean L2 | combined@N | mean result tok | task_success");
     for (const [id, b] of Object.entries(board)) {
       if (b.skipped) {
         console.log(`${id} | SKIP ${b.reason?.slice(0, 60)}`);
         continue;
       }
       console.log(
-        `${id} | ${b.layer1_once_tokens} | ${b.mean_layer2_tokens} | ${b.combined_at_n} | ${b.mean_result_tokens}`
+        `${id} | ${b.layer1_once_tokens} | ${b.mean_layer2_tokens} | ${b.combined_at_n} | ${b.mean_result_tokens} | ${b.task_success_ok ? "PASS" : "FAIL"} (${b.task_success_rate})`
       );
     }
-    console.log("\nRatios vs ClawQL (classic / relist-every-turn):");
+    console.log("\nRatios vs ClawQL (classic primary / relist secondary):");
     console.log(JSON.stringify(ratios, null, 2));
     for (const line of narrative) console.log(`• ${line}`);
   } finally {
