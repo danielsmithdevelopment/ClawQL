@@ -18,28 +18,21 @@ export const SEARCH_QUERY_DESCRIPTION =
 
 export const SEARCH_LIMIT_DESCRIPTION = "Max number of matching operations to return.";
 
+/** Lean tool-schema copy — keep docs/skills for long-form; Layer-1 tokens matter. */
 export const EXECUTE_OPERATION_ID_DESCRIPTION =
-  "The operation ID from search() results. " +
-  "E.g. 'run.projects.locations.services.list'. " +
-  "For large binary bodies (e.g. PDF → Tika `application/octet-stream`), prefer the MCP gRPC surface " +
-  "(`model_context_protocol.Mcp/CallTool` on the chart gRPC port, default 50051) instead of Streamable HTTP JSON.";
+  "Operation id from search (e.g. pulls.list). Large binaries: prefer MCP gRPC CallTool.";
 
 export const EXECUTE_ARGS_DESCRIPTION =
-  "Key/value map of parameters for the operation (path + query + body). " +
-  'For `application/octet-stream`, pass `body` (+ optional `bodyEncoding: "base64"`, `bodyContentType`). ' +
-  "Very large `body` strings should use gRPC CallTool (see operationId note), not HTTP MCP.";
+  "Path/query/body parameters. Octet-stream: `body` (+ optional bodyEncoding/bodyContentType).";
 
 export const EXECUTE_FIELDS_DESCRIPTION =
-  "Optional response fields to return. Fewer fields = smaller context window usage. " +
-  "Omit to get a sensible default. E.g. ['name', 'uri', 'latestReadyRevision']";
+  "Optional response fields to keep (smaller context). Omit for defaults.";
 
 /** Max length for execute `where` JMESPath (must match where-filter caps). */
 export const EXECUTE_WHERE_MAX_LENGTH = 512;
 
 export const EXECUTE_WHERE_DESCRIPTION =
-  "Optional JMESPath evaluated server-side on the provider JSON after fetch, " +
-  "before fields projection. Filter arrays (e.g. [?state=='open']) or extract " +
-  "(e.g. user.login). Max 512 chars; invalid expressions fail closed.";
+  "Optional JMESPath filter/extract before fields (max 512 chars; fail-closed).";
 
 /** MCP `search` tool arguments — Effect Schema (source of truth). */
 export const SearchInputSchema = Schema.Struct({

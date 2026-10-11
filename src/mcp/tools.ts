@@ -12,7 +12,8 @@
  * gate with CLAWQL_ENABLE_OUROBOROS_TOOLS=1 or instance/tier ouroboros.enabled; optional
  * CLAWQL_OUROBOROS_DATABASE_URL for Postgres lineage (#142).
  * Plugin enablement: {@link resolvePluginCompositionFlags} / ClawQLInstance — not CLAWQL_ENABLE_*.
- * Single-spec `execute` runs OpenAPI→GraphQL in-process; field resolution uses `graphql-execute-helpers`.
+ * Single-spec OpenAPI `execute` prefers REST for plain `fields` (auto); nested GraphQL
+ * selection sets still use in-process OpenAPI→GraphQL (`CLAWQL_OPENAPI_EXECUTE_PATH`).
  */
 
 import { readFile } from "node:fs/promises";
