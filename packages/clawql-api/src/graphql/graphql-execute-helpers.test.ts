@@ -1,5 +1,6 @@
 import { buildSchema } from "graphql";
 import { describe, expect, it } from "vitest";
+import type { Operation } from "../spec/operation-types.js";
 import {
   capturePathParams,
   discoveryTypeToGraphQL,
@@ -8,8 +9,7 @@ import {
   operationIdToRunStyleName,
   resolveGraphQLFieldFromSchema,
   sanitizeNameForGraphQL,
-} from "clawql-api";
-import type { Operation } from "clawql-api";
+} from "./execute-helpers.js";
 
 function op(partial: Partial<Operation> & Pick<Operation, "id" | "flatPath">): Operation {
   return {
