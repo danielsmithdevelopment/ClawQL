@@ -101,3 +101,24 @@ export {
   type FlipRateResponse,
   type FlipRateFamily,
 } from "./flip-rate.js";
+
+export {
+  HeldOutToFanoutService,
+  HeldOutToFanoutLive,
+  applyFrontierLabels,
+  heldOutCaseToFanout,
+  heldOutCasesToFanout,
+  heldOutCasesToFlipRate,
+  type FrontierLabelRow,
+  type FrontierLabelsFile,
+} from "./held-out-to-fanout.js";
+
+export {
+  Decision1CandidateReportService,
+  Decision1CandidateReportLive,
+  buildDecision1CandidateReport,
+  runDecision1CandidateReport,
+  DECISION1_CANDIDATE_PROTOCOL,
+  type Decision1CandidateReport,
+  type Decision1CandidateDeps,
+} from "./decision1-candidate-report.js";

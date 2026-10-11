@@ -139,3 +139,4 @@ USD/call = `(inputTokens * inputRate + outputTokens * outputRate) / calls` where
 4. ~~Cost models from virtual-key spend ledger~~ — shipped (`costSource=spend_ledger`)
 5. ~~Live `ensemble` quorum when it raises answers-on-its-own~~ — shipped
 6. ~~Provider-specific pricing for spend-ledger / VK budgets~~ — shipped (`TokenPricingService`)
+7. ~~Held-out → fan-out converter + Decision-1 candidate report~~ — shipped (`heldOutCasesToFanout` / `buildDecision1CandidateReport`; `productionTrustedClaim: false`)
