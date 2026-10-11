@@ -24,7 +24,7 @@ Next:
   2. npm run board:hydrate-from   (or board:hydrate / demo:approval-path)
   3. Show .local/demo-gate/run-3/.local/canary/status.json (or board canary panel)
   4. Follow docs/VIDEO_SCRIPT.md
-  5. Submit per docs/SUBMISSION.md
+  5. Submit per docs/SUBMISSION.md + docs/HUMAN_NEXT.md
 
 Tip: judges can run npm run demo:judge-smoke for a single verified demo first.
 `);

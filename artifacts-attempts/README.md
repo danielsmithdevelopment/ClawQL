@@ -29,7 +29,8 @@ Apache-2.0. No private Ontologiql code. Nothing personal goes into a release.
 - Day 12 status + board trust: [`DAY12.md`](./DAY12.md) · [`docs/STATUS.md`](./docs/STATUS.md)  
 - Day 13 standalone + film preflight: [`DAY13.md`](./DAY13.md) · [`docs/STANDALONE.md`](./docs/STANDALONE.md)  
 - Day 14 gradual-deploy builder + FAQ: [`DAY14.md`](./DAY14.md) · [`docs/FAQ.md`](./docs/FAQ.md)  
-- Day 15 release wire + record-prep GATE PASS: [`DAY15.md`](./DAY15.md)
+- Day 15 release wire + record-prep GATE PASS: [`DAY15.md`](./DAY15.md)  
+- Day 16 human handoff: [`DAY16.md`](./DAY16.md) · [`docs/HUMAN_NEXT.md`](./docs/HUMAN_NEXT.md)
 
 ### Run the local demo (real git notes + vitest + dry-run release)
 

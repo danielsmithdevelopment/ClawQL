@@ -22,6 +22,7 @@ const required = [
   "docs/STATUS.md",
   "docs/STANDALONE.md",
   "docs/FAQ.md",
+  "docs/HUMAN_NEXT.md",
   "agents/run-attempt.sh",
   "demo/fixtures/patches/att_1.good.patch",
   "demo/fixtures/patches/att_2.partial.patch",
