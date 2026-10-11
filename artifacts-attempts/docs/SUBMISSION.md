@@ -2,7 +2,7 @@
 
 Deadline: **October 14, 2026**. Artifacts billing starts October 15 (Workers Paid).
 
-Readiness matrix: [`STATUS.md`](./STATUS.md).
+Readiness matrix: [`STATUS.md`](./STATUS.md). Operator steps: [`HUMAN_NEXT.md`](./HUMAN_NEXT.md).
 
 ## Required by Cloudflare
 

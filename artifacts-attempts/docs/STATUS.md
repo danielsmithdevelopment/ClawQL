@@ -1,6 +1,8 @@
 # Competition status — artifacts-attempts
 
-As of Day 12 (local path). Deadline **Oct 14, 2026**. Artifacts billing starts **Oct 15**.
+As of Day 16 (local path complete + human handoff). Deadline **Oct 14, 2026**. Artifacts billing starts **Oct 15**.
+
+**Operator checklist:** [`HUMAN_NEXT.md`](./HUMAN_NEXT.md).
 
 ## Ready (no Cloudflare account)
 
