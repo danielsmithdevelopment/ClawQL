@@ -164,17 +164,6 @@ EXECUTOR_BIN=… EXECUTOR_CWD=… \
 
 Latest board (`executor-cmp-comprehensive.json`):
 
-<<<<<<< Updated upstream
-| Dimension                    |              ClawQL |    Executor | Note                           |
-| ---------------------------- | ------------------: | ----------: | ------------------------------ |
-| Gateway p50 / p99 (ms)       |     **1.17 / 5.17** | 2.47 / 7.68 | Win (exploratory n=500)        |
-| CPU % median                 |                31.7 |        29.8 | Near-parity                    |
-| RSS MB median                |                 368 |         253 | Still lose — next lever        |
-| `execute` schema tokens      |   **178** (was 323) |          90 | Improved; still lose           |
-| Fat lean vs full dump tokens |            **2804** |        9122 | Win (`fields`)                 |
-| Stdio chaos sustained        | **8** (was break@8) |           8 | Tie at max tried               |
-| HTTP multiplex sustained     |               **8** |         n/a | ClawQL-only shared-process arm |
-=======
 | Dimension | ClawQL | Executor | Note |
 | --- | ---: | ---: | --- |
 | Gateway p50 / p99 (ms) | **1.31 / 3.09** | 2.57 / 5.69 | Win (exploratory n=200) |
@@ -185,7 +174,6 @@ Latest board (`executor-cmp-comprehensive.json`):
 | **NATS scale-out sustained clients** | **32** (4 workers) | **16** (broke @32 p99) | **Win** — primary chaos arm |
 | At 32 clients: p99 / rps | **29 ms / 2419** | 153 ms / 291 | ClawQL holds SLO; Executor breaks |
 | Stdio process chaos | 8 | 8 | Honesty baseline (tie at max tried) |
->>>>>>> Stashed changes
 
 Honesty: scale-out is the **product** path (fixed gateway replicas, NATS queue-group session placement — same shape as fabric VG workers). Executor comparison uses their natural process-per-client stdio model. Layer-1 schema richness stays. p999 from short comprehensive iters is exploratory — publish latency tails from `latency-fair` 10k×3. **Panguard off**. Hold publicizing until RAM gap is closed or scoped.
 
