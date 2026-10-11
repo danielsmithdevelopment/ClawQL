@@ -57,8 +57,9 @@ async function runStdio() {
 
 async function runHttp(port) {
   const server = makeServer();
+  // Stateless mode — gateway proxies (ContextForge) re-initialize without sticky sessions.
   const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: () => randomUUID(),
+    sessionIdGenerator: undefined,
   });
   await server.connect(transport);
 

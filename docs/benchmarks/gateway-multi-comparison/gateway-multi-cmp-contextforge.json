@@ -1,0 +1,171 @@
+{
+  "suite": "gateway-multi-comparison",
+  "measuredAt": "2026-10-11T05:36:50.619Z",
+  "node": "v22.14.0",
+  "config": {
+    "iters": 200,
+    "warmup": 20,
+    "chaos_max": 64,
+    "chaos_step_ms": 3000,
+    "break_p99_ms": 100,
+    "break_error_rate": 0.02,
+    "refine": true,
+    "arms": [
+      "contextforge"
+    ]
+  },
+  "board": {
+    "contextforge": {
+      "latency_e2e_ms": {
+        "n": 200,
+        "p50_ms": 17.48,
+        "p95_ms": 22.516,
+        "p99_ms": 28.274,
+        "p999_ms": 33.149,
+        "mean_ms": 18.224,
+        "min_ms": 15.272,
+        "max_ms": 33.149
+      },
+      "gateway_cost_ms": {
+        "n": 200,
+        "p50_ms": 17.48,
+        "p95_ms": 22.516,
+        "p99_ms": 28.274,
+        "p999_ms": 33.149,
+        "mean_ms": 18.224,
+        "min_ms": 15.272,
+        "max_ms": 33.149
+      },
+      "rss_mb_median": 698.27,
+      "cpu_pct_median": 77.48,
+      "schema_tokens": 48,
+      "tools_count": 1,
+      "equal_result_tokens": 28,
+      "chaos_last_ok": 1,
+      "chaos_first_break": 2,
+      "chaos_break_reason": "p99 282.245ms"
+    }
+  },
+  "arms": {
+    "contextforge": {
+      "id": "contextforge",
+      "model": "virtual_mcp_server_over_mcpjungle_stdio_pets",
+      "ok": true,
+      "latency": {
+        "e2e": {
+          "n": 200,
+          "p50_ms": 17.48,
+          "p95_ms": 22.516,
+          "p99_ms": 28.274,
+          "p999_ms": 33.149,
+          "mean_ms": 18.224,
+          "min_ms": 15.272,
+          "max_ms": 33.149
+        },
+        "direct_http": null,
+        "gateway_cost": {
+          "n": 200,
+          "p50_ms": 17.48,
+          "p95_ms": 22.516,
+          "p99_ms": 28.274,
+          "p999_ms": 33.149,
+          "mean_ms": 18.224,
+          "min_ms": 15.272,
+          "max_ms": 33.149
+        },
+        "note": "gateway_cost ≈ e2e (stdio/in-process upstream, no HTTP hop)"
+      },
+      "resources": {
+        "label": "contextforge",
+        "pid": 184524,
+        "n": 85,
+        "rss_mb": {
+          "min": 698.25,
+          "median": 698.27,
+          "max": 716.86
+        },
+        "cpu_pct": {
+          "min": 7.72,
+          "median": 77.48,
+          "max": 82.69,
+          "mean": 69.79
+        }
+      },
+      "tokens": {
+        "tools_list_count": 1,
+        "tools_list_schema_tokens": 48,
+        "equal_result_tokens": 28,
+        "tool_names": [
+          "pets-pets-list-pets"
+        ]
+      },
+      "pid": 184524,
+      "version": "mcp-contextforge-gateway (uvx)",
+      "mcp_url": "http://127.0.0.1:38175/servers/2281a06eb1354803b344209dc4e3cbe9/mcp",
+      "tool_name": "pets-pets-list-pets",
+      "chaos": {
+        "slo": {
+          "break_p99_ms": 100,
+          "break_error_rate": 0.02,
+          "step_ms": 3000
+        },
+        "steps": [
+          {
+            "concurrency": 1,
+            "ok": 162,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 54,
+            "latency": {
+              "n": 162,
+              "p50_ms": 16.088,
+              "p95_ms": 20.845,
+              "p99_ms": 24.145,
+              "p999_ms": 248.242,
+              "mean_ms": 18.012,
+              "min_ms": 14.625,
+              "max_ms": 248.242
+            },
+            "broken": false,
+            "break_reason": null,
+            "phase": "power_of_two"
+          },
+          {
+            "concurrency": 2,
+            "ok": 171,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 57,
+            "latency": {
+              "n": 171,
+              "p50_ms": 30.807,
+              "p95_ms": 38.649,
+              "p99_ms": 282.245,
+              "p999_ms": 288.257,
+              "mean_ms": 34.742,
+              "min_ms": 23.701,
+              "max_ms": 288.257
+            },
+            "broken": true,
+            "break_reason": "p99 282.245ms",
+            "phase": "power_of_two"
+          }
+        ],
+        "refine": null,
+        "last_ok_clients": 1,
+        "first_break_clients": 2,
+        "break_reason": "p99 282.245ms"
+      }
+    }
+  },
+  "errors": {},
+  "honesty": [
+    "Equal-arm pets JSON across all arms.",
+    "Aggregator arms use stdio equal-arm-pets MCP (upstream≈0).",
+    "ClawQL OpenAPI execute hits mock HTTP; gateway_cost = e2e − direct.",
+    "Executor code execute returns pets in-process; gateway_cost ≈ e2e.",
+    "Chaos = concurrent MCP clients until p99>SLO or error_rate; binary refine tol=1.",
+    "Panguard / durable WORM off. MetaMCP skipped without Docker.",
+    "Hold publicizing until RAM narrative closed for ClawQL vs Executor; multi-arm is exploratory until repeated."
+  ]
+}
