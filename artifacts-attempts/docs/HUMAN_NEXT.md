@@ -10,13 +10,14 @@ Agent-local work through Day 15 is done, including a proven **`demo:record-prep`
 cd artifacts-attempts
 npm ci
 npm run demo:film-preflight
+npm run demo:live-check     # shows which Cloudflare secrets are still missing
 npm run demo:record-prep    # expect GATE PASS
 npm run board:serve         # terminal A
 # terminal B after a demo snapshot exists:
 npm run board:hydrate-from
 ```
 
-Record scenes in [`VIDEO_SCRIPT.md`](./VIDEO_SCRIPT.md) (5–10 min). Caption note about at-least-once + dedup is in that file.
+Open with [`PITCH.md`](./PITCH.md). Record scenes in [`VIDEO_SCRIPT.md`](./VIDEO_SCRIPT.md) (5–10 min). Caption note about at-least-once + dedup is in that file.
 
 ### 2. Submit (required)
 
@@ -28,7 +29,14 @@ Create GitHub repo `artifacts-attempts` (Apache-2.0), then extract per [`STANDAL
 
 ### 4. Live Cloudflare (optional; billing Oct 15)
 
-Workers Paid + Artifacts beta + Turbo credits. Set secrets from `.env.example`, then `ATTEMPTS_E2E=1`. Gradual deploy body is already built by `prepareRelease().gradualDeploy` / `buildGradualDeployRequest` — POST when ready (`gradualDeployUrl`).
+Workers Paid + Artifacts beta + Turbo credits. Set secrets from `.env.example`, then:
+
+```bash
+LIVE_PROBE=1 npm run demo:live-check   # Artifacts REST list()
+ATTEMPTS_E2E=1 npx vitest run --config e2e/vitest.config.ts
+```
+
+Gradual deploy body is printed by `demo:live-check` / `prepareRelease().gradualDeploy`.
 
 ## Do not wait on agents for
 

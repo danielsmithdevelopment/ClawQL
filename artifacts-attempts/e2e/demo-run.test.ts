@@ -57,7 +57,21 @@ describe.skipIf(!local)("demo-run (local-git witnesses)", () => {
 });
 
 describe.skipIf(!live)("demo-run (live Artifacts + Arweave)", () => {
-  it("full Cloudflare path", async () => {
-    throw new Error("wire when CLOUDFLARE_* + Artifacts credentials are available");
+  it("requires Cloudflare env, then probes Artifacts REST", async () => {
+    const { missingLiveEnv } = await import("./live-env.js");
+    const missing = missingLiveEnv();
+    if (missing.length) {
+      throw new Error(
+        `ATTEMPTS_E2E=1 but missing: ${missing.join(", ")}. See .env.example and npm run demo:live-check`
+      );
+    }
+    const { createRestClient } = await import("@artifacts-attempts/artifacts-client");
+    const client = createRestClient({
+      accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
+      apiToken: process.env.CLOUDFLARE_API_TOKEN!,
+      namespace: process.env.ARTIFACTS_NAMESPACE?.trim() || "attempts",
+    });
+    const repos = await client.list();
+    expect(Array.isArray(repos)).toBe(true);
   });
 });

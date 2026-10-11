@@ -22,6 +22,7 @@
     "demo:judge-smoke": "npx tsx scripts/judge-smoke.ts",
     "demo:board-mcp-smoke": "npx tsx scripts/board-mcp-smoke.ts",
     "demo:film-preflight": "npx tsx scripts/film-preflight.ts",
+    "demo:live-check": "npx tsx scripts/live-check.ts",
     "demo:approval-path": "npx tsx scripts/approval-path-demo.ts",
     "demo:record-prep": "npx tsx scripts/record-prep.ts",
     "board:serve": "npx tsx scripts/local-api-server.ts",

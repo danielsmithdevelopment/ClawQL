@@ -1,6 +1,6 @@
 # Competition status — artifacts-attempts
 
-As of Day 16 (local path complete + human handoff). Deadline **Oct 14, 2026**. Artifacts billing starts **Oct 15**.
+As of Day 17 (pitch + live-check; local path complete). Deadline **Oct 14, 2026**. Artifacts billing starts **Oct 15**.
 
 **Operator checklist:** [`HUMAN_NEXT.md`](./HUMAN_NEXT.md).
 
@@ -20,6 +20,8 @@ As of Day 16 (local path complete + human handoff). Deadline **Oct 14, 2026**. A
 | Film preflight | `npm run demo:film-preflight` |
 | Gradual-deploy request builder (offline) | `buildGradualDeployRequest` in pipeline |
 | FAQ | [`FAQ.md`](./FAQ.md) |
+| On-camera pitch | [`PITCH.md`](./PITCH.md) |
+| Live cred check | `npm run demo:live-check` (`LIVE_PROBE=1` when tokens exist) |
 | CI (path-filtered) | `.github/workflows/artifacts-attempts.yml` |
 
 ## Blocked on credentials / human steps
