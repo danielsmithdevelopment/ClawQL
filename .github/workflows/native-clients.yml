@@ -1,0 +1,55 @@
+# Mobile (Expo) unit/typecheck + Desktop (Electron) packaging config checks.
+name: Native clients
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/mobile/**"
+      - "apps/desktop/**"
+      - ".github/workflows/native-clients.yml"
+  pull_request:
+    paths:
+      - "apps/mobile/**"
+      - "apps/desktop/**"
+      - ".github/workflows/native-clients.yml"
+
+concurrency:
+  group: native-clients-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mobile:
+    name: Mobile test + store-check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run store:check
+
+  desktop:
+    name: Desktop packaging (Linux)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - run: npm ci
+      - name: Unit smoke (paths / packaging metadata)
+        run: npm test

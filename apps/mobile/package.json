@@ -3,6 +3,7 @@
   "main": "expo-router/entry",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "dependencies": {
     "@react-native-async-storage/async-storage": "^3.1.1",
     "effect": "^4.0.2",
@@ -48,7 +49,11 @@
     "typecheck": "tsc --noEmit",
     "maestro": "maestro test maestro/flows",
     "eas:preview": "eas build --profile preview --platform all",
+    "eas:reviewer": "eas build --profile reviewer-demo --platform all",
     "eas:ios": "eas build --profile production --platform ios",
-    "eas:android-internal": "eas build --profile production --platform android"
+    "eas:android-internal": "eas build --profile production --platform android",
+    "eas:submit:ios": "eas submit --platform ios --profile production --latest",
+    "eas:submit:android": "eas submit --platform android --profile production --latest",
+    "store:check": "node scripts/store-check.mjs"
   }
 }

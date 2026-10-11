@@ -40,9 +40,12 @@ npm start
 ```bash
 npm test          # vitest (schemas, API fixture, NFC mock, deep links)
 npm run typecheck
+npm run store:check   # in-repo App Store / Play packaging preflight
 # with simulator/emulator + Maestro CLI:
 npm run maestro
 ```
+
+Day-0 human checklist: [`store/DAY0-CHECKLIST.md`](store/DAY0-CHECKLIST.md).
 
 ## Store path (no D-U-N-S yet)
 
