@@ -138,12 +138,7 @@ export function buildDecision1CandidateReport(
     if ("error" in bulk) return bulk;
 
     const maxFlipRate = deps.maxFlipRate ?? 0.1;
-    const flipFamilies = deps.flipFamilies ?? [
-      "whitespace",
-      "case",
-      "punctuation",
-      "synonym",
-    ];
+    const flipFamilies = deps.flipFamilies ?? ["whitespace", "case", "punctuation", "synonym"];
     const flipReq: FlipRateRequest = {
       cases: flipCases,
       useSiteId: "search_provider_tool_routing",
