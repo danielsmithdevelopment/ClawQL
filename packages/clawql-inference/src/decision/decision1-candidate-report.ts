@@ -38,6 +38,9 @@ export type Decision1CandidateReport = {
     readonly passed: boolean;
     readonly caseCount: number;
     readonly reports: FlipRateResponse["reports"];
+    /** True when OpenRouter key missing / flip suite skipped (measure still emits). */
+    readonly skipped?: boolean;
+    readonly skipReason?: string;
   };
   readonly honesty: readonly string[];
   readonly verdict: {
@@ -56,6 +59,13 @@ export type Decision1CandidateDeps = {
   ) => Promise<OpenAiDecisionCreateResponse>;
   readonly env?: NodeJS.ProcessEnv;
   readonly maxFlipRate?: number;
+  /** Override flip-rate families (default full suite; use `["synonym"]` to cut spend). */
+  readonly flipFamilies?: FlipRateRequest["families"];
+  /**
+   * When true (default), missing OpenRouter still emits bulk + flipRate.skipped
+   * instead of hard-failing the whole report.
+   */
+  readonly allowMissingOpenRouter?: boolean;
   /** Injected for tests — defaults to runFanoutEval. */
   readonly runBulk?: (req: FanoutEvalRequest) => Promise<FanoutEvalResponse>;
   /** Injected for tests — defaults to runFlipRate. */
@@ -128,16 +138,23 @@ export function buildDecision1CandidateReport(
     if ("error" in bulk) return bulk;
 
     const maxFlipRate = deps.maxFlipRate ?? 0.1;
+    const flipFamilies = deps.flipFamilies ?? [
+      "whitespace",
+      "case",
+      "punctuation",
+      "synonym",
+    ];
     const flipReq: FlipRateRequest = {
       cases: flipCases,
       useSiteId: "search_provider_tool_routing",
       model: "microsoft-decision-1",
       maxFlipRate,
-      families: ["whitespace", "case", "punctuation", "synonym"],
+      families: flipFamilies,
     };
 
     const runFlip = deps.runFlip ?? runFlipRate;
-    const flip = yield* Effect.tryPromise({
+    const allowMissing = deps.allowMissingOpenRouter !== false;
+    const flipOrSkip = yield* Effect.tryPromise({
       try: () =>
         runFlip(flipReq, {
           decide: deps.decide,
@@ -146,9 +163,45 @@ export function buildDecision1CandidateReport(
         }),
       catch: (e) => (e instanceof Error ? e : new Error(String(e))),
     }).pipe(
-      Effect.catch((e) => Effect.succeed({ error: `flip-rate failed: ${e.message}` } as const))
+      Effect.map((flip) => ({ kind: "ok" as const, flip })),
+      Effect.catch((e) => {
+        const msg = e.message;
+        if (allowMissing && /OPENROUTER_API_KEY/i.test(msg)) {
+          return Effect.succeed({
+            kind: "skipped" as const,
+            reason: msg,
+          });
+        }
+        return Effect.succeed({ kind: "error" as const, error: `flip-rate failed: ${msg}` });
+      })
     );
-    if ("error" in flip) return flip;
+    if (flipOrSkip.kind === "error") return { error: flipOrSkip.error };
+
+    const honesty = [...HONESTY];
+    if (flipOrSkip.kind === "skipped") {
+      honesty.push(`flip-rate skipped: ${flipOrSkip.reason}`);
+    }
+
+    const flipRateBlock =
+      flipOrSkip.kind === "ok"
+        ? {
+            model: flipOrSkip.flip.model ?? "microsoft/microsoft-decision-1",
+            backendId: flipOrSkip.flip.backendId,
+            maxFlipRate: flipOrSkip.flip.maxFlipRate,
+            passed: flipOrSkip.flip.passed,
+            caseCount: flipOrSkip.flip.caseCount,
+            reports: flipOrSkip.flip.reports,
+          }
+        : {
+            model: "microsoft/microsoft-decision-1",
+            backendId: "openrouter/microsoft/microsoft-decision-1",
+            maxFlipRate,
+            passed: false,
+            caseCount: flipCases.length,
+            reports: [] as FlipRateResponse["reports"],
+            skipped: true,
+            skipReason: flipOrSkip.reason,
+          };
 
     return {
       protocol: DECISION1_CANDIDATE_PROTOCOL,
@@ -162,15 +215,8 @@ export function buildDecision1CandidateReport(
         recommendation: bulk.recommendation,
         disagreements: bulk.disagreements,
       },
-      flipRate: {
-        model: flip.model ?? "microsoft/microsoft-decision-1",
-        backendId: flip.backendId,
-        maxFlipRate: flip.maxFlipRate,
-        passed: flip.passed,
-        caseCount: flip.caseCount,
-        reports: flip.reports,
-      },
-      honesty: [...HONESTY],
+      flipRate: flipRateBlock,
+      honesty,
       verdict: {
         productionTrustedClaim: false,
         calibratedClaim: false,

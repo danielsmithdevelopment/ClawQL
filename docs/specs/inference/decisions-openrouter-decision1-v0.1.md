@@ -45,6 +45,8 @@ Default model pin: `microsoft/microsoft-decision-1`.
 
 Convert frozen v0.4 routing held-out (+ frontier labels) → fan-out cases via `heldOutCasesToFanout`, then `buildDecision1CandidateReport` runs bulk (local + Decision-1) and flip-rate with the Decision-1 pin. Artifact template: `packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/decision1-v04-routing-candidate-TEMPLATE.json`. Readout: `DECISION1_V04_CANDIDATE_READOUT.md`. Verdict always carries `productionTrustedClaim: false`.
 
+Operator fill: marker `packages/clawql-core/src/classifier/held-out/.run-decision1-v04-candidate` → workflow `decision1-v04-candidate.yml` (needs repo secret `OPENROUTER_API_KEY`), or `npx tsx scripts/run-decision1-v04-candidate.mts`.
+
 ## Fan-out example
 
 ```json

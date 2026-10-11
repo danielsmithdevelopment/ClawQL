@@ -123,7 +123,7 @@ describe("decision1-candidate-report", () => {
     expect(report.honesty.some((h) => /productionTrusted/i.test(h))).toBe(true);
   });
 
-  it("surfaces flip-rate key failure without claiming trust", async () => {
+  it("skips flip-rate when OpenRouter unkeyed but still emits measure report", async () => {
     const report = await Effect.runPromise(
       buildDecision1CandidateReport({
         suite,
@@ -143,8 +143,11 @@ describe("decision1-candidate-report", () => {
         },
       })
     );
-    expect(report).toEqual({
-      error: expect.stringContaining("OPENROUTER_API_KEY"),
-    });
+    expect("error" in report).toBe(false);
+    if ("error" in report) return;
+    expect(report.verdict.productionTrustedClaim).toBe(false);
+    expect(report.flipRate.skipped).toBe(true);
+    expect(report.flipRate.passed).toBe(false);
+    expect(report.honesty.some((h) => /OPENROUTER_API_KEY/i.test(h))).toBe(true);
   });
 });
