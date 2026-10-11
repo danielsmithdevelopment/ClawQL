@@ -15,7 +15,6 @@
     "arms": [
       "clawql",
       "executor",
-      "executor_filter",
       "mcpjungle",
       "agentgateway"
     ],
@@ -50,17 +49,6 @@
       "task_success_ok": true,
       "task_success_rate": 1
     },
-    "executor_filter": {
-      "layer1_once_tokens": 90,
-      "mean_layer2_tokens": 722.8,
-      "mean_result_tokens": 722.8,
-      "combined_at_n": 8764,
-      "combined_relist_every_turn_at_n": 8674,
-      "mean_latency_ms": 8.236,
-      "turns": 12,
-      "task_success_ok": true,
-      "task_success_rate": 1
-    },
     "mcpjungle": {
       "layer1_once_tokens": 5840,
       "mean_layer2_tokens": 2456.8,
@@ -91,12 +79,6 @@
       "vs_clawql_mean_result": 6.18,
       "vs_clawql_layer1": 0.3
     },
-    "executor_filter": {
-      "vs_clawql_combined_classic": 0.43,
-      "vs_clawql_combined_relist_every_turn": 0.43,
-      "vs_clawql_mean_result": 1,
-      "vs_clawql_layer1": 0.3
-    },
     "mcpjungle": {
       "vs_clawql_combined_classic": 1.72,
       "vs_clawql_combined_relist_every_turn": 4.92,
@@ -118,12 +100,6 @@
       "rate": 1
     },
     "executor": {
-      "turns_ok": 12,
-      "turns_total": 12,
-      "ok": true,
-      "rate": 1
-    },
-    "executor_filter": {
       "turns_ok": 12,
       "turns_total": 12,
       "ok": true,
@@ -265,68 +241,6 @@
         "n": 12,
         "combined": 53668,
         "layer2Cumulative": 53578
-      }
-    ],
-    "executor_filter": [
-      {
-        "n": 1,
-        "combined": 767,
-        "layer2Cumulative": 677
-      },
-      {
-        "n": 2,
-        "combined": 1494,
-        "layer2Cumulative": 1404
-      },
-      {
-        "n": 3,
-        "combined": 2221,
-        "layer2Cumulative": 2131
-      },
-      {
-        "n": 4,
-        "combined": 2948,
-        "layer2Cumulative": 2858
-      },
-      {
-        "n": 5,
-        "combined": 3675,
-        "layer2Cumulative": 3585
-      },
-      {
-        "n": 6,
-        "combined": 4402,
-        "layer2Cumulative": 4312
-      },
-      {
-        "n": 7,
-        "combined": 5129,
-        "layer2Cumulative": 5039
-      },
-      {
-        "n": 8,
-        "combined": 5856,
-        "layer2Cumulative": 5766
-      },
-      {
-        "n": 9,
-        "combined": 6583,
-        "layer2Cumulative": 6493
-      },
-      {
-        "n": 10,
-        "combined": 7310,
-        "layer2Cumulative": 7220
-      },
-      {
-        "n": 11,
-        "combined": 8037,
-        "layer2Cumulative": 7947
-      },
-      {
-        "n": 12,
-        "combined": 8764,
-        "layer2Cumulative": 8674
       }
     ],
     "mcpjungle": [
@@ -1389,437 +1303,6 @@
         "task_success_rate": 1
       }
     },
-    "executor_filter": {
-      "id": "executor_filter",
-      "model": "stdio_mcp_code_execute_fields_filter",
-      "layer1": {
-        "once_schema_tokens": 90,
-        "tools_count": 1,
-        "tools_list_count_full": 7,
-        "tools_list_schema_tokens_full": 2243,
-        "note": "execute schema only (catalog not published as N tools)"
-      },
-      "perTurn": [
-        {
-          "n": 1,
-          "tool": "execute",
-          "result_tokens": 677,
-          "result_chars": 1840,
-          "layer2_classic": 677,
-          "layer2_relist_every_turn": 677,
-          "latency_ms": 17.114,
-          "ok": true,
-          "task_success": {
-            "ok": true,
-            "matched": 25,
-            "expected": 25,
-            "failures": []
-          },
-          "note": "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
-        },
-        {
-          "n": 2,
-          "tool": "execute",
-          "result_tokens": 727,
-          "result_chars": 1952,
-          "layer2_classic": 727,
-          "layer2_relist_every_turn": 727,
-          "latency_ms": 10.106,
-          "ok": true,
-          "task_success": {
-            "ok": true,
-            "matched": 25,
-            "expected": 25,
-            "failures": []
-          },
-          "note": "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
-        },
-        {
-          "n": 3,
-          "tool": "execute",
-          "result_tokens": 727,
-          "result_chars": 1952,
-          "layer2_classic": 727,
-          "layer2_relist_every_turn": 727,
-          "latency_ms": 10.383,
-          "ok": true,
-          "task_success": {
-            "ok": true,
-            "matched": 25,
-            "expected": 25,
-            "failures": []
-          },
-          "note": "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
-        },
-        {
-          "n": 4,
-          "tool": "execute",
-          "result_tokens": 727,
-          "result_chars": 1952,
-          "layer2_classic": 727,
-          "layer2_relist_every_turn": 727,
-          "latency_ms": 6.342,
-          "ok": true,
-          "task_success": {
-            "ok": true,
-            "matched": 25,
-            "expected": 25,
-            "failures": []
-          },
-          "note": "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
-        },
-        {
-          "n": 5,
-          "tool": "execute",
-          "result_tokens": 727,
-          "result_chars": 1952,
-          "layer2_classic": 727,
-          "layer2_relist_every_turn": 727,
-          "latency_ms": 7.37,
-          "ok": true,
-          "task_success": {
-            "ok": true,
-            "matched": 25,
-            "expected": 25,
-            "failures": []
-          },
-          "note": "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
-        },
-        {
-          "n": 6,
-          "tool": "execute",
-          "result_tokens": 727,
-          "result_chars": 1952,
-          "layer2_classic": 727,
-          "layer2_relist_every_turn": 727,
-          "latency_ms": 6.403,
-          "ok": true,
-          "task_success": {
-            "ok": true,
-            "matched": 25,
-            "expected": 25,
-            "failures": []
-          },
-          "note": "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
-        },
-        {
-          "n": 7,
-          "tool": "execute",
-          "result_tokens": 727,
-          "result_chars": 1952,
-          "layer2_classic": 727,
-          "layer2_relist_every_turn": 727,
-          "latency_ms": 7.278,
-          "ok": true,
-          "task_success": {
-            "ok": true,
-            "matched": 25,
-            "expected": 25,
-            "failures": []
-          },
-          "note": "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
-        },
-        {
-          "n": 8,
-          "tool": "execute",
-          "result_tokens": 727,
-          "result_chars": 1952,
-          "layer2_classic": 727,
-          "layer2_relist_every_turn": 727,
-          "latency_ms": 5.408,
-          "ok": true,
-          "task_success": {
-            "ok": true,
-            "matched": 25,
-            "expected": 25,
-            "failures": []
-          },
-          "note": "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
-        },
-        {
-          "n": 9,
-          "tool": "execute",
-          "result_tokens": 727,
-          "result_chars": 1952,
-          "layer2_classic": 727,
-          "layer2_relist_every_turn": 727,
-          "latency_ms": 6.751,
-          "ok": true,
-          "task_success": {
-            "ok": true,
-            "matched": 25,
-            "expected": 25,
-            "failures": []
-          },
-          "note": "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
-        },
-        {
-          "n": 10,
-          "tool": "execute",
-          "result_tokens": 727,
-          "result_chars": 1952,
-          "layer2_classic": 727,
-          "layer2_relist_every_turn": 727,
-          "latency_ms": 6.564,
-          "ok": true,
-          "task_success": {
-            "ok": true,
-            "matched": 25,
-            "expected": 25,
-            "failures": []
-          },
-          "note": "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
-        },
-        {
-          "n": 11,
-          "tool": "execute",
-          "result_tokens": 727,
-          "result_chars": 2002,
-          "layer2_classic": 727,
-          "layer2_relist_every_turn": 727,
-          "latency_ms": 7.989,
-          "ok": true,
-          "task_success": {
-            "ok": true,
-            "matched": 25,
-            "expected": 25,
-            "failures": []
-          },
-          "note": "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
-        },
-        {
-          "n": 12,
-          "tool": "execute",
-          "result_tokens": 727,
-          "result_chars": 2002,
-          "layer2_classic": 727,
-          "layer2_relist_every_turn": 727,
-          "latency_ms": 7.129,
-          "ok": true,
-          "task_success": {
-            "ok": true,
-            "matched": 25,
-            "expected": 25,
-            "failures": []
-          },
-          "note": "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
-        }
-      ],
-      "skipped": false,
-      "cumulative_classic": [
-        {
-          "n": 1,
-          "layer1Once": 90,
-          "layer2ThisTurn": 677,
-          "layer2Cumulative": 677,
-          "combined": 767,
-          "layer2ShareOfCombined": 88.3
-        },
-        {
-          "n": 2,
-          "layer1Once": 90,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 1404,
-          "combined": 1494,
-          "layer2ShareOfCombined": 94
-        },
-        {
-          "n": 3,
-          "layer1Once": 90,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 2131,
-          "combined": 2221,
-          "layer2ShareOfCombined": 95.9
-        },
-        {
-          "n": 4,
-          "layer1Once": 90,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 2858,
-          "combined": 2948,
-          "layer2ShareOfCombined": 96.9
-        },
-        {
-          "n": 5,
-          "layer1Once": 90,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 3585,
-          "combined": 3675,
-          "layer2ShareOfCombined": 97.6
-        },
-        {
-          "n": 6,
-          "layer1Once": 90,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 4312,
-          "combined": 4402,
-          "layer2ShareOfCombined": 98
-        },
-        {
-          "n": 7,
-          "layer1Once": 90,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 5039,
-          "combined": 5129,
-          "layer2ShareOfCombined": 98.2
-        },
-        {
-          "n": 8,
-          "layer1Once": 90,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 5766,
-          "combined": 5856,
-          "layer2ShareOfCombined": 98.5
-        },
-        {
-          "n": 9,
-          "layer1Once": 90,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 6493,
-          "combined": 6583,
-          "layer2ShareOfCombined": 98.6
-        },
-        {
-          "n": 10,
-          "layer1Once": 90,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 7220,
-          "combined": 7310,
-          "layer2ShareOfCombined": 98.8
-        },
-        {
-          "n": 11,
-          "layer1Once": 90,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 7947,
-          "combined": 8037,
-          "layer2ShareOfCombined": 98.9
-        },
-        {
-          "n": 12,
-          "layer1Once": 90,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 8674,
-          "combined": 8764,
-          "layer2ShareOfCombined": 99
-        }
-      ],
-      "cumulative_tools_list_every_turn": [
-        {
-          "n": 1,
-          "layer1Once": 0,
-          "layer2ThisTurn": 677,
-          "layer2Cumulative": 677,
-          "combined": 677,
-          "layer2ShareOfCombined": 100
-        },
-        {
-          "n": 2,
-          "layer1Once": 0,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 1404,
-          "combined": 1404,
-          "layer2ShareOfCombined": 100
-        },
-        {
-          "n": 3,
-          "layer1Once": 0,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 2131,
-          "combined": 2131,
-          "layer2ShareOfCombined": 100
-        },
-        {
-          "n": 4,
-          "layer1Once": 0,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 2858,
-          "combined": 2858,
-          "layer2ShareOfCombined": 100
-        },
-        {
-          "n": 5,
-          "layer1Once": 0,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 3585,
-          "combined": 3585,
-          "layer2ShareOfCombined": 100
-        },
-        {
-          "n": 6,
-          "layer1Once": 0,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 4312,
-          "combined": 4312,
-          "layer2ShareOfCombined": 100
-        },
-        {
-          "n": 7,
-          "layer1Once": 0,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 5039,
-          "combined": 5039,
-          "layer2ShareOfCombined": 100
-        },
-        {
-          "n": 8,
-          "layer1Once": 0,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 5766,
-          "combined": 5766,
-          "layer2ShareOfCombined": 100
-        },
-        {
-          "n": 9,
-          "layer1Once": 0,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 6493,
-          "combined": 6493,
-          "layer2ShareOfCombined": 100
-        },
-        {
-          "n": 10,
-          "layer1Once": 0,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 7220,
-          "combined": 7220,
-          "layer2ShareOfCombined": 100
-        },
-        {
-          "n": 11,
-          "layer1Once": 0,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 7947,
-          "combined": 7947,
-          "layer2ShareOfCombined": 100
-        },
-        {
-          "n": 12,
-          "layer1Once": 0,
-          "layer2ThisTurn": 727,
-          "layer2Cumulative": 8674,
-          "combined": 8674,
-          "layer2ShareOfCombined": 100
-        }
-      ],
-      "task_success": {
-        "turns_ok": 12,
-        "turns_total": 12,
-        "ok": true,
-        "rate": 1
-      },
-      "board": {
-        "layer1_once_tokens": 90,
-        "mean_layer2_tokens": 722.8,
-        "mean_result_tokens": 722.8,
-        "combined_at_n": 8764,
-        "combined_relist_every_turn_at_n": 8674,
-        "mean_latency_ms": 8.236,
-        "turns": 12,
-        "task_success_ok": true,
-        "task_success_rate": 1
-      }
-    },
     "mcpjungle": {
       "id": "mcpjungle",
       "model": "aggregator_tools_list_plus_fat_call",
@@ -2683,9 +2166,9 @@
   "category_win": [
     "Category story: most efficient governed gateway — multi-turn I/O tokens with equal task success.",
     "PRIMARY classic Layer1 once + Σ Layer2; re-list secondary.",
-    "All arms task_success PASS (deterministic inventory).",
-    "vs MCPJungle classic 1.72×; vs agentgateway 1.7×; vs fat Executor 2.61×.",
-    "vs executor_filter classic 0.43× — result tok tie (723); Executor wins combined (no search tax). Admit it.",
+    "All publish arms task_success PASS.",
+    "vs MCPJungle classic 1.72×; vs agentgateway 1.7×; vs Executor 2.61×.",
+    "Executor Layer2 is fat pass-through (settled blog + executor-cmp-001). No executor_filter on publish board.",
     "RSS is a loss among serious arms."
   ],
   "primary_metric": "classic_layer1_once_plus_sum_layer2_with_task_success",
@@ -2694,10 +2177,31 @@
     "Fat catalog equal-arm: N MCP tools mirrored as N OpenAPI operationIds.",
     "PRIMARY: classic Layer1_once + sum(Layer2) with deterministic task_success.",
     "SECONDARY: tools_list_every_turn — most clients cache ListTools; do not lead with this multiplier.",
-    "executor_filter: code-mode maps to same {id,name,status} fields as ClawQL projection.",
     "executor (fat): returns full envelope — shows unfiltered program cost, not the fairest peer.",
     "ContextForge/MetaMCP off publish board by default.",
     "Not a latency board; see gateway-multi-cmp-10k.json for interleaved p999.",
-    "RSS is a loss among serious arms — admit plainly."
+    "RSS is a loss among serious arms — admit plainly.",
+    "executor_filter removed from publish board — not Executor gateway projection (settled)."
+  ],
+  "off_board": {
+    "executor_filter": {
+      "reason": "Hand-written slim-return program — not Executor. Settled: gateway has no response-side field selection (Both Sides of Context Compression; executor-cmp-001.live.json Layer2=143466 full REST).",
+      "board_snapshot": {
+        "layer1_once_tokens": 90,
+        "mean_layer2_tokens": 722.8,
+        "mean_result_tokens": 722.8,
+        "combined_at_n": 8764,
+        "combined_relist_every_turn_at_n": 8674,
+        "mean_latency_ms": 8.236,
+        "turns": 12,
+        "task_success_ok": true,
+        "task_success_rate": 1
+      }
+    }
+  },
+  "settled_refs": [
+    "https://pragmaticvectors.com/posts/both-sides-of-context-compression",
+    "docs/benchmarks/executor-comparison/executor-cmp-001.live.json",
+    "https://docs.clawql.com/benchmarks/executor-comparison"
   ]
 }

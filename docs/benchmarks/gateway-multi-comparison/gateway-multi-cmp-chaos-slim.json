@@ -145,7 +145,7 @@
     "vs_executor_chaos": "ClawQL 63/64 vs Executor 23/24 (~2.7×) — topology A",
     "vs_aggregators_chaos": "MCPJungle 204/205 leads; agentgateway 62/63 ≈ ClawQL 63/64 — claim only within topology A",
     "rss_min": "ClawQL min 259MB — loss vs MCPJungle ~97MB; admit it",
-    "publishable": "Win vs Executor concurrency + governed cost; latency competitive with path matrix; multiturn tokens vs aggregators/fat Executor with task_success; NOT concurrency win vs MCPJungle; NOT token win vs executor_filter"
+    "publishable": "Win vs Executor concurrency + governed cost; latency competitive with path matrix; multiturn tokens vs aggregators/Executor (fat Layer2) with task_success; NOT concurrency win vs MCPJungle; Executor has no gateway output projection (settled blog)"
   },
   "topology": {
     "id": "A_single_instance",
