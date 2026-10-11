@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 /**
- * Render shareable equal-arm ClawQL vs Executor latency HTML (p50/p95/p99).
+ * Render shareable equal-arm ClawQL vs Executor latency HTML (p50/p95/p99[/p999]).
  *
  *   node scripts/benchmarks/generate-executor-cmp-latency-html.mjs
+ *   LATENCY_JSON=…/executor-cmp-latency-10k.json LATENCY_HTML_OUT=latency-10k.html \
+ *     node scripts/benchmarks/generate-executor-cmp-latency-html.mjs
  */
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -10,18 +12,22 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const LATENCY_JSON = join(
-  ROOT,
-  "docs",
-  "benchmarks",
-  "executor-comparison",
-  "executor-cmp-latency.json"
+const DOCS_DIR = join(ROOT, "docs", "benchmarks", "executor-comparison");
+const LATENCY_JSON = process.env.LATENCY_JSON?.trim()
+  ? process.env.LATENCY_JSON.trim()
+  : join(DOCS_DIR, "executor-cmp-latency.json");
+const HTML_BASENAME = (process.env.LATENCY_HTML_OUT ?? "latency.html").replace(
+  /[^a-zA-Z0-9._-]/g,
+  ""
 );
-const OUT_DOCS = join(ROOT, "docs", "benchmarks", "executor-comparison", "latency.html");
+const OUT_DOCS = join(DOCS_DIR, HTML_BASENAME || "latency.html");
 const OUT_WWW_DIR = join(ROOT, "apps", "www", "public", "benchmarks", "executor-comparison");
-const OUT_WWW_HTML = join(OUT_WWW_DIR, "latency.html");
-const OUT_WWW_JSON = join(OUT_WWW_DIR, "latency.json");
-const CANONICAL = "https://clawql.com/benchmarks/executor-comparison/latency.html";
+const OUT_WWW_HTML = join(OUT_WWW_DIR, HTML_BASENAME || "latency.html");
+const OUT_WWW_JSON = join(
+  OUT_WWW_DIR,
+  (HTML_BASENAME || "latency.html").replace(/\.html$/i, ".json")
+);
+const CANONICAL = `https://clawql.com/benchmarks/executor-comparison/${HTML_BASENAME || "latency.html"}`;
 
 const EXECUTOR_WARM_REFERENCE = {
   id: "executor_execute",
