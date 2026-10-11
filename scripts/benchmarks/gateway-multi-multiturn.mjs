@@ -65,6 +65,8 @@ const ARMS = (
   .map((s) => s.trim())
   .filter(Boolean);
 
+/** Project list rows after JMESPath extract — ClawQL product path for envelopes. */
+const WHERE = "items";
 const FIELDS = ["id", "name", "status"];
 const enc = getEncoding("cl100k_base");
 
@@ -201,12 +203,13 @@ function fatPayload(partitionIndex, limit = LIMIT) {
   return { items: rows, partition: toolName(partitionIndex) };
 }
 
+/** Expected ClawQL shape after where=items + fields projection (array of slim rows). */
 function slimPayload(partitionIndex, limit = LIMIT) {
-  const fat = fatPayload(partitionIndex, limit);
-  return {
-    items: fat.items.map((r) => ({ id: r.id, name: r.name, status: r.status })),
-    partition: fat.partition,
-  };
+  return fatPayload(partitionIndex, limit).items.map((r) => ({
+    id: r.id,
+    name: r.name,
+    status: r.status,
+  }));
 }
 
 function buildTurns() {
@@ -220,6 +223,7 @@ function buildTurns() {
       operationId: toolName(partition),
       query: `${toolName(partition)} partition ${partition} inventory list entities`,
       args: { limit: LIMIT, status: "available", includeMeta: true },
+      where: WHERE,
       fields: FIELDS,
     });
   }
@@ -659,7 +663,7 @@ async function runClawqlArm(mock, turns) {
       const t0 = performance.now();
       const searchRes = await conn.client.callTool({
         name: "search",
-        arguments: { query: turn.query, limit: 5 },
+        arguments: { query: turn.query, limit: 3 },
       });
       if (searchRes.isError) {
         throw new Error(`clawql search: ${toolText(searchRes).slice(0, 300)}`);
@@ -674,6 +678,7 @@ async function runClawqlArm(mock, turns) {
             status: turn.args.status,
             includeMeta: turn.args.includeMeta,
           },
+          where: turn.where,
           fields: turn.fields,
         },
       });
@@ -690,6 +695,7 @@ async function runClawqlArm(mock, turns) {
         search_tokens: searchTok,
         result_tokens: resultTok,
         result_chars: execText.length,
+        where: turn.where,
         fields: turn.fields,
         layer2_classic: searchTok + resultTok,
         layer2_relist_every_turn: searchTok + resultTok, // no tools/list dump
@@ -699,7 +705,7 @@ async function runClawqlArm(mock, turns) {
     }
     return {
       id: "clawql",
-      model: "search_plus_execute_fields",
+      model: "search_plus_execute_where_fields",
       layer1: {
         once_schema_tokens: l1.schema_tokens,
         tools_count: l1.tools_count,
@@ -932,6 +938,7 @@ async function main() {
         turns: TURNS,
         catalog_tool_count: TOOL_COUNT,
         limit: LIMIT,
+        where: WHERE,
         fields: FIELDS,
         arms: ARMS,
         tokenizer: "cl100k_base",
@@ -940,7 +947,7 @@ async function main() {
         fat_result_tokens_partition_1: fatTok,
         slim_fields_tokens_partition_1: slimTok,
         projection_ratio: +(fatTok / Math.max(1, slimTok)).toFixed(2),
-        note: "Same underlying rows; ClawQL fields=['id','name','status'] vs aggregator/Executor fat JSON",
+        note: "Same underlying rows; ClawQL where=items + fields=['id','name','status'] vs aggregator/Executor fat envelope JSON",
       },
       board,
       ratios_vs_clawql: ratios,
