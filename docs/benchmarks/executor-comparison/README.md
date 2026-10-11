@@ -105,6 +105,37 @@ LATENCY_ITERS=10000 LATENCY_WARMUP=50 LATENCY_KEEP_SAMPLES=0 \
 
 At n=10k, equalized ClawQL is ~**3.1×** faster at p50 and ~**6.4×** at p999 vs live Executor (same host; long run also warms both sides). p999 needs large n — with 10k samples the 99.9th is ~10 observations.
 
+**Treat sequential n=100 / n=10k as exploratory.** Before the comparison page leads on Executor ratios, use the **fair harness** below (interleaved, paired overhead, versions, multi-run, optional open-loop / WORM).
+
+### Fair harness (method critique checklist)
+
+```bash
+# Interleaved closed-loop, paired overhead, 3 runs → spread
+EXECUTOR_BIN=… EXECUTOR_CWD=… \
+  LATENCY_ITERS=2000 LATENCY_RUNS=3 LATENCY_KEEP_SAMPLES=0 \
+  npm run benchmark:executor-comparison:latency-fair
+
+# Open-loop tail (coordinated-omission aware; fixed arrival)
+LATENCY_OPEN_LOOP=1 LATENCY_ARRIVAL_MS=3 LATENCY_ITERS=2000 \
+  npm run benchmark:executor-comparison:latency-fair
+
+# Governance arm (durable WORM memory; Panguard still off unless wired)
+LATENCY_GOVERNANCE=1 LATENCY_ITERS=1000 \
+  npm run benchmark:executor-comparison:latency-fair
+```
+
+| Critique | Fair harness response |
+| --- | --- |
+| **1. Same definition?** | `gateway_cost = MCP_execute − upstream`. ClawQL: **paired** `execute_i − direct_i`. Executor: upstream **= 0** (same JSON in-process; sandbox cannot fetch). Not “total with upstream vs overhead.” |
+| **2. Same machine / transport?** | Both **local stdio**, same host, same mock for ClawQL/direct. Records ClawQL commit + Executor npm version. |
+| **3. Interleave + versions + spread?** | Each round: ClawQL → Executor → direct. `LATENCY_RUNS≥3` reports min/median/max of p50/p999. |
+| **4. Coordinated omission?** | Closed-loop = serial agent tool-call model. Tail-under-load needs `LATENCY_OPEN_LOOP=1` (`*_from_schedule` includes lateness). |
+| **Governance?** | `LATENCY_GOVERNANCE=1` enables durable WORM (memory). Panguard sidecar is a separate wire-up — do not imply it is on. |
+
+**Publish framing (preferred):** lead with absolute oversight cost, Executor ratio as supporting evidence:
+
+> Risk gates, ring audit, hooks and field projection add **X ms** at p50 and **Y ms** at p999.
+
 **Shareable page:** [clawql.com/benchmarks/executor-comparison/latency.html](https://clawql.com/benchmarks/executor-comparison/latency.html) · `npm run generate:executor-cmp-latency-html`.
 
 The flamegraph demo’s 120ms total remains a **synthetic fixture**. Schema-decode microbench (`scripts/release/measure-gateway-hotpath.mts`) is sub-millisecond and is **not** product latency.
@@ -115,7 +146,7 @@ The flamegraph demo’s 120ms total remains a **synthetic fixture**. Schema-deco
 | ----------- | ----------------------------------------------------- | -------------------------------------- |
 | **Layer 1** | Homepage ~1,044 **and** live MCP `tools/list`         | Measured gateway `search`+`execute`    |
 | **Layer 2** | Live CLI tool call (no projection)                    | Live MCP `execute` + `fields`          |
-| **Latency** | Live equal-arm `execute` (same JSON) via `EXECUTOR_*` | equal-arm execute − direct vs Executor |
+| **Latency** | Live equal-arm via fair harness (interleaved)         | paired execute − direct; see FAQ above |
 | **862×**    | Not comparable                                        | Do not blend                           |
 
 Tokenizer: `cl100k_base`. `focus=input`.
