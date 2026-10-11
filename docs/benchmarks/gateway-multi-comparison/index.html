@@ -111,7 +111,7 @@
     <p class="brand">ClawQL</p>
     <h1>Gateway comparison board</h1>
     <p class="lead">Equal-arm 12-step inventory workflow across MCP gateways — plus a <strong>no-gateway direct HTTP</strong> baseline that still counts <em>catalog tool definitions</em> (an agent calling 40 ops without a gateway still needs them).</p>
-    <p class="meta">Measured 2026-10-11T20:57:29.419Z · 10,000 flows × 12 turns/arm · tokenizer <code>cl100k_base</code> · task_success deterministic</p>
+    <p class="meta">Measured 2026-10-11T22:27:35.431Z · 10,000 flows × 12 turns/arm · tokenizer <code>cl100k_base</code> · task_success deterministic</p>
 
     <div class="warn">
       <strong>Deploy status:</strong> this HTML ships in <code>apps/www/public/benchmarks/gateway-multi-comparison/</code>.
@@ -135,7 +135,7 @@
     <h2>1. Tokens — rebuild every total</h2>
     <p class="eq">combined @12 = <strong>definitions</strong> + <strong>Σ discovery</strong> + <strong>Σ results</strong></p>
     <ul>
-      <li><strong>Definitions</strong> — tool/OpenAPI schemas once (classic Layer1). Direct uses the same catalog <code>tools/list</code> surface aggregators expose.</li>
+      <li><strong>Definitions</strong> — tool/OpenAPI schemas once (classic Layer1). The baseline pins these to <strong>agentgateway’s <code>tools/list</code> serialization</strong> of the same 40 catalog ops (unwrapped republish) — that is why agentgateway matches the baseline exactly.</li>
       <li><strong>Discovery</strong> — per-turn search/hit text (ClawQL only; 0 for others).</li>
       <li><strong>Results</strong> — tool/HTTP response tokens across 12 turns.</li>
     </ul>
@@ -163,9 +163,19 @@
     <p class="meta">
       ClawQL check: 297 + 11,568 + 8,674 = <strong>20,539</strong>
       (mean discovery 964.0/turn · mean result 722.8/turn).
-      Direct = 5,520 defs + 29,482 fat results = <strong>35,002</strong>.
-      agentgateway matches that total; MCPJungle is +320 from a slightly larger wrapped schema dump.
+      Direct = 5,520 defs (agentgateway serialization) + 29,482 fat results = <strong>35,002</strong>.
+      agentgateway matches that total by construction; MCPJungle’s +320 is exactly its defs (5,840) minus baseline defs (5,520) — slightly more verbose wrapped schema text, not another token kind.
     </p>
+
+    <h3>Where ClawQL’s next token win is</h3>
+    <p>
+      Discovery is <strong>11,568</strong> tokens —
+      56% of ClawQL’s combined total — about 964 search tokens/turn, larger than projected tool results (~723/turn). Projection already won Layer2; discovery is the next lever (no change to functionality):
+    </p>
+    <ul>
+      <li><strong>Leaner search results</strong> — return compact typed signatures for top matches, not fuller entries. ~300 tok/turn (vs ~964) would cut ~8 000 from the 12-turn total.</li>
+      <li><strong>Skip search when the agent already knows the operation</strong> — allow <code>execute</code> by operation ID directly when the same ops recur across turns, and measure how often the flow repeats operations.</li>
+    </ul>
 
     <h2>2. Cost of the gateway — latency &amp; memory</h2>
     <p>Same 10 000 × 12-turn board. Flow e2e = one full 12-step workflow. Direct has no gateway process RSS (definitions are counted for tokens only).</p>

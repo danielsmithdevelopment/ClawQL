@@ -155,20 +155,24 @@ Equal-arm fat catalog (40 tools). Each arm completes **10 000** full **12-turn
 
 **Token model (rebuildable):** `combined @12 = definitions + Σ discovery + Σ results`.
 
-**`direct`** = no MCP gateway — raw HTTP fat bodies **plus** catalog tool definitions once (same `tools/list` surface aggregators expose). An agent calling 40 ops without a gateway still needs those schemas in context. Latency/RSS remain “no gateway process.”
+**`direct`** = no MCP gateway — raw HTTP fat bodies **plus** catalog tool definitions once. When agentgateway is on the board, those definitions are **pinned to agentgateway’s `tools/list` serialization** of the same 40 ops (unwrapped republish) — that is why agentgateway matches the baseline exactly. MCPJungle’s +320 is exactly 5 840 − 5 520 (slightly more verbose wrapped schema text). Latency/RSS remain “no gateway process.”
 
 Artifact: [`gateway-multi-multiturn-10k.json`](./gateway-multi-multiturn-10k.json) (smoke: [`gateway-multi-multiturn-direct-defs-smoke.json`](./gateway-multi-multiturn-direct-defs-smoke.json)).
 
 | Arm | Definitions | Σ Discovery | Σ Results | Combined @12 | vs direct | Flow e2e p50 / **p999** (ms) | RSS med MB | Task success |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| Direct HTTP | 5 520 | 0 | 29 482 | **35 002** | baseline | **2.2 / 9.4** | — | **PASS** |
+| Direct HTTP | 5 520† | 0 | 29 482 | **35 002** | baseline | **2.2 / 9.4** | — | **PASS** |
 | **ClawQL (Node)** | **297** | **11 568** | **8 674** | **20 539** | **−14 463** | 18.2 / 56.8 | 678 | **PASS** |
 | **ClawQL (Bun)** | **297** | **11 568** | **8 674** | **20 539** | **−14 463** | **15.0 / 35.0** | **337** | **PASS** |
 | Executor | 90 | 0 | 53 578 | 53 668 | +18 666 | 64.4 / 106.6 | 213 | **PASS** |
 | MCPJungle | 5 840 | 0 | 29 482 | 35 322 | +320 | 15.4 / 135.0 | **153** | **PASS** |
 | agentgateway | 5 520 | 0 | 29 482 | **35 002** | **match** | **13.6** / 330.9 | 214 | **PASS** |
 
-ClawQL check: 297 + 11 568 + 8 674 = **20 539** (mean discovery 964/turn · mean result 723/turn). Aggregators **match** (or nearly match) the fair baseline — they do **not** add a separate “schema tax” beyond the definitions any agent needs. ClawQL is the only arm that **reduces** tokens vs that baseline (~14.5k @12) via projection. Bun keeps token wins and cuts Node multiturn RSS ~50%.
+† Baseline defs = agentgateway’s serialization of the 40 catalog tools (exact match by construction).
+
+ClawQL check: 297 + 11 568 + 8 674 = **20 539** (mean discovery 964/turn · mean result 723/turn). Aggregators **match** (or nearly match) the fair baseline — they do **not** add a separate “schema tax.” ClawQL is the only arm that **reduces** tokens vs that baseline (~14.5k @12) via projection. Bun keeps token wins and cuts Node multiturn RSS ~50%.
+
+**Next ClawQL token lever — discovery (11 568 = 56% of combined):** leaner search hits (~300 tok/turn would cut ~8k @12), and/or skip search when the agent already knows the operation (`execute` by operation ID; measure op-repeat rate). Neither touches projection.
 
 ```bash
 MT_TURNS=12 MT_ITERS=10000 CATALOG_TOOL_COUNT=40 \

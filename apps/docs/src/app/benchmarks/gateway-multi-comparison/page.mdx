@@ -12,16 +12,22 @@ The shareable board (rebuildable token breakdown, Bun rationale, reproduce comma
 
 `combined = definitions + Σ discovery + Σ results`
 
+Baseline definitions are pinned to **agentgateway’s `tools/list` serialization** of the same 40 catalog ops — that is why agentgateway matches exactly. MCPJungle’s +320 is 5 840 − 5 520 (more verbose wrapped schema text only).
+
 | Arm | Definitions | Σ Discovery | Σ Results | Combined @12 | vs direct | Flow e2e p50 | RSS med |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Direct HTTP (no MCP) | 5 520 | 0 | 29 482 | **35 002** | baseline | **2.2 ms** | — |
+| Direct HTTP (no MCP) | 5 520† | 0 | 29 482 | **35 002** | baseline | **2.2 ms** | — |
 | **ClawQL (Bun)** | **297** | **11 568** | **8 674** | **20 539** | **−14 463** | 15.0 ms | 337 MB |
 | **ClawQL (Node)** | **297** | **11 568** | **8 674** | **20 539** | **−14 463** | 18.2 ms | 678 MB |
 | agentgateway | 5 520 | 0 | 29 482 | **35 002** | **match** | 13.6 ms | 214 MB |
 | MCPJungle | 5 840 | 0 | 29 482 | 35 322 | +320 | 15.4 ms | **153 MB** |
 | Executor | 90 | 0 | 53 578 | 53 668 | +18 666 | 64.4 ms | 213 MB |
 
+† agentgateway serialization of the 40 catalog tools.
+
 ClawQL is the only measured gateway that **reduces** tokens vs a fair no-gateway baseline (projection + server-side discovery). Thin aggregators **match** that baseline — they do not invent an extra “schema tax.” Bun keeps those token wins and cuts Node’s multiturn RSS/p50 tax.
+
+**Next lever:** discovery is 11 568 tokens (56% of ClawQL’s total) — leaner search signatures (~300 tok/turn ≈ −8k @12) and/or `execute` by operation ID when ops recur.
 
 ## Why Bun
 

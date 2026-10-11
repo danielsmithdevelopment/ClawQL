@@ -793,7 +793,8 @@ async function measureCatalogDefinitionTokens() {
 
 /**
  * No-MCP baseline: raw HTTP fat results + catalog tool definitions once.
- * Definitions match aggregator tools/list (agent still needs the 40 ops).
+ * When agentgateway is also on the board, summarizeArm pinning replaces these
+ * tokens with agentgateway's tools/list serialization (exact match by construction).
  * Latency/RSS remain "no gateway process" — only HTTP to the mock.
  */
 async function runDirectHttpArm(mock, turns) {
@@ -1384,7 +1385,26 @@ async function main() {
   );
   console.log(`[mt] equal-arm fat≈${fatTok} tok slim(fields)≈${slimTok} tok (partition 1)`);
 
+  /** Pin direct Layer1 to agentgateway's tools/list serialization when both arms ran. */
+  const pinDirectDefsToAgentgateway = () => {
+    const ag = rawArms.agentgateway;
+    const direct = rawArms.direct;
+    if (!ag || ag.skipped || !direct || direct.skipped) return;
+    const toks = ag.layer1?.once_schema_tokens;
+    if (!(toks > 0)) return;
+    direct.layer1 = {
+      once_schema_tokens: toks,
+      tools_count: ag.layer1.tools_count ?? TOOL_COUNT,
+      source: "agentgateway_tools_list",
+      note:
+        "Baseline definitions pinned to agentgateway's tools/list serialization of the same 40 catalog ops " +
+        "(unwrapped republish). That is why agentgateway matches this baseline exactly. " +
+        "MCPJungle's dump is the same ops with slightly more verbose wrapped schema text (+320 here).",
+    };
+  };
+
   const buildPartialReport = (partial) => {
+    pinDirectDefsToAgentgateway();
     const arms = Object.fromEntries(
       Object.entries(rawArms).map(([id, a]) => [id, a.skipped ? a : summarizeArm(a)])
     );

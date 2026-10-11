@@ -290,7 +290,7 @@ function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun }) {
     <h2>1. Tokens — rebuild every total</h2>
     <p class="eq">combined @12 = <strong>definitions</strong> + <strong>Σ discovery</strong> + <strong>Σ results</strong></p>
     <ul>
-      <li><strong>Definitions</strong> — tool/OpenAPI schemas once (classic Layer1). Direct uses the same catalog <code>tools/list</code> surface aggregators expose.</li>
+      <li><strong>Definitions</strong> — tool/OpenAPI schemas once (classic Layer1). The baseline pins these to <strong>agentgateway’s <code>tools/list</code> serialization</strong> of the same 40 catalog ops (unwrapped republish) — that is why agentgateway matches the baseline exactly.</li>
       <li><strong>Discovery</strong> — per-turn search/hit text (ClawQL only; 0 for others).</li>
       <li><strong>Results</strong> — tool/HTTP response tokens across 12 turns.</li>
     </ul>
@@ -318,13 +318,35 @@ ${breakdownRows}
         claw?.mean_result_tokens,
         1
       )}/turn).
-      Direct = ${fmt(direct?.definitions_tokens)} defs + ${fmt(
+      Direct = ${fmt(direct?.definitions_tokens)} defs (agentgateway serialization) + ${fmt(
         direct?.result_tokens_sum
       )} fat results = <strong>${fmt(direct?.combined_at_n)}</strong>.
-      agentgateway matches that total; MCPJungle is +${fmt(
+      agentgateway matches that total by construction; MCPJungle’s +${fmt(
         (board.mcpjungle?.combined_at_n || 0) - (direct?.combined_at_n || 0)
-      )} from a slightly larger wrapped schema dump.
+      )} is exactly its defs (${fmt(board.mcpjungle?.definitions_tokens)}) minus baseline defs (${fmt(
+        direct?.definitions_tokens
+      )}) — slightly more verbose wrapped schema text, not another token kind.
     </p>
+
+    <h3>Where ClawQL’s next token win is</h3>
+    <p>
+      Discovery is <strong>${fmt(claw?.discovery_tokens_sum)}</strong> tokens —
+      ${
+        claw?.combined_at_n
+          ? `${Math.round((100 * claw.discovery_tokens_sum) / claw.combined_at_n)}%`
+          : "—"
+      } of ClawQL’s combined total — about ${fmt(
+        claw?.mean_discovery_tokens,
+        0
+      )} search tokens/turn, larger than projected tool results (~${fmt(
+        claw?.mean_result_tokens,
+        0
+      )}/turn). Projection already won Layer2; discovery is the next lever (no change to functionality):
+    </p>
+    <ul>
+      <li><strong>Leaner search results</strong> — return compact typed signatures for top matches, not fuller entries. ~300 tok/turn (vs ~964) would cut ~8 000 from the 12-turn total.</li>
+      <li><strong>Skip search when the agent already knows the operation</strong> — allow <code>execute</code> by operation ID directly when the same ops recur across turns, and measure how often the flow repeats operations.</li>
+    </ul>
 
     <h2>2. Cost of the gateway — latency &amp; memory</h2>
     <p>Same 10 000 × 12-turn board. Flow e2e = one full 12-step workflow. Direct has no gateway process RSS (definitions are counted for tokens only).</p>

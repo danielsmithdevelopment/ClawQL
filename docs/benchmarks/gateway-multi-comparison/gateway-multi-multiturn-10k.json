@@ -836,7 +836,8 @@
       "layer1": {
         "once_schema_tokens": 5520,
         "tools_count": 40,
-        "note": "Catalog tool definitions once (same surface as aggregator tools/list). Agent calling 40 ops without a gateway still needs these in context. Hot path is raw HTTP \u2014 no gateway RSS."
+        "note": "Baseline definitions pinned to agentgateway's tools/list serialization of the same 40 catalog ops (unwrapped republish). That is why agentgateway matches this baseline exactly. MCPJungle's dump is the same ops with slightly more verbose wrapped schema text (+320 here).",
+        "source": "agentgateway_tools_list"
       },
       "perTurn": [
         {
@@ -3946,7 +3947,10 @@
     "Aggregators roughly match that baseline (definitions + fat results); they do not add a separate \"schema tax\" beyond the definitions any agent needs.",
     "ClawQL combined = definitions + \u03a3 discovery(search) + \u03a3 projected results \u2014 see board.*_tokens breakdown columns.",
     "Do not claim marketing URL is live until apps/www public/benchmarks is deployed (GitHub Pages).",
-    "ClawQL combined = definitions + \u03a3 discovery(search) + \u03a3 results; rebuild columns on the dedicated page."
+    "ClawQL combined = definitions + \u03a3 discovery(search) + \u03a3 results; rebuild columns on the dedicated page.",
+    "Baseline definitions use agentgateway's tools/list serialization of the 40 catalog ops (exact match by construction).",
+    "MCPJungle +320 = 5840 \u2212 5520 definitions only (more verbose wrapped schema text).",
+    "ClawQL discovery is 11568 (56% of 20539) \u2014 next levers: leaner search signatures; execute-by-operationId when ops recur."
   ],
   "ratios_vs_direct": {
     "direct": {},
@@ -4037,11 +4041,13 @@
     }
   },
   "mergedAt": "2026-10-11T19:47:57.836716Z",
-  "correctedAt": "2026-10-11T20:57:29.419Z",
+  "correctedAt": "2026-10-11T22:27:35.431Z",
   "token_model": {
     "combined": "definitions + sum(discovery) + sum(results)",
-    "direct_definitions": "catalog tools/list once (same surface as aggregator Layer1)",
+    "direct_definitions": "pinned to agentgateway's tools/list serialization of the 40 catalog ops",
     "discovery": "per-turn search/hit text (ClawQL); 0 for other arms",
-    "results": "tool/HTTP response tokens across turns"
+    "results": "tool/HTTP response tokens across turns",
+    "mcpjungle_plus_320": "5840 - 5520 = wrapped schema verbosity only",
+    "next_clawql_lever": "discovery is 56% of ClawQL combined \u2014 leaner search hits and/or execute-by-operationId when ops recur"
   }
 }
