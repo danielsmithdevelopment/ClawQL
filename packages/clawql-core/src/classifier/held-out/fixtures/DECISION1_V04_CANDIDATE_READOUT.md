@@ -3,7 +3,8 @@
 **Tag:** `candidate` / `not-productionTrusted` / **`decision1-v04-measure`**  
 **Suite:** frozen v0.4 routing-fresh (n=40) + frontier labels GHA 36144911649  
 **Harness:** `buildDecision1CandidateReport` in `clawql-inference` (fan-out bulk + flip-rate `model=microsoft-decision-1`)  
-**Template:** [`frontier-runs/decision1-v04-routing-candidate-TEMPLATE.json`](./frontier-runs/decision1-v04-routing-candidate-TEMPLATE.json)
+**Template:** [`frontier-runs/decision1-v04-routing-candidate-TEMPLATE.json`](./frontier-runs/decision1-v04-routing-candidate-TEMPLATE.json)  
+**Filled:** [`frontier-runs/decision1-v04-routing-candidate.json`](./frontier-runs/decision1-v04-routing-candidate.json) — Decision-1 bulk 40/40, synonym flip-rate pass (measure-only; see scorecard)
 
 ## Honesty (locked)
 

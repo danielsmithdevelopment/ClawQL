@@ -1,0 +1,451 @@
+{
+  "protocol": "Decision-1 candidate on frozen routing held-out; fan-out bulk + flip-rate pin; not productionTrusted",
+  "evalSuite": "fast-decision-held-out-v0.4-routing-fresh",
+  "labelCount": 40,
+  "groundTruthSource": "frontier_labels",
+  "backends": [
+    {
+      "id": "local",
+      "model": "clawql"
+    },
+    {
+      "id": "openrouter/microsoft/microsoft-decision-1",
+      "model": "microsoft/microsoft-decision-1"
+    }
+  ],
+  "bulk": {
+    "qualityBar": {
+      "maxWrongAnswers": 0,
+      "minAnswered": 1
+    },
+    "reports": [
+      {
+        "backendId": "local",
+        "model": "clawql",
+        "answered": 8,
+        "correct": 6,
+        "wrong": 2,
+        "abstained": 32,
+        "skipped": 0,
+        "answersOnItsOwn": 0,
+        "meetsQualityBar": false
+      },
+      {
+        "backendId": "openrouter/microsoft/microsoft-decision-1",
+        "model": "microsoft/microsoft-decision-1",
+        "answered": 40,
+        "correct": 40,
+        "wrong": 0,
+        "abstained": 0,
+        "skipped": 0,
+        "answersOnItsOwn": 40,
+        "meetsQualityBar": true
+      }
+    ],
+    "recommendation": {
+      "backendId": "openrouter/microsoft/microsoft-decision-1",
+      "reason": "First backend meeting maxWrong=0 (no costPerCase provided)"
+    },
+    "disagreements": [
+      {
+        "caseId": "route-v04-010",
+        "answers": {
+          "local": "mcp.cache",
+          "openrouter/microsoft/microsoft-decision-1": "mcp.audit"
+        }
+      },
+      {
+        "caseId": "route-v04-012",
+        "answers": {
+          "local": "mcp.memory_ingest",
+          "openrouter/microsoft/microsoft-decision-1": "mcp.cache"
+        }
+      }
+    ]
+  },
+  "flipRate": {
+    "model": "microsoft/microsoft-decision-1",
+    "backendId": "openrouter/microsoft/microsoft-decision-1",
+    "maxFlipRate": 0.1,
+    "passed": true,
+    "caseCount": 40,
+    "reports": [
+      {
+        "caseId": "route-v04-001",
+        "baseline": "mcp.search",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-002",
+        "baseline": "mcp.execute",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-003",
+        "baseline": "mcp.search",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-004",
+        "baseline": "mcp.execute",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-005",
+        "baseline": "mcp.skills_list",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-006",
+        "baseline": "mcp.skills_get",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-007",
+        "baseline": "mcp.skills_get",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-008",
+        "baseline": "mcp.skills_list",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-009",
+        "baseline": "mcp.cache",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-010",
+        "baseline": "mcp.audit",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-011",
+        "baseline": "mcp.audit",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-012",
+        "baseline": "mcp.cache",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-013",
+        "baseline": "mcp.audit",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-014",
+        "baseline": "mcp.notify",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-015",
+        "baseline": "mcp.schedule",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-016",
+        "baseline": "mcp.notify",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-017",
+        "baseline": "mcp.schedule",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-018",
+        "baseline": "mcp.memory_recall_title_flag_a",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-019",
+        "baseline": "mcp.memory_recall_title_flag_b",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-020",
+        "baseline": "mcp.memory_recall_overbroad",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-021",
+        "baseline": "mcp.memory_recall_title_flag_a",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-022",
+        "baseline": "mcp.memory_recall_overbroad",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-023",
+        "baseline": "mcp.memory_recall_title_flag_b",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-024",
+        "baseline": "mcp.data_query",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-025",
+        "baseline": "mcp.data_query_cohort_count",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-026",
+        "baseline": "mcp.memory_recall_overbroad",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-027",
+        "baseline": "mcp.data_query",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-028",
+        "baseline": "mcp.data_query_cohort_count",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-029",
+        "baseline": "tool.bash_workspace_hunt",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-030",
+        "baseline": "tool.generic_web_search",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-031",
+        "baseline": "mcp.search",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-032",
+        "baseline": "tool.generic_web_search",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-033",
+        "baseline": "mcp.pageindex_build_tree",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-034",
+        "baseline": "mcp.knowledge_search_onyx",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-035",
+        "baseline": "mcp.ingest_external_knowledge",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-036",
+        "baseline": "mcp.search",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-037",
+        "baseline": "mcp.clawql_think",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-038",
+        "baseline": "skill.clawql-audit-workflows",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-039",
+        "baseline": "mcp.audit",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      },
+      {
+        "caseId": "route-v04-040",
+        "baseline": "skill.clawql-composed-mcp-workflows",
+        "perturbations": 0,
+        "flips": 0,
+        "flipRate": 0,
+        "passed": true,
+        "details": []
+      }
+    ]
+  },
+  "honesty": [
+    "measure-only — reuses fan-out bulk + flip-rate model pin",
+    "bulk correctness is exact option id match (not twin-aware held-out scoring)",
+    "does not light calibrated or held-out productionTrusted (still GLiNER2-only)"
+  ],
+  "verdict": {
+    "productionTrustedClaim": false,
+    "calibratedClaim": false,
+    "citeAs": "Decision-1 routing candidate readout — not a trusted path"
+  },
+  "labelsPath": "packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.4-routing-fresh-gha-36144911649-labels.json",
+  "filledAt": "2026-10-11T19:27:22.240Z",
+  "flipFamilies": [
+    "synonym"
+  ],
+  "openRouterKeyed": true
+}
