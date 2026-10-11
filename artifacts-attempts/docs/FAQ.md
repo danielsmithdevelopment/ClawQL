@@ -22,8 +22,13 @@ Only when `/v1/decisions` (or the local calibrated stub) returns `calibrated: tr
 ## How do I film?
 
 1. `npm run demo:film-preflight`
-2. `npm run demo:record-prep` → **GATE PASS**
-3. Follow [`VIDEO_SCRIPT.md`](./VIDEO_SCRIPT.md)
+2. `npm run demo:live-check` (optional — shows which CF secrets are missing)
+3. `npm run demo:record-prep` → **GATE PASS**
+4. Open with [`PITCH.md`](./PITCH.md), then [`VIDEO_SCRIPT.md`](./VIDEO_SCRIPT.md)
+
+## How do I know live Cloudflare is wired?
+
+`npm run demo:live-check` lists missing env vars and prints the gradual-deploy POST body. With tokens: `LIVE_PROBE=1 npm run demo:live-check` calls Artifacts REST `list()`.
 
 ## How do I publish a public repo?
 

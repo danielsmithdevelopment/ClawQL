@@ -4,7 +4,7 @@ Record only after `npm run demo:record-prep` (or `demo:gate`) prints **GATE PASS
 
 ## Scenes
 
-1. **Cold start (30s)** — Clone repo, `npm ci`, show README “no mocked steps” + Apache-2.0.
+1. **Cold start (30s)** — Deliver the pitch from [`PITCH.md`](./PITCH.md). Clone repo, `npm ci`, show Apache-2.0 + “no mocked steps.”
 2. **Seed + forks (60s)** — `npm run demo:local` starts; show three bare forks created under `.local/demo-run/artifacts/repos/`.
 3. **Agents / replay (90s)** — Show `--replay` patches applying in parallel worktrees; label clearly if replay (not live models).
 4. **Events → evaluation (90s)** — Show vitest output per attempt; open a `git notes show` on a commit after fetch into a clean clone.
