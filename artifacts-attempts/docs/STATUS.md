@@ -30,6 +30,10 @@ As of Day 12 (local path). Deadline **Oct 14, 2026**. Artifacts billing starts *
 | Workers gradual deploy API | Cloudflare account |
 | Demo video | Run `demo:record-prep` then film [`VIDEO_SCRIPT.md`](./VIDEO_SCRIPT.md) |
 
+## Recording readiness
+
+After Day 15: run `npm run demo:record-prep` and confirm **GATE PASS** before filming. Scenes: [`VIDEO_SCRIPT.md`](./VIDEO_SCRIPT.md).
+
 ## Submit path if CF stays blocked
 
 Ship the **local-witness** path: real git, real vitest, real Merkle verify, honest dry-run labels for Arweave/canary. Judges follow [`JUDGE_RUNBOOK.md`](./JUDGE_RUNBOOK.md). Checklist: [`SUBMISSION.md`](./SUBMISSION.md).

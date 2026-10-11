@@ -48,6 +48,19 @@ describe("local demo pipeline", () => {
         },
       ];
       expect(verifyBundleAgainstManifest(manifest, files)).toEqual({ ok: true });
+      // release step attaches gradual-deploy body used by the Workers path
+      const { prepareRelease } = await import("./release-step.js");
+      const release = prepareRelease({
+        version: "0.1.0-demo",
+        files,
+        taskId: result.task.id,
+        attemptId: "att_1",
+        fork: "tsk_demo-att_1",
+        commit: result.mainCommit,
+        canaryPercent: 10,
+        dryRun: true,
+      });
+      expect(release.gradualDeploy.versions.map((v) => v.percentage)).toEqual([90, 10]);
     },
     180_000
   );

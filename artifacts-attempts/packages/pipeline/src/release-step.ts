@@ -1,4 +1,8 @@
 import { buildReleaseManifest, type BundleFile, type ReleaseManifest } from "@artifacts-attempts/manifest";
+import {
+  buildGradualDeployRequest,
+  type GradualDeployRequest,
+} from "./canary.js";
 
 export type ReleaseInput = {
   version: string;
@@ -9,12 +13,17 @@ export type ReleaseInput = {
   commit: string;
   canaryPercent: number;
   dryRun?: boolean;
+  /** Workers script version id for the canary slice (defaults from commit). */
+  versionId?: string;
+  previousVersionId?: string;
 };
 
 export type ReleaseOutput = {
   manifest: ReleaseManifest;
   arweaveId: string;
   dryRun: boolean;
+  /** Offline Cloudflare gradual-deploy body (POST when credentials exist). */
+  gradualDeploy: GradualDeployRequest;
 };
 
 export function prepareRelease(input: ReleaseInput): ReleaseOutput {
@@ -33,9 +42,16 @@ export function prepareRelease(input: ReleaseInput): ReleaseOutput {
   });
   const dryRun = input.dryRun !== false;
   const arweaveId = dryRun ? `local_${manifest.merkleRoot.slice(0, 16)}` : "pending_upload";
+  const versionId = input.versionId ?? `ver_${input.commit.slice(0, 12)}`;
+  const gradualDeploy = buildGradualDeployRequest({
+    canaryPercent: input.canaryPercent,
+    versionId,
+    previousVersionId: input.previousVersionId,
+  });
   return {
     dryRun,
     arweaveId,
+    gradualDeploy,
     manifest: {
       ...manifest,
       permanence: {
