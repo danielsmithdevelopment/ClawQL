@@ -1,8 +1,8 @@
 {
   "suite": "gateway-multi-comparison-chaos-slim",
-  "measuredAt": "2026-10-11T13:21:33.610Z",
-  "composition": "INSTANCE_SPEC slim Core (memory/documents/chatgpt off); tools=8",
-  "model": "stdio process-per-client for ClawQL/Executor; HTTP gateway for MCPJungle/agentgateway",
+  "measuredAt": "2026-10-11T13:34:07.143Z",
+  "composition": "INSTANCE_SPEC slim Core; until-break topology A",
+  "model": "stdio process-per-client for ClawQL/Executor; HTTP 1× for MCPJungle/agentgateway",
   "slo": {
     "break_p99_ms": 100,
     "break_error_rate": 0.02
@@ -95,38 +95,74 @@
         "min_ms": -2.805,
         "max_ms": 3.744
       },
-      "rss_mb_min": 96.54,
-      "rss_mb_median": 108.87,
+      "rss_mb_min": 96.77,
+      "rss_mb_median": 96.77,
       "rss_mb_max": 112.9,
       "cpu_pct_median": 91.5,
       "invoked_tool_schema_tokens": 46,
       "schema_tokens_full_list": 46,
       "tools_count": 1,
       "equal_result_tokens": 28,
-      "chaos_last_ok": 128,
-      "chaos_first_break": null,
-      "chaos_break_reason": null
+      "chaos_last_ok": 204,
+      "chaos_first_break": 205,
+      "chaos_break_reason": "p99 111.588ms",
+      "note": "until-break MULTI_CHAOS_UNTIL_BREAK=1 HARD_MAX=512"
     },
     "agentgateway": {
       "latency_e2e_ms": {
-        "n": 100,
-        "p50_ms": 2.037,
-        "note": "from prior AGW latency sample before refine OOM"
+        "n": 20,
+        "p50_ms": 2.161,
+        "p95_ms": 3.461,
+        "p99_ms": 3.991,
+        "p999_ms": 3.991,
+        "mean_ms": 2.383,
+        "min_ms": 1.408,
+        "max_ms": 3.991
       },
-      "gateway_cost_ms": null,
-      "rss_mb_min": 189.24,
-      "rss_mb_median": 190.65,
-      "rss_mb_max": 191.96,
+      "gateway_cost_ms": {
+        "n": 20,
+        "p50_ms": 1.56,
+        "p95_ms": 2.57,
+        "p99_ms": 2.995,
+        "p999_ms": 2.995,
+        "mean_ms": 1.681,
+        "min_ms": 0.806,
+        "max_ms": 2.995
+      },
+      "rss_mb_min": null,
+      "rss_mb_median": null,
+      "rss_mb_max": null,
       "tools_count": 1,
-      "chaos_last_ok": 64,
-      "chaos_first_break": 128,
-      "chaos_break_reason": "p99 (power-of-two; refine OOM on host — last_ok≥64)",
-      "note": "Chaos from power-of-two steps in multi-arm run; binary refine killed by host OOM. Start flake on retry."
+      "invoked_tool_schema_tokens": 37,
+      "equal_result_tokens": 28,
+      "chaos_last_ok": 62,
+      "chaos_first_break": 63,
+      "chaos_break_reason": "p99 111.233ms",
+      "note": "until-break refine complete; ~tied with ClawQL single-instance"
     }
   },
   "verdict": {
-    "vs_executor_chaos": "ClawQL 63/64 vs Executor 23/24 (~2.7× clients)",
-    "vs_aggregators_chaos": "MCPJungle ≥128; agentgateway 64/128 (refine incomplete)",
-    "rss_min": "ClawQL min 259MB (solo chaos) / 255MB (solo 2k); cold Ready ~232MB"
-  }
+    "vs_executor_chaos": "ClawQL 63/64 vs Executor 23/24 (~2.7×) — topology A",
+    "vs_aggregators_chaos": "MCPJungle 204/205 leads; agentgateway 62/63 ≈ ClawQL 63/64 — claim only within topology A",
+    "rss_min": "ClawQL min 259MB — loss vs MCPJungle ~97MB; admit it",
+    "publishable": "Win vs Executor concurrency + governed cost; latency competitive with path matrix; multiturn tokens vs aggregators/fat Executor with task_success; NOT concurrency win vs MCPJungle; NOT token win vs executor_filter"
+  },
+  "topology": {
+    "id": "A_single_instance",
+    "label": "single-instance / process-per-client",
+    "replicas": 1,
+    "note": "Do not mix with NATS 4-replica (topology B) ceilings."
+  },
+  "claim_rules": [
+    "Claim concurrency only within the same topology.",
+    "MCPJungle ≥128 with no break is incomplete — push MULTI_CHAOS_UNTIL_BREAK until first_break.",
+    "ClawQL vs Executor 63/64 vs 23/24 is the only equal-topology concurrency win on this board.",
+    "Aggregators currently lead single-instance concurrency until they break."
+  ],
+  "path_matrix_note": "ClawQL path includes risk/audit/projection; aggregators do almost none — see README path matrix.",
+  "rss_honesty": "ClawQL is heaviest serious arm (min ~259MB vs MCPJungle ~97MB). Admit the loss.",
+  "off_board": [
+    "contextforge",
+    "metamcp"
+  ]
 }

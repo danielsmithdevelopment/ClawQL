@@ -1,0 +1,460 @@
+{
+  "suite": "gateway-multi-comparison",
+  "measuredAt": "2026-10-11T13:33:55.173Z",
+  "node": "v22.14.0",
+  "partial": false,
+  "topology": {
+    "id": "A_single_instance",
+    "label": "single-instance / process-per-client (ClawQL+Executor stdio; aggregators 1× HTTP)",
+    "replicas": 1,
+    "note": "Scale-out (4 replicas behind LB) is topology B — claim only within the same topology."
+  },
+  "path_matrix": {
+    "clawql": {
+      "auth_capability_gate": true,
+      "operation_risk_policy": true,
+      "ephemeral_audit_ring": true,
+      "output_redaction_hooks": true,
+      "result_projection": true,
+      "upstream_http_equal_mock": true,
+      "catalog_discovery": "search_server_side"
+    },
+    "executor": {
+      "auth_capability_gate": false,
+      "operation_risk_policy": false,
+      "ephemeral_audit_ring": false,
+      "output_redaction_hooks": false,
+      "result_projection": "code_mode_optional",
+      "upstream_http_equal_mock": false,
+      "catalog_discovery": "n_a_code_execute"
+    },
+    "mcpjungle": {
+      "auth_capability_gate": "optional",
+      "operation_risk_policy": false,
+      "ephemeral_audit_ring": false,
+      "output_redaction_hooks": false,
+      "result_projection": false,
+      "upstream_http_equal_mock": true,
+      "catalog_discovery": "full_tools_list"
+    },
+    "agentgateway": {
+      "auth_capability_gate": "optional",
+      "operation_risk_policy": false,
+      "ephemeral_audit_ring": false,
+      "output_redaction_hooks": false,
+      "result_projection": false,
+      "upstream_http_equal_mock": true,
+      "catalog_discovery": "full_tools_list"
+    }
+  },
+  "config": {
+    "iters": 20,
+    "warmup": 2,
+    "equal_upstream": true,
+    "interleaved": true,
+    "skip_chaos": false,
+    "chaos_max": 128,
+    "chaos_until_break": true,
+    "chaos_hard_max": 512,
+    "chaos_step_ms": 2000,
+    "break_p99_ms": 100,
+    "break_error_rate": 0.02,
+    "refine": true,
+    "arms": [
+      "agentgateway"
+    ],
+    "include_contextforge": false
+  },
+  "board": {
+    "agentgateway": {
+      "latency_e2e_ms": {
+        "n": 20,
+        "p50_ms": 2.161,
+        "p95_ms": 3.461,
+        "p99_ms": 3.991,
+        "p999_ms": 3.991,
+        "mean_ms": 2.383,
+        "min_ms": 1.408,
+        "max_ms": 3.991
+      },
+      "gateway_cost_ms": {
+        "n": 20,
+        "p50_ms": 1.56,
+        "p95_ms": 2.57,
+        "p99_ms": 2.995,
+        "p999_ms": 2.995,
+        "mean_ms": 1.681,
+        "min_ms": 0.806,
+        "max_ms": 2.995
+      },
+      "rss_mb_min": null,
+      "rss_mb_median": null,
+      "rss_mb_max": null,
+      "cpu_pct_median": null,
+      "invoked_tool_schema_tokens": 37,
+      "schema_tokens_full_list": 37,
+      "tools_count": 1,
+      "equal_result_tokens": 28,
+      "chaos_last_ok": 62,
+      "chaos_first_break": 63,
+      "chaos_break_reason": "p99 111.233ms"
+    }
+  },
+  "arms": {
+    "agentgateway": {
+      "id": "agentgateway",
+      "model": "streamable_http_gateway_stdio_upstream+shared_http_upstream",
+      "ok": true,
+      "version": "{\n  \"version\": \"1.6.0\",\n  \"git_revision\": \"ea5608642b9d5c94c5baf5fd9f2f9849b808e963\",\n  \"rust_version\": \"1.99.0\",\n  \"build_profile\": \"release\",\n  \"build_target\": \"x86_64-unknown-linux-musl\",\n  \"crypto_backend\": \"aws-lc-rs\",\n  \"crypto_fips\": false\n}",
+      "mcp_url": "http://127.0.0.1:38293/mcp",
+      "tool_name": "list_pets",
+      "latency": {
+        "e2e": {
+          "n": 20,
+          "p50_ms": 2.161,
+          "p95_ms": 3.461,
+          "p99_ms": 3.991,
+          "p999_ms": 3.991,
+          "mean_ms": 2.383,
+          "min_ms": 1.408,
+          "max_ms": 3.991
+        },
+        "direct_http": {
+          "n": 20,
+          "p50_ms": 0.655,
+          "p95_ms": 0.924,
+          "p99_ms": 0.996,
+          "p999_ms": 0.996,
+          "mean_ms": 0.702,
+          "min_ms": 0.578,
+          "max_ms": 0.996
+        },
+        "gateway_cost": {
+          "n": 20,
+          "p50_ms": 1.56,
+          "p95_ms": 2.57,
+          "p99_ms": 2.995,
+          "p999_ms": 2.995,
+          "mean_ms": 1.681,
+          "min_ms": 0.806,
+          "max_ms": 2.995
+        },
+        "call_errors": 0,
+        "note": "gateway_cost = e2e − paired direct HTTP /pets (interleaved equal-arm)",
+        "schedule": "interleaved_closed_loop"
+      },
+      "resources": {
+        "label": "agentgateway",
+        "pid": 238103,
+        "n": 0,
+        "rss_mb": {
+          "min": null,
+          "median": null,
+          "max": null
+        },
+        "cpu_pct": {
+          "min": null,
+          "median": null,
+          "max": null,
+          "mean": null
+        }
+      },
+      "tokens": {
+        "invoked_tool_name": "list_pets",
+        "invoked_tool_schema_tokens": 37,
+        "tools_list_count": 1,
+        "tools_list_schema_tokens": 37,
+        "equal_result_tokens": 28,
+        "tool_names": [
+          "list_pets"
+        ],
+        "note": "Primary board uses invoked_tool_schema_tokens (apples-to-apples); tools_list_* is secondary surface size."
+      },
+      "pid": 238103,
+      "chaos": {
+        "topology": {
+          "id": "A_single_instance",
+          "label": "single-instance / process-per-client (ClawQL+Executor stdio; aggregators 1× HTTP)",
+          "replicas": 1,
+          "note": "Scale-out (4 replicas behind LB) is topology B — claim only within the same topology."
+        },
+        "slo": {
+          "break_p99_ms": 100,
+          "break_error_rate": 0.02,
+          "step_ms": 2000
+        },
+        "until_break": true,
+        "chaos_max": 128,
+        "chaos_hard_max": 512,
+        "steps": [
+          {
+            "concurrency": 1,
+            "ok": 1358,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 679,
+            "latency": {
+              "n": 1358,
+              "p50_ms": 1.375,
+              "p95_ms": 2.056,
+              "p99_ms": 3.274,
+              "p999_ms": 4.445,
+              "mean_ms": 1.454,
+              "min_ms": 0.933,
+              "max_ms": 5.428
+            },
+            "broken": false,
+            "break_reason": null,
+            "phase": "power_of_two"
+          },
+          {
+            "concurrency": 2,
+            "ok": 2176,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 1088,
+            "latency": {
+              "n": 2176,
+              "p50_ms": 1.686,
+              "p95_ms": 3.07,
+              "p99_ms": 4.522,
+              "p999_ms": 6.357,
+              "mean_ms": 1.811,
+              "min_ms": 1.004,
+              "max_ms": 12.406
+            },
+            "broken": false,
+            "break_reason": null,
+            "phase": "power_of_two"
+          },
+          {
+            "concurrency": 4,
+            "ok": 3120,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 1560,
+            "latency": {
+              "n": 3120,
+              "p50_ms": 2.271,
+              "p95_ms": 4.256,
+              "p99_ms": 6.441,
+              "p999_ms": 9.279,
+              "mean_ms": 2.509,
+              "min_ms": 1.113,
+              "max_ms": 11.155
+            },
+            "broken": false,
+            "break_reason": null,
+            "phase": "power_of_two"
+          },
+          {
+            "concurrency": 8,
+            "ok": 3453,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 1726.5,
+            "latency": {
+              "n": 3453,
+              "p50_ms": 4.034,
+              "p95_ms": 6.987,
+              "p99_ms": 12.152,
+              "p999_ms": 19.861,
+              "mean_ms": 4.408,
+              "min_ms": 1.297,
+              "max_ms": 24.246
+            },
+            "broken": false,
+            "break_reason": null,
+            "phase": "power_of_two"
+          },
+          {
+            "concurrency": 16,
+            "ok": 3382,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 1691,
+            "latency": {
+              "n": 3382,
+              "p50_ms": 7.83,
+              "p95_ms": 12.173,
+              "p99_ms": 23.054,
+              "p999_ms": 46.535,
+              "mean_ms": 8.494,
+              "min_ms": 3.118,
+              "max_ms": 73.462
+            },
+            "broken": false,
+            "break_reason": null,
+            "phase": "power_of_two"
+          },
+          {
+            "concurrency": 32,
+            "ok": 2696,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 1348,
+            "latency": {
+              "n": 2696,
+              "p50_ms": 16.27,
+              "p95_ms": 24.111,
+              "p99_ms": 30.07,
+              "p999_ms": 36.467,
+              "mean_ms": 16.999,
+              "min_ms": 6.234,
+              "max_ms": 64.773
+            },
+            "broken": false,
+            "break_reason": null,
+            "phase": "power_of_two"
+          },
+          {
+            "concurrency": 64,
+            "ok": 874,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 437,
+            "latency": {
+              "n": 874,
+              "p50_ms": 42.473,
+              "p95_ms": 99.781,
+              "p99_ms": 113.921,
+              "p999_ms": 143.252,
+              "mean_ms": 52.186,
+              "min_ms": 19.027,
+              "max_ms": 143.252
+            },
+            "broken": true,
+            "break_reason": "p99 113.921ms",
+            "phase": "power_of_two"
+          }
+        ],
+        "refine": {
+          "method": "binary_search",
+          "tolerance": 1,
+          "last_ok_clients": 62,
+          "first_break_clients": 63,
+          "break_reason_at_first_break": "p99 111.233ms",
+          "steps": [
+            {
+              "concurrency": 48,
+              "ok": 1772,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 886,
+              "latency": {
+                "n": 1772,
+                "p50_ms": 26.561,
+                "p95_ms": 40.035,
+                "p99_ms": 47.046,
+                "p999_ms": 61.252,
+                "mean_ms": 28.217,
+                "min_ms": 6.744,
+                "max_ms": 65.116
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "binary_refine"
+            },
+            {
+              "concurrency": 56,
+              "ok": 1581,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 790.5,
+              "latency": {
+                "n": 1581,
+                "p50_ms": 32.014,
+                "p95_ms": 43.931,
+                "p99_ms": 48.949,
+                "p999_ms": 63.78,
+                "mean_ms": 32.649,
+                "min_ms": 14.997,
+                "max_ms": 67.959
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "binary_refine"
+            },
+            {
+              "concurrency": 60,
+              "ok": 1366,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 683,
+              "latency": {
+                "n": 1366,
+                "p50_ms": 37.023,
+                "p95_ms": 78.572,
+                "p99_ms": 91.994,
+                "p999_ms": 1177.489,
+                "mean_ms": 45.529,
+                "min_ms": 19.214,
+                "max_ms": 1187.281
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "binary_refine"
+            },
+            {
+              "concurrency": 62,
+              "ok": 1275,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 637.5,
+              "latency": {
+                "n": 1275,
+                "p50_ms": 35.664,
+                "p95_ms": 47.346,
+                "p99_ms": 51.133,
+                "p999_ms": 53.405,
+                "mean_ms": 36.385,
+                "min_ms": 9.905,
+                "max_ms": 53.901
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "binary_refine"
+            },
+            {
+              "concurrency": 63,
+              "ok": 1169,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 584.5,
+              "latency": {
+                "n": 1169,
+                "p50_ms": 39.076,
+                "p95_ms": 90.654,
+                "p99_ms": 111.233,
+                "p999_ms": 122.477,
+                "mean_ms": 45.811,
+                "min_ms": 9.819,
+                "max_ms": 1258.148
+              },
+              "broken": true,
+              "break_reason": "p99 111.233ms",
+              "phase": "binary_refine"
+            }
+          ]
+        },
+        "last_ok_clients": 62,
+        "first_break_clients": 63,
+        "break_reason": "p99 111.233ms",
+        "incomplete_no_break": false,
+        "honesty": "Broke within topology A — comparable only to other A ceilings."
+      }
+    }
+  },
+  "errors": {},
+  "honesty": [
+    "Equal-arm pets JSON across all arms.",
+    "EQUAL_UPSTREAM: shared mock HTTP /pets — ClawQL OpenAPI, aggregator list_pets fetch, Executor static upstream=0; gateway_cost = e2e − paired direct when hop paid.",
+    "Latency schedule: interleaved closed-loop across live arms (n≥10000 recommended for p999).",
+    "Primary token metric: invoked_tool_schema_tokens (not full tools/list).",
+    "Chaos: topology A only (single-instance). Claim only vs same topology. MULTI_CHAOS_UNTIL_BREAK pushes past power-of-two ceiling until break.",
+    "path_matrix: ClawQL latency includes risk/audit/projection; aggregators do almost none of that.",
+    "ContextForge/MetaMCP off publish board by default (nested CF / Docker).",
+    "RSS: ClawQL is heaviest serious arm — admit the loss; do not hide under-load median.",
+    "Checkpoint writes after latency and after each chaos arm (survives OOM mid-chaos)."
+  ]
+}
