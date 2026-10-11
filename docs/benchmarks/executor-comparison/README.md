@@ -161,15 +161,15 @@ EXECUTOR_BIN=… EXECUTOR_CWD=… \
 
 Latest board (`executor-cmp-comprehensive.json`, REST-prefer equal-arm, chaos warmup + HTTP multiplex):
 
-| Dimension | ClawQL | Executor | Note |
-| --- | ---: | ---: | --- |
-| Gateway p50 / p99 (ms) | **1.17 / 5.17** | 2.47 / 7.68 | Win (exploratory n=500) |
-| CPU % median | 31.7 | 29.8 | Near-parity |
-| RSS MB median | 368 | 253 | Still lose — next lever |
-| `execute` schema tokens | **178** (was 323) | 90 | Improved; still lose |
-| Fat lean vs full dump tokens | **2804** | 9122 | Win (`fields`) |
-| Stdio chaos sustained | **8** (was break@8) | 8 | Tie at max tried |
-| HTTP multiplex sustained | **8** | n/a | ClawQL-only shared-process arm |
+| Dimension                    |              ClawQL |    Executor | Note                           |
+| ---------------------------- | ------------------: | ----------: | ------------------------------ |
+| Gateway p50 / p99 (ms)       |     **1.17 / 5.17** | 2.47 / 7.68 | Win (exploratory n=500)        |
+| CPU % median                 |                31.7 |        29.8 | Near-parity                    |
+| RSS MB median                |                 368 |         253 | Still lose — next lever        |
+| `execute` schema tokens      |   **178** (was 323) |          90 | Improved; still lose           |
+| Fat lean vs full dump tokens |            **2804** |        9122 | Win (`fields`)                 |
+| Stdio chaos sustained        | **8** (was break@8) |           8 | Tie at max tried               |
+| HTTP multiplex sustained     |               **8** |         n/a | ClawQL-only shared-process arm |
 
 Honesty: stdio chaos is **N independent processes** (warmup excluded from stats). HTTP multiplex is ClawQL-only. p999 from `COMPREHENSIVE_ITERS<10000` is exploratory — publish latency tails from `latency-fair` 10k×3. In-memory WORM only if `COMPREHENSIVE_GOVERNANCE=1`; **Panguard off**. Do not publicize until RAM + Layer-1 schema tokens are won or honestly scoped.
 
