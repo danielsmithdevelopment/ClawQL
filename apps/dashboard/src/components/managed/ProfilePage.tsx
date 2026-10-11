@@ -51,6 +51,9 @@ export function ProfilePage() {
   const [endOthersBusy, setEndOthersBusy] = useState(false)
 
   useEffect(() => {
+    // Only poll arrange surfaces when the E2E harness is on (see layout `data-clawql-e2e`).
+    // Avoids harness-off 404 noise in Lighthouse / local mock console.
+    if (typeof document === 'undefined' || document.body.dataset.clawqlE2e !== '1') return
     let cancelled = false
     void (async () => {
       try {
@@ -88,6 +91,7 @@ export function ProfilePage() {
   }, [session.displayName])
 
   useEffect(() => {
+    if (typeof document === 'undefined' || document.body.dataset.clawqlE2e !== '1') return
     let cancelled = false
     void (async () => {
       try {
@@ -213,13 +217,15 @@ export function ProfilePage() {
                 ['Email', 'For requests still waiting after 30 minutes.', false],
                 ['Morning digest', "What your agents did overnight, at 8:00 in your time zone.", true],
               ].map(([label, help, on]) => (
-                <label key={String(label)} className="flex items-start gap-2">
-                  <input type="checkbox" defaultChecked={Boolean(on)} className="mt-1" />
-                  <span>
-                    <strong className="text-slate-800">{label}</strong>
-                    <span className="mt-0.5 block text-xs text-slate-600">{help}</span>
-                  </span>
-                </label>
+                <li key={String(label)}>
+                  <label className="flex items-start gap-2">
+                    <input type="checkbox" defaultChecked={Boolean(on)} className="mt-1" />
+                    <span>
+                      <strong className="text-slate-800">{label}</strong>
+                      <span className="mt-0.5 block text-xs text-slate-600">{help}</span>
+                    </span>
+                  </label>
+                </li>
               ))}
             </ul>
           </section>
@@ -243,7 +249,7 @@ export function ProfilePage() {
                   data-session-ended={s.ended ? 'true' : 'false'}
                   data-session-device={s.device}
                 >
-                  <span className={s.ended ? 'text-slate-400 line-through' : undefined}>{s.device}</span>
+                  <span className={s.ended ? 'text-slate-600 line-through' : undefined}>{s.device}</span>
                   {i === 0 && !s.ended ? (
                     <span className="text-xs text-slate-600">This device</span>
                   ) : s.ended ? (

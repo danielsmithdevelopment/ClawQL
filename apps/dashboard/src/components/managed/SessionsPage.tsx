@@ -50,7 +50,7 @@ export function SessionsPage() {
           placeholder="Search agents, people, tools"
           className="h-9 min-w-[16rem] flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm"
         />
-        <select className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm">
+        <select aria-label="Filter sessions" className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm">
           <option>Last 24 hours</option>
         </select>
       </div>
@@ -157,7 +157,7 @@ export function SessionsPage() {
           </section>
           <p className="mt-4 text-xs text-slate-600">
             Every step is in the audit log, and the chain verifies.{' '}
-            <Link href="/console/audit" className="text-sky-700 hover:underline">
+            <Link href="/console/audit" className="text-sky-700 underline underline-offset-2">
               Open in Audit
             </Link>
           </p>

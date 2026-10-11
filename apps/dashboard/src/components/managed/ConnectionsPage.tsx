@@ -147,7 +147,7 @@ export function ConnectionsPage() {
                         <div>
                           <p className="text-sm font-semibold text-slate-900">{c.name}</p>
                           <p className="text-xs text-slate-600">{c.summary}</p>
-                          <p className="mt-1 text-[11px] text-slate-400">Last used {c.lastUsed}</p>
+                          <p className="mt-1 text-[11px] text-slate-600">Last used {c.lastUsed}</p>
                         </div>
                         <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-700">
                           <StatusDot tone={statusTone(c.status)} />
@@ -343,7 +343,7 @@ export function ConnectionsPage() {
 
 function permBadge(kind: 'none' | 'read' | 'read-write' | 'tag' | 'skills', label: string) {
   if (kind === 'none') {
-    return <span className="text-xs text-slate-400">None</span>
+    return <span className="text-xs text-slate-600">None</span>
   }
   if (kind === 'read') {
     return (
@@ -383,7 +383,7 @@ function KeyGroupsMatrix() {
           <span>writes need a mandate every time</span>
         </span>
         <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
-          <span className="shrink-0 text-slate-400">None</span>
+          <span className="shrink-0 text-slate-600">None</span>
           <span>can&apos;t reach it</span>
         </span>
         <span className="text-slate-600">Deletes stay blocked for every group.</span>
@@ -398,7 +398,7 @@ function KeyGroupsMatrix() {
                   <button type="button" className="text-left text-sky-700 underline-offset-2 hover:underline">
                     {col.name}
                   </button>
-                  <span className="mt-0.5 block font-normal normal-case text-slate-400">
+                  <span className="mt-0.5 block font-normal normal-case text-slate-600">
                     {col.keys} keys
                   </span>
                 </th>

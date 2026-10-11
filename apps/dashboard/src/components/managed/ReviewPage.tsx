@@ -395,7 +395,7 @@ function ReviewDetail({
             <h2 className="text-lg font-semibold text-slate-900">{item.title}</h2>
             <p className="mt-1 text-sm text-slate-600">
               Learned from 6 sessions by legal-ops agent.{' '}
-              <Link href="/skills" className="text-sky-700 hover:underline">
+              <Link href="/skills" className="text-sky-700 underline underline-offset-2">
                 Open in Skills
               </Link>
             </p>
@@ -486,7 +486,7 @@ function ReviewDetail({
           ) : (
             <>
               Requested by legal-ops agent in session{' '}
-              <Link href="/sessions" className="font-mono text-sky-700 hover:underline">
+              <Link href="/sessions" className="font-mono text-sky-700 underline underline-offset-2">
                 sess_7f2a91c4
               </Link>
               , run by Priya Shah in Claude Code, 18 minutes ago.
@@ -508,7 +508,7 @@ function ReviewDetail({
                 <tr>
                   <td className="py-2">Contract</td>
                   <td className="py-2 font-mono text-xs">Northwind MSA ct_4471</td>
-                  <td className="py-2 text-slate-400">—</td>
+                  <td className="py-2 text-slate-600">—</td>
                 </tr>
                 <tr>
                   <td className="py-2">Annual value</td>

@@ -213,7 +213,7 @@ export function UsageBillingPage() {
                     style={{ height: `${Math.max(8, (d.amount / maxBar) * 100)}%` }}
                     title={`${d.label}: $${d.amount}`}
                   />
-                  <span className="truncate text-[9px] text-slate-400">
+                  <span className="truncate text-[9px] text-slate-600">
                     {d.today ? 'Today' : d.label.replace(/^\w+ /, '')}
                   </span>
                 </div>
@@ -268,7 +268,7 @@ export function UsageBillingPage() {
                         <tr key={row.team} className={cn(row.alert && 'bg-amber-50/60')}>
                           <td className="py-3 pr-3">
                             <p className="font-medium text-slate-900">{row.team}</p>
-                            {row.alert ? <p className="text-xs text-rose-600">{row.alert}</p> : null}
+                            {row.alert ? <p className="text-xs font-medium text-rose-800">{row.alert}</p> : null}
                           </td>
                           <td className="py-3 pr-3 tabular-nums">${row.spent}</td>
                           <td className="py-3 pr-3">
@@ -410,7 +410,7 @@ function PlanCreditsPanel({
                       PDF
                     </button>
                   ) : (
-                    <span className="ml-2 text-xs text-slate-400">{inv.extra}</span>
+                    <span className="ml-2 text-xs text-slate-600">{inv.extra}</span>
                   )}
                 </td>
               </tr>
@@ -528,7 +528,7 @@ function PaymentLimitsPanel({
           <h2 className="text-sm font-semibold text-slate-900">Team budgets</h2>
           <p className="text-xs text-slate-600">
             Daily caps per key are set on each key in{' '}
-            <a href="/connections" className="text-sky-700 hover:underline">
+            <a href="/connections" className="text-sky-700 underline underline-offset-2">
               Connections & keys
             </a>
             .

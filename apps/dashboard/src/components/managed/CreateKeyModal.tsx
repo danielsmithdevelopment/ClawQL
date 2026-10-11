@@ -83,7 +83,7 @@ export function CreateKeyModal({
                   For a client or service that talks to your gateway. Each key gets only what it needs.
                 </p>
               </div>
-              <button type="button" className="text-slate-400 hover:text-slate-700" onClick={resetAndClose}>
+              <button type="button" className="text-slate-600 hover:text-slate-700" onClick={resetAndClose}>
                 ✕
               </button>
             </div>

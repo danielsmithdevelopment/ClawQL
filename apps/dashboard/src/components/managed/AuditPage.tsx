@@ -194,16 +194,27 @@ export function AuditPage() {
 
       <div className="mb-4 flex flex-wrap gap-2">
         <input
+          type="search"
+          aria-label="Search actions, actors, entry IDs"
           placeholder="Search actions, actors, entry IDs"
           className="h-9 min-w-[16rem] flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm"
         />
-        <select className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm text-slate-700">
+        <select
+          aria-label="Filter by action"
+          className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm text-slate-700"
+        >
           <option>All actions</option>
         </select>
-        <select className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm text-slate-700">
+        <select
+          aria-label="Filter by actor"
+          className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm text-slate-700"
+        >
           <option>Anyone</option>
         </select>
-        <select className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm text-slate-700">
+        <select
+          aria-label="Filter by time range"
+          className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm text-slate-700"
+        >
           <option>Last 24 hours</option>
         </select>
       </div>
@@ -302,10 +313,10 @@ export function AuditPage() {
                 <dt className="font-sans text-xs text-slate-600">Hourly root</dt>
                 <dd>b41e…07c9</dd>
               </div>
-              <div className="flex items-center gap-2 font-sans text-sm text-emerald-800">
-                <StatusDot tone="ok" /> Proven in the 09:00 root
-              </div>
             </dl>
+            <p className="mt-2 flex items-center gap-2 font-sans text-sm text-emerald-800">
+              <StatusDot tone="ok" /> Proven in the 09:00 root
+            </p>
           </div>
         </div>
       </div>

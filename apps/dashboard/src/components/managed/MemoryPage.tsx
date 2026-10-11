@@ -75,12 +75,12 @@ export function MemoryPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-semibold text-slate-900">{step.title}</p>
                     {step.at ? (
-                      <span className="text-xs text-slate-400">{step.at}</span>
+                      <span className="text-xs text-slate-600">{step.at}</span>
                     ) : (
                       <span
                         className={cn(
                           'text-xs font-medium',
-                          step.state === 'running' ? 'text-sky-700' : 'text-slate-400',
+                          step.state === 'running' ? 'text-sky-700' : 'text-slate-600',
                         )}
                       >
                         {step.state === 'running' ? 'Running' : 'Waiting'}
@@ -241,7 +241,7 @@ export function MemoryPage() {
                           <td className="py-2">
                             <span className="font-mono text-slate-900">{f.name}</span>
                             {f.required ? (
-                              <span className="ml-2 text-[10px] font-semibold uppercase text-slate-400">
+                              <span className="ml-2 text-[10px] font-semibold uppercase text-slate-600">
                                 required
                               </span>
                             ) : null}
@@ -417,7 +417,7 @@ export function MemoryPage() {
               ))}
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700">
                 Contract.counterparty = Northwind
-                <button type="button" className="text-slate-400 hover:text-slate-700">
+                <button type="button" className="text-slate-600 hover:text-slate-700">
                   ×
                 </button>
               </span>

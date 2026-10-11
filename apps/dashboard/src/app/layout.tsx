@@ -66,6 +66,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       className={cn(managedSurface ? 'managed' : 'dark', 'h-full', 'font-sans', geist.variable)}
     >
       <body
+        data-clawql-e2e={process.env.CLAWQL_E2E_HARNESS === '1' ? '1' : '0'}
         className={cn(
           'min-h-dvh antialiased',
           managedSurface

@@ -40,7 +40,7 @@ export function TeamPage() {
             Everyone signs in through Okta. Approvals need a security key, and each person must register at least
             two.
           </p>
-          <Link href="/settings" className="font-medium text-sky-700 hover:underline">
+          <Link href="/settings" className="font-medium text-sky-700 underline underline-offset-2">
             Sign-in settings
           </Link>
         </div>
@@ -72,7 +72,9 @@ export function TeamPage() {
                   <th className="px-4 py-3 font-medium">Can approve</th>
                   <th className="px-4 py-3 font-medium">Security keys</th>
                   <th className="px-4 py-3 font-medium">Last active</th>
-                  <th className="px-4 py-3 font-medium" />
+                  <th className="px-4 py-3 font-medium">
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -99,7 +101,7 @@ export function TeamPage() {
                     </td>
                     <td className="px-4 py-3 text-slate-600">{person.lastActive}</td>
                     <td className="px-4 py-3">
-                      <button type="button" className="text-sky-700 hover:underline">
+                      <button type="button" className="text-sky-700 underline underline-offset-2">
                         {person.action}
                       </button>
                     </td>
@@ -136,7 +138,7 @@ export function TeamPage() {
 
           <p className="mt-4 text-xs text-slate-600">
             Agents aren&apos;t team members. Their access comes from keys in{' '}
-            <Link href="/connections" className="text-sky-700 hover:underline">
+            <Link href="/connections" className="text-sky-700 underline underline-offset-2">
               Connections & keys
             </Link>
             .
@@ -157,7 +159,7 @@ function GroupsPanel() {
           </span>
           Last synced from Okta 6 minutes ago. Edit membership in Okta; it lands here on the next sync.
         </p>
-        <button type="button" className="font-medium text-sky-700 hover:underline">
+        <button type="button" className="font-medium text-sky-700 underline underline-offset-2">
           Sync now
         </button>
       </div>
@@ -187,7 +189,7 @@ function GroupsPanel() {
 
       <p className="text-xs text-slate-600">
         People groups are separate from key groups. Key groups decide what agents&apos; keys can reach, in{' '}
-        <Link href="/connections" className="text-sky-700 hover:underline">
+        <Link href="/connections" className="text-sky-700 underline underline-offset-2">
           Connections & keys
         </Link>
         .
@@ -198,7 +200,7 @@ function GroupsPanel() {
 
 function RolesPanel() {
   const cell = (value: string) => (
-    <span className={cn(value === 'No' ? 'text-slate-400' : 'text-slate-800')}>{value}</span>
+    <span className={cn(value === 'No' ? 'text-slate-600' : 'text-slate-800')}>{value}</span>
   )
 
   return (
@@ -240,7 +242,7 @@ function RolesPanel() {
         <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-700">
           <li>
             Approving needs an approval area, set per rule in{' '}
-            <Link href="/review" className="text-sky-700 hover:underline">
+            <Link href="/review" className="text-sky-700 underline underline-offset-2">
               Review, Approval policies
             </Link>
             . A role alone isn&apos;t enough.
