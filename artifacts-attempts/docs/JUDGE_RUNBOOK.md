@@ -20,8 +20,11 @@ Apache-2.0. No mocked pipeline steps in the demo path: local mode uses **real gi
 ```bash
 cd artifacts-attempts
 npm ci
-npm run demo:judge-smoke   # one demo + verify notes/manifest/canary
+npm run demo:judge-smoke       # one demo + verify notes/manifest/canary
+npm run demo:board-mcp-smoke   # optional: board + GET/POST /mcp/tools
 ```
+
+CI (path-filtered): `.github/workflows/artifacts-attempts.yml` runs package tests + judge smoke when this tree changes.
 
 ### Full path (recording / thorough)
 
