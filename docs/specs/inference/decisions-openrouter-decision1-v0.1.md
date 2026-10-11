@@ -37,6 +37,10 @@ Default model pin: `microsoft/microsoft-decision-1`.
 - Remote Decision-1 answers are **never** site-calibrated → fail-closed `refusal` unless `allow_uncalibrated` / header / env opt-in (same as Luna).
 - Trust does **not** transfer from OpenRouter vendor scores. Use held-out + flip-rate before `productionTrusted`.
 
+## Flip-rate measure rung
+
+`POST /decision/flip-rate` accepts `model=microsoft-decision-1` (or `backendId`) so the perturbation suite calls OpenRouter Decision-1. Fan-out mining attach supports the same pin via `flipRate.model`. Results are operator/CI reports only — they do **not** light `calibrated` or held-out `productionTrusted`.
+
 ## Fan-out example
 
 ```json

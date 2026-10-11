@@ -1,11 +1,24 @@
 /**
  * Flip-rate / perturbation robustness gate for decision sites (v0.1).
  * Deterministic transforms; fail-closed suite pass when any case flips too often.
+ * Optional model pin routes decide through OpenRouter Decision-1 (measure-only).
  */
 
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Layer } from "effect";
-import type { DecisionQuestion, DecisionRequest, DecisionResponse } from "./service.js";
+import type { OpenAiDecisionCreateRequest, OpenAiDecisionCreateResponse } from "./openai-types.js";
+import {
+  callRemoteOpenRouterDecisions,
+  isOpenRouterDecisionBackendId,
+  remoteOpenRouterDecisionsAvailable,
+  resolveOpenRouterDecisionsModel,
+} from "./remote-openrouter-decisions.js";
+import type {
+  DecisionAnswer,
+  DecisionQuestion,
+  DecisionRequest,
+  DecisionResponse,
+} from "./service.js";
 import { runDecision } from "./service.js";
 
 export type FlipRateFamily = "whitespace" | "case" | "punctuation" | "synonym";
@@ -30,6 +43,14 @@ export type FlipRateRequest = {
   /** Default 0.1 — at most 10% of comparable perturbations may flip. */
   readonly maxFlipRate?: number;
   readonly families?: readonly FlipRateFamily[];
+  /**
+   * Optional backend pin (e.g. `microsoft-decision-1`).
+   * When set to an OpenRouter Decision-1 id, perturbations call that remote.
+   * Reports only — never lights calibrated / productionTrusted.
+   */
+  readonly model?: string;
+  /** Alias for model pin (fan-out / operator convenience). */
+  readonly backendId?: string;
 };
 
 export type FlipRatePerturbationResult = {
@@ -58,9 +79,190 @@ export type FlipRateResponse = {
   readonly passed: boolean;
   readonly reports: readonly FlipRateCaseReport[];
   readonly traceId: string;
+  /** Backend that answered perturbations (`local` or `openrouter/...`). */
+  readonly backendId: string;
+  readonly model?: string;
 };
 
 export type FlipRateDecideFn = (req: DecisionRequest) => Promise<DecisionResponse>;
+
+export type FlipRateCallOpenRouterFn = (
+  body: OpenAiDecisionCreateRequest
+) => Promise<OpenAiDecisionCreateResponse>;
+
+export type FlipRateBackendResolution =
+  | { readonly kind: "local"; readonly backendId: "local" }
+  | {
+      readonly kind: "openrouter";
+      readonly backendId: string;
+      readonly model: string;
+    };
+
+export function resolveFlipRateBackend(req: FlipRateRequest): FlipRateBackendResolution {
+  const pin = (req.model ?? req.backendId ?? "").trim();
+  if (!pin) return { kind: "local", backendId: "local" };
+  if (isOpenRouterDecisionBackendId(pin, pin)) {
+    const model = resolveOpenRouterDecisionsModel(pin);
+    return {
+      kind: "openrouter",
+      model,
+      backendId: `openrouter/${model}`,
+    };
+  }
+  return { kind: "local", backendId: "local" };
+}
+
+function questionsToOpenAi(questions: readonly DecisionQuestion[]) {
+  return questions.map((q) => {
+    if (q.type === "noul") {
+      return {
+        type: "predicate" as const,
+        name: q.name,
+        instructions: q.statement,
+      };
+    }
+    if (q.type === "score") {
+      return {
+        type: "score" as const,
+        name: q.name,
+        instructions: q.instructions ?? q.name,
+        levels: q.levels.map((l) => ({
+          label: l.label,
+          description: l.description,
+        })),
+      };
+    }
+    return {
+      type: "choice" as const,
+      name: q.name,
+      instructions: q.instructions ?? q.name,
+      choices: q.options.map((o) => ({
+        value: o.id,
+        description: o.description,
+      })),
+    };
+  });
+}
+
+function openAiToClawqlDecision(
+  remote: OpenAiDecisionCreateResponse,
+  backendId: string,
+  req: DecisionRequest
+): DecisionResponse {
+  const useSiteId = req.useSiteId?.trim() || "search_provider_tool_routing";
+  const answers: DecisionAnswer[] = remote.answers.map((a) => {
+    if (a.type === "choice") {
+      return {
+        name: a.name,
+        type: "choice" as const,
+        answer: String(a.choice),
+        abstained: false,
+        escalated: false,
+        calibrated: false,
+        backendId,
+        useSiteId,
+      };
+    }
+    if (a.type === "predicate") {
+      return {
+        name: a.name,
+        type: "noul" as const,
+        answer: a.probability >= 0.5 ? "true" : "false",
+        probability: a.probability,
+        abstained: false,
+        escalated: false,
+        calibrated: false,
+        backendId,
+        useSiteId,
+      };
+    }
+    if (a.type === "score") {
+      return {
+        name: a.name,
+        type: "choice" as const,
+        answer: String(a.score),
+        abstained: false,
+        escalated: false,
+        calibrated: false,
+        backendId,
+        useSiteId,
+      };
+    }
+    return {
+      name: a.name,
+      type: "choice" as const,
+      answer: undefined,
+      abstained: true,
+      escalated: false,
+      calibrated: false,
+      backendId,
+      useSiteId,
+    };
+  });
+  return {
+    object: "clawql.decision",
+    answers,
+    traceId: remote.trace_id || randomUUID(),
+    escalated: false,
+    calibrated: false,
+    backendId,
+  };
+}
+
+/** Build a FlipRateDecideFn that calls OpenRouter Decision-1 (uncalibrated). */
+export function makeOpenRouterFlipRateDecide(opts: {
+  callOpenRouter: FlipRateCallOpenRouterFn;
+  model: string;
+  backendId: string;
+}): FlipRateDecideFn {
+  return async (req) => {
+    const remote = await opts.callOpenRouter({
+      model: opts.model,
+      input: req.state,
+      questions: questionsToOpenAi(req.questions),
+      use_site_id: req.useSiteId,
+      allow_uncalibrated: true,
+    });
+    return openAiToClawqlDecision(remote, opts.backendId, req);
+  };
+}
+
+export function resolveFlipRateDecide(opts: {
+  request: FlipRateRequest;
+  decide?: FlipRateDecideFn;
+  callOpenRouter?: FlipRateCallOpenRouterFn;
+  env?: NodeJS.ProcessEnv;
+}): Effect.Effect<
+  { decide: FlipRateDecideFn; backend: FlipRateBackendResolution },
+  { error: string; status: number }
+> {
+  return Effect.gen(function* () {
+    const backend = resolveFlipRateBackend(opts.request);
+    if (backend.kind === "local") {
+      return { decide: opts.decide ?? runDecision, backend };
+    }
+    const env = opts.env ?? process.env;
+    const callable = Boolean(opts.callOpenRouter) || remoteOpenRouterDecisionsAvailable(env);
+    if (!callable) {
+      return yield* Effect.fail({
+        error:
+          "model microsoft-decision-1 requires OPENROUTER_API_KEY (or CLAWQL_DECISIONS_OPENROUTER_API_KEY)",
+        status: 503,
+      } as const);
+    }
+    const callOpenRouter =
+      opts.callOpenRouter ??
+      ((body: OpenAiDecisionCreateRequest) => callRemoteOpenRouterDecisions(body, { env }));
+    return {
+      decide: makeOpenRouterFlipRateDecide({
+        callOpenRouter,
+        model: backend.model,
+        backendId: backend.backendId,
+      }),
+      backend,
+    };
+  });
+}
 
 const SYNONYM_SWAPS: ReadonlyArray<readonly [RegExp, string]> = [
   [/\bcharged\b/gi, "billed"],
@@ -216,20 +418,39 @@ export function parseFlipRateBody(body: unknown): FlipRateRequest | { error: str
     });
   }
 
+  const model =
+    typeof b.model === "string" && b.model.trim()
+      ? b.model.trim()
+      : typeof b.backendId === "string" && b.backendId.trim()
+        ? b.backendId.trim()
+        : undefined;
+  const backendId =
+    typeof b.backendId === "string" && b.backendId.trim() ? b.backendId.trim() : undefined;
+
   return {
     cases,
     useSiteId: typeof b.useSiteId === "string" ? b.useSiteId : undefined,
     maxFlipRate: typeof b.maxFlipRate === "number" ? b.maxFlipRate : undefined,
     families,
+    model,
+    backendId,
   };
 }
 
 export function runFlipRateGate(opts: {
   request: FlipRateRequest;
   decide?: FlipRateDecideFn;
-}): Effect.Effect<FlipRateResponse> {
+  callOpenRouter?: FlipRateCallOpenRouterFn;
+  env?: NodeJS.ProcessEnv;
+}): Effect.Effect<FlipRateResponse, { error: string; status: number }> {
   return Effect.gen(function* () {
-    const decide = opts.decide ?? runDecision;
+    const resolved = yield* resolveFlipRateDecide({
+      request: opts.request,
+      decide: opts.decide,
+      callOpenRouter: opts.callOpenRouter,
+      env: opts.env,
+    });
+    const decide = resolved.decide;
     const maxFlipRate = opts.request.maxFlipRate ?? 0.1;
     const families = opts.request.families ?? DEFAULT_FLIP_RATE_FAMILIES;
     const traceId = randomUUID();
@@ -315,6 +536,8 @@ export function runFlipRateGate(opts: {
       passed: reports.every((r) => r.passed),
       reports,
       traceId,
+      backendId: resolved.backend.backendId,
+      model: resolved.backend.kind === "openrouter" ? resolved.backend.model : opts.request.model,
     };
   });
 }
@@ -322,30 +545,56 @@ export function runFlipRateGate(opts: {
 export class FlipRateGateService extends Context.Service<
   FlipRateGateService,
   {
-    readonly evaluate: (req: FlipRateRequest) => Effect.Effect<FlipRateResponse>;
+    readonly evaluate: (
+      req: FlipRateRequest
+    ) => Effect.Effect<FlipRateResponse, { error: string; status: number }>;
   }
 >()("clawql/inference/FlipRateGateService") {}
 
 export function makeFlipRateGateLive(
   opts: {
     decide?: FlipRateDecideFn;
+    callOpenRouter?: FlipRateCallOpenRouterFn;
+    env?: NodeJS.ProcessEnv;
   } = {}
 ): Layer.Layer<FlipRateGateService> {
   return Layer.succeed(FlipRateGateService, {
-    evaluate: (req) => runFlipRateGate({ request: req, decide: opts.decide }),
+    evaluate: (req) =>
+      runFlipRateGate({
+        request: req,
+        decide: opts.decide,
+        callOpenRouter: opts.callOpenRouter,
+        env: opts.env,
+      }),
   });
 }
 
 export const FlipRateGateLive = makeFlipRateGateLive();
 
+export class FlipRateGateError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "FlipRateGateError";
+    this.status = status;
+  }
+}
+
 export function runFlipRate(
   req: FlipRateRequest,
-  opts: { decide?: FlipRateDecideFn } = {}
+  opts: {
+    decide?: FlipRateDecideFn;
+    callOpenRouter?: FlipRateCallOpenRouterFn;
+    env?: NodeJS.ProcessEnv;
+  } = {}
 ): Promise<FlipRateResponse> {
   return Effect.runPromise(
     Effect.gen(function* () {
       const svc = yield* FlipRateGateService;
       return yield* svc.evaluate(req);
-    }).pipe(Effect.provide(makeFlipRateGateLive(opts)))
+    }).pipe(
+      Effect.mapError((e) => new FlipRateGateError(e.error, e.status)),
+      Effect.provide(makeFlipRateGateLive(opts))
+    )
   );
 }

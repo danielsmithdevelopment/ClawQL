@@ -89,10 +89,13 @@ export {
 export {
   FlipRateGateService,
   FlipRateGateLive,
+  FlipRateGateError,
   makeFlipRateGateLive,
   runFlipRate,
   parseFlipRateBody,
   applyPerturbations,
+  resolveFlipRateBackend,
+  makeOpenRouterFlipRateDecide,
   DEFAULT_FLIP_RATE_FAMILIES,
   type FlipRateRequest,
   type FlipRateResponse,

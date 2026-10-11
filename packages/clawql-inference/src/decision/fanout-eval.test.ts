@@ -314,6 +314,69 @@ describe("fan-out eval disagreement_mining", () => {
     expect(result.disagreements[0]?.flipRate?.baseline).toBe("billing");
   });
 
+  it("mining flipRate.model pin measures Decision-1 via callOpenRouter", async () => {
+    let openRouterCalls = 0;
+    const result = await runFanoutEval(
+      {
+        mode: "disagreement_mining",
+        cases: [miningCase],
+        backends: [
+          { id: "local-a", model: "clawql" },
+          {
+            id: "openrouter/microsoft/microsoft-decision-1",
+            model: "microsoft/microsoft-decision-1",
+          },
+        ],
+        flipRate: {
+          maxFlipRate: 0.1,
+          families: ["synonym"],
+          model: "microsoft-decision-1",
+        },
+      },
+      {
+        env: { OPENROUTER_API_KEY: "sk-test" },
+        decide: decideBilling,
+        callOpenRouter: async () => {
+          openRouterCalls += 1;
+          return {
+            id: "decision_or",
+            object: "decision",
+            model: "microsoft/microsoft-decision-1",
+            created: 1,
+            answers: [
+              {
+                type: "choice",
+                name: "department",
+                choice: "shipping",
+                confidence: 0.9,
+                probabilities: [{ value: "shipping", probability: 0.9 }],
+              },
+            ],
+            usage: {
+              input_tokens: 1,
+              output_tokens: 1,
+              total_tokens: 2,
+              input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+              output_tokens_details: { reasoning_tokens: 0 },
+            },
+            calibrated: false,
+            escalated: false,
+            use_site_id: "search_provider_tool_routing",
+            backend_id: "openrouter/microsoft/microsoft-decision-1",
+            trace_id: "or",
+          };
+        },
+      }
+    );
+
+    expect(result.disagreements).toHaveLength(1);
+    expect(result.disagreements[0]?.flipRate).toBeDefined();
+    // Flip attach used Decision-1 (stable shipping) — not local flaky decide.
+    expect(result.disagreements[0]?.flipRate?.baseline).toBe("shipping");
+    expect(result.disagreements[0]?.flipRate?.passed).toBe(true);
+    expect(openRouterCalls).toBeGreaterThan(1);
+  });
+
   it("majority quorum abstains on ties and requires ≥2 answers", async () => {
     expect(await Effect.runPromise(majorityQuorumVote({ a: "billing", b: "shipping" }))).toBe(null);
     expect(await Effect.runPromise(majorityQuorumVote({ a: "billing" }))).toBe(null);

@@ -545,7 +545,16 @@ async function handleFlipRate(
     res.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    sendOpenAiError(res, 502, message, "server_error");
+    const status =
+      typeof error === "object" &&
+      error !== null &&
+      "status" in error &&
+      typeof (error as { status: unknown }).status === "number"
+        ? (error as { status: number }).status
+        : /OPENROUTER_API_KEY/i.test(message)
+          ? 503
+          : 502;
+    sendOpenAiError(res, status, message, "server_error");
   }
 }
 
@@ -562,7 +571,14 @@ export function createDecisionRouter(options: CreateDecisionRouterOptions = {}):
         callOpenRouter: options.callOpenRouter,
         env,
       }));
-  const flipRate = options.flipRate ?? ((req: FlipRateRequest) => runFlipRate(req, { decide }));
+  const flipRate =
+    options.flipRate ??
+    ((req: FlipRateRequest) =>
+      runFlipRate(req, {
+        decide,
+        callOpenRouter: options.callOpenRouter,
+        env,
+      }));
 
   const systemOneHandler = (req: Request, res: Response) =>
     void handleDecide(req as VirtualKeyRequest, res, decide);
