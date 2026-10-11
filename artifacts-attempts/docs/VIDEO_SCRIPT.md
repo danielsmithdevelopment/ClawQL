@@ -9,7 +9,7 @@ Record only after `npm run demo:record-prep` (or `demo:gate`) prints **GATE PASS
 3. **Agents / replay (90s)** — Show `--replay` patches applying in parallel worktrees; label clearly if replay (not live models).
 4. **Events → evaluation (90s)** — Show vitest output per attempt; open a `git notes show` on a commit after fetch into a clean clone.
 5. **Safety beat (45s)** — `att_3` blocked: evidence note `policy.violations` includes `egress:https://evil.example`.
-6. **Decision (60s)** — Calibrated path auto-merges **or** run `demo:approval-path` and click Approve on `/approve.html`. Show trust rule briefly.
+6. **Decision (60s)** — Calibrated path auto-merges **or** run `demo:approval-path` and click Approve on `/approve.html`. Show board trust line (`calibrated_confident` / `uncalibrated`).
 7. **Merge (45s)** — Winner rebased onto main; re-test green; losers stood down (notes remain).
 8. **Release — never cut (90s)** — Dry-run Arweave dir + `artifacts-verify --local-manifest …`; call out Merkle root + `buildEnvironment.fork/commit`. State that live Turbo is the production swap.
 9. **Canary (30s)** — Open `.local/canary/status.json`: 10% canary + rollback trigger from the manifest (dry-run; live = Workers gradual deploy API).

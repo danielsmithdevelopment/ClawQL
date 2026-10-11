@@ -25,6 +25,7 @@ describe("local demo pipeline", () => {
       expect(result.attempts.find((a) => a.id === "att_3")?.status).toBe("blocked");
       expect(result.attempts.find((a) => a.id === "att_1")?.status).toBe("won");
       expect(result.autoMerge).toBe(true);
+      expect(result.trustReason).toBe("calibrated_confident");
       expect(result.approvalUsed).toBe(false);
       expect(verifyEvidenceChain(result.notes)).toEqual({ ok: true });
 
@@ -62,6 +63,7 @@ describe("local demo pipeline", () => {
         approveIfNeeded: true,
       });
       expect(result.autoMerge).toBe(false);
+      expect(result.trustReason).toBe("uncalibrated");
       expect(result.approvalUsed).toBe(true);
       expect(result.task.status).toBe("released");
     },

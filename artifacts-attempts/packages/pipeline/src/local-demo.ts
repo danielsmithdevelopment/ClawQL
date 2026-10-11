@@ -37,6 +37,8 @@ export type LocalDemoResult = {
   notes: EvidenceNote[];
   decision: DecisionResponse;
   autoMerge: boolean;
+  /** Trust-rule reason from applyDecision (e.g. calibrated_confident, uncalibrated). */
+  trustReason: string;
   approvalUsed: boolean;
   mainCommit: string;
   arweaveId: string;
@@ -278,6 +280,7 @@ export async function runLocalDemo(opts: {
     notes,
     decision,
     autoMerge: trust.autoMerge,
+    trustReason: trust.reason,
     approvalUsed,
     mainCommit,
     arweaveId: release.arweaveId,

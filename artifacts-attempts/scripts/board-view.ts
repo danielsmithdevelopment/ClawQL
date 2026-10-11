@@ -20,6 +20,8 @@ export type BoardTaskView = {
   notes: LocalDemoResult["notes"];
   decision: LocalDemoResult["decision"];
   pendingApproval: boolean;
+  autoMerge: boolean;
+  trustReason: string;
   arweaveId: string;
   canary: BoardCanaryView;
 };
@@ -46,6 +48,8 @@ export function toBoardTaskView(
     notes: result.notes,
     decision: result.decision,
     pendingApproval,
+    autoMerge: result.autoMerge,
+    trustReason: result.trustReason,
     arweaveId: result.arweaveId,
     canary: {
       mode: result.canary.mode,
