@@ -20,7 +20,8 @@
  *
  * Governance arm (optional third ClawQL path):
  *   LATENCY_GOVERNANCE=1 → CLAWQL_WORM_ENABLED=1 + CLAWQL_WORM_LOCAL=memory
- *   (Panguard sidecar still off unless you wire CLAWQL_PANGUARD_*; documented)
+ *   Label as **in-memory WORM** — not the production durable write path.
+ *   Panguard sidecar still off unless you wire CLAWQL_PANGUARD_*; always disclose.
  *
  * Usage:
  *   EXECUTOR_BIN=…/executor EXECUTOR_CWD=… \
@@ -573,14 +574,21 @@ async function main() {
           : null,
       publish_lines: {
         absolute:
-          `Risk gates, ring audit, hooks and field projection add ` +
+          `On local stdio, interleaved + paired: risk gates, ring audit, hooks and field projection add ` +
           `${primary.arms.clawql_gateway_cost.p50_ms} ms at p50 and ` +
-          `${primary.arms.clawql_gateway_cost.p999_ms} ms at p999` +
-          (GOVERNANCE ? " (durable WORM memory on)." : " (ephemeral ring; durable WORM off)."),
+          `${primary.arms.clawql_gateway_cost.p99_ms} ms at p99` +
+          (ITERS >= 10000
+            ? ` (p999 ${primary.arms.clawql_gateway_cost.p999_ms} ms; claim p999 only with n≥10000 and multi-run spread)`
+            : ` (p999 not claimed at n=${ITERS}; need interleaved n≥10000 × ≥3 runs)`) +
+          (GOVERNANCE
+            ? ". In-memory WORM on (not production durable backend). Panguard off."
+            : ". Ephemeral ring audit; in-memory/production WORM off. Panguard off."),
         vs_executor_supporting:
-          `Supporting: interleaved equal-arm Executor gateway_cost p50 ` +
+          `Supporting: Executor ${versions.executor.version ?? "?"} on same harness — gateway_cost p50 ` +
           `${primary.arms.executor_gateway_cost.p50_ms} ms ` +
-          `(ratio ${primary.ratios.p50}× at p50).`,
+          `(ratio ${primary.ratios.p50}× at p50). Rerun when Executor v2 ships.`,
+        p999_policy:
+          "Publish p50/p95/p99 from interleaved multi-run. Claim p999 only from interleaved n≥10000/run with spread across runs.",
       },
     };
 
