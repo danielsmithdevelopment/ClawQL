@@ -6,11 +6,24 @@
  * hot-path `execute` does not rebuild Omnigraph on every call (~5–6ms on a tiny spec).
  */
 
-import loadGraphQLSchemaFromOpenAPI from "@omnigraph/openapi";
 import { Effect } from "effect";
 import type { GraphQLSchema } from "graphql";
 import { mergedAuthHeadersEffect } from "../auth/auth-headers.js";
 import { getPackageRoot } from "../spec/package-root.js";
+
+/** Lazy Omnigraph — keep REST-prefer / equal-arm boots off the Mesh RSS tax. */
+function loadOmnigraphOpenApiEffect(): Effect.Effect<
+  typeof import("@omnigraph/openapi").default,
+  Error
+> {
+  return Effect.tryPromise({
+    try: async () => {
+      const mod = await import("@omnigraph/openapi");
+      return mod.default;
+    },
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
 
 interface SchemaResult {
   schema: GraphQLSchema;
@@ -63,6 +76,7 @@ async function buildGraphQLSchemaImpl(openapi: object, baseUrl: string): Promise
   if (pending) return pending;
 
   const build = (async (): Promise<SchemaResult> => {
+    const loadGraphQLSchemaFromOpenAPI = await Effect.runPromise(loadOmnigraphOpenApiEffect());
     const schema = await loadGraphQLSchemaFromOpenAPI("ClawQL", {
       source: openapi as never,
       endpoint: baseUrl,

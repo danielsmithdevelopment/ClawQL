@@ -5,7 +5,6 @@
 
 import { Effect } from "effect";
 import { ArgsHash, ExecutionId, name, type Named } from "clawql-gdp";
-import { executeOperationGraphQL } from "../graphql/in-process-execute.js";
 import { loadSpec, resolveApiBaseUrlForOperation, type OpenAPIDoc } from "../spec/spec-loader.js";
 import type { Operation } from "../spec/operation-types.js";
 import type { LoadSpecFn } from "../search/search-core.js";
@@ -392,6 +391,10 @@ export function executeClawqlOperationEffect(
       const baseUrl = resolveApiBaseUrlForOperation(openapiForOp, op as Operation);
 
       return yield* Effect.gen(function* () {
+        // Dynamic import: REST-prefer / equal-arm never loads Omnigraph + graphql execute.
+        const { executeOperationGraphQL } = yield* fromPromise(
+          () => import("../graphql/in-process-execute.js")
+        );
         const inProc = yield* fromPromise(() =>
           executeOperationGraphQL(openapiForOp, baseUrl, op as Operation, args, selectedFields)
         );

@@ -4,6 +4,8 @@ export default defineConfig({
   entry: {
     index: "src/index.ts",
     "mcp/tool-shape-log": "src/mcp/tool-shape-log.ts",
+    // Separate entry so REST-prefer boots do not evaluate Omnigraph execute.
+    "graphql/in-process-execute": "src/graphql/in-process-execute.ts",
   },
   format: ["esm", "cjs"],
   dts: true,
