@@ -1,21 +1,26 @@
 #!/usr/bin/env node
 /**
- * Multi-gateway 10+ turn token board (input + output + task success).
+ * Multi-gateway 10+ turn board: tokens + latency + RSS + task success.
  *
  * Equal-arm fat catalog (N tools, verbose schemas, fat default results):
  *   - Aggregators (MCPJungle / agentgateway): full tools/list once (classic) +
  *     raw fat tool results each turn
- *   - ClawQL: Layer1 = search+execute schemas only; Layer2 = search hit +
- *     execute with fields projection against mirrored OpenAPI
+ *   - ClawQL / clawql_bun: Layer1 = search+execute schemas only; Layer2 =
+ *     search hit + execute with fields projection (same dist; runtime differs)
  *   - Executor: Layer1 = execute schema; Layer2 = fat JSON via code
  *     (matches measured live path — full payload pass-through; no gateway
  *     fields. See pragmaticvectors.com/posts/both-sides-of-context-compression)
  *
- * Cumulative (primary = classic):
+ * Cumulative tokens (primary = classic):
  *   turn_n = Layer1_once + sum(Layer2_i for i=1..n)
  *
- * Secondary model (tools_list_every_turn): aggregators re-pay tools/list each
- * turn — most clients cache ListTools; demoted from publish headline.
+ * MT_ITERS (default 1): repeat the full N-turn flow that many times on one
+ * warm connection. Tokens are measured on flow 1 (+ spot-check); latency /
+ * RSS / task_success aggregate across all flows×turns.
+ *
+ * Secondary model (tools_list_every_turn): measured once (flow 1) for
+ * aggregators — most clients cache ListTools; demoted from publish headline.
+ * Not re-paid on every hot-path turn when MT_ITERS>1.
  *
  * Task success: deterministic inventory check each turn (expected available
  * rows for the partition). Optional MT_LLM_JUDGE=1 when a model key exists.
@@ -24,15 +29,16 @@
  *   EXECUTOR_BIN=… EXECUTOR_CWD=… \
  *     MCPJUNGLE_BIN=/tmp/gw-bins/mcpjungle \
  *     AGENTGATEWAY_BIN=/tmp/gw-bins/agentgateway \
- *     MT_TURNS=12 CATALOG_TOOL_COUNT=40 \
+ *     MT_TURNS=12 MT_ITERS=10000 CATALOG_TOOL_COUNT=40 \
+ *     MT_ARMS=clawql,clawql_bun,executor,mcpjungle,agentgateway \
  *     node scripts/benchmarks/gateway-multi-multiturn.mjs
  *
  * Env:
- *   MT_TURNS (default 12)  CATALOG_TOOL_COUNT (default 40)
- *   MT_ARMS=clawql,executor,mcpjungle,agentgateway
+ *   MT_TURNS (default 12)  MT_ITERS (default 1)  CATALOG_TOOL_COUNT (default 40)
+ *   MT_ARMS=clawql,clawql_bun,executor,mcpjungle,agentgateway
  *   MT_LIMIT (rows per turn, default 25)
  *   MT_OUT (default gateway-multi-multiturn.json)
- *   MT_INCLUDE_CF=1 only for nested CF experiments (off publish board)
+ *   MT_PROGRESS_EVERY (default 100)  BUN_BIN  MT_INCLUDE_CF=1
  *
  * Note: do NOT put a hand-written slim-return program on the publish board as
  * "Executor". That is not gateway projection and contradicts the settled blog.
@@ -60,14 +66,16 @@ const OUT_PATH = join(OUT_DIR, OUT_NAME || "gateway-multi-multiturn.json");
 
 const TOOL_COUNT = Math.max(4, Math.min(200, Number(process.env.CATALOG_TOOL_COUNT ?? 40) || 40));
 const TURNS = Math.max(10, Math.min(40, Number(process.env.MT_TURNS ?? 12) || 12));
+const ITERS = Math.max(1, Number(process.env.MT_ITERS ?? 1) || 1);
 const LIMIT = Math.min(100, Math.max(1, Number(process.env.MT_LIMIT ?? 25) || 25));
+const PROGRESS_EVERY = Math.max(1, Number(process.env.MT_PROGRESS_EVERY ?? 100) || 100);
 const INCLUDE_CF =
   process.env.MT_INCLUDE_CF === "1" || process.env.MT_INCLUDE_CF === "true";
 const ARMS = (
   process.env.MT_ARMS ??
   (INCLUDE_CF
-    ? "clawql,executor,mcpjungle,agentgateway,contextforge"
-    : "clawql,executor,mcpjungle,agentgateway")
+    ? "clawql,clawql_bun,executor,mcpjungle,agentgateway,contextforge"
+    : "clawql,clawql_bun,executor,mcpjungle,agentgateway")
 )
   .split(",")
   .map((s) => s.trim())
@@ -181,6 +189,109 @@ function transportPid(transport) {
   if (typeof transport?.pid === "number") return transport.pid;
   if (typeof transport?._process?.pid === "number") return transport._process.pid;
   return null;
+}
+
+function percentile(sorted, p) {
+  if (!sorted.length) return null;
+  const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil((p / 100) * sorted.length) - 1));
+  return sorted[idx];
+}
+
+function summarizeMs(samples) {
+  if (!samples.length) {
+    return { n: 0, p50_ms: null, p95_ms: null, p99_ms: null, p999_ms: null, mean_ms: null };
+  }
+  const sorted = [...samples].sort((a, b) => a - b);
+  const sum = sorted.reduce((a, b) => a + b, 0);
+  return {
+    n: sorted.length,
+    p50_ms: Number(percentile(sorted, 50).toFixed(3)),
+    p95_ms: Number(percentile(sorted, 95).toFixed(3)),
+    p99_ms: Number(percentile(sorted, 99).toFixed(3)),
+    p999_ms: Number(percentile(sorted, 99.9).toFixed(3)),
+    mean_ms: Number((sum / sorted.length).toFixed(3)),
+    min_ms: Number(sorted[0].toFixed(3)),
+    max_ms: Number(sorted[sorted.length - 1].toFixed(3)),
+  };
+}
+
+function readProcRssMb(pid) {
+  try {
+    const status = readFileSync(`/proc/${pid}/status`, "utf8");
+    const m = status.match(/^VmRSS:\s+(\d+)\s+kB$/m);
+    return m ? Number(m[1]) / 1024 : null;
+  } catch {
+    return null;
+  }
+}
+
+function readTreeRssMb(rootPid) {
+  let sum = 0;
+  let any = false;
+  for (const p of processTreePids(rootPid)) {
+    const s = readProcRssMb(p);
+    if (s != null) {
+      sum += s;
+      any = true;
+    }
+  }
+  return any ? Number(sum.toFixed(2)) : null;
+}
+
+class ResourceSampler {
+  constructor(label, pid) {
+    this.label = label;
+    this.pid = pid;
+    this.samples = [];
+    this._timer = null;
+  }
+  start(intervalMs = 200) {
+    if (!this.pid) return;
+    this._timer = setInterval(() => {
+      const rss = readTreeRssMb(this.pid);
+      if (rss == null) return;
+      this.samples.push(rss);
+    }, intervalMs);
+    if (typeof this._timer.unref === "function") this._timer.unref();
+  }
+  stop() {
+    if (this._timer) clearInterval(this._timer);
+    this._timer = null;
+    if (!this.samples.length) {
+      return { label: this.label, pid: this.pid, n: 0, rss_mb: { min: null, median: null, max: null } };
+    }
+    const rss = [...this.samples].sort((a, b) => a - b);
+    return {
+      label: this.label,
+      pid: this.pid,
+      n: rss.length,
+      rss_mb: { min: rss[0], median: percentile(rss, 50), max: rss[rss.length - 1] },
+    };
+  }
+}
+
+function resolveBunBin() {
+  return resolveBin("BUN_BIN", [
+    join(process.env.HOME || "", ".bun/bin/bun"),
+    "/usr/local/bin/bun",
+    "/home/ubuntu/.bun/bin/bun",
+  ]);
+}
+
+function resolveClawqlJsRuntime(runtime = "node") {
+  const server = join(ROOT, "dist", "server.js");
+  if (runtime === "bun") {
+    const bun = resolveBunBin();
+    if (!bun) throw new Error("clawql_bun requires bun (set BUN_BIN or install ~/.bun/bin/bun)");
+    const ver = spawnSync(bun, ["--version"], { encoding: "utf8" }).stdout?.trim() || null;
+    return { runtime: "bun", runtimeVersion: ver, command: bun, args: [server] };
+  }
+  return {
+    runtime: "node",
+    runtimeVersion: process.version,
+    command: process.execPath,
+    args: [server],
+  };
 }
 
 function toolName(i) {
@@ -411,20 +522,25 @@ async function startCatalogHttp() {
   };
 }
 
-async function connectClawql(mock) {
-  const home = join("/tmp", `clawql-mt-gw-${process.pid}`);
+async function connectClawql(mock, { runtime = "node", id = "clawql" } = {}) {
+  const js = resolveClawqlJsRuntime(runtime);
+  const home = join("/tmp", `clawql-mt-${id}-${process.pid}`);
   await mkdir(home, { recursive: true });
   const env = clawqlEnv(home, mock.specPath, mock.baseUrl);
+  const t0 = performance.now();
   const transport = new StdioClientTransport({
-    command: process.execPath,
-    args: [join(ROOT, "dist", "server.js")],
+    command: js.command,
+    args: js.args,
     cwd: ROOT,
     stderr: "pipe",
     env,
   });
-  const client = new Client({ name: "mt-clawql", version: "1" }, {});
+  const client = new Client({ name: `mt-${id}`, version: "1" }, {});
   const ready = new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("clawql Ready timeout")), 90_000);
+    const timer = setTimeout(
+      () => reject(new Error(`clawql Ready timeout (${js.runtime})`)),
+      90_000
+    );
     transport.stderr?.on("data", (chunk) => {
       if (chunk.toString().includes("[clawql-mcp] Ready")) {
         clearTimeout(timer);
@@ -434,9 +550,14 @@ async function connectClawql(mock) {
   });
   await client.connect(transport);
   await ready;
+  const pid = transportPid(transport);
   return {
     client,
-    pid: transportPid(transport),
+    pid,
+    runtime: js.runtime,
+    runtimeVersion: js.runtimeVersion,
+    ready_ms: Number((performance.now() - t0).toFixed(1)),
+    rss_mb_ready: pid != null ? readTreeRssMb(pid) : null,
     close: async () => {
       await client.close().catch(() => {});
     },
@@ -646,108 +767,184 @@ function buildCumulative(layer1Once, layer2PerTurn) {
 
 async function runAggregatorArm(gw, turns) {
   const conn = await gw.connect();
+  const pid = conn.pid ?? gw.pid ?? null;
+  const sampler = new ResourceSampler(gw.id, pid);
+  sampler.start(ITERS > 1 ? 500 : 200);
   try {
     const listed = await conn.client.listTools();
     const l1 = measureLayer1FromTools(listed.tools);
-    const perTurn = [];
-    for (const turn of turns) {
-      const name = gw.resolveTool(turn.tool);
-      const t0 = performance.now();
-      const res = await conn.client.callTool({
-        name,
-        arguments: turn.args,
-      });
-      const ms = performance.now() - t0;
-      if (res.isError) throw new Error(`${gw.id} ${name}: ${toolText(res).slice(0, 300)}`);
-      const text = toolText(res);
-      // Secondary sensitivity: re-list cost (most clients cache — demoted from headline)
-      const relist = await conn.client.listTools();
-      const relistTok = relist.tools.reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
-      const success = scoreTaskSuccess(text, turn.partition, turn.args.limit);
-      perTurn.push({
-        n: turn.n,
-        tool: name,
-        result_tokens: countTokens(text),
-        result_chars: text.length,
-        tools_list_tokens: relistTok,
-        layer2_classic: countTokens(text),
-        layer2_relist_every_turn: relistTok + countTokens(text),
-        latency_ms: Number(ms.toFixed(3)),
-        ok: true,
-        task_success: success,
-      });
+    let perTurn = null;
+    let relistTok = null;
+    const flowE2e = [];
+    const turnLat = [];
+    let successOk = 0;
+    let successTotal = 0;
+    let callErrors = 0;
+
+    for (let iter = 1; iter <= ITERS; iter++) {
+      const flowT0 = performance.now();
+      const thisPerTurn = [];
+      for (const turn of turns) {
+        const name = gw.resolveTool(turn.tool);
+        const t0 = performance.now();
+        let text = "";
+        let ok = true;
+        try {
+          const res = await conn.client.callTool({ name, arguments: turn.args });
+          if (res.isError) throw new Error(toolText(res).slice(0, 300));
+          text = toolText(res);
+        } catch (e) {
+          ok = false;
+          callErrors++;
+          text = "";
+          if (iter === 1) throw new Error(`${gw.id} ${name}: ${String(e?.message || e)}`);
+        }
+        const ms = performance.now() - t0;
+        turnLat.push(ms);
+        const success = ok ? scoreTaskSuccess(text, turn.partition, turn.args.limit) : { ok: false };
+        successTotal++;
+        if (success.ok) successOk++;
+        if (iter === 1) {
+          // Secondary: tools/list once on flow 1 only (not every hot-path turn when ITERS>1)
+          if (relistTok == null) {
+            const relist = await conn.client.listTools();
+            relistTok = relist.tools.reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
+          }
+          const resultTok = countTokens(text);
+          thisPerTurn.push({
+            n: turn.n,
+            tool: name,
+            result_tokens: resultTok,
+            result_chars: text.length,
+            tools_list_tokens: relistTok,
+            layer2_classic: resultTok,
+            layer2_relist_every_turn: relistTok + resultTok,
+            latency_ms: Number(ms.toFixed(3)),
+            ok,
+            task_success: success,
+          });
+        }
+      }
+      flowE2e.push(performance.now() - flowT0);
+      if (iter === 1) perTurn = thisPerTurn;
+      if (iter % PROGRESS_EVERY === 0 || iter === ITERS) {
+        console.log(`[mt] ${gw.id} flows ${iter}/${ITERS}`);
+      }
     }
+
+    const resources = sampler.stop();
     return {
       id: gw.id,
       model: "aggregator_tools_list_plus_fat_call",
+      runtime: null,
+      runtimeVersion: null,
       layer1: {
         once_schema_tokens: l1.schema_tokens,
         tools_count: l1.tools_count,
         note: "Full tools/list dump (fat catalog surface); classic counts Layer1 once",
       },
       perTurn,
+      iters: ITERS,
+      flow_e2e_ms: flowE2e,
+      turn_latency_ms: turnLat,
+      call_errors: callErrors,
+      task_success_agg: { ok: successOk, total: successTotal },
+      resources,
+      startup: { ready_ms: null, rss_mb_ready: resources.rss_mb?.min ?? null },
       skipped: false,
     };
   } finally {
+    sampler.stop();
     await conn.close();
   }
 }
 
-async function runClawqlArm(mock, turns) {
-  const conn = await connectClawql(mock);
+async function runClawqlArm(mock, turns, { runtime = "node", id = "clawql" } = {}) {
+  const conn = await connectClawql(mock, { runtime, id });
+  const sampler = new ResourceSampler(id, conn.pid);
+  sampler.start(ITERS > 1 ? 500 : 200);
   try {
     const listed = await conn.client.listTools();
     const l1 = measureLayer1FromTools(listed.tools, { onlyNames: ["search", "execute"] });
-    const perTurn = [];
-    for (const turn of turns) {
-      const t0 = performance.now();
-      const searchRes = await conn.client.callTool({
-        name: "search",
-        arguments: { query: turn.query, limit: 3 },
-      });
-      if (searchRes.isError) {
-        throw new Error(`clawql search: ${toolText(searchRes).slice(0, 300)}`);
+    let perTurn = null;
+    const flowE2e = [];
+    const turnLat = [];
+    let successOk = 0;
+    let successTotal = 0;
+    let callErrors = 0;
+
+    for (let iter = 1; iter <= ITERS; iter++) {
+      const flowT0 = performance.now();
+      const thisPerTurn = [];
+      for (const turn of turns) {
+        const t0 = performance.now();
+        let searchText = "";
+        let execText = "";
+        let ok = true;
+        try {
+          const searchRes = await conn.client.callTool({
+            name: "search",
+            arguments: { query: turn.query, limit: 3 },
+          });
+          if (searchRes.isError) throw new Error(`search: ${toolText(searchRes).slice(0, 300)}`);
+          searchText = toolText(searchRes);
+          const execRes = await conn.client.callTool({
+            name: "execute",
+            arguments: {
+              operationId: turn.operationId,
+              args: {
+                limit: turn.args.limit,
+                status: turn.args.status,
+                includeMeta: turn.args.includeMeta,
+              },
+              where: turn.where,
+              fields: turn.fields,
+            },
+          });
+          if (execRes.isError) throw new Error(`execute: ${toolText(execRes).slice(0, 400)}`);
+          execText = toolText(execRes);
+        } catch (e) {
+          ok = false;
+          callErrors++;
+          if (iter === 1) throw new Error(`${id}: ${String(e?.message || e)}`);
+        }
+        const ms = performance.now() - t0;
+        turnLat.push(ms);
+        const success = ok ? scoreTaskSuccess(execText, turn.partition, turn.args.limit) : { ok: false };
+        successTotal++;
+        if (success.ok) successOk++;
+        if (iter === 1) {
+          const searchTok = countTokens(searchText);
+          const resultTok = countTokens(execText);
+          thisPerTurn.push({
+            n: turn.n,
+            tool: turn.operationId,
+            search_tokens: searchTok,
+            result_tokens: resultTok,
+            result_chars: execText.length,
+            where: turn.where,
+            fields: turn.fields,
+            layer2_classic: searchTok + resultTok,
+            layer2_relist_every_turn: searchTok + resultTok,
+            latency_ms: Number(ms.toFixed(3)),
+            ok,
+            task_success: success,
+          });
+        }
       }
-      const searchText = toolText(searchRes);
-      const execRes = await conn.client.callTool({
-        name: "execute",
-        arguments: {
-          operationId: turn.operationId,
-          args: {
-            limit: turn.args.limit,
-            status: turn.args.status,
-            includeMeta: turn.args.includeMeta,
-          },
-          where: turn.where,
-          fields: turn.fields,
-        },
-      });
-      const ms = performance.now() - t0;
-      if (execRes.isError) {
-        throw new Error(`clawql execute: ${toolText(execRes).slice(0, 400)}`);
+      flowE2e.push(performance.now() - flowT0);
+      if (iter === 1) perTurn = thisPerTurn;
+      if (iter % PROGRESS_EVERY === 0 || iter === ITERS) {
+        console.log(`[mt] ${id} flows ${iter}/${ITERS}`);
       }
-      const execText = toolText(execRes);
-      const searchTok = countTokens(searchText);
-      const resultTok = countTokens(execText);
-      const success = scoreTaskSuccess(execText, turn.partition, turn.args.limit);
-      perTurn.push({
-        n: turn.n,
-        tool: turn.operationId,
-        search_tokens: searchTok,
-        result_tokens: resultTok,
-        result_chars: execText.length,
-        where: turn.where,
-        fields: turn.fields,
-        layer2_classic: searchTok + resultTok,
-        layer2_relist_every_turn: searchTok + resultTok, // no tools/list dump
-        latency_ms: Number(ms.toFixed(3)),
-        ok: true,
-        task_success: success,
-      });
     }
+
+    const resources = sampler.stop();
     return {
-      id: "clawql",
-      model: "search_plus_execute_where_fields",
+      id,
+      model: `search_plus_execute_where_fields_${conn.runtime}`,
+      runtime: conn.runtime,
+      runtimeVersion: conn.runtimeVersion,
       layer1: {
         once_schema_tokens: l1.schema_tokens,
         tools_count: l1.tools_count,
@@ -756,9 +953,17 @@ async function runClawqlArm(mock, turns) {
         note: "Only search+execute schemas counted as Layer1 (catalog stays server-side)",
       },
       perTurn,
+      iters: ITERS,
+      flow_e2e_ms: flowE2e,
+      turn_latency_ms: turnLat,
+      call_errors: callErrors,
+      task_success_agg: { ok: successOk, total: successTotal },
+      resources,
+      startup: { ready_ms: conn.ready_ms, rss_mb_ready: conn.rss_mb_ready },
       skipped: false,
     };
   } finally {
+    sampler.stop();
     await conn.close();
   }
 }
@@ -766,48 +971,86 @@ async function runClawqlArm(mock, turns) {
 async function runExecutorArm(turns, { filter = false } = {}) {
   const conn = await connectExecutor();
   const armId = filter ? "executor_filter" : "executor";
+  const sampler = new ResourceSampler(armId, conn.pid);
+  sampler.start(ITERS > 1 ? 500 : 200);
   try {
     const listed = await conn.client.listTools();
     const executeTool = listed.tools.find((t) => t.name === "execute");
     const l1Tokens = executeTool ? countTokens(JSON.stringify(executeTool)) : 0;
-    const perTurn = [];
-    for (const turn of turns) {
+    // Prebuild code strings once — equal-arm payload is deterministic per turn.
+    const codes = turns.map((turn) => {
       const payload = filter
         ? slimPayload(turn.partition, turn.args.limit)
         : fatPayload(turn.partition, turn.args.limit);
-      // Code-mode filter: program projects to same fields as ClawQL where+fields.
-      const code = filter
+      return filter
         ? `const fat = ${JSON.stringify(fatPayload(turn.partition, turn.args.limit))}; return fat.items.map((r) => ({ id: r.id, name: r.name, status: r.status }));`
         : `return ${JSON.stringify(payload)};`;
-      const t0 = performance.now();
-      const res = await conn.client.callTool({
-        name: "execute",
-        arguments: { code, timeoutMs: 30_000 },
-      });
-      const ms = performance.now() - t0;
-      if (res.isError) throw new Error(`${armId}: ${toolText(res).slice(0, 300)}`);
-      const text = toolText(res);
-      const success = scoreTaskSuccess(text, turn.partition, turn.args.limit);
-      perTurn.push({
-        n: turn.n,
-        tool: "execute",
-        result_tokens: countTokens(text),
-        result_chars: text.length,
-        layer2_classic: countTokens(text),
-        layer2_relist_every_turn: countTokens(text),
-        latency_ms: Number(ms.toFixed(3)),
-        ok: true,
-        task_success: success,
-        note: filter
-          ? "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
-          : "Fat equal-arm JSON via code; no fields projection",
-      });
+    });
+    let perTurn = null;
+    const flowE2e = [];
+    const turnLat = [];
+    let successOk = 0;
+    let successTotal = 0;
+    let callErrors = 0;
+
+    for (let iter = 1; iter <= ITERS; iter++) {
+      const flowT0 = performance.now();
+      const thisPerTurn = [];
+      for (let ti = 0; ti < turns.length; ti++) {
+        const turn = turns[ti];
+        const t0 = performance.now();
+        let text = "";
+        let ok = true;
+        try {
+          const res = await conn.client.callTool({
+            name: "execute",
+            arguments: { code: codes[ti], timeoutMs: 30_000 },
+          });
+          if (res.isError) throw new Error(toolText(res).slice(0, 300));
+          text = toolText(res);
+        } catch (e) {
+          ok = false;
+          callErrors++;
+          if (iter === 1) throw new Error(`${armId}: ${String(e?.message || e)}`);
+        }
+        const ms = performance.now() - t0;
+        turnLat.push(ms);
+        const success = ok ? scoreTaskSuccess(text, turn.partition, turn.args.limit) : { ok: false };
+        successTotal++;
+        if (success.ok) successOk++;
+        if (iter === 1) {
+          const resultTok = countTokens(text);
+          thisPerTurn.push({
+            n: turn.n,
+            tool: "execute",
+            result_tokens: resultTok,
+            result_chars: text.length,
+            layer2_classic: resultTok,
+            layer2_relist_every_turn: resultTok,
+            latency_ms: Number(ms.toFixed(3)),
+            ok,
+            task_success: success,
+            note: filter
+              ? "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
+              : "Fat equal-arm JSON via code; no fields projection",
+          });
+        }
+      }
+      flowE2e.push(performance.now() - flowT0);
+      if (iter === 1) perTurn = thisPerTurn;
+      if (iter % PROGRESS_EVERY === 0 || iter === ITERS) {
+        console.log(`[mt] ${armId} flows ${iter}/${ITERS}`);
+      }
     }
+
+    const resources = sampler.stop();
     return {
       id: armId,
       model: filter
         ? "stdio_mcp_code_execute_fields_filter"
         : "stdio_mcp_code_execute_fat_static",
+      runtime: null,
+      runtimeVersion: null,
       layer1: {
         once_schema_tokens: l1Tokens,
         tools_count: executeTool ? 1 : listed.tools.length,
@@ -819,9 +1062,17 @@ async function runExecutorArm(turns, { filter = false } = {}) {
         note: "execute schema only (catalog not published as N tools)",
       },
       perTurn,
+      iters: ITERS,
+      flow_e2e_ms: flowE2e,
+      turn_latency_ms: turnLat,
+      call_errors: callErrors,
+      task_success_agg: { ok: successOk, total: successTotal },
+      resources,
+      startup: { ready_ms: null, rss_mb_ready: resources.rss_mb?.min ?? null },
       skipped: false,
     };
   } finally {
+    sampler.stop();
     await conn.close();
   }
 }
@@ -837,28 +1088,47 @@ function summarizeArm(arm) {
   const lastRelist = relist[relist.length - 1];
   const meanL2 = classicL2.reduce((a, b) => a + b, 0) / classicL2.length;
   const meanResult = arm.perTurn.reduce((a, t) => a + t.result_tokens, 0) / arm.perTurn.length;
-  const meanLat =
-    arm.perTurn.reduce((a, t) => a + (t.latency_ms || 0), 0) / arm.perTurn.length;
-  const successTurns = arm.perTurn.filter((t) => t.task_success?.ok).length;
+  const flowLat = summarizeMs(arm.flow_e2e_ms || []);
+  const turnLat = summarizeMs(arm.turn_latency_ms || []);
+  const agg = arm.task_success_agg || {
+    ok: arm.perTurn.filter((t) => t.task_success?.ok).length,
+    total: arm.perTurn.length,
+  };
   const taskSuccess = {
-    turns_ok: successTurns,
-    turns_total: arm.perTurn.length,
-    ok: successTurns === arm.perTurn.length,
-    rate: Number((successTurns / Math.max(1, arm.perTurn.length)).toFixed(3)),
+    turns_ok: agg.ok,
+    turns_total: agg.total,
+    flows: arm.iters ?? 1,
+    turns_per_flow: arm.perTurn.length,
+    ok: agg.ok === agg.total && agg.total > 0,
+    rate: Number((agg.ok / Math.max(1, agg.total)).toFixed(4)),
   };
   return {
     ...arm,
+    // Drop raw sample arrays from serialized arm body — board keeps summaries.
+    flow_e2e_ms: undefined,
+    turn_latency_ms: undefined,
     cumulative_classic: classic,
     cumulative_tools_list_every_turn: relist,
     task_success: taskSuccess,
     board: {
+      runtime: arm.runtime ?? null,
+      runtime_version: arm.runtimeVersion ?? null,
+      ready_ms: arm.startup?.ready_ms ?? null,
+      rss_mb_ready: arm.startup?.rss_mb_ready ?? null,
+      rss_mb_min: arm.resources?.rss_mb?.min ?? null,
+      rss_mb_median: arm.resources?.rss_mb?.median ?? null,
+      rss_mb_max: arm.resources?.rss_mb?.max ?? null,
       layer1_once_tokens: l1,
       mean_layer2_tokens: Number(meanL2.toFixed(1)),
       mean_result_tokens: Number(meanResult.toFixed(1)),
       combined_at_n: last.combined,
       combined_relist_every_turn_at_n: lastRelist.combined,
-      mean_latency_ms: Number(meanLat.toFixed(3)),
-      turns: arm.perTurn.length,
+      flows: arm.iters ?? 1,
+      turns_per_flow: arm.perTurn.length,
+      total_turns: agg.total,
+      flow_e2e_ms: flowLat,
+      turn_latency_ms: turnLat,
+      call_errors: arm.call_errors ?? 0,
       task_success_ok: taskSuccess.ok,
       task_success_rate: taskSuccess.rate,
     },
@@ -866,11 +1136,12 @@ function summarizeArm(arm) {
 }
 
 function ratioBoard(arms) {
-  const claw = arms.clawql?.board;
+  const claw = arms.clawql?.board || arms.clawql_bun?.board;
   if (!claw) return {};
-  const out = {};
+  const baseline = arms.clawql?.board ? "clawql" : "clawql_bun";
+  const out = { baseline };
   for (const [id, arm] of Object.entries(arms)) {
-    if (!arm?.board || id === "clawql") continue;
+    if (!arm?.board || id === baseline) continue;
     out[id] = {
       vs_clawql_combined_classic: +(arm.board.combined_at_n / claw.combined_at_n).toFixed(2),
       vs_clawql_combined_relist_every_turn: +(
@@ -880,6 +1151,10 @@ function ratioBoard(arms) {
       vs_clawql_layer1: +(arm.board.layer1_once_tokens / Math.max(1, claw.layer1_once_tokens)).toFixed(
         2
       ),
+      vs_clawql_flow_e2e_p50:
+        claw.flow_e2e_ms?.p50_ms != null && arm.board.flow_e2e_ms?.p50_ms != null
+          ? +(arm.board.flow_e2e_ms.p50_ms / claw.flow_e2e_ms.p50_ms).toFixed(2)
+          : null,
     };
   }
   return out;
@@ -941,20 +1216,47 @@ async function main() {
   const slimTok = countTokens(JSON.stringify(slimPayload(1)));
 
   console.log(
-    `[mt] turns=${TURNS} catalog_tools=${TOOL_COUNT} limit=${LIMIT} arms=${ARMS.join(",")}`
+    `[mt] turns=${TURNS} iters=${ITERS} catalog_tools=${TOOL_COUNT} limit=${LIMIT} arms=${ARMS.join(",")}`
   );
   console.log(`[mt] equal-arm fat≈${fatTok} tok slim(fields)≈${slimTok} tok (partition 1)`);
+
+  const buildPartialReport = (partial) => {
+    const arms = Object.fromEntries(
+      Object.entries(rawArms).map(([id, a]) => [id, a.skipped ? a : summarizeArm(a)])
+    );
+    const ratios = ratioBoard(arms);
+    const narrative = categoryWinNarrative(arms, ratios);
+    const board = {};
+    for (const [id, a] of Object.entries(arms)) {
+      if (a.skipped) {
+        board[id] = { skipped: true, reason: a.reason };
+      } else {
+        board[id] = a.board;
+      }
+    }
+    return { arms, ratios, narrative, board, partial };
+  };
 
   try {
     for (const arm of ARMS) {
       console.log(`[mt] run ${arm}`);
       try {
-        if (arm === "clawql") {
+        if (arm === "clawql" || arm === "clawql_bun") {
           if (!existsSync(join(ROOT, "dist", "server.js"))) {
-            rawArms.clawql = { skipped: true, reason: "dist/server.js missing" };
+            rawArms[arm] = { skipped: true, reason: "dist/server.js missing" };
             continue;
           }
-          rawArms.clawql = await runClawqlArm(mock, turns);
+          if (arm === "clawql_bun" && !resolveBunBin()) {
+            rawArms.clawql_bun = {
+              skipped: true,
+              reason: "bun not found (set BUN_BIN or install ~/.bun/bin/bun)",
+            };
+            continue;
+          }
+          rawArms[arm] = await runClawqlArm(mock, turns, {
+            runtime: arm === "clawql_bun" ? "bun" : "node",
+            id: arm,
+          });
         } else if (arm === "executor") {
           if (!process.env.EXECUTOR_BIN?.trim()) {
             rawArms.executor = { skipped: true, reason: "EXECUTOR_BIN unset" };
@@ -991,35 +1293,48 @@ async function main() {
         rawArms[arm] = { skipped: true, reason: String(e?.stack || e), error: true };
         errors[arm] = String(e?.message || e);
       }
+      // Checkpoint after each arm (survives OOM mid-board).
+      const ck = buildPartialReport(true);
+      await writeFile(
+        OUT_PATH,
+        JSON.stringify(
+          {
+            suite: "gateway-multi-multiturn",
+            measuredAt: new Date().toISOString(),
+            partial: true,
+            checkpoint_after: arm,
+            node: process.version,
+            config: { turns: TURNS, iters: ITERS, arms: ARMS },
+            board: ck.board,
+            arms: ck.arms,
+            errors,
+          },
+          null,
+          2
+        )
+      );
+      console.log(`[mt] checkpoint after ${arm} → ${OUT_PATH}`);
     }
 
-    const arms = Object.fromEntries(
-      Object.entries(rawArms).map(([id, a]) => [id, a.skipped ? a : summarizeArm(a)])
-    );
-    const ratios = ratioBoard(arms);
-    const narrative = categoryWinNarrative(arms, ratios);
-
-    const board = {};
-    for (const [id, a] of Object.entries(arms)) {
-      if (a.skipped) {
-        board[id] = { skipped: true, reason: a.reason };
-      } else {
-        board[id] = a.board;
-      }
-    }
+    const { arms, ratios, narrative, board } = buildPartialReport(false);
 
     const report = {
       suite: "gateway-multi-multiturn",
       measuredAt: new Date().toISOString(),
       node: process.version,
+      bun: resolveBunBin()
+        ? spawnSync(resolveBunBin(), ["--version"], { encoding: "utf8" }).stdout?.trim() || null
+        : null,
       config: {
         turns: TURNS,
+        iters: ITERS,
         catalog_tool_count: TOOL_COUNT,
         limit: LIMIT,
         where: WHERE,
         fields: FIELDS,
         arms: ARMS,
         tokenizer: "cl100k_base",
+        progress_every: PROGRESS_EVERY,
       },
       equal_arm: {
         fat_result_tokens_partition_1: fatTok,
@@ -1053,27 +1368,36 @@ async function main() {
       secondary_metric: "tools_list_every_turn_sensitivity",
       honesty: [
         "Fat catalog equal-arm: N MCP tools mirrored as N OpenAPI operationIds.",
-        "PRIMARY: classic Layer1_once + sum(Layer2) with deterministic task_success.",
-        "SECONDARY: tools_list_every_turn — most clients cache ListTools; do not lead with this multiplier.",
+        "PRIMARY tokens: classic Layer1_once + sum(Layer2) with deterministic task_success (tokens from flow 1; spot-stable).",
+        `MT_ITERS=${ITERS}: each arm completes that many full ${TURNS}-turn flows on one warm connection.`,
+        "Also reports flow e2e + per-turn latency percentiles and RSS (do not drop these for publish).",
+        "SECONDARY: tools_list_every_turn — measured once on flow 1; most clients cache ListTools.",
         "Executor Layer2 is fat JSON — matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
         "Do not publish a hand-written slim-return program as Executor.",
+        "clawql_bun: same dist/server.js as clawql; only JS runtime changes.",
         "ContextForge/MetaMCP off publish board by default.",
-        "Not a latency board; see gateway-multi-cmp-10k.json for interleaved p999.",
+        "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",
         "RSS is a loss among serious arms — admit plainly.",
       ],
     };
 
     await writeFile(OUT_PATH, JSON.stringify(report, null, 2));
     console.log(`\n[mt] wrote ${OUT_PATH}`);
-    console.log("\n=== Multi-turn cumulative (PRIMARY: classic Layer1 once + sum L2) ===\n");
-    console.log("arm | L1 once | mean L2 | combined@N | mean result tok | task_success");
+    console.log(
+      `\n=== Multi-turn board (iters=${ITERS} × turns=${TURNS}) — tokens + latency + RSS + task_success ===\n`
+    );
+    console.log(
+      "arm | L1 | mean L2 | combined@N | result tok | flow e2e p50/p999 | turn p50/p999 | RSS med | task_success"
+    );
     for (const [id, b] of Object.entries(board)) {
       if (b.skipped) {
         console.log(`${id} | SKIP ${b.reason?.slice(0, 60)}`);
         continue;
       }
+      const fe = b.flow_e2e_ms || {};
+      const tl = b.turn_latency_ms || {};
       console.log(
-        `${id} | ${b.layer1_once_tokens} | ${b.mean_layer2_tokens} | ${b.combined_at_n} | ${b.mean_result_tokens} | ${b.task_success_ok ? "PASS" : "FAIL"} (${b.task_success_rate})`
+        `${id} | ${b.layer1_once_tokens} | ${b.mean_layer2_tokens} | ${b.combined_at_n} | ${b.mean_result_tokens} | ${fe.p50_ms}/${fe.p999_ms} | ${tl.p50_ms}/${tl.p999_ms} | ${b.rss_mb_median} | ${b.task_success_ok ? "PASS" : "FAIL"} (${b.task_success_rate})`
       );
     }
     console.log("\nRatios vs ClawQL (classic primary / relist secondary):");
