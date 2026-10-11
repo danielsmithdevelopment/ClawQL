@@ -48,10 +48,7 @@ describe("held-out-to-fanout", () => {
     expect(mapped.expected?.[0]).toEqual({ name: "route", answer: "mcp.search" });
     expect(mapped.questions[0] && "options" in mapped.questions[0]).toBe(true);
     if (mapped.questions[0] && mapped.questions[0].type === "choice") {
-      expect(mapped.questions[0].options.map((o) => o.id)).toEqual([
-        "mcp.search",
-        "mcp.execute",
-      ]);
+      expect(mapped.questions[0].options.map((o) => o.id)).toEqual(["mcp.search", "mcp.execute"]);
     }
   });
 
@@ -61,9 +58,7 @@ describe("held-out-to-fanout", () => {
     );
     expect(noGt).toEqual({ error: "case route-v04-001: groundTruthCandidateId required" });
 
-    const empty = await Effect.runPromise(
-      heldOutCaseToFanout({ ...sampleCase, candidates: [] })
-    );
+    const empty = await Effect.runPromise(heldOutCaseToFanout({ ...sampleCase, candidates: [] }));
     expect(empty).toEqual({ error: "case route-v04-001: candidates required" });
   });
 
@@ -71,7 +66,10 @@ describe("held-out-to-fanout", () => {
     const suite: HeldOutSuiteManifest = {
       suiteId: "fast-decision-held-out-v0.4-routing-fresh",
       description: "test",
-      cases: [sampleCase, { ...sampleCase, caseId: "route-v04-002", groundTruthCandidateId: "mcp.search" }],
+      cases: [
+        sampleCase,
+        { ...sampleCase, caseId: "route-v04-002", groundTruthCandidateId: "mcp.search" },
+      ],
     };
     const labeled = await Effect.runPromise(
       applyFrontierLabels(suite, {

@@ -42,10 +42,7 @@ export function applyFrontierLabels(
       if (!row || typeof row.caseId !== "string" || !row.caseId.trim()) {
         return { error: "each frontier label requires caseId" };
       }
-      if (
-        typeof row.groundTruthCandidateId !== "string" ||
-        !row.groundTruthCandidateId.trim()
-      ) {
+      if (typeof row.groundTruthCandidateId !== "string" || !row.groundTruthCandidateId.trim()) {
         return { error: `label ${row.caseId}: groundTruthCandidateId required` };
       }
       byId.set(row.caseId.trim(), row);

@@ -5,16 +5,8 @@
 
 import { Context, Effect, Layer } from "effect";
 import type { HeldOutSuiteManifest } from "clawql-core/classifier";
-import {
-  runFanoutEval,
-  type FanoutEvalRequest,
-  type FanoutEvalResponse,
-} from "./fanout-eval.js";
-import {
-  runFlipRate,
-  type FlipRateRequest,
-  type FlipRateResponse,
-} from "./flip-rate.js";
+import { runFanoutEval, type FanoutEvalRequest, type FanoutEvalResponse } from "./fanout-eval.js";
+import { runFlipRate, type FlipRateRequest, type FlipRateResponse } from "./flip-rate.js";
 import {
   applyFrontierLabels,
   heldOutCasesToFanout,
@@ -71,9 +63,7 @@ export type Decision1CandidateDeps = {
     req: FlipRateRequest,
     opts?: {
       decide?: (req: DecisionRequest) => Promise<DecisionResponse>;
-      callOpenRouter?: (
-        body: OpenAiDecisionCreateRequest
-      ) => Promise<OpenAiDecisionCreateResponse>;
+      callOpenRouter?: (body: OpenAiDecisionCreateRequest) => Promise<OpenAiDecisionCreateResponse>;
       env?: NodeJS.ProcessEnv;
     }
   ) => Promise<FlipRateResponse>;
@@ -133,9 +123,7 @@ export function buildDecision1CandidateReport(
       try: () => runBulk(bulkReq),
       catch: (e) => (e instanceof Error ? e : new Error(String(e))),
     }).pipe(
-      Effect.catch((e) =>
-        Effect.succeed({ error: `bulk fan-out failed: ${e.message}` } as const)
-      )
+      Effect.catch((e) => Effect.succeed({ error: `bulk fan-out failed: ${e.message}` } as const))
     );
     if ("error" in bulk) return bulk;
 
@@ -158,9 +146,7 @@ export function buildDecision1CandidateReport(
         }),
       catch: (e) => (e instanceof Error ? e : new Error(String(e))),
     }).pipe(
-      Effect.catch((e) =>
-        Effect.succeed({ error: `flip-rate failed: ${e.message}` } as const)
-      )
+      Effect.catch((e) => Effect.succeed({ error: `flip-rate failed: ${e.message}` } as const))
     );
     if ("error" in flip) return flip;
 
