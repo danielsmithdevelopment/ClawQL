@@ -53,6 +53,7 @@ function armStats(arm, fallbacks = {}) {
     p50_ms: arm.p50_ms,
     p95_ms: arm.p95_ms,
     p99_ms: arm.p99_ms ?? arm.max_ms,
+    p999_ms: arm.p999_ms ?? null,
     min_ms: arm.min_ms,
     max_ms: arm.max_ms,
     n: arm.n,
@@ -74,6 +75,7 @@ function buildChartEnvelope(report) {
           p50_ms: report.derived.clawql_vs_direct.overhead_p50_ms,
           p95_ms: report.derived.clawql_vs_direct.overhead_p95_ms,
           p99_ms: report.derived.clawql_vs_direct.overhead_p99_ms,
+          p999_ms: report.derived.clawql_vs_direct.overhead_p999_ms,
         }
       : null);
 
@@ -115,6 +117,7 @@ function buildChartEnvelope(report) {
           p50_ms: overhead.p50_ms,
           p95_ms: overhead.p95_ms,
           p99_ms: overhead.p99_ms,
+          p999_ms: overhead.p999_ms ?? null,
           headline: true,
         }
       : null,
@@ -149,6 +152,7 @@ function buildChartEnvelope(report) {
   const clawEqualP50 = overhead?.p50_ms ?? execute?.p50_ms ?? null;
   const clawEqualP95 = overhead?.p95_ms ?? execute?.p95_ms ?? null;
   const clawEqualP99 = overhead?.p99_ms ?? execute?.p99_ms ?? null;
+  const clawEqualP999 = overhead?.p999_ms ?? execute?.p999_ms ?? null;
   const execP50 = executorSeries.p50_ms;
   const ratioExecOverClaw =
     clawEqualP50 > 0 ? Number((execP50 / clawEqualP50).toFixed(2)) : null;
@@ -196,11 +200,13 @@ function buildChartEnvelope(report) {
       clawql_p50_ms: clawEqualP50,
       clawql_p95_ms: clawEqualP95,
       clawql_p99_ms: clawEqualP99,
+      clawql_p999_ms: clawEqualP999,
       clawql_arm: overhead ? "gateway_overhead" : "execute",
       clawql_execute_e2e_p50_ms: execute?.p50_ms ?? null,
       executor_p50_ms: execP50,
       executor_p95_ms: executorSeries.p95_ms,
       executor_p99_ms: executorSeries.p99_ms,
+      executor_p999_ms: executorSeries.p999_ms ?? null,
       ratio_executor_over_clawql: ratioExecOverClaw,
       ratio_clawql_over_executor: ratioClawOverExec,
       executor_source: executorSeries.source,
@@ -209,6 +215,10 @@ function buildChartEnvelope(report) {
       p99_beats_executor_band_high:
         clawEqualP99 != null &&
         clawEqualP99 < (executorSeries.p99_ms ?? executorSeries.band_high_ms ?? execP50),
+      p999_beats_executor:
+        clawEqualP999 != null &&
+        executorSeries.p999_ms != null &&
+        clawEqualP999 < executorSeries.p999_ms,
     },
     honesty: {
       ...(report.honesty ?? {}),
@@ -241,6 +251,7 @@ function renderToolRow(tool, maxMs) {
     { key: "p95", ms: tool.p95_ms, cls: "p95" },
     { key: "p99", ms: tool.p99_ms, cls: "p99" },
   ];
+  if (tool.p999_ms != null) pills.push({ key: "p999", ms: tool.p999_ms, cls: "p999" });
   const barClass =
     tool.id === "executor_execute" || tool.workload === "lighter" ? "exec" : "claw";
   const badge =
@@ -249,6 +260,10 @@ function renderToolRow(tool, maxMs) {
       : tool.workload === "equal"
         ? `<span class="badge equal">equal</span>`
         : `<span class="badge control">control</span>`;
+  const p999Num =
+    tool.p999_ms != null
+      ? `<span><em>p999</em> ${Number(tool.p999_ms).toFixed(1)}</span>`
+      : "";
 
   return `
       <div class="tool ${tool.headline ? "headline-tool" : ""}" data-tool="${escapeHtml(tool.id)}">
@@ -260,6 +275,7 @@ function renderToolRow(tool, maxMs) {
             <span><em>p50</em> ${Number(tool.p50_ms).toFixed(1)}</span>
             <span><em>p95</em> ${Number(tool.p95_ms).toFixed(1)}</span>
             <span><em>p99</em> ${Number(tool.p99_ms).toFixed(1)}</span>
+            ${p999Num}
             <span class="unit">ms</span>
           </div>
         </div>
@@ -287,7 +303,13 @@ function renderToolRow(tool, maxMs) {
 function renderHtml(chart) {
   const tools = chart.tools;
   const observedMax = Math.max(
-    ...tools.flatMap((t) => [t.p50_ms, t.p95_ms, t.p99_ms, t.band_high_ms ?? 0]),
+    ...tools.flatMap((t) => [
+      t.p50_ms,
+      t.p95_ms,
+      t.p99_ms,
+      t.p999_ms ?? 0,
+      t.band_high_ms ?? 0,
+    ]),
     1
   );
   const maxMs =
@@ -587,6 +609,7 @@ async function main() {
           p50: t.p50_ms,
           p95: t.p95_ms,
           p99: t.p99_ms,
+          p999: t.p999_ms ?? null,
           workload: t.workload,
         })),
         canonical: CANONICAL,

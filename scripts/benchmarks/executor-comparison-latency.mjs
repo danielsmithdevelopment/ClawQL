@@ -20,6 +20,8 @@
  *
  * Env:
  *   LATENCY_ITERS (default 100), LATENCY_WARMUP (default 10), MOCK_DELAY_MS (default 0)
+ *   LATENCY_KEEP_SAMPLES=0|1 — omit samples_ms from JSON when 0 (default: keep only if iters ≤ 500)
+ *   LATENCY_OUT — filename under docs/benchmarks/executor-comparison/ (default executor-cmp-latency.json)
  *   EXECUTOR_BIN / EXECUTOR_CWD / EXECUTOR_MCP_URL  (required for live Executor; else reference)
  */
 
@@ -35,11 +37,21 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT_DIR = join(ROOT, "docs", "benchmarks", "executor-comparison");
-const OUT_PATH = join(OUT_DIR, "executor-cmp-latency.json");
+const OUT_NAME = (process.env.LATENCY_OUT ?? "executor-cmp-latency.json").replace(
+  /[^a-zA-Z0-9._-]/g,
+  ""
+);
+const OUT_PATH = join(OUT_DIR, OUT_NAME || "executor-cmp-latency.json");
 
 const ITERS = Math.max(5, Number(process.env.LATENCY_ITERS ?? 100) || 100);
 const WARMUP = Math.max(0, Number(process.env.LATENCY_WARMUP ?? 10) || 10);
 const MOCK_DELAY_MS = Math.max(0, Number(process.env.MOCK_DELAY_MS ?? 0) || 0);
+const KEEP_SAMPLES =
+  process.env.LATENCY_KEEP_SAMPLES === "1"
+    ? true
+    : process.env.LATENCY_KEEP_SAMPLES === "0"
+      ? false
+      : ITERS <= 500;
 
 /** Identical logical result both arms return. */
 const EQUAL_PAYLOAD = {
@@ -68,6 +80,8 @@ function summarize(samples) {
     p50_ms: Number(percentile(sorted, 50).toFixed(3)),
     p95_ms: Number(percentile(sorted, 95).toFixed(3)),
     p99_ms: Number(percentile(sorted, 99).toFixed(3)),
+    /** 99.9th percentile — meaningful when n ≳ 1000 (n=10000 → ~10 samples in the tail). */
+    p999_ms: Number(percentile(sorted, 99.9).toFixed(3)),
     mean_ms: Number((sum / sorted.length).toFixed(3)),
     min_ms: Number(sorted[0].toFixed(3)),
     max_ms: Number(sorted[sorted.length - 1].toFixed(3)),
@@ -217,7 +231,9 @@ async function bench(label, iters, warmup, runOnce) {
     await runOnce();
     samples.push(performance.now() - t0);
   }
-  return { label, ...summarize(samples), samples_ms: samples.map((s) => Number(s.toFixed(3))) };
+  const stats = summarize(samples);
+  if (!KEEP_SAMPLES) return { label, ...stats };
+  return { label, ...stats, samples_ms: samples.map((s) => Number(s.toFixed(3))) };
 }
 
 async function measureClawqlArms(mock) {
@@ -344,16 +360,18 @@ function deriveEqualized(execute, direct, executorEqual, mockDelayMs) {
     p50_ms: Number((execute.p50_ms - direct.p50_ms).toFixed(3)),
     p95_ms: Number((execute.p95_ms - direct.p95_ms).toFixed(3)),
     p99_ms: Number((execute.p99_ms - direct.p99_ms).toFixed(3)),
+    p999_ms: Number((execute.p999_ms - direct.p999_ms).toFixed(3)),
   };
   const execP50 = executorEqual?.p50_ms ?? null;
   const execP95 = executorEqual?.p95_ms ?? null;
   const execP99 = executorEqual?.p99_ms ?? null;
+  const execP999 = executorEqual?.p999_ms ?? null;
   return {
-    method: "clawql_execute_p50 − direct_http_p50 (same tiny mock)",
+    method: "clawql_execute_p* − direct_http_p* (same tiny mock); compare to executor execute p*",
     mock_delay_ms: mockDelayMs,
     clawql_gateway_overhead: overhead,
     executor_equal: executorEqual
-      ? { p50_ms: execP50, p95_ms: execP95, p99_ms: execP99 }
+      ? { p50_ms: execP50, p95_ms: execP95, p99_ms: execP99, p999_ms: execP999 }
       : null,
     ratio_executor_over_clawql_overhead:
       execP50 != null && overhead.p50_ms > 0
@@ -435,6 +453,8 @@ async function main() {
           "Do not use UsefulSoftwareCo/executor#1519 50–100ms as measured — wire EXECUTOR_BIN for live.",
         p99Caveat:
           "p99 needs adequate n; default iters=100. Still sensitive to rare GC/scheduling spikes.",
+        p999Caveat:
+          "p999 (99.9th) needs large n — prefer LATENCY_ITERS≥1000 (10000 gives ~10 tail samples). Max still informative for rare spikes.",
       },
       pathFlags: {
         CLAWQL_TIER: "gateway",
@@ -464,6 +484,7 @@ async function main() {
               overhead_p50_ms: equalized.clawql_gateway_overhead.p50_ms,
               overhead_p95_ms: equalized.clawql_gateway_overhead.p95_ms,
               overhead_p99_ms: equalized.clawql_gateway_overhead.p99_ms,
+              overhead_p999_ms: equalized.clawql_gateway_overhead.p999_ms,
               honesty: equalized.honesty,
             }
           : null,
