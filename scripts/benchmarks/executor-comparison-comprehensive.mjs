@@ -1255,16 +1255,50 @@ async function phaseChaosScaleout(mock) {
   }
 
   const clawOk = [...steps].reverse().find((s) => !s.arms.clawql?.broken);
-  const execOk = [...steps].reverse().find((s) => !s.arms.executor?.broken);
+  const execOk = [...steps]
+    .reverse()
+    .find((s) => s.arms.executor && !s.arms.executor.skipped && !s.arms.executor.broken);
   const clawSus = clawOk?.concurrency ?? 0;
   const execSus = execOk?.concurrency ?? 0;
   let winner = "tie";
-  if (clawSus > execSus) winner = "clawql";
-  else if (execSus > clawSus) winner = "executor";
-  else if (brokeAt?.kind === "executor" && !steps.some((s) => s.arms.clawql?.broken))
+  let winReason = "equal_sustained";
+  if (clawSus > execSus) {
     winner = "clawql";
-  else if (brokeAt?.kind === "clawql" && !steps.some((s) => s.arms.executor?.broken))
+    winReason = "higher_sustained_clients";
+  } else if (execSus > clawSus) {
     winner = "executor";
+    winReason = "higher_sustained_clients";
+  } else if (brokeAt?.kind === "executor" && !steps.some((s) => s.arms.clawql?.broken)) {
+    winner = "clawql";
+    winReason = "executor_broke_first";
+  } else if (brokeAt?.kind === "clawql" && !steps.some((s) => s.arms.executor?.broken)) {
+    winner = "executor";
+    winReason = "clawql_broke_first";
+  } else {
+    // Both held the ramp: prefer clearly better throughput with equal-or-better p99.
+    const last = [...steps]
+      .reverse()
+      .find((s) => s.arms.clawql && s.arms.executor && !s.arms.executor.skipped);
+    if (last && !last.arms.clawql.broken && !last.arms.executor.broken) {
+      const cR = last.arms.clawql.rps ?? 0;
+      const eR = last.arms.executor.rps ?? 0;
+      const cP = last.arms.clawql.latency?.p99_ms ?? Infinity;
+      const eP = last.arms.executor.latency?.p99_ms ?? Infinity;
+      if (cR >= eR * 1.25 && cP <= eP) {
+        winner = "clawql";
+        winReason = `higher_rps_at_cap (${cR} vs ${eR}) with p99 ${cP}≤${eP}`;
+      } else if (eR >= cR * 1.25 && eP <= cP) {
+        winner = "executor";
+        winReason = `higher_rps_at_cap (${eR} vs ${cR}) with p99 ${eP}≤${cP}`;
+      } else if (cP * 2 <= eP && cR >= eR) {
+        winner = "clawql";
+        winReason = `much_better_p99_at_cap (${cP} vs ${eP})`;
+      } else if (eP * 2 <= cP && eR >= cR) {
+        winner = "executor";
+        winReason = `much_better_p99_at_cap (${eP} vs ${cP})`;
+      }
+    }
+  }
 
   return {
     primary: true,
@@ -1284,13 +1318,14 @@ async function phaseChaosScaleout(mock) {
     clawql_sustained_clients: clawSus,
     executor_sustained_clients: execSus,
     winner,
+    win_reason: winReason,
     broke_at: brokeAt,
     break_reason: breakReason,
     note:
       "Primary chaos arm. ClawQL: fixed K HTTP gateway replicas; each client asks NATS " +
       "queue group clawql-chaos-assign for a sticky base URL (fabric session placement). " +
       "Executor: N independent stdio MCP processes (process-per-client). " +
-      "Win = higher sustained client concurrency before p99/error SLO break.",
+      "Win = higher sustained clients before SLO break; at equal cap, higher rps with ≤ p99.",
   };
 }
 
@@ -1327,6 +1362,7 @@ function boardTable(latency, resources, tokens, chaos, chaosHttp, chaosScaleout)
     chaos: {
       primary: "nats_scaleout",
       scaleout_winner: scaleWinner,
+      scaleout_win_reason: chaosScaleout?.win_reason ?? null,
       clawql_sustained_clients: chaosScaleout?.clawql_sustained_clients ?? null,
       executor_sustained_clients: chaosScaleout?.executor_sustained_clients ?? null,
       clawql_workers: chaosScaleout?.clawql_workers ?? null,
