@@ -459,7 +459,7 @@ async function waitHttpOk(url, { timeoutMs = 60_000, headers } = {}) {
   while (Date.now() - t0 < timeoutMs) {
     try {
       const res = await fetch(url, { headers });
-      if (res.ok || res.status === 401 || res.status === 405) return;
+      if (res.ok || res.status === 401 || res.status === 405 || res.status === 406) return;
       last = `${res.status}`;
     } catch (e) {
       last = String(e?.message ?? e);
@@ -885,8 +885,7 @@ async function startContextforge() {
   await rm(work, { recursive: true, force: true });
   await mkdir(work, { recursive: true });
   const port = await pickFreePort();
-  const translatePort = await pickFreePort();
-  // Ensure package available via uvx (cached after first pull)
+  const petsPort = await pickFreePort();
   const uv = resolveBin("UV_BIN", [
     `${process.env.HOME}/.local/bin/uv`,
     "/home/ubuntu/.local/bin/uv",
@@ -895,47 +894,43 @@ async function startContextforge() {
   if (!uv || (uv !== "uv" && !existsSync(uv))) {
     throw new Error("uv not found — required for ContextForge");
   }
-  const uvx = uv.endsWith("uv") ? uv.replace(/uv$/, "uvx") : join(dirname(uv), "uvx");
-  const secrets = spawnSync(
-    process.execPath,
-    ["-e", "console.log(require('crypto').randomBytes(32).toString('hex'))"],
-    { encoding: "utf8" }
-  );
-  const secret = (secrets.stdout || "").trim() || "bench-secret-change-me-32bytes-min!!";
-  const jwtSecret = secret;
-  const authSecret = secret + "auth";
+  const uvBinDir = uv === "uv" ? "" : dirname(uv);
+  const uvx = uv === "uv" ? "uvx" : join(uvBinDir, "uvx");
+  const pathEnv = uvBinDir ? `${uvBinDir}:${process.env.PATH}` : process.env.PATH;
 
-  // Start translate wrapper: stdio pets → streamable HTTP
-  const fs = await import("node:fs");
-  const tLog = fs.openSync(join(work, "translate.log"), "w");
-  const translate = spawn(
-    uvx,
-    [
-      "--from",
-      "mcp-contextforge-gateway",
-      "python",
-      "-m",
-      "mcpgateway.translate",
-      "--stdio",
-      `${process.execPath} ${PETS_MCP}`,
-      "--port",
-      String(translatePort),
-    ],
-    {
-      cwd: work,
-      stdio: ["ignore", tLog, tLog],
-      env: {
-        ...process.env,
-        PATH: `${dirname(uv)}:${process.env.PATH}`,
-        JWT_SECRET_KEY: jwtSecret,
-        AUTH_ENCRYPTION_SECRET: authSecret,
-      },
-    }
-  );
-  await sleep(3000);
-  await waitHttpOk(`http://127.0.0.1:${translatePort}/mcp`, { timeoutMs: 120_000 }).catch(async () => {
-    await waitHttpOk(`http://127.0.0.1:${translatePort}/sse`, { timeoutMs: 30_000 });
+  // Strong secrets via ContextForge helper into work/.env
+  spawnSync(uvx, ["--from", "mcp-contextforge-gateway", "python", "-m", "mcpgateway.scripts.init_secrets", "--patch-env", ".env"], {
+    cwd: work,
+    encoding: "utf8",
+    env: { ...process.env, PATH: pathEnv },
   });
+  const adminPassword = "BenchAdmin!23456";
+  await writeFile(
+    join(work, ".env"),
+    `${existsSync(join(work, ".env")) ? readFileSync(join(work, ".env"), "utf8") : ""}\n` +
+      [
+        `PLATFORM_ADMIN_EMAIL=admin@example.com`,
+        `PLATFORM_ADMIN_PASSWORD=${adminPassword}`,
+        `BASIC_AUTH_USER=admin@example.com`,
+        `BASIC_AUTH_PASSWORD=${adminPassword}`,
+        `DEFAULT_USER_PASSWORD=${adminPassword}`,
+        `MCPGATEWAY_UI_ENABLED=false`,
+        `MCPGATEWAY_ADMIN_API_ENABLED=true`,
+        `SSRF_ALLOW_LOCALHOST=true`,
+        `SSRF_ALLOW_PRIVATE_NETWORKS=true`,
+        `CSRF_ENABLED=false`,
+      ].join("\n") +
+      "\n",
+    "utf8"
+  );
+
+  const fs = await import("node:fs");
+  const petsLog = fs.openSync(join(work, "pets-http.log"), "w");
+  const pets = spawn(process.execPath, [PETS_MCP, "--http", "--port", String(petsPort)], {
+    cwd: work,
+    stdio: ["ignore", petsLog, petsLog],
+  });
+  await waitHttpOk(`http://127.0.0.1:${petsPort}/mcp`, { timeoutMs: 30_000 });
 
   const gLog = fs.openSync(join(work, "gateway.log"), "w");
   const gateway = spawn(
@@ -946,82 +941,83 @@ async function startContextforge() {
       stdio: ["ignore", gLog, gLog],
       env: {
         ...process.env,
-        PATH: `${dirname(uv)}:${process.env.PATH}`,
-        JWT_SECRET_KEY: jwtSecret,
-        AUTH_ENCRYPTION_SECRET: authSecret,
+        PATH: pathEnv,
+        SSRF_ALLOW_LOCALHOST: "true",
+        SSRF_ALLOW_PRIVATE_NETWORKS: "true",
+        CSRF_ENABLED: "false",
         MCPGATEWAY_UI_ENABLED: "false",
         MCPGATEWAY_ADMIN_API_ENABLED: "true",
         PLATFORM_ADMIN_EMAIL: "admin@example.com",
-        PLATFORM_ADMIN_PASSWORD: "changeme",
+        PLATFORM_ADMIN_PASSWORD: adminPassword,
         BASIC_AUTH_USER: "admin@example.com",
-        BASIC_AUTH_PASSWORD: "changeme",
+        BASIC_AUTH_PASSWORD: adminPassword,
+        DEFAULT_USER_PASSWORD: adminPassword,
       },
     }
   );
   await waitHttpOk(`http://127.0.0.1:${port}/health`, { timeoutMs: 180_000 });
 
-  // Obtain token — try admin login / token helper
-  let token = process.env.CONTEXTFORGE_TOKEN?.trim() || null;
+  const tokProc = spawnSync(
+    uvx,
+    [
+      "--from",
+      "mcp-contextforge-gateway",
+      "python",
+      "-m",
+      "mcpgateway.utils.create_jwt_token",
+      "--username",
+      "admin@example.com",
+      "--exp",
+      "10080",
+      "--admin",
+    ],
+    { cwd: work, encoding: "utf8", env: { ...process.env, PATH: pathEnv } }
+  );
+  const token = (tokProc.stdout || tokProc.stderr || "").match(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/)?.[0];
   if (!token) {
-    const tok = spawnSync(
-      uvx,
-      [
-        "--from",
-        "mcp-contextforge-gateway",
-        "python",
-        "-c",
-        `from mcpgateway.utils.create_jwt_token import create_access_token; import asyncio; print(asyncio.run(create_access_token(data={"sub":"admin@example.com"})))`,
-      ],
-      {
-        encoding: "utf8",
-        env: {
-          ...process.env,
-          PATH: `${dirname(uv)}:${process.env.PATH}`,
-          JWT_SECRET_KEY: jwtSecret,
-          AUTH_ENCRYPTION_SECRET: authSecret,
-        },
-      }
-    );
-    token = (tok.stdout || "").trim().split("\n").filter(Boolean).pop() || null;
-  }
-  if (!token) {
-    throw new Error("Could not mint ContextForge JWT (set CONTEXTFORGE_TOKEN)");
+    throw new Error(`Could not mint ContextForge JWT: ${(tokProc.stderr || tokProc.stdout || "").slice(0, 400)}`);
   }
 
-  const upstreamUrl = `http://127.0.0.1:${translatePort}/mcp`;
-  const regRes = await fetch(`http://127.0.0.1:${port}/gateways`, {
+  const regRes = await fetch(`http://127.0.0.1:${port}/v1/gateways`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       name: "pets",
-      url: upstreamUrl,
+      url: `http://127.0.0.1:${petsPort}/mcp`,
       description: "equal-arm pets",
       transport: "STREAMABLEHTTP",
     }),
   });
   const regBody = await regRes.text();
-  if (!regRes.ok) {
+  if (!regRes.ok && !/already exists/i.test(regBody)) {
     throw new Error(`contextforge register gateway: ${regRes.status} ${regBody.slice(0, 500)}`);
   }
-  const toolsRes = await fetch(`http://127.0.0.1:${port}/tools`, {
+
+  const toolsRes = await fetch(`http://127.0.0.1:${port}/v1/tools`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const toolsJson = await toolsRes.json();
-  const toolList = Array.isArray(toolsJson) ? toolsJson : toolsJson?.tools || toolsJson?.data || [];
-  const toolIds = toolList.map((t) => t.id || t.tool_id).filter(Boolean);
-  const srvRes = await fetch(`http://127.0.0.1:${port}/servers`, {
+  const toolList = Array.isArray(toolsJson) ? toolsJson : [];
+  const petTool = toolList.find(
+    (t) =>
+      String(t.originalName || "").includes("list_pets") ||
+      String(t.name || "").includes("list-pets") ||
+      String(t.name || "").includes("list_pets")
+  );
+  if (!petTool?.id) {
+    throw new Error(`contextforge: pets tool not imported (${toolList.map((t) => t.name).join(",")})`);
+  }
+
+  const srvRes = await fetch(`http://127.0.0.1:${port}/v1/servers`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      name: "bench",
-      description: "equal-arm virtual server",
-      associatedTools: toolIds.length ? toolIds : toolList.map((t) => String(t.id ?? t.name)),
+      server: {
+        name: "bench",
+        description: "equal-arm virtual server",
+        associated_tools: [petTool.id],
+      },
+      visibility: "public",
     }),
   });
   const srvBody = await srvRes.text();
@@ -1029,68 +1025,48 @@ async function startContextforge() {
     throw new Error(`contextforge create server: ${srvRes.status} ${srvBody.slice(0, 500)}`);
   }
   const srv = JSON.parse(srvBody);
-  const serverId = srv.id || srv.uuid || srv.server_id;
+  const serverId = srv.id;
   const mcpUrl = `http://127.0.0.1:${port}/servers/${serverId}/mcp`;
 
-  // Prefer stdio wrapper for reliable client path
-  const callViaWrapper = async (client) => {
-    const tools = await client.listTools();
-    const hit =
-      tools.tools.find((t) => t.name.includes("list_pets")) ||
-      tools.tools.find((t) => /pet/i.test(t.name)) ||
-      tools.tools[0];
-    if (!hit) throw new Error("no tools on contextforge virtual server");
-    const res = await client.callTool({ name: hit.name, arguments: {} });
+  let toolName = petTool.name || "pets-list-pets";
+  const call = async (client) => {
+    const res = await client.callTool({ name: toolName, arguments: {} });
     if (res.isError) throw new Error(toolText(res));
     return toolText(res);
   };
-
   const connect = async () => {
-    // Try direct HTTP first; fall back to wrapper stdio
-    try {
-      const c = await connectHttpMcp(mcpUrl, "contextforge");
-      await c.client.listTools();
-      return c;
-    } catch {
-      const transport = new StdioClientTransport({
-        command: uvx,
-        args: ["--from", "mcp-contextforge-gateway", "python", "-m", "mcpgateway.wrapper"],
-        env: {
-          ...process.env,
-          PATH: `${dirname(uv)}:${process.env.PATH}`,
-          MCP_SERVER_URL: mcpUrl,
-          MCP_AUTH: `Bearer ${token}`,
-          JWT_SECRET_KEY: jwtSecret,
-          AUTH_ENCRYPTION_SECRET: authSecret,
-        },
-        stderr: "pipe",
-      });
-      const client = new Client({ name: "contextforge-wrap", version: "1" }, {});
-      await client.connect(transport);
-      return {
-        client,
-        transport,
-        pid: transportPid(transport),
-        close: async () => {
-          await client.close().catch(() => {});
-        },
-      };
-    }
+    const transport = new StreamableHTTPClientTransport(new URL(mcpUrl), {
+      requestInit: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const client = new Client({ name: "contextforge", version: "1" }, {});
+    await client.connect(transport);
+    const tools = await client.listTools();
+    const hit = tools.tools.find((t) => t.name.includes("list") || t.name.includes("pet")) || tools.tools[0];
+    if (hit) toolName = hit.name;
+    return {
+      client,
+      transport,
+      pid: null,
+      close: async () => {
+        await client.close().catch(() => {});
+      },
+    };
   };
 
   return {
     id: "contextforge",
-    model: "virtual_mcp_server_over_translate",
+    model: "virtual_mcp_server_over_http_pets",
     version: "mcp-contextforge-gateway (uvx)",
     mcpUrl,
     pid: gateway.pid,
+    toolName,
     connect,
-    call: callViaWrapper,
+    call,
     close: async () => {
       killTree(gateway.pid);
-      killTree(translate.pid);
+      killTree(pets.pid);
       try {
-        fs.closeSync(tLog);
+        fs.closeSync(petsLog);
         fs.closeSync(gLog);
       } catch {
         /* ignore */
