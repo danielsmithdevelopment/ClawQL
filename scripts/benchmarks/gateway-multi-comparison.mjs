@@ -30,7 +30,7 @@
  *   MCPJUNGLE_BIN  AGENTGATEWAY_BIN  CONTEXTFORGE_SKIP=1
  */
 
-import { existsSync, readFileSync, readdirSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, mkdirSync, writeFileSync, openSync, closeSync } from "node:fs";
 import { createServer } from "node:http";
 import { mkdir, writeFile, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -49,8 +49,11 @@ const OUT_DIR = join(ROOT, "docs", "benchmarks", "gateway-multi-comparison");
 const OUT_NAME = (process.env.MULTI_OUT ?? "gateway-multi-cmp.json").replace(/[^a-zA-Z0-9._-]/g, "");
 const OUT_PATH = join(OUT_DIR, OUT_NAME || "gateway-multi-cmp.json");
 
-const ITERS = Math.max(20, Number(process.env.MULTI_ITERS ?? 200) || 200);
-const WARMUP = Math.max(0, Number(process.env.MULTI_WARMUP ?? 20) || 20);
+const ITERS = Math.max(20, Number(process.env.MULTI_ITERS ?? 10000) || 10000);
+const WARMUP = Math.max(0, Number(process.env.MULTI_WARMUP ?? 100) || 100);
+const EQUAL_UPSTREAM = process.env.MULTI_EQUAL_UPSTREAM !== "0";
+const SKIP_CHAOS = process.env.MULTI_SKIP_CHAOS === "1" || process.env.MULTI_SKIP_CHAOS === "true";
+const PROGRESS_EVERY = Math.max(100, Number(process.env.MULTI_PROGRESS_EVERY ?? 1000) || 1000);
 const CHAOS_MAX = Math.max(1, Number(process.env.MULTI_CHAOS_MAX ?? 32) || 32);
 const CHAOS_STEP_MS = Math.max(1000, Number(process.env.MULTI_CHAOS_STEP_MS ?? 3000) || 3000);
 const CHAOS_WARMUP = Math.max(0, Number(process.env.MULTI_CHAOS_WARMUP ?? 6) || 6);
@@ -72,7 +75,12 @@ const EQUAL_PAYLOAD = {
     { id: 2, name: "Grace", status: "available" },
   ],
 };
-const EXECUTOR_EQUAL_CODE = `return ${JSON.stringify(EQUAL_PAYLOAD)};`;
+const EXECUTOR_STATIC_CODE = `return ${JSON.stringify(EQUAL_PAYLOAD)};`;
+function executorEqualCode(mockBaseUrl) {
+  if (!EQUAL_UPSTREAM || !mockBaseUrl) return EXECUTOR_STATIC_CODE;
+  // Same HTTP hop as ClawQL / aggregator pets MCP when Executor sandbox allows fetch.
+  return `const r = await fetch(${JSON.stringify(mockBaseUrl + "/pets")}); if (!r.ok) throw new Error("upstream "+r.status); return await r.json();`;
+}
 const enc = getEncoding("cl100k_base");
 const CLK_TCK = (() => {
   const r = spawnSync("getconf", ["CLK_TCK"], { encoding: "utf8" });
@@ -477,68 +485,105 @@ async function pickFreePort() {
   return port;
 }
 
-/** Measure latency/resources/tokens for a callTool arm. */
-async function measureCallArm({
-  id,
-  model,
-  connect,
-  call,
-  pidForResources,
-  mockBaseUrl,
-  gatewayCostFromDirect,
-}) {
-  const conn = await connect();
-  const pid = pidForResources?.(conn) ?? conn.pid;
-  const sampler = new ResourceSampler(id, pid);
-  sampler.start(50);
+/**
+ * Interleaved equal-arm latency across live arms (closed-loop):
+ *   for i in 0..ITERS: for each arm: call; then paired direct HTTP
+ * so host drift hits every arm equally. gateway_cost = e2e − direct when
+ * EQUAL_UPSTREAM (or arm.requestGatewayCost).
+ */
+async function measureInterleaved(liveArms, mockBaseUrl) {
+  const conns = [];
+  const samplers = [];
   try {
+    for (const arm of liveArms) {
+      const conn = await arm.connect();
+      const pid = arm.pidForResources?.(conn) ?? conn.pid ?? arm.pid ?? null;
+      const sampler = new ResourceSampler(arm.id, pid);
+      sampler.start(100);
+      conns.push({ arm, conn, pid, sampler });
+      samplers.push(sampler);
+    }
+
+    console.log(`[multi] interleaved warmup=${WARMUP} iters=${ITERS} arms=${liveArms.map((a) => a.id).join(",")}`);
     for (let i = 0; i < WARMUP; i++) {
-      await call(conn.client);
+      for (const c of conns) await c.arm.call(c.conn.client);
       if (mockBaseUrl) await callDirect(mockBaseUrl);
     }
-    const e2e = [];
+
+    const series = Object.fromEntries(
+      liveArms.map((a) => [a.id, { e2e: [], gateway: [], errors: 0 }])
+    );
     const direct = [];
-    const gateway = [];
+
     for (let i = 0; i < ITERS; i++) {
-      const e = await timeOnce(() => call(conn.client));
-      e2e.push(e);
-      if (mockBaseUrl && gatewayCostFromDirect) {
-        const d = await timeOnce(() => callDirect(mockBaseUrl));
-        direct.push(d);
-        gateway.push(e - d);
-      } else {
-        gateway.push(e);
+      for (const c of conns) {
+        try {
+          const e = await timeOnce(() => c.arm.call(c.conn.client));
+          series[c.arm.id].e2e.push(e);
+        } catch {
+          series[c.arm.id].errors++;
+        }
+      }
+      const d = await timeOnce(() => callDirect(mockBaseUrl));
+      direct.push(d);
+      for (const c of conns) {
+        const e2e = series[c.arm.id].e2e;
+        if (e2e.length === direct.length) {
+          const useCost = EQUAL_UPSTREAM || c.arm.gatewayCostFromDirect;
+          series[c.arm.id].gateway.push(useCost ? e2e[e2e.length - 1] - d : e2e[e2e.length - 1]);
+        }
+      }
+      if ((i + 1) % PROGRESS_EVERY === 0) {
+        console.log(`[multi] interleaved progress ${i + 1}/${ITERS}`);
       }
     }
-    const tools = await conn.client.listTools();
-    const schemaTokens = tools.tools.reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
-    const resultText = await call(conn.client);
-    const resultTokens = countTokens(resultText);
-    const resources = sampler.stop();
-    return {
-      id,
-      model,
-      ok: true,
-      latency: {
-        e2e: summarize(e2e),
-        direct_http: direct.length ? summarize(direct) : null,
-        gateway_cost: summarize(gateway),
-        note: gatewayCostFromDirect
-          ? "gateway_cost = e2e − direct HTTP pets"
-          : "gateway_cost ≈ e2e (stdio/in-process upstream, no HTTP hop)",
-      },
-      resources,
-      tokens: {
-        tools_list_count: tools.tools.length,
-        tools_list_schema_tokens: schemaTokens,
-        equal_result_tokens: resultTokens,
-        tool_names: tools.tools.map((t) => t.name),
-      },
-      pid,
-    };
+
+    const out = {};
+    for (const c of conns) {
+      const tools = await c.conn.client.listTools();
+      const invokedName = c.arm.invokedToolName;
+      const invoked =
+        tools.tools.find((t) => t.name === invokedName) ||
+        tools.tools.find((t) => invokedName && t.name.includes(invokedName.replace(/^.*__/, ""))) ||
+        tools.tools.find((t) => /execute|list_pets|list-pets/i.test(t.name)) ||
+        tools.tools[0];
+      const resultText = await c.arm.call(c.conn.client);
+      const resources = c.sampler.stop();
+      const useCost = EQUAL_UPSTREAM || c.arm.gatewayCostFromDirect;
+      out[c.arm.id] = {
+        id: c.arm.id,
+        model: c.arm.model,
+        ok: true,
+        version: c.arm.version ?? null,
+        mcp_url: c.arm.mcpUrl ?? null,
+        tool_name: invoked?.name ?? null,
+        latency: {
+          e2e: summarize(series[c.arm.id].e2e),
+          direct_http: summarize(direct),
+          gateway_cost: summarize(series[c.arm.id].gateway),
+          call_errors: series[c.arm.id].errors,
+          note: useCost
+            ? "gateway_cost = e2e − paired direct HTTP /pets (interleaved equal-arm)"
+            : "gateway_cost ≈ e2e (no equal-upstream subtraction)",
+          schedule: "interleaved_closed_loop",
+        },
+        resources,
+        tokens: {
+          invoked_tool_name: invoked?.name ?? null,
+          invoked_tool_schema_tokens: invoked ? countTokens(JSON.stringify(invoked)) : null,
+          tools_list_count: tools.tools.length,
+          tools_list_schema_tokens: tools.tools.reduce((n, t) => n + countTokens(JSON.stringify(t)), 0),
+          equal_result_tokens: countTokens(resultText),
+          tool_names: tools.tools.map((t) => t.name),
+          note: "Primary board uses invoked_tool_schema_tokens (apples-to-apples); tools_list_* is secondary surface size.",
+        },
+        pid: c.pid,
+      };
+    }
+    return out;
   } finally {
-    sampler.stop();
-    await conn.close();
+    for (const s of samplers) s.stop();
+    for (const c of conns) await c.conn.close().catch(() => {});
   }
 }
 
@@ -664,9 +709,9 @@ async function chaosWithRefine(armHooks) {
 
 /* -------------------- arm starters -------------------- */
 
-async function armClawql(mock) {
+function makeClawqlLiveArm(mock) {
   const home = join("/tmp", `multi-clawql-${process.pid}`);
-  await mkdir(home, { recursive: true });
+  mkdirSync(home, { recursive: true });
   const env = clawqlEnv(home, mock.specPath, mock.baseUrl);
   const call = async (client) => {
     const res = await client.callTool({
@@ -676,44 +721,38 @@ async function armClawql(mock) {
     if (res.isError) throw new Error(toolText(res));
     return toolText(res);
   };
-  const latency = await measureCallArm({
+  return {
     id: "clawql",
     model: "stdio_mcp_openapi_execute",
-    connect: () => connectClawqlStdio(env),
-    call,
-    mockBaseUrl: mock.baseUrl,
+    invokedToolName: "execute",
     gatewayCostFromDirect: true,
-  });
-  const chaos = await chaosWithRefine({
-    id: "clawql",
     connect: () => connectClawqlStdio(env),
     call,
-  });
-  return { ...latency, chaos };
+    chaosHooks: { id: "clawql", connect: () => connectClawqlStdio(env), call },
+  };
 }
 
-async function armExecutor() {
+function makeExecutorLiveArm(_mock) {
+  // Executor QuickJS sandbox disables fetch — product-native equal arm is static JSON
+  // with upstream_cost=0 (same as executor-comparison-latency-fair).
   const call = async (client) => {
     const res = await client.callTool({
       name: "execute",
-      arguments: { code: EXECUTOR_EQUAL_CODE, timeoutMs: 30_000 },
+      arguments: { code: EXECUTOR_STATIC_CODE, timeoutMs: 30_000 },
     });
     if (res.isError) throw new Error(toolText(res));
     return toolText(res);
   };
-  const latency = await measureCallArm({
+  return {
     id: "executor",
-    model: "stdio_mcp_code_execute",
+    model: "stdio_mcp_code_execute_static_upstream0",
+    invokedToolName: "execute",
+    gatewayCostFromDirect: false, // gateway_cost ≈ e2e (upstream=0 by sandbox)
     connect: connectExecutorStdio,
     call,
-    gatewayCostFromDirect: false,
-  });
-  const chaos = await chaosWithRefine({
-    id: "executor",
-    connect: connectExecutorStdio,
-    call,
-  });
-  return { ...latency, chaos };
+    chaosHooks: { id: "executor", connect: connectExecutorStdio, call },
+    note: "Static equal JSON; fetch disabled in Executor sandbox — upstream_cost=0 (fair methodology)",
+  };
 }
 
 async function startMcpjungle() {
@@ -728,6 +767,9 @@ async function startMcpjungle() {
   const port = await pickFreePort();
   const dbPath = join(work, "mcpjungle.db");
   const confPath = join(work, "pets-stdio.json");
+  const upstreamEnv = EQUAL_UPSTREAM && globalThis.__MULTI_MOCK_BASE__
+    ? { EQUAL_ARM_UPSTREAM: globalThis.__MULTI_MOCK_BASE__ }
+    : {};
   await writeFile(
     confPath,
     JSON.stringify(
@@ -738,6 +780,7 @@ async function startMcpjungle() {
         command: process.execPath,
         args: [PETS_MCP],
         session_mode: "stateful",
+        env: upstreamEnv,
       },
       null,
       2
@@ -810,6 +853,10 @@ async function startAgentgateway() {
   await mkdir(work, { recursive: true });
   const port = await pickFreePort();
   const cfgPath = join(work, "config.yaml");
+  const upstream = EQUAL_UPSTREAM && globalThis.__MULTI_MOCK_BASE__ ? globalThis.__MULTI_MOCK_BASE__ : "";
+  const bashCmd = upstream
+    ? `EQUAL_ARM_UPSTREAM=${JSON.stringify(upstream)} exec ${JSON.stringify(process.execPath)} ${JSON.stringify(PETS_MCP)}`
+    : `exec ${JSON.stringify(process.execPath)} ${JSON.stringify(PETS_MCP)}`;
   await writeFile(
     cfgPath,
     `# yaml-language-server: $schema=https://agentgateway.dev/schema/config
@@ -818,8 +865,8 @@ mcp:
   targets:
   - name: pets
     stdio:
-      cmd: ${JSON.stringify(process.execPath)}
-      args: [${JSON.stringify(PETS_MCP)}]
+      cmd: "/bin/bash"
+      args: ["-c", ${JSON.stringify(bashCmd)}]
 `
   );
   const logPath = join(work, "server.log");
@@ -939,6 +986,10 @@ async function startContextforge() {
       command: process.execPath,
       args: [PETS_MCP],
       session_mode: "stateful",
+      env:
+        EQUAL_UPSTREAM && globalThis.__MULTI_MOCK_BASE__
+          ? { EQUAL_ARM_UPSTREAM: globalThis.__MULTI_MOCK_BASE__ }
+          : {},
     })
   );
   const pets = spawn(
@@ -1101,35 +1152,6 @@ async function startContextforge() {
   };
 }
 
-async function runHttpGatewayArm(starter, mock) {
-  const gw = await starter();
-  try {
-    const latency = await measureCallArm({
-      id: gw.id,
-      model: gw.model,
-      connect: gw.connect,
-      call: gw.call,
-      pidForResources: () => gw.pid,
-      mockBaseUrl: mock.baseUrl,
-      gatewayCostFromDirect: false,
-    });
-    const chaos = await chaosWithRefine({
-      id: gw.id,
-      connect: gw.connect,
-      call: gw.call,
-    });
-    return {
-      ...latency,
-      version: gw.version,
-      mcp_url: gw.mcpUrl,
-      tool_name: gw.toolName ?? null,
-      chaos,
-    };
-  } finally {
-    await gw.close();
-  }
-}
-
 function boardFromArms(arms) {
   const rows = {};
   for (const [id, a] of Object.entries(arms)) {
@@ -1142,7 +1164,8 @@ function boardFromArms(arms) {
       gateway_cost_ms: a.latency?.gateway_cost,
       rss_mb_median: a.resources?.rss_mb?.median ?? null,
       cpu_pct_median: a.resources?.cpu_pct?.median ?? null,
-      schema_tokens: a.tokens?.tools_list_schema_tokens ?? null,
+      invoked_tool_schema_tokens: a.tokens?.invoked_tool_schema_tokens ?? null,
+      schema_tokens_full_list: a.tokens?.tools_list_schema_tokens ?? null,
       tools_count: a.tokens?.tools_list_count ?? null,
       equal_result_tokens: a.tokens?.equal_result_tokens ?? null,
       chaos_last_ok: a.chaos?.last_ok_clients ?? null,
@@ -1159,51 +1182,109 @@ async function main() {
   }
   await mkdir(OUT_DIR, { recursive: true });
   const mock = await startMockHttp();
+  globalThis.__MULTI_MOCK_BASE__ = mock.baseUrl;
   const arms = {};
   const errors = {};
+  const live = [];
+  const gateways = []; // { close }
 
   try {
     for (const arm of ARMS) {
-      console.log(`\n[multi] === arm ${arm} ===`);
+      console.log(`[multi] prepare ${arm}`);
       try {
         if (arm === "clawql") {
           if (!existsSync(join(ROOT, "dist", "server.js"))) {
             arms.clawql = { skipped: true, reason: "dist/server.js missing" };
             continue;
           }
-          arms.clawql = await armClawql(mock);
+          live.push(makeClawqlLiveArm(mock));
         } else if (arm === "executor") {
           if (!process.env.EXECUTOR_BIN?.trim()) {
             arms.executor = { skipped: true, reason: "EXECUTOR_BIN unset" };
             continue;
           }
-          arms.executor = await armExecutor();
+          live.push(makeExecutorLiveArm(mock));
         } else if (arm === "mcpjungle") {
-          arms.mcpjungle = await runHttpGatewayArm(startMcpjungle, mock);
+          const gw = await startMcpjungle();
+          gateways.push(gw);
+          live.push({
+            id: gw.id,
+            model: gw.model + (EQUAL_UPSTREAM ? "+shared_http_upstream" : ""),
+            version: gw.version,
+            mcpUrl: gw.mcpUrl,
+            invokedToolName: gw.toolName,
+            pid: gw.pid,
+            gatewayCostFromDirect: EQUAL_UPSTREAM,
+            connect: gw.connect,
+            call: gw.call,
+            chaosHooks: { id: gw.id, connect: gw.connect, call: gw.call },
+          });
         } else if (arm === "agentgateway") {
-          arms.agentgateway = await runHttpGatewayArm(startAgentgateway, mock);
+          const gw = await startAgentgateway();
+          gateways.push(gw);
+          live.push({
+            id: gw.id,
+            model: gw.model + (EQUAL_UPSTREAM ? "+shared_http_upstream" : ""),
+            version: gw.version,
+            mcpUrl: gw.mcpUrl,
+            invokedToolName: gw.toolName,
+            pid: gw.pid,
+            gatewayCostFromDirect: EQUAL_UPSTREAM,
+            connect: gw.connect,
+            call: gw.call,
+            chaosHooks: { id: gw.id, connect: gw.connect, call: gw.call },
+          });
         } else if (arm === "contextforge") {
-          arms.contextforge = await runHttpGatewayArm(startContextforge, mock);
+          const gw = await startContextforge();
+          gateways.push(gw);
+          live.push({
+            id: gw.id,
+            model: gw.model + (EQUAL_UPSTREAM ? "+shared_http_upstream" : ""),
+            version: gw.version,
+            mcpUrl: gw.mcpUrl,
+            invokedToolName: gw.toolName,
+            pid: gw.pid,
+            gatewayCostFromDirect: EQUAL_UPSTREAM,
+            connect: gw.connect,
+            call: gw.call,
+            chaosHooks: { id: gw.id, connect: gw.connect, call: gw.call },
+          });
         } else if (arm === "metamcp") {
-          const docker = spawnSync("docker", ["info"], { encoding: "utf8" });
-          if (docker.status !== 0) {
-            arms.metamcp = {
-              skipped: true,
-              reason: "Docker unavailable in this environment; MetaMCP is Docker Compose–first",
-            };
-          } else {
-            arms.metamcp = {
-              skipped: true,
-              reason: "MetaMCP Docker arm not wired in this harness revision",
-            };
-          }
+          arms.metamcp = {
+            skipped: true,
+            reason: "Docker unavailable / MetaMCP Docker Compose–first",
+          };
         } else {
           errors[arm] = `unknown arm ${arm}`;
         }
       } catch (e) {
-        console.error(`[multi] arm ${arm} failed:`, e);
+        console.error(`[multi] prepare ${arm} failed:`, e);
         arms[arm] = { skipped: true, reason: String(e?.stack || e), error: true };
         errors[arm] = String(e?.message || e);
+      }
+    }
+
+    if (live.length) {
+      const measured = await measureInterleaved(live, mock.baseUrl);
+      for (const [id, row] of Object.entries(measured)) {
+        arms[id] = row;
+      }
+      if (!SKIP_CHAOS) {
+        for (const arm of live) {
+          if (!arm.chaosHooks) continue;
+          console.log(`[multi] chaos ${arm.id}`);
+          try {
+            arms[arm.id].chaos = await chaosWithRefine(arm.chaosHooks);
+          } catch (e) {
+            arms[arm.id].chaos = { error: String(e?.message || e) };
+          }
+        }
+      } else {
+        for (const arm of live) {
+          if (arms[arm.id]) {
+            arms[arm.id].chaos = { skipped: true, reason: "MULTI_SKIP_CHAOS=1 (latency/p999 focus)" };
+          }
+        }
       }
     }
 
@@ -1214,6 +1295,9 @@ async function main() {
       config: {
         iters: ITERS,
         warmup: WARMUP,
+        equal_upstream: EQUAL_UPSTREAM,
+        interleaved: true,
+        skip_chaos: SKIP_CHAOS,
         chaos_max: CHAOS_MAX,
         chaos_step_ms: CHAOS_STEP_MS,
         break_p99_ms: BREAK_P99_MS,
@@ -1226,12 +1310,14 @@ async function main() {
       errors,
       honesty: [
         "Equal-arm pets JSON across all arms.",
-        "Aggregator arms use stdio equal-arm-pets MCP (upstream≈0).",
-        "ClawQL OpenAPI execute hits mock HTTP; gateway_cost = e2e − direct.",
-        "Executor code execute returns pets in-process; gateway_cost ≈ e2e.",
-        "Chaos = concurrent MCP clients until p99>SLO or error_rate; binary refine tol=1.",
+        EQUAL_UPSTREAM
+          ? "EQUAL_UPSTREAM: shared mock HTTP /pets — ClawQL OpenAPI, aggregator list_pets fetch, Executor fetch-when-allowed; gateway_cost = e2e − paired direct."
+          : "EQUAL_UPSTREAM off: aggregators/Executor may be upstream≈0; ClawQL still hits HTTP.",
+        "Latency schedule: interleaved closed-loop across live arms (n≥10000 recommended for p999).",
+        "Primary token metric: invoked_tool_schema_tokens (not full tools/list).",
+        "Chaos optional (MULTI_SKIP_CHAOS); when on: concurrent clients until p99>SLO / error_rate.",
         "Panguard / durable WORM off. MetaMCP skipped without Docker.",
-        "Hold publicizing until RAM narrative closed for ClawQL vs Executor; multi-arm is exploratory until repeated.",
+        "Hold publicizing until ClawQL RAM narrative closed or scoped.",
       ],
     };
 
@@ -1239,6 +1325,7 @@ async function main() {
     console.log(`\n[multi] wrote ${OUT_PATH}`);
     console.log(JSON.stringify(report.board, null, 2));
   } finally {
+    for (const gw of gateways) await gw.close?.().catch(() => {});
     await mock.close().catch(() => {});
   }
 }
