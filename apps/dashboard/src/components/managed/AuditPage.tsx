@@ -51,11 +51,11 @@ export function AuditPage() {
         <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-sm font-semibold text-slate-900">What changed</h3>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-600">
               Compared with your offsite copy of the hourly roots, which no one at ClawQL can write to.
             </p>
             <table className="mt-4 w-full text-left text-sm">
-              <thead className="text-xs text-slate-500">
+              <thead className="text-xs text-slate-600">
                 <tr>
                   <th className="py-1 font-medium">Field</th>
                   <th className="py-1 font-medium">When written, per the proof</th>
@@ -179,7 +179,7 @@ export function AuditPage() {
           <StatusDot tone="ok" /> Chain verified (Checked {AUDIT_CHAIN.checkedAgo})
         </span>
         <span className="text-slate-600">Entries: {AUDIT_CHAIN.entries}</span>
-        <span className="font-mono text-xs text-slate-500">
+        <span className="font-mono text-xs text-slate-600">
           Latest root ({AUDIT_CHAIN.latestRootAt}): {AUDIT_CHAIN.latestRoot}
         </span>
         <span className="text-slate-600">Retention: {AUDIT_CHAIN.retention}</span>
@@ -210,7 +210,7 @@ export function AuditPage() {
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="px-4 py-3 font-medium">Time</th>
               <th className="px-4 py-3 font-medium">Actor</th>
@@ -252,7 +252,7 @@ export function AuditPage() {
               {selected.action}, {selected.outcome.toLowerCase()}{' '}
               <span className="font-mono text-sm font-normal text-sky-700">{selected.id}</span>
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-600">
               Today {selected.time}, in session sess_7f2a91c4
             </p>
           </div>
@@ -270,15 +270,15 @@ export function AuditPage() {
             <h3 className="text-sm font-semibold text-slate-900">Record</h3>
             <dl className="mt-2 space-y-2 text-sm text-slate-600">
               <div>
-                <dt className="text-xs text-slate-500">Actor</dt>
+                <dt className="text-xs text-slate-600">Actor</dt>
                 <dd>{selected.actor}, for Priya Shah, via Claude Code</dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500">Action</dt>
+                <dt className="text-xs text-slate-600">Action</dt>
                 <dd className="font-mono text-xs">{selected.action.split(' ')[0]}</dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500">Decision</dt>
+                <dt className="text-xs text-slate-600">Decision</dt>
                 <dd>
                   {selected.tone === 'danger'
                     ? 'Blocked. The attachment is labeled internal, and this destination only accepts public data.'
@@ -291,15 +291,15 @@ export function AuditPage() {
             <h3 className="text-sm font-semibold text-slate-900">Integrity</h3>
             <dl className="mt-2 space-y-2 font-mono text-xs text-slate-600">
               <div>
-                <dt className="font-sans text-xs text-slate-500">Entry hash</dt>
+                <dt className="font-sans text-xs text-slate-600">Entry hash</dt>
                 <dd>9f2a…c41d</dd>
               </div>
               <div>
-                <dt className="font-sans text-xs text-slate-500">Previous</dt>
+                <dt className="font-sans text-xs text-slate-600">Previous</dt>
                 <dd className="text-sky-700">e07b…5a18 (wrm_4905)</dd>
               </div>
               <div>
-                <dt className="font-sans text-xs text-slate-500">Hourly root</dt>
+                <dt className="font-sans text-xs text-slate-600">Hourly root</dt>
                 <dd>b41e…07c9</dd>
               </div>
               <div className="flex items-center gap-2 font-sans text-sm text-emerald-800">

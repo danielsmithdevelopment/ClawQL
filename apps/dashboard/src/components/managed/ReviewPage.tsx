@@ -130,7 +130,7 @@ export function ReviewPage() {
 
       {section === 'queue' ? (
         <>
-      <p className="mb-3 text-xs text-slate-500" data-testid="review-data-source">
+      <p className="mb-3 text-xs text-slate-600" data-testid="review-data-source">
         Review source:{' '}
         {source === 'live'
           ? 'Pending executions + source proposals ($CLAWQL_HOME)'
@@ -169,7 +169,7 @@ export function ReviewPage() {
       {!selected ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
           <p className="text-sm font-medium text-slate-800">Nothing waiting</p>
-          <p className="mt-1 text-sm text-slate-500">New pending changes and sources will show up here.</p>
+          <p className="mt-1 text-sm text-slate-600">New pending changes and sources will show up here.</p>
         </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-[minmax(16rem,20rem)_1fr]">
@@ -195,7 +195,7 @@ export function ReviewPage() {
                       )}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-600">
                           {item.kindLabel}
                         </span>
                         <span
@@ -211,7 +211,7 @@ export function ReviewPage() {
                         </span>
                       </div>
                       <p className="mt-1 text-sm font-semibold text-slate-900">{item.title}</p>
-                      <p className="mt-1 text-xs text-slate-500">{item.listMeta}</p>
+                      <p className="mt-1 text-xs text-slate-600">{item.listMeta}</p>
                       <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-600">
                         <StatusDot tone={item.statusTone} />
                         {item.statusLine}
@@ -221,7 +221,7 @@ export function ReviewPage() {
                 )
               })}
             </ul>
-            <p className="mt-3 text-xs text-slate-500">Decided requests move to the audit log.</p>
+            <p className="mt-3 text-xs text-slate-600">Decided requests move to the audit log.</p>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-900/5">
@@ -254,7 +254,7 @@ function ApprovalPoliciesPanel({
     <div className="space-y-4">
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[48rem] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="px-4 py-3 font-medium">When</th>
               <th className="px-4 py-3 font-medium">Who approves</th>
@@ -282,13 +282,13 @@ function ApprovalPoliciesPanel({
                         Always blocked
                       </span>
                       {row.blockedNote ? (
-                        <p className="mt-1 max-w-md text-xs text-slate-500">{row.blockedNote}</p>
+                        <p className="mt-1 max-w-md text-xs text-slate-600">{row.blockedNote}</p>
                       ) : null}
                     </div>
                   ) : (
                     <div>
                       <p className="font-medium text-slate-900">{row.when}</p>
-                      {row.whenDetail ? <p className="text-xs text-slate-500">{row.whenDetail}</p> : null}
+                      {row.whenDetail ? <p className="text-xs text-slate-600">{row.whenDetail}</p> : null}
                     </div>
                   )}
                 </td>
@@ -307,7 +307,7 @@ function ApprovalPoliciesPanel({
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">{detail.title}</h2>
-              <p className="mt-1 text-sm text-slate-500">{detail.lastChanged}</p>
+              <p className="mt-1 text-sm text-slate-600">{detail.lastChanged}</p>
             </div>
           </div>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -327,7 +327,7 @@ function ApprovalPoliciesPanel({
                 >
                   <option>{value}</option>
                 </select>
-                {help ? <p className="mt-1 text-xs font-normal text-slate-500">{help}</p> : null}
+                {help ? <p className="mt-1 text-xs font-normal text-slate-600">{help}</p> : null}
               </label>
             ))}
           </div>
@@ -335,7 +335,7 @@ function ApprovalPoliciesPanel({
             <li className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
               <div>
                 <p className="font-medium text-slate-900">Require a security key</p>
-                <p className="text-xs text-slate-500">A device-bound key, signing the exact change.</p>
+                <p className="text-xs text-slate-600">A device-bound key, signing the exact change.</p>
               </div>
               <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-semibold text-white">
                 On
@@ -344,7 +344,7 @@ function ApprovalPoliciesPanel({
             <li className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
               <div>
                 <p className="font-medium text-slate-900">The requester can&apos;t approve</p>
-                <p className="text-xs text-slate-500">Always on. It can&apos;t be turned off for any rule.</p>
+                <p className="text-xs text-slate-600">Always on. It can&apos;t be turned off for any rule.</p>
               </div>
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
                 Locked on
@@ -353,11 +353,11 @@ function ApprovalPoliciesPanel({
             <li className="rounded-lg bg-slate-50 px-3 py-2">
               <p className="font-medium text-slate-900">Notify approvers</p>
               <p className="text-sm text-slate-700">{detail.notify}</p>
-              <p className="text-xs text-slate-500">Each person also chooses how in their profile.</p>
+              <p className="text-xs text-slate-600">Each person also chooses how in their profile.</p>
             </li>
           </ul>
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               Saving a policy change needs your security key, and it&apos;s recorded in the audit log.
             </p>
             <div className="flex gap-2">
@@ -391,7 +391,7 @@ function ReviewDetail({
       <>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-medium text-slate-500">Skill promotion</p>
+            <p className="text-xs font-medium text-slate-600">Skill promotion</p>
             <h2 className="text-lg font-semibold text-slate-900">{item.title}</h2>
             <p className="mt-1 text-sm text-slate-600">
               Learned from 6 sessions by legal-ops agent.{' '}
@@ -428,7 +428,7 @@ function ReviewDetail({
             ))}
           </div>
         </section>
-        <p className="mt-4 text-xs text-slate-500">
+        <p className="mt-4 text-xs text-slate-600">
           Policy: one contract approver, with a security key, who isn&apos;t the proposer. You qualify.
         </p>
         <label className="mt-4 block text-sm text-slate-700">
@@ -446,7 +446,7 @@ function ReviewDetail({
             Decline
           </Button>
         </div>
-        <p className="mt-3 text-xs text-slate-500">
+        <p className="mt-3 text-xs text-slate-600">
           Skill promotion stays fixture-only until the skills registry API is wired.
         </p>
       </>
@@ -497,7 +497,7 @@ function ReviewDetail({
           <section className="mt-5">
             <h3 className="text-sm font-semibold text-slate-900">The exact change</h3>
             <table className="mt-2 w-full text-left text-sm">
-              <thead className="text-xs text-slate-500">
+              <thead className="text-xs text-slate-600">
                 <tr>
                   <th className="py-1 font-medium">Field</th>
                   <th className="py-1 font-medium">Now</th>
@@ -522,7 +522,7 @@ function ReviewDetail({
                 </tr>
               </tbody>
             </table>
-            <p className="mt-2 font-mono text-[11px] text-slate-500">
+            <p className="mt-2 font-mono text-[11px] text-slate-600">
               adjust_contract_value via crm.contracts · digest 4e7c…91ab
             </p>
           </section>
@@ -642,7 +642,7 @@ function ReviewDetail({
                 <input type="radio" name="decision" defaultChecked={label === 'Refund request'} className="mr-2" />
                 {label}
               </span>
-              <span className="font-mono text-xs text-slate-500">{score}</span>
+              <span className="font-mono text-xs text-slate-600">{score}</span>
             </label>
           ))}
         </div>
@@ -658,7 +658,7 @@ function ReviewDetail({
             Ask a teammate
           </Button>
         </div>
-        <p className="mt-3 text-xs text-slate-500">Label Studio / decision HITL stays fixture-only in this slice.</p>
+        <p className="mt-3 text-xs text-slate-600">Label Studio / decision HITL stays fixture-only in this slice.</p>
       </>
     )
   }
@@ -720,7 +720,7 @@ function PermissionsBlock() {
           ['Spend', 'Up to $2 per run'],
         ].map(([k, v]) => (
           <div key={k} className="rounded-lg bg-slate-50 px-3 py-2">
-            <dt className="text-xs font-medium text-slate-500">{k}</dt>
+            <dt className="text-xs font-medium text-slate-600">{k}</dt>
             <dd className="text-slate-800">{v}</dd>
           </div>
         ))}

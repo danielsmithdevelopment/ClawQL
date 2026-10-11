@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 
 /**
  * `/audit` is both the console Audit page and the production-shaped audit API.
- * Document navigations rewrite to `/console/audit`; JSON / ?format= clients hit the route handler.
+ * Document navigations and Next.js RSC / Link prefetch rewrite to `/console/audit`;
+ * JSON / ?format= clients hit the route handler.
  */
 export function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
@@ -22,7 +23,13 @@ export function middleware(request: NextRequest) {
 
   const dest = request.headers.get("sec-fetch-dest") ?? "";
   const wantsDocument = dest === "document" || accept.includes("text/html");
-  if (!wantsDocument) {
+  // Link prefetch / client transitions send RSC headers (and often `?_rsc=`); those
+  // must hit the console page, not the JSON route handler (which 404s when harness is off).
+  const isRscNavigation =
+    request.headers.has("rsc") ||
+    request.headers.has("next-router-prefetch") ||
+    searchParams.has("_rsc");
+  if (!wantsDocument && !isRscNavigation) {
     // fetch() default Accept */* — production-shaped API
     return NextResponse.next();
   }

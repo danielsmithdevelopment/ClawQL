@@ -87,12 +87,12 @@ export function ConnectionsPage() {
         }
       >
         {tab === 'keys' ? (
-          <p className="mb-3 text-xs text-slate-500" data-testid="keys-data-source">
+          <p className="mb-3 text-xs text-slate-600" data-testid="keys-data-source">
             Keys source: {keysSource === 'live' ? 'IssuedApiKeyStore ($CLAWQL_HOME)' : 'Acme fixture'}
           </p>
         ) : null}
         {tab === 'connections' ? (
-          <p className="mb-3 text-xs text-slate-500" data-testid="connections-data-source">
+          <p className="mb-3 text-xs text-slate-600" data-testid="connections-data-source">
             Connections source:{' '}
             {connectionsSource === 'live'
               ? 'sources.json + pending proposals ($CLAWQL_HOME)'
@@ -116,7 +116,7 @@ export function ConnectionsPage() {
                 'border-b-2 px-0.5 pb-2 font-medium transition-colors',
                 tab === id
                   ? 'border-slate-900 text-slate-900'
-                  : 'border-transparent text-slate-500 hover:text-slate-800',
+                  : 'border-transparent text-slate-600 hover:text-slate-800',
               )}
               data-testid={`connections-tab-${id}`}
             >
@@ -146,7 +146,7 @@ export function ConnectionsPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <p className="text-sm font-semibold text-slate-900">{c.name}</p>
-                          <p className="text-xs text-slate-500">{c.summary}</p>
+                          <p className="text-xs text-slate-600">{c.summary}</p>
                           <p className="mt-1 text-[11px] text-slate-400">Last used {c.lastUsed}</p>
                         </div>
                         <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-700">
@@ -164,7 +164,7 @@ export function ConnectionsPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">{selected.detailTitle}</h2>
-                  <p className="text-sm text-slate-500">{selected.detailSubtitle}</p>
+                  <p className="text-sm text-slate-600">{selected.detailSubtitle}</p>
                 </div>
                 <Button type="button" variant="outline" size="sm">
                   Add account
@@ -196,13 +196,13 @@ export function ConnectionsPage() {
                       <p className="mt-2 text-xs text-slate-600">{account.detail}</p>
                     </div>
                   ))}
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-600">
                     Personal account results stay private — they never enter org memory, shared audit content, or
                     training.
                   </p>
                 </div>
               ) : (
-                <p className="mt-5 text-sm text-slate-500">
+                <p className="mt-5 text-sm text-slate-600">
                   {selected.status === 'waiting-review'
                     ? 'This connection is waiting in Review before agents can use it.'
                     : 'Connected. Open Overrides to change operation defaults.'}
@@ -230,7 +230,7 @@ export function ConnectionsPage() {
                     <p className="text-lg font-semibold">{selected.ops.deletesBlocked}</p>
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-slate-600">
                   Set automatically from the API spec. Overrides are recorded in the audit trail.
                 </p>
               </div>
@@ -273,7 +273,7 @@ export function ConnectionsPage() {
             ) : null}
             <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
               <table className="w-full min-w-[48rem] text-left text-sm">
-                <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
                   <tr>
                     <th className="px-4 py-3 font-medium">Key</th>
                     <th className="px-4 py-3 font-medium">Group</th>
@@ -290,7 +290,7 @@ export function ConnectionsPage() {
                       <td className="px-4 py-3">
                         <p className="font-medium text-slate-900">{key.name}</p>
                         {key.endsIn ? (
-                          <p className="text-xs text-slate-500">ends in {key.endsIn}</p>
+                          <p className="text-xs text-slate-600">ends in {key.endsIn}</p>
                         ) : null}
                       </td>
                       <td className="px-4 py-3 text-slate-600">{key.keyGroup}</td>
@@ -322,7 +322,7 @@ export function ConnectionsPage() {
                 </tbody>
               </table>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               Only a hash of each key is stored, so a lost key can&apos;t be shown again; revoke it and create a
               new one. Revoking takes effect within seconds.
             </p>
@@ -386,11 +386,11 @@ function KeyGroupsMatrix() {
           <span className="shrink-0 text-slate-400">None</span>
           <span>can&apos;t reach it</span>
         </span>
-        <span className="text-slate-500">Deletes stay blocked for every group.</span>
+        <span className="text-slate-600">Deletes stay blocked for every group.</span>
       </div>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[48rem] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="px-4 py-3 font-medium">Reaches</th>
               {KEY_GROUP_COLUMNS.map((col) => (
@@ -419,7 +419,7 @@ function KeyGroupsMatrix() {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-slate-600">
         A personal account is never part of a key group. Its results stay with the person who connected it.
       </p>
     </div>

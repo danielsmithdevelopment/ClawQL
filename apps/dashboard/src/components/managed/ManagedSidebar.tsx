@@ -99,7 +99,7 @@ export function ManagedSidebar() {
           Sign out
         </button>
         {session.mode === 'mock' ? (
-          <p className="mt-2 px-2 text-[10px] leading-snug text-slate-500">
+          <p className="mt-2 px-2 text-[10px] leading-snug text-slate-400">
             Mock Supabase session — set real keys to use Auth.
           </p>
         ) : null}

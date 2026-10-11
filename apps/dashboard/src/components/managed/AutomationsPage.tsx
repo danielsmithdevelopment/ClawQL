@@ -82,7 +82,7 @@ export function AutomationsPage() {
               ['Paused', '1 subscription'],
             ].map(([k, v]) => (
               <div key={k} className="rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
-                <p className="text-xs text-slate-500">{k}</p>
+                <p className="text-xs text-slate-600">{k}</p>
                 <p className="mt-1 text-lg font-semibold text-slate-900">{v}</p>
               </div>
             ))}
@@ -91,7 +91,7 @@ export function AutomationsPage() {
           <div className="grid gap-4 lg:grid-cols-[1fr_minmax(18rem,24rem)]">
             <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
               <table className="w-full min-w-[40rem] text-left text-sm">
-                <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
                   <tr>
                     <th className="px-4 py-3 font-medium">Subscription</th>
                     <th className="px-4 py-3 font-medium">Events</th>
@@ -112,7 +112,7 @@ export function AutomationsPage() {
                     >
                       <td className="px-4 py-3">
                         <p className="font-medium text-slate-900">{sub.name}</p>
-                        <p className="text-xs text-slate-500">{sub.target}</p>
+                        <p className="text-xs text-slate-600">{sub.target}</p>
                       </td>
                       <td className="px-4 py-3 text-slate-600">{sub.events}</td>
                       <td className="px-4 py-3 text-slate-600">{sub.via}</td>
@@ -139,7 +139,7 @@ export function AutomationsPage() {
                   </p>
                 </div>
               </div>
-              <p className="mt-3 break-all font-mono text-[11px] text-slate-500">
+              <p className="mt-3 break-all font-mono text-[11px] text-slate-600">
                 https://hooks.slack.com/services/T04…/B07…/…
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -166,15 +166,15 @@ export function AutomationsPage() {
               ) : null}
               <dl className="mt-4 space-y-2 text-sm text-slate-600">
                 <div>
-                  <dt className="text-xs text-slate-500">Events</dt>
+                  <dt className="text-xs text-slate-600">Events</dt>
                   <dd>{selected.events}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">Payloads</dt>
+                  <dt className="text-xs text-slate-600">Payloads</dt>
                   <dd>Personal data redacted</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">Signing secret</dt>
+                  <dt className="text-xs text-slate-600">Signing secret</dt>
                   <dd>
                     Rotated 41 days ago{' '}
                     <button type="button" className="text-sky-700 hover:underline">
@@ -199,7 +199,7 @@ export function AutomationsPage() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs text-slate-500">
+              <p className="mt-3 text-xs text-slate-600">
                 Retries keep the same event ID so receivers process once. Every delivery attempt is in the
                 audit log.
               </p>
@@ -243,7 +243,7 @@ function InboundWebhooksPanel() {
                     {hook.status}
                   </span>
                 </div>
-                {hook.stats ? <p className="mt-1 text-xs text-slate-500">{hook.stats}</p> : null}
+                {hook.stats ? <p className="mt-1 text-xs text-slate-600">{hook.stats}</p> : null}
               </div>
               {hook.setup ? (
                 <Button type="button" variant="outline" size="sm">
@@ -278,7 +278,7 @@ function SchedulesPanel() {
     <div className="space-y-4" data-testid="automations-schedules">
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[48rem] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="px-4 py-3 font-medium">Schedule</th>
               <th className="px-4 py-3 font-medium">Runs</th>
@@ -315,7 +315,7 @@ function SchedulesPanel() {
           </tbody>
         </table>
       </div>
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-slate-600">
         A schedule runs with its key&apos;s permissions, so anything that writes still waits for a mandate. Each
         run sends a <span className="font-mono text-xs">schedule.completed</span> event; if its source keeps
         failing to sign in, it pauses and sends <span className="font-mono text-xs">schedule.paused</span>.
@@ -329,7 +329,7 @@ function EventTypesPanel() {
     <div className="space-y-4" data-testid="automations-types">
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[40rem] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="px-4 py-3 font-medium">Event</th>
               <th className="px-4 py-3 font-medium">Sent when</th>
@@ -382,7 +382,7 @@ function WatchedSourcesPanel({
     <div className="space-y-4">
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[40rem] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="px-4 py-3 font-medium">Watch</th>
               <th className="px-4 py-3 font-medium">Checks</th>
@@ -403,7 +403,7 @@ function WatchedSourcesPanel({
               >
                 <td className="px-4 py-3">
                   <p className="font-medium text-slate-900">{row.watch}</p>
-                  <p className="text-xs text-slate-500">{row.watchDetail}</p>
+                  <p className="text-xs text-slate-600">{row.watchDetail}</p>
                 </td>
                 <td className="px-4 py-3 text-slate-600">{row.checks}</td>
                 <td className="px-4 py-3 text-slate-600">{row.lastChange}</td>
@@ -430,7 +430,7 @@ function WatchedSourcesPanel({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">{detail.title}</h2>
-              <p className="mt-1 font-mono text-xs text-slate-500">{detail.endpoint}</p>
+              <p className="mt-1 font-mono text-xs text-slate-600">{detail.endpoint}</p>
             </div>
             <div className="flex gap-2">
               <Button type="button" variant="outline" size="sm">
@@ -450,17 +450,17 @@ function WatchedSourcesPanel({
                 className="rounded-md bg-slate-100 px-2 py-1 font-mono text-xs text-slate-800"
               >
                 {f.name}
-                {f.note ? <span className="ml-1 text-slate-500">{f.note}</span> : null}
+                {f.note ? <span className="ml-1 text-slate-600">{f.note}</span> : null}
               </span>
             ))}
             <button
               type="button"
-              className="rounded-md border border-dashed border-slate-300 px-2 py-1 text-xs text-slate-500"
+              className="rounded-md border border-dashed border-slate-300 px-2 py-1 text-xs text-slate-600"
             >
               Add a field
             </button>
           </div>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-slate-600">
             Anything else in the response is ignored, so timestamps and paging cursors don&apos;t fire events.
           </p>
 
@@ -473,9 +473,9 @@ function WatchedSourcesPanel({
               ] as const
             ).map(([title, value, note]) => (
               <div key={title} className="rounded-lg bg-slate-50 px-3 py-2 text-sm">
-                <p className="text-xs font-medium text-slate-500">{title}</p>
+                <p className="text-xs font-medium text-slate-600">{title}</p>
                 <p className="mt-1 font-medium text-slate-900">{value}</p>
-                <p className="mt-1 text-xs text-slate-500">{note}</p>
+                <p className="mt-1 text-xs text-slate-600">{note}</p>
               </div>
             ))}
           </div>
@@ -485,7 +485,7 @@ function WatchedSourcesPanel({
           </h3>
           <div className="mt-2 overflow-x-auto">
             <table className="w-full min-w-[28rem] text-left text-sm">
-              <thead className="text-xs text-slate-500">
+              <thead className="text-xs text-slate-600">
                 <tr>
                   <th className="py-1 font-medium" />
                   <th className="py-1 font-medium">id</th>
@@ -507,7 +507,7 @@ function WatchedSourcesPanel({
               </tbody>
             </table>
           </div>
-          <p className="mt-3 text-xs text-slate-500">
+          <p className="mt-3 text-xs text-slate-600">
             Sent as one <span className="font-mono">stream.changed</span> event to 1 subscription:{' '}
             <button type="button" className="text-sky-700 hover:underline">
               Ops dashboard
@@ -516,7 +516,7 @@ function WatchedSourcesPanel({
           </p>
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-8 text-center text-sm text-slate-500">
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-8 text-center text-sm text-slate-600">
           Select Failed payments for the full mockup detail, or wire the remaining watches next.
         </div>
       )}

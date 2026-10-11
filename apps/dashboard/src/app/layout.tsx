@@ -19,11 +19,17 @@ export const metadata: Metadata = managed
       title: 'ClawQL Cloud',
       description:
         'Managed ClawQL console — gateway, keys, billing, review, and audit for your organization.',
+      icons: {
+        icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+      },
     }
   : {
       title: 'ClawQL — Dashboard',
       description:
         'Agent chat, fleet status, and Vault-backed cluster configuration for ClawQL MCP.',
+      icons: {
+        icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+      },
     }
 
 export const viewport: Viewport = {
