@@ -5,6 +5,7 @@ Normalized boards across MCP gateways in ClawQL’s neighborhood.
 | Artifact | What it proves |
 | --- | --- |
 | [`gateway-multi-cmp-10k.json`](./gateway-multi-cmp-10k.json) | Interleaved latency / gateway_cost / RSS (n=10 000) |
+| [`gateway-multi-cmp-chaos-slim.json`](./gateway-multi-cmp-chaos-slim.json) | Chaos ceilings with slim composition (per-arm) |
 | [`gateway-multi-multiturn.json`](./gateway-multi-multiturn.json) | **12-turn I/O tokens** on a fat catalog (both sides) |
 | [`gateway-multi-multiturn-24.json`](./gateway-multi-multiturn-24.json) | Same board at N=24 (compounding check) |
 
@@ -14,11 +15,13 @@ Normalized boards across MCP gateways in ClawQL’s neighborhood.
 | --- | --- |
 | **Multi-turn I/O tokens** | **Win** — Layer1 schemas ~19× vs aggregators; results ~3.4×; combined @12 ~1.7× (relist-every-turn ~4.8×) |
 | **Latency e2e / gateway_cost** | **Win** — best p50/p95/p99 on n=10k interleaved equal-upstream |
-| **Chaos scale-out** | **Win vs Executor** (NATS sticky replicas); MJ/AGW also high — remeasure with chaos on |
-| **RSS** | **Hold** — cold floor ~261 MB; under long interleaved load median still trails MJ/AGW/Executor |
+| **Chaos (stdio equal-arm)** | **Win vs Executor** — ClawQL **63/64** vs Executor **23/24** (~2.7× clients, p99≤100 ms) |
+| **Chaos vs thin gateways** | MCPJungle **≥128**; agentgateway **64/128** (refine OOM on host) — still lead on product features |
+| **RSS cold / min** | **Improved** — Ready ~**232 MB**, solo min ~**255–259 MB** (was ~317 median with fat tools) |
+| **RSS under load** | **Hold** — V8 watermark grows under long interleaved load; report min + median |
 | **Invoked schema tokens** | Rich `execute` surface intentional (178); not trimmed for parity |
 
-Nontrivial agent work is multi-turn — lead with the token board. Latency is already #1 on the equal-arm microboard; do not lead with RSS until the under-load gap closes.
+Nontrivial agent work is multi-turn — lead with the token board + chaos vs Executor. Latency is #1 on the equal-arm microboard.
 
 ## Equal-arm contract (latency)
 
@@ -43,10 +46,23 @@ Nontrivial agent work is multi-turn — lead with the token board. Latency is al
 | **MCPJungle** | 1.34 / 2.72 / 4.36 / 6.86 | 1.02 / 3.99 / 6.52 | **152** | 1 | 46 | 46 | 28 |
 | **agentgateway** | 1.17 / 2.38 / 4.21 / 7.29 | 0.84 / 3.81 / 6.87 | 215 | 1 | 37 | 37 | 28 |
 
-† Cold/min RSS ≈261 MB (improved vs prior tool dump); median during long interleaved load still grows — **publish hold**.  
+† Prior 10k median before vault-skip; cold Ready now ~232 MB / solo min ~255 MB — still report median under load as hold.  
 ‡ Executor gateway_cost = e2e (upstream=0).
 
 **Delta vs prior 10k (tools=18):** e2e p50 1.08→**1.02**, gateway_cost p50 0.81→**0.70**, p999 cost 9.41→**6.87**, tools 18→**8**, list tok 5334→**1189**.
+
+## Chaos — slim composition (p99≤100 ms)
+
+Per-arm runs (`gateway-multi-cmp-chaos-*.json` → merged [`gateway-multi-cmp-chaos-slim.json`](./gateway-multi-cmp-chaos-slim.json)). ClawQL/Executor = stdio process-per-client (equal-arm model).
+
+| Arm | last_ok / first_break | Break reason | RSS min / med (MB) |
+| --- | ---: | --- | ---: |
+| **ClawQL** | **63 / 64** | p99 106 ms | **259 / 342** |
+| Executor | 23 / 24 | p99 102 ms | 397 / 422 |
+| MCPJungle | **≥128** / — | (no break ≤128) | **97 / 109** |
+| agentgateway | 64 / 128 | power-of-two; refine OOM | 189 / 191 |
+
+ClawQL chaos ceiling is **~2.7× Executor** on the same stdio process-per-client model. Product scale-out (NATS sticky replicas) is higher still — see executor-comparison chaos ceilings.
 
 ### Latency run
 

@@ -1,0 +1,132 @@
+{
+  "suite": "gateway-multi-comparison-chaos-slim",
+  "measuredAt": "2026-10-11T13:21:33.610Z",
+  "composition": "INSTANCE_SPEC slim Core (memory/documents/chatgpt off); tools=8",
+  "model": "stdio process-per-client for ClawQL/Executor; HTTP gateway for MCPJungle/agentgateway",
+  "slo": {
+    "break_p99_ms": 100,
+    "break_error_rate": 0.02
+  },
+  "board": {
+    "clawql": {
+      "latency_e2e_ms": {
+        "n": 100,
+        "p50_ms": 1.802,
+        "p95_ms": 2.752,
+        "p99_ms": 3.027,
+        "p999_ms": 3.259,
+        "mean_ms": 1.889,
+        "min_ms": 1.395,
+        "max_ms": 3.259
+      },
+      "gateway_cost_ms": {
+        "n": 100,
+        "p50_ms": 1.319,
+        "p95_ms": 2.275,
+        "p99_ms": 2.535,
+        "p999_ms": 2.638,
+        "mean_ms": 1.352,
+        "min_ms": -1.259,
+        "max_ms": 2.638
+      },
+      "rss_mb_min": 259,
+      "rss_mb_median": 342.02,
+      "rss_mb_max": 365.6,
+      "cpu_pct_median": 174.2,
+      "invoked_tool_schema_tokens": 178,
+      "schema_tokens_full_list": 1189,
+      "tools_count": 8,
+      "equal_result_tokens": 59,
+      "chaos_last_ok": 63,
+      "chaos_first_break": 64,
+      "chaos_break_reason": "p99 105.979ms"
+    },
+    "executor": {
+      "latency_e2e_ms": {
+        "n": 100,
+        "p50_ms": 3.13,
+        "p95_ms": 6.757,
+        "p99_ms": 7.205,
+        "p999_ms": 9.049,
+        "mean_ms": 3.798,
+        "min_ms": 2.317,
+        "max_ms": 9.049
+      },
+      "gateway_cost_ms": {
+        "n": 100,
+        "p50_ms": 3.13,
+        "p95_ms": 6.757,
+        "p99_ms": 7.205,
+        "p999_ms": 9.049,
+        "mean_ms": 3.798,
+        "min_ms": 2.317,
+        "max_ms": 9.049
+      },
+      "rss_mb_min": 396.5,
+      "rss_mb_median": 422.29,
+      "rss_mb_max": 440.31,
+      "cpu_pct_median": 179.8,
+      "invoked_tool_schema_tokens": 90,
+      "schema_tokens_full_list": 2243,
+      "tools_count": 7,
+      "equal_result_tokens": 59,
+      "chaos_last_ok": 23,
+      "chaos_first_break": 24,
+      "chaos_break_reason": "p99 101.931ms"
+    },
+    "mcpjungle": {
+      "latency_e2e_ms": {
+        "n": 100,
+        "p50_ms": 1.889,
+        "p95_ms": 2.254,
+        "p99_ms": 4.304,
+        "p999_ms": 4.411,
+        "mean_ms": 1.949,
+        "min_ms": 1.488,
+        "max_ms": 4.411
+      },
+      "gateway_cost_ms": {
+        "n": 100,
+        "p50_ms": 1.363,
+        "p95_ms": 1.731,
+        "p99_ms": 3.688,
+        "p999_ms": 3.744,
+        "mean_ms": 1.395,
+        "min_ms": -2.805,
+        "max_ms": 3.744
+      },
+      "rss_mb_min": 96.54,
+      "rss_mb_median": 108.87,
+      "rss_mb_max": 112.9,
+      "cpu_pct_median": 91.5,
+      "invoked_tool_schema_tokens": 46,
+      "schema_tokens_full_list": 46,
+      "tools_count": 1,
+      "equal_result_tokens": 28,
+      "chaos_last_ok": 128,
+      "chaos_first_break": null,
+      "chaos_break_reason": null
+    },
+    "agentgateway": {
+      "latency_e2e_ms": {
+        "n": 100,
+        "p50_ms": 2.037,
+        "note": "from prior AGW latency sample before refine OOM"
+      },
+      "gateway_cost_ms": null,
+      "rss_mb_min": 189.24,
+      "rss_mb_median": 190.65,
+      "rss_mb_max": 191.96,
+      "tools_count": 1,
+      "chaos_last_ok": 64,
+      "chaos_first_break": 128,
+      "chaos_break_reason": "p99 (power-of-two; refine OOM on host — last_ok≥64)",
+      "note": "Chaos from power-of-two steps in multi-arm run; binary refine killed by host OOM. Start flake on retry."
+    }
+  },
+  "verdict": {
+    "vs_executor_chaos": "ClawQL 63/64 vs Executor 23/24 (~2.7× clients)",
+    "vs_aggregators_chaos": "MCPJungle ≥128; agentgateway 64/128 (refine incomplete)",
+    "rss_min": "ClawQL min 259MB (solo chaos) / 255MB (solo 2k); cold Ready ~232MB"
+  }
+}

@@ -1,7 +1,8 @@
 {
   "suite": "gateway-multi-comparison",
-  "measuredAt": "2026-10-11T07:15:21.574Z",
+  "measuredAt": "2026-10-11T13:20:18.718Z",
   "node": "v22.14.0",
+  "partial": false,
   "config": {
     "iters": 2000,
     "warmup": 50,
@@ -21,26 +22,28 @@
     "clawql": {
       "latency_e2e_ms": {
         "n": 2000,
-        "p50_ms": 1.258,
-        "p95_ms": 2.203,
-        "p99_ms": 3.187,
-        "p999_ms": 6.279,
-        "mean_ms": 1.405,
-        "min_ms": 0.924,
-        "max_ms": 11.977
+        "p50_ms": 1.254,
+        "p95_ms": 1.999,
+        "p99_ms": 5.281,
+        "p999_ms": 12.609,
+        "mean_ms": 1.413,
+        "min_ms": 0.889,
+        "max_ms": 12.821
       },
       "gateway_cost_ms": {
         "n": 2000,
-        "p50_ms": 0.912,
-        "p95_ms": 1.76,
-        "p99_ms": 2.777,
-        "p999_ms": 5.888,
-        "mean_ms": 1.038,
-        "min_ms": -3.149,
-        "max_ms": 11.447
+        "p50_ms": 0.919,
+        "p95_ms": 1.57,
+        "p99_ms": 4.498,
+        "p999_ms": 12.192,
+        "mean_ms": 0.959,
+        "min_ms": -28.675,
+        "max_ms": 12.496
       },
-      "rss_mb_median": 368.48,
-      "cpu_pct_median": 105.3,
+      "rss_mb_min": 255.05,
+      "rss_mb_median": 363.59,
+      "rss_mb_max": 382.27,
+      "cpu_pct_median": 97,
       "invoked_tool_schema_tokens": 178,
       "schema_tokens_full_list": 1189,
       "tools_count": 8,
@@ -61,33 +64,33 @@
       "latency": {
         "e2e": {
           "n": 2000,
-          "p50_ms": 1.258,
-          "p95_ms": 2.203,
-          "p99_ms": 3.187,
-          "p999_ms": 6.279,
-          "mean_ms": 1.405,
-          "min_ms": 0.924,
-          "max_ms": 11.977
+          "p50_ms": 1.254,
+          "p95_ms": 1.999,
+          "p99_ms": 5.281,
+          "p999_ms": 12.609,
+          "mean_ms": 1.413,
+          "min_ms": 0.889,
+          "max_ms": 12.821
         },
         "direct_http": {
           "n": 2000,
-          "p50_ms": 0.319,
-          "p95_ms": 0.613,
-          "p99_ms": 1.685,
-          "p999_ms": 3.417,
-          "mean_ms": 0.367,
-          "min_ms": 0.206,
-          "max_ms": 4.149
+          "p50_ms": 0.324,
+          "p95_ms": 0.47,
+          "p99_ms": 8.169,
+          "p999_ms": 14.725,
+          "mean_ms": 0.454,
+          "min_ms": 0.194,
+          "max_ms": 30.741
         },
         "gateway_cost": {
           "n": 2000,
-          "p50_ms": 0.912,
-          "p95_ms": 1.76,
-          "p99_ms": 2.777,
-          "p999_ms": 5.888,
-          "mean_ms": 1.038,
-          "min_ms": -3.149,
-          "max_ms": 11.447
+          "p50_ms": 0.919,
+          "p95_ms": 1.57,
+          "p99_ms": 4.498,
+          "p999_ms": 12.192,
+          "mean_ms": 0.959,
+          "min_ms": -28.675,
+          "max_ms": 12.496
         },
         "call_errors": 0,
         "note": "gateway_cost = e2e − paired direct HTTP /pets (interleaved equal-arm)",
@@ -95,18 +98,18 @@
       },
       "resources": {
         "label": "clawql",
-        "pid": 200970,
-        "n": 40,
+        "pid": 236301,
+        "n": 43,
         "rss_mb": {
-          "min": 268.56,
-          "median": 368.48,
-          "max": 385.88
+          "min": 255.05,
+          "median": 363.59,
+          "max": 382.27
         },
         "cpu_pct": {
-          "min": 91.57,
-          "median": 105.3,
-          "max": 211.67,
-          "mean": 121.68
+          "min": 84.44,
+          "median": 97,
+          "max": 185.15,
+          "mean": 109.71
         }
       },
       "tokens": {
@@ -127,7 +130,7 @@
         ],
         "note": "Primary board uses invoked_tool_schema_tokens (apples-to-apples); tools_list_* is secondary surface size."
       },
-      "pid": 200970,
+      "pid": 236301,
       "chaos": {
         "skipped": true,
         "reason": "MULTI_SKIP_CHAOS=1 (latency/p999 focus)"
@@ -142,6 +145,7 @@
     "Primary token metric: invoked_tool_schema_tokens (not full tools/list).",
     "Chaos optional (MULTI_SKIP_CHAOS); when on: concurrent clients until p99>SLO / error_rate.",
     "Panguard / durable WORM off. MetaMCP skipped without Docker.",
-    "Hold publicizing until ClawQL RAM narrative closed or scoped."
+    "Hold publicizing until ClawQL RAM narrative closed or scoped.",
+    "Checkpoint writes after latency and after each chaos arm (survives OOM mid-chaos)."
   ]
 }
