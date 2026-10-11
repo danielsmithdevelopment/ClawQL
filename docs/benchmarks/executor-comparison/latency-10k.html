@@ -4,11 +4,11 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>ClawQL vs Executor — equal-arm latency p50 / p95 / p99</title>
-  <link rel="canonical" href="https://clawql.com/benchmarks/executor-comparison/latency.html"/>
+  <link rel="canonical" href="https://clawql.com/benchmarks/executor-comparison/latency-10k.html"/>
   <meta name="description" content="Apples-to-apples MCP latency: same pets JSON, ClawQL gateway overhead vs live Executor execute."/>
   <meta property="og:title" content="ClawQL vs Executor — equal-arm latency"/>
-  <meta property="og:description" content="Equalized ClawQL overhead p50 1.341ms · Executor live same-host 3.032ms · 2.26× — ClawQL overhead faster"/>
-  <meta property="og:url" content="https://clawql.com/benchmarks/executor-comparison/latency.html"/>
+  <meta property="og:description" content="Equalized ClawQL overhead p50 0.643ms · Executor live same-host 1.965ms · 3.06× — ClawQL overhead faster"/>
+  <meta property="og:url" content="https://clawql.com/benchmarks/executor-comparison/latency-10k.html"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,650;9..144,750&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet"/>
@@ -184,7 +184,7 @@
       Apples-to-apples: both sides return the <strong>same tiny pets JSON</strong> via one MCP <code>execute</code>.
       Headline compares <strong>ClawQL gateway overhead</strong> (execute − same-host mock fetch) to
       <strong>Executor</strong> (live same-host).
-      n=100.
+      n=10000.
     </p>
 
     <div class="tilt">
@@ -206,10 +206,10 @@
             <span class="sub">MCP → tiny same-host mock + fields</span>
           </div>
           <div class="nums">
-            <span><em>p50</em> 1.8</span>
-            <span><em>p95</em> 2.7</span>
-            <span><em>p99</em> 4.2</span>
-            
+            <span><em>p50</em> 0.7</span>
+            <span><em>p95</em> 1.3</span>
+            <span><em>p99</em> 2.3</span>
+            <span><em>p999</em> 5.3</span>
             <span class="unit">ms</span>
           </div>
         </div>
@@ -219,21 +219,28 @@
               <span class="p-label">p50</span>
               <div class="track">
                 
-                <span class="bar claw p50" style="width:5.21%"></span>
+                <span class="bar claw p50" style="width:4.56%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p95</span>
               <div class="track">
                 
-                <span class="bar claw p95" style="width:7.99%"></span>
+                <span class="bar claw p95" style="width:7.91%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p99</span>
               <div class="track">
                 
-                <span class="bar claw p99" style="width:12.35%"></span>
+                <span class="bar claw p99" style="width:14.05%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p999</span>
+              <div class="track">
+                
+                <span class="bar claw p999" style="width:32.60%"></span>
               </div>
             </div>
         </div>
@@ -244,10 +251,10 @@
             <span class="sub">execute − direct fetch (apples-to-apples)</span>
           </div>
           <div class="nums">
-            <span><em>p50</em> 1.3</span>
-            <span><em>p95</em> 2.1</span>
-            <span><em>p99</em> 3.4</span>
-            
+            <span><em>p50</em> 0.6</span>
+            <span><em>p95</em> 0.9</span>
+            <span><em>p99</em> 1.7</span>
+            <span><em>p999</em> 2.3</span>
             <span class="unit">ms</span>
           </div>
         </div>
@@ -264,14 +271,21 @@
               <span class="p-label">p95</span>
               <div class="track">
                 
-                <span class="bar claw p95" style="width:6.37%"></span>
+                <span class="bar claw p95" style="width:5.68%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p99</span>
               <div class="track">
                 
-                <span class="bar claw p99" style="width:10.09%"></span>
+                <span class="bar claw p99" style="width:10.54%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p999</span>
+              <div class="track">
+                
+                <span class="bar claw p999" style="width:14.48%"></span>
               </div>
             </div>
         </div>
@@ -282,10 +296,10 @@
             <span class="sub">live · same pets JSON in-process</span>
           </div>
           <div class="nums">
-            <span><em>p50</em> 3.0</span>
-            <span><em>p95</em> 5.5</span>
-            <span><em>p99</em> 5.9</span>
-            
+            <span><em>p50</em> 2.0</span>
+            <span><em>p95</em> 3.6</span>
+            <span><em>p99</em> 5.1</span>
+            <span><em>p999</em> 15.0</span>
             <span class="unit">ms</span>
           </div>
         </div>
@@ -295,21 +309,28 @@
               <span class="p-label">p50</span>
               <div class="track">
                 
-                <span class="bar exec p50" style="width:9.00%"></span>
+                <span class="bar exec p50" style="width:12.17%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p95</span>
               <div class="track">
                 
-                <span class="bar exec p95" style="width:16.37%"></span>
+                <span class="bar exec p95" style="width:22.31%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p99</span>
               <div class="track">
                 
-                <span class="bar exec p99" style="width:17.46%"></span>
+                <span class="bar exec p99" style="width:31.61%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p999</span>
+              <div class="track">
+                
+                <span class="bar exec p999" style="width:92.59%"></span>
               </div>
             </div>
         </div>
@@ -320,10 +341,10 @@
             <span class="sub">bare fetch of the same tiny body</span>
           </div>
           <div class="nums">
-            <span><em>p50</em> 0.4</span>
-            <span><em>p95</em> 0.5</span>
-            <span><em>p99</em> 0.8</span>
-            
+            <span><em>p50</em> 0.1</span>
+            <span><em>p95</em> 0.4</span>
+            <span><em>p99</em> 0.6</span>
+            <span><em>p999</em> 2.9</span>
             <span class="unit">ms</span>
           </div>
         </div>
@@ -347,7 +368,14 @@
               <span class="p-label">p99</span>
               <div class="track">
                 
-                <span class="bar claw p99" style="width:2.50%"></span>
+                <span class="bar claw p99" style="width:3.51%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p999</span>
+              <div class="track">
+                
+                <span class="bar claw p999" style="width:18.12%"></span>
               </div>
             </div>
         </div>
@@ -358,10 +386,10 @@
             <span class="sub">local ring append (no upstream)</span>
           </div>
           <div class="nums">
-            <span><em>p50</em> 0.6</span>
-            <span><em>p95</em> 14.1</span>
-            <span><em>p99</em> 31.2</span>
-            
+            <span><em>p50</em> 0.1</span>
+            <span><em>p95</em> 0.3</span>
+            <span><em>p99</em> 1.0</span>
+            <span><em>p999</em> 2.5</span>
             <span class="unit">ms</span>
           </div>
         </div>
@@ -378,39 +406,46 @@
               <span class="p-label">p95</span>
               <div class="track">
                 
-                <span class="bar claw p95" style="width:41.88%"></span>
+                <span class="bar claw p95" style="width:2.50%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p99</span>
               <div class="track">
                 
-                <span class="bar claw p99" style="width:92.59%"></span>
+                <span class="bar claw p99" style="width:5.99%"></span>
+              </div>
+            </div>
+            <div class="track-row">
+              <span class="p-label">p999</span>
+              <div class="track">
+                
+                <span class="bar claw p999" style="width:15.22%"></span>
               </div>
             </div>
         </div>
       </div>
       <div class="score">
-        <div>Equalized ClawQL p50 <strong>1.3ms</strong></div>
-        <div>Equalized ClawQL p95 <strong>2.1ms</strong></div>
-        <div class="">Equalized ClawQL p99 <strong>3.4ms</strong></div>
-        <div>Executor p50 <strong>3.0ms</strong><small style="display:block;color:var(--muted);font-weight:400">live same-host</small></div>
-        <div>Executor p99 <strong>5.9ms</strong></div>
-        <div>Compare <strong>2.26× — ClawQL overhead faster</strong></div>
+        <div>Equalized ClawQL p50 <strong>0.6ms</strong></div>
+        <div>Equalized ClawQL p95 <strong>0.9ms</strong></div>
+        <div class="">Equalized ClawQL p99 <strong>1.7ms</strong></div>
+        <div>Executor p50 <strong>2.0ms</strong><small style="display:block;color:var(--muted);font-weight:400">live same-host</small></div>
+        <div>Executor p99 <strong>5.1ms</strong></div>
+        <div>Compare <strong>3.06× — ClawQL overhead faster</strong></div>
       </div>
     </section>
 
     <div class="honesty">
-      <div><strong>Honesty</strong> — Equalized ClawQL gateway overhead p50 1.341ms beats live Executor p50 3.032ms on the same result shape.</div>
+      <div><strong>Honesty</strong> — Equalized ClawQL gateway overhead p50 0.643ms beats live Executor p50 1.965ms on the same result shape.</div>
       <ul>
         <li>Both arms return the same tiny pets JSON via one MCP execute. ClawQL goes through same-host mock HTTP; that cost is subtracted for the equalized overhead metric.</li>
         <li>Executor is LIVE equal-arm MCP execute returning the same pets JSON.</li>
-        <li>Raw ClawQL execute e2e p50 1.8ms still includes same-host mock HTTP; equalized row subtracts it.</li>
+        <li>Raw ClawQL execute e2e p50 0.7ms still includes same-host mock HTTP; equalized row subtracts it.</li>
         <li>Do not use UsefulSoftwareCo/executor#1519 50–100ms as measured — wire EXECUTOR_BIN for live.</li>
         <li>p99 needs adequate n; default iters=100. Still sensitive to rare GC/scheduling spikes.</li>
       </ul>
       <p style="margin:0.65rem 0 0">
-        Measured 2026-10-11T00:31:37.146Z (linux/x64, Node v22.14.0).
+        Measured 2026-10-11T00:51:28.887Z (linux/x64, Node v22.14.0).
         Equal arm: MCP execute returns the same pets JSON ClawQL gets from the mock. In-process (Executor has no fetch); ClawQL pays same-host mock HTTP (~subtracted in overhead).
         Distinct from <a href="https://clawql.com/mcp-ui/trace/compare/executor">token compare</a>.
       </p>

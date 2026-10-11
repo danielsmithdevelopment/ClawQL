@@ -60,6 +60,7 @@
       "p50_ms": 1.753,
       "p95_ms": 2.691,
       "p99_ms": 4.159,
+      "p999_ms": null,
       "min_ms": 1.28,
       "max_ms": 158.237,
       "n": 100
@@ -73,6 +74,7 @@
       "p50_ms": 1.341,
       "p95_ms": 2.147,
       "p99_ms": 3.399,
+      "p999_ms": null,
       "headline": true
     },
     {
@@ -84,6 +86,7 @@
       "p50_ms": 3.032,
       "p95_ms": 5.512,
       "p99_ms": 5.88,
+      "p999_ms": null,
       "min_ms": 2.281,
       "max_ms": 7.431,
       "n": 100,
@@ -100,6 +103,7 @@
       "p50_ms": 0.412,
       "p95_ms": 0.544,
       "p99_ms": 0.76,
+      "p999_ms": null,
       "min_ms": 0.321,
       "max_ms": 1.899,
       "n": 100
@@ -113,6 +117,7 @@
       "p50_ms": 0.589,
       "p95_ms": 14.105,
       "p99_ms": 31.184,
+      "p999_ms": null,
       "min_ms": 0.287,
       "max_ms": 190.424,
       "n": 100
@@ -125,6 +130,7 @@
       "p50_ms": 1.753,
       "p95_ms": 2.691,
       "p99_ms": 4.159,
+      "p999_ms": null,
       "min_ms": 1.28,
       "max_ms": 158.237,
       "n": 100,
@@ -144,6 +150,7 @@
       "p50_ms": 0.589,
       "p95_ms": 14.105,
       "p99_ms": 31.184,
+      "p999_ms": null,
       "min_ms": 0.287,
       "max_ms": 190.424,
       "n": 100
@@ -154,6 +161,7 @@
       "p50_ms": 0.412,
       "p95_ms": 0.544,
       "p99_ms": 0.76,
+      "p999_ms": null,
       "min_ms": 0.321,
       "max_ms": 1.899,
       "n": 100
@@ -167,6 +175,7 @@
       "p50_ms": 3.032,
       "p95_ms": 5.512,
       "p99_ms": 5.88,
+      "p999_ms": null,
       "min_ms": 2.281,
       "max_ms": 7.431,
       "n": 100,
@@ -178,17 +187,20 @@
     "clawql_p50_ms": 1.341,
     "clawql_p95_ms": 2.147,
     "clawql_p99_ms": 3.399,
+    "clawql_p999_ms": null,
     "clawql_arm": "gateway_overhead",
     "clawql_execute_e2e_p50_ms": 1.753,
     "executor_p50_ms": 3.032,
     "executor_p95_ms": 5.512,
     "executor_p99_ms": 5.88,
+    "executor_p999_ms": null,
     "ratio_executor_over_clawql": 2.26,
     "ratio_clawql_over_executor": 0.44,
     "executor_source": "live",
     "clawql_faster_p50": true,
     "p50_beats_executor_band_low": true,
-    "p99_beats_executor_band_high": true
+    "p99_beats_executor_band_high": true,
+    "p999_beats_executor": false
   },
   "honesty": {
     "flamegraphDemo120ms": "Synthetic fixture in clawql-observability demo-mcp-execute — NOT a measured ClawQL p50.",
