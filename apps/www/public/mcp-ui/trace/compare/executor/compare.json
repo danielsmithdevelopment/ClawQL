@@ -6,10 +6,22 @@
     "tokenizer": "cl100k_base",
     "focus": "input",
     "benchmarkLive": true,
+    "measuredAt": "2026-08-27",
+    "sampleSize": 1,
     "sourceJson": "docs/benchmarks/executor-comparison/executor-cmp-001.live.json"
   },
   "preset": "executor-cmp-001",
   "measurements": "docs/benchmarks/executor-comparison/executor-cmp-001.live.json",
+  "provenance": {
+    "measuredAt": "2026-08-27",
+    "sampleSize": 1,
+    "sourceJson": "docs/benchmarks/executor-comparison/executor-cmp-001.live.json",
+    "clawqlLayer1TokensMeasured": 394,
+    "executorLiveExecuteTokens": 115,
+    "executorPackageVersionInArtifact": null,
+    "multiTurnUniformN5Ratio": 148,
+    "multiTurnMixedN5Ratio": 66
+  },
   "layer1": {
     "clawqlCodemodeTokens": 394,
     "executorLiveExecuteTokens": 115,
@@ -23,14 +35,22 @@
     "shareOfInputPct": {
       "clawql": 70,
       "executor": 100
-    }
+    },
+    "note": "Executor: no gateway output projection (full REST pass-through)"
   },
   "combined": {
     "clawqlInputTokens": 1301,
     "executorLiveInputTokens": 143581,
     "executorPublishedL1InputTokens": 144510,
     "ratioLiveL1": 110.36202920830131,
-    "ratioPublishedL1": 111.076095311299
+    "ratioPublishedL1": 111.076095311299,
+    "sampleSize": 1,
+    "multiTurn": {
+      "uniformN5Ratio": 148,
+      "mixedN5Ratio": 66,
+      "uniformArtifact": "docs/benchmarks/executor-comparison/executor-cmp-002b.uniform-pulls.live.json",
+      "mixedArtifact": "docs/benchmarks/executor-comparison/executor-cmp-002.multiturn.live.json"
+    }
   },
   "clawql": {
     "sessionId": "demo-executor-cmp-clawql",

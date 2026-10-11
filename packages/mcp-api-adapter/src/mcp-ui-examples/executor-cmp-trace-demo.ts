@@ -10,13 +10,19 @@ import type { TraceComparePageOpts } from "../mcp-ui-trace-html.js";
 export const EXECUTOR_CMP_MEASUREMENTS = {
   task: "executor-cmp-001",
   repo: "vercel/next.js",
+  /** ISO date from executor-cmp-001.live.json `generatedAt` (date part). */
   capturedAt: "2026-08-27",
+  sourceJson: "docs/benchmarks/executor-comparison/executor-cmp-001.live.json",
+  /** Headline is a single action (N=1). Multi-turn ranges are separate artifacts. */
+  sampleSize: 1,
   clawql: {
     toolDefsTokens: 394,
     toolResultTokens: 907,
     combinedInputTokens: 1301,
     toolNames: ["search", "execute", "cache", "audit"],
     operation: "pulls/list fields=[title,number]",
+    /** Schema size as measured in the live artifact (not re-derived from a later commit). */
+    note: "Layer1 394 = measured search+execute codemode in artifact",
   },
   executor: {
     toolDefsTokensLive: 115,
@@ -25,7 +31,16 @@ export const EXECUTOR_CMP_MEASUREMENTS = {
     combinedInputTokensLive: 143581,
     combinedInputTokensPublished: 144510,
     toolPath: "github.user.githubMain.pulls.list",
-    note: "No output projection — full REST list JSON",
+    note: "No gateway output projection — full REST list JSON (settled: Both Sides of Context Compression)",
+    /** Not recorded inside executor-cmp-001.live.json; pin on remeasure. */
+    versionInArtifact: null as string | null,
+  },
+  /** From executor-cmp-002b / 002 live series (same task family). */
+  multiTurn: {
+    uniformN5Ratio: 148,
+    mixedN5Ratio: 66,
+    uniformArtifact: "docs/benchmarks/executor-comparison/executor-cmp-002b.uniform-pulls.live.json",
+    mixedArtifact: "docs/benchmarks/executor-comparison/executor-cmp-002.multiturn.live.json",
   },
   ratioCombinedLive: 110.4,
   ratioLayer2: 158.18,
@@ -127,7 +142,9 @@ export const EXECUTOR_CMP_MATCHED_CONDITIONS = {
   tokenizer: "cl100k_base",
   focus: "input",
   benchmarkLive: true,
-  sourceJson: "docs/benchmarks/executor-comparison/executor-cmp-001.live.json",
+  measuredAt: EXECUTOR_CMP_MEASUREMENTS.capturedAt,
+  sampleSize: EXECUTOR_CMP_MEASUREMENTS.sampleSize,
+  sourceJson: EXECUTOR_CMP_MEASUREMENTS.sourceJson,
 } as const;
 
 function fmtRatio(n: number): string {
@@ -146,14 +163,17 @@ export function buildExecutorCmpComparePageOpts(
   const inputOnly = focus === "input";
 
   const methodologyHtml = `<div class="fg-methodology">
+    <p><strong>Provenance:</strong> measured <strong>${m.capturedAt}</strong> · N=<strong>${m.sampleSize}</strong> (single action) · artifact <code>${m.sourceJson}</code> · ClawQL Layer1 as measured (<strong>${m.clawql.toolDefsTokens}</strong> tok search+execute) · Executor live MCP execute-only (<strong>${m.executor.toolDefsTokensLive}</strong> tok; package version not recorded in this artifact).</p>
     <p><strong>Layer 1 (tool definitions):</strong> Right column uses <strong>${m.executor.toolDefsTokensLive} tok</strong> from our <em>live</em> Executor MCP install (<code>execute</code> only). <a href="https://executor.sh/">executor.sh</a> publishes <strong>~${m.executor.toolDefsTokensPublished.toLocaleString()} tok</strong> for their codemode chart — a different measurement. ClawQL measured <strong>${m.clawql.toolDefsTokens} tok</strong> (search+execute codemode). <strong>${m.clawql.toolDefsTokens} is smaller than the published Executor figure, not smaller than live execute-only ${m.executor.toolDefsTokensLive}.</strong></p>
-    <p><strong>Layer 2 (tool result):</strong> Layer 2 is <strong>${stats.layer2PctExecutor}%</strong> of Executor's input and <strong>${stats.layer2PctClawql}%</strong> of ClawQL's — almost the entire Executor bill is uncacheable tool payload after <code>pulls.list</code>.</p>
+    <p><strong>Layer 2 (tool result):</strong> Layer 2 is <strong>${stats.layer2PctExecutor}%</strong> of Executor's input and <strong>${stats.layer2PctClawql}%</strong> of ClawQL's — almost the entire Executor bill is uncacheable tool payload after <code>pulls.list</code>. Executor has <strong>no gateway output projection</strong>; the measured path returns full REST JSON (see <a href="https://pragmaticvectors.com/posts/both-sides-of-context-compression">Both Sides of Context Compression</a>).</p>
+    <p><strong>Sample size:</strong> headline is <strong>N=1</strong>. Across N=5: uniform pulls climb <strong>110×→${m.multiTurn.uniformN5Ratio}×</strong>; mixed surfaces land at <strong>${m.multiTurn.mixedN5Ratio}×</strong> at N=5 (see methodology).</p>
+    <p><strong>Results-side cost:</strong> both approaches pay some tokens to shrink results — ClawQL's <code>fields</code>/<code>where</code> args (few tokens, server-enforced) vs any model-authored filter code (output tokens, not guaranteed). Headline ratios use <code>focus=input</code>; toggle <em>include outputs</em> to see model-output tokens.</p>
     <p class="fg-meta" style="margin:0.5rem 0 0">Matched conditions: cl100k_base · focus=input (default) · ${m.task} live · ${m.repo}</p>
   </div>`;
 
   const calloutHtml = inputOnly
-    ? `<div class="fg-callout"><strong>Combined (L1+L2, input only):</strong> Executor <strong>${m.executor.combinedInputTokensLive.toLocaleString()}</strong> vs ClawQL <strong>${m.clawql.combinedInputTokens.toLocaleString()}</strong> = <strong>${fmtRatio(stats.ratioCombinedLive)}×</strong> (live Executor L1 ${m.executor.toolDefsTokensLive}). With Executor's published homepage L1 (~${m.executor.toolDefsTokensPublished.toLocaleString()}), combined would be <strong>${fmtRatio(stats.ratioCombinedPublishedL1)}×</strong> (${m.executor.combinedInputTokensPublished.toLocaleString()} vs ${m.clawql.combinedInputTokens.toLocaleString()}). Layer 2 alone: <strong>${fmtRatio(m.ratioLayer2)}×</strong> (${m.executor.toolResultTokens.toLocaleString()} vs ${m.clawql.toolResultTokens}). Model output omitted — same discipline as the built-in compressed vs fat demos.</div>`
-    : `<div class="fg-callout"><strong>focus=all:</strong> This view includes model output tokens. Blog headline ratios use <strong>focus=input</strong> only (<a href="${canonicalPath}">switch back</a>).</div>`;
+    ? `<div class="fg-callout"><strong>Combined (L1+L2, input only, N=1):</strong> Executor <strong>${m.executor.combinedInputTokensLive.toLocaleString()}</strong> vs ClawQL <strong>${m.clawql.combinedInputTokens.toLocaleString()}</strong> = <strong>${fmtRatio(stats.ratioCombinedLive)}×</strong> (live Executor L1 ${m.executor.toolDefsTokensLive}). With Executor's published homepage L1 (~${m.executor.toolDefsTokensPublished.toLocaleString()}), combined would be <strong>${fmtRatio(stats.ratioCombinedPublishedL1)}×</strong> (${m.executor.combinedInputTokensPublished.toLocaleString()} vs ${m.clawql.combinedInputTokens.toLocaleString()}). Layer 2 alone: <strong>${fmtRatio(m.ratioLayer2)}×</strong> (${m.executor.toolResultTokens.toLocaleString()} vs ${m.clawql.toolResultTokens}). Model output omitted — same discipline as the built-in compressed vs fat demos. <strong>N=5 range:</strong> uniform ${fmtRatio(stats.ratioCombinedLive)}×→${m.multiTurn.uniformN5Ratio}× · mixed →${m.multiTurn.mixedN5Ratio}×.</div>`
+    : `<div class="fg-callout"><strong>focus=all:</strong> This view includes model output tokens. Blog headline ratios use <strong>focus=input</strong> only (<a href="${canonicalPath}">switch back</a>). Output tokens include any cost of asking for <code>fields</code> or writing filter code.</div>`;
 
   return {
     basePath: base,
@@ -195,6 +215,16 @@ export function executorCmpJsonEnvelope(
     matchedConditions: { ...EXECUTOR_CMP_MATCHED_CONDITIONS, focus },
     preset: "executor-cmp-001",
     measurements: EXECUTOR_CMP_MATCHED_CONDITIONS.sourceJson,
+    provenance: {
+      measuredAt: m.capturedAt,
+      sampleSize: m.sampleSize,
+      sourceJson: m.sourceJson,
+      clawqlLayer1TokensMeasured: m.clawql.toolDefsTokens,
+      executorLiveExecuteTokens: m.executor.toolDefsTokensLive,
+      executorPackageVersionInArtifact: m.executor.versionInArtifact,
+      multiTurnUniformN5Ratio: m.multiTurn.uniformN5Ratio,
+      multiTurnMixedN5Ratio: m.multiTurn.mixedN5Ratio,
+    },
     layer1: {
       clawqlCodemodeTokens: m.clawql.toolDefsTokens,
       executorLiveExecuteTokens: m.executor.toolDefsTokensLive,
@@ -209,6 +239,7 @@ export function executorCmpJsonEnvelope(
         clawql: stats.layer2PctClawql,
         executor: stats.layer2PctExecutor,
       },
+      note: "Executor: no gateway output projection (full REST pass-through)",
     },
     combined: {
       clawqlInputTokens: m.clawql.combinedInputTokens,
@@ -216,6 +247,8 @@ export function executorCmpJsonEnvelope(
       executorPublishedL1InputTokens: m.executor.combinedInputTokensPublished,
       ratioLiveL1: stats.ratioCombinedLive,
       ratioPublishedL1: stats.ratioCombinedPublishedL1,
+      sampleSize: m.sampleSize,
+      multiTurn: m.multiTurn,
     },
     clawql,
     executor,

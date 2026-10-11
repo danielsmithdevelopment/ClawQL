@@ -24,7 +24,8 @@ const ROOT = join(__dirname, "..", "..", "..");
 
 const CANONICAL = "https://clawql.com/mcp-ui/trace/compare/executor";
 const DOCS_CATALOG = "https://docs.clawql.com/mcp/mcp-ui";
-const METHODOLOGY = "https://clawql.com/benchmarks/executor-comparison";
+/** Full methodology lives on docs; www mirror is a short landing page. */
+const METHODOLOGY = "https://docs.clawql.com/benchmarks/executor-comparison";
 
 const OUT_DIRS = [
   join(ROOT, "apps", "docs", "public", "mcp-ui", "trace", "compare", "executor"),

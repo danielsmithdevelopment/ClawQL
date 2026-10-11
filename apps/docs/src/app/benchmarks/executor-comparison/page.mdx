@@ -4,7 +4,9 @@ Side-by-side token comparison against [executor.sh](https://executor.sh/) on a G
 
 Tokenizer: `cl100k_base`. `focus=input` (model output omitted from headline ratios).
 
-## Headline numbers (live, `vercel/next.js`)
+**Provenance:** measured **2026-08-27** · **N=1** (single action) · artifact `executor-cmp-001.live.json` · ClawQL Layer1 as measured (**394** tok search+execute) · Executor live MCP execute-only (**115** tok; package version not recorded in this artifact).
+
+## Headline numbers (live, `vercel/next.js`, N=1)
 
 | Layer        |                                     Executor |                         ClawQL | Notes                          |
 | ------------ | -------------------------------------------: | -----------------------------: | ------------------------------ |
@@ -12,7 +14,11 @@ Tokenizer: `cl100k_base`. `focus=input` (model output omitted from headline rati
 | **Layer 2**  |        **143,466** (`pulls.list`, full REST) | **907** (`execute` + `fields`) | **158×** on tool result alone  |
 | **Combined** | **144,510** (pub L1) / **143,581** (live L1) |                      **1,301** | **111×** / **110×**            |
 
-Layer 2 is **100%** of Executor's input and **70%** of ClawQL's on this task.
+Layer 2 is **100%** of Executor's input and **70%** of ClawQL's on this task. Executor has **no gateway output projection** — the measured path returns full REST JSON.
+
+**Sample size:** headline is **N=1**. Across N=5: uniform pulls climb **110×→148×**; mixed surfaces land at **66×** at N=5 ([uniform](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/executor-comparison/executor-cmp-002b.uniform-pulls.live.json) · [mixed](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/executor-comparison/executor-cmp-002.multiturn.live.json)).
+
+**Results-side cost:** both approaches pay some tokens to shrink results — ClawQL's `fields`/`where` args (few tokens, server-enforced) vs any model-authored filter code (output tokens, not guaranteed). Headline ratios use `focus=input`; the flamegraph's *include outputs* toggle shows model-output tokens.
 
 ## Live flamegraph (public)
 
@@ -56,3 +62,4 @@ Multi-turn series: `npm run benchmark:executor-comparison:multiturn` and `npm ru
 - **862×** multi-provider workflow — different metric; do not blend into this comparison
 - Fixture **953 vs 23** — harness sanity only, not for headlines
 - ClawQL **883** / **3,548** — context tiers, not Executor chart parity
+- That Executor provides gateway-layer response projection — it does not (measured full REST pass-through)
