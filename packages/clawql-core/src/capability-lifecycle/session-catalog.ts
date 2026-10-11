@@ -32,10 +32,36 @@ function toSet(xs: readonly string[]): ReadonlySet<string> {
   return new Set(xs);
 }
 
-export function makeInMemorySessionCatalogService(): Context.Service.Shape<
-  typeof SessionCatalogService
-> {
+/** Max bound sessions before oldest-by-boundAt eviction. `0` = unbounded. Default 256. */
+export function sessionCatalogMaxFromEnv(env: NodeJS.ProcessEnv = process.env): number {
+  const raw = env.CLAWQL_CAPABILITY_SESSION_MAX?.trim();
+  if (raw === undefined || raw === "") return 256;
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n) || n < 0) return 256;
+  return n;
+}
+
+export function makeInMemorySessionCatalogService(
+  options: { readonly maxSessions?: number } = {}
+): Context.Service.Shape<typeof SessionCatalogService> {
   const store = new Map<string, SessionCatalog>();
+  const maxSessions = options.maxSessions ?? sessionCatalogMaxFromEnv();
+
+  const evictIfNeeded = (): void => {
+    if (!maxSessions || maxSessions <= 0) return;
+    while (store.size > maxSessions) {
+      let oldestId: string | null = null;
+      let oldestAt = "";
+      for (const [id, cat] of store) {
+        if (!oldestId || cat.boundAt < oldestAt) {
+          oldestId = id;
+          oldestAt = cat.boundAt;
+        }
+      }
+      if (!oldestId) break;
+      store.delete(oldestId);
+    }
+  };
 
   return {
     bind: (catalog) =>
@@ -57,6 +83,7 @@ export function makeInMemorySessionCatalogService(): Context.Service.Shape<
           }
         }
         store.set(catalog.sessionId, catalog);
+        evictIfNeeded();
         return catalog;
       }),
 

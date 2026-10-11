@@ -1,15 +1,4 @@
-import {
-  appendProcessWormEffect,
-  wormInputFromToolAttempt,
-  wormInputFromToolResult,
-} from "clawql-audit";
-import {
-  emitPanguardTelemetryEffect,
-  resolvePanguardTelemetryLokiUrlEffect,
-} from "clawql-observability";
 import { Effect } from "effect";
-import { isX402McpPaymentError } from "clawql-payments/x402";
-import { isMppMcpJsonRpcPaymentError } from "clawql-payments/mpp";
 import { runMcpProxyBeforeCallTool } from "../composition/clawql-api-adapters.js";
 import { recordMcpToolCallAudit, type McpToolAuditOutcome } from "./mcp-tool-audit.js";
 import { wrapMcpToolHandler } from "../observability/otel-tracing.js";
@@ -41,8 +30,10 @@ function clawqlPolicyBlockMessage(err: unknown): string | null {
 
 function emitPanguardDenyTelemetryEffect(toolName: string, reason: string): Effect.Effect<void> {
   return Effect.gen(function* () {
-    const lokiPushUrl = yield* resolvePanguardTelemetryLokiUrlEffect();
-    yield* emitPanguardTelemetryEffect({ toolName, verdict: "deny", reason }, { lokiPushUrl });
+    // Lazy: clawql-observability stays out of the cold import graph when denies are rare.
+    const obs = yield* Effect.promise(() => import("clawql-observability"));
+    const lokiPushUrl = yield* obs.resolvePanguardTelemetryLokiUrlEffect();
+    yield* obs.emitPanguardTelemetryEffect({ toolName, verdict: "deny", reason }, { lokiPushUrl });
   }).pipe(Effect.catch(() => Effect.void));
 }
 
@@ -76,12 +67,13 @@ function appendMcpToolAttemptEffect(toolName: string, args: unknown): Effect.Eff
     return Effect.void;
   }
   return Effect.gen(function* () {
-    const input = yield* wormInputFromToolAttempt({
+    const audit = yield* Effect.promise(() => import("clawql-audit"));
+    const input = yield* audit.wormInputFromToolAttempt({
       toolName,
       argKeys: argKeysFromToolArgs(args),
       source: "mcp",
     });
-    yield* appendProcessWormEffect(input);
+    yield* audit.appendProcessWormEffect(input);
   }).pipe(Effect.catch(() => Effect.void));
 }
 
@@ -94,19 +86,35 @@ function appendMcpToolResultEffect(
     return Effect.void;
   }
   return Effect.gen(function* () {
-    const input = yield* wormInputFromToolResult({
+    const audit = yield* Effect.promise(() => import("clawql-audit"));
+    const input = yield* audit.wormInputFromToolResult({
       toolName,
       ok,
       detail,
       source: "mcp",
     });
-    yield* appendProcessWormEffect(input);
+    yield* audit.appendProcessWormEffect(input);
   }).pipe(Effect.catch(() => Effect.void));
+}
+
+type PaymentToolResultErr = {
+  toToolResult: () => unknown;
+};
+
+function looksLikePaymentToolResultError(err: unknown): err is PaymentToolResultErr {
+  return Boolean(
+    err &&
+      typeof err === "object" &&
+      typeof (err as { toToolResult?: unknown }).toToolResult === "function"
+  );
 }
 
 /**
  * Wrap MCP tool handlers with mcp-proxy pipeline hooks (Panguard, x402, …),
  * durable WORM audit (when CLAWQL_WORM_ENABLED), ephemeral ring audit, and OTEL spans.
+ *
+ * Heavy packages (payments, observability, audit append) load only on the paths that need them
+ * so equal-arm / Core-only compositions keep a smaller cold RSS (§11.1).
  */
 export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
   toolName: string,
@@ -126,15 +134,21 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
         clawqlPolicyBlockMessage(err) ?? (err instanceof Error ? err.message : String(err));
       await Effect.runPromise(appendMcpToolResultEffect(toolName, false, errDetail));
 
-      if (isMppMcpJsonRpcPaymentError(err)) {
-        const result = err.toToolResult() as TResult;
-        await auditWrappedTool(toolName, args[0], "payment_required", result);
-        return result;
-      }
-      if (isX402McpPaymentError(err)) {
-        const result = err.toToolResult() as TResult;
-        await auditWrappedTool(toolName, args[0], "payment_required", result);
-        return result;
+      if (looksLikePaymentToolResultError(err)) {
+        const [{ isMppMcpJsonRpcPaymentError }, { isX402McpPaymentError }] = await Promise.all([
+          import("clawql-payments/mpp"),
+          import("clawql-payments/x402"),
+        ]);
+        if (isMppMcpJsonRpcPaymentError(err)) {
+          const result = err.toToolResult() as TResult;
+          await auditWrappedTool(toolName, args[0], "payment_required", result);
+          return result;
+        }
+        if (isX402McpPaymentError(err)) {
+          const result = err.toToolResult() as TResult;
+          await auditWrappedTool(toolName, args[0], "payment_required", result);
+          return result;
+        }
       }
       const blocked = clawqlPolicyBlockMessage(err);
       if (blocked) {

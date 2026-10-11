@@ -1130,7 +1130,9 @@ function boardFromArms(arms) {
     rows[id] = {
       latency_e2e_ms: a.latency?.e2e,
       gateway_cost_ms: a.latency?.gateway_cost,
+      rss_mb_min: a.resources?.rss_mb?.min ?? null,
       rss_mb_median: a.resources?.rss_mb?.median ?? null,
+      rss_mb_max: a.resources?.rss_mb?.max ?? null,
       cpu_pct_median: a.resources?.cpu_pct?.median ?? null,
       invoked_tool_schema_tokens: a.tokens?.invoked_tool_schema_tokens ?? null,
       schema_tokens_full_list: a.tokens?.tools_list_schema_tokens ?? null,
