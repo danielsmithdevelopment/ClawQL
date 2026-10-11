@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Gateway multi-arm comparison · ClawQL</title>
+  <link rel="canonical" href="https://clawql.com/benchmarks/gateway-multi-comparison"/>
+  <meta name="description" content="Equal-arm MCP gateway board: ClawQL vs MCPJungle, agentgateway, Executor, and a no-gateway direct HTTP baseline — tokens, latency, RSS, and why Bun."/>
+  <style>
+    :root {
+      --ink: #14201c;
+      --muted: #4a5c55;
+      --line: #d5ddd8;
+      --paper: #f7f4ee;
+      --card: #fffdf8;
+      --accent: #0f6b5c;
+      --accent-soft: #d8efe9;
+      --warn: #7a4b12;
+      --warn-soft: #f3e6d2;
+      --hl: #eef7f4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #e4f2ec 0%, transparent 55%),
+        radial-gradient(900px 400px at 100% 0%, #f0e8d8 0%, transparent 50%),
+        var(--paper);
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      line-height: 1.55;
+    }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    .meta { color: var(--muted); font-size: 0.92rem; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .meta a { color: var(--accent); }
+    h1 {
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      line-height: 1.15;
+      margin: 0.35rem 0 0.75rem;
+      letter-spacing: -0.02em;
+    }
+    h2 {
+      font-size: 1.35rem;
+      margin: 2.25rem 0 0.65rem;
+      letter-spacing: -0.01em;
+    }
+    h3 { font-size: 1.05rem; margin: 1.4rem 0 0.4rem; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .lead { font-size: 1.15rem; color: #24352f; max-width: 46rem; }
+    a { color: var(--accent); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      margin: 0.75rem 0 1.1rem;
+      background: var(--card);
+      border: 1px solid var(--line);
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    th, td { text-align: left; padding: 0.45rem 0.55rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { background: #f1eee6; font-weight: 650; }
+    td:nth-child(n+2), th:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; }
+    tr.hl td { background: var(--hl); }
+    .callout {
+      background: var(--accent-soft);
+      border: 1px solid #9dcbbe;
+      color: #11493f;
+      padding: 0.95rem 1.1rem;
+      border-radius: 2px;
+      margin: 1.1rem 0;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .warn {
+      background: var(--warn-soft);
+      border: 1px solid #e0c39a;
+      color: var(--warn);
+      padding: 0.95rem 1.1rem;
+      border-radius: 2px;
+      margin: 1.1rem 0;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+      margin: 1rem 0 1.4rem;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .stat {
+      background: var(--card);
+      border: 1px solid var(--line);
+      padding: 0.85rem 0.95rem;
+    }
+    .stat b { display: block; font-size: 1.35rem; letter-spacing: -0.02em; margin-top: 0.15rem; }
+    .stat span { color: var(--muted); font-size: 0.82rem; }
+    code, pre {
+      background: #efece4;
+      border-radius: 2px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.84em;
+    }
+    code { padding: 0.1rem 0.35rem; }
+    pre { padding: 0.9rem 1rem; overflow: auto; border: 1px solid var(--line); }
+    ul { padding-left: 1.2rem; }
+    .brand { font-family: ui-sans-serif, system-ui, sans-serif; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.78rem; color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="meta"><a href="https://clawql.com/">← clawql.com</a> · <a href="/benchmarks">Benchmarks</a> · <a href="https://pragmaticvectors.com/posts/both-sides-of-context-compression/">Both Sides of Context Compression</a></p>
+    <p class="brand">ClawQL</p>
+    <h1>Gateway comparison board</h1>
+    <p class="lead">Equal-arm 12-step inventory workflow across MCP gateways — plus a <strong>no-gateway direct HTTP</strong> baseline so you can see what each gateway saves in tokens and what it costs in latency and memory.</p>
+    <p class="meta">Measured 2026-10-11T19:47:57.836716Z · 10,000 flows × 12 turns/arm · tokenizer <code>cl100k_base</code> · task_success deterministic inventory check</p>
+
+    <div class="grid">
+      <div class="stat"><span>ClawQL tokens @12 vs direct</span><b>−8,943</b></div>
+      <div class="stat"><span>ClawQL flow p50 tax vs direct</span><b>+16.1 ms</b></div>
+      <div class="stat"><span>Bun multiturn RSS vs Node</span><b>337 / 678 MB</b></div>
+      <div class="stat"><span>Classic token lead vs MCPJungle</span><b>1.72×</b></div>
+    </div>
+
+    <div class="callout">
+      <strong>Publish line:</strong> most efficient <em>governed</em> gateway — fewest multi-turn I/O tokens with equal task success.
+      ClawQL wins tokens by keeping catalog discovery server-side and projecting results (<code>where</code>/<code>fields</code>).
+      Direct HTTP is fastest and has no gateway RSS, but returns fat bodies (and no capability/audit path).
+    </div>
+
+    <h2>1. Tokens — what the model pays</h2>
+    <p>Primary metric: <strong>classic</strong> Layer1 once + Σ Layer2 over 12 turns. Direct has Layer1 = 0 (no MCP <code>tools/list</code>) and fat JSON every turn.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Arm</th><th>L1 once</th><th>Mean L2</th><th>Combined @12</th><th>Mean result</th><th>vs direct</th><th>Success</th>
+        </tr>
+      </thead>
+      <tbody>
+<tr><td>Direct HTTP (no MCP)</td><td>0</td><td>2,456.8</td><td><strong>29,482</strong></td><td>2,456.8</td><td>baseline</td><td>PASS</td></tr>
+<tr class="hl"><td>ClawQL (Node)</td><td>297</td><td>1,686.8</td><td><strong>20,539</strong></td><td>722.8</td><td>saves 8,943</td><td>PASS</td></tr>
+<tr class="hl"><td>ClawQL (Bun)</td><td>297</td><td>1,686.8</td><td><strong>20,539</strong></td><td>722.8</td><td>saves 8,943</td><td>PASS</td></tr>
+<tr><td>MCPJungle</td><td>5,840</td><td>2,456.8</td><td><strong>35,322</strong></td><td>2,456.8</td><td>+5,840</td><td>PASS</td></tr>
+<tr><td>agentgateway</td><td>5,520</td><td>2,456.8</td><td><strong>35,002</strong></td><td>2,456.8</td><td>+5,520</td><td>PASS</td></tr>
+<tr><td>Executor</td><td>90</td><td>4,464.8</td><td><strong>53,668</strong></td><td>4,464.8</td><td>+24,186</td><td>PASS</td></tr>
+      </tbody>
+    </table>
+    <p class="meta">ClawQL / Bun <strong>save</strong> tokens vs raw HTTP because gateway projection shrinks Layer2. Aggregators <strong>add</strong> a fat schema dump (Layer1) on top of the same fat bodies direct already returns. Executor adds the largest Layer2 (full pass-through code result).</p>
+
+    <h2>2. Cost of the gateway — latency &amp; memory</h2>
+    <p>Same 10 000 × 12-turn board. Flow e2e = one full 12-step workflow. RSS is gateway process tree under load (direct has no gateway process).</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Arm</th><th>Flow e2e p50 / p999 (ms)</th><th>Turn p50 / p999</th><th>p50 tax vs direct</th><th>RSS med (MB)</th>
+        </tr>
+      </thead>
+      <tbody>
+<tr><td>Direct HTTP (no MCP)</td><td>2.17 / 9.39</td><td>0.12 / 1.75</td><td>—</td><td>—</td></tr>
+<tr class="hl"><td>ClawQL (Node)</td><td>18.23 / 56.79</td><td>1.38 / 5.14</td><td>+16.1</td><td>678</td></tr>
+<tr class="hl"><td>ClawQL (Bun)</td><td>15.01 / 34.97</td><td>1.12 / 4.82</td><td>+12.8</td><td>337</td></tr>
+<tr><td>MCPJungle</td><td>15.39 / 134.97</td><td>1.18 / 3.84</td><td>+13.2</td><td>153</td></tr>
+<tr><td>agentgateway</td><td>13.63 / 330.91</td><td>1.01 / 3.54</td><td>+11.5</td><td>214</td></tr>
+<tr><td>Executor</td><td>64.35 / 106.55</td><td>5.03 / 16.98</td><td>+62.2</td><td>213</td></tr>
+      </tbody>
+    </table>
+
+    <h3>How to read the trade</h3>
+    <ul>
+      <li><strong>Direct HTTP</strong> — cheapest latency, zero gateway RSS, fat tokens. No MCP auth/audit/projection.</li>
+      <li><strong>ClawQL</strong> — only arm that <em>reduces</em> tokens vs direct (~8,943 @12) while keeping task success. Pays ~16.1 ms flow p50 and Node RSS.</li>
+      <li><strong>MCPJungle / agentgateway</strong> — fast multiplexers; they do <em>not</em> shrink payloads, so they cost schema tokens vs direct for little Layer2 benefit.</li>
+      <li><strong>Executor</strong> — smallest Layer1 schema, largest Layer2 (full JSON pass-through); slowest flow p50 here.</li>
+    </ul>
+
+    <h2>3. Why move ClawQL from Node to Bun</h2>
+    <p>Same <code>dist/server.js</code> and equal-arm env — only the JS runtime binary changes. Tokens are identical; Bun cuts the Node memory/latency tax without a Rust rewrite.</p>
+    <table>
+      <thead><tr><th>Signal</th><th>Node</th><th>Bun</th><th>Delta</th></tr></thead>
+      <tbody>
+        <tr><td>Pets Ready RSS</td><td>234 MB</td><td>179 MB</td><td>−23%</td></tr>
+        <tr><td>Pets under-load med RSS</td><td>409 MB</td><td>309 MB</td><td>−25%</td></tr>
+        <tr><td>Pets e2e p50 / gateway_cost p50</td><td>0.76 / 0.60 ms</td><td>0.34 / 0.20 ms</td><td>faster p50</td></tr>
+        <tr><td>Pets e2e p999</td><td>5.10 ms</td><td>5.52 ms</td><td>Node still edges tail</td></tr>
+        <tr><td>Multiturn flow p50 / RSS med</td><td>18.23 ms / 678 MB</td><td>15.01 ms / 337 MB</td><td>Bun wins both</td></tr>
+        <tr><td>Chaos until-break</td><td>70/71</td><td>62/63</td><td>not a Bun win</td></tr>
+      </tbody>
+    </table>
+    <div class="warn">
+      <strong>Bun is the low-pain lever, not the endgame.</strong>
+      It keeps the Effect/TS governed path and buys ~¼ less Ready RSS and much better multiturn RSS/p50.
+      It does <em>not</em> reach MCPJungle-class memory or beat Node on every chaos/p999 sample.
+      A Rust rewrite would hurt more and might close more of the native gap later — Bun is the optional runtime track now.
+    </div>
+
+    <h2>Reproduce</h2>
+<pre>EXECUTOR_BIN=… MCPJUNGLE_BIN=/tmp/gw-bins/mcpjungle AGENTGATEWAY_BIN=/tmp/gw-bins/agentgateway \
+  BUN_BIN=~/.bun/bin/bun \
+  MT_TURNS=12 MT_ITERS=10000 CATALOG_TOOL_COUNT=40 \
+  MT_ARMS=direct,clawql,clawql_bun,executor,mcpjungle,agentgateway \
+  MT_OUT=gateway-multi-multiturn-10k.json \
+  npm run benchmark:gateway-multi-multiturn
+
+npm run generate:gateway-multi-page</pre>
+
+    <h2>Raw artifacts</h2>
+    <ul>
+      <li><a href="./gateway-multi-multiturn-10k.json">gateway-multi-multiturn-10k.json</a> — this board</li>
+      <li><a href="./gateway-multi-cmp-ts7-node-10k.json">ts7 Node pets 10k</a> · <a href="./gateway-multi-cmp-ts7-bun-10k.json">ts7 Bun pets 10k</a></li>
+      <li><a href="./gateway-multi-cmp-ts7-node-chaos.json">ts7 Node chaos</a> · <a href="./gateway-multi-cmp-ts7-bun-chaos.json">ts7 Bun chaos</a></li>
+      <li><a href="./README.md">Methodology README</a></li>
+    </ul>
+
+    <h2>What not to claim</h2>
+    <ul>
+      <li>Do not mix this topology-A stdio/HTTP board with NATS 4-replica concurrency ceilings.</li>
+      <li>Do not call a hand-written slim-return program “Executor” — live Executor is full pass-through.</li>
+      <li>Do not hide ClawQL RSS — admit the memory loss; Bun shrinks it, Go-thin proxies still win RAM.</li>
+      <li>Token wins require <code>task_success</code> — projection must keep the facts the agent needs.</li>
+    </ul>
+    <p class="meta">Host-bound numbers; re-run on a dedicated bench host before external publish.</p>
+  </div>
+</body>
+</html>

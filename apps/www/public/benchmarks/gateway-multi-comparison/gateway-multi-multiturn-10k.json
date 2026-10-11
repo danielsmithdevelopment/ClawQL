@@ -1,0 +1,3896 @@
+{
+  "suite": "gateway-multi-multiturn",
+  "measuredAt": "2026-10-11T19:26:27.373Z",
+  "node": "v22.14.0",
+  "bun": "1.4.3",
+  "config": {
+    "turns": 12,
+    "iters": 10000,
+    "catalog_tool_count": 40,
+    "limit": 25,
+    "where": "items",
+    "fields": [
+      "id",
+      "name",
+      "status"
+    ],
+    "arms": [
+      "direct",
+      "clawql",
+      "clawql_bun",
+      "executor",
+      "mcpjungle",
+      "agentgateway"
+    ],
+    "tokenizer": "cl100k_base",
+    "progress_every": 500
+  },
+  "equal_arm": {
+    "fat_result_tokens_partition_1": 2411,
+    "slim_fields_tokens_partition_1": 353,
+    "projection_ratio": 6.83,
+    "note": "Same underlying rows; ClawQL where+fields project to {id,name,status}; Executor/aggregators return full envelope (Executor: no gateway projection \u2014 settled)"
+  },
+  "board": {
+    "direct": {
+      "runtime": null,
+      "runtime_version": null,
+      "ready_ms": null,
+      "rss_mb_ready": null,
+      "rss_mb_min": null,
+      "rss_mb_median": null,
+      "rss_mb_max": null,
+      "layer1_once_tokens": 0,
+      "mean_layer2_tokens": 2456.8,
+      "mean_result_tokens": 2456.8,
+      "combined_at_n": 29482,
+      "combined_relist_every_turn_at_n": 29482,
+      "flows": 10000,
+      "turns_per_flow": 12,
+      "total_turns": 120000,
+      "flow_e2e_ms": {
+        "n": 10000,
+        "p50_ms": 2.173,
+        "p95_ms": 4.048,
+        "p99_ms": 5.746,
+        "p999_ms": 9.385,
+        "mean_ms": 2.563,
+        "min_ms": 1.91,
+        "max_ms": 178.696
+      },
+      "turn_latency_ms": {
+        "n": 120000,
+        "p50_ms": 0.122,
+        "p95_ms": 0.256,
+        "p99_ms": 1.297,
+        "p999_ms": 1.75,
+        "mean_ms": 0.157,
+        "min_ms": 0.104,
+        "max_ms": 17.996
+      },
+      "call_errors": 0,
+      "task_success_ok": true,
+      "task_success_rate": 1
+    },
+    "clawql": {
+      "runtime": "node",
+      "runtime_version": "v22.14.0",
+      "ready_ms": 1282.8,
+      "rss_mb_ready": 229.3,
+      "rss_mb_min": 358.81,
+      "rss_mb_median": 677.93,
+      "rss_mb_max": 680.13,
+      "layer1_once_tokens": 297,
+      "mean_layer2_tokens": 1686.8,
+      "mean_result_tokens": 722.8,
+      "combined_at_n": 20539,
+      "combined_relist_every_turn_at_n": 20242,
+      "flows": 10000,
+      "turns_per_flow": 12,
+      "total_turns": 120000,
+      "flow_e2e_ms": {
+        "n": 10000,
+        "p50_ms": 18.228,
+        "p95_ms": 23.906,
+        "p99_ms": 31.718,
+        "p999_ms": 56.792,
+        "mean_ms": 18.995,
+        "min_ms": 14.917,
+        "max_ms": 384.957
+      },
+      "turn_latency_ms": {
+        "n": 120000,
+        "p50_ms": 1.378,
+        "p95_ms": 2.517,
+        "p99_ms": 3.148,
+        "p999_ms": 5.141,
+        "mean_ms": 1.544,
+        "min_ms": 1.168,
+        "max_ms": 137.659
+      },
+      "call_errors": 0,
+      "task_success_ok": true,
+      "task_success_rate": 1
+    },
+    "clawql_bun": {
+      "runtime": "bun",
+      "runtime_version": "1.4.3",
+      "ready_ms": 851.3,
+      "rss_mb_ready": 178.31,
+      "rss_mb_min": 299.67,
+      "rss_mb_median": 337.09,
+      "rss_mb_max": 371.27,
+      "layer1_once_tokens": 297,
+      "mean_layer2_tokens": 1686.8,
+      "mean_result_tokens": 722.8,
+      "combined_at_n": 20539,
+      "combined_relist_every_turn_at_n": 20242,
+      "flows": 10000,
+      "turns_per_flow": 12,
+      "total_turns": 120000,
+      "flow_e2e_ms": {
+        "n": 10000,
+        "p50_ms": 15.014,
+        "p95_ms": 20.401,
+        "p99_ms": 24.585,
+        "p999_ms": 34.974,
+        "mean_ms": 15.641,
+        "min_ms": 11.038,
+        "max_ms": 342.413
+      },
+      "turn_latency_ms": {
+        "n": 120000,
+        "p50_ms": 1.115,
+        "p95_ms": 1.884,
+        "p99_ms": 3.476,
+        "p999_ms": 4.823,
+        "mean_ms": 1.264,
+        "min_ms": 0.812,
+        "max_ms": 152.065
+      },
+      "call_errors": 0,
+      "task_success_ok": true,
+      "task_success_rate": 1
+    },
+    "executor": {
+      "runtime": null,
+      "runtime_version": null,
+      "ready_ms": null,
+      "rss_mb_ready": 194.01,
+      "rss_mb_min": 194.01,
+      "rss_mb_median": 213.48,
+      "rss_mb_max": 226.75,
+      "layer1_once_tokens": 90,
+      "mean_layer2_tokens": 4464.8,
+      "mean_result_tokens": 4464.8,
+      "combined_at_n": 53668,
+      "combined_relist_every_turn_at_n": 53578,
+      "flows": 10000,
+      "turns_per_flow": 12,
+      "total_turns": 120000,
+      "flow_e2e_ms": {
+        "n": 10000,
+        "p50_ms": 64.351,
+        "p95_ms": 76.84,
+        "p99_ms": 86.821,
+        "p999_ms": 106.552,
+        "mean_ms": 65.446,
+        "min_ms": 52.633,
+        "max_ms": 264.269
+      },
+      "turn_latency_ms": {
+        "n": 120000,
+        "p50_ms": 5.026,
+        "p95_ms": 7.283,
+        "p99_ms": 9.864,
+        "p999_ms": 16.982,
+        "mean_ms": 5.366,
+        "min_ms": 3.633,
+        "max_ms": 40.135
+      },
+      "call_errors": 0,
+      "task_success_ok": true,
+      "task_success_rate": 1
+    },
+    "mcpjungle": {
+      "runtime": null,
+      "runtime_version": null,
+      "ready_ms": null,
+      "rss_mb_ready": 107.29,
+      "rss_mb_min": 107.29,
+      "rss_mb_median": 152.55,
+      "rss_mb_max": 153.06,
+      "layer1_once_tokens": 5840,
+      "mean_layer2_tokens": 2456.8,
+      "mean_result_tokens": 2456.8,
+      "combined_at_n": 35322,
+      "combined_relist_every_turn_at_n": 99562,
+      "flows": 10000,
+      "turns_per_flow": 12,
+      "total_turns": 120000,
+      "flow_e2e_ms": {
+        "n": 10000,
+        "p50_ms": 15.389,
+        "p95_ms": 18.31,
+        "p99_ms": 20.311,
+        "p999_ms": 134.972,
+        "mean_ms": 15.795,
+        "min_ms": 11.723,
+        "max_ms": 349.416
+      },
+      "turn_latency_ms": {
+        "n": 120000,
+        "p50_ms": 1.175,
+        "p95_ms": 1.57,
+        "p99_ms": 2.443,
+        "p999_ms": 3.842,
+        "mean_ms": 1.237,
+        "min_ms": 0.749,
+        "max_ms": 265.172
+      },
+      "call_errors": 0,
+      "task_success_ok": true,
+      "task_success_rate": 1
+    },
+    "agentgateway": {
+      "runtime": null,
+      "runtime_version": null,
+      "ready_ms": null,
+      "rss_mb_ready": 183.6,
+      "rss_mb_min": 183.6,
+      "rss_mb_median": 214.08,
+      "rss_mb_max": 214.52,
+      "layer1_once_tokens": 5520,
+      "mean_layer2_tokens": 2456.8,
+      "mean_result_tokens": 2456.8,
+      "combined_at_n": 35002,
+      "combined_relist_every_turn_at_n": 95722,
+      "flows": 10000,
+      "turns_per_flow": 12,
+      "total_turns": 120000,
+      "flow_e2e_ms": {
+        "n": 10000,
+        "p50_ms": 13.628,
+        "p95_ms": 17.435,
+        "p99_ms": 19.577,
+        "p999_ms": 330.912,
+        "mean_ms": 14.11,
+        "min_ms": 8.679,
+        "max_ms": 377.961
+      },
+      "turn_latency_ms": {
+        "n": 120000,
+        "p50_ms": 1.005,
+        "p95_ms": 1.604,
+        "p99_ms": 2.392,
+        "p999_ms": 3.54,
+        "mean_ms": 1.101,
+        "min_ms": 0.608,
+        "max_ms": 353.222
+      },
+      "call_errors": 0,
+      "task_success_ok": true,
+      "task_success_rate": 1
+    }
+  },
+  "ratios_vs_clawql": {
+    "baseline": "clawql",
+    "direct": {
+      "vs_clawql_combined_classic": 1.44,
+      "vs_clawql_mean_result": 3.4,
+      "vs_clawql_flow_e2e_p50": 0.12,
+      "vs_direct_combined_classic": 1.0,
+      "token_delta_vs_direct": 0,
+      "flow_e2e_p50_delta_ms_vs_direct": 0
+    },
+    "clawql_bun": {
+      "vs_clawql_combined_classic": 1.0,
+      "vs_clawql_mean_result": 1.0,
+      "vs_clawql_flow_e2e_p50": 0.82,
+      "vs_direct_combined_classic": 0.7,
+      "token_delta_vs_direct": -8943,
+      "tokens_saved_vs_direct": 8943,
+      "tokens_added_vs_direct": 0,
+      "flow_e2e_p50_delta_ms_vs_direct": 12.841,
+      "flow_e2e_p50_ratio_vs_direct": 6.91,
+      "rss_mb_median": 337.09
+    },
+    "executor": {
+      "vs_clawql_combined_classic": 2.61,
+      "vs_clawql_mean_result": 6.18,
+      "vs_clawql_flow_e2e_p50": 3.53,
+      "vs_direct_combined_classic": 1.82,
+      "token_delta_vs_direct": 24186,
+      "tokens_saved_vs_direct": 0,
+      "tokens_added_vs_direct": 24186,
+      "flow_e2e_p50_delta_ms_vs_direct": 62.178,
+      "flow_e2e_p50_ratio_vs_direct": 29.61,
+      "rss_mb_median": 213.48
+    },
+    "mcpjungle": {
+      "vs_clawql_combined_classic": 1.72,
+      "vs_clawql_mean_result": 3.4,
+      "vs_clawql_flow_e2e_p50": 0.84,
+      "vs_direct_combined_classic": 1.2,
+      "token_delta_vs_direct": 5840,
+      "tokens_saved_vs_direct": 0,
+      "tokens_added_vs_direct": 5840,
+      "flow_e2e_p50_delta_ms_vs_direct": 13.216,
+      "flow_e2e_p50_ratio_vs_direct": 7.08,
+      "rss_mb_median": 152.55
+    },
+    "agentgateway": {
+      "vs_clawql_combined_classic": 1.7,
+      "vs_clawql_mean_result": 3.4,
+      "vs_clawql_flow_e2e_p50": 0.75,
+      "vs_direct_combined_classic": 1.19,
+      "token_delta_vs_direct": 5520,
+      "tokens_saved_vs_direct": 0,
+      "tokens_added_vs_direct": 5520,
+      "flow_e2e_p50_delta_ms_vs_direct": 11.455,
+      "flow_e2e_p50_ratio_vs_direct": 6.27,
+      "rss_mb_median": 214.08
+    },
+    "clawql": {
+      "vs_direct_combined_classic": 0.7,
+      "token_delta_vs_direct": -8943,
+      "tokens_saved_vs_direct": 8943,
+      "tokens_added_vs_direct": 0,
+      "flow_e2e_p50_delta_ms_vs_direct": 16.055,
+      "flow_e2e_p50_ratio_vs_direct": 8.39,
+      "rss_mb_median": 677.93
+    }
+  },
+  "task_success": {
+    "direct": {
+      "turns_ok": 120000,
+      "turns_total": 120000,
+      "flows": 10000,
+      "turns_per_flow": 12,
+      "ok": true,
+      "rate": 1
+    },
+    "clawql": {
+      "turns_ok": 120000,
+      "turns_total": 120000,
+      "flows": 10000,
+      "turns_per_flow": 12,
+      "ok": true,
+      "rate": 1
+    },
+    "clawql_bun": {
+      "turns_ok": 120000,
+      "turns_total": 120000,
+      "flows": 10000,
+      "turns_per_flow": 12,
+      "ok": true,
+      "rate": 1
+    },
+    "executor": {
+      "turns_ok": 120000,
+      "turns_total": 120000,
+      "flows": 10000,
+      "turns_per_flow": 12,
+      "ok": true,
+      "rate": 1
+    },
+    "mcpjungle": {
+      "turns_ok": 120000,
+      "turns_total": 120000,
+      "flows": 10000,
+      "turns_per_flow": 12,
+      "ok": true,
+      "rate": 1
+    },
+    "agentgateway": {
+      "turns_ok": 120000,
+      "turns_total": 120000,
+      "flows": 10000,
+      "turns_per_flow": 12,
+      "ok": true,
+      "rate": 1
+    }
+  },
+  "cumulative_table": {
+    "direct": [
+      {
+        "n": 1,
+        "combined": 2411,
+        "layer2Cumulative": 2411
+      },
+      {
+        "n": 2,
+        "combined": 4872,
+        "layer2Cumulative": 4872
+      },
+      {
+        "n": 3,
+        "combined": 7333,
+        "layer2Cumulative": 7333
+      },
+      {
+        "n": 4,
+        "combined": 9794,
+        "layer2Cumulative": 9794
+      },
+      {
+        "n": 5,
+        "combined": 12255,
+        "layer2Cumulative": 12255
+      },
+      {
+        "n": 6,
+        "combined": 14716,
+        "layer2Cumulative": 14716
+      },
+      {
+        "n": 7,
+        "combined": 17177,
+        "layer2Cumulative": 17177
+      },
+      {
+        "n": 8,
+        "combined": 19638,
+        "layer2Cumulative": 19638
+      },
+      {
+        "n": 9,
+        "combined": 22099,
+        "layer2Cumulative": 22099
+      },
+      {
+        "n": 10,
+        "combined": 24560,
+        "layer2Cumulative": 24560
+      },
+      {
+        "n": 11,
+        "combined": 27021,
+        "layer2Cumulative": 27021
+      },
+      {
+        "n": 12,
+        "combined": 29482,
+        "layer2Cumulative": 29482
+      }
+    ],
+    "clawql": [
+      {
+        "n": 1,
+        "combined": 1938,
+        "layer2Cumulative": 1641
+      },
+      {
+        "n": 2,
+        "combined": 3629,
+        "layer2Cumulative": 3332
+      },
+      {
+        "n": 3,
+        "combined": 5320,
+        "layer2Cumulative": 5023
+      },
+      {
+        "n": 4,
+        "combined": 7011,
+        "layer2Cumulative": 6714
+      },
+      {
+        "n": 5,
+        "combined": 8702,
+        "layer2Cumulative": 8405
+      },
+      {
+        "n": 6,
+        "combined": 10393,
+        "layer2Cumulative": 10096
+      },
+      {
+        "n": 7,
+        "combined": 12084,
+        "layer2Cumulative": 11787
+      },
+      {
+        "n": 8,
+        "combined": 13775,
+        "layer2Cumulative": 13478
+      },
+      {
+        "n": 9,
+        "combined": 15466,
+        "layer2Cumulative": 15169
+      },
+      {
+        "n": 10,
+        "combined": 17157,
+        "layer2Cumulative": 16860
+      },
+      {
+        "n": 11,
+        "combined": 18848,
+        "layer2Cumulative": 18551
+      },
+      {
+        "n": 12,
+        "combined": 20539,
+        "layer2Cumulative": 20242
+      }
+    ],
+    "clawql_bun": [
+      {
+        "n": 1,
+        "combined": 1938,
+        "layer2Cumulative": 1641
+      },
+      {
+        "n": 2,
+        "combined": 3629,
+        "layer2Cumulative": 3332
+      },
+      {
+        "n": 3,
+        "combined": 5320,
+        "layer2Cumulative": 5023
+      },
+      {
+        "n": 4,
+        "combined": 7011,
+        "layer2Cumulative": 6714
+      },
+      {
+        "n": 5,
+        "combined": 8702,
+        "layer2Cumulative": 8405
+      },
+      {
+        "n": 6,
+        "combined": 10393,
+        "layer2Cumulative": 10096
+      },
+      {
+        "n": 7,
+        "combined": 12084,
+        "layer2Cumulative": 11787
+      },
+      {
+        "n": 8,
+        "combined": 13775,
+        "layer2Cumulative": 13478
+      },
+      {
+        "n": 9,
+        "combined": 15466,
+        "layer2Cumulative": 15169
+      },
+      {
+        "n": 10,
+        "combined": 17157,
+        "layer2Cumulative": 16860
+      },
+      {
+        "n": 11,
+        "combined": 18848,
+        "layer2Cumulative": 18551
+      },
+      {
+        "n": 12,
+        "combined": 20539,
+        "layer2Cumulative": 20242
+      }
+    ],
+    "executor": [
+      {
+        "n": 1,
+        "combined": 4509,
+        "layer2Cumulative": 4419
+      },
+      {
+        "n": 2,
+        "combined": 8978,
+        "layer2Cumulative": 8888
+      },
+      {
+        "n": 3,
+        "combined": 13447,
+        "layer2Cumulative": 13357
+      },
+      {
+        "n": 4,
+        "combined": 17916,
+        "layer2Cumulative": 17826
+      },
+      {
+        "n": 5,
+        "combined": 22385,
+        "layer2Cumulative": 22295
+      },
+      {
+        "n": 6,
+        "combined": 26854,
+        "layer2Cumulative": 26764
+      },
+      {
+        "n": 7,
+        "combined": 31323,
+        "layer2Cumulative": 31233
+      },
+      {
+        "n": 8,
+        "combined": 35792,
+        "layer2Cumulative": 35702
+      },
+      {
+        "n": 9,
+        "combined": 40261,
+        "layer2Cumulative": 40171
+      },
+      {
+        "n": 10,
+        "combined": 44730,
+        "layer2Cumulative": 44640
+      },
+      {
+        "n": 11,
+        "combined": 49199,
+        "layer2Cumulative": 49109
+      },
+      {
+        "n": 12,
+        "combined": 53668,
+        "layer2Cumulative": 53578
+      }
+    ],
+    "mcpjungle": [
+      {
+        "n": 1,
+        "combined": 8251,
+        "layer2Cumulative": 2411
+      },
+      {
+        "n": 2,
+        "combined": 10712,
+        "layer2Cumulative": 4872
+      },
+      {
+        "n": 3,
+        "combined": 13173,
+        "layer2Cumulative": 7333
+      },
+      {
+        "n": 4,
+        "combined": 15634,
+        "layer2Cumulative": 9794
+      },
+      {
+        "n": 5,
+        "combined": 18095,
+        "layer2Cumulative": 12255
+      },
+      {
+        "n": 6,
+        "combined": 20556,
+        "layer2Cumulative": 14716
+      },
+      {
+        "n": 7,
+        "combined": 23017,
+        "layer2Cumulative": 17177
+      },
+      {
+        "n": 8,
+        "combined": 25478,
+        "layer2Cumulative": 19638
+      },
+      {
+        "n": 9,
+        "combined": 27939,
+        "layer2Cumulative": 22099
+      },
+      {
+        "n": 10,
+        "combined": 30400,
+        "layer2Cumulative": 24560
+      },
+      {
+        "n": 11,
+        "combined": 32861,
+        "layer2Cumulative": 27021
+      },
+      {
+        "n": 12,
+        "combined": 35322,
+        "layer2Cumulative": 29482
+      }
+    ],
+    "agentgateway": [
+      {
+        "n": 1,
+        "combined": 7931,
+        "layer2Cumulative": 2411
+      },
+      {
+        "n": 2,
+        "combined": 10392,
+        "layer2Cumulative": 4872
+      },
+      {
+        "n": 3,
+        "combined": 12853,
+        "layer2Cumulative": 7333
+      },
+      {
+        "n": 4,
+        "combined": 15314,
+        "layer2Cumulative": 9794
+      },
+      {
+        "n": 5,
+        "combined": 17775,
+        "layer2Cumulative": 12255
+      },
+      {
+        "n": 6,
+        "combined": 20236,
+        "layer2Cumulative": 14716
+      },
+      {
+        "n": 7,
+        "combined": 22697,
+        "layer2Cumulative": 17177
+      },
+      {
+        "n": 8,
+        "combined": 25158,
+        "layer2Cumulative": 19638
+      },
+      {
+        "n": 9,
+        "combined": 27619,
+        "layer2Cumulative": 22099
+      },
+      {
+        "n": 10,
+        "combined": 30080,
+        "layer2Cumulative": 24560
+      },
+      {
+        "n": 11,
+        "combined": 32541,
+        "layer2Cumulative": 27021
+      },
+      {
+        "n": 12,
+        "combined": 35002,
+        "layer2Cumulative": 29482
+      }
+    ]
+  },
+  "arms": {
+    "direct": {
+      "id": "direct",
+      "model": "raw_http_catalog_fat_no_mcp",
+      "runtime": null,
+      "runtimeVersion": null,
+      "layer1": {
+        "once_schema_tokens": 0,
+        "tools_count": 0,
+        "note": "No MCP tools/list \u2014 agent talks HTTP directly to the mock API"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "GET /catalog/001",
+          "result_tokens": 2411,
+          "result_chars": 7655,
+          "layer2_classic": 2411,
+          "layer2_relist_every_turn": 2411,
+          "latency_ms": 15.738,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+        },
+        {
+          "n": 2,
+          "tool": "GET /catalog/002",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 2.635,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+        },
+        {
+          "n": 3,
+          "tool": "GET /catalog/003",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 1.697,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+        },
+        {
+          "n": 4,
+          "tool": "GET /catalog/004",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 1.555,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+        },
+        {
+          "n": 5,
+          "tool": "GET /catalog/005",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 1.335,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+        },
+        {
+          "n": 6,
+          "tool": "GET /catalog/006",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 1.643,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+        },
+        {
+          "n": 7,
+          "tool": "GET /catalog/007",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 1.219,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+        },
+        {
+          "n": 8,
+          "tool": "GET /catalog/008",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 1.184,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+        },
+        {
+          "n": 9,
+          "tool": "GET /catalog/009",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 2.682,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+        },
+        {
+          "n": 10,
+          "tool": "GET /catalog/010",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 1.401,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+        },
+        {
+          "n": 11,
+          "tool": "GET /catalog/011",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 0.978,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+        },
+        {
+          "n": 12,
+          "tool": "GET /catalog/012",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 2461,
+          "latency_ms": 0.946,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "No MCP gateway \u2014 fat equal-arm HTTP body (aggregator Layer2 shape)"
+        }
+      ],
+      "iters": 10000,
+      "call_errors": 0,
+      "task_success_agg": {
+        "ok": 120000,
+        "total": 120000
+      },
+      "resources": {
+        "label": "direct",
+        "pid": null,
+        "n": 0,
+        "rss_mb": {
+          "min": null,
+          "median": null,
+          "max": null
+        }
+      },
+      "startup": {
+        "ready_ms": null,
+        "rss_mb_ready": null
+      },
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2411,
+          "layer2Cumulative": 2411,
+          "combined": 2411,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 4872,
+          "combined": 4872,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 7333,
+          "combined": 7333,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 9794,
+          "combined": 9794,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 12255,
+          "combined": 12255,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 14716,
+          "combined": 14716,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 17177,
+          "combined": 17177,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 19638,
+          "combined": 19638,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 22099,
+          "combined": 22099,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 24560,
+          "combined": 24560,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 27021,
+          "combined": 27021,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 29482,
+          "combined": 29482,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2411,
+          "layer2Cumulative": 2411,
+          "combined": 2411,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 4872,
+          "combined": 4872,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 7333,
+          "combined": 7333,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 9794,
+          "combined": 9794,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 12255,
+          "combined": 12255,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 14716,
+          "combined": 14716,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 17177,
+          "combined": 17177,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 19638,
+          "combined": 19638,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 22099,
+          "combined": 22099,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 24560,
+          "combined": 24560,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 27021,
+          "combined": 27021,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 29482,
+          "combined": 29482,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 120000,
+        "turns_total": 120000,
+        "flows": 10000,
+        "turns_per_flow": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "runtime": null,
+        "runtime_version": null,
+        "ready_ms": null,
+        "rss_mb_ready": null,
+        "rss_mb_min": null,
+        "rss_mb_median": null,
+        "rss_mb_max": null,
+        "layer1_once_tokens": 0,
+        "mean_layer2_tokens": 2456.8,
+        "mean_result_tokens": 2456.8,
+        "combined_at_n": 29482,
+        "combined_relist_every_turn_at_n": 29482,
+        "flows": 10000,
+        "turns_per_flow": 12,
+        "total_turns": 120000,
+        "flow_e2e_ms": {
+          "n": 10000,
+          "p50_ms": 2.173,
+          "p95_ms": 4.048,
+          "p99_ms": 5.746,
+          "p999_ms": 9.385,
+          "mean_ms": 2.563,
+          "min_ms": 1.91,
+          "max_ms": 178.696
+        },
+        "turn_latency_ms": {
+          "n": 120000,
+          "p50_ms": 0.122,
+          "p95_ms": 0.256,
+          "p99_ms": 1.297,
+          "p999_ms": 1.75,
+          "mean_ms": 0.157,
+          "min_ms": 0.104,
+          "max_ms": 17.996
+        },
+        "call_errors": 0,
+        "task_success_ok": true,
+        "task_success_rate": 1
+      }
+    },
+    "clawql": {
+      "id": "clawql",
+      "model": "search_plus_execute_where_fields_node",
+      "runtime": "node",
+      "runtimeVersion": "v22.14.0",
+      "layer1": {
+        "once_schema_tokens": 297,
+        "tools_count": 2,
+        "tools_list_count_full": 8,
+        "tools_list_schema_tokens_full": 1189,
+        "note": "Only search+execute schemas counted as Layer1 (catalog stays server-side)"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "catalog_list_001",
+          "search_tokens": 964,
+          "result_tokens": 677,
+          "result_chars": 1840,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1641,
+          "layer2_relist_every_turn": 1641,
+          "latency_ms": 57.799,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 2,
+          "tool": "catalog_list_002",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 29.814,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 3,
+          "tool": "catalog_list_003",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 45.943,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 4,
+          "tool": "catalog_list_004",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 41.798,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 5,
+          "tool": "catalog_list_005",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 11.997,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 6,
+          "tool": "catalog_list_006",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 11.558,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 7,
+          "tool": "catalog_list_007",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 4.888,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 8,
+          "tool": "catalog_list_008",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 6.101,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 9,
+          "tool": "catalog_list_009",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 6.286,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 10,
+          "tool": "catalog_list_010",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 137.659,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 11,
+          "tool": "catalog_list_011",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 2002,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 6.368,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 12,
+          "tool": "catalog_list_012",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 2002,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 3.923,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        }
+      ],
+      "iters": 10000,
+      "call_errors": 0,
+      "task_success_agg": {
+        "ok": 120000,
+        "total": 120000
+      },
+      "resources": {
+        "label": "clawql",
+        "pid": 311909,
+        "n": 379,
+        "rss_mb": {
+          "min": 358.81,
+          "median": 677.93,
+          "max": 680.13
+        }
+      },
+      "startup": {
+        "ready_ms": 1282.8,
+        "rss_mb_ready": 229.3
+      },
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1641,
+          "layer2Cumulative": 1641,
+          "combined": 1938,
+          "layer2ShareOfCombined": 84.7
+        },
+        {
+          "n": 2,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 3332,
+          "combined": 3629,
+          "layer2ShareOfCombined": 91.8
+        },
+        {
+          "n": 3,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 5023,
+          "combined": 5320,
+          "layer2ShareOfCombined": 94.4
+        },
+        {
+          "n": 4,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 6714,
+          "combined": 7011,
+          "layer2ShareOfCombined": 95.8
+        },
+        {
+          "n": 5,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 8405,
+          "combined": 8702,
+          "layer2ShareOfCombined": 96.6
+        },
+        {
+          "n": 6,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 10096,
+          "combined": 10393,
+          "layer2ShareOfCombined": 97.1
+        },
+        {
+          "n": 7,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 11787,
+          "combined": 12084,
+          "layer2ShareOfCombined": 97.5
+        },
+        {
+          "n": 8,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 13478,
+          "combined": 13775,
+          "layer2ShareOfCombined": 97.8
+        },
+        {
+          "n": 9,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 15169,
+          "combined": 15466,
+          "layer2ShareOfCombined": 98.1
+        },
+        {
+          "n": 10,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 16860,
+          "combined": 17157,
+          "layer2ShareOfCombined": 98.3
+        },
+        {
+          "n": 11,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 18551,
+          "combined": 18848,
+          "layer2ShareOfCombined": 98.4
+        },
+        {
+          "n": 12,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 20242,
+          "combined": 20539,
+          "layer2ShareOfCombined": 98.6
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1641,
+          "layer2Cumulative": 1641,
+          "combined": 1641,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 3332,
+          "combined": 3332,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 5023,
+          "combined": 5023,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 6714,
+          "combined": 6714,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 8405,
+          "combined": 8405,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 10096,
+          "combined": 10096,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 11787,
+          "combined": 11787,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 13478,
+          "combined": 13478,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 15169,
+          "combined": 15169,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 16860,
+          "combined": 16860,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 18551,
+          "combined": 18551,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 20242,
+          "combined": 20242,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 120000,
+        "turns_total": 120000,
+        "flows": 10000,
+        "turns_per_flow": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "runtime": "node",
+        "runtime_version": "v22.14.0",
+        "ready_ms": 1282.8,
+        "rss_mb_ready": 229.3,
+        "rss_mb_min": 358.81,
+        "rss_mb_median": 677.93,
+        "rss_mb_max": 680.13,
+        "layer1_once_tokens": 297,
+        "mean_layer2_tokens": 1686.8,
+        "mean_result_tokens": 722.8,
+        "combined_at_n": 20539,
+        "combined_relist_every_turn_at_n": 20242,
+        "flows": 10000,
+        "turns_per_flow": 12,
+        "total_turns": 120000,
+        "flow_e2e_ms": {
+          "n": 10000,
+          "p50_ms": 18.228,
+          "p95_ms": 23.906,
+          "p99_ms": 31.718,
+          "p999_ms": 56.792,
+          "mean_ms": 18.995,
+          "min_ms": 14.917,
+          "max_ms": 384.957
+        },
+        "turn_latency_ms": {
+          "n": 120000,
+          "p50_ms": 1.378,
+          "p95_ms": 2.517,
+          "p99_ms": 3.148,
+          "p999_ms": 5.141,
+          "mean_ms": 1.544,
+          "min_ms": 1.168,
+          "max_ms": 137.659
+        },
+        "call_errors": 0,
+        "task_success_ok": true,
+        "task_success_rate": 1
+      }
+    },
+    "clawql_bun": {
+      "id": "clawql_bun",
+      "model": "search_plus_execute_where_fields_bun",
+      "runtime": "bun",
+      "runtimeVersion": "1.4.3",
+      "layer1": {
+        "once_schema_tokens": 297,
+        "tools_count": 2,
+        "tools_list_count_full": 8,
+        "tools_list_schema_tokens_full": 1189,
+        "note": "Only search+execute schemas counted as Layer1 (catalog stays server-side)"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "catalog_list_001",
+          "search_tokens": 964,
+          "result_tokens": 677,
+          "result_chars": 1840,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1641,
+          "layer2_relist_every_turn": 1641,
+          "latency_ms": 43.443,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 2,
+          "tool": "catalog_list_002",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 89.272,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 3,
+          "tool": "catalog_list_003",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 152.065,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 4,
+          "tool": "catalog_list_004",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 5.055,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 5,
+          "tool": "catalog_list_005",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 5.493,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 6,
+          "tool": "catalog_list_006",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 4.184,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 7,
+          "tool": "catalog_list_007",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 3.405,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 8,
+          "tool": "catalog_list_008",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 3.637,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 9,
+          "tool": "catalog_list_009",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 4.458,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 10,
+          "tool": "catalog_list_010",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 3.72,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 11,
+          "tool": "catalog_list_011",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 2002,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 3.841,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 12,
+          "tool": "catalog_list_012",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 2002,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 3.175,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        }
+      ],
+      "iters": 10000,
+      "call_errors": 0,
+      "task_success_agg": {
+        "ok": 120000,
+        "total": 120000
+      },
+      "resources": {
+        "label": "clawql_bun",
+        "pid": 311975,
+        "n": 312,
+        "rss_mb": {
+          "min": 299.67,
+          "median": 337.09,
+          "max": 371.27
+        }
+      },
+      "startup": {
+        "ready_ms": 851.3,
+        "rss_mb_ready": 178.31
+      },
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1641,
+          "layer2Cumulative": 1641,
+          "combined": 1938,
+          "layer2ShareOfCombined": 84.7
+        },
+        {
+          "n": 2,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 3332,
+          "combined": 3629,
+          "layer2ShareOfCombined": 91.8
+        },
+        {
+          "n": 3,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 5023,
+          "combined": 5320,
+          "layer2ShareOfCombined": 94.4
+        },
+        {
+          "n": 4,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 6714,
+          "combined": 7011,
+          "layer2ShareOfCombined": 95.8
+        },
+        {
+          "n": 5,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 8405,
+          "combined": 8702,
+          "layer2ShareOfCombined": 96.6
+        },
+        {
+          "n": 6,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 10096,
+          "combined": 10393,
+          "layer2ShareOfCombined": 97.1
+        },
+        {
+          "n": 7,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 11787,
+          "combined": 12084,
+          "layer2ShareOfCombined": 97.5
+        },
+        {
+          "n": 8,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 13478,
+          "combined": 13775,
+          "layer2ShareOfCombined": 97.8
+        },
+        {
+          "n": 9,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 15169,
+          "combined": 15466,
+          "layer2ShareOfCombined": 98.1
+        },
+        {
+          "n": 10,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 16860,
+          "combined": 17157,
+          "layer2ShareOfCombined": 98.3
+        },
+        {
+          "n": 11,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 18551,
+          "combined": 18848,
+          "layer2ShareOfCombined": 98.4
+        },
+        {
+          "n": 12,
+          "layer1Once": 297,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 20242,
+          "combined": 20539,
+          "layer2ShareOfCombined": 98.6
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1641,
+          "layer2Cumulative": 1641,
+          "combined": 1641,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 3332,
+          "combined": 3332,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 5023,
+          "combined": 5023,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 6714,
+          "combined": 6714,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 8405,
+          "combined": 8405,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 10096,
+          "combined": 10096,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 11787,
+          "combined": 11787,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 13478,
+          "combined": 13478,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 15169,
+          "combined": 15169,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 16860,
+          "combined": 16860,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 18551,
+          "combined": 18551,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 20242,
+          "combined": 20242,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 120000,
+        "turns_total": 120000,
+        "flows": 10000,
+        "turns_per_flow": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "runtime": "bun",
+        "runtime_version": "1.4.3",
+        "ready_ms": 851.3,
+        "rss_mb_ready": 178.31,
+        "rss_mb_min": 299.67,
+        "rss_mb_median": 337.09,
+        "rss_mb_max": 371.27,
+        "layer1_once_tokens": 297,
+        "mean_layer2_tokens": 1686.8,
+        "mean_result_tokens": 722.8,
+        "combined_at_n": 20539,
+        "combined_relist_every_turn_at_n": 20242,
+        "flows": 10000,
+        "turns_per_flow": 12,
+        "total_turns": 120000,
+        "flow_e2e_ms": {
+          "n": 10000,
+          "p50_ms": 15.014,
+          "p95_ms": 20.401,
+          "p99_ms": 24.585,
+          "p999_ms": 34.974,
+          "mean_ms": 15.641,
+          "min_ms": 11.038,
+          "max_ms": 342.413
+        },
+        "turn_latency_ms": {
+          "n": 120000,
+          "p50_ms": 1.115,
+          "p95_ms": 1.884,
+          "p99_ms": 3.476,
+          "p999_ms": 4.823,
+          "mean_ms": 1.264,
+          "min_ms": 0.812,
+          "max_ms": 152.065
+        },
+        "call_errors": 0,
+        "task_success_ok": true,
+        "task_success_rate": 1
+      }
+    },
+    "executor": {
+      "id": "executor",
+      "model": "stdio_mcp_code_execute_fat_static",
+      "runtime": null,
+      "runtimeVersion": null,
+      "layer1": {
+        "once_schema_tokens": 90,
+        "tools_count": 1,
+        "tools_list_count_full": 7,
+        "tools_list_schema_tokens_full": 2243,
+        "note": "execute schema only (catalog not published as N tools)"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "execute",
+          "result_tokens": 4419,
+          "result_chars": 16317,
+          "layer2_classic": 4419,
+          "layer2_relist_every_turn": 4419,
+          "latency_ms": 13.677,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; no fields projection"
+        },
+        {
+          "n": 2,
+          "tool": "execute",
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 9.597,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; no fields projection"
+        },
+        {
+          "n": 3,
+          "tool": "execute",
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 8.548,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; no fields projection"
+        },
+        {
+          "n": 4,
+          "tool": "execute",
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 5.983,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; no fields projection"
+        },
+        {
+          "n": 5,
+          "tool": "execute",
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 8.465,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; no fields projection"
+        },
+        {
+          "n": 6,
+          "tool": "execute",
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 8.279,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; no fields projection"
+        },
+        {
+          "n": 7,
+          "tool": "execute",
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 7.559,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; no fields projection"
+        },
+        {
+          "n": 8,
+          "tool": "execute",
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 7.691,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; no fields projection"
+        },
+        {
+          "n": 9,
+          "tool": "execute",
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 7.335,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; no fields projection"
+        },
+        {
+          "n": 10,
+          "tool": "execute",
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 8.238,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; no fields projection"
+        },
+        {
+          "n": 11,
+          "tool": "execute",
+          "result_tokens": 4469,
+          "result_chars": 16479,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 6.141,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; no fields projection"
+        },
+        {
+          "n": 12,
+          "tool": "execute",
+          "result_tokens": 4469,
+          "result_chars": 16479,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 7.166,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; no fields projection"
+        }
+      ],
+      "iters": 10000,
+      "call_errors": 0,
+      "task_success_agg": {
+        "ok": 120000,
+        "total": 120000
+      },
+      "resources": {
+        "label": "executor",
+        "pid": 312012,
+        "n": 1308,
+        "rss_mb": {
+          "min": 194.01,
+          "median": 213.48,
+          "max": 226.75
+        }
+      },
+      "startup": {
+        "ready_ms": null,
+        "rss_mb_ready": 194.01
+      },
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4419,
+          "layer2Cumulative": 4419,
+          "combined": 4509,
+          "layer2ShareOfCombined": 98
+        },
+        {
+          "n": 2,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 8888,
+          "combined": 8978,
+          "layer2ShareOfCombined": 99
+        },
+        {
+          "n": 3,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 13357,
+          "combined": 13447,
+          "layer2ShareOfCombined": 99.3
+        },
+        {
+          "n": 4,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 17826,
+          "combined": 17916,
+          "layer2ShareOfCombined": 99.5
+        },
+        {
+          "n": 5,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 22295,
+          "combined": 22385,
+          "layer2ShareOfCombined": 99.6
+        },
+        {
+          "n": 6,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 26764,
+          "combined": 26854,
+          "layer2ShareOfCombined": 99.7
+        },
+        {
+          "n": 7,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 31233,
+          "combined": 31323,
+          "layer2ShareOfCombined": 99.7
+        },
+        {
+          "n": 8,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 35702,
+          "combined": 35792,
+          "layer2ShareOfCombined": 99.7
+        },
+        {
+          "n": 9,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 40171,
+          "combined": 40261,
+          "layer2ShareOfCombined": 99.8
+        },
+        {
+          "n": 10,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 44640,
+          "combined": 44730,
+          "layer2ShareOfCombined": 99.8
+        },
+        {
+          "n": 11,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 49109,
+          "combined": 49199,
+          "layer2ShareOfCombined": 99.8
+        },
+        {
+          "n": 12,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 53578,
+          "combined": 53668,
+          "layer2ShareOfCombined": 99.8
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4419,
+          "layer2Cumulative": 4419,
+          "combined": 4419,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 8888,
+          "combined": 8888,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 13357,
+          "combined": 13357,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 17826,
+          "combined": 17826,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 22295,
+          "combined": 22295,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 26764,
+          "combined": 26764,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 31233,
+          "combined": 31233,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 35702,
+          "combined": 35702,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 40171,
+          "combined": 40171,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 44640,
+          "combined": 44640,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 49109,
+          "combined": 49109,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 53578,
+          "combined": 53578,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 120000,
+        "turns_total": 120000,
+        "flows": 10000,
+        "turns_per_flow": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "runtime": null,
+        "runtime_version": null,
+        "ready_ms": null,
+        "rss_mb_ready": 194.01,
+        "rss_mb_min": 194.01,
+        "rss_mb_median": 213.48,
+        "rss_mb_max": 226.75,
+        "layer1_once_tokens": 90,
+        "mean_layer2_tokens": 4464.8,
+        "mean_result_tokens": 4464.8,
+        "combined_at_n": 53668,
+        "combined_relist_every_turn_at_n": 53578,
+        "flows": 10000,
+        "turns_per_flow": 12,
+        "total_turns": 120000,
+        "flow_e2e_ms": {
+          "n": 10000,
+          "p50_ms": 64.351,
+          "p95_ms": 76.84,
+          "p99_ms": 86.821,
+          "p999_ms": 106.552,
+          "mean_ms": 65.446,
+          "min_ms": 52.633,
+          "max_ms": 264.269
+        },
+        "turn_latency_ms": {
+          "n": 120000,
+          "p50_ms": 5.026,
+          "p95_ms": 7.283,
+          "p99_ms": 9.864,
+          "p999_ms": 16.982,
+          "mean_ms": 5.366,
+          "min_ms": 3.633,
+          "max_ms": 40.135
+        },
+        "call_errors": 0,
+        "task_success_ok": true,
+        "task_success_rate": 1
+      }
+    },
+    "mcpjungle": {
+      "id": "mcpjungle",
+      "model": "aggregator_tools_list_plus_fat_call",
+      "runtime": null,
+      "runtimeVersion": null,
+      "layer1": {
+        "once_schema_tokens": 5840,
+        "tools_count": 40,
+        "note": "Full tools/list dump (fat catalog surface); classic counts Layer1 once"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "catalog__catalog_list_001",
+          "result_tokens": 2411,
+          "result_chars": 7655,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2411,
+          "layer2_relist_every_turn": 8251,
+          "latency_ms": 163.63,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 2,
+          "tool": "catalog__catalog_list_002",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.945,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 3,
+          "tool": "catalog__catalog_list_003",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.725,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 4,
+          "tool": "catalog__catalog_list_004",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.473,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 5,
+          "tool": "catalog__catalog_list_005",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.35,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 6,
+          "tool": "catalog__catalog_list_006",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.714,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 7,
+          "tool": "catalog__catalog_list_007",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.367,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 8,
+          "tool": "catalog__catalog_list_008",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.577,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 9,
+          "tool": "catalog__catalog_list_009",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.308,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 10,
+          "tool": "catalog__catalog_list_010",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.435,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 11,
+          "tool": "catalog__catalog_list_011",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.022,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 12,
+          "tool": "catalog__catalog_list_012",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.181,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        }
+      ],
+      "iters": 10000,
+      "call_errors": 0,
+      "task_success_agg": {
+        "ok": 120000,
+        "total": 120000
+      },
+      "resources": {
+        "label": "mcpjungle",
+        "pid": 312133,
+        "n": 315,
+        "rss_mb": {
+          "min": 107.29,
+          "median": 152.55,
+          "max": 153.06
+        }
+      },
+      "startup": {
+        "ready_ms": null,
+        "rss_mb_ready": 107.29
+      },
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2411,
+          "layer2Cumulative": 2411,
+          "combined": 8251,
+          "layer2ShareOfCombined": 29.2
+        },
+        {
+          "n": 2,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 4872,
+          "combined": 10712,
+          "layer2ShareOfCombined": 45.5
+        },
+        {
+          "n": 3,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 7333,
+          "combined": 13173,
+          "layer2ShareOfCombined": 55.7
+        },
+        {
+          "n": 4,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 9794,
+          "combined": 15634,
+          "layer2ShareOfCombined": 62.6
+        },
+        {
+          "n": 5,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 12255,
+          "combined": 18095,
+          "layer2ShareOfCombined": 67.7
+        },
+        {
+          "n": 6,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 14716,
+          "combined": 20556,
+          "layer2ShareOfCombined": 71.6
+        },
+        {
+          "n": 7,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 17177,
+          "combined": 23017,
+          "layer2ShareOfCombined": 74.6
+        },
+        {
+          "n": 8,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 19638,
+          "combined": 25478,
+          "layer2ShareOfCombined": 77.1
+        },
+        {
+          "n": 9,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 22099,
+          "combined": 27939,
+          "layer2ShareOfCombined": 79.1
+        },
+        {
+          "n": 10,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 24560,
+          "combined": 30400,
+          "layer2ShareOfCombined": 80.8
+        },
+        {
+          "n": 11,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 27021,
+          "combined": 32861,
+          "layer2ShareOfCombined": 82.2
+        },
+        {
+          "n": 12,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 29482,
+          "combined": 35322,
+          "layer2ShareOfCombined": 83.5
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8251,
+          "layer2Cumulative": 8251,
+          "combined": 8251,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 16552,
+          "combined": 16552,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 24853,
+          "combined": 24853,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 33154,
+          "combined": 33154,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 41455,
+          "combined": 41455,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 49756,
+          "combined": 49756,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 58057,
+          "combined": 58057,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 66358,
+          "combined": 66358,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 74659,
+          "combined": 74659,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 82960,
+          "combined": 82960,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 91261,
+          "combined": 91261,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 99562,
+          "combined": 99562,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 120000,
+        "turns_total": 120000,
+        "flows": 10000,
+        "turns_per_flow": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "runtime": null,
+        "runtime_version": null,
+        "ready_ms": null,
+        "rss_mb_ready": 107.29,
+        "rss_mb_min": 107.29,
+        "rss_mb_median": 152.55,
+        "rss_mb_max": 153.06,
+        "layer1_once_tokens": 5840,
+        "mean_layer2_tokens": 2456.8,
+        "mean_result_tokens": 2456.8,
+        "combined_at_n": 35322,
+        "combined_relist_every_turn_at_n": 99562,
+        "flows": 10000,
+        "turns_per_flow": 12,
+        "total_turns": 120000,
+        "flow_e2e_ms": {
+          "n": 10000,
+          "p50_ms": 15.389,
+          "p95_ms": 18.31,
+          "p99_ms": 20.311,
+          "p999_ms": 134.972,
+          "mean_ms": 15.795,
+          "min_ms": 11.723,
+          "max_ms": 349.416
+        },
+        "turn_latency_ms": {
+          "n": 120000,
+          "p50_ms": 1.175,
+          "p95_ms": 1.57,
+          "p99_ms": 2.443,
+          "p999_ms": 3.842,
+          "mean_ms": 1.237,
+          "min_ms": 0.749,
+          "max_ms": 265.172
+        },
+        "call_errors": 0,
+        "task_success_ok": true,
+        "task_success_rate": 1
+      }
+    },
+    "agentgateway": {
+      "id": "agentgateway",
+      "model": "aggregator_tools_list_plus_fat_call",
+      "runtime": null,
+      "runtimeVersion": null,
+      "layer1": {
+        "once_schema_tokens": 5520,
+        "tools_count": 40,
+        "note": "Full tools/list dump (fat catalog surface); classic counts Layer1 once"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "catalog_list_001",
+          "result_tokens": 2411,
+          "result_chars": 7655,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2411,
+          "layer2_relist_every_turn": 7931,
+          "latency_ms": 5.096,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 2,
+          "tool": "catalog_list_002",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.898,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 3,
+          "tool": "catalog_list_003",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.47,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 4,
+          "tool": "catalog_list_004",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.784,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 5,
+          "tool": "catalog_list_005",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.644,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 6,
+          "tool": "catalog_list_006",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.126,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 7,
+          "tool": "catalog_list_007",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.49,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 8,
+          "tool": "catalog_list_008",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.748,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 9,
+          "tool": "catalog_list_009",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.97,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 10,
+          "tool": "catalog_list_010",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.162,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 11,
+          "tool": "catalog_list_011",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.617,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 12,
+          "tool": "catalog_list_012",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.414,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        }
+      ],
+      "iters": 10000,
+      "call_errors": 0,
+      "task_success_agg": {
+        "ok": 120000,
+        "total": 120000
+      },
+      "resources": {
+        "label": "agentgateway",
+        "pid": 312182,
+        "n": 281,
+        "rss_mb": {
+          "min": 183.6,
+          "median": 214.08,
+          "max": 214.52
+        }
+      },
+      "startup": {
+        "ready_ms": null,
+        "rss_mb_ready": 183.6
+      },
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2411,
+          "layer2Cumulative": 2411,
+          "combined": 7931,
+          "layer2ShareOfCombined": 30.4
+        },
+        {
+          "n": 2,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 4872,
+          "combined": 10392,
+          "layer2ShareOfCombined": 46.9
+        },
+        {
+          "n": 3,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 7333,
+          "combined": 12853,
+          "layer2ShareOfCombined": 57.1
+        },
+        {
+          "n": 4,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 9794,
+          "combined": 15314,
+          "layer2ShareOfCombined": 64
+        },
+        {
+          "n": 5,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 12255,
+          "combined": 17775,
+          "layer2ShareOfCombined": 68.9
+        },
+        {
+          "n": 6,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 14716,
+          "combined": 20236,
+          "layer2ShareOfCombined": 72.7
+        },
+        {
+          "n": 7,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 17177,
+          "combined": 22697,
+          "layer2ShareOfCombined": 75.7
+        },
+        {
+          "n": 8,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 19638,
+          "combined": 25158,
+          "layer2ShareOfCombined": 78.1
+        },
+        {
+          "n": 9,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 22099,
+          "combined": 27619,
+          "layer2ShareOfCombined": 80
+        },
+        {
+          "n": 10,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 24560,
+          "combined": 30080,
+          "layer2ShareOfCombined": 81.6
+        },
+        {
+          "n": 11,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 27021,
+          "combined": 32541,
+          "layer2ShareOfCombined": 83
+        },
+        {
+          "n": 12,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 29482,
+          "combined": 35002,
+          "layer2ShareOfCombined": 84.2
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7931,
+          "layer2Cumulative": 7931,
+          "combined": 7931,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 15912,
+          "combined": 15912,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 23893,
+          "combined": 23893,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 31874,
+          "combined": 31874,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 39855,
+          "combined": 39855,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 47836,
+          "combined": 47836,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 55817,
+          "combined": 55817,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 63798,
+          "combined": 63798,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 71779,
+          "combined": 71779,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 79760,
+          "combined": 79760,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 87741,
+          "combined": 87741,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 95722,
+          "combined": 95722,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 120000,
+        "turns_total": 120000,
+        "flows": 10000,
+        "turns_per_flow": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "runtime": null,
+        "runtime_version": null,
+        "ready_ms": null,
+        "rss_mb_ready": 183.6,
+        "rss_mb_min": 183.6,
+        "rss_mb_median": 214.08,
+        "rss_mb_max": 214.52,
+        "layer1_once_tokens": 5520,
+        "mean_layer2_tokens": 2456.8,
+        "mean_result_tokens": 2456.8,
+        "combined_at_n": 35002,
+        "combined_relist_every_turn_at_n": 95722,
+        "flows": 10000,
+        "turns_per_flow": 12,
+        "total_turns": 120000,
+        "flow_e2e_ms": {
+          "n": 10000,
+          "p50_ms": 13.628,
+          "p95_ms": 17.435,
+          "p99_ms": 19.577,
+          "p999_ms": 330.912,
+          "mean_ms": 14.11,
+          "min_ms": 8.679,
+          "max_ms": 377.961
+        },
+        "turn_latency_ms": {
+          "n": 120000,
+          "p50_ms": 1.005,
+          "p95_ms": 1.604,
+          "p99_ms": 2.392,
+          "p999_ms": 3.54,
+          "mean_ms": 1.101,
+          "min_ms": 0.608,
+          "max_ms": 353.222
+        },
+        "call_errors": 0,
+        "task_success_ok": true,
+        "task_success_rate": 1
+      }
+    }
+  },
+  "errors": {},
+  "category_win": [
+    "Category story: most efficient governed gateway \u2014 multi-turn I/O tokens with equal task success.",
+    "1. Primary model \u2014 classic Layer1 once + \u03a3 Layer2 (clients that cache tools/list).",
+    "2. Input side \u2014 ClawQL Layer1 is search+execute only; aggregators pay the full fat tools/list once.",
+    "3. Output side \u2014 ClawQL gateway fields/where projection; Executor measured path is full payload pass-through.",
+    "4. Re-list-every-turn is secondary sensitivity only (most clients cache; lazy clients shrink aggregators further).",
+    "5. Settled: do not label a hand-written slim-return program as Executor (Both Sides of Context Compression).",
+    "ClawQL deterministic task_success: PASS.",
+    "Measured vs MCPJungle @N=12: classic 1.72\u00d7 (relist secondary 4.92\u00d7).",
+    "Measured vs agentgateway @N=12: classic 1.7\u00d7 (relist secondary 4.73\u00d7).",
+    "Measured vs Executor @N=12: classic 2.61\u00d7 (fat return \u2014 matches live Layer 2 pass-through; Layer1 schema still smaller).",
+    "RSS is a loss among serious arms \u2014 admit or fix before memory claims."
+  ],
+  "primary_metric": "classic_layer1_once_plus_sum_layer2_with_task_success",
+  "secondary_metric": "tools_list_every_turn_sensitivity",
+  "honesty": [
+    "Fat catalog equal-arm: N MCP tools mirrored as N OpenAPI operationIds.",
+    "PRIMARY tokens: classic Layer1_once + sum(Layer2) with deterministic task_success (tokens from flow 1; spot-stable).",
+    "MT_ITERS=10000: each arm completes that many full 12-turn flows on one warm connection.",
+    "Also reports flow e2e + per-turn latency percentiles and RSS (do not drop these for publish).",
+    "SECONDARY: tools_list_every_turn \u2014 measured once on flow 1; most clients cache ListTools.",
+    "Executor Layer2 is fat JSON \u2014 matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
+    "Do not publish a hand-written slim-return program as Executor.",
+    "clawql_bun: same dist/server.js as clawql; only JS runtime changes.",
+    "ContextForge/MetaMCP off publish board by default.",
+    "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",
+    "RSS is a loss among serious arms \u2014 admit plainly.",
+    "direct: no MCP gateway \u2014 raw HTTP fat catalog; Layer1=0. Prices token savings vs latency/RSS tax.",
+    "Merged direct-10k solo run into prior gateway 10k board (same equal-arm mock contract)."
+  ],
+  "ratios_vs_direct": {
+    "direct": {
+      "vs_direct_combined_classic": 1.0,
+      "token_delta_vs_direct": 0,
+      "flow_e2e_p50_delta_ms_vs_direct": 0
+    },
+    "clawql_bun": {
+      "vs_direct_combined_classic": 0.7,
+      "token_delta_vs_direct": -8943,
+      "tokens_saved_vs_direct": 8943,
+      "tokens_added_vs_direct": 0,
+      "flow_e2e_p50_delta_ms_vs_direct": 12.841,
+      "flow_e2e_p50_ratio_vs_direct": 6.91,
+      "rss_mb_median": 337.09
+    },
+    "executor": {
+      "vs_direct_combined_classic": 1.82,
+      "token_delta_vs_direct": 24186,
+      "tokens_saved_vs_direct": 0,
+      "tokens_added_vs_direct": 24186,
+      "flow_e2e_p50_delta_ms_vs_direct": 62.178,
+      "flow_e2e_p50_ratio_vs_direct": 29.61,
+      "rss_mb_median": 213.48
+    },
+    "mcpjungle": {
+      "vs_direct_combined_classic": 1.2,
+      "token_delta_vs_direct": 5840,
+      "tokens_saved_vs_direct": 0,
+      "tokens_added_vs_direct": 5840,
+      "flow_e2e_p50_delta_ms_vs_direct": 13.216,
+      "flow_e2e_p50_ratio_vs_direct": 7.08,
+      "rss_mb_median": 152.55
+    },
+    "agentgateway": {
+      "vs_direct_combined_classic": 1.19,
+      "token_delta_vs_direct": 5520,
+      "tokens_saved_vs_direct": 0,
+      "tokens_added_vs_direct": 5520,
+      "flow_e2e_p50_delta_ms_vs_direct": 11.455,
+      "flow_e2e_p50_ratio_vs_direct": 6.27,
+      "rss_mb_median": 214.08
+    },
+    "clawql": {
+      "vs_direct_combined_classic": 0.7,
+      "token_delta_vs_direct": -8943,
+      "tokens_saved_vs_direct": 8943,
+      "tokens_added_vs_direct": 0,
+      "flow_e2e_p50_delta_ms_vs_direct": 16.055,
+      "flow_e2e_p50_ratio_vs_direct": 8.39,
+      "rss_mb_median": 677.93
+    }
+  },
+  "mergedAt": "2026-10-11T19:47:57.836716Z"
+}

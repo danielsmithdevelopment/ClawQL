@@ -1,0 +1,41 @@
+# Gateway multi-arm comparison
+
+Equal-arm **12-step** inventory workflow across MCP gateways — plus a **no-gateway direct HTTP** baseline so you can see what each gateway saves in tokens and what it costs in latency and memory. {{ className: 'lead' }}
+
+The shareable board (tables, Bun rationale, reproduce commands) lives on the static page:
+
+**[clawql.com/benchmarks/gateway-multi-comparison](https://clawql.com/benchmarks/gateway-multi-comparison)** · local mirror under `apps/www/public/benchmarks/gateway-multi-comparison/`.
+
+## Headline (10 000 × 12 turns)
+
+| Arm | Combined tokens @12 | vs direct | Flow e2e p50 | RSS med |
+| --- | ---: | ---: | ---: | ---: |
+| Direct HTTP (no MCP) | 29 482 | baseline | **2.2 ms** | — |
+| **ClawQL (Bun)** | **20 539** | **−8 943** | 15.0 ms | 337 MB |
+| **ClawQL (Node)** | **20 539** | **−8 943** | 18.2 ms | 678 MB |
+| MCPJungle | 35 322 | +5 840 | 15.4 ms | **153 MB** |
+| agentgateway | 35 002 | +5 520 | 13.6 ms | 214 MB |
+| Executor | 53 668 | +24 186 | 64.4 ms | 213 MB |
+
+ClawQL is the only measured gateway that **reduces** tokens vs raw HTTP (projection + server-side discovery). Aggregators add a fat `tools/list` on top of the same fat bodies. Bun keeps those token wins and cuts Node’s multiturn RSS/p50 tax.
+
+## Why Bun
+
+Same `dist/server.js` — only the JS runtime changes. Pets board (TS7 rebuild): Ready RSS **−23%**, under-load **−25%**, gateway_cost p50 **−67%**. Chaos/p999 are not Bun wins; MCPJungle still leads RAM. Bun is the low-pain runtime track, not a Rust substitute.
+
+## Reproduce
+
+```bash
+MT_TURNS=12 MT_ITERS=10000 CATALOG_TOOL_COUNT=40 \
+  MT_ARMS=direct,clawql,clawql_bun,executor,mcpjungle,agentgateway \
+  MT_OUT=gateway-multi-multiturn-10k.json \
+  npm run benchmark:gateway-multi-multiturn
+
+npm run generate:gateway-multi-page
+```
+
+## Artifacts
+
+- [`gateway-multi-multiturn-10k.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/gateway-multi-comparison/gateway-multi-multiturn-10k.json)
+- [`README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/gateway-multi-comparison/README.md) — methodology
+- Pets Bun boards: `gateway-multi-cmp-ts7-*-10k.json` / `*-chaos.json`

@@ -1,0 +1,317 @@
+# Multi-gateway equal-arm comparison
+
+Publish posture: **most efficient governed gateway** — claims only what holds under equal topology, equal task success, and an honest path matrix. Numbers below are host-bound; re-run on a dedicated bench host before external publish.
+
+| Artifact | What it proves |
+| --- | --- |
+| [`gateway-multi-cmp-10k.json`](./gateway-multi-cmp-10k.json) | Interleaved latency / gateway_cost / RSS (n=10 000) |
+| [`gateway-multi-cmp-chaos-slim.json`](./gateway-multi-cmp-chaos-slim.json) | Chaos ceilings — **single-instance / stdio equal-arm** (not cross-topology) |
+| [`gateway-multi-cmp-bun-10k.json`](./gateway-multi-cmp-bun-10k.json) | **Node vs Bun** same Core binary — Ready RSS / under-load RSS / latency (n=10 000) |
+| [`gateway-multi-cmp-bun-chaos.json`](./gateway-multi-cmp-bun-chaos.json) | **Node vs Bun** chaos until-break (topology A) |
+| [`gateway-multi-cmp-ts7-node-10k.json`](./gateway-multi-cmp-ts7-node-10k.json) | **TS7 + Node** ClawQL n=10k |
+| [`gateway-multi-cmp-ts7-bun-10k.json`](./gateway-multi-cmp-ts7-bun-10k.json) | **TS7 + Bun** ClawQL n=10k |
+| [`gateway-multi-cmp-ts7-node-chaos.json`](./gateway-multi-cmp-ts7-node-chaos.json) | **TS7 + Node** chaos until-break |
+| [`gateway-multi-cmp-ts7-bun-chaos.json`](./gateway-multi-cmp-ts7-bun-chaos.json) | **TS7 + Bun** chaos until-break |
+| [`gateway-multi-multiturn.json`](./gateway-multi-multiturn.json) | **12-turn I/O tokens + task success** on a fat catalog |
+| [`gateway-multi-multiturn-24.json`](./gateway-multi-multiturn-24.json) | Same board at N=24 (compounding check) |
+| [`gateway-multi-multiturn-10k.json`](./gateway-multi-multiturn-10k.json) | **10 000 × 12-turn** flows — tokens + latency + RSS + task_success |
+
+---
+
+## Category story (what we claim)
+
+| Claim | Status | Bound |
+| --- | --- | --- |
+| **Fewest tokens among MCP aggregators + live Executor with equal task success** | **Primary** — classic Layer1-once + Σ Layer2 @12; all arms `task_success` PASS | ClawQL **20.5k** vs MCPJungle **35.3k** (1.72×) and Executor **53.7k** (2.61×). Layer 2 is the win — same gap as [Both Sides of Context Compression](https://pragmaticvectors.com/posts/both-sides-of-context-compression). |
+| **Lowest governed gateway cost** | **Supported** on n=10k — ClawQL gateway_cost p50 **0.70 ms** vs Executor **2.36 ms** | Same equal-arm pets upstream contract |
+| **Latency competitive with the fastest aggregators while doing more per call** | **Supported** — ClawQL best p50; MCPJungle best p999; essentially a tie at the top | Read with [path matrix](#path-matrix-what-each-arm-does) |
+| **Scale-out concurrency win** | **Not claimed yet** | Only after same-topology boards (1-instance **and** 4-replica behind LB) for every arm, pushed until break |
+
+Coherent publish line: **most efficient governed gateway** — output projection at the gateway layer (`fields`/`where`), which live Executor does not provide (measured full REST pass-through; see blog + `executor-cmp-001.live.json`).
+
+Do **not** cite “135 vs 19” (ClawQL NATS 4-replica vs Executor process-per-client) as a same-board concurrency win.
+
+---
+
+## Path matrix (what each arm does)
+
+Latency at n=10 000 is essentially a tie among the top three. ClawQL’s figure includes governance work the aggregators skip.
+
+| Capability on the hot path | ClawQL (slim Core) | Executor | MCPJungle | agentgateway |
+| --- | :---: | :---: | :---: | :---: |
+| Auth / capability gate | ✓ (lifecycle off in bench; gate still present) | — | optional | optional |
+| Operation risk / policy | ✓ (ALLOW_NO_ENFORCEMENT in bench) | — | — | — |
+| Ephemeral audit ring | ✓ | — | — | — |
+| Output redaction hooks | ✓ (available; unused on pets) | — | — | — |
+| Result projection (`where`/`fields`) | ✓ (gateway-enforced) | ✗ (pass-through; no gateway projection) | — | — |
+| Upstream HTTP to equal mock | ✓ | ✗ (sandbox; upstream=0) | ✓ | ✓ |
+| Multi-tool catalog discovery | search (server-side) | N/A (code) | full `tools/list` | full `tools/list` |
+
+At n=10 000: ClawQL fastest at **p50**; MCPJungle fastest at **p999**. That is the fair framing — not “ClawQL is always the lowest latency gateway.”
+
+---
+
+## Scorecard (honest)
+
+| Dimension | Verdict |
+| --- | --- |
+| **Multi-turn I/O tokens (classic)** | **Lead** vs aggregators (~1.7× combined @12) and fat Executor (~2.6×). Re-list-every-turn is **secondary** (most clients cache `tools/list`; lazy clients shrink aggregator schema cost further). |
+| **Task success** | Deterministic inventory checks in harness (`task_success`); LLM-as-judge optional when a model key is present. Publish only if ClawQL success ≥ peers. |
+| **Latency e2e / gateway_cost** | **Win on governed cost**; e2e competitive (best p50, near-tie p999). |
+| **Chaos (single-instance equal-arm)** | **Win vs Executor** — ClawQL **63/64** vs Executor **23/24**. **Loss vs MCPJungle** — **204/205**. **Tie vs agentgateway** — **62/63**. Do not claim aggregator concurrency wins. |
+| **RSS** | **Loss among serious arms** — ClawQL cold Ready ~**232 MB**, chaos min ~**259 MB**, under-load median ~**427 MB** vs MCPJungle ~**148–152 MB**. Scale-out multiplies the gap. Admit it; profile heap before claiming memory wins. |
+| **ContextForge / MetaMCP** | **Off the publish board.** ContextForge was previously nested behind MCPJungle (inflates latency/RSS/chaos). MetaMCP needs Docker. Re-add only with native REST/virtualization (CF → `/pets` direct) or a real MetaMCP run. |
+
+---
+
+## Equal-arm contract (latency)
+
+| Lever | Normalization |
+| --- | --- |
+| Result | Same two-pet JSON (`Ada` / `Grace`) |
+| Upstream | Shared mock HTTP `/pets` — ClawQL OpenAPI `execute` + aggregator `list_pets` via `EQUAL_ARM_UPSTREAM` |
+| Executor | Static equal JSON in-sandbox (`fetch` disabled) — **upstream_cost = 0** |
+| Composition | `CLAWQL_INSTANCE_SPEC` slim Core (memory/documents/ChatGPT off) — `ENABLE_*=0` alone is a no-op in 8.0 |
+| Latency schedule | Interleaved closed-loop across live arms |
+| Samples | **n = 10 000** (+ warmup 100) for trustworthy p999 |
+| Gateway cost | `e2e − paired direct` when the arm paid the HTTP hop; Executor `gateway_cost ≈ e2e` |
+| Tokens (primary) | **Invoked tool schema only**; full `tools/list` secondary |
+| Chaos | Optional (`MULTI_SKIP_CHAOS=1` on the 10k latency run) |
+
+## Board — n=10 000 interleaved (post composition slim)
+
+| Arm | e2e p50 / p95 / p99 / **p999** (ms) | Gateway cost p50 / p99 / **p999** | RSS med MB | Tools | List tok | Invoked schema | Result tok |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **ClawQL** | **1.02 / 1.95 / 3.82 / 7.41** | **0.70 / 3.48 / 6.87** | 427† | **8** | **1189** | 178 | 59 |
+| **Executor** | 2.36 / 5.12 / 6.61 / 11.49 | 2.36 / 6.61 / 11.49‡ | 210 | 7 | 2243 | 90 | 59 |
+| **MCPJungle** | 1.34 / 2.72 / 4.36 / **6.86** | 1.02 / 3.99 / 6.52 | **152** | 1 | 46 | 46 | 28 |
+| **agentgateway** | 1.17 / 2.38 / 4.21 / 7.29 | 0.84 / 3.81 / 6.87 | 215 | 1 | 37 | 37 | 28 |
+
+† Under-load median; cold Ready ~232 MB / solo min ~255–259 MB. Heaviest serious arm — see RSS section.  
+‡ Executor gateway_cost = e2e (upstream=0).
+
+**Delta vs prior 10k (tools=18):** e2e p50 1.08→**1.02**, gateway_cost p50 0.81→**0.70**, p999 cost 9.41→**6.87**, tools 18→**8**, list tok 5334→**1189**.
+
+---
+
+## Chaos — topology rules
+
+### What this board measures
+
+| Topology | Arms | Artifact |
+| --- | --- | --- |
+| **A — Single instance / process-per-client** | ClawQL stdio, Executor stdio, MCPJungle 1× HTTP, agentgateway 1× HTTP | [`gateway-multi-cmp-chaos-slim.json`](./gateway-multi-cmp-chaos-slim.json) |
+| **B — Scale-out (4 replicas behind LB)** | ClawQL NATS sticky (existing executor-cmp ceilings); MCPJungle / agentgateway **not yet on this board** | Separate — do not mix with A |
+
+**Claim only within the same topology.** Push every arm until it **actually breaks** (`MULTI_CHAOS_UNTIL_BREAK=1`, raise `MULTI_CHAOS_MAX`). Stopping at 128 without a break is incomplete for concurrency claims.
+
+### Board A — slim composition (p99≤100 ms), until-break
+
+| Arm | Topology | last_ok / first_break | Break reason | RSS min / med (MB) |
+| --- | --- | ---: | --- | ---: |
+| **ClawQL** | stdio 1× | **63 / 64** | p99 106 ms | **259 / 342** |
+| Executor | stdio 1× | 23 / 24 | p99 102 ms | 397 / 422 |
+| MCPJungle | HTTP 1× | **204 / 205** | p99 112 ms | **97 / 97** |
+| agentgateway | HTTP 1× | **62 / 63** | p99 111 ms | — |
+
+On equal single-instance footing: **MCPJungle leads concurrency** (204); ClawQL ≈ agentgateway (~63); Executor trails (23). Publishable chaos claim on this board is **vs Executor only** (~2.7× clients) — not vs MCPJungle.
+
+### Latency / chaos run
+
+```bash
+export EXECUTOR_BIN=… EXECUTOR_CWD=…
+export MCPJUNGLE_BIN=/tmp/gw-bins/mcpjungle
+export AGENTGATEWAY_BIN=/tmp/gw-bins/agentgateway
+
+# Latency (no chaos)
+MULTI_ITERS=10000 MULTI_WARMUP=100 MULTI_SKIP_CHAOS=1 MULTI_EQUAL_UPSTREAM=1 \
+  MULTI_ARMS=clawql,executor,mcpjungle,agentgateway \
+  MULTI_OUT=gateway-multi-cmp-10k.json \
+  npm run benchmark:gateway-multi-comparison
+
+# Chaos until break (single-instance)
+MULTI_ITERS=100 MULTI_SKIP_CHAOS=0 MULTI_CHAOS_UNTIL_BREAK=1 MULTI_CHAOS_MAX=512 \
+  MULTI_ARMS=clawql,executor,mcpjungle,agentgateway \
+  MULTI_OUT=gateway-multi-cmp-chaos-slim.json \
+  npm run benchmark:gateway-multi-comparison
+```
+
+---
+
+## 12-step multiturn × 10 000 flows (tokens + latency + RSS)
+
+Equal-arm fat catalog (40 tools). Each arm completes **10 000** full **12-turn** flows on one warm connection. Tokens from flow 1 (deterministic); latency/RSS/task_success over all 120 000 turns/arm.
+
+Artifact: [`gateway-multi-multiturn-10k.json`](./gateway-multi-multiturn-10k.json) (smoke: [`gateway-multi-multiturn-iters20-smoke.json`](./gateway-multi-multiturn-iters20-smoke.json)).
+
+| Arm | L1 once | Mean L2 | Combined @12 | Mean result | Flow e2e p50 / **p999** (ms) | Turn p50 / **p999** | RSS med MB | Task success |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| **ClawQL (Node)** | **297** | **1687** | **20 539** | **723** | 18.2 / 56.8 | 1.38 / 5.14 | 678 | **PASS** (1.0) |
+| **ClawQL (Bun)** | **297** | **1687** | **20 539** | **723** | **15.0 / 35.0** | **1.12 / 4.82** | **337** | **PASS** (1.0) |
+| Executor | 90 | 4465 | 53 668 (2.61×) | 4465 | 64.4 / 106.6 | 5.03 / 16.98 | 213 | **PASS** (1.0) |
+| MCPJungle | 5840 | 2457 | 35 322 (1.72×) | 2457 | 15.4 / 135.0 | 1.18 / 3.84 | **153** | **PASS** (1.0) |
+| agentgateway | 5520 | 2457 | 35 002 (1.70×) | 2457 | **13.6** / 330.9 | **1.01** / 3.54 | 214 | **PASS** (1.0) |
+
+Primary publish column remains **classic tokens @12 with task_success**. Bun matches Node tokens; wins flow/turn latency and cuts multiturn RSS ~50% vs Node on this board. Aggregators still win raw RSS; ClawQL still wins I/O tokens.
+
+```bash
+MT_TURNS=12 MT_ITERS=10000 CATALOG_TOOL_COUNT=40 \
+  MT_ARMS=clawql,clawql_bun,executor,mcpjungle,agentgateway \
+  MT_OUT=gateway-multi-multiturn-10k.json \
+  npm run benchmark:gateway-multi-multiturn
+```
+
+## Category win — 12-turn I/O tokens (fat catalog)
+
+Single-tool p50 is a thin slice. The category ClawQL is built for is **multi-turn agents** where **input schemas** and **output payloads** both compound — **and the task still succeeds**.
+
+### Equal-arm catalog
+
+| Lever | Normalization |
+| --- | --- |
+| Surface | **40** verbose tools (`catalog_list_001`…`040`) — same names as OpenAPI `operationId`s |
+| Fat result | Nested `items[]` + `meta`/`history` (~2411 tok/turn raw) |
+| ClawQL path | `search` → `execute` with `where=items` + `fields=["id","name","status"]` |
+| Aggregators | Full `tools/list` once (classic) + raw fat `callTool` |
+| Executor | `execute` code returns the same fat JSON (matches measured live path: full payload pass-through; no gateway `fields`) |
+| Task success | Deterministic: every turn’s rows must match expected available inventory for that partition |
+| Turns | **12** unique partitions (see also N=24 artifact) |
+
+**Settled (do not reopen):** Executor’s live Layer 2 is unmodified API JSON — [Both Sides of Context Compression](https://pragmaticvectors.com/posts/both-sides-of-context-compression), `executor-cmp-001.live.json` (143,466 tok `pulls.list`). A hand-written program that maps to slim fields is **not** Executor and must not appear on this board as Executor. Codemode gateways compress input; response-side field selection at the gateway layer is ClawQL’s differentiator.
+
+### Board @ N=12 (classic: Layer1 once + Σ Layer2) — re-measured
+
+| Arm | Layer1 once (tok) | Mean Layer2 (tok) | Mean **result** tok | Combined @12 | Task success |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| **ClawQL** | **297** (search+execute) | **1687** | **723** | **20 539** | **PASS** |
+| Executor | 90 | 4465 | 4465 | 53 668 (2.61×) | **PASS** |
+| MCPJungle | 5840 | 2457 | 2457 | 35 322 (1.72×) | **PASS** |
+| agentgateway | 5520 | 2457 | 2457 | 35 002 (1.70×) | **PASS** |
+
+Primary publish column is **classic** (Layer1 once). **Re-list every turn** is secondary — most clients cache tool lists; lazy clients shrink aggregator Layer1 further. Secondary numbers remain in the JSON for sensitivity analysis.
+
+### Multiturn run
+
+```bash
+MT_TURNS=12 CATALOG_TOOL_COUNT=40 \
+  MT_ARMS=clawql,executor,mcpjungle,agentgateway \
+  npm run benchmark:gateway-multi-multiturn
+```
+
+---
+
+## TS7 rebuild — Node vs Bun (decision board)
+
+Toolchain: **TypeScript 7.0.2** Go-native `tsc` (`@typescript/native`) + `@typescript/typescript6` for eslint/tsup API. Same rebuilt `dist/server.js`; only the JS runtime changes between arms. Sequential solo-arm runs (not interleaved with peers).
+
+Artifacts: [`gateway-multi-cmp-ts7-node-10k.json`](./gateway-multi-cmp-ts7-node-10k.json), [`gateway-multi-cmp-ts7-bun-10k.json`](./gateway-multi-cmp-ts7-bun-10k.json), [`gateway-multi-cmp-ts7-node-chaos.json`](./gateway-multi-cmp-ts7-node-chaos.json), [`gateway-multi-cmp-ts7-bun-chaos.json`](./gateway-multi-cmp-ts7-bun-chaos.json).
+
+### n=10 000
+
+| Arm | Ready RSS | Under-load med | e2e p50 / p99 / **p999** | Gateway cost p50 / **p999** |
+| --- | ---: | ---: | ---: | ---: |
+| **Node** v22.14 | 234 MB | 409 MB | 0.76 / 2.53 / **5.10** | 0.60 / 4.75 |
+| **Bun** 1.4.3 | **179 MB** (−23%) | **309 MB** (−25%) | **0.34 / 1.88 / 5.52** | **0.20 / 5.16** |
+
+### Chaos until-break
+
+| Arm | last_ok / first_break | Break |
+| --- | ---: | --- |
+| Node | **70 / 71** | p99 115 ms |
+| Bun | 62 / 63 | p99 102 ms |
+
+### Decision inputs
+
+- Bun wins Ready/under-load RSS and **p50** latency/cost hard (−55% e2e p50, −67% cost p50).
+- Bun does **not** win p999 on this host (Node 5.10 vs Bun 5.52) or chaos ceiling.
+- Still not MCPJungle-class RSS. Compiler upgrade (TS7) is CI/DX only — these boards are the runtime comparison.
+
+## Node vs Bun runtime (same Core binary)
+
+Drop-in experiment: `clawql` (Node v22.14.0) vs `clawql_bun` (Bun 1.4.3) — same `dist/server.js`, same equal-arm env, only the JS runtime binary changes (`MULTI_ARMS=clawql,clawql_bun`, optional `BUN_BIN`).
+
+### Board — n=10 000 interleaved
+
+| Arm | Ready RSS | Under-load med RSS | e2e p50 / p99 / **p999** (ms) | Gateway cost p50 / **p999** |
+| --- | ---: | ---: | ---: | ---: |
+| **ClawQL (Node)** | 232 MB | 413 MB | 0.99 / 3.13 / 6.70 | 0.76 / 6.19 |
+| **ClawQL (Bun)** | **180 MB** (−22%) | **296 MB** (−28%) | **0.74 / 2.56 / 6.28** | **0.52 / 5.78** |
+
+### Chaos — topology A until-break
+
+| Arm | last_ok / first_break | Break reason | Ready RSS |
+| --- | ---: | --- | ---: |
+| ClawQL (Node) | **75 / 76** | p99 101 ms | 231 MB |
+| ClawQL (Bun) | 64 / 65 | p99 121 ms | **181 MB** |
+
+### Verdict (switch vs Rust pain)
+
+- **Compelling for RSS + p50 cost** as a low-rewrite lever: ~¼ less Ready RSS, ~¼ less under-load median, ~25–30% lower gateway_cost p50 — without touching the Effect/TS codebase.
+- **Not a concurrency win** on this host (Bun broke slightly earlier). Do not sell Bun as a chaos ceiling upgrade.
+- **Still not Go-parity** — MCPJungle under-load ~152 MB / chaos min ~97 MB. Bun shrinks the Node tax; it does not replace a thin native multiplexer.
+- **Operational pain is real but bounded** (native addons, CI matrix, production support) — usually less than a Rust rewrite of the governed path. Treat Bun as an optional runtime track, not the RSS endgame.
+
+```bash
+BUN_BIN=~/.bun/bin/bun \
+  MULTI_ARMS=clawql,clawql_bun MULTI_ITERS=10000 MULTI_SKIP_CHAOS=1 \
+  MULTI_OUT=gateway-multi-cmp-bun-10k.json \
+  npm run benchmark:gateway-multi-comparison
+
+BUN_BIN=~/.bun/bin/bun \
+  MULTI_ARMS=clawql,clawql_bun MULTI_ITERS=100 MULTI_CHAOS_UNTIL_BREAK=1 \
+  MULTI_CHAOS_MAX=512 MULTI_OUT=gateway-multi-cmp-bun-chaos.json \
+  npm run benchmark:gateway-multi-comparison
+```
+
+---
+
+## RSS — admit the loss
+
+ClawQL is the **heaviest serious arm** on this board:
+
+| Signal | ClawQL | MCPJungle | Notes |
+| --- | ---: | ---: | --- |
+| Cold Ready | ~232 MB | — | After composition slim + lazy optional imports |
+| Chaos min / med | 259 / 342 | 97 / 109 | Single-instance |
+| 10k under-load median | ~427 MB | ~152 MB | V8 watermark under interleaved load |
+
+Levers landed: INSTANCE_SPEC slim Core, lazy optional imports, WORM ring cap, session catalog max. **Bun runtime** trims Ready ~22% / under-load ~28% without a rewrite (see [Node vs Bun](#node-vs-bun-runtime-same-core-binary)) — still not MCPJungle-class. Remaining: further lazy `clawql-api` deps, post-GC steady-state RSS arm, Node heap tuning. **If RSS stays high, say so** — hiding a memory loss costs more than admitting it. Scale-out multiplies RSS; concurrency claims must price that in.
+
+---
+
+## Arms off the publish board
+
+| Arm | Why off |
+| --- | --- |
+| **ContextForge** | Prior run nested through MCPJungle — inflates latency, memory, and chaos. Re-add only with native REST virtualization calling `/pets` directly. |
+| **MetaMCP** | Not run (Docker Compose–first). Do not list as a peer without a measured arm. |
+
+Default `MULTI_ARMS` / `MT_ARMS` omit both.
+
+---
+
+## Code levers landed (this branch)
+
+1. **Bench composition honesty** — `scripts/benchmarks/lib/clawql-bench-env.mjs` sets `CLAWQL_INSTANCE_SPEC` (8.0 ignores bare `ENABLE_*=0`; fake `TIER=gateway` was falling through to `standard`).
+2. **Lazy optional imports** — `wireOptionalToolDeps()`; no static `nats/env` in dynamic compose; pgvector / vault only when memory on; mcp-tool-wrap lazy-loads payments/observability/audit (§11.1).
+3. **WORM memory ring cap** — `CLAWQL_WORM_MEMORY_MAX_ENTRIES` (default 10 000).
+4. **Session catalog eviction** — `CLAWQL_CAPABILITY_SESSION_MAX` (default 256).
+5. **Chaos checkpoints** — board JSON flushed after latency and after each arm (survives host OOM mid-refine).
+6. **Multiturn fairness** — deterministic `task_success`; classic Layer1-once is primary; re-list demoted. No simulated Executor “filter” arm on the publish board (settled: gateway has no response-side projection).
+7. **Chaos until-break + topology tags** — `MULTI_CHAOS_UNTIL_BREAK`; reports carry `topology` so cross-topology claims fail the honesty check.
+8. **`clawql_bun` runtime arm** — same Core binary under Bun; board artifacts `gateway-multi-cmp-bun-10k.json` / `gateway-multi-cmp-bun-chaos.json`.
+
+**Next:** topology B (4× behind LB) for every arm before any scale-out claim; optional real-model task-success arm; RSS heap profile / lazy `clawql-api` if we want to close the memory loss beyond Bun. Date/version stamps on published executor-cmp pages (housekeeping).
+
+---
+
+## Honesty / publish hold
+
+- Host-bound; repeat on a dedicated bench host before publicizing.
+- **RSS is a loss** among serious arms — scope or fix before claiming efficiency without the asterisk.
+- Do not cite n=200 boards for p999.
+- Do not mix NATS scale-out ceilings with stdio process-per-client ceilings.
+- Do not publish aggregator concurrency wins until every arm breaks on the same topology.
+- ContextForge / MetaMCP off until native equal-arm runs exist.
+- Multiturn ClawQL Layer2 includes per-turn `search` (discovery tax); result-only gap vs fat peers is larger (~3.4×).
+- Token wins require `task_success` — projection must not drop facts the agent needed.

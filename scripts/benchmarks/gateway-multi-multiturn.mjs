@@ -35,10 +35,14 @@
  *
  * Env:
  *   MT_TURNS (default 12)  MT_ITERS (default 1)  CATALOG_TOOL_COUNT (default 40)
- *   MT_ARMS=clawql,clawql_bun,executor,mcpjungle,agentgateway
+ *   MT_ARMS=direct,clawql,clawql_bun,executor,mcpjungle,agentgateway
  *   MT_LIMIT (rows per turn, default 25)
  *   MT_OUT (default gateway-multi-multiturn.json)
  *   MT_PROGRESS_EVERY (default 100)  BUN_BIN  MT_INCLUDE_CF=1
+ *
+ * `direct` = no MCP gateway — raw HTTP GETs to the equal-arm catalog mock.
+ * Layer1 tokens = 0 (no tools/list); Layer2 = fat JSON body. Use it to price
+ * each gateway's token savings vs latency/RSS cost.
  *
  * Note: do NOT put a hand-written slim-return program on the publish board as
  * "Executor". That is not gateway projection and contradicts the settled blog.
@@ -74,8 +78,8 @@ const INCLUDE_CF =
 const ARMS = (
   process.env.MT_ARMS ??
   (INCLUDE_CF
-    ? "clawql,clawql_bun,executor,mcpjungle,agentgateway,contextforge"
-    : "clawql,clawql_bun,executor,mcpjungle,agentgateway")
+    ? "direct,clawql,clawql_bun,executor,mcpjungle,agentgateway,contextforge"
+    : "direct,clawql,clawql_bun,executor,mcpjungle,agentgateway")
 )
   .split(",")
   .map((s) => s.trim())
@@ -765,6 +769,89 @@ function buildCumulative(layer1Once, layer2PerTurn) {
   });
 }
 
+/**
+ * No-MCP baseline: raw HTTP to the equal-arm catalog mock (fat JSON).
+ * Same 12 partitions / args as aggregator tool calls — prices gateway tax.
+ */
+async function runDirectHttpArm(mock, turns) {
+  const flowE2e = [];
+  const turnLat = [];
+  let perTurn = null;
+  let successOk = 0;
+  let successTotal = 0;
+  let callErrors = 0;
+
+  for (let iter = 1; iter <= ITERS; iter++) {
+    const flowT0 = performance.now();
+    const thisPerTurn = [];
+    for (const turn of turns) {
+      const part = String(turn.partition).padStart(3, "0");
+      const u = new URL(`/catalog/${part}`, mock.baseUrl);
+      u.searchParams.set("limit", String(turn.args.limit));
+      u.searchParams.set("status", String(turn.args.status));
+      u.searchParams.set("includeMeta", turn.args.includeMeta === false ? "false" : "true");
+      const t0 = performance.now();
+      let text = "";
+      let ok = true;
+      try {
+        const res = await fetch(u);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        text = await res.text();
+      } catch (e) {
+        ok = false;
+        callErrors++;
+        if (iter === 1) throw new Error(`direct: ${String(e?.message || e)}`);
+      }
+      const ms = performance.now() - t0;
+      turnLat.push(ms);
+      const success = ok ? scoreTaskSuccess(text, turn.partition, turn.args.limit) : { ok: false };
+      successTotal++;
+      if (success.ok) successOk++;
+      if (iter === 1) {
+        const resultTok = countTokens(text);
+        thisPerTurn.push({
+          n: turn.n,
+          tool: `GET /catalog/${part}`,
+          result_tokens: resultTok,
+          result_chars: text.length,
+          layer2_classic: resultTok,
+          layer2_relist_every_turn: resultTok,
+          latency_ms: Number(ms.toFixed(3)),
+          ok,
+          task_success: success,
+          note: "No MCP gateway — fat equal-arm HTTP body (aggregator Layer2 shape)",
+        });
+      }
+    }
+    flowE2e.push(performance.now() - flowT0);
+    if (iter === 1) perTurn = thisPerTurn;
+    if (iter % PROGRESS_EVERY === 0 || iter === ITERS) {
+      console.log(`[mt] direct flows ${iter}/${ITERS}`);
+    }
+  }
+
+  return {
+    id: "direct",
+    model: "raw_http_catalog_fat_no_mcp",
+    runtime: null,
+    runtimeVersion: null,
+    layer1: {
+      once_schema_tokens: 0,
+      tools_count: 0,
+      note: "No MCP tools/list — agent talks HTTP directly to the mock API",
+    },
+    perTurn,
+    iters: ITERS,
+    flow_e2e_ms: flowE2e,
+    turn_latency_ms: turnLat,
+    call_errors: callErrors,
+    task_success_agg: { ok: successOk, total: successTotal },
+    resources: { label: "direct", pid: null, n: 0, rss_mb: { min: null, median: null, max: null } },
+    startup: { ready_ms: null, rss_mb_ready: null },
+    skipped: false,
+  };
+}
+
 async function runAggregatorArm(gw, turns) {
   const conn = await gw.connect();
   const pid = conn.pid ?? gw.pid ?? null;
@@ -1137,25 +1224,50 @@ function summarizeArm(arm) {
 
 function ratioBoard(arms) {
   const claw = arms.clawql?.board || arms.clawql_bun?.board;
-  if (!claw) return {};
-  const baseline = arms.clawql?.board ? "clawql" : "clawql_bun";
+  const direct = arms.direct?.board;
+  if (!claw && !direct) return {};
+  const baseline = arms.clawql?.board ? "clawql" : arms.clawql_bun?.board ? "clawql_bun" : "direct";
   const out = { baseline };
   for (const [id, arm] of Object.entries(arms)) {
     if (!arm?.board || id === baseline) continue;
-    out[id] = {
-      vs_clawql_combined_classic: +(arm.board.combined_at_n / claw.combined_at_n).toFixed(2),
-      vs_clawql_combined_relist_every_turn: +(
+    const row = {};
+    if (claw) {
+      row.vs_clawql_combined_classic = +(arm.board.combined_at_n / claw.combined_at_n).toFixed(2);
+      row.vs_clawql_combined_relist_every_turn = +(
         arm.board.combined_relist_every_turn_at_n / claw.combined_relist_every_turn_at_n
-      ).toFixed(2),
-      vs_clawql_mean_result: +(arm.board.mean_result_tokens / claw.mean_result_tokens).toFixed(2),
-      vs_clawql_layer1: +(arm.board.layer1_once_tokens / Math.max(1, claw.layer1_once_tokens)).toFixed(
-        2
-      ),
-      vs_clawql_flow_e2e_p50:
+      ).toFixed(2);
+      row.vs_clawql_mean_result = +(arm.board.mean_result_tokens / claw.mean_result_tokens).toFixed(2);
+      row.vs_clawql_layer1 = +(
+        arm.board.layer1_once_tokens / Math.max(1, claw.layer1_once_tokens)
+      ).toFixed(2);
+      row.vs_clawql_flow_e2e_p50 =
         claw.flow_e2e_ms?.p50_ms != null && arm.board.flow_e2e_ms?.p50_ms != null
           ? +(arm.board.flow_e2e_ms.p50_ms / claw.flow_e2e_ms.p50_ms).toFixed(2)
-          : null,
-    };
+          : null;
+    }
+    if (direct && id !== "direct") {
+      row.vs_direct_combined_classic = +(arm.board.combined_at_n / Math.max(1, direct.combined_at_n)).toFixed(
+        2
+      );
+      row.token_delta_vs_direct = arm.board.combined_at_n - direct.combined_at_n;
+      row.tokens_saved_vs_direct =
+        direct.combined_at_n > arm.board.combined_at_n
+          ? direct.combined_at_n - arm.board.combined_at_n
+          : 0;
+      row.tokens_added_vs_direct =
+        arm.board.combined_at_n > direct.combined_at_n
+          ? arm.board.combined_at_n - direct.combined_at_n
+          : 0;
+      row.flow_e2e_p50_delta_ms_vs_direct =
+        direct.flow_e2e_ms?.p50_ms != null && arm.board.flow_e2e_ms?.p50_ms != null
+          ? Number((arm.board.flow_e2e_ms.p50_ms - direct.flow_e2e_ms.p50_ms).toFixed(3))
+          : null;
+      row.flow_e2e_p50_ratio_vs_direct =
+        direct.flow_e2e_ms?.p50_ms != null && arm.board.flow_e2e_ms?.p50_ms != null
+          ? +(arm.board.flow_e2e_ms.p50_ms / Math.max(0.001, direct.flow_e2e_ms.p50_ms)).toFixed(2)
+          : null;
+    }
+    out[id] = row;
   }
   return out;
 }
@@ -1191,6 +1303,19 @@ function categoryWinNarrative(arms, ratios) {
     lines.push(
       `Measured vs Executor @N=${TURNS}: classic ${ratios.executor.vs_clawql_combined_classic}× ` +
         `(fat return — matches live Layer 2 pass-through; Layer1 schema still smaller).`
+    );
+  }
+  if (arms.direct?.board && clawOk) {
+    const d = arms.direct.board;
+    const c = arms.clawql.board;
+    const saved = d.combined_at_n - c.combined_at_n;
+    const lat =
+      d.flow_e2e_ms?.p50_ms != null && c.flow_e2e_ms?.p50_ms != null
+        ? (c.flow_e2e_ms.p50_ms - d.flow_e2e_ms.p50_ms).toFixed(1)
+        : "?";
+    lines.push(
+      `Vs direct HTTP (no MCP): ClawQL saves ~${saved} tokens @N=${TURNS} ` +
+        `(projection + search schemas vs fat bodies); flow e2e p50 delta ≈ +${lat} ms vs raw HTTP.`
     );
   }
   lines.push("RSS is a loss among serious arms — admit or fix before memory claims.");
@@ -1241,7 +1366,9 @@ async function main() {
     for (const arm of ARMS) {
       console.log(`[mt] run ${arm}`);
       try {
-        if (arm === "clawql" || arm === "clawql_bun") {
+        if (arm === "direct") {
+          rawArms.direct = await runDirectHttpArm(mock, turns);
+        } else if (arm === "clawql" || arm === "clawql_bun") {
           if (!existsSync(join(ROOT, "dist", "server.js"))) {
             rawArms[arm] = { skipped: true, reason: "dist/server.js missing" };
             continue;
@@ -1371,6 +1498,7 @@ async function main() {
         "PRIMARY tokens: classic Layer1_once + sum(Layer2) with deterministic task_success (tokens from flow 1; spot-stable).",
         `MT_ITERS=${ITERS}: each arm completes that many full ${TURNS}-turn flows on one warm connection.`,
         "Also reports flow e2e + per-turn latency percentiles and RSS (do not drop these for publish).",
+        "direct: no MCP gateway — raw HTTP fat catalog; Layer1=0. Prices token savings vs latency/RSS tax of each gateway.",
         "SECONDARY: tools_list_every_turn — measured once on flow 1; most clients cache ListTools.",
         "Executor Layer2 is fat JSON — matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
         "Do not publish a hand-written slim-return program as Executor.",
