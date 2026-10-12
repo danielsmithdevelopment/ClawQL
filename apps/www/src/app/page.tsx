@@ -173,8 +173,8 @@ export default function Page() {
             <Link href={openBenchMiniFirm.runUrl}>
               GitHub Actions run {openBenchMiniFirm.runId} <ArrowNarrowRightIcon />
             </Link>
-            <Link href="https://docs.clawql.com/benchmarks">
-              Context-compression benchmark <ArrowNarrowRightIcon />
+            <Link href="/benchmarks">
+              Gateway benchmarks <ArrowNarrowRightIcon />
             </Link>
           </div>
         }

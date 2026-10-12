@@ -1,7 +1,7 @@
 {
   "name": "clawql-mcp",
   "version": "8.0.0",
-  "description": "Agentic Gateway — Foundational Platform for Auditable Production AI. MCP search + execute over OpenAPI/Discovery (internal GraphQL projection), optional native GraphQL HTTP and gRPC unary sources",
+  "description": "Agentic Gateway \u2014 Foundational Platform for Auditable Production AI. MCP search + execute over OpenAPI/Discovery (internal GraphQL projection), optional native GraphQL HTTP and gRPC unary sources",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/server.js",
@@ -107,6 +107,7 @@
     "benchmark:executor-comparison:comprehensive": "node scripts/benchmarks/executor-comparison-comprehensive.mjs",
     "benchmark:gateway-multi-comparison": "node scripts/benchmarks/gateway-multi-comparison.mjs",
     "benchmark:gateway-multi-multiturn": "node scripts/benchmarks/gateway-multi-multiturn.mjs",
+    "generate:gateway-multi-page": "node scripts/benchmarks/generate-gateway-multi-page.mjs",
     "generate:executor-cmp-latency-html": "node scripts/benchmarks/generate-executor-cmp-latency-html.mjs",
     "generate:executor-cmp-static": "npm run generate:executor-cmp-static -w mcp-api-adapter",
     "openbench:validate": "python3 benchmarks/openbench/validate_tasks.py",
@@ -137,7 +138,9 @@
     "release:audit-wedge:dry-run": "node scripts/release/npm-publish-audit-wedge.mjs --dry-run",
     "test:npm-pack-audit-wedge": "bash scripts/dev/test-npm-pack-audit-wedge.sh",
     "test:gdp-mistakes": "npm run build -w clawql-gdp && vitest run packages/clawql-gdp/src/gdp-mistakes-all.test.ts",
-    "check:gdp": "npm run test:gdp-mistakes"
+    "check:gdp": "npm run test:gdp-mistakes",
+    "benchmark:executor-v2-multiturn": "node scripts/benchmarks/executor-v2-multiturn.mjs",
+    "benchmark:executor-v2-multiturn:equal": "MT_ARMS=executor_v2 MT_OUT=gateway-multi-multiturn-executor-v2-equal-10k.json node scripts/benchmarks/gateway-multi-multiturn.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1127.0",
@@ -206,12 +209,13 @@
     "@types/node": "^26.1.1",
     "@types/pg": "^8.20.0",
     "@types/sql.js": "^1.4.11",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "@vitest/coverage-v8": "5.0.0",
     "eslint": "^10.7.0",
     "prettier": "^3.9.3",
     "tsx": "^4.23.1",
     "turbo": "^2.10.5",
-    "typescript": "^6.0.3",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.65.0",
     "vitest": "5.0.0"
   },

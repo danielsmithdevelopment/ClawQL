@@ -133,6 +133,9 @@ export default function RootLayout({
                 <NavbarIndustriesMenu />
                 <NavbarLink href="/#security">Security</NavbarLink>
                 <NavbarLink href={site.urls.pricing}>Pricing</NavbarLink>
+                <NavbarLink href={site.urls.benchmarks} className="max-lg:hidden">
+                  Benchmarks
+                </NavbarLink>
                 <NavbarLink href={site.urls.demo} className="max-lg:hidden">
                   Demo
                 </NavbarLink>
@@ -184,6 +187,7 @@ export default function RootLayout({
                   <FooterLink href={site.urls.streams}>Streams</FooterLink>
                   <FooterLink href="/#security">Security</FooterLink>
                   <FooterLink href={site.urls.pricing}>Pricing</FooterLink>
+                  <FooterLink href={site.urls.benchmarks}>Benchmarks</FooterLink>
                   <FooterLink href={site.urls.demo}>Interactive demo</FooterLink>
                   <FooterLink href={site.urls.signup}>Sign up</FooterLink>
                   <FooterLink href={site.urls.status}>Status</FooterLink>

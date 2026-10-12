@@ -1,0 +1,26 @@
+{
+  "fixture_chars": 7655,
+  "fixture_tokens": 2411,
+  "mock_chars": 7655,
+  "mock_tokens": 2411,
+  "mock_equals_fixture": true,
+  "executor_chars": 16317,
+  "executor_tokens": 4419,
+  "executor_head": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"name\": \"Entity-1\",\n      \"status\": \"available\",\n      \"tag\": \"tag-1\",\n      \"meta\": {\n        \"kennel\": \"K1\",\n        \"notes\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\n        \"history\": [\n          {\n            \"at\": 0,\n            \"event\": \"e-0\"\n          },\n          {\n            \"at\": 1,\n            \"event\"",
+  "executor_tail": " {\n            \"at\": 3,\n            \"event\": \"e-3\"\n          },\n          {\n            \"at\": 4,\n            \"event\": \"e-4\"\n          }\n        ]\n      }\n    }\n  ],\n  \"partition\": \"catalog_list_001\"\n}",
+  "ratio_chars": 2.132,
+  "ratio_tok": 1.833,
+  "exec_top_keys": [
+    "items",
+    "partition"
+  ],
+  "items_equal_fixture": true,
+  "structure_preview": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"name\": \"Entity-1\",\n      \"status\": \"available\",\n      \"tag\": \"tag-1\",\n      \"meta\": {\n        \"kennel\": \"K1\",\n        \"notes\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\n        \"history\": [\n          {\n            \"at\": 0,\n            \"event\": \"e-0\"\n          },\n          {\n            \"at\": 1,\n            \"event\": \"e-1\"\n          },\n          {\n            \"at\": 2,\n            \"event\": \"e-2\"\n          },\n          {\n            \"at\": 3,\n            \"event\": \"e-3\"\n          },\n          {\n            \"at\": 4,\n            \"event\": \"e-4\"\n          }\n        ]\n      }\n    },\n    {\n      \"id\": 2,\n      \"name\": \"Entity-2\",\n      \"status\": \"available\",\n      \"tag\": \"tag-2\",\n      \"meta\": {\n        \"kennel\": \"K2\",\n        \"notes\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\n        \"history\": [\n          {\n            \"at\": 0,\n            \"event\": \"e-0\"\n          },\n          {\n            \"at\": 1,\n            \"event\": \"e-1\"\n          },\n          {\n            \"at\": 2,\n            \"event\": \"e-2\"\n          },\n          {\n            \"at\": 3,\n            \"event\": \"e-3\"\n          },\n          {\n            \"at\": 4,\n            \"event\": \"e-4\"\n          }\n        ]\n      }\n    },\n    {\n      \"id\": 4,\n      \"name\": \"Entity-4\",\n      \"status\": \"available\",\n      \"tag\": \"tag-4\",\n      \"meta\": {\n        \"kennel\": \"K4\",\n        \"notes\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\n        \"history\": [\n          {\n            \"at\": 0,\n            \"event\": \"e-0\"\n          },\n          {\n            \"at\": 1,\n            \"event\": \"e-1\"\n          },\n          {\n            \"at\": 2,\n            \"event\": \"e-2\"\n          },\n          {\n            \"at\": 3,\n            \"event\": \"e-3\"\n          },\n          {\n            \"at\": 4,\n            \"event\": \"e-4\"\n          }\n        ]\n      }\n    },\n    {\n      \"id\": 5,\n      \"name\": \"En",
+  "mcp_content_types": [
+    {
+      "type": "text",
+      "textLen": 16317
+    }
+  ],
+  "isError": false
+}

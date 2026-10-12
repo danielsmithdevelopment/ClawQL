@@ -28,7 +28,7 @@ export function WebMcpRegister() {
         name: 'clawql.site.navigate',
         title: 'Navigate ClawQL marketing site',
         description:
-          'Navigate to a page on clawql.com. Use paths like /, /pricing, /signup, /about, /industries, or /industries/lending. Only same-origin relative paths are allowed.',
+          'Navigate to a page on clawql.com. Use paths like /, /pricing, /benchmarks, /signup, /about, /industries, or /industries/lending. Only same-origin relative paths are allowed.',
         inputSchema: {
           $schema: 'https://json-schema.org/draft/2020-12/schema',
           type: 'object',

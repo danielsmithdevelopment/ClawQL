@@ -1,0 +1,349 @@
+{
+  "suite": "gateway-multi-comparison",
+  "measuredAt": "2026-10-11T16:16:31.691Z",
+  "node": "v22.14.0",
+  "bun": "1.4.3",
+  "partial": false,
+  "topology": {
+    "id": "A_single_instance",
+    "label": "single-instance / process-per-client (ClawQL+Executor stdio; aggregators 1× HTTP)",
+    "replicas": 1,
+    "note": "Scale-out (4 replicas behind LB) is topology B — claim only within the same topology."
+  },
+  "path_matrix": {
+    "clawql": {
+      "auth_capability_gate": true,
+      "operation_risk_policy": true,
+      "ephemeral_audit_ring": true,
+      "output_redaction_hooks": true,
+      "result_projection": true,
+      "upstream_http_equal_mock": true,
+      "catalog_discovery": "search_server_side",
+      "js_runtime": "node"
+    },
+    "clawql_bun": {
+      "auth_capability_gate": true,
+      "operation_risk_policy": true,
+      "ephemeral_audit_ring": true,
+      "output_redaction_hooks": true,
+      "result_projection": true,
+      "upstream_http_equal_mock": true,
+      "catalog_discovery": "search_server_side",
+      "js_runtime": "bun",
+      "note": "Same ClawQL slim Core binary (dist/server.js); only the JS runtime changes."
+    },
+    "executor": {
+      "auth_capability_gate": false,
+      "operation_risk_policy": false,
+      "ephemeral_audit_ring": false,
+      "output_redaction_hooks": false,
+      "result_projection": false,
+      "upstream_http_equal_mock": false,
+      "catalog_discovery": "n_a_code_execute"
+    },
+    "mcpjungle": {
+      "auth_capability_gate": "optional",
+      "operation_risk_policy": false,
+      "ephemeral_audit_ring": false,
+      "output_redaction_hooks": false,
+      "result_projection": false,
+      "upstream_http_equal_mock": true,
+      "catalog_discovery": "full_tools_list"
+    },
+    "agentgateway": {
+      "auth_capability_gate": "optional",
+      "operation_risk_policy": false,
+      "ephemeral_audit_ring": false,
+      "output_redaction_hooks": false,
+      "result_projection": false,
+      "upstream_http_equal_mock": true,
+      "catalog_discovery": "full_tools_list"
+    }
+  },
+  "config": {
+    "iters": 30,
+    "warmup": 5,
+    "equal_upstream": true,
+    "interleaved": true,
+    "skip_chaos": true,
+    "chaos_max": 32,
+    "chaos_until_break": false,
+    "chaos_hard_max": 1024,
+    "chaos_step_ms": 3000,
+    "break_p99_ms": 100,
+    "break_error_rate": 0.02,
+    "refine": true,
+    "arms": [
+      "clawql",
+      "clawql_bun"
+    ],
+    "include_contextforge": false
+  },
+  "board": {
+    "clawql": {
+      "runtime": "node",
+      "runtime_version": "v22.14.0",
+      "ready_ms": 1475,
+      "rss_mb_ready": 232.97,
+      "latency_e2e_ms": {
+        "n": 30,
+        "p50_ms": 2.059,
+        "p95_ms": 4.069,
+        "p99_ms": 4.54,
+        "p999_ms": 4.54,
+        "mean_ms": 2.335,
+        "min_ms": 1.661,
+        "max_ms": 4.54
+      },
+      "gateway_cost_ms": {
+        "n": 30,
+        "p50_ms": 1.538,
+        "p95_ms": 2.806,
+        "p99_ms": 3.345,
+        "p999_ms": 3.345,
+        "mean_ms": 1.656,
+        "min_ms": 0.799,
+        "max_ms": 3.345
+      },
+      "rss_mb_min": 264.89,
+      "rss_mb_median": 356.95,
+      "rss_mb_max": 358.73,
+      "cpu_pct_median": 127.04,
+      "invoked_tool_schema_tokens": 178,
+      "schema_tokens_full_list": 1189,
+      "tools_count": 8,
+      "equal_result_tokens": 59,
+      "chaos_last_ok": null,
+      "chaos_first_break": null,
+      "chaos_break_reason": null
+    },
+    "clawql_bun": {
+      "runtime": "bun",
+      "runtime_version": "1.4.3",
+      "ready_ms": 1014.9,
+      "rss_mb_ready": 180,
+      "latency_e2e_ms": {
+        "n": 30,
+        "p50_ms": 1.945,
+        "p95_ms": 3.255,
+        "p99_ms": 3.498,
+        "p999_ms": 3.498,
+        "mean_ms": 2.067,
+        "min_ms": 1.351,
+        "max_ms": 3.498
+      },
+      "gateway_cost_ms": {
+        "n": 30,
+        "p50_ms": 1.263,
+        "p95_ms": 2.276,
+        "p99_ms": 2.888,
+        "p999_ms": 2.888,
+        "mean_ms": 1.388,
+        "min_ms": 0.884,
+        "max_ms": 2.888
+      },
+      "rss_mb_min": 205.37,
+      "rss_mb_median": 272.62,
+      "rss_mb_max": 305.49,
+      "cpu_pct_median": 176.98,
+      "invoked_tool_schema_tokens": 178,
+      "schema_tokens_full_list": 1189,
+      "tools_count": 8,
+      "equal_result_tokens": 59,
+      "chaos_last_ok": null,
+      "chaos_first_break": null,
+      "chaos_break_reason": null
+    }
+  },
+  "arms": {
+    "clawql": {
+      "id": "clawql",
+      "model": "stdio_mcp_openapi_execute_node",
+      "ok": true,
+      "version": null,
+      "runtime": "node",
+      "runtimeVersion": "v22.14.0",
+      "mcp_url": null,
+      "tool_name": "execute",
+      "startup": {
+        "ready_ms": 1475,
+        "rss_mb_ready": 232.97
+      },
+      "latency": {
+        "e2e": {
+          "n": 30,
+          "p50_ms": 2.059,
+          "p95_ms": 4.069,
+          "p99_ms": 4.54,
+          "p999_ms": 4.54,
+          "mean_ms": 2.335,
+          "min_ms": 1.661,
+          "max_ms": 4.54
+        },
+        "direct_http": {
+          "n": 30,
+          "p50_ms": 0.595,
+          "p95_ms": 1.015,
+          "p99_ms": 1.734,
+          "p999_ms": 1.734,
+          "mean_ms": 0.679,
+          "min_ms": 0.467,
+          "max_ms": 1.734
+        },
+        "gateway_cost": {
+          "n": 30,
+          "p50_ms": 1.538,
+          "p95_ms": 2.806,
+          "p99_ms": 3.345,
+          "p999_ms": 3.345,
+          "mean_ms": 1.656,
+          "min_ms": 0.799,
+          "max_ms": 3.345
+        },
+        "call_errors": 0,
+        "note": "gateway_cost = e2e − paired direct HTTP /pets (interleaved equal-arm)",
+        "schedule": "interleaved_closed_loop"
+      },
+      "resources": {
+        "label": "clawql",
+        "pid": 247739,
+        "n": 15,
+        "rss_mb": {
+          "min": 264.89,
+          "median": 356.95,
+          "max": 358.73
+        },
+        "cpu_pct": {
+          "min": 73.62,
+          "median": 127.04,
+          "max": 195.22,
+          "mean": 130.86
+        }
+      },
+      "tokens": {
+        "invoked_tool_name": "execute",
+        "invoked_tool_schema_tokens": 178,
+        "tools_list_count": 8,
+        "tools_list_schema_tokens": 1189,
+        "equal_result_tokens": 59,
+        "tool_names": [
+          "search",
+          "execute",
+          "resume",
+          "cache",
+          "audit",
+          "skills_list",
+          "skills_get",
+          "sources_propose"
+        ],
+        "note": "Primary board uses invoked_tool_schema_tokens (apples-to-apples); tools_list_* is secondary surface size."
+      },
+      "pid": 247739,
+      "chaos": {
+        "skipped": true,
+        "reason": "MULTI_SKIP_CHAOS=1 (latency/p999 focus)"
+      }
+    },
+    "clawql_bun": {
+      "id": "clawql_bun",
+      "model": "stdio_mcp_openapi_execute_bun",
+      "ok": true,
+      "version": null,
+      "runtime": "bun",
+      "runtimeVersion": "1.4.3",
+      "mcp_url": null,
+      "tool_name": "execute",
+      "startup": {
+        "ready_ms": 1014.9,
+        "rss_mb_ready": 180
+      },
+      "latency": {
+        "e2e": {
+          "n": 30,
+          "p50_ms": 1.945,
+          "p95_ms": 3.255,
+          "p99_ms": 3.498,
+          "p999_ms": 3.498,
+          "mean_ms": 2.067,
+          "min_ms": 1.351,
+          "max_ms": 3.498
+        },
+        "direct_http": {
+          "n": 30,
+          "p50_ms": 0.595,
+          "p95_ms": 1.015,
+          "p99_ms": 1.734,
+          "p999_ms": 1.734,
+          "mean_ms": 0.679,
+          "min_ms": 0.467,
+          "max_ms": 1.734
+        },
+        "gateway_cost": {
+          "n": 30,
+          "p50_ms": 1.263,
+          "p95_ms": 2.276,
+          "p99_ms": 2.888,
+          "p999_ms": 2.888,
+          "mean_ms": 1.388,
+          "min_ms": 0.884,
+          "max_ms": 2.888
+        },
+        "call_errors": 0,
+        "note": "gateway_cost = e2e − paired direct HTTP /pets (interleaved equal-arm)",
+        "schedule": "interleaved_closed_loop"
+      },
+      "resources": {
+        "label": "clawql_bun",
+        "pid": 247751,
+        "n": 5,
+        "rss_mb": {
+          "min": 205.37,
+          "median": 272.62,
+          "max": 305.49
+        },
+        "cpu_pct": {
+          "min": 156.02,
+          "median": 176.98,
+          "max": 190.84,
+          "mean": 172.89
+        }
+      },
+      "tokens": {
+        "invoked_tool_name": "execute",
+        "invoked_tool_schema_tokens": 178,
+        "tools_list_count": 8,
+        "tools_list_schema_tokens": 1189,
+        "equal_result_tokens": 59,
+        "tool_names": [
+          "search",
+          "execute",
+          "resume",
+          "cache",
+          "audit",
+          "skills_list",
+          "skills_get",
+          "sources_propose"
+        ],
+        "note": "Primary board uses invoked_tool_schema_tokens (apples-to-apples); tools_list_* is secondary surface size."
+      },
+      "pid": 247751,
+      "chaos": {
+        "skipped": true,
+        "reason": "MULTI_SKIP_CHAOS=1 (latency/p999 focus)"
+      }
+    }
+  },
+  "errors": {},
+  "honesty": [
+    "Equal-arm pets JSON across all arms.",
+    "EQUAL_UPSTREAM: shared mock HTTP /pets — ClawQL OpenAPI, aggregator list_pets fetch, Executor static upstream=0; gateway_cost = e2e − paired direct when hop paid.",
+    "Latency schedule: interleaved closed-loop across live arms (n≥10000 recommended for p999).",
+    "Primary token metric: invoked_tool_schema_tokens (not full tools/list).",
+    "Chaos: topology A only (single-instance). Claim only vs same topology. MULTI_CHAOS_UNTIL_BREAK pushes past power-of-two ceiling until break.",
+    "path_matrix: ClawQL latency includes risk/audit/projection; aggregators do almost none of that.",
+    "clawql_bun: same dist/server.js + equal-arm env as clawql; only the JS runtime binary changes (Node vs Bun).",
+    "ContextForge/MetaMCP off publish board by default (nested CF / Docker).",
+    "RSS: ClawQL is heaviest serious arm — admit the loss; do not hide under-load median.",
+    "Checkpoint writes after latency and after each chaos arm (survives OOM mid-chaos)."
+  ]
+}
