@@ -174,7 +174,7 @@ ClawQL check: 297 + 11 568 + 8 674 = **20 539** (mean discovery 964/turn �
 
 **Executor v1.6.10 framing (verified):** defs **save 5 430**; pretty-print results **add 24 096**; **net +18 666**. Compacted @12 = **29 572**; ClawQL still leads by **9 033**. Artifact: [`executor-vs-mock-compare.json`](./executor-vs-mock-compare.json).
 
-**Executor 2.0.0-beta.15 smoke (HTTP `/mcp`):** same fixture path — combined **29 927** (−5 075 vs baseline). Compact envelope (+264), not indent tax. ClawQL still leads by **9 388**. Tools: `execute`/`resume`/`skills`. Artifact: [`executor-v1-vs-v2-12turn.json`](./executor-v1-vs-v2-12turn.json). Not yet 10k latency/RSS.
+**Executor 2.0.0-beta.15 · 10 000 × 12 (HTTP `/mcp`):** combined **29 927** (−5 075 vs baseline). Flow e2e p50 / p999 **74.0 / 126.0 ms**; turn p50 / p999 **5.74 / 25.0 ms**; RSS ready / med / max **604 / 968 / 1305 MB**. Slower and much heavier than v1 on this path; tokens win (no indent tax). ClawQL still leads tokens by **9 388**. Artifact: [`gateway-multi-multiturn-executor-v2-10k.json`](./gateway-multi-multiturn-executor-v2-10k.json).
 
 **Executor discovery = 0 (both):** harness-authored `execute` returns the fixture (no `skills`/search). Favors Executor vs ClawQL’s charged 11 568.
 

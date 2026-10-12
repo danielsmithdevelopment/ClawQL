@@ -1,7 +1,7 @@
 {
   "name": "clawql-mcp",
   "version": "8.0.0",
-  "description": "Agentic Gateway — Foundational Platform for Auditable Production AI. MCP search + execute over OpenAPI/Discovery (internal GraphQL projection), optional native GraphQL HTTP and gRPC unary sources",
+  "description": "Agentic Gateway \u2014 Foundational Platform for Auditable Production AI. MCP search + execute over OpenAPI/Discovery (internal GraphQL projection), optional native GraphQL HTTP and gRPC unary sources",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/server.js",
@@ -138,7 +138,8 @@
     "release:audit-wedge:dry-run": "node scripts/release/npm-publish-audit-wedge.mjs --dry-run",
     "test:npm-pack-audit-wedge": "bash scripts/dev/test-npm-pack-audit-wedge.sh",
     "test:gdp-mistakes": "npm run build -w clawql-gdp && vitest run packages/clawql-gdp/src/gdp-mistakes-all.test.ts",
-    "check:gdp": "npm run test:gdp-mistakes"
+    "check:gdp": "npm run test:gdp-mistakes",
+    "benchmark:executor-v2-multiturn": "node scripts/benchmarks/executor-v2-multiturn.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1127.0",

@@ -26,6 +26,7 @@ const PETS_BUN = join(DIR, "gateway-multi-cmp-ts7-bun-10k.json");
 const PETS_NODE = join(DIR, "gateway-multi-cmp-ts7-node-10k.json");
 const PETS_CHAOS_BUN = join(DIR, "gateway-multi-cmp-ts7-bun-chaos.json");
 const PETS_CHAOS_NODE = join(DIR, "gateway-multi-cmp-ts7-node-chaos.json");
+const EX2_JSON = join(DIR, "gateway-multi-multiturn-executor-v2-10k.json");
 const OUT_DOCS = join(DIR, "index.html");
 const OUT_WWW_DIR = join(ROOT, "apps", "www", "public", "benchmarks", "gateway-multi-comparison");
 const OUT_WWW_HTML = join(OUT_WWW_DIR, "index.html");
@@ -80,7 +81,7 @@ function vsDirectLabel(id, b, direct) {
   return `+${fmt(delta)}`;
 }
 
-function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun }) {
+function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun, ex2 }) {
   const board = mt.board;
   const ratios = mt.ratios_vs_clawql || {};
   const ids = orderArms(board);
@@ -348,24 +349,75 @@ ${breakdownRows}
       <strong>Discovery = 0:</strong> harness-authored <code>execute</code> returns the fixture (no search). Favors Executor vs ClawQL’s charged 11 568.
     </p>
 
-    <h3>Executor 2.0 beta — first smoke (design direction)</h3>
+    <h3>Executor 2.0.0-beta.15 — full 10 000 × 12 board</h3>
     <p>
-      Installed <code>executor@2.0.0-beta.15</code> (HTTP <code>/mcp</code>, local serve). Same 12-turn equal-arm fixture code, discovery still 0:
+      Same equal-arm fixture path over HTTP <code>/mcp</code> (local <code>executor serve</code>). Discovery still 0 (harness-authored <code>execute</code>; <code>skills</code> not called).
+      Tokens match the earlier smoke; latency/RSS below are n=10 000.
     </p>
-    <table>
-      <thead><tr><th>Arm</th><th>Definitions</th><th>Σ Results</th><th>Combined @12</th><th>vs baseline</th></tr></thead>
+${
+  ex2?.board?.executor_v2
+    ? (() => {
+        const e = ex2.board.executor_v2;
+        const fe = e.flow_e2e_ms || {};
+        const tl = e.turn_latency_ms || {};
+        return `    <table>
+      <thead>
+        <tr>
+          <th>Arm</th><th>Combined @12</th><th>Flow e2e p50 / p99 / <strong>p999</strong></th>
+          <th>Turn p50 / <strong>p999</strong></th><th>RSS ready / med / max (MB)</th>
+        </tr>
+      </thead>
       <tbody>
-        <tr><td>Executor v1.6.10 (board)</td><td>90</td><td>53 578</td><td><strong>53 668</strong></td><td>+18 666</td></tr>
-        <tr><td>Executor v2 β.15 (smoke)</td><td>181</td><td>29 746</td><td><strong>29 927</strong></td><td><strong>−5 075</strong></td></tr>
-        <tr class="hl"><td>ClawQL (board)</td><td>297</td><td>8 674 (+11 568 search)</td><td><strong>20 539</strong></td><td>−14 463</td></tr>
+        <tr><td>Direct HTTP</td><td>35 002</td><td>2.17 / 5.75 / <strong>9.39</strong></td><td>0.12 / <strong>1.75</strong></td><td>—</td></tr>
+        <tr class="hl"><td>ClawQL Bun</td><td><strong>20 539</strong></td><td>15.01 / 24.59 / <strong>34.97</strong></td><td>1.12 / <strong>4.82</strong></td><td>178 / <strong>337</strong> / 371</td></tr>
+        <tr><td>ClawQL Node</td><td>20 539</td><td>18.23 / 31.72 / <strong>56.79</strong></td><td>1.38 / <strong>5.14</strong></td><td>229 / <strong>678</strong> / 680</td></tr>
+        <tr><td>agentgateway</td><td>35 002</td><td>13.63 / 19.58 / <strong>330.91</strong></td><td>1.01 / <strong>3.54</strong></td><td>184 / <strong>214</strong> / 215</td></tr>
+        <tr><td>MCPJungle</td><td>35 322</td><td>15.39 / 20.31 / <strong>134.97</strong></td><td>1.18 / <strong>3.84</strong></td><td>107 / <strong>153</strong> / 153</td></tr>
+        <tr><td>Executor v1.6.10</td><td>53 668</td><td>64.35 / 86.82 / <strong>106.55</strong></td><td>5.03 / <strong>16.98</strong></td><td>194 / <strong>213</strong> / 227</td></tr>
+        <tr><td><strong>Executor v2 β.15</strong></td><td><strong>${fmt(e.combined_at_n)}</strong> (−${fmt(
+          35002 - e.combined_at_n
+        )})</td><td>${fmt(fe.p50_ms, 2)} / ${fmt(fe.p99_ms, 2)} / <strong>${fmt(
+          fe.p999_ms,
+          2
+        )}</strong></td><td>${fmt(tl.p50_ms, 2)} / <strong>${fmt(
+          tl.p999_ms,
+          2
+        )}</strong></td><td>${fmt(e.rss_mb_ready, 0)} / <strong>${fmt(
+          e.rss_mb_median,
+          0
+        )}</strong> / ${fmt(e.rss_mb_max, 0)}</td></tr>
       </tbody>
     </table>
     <ul>
-      <li>v2 returns <strong>compact</strong> JSON wrapped in <code>{status, execution:{ok,value}}</code> — inner value equals the fixture; envelope ≈ <strong>+264</strong> tok over 12 turns (not the v1 indent tax).</li>
-      <li>Tools exposed: <code>execute</code>, <code>resume</code>, <code>skills</code> (3; execute schema 181 tok). <code>skills</code> not called in this smoke.</li>
-      <li>v2 <em>beats the no-gateway baseline</em> on this path (−5 075). ClawQL still leads v2 by <strong>9 388</strong> (projection). Inner-only compacted lead ≈ 9 124.</li>
-      <li>Smoke = 1×12 turns (tokens deterministic). Not yet a 10 000-flow latency/RSS board. Artifact: <a href="./executor-v1-vs-v2-12turn.json">executor-v1-vs-v2-12turn.json</a>.</li>
-    </ul>
+      <li><strong>Tokens:</strong> v2 combined ${fmt(e.combined_at_n)} = ${fmt(
+          e.definitions_tokens
+        )} defs + ${fmt(e.result_tokens_sum)} results (envelope +${fmt(
+          e.envelope_overhead_tokens_sum
+        )} vs compact fixture). Beats baseline by ${fmt(
+          35002 - e.combined_at_n
+        )}; ClawQL still leads by ${fmt(e.combined_at_n - 20539)} via projection.</li>
+      <li><strong>Latency:</strong> v2 flow p50 <strong>${fmt(
+        fe.p50_ms,
+        1
+      )} ms</strong> is slower than v1 (64.4) and ~5× ClawQL Bun (15.0). Turn p50 ${fmt(
+        tl.p50_ms,
+        1
+      )} ms ≈ v1’s 5.0; turn p999 ${fmt(tl.p999_ms, 1)} ms worse than v1’s 17.0.</li>
+      <li><strong>Memory:</strong> v2 Ready ~${fmt(
+        e.rss_mb_ready,
+        0
+      )} MB, under-load med <strong>~${fmt(
+        e.rss_mb_median,
+        0
+      )} MB</strong>, max ~${fmt(
+        e.rss_mb_max,
+        0
+      )} MB — much heavier than v1 (~213 med) or ClawQL Bun (~337).</li>
+      <li>Transport differs: v1 stdio vs v2 HTTP streamable MCP on a long-lived <code>serve</code> process. Artifact: <a href="./gateway-multi-multiturn-executor-v2-10k.json">gateway-multi-multiturn-executor-v2-10k.json</a>.</li>
+    </ul>`;
+      })()
+    : `    <p class="meta">Executor v2 10k board not found — run <code>node scripts/benchmarks/executor-v2-multiturn.mjs</code>.</p>`
+}
 
     <h3>Where ClawQL’s next token win is</h3>
     <p>
@@ -506,7 +558,8 @@ async function main() {
   const petsBun = await loadJson(PETS_BUN);
   const chaosNode = await loadJson(PETS_CHAOS_NODE);
   const chaosBun = await loadJson(PETS_CHAOS_BUN);
-  const html = buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun });
+  const ex2 = await loadJson(EX2_JSON);
+  const html = buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun, ex2 });
   await writeFile(OUT_DOCS, html);
   await mkdir(OUT_WWW_DIR, { recursive: true });
   await writeFile(OUT_WWW_HTML, html);
@@ -519,6 +572,7 @@ async function main() {
     "gateway-multi-cmp-ts7-bun-chaos.json",
     "executor-vs-mock-compare.json",
     "executor-v1-vs-v2-12turn.json",
+    "gateway-multi-multiturn-executor-v2-10k.json",
     "README.md",
   ]) {
     const src = join(DIR, name);

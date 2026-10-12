@@ -1,0 +1,332 @@
+{
+  "suite": "gateway-multi-multiturn-executor-v2",
+  "measuredAt": "2026-10-12T04:24:25.496Z",
+  "config": {
+    "turns": 12,
+    "iters": 10000,
+    "limit": 25,
+    "url": "http://127.0.0.1:4312/mcp",
+    "tokenizer": "cl100k_base",
+    "discovery": 0,
+    "discovery_note": "Harness-authored execute returns fatPayload; skills not called"
+  },
+  "board": {
+    "executor_v2": {
+      "runtime": "executor-v2-http",
+      "runtime_version": "2.0.0-beta.15",
+      "ready_ms": 38.9,
+      "rss_mb_ready": 603.63,
+      "rss_mb_min": 603.67,
+      "rss_mb_median": 968.09,
+      "rss_mb_max": 1304.98,
+      "definitions_tokens": 181,
+      "discovery_tokens_sum": 0,
+      "mean_discovery_tokens": 0,
+      "result_tokens_sum": 29746,
+      "mean_result_tokens": 2478.8,
+      "fixture_result_tokens_sum": 29482,
+      "envelope_overhead_tokens_sum": 264,
+      "layer1_once_tokens": 181,
+      "combined_at_n": 29927,
+      "combined_rebuild": 29927,
+      "compacted_inner_combined_at_n": 29663,
+      "flows": 10000,
+      "turns_per_flow": 12,
+      "total_turns": 120000,
+      "flow_e2e_ms": {
+        "n": 10000,
+        "p50_ms": 73.992,
+        "p95_ms": 92.72,
+        "p99_ms": 106.67,
+        "p999_ms": 126.043,
+        "mean_ms": 75.826,
+        "min_ms": 61.604,
+        "max_ms": 569.242
+      },
+      "turn_latency_ms": {
+        "n": 120000,
+        "p50_ms": 5.741,
+        "p95_ms": 9.676,
+        "p99_ms": 16.361,
+        "p999_ms": 24.976,
+        "mean_ms": 6.314,
+        "min_ms": 4.905,
+        "max_ms": 53.887
+      },
+      "call_errors": 0,
+      "task_success_ok": true,
+      "tools": [
+        "execute",
+        "resume",
+        "skills"
+      ],
+      "tools_list_full_tokens": 815
+    }
+  },
+  "arms": {
+    "executor_v2": {
+      "id": "executor_v2",
+      "model": "http_mcp_code_execute_fat_static_v2",
+      "layer1": {
+        "once_schema_tokens": 181,
+        "tools_count": 1,
+        "tools_list_count_full": 3,
+        "tools_list_schema_tokens_full": 815,
+        "note": "execute schema only (v2 exposes execute/resume/skills)"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2433,
+          "result_chars": 7746,
+          "fixture_tokens": 2411,
+          "value_equals_fixture": true,
+          "layer2_classic": 2433,
+          "latency_ms": 20.119,
+          "ok": true
+        },
+        {
+          "n": 2,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "fixture_tokens": 2461,
+          "value_equals_fixture": true,
+          "layer2_classic": 2483,
+          "latency_ms": 9.623,
+          "ok": true
+        },
+        {
+          "n": 3,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "fixture_tokens": 2461,
+          "value_equals_fixture": true,
+          "layer2_classic": 2483,
+          "latency_ms": 11.359,
+          "ok": true
+        },
+        {
+          "n": 4,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "fixture_tokens": 2461,
+          "value_equals_fixture": true,
+          "layer2_classic": 2483,
+          "latency_ms": 8.668,
+          "ok": true
+        },
+        {
+          "n": 5,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "fixture_tokens": 2461,
+          "value_equals_fixture": true,
+          "layer2_classic": 2483,
+          "latency_ms": 9.631,
+          "ok": true
+        },
+        {
+          "n": 6,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "fixture_tokens": 2461,
+          "value_equals_fixture": true,
+          "layer2_classic": 2483,
+          "latency_ms": 9.11,
+          "ok": true
+        },
+        {
+          "n": 7,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "fixture_tokens": 2461,
+          "value_equals_fixture": true,
+          "layer2_classic": 2483,
+          "latency_ms": 9.176,
+          "ok": true
+        },
+        {
+          "n": 8,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "fixture_tokens": 2461,
+          "value_equals_fixture": true,
+          "layer2_classic": 2483,
+          "latency_ms": 10.001,
+          "ok": true
+        },
+        {
+          "n": 9,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "fixture_tokens": 2461,
+          "value_equals_fixture": true,
+          "layer2_classic": 2483,
+          "latency_ms": 7.799,
+          "ok": true
+        },
+        {
+          "n": 10,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "fixture_tokens": 2461,
+          "value_equals_fixture": true,
+          "layer2_classic": 2483,
+          "latency_ms": 7.627,
+          "ok": true
+        },
+        {
+          "n": 11,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7908,
+          "fixture_tokens": 2461,
+          "value_equals_fixture": true,
+          "layer2_classic": 2483,
+          "latency_ms": 18.466,
+          "ok": true
+        },
+        {
+          "n": 12,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7908,
+          "fixture_tokens": 2461,
+          "value_equals_fixture": true,
+          "layer2_classic": 2483,
+          "latency_ms": 8.179,
+          "ok": true
+        }
+      ],
+      "resources": {
+        "label": "executor_v2",
+        "pid": 322401,
+        "n": 1516,
+        "rss_mb": {
+          "min": 603.67,
+          "median": 968.09,
+          "max": 1304.98
+        }
+      },
+      "startup": {
+        "ready_ms": 38.9,
+        "rss_mb_ready": 603.63
+      },
+      "board": {
+        "runtime": "executor-v2-http",
+        "runtime_version": "2.0.0-beta.15",
+        "ready_ms": 38.9,
+        "rss_mb_ready": 603.63,
+        "rss_mb_min": 603.67,
+        "rss_mb_median": 968.09,
+        "rss_mb_max": 1304.98,
+        "definitions_tokens": 181,
+        "discovery_tokens_sum": 0,
+        "mean_discovery_tokens": 0,
+        "result_tokens_sum": 29746,
+        "mean_result_tokens": 2478.8,
+        "fixture_result_tokens_sum": 29482,
+        "envelope_overhead_tokens_sum": 264,
+        "layer1_once_tokens": 181,
+        "combined_at_n": 29927,
+        "combined_rebuild": 29927,
+        "compacted_inner_combined_at_n": 29663,
+        "flows": 10000,
+        "turns_per_flow": 12,
+        "total_turns": 120000,
+        "flow_e2e_ms": {
+          "n": 10000,
+          "p50_ms": 73.992,
+          "p95_ms": 92.72,
+          "p99_ms": 106.67,
+          "p999_ms": 126.043,
+          "mean_ms": 75.826,
+          "min_ms": 61.604,
+          "max_ms": 569.242
+        },
+        "turn_latency_ms": {
+          "n": 120000,
+          "p50_ms": 5.741,
+          "p95_ms": 9.676,
+          "p99_ms": 16.361,
+          "p999_ms": 24.976,
+          "mean_ms": 6.314,
+          "min_ms": 4.905,
+          "max_ms": 53.887
+        },
+        "call_errors": 0,
+        "task_success_ok": true,
+        "tools": [
+          "execute",
+          "resume",
+          "skills"
+        ],
+        "tools_list_full_tokens": 815
+      }
+    }
+  },
+  "ratios_vs_direct": {
+    "executor_v2": {
+      "vs_direct_combined_classic": 0.86,
+      "token_delta_vs_direct": -5075,
+      "flow_e2e_p50_delta_ms_vs_direct": 71.819
+    }
+  },
+  "vs_board_peers": {
+    "note": "Peer numbers from gateway-multi-multiturn-10k.json (same host/date family)",
+    "clawql_bun": {
+      "combined": 20539,
+      "flow_p50": 15.014,
+      "flow_p999": 34.974,
+      "turn_p50": 1.115,
+      "turn_p999": 4.823,
+      "rss_med": 337.09
+    },
+    "executor_v1": {
+      "combined": 53668,
+      "flow_p50": 64.351,
+      "flow_p999": 106.552,
+      "turn_p50": 5.026,
+      "turn_p999": 16.982,
+      "rss_med": 213.48
+    },
+    "agentgateway": {
+      "combined": 35002,
+      "flow_p50": 13.628,
+      "flow_p999": 330.912,
+      "turn_p50": 1.005,
+      "turn_p999": 3.54,
+      "rss_med": 214.08
+    },
+    "mcpjungle": {
+      "combined": 35322,
+      "flow_p50": 15.389,
+      "flow_p999": 134.972,
+      "turn_p50": 1.175,
+      "turn_p999": 3.842,
+      "rss_med": 152.55
+    }
+  }
+}

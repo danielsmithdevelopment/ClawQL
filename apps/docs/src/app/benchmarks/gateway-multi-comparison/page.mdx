@@ -29,7 +29,7 @@ On **this board**, ClawQL is the only measured gateway that **reduces** tokens v
 
 **Executor v1.6.10:** defs −5 430; pretty-print +24 096; net +18 666. Compacted 29 572; ClawQL leads by 9 033.
 
-**Executor 2.0 β.15 smoke:** combined **29 927** (−5 075 vs baseline) — compact JSON + small envelope, not indent tax. ClawQL still leads by **9 388**. Discovery=0 both (harness fixture `execute`). See [`executor-v1-vs-v2-12turn.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/gateway-multi-comparison/executor-v1-vs-v2-12turn.json).
+**Executor 2.0 β.15 · 10k×12:** combined **29 927** (−5 075 vs baseline). Flow p50/p999 **74.0 / 126 ms**; turn p50/p999 **5.74 / 25.0 ms**; RSS med **968 MB** (ready 604 / max 1305). Tokens beat v1; latency/RSS worse. ClawQL still leads tokens by **9 388**. See [`gateway-multi-multiturn-executor-v2-10k.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/gateway-multi-comparison/gateway-multi-multiturn-executor-v2-10k.json).
 
 **Next lever:** discovery is 11 568 tokens (56% of ClawQL’s total) — leaner search signatures (~300 tok/turn ≈ −8k @12) and/or `execute` by operation ID when ops recur.
 
