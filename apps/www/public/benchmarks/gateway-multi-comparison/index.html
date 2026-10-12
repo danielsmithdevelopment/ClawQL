@@ -196,14 +196,14 @@
       </thead>
       <tbody>
         <tr class="hl"><td>ClawQL HTTP</td><td>HTTP multiplex</td><td><strong>20 539</strong></td><td>47.85 / <strong>388.63</strong></td><td>285 / <strong>2,717</strong> / 3,839</td><td>steady_climb_possible_leak</td></tr>
-        <tr><td><strong>Executor v2 β.15</strong></td><td>HTTP /mcp</td><td><strong>29,927</strong> (−5,075)</td><td>74.37 / <strong>135.32</strong></td><td>490 / <strong>918</strong> / 1,290</td><td>working_set_or_noise</td></tr>
+        <tr><td><strong>Executor v2 β.15</strong></td><td>HTTP /mcp</td><td><strong>29,927</strong> (−5,075)</td><td>73.45 / <strong>143.25</strong></td><td>493 / <strong>927</strong> / 1,354</td><td>plateau</td></tr>
         <tr><td>ClawQL Bun</td><td>stdio</td><td>20 539</td><td>15.01 / <strong>34.97</strong></td><td>— / <strong>337</strong> / —</td><td>—</td></tr>
         <tr><td>Executor v1.6.10</td><td>stdio</td><td>53 668 (+18 666)</td><td>64.35 / <strong>106.55</strong></td><td>— / <strong>213</strong> / —</td><td>—</td></tr>
       </tbody>
     </table>
     <ul>
-      <li><strong>Tokens:</strong> v2 combined 29,927 = 181 defs + 29,746 results (envelope +264; defs+envelope over compact results ≈ 445). Beats baseline by 5,075; ClawQL still leads by 9,388.</li>
-      <li><strong>Latency (equal transport):</strong> ClawQL HTTP p50 <strong>47.8 ms</strong> vs v2 <strong>74.4 ms</strong> (+26.5 ms). Do not compare v2 to Bun stdio (15 ms) as a product regression.</li>
+      <li><strong>Tokens:</strong> v2 combined 29,927 = 181 defs + 29,746 results (envelope +—; defs+envelope over compact results ≈ —). Beats baseline by 5,075; ClawQL still leads by 9,388.</li>
+      <li><strong>Latency (equal transport):</strong> ClawQL HTTP p50 <strong>47.8 ms</strong> vs v2 <strong>73.5 ms</strong> (+25.6 ms). Do not compare v2 to Bun stdio (15 ms) as a product regression.</li>
       <li><strong>Memory:</strong> v2 series is a <em>working set</em> (early spike, then ~850–975 MB) — not a leak headline. ClawQL HTTP climbs on this host — investigate before memory claims. Build: npm <code>executor@2.0.0-beta.15</code> / <code>executor serve</code>.</li>
       <li>Artifacts: <a href="./gateway-multi-multiturn-executor-v2-10k.json">executor-v2-10k</a>, <a href="./gateway-multi-multiturn-clawql-http-10k.json">clawql-http-10k</a>.</li>
     </ul>

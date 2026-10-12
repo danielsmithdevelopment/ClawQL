@@ -35,16 +35,19 @@
  *
  * Env:
  *   MT_TURNS (default 12)  MT_ITERS (default 1)  CATALOG_TOOL_COUNT (default 40)
- *   MT_ARMS=direct,clawql,clawql_bun,clawql_http,executor,mcpjungle,agentgateway
+ *   MT_ARMS=direct,clawql,clawql_bun,executor,executor_v2,mcpjungle,agentgateway
  *   MT_LIMIT (rows per turn, default 25)
  *   MT_OUT (default gateway-multi-multiturn.json)
  *   MT_PROGRESS_EVERY (default 100)  BUN_BIN  MT_INCLUDE_CF=1
+ *   EXECUTOR_BIN / EXECUTOR_CWD — Executor 1.x stdio (`executor mcp`)
+ *   EXECUTOR_V2_URL / EXECUTOR_V2_API_KEY / EXECUTOR_V2_PID — Executor 2.x HTTP
+ *     (v2 removed stdio MCP; same harness loop + fat execute fixture as v1)
  *
  * `direct` = no MCP gateway — raw HTTP GETs to the equal-arm catalog mock.
  * Layer1 tokens = 0 (no tools/list); Layer2 = fat JSON body. Use it to price
  * each gateway's token savings vs latency/RSS cost.
- * `clawql_http` = same search+execute+projection over Streamable HTTP
- * (`dist/server-http.js`) — equal transport for Executor v2 HTTP compares.
+ * `executor` = v1 stdio; `executor_v2` = v2 HTTP — identical runExecutorArm loop.
+ * `clawql_http` = optional Node HTTP peer (not default; RSS climb under investigation).
  *
  * Note: do NOT put a hand-written slim-return program on the publish board as
  * "Executor". That is not gateway projection and contradicts the settled blog.
@@ -443,10 +446,16 @@ function parseResultJson(text) {
  */
 function scoreTaskSuccess(text, partitionIndex, limit = LIMIT) {
   const expected = slimPayload(partitionIndex, limit);
-  const parsed = parseResultJson(text);
+  let parsed = parseResultJson(text);
   const failures = [];
   if (parsed == null) {
     return { ok: false, matched: 0, expected: expected.length, failures: ["unparseable_json"] };
+  }
+  // Executor v2 HTTP wraps the return value: { execution: { value: <payload> } }.
+  if (parsed && typeof parsed === "object" && parsed.execution?.value != null) {
+    parsed = parsed.execution.value;
+  } else if (parsed && typeof parsed === "object" && parsed.value != null && parsed.items == null) {
+    parsed = parsed.value;
   }
   let rows = null;
   if (Array.isArray(parsed)) rows = parsed;
@@ -740,6 +749,65 @@ async function connectExecutor() {
   return {
     client,
     pid: transportPid(transport),
+    transport: "stdio",
+    runtimeVersion: "1.6.10",
+    close: async () => {
+      await client.close().catch(() => {});
+    },
+  };
+}
+
+/** Prefer native platform binary PID — not the tiny node launcher. */
+function findExecutorV2ServePid() {
+  if (process.env.EXECUTOR_V2_PID) return Number(process.env.EXECUTOR_V2_PID);
+  const ranked = [];
+  for (const ent of readdirSync("/proc")) {
+    if (!/^\d+$/.test(ent)) continue;
+    try {
+      const cmd = readFileSync(`/proc/${ent}/cmdline`, "utf8").replace(/\0/g, " ");
+      if (!/\bserve\b/.test(cmd) || /workerd/.test(cmd)) continue;
+      if (/executor-(linux|darwin|win)[^/]*\/executor(\.exe)?\b/.test(cmd)) {
+        ranked.push({ pid: Number(ent), rank: 0 });
+      } else if (/\bexecutor\b/.test(cmd) && !/\bnode\b/.test(cmd)) {
+        ranked.push({ pid: Number(ent), rank: 1 });
+      } else if (/\bexecutor\b/.test(cmd)) {
+        ranked.push({ pid: Number(ent), rank: 2 });
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  ranked.sort((a, b) => a.rank - b.rank);
+  return ranked[0]?.pid ?? null;
+}
+
+/**
+ * Executor 2.x — product is HTTP-only (`executor mcp` is v1). Same fat-execute
+ * harness as connectExecutor; transport differs because the product dropped stdio.
+ */
+async function connectExecutorV2() {
+  const url = process.env.EXECUTOR_V2_URL?.trim() || "http://127.0.0.1:4312/mcp";
+  const apiKey =
+    process.env.EXECUTOR_V2_API_KEY?.trim() ||
+    (existsSync("/tmp/executor-v2-data/api_key.txt")
+      ? readFileSync("/tmp/executor-v2-data/api_key.txt", "utf8").trim()
+      : "");
+  if (!apiKey) throw new Error("EXECUTOR_V2_API_KEY or /tmp/executor-v2-data/api_key.txt required");
+  const transport = new StreamableHTTPClientTransport(new URL(url), {
+    requestInit: { headers: { Authorization: `Bearer ${apiKey}` } },
+  });
+  const client = new Client({ name: "mt-executor-v2", version: "1" }, {});
+  const t0 = performance.now();
+  await client.connect(transport);
+  const pid = findExecutorV2ServePid();
+  return {
+    client,
+    pid,
+    transport: "streamable_http",
+    runtimeVersion: "2.0.0-beta.15",
+    mcpUrl: url,
+    ready_ms: Number((performance.now() - t0).toFixed(1)),
+    rss_mb_ready: pid != null ? readProcRssMb(pid) : null,
     close: async () => {
       await client.close().catch(() => {});
     },
@@ -1254,10 +1322,32 @@ async function runClawqlArm(
   }
 }
 
-async function runExecutorArm(turns, { filter = false } = {}) {
-  const conn = await connectExecutor();
-  const armId = filter ? "executor_filter" : "executor";
+async function runExecutorArm(turns, { filter = false, version = "v1" } = {}) {
+  const isV2 = version === "v2";
+  const conn = isV2 ? await connectExecutorV2() : await connectExecutor();
+  const armId = filter ? "executor_filter" : isV2 ? "executor_v2" : "executor";
+  // v2: sample serve process RSS (single proc). v1: stdio child tree.
   const sampler = new ResourceSampler(armId, conn.pid);
+  if (isV2) {
+    // Override tree sampling with single-proc for the long-lived serve binary.
+    sampler.start = function start(intervalMs = 200) {
+      if (!this.pid) return;
+      this._t0 = performance.now();
+      const tick = () => {
+        const rss = readProcRssMb(this.pid);
+        if (rss == null) return;
+        this.samples.push(rss);
+        this.series.push({
+          t_s: Number(((performance.now() - this._t0) / 1000).toFixed(2)),
+          flow: this._flow,
+          rss_mb: Number(rss.toFixed(2)),
+        });
+      };
+      tick();
+      this._timer = setInterval(tick, intervalMs);
+      if (typeof this._timer.unref === "function") this._timer.unref();
+    };
+  }
   sampler.start(ITERS > 1 ? 500 : 200);
   try {
     const listed = await conn.client.listTools();
@@ -1289,9 +1379,12 @@ async function runExecutorArm(turns, { filter = false } = {}) {
         let text = "";
         let ok = true;
         try {
+          // Same fixture path: harness-authored execute returns fatPayload (discovery=0).
+          // v1 accepts timeoutMs; v2 HTTP execute schema is code-only.
+          const args = isV2 ? { code: codes[ti] } : { code: codes[ti], timeoutMs: 30_000 };
           const res = await conn.client.callTool({
             name: "execute",
-            arguments: { code: codes[ti], timeoutMs: 30_000 },
+            arguments: args,
           });
           if (res.isError) throw new Error(toolText(res).slice(0, 300));
           text = toolText(res);
@@ -1310,6 +1403,7 @@ async function runExecutorArm(turns, { filter = false } = {}) {
           thisPerTurn.push({
             n: turn.n,
             tool: "execute",
+            search_tokens: 0,
             result_tokens: resultTok,
             result_chars: text.length,
             layer2_classic: resultTok,
@@ -1319,7 +1413,9 @@ async function runExecutorArm(turns, { filter = false } = {}) {
             task_success: success,
             note: filter
               ? "Code-mode filter to {id,name,status} — fair peer for ClawQL projection"
-              : "Fat equal-arm JSON via code; Executor MCP text is pretty-printed same payload (see executor-vs-mock-compare.json)",
+              : isV2
+                ? "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+                : "Fat equal-arm JSON via code; Executor MCP text is pretty-printed same payload (see executor-vs-mock-compare.json)",
           });
         }
       }
@@ -1334,10 +1430,14 @@ async function runExecutorArm(turns, { filter = false } = {}) {
     return {
       id: armId,
       model: filter
-        ? "stdio_mcp_code_execute_fields_filter"
-        : "stdio_mcp_code_execute_fat_static",
-      runtime: null,
-      runtimeVersion: null,
+        ? `${conn.transport || "stdio"}_mcp_code_execute_fields_filter`
+        : `${conn.transport || "stdio"}_mcp_code_execute_fat_static`,
+      runtime: isV2 ? "executor-v2" : "executor-v1",
+      runtimeVersion: conn.runtimeVersion ?? null,
+      transport: conn.transport || "stdio",
+      mcpUrl: conn.mcpUrl || null,
+      discovery_note:
+        "Harness-authored execute returns fatPayload; skills/search not called (discovery=0)",
       layer1: {
         once_schema_tokens: l1Tokens,
         tools_count: executeTool ? 1 : listed.tools.length,
@@ -1355,7 +1455,10 @@ async function runExecutorArm(turns, { filter = false } = {}) {
       call_errors: callErrors,
       task_success_agg: { ok: successOk, total: successTotal },
       resources,
-      startup: { ready_ms: null, rss_mb_ready: resources.rss_mb?.min ?? null },
+      startup: {
+        ready_ms: conn.ready_ms ?? null,
+        rss_mb_ready: conn.rss_mb_ready ?? resources.rss_mb?.min ?? null,
+      },
       skipped: false,
     };
   } finally {
@@ -1632,13 +1735,15 @@ async function main() {
             rawArms.executor = { skipped: true, reason: "EXECUTOR_BIN unset" };
             continue;
           }
-          rawArms.executor = await runExecutorArm(turns, { filter: false });
+          rawArms.executor = await runExecutorArm(turns, { filter: false, version: "v1" });
+        } else if (arm === "executor_v2") {
+          rawArms.executor_v2 = await runExecutorArm(turns, { filter: false, version: "v2" });
         } else if (arm === "executor_filter") {
           if (!process.env.EXECUTOR_BIN?.trim()) {
             rawArms.executor_filter = { skipped: true, reason: "EXECUTOR_BIN unset" };
             continue;
           }
-          rawArms.executor_filter = await runExecutorArm(turns, { filter: true });
+          rawArms.executor_filter = await runExecutorArm(turns, { filter: true, version: "v1" });
         } else if (arm === "mcpjungle") {
           const gw = await startMcpjungleCatalog();
           gateways.push(gw);
@@ -1746,8 +1851,10 @@ async function main() {
         "Executor Layer2 is fat JSON — matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
         "Do not publish a hand-written slim-return program as Executor.",
         "clawql_bun: same dist/server.js as clawql; only JS runtime changes.",
-        "clawql_http: same search+execute+projection over Streamable HTTP multiplex — use for Executor v2 HTTP latency compares (stdio ClawQL is a different transport).",
-        "Executor v1 (stdio) vs v2 (HTTP) are different transports; do not headline v2 slower-than-v1 without an HTTP ClawQL peer.",
+        "executor + executor_v2 share the same runExecutorArm loop and fat fixture (discovery=0).",
+        "Executor 2 removed stdio MCP (`executor mcp` is v1-only) — product transport is HTTP; harness equalization is the shared loop, not pretending v2 has stdio.",
+        "Do not compare Executor v2 latency/RSS to ClawQL Bun stdio as same-topology. Tokens remain comparable.",
+        "clawql_http is optional diagnostic only (HTTP RSS climb under investigation) — not a default publish peer.",
         "Executor discovery=0 on both versions (harness-authored execute). ClawQL charges search each turn.",
         "ContextForge/MetaMCP off publish board by default.",
         "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",

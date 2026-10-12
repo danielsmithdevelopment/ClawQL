@@ -17,10 +17,10 @@ export const BENCHMARK_VIDEO_META = {
 export const gatewayBenchmarkHeadline = 'Most efficient governed MCP gateway — measured, not marketed.'
 
 export const gatewayBenchmarkSummary =
-  'Equal-arm board: same 40-tool fat catalog, same task success, 10 000 × 12-turn flows. ClawQL is the only measured arm that cuts tokens versus a fair direct-HTTP baseline — via gateway result projection. Aggregators match the baseline. Executor is version-scoped: v1.6.10 pretty-prints (+18 666); v2 beta ships compact envelopes (−5 075) and ClawQL still leads by 9 388.'
+  'Equal-arm board: same multiturn harness, same 40-tool fat catalog, same task success, 10 000 × 12-turn flows. ClawQL is the only measured arm that cuts tokens versus a fair direct-HTTP baseline — via gateway result projection. Executor is version-scoped on that same harness: v1.6.10 pretty-prints (+18 666); v2 β compact envelopes (−5 075). ClawQL still leads v2 by 9 388. Executor 2 removed stdio MCP — product transport is HTTP; tokens stay comparable, latency is not mixed with Bun stdio.'
 
 export const gatewayBenchmarkClaim =
-  'Fewest I/O tokens among measured MCP aggregators and live Executor (v1 and v2 β), with equal task success.'
+  'Fewest I/O tokens among measured MCP aggregators and live Executor (v1 and v2 β), same harness, equal task success.'
 
 export type GatewayCompetitorColumn = 'ClawQL' | 'Executor' | 'MCPJungle' | 'agentgateway'
 
@@ -139,7 +139,7 @@ export const tokenScorecardRows: TokenScorecardRow[] = [
     note: 'No gateway process. Defs = agentgateway serialization of the same 40 ops.',
   },
   {
-    arm: 'ClawQL (Node, stdio)',
+    arm: 'ClawQL (Node)',
     highlight: true,
     definitions: '297',
     discovery: '11 568',
@@ -150,9 +150,10 @@ export const tokenScorecardRows: TokenScorecardRow[] = [
     flowP999: '56.8',
     rssMed: '678',
     taskSuccess: 'PASS',
+    note: 'stdio · same multiturn harness as Executor rows',
   },
   {
-    arm: 'ClawQL (Bun, stdio)',
+    arm: 'ClawQL (Bun)',
     highlight: true,
     definitions: '297',
     discovery: '11 568',
@@ -163,24 +164,10 @@ export const tokenScorecardRows: TokenScorecardRow[] = [
     flowP999: '35.0',
     rssMed: '337',
     taskSuccess: 'PASS',
-    note: 'Same tokens as Node; ~50% lower multiturn RSS on this host.',
+    note: 'stdio · same tokens as Node; ~50% lower multiturn RSS on this host.',
   },
   {
-    arm: 'ClawQL (HTTP)',
-    highlight: true,
-    definitions: '297',
-    discovery: '11 568',
-    results: '8 674',
-    combined: '20 539',
-    vsDirect: '−14 463',
-    flowP50: '47.8',
-    flowP999: '388.6',
-    rssMed: '2 717',
-    taskSuccess: 'PASS',
-    note: 'Equal-transport peer for Executor v2. Tokens unchanged; latency higher than stdio. RSS climbs on this host (leak-shaped) — do not hide it.',
-  },
-  {
-    arm: 'Executor 1.6.10 (stdio)',
+    arm: 'Executor 1.6.10',
     definitions: '90',
     discovery: '0',
     results: '53 578',
@@ -190,20 +177,20 @@ export const tokenScorecardRows: TokenScorecardRow[] = [
     flowP999: '106.6',
     rssMed: '213',
     taskSuccess: 'PASS',
-    note: 'Pretty-printed results. Defs save 5 430; indent tax adds 24 096. Discovery=0 (harness execute). Version-scope: this is v1 only.',
+    note: 'stdio (`executor mcp`) · pretty-print tax. Discovery=0. Same runExecutorArm loop as v2.',
   },
   {
-    arm: 'Executor 2.0.0-β.15 (HTTP)',
+    arm: 'Executor 2.0.0-β.15',
     definitions: '181',
     discovery: '0',
     results: '29 746',
     combined: '29 927',
     vsDirect: '−5 075',
-    flowP50: '74.4',
-    flowP999: '135.3',
-    rssMed: '918',
+    flowP50: '73.5',
+    flowP999: '143.2',
+    rssMed: '927',
     taskSuccess: 'PASS',
-    note: 'Credits the compact-JSON fix (≈v1 compacted 29 572; defs+envelope over compact results ≈445). Still +9 388 vs ClawQL. Discovery=0. Latency peer is ClawQL HTTP (+26.5 ms). RSS working set (490→918 med→1290 max), not a leak.',
+    note: 'Same runExecutorArm + fat fixture as v1 (discovery=0). Product transport HTTP-only (v2 removed stdio) — do not compare latency/RSS to Bun stdio. Compact fix credited; ClawQL still −9 388 tokens.',
   },
   {
     arm: 'MCPJungle',
@@ -286,23 +273,23 @@ export const latencyScorecardRows: LatencyScorecardRow[] = [
 export const gatewayBenchmarkHonesty = [
   {
     title: 'What we claim',
-    body: 'Fewest tokens among measured MCP aggregators and live Executor (v1 and v2 β) with equal task success. Lowest governed gateway cost on the n=10 000 interleaved board. Latency competitive with the fastest aggregators (best p50; MCPJungle best p999) on the stdio/aggregator board.',
+    body: 'Fewest tokens among measured MCP aggregators and live Executor (v1 and v2 β) with equal task success on the same multiturn harness. Lowest governed gateway cost on the n=10 000 interleaved board.',
   },
   {
     title: 'What we do not claim',
-    body: 'Scale-out concurrency wins. Memory wins — ClawQL HTTP RSS climbs on this host; do not headline Executor “4.5× heavier” against Bun stdio. Category-wide supremacy until Bifrost / mcp-gateway are on the board. “v2 slower than v1” without naming transport.',
+    body: 'Scale-out concurrency wins. Memory wins. Mixing Executor v2 latency with ClawQL Bun stdio. Category-wide supremacy until Bifrost / mcp-gateway are on the board.',
   },
   {
     title: 'Executor version scope',
     body: 'v1.6.10: pretty-printed, +18 666 vs baseline. v2 β.15: compact, −5 075 — credit the fix. ClawQL still leads v2 by 9 388. Video scenes that cite the pretty-print tax must label v1.6.10 on-screen, not only in a footer.',
   },
   {
-    title: 'Discovery and transport',
-    body: 'Both Executor versions: discovery=0 (harness-authored execute; skills unused) — favors Executor vs ClawQL’s charged 11 568. v2 latency peers with ClawQL HTTP (47.8 ms p50), not stdio Bun (15 ms).',
+    title: 'Same harness — v2 has no stdio',
+    body: 'v1 and v2 share runExecutorArm + the fat execute fixture (discovery=0). Executor 2 removed `executor mcp` stdio — product transport is HTTP /mcp. That is a product change, not a different benchmark recipe. Token totals are apples-to-apples; latency/RSS must stay labeled by transport and must not be compared to Bun stdio.',
   },
   {
     title: 'Next ClawQL lever',
-    body: 'Discovery is 56% of ClawQL’s combined @12. Leaner search hits (~300 tok/turn) or skip-search when the agent already knows the operationId would cut ~8k more — without touching projection. Separately: investigate ClawQL HTTP RSS climb before memory claims.',
+    body: 'Discovery is 56% of ClawQL’s combined @12. Leaner search hits (~300 tok/turn) or skip-search when the agent already knows the operationId would cut ~8k more — without touching projection.',
   },
 ] as const
 
@@ -334,6 +321,6 @@ export const gatewayBenchmarkMeta = {
   multiturnLabel: '10 000 flows × 12 turns · 40-tool fat catalog',
   latencyLabel: 'n=10 000 interleaved · composition slim',
   artifactMultiturn: 'gateway-multi-multiturn-10k.json',
-  artifactExecutorV2: 'gateway-multi-multiturn-executor-v2-10k.json',
+  artifactExecutorV2: 'gateway-multi-multiturn-executor-v2-equal-10k.json',
   artifactLatency: 'gateway-multi-cmp-10k.json',
 } as const

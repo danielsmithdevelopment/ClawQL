@@ -175,49 +175,52 @@ Artifact: [`gateway-multi-multiturn-10k.json`](./gateway-multi-multiturn-10k.jso
 
 ClawQL check: 297 + 11 568 + 8 674 = **20 539** (mean discovery 964/turn · mean result 723/turn). Aggregators **match** (or nearly match) the fair baseline — they do **not** add a separate “schema tax.” On **this board** ClawQL is the only measured arm that **reduces** tokens vs that baseline (~14.5k @12, ~41%) via projection. Bun keeps token wins and cuts Node multiturn RSS ~50%.
 
-### Executor — version-scoped (do not collapse v1 and v2)
+### Executor — same harness as always (version-scoped)
 
-| Version | Transport | Combined @12 | vs baseline | What changed |
+v1 and v2 both run through **`runExecutorArm` in `gateway-multi-multiturn.mjs`**: same fat `execute` fixture, discovery=0, same turns/iters/tokenizer. That is the equalization.
+
+Executor **2 removed stdio MCP** (`executor mcp` prints: “Executor 1 command… Executor 2 serves MCP over HTTP”). Product transport differs; the **benchmark recipe does not**.
+
+| Version | Product transport | Combined @12 | vs baseline | What changed |
 | --- | --- | ---: | ---: | --- |
-| **v1.6.10** | stdio | **53 668** | **+18 666** | Defs save 5 430; **pretty-print** results add 24 096. Compacted would be ~29 572. |
-| **v2.0.0-β.15** | HTTP `/mcp` | **29 927** | **−5 075** | Compact envelopes — pretty-print gone. `combined − compact_results ≈ 445` (= 181 defs + 264 envelope). |
+| **v1.6.10** | stdio (`executor mcp`) | **53 668** | **+18 666** | Pretty-print tax. Compacted would be ~29 572. |
+| **v2.0.0-β.15** | HTTP `/mcp` only | **29 927** | **−5 075** | Compact envelopes. defs+envelope ≈ 445 over compact results. |
 
-Credit the v2 fix plainly. ClawQL (**20 539**) still leads v2 by **9 388**. Artifacts: [`executor-vs-mock-compare.json`](./executor-vs-mock-compare.json), [`gateway-multi-multiturn-executor-v2-10k.json`](./gateway-multi-multiturn-executor-v2-10k.json).
+Credit the v2 fix. ClawQL (**20 539**) still leads v2 by **9 388** on tokens. Artifacts: [`executor-vs-mock-compare.json`](./executor-vs-mock-compare.json), [`gateway-multi-multiturn-executor-v2-equal-10k.json`](./gateway-multi-multiturn-executor-v2-equal-10k.json) (same harness as v1).
 
-**Video / marketing:** any scene that says Executor adds ~18 666 via pretty-printing must name **v1.6.10 on-screen** (not only a footer). Plan a re-cut with v2 numbers when v2 is generally available.
+**Do not** compare v2 flow latency / RSS to ClawQL Bun stdio as same-topology. **Do not** publish a separate “ClawQL HTTP” row as if Bun regressed — that was a mistaken peer experiment.
 
-### Transport — HTTP ClawQL peer for v2 latency
+**Video / marketing:** any scene that says Executor adds ~18 666 via pretty-printing must name **v1.6.10 on-screen**. Plan a re-cut with v2 numbers when v2 is GA.
 
-v1 and ClawQL Node/Bun multiturn used **stdio**; v2 used **HTTP**. Do **not** headline “v2 slower than v1” or “v2 vs ClawQL Bun latency” without an HTTP ClawQL arm.
-
-| Arm | Transport | Combined | Flow e2e p50 / p999 (ms) | RSS ready / med / max (MB) | RSS trend | Artifact |
-| --- | --- | ---: | ---: | ---: | --- | --- |
-| **ClawQL HTTP** | Streamable HTTP multiplex | **20 539** | **47.8 / 388.6** | 285 / **2717** / 3839 | **steady climb** | [`gateway-multi-multiturn-clawql-http-10k.json`](./gateway-multi-multiturn-clawql-http-10k.json) |
-| **Executor v2 β.15** | HTTP `/mcp` | **29 927** | **74.4 / 135.3** | 490 / **918** / 1290 | **working set** (early spike, then flat) | [`gateway-multi-multiturn-executor-v2-10k.json`](./gateway-multi-multiturn-executor-v2-10k.json) |
-| ClawQL Bun (stdio) | stdio | 20 539 | 15.0 / 35.0 | — / 337 / — | — | multiturn-10k |
-| Executor v1.6.10 | stdio | 53 668 | 64.4 / 106.6 | — / 213 / — | — | multiturn-10k |
-
-Equal-transport latency: ClawQL HTTP p50 **47.8 ms** vs Executor v2 **74.4 ms** (+26.5 ms) — not the ~5× gap vs Bun stdio. Tokens unchanged (ClawQL still −9 388 vs v2).
-
-**RSS honesty:** Executor v2 is a published npm beta (`executor@2.0.0-beta.15` / `executor serve`) — not a local dev checkout. Series shows ready→~1.2 GB early spike, then **plateau ~850–975 MB** (`working_set_or_noise`) — not a leak headline. ClawQL HTTP **does** climb (285 → 2717 med → 3839 max) on this host — investigate before memory claims; do **not** claim Executor “4.5× heavier” vs Bun stdio.
-
-**Discovery = 0 (both Executor versions):** harness-authored `execute` returns the fixture; `skills`/search **not** called. Favors Executor vs ClawQL’s charged **11 568**. Note on every Executor row.
+**Discovery = 0 (both):** harness-authored `execute`; `skills`/search unused. Favors Executor vs ClawQL’s charged **11 568**.
 
 **Claim bound:** four gateways measured (+ ClawQL HTTP peer). Bifrost / mcp-gateway (compact meta-tool shortlist) **not** on this board — do not claim the whole category until they are.
 
 **Next ClawQL token lever — discovery (11 568 = 56% of combined):** leaner search hits (~300 tok/turn would cut ~8k @12), and/or skip search when the agent already knows the operation (`execute` by operation ID; measure op-repeat rate). Neither touches projection.
 
 ```bash
+# Primary board (stdio arms + aggregators)
 MT_TURNS=12 MT_ITERS=10000 CATALOG_TOOL_COUNT=40 \
-  MT_ARMS=direct,clawql,clawql_bun,clawql_http,executor,mcpjungle,agentgateway \
+  MT_ARMS=direct,clawql,clawql_bun,executor,mcpjungle,agentgateway \
+  EXECUTOR_BIN=…/executor EXECUTOR_CWD=… \
   MT_OUT=gateway-multi-multiturn-10k.json \
   npm run benchmark:gateway-multi-multiturn
 
-# Executor v2 HTTP (separate harness; pin native PID if needed)
-MT_ITERS=10000 MT_TURNS=12 npm run benchmark:executor-v2-multiturn
+# Executor v2 on the SAME harness (product is HTTP-only; pin native serve PID)
+MT_TURNS=12 MT_ITERS=10000 CATALOG_TOOL_COUNT=40 \
+  MT_ARMS=executor_v2 \
+  EXECUTOR_V2_URL=http://127.0.0.1:4312/mcp \
+  EXECUTOR_V2_API_KEY=… EXECUTOR_V2_PID=… \
+  MT_OUT=gateway-multi-multiturn-executor-v2-equal-10k.json \
+  npm run benchmark:gateway-multi-multiturn
+
+# Same thing via the compatibility npm script (wrapper → runExecutorArm; not a second recipe)
+npm run benchmark:executor-v2-multiturn
 
 npm run generate:gateway-multi-page
 ```
+
+`gateway-multi-multiturn-executor-v2-10k.json` is the **pre-equalization** artifact (separate recipe). Publish and `/benchmarks` use **`…-executor-v2-equal-10k.json` only**.
 
 ## Category win — 12-turn I/O tokens (fat catalog)
 

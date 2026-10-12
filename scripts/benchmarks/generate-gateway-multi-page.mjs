@@ -26,7 +26,9 @@ const PETS_BUN = join(DIR, "gateway-multi-cmp-ts7-bun-10k.json");
 const PETS_NODE = join(DIR, "gateway-multi-cmp-ts7-node-10k.json");
 const PETS_CHAOS_BUN = join(DIR, "gateway-multi-cmp-ts7-bun-chaos.json");
 const PETS_CHAOS_NODE = join(DIR, "gateway-multi-cmp-ts7-node-chaos.json");
-const EX2_JSON = join(DIR, "gateway-multi-multiturn-executor-v2-10k.json");
+const EX2_JSON = existsSync(join(DIR, "gateway-multi-multiturn-executor-v2-equal-10k.json"))
+  ? join(DIR, "gateway-multi-multiturn-executor-v2-equal-10k.json")
+  : join(DIR, "gateway-multi-multiturn-executor-v2-10k.json");
 const OUT_DOCS = join(DIR, "index.html");
 const OUT_WWW_DIR = join(ROOT, "apps", "www", "public", "benchmarks", "gateway-multi-comparison");
 const OUT_WWW_HTML = join(OUT_WWW_DIR, "index.html");
@@ -349,86 +351,57 @@ ${breakdownRows}
       <strong>Discovery = 0:</strong> harness-authored <code>execute</code> returns the fixture (no search). Favors Executor vs ClawQL’s charged 11 568.
     </p>
 
-    <h3>Executor — version-scoped (v1 pretty-print vs v2 compact)</h3>
+    <h3>Executor — same harness (v1 pretty-print vs v2 compact)</h3>
     <p>
-      <strong>v1.6.10 (stdio):</strong> pretty-printed, <strong>+18 666</strong> vs baseline.
-      <strong>v2.0.0-β.15 (HTTP):</strong> compact envelopes, <strong>−5 075</strong> — credit the fix.
-      ClawQL still leads v2 by <strong>9 388</strong>. Discovery = 0 on both Executor versions (harness <code>execute</code>; <code>skills</code> unused).
+      Both versions use <code>runExecutorArm</code> + the fat execute fixture (discovery=0).
+      <strong>v1.6.10</strong> stdio pretty-print <strong>+18 666</strong>.
+      <strong>v2.0.0-β.15</strong> compact <strong>−5 075</strong> — credit the fix.
+      ClawQL still leads v2 by <strong>9 388</strong>.
+      Executor 2 removed stdio MCP — product transport is HTTP; do not mix v2 latency with Bun stdio.
     </p>
 ${
   ex2?.board?.executor_v2
     ? (() => {
         const e = ex2.board.executor_v2;
         const fe = e.flow_e2e_ms || {};
-        const tl = e.turn_latency_ms || {};
-        const httpPeer = (() => {
-          try {
-            return JSON.parse(
-              readFileSync(join(DIR, "gateway-multi-multiturn-clawql-http-10k.json"), "utf8")
-            )?.board?.clawql_http;
-          } catch {
-            return null;
-          }
-        })();
-        const hfe = httpPeer?.flow_e2e_ms || {};
         const trend = e.rss_trend?.classification || "—";
-        const hTrend = httpPeer?.rss_trend?.classification || "—";
+        const v1 = board.executor || {};
+        const v1fe = v1.flow_e2e_ms || {};
         return `    <table>
       <thead>
         <tr>
-          <th>Arm</th><th>Transport</th><th>Combined @12</th><th>Flow e2e p50 / <strong>p999</strong></th>
-          <th>RSS ready / med / max</th><th>RSS trend</th>
+          <th>Arm</th><th>Harness</th><th>Product transport</th><th>Combined @12</th>
+          <th>Flow e2e p50 / <strong>p999</strong></th><th>RSS med</th>
         </tr>
       </thead>
       <tbody>
-        <tr class="hl"><td>ClawQL HTTP</td><td>HTTP multiplex</td><td><strong>20 539</strong></td><td>${fmt(
-          hfe.p50_ms,
+        <tr class="hl"><td>ClawQL Bun</td><td>multiturn</td><td>stdio</td><td><strong>20 539</strong></td><td>15.01 / <strong>34.97</strong></td><td><strong>337</strong></td></tr>
+        <tr><td>Executor v1.6.10</td><td>runExecutorArm</td><td>stdio</td><td>53 668 (+18 666)</td><td>${fmt(
+          v1fe.p50_ms,
           2
-        )} / <strong>${fmt(hfe.p999_ms, 2)}</strong></td><td>${fmt(
-          httpPeer?.rss_mb_ready,
-          0
-        )} / <strong>${fmt(httpPeer?.rss_mb_median, 0)}</strong> / ${fmt(
-          httpPeer?.rss_mb_max,
-          0
-        )}</td><td>${hTrend}</td></tr>
-        <tr><td><strong>Executor v2 β.15</strong></td><td>HTTP /mcp</td><td><strong>${fmt(
+        )} / <strong>${fmt(v1fe.p999_ms, 2)}</strong></td><td>${fmt(v1.rss_mb_median, 0)}</td></tr>
+        <tr><td><strong>Executor v2 β.15</strong></td><td>runExecutorArm (same)</td><td>HTTP /mcp</td><td><strong>${fmt(
           e.combined_at_n
         )}</strong> (−${fmt(35002 - e.combined_at_n)})</td><td>${fmt(
           fe.p50_ms,
           2
-        )} / <strong>${fmt(fe.p999_ms, 2)}</strong></td><td>${fmt(
-          e.rss_mb_ready,
+        )} / <strong>${fmt(fe.p999_ms, 2)}</strong></td><td><strong>${fmt(
+          e.rss_mb_median,
           0
-        )} / <strong>${fmt(e.rss_mb_median, 0)}</strong> / ${fmt(
-          e.rss_mb_max,
-          0
-        )}</td><td>${trend}</td></tr>
-        <tr><td>ClawQL Bun</td><td>stdio</td><td>20 539</td><td>15.01 / <strong>34.97</strong></td><td>— / <strong>337</strong> / —</td><td>—</td></tr>
-        <tr><td>Executor v1.6.10</td><td>stdio</td><td>53 668 (+18 666)</td><td>64.35 / <strong>106.55</strong></td><td>— / <strong>213</strong> / —</td><td>—</td></tr>
+        )}</strong> (${trend})</td></tr>
       </tbody>
     </table>
     <ul>
-      <li><strong>Tokens:</strong> v2 combined ${fmt(e.combined_at_n)} = ${fmt(
-          e.definitions_tokens
-        )} defs + ${fmt(e.result_tokens_sum)} results (envelope +${fmt(
-          e.envelope_overhead_tokens_sum
-        )}; defs+envelope over compact results ≈ ${fmt(
-          e.defs_plus_envelope_over_compact_results ?? e.definitions_tokens + e.envelope_overhead_tokens_sum
-        )}). Beats baseline by ${fmt(
-          35002 - e.combined_at_n
-        )}; ClawQL still leads by ${fmt(e.combined_at_n - 20539)}.</li>
-      <li><strong>Latency (equal transport):</strong> ClawQL HTTP p50 <strong>${fmt(
-        hfe.p50_ms,
-        1
-      )} ms</strong> vs v2 <strong>${fmt(fe.p50_ms, 1)} ms</strong> (+${fmt(
-        (fe.p50_ms || 0) - (hfe.p50_ms || 0),
-        1
-      )} ms). Do not compare v2 to Bun stdio (15 ms) as a product regression.</li>
-      <li><strong>Memory:</strong> v2 series is a <em>working set</em> (early spike, then ~850–975 MB) — not a leak headline. ClawQL HTTP climbs on this host — investigate before memory claims. Build: npm <code>executor@2.0.0-beta.15</code> / <code>executor serve</code>.</li>
-      <li>Artifacts: <a href="./gateway-multi-multiturn-executor-v2-10k.json">executor-v2-10k</a>, <a href="./gateway-multi-multiturn-clawql-http-10k.json">clawql-http-10k</a>.</li>
+      <li><strong>Tokens (apples-to-apples):</strong> same fixture path. v2 ${fmt(
+        e.combined_at_n
+      )} = ${fmt(e.definitions_tokens)} defs + ${fmt(
+        e.result_tokens_sum
+      )} results. ClawQL leads by ${fmt(e.combined_at_n - 20539)}.</li>
+      <li><strong>Latency/RSS:</strong> labeled by product transport. Do not headline v2 vs Bun stdio.</li>
+      <li>Artifact: <a href="./gateway-multi-multiturn-executor-v2-equal-10k.json">executor-v2-equal-10k.json</a>.</li>
     </ul>`;
       })()
-    : `    <p class="meta">Executor v2 10k board not found — run <code>node scripts/benchmarks/executor-v2-multiturn.mjs</code>.</p>`
+    : `    <p class="meta">Executor v2 equal-harness board missing — run <code>MT_ARMS=executor_v2 … npm run benchmark:gateway-multi-multiturn</code>.</p>`
 }
 
     <h3>Where ClawQL’s next token win is</h3>
