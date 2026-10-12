@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { FIXTURE_SESSION, REVIEWER_DEMO_SESSION } from "../../domain/fixtures";
 import {
+  addAttachmentEffect,
   decideReviewEffect,
   deleteAccountEffect,
   endOtherDeviceSessionsEffect,
@@ -11,19 +12,24 @@ import {
   getReviewByIdEffect,
   listActivityEffect,
   listAgentsEffect,
+  listAttachmentsEffect,
   listDeviceSessionsEffect,
   listInboxEffect,
   listPoliciesEffect,
+  listPushDevicesEffect,
   listReviewEffect,
   listTeammatesEffect,
   pendingReviewCountEffect,
+  prependInboxItemEffect,
   resetFixtureStateEffect,
   revokeConnectedAppEffect,
 } from "../api";
+import { captureDocumentEffect } from "../documents";
 import { approveWithSecurityKeyEffect } from "../nfc-security-key";
 import {
   parseApprovalDeepLinkEffect,
   parseApprovalNotificationDataEffect,
+  registerForPushEffect,
   scheduleLocalApprovalNotificationEffect,
 } from "../push";
 import {
@@ -170,6 +176,49 @@ describe("mobile API fixture mode", () => {
       scheduleLocalApprovalNotificationEffect({ requestId: "rev_change", delaySeconds: 1 })
     );
     expect(scheduled.notificationId).toBeTruthy();
+  });
+
+  it("registers a fixture push device token", async () => {
+    const res = await Effect.runPromise(registerForPushEffect(FIXTURE_SESSION));
+    expect(res.fixture).toBe(true);
+    expect(res.token).toMatch(/^ExponentPushToken\[fixture-/);
+    const devices = await Effect.runPromise(listPushDevicesEffect(FIXTURE_SESSION));
+    expect(devices.length).toBe(1);
+    expect(devices[0]?.fixture).toBe(true);
+  });
+
+  it("prepends simulated push into the notification inbox", async () => {
+    const before = await Effect.runPromise(listInboxEffect(FIXTURE_SESSION));
+    await Effect.runPromise(
+      prependInboxItemEffect({
+        id: "inbox_sim_test",
+        title: "Change a contract's value",
+        body: "Local push simulation",
+        atMs: Date.now(),
+        kind: "approval",
+        reviewId: "rev_change",
+        unread: true,
+      })
+    );
+    const after = await Effect.runPromise(listInboxEffect(FIXTURE_SESSION));
+    expect(after[0]?.id).toBe("inbox_sim_test");
+    expect(after.length).toBe(before.length + 1);
+  });
+
+  it("captures a fixture document and attaches it to a review", async () => {
+    const doc = await Effect.runPromise(
+      captureDocumentEffect({ reviewId: "rev_change", source: "camera" })
+    );
+    expect(doc.uri).toMatch(/^fixture:\/\/document\//);
+    expect(doc.source).toBe("camera");
+    expect(doc.mimeType).toBe("image/jpeg");
+    await Effect.runPromise(
+      addAttachmentEffect({ session: FIXTURE_SESSION, attachment: doc })
+    );
+    const listed = await Effect.runPromise(
+      listAttachmentsEffect(FIXTURE_SESSION, "rev_change")
+    );
+    expect(listed.some((a) => a.id === doc.id)).toBe(true);
   });
 
   it("promotes a skill with simulated fixture NFC", async () => {

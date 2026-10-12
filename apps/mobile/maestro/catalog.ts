@@ -84,6 +84,14 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-10-sessions-and-push.yaml",
   },
   {
+    id: "MOB-11",
+    run: "Maestro",
+    title: "Register push device and scan document evidence",
+    passWhen:
+      "Profile shows fixture push token; Home sim lands in inbox; review attaches fixture camera scan",
+    flow: "maestro/flows/mob-11-push-register-and-scan.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',

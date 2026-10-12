@@ -8,21 +8,25 @@ import type {
   ConnectedApp,
   DeviceSession,
   NotificationPrefs,
+  PushDevice,
   SecurityKey,
 } from "@/src/domain/schemas";
 import {
+  clearPushDevicesEffect,
   deleteAccountEffect,
   endOtherDeviceSessionsEffect,
   getNotificationPrefsEffect,
   listConnectedAppsEffect,
   listDeviceSessionsEffect,
+  listPushDevicesEffect,
   listSecurityKeysEffect,
   revokeConnectedAppEffect,
   setNotificationPrefsEffect,
 } from "@/src/services/api";
 import { loadMobileConfigEffect } from "@/src/services/config";
+import { registerForPushEffect } from "@/src/services/push";
 import { useSession } from "@/src/state/SessionContext";
-import { space } from "@/src/theme";
+import { brand, space } from "@/src/theme";
 import {
   Badge,
   Body,
@@ -47,6 +51,7 @@ export default function ProfileScreen() {
   const [keys, setKeys] = useState<readonly SecurityKey[]>([]);
   const [apps, setApps] = useState<readonly ConnectedApp[]>([]);
   const [deviceSessions, setDeviceSessions] = useState<readonly DeviceSession[]>([]);
+  const [pushDevices, setPushDevices] = useState<readonly PushDevice[]>([]);
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -54,16 +59,18 @@ export default function ProfileScreen() {
 
   const load = useCallback(async () => {
     if (!session) return;
-    const [k, a, p, s] = await Promise.all([
+    const [k, a, p, s, d] = await Promise.all([
       Effect.runPromise(listSecurityKeysEffect(session)),
       Effect.runPromise(listConnectedAppsEffect(session)),
       Effect.runPromise(getNotificationPrefsEffect(session)),
       Effect.runPromise(listDeviceSessionsEffect(session)),
+      Effect.runPromise(listPushDevicesEffect(session)),
     ]);
     setKeys(k);
     setApps(a);
     setPrefs(p);
     setDeviceSessions(s);
+    setPushDevices(d);
     setLoading(false);
   }, [session]);
 
@@ -225,7 +232,16 @@ export default function ProfileScreen() {
                 onChange={(push) => {
                   const next = { ...prefs, push };
                   setPrefs(next);
-                  void Effect.runPromise(setNotificationPrefsEffect({ session, prefs: next }));
+                  void (async () => {
+                    await Effect.runPromise(setNotificationPrefsEffect({ session, prefs: next }));
+                    if (push) {
+                      await Effect.runPromise(registerForPushEffect(session)).catch(() => undefined);
+                    } else {
+                      await Effect.runPromise(clearPushDevicesEffect(session));
+                    }
+                    const devices = await Effect.runPromise(listPushDevicesEffect(session));
+                    setPushDevices(devices);
+                  })();
                 }}
               />
               <PrefRow
@@ -263,6 +279,59 @@ export default function ProfileScreen() {
               />
             </FieldGroup.Section>
           </FieldGroup>
+
+          <SurfaceCard testID="profile-push-devices">
+            <IconBubble name="inbox" tone="seed" size={32} iconSize={16} />
+            <Subtitle>Push on this phone</Subtitle>
+            {pushDevices.length === 0 ? (
+              <Meta testID="push-devices-empty">
+                Not registered yet. Turn on “Push to the ClawQL app” above, or register now.
+              </Meta>
+            ) : (
+              pushDevices.map((device) => (
+                <Column key={device.id} spacing={4} testID={`push-device-${device.id}`}>
+                  <Body>{device.label}</Body>
+                  <Meta mono>{device.token}</Meta>
+                  <Meta>
+                    {`${device.platform}${device.fixture ? " · fixture token" : ""} · ${new Date(
+                      device.registeredAtMs
+                    ).toLocaleString()}`}
+                  </Meta>
+                </Column>
+              ))
+            )}
+            <SecondaryButton
+              testID="profile-register-push"
+              label={pushDevices.length ? "Re-register push" : "Register for push"}
+              disabled={busy}
+              onPress={() => {
+                void (async () => {
+                  setBusy(true);
+                  try {
+                    const res = await Effect.runPromise(registerForPushEffect(session));
+                    const devices = await Effect.runPromise(listPushDevicesEffect(session));
+                    setPushDevices(devices);
+                    setNote(
+                      res.token
+                        ? res.fixture
+                          ? "Fixture push token registered"
+                          : "Push token registered"
+                        : "Push permission not granted"
+                    );
+                  } catch (e: unknown) {
+                    setNote(e instanceof Error ? e.message : String(e));
+                  } finally {
+                    setBusy(false);
+                  }
+                })();
+              }}
+            />
+            {note ? (
+              <Meta testID="profile-push-note" color={brand.ok}>
+                {note}
+              </Meta>
+            ) : null}
+          </SurfaceCard>
 
           <SurfaceCard testID="profile-policies" tint="soft">
             <IconBubble name="policies" tone="neutral" size={32} iconSize={16} />

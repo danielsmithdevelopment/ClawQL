@@ -9,6 +9,7 @@ import {
   getOrgSummaryEffect,
   listActivityEffect,
   listReviewEffect,
+  prependInboxItemEffect,
 } from "@/src/services/api";
 import { scheduleLocalApprovalNotificationEffect } from "@/src/services/push";
 import { useSession } from "@/src/state/SessionContext";
@@ -214,20 +215,32 @@ export default function HomeScreen() {
                 onPress={() => {
                   void (async () => {
                     try {
+                      const top = items[0]!;
                       const res = await Effect.runPromise(
                         scheduleLocalApprovalNotificationEffect({
-                          requestId: items[0]!.id,
-                          title: items[0]!.title,
+                          requestId: top.id,
+                          title: top.title,
                           delaySeconds: 1,
+                        })
+                      );
+                      await Effect.runPromise(
+                        prependInboxItemEffect({
+                          id: `inbox_sim_${Date.now().toString(36)}`,
+                          title: top.title,
+                          body: "Local push simulation — open the request to approve with your security key.",
+                          atMs: Date.now(),
+                          kind: "approval",
+                          reviewId: top.id,
+                          unread: true,
                         })
                       );
                       setPushNote(
                         res.simulated
-                          ? `Web simulated · open /review/${items[0]!.id}`
+                          ? `Web simulated · open /review/${top.id}`
                           : `Notification scheduled · ${res.notificationId}`
                       );
                       if (res.simulated) {
-                        setTimeout(() => router.push(`/review/${items[0]!.id}`), 800);
+                        setTimeout(() => router.push(`/review/${top.id}`), 800);
                       }
                     } catch (e: unknown) {
                       setPushNote(e instanceof Error ? e.message : String(e));

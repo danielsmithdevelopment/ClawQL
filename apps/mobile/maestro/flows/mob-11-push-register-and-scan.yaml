@@ -1,0 +1,34 @@
+# MOB-11 — Register fixture push token; attach a fixture document scan on review
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- assertVisible:
+    id: "profile-push-devices"
+- tapOn:
+    id: "profile-register-push"
+- assertVisible:
+    id: "profile-push-note"
+- tapOn:
+    id: "tab-home"
+- tapOn:
+    id: "home-simulate-push-btn"
+- assertVisible:
+    id: "home-push-note"
+- tapOn:
+    id: "home-open-inbox"
+- assertVisible:
+    id: "inbox-screen"
+- tapOn:
+    id: "tab-review"
+- tapOn:
+    id: "review-item-rev_change"
+- assertVisible:
+    id: "review-attachments"
+- tapOn:
+    id: "review-scan-camera"
+- assertVisible:
+    id: "review-note"

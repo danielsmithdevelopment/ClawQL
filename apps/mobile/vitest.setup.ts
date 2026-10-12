@@ -44,6 +44,36 @@ vi.mock("expo-notifications", () => ({
   SchedulableTriggerInputTypes: { TIME_INTERVAL: "timeInterval" },
 }));
 
+vi.mock("expo-image-picker", () => ({
+  requestCameraPermissionsAsync: async () => ({ granted: true, status: "granted" }),
+  requestMediaLibraryPermissionsAsync: async () => ({
+    granted: true,
+    status: "granted",
+  }),
+  launchCameraAsync: async () => ({
+    canceled: false,
+    assets: [
+      {
+        uri: "file:///tmp/scan-test.jpg",
+        fileName: "scan-test.jpg",
+        mimeType: "image/jpeg",
+        fileSize: 12_340,
+      },
+    ],
+  }),
+  launchImageLibraryAsync: async () => ({
+    canceled: false,
+    assets: [
+      {
+        uri: "file:///tmp/library-test.jpg",
+        fileName: "library-test.jpg",
+        mimeType: "image/jpeg",
+        fileSize: 9_876,
+      },
+    ],
+  }),
+}));
+
 vi.mock("expo-linking", () => ({
   parse: (url: string) => {
     const u = new URL(url.includes("://") ? url : `https://x/${url}`);

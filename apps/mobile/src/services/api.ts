@@ -30,11 +30,13 @@ import {
   ApprovalPolicyDetail,
   ConnectedApp,
   DeviceSession,
+  DocumentAttachment,
   HomeSpend,
   InboxItem,
   MorningDigest,
   NotificationPrefs,
   OrgSummary,
+  PushDevice,
   ReviewDecision,
   ReviewItem,
   ReviewKind,
@@ -59,6 +61,9 @@ type MutableState = {
   notificationPrefs: NotificationPrefs;
   activity: ActivityEvent[];
   deviceSessions: DeviceSession[];
+  inbox: InboxItem[];
+  pushDevices: PushDevice[];
+  attachments: DocumentAttachment[];
   deleted: boolean;
 };
 
@@ -69,6 +74,9 @@ const stateRef = Ref.makeUnsafe<MutableState>({
   notificationPrefs: { ...FIXTURE_NOTIFICATION_PREFS },
   activity: [...FIXTURE_ACTIVITY],
   deviceSessions: [...FIXTURE_DEVICE_SESSIONS],
+  inbox: [...FIXTURE_INBOX],
+  pushDevices: [],
+  attachments: [],
   deleted: false,
 });
 
@@ -535,12 +543,86 @@ export function listInboxEffect(
   session: MobileSession
 ): Effect.Effect<readonly InboxItem[], MobileApiError> {
   return Effect.gen(function* () {
-    const config = yield* loadMobileConfigEffect();
-    if (isFixtureSession(session, config.fixtureMode)) {
-      return FIXTURE_INBOX;
-    }
-    return FIXTURE_INBOX;
+    void session;
+    const state = yield* Ref.get(stateRef);
+    return state.inbox;
   });
+}
+
+export function registerPushDeviceEffect(input: {
+  session: MobileSession;
+  token: string;
+  platform: "ios" | "android" | "web";
+  label: string;
+  fixture: boolean;
+}): Effect.Effect<PushDevice, MobileApiError> {
+  return Effect.gen(function* () {
+    void input.session;
+    const device: PushDevice = {
+      id: `push_${input.platform}_${input.token.slice(-12)}`,
+      token: input.token,
+      platform: input.platform,
+      label: input.label,
+      registeredAtMs: Date.now(),
+      fixture: input.fixture,
+    };
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      pushDevices: [device, ...s.pushDevices.filter((d) => d.token !== device.token)],
+    }));
+    return device;
+  });
+}
+
+export function listPushDevicesEffect(
+  session: MobileSession
+): Effect.Effect<readonly PushDevice[], MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    const state = yield* Ref.get(stateRef);
+    return state.pushDevices;
+  });
+}
+
+export function clearPushDevicesEffect(
+  session: MobileSession
+): Effect.Effect<void, MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    yield* Ref.update(stateRef, (s) => ({ ...s, pushDevices: [] }));
+  });
+}
+
+export function listAttachmentsEffect(
+  session: MobileSession,
+  reviewId: string
+): Effect.Effect<readonly DocumentAttachment[], MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    const state = yield* Ref.get(stateRef);
+    return state.attachments.filter((a) => a.reviewId === reviewId);
+  });
+}
+
+export function addAttachmentEffect(input: {
+  session: MobileSession;
+  attachment: DocumentAttachment;
+}): Effect.Effect<DocumentAttachment, MobileApiError> {
+  return Effect.gen(function* () {
+    void input.session;
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      attachments: [input.attachment, ...s.attachments],
+    }));
+    return input.attachment;
+  });
+}
+
+export function prependInboxItemEffect(item: InboxItem): Effect.Effect<void> {
+  return Ref.update(stateRef, (s) => ({
+    ...s,
+    inbox: [item, ...s.inbox],
+  }));
 }
 
 /** Test helper — reset fixture queue between Maestro / unit runs. */
@@ -552,6 +634,9 @@ export function resetFixtureStateEffect(): Effect.Effect<void> {
     notificationPrefs: { ...FIXTURE_NOTIFICATION_PREFS },
     activity: [...FIXTURE_ACTIVITY],
     deviceSessions: [...FIXTURE_DEVICE_SESSIONS],
+    inbox: [...FIXTURE_INBOX],
+    pushDevices: [],
+    attachments: [],
     deleted: false,
   });
 }
@@ -624,6 +709,27 @@ export class MobileApi extends Context.Service<
       session: MobileSession;
       prefs: NotificationPrefs;
     }) => Effect.Effect<NotificationPrefs, MobileApiError>;
+    readonly registerPushDevice: (input: {
+      session: MobileSession;
+      token: string;
+      platform: "ios" | "android" | "web";
+      label: string;
+      fixture: boolean;
+    }) => Effect.Effect<PushDevice, MobileApiError>;
+    readonly listPushDevices: (
+      session: MobileSession
+    ) => Effect.Effect<readonly PushDevice[], MobileApiError>;
+    readonly clearPushDevices: (
+      session: MobileSession
+    ) => Effect.Effect<void, MobileApiError>;
+    readonly listAttachments: (
+      session: MobileSession,
+      reviewId: string
+    ) => Effect.Effect<readonly DocumentAttachment[], MobileApiError>;
+    readonly addAttachment: (input: {
+      session: MobileSession;
+      attachment: DocumentAttachment;
+    }) => Effect.Effect<DocumentAttachment, MobileApiError>;
     readonly deleteAccount: (
       session: MobileSession
     ) => Effect.Effect<AccountDeletionResult, MobileApiError>;
@@ -648,5 +754,10 @@ export const MobileApiLive = Layer.succeed(MobileApi, {
   revokeConnectedApp: revokeConnectedAppEffect,
   getNotificationPrefs: getNotificationPrefsEffect,
   setNotificationPrefs: setNotificationPrefsEffect,
+  registerPushDevice: registerPushDeviceEffect,
+  listPushDevices: listPushDevicesEffect,
+  clearPushDevices: clearPushDevicesEffect,
+  listAttachments: listAttachmentsEffect,
+  addAttachment: addAttachmentEffect,
   deleteAccount: deleteAccountEffect,
 });

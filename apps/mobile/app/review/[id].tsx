@@ -2,9 +2,22 @@ import { Effect } from "effect";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 
-import type { ReviewDecision, ReviewItem } from "@/src/domain/schemas";
-import { decideReviewEffect, getReviewByIdEffect } from "@/src/services/api";
+import type {
+  DocumentAttachment,
+  ReviewDecision,
+  ReviewItem,
+} from "@/src/domain/schemas";
+import {
+  addAttachmentEffect,
+  decideReviewEffect,
+  getReviewByIdEffect,
+  listAttachmentsEffect,
+} from "@/src/services/api";
 import { loadMobileConfigEffect } from "@/src/services/config";
+import {
+  captureDocumentEffect,
+  type CaptureSource,
+} from "@/src/services/documents";
 import { approveWithSecurityKeyEffect } from "@/src/services/nfc-security-key";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, color, space } from "@/src/theme";
@@ -13,6 +26,7 @@ import {
   Body,
   ChoiceRow,
   Column,
+  IconBubble,
   LoadingBlock,
   Meta,
   PrimaryButton,
@@ -30,6 +44,7 @@ export default function ReviewDetailScreen() {
   const { session } = useSession();
   const router = useRouter();
   const [item, setItem] = useState<ReviewItem | null>(null);
+  const [attachments, setAttachments] = useState<readonly DocumentAttachment[]>([]);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,12 +55,14 @@ export default function ReviewDetailScreen() {
   const load = useCallback(async () => {
     if (!session || !id) return;
     try {
-      const [found, config] = await Promise.all([
+      const [found, config, docs] = await Promise.all([
         Effect.runPromise(getReviewByIdEffect(session, id)),
         Effect.runPromise(loadMobileConfigEffect()),
+        Effect.runPromise(listAttachmentsEffect(session, id)),
       ]);
       setItem(found);
       setFixtureMode(config.fixtureMode);
+      setAttachments(docs);
       if (found?.kind === "decision") {
         const preferred =
           found.decisionChoices?.find((c) => c.label === "Refund request")?.label ??
@@ -142,6 +159,36 @@ export default function ReviewDetailScreen() {
     }
   };
 
+  const attachDocument = async (source: CaptureSource) => {
+    if (!session || !item) return;
+    setBusy(true);
+    setError(null);
+    setNote(null);
+    try {
+      const captured = await Effect.runPromise(
+        captureDocumentEffect({ reviewId: item.id, source })
+      );
+      const saved = await Effect.runPromise(
+        addAttachmentEffect({ session, attachment: captured })
+      );
+      setAttachments((prev) => [saved, ...prev]);
+      setNote(
+        fixtureMode || saved.uri.startsWith("fixture://")
+          ? `Attached ${saved.fileName} (fixture scan)`
+          : `Attached ${saved.fileName}`
+      );
+    } catch (e: unknown) {
+      const reason = errorMessage(e);
+      if (reason === "capture_cancelled") {
+        setNote(null);
+      } else {
+        setError(reason);
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) {
     return (
       <ScreenHost>
@@ -196,6 +243,47 @@ export default function ReviewDetailScreen() {
       ) : null}
       {item.kind === "change" ? <ChangeBody item={item} /> : null}
       {item.kind === "source" ? <SourceBody /> : null}
+
+      <SurfaceCard testID="review-attachments">
+        <IconBubble name="document" tone="neutral" size={32} iconSize={16} />
+        <Subtitle>Evidence photos</Subtitle>
+        <Meta>
+          {`Scan a contract, invoice, or screenshot to attach to this request.${
+            fixtureMode ? " Fixture mode uses a synthetic scan — no camera needed." : ""
+          }`}
+        </Meta>
+        {attachments.length === 0 ? (
+          <Meta testID="review-attachments-empty">No attachments yet.</Meta>
+        ) : (
+          attachments.map((doc) => (
+            <Column key={doc.id} spacing={2} testID={`review-attachment-${doc.id}`}>
+              <Body>{doc.fileName}</Body>
+              <Meta mono>{doc.uri}</Meta>
+              <Meta>
+                {`${doc.source}${doc.bytes ? ` · ${Math.round(doc.bytes / 1024)} KB` : ""} · ${new Date(
+                  doc.capturedAtMs
+                ).toLocaleString()}`}
+              </Meta>
+            </Column>
+          ))
+        )}
+        {!decided ? (
+          <Column spacing={space.sm}>
+            <SecondaryButton
+              testID="review-scan-camera"
+              label={busy ? "Working…" : "Scan with camera"}
+              disabled={busy}
+              onPress={() => void attachDocument("camera")}
+            />
+            <SecondaryButton
+              testID="review-pick-library"
+              label="Choose from photos"
+              disabled={busy}
+              onPress={() => void attachDocument("library")}
+            />
+          </Column>
+        ) : null}
+      </SurfaceCard>
 
       {!decided && item.kind !== "decision" ? (
         <SurfaceCard>

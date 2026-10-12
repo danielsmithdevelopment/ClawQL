@@ -8,6 +8,7 @@ import { Context, Data, Effect, Layer } from "effect";
 import { Platform } from "react-native";
 
 import type { MobileSession } from "../domain/schemas";
+import { registerPushDeviceEffect } from "./api";
 import { loadMobileConfigEffect } from "./config";
 
 Notifications.setNotificationHandler({
@@ -142,12 +143,23 @@ export function scheduleLocalApprovalNotificationEffect(input: {
 
 export function registerForPushEffect(
   session: MobileSession
-): Effect.Effect<{ token: string | null }, PushError> {
+): Effect.Effect<{ token: string | null; fixture: boolean }, PushError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
+
+    // Fixture / web: synthetic Expo token so demos + prefs UI exercise the full path.
     if (config.fixtureMode || Platform.OS === "web") {
-      return { token: null };
+      const token = `ExponentPushToken[fixture-${session.userId.slice(0, 8)}]`;
+      yield* registerPushDeviceEffect({
+        session,
+        token,
+        platform: Platform.OS === "ios" ? "ios" : Platform.OS === "android" ? "android" : "web",
+        label: Platform.OS === "web" ? "Web (fixture)" : "This phone (fixture)",
+        fixture: true,
+      }).pipe(Effect.catch(() => Effect.void));
+      return { token, fixture: true };
     }
+
     const permissions = yield* Effect.tryPromise({
       try: () => Notifications.getPermissionsAsync(),
       catch: (cause) =>
@@ -167,7 +179,7 @@ export function registerForPushEffect(
       status = asked.status;
     }
     if (status !== "granted") {
-      return { token: null };
+      return { token: null, fixture: false };
     }
     const token = yield* Effect.tryPromise({
       try: async () => {
@@ -180,6 +192,15 @@ export function registerForPushEffect(
         }),
     });
 
+    const platform = Platform.OS === "ios" ? "ios" : "android";
+    yield* registerPushDeviceEffect({
+      session,
+      token,
+      platform,
+      label: "This phone",
+      fixture: false,
+    }).pipe(Effect.catch(() => Effect.void));
+
     // Best-effort register with managed console (no-op if route not yet deployed).
     yield* Effect.tryPromise({
       try: async () => {
@@ -191,7 +212,7 @@ export function registerForPushEffect(
           },
           body: JSON.stringify({
             token,
-            platform: Platform.OS,
+            platform,
             userId: session.userId,
           }),
         }).catch(() => undefined);
@@ -199,7 +220,7 @@ export function registerForPushEffect(
       catch: () => new PushError({ reason: "register_failed" }),
     }).pipe(Effect.catch(() => Effect.void));
 
-    return { token };
+    return { token, fixture: false };
   });
 }
 
@@ -217,7 +238,7 @@ export class MobilePush extends Context.Service<
   {
     readonly register: (
       session: MobileSession
-    ) => Effect.Effect<{ token: string | null }, PushError>;
+    ) => Effect.Effect<{ token: string | null; fixture: boolean }, PushError>;
     readonly parseApprovalDeepLink: (url: string) => Effect.Effect<string | null>;
     readonly parseApprovalNotificationData: (
       data: unknown

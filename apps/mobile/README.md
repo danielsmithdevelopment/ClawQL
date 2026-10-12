@@ -12,15 +12,16 @@ Everything else opens the web console.
 
 Apple rejects thin website wrappers. This app ships the PhoneApprove surface from the managed console fixtures:
 
-- **Home** — what needs you + today's spend + recent activity + local push simulate
-- **Review** — kind filters, exact-change / skill / decision detail, Approve (NFC or fixture)
+- **Home** — what needs you + today's spend + recent activity + local push simulate (inbox)
+- **Review** — kind filters, exact-change / skill / decision detail, document scan/attach, Approve (NFC or fixture)
 - **Activity** — decided history (drill-in to read-only request)
-- **Profile** — keys, signed-in sessions, connected apps, prefs, delete account
+- **Profile** — keys, signed-in sessions, push device registration, connected apps, prefs, delete account
 
 ## Stack
 
 - Expo SDK 57 + Expo Router (TypeScript)
-- **Design system: Material 3 (dark)** — see [`DESIGN.md`](DESIGN.md); brand navy + orange QL seed `#FF5636`
+- **Design system: Material 3 (light)** — see [`DESIGN.md`](DESIGN.md); blue primary + orange action accent
+- `expo-notifications` + `expo-image-picker` for push + camera/library evidence
 - Effect 4 services/schemas (same discipline as `packages/*`)
 - EAS Build / Submit (`eas.json`)
 - Maestro goal-oriented flows (`maestro/flows`)
@@ -96,7 +97,7 @@ Until linked, production sessions get `nfc_module_unavailable`. **Fixture mode**
 
 | Id | Coverage |
 | -- | -------- |
-| MOB-01…10 | Maestro flows in this app (fixture NFC, decision, skill, sessions, local push) |
+| MOB-01…11 | Maestro flows (fixture NFC, decision, skill, sessions, push register, document scan) |
 | REV-13 / UX-09 | Physical YubiKey — still Manual |
 
 See `store/review-notes.md` for App Review copy.

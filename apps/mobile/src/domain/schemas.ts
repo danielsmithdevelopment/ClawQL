@@ -240,6 +240,30 @@ export const NotificationPrefs = Schema.Struct({
 });
 export type NotificationPrefs = Schema.Schema.Type<typeof NotificationPrefs>;
 
+/** Registered Expo / APNs / FCM push endpoint for this phone. */
+export const PushDevice = Schema.Struct({
+  id: Schema.String,
+  token: Schema.String,
+  platform: Schema.Literals(["ios", "android", "web"]),
+  label: Schema.String,
+  registeredAtMs: Schema.Number,
+  fixture: Schema.Boolean,
+});
+export type PushDevice = Schema.Schema.Type<typeof PushDevice>;
+
+/** Photo / scan attached to a review request (evidence for approve). */
+export const DocumentAttachment = Schema.Struct({
+  id: Schema.String,
+  reviewId: Schema.String,
+  uri: Schema.String,
+  fileName: Schema.String,
+  mimeType: Schema.String,
+  source: Schema.Literals(["camera", "library"]),
+  capturedAtMs: Schema.Number,
+  bytes: Schema.optional(Schema.Number),
+});
+export type DocumentAttachment = Schema.Schema.Type<typeof DocumentAttachment>;
+
 export const MobileSession = Schema.Struct({
   accessToken: Schema.String,
   refreshToken: Schema.optional(Schema.String),
