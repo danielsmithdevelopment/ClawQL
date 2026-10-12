@@ -25,8 +25,9 @@ export const color = {
   // Primary = brand orange (CTAs, active tint, emphasis)
   primary: brandSwatches.orange,
   onPrimary: "#FFFFFF",
-  primaryContainer: "#5C1A0F",
-  onPrimaryContainer: "#FFDAD2",
+  /** Darker orange plate — still clearly branded, not muddy brown */
+  primaryContainer: "#6E2414",
+  onPrimaryContainer: "#FFD2C6",
 
   // Secondary = brand sky (technical / lower emphasis)
   secondary: brandSwatches.skyBright,

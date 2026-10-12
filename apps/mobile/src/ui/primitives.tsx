@@ -519,8 +519,7 @@ export function SurfaceCard({
       : tint === "soft"
         ? color.surfaceContainerLow
         : color.surfaceContainerLowest;
-  const border =
-    tint === "seed" ? color.primaryContainer : color.outlineVariant;
+  const border = tint === "seed" ? color.primary : color.outlineVariant;
   const elevationStyle: ViewStyle = elevated
     ? Platform.select<ViewStyle>({
         web: { boxShadow: elevation.level1.boxShadow } as ViewStyle,
