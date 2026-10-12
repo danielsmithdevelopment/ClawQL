@@ -73,7 +73,7 @@ export function AppIcon({
 /** M3 tonal icon container — primaryContainer / secondaryContainer / etc. */
 export function IconBubble({
   name,
-  tone = "primary",
+  tone = "secondary",
   size = 40,
   iconSize = 20,
   testID,

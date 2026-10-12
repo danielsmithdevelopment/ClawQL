@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { pendingReviewCountEffect } from "@/src/services/api";
 import { useSession } from "@/src/state/SessionContext";
-import { brand, color } from "@/src/theme";
+import { color } from "@/src/theme";
 import { TabGlyph } from "@/src/ui/TabGlyph";
 import { TabAndroidIcons } from "@/src/ui/tabIcons";
 
@@ -35,7 +35,7 @@ export default function TabLayout() {
         headerShadowVisible: false,
         headerTitleStyle: { fontWeight: "700" },
         tabBarActiveTintColor: color.primary,
-        tabBarInactiveTintColor: brand.inkFaint,
+        tabBarInactiveTintColor: color.onSurfaceVariant,
         tabBarStyle: {
           backgroundColor: color.surfaceContainerLowest,
           borderTopColor: color.outlineVariant,

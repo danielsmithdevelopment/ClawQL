@@ -1,6 +1,6 @@
 import { View } from "react-native";
 
-import { brand, color } from "@/src/theme";
+import { color } from "@/src/theme";
 import { AppIcon } from "@/src/ui/AppIcon";
 import type { AppIconName } from "@/src/ui/icons";
 
@@ -22,7 +22,7 @@ export function TabGlyph({
   const name = webIcon ?? "shield";
   return (
     <View style={{ alignItems: "center", justifyContent: "center", minWidth: 28, minHeight: 22 }}>
-      <AppIcon name={name} size={22} color={focused ? color.primary : brand.inkFaint} />
+      <AppIcon name={name} size={22} color={focused ? color.primary : color.onSurfaceVariant} />
     </View>
   );
 }

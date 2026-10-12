@@ -29,7 +29,7 @@ export default function RootLayout() {
 
   return (
     <SessionProvider>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <RootNavigator />
     </SessionProvider>
   );

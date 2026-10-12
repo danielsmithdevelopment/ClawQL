@@ -97,6 +97,7 @@ export default function HomeScreen() {
         <Column spacing={space.md} style={{ padding: space.md }}>
           <SectionHeader
             icon="shield"
+            tone="seed"
             title="What needs you"
             subtitle={`Signed in as ${session.displayName}${session.reviewerDemo ? " · reviewer demo" : ""}`}
           />

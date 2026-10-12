@@ -1,81 +1,81 @@
 /**
- * PhoneApprove theme — Material Design 3 roles, seeded from ClawQL brand art
- * (navy field · orange QL · warm paper · sky technical).
+ * PhoneApprove theme — Material Design 3 **light** scheme.
  *
- * See apps/mobile/DESIGN.md.
+ * Primary / surfaces / tertiary / error: MCU `themeFromSourceColor(#FF5636)`
+ * (same algorithm as Material Theme Builder — https://m3.material.io/).
+ * Secondary: tonal roles from brand navy `#081133` so icon bubbles
+ * (`secondaryContainer`) stay distinct from coral `primaryContainer`.
+ *
+ * Regenerate: `node scripts/generate-m3-theme.mjs`
+ * Rules: `DESIGN.md`
  */
 
-/** ClawQL brand reference swatches (from logo / brand still). */
+/** Brand reference (marketing still) — seeds for MCU / secondary palette. */
 export const brandSwatches = {
-  navy: "#081133",
-  navyDeep: "#030921",
-  navyGlow: "#1B2A68",
   orange: "#FF5636",
-  orangeSoft: "#FF8A6E",
-  paper: "#EFEAE7",
-  sky: "#7289AB",
-  skyBright: "#A8C0E0",
+  navy: "#081133",
 } as const;
 
 /**
- * M3 **dark** color roles mapped from ClawQL brand.
- * Pair only as documented (primary↔onPrimary, surface↔onSurface, …).
+ * M3 light color roles. Pair only as documented:
+ * primary↔onPrimary, primaryContainer↔onPrimaryContainer, surface*↔onSurface.
  */
 export const color = {
-  // Primary = brand orange (CTAs, active tint, emphasis)
-  primary: brandSwatches.orange,
-  onPrimary: "#FFFFFF",
-  /** Darker orange plate — still clearly branded, not muddy brown */
-  primaryContainer: "#6E2414",
-  onPrimaryContainer: "#FFD2C6",
+  // Accent — MCU light from #FF5636
+  primary: "#b72205",
+  onPrimary: "#ffffff",
+  primaryContainer: "#ffdad3",
+  onPrimaryContainer: "#3e0400",
 
-  // Secondary = brand sky (technical / lower emphasis)
-  secondary: brandSwatches.skyBright,
-  onSecondary: brandSwatches.navyDeep,
-  secondaryContainer: "#243556",
-  onSecondaryContainer: "#D4E3FF",
+  // Secondary — navy tonal (M3 light tones 40/100/90/10)
+  secondary: "#545c82",
+  onSecondary: "#ffffff",
+  secondaryContainer: "#dde1ff",
+  onSecondaryContainer: "#10193b",
 
-  // Tertiary — amber “needs you” (warn family on dark)
-  tertiary: "#FFB95C",
-  onTertiary: "#422B00",
-  tertiaryContainer: "#5C3D00",
-  onTertiaryContainer: "#FFDDB3",
+  tertiary: "#6e5c2e",
+  onTertiary: "#ffffff",
+  tertiaryContainer: "#f9e0a6",
+  onTertiaryContainer: "#241a00",
 
-  // Error
-  error: "#FFB4AB",
-  onError: "#690005",
-  errorContainer: "#93000A",
-  onErrorContainer: "#FFDAD6",
+  error: "#ba1a1a",
+  onError: "#ffffff",
+  errorContainer: "#ffdad6",
+  onErrorContainer: "#410002",
 
-  // Surfaces = brand navy field
-  surface: brandSwatches.navy,
-  onSurface: brandSwatches.paper,
-  onSurfaceVariant: brandSwatches.sky,
-  surfaceContainerLowest: brandSwatches.navyDeep,
-  surfaceContainerLow: "#0C1638",
-  surfaceContainer: "#121C42",
-  surfaceContainerHigh: "#1A2650",
-  surfaceContainerHighest: "#243056",
+  // Surfaces — neutral tonal steps (M3 surface containers)
+  surface: "#fff8f6",
+  onSurface: "#201a19",
+  onSurfaceVariant: "#534340",
+  surfaceContainerLowest: "#ffffff",
+  surfaceContainerLow: "#fef1ee",
+  surfaceContainer: "#f8ebe8",
+  surfaceContainerHigh: "#f3e5e3",
+  surfaceContainerHighest: "#ede0dd",
 
-  // Outline
-  outline: "#8A9BB8",
-  outlineVariant: "#3A4668",
+  outline: "#85736f",
+  outlineVariant: "#d8c2bd",
 
-  // Product extension — success / approved (readable on navy)
-  ok: "#6FDBA8",
-  onOk: "#003824",
-  okContainer: "#005236",
-  onOkContainer: "#8FF8C3",
+  inverseSurface: "#362f2d",
+  inverseOnSurface: "#fbeeeb",
+  inversePrimary: "#ffb4a5",
 
-  /** Host.seedColor — drives Material You / SwiftUI tint */
+  // Product extension — success (not core M3)
+  ok: "#146c2e",
+  onOk: "#ffffff",
+  okContainer: "#a6f2a8",
+  onOkContainer: "#002106",
+
+  /** Host.seedColor */
   seed: brandSwatches.orange,
-  splash: brandSwatches.navyDeep,
+  splash: brandSwatches.navy,
 } as const;
 
 export const shape = {
   xs: 4,
   sm: 8,
   md: 12,
+  /** M3 card / large component */
   lg: 16,
   xl: 28,
   full: 999,
@@ -89,18 +89,18 @@ export const space = {
   xl: 32,
 } as const;
 
+/** M3 prefers tonal surfaces over heavy shadows — keep elevation subtle. */
 export const elevation = {
   level1: {
-    shadowColor: "#000000",
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
-    boxShadow: "0 10px 28px rgba(0, 0, 0, 0.45)",
+    shadowColor: "#201A19",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+    boxShadow: "0 2px 8px rgba(32, 26, 25, 0.08)",
   },
 } as const;
 
-/** M3-aligned type scale on brand paper / sky. */
 export const type = {
   display: { fontSize: 32, fontWeight: "700" as const, color: color.onSurface },
   headline: { fontSize: 22, fontWeight: "700" as const, color: color.onSurface },
@@ -126,22 +126,19 @@ export const type = {
   },
 } as const;
 
-/**
- * @deprecated Prefer `color.*` M3 role names.
- * Aliases remapped to the dark brand scheme so existing screens pick up navy/orange.
- */
+/** @deprecated Prefer `color.*` M3 role names. */
 export const brand = {
   seed: color.seed,
   seedSoft: color.primaryContainer,
   seedMuted: color.primary,
   ink: color.onSurface,
   inkMuted: color.onSurfaceVariant,
-  inkFaint: "#6B7C9A",
+  inkFaint: "#85736f",
   surface: color.surface,
   surfaceElevated: color.surfaceContainerLow,
-  card: color.surfaceContainer,
+  card: color.surfaceContainerLowest,
   border: color.outlineVariant,
-  borderSoft: color.surfaceContainerHighest,
+  borderSoft: color.outlineVariant,
   neutralSoft: color.surfaceContainerHighest,
   warn: color.tertiary,
   warnBg: color.tertiaryContainer,
@@ -150,7 +147,7 @@ export const brand = {
   ok: color.ok,
   okBg: color.okContainer,
   splash: color.splash,
-  shadow: "rgba(0, 0, 0, 0.45)",
+  shadow: "rgba(32, 26, 25, 0.08)",
 } as const;
 
 /** @deprecated Prefer color/brand. */
@@ -159,7 +156,7 @@ export const colors = {
   ink: color.onSurface,
   inkMuted: color.onSurfaceVariant,
   inkFaint: brand.inkFaint,
-  card: color.surfaceContainer,
+  card: color.surfaceContainerLowest,
   border: color.outlineVariant,
   accent: color.primary,
   warn: color.tertiary,

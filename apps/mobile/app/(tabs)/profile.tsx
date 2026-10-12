@@ -265,7 +265,7 @@ export default function ProfileScreen() {
           </FieldGroup>
 
           <SurfaceCard testID="profile-policies" tint="soft">
-            <IconBubble name="policies" tone="seed" size={32} iconSize={16} />
+            <IconBubble name="policies" tone="neutral" size={32} iconSize={16} />
             <Subtitle>Approval policies</Subtitle>
             <Meta>What waits on a person — read-only on phone.</Meta>
             <SecondaryButton
@@ -287,7 +287,7 @@ export default function ProfileScreen() {
           </SurfaceCard>
 
           <SurfaceCard testID="profile-teammates" tint="soft">
-            <IconBubble name="people" tone="seed" size={32} iconSize={16} />
+            <IconBubble name="people" tone="neutral" size={32} iconSize={16} />
             <Subtitle>Who can approve</Subtitle>
             <Meta>People in approval groups — read-only on phone.</Meta>
             <SecondaryButton

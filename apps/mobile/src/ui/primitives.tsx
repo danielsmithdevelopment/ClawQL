@@ -108,7 +108,7 @@ export function ScreenHost({
       testID={testID}
       style={{ backgroundColor: color.surface, width: "100%", height: "100%" }}
       seedColor={color.seed}
-      colorScheme="dark"
+      colorScheme="light"
       matchContents={matchContents}
       useViewportSizeMeasurement
     >
@@ -247,7 +247,7 @@ export function SectionHeader({
   title,
   subtitle,
   icon,
-  tone = "seed",
+  tone = "neutral",
   testID,
 }: {
   title: string;
@@ -276,7 +276,7 @@ export function NavRow({
   icon,
   onPress,
   testID,
-  tone = "seed",
+  tone = "neutral",
 }: {
   label: string;
   help?: string;
@@ -457,7 +457,7 @@ function kindTone(badgeTone: "warn" | "neutral" | "ok" | "danger"): "seed" | "ok
   if (badgeTone === "ok") return "ok";
   if (badgeTone === "warn") return "warn";
   if (badgeTone === "danger") return "danger";
-  return "seed";
+  return "neutral";
 }
 
 export function ReviewRow({
@@ -499,7 +499,7 @@ export function ReviewRow({
   );
 }
 
-/** Surface card — maps to M3 surfaceContainer* / primaryContainer. */
+/** Surface card — M3 tonal containers (no hard borders; depth from tone/elevation). */
 export function SurfaceCard({
   children,
   testID,
@@ -510,16 +510,15 @@ export function SurfaceCard({
   testID?: string;
   /** Soft elevation for hero / unread (M3 Expressive). */
   elevated?: boolean;
-  /** seed → primaryContainer · soft → surfaceContainerLow · none → surfaceContainerLowest */
+  /** seed → primaryContainer (one standout/screen) · soft → surfaceContainer · none → surfaceContainerLowest */
   tint?: "seed" | "soft" | "none";
 }) {
   const bg =
     tint === "seed"
       ? color.primaryContainer
       : tint === "soft"
-        ? color.surfaceContainerLow
+        ? color.surfaceContainer
         : color.surfaceContainerLowest;
-  const border = tint === "seed" ? color.primary : color.outlineVariant;
   const elevationStyle: ViewStyle = elevated
     ? Platform.select<ViewStyle>({
         web: { boxShadow: elevation.level1.boxShadow } as ViewStyle,
@@ -538,8 +537,6 @@ export function SurfaceCard({
       spacing={space.sm}
       style={{
         backgroundColor: bg,
-        borderColor: border,
-        borderWidth: 1,
         borderRadius: shape.lg,
         padding: space.md,
         ...elevationStyle,

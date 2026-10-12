@@ -1,6 +1,6 @@
 import { Icon } from "@expo/ui";
 
-import { brand } from "@/src/theme";
+import { color } from "@/src/theme";
 
 /**
  * Android — Material Symbols as XML vector drawables (not the ~1MB TTF font).
@@ -18,7 +18,7 @@ export function TabGlyph({
     <Icon
       name={androidXml}
       size={22}
-      color={focused ? brand.seed : brand.inkFaint}
+      color={focused ? color.primary : color.onSurfaceVariant}
     />
   );
 }

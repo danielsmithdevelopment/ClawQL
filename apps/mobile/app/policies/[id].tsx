@@ -70,7 +70,7 @@ export default function PolicyDetailScreen() {
       </SurfaceCard>
 
       <SurfaceCard testID="policy-who">
-        <IconBubble name="people" tone="seed" size={28} iconSize={14} />
+        <IconBubble name="people" tone="neutral" size={28} iconSize={14} />
         <Subtitle>Who approves</Subtitle>
         <Body>{detail.whoApproves}</Body>
         <Meta>{detail.whoHelp}</Meta>
