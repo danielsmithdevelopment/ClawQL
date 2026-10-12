@@ -105,16 +105,32 @@ function readProcRssMb(pid) {
 
 function findServePid() {
   if (process.env.EXECUTOR_V2_PID) return Number(process.env.EXECUTOR_V2_PID);
+  /** Prefer the native platform binary — not the tiny `node …/bin/executor` launcher. */
+  const ranked = [];
   for (const ent of readdirSync("/proc")) {
     if (!/^\d+$/.test(ent)) continue;
     try {
       const cmd = readFileSync(`/proc/${ent}/cmdline`, "utf8").replace(/\0/g, " ");
-      if (/\bexecutor\b/.test(cmd) && /\bserve\b/.test(cmd)) return Number(ent);
+      if (!/\bserve\b/.test(cmd)) continue;
+      if (/executor-(linux|darwin|win)[^/]*\/executor(\.exe)?\b/.test(cmd) && !/workerd/.test(cmd)) {
+        ranked.push({ pid: Number(ent), rank: 0, cmd });
+      } else if (
+        /\bexecutor\b/.test(cmd) &&
+        /\bserve\b/.test(cmd) &&
+        !/workerd/.test(cmd) &&
+        !/node_modules\/\.bin\/executor\b/.test(cmd) &&
+        !/\bnode\b/.test(cmd)
+      ) {
+        ranked.push({ pid: Number(ent), rank: 1, cmd });
+      } else if (/\bexecutor\b/.test(cmd) && /\bserve\b/.test(cmd) && !/workerd/.test(cmd)) {
+        ranked.push({ pid: Number(ent), rank: 2, cmd });
+      }
     } catch {
       /* ignore */
     }
   }
-  return null;
+  ranked.sort((a, b) => a.rank - b.rank);
+  return ranked[0]?.pid ?? null;
 }
 
 function analyzeRssTrend(series) {

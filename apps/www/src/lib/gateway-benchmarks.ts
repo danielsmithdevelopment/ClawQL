@@ -17,10 +17,10 @@ export const BENCHMARK_VIDEO_META = {
 export const gatewayBenchmarkHeadline = 'Most efficient governed MCP gateway — measured, not marketed.'
 
 export const gatewayBenchmarkSummary =
-  'Equal-arm board: same 40-tool fat catalog, same task success, 10 000 × 12-turn flows. ClawQL is the only measured arm that cuts tokens versus a fair direct-HTTP baseline — via gateway result projection. Aggregators match the baseline; Executor pays a pretty-print tax (v1) or still trails after compact envelopes (v2 beta).'
+  'Equal-arm board: same 40-tool fat catalog, same task success, 10 000 × 12-turn flows. ClawQL is the only measured arm that cuts tokens versus a fair direct-HTTP baseline — via gateway result projection. Aggregators match the baseline. Executor is version-scoped: v1.6.10 pretty-prints (+18 666); v2 beta ships compact envelopes (−5 075) and ClawQL still leads by 9 388.'
 
 export const gatewayBenchmarkClaim =
-  'Fewest I/O tokens among measured MCP aggregators and live Executor, with equal task success.'
+  'Fewest I/O tokens among measured MCP aggregators and live Executor (v1 and v2 β), with equal task success.'
 
 export type GatewayCompetitorColumn = 'ClawQL' | 'Executor' | 'MCPJungle' | 'agentgateway'
 
@@ -139,7 +139,7 @@ export const tokenScorecardRows: TokenScorecardRow[] = [
     note: 'No gateway process. Defs = agentgateway serialization of the same 40 ops.',
   },
   {
-    arm: 'ClawQL (Node)',
+    arm: 'ClawQL (Node, stdio)',
     highlight: true,
     definitions: '297',
     discovery: '11 568',
@@ -152,7 +152,7 @@ export const tokenScorecardRows: TokenScorecardRow[] = [
     taskSuccess: 'PASS',
   },
   {
-    arm: 'ClawQL (Bun)',
+    arm: 'ClawQL (Bun, stdio)',
     highlight: true,
     definitions: '297',
     discovery: '11 568',
@@ -166,7 +166,21 @@ export const tokenScorecardRows: TokenScorecardRow[] = [
     note: 'Same tokens as Node; ~50% lower multiturn RSS on this host.',
   },
   {
-    arm: 'Executor 1.6.10',
+    arm: 'ClawQL (HTTP)',
+    highlight: true,
+    definitions: '297',
+    discovery: '11 568',
+    results: '8 674',
+    combined: '20 539',
+    vsDirect: '−14 463',
+    flowP50: '47.8',
+    flowP999: '388.6',
+    rssMed: '2 717',
+    taskSuccess: 'PASS',
+    note: 'Equal-transport peer for Executor v2. Tokens unchanged; latency higher than stdio. RSS climbs on this host (leak-shaped) — do not hide it.',
+  },
+  {
+    arm: 'Executor 1.6.10 (stdio)',
     definitions: '90',
     discovery: '0',
     results: '53 578',
@@ -176,20 +190,20 @@ export const tokenScorecardRows: TokenScorecardRow[] = [
     flowP999: '106.6',
     rssMed: '213',
     taskSuccess: 'PASS',
-    note: 'Defs save 5 430; pretty-print results add 24 096. Discovery=0 favors Executor vs ClawQL’s charged search.',
+    note: 'Pretty-printed results. Defs save 5 430; indent tax adds 24 096. Discovery=0 (harness execute). Version-scope: this is v1 only.',
   },
   {
-    arm: 'Executor 2.0.0-β.15',
+    arm: 'Executor 2.0.0-β.15 (HTTP)',
     definitions: '181',
     discovery: '0',
     results: '29 746',
     combined: '29 927',
     vsDirect: '−5 075',
-    flowP50: '74.0',
-    flowP999: '126.0',
-    rssMed: '968',
+    flowP50: '74.4',
+    flowP999: '135.3',
+    rssMed: '918',
     taskSuccess: 'PASS',
-    note: 'HTTP /mcp compact envelope — no indent tax. Still +9 388 vs ClawQL; RSS ready/med/max 604/968/1305 MB.',
+    note: 'Credits the compact-JSON fix (≈v1 compacted 29 572; defs+envelope over compact results ≈445). Still +9 388 vs ClawQL. Discovery=0. Latency peer is ClawQL HTTP (+26.5 ms). RSS working set (490→918 med→1290 max), not a leak.',
   },
   {
     arm: 'MCPJungle',
@@ -272,19 +286,23 @@ export const latencyScorecardRows: LatencyScorecardRow[] = [
 export const gatewayBenchmarkHonesty = [
   {
     title: 'What we claim',
-    body: 'Fewest tokens among measured MCP aggregators and live Executor with equal task success. Lowest governed gateway cost on the n=10 000 interleaved board. Latency competitive with the fastest aggregators (best p50; MCPJungle best p999).',
+    body: 'Fewest tokens among measured MCP aggregators and live Executor (v1 and v2 β) with equal task success. Lowest governed gateway cost on the n=10 000 interleaved board. Latency competitive with the fastest aggregators (best p50; MCPJungle best p999) on the stdio/aggregator board.',
   },
   {
     title: 'What we do not claim',
-    body: 'Scale-out concurrency wins (need same-topology 1× and 4-replica boards for every arm). Memory wins — ClawQL is the heaviest serious arm on RSS. Category-wide supremacy until Bifrost / mcp-gateway compact shortlist arms are on the board.',
+    body: 'Scale-out concurrency wins. Memory wins — ClawQL HTTP RSS climbs on this host; do not headline Executor “4.5× heavier” against Bun stdio. Category-wide supremacy until Bifrost / mcp-gateway are on the board. “v2 slower than v1” without naming transport.',
   },
   {
-    title: 'Executor framing',
-    body: 'Discovery is harness-authored execute (0 discovery tokens) on both Executor versions — that favors Executor versus ClawQL’s charged 11 568 search tokens. v1 net loss is pretty-print; v2 compact wins tokens but still trails ClawQL by ~9.4k @12 and costs more RSS/latency on this path.',
+    title: 'Executor version scope',
+    body: 'v1.6.10: pretty-printed, +18 666 vs baseline. v2 β.15: compact, −5 075 — credit the fix. ClawQL still leads v2 by 9 388. Video scenes that cite the pretty-print tax must label v1.6.10 on-screen, not only in a footer.',
+  },
+  {
+    title: 'Discovery and transport',
+    body: 'Both Executor versions: discovery=0 (harness-authored execute; skills unused) — favors Executor vs ClawQL’s charged 11 568. v2 latency peers with ClawQL HTTP (47.8 ms p50), not stdio Bun (15 ms).',
   },
   {
     title: 'Next ClawQL lever',
-    body: 'Discovery is 56% of ClawQL’s combined @12. Leaner search hits (~300 tok/turn) or skip-search when the agent already knows the operationId would cut ~8k more — without touching projection.',
+    body: 'Discovery is 56% of ClawQL’s combined @12. Leaner search hits (~300 tok/turn) or skip-search when the agent already knows the operationId would cut ~8k more — without touching projection. Separately: investigate ClawQL HTTP RSS climb before memory claims.',
   },
 ] as const
 

@@ -143,7 +143,7 @@ MULTI_ITERS=100 MULTI_SKIP_CHAOS=0 MULTI_CHAOS_UNTIL_BREAK=1 MULTI_CHAOS_MAX=512
 
 Marketing landing (competitive matrix + scoreboards + video slot):
 
-- App Router `/benchmarks` → [clawql.com/benchmarks/](https://clawql.com/benchmarks/) after www Pages deploy merges
+- [`apps/www/src/app/benchmarks/page.tsx`](../../../apps/www/src/app/benchmarks/page.tsx) → [clawql.com/benchmarks/](https://clawql.com/benchmarks/) after www Pages deploy merges
 - Video embed: set `BENCHMARK_VIDEO_SRC` in `apps/www/src/lib/gateway-benchmarks.ts` to an R2/CDN URL (~84s / ~11 MB)
 
 Shareable static board (competitors + fair direct baseline + Bun rationale):
@@ -175,13 +175,35 @@ Artifact: [`gateway-multi-multiturn-10k.json`](./gateway-multi-multiturn-10k.jso
 
 ClawQL check: 297 + 11 568 + 8 674 = **20 539** (mean discovery 964/turn · mean result 723/turn). Aggregators **match** (or nearly match) the fair baseline — they do **not** add a separate “schema tax.” On **this board** ClawQL is the only measured arm that **reduces** tokens vs that baseline (~14.5k @12, ~41%) via projection. Bun keeps token wins and cuts Node multiturn RSS ~50%.
 
-**Executor v1.6.10 framing (verified):** defs **save 5 430**; pretty-print results **add 24 096**; **net +18 666**. Compacted @12 = **29 572**; ClawQL still leads by **9 033**. Artifact: [`executor-vs-mock-compare.json`](./executor-vs-mock-compare.json).
+### Executor — version-scoped (do not collapse v1 and v2)
 
-**Executor 2.0.0-beta.15 · 10 000 × 12 (HTTP `/mcp`):** combined **29 927** (−5 075 vs baseline). Flow e2e p50 / p999 **74.0 / 126.0 ms**; turn p50 / p999 **5.74 / 25.0 ms**; RSS ready / med / max **604 / 968 / 1305 MB**. Slower and much heavier than v1 on this path; tokens win (no indent tax). ClawQL still leads tokens by **9 388**. Artifact: [`gateway-multi-multiturn-executor-v2-10k.json`](./gateway-multi-multiturn-executor-v2-10k.json).
+| Version | Transport | Combined @12 | vs baseline | What changed |
+| --- | --- | ---: | ---: | --- |
+| **v1.6.10** | stdio | **53 668** | **+18 666** | Defs save 5 430; **pretty-print** results add 24 096. Compacted would be ~29 572. |
+| **v2.0.0-β.15** | HTTP `/mcp` | **29 927** | **−5 075** | Compact envelopes — pretty-print gone. `combined − compact_results ≈ 445` (= 181 defs + 264 envelope). |
 
-**Executor discovery = 0 (both):** harness-authored `execute` returns the fixture (no `skills`/search). Favors Executor vs ClawQL’s charged 11 568.
+Credit the v2 fix plainly. ClawQL (**20 539**) still leads v2 by **9 388**. Artifacts: [`executor-vs-mock-compare.json`](./executor-vs-mock-compare.json), [`gateway-multi-multiturn-executor-v2-10k.json`](./gateway-multi-multiturn-executor-v2-10k.json).
 
-**Claim bound:** four gateways measured. Bifrost / mcp-gateway (compact meta-tool shortlist) **not** on this board — do not claim the whole category until they are.
+**Video / marketing:** any scene that says Executor adds ~18 666 via pretty-printing must name **v1.6.10 on-screen** (not only a footer). Plan a re-cut with v2 numbers when v2 is generally available.
+
+### Transport — HTTP ClawQL peer for v2 latency
+
+v1 and ClawQL Node/Bun multiturn used **stdio**; v2 used **HTTP**. Do **not** headline “v2 slower than v1” or “v2 vs ClawQL Bun latency” without an HTTP ClawQL arm.
+
+| Arm | Transport | Combined | Flow e2e p50 / p999 (ms) | RSS ready / med / max (MB) | RSS trend | Artifact |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| **ClawQL HTTP** | Streamable HTTP multiplex | **20 539** | **47.8 / 388.6** | 285 / **2717** / 3839 | **steady climb** | [`gateway-multi-multiturn-clawql-http-10k.json`](./gateway-multi-multiturn-clawql-http-10k.json) |
+| **Executor v2 β.15** | HTTP `/mcp` | **29 927** | **74.4 / 135.3** | 490 / **918** / 1290 | **working set** (early spike, then flat) | [`gateway-multi-multiturn-executor-v2-10k.json`](./gateway-multi-multiturn-executor-v2-10k.json) |
+| ClawQL Bun (stdio) | stdio | 20 539 | 15.0 / 35.0 | — / 337 / — | — | multiturn-10k |
+| Executor v1.6.10 | stdio | 53 668 | 64.4 / 106.6 | — / 213 / — | — | multiturn-10k |
+
+Equal-transport latency: ClawQL HTTP p50 **47.8 ms** vs Executor v2 **74.4 ms** (+26.5 ms) — not the ~5× gap vs Bun stdio. Tokens unchanged (ClawQL still −9 388 vs v2).
+
+**RSS honesty:** Executor v2 is a published npm beta (`executor@2.0.0-beta.15` / `executor serve`) — not a local dev checkout. Series shows ready→~1.2 GB early spike, then **plateau ~850–975 MB** (`working_set_or_noise`) — not a leak headline. ClawQL HTTP **does** climb (285 → 2717 med → 3839 max) on this host — investigate before memory claims; do **not** claim Executor “4.5× heavier” vs Bun stdio.
+
+**Discovery = 0 (both Executor versions):** harness-authored `execute` returns the fixture; `skills`/search **not** called. Favors Executor vs ClawQL’s charged **11 568**. Note on every Executor row.
+
+**Claim bound:** four gateways measured (+ ClawQL HTTP peer). Bifrost / mcp-gateway (compact meta-tool shortlist) **not** on this board — do not claim the whole category until they are.
 
 **Next ClawQL token lever — discovery (11 568 = 56% of combined):** leaner search hits (~300 tok/turn would cut ~8k @12), and/or skip search when the agent already knows the operation (`execute` by operation ID; measure op-repeat rate). Neither touches projection.
 
