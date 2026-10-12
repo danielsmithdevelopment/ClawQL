@@ -318,7 +318,8 @@ export function PrimaryButton({
       variant="filled"
       disabled={disabled}
       onPress={onPress}
-      style={danger ? { backgroundColor: color.error } : undefined}
+      // M3 filled: container = primary (not raw seed). Label uses Host onPrimary.
+      style={{ backgroundColor: danger ? color.error : color.primary }}
     />
   );
 }
