@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { ApprovalPolicyDetail } from "@/src/domain/schemas";
 import { getPolicyDetailEffect } from "@/src/services/api";
 import { useSession } from "@/src/state/SessionContext";
-import { brand, space } from "@/src/theme";
+import { brand } from "@/src/theme";
 import {
   Badge,
   Body,

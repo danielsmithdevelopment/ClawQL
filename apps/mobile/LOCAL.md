@@ -16,7 +16,7 @@ Sign-in screen → **Continue with fixture session** (or **App Store reviewer de
 
 ## UI stack
 
-Screens use **`@expo/ui`** universal components (`Host` + Material 3 / SwiftUI) with ClawQL `brand.seed` tint. Fixture Maestro `testID`s are unchanged. Pull-to-refresh uses `List.onRefresh`.
+Screens use **`@expo/ui`** universal components (`Host` + Material 3 / SwiftUI) with ClawQL `brand.seed` tint. Icons: SF Symbols / Material XML on native, SVG stroke fallbacks on web (`AppIcon` + tonal `IconBubble`). Fixture Maestro `testID`s are unchanged. Pull-to-refresh uses `List.onRefresh`.
 
 ## What works offline / fixture
 
