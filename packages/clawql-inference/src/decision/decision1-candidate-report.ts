@@ -15,6 +15,7 @@ import {
 } from "./held-out-to-fanout.js";
 import type { OpenAiDecisionCreateRequest, OpenAiDecisionCreateResponse } from "./openai-types.js";
 import type { DecisionRequest, DecisionResponse } from "./service.js";
+import type { FanoutCostSource } from "./spend-cost.js";
 
 export const DECISION1_CANDIDATE_PROTOCOL =
   "Decision-1 candidate on frozen routing held-out; fan-out bulk + flip-rate pin; not productionTrusted";
@@ -29,6 +30,8 @@ export type Decision1CandidateReport = {
     readonly qualityBar: { readonly maxWrongAnswers: number; readonly minAnswered: number };
     /** Decision-1 candidate uses twin-aware bulk scoring (mcp↔skill). */
     readonly matchMode: "twin";
+    /** How costEstimate was resolved for recommendation ranking. */
+    readonly costSource: FanoutCostSource;
     readonly reports: FanoutEvalResponse["reports"];
     readonly recommendation: FanoutEvalResponse["recommendation"];
     readonly disagreements: FanoutEvalResponse["disagreements"];
@@ -70,6 +73,15 @@ export type Decision1CandidateDeps = {
    * instead of hard-failing the whole report.
    */
   readonly allowMissingOpenRouter?: boolean;
+  /**
+   * Fan-out cost source. Default: `spend_ledger` when `spendCosts` is set, else `explicit`
+   * (local `costPerCase=0`; optional `decision1CostPerCase`).
+   */
+  readonly costSource?: FanoutCostSource;
+  /** Inline spend-ledger snapshot for `costSource=spend_ledger`. */
+  readonly spendCosts?: ReadonlyMap<string, number>;
+  /** Explicit USD/case for Decision-1 when not using spend ledger. */
+  readonly decision1CostPerCase?: number;
   /** Injected for tests — defaults to runFanoutEval. */
   readonly runBulk?: (req: FanoutEvalRequest) => Promise<FanoutEvalResponse>;
   /** Injected for tests — defaults to runFlipRate. */
@@ -83,19 +95,27 @@ export type Decision1CandidateDeps = {
   ) => Promise<FlipRateResponse>;
 };
 
-const DEFAULT_BACKENDS = [
-  { id: "local", model: "clawql" },
-  {
-    id: "openrouter/microsoft/microsoft-decision-1",
-    model: "microsoft/microsoft-decision-1",
-  },
-] as const;
-
 const HONESTY: readonly string[] = [
   "measure-only — reuses fan-out bulk + flip-rate model pin",
   "bulk correctness uses twin-aware candidatesEquivalent (mcp↔skill); still not productionTrusted",
+  "recommendation ranks by costEstimate among backends meeting the quality bar (local costPerCase=0)",
   "does not light calibrated or held-out productionTrusted (still GLiNER2-only)",
 ];
+
+function decision1CandidateBackends(deps: Decision1CandidateDeps): FanoutEvalRequest["backends"] {
+  const decision1: {
+    id: string;
+    model: string;
+    costPerCase?: number;
+  } = {
+    id: "openrouter/microsoft/microsoft-decision-1",
+    model: "microsoft/microsoft-decision-1",
+  };
+  if (typeof deps.decision1CostPerCase === "number") {
+    decision1.costPerCase = deps.decision1CostPerCase;
+  }
+  return [{ id: "local", model: "clawql", costPerCase: 0 }, decision1];
+}
 
 type FlipOrSkip =
   | { readonly kind: "ok"; readonly flip: FlipRateResponse }
@@ -121,12 +141,17 @@ export function buildDecision1CandidateReport(
     if ("error" in flipCases) return flipCases;
 
     const qualityBar = { maxWrongAnswers: 0, minAnswered: 1 } as const;
+    const backends = decision1CandidateBackends(deps);
+    const costSource: FanoutCostSource =
+      deps.costSource ?? (deps.spendCosts ? "spend_ledger" : "explicit");
     const bulkReq: FanoutEvalRequest = {
       mode: "bulk",
       matchMode: "twin",
+      costSource,
+      spendCosts: deps.spendCosts,
       useSiteId: "search_provider_tool_routing",
       qualityBar: { ...qualityBar },
-      backends: [...DEFAULT_BACKENDS],
+      backends,
       cases: fanoutCases,
     };
 
@@ -219,10 +244,11 @@ export function buildDecision1CandidateReport(
       evalSuite: suite.suiteId,
       labelCount: suite.cases.length,
       groundTruthSource,
-      backends: [...DEFAULT_BACKENDS],
+      backends: backends.map((b) => ({ id: b.id, model: b.model ?? b.id })),
       bulk: {
         qualityBar: { ...qualityBar },
         matchMode: "twin",
+        costSource,
         reports: bulk.reports,
         recommendation: bulk.recommendation,
         disagreements: bulk.disagreements,

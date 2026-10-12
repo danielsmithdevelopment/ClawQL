@@ -97,6 +97,8 @@ describe("decision1-candidate-report", () => {
     };
 
     let bulkReqMatchMode: string | undefined;
+    let bulkReqCostSource: string | undefined;
+    let localCost: number | undefined;
     const report = await Effect.runPromise(
       buildDecision1CandidateReport({
         suite,
@@ -111,6 +113,8 @@ describe("decision1-candidate-report", () => {
         },
         runBulk: async (req) => {
           bulkReqMatchMode = req.matchMode;
+          bulkReqCostSource = req.costSource;
+          localCost = req.backends.find((b) => b.id === "local")?.costPerCase;
           return bulk;
         },
         runFlip: async () => flip,
@@ -123,13 +127,17 @@ describe("decision1-candidate-report", () => {
     expect(report.verdict.calibratedClaim).toBe(false);
     expect(report.groundTruthSource).toBe("frontier_labels");
     expect(bulkReqMatchMode).toBe("twin");
+    expect(bulkReqCostSource).toBe("explicit");
+    expect(localCost).toBe(0);
     expect(report.bulk.matchMode).toBe("twin");
+    expect(report.bulk.costSource).toBe("explicit");
     expect(report.flipRate.backendId).toBe("openrouter/microsoft/microsoft-decision-1");
     expect(report.flipRate.model).toBe("microsoft/microsoft-decision-1");
     expect(report.flipRate.passed).toBe(true);
     expect(report.bulk.recommendation?.backendId).toBe("local");
     expect(report.honesty.some((h) => /productionTrusted/i.test(h))).toBe(true);
     expect(report.honesty.some((h) => /twin-aware|candidatesEquivalent/i.test(h))).toBe(true);
+    expect(report.honesty.some((h) => /costEstimate/i.test(h))).toBe(true);
   });
 
   it("skips flip-rate when OpenRouter unkeyed but still emits measure report", async () => {
@@ -159,5 +167,59 @@ describe("decision1-candidate-report", () => {
     expect(report.flipRate.skipped).toBe(true);
     expect(report.flipRate.passed).toBe(false);
     expect(report.honesty.some((h) => /OPENROUTER_API_KEY/i.test(h))).toBe(true);
+    expect(report.bulk.costSource).toBe("explicit");
+  });
+
+  it("passes spend_ledger costSource and spendCosts into fan-out bulk", async () => {
+    const spendCosts = new Map<string, number>([
+      ["clawql", 0],
+      ["microsoft/microsoft-decision-1", 0.002],
+    ]);
+    let seenCostSource: string | undefined;
+    let seenSpend: ReadonlyMap<string, number> | undefined;
+    let d1Cost: number | undefined;
+    const report = await Effect.runPromise(
+      buildDecision1CandidateReport({
+        suite,
+        spendCosts,
+        decision1CostPerCase: 0.05,
+        runBulk: async (req) => {
+          seenCostSource = req.costSource;
+          seenSpend = req.spendCosts;
+          d1Cost = req.backends.find(
+            (b) => b.id === "openrouter/microsoft/microsoft-decision-1"
+          )?.costPerCase;
+          return {
+            object: "clawql.decision.fanout_eval",
+            mode: "bulk",
+            matchMode: "twin",
+            reports: [],
+            disagreements: [],
+            reviewCount: 0,
+            traceId: "t",
+            caseCount: 1,
+          };
+        },
+        runFlip: async () => ({
+          object: "clawql.decision.flip_rate",
+          maxFlipRate: 0.1,
+          families: ["whitespace"],
+          caseCount: 1,
+          totalPerturbations: 1,
+          passed: true,
+          reports: [],
+          traceId: "f",
+          backendId: "openrouter/microsoft/microsoft-decision-1",
+          model: "microsoft/microsoft-decision-1",
+        }),
+      })
+    );
+    expect("error" in report).toBe(false);
+    if ("error" in report) return;
+    expect(seenCostSource).toBe("spend_ledger");
+    expect(seenSpend?.get("microsoft/microsoft-decision-1")).toBe(0.002);
+    expect(d1Cost).toBe(0.05);
+    expect(report.bulk.costSource).toBe("spend_ledger");
+    expect(report.verdict.productionTrustedClaim).toBe(false);
   });
 });
