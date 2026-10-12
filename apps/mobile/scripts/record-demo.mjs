@@ -51,8 +51,14 @@ await page.waitForTimeout(1600);
 await shot("04-change-request-detail.png");
 
 await page.getByTestId("review-decline").click();
-// Detail screen auto-routes to /(tabs)/review after decline (~600ms).
-await page.getByText("2 waiting").waitFor({ state: "visible", timeout: 15000 });
+// Detail auto-routes to /(tabs)/review (~600ms). Tab Host stays mounted (hidden)
+// under the stack — always filter to a visible node.
+await page.waitForURL(/\/(review)?\/?$/, { timeout: 15000 }).catch(() => {});
+await page.waitForTimeout(900);
+await page
+  .getByText(/\d+ waiting/)
+  .filter({ visible: true })
+  .waitFor({ state: "visible", timeout: 15000 });
 await page.waitForTimeout(1000);
 await shot("03b-review-after-decline.png");
 

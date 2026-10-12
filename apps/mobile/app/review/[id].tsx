@@ -16,7 +16,6 @@ import {
   LoadingBlock,
   Meta,
   PrimaryButton,
-  Row,
   ScreenHost,
   ScreenScroll,
   SecondaryButton,
@@ -385,15 +384,9 @@ function ChangeBody({ item }: { item: ReviewItem }) {
     return (
       <SurfaceCard testID="exact-change">
         <Subtitle>The exact change</Subtitle>
-        <Row>
-          <Meta>{"Field"}</Meta>
-          <Meta>{"Now"}</Meta>
-          <Meta>{"After"}</Meta>
-        </Row>
+        <Meta>Field · now → after</Meta>
         {item.exactChange.map((row) => (
-          <Column key={row.field} spacing={2}>
-            <Body>{`${row.field}: ${row.now} → ${row.after}`}</Body>
-          </Column>
+          <Body key={row.field}>{`${row.field}: ${row.now} → ${row.after}`}</Body>
         ))}
         {item.digest ? (
           <Meta mono>{`${item.operationId ?? "operation"} · digest ${item.digest}`}</Meta>
