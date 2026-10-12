@@ -35,11 +35,15 @@ Only start recording after `demo:record-prep` / `demo:gate` prints `GATE PASS`.
 7. **Canary** dry-run status (10% + rollback trigger; say Workers gradual deploy is the swap)  
 8. Board live update  
 
-## Optional if credentials arrive before Oct 14
+## Required: public source
 
-- [ ] Public standalone GitHub repo `artifacts-attempts` for judges  
-- [ ] Live Artifacts forks (`ATTEMPTS_E2E=1`)  
-- [ ] Live Turbo Arweave upload  
+- [ ] **Public** standalone GitHub repo `artifacts-attempts` (Apache-2.0) judges can clone — see [`STANDALONE.md`](./STANDALONE.md). A private tree is an incomplete entry.
+
+## Strongly preferred if credentials arrive (Oct 12–13)
+
+- [ ] Live Artifacts forks (`LIVE_PROBE=1` / `ATTEMPTS_E2E=1`)  
+- [ ] Live Turbo Arweave upload (gateway tx on camera)  
 - [ ] Workers gradual deploy at `policy.canaryPercent`  
+- [ ] Optional: x402 unlock closing beat ([`X402_UNLOCK.md`](./X402_UNLOCK.md)) — only after live forks work  
 
-If those stay blocked, submit the local-witness path — it is real git/vitest/Merkle, not stubs.
+If live CF pieces stay blocked, submit the **public** local-witness path with honest dry-run labels — real git/vitest/Merkle, not stubs.

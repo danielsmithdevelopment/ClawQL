@@ -30,6 +30,14 @@ Only when `/v1/decisions` (or the local calibrated stub) returns `calibrated: tr
 
 `npm run demo:live-check` lists missing env vars and prints the gradual-deploy POST body. With tokens: `LIVE_PROBE=1 npm run demo:live-check` calls Artifacts REST `list()`.
 
+## Is the public repo optional?
+
+No. Judges need a public Apache-2.0 tree they can clone. Extract with [`STANDALONE.md`](./STANDALONE.md).
+
+## What about x402 pay-to-decrypt?
+
+Optional closing beat only after live Artifacts works. Ciphertext on Arweave; Worker holds the key; paid buyers get a **private Artifacts copy** with a buyer-named manifest. Leak prevention is impossible — attribution is the goal. [`X402_UNLOCK.md`](./X402_UNLOCK.md).
+
 ## How do I publish a public repo?
 
 Agents cannot create the GitHub repository. Follow [`STANDALONE.md`](./STANDALONE.md) after a human creates it.

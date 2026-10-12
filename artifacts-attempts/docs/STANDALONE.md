@@ -1,6 +1,6 @@
 # Standalone public repo extract
 
-When a human creates the public `artifacts-attempts` GitHub repo (agents cannot create it), copy this tree as the root:
+**Required for submission.** When a human creates the public `artifacts-attempts` GitHub repo (agents cannot create it), copy this tree as the root:
 
 ```bash
 # from ClawQL monorepo
@@ -26,6 +26,6 @@ git commit -m "Initial Apache-2.0 artifacts-attempts competition entry"
 - `.local/` demo runs
 - `dist/` build outputs (rebuild with `npm run build`)
 
-## Live Cloudflare (optional)
+## Live Cloudflare (Oct 12 priority after public push)
 
-Copy `.env.example`, set Workers Paid + Artifacts + Turbo secrets, then `ATTEMPTS_E2E=1`. Until then the local-witness path is the submission path.
+Copy `.env.example`, set Workers Paid + Artifacts + Turbo secrets, then `LIVE_PROBE=1 npm run demo:live-check`. Until live forks work, film the local-witness path with honest labels. Optional unlock beat: [`X402_UNLOCK.md`](./X402_UNLOCK.md).

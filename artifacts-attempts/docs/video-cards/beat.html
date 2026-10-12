@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>artifacts-attempts — beat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #0e1419;
+        --foam: #e8f0f4;
+        --signal: #1f8a70;
+      }
+      * { box-sizing: border-box; margin: 0; }
+      html, body { height: 100%; }
+      body {
+        font-family: "IBM Plex Mono", monospace;
+        color: var(--foam);
+        background:
+          linear-gradient(135deg, rgba(31, 138, 112, 0.12), transparent 40%),
+          linear-gradient(160deg, #0a1014, #121c22 60%, #0e1419);
+        display: grid;
+        place-items: center;
+      }
+      .card {
+        text-align: left;
+        width: min(90vw, 820px);
+        padding: 3rem;
+        animation: in 0.7s ease both;
+      }
+      .kicker {
+        color: var(--signal);
+        font-size: 0.85rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+        animation: in 0.7s 0.1s ease both;
+      }
+      h1 {
+        font-family: "Fraunces", serif;
+        font-size: clamp(2rem, 5vw, 3.4rem);
+        font-weight: 600;
+        line-height: 1.1;
+        animation: in 0.8s 0.2s ease both;
+      }
+      p {
+        margin-top: 1rem;
+        color: #a8bbc4;
+        max-width: 42ch;
+        animation: in 0.8s 0.35s ease both;
+      }
+      @keyframes in {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Edit ?t= and ?s= via query, or rewrite these defaults between takes -->
+    <div class="card">
+      <div class="kicker" id="kicker">Beat</div>
+      <h1 id="title">Three forks. One truth.</h1>
+      <p id="sub">Evidence notes decide. Policy blocks the unsafe path.</p>
+    </div>
+    <script>
+      const q = new URLSearchParams(location.search);
+      if (q.get("k")) document.getElementById("kicker").textContent = q.get("k");
+      if (q.get("t")) document.getElementById("title").textContent = q.get("t");
+      if (q.get("s")) document.getElementById("sub").textContent = q.get("s");
+    </script>
+  </body>
+</html>

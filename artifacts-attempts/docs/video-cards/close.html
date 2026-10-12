@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>artifacts-attempts — close</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --foam: #e8f0f4;
+        --signal: #1f8a70;
+        --ember: #c45c26;
+      }
+      * { box-sizing: border-box; margin: 0; }
+      html, body { height: 100%; }
+      body {
+        font-family: "IBM Plex Mono", monospace;
+        color: var(--foam);
+        background:
+          radial-gradient(800px 500px at 80% 20%, #243a40 0%, transparent 55%),
+          linear-gradient(165deg, #0a1014, #101820 50%, #0e1419);
+        display: grid;
+        place-items: center;
+      }
+      .stage {
+        width: min(92vw, 900px);
+        padding: 3rem 2rem;
+        animation: rise 0.9s ease both;
+      }
+      .brand {
+        font-family: "Fraunces", serif;
+        font-size: clamp(2.2rem, 6vw, 3.8rem);
+        font-weight: 700;
+      }
+      .brand span { color: var(--signal); }
+      ul {
+        list-style: none;
+        margin-top: 2rem;
+        display: grid;
+        gap: 0.85rem;
+      }
+      li {
+        padding-left: 1rem;
+        border-left: 3px solid var(--ember);
+        animation: rise 0.8s ease both;
+      }
+      li:nth-child(2) { animation-delay: 0.12s; border-left-color: var(--signal); }
+      li:nth-child(3) { animation-delay: 0.24s; }
+      code { color: #9ec9bc; }
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(14px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage">
+      <h1 class="brand">artifacts<span>-attempts</span></h1>
+      <ul>
+        <li>Public repo + runbook — judges clone and run</li>
+        <li><code>docs/JUDGE_RUNBOOK.md</code> · <code>npm run demo:judge-smoke</code></li>
+        <li>Apache-2.0 · Workers / Artifacts / x402 when labeled live</li>
+      </ul>
+    </div>
+  </body>
+</html>
