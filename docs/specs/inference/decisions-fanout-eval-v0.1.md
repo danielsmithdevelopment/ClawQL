@@ -89,10 +89,10 @@ Unlabeled — omit `expected`. Optional `flipRate` attaches the perturbation gat
 
 ## Match mode (labeled bulk / ensemble)
 
-| `matchMode`      | Behavior                                                                                          |
-| ---------------- | ------------------------------------------------------------------------------------------------- |
-| `exact` (default)| Predicted answer string must equal expected                                                       |
-| `twin`           | Declared mcp↔skill catalog twins count as correct (`candidatesEquivalent` from `clawql-core`)     |
+| `matchMode`       | Behavior                                                                                      |
+| ----------------- | --------------------------------------------------------------------------------------------- |
+| `exact` (default) | Predicted answer string must equal expected                                                   |
+| `twin`            | Declared mcp↔skill catalog twins count as correct (`candidatesEquivalent` from `clawql-core`) |
 
 Omitted `matchMode` → `exact` (preserves historical fan-out semantics). Response echoes `matchMode`. Decision-1 candidate reports opt into `twin` for apples-to-apples language with GLiNER held-out scoring; they still never light `productionTrusted`.
 
