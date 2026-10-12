@@ -15,6 +15,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { getDefaultAuditRingBuffer } from "clawql-core";
 import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
+import { pruneOrphanJsonStreamMappings } from "./prune-json-stream-mappings.js";
 import { createRegisteredMcpServer } from "../mcp/mcp-server-factory.js";
 import { runWithMcpRequestContext } from "../mcp/mcp-request-context.js";
 import {
@@ -860,6 +861,11 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           )
         );
       } finally {
+        // SDK JSON-response mode leaves `_streamMapping` entries after resolveJson;
+        // prune orphans so sessionful multiturn does not retain one entry per POST.
+        const prunedJsonStreams = closeTransportAfter
+          ? 0
+          : pruneOrphanJsonStreamMappings(transport);
         // #region agent log
         // Sample: first 5, then every 25th — enough for climb curve without huge logs.
         if (_dbgPostN <= 5 || _dbgPostN % 25 === 0) {
@@ -878,17 +884,20 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
             transportsSize: transports.size,
             mapsBefore: _dbgMapsBefore,
             mapsAfter,
+            prunedJsonStreams,
             mem: _dbgMem(),
             auditTotal,
             bodyBytes: Buffer.byteLength(JSON.stringify(req.body ?? null)),
             headersSent: res.headersSent,
             statusCode: res.statusCode,
+            runId: "post-fix",
           });
           // Hypotheses B (audit) + C (express status) share this sample; E = req maps non-zero after.
           if (mapsAfter.reqToStream > 0 || mapsAfter.reqResp > 0) {
             _dbgAgentLog("E", "mcp-http-server.ts:post-finally", "orphan request maps after handle", {
               n: _dbgPostN,
               mapsAfter,
+              runId: "post-fix",
             });
           }
           if (mapsAfter.stream > (mapsAfter.hasStandaloneSse ? 1 : 0)) {
@@ -897,6 +906,15 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
               streamSize: mapsAfter.stream,
               hasStandaloneSse: mapsAfter.hasStandaloneSse,
               enableJson: mapsAfter.enableJson,
+              prunedJsonStreams,
+              runId: "post-fix",
+            });
+          } else {
+            _dbgAgentLog("A", "mcp-http-server.ts:post-finally", "streamMapping stable after prune", {
+              n: _dbgPostN,
+              streamSize: mapsAfter.stream,
+              prunedJsonStreams,
+              runId: "post-fix",
             });
           }
         }
