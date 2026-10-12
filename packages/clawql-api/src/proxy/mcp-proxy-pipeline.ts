@@ -30,13 +30,25 @@ export class McpProxyPipeline extends Context.Service<
 >()("clawql/McpProxyPipeline") {}
 
 export function mcpProxyPipelineLayer(registry: PluginRegistry): Layer.Layer<McpProxyPipeline> {
+  /**
+   * Tools with a confirmed empty `pre-execute` list (common under equal-arm /
+   * Core-only benches). Cleared when plugins register new hooks is rare after boot;
+   * wrong sticky empty would skip enforcement — only cache length-0 results.
+   */
+  const emptyPreExecuteTools = new Set<string>();
+
   return Layer.succeed(
     McpProxyPipeline,
     McpProxyPipeline.of({
       runBeforeCallTool: (ctx) =>
         Effect.gen(function* () {
+          if (emptyPreExecuteTools.has(ctx.toolName)) return;
+
           const listed = yield* registry.hookRegistry.list("pre-execute", ctx.toolName);
-          if (listed.length === 0) return;
+          if (listed.length === 0) {
+            emptyPreExecuteTools.add(ctx.toolName);
+            return;
+          }
 
           const result = yield* fireHooksForEvent(
             listed,

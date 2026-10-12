@@ -62,8 +62,16 @@ async function auditWrappedTool(
   await recordMcpToolCallAudit({ toolName, args, outcome, result, errorMessage });
 }
 
+/** Sync gate — avoid dynamic import + Effect.runPromise when WORM is off (bench/default). */
+function isProcessWormEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.CLAWQL_WORM_ENABLED?.trim() === "1";
+}
+
 function appendMcpToolAttemptEffect(toolName: string, args: unknown): Effect.Effect<void> {
   if (WORM_AUDIT_SKIP_TOOLS.has(toolName) || toolName === "execute") {
+    return Effect.void;
+  }
+  if (!isProcessWormEnabled()) {
     return Effect.void;
   }
   return Effect.gen(function* () {
@@ -83,6 +91,9 @@ function appendMcpToolResultEffect(
   detail?: string
 ): Effect.Effect<void> {
   if (WORM_AUDIT_SKIP_TOOLS.has(toolName) || toolName === "execute") {
+    return Effect.void;
+  }
+  if (!isProcessWormEnabled()) {
     return Effect.void;
   }
   return Effect.gen(function* () {
@@ -116,12 +127,20 @@ function looksLikePaymentToolResultError(err: unknown): err is PaymentToolResult
  * Heavy packages (payments, observability, audit append) load only on the paths that need them
  * so equal-arm / Core-only compositions keep a smaller cold RSS (§11.1).
  */
+function shouldAppendWorm(toolName: string): boolean {
+  return (
+    isProcessWormEnabled() && !WORM_AUDIT_SKIP_TOOLS.has(toolName) && toolName !== "execute"
+  );
+}
+
 export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
   toolName: string,
   handler: (...args: TArgs) => Promise<TResult>
 ): (...args: TArgs) => Promise<TResult> {
   return wrapMcpToolHandler(toolName, async (...args: TArgs): Promise<TResult> => {
-    await Effect.runPromise(appendMcpToolAttemptEffect(toolName, args[0]));
+    if (shouldAppendWorm(toolName)) {
+      await Effect.runPromise(appendMcpToolAttemptEffect(toolName, args[0]));
+    }
 
     try {
       const mcpCtx = getMcpRequestContext();
@@ -132,7 +151,9 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
     } catch (err: unknown) {
       const errDetail =
         clawqlPolicyBlockMessage(err) ?? (err instanceof Error ? err.message : String(err));
-      await Effect.runPromise(appendMcpToolResultEffect(toolName, false, errDetail));
+      if (shouldAppendWorm(toolName)) {
+        await Effect.runPromise(appendMcpToolResultEffect(toolName, false, errDetail));
+      }
 
       if (looksLikePaymentToolResultError(err)) {
         const [{ isMppMcpJsonRpcPaymentError }, { isX402McpPaymentError }] = await Promise.all([
@@ -178,18 +199,22 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
     try {
       const result = await handler(...args);
       const ok = toolResultLooksOk(result);
-      await Effect.runPromise(
-        appendMcpToolResultEffect(
-          toolName,
-          ok,
-          ok ? undefined : JSON.stringify(result).slice(0, 500)
-        )
-      );
+      if (shouldAppendWorm(toolName)) {
+        await Effect.runPromise(
+          appendMcpToolResultEffect(
+            toolName,
+            ok,
+            ok ? undefined : JSON.stringify(result).slice(0, 500)
+          )
+        );
+      }
       await auditWrappedTool(toolName, args[0], resultLooksError(result) ? "error" : "ok", result);
       return result;
     } catch (err: unknown) {
       const errDetail = err instanceof Error ? err.message : String(err);
-      await Effect.runPromise(appendMcpToolResultEffect(toolName, false, errDetail));
+      if (shouldAppendWorm(toolName)) {
+        await Effect.runPromise(appendMcpToolResultEffect(toolName, false, errDetail));
+      }
       await auditWrappedTool(toolName, args[0], "thrown", undefined, errDetail);
       throw err;
     }

@@ -4,7 +4,10 @@
  */
 
 import { Effect } from "effect";
-import { handleAuditToolInput } from "./clawql-audit.js";
+import { runAuditOperation } from "clawql-core";
+import { maybePushAuditEntryToLoki } from "../observability/clawql-audit-loki.js";
+import { logMcpToolShape } from "./mcp-tool-log.js";
+import { prometheusRecordAuditAppend } from "clawql-api";
 
 const SENSITIVE_KEY =
   /^(password|passwd|secret|token|api[_-]?key|authorization|bearer|cookie|private[_-]?key)$/i;
@@ -135,9 +138,16 @@ export const recordMcpToolCallAuditEffect = (event: McpToolAuditEvent): Effect.E
   Effect.gen(function* () {
     const params = yield* buildMcpToolAuditAppend(event);
     if (!params) return;
+    // Trusted internal append — skip Effect Schema re-decode (handleAuditToolInput).
     yield* Effect.tryPromise({
       try: async () => {
-        await handleAuditToolInput(params);
+        await runAuditOperation(params, {
+          onShapeLog: (meta) => logMcpToolShape("audit", meta),
+          onAppend: (entry, total, dropped) => {
+            prometheusRecordAuditAppend(total, dropped);
+            maybePushAuditEntryToLoki(entry);
+          },
+        });
       },
       catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
     }).pipe(
@@ -151,5 +161,7 @@ export const recordMcpToolCallAuditEffect = (event: McpToolAuditEvent): Effect.E
 
 /** MCP host façade — never throws. */
 export async function recordMcpToolCallAudit(event: McpToolAuditEvent): Promise<void> {
+  // Sync gate before Effect.runPromise — hot path when CLAWQL_AUDIT_TOOL_CALLS=0.
+  if (envFlagOff(process.env.CLAWQL_AUDIT_TOOL_CALLS)) return;
   await Effect.runPromise(recordMcpToolCallAuditEffect(event));
 }

@@ -5,6 +5,7 @@
  */
 
 import { randomUUID } from "node:crypto";
+import { PerformanceObserver, monitorEventLoopDelay } from "node:perf_hooks";
 import express, { type Express } from "express";
 import {
   hostHeaderValidation,
@@ -359,11 +360,73 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     attachMppOpenApiRoutes(app, { serverName: "ClawQL MCP" });
   }
 
+  /**
+   * Sync claim modes (`noAuth` / `apiKey` without MCP-OAuth hybrid) must not pay a
+   * per-request `async`/`Effect.runPromise` hop — that defers `next()` and inflates
+   * Streamable HTTP multiturn p50/p999 under localhost load. OIDC / mcpOAuth stay async.
+   */
+  const gatewayAuthNeedsAsync =
+    gatewayAuthConfig.mcpOAuthValidator != null ||
+    gatewayAuthConfig.mode === "oidc" ||
+    gatewayAuthConfig.mode === "mcpOAuth";
+
+  function attachClaimsAndNext(
+    req: import("express").Request,
+    next: import("express").NextFunction,
+    claims: AtrClaims
+  ): void {
+    (req as import("express").Request & { clawqlClaims?: AtrClaims }).clawqlClaims = claims;
+    next();
+  }
+
+  async function sendGatewayAuthFailure(
+    req: import("express").Request,
+    res: import("express").Response,
+    error: string
+  ): Promise<void> {
+    // MCP OAuth discovery challenge (RFC 9728): clients follow resource_metadata
+    // to the protected-resource doc on this MCP origin.
+    if (mcpOAuthRuntime) {
+      const { buildMcpWwwAuthenticateHeaderEffect, resolvePublicOriginEffect } =
+        await import("clawql-auth");
+      const origin = await Effect.runPromise(
+        resolvePublicOriginEffect({
+          proto: req.get("x-forwarded-proto") ?? req.protocol,
+          host: req.get("host") ?? "localhost",
+        })
+      );
+      const wwwAuth = await Effect.runPromise(
+        buildMcpWwwAuthenticateHeaderEffect({
+          resourceMetadataUrl: `${origin}/.well-known/oauth-protected-resource`,
+          error: "invalid_token",
+          errorDescription: error,
+        })
+      );
+      res.setHeader("WWW-Authenticate", wwwAuth);
+    }
+    res.status(401).json({ error });
+  }
+
   function applyGatewayAuth(
     req: import("express").Request,
     res: import("express").Response,
     next: import("express").NextFunction
   ): void {
+    if (!gatewayAuthNeedsAsync) {
+      const result = Effect.runSync(
+        resolveAtrClaimsFromHeadersEffect(req.headers, gatewayAuthConfig).pipe(
+          Effect.map((claims) => ({ ok: true, claims }) as const),
+          Effect.catch((err) => Effect.succeed({ ok: false, error: err.reason } as const))
+        )
+      );
+      if (!result.ok) {
+        void sendGatewayAuthFailure(req, res, result.error);
+        return;
+      }
+      attachClaimsAndNext(req, next, result.claims);
+      return;
+    }
+
     void (async () => {
       const result = await Effect.runPromise(
         resolveAtrClaimsFromHeadersEffect(req.headers, gatewayAuthConfig).pipe(
@@ -372,32 +435,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         )
       );
       if (!result.ok) {
-        // MCP OAuth discovery challenge (RFC 9728): clients follow resource_metadata
-        // to the protected-resource doc on this MCP origin.
-        if (mcpOAuthRuntime) {
-          const { buildMcpWwwAuthenticateHeaderEffect, resolvePublicOriginEffect } =
-            await import("clawql-auth");
-          const origin = await Effect.runPromise(
-            resolvePublicOriginEffect({
-              proto: req.get("x-forwarded-proto") ?? req.protocol,
-              host: req.get("host") ?? "localhost",
-            })
-          );
-          const wwwAuth = await Effect.runPromise(
-            buildMcpWwwAuthenticateHeaderEffect({
-              resourceMetadataUrl: `${origin}/.well-known/oauth-protected-resource`,
-              error: "invalid_token",
-              errorDescription: result.error,
-            })
-          );
-          res.setHeader("WWW-Authenticate", wwwAuth);
-        }
-        res.status(401).json({ error: result.error });
+        await sendGatewayAuthFailure(req, res, result.error);
         return;
       }
-      (req as import("express").Request & { clawqlClaims?: typeof result.claims }).clawqlClaims =
-        result.claims;
-      next();
+      attachClaimsAndNext(req, next, result.claims);
     })();
   }
 
@@ -842,10 +883,42 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   return app;
 }
 
+function maybeInstallHttpPerfDiagnostics(): void {
+  if (!["1", "true", "yes"].includes((process.env.CLAWQL_HTTP_PERF ?? "").trim().toLowerCase())) {
+    return;
+  }
+  const h = monitorEventLoopDelay({ resolution: 10 });
+  h.enable();
+  const gcObs = new PerformanceObserver((list) => {
+    for (const entry of list.getEntries()) {
+      if (entry.duration >= 20) {
+        const detail = (entry as PerformanceEntry & { detail?: { kind?: number | string } })
+          .detail;
+        console.error(
+          `[clawql-http-perf] gc kind=${detail?.kind ?? entry.name} duration_ms=${entry.duration.toFixed(1)}`
+        );
+      }
+    }
+  });
+  gcObs.observe({ entryTypes: ["gc"], buffered: false });
+  const timer = setInterval(() => {
+    const maxMs = h.max / 1e6;
+    const p99Ms = h.percentile(99) / 1e6;
+    if (maxMs >= 20) {
+      console.error(
+        `[clawql-http-perf] event_loop_delay max_ms=${maxMs.toFixed(1)} p99_ms=${p99Ms.toFixed(1)}`
+      );
+    }
+    h.reset();
+  }, 2000);
+  timer.unref?.();
+}
+
 export async function startMcpHttpServer(): Promise<void> {
   await maybeInitOtelTracing();
   await maybeVerifyReleaseManifestAtStartup();
   registerSpecCacheShutdownHooks();
+  maybeInstallHttpPerfDiagnostics();
   const { resolvePluginCompositionFlags } = await import("../composition/resolve-plugin-flags.js");
   if (resolvePluginCompositionFlags().enableMemory) {
     const { registerPostgresPoolShutdownHooks } = await import("clawql-memory/vector/pgvector");
@@ -868,12 +941,34 @@ export async function startMcpHttpServer(): Promise<void> {
     createMcpServer: () => createRegisteredMcpServer(),
   });
 
-  app.listen(PORT, () => {
+  const httpServer = app.listen(PORT, () => {
     const path = process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;
     console.error(
       `[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:${PORT}${path}`
     );
   });
+  // Localhost multiturn is chatty small POSTs — disable Nagle and keep sockets warm.
+  // keepAliveTimeout < typical reverse-proxy idle (e.g. 75s) avoids 502 races in prod.
+  httpServer.keepAliveTimeout = Number.parseInt(
+    process.env.CLAWQL_HTTP_KEEPALIVE_TIMEOUT_MS ?? "65000",
+    10
+  );
+  httpServer.headersTimeout = Number.parseInt(
+    process.env.CLAWQL_HTTP_HEADERS_TIMEOUT_MS ?? "66000",
+    10
+  );
+  httpServer.on("connection", (socket) => {
+    socket.setNoDelay(true);
+    socket.setKeepAlive(true, 0);
+  });
+
+  const shutdownHttp = () => {
+    httpServer.close(() => process.exit(0));
+    // Bound hang — --cpu-prof needs a clean exit to flush.
+    setTimeout(() => process.exit(0), 2000).unref?.();
+  };
+  process.once("SIGTERM", shutdownHttp);
+  process.once("SIGINT", shutdownHttp);
 
   const grpc = await grpcPromise;
   if (grpc) {

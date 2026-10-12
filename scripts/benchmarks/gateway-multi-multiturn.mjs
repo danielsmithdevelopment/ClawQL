@@ -64,6 +64,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { performance } from "node:perf_hooks";
 import { spawn, spawnSync } from "node:child_process";
+import { Agent, fetch as undiciFetch } from "undici";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -536,8 +537,45 @@ function buildTurns() {
   return turns;
 }
 
+/**
+ * Equalize Streamable HTTP clients: refuse standalone GET SSE the same way
+ * ClawQL does under CLAWQL_MCP_DISABLE_STANDALONE_SSE=1 (server returns 405).
+ * Without this, aggregators/Executor that accept GET SSE get a different
+ * client path than ClawQL HTTP (long-lived event stream vs POST-only JSON).
+ */
+/** Shared keep-alive + TCP_NODELAY agent for Streamable HTTP bench clients. */
+const streamableHttpAgent = new Agent({
+  keepAliveTimeout: 60_000,
+  keepAliveMaxTimeout: 60_000,
+  connections: 8,
+  pipelining: 1,
+  connect: { noDelay: true },
+});
+
+function fetchSkipStandaloneSse(baseFetch = undiciFetch) {
+  return async (input, init = {}) => {
+    const method = String(init.method || "GET").toUpperCase();
+    const headers = new Headers(init.headers || {});
+    const accept = headers.get("accept") || headers.get("Accept") || "";
+    if (method === "GET" && accept.includes("text/event-stream")) {
+      return new Response(null, { status: 405, headers: { Allow: "POST, DELETE" } });
+    }
+    return baseFetch(input, {
+      ...init,
+      dispatcher: init.dispatcher || streamableHttpAgent,
+    });
+  };
+}
+
+function streamableHttpClientOpts(extra = {}) {
+  return {
+    ...extra,
+    fetch: fetchSkipStandaloneSse(extra.fetch || undiciFetch),
+  };
+}
+
 async function connectHttpMcp(url, name = "mt-http") {
-  const transport = new StreamableHTTPClientTransport(new URL(url));
+  const transport = new StreamableHTTPClientTransport(new URL(url), streamableHttpClientOpts());
   const client = new Client({ name, version: "1" }, {});
   await client.connect(transport);
   return {
@@ -716,13 +754,31 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     PORT: String(port),
     MCP_PORT: String(port),
     MCP_HOST: "127.0.0.1",
+    CLAWQL_AUTH_MODE: "noAuth",
+    // Bench payloads are small; avoid the 32mb default JSON parser ceiling.
+    CLAWQL_MCP_JSON_BODY_LIMIT: process.env.CLAWQL_MCP_JSON_BODY_LIMIT || "2mb",
     CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE: "1",
     // Refuse GET SSE so the SDK client skips the standalone stream (405) — avoids
     // long-lived SSE buffers under JSON-response mode (bench / headless clients).
     CLAWQL_MCP_DISABLE_STANDALONE_SSE: "1",
   };
+  if (process.env.CLAWQL_HTTP_PERF) env.CLAWQL_HTTP_PERF = process.env.CLAWQL_HTTP_PERF;
+  if (process.env.CLAWQL_AUDIT_TOOL_CALLS != null) {
+    env.CLAWQL_AUDIT_TOOL_CALLS = process.env.CLAWQL_AUDIT_TOOL_CALLS;
+  }
+  const wantCpuProf = runtime === "node" && process.env.MT_HTTP_CPU_PROF === "1";
+  const cpuProfDir =
+    process.env.MT_HTTP_CPU_PROF_DIR ||
+    join(ROOT, "docs/benchmarks/gateway-multi-comparison/cpu-prof");
+  const nodeProfArgs = wantCpuProf
+    ? ["--cpu-prof", "--cpu-prof-dir", cpuProfDir]
+    : [];
+  if (runtime === "node" && process.env.MT_HTTP_TRACE_GC === "1") {
+    nodeProfArgs.push("--trace-gc");
+  }
+  if (wantCpuProf) await mkdir(cpuProfDir, { recursive: true });
   const t0 = performance.now();
-  const child = spawn(js.command, js.args, {
+  const child = spawn(js.command, [...nodeProfArgs, ...js.args], {
     cwd: ROOT,
     env,
     stdio: ["ignore", "pipe", "pipe"],
@@ -733,10 +789,17 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     earlyExit = { code, signal };
   };
   child.on("exit", onEarlyExit);
+  const stderrChunks = [];
   await new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`${id} listening timeout`)), 90_000);
     const onData = (chunk) => {
       const s = String(chunk);
+      if (process.env.CLAWQL_HTTP_PERF === "1" || process.env.MT_HTTP_TRACE_GC === "1") {
+        stderrChunks.push(s);
+        if (s.includes("[clawql-http-perf]") || s.includes("Scavenge") || s.includes("Mark-")) {
+          process.stderr.write(s);
+        }
+      }
       if (s.includes("listening on") || s.includes("[clawql-mcp] Ready")) {
         clearTimeout(timer);
         resolve(undefined);
@@ -746,12 +809,27 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     child.stdout?.on("data", onData);
     child.on("error", reject);
   });
+  // Keep draining stderr for perf/GC lines after listen.
+  if (process.env.CLAWQL_HTTP_PERF === "1" || process.env.MT_HTTP_TRACE_GC === "1") {
+    child.stderr?.on("data", (chunk) => {
+      const s = String(chunk);
+      stderrChunks.push(s);
+      if (s.includes("[clawql-http-perf]") || s.includes("Scavenge") || s.includes("Mark-")) {
+        process.stderr.write(s);
+      }
+    });
+  }
   if (earlyExit) {
     killProcessGroup(child);
     throw new Error(`${id} exited early code=${earlyExit.code} signal=${earlyExit.signal}`);
   }
   const mcpUrl = `http://127.0.0.1:${port}/mcp`;
-  const transport = new StreamableHTTPClientTransport(new URL(mcpUrl));
+  // Client-side SSE skip matches server CLAWQL_MCP_DISABLE_STANDALONE_SSE (and
+  // the same client filter used for mcpjungle / agentgateway / executor_v2).
+  const transport = new StreamableHTTPClientTransport(
+    new URL(mcpUrl),
+    streamableHttpClientOpts()
+  );
   const client = new Client({ name: `mt-${id}`, version: "1" }, {});
   await client.connect(transport);
   return {
@@ -771,9 +849,17 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
       }
       await client.close().catch(() => {});
       child.off("exit", onEarlyExit);
-      killProcessGroup(child);
-      await sleep(150);
-      killProcessGroup(child, "SIGKILL");
+      // SIGTERM first so --cpu-prof can flush; only SIGKILL if it hangs.
+      killProcessGroup(child, "SIGTERM");
+      const exited = await new Promise((resolve) => {
+        const t = setTimeout(() => resolve(false), wantCpuProf ? 5000 : 1500);
+        child.once("exit", () => {
+          clearTimeout(t);
+          resolve(true);
+        });
+      });
+      if (!exited) killProcessGroup(child, "SIGKILL");
+      await sleep(100);
     },
   };
 }
@@ -952,9 +1038,12 @@ async function connectExecutorV2() {
       ? readFileSync("/tmp/executor-v2-data/api_key.txt", "utf8").trim()
       : "");
   if (!apiKey) throw new Error("EXECUTOR_V2_API_KEY or /tmp/executor-v2-data/api_key.txt required");
-  const transport = new StreamableHTTPClientTransport(new URL(url), {
-    requestInit: { headers: { Authorization: `Bearer ${apiKey}` } },
-  });
+  const transport = new StreamableHTTPClientTransport(
+    new URL(url),
+    streamableHttpClientOpts({
+      requestInit: { headers: { Authorization: `Bearer ${apiKey}` } },
+    })
+  );
   const client = new Client({ name: "mt-executor-v2", version: "1" }, {});
   const t0 = performance.now();
   await client.connect(transport);
@@ -2196,8 +2285,10 @@ async function main() {
         "Executor 2 removed stdio MCP (`executor mcp` is v1-only) — product transport is HTTP; harness equalization is the shared loop, not pretending v2 has stdio.",
         "Do not compare Executor v2 latency/RSS to ClawQL Bun stdio as same-topology. Tokens remain comparable.",
         "ClawQL transport matrix: clawql/clawql_bun (stdio), clawql_http/clawql_http_bun (Streamable HTTP), clawql_grpc/clawql_grpc_bun (gRPC MCP).",
-        "HTTP arms set CLAWQL_MCP_DISABLE_STANDALONE_SSE=1 (405 on GET) so the SDK skips SSE buffers — compare RSS trend before/after.",
+        "All Streamable HTTP clients skip standalone GET SSE (fetch returns 405) — same filter for ClawQL HTTP, Executor v2, MCPJungle, agentgateway.",
+        "ClawQL HTTP server also sets CLAWQL_MCP_DISABLE_STANDALONE_SSE=1; client filter equalizes peers that would otherwise open SSE.",
         "gRPC is ClawQL-only on this board — Executor / MCPJungle / agentgateway have no gRPC MCP peer here.",
+        "VIDEO HOLD: do not publish latency claims that mix ClawQL stdio vs aggregator HTTP. Label transports on every bar, or wait for HTTP-vs-HTTP after ClawQL HTTP path is optimized.",
         "Executor discovery=0 on both versions (harness-authored execute). ClawQL charges search each turn.",
         "ContextForge/MetaMCP off publish board by default.",
         "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",
