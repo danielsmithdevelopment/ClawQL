@@ -1,0 +1,22 @@
+# MOB-10 — End other sessions; simulate local approval push from Home
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- assertVisible:
+    id: "profile-sessions"
+- tapOn:
+    id: "profile-end-other-sessions"
+- assertVisible:
+    id: "profile-note"
+- tapOn:
+    id: "tab-home"
+- assertVisible:
+    id: "home-simulate-push"
+- tapOn:
+    id: "home-simulate-push-btn"
+- assertVisible:
+    id: "home-push-note"

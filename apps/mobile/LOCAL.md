@@ -28,7 +28,10 @@ Sign-in screen → **Continue with fixture session** (or **App Store reviewer de
 | Activity feed (after decisions) | ✅ |
 | Pull-to-refresh on Home / Review / Activity | ✅ |
 | Profile keys, revoke, delete-account UI | ✅ |
-| Deep link parsing / Maestro MOB-01…07 | ✅ (sim/emulator or web) |
+| Signed-in sessions + sign out elsewhere | ✅ |
+| Local push simulate (no APNs/EAS) | ✅ |
+| Activity drill-in to decided archive | ✅ |
+| Deep link parsing / Maestro MOB-01…10 | ✅ (sim/emulator or web) |
 | Unit tests | `npm test` |
 | Packaging preflight (no upload) | `npm run store:check` |
 

@@ -4,11 +4,18 @@ import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, ScrollView, View } from "react-native";
 
-import type { ConnectedApp, NotificationPrefs, SecurityKey } from "@/src/domain/schemas";
+import type {
+  ConnectedApp,
+  DeviceSession,
+  NotificationPrefs,
+  SecurityKey,
+} from "@/src/domain/schemas";
 import {
   deleteAccountEffect,
+  endOtherDeviceSessionsEffect,
   getNotificationPrefsEffect,
   listConnectedAppsEffect,
+  listDeviceSessionsEffect,
   listSecurityKeysEffect,
   revokeConnectedAppEffect,
   setNotificationPrefsEffect,
@@ -35,6 +42,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [keys, setKeys] = useState<readonly SecurityKey[]>([]);
   const [apps, setApps] = useState<readonly ConnectedApp[]>([]);
+  const [deviceSessions, setDeviceSessions] = useState<readonly DeviceSession[]>([]);
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -42,14 +50,16 @@ export default function ProfileScreen() {
 
   const load = useCallback(async () => {
     if (!session) return;
-    const [k, a, p] = await Promise.all([
+    const [k, a, p, s] = await Promise.all([
       Effect.runPromise(listSecurityKeysEffect(session)),
       Effect.runPromise(listConnectedAppsEffect(session)),
       Effect.runPromise(getNotificationPrefsEffect(session)),
+      Effect.runPromise(listDeviceSessionsEffect(session)),
     ]);
     setKeys(k);
     setApps(a);
     setPrefs(p);
+    setDeviceSessions(s);
     setLoading(false);
   }, [session]);
 
@@ -150,6 +160,60 @@ export default function ProfileScreen() {
               <Meta style={{ marginTop: 4 }}>{key.detail}</Meta>
             </View>
           ))}
+        </Card>
+
+        <Card testID="profile-sessions">
+          <Subtitle>Where you are signed in</Subtitle>
+          <Meta style={{ marginTop: 4 }}>End other sessions if a device is lost or shared.</Meta>
+          {deviceSessions.map((row) => (
+            <View
+              key={row.id}
+              style={{
+                marginTop: space.sm,
+                paddingTop: space.sm,
+                borderTopWidth: 1,
+                borderTopColor: colors.border,
+              }}
+              testID={`device-session-${row.id}`}
+            >
+              <Body style={{ fontWeight: "600" }}>
+                {row.device}
+                {row.current ? " · this device" : ""}
+              </Body>
+              <Meta>
+                {row.path} · {row.lastActive}
+              </Meta>
+            </View>
+          ))}
+          {deviceSessions.filter((s) => !s.current).length > 0 ? (
+            <View style={{ marginTop: space.sm }}>
+              <SecondaryButton
+                testID="profile-end-other-sessions"
+                label={busy ? "Working…" : "Sign out everywhere else"}
+                disabled={busy}
+                onPress={() => {
+                  void (async () => {
+                    setBusy(true);
+                    try {
+                      const res = await Effect.runPromise(
+                        endOtherDeviceSessionsEffect(session)
+                      );
+                      setNote(`Ended ${res.ended} other session${res.ended === 1 ? "" : "s"}`);
+                      await load();
+                    } catch (e: unknown) {
+                      setNote(e instanceof Error ? e.message : String(e));
+                    } finally {
+                      setBusy(false);
+                    }
+                  })();
+                }}
+              />
+            </View>
+          ) : (
+            <Meta testID="profile-sessions-only-this" style={{ marginTop: space.sm }}>
+              Only this device is signed in.
+            </Meta>
+          )}
         </Card>
 
         <Card testID="profile-connected-apps">

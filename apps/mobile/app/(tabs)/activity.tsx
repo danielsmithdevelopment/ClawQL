@@ -1,6 +1,7 @@
 import { Effect } from "effect";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
+import { Pressable } from "react-native";
 
 import type { ActivityEvent } from "@/src/domain/schemas";
 import { listActivityEffect } from "@/src/services/api";
@@ -32,6 +33,7 @@ function formatWhen(atMs: number): string {
 
 export default function ActivityScreen() {
   const { session } = useSession();
+  const router = useRouter();
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [source, setSource] = useState<"live" | "fixture">("fixture");
   const [loading, setLoading] = useState(true);
@@ -83,12 +85,19 @@ export default function ActivityScreen() {
         <Meta testID="activity-empty">Nothing recorded yet. Approvals and answers land here.</Meta>
       ) : (
         events.map((event) => (
-          <Card key={event.id} testID={`activity-event-${event.id}`}>
-            <Badge label={event.kind} tone="neutral" />
-            <Body style={{ fontWeight: "600", marginTop: 6 }}>{event.title}</Body>
-            <Meta style={{ marginTop: 4 }}>{event.detail}</Meta>
-            <Meta style={{ marginTop: 6 }}>{formatWhen(event.atMs)}</Meta>
-          </Card>
+          <Pressable
+            key={event.id}
+            accessibilityRole="button"
+            testID={`activity-event-${event.id}`}
+            onPress={() => router.push(`/review/${event.reviewId}`)}
+          >
+            <Card>
+              <Badge label={event.kind} tone="neutral" />
+              <Body style={{ fontWeight: "600", marginTop: 6 }}>{event.title}</Body>
+              <Meta style={{ marginTop: 4 }}>{event.detail}</Meta>
+              <Meta style={{ marginTop: 6 }}>{formatWhen(event.atMs)}</Meta>
+            </Card>
+          </Pressable>
         ))
       )}
     </ScreenScroll>

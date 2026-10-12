@@ -159,18 +159,33 @@ export default function ReviewDetailScreen() {
     );
   }
 
+  const decided = Boolean(item.decidedStatus);
+
   return (
     <Screen testID="review-detail-screen">
       <ScrollView>
         <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
           <Meta>{item.kindLabel}</Meta>
           <Badge label={item.badge} tone={item.badgeTone} />
+          {decided ? <Badge label="Decided" tone="ok" /> : null}
         </View>
         <Title accessibilityRole="header" style={{ marginTop: 8 }}>
           {item.title}
         </Title>
         <Meta style={{ marginTop: 6 }}>{item.listMeta}</Meta>
         <Meta style={{ marginTop: 4 }}>{item.statusLine}</Meta>
+        {decided ? (
+          <Card style={{ marginTop: space.md }} testID="review-decided-banner">
+            <Subtitle>Already decided</Subtitle>
+            <Meta style={{ marginTop: 6 }} testID="review-decided-status">
+              {item.decidedStatus}
+              {item.decidedAtMs
+                ? ` · ${new Date(item.decidedAtMs).toLocaleString()}`
+                : ""}
+            </Meta>
+            <Meta style={{ marginTop: 4 }}>Read-only history from Activity.</Meta>
+          </Card>
+        ) : null}
 
         {item.kind === "skill" ? <SkillBody item={item} /> : null}
         {item.kind === "decision" ? (
@@ -178,12 +193,13 @@ export default function ReviewDetailScreen() {
             item={item}
             selectedAnswer={selectedAnswer}
             onSelect={setSelectedAnswer}
+            readOnly={decided}
           />
         ) : null}
         {item.kind === "change" ? <ChangeBody item={item} /> : null}
         {item.kind === "source" ? <SourceBody /> : null}
 
-        {item.kind !== "decision" ? (
+        {!decided && item.kind !== "decision" ? (
           <Card>
             <Subtitle>Checks</Subtitle>
             <Meta style={{ marginTop: 6 }}>Panguard: no known attack patterns</Meta>
@@ -204,72 +220,82 @@ export default function ReviewDetailScreen() {
           </Card>
         ) : null}
 
-        <View style={{ gap: space.sm, marginBottom: space.xl }}>
-          {item.kind === "decision" ? (
-            <>
-              <PrimaryButton
-                testID="review-submit-answer"
-                label={busy ? "Working…" : "Submit answer"}
-                disabled={busy || !selectedAnswer}
-                onPress={() => void decidePlain("answer", selectedAnswer ?? undefined)}
-              />
-              <SecondaryButton
-                testID="review-skip"
-                label="Skip for now"
-                disabled={busy}
-                onPress={() => void decidePlain("skip")}
-              />
-              <SecondaryButton
-                testID="review-ask-teammate"
-                label="Ask a teammate"
-                disabled={busy}
-                onPress={() => void decidePlain("ask_teammate")}
-              />
-            </>
-          ) : item.kind === "change" && item.changeStatus === "outcome_unknown" ? (
-            <>
-              <PrimaryButton
-                testID="review-mark-applied"
-                label={busy ? "Working…" : "Mark applied"}
-                disabled={busy}
-                onPress={() => void decidePlain("mark_applied")}
-              />
-              <SecondaryButton
-                testID="review-mark-not-applied"
-                label="Mark not applied"
-                disabled={busy}
-                onPress={() => void decidePlain("mark_not_applied")}
-              />
-              <SecondaryButton
-                testID="review-retry-with-key"
-                label="Retry with key"
-                disabled={busy || !item.idempotencyCapable}
-                onPress={() => void decidePlain("retry_with_key")}
-              />
-            </>
-          ) : (
-            <>
-              <PrimaryButton
-                testID="review-approve"
-                label={
-                  busy
-                    ? "Working…"
-                    : item.kind === "skill"
-                      ? "Promote with security key"
-                      : "Approve with security key"
-                }
-                disabled={busy}
-                onPress={() => void decideKeyed("approve")}
-              />
-              <SecondaryButton
-                testID="review-decline"
-                label="Decline"
-                disabled={busy}
-                onPress={() => void decideKeyed("decline")}
-              />
-            </>
-          )}
-        </View>
+        {!decided ? (
+          <View style={{ gap: space.sm, marginBottom: space.xl }}>
+            {item.kind === "decision" ? (
+              <>
+                <PrimaryButton
+                  testID="review-submit-answer"
+                  label={busy ? "Working…" : "Submit answer"}
+                  disabled={busy || !selectedAnswer}
+                  onPress={() => void decidePlain("answer", selectedAnswer ?? undefined)}
+                />
+                <SecondaryButton
+                  testID="review-skip"
+                  label="Skip for now"
+                  disabled={busy}
+                  onPress={() => void decidePlain("skip")}
+                />
+                <SecondaryButton
+                  testID="review-ask-teammate"
+                  label="Ask a teammate"
+                  disabled={busy}
+                  onPress={() => void decidePlain("ask_teammate")}
+                />
+              </>
+            ) : item.kind === "change" && item.changeStatus === "outcome_unknown" ? (
+              <>
+                <PrimaryButton
+                  testID="review-mark-applied"
+                  label={busy ? "Working…" : "Mark applied"}
+                  disabled={busy}
+                  onPress={() => void decidePlain("mark_applied")}
+                />
+                <SecondaryButton
+                  testID="review-mark-not-applied"
+                  label="Mark not applied"
+                  disabled={busy}
+                  onPress={() => void decidePlain("mark_not_applied")}
+                />
+                <SecondaryButton
+                  testID="review-retry-with-key"
+                  label="Retry with key"
+                  disabled={busy || !item.idempotencyCapable}
+                  onPress={() => void decidePlain("retry_with_key")}
+                />
+              </>
+            ) : (
+              <>
+                <PrimaryButton
+                  testID="review-approve"
+                  label={
+                    busy
+                      ? "Working…"
+                      : item.kind === "skill"
+                        ? "Promote with security key"
+                        : "Approve with security key"
+                  }
+                  disabled={busy}
+                  onPress={() => void decideKeyed("approve")}
+                />
+                <SecondaryButton
+                  testID="review-decline"
+                  label="Decline"
+                  disabled={busy}
+                  onPress={() => void decideKeyed("decline")}
+                />
+              </>
+            )}
+          </View>
+        ) : (
+          <View style={{ marginBottom: space.xl }}>
+            <SecondaryButton
+              testID="review-back-activity"
+              label="Back to Activity"
+              onPress={() => router.replace("/(tabs)/activity")}
+            />
+          </View>
+        )}
 
         {note ? (
           <Meta testID="review-note" style={{ color: colors.ok, marginBottom: space.md }}>
@@ -304,6 +330,15 @@ function SkillBody({ item }: { item: ReviewItem }) {
           listed reads, writes, network, and spend. Any later code change sends it back to proving.
         </Body>
       </Card>
+      {item.skillPermissions ? (
+        <Card testID="skill-permissions">
+          <Subtitle>What it is allowed to do</Subtitle>
+          <Meta style={{ marginTop: space.sm }}>Reads · {item.skillPermissions.reads}</Meta>
+          <Meta>Writes · {item.skillPermissions.writes}</Meta>
+          <Meta>Network · {item.skillPermissions.network}</Meta>
+          <Meta>Spend · {item.skillPermissions.spend}</Meta>
+        </Card>
+      ) : null}
       <Card>
         <Subtitle>Evidence · All checks passed</Subtitle>
         <View style={{ marginTop: space.sm, flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
@@ -323,10 +358,12 @@ function DecisionBody({
   item,
   selectedAnswer,
   onSelect,
+  readOnly,
 }: {
   item: ReviewItem;
   selectedAnswer: string | null;
   onSelect: (label: string) => void;
+  readOnly?: boolean;
 }) {
   return (
     <Card style={{ marginTop: space.md }} testID="decision-body">
@@ -344,7 +381,9 @@ function DecisionBody({
             label={choice.label}
             score={choice.score}
             selected={selectedAnswer === choice.label}
-            onPress={() => onSelect(choice.label)}
+            onPress={() => {
+              if (!readOnly) onSelect(choice.label);
+            }}
           />
         ))}
       </View>

@@ -12,9 +12,10 @@ Everything else opens the web console.
 
 Apple rejects thin website wrappers. This app ships the PhoneApprove surface from the managed console fixtures:
 
-- **Home** — what needs you + today's spend
-- **Review** — queue, exact-change detail, Decline, Approve with security key
-- **Profile** — keys, connected apps (Revoke), notification prefs, sign out, delete account
+- **Home** — what needs you + today's spend + recent activity + local push simulate
+- **Review** — kind filters, exact-change / skill / decision detail, Approve (NFC or fixture)
+- **Activity** — decided history (drill-in to read-only request)
+- **Profile** — keys, signed-in sessions, connected apps, prefs, delete account
 
 ## Stack
 
@@ -76,13 +77,13 @@ Deep links: `clawql://review/:id` and `https://cloud.clawql.com/app/review/:id`.
 - iOS — `ASAuthorizationSecurityKeyPublicKeyCredentialProvider`
 - Android — Credential Manager + NFC CTAP
 
-Until linked, production sessions get `nfc_module_unavailable`. The **reviewer demo** org uses device biometrics and is audit-tagged.
+Until linked, production sessions get `nfc_module_unavailable`. **Fixture mode** simulates NFC (`fixture-nfc:`). The **reviewer demo** org uses device biometrics and is audit-tagged.
 
 ## Catalog
 
 | Id | Coverage |
 | -- | -------- |
-| MOB-01…06 | Maestro flows in this app |
+| MOB-01…10 | Maestro flows in this app (fixture NFC, decision, skill, sessions, local push) |
 | REV-13 / UX-09 | Physical YubiKey — still Manual |
 
 See `store/review-notes.md` for App Review copy.

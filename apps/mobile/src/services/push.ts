@@ -1,6 +1,6 @@
 /**
  * Push registration + deep-link routing into Review detail.
- * Expo Notifications handles APNs/FCM once EAS credentials are configured.
+ * Fixture mode can schedule a local notification (no APNs/FCM/EAS).
  */
 import * as Notifications from "expo-notifications";
 import * as Linking from "expo-linking";
@@ -58,6 +58,85 @@ export function parseApprovalDeepLinkEffect(
     } catch {
       return null;
     }
+  });
+}
+
+/** Extract request id from a notification response / content data blob. */
+export function parseApprovalNotificationDataEffect(
+  data: unknown
+): Effect.Effect<string | null> {
+  return Effect.sync(() => {
+    if (!data || typeof data !== "object") return null;
+    const row = data as Record<string, unknown>;
+    if (row.type === "approval_request" && typeof row.requestId === "string") {
+      return row.requestId;
+    }
+    if (typeof row.requestId === "string") return row.requestId;
+    if (typeof row.url === "string") {
+      // Sync parse without Effect nesting
+      try {
+        const u = new URL(row.url);
+        const q = u.searchParams.get("requestId");
+        if (q) return q;
+        const parts = u.pathname.split("/").filter(Boolean);
+        const idx = parts.indexOf("review");
+        if (idx >= 0 && parts[idx + 1]) return parts[idx + 1];
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+}
+
+/**
+ * Schedule a local approval notification — works in fixture / Maestro without EAS push creds.
+ * On web, returns a synthetic id (Notifications are limited).
+ */
+export function scheduleLocalApprovalNotificationEffect(input: {
+  requestId: string;
+  title?: string;
+  body?: string;
+  delaySeconds?: number;
+}): Effect.Effect<{ notificationId: string; simulated: boolean }, PushError> {
+  return Effect.gen(function* () {
+    if (Platform.OS === "web") {
+      return {
+        notificationId: `web-sim-${input.requestId}`,
+        simulated: true,
+      };
+    }
+    const id = yield* Effect.tryPromise({
+      try: async () => {
+        const permissions = await Notifications.getPermissionsAsync();
+        if (permissions.status !== "granted") {
+          await Notifications.requestPermissionsAsync();
+        }
+        return Notifications.scheduleNotificationAsync({
+          content: {
+            title: input.title ?? "Something needs you",
+            body: input.body ?? "Open the request to approve with your security key.",
+            data: {
+              type: "approval_request",
+              requestId: input.requestId,
+            } satisfies ApprovalPushPayload,
+            sound: true,
+          },
+          trigger:
+            (input.delaySeconds ?? 1) > 0
+              ? {
+                  type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+                  seconds: input.delaySeconds ?? 1,
+                }
+              : null,
+        });
+      },
+      catch: (cause) =>
+        new PushError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+        }),
+    });
+    return { notificationId: id, simulated: false };
   });
 }
 
@@ -140,6 +219,15 @@ export class MobilePush extends Context.Service<
       session: MobileSession
     ) => Effect.Effect<{ token: string | null }, PushError>;
     readonly parseApprovalDeepLink: (url: string) => Effect.Effect<string | null>;
+    readonly parseApprovalNotificationData: (
+      data: unknown
+    ) => Effect.Effect<string | null>;
+    readonly scheduleLocalApprovalNotification: (input: {
+      requestId: string;
+      title?: string;
+      body?: string;
+      delaySeconds?: number;
+    }) => Effect.Effect<{ notificationId: string; simulated: boolean }, PushError>;
     readonly buildReviewDeepLink: (requestId: string) => Effect.Effect<string>;
   }
 >()(CLAWQL_PUSH_TAG) {}
@@ -147,5 +235,7 @@ export class MobilePush extends Context.Service<
 export const MobilePushLive = Layer.succeed(MobilePush, {
   register: registerForPushEffect,
   parseApprovalDeepLink: parseApprovalDeepLinkEffect,
+  parseApprovalNotificationData: parseApprovalNotificationDataEffect,
+  scheduleLocalApprovalNotification: scheduleLocalApprovalNotificationEffect,
   buildReviewDeepLink: buildReviewDeepLinkEffect,
 });

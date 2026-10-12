@@ -15,7 +15,13 @@ describe("desktop packaging metadata", () => {
     assert.ok(b.win?.target?.includes("nsis"));
     assert.ok(b.linux?.target?.includes("AppImage"));
     assert.ok(b.linux?.target?.includes("deb"));
-    for (const script of ["dist:mac", "dist:win", "dist:linux", "dist:all"]) {
+    assert.ok(
+      (b.protocols ?? []).some(
+        (p) => Array.isArray(p.schemes) && p.schemes.includes("clawql"),
+      ),
+      "build.protocols must include clawql for PhoneApprove deep links",
+    );
+    for (const script of ["dist:mac", "dist:win", "dist:linux", "dist:all", "dev:managed", "local:ready"]) {
       assert.ok(pkg.scripts[script], `missing script ${script}`);
     }
   });

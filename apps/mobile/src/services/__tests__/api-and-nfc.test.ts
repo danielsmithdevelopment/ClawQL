@@ -5,14 +5,21 @@ import { FIXTURE_SESSION, REVIEWER_DEMO_SESSION } from "../../domain/fixtures";
 import {
   decideReviewEffect,
   deleteAccountEffect,
+  endOtherDeviceSessionsEffect,
   getReviewByIdEffect,
   listActivityEffect,
+  listDeviceSessionsEffect,
   listReviewEffect,
+  pendingReviewCountEffect,
   resetFixtureStateEffect,
   revokeConnectedAppEffect,
 } from "../api";
 import { approveWithSecurityKeyEffect } from "../nfc-security-key";
-import { parseApprovalDeepLinkEffect } from "../push";
+import {
+  parseApprovalDeepLinkEffect,
+  parseApprovalNotificationDataEffect,
+  scheduleLocalApprovalNotificationEffect,
+} from "../push";
 import {
   installMockNfcModuleEffect,
   clearMockNfcModuleEffect,
@@ -76,6 +83,50 @@ describe("mobile API fixture mode", () => {
     const activity = await Effect.runPromise(listActivityEffect(FIXTURE_SESSION));
     expect(activity.events[0]?.decision).toBe("answer");
     expect(activity.events[0]?.detail).toBe("Refund request");
+  });
+
+  it("archives decided items for Activity drill-in", async () => {
+    await Effect.runPromise(
+      decideReviewEffect({
+        session: FIXTURE_SESSION,
+        id: "rev_source",
+        kind: "source",
+        decision: "decline",
+      })
+    );
+    const archived = await Effect.runPromise(
+      getReviewByIdEffect(FIXTURE_SESSION, "rev_source")
+    );
+    expect(archived?.decidedStatus).toBe("decline");
+    expect(archived?.decidedAtMs).toBeTypeOf("number");
+  });
+
+  it("ends other device sessions", async () => {
+    const before = await Effect.runPromise(listDeviceSessionsEffect(FIXTURE_SESSION));
+    expect(before.length).toBeGreaterThan(1);
+    const res = await Effect.runPromise(endOtherDeviceSessionsEffect(FIXTURE_SESSION));
+    expect(res.ended).toBeGreaterThan(0);
+    const after = await Effect.runPromise(listDeviceSessionsEffect(FIXTURE_SESSION));
+    expect(after.every((s) => s.current)).toBe(true);
+  });
+
+  it("reports pending review count", async () => {
+    const n = await Effect.runPromise(pendingReviewCountEffect(FIXTURE_SESSION));
+    expect(n).toBeGreaterThan(0);
+  });
+
+  it("parses notification payload and schedules local fixture push", async () => {
+    const id = await Effect.runPromise(
+      parseApprovalNotificationDataEffect({
+        type: "approval_request",
+        requestId: "rev_change",
+      })
+    );
+    expect(id).toBe("rev_change");
+    const scheduled = await Effect.runPromise(
+      scheduleLocalApprovalNotificationEffect({ requestId: "rev_change", delaySeconds: 1 })
+    );
+    expect(scheduled.notificationId).toBeTruthy();
   });
 
   it("promotes a skill with simulated fixture NFC", async () => {

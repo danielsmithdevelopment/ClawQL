@@ -38,6 +38,10 @@ vi.mock("expo-notifications", () => ({
   getPermissionsAsync: async () => ({ status: "granted" }),
   requestPermissionsAsync: async () => ({ status: "granted" }),
   getExpoPushTokenAsync: async () => ({ data: "ExponentPushToken[test]" }),
+  scheduleNotificationAsync: async () => "notif_fixture_1",
+  getLastNotificationResponseAsync: async () => null,
+  addNotificationResponseReceivedListener: () => ({ remove: () => undefined }),
+  SchedulableTriggerInputTypes: { TIME_INTERVAL: "timeInterval" },
 }));
 
 vi.mock("expo-linking", () => ({

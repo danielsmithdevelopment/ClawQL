@@ -9,6 +9,7 @@ import {
   listActivityEffect,
   listReviewEffect,
 } from "@/src/services/api";
+import { scheduleLocalApprovalNotificationEffect } from "@/src/services/push";
 import { useSession } from "@/src/state/SessionContext";
 import { colors, space } from "@/src/theme";
 import {
@@ -19,6 +20,7 @@ import {
   Meta,
   Screen,
   ScreenScroll,
+  SecondaryButton,
   Subtitle,
   Title,
 } from "@/src/ui/primitives";
@@ -41,6 +43,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pushNote, setPushNote] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   const load = useCallback(
@@ -130,12 +133,19 @@ export default function HomeScreen() {
         <Meta testID="home-activity-empty">No recent decisions yet.</Meta>
       ) : (
         activity.map((event) => (
-          <Card key={event.id} testID={`home-activity-${event.id}`}>
-            <Body style={{ fontWeight: "600" }}>{event.title}</Body>
-            <Meta style={{ marginTop: 4 }}>
-              {event.detail} · {formatRelative(event.atMs)}
-            </Meta>
-          </Card>
+          <Pressable
+            key={event.id}
+            accessibilityRole="button"
+            testID={`home-activity-${event.id}`}
+            onPress={() => router.push(`/review/${event.reviewId}`)}
+          >
+            <Card>
+              <Body style={{ fontWeight: "600" }}>{event.title}</Body>
+              <Meta style={{ marginTop: 4 }}>
+                {event.detail} · {formatRelative(event.atMs)}
+              </Meta>
+            </Card>
+          </Pressable>
         ))
       )}
       <Pressable
@@ -143,8 +153,49 @@ export default function HomeScreen() {
         testID="home-open-activity"
         onPress={() => router.push("/(tabs)/activity")}
       >
-        <Meta style={{ color: colors.accent, marginBottom: space.lg }}>See all activity →</Meta>
+        <Meta style={{ color: colors.accent, marginBottom: space.md }}>See all activity →</Meta>
       </Pressable>
+
+      {items[0] ? (
+        <Card testID="home-simulate-push">
+          <Subtitle>Local push (fixture)</Subtitle>
+          <Meta style={{ marginTop: 4, marginBottom: space.sm }}>
+            Schedule a local notification that opens the top request — no EAS or APNs needed.
+          </Meta>
+          <SecondaryButton
+            testID="home-simulate-push-btn"
+            label="Simulate approval push"
+            onPress={() => {
+              void (async () => {
+                try {
+                  const res = await Effect.runPromise(
+                    scheduleLocalApprovalNotificationEffect({
+                      requestId: items[0]!.id,
+                      title: items[0]!.title,
+                      delaySeconds: 1,
+                    })
+                  );
+                  setPushNote(
+                    res.simulated
+                      ? `Web simulated · open /review/${items[0]!.id}`
+                      : `Notification scheduled · ${res.notificationId}`
+                  );
+                  if (res.simulated) {
+                    setTimeout(() => router.push(`/review/${items[0]!.id}`), 800);
+                  }
+                } catch (e: unknown) {
+                  setPushNote(e instanceof Error ? e.message : String(e));
+                }
+              })();
+            }}
+          />
+          {pushNote ? (
+            <Meta testID="home-push-note" style={{ marginTop: space.sm, color: colors.ok }}>
+              {pushNote}
+            </Meta>
+          ) : null}
+        </Card>
+      ) : null}
     </ScreenScroll>
   );
 }

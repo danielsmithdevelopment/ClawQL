@@ -46,8 +46,30 @@ export const ReviewItem = Schema.Struct({
   /** Skill promotion evidence pills. */
   skillEvidence: Schema.optional(Schema.Array(Schema.String)),
   skillSummary: Schema.optional(Schema.String),
+  /** Skill sandbox permissions (reads / writes / network / spend). */
+  skillPermissions: Schema.optional(
+    Schema.Struct({
+      reads: Schema.String,
+      writes: Schema.String,
+      network: Schema.String,
+      spend: Schema.String,
+    })
+  ),
+  /** Set when moved to the decided archive (fixture + local history). */
+  decidedAtMs: Schema.optional(Schema.Number),
+  decidedStatus: Schema.optional(Schema.String),
 });
 export type ReviewItem = Schema.Schema.Type<typeof ReviewItem>;
+
+export const DeviceSession = Schema.Struct({
+  id: Schema.String,
+  device: Schema.String,
+  path: Schema.String,
+  current: Schema.Boolean,
+  lastActive: Schema.String,
+  ended: Schema.Boolean,
+});
+export type DeviceSession = Schema.Schema.Type<typeof DeviceSession>;
 
 export const ReviewDecision = Schema.Literals([
   "approve",

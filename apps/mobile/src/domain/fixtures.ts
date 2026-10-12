@@ -1,6 +1,7 @@
 import type {
   ActivityEvent,
   ConnectedApp,
+  DeviceSession,
   HomeSpend,
   NotificationPrefs,
   ReviewItem,
@@ -49,6 +50,12 @@ export const FIXTURE_REVIEW_ITEMS: readonly ReviewItem[] = [
       "Code checks clean",
       "Instructions scanned",
     ],
+    skillPermissions: {
+      reads: "crm.contracts, memory:legal",
+      writes: "crm.contracts (amendments)",
+      network: "api.acme.example (CRM only)",
+      spend: "$2 / run · $40 / day",
+    },
   },
   {
     id: "rev_change",
@@ -173,6 +180,33 @@ export const FIXTURE_NOTIFICATION_PREFS: NotificationPrefs = {
   email: false,
   morningDigest: true,
 };
+
+export const FIXTURE_DEVICE_SESSIONS: readonly DeviceSession[] = [
+  {
+    id: "sess_this_phone",
+    device: "This iPhone",
+    path: "ClawQL app · fixture",
+    current: true,
+    lastActive: "Now",
+    ended: false,
+  },
+  {
+    id: "sess_mac_chrome",
+    device: "Mac · Chrome",
+    path: "cloud.clawql.com",
+    current: false,
+    lastActive: "Today at 09:12",
+    ended: false,
+  },
+  {
+    id: "sess_ipad",
+    device: "iPad · Safari",
+    path: "cloud.clawql.com",
+    current: false,
+    lastActive: "Yesterday",
+    ended: false,
+  },
+];
 
 /** Seed activity so Home / Activity tabs are never empty on first open. */
 export const FIXTURE_ACTIVITY: readonly ActivityEvent[] = [

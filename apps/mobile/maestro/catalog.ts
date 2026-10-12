@@ -70,6 +70,20 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-08-decision-and-filter.yaml",
   },
   {
+    id: "MOB-09",
+    run: "Maestro",
+    title: "Promote a skill and resolve outcome-unknown",
+    passWhen: "Skill leaves queue after promote; outcome-unknown marked applied",
+    flow: "maestro/flows/mob-09-skill-and-outcome.yaml",
+  },
+  {
+    id: "MOB-10",
+    run: "Maestro",
+    title: "End other sessions and simulate local approval push",
+    passWhen: "Other sessions ended; Home schedules local notification / web sim",
+    flow: "maestro/flows/mob-10-sessions-and-push.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',

@@ -1,0 +1,32 @@
+# MOB-09 — Promote a skill; resolve outcome-unknown change
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-review"
+- tapOn:
+    id: "filter-skill"
+- tapOn:
+    id: "review-item-rev_skill"
+- assertVisible:
+    id: "skill-body"
+- assertVisible:
+    id: "skill-permissions"
+- tapOn:
+    id: "review-approve"
+- assertVisible:
+    id: "review-note"
+- tapOn:
+    id: "tab-review"
+- tapOn:
+    id: "filter-change"
+- tapOn:
+    id: "review-item-rev_change_unknown"
+- assertVisible:
+    id: "outcome-unknown-hint"
+- tapOn:
+    id: "review-mark-applied"
+- assertVisible:
+    id: "review-note"

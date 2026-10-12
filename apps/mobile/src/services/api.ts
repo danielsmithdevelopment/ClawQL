@@ -7,6 +7,7 @@ import { Context, Data, Effect, Layer, Ref } from "effect";
 import {
   FIXTURE_ACTIVITY,
   FIXTURE_CONNECTED_APPS,
+  FIXTURE_DEVICE_SESSIONS,
   FIXTURE_KEYS,
   FIXTURE_NOTIFICATION_PREFS,
   FIXTURE_REVIEW_ITEMS,
@@ -17,6 +18,7 @@ import {
   ActivityEvent,
   ActivityListResponse,
   ConnectedApp,
+  DeviceSession,
   HomeSpend,
   NotificationPrefs,
   ReviewDecision,
@@ -36,17 +38,22 @@ export class MobileApiError extends Data.TaggedError("MobileApiError")<{
 
 type MutableState = {
   items: ReviewItem[];
+  /** Decided items kept so Activity / deep links can reopen history. */
+  decided: ReviewItem[];
   connectedApps: ConnectedApp[];
   notificationPrefs: NotificationPrefs;
   activity: ActivityEvent[];
+  deviceSessions: DeviceSession[];
   deleted: boolean;
 };
 
 const stateRef = Ref.makeUnsafe<MutableState>({
   items: [...FIXTURE_REVIEW_ITEMS],
+  decided: [],
   connectedApps: [...FIXTURE_CONNECTED_APPS],
   notificationPrefs: { ...FIXTURE_NOTIFICATION_PREFS },
   activity: [...FIXTURE_ACTIVITY],
+  deviceSessions: [...FIXTURE_DEVICE_SESSIONS],
   deleted: false,
 });
 
@@ -120,9 +127,24 @@ export function getReviewByIdEffect(
   id: string
 ): Effect.Effect<ReviewItem | null, MobileApiError> {
   return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      const state = yield* Ref.get(stateRef);
+      return (
+        state.items.find((i) => i.id === id) ??
+        state.decided.find((i) => i.id === id) ??
+        null
+      );
+    }
     const list = yield* listReviewEffect(session);
     return list.items.find((i) => i.id === id) ?? null;
   });
+}
+
+export function pendingReviewCountEffect(
+  session: MobileSession
+): Effect.Effect<number, MobileApiError> {
+  return listReviewEffect(session).pipe(Effect.map((r) => r.items.length));
 }
 
 export function decideReviewEffect(input: {
@@ -145,6 +167,8 @@ export function decideReviewEffect(input: {
         return yield* Effect.fail(new MobileApiError({ reason: "not_found", status: 404 }));
       }
       const leaveInQueue = input.decision === "retry_with_key";
+      const status =
+        input.decision === "answer" ? (input.answer ?? "answer") : input.decision;
       const detail =
         input.answer ??
         input.approvalProof?.method ??
@@ -160,15 +184,23 @@ export function decideReviewEffect(input: {
         decision: input.decision,
         reviewId: item.id,
       };
+      const archived: ReviewItem = {
+        ...item,
+        decidedAtMs: Date.now(),
+        decidedStatus: status,
+      };
       yield* Ref.update(stateRef, (s) => ({
         ...s,
         items: leaveInQueue ? s.items : s.items.filter((i) => i.id !== input.id),
+        decided: leaveInQueue
+          ? s.decided
+          : [archived, ...s.decided.filter((d) => d.id !== input.id)].slice(0, 50),
         activity: [event, ...s.activity].slice(0, 50),
       }));
       return {
         ok: true as const,
         id: input.id,
-        status: input.decision === "answer" ? (input.answer ?? "answer") : input.decision,
+        status,
       };
     }
     const res = yield* Effect.tryPromise({
@@ -208,6 +240,39 @@ export function listActivityEffect(
     }
     // Live activity comes from the audit surface; until wired, return empty.
     return { events: [], source: "live" as const };
+  });
+}
+
+export function listDeviceSessionsEffect(
+  session: MobileSession
+): Effect.Effect<readonly DeviceSession[], MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      const state = yield* Ref.get(stateRef);
+      return state.deviceSessions.filter((s) => !s.ended);
+    }
+    return FIXTURE_DEVICE_SESSIONS.filter((s) => s.current);
+  });
+}
+
+export function endOtherDeviceSessionsEffect(
+  session: MobileSession
+): Effect.Effect<{ ended: number }, MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      const before = yield* Ref.get(stateRef);
+      const toEnd = before.deviceSessions.filter((row) => !row.current && !row.ended).length;
+      yield* Ref.update(stateRef, (s) => ({
+        ...s,
+        deviceSessions: s.deviceSessions.map((row) =>
+          row.current || row.ended ? row : { ...row, ended: true }
+        ),
+      }));
+      return { ended: toEnd };
+    }
+    return { ended: 0 };
   });
 }
 
@@ -317,7 +382,9 @@ export function deleteAccountEffect(
         ...s,
         deleted: true,
         items: [],
+        decided: [],
         activity: [],
+        deviceSessions: [],
       }));
       return {
         ok: true,
@@ -361,9 +428,11 @@ export function deleteAccountEffect(
 export function resetFixtureStateEffect(): Effect.Effect<void> {
   return Ref.set(stateRef, {
     items: [...FIXTURE_REVIEW_ITEMS],
+    decided: [],
     connectedApps: [...FIXTURE_CONNECTED_APPS],
     notificationPrefs: { ...FIXTURE_NOTIFICATION_PREFS },
     activity: [...FIXTURE_ACTIVITY],
+    deviceSessions: [...FIXTURE_DEVICE_SESSIONS],
     deleted: false,
   });
 }
@@ -395,6 +464,15 @@ export class MobileApi extends Context.Service<
     readonly listActivity: (
       session: MobileSession
     ) => Effect.Effect<ActivityListResponse, MobileApiError>;
+    readonly pendingReviewCount: (
+      session: MobileSession
+    ) => Effect.Effect<number, MobileApiError>;
+    readonly listDeviceSessions: (
+      session: MobileSession
+    ) => Effect.Effect<readonly DeviceSession[], MobileApiError>;
+    readonly endOtherDeviceSessions: (
+      session: MobileSession
+    ) => Effect.Effect<{ ended: number }, MobileApiError>;
     readonly getHomeSpend: (
       session: MobileSession
     ) => Effect.Effect<HomeSpend, MobileApiError>;
@@ -426,6 +504,9 @@ export const MobileApiLive = Layer.succeed(MobileApi, {
   getReviewById: getReviewByIdEffect,
   decideReview: decideReviewEffect,
   listActivity: listActivityEffect,
+  pendingReviewCount: pendingReviewCountEffect,
+  listDeviceSessions: listDeviceSessionsEffect,
+  endOtherDeviceSessions: endOtherDeviceSessionsEffect,
   getHomeSpend: getHomeSpendEffect,
   listSecurityKeys: listSecurityKeysEffect,
   listConnectedApps: listConnectedAppsEffect,

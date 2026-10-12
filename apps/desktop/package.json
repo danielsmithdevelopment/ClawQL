@@ -11,7 +11,9 @@
   "scripts": {
     "prepare:standalone": "node scripts/prepare-standalone.mjs",
     "dev": "CLAWQL_DESKTOP_DEV=1 electron .",
+    "dev:managed": "CLAWQL_DESKTOP_DEV=1 CLAWQL_DESKTOP_MANAGED_FIXTURE=1 electron .",
     "test": "node --test src/**/*.test.mjs",
+    "local:ready": "node scripts/local-ready.mjs",
     "pack:mac": "npm run prepare:standalone && electron-builder --mac dmg --publish never",
     "pack:win": "npm run prepare:standalone && electron-builder --win nsis --publish never",
     "pack:linux": "npm run prepare:standalone && electron-builder --linux AppImage deb --publish never",
@@ -24,6 +26,14 @@
     "appId": "com.clawql.desktop",
     "productName": "ClawQL",
     "copyright": "Copyright © ClawQL",
+    "protocols": [
+      {
+        "name": "ClawQL",
+        "schemes": [
+          "clawql"
+        ]
+      }
+    ],
     "directories": {
       "output": "dist",
       "buildResources": "build"

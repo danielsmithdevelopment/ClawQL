@@ -30,12 +30,35 @@ describe("desktop paths", () => {
   });
 
   it("desktopServiceEnv forces localhost desktop mode", () => {
-    const env = desktopServiceEnv("/tmp/clawql-home-test");
-    assert.equal(env.CLAWQL_DESKTOP_MODE, "1");
-    assert.equal(env.HOSTNAME, "127.0.0.1");
-    assert.equal(env.PORT, "3040");
-    assert.equal(env.CLAWQL_DASHBOARD_ALLOW_K8S_SYNC, "0");
-    assert.match(env.CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL, /127\.0\.0\.1:8787/);
+    const prev = process.env.CLAWQL_DESKTOP_MANAGED_FIXTURE;
+    const prevSurface = process.env.CLAWQL_CONSOLE_SURFACE;
+    delete process.env.CLAWQL_DESKTOP_MANAGED_FIXTURE;
+    delete process.env.CLAWQL_CONSOLE_SURFACE;
+    try {
+      const env = desktopServiceEnv("/tmp/clawql-home-test");
+      assert.equal(env.CLAWQL_DESKTOP_MODE, "1");
+      assert.equal(env.HOSTNAME, "127.0.0.1");
+      assert.equal(env.PORT, "3040");
+      assert.equal(env.CLAWQL_DASHBOARD_ALLOW_K8S_SYNC, "0");
+      assert.match(env.CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL, /127\.0\.0\.1:8787/);
+      assert.notEqual(env.CLAWQL_CONSOLE_SURFACE, "managed");
+    } finally {
+      if (prev !== undefined) process.env.CLAWQL_DESKTOP_MANAGED_FIXTURE = prev;
+      if (prevSurface !== undefined) process.env.CLAWQL_CONSOLE_SURFACE = prevSurface;
+    }
+  });
+
+  it("desktopServiceEnv opts into managed Review fixture", () => {
+    const prev = process.env.CLAWQL_DESKTOP_MANAGED_FIXTURE;
+    process.env.CLAWQL_DESKTOP_MANAGED_FIXTURE = "1";
+    try {
+      const env = desktopServiceEnv("/tmp/clawql-home-test");
+      assert.equal(env.CLAWQL_CONSOLE_SURFACE, "managed");
+      assert.equal(env.CLAWQL_DESKTOP_MANAGED_FIXTURE, "1");
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_DESKTOP_MANAGED_FIXTURE;
+      else process.env.CLAWQL_DESKTOP_MANAGED_FIXTURE = prev;
+    }
   });
 
   it("resolves repo + desktop roots from main module URL", () => {
