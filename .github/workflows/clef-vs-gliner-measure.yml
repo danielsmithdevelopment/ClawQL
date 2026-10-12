@@ -148,6 +148,14 @@ jobs:
       - name: Build clawql-core
         run: npm run build -w clawql-merkle -w clawql-core
 
+      - name: Smoke Clef SystemOne
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLAWQL_CLEF_SYSTEMONE_URL: ${{ secrets.CLAWQL_CLEF_SYSTEMONE_URL }}
+          CLAWQL_CLEF_MODEL: ${{ needs.gate.outputs.clef_model }}
+        run: npx tsx scripts/smoke-clef-systemone.mts
+
       - name: Run Clef measure + GLiNER compare
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -155,11 +163,12 @@ jobs:
           CLAWQL_CLEF_SYSTEMONE_URL: ${{ secrets.CLAWQL_CLEF_SYSTEMONE_URL }}
           CLAWQL_CLEF_MODEL: ${{ needs.gate.outputs.clef_model }}
           CLAWQL_FLIP_RATE_GATE: "0"
-          OUT: ${{ github.workspace }}/clef-v04-held-out-measure.json
+          CLEF_MEASURE_OUT: ${{ github.workspace }}/clef-v04-held-out-measure.json
+          COMPARE_OUT: ${{ github.workspace }}/clef-vs-gliner-v04-compare.json
         run: |
           set -euo pipefail
-          npx tsx scripts/run-clef-held-out-measure.mts
-          CLEF_MEASURE="${OUT}" OUT="${{ github.workspace }}/clef-vs-gliner-v04-compare.json" \
+          OUT="${CLEF_MEASURE_OUT}" npx tsx scripts/run-clef-held-out-measure.mts
+          CLEF_MEASURE="${CLEF_MEASURE_OUT}" OUT="${COMPARE_OUT}" \
             npx tsx scripts/run-clef-vs-gliner-compare.mts
 
       - name: Upload artifacts

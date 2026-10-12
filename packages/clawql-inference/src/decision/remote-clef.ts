@@ -120,6 +120,29 @@ type SystemOneResponse = {
   readonly usage?: unknown;
 };
 
+function asAnswerMap(raw: unknown): Record<string, Record<string, unknown>> | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  return raw as Record<string, Record<string, unknown>>;
+}
+
+function coerceJsonObject(value: unknown): Record<string, unknown> | null {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  if (typeof value === "string" && value.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(value);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/** Normalize Clef/Workers AI envelopes → SystemOne answers map. */
 function parseWorkersAiEnvelope(json: unknown): SystemOneResponse {
   if (!json || typeof json !== "object") {
     throw new Error("Clef Workers AI returned non-object JSON");
@@ -133,11 +156,35 @@ function parseWorkersAiEnvelope(json: unknown): SystemOneResponse {
         : "Workers AI error";
     throw new Error(msg);
   }
-  const result = (root.result ?? root) as SystemOneResponse;
-  if (!result.answers || typeof result.answers !== "object") {
-    throw new Error("Clef response missing answers map");
+  // Common shapes:
+  // 1) { success, result: { model, answers } }
+  // 2) { model, answers } (self-host / bare SystemOne)
+  // 3) { success, result: { response: { model, answers } } }  (± response as JSON string)
+  // 4) { result: { result: { answers } } }
+  const resultObj = coerceJsonObject(root.result);
+  const candidates: unknown[] = [
+    root,
+    resultObj,
+    coerceJsonObject(root.response),
+    resultObj ? coerceJsonObject(resultObj.response) : undefined,
+    resultObj ? coerceJsonObject(resultObj.result) : undefined,
+  ];
+  for (const cand of candidates) {
+    if (!cand || typeof cand !== "object") continue;
+    const obj = cand as Record<string, unknown>;
+    const answers = asAnswerMap(obj.answers);
+    if (answers) {
+      return {
+        model: typeof obj.model === "string" ? obj.model : undefined,
+        answers,
+        usage: obj.usage,
+      };
+    }
   }
-  return result;
+  const snippet = JSON.stringify(json).slice(0, 280);
+  throw new Error(
+    `Clef response missing answers map; keys=${Object.keys(root).join(",")}; body=${snippet}`
+  );
 }
 
 export function callRemoteClefEffect(

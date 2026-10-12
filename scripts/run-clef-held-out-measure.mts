@@ -122,6 +122,17 @@ async function main(): Promise<void> {
     process.exit(3);
   }
 
+  const routing = (summary.reports ?? []).find(
+    (r) => r.useSiteId === "search_provider_tool_routing"
+  );
+  if (routing && routing.rawAccuracy === 0) {
+    const reasons = (routing.failureReasons ?? []).join("; ");
+    console.error(
+      `fail-closed: Clef measure rawAccuracy=0 (likely transport/parse soft-fail). ${reasons}`
+    );
+    process.exit(4);
+  }
+
   const artifact = {
     protocol: "Clef held-out measure on frozen v0.4 labels; not productionTrusted",
     filledAt: new Date().toISOString(),

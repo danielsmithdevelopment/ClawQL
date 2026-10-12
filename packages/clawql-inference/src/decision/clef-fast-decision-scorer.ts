@@ -126,9 +126,12 @@ export function createClefFastDecisionScorerLayer(
         }
         return scoresFromChoice(request, answer.choice, answer.probabilities);
       }).pipe(
-        Effect.catch((): Effect.Effect<readonly FastDecisionScore[]> =>
-          Effect.succeed(zeroScores(request))
-        )
+        Effect.catch((err): Effect.Effect<readonly FastDecisionScore[]> => {
+          // Soft-fail to zeros (held-out harness), but leave a breadcrumb for operators.
+          const msg = err instanceof Error ? err.message : String(err);
+          console.error(`[clef-scorer] ${request.useSiteId}: ${msg}`);
+          return Effect.succeed(zeroScores(request));
+        })
       ),
   });
 }
