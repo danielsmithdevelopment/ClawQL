@@ -1,10 +1,15 @@
 /**
  * Work around MCP SDK Streamable HTTP JSON-response mode retaining `_streamMapping`
  * entries after `resolveJson` (SSE mode calls `cleanup()`; JSON mode does not).
- * Sessionful multiturn otherwise grows one map entry per POST and climbs RSS on Node.
+ * Sessionful multiturn otherwise grows one map entry per POST.
  *
  * Safe with concurrent POSTs: only removes streams no longer referenced by
  * `_requestToStreamMapping` (in-flight batches still listed there).
+ *
+ * Residual: even after this prune, Node HTTP multiturn RSS can still look
+ * climb-shaped from V8 GC lag (heap is reclaimable under force-GC); Bun on the
+ * same path plateaus. Do not treat that residual climb as a `_streamMapping` leak,
+ * and do not enable force-GC on publish/latency arms.
  */
 
 import { Effect } from "effect";

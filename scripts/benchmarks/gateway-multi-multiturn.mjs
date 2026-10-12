@@ -703,18 +703,12 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     MCP_PORT: String(port),
     MCP_HOST: "127.0.0.1",
     CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE: "1",
-    // Refuse GET SSE so the SDK client skips the standalone stream (405) — fixes
-    // multiturn RSS climb from retained SSE buffers under JSON-response mode.
+    // Refuse GET SSE so the SDK client skips the standalone stream (405) — avoids
+    // long-lived SSE buffers under JSON-response mode (bench / headless clients).
     CLAWQL_MCP_DISABLE_STANDALONE_SSE: "1",
-    // RSS debug: allow server to call global.gc when spawned with --expose-gc (Node).
-    CLAWQL_DEBUG_FORCE_GC: process.env.CLAWQL_DEBUG_FORCE_GC ?? "1",
   };
   const t0 = performance.now();
-  const spawnArgs =
-    js.runtime === "node" && env.CLAWQL_DEBUG_FORCE_GC
-      ? ["--expose-gc", ...js.args]
-      : js.args;
-  const child = spawn(js.command, spawnArgs, {
+  const child = spawn(js.command, js.args, {
     cwd: ROOT,
     env,
     stdio: ["ignore", "pipe", "pipe"],

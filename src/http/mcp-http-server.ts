@@ -5,17 +5,13 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { appendFileSync } from "node:fs";
-import v8 from "node:v8";
 import express, { type Express } from "express";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   hostHeaderValidation,
   localhostHostValidation,
 } from "@modelcontextprotocol/sdk/server/middleware/hostHeaderValidation.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import { getDefaultAuditRingBuffer } from "clawql-core";
 import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
 import { pruneOrphanJsonStreamMappings } from "./prune-json-stream-mappings.js";
 import { createRegisteredMcpServer } from "../mcp/mcp-server-factory.js";
@@ -53,161 +49,6 @@ import { resolvePluginCompositionFlags } from "../composition/resolve-plugin-fla
 import { getNativeProtocolMetricsSnapshot, nativeProtocolMetricsEnabled } from "clawql-api";
 import { httpMetricsEnabledForHttp, renderPrometheusMetrics } from "clawql-api";
 import { maybeInitOtelTracing } from "../observability/otel-tracing.js";
-
-// #region agent log
-/** Debug-mode NDJSON probe for Node HTTP multiturn RSS climb (A–E done; F–J next). */
-let _dbgMcpPostN = 0;
-/** Sessionful McpServer refs — debug only, to size Protocol maps (hypothesis F). */
-const _dbgSessionServers = new Map<string, McpServer>();
-let _dbgPendingSessionServer: McpServer | undefined;
-function _dbgAgentLog(
-  hypothesisId: string,
-  location: string,
-  message: string,
-  data: Record<string, unknown>
-): void {
-  try {
-    appendFileSync(
-      "/opt/cursor/logs/debug.log",
-      `${JSON.stringify({
-        hypothesisId,
-        location,
-        message,
-        data,
-        timestamp: Date.now(),
-        pid: process.pid,
-      })}\n`
-    );
-  } catch {
-    /* ignore probe I/O */
-  }
-}
-function _dbgTransportMaps(transport: StreamableHTTPServerTransport | undefined): {
-  stream: number;
-  reqToStream: number;
-  reqResp: number;
-  hasStandaloneSse: boolean;
-  enableJson: boolean | null;
-} {
-  const web = (
-    transport as unknown as {
-      _webStandardTransport?: {
-        _streamMapping?: Map<string, unknown>;
-        _requestToStreamMapping?: Map<unknown, unknown>;
-        _requestResponseMap?: Map<unknown, unknown>;
-        _standaloneSseStreamId?: string;
-        _enableJsonResponse?: boolean;
-      };
-    }
-  )?._webStandardTransport;
-  if (!web) {
-    return {
-      stream: -1,
-      reqToStream: -1,
-      reqResp: -1,
-      hasStandaloneSse: false,
-      enableJson: null,
-    };
-  }
-  const sid = web._standaloneSseStreamId ?? "_GET_stream";
-  return {
-    stream: web._streamMapping?.size ?? -1,
-    reqToStream: web._requestToStreamMapping?.size ?? -1,
-    reqResp: web._requestResponseMap?.size ?? -1,
-    hasStandaloneSse: web._streamMapping?.has(sid) ?? false,
-    enableJson: web._enableJsonResponse ?? null,
-  };
-}
-function _dbgMem(): {
-  rssMb: number;
-  heapMb: number;
-  extMb: number;
-  arrMb: number;
-  heapTotalMb: number;
-} {
-  const m = process.memoryUsage();
-  const arr = (m as { arrayBuffers?: number }).arrayBuffers ?? 0;
-  return {
-    rssMb: Number((m.rss / 1048576).toFixed(2)),
-    heapMb: Number((m.heapUsed / 1048576).toFixed(2)),
-    heapTotalMb: Number((m.heapTotal / 1048576).toFixed(2)),
-    extMb: Number((m.external / 1048576).toFixed(2)),
-    arrMb: Number((arr / 1048576).toFixed(2)),
-  };
-}
-function _dbgV8(): Record<string, number> {
-  const h = v8.getHeapStatistics();
-  return {
-    usedHeapMb: Number((h.used_heap_size / 1048576).toFixed(2)),
-    totalHeapMb: Number((h.total_heap_size / 1048576).toFixed(2)),
-    physMb: Number((h.total_physical_size / 1048576).toFixed(2)),
-    extMemMb: Number((h.external_memory / 1048576).toFixed(2)),
-    mallocMb: Number((h.malloced_memory / 1048576).toFixed(2)),
-    peakMallocMb: Number((h.peak_malloced_memory / 1048576).toFixed(2)),
-    nativeCtx: h.number_of_native_contexts,
-    detachedCtx: h.number_of_detached_contexts,
-    globalHandlesMb: Number((h.used_global_handles_size / 1048576).toFixed(2)),
-  };
-}
-function _dbgProtocolSizes(server: McpServer | undefined): Record<string, number> | null {
-  if (!server) return null;
-  const proto = (
-    server as unknown as {
-      server?: {
-        _responseHandlers?: Map<unknown, unknown>;
-        _progressHandlers?: Map<unknown, unknown>;
-        _requestHandlers?: Map<unknown, unknown>;
-        _requestHandlerAbortControllers?: Map<unknown, unknown>;
-        _timeoutInfo?: Map<unknown, unknown>;
-        _requestResolvers?: Map<unknown, unknown>;
-        _loggingLevels?: Map<unknown, unknown>;
-        _pendingDebouncedNotifications?: Set<unknown>;
-        _taskProgressTokens?: Map<unknown, unknown>;
-        _taskMessageQueue?: Map<unknown, unknown> | unknown[];
-      };
-      _registeredTools?: Map<unknown, unknown> | Record<string, unknown>;
-    }
-  ).server;
-  const tools = (server as unknown as { _registeredTools?: Map<unknown, unknown> | Record<string, unknown> })
-    ._registeredTools;
-  const toolCount = tools instanceof Map ? tools.size : tools ? Object.keys(tools).length : -1;
-  const queue = proto?._taskMessageQueue;
-  return {
-    responseHandlers: proto?._responseHandlers?.size ?? -1,
-    progressHandlers: proto?._progressHandlers?.size ?? -1,
-    requestHandlers: proto?._requestHandlers?.size ?? -1,
-    abortControllers: proto?._requestHandlerAbortControllers?.size ?? -1,
-    timeoutInfo: proto?._timeoutInfo?.size ?? -1,
-    requestResolvers: proto?._requestResolvers?.size ?? -1,
-    loggingLevels: proto?._loggingLevels?.size ?? -1,
-    pendingDebounced: proto?._pendingDebouncedNotifications?.size ?? -1,
-    taskProgressTokens: proto?._taskProgressTokens?.size ?? -1,
-    taskQueue: queue instanceof Map ? queue.size : Array.isArray(queue) ? queue.length : -1,
-    registeredTools: toolCount,
-  };
-}
-function _dbgHandles(): { handles: number; requests: number } {
-  const proc = process as NodeJS.Process & {
-    _getActiveHandles?: () => unknown[];
-    _getActiveRequests?: () => unknown[];
-  };
-  return {
-    handles: proc._getActiveHandles?.()?.length ?? -1,
-    requests: proc._getActiveRequests?.()?.length ?? -1,
-  };
-}
-function _dbgMaybeForceGc(): { ran: boolean; before?: ReturnType<typeof _dbgMem>; after?: ReturnType<typeof _dbgMem> } {
-  const enabled = ["1", "true", "yes"].includes(
-    (process.env.CLAWQL_DEBUG_FORCE_GC ?? "").trim().toLowerCase()
-  );
-  const gc = (globalThis as { gc?: () => void }).gc;
-  if (!enabled || typeof gc !== "function") return { ran: false };
-  const before = _dbgMem();
-  gc();
-  const after = _dbgMem();
-  return { ran: true, before, after };
-}
-// #endregion
 import { maybeVerifyReleaseManifestAtStartup } from "../host/release-manifest-startup.js";
 import { handleLabelStudioWebhookRequest } from "clawql-automation/hitl/label-studio";
 import { configureHitlTransportDeps } from "./hitl-transport.js";
@@ -383,9 +224,6 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
   const mcpPath = options.mcpPath?.trim() || process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;
   const transports = new Map<string, StreamableHTTPServerTransport>();
-  // #region agent log
-  // Cleared with transports on session close (see onclose below).
-  // #endregion
 
   const app = createClawqlMcpExpressApp({
     host: options.host || process.env.MCP_HOST || "0.0.0.0",
@@ -836,18 +674,11 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     const useStateless = shouldUseStatelessHttpTransport(protocolVersion);
     /** Close after request — required for per-request (stateless) transports so they do not accumulate. */
     let closeTransportAfter = false;
-    // #region agent log
-    let _dbgBranch: "session_reuse" | "stateless" | "initialize" | "reject" | "none" = "none";
-    const _dbgPostN = ++_dbgMcpPostN;
-    // #endregion
     try {
       let transport: StreamableHTTPServerTransport | undefined;
 
       if (!useStateless && sessionId && transports.has(sessionId)) {
         transport = transports.get(sessionId);
-        // #region agent log
-        _dbgBranch = "session_reuse";
-        // #endregion
       } else if (useStateless) {
         // Per-request transport — no session affinity (MCP 2026-07-28).
         const streamableJson = ["1", "true", "yes"].includes(
@@ -860,9 +691,6 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         const server = createRegisteredMcpServer();
         await server.connect(transport);
         closeTransportAfter = true;
-        // #region agent log
-        _dbgBranch = "stateless";
-        // #endregion
       } else if (!sessionId && isInitializeRequest(req.body)) {
         const streamableJson = ["1", "true", "yes"].includes(
           (process.env.CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE ?? "").trim().toLowerCase()
@@ -871,20 +699,8 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (sid) => {
             transports.set(sid, transport!);
-            // #region agent log
-            if (_dbgPendingSessionServer) {
-              _dbgSessionServers.set(sid, _dbgPendingSessionServer);
-              _dbgPendingSessionServer = undefined;
-            }
-            // #endregion
             // 8.0 session-scope hooks (spec §5) — fire-and-forget; never block init.
             const api = getClawqlApi();
-            // #region agent log
-            _dbgAgentLog("D", "mcp-http-server.ts:onsessioninitialized", "session start hook", {
-              sidLen: sid.length,
-              transportsSize: transports.size,
-            });
-            // #endregion
             void fireSessionStart({
               hookRegistry: api.hookRegistry,
               worm: api.worm,
@@ -898,16 +714,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           const sid = transport!.sessionId;
           if (sid) {
             transports.delete(sid);
-            // #region agent log
-            _dbgSessionServers.delete(sid);
-            // #endregion
             const api = getClawqlApi();
-            // #region agent log
-            _dbgAgentLog("D", "mcp-http-server.ts:onclose", "session end hook", {
-              sidLen: typeof sid === "string" ? sid.length : 0,
-              transportsSize: transports.size,
-            });
-            // #endregion
             void fireSessionEnd({
               hookRegistry: api.hookRegistry,
               worm: api.worm,
@@ -917,17 +724,8 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         };
 
         const server = createRegisteredMcpServer();
-        // #region agent log
-        _dbgPendingSessionServer = server;
-        // #endregion
         await server.connect(transport);
-        // #region agent log
-        _dbgBranch = "initialize";
-        // #endregion
       } else {
-        // #region agent log
-        _dbgBranch = "reject";
-        // #endregion
         jsonRpcError(
           res,
           "Bad Request: missing/invalid mcp-session-id, or initialize request required. For MCP 2026-07-28 send mcp-protocol-version: 2026-07-28."
@@ -950,9 +748,6 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         sessionId ??
         (typeof transport.sessionId === "string" ? transport.sessionId : undefined) ??
         "mcp";
-      // #region agent log
-      const _dbgMapsBefore = _dbgTransportMaps(transport);
-      // #endregion
       try {
         await runWithMcpX402Context(headersFromExpressRequest(req), () =>
           runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens }, () =>
@@ -962,99 +757,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       } finally {
         // SDK JSON-response mode leaves `_streamMapping` entries after resolveJson;
         // prune orphans so sessionful multiturn does not retain one entry per POST.
-        const prunedJsonStreams = closeTransportAfter
-          ? 0
-          : pruneOrphanJsonStreamMappings(transport);
-        // #region agent log
-        // Sample: first 5, then every 25th — enough for climb curve without huge logs.
-        if (_dbgPostN <= 5 || _dbgPostN % 25 === 0) {
-          let auditTotal = -1;
-          try {
-            auditTotal = getDefaultAuditRingBuffer().list(1).total;
-          } catch {
-            auditTotal = -1;
-          }
-          const mapsAfter = _dbgTransportMaps(transport);
-          const sid =
-            (typeof transport.sessionId === "string" && transport.sessionId) ||
-            sessionId ||
-            "";
-          const mcpSrv = sid ? _dbgSessionServers.get(sid) : undefined;
-          const protocol = _dbgProtocolSizes(mcpSrv);
-          const handles = _dbgHandles();
-          const v8s = _dbgV8();
-          const memBeforeGc = _dbgMem();
-          const gcProbe = _dbgMaybeForceGc();
-          _dbgAgentLog("F", "mcp-http-server.ts:post-finally", "post /mcp heap+protocol", {
-            n: _dbgPostN,
-            branch: _dbgBranch,
-            useStateless,
-            closeTransportAfter,
-            transportsSize: transports.size,
-            mapsBefore: _dbgMapsBefore,
-            mapsAfter,
-            prunedJsonStreams,
-            mem: memBeforeGc,
-            memAfterGc: gcProbe.ran ? gcProbe.after : null,
-            gcRan: gcProbe.ran,
-            heapReclaimedMb:
-              gcProbe.ran && gcProbe.before && gcProbe.after
-                ? Number((gcProbe.before.heapMb - gcProbe.after.heapMb).toFixed(2))
-                : null,
-            v8: v8s,
-            protocol,
-            handles,
-            auditTotal,
-            bodyBytes: Buffer.byteLength(JSON.stringify(req.body ?? null)),
-            headersSent: res.headersSent,
-            statusCode: res.statusCode,
-            runId: "iter2",
-          });
-          if (protocol && (protocol.responseHandlers > 0 || protocol.progressHandlers > 0 || protocol.requestResolvers > 0)) {
-            _dbgAgentLog("F", "mcp-http-server.ts:post-finally", "protocol maps non-empty after handle", {
-              n: _dbgPostN,
-              protocol,
-              runId: "iter2",
-            });
-          }
-          if (handles.handles > 50) {
-            _dbgAgentLog("J", "mcp-http-server.ts:post-finally", "elevated active handles", {
-              n: _dbgPostN,
-              handles,
-              runId: "iter2",
-            });
-          }
-          if (mapsAfter.stream > (mapsAfter.hasStandaloneSse ? 1 : 0)) {
-            _dbgAgentLog("A", "mcp-http-server.ts:post-finally", "streamMapping grew (json mode leak?)", {
-              n: _dbgPostN,
-              streamSize: mapsAfter.stream,
-              runId: "iter2",
-            });
-          } else {
-            _dbgAgentLog("A", "mcp-http-server.ts:post-finally", "streamMapping stable after prune", {
-              n: _dbgPostN,
-              streamSize: mapsAfter.stream,
-              prunedJsonStreams,
-              runId: "iter2",
-            });
-          }
-          // G: if force-GC reclaims little while heap keeps climbing → true retention.
-          if (gcProbe.ran && gcProbe.after) {
-            _dbgAgentLog("G", "mcp-http-server.ts:post-finally", "force-gc probe", {
-              n: _dbgPostN,
-              before: gcProbe.before,
-              after: gcProbe.after,
-              heapReclaimedMb: Number(
-                ((gcProbe.before?.heapMb ?? 0) - gcProbe.after.heapMb).toFixed(2)
-              ),
-              rssReclaimedMb: Number(
-                ((gcProbe.before?.rssMb ?? 0) - gcProbe.after.rssMb).toFixed(2)
-              ),
-              runId: "iter2",
-            });
-          }
+        if (!closeTransportAfter) {
+          pruneOrphanJsonStreamMappings(transport);
         }
-        // #endregion
         if (closeTransportAfter) {
           await transport.close().catch(() => undefined);
         }
@@ -1100,12 +805,6 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         (process.env.CLAWQL_MCP_DISABLE_STANDALONE_SSE ?? "").trim().toLowerCase()
       )
     ) {
-      // #region agent log
-      _dbgAgentLog("C", "mcp-http-server.ts:get-sse-disabled", "GET /mcp refused (standalone SSE off)", {
-        mem: _dbgMem(),
-        transportsSize: transports.size,
-      });
-      // #endregion
       res.status(405).setHeader("Allow", "POST, DELETE").end();
       return;
     }
