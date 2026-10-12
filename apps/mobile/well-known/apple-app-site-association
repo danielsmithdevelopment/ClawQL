@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["TEAMID.com.clawql.app"],
+        "paths": ["/app/*", "/auth/mobile/callback", "/review/*"]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TEAMID.com.clawql.app"]
+  }
+}

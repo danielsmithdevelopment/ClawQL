@@ -1,12 +1,23 @@
-# ClawQL Desktop (macOS)
+# ClawQL Desktop (macOS · Windows · Linux)
 
-Native macOS app wrapping the ClawQL dashboard: **Provider secrets** (local `~/.ClawQL/vault/providers.json`) and **Agent Chat** (OpenClaw bridge).
+Native desktop app wrapping the ClawQL dashboard: **Provider secrets** (local `~/.ClawQL/vault/providers.json`) and **Agent Chat** (OpenClaw bridge).
+
+> **No code-signing or store accounts needed for local work.**  
+> See **[LOCAL.md](LOCAL.md)** — `npm run dev` / `make desktop-dev`.  
+> Signing is only for publishing installers later.
+
+| Platform | Artifact | Script |
+| -------- | -------- | ------ |
+| macOS 13+ | `.dmg` | `npm run dist:mac` |
+| Windows 10+ | NSIS `.exe` installer | `npm run dist:win` |
+| Linux | `.AppImage` + `.deb` | `npm run dist:linux` |
+| All (cross-host where supported) | combined | `npm run dist:all` |
 
 ## Prerequisites
 
 - **Node.js 22+**
 - **OpenClaw** on `PATH` for Agent Chat (`openclaw` CLI + model auth)
-- macOS 13+ (Apple Silicon or Intel)
+- Platform toolchain for the target you build (Apple signing for distribution DMGs; Windows can be built on Win or via electron-builder from CI/Linux with caveats)
 
 ## Development
 
@@ -23,27 +34,30 @@ This starts:
 2. Dashboard on `127.0.0.1:3040` with `CLAWQL_DESKTOP_MODE=1`
 3. Electron window loading the dashboard
 
-## Build `.dmg` (local)
+Or from repo root: `make desktop-dev`.
+
+## Packaged builds
 
 ```bash
 cd apps/desktop
 npm install
-npm run dist:mac
+npm test                 # paths + packaging metadata
+npm run dist:mac         # → dist/ClawQL-*.dmg
+npm run dist:win         # → dist/ClawQL-Setup-*.exe
+npm run dist:linux       # → dist/ClawQL-*.AppImage + .deb
 ```
 
-Output: `apps/desktop/dist/ClawQL-<version>.dmg`
+Each `dist:*` script runs `prepare:standalone` (dashboard production build → `standalone/dashboard/`) then **electron-builder**.
 
-The build script runs `dashboard` production build, copies Next.js **standalone** output into `desktop/standalone/`, and packages it via **electron-builder**.
+## Code signing
 
-## Code signing / notarization
+| Platform | Notes |
+| -------- | ----- |
+| macOS | Developer ID Application + notarization (`CSC_LINK`, `CSC_KEY_PASSWORD`, `notarytool`) — see [clawql-desktop.md](../../docs/design/clawql-desktop.md) |
+| Windows | Optional Authenticode (`CSC_LINK` / Azure Trusted Signing) for SmartScreen |
+| Linux | AppImage/deb unsigned is fine for clawql.com downloads; optional GPG for apt later |
 
-CI does not sign macOS builds yet. For distribution from clawql.com:
-
-1. Apple Developer ID Application certificate
-2. `CSC_LINK` / `CSC_KEY_PASSWORD` for electron-builder
-3. `notarytool` notarization + staple
-
-See [clawql-desktop-macos.md](../../docs/design/clawql-desktop-macos.md).
+CI runs packaging **metadata** checks on every PR that touches `apps/desktop`. Full signed store/site artifacts remain a human release step.
 
 ## Environment
 

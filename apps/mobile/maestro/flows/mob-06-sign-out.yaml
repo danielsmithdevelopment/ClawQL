@@ -1,0 +1,14 @@
+# MOB-06 — Sign out returns to browser sign-in
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- tapOn:
+    id: "profile-sign-out"
+- assertVisible:
+    id: "sign-in-screen"
+- assertVisible:
+    id: "sign-in-browser"

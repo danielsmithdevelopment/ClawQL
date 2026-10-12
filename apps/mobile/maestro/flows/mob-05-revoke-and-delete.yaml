@@ -1,0 +1,20 @@
+# MOB-05 — Revoke a connected app, then delete account
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- assertVisible:
+    id: "profile-screen"
+- tapOn:
+    id: "revoke-cursor-ide"
+- tapOn: "Revoke"
+- assertVisible:
+    id: "profile-note"
+- tapOn:
+    id: "profile-delete-account"
+- tapOn: "Delete account"
+- assertVisible:
+    id: "sign-in-screen"

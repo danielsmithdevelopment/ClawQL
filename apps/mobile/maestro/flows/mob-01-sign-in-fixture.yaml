@@ -1,0 +1,11 @@
+# MOB-01 — Sign in without localhost (fixture session)
+appId: com.clawql.app
+---
+- launchApp
+- assertVisible:
+    id: "sign-in-screen"
+- tapOn:
+    id: "sign-in-fixture"
+- assertVisible:
+    id: "home-screen"
+- assertVisible: "What needs you"

@@ -6,6 +6,13 @@ GHSA-q4gf-8mx6-v5v3
 # No fixed version beyond 3.0.3; transitive via micromatch/chokidar tooling, not MCP request path.
 CVE-2026-93687
 
+# node-forge@1.4.0 — same as osv-scanner.toml GHSA-86w9-cpqp-85rv (no fixed release yet).
+# Expo mobile build-time code-signing path only. Remove when upstream patches.
+CVE-2026-85393
+CVE-2026-33894
+GHSA-86w9-cpqp-85rv
+GHSA-ppp5-5v6c-4jwp
+
 # http-cache-semantics was overridden to 4.3.0 (GHSA-ch52-4w7c-c8xp / CVE-2026-93748).
 # Keep the CVE id briefly in case a nested package.json still reports 4.2.0 metadata to Trivy.
 CVE-2026-93748

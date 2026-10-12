@@ -6,12 +6,13 @@ import { fileURLToPath } from 'node:url'
 export const DASHBOARD_PORT = 3040
 export const BRIDGE_PORT = 8787
 
+/** `import.meta.url` of `src/main.mjs` — URL `..` is the file's directory parent. */
 export function repoRootFromMain(mainUrl) {
-  return resolve(fileURLToPath(new URL('../../../..', mainUrl)))
+  return resolve(fileURLToPath(new URL('../../..', mainUrl)))
 }
 
 export function desktopRootFromMain(mainUrl) {
-  return resolve(fileURLToPath(new URL('../..', mainUrl)))
+  return resolve(fileURLToPath(new URL('..', mainUrl)))
 }
 
 export function clawqlHome() {
@@ -27,6 +28,10 @@ export async function ensureClawqlHome() {
 }
 
 export function desktopServiceEnv(home) {
+  const managedFixture =
+    process.env.CLAWQL_DESKTOP_MANAGED_FIXTURE === '1' ||
+    process.env.CLAWQL_CONSOLE_SURFACE === 'managed'
+
   return {
     ...process.env,
     CLAWQL_DESKTOP_MODE: '1',
@@ -39,6 +44,13 @@ export function desktopServiceEnv(home) {
     PORT: String(DASHBOARD_PORT),
     HOSTNAME: '127.0.0.1',
     NODE_ENV: 'production',
+    // Opt-in PhoneApprove / managed Review surface for local desktop (no cloud auth).
+    ...(managedFixture
+      ? {
+          CLAWQL_CONSOLE_SURFACE: 'managed',
+          CLAWQL_DESKTOP_MANAGED_FIXTURE: '1',
+        }
+      : {}),
   }
 }
 

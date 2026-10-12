@@ -11,18 +11,32 @@
   "scripts": {
     "prepare:standalone": "node scripts/prepare-standalone.mjs",
     "dev": "CLAWQL_DESKTOP_DEV=1 electron .",
+    "dev:managed": "CLAWQL_DESKTOP_DEV=1 CLAWQL_DESKTOP_MANAGED_FIXTURE=1 electron .",
+    "test": "node --test src/**/*.test.mjs",
+    "local:ready": "node scripts/local-ready.mjs",
     "pack:mac": "npm run prepare:standalone && electron-builder --mac dmg --publish never",
     "pack:win": "npm run prepare:standalone && electron-builder --win nsis --publish never",
     "pack:linux": "npm run prepare:standalone && electron-builder --linux AppImage deb --publish never",
     "dist:mac": "npm run pack:mac",
     "dist:win": "npm run pack:win",
-    "dist:linux": "npm run pack:linux"
+    "dist:linux": "npm run pack:linux",
+    "dist:all": "npm run prepare:standalone && electron-builder --mac dmg --win nsis --linux AppImage deb --publish never"
   },
   "build": {
     "appId": "com.clawql.desktop",
     "productName": "ClawQL",
+    "copyright": "Copyright © ClawQL",
+    "protocols": [
+      {
+        "name": "ClawQL",
+        "schemes": [
+          "clawql"
+        ]
+      }
+    ],
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "build"
     },
     "files": [
       "src/**/*",
@@ -43,13 +57,22 @@
         "dmg"
       ],
       "hardenedRuntime": true,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "icon": "build/icon.png"
     },
     "win": {
       "target": [
         "nsis"
       ],
+      "icon": "build/icon.ico",
       "artifactName": "ClawQL-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ClawQL"
     },
     "linux": {
       "target": [
@@ -57,6 +80,12 @@
         "deb"
       ],
       "category": "Development",
+      "icon": "build/icon.png",
+      "desktop": {
+        "Name": "ClawQL",
+        "Comment": "Local ClawQL console — provider secrets and Agent Chat",
+        "Categories": "Development;Utility;"
+      },
       "artifactName": "ClawQL-${version}.${ext}"
     },
     "dmg": {
@@ -64,7 +93,11 @@
     }
   },
   "devDependencies": {
-    "electron": "^35.7.5",
-    "electron-builder": "^25.1.8"
+    "electron": "^41.10.6",
+    "electron-builder": "^26.15.3"
+  },
+  "overrides": {
+    "tar": "7.5.22",
+    "builder-util-runtime": "9.7.0"
   }
 }

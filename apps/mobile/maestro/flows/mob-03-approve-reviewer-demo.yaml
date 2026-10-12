@@ -1,0 +1,14 @@
+# MOB-03 — Approve via reviewer-demo biometrics (no YubiKey)
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-reviewer-demo"
+- tapOn:
+    id: "home-item-rev_change"
+- assertVisible:
+    id: "review-detail-screen"
+- tapOn:
+    id: "review-approve"
+- assertVisible:
+    id: "review-note"

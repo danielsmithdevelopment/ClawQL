@@ -1,0 +1,107 @@
+{
+  "measuredAt": "2026-10-12T13:52:11.042Z",
+  "bundle": {
+    "web": {
+      "jsKb": 3482,
+      "totalKb": 3880
+    },
+    "ios": {
+      "jsKb": 6680,
+      "totalKb": 6704
+    },
+    "android": {
+      "jsKb": 6661,
+      "totalKb": 6689
+    }
+  },
+  "timings": {
+    "signInPaintMs": 703,
+    "signInToHomeMs": 98,
+    "homeToReviewMs": 53,
+    "reviewOpenDetailMs": 71
+  },
+  "lighthouse": {
+    "performance": 0.85,
+    "accessibility": 0.93,
+    "bestPractices": 0.96,
+    "seo": 0.8,
+    "audits": {
+      "fcp": 627.6115,
+      "lcp": 627.6115,
+      "tbt": 606,
+      "cls": 0,
+      "si": 1397.3665558843265,
+      "interactive": 5511.223
+    }
+  },
+  "cpuProfile": {
+    "path": "perf/out/cpu-profile.cpuprofile",
+    "nodes": 9479,
+    "samples": 14612,
+    "startTime": 11773292964,
+    "endTime": 11775547515,
+    "durationMs": 2255,
+    "topFunctions": [
+      {
+        "fn": "(idle)",
+        "url": "",
+        "samples": 11677
+      },
+      {
+        "fn": "(anonymous)",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-c00e7cab3296ac4985cacb548b0696f6.js",
+        "samples": 570
+      },
+      {
+        "fn": "(program)",
+        "url": "",
+        "samples": 455
+      },
+      {
+        "fn": "g",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-c00e7cab3296ac4985cacb548b0696f6.js",
+        "samples": 446
+      },
+      {
+        "fn": "as",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-c00e7cab3296ac4985cacb548b0696f6.js",
+        "samples": 224
+      },
+      {
+        "fn": "Es",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-c00e7cab3296ac4985cacb548b0696f6.js",
+        "samples": 92
+      },
+      {
+        "fn": "co",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-c00e7cab3296ac4985cacb548b0696f6.js",
+        "samples": 54
+      },
+      {
+        "fn": "(garbage collector)",
+        "url": "",
+        "samples": 50
+      },
+      {
+        "fn": "o",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-c00e7cab3296ac4985cacb548b0696f6.js",
+        "samples": 42
+      },
+      {
+        "fn": "s",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-c00e7cab3296ac4985cacb548b0696f6.js",
+        "samples": 39
+      },
+      {
+        "fn": "n",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-c00e7cab3296ac4985cacb548b0696f6.js",
+        "samples": 28
+      },
+      {
+        "fn": "i",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-c00e7cab3296ac4985cacb548b0696f6.js",
+        "samples": 24
+      }
+    ]
+  }
+}

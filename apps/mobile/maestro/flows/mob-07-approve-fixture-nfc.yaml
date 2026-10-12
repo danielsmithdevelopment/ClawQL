@@ -1,0 +1,16 @@
+# MOB-07 — Approve via fixture simulated NFC (no YubiKey / no store signup)
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "home-item-rev_change"
+- assertVisible:
+    id: "review-detail-screen"
+- assertVisible:
+    id: "fixture-nfc-hint"
+- tapOn:
+    id: "review-approve"
+- assertVisible:
+    id: "review-note"

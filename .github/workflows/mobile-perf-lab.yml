@@ -1,0 +1,42 @@
+# Lab performance gate for PhoneApprove (bundle + Lighthouse mobile proxy + CPU profile).
+# Native Flashlight / Instruments stay manual (need devices) — see apps/mobile/PERFORMANCE.md.
+name: Mobile perf lab
+
+on:
+  pull_request:
+    paths:
+      - "apps/mobile/**"
+      - ".github/workflows/mobile-perf-lab.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-perf-lab-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  perf-lab:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+      - name: Run perf lab
+        run: npm run perf:lab
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-perf-lab
+          path: |
+            apps/mobile/perf/out/
+          if-no-files-found: warn
