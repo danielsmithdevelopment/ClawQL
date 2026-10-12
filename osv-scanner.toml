@@ -31,4 +31,8 @@ reason = "LOW (CVE-2026-103923): katex@0.16.47 prototype-pollution bypass; merma
 id = "GHSA-86w9-cpqp-85rv"
 reason = "HIGH (CVE-2026-85393 / CVE-2026-33894): node-forge@1.4.0 RSA PKCS#1 v1.5 verification accepts nested DigestAlgorithm. OSV lists no fixed version beyond 1.4.0 (npm latest). Transitive via Expo CLI / @expo/code-signing-certificates in apps/mobile lockfile — build-time signing tooling, not PhoneApprove or MCP runtime. Remove when node-forge or Expo ships a patched release."
 
+[[IgnoredVulns]]
+id = "GHSA-hp3w-g68c-fv3c"
+reason = "MODERATE: sprintf-js@1.1.3 — OSV lists no fixed version. Transitive via electron-builder packaging toolchain in apps/desktop (devDependency). Not MCP/PhoneApprove runtime. Remove when upstream ships a patched sprintf-js or electron-builder drops it."
+
 # GHSA-ch52-4w7c-c8xp (http-cache-semantics <=4.2.0) — fixed via root override to 4.3.0.

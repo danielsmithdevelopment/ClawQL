@@ -42,6 +42,10 @@
     "typescript": "~6.0.3",
     "vitest": "^5.0.3"
   },
+  "overrides": {
+    "uuid": "11.1.1",
+    "decode-uri-component": "0.5.0"
+  },
   "scripts": {
     "start": "EXPO_PUBLIC_CLAWQL_FIXTURE=1 expo start",
     "android": "EXPO_PUBLIC_CLAWQL_FIXTURE=1 expo start --android",
