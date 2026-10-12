@@ -69,366 +69,1807 @@
     "maxFlipRate": 0.1,
     "passed": true,
     "caseCount": 40,
+    "totalPerturbations": 200,
     "reports": [
       {
         "caseId": "route-v04-001",
         "baseline": "mcp.search",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  I don't know which operationId handles refunding a payment yet; find candidates before I call anything.  ",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "i don't know which operationid handles refunding a payment yet; find candidates before i call anything.",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "I DON'T KNOW WHICH OPERATIONID HANDLES REFUNDING A PAYMENT YET; FIND CANDIDATES BEFORE I CALL ANYTHING.",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "I don't know which operationId handles refunding a payment yet; find candidates before I call anything",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "I don't know which operationId handles refunding a payment yet; find candidates before I call anything?",
+            "answer": "mcp.search",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-002",
         "baseline": "mcp.execute",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Run operationId `billing.refundCharge` with amount=1200 and reason='duplicate' now that I've confirmed it.  ",
+            "answer": "mcp.execute",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "run operationid `billing.refundcharge` with amount=1200 and reason='duplicate' now that i've confirmed it.",
+            "answer": "mcp.execute",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "RUN OPERATIONID `BILLING.REFUNDCHARGE` WITH AMOUNT=1200 AND REASON='DUPLICATE' NOW THAT I'VE CONFIRMED IT.",
+            "answer": "mcp.execute",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Run operationId `billing.refundCharge` with amount=1200 and reason='duplicate' now that I've confirmed it",
+            "answer": "mcp.execute",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Run operationId `billing.refundCharge` with amount=1200 and reason='duplicate' now that I've confirmed it?",
+            "answer": "mcp.execute",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-003",
         "baseline": "mcp.search",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  What provider operations exist for rotating an API key? I haven't picked one yet.  ",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "what provider operations exist for rotating an api key? i haven't picked one yet.",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "WHAT PROVIDER OPERATIONS EXIST FOR ROTATING AN API KEY? I HAVEN'T PICKED ONE YET.",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "What provider operations exist for rotating an API key? I haven't picked one yet",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "What provider operations exist for rotating an API key? I haven't picked one yet?",
+            "answer": "mcp.search",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-004",
         "baseline": "mcp.execute",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Call `users.deactivate` with userId=8821 immediately; skip discovery, I already know the op.  ",
+            "answer": "mcp.execute",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "call `users.deactivate` with userid=8821 immediately; skip discovery, i already know the op.",
+            "answer": "mcp.execute",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "CALL `USERS.DEACTIVATE` WITH USERID=8821 IMMEDIATELY; SKIP DISCOVERY, I ALREADY KNOW THE OP.",
+            "answer": "mcp.execute",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Call `users.deactivate` with userId=8821 immediately; skip discovery, I already know the op",
+            "answer": "mcp.execute",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Call `users.deactivate` with userId=8821 immediately; skip discovery, I already know the op?",
+            "answer": "mcp.execute",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-005",
         "baseline": "mcp.skills_list",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  List every skill available in this session so I can pick one to read in full.  ",
+            "answer": "mcp.skills_list",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "list every skill available in this session so i can pick one to read in full.",
+            "answer": "mcp.skills_list",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "LIST EVERY SKILL AVAILABLE IN THIS SESSION SO I CAN PICK ONE TO READ IN FULL.",
+            "answer": "mcp.skills_list",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "List every skill available in this session so I can pick one to read in full",
+            "answer": "mcp.skills_list",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "List every skill available in this session so I can pick one to read in full?",
+            "answer": "mcp.skills_list",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-006",
         "baseline": "mcp.skills_get",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Someone mentioned a skill called `clawql-schedule-workflows` — pull its complete write-up so I can walk through the steps myself.  ",
+            "answer": "mcp.skills_get",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "someone mentioned a skill called `clawql-schedule-workflows` — pull its complete write-up so i can walk through the steps myself.",
+            "answer": "mcp.skills_get",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "SOMEONE MENTIONED A SKILL CALLED `CLAWQL-SCHEDULE-WORKFLOWS` — PULL ITS COMPLETE WRITE-UP SO I CAN WALK THROUGH THE STEPS MYSELF.",
+            "answer": "mcp.skills_get",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Someone mentioned a skill called `clawql-schedule-workflows` — pull its complete write-up so I can walk through the steps myself",
+            "answer": "mcp.skills_get",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Someone mentioned a skill called `clawql-schedule-workflows` — pull its complete write-up so I can walk through the steps myself?",
+            "answer": "mcp.skills_get",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-007",
         "baseline": "mcp.skills_get",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  I already know I want the sandbox exec skill by id; give me its full text, not a summary list.  ",
+            "answer": "mcp.skills_get",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "i already know i want the sandbox exec skill by id; give me its full text, not a summary list.",
+            "answer": "mcp.skills_get",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "I ALREADY KNOW I WANT THE SANDBOX EXEC SKILL BY ID; GIVE ME ITS FULL TEXT, NOT A SUMMARY LIST.",
+            "answer": "mcp.skills_get",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "I already know I want the sandbox exec skill by id; give me its full text, not a summary list",
+            "answer": "mcp.skills_get",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "I already know I want the sandbox exec skill by id; give me its full text, not a summary list?",
+            "answer": "mcp.skills_get",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-008",
         "baseline": "mcp.skills_list",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Show me digests and descriptions for all registered skills before I decide which one to open.  ",
+            "answer": "mcp.skills_list",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "show me digests and descriptions for all registered skills before i decide which one to open.",
+            "answer": "mcp.skills_list",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "SHOW ME DIGESTS AND DESCRIPTIONS FOR ALL REGISTERED SKILLS BEFORE I DECIDE WHICH ONE TO OPEN.",
+            "answer": "mcp.skills_list",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Show me digests and descriptions for all registered skills before I decide which one to open",
+            "answer": "mcp.skills_list",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Show me digests and descriptions for all registered skills before I decide which one to open?",
+            "answer": "mcp.skills_list",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-009",
         "baseline": "mcp.cache",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Stash this intermediate computation result in scratch memory so I can reuse it two turns from now this session.  ",
+            "answer": "mcp.cache",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "stash this intermediate computation result in scratch memory so i can reuse it two turns from now this session.",
+            "answer": "mcp.cache",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "STASH THIS INTERMEDIATE COMPUTATION RESULT IN SCRATCH MEMORY SO I CAN REUSE IT TWO TURNS FROM NOW THIS SESSION.",
+            "answer": "mcp.cache",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Stash this intermediate computation result in scratch memory so I can reuse it two turns from now this session",
+            "answer": "mcp.cache",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Stash this intermediate computation result in scratch memory so I can reuse it two turns from now this session?",
+            "answer": "mcp.cache",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-010",
         "baseline": "mcp.audit",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Record a permanent, tamper-evident entry noting that the finance lead signed off on this wire transfer at 09:47 local time.  ",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "record a permanent, tamper-evident entry noting that the finance lead signed off on this wire transfer at 09:47 local time.",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "RECORD A PERMANENT, TAMPER-EVIDENT ENTRY NOTING THAT THE FINANCE LEAD SIGNED OFF ON THIS WIRE TRANSFER AT 09:47 LOCAL TIME.",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Record a permanent, tamper-evident entry noting that the finance lead signed off on this wire transfer at 09:47 local time",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Record a permanent, tamper-evident entry noting that the finance lead signed off on this wire transfer at 09:47 local time?",
+            "answer": "mcp.audit",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-011",
         "baseline": "mcp.audit",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  List the last audit events logged for this matter so I can confirm what was already recorded.  ",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "list the last audit events logged for this matter so i can confirm what was already recorded.",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "LIST THE LAST AUDIT EVENTS LOGGED FOR THIS MATTER SO I CAN CONFIRM WHAT WAS ALREADY RECORDED.",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "List the last audit events logged for this matter so I can confirm what was already recorded",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "List the last audit events logged for this matter so I can confirm what was already recorded?",
+            "answer": "mcp.audit",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-012",
         "baseline": "mcp.cache",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Keep this draft calculation available only for the rest of my current chat session; there's no need for it to outlive the conversation.  ",
+            "answer": "mcp.cache",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "keep this draft calculation available only for the rest of my current chat session; there's no need for it to outlive the conversation.",
+            "answer": "mcp.cache",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "KEEP THIS DRAFT CALCULATION AVAILABLE ONLY FOR THE REST OF MY CURRENT CHAT SESSION; THERE'S NO NEED FOR IT TO OUTLIVE THE CONVERSATION.",
+            "answer": "mcp.cache",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Keep this draft calculation available only for the rest of my current chat session; there's no need for it to outlive the conversation",
+            "answer": "mcp.cache",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Keep this draft calculation available only for the rest of my current chat session; there's no need for it to outlive the conversation?",
+            "answer": "mcp.cache",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-013",
         "baseline": "mcp.audit",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  I need a permanent, append-only trail proving this rollback action happened, not just a scratch note.  ",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "i need a permanent, append-only trail proving this rollback action happened, not just a scratch note.",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "I NEED A PERMANENT, APPEND-ONLY TRAIL PROVING THIS ROLLBACK ACTION HAPPENED, NOT JUST A SCRATCH NOTE.",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "I need a permanent, append-only trail proving this rollback action happened, not just a scratch note",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "I need a permanent, append-only trail proving this rollback action happened, not just a scratch note?",
+            "answer": "mcp.audit",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-014",
         "baseline": "mcp.notify",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Send a Slack message right now telling the team the nightly build just failed.  ",
+            "answer": "mcp.notify",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "send a slack message right now telling the team the nightly build just failed.",
+            "answer": "mcp.notify",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "SEND A SLACK MESSAGE RIGHT NOW TELLING THE TEAM THE NIGHTLY BUILD JUST FAILED.",
+            "answer": "mcp.notify",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Send a Slack message right now telling the team the nightly build just failed",
+            "answer": "mcp.notify",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Send a Slack message right now telling the team the nightly build just failed?",
+            "answer": "mcp.notify",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-015",
         "baseline": "mcp.schedule",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  I want an automated probe that pings the checkout flow every quarter hour, and it should validate itself with a dry run before going live.  ",
+            "answer": "mcp.schedule",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "i want an automated probe that pings the checkout flow every quarter hour, and it should validate itself with a dry run before going live.",
+            "answer": "mcp.schedule",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "I WANT AN AUTOMATED PROBE THAT PINGS THE CHECKOUT FLOW EVERY QUARTER HOUR, AND IT SHOULD VALIDATE ITSELF WITH A DRY RUN BEFORE GOING LIVE.",
+            "answer": "mcp.schedule",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "I want an automated probe that pings the checkout flow every quarter hour, and it should validate itself with a dry run before going live",
+            "answer": "mcp.schedule",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "I want an automated probe that pings the checkout flow every quarter hour, and it should validate itself with a dry run before going live?",
+            "answer": "mcp.schedule",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-016",
         "baseline": "mcp.notify",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Once the recurring check I set up starts failing, I also want a Slack milestone message sent automatically.  ",
+            "answer": "mcp.notify",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "once the recurring check i set up starts failing, i also want a slack milestone message sent automatically.",
+            "answer": "mcp.notify",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "ONCE THE RECURRING CHECK I SET UP STARTS FAILING, I ALSO WANT A SLACK MILESTONE MESSAGE SENT AUTOMATICALLY.",
+            "answer": "mcp.notify",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Once the recurring check I set up starts failing, I also want a Slack milestone message sent automatically",
+            "answer": "mcp.notify",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Once the recurring check I set up starts failing, I also want a Slack milestone message sent automatically?",
+            "answer": "mcp.notify",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-017",
         "baseline": "mcp.schedule",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Configure a synthetic probe that fires hourly against the payments API and validate it with dry_run before enabling.  ",
+            "answer": "mcp.schedule",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "configure a synthetic probe that fires hourly against the payments api and validate it with dry_run before enabling.",
+            "answer": "mcp.schedule",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "CONFIGURE A SYNTHETIC PROBE THAT FIRES HOURLY AGAINST THE PAYMENTS API AND VALIDATE IT WITH DRY_RUN BEFORE ENABLING.",
+            "answer": "mcp.schedule",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Configure a synthetic probe that fires hourly against the payments API and validate it with dry_run before enabling",
+            "answer": "mcp.schedule",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Configure a synthetic probe that fires hourly against the payments API and validate it with dry_run before enabling?",
+            "answer": "mcp.schedule",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-018",
         "baseline": "mcp.memory_recall_title_flag_a",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Pull vault context restricted only to items carrying title flag A; anything filed under flag B should be left out entirely.  ",
+            "answer": "mcp.memory_recall_title_flag_a",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "pull vault context restricted only to items carrying title flag a; anything filed under flag b should be left out entirely.",
+            "answer": "mcp.memory_recall_title_flag_a",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "PULL VAULT CONTEXT RESTRICTED ONLY TO ITEMS CARRYING TITLE FLAG A; ANYTHING FILED UNDER FLAG B SHOULD BE LEFT OUT ENTIRELY.",
+            "answer": "mcp.memory_recall_title_flag_a",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Pull vault context restricted only to items carrying title flag A; anything filed under flag B should be left out entirely",
+            "answer": "mcp.memory_recall_title_flag_a",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Pull vault context restricted only to items carrying title flag A; anything filed under flag B should be left out entirely?",
+            "answer": "mcp.memory_recall_title_flag_a",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-019",
         "baseline": "mcp.memory_recall_title_flag_b",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  I need vault recall narrowed to title flag B only; flag A results are not relevant to this question.  ",
+            "answer": "mcp.memory_recall_title_flag_b",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "i need vault recall narrowed to title flag b only; flag a results are not relevant to this question.",
+            "answer": "mcp.memory_recall_title_flag_b",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "I NEED VAULT RECALL NARROWED TO TITLE FLAG B ONLY; FLAG A RESULTS ARE NOT RELEVANT TO THIS QUESTION.",
+            "answer": "mcp.memory_recall_title_flag_b",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "I need vault recall narrowed to title flag B only; flag A results are not relevant to this question",
+            "answer": "mcp.memory_recall_title_flag_b",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "I need vault recall narrowed to title flag B only; flag A results are not relevant to this question?",
+            "answer": "mcp.memory_recall_title_flag_b",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-020",
         "baseline": "mcp.memory_recall_overbroad",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Pull ontology context using a coarse practice-area filter; I'd rather over-include than miss something, precision isn't critical here.  ",
+            "answer": "mcp.memory_recall_overbroad",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "pull ontology context using a coarse practice-area filter; i'd rather over-include than miss something, precision isn't critical here.",
+            "answer": "mcp.memory_recall_overbroad",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "PULL ONTOLOGY CONTEXT USING A COARSE PRACTICE-AREA FILTER; I'D RATHER OVER-INCLUDE THAN MISS SOMETHING, PRECISION ISN'T CRITICAL HERE.",
+            "answer": "mcp.memory_recall_overbroad",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Pull ontology context using a coarse practice-area filter; I'd rather over-include than miss something, precision isn't critical here",
+            "answer": "mcp.memory_recall_overbroad",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Pull ontology context using a coarse practice-area filter; I'd rather over-include than miss something, precision isn't critical here?",
+            "answer": "mcp.memory_recall_overbroad",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-021",
         "baseline": "mcp.memory_recall_title_flag_a",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Get me a tightly scoped recall by title flag A for this specific sub-question, nothing broader.  ",
+            "answer": "mcp.memory_recall_title_flag_a",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "get me a tightly scoped recall by title flag a for this specific sub-question, nothing broader.",
+            "answer": "mcp.memory_recall_title_flag_a",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "GET ME A TIGHTLY SCOPED RECALL BY TITLE FLAG A FOR THIS SPECIFIC SUB-QUESTION, NOTHING BROADER.",
+            "answer": "mcp.memory_recall_title_flag_a",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Get me a tightly scoped recall by title flag A for this specific sub-question, nothing broader",
+            "answer": "mcp.memory_recall_title_flag_a",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Get me a tightly scoped recall by title flag A for this specific sub-question, nothing broader?",
+            "answer": "mcp.memory_recall_title_flag_a",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-022",
         "baseline": "mcp.memory_recall_overbroad",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Run a broad practice-area recall sweep across the vault even if it risks pulling in extra unrelated notes.  ",
+            "answer": "mcp.memory_recall_overbroad",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "run a broad practice-area recall sweep across the vault even if it risks pulling in extra unrelated notes.",
+            "answer": "mcp.memory_recall_overbroad",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "RUN A BROAD PRACTICE-AREA RECALL SWEEP ACROSS THE VAULT EVEN IF IT RISKS PULLING IN EXTRA UNRELATED NOTES.",
+            "answer": "mcp.memory_recall_overbroad",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Run a broad practice-area recall sweep across the vault even if it risks pulling in extra unrelated notes",
+            "answer": "mcp.memory_recall_overbroad",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Run a broad practice-area recall sweep across the vault even if it risks pulling in extra unrelated notes?",
+            "answer": "mcp.memory_recall_overbroad",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-023",
         "baseline": "mcp.memory_recall_title_flag_b",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Restrict the recall to notes bearing title flag B, and be careful not to let flag A material sneak into the output.  ",
+            "answer": "mcp.memory_recall_title_flag_b",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "restrict the recall to notes bearing title flag b, and be careful not to let flag a material sneak into the output.",
+            "answer": "mcp.memory_recall_title_flag_b",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "RESTRICT THE RECALL TO NOTES BEARING TITLE FLAG B, AND BE CAREFUL NOT TO LET FLAG A MATERIAL SNEAK INTO THE OUTPUT.",
+            "answer": "mcp.memory_recall_title_flag_b",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Restrict the recall to notes bearing title flag B, and be careful not to let flag A material sneak into the output",
+            "answer": "mcp.memory_recall_title_flag_b",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Restrict the recall to notes bearing title flag B, and be careful not to let flag A material sneak into the output?",
+            "answer": "mcp.memory_recall_title_flag_b",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-024",
         "baseline": "mcp.data_query",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  How many matters in the structured corpus have both flags X and Y set to true? I need an exact number.  ",
+            "answer": "mcp.data_query",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "how many matters in the structured corpus have both flags x and y set to true? i need an exact number.",
+            "answer": "mcp.data_query",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "HOW MANY MATTERS IN THE STRUCTURED CORPUS HAVE BOTH FLAGS X AND Y SET TO TRUE? I NEED AN EXACT NUMBER.",
+            "answer": "mcp.data_query",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "How many matters in the structured corpus have both flags X and Y set to true? I need an exact number",
+            "answer": "mcp.data_query",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "How many matters in the structured corpus have both flags X and Y set to true? I need an exact number?",
+            "answer": "mcp.data_query",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-025",
         "baseline": "mcp.data_query_cohort_count",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  I want a precise COUNT of exactly how many of the 500 records match this cohort definition, no estimate.  ",
+            "answer": "mcp.data_query_cohort_count",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "i want a precise count of exactly how many of the 500 records match this cohort definition, no estimate.",
+            "answer": "mcp.data_query_cohort_count",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "I WANT A PRECISE COUNT OF EXACTLY HOW MANY OF THE 500 RECORDS MATCH THIS COHORT DEFINITION, NO ESTIMATE.",
+            "answer": "mcp.data_query_cohort_count",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "I want a precise COUNT of exactly how many of the 500 records match this cohort definition, no estimate",
+            "answer": "mcp.data_query_cohort_count",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "I want a precise COUNT of exactly how many of the 500 records match this cohort definition, no estimate?",
+            "answer": "mcp.data_query_cohort_count",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-026",
         "baseline": "mcp.memory_recall_overbroad",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Give me a rough sense of which vault notes touch on this general topic area, precision doesn't matter much.  ",
+            "answer": "mcp.memory_recall_overbroad",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "give me a rough sense of which vault notes touch on this general topic area, precision doesn't matter much.",
+            "answer": "mcp.memory_recall_overbroad",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "GIVE ME A ROUGH SENSE OF WHICH VAULT NOTES TOUCH ON THIS GENERAL TOPIC AREA, PRECISION DOESN'T MATTER MUCH.",
+            "answer": "mcp.memory_recall_overbroad",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Give me a rough sense of which vault notes touch on this general topic area, precision doesn't matter much",
+            "answer": "mcp.memory_recall_overbroad",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Give me a rough sense of which vault notes touch on this general topic area, precision doesn't matter much?",
+            "answer": "mcp.memory_recall_overbroad",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-027",
         "baseline": "mcp.data_query",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Query the DuckDB matters table for the average settlement amount grouped by practice area.  ",
+            "answer": "mcp.data_query",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "query the duckdb matters table for the average settlement amount grouped by practice area.",
+            "answer": "mcp.data_query",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "QUERY THE DUCKDB MATTERS TABLE FOR THE AVERAGE SETTLEMENT AMOUNT GROUPED BY PRACTICE AREA.",
+            "answer": "mcp.data_query",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Query the DuckDB matters table for the average settlement amount grouped by practice area",
+            "answer": "mcp.data_query",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Query the DuckDB matters table for the average settlement amount grouped by practice area?",
+            "answer": "mcp.data_query",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-028",
         "baseline": "mcp.data_query_cohort_count",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Count exactly how many cases in our tracked cohort satisfy both criteria A and criteria B simultaneously.  ",
+            "answer": "mcp.data_query_cohort_count",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "count exactly how many cases in our tracked cohort satisfy both criteria a and criteria b simultaneously.",
+            "answer": "mcp.data_query_cohort_count",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "COUNT EXACTLY HOW MANY CASES IN OUR TRACKED COHORT SATISFY BOTH CRITERIA A AND CRITERIA B SIMULTANEOUSLY.",
+            "answer": "mcp.data_query_cohort_count",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Count exactly how many cases in our tracked cohort satisfy both criteria A and criteria B simultaneously",
+            "answer": "mcp.data_query_cohort_count",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Count exactly how many cases in our tracked cohort satisfy both criteria A and criteria B simultaneously?",
+            "answer": "mcp.data_query_cohort_count",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-029",
         "baseline": "tool.bash_workspace_hunt",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Just grep through the whole workspace directory tree to find where this function is defined.  ",
+            "answer": "tool.bash_workspace_hunt",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "just grep through the whole workspace directory tree to find where this function is defined.",
+            "answer": "tool.bash_workspace_hunt",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "JUST GREP THROUGH THE WHOLE WORKSPACE DIRECTORY TREE TO FIND WHERE THIS FUNCTION IS DEFINED.",
+            "answer": "tool.bash_workspace_hunt",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Just grep through the whole workspace directory tree to find where this function is defined",
+            "answer": "tool.bash_workspace_hunt",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Just grep through the whole workspace directory tree to find where this function is defined?",
+            "answer": "tool.bash_workspace_hunt",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-030",
         "baseline": "tool.generic_web_search",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Do a broad open-ended web search for 'best refund policy' with no schema or filters applied.  ",
+            "answer": "tool.generic_web_search",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "do a broad open-ended web search for 'best refund policy' with no schema or filters applied.",
+            "answer": "tool.generic_web_search",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "DO A BROAD OPEN-ENDED WEB SEARCH FOR 'BEST REFUND POLICY' WITH NO SCHEMA OR FILTERS APPLIED.",
+            "answer": "tool.generic_web_search",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Do a broad open-ended web search for 'best refund policy' with no schema or filters applied",
+            "answer": "tool.generic_web_search",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Do a broad open-ended web search for 'best refund policy' with no schema or filters applied?",
+            "answer": "tool.generic_web_search",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-031",
         "baseline": "mcp.search",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Find the operationId for cancelling a subscription using structured provider discovery, not ad hoc grepping.  ",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "find the operationid for cancelling a subscription using structured provider discovery, not ad hoc grepping.",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "FIND THE OPERATIONID FOR CANCELLING A SUBSCRIPTION USING STRUCTURED PROVIDER DISCOVERY, NOT AD HOC GREPPING.",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Find the operationId for cancelling a subscription using structured provider discovery, not ad hoc grepping",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Find the operationId for cancelling a subscription using structured provider discovery, not ad hoc grepping?",
+            "answer": "mcp.search",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-032",
         "baseline": "tool.generic_web_search",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Search the open web broadly for background on a topic instead of using any schema-aware corpus tool.  ",
+            "answer": "tool.generic_web_search",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "search the open web broadly for background on a topic instead of using any schema-aware corpus tool.",
+            "answer": "tool.generic_web_search",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "SEARCH THE OPEN WEB BROADLY FOR BACKGROUND ON A TOPIC INSTEAD OF USING ANY SCHEMA-AWARE CORPUS TOOL.",
+            "answer": "tool.generic_web_search",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Search the open web broadly for background on a topic instead of using any schema-aware corpus tool",
+            "answer": "tool.generic_web_search",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Search the open web broadly for background on a topic instead of using any schema-aware corpus tool?",
+            "answer": "tool.generic_web_search",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-033",
         "baseline": "mcp.pageindex_build_tree",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  This 200-page contract needs a section-by-section navigable index constructed before I can pull out specific evidentiary clauses.  ",
+            "answer": "mcp.pageindex_build_tree",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "this 200-page contract needs a section-by-section navigable index constructed before i can pull out specific evidentiary clauses.",
+            "answer": "mcp.pageindex_build_tree",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "THIS 200-PAGE CONTRACT NEEDS A SECTION-BY-SECTION NAVIGABLE INDEX CONSTRUCTED BEFORE I CAN PULL OUT SPECIFIC EVIDENTIARY CLAUSES.",
+            "answer": "mcp.pageindex_build_tree",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "This 200-page contract needs a section-by-section navigable index constructed before I can pull out specific evidentiary clauses",
+            "answer": "mcp.pageindex_build_tree",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "This 200-page contract needs a section-by-section navigable index constructed before I can pull out specific evidentiary clauses?",
+            "answer": "mcp.pageindex_build_tree",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-034",
         "baseline": "mcp.knowledge_search_onyx",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Before taking any action, search our internal enterprise knowledge base to see if this has already been documented.  ",
+            "answer": "mcp.knowledge_search_onyx",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "before taking any action, search our internal enterprise knowledge base to see if this has already been documented.",
+            "answer": "mcp.knowledge_search_onyx",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "BEFORE TAKING ANY ACTION, SEARCH OUR INTERNAL ENTERPRISE KNOWLEDGE BASE TO SEE IF THIS HAS ALREADY BEEN DOCUMENTED.",
+            "answer": "mcp.knowledge_search_onyx",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Before taking any action, search our internal enterprise knowledge base to see if this has already been documented",
+            "answer": "mcp.knowledge_search_onyx",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Before taking any action, search our internal enterprise knowledge base to see if this has already been documented?",
+            "answer": "mcp.knowledge_search_onyx",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-035",
         "baseline": "mcp.ingest_external_knowledge",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Bring this external blog post URL into our knowledge base so it's stored and available for future reference.  ",
+            "answer": "mcp.ingest_external_knowledge",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "bring this external blog post url into our knowledge base so it's stored and available for future reference.",
+            "answer": "mcp.ingest_external_knowledge",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "BRING THIS EXTERNAL BLOG POST URL INTO OUR KNOWLEDGE BASE SO IT'S STORED AND AVAILABLE FOR FUTURE REFERENCE.",
+            "answer": "mcp.ingest_external_knowledge",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Bring this external blog post URL into our knowledge base so it's stored and available for future reference",
+            "answer": "mcp.ingest_external_knowledge",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Bring this external blog post URL into our knowledge base so it's stored and available for future reference?",
+            "answer": "mcp.ingest_external_knowledge",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-036",
         "baseline": "mcp.search",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  I just need to find which API operation lists open invoices; I don't have a long document or external URL to import.  ",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "i just need to find which api operation lists open invoices; i don't have a long document or external url to import.",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "I JUST NEED TO FIND WHICH API OPERATION LISTS OPEN INVOICES; I DON'T HAVE A LONG DOCUMENT OR EXTERNAL URL TO IMPORT.",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "I just need to find which API operation lists open invoices; I don't have a long document or external URL to import",
+            "answer": "mcp.search",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "I just need to find which API operation lists open invoices; I don't have a long document or external URL to import?",
+            "answer": "mcp.search",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-037",
         "baseline": "mcp.clawql_think",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Before we execute this multi-step migration, walk through a structured reasoning pass on risks and rollback options.  ",
+            "answer": "mcp.clawql_think",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "before we execute this multi-step migration, walk through a structured reasoning pass on risks and rollback options.",
+            "answer": "mcp.clawql_think",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "BEFORE WE EXECUTE THIS MULTI-STEP MIGRATION, WALK THROUGH A STRUCTURED REASONING PASS ON RISKS AND ROLLBACK OPTIONS.",
+            "answer": "mcp.clawql_think",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Before we execute this multi-step migration, walk through a structured reasoning pass on risks and rollback options",
+            "answer": "mcp.clawql_think",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Before we execute this multi-step migration, walk through a structured reasoning pass on risks and rollback options?",
+            "answer": "mcp.clawql_think",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-038",
         "baseline": "skill.clawql-audit-workflows",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  I want the recipe/workflow doc for how to safely append and list WORM audit events across multiple steps, not to append one myself right now.  ",
+            "answer": "skill.clawql-audit-workflows",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "i want the recipe/workflow doc for how to safely append and list worm audit events across multiple steps, not to append one myself right now.",
+            "answer": "skill.clawql-audit-workflows",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "I WANT THE RECIPE/WORKFLOW DOC FOR HOW TO SAFELY APPEND AND LIST WORM AUDIT EVENTS ACROSS MULTIPLE STEPS, NOT TO APPEND ONE MYSELF RIGHT NOW.",
+            "answer": "skill.clawql-audit-workflows",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "I want the recipe/workflow doc for how to safely append and list WORM audit events across multiple steps, not to append one myself right now",
+            "answer": "skill.clawql-audit-workflows",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "I want the recipe/workflow doc for how to safely append and list WORM audit events across multiple steps, not to append one myself right now?",
+            "answer": "skill.clawql-audit-workflows",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-039",
         "baseline": "mcp.audit",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Append one audit event right now recording that the export completed successfully.  ",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "append one audit event right now recording that the export completed successfully.",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "APPEND ONE AUDIT EVENT RIGHT NOW RECORDING THAT THE EXPORT COMPLETED SUCCESSFULLY.",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Append one audit event right now recording that the export completed successfully",
+            "answer": "mcp.audit",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Append one audit event right now recording that the export completed successfully?",
+            "answer": "mcp.audit",
+            "flipped": false
+          }
+        ]
       },
       {
         "caseId": "route-v04-040",
         "baseline": "skill.clawql-composed-mcp-workflows",
-        "perturbations": 0,
+        "perturbations": 5,
         "flips": 0,
         "flipRate": 0,
         "passed": true,
-        "details": []
+        "details": [
+          {
+            "family": "whitespace",
+            "label": "pad",
+            "state": "  Show me the composed end-to-end recipe that chains search, memory, notify, and schedule together for this kind of task.  ",
+            "answer": "skill.clawql-composed-mcp-workflows",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "lower",
+            "state": "show me the composed end-to-end recipe that chains search, memory, notify, and schedule together for this kind of task.",
+            "answer": "skill.clawql-composed-mcp-workflows",
+            "flipped": false
+          },
+          {
+            "family": "case",
+            "label": "upper",
+            "state": "SHOW ME THE COMPOSED END-TO-END RECIPE THAT CHAINS SEARCH, MEMORY, NOTIFY, AND SCHEDULE TOGETHER FOR THIS KIND OF TASK.",
+            "answer": "skill.clawql-composed-mcp-workflows",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "strip_trail",
+            "state": "Show me the composed end-to-end recipe that chains search, memory, notify, and schedule together for this kind of task",
+            "answer": "skill.clawql-composed-mcp-workflows",
+            "flipped": false
+          },
+          {
+            "family": "punctuation",
+            "label": "add_q",
+            "state": "Show me the composed end-to-end recipe that chains search, memory, notify, and schedule together for this kind of task?",
+            "answer": "skill.clawql-composed-mcp-workflows",
+            "flipped": false
+          }
+        ]
       }
     ]
   },
@@ -443,7 +1884,12 @@
     "citeAs": "Decision-1 routing candidate readout — not a trusted path"
   },
   "labelsPath": "packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.4-routing-fresh-gha-36144911649-labels.json",
-  "filledAt": "2026-10-11T19:27:22.240Z",
-  "flipFamilies": ["synonym"],
+  "filledAt": "2026-10-12T04:34:40.310Z",
+  "flipFamilies": [
+    "whitespace",
+    "case",
+    "punctuation",
+    "synonym"
+  ],
   "openRouterKeyed": true
 }

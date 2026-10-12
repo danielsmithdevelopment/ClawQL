@@ -4,7 +4,7 @@
 **Suite:** frozen v0.4 routing-fresh (n=40) + frontier labels GHA 36144911649  
 **Harness:** `buildDecision1CandidateReport` in `clawql-inference` (fan-out bulk + flip-rate `model=microsoft-decision-1`)  
 **Template:** [`frontier-runs/decision1-v04-routing-candidate-TEMPLATE.json`](./frontier-runs/decision1-v04-routing-candidate-TEMPLATE.json)  
-**Filled:** [`frontier-runs/decision1-v04-routing-candidate.json`](./frontier-runs/decision1-v04-routing-candidate.json) — Decision-1 bulk 40/40; flip-rate requires full families (synonym-only #1273 pass vacated — 0 perturbations)
+**Filled:** [`frontier-runs/decision1-v04-routing-candidate.json`](./frontier-runs/decision1-v04-routing-candidate.json) — Decision-1 bulk 40/40; full-family flip-rate pass (`totalPerturbations=200`, 0 flips; synonym-only #1273 cite vacated)
 
 ## Honesty (locked)
 
