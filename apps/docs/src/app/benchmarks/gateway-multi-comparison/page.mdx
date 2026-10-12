@@ -27,7 +27,9 @@ Baseline definitions are pinned to **agentgateway’s `tools/list` serialization
 
 On **this board**, ClawQL is the only measured gateway that **reduces** tokens vs a fair no-gateway baseline (~41% @12 via projection + server-side discovery). Thin aggregators **match** that baseline. Bound: Bifrost / mcp-gateway were **not** tested.
 
-**Executor:** definitions save **5 430**; pretty-printed results add **24 096**; net **+18 666**. Compacted = **29 572** (5 430 below baseline); ClawQL still leads by **9 033**. Discovery column is **0** because the harness hands `execute` fixture-return code (no search step) — that favors Executor vs ClawQL’s charged 11 568 discovery. See [`executor-vs-mock-compare.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/gateway-multi-comparison/executor-vs-mock-compare.json).
+**Executor v1.6.10:** defs −5 430; pretty-print +24 096; net +18 666. Compacted 29 572; ClawQL leads by 9 033.
+
+**Executor 2.0 β.15 smoke:** combined **29 927** (−5 075 vs baseline) — compact JSON + small envelope, not indent tax. ClawQL still leads by **9 388**. Discovery=0 both (harness fixture `execute`). See [`executor-v1-vs-v2-12turn.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/gateway-multi-comparison/executor-v1-vs-v2-12turn.json).
 
 **Next lever:** discovery is 11 568 tokens (56% of ClawQL’s total) — leaner search signatures (~300 tok/turn ≈ −8k @12) and/or `execute` by operation ID when ops recur.
 

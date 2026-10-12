@@ -328,34 +328,44 @@ ${breakdownRows}
       )}) — slightly more verbose wrapped schema text, not another token kind.
     </p>
 
-    <h3>Executor — generous framing (verified)</h3>
+    <h3>Executor v1.6.10 — generous framing (verified)</h3>
     <p>
-      Measured net vs baseline: <strong>+${fmt(
-        (board.executor?.combined_at_n || 0) - (direct?.combined_at_n || 0)
-      )}</strong>. Split that fairly:
+      Primary board arm is <strong>Executor v1.6.10</strong> (stdio). Measured net vs baseline:
+      <strong>+${fmt((board.executor?.combined_at_n || 0) - (direct?.combined_at_n || 0))}</strong>. Split that fairly:
     </p>
     <ul>
       <li><strong>Code-mode definitions save ${fmt(
         (direct?.definitions_tokens || 0) - (board.executor?.definitions_tokens || 0)
-      )}</strong> over 12 turns (5 520 → 90) — Executor’s design gets this right.</li>
+      )}</strong> (5 520 → 90).</li>
       <li><strong>Pretty-printed results add ${fmt(
         (board.executor?.result_tokens_sum || 0) - (direct?.result_tokens_sum || 0)
-      )}</strong> (53 578 − 29 482) — same <code>items</code>/<code>partition</code> as the shared mock; turn-1
-        <code>compact(JSON.stringify(parse(exec))) === fixture</code>. A compact JSON return would erase that tax.</li>
-      <li><strong>Net: +${fmt(
+      )}</strong> (53 578 − 29 482) — same data as the mock; indent tax only.</li>
+      <li><strong>Net +${fmt(
         (board.executor?.combined_at_n || 0) - (direct?.combined_at_n || 0)
-      )}</strong> measured. Compacted equivalent @12 = <strong>29 572</strong> (90 + 29 482) —
-        <em>5 430 below</em> baseline. ClawQL still leads that generous figure by <strong>9 033</strong>
-        (29 572 − 20 539) because projection is the difference either way.</li>
+      )}</strong>. Compacted ≈ <strong>29 572</strong> (−5 430 vs baseline). ClawQL still leads that by <strong>9 033</strong>.</li>
     </ul>
     <p>
-      <strong>Discovery column = 0 — why:</strong> this arm is a single <code>execute</code> call per turn with
-      <em>harness-authored code</em> that returns the equal-arm fixture in-process (sandbox cannot <code>fetch</code>).
-      It does <strong>not</strong> run a search/discovery step. ClawQL is charged 11 568 discovery tokens because its
-      measured path is <code>search</code> → <code>execute</code>. That inequality favors Executor; if a future arm
-      counted Executor search-then-call discovery, its combined would only get worse. Zero here is “harness handed
-      the operation,” not “Executor has free discovery.”
+      <strong>Discovery = 0:</strong> harness-authored <code>execute</code> returns the fixture (no search). Favors Executor vs ClawQL’s charged 11 568.
     </p>
+
+    <h3>Executor 2.0 beta — first smoke (design direction)</h3>
+    <p>
+      Installed <code>executor@2.0.0-beta.15</code> (HTTP <code>/mcp</code>, local serve). Same 12-turn equal-arm fixture code, discovery still 0:
+    </p>
+    <table>
+      <thead><tr><th>Arm</th><th>Definitions</th><th>Σ Results</th><th>Combined @12</th><th>vs baseline</th></tr></thead>
+      <tbody>
+        <tr><td>Executor v1.6.10 (board)</td><td>90</td><td>53 578</td><td><strong>53 668</strong></td><td>+18 666</td></tr>
+        <tr><td>Executor v2 β.15 (smoke)</td><td>181</td><td>29 746</td><td><strong>29 927</strong></td><td><strong>−5 075</strong></td></tr>
+        <tr class="hl"><td>ClawQL (board)</td><td>297</td><td>8 674 (+11 568 search)</td><td><strong>20 539</strong></td><td>−14 463</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>v2 returns <strong>compact</strong> JSON wrapped in <code>{status, execution:{ok,value}}</code> — inner value equals the fixture; envelope ≈ <strong>+264</strong> tok over 12 turns (not the v1 indent tax).</li>
+      <li>Tools exposed: <code>execute</code>, <code>resume</code>, <code>skills</code> (3; execute schema 181 tok). <code>skills</code> not called in this smoke.</li>
+      <li>v2 <em>beats the no-gateway baseline</em> on this path (−5 075). ClawQL still leads v2 by <strong>9 388</strong> (projection). Inner-only compacted lead ≈ 9 124.</li>
+      <li>Smoke = 1×12 turns (tokens deterministic). Not yet a 10 000-flow latency/RSS board. Artifact: <a href="./executor-v1-vs-v2-12turn.json">executor-v1-vs-v2-12turn.json</a>.</li>
+    </ul>
 
     <h3>Where ClawQL’s next token win is</h3>
     <p>
@@ -508,6 +518,7 @@ async function main() {
     "gateway-multi-cmp-ts7-node-chaos.json",
     "gateway-multi-cmp-ts7-bun-chaos.json",
     "executor-vs-mock-compare.json",
+    "executor-v1-vs-v2-12turn.json",
     "README.md",
   ]) {
     const src = join(DIR, name);

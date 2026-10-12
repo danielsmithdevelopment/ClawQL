@@ -1,0 +1,319 @@
+{
+  "measuredAt": "2026-10-12T03:41:56.972Z",
+  "note": "Equal-arm 12-turn smoke: harness-authored execute returns fatPayload; discovery=0 both arms",
+  "baseline": {
+    "definitions_tokens": 5520,
+    "result_tokens_sum": 29482,
+    "combined_at_12": 35002
+  },
+  "clawql_board_reference": {
+    "definitions_tokens": 297,
+    "discovery_tokens_sum": 11568,
+    "result_tokens_sum": 8674,
+    "combined_at_12": 20539
+  },
+  "v1": {
+    "label": "executor_v1_6_10",
+    "tools": [
+      "execute",
+      "skills",
+      "resume",
+      "create-artifact",
+      "edit-artifact",
+      "list-artifacts",
+      "show-artifact"
+    ],
+    "definitions_tokens_execute_only": 90,
+    "tools_list_full_tokens": 2243,
+    "skills_schema_tokens": 241,
+    "discovery_tokens_sum": 0,
+    "discovery_note": "Harness execute-only with authored fixture code (same as v1 board); skills not called",
+    "result_tokens_sum": 53578,
+    "fixture_result_tokens_sum": 29482,
+    "envelope_overhead_tokens_sum": 24096,
+    "combined_at_12": 53668,
+    "compacted_inner_combined_at_12": 29572,
+    "mean_result_tokens": 4464.8,
+    "mean_fixture_tokens": 2456.8,
+    "turn_p50_ms": 6.90273000000002,
+    "perTurn": [
+      {
+        "n": 1,
+        "result_tokens": 4419,
+        "result_chars": 16317,
+        "fixture_tokens": 2411,
+        "value_equals_fixture": true,
+        "latency_ms": 33.249,
+        "isError": false,
+        "head": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"name\": \"Entity-1\",\n      \"status\": \"available\",\n      \"tag\": \"tag-1\",\n      \""
+      },
+      {
+        "n": 2,
+        "result_tokens": 4469,
+        "result_chars": 16429,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 7.508,
+        "isError": false,
+        "head": "{\n  \"items\": [\n    {\n      \"id\": 1001,\n      \"name\": \"Entity-1001\",\n      \"status\": \"available\",\n      \"tag\": \"tag-1\",\n "
+      },
+      {
+        "n": 3,
+        "result_tokens": 4469,
+        "result_chars": 16429,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 6.539,
+        "isError": false,
+        "head": "{\n  \"items\": [\n    {\n      \"id\": 2002,\n      \"name\": \"Entity-2002\",\n      \"status\": \"available\",\n      \"tag\": \"tag-2\",\n "
+      },
+      {
+        "n": 4,
+        "result_tokens": 4469,
+        "result_chars": 16429,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 6.903,
+        "isError": false,
+        "head": "{\n  \"items\": [\n    {\n      \"id\": 3001,\n      \"name\": \"Entity-3001\",\n      \"status\": \"available\",\n      \"tag\": \"tag-1\",\n "
+      },
+      {
+        "n": 5,
+        "result_tokens": 4469,
+        "result_chars": 16429,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 6.501,
+        "isError": false,
+        "head": "{\n  \"items\": [\n    {\n      \"id\": 4001,\n      \"name\": \"Entity-4001\",\n      \"status\": \"available\",\n      \"tag\": \"tag-1\",\n "
+      },
+      {
+        "n": 6,
+        "result_tokens": 4469,
+        "result_chars": 16429,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 6.095,
+        "isError": false,
+        "head": "{\n  \"items\": [\n    {\n      \"id\": 5002,\n      \"name\": \"Entity-5002\",\n      \"status\": \"available\",\n      \"tag\": \"tag-2\",\n "
+      },
+      {
+        "n": 7,
+        "result_tokens": 4469,
+        "result_chars": 16429,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 7.343,
+        "isError": false,
+        "head": "{\n  \"items\": [\n    {\n      \"id\": 6001,\n      \"name\": \"Entity-6001\",\n      \"status\": \"available\",\n      \"tag\": \"tag-1\",\n "
+      },
+      {
+        "n": 8,
+        "result_tokens": 4469,
+        "result_chars": 16429,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 6.086,
+        "isError": false,
+        "head": "{\n  \"items\": [\n    {\n      \"id\": 7001,\n      \"name\": \"Entity-7001\",\n      \"status\": \"available\",\n      \"tag\": \"tag-1\",\n "
+      },
+      {
+        "n": 9,
+        "result_tokens": 4469,
+        "result_chars": 16429,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 6.496,
+        "isError": false,
+        "head": "{\n  \"items\": [\n    {\n      \"id\": 8002,\n      \"name\": \"Entity-8002\",\n      \"status\": \"available\",\n      \"tag\": \"tag-2\",\n "
+      },
+      {
+        "n": 10,
+        "result_tokens": 4469,
+        "result_chars": 16429,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 10.097,
+        "isError": false,
+        "head": "{\n  \"items\": [\n    {\n      \"id\": 9001,\n      \"name\": \"Entity-9001\",\n      \"status\": \"available\",\n      \"tag\": \"tag-1\",\n "
+      },
+      {
+        "n": 11,
+        "result_tokens": 4469,
+        "result_chars": 16479,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 5.947,
+        "isError": false,
+        "head": "{\n  \"items\": [\n    {\n      \"id\": 10001,\n      \"name\": \"Entity-10001\",\n      \"status\": \"available\",\n      \"tag\": \"tag-1\","
+      },
+      {
+        "n": 12,
+        "result_tokens": 4469,
+        "result_chars": 16479,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 7.89,
+        "isError": false,
+        "head": "{\n  \"items\": [\n    {\n      \"id\": 11002,\n      \"name\": \"Entity-11002\",\n      \"status\": \"available\",\n      \"tag\": \"tag-2\","
+      }
+    ],
+    "all_values_equal_fixture": true
+  },
+  "v2": {
+    "label": "executor_v2_beta15",
+    "tools": [
+      "execute",
+      "resume",
+      "skills"
+    ],
+    "definitions_tokens_execute_only": 181,
+    "tools_list_full_tokens": 815,
+    "skills_schema_tokens": 274,
+    "discovery_tokens_sum": 0,
+    "discovery_note": "Harness execute-only with authored fixture code (same as v1 board); skills not called",
+    "result_tokens_sum": 29746,
+    "fixture_result_tokens_sum": 29482,
+    "envelope_overhead_tokens_sum": 264,
+    "combined_at_12": 29927,
+    "compacted_inner_combined_at_12": 29663,
+    "mean_result_tokens": 2478.8,
+    "mean_fixture_tokens": 2456.8,
+    "turn_p50_ms": 13.477673999999979,
+    "perTurn": [
+      {
+        "n": 1,
+        "result_tokens": 2433,
+        "result_chars": 7746,
+        "fixture_tokens": 2411,
+        "value_equals_fixture": true,
+        "latency_ms": 26.03,
+        "isError": false,
+        "head": "{\"status\":\"completed\",\"execution\":{\"ok\":true,\"value\":{\"items\":[{\"id\":1,\"name\":\"Entity-1\",\"status\":\"available\",\"tag\":\"tag"
+      },
+      {
+        "n": 2,
+        "result_tokens": 2483,
+        "result_chars": 7858,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 17.184,
+        "isError": false,
+        "head": "{\"status\":\"completed\",\"execution\":{\"ok\":true,\"value\":{\"items\":[{\"id\":1001,\"name\":\"Entity-1001\",\"status\":\"available\",\"tag"
+      },
+      {
+        "n": 3,
+        "result_tokens": 2483,
+        "result_chars": 7858,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 15.149,
+        "isError": false,
+        "head": "{\"status\":\"completed\",\"execution\":{\"ok\":true,\"value\":{\"items\":[{\"id\":2002,\"name\":\"Entity-2002\",\"status\":\"available\",\"tag"
+      },
+      {
+        "n": 4,
+        "result_tokens": 2483,
+        "result_chars": 7858,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 13.518,
+        "isError": false,
+        "head": "{\"status\":\"completed\",\"execution\":{\"ok\":true,\"value\":{\"items\":[{\"id\":3001,\"name\":\"Entity-3001\",\"status\":\"available\",\"tag"
+      },
+      {
+        "n": 5,
+        "result_tokens": 2483,
+        "result_chars": 7858,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 13.478,
+        "isError": false,
+        "head": "{\"status\":\"completed\",\"execution\":{\"ok\":true,\"value\":{\"items\":[{\"id\":4001,\"name\":\"Entity-4001\",\"status\":\"available\",\"tag"
+      },
+      {
+        "n": 6,
+        "result_tokens": 2483,
+        "result_chars": 7858,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 13.421,
+        "isError": false,
+        "head": "{\"status\":\"completed\",\"execution\":{\"ok\":true,\"value\":{\"items\":[{\"id\":5002,\"name\":\"Entity-5002\",\"status\":\"available\",\"tag"
+      },
+      {
+        "n": 7,
+        "result_tokens": 2483,
+        "result_chars": 7858,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 13.626,
+        "isError": false,
+        "head": "{\"status\":\"completed\",\"execution\":{\"ok\":true,\"value\":{\"items\":[{\"id\":6001,\"name\":\"Entity-6001\",\"status\":\"available\",\"tag"
+      },
+      {
+        "n": 8,
+        "result_tokens": 2483,
+        "result_chars": 7858,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 12.062,
+        "isError": false,
+        "head": "{\"status\":\"completed\",\"execution\":{\"ok\":true,\"value\":{\"items\":[{\"id\":7001,\"name\":\"Entity-7001\",\"status\":\"available\",\"tag"
+      },
+      {
+        "n": 9,
+        "result_tokens": 2483,
+        "result_chars": 7858,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 11.883,
+        "isError": false,
+        "head": "{\"status\":\"completed\",\"execution\":{\"ok\":true,\"value\":{\"items\":[{\"id\":8002,\"name\":\"Entity-8002\",\"status\":\"available\",\"tag"
+      },
+      {
+        "n": 10,
+        "result_tokens": 2483,
+        "result_chars": 7858,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 13.087,
+        "isError": false,
+        "head": "{\"status\":\"completed\",\"execution\":{\"ok\":true,\"value\":{\"items\":[{\"id\":9001,\"name\":\"Entity-9001\",\"status\":\"available\",\"tag"
+      },
+      {
+        "n": 11,
+        "result_tokens": 2483,
+        "result_chars": 7908,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 11.008,
+        "isError": false,
+        "head": "{\"status\":\"completed\",\"execution\":{\"ok\":true,\"value\":{\"items\":[{\"id\":10001,\"name\":\"Entity-10001\",\"status\":\"available\",\"t"
+      },
+      {
+        "n": 12,
+        "result_tokens": 2483,
+        "result_chars": 7908,
+        "fixture_tokens": 2461,
+        "value_equals_fixture": true,
+        "latency_ms": 10.858,
+        "isError": false,
+        "head": "{\"status\":\"completed\",\"execution\":{\"ok\":true,\"value\":{\"items\":[{\"id\":11002,\"name\":\"Entity-11002\",\"status\":\"available\",\"t"
+      }
+    ],
+    "all_values_equal_fixture": true
+  },
+  "vs_baseline": {
+    "v1_net": 18666,
+    "v2_net": -5075,
+    "v1_compacted_inner_net": -5430,
+    "v2_compacted_inner_net": -5339,
+    "clawql_lead_vs_v2": 9388,
+    "clawql_lead_vs_v2_inner": 9124
+  },
+  "framing": {
+    "v1": "pretty-print tax dominant; envelope none",
+    "v2": "compact JSON wrapped in {status,execution:{ok,value}} — small envelope, no indent tax"
+  }
+}
