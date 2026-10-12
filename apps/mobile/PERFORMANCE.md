@@ -77,6 +77,20 @@ npm run perf:ios   # writes perf/out/ios-instruments-RUNBOOK.md
 
 Largest **assets** (not Hermes): Material Symbols TTF ~948 KB, Material Icons TTF ~348 KB. First weight win is subsetting or dropping the unused icon font on platforms that already use SF Symbols / XML material-symbols.
 
+## Optimizations applied (best-practice pass)
+
+Mapped from Expo/RN 2026 playbook + our lab baseline:
+
+| Practice | Change |
+| -------- | ------ |
+| Don’t ship unused icon fonts | Platform-split `TabGlyph` — SF Symbols (iOS), Material XML (Android), text (web). No `@expo/vector-icons` / no `expo-symbols` on Android/web. |
+| Block expo-router Material Symbols leak | `metro.config.cjs` aliases Android `materialIconConverter` → no-op stub ([expo#43614](https://github.com/expo/expo/issues/43614)). |
+| Trim icon graph | `icons.ts` keeps only `chevron`; tabs use `tabIcons.ts`. |
+| Don’t block splash on fonts | Removed SpaceMono `useFonts` gate; digests use system Menlo/monospace. |
+| React Compiler | `experiments.reactCompiler` + babel-preset-expo `react-compiler`. |
+| New Architecture | Expo SDK 57 default (Fabric / TurboModules). |
+| Lazy tabs | `Tabs` `lazy: true` so inactive screens aren’t work on first paint. |
+
 ## Optimization checklist (when lab or device scores regress)
 
 1. Speedscope / Instruments — who owns the wide flame stacks?

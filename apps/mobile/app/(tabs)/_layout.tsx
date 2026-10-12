@@ -1,36 +1,12 @@
 import { Effect } from "effect";
 import { Redirect, Tabs, usePathname } from "expo-router";
 import { useEffect, useState } from "react";
-import { Platform } from "react-native";
-import { SymbolView } from "expo-symbols";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import { pendingReviewCountEffect } from "@/src/services/api";
 import { useSession } from "@/src/state/SessionContext";
 import { brand } from "@/src/theme";
-
-function TabGlyph({
-  ios,
-  android,
-  focused,
-}: {
-  ios: string;
-  android: keyof typeof MaterialIcons.glyphMap;
-  focused: boolean;
-}) {
-  const color = focused ? brand.seed : brand.inkFaint;
-  if (Platform.OS === "ios") {
-    return (
-      <SymbolView
-        name={ios as never}
-        size={22}
-        tintColor={color}
-        weight={focused ? "semibold" : "regular"}
-      />
-    );
-  }
-  return <MaterialIcons name={android} size={22} color={color} />;
-}
+import { TabGlyph } from "@/src/ui/TabGlyph";
+import { TabAndroidIcons } from "@/src/ui/tabIcons";
 
 export default function TabLayout() {
   const { session, loading } = useSession();
@@ -64,6 +40,8 @@ export default function TabLayout() {
           backgroundColor: brand.card,
           borderTopColor: brand.border,
         },
+        // Keep inactive screens mounted but detach inactive native views when possible.
+        lazy: true,
       }}
     >
       <Tabs.Screen
@@ -72,7 +50,12 @@ export default function TabLayout() {
           title: "Home",
           tabBarLabel: "Home",
           tabBarIcon: ({ focused }) => (
-            <TabGlyph ios="house.fill" android="home" focused={focused} />
+            <TabGlyph
+              ios="house.fill"
+              androidXml={TabAndroidIcons.home as never}
+              label="⌂"
+              focused={focused}
+            />
           ),
           tabBarButtonTestID: "tab-home",
         }}
@@ -89,7 +72,12 @@ export default function TabLayout() {
             fontSize: 10,
           },
           tabBarIcon: ({ focused }) => (
-            <TabGlyph ios="checklist" android="rate-review" focused={focused} />
+            <TabGlyph
+              ios="checklist"
+              androidXml={TabAndroidIcons.review as never}
+              label="☰"
+              focused={focused}
+            />
           ),
           tabBarButtonTestID: "tab-review",
         }}
@@ -100,7 +88,12 @@ export default function TabLayout() {
           title: "Activity",
           tabBarLabel: "Activity",
           tabBarIcon: ({ focused }) => (
-            <TabGlyph ios="clock.arrow.circlepath" android="history" focused={focused} />
+            <TabGlyph
+              ios="clock.arrow.circlepath"
+              androidXml={TabAndroidIcons.activity as never}
+              label="↺"
+              focused={focused}
+            />
           ),
           tabBarButtonTestID: "tab-activity",
         }}
@@ -111,7 +104,12 @@ export default function TabLayout() {
           title: "Profile",
           tabBarLabel: "Profile",
           tabBarIcon: ({ focused }) => (
-            <TabGlyph ios="person.crop.circle.fill" android="person" focused={focused} />
+            <TabGlyph
+              ios="person.crop.circle.fill"
+              androidXml={TabAndroidIcons.profile as never}
+              label="☺"
+              focused={focused}
+            />
           ),
           tabBarButtonTestID: "tab-profile",
         }}

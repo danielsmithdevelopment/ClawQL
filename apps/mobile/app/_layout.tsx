@@ -1,4 +1,3 @@
-import { useFonts } from "expo-font";
 import { Stack, useRouter } from "expo-router";
 import * as Linking from "expo-linking";
 import * as Notifications from "expo-notifications";
@@ -19,20 +18,14 @@ export { ErrorBoundary } from "expo-router";
 
 SplashScreen.preventAutoHideAsync();
 
+/**
+ * No custom font gate — system UI + system monospace keep first paint unblocked
+ * (RN perf playbook: don't stall splash on remote/local font loads).
+ */
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-  });
-
   useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
-  }, [loaded]);
-
-  if (!loaded) return null;
+    void SplashScreen.hideAsync();
+  }, []);
 
   return (
     <SessionProvider>

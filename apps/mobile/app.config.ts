@@ -98,6 +98,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ],
   experiments: {
     typedRoutes: true,
+    /** Auto-memoize components/hooks — Expo SDK 57 + babel-preset-expo. */
+    reactCompiler: true,
   },
   extra: {
     eas: {

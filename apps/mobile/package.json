@@ -7,7 +7,6 @@
   "dependencies": {
     "@expo/material-symbols": "^0.1.1",
     "@expo/ui": "~57.0.22",
-    "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "^3.1.1",
     "effect": "^4.0.2",
     "expo": "~57.0.27",

@@ -17,10 +17,19 @@ import {
   Switch,
   Text,
 } from "@expo/ui";
-import { ActivityIndicator, View, type StyleProp, type ViewStyle } from "react-native";
+import {
+  ActivityIndicator,
+  Platform,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 
 import { brand, space, type } from "../theme";
 import { Icons } from "./icons";
+
+/** System monospace — skip custom SpaceMono.ttf in the asset catalog. */
+const monoFont = Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" });
 
 export {
   Button,
@@ -182,7 +191,7 @@ export function Meta({
       textStyle={{
         ...type.meta,
         color: color ?? type.meta.color,
-        fontFamily: mono ? "SpaceMono" : undefined,
+        fontFamily: mono ? monoFont : undefined,
       }}
     >
       {children}
