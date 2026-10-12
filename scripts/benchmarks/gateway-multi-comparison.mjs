@@ -429,26 +429,43 @@ function resolveBunBin() {
   ]);
 }
 
+/** Match multiturn publish-board defaults (disclose if claiming capped-heap RSS). */
+function clawqlLatencyRuntimeFlags() {
+  const nodeMaxOldSpaceMb = Number(process.env.CLAWQL_NODE_MAX_OLD_SPACE_MB || 512) || 0;
+  const bunSmol = !["0", "false", "no"].includes(
+    (process.env.CLAWQL_BUN_SMOL ?? "1").trim().toLowerCase()
+  );
+  return { nodeMaxOldSpaceMb, bunSmol };
+}
+
 function resolveClawqlJsRuntime(runtime = "node") {
   const server = join(ROOT, "dist", "server.js");
+  const flags = clawqlLatencyRuntimeFlags();
   if (runtime === "bun") {
     const bun = resolveBunBin();
     if (!bun) {
       throw new Error("clawql_bun requires bun (set BUN_BIN or install to ~/.bun/bin/bun)");
     }
     const ver = spawnSync(bun, ["--version"], { encoding: "utf8" }).stdout?.trim() || null;
+    const args = flags.bunSmol ? ["--smol", server] : [server];
     return {
       runtime: "bun",
       runtimeVersion: ver,
       command: bun,
-      args: [server],
+      args,
+      flags,
     };
   }
+  const args =
+    flags.nodeMaxOldSpaceMb > 0
+      ? [`--max-old-space-size=${flags.nodeMaxOldSpaceMb}`, server]
+      : [server];
   return {
     runtime: "node",
     runtimeVersion: process.version,
     command: process.execPath,
-    args: [server],
+    args,
+    flags,
   };
 }
 
@@ -1416,6 +1433,14 @@ async function main() {
         refine: REFINE,
         arms: ARMS,
         include_contextforge: INCLUDE_CF,
+        runtime_flags: (() => {
+          const f = clawqlLatencyRuntimeFlags();
+          return {
+            clawql_node_max_old_space_mb: f.nodeMaxOldSpaceMb || null,
+            clawql_bun_smol: f.bunSmol,
+            note: "Applied to ClawQL stdio pets arms (same defaults as multiturn publish board).",
+          };
+        })(),
       },
       board: boardFromArms(arms),
       arms,
@@ -1430,6 +1455,9 @@ async function main() {
         "Chaos: topology A only (single-instance). Claim only vs same topology. MULTI_CHAOS_UNTIL_BREAK pushes past power-of-two ceiling until break.",
         "path_matrix: ClawQL latency includes risk/audit/projection; aggregators do almost none of that.",
         "clawql_bun: same dist/server.js + equal-arm env as clawql; only the JS runtime binary changes (Node vs Bun).",
+        `RUNTIME FLAGS: Node --max-old-space-size=${
+          clawqlLatencyRuntimeFlags().nodeMaxOldSpaceMb || "off"
+        }; Bun ${clawqlLatencyRuntimeFlags().bunSmol ? "--smol" : "default"}. See config.runtime_flags.`,
         "ContextForge/MetaMCP off publish board by default (nested CF / Docker).",
         "RSS: ClawQL is heaviest serious arm — admit the loss; do not hide under-load median.",
         "Checkpoint writes after latency and after each chaos arm (survives OOM mid-chaos).",
