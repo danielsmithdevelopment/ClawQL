@@ -1,8 +1,19 @@
 # PhoneApprove design system
 
 **System:** [Material Design 3](https://m3.material.io/) (incl. [Expressive](https://m3.material.io/blog/building-with-m3-expressive) tactics)  
+**Brand seed:** ClawQL mark — navy field · orange **QL** · warm paper · sky technical  
 **Native bridge:** [`@expo/ui`](https://docs.expo.dev/versions/latest/sdk/ui/) — Android → Material 3 / Compose; iOS → SwiftUI (HIG-shaped controls tinted by the same seed)  
-**Not using:** IBM Carbon (enterprise web), custom one-off palettes outside tokens
+**Scheme:** **Dark** (`Host.colorScheme="dark"`) to match brand art  
+**Not using:** IBM Carbon (enterprise web), ad-hoc hex outside tokens
+
+## Brand → M3 mapping
+
+| Brand | Hex (approx) | M3 role |
+| --- | --- | --- |
+| Navy field | `#081133` | `surface` / containers |
+| Orange QL | `#FF5636` | `primary` / `seed` |
+| Warm paper | `#EFEAE7` | `onSurface` |
+| Sky technical | `#7289AB` → `#A8C0E0` | `onSurfaceVariant` / `secondary` |
 
 ## Why Material 3 (not Carbon)
 
@@ -12,7 +23,7 @@
 | Our stack | `@expo/ui` Host + Compose/SwiftUI already M3/HIG | Would fight native controls |
 | Tokens | Color roles, type scale, shape, elevation | `$text-02`-style web tokens + IBM Plex |
 
-Carbon is excellent for consoles; PhoneApprove is a phone approval app. Stick to M3.
+Carbon is excellent for consoles; PhoneApprove is a phone approval app. Stick to M3 + ClawQL brand colors.
 
 ## How to build a screen
 
@@ -22,21 +33,21 @@ Carbon is excellent for consoles; PhoneApprove is a phone approval app. Stick to
 4. **Icons** — Material Symbols XML (Android) / SF Symbols (iOS) via `AppIcon`; web SVG fallback. Put icons in tonal containers (`IconBubble` = primary/secondary/error **container** fills).
 5. **Hierarchy** — one primary action per region; secondary = outlined / tonal; tertiary = text. Section chrome uses `SectionHeader` (icon + title).
 
-## Token map (ClawQL seed → M3 roles)
+## Token map (ClawQL brand → M3 roles)
 
-Seed / brand primary: `#0B5FFF` → `Host.seedColor` + `color.primary`.
+Seed / brand primary: `#FF5636` (orange QL) → `Host.seedColor` + `color.primary`.
 
 | Role | Use |
 | --- | --- |
-| `primary` / `onPrimary` | Filled buttons, active tab tint |
-| `primaryContainer` / `onPrimaryContainer` | Hero spend card, tonal icon bubbles, FAB-like emphasis |
-| `secondaryContainer` / `onSecondaryContainer` | Soft cards, less urgent chips |
+| `primary` / `onPrimary` | Filled buttons, active tab tint (orange) |
+| `primaryContainer` / `onPrimaryContainer` | Hero spend / tonal orange-tinted surfaces |
+| `secondary` / `secondaryContainer` | Sky technical accents, softer chips |
 | `error` / `errorContainer` / `onErrorContainer` | Decline, blocked, danger |
-| `tertiaryContainer` / `onTertiaryContainer` | Warn / “needs you” (digest, expiry) — static warn family |
-| `surface` | Screen background |
-| `surfaceContainer*` | Cards / nested surfaces (low → high emphasis) |
-| `onSurface` / `onSurfaceVariant` | Body / meta text |
-| `outline` / `outlineVariant` | Focused borders / decorative dividers |
+| `tertiaryContainer` / `onTertiaryContainer` | Warn / “needs you” (digest, expiry) |
+| `surface` | Navy screen background |
+| `surfaceContainer*` | Cards / nested surfaces on navy |
+| `onSurface` / `onSurfaceVariant` | Paper body / sky meta |
+| `outline` / `outlineVariant` | Borders / dividers on dark |
 
 Success (`ok`) is a product extension for “approved / running” — not a core M3 role; keep it in `color.ok*` and use sparingly.
 

@@ -18,7 +18,7 @@ Sign-in screen → **Continue with fixture session** (or **App Store reviewer de
 
 **Design system: [Material Design 3](https://m3.material.io/)** — see [`DESIGN.md`](DESIGN.md).
 
-Screens use **`@expo/ui`** (`Host` + M3 Compose / SwiftUI) with ClawQL seed `#0B5FFF`. Tokens live in `src/theme.ts` as M3 **color roles** (`primary`, `primaryContainer`, `onSurface`, …). Icons: SF Symbols / Material XML on native, SVG on web (`AppIcon` + tonal `IconBubble`). Fixture Maestro `testID`s are unchanged. Pull-to-refresh uses `List.onRefresh`.
+Screens use **`@expo/ui`** (`Host` + M3 Compose / SwiftUI) in **dark** scheme, seeded from ClawQL brand: navy `#081133`, orange `#FF5636`, paper `#EFEAE7`, sky `#7289AB`. Tokens in `src/theme.ts` as M3 **color roles**. Icons: SF Symbols / Material XML on native, SVG on web (`AppIcon` + tonal `IconBubble`). Fixture Maestro `testID`s are unchanged. Pull-to-refresh uses `List.onRefresh`.
 
 Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 

@@ -20,7 +20,7 @@ Apple rejects thin website wrappers. This app ships the PhoneApprove surface fro
 ## Stack
 
 - Expo SDK 57 + Expo Router (TypeScript)
-- **Design system: Material 3** — see [`DESIGN.md`](DESIGN.md); `@expo/ui` Host seeds Compose/SwiftUI with ClawQL primary `#0B5FFF`
+- **Design system: Material 3 (dark)** — see [`DESIGN.md`](DESIGN.md); brand navy + orange QL seed `#FF5636`
 - Effect 4 services/schemas (same discipline as `packages/*`)
 - EAS Build / Submit (`eas.json`)
 - Maestro goal-oriented flows (`maestro/flows`)

@@ -108,7 +108,7 @@ export function ScreenHost({
       testID={testID}
       style={{ backgroundColor: color.surface, width: "100%", height: "100%" }}
       seedColor={color.seed}
-      colorScheme="light"
+      colorScheme="dark"
       matchContents={matchContents}
       useViewportSizeMeasurement
     >
