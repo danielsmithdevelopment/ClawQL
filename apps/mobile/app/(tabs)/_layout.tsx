@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { pendingReviewCountEffect } from "@/src/services/api";
 import { useSession } from "@/src/state/SessionContext";
-import { brand } from "@/src/theme";
+import { brand, color } from "@/src/theme";
 import { TabGlyph } from "@/src/ui/TabGlyph";
 import { TabAndroidIcons } from "@/src/ui/tabIcons";
 
@@ -30,15 +30,15 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: brand.surface },
-        headerTintColor: brand.ink,
+        headerStyle: { backgroundColor: color.surface },
+        headerTintColor: color.onSurface,
         headerShadowVisible: false,
         headerTitleStyle: { fontWeight: "700" },
-        tabBarActiveTintColor: brand.seed,
+        tabBarActiveTintColor: color.primary,
         tabBarInactiveTintColor: brand.inkFaint,
         tabBarStyle: {
-          backgroundColor: brand.card,
-          borderTopColor: brand.border,
+          backgroundColor: color.surfaceContainerLowest,
+          borderTopColor: color.outlineVariant,
         },
         // Keep inactive screens mounted but detach inactive native views when possible.
         lazy: true,
@@ -67,8 +67,8 @@ export default function TabLayout() {
           tabBarLabel: "Review",
           tabBarBadge: pending > 0 ? pending : undefined,
           tabBarBadgeStyle: {
-            backgroundColor: brand.danger,
-            color: "#fff",
+            backgroundColor: color.error,
+            color: color.onError,
             fontSize: 10,
           },
           tabBarIcon: ({ focused }) => (

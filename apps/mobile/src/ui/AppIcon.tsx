@@ -1,18 +1,41 @@
 /**
  * Cross-platform glyph: SF Symbol / Material XML on native, SVG stroke on web.
  * @expo/ui Icon is null on web — demos and Maestro web need this fallback.
+ *
+ * Tonal containers follow M3 primary/secondary/error/tertiary **container** roles
+ * (see DESIGN.md).
  */
 import { createElement, type ReactNode } from "react";
 import { Platform, View, type StyleProp, type ViewStyle } from "react-native";
 import { Icon } from "@expo/ui";
 
-import { brand } from "../theme";
+import { color, shape } from "../theme";
 import { Icons, WEB_ICON_PATHS, type AppIconName } from "./icons";
+
+/** M3 roles + short aliases used by screens (`seed`→primary, `warn`→tertiary). */
+export type IconTone =
+  | "primary"
+  | "secondary"
+  | "tertiary"
+  | "error"
+  | "ok"
+  | "neutral"
+  | "seed"
+  | "warn"
+  | "danger";
+
+function resolveTone(tone: IconTone): "primary" | "secondary" | "tertiary" | "error" | "ok" {
+  if (tone === "seed" || tone === "primary") return "primary";
+  if (tone === "warn" || tone === "tertiary") return "tertiary";
+  if (tone === "danger" || tone === "error") return "error";
+  if (tone === "ok") return "ok";
+  return "secondary";
+}
 
 export function AppIcon({
   name,
   size = 20,
-  color = brand.ink,
+  color: ink = color.onSurface,
   testID,
 }: {
   name: AppIconName;
@@ -21,7 +44,7 @@ export function AppIcon({
   testID?: string;
 }): ReactNode {
   if (Platform.OS === "ios" || Platform.OS === "android") {
-    return <Icon testID={testID} name={Icons[name]} size={size} color={color} />;
+    return <Icon testID={testID} name={Icons[name]} size={size} color={ink} />;
   }
 
   const d = WEB_ICON_PATHS[name];
@@ -38,7 +61,7 @@ export function AppIcon({
     },
     createElement("path", {
       d,
-      stroke: color,
+      stroke: ink,
       strokeWidth: 1.75,
       strokeLinecap: "round",
       strokeLinejoin: "round",
@@ -47,42 +70,43 @@ export function AppIcon({
   );
 }
 
-/** Tonal M3-style icon container — soft depth without heavy shadows. */
+/** M3 tonal icon container — primaryContainer / secondaryContainer / etc. */
 export function IconBubble({
   name,
-  tone = "seed",
+  tone = "primary",
   size = 40,
   iconSize = 20,
   testID,
   style,
 }: {
   name: AppIconName;
-  tone?: "seed" | "ok" | "warn" | "danger" | "neutral";
+  tone?: IconTone;
   size?: number;
   iconSize?: number;
   testID?: string;
   style?: StyleProp<ViewStyle>;
 }) {
+  const role = resolveTone(tone);
   const bg =
-    tone === "ok"
-      ? brand.okBg
-      : tone === "warn"
-        ? brand.warnBg
-        : tone === "danger"
-          ? brand.dangerBg
-          : tone === "neutral"
-            ? brand.neutralSoft
-            : brand.seedSoft;
+    role === "ok"
+      ? color.okContainer
+      : role === "tertiary"
+        ? color.tertiaryContainer
+        : role === "error"
+          ? color.errorContainer
+          : role === "secondary"
+            ? color.secondaryContainer
+            : color.primaryContainer;
   const fg =
-    tone === "ok"
-      ? brand.ok
-      : tone === "warn"
-        ? brand.warn
-        : tone === "danger"
-          ? brand.danger
-          : tone === "neutral"
-            ? brand.inkMuted
-            : brand.seed;
+    role === "ok"
+      ? color.onOkContainer
+      : role === "tertiary"
+        ? color.onTertiaryContainer
+        : role === "error"
+          ? color.onErrorContainer
+          : role === "secondary"
+            ? color.onSecondaryContainer
+            : color.onPrimaryContainer;
   return (
     <View
       testID={testID}
@@ -90,7 +114,7 @@ export function IconBubble({
         {
           width: size,
           height: size,
-          borderRadius: size * 0.32,
+          borderRadius: Math.round(size * 0.32) || shape.sm,
           backgroundColor: bg,
           alignItems: "center",
           justifyContent: "center",

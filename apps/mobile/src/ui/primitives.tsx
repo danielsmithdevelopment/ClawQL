@@ -1,6 +1,7 @@
 /**
- * Adaptive UI primitives — @expo/ui universal components.
- * Android → Material 3 (Jetpack Compose); iOS → SwiftUI; web → RN/DOM fallback.
+ * Adaptive UI primitives — Material 3 via @expo/ui.
+ * Android → M3 Compose; iOS → SwiftUI tinted by seed; web → RN/DOM fallback.
+ * Token rules: apps/mobile/DESIGN.md
  */
 import type { ReactNode } from "react";
 import {
@@ -25,12 +26,13 @@ import {
   type ViewStyle,
 } from "react-native";
 
-import { brand, space, type } from "../theme";
+import { brand, color, elevation, shape, space, type } from "../theme";
 import { AppIcon, IconBubble } from "./AppIcon";
 import { Icons, type AppIconName } from "./icons";
 
 export { AppIcon, IconBubble };
 export type { AppIconName };
+export { color, shape, space, type };
 
 /** System monospace — skip custom SpaceMono.ttf in the asset catalog. */
 const monoFont = Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" });
@@ -104,8 +106,8 @@ export function ScreenHost({
   return (
     <Host
       testID={testID}
-      style={{ backgroundColor: brand.surface, width: "100%", height: "100%" }}
-      seedColor={brand.seed}
+      style={{ backgroundColor: color.surface, width: "100%", height: "100%" }}
+      seedColor={color.seed}
       colorScheme="light"
       matchContents={matchContents}
       useViewportSizeMeasurement
@@ -212,25 +214,25 @@ export function Badge({
 }) {
   const bg =
     tone === "ok"
-      ? brand.okBg
+      ? color.okContainer
       : tone === "warn"
-        ? brand.warnBg
+        ? color.tertiaryContainer
         : tone === "danger"
-          ? brand.dangerBg
-          : brand.neutralSoft;
+          ? color.errorContainer
+          : color.secondaryContainer;
   const fg =
     tone === "ok"
-      ? brand.ok
+      ? color.onOkContainer
       : tone === "warn"
-        ? brand.warn
+        ? color.onTertiaryContainer
         : tone === "danger"
-          ? brand.danger
-          : brand.inkMuted;
+          ? color.onErrorContainer
+          : color.onSecondaryContainer;
   return (
     <Row
       style={{
         backgroundColor: bg,
-        borderRadius: 999,
+        borderRadius: shape.full,
         paddingHorizontal: 10,
         paddingVertical: 4,
       }}
@@ -288,7 +290,7 @@ export function NavRow({
       testID={testID}
       onPress={onPress}
       leading={<IconBubble name={icon} tone={tone} size={36} iconSize={18} />}
-      trailing={<Icon name={Icons.chevron} size={14} color={brand.inkFaint} />}
+      trailing={<Icon name={Icons.chevron} size={14} color={color.onSurfaceVariant} />}
       supportingText={help}
     >
       {label}
@@ -316,7 +318,7 @@ export function PrimaryButton({
       variant="filled"
       disabled={disabled}
       onPress={onPress}
-      style={danger ? { backgroundColor: brand.danger } : undefined}
+      style={danger ? { backgroundColor: color.error } : undefined}
     />
   );
 }
@@ -414,7 +416,7 @@ export function ChoiceRow({
 export function LoadingBlock({ label = "Loading…" }: { label?: string }) {
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: space.xl }} testID="loading">
-      <ActivityIndicator color={brand.seed} />
+      <ActivityIndicator color={color.primary} />
       <View style={{ height: space.sm }} />
       <Text textStyle={type.meta}>{label}</Text>
     </View>
@@ -489,7 +491,7 @@ export function ReviewRow({
           iconSize={18}
         />
       }
-      trailing={<Icon name={Icons.chevron} size={14} color={brand.inkFaint} />}
+      trailing={<Icon name={Icons.chevron} size={14} color={color.onSurfaceVariant} />}
       supportingText={`${kindLabel} · ${badge}\n${listMeta}\n${statusLine}`}
     >
       {title}
@@ -497,7 +499,7 @@ export function ReviewRow({
   );
 }
 
-/** Surface card for detail blocks that aren't list rows. */
+/** Surface card — maps to M3 surfaceContainer* / primaryContainer. */
 export function SurfaceCard({
   children,
   testID,
@@ -506,22 +508,28 @@ export function SurfaceCard({
 }: {
   children: ReactNode;
   testID?: string;
-  /** Soft tactile depth (M3 Expressive / soft-UI accent). */
+  /** Soft elevation for hero / unread (M3 Expressive). */
   elevated?: boolean;
-  /** Tonal wash — seed | soft | none (default card white) */
+  /** seed → primaryContainer · soft → surfaceContainerLow · none → surfaceContainerLowest */
   tint?: "seed" | "soft" | "none";
 }) {
   const bg =
-    tint === "seed" ? brand.seedSoft : tint === "soft" ? brand.surfaceElevated : brand.card;
+    tint === "seed"
+      ? color.primaryContainer
+      : tint === "soft"
+        ? color.surfaceContainerLow
+        : color.surfaceContainerLowest;
+  const border =
+    tint === "seed" ? color.primaryContainer : color.outlineVariant;
   const elevationStyle: ViewStyle = elevated
     ? Platform.select<ViewStyle>({
-        web: { boxShadow: `0 8px 24px ${brand.shadow}` } as ViewStyle,
+        web: { boxShadow: elevation.level1.boxShadow } as ViewStyle,
         default: {
-          shadowColor: "#0F2346",
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 3,
+          shadowColor: elevation.level1.shadowColor,
+          shadowOpacity: elevation.level1.shadowOpacity,
+          shadowRadius: elevation.level1.shadowRadius,
+          shadowOffset: elevation.level1.shadowOffset,
+          elevation: elevation.level1.elevation,
         },
       }) ?? {}
     : {};
@@ -531,9 +539,9 @@ export function SurfaceCard({
       spacing={space.sm}
       style={{
         backgroundColor: bg,
-        borderColor: tint === "seed" ? brand.seedSoft : brand.borderSoft,
+        borderColor: border,
         borderWidth: 1,
-        borderRadius: 16,
+        borderRadius: shape.lg,
         padding: space.md,
         ...elevationStyle,
       }}

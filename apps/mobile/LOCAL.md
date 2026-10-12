@@ -14,9 +14,13 @@ Then press `w` for web, or scan the QR with Expo Go on a phone (still no Apple/G
 
 Sign-in screen → **Continue with fixture session** (or **App Store reviewer demo** for biometric approve).
 
-## UI stack
+## UI stack / design system
 
-Screens use **`@expo/ui`** universal components (`Host` + Material 3 / SwiftUI) with ClawQL `brand.seed` tint. Icons: SF Symbols / Material XML on native, SVG stroke fallbacks on web (`AppIcon` + tonal `IconBubble`). Fixture Maestro `testID`s are unchanged. Pull-to-refresh uses `List.onRefresh`.
+**Design system: [Material Design 3](https://m3.material.io/)** — see [`DESIGN.md`](DESIGN.md).
+
+Screens use **`@expo/ui`** (`Host` + M3 Compose / SwiftUI) with ClawQL seed `#0B5FFF`. Tokens live in `src/theme.ts` as M3 **color roles** (`primary`, `primaryContainer`, `onSurface`, …). Icons: SF Symbols / Material XML on native, SVG on web (`AppIcon` + tonal `IconBubble`). Fixture Maestro `testID`s are unchanged. Pull-to-refresh uses `List.onRefresh`.
+
+Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 
 ## What works offline / fixture
 
