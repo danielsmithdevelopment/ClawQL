@@ -2,6 +2,7 @@ import {
   createClawQLApi,
   createClawQLApiAsync,
   composeDefaultPlugins,
+  isPreExecuteEmptyCached,
   loadSpec,
   makeExecuteLive,
   McpProxyPipeline,
@@ -231,6 +232,8 @@ export async function runMcpProxyBeforeCallTool(
   args: unknown,
   opts?: { readonly sessionId?: string; readonly atrScopeTokens?: readonly string[] }
 ): Promise<void> {
+  // After first empty pre-execute list, skip Effect/Promise entirely (Bun HTTP p999).
+  if (isPreExecuteEmptyCached(toolName)) return;
   return Effect.runPromise(runMcpProxyBeforeCallToolEffect(toolName, args, opts));
 }
 

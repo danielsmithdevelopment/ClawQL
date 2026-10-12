@@ -224,6 +224,12 @@ function summarizeMs(samples) {
   }
   const sorted = [...samples].sort((a, b) => a - b);
   const sum = sorted.reduce((a, b) => a + b, 0);
+  const above = (thr) => samples.filter((x) => x >= thr).length;
+  const worst = samples
+    .map((v, i) => ({ v, i: i + 1 }))
+    .sort((a, b) => b.v - a.v)
+    .slice(0, 8)
+    .map((x) => ({ i: x.i, ms: Number(x.v.toFixed(3)) }));
   return {
     n: sorted.length,
     p50_ms: Number(percentile(sorted, 50).toFixed(3)),
@@ -233,6 +239,10 @@ function summarizeMs(samples) {
     mean_ms: Number((sum / sorted.length).toFixed(3)),
     min_ms: Number(sorted[0].toFixed(3)),
     max_ms: Number(sorted[sorted.length - 1].toFixed(3)),
+    n_ge_100ms: above(100),
+    n_ge_200ms: above(200),
+    n_ge_300ms: above(300),
+    worst,
   };
 }
 
@@ -1888,8 +1898,21 @@ function summarizeArm(arm) {
   const sumDiscovery = arm.perTurn.reduce((a, t) => a + (t.search_tokens || 0), 0);
   const meanResult = sumResult / arm.perTurn.length;
   const meanDiscovery = sumDiscovery / arm.perTurn.length;
-  const flowLat = summarizeMs(arm.flow_e2e_ms || []);
-  const turnLat = summarizeMs(arm.turn_latency_ms || []);
+  // Optional steady-state view: drop first N flows (and their turns) from latency stats.
+  const warmupFlows = Math.max(0, Number(process.env.MT_WARMUP_FLOWS || 0) || 0);
+  const turnsPerFlow = arm.perTurn?.length || 0;
+  const flowSamples = arm.flow_e2e_ms || [];
+  const turnSamples = arm.turn_latency_ms || [];
+  const flowLat = summarizeMs(
+    warmupFlows > 0 ? flowSamples.slice(warmupFlows) : flowSamples
+  );
+  const turnLat = summarizeMs(
+    warmupFlows > 0 && turnsPerFlow > 0
+      ? turnSamples.slice(warmupFlows * turnsPerFlow)
+      : turnSamples
+  );
+  const flowLatAll =
+    warmupFlows > 0 ? summarizeMs(flowSamples) : null;
   const agg = arm.task_success_agg || {
     ok: arm.perTurn.filter((t) => t.task_success?.ok).length,
     total: arm.perTurn.length,
@@ -1938,6 +1961,9 @@ function summarizeArm(arm) {
       total_turns: agg.total,
       flow_e2e_ms: flowLat,
       turn_latency_ms: turnLat,
+      ...(flowLatAll
+        ? { flow_e2e_ms_including_warmup: flowLatAll, warmup_flows: warmupFlows }
+        : {}),
       call_errors: arm.call_errors ?? 0,
       task_success_ok: taskSuccess.ok,
       task_success_rate: taskSuccess.rate,

@@ -1,6 +1,7 @@
 import { Effect } from "effect";
+import { isPreExecuteEmptyCached } from "clawql-api";
 import { runMcpProxyBeforeCallTool } from "../composition/clawql-api-adapters.js";
-import { recordMcpToolCallAudit, type McpToolAuditOutcome } from "./mcp-tool-audit.js";
+import { recordMcpToolCallAuditSync, type McpToolAuditOutcome } from "./mcp-tool-audit.js";
 import { wrapMcpToolHandler } from "../observability/otel-tracing.js";
 import { getMcpRequestContext } from "./mcp-request-context.js";
 
@@ -52,14 +53,14 @@ function toolResultLooksOk(result: unknown): boolean {
   return rec.isError !== true;
 }
 
-async function auditWrappedTool(
+function auditWrappedTool(
   toolName: string,
   args: unknown,
   outcome: McpToolAuditOutcome,
   result?: unknown,
   errorMessage?: string
-): Promise<void> {
-  await recordMcpToolCallAudit({ toolName, args, outcome, result, errorMessage });
+): void {
+  recordMcpToolCallAuditSync({ toolName, args, outcome, result, errorMessage });
 }
 
 /** Sync gate — avoid dynamic import + Effect.runPromise when WORM is off (bench/default). */
@@ -143,11 +144,14 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
     }
 
     try {
-      const mcpCtx = getMcpRequestContext();
-      await runMcpProxyBeforeCallTool(toolName, args[0], {
-        sessionId: mcpCtx?.sessionId,
-        atrScopeTokens: mcpCtx?.atrScopeTokens,
-      });
+      // Skip Promise scheduling once pre-execute list is known empty (Bun HTTP p999).
+      if (!isPreExecuteEmptyCached(toolName)) {
+        const mcpCtx = getMcpRequestContext();
+        await runMcpProxyBeforeCallTool(toolName, args[0], {
+          sessionId: mcpCtx?.sessionId,
+          atrScopeTokens: mcpCtx?.atrScopeTokens,
+        });
+      }
     } catch (err: unknown) {
       const errDetail =
         clawqlPolicyBlockMessage(err) ?? (err instanceof Error ? err.message : String(err));
@@ -162,12 +166,12 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
         ]);
         if (isMppMcpJsonRpcPaymentError(err)) {
           const result = err.toToolResult() as TResult;
-          await auditWrappedTool(toolName, args[0], "payment_required", result);
+          auditWrappedTool(toolName, args[0], "payment_required", result);
           return result;
         }
         if (isX402McpPaymentError(err)) {
           const result = err.toToolResult() as TResult;
-          await auditWrappedTool(toolName, args[0], "payment_required", result);
+          auditWrappedTool(toolName, args[0], "payment_required", result);
           return result;
         }
       }
@@ -189,10 +193,10 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
           content: [{ type: "text" as const, text: blocked }],
           isError: true,
         } as TResult;
-        await auditWrappedTool(toolName, args[0], "blocked", result, blocked);
+        auditWrappedTool(toolName, args[0], "blocked", result, blocked);
         return result;
       }
-      await auditWrappedTool(toolName, args[0], "thrown", undefined, errDetail);
+      auditWrappedTool(toolName, args[0], "thrown", undefined, errDetail);
       throw err;
     }
 
@@ -208,14 +212,14 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
           )
         );
       }
-      await auditWrappedTool(toolName, args[0], resultLooksError(result) ? "error" : "ok", result);
+      auditWrappedTool(toolName, args[0], resultLooksError(result) ? "error" : "ok", result);
       return result;
     } catch (err: unknown) {
       const errDetail = err instanceof Error ? err.message : String(err);
       if (shouldAppendWorm(toolName)) {
         await Effect.runPromise(appendMcpToolResultEffect(toolName, false, errDetail));
       }
-      await auditWrappedTool(toolName, args[0], "thrown", undefined, errDetail);
+      auditWrappedTool(toolName, args[0], "thrown", undefined, errDetail);
       throw err;
     }
   });

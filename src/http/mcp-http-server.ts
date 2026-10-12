@@ -84,6 +84,7 @@ import {
   registerMcpX402TransportHooks,
   runWithMcpX402Context,
 } from "./mcp-x402-transport.js";
+import { isX402EnforcementActive } from "clawql-payments/x402";
 import {
   buildGatewayAuthConfig,
   createInferenceVirtualKeyClaimsResolver,
@@ -789,13 +790,32 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         sessionId ??
         (typeof transport.sessionId === "string" ? transport.sessionId : undefined) ??
         "mcp";
+      const slowMs = Number.parseInt(process.env.CLAWQL_HTTP_SLOW_MS ?? "0", 10);
+      const tHandle0 = slowMs > 0 ? performance.now() : 0;
       try {
-        await runWithMcpX402Context(headersFromExpressRequest(req), () =>
+        const runHandle = () =>
           runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens }, () =>
             transport!.handleRequest(req, res, req.body)
-          )
-        );
+          );
+        // Skip x402 AsyncLocalStorage + Promise.resolve wrapper when enforcement is off.
+        if (isX402EnforcementActive(process.env)) {
+          await runWithMcpX402Context(headersFromExpressRequest(req), runHandle);
+        } else {
+          await runHandle();
+        }
       } finally {
+        if (slowMs > 0) {
+          const dt = performance.now() - tHandle0;
+          if (dt >= slowMs) {
+            const method =
+              req.body && typeof req.body === "object" && !Array.isArray(req.body)
+                ? String((req.body as { method?: unknown }).method ?? "?")
+                : "?";
+            console.error(
+              `[clawql-http-slow] ${dt.toFixed(1)}ms method=${method} session=${mcpSession}`
+            );
+          }
+        }
         // SDK JSON-response mode leaves `_streamMapping` entries after resolveJson;
         // prune orphans so sessionful multiturn does not retain one entry per POST.
         if (!closeTransportAfter) {
@@ -949,18 +969,29 @@ export async function startMcpHttpServer(): Promise<void> {
   });
   // Localhost multiturn is chatty small POSTs — disable Nagle and keep sockets warm.
   // keepAliveTimeout < typical reverse-proxy idle (e.g. 75s) avoids 502 races in prod.
-  httpServer.keepAliveTimeout = Number.parseInt(
-    process.env.CLAWQL_HTTP_KEEPALIVE_TIMEOUT_MS ?? "65000",
-    10
-  );
-  httpServer.headersTimeout = Number.parseInt(
-    process.env.CLAWQL_HTTP_HEADERS_TIMEOUT_MS ?? "66000",
-    10
-  );
-  httpServer.on("connection", (socket) => {
-    socket.setNoDelay(true);
-    socket.setKeepAlive(true, 0);
-  });
+  // Bun's listen() handle is Node-compatible for most of these; guard for partial shims.
+  try {
+    httpServer.keepAliveTimeout = Number.parseInt(
+      process.env.CLAWQL_HTTP_KEEPALIVE_TIMEOUT_MS ?? "65000",
+      10
+    );
+    if ("headersTimeout" in httpServer) {
+      (httpServer as { headersTimeout: number }).headersTimeout = Number.parseInt(
+        process.env.CLAWQL_HTTP_HEADERS_TIMEOUT_MS ?? "66000",
+        10
+      );
+    }
+    httpServer.on("connection", (socket) => {
+      try {
+        socket.setNoDelay?.(true);
+        socket.setKeepAlive?.(true, 0);
+      } catch {
+        /* Bun / non-TCP shim */
+      }
+    });
+  } catch {
+    /* ignore listen-handle tuning failures */
+  }
 
   const shutdownHttp = () => {
     httpServer.close(() => process.exit(0));
