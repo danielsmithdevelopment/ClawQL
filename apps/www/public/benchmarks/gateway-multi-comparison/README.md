@@ -209,9 +209,12 @@ Equal-transport latency: ClawQL HTTP p50 **47.8 ms** vs Executor v2 **74.4 m
 
 ```bash
 MT_TURNS=12 MT_ITERS=10000 CATALOG_TOOL_COUNT=40 \
-  MT_ARMS=direct,clawql,clawql_bun,executor,mcpjungle,agentgateway \
+  MT_ARMS=direct,clawql,clawql_bun,clawql_http,executor,mcpjungle,agentgateway \
   MT_OUT=gateway-multi-multiturn-10k.json \
   npm run benchmark:gateway-multi-multiturn
+
+# Executor v2 HTTP (separate harness; pin native PID if needed)
+MT_ITERS=10000 MT_TURNS=12 npm run benchmark:executor-v2-multiturn
 
 npm run generate:gateway-multi-page
 ```
