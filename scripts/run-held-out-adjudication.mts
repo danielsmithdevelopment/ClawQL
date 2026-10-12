@@ -10,6 +10,10 @@
  * Without the URL the scorer reports honest `gliner2-stub` (never heuristic-
  * as-primary). productionTrusted still requires live judge labels + criteria.
  *
+ * Measure-only Decision-1 scorer (never lights productionTrusted):
+ *   CLAWQL_HELD_OUT_SCORER=openrouter-decision-1
+ *   (+ OPENROUTER_API_KEY). Prefer CLAWQL_FLIP_RATE_GATE=0 to bound spend.
+ *
  * Usage:
  *   npx tsx scripts/run-held-out-adjudication.mts
  *   npx tsx scripts/run-held-out-adjudication.mts --suite v0.2-harvey
@@ -36,6 +40,10 @@ import {
   type AdjudicationLabel,
   type AdjudicationRunReport,
 } from "clawql-core";
+import {
+  createOpenRouterDecision1FastDecisionScorerLayer,
+  OPENROUTER_DECISION1_SCORER_BACKEND_ID,
+} from "../packages/clawql-inference/src/decision/openrouter-decision1-scorer.ts";
 
 function argValue(flag: string): string | undefined {
   const idx = process.argv.indexOf(flag);
@@ -48,9 +56,19 @@ const suiteArg = argValue("--suite");
 
 const suite = resolveHeldOutSuite(suiteArg);
 console.error(`suite=${suite.suiteId} cases=${suite.cases.length}`);
-/** Primary scorer — live HTTP when CLAWQL_FAST_DECISION_GLINER_URL is set. */
-const scorerLayer = createGlinerFastDecisionScorerLayer();
-const glinerLiveConfigured = glinerEndpointConfigured();
+const heldOutScorer = (process.env.CLAWQL_HELD_OUT_SCORER ?? "").trim().toLowerCase();
+/** Default: GLiNER2. Opt-in Decision-1 measure scorer never lights productionTrusted. */
+const scorerLayer =
+  heldOutScorer === "openrouter-decision-1"
+    ? createOpenRouterDecision1FastDecisionScorerLayer()
+    : createGlinerFastDecisionScorerLayer();
+const glinerLiveConfigured =
+  heldOutScorer === "openrouter-decision-1" ? false : glinerEndpointConfigured();
+if (heldOutScorer === "openrouter-decision-1") {
+  console.error(
+    `scorer=${OPENROUTER_DECISION1_SCORER_BACKEND_ID} (measure-only; productionTrusted stays false)`
+  );
+}
 
 let adj: AdjudicationRunReport;
 if (labelsInPath) {

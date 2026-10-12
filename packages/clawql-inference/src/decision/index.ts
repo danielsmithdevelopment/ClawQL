@@ -80,6 +80,12 @@ export {
 } from "./fanout-eval.js";
 
 export {
+  createOpenRouterDecision1FastDecisionScorerLayer,
+  OPENROUTER_DECISION1_SCORER_BACKEND_ID,
+  type OpenRouterDecision1ScorerLayerOptions,
+} from "./openrouter-decision1-scorer.js";
+
+export {
   FanoutSpendCostService,
   FanoutSpendCostLive,
   buildSpendCostLookup,

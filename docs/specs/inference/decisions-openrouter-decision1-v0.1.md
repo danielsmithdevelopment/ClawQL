@@ -45,6 +45,10 @@ Default model pin: `microsoft/microsoft-decision-1`.
 
 Convert frozen v0.4 routing held-out (+ frontier labels) → fan-out cases via `heldOutCasesToFanout`, then `buildDecision1CandidateReport` runs bulk (local + Decision-1, `matchMode: twin`, local `costPerCase=0`, optional `spend_ledger` / `decision1CostPerCase`) and flip-rate with the Decision-1 pin. Artifact template: `packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/decision1-v04-routing-candidate-TEMPLATE.json`. Readout: `DECISION1_V04_CANDIDATE_READOUT.md`. Verdict always carries `productionTrustedClaim: false`.
 
+### Held-out measure scorer (opt-in)
+
+`CLAWQL_HELD_OUT_SCORER=openrouter-decision-1` selects `createOpenRouterDecision1FastDecisionScorerLayer` in `scripts/run-held-out-adjudication.mts`. Backend id is always `openrouter/microsoft/microsoft-decision-1` (≠ `gliner2`), so held-out `productionTrusted` stays false even with perfect accuracy + live labels. Default scorer remains GLiNER2. Bound flip-rate spend with `CLAWQL_FLIP_RATE_GATE=0` when measuring.
+
 Operator fill: marker `packages/clawql-core/src/classifier/held-out/.run-decision1-v04-candidate` → workflow `decision1-v04-candidate.yml` (needs repo secret `OPENROUTER_API_KEY`), or `npx tsx scripts/run-decision1-v04-candidate.mts`.
 
 ## Fan-out example

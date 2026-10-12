@@ -13,7 +13,8 @@ Honest readout after merging spend-ledger → provider pricing → Decision-1 fl
 | Operator fill via Actions marker           | #1273   | Filled (bulk; synonym flip vacated) |
 | Full flip-family remeasure + vacuous gate  | #1278   | Filled                              |
 | Twin-aware fan-out `matchMode`             | #1279   | Merged                              |
-| Candidate costSource / local costPerCase=0 | this PR | In flight                           |
+| Candidate costSource / local costPerCase=0 | #1281   | Merged                              |
+| Measure-only Decision-1 held-out scorer    | this PR | In flight                           |
 
 ## Live Decision-1 v0.4 candidate (Actions, keyed — full families)
 
