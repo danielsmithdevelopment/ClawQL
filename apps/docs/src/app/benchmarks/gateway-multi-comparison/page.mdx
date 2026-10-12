@@ -1,0 +1,55 @@
+# Gateway multi-arm comparison
+
+Equal-arm **12-step** inventory workflow across MCP gateways — plus a **no-gateway direct HTTP** baseline that still counts **catalog tool definitions** (an agent calling 40 ops without a gateway still needs them). {{ className: 'lead' }}
+
+The shareable board (rebuildable token breakdown, Bun rationale, reproduce commands) lives on the static page after www deploy:
+
+**[clawql.com/benchmarks/gateway-multi-comparison/](https://clawql.com/benchmarks/gateway-multi-comparison/)** · local mirror under `apps/www/public/benchmarks/gateway-multi-comparison/`.
+
+> **Deploy note:** marketing and docs URLs stay 404 until the www/docs publish that includes this folder merges. Prefer the trailing-slash marketing URL (`trailingSlash: true`). Confirm both are live before linking externally.
+
+## Headline (10 000 × 12 turns)
+
+`combined = definitions + Σ discovery + Σ results`
+
+Baseline definitions are pinned to **agentgateway’s `tools/list` serialization** of the same 40 catalog ops — that is why agentgateway matches exactly. MCPJungle’s +320 is 5 840 − 5 520 (more verbose wrapped schema text only).
+
+| Arm | Definitions | Σ Discovery | Σ Results | Combined @12 | vs direct | Flow e2e p50 | RSS med |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Direct HTTP (no MCP) | 5 520† | 0 | 29 482 | **35 002** | baseline | **2.2 ms** | — |
+| **ClawQL (Bun)** | **297** | **11 568** | **8 674** | **20 539** | **−14 463** | 15.0 ms | 337 MB |
+| **ClawQL (Node)** | **297** | **11 568** | **8 674** | **20 539** | **−14 463** | 18.2 ms | 678 MB |
+| agentgateway | 5 520 | 0 | 29 482 | **35 002** | **match** | 13.6 ms | 214 MB |
+| MCPJungle | 5 840 | 0 | 29 482 | 35 322 | +320 | 15.4 ms | **153 MB** |
+| Executor | 90 | 0 | 53 578 | 53 668 | +18 666 | 64.4 ms | 213 MB |
+
+† agentgateway serialization of the 40 catalog tools.
+
+On **this board**, ClawQL is the only measured gateway that **reduces** tokens vs a fair no-gateway baseline (~41% @12 via projection + server-side discovery). Thin aggregators **match** that baseline. Bound: Bifrost / mcp-gateway were **not** tested.
+
+**Executor v1.6.10:** defs −5 430; pretty-print +24 096; net +18 666. Compacted 29 572; ClawQL leads by 9 033.
+
+**Executor 2.0 β.15 · 10k×12:** combined **29 927** (−5 075 vs baseline). Flow p50/p999 **74.0 / 126 ms**; turn p50/p999 **5.74 / 25.0 ms**; RSS med **968 MB** (ready 604 / max 1305). Tokens beat v1; latency/RSS worse. ClawQL still leads tokens by **9 388**. See [`gateway-multi-multiturn-executor-v2-10k.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/gateway-multi-comparison/gateway-multi-multiturn-executor-v2-10k.json).
+
+**Next lever:** discovery is 11 568 tokens (56% of ClawQL’s total) — leaner search signatures (~300 tok/turn ≈ −8k @12) and/or `execute` by operation ID when ops recur.
+
+## Why Bun
+
+Same `dist/server.js` — only the JS runtime changes. Pets board (TS7 rebuild): Ready RSS **−23%**, under-load **−25%**, gateway_cost p50 **−67%**. Chaos/p999 are not Bun wins; MCPJungle still leads RAM. Bun is the low-pain runtime track, not a Rust substitute.
+
+## Reproduce
+
+```bash
+MT_TURNS=12 MT_ITERS=10000 CATALOG_TOOL_COUNT=40 \
+  MT_ARMS=direct,clawql,clawql_bun,executor,mcpjungle,agentgateway \
+  MT_OUT=gateway-multi-multiturn-10k.json \
+  npm run benchmark:gateway-multi-multiturn
+
+npm run generate:gateway-multi-page
+```
+
+## Artifacts
+
+- [`gateway-multi-multiturn-10k.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/gateway-multi-comparison/gateway-multi-multiturn-10k.json)
+- [`README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/gateway-multi-comparison/README.md) — methodology
+- Pets Bun boards: `gateway-multi-cmp-ts7-*-10k.json` / `*-chaos.json`

@@ -1,7 +1,7 @@
 {
   "name": "clawql-supabase",
   "version": "0.1.0",
-  "description": "ClawQL Supabase Auth provider plugin — managed clawql.com signup → Stripe Checkout → provisionOrg handoff",
+  "description": "ClawQL Supabase Auth provider plugin \u2014 managed clawql.com signup \u2192 Stripe Checkout \u2192 provisionOrg handoff",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -36,7 +36,7 @@
   "devDependencies": {
     "@types/node": "^26.1.1",
     "tsup": "^8.3.0",
-    "typescript": "^6.0.3",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vitest": "^5.0.0"
   },
   "files": [

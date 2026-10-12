@@ -13,6 +13,7 @@ import {
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
+import { pruneOrphanJsonStreamMappings } from "./prune-json-stream-mappings.js";
 import { createRegisteredMcpServer } from "../mcp/mcp-server-factory.js";
 import { runWithMcpRequestContext } from "../mcp/mcp-request-context.js";
 import {
@@ -671,6 +672,8 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
     const sessionId = req.header("mcp-session-id");
     const useStateless = shouldUseStatelessHttpTransport(protocolVersion);
+    /** Close after request — required for per-request (stateless) transports so they do not accumulate. */
+    let closeTransportAfter = false;
     try {
       let transport: StreamableHTTPServerTransport | undefined;
 
@@ -687,6 +690,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         });
         const server = createRegisteredMcpServer();
         await server.connect(transport);
+        closeTransportAfter = true;
       } else if (!sessionId && isInitializeRequest(req.body)) {
         const streamableJson = ["1", "true", "yes"].includes(
           (process.env.CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE ?? "").trim().toLowerCase()
@@ -744,11 +748,22 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         sessionId ??
         (typeof transport.sessionId === "string" ? transport.sessionId : undefined) ??
         "mcp";
-      await runWithMcpX402Context(headersFromExpressRequest(req), () =>
-        runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens }, () =>
-          transport!.handleRequest(req, res, req.body)
-        )
-      );
+      try {
+        await runWithMcpX402Context(headersFromExpressRequest(req), () =>
+          runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens }, () =>
+            transport!.handleRequest(req, res, req.body)
+          )
+        );
+      } finally {
+        // SDK JSON-response mode leaves `_streamMapping` entries after resolveJson;
+        // prune orphans so sessionful multiturn does not retain one entry per POST.
+        if (!closeTransportAfter) {
+          pruneOrphanJsonStreamMappings(transport);
+        }
+        if (closeTransportAfter) {
+          await transport.close().catch(() => undefined);
+        }
+      }
     } catch (err: unknown) {
       console.error("[clawql-mcp-http] POST /mcp error:", err);
       if (!res.headersSent) {
@@ -782,6 +797,17 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   });
 
   app.get(mcpPath, applyGatewayAuth, async (req, res) => {
+    // Opt-in for long-lived benches / JSON-response clients: refuse standalone SSE GET
+    // so the SDK client skips the GET stream (405) and does not retain SSE buffers.
+    // Default remains SSE-capable for IDE notifications.
+    if (
+      ["1", "true", "yes"].includes(
+        (process.env.CLAWQL_MCP_DISABLE_STANDALONE_SSE ?? "").trim().toLowerCase()
+      )
+    ) {
+      res.status(405).setHeader("Allow", "POST, DELETE").end();
+      return;
+    }
     const sessionId = req.header("mcp-session-id");
     if (!sessionId) {
       jsonRpcError(res, "Bad Request: missing mcp-session-id.");

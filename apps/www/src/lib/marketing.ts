@@ -205,7 +205,7 @@ export const multiProviderBenchmark = {
   planningTokensAfter: '~12K',
   percentReduction: '99.9%',
   compressionRatio: '~862×',
-  href: 'https://docs.clawql.com/benchmarks',
+  href: '/benchmarks',
   workflowHref: 'https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/workflows/workflow-multi-provider.md',
 } as const
 

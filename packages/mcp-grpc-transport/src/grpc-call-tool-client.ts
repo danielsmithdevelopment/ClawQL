@@ -34,6 +34,11 @@ export type CallToolGrpcClientOptions = {
   readyDeadlineMs?: number;
   /** Max send/receive message length for this client channel (bytes). */
   maxMessageLength?: number;
+  /**
+   * Reuse an existing `@grpc/grpc-js` client (caller owns lifecycle).
+   * Prefer this for multiturn benches — opening a channel per CallTool skews latency.
+   */
+  client?: grpc.Client;
 };
 
 /** Resolve default max message size (bytes) for gRPC client channels. */
@@ -103,18 +108,23 @@ async function callToolServerStreamingGrpcImpl(
     CallToolRequest.encode(CallToolRequest.create(payload)).finish()
   );
 
+  const ownsClient = !options.client;
   const creds = options.credentials ?? grpc.credentials.createInsecure();
   const maxLen = options.maxMessageLength ?? resolveGrpcMaxMessageLengthFromEnv();
-  const client = new grpc.Client(options.address, creds, {
-    "grpc.max_receive_message_length": maxLen,
-    "grpc.max_send_message_length": maxLen,
-  });
+  const client =
+    options.client ??
+    new grpc.Client(options.address, creds, {
+      "grpc.max_receive_message_length": maxLen,
+      "grpc.max_send_message_length": maxLen,
+    });
 
-  await new Promise<void>((resolve, reject) => {
-    client.waitForReady(Date.now() + (options.readyDeadlineMs ?? 15_000), (e) =>
-      e ? reject(e) : resolve()
-    );
-  });
+  if (ownsClient || options.readyDeadlineMs != null) {
+    await new Promise<void>((resolve, reject) => {
+      client.waitForReady(Date.now() + (options.readyDeadlineMs ?? 15_000), (e) =>
+        e ? reject(e) : resolve()
+      );
+    });
+  }
 
   const md = new grpc.Metadata();
   md.set("mcp-protocol-version", options.protocolVersion?.trim() || LATEST_PROTOCOL_VERSION);
@@ -123,13 +133,22 @@ async function callToolServerStreamingGrpcImpl(
   const deserialize = (buf: Buffer) => CallToolResponse.decode(buf);
 
   const decoded: protobuf.Message[] = [];
-  await new Promise<void>((resolve, reject) => {
-    const stream = client.makeServerStreamRequest(CALL_TOOL_METHOD, serialize, deserialize, {}, md);
-    stream.on("data", (msg: protobuf.Message) => decoded.push(msg));
-    stream.on("error", reject);
-    stream.on("end", () => resolve());
-  });
-  client.close();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const stream = client.makeServerStreamRequest(
+        CALL_TOOL_METHOD,
+        serialize,
+        deserialize,
+        {},
+        md
+      );
+      stream.on("data", (msg: protobuf.Message) => decoded.push(msg));
+      stream.on("error", reject);
+      stream.on("end", () => resolve());
+    });
+  } finally {
+    if (ownsClient) client.close();
+  }
 
   return decoded.map((msg) =>
     CallToolResponse.toObject(msg, { defaults: true, enums: String, longs: String })
@@ -193,6 +212,8 @@ export type ListToolsGrpcClientOptions = {
   credentials?: grpc.ChannelCredentials;
   readyDeadlineMs?: number;
   maxMessageLength?: number;
+  /** Reuse an existing client (caller owns lifecycle). */
+  client?: grpc.Client;
 };
 
 const LIST_TOOLS_METHOD = "/model_context_protocol.Mcp/ListTools";
@@ -238,18 +259,23 @@ async function listToolsUnaryGrpcImpl(
     ListToolsRequest.encode(ListToolsRequest.create(payload)).finish()
   );
 
+  const ownsClient = !options.client;
   const creds = options.credentials ?? grpc.credentials.createInsecure();
   const maxLen = options.maxMessageLength ?? resolveGrpcMaxMessageLengthFromEnv();
-  const client = new grpc.Client(options.address, creds, {
-    "grpc.max_receive_message_length": maxLen,
-    "grpc.max_send_message_length": maxLen,
-  });
+  const client =
+    options.client ??
+    new grpc.Client(options.address, creds, {
+      "grpc.max_receive_message_length": maxLen,
+      "grpc.max_send_message_length": maxLen,
+    });
 
-  await new Promise<void>((resolve, reject) => {
-    client.waitForReady(Date.now() + (options.readyDeadlineMs ?? 15_000), (e) =>
-      e ? reject(e) : resolve()
-    );
-  });
+  if (ownsClient || options.readyDeadlineMs != null) {
+    await new Promise<void>((resolve, reject) => {
+      client.waitForReady(Date.now() + (options.readyDeadlineMs ?? 15_000), (e) =>
+        e ? reject(e) : resolve()
+      );
+    });
+  }
 
   const md = new grpc.Metadata();
   md.set(
@@ -315,7 +341,7 @@ async function listToolsUnaryGrpcImpl(
         return tool;
       });
   } finally {
-    client.close();
+    if (ownsClient) client.close();
   }
 }
 
