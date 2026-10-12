@@ -4,18 +4,19 @@ Honest readout after merging spend-ledger → provider pricing → Decision-1 fl
 
 ## What shipped (structural)
 
-| Rung                                   | PR      | Status |
-| -------------------------------------- | ------- | ------ |
-| Spend-ledger `costSource=spend_ledger` | #1255   | Merged |
-| Provider/model token pricing           | #1267   | Merged |
-| Flip-rate `model` pin → Decision-1     | #1268   | Merged |
-| Held-out → fan-out + candidate report  | #1269   | Merged |
-| Operator fill via Actions marker       | this PR | Filled |
+| Rung                                      | PR      | Status                              |
+| ----------------------------------------- | ------- | ----------------------------------- |
+| Spend-ledger `costSource=spend_ledger`    | #1255   | Merged                              |
+| Provider/model token pricing              | #1267   | Merged                              |
+| Flip-rate `model` pin → Decision-1        | #1268   | Merged                              |
+| Held-out → fan-out + candidate report     | #1269   | Merged                              |
+| Operator fill via Actions marker          | #1273   | Filled (bulk; synonym flip vacated) |
+| Full flip-family remeasure + vacuous gate | this PR | Filled                              |
 
-## Live Decision-1 v0.4 candidate (Actions, keyed)
+## Live Decision-1 v0.4 candidate (Actions, keyed — full families)
 
 Artifact: [`decision1-v04-routing-candidate.json`](./decision1-v04-routing-candidate.json)  
-Source: workflow run filledAt `2026-10-11T19:27:22.240Z`, `flipFamilies=["synonym"]`, `openRouterKeyed=true`.
+Source: filledAt `2026-10-12T04:34:40.310Z`, `flipFamilies=["whitespace","case","punctuation","synonym"]`, `openRouterKeyed=true`.
 
 | Backend      | Answered | Correct | Wrong | Meets quality bar |
 | ------------ | -------- | ------- | ----- | ----------------- |
@@ -23,14 +24,15 @@ Source: workflow run filledAt `2026-10-11T19:27:22.240Z`, `flipFamilies=["synony
 | Decision-1   | 40/40    | 40      | 0     | **yes**           |
 
 - **Bulk recommendation:** `openrouter/microsoft/microsoft-decision-1` (first backend with maxWrong=0).
-- **Flip-rate (synonym):** passed — 40 cases, 0 flips, `maxFlipRate=0.1`.
+- **Flip-rate (full families):** **passed** — `totalPerturbations=200`, 0 flips, all 40 cases non-vacuous, `maxFlipRate=0.1`.
+- **Prior synonym-only #1273 cite vacated** (`totalPerturbations=0`).
 - **Verdict:** `productionTrustedClaim: false`, `calibratedClaim: false` (honesty rails held).
 
 ## What improved (obvious)
 
 - **Decision-1 clears the fan-out quality bar on labeled v0.4** (40/40 exact option-id) while local stub does not (6/8 answered).
-- **Flip-rate synonym pass** under the Decision-1 model pin — measurable remote candidate, not a trust light.
-- **Operator can compare backends with live spend + pricing** instead of only explicit `costPerCase`.
+- **Non-vacuous flip-rate pass** under Decision-1 model pin (200 comparable perturbations, 0 flips).
+- **Vacuous synonym passes fail closed** (`totalPerturbations === 0`).
 - **Honesty rails held**: remotes stay `productionTrustedClaim: false`; GLiNER2 remains the only path that can light trust.
 
 ## What did _not_ improve

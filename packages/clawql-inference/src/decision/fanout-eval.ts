@@ -530,6 +530,7 @@ function attachFlipRateToDisagreements(opts: {
             maxFlipRate: opts.flipRate.maxFlipRate ?? 0.1,
             families: opts.flipRate.families ?? [],
             caseCount: 1,
+            totalPerturbations: 0,
             passed: false,
             reports: [],
             traceId: "flip-rate-attach-error",

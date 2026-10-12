@@ -147,6 +147,28 @@ describe("flip-rate gate", () => {
     expect(result.reports[0]?.flipRate).toBeGreaterThan(0);
   });
 
+  it("fails closed when synonym-only yields zero comparable perturbations", async () => {
+    const result = await runFlipRate(
+      {
+        cases: [
+          {
+            caseId: "routing-no-synonym-hits",
+            state: "Find the operationId for refunds before calling anything.",
+            questions: caseBody.questions,
+            useSiteId: "search_provider_tool_routing",
+          },
+        ],
+        maxFlipRate: 0.1,
+        families: ["synonym"],
+      },
+      { decide: stableDecide }
+    );
+    expect(result.totalPerturbations).toBe(0);
+    expect(result.reports[0]?.perturbations).toBe(0);
+    expect(result.reports[0]?.passed).toBe(false);
+    expect(result.passed).toBe(false);
+  });
+
   it("POST /decision/flip-rate returns flip_rate shape", async () => {
     const app = express();
     app.use(express.json());

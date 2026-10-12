@@ -56,15 +56,17 @@ Families are deterministic (no RNG) so CI is reproducible.
 
 ## Metrics
 
-| Field           | Meaning                                                       |
-| --------------- | ------------------------------------------------------------- |
-| `baseline`      | Answer on original `state` (null if abstained)                |
-| `perturbations` | Count of applied transforms that produced a comparable answer |
-| `flips`         | Perturbations whose answer ≠ baseline                         |
-| `flipRate`      | `flips / perturbations` (0 when no comparable perturbations)  |
-| `passed`        | `flipRate <= maxFlipRate` and baseline answered               |
+| Field                | Meaning                                                                           |
+| -------------------- | --------------------------------------------------------------------------------- |
+| `baseline`           | Answer on original `state` (null if abstained)                                    |
+| `perturbations`      | Count of applied transforms that produced a comparable answer                     |
+| `flips`              | Perturbations whose answer ≠ baseline                                             |
+| `flipRate`           | `flips / perturbations` (0 when no comparable perturbations)                      |
+| `totalPerturbations` | Sum of per-case `perturbations`                                                   |
+| `passed` (case)      | baseline answered, `perturbations > 0`, and `flipRate <= maxFlipRate`             |
+| `passed` (suite)     | `totalPerturbations > 0` and every case passed (fail-closed; vacuous suites fail) |
 
-Suite-level `passed` requires every case passed (fail-closed).
+Suite-level `passed` requires every case passed **and** at least one comparable perturbation (fail-closed). Synonym-only on text that never hits the swap list is **not** a pass — use `whitespace`/`case`/`punctuation` for non-vacuous routing suites.
 
 ## Trust coupling
 

@@ -6,8 +6,9 @@
  *   OPENROUTER_API_KEY=… npx tsx scripts/run-decision1-v04-candidate.mts
  *   OUT=…/decision1-v04-routing-candidate.json npx tsx scripts/run-decision1-v04-candidate.mts
  *
- * Flip families default to synonym-only to bound OpenRouter spend on first fills.
- * Set CLAWQL_DECISION1_FLIP_FAMILIES=whitespace,case,punctuation,synonym for full suite.
+ * Flip families default to the full suite (whitespace,case,punctuation,synonym).
+ * Synonym-only is often vacuous on routing text (0 comparable perturbations).
+ * Override with CLAWQL_DECISION1_FLIP_FAMILIES=synonym only to bound spend knowingly.
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
@@ -34,8 +35,15 @@ const defaultOut = resolve(
   "packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/decision1-v04-routing-candidate.json"
 );
 
+const DEFAULT_DECISION1_FLIP_FAMILIES: readonly FlipRateFamily[] = [
+  "whitespace",
+  "case",
+  "punctuation",
+  "synonym",
+];
+
 function parseFamilies(raw: string | undefined): readonly FlipRateFamily[] {
-  if (!raw?.trim()) return ["synonym"];
+  if (!raw?.trim()) return DEFAULT_DECISION1_FLIP_FAMILIES;
   const allowed = new Set(["whitespace", "case", "punctuation", "synonym"]);
   const out: FlipRateFamily[] = [];
   for (const part of raw.split(",")) {
@@ -121,6 +129,7 @@ async function main(): Promise<void> {
           passed: artifact.flipRate.passed,
           skipped: artifact.flipRate.skipped ?? false,
           caseCount: artifact.flipRate.caseCount,
+          totalPerturbations: artifact.flipRate.totalPerturbations,
           backendId: artifact.flipRate.backendId,
         },
       },

@@ -37,6 +37,8 @@ export type Decision1CandidateReport = {
     readonly maxFlipRate: number;
     readonly passed: boolean;
     readonly caseCount: number;
+    /** Sum of comparable perturbations — 0 means the flip suite was vacuous. */
+    readonly totalPerturbations: number;
     readonly reports: FlipRateResponse["reports"];
     /** True when OpenRouter key missing / flip suite skipped (measure still emits). */
     readonly skipped?: boolean;
@@ -180,6 +182,10 @@ export function buildDecision1CandidateReport(
     const honesty: string[] = [...HONESTY];
     if (flipOrSkip.kind === "skipped") {
       honesty.push(`flip-rate skipped: ${flipOrSkip.reason}`);
+    } else if (flipOrSkip.flip.totalPerturbations === 0) {
+      honesty.push(
+        "flip-rate vacuous — 0 comparable perturbations (synonym-only often matches nothing on routing text; use whitespace,case,punctuation)"
+      );
     }
 
     const flipRateBlock: Decision1CandidateReport["flipRate"] =
@@ -190,6 +196,7 @@ export function buildDecision1CandidateReport(
             maxFlipRate: flipOrSkip.flip.maxFlipRate,
             passed: flipOrSkip.flip.passed,
             caseCount: flipOrSkip.flip.caseCount,
+            totalPerturbations: flipOrSkip.flip.totalPerturbations,
             reports: flipOrSkip.flip.reports,
           }
         : {
@@ -198,6 +205,7 @@ export function buildDecision1CandidateReport(
             maxFlipRate,
             passed: false,
             caseCount: flipCases.length,
+            totalPerturbations: 0,
             reports: [],
             skipped: true,
             skipReason: flipOrSkip.reason,
