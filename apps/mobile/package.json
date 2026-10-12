@@ -59,6 +59,12 @@
     "eas:submit:android": "eas submit --platform android --profile production --latest",
     "store:check": "node scripts/store-check.mjs",
     "local:ready": "node scripts/local-ready.mjs",
-    "local:web-export": "EXPO_PUBLIC_CLAWQL_FIXTURE=1 expo export --platform web --output-dir dist-web"
+    "local:web-export": "EXPO_PUBLIC_CLAWQL_FIXTURE=1 expo export --platform web --output-dir dist-web",
+    "perf:lab": "node scripts/perf-lab.mjs",
+    "perf:assert": "node scripts/perf-assert.mjs",
+    "perf:bundle": "node scripts/perf-bundle.mjs",
+    "perf:runtime": "node scripts/perf-runtime.mjs",
+    "perf:android": "node scripts/perf-android.mjs",
+    "perf:ios": "node scripts/perf-ios.mjs"
   }
 }

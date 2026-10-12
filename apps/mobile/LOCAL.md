@@ -63,3 +63,13 @@ npm run local:ready
 ```
 
 Runs typecheck, vitest, and confirms fixture defaults — exit 0 means you can keep iterating without store signup.
+
+## Performance (Lighthouse equivalents)
+
+```bash
+npm run perf:lab       # bundle (web/ios/android) + LH mobile + CPU flame + assert
+npm run perf:android   # Flashlight on a connected Android device
+npm run perf:ios       # Instruments / RN DevTools runbook
+```
+
+Details and artifact map: [`PERFORMANCE.md`](PERFORMANCE.md). Lab output lands in `perf/out/` (open `cpu-profile.cpuprofile` in [speedscope.app](https://www.speedscope.app)).

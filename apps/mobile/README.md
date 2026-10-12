@@ -51,6 +51,18 @@ npm run store:check   # in-repo App Store / Play packaging preflight
 npm run maestro
 ```
 
+## Performance
+
+There is no single “Lighthouse for iOS/Android.” We use:
+
+| Command | Role |
+| ------- | ---- |
+| `npm run perf:lab` | CI/lab: export sizes + Lighthouse mobile (web proxy) + Chrome CPU **flame** + timing gates |
+| `npm run perf:android` | Device: Flashlight FPS/CPU/RAM (needs adb) |
+| `npm run perf:ios` | Device/sim: Instruments + RN DevTools runbook |
+
+See [`PERFORMANCE.md`](PERFORMANCE.md).
+
 Day-0 human checklist: [`store/DAY0-CHECKLIST.md`](store/DAY0-CHECKLIST.md).
 
 ## Store path (no D-U-N-S yet)

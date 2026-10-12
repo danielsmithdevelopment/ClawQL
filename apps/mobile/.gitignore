@@ -7,7 +7,9 @@ node_modules/
 .expo/
 dist/
 dist-web/
+dist-perf-*/
 web-build/
+perf/out/
 expo-env.d.ts
 
 # Native
