@@ -22,7 +22,12 @@ Screens use **`@expo/ui`** universal components (`Host` + Material 3 / SwiftUI) 
 
 | Surface | Local without signup |
 | ------- | -------------------- |
-| Home queue + spend + recent activity | ✅ fixtures |
+| Home queue + org card + spend + recent activity | ✅ fixtures |
+| Spend by agent | ✅ |
+| Agents roster (status / spend / waiting) | ✅ |
+| Morning digest preview | ✅ |
+| Approval policies (list + detail) | ✅ read-only |
+| Seeded decided archive (Activity drill-in) | ✅ |
 | Review filters (change / source / decision / skill) | ✅ |
 | Approve with simulated NFC (fixture session) | ✅ no YubiKey needed |
 | Approve with reviewer-demo biometrics | ✅ |

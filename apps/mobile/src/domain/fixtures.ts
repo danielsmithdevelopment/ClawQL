@@ -1,9 +1,14 @@
 import type {
   ActivityEvent,
+  AgentSummary,
+  ApprovalPolicy,
+  ApprovalPolicyDetail,
   ConnectedApp,
   DeviceSession,
   HomeSpend,
+  MorningDigest,
   NotificationPrefs,
+  OrgSummary,
   ReviewItem,
   SecurityKey,
   MobileSession,
@@ -129,11 +134,211 @@ export const FIXTURE_REVIEW_ITEMS: readonly ReviewItem[] = [
   },
 ];
 
+export const FIXTURE_ORG: OrgSummary = {
+  orgId: "org_acme",
+  name: "Acme",
+  plan: "Team",
+  role: "Approver",
+  members: "12 people · 4 agents",
+};
+
 export const FIXTURE_SPEND: HomeSpend = {
   label: "Today's spend",
   amount: "$128.40",
   note: "Across 3 agents · budget $500/day",
+  budget: "$500/day",
+  lines: [
+    { agent: "legal-ops", amount: "$62.10", note: "CRM amendments · 14 runs" },
+    { agent: "ticket-triage", amount: "$41.20", note: "Support decisions · 38 runs" },
+    { agent: "crm-sync", amount: "$25.10", note: "Contact merges · 6 runs" },
+  ],
 };
+
+export const FIXTURE_AGENTS: readonly AgentSummary[] = [
+  {
+    id: "agent_legal",
+    name: "legal-ops",
+    role: "CRM contract amendments",
+    status: "needs_you",
+    statusLabel: "1 waiting on you",
+    lastRun: "4 min ago",
+    spendToday: "$62.10",
+    waiting: 1,
+  },
+  {
+    id: "agent_triage",
+    name: "ticket-triage",
+    role: "Support decisions",
+    status: "active",
+    statusLabel: "Running",
+    lastRun: "Just now",
+    spendToday: "$41.20",
+  },
+  {
+    id: "agent_crm",
+    name: "crm-sync",
+    role: "Contact merges",
+    status: "paused",
+    statusLabel: "Paused overnight",
+    lastRun: "Last night",
+    spendToday: "$25.10",
+  },
+  {
+    id: "agent_support",
+    name: "support-bot",
+    role: "Source proposals",
+    status: "active",
+    statusLabel: "Idle · awaiting work",
+    lastRun: "1h ago",
+    spendToday: "$0.00",
+  },
+];
+
+export const FIXTURE_DIGEST: MorningDigest = {
+  headline: "Overnight from your agents",
+  whenLabel: "Today · 7:00 AM digest",
+  summary: "3 agents ran · 2 decisions answered · 1 source approved · $38.20 overnight spend",
+  awaitingYou: 4,
+  items: [
+    {
+      id: "dig_1",
+      title: "ticket-triage answered 12 tickets",
+      detail: "Refund vs billing · no escalations left open",
+      tone: "ok",
+    },
+    {
+      id: "dig_2",
+      title: "legal-ops paused on a contract write",
+      detail: "adjust_contract_value · waiting on Contract approvers",
+      tone: "warn",
+    },
+    {
+      id: "dig_3",
+      title: "support-bot proposed Linear",
+      detail: "Approved earlier · digest a91c…",
+      tone: "ok",
+    },
+    {
+      id: "dig_4",
+      title: "crm-sync hit spend caution",
+      detail: "Approaching 60% of daily budget before noon",
+      tone: "neutral",
+    },
+  ],
+};
+
+export const FIXTURE_POLICIES: readonly ApprovalPolicy[] = [
+  {
+    id: "pol_contracts",
+    when: "Writes to contracts",
+    whenDetail: "MEDIUM risk, CRM",
+    who: "Contract approvers",
+    approvals: "1",
+    securityKey: "Required",
+    waits: "30 minutes",
+  },
+  {
+    id: "pol_writes",
+    when: "Any other write",
+    whenDetail: "Every connection",
+    who: "Admins",
+    approvals: "1",
+    securityKey: "Required",
+    waits: "30 minutes",
+  },
+  {
+    id: "pol_sources",
+    when: "New sources from agents",
+    whenDetail: "",
+    who: "Source approvers",
+    approvals: "1",
+    securityKey: "Required",
+    waits: "No limit",
+  },
+  {
+    id: "pol_skill_write",
+    when: "Skill promotions that write",
+    whenDetail: "",
+    who: "Approvers for what it writes",
+    approvals: "1",
+    securityKey: "Required",
+    waits: "No limit",
+  },
+  {
+    id: "pol_triage",
+    when: "ticket-triage decisions",
+    whenDetail: "",
+    who: "Support group",
+    approvals: "1",
+    securityKey: "Not needed",
+    waits: "Until answered",
+  },
+  {
+    id: "pol_block",
+    when: "Deletes and payments",
+    whenDetail: "",
+    who: "Always blocked",
+    approvals: "—",
+    securityKey: "—",
+    waits: "—",
+    blocked: true,
+    blockedNote:
+      "No one can approve these for an agent. Allowlist a single operation in Connections if you must.",
+  },
+];
+
+export const FIXTURE_POLICY_DETAIL: ApprovalPolicyDetail = {
+  id: "pol_contracts",
+  title: "Writes to contracts",
+  lastChanged: "Last changed by Dana Reyes, Sep 14.",
+  appliesTo: "MEDIUM-risk writes on CRM contracts",
+  appliesHelp: "Covers 6 operations, including adjust_contract_value.",
+  whoApproves: "Contract approvers (2 people)",
+  whoHelp: "Dana Reyes, Marcus Lee. Managed in Team.",
+  approvalsNeeded: "1",
+  expiresAfter: "30 minutes",
+  expiresHelp: "Expired requests close without changing anything.",
+  requireSecurityKey: true,
+  notify: "Phone push, Slack",
+};
+
+/** Seed archive so Activity / Home drill-in works before any new decisions. */
+export const FIXTURE_DECIDED: readonly ReviewItem[] = [
+  {
+    id: "rev_source_prior",
+    kind: "source",
+    kindLabel: "NEW SOURCE",
+    title: "Add the Linear API",
+    badge: "Approved",
+    badgeTone: "ok",
+    listMeta: "support-bot · decided earlier today",
+    statusLine: "Approved with security key",
+    statusTone: "ok",
+    decidedAtMs: Date.now() - 3_600_000,
+    decidedStatus: "approve",
+    digest: "a91c…e4f2",
+  },
+  {
+    id: "rev_decision_prior",
+    kind: "decision",
+    kindLabel: "DECISION",
+    title: "Billing question or refund request?",
+    badge: "Answered",
+    badgeTone: "ok",
+    listMeta: "ticket-triage · Support group",
+    statusLine: "Refund request",
+    statusTone: "ok",
+    decidedAtMs: Date.now() - 7_200_000,
+    decidedStatus: "answer",
+    decisionSite: "ticket-triage",
+    decisionQuote: 'Ticket #48102: "Can I get October refunded?"',
+    decisionChoices: [
+      { label: "Billing question", score: "0.41" },
+      { label: "Refund request", score: "0.52" },
+      { label: "Other", score: "0.07" },
+    ],
+  },
+];
 
 export const FIXTURE_KEYS: readonly SecurityKey[] = [
   {

@@ -36,9 +36,37 @@ await shot("01-sign-in.png");
 
 await page.getByTestId("sign-in-fixture").click();
 await page.getByTestId("home-spend").waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("home-org").waitFor({ state: "visible", timeout: 15000 });
 await page.getByText("$128.40").waitFor({ state: "visible" });
 await page.waitForTimeout(1600);
 await shot("02-home.png");
+
+await page.getByTestId("home-open-spend").click();
+await page.getByTestId("spend-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.waitForTimeout(1000);
+await shot("02b-spend.png");
+await page.evaluate(() => {
+  window.location.assign("/");
+});
+await page.getByTestId("home-spend").waitFor({ state: "visible", timeout: 15000 });
+
+await page.getByTestId("home-open-agents").click();
+await page.getByTestId("agents-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.waitForTimeout(1000);
+await shot("02c-agents.png");
+await page.evaluate(() => {
+  window.location.assign("/");
+});
+await page.getByTestId("home-spend").waitFor({ state: "visible", timeout: 15000 });
+
+await page.getByTestId("home-open-digest").click();
+await page.getByTestId("digest-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.waitForTimeout(1000);
+await shot("02d-digest.png");
+await page.evaluate(() => {
+  window.location.assign("/");
+});
+await page.getByTestId("home-spend").waitFor({ state: "visible", timeout: 15000 });
 
 await page.getByTestId("tab-review").first().click();
 await page.getByTestId("review-item-rev_change").first().waitFor({ state: "visible", timeout: 15000 });
@@ -62,6 +90,17 @@ await page
 await page.waitForTimeout(1000);
 await shot("03b-review-after-decline.png");
 
+await page.evaluate(() => {
+  window.location.assign("/activity");
+});
+await page.getByTestId("activity-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.waitForTimeout(1000);
+await shot("04b-activity.png");
+await page.getByTestId("activity-event-act_seed_1").first().click();
+await page.getByTestId("review-decided-banner").waitFor({ state: "visible", timeout: 15000 });
+await page.waitForTimeout(1200);
+await shot("04c-archive-detail.png");
+
 // Client-side route (localStorage session survives). Avoids flaky hidden duplicate tab nodes.
 await page.evaluate(() => {
   window.location.assign("/profile");
@@ -69,6 +108,15 @@ await page.evaluate(() => {
 await page.getByTestId("profile-security-keys").waitFor({ state: "visible", timeout: 15000 });
 await page.waitForTimeout(1600);
 await shot("05-profile.png");
+
+await page.getByTestId("profile-open-policies").click();
+await page.getByTestId("policies-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.waitForTimeout(1000);
+await shot("06-policies.png");
+await page.getByTestId("policy-pol_contracts").click();
+await page.getByTestId("policy-detail-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.waitForTimeout(1200);
+await shot("07-policy-detail.png");
 
 await context.close();
 await browser.close();

@@ -106,12 +106,91 @@ export const ActivityListResponse = Schema.Struct({
 });
 export type ActivityListResponse = Schema.Schema.Type<typeof ActivityListResponse>;
 
+export const SpendLine = Schema.Struct({
+  agent: Schema.String,
+  amount: Schema.String,
+  note: Schema.String,
+});
+export type SpendLine = Schema.Schema.Type<typeof SpendLine>;
+
 export const HomeSpend = Schema.Struct({
   label: Schema.String,
   amount: Schema.String,
   note: Schema.String,
+  budget: Schema.optional(Schema.String),
+  lines: Schema.optional(Schema.Array(SpendLine)),
 });
 export type HomeSpend = Schema.Schema.Type<typeof HomeSpend>;
+
+export const ApprovalPolicy = Schema.Struct({
+  id: Schema.String,
+  when: Schema.String,
+  whenDetail: Schema.String,
+  who: Schema.String,
+  approvals: Schema.String,
+  securityKey: Schema.String,
+  waits: Schema.String,
+  blocked: Schema.optional(Schema.Boolean),
+  blockedNote: Schema.optional(Schema.String),
+});
+export type ApprovalPolicy = Schema.Schema.Type<typeof ApprovalPolicy>;
+
+export const ApprovalPolicyDetail = Schema.Struct({
+  id: Schema.String,
+  title: Schema.String,
+  lastChanged: Schema.String,
+  appliesTo: Schema.String,
+  appliesHelp: Schema.String,
+  whoApproves: Schema.String,
+  whoHelp: Schema.String,
+  approvalsNeeded: Schema.String,
+  expiresAfter: Schema.String,
+  expiresHelp: Schema.String,
+  requireSecurityKey: Schema.Boolean,
+  notify: Schema.String,
+});
+export type ApprovalPolicyDetail = Schema.Schema.Type<typeof ApprovalPolicyDetail>;
+
+export const OrgSummary = Schema.Struct({
+  orgId: Schema.String,
+  name: Schema.String,
+  plan: Schema.String,
+  role: Schema.String,
+  members: Schema.String,
+});
+export type OrgSummary = Schema.Schema.Type<typeof OrgSummary>;
+
+export const DigestItem = Schema.Struct({
+  id: Schema.String,
+  title: Schema.String,
+  detail: Schema.String,
+  tone: BadgeTone,
+});
+export type DigestItem = Schema.Schema.Type<typeof DigestItem>;
+
+export const MorningDigest = Schema.Struct({
+  headline: Schema.String,
+  whenLabel: Schema.String,
+  summary: Schema.String,
+  items: Schema.Array(DigestItem),
+  awaitingYou: Schema.Number,
+});
+export type MorningDigest = Schema.Schema.Type<typeof MorningDigest>;
+
+export const AgentStatus = Schema.Literals(["active", "paused", "needs_you"]);
+export type AgentStatus = Schema.Schema.Type<typeof AgentStatus>;
+
+export const AgentSummary = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  role: Schema.String,
+  status: AgentStatus,
+  statusLabel: Schema.String,
+  lastRun: Schema.String,
+  spendToday: Schema.String,
+  waiting: Schema.optional(Schema.Number),
+});
+export type AgentSummary = Schema.Schema.Type<typeof AgentSummary>;
 
 export const SecurityKey = Schema.Struct({
   id: Schema.String,

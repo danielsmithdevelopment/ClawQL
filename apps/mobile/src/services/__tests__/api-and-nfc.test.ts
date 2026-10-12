@@ -6,9 +6,13 @@ import {
   decideReviewEffect,
   deleteAccountEffect,
   endOtherDeviceSessionsEffect,
+  getMorningDigestEffect,
+  getPolicyDetailEffect,
   getReviewByIdEffect,
   listActivityEffect,
+  listAgentsEffect,
   listDeviceSessionsEffect,
+  listPoliciesEffect,
   listReviewEffect,
   pendingReviewCountEffect,
   resetFixtureStateEffect,
@@ -99,6 +103,34 @@ describe("mobile API fixture mode", () => {
     );
     expect(archived?.decidedStatus).toBe("decline");
     expect(archived?.decidedAtMs).toBeTypeOf("number");
+  });
+
+  it("seeds decided archive so Activity drill-in works offline", async () => {
+    const prior = await Effect.runPromise(
+      getReviewByIdEffect(FIXTURE_SESSION, "rev_source_prior")
+    );
+    expect(prior?.decidedStatus).toBe("approve");
+    expect(prior?.kind).toBe("source");
+  });
+
+  it("lists approval policies and detail", async () => {
+    const policies = await Effect.runPromise(listPoliciesEffect(FIXTURE_SESSION));
+    expect(policies.length).toBeGreaterThan(3);
+    expect(policies.some((p) => p.blocked)).toBe(true);
+    const detail = await Effect.runPromise(
+      getPolicyDetailEffect(FIXTURE_SESSION, "pol_contracts")
+    );
+    expect(detail?.requireSecurityKey).toBe(true);
+    expect(detail?.title).toMatch(/contracts/i);
+  });
+
+  it("lists agents and morning digest fixtures", async () => {
+    const agents = await Effect.runPromise(listAgentsEffect(FIXTURE_SESSION));
+    expect(agents.some((a) => a.status === "needs_you")).toBe(true);
+    expect(agents.length).toBeGreaterThanOrEqual(3);
+    const digest = await Effect.runPromise(getMorningDigestEffect(FIXTURE_SESSION));
+    expect(digest.awaitingYou).toBeGreaterThan(0);
+    expect(digest.items.length).toBeGreaterThan(2);
   });
 
   it("ends other device sessions", async () => {

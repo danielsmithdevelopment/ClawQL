@@ -6,10 +6,16 @@ import { Context, Data, Effect, Layer, Ref } from "effect";
 
 import {
   FIXTURE_ACTIVITY,
+  FIXTURE_AGENTS,
   FIXTURE_CONNECTED_APPS,
+  FIXTURE_DECIDED,
   FIXTURE_DEVICE_SESSIONS,
+  FIXTURE_DIGEST,
   FIXTURE_KEYS,
   FIXTURE_NOTIFICATION_PREFS,
+  FIXTURE_ORG,
+  FIXTURE_POLICIES,
+  FIXTURE_POLICY_DETAIL,
   FIXTURE_REVIEW_ITEMS,
   FIXTURE_SPEND,
 } from "../domain/fixtures";
@@ -17,10 +23,15 @@ import {
   AccountDeletionResult,
   ActivityEvent,
   ActivityListResponse,
+  AgentSummary,
+  ApprovalPolicy,
+  ApprovalPolicyDetail,
   ConnectedApp,
   DeviceSession,
   HomeSpend,
+  MorningDigest,
   NotificationPrefs,
+  OrgSummary,
   ReviewDecision,
   ReviewItem,
   ReviewKind,
@@ -49,7 +60,7 @@ type MutableState = {
 
 const stateRef = Ref.makeUnsafe<MutableState>({
   items: [...FIXTURE_REVIEW_ITEMS],
-  decided: [],
+  decided: [...FIXTURE_DECIDED],
   connectedApps: [...FIXTURE_CONNECTED_APPS],
   notificationPrefs: { ...FIXTURE_NOTIFICATION_PREFS },
   activity: [...FIXTURE_ACTIVITY],
@@ -424,11 +435,91 @@ export function deleteAccountEffect(
   });
 }
 
+export function listPoliciesEffect(
+  session: MobileSession
+): Effect.Effect<readonly ApprovalPolicy[], MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return FIXTURE_POLICIES;
+    }
+    // Live: policies remain console-authored; phone shows fixture-shaped empty until API lands.
+    return FIXTURE_POLICIES;
+  });
+}
+
+export function getPolicyDetailEffect(
+  session: MobileSession,
+  id: string
+): Effect.Effect<ApprovalPolicyDetail | null, MobileApiError> {
+  return Effect.gen(function* () {
+    yield* Effect.void;
+    void session;
+    if (id === FIXTURE_POLICY_DETAIL.id) return FIXTURE_POLICY_DETAIL;
+    const row = FIXTURE_POLICIES.find((p) => p.id === id);
+    if (!row) return null;
+    return {
+      id: row.id,
+      title: row.when,
+      lastChanged: "Managed in the web console.",
+      appliesTo: row.whenDetail || row.when,
+      appliesHelp: row.blockedNote ?? "Phone shows a summary; edit policies on the console.",
+      whoApproves: row.who,
+      whoHelp: row.blocked ? "No approvers — always blocked." : `Approvals needed: ${row.approvals}.`,
+      approvalsNeeded: row.approvals,
+      expiresAfter: row.waits,
+      expiresHelp: row.securityKey === "Required" ? "Security key required to approve." : "No security key required.",
+      requireSecurityKey: row.securityKey === "Required",
+      notify: "Phone push, Slack",
+    } satisfies ApprovalPolicyDetail;
+  });
+}
+
+export function getOrgSummaryEffect(
+  session: MobileSession
+): Effect.Effect<OrgSummary, MobileApiError> {
+  return Effect.sync(() =>
+    session.orgId === FIXTURE_ORG.orgId
+      ? FIXTURE_ORG
+      : {
+          orgId: session.orgId,
+          name: session.orgId.replace(/^org_/, "").replace(/_/g, " "),
+          plan: session.reviewerDemo ? "Reviewer demo" : "Team",
+          role: session.role,
+          members: "—",
+        }
+  );
+}
+
+export function listAgentsEffect(
+  session: MobileSession
+): Effect.Effect<readonly AgentSummary[], MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return FIXTURE_AGENTS;
+    }
+    return FIXTURE_AGENTS;
+  });
+}
+
+export function getMorningDigestEffect(
+  session: MobileSession
+): Effect.Effect<MorningDigest, MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return FIXTURE_DIGEST;
+    }
+    return FIXTURE_DIGEST;
+  });
+}
+
 /** Test helper — reset fixture queue between Maestro / unit runs. */
 export function resetFixtureStateEffect(): Effect.Effect<void> {
   return Ref.set(stateRef, {
     items: [...FIXTURE_REVIEW_ITEMS],
-    decided: [],
+    decided: [...FIXTURE_DECIDED],
     connectedApps: [...FIXTURE_CONNECTED_APPS],
     notificationPrefs: { ...FIXTURE_NOTIFICATION_PREFS },
     activity: [...FIXTURE_ACTIVITY],
@@ -476,6 +567,12 @@ export class MobileApi extends Context.Service<
     readonly getHomeSpend: (
       session: MobileSession
     ) => Effect.Effect<HomeSpend, MobileApiError>;
+    readonly listAgents: (
+      session: MobileSession
+    ) => Effect.Effect<readonly AgentSummary[], MobileApiError>;
+    readonly getMorningDigest: (
+      session: MobileSession
+    ) => Effect.Effect<MorningDigest, MobileApiError>;
     readonly listSecurityKeys: (
       session: MobileSession
     ) => Effect.Effect<readonly SecurityKey[], MobileApiError>;
@@ -508,6 +605,8 @@ export const MobileApiLive = Layer.succeed(MobileApi, {
   listDeviceSessions: listDeviceSessionsEffect,
   endOtherDeviceSessions: endOtherDeviceSessionsEffect,
   getHomeSpend: getHomeSpendEffect,
+  listAgents: listAgentsEffect,
+  getMorningDigest: getMorningDigestEffect,
   listSecurityKeys: listSecurityKeysEffect,
   listConnectedApps: listConnectedAppsEffect,
   revokeConnectedApp: revokeConnectedAppEffect,

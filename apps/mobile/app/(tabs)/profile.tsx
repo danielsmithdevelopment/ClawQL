@@ -262,9 +262,29 @@ export default function ProfileScreen() {
             </FieldGroup.Section>
           </FieldGroup>
 
+          <SurfaceCard testID="profile-policies">
+            <Subtitle>Approval policies</Subtitle>
+            <Meta>What waits on a person — read-only on phone.</Meta>
+            <SecondaryButton
+              testID="profile-open-policies"
+              label="View policies"
+              onPress={() => router.push("/policies")}
+            />
+          </SurfaceCard>
+
+          <SurfaceCard testID="profile-digest">
+            <Subtitle>Morning digest</Subtitle>
+            <Meta>What your agents did overnight — same story as the email/Slack digest.</Meta>
+            <SecondaryButton
+              testID="profile-open-digest"
+              label="Preview digest"
+              onPress={() => router.push("/digest")}
+            />
+          </SurfaceCard>
+
           <SurfaceCard>
             <Subtitle>Everything else</Subtitle>
-            <Meta>Policies, spend, gateways, and team live in the web console.</Meta>
+            <Meta>Gateways, billing, and team live in the web console.</Meta>
             <SecondaryButton
               testID="open-console"
               label="Open web console"

@@ -3,8 +3,10 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 
 import type { ActivityEvent, HomeSpend, ReviewItem } from "@/src/domain/schemas";
+import type { OrgSummary } from "@/src/domain/schemas";
 import {
   getHomeSpendEffect,
+  getOrgSummaryEffect,
   listActivityEffect,
   listReviewEffect,
 } from "@/src/services/api";
@@ -40,6 +42,7 @@ export default function HomeScreen() {
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [spend, setSpend] = useState<HomeSpend | null>(null);
+  const [org, setOrg] = useState<OrgSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pushNote, setPushNote] = useState<string | null>(null);
@@ -49,14 +52,16 @@ export default function HomeScreen() {
     if (!session) return;
     setError(null);
     try {
-      const [review, spendRes, activityRes] = await Promise.all([
+      const [review, spendRes, activityRes, orgRes] = await Promise.all([
         Effect.runPromise(listReviewEffect(session)),
         Effect.runPromise(getHomeSpendEffect(session)),
         Effect.runPromise(listActivityEffect(session)),
+        Effect.runPromise(getOrgSummaryEffect(session)),
       ]);
       setItems([...review.items]);
       setSpend(spendRes);
       setActivity([...activityRes.events].slice(0, 5));
+      setOrg(orgRes);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -91,11 +96,32 @@ export default function HomeScreen() {
           <Meta>
             {`Signed in as ${session.displayName}${session.reviewerDemo ? " · reviewer demo" : ""}`}
           </Meta>
+          {org ? (
+            <SurfaceCard testID="home-org">
+              <Subtitle>{org.name}</Subtitle>
+              <Meta>{`${org.plan} · ${org.role} · ${org.members}`}</Meta>
+            </SurfaceCard>
+          ) : null}
           {spend ? (
             <SurfaceCard testID="home-spend">
               <Subtitle>{spend.label}</Subtitle>
               <Title>{spend.amount}</Title>
               <Meta>{spend.note}</Meta>
+              <SecondaryButton
+                testID="home-open-spend"
+                label="See spend by agent"
+                onPress={() => router.push("/spend")}
+              />
+              <SecondaryButton
+                testID="home-open-agents"
+                label="Your agents"
+                onPress={() => router.push("/agents")}
+              />
+              <SecondaryButton
+                testID="home-open-digest"
+                label="Morning digest"
+                onPress={() => router.push("/digest")}
+              />
             </SurfaceCard>
           ) : null}
           <Subtitle>Needs action</Subtitle>

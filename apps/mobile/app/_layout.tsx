@@ -85,6 +85,11 @@ function RootNavigator() {
       <Stack.Screen name="sign-in" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="review/[id]" options={{ title: "Request" }} />
+      <Stack.Screen name="policies/index" options={{ title: "Policies" }} />
+      <Stack.Screen name="policies/[id]" options={{ title: "Policy" }} />
+      <Stack.Screen name="spend" options={{ title: "Spend" }} />
+      <Stack.Screen name="agents" options={{ title: "Agents" }} />
+      <Stack.Screen name="digest" options={{ title: "Morning digest" }} />
     </Stack>
   );
 }
