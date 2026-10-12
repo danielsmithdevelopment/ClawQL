@@ -64,6 +64,19 @@ npm run perf:ios   # writes perf/out/ios-instruments-RUNBOOK.md
 2. **Native flame:** `expo prebuild` → Xcode → Product → Profile → **Time Profiler** (needs Apple toolchain; not Expo Go).
 3. Overlay: Developer menu → Performance monitor (UI/JS FPS + JS heap).
 
+## Baseline (lab, 2026-10-12)
+
+| Signal | Value |
+| ------ | ----- |
+| Web JS | ~3.6 MB |
+| iOS Hermes `.hbc` | ~6.7 MB |
+| Android Hermes `.hbc` | ~6.8 MB |
+| Lighthouse mobile Performance | ~0.84 |
+| Fixture sign-in → home | ~100 ms |
+| CPU profile | `perf/out/cpu-profile.cpuprofile` → speedscope |
+
+Largest **assets** (not Hermes): Material Symbols TTF ~948 KB, Material Icons TTF ~348 KB. First weight win is subsetting or dropping the unused icon font on platforms that already use SF Symbols / XML material-symbols.
+
 ## Optimization checklist (when lab or device scores regress)
 
 1. Speedscope / Instruments — who owns the wide flame stacks?

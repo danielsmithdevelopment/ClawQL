@@ -1,0 +1,107 @@
+{
+  "measuredAt": "2026-10-12T05:17:54.594Z",
+  "bundle": {
+    "web": {
+      "jsKb": 3631,
+      "totalKb": 5416
+    },
+    "ios": {
+      "jsKb": 6746,
+      "totalKb": 7210
+    },
+    "android": {
+      "jsKb": 6820,
+      "totalKb": 8241
+    }
+  },
+  "timings": {
+    "signInPaintMs": 701,
+    "signInToHomeMs": 96,
+    "homeToReviewMs": 56,
+    "reviewOpenDetailMs": 65
+  },
+  "lighthouse": {
+    "performance": 0.84,
+    "accessibility": 0.93,
+    "bestPractices": 0.96,
+    "seo": 0.8,
+    "audits": {
+      "fcp": 636.95465,
+      "lcp": 909.9093,
+      "tbt": 638,
+      "cls": 0,
+      "si": 1579.666698992799,
+      "interactive": 6197.909300000001
+    }
+  },
+  "cpuProfile": {
+    "path": "perf/out/cpu-profile.cpuprofile",
+    "nodes": 11454,
+    "samples": 15091,
+    "startTime": 9214967189,
+    "endTime": 9217219658,
+    "durationMs": 2252,
+    "topFunctions": [
+      {
+        "fn": "(idle)",
+        "url": "",
+        "samples": 11433
+      },
+      {
+        "fn": "(program)",
+        "url": "",
+        "samples": 482
+      },
+      {
+        "fn": "g",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-5c3aa03cf467d6125f3f07ed62f67c0a.js",
+        "samples": 477
+      },
+      {
+        "fn": "(anonymous)",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-5c3aa03cf467d6125f3f07ed62f67c0a.js",
+        "samples": 472
+      },
+      {
+        "fn": "Yi",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-5c3aa03cf467d6125f3f07ed62f67c0a.js",
+        "samples": 283
+      },
+      {
+        "fn": "as",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-5c3aa03cf467d6125f3f07ed62f67c0a.js",
+        "samples": 278
+      },
+      {
+        "fn": "us",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-5c3aa03cf467d6125f3f07ed62f67c0a.js",
+        "samples": 202
+      },
+      {
+        "fn": "Es",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-5c3aa03cf467d6125f3f07ed62f67c0a.js",
+        "samples": 94
+      },
+      {
+        "fn": "cs",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-5c3aa03cf467d6125f3f07ed62f67c0a.js",
+        "samples": 94
+      },
+      {
+        "fn": "(garbage collector)",
+        "url": "",
+        "samples": 79
+      },
+      {
+        "fn": "co",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-5c3aa03cf467d6125f3f07ed62f67c0a.js",
+        "samples": 51
+      },
+      {
+        "fn": "s",
+        "url": "p://127.0.0.1:8091/_expo/static/js/web/entry-5c3aa03cf467d6125f3f07ed62f67c0a.js",
+        "samples": 49
+      }
+    ]
+  }
+}

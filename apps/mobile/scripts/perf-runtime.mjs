@@ -190,6 +190,16 @@ export async function measureRuntime({
 
   if (child) {
     child.kill("SIGTERM");
+    await new Promise((resolve) => {
+      const t = setTimeout(() => {
+        child.kill("SIGKILL");
+        resolve();
+      }, 2000);
+      child.once("exit", () => {
+        clearTimeout(t);
+        resolve();
+      });
+    });
   }
 
   const nodes = cpuProfile?.nodes?.length ?? 0;

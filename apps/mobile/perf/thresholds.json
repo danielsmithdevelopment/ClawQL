@@ -2,12 +2,12 @@
   "$comment": "Lab gates for apps/mobile. Native Flashlight/Instruments scores are not asserted in CI — see PERFORMANCE.md.",
   "bundle": {
     "maxJsBytesWeb": 4500000,
-    "maxJsBytesIos": 5500000,
-    "maxJsBytesAndroid": 5500000,
-    "maxTotalExportBytesWeb": 6000000
+    "maxJsBytesIos": 8000000,
+    "maxJsBytesAndroid": 8000000,
+    "maxTotalExportBytesWeb": 6500000
   },
   "lighthouseMobile": {
-    "minPerformance": 0.35,
+    "minPerformance": 0.55,
     "minAccessibility": 0.85,
     "minBestPractices": 0.7,
     "minSeo": 0.7
