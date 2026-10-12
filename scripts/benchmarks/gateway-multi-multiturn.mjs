@@ -35,7 +35,7 @@
  *
  * Env:
  *   MT_TURNS (default 12)  MT_ITERS (default 1)  CATALOG_TOOL_COUNT (default 40)
- *   MT_ARMS=direct,clawql,clawql_bun,executor,mcpjungle,agentgateway
+ *   MT_ARMS=direct,clawql,clawql_bun,clawql_http,executor,mcpjungle,agentgateway
  *   MT_LIMIT (rows per turn, default 25)
  *   MT_OUT (default gateway-multi-multiturn.json)
  *   MT_PROGRESS_EVERY (default 100)  BUN_BIN  MT_INCLUDE_CF=1
@@ -43,6 +43,8 @@
  * `direct` = no MCP gateway — raw HTTP GETs to the equal-arm catalog mock.
  * Layer1 tokens = 0 (no tools/list); Layer2 = fat JSON body. Use it to price
  * each gateway's token savings vs latency/RSS cost.
+ * `clawql_http` = same search+execute+projection over Streamable HTTP
+ * (`dist/server-http.js`) — equal transport for Executor v2 HTTP compares.
  *
  * Note: do NOT put a hand-written slim-return program on the publish board as
  * "Executor". That is not gateway projection and contradicts the settled blog.
@@ -242,34 +244,116 @@ function readTreeRssMb(rootPid) {
   return any ? Number(sum.toFixed(2)) : null;
 }
 
+function analyzeRssTrend(series) {
+  if (!series?.length) {
+    return { classification: "unknown", reason: "no samples" };
+  }
+  const vals = series.map((s) => s.rss_mb);
+  const n = vals.length;
+  const early = vals.slice(0, Math.max(1, Math.floor(n * 0.2)));
+  const late = vals.slice(Math.floor(n * 0.8));
+  const earlyMed = percentile([...early].sort((a, b) => a - b), 50);
+  const lateMed = percentile([...late].sort((a, b) => a - b), 50);
+  const midStart = Math.floor(n * 0.4);
+  const midEnd = Math.floor(n * 0.7);
+  const mid = vals.slice(midStart, Math.max(midStart + 1, midEnd));
+  const midMed = percentile([...mid].sort((a, b) => a - b), 50);
+  const riseEarlyToLate = lateMed - earlyMed;
+  const riseMidToLate = lateMed - midMed;
+  const first = series[0];
+  const last = series[series.length - 1];
+  const flowSpan = (last.flow ?? n) - (first.flow ?? 1);
+  const mbPer1kFlows =
+    flowSpan > 0 ? Number((((last.rss_mb - first.rss_mb) / flowSpan) * 1000).toFixed(2)) : null;
+  // Plateau: late median within 5% of mid median, and late rise < 10% of mid.
+  const plateau =
+    midMed > 0 &&
+    Math.abs(riseMidToLate) / midMed <= 0.05 &&
+    riseMidToLate <= Math.max(8, 0.1 * midMed);
+  const leak =
+    !plateau &&
+    riseEarlyToLate > Math.max(32, 0.15 * earlyMed) &&
+    riseMidToLate > Math.max(16, 0.05 * midMed) &&
+    (mbPer1kFlows == null || mbPer1kFlows > 2);
+  let classification = "working_set_or_noise";
+  let reason = "no clear monotonic climb after warm-up";
+  if (plateau && riseEarlyToLate > Math.max(16, 0.1 * earlyMed)) {
+    classification = "rise_then_plateau";
+    reason = "RSS rises from ready/early samples then flattens in the last fifth of the run";
+  } else if (leak) {
+    classification = "steady_climb_possible_leak";
+    reason = "RSS keeps rising through mid→late samples; treat as beta leak signal, not a memory headline";
+  } else if (plateau) {
+    classification = "plateau";
+    reason = "late-window RSS stable relative to mid-window";
+  }
+  return {
+    classification,
+    reason,
+    early_median_mb: Number(earlyMed.toFixed(2)),
+    mid_median_mb: Number(midMed.toFixed(2)),
+    late_median_mb: Number(lateMed.toFixed(2)),
+    rise_early_to_late_mb: Number(riseEarlyToLate.toFixed(2)),
+    rise_mid_to_late_mb: Number(riseMidToLate.toFixed(2)),
+    mb_per_1000_flows: mbPer1kFlows,
+    n_series: n,
+  };
+}
+
 class ResourceSampler {
   constructor(label, pid) {
     this.label = label;
     this.pid = pid;
     this.samples = [];
+    this.series = [];
     this._timer = null;
+    this._t0 = performance.now();
+    this._flow = 0;
   }
   start(intervalMs = 200) {
     if (!this.pid) return;
-    this._timer = setInterval(() => {
+    this._t0 = performance.now();
+    const tick = () => {
       const rss = readTreeRssMb(this.pid);
       if (rss == null) return;
       this.samples.push(rss);
-    }, intervalMs);
+      this.series.push({
+        t_s: Number(((performance.now() - this._t0) / 1000).toFixed(2)),
+        flow: this._flow,
+        rss_mb: Number(rss.toFixed(2)),
+      });
+    };
+    tick();
+    this._timer = setInterval(tick, intervalMs);
     if (typeof this._timer.unref === "function") this._timer.unref();
+  }
+  markFlow(flow) {
+    this._flow = flow;
   }
   stop() {
     if (this._timer) clearInterval(this._timer);
     this._timer = null;
     if (!this.samples.length) {
-      return { label: this.label, pid: this.pid, n: 0, rss_mb: { min: null, median: null, max: null } };
+      return {
+        label: this.label,
+        pid: this.pid,
+        n: 0,
+        rss_mb: { min: null, median: null, max: null },
+        series: [],
+        trend: analyzeRssTrend([]),
+      };
     }
     const rss = [...this.samples].sort((a, b) => a - b);
+    // Downsample series for artifact size (~120 points max).
+    const step = Math.max(1, Math.ceil(this.series.length / 120));
+    const series = this.series.filter((_, i) => i % step === 0 || i === this.series.length - 1);
     return {
       label: this.label,
       pid: this.pid,
       n: rss.length,
       rss_mb: { min: rss[0], median: percentile(rss, 50), max: rss[rss.length - 1] },
+      series,
+      trend: analyzeRssTrend(series),
     };
   }
 }
@@ -560,10 +644,84 @@ async function connectClawql(mock, { runtime = "node", id = "clawql" } = {}) {
     pid,
     runtime: js.runtime,
     runtimeVersion: js.runtimeVersion,
+    transport: "stdio",
     ready_ms: Number((performance.now() - t0).toFixed(1)),
     rss_mb_ready: pid != null ? readTreeRssMb(pid) : null,
     close: async () => {
       await client.close().catch(() => {});
+    },
+  };
+}
+
+/** Streamable HTTP multiplex — same product path as deployed gateways / Executor v2 HTTP. */
+async function connectClawqlHttp(mock, { id = "clawql_http" } = {}) {
+  const serverHttp = join(ROOT, "dist", "server-http.js");
+  if (!existsSync(serverHttp)) throw new Error("dist/server-http.js missing");
+  const home = join("/tmp", `clawql-mt-${id}-${process.pid}`);
+  await mkdir(home, { recursive: true });
+  const port = await pickFreePort();
+  const env = {
+    ...clawqlEnv(home, mock.specPath, mock.baseUrl),
+    PORT: String(port),
+    MCP_PORT: String(port),
+    MCP_HOST: "127.0.0.1",
+    CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE: "1",
+  };
+  const t0 = performance.now();
+  const child = spawn(process.execPath, [serverHttp], {
+    cwd: ROOT,
+    env,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let earlyExit = null;
+  const onEarlyExit = (code, signal) => {
+    earlyExit = { code, signal };
+  };
+  child.on("exit", onEarlyExit);
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("clawql_http listening timeout")), 90_000);
+    const onData = (chunk) => {
+      const s = String(chunk);
+      if (s.includes("listening on") || s.includes("[clawql-mcp] Ready")) {
+        clearTimeout(timer);
+        resolve(undefined);
+      }
+    };
+    child.stderr?.on("data", onData);
+    child.stdout?.on("data", onData);
+    child.on("error", reject);
+  });
+  if (earlyExit) {
+    child.kill("SIGKILL");
+    throw new Error(`clawql_http exited early code=${earlyExit.code} signal=${earlyExit.signal}`);
+  }
+  const mcpUrl = `http://127.0.0.1:${port}/mcp`;
+  const transport = new StreamableHTTPClientTransport(new URL(mcpUrl));
+  const client = new Client({ name: `mt-${id}`, version: "1" }, {});
+  await client.connect(transport);
+  return {
+    client,
+    pid: child.pid,
+    runtime: "node",
+    runtimeVersion: process.version,
+    transport: "streamable_http_multiplex",
+    mcpUrl,
+    ready_ms: Number((performance.now() - t0).toFixed(1)),
+    rss_mb_ready: child.pid != null ? readTreeRssMb(child.pid) : null,
+    close: async () => {
+      await client.close().catch(() => {});
+      child.off("exit", onEarlyExit);
+      try {
+        child.kill("SIGTERM");
+      } catch {
+        /* ignore */
+      }
+      await sleep(200);
+      try {
+        child.kill("SIGKILL");
+      } catch {
+        /* ignore */
+      }
     },
   };
 }
@@ -975,8 +1133,15 @@ async function runAggregatorArm(gw, turns) {
   }
 }
 
-async function runClawqlArm(mock, turns, { runtime = "node", id = "clawql" } = {}) {
-  const conn = await connectClawql(mock, { runtime, id });
+async function runClawqlArm(
+  mock,
+  turns,
+  { runtime = "node", id = "clawql", transport = "stdio" } = {}
+) {
+  const conn =
+    transport === "http"
+      ? await connectClawqlHttp(mock, { id })
+      : await connectClawql(mock, { runtime, id });
   const sampler = new ResourceSampler(id, conn.pid);
   sampler.start(ITERS > 1 ? 500 : 200);
   try {
@@ -990,6 +1155,7 @@ async function runClawqlArm(mock, turns, { runtime = "node", id = "clawql" } = {
     let callErrors = 0;
 
     for (let iter = 1; iter <= ITERS; iter++) {
+      sampler.markFlow(iter);
       const flowT0 = performance.now();
       const thisPerTurn = [];
       for (const turn of turns) {
@@ -1058,9 +1224,11 @@ async function runClawqlArm(mock, turns, { runtime = "node", id = "clawql" } = {
     const resources = sampler.stop();
     return {
       id,
-      model: `search_plus_execute_where_fields_${conn.runtime}`,
+      model: `search_plus_execute_where_fields_${conn.runtime}_${conn.transport || "stdio"}`,
       runtime: conn.runtime,
       runtimeVersion: conn.runtimeVersion,
+      transport: conn.transport || "stdio",
+      mcpUrl: conn.mcpUrl || null,
       layer1: {
         once_schema_tokens: l1.schema_tokens,
         tools_count: l1.tools_count,
@@ -1068,6 +1236,8 @@ async function runClawqlArm(mock, turns, { runtime = "node", id = "clawql" } = {
         tools_list_schema_tokens_full: l1.tools_list_schema_tokens_full,
         note: "Only search+execute schemas counted as Layer1 (catalog stays server-side)",
       },
+      discovery_note:
+        "Each turn charges search (limit 3) + execute — discovery is not zero (unlike Executor harness)",
       perTurn,
       iters: ITERS,
       flow_e2e_ms: flowE2e,
@@ -1110,6 +1280,7 @@ async function runExecutorArm(turns, { filter = false } = {}) {
     let callErrors = 0;
 
     for (let iter = 1; iter <= ITERS; iter++) {
+      sampler.markFlow(iter);
       const flowT0 = performance.now();
       const thisPerTurn = [];
       for (let ti = 0; ti < turns.length; ti++) {
@@ -1235,10 +1406,12 @@ function summarizeArm(arm) {
       runtime: arm.runtime ?? null,
       runtime_version: arm.runtimeVersion ?? null,
       ready_ms: arm.startup?.ready_ms ?? null,
+      transport: arm.transport ?? null,
       rss_mb_ready: arm.startup?.rss_mb_ready ?? null,
       rss_mb_min: arm.resources?.rss_mb?.min ?? null,
       rss_mb_median: arm.resources?.rss_mb?.median ?? null,
       rss_mb_max: arm.resources?.rss_mb?.max ?? null,
+      rss_trend: arm.resources?.trend ?? null,
       // Token breakdown (rebuild combined_at_n from these three)
       definitions_tokens: l1,
       discovery_tokens_sum: sumDiscovery,
@@ -1442,6 +1615,17 @@ async function main() {
           rawArms[arm] = await runClawqlArm(mock, turns, {
             runtime: arm === "clawql_bun" ? "bun" : "node",
             id: arm,
+            transport: "stdio",
+          });
+        } else if (arm === "clawql_http") {
+          if (!existsSync(join(ROOT, "dist", "server-http.js"))) {
+            rawArms.clawql_http = { skipped: true, reason: "dist/server-http.js missing" };
+            continue;
+          }
+          rawArms.clawql_http = await runClawqlArm(mock, turns, {
+            runtime: "node",
+            id: "clawql_http",
+            transport: "http",
           });
         } else if (arm === "executor") {
           if (!process.env.EXECUTOR_BIN?.trim()) {
@@ -1562,9 +1746,12 @@ async function main() {
         "Executor Layer2 is fat JSON — matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
         "Do not publish a hand-written slim-return program as Executor.",
         "clawql_bun: same dist/server.js as clawql; only JS runtime changes.",
+        "clawql_http: same search+execute+projection over Streamable HTTP multiplex — use for Executor v2 HTTP latency compares (stdio ClawQL is a different transport).",
+        "Executor v1 (stdio) vs v2 (HTTP) are different transports; do not headline v2 slower-than-v1 without an HTTP ClawQL peer.",
+        "Executor discovery=0 on both versions (harness-authored execute). ClawQL charges search each turn.",
         "ContextForge/MetaMCP off publish board by default.",
         "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",
-        "RSS is a loss among serious arms — admit plainly.",
+        "RSS is a loss among serious arms — admit plainly. Classify Executor v2 climb via rss_trend before 'Nx heavier' headlines.",
       ],
     };
 
