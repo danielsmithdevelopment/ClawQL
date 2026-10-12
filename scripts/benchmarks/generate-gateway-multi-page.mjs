@@ -29,6 +29,7 @@ const PETS_CHAOS_NODE = join(DIR, "gateway-multi-cmp-ts7-node-chaos.json");
 const EX2_JSON = existsSync(join(DIR, "gateway-multi-multiturn-executor-v2-equal-10k.json"))
   ? join(DIR, "gateway-multi-multiturn-executor-v2-equal-10k.json")
   : join(DIR, "gateway-multi-multiturn-executor-v2-10k.json");
+const TRANSPORT_JSON = join(DIR, "gateway-multi-multiturn-clawql-transport-10k.json");
 const OUT_DOCS = join(DIR, "index.html");
 const OUT_WWW_DIR = join(ROOT, "apps", "www", "public", "benchmarks", "gateway-multi-comparison");
 const OUT_WWW_HTML = join(OUT_WWW_DIR, "index.html");
@@ -83,7 +84,7 @@ function vsDirectLabel(id, b, direct) {
   return `+${fmt(delta)}`;
 }
 
-function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun, ex2 }) {
+function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun, ex2, transport }) {
   const board = mt.board;
   const ratios = mt.ratios_vs_clawql || {};
   const ids = orderArms(board);
@@ -404,6 +405,58 @@ ${
     : `    <p class="meta">Executor v2 equal-harness board missing — run <code>MT_ARMS=executor_v2 … npm run benchmark:gateway-multi-multiturn</code>.</p>`
 }
 
+    <h3>ClawQL transport matrix (Node/Bun × stdio/HTTP + gRPC)</h3>
+    <p>
+      Same search→execute+projection recipe. Tokens stay ~20.5k across transports.
+      Compare Executor v2 latency to <strong>ClawQL HTTP</strong>, not Bun stdio.
+      gRPC is <strong>ClawQL-only</strong> on this board (peers have no gRPC MCP).
+    </p>
+${
+  transport?.board
+    ? (() => {
+        const order = [
+          "clawql",
+          "clawql_bun",
+          "clawql_http",
+          "clawql_http_bun",
+          "clawql_grpc",
+          "clawql_grpc_bun",
+        ];
+        const rows = order
+          .map((id) => {
+            const e = transport.board[id];
+            if (!e || e.skipped) return "";
+            const fe = e.flow_e2e_ms || {};
+            const trend = e.rss_trend?.classification || "—";
+            const hl = id === "clawql_bun" || id === "clawql_http_bun" ? ' class="hl"' : "";
+            return `        <tr${hl}><td>${esc(id)}</td><td>${esc(
+              e.transport || "—"
+            )}</td><td>${fmt(e.combined_at_n)}</td><td>${fmt(fe.p50_ms, 1)} / <strong>${fmt(
+              fe.p999_ms,
+              1
+            )}</strong></td><td>${fmt(e.rss_mb_median, 0)}</td><td>${esc(trend)}</td></tr>`;
+          })
+          .join("\n");
+        return `    <table>
+      <thead>
+        <tr>
+          <th>Arm</th><th>Transport</th><th>Combined @12</th>
+          <th>Flow e2e p50 / <strong>p999</strong></th><th>RSS med</th><th>RSS trend</th>
+        </tr>
+      </thead>
+      <tbody>
+${rows}
+      </tbody>
+    </table>
+    <ul>
+      <li><strong>Fastest:</strong> Bun stdio. <strong>Fair Executor v2 peer:</strong> ClawQL HTTP (~46 ms Node / ~39 ms Bun vs Executor v2 ~74 ms).</li>
+      <li><strong>gRPC:</strong> ~138 ms p50 on this small-payload board — prefer for large CallTool bodies, not tiny search/execute.</li>
+      <li>Artifact: <a href="./gateway-multi-multiturn-clawql-transport-10k.json">clawql-transport-10k.json</a>.</li>
+    </ul>`;
+      })()
+    : `    <p class="meta">Transport matrix missing — run <code>MT_ARMS=clawql,clawql_bun,clawql_http,clawql_http_bun,clawql_grpc,clawql_grpc_bun …</code>.</p>`
+}
+
     <h3>Where ClawQL’s next token win is</h3>
     <p>
       Discovery is <strong>${fmt(claw?.discovery_tokens_sum)}</strong> tokens —
@@ -509,6 +562,7 @@ npm run generate:gateway-multi-page</pre>
     <h2>Raw artifacts</h2>
     <ul>
       <li><a href="./gateway-multi-multiturn-10k.json">gateway-multi-multiturn-10k.json</a></li>
+      <li><a href="./gateway-multi-multiturn-clawql-transport-10k.json">clawql-transport-10k.json</a> (Node/Bun × stdio/HTTP/gRPC)</li>
       <li><a href="./gateway-multi-cmp-ts7-node-10k.json">ts7 Node pets 10k</a> · <a href="./gateway-multi-cmp-ts7-bun-10k.json">ts7 Bun pets 10k</a></li>
       <li><a href="./README.md">Methodology README</a></li>
     </ul>
@@ -544,13 +598,15 @@ async function main() {
   const chaosNode = await loadJson(PETS_CHAOS_NODE);
   const chaosBun = await loadJson(PETS_CHAOS_BUN);
   const ex2 = await loadJson(EX2_JSON);
-  const html = buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun, ex2 });
+  const transport = await loadJson(TRANSPORT_JSON);
+  const html = buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun, ex2, transport });
   await writeFile(OUT_DOCS, html);
   await mkdir(OUT_WWW_DIR, { recursive: true });
   await writeFile(OUT_WWW_HTML, html);
   await writeFile(OUT_WWW_JSON, JSON.stringify(mt, null, 2));
   for (const name of [
     "gateway-multi-multiturn-10k.json",
+    "gateway-multi-multiturn-clawql-transport-10k.json",
     "gateway-multi-cmp-ts7-node-10k.json",
     "gateway-multi-cmp-ts7-bun-10k.json",
     "gateway-multi-cmp-ts7-node-chaos.json",
@@ -558,6 +614,7 @@ async function main() {
     "executor-vs-mock-compare.json",
     "executor-v1-vs-v2-12turn.json",
     "gateway-multi-multiturn-executor-v2-10k.json",
+    "gateway-multi-multiturn-executor-v2-equal-10k.json",
     "README.md",
   ]) {
     const src = join(DIR, name);

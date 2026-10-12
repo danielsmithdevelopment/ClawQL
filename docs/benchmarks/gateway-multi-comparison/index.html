@@ -181,31 +181,59 @@
       <strong>Discovery = 0:</strong> harness-authored <code>execute</code> returns the fixture (no search). Favors Executor vs ClawQL’s charged 11 568.
     </p>
 
-    <h3>Executor — version-scoped (v1 pretty-print vs v2 compact)</h3>
+    <h3>Executor — same harness (v1 pretty-print vs v2 compact)</h3>
     <p>
-      <strong>v1.6.10 (stdio):</strong> pretty-printed, <strong>+18 666</strong> vs baseline.
-      <strong>v2.0.0-β.15 (HTTP):</strong> compact envelopes, <strong>−5 075</strong> — credit the fix.
-      ClawQL still leads v2 by <strong>9 388</strong>. Discovery = 0 on both Executor versions (harness <code>execute</code>; <code>skills</code> unused).
+      Both versions use <code>runExecutorArm</code> + the fat execute fixture (discovery=0).
+      <strong>v1.6.10</strong> stdio pretty-print <strong>+18 666</strong>.
+      <strong>v2.0.0-β.15</strong> compact <strong>−5 075</strong> — credit the fix.
+      ClawQL still leads v2 by <strong>9 388</strong>.
+      Executor 2 removed stdio MCP — product transport is HTTP; do not mix v2 latency with Bun stdio.
     </p>
     <table>
       <thead>
         <tr>
-          <th>Arm</th><th>Transport</th><th>Combined @12</th><th>Flow e2e p50 / <strong>p999</strong></th>
-          <th>RSS ready / med / max</th><th>RSS trend</th>
+          <th>Arm</th><th>Harness</th><th>Product transport</th><th>Combined @12</th>
+          <th>Flow e2e p50 / <strong>p999</strong></th><th>RSS med</th>
         </tr>
       </thead>
       <tbody>
-        <tr class="hl"><td>ClawQL HTTP</td><td>HTTP multiplex</td><td><strong>20 539</strong></td><td>47.85 / <strong>388.63</strong></td><td>285 / <strong>2,717</strong> / 3,839</td><td>steady_climb_possible_leak</td></tr>
-        <tr><td><strong>Executor v2 β.15</strong></td><td>HTTP /mcp</td><td><strong>29,927</strong> (−5,075)</td><td>73.45 / <strong>143.25</strong></td><td>493 / <strong>927</strong> / 1,354</td><td>plateau</td></tr>
-        <tr><td>ClawQL Bun</td><td>stdio</td><td>20 539</td><td>15.01 / <strong>34.97</strong></td><td>— / <strong>337</strong> / —</td><td>—</td></tr>
-        <tr><td>Executor v1.6.10</td><td>stdio</td><td>53 668 (+18 666)</td><td>64.35 / <strong>106.55</strong></td><td>— / <strong>213</strong> / —</td><td>—</td></tr>
+        <tr class="hl"><td>ClawQL Bun</td><td>multiturn</td><td>stdio</td><td><strong>20 539</strong></td><td>15.01 / <strong>34.97</strong></td><td><strong>337</strong></td></tr>
+        <tr><td>Executor v1.6.10</td><td>runExecutorArm</td><td>stdio</td><td>53 668 (+18 666)</td><td>64.35 / <strong>106.55</strong></td><td>213</td></tr>
+        <tr><td><strong>Executor v2 β.15</strong></td><td>runExecutorArm (same)</td><td>HTTP /mcp</td><td><strong>29,927</strong> (−5,075)</td><td>73.45 / <strong>143.25</strong></td><td><strong>927</strong> (plateau)</td></tr>
       </tbody>
     </table>
     <ul>
-      <li><strong>Tokens:</strong> v2 combined 29,927 = 181 defs + 29,746 results (envelope +—; defs+envelope over compact results ≈ —). Beats baseline by 5,075; ClawQL still leads by 9,388.</li>
-      <li><strong>Latency (equal transport):</strong> ClawQL HTTP p50 <strong>47.8 ms</strong> vs v2 <strong>73.5 ms</strong> (+25.6 ms). Do not compare v2 to Bun stdio (15 ms) as a product regression.</li>
-      <li><strong>Memory:</strong> v2 series is a <em>working set</em> (early spike, then ~850–975 MB) — not a leak headline. ClawQL HTTP climbs on this host — investigate before memory claims. Build: npm <code>executor@2.0.0-beta.15</code> / <code>executor serve</code>.</li>
-      <li>Artifacts: <a href="./gateway-multi-multiturn-executor-v2-10k.json">executor-v2-10k</a>, <a href="./gateway-multi-multiturn-clawql-http-10k.json">clawql-http-10k</a>.</li>
+      <li><strong>Tokens (apples-to-apples):</strong> same fixture path. v2 29,927 = 181 defs + 29,746 results. ClawQL leads by 9,388.</li>
+      <li><strong>Latency/RSS:</strong> labeled by product transport. Do not headline v2 vs Bun stdio.</li>
+      <li>Artifact: <a href="./gateway-multi-multiturn-executor-v2-equal-10k.json">executor-v2-equal-10k.json</a>.</li>
+    </ul>
+
+    <h3>ClawQL transport matrix (Node/Bun × stdio/HTTP + gRPC)</h3>
+    <p>
+      Same search→execute+projection recipe. Tokens stay ~20.5k across transports.
+      Compare Executor v2 latency to <strong>ClawQL HTTP</strong>, not Bun stdio.
+      gRPC is <strong>ClawQL-only</strong> on this board (peers have no gRPC MCP).
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Arm</th><th>Transport</th><th>Combined @12</th>
+          <th>Flow e2e p50 / <strong>p999</strong></th><th>RSS med</th><th>RSS trend</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>clawql</td><td>stdio</td><td>20,539</td><td>18.7 / <strong>49.5</strong></td><td>665</td><td>plateau</td></tr>
+        <tr class="hl"><td>clawql_bun</td><td>stdio</td><td>20,539</td><td>16.0 / <strong>39.5</strong></td><td>344</td><td>plateau</td></tr>
+        <tr><td>clawql_http</td><td>streamable_http_multiplex</td><td>20,539</td><td>45.9 / <strong>391.1</strong></td><td>740</td><td>plateau</td></tr>
+        <tr class="hl"><td>clawql_http_bun</td><td>streamable_http_multiplex</td><td>20,539</td><td>38.9 / <strong>364.5</strong></td><td>340</td><td>plateau</td></tr>
+        <tr><td>clawql_grpc</td><td>grpc_mcp</td><td>20,523</td><td>138.7 / <strong>292.2</strong></td><td>700</td><td>plateau</td></tr>
+        <tr><td>clawql_grpc_bun</td><td>grpc_mcp</td><td>20,523</td><td>137.3 / <strong>254.7</strong></td><td>335</td><td>plateau</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li><strong>Fastest:</strong> Bun stdio. <strong>Fair Executor v2 peer:</strong> ClawQL HTTP (~46 ms Node / ~39 ms Bun vs Executor v2 ~74 ms).</li>
+      <li><strong>gRPC:</strong> ~138 ms p50 on this small-payload board — prefer for large CallTool bodies, not tiny search/execute.</li>
+      <li>Artifact: <a href="./gateway-multi-multiturn-clawql-transport-10k.json">clawql-transport-10k.json</a>.</li>
     </ul>
 
     <h3>Where ClawQL’s next token win is</h3>
@@ -276,6 +304,7 @@ npm run generate:gateway-multi-page</pre>
     <h2>Raw artifacts</h2>
     <ul>
       <li><a href="./gateway-multi-multiturn-10k.json">gateway-multi-multiturn-10k.json</a></li>
+      <li><a href="./gateway-multi-multiturn-clawql-transport-10k.json">clawql-transport-10k.json</a> (Node/Bun × stdio/HTTP/gRPC)</li>
       <li><a href="./gateway-multi-cmp-ts7-node-10k.json">ts7 Node pets 10k</a> · <a href="./gateway-multi-cmp-ts7-bun-10k.json">ts7 Bun pets 10k</a></li>
       <li><a href="./README.md">Methodology README</a></li>
     </ul>

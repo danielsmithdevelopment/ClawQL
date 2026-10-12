@@ -188,13 +188,28 @@ Executor **2 removed stdio MCP** (`executor mcp` prints: “Executor 1 command�
 
 Credit the v2 fix. ClawQL (**20 539**) still leads v2 by **9 388** on tokens. Artifacts: [`executor-vs-mock-compare.json`](./executor-vs-mock-compare.json), [`gateway-multi-multiturn-executor-v2-equal-10k.json`](./gateway-multi-multiturn-executor-v2-equal-10k.json) (same harness as v1).
 
-**Do not** compare v2 flow latency / RSS to ClawQL Bun stdio as same-topology. **Do not** publish a separate “ClawQL HTTP” row as if Bun regressed — that was a mistaken peer experiment.
+**Do not** compare v2 flow latency / RSS to ClawQL Bun stdio as same-topology — use the ClawQL HTTP rows below for same-transport latency peers.
+
+### ClawQL transport matrix (same recipe)
+
+Same search→execute+projection multiturn as the primary board — only runtime × transport changes. Artifact: [`gateway-multi-multiturn-clawql-transport-10k.json`](./gateway-multi-multiturn-clawql-transport-10k.json).
+
+| Arm | Runtime | Transport | Notes |
+| --- | --- | --- | --- |
+| `clawql` | Node | stdio | Primary publish peer |
+| `clawql_bun` | Bun | stdio | Same tokens; lower RSS |
+| `clawql_http` | Node | Streamable HTTP | Fair peer for Executor v2 HTTP latency |
+| `clawql_http_bun` | Bun | Streamable HTTP | |
+| `clawql_grpc` | Node | gRPC MCP | **ClawQL-only** — peers have no gRPC MCP here |
+| `clawql_grpc_bun` | Bun | gRPC MCP | Same |
+
+HTTP arms set `CLAWQL_MCP_DISABLE_STANDALONE_SSE=1` (GET `/mcp` → 405) so the SDK skips standalone SSE buffers. Server also prunes orphan JSON `_streamMapping` entries after each sessionful POST (SDK JSON-mode leak). Node HTTP RSS can still look climb-shaped under long multiturn (GC lag); Bun tends to plateau. gRPC on this small-payload board is typically slower than Streamable HTTP — prefer gRPC for large `CallTool` bodies.
 
 **Video / marketing:** any scene that says Executor adds ~18 666 via pretty-printing must name **v1.6.10 on-screen**. Plan a re-cut with v2 numbers when v2 is GA.
 
-**Discovery = 0 (both):** harness-authored `execute`; `skills`/search unused. Favors Executor vs ClawQL’s charged **11 568**.
+**Discovery = 0 (both Executor versions):** harness-authored `execute`; `skills`/search unused. Favors Executor vs ClawQL’s charged **11 568**.
 
-**Claim bound:** four gateways measured (+ ClawQL HTTP peer). Bifrost / mcp-gateway (compact meta-tool shortlist) **not** on this board — do not claim the whole category until they are.
+**Claim bound:** four gateways measured + ClawQL transport matrix. Bifrost / mcp-gateway (compact meta-tool shortlist) **not** on this board — do not claim the whole category until they are.
 
 **Next ClawQL token lever — discovery (11 568 = 56% of combined):** leaner search hits (~300 tok/turn would cut ~8k @12), and/or skip search when the agent already knows the operation (`execute` by operation ID; measure op-repeat rate). Neither touches projection.
 
@@ -216,6 +231,12 @@ MT_TURNS=12 MT_ITERS=10000 CATALOG_TOOL_COUNT=40 \
 
 # Same thing via the compatibility npm script (wrapper → runExecutorArm; not a second recipe)
 npm run benchmark:executor-v2-multiturn
+
+# ClawQL transport matrix (Node/Bun × stdio/HTTP + gRPC)
+MT_TURNS=12 MT_ITERS=10000 CATALOG_TOOL_COUNT=40 \
+  MT_ARMS=clawql,clawql_bun,clawql_http,clawql_http_bun,clawql_grpc,clawql_grpc_bun \
+  MT_OUT=gateway-multi-multiturn-clawql-transport-10k.json \
+  npm run benchmark:gateway-multi-multiturn
 
 npm run generate:gateway-multi-page
 ```
