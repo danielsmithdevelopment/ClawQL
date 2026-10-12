@@ -380,6 +380,20 @@ function resolveBunBin() {
   ]);
 }
 
+/** Kill a detached spawn process group (Bun HTTP can otherwise orphan after SIGTERM). */
+function killProcessGroup(child, signal = "SIGTERM") {
+  if (!child?.pid) return;
+  try {
+    process.kill(-child.pid, signal);
+  } catch {
+    try {
+      child.kill(signal);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
 function resolveClawqlJsRuntime(runtime = "node") {
   const server = join(ROOT, "dist", "server.js");
   if (runtime === "bun") {
@@ -712,6 +726,7 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     cwd: ROOT,
     env,
     stdio: ["ignore", "pipe", "pipe"],
+    detached: true,
   });
   let earlyExit = null;
   const onEarlyExit = (code, signal) => {
@@ -732,7 +747,7 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     child.on("error", reject);
   });
   if (earlyExit) {
-    child.kill("SIGKILL");
+    killProcessGroup(child);
     throw new Error(`${id} exited early code=${earlyExit.code} signal=${earlyExit.signal}`);
   }
   const mcpUrl = `http://127.0.0.1:${port}/mcp`;
@@ -756,17 +771,9 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
       }
       await client.close().catch(() => {});
       child.off("exit", onEarlyExit);
-      try {
-        child.kill("SIGTERM");
-      } catch {
-        /* ignore */
-      }
-      await sleep(200);
-      try {
-        child.kill("SIGKILL");
-      } catch {
-        /* ignore */
-      }
+      killProcessGroup(child);
+      await sleep(150);
+      killProcessGroup(child, "SIGKILL");
     },
   };
 }
@@ -812,6 +819,7 @@ async function connectClawqlGrpc(mock, { id = "clawql_grpc", runtime = "node" } 
     cwd: ROOT,
     env,
     stdio: ["ignore", "pipe", "pipe"],
+    detached: true,
   });
   let earlyExit = null;
   const onEarlyExit = (code, signal) => {
@@ -848,7 +856,7 @@ async function connectClawqlGrpc(mock, { id = "clawql_grpc", runtime = "node" } 
     child.on("error", reject);
   });
   if (earlyExit) {
-    child.kill("SIGKILL");
+    killProcessGroup(child);
     throw new Error(`${id} exited early code=${earlyExit.code} signal=${earlyExit.signal}`);
   }
   const address = `127.0.0.1:${grpcPort}`;
@@ -879,17 +887,9 @@ async function connectClawqlGrpc(mock, { id = "clawql_grpc", runtime = "node" } 
         /* ignore */
       }
       child.off("exit", onEarlyExit);
-      try {
-        child.kill("SIGTERM");
-      } catch {
-        /* ignore */
-      }
-      await sleep(200);
-      try {
-        child.kill("SIGKILL");
-      } catch {
-        /* ignore */
-      }
+      killProcessGroup(child);
+      await sleep(150);
+      killProcessGroup(child, "SIGKILL");
     },
   };
 }
