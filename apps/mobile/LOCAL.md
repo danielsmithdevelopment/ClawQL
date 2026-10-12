@@ -14,6 +14,10 @@ Then press `w` for web, or scan the QR with Expo Go on a phone (still no Apple/G
 
 Sign-in screen → **Continue with fixture session** (or **App Store reviewer demo** for biometric approve).
 
+## UI stack
+
+Screens use **`@expo/ui`** universal components (`Host` + Material 3 / SwiftUI) with ClawQL `brand.seed` tint. Fixture Maestro `testID`s are unchanged. Pull-to-refresh uses `List.onRefresh`.
+
 ## What works offline / fixture
 
 | Surface | Local without signup |

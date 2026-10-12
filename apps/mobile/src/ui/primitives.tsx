@@ -1,148 +1,193 @@
+/**
+ * Adaptive UI primitives — @expo/ui universal components.
+ * Android → Material 3 (Jetpack Compose); iOS → SwiftUI; web → RN/DOM fallback.
+ */
 import type { ReactNode } from "react";
 import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
+  Button,
+  Column,
+  FieldGroup,
+  Host,
+  Icon,
+  List,
+  ListItem,
+  Row,
   ScrollView,
-  StyleSheet,
+  Spacer,
   Switch,
   Text,
-  View,
-  type TextProps,
-  type ViewProps,
-} from "react-native";
+} from "@expo/ui";
+import { ActivityIndicator, View, type StyleProp, type ViewStyle } from "react-native";
 
-import { colors, space } from "../theme";
+import { brand, space, type } from "../theme";
+import { Icons } from "./icons";
 
-export function Screen({ children, style, ...rest }: ViewProps) {
-  return (
-    <View style={[styles.screen, style]} {...rest}>
-      {children}
-    </View>
-  );
-}
+export {
+  Button,
+  Column,
+  FieldGroup,
+  Host,
+  Icon,
+  List,
+  ListItem,
+  Row,
+  ScrollView,
+  Spacer,
+  Switch,
+  Text,
+};
+export { Icons };
 
-/** Scrollable screen body — flex:1 avoids RN-web blank layouts inside tab screens. */
-export function ScreenScroll({
+/**
+ * RN layout shell for flex / wrap / justify — UniversalStyle only allows
+ * padding, size, border, opacity, backgroundColor.
+ */
+export function Fill({
   children,
   testID,
-  refreshing,
-  onRefresh,
+  style,
 }: {
   children: ReactNode;
   testID?: string;
-  refreshing?: boolean;
-  onRefresh?: () => void;
+  style?: StyleProp<ViewStyle>;
 }) {
   return (
-    <Screen testID={testID}>
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: space.xl, flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          onRefresh ? (
-            <RefreshControl
-              refreshing={Boolean(refreshing)}
-              onRefresh={onRefresh}
-              tintColor={colors.accent}
-              colors={[colors.accent]}
-            />
-          ) : undefined
-        }
-      >
-        {children}
-      </ScrollView>
-    </Screen>
-  );
-}
-
-export function FilterChip({
-  label,
-  selected,
-  onPress,
-  testID,
-  count,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-  testID?: string;
-  count?: number;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      testID={testID}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.chip,
-        selected && styles.chipSelected,
-        pressed && { opacity: 0.7 },
-      ]}
-    >
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-        {label}
-        {typeof count === "number" ? ` ${count}` : ""}
-      </Text>
-    </Pressable>
-  );
-}
-
-export function ChoiceRow({
-  label,
-  score,
-  selected,
-  onPress,
-  testID,
-}: {
-  label: string;
-  score?: string;
-  selected: boolean;
-  onPress: () => void;
-  testID?: string;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
-      testID={testID}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.choiceRow,
-        selected && styles.choiceRowSelected,
-        pressed && { opacity: 0.8 },
-      ]}
-    >
-      <Body style={{ flex: 1, fontWeight: selected ? "700" : "500" }}>{label}</Body>
-      {score ? <Meta style={{ fontFamily: "SpaceMono" }}>{score}</Meta> : null}
-    </Pressable>
-  );
-}
-
-export function Card({ children, style, ...rest }: ViewProps) {
-  return (
-    <View style={[styles.card, style]} {...rest}>
+    <View testID={testID} style={[{ flex: 1 }, style]}>
       {children}
     </View>
   );
 }
 
-export function Title({ style, ...rest }: TextProps) {
-  return <Text style={[styles.title, style]} {...rest} />;
+/** Horizontal wrap for chips / badges (Universal Row has no flexWrap). */
+export function WrapRow({
+  children,
+  testID,
+  gap = space.sm,
+}: {
+  children: ReactNode;
+  testID?: string;
+  gap?: number;
+}) {
+  return (
+    <View
+      testID={testID}
+      style={{ flexDirection: "row", flexWrap: "wrap", gap, alignItems: "center" }}
+    >
+      {children}
+    </View>
+  );
 }
 
-export function Subtitle({ style, ...rest }: TextProps) {
-  return <Text style={[styles.subtitle, style]} {...rest} />;
+/** Root host for a screen — seeds Material 3 / SwiftUI tint. */
+export function ScreenHost({
+  children,
+  testID,
+  matchContents,
+}: {
+  children: ReactNode;
+  testID?: string;
+  matchContents?: boolean;
+}) {
+  return (
+    <Host
+      testID={testID}
+      style={{ backgroundColor: brand.surface, width: "100%", height: "100%" }}
+      seedColor={brand.seed}
+      colorScheme="light"
+      matchContents={matchContents}
+      useViewportSizeMeasurement
+    >
+      {children}
+    </Host>
+  );
 }
 
-export function Body({ style, ...rest }: TextProps) {
-  return <Text style={[styles.body, style]} {...rest} />;
+export function ScreenScroll({
+  children,
+  testID,
+}: {
+  children: ReactNode;
+  testID?: string;
+  /** @deprecated Prefer List onRefresh — kept so call sites typecheck during migration. */
+  refreshing?: boolean;
+  onRefresh?: () => void | Promise<void>;
+}) {
+  return (
+    <ScreenHost testID={testID}>
+      <ScrollView>
+        <Column spacing={space.md} style={{ padding: space.md, paddingBottom: space.xl }}>
+          {children}
+        </Column>
+      </ScrollView>
+    </ScreenHost>
+  );
 }
 
-export function Meta({ style, ...rest }: TextProps) {
-  return <Text style={[styles.meta, style]} {...rest} />;
+export function Title({ children, testID }: { children: string; testID?: string }) {
+  return (
+    <Text testID={testID} textStyle={type.headline}>
+      {children}
+    </Text>
+  );
+}
+
+export function Subtitle({ children, testID }: { children: string; testID?: string }) {
+  return (
+    <Text testID={testID} textStyle={type.subtitle}>
+      {children}
+    </Text>
+  );
+}
+
+export function Body({
+  children,
+  testID,
+  color,
+  italic,
+}: {
+  children: string;
+  testID?: string;
+  color?: string;
+  italic?: boolean;
+}) {
+  return (
+    <Text
+      testID={testID}
+      textStyle={{
+        ...type.body,
+        color: color ?? type.body.color,
+        // italic approximated via weight on platforms that ignore fontStyle
+        fontWeight: italic ? "400" : type.body.fontWeight,
+      }}
+    >
+      {children}
+    </Text>
+  );
+}
+
+export function Meta({
+  children,
+  testID,
+  color,
+  mono,
+}: {
+  children: string;
+  testID?: string;
+  color?: string;
+  mono?: boolean;
+}) {
+  return (
+    <Text
+      testID={testID}
+      textStyle={{
+        ...type.meta,
+        color: color ?? type.meta.color,
+        fontFamily: mono ? "SpaceMono" : undefined,
+      }}
+    >
+      {children}
+    </Text>
+  );
 }
 
 export function Badge({
@@ -152,18 +197,33 @@ export function Badge({
   label: string;
   tone?: "warn" | "neutral" | "ok" | "danger";
 }) {
-  const toneStyle =
+  const bg =
     tone === "ok"
-      ? styles.badgeOk
+      ? brand.okBg
       : tone === "warn"
-        ? styles.badgeWarn
+        ? brand.warnBg
         : tone === "danger"
-          ? styles.badgeDanger
-          : styles.badgeNeutral;
+          ? brand.dangerBg
+          : brand.border;
+  const fg =
+    tone === "ok"
+      ? brand.ok
+      : tone === "warn"
+        ? brand.warn
+        : tone === "danger"
+          ? brand.danger
+          : brand.inkMuted;
   return (
-    <View style={[styles.badge, toneStyle]}>
-      <Text style={styles.badgeText}>{label}</Text>
-    </View>
+    <Row
+      style={{
+        backgroundColor: bg,
+        borderRadius: 6,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+      }}
+    >
+      <Text textStyle={{ fontSize: 10, fontWeight: "700", color: fg }}>{label.toUpperCase()}</Text>
+    </Row>
   );
 }
 
@@ -181,19 +241,14 @@ export function PrimaryButton({
   danger?: boolean;
 }) {
   return (
-    <Pressable
-      accessibilityRole="button"
+    <Button
       testID={testID}
+      label={label}
+      variant="filled"
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.primaryBtn,
-        danger && styles.dangerBtn,
-        (pressed || disabled) && { opacity: 0.6 },
-      ]}
-    >
-      <Text style={styles.primaryBtnText}>{label}</Text>
-    </Pressable>
+      style={danger ? { backgroundColor: brand.danger } : undefined}
+    />
   );
 }
 
@@ -209,26 +264,90 @@ export function SecondaryButton({
   testID?: string;
 }) {
   return (
-    <Pressable
-      accessibilityRole="button"
+    <Button
       testID={testID}
+      label={label}
+      variant="outlined"
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.secondaryBtn,
-        (pressed || disabled) && { opacity: 0.6 },
-      ]}
-    >
-      <Text style={styles.secondaryBtnText}>{label}</Text>
-    </Pressable>
+    />
+  );
+}
+
+export function TextButton({
+  label,
+  onPress,
+  disabled,
+  testID,
+}: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  testID?: string;
+}) {
+  return (
+    <Button
+      testID={testID}
+      label={label}
+      variant="text"
+      disabled={disabled}
+      onPress={onPress}
+    />
+  );
+}
+
+export function FilterChip({
+  label,
+  selected,
+  onPress,
+  testID,
+  count,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  testID?: string;
+  count?: number;
+}) {
+  return (
+    <Button
+      testID={testID}
+      label={typeof count === "number" ? `${label} ${count}` : label}
+      variant={selected ? "filled" : "outlined"}
+      onPress={onPress}
+    />
+  );
+}
+
+export function ChoiceRow({
+  label,
+  score,
+  selected,
+  onPress,
+  testID,
+}: {
+  label: string;
+  score?: string;
+  selected: boolean;
+  onPress: () => void;
+  testID?: string;
+}) {
+  return (
+    <Button
+      testID={testID}
+      variant={selected ? "filled" : "outlined"}
+      onPress={onPress}
+      label={score ? `${label}  ${score}` : label}
+    />
   );
 }
 
 export function LoadingBlock({ label = "Loading…" }: { label?: string }) {
   return (
-    <View style={styles.loading} testID="loading">
-      <ActivityIndicator color={colors.accent} />
-      <Meta style={{ marginTop: space.sm }}>{label}</Meta>
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: space.xl }} testID="loading">
+      <ActivityIndicator color={brand.seed} />
+      <View style={{ height: space.sm }} />
+      <Text textStyle={type.meta}>{label}</Text>
     </View>
   );
 }
@@ -247,147 +366,80 @@ export function PrefRow({
   testID?: string;
 }) {
   return (
-    <View style={styles.prefRow} testID={testID}>
-      <View style={{ flex: 1, paddingRight: space.md }}>
-        <Body style={{ fontWeight: "600" }}>{label}</Body>
-        <Meta>{help}</Meta>
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onChange}
-        accessibilityLabel={label}
-        trackColor={{ true: colors.accent, false: colors.border }}
-      />
-    </View>
+    <Column testID={testID} spacing={4} style={{ paddingVertical: space.sm }}>
+      <Switch label={label} value={value} onValueChange={onChange} />
+      <Meta>{help}</Meta>
+    </Column>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.bg,
-    paddingHorizontal: space.md,
-    paddingTop: space.md,
-  },
-  card: {
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: space.md,
-    marginBottom: space.md,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: colors.ink,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: colors.ink,
-  },
-  body: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: colors.ink,
-  },
-  meta: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: colors.inkMuted,
-  },
-  badge: {
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    alignSelf: "flex-start",
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: "700",
-    textTransform: "uppercase",
-  },
-  badgeOk: { backgroundColor: colors.okBg },
-  badgeWarn: { backgroundColor: colors.warnBg },
-  badgeDanger: { backgroundColor: colors.dangerBg },
-  badgeNeutral: { backgroundColor: colors.border },
-  primaryBtn: {
-    backgroundColor: colors.ink,
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: "center",
-  },
-  dangerBtn: {
-    backgroundColor: colors.danger,
-  },
-  primaryBtnText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-  secondaryBtn: {
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: "center",
-    backgroundColor: colors.card,
-  },
-  secondaryBtnText: {
-    color: colors.ink,
-    fontWeight: "600",
-    fontSize: 15,
-  },
-  loading: {
-    padding: space.xl,
-    alignItems: "center",
-  },
-  prefRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: space.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  chipSelected: {
-    backgroundColor: colors.ink,
-    borderColor: colors.ink,
-  },
-  chipText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.inkMuted,
-  },
-  chipTextSelected: {
-    color: "#fff",
-  },
-  choiceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginBottom: 8,
-    backgroundColor: colors.card,
-  },
-  choiceRowSelected: {
-    borderColor: colors.ink,
-    backgroundColor: "#EEF2FF",
-  },
-});
+export function ReviewRow({
+  kindLabel,
+  badge,
+  badgeTone,
+  title,
+  listMeta,
+  statusLine,
+  testID,
+  onPress,
+}: {
+  kindLabel: string;
+  badge: string;
+  badgeTone: "warn" | "neutral" | "ok" | "danger";
+  title: string;
+  listMeta: string;
+  statusLine: string;
+  testID?: string;
+  onPress: () => void;
+}) {
+  return (
+    <ListItem
+      testID={testID}
+      onPress={onPress}
+      trailing={<Icon name={Icons.chevron} size={14} color={brand.inkFaint} />}
+      supportingText={`${kindLabel} · ${badge}\n${listMeta}\n${statusLine}`}
+    >
+      {title}
+    </ListItem>
+  );
+}
+
+/** Surface card for detail blocks that aren't list rows. */
+export function SurfaceCard({
+  children,
+  testID,
+}: {
+  children: ReactNode;
+  testID?: string;
+}) {
+  return (
+    <Column
+      testID={testID}
+      spacing={space.sm}
+      style={{
+        backgroundColor: brand.card,
+        borderColor: brand.border,
+        borderWidth: 1,
+        borderRadius: 12,
+        padding: space.md,
+      }}
+    >
+      {children}
+    </Column>
+  );
+}
+
+/** Back-compat alias used by older screens. */
+export const Card = SurfaceCard;
+
+/** Back-compat Screen wrapper. */
+export function Screen({
+  children,
+  testID,
+}: {
+  children: ReactNode;
+  testID?: string;
+  style?: unknown;
+}) {
+  return <ScreenHost testID={testID}>{children}</ScreenHost>;
+}

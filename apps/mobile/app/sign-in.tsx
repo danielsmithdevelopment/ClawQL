@@ -1,16 +1,18 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
 
 import { useSession } from "@/src/state/SessionContext";
-import { colors, space } from "@/src/theme";
+import { brand, space } from "@/src/theme";
 import {
   Body,
-  Card,
+  Column,
+  Fill,
   Meta,
   PrimaryButton,
-  Screen,
+  ScreenHost,
   SecondaryButton,
+  Spacer,
+  SurfaceCard,
   Title,
 } from "@/src/ui/primitives";
 
@@ -32,61 +34,50 @@ export default function SignInScreen() {
   };
 
   return (
-    <Screen style={styles.root} testID="sign-in-screen">
-      <View style={styles.hero}>
-        <Title accessibilityRole="header">ClawQL</Title>
-        <Body style={{ marginTop: space.sm, color: colors.inkMuted }}>
-          Approve exact changes from your phone — tap your security key, not another push.
-        </Body>
-      </View>
+    <ScreenHost testID="sign-in-screen">
+      <Fill style={{ justifyContent: "center", padding: space.lg }}>
+        <Column spacing={space.md} alignment="center">
+        <Column spacing={space.sm} style={{ width: "100%" }}>
+          <Title>ClawQL</Title>
+          <Body color={brand.inkMuted}>
+            Approve exact changes from your phone — tap your security key, not another push.
+          </Body>
+        </Column>
 
-      <Card>
-        <PrimaryButton
-          testID="sign-in-browser"
-          label={busy ? "Opening browser…" : "Sign in with browser"}
-          disabled={busy}
-          onPress={() => void run(signInWithBrowser)}
-        />
-        <Meta style={{ marginTop: space.sm }}>
-          Uses the system browser and returns via app link — no localhost.
-        </Meta>
-      </Card>
+        <SurfaceCard>
+          <PrimaryButton
+            testID="sign-in-browser"
+            label={busy ? "Opening browser…" : "Sign in with browser"}
+            disabled={busy}
+            onPress={() => void run(signInWithBrowser)}
+          />
+          <Meta>Uses the system browser and returns via app link — no localhost.</Meta>
+        </SurfaceCard>
 
-      <Card>
-        <Body style={{ fontWeight: "600", marginBottom: space.sm }}>Demo & review</Body>
-        <SecondaryButton
-          testID="sign-in-fixture"
-          label="Continue with fixture session"
-          disabled={busy}
-          onPress={() => void run(signInFixture)}
-        />
-        <View style={{ height: space.sm }} />
-        <SecondaryButton
-          testID="sign-in-reviewer-demo"
-          label="App Store reviewer demo (biometric)"
-          disabled={busy}
-          onPress={() => void run(signInReviewerDemo)}
-        />
-        <Meta style={{ marginTop: space.sm }}>
-          Reviewer demo allows device biometrics instead of a YubiKey. Approvals are audit-tagged.
-        </Meta>
-      </Card>
+        <SurfaceCard>
+          <Body>Demo & review</Body>
+          <Spacer />
+          <SecondaryButton
+            testID="sign-in-fixture"
+            label="Continue with fixture session"
+            disabled={busy}
+            onPress={() => void run(signInFixture)}
+          />
+          <Spacer />
+          <SecondaryButton
+            testID="sign-in-reviewer-demo"
+            label="App Store reviewer demo (biometric)"
+            disabled={busy}
+            onPress={() => void run(signInReviewerDemo)}
+          />
+          <Meta>
+            Reviewer demo allows device biometrics instead of a YubiKey. Approvals are audit-tagged.
+          </Meta>
+        </SurfaceCard>
 
-      {error ? (
-        <Meta testID="sign-in-error" style={{ color: colors.danger }}>
-          {error}
-        </Meta>
-      ) : null}
-    </Screen>
+        {error ? <Meta testID="sign-in-error" color={brand.danger}>{error}</Meta> : null}
+        </Column>
+      </Fill>
+    </ScreenHost>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    justifyContent: "center",
-  },
-  hero: {
-    marginBottom: space.lg,
-    paddingHorizontal: space.xs,
-  },
-});

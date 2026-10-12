@@ -1,7 +1,6 @@
 import { Effect } from "effect";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Pressable, View } from "react-native";
 
 import type { ActivityEvent, HomeSpend, ReviewItem } from "@/src/domain/schemas";
 import {
@@ -11,17 +10,18 @@ import {
 } from "@/src/services/api";
 import { scheduleLocalApprovalNotificationEffect } from "@/src/services/push";
 import { useSession } from "@/src/state/SessionContext";
-import { colors, space } from "@/src/theme";
+import { brand, space } from "@/src/theme";
 import {
-  Badge,
   Body,
-  Card,
+  Column,
+  List,
   LoadingBlock,
   Meta,
-  Screen,
-  ScreenScroll,
+  ReviewRow,
+  ScreenHost,
   SecondaryButton,
   Subtitle,
+  SurfaceCard,
   Title,
 } from "@/src/ui/primitives";
 
@@ -41,35 +41,29 @@ export default function HomeScreen() {
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [spend, setSpend] = useState<HomeSpend | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pushNote, setPushNote] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  const load = useCallback(
-    async (opts?: { soft?: boolean }) => {
-      if (!session) return;
-      if (opts?.soft) setRefreshing(true);
-      setError(null);
-      try {
-        const [review, spendRes, activityRes] = await Promise.all([
-          Effect.runPromise(listReviewEffect(session)),
-          Effect.runPromise(getHomeSpendEffect(session)),
-          Effect.runPromise(listActivityEffect(session)),
-        ]);
-        setItems([...review.items]);
-        setSpend(spendRes);
-        setActivity([...activityRes.events].slice(0, 5));
-      } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : String(e));
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-        setHydrated(true);
-      }
-    },
-    [session]
-  );
+  const load = useCallback(async () => {
+    if (!session) return;
+    setError(null);
+    try {
+      const [review, spendRes, activityRes] = await Promise.all([
+        Effect.runPromise(listReviewEffect(session)),
+        Effect.runPromise(getHomeSpendEffect(session)),
+        Effect.runPromise(listActivityEffect(session)),
+      ]);
+      setItems([...review.items]);
+      setSpend(spendRes);
+      setActivity([...activityRes.events].slice(0, 5));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+      setHydrated(true);
+    }
+  }, [session]);
 
   useFocusEffect(
     useCallback(() => {
@@ -79,123 +73,122 @@ export default function HomeScreen() {
 
   if (!session || (loading && !hydrated)) {
     return (
-      <Screen>
+      <ScreenHost>
         <LoadingBlock />
-      </Screen>
+      </ScreenHost>
     );
   }
 
   return (
-    <ScreenScroll
-      testID="home-screen"
-      refreshing={refreshing}
-      onRefresh={() => void load({ soft: true })}
-    >
-      <Title accessibilityRole="header">What needs you</Title>
-      <Meta style={{ marginTop: 4, marginBottom: space.md }}>
-        Signed in as {session.displayName}
-        {session.reviewerDemo ? " · reviewer demo" : ""}
-      </Meta>
-      {spend ? (
-        <Card testID="home-spend">
-          <Subtitle>{spend.label}</Subtitle>
-          <Title style={{ marginTop: 4 }}>{spend.amount}</Title>
-          <Meta style={{ marginTop: 4 }}>{spend.note}</Meta>
-        </Card>
-      ) : null}
-      <Subtitle style={{ marginBottom: space.sm }}>Needs action</Subtitle>
-      {error ? <Meta style={{ color: colors.danger }}>{error}</Meta> : null}
-      {items.length === 0 ? (
-        <Meta testID="home-empty">Nothing waiting. You are clear.</Meta>
-      ) : (
-        items.map((item) => (
-          <Pressable
-            key={item.id}
-            accessibilityRole="button"
-            testID={`home-item-${item.id}`}
-            onPress={() => router.push(`/review/${item.id}`)}
-          >
-            <Card>
-              <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-                <Meta>{item.kindLabel}</Meta>
-                <Badge label={item.badge} tone={item.badgeTone} />
-              </View>
-              <Body style={{ fontWeight: "600", marginTop: 6 }}>{item.title}</Body>
-              <Meta style={{ marginTop: 4 }}>{item.listMeta}</Meta>
-              <Meta style={{ marginTop: 6 }}>{item.statusLine}</Meta>
-            </Card>
-          </Pressable>
-        ))
-      )}
-
-      <Subtitle style={{ marginTop: space.md, marginBottom: space.sm }}>Recent activity</Subtitle>
-      {activity.length === 0 ? (
-        <Meta testID="home-activity-empty">No recent decisions yet.</Meta>
-      ) : (
-        activity.map((event) => (
-          <Pressable
-            key={event.id}
-            accessibilityRole="button"
-            testID={`home-activity-${event.id}`}
-            onPress={() => router.push(`/review/${event.reviewId}`)}
-          >
-            <Card>
-              <Body style={{ fontWeight: "600" }}>{event.title}</Body>
-              <Meta style={{ marginTop: 4 }}>
-                {event.detail} · {formatRelative(event.atMs)}
-              </Meta>
-            </Card>
-          </Pressable>
-        ))
-      )}
-      <Pressable
-        accessibilityRole="button"
-        testID="home-open-activity"
-        onPress={() => router.push("/(tabs)/activity")}
+    <ScreenHost testID="home-screen">
+      <List
+        onRefresh={async () => {
+          await load();
+        }}
       >
-        <Meta style={{ color: colors.accent, marginBottom: space.md }}>See all activity →</Meta>
-      </Pressable>
-
-      {items[0] ? (
-        <Card testID="home-simulate-push">
-          <Subtitle>Local push (fixture)</Subtitle>
-          <Meta style={{ marginTop: 4, marginBottom: space.sm }}>
-            Schedule a local notification that opens the top request — no EAS or APNs needed.
+        <Column spacing={space.sm} style={{ padding: space.md }}>
+          <Title>What needs you</Title>
+          <Meta>
+            {`Signed in as ${session.displayName}${session.reviewerDemo ? " · reviewer demo" : ""}`}
           </Meta>
-          <SecondaryButton
-            testID="home-simulate-push-btn"
-            label="Simulate approval push"
-            onPress={() => {
-              void (async () => {
-                try {
-                  const res = await Effect.runPromise(
-                    scheduleLocalApprovalNotificationEffect({
-                      requestId: items[0]!.id,
-                      title: items[0]!.title,
-                      delaySeconds: 1,
-                    })
-                  );
-                  setPushNote(
-                    res.simulated
-                      ? `Web simulated · open /review/${items[0]!.id}`
-                      : `Notification scheduled · ${res.notificationId}`
-                  );
-                  if (res.simulated) {
-                    setTimeout(() => router.push(`/review/${items[0]!.id}`), 800);
-                  }
-                } catch (e: unknown) {
-                  setPushNote(e instanceof Error ? e.message : String(e));
-                }
-              })();
-            }}
-          />
-          {pushNote ? (
-            <Meta testID="home-push-note" style={{ marginTop: space.sm, color: colors.ok }}>
-              {pushNote}
-            </Meta>
+          {spend ? (
+            <SurfaceCard testID="home-spend">
+              <Subtitle>{spend.label}</Subtitle>
+              <Title>{spend.amount}</Title>
+              <Meta>{spend.note}</Meta>
+            </SurfaceCard>
           ) : null}
-        </Card>
-      ) : null}
-    </ScreenScroll>
+          <Subtitle>Needs action</Subtitle>
+          {error ? <Meta color={brand.danger}>{error}</Meta> : null}
+          {items.length === 0 ? (
+            <Meta testID="home-empty">Nothing waiting. You are clear.</Meta>
+          ) : null}
+        </Column>
+
+        {items.map((item) => (
+          <ReviewRow
+            key={item.id}
+            testID={`home-item-${item.id}`}
+            kindLabel={item.kindLabel}
+            badge={item.badge}
+            badgeTone={item.badgeTone}
+            title={item.title}
+            listMeta={item.listMeta}
+            statusLine={item.statusLine}
+            onPress={() => router.push(`/review/${item.id}`)}
+          />
+        ))}
+
+        <Column spacing={space.sm} style={{ padding: space.md }}>
+          <Subtitle>Recent activity</Subtitle>
+          {activity.length === 0 ? (
+            <Meta testID="home-activity-empty">No recent decisions yet.</Meta>
+          ) : null}
+        </Column>
+
+        {activity.map((event) => (
+          <ReviewRow
+            key={event.id}
+            testID={`home-activity-${event.id}`}
+            kindLabel={event.kind.toUpperCase()}
+            badge={event.decision}
+            badgeTone="neutral"
+            title={event.title}
+            listMeta={event.detail}
+            statusLine={formatRelative(event.atMs)}
+            onPress={() => router.push(`/review/${event.reviewId}`)}
+          />
+        ))}
+
+        <Column spacing={space.sm} style={{ padding: space.md, paddingBottom: space.xl }}>
+          <SecondaryButton
+            testID="home-open-activity"
+            label="See all activity"
+            onPress={() => router.push("/(tabs)/activity")}
+          />
+          {items[0] ? (
+            <SurfaceCard testID="home-simulate-push">
+              <Subtitle>Local push (fixture)</Subtitle>
+              <Meta>
+                Schedule a local notification that opens the top request — no EAS or APNs needed.
+              </Meta>
+              <SecondaryButton
+                testID="home-simulate-push-btn"
+                label="Simulate approval push"
+                onPress={() => {
+                  void (async () => {
+                    try {
+                      const res = await Effect.runPromise(
+                        scheduleLocalApprovalNotificationEffect({
+                          requestId: items[0]!.id,
+                          title: items[0]!.title,
+                          delaySeconds: 1,
+                        })
+                      );
+                      setPushNote(
+                        res.simulated
+                          ? `Web simulated · open /review/${items[0]!.id}`
+                          : `Notification scheduled · ${res.notificationId}`
+                      );
+                      if (res.simulated) {
+                        setTimeout(() => router.push(`/review/${items[0]!.id}`), 800);
+                      }
+                    } catch (e: unknown) {
+                      setPushNote(e instanceof Error ? e.message : String(e));
+                    }
+                  })();
+                }}
+              />
+              {pushNote ? (
+                <Meta testID="home-push-note" color={brand.ok}>
+                  {pushNote}
+                </Meta>
+              ) : null}
+            </SurfaceCard>
+          ) : null}
+          <Body color={brand.inkFaint}>Pull to refresh the queue</Body>
+        </Column>
+      </List>
+    </ScreenHost>
   );
 }

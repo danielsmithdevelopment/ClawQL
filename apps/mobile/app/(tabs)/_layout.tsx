@@ -1,24 +1,35 @@
 import { Effect } from "effect";
 import { Redirect, Tabs, usePathname } from "expo-router";
 import { useEffect, useState } from "react";
-import { Text } from "react-native";
+import { Platform } from "react-native";
+import { SymbolView } from "expo-symbols";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import { pendingReviewCountEffect } from "@/src/services/api";
 import { useSession } from "@/src/state/SessionContext";
-import { colors } from "@/src/theme";
+import { brand } from "@/src/theme";
 
-function TabIcon({ label, focused }: { label: string; focused: boolean }) {
-  return (
-    <Text
-      style={{
-        fontSize: 11,
-        fontWeight: focused ? "700" : "500",
-        color: focused ? colors.accent : colors.inkFaint,
-      }}
-    >
-      {label}
-    </Text>
-  );
+function TabGlyph({
+  ios,
+  android,
+  focused,
+}: {
+  ios: string;
+  android: keyof typeof MaterialIcons.glyphMap;
+  focused: boolean;
+}) {
+  const color = focused ? brand.seed : brand.inkFaint;
+  if (Platform.OS === "ios") {
+    return (
+      <SymbolView
+        name={ios as never}
+        size={22}
+        tintColor={color}
+        weight={focused ? "semibold" : "regular"}
+      />
+    );
+  }
+  return <MaterialIcons name={android} size={22} color={color} />;
 }
 
 export default function TabLayout() {
@@ -43,19 +54,26 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.ink,
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.inkFaint,
-        tabBarShowLabel: false,
-        tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border },
+        headerStyle: { backgroundColor: brand.surface },
+        headerTintColor: brand.ink,
+        headerShadowVisible: false,
+        headerTitleStyle: { fontWeight: "700" },
+        tabBarActiveTintColor: brand.seed,
+        tabBarInactiveTintColor: brand.inkFaint,
+        tabBarStyle: {
+          backgroundColor: brand.card,
+          borderTopColor: brand.border,
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ focused }) => <TabIcon label="Home" focused={focused} />,
+          tabBarLabel: "Home",
+          tabBarIcon: ({ focused }) => (
+            <TabGlyph ios="house.fill" android="home" focused={focused} />
+          ),
           tabBarButtonTestID: "tab-home",
         }}
       />
@@ -63,13 +81,16 @@ export default function TabLayout() {
         name="review"
         options={{
           title: "Review",
+          tabBarLabel: "Review",
           tabBarBadge: pending > 0 ? pending : undefined,
           tabBarBadgeStyle: {
-            backgroundColor: colors.danger,
+            backgroundColor: brand.danger,
             color: "#fff",
             fontSize: 10,
           },
-          tabBarIcon: ({ focused }) => <TabIcon label="Review" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabGlyph ios="checklist" android="rate-review" focused={focused} />
+          ),
           tabBarButtonTestID: "tab-review",
         }}
       />
@@ -77,7 +98,10 @@ export default function TabLayout() {
         name="activity"
         options={{
           title: "Activity",
-          tabBarIcon: ({ focused }) => <TabIcon label="Activity" focused={focused} />,
+          tabBarLabel: "Activity",
+          tabBarIcon: ({ focused }) => (
+            <TabGlyph ios="clock.arrow.circlepath" android="history" focused={focused} />
+          ),
           tabBarButtonTestID: "tab-activity",
         }}
       />
@@ -85,7 +109,10 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ focused }) => <TabIcon label="Profile" focused={focused} />,
+          tabBarLabel: "Profile",
+          tabBarIcon: ({ focused }) => (
+            <TabGlyph ios="person.crop.circle.fill" android="person" focused={focused} />
+          ),
           tabBarButtonTestID: "tab-profile",
         }}
       />

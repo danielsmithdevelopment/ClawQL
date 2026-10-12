@@ -13,7 +13,7 @@ import {
   parseApprovalDeepLinkEffect,
   parseApprovalNotificationDataEffect,
 } from "@/src/services/push";
-import { colors } from "@/src/theme";
+import { brand } from "@/src/theme";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -83,9 +83,9 @@ function RootNavigator() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: colors.bg },
-        headerTintColor: colors.ink,
-        contentStyle: { backgroundColor: colors.bg },
+        headerStyle: { backgroundColor: brand.surface },
+        headerTintColor: brand.ink,
+        contentStyle: { backgroundColor: brand.surface },
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />

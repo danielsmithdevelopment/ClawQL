@@ -1,22 +1,21 @@
 import { Effect } from "effect";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { Pressable, View } from "react-native";
 
 import type { ReviewItem, ReviewKind } from "@/src/domain/schemas";
 import { listReviewEffect } from "@/src/services/api";
 import { useSession } from "@/src/state/SessionContext";
 import { space } from "@/src/theme";
 import {
-  Badge,
-  Body,
-  Card,
+  Column,
   FilterChip,
+  List,
   LoadingBlock,
   Meta,
-  Screen,
-  ScreenScroll,
+  ReviewRow,
+  ScreenHost,
   Title,
+  WrapRow,
 } from "@/src/ui/primitives";
 
 type FilterKind = ReviewKind | "all";
@@ -36,25 +35,19 @@ export default function ReviewQueueScreen() {
   const [source, setSource] = useState<"live" | "fixture">("fixture");
   const [filter, setFilter] = useState<FilterKind>("all");
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
-  const load = useCallback(
-    async (opts?: { soft?: boolean }) => {
-      if (!session) return;
-      if (opts?.soft) setRefreshing(true);
-      try {
-        const res = await Effect.runPromise(listReviewEffect(session));
-        setItems([...res.items]);
-        setSource(res.source);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-        setHydrated(true);
-      }
-    },
-    [session]
-  );
+  const load = useCallback(async () => {
+    if (!session) return;
+    try {
+      const res = await Effect.runPromise(listReviewEffect(session));
+      setItems([...res.items]);
+      setSource(res.source);
+    } finally {
+      setLoading(false);
+      setHydrated(true);
+    }
+  }, [session]);
 
   useFocusEffect(
     useCallback(() => {
@@ -75,67 +68,57 @@ export default function ReviewQueueScreen() {
 
   if (!session || (loading && !hydrated)) {
     return (
-      <Screen>
+      <ScreenHost>
         <LoadingBlock />
-      </Screen>
+      </ScreenHost>
     );
   }
 
   return (
-    <ScreenScroll
-      testID="review-queue-screen"
-      refreshing={refreshing}
-      onRefresh={() => void load({ soft: true })}
-    >
-      <View style={{ marginBottom: space.md }}>
-        <Title accessibilityRole="header">Review</Title>
-        <Meta style={{ marginTop: 4 }}>
-          {items.length} waiting · source {source}
-        </Meta>
-      </View>
-
-      <View
-        style={{ flexDirection: "row", flexWrap: "wrap", marginBottom: space.sm }}
-        testID="review-filters"
+    <ScreenHost testID="review-queue-screen">
+      <List
+        onRefresh={async () => {
+          await load();
+        }}
       >
-        {FILTERS.map((f) => (
-          <FilterChip
-            key={f.id}
-            testID={`filter-${f.id}`}
-            label={f.label}
-            count={f.id === "all" ? items.length : counts[f.id]}
-            selected={filter === f.id}
-            onPress={() => setFilter(f.id)}
+        <Column spacing={space.sm} style={{ padding: space.md }} testID="review-filters">
+          <Title>Review</Title>
+          <Meta>{`${items.length} waiting · source ${source}`}</Meta>
+          <WrapRow>
+            {FILTERS.map((f) => (
+              <FilterChip
+                key={f.id}
+                testID={`filter-${f.id}`}
+                label={f.label}
+                count={f.id === "all" ? items.length : counts[f.id]}
+                selected={filter === f.id}
+                onPress={() => setFilter(f.id)}
+              />
+            ))}
+          </WrapRow>
+          {visible.length === 0 ? (
+            <Meta testID="review-empty">
+              {items.length === 0
+                ? "Queue clear. Decided requests move to Activity."
+                : `No ${filter} requests waiting.`}
+            </Meta>
+          ) : null}
+        </Column>
+
+        {visible.map((item) => (
+          <ReviewRow
+            key={item.id}
+            testID={`review-item-${item.id}`}
+            kindLabel={item.kindLabel}
+            badge={item.badge}
+            badgeTone={item.badgeTone}
+            title={item.title}
+            listMeta={item.listMeta}
+            statusLine={item.statusLine}
+            onPress={() => router.push(`/review/${item.id}`)}
           />
         ))}
-      </View>
-
-      {visible.length === 0 ? (
-        <Meta testID="review-empty">
-          {items.length === 0
-            ? "Queue clear. Decided requests move to Activity."
-            : `No ${filter} requests waiting.`}
-        </Meta>
-      ) : (
-        visible.map((item) => (
-          <Pressable
-            key={item.id}
-            accessibilityRole="button"
-            testID={`review-item-${item.id}`}
-            onPress={() => router.push(`/review/${item.id}`)}
-          >
-            <Card>
-              <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-                <Meta>{item.kindLabel}</Meta>
-                <Badge label={item.badge} tone={item.badgeTone} />
-              </View>
-              <Body style={{ fontWeight: "600", marginTop: 6 }}>{item.title}</Body>
-              <Meta style={{ marginTop: 4 }}>{item.listMeta}</Meta>
-              <Meta style={{ marginTop: 6 }}>{item.statusLine}</Meta>
-            </Card>
-          </Pressable>
-        ))
-      )}
-    </ScreenScroll>
+      </List>
+    </ScreenHost>
   );
 }

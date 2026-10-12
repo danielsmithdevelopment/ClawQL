@@ -1,20 +1,18 @@
 import { Effect } from "effect";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Pressable } from "react-native";
 
 import type { ActivityEvent } from "@/src/domain/schemas";
 import { listActivityEffect } from "@/src/services/api";
 import { useSession } from "@/src/state/SessionContext";
 import { space } from "@/src/theme";
 import {
-  Badge,
-  Body,
-  Card,
+  Column,
+  List,
   LoadingBlock,
   Meta,
-  Screen,
-  ScreenScroll,
+  ReviewRow,
+  ScreenHost,
   Title,
 } from "@/src/ui/primitives";
 
@@ -37,25 +35,19 @@ export default function ActivityScreen() {
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [source, setSource] = useState<"live" | "fixture">("fixture");
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
-  const load = useCallback(
-    async (opts?: { soft?: boolean }) => {
-      if (!session) return;
-      if (opts?.soft) setRefreshing(true);
-      try {
-        const res = await Effect.runPromise(listActivityEffect(session));
-        setEvents([...res.events]);
-        setSource(res.source);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-        setHydrated(true);
-      }
-    },
-    [session]
-  );
+  const load = useCallback(async () => {
+    if (!session) return;
+    try {
+      const res = await Effect.runPromise(listActivityEffect(session));
+      setEvents([...res.events]);
+      setSource(res.source);
+    } finally {
+      setLoading(false);
+      setHydrated(true);
+    }
+  }, [session]);
 
   useFocusEffect(
     useCallback(() => {
@@ -65,41 +57,43 @@ export default function ActivityScreen() {
 
   if (!session || (loading && !hydrated)) {
     return (
-      <Screen>
+      <ScreenHost>
         <LoadingBlock />
-      </Screen>
+      </ScreenHost>
     );
   }
 
   return (
-    <ScreenScroll
-      testID="activity-screen"
-      refreshing={refreshing}
-      onRefresh={() => void load({ soft: true })}
-    >
-      <Title accessibilityRole="header">Activity</Title>
-      <Meta style={{ marginTop: 4, marginBottom: space.md }}>
-        Your recent decisions · source {source}
-      </Meta>
-      {events.length === 0 ? (
-        <Meta testID="activity-empty">Nothing recorded yet. Approvals and answers land here.</Meta>
-      ) : (
-        events.map((event) => (
-          <Pressable
+    <ScreenHost testID="activity-screen">
+      <List
+        onRefresh={async () => {
+          await load();
+        }}
+      >
+        <Column spacing={space.sm} style={{ padding: space.md }}>
+          <Title>Activity</Title>
+          <Meta>{`Your recent decisions · source ${source}`}</Meta>
+          {events.length === 0 ? (
+            <Meta testID="activity-empty">
+              Nothing recorded yet. Approvals and answers land here.
+            </Meta>
+          ) : null}
+        </Column>
+
+        {events.map((event) => (
+          <ReviewRow
             key={event.id}
-            accessibilityRole="button"
             testID={`activity-event-${event.id}`}
+            kindLabel={event.kind.toUpperCase()}
+            badge={event.decision}
+            badgeTone="neutral"
+            title={event.title}
+            listMeta={event.detail}
+            statusLine={formatWhen(event.atMs)}
             onPress={() => router.push(`/review/${event.reviewId}`)}
-          >
-            <Card>
-              <Badge label={event.kind} tone="neutral" />
-              <Body style={{ fontWeight: "600", marginTop: 6 }}>{event.title}</Body>
-              <Meta style={{ marginTop: 4 }}>{event.detail}</Meta>
-              <Meta style={{ marginTop: 6 }}>{formatWhen(event.atMs)}</Meta>
-            </Card>
-          </Pressable>
-        ))
-      )}
-    </ScreenScroll>
+          />
+        ))}
+      </List>
+    </ScreenHost>
   );
 }

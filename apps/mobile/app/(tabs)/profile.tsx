@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import * as WebBrowser from "expo-web-browser";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Alert, ScrollView, View } from "react-native";
+import { Alert } from "react-native";
 
 import type {
   ConnectedApp,
@@ -22,18 +22,21 @@ import {
 } from "@/src/services/api";
 import { loadMobileConfigEffect } from "@/src/services/config";
 import { useSession } from "@/src/state/SessionContext";
-import { colors, space } from "@/src/theme";
+import { space } from "@/src/theme";
 import {
   Badge,
   Body,
-  Card,
+  Column,
+  FieldGroup,
   LoadingBlock,
   Meta,
   PrefRow,
   PrimaryButton,
-  Screen,
+  ScreenHost,
+  ScrollView,
   SecondaryButton,
   Subtitle,
+  SurfaceCard,
   Title,
 } from "@/src/ui/primitives";
 
@@ -69,9 +72,9 @@ export default function ProfileScreen() {
 
   if (!session || loading || !prefs) {
     return (
-      <Screen>
+      <ScreenHost>
         <LoadingBlock />
-      </Screen>
+      </ScreenHost>
     );
   }
 
@@ -90,9 +93,7 @@ export default function ProfileScreen() {
           void (async () => {
             setBusy(true);
             try {
-              await Effect.runPromise(
-                revokeConnectedAppEffect({ session, clientId })
-              );
+              await Effect.runPromise(revokeConnectedAppEffect({ session, clientId }));
               setNote(`Revoked ${clientId}`);
               await load();
             } catch (e: unknown) {
@@ -136,57 +137,38 @@ export default function ProfileScreen() {
   };
 
   return (
-    <Screen testID="profile-screen">
+    <ScreenHost testID="profile-screen">
       <ScrollView>
-        <Title accessibilityRole="header">{session.displayName}</Title>
-        <Meta style={{ marginTop: 4 }}>
-          {session.email} · {session.role}
-          {session.reviewerDemo ? " · reviewer demo" : ""}
-        </Meta>
+        <Column spacing={space.md} style={{ padding: space.md, paddingBottom: space.xl }}>
+          <Column spacing={4}>
+            <Title>{session.displayName}</Title>
+            <Meta>
+              {`${session.email} · ${session.role}${session.reviewerDemo ? " · reviewer demo" : ""}`}
+            </Meta>
+          </Column>
 
-        <Card style={{ marginTop: space.md }} testID="profile-security-keys">
-          <Subtitle>Your security keys</Subtitle>
-          <Meta style={{ marginTop: 4 }}>You need two keys that can approve.</Meta>
-          {keys.map((key) => (
-            <View
-              key={key.id}
-              style={{ marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: colors.border }}
-              testID="profile-security-key"
-            >
-              <Body style={{ fontWeight: "600" }}>{key.name}</Body>
-              <View style={{ marginTop: 4 }}>
+          <SurfaceCard testID="profile-security-keys">
+            <Subtitle>Your security keys</Subtitle>
+            <Meta>You need two keys that can approve.</Meta>
+            {keys.map((key) => (
+              <Column key={key.id} spacing={4} testID="profile-security-key">
+                <Body>{key.name}</Body>
                 <Badge label={key.badge} tone={key.canApprove ? "ok" : "neutral"} />
-              </View>
-              <Meta style={{ marginTop: 4 }}>{key.detail}</Meta>
-            </View>
-          ))}
-        </Card>
+                <Meta>{key.detail}</Meta>
+              </Column>
+            ))}
+          </SurfaceCard>
 
-        <Card testID="profile-sessions">
-          <Subtitle>Where you are signed in</Subtitle>
-          <Meta style={{ marginTop: 4 }}>End other sessions if a device is lost or shared.</Meta>
-          {deviceSessions.map((row) => (
-            <View
-              key={row.id}
-              style={{
-                marginTop: space.sm,
-                paddingTop: space.sm,
-                borderTopWidth: 1,
-                borderTopColor: colors.border,
-              }}
-              testID={`device-session-${row.id}`}
-            >
-              <Body style={{ fontWeight: "600" }}>
-                {row.device}
-                {row.current ? " · this device" : ""}
-              </Body>
-              <Meta>
-                {row.path} · {row.lastActive}
-              </Meta>
-            </View>
-          ))}
-          {deviceSessions.filter((s) => !s.current).length > 0 ? (
-            <View style={{ marginTop: space.sm }}>
+          <SurfaceCard testID="profile-sessions">
+            <Subtitle>Where you are signed in</Subtitle>
+            <Meta>End other sessions if a device is lost or shared.</Meta>
+            {deviceSessions.map((row) => (
+              <Column key={row.id} spacing={2} testID={`device-session-${row.id}`}>
+                <Body>{`${row.device}${row.current ? " · this device" : ""}`}</Body>
+                <Meta>{`${row.path} · ${row.lastActive}`}</Meta>
+              </Column>
+            ))}
+            {deviceSessions.filter((s) => !s.current).length > 0 ? (
               <SecondaryButton
                 testID="profile-end-other-sessions"
                 label={busy ? "Working…" : "Sign out everywhere else"}
@@ -195,9 +177,7 @@ export default function ProfileScreen() {
                   void (async () => {
                     setBusy(true);
                     try {
-                      const res = await Effect.runPromise(
-                        endOtherDeviceSessionsEffect(session)
-                      );
+                      const res = await Effect.runPromise(endOtherDeviceSessionsEffect(session));
                       setNote(`Ended ${res.ended} other session${res.ended === 1 ? "" : "s"}`);
                       await load();
                     } catch (e: unknown) {
@@ -208,123 +188,114 @@ export default function ProfileScreen() {
                   })();
                 }}
               />
-            </View>
-          ) : (
-            <Meta testID="profile-sessions-only-this" style={{ marginTop: space.sm }}>
-              Only this device is signed in.
-            </Meta>
-          )}
-        </Card>
+            ) : (
+              <Meta testID="profile-sessions-only-this">Only this device is signed in.</Meta>
+            )}
+          </SurfaceCard>
 
-        <Card testID="profile-connected-apps">
-          <Subtitle>Connected apps</Subtitle>
-          <Meta style={{ marginTop: 4 }}>Revoke access for agents and IDEs.</Meta>
-          {apps.map((app) => (
-            <View
-              key={app.clientId}
-              style={{ marginTop: space.sm, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: colors.border }}
-              testID={`connected-app-${app.clientId}`}
-            >
-              <Body style={{ fontWeight: "600" }}>{app.name}</Body>
-              <Meta>
-                {app.scopes.join(", ")} · {app.lastUsed}
-              </Meta>
-              <View style={{ marginTop: space.sm }}>
+          <SurfaceCard testID="profile-connected-apps">
+            <Subtitle>Connected apps</Subtitle>
+            <Meta>Revoke access for agents and IDEs.</Meta>
+            {apps.map((app) => (
+              <Column key={app.clientId} spacing={space.sm} testID={`connected-app-${app.clientId}`}>
+                <Body>{app.name}</Body>
+                <Meta>{`${app.scopes.join(", ")} · ${app.lastUsed}`}</Meta>
                 <SecondaryButton
                   testID={`revoke-${app.clientId}`}
                   label="Revoke"
                   disabled={busy}
                   onPress={() => onRevoke(app.clientId)}
                 />
-              </View>
-            </View>
-          ))}
-          {apps.length === 0 ? <Meta testID="connected-apps-empty">No connected apps.</Meta> : null}
-        </Card>
+              </Column>
+            ))}
+            {apps.length === 0 ? (
+              <Meta testID="connected-apps-empty">No connected apps.</Meta>
+            ) : null}
+          </SurfaceCard>
 
-        <Card testID="profile-notification-prefs">
-          <Subtitle>When something needs you</Subtitle>
-          <PrefRow
-            testID="pref-push"
-            label="Push to the ClawQL app"
-            help="Approve from your phone by tapping your YubiKey to it."
-            value={prefs.push}
-            onChange={(push) => {
-              const next = { ...prefs, push };
-              setPrefs(next);
-              void Effect.runPromise(setNotificationPrefsEffect({ session, prefs: next }));
-            }}
-          />
-          <PrefRow
-            testID="pref-slack"
-            label="Slack direct message"
-            help="A link to the request. Approving still happens with your key."
-            value={prefs.slack}
-            onChange={(slack) => {
-              const next = { ...prefs, slack };
-              setPrefs(next);
-              void Effect.runPromise(setNotificationPrefsEffect({ session, prefs: next }));
-            }}
-          />
-          <PrefRow
-            testID="pref-email"
-            label="Email"
-            help="For requests still waiting after 30 minutes."
-            value={prefs.email}
-            onChange={(email) => {
-              const next = { ...prefs, email };
-              setPrefs(next);
-              void Effect.runPromise(setNotificationPrefsEffect({ session, prefs: next }));
-            }}
-          />
-          <PrefRow
-            testID="pref-digest"
-            label="Morning digest"
-            help="What your agents did overnight."
-            value={prefs.morningDigest}
-            onChange={(morningDigest) => {
-              const next = { ...prefs, morningDigest };
-              setPrefs(next);
-              void Effect.runPromise(setNotificationPrefsEffect({ session, prefs: next }));
-            }}
-          />
-        </Card>
+          <FieldGroup>
+            <FieldGroup.Section title="When something needs you">
+              <PrefRow
+                testID="pref-push"
+                label="Push to the ClawQL app"
+                help="Approve from your phone by tapping your YubiKey to it."
+                value={prefs.push}
+                onChange={(push) => {
+                  const next = { ...prefs, push };
+                  setPrefs(next);
+                  void Effect.runPromise(setNotificationPrefsEffect({ session, prefs: next }));
+                }}
+              />
+              <PrefRow
+                testID="pref-slack"
+                label="Slack direct message"
+                help="A link to the request. Approving still happens with your key."
+                value={prefs.slack}
+                onChange={(slack) => {
+                  const next = { ...prefs, slack };
+                  setPrefs(next);
+                  void Effect.runPromise(setNotificationPrefsEffect({ session, prefs: next }));
+                }}
+              />
+              <PrefRow
+                testID="pref-email"
+                label="Email"
+                help="For requests still waiting after 30 minutes."
+                value={prefs.email}
+                onChange={(email) => {
+                  const next = { ...prefs, email };
+                  setPrefs(next);
+                  void Effect.runPromise(setNotificationPrefsEffect({ session, prefs: next }));
+                }}
+              />
+              <PrefRow
+                testID="pref-digest"
+                label="Morning digest"
+                help="What your agents did overnight."
+                value={prefs.morningDigest}
+                onChange={(morningDigest) => {
+                  const next = { ...prefs, morningDigest };
+                  setPrefs(next);
+                  void Effect.runPromise(setNotificationPrefsEffect({ session, prefs: next }));
+                }}
+              />
+            </FieldGroup.Section>
+          </FieldGroup>
 
-        <Card>
-          <Subtitle>Everything else</Subtitle>
-          <Meta style={{ marginTop: 4, marginBottom: space.sm }}>
-            Policies, spend, gateways, and team live in the web console.
-          </Meta>
-          <SecondaryButton testID="open-console" label="Open web console" onPress={() => void openConsole()} />
-        </Card>
+          <SurfaceCard>
+            <Subtitle>Everything else</Subtitle>
+            <Meta>Policies, spend, gateways, and team live in the web console.</Meta>
+            <SecondaryButton
+              testID="open-console"
+              label="Open web console"
+              onPress={() => void openConsole()}
+            />
+          </SurfaceCard>
 
-        <View style={{ gap: space.sm, marginBottom: space.xl }}>
-          <SecondaryButton
-            testID="profile-sign-out"
-            label="Sign out"
-            disabled={busy}
-            onPress={() => {
-              void (async () => {
-                await signOut();
-                router.replace("/sign-in");
-              })();
-            }}
-          />
-          <PrimaryButton
-            testID="profile-delete-account"
-            label="Delete account"
-            danger
-            disabled={busy}
-            onPress={onDeleteAccount}
-          />
-        </View>
+          <Column spacing={space.sm}>
+            <SecondaryButton
+              testID="profile-sign-out"
+              label="Sign out"
+              disabled={busy}
+              onPress={() => {
+                void (async () => {
+                  await signOut();
+                  router.replace("/sign-in");
+                })();
+              }}
+            />
+            <PrimaryButton
+              testID="profile-delete-account"
+              label="Delete account"
+              danger
+              disabled={busy}
+              onPress={onDeleteAccount}
+            />
+          </Column>
 
-        {note ? (
-          <Meta testID="profile-note" style={{ marginBottom: space.lg }}>
-            {note}
-          </Meta>
-        ) : null}
+          {note ? <Meta testID="profile-note">{note}</Meta> : null}
+        </Column>
       </ScrollView>
-    </Screen>
+    </ScreenHost>
   );
 }
