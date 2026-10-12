@@ -95,25 +95,34 @@ export function BenchmarksLanding() {
         }
         subheadline={<p>{gatewayBenchmarkSummary}</p>}
         cta={
-          <p className="text-sm font-medium text-mist-800 dark:text-mist-200">
-            {gatewayBenchmarkClaim}{' '}
-            <span className="font-normal text-mist-600 dark:text-mist-400">
-              · {gatewayBenchmarkMeta.measuredLabel} · {gatewayBenchmarkMeta.multiturnLabel}
-            </span>
-          </p>
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-medium text-mist-800 dark:text-mist-200">
+              {gatewayBenchmarkClaim}{' '}
+              <span className="font-normal text-mist-600 dark:text-mist-400">
+                · {gatewayBenchmarkMeta.measuredLabel} · {gatewayBenchmarkMeta.multiturnLabel}
+              </span>
+            </p>
+            {!BENCHMARK_VIDEO_SRC ? (
+              <p className="text-xs/6 text-mist-600 dark:text-mist-400">
+                Walkthrough video (~{BENCHMARK_VIDEO_META.durationSeconds}s · ~{BENCHMARK_VIDEO_META.approxSizeMb} MB)
+                will embed at the top of this page from object storage when published.
+              </p>
+            ) : null}
+          </div>
         }
       >
-        <BenchmarkVideoSlot />
+        {BENCHMARK_VIDEO_SRC ? <BenchmarkVideoSlot /> : null}
       </Section>
 
       <Section
         id="competitive-matrix"
+        className="pt-4 sm:pt-6"
         eyebrow="Competitive landscape"
         headline="ClawQL versus the MCP gateway field"
         subheadline={
           <p>
-            Feature matrix first — what each arm actually does on the hot path and in the product surface. Measured
-            token and latency boards follow.
+            What each arm actually does on the hot path and in the product surface. Measured token and latency boards
+            follow.
           </p>
         }
       >
