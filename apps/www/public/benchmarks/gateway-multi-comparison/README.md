@@ -141,13 +141,16 @@ MULTI_ITERS=100 MULTI_SKIP_CHAOS=0 MULTI_CHAOS_UNTIL_BREAK=1 MULTI_CHAOS_MAX=512
 
 ## Dedicated page
 
-Shareable board (competitors + fair direct baseline + Bun rationale):
+Marketing landing (competitive matrix + scoreboards + video slot):
+
+- App Router `/benchmarks` → [clawql.com/benchmarks/](https://clawql.com/benchmarks/) after www Pages deploy merges
+- Video embed: set `BENCHMARK_VIDEO_SRC` in `apps/www/src/lib/gateway-benchmarks.ts` to an R2/CDN URL (~84s / ~11 MB)
+
+Shareable static board (competitors + fair direct baseline + Bun rationale):
 
 - [`index.html`](./index.html) · ships under `apps/www/public/benchmarks/gateway-multi-comparison/` (live at [clawql.com/benchmarks/gateway-multi-comparison/](https://clawql.com/benchmarks/gateway-multi-comparison/) after www Pages deploy merges; prefer trailing slash)
 - Docs mirror: `docs.clawql.com/benchmarks/gateway-multi-comparison` after docs deploy
 - Regenerate: `npm run generate:gateway-multi-page`
-
-**Do not link the marketing/docs URLs until deploy is confirmed** — both currently 404 until this branch’s www/docs publish lands.
 
 ## 12-step multiturn × 10 000 flows (tokens + latency + RSS)
 
