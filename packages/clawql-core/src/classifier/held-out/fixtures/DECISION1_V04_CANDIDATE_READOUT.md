@@ -10,7 +10,7 @@
 
 1. This is a **measure rung** after the flip-rate Decision-1 pin. It does **not** light `calibrated` or held-out `productionTrusted`.
 2. Trust remains **GLiNER2-only** on the core held-out path (`PRODUCTION_TRUSTED_SCORER_BACKEND`).
-3. Fan-out bulk scores **exact option id match** — not twin-aware held-out scoring. Do not equate bulk accuracy with GLiNER held-out accuracy.
+3. Fan-out bulk for this candidate uses **twin-aware** `candidatesEquivalent` (`matchMode: twin`). Still not a `productionTrusted` claim — GLiNER held-out remains the only trust path.
 4. Fill the template with a live OpenRouter run before citing any numbers. Empty `reports` arrays are not evidence.
 5. Flip-rate **fails closed** when `totalPerturbations === 0` (vacuous synonym-only on routing text is not a pass).
 

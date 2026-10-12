@@ -70,11 +70,13 @@ export {
   makeFanoutEvalLive,
   runFanoutEval,
   parseFanoutEvalBody,
+  fanoutAnswersMatch,
   resolveFanoutCostPerCase,
   spendCostsFromRows,
   type FanoutEvalRequest,
   type FanoutEvalResponse,
   type FanoutBackendReport,
+  type FanoutMatchMode,
 } from "./fanout-eval.js";
 
 export {

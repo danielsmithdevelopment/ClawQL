@@ -87,13 +87,22 @@ Unlabeled — omit `expected`. Optional `flipRate` attaches the perturbation gat
 }
 ```
 
+## Match mode (labeled bulk / ensemble)
+
+| `matchMode`       | Behavior                                                                                      |
+| ----------------- | --------------------------------------------------------------------------------------------- |
+| `exact` (default) | Predicted answer string must equal expected                                                   |
+| `twin`            | Declared mcp↔skill catalog twins count as correct (`candidatesEquivalent` from `clawql-core`) |
+
+Omitted `matchMode` → `exact` (preserves historical fan-out semantics). Response echoes `matchMode`. Decision-1 candidate reports opt into `twin` for apples-to-apples language with GLiNER held-out scoring; they still never light `productionTrusted`.
+
 ## Metrics (per backend)
 
 | Field             | Meaning                                                                               |
 | ----------------- | ------------------------------------------------------------------------------------- |
 | `answered`        | Non-abstain answers produced                                                          |
-| `correct`         | Answered and matched expected (bulk only; 0 in mining)                                |
-| `wrong`           | Answered and mismatched expected (bulk only; 0 in mining)                             |
+| `correct`         | Answered and matched expected under `matchMode` (bulk/ensemble; 0 in mining)          |
+| `wrong`           | Answered and mismatched expected (bulk/ensemble; 0 in mining)                         |
 | `abstained`       | Soft abstain / no answer                                                              |
 | `answersOnItsOwn` | `correct` when `wrong <= maxWrongAnswers` (else 0) — honesty bar                      |
 | `meetsQualityBar` | Bulk: `wrong <= maxWrongAnswers` and `answered >= minAnswered`; mining always `false` |
@@ -140,3 +149,4 @@ USD/call = `(inputTokens * inputRate + outputTokens * outputRate) / calls` where
 5. ~~Live `ensemble` quorum when it raises answers-on-its-own~~ — shipped
 6. ~~Provider-specific pricing for spend-ledger / VK budgets~~ — shipped (`TokenPricingService`)
 7. ~~Held-out → fan-out converter + Decision-1 candidate report~~ — shipped (`heldOutCasesToFanout` / `buildDecision1CandidateReport`; `productionTrustedClaim: false`)
+8. ~~Twin-aware bulk/ensemble `matchMode`~~ — shipped (`exact` default; Decision-1 candidate uses `twin`)

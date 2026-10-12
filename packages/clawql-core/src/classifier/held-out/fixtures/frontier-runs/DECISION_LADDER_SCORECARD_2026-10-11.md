@@ -38,7 +38,7 @@ Source: filledAt `2026-10-12T04:34:40.310Z`, `flipFamilies=["whitespace","case",
 ## What did _not_ improve
 
 - **No trust transfer**: Decision-1 still cannot enter `PRODUCTION_TRUSTED_SCORER_BACKEND`.
-- **Not apples-to-apples with GLiNER trusted readout**: fan-out uses exact option-id match, not twin-aware held-out scoring. GLiNER live trusted path remains ~0.80 rawAcc / 18 accepted @ τ=0.70 on the same suite.
+- **Twin matchMode (this ladder step)**: Decision-1 candidate bulk now uses `matchMode: twin` (`candidatesEquivalent`). Numbers on v0.4 may not move (already 40/40 exact); protocol honesty vs GLiNER improves. GLiNER live trusted path remains ~0.80 rawAcc / 18 accepted @ τ=0.70.
 - **Local stub** (no `CLAWQL_FAST_DECISION_GLINER_URL` in measure job) is not a GLiNER baseline — only a fail-closed local contrast.
 
 ## Baseline references

@@ -7,7 +7,12 @@ import { once } from "node:events";
 import { describe, expect, it } from "vitest";
 import express from "express";
 import { createDecisionRouter } from "./router.js";
-import { ENSEMBLE_BACKEND_ID, majorityQuorumVote, runFanoutEval } from "./fanout-eval.js";
+import {
+  ENSEMBLE_BACKEND_ID,
+  majorityQuorumVote,
+  parseFanoutEvalBody,
+  runFanoutEval,
+} from "./fanout-eval.js";
 import type { DecisionRequest, DecisionResponse } from "./service.js";
 import { Effect } from "effect";
 
@@ -164,6 +169,111 @@ describe("fan-out eval bulk", () => {
     expect(luna?.skipped).toBe(1);
     expect(luna?.skipReason).toMatch(/OPENAI_API_KEY/);
     expect(result.recommendation?.backendId).toBe("local");
+    expect(result.matchMode).toBe("exact");
+  });
+
+  it("defaults to exact matchMode; twin credits mcp↔skill pairs", async () => {
+    const routingCase = {
+      caseId: "route-1",
+      state: "Find the operationId before calling anything.",
+      questions: [
+        {
+          type: "choice" as const,
+          name: "tool",
+          options: [
+            { id: "mcp.search", description: "Discover operationIds" },
+            { id: "mcp.execute", description: "Run known operationId" },
+          ],
+        },
+      ],
+      expected: [{ name: "tool", answer: "mcp.search" }],
+    };
+    const decideTwinSkill = async (): Promise<DecisionResponse> => ({
+      object: "clawql.decision",
+      answers: [
+        {
+          name: "tool",
+          type: "choice",
+          answer: "skill.clawql-search-workflows",
+          abstained: false,
+          escalated: false,
+          calibrated: false,
+          backendId: "stub",
+          useSiteId: "search_provider_tool_routing",
+        },
+      ],
+      traceId: "stub",
+      escalated: false,
+      calibrated: false,
+      backendId: "stub",
+    });
+
+    const exact = await runFanoutEval(
+      {
+        mode: "bulk",
+        cases: [routingCase],
+        backends: [{ id: "local", model: "clawql", costPerCase: 0 }],
+        qualityBar: { maxWrongAnswers: 0, minAnswered: 1 },
+      },
+      { env: {}, decide: decideTwinSkill }
+    );
+    expect(exact.matchMode).toBe("exact");
+    expect(exact.reports[0]?.correct).toBe(0);
+    expect(exact.reports[0]?.wrong).toBe(1);
+    expect(exact.reports[0]?.meetsQualityBar).toBe(false);
+
+    const twin = await runFanoutEval(
+      {
+        mode: "bulk",
+        matchMode: "twin",
+        cases: [routingCase],
+        backends: [{ id: "local", model: "clawql", costPerCase: 0 }],
+        qualityBar: { maxWrongAnswers: 0, minAnswered: 1 },
+      },
+      { env: {}, decide: decideTwinSkill }
+    );
+    expect(twin.matchMode).toBe("twin");
+    expect(twin.reports[0]?.correct).toBe(1);
+    expect(twin.reports[0]?.wrong).toBe(0);
+    expect(twin.reports[0]?.meetsQualityBar).toBe(true);
+
+    const nonTwin = await runFanoutEval(
+      {
+        mode: "bulk",
+        matchMode: "twin",
+        cases: [
+          {
+            ...routingCase,
+            expected: [{ name: "tool", answer: "mcp.execute" }],
+          },
+        ],
+        backends: [{ id: "local", model: "clawql", costPerCase: 0 }],
+        qualityBar: { maxWrongAnswers: 0, minAnswered: 1 },
+      },
+      { env: {}, decide: decideTwinSkill }
+    );
+    expect(nonTwin.reports[0]?.correct).toBe(0);
+    expect(nonTwin.reports[0]?.wrong).toBe(1);
+  });
+
+  it("parseFanoutEvalBody rejects invalid matchMode", () => {
+    const bad = parseFanoutEvalBody({
+      mode: "bulk",
+      matchMode: "fuzzy",
+      backends: [{ id: "local" }],
+      cases: [billingCase],
+    });
+    expect("error" in bad).toBe(true);
+    if ("error" in bad) expect(bad.error).toMatch(/matchMode/);
+
+    const ok = parseFanoutEvalBody({
+      mode: "bulk",
+      matchMode: "twin",
+      backends: [{ id: "local" }],
+      cases: [billingCase],
+    });
+    expect("error" in ok).toBe(false);
+    if (!("error" in ok)) expect(ok.matchMode).toBe("twin");
   });
 
   it("POST /decision/eval returns fanout_eval shape", async () => {
@@ -383,6 +493,61 @@ describe("fan-out eval disagreement_mining", () => {
     expect(
       await Effect.runPromise(majorityQuorumVote({ a: "billing", b: "billing", c: "shipping" }))
     ).toBe("billing");
+  });
+
+  it("ensemble twin matchMode credits twin vote vs expected", async () => {
+    const routingCase = {
+      caseId: "route-ens-1",
+      state: "Find the operationId before calling anything.",
+      questions: [
+        {
+          type: "choice" as const,
+          name: "tool",
+          options: [
+            { id: "mcp.search", description: "Discover operationIds" },
+            { id: "mcp.execute", description: "Run known operationId" },
+          ],
+        },
+      ],
+      expected: [{ name: "tool", answer: "mcp.search" }],
+    };
+    const decideSkill = async (): Promise<DecisionResponse> => ({
+      object: "clawql.decision",
+      answers: [
+        {
+          name: "tool",
+          type: "choice",
+          answer: "skill.clawql-search-workflows",
+          abstained: false,
+          escalated: false,
+          calibrated: false,
+          backendId: "stub",
+          useSiteId: "search_provider_tool_routing",
+        },
+      ],
+      traceId: "stub",
+      escalated: false,
+      calibrated: false,
+      backendId: "stub",
+    });
+    const result = await runFanoutEval(
+      {
+        mode: "ensemble",
+        matchMode: "twin",
+        cases: [routingCase],
+        backends: [
+          { id: "local-a", model: "clawql", costPerCase: 0 },
+          { id: "local-b", model: "clawql", costPerCase: 0 },
+        ],
+        qualityBar: { maxWrongAnswers: 0, minAnswered: 1 },
+      },
+      { env: {}, decide: decideSkill }
+    );
+    const ens = result.reports.find((r) => r.backendId === ENSEMBLE_BACKEND_ID);
+    expect(result.matchMode).toBe("twin");
+    expect(ens?.correct).toBe(1);
+    expect(ens?.wrong).toBe(0);
+    expect(ens?.meetsQualityBar).toBe(true);
   });
 
   it("ensemble recommends only when quorum raises answersOnItsOwn", async () => {
