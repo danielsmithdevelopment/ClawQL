@@ -51,7 +51,6 @@ export default function SpendScreen() {
       <Title>{spend.label}</Title>
       <Title testID="spend-amount">{spend.amount}</Title>
       <Meta>{spend.note}</Meta>
-      {spend.budget ? <Meta color={brand.inkMuted}>{`Budget ${spend.budget}`}</Meta> : null}
 
       <SurfaceCard testID="spend-by-agent">
         <Subtitle>By agent</Subtitle>

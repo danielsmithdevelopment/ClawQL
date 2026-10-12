@@ -112,18 +112,20 @@ export default function HomeScreen() {
                 label="See spend by agent"
                 onPress={() => router.push("/spend")}
               />
-              <SecondaryButton
-                testID="home-open-agents"
-                label="Your agents"
-                onPress={() => router.push("/agents")}
-              />
-              <SecondaryButton
-                testID="home-open-digest"
-                label="Morning digest"
-                onPress={() => router.push("/digest")}
-              />
             </SurfaceCard>
           ) : null}
+          <Column spacing={space.sm} testID="home-shortcuts">
+            <SecondaryButton
+              testID="home-open-agents"
+              label="Your agents"
+              onPress={() => router.push("/agents")}
+            />
+            <SecondaryButton
+              testID="home-open-digest"
+              label="Morning digest"
+              onPress={() => router.push("/digest")}
+            />
+          </Column>
           <Subtitle>Needs action</Subtitle>
           {error ? <Meta color={brand.danger}>{error}</Meta> : null}
           {items.length === 0 ? (
