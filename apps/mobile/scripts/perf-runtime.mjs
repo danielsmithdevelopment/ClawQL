@@ -38,6 +38,8 @@ function startServer(distDir, port) {
     cwd: root,
     stdio: ["ignore", "pipe", "pipe"],
     env: process.env,
+    // Own process group so we can SIGKILL the whole tree on teardown.
+    detached: true,
   });
   return child;
 }
@@ -188,18 +190,22 @@ export async function measureRuntime({
     console.warn("[perf-runtime] lighthouse skipped:", e instanceof Error ? e.message : e);
   }
 
-  if (child) {
-    child.kill("SIGTERM");
-    await new Promise((resolve) => {
-      const t = setTimeout(() => {
-        child.kill("SIGKILL");
-        resolve();
-      }, 2000);
-      child.once("exit", () => {
-        clearTimeout(t);
-        resolve();
-      });
-    });
+  if (child?.pid) {
+    try {
+      process.kill(-child.pid, "SIGTERM");
+    } catch {
+      try {
+        child.kill("SIGTERM");
+      } catch {
+        /* already gone */
+      }
+    }
+    await sleep(400);
+    try {
+      process.kill(-child.pid, "SIGKILL");
+    } catch {
+      /* already gone */
+    }
   }
 
   const nodes = cpuProfile?.nodes?.length ?? 0;

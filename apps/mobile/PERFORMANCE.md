@@ -64,18 +64,17 @@ npm run perf:ios   # writes perf/out/ios-instruments-RUNBOOK.md
 2. **Native flame:** `expo prebuild` → Xcode → Product → Profile → **Time Profiler** (needs Apple toolchain; not Expo Go).
 3. Overlay: Developer menu → Performance monitor (UI/JS FPS + JS heap).
 
-## Baseline (lab, 2026-10-12)
+## Baseline (lab, after optimize — 2026-10-12)
 
-| Signal | Value |
-| ------ | ----- |
-| Web JS | ~3.6 MB |
-| iOS Hermes `.hbc` | ~6.7 MB |
-| Android Hermes `.hbc` | ~6.8 MB |
-| Lighthouse mobile Performance | ~0.84 |
-| Fixture sign-in → home | ~100 ms |
-| CPU profile | `perf/out/cpu-profile.cpuprofile` → speedscope |
+| Signal | Before | After |
+| ------ | -----: | ----: |
+| Web JS / total | 3.6 / 5.4 MB | **3.5 / 3.9 MB** |
+| iOS Hermes / total | 6.7 / 7.2 MB | **6.7 / 6.7 MB** |
+| Android Hermes / total | 6.8 / 8.2 MB | **6.7 / 6.7 MB** |
+| Lighthouse mobile Performance | 0.84 | **0.85** |
+| Fixture sign-in → home | ~100 ms | ~100 ms |
 
-Largest **assets** (not Hermes): Material Symbols TTF ~948 KB, Material Icons TTF ~348 KB. First weight win is subsetting or dropping the unused icon font on platforms that already use SF Symbols / XML material-symbols.
+No `.ttf` icon fonts in web/ios/android exports. Android/web use XML vector drawables or text glyphs; iOS uses SF Symbols.
 
 ## Optimizations applied (best-practice pass)
 
