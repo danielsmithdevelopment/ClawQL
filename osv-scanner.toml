@@ -27,4 +27,8 @@ reason = "MODERATE (CVE-2026-104872): @opentelemetry/instrumentation-* db.user s
 id = "GHSA-238p-pmpm-9mq7"
 reason = "LOW (CVE-2026-103923): katex@0.16.47 prototype-pollution bypass; mermaid@11 pins katex ^0.16 (fixed only in 0.18.2). Docs diagram rendering, not MCP request path. Remove when mermaid accepts katex >=0.18.2."
 
+[[IgnoredVulns]]
+id = "GHSA-86w9-cpqp-85rv"
+reason = "HIGH (CVE-2026-85393 / CVE-2026-33894): node-forge@1.4.0 RSA PKCS#1 v1.5 verification accepts nested DigestAlgorithm. OSV lists no fixed version beyond 1.4.0 (npm latest). Transitive via Expo CLI / @expo/code-signing-certificates in apps/mobile lockfile — build-time signing tooling, not PhoneApprove or MCP runtime. Remove when node-forge or Expo ships a patched release."
+
 # GHSA-ch52-4w7c-c8xp (http-cache-semantics <=4.2.0) — fixed via root override to 4.3.0.
