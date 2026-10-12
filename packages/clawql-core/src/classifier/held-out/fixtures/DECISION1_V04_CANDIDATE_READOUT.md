@@ -41,4 +41,4 @@ CLAWQL_DECISION1_FLIP_FAMILIES=synonym \
 
 ## Next
 
-After a non-vacuous full-family flip readout: discuss whether a dedicated remote scorer / new frozen suite is worth the cost. Until then, keep Decision-1 on the measure path.
+Held-out measure scorer Layer shipped (#1282). Operator path: marker `.run-decision1-held-out-measure` → workflow `Decision-1 held-out measure scorer` (frozen v0.4 labels, `CLAWQL_FLIP_RATE_GATE=0`). Still not a trust transfer — cite only as measure.

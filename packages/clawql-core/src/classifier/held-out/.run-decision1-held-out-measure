@@ -1,0 +1,4 @@
+# Marker for Decision-1 held-out measure scorer workflow.
+# First non-comment token must be v0.4-routing-fresh. Clear after fill lands.
+# Re-enable to re-run (needs OPENROUTER_API_KEY; CLAWQL_FLIP_RATE_GATE=0 by default).
+v0.4-routing-fresh
