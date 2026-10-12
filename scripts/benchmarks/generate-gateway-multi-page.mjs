@@ -457,12 +457,13 @@ ${
             )}</strong></td><td>${fmt(e.rss_mb_median, 0)}</td><td>${esc(trend)}</td></tr>`;
           })
           .join("\n");
-        // HTTP-to-HTTP peers (session flow): ClawQL Bun HTTP vs Executor v2 / aggregators.
+        // HTTP-to-HTTP peers: prefer the same interleaved publish board for every arm.
         const httpBun = src.board.clawql_http_bun || transport?.board?.clawql_http_bun;
         const httpNode = src.board.clawql_http || transport?.board?.clawql_http;
-        const ag = board.agentgateway || publish?.board?.agentgateway;
-        const mj = board.mcpjungle || publish?.board?.mcpjungle;
-        const ex2b = ex2?.board?.executor_v2 || publish?.board?.executor_v2;
+        const ag = publish?.board?.agentgateway || board.agentgateway;
+        const mj = publish?.board?.mcpjungle || board.mcpjungle;
+        const ex2b =
+          publish?.board?.executor_v2 || ex2?.board?.executor_v2 || board.executor_v2;
         const hbFe = httpBun?.flow_e2e_ms || {};
         const hnFe = httpNode?.flow_e2e_ms || {};
         const agFe = ag?.flow_e2e_ms || {};
@@ -476,6 +477,51 @@ ${
           hbFe.p50_ms != null && ex2Fe.p50_ms
             ? (ex2Fe.p50_ms / hbFe.p50_ms).toFixed(1)
             : null;
+        const p999Peers = [
+          agFe.p999_ms != null
+            ? {
+                name: "agentgateway",
+                ms: agFe.p999_ms,
+                beats: hbFe.p999_ms != null && hbFe.p999_ms < agFe.p999_ms,
+              }
+            : null,
+          mjFe.p999_ms != null
+            ? {
+                name: "MCPJungle",
+                ms: mjFe.p999_ms,
+                beats: hbFe.p999_ms != null && hbFe.p999_ms < mjFe.p999_ms,
+              }
+            : null,
+          ex2Fe.p999_ms != null
+            ? {
+                name: "Executor v2",
+                ms: ex2Fe.p999_ms,
+                beats: hbFe.p999_ms != null && hbFe.p999_ms < ex2Fe.p999_ms,
+              }
+            : null,
+        ].filter(Boolean);
+        const p999Beats = p999Peers.filter((p) => p.beats);
+        const p999Trails = p999Peers.filter((p) => !p.beats);
+        const p999Sentence =
+          hbFe.p999_ms == null
+            ? ""
+            : `p999: ClawQL Bun HTTP ${fmt(hbFe.p999_ms, 0)} ms` +
+              (p999Beats.length
+                ? ` beats ${p999Beats.map((p) => `${p.name} (${fmt(p.ms, 0)} ms)`).join(" / ")}`
+                : "") +
+              (p999Trails.length
+                ? `${p999Beats.length ? " but" : ""} trails ${p999Trails
+                    .map((p) => `${p.name} (${fmt(p.ms, 0)} ms)`)
+                    .join(" / ")}`
+                : "") +
+              ".";
+        const perCallNote =
+          httpBun?.ms_per_call_p50 != null
+            ? ` Per-call p50: ClawQL Bun HTTP ${fmt(httpBun.ms_per_call_p50, 2)} ms` +
+              (mj?.ms_per_call_p50 != null ? ` · MCPJungle ${fmt(mj.ms_per_call_p50, 2)}` : "") +
+              (ag?.ms_per_call_p50 != null ? ` · agentgateway ${fmt(ag.ms_per_call_p50, 2)}` : "") +
+              "."
+            : "";
         return `    <table>
       <thead>
         <tr>
@@ -488,23 +534,12 @@ ${rows}
       </tbody>
     </table>
     <div class="callout">
-      <strong>HTTP-to-HTTP (same transport).</strong>
+      <strong>HTTP-to-HTTP (same interleaved board).</strong>
       ClawQL Bun HTTP flow median ${fmt(hbFe.p50_ms, 1)} ms
       ${vsAg ? `≈ ${vsAg}× agentgateway (${fmt(agFe.p50_ms, 1)} ms)` : ""}
       ${vsEx2 ? ` and ~${vsEx2}× faster than Executor v2 (${fmt(ex2Fe.p50_ms, 1)} ms)` : ""}.
-      p999: ClawQL Bun HTTP ${fmt(hbFe.p999_ms, 0)} ms
-      ${agFe.p999_ms != null ? `beats agentgateway (${fmt(agFe.p999_ms, 0)} ms)` : ""}
-      ${
-        mjFe.p999_ms != null || ex2Fe.p999_ms != null
-          ? ` but trails ${[
-              mjFe.p999_ms != null ? `MCPJungle (${fmt(mjFe.p999_ms, 0)} ms)` : null,
-              ex2Fe.p999_ms != null ? `Executor v2 (${fmt(ex2Fe.p999_ms, 0)} ms)` : null,
-            ]
-              .filter(Boolean)
-              .join(" / ")}`
-          : ""
-      }.
-      Node HTTP peer: ${fmt(hnFe.p50_ms, 1)} / ${fmt(hnFe.p999_ms, 0)} ms.
+      ${p999Sentence}
+      Node HTTP peer: ${fmt(hnFe.p50_ms, 1)} / ${fmt(hnFe.p999_ms, 0)} ms.${perCallNote}
       <em>Claims that hold:</em> per-call overhead on par with Go/Rust (turn p50 ÷ 2 RPCs ≈ MCPJungle / agentgateway);
       more than twice as fast as Executor v2 on median flow. Do <strong>not</strong> claim “3×–9× tighter tail.”
     </div>

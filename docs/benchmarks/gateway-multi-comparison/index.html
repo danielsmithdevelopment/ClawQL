@@ -225,23 +225,21 @@
         </tr>
       </thead>
       <tbody>
-        <tr><td>clawql</td><td>stdio</td><td>20,539</td><td>2</td><td>0.71</td><td>18.7 / <strong>49.5</strong></td><td>665</td><td>plateau</td></tr>
-        <tr class="hl"><td>clawql_bun</td><td>stdio</td><td>20,539</td><td>2</td><td>0.60</td><td>16.0 / <strong>39.5</strong></td><td>344</td><td>plateau</td></tr>
-        <tr><td>clawql_http</td><td>streamable_http_multiplex</td><td>20,539</td><td>2</td><td>1.85</td><td>45.9 / <strong>391.1</strong></td><td>740</td><td>plateau</td></tr>
-        <tr class="hl"><td>clawql_http_bun</td><td>streamable_http_multiplex</td><td>20,539</td><td>2</td><td>1.55</td><td>38.9 / <strong>364.5</strong></td><td>340</td><td>plateau</td></tr>
-        <tr><td>clawql_grpc</td><td>grpc_mcp</td><td>20,523</td><td>2</td><td>5.73</td><td>138.7 / <strong>292.2</strong></td><td>700</td><td>plateau</td></tr>
-        <tr><td>clawql_grpc_bun</td><td>grpc_mcp</td><td>20,523</td><td>2</td><td>5.68</td><td>137.3 / <strong>254.7</strong></td><td>335</td><td>plateau</td></tr>
+        <tr><td>clawql</td><td>stdio</td><td>20,539</td><td>2</td><td>0.56</td><td>15.2 / <strong>42.5</strong></td><td>373</td><td>plateau</td></tr>
+        <tr class="hl"><td>clawql_bun</td><td>stdio</td><td>20,539</td><td>2</td><td>0.35</td><td>9.6 / <strong>25.7</strong></td><td>342</td><td>plateau</td></tr>
+        <tr><td>clawql_http</td><td>streamable_http_multiplex</td><td>20,539</td><td>2</td><td>1.68</td><td>41.6 / <strong>443.2</strong></td><td>366</td><td>plateau</td></tr>
+        <tr class="hl"><td>clawql_http_bun</td><td>streamable_http_multiplex</td><td>20,539</td><td>2</td><td>1.30</td><td>32.7 / <strong>460.7</strong></td><td>312</td><td>plateau</td></tr>
+        <tr><td>clawql_grpc</td><td>grpc_mcp</td><td>20,523</td><td>2</td><td>5.64</td><td>136.7 / <strong>194.4</strong></td><td>364</td><td>plateau</td></tr>
+        <tr><td>clawql_grpc_bun</td><td>grpc_mcp</td><td>20,523</td><td>2</td><td>5.55</td><td>134.1 / <strong>292.4</strong></td><td>438</td><td>steady_climb_possible_leak</td></tr>
       </tbody>
     </table>
     <div class="callout">
-      <strong>HTTP-to-HTTP (same transport).</strong>
-      ClawQL Bun HTTP flow median 38.9 ms
-      ≈ 2.9× agentgateway (13.6 ms)
-       and ~1.9× faster than Executor v2 (73.5 ms).
-      p999: ClawQL Bun HTTP 365 ms
-      beats agentgateway (331 ms)
-       but trails MCPJungle (135 ms) / Executor v2 (143 ms).
-      Node HTTP peer: 45.9 / 391 ms.
+      <strong>HTTP-to-HTTP (same interleaved board).</strong>
+      ClawQL Bun HTTP flow median 32.7 ms
+      ≈ 2.0× agentgateway (16.3 ms)
+       and ~2.2× faster than Executor v2 (70.6 ms).
+      p999: ClawQL Bun HTTP 461 ms trails agentgateway (208 ms) / MCPJungle (287 ms) / Executor v2 (136 ms).
+      Node HTTP peer: 41.6 / 443 ms. Per-call p50: ClawQL Bun HTTP 1.30 ms · MCPJungle 1.28 · agentgateway 1.23.
       <em>Claims that hold:</em> per-call overhead on par with Go/Rust (turn p50 ÷ 2 RPCs ≈ MCPJungle / agentgateway);
       more than twice as fast as Executor v2 on median flow. Do <strong>not</strong> claim “3×–9× tighter tail.”
     </div>
@@ -249,7 +247,7 @@
       <li><strong>Fastest ClawQL path:</strong> Bun stdio. <strong>Fair Executor v2 peer:</strong> ClawQL HTTP (not Bun stdio).</li>
       <li><strong>RPCs/turn:</strong> ClawQL = 2 (search+execute); peers = 1. Session latency gap is mostly the second call — it buys the ~41% token savings. Next win: skip search when the op is already known.</li>
       <li><strong>gRPC −16 tokens:</strong> Layer1 only (<code>execution.taskSupport</code> absent on protobuf Tool). Harmless envelope difference.</li>
-      <li>Artifact: <a href="./gateway-multi-multiturn-clawql-transport-10k.json">gateway-multi-multiturn-clawql-transport-10k.json</a> · prefer <code>publish-all-arms-10k.json</code> once interleaved.</li>
+      <li>Artifact: <a href="./gateway-multi-multiturn-publish-all-arms-10k.json">gateway-multi-multiturn-publish-all-arms-10k.json</a> (one interleaved run — preferred for a single publish table).</li>
     </ul>
 
     <h3>Where ClawQL’s next token win is</h3>

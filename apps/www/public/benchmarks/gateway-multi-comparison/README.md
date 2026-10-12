@@ -219,16 +219,16 @@ Same search→execute+projection multiturn as the primary board — only runtime
 
 | Arm | Runtime | Transport | Notes |
 | --- | --- | --- | --- |
-| `clawql` | Node | stdio | Primary publish peer |
-| `clawql_bun` | Bun | stdio | Same tokens; lower RSS |
+| `clawql` | Node | stdio | Primary publish peer (`--max-old-space-size=512`) |
+| `clawql_bun` | Bun | stdio | Same tokens; lower RSS (`--smol`) |
 | `clawql_http` | Node | Streamable HTTP | Fair peer for Executor v2 HTTP latency |
-| `clawql_http_bun` | Bun | Streamable HTTP | |
-| `clawql_grpc` | Node | gRPC MCP | **ClawQL-only** — peers have no gRPC MCP here |
+| `clawql_http_bun` | Bun | Streamable HTTP | Post-fix HTTP median peer for video |
+| `clawql_grpc` | Node | gRPC MCP | **ClawQL-only** — peers have no gRPC MCP here; Layer1 −16 vs stdio |
 | `clawql_grpc_bun` | Bun | gRPC MCP | Same |
 
 HTTP arms set `CLAWQL_MCP_DISABLE_STANDALONE_SSE=1` (GET `/mcp` → 405) so the SDK skips standalone SSE buffers. Server also prunes orphan JSON `_streamMapping` entries after each sessionful POST (SDK JSON-mode leak). Node HTTP RSS can still look climb-shaped under long multiturn (GC lag); Bun tends to plateau. gRPC on this small-payload board is typically slower than Streamable HTTP — prefer gRPC for large `CallTool` bodies.
 
-**Video / marketing:** any scene that says Executor adds ~18 666 via pretty-printing must name **v1.6.10 on-screen**. Plan a re-cut with v2 numbers when v2 is GA.
+**Video / marketing:** latency section uses **HTTP-to-HTTP** numbers (ClawQL HTTP vs Executor v2 / MCPJungle / agentgateway). Replace “3× to 9× tighter tail” with per-call parity + &gt;2× vs Executor v2. Any scene that says Executor adds ~18 666 via pretty-printing must name **v1.6.10 on-screen**.
 
 **Discovery = 0 (both Executor versions):** harness-authored `execute`; `skills`/search unused. Favors Executor vs ClawQL’s charged **11 568**.
 
