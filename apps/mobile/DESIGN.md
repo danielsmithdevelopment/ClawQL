@@ -1,30 +1,45 @@
 # PhoneApprove design system
 
 **System:** [Material Design 3](https://m3.material.io/)  
-**Generator:** [`@material/material-color-utilities`](https://www.npmjs.com/package/@material/material-color-utilities) `themeFromSourceColor` (same as [Material Theme Builder](https://m3.material.io/blog/announcing-material-theme-builder))  
-**Primary seed:** ClawQL orange `#FF5636`  
-**Secondary palette:** ClawQL navy `#081133` (MCU mono-seed collapses `secondaryContainer` onto `primaryContainer` for this orange — navy keeps hierarchy)  
-**Default scheme:** **Light** (readable for approval/diff work)  
-**Native:** `@expo/ui` Host → Android M3 Compose / iOS SwiftUI, `seedColor={color.seed}`, `colorScheme="light"`
+**Visual reference:** ClawQL Cloud console + brand mark (navy field, orange **Q**)  
+**Generator:** [`@material/material-color-utilities`](https://www.npmjs.com/package/@material/material-color-utilities) `themeFromSourceColor`  
+**Primary seed:** Console navy `#12182b` → blue chrome / surfaces / selection  
+**Action accent:** Brand orange `#FF5636` → filled CTAs only  
+**Default scheme:** **Light**  
+**Native:** `@expo/ui` Host → `seedColor={color.seed}` (blue), `colorScheme="light"`
+
+## Palette intent
+
+| Role | Color | Use |
+| --- | --- | --- |
+| Primary | Blue from navy | Tabs, selection, filter chips, links, default tonal plates |
+| Secondary | Cool blue-gray | Default icon bubbles, soft chips |
+| Accent | Orange | **Actions** — Sign in, Approve, Add, primary filled buttons |
+| Warn | Amber | “Needs you” / caution (not orange) |
+| Error | Red | Decline / blocked / delete |
+
+Do **not** paint surfaces, cards, and icons in orange tints. Orange is the Q — used when the user commits an action.
 
 ## What went wrong before (don’t repeat)
 
-- Hand-rolled dark navy + muddy terracotta “containers” that ignored M3 tonal steps  
-- Painting whole cards and every icon bubble with `primaryContainer`  
-- Drawing hard borders for hierarchy instead of **surface container** tones  
-- Forcing `colorScheme="dark"` while tokens were light (or vice versa)  
+- Hand-rolled dark navy + muddy terracotta containers  
+- Orange as MCU primary → peach surfaces + coral cards + rust buttons (three shades of orange)  
+- Painting every card/icon with `primaryContainer` / accent containers  
+- Hard borders instead of **surface container** tones  
 
-## Color roles (use these pairs only)
+## Color roles (pairs only)
 
 | Role | Use on PhoneApprove |
 | --- | --- |
 | `surface` | Screen background |
 | `surfaceContainerLowest` → `Highest` | Cards / nested plates (tonal depth, **no** heavy border) |
-| `onSurface` / `onSurfaceVariant` | Body / meta on any surface |
-| `primary` / `onPrimary` | Filled CTAs, active tab tint |
-| `primaryContainer` / `onPrimaryContainer` | **One** standout plate per screen (e.g. spend hero) + rare brand icons |
-| `secondaryContainer` / `onSecondaryContainer` | Default icon bubbles, soft chips (navy tint) |
-| `tertiaryContainer` / `onTertiaryContainer` | “Needs you” / warn |
+| `onSurface` / `onSurfaceVariant` | Body / meta |
+| `primary` / `onPrimary` | Active tab, selected chips, blue filled controls |
+| `primaryContainer` / `onPrimaryContainer` | One standout plate per screen (e.g. spend) — **blue**, not orange |
+| `secondaryContainer` / `onSecondaryContainer` | Default icon bubbles |
+| `accent` / `onAccent` | Filled action CTAs (Approve, Sign in, …) |
+| `accentContainer` / `onAccentContainer` | Rare orange tonal highlight (brand mark, not every card) |
+| `warn*` | Needs-you / caution |
 | `error*` | Decline / blocked / delete |
 
 Regenerate tokens:
@@ -33,12 +48,13 @@ Regenerate tokens:
 node scripts/generate-m3-theme.mjs
 ```
 
-## Component mapping (M3)
+## Component mapping (M3 + brand)
 
-- **Filled button** → `primary` + `onPrimary`  
-- **Outlined button** → outline + `primary` label (default `@expo/ui` outlined)  
-- **Card** → `surfaceContainer` / `surfaceContainerLow`, corner `shape.lg` (16), border optional `outlineVariant` at most  
-- **List item leading icon** → `IconBubble` on `secondaryContainer` by default  
+- **Filled action button** → `accent` + `onAccent` (orange)  
+- **Selected filter chip** → `primary` + `onPrimary` (blue)  
+- **Outlined button** → outline + `primary` label  
+- **Card** → `surfaceContainer*` / rare `primaryContainer`, corner `shape.lg` (16)  
+- **List leading icon** → `IconBubble` on `secondaryContainer` by default  
 - **Navigation bar** → `surfaceContainerLowest`, active icon `primary`  
 
 ## References
@@ -46,3 +62,4 @@ node scripts/generate-m3-theme.mjs
 - https://m3.material.io/styles/color/roles  
 - https://m3.material.io/styles/color/system/how-the-system-works  
 - https://developer.android.com/design/ui/mobile/guides/styles/color  
+- `apps/dashboard/src/styles/tailwind.css` (`.managed` console tokens)  

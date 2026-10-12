@@ -1,6 +1,6 @@
 import { Link, Stack } from "expo-router";
 
-import { brand, space } from "@/src/theme";
+import { brand, color, space } from "@/src/theme";
 import { Body, Column, Fill, Meta, ScreenHost, Title } from "@/src/ui/primitives";
 
 export default function NotFoundScreen() {
@@ -13,7 +13,7 @@ export default function NotFoundScreen() {
             <Title>This screen does not exist</Title>
             <Body color={brand.inkMuted}>The link may be stale or mistyped.</Body>
             <Link href="/" testID="not-found-home">
-              <Meta color={brand.seed}>Go to home</Meta>
+              <Meta color={color.primary}>Go to home</Meta>
             </Link>
           </Column>
         </Fill>

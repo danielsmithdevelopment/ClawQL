@@ -216,7 +216,7 @@ export function Badge({
     tone === "ok"
       ? color.okContainer
       : tone === "warn"
-        ? color.tertiaryContainer
+        ? color.warnContainer
         : tone === "danger"
           ? color.errorContainer
           : color.secondaryContainer;
@@ -224,7 +224,7 @@ export function Badge({
     tone === "ok"
       ? color.onOkContainer
       : tone === "warn"
-        ? color.onTertiaryContainer
+        ? color.onWarnContainer
         : tone === "danger"
           ? color.onErrorContainer
           : color.onSecondaryContainer;
@@ -318,8 +318,8 @@ export function PrimaryButton({
       variant="filled"
       disabled={disabled}
       onPress={onPress}
-      // M3 filled: container = primary (not raw seed). Label uses Host onPrimary.
-      style={{ backgroundColor: danger ? color.error : color.primary }}
+      // Brand action accent (orange). Chrome/selection stay primary blue.
+      style={{ backgroundColor: danger ? color.error : color.accent }}
     />
   );
 }
@@ -387,6 +387,7 @@ export function FilterChip({
       label={typeof count === "number" ? `${label} ${count}` : label}
       variant={selected ? "filled" : "outlined"}
       onPress={onPress}
+      style={selected ? { backgroundColor: color.primary } : undefined}
     />
   );
 }

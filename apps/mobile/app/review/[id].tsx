@@ -7,7 +7,7 @@ import { decideReviewEffect, getReviewByIdEffect } from "@/src/services/api";
 import { loadMobileConfigEffect } from "@/src/services/config";
 import { approveWithSecurityKeyEffect } from "@/src/services/nfc-security-key";
 import { useSession } from "@/src/state/SessionContext";
-import { brand, space } from "@/src/theme";
+import { brand, color, space } from "@/src/theme";
 import {
   Badge,
   Body,
@@ -207,7 +207,7 @@ export default function ReviewDetailScreen() {
               Reviewer demo: approve with device biometrics (audit-tagged).
             </Meta>
           ) : fixtureMode ? (
-            <Meta color={brand.seed} testID="fixture-nfc-hint">
+            <Meta color={color.primary} testID="fixture-nfc-hint">
               Fixture mode: Approve uses simulated NFC (no hardware).
             </Meta>
           ) : (

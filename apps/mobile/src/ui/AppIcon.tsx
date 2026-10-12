@@ -12,11 +12,12 @@ import { Icon } from "@expo/ui";
 import { color, shape } from "../theme";
 import { Icons, WEB_ICON_PATHS, type AppIconName } from "./icons";
 
-/** M3 roles + short aliases used by screens (`seed`→primary, `warn`→tertiary). */
+/** M3 roles + short aliases (`seed`→primary blue, `accent`→orange, `warn`→amber). */
 export type IconTone =
   | "primary"
   | "secondary"
   | "tertiary"
+  | "accent"
   | "error"
   | "ok"
   | "neutral"
@@ -24,9 +25,13 @@ export type IconTone =
   | "warn"
   | "danger";
 
-function resolveTone(tone: IconTone): "primary" | "secondary" | "tertiary" | "error" | "ok" {
+function resolveTone(
+  tone: IconTone
+): "primary" | "secondary" | "tertiary" | "accent" | "error" | "ok" | "warn" {
   if (tone === "seed" || tone === "primary") return "primary";
-  if (tone === "warn" || tone === "tertiary") return "tertiary";
+  if (tone === "accent") return "accent";
+  if (tone === "warn") return "warn";
+  if (tone === "tertiary") return "tertiary";
   if (tone === "danger" || tone === "error") return "error";
   if (tone === "ok") return "ok";
   return "secondary";
@@ -90,23 +95,31 @@ export function IconBubble({
   const bg =
     role === "ok"
       ? color.okContainer
-      : role === "tertiary"
-        ? color.tertiaryContainer
-        : role === "error"
-          ? color.errorContainer
-          : role === "secondary"
-            ? color.secondaryContainer
-            : color.primaryContainer;
+      : role === "warn"
+        ? color.warnContainer
+        : role === "accent"
+          ? color.accentContainer
+          : role === "tertiary"
+            ? color.tertiaryContainer
+            : role === "error"
+              ? color.errorContainer
+              : role === "secondary"
+                ? color.secondaryContainer
+                : color.primaryContainer;
   const fg =
     role === "ok"
       ? color.onOkContainer
-      : role === "tertiary"
-        ? color.onTertiaryContainer
-        : role === "error"
-          ? color.onErrorContainer
-          : role === "secondary"
-            ? color.onSecondaryContainer
-            : color.onPrimaryContainer;
+      : role === "warn"
+        ? color.onWarnContainer
+        : role === "accent"
+          ? color.onAccentContainer
+          : role === "tertiary"
+            ? color.onTertiaryContainer
+            : role === "error"
+              ? color.onErrorContainer
+              : role === "secondary"
+                ? color.onSecondaryContainer
+                : color.onPrimaryContainer;
   return (
     <View
       testID={testID}

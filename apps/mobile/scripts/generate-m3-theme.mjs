@@ -1,10 +1,12 @@
 /**
  * Regenerate M3 light scheme tokens for PhoneApprove.
  *
- * - Primary / surfaces / tertiary / error: MCU from ClawQL orange `#FF5636`
- *   (`themeFromSourceColor` — same algorithm as Material Theme Builder)
- * - Secondary: tonal roles from ClawQL navy `#081133` so secondaryContainer
- *   does not collapse onto primaryContainer (MCU mono-seed quirk for this hue)
+ * Visual reference: ClawQL Cloud console + brand (navy chrome, orange Q accent).
+ *
+ * - Primary / surfaces / secondary: MCU from console navy `#12182b`
+ *   (`themeFromSourceColor` — Material Theme Builder algorithm)
+ * - Accent (actions): tonal roles from brand orange `#FF5636`
+ *   → filled CTAs, not chrome / surfaces / icon defaults
  *
  *   node scripts/generate-m3-theme.mjs
  */
@@ -13,39 +15,38 @@ const require = createRequire(import.meta.url);
 const { argbFromHex, hexFromArgb, themeFromSourceColor, TonalPalette } =
   require("@material/material-color-utilities");
 
-const SEED = "#FF5636";
-const NAVY = "#081133";
+/** Matches `apps/dashboard` managed `--primary` / sidebar. */
+const BLUE = "#12182b";
+/** ClawQL brand orange — action accent only. */
+const ORANGE = "#FF5636";
 
-const theme = themeFromSourceColor(argbFromHex(SEED));
+const theme = themeFromSourceColor(argbFromHex(BLUE));
 const light = theme.schemes.light;
 const n = theme.palettes.neutral;
-const secondary = TonalPalette.fromInt(argbFromHex(NAVY));
+const accent = TonalPalette.fromInt(argbFromHex(ORANGE));
 
 const hex = (v) => hexFromArgb(v);
 const role = (scheme, k) => hex(scheme[k]);
 
-// M3 light secondary tone mapping (Material Theme Builder / MCU Scheme)
-const secondaryRoles = {
-  secondary: hex(secondary.tone(40)),
-  onSecondary: hex(secondary.tone(100)),
-  secondaryContainer: hex(secondary.tone(90)),
-  onSecondaryContainer: hex(secondary.tone(10)),
+// M3 light tertiary-style tones for the orange action accent
+const accentRoles = {
+  accent: hex(accent.tone(40)),
+  onAccent: hex(accent.tone(100)),
+  accentContainer: hex(accent.tone(90)),
+  onAccentContainer: hex(accent.tone(10)),
 };
 
-console.log(`// Seed ${SEED} + secondary ${NAVY} → M3 light`);
+console.log(`// Primary ${BLUE} + accent ${ORANGE} → M3 light`);
 console.log("{");
 for (const k of [
   "primary",
   "onPrimary",
   "primaryContainer",
   "onPrimaryContainer",
-]) {
-  console.log(`  ${k}: "${role(light, k)}",`);
-}
-for (const [k, v] of Object.entries(secondaryRoles)) {
-  console.log(`  ${k}: "${v}",`);
-}
-for (const k of [
+  "secondary",
+  "onSecondary",
+  "secondaryContainer",
+  "onSecondaryContainer",
   "tertiary",
   "onTertiary",
   "tertiaryContainer",
@@ -62,6 +63,9 @@ for (const k of [
 ]) {
   console.log(`  ${k}: "${role(light, k)}",`);
 }
+for (const [k, v] of Object.entries(accentRoles)) {
+  console.log(`  ${k}: "${v}",`);
+}
 console.log(`  surface: "${hex(n.tone(98))}",`);
 console.log(`  onSurface: "${role(light, "onSurface")}",`);
 console.log(`  onSurfaceVariant: "${role(light, "onSurfaceVariant")}",`);
@@ -70,5 +74,6 @@ console.log(`  surfaceContainerLow: "${hex(n.tone(96))}",`);
 console.log(`  surfaceContainer: "${hex(n.tone(94))}",`);
 console.log(`  surfaceContainerHigh: "${hex(n.tone(92))}",`);
 console.log(`  surfaceContainerHighest: "${hex(n.tone(90))}",`);
-console.log(`  seed: "${SEED}",`);
+console.log(`  seed: "${BLUE}",`);
+console.log(`  orange: "${ORANGE}",`);
 console.log("}");
