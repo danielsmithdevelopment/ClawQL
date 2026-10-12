@@ -90,6 +90,8 @@ function RootNavigator() {
       <Stack.Screen name="spend" options={{ title: "Spend" }} />
       <Stack.Screen name="agents" options={{ title: "Agents" }} />
       <Stack.Screen name="digest" options={{ title: "Morning digest" }} />
+      <Stack.Screen name="teammates" options={{ title: "Team" }} />
+      <Stack.Screen name="inbox" options={{ title: "Notifications" }} />
     </Stack>
   );
 }

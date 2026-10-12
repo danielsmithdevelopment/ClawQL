@@ -68,6 +68,15 @@ await page.evaluate(() => {
 });
 await page.getByTestId("home-spend").waitFor({ state: "visible", timeout: 15000 });
 
+await page.getByTestId("home-open-inbox").click();
+await page.getByTestId("inbox-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.waitForTimeout(1000);
+await shot("02e-inbox.png");
+await page.evaluate(() => {
+  window.location.assign("/");
+});
+await page.getByTestId("home-spend").waitFor({ state: "visible", timeout: 15000 });
+
 await page.getByTestId("tab-review").first().click();
 await page.getByTestId("review-item-rev_change").first().waitFor({ state: "visible", timeout: 15000 });
 await page.waitForTimeout(1000);
@@ -117,6 +126,15 @@ await page.getByTestId("policy-pol_contracts").click();
 await page.getByTestId("policy-detail-screen").waitFor({ state: "visible", timeout: 15000 });
 await page.waitForTimeout(1200);
 await shot("07-policy-detail.png");
+
+await page.evaluate(() => {
+  window.location.assign("/profile");
+});
+await page.getByTestId("profile-open-teammates").waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("profile-open-teammates").click();
+await page.getByTestId("teammates-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.waitForTimeout(1000);
+await shot("08-teammates.png");
 
 await context.close();
 await browser.close();

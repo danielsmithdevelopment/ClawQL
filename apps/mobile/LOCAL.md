@@ -26,6 +26,8 @@ Screens use **`@expo/ui`** universal components (`Host` + Material 3 / SwiftUI) 
 | Spend by agent | ✅ |
 | Agents roster (status / spend / waiting) | ✅ |
 | Morning digest preview | ✅ |
+| Notification inbox (fixture pushes / digest) | ✅ |
+| Who can approve (teammates) | ✅ read-only |
 | Approval policies (list + detail) | ✅ read-only |
 | Seeded decided archive (Activity drill-in) | ✅ |
 | Review filters (change / source / decision / skill) | ✅ |

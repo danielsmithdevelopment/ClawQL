@@ -282,6 +282,16 @@ export default function ProfileScreen() {
             />
           </SurfaceCard>
 
+          <SurfaceCard testID="profile-teammates">
+            <Subtitle>Who can approve</Subtitle>
+            <Meta>People in approval groups — read-only on phone.</Meta>
+            <SecondaryButton
+              testID="profile-open-teammates"
+              label="View team"
+              onPress={() => router.push("/teammates")}
+            />
+          </SurfaceCard>
+
           <SurfaceCard>
             <Subtitle>Everything else</Subtitle>
             <Meta>Gateways, billing, and team live in the web console.</Meta>

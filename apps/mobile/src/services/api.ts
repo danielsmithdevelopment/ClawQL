@@ -11,6 +11,7 @@ import {
   FIXTURE_DECIDED,
   FIXTURE_DEVICE_SESSIONS,
   FIXTURE_DIGEST,
+  FIXTURE_INBOX,
   FIXTURE_KEYS,
   FIXTURE_NOTIFICATION_PREFS,
   FIXTURE_ORG,
@@ -18,6 +19,7 @@ import {
   FIXTURE_POLICY_DETAIL,
   FIXTURE_REVIEW_ITEMS,
   FIXTURE_SPEND,
+  FIXTURE_TEAMMATES,
 } from "../domain/fixtures";
 import {
   AccountDeletionResult,
@@ -29,6 +31,7 @@ import {
   ConnectedApp,
   DeviceSession,
   HomeSpend,
+  InboxItem,
   MorningDigest,
   NotificationPrefs,
   OrgSummary,
@@ -37,6 +40,7 @@ import {
   ReviewKind,
   ReviewListResponse,
   SecurityKey,
+  Teammate,
   decodeUnknownEffect,
   type MobileSession,
 } from "../domain/schemas";
@@ -515,6 +519,30 @@ export function getMorningDigestEffect(
   });
 }
 
+export function listTeammatesEffect(
+  session: MobileSession
+): Effect.Effect<readonly Teammate[], MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return FIXTURE_TEAMMATES;
+    }
+    return FIXTURE_TEAMMATES;
+  });
+}
+
+export function listInboxEffect(
+  session: MobileSession
+): Effect.Effect<readonly InboxItem[], MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return FIXTURE_INBOX;
+    }
+    return FIXTURE_INBOX;
+  });
+}
+
 /** Test helper — reset fixture queue between Maestro / unit runs. */
 export function resetFixtureStateEffect(): Effect.Effect<void> {
   return Ref.set(stateRef, {
@@ -573,6 +601,12 @@ export class MobileApi extends Context.Service<
     readonly getMorningDigest: (
       session: MobileSession
     ) => Effect.Effect<MorningDigest, MobileApiError>;
+    readonly listTeammates: (
+      session: MobileSession
+    ) => Effect.Effect<readonly Teammate[], MobileApiError>;
+    readonly listInbox: (
+      session: MobileSession
+    ) => Effect.Effect<readonly InboxItem[], MobileApiError>;
     readonly listSecurityKeys: (
       session: MobileSession
     ) => Effect.Effect<readonly SecurityKey[], MobileApiError>;
@@ -607,6 +641,8 @@ export const MobileApiLive = Layer.succeed(MobileApi, {
   getHomeSpend: getHomeSpendEffect,
   listAgents: listAgentsEffect,
   getMorningDigest: getMorningDigestEffect,
+  listTeammates: listTeammatesEffect,
+  listInbox: listInboxEffect,
   listSecurityKeys: listSecurityKeysEffect,
   listConnectedApps: listConnectedAppsEffect,
   revokeConnectedApp: revokeConnectedAppEffect,

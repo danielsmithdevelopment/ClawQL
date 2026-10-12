@@ -12,8 +12,10 @@ import {
   listActivityEffect,
   listAgentsEffect,
   listDeviceSessionsEffect,
+  listInboxEffect,
   listPoliciesEffect,
   listReviewEffect,
+  listTeammatesEffect,
   pendingReviewCountEffect,
   resetFixtureStateEffect,
   revokeConnectedAppEffect,
@@ -131,6 +133,15 @@ describe("mobile API fixture mode", () => {
     const digest = await Effect.runPromise(getMorningDigestEffect(FIXTURE_SESSION));
     expect(digest.awaitingYou).toBeGreaterThan(0);
     expect(digest.items.length).toBeGreaterThan(2);
+  });
+
+  it("lists teammates and notification inbox", async () => {
+    const team = await Effect.runPromise(listTeammatesEffect(FIXTURE_SESSION));
+    expect(team.some((t) => t.canApprove && t.keysReady)).toBe(true);
+    expect(team.some((t) => !t.canApprove)).toBe(true);
+    const inbox = await Effect.runPromise(listInboxEffect(FIXTURE_SESSION));
+    expect(inbox.some((i) => i.unread && i.kind === "approval")).toBe(true);
+    expect(inbox.some((i) => i.kind === "digest")).toBe(true);
   });
 
   it("ends other device sessions", async () => {

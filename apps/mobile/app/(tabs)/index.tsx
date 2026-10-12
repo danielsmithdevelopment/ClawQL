@@ -125,6 +125,11 @@ export default function HomeScreen() {
               label="Morning digest"
               onPress={() => router.push("/digest")}
             />
+            <SecondaryButton
+              testID="home-open-inbox"
+              label="Notifications"
+              onPress={() => router.push("/inbox")}
+            />
           </Column>
           <Subtitle>Needs action</Subtitle>
           {error ? <Meta color={brand.danger}>{error}</Meta> : null}

@@ -6,11 +6,13 @@ import type {
   ConnectedApp,
   DeviceSession,
   HomeSpend,
+  InboxItem,
   MorningDigest,
   NotificationPrefs,
   OrgSummary,
   ReviewItem,
   SecurityKey,
+  Teammate,
   MobileSession,
 } from "./schemas";
 
@@ -226,6 +228,86 @@ export const FIXTURE_DIGEST: MorningDigest = {
     },
   ],
 };
+
+export const FIXTURE_TEAMMATES: readonly Teammate[] = [
+  {
+    id: "user_dana",
+    name: "Dana Reyes",
+    email: "dana@acme.example",
+    role: "Approver",
+    groups: ["Contract approvers", "Admins"],
+    canApprove: true,
+    keysReady: true,
+    lastActive: "Now · this phone",
+  },
+  {
+    id: "user_marcus",
+    name: "Marcus Lee",
+    email: "marcus@acme.example",
+    role: "Approver",
+    groups: ["Contract approvers", "Source approvers"],
+    canApprove: true,
+    keysReady: true,
+    lastActive: "Today at 08:55",
+  },
+  {
+    id: "user_priya",
+    name: "Priya Shah",
+    email: "priya@acme.example",
+    role: "Requester",
+    groups: ["Support group"],
+    canApprove: false,
+    keysReady: false,
+    lastActive: "Yesterday",
+  },
+  {
+    id: "user_jordan",
+    name: "Jordan Kim",
+    email: "jordan@acme.example",
+    role: "Approver",
+    groups: ["Source approvers"],
+    canApprove: true,
+    keysReady: false,
+    lastActive: "3 days ago",
+  },
+];
+
+export const FIXTURE_INBOX: readonly InboxItem[] = [
+  {
+    id: "inbox_1",
+    title: "legal-ops needs a security key",
+    body: "Change a contract's value · expires in 11 min",
+    atMs: Date.now() - 120_000,
+    kind: "approval",
+    reviewId: "rev_change",
+    unread: true,
+  },
+  {
+    id: "inbox_2",
+    title: "Morning digest is ready",
+    body: "3 agents ran overnight · 4 still waiting on you",
+    atMs: Date.now() - 3_600_000,
+    kind: "digest",
+    unread: true,
+  },
+  {
+    id: "inbox_3",
+    title: "Skill ready to promote",
+    body: "reconcile-amendment · learned by legal-ops",
+    atMs: Date.now() - 7_200_000,
+    kind: "approval",
+    reviewId: "rev_skill",
+    unread: false,
+  },
+  {
+    id: "inbox_4",
+    title: "Backup key reminder",
+    body: "Keep a second key that can approve — passkeys can't.",
+    atMs: Date.now() - 86_400_000,
+    kind: "system",
+    unread: false,
+  },
+];
 
 export const FIXTURE_POLICIES: readonly ApprovalPolicy[] = [
   {

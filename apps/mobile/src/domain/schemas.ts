@@ -192,6 +192,29 @@ export const AgentSummary = Schema.Struct({
 });
 export type AgentSummary = Schema.Schema.Type<typeof AgentSummary>;
 
+export const Teammate = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  email: Schema.String,
+  role: Schema.String,
+  groups: Schema.Array(Schema.String),
+  canApprove: Schema.Boolean,
+  keysReady: Schema.Boolean,
+  lastActive: Schema.String,
+});
+export type Teammate = Schema.Schema.Type<typeof Teammate>;
+
+export const InboxItem = Schema.Struct({
+  id: Schema.String,
+  title: Schema.String,
+  body: Schema.String,
+  atMs: Schema.Number,
+  kind: Schema.Literals(["approval", "digest", "system"]),
+  reviewId: Schema.optional(Schema.String),
+  unread: Schema.Boolean,
+});
+export type InboxItem = Schema.Schema.Type<typeof InboxItem>;
+
 export const SecurityKey = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
