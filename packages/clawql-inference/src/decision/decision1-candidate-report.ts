@@ -114,10 +114,7 @@ function decision1CandidateBackends(deps: Decision1CandidateDeps): FanoutEvalReq
   if (typeof deps.decision1CostPerCase === "number") {
     decision1.costPerCase = deps.decision1CostPerCase;
   }
-  return [
-    { id: "local", model: "clawql", costPerCase: 0 },
-    decision1,
-  ];
+  return [{ id: "local", model: "clawql", costPerCase: 0 }, decision1];
 }
 
 type FlipOrSkip =
