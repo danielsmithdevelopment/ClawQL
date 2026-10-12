@@ -443,7 +443,12 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     })();
   }
 
-  if (!options.skipGraphqlAttach) {
+  const skipGraphql =
+    options.skipGraphqlAttach === true ||
+    ["1", "true", "yes"].includes(
+      (process.env.CLAWQL_HTTP_SKIP_GRAPHQL ?? "").trim().toLowerCase()
+    );
+  if (!skipGraphql) {
     await attachGraphqlHttpToMcpApp(app);
   }
 
@@ -642,6 +647,20 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   });
 
   app.post(mcpPath, applyGatewayAuth, async (req, res) => {
+    const slowMs = Number.parseInt(process.env.CLAWQL_HTTP_SLOW_MS ?? "0", 10);
+    const tRoute0 = slowMs > 0 ? performance.now() : 0;
+    const logSlowRoute = (phase: string) => {
+      if (slowMs <= 0) return;
+      const dt = performance.now() - tRoute0;
+      if (dt < slowMs) return;
+      const method =
+        req.body && typeof req.body === "object" && !Array.isArray(req.body)
+          ? String((req.body as { method?: unknown }).method ?? "?")
+          : "?";
+      console.error(
+        `[clawql-http-slow] ${dt.toFixed(1)}ms phase=${phase} method=${method} session=${req.header("mcp-session-id") ?? "-"}`
+      );
+    };
     const protocolVersion = resolveHttpMcpProtocolVersion(req.header("mcp-protocol-version"));
     res.setHeader("mcp-protocol-version", protocolVersion);
 
@@ -790,8 +809,6 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         sessionId ??
         (typeof transport.sessionId === "string" ? transport.sessionId : undefined) ??
         "mcp";
-      const slowMs = Number.parseInt(process.env.CLAWQL_HTTP_SLOW_MS ?? "0", 10);
-      const tHandle0 = slowMs > 0 ? performance.now() : 0;
       try {
         const runHandle = () =>
           runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens }, () =>
@@ -804,18 +821,6 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           await runHandle();
         }
       } finally {
-        if (slowMs > 0) {
-          const dt = performance.now() - tHandle0;
-          if (dt >= slowMs) {
-            const method =
-              req.body && typeof req.body === "object" && !Array.isArray(req.body)
-                ? String((req.body as { method?: unknown }).method ?? "?")
-                : "?";
-            console.error(
-              `[clawql-http-slow] ${dt.toFixed(1)}ms method=${method} session=${mcpSession}`
-            );
-          }
-        }
         // SDK JSON-response mode leaves `_streamMapping` entries after resolveJson;
         // prune orphans so sessionful multiturn does not retain one entry per POST.
         if (!closeTransportAfter) {
@@ -824,6 +829,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         if (closeTransportAfter) {
           await transport.close().catch(() => undefined);
         }
+        logSlowRoute("post_mcp");
       }
     } catch (err: unknown) {
       console.error("[clawql-mcp-http] POST /mcp error:", err);
@@ -834,6 +840,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           id: null,
         });
       }
+      logSlowRoute("post_mcp_error");
     }
   });
 

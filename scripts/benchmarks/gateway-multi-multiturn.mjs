@@ -557,12 +557,15 @@ function buildTurns() {
 const streamableHttpAgent = new Agent({
   keepAliveTimeout: 60_000,
   keepAliveMaxTimeout: 60_000,
-  connections: 8,
+  // Single connection per origin — sessionful MCP is strictly sequential per client;
+  // extra sockets only add churn under rare server stalls.
+  connections: 1,
   pipelining: 1,
   connect: { noDelay: true },
 });
 
 function fetchSkipStandaloneSse(baseFetch = undiciFetch) {
+  const slowMs = Number(process.env.MT_CLIENT_SLOW_MS || 0) || 0;
   return async (input, init = {}) => {
     const method = String(init.method || "GET").toUpperCase();
     const headers = new Headers(init.headers || {});
@@ -570,10 +573,21 @@ function fetchSkipStandaloneSse(baseFetch = undiciFetch) {
     if (method === "GET" && accept.includes("text/event-stream")) {
       return new Response(null, { status: 405, headers: { Allow: "POST, DELETE" } });
     }
-    return baseFetch(input, {
-      ...init,
-      dispatcher: init.dispatcher || streamableHttpAgent,
-    });
+    const t0 = slowMs > 0 ? performance.now() : 0;
+    try {
+      return await baseFetch(input, {
+        ...init,
+        dispatcher: init.dispatcher || streamableHttpAgent,
+      });
+    } finally {
+      if (slowMs > 0) {
+        const dt = performance.now() - t0;
+        if (dt >= slowMs) {
+          const url = typeof input === "string" ? input : input?.url || String(input);
+          console.error(`[mt-client-slow] ${dt.toFixed(1)}ms ${method} ${url}`);
+        }
+      }
+    }
   };
 }
 
@@ -771,10 +785,21 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     // Refuse GET SSE so the SDK client skips the standalone stream (405) — avoids
     // long-lived SSE buffers under JSON-response mode (bench / headless clients).
     CLAWQL_MCP_DISABLE_STANDALONE_SSE: "1",
+    // MCP-only surface for latency arms — GraphQL attach adds idle RSS/GC pressure.
+    CLAWQL_HTTP_SKIP_GRAPHQL: process.env.CLAWQL_HTTP_SKIP_GRAPHQL || "1",
+    CLAWQL_ENABLE_HTTP_METRICS: process.env.CLAWQL_ENABLE_HTTP_METRICS || "0",
   };
-  if (process.env.CLAWQL_HTTP_PERF) env.CLAWQL_HTTP_PERF = process.env.CLAWQL_HTTP_PERF;
-  if (process.env.CLAWQL_AUDIT_TOOL_CALLS != null) {
-    env.CLAWQL_AUDIT_TOOL_CALLS = process.env.CLAWQL_AUDIT_TOOL_CALLS;
+  for (const key of [
+    "CLAWQL_HTTP_PERF",
+    "CLAWQL_HTTP_SLOW_MS",
+    "CLAWQL_AUDIT_TOOL_CALLS",
+    "CLAWQL_AUDIT_MAX_ENTRIES",
+    "BUN_JSC_forceRAMSize",
+    "BUN_JSC_useJIT",
+  ]) {
+    if (process.env[key] != null && process.env[key] !== "") {
+      env[key] = process.env[key];
+    }
   }
   const wantCpuProf = runtime === "node" && process.env.MT_HTTP_CPU_PROF === "1";
   const cpuProfDir =
