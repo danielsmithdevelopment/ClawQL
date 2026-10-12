@@ -19,11 +19,18 @@ import {
   listPushDevicesEffect,
   listReviewEffect,
   listTeammatesEffect,
+  markInboxReadByReviewEffect,
+  markInboxReadEffect,
   pendingReviewCountEffect,
   prependInboxItemEffect,
   resetFixtureStateEffect,
   revokeConnectedAppEffect,
 } from "../api";
+import {
+  ensureFreshSessionEffect,
+  isSessionExpiredEffect,
+  refreshSessionEffect,
+} from "../auth";
 import { captureDocumentEffect } from "../documents";
 import { approveWithSecurityKeyEffect } from "../nfc-security-key";
 import {
@@ -32,6 +39,7 @@ import {
   registerForPushEffect,
   scheduleLocalApprovalNotificationEffect,
 } from "../push";
+import { loadSessionEffect } from "../session-store";
 import {
   installMockNfcModuleEffect,
   clearMockNfcModuleEffect,
@@ -219,6 +227,53 @@ describe("mobile API fixture mode", () => {
       listAttachmentsEffect(FIXTURE_SESSION, "rev_change")
     );
     expect(listed.some((a) => a.id === doc.id)).toBe(true);
+  });
+
+  it("refreshes a fixture session and gates expiry", async () => {
+    const expired = {
+      ...FIXTURE_SESSION,
+      expiresAtMs: Date.now() - 1_000,
+    };
+    expect(await Effect.runPromise(isSessionExpiredEffect(expired))).toBe(true);
+    const refreshed = await Effect.runPromise(refreshSessionEffect(expired));
+    expect(refreshed.expiresAtMs).toBeGreaterThan(Date.now());
+    expect(refreshed.accessToken).toMatch(/^fixture-access-token-/);
+    const stored = await Effect.runPromise(loadSessionEffect());
+    expect(stored?.accessToken).toBe(refreshed.accessToken);
+
+    const fresh = await Effect.runPromise(ensureFreshSessionEffect(refreshed, 0));
+    expect(fresh?.accessToken).toBe(refreshed.accessToken);
+
+    const nearExpiry = {
+      ...refreshed,
+      expiresAtMs: Date.now() + 10_000,
+    };
+    const early = await Effect.runPromise(ensureFreshSessionEffect(nearExpiry, 60_000));
+    expect(early?.expiresAtMs).toBeGreaterThan(nearExpiry.expiresAtMs);
+  });
+
+  it("marks inbox items read by id and by review", async () => {
+    await Effect.runPromise(markInboxReadEffect(FIXTURE_SESSION, "inbox_1"));
+    let inbox = await Effect.runPromise(listInboxEffect(FIXTURE_SESSION));
+    expect(inbox.find((i) => i.id === "inbox_1")?.unread).toBe(false);
+
+    await Effect.runPromise(
+      prependInboxItemEffect({
+        id: "inbox_sim_read",
+        title: "Sim",
+        body: "body",
+        atMs: Date.now(),
+        kind: "approval",
+        reviewId: "rev_skill",
+        unread: true,
+      })
+    );
+    const marked = await Effect.runPromise(
+      markInboxReadByReviewEffect(FIXTURE_SESSION, "rev_skill")
+    );
+    expect(marked).toBeGreaterThan(0);
+    inbox = await Effect.runPromise(listInboxEffect(FIXTURE_SESSION));
+    expect(inbox.find((i) => i.id === "inbox_sim_read")?.unread).toBe(false);
   });
 
   it("promotes a skill with simulated fixture NFC", async () => {

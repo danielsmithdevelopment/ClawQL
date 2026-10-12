@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 
 import type { InboxItem } from "@/src/domain/schemas";
-import { listInboxEffect } from "@/src/services/api";
+import { listInboxEffect, markInboxReadEffect } from "@/src/services/api";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, space } from "@/src/theme";
 import {
@@ -104,14 +104,28 @@ export default function InboxScreen() {
                 <SecondaryButton
                   testID={`inbox-open-${item.id}`}
                   label="Open request"
-                  onPress={() => router.push(`/review/${item.reviewId}`)}
+                  onPress={() => {
+                    void (async () => {
+                      if (item.unread) {
+                        await Effect.runPromise(markInboxReadEffect(session, item.id));
+                      }
+                      router.push(`/review/${item.reviewId}`);
+                    })();
+                  }}
                 />
               ) : null}
               {item.kind === "digest" ? (
                 <SecondaryButton
                   testID={`inbox-open-digest-${item.id}`}
                   label="Open digest"
-                  onPress={() => router.push("/digest")}
+                  onPress={() => {
+                    void (async () => {
+                      if (item.unread) {
+                        await Effect.runPromise(markInboxReadEffect(session, item.id));
+                      }
+                      router.push("/digest");
+                    })();
+                  }}
                 />
               ) : null}
             </Column>

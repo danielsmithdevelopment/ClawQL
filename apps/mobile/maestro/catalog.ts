@@ -92,6 +92,13 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-11-push-register-and-scan.yaml",
   },
   {
+    id: "MOB-12",
+    run: "Maestro",
+    title: "Refresh session and share request link",
+    passWhen: "Profile renews fixture expiry; Review shows Share request link",
+    flow: "maestro/flows/mob-12-session-refresh.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',

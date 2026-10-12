@@ -48,8 +48,11 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Push device registration (fixture Expo token) | ✅ Profile |
 | Camera / library document attach (fixture synthetic URI) | ✅ Review detail |
 | Simulate push → notification inbox | ✅ |
+| Session refresh + expiry gate (fixture renew) | ✅ Profile / boot |
+| Mark inbox read on open | ✅ |
+| Share request deep link | ✅ Review detail |
 | Activity drill-in to decided archive | ✅ |
-| Deep link parsing / Maestro MOB-01…11 | ✅ (sim/emulator or web) |
+| Deep link parsing / Maestro MOB-01…12 | ✅ (sim/emulator or web) |
 | Unit tests | `npm test` |
 | Packaging preflight (no upload) | `npm run store:check` |
 

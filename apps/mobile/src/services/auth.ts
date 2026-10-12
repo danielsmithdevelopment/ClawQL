@@ -217,6 +217,110 @@ export function signOutEffect(): Effect.Effect<void, MobileAuthError> {
   );
 }
 
+function isFixtureAccessToken(token: string): boolean {
+  return token.startsWith("fixture-");
+}
+
+/** True when access token should be treated as expired (optional skew for refresh-early). */
+export function isSessionExpiredEffect(
+  session: MobileSession,
+  skewMs = 0
+): Effect.Effect<boolean> {
+  return Effect.sync(() => session.expiresAtMs <= Date.now() + skewMs);
+}
+
+/**
+ * Refresh access token. Fixture / reviewer-demo extends expiry locally.
+ * Live: refresh_token grant against auth issuer.
+ */
+export function refreshSessionEffect(
+  session: MobileSession
+): Effect.Effect<MobileSession, MobileAuthError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (config.fixtureMode || isFixtureAccessToken(session.accessToken)) {
+      const next: MobileSession = {
+        ...session,
+        accessToken: session.accessToken.startsWith("fixture-")
+          ? `fixture-access-token-${Date.now().toString(36)}`
+          : session.accessToken,
+        expiresAtMs: Date.now() + 86_400_000,
+      };
+      yield* saveSessionEffect(next).pipe(
+        Effect.mapError((e) => new MobileAuthError({ reason: e.reason }))
+      );
+      return next;
+    }
+
+    if (!session.refreshToken) {
+      return yield* Effect.fail(new MobileAuthError({ reason: "no_refresh_token" }));
+    }
+
+    const tokenRes = yield* Effect.tryPromise({
+      try: async () => {
+        const res = await fetch(`${config.authIssuer}/auth/mobile/token`, {
+          method: "POST",
+          headers: { "content-type": "application/json", accept: "application/json" },
+          body: JSON.stringify({
+            grant_type: "refresh_token",
+            refresh_token: session.refreshToken,
+            client_id: "clawql-mobile",
+          }),
+        });
+        if (!res.ok) throw new Error(`refresh_http_${res.status}`);
+        return (await res.json()) as Record<string, unknown>;
+      },
+      catch: (cause) =>
+        new MobileAuthError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+        }),
+    });
+
+    const accessToken = String(tokenRes.access_token ?? "");
+    if (!accessToken) {
+      return yield* Effect.fail(
+        new MobileAuthError({ reason: "missing_access_token" })
+      );
+    }
+    const next: MobileSession = {
+      ...session,
+      accessToken,
+      refreshToken:
+        typeof tokenRes.refresh_token === "string"
+          ? tokenRes.refresh_token
+          : session.refreshToken,
+      expiresAtMs:
+        Date.now() +
+        (typeof tokenRes.expires_in === "number"
+          ? tokenRes.expires_in * 1000
+          : 3_600_000),
+    };
+    yield* saveSessionEffect(next).pipe(
+      Effect.mapError((e) => new MobileAuthError({ reason: e.reason }))
+    );
+    return next;
+  });
+}
+
+/**
+ * Return a still-valid session, refreshing when within skew of expiry.
+ * Returns null when refresh fails or the session cannot be renewed (caller signs out).
+ */
+export function ensureFreshSessionEffect(
+  session: MobileSession,
+  skewMs = 60_000
+): Effect.Effect<MobileSession | null, MobileAuthError> {
+  return Effect.gen(function* () {
+    const expired = yield* isSessionExpiredEffect(session, skewMs);
+    if (!expired) return session;
+    const refreshed = yield* refreshSessionEffect(session).pipe(
+      Effect.map((s) => s as MobileSession | null),
+      Effect.catch(() => Effect.succeed(null as MobileSession | null))
+    );
+    return refreshed;
+  });
+}
+
 export const CLAWQL_MOBILE_AUTH_TAG = "clawql/MobileAuth" as const;
 
 export class MobileAuth extends Context.Service<
@@ -229,6 +333,17 @@ export class MobileAuth extends Context.Service<
     readonly exchangeCallbackUrl: (
       url: string
     ) => Effect.Effect<MobileSession, MobileAuthError>;
+    readonly refreshSession: (
+      session: MobileSession
+    ) => Effect.Effect<MobileSession, MobileAuthError>;
+    readonly ensureFreshSession: (
+      session: MobileSession,
+      skewMs?: number
+    ) => Effect.Effect<MobileSession | null, MobileAuthError>;
+    readonly isSessionExpired: (
+      session: MobileSession,
+      skewMs?: number
+    ) => Effect.Effect<boolean>;
   }
 >()(CLAWQL_MOBILE_AUTH_TAG) {}
 
@@ -238,4 +353,7 @@ export const MobileAuthLive = Layer.succeed(MobileAuth, {
   signInAsReviewerDemo: signInAsReviewerDemoEffect,
   signOut: signOutEffect,
   exchangeCallbackUrl: exchangeCallbackUrlEffect,
+  refreshSession: refreshSessionEffect,
+  ensureFreshSession: ensureFreshSessionEffect,
+  isSessionExpired: isSessionExpiredEffect,
 });

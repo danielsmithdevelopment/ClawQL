@@ -46,7 +46,7 @@ import {
 } from "@/src/ui/primitives";
 
 export default function ProfileScreen() {
-  const { session, signOut } = useSession();
+  const { session, signOut, refreshSession } = useSession();
   const router = useRouter();
   const [keys, setKeys] = useState<readonly SecurityKey[]>([]);
   const [apps, setApps] = useState<readonly ConnectedApp[]>([]);
@@ -171,6 +171,36 @@ export default function ProfileScreen() {
             <IconBubble name="sessions" tone="neutral" size={32} iconSize={16} />
             <Subtitle>Where you are signed in</Subtitle>
             <Meta>End other sessions if a device is lost or shared.</Meta>
+            <Meta testID="profile-session-expiry">
+              {`This device access expires ${new Date(session.expiresAtMs).toLocaleString()}`}
+            </Meta>
+            <SecondaryButton
+              testID="profile-refresh-session"
+              label={busy ? "Working…" : "Refresh session"}
+              disabled={busy}
+              onPress={() => {
+                void (async () => {
+                  setBusy(true);
+                  try {
+                    const next = await refreshSession();
+                    setNote(
+                      next
+                        ? `Session refreshed · expires ${new Date(next.expiresAtMs).toLocaleString()}`
+                        : "Session expired — sign in again"
+                    );
+                    if (!next) {
+                      router.replace("/sign-in");
+                      return;
+                    }
+                    await load();
+                  } catch (e: unknown) {
+                    setNote(e instanceof Error ? e.message : String(e));
+                  } finally {
+                    setBusy(false);
+                  }
+                })();
+              }}
+            />
             {deviceSessions.map((row) => (
               <Column key={row.id} spacing={2} testID={`device-session-${row.id}`}>
                 <Body>{`${row.device}${row.current ? " · this device" : ""}`}</Body>

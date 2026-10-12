@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
+import { Platform, Share } from "react-native";
 
 import type {
   DocumentAttachment,
@@ -12,6 +13,7 @@ import {
   decideReviewEffect,
   getReviewByIdEffect,
   listAttachmentsEffect,
+  markInboxReadByReviewEffect,
 } from "@/src/services/api";
 import { loadMobileConfigEffect } from "@/src/services/config";
 import {
@@ -19,6 +21,7 @@ import {
   type CaptureSource,
 } from "@/src/services/documents";
 import { approveWithSecurityKeyEffect } from "@/src/services/nfc-security-key";
+import { buildReviewDeepLinkEffect } from "@/src/services/push";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, color, space } from "@/src/theme";
 import {
@@ -63,6 +66,8 @@ export default function ReviewDetailScreen() {
       setItem(found);
       setFixtureMode(config.fixtureMode);
       setAttachments(docs);
+      // Opening a request from a push / inbox marks matching notifications read.
+      await Effect.runPromise(markInboxReadByReviewEffect(session, id)).catch(() => 0);
       if (found?.kind === "decision") {
         const preferred =
           found.decisionChoices?.find((c) => c.label === "Refund request")?.label ??
@@ -159,6 +164,37 @@ export default function ReviewDetailScreen() {
     }
   };
 
+  const shareRequest = async () => {
+    if (!item) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const url = await Effect.runPromise(buildReviewDeepLinkEffect(item.id));
+      const message = `${item.title}\n${url}`;
+      // Web browsers often lack navigator.share — copy the deep link instead.
+      if (Platform.OS === "web") {
+        const clipboard = (
+          globalThis as unknown as { navigator?: { clipboard?: { writeText?: (t: string) => Promise<void> } } }
+        ).navigator?.clipboard;
+        if (clipboard?.writeText) {
+          await clipboard.writeText(url);
+          setNote(`Link copied · ${url}`);
+          return;
+        }
+      }
+      await Share.share({
+        title: item.title,
+        message,
+        url,
+      });
+      setNote("Share sheet opened");
+    } catch (e: unknown) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const attachDocument = async (source: CaptureSource) => {
     if (!session || !item) return;
     setBusy(true);
@@ -219,6 +255,12 @@ export default function ReviewDetailScreen() {
       <Title>{item.title}</Title>
       <Meta>{item.listMeta}</Meta>
       <Meta>{item.statusLine}</Meta>
+      <SecondaryButton
+        testID="review-share"
+        label="Share request link"
+        disabled={busy}
+        onPress={() => void shareRequest()}
+      />
 
       {decided ? (
         <SurfaceCard testID="review-decided-banner">

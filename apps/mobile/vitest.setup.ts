@@ -96,4 +96,7 @@ vi.mock("expo-auth-session", () => ({
 
 vi.mock("react-native", () => ({
   Platform: { OS: "ios" },
+  Share: {
+    share: async () => ({ action: "sharedAction" }),
+  },
 }));

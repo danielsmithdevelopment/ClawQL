@@ -1,0 +1,20 @@
+# MOB-12 — Refresh fixture session from Profile; share link visible on review
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- assertVisible:
+    id: "profile-session-expiry"
+- tapOn:
+    id: "profile-refresh-session"
+- assertVisible:
+    id: "profile-note"
+- tapOn:
+    id: "tab-review"
+- tapOn:
+    id: "review-item-rev_change"
+- assertVisible:
+    id: "review-share"

@@ -549,6 +549,44 @@ export function listInboxEffect(
   });
 }
 
+export function markInboxReadEffect(
+  session: MobileSession,
+  inboxId: string
+): Effect.Effect<void, MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      inbox: s.inbox.map((item) =>
+        item.id === inboxId ? { ...item, unread: false } : item
+      ),
+    }));
+  });
+}
+
+export function markInboxReadByReviewEffect(
+  session: MobileSession,
+  reviewId: string
+): Effect.Effect<number, MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    const before = yield* Ref.get(stateRef);
+    const marked = before.inbox.filter(
+      (item) => item.reviewId === reviewId && item.unread
+    ).length;
+    if (marked === 0) return 0;
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      inbox: s.inbox.map((item) =>
+        item.reviewId === reviewId && item.unread
+          ? { ...item, unread: false }
+          : item
+      ),
+    }));
+    return marked;
+  });
+}
+
 export function registerPushDeviceEffect(input: {
   session: MobileSession;
   token: string;
@@ -692,6 +730,14 @@ export class MobileApi extends Context.Service<
     readonly listInbox: (
       session: MobileSession
     ) => Effect.Effect<readonly InboxItem[], MobileApiError>;
+    readonly markInboxRead: (
+      session: MobileSession,
+      inboxId: string
+    ) => Effect.Effect<void, MobileApiError>;
+    readonly markInboxReadByReview: (
+      session: MobileSession,
+      reviewId: string
+    ) => Effect.Effect<number, MobileApiError>;
     readonly listSecurityKeys: (
       session: MobileSession
     ) => Effect.Effect<readonly SecurityKey[], MobileApiError>;
@@ -749,6 +795,8 @@ export const MobileApiLive = Layer.succeed(MobileApi, {
   getMorningDigest: getMorningDigestEffect,
   listTeammates: listTeammatesEffect,
   listInbox: listInboxEffect,
+  markInboxRead: markInboxReadEffect,
+  markInboxReadByReview: markInboxReadByReviewEffect,
   listSecurityKeys: listSecurityKeysEffect,
   listConnectedApps: listConnectedAppsEffect,
   revokeConnectedApp: revokeConnectedAppEffect,

@@ -97,7 +97,7 @@ Until linked, production sessions get `nfc_module_unavailable`. **Fixture mode**
 
 | Id | Coverage |
 | -- | -------- |
-| MOB-01…11 | Maestro flows (fixture NFC, decision, skill, sessions, push register, document scan) |
+| MOB-01…12 | Maestro flows (fixture NFC, decision, skill, sessions, push, document scan, session refresh) |
 | REV-13 / UX-09 | Physical YubiKey — still Manual |
 
 See `store/review-notes.md` for App Review copy.
