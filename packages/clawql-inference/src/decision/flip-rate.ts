@@ -76,6 +76,8 @@ export type FlipRateResponse = {
   readonly maxFlipRate: number;
   readonly families: readonly FlipRateFamily[];
   readonly caseCount: number;
+  /** Sum of comparable perturbations across cases — 0 means the suite is vacuous. */
+  readonly totalPerturbations: number;
   readonly passed: boolean;
   readonly reports: readonly FlipRateCaseReport[];
   readonly traceId: string;
@@ -516,7 +518,8 @@ export function runFlipRateGate(opts: {
       }
 
       const flipRate = comparable === 0 ? 0 : flips / comparable;
-      const passed = baseline !== null && flipRate <= maxFlipRate;
+      // Zero comparable perturbations is vacuous — do not count as a pass.
+      const passed = baseline !== null && comparable > 0 && flipRate <= maxFlipRate;
       reports.push({
         caseId: c.caseId,
         baseline,
@@ -528,12 +531,15 @@ export function runFlipRateGate(opts: {
       });
     }
 
+    const totalPerturbations = reports.reduce((n, r) => n + r.perturbations, 0);
     return {
       object: "clawql.decision.flip_rate" as const,
       maxFlipRate,
       families: [...families],
       caseCount: opts.request.cases.length,
-      passed: reports.every((r) => r.passed),
+      totalPerturbations,
+      // Suite pass requires real evidence — synonym-only on non-matching text is not a pass.
+      passed: totalPerturbations > 0 && reports.every((r) => r.passed),
       reports,
       traceId,
       backendId: resolved.backend.backendId,

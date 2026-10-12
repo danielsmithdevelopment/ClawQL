@@ -1,3 +1,3 @@
 # Marker for Decision-1 v0.4 candidate measure workflow.
-# First non-comment token must be v0.4-routing-fresh. Cleared after fill landed
-# (decision1-v04-routing-candidate.json). Re-enable to re-run measure.
+# First non-comment token must be v0.4-routing-fresh. Re-enabled for full-family remeasure.
+v0.4-routing-fresh

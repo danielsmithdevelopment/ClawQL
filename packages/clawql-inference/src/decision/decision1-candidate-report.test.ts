@@ -77,6 +77,7 @@ describe("decision1-candidate-report", () => {
       maxFlipRate: 0.1,
       families: ["synonym"],
       caseCount: 1,
+      totalPerturbations: 1,
       passed: true,
       reports: [
         {

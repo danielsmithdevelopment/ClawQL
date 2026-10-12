@@ -10,7 +10,8 @@ Honest readout after merging spend-ledger → provider pricing → Decision-1 fl
 | Provider/model token pricing           | #1267   | Merged |
 | Flip-rate `model` pin → Decision-1     | #1268   | Merged |
 | Held-out → fan-out + candidate report  | #1269   | Merged |
-| Operator fill via Actions marker       | this PR | Filled |
+| Operator fill via Actions marker       | #1273   | Filled (bulk) |
+| Full flip-family remeasure + vacuous gate | this PR | In flight |
 
 ## Live Decision-1 v0.4 candidate (Actions, keyed)
 
@@ -23,15 +24,21 @@ Source: workflow run filledAt `2026-10-11T19:27:22.240Z`, `flipFamilies=["synony
 | Decision-1   | 40/40    | 40      | 0     | **yes**           |
 
 - **Bulk recommendation:** `openrouter/microsoft/microsoft-decision-1` (first backend with maxWrong=0).
-- **Flip-rate (synonym):** passed — 40 cases, 0 flips, `maxFlipRate=0.1`.
+- **Flip-rate (synonym) — VACATED:** reported pass but `totalPerturbations=0` (synonym swaps never hit routing-fresh text). Not evidence.
 - **Verdict:** `productionTrustedClaim: false`, `calibratedClaim: false` (honesty rails held).
+
+## Remeasure (this PR)
+
+- Flip-rate suite now **fails closed** when `totalPerturbations === 0`.
+- Default families: `whitespace,case,punctuation,synonym` (non-vacuous on routing text).
+- Replace artifact + cite flip pass/fail only after full-family fill lands.
 
 ## What improved (obvious)
 
 - **Decision-1 clears the fan-out quality bar on labeled v0.4** (40/40 exact option-id) while local stub does not (6/8 answered).
-- **Flip-rate synonym pass** under the Decision-1 model pin — measurable remote candidate, not a trust light.
 - **Operator can compare backends with live spend + pricing** instead of only explicit `costPerCase`.
 - **Honesty rails held**: remotes stay `productionTrustedClaim: false`; GLiNER2 remains the only path that can light trust.
+- **Vacuous synonym pass cannot be cited** after this PR’s fail-closed gate.
 
 ## What did _not_ improve
 

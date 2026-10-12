@@ -16,9 +16,9 @@ on:
   workflow_dispatch:
     inputs:
       flip_families:
-        description: Comma-separated flip families (default synonym to bound spend)
+        description: Comma-separated flip families (full suite required for non-vacuous evidence)
         required: true
-        default: synonym
+        default: whitespace,case,punctuation,synonym
         type: string
   pull_request:
     paths:
@@ -83,7 +83,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           MARKER_SUITE: ${{ steps.marker.outputs.suite }}
           MARKER_PRESENT: ${{ steps.marker.outputs.present }}
-          INPUT_FAMILIES: ${{ inputs.flip_families || 'synonym' }}
+          INPUT_FAMILIES: ${{ inputs.flip_families || 'whitespace,case,punctuation,synonym' }}
         run: |
           set -euo pipefail
           CAN=true
