@@ -1885,11 +1885,6 @@
   },
   "labelsPath": "packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.4-routing-fresh-gha-36144911649-labels.json",
   "filledAt": "2026-10-12T04:34:40.310Z",
-  "flipFamilies": [
-    "whitespace",
-    "case",
-    "punctuation",
-    "synonym"
-  ],
+  "flipFamilies": ["whitespace", "case", "punctuation", "synonym"],
   "openRouterKeyed": true
 }

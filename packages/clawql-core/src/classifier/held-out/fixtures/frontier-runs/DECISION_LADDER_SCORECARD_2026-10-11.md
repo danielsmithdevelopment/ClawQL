@@ -4,12 +4,12 @@ Honest readout after merging spend-ledger → provider pricing → Decision-1 fl
 
 ## What shipped (structural)
 
-| Rung                                   | PR      | Status |
-| -------------------------------------- | ------- | ------ |
-| Spend-ledger `costSource=spend_ledger` | #1255   | Merged |
-| Provider/model token pricing           | #1267   | Merged |
-| Flip-rate `model` pin → Decision-1     | #1268   | Merged |
-| Held-out → fan-out + candidate report  | #1269   | Merged |
+| Rung                                      | PR      | Status                              |
+| ----------------------------------------- | ------- | ----------------------------------- |
+| Spend-ledger `costSource=spend_ledger`    | #1255   | Merged                              |
+| Provider/model token pricing              | #1267   | Merged                              |
+| Flip-rate `model` pin → Decision-1        | #1268   | Merged                              |
+| Held-out → fan-out + candidate report     | #1269   | Merged                              |
 | Operator fill via Actions marker          | #1273   | Filled (bulk; synonym flip vacated) |
 | Full flip-family remeasure + vacuous gate | this PR | Filled                              |
 
