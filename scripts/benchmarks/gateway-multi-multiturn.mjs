@@ -35,7 +35,8 @@
  *
  * Env:
  *   MT_TURNS (default 12)  MT_ITERS (default 1)  CATALOG_TOOL_COUNT (default 40)
- *   MT_ARMS=direct,clawql,clawql_bun,executor,executor_v2,mcpjungle,agentgateway
+ *   MT_ARMS=direct,clawql,clawql_bun,clawql_http,clawql_http_bun,clawql_grpc,
+ *           clawql_grpc_bun,executor,executor_v2,mcpjungle,agentgateway
  *   MT_LIMIT (rows per turn, default 25)
  *   MT_OUT (default gateway-multi-multiturn.json)
  *   MT_PROGRESS_EVERY (default 100)  BUN_BIN  MT_INCLUDE_CF=1
@@ -47,7 +48,10 @@
  * Layer1 tokens = 0 (no tools/list); Layer2 = fat JSON body. Use it to price
  * each gateway's token savings vs latency/RSS cost.
  * `executor` = v1 stdio; `executor_v2` = v2 HTTP — identical runExecutorArm loop.
- * `clawql_http` = optional Node HTTP peer (not default; RSS climb under investigation).
+ * ClawQL transport matrix (same search→execute+projection recipe):
+ *   clawql / clawql_bun — stdio
+ *   clawql_http / clawql_http_bun — Streamable HTTP (JSON response; standalone SSE GET disabled for bench)
+ *   clawql_grpc / clawql_grpc_bun — ClawQL-only gRPC MCP (peers have no gRPC MCP on this board)
  *
  * Note: do NOT put a hand-written slim-return program on the publish board as
  * "Executor". That is not gateway projection and contradicts the settled blog.
@@ -63,6 +67,13 @@ import { spawn, spawnSync } from "node:child_process";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import * as grpc from "@grpc/grpc-js";
+import {
+  callToolServerStreamingGrpc,
+  lastNonEmptyCallToolText,
+  listToolsUnaryGrpc,
+  resolveGrpcMaxMessageLengthFromEnv,
+} from "mcp-grpc-transport";
 import { getEncoding } from "js-tiktoken";
 import { clawqlEqualArmEnv } from "./lib/clawql-bench-env.mjs";
 
@@ -662,10 +673,27 @@ async function connectClawql(mock, { runtime = "node", id = "clawql" } = {}) {
   };
 }
 
-/** Streamable HTTP multiplex — same product path as deployed gateways / Executor v2 HTTP. */
-async function connectClawqlHttp(mock, { id = "clawql_http" } = {}) {
+/**
+ * Streamable HTTP multiplex — same product path as deployed gateways / Executor v2 HTTP.
+ * `runtime`: "node" | "bun". Bench disables standalone SSE GET to avoid long-lived SSE buffers.
+ */
+async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } = {}) {
   const serverHttp = join(ROOT, "dist", "server-http.js");
   if (!existsSync(serverHttp)) throw new Error("dist/server-http.js missing");
+  const js =
+    runtime === "bun"
+      ? (() => {
+          const bun = resolveBunBin();
+          if (!bun) throw new Error(`${id} requires bun (set BUN_BIN)`);
+          const ver = spawnSync(bun, ["--version"], { encoding: "utf8" }).stdout?.trim() || null;
+          return { runtime: "bun", runtimeVersion: ver, command: bun, args: [serverHttp] };
+        })()
+      : {
+          runtime: "node",
+          runtimeVersion: process.version,
+          command: process.execPath,
+          args: [serverHttp],
+        };
   const home = join("/tmp", `clawql-mt-${id}-${process.pid}`);
   await mkdir(home, { recursive: true });
   const port = await pickFreePort();
@@ -675,9 +703,18 @@ async function connectClawqlHttp(mock, { id = "clawql_http" } = {}) {
     MCP_PORT: String(port),
     MCP_HOST: "127.0.0.1",
     CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE: "1",
+    // Refuse GET SSE so the SDK client skips the standalone stream (405) — fixes
+    // multiturn RSS climb from retained SSE buffers under JSON-response mode.
+    CLAWQL_MCP_DISABLE_STANDALONE_SSE: "1",
+    // RSS debug: allow server to call global.gc when spawned with --expose-gc (Node).
+    CLAWQL_DEBUG_FORCE_GC: process.env.CLAWQL_DEBUG_FORCE_GC ?? "1",
   };
   const t0 = performance.now();
-  const child = spawn(process.execPath, [serverHttp], {
+  const spawnArgs =
+    js.runtime === "node" && env.CLAWQL_DEBUG_FORCE_GC
+      ? ["--expose-gc", ...js.args]
+      : js.args;
+  const child = spawn(js.command, spawnArgs, {
     cwd: ROOT,
     env,
     stdio: ["ignore", "pipe", "pipe"],
@@ -688,7 +725,7 @@ async function connectClawqlHttp(mock, { id = "clawql_http" } = {}) {
   };
   child.on("exit", onEarlyExit);
   await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("clawql_http listening timeout")), 90_000);
+    const timer = setTimeout(() => reject(new Error(`${id} listening timeout`)), 90_000);
     const onData = (chunk) => {
       const s = String(chunk);
       if (s.includes("listening on") || s.includes("[clawql-mcp] Ready")) {
@@ -702,7 +739,7 @@ async function connectClawqlHttp(mock, { id = "clawql_http" } = {}) {
   });
   if (earlyExit) {
     child.kill("SIGKILL");
-    throw new Error(`clawql_http exited early code=${earlyExit.code} signal=${earlyExit.signal}`);
+    throw new Error(`${id} exited early code=${earlyExit.code} signal=${earlyExit.signal}`);
   }
   const mcpUrl = `http://127.0.0.1:${port}/mcp`;
   const transport = new StreamableHTTPClientTransport(new URL(mcpUrl));
@@ -711,14 +748,142 @@ async function connectClawqlHttp(mock, { id = "clawql_http" } = {}) {
   return {
     client,
     pid: child.pid,
-    runtime: "node",
-    runtimeVersion: process.version,
+    runtime: js.runtime,
+    runtimeVersion: js.runtimeVersion,
     transport: "streamable_http_multiplex",
     mcpUrl,
     ready_ms: Number((performance.now() - t0).toFixed(1)),
     rss_mb_ready: child.pid != null ? readTreeRssMb(child.pid) : null,
     close: async () => {
+      try {
+        await transport.terminateSession?.();
+      } catch {
+        /* ignore */
+      }
       await client.close().catch(() => {});
+      child.off("exit", onEarlyExit);
+      try {
+        child.kill("SIGTERM");
+      } catch {
+        /* ignore */
+      }
+      await sleep(200);
+      try {
+        child.kill("SIGKILL");
+      } catch {
+        /* ignore */
+      }
+    },
+  };
+}
+
+/**
+ * ClawQL gRPC MCP (ENABLE_GRPC on server-http). Peers on this board have no gRPC MCP.
+ * Same search→execute+projection recipe via protobuf CallTool.
+ */
+async function connectClawqlGrpc(mock, { id = "clawql_grpc", runtime = "node" } = {}) {
+  const serverHttp = join(ROOT, "dist", "server-http.js");
+  if (!existsSync(serverHttp)) throw new Error("dist/server-http.js missing");
+  const js =
+    runtime === "bun"
+      ? (() => {
+          const bun = resolveBunBin();
+          if (!bun) throw new Error(`${id} requires bun (set BUN_BIN)`);
+          const ver = spawnSync(bun, ["--version"], { encoding: "utf8" }).stdout?.trim() || null;
+          return { runtime: "bun", runtimeVersion: ver, command: bun, args: [serverHttp] };
+        })()
+      : {
+          runtime: "node",
+          runtimeVersion: process.version,
+          command: process.execPath,
+          args: [serverHttp],
+        };
+  const home = join("/tmp", `clawql-mt-${id}-${process.pid}`);
+  await mkdir(home, { recursive: true });
+  const httpPort = await pickFreePort();
+  const grpcPort = await pickFreePort();
+  const env = {
+    ...clawqlEnv(home, mock.specPath, mock.baseUrl),
+    PORT: String(httpPort),
+    MCP_PORT: String(httpPort),
+    MCP_HOST: "127.0.0.1",
+    ENABLE_GRPC: "1",
+    GRPC_PORT: String(grpcPort),
+    GRPC_HOST: "127.0.0.1",
+    CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE: "1",
+    CLAWQL_MCP_DISABLE_STANDALONE_SSE: "1",
+  };
+  const t0 = performance.now();
+  const child = spawn(js.command, js.args, {
+    cwd: ROOT,
+    env,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let earlyExit = null;
+  const onEarlyExit = (code, signal) => {
+    earlyExit = { code, signal };
+  };
+  child.on("exit", onEarlyExit);
+  let stderrBuf = "";
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`${id} gRPC ready timeout\n${stderrBuf.slice(-2000)}`)),
+      90_000
+    );
+    const onData = (chunk) => {
+      const s = String(chunk);
+      stderrBuf += s;
+      // HTTP listen + gRPC bind (either order)
+      if (
+        (s.includes("listening on") || stderrBuf.includes("listening on")) &&
+        (s.includes("gRPC") ||
+          s.includes("GRPC") ||
+          stderrBuf.includes("gRPC") ||
+          stderrBuf.includes(`:${grpcPort}`))
+      ) {
+        clearTimeout(timer);
+        resolve(undefined);
+      } else if (s.includes("listening on") || s.includes("[clawql-mcp] Ready")) {
+        // HTTP up first — give gRPC a moment; resolve on HTTP if ENABLE_GRPC logs lag
+        clearTimeout(timer);
+        setTimeout(resolve, 400);
+      }
+    };
+    child.stderr?.on("data", onData);
+    child.stdout?.on("data", onData);
+    child.on("error", reject);
+  });
+  if (earlyExit) {
+    child.kill("SIGKILL");
+    throw new Error(`${id} exited early code=${earlyExit.code} signal=${earlyExit.signal}`);
+  }
+  const address = `127.0.0.1:${grpcPort}`;
+  const maxLen = resolveGrpcMaxMessageLengthFromEnv();
+  const client = new grpc.Client(address, grpc.credentials.createInsecure(), {
+    "grpc.max_receive_message_length": maxLen,
+    "grpc.max_send_message_length": maxLen,
+  });
+  await new Promise((resolve, reject) => {
+    client.waitForReady(Date.now() + 30_000, (e) => (e ? reject(e) : resolve()));
+  });
+  // Probe ListTools once so ready_ms includes first successful RPC.
+  await listToolsUnaryGrpc({ address, client, readyDeadlineMs: 30_000 });
+  return {
+    address,
+    client,
+    pid: child.pid,
+    runtime: js.runtime,
+    runtimeVersion: js.runtimeVersion,
+    transport: "grpc_mcp",
+    mcpUrl: `grpc://${address}`,
+    ready_ms: Number((performance.now() - t0).toFixed(1)),
+    rss_mb_ready: child.pid != null ? readTreeRssMb(child.pid) : null,
+    close: async () => {
+      try {
+        client.close();
+      } catch {
+        /* ignore */
+      }
       child.off("exit", onEarlyExit);
       try {
         child.kill("SIGTERM");
@@ -1208,9 +1373,29 @@ async function runClawqlArm(
 ) {
   const conn =
     transport === "http"
-      ? await connectClawqlHttp(mock, { id })
+      ? await connectClawqlHttp(mock, { id, runtime })
       : await connectClawql(mock, { runtime, id });
   const sampler = new ResourceSampler(id, conn.pid);
+  // HTTP serve is a single long-lived process — sample that PID (not a stdio tree).
+  if (transport === "http" && conn.pid) {
+    sampler.start = function start(intervalMs = 200) {
+      if (!this.pid) return;
+      this._t0 = performance.now();
+      const tick = () => {
+        const rss = readProcRssMb(this.pid);
+        if (rss == null) return;
+        this.samples.push(rss);
+        this.series.push({
+          t_s: Number(((performance.now() - this._t0) / 1000).toFixed(2)),
+          flow: this._flow,
+          rss_mb: Number(rss.toFixed(2)),
+        });
+      };
+      tick();
+      this._timer = setInterval(tick, intervalMs);
+      if (typeof this._timer.unref === "function") this._timer.unref();
+    };
+  }
   sampler.start(ITERS > 1 ? 500 : 200);
   try {
     const listed = await conn.client.listTools();
@@ -1297,6 +1482,145 @@ async function runClawqlArm(
       runtimeVersion: conn.runtimeVersion,
       transport: conn.transport || "stdio",
       mcpUrl: conn.mcpUrl || null,
+      layer1: {
+        once_schema_tokens: l1.schema_tokens,
+        tools_count: l1.tools_count,
+        tools_list_count_full: l1.tools_list_count_full,
+        tools_list_schema_tokens_full: l1.tools_list_schema_tokens_full,
+        note: "Only search+execute schemas counted as Layer1 (catalog stays server-side)",
+      },
+      discovery_note:
+        "Each turn charges search (limit 3) + execute — discovery is not zero (unlike Executor harness)",
+      perTurn,
+      iters: ITERS,
+      flow_e2e_ms: flowE2e,
+      turn_latency_ms: turnLat,
+      call_errors: callErrors,
+      task_success_agg: { ok: successOk, total: successTotal },
+      resources,
+      startup: { ready_ms: conn.ready_ms, rss_mb_ready: conn.rss_mb_ready },
+      skipped: false,
+    };
+  } finally {
+    sampler.stop();
+    await conn.close();
+  }
+}
+
+/** Same multiturn recipe as runClawqlArm, over ClawQL gRPC MCP (protobuf CallTool). */
+async function runClawqlGrpcArm(mock, turns, { runtime = "node", id = "clawql_grpc" } = {}) {
+  const conn = await connectClawqlGrpc(mock, { id, runtime });
+  const sampler = new ResourceSampler(id, conn.pid);
+  if (conn.pid) {
+    sampler.start = function start(intervalMs = 200) {
+      if (!this.pid) return;
+      this._t0 = performance.now();
+      const tick = () => {
+        const rss = readProcRssMb(this.pid);
+        if (rss == null) return;
+        this.samples.push(rss);
+        this.series.push({
+          t_s: Number(((performance.now() - this._t0) / 1000).toFixed(2)),
+          flow: this._flow,
+          rss_mb: Number(rss.toFixed(2)),
+        });
+      };
+      tick();
+      this._timer = setInterval(tick, intervalMs);
+      if (typeof this._timer.unref === "function") this._timer.unref();
+    };
+  }
+  sampler.start(ITERS > 1 ? 500 : 200);
+  try {
+    const tools = await listToolsUnaryGrpc({
+      address: conn.address,
+      client: conn.client,
+    });
+    const l1 = measureLayer1FromTools(tools, { onlyNames: ["search", "execute"] });
+    let perTurn = null;
+    const flowE2e = [];
+    const turnLat = [];
+    let successOk = 0;
+    let successTotal = 0;
+    let callErrors = 0;
+
+    async function callToolText(name, args) {
+      const msgs = await callToolServerStreamingGrpc({
+        address: conn.address,
+        client: conn.client,
+        toolName: name,
+        arguments: args,
+      });
+      return lastNonEmptyCallToolText(msgs);
+    }
+
+    for (let iter = 1; iter <= ITERS; iter++) {
+      sampler.markFlow(iter);
+      const flowT0 = performance.now();
+      const thisPerTurn = [];
+      for (const turn of turns) {
+        const t0 = performance.now();
+        let searchText = "";
+        let execText = "";
+        let ok = true;
+        try {
+          searchText = await callToolText("search", { query: turn.query, limit: 3 });
+          execText = await callToolText("execute", {
+            operationId: turn.operationId,
+            args: {
+              limit: turn.args.limit,
+              status: turn.args.status,
+              includeMeta: turn.args.includeMeta,
+            },
+            where: turn.where,
+            fields: turn.fields,
+          });
+          if (!execText) throw new Error("execute returned empty text over gRPC");
+        } catch (e) {
+          ok = false;
+          callErrors++;
+          if (iter === 1) throw new Error(`${id}: ${String(e?.message || e)}`);
+        }
+        const ms = performance.now() - t0;
+        turnLat.push(ms);
+        const success = ok ? scoreTaskSuccess(execText, turn.partition, turn.args.limit) : { ok: false };
+        successTotal++;
+        if (success.ok) successOk++;
+        if (iter === 1) {
+          const searchTok = countTokens(searchText);
+          const resultTok = countTokens(execText);
+          thisPerTurn.push({
+            n: turn.n,
+            tool: turn.operationId,
+            search_tokens: searchTok,
+            result_tokens: resultTok,
+            result_chars: execText.length,
+            where: turn.where,
+            fields: turn.fields,
+            layer2_classic: searchTok + resultTok,
+            layer2_relist_every_turn: searchTok + resultTok,
+            latency_ms: Number(ms.toFixed(3)),
+            ok,
+            task_success: success,
+            note: "ClawQL gRPC MCP CallTool (peers have no gRPC MCP on this board)",
+          });
+        }
+      }
+      flowE2e.push(performance.now() - flowT0);
+      if (iter === 1) perTurn = thisPerTurn;
+      if (iter % PROGRESS_EVERY === 0 || iter === ITERS) {
+        console.log(`[mt] ${id} flows ${iter}/${ITERS}`);
+      }
+    }
+
+    const resources = sampler.stop();
+    return {
+      id,
+      model: `search_plus_execute_where_fields_${conn.runtime}_grpc_mcp`,
+      runtime: conn.runtime,
+      runtimeVersion: conn.runtimeVersion,
+      transport: conn.transport,
+      mcpUrl: conn.mcpUrl,
       layer1: {
         once_schema_tokens: l1.schema_tokens,
         tools_count: l1.tools_count,
@@ -1720,15 +2044,38 @@ async function main() {
             id: arm,
             transport: "stdio",
           });
-        } else if (arm === "clawql_http") {
+        } else if (arm === "clawql_http" || arm === "clawql_http_bun") {
           if (!existsSync(join(ROOT, "dist", "server-http.js"))) {
-            rawArms.clawql_http = { skipped: true, reason: "dist/server-http.js missing" };
+            rawArms[arm] = { skipped: true, reason: "dist/server-http.js missing" };
             continue;
           }
-          rawArms.clawql_http = await runClawqlArm(mock, turns, {
-            runtime: "node",
-            id: "clawql_http",
+          if (arm === "clawql_http_bun" && !resolveBunBin()) {
+            rawArms.clawql_http_bun = {
+              skipped: true,
+              reason: "bun not found (set BUN_BIN or install ~/.bun/bin/bun)",
+            };
+            continue;
+          }
+          rawArms[arm] = await runClawqlArm(mock, turns, {
+            runtime: arm === "clawql_http_bun" ? "bun" : "node",
+            id: arm,
             transport: "http",
+          });
+        } else if (arm === "clawql_grpc" || arm === "clawql_grpc_bun") {
+          if (!existsSync(join(ROOT, "dist", "server-http.js"))) {
+            rawArms[arm] = { skipped: true, reason: "dist/server-http.js missing" };
+            continue;
+          }
+          if (arm === "clawql_grpc_bun" && !resolveBunBin()) {
+            rawArms.clawql_grpc_bun = {
+              skipped: true,
+              reason: "bun not found (set BUN_BIN or install ~/.bun/bin/bun)",
+            };
+            continue;
+          }
+          rawArms[arm] = await runClawqlGrpcArm(mock, turns, {
+            runtime: arm === "clawql_grpc_bun" ? "bun" : "node",
+            id: arm,
           });
         } else if (arm === "executor") {
           if (!process.env.EXECUTOR_BIN?.trim()) {
@@ -1854,7 +2201,9 @@ async function main() {
         "executor + executor_v2 share the same runExecutorArm loop and fat fixture (discovery=0).",
         "Executor 2 removed stdio MCP (`executor mcp` is v1-only) — product transport is HTTP; harness equalization is the shared loop, not pretending v2 has stdio.",
         "Do not compare Executor v2 latency/RSS to ClawQL Bun stdio as same-topology. Tokens remain comparable.",
-        "clawql_http is optional diagnostic only (HTTP RSS climb under investigation) — not a default publish peer.",
+        "ClawQL transport matrix: clawql/clawql_bun (stdio), clawql_http/clawql_http_bun (Streamable HTTP), clawql_grpc/clawql_grpc_bun (gRPC MCP).",
+        "HTTP arms set CLAWQL_MCP_DISABLE_STANDALONE_SSE=1 (405 on GET) so the SDK skips SSE buffers — compare RSS trend before/after.",
+        "gRPC is ClawQL-only on this board — Executor / MCPJungle / agentgateway have no gRPC MCP peer here.",
         "Executor discovery=0 on both versions (harness-authored execute). ClawQL charges search each turn.",
         "ContextForge/MetaMCP off publish board by default.",
         "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",
