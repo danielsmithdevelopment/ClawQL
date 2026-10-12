@@ -11,7 +11,9 @@ Honest readout after merging spend-ledger → provider pricing → Decision-1 fl
 | Flip-rate `model` pin → Decision-1        | #1268   | Merged                              |
 | Held-out → fan-out + candidate report     | #1269   | Merged                              |
 | Operator fill via Actions marker          | #1273   | Filled (bulk; synonym flip vacated) |
-| Full flip-family remeasure + vacuous gate | this PR | Filled                              |
+| Full flip-family remeasure + vacuous gate | #1278   | Filled                              |
+| Twin-aware fan-out `matchMode`            | #1279   | In flight                           |
+| Candidate costSource / local costPerCase=0 | this PR | In flight                         |
 
 ## Live Decision-1 v0.4 candidate (Actions, keyed — full families)
 
