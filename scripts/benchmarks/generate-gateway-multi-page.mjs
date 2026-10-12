@@ -30,6 +30,8 @@ const EX2_JSON = existsSync(join(DIR, "gateway-multi-multiturn-executor-v2-equal
   ? join(DIR, "gateway-multi-multiturn-executor-v2-equal-10k.json")
   : join(DIR, "gateway-multi-multiturn-executor-v2-10k.json");
 const TRANSPORT_JSON = join(DIR, "gateway-multi-multiturn-clawql-transport-10k.json");
+/** Prefer one interleaved all-arms board when present (publishable single table). */
+const PUBLISH_JSON = join(DIR, "gateway-multi-multiturn-publish-all-arms-10k.json");
 const OUT_DOCS = join(DIR, "index.html");
 const OUT_WWW_DIR = join(ROOT, "apps", "www", "public", "benchmarks", "gateway-multi-comparison");
 const OUT_WWW_HTML = join(OUT_WWW_DIR, "index.html");
@@ -84,7 +86,7 @@ function vsDirectLabel(id, b, direct) {
   return `+${fmt(delta)}`;
 }
 
-function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun, ex2, transport }) {
+function buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun, ex2, transport, publish }) {
   const board = mt.board;
   const ratios = mt.ratios_vs_clawql || {};
   const ids = orderArms(board);
@@ -407,13 +409,20 @@ ${
 
     <h3>ClawQL transport matrix (Node/Bun × stdio/HTTP + gRPC)</h3>
     <p>
-      Same search→execute+projection recipe. Tokens stay ~20.5k across transports.
+      Same search→execute+projection recipe. Tokens stay ~20.5k across transports
+      (gRPC Layer1 is −16 vs stdio/HTTP — protobuf omits SDK <code>execution.taskSupport</code>; envelope-only).
       Compare Executor v2 latency to <strong>ClawQL HTTP</strong>, not Bun stdio.
       gRPC is <strong>ClawQL-only</strong> on this board (peers have no gRPC MCP).
+      ClawQL arms share runtime flags: Node <code>--max-old-space-size=512</code>, Bun <code>--smol</code>
+      (see <code>config.runtime_flags</code> on the interleaved publish board).
     </p>
 ${
-  transport?.board
+  (publish?.board || transport?.board)
     ? (() => {
+        const src = publish?.board ? publish : transport;
+        const srcLabel = publish?.board
+          ? "gateway-multi-multiturn-publish-all-arms-10k.json"
+          : "gateway-multi-multiturn-clawql-transport-10k.json";
         const order = [
           "clawql",
           "clawql_bun",
@@ -424,23 +433,53 @@ ${
         ];
         const rows = order
           .map((id) => {
-            const e = transport.board[id];
+            const e = src.board[id];
             if (!e || e.skipped) return "";
             const fe = e.flow_e2e_ms || {};
+            const tl = e.turn_latency_ms || {};
+            const rpcs = e.rpcs_per_turn ?? 2;
+            const perCall =
+              e.ms_per_call_p50 != null
+                ? e.ms_per_call_p50
+                : tl.p50_ms != null
+                  ? Number((tl.p50_ms / rpcs).toFixed(2))
+                  : null;
             const trend = e.rss_trend?.classification || "—";
             const hl = id === "clawql_bun" || id === "clawql_http_bun" ? ' class="hl"' : "";
             return `        <tr${hl}><td>${esc(id)}</td><td>${esc(
               e.transport || "—"
-            )}</td><td>${fmt(e.combined_at_n)}</td><td>${fmt(fe.p50_ms, 1)} / <strong>${fmt(
+            )}</td><td>${fmt(e.combined_at_n)}</td><td>${fmt(rpcs)}</td><td>${fmt(
+              perCall,
+              2
+            )}</td><td>${fmt(fe.p50_ms, 1)} / <strong>${fmt(
               fe.p999_ms,
               1
             )}</strong></td><td>${fmt(e.rss_mb_median, 0)}</td><td>${esc(trend)}</td></tr>`;
           })
           .join("\n");
+        // HTTP-to-HTTP peers (session flow): ClawQL Bun HTTP vs Executor v2 / aggregators.
+        const httpBun = src.board.clawql_http_bun || transport?.board?.clawql_http_bun;
+        const httpNode = src.board.clawql_http || transport?.board?.clawql_http;
+        const ag = board.agentgateway || publish?.board?.agentgateway;
+        const mj = board.mcpjungle || publish?.board?.mcpjungle;
+        const ex2b = ex2?.board?.executor_v2 || publish?.board?.executor_v2;
+        const hbFe = httpBun?.flow_e2e_ms || {};
+        const hnFe = httpNode?.flow_e2e_ms || {};
+        const agFe = ag?.flow_e2e_ms || {};
+        const mjFe = mj?.flow_e2e_ms || {};
+        const ex2Fe = ex2b?.flow_e2e_ms || {};
+        const vsAg =
+          hbFe.p50_ms != null && agFe.p50_ms
+            ? (hbFe.p50_ms / agFe.p50_ms).toFixed(1)
+            : null;
+        const vsEx2 =
+          hbFe.p50_ms != null && ex2Fe.p50_ms
+            ? (ex2Fe.p50_ms / hbFe.p50_ms).toFixed(1)
+            : null;
         return `    <table>
       <thead>
         <tr>
-          <th>Arm</th><th>Transport</th><th>Combined @12</th>
+          <th>Arm</th><th>Transport</th><th>Combined @12</th><th>RPCs/turn</th><th>ms/call p50</th>
           <th>Flow e2e p50 / <strong>p999</strong></th><th>RSS med</th><th>RSS trend</th>
         </tr>
       </thead>
@@ -448,13 +487,39 @@ ${
 ${rows}
       </tbody>
     </table>
+    <div class="callout">
+      <strong>HTTP-to-HTTP (same transport).</strong>
+      ClawQL Bun HTTP flow median ${fmt(hbFe.p50_ms, 1)} ms
+      ${vsAg ? `≈ ${vsAg}× agentgateway (${fmt(agFe.p50_ms, 1)} ms)` : ""}
+      ${vsEx2 ? ` and ~${vsEx2}× faster than Executor v2 (${fmt(ex2Fe.p50_ms, 1)} ms)` : ""}.
+      p999: ClawQL Bun HTTP ${fmt(hbFe.p999_ms, 0)} ms
+      ${agFe.p999_ms != null ? `beats agentgateway (${fmt(agFe.p999_ms, 0)} ms)` : ""}
+      ${
+        mjFe.p999_ms != null || ex2Fe.p999_ms != null
+          ? ` but trails ${[
+              mjFe.p999_ms != null ? `MCPJungle (${fmt(mjFe.p999_ms, 0)} ms)` : null,
+              ex2Fe.p999_ms != null ? `Executor v2 (${fmt(ex2Fe.p999_ms, 0)} ms)` : null,
+            ]
+              .filter(Boolean)
+              .join(" / ")}`
+          : ""
+      }.
+      Node HTTP peer: ${fmt(hnFe.p50_ms, 1)} / ${fmt(hnFe.p999_ms, 0)} ms.
+      <em>Claims that hold:</em> per-call overhead on par with Go/Rust (turn p50 ÷ 2 RPCs ≈ MCPJungle / agentgateway);
+      more than twice as fast as Executor v2 on median flow. Do <strong>not</strong> claim “3×–9× tighter tail.”
+    </div>
     <ul>
-      <li><strong>Fastest:</strong> Bun stdio. <strong>Fair Executor v2 peer:</strong> ClawQL HTTP (~46 ms Node / ~39 ms Bun vs Executor v2 ~74 ms).</li>
-      <li><strong>gRPC:</strong> ~138 ms p50 on this small-payload board — prefer for large CallTool bodies, not tiny search/execute.</li>
-      <li>Artifact: <a href="./gateway-multi-multiturn-clawql-transport-10k.json">clawql-transport-10k.json</a>.</li>
+      <li><strong>Fastest ClawQL path:</strong> Bun stdio. <strong>Fair Executor v2 peer:</strong> ClawQL HTTP (not Bun stdio).</li>
+      <li><strong>RPCs/turn:</strong> ClawQL = 2 (search+execute); peers = 1. Session latency gap is mostly the second call — it buys the ~41% token savings. Next win: skip search when the op is already known.</li>
+      <li><strong>gRPC −16 tokens:</strong> Layer1 only (<code>execution.taskSupport</code> absent on protobuf Tool). Harmless envelope difference.</li>
+      <li>Artifact: <a href="./${esc(srcLabel)}">${esc(srcLabel)}</a>${
+          publish?.board
+            ? " (one interleaved run — preferred for a single publish table)"
+            : " · prefer <code>publish-all-arms-10k.json</code> once interleaved"
+        }.</li>
     </ul>`;
       })()
-    : `    <p class="meta">Transport matrix missing — run <code>MT_ARMS=clawql,clawql_bun,clawql_http,clawql_http_bun,clawql_grpc,clawql_grpc_bun …</code>.</p>`
+    : `    <p class="meta">Transport matrix missing — run interleaved <code>MT_ARMS=direct,clawql,…,agentgateway</code> → <code>publish-all-arms-10k.json</code>.</p>`
 }
 
     <h3>Where ClawQL’s next token win is</h3>
@@ -561,6 +626,7 @@ npm run generate:gateway-multi-page</pre>
 
     <h2>Raw artifacts</h2>
     <ul>
+      <li><a href="./gateway-multi-multiturn-publish-all-arms-10k.json">publish-all-arms-10k.json</a> (interleaved single-table board — when present)</li>
       <li><a href="./gateway-multi-multiturn-10k.json">gateway-multi-multiturn-10k.json</a></li>
       <li><a href="./gateway-multi-multiturn-clawql-transport-10k.json">clawql-transport-10k.json</a> (Node/Bun × stdio/HTTP/gRPC)</li>
       <li><a href="./gateway-multi-cmp-ts7-node-10k.json">ts7 Node pets 10k</a> · <a href="./gateway-multi-cmp-ts7-bun-10k.json">ts7 Bun pets 10k</a></li>
@@ -572,6 +638,9 @@ npm run generate:gateway-multi-page</pre>
       <li>Do not say aggregators add a “schema tax” vs a zero-definition baseline — that baseline was unfair.</li>
       <li>Do not say Executor invents extra payload fields — verified same data; excess is pretty-print formatting.</li>
       <li>Do not claim “only gateway in the category that saves tokens” — this board has four gateways; Bifrost / mcp-gateway untested.</li>
+      <li>Do not claim “3×–9× tighter tail” — use HTTP-to-HTTP per-call parity and &gt;2× vs Executor v2 median.</li>
+      <li>Do not stitch a publish table from separate solo runs — p999 drifts across sessions; one interleaved board only.</li>
+      <li>Do not hide runtime flags (Node heap cap / Bun <code>--smol</code>) when they apply to ClawQL arms.</li>
       <li>Do not link <code>clawql.com/benchmarks/…</code> until www Pages deploy includes this folder.</li>
       <li>Do not mix topology-A ceilings with NATS 4-replica concurrency.</li>
       <li>Do not hide ClawQL RSS; Bun shrinks it, Go-thin proxies still win RAM.</li>
@@ -599,12 +668,14 @@ async function main() {
   const chaosBun = await loadJson(PETS_CHAOS_BUN);
   const ex2 = await loadJson(EX2_JSON);
   const transport = await loadJson(TRANSPORT_JSON);
-  const html = buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun, ex2, transport });
+  const publish = await loadJson(PUBLISH_JSON);
+  const html = buildHtml({ mt, petsNode, petsBun, chaosNode, chaosBun, ex2, transport, publish });
   await writeFile(OUT_DOCS, html);
   await mkdir(OUT_WWW_DIR, { recursive: true });
   await writeFile(OUT_WWW_HTML, html);
-  await writeFile(OUT_WWW_JSON, JSON.stringify(mt, null, 2));
+  await writeFile(OUT_WWW_JSON, JSON.stringify(publish?.board ? publish : mt, null, 2));
   for (const name of [
+    "gateway-multi-multiturn-publish-all-arms-10k.json",
     "gateway-multi-multiturn-10k.json",
     "gateway-multi-multiturn-clawql-transport-10k.json",
     "gateway-multi-cmp-ts7-node-10k.json",

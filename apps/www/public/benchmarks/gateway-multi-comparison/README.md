@@ -190,6 +190,29 @@ Credit the v2 fix. ClawQL (**20 539**) still leads v2 by **9 388** on tokens
 
 **Do not** compare v2 flow latency / RSS to ClawQL Bun stdio as same-topology — use the ClawQL HTTP rows below for same-transport latency peers.
 
+### Publishability (one table)
+
+Before sharing a single competitor table:
+
+1. **One interleaved run** — every arm in one `MT_ITERS=10000` process (`gateway-multi-multiturn-publish-all-arms-10k.json`). Solo-run rows drift (Executor v2 p999 moved 126→143 ms across sessions).
+2. **Even ClawQL runtime flags** — harness defaults Node `--max-old-space-size=512` and Bun `--smol` on **all** ClawQL arms (stdio / HTTP / gRPC). Disclosed in `config.runtime_flags` + honesty. Override with `CLAWQL_NODE_MAX_OLD_SPACE_MB=0` / `CLAWQL_BUN_SMOL=0` for defaults-only.
+3. **gRPC −16 tokens** — Layer1 only: protobuf `Tool` omits SDK `execution.taskSupport=forbidden` on search+execute (8+8). Envelope-only; CallTool bodies match.
+4. **Latency framing (HTTP-to-HTTP)** — claims that hold: per-call overhead on par with Go/Rust (turn p50 ÷ 2 RPCs); &gt;2× faster than Executor v2 median. Do **not** claim “3×–9× tighter tail.” Video latency section: same-transport numbers only.
+
+**RPCs/turn:** ClawQL = 2 (search+execute); peers = 1. Session gap is mostly the second call — it buys ~41% token savings. **Next win:** skip search when the agent already knows the operation.
+
+```bash
+# Publish board — every arm, one interleaved process
+MT_TURNS=12 MT_ITERS=10000 CATALOG_TOOL_COUNT=40 \
+  MT_ARMS=direct,clawql,clawql_bun,clawql_http,clawql_http_bun,clawql_grpc,clawql_grpc_bun,executor,executor_v2,mcpjungle,agentgateway \
+  EXECUTOR_BIN=…/executor EXECUTOR_CWD=… \
+  EXECUTOR_V2_URL=http://127.0.0.1:4312/mcp EXECUTOR_V2_API_KEY=… EXECUTOR_V2_PID=… \
+  MCPJUNGLE_BIN=/tmp/gw-bins/mcpjungle AGENTGATEWAY_BIN=/tmp/gw-bins/agentgateway \
+  BUN_BIN=~/.bun/bin/bun \
+  MT_OUT=gateway-multi-multiturn-publish-all-arms-10k.json \
+  npm run benchmark:gateway-multi-multiturn
+```
+
 ### ClawQL transport matrix (same recipe)
 
 Same search→execute+projection multiturn as the primary board — only runtime × transport changes. Artifact: [`gateway-multi-multiturn-clawql-transport-10k.json`](./gateway-multi-multiturn-clawql-transport-10k.json).

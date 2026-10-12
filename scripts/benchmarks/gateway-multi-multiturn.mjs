@@ -405,19 +405,49 @@ function killProcessGroup(child, signal = "SIGTERM") {
   }
 }
 
-function resolveClawqlJsRuntime(runtime = "node") {
-  const server = join(ROOT, "dist", "server.js");
+/** Shared ClawQL latency-board runtime flags (stdio / HTTP / gRPC). */
+function clawqlLatencyRuntimeFlags() {
+  const nodeMaxOldSpaceMb = Number(process.env.CLAWQL_NODE_MAX_OLD_SPACE_MB || 512) || 0;
+  const bunSmol = !["0", "false", "no"].includes(
+    (process.env.CLAWQL_BUN_SMOL ?? "1").trim().toLowerCase()
+  );
+  const httpSkipGraphql = !["0", "false", "no"].includes(
+    (process.env.CLAWQL_HTTP_SKIP_GRAPHQL ?? "1").trim().toLowerCase()
+  );
+  const httpMetrics = ["1", "true", "yes"].includes(
+    (process.env.CLAWQL_ENABLE_HTTP_METRICS ?? "0").trim().toLowerCase()
+  );
+  return { nodeMaxOldSpaceMb, bunSmol, httpSkipGraphql, httpMetrics };
+}
+
+function resolveClawqlJsRuntime(runtime = "node", { entry = "stdio" } = {}) {
+  const server =
+    entry === "http" ? join(ROOT, "dist", "server-http.js") : join(ROOT, "dist", "server.js");
+  const flags = clawqlLatencyRuntimeFlags();
   if (runtime === "bun") {
     const bun = resolveBunBin();
     if (!bun) throw new Error("clawql_bun requires bun (set BUN_BIN or install ~/.bun/bin/bun)");
     const ver = spawnSync(bun, ["--version"], { encoding: "utf8" }).stdout?.trim() || null;
-    return { runtime: "bun", runtimeVersion: ver, command: bun, args: [server] };
+    // Default-on for publish board — disclose in honesty.runtime_flags.
+    const args = flags.bunSmol ? ["--smol", server] : [server];
+    return {
+      runtime: "bun",
+      runtimeVersion: ver,
+      command: bun,
+      args,
+      flags,
+    };
   }
+  const args =
+    flags.nodeMaxOldSpaceMb > 0
+      ? [`--max-old-space-size=${flags.nodeMaxOldSpaceMb}`, server]
+      : [server];
   return {
     runtime: "node",
     runtimeVersion: process.version,
     command: process.execPath,
-    args: [server],
+    args,
+    flags,
   };
 }
 
@@ -756,29 +786,7 @@ async function connectClawql(mock, { runtime = "node", id = "clawql" } = {}) {
 async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } = {}) {
   const serverHttp = join(ROOT, "dist", "server-http.js");
   if (!existsSync(serverHttp)) throw new Error("dist/server-http.js missing");
-  const js =
-    runtime === "bun"
-      ? (() => {
-          const bun = resolveBunBin();
-          if (!bun) throw new Error(`${id} requires bun (set BUN_BIN)`);
-          const ver = spawnSync(bun, ["--version"], { encoding: "utf8" }).stdout?.trim() || null;
-          // --smol: more frequent GC, lower RAM — cuts rare 300–500ms JSC pauses on HTTP multiturn.
-          const smolOn = !["0", "false", "no"].includes(
-            (process.env.CLAWQL_BUN_SMOL ?? "1").trim().toLowerCase()
-          );
-          return {
-            runtime: "bun",
-            runtimeVersion: ver,
-            command: bun,
-            args: smolOn ? ["--smol", serverHttp] : [serverHttp],
-          };
-        })()
-      : {
-          runtime: "node",
-          runtimeVersion: process.version,
-          command: process.execPath,
-          args: [serverHttp],
-        };
+  const js = resolveClawqlJsRuntime(runtime, { entry: "http" });
   const home = join("/tmp", `clawql-mt-${id}-${process.pid}`);
   await mkdir(home, { recursive: true });
   const port = await pickFreePort();
@@ -814,20 +822,17 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
   const cpuProfDir =
     process.env.MT_HTTP_CPU_PROF_DIR ||
     join(ROOT, "docs/benchmarks/gateway-multi-comparison/cpu-prof");
-  const nodeArgs = [];
+  // resolveClawqlJsRuntime already embeds heap/--smol; only prepend cpu-prof/trace-gc.
+  const prefixArgs = [];
   if (runtime === "node") {
-    // Cap V8 old space so major GC stays short — uncapped Node HTTP RSS ~700MB
-    // produced 300–500ms flow tails; 384–512MB keeps p999 near stdio.
-    const heapMb = Number(process.env.CLAWQL_NODE_MAX_OLD_SPACE_MB || 512) || 0;
-    if (heapMb > 0) nodeArgs.push(`--max-old-space-size=${heapMb}`);
     if (wantCpuProf) {
-      nodeArgs.push("--cpu-prof", "--cpu-prof-dir", cpuProfDir);
+      prefixArgs.push("--cpu-prof", "--cpu-prof-dir", cpuProfDir);
     }
-    if (process.env.MT_HTTP_TRACE_GC === "1") nodeArgs.push("--trace-gc");
+    if (process.env.MT_HTTP_TRACE_GC === "1") prefixArgs.push("--trace-gc");
   }
   if (wantCpuProf) await mkdir(cpuProfDir, { recursive: true });
   const t0 = performance.now();
-  const child = spawn(js.command, [...nodeArgs, ...js.args], {
+  const child = spawn(js.command, [...prefixArgs, ...js.args], {
     cwd: ROOT,
     env,
     stdio: ["ignore", "pipe", "pipe"],
@@ -920,20 +925,8 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
 async function connectClawqlGrpc(mock, { id = "clawql_grpc", runtime = "node" } = {}) {
   const serverHttp = join(ROOT, "dist", "server-http.js");
   if (!existsSync(serverHttp)) throw new Error("dist/server-http.js missing");
-  const js =
-    runtime === "bun"
-      ? (() => {
-          const bun = resolveBunBin();
-          if (!bun) throw new Error(`${id} requires bun (set BUN_BIN)`);
-          const ver = spawnSync(bun, ["--version"], { encoding: "utf8" }).stdout?.trim() || null;
-          return { runtime: "bun", runtimeVersion: ver, command: bun, args: [serverHttp] };
-        })()
-      : {
-          runtime: "node",
-          runtimeVersion: process.version,
-          command: process.execPath,
-          args: [serverHttp],
-        };
+  // Same Node heap / Bun --smol defaults as stdio + HTTP latency arms.
+  const js = resolveClawqlJsRuntime(runtime, { entry: "http" });
   const home = join("/tmp", `clawql-mt-${id}-${process.pid}`);
   await mkdir(home, { recursive: true });
   const httpPort = await pickFreePort();
@@ -948,6 +941,8 @@ async function connectClawqlGrpc(mock, { id = "clawql_grpc", runtime = "node" } 
     GRPC_HOST: "127.0.0.1",
     CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE: "1",
     CLAWQL_MCP_DISABLE_STANDALONE_SSE: "1",
+    CLAWQL_HTTP_SKIP_GRAPHQL: process.env.CLAWQL_HTTP_SKIP_GRAPHQL || "1",
+    CLAWQL_ENABLE_HTTP_METRICS: process.env.CLAWQL_ENABLE_HTTP_METRICS || "0",
   };
   const t0 = performance.now();
   const child = spawn(js.command, js.args, {
@@ -1966,6 +1961,18 @@ function summarizeArm(arm) {
   };
   // Rebuildable classic total: definitions + Σ discovery + Σ results (= L1 + Σ L2).
   const combinedRebuild = l1 + sumDiscovery + sumResult;
+  // ClawQL search+execute = 2 RPCs/turn; aggregators / Executor / direct = 1.
+  const isClawql =
+    typeof arm.id === "string" &&
+    (arm.id === "clawql" ||
+      arm.id.startsWith("clawql_") ||
+      arm.model?.includes("search_plus_execute"));
+  const rpcsPerTurn = isClawql ? 2 : 1;
+  const turnP50 = turnLat?.p50_ms ?? null;
+  const msPerCallP50 =
+    turnP50 != null && rpcsPerTurn > 0
+      ? Number((turnP50 / rpcsPerTurn).toFixed(2))
+      : null;
   return {
     ...arm,
     // Drop raw sample arrays from serialized arm body — board keeps summaries.
@@ -1998,6 +2005,8 @@ function summarizeArm(arm) {
       flows: arm.iters ?? 1,
       turns_per_flow: arm.perTurn.length,
       total_turns: agg.total,
+      rpcs_per_turn: rpcsPerTurn,
+      ms_per_call_p50: msPerCallP50,
       flow_e2e_ms: flowLat,
       turn_latency_ms: turnLat,
       ...(flowLatAll
@@ -2287,6 +2296,7 @@ async function main() {
     }
 
     const { arms, ratios, narrative, board } = buildPartialReport(false);
+    const runtimeFlags = clawqlLatencyRuntimeFlags();
 
     const report = {
       suite: "gateway-multi-multiturn",
@@ -2305,6 +2315,15 @@ async function main() {
         arms: ARMS,
         tokenizer: "cl100k_base",
         progress_every: PROGRESS_EVERY,
+        runtime_flags: {
+          clawql_node_max_old_space_mb: runtimeFlags.nodeMaxOldSpaceMb || null,
+          clawql_bun_smol: runtimeFlags.bunSmol,
+          clawql_http_skip_graphql: runtimeFlags.httpSkipGraphql,
+          clawql_enable_http_metrics: runtimeFlags.httpMetrics,
+          note:
+            "Applied evenly to all ClawQL arms (stdio / Streamable HTTP / gRPC). " +
+            "Override with CLAWQL_NODE_MAX_OLD_SPACE_MB=0 or CLAWQL_BUN_SMOL=0 for defaults-only.",
+        },
       },
       equal_arm: {
         fat_result_tokens_partition_1: fatTok,
@@ -2353,7 +2372,16 @@ async function main() {
         "All Streamable HTTP clients skip standalone GET SSE (fetch returns 405) — same filter for ClawQL HTTP, Executor v2, MCPJungle, agentgateway.",
         "ClawQL HTTP server also sets CLAWQL_MCP_DISABLE_STANDALONE_SSE=1; client filter equalizes peers that would otherwise open SSE.",
         "gRPC is ClawQL-only on this board — Executor / MCPJungle / agentgateway have no gRPC MCP peer here.",
-        "VIDEO HOLD: do not publish latency claims that mix ClawQL stdio vs aggregator HTTP. Label transports on every bar, or wait for HTTP-vs-HTTP after ClawQL HTTP path is optimized.",
+        `RUNTIME FLAGS (even across all ClawQL arms): Node --max-old-space-size=${
+          runtimeFlags.nodeMaxOldSpaceMb || "off"
+        }; Bun ${runtimeFlags.bunSmol ? "--smol" : "default (no --smol)"}. ` +
+          "See config.runtime_flags. Memory deltas vs older default-heap boards partly reflect these knobs.",
+        "gRPC Layer1 is 16 tokens below stdio/HTTP (281 vs 297): protobuf Tool omits SDK execution.taskSupport=forbidden on search+execute. Envelope-only — CallTool result bodies match; not a dropped content field.",
+        "RPCs/turn: ClawQL = 2 (search+execute); peers = 1. Publish ms/call = turn_p50 / rpcs_per_turn. Session latency gap is mostly the second call, which buys projection token savings.",
+        "LATENCY CLAIMS (HTTP-to-HTTP): per-call overhead on par with Go/Rust gateways; ClawQL Bun HTTP median ~2.3× agentgateway and >2× faster than Executor v2. Do not claim '3×–9× tighter tail'.",
+        "Publish board must be one interleaved run of every arm — do not stitch rows from separate solo runs (p999 drifts across sessions).",
+        "VIDEO: latency section uses same-transport HTTP numbers only (ClawQL HTTP vs Executor v2 / MCPJungle / agentgateway). Replace '3× to 9× tighter tail' with per-call parity + >2× vs Executor v2.",
+        "NEXT WIN: skip search when the agent already knows the operation (execute by ID) — halves remaining latency gap and cuts discovery tokens on repeat turns.",
         "Executor discovery=0 on both versions (harness-authored execute). ClawQL charges search each turn.",
         "ContextForge/MetaMCP off publish board by default.",
         "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",
@@ -2367,7 +2395,7 @@ async function main() {
       `\n=== Multi-turn board (iters=${ITERS} × turns=${TURNS}) — tokens + latency + RSS + task_success ===\n`
     );
     console.log(
-      "arm | L1 | mean L2 | combined@N | result tok | flow e2e p50/p999 | turn p50/p999 | RSS med | task_success"
+      "arm | L1 | mean L2 | combined@N | result tok | RPCs/turn | ms/call p50 | flow e2e p50/p999 | turn p50/p999 | RSS med | task_success"
     );
     for (const [id, b] of Object.entries(board)) {
       if (b.skipped) {
@@ -2377,7 +2405,7 @@ async function main() {
       const fe = b.flow_e2e_ms || {};
       const tl = b.turn_latency_ms || {};
       console.log(
-        `${id} | ${b.layer1_once_tokens} | ${b.mean_layer2_tokens} | ${b.combined_at_n} | ${b.mean_result_tokens} | ${fe.p50_ms}/${fe.p999_ms} | ${tl.p50_ms}/${tl.p999_ms} | ${b.rss_mb_median} | ${b.task_success_ok ? "PASS" : "FAIL"} (${b.task_success_rate})`
+        `${id} | ${b.layer1_once_tokens} | ${b.mean_layer2_tokens} | ${b.combined_at_n} | ${b.mean_result_tokens} | ${b.rpcs_per_turn} | ${b.ms_per_call_p50} | ${fe.p50_ms}/${fe.p999_ms} | ${tl.p50_ms}/${tl.p999_ms} | ${b.rss_mb_median} | ${b.task_success_ok ? "PASS" : "FAIL"} (${b.task_success_rate})`
       );
     }
     console.log("\nRatios vs ClawQL (classic primary / relist secondary):");
