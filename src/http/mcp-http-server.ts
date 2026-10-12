@@ -5,6 +5,7 @@
  */
 
 import { randomUUID } from "node:crypto";
+import { PerformanceObserver, monitorEventLoopDelay } from "node:perf_hooks";
 import express, { type Express } from "express";
 import {
   hostHeaderValidation,
@@ -83,6 +84,7 @@ import {
   registerMcpX402TransportHooks,
   runWithMcpX402Context,
 } from "./mcp-x402-transport.js";
+import { isX402EnforcementActive } from "clawql-payments/x402";
 import {
   buildGatewayAuthConfig,
   createInferenceVirtualKeyClaimsResolver,
@@ -359,11 +361,73 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     attachMppOpenApiRoutes(app, { serverName: "ClawQL MCP" });
   }
 
+  /**
+   * Sync claim modes (`noAuth` / `apiKey` without MCP-OAuth hybrid) must not pay a
+   * per-request `async`/`Effect.runPromise` hop — that defers `next()` and inflates
+   * Streamable HTTP multiturn p50/p999 under localhost load. OIDC / mcpOAuth stay async.
+   */
+  const gatewayAuthNeedsAsync =
+    gatewayAuthConfig.mcpOAuthValidator != null ||
+    gatewayAuthConfig.mode === "oidc" ||
+    gatewayAuthConfig.mode === "mcpOAuth";
+
+  function attachClaimsAndNext(
+    req: import("express").Request,
+    next: import("express").NextFunction,
+    claims: AtrClaims
+  ): void {
+    (req as import("express").Request & { clawqlClaims?: AtrClaims }).clawqlClaims = claims;
+    next();
+  }
+
+  async function sendGatewayAuthFailure(
+    req: import("express").Request,
+    res: import("express").Response,
+    error: string
+  ): Promise<void> {
+    // MCP OAuth discovery challenge (RFC 9728): clients follow resource_metadata
+    // to the protected-resource doc on this MCP origin.
+    if (mcpOAuthRuntime) {
+      const { buildMcpWwwAuthenticateHeaderEffect, resolvePublicOriginEffect } =
+        await import("clawql-auth");
+      const origin = await Effect.runPromise(
+        resolvePublicOriginEffect({
+          proto: req.get("x-forwarded-proto") ?? req.protocol,
+          host: req.get("host") ?? "localhost",
+        })
+      );
+      const wwwAuth = await Effect.runPromise(
+        buildMcpWwwAuthenticateHeaderEffect({
+          resourceMetadataUrl: `${origin}/.well-known/oauth-protected-resource`,
+          error: "invalid_token",
+          errorDescription: error,
+        })
+      );
+      res.setHeader("WWW-Authenticate", wwwAuth);
+    }
+    res.status(401).json({ error });
+  }
+
   function applyGatewayAuth(
     req: import("express").Request,
     res: import("express").Response,
     next: import("express").NextFunction
   ): void {
+    if (!gatewayAuthNeedsAsync) {
+      const result = Effect.runSync(
+        resolveAtrClaimsFromHeadersEffect(req.headers, gatewayAuthConfig).pipe(
+          Effect.map((claims) => ({ ok: true, claims }) as const),
+          Effect.catch((err) => Effect.succeed({ ok: false, error: err.reason } as const))
+        )
+      );
+      if (!result.ok) {
+        void sendGatewayAuthFailure(req, res, result.error);
+        return;
+      }
+      attachClaimsAndNext(req, next, result.claims);
+      return;
+    }
+
     void (async () => {
       const result = await Effect.runPromise(
         resolveAtrClaimsFromHeadersEffect(req.headers, gatewayAuthConfig).pipe(
@@ -372,36 +436,19 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         )
       );
       if (!result.ok) {
-        // MCP OAuth discovery challenge (RFC 9728): clients follow resource_metadata
-        // to the protected-resource doc on this MCP origin.
-        if (mcpOAuthRuntime) {
-          const { buildMcpWwwAuthenticateHeaderEffect, resolvePublicOriginEffect } =
-            await import("clawql-auth");
-          const origin = await Effect.runPromise(
-            resolvePublicOriginEffect({
-              proto: req.get("x-forwarded-proto") ?? req.protocol,
-              host: req.get("host") ?? "localhost",
-            })
-          );
-          const wwwAuth = await Effect.runPromise(
-            buildMcpWwwAuthenticateHeaderEffect({
-              resourceMetadataUrl: `${origin}/.well-known/oauth-protected-resource`,
-              error: "invalid_token",
-              errorDescription: result.error,
-            })
-          );
-          res.setHeader("WWW-Authenticate", wwwAuth);
-        }
-        res.status(401).json({ error: result.error });
+        await sendGatewayAuthFailure(req, res, result.error);
         return;
       }
-      (req as import("express").Request & { clawqlClaims?: typeof result.claims }).clawqlClaims =
-        result.claims;
-      next();
+      attachClaimsAndNext(req, next, result.claims);
     })();
   }
 
-  if (!options.skipGraphqlAttach) {
+  const skipGraphql =
+    options.skipGraphqlAttach === true ||
+    ["1", "true", "yes"].includes(
+      (process.env.CLAWQL_HTTP_SKIP_GRAPHQL ?? "").trim().toLowerCase()
+    );
+  if (!skipGraphql) {
     await attachGraphqlHttpToMcpApp(app);
   }
 
@@ -600,6 +647,20 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   });
 
   app.post(mcpPath, applyGatewayAuth, async (req, res) => {
+    const slowMs = Number.parseInt(process.env.CLAWQL_HTTP_SLOW_MS ?? "0", 10);
+    const tRoute0 = slowMs > 0 ? performance.now() : 0;
+    const logSlowRoute = (phase: string) => {
+      if (slowMs <= 0) return;
+      const dt = performance.now() - tRoute0;
+      if (dt < slowMs) return;
+      const method =
+        req.body && typeof req.body === "object" && !Array.isArray(req.body)
+          ? String((req.body as { method?: unknown }).method ?? "?")
+          : "?";
+      console.error(
+        `[clawql-http-slow] ${dt.toFixed(1)}ms phase=${phase} method=${method} session=${req.header("mcp-session-id") ?? "-"}`
+      );
+    };
     const protocolVersion = resolveHttpMcpProtocolVersion(req.header("mcp-protocol-version"));
     res.setHeader("mcp-protocol-version", protocolVersion);
 
@@ -749,11 +810,16 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         (typeof transport.sessionId === "string" ? transport.sessionId : undefined) ??
         "mcp";
       try {
-        await runWithMcpX402Context(headersFromExpressRequest(req), () =>
+        const runHandle = () =>
           runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens }, () =>
             transport!.handleRequest(req, res, req.body)
-          )
-        );
+          );
+        // Skip x402 AsyncLocalStorage + Promise.resolve wrapper when enforcement is off.
+        if (isX402EnforcementActive(process.env)) {
+          await runWithMcpX402Context(headersFromExpressRequest(req), runHandle);
+        } else {
+          await runHandle();
+        }
       } finally {
         // SDK JSON-response mode leaves `_streamMapping` entries after resolveJson;
         // prune orphans so sessionful multiturn does not retain one entry per POST.
@@ -763,6 +829,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         if (closeTransportAfter) {
           await transport.close().catch(() => undefined);
         }
+        logSlowRoute("post_mcp");
       }
     } catch (err: unknown) {
       console.error("[clawql-mcp-http] POST /mcp error:", err);
@@ -773,6 +840,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           id: null,
         });
       }
+      logSlowRoute("post_mcp_error");
     }
   });
 
@@ -842,10 +910,42 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   return app;
 }
 
+function maybeInstallHttpPerfDiagnostics(): void {
+  if (!["1", "true", "yes"].includes((process.env.CLAWQL_HTTP_PERF ?? "").trim().toLowerCase())) {
+    return;
+  }
+  const h = monitorEventLoopDelay({ resolution: 10 });
+  h.enable();
+  const gcObs = new PerformanceObserver((list) => {
+    for (const entry of list.getEntries()) {
+      if (entry.duration >= 20) {
+        const detail = (entry as PerformanceEntry & { detail?: { kind?: number | string } })
+          .detail;
+        console.error(
+          `[clawql-http-perf] gc kind=${detail?.kind ?? entry.name} duration_ms=${entry.duration.toFixed(1)}`
+        );
+      }
+    }
+  });
+  gcObs.observe({ entryTypes: ["gc"], buffered: false });
+  const timer = setInterval(() => {
+    const maxMs = h.max / 1e6;
+    const p99Ms = h.percentile(99) / 1e6;
+    if (maxMs >= 20) {
+      console.error(
+        `[clawql-http-perf] event_loop_delay max_ms=${maxMs.toFixed(1)} p99_ms=${p99Ms.toFixed(1)}`
+      );
+    }
+    h.reset();
+  }, 2000);
+  timer.unref?.();
+}
+
 export async function startMcpHttpServer(): Promise<void> {
   await maybeInitOtelTracing();
   await maybeVerifyReleaseManifestAtStartup();
   registerSpecCacheShutdownHooks();
+  maybeInstallHttpPerfDiagnostics();
   const { resolvePluginCompositionFlags } = await import("../composition/resolve-plugin-flags.js");
   if (resolvePluginCompositionFlags().enableMemory) {
     const { registerPostgresPoolShutdownHooks } = await import("clawql-memory/vector/pgvector");
@@ -868,12 +968,45 @@ export async function startMcpHttpServer(): Promise<void> {
     createMcpServer: () => createRegisteredMcpServer(),
   });
 
-  app.listen(PORT, () => {
+  const httpServer = app.listen(PORT, () => {
     const path = process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;
     console.error(
       `[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:${PORT}${path}`
     );
   });
+  // Localhost multiturn is chatty small POSTs — disable Nagle and keep sockets warm.
+  // keepAliveTimeout < typical reverse-proxy idle (e.g. 75s) avoids 502 races in prod.
+  // Bun's listen() handle is Node-compatible for most of these; guard for partial shims.
+  try {
+    httpServer.keepAliveTimeout = Number.parseInt(
+      process.env.CLAWQL_HTTP_KEEPALIVE_TIMEOUT_MS ?? "65000",
+      10
+    );
+    if ("headersTimeout" in httpServer) {
+      (httpServer as { headersTimeout: number }).headersTimeout = Number.parseInt(
+        process.env.CLAWQL_HTTP_HEADERS_TIMEOUT_MS ?? "66000",
+        10
+      );
+    }
+    httpServer.on("connection", (socket) => {
+      try {
+        socket.setNoDelay?.(true);
+        socket.setKeepAlive?.(true, 0);
+      } catch {
+        /* Bun / non-TCP shim */
+      }
+    });
+  } catch {
+    /* ignore listen-handle tuning failures */
+  }
+
+  const shutdownHttp = () => {
+    httpServer.close(() => process.exit(0));
+    // Bound hang — --cpu-prof needs a clean exit to flush.
+    setTimeout(() => process.exit(0), 2000).unref?.();
+  };
+  process.once("SIGTERM", shutdownHttp);
+  process.once("SIGINT", shutdownHttp);
 
   const grpc = await grpcPromise;
   if (grpc) {

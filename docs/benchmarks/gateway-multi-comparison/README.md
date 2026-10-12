@@ -190,22 +190,60 @@ Credit the v2 fix. ClawQL (**20 539**) still leads v2 by **9 388** on tokens
 
 **Do not** compare v2 flow latency / RSS to ClawQL Bun stdio as same-topology — use the ClawQL HTTP rows below for same-transport latency peers.
 
+### Publish board (one interleaved run) — share this table
+
+Artifact: [`gateway-multi-multiturn-publish-all-arms-10k.json`](./gateway-multi-multiturn-publish-all-arms-10k.json) (`2026-10-12T23:27Z`). Every arm in **one** process. ClawQL runtime flags (even): Node `--max-old-space-size=512`, Bun `--smol` (`config.runtime_flags`).
+
+| Arm | Combined @12 | RPCs/turn | ms/call p50 | Flow e2e p50 / **p999** | RSS med | Task |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Direct HTTP | **35 002** | 1 | 0.13 | **2.2 / 10.9** | — | PASS |
+| ClawQL Node stdio | **20 539** | 2 | 0.56 | 15.2 / 42.5 | 373 | PASS |
+| **ClawQL Bun stdio** | **20 539** | 2 | **0.35** | **9.6 / 25.7** | 342 | PASS |
+| ClawQL Node HTTP | **20 539** | 2 | 1.68 | 41.6 / 443 | 366 | PASS |
+| **ClawQL Bun HTTP** | **20 539** | 2 | **1.30** | **32.7 / 461** | **312** | PASS |
+| ClawQL Node gRPC | 20 523† | 2 | 5.64 | 136.7 / 194 | 364 | PASS |
+| ClawQL Bun gRPC | 20 523† | 2 | 5.55 | 134.1 / 292 | 438 | PASS |
+| Executor v1.6.10 | 53 668 | 1 | 4.75 | 60.8 / 165 | 254 | PASS |
+| Executor v2 β.15 | 29 927 | 1 | 5.55 | 70.6 / **136** | 900 | PASS |
+| MCPJungle | 35 322 | 1 | **1.28** | 16.6 / 287 | **153** | PASS |
+| agentgateway | **35 002** | 1 | **1.23** | 16.3 / 208 | 214 | PASS |
+
+† gRPC Layer1 is −16 vs stdio/HTTP (281 vs 297): protobuf omits SDK `execution.taskSupport=forbidden` on search+execute — envelope-only.
+
+**HTTP-to-HTTP (video / latency):** ClawQL Bun HTTP median **32.7 ms** ≈ **2.0×** agentgateway (16.3) and **~2.2×** faster than Executor v2 (70.6). Per-call: **1.30 ms** vs MCPJungle **1.28** / agentgateway **1.23**. p999 on this interleaved board trails the peers (461 vs 136–287) — do **not** claim “3×–9× tighter tail.” Claims that hold: **per-call overhead on par with Go/Rust** and **&gt;2× faster than Executor v2** on median.
+
+**RPCs/turn:** ClawQL = 2 (search+execute); peers = 1. Session gap is mostly the second call — it buys ~41% token savings. **Next win:** skip search when the agent already knows the operation.
+
+Older solo-arm JSON rows (HTTP p999 v1–v4, bun-smol10k, etc.) are diagnostics only — p999 drifts across sessions (this is why the interleaved board exists).
+
+```bash
+# Publish board — every arm, one interleaved process
+MT_TURNS=12 MT_ITERS=10000 CATALOG_TOOL_COUNT=40 \
+  MT_ARMS=direct,clawql,clawql_bun,clawql_http,clawql_http_bun,clawql_grpc,clawql_grpc_bun,executor,executor_v2,mcpjungle,agentgateway \
+  EXECUTOR_BIN=…/executor EXECUTOR_CWD=… \
+  EXECUTOR_V2_URL=http://127.0.0.1:4312/mcp EXECUTOR_V2_API_KEY=… EXECUTOR_V2_PID=… \
+  MCPJUNGLE_BIN=/tmp/gw-bins/mcpjungle AGENTGATEWAY_BIN=/tmp/gw-bins/agentgateway \
+  BUN_BIN=~/.bun/bin/bun \
+  MT_OUT=gateway-multi-multiturn-publish-all-arms-10k.json \
+  npm run benchmark:gateway-multi-multiturn
+```
+
 ### ClawQL transport matrix (same recipe)
 
 Same search→execute+projection multiturn as the primary board — only runtime × transport changes. Artifact: [`gateway-multi-multiturn-clawql-transport-10k.json`](./gateway-multi-multiturn-clawql-transport-10k.json).
 
 | Arm | Runtime | Transport | Notes |
 | --- | --- | --- | --- |
-| `clawql` | Node | stdio | Primary publish peer |
-| `clawql_bun` | Bun | stdio | Same tokens; lower RSS |
+| `clawql` | Node | stdio | Primary publish peer (`--max-old-space-size=512`) |
+| `clawql_bun` | Bun | stdio | Same tokens; lower RSS (`--smol`) |
 | `clawql_http` | Node | Streamable HTTP | Fair peer for Executor v2 HTTP latency |
-| `clawql_http_bun` | Bun | Streamable HTTP | |
-| `clawql_grpc` | Node | gRPC MCP | **ClawQL-only** — peers have no gRPC MCP here |
+| `clawql_http_bun` | Bun | Streamable HTTP | Post-fix HTTP median peer for video |
+| `clawql_grpc` | Node | gRPC MCP | **ClawQL-only** — peers have no gRPC MCP here; Layer1 −16 vs stdio |
 | `clawql_grpc_bun` | Bun | gRPC MCP | Same |
 
 HTTP arms set `CLAWQL_MCP_DISABLE_STANDALONE_SSE=1` (GET `/mcp` → 405) so the SDK skips standalone SSE buffers. Server also prunes orphan JSON `_streamMapping` entries after each sessionful POST (SDK JSON-mode leak). Node HTTP RSS can still look climb-shaped under long multiturn (GC lag); Bun tends to plateau. gRPC on this small-payload board is typically slower than Streamable HTTP — prefer gRPC for large `CallTool` bodies.
 
-**Video / marketing:** any scene that says Executor adds ~18 666 via pretty-printing must name **v1.6.10 on-screen**. Plan a re-cut with v2 numbers when v2 is GA.
+**Video / marketing:** latency section uses **HTTP-to-HTTP** numbers (ClawQL HTTP vs Executor v2 / MCPJungle / agentgateway). Replace “3× to 9× tighter tail” with per-call parity + &gt;2× vs Executor v2. Any scene that says Executor adds ~18 666 via pretty-printing must name **v1.6.10 on-screen**.
 
 **Discovery = 0 (both Executor versions):** harness-authored `execute`; `skills`/search unused. Favors Executor vs ClawQL’s charged **11 568**.
 

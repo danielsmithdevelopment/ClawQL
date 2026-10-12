@@ -210,30 +210,44 @@
 
     <h3>ClawQL transport matrix (Node/Bun × stdio/HTTP + gRPC)</h3>
     <p>
-      Same search→execute+projection recipe. Tokens stay ~20.5k across transports.
+      Same search→execute+projection recipe. Tokens stay ~20.5k across transports
+      (gRPC Layer1 is −16 vs stdio/HTTP — protobuf omits SDK <code>execution.taskSupport</code>; envelope-only).
       Compare Executor v2 latency to <strong>ClawQL HTTP</strong>, not Bun stdio.
       gRPC is <strong>ClawQL-only</strong> on this board (peers have no gRPC MCP).
+      ClawQL arms share runtime flags: Node <code>--max-old-space-size=512</code>, Bun <code>--smol</code>
+      (see <code>config.runtime_flags</code> on the interleaved publish board).
     </p>
     <table>
       <thead>
         <tr>
-          <th>Arm</th><th>Transport</th><th>Combined @12</th>
+          <th>Arm</th><th>Transport</th><th>Combined @12</th><th>RPCs/turn</th><th>ms/call p50</th>
           <th>Flow e2e p50 / <strong>p999</strong></th><th>RSS med</th><th>RSS trend</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td>clawql</td><td>stdio</td><td>20,539</td><td>18.7 / <strong>49.5</strong></td><td>665</td><td>plateau</td></tr>
-        <tr class="hl"><td>clawql_bun</td><td>stdio</td><td>20,539</td><td>16.0 / <strong>39.5</strong></td><td>344</td><td>plateau</td></tr>
-        <tr><td>clawql_http</td><td>streamable_http_multiplex</td><td>20,539</td><td>45.9 / <strong>391.1</strong></td><td>740</td><td>plateau</td></tr>
-        <tr class="hl"><td>clawql_http_bun</td><td>streamable_http_multiplex</td><td>20,539</td><td>38.9 / <strong>364.5</strong></td><td>340</td><td>plateau</td></tr>
-        <tr><td>clawql_grpc</td><td>grpc_mcp</td><td>20,523</td><td>138.7 / <strong>292.2</strong></td><td>700</td><td>plateau</td></tr>
-        <tr><td>clawql_grpc_bun</td><td>grpc_mcp</td><td>20,523</td><td>137.3 / <strong>254.7</strong></td><td>335</td><td>plateau</td></tr>
+        <tr><td>clawql</td><td>stdio</td><td>20,539</td><td>2</td><td>0.56</td><td>15.2 / <strong>42.5</strong></td><td>373</td><td>plateau</td></tr>
+        <tr class="hl"><td>clawql_bun</td><td>stdio</td><td>20,539</td><td>2</td><td>0.35</td><td>9.6 / <strong>25.7</strong></td><td>342</td><td>plateau</td></tr>
+        <tr><td>clawql_http</td><td>streamable_http_multiplex</td><td>20,539</td><td>2</td><td>1.68</td><td>41.6 / <strong>443.2</strong></td><td>366</td><td>plateau</td></tr>
+        <tr class="hl"><td>clawql_http_bun</td><td>streamable_http_multiplex</td><td>20,539</td><td>2</td><td>1.30</td><td>32.7 / <strong>460.7</strong></td><td>312</td><td>plateau</td></tr>
+        <tr><td>clawql_grpc</td><td>grpc_mcp</td><td>20,523</td><td>2</td><td>5.64</td><td>136.7 / <strong>194.4</strong></td><td>364</td><td>plateau</td></tr>
+        <tr><td>clawql_grpc_bun</td><td>grpc_mcp</td><td>20,523</td><td>2</td><td>5.55</td><td>134.1 / <strong>292.4</strong></td><td>438</td><td>steady_climb_possible_leak</td></tr>
       </tbody>
     </table>
+    <div class="callout">
+      <strong>HTTP-to-HTTP (same interleaved board).</strong>
+      ClawQL Bun HTTP flow median 32.7 ms
+      ≈ 2.0× agentgateway (16.3 ms)
+       and ~2.2× faster than Executor v2 (70.6 ms).
+      p999: ClawQL Bun HTTP 461 ms trails agentgateway (208 ms) / MCPJungle (287 ms) / Executor v2 (136 ms).
+      Node HTTP peer: 41.6 / 443 ms. Per-call p50: ClawQL Bun HTTP 1.30 ms · MCPJungle 1.28 · agentgateway 1.23.
+      <em>Claims that hold:</em> per-call overhead on par with Go/Rust (turn p50 ÷ 2 RPCs ≈ MCPJungle / agentgateway);
+      more than twice as fast as Executor v2 on median flow. Do <strong>not</strong> claim “3×–9× tighter tail.”
+    </div>
     <ul>
-      <li><strong>Fastest:</strong> Bun stdio. <strong>Fair Executor v2 peer:</strong> ClawQL HTTP (~46 ms Node / ~39 ms Bun vs Executor v2 ~74 ms).</li>
-      <li><strong>gRPC:</strong> ~138 ms p50 on this small-payload board — prefer for large CallTool bodies, not tiny search/execute.</li>
-      <li>Artifact: <a href="./gateway-multi-multiturn-clawql-transport-10k.json">clawql-transport-10k.json</a>.</li>
+      <li><strong>Fastest ClawQL path:</strong> Bun stdio. <strong>Fair Executor v2 peer:</strong> ClawQL HTTP (not Bun stdio).</li>
+      <li><strong>RPCs/turn:</strong> ClawQL = 2 (search+execute); peers = 1. Session latency gap is mostly the second call — it buys the ~41% token savings. Next win: skip search when the op is already known.</li>
+      <li><strong>gRPC −16 tokens:</strong> Layer1 only (<code>execution.taskSupport</code> absent on protobuf Tool). Harmless envelope difference.</li>
+      <li>Artifact: <a href="./gateway-multi-multiturn-publish-all-arms-10k.json">gateway-multi-multiturn-publish-all-arms-10k.json</a> (one interleaved run — preferred for a single publish table).</li>
     </ul>
 
     <h3>Where ClawQL’s next token win is</h3>
@@ -303,6 +317,7 @@ npm run generate:gateway-multi-page</pre>
 
     <h2>Raw artifacts</h2>
     <ul>
+      <li><a href="./gateway-multi-multiturn-publish-all-arms-10k.json">publish-all-arms-10k.json</a> (interleaved single-table board — when present)</li>
       <li><a href="./gateway-multi-multiturn-10k.json">gateway-multi-multiturn-10k.json</a></li>
       <li><a href="./gateway-multi-multiturn-clawql-transport-10k.json">clawql-transport-10k.json</a> (Node/Bun × stdio/HTTP/gRPC)</li>
       <li><a href="./gateway-multi-cmp-ts7-node-10k.json">ts7 Node pets 10k</a> · <a href="./gateway-multi-cmp-ts7-bun-10k.json">ts7 Bun pets 10k</a></li>
@@ -314,6 +329,9 @@ npm run generate:gateway-multi-page</pre>
       <li>Do not say aggregators add a “schema tax” vs a zero-definition baseline — that baseline was unfair.</li>
       <li>Do not say Executor invents extra payload fields — verified same data; excess is pretty-print formatting.</li>
       <li>Do not claim “only gateway in the category that saves tokens” — this board has four gateways; Bifrost / mcp-gateway untested.</li>
+      <li>Do not claim “3×–9× tighter tail” — use HTTP-to-HTTP per-call parity and &gt;2× vs Executor v2 median.</li>
+      <li>Do not stitch a publish table from separate solo runs — p999 drifts across sessions; one interleaved board only.</li>
+      <li>Do not hide runtime flags (Node heap cap / Bun <code>--smol</code>) when they apply to ClawQL arms.</li>
       <li>Do not link <code>clawql.com/benchmarks/…</code> until www Pages deploy includes this folder.</li>
       <li>Do not mix topology-A ceilings with NATS 4-replica concurrency.</li>
       <li>Do not hide ClawQL RSS; Bun shrinks it, Go-thin proxies still win RAM.</li>
