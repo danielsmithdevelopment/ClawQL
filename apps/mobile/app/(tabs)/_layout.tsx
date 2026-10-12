@@ -53,7 +53,7 @@ export default function TabLayout() {
             <TabGlyph
               ios="house.fill"
               androidXml={TabAndroidIcons.home as never}
-              label="⌂"
+              webIcon="home"
               focused={focused}
             />
           ),
@@ -75,7 +75,7 @@ export default function TabLayout() {
             <TabGlyph
               ios="checklist"
               androidXml={TabAndroidIcons.review as never}
-              label="☰"
+              webIcon="change"
               focused={focused}
             />
           ),
@@ -91,7 +91,7 @@ export default function TabLayout() {
             <TabGlyph
               ios="clock.arrow.circlepath"
               androidXml={TabAndroidIcons.activity as never}
-              label="↺"
+              webIcon="activity"
               focused={focused}
             />
           ),
@@ -107,7 +107,7 @@ export default function TabLayout() {
             <TabGlyph
               ios="person.crop.circle.fill"
               androidXml={TabAndroidIcons.profile as never}
-              label="☺"
+              webIcon="people"
               focused={focused}
             />
           ),

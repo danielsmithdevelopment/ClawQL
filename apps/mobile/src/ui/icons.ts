@@ -7,6 +7,7 @@ import { Icon } from "@expo/ui";
 
 export type AppIconName =
   | "chevron"
+  | "home"
   | "org"
   | "spend"
   | "agents"
@@ -28,6 +29,10 @@ export const Icons = {
   chevron: Icon.select({
     ios: "chevron.right",
     android: import("@expo/material-symbols/chevron_right.xml"),
+  }),
+  home: Icon.select({
+    ios: "house.fill",
+    android: import("@expo/material-symbols/home.xml"),
   }),
   org: Icon.select({
     ios: "building.2.fill",
@@ -98,6 +103,7 @@ export const Icons = {
 /** Lucide-style 24×24 stroke paths for web (no icon font / TTF). */
 export const WEB_ICON_PATHS: Record<AppIconName, string> = {
   chevron: "M9 18l6-6-6-6",
+  home: "M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z",
   org: "M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 10h.01M15 10h.01M9 14h.01M15 14h.01",
   spend: "M2 8h20v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8Zm0 0V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2M12 14h.01",
   agents: "M12 8V4H8M4 8h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Zm4 4h.01M16 12h.01M9 16c.8.8 1.8 1.2 3 1.2s2.2-.4 3-1.2",
