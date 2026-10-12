@@ -5,6 +5,7 @@
  */
 
 import { randomUUID } from "node:crypto";
+import { appendFileSync } from "node:fs";
 import express, { type Express } from "express";
 import {
   hostHeaderValidation,
@@ -12,6 +13,7 @@ import {
 } from "@modelcontextprotocol/sdk/server/middleware/hostHeaderValidation.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
+import { getDefaultAuditRingBuffer } from "clawql-core";
 import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
 import { createRegisteredMcpServer } from "../mcp/mcp-server-factory.js";
 import { runWithMcpRequestContext } from "../mcp/mcp-request-context.js";
@@ -48,6 +50,79 @@ import { resolvePluginCompositionFlags } from "../composition/resolve-plugin-fla
 import { getNativeProtocolMetricsSnapshot, nativeProtocolMetricsEnabled } from "clawql-api";
 import { httpMetricsEnabledForHttp, renderPrometheusMetrics } from "clawql-api";
 import { maybeInitOtelTracing } from "../observability/otel-tracing.js";
+
+// #region agent log
+/** Debug-mode NDJSON probe for Node HTTP multiturn RSS climb (hypotheses A–E). */
+let _dbgMcpPostN = 0;
+function _dbgAgentLog(
+  hypothesisId: string,
+  location: string,
+  message: string,
+  data: Record<string, unknown>
+): void {
+  try {
+    appendFileSync(
+      "/opt/cursor/logs/debug.log",
+      `${JSON.stringify({
+        hypothesisId,
+        location,
+        message,
+        data,
+        timestamp: Date.now(),
+        pid: process.pid,
+      })}\n`
+    );
+  } catch {
+    /* ignore probe I/O */
+  }
+}
+function _dbgTransportMaps(transport: StreamableHTTPServerTransport | undefined): {
+  stream: number;
+  reqToStream: number;
+  reqResp: number;
+  hasStandaloneSse: boolean;
+  enableJson: boolean | null;
+} {
+  const web = (
+    transport as unknown as {
+      _webStandardTransport?: {
+        _streamMapping?: Map<string, unknown>;
+        _requestToStreamMapping?: Map<unknown, unknown>;
+        _requestResponseMap?: Map<unknown, unknown>;
+        _standaloneSseStreamId?: string;
+        _enableJsonResponse?: boolean;
+      };
+    }
+  )?._webStandardTransport;
+  if (!web) {
+    return {
+      stream: -1,
+      reqToStream: -1,
+      reqResp: -1,
+      hasStandaloneSse: false,
+      enableJson: null,
+    };
+  }
+  const sid = web._standaloneSseStreamId ?? "_GET_stream";
+  return {
+    stream: web._streamMapping?.size ?? -1,
+    reqToStream: web._requestToStreamMapping?.size ?? -1,
+    reqResp: web._requestResponseMap?.size ?? -1,
+    hasStandaloneSse: web._streamMapping?.has(sid) ?? false,
+    enableJson: web._enableJsonResponse ?? null,
+  };
+}
+function _dbgMem(): { rssMb: number; heapMb: number; extMb: number; arrMb: number } {
+  const m = process.memoryUsage();
+  const arr = (m as { arrayBuffers?: number }).arrayBuffers ?? 0;
+  return {
+    rssMb: Number((m.rss / 1048576).toFixed(2)),
+    heapMb: Number((m.heapUsed / 1048576).toFixed(2)),
+    extMb: Number((m.external / 1048576).toFixed(2)),
+    arrMb: Number((arr / 1048576).toFixed(2)),
+  };
+}
+// #endregion
 import { maybeVerifyReleaseManifestAtStartup } from "../host/release-manifest-startup.js";
 import { handleLabelStudioWebhookRequest } from "clawql-automation/hitl/label-studio";
 import { configureHitlTransportDeps } from "./hitl-transport.js";
@@ -671,11 +746,20 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
     const sessionId = req.header("mcp-session-id");
     const useStateless = shouldUseStatelessHttpTransport(protocolVersion);
+    /** Close after request — required for per-request (stateless) transports so they do not accumulate. */
+    let closeTransportAfter = false;
+    // #region agent log
+    let _dbgBranch: "session_reuse" | "stateless" | "initialize" | "reject" | "none" = "none";
+    const _dbgPostN = ++_dbgMcpPostN;
+    // #endregion
     try {
       let transport: StreamableHTTPServerTransport | undefined;
 
       if (!useStateless && sessionId && transports.has(sessionId)) {
         transport = transports.get(sessionId);
+        // #region agent log
+        _dbgBranch = "session_reuse";
+        // #endregion
       } else if (useStateless) {
         // Per-request transport — no session affinity (MCP 2026-07-28).
         const streamableJson = ["1", "true", "yes"].includes(
@@ -687,6 +771,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         });
         const server = createRegisteredMcpServer();
         await server.connect(transport);
+        closeTransportAfter = true;
+        // #region agent log
+        _dbgBranch = "stateless";
+        // #endregion
       } else if (!sessionId && isInitializeRequest(req.body)) {
         const streamableJson = ["1", "true", "yes"].includes(
           (process.env.CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE ?? "").trim().toLowerCase()
@@ -697,6 +785,12 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
             transports.set(sid, transport!);
             // 8.0 session-scope hooks (spec §5) — fire-and-forget; never block init.
             const api = getClawqlApi();
+            // #region agent log
+            _dbgAgentLog("D", "mcp-http-server.ts:onsessioninitialized", "session start hook", {
+              sidLen: sid.length,
+              transportsSize: transports.size,
+            });
+            // #endregion
             void fireSessionStart({
               hookRegistry: api.hookRegistry,
               worm: api.worm,
@@ -711,6 +805,12 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           if (sid) {
             transports.delete(sid);
             const api = getClawqlApi();
+            // #region agent log
+            _dbgAgentLog("D", "mcp-http-server.ts:onclose", "session end hook", {
+              sidLen: typeof sid === "string" ? sid.length : 0,
+              transportsSize: transports.size,
+            });
+            // #endregion
             void fireSessionEnd({
               hookRegistry: api.hookRegistry,
               worm: api.worm,
@@ -721,7 +821,13 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
         const server = createRegisteredMcpServer();
         await server.connect(transport);
+        // #region agent log
+        _dbgBranch = "initialize";
+        // #endregion
       } else {
+        // #region agent log
+        _dbgBranch = "reject";
+        // #endregion
         jsonRpcError(
           res,
           "Bad Request: missing/invalid mcp-session-id, or initialize request required. For MCP 2026-07-28 send mcp-protocol-version: 2026-07-28."
@@ -744,11 +850,61 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         sessionId ??
         (typeof transport.sessionId === "string" ? transport.sessionId : undefined) ??
         "mcp";
-      await runWithMcpX402Context(headersFromExpressRequest(req), () =>
-        runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens }, () =>
-          transport!.handleRequest(req, res, req.body)
-        )
-      );
+      // #region agent log
+      const _dbgMapsBefore = _dbgTransportMaps(transport);
+      // #endregion
+      try {
+        await runWithMcpX402Context(headersFromExpressRequest(req), () =>
+          runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens }, () =>
+            transport!.handleRequest(req, res, req.body)
+          )
+        );
+      } finally {
+        // #region agent log
+        // Sample: first 5, then every 25th — enough for climb curve without huge logs.
+        if (_dbgPostN <= 5 || _dbgPostN % 25 === 0) {
+          let auditTotal = -1;
+          try {
+            auditTotal = getDefaultAuditRingBuffer().list(1).total;
+          } catch {
+            auditTotal = -1;
+          }
+          const mapsAfter = _dbgTransportMaps(transport);
+          _dbgAgentLog("A", "mcp-http-server.ts:post-finally", "post /mcp maps+mem", {
+            n: _dbgPostN,
+            branch: _dbgBranch,
+            useStateless,
+            closeTransportAfter,
+            transportsSize: transports.size,
+            mapsBefore: _dbgMapsBefore,
+            mapsAfter,
+            mem: _dbgMem(),
+            auditTotal,
+            bodyBytes: Buffer.byteLength(JSON.stringify(req.body ?? null)),
+            headersSent: res.headersSent,
+            statusCode: res.statusCode,
+          });
+          // Hypotheses B (audit) + C (express status) share this sample; E = req maps non-zero after.
+          if (mapsAfter.reqToStream > 0 || mapsAfter.reqResp > 0) {
+            _dbgAgentLog("E", "mcp-http-server.ts:post-finally", "orphan request maps after handle", {
+              n: _dbgPostN,
+              mapsAfter,
+            });
+          }
+          if (mapsAfter.stream > (mapsAfter.hasStandaloneSse ? 1 : 0)) {
+            _dbgAgentLog("A", "mcp-http-server.ts:post-finally", "streamMapping grew (json mode leak?)", {
+              n: _dbgPostN,
+              streamSize: mapsAfter.stream,
+              hasStandaloneSse: mapsAfter.hasStandaloneSse,
+              enableJson: mapsAfter.enableJson,
+            });
+          }
+        }
+        // #endregion
+        if (closeTransportAfter) {
+          await transport.close().catch(() => undefined);
+        }
+      }
     } catch (err: unknown) {
       console.error("[clawql-mcp-http] POST /mcp error:", err);
       if (!res.headersSent) {
@@ -782,6 +938,23 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   });
 
   app.get(mcpPath, applyGatewayAuth, async (req, res) => {
+    // Opt-in for long-lived benches / JSON-response clients: refuse standalone SSE GET
+    // so the SDK client skips the GET stream (405) and does not retain SSE buffers.
+    // Default remains SSE-capable for IDE notifications.
+    if (
+      ["1", "true", "yes"].includes(
+        (process.env.CLAWQL_MCP_DISABLE_STANDALONE_SSE ?? "").trim().toLowerCase()
+      )
+    ) {
+      // #region agent log
+      _dbgAgentLog("C", "mcp-http-server.ts:get-sse-disabled", "GET /mcp refused (standalone SSE off)", {
+        mem: _dbgMem(),
+        transportsSize: transports.size,
+      });
+      // #endregion
+      res.status(405).setHeader("Allow", "POST, DELETE").end();
+      return;
+    }
     const sessionId = req.header("mcp-session-id");
     if (!sessionId) {
       jsonRpcError(res, "Bad Request: missing mcp-session-id.");
