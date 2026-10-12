@@ -38,6 +38,7 @@ describe("decision1-candidate-report", () => {
     const bulk: FanoutEvalResponse = {
       object: "clawql.decision.fanout_eval",
       mode: "bulk",
+      matchMode: "twin",
       reports: [
         {
           backendId: "local",
@@ -95,6 +96,7 @@ describe("decision1-candidate-report", () => {
       model: "microsoft/microsoft-decision-1",
     };
 
+    let bulkReqMatchMode: string | undefined;
     const report = await Effect.runPromise(
       buildDecision1CandidateReport({
         suite,
@@ -107,7 +109,10 @@ describe("decision1-candidate-report", () => {
             },
           ],
         },
-        runBulk: async () => bulk,
+        runBulk: async (req) => {
+          bulkReqMatchMode = req.matchMode;
+          return bulk;
+        },
         runFlip: async () => flip,
       })
     );
@@ -117,11 +122,14 @@ describe("decision1-candidate-report", () => {
     expect(report.verdict.productionTrustedClaim).toBe(false);
     expect(report.verdict.calibratedClaim).toBe(false);
     expect(report.groundTruthSource).toBe("frontier_labels");
+    expect(bulkReqMatchMode).toBe("twin");
+    expect(report.bulk.matchMode).toBe("twin");
     expect(report.flipRate.backendId).toBe("openrouter/microsoft/microsoft-decision-1");
     expect(report.flipRate.model).toBe("microsoft/microsoft-decision-1");
     expect(report.flipRate.passed).toBe(true);
     expect(report.bulk.recommendation?.backendId).toBe("local");
     expect(report.honesty.some((h) => /productionTrusted/i.test(h))).toBe(true);
+    expect(report.honesty.some((h) => /twin-aware|candidatesEquivalent/i.test(h))).toBe(true);
   });
 
   it("skips flip-rate when OpenRouter unkeyed but still emits measure report", async () => {
@@ -131,6 +139,7 @@ describe("decision1-candidate-report", () => {
         runBulk: async () => ({
           object: "clawql.decision.fanout_eval",
           mode: "bulk",
+          matchMode: "twin",
           reports: [],
           disagreements: [],
           reviewCount: 0,

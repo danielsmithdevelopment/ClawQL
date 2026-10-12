@@ -27,6 +27,8 @@ export type Decision1CandidateReport = {
   readonly backends: readonly { readonly id: string; readonly model: string }[];
   readonly bulk: {
     readonly qualityBar: { readonly maxWrongAnswers: number; readonly minAnswered: number };
+    /** Decision-1 candidate uses twin-aware bulk scoring (mcp↔skill). */
+    readonly matchMode: "twin";
     readonly reports: FanoutEvalResponse["reports"];
     readonly recommendation: FanoutEvalResponse["recommendation"];
     readonly disagreements: FanoutEvalResponse["disagreements"];
@@ -91,7 +93,7 @@ const DEFAULT_BACKENDS = [
 
 const HONESTY: readonly string[] = [
   "measure-only — reuses fan-out bulk + flip-rate model pin",
-  "bulk correctness is exact option id match (not twin-aware held-out scoring)",
+  "bulk correctness uses twin-aware candidatesEquivalent (mcp↔skill); still not productionTrusted",
   "does not light calibrated or held-out productionTrusted (still GLiNER2-only)",
 ];
 
@@ -121,6 +123,7 @@ export function buildDecision1CandidateReport(
     const qualityBar = { maxWrongAnswers: 0, minAnswered: 1 } as const;
     const bulkReq: FanoutEvalRequest = {
       mode: "bulk",
+      matchMode: "twin",
       useSiteId: "search_provider_tool_routing",
       qualityBar: { ...qualityBar },
       backends: [...DEFAULT_BACKENDS],
@@ -219,6 +222,7 @@ export function buildDecision1CandidateReport(
       backends: [...DEFAULT_BACKENDS],
       bulk: {
         qualityBar: { ...qualityBar },
+        matchMode: "twin",
         reports: bulk.reports,
         recommendation: bulk.recommendation,
         disagreements: bulk.disagreements,

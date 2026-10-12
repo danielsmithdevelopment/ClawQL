@@ -8,6 +8,7 @@
 
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Layer } from "effect";
+import { candidatesEquivalent } from "clawql-core/classifier";
 import type { DecisionQuestion, DecisionRequest, DecisionResponse } from "./service.js";
 import { runDecision } from "./service.js";
 import type { OpenAiDecisionCreateRequest, OpenAiDecisionCreateResponse } from "./openai-types.js";
@@ -28,6 +29,9 @@ import {
 import type { SpendRow } from "../store/types.js";
 
 export type FanoutEvalMode = "bulk" | "disagreement_mining" | "ensemble";
+
+/** How labeled bulk/ensemble correctness compares predicted vs expected answers. */
+export type FanoutMatchMode = "exact" | "twin";
 
 export const ENSEMBLE_BACKEND_ID = "ensemble";
 
@@ -80,6 +84,12 @@ export type FanoutEvalRequest = {
   readonly qualityBar?: FanoutQualityBar;
   readonly flipRate?: FanoutFlipRateAttach;
   /**
+   * Labeled correctness mode for bulk/ensemble.
+   * Default `exact` (string equality). `twin` uses declared mcp↔skill pairs.
+   * Ignored for disagreement_mining (unlabeled).
+   */
+  readonly matchMode?: FanoutMatchMode;
+  /**
    * `spend_ledger` fills missing `costPerCase` from `spendCosts` / injected ledger.
    * Default `explicit` — only backends with costPerCase get costEstimate.
    */
@@ -128,6 +138,8 @@ export type FanoutEnsembleSummary = {
 export type FanoutEvalResponse = {
   readonly object: "clawql.decision.fanout_eval";
   readonly mode: FanoutEvalMode;
+  /** Echo of request matchMode (default exact). */
+  readonly matchMode: FanoutMatchMode;
   readonly reports: readonly FanoutBackendReport[];
   readonly recommendation?: {
     readonly backendId: string;
@@ -140,6 +152,18 @@ export type FanoutEvalResponse = {
   readonly traceId: string;
   readonly caseCount: number;
 };
+
+/** Compare predicted vs expected under exact string equality or declared twin equivalence. */
+export function fanoutAnswersMatch(
+  predicted: string,
+  expected: string,
+  matchMode: FanoutMatchMode = "exact"
+): Effect.Effect<boolean> {
+  return Effect.sync(() => {
+    if (matchMode === "exact") return predicted === expected;
+    return candidatesEquivalent(predicted, expected);
+  });
+}
 
 export type FanoutDecideFn = (req: DecisionRequest) => Promise<DecisionResponse>;
 export type FanoutRemoteFn = (
@@ -388,6 +412,13 @@ export function parseFanoutEvalBody(body: unknown): FanoutEvalRequest | { error:
     }
     costSource = b.costSource;
   }
+  let matchMode: FanoutMatchMode | undefined;
+  if (b.matchMode !== undefined) {
+    if (b.matchMode !== "exact" && b.matchMode !== "twin") {
+      return { error: "matchMode must be 'exact' or 'twin'" };
+    }
+    matchMode = b.matchMode;
+  }
   const spendParsed = Effect.runSync(parseSpendCostsRecord(b.spendCosts));
   if ("error" in spendParsed) return spendParsed;
 
@@ -405,6 +436,7 @@ export function parseFanoutEvalBody(body: unknown): FanoutEvalRequest | { error:
           }
         : undefined,
     flipRate,
+    matchMode,
     costSource,
     spendCosts: spendParsed.size > 0 ? spendParsed : undefined,
   };
@@ -583,6 +615,7 @@ export function runFanoutEvalBulk(opts: {
       Boolean(openRouterOverride) || remoteOpenRouterDecisionsAvailable(env);
     const maxWrong = opts.request.qualityBar?.maxWrongAnswers ?? 0;
     const minAnswered = opts.request.qualityBar?.minAnswered ?? 1;
+    const matchMode: FanoutMatchMode = opts.request.matchMode ?? "exact";
     const traceId = randomUUID();
 
     type CaseAnswer = { caseId: string; backendId: string; value: string | null };
@@ -687,8 +720,14 @@ export function runFanoutEvalBulk(opts: {
           }
           answered += 1;
           const expectedAnswer = c.expected?.[0]?.answer;
-          if (expectedAnswer !== undefined && value === expectedAnswer) correct += 1;
-          else wrong += 1;
+          if (
+            expectedAnswer !== undefined &&
+            (yield* fanoutAnswersMatch(value, expectedAnswer, matchMode))
+          ) {
+            correct += 1;
+          } else {
+            wrong += 1;
+          }
         }
       }
 
@@ -758,8 +797,14 @@ export function runFanoutEvalBulk(opts: {
         }
         answered += 1;
         const expectedAnswer = c.expected?.[0]?.answer;
-        if (expectedAnswer !== undefined && vote === expectedAnswer) correct += 1;
-        else wrong += 1;
+        if (
+          expectedAnswer !== undefined &&
+          (yield* fanoutAnswersMatch(vote, expectedAnswer, matchMode))
+        ) {
+          correct += 1;
+        } else {
+          wrong += 1;
+        }
       }
       const meetsQualityBar = wrong <= maxWrong && answered >= minAnswered;
       const answersOnItsOwn = meetsQualityBar ? correct : 0;
@@ -798,6 +843,7 @@ export function runFanoutEvalBulk(opts: {
     return {
       object: "clawql.decision.fanout_eval" as const,
       mode: labeledMode,
+      matchMode,
       reports: finalReports,
       recommendation,
       disagreements,
@@ -976,6 +1022,7 @@ export function runFanoutEvalDisagreementMining(opts: {
     return {
       object: "clawql.decision.fanout_eval" as const,
       mode: "disagreement_mining" as const,
+      matchMode: opts.request.matchMode ?? "exact",
       reports,
       disagreements,
       reviewCount: disagreements.length,
