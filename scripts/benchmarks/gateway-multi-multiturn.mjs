@@ -762,7 +762,16 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
           const bun = resolveBunBin();
           if (!bun) throw new Error(`${id} requires bun (set BUN_BIN)`);
           const ver = spawnSync(bun, ["--version"], { encoding: "utf8" }).stdout?.trim() || null;
-          return { runtime: "bun", runtimeVersion: ver, command: bun, args: [serverHttp] };
+          // --smol: more frequent GC, lower RAM — cuts rare 300–500ms JSC pauses on HTTP multiturn.
+          const smolOn = !["0", "false", "no"].includes(
+            (process.env.CLAWQL_BUN_SMOL ?? "1").trim().toLowerCase()
+          );
+          return {
+            runtime: "bun",
+            runtimeVersion: ver,
+            command: bun,
+            args: smolOn ? ["--smol", serverHttp] : [serverHttp],
+          };
         })()
       : {
           runtime: "node",
@@ -805,15 +814,20 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
   const cpuProfDir =
     process.env.MT_HTTP_CPU_PROF_DIR ||
     join(ROOT, "docs/benchmarks/gateway-multi-comparison/cpu-prof");
-  const nodeProfArgs = wantCpuProf
-    ? ["--cpu-prof", "--cpu-prof-dir", cpuProfDir]
-    : [];
-  if (runtime === "node" && process.env.MT_HTTP_TRACE_GC === "1") {
-    nodeProfArgs.push("--trace-gc");
+  const nodeArgs = [];
+  if (runtime === "node") {
+    // Cap V8 old space so major GC stays short — uncapped Node HTTP RSS ~700MB
+    // produced 300–500ms flow tails; 384–512MB keeps p999 near stdio.
+    const heapMb = Number(process.env.CLAWQL_NODE_MAX_OLD_SPACE_MB || 512) || 0;
+    if (heapMb > 0) nodeArgs.push(`--max-old-space-size=${heapMb}`);
+    if (wantCpuProf) {
+      nodeArgs.push("--cpu-prof", "--cpu-prof-dir", cpuProfDir);
+    }
+    if (process.env.MT_HTTP_TRACE_GC === "1") nodeArgs.push("--trace-gc");
   }
   if (wantCpuProf) await mkdir(cpuProfDir, { recursive: true });
   const t0 = performance.now();
-  const child = spawn(js.command, [...nodeProfArgs, ...js.args], {
+  const child = spawn(js.command, [...nodeArgs, ...js.args], {
     cwd: ROOT,
     env,
     stdio: ["ignore", "pipe", "pipe"],
