@@ -86,6 +86,26 @@ export {
 } from "./openrouter-decision1-scorer.js";
 
 export {
+  callRemoteClef,
+  callRemoteClefEffect,
+  clefBackendId,
+  isClefBackendId,
+  readClefConfigFromEnv,
+  remoteClefAvailable,
+  resolveClefVariant,
+  CLEF_FLASH_BACKEND_ID,
+  CLEF_BACKEND_ID,
+  DEFAULT_CLEF_VARIANT,
+  type CallClefOptions,
+  type ClefVariant,
+} from "./remote-clef.js";
+
+export {
+  createClefFastDecisionScorerLayer,
+  type ClefFastDecisionScorerLayerOptions,
+} from "./clef-fast-decision-scorer.js";
+
+export {
   FanoutSpendCostService,
   FanoutSpendCostLive,
   buildSpendCostLookup,

@@ -152,3 +152,4 @@ USD/call = `(inputTokens * inputRate + outputTokens * outputRate) / calls` where
 8. ~~Twin-aware bulk/ensemble `matchMode`~~ — shipped (`exact` default; Decision-1 candidate uses `twin`)
 9. ~~Measure-only Decision-1 held-out scorer~~ — shipped (`CLAWQL_HELD_OUT_SCORER=openrouter-decision-1`; never lights `productionTrusted`)
 10. Operator held-out measure vs frozen labels — marker + `decision1-held-out-measure.yml` / `run-decision1-held-out-measure.mts`
+11. Cloudflare Clef / Clef-Flash (self-hostable) vs GLiNER measure — [decisions-clef-v0.1](./decisions-clef-v0.1.md)

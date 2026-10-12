@@ -15,7 +15,8 @@ Honest readout after merging spend-ledger → provider pricing → Decision-1 fl
 | Twin-aware fan-out `matchMode`             | #1279   | Merged                              |
 | Candidate costSource / local costPerCase=0 | #1281   | Merged                              |
 | Measure-only Decision-1 held-out scorer    | #1282   | Merged                              |
-| Operator held-out measure (frozen labels)  | this PR | Filled                              |
+| Operator held-out measure (frozen labels)  | #1284   | Filled                              |
+| Clef vs GLiNER held-out measure            | this PR | In flight                           |
 
 ## Live Decision-1 held-out measure scorer (Actions, keyed)
 

@@ -1,0 +1,182 @@
+# Clef vs GLiNER held-out measure on frozen v0.4 labels (not productionTrusted).
+#
+# Triggers:
+#   - Marker: packages/clawql-core/src/classifier/held-out/.run-clef-vs-gliner
+#     First non-comment line = `v0.4-routing-fresh`
+#   - workflow_dispatch
+#
+# Secrets:
+#   CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID — Workers AI Clef-Flash measure
+#   (token needs Workers AI permission). Or set CLAWQL_CLEF_SYSTEMONE_URL for self-host.
+#
+# Artifacts: clef-v04-held-out-measure.json + clef-vs-gliner-v04-compare.json
+
+name: Clef vs GLiNER held-out measure
+
+on:
+  workflow_dispatch:
+    inputs:
+      clef_model:
+        description: Clef variant (clef-flash recommended for latency)
+        required: true
+        default: clef-flash
+        type: choice
+        options:
+          - clef-flash
+          - clef
+  pull_request:
+    paths:
+      - "packages/clawql-core/src/classifier/held-out/.run-clef-vs-gliner"
+      - ".github/workflows/clef-vs-gliner-measure.yml"
+      - "scripts/run-clef-held-out-measure.mts"
+      - "scripts/run-clef-vs-gliner-compare.mts"
+      - "packages/clawql-inference/src/decision/remote-clef.ts"
+      - "packages/clawql-inference/src/decision/clef-fast-decision-scorer.ts"
+  push:
+    branches: [main]
+    paths:
+      - "packages/clawql-core/src/classifier/held-out/.run-clef-vs-gliner"
+      - ".github/workflows/clef-vs-gliner-measure.yml"
+      - "scripts/run-clef-held-out-measure.mts"
+      - "scripts/run-clef-vs-gliner-compare.mts"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clef-vs-gliner-measure-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Credential gate
+    runs-on: ubuntu-latest
+    outputs:
+      can_run: ${{ steps.gate.outputs.can_run }}
+      skip_reason: ${{ steps.gate.outputs.skip_reason }}
+      clef_model: ${{ steps.gate.outputs.clef_model }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - id: marker
+        run: |
+          set -euo pipefail
+          MARKER="packages/clawql-core/src/classifier/held-out/.run-clef-vs-gliner"
+          SUITE=""
+          if [ -f "${MARKER}" ]; then
+            SUITE="$(awk 'NF && $1 !~ /^#/ { print $1; exit }' "${MARKER}" || true)"
+          fi
+          {
+            echo "suite=${SUITE}"
+            if [ -n "${SUITE}" ]; then
+              echo "present=true"
+            else
+              echo "present=false"
+            fi
+          } >>"$GITHUB_OUTPUT"
+
+      - id: secret
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLAWQL_CLEF_SYSTEMONE_URL: ${{ secrets.CLAWQL_CLEF_SYSTEMONE_URL }}
+        run: |
+          if [ -n "${CLAWQL_CLEF_SYSTEMONE_URL:-}" ]; then
+            echo "has_clef=true" >>"$GITHUB_OUTPUT"
+          elif [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "has_clef=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "has_clef=false" >>"$GITHUB_OUTPUT"
+          fi
+
+      - id: gate
+        env:
+          HAS_CLEF: ${{ steps.secret.outputs.has_clef }}
+          EVENT_NAME: ${{ github.event_name }}
+          MARKER_SUITE: ${{ steps.marker.outputs.suite }}
+          MARKER_PRESENT: ${{ steps.marker.outputs.present }}
+          INPUT_MODEL: ${{ inputs.clef_model || 'clef-flash' }}
+        run: |
+          set -euo pipefail
+          CAN=true
+          REASON=""
+          MODEL="${INPUT_MODEL}"
+
+          if [ "${EVENT_NAME}" = "pull_request" ] || [ "${EVENT_NAME}" = "push" ]; then
+            if [ "${MARKER_PRESENT}" != "true" ]; then
+              CAN=false
+              REASON="marker absent/empty"
+            elif [ "${MARKER_SUITE}" != "v0.4-routing-fresh" ]; then
+              CAN=false
+              REASON="marker suite must be v0.4-routing-fresh (got '${MARKER_SUITE}')"
+            fi
+          fi
+
+          if [ "${HAS_CLEF}" != "true" ]; then
+            CAN=false
+            REASON="${REASON:+$REASON; }Clef transport missing (CLOUDFLARE_API_TOKEN+ACCOUNT_ID or CLAWQL_CLEF_SYSTEMONE_URL)"
+          fi
+
+          {
+            echo "can_run=${CAN}"
+            echo "skip_reason=${REASON}"
+            echo "clef_model=${MODEL}"
+          } >>"$GITHUB_OUTPUT"
+          if [ "${CAN}" = "true" ]; then
+            echo "::notice::Clef vs GLiNER measure will run (model=${MODEL})"
+          else
+            echo "::notice::skip — ${REASON}"
+          fi
+
+  measure:
+    name: Clef held-out + compare
+    needs: gate
+    if: needs.gate.outputs.can_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build clawql-core
+        run: npm run build -w clawql-merkle -w clawql-core
+
+      - name: Run Clef measure + GLiNER compare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLAWQL_CLEF_SYSTEMONE_URL: ${{ secrets.CLAWQL_CLEF_SYSTEMONE_URL }}
+          CLAWQL_CLEF_MODEL: ${{ needs.gate.outputs.clef_model }}
+          CLAWQL_FLIP_RATE_GATE: "0"
+          OUT: ${{ github.workspace }}/clef-v04-held-out-measure.json
+        run: |
+          set -euo pipefail
+          npx tsx scripts/run-clef-held-out-measure.mts
+          CLEF_MEASURE="${OUT}" OUT="${{ github.workspace }}/clef-vs-gliner-v04-compare.json" \
+            npx tsx scripts/run-clef-vs-gliner-compare.mts
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: clef-vs-gliner-v04
+          path: |
+            clef-v04-held-out-measure.json
+            clef-vs-gliner-v04-compare.json
+          if-no-files-found: error
+
+  skip-notice:
+    name: Skip notice
+    needs: gate
+    if: needs.gate.outputs.can_run != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::notice::Clef vs GLiNER measure skipped — ${{ needs.gate.outputs.skip_reason }}"
+          echo "Need Workers AI permission on CLOUDFLARE_API_TOKEN (+ ACCOUNT_ID), or CLAWQL_CLEF_SYSTEMONE_URL self-host."
