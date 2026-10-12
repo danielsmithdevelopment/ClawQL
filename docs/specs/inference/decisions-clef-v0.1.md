@@ -15,7 +15,7 @@ Clef is an **Apache-2.0** SystemOne decision model (open weights on Hugging Face
 ## Transports
 
 1. **Self-host (preferred for official stack):** `CLAWQL_CLEF_SYSTEMONE_URL` → `POST {base}/v1/systemone` (e.g. SGLang).
-2. **Workers AI (measure fill only):** `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` → `@cf/cloudflare/clef-flash` or `@cf/cloudflare/clef`. Token must include Workers AI permission.
+2. **Workers AI (measure fill only):** `CLOUDFLARE_API_TOKEN` (or `CLAWQL_CLOUDFLARE_API_TOKEN`) + account id → `@cf/cloudflare/clef-flash` or `@cf/cloudflare/clef`. Token must include **Workers AI Run** permission — secret presence alone is not enough (401 soft-fails into all-zero scores). The Actions gate probes `/ai/run` before spending the n=40 fill.
 
 ## Held-out measure (vs GLiNER)
 
