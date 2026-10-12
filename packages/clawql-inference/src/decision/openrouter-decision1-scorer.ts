@@ -11,10 +11,7 @@ import {
   DEFAULT_OPENROUTER_DECISIONS_MODEL,
   type CallOpenRouterDecisionsOptions,
 } from "./remote-openrouter-decisions.js";
-import type {
-  OpenAiDecisionCreateRequest,
-  OpenAiDecisionCreateResponse,
-} from "./openai-types.js";
+import type { OpenAiDecisionCreateRequest, OpenAiDecisionCreateResponse } from "./openai-types.js";
 
 /** Stable scorer id — must remain ≠ PRODUCTION_TRUSTED_SCORER_BACKEND (`gliner2`). */
 export const OPENROUTER_DECISION1_SCORER_BACKEND_ID =
