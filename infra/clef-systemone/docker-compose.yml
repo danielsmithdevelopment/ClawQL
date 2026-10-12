@@ -1,0 +1,58 @@
+# Self-host Cloudflare Clef via SGLang (SystemOne /v1/systemone).
+# Requires NVIDIA GPU + Container Toolkit. Not for CPU-only CI runners.
+
+services:
+  clef-flash:
+    image: lmsysorg/sglang:dev-clef
+    shm_size: "32gb"
+    ipc: host
+    ports:
+      - "30000:30000"
+    volumes:
+      - clef-hf-cache:/root/.cache/huggingface
+    command:
+      - sglang
+      - serve
+      - --model-path
+      - Cloudflare/clef-flash
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "30000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Larger 27B variant — profile opt-in
+  clef:
+    profiles: ["clef-27b"]
+    image: lmsysorg/sglang:dev-clef
+    shm_size: "32gb"
+    ipc: host
+    ports:
+      - "30000:30000"
+    volumes:
+      - clef-hf-cache:/root/.cache/huggingface
+    command:
+      - sglang
+      - serve
+      - --model-path
+      - Cloudflare/clef
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "30000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  clef-hf-cache:

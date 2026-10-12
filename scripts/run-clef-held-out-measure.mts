@@ -5,12 +5,12 @@
  * Replays live frontier labels, scores with CLAWQL_HELD_OUT_SCORER=clef-flash
  * (or clef), CLAWQL_FLIP_RATE_GATE=0. productionTrusted stays false.
  *
- * Transport:
- *   Workers AI measure: CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID
- *   Self-host (preferred for official stack): CLAWQL_CLEF_SYSTEMONE_URL
+ * Transport (self-host only — Workers AI is refused):
+ *   CLAWQL_CLEF_SYSTEMONE_URL → POST {base}/v1/systemone
+ *   Launch: infra/clef-systemone (SGLang Cloudflare/clef-flash)
  *
  * Usage:
- *   CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=… \
+ *   CLAWQL_CLEF_SYSTEMONE_URL=http://127.0.0.1:30000 \
  *     npx tsx scripts/run-clef-held-out-measure.mts
  */
 
@@ -20,8 +20,8 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   clefBackendId,
-  remoteClefAvailable,
   resolveClefVariant,
+  selfHostedClefAvailable,
 } from "../packages/clawql-inference/src/decision/remote-clef.ts";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -52,9 +52,9 @@ async function main(): Promise<void> {
     console.error(`missing frozen labels: ${labelsPath}`);
     process.exit(1);
   }
-  if (!remoteClefAvailable(process.env)) {
+  if (!selfHostedClefAvailable(process.env)) {
     console.error(
-      "Clef unavailable — set CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID, or CLAWQL_CLEF_SYSTEMONE_URL"
+      "Clef held-out measure requires self-host: set CLAWQL_CLEF_SYSTEMONE_URL (SGLang /v1/systemone). Workers AI is not used."
     );
     process.exit(1);
   }
@@ -81,9 +81,7 @@ async function main(): Promise<void> {
         outPath,
         scorer: expectedBackend,
         flipRateGate: env.CLAWQL_FLIP_RATE_GATE,
-        transport: process.env.CLAWQL_CLEF_SYSTEMONE_URL?.trim()
-          ? "self-host-systemone"
-          : "workers-ai",
+        transport: "self-host-systemone",
         measureOnly: true,
       },
       null,
@@ -141,12 +139,12 @@ async function main(): Promise<void> {
     scorerBackend: summary.scorerBackend,
     variant,
     flipRateGate: env.CLAWQL_FLIP_RATE_GATE,
-    transport: process.env.CLAWQL_CLEF_SYSTEMONE_URL?.trim() ? "self-host-systemone" : "workers-ai",
+    transport: "self-host-systemone",
     summary,
     honesty: [
       `measure-only — CLAWQL_HELD_OUT_SCORER=${scorerEnv}`,
       `backendId=${expectedBackend} ≠ gliner2`,
-      "Apache-2.0 self-host preferred for official stack; Workers AI is measure fill only",
+      "self-host SystemOne only (CLAWQL_CLEF_SYSTEMONE_URL) — Workers AI refused for this fill",
       "does not light calibrated or held-out productionTrusted",
       "CLAWQL_FLIP_RATE_GATE=0 bounds spend (flip-rate skipped)",
     ],

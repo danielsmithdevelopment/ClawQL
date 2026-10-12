@@ -6,6 +6,7 @@ import {
   isClefBackendId,
   remoteClefAvailable,
   resolveClefVariant,
+  selfHostedClefAvailable,
 } from "./remote-clef.js";
 
 describe("remote-clef", () => {
@@ -17,8 +18,17 @@ describe("remote-clef", () => {
     expect(isClefBackendId("local", "clawql")).toBe(false);
   });
 
-  it("remoteClefAvailable for self-host URL without Workers AI creds", () => {
+  it("self-host SystemOne is the measure path; Workers AI alone is not", () => {
+    expect(selfHostedClefAvailable({ CLAWQL_CLEF_SYSTEMONE_URL: "http://127.0.0.1:30000" })).toBe(
+      true
+    );
     expect(remoteClefAvailable({ CLAWQL_CLEF_SYSTEMONE_URL: "http://127.0.0.1:30000" })).toBe(true);
+    expect(remoteClefAvailable({ CLOUDFLARE_API_TOKEN: "t", CLOUDFLARE_ACCOUNT_ID: "a" })).toBe(
+      true
+    );
+    expect(selfHostedClefAvailable({ CLOUDFLARE_API_TOKEN: "t", CLOUDFLARE_ACCOUNT_ID: "a" })).toBe(
+      false
+    );
     expect(remoteClefAvailable({})).toBe(false);
   });
 

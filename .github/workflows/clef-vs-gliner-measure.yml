@@ -1,15 +1,15 @@
 # Clef vs GLiNER held-out measure on frozen v0.4 labels (not productionTrusted).
 #
+# Self-host ONLY. Workers AI / Cloudflare API tokens are not used.
+#
 # Triggers:
 #   - Marker: packages/clawql-core/src/classifier/held-out/.run-clef-vs-gliner
 #     First non-comment line = `v0.4-routing-fresh`
 #   - workflow_dispatch
 #
 # Secrets:
-#   CLOUDFLARE_API_TOKEN (or CLAWQL_CLOUDFLARE_API_TOKEN) + ACCOUNT_ID —
-#   Workers AI Clef measure. Token must include Workers AI Run permission
-#   (presence alone is not enough — gate probes /ai/run).
-#   Or CLAWQL_CLEF_SYSTEMONE_URL for self-host (preferred for official stack).
+#   CLAWQL_CLEF_SYSTEMONE_URL — base or full URL for POST /v1/systemone
+#   (SGLang: infra/clef-systemone; e.g. http://clef:30000)
 #
 # Artifacts: clef-v04-held-out-measure.json + clef-vs-gliner-v04-compare.json
 
@@ -33,6 +33,7 @@ on:
       - "scripts/run-clef-held-out-measure.mts"
       - "scripts/run-clef-vs-gliner-compare.mts"
       - "scripts/smoke-clef-systemone.mts"
+      - "infra/clef-systemone/**"
       - "packages/clawql-inference/src/decision/remote-clef.ts"
       - "packages/clawql-inference/src/decision/clef-fast-decision-scorer.ts"
   push:
@@ -43,6 +44,7 @@ on:
       - "scripts/run-clef-held-out-measure.mts"
       - "scripts/run-clef-vs-gliner-compare.mts"
       - "scripts/smoke-clef-systemone.mts"
+      - "infra/clef-systemone/**"
 
 permissions:
   contents: read
@@ -81,60 +83,17 @@ jobs:
 
       - id: secret
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLAWQL_CLOUDFLARE_API_TOKEN: ${{ secrets.CLAWQL_CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLAWQL_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLAWQL_CLOUDFLARE_ACCOUNT_ID }}
-          CLAWQL_R2_ACCOUNT_ID: ${{ secrets.CLAWQL_R2_ACCOUNT_ID }}
           CLAWQL_CLEF_SYSTEMONE_URL: ${{ secrets.CLAWQL_CLEF_SYSTEMONE_URL }}
-          CLEF_MODEL: ${{ inputs.clef_model || 'clef-flash' }}
         run: |
-          set -euo pipefail
-          TOKEN="${CLAWQL_CLOUDFLARE_API_TOKEN:-${CLOUDFLARE_API_TOKEN:-}}"
-          ACCOUNT="${CLAWQL_CLOUDFLARE_ACCOUNT_ID:-${CLOUDFLARE_ACCOUNT_ID:-${CLAWQL_R2_ACCOUNT_ID:-}}}"
-          SYSTEMONE="${CLAWQL_CLEF_SYSTEMONE_URL:-}"
-
-          if [ -n "${SYSTEMONE}" ]; then
+          if [ -n "${CLAWQL_CLEF_SYSTEMONE_URL:-}" ]; then
             echo "has_clef=true" >>"$GITHUB_OUTPUT"
-            echo "auth_probe=self-host" >>"$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          if [ -z "${TOKEN}" ] || [ -z "${ACCOUNT}" ]; then
-            echo "has_clef=false" >>"$GITHUB_OUTPUT"
-            echo "auth_probe=missing-secrets" >>"$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          # Presence is not enough — first fill soft-failed 40×401 into zeros.
-          MODEL_PATH="clef-flash"
-          if [ "${CLEF_MODEL}" = "clef" ]; then
-            MODEL_PATH="clef"
-          fi
-          URL="https://api.cloudflare.com/client/v4/accounts/${ACCOUNT}/ai/run/@cf/cloudflare/${MODEL_PATH}"
-          BODY='{"model":"'"${MODEL_PATH}"'","state":"auth probe","questions":{"ok":{"type":"noul","instructions":"Is this an auth probe?"}}}'
-          HTTP_CODE="$(curl -sS -o /tmp/clef-auth-probe.json -w "%{http_code}" \
-            -X POST "${URL}" \
-            -H "Authorization: Bearer ${TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d "${BODY}" || true)"
-          echo "Workers AI probe HTTP ${HTTP_CODE}"
-          if [ "${HTTP_CODE}" = "200" ]; then
-            echo "has_clef=true" >>"$GITHUB_OUTPUT"
-            echo "auth_probe=workers-ai-ok" >>"$GITHUB_OUTPUT"
-          elif [ "${HTTP_CODE}" = "401" ] || [ "${HTTP_CODE}" = "403" ]; then
-            echo "has_clef=false" >>"$GITHUB_OUTPUT"
-            echo "auth_probe=workers-ai-unauthorized" >>"$GITHUB_OUTPUT"
           else
-            # Other errors (5xx, model not enabled) — still block measure; skip-notice explains.
             echo "has_clef=false" >>"$GITHUB_OUTPUT"
-            echo "auth_probe=workers-ai-http-${HTTP_CODE}" >>"$GITHUB_OUTPUT"
           fi
 
       - id: gate
         env:
           HAS_CLEF: ${{ steps.secret.outputs.has_clef }}
-          AUTH_PROBE: ${{ steps.secret.outputs.auth_probe }}
           EVENT_NAME: ${{ github.event_name }}
           MARKER_SUITE: ${{ steps.marker.outputs.suite }}
           MARKER_PRESENT: ${{ steps.marker.outputs.present }}
@@ -157,17 +116,7 @@ jobs:
 
           if [ "${HAS_CLEF}" != "true" ]; then
             CAN=false
-            case "${AUTH_PROBE}" in
-              workers-ai-unauthorized)
-                REASON="${REASON:+$REASON; }CLOUDFLARE_API_TOKEN present but Workers AI Run unauthorized (401/403) — grant Workers AI on the token, or set CLAWQL_CLEF_SYSTEMONE_URL"
-                ;;
-              missing-secrets)
-                REASON="${REASON:+$REASON; }Clef transport missing (CLOUDFLARE_API_TOKEN+ACCOUNT_ID or CLAWQL_CLEF_SYSTEMONE_URL)"
-                ;;
-              *)
-                REASON="${REASON:+$REASON; }Clef transport not usable (probe=${AUTH_PROBE})"
-                ;;
-            esac
+            REASON="${REASON:+$REASON; }CLAWQL_CLEF_SYSTEMONE_URL missing (self-host SGLang required — Workers AI not used)"
           fi
 
           {
@@ -176,7 +125,7 @@ jobs:
             echo "clef_model=${MODEL}"
           } >>"$GITHUB_OUTPUT"
           if [ "${CAN}" = "true" ]; then
-            echo "::notice::Clef vs GLiNER measure will run (model=${MODEL}, probe=${AUTH_PROBE})"
+            echo "::notice::Clef vs GLiNER measure will run (model=${MODEL}, transport=self-host-systemone)"
           else
             echo "::notice::skip — ${REASON}"
           fi
@@ -201,24 +150,15 @@ jobs:
       - name: Build clawql-core
         run: npm run build -w clawql-merkle -w clawql-core
 
-      - name: Smoke Clef SystemOne
+      - name: Smoke self-host SystemOne
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLAWQL_CLOUDFLARE_API_TOKEN: ${{ secrets.CLAWQL_CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLAWQL_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLAWQL_CLOUDFLARE_ACCOUNT_ID }}
-          CLAWQL_R2_ACCOUNT_ID: ${{ secrets.CLAWQL_R2_ACCOUNT_ID }}
           CLAWQL_CLEF_SYSTEMONE_URL: ${{ secrets.CLAWQL_CLEF_SYSTEMONE_URL }}
           CLAWQL_CLEF_MODEL: ${{ needs.gate.outputs.clef_model }}
+          CLAWQL_CLEF_REQUIRE_SELF_HOST: "1"
         run: npx tsx scripts/smoke-clef-systemone.mts
 
       - name: Run Clef measure + GLiNER compare
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLAWQL_CLOUDFLARE_API_TOKEN: ${{ secrets.CLAWQL_CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLAWQL_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLAWQL_CLOUDFLARE_ACCOUNT_ID }}
-          CLAWQL_R2_ACCOUNT_ID: ${{ secrets.CLAWQL_R2_ACCOUNT_ID }}
           CLAWQL_CLEF_SYSTEMONE_URL: ${{ secrets.CLAWQL_CLEF_SYSTEMONE_URL }}
           CLAWQL_CLEF_MODEL: ${{ needs.gate.outputs.clef_model }}
           CLAWQL_FLIP_RATE_GATE: "0"
@@ -247,5 +187,4 @@ jobs:
     steps:
       - run: |
           echo "::notice::Clef vs GLiNER measure skipped — ${{ needs.gate.outputs.skip_reason }}"
-          echo "Grant Workers AI Run on the Cloudflare API token (+ ACCOUNT_ID), or set CLAWQL_CLEF_SYSTEMONE_URL for self-host."
-          echo "Do not treat an all-zero Clef arm as a real loss to GLiNER — that was soft-failed auth."
+          echo "Point CLAWQL_CLEF_SYSTEMONE_URL at a self-hosted SGLang Clef (infra/clef-systemone). Do not use Workers AI."

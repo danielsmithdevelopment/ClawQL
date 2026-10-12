@@ -2,8 +2,8 @@
  * Measure-only FastDecisionScorer backed by Cloudflare Clef / Clef-Flash.
  * backendId is never `gliner2` — cannot light held-out productionTrusted.
  *
- * Official stack path: self-host Apache-2.0 weights (CLAWQL_CLEF_SYSTEMONE_URL).
- * Workers AI is an optional measure fill transport.
+ * Official / held-out path: self-host Apache-2.0 weights (CLAWQL_CLEF_SYSTEMONE_URL).
+ * Workers AI is not used for held-out measure fills.
  */
 
 import { Effect, Layer } from "effect";

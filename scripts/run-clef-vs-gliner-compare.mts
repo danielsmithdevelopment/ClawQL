@@ -140,7 +140,7 @@ function main(): void {
     honesty: [
       "GLiNER arm is the frozen productionTrusted readout (live sidecar + criteria + flip).",
       "Clef arm is measure-only (backend ≠ gliner2) — cannot light productionTrusted under current gate.",
-      "Official stack prefers self-hosted Clef (Apache-2.0); Workers AI is fill transport only.",
+      "Clef arm must be self-host SystemOne (CLAWQL_CLEF_SYSTEMONE_URL); Workers AI is refused for this compare.",
       "Among-accepted@τ is GLiNER policy semantics — Clef measure reports forced top-1 rawAccuracy.",
     ],
     verdict: {

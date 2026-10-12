@@ -12,16 +12,21 @@ Clef is an **Apache-2.0** SystemOne decision model (open weights on Hugging Face
 | Clef-Flash | 9B   | Latency-sensitive measure / routing |
 | Clef       | 27B  | Higher-quality measure              |
 
-## Transports
+## Transport (self-host only)
 
-1. **Self-host (preferred for official stack):** `CLAWQL_CLEF_SYSTEMONE_URL` → `POST {base}/v1/systemone` (e.g. SGLang).
-2. **Workers AI (measure fill only):** `CLOUDFLARE_API_TOKEN` (or `CLAWQL_CLOUDFLARE_API_TOKEN`) + account id → `@cf/cloudflare/clef-flash` or `@cf/cloudflare/clef`. Token must include **Workers AI Run** permission — secret presence alone is not enough (401 soft-fails into all-zero scores). The Actions gate probes `/ai/run` before spending the n=40 fill.
+**Held-out measure and official-stack path:** `CLAWQL_CLEF_SYSTEMONE_URL` → `POST {base}/v1/systemone` (SGLang).
+
+Launch helpers: [`infra/clef-systemone`](../../../infra/clef-systemone/README.md).
+
+Workers AI is **not** used for ClawQL held-out fills (cloud-only; refused by measure scripts and Actions).
 
 ## Held-out measure (vs GLiNER)
 
 ```bash
-# Workers AI fill:
-CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=… \
+# Self-host SGLang first (GPU host):
+#   cd infra/clef-systemone && docker compose up clef-flash
+
+CLAWQL_CLEF_SYSTEMONE_URL=http://127.0.0.1:30000 \
   CLAWQL_CLEF_MODEL=clef-flash \
   npx tsx scripts/run-clef-held-out-measure.mts
 
@@ -33,10 +38,10 @@ CLEF_MEASURE=…/clef-v04-held-out-measure.json \
 Opt-in scorer: `CLAWQL_HELD_OUT_SCORER=clef-flash` (or `clef`) in `scripts/run-held-out-adjudication.mts`.  
 `backendId` is `cloudflare/clef-flash` or `cloudflare/clef` — **≠ `gliner2`**, so `productionTrusted` stays false under the current gate.
 
-Marker: `packages/clawql-core/src/classifier/held-out/.run-clef-vs-gliner` → workflow `clef-vs-gliner-measure.yml`.
+Marker: `packages/clawql-core/src/classifier/held-out/.run-clef-vs-gliner` → workflow `clef-vs-gliner-measure.yml` (secret: `CLAWQL_CLEF_SYSTEMONE_URL` only).
 
 ## Honesty
 
 - Measure / candidate only until a deliberate trust program exists.
-- Official stack path is **self-hosted** Clef, not Workers AI.
+- Official stack path is **self-hosted** Clef — not Workers AI, not Decision-1 cloud.
 - GLiNER2.5-Decide remains the only `PRODUCTION_TRUSTED_SCORER_BACKEND` today.

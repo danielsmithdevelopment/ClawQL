@@ -1,13 +1,12 @@
 /**
  * Cloudflare Clef / Clef-Flash SystemOne client (measure + optional pin).
  *
- * Two transports:
- * - Workers AI: CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID →
- *   POST .../ai/run/@cf/cloudflare/{clef|clef-flash}
- * - Self-host: CLAWQL_CLEF_SYSTEMONE_URL → POST {base}/v1/systemone (SGLang etc.)
+ * Official / held-out measure path is **self-host only**:
+ *   CLAWQL_CLEF_SYSTEMONE_URL → POST {base}/v1/systemone (SGLang, see infra/clef-systemone)
  *
- * Apache-2.0 weights on Hugging Face; official stack prefers self-host.
- * Workers AI is measure fill only — never lights productionTrusted.
+ * Workers AI remains a dormant alternate in the client (opt-in via token+account)
+ * but held-out measure scripts and Actions refuse it — cloud-only is not our stack.
+ * Never lights productionTrusted.
  */
 
 import { Effect } from "effect";
@@ -71,6 +70,15 @@ export function readClefConfigFromEnv(env: NodeJS.ProcessEnv = process.env): Cle
   return { apiToken, accountId, systemOneUrl, variant };
 }
 
+/** True when a SystemOne base URL is configured (self-host). */
+export function selfHostedClefAvailable(env: NodeJS.ProcessEnv = process.env): boolean {
+  return Boolean(readClefConfigFromEnv(env).systemOneUrl);
+}
+
+/**
+ * Any Clef transport. Prefer {@link selfHostedClefAvailable} for held-out measure.
+ * Workers AI alone is not enough for official-stack measure fills.
+ */
 export function remoteClefAvailable(env: NodeJS.ProcessEnv = process.env): boolean {
   const cfg = readClefConfigFromEnv(env);
   if (cfg.systemOneUrl) return true;
