@@ -10,14 +10,15 @@ import {
   Badge,
   Body,
   Column,
+  IconBubble,
   LoadingBlock,
   Meta,
   ScreenHost,
   ScreenScroll,
   SecondaryButton,
+  SectionHeader,
   Subtitle,
   SurfaceCard,
-  Title,
 } from "@/src/ui/primitives";
 
 export default function DigestScreen() {
@@ -49,12 +50,11 @@ export default function DigestScreen() {
 
   return (
     <ScreenScroll testID="digest-screen">
-      <Title>{digest.headline}</Title>
-      <Meta>{digest.whenLabel}</Meta>
+      <SectionHeader icon="digest" title={digest.headline} subtitle={digest.whenLabel} tone="warn" />
       <Body>{digest.summary}</Body>
 
       {digest.awaitingYou > 0 ? (
-        <SurfaceCard testID="digest-awaiting">
+        <SurfaceCard testID="digest-awaiting" tint="seed" elevated>
           <Badge label={`${digest.awaitingYou} waiting`} tone="warn" />
           <Subtitle>Still needs you</Subtitle>
           <Meta>Open Review to clear what piled up overnight.</Meta>
@@ -69,9 +69,17 @@ export default function DigestScreen() {
       <Column spacing={space.sm}>
         {digest.items.map((item) => (
           <SurfaceCard key={item.id} testID={`digest-item-${item.id}`}>
-            <Badge label={item.tone} tone={item.tone} />
-            <Body>{item.title}</Body>
-            <Meta>{item.detail}</Meta>
+            <Column spacing={space.sm}>
+              <IconBubble
+                name={item.tone === "warn" ? "change" : item.tone === "ok" ? "activity" : "agents"}
+                tone={item.tone === "ok" ? "ok" : item.tone === "warn" ? "warn" : "neutral"}
+                size={32}
+                iconSize={16}
+              />
+              <Badge label={item.tone} tone={item.tone} />
+              <Body>{item.title}</Body>
+              <Meta>{item.detail}</Meta>
+            </Column>
           </SurfaceCard>
         ))}
       </Column>

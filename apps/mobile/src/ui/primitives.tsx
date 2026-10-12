@@ -26,7 +26,11 @@ import {
 } from "react-native";
 
 import { brand, space, type } from "../theme";
-import { Icons } from "./icons";
+import { AppIcon, IconBubble } from "./AppIcon";
+import { Icons, type AppIconName } from "./icons";
+
+export { AppIcon, IconBubble };
+export type { AppIconName };
 
 /** System monospace — skip custom SpaceMono.ttf in the asset catalog. */
 const monoFont = Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" });
@@ -213,7 +217,7 @@ export function Badge({
         ? brand.warnBg
         : tone === "danger"
           ? brand.dangerBg
-          : brand.border;
+          : brand.neutralSoft;
   const fg =
     tone === "ok"
       ? brand.ok
@@ -226,13 +230,69 @@ export function Badge({
     <Row
       style={{
         backgroundColor: bg,
-        borderRadius: 6,
-        paddingHorizontal: 8,
-        paddingVertical: 3,
+        borderRadius: 999,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
       }}
     >
       <Text textStyle={{ fontSize: 10, fontWeight: "700", color: fg }}>{label.toUpperCase()}</Text>
     </Row>
+  );
+}
+
+/** Section title with a tonal icon — M3 Expressive hierarchy cue. */
+export function SectionHeader({
+  title,
+  subtitle,
+  icon,
+  tone = "seed",
+  testID,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: AppIconName;
+  tone?: "seed" | "ok" | "warn" | "danger" | "neutral";
+  testID?: string;
+}) {
+  return (
+    <View testID={testID} style={{ gap: space.sm }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+        {icon ? <IconBubble name={icon} tone={tone} size={36} iconSize={18} /> : null}
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text textStyle={type.headline}>{title}</Text>
+          {subtitle ? <Text textStyle={type.meta}>{subtitle}</Text> : null}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/** Icon + label + chevron navigation row (replaces sterile outlined button stacks). */
+export function NavRow({
+  label,
+  help,
+  icon,
+  onPress,
+  testID,
+  tone = "seed",
+}: {
+  label: string;
+  help?: string;
+  icon: AppIconName;
+  onPress: () => void;
+  testID?: string;
+  tone?: "seed" | "ok" | "warn" | "danger" | "neutral";
+}) {
+  return (
+    <ListItem
+      testID={testID}
+      onPress={onPress}
+      leading={<IconBubble name={icon} tone={tone} size={36} iconSize={18} />}
+      trailing={<Icon name={Icons.chevron} size={14} color={brand.inkFaint} />}
+      supportingText={help}
+    >
+      {label}
+    </ListItem>
   );
 }
 
@@ -382,6 +442,22 @@ export function PrefRow({
   );
 }
 
+function kindIcon(kindLabel: string): AppIconName {
+  const k = kindLabel.toUpperCase();
+  if (k.includes("SKILL")) return "skill";
+  if (k.includes("SOURCE")) return "source";
+  if (k.includes("DECISION")) return "decision";
+  if (k.includes("CHANGE")) return "change";
+  return "activity";
+}
+
+function kindTone(badgeTone: "warn" | "neutral" | "ok" | "danger"): "seed" | "ok" | "warn" | "danger" | "neutral" {
+  if (badgeTone === "ok") return "ok";
+  if (badgeTone === "warn") return "warn";
+  if (badgeTone === "danger") return "danger";
+  return "seed";
+}
+
 export function ReviewRow({
   kindLabel,
   badge,
@@ -405,6 +481,14 @@ export function ReviewRow({
     <ListItem
       testID={testID}
       onPress={onPress}
+      leading={
+        <IconBubble
+          name={kindIcon(kindLabel)}
+          tone={kindTone(badgeTone)}
+          size={36}
+          iconSize={18}
+        />
+      }
       trailing={<Icon name={Icons.chevron} size={14} color={brand.inkFaint} />}
       supportingText={`${kindLabel} · ${badge}\n${listMeta}\n${statusLine}`}
     >
@@ -417,20 +501,41 @@ export function ReviewRow({
 export function SurfaceCard({
   children,
   testID,
+  elevated,
+  tint,
 }: {
   children: ReactNode;
   testID?: string;
+  /** Soft tactile depth (M3 Expressive / soft-UI accent). */
+  elevated?: boolean;
+  /** Tonal wash — seed | soft | none (default card white) */
+  tint?: "seed" | "soft" | "none";
 }) {
+  const bg =
+    tint === "seed" ? brand.seedSoft : tint === "soft" ? brand.surfaceElevated : brand.card;
+  const elevationStyle: ViewStyle = elevated
+    ? Platform.select<ViewStyle>({
+        web: { boxShadow: `0 8px 24px ${brand.shadow}` } as ViewStyle,
+        default: {
+          shadowColor: "#0F2346",
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 3,
+        },
+      }) ?? {}
+    : {};
   return (
     <Column
       testID={testID}
       spacing={space.sm}
       style={{
-        backgroundColor: brand.card,
-        borderColor: brand.border,
+        backgroundColor: bg,
+        borderColor: tint === "seed" ? brand.seedSoft : brand.borderSoft,
         borderWidth: 1,
-        borderRadius: 12,
+        borderRadius: 16,
         padding: space.md,
+        ...elevationStyle,
       }}
     >
       {children}

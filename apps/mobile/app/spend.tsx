@@ -9,11 +9,13 @@ import { brand, space } from "@/src/theme";
 import {
   Body,
   Column,
+  IconBubble,
   LoadingBlock,
   Meta,
   ScreenHost,
   ScreenScroll,
   SecondaryButton,
+  SectionHeader,
   Subtitle,
   SurfaceCard,
   Title,
@@ -48,17 +50,22 @@ export default function SpendScreen() {
 
   return (
     <ScreenScroll testID="spend-screen">
-      <Title>{spend.label}</Title>
-      <Title testID="spend-amount">{spend.amount}</Title>
-      <Meta>{spend.note}</Meta>
+      <SectionHeader icon="spend" title={spend.label} subtitle={spend.note} />
+      <SurfaceCard tint="seed" elevated>
+        <Title testID="spend-amount">{spend.amount}</Title>
+        {spend.budget ? <Meta>{`Budget ${spend.budget}`}</Meta> : null}
+      </SurfaceCard>
 
       <SurfaceCard testID="spend-by-agent">
         <Subtitle>By agent</Subtitle>
         <Column spacing={space.sm}>
           {(spend.lines ?? []).map((line) => (
-            <Column key={line.agent} spacing={2} testID={`spend-line-${line.agent}`}>
-              <Body>{`${line.agent} · ${line.amount}`}</Body>
-              <Meta>{line.note}</Meta>
+            <Column key={line.agent} spacing={4} testID={`spend-line-${line.agent}`}>
+              <Column spacing={space.sm}>
+                <IconBubble name="agents" tone="neutral" size={28} iconSize={14} />
+                <Body>{`${line.agent} · ${line.amount}`}</Body>
+                <Meta>{line.note}</Meta>
+              </Column>
             </Column>
           ))}
         </Column>

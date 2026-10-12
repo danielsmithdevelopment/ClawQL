@@ -10,13 +10,16 @@ import {
   Badge,
   Body,
   Column,
+  IconBubble,
   List,
   ListItem,
   LoadingBlock,
   Meta,
   ScreenHost,
-  Title,
+  SectionHeader,
 } from "@/src/ui/primitives";
+import { Icons } from "@/src/ui/icons";
+import { Icon } from "@expo/ui";
 
 export default function PoliciesScreen() {
   const { session } = useSession();
@@ -50,16 +53,26 @@ export default function PoliciesScreen() {
     <ScreenHost testID="policies-screen">
       <List>
         <Column spacing={space.sm} style={{ padding: space.md }}>
-          <Title>Approval policies</Title>
-          <Meta>
-            {"What waits on a person. Agents can't edit or skip these — every change is recorded."}
-          </Meta>
+          <SectionHeader
+            icon="policies"
+            title="Approval policies"
+            subtitle="What waits on a person. Agents can't edit or skip these — every change is recorded."
+          />
         </Column>
         {policies.map((pol) => (
           <ListItem
             key={pol.id}
             testID={`policy-${pol.id}`}
             onPress={() => router.push(`/policies/${pol.id}`)}
+            leading={
+              <IconBubble
+                name={pol.blocked ? "shield" : "policies"}
+                tone={pol.blocked ? "danger" : "seed"}
+                size={36}
+                iconSize={18}
+              />
+            }
+            trailing={<Icon name={Icons.chevron} size={14} color={brand.inkFaint} />}
             supportingText={`${pol.who} · ${pol.approvals} approval${pol.approvals === "1" ? "" : "s"} · key ${pol.securityKey}`}
           >
             {pol.when}

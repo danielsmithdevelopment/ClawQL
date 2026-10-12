@@ -7,6 +7,7 @@ import {
   Body,
   Column,
   Fill,
+  IconBubble,
   Meta,
   PrimaryButton,
   ScreenHost,
@@ -37,14 +38,15 @@ export default function SignInScreen() {
     <ScreenHost testID="sign-in-screen">
       <Fill style={{ justifyContent: "center", padding: space.lg }}>
         <Column spacing={space.md} alignment="center">
-        <Column spacing={space.sm} style={{ width: "100%" }}>
+        <Column spacing={space.sm} style={{ width: "100%" }} alignment="center">
+          <IconBubble name="shield" tone="seed" size={56} iconSize={28} />
           <Title>ClawQL</Title>
           <Body color={brand.inkMuted}>
             Approve exact changes from your phone — tap your security key, not another push.
           </Body>
         </Column>
 
-        <SurfaceCard>
+        <SurfaceCard elevated>
           <PrimaryButton
             testID="sign-in-browser"
             label={busy ? "Opening browser…" : "Sign in with browser"}
@@ -54,7 +56,7 @@ export default function SignInScreen() {
           <Meta>Uses the system browser and returns via app link — no localhost.</Meta>
         </SurfaceCard>
 
-        <SurfaceCard>
+        <SurfaceCard tint="soft">
           <Body>Demo & review</Body>
           <Spacer />
           <SecondaryButton

@@ -10,14 +10,15 @@ import {
   Badge,
   Body,
   Column,
+  IconBubble,
   LoadingBlock,
   Meta,
   ScreenHost,
   ScreenScroll,
   SecondaryButton,
+  SectionHeader,
   Subtitle,
   SurfaceCard,
-  Title,
 } from "@/src/ui/primitives";
 
 export default function TeammatesScreen() {
@@ -52,11 +53,11 @@ export default function TeammatesScreen() {
 
   return (
     <ScreenScroll testID="teammates-screen">
-      <Title>Who can approve</Title>
-      <Meta>
-        People in approval groups. Invite and group edits stay in the web console — phone is
-        read-only.
-      </Meta>
+      <SectionHeader
+        icon="people"
+        title="Who can approve"
+        subtitle="People in approval groups. Invite and group edits stay in the web console."
+      />
       <Meta color={brand.inkMuted}>{`${approvers} approvers · ${people.length} people`}</Meta>
       {keysMissing > 0 ? (
         <Column spacing={4} testID="teammates-keys-missing">
@@ -70,14 +71,28 @@ export default function TeammatesScreen() {
       <Column spacing={space.sm}>
         {people.map((person) => (
           <SurfaceCard key={person.id} testID={`teammate-${person.id}`}>
-            <Subtitle>{person.name}</Subtitle>
-            <Meta>{`${person.email} · ${person.role}`}</Meta>
-            <Badge
-              label={person.canApprove ? (person.keysReady ? "Can approve" : "Keys incomplete") : "Requester"}
-              tone={person.canApprove ? (person.keysReady ? "ok" : "warn") : "neutral"}
-            />
-            <Meta>{person.groups.join(" · ")}</Meta>
-            <Meta color={brand.inkFaint}>{person.lastActive}</Meta>
+            <Column spacing={space.sm}>
+              <IconBubble
+                name={person.canApprove ? "key" : "people"}
+                tone={person.canApprove ? (person.keysReady ? "ok" : "warn") : "neutral"}
+                size={36}
+                iconSize={18}
+              />
+              <Subtitle>{person.name}</Subtitle>
+              <Meta>{`${person.email} · ${person.role}`}</Meta>
+              <Badge
+                label={
+                  person.canApprove
+                    ? person.keysReady
+                      ? "Can approve"
+                      : "Keys incomplete"
+                    : "Requester"
+                }
+                tone={person.canApprove ? (person.keysReady ? "ok" : "warn") : "neutral"}
+              />
+              <Meta>{person.groups.join(" · ")}</Meta>
+              <Meta color={brand.inkFaint}>{person.lastActive}</Meta>
+            </Column>
           </SurfaceCard>
         ))}
       </Column>

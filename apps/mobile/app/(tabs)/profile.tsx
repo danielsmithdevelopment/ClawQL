@@ -28,6 +28,7 @@ import {
   Body,
   Column,
   FieldGroup,
+  IconBubble,
   LoadingBlock,
   Meta,
   PrefRow,
@@ -35,9 +36,9 @@ import {
   ScreenHost,
   ScrollView,
   SecondaryButton,
+  SectionHeader,
   Subtitle,
   SurfaceCard,
-  Title,
 } from "@/src/ui/primitives";
 
 export default function ProfileScreen() {
@@ -140,14 +141,14 @@ export default function ProfileScreen() {
     <ScreenHost testID="profile-screen">
       <ScrollView>
         <Column spacing={space.md} style={{ padding: space.md, paddingBottom: space.xl }}>
-          <Column spacing={4}>
-            <Title>{session.displayName}</Title>
-            <Meta>
-              {`${session.email} · ${session.role}${session.reviewerDemo ? " · reviewer demo" : ""}`}
-            </Meta>
-          </Column>
+          <SectionHeader
+            icon="people"
+            title={session.displayName}
+            subtitle={`${session.email} · ${session.role}${session.reviewerDemo ? " · reviewer demo" : ""}`}
+          />
 
           <SurfaceCard testID="profile-security-keys">
+            <IconBubble name="key" tone="ok" size={32} iconSize={16} />
             <Subtitle>Your security keys</Subtitle>
             <Meta>You need two keys that can approve.</Meta>
             {keys.map((key) => (
@@ -160,6 +161,7 @@ export default function ProfileScreen() {
           </SurfaceCard>
 
           <SurfaceCard testID="profile-sessions">
+            <IconBubble name="sessions" tone="neutral" size={32} iconSize={16} />
             <Subtitle>Where you are signed in</Subtitle>
             <Meta>End other sessions if a device is lost or shared.</Meta>
             {deviceSessions.map((row) => (
@@ -262,7 +264,8 @@ export default function ProfileScreen() {
             </FieldGroup.Section>
           </FieldGroup>
 
-          <SurfaceCard testID="profile-policies">
+          <SurfaceCard testID="profile-policies" tint="soft">
+            <IconBubble name="policies" tone="seed" size={32} iconSize={16} />
             <Subtitle>Approval policies</Subtitle>
             <Meta>What waits on a person — read-only on phone.</Meta>
             <SecondaryButton
@@ -272,7 +275,8 @@ export default function ProfileScreen() {
             />
           </SurfaceCard>
 
-          <SurfaceCard testID="profile-digest">
+          <SurfaceCard testID="profile-digest" tint="soft">
+            <IconBubble name="digest" tone="warn" size={32} iconSize={16} />
             <Subtitle>Morning digest</Subtitle>
             <Meta>What your agents did overnight — same story as the email/Slack digest.</Meta>
             <SecondaryButton
@@ -282,7 +286,8 @@ export default function ProfileScreen() {
             />
           </SurfaceCard>
 
-          <SurfaceCard testID="profile-teammates">
+          <SurfaceCard testID="profile-teammates" tint="soft">
+            <IconBubble name="people" tone="seed" size={32} iconSize={16} />
             <Subtitle>Who can approve</Subtitle>
             <Meta>People in approval groups — read-only on phone.</Meta>
             <SecondaryButton
@@ -293,6 +298,7 @@ export default function ProfileScreen() {
           </SurfaceCard>
 
           <SurfaceCard>
+            <IconBubble name="console" tone="neutral" size={32} iconSize={16} />
             <Subtitle>Everything else</Subtitle>
             <Meta>Gateways, billing, and team live in the web console.</Meta>
             <SecondaryButton

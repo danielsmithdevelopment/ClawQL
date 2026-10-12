@@ -10,15 +10,17 @@ import {
   Badge,
   Body,
   Column,
+  IconBubble,
   LoadingBlock,
   Meta,
   ScreenHost,
   ScreenScroll,
   SecondaryButton,
+  SectionHeader,
   Subtitle,
   SurfaceCard,
-  Title,
 } from "@/src/ui/primitives";
+import type { AppIconName } from "@/src/ui/primitives";
 
 function formatWhen(atMs: number): string {
   const mins = Math.max(0, Math.round((Date.now() - atMs) / 60_000));
@@ -33,6 +35,12 @@ function kindLabel(kind: InboxItem["kind"]): string {
   if (kind === "approval") return "Approval";
   if (kind === "digest") return "Digest";
   return "System";
+}
+
+function kindIcon(kind: InboxItem["kind"]): AppIconName {
+  if (kind === "approval") return "key";
+  if (kind === "digest") return "digest";
+  return "shield";
 }
 
 export default function InboxScreen() {
@@ -66,34 +74,47 @@ export default function InboxScreen() {
 
   return (
     <ScreenScroll testID="inbox-screen">
-      <Title>Notifications</Title>
-      <Meta>
-        Local inbox for approval pushes, digests, and system reminders — no APNs required in
-        fixture mode.
-      </Meta>
+      <SectionHeader
+        icon="inbox"
+        title="Notifications"
+        subtitle="Approval pushes, digests, and system reminders — no APNs in fixture mode."
+      />
       {unread > 0 ? <Badge label={`${unread} unread`} tone="warn" /> : null}
 
       <Column spacing={space.sm}>
         {items.map((item) => (
-          <SurfaceCard key={item.id} testID={`inbox-${item.id}`}>
-            <Badge label={kindLabel(item.kind)} tone={item.unread ? "warn" : "neutral"} />
-            <Subtitle>{item.title}</Subtitle>
-            <Body>{item.body}</Body>
-            <Meta color={brand.inkFaint}>{formatWhen(item.atMs)}</Meta>
-            {item.kind === "approval" && item.reviewId ? (
-              <SecondaryButton
-                testID={`inbox-open-${item.id}`}
-                label="Open request"
-                onPress={() => router.push(`/review/${item.reviewId}`)}
+          <SurfaceCard
+            key={item.id}
+            testID={`inbox-${item.id}`}
+            elevated={item.unread}
+            tint={item.unread ? "soft" : "none"}
+          >
+            <Column spacing={space.sm}>
+              <IconBubble
+                name={kindIcon(item.kind)}
+                tone={item.unread ? "warn" : "neutral"}
+                size={36}
+                iconSize={18}
               />
-            ) : null}
-            {item.kind === "digest" ? (
-              <SecondaryButton
-                testID={`inbox-open-digest-${item.id}`}
-                label="Open digest"
-                onPress={() => router.push("/digest")}
-              />
-            ) : null}
+              <Badge label={kindLabel(item.kind)} tone={item.unread ? "warn" : "neutral"} />
+              <Subtitle>{item.title}</Subtitle>
+              <Body>{item.body}</Body>
+              <Meta color={brand.inkFaint}>{formatWhen(item.atMs)}</Meta>
+              {item.kind === "approval" && item.reviewId ? (
+                <SecondaryButton
+                  testID={`inbox-open-${item.id}`}
+                  label="Open request"
+                  onPress={() => router.push(`/review/${item.reviewId}`)}
+                />
+              ) : null}
+              {item.kind === "digest" ? (
+                <SecondaryButton
+                  testID={`inbox-open-digest-${item.id}`}
+                  label="Open digest"
+                  onPress={() => router.push("/digest")}
+                />
+              ) : null}
+            </Column>
           </SurfaceCard>
         ))}
       </Column>

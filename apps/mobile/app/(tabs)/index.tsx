@@ -16,12 +16,15 @@ import { brand, space } from "@/src/theme";
 import {
   Body,
   Column,
+  IconBubble,
   List,
   LoadingBlock,
   Meta,
+  NavRow,
   ReviewRow,
   ScreenHost,
   SecondaryButton,
+  SectionHeader,
   Subtitle,
   SurfaceCard,
   Title,
@@ -91,47 +94,65 @@ export default function HomeScreen() {
           await load();
         }}
       >
-        <Column spacing={space.sm} style={{ padding: space.md }}>
-          <Title>What needs you</Title>
-          <Meta>
-            {`Signed in as ${session.displayName}${session.reviewerDemo ? " · reviewer demo" : ""}`}
-          </Meta>
+        <Column spacing={space.md} style={{ padding: space.md }}>
+          <SectionHeader
+            icon="shield"
+            title="What needs you"
+            subtitle={`Signed in as ${session.displayName}${session.reviewerDemo ? " · reviewer demo" : ""}`}
+          />
           {org ? (
-            <SurfaceCard testID="home-org">
-              <Subtitle>{org.name}</Subtitle>
-              <Meta>{`${org.plan} · ${org.role} · ${org.members}`}</Meta>
+            <SurfaceCard testID="home-org" tint="soft">
+              <Column spacing={space.sm}>
+                <Column spacing={4}>
+                  <IconBubble name="org" tone="neutral" size={36} iconSize={18} />
+                  <Subtitle>{org.name}</Subtitle>
+                  <Meta>{`${org.plan} · ${org.role} · ${org.members}`}</Meta>
+                </Column>
+              </Column>
             </SurfaceCard>
           ) : null}
           {spend ? (
-            <SurfaceCard testID="home-spend">
-              <Subtitle>{spend.label}</Subtitle>
-              <Title>{spend.amount}</Title>
-              <Meta>{spend.note}</Meta>
-              <SecondaryButton
-                testID="home-open-spend"
-                label="See spend by agent"
-                onPress={() => router.push("/spend")}
-              />
+            <SurfaceCard testID="home-spend" tint="seed" elevated>
+              <Column spacing={space.sm}>
+                <IconBubble name="spend" tone="seed" size={40} iconSize={20} />
+                <Meta>{spend.label}</Meta>
+                <Title>{spend.amount}</Title>
+                <Meta>{spend.note}</Meta>
+                <SecondaryButton
+                  testID="home-open-spend"
+                  label="See spend by agent"
+                  onPress={() => router.push("/spend")}
+                />
+              </Column>
             </SurfaceCard>
           ) : null}
-          <Column spacing={space.sm} testID="home-shortcuts">
-            <SecondaryButton
-              testID="home-open-agents"
-              label="Your agents"
-              onPress={() => router.push("/agents")}
-            />
-            <SecondaryButton
-              testID="home-open-digest"
-              label="Morning digest"
-              onPress={() => router.push("/digest")}
-            />
-            <SecondaryButton
-              testID="home-open-inbox"
-              label="Notifications"
-              onPress={() => router.push("/inbox")}
-            />
-          </Column>
-          <Subtitle>Needs action</Subtitle>
+        </Column>
+
+        <NavRow
+          testID="home-open-agents"
+          icon="agents"
+          label="Your agents"
+          help="Who is running and who is waiting on you"
+          onPress={() => router.push("/agents")}
+        />
+        <NavRow
+          testID="home-open-digest"
+          icon="digest"
+          label="Morning digest"
+          help="Overnight from your agents"
+          tone="warn"
+          onPress={() => router.push("/digest")}
+        />
+        <NavRow
+          testID="home-open-inbox"
+          icon="inbox"
+          label="Notifications"
+          help="Approval pushes and reminders"
+          onPress={() => router.push("/inbox")}
+        />
+
+        <Column spacing={space.sm} style={{ padding: space.md }}>
+          <SectionHeader icon="change" title="Needs action" tone="warn" />
           {error ? <Meta color={brand.danger}>{error}</Meta> : null}
           {items.length === 0 ? (
             <Meta testID="home-empty">Nothing waiting. You are clear.</Meta>
@@ -153,7 +174,7 @@ export default function HomeScreen() {
         ))}
 
         <Column spacing={space.sm} style={{ padding: space.md }}>
-          <Subtitle>Recent activity</Subtitle>
+          <SectionHeader icon="activity" title="Recent activity" tone="neutral" />
           {activity.length === 0 ? (
             <Meta testID="home-activity-empty">No recent decisions yet.</Meta>
           ) : null}
@@ -180,7 +201,8 @@ export default function HomeScreen() {
             onPress={() => router.push("/(tabs)/activity")}
           />
           {items[0] ? (
-            <SurfaceCard testID="home-simulate-push">
+            <SurfaceCard testID="home-simulate-push" tint="soft">
+              <IconBubble name="inbox" tone="neutral" size={32} iconSize={16} />
               <Subtitle>Local push (fixture)</Subtitle>
               <Meta>
                 Schedule a local notification that opens the top request — no EAS or APNs needed.

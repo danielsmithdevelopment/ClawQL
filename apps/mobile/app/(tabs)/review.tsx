@@ -14,7 +14,7 @@ import {
   Meta,
   ReviewRow,
   ScreenHost,
-  Title,
+  SectionHeader,
   WrapRow,
 } from "@/src/ui/primitives";
 
@@ -82,8 +82,12 @@ export default function ReviewQueueScreen() {
         }}
       >
         <Column spacing={space.sm} style={{ padding: space.md }} testID="review-filters">
-          <Title>Review</Title>
-          <Meta>{`${items.length} waiting · source ${source}`}</Meta>
+          <SectionHeader
+            icon="change"
+            title="Review"
+            subtitle={`${items.length} waiting · source ${source}`}
+            tone="warn"
+          />
           <WrapRow>
             {FILTERS.map((f) => (
               <FilterChip

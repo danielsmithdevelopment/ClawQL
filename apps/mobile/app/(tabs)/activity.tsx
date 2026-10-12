@@ -13,7 +13,7 @@ import {
   Meta,
   ReviewRow,
   ScreenHost,
-  Title,
+  SectionHeader,
 } from "@/src/ui/primitives";
 
 function formatWhen(atMs: number): string {
@@ -71,8 +71,12 @@ export default function ActivityScreen() {
         }}
       >
         <Column spacing={space.sm} style={{ padding: space.md }}>
-          <Title>Activity</Title>
-          <Meta>{`Your recent decisions · source ${source}`}</Meta>
+          <SectionHeader
+            icon="activity"
+            title="Activity"
+            subtitle={`Your recent decisions · source ${source}`}
+            tone="neutral"
+          />
           {events.length === 0 ? (
             <Meta testID="activity-empty">
               Nothing recorded yet. Approvals and answers land here.

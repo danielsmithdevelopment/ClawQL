@@ -9,14 +9,15 @@ import { brand, space } from "@/src/theme";
 import {
   Badge,
   Body,
+  IconBubble,
   LoadingBlock,
   Meta,
   ScreenHost,
   ScreenScroll,
   SecondaryButton,
+  SectionHeader,
   Subtitle,
   SurfaceCard,
-  Title,
 } from "@/src/ui/primitives";
 
 export default function PolicyDetailScreen() {
@@ -51,8 +52,7 @@ export default function PolicyDetailScreen() {
   if (!detail) {
     return (
       <ScreenScroll testID="policy-detail-missing">
-        <Title>Policy not found</Title>
-        <Meta>It may have been removed in the web console.</Meta>
+        <SectionHeader icon="policies" title="Policy not found" subtitle="It may have been removed in the web console." />
         <SecondaryButton label="Back to policies" onPress={() => router.replace("/policies")} />
       </ScreenScroll>
     );
@@ -60,22 +60,24 @@ export default function PolicyDetailScreen() {
 
   return (
     <ScreenScroll testID="policy-detail-screen">
-      <Title>{detail.title}</Title>
-      <Meta>{detail.lastChanged}</Meta>
+      <SectionHeader icon="policies" title={detail.title} subtitle={detail.lastChanged} />
 
-      <SurfaceCard testID="policy-applies">
+      <SurfaceCard testID="policy-applies" tint="soft">
+        <IconBubble name="change" tone="neutral" size={28} iconSize={14} />
         <Subtitle>Applies to</Subtitle>
         <Body>{detail.appliesTo}</Body>
         <Meta>{detail.appliesHelp}</Meta>
       </SurfaceCard>
 
       <SurfaceCard testID="policy-who">
+        <IconBubble name="people" tone="seed" size={28} iconSize={14} />
         <Subtitle>Who approves</Subtitle>
         <Body>{detail.whoApproves}</Body>
         <Meta>{detail.whoHelp}</Meta>
       </SurfaceCard>
 
       <SurfaceCard testID="policy-rules">
+        <IconBubble name="key" tone={detail.requireSecurityKey ? "warn" : "neutral"} size={28} iconSize={14} />
         <Subtitle>Rules</Subtitle>
         <Meta>{`Approvals needed · ${detail.approvalsNeeded}`}</Meta>
         <Meta>{`Expires after · ${detail.expiresAfter}`}</Meta>

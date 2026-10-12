@@ -10,14 +10,15 @@ import {
   Badge,
   Body,
   Column,
+  IconBubble,
   LoadingBlock,
   Meta,
   ScreenHost,
   ScreenScroll,
   SecondaryButton,
+  SectionHeader,
   Subtitle,
   SurfaceCard,
-  Title,
 } from "@/src/ui/primitives";
 
 function toneFor(status: AgentSummary["status"]): "ok" | "warn" | "neutral" {
@@ -57,11 +58,11 @@ export default function AgentsScreen() {
 
   return (
     <ScreenScroll testID="agents-screen">
-      <Title>Your agents</Title>
-      <Meta>
-        Who is running, who is waiting on you, and today's spend. Pause and budgets stay in the
-        console.
-      </Meta>
+      <SectionHeader
+        icon="agents"
+        title="Your agents"
+        subtitle="Who is running, who is waiting on you, and today's spend."
+      />
       {needsYou > 0 ? (
         <Column spacing={4} testID="agents-needs-you">
           <Badge label={`${needsYou} need you`} tone="warn" />
@@ -73,11 +74,19 @@ export default function AgentsScreen() {
 
       <Column spacing={space.sm}>
         {agents.map((agent) => (
-          <SurfaceCard key={agent.id} testID={`agent-${agent.id}`}>
-            <Subtitle>{agent.name}</Subtitle>
-            <Badge label={agent.statusLabel} tone={toneFor(agent.status)} />
-            <Meta>{agent.role}</Meta>
-            <Meta>{`${agent.spendToday} today · last run ${agent.lastRun}`}</Meta>
+          <SurfaceCard key={agent.id} testID={`agent-${agent.id}`} elevated={agent.status === "needs_you"}>
+            <Column spacing={space.sm}>
+              <IconBubble
+                name="agents"
+                tone={toneFor(agent.status)}
+                size={36}
+                iconSize={18}
+              />
+              <Subtitle>{agent.name}</Subtitle>
+              <Badge label={agent.statusLabel} tone={toneFor(agent.status)} />
+              <Meta>{agent.role}</Meta>
+              <Meta>{`${agent.spendToday} today · last run ${agent.lastRun}`}</Meta>
+            </Column>
           </SurfaceCard>
         ))}
       </Column>
