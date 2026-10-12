@@ -1,0 +1,3 @@
+# Marker for Decision-1 v0.4 candidate measure workflow.
+# First non-comment token must be v0.4-routing-fresh. Cleared after full-family
+# remeasure landed (decision1-v04-routing-candidate.json). Re-enable to re-run.

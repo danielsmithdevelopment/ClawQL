@@ -105,6 +105,7 @@ function rowToRecord(payloadJson: string): PendingExecutionRecord {
   const raw = JSON.parse(payloadJson) as PendingExecutionRecord;
   return {
     ...raw,
+    where: raw.where ?? null,
     consumedAt: raw.consumedAt ?? null,
     consumedBy: raw.consumedBy ?? null,
     idempotencyCapable: raw.idempotencyCapable ?? false,

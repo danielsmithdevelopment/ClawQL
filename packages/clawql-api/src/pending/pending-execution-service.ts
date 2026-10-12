@@ -28,6 +28,7 @@ export type ParkInput = {
   readonly operationId: string;
   readonly args: Record<string, unknown>;
   readonly fields?: readonly string[];
+  readonly where?: string;
   readonly risk: OperationRisk;
   readonly home?: string;
   /** Override: connector honors Idempotency-Key (Stripe, etc.). */
@@ -99,6 +100,7 @@ export const PendingExecutionLive = Layer.succeed(
           operationId: input.operationId,
           args: input.args,
           fields: input.fields,
+          where: input.where,
         });
         const createdAt = new Date().toISOString();
         const expiresAt = new Date(Date.now() + pendingTtlHours() * 60 * 60 * 1000).toISOString();
@@ -108,6 +110,7 @@ export const PendingExecutionLive = Layer.succeed(
           operationId: input.operationId,
           args: input.args,
           fields: input.fields ? [...input.fields] : null,
+          where: input.where?.trim() ? input.where : null,
           argsHash,
           risk: input.risk,
           status: "pending",
@@ -182,6 +185,7 @@ export const PendingExecutionLive = Layer.succeed(
           operationId: record.operationId,
           args: record.args,
           fields: record.fields ?? undefined,
+          where: record.where ?? undefined,
         });
         if (expectedHash !== record.argsHash) {
           return yield* Effect.fail(

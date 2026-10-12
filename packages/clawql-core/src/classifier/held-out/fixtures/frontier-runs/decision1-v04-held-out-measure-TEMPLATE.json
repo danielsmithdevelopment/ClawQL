@@ -1,0 +1,21 @@
+{
+  "protocol": "Decision-1 held-out measure scorer on frozen v0.4 labels; not productionTrusted",
+  "filledAt": null,
+  "labelsPath": "packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.4-routing-fresh-gha-36144911649-labels.json",
+  "suiteId": "fast-decision-held-out-v0.4-routing-fresh",
+  "scorerBackend": "openrouter/microsoft/microsoft-decision-1",
+  "flipRateGate": "0",
+  "summary": null,
+  "honesty": [
+    "measure-only — CLAWQL_HELD_OUT_SCORER=openrouter-decision-1",
+    "backendId=openrouter/microsoft/microsoft-decision-1 ≠ gliner2",
+    "does not light calibrated or held-out productionTrusted (still GLiNER2-only)",
+    "CLAWQL_FLIP_RATE_GATE=0 bounds spend (flip-rate skipped)",
+    "empty summary is not evidence — fill via marker or run-decision1-held-out-measure.mts"
+  ],
+  "verdict": {
+    "productionTrustedClaim": false,
+    "calibratedClaim": false,
+    "citeAs": "Decision-1 held-out measure readout — not a trusted path"
+  }
+}

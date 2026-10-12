@@ -1,0 +1,42 @@
+diff --git a/src/delivery.js b/src/delivery.js
+index c84606d..56efa71 100644
+--- a/src/delivery.js
++++ b/src/delivery.js
+@@ -28,13 +28,12 @@ export async function deliverWebhook(url, payload, opts = {}) {
+       return { ok: true, attempts: attempt, status: res.status };
+     }
+     lastError = new Error(`webhook failed: ${res.status}`);
+-    // BUG: no backoff — immediate retry even on 429 with Retry-After.
+-    // Fixed code should:
+-    //   const retryAfter = Number(res.headers.get("retry-after"));
+-    //   const delay = Number.isFinite(retryAfter) ? retryAfter * 1000 : Math.min(1000 * 2 ** (attempt - 1), 8000);
+-    //   await sleep(delay);
+-    void sleep;
+-    void res;
++    const retryAfter = Number(res.headers.get("retry-after"));
++    const delay =
++      Number.isFinite(retryAfter) && retryAfter > 0
++        ? retryAfter * 1000
++        : Math.min(1000 * 2 ** (attempt - 1), 8000);
++    await sleep(delay);
+   }
+   return { ok: false, attempts: maxAttempts, error: lastError?.message ?? "unknown" };
+ }
+diff --git a/src/delivery.test.js b/src/delivery.test.js
+index 3fe8a5e..870960a 100644
+--- a/src/delivery.test.js
++++ b/src/delivery.test.js
+@@ -32,11 +32,10 @@ describe("deliverWebhook", () => {
+       { fetch, sleep, maxAttempts: 5 }
+     );
+ 
+-    // Current buggy behavior: no sleep between retries.
+-    // After the fix, sleeps should include >= 2000 (Retry-After) or exponential backoff.
+     expect(r.ok).toBe(true);
+     expect(fetch.mock.calls.length).toBeGreaterThan(1);
+-    expect(sleeps.length).toBe(0);
++    expect(sleeps.length).toBeGreaterThan(0);
++    expect(sleeps[0]).toBeGreaterThanOrEqual(2000);
+   });
+ 
+   it("fails after maxAttempts", async () => {

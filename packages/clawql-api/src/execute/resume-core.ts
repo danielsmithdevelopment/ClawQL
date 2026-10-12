@@ -54,6 +54,7 @@ export function resumeClawqlExecutionEffect(
       operationId: approved.operationId,
       args: approved.args,
       fields: approved.fields ?? undefined,
+      where: approved.where ?? undefined,
     };
     const content = yield* name(
       ExecutionId(approved.executionId),
@@ -72,6 +73,7 @@ export function resumeClawqlExecutionEffect(
               operationId: approved.operationId,
               args: approved.args,
               fields: approved.fields ?? undefined,
+              where: approved.where ?? undefined,
               approvedExecutionId: approved.executionId,
             },
             loadSpecFn

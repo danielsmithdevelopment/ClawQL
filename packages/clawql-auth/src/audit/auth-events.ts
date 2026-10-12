@@ -108,6 +108,15 @@ export type AuthEvent =
       accessTokenHash?: string;
     }
   | {
+      /** MCP OAuth §2 — live grant ended; tokens stamped with this virtualKeyId must fail validate. */
+      type: "MCP_GRANT_REVOKED";
+      virtualKeyId: string;
+      clientId?: string;
+      subject?: string;
+      reason: string;
+      timestamp: string;
+    }
+  | {
       type: "MCP_TOKEN_VALIDATION_FAILED";
       reason: string;
       timestamp: string;

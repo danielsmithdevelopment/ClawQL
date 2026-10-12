@@ -1,0 +1,23 @@
+{
+  "name": "@artifacts-attempts/verify",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "artifacts-verify": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/cli.d.ts",
+      "import": "./dist/cli.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@artifacts-attempts/manifest": "0.1.0",
+    "@artifacts-attempts/notes": "0.1.0"
+  }
+}

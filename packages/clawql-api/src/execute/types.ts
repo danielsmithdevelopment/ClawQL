@@ -5,10 +5,21 @@ export type ExecuteClawqlOperationParams = {
   args: Record<string, unknown>;
   fields?: readonly string[];
   /**
+   * Optional JMESPath applied server-side after the provider response and before
+   * `fields` projection. See {@link ./where-filter.js}.
+   */
+  where?: string;
+  /**
    * After `clawql resume` / MCP `resume` approves a parked mandate call, pass the
    * pending `executionId` so execute may run that exact payload once.
    */
   approvedExecutionId?: string;
+  /**
+   * Optional MCP / API session id for session IFC (`CLAWQL_ENABLE_SESSION_IFC`).
+   * When omitted, {@link ../ifc/session-label-store.js} resolves
+   * `CLAWQL_SESSION_ID` / API key id.
+   */
+  sessionId?: string;
 };
 
 export type ExecuteOperationResult = { ok: true; data: unknown } | { ok: false; error: string };

@@ -1,0 +1,46 @@
+# Competition status — artifacts-attempts
+
+As of Day 18 (x402 unlock scaffold + Oct 12–14 plan). Deadline **Oct 14, 2026**. Artifacts billing starts **Oct 15**.
+
+**Operator checklist:** [`HUMAN_NEXT.md`](./HUMAN_NEXT.md) — **public repo is required**; live Artifacts is the Oct 12 priority.
+
+## Ready (no Cloudflare account)
+
+| Area | Status |
+| --- | --- |
+| Apache-2.0 tree under `artifacts-attempts/` | yes |
+| Local pipeline (git notes, vitest, Merkle dry-run) | yes — `demo:local` / `demo:judge-smoke` |
+| Policy block (`att_3` / evil.example) | yes |
+| Decider + trust rule (calibrated auto-merge / approval) | yes |
+| Canary dry-run status + board panel | yes |
+| Board SSE + MCP tools | yes — `demo:board-mcp-smoke` |
+| Recording gate (3× verify) | yes — `demo:record-prep` |
+| Judge docs | [`JUDGE_RUNBOOK.md`](./JUDGE_RUNBOOK.md), [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`VIDEO_SCRIPT.md`](./VIDEO_SCRIPT.md) |
+| Public-repo extract notes | [`STANDALONE.md`](./STANDALONE.md) |
+| Film preflight | `npm run demo:film-preflight` |
+| Gradual-deploy request builder (offline) | `buildGradualDeployRequest` in pipeline |
+| FAQ | [`FAQ.md`](./FAQ.md) |
+| On-camera pitch | [`PITCH.md`](./PITCH.md) |
+| Live cred check | `npm run demo:live-check` (`LIVE_PROBE=1` when tokens exist) |
+| x402 unlock (offline scaffold) | `npm run demo:unlock-dry` · [`X402_UNLOCK.md`](./X402_UNLOCK.md) |
+| Film cards | [`video-cards/`](./video-cards/) |
+| CI (path-filtered) | `.github/workflows/artifacts-attempts.yml` |
+
+## Blocked on credentials / human steps
+
+| Item | Blocker |
+| --- | --- |
+| **Public** standalone `artifacts-attempts` repo (**required**) | GitHub create denied to agents; human must create + push [`STANDALONE.md`](./STANDALONE.md) |
+| Live Artifacts forks / tokens (Oct 12 priority) | Workers Paid + Artifacts beta |
+| Live Turbo Arweave publish | `ARWEAVE_JWK` / Turbo credits |
+| Workers gradual deploy API | Cloudflare account |
+| Live x402 unlock beat | Base Sepolia + facilitator + live Artifacts delivery |
+| Demo video | Run `demo:record-prep` then film [`VIDEO_SCRIPT.md`](./VIDEO_SCRIPT.md) |
+
+## Recording readiness
+
+After Day 15: run `npm run demo:record-prep` and confirm **GATE PASS** before filming. Scenes: [`VIDEO_SCRIPT.md`](./VIDEO_SCRIPT.md).
+
+## Submit path if CF stays blocked
+
+Ship the **local-witness** path: real git, real vitest, real Merkle verify, honest dry-run labels for Arweave/canary. Judges follow [`JUDGE_RUNBOOK.md`](./JUDGE_RUNBOOK.md). Checklist: [`SUBMISSION.md`](./SUBMISSION.md).

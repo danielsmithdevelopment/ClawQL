@@ -17,13 +17,20 @@ import {
   tryConsumeApprovedMandate,
 } from "../pending/pending-execution-service.js";
 import { mandateArgsMatchEffect, type MandateArgsMatch } from "../proofs/mandate-args-match.js";
-import { defaultFields, executeOutputFields, projectRestByFields } from "./field-projection.js";
+import { defaultFields, executeOutputFields } from "./field-projection.js";
+import { serializeExecuteResultEffect } from "./result-truncation.js";
+import { unknownOperationIdErrorEffect } from "./suggest-operation-ids.js";
+import { shapeExecuteDataEffect, WhereFilterError } from "./where-filter.js";
 import { executeNativeGraphQL } from "./native-graphql.js";
 import { executeNativeGrpc } from "./native-grpc.js";
 import { executeNativeMcp } from "./native-mcp.js";
 import { executeNativeCli } from "./native-cli.js";
 import { executeNativeWebmcp } from "./native-webmcp.js";
 import { operationRiskEnforceEnabledEffect } from "../risk/operation-risk-enforce.js";
+import {
+  accumulateSessionIfcReadSync,
+  checkSessionIfcWriteSync,
+} from "../ifc/session-ifc-enforce.js";
 import { executeRestOperation } from "./rest-operation.js";
 import type { ExecuteClawqlOperationParams, McpTextContent } from "./types.js";
 
@@ -41,6 +48,37 @@ function textContentEffect(text: string): Effect.Effect<McpTextContent[], Error>
       : text;
     return [{ type: "text" as const, text: body }];
   });
+}
+
+/**
+ * Apply `where` then `fields` projection, then bound the serialized payload.
+ * Fail-closed where errors become MCP error JSON (never return unfiltered provider data).
+ * Oversized success bodies get an explicit `truncated: true` envelope (never a silent cut).
+ */
+function shapedSuccessContent(
+  data: unknown,
+  outputFields: string[] | undefined,
+  where: string | undefined
+): Effect.Effect<McpTextContent[], Error> {
+  return shapeExecuteDataEffect(data, { where, fields: outputFields }).pipe(
+    Effect.flatMap((shaped) =>
+      serializeExecuteResultEffect(shaped).pipe(Effect.flatMap((text) => textContentEffect(text)))
+    ),
+    Effect.catch((err: unknown) => {
+      if (err instanceof WhereFilterError) {
+        return textContentEffect(
+          JSON.stringify({
+            ok: false,
+            status: "where_invalid",
+            error: err.message,
+            issue: err.issue,
+            fix: err.fixHint,
+          })
+        );
+      }
+      return Effect.fail(err instanceof Error ? err : new Error(String(err)));
+    })
+  );
 }
 
 function interpretExecuteOutcome(content: McpTextContent[]): {
@@ -83,17 +121,17 @@ export function executeClawqlOperationEffect(
   loadSpecFn: LoadSpecFn = loadSpec
 ): Effect.Effect<McpTextContent[], Error> {
   return Effect.gen(function* () {
-    const { operationId, args, fields } = params;
+    const { operationId, args, fields, where } = params;
     const loaded = yield* fromPromise(() => loadSpecFn());
     const { operations, openapi, openapis, multi } = loaded;
     const op = operations.find((o) => o.id === operationId);
 
     if (!op) {
-      return yield* textContentEffect(
-        JSON.stringify({
-          error: `Unknown operationId: "${operationId}". Use search() to find valid operation IDs.`,
-        })
+      const body = yield* unknownOperationIdErrorEffect(
+        operationId,
+        operations.map((o) => o.id)
       );
+      return yield* textContentEffect(JSON.stringify(body));
     }
 
     const risk = op.risk;
@@ -109,12 +147,22 @@ export function executeClawqlOperationEffect(
         })
       );
     }
+
+    // Session IFC (ADR 0015): within-session-only — labels do not cross session keys.
+    // Gated by CLAWQL_ENABLE_SESSION_IFC=1 (default off).
+    const ifcBlock = checkSessionIfcWriteSync({
+      operation: op as Operation,
+      sessionId: params.sessionId,
+    });
+    if (ifcBlock) {
+      return yield* textContentEffect(JSON.stringify(ifcBlock));
+    }
     let consumedMandateId: string | undefined;
 
     if (enforceRisk && risk?.policy === "mandate") {
       const approvedId = params.approvedExecutionId?.trim();
       if (approvedId) {
-        const livePayload = { operationId, args, fields };
+        const livePayload = { operationId, args, fields, where };
         const argsHash = yield* hashPendingArgsEffect(livePayload);
         // Atomic consume before any side effect (CAS: approved + digest + not expired).
         const consumed = yield* fromPromise(() =>
@@ -188,6 +236,7 @@ export function executeClawqlOperationEffect(
             operationId,
             args,
             fields,
+            where,
             risk,
             idempotencyCapable: op.riskHints?.idempotencyCapable === true,
           })
@@ -223,9 +272,7 @@ export function executeClawqlOperationEffect(
           root && typeof root === "object" && op.nativeGraphQL.fieldName in root
             ? root[op.nativeGraphQL.fieldName]
             : exec.data;
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(inner, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(inner, outputFields, where);
       }
 
       if (op.protocolKind === "grpc" && op.nativeGrpc) {
@@ -239,9 +286,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(exec.data, outputFields, where);
       }
 
       if (op.protocolKind === "mcp" && op.nativeMcp) {
@@ -255,9 +300,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(exec.data, outputFields, where);
       }
 
       if (op.protocolKind === "cli" && op.nativeCli) {
@@ -271,9 +314,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(exec.data, outputFields, where);
       }
 
       if (op.protocolKind === "webmcp" && op.nativeWebmcp) {
@@ -287,9 +328,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(exec.data, outputFields, where);
       }
 
       if (multi) {
@@ -305,9 +344,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(fallback.data, outputFields, where);
       }
 
       if (
@@ -326,9 +363,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(rest.data, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(rest.data, outputFields, where);
       }
 
       const selectedFields = outputFields?.length
@@ -343,9 +378,7 @@ export function executeClawqlOperationEffect(
         if (!inProc.ok) {
           return yield* Effect.fail(new Error(inProc.error));
         }
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(inProc.data, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(inProc.data, outputFields, where);
       }).pipe(
         Effect.catch((err) =>
           Effect.gen(function* () {
@@ -362,9 +395,7 @@ export function executeClawqlOperationEffect(
                 })
               );
             }
-            return yield* textContentEffect(
-              JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2)
-            );
+            return yield* shapedSuccessContent(fallback.data, outputFields, where);
           })
         )
       );
@@ -383,6 +414,16 @@ export function executeClawqlOperationEffect(
     if (consumedMandateId) {
       const outcome = interpretExecuteOutcome(content);
       yield* fromPromise(() => markPendingCompleted(consumedMandateId!, outcome));
+    }
+
+    // Accumulate read labels only after a successful execute (ADR 0015 session IFC).
+    {
+      const outcome = interpretExecuteOutcome(content);
+      accumulateSessionIfcReadSync({
+        operation: op as Operation,
+        sessionId: params.sessionId,
+        success: outcome.ok,
+      });
     }
 
     return content;

@@ -19,6 +19,8 @@ export type PendingExecutionRecord = {
   readonly operationId: string;
   readonly args: Record<string, unknown>;
   readonly fields: readonly string[] | null;
+  /** Optional JMESPath bound into argsHash when set. */
+  readonly where: string | null;
   readonly argsHash: string;
   readonly risk: OperationRisk;
   readonly status: PendingExecutionStatus;

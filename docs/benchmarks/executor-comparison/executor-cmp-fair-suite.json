@@ -1,0 +1,467 @@
+{
+  "suite": "executor-cmp-fair",
+  "version": 1,
+  "focus": [
+    "input",
+    "output"
+  ],
+  "tokenizer": "cl100k_base",
+  "taskCount": 12,
+  "honesty": {
+    "programFilterArm": "Simulated by projecting the same raw payload to the task fields. This is the fair comparison once Executor/OpenCode code mode filters before return. Replace with a live Executor program arm when EXECUTOR_PROGRAM_BIN is available.",
+    "singleCallBestCase": "fair-001 is ClawQL's best case (fields projection). Multi-step tasks (fair-008..010) are where programs must earn promotion.",
+    "layer1Note": "Layer 1 tool-definition sizes are measured separately in executor-cmp-001; this suite focuses on Layer 2 + outputs."
+  },
+  "totals": {
+    "executorRawInput": 54000,
+    "executorProgramFilterInput": 10283,
+    "clawqlInput": 10283,
+    "executorRawOutput": 10047,
+    "executorProgramFilterOutput": 10047,
+    "clawqlOutput": 10047,
+    "ratioRawVsClawqlInput": 5.25,
+    "ratioProgramFilterVsClawqlInput": 1,
+    "ratioRawVsClawqlOutput": 1
+  },
+  "tasks": [
+    {
+      "id": "fair-001",
+      "kind": "single",
+      "description": "List open PRs; return title and number only",
+      "multiStep": false,
+      "arms": {
+        "executorRaw": {
+          "inputTokens": 4430,
+          "outputTokens": 322,
+          "note": "Full list JSON into model context (no projection)."
+        },
+        "executorProgramFilterSimulated": {
+          "inputTokens": 322,
+          "outputTokens": 322,
+          "simulated": true,
+          "note": "Same fields as ClawQL; projects the raw payload. Stand-in for Executor/OpenCode code-mode filter until live program arm exists."
+        },
+        "clawql": {
+          "inputTokens": 322,
+          "outputTokens": 322,
+          "note": "execute + fields (+ where when filtering). Same projected payload as program-filter arm on single-source tasks."
+        }
+      },
+      "ratios": {
+        "rawVsClawqlInput": 13.76,
+        "programFilterVsClawqlInput": 1
+      },
+      "itemCountRaw": 24,
+      "itemCountProjected": 24
+    },
+    {
+      "id": "fair-002",
+      "kind": "single",
+      "description": "Open PRs labeled bug; title and number only",
+      "multiStep": false,
+      "arms": {
+        "executorRaw": {
+          "inputTokens": 1670,
+          "outputTokens": 137,
+          "note": "Full list JSON into model context (no projection)."
+        },
+        "executorProgramFilterSimulated": {
+          "inputTokens": 137,
+          "outputTokens": 137,
+          "simulated": true,
+          "note": "Same fields as ClawQL; projects the raw payload. Stand-in for Executor/OpenCode code-mode filter until live program arm exists."
+        },
+        "clawql": {
+          "inputTokens": 137,
+          "outputTokens": 137,
+          "note": "execute + fields (+ where when filtering). Same projected payload as program-filter arm on single-source tasks."
+        }
+      },
+      "ratios": {
+        "rawVsClawqlInput": 12.19,
+        "programFilterVsClawqlInput": 1
+      },
+      "itemCountRaw": 9,
+      "itemCountProjected": 9
+    },
+    {
+      "id": "fair-003",
+      "kind": "single",
+      "description": "List issues; title and number only",
+      "multiStep": false,
+      "arms": {
+        "executorRaw": {
+          "inputTokens": 3843,
+          "outputTokens": 402,
+          "note": "Full list JSON into model context (no projection)."
+        },
+        "executorProgramFilterSimulated": {
+          "inputTokens": 402,
+          "outputTokens": 402,
+          "simulated": true,
+          "note": "Same fields as ClawQL; projects the raw payload. Stand-in for Executor/OpenCode code-mode filter until live program arm exists."
+        },
+        "clawql": {
+          "inputTokens": 402,
+          "outputTokens": 402,
+          "note": "execute + fields (+ where when filtering). Same projected payload as program-filter arm on single-source tasks."
+        }
+      },
+      "ratios": {
+        "rawVsClawqlInput": 9.56,
+        "programFilterVsClawqlInput": 1
+      },
+      "itemCountRaw": 40,
+      "itemCountProjected": 40
+    },
+    {
+      "id": "fair-004",
+      "kind": "single",
+      "description": "List commits; sha and message only",
+      "multiStep": false,
+      "arms": {
+        "executorRaw": {
+          "inputTokens": 6152,
+          "outputTokens": 4253,
+          "note": "Full list JSON into model context (no projection)."
+        },
+        "executorProgramFilterSimulated": {
+          "inputTokens": 4253,
+          "outputTokens": 4253,
+          "simulated": true,
+          "note": "Same fields as ClawQL; projects the raw payload. Stand-in for Executor/OpenCode code-mode filter until live program arm exists."
+        },
+        "clawql": {
+          "inputTokens": 4253,
+          "outputTokens": 4253,
+          "note": "execute + fields (+ where when filtering). Same projected payload as program-filter arm on single-source tasks."
+        }
+      },
+      "ratios": {
+        "rawVsClawqlInput": 1.45,
+        "programFilterVsClawqlInput": 1
+      },
+      "itemCountRaw": 50,
+      "itemCountProjected": 50
+    },
+    {
+      "id": "fair-005",
+      "kind": "single",
+      "description": "List releases; tag_name and name only",
+      "multiStep": false,
+      "arms": {
+        "executorRaw": {
+          "inputTokens": 5653,
+          "outputTokens": 403,
+          "note": "Full list JSON into model context (no projection)."
+        },
+        "executorProgramFilterSimulated": {
+          "inputTokens": 403,
+          "outputTokens": 403,
+          "simulated": true,
+          "note": "Same fields as ClawQL; projects the raw payload. Stand-in for Executor/OpenCode code-mode filter until live program arm exists."
+        },
+        "clawql": {
+          "inputTokens": 403,
+          "outputTokens": 403,
+          "note": "execute + fields (+ where when filtering). Same projected payload as program-filter arm on single-source tasks."
+        }
+      },
+      "ratios": {
+        "rawVsClawqlInput": 14.03,
+        "programFilterVsClawqlInput": 1
+      },
+      "itemCountRaw": 25,
+      "itemCountProjected": 25
+    },
+    {
+      "id": "fair-006",
+      "kind": "single",
+      "description": "List events; type and actor only",
+      "multiStep": false,
+      "arms": {
+        "executorRaw": {
+          "inputTokens": 6033,
+          "outputTokens": 992,
+          "note": "Full list JSON into model context (no projection)."
+        },
+        "executorProgramFilterSimulated": {
+          "inputTokens": 992,
+          "outputTokens": 992,
+          "simulated": true,
+          "note": "Same fields as ClawQL; projects the raw payload. Stand-in for Executor/OpenCode code-mode filter until live program arm exists."
+        },
+        "clawql": {
+          "inputTokens": 992,
+          "outputTokens": 992,
+          "note": "execute + fields (+ where when filtering). Same projected payload as program-filter arm on single-source tasks."
+        }
+      },
+      "ratios": {
+        "rawVsClawqlInput": 6.08,
+        "programFilterVsClawqlInput": 1
+      },
+      "itemCountRaw": 60,
+      "itemCountProjected": 60
+    },
+    {
+      "id": "fair-007",
+      "kind": "single",
+      "description": "Filter 200 PRs down to open bug titles (large-list filter)",
+      "multiStep": false,
+      "arms": {
+        "executorRaw": {
+          "inputTokens": 4276,
+          "outputTokens": 347,
+          "note": "Full list JSON into model context (no projection)."
+        },
+        "executorProgramFilterSimulated": {
+          "inputTokens": 347,
+          "outputTokens": 347,
+          "simulated": true,
+          "note": "Same fields as ClawQL; projects the raw payload. Stand-in for Executor/OpenCode code-mode filter until live program arm exists."
+        },
+        "clawql": {
+          "inputTokens": 347,
+          "outputTokens": 347,
+          "note": "execute + fields (+ where when filtering). Same projected payload as program-filter arm on single-source tasks."
+        }
+      },
+      "ratios": {
+        "rawVsClawqlInput": 12.32,
+        "programFilterVsClawqlInput": 1
+      },
+      "itemCountRaw": 23,
+      "itemCountProjected": 23
+    },
+    {
+      "id": "fair-008",
+      "kind": "fanout",
+      "description": "Fan-out: list open PRs + list open issues (parallel reads)",
+      "multiStep": true,
+      "steps": [
+        {
+          "source": "pulls",
+          "fields": [
+            "title",
+            "number"
+          ],
+          "rawInputTokens": 4430,
+          "programFilterInputTokens": 322,
+          "itemCountRaw": 24,
+          "itemCountProjected": 24
+        },
+        {
+          "source": "issues",
+          "fields": [
+            "title",
+            "number"
+          ],
+          "rawInputTokens": 2881,
+          "programFilterInputTokens": 302,
+          "itemCountRaw": 30,
+          "itemCountProjected": 30
+        }
+      ],
+      "arms": {
+        "executorRaw": {
+          "inputTokens": 7311,
+          "outputTokens": 624,
+          "note": "Sum of full REST bodies for each step (no projection)."
+        },
+        "executorProgramFilterSimulated": {
+          "inputTokens": 624,
+          "outputTokens": 624,
+          "simulated": true,
+          "note": "Sum of per-step projected results — code-mode filter stand-in."
+        },
+        "clawql": {
+          "inputTokens": 624,
+          "outputTokens": 624,
+          "note": "N parallel executes with fields (fan-out). Same projected input as program-filter until programs land."
+        }
+      },
+      "ratios": {
+        "rawVsClawqlInput": 11.72,
+        "programFilterVsClawqlInput": 1
+      }
+    },
+    {
+      "id": "fair-009",
+      "kind": "fanout",
+      "description": "Fan-out: commits + releases + events (three parallel reads)",
+      "multiStep": true,
+      "steps": [
+        {
+          "source": "commits",
+          "fields": [
+            "sha",
+            "message"
+          ],
+          "rawInputTokens": 2462,
+          "programFilterInputTokens": 1703,
+          "itemCountRaw": 20,
+          "itemCountProjected": 20
+        },
+        {
+          "source": "releases",
+          "fields": [
+            "tag_name",
+            "name"
+          ],
+          "rawInputTokens": 2263,
+          "programFilterInputTokens": 163,
+          "itemCountRaw": 10,
+          "itemCountProjected": 10
+        },
+        {
+          "source": "events",
+          "fields": [
+            "type",
+            "actor"
+          ],
+          "rawInputTokens": 2013,
+          "programFilterInputTokens": 332,
+          "itemCountRaw": 20,
+          "itemCountProjected": 20
+        }
+      ],
+      "arms": {
+        "executorRaw": {
+          "inputTokens": 6738,
+          "outputTokens": 2198,
+          "note": "Sum of full REST bodies for each step (no projection)."
+        },
+        "executorProgramFilterSimulated": {
+          "inputTokens": 2198,
+          "outputTokens": 2198,
+          "simulated": true,
+          "note": "Sum of per-step projected results — code-mode filter stand-in."
+        },
+        "clawql": {
+          "inputTokens": 2198,
+          "outputTokens": 2198,
+          "note": "N parallel executes with fields (fan-out). Same projected input as program-filter until programs land."
+        }
+      },
+      "ratios": {
+        "rawVsClawqlInput": 3.07,
+        "programFilterVsClawqlInput": 1
+      }
+    },
+    {
+      "id": "fair-010",
+      "kind": "join",
+      "description": "Cross-source join: open bug PRs with matching Jira PLAT-* keys",
+      "multiStep": true,
+      "joinNote": "Join in program memory: keep PRs whose title contains a Jira key present in the bug ticket set.",
+      "steps": [
+        {
+          "source": "pulls",
+          "fields": [
+            "title",
+            "number"
+          ],
+          "rawInputTokens": 1670,
+          "programFilterInputTokens": 137,
+          "itemCountRaw": 9,
+          "itemCountProjected": 9
+        },
+        {
+          "source": "jira",
+          "fields": [
+            "key",
+            "summary"
+          ],
+          "rawInputTokens": 1783,
+          "programFilterInputTokens": 146,
+          "itemCountRaw": 11,
+          "itemCountProjected": 11
+        }
+      ],
+      "arms": {
+        "executorRaw": {
+          "inputTokens": 3453,
+          "outputTokens": 47,
+          "note": "Sum of full REST bodies for each step (no projection)."
+        },
+        "executorProgramFilterSimulated": {
+          "inputTokens": 283,
+          "outputTokens": 47,
+          "simulated": true,
+          "note": "Sum of per-step projected results — code-mode filter stand-in."
+        },
+        "clawql": {
+          "inputTokens": 283,
+          "outputTokens": 47,
+          "note": "Today: N executes with fields; join still needs model or future program. Tokenized as projected reads + small join answer."
+        }
+      },
+      "ratios": {
+        "rawVsClawqlInput": 12.2,
+        "programFilterVsClawqlInput": 1
+      }
+    },
+    {
+      "id": "fair-011",
+      "kind": "single",
+      "description": "Alice-authored open PRs; title and number",
+      "multiStep": false,
+      "arms": {
+        "executorRaw": {
+          "inputTokens": 2964,
+          "outputTokens": 214,
+          "note": "Full list JSON into model context (no projection)."
+        },
+        "executorProgramFilterSimulated": {
+          "inputTokens": 214,
+          "outputTokens": 214,
+          "simulated": true,
+          "note": "Same fields as ClawQL; projects the raw payload. Stand-in for Executor/OpenCode code-mode filter until live program arm exists."
+        },
+        "clawql": {
+          "inputTokens": 214,
+          "outputTokens": 214,
+          "note": "execute + fields (+ where when filtering). Same projected payload as program-filter arm on single-source tasks."
+        }
+      },
+      "ratios": {
+        "rawVsClawqlInput": 13.85,
+        "programFilterVsClawqlInput": 1
+      },
+      "itemCountRaw": 16,
+      "itemCountProjected": 16
+    },
+    {
+      "id": "fair-012",
+      "kind": "single",
+      "description": "Closed PRs only; title and number",
+      "multiStep": false,
+      "arms": {
+        "executorRaw": {
+          "inputTokens": 1477,
+          "outputTokens": 108,
+          "note": "Full list JSON into model context (no projection)."
+        },
+        "executorProgramFilterSimulated": {
+          "inputTokens": 108,
+          "outputTokens": 108,
+          "simulated": true,
+          "note": "Same fields as ClawQL; projects the raw payload. Stand-in for Executor/OpenCode code-mode filter until live program arm exists."
+        },
+        "clawql": {
+          "inputTokens": 108,
+          "outputTokens": 108,
+          "note": "execute + fields (+ where when filtering). Same projected payload as program-filter arm on single-source tasks."
+        }
+      },
+      "ratios": {
+        "rawVsClawqlInput": 13.68,
+        "programFilterVsClawqlInput": 1
+      },
+      "itemCountRaw": 8,
+      "itemCountProjected": 8
+    }
+  ],
+  "generatedAt": "2026-10-09T19:00:27.909Z"
+}

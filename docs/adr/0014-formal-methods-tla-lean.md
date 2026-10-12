@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-07
-- Related: [ADR 0013 gdp-ts](./0013-gdp-ts-compile-time-auth-proofs.md), [correctness by construction](../design/correctness-by-construction.md), [execute pause/resume](../specs/risk/execute-pause-resume-v0.1.md), [`formal/tla/mandate/`](../../formal/tla/mandate/), [`formal/tla/events/`](../../formal/tla/events/), [`formal/lean/`](../../formal/lean/)
+- Related: [ADR 0013 gdp-ts](./0013-gdp-ts-compile-time-auth-proofs.md), [ADR 0015 program mode](./0015-program-mode-alongside-search-execute.md) (batch Merkle mandates + Lean IFC), [correctness by construction](../design/correctness-by-construction.md), [execute pause/resume](../specs/risk/execute-pause-resume-v0.1.md), [`formal/tla/mandate/`](../../formal/tla/mandate/), [`formal/tla/events/`](../../formal/tla/events/), [`formal/lean/`](../../formal/lean/)
 
 ## Context
 

@@ -1,0 +1,295 @@
+{
+  "protocol": "Decision-1 held-out measure scorer on frozen v0.4 labels; not productionTrusted",
+  "filledAt": "2026-10-12T19:27:54.182Z",
+  "labelsPath": "/home/runner/work/ClawQL/ClawQL/packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.4-routing-fresh-gha-36144911649-labels.json",
+  "suiteId": "fast-decision-held-out-v0.4-routing-fresh",
+  "scorerBackend": "openrouter/microsoft/microsoft-decision-1",
+  "flipRateGate": "0",
+  "summary": {
+    "suiteId": "fast-decision-held-out-v0.4-routing-fresh",
+    "adjudicationMode": "live",
+    "judgeModel": "claude-sonnet-4-6",
+    "labelCount": 40,
+    "labelsIn": "/home/runner/work/ClawQL/ClawQL/packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.4-routing-fresh-gha-36144911649-labels.json",
+    "scorerBackend": "openrouter/microsoft/microsoft-decision-1",
+    "glinerLiveConfigured": false,
+    "ontologyEnrichment": false,
+    "ontologyDigest": null,
+    "validationCriteria": {
+      "minAccuracy": 0.7,
+      "maxMeanCalibrationError": 0.15,
+      "minCases": 1
+    },
+    "candidateIdRemapPolicy": "cosmetic-only (quote/case); semantic label/suffix remaps fail the case — never counted",
+    "candidateIdRemaps": [],
+    "reports": [
+      {
+        "useSiteId": "search_provider_tool_routing",
+        "adjudicatedCount": 40,
+        "caseCount": 40,
+        "passedCriteria": true,
+        "productionTrusted": false,
+        "scorerBackend": "openrouter/microsoft/microsoft-decision-1",
+        "meanCalibrationError": 0.09999999999999998,
+        "rawAccuracy": 1,
+        "failureReasons": [
+          "scorer backend \"openrouter/microsoft/microsoft-decision-1\" is not live gliner2 (stub/fallback/heuristic/prior cannot light productionTrusted)"
+        ],
+        "cases": [
+          {
+            "caseId": "route-v04-001",
+            "topCandidateId": "mcp.search",
+            "topConfidence": 0.9933071503294908,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-002",
+            "topCandidateId": "mcp.execute",
+            "topConfidence": 0.995390428192395,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-003",
+            "topCandidateId": "mcp.search",
+            "topConfidence": 0.9940441108890757,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-004",
+            "topCandidateId": "mcp.execute",
+            "topConfidence": 0.9988304895604697,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-005",
+            "topCandidateId": "mcp.skills_list",
+            "topConfidence": 0.9947798737599461,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-006",
+            "topCandidateId": "mcp.skills_get",
+            "topConfidence": 0.9924227572404182,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-007",
+            "topCandidateId": "mcp.skills_get",
+            "topConfidence": 0.9341067877229232,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-008",
+            "topCandidateId": "mcp.skills_list",
+            "topConfidence": 0.998674977329069,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-009",
+            "topCandidateId": "mcp.cache",
+            "topConfidence": 0.9914225148476443,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-010",
+            "topCandidateId": "mcp.audit",
+            "topConfidence": 0.9964063976861958,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-011",
+            "topCandidateId": "mcp.audit",
+            "topConfidence": 0.9986749778084679,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-012",
+            "topCandidateId": "mcp.cache",
+            "topConfidence": 0.9792019151446858,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-013",
+            "topCandidateId": "mcp.audit",
+            "topConfidence": 0.9988304895774684,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-014",
+            "topCandidateId": "mcp.notify",
+            "topConfidence": 0.9990889487539951,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-015",
+            "topCandidateId": "mcp.schedule",
+            "topConfidence": 0.9980732657237424,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-016",
+            "topCandidateId": "mcp.notify",
+            "topConfidence": 0.9626731107817876,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-017",
+            "topCandidateId": "mcp.schedule",
+            "topConfidence": 0.9978172830663232,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-018",
+            "topCandidateId": "mcp.memory_recall_title_flag_a",
+            "topConfidence": 0.9994472213168009,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-019",
+            "topCandidateId": "mcp.memory_recall_title_flag_b",
+            "topConfidence": 0.9953904287585952,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-020",
+            "topCandidateId": "mcp.memory_recall_overbroad",
+            "topConfidence": 0.9986749774908199,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-021",
+            "topCandidateId": "mcp.memory_recall_title_flag_a",
+            "topConfidence": 0.9974493420840742,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-022",
+            "topCandidateId": "mcp.memory_recall_overbroad",
+            "topConfidence": 0.9980732657271005,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-023",
+            "topCandidateId": "mcp.memory_recall_title_flag_b",
+            "topConfidence": 0.9975273767756003,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-024",
+            "topCandidateId": "mcp.data_query",
+            "topConfidence": 0.9994472214480061,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-025",
+            "topCandidateId": "mcp.data_query_cohort_count",
+            "topConfidence": 0.9975572320914514,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-026",
+            "topCandidateId": "mcp.memory_recall_overbroad",
+            "topConfidence": 0.9875683464484029,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-027",
+            "topCandidateId": "mcp.data_query",
+            "topConfidence": 0.9993590236067382,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-028",
+            "topCandidateId": "mcp.data_query_cohort_count",
+            "topConfidence": 0.9980732652500351,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-029",
+            "topCandidateId": "tool.bash_workspace_hunt",
+            "topConfidence": 0.9924227572159063,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-030",
+            "topCandidateId": "tool.generic_web_search",
+            "topConfidence": 0.9964063976186665,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-031",
+            "topCandidateId": "mcp.search",
+            "topConfidence": 0.9993736658166777,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-032",
+            "topCandidateId": "tool.generic_web_search",
+            "topConfidence": 0.9940889302955077,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-033",
+            "topCandidateId": "mcp.pageindex_build_tree",
+            "topConfidence": 0.9980732657288914,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-034",
+            "topCandidateId": "mcp.knowledge_search_onyx",
+            "topConfidence": 0.9830724151930962,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-035",
+            "topCandidateId": "mcp.ingest_external_knowledge",
+            "topConfidence": 0.9914225149506027,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-036",
+            "topCandidateId": "mcp.search",
+            "topConfidence": 0.9978730205081797,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-037",
+            "topCandidateId": "mcp.clawql_think",
+            "topConfidence": 0.9914225128359933,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-038",
+            "topCandidateId": "skill.clawql-audit-workflows",
+            "topConfidence": 0.9840936087255356,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-039",
+            "topCandidateId": "mcp.audit",
+            "topConfidence": 0.9579122738866626,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-040",
+            "topCandidateId": "skill.clawql-composed-mcp-workflows",
+            "topConfidence": 0.8933094060543488,
+            "correct": true
+          }
+        ]
+      }
+    ],
+    "honesty": "live labels loaded from /home/runner/work/ClawQL/ClawQL/packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.4-routing-fresh-gha-36144911649-labels.json; scorer=openrouter/microsoft/microsoft-decision-1 (CLAWQL_HELD_OUT_SCORER=openrouter-decision-1; measure-only); productionTrusted requires DEFAULT_VALIDATION_CRITERIA (minAccuracy=0.7, maxMeanCalibrationError=0.15) — wiring criteria cannot light the flag; productionTrusted remains false — Decision-1 measure scorer backend ≠ gliner2; no candidateId remaps on this run"
+  },
+  "honesty": [
+    "measure-only — CLAWQL_HELD_OUT_SCORER=openrouter-decision-1",
+    "backendId=openrouter/microsoft/microsoft-decision-1 ≠ gliner2",
+    "does not light calibrated or held-out productionTrusted (still GLiNER2-only)",
+    "CLAWQL_FLIP_RATE_GATE=0 bounds spend (flip-rate skipped)"
+  ],
+  "verdict": {
+    "productionTrustedClaim": false,
+    "calibratedClaim": false,
+    "citeAs": "Decision-1 held-out measure readout — not a trusted path"
+  }
+}

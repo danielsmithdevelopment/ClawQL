@@ -1,0 +1,287 @@
+/**
+ * Decision-1 candidate readout on frozen routing held-out (measure-only).
+ * Always emits productionTrustedClaim: false — never lights trust.
+ */
+
+import { Context, Effect, Layer } from "effect";
+import type { HeldOutSuiteManifest } from "clawql-core/classifier";
+import { runFanoutEval, type FanoutEvalRequest, type FanoutEvalResponse } from "./fanout-eval.js";
+import { runFlipRate, type FlipRateRequest, type FlipRateResponse } from "./flip-rate.js";
+import {
+  applyFrontierLabels,
+  heldOutCasesToFanout,
+  heldOutCasesToFlipRate,
+  type FrontierLabelsFile,
+} from "./held-out-to-fanout.js";
+import type { OpenAiDecisionCreateRequest, OpenAiDecisionCreateResponse } from "./openai-types.js";
+import type { DecisionRequest, DecisionResponse } from "./service.js";
+import type { FanoutCostSource } from "./spend-cost.js";
+
+export const DECISION1_CANDIDATE_PROTOCOL =
+  "Decision-1 candidate on frozen routing held-out; fan-out bulk + flip-rate pin; not productionTrusted";
+
+export type Decision1CandidateReport = {
+  readonly protocol: typeof DECISION1_CANDIDATE_PROTOCOL;
+  readonly evalSuite: string;
+  readonly labelCount: number;
+  readonly groundTruthSource: "frontier_labels" | "suite_provisional";
+  readonly backends: readonly { readonly id: string; readonly model: string }[];
+  readonly bulk: {
+    readonly qualityBar: { readonly maxWrongAnswers: number; readonly minAnswered: number };
+    /** Decision-1 candidate uses twin-aware bulk scoring (mcp↔skill). */
+    readonly matchMode: "twin";
+    /** How costEstimate was resolved for recommendation ranking. */
+    readonly costSource: FanoutCostSource;
+    readonly reports: FanoutEvalResponse["reports"];
+    readonly recommendation: FanoutEvalResponse["recommendation"];
+    readonly disagreements: FanoutEvalResponse["disagreements"];
+  };
+  readonly flipRate: {
+    readonly model: string;
+    readonly backendId: string;
+    readonly maxFlipRate: number;
+    readonly passed: boolean;
+    readonly caseCount: number;
+    /** Sum of comparable perturbations — 0 means the flip suite was vacuous. */
+    readonly totalPerturbations: number;
+    readonly reports: FlipRateResponse["reports"];
+    /** True when OpenRouter key missing / flip suite skipped (measure still emits). */
+    readonly skipped?: boolean;
+    readonly skipReason?: string;
+  };
+  readonly honesty: readonly string[];
+  readonly verdict: {
+    readonly productionTrustedClaim: false;
+    readonly calibratedClaim: false;
+    readonly citeAs: string;
+  };
+};
+
+export type Decision1CandidateDeps = {
+  readonly suite: HeldOutSuiteManifest;
+  readonly labels?: FrontierLabelsFile;
+  readonly decide?: (req: DecisionRequest) => Promise<DecisionResponse>;
+  readonly callOpenRouter?: (
+    body: OpenAiDecisionCreateRequest
+  ) => Promise<OpenAiDecisionCreateResponse>;
+  readonly env?: NodeJS.ProcessEnv;
+  readonly maxFlipRate?: number;
+  /** Override flip-rate families (default full suite; use `["synonym"]` to cut spend). */
+  readonly flipFamilies?: FlipRateRequest["families"];
+  /**
+   * When true (default), missing OpenRouter still emits bulk + flipRate.skipped
+   * instead of hard-failing the whole report.
+   */
+  readonly allowMissingOpenRouter?: boolean;
+  /**
+   * Fan-out cost source. Default: `spend_ledger` when `spendCosts` is set, else `explicit`
+   * (local `costPerCase=0`; optional `decision1CostPerCase`).
+   */
+  readonly costSource?: FanoutCostSource;
+  /** Inline spend-ledger snapshot for `costSource=spend_ledger`. */
+  readonly spendCosts?: ReadonlyMap<string, number>;
+  /** Explicit USD/case for Decision-1 when not using spend ledger. */
+  readonly decision1CostPerCase?: number;
+  /** Injected for tests — defaults to runFanoutEval. */
+  readonly runBulk?: (req: FanoutEvalRequest) => Promise<FanoutEvalResponse>;
+  /** Injected for tests — defaults to runFlipRate. */
+  readonly runFlip?: (
+    req: FlipRateRequest,
+    opts?: {
+      decide?: (req: DecisionRequest) => Promise<DecisionResponse>;
+      callOpenRouter?: (body: OpenAiDecisionCreateRequest) => Promise<OpenAiDecisionCreateResponse>;
+      env?: NodeJS.ProcessEnv;
+    }
+  ) => Promise<FlipRateResponse>;
+};
+
+const HONESTY: readonly string[] = [
+  "measure-only — reuses fan-out bulk + flip-rate model pin",
+  "bulk correctness uses twin-aware candidatesEquivalent (mcp↔skill); still not productionTrusted",
+  "recommendation ranks by costEstimate among backends meeting the quality bar (local costPerCase=0)",
+  "does not light calibrated or held-out productionTrusted (still GLiNER2-only)",
+];
+
+function decision1CandidateBackends(deps: Decision1CandidateDeps): FanoutEvalRequest["backends"] {
+  const decision1: {
+    id: string;
+    model: string;
+    costPerCase?: number;
+  } = {
+    id: "openrouter/microsoft/microsoft-decision-1",
+    model: "microsoft/microsoft-decision-1",
+  };
+  if (typeof deps.decision1CostPerCase === "number") {
+    decision1.costPerCase = deps.decision1CostPerCase;
+  }
+  return [{ id: "local", model: "clawql", costPerCase: 0 }, decision1];
+}
+
+type FlipOrSkip =
+  | { readonly kind: "ok"; readonly flip: FlipRateResponse }
+  | { readonly kind: "skipped"; readonly reason: string }
+  | { readonly kind: "error"; readonly error: string };
+
+export function buildDecision1CandidateReport(
+  deps: Decision1CandidateDeps
+): Effect.Effect<Decision1CandidateReport | { error: string }> {
+  return Effect.gen(function* () {
+    let suite = deps.suite;
+    let groundTruthSource: Decision1CandidateReport["groundTruthSource"] = "suite_provisional";
+    if (deps.labels) {
+      const labeled = yield* applyFrontierLabels(suite, deps.labels);
+      if ("error" in labeled) return labeled;
+      suite = labeled;
+      groundTruthSource = "frontier_labels";
+    }
+
+    const fanoutCases = yield* heldOutCasesToFanout(suite.cases);
+    if ("error" in fanoutCases) return fanoutCases;
+    const flipCases = yield* heldOutCasesToFlipRate(suite.cases);
+    if ("error" in flipCases) return flipCases;
+
+    const qualityBar = { maxWrongAnswers: 0, minAnswered: 1 } as const;
+    const backends = decision1CandidateBackends(deps);
+    const costSource: FanoutCostSource =
+      deps.costSource ?? (deps.spendCosts ? "spend_ledger" : "explicit");
+    const bulkReq: FanoutEvalRequest = {
+      mode: "bulk",
+      matchMode: "twin",
+      costSource,
+      spendCosts: deps.spendCosts,
+      useSiteId: "search_provider_tool_routing",
+      qualityBar: { ...qualityBar },
+      backends,
+      cases: fanoutCases,
+    };
+
+    const runBulk =
+      deps.runBulk ??
+      ((req: FanoutEvalRequest) =>
+        runFanoutEval(req, {
+          decide: deps.decide,
+          callOpenRouter: deps.callOpenRouter,
+          env: deps.env,
+        }));
+
+    const bulkOrErr: FanoutEvalResponse | { error: string } = yield* Effect.tryPromise({
+      try: () => runBulk(bulkReq),
+      catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+    }).pipe(
+      Effect.catch((e): Effect.Effect<FanoutEvalResponse | { error: string }> =>
+        Effect.succeed({ error: `bulk fan-out failed: ${e.message}` })
+      )
+    );
+    if ("error" in bulkOrErr) return bulkOrErr;
+    const bulk = bulkOrErr;
+
+    const maxFlipRate = deps.maxFlipRate ?? 0.1;
+    const flipFamilies = deps.flipFamilies ?? ["whitespace", "case", "punctuation", "synonym"];
+    const flipReq: FlipRateRequest = {
+      cases: flipCases,
+      useSiteId: "search_provider_tool_routing",
+      model: "microsoft-decision-1",
+      maxFlipRate,
+      families: flipFamilies,
+    };
+
+    const runFlip = deps.runFlip ?? runFlipRate;
+    const allowMissing = deps.allowMissingOpenRouter !== false;
+    const flipOrSkip: FlipOrSkip = yield* Effect.tryPromise({
+      try: () =>
+        runFlip(flipReq, {
+          decide: deps.decide,
+          callOpenRouter: deps.callOpenRouter,
+          env: deps.env,
+        }),
+      catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+    }).pipe(
+      Effect.map((flip): FlipOrSkip => ({ kind: "ok", flip })),
+      Effect.catch((e): Effect.Effect<FlipOrSkip> => {
+        const msg = e.message;
+        if (allowMissing && /OPENROUTER_API_KEY/i.test(msg)) {
+          return Effect.succeed({ kind: "skipped", reason: msg });
+        }
+        return Effect.succeed({ kind: "error", error: `flip-rate failed: ${msg}` });
+      })
+    );
+    if (flipOrSkip.kind === "error") return { error: flipOrSkip.error };
+
+    const honesty: string[] = [...HONESTY];
+    if (flipOrSkip.kind === "skipped") {
+      honesty.push(`flip-rate skipped: ${flipOrSkip.reason}`);
+    } else if (flipOrSkip.flip.totalPerturbations === 0) {
+      honesty.push(
+        "flip-rate vacuous — 0 comparable perturbations (synonym-only often matches nothing on routing text; use whitespace,case,punctuation)"
+      );
+    }
+
+    const flipRateBlock: Decision1CandidateReport["flipRate"] =
+      flipOrSkip.kind === "ok"
+        ? {
+            model: flipOrSkip.flip.model ?? "microsoft/microsoft-decision-1",
+            backendId: flipOrSkip.flip.backendId,
+            maxFlipRate: flipOrSkip.flip.maxFlipRate,
+            passed: flipOrSkip.flip.passed,
+            caseCount: flipOrSkip.flip.caseCount,
+            totalPerturbations: flipOrSkip.flip.totalPerturbations,
+            reports: flipOrSkip.flip.reports,
+          }
+        : {
+            model: "microsoft/microsoft-decision-1",
+            backendId: "openrouter/microsoft/microsoft-decision-1",
+            maxFlipRate,
+            passed: false,
+            caseCount: flipCases.length,
+            totalPerturbations: 0,
+            reports: [],
+            skipped: true,
+            skipReason: flipOrSkip.reason,
+          };
+
+    const report: Decision1CandidateReport = {
+      protocol: DECISION1_CANDIDATE_PROTOCOL,
+      evalSuite: suite.suiteId,
+      labelCount: suite.cases.length,
+      groundTruthSource,
+      backends: backends.map((b) => ({ id: b.id, model: b.model ?? b.id })),
+      bulk: {
+        qualityBar: { ...qualityBar },
+        matchMode: "twin",
+        costSource,
+        reports: bulk.reports,
+        recommendation: bulk.recommendation,
+        disagreements: bulk.disagreements,
+      },
+      flipRate: flipRateBlock,
+      honesty,
+      verdict: {
+        productionTrustedClaim: false,
+        calibratedClaim: false,
+        citeAs: "Decision-1 routing candidate readout — not a trusted path",
+      },
+    };
+    return report;
+  });
+}
+
+export class Decision1CandidateReportService extends Context.Service<
+  Decision1CandidateReportService,
+  {
+    readonly build: (
+      deps: Decision1CandidateDeps
+    ) => Effect.Effect<Decision1CandidateReport | { error: string }>;
+  }
+>()("clawql/inference/Decision1CandidateReportService") {}
+
+export const Decision1CandidateReportLive: Layer.Layer<Decision1CandidateReportService> =
+  Layer.succeed(Decision1CandidateReportService, {
+    build: buildDecision1CandidateReport,
+  });
+
+/** Host-boundary façade for operator / scripts. */
+export function runDecision1CandidateReport(
+  deps: Decision1CandidateDeps
+): Promise<Decision1CandidateReport | { error: string }> {
+  return Effect.runPromise(buildDecision1CandidateReport(deps));
+}

@@ -1,7 +1,8 @@
 /**
  * §7 held-out runner — score cases via FastDecisionScorer, then correctness/calibration.
  * productionTrusted stays false until every case is live-frontier-adjudicated,
- * the scorer backend is live `gliner2`, AND criteria pass.
+ * the scorer backend is live `gliner2`, criteria pass, AND flip-rate gate passes
+ * (unless CLAWQL_FLIP_RATE_GATE=0).
  */
 
 import { readFileSync } from "node:fs";
@@ -22,6 +23,7 @@ import {
   routingFreshHeldOutSuiteV05,
   routingFreshHeldOutSuiteV06,
 } from "./fixtures.js";
+import { evaluateHeldOutFlipRate } from "./flip-rate.js";
 import type {
   HeldOutCaseSpec,
   HeldOutSuiteManifest,
@@ -249,6 +251,24 @@ export function runHeldOutValidationForUseSite(
         }
       }
     }
+    const flipRate = yield* evaluateHeldOutFlipRate(cases);
+    const flipRateOk = flipRate.skipped || flipRate.passed;
+    if (!flipRate.skipped && !flipRate.passed) {
+      const failing = flipRate.reports.filter((r) => !r.passed);
+      const detail =
+        failing.length === 0
+          ? "no cases evaluated"
+          : failing
+              .slice(0, 3)
+              .map(
+                (r) =>
+                  `${r.caseId}(rate=${r.flipRate.toFixed(3)},flips=${r.flips}/${r.perturbations},baseline=${r.baseline ?? "null"})`
+              )
+              .join("; ");
+      failureReasons.push(
+        `flip-rate gate failed (max=${flipRate.maxFlipRate}): ${detail}${failing.length > 3 ? ` (+${failing.length - 3} more)` : ""}`
+      );
+    }
     return {
       suiteId: suite.suiteId,
       useSiteId,
@@ -259,7 +279,8 @@ export function runHeldOutValidationForUseSite(
       passedCriteria: cal.passed,
       failureReasons,
       scorerBackend,
-      productionTrusted: productionCal.passed && liveAdjudicated && liveGliner,
+      productionTrusted: productionCal.passed && liveAdjudicated && liveGliner && flipRateOk,
+      flipRate,
       cases: scored,
     };
   });

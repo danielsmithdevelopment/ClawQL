@@ -1,0 +1,39 @@
+{
+  "protocol": "Decision-1 candidate on frozen routing held-out; fan-out bulk + flip-rate pin; not productionTrusted",
+  "evalSuite": "fast-decision-held-out-v0.4-routing-fresh",
+  "labelsPath": "packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.4-routing-fresh-gha-36144911649-labels.json",
+  "labelCount": 40,
+  "groundTruthSource": "frontier_labels",
+  "backends": [
+    { "id": "local", "model": "clawql" },
+    {
+      "id": "openrouter/microsoft/microsoft-decision-1",
+      "model": "microsoft/microsoft-decision-1"
+    }
+  ],
+  "bulk": {
+    "qualityBar": { "maxWrongAnswers": 0, "minAnswered": 1 },
+    "reports": [],
+    "recommendation": null,
+    "disagreements": []
+  },
+  "flipRate": {
+    "model": "microsoft/microsoft-decision-1",
+    "backendId": "openrouter/microsoft/microsoft-decision-1",
+    "maxFlipRate": 0.1,
+    "passed": false,
+    "caseCount": 40,
+    "reports": []
+  },
+  "honesty": [
+    "measure-only — reuses fan-out bulk + flip-rate model pin",
+    "bulk correctness is exact option id match (not twin-aware held-out scoring)",
+    "does not light calibrated or held-out productionTrusted (still GLiNER2-only)",
+    "TEMPLATE — fill via buildDecision1CandidateReport / operator OpenRouter run; do not cite empty reports"
+  ],
+  "verdict": {
+    "productionTrustedClaim": false,
+    "calibratedClaim": false,
+    "citeAs": "Decision-1 routing candidate readout — not a trusted path"
+  }
+}

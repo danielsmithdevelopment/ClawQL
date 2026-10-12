@@ -143,8 +143,9 @@ On the Managed Edge Gateway the same host exposes five rungs — `/v1` → `/mcp
 
 | Method   | Path                        | Notes                                                                   |
 | -------- | --------------------------- | ----------------------------------------------------------------------- |
-| `POST`   | `/decision`                 | Fast Decision (System One `choice`/`noul`); canonical                   |
-| `POST`   | `/v1/systemone`             | Alias of `/decision`; `score` → explicit **400**                        |
+| `POST`   | `/decision`                 | Fast Decision (System One `choice`/`noul`/`score`); canonical           |
+| `POST`   | `/v1/systemone`             | Alias of `/decision`                                                    |
+| `POST`   | `/v1/decisions`             | OpenAI Decisions-compatible; fail-closed refusals + ClawQL trust fields |
 | `POST`   | `/memory/ingest`            | Vault ingest façade                                                     |
 | `POST`   | `/memory/search`            | Vault recall façade                                                     |
 | `GET`    | `/memory`                   | List Memory notes (optionally scoped)                                   |

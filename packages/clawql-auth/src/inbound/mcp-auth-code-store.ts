@@ -22,6 +22,8 @@ export type McpAuthorizationCodeRecord = {
   codeChallengeMethod: "S256";
   scope: string[];
   claims: AtrClaims;
+  /** RFC 8707 resource / access-token audience bound at authorize time. */
+  resource?: string;
   expiresAtMs: number;
   createdAtMs: number;
 };

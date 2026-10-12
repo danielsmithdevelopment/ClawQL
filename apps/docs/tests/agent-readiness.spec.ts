@@ -26,6 +26,11 @@ test.describe('agent readiness discovery', () => {
     expect(doc.grant_types_supported).toContain(
       'urn:workos:agent-auth:grant-type:claim',
     )
+    // Honesty: do not advertise Google device flow until ClawQL ships RFC 8628.
+    expect(doc.device_authorization_endpoint).toBeUndefined()
+    expect(doc.grant_types_supported).not.toContain(
+      'urn:ietf:params:oauth:grant-type:device_code',
+    )
   })
 
   test('agent-card.json is valid A2A discovery', async ({ request }) => {

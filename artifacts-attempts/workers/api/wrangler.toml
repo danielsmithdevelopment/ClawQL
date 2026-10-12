@@ -1,0 +1,13 @@
+name = "artifacts-attempts-api"
+main = "src/index.ts"
+compatibility_date = "2026-10-09"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# Bind coordinator DO + queues in Day 2 deploy wiring.
+# [[artifacts]]
+# binding = "ARTIFACTS"
+# namespace = "attempts"

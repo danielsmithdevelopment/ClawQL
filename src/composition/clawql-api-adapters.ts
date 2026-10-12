@@ -40,6 +40,9 @@ function resolveLoadSpec(): LoadSpecFn {
   return loadSpecOverride ?? loadSpec;
 }
 
+/** The spec loader search/execute run against (honors {@link setLoadSpecForTests}). */
+export const currentLoadSpecEffect: Effect.Effect<LoadSpecFn> = Effect.sync(resolveLoadSpec);
+
 function buildExecuteLive() {
   return makeExecuteLive(resolveLoadSpec());
 }
