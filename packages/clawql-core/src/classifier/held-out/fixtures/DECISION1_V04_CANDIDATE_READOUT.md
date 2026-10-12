@@ -39,6 +39,6 @@ CLAWQL_DECISION1_FLIP_FAMILIES=synonym \
 - Cite flip-rate only when `totalPerturbations > 0` and `passed`.
 - Do **not** promote Decision-1 into `PRODUCTION_TRUSTED_USE_SITES` from this readout.
 
-## Next
+## Held-out measure scorer fill
 
-After a non-vacuous full-family flip readout: discuss whether a dedicated remote scorer / new frozen suite is worth the cost. Until then, keep Decision-1 on the measure path.
+Artifact: [`frontier-runs/decision1-v04-held-out-measure.json`](./frontier-runs/decision1-v04-held-out-measure.json) (GHA 38297678758). Decision-1 scorer on frozen v0.4 labels: **rawAccuracy=1.0**, criteria pass, **`productionTrusted=false`** (backend ≠ gliner2). Marker cleared after fill.

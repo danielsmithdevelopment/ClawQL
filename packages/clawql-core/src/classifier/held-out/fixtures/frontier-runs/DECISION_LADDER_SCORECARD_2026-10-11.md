@@ -14,7 +14,25 @@ Honest readout after merging spend-ledger → provider pricing → Decision-1 fl
 | Full flip-family remeasure + vacuous gate  | #1278   | Filled                              |
 | Twin-aware fan-out `matchMode`             | #1279   | Merged                              |
 | Candidate costSource / local costPerCase=0 | #1281   | Merged                              |
-| Measure-only Decision-1 held-out scorer    | this PR | In flight                           |
+| Measure-only Decision-1 held-out scorer    | #1282   | Merged                              |
+| Operator held-out measure (frozen labels)  | this PR | Filled                              |
+
+## Live Decision-1 held-out measure scorer (Actions, keyed)
+
+Artifact: [`decision1-v04-held-out-measure.json`](./decision1-v04-held-out-measure.json)  
+Source: filled via marker + `decision1-held-out-measure.yml` (GHA run 38297678758), frozen labels `v0.4-routing-fresh-gha-36144911649`, `CLAWQL_FLIP_RATE_GATE=0`.
+
+| Metric               | Value                                       |
+| -------------------- | ------------------------------------------- |
+| Scorer backend       | `openrouter/microsoft/microsoft-decision-1` |
+| Use site             | `search_provider_tool_routing`              |
+| rawAccuracy          | **1.0** (40/40)                             |
+| meanCalibrationError | ~0.10                                       |
+| passedCriteria       | yes                                         |
+| productionTrusted    | **false** (not live gliner2)                |
+
+- **Honesty rails held** — perfect accuracy still cannot light trust.
+- Compare GLiNER2 trusted path: ~0.80 rawAcc / 18 accepted @ τ=0.70 (`v0.4-routing-fresh-productionTrusted-readout.json`).
 
 ## Live Decision-1 v0.4 candidate (Actions, keyed — full families)
 

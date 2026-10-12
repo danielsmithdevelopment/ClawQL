@@ -150,3 +150,5 @@ USD/call = `(inputTokens * inputRate + outputTokens * outputRate) / calls` where
 6. ~~Provider-specific pricing for spend-ledger / VK budgets~~ — shipped (`TokenPricingService`)
 7. ~~Held-out → fan-out converter + Decision-1 candidate report~~ — shipped (`heldOutCasesToFanout` / `buildDecision1CandidateReport`; `productionTrustedClaim: false`)
 8. ~~Twin-aware bulk/ensemble `matchMode`~~ — shipped (`exact` default; Decision-1 candidate uses `twin`)
+9. ~~Measure-only Decision-1 held-out scorer~~ — shipped (`CLAWQL_HELD_OUT_SCORER=openrouter-decision-1`; never lights `productionTrusted`)
+10. Operator held-out measure vs frozen labels — marker + `decision1-held-out-measure.yml` / `run-decision1-held-out-measure.mts`

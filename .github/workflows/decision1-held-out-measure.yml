@@ -1,0 +1,154 @@
+# Decision-1 held-out measure scorer on frozen v0.4 labels (not productionTrusted).
+#
+# Triggers:
+#   - Marker PR/push: packages/clawql-core/src/classifier/held-out/.run-decision1-held-out-measure
+#     First non-comment line = `v0.4-routing-fresh` (only suite supported today).
+#   - workflow_dispatch
+#
+# Secrets:
+#   OPENROUTER_API_KEY — required (skip-notice when absent)
+#
+# Artifact: decision1-v04-held-out-measure.json (measure-only; productionTrustedClaim=false)
+# Spend: CLAWQL_FLIP_RATE_GATE=0 (no flip re-scores); one Decision-1 call per held-out case.
+
+name: Decision-1 held-out measure scorer
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "packages/clawql-core/src/classifier/held-out/.run-decision1-held-out-measure"
+      - ".github/workflows/decision1-held-out-measure.yml"
+      - "scripts/run-decision1-held-out-measure.mts"
+      - "scripts/run-held-out-adjudication.mts"
+      - "packages/clawql-inference/src/decision/openrouter-decision1-scorer.ts"
+  push:
+    branches: [main]
+    paths:
+      - "packages/clawql-core/src/classifier/held-out/.run-decision1-held-out-measure"
+      - ".github/workflows/decision1-held-out-measure.yml"
+      - "scripts/run-decision1-held-out-measure.mts"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: decision1-held-out-measure-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Credential gate
+    runs-on: ubuntu-latest
+    outputs:
+      can_run: ${{ steps.gate.outputs.can_run }}
+      skip_reason: ${{ steps.gate.outputs.skip_reason }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - id: marker
+        run: |
+          set -euo pipefail
+          MARKER="packages/clawql-core/src/classifier/held-out/.run-decision1-held-out-measure"
+          SUITE=""
+          if [ -f "${MARKER}" ]; then
+            SUITE="$(awk 'NF && $1 !~ /^#/ { print $1; exit }' "${MARKER}" || true)"
+          fi
+          {
+            echo "suite=${SUITE}"
+            if [ -n "${SUITE}" ]; then
+              echo "present=true"
+            else
+              echo "present=false"
+            fi
+          } >>"$GITHUB_OUTPUT"
+
+      - id: secret
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+            echo "has_openrouter=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "has_openrouter=false" >>"$GITHUB_OUTPUT"
+          fi
+
+      - id: gate
+        env:
+          HAS_OR: ${{ steps.secret.outputs.has_openrouter }}
+          EVENT_NAME: ${{ github.event_name }}
+          MARKER_SUITE: ${{ steps.marker.outputs.suite }}
+          MARKER_PRESENT: ${{ steps.marker.outputs.present }}
+        run: |
+          set -euo pipefail
+          CAN=true
+          REASON=""
+
+          if [ "${EVENT_NAME}" = "pull_request" ] || [ "${EVENT_NAME}" = "push" ]; then
+            if [ "${MARKER_PRESENT}" != "true" ]; then
+              CAN=false
+              REASON="marker absent/empty"
+            elif [ "${MARKER_SUITE}" != "v0.4-routing-fresh" ]; then
+              CAN=false
+              REASON="marker suite must be v0.4-routing-fresh (got '${MARKER_SUITE}')"
+            fi
+          fi
+
+          if [ "${HAS_OR}" != "true" ]; then
+            CAN=false
+            REASON="${REASON:+$REASON; }OPENROUTER_API_KEY missing"
+          fi
+
+          {
+            echo "can_run=${CAN}"
+            echo "skip_reason=${REASON}"
+          } >>"$GITHUB_OUTPUT"
+          if [ "${CAN}" = "true" ]; then
+            echo "::notice::Decision-1 held-out measure will run (FLIP_RATE_GATE=0)"
+          else
+            echo "::notice::skip — ${REASON}"
+          fi
+
+  measure:
+    name: Held-out Decision-1 measure
+    needs: gate
+    if: needs.gate.outputs.can_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build clawql-core
+        run: npm run build -w clawql-merkle -w clawql-core
+
+      - name: Run Decision-1 held-out measure
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          CLAWQL_FLIP_RATE_GATE: "0"
+          OUT: ${{ github.workspace }}/decision1-v04-held-out-measure.json
+        run: npx tsx scripts/run-decision1-held-out-measure.mts
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: decision1-v04-held-out-measure
+          path: decision1-v04-held-out-measure.json
+          if-no-files-found: error
+
+  skip-notice:
+    name: Skip notice
+    needs: gate
+    if: needs.gate.outputs.can_run != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::notice::Decision-1 held-out measure skipped — ${{ needs.gate.outputs.skip_reason }}"
+          echo "Install OPENROUTER_API_KEY as a repo Actions secret and set the marker to v0.4-routing-fresh."

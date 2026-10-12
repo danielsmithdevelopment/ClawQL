@@ -159,13 +159,17 @@ const summary = {
       : adj.mode === "dry-run"
         ? "dry-run labels are not frontier-judge verdicts (cannot light productionTrusted)"
         : "live judge labels applied",
-    glinerLiveConfigured
-      ? `scorer=${scorerBackend} (CLAWQL_FAST_DECISION_GLINER_URL set)`
-      : "scorer=gliner2-stub (set CLAWQL_FAST_DECISION_GLINER_URL for live scores)",
+    heldOutScorer === "openrouter-decision-1"
+      ? `scorer=${scorerBackend} (CLAWQL_HELD_OUT_SCORER=openrouter-decision-1; measure-only)`
+      : glinerLiveConfigured
+        ? `scorer=${scorerBackend} (CLAWQL_FAST_DECISION_GLINER_URL set)`
+        : "scorer=gliner2-stub (set CLAWQL_FAST_DECISION_GLINER_URL for live scores)",
     `productionTrusted requires DEFAULT_VALIDATION_CRITERIA (minAccuracy=${DEFAULT_VALIDATION_CRITERIA.minAccuracy}, maxMeanCalibrationError=${DEFAULT_VALIDATION_CRITERIA.maxMeanCalibrationError}) — wiring criteria cannot light the flag`,
     anyProductionTrusted
       ? "at least one use-site reports productionTrusted (live adjudicationKind + live gliner2 + DEFAULT criteria)"
-      : "productionTrusted remains false until live adjudicationKind + live gliner2 backend + DEFAULT calibration criteria pass",
+      : heldOutScorer === "openrouter-decision-1"
+        ? "productionTrusted remains false — Decision-1 measure scorer backend ≠ gliner2"
+        : "productionTrusted remains false until live adjudicationKind + live gliner2 backend + DEFAULT calibration criteria pass",
     candidateIdRemaps.length > 0
       ? `candidateIdRemaps=${candidateIdRemaps.length} cosmetic (logged before→after); semantic remaps fail closed`
       : "no candidateId remaps on this run",
