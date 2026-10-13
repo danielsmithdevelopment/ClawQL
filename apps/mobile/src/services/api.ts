@@ -758,6 +758,29 @@ export function addAttachmentEffect(input: {
   });
 }
 
+export function removeAttachmentEffect(input: {
+  session: MobileSession;
+  reviewId: string;
+  attachmentId: string;
+}): Effect.Effect<void, MobileApiError> {
+  return Effect.gen(function* () {
+    void input.session;
+    const before = yield* Ref.get(stateRef);
+    const found = before.attachments.some(
+      (a) => a.id === input.attachmentId && a.reviewId === input.reviewId
+    );
+    if (!found) {
+      return yield* Effect.fail(new MobileApiError({ reason: "not_found", status: 404 }));
+    }
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      attachments: s.attachments.filter(
+        (a) => !(a.id === input.attachmentId && a.reviewId === input.reviewId)
+      ),
+    }));
+  });
+}
+
 export function prependInboxItemEffect(item: InboxItem): Effect.Effect<void> {
   return Ref.update(stateRef, (s) => ({
     ...s,
@@ -881,6 +904,11 @@ export class MobileApi extends Context.Service<
       session: MobileSession;
       attachment: DocumentAttachment;
     }) => Effect.Effect<DocumentAttachment, MobileApiError>;
+    readonly removeAttachment: (input: {
+      session: MobileSession;
+      reviewId: string;
+      attachmentId: string;
+    }) => Effect.Effect<void, MobileApiError>;
     readonly deleteAccount: (
       session: MobileSession
     ) => Effect.Effect<AccountDeletionResult, MobileApiError>;
@@ -913,5 +941,6 @@ export const MobileApiLive = Layer.succeed(MobileApi, {
   clearPushDevices: clearPushDevicesEffect,
   listAttachments: listAttachmentsEffect,
   addAttachment: addAttachmentEffect,
+  removeAttachment: removeAttachmentEffect,
   deleteAccount: deleteAccountEffect,
 });

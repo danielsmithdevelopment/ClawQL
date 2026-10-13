@@ -120,6 +120,13 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-15-ask-teammate.yaml",
   },
   {
+    id: "MOB-16",
+    run: "Maestro",
+    title: "Evidence preview and remove attachment",
+    passWhen: "Scan shows preview plate; Remove restores empty attachments state",
+    flow: "maestro/flows/mob-16-attachment-preview-remove.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',

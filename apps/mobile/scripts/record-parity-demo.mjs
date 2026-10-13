@@ -78,8 +78,22 @@ await page.getByTestId("review-item-rev_change").first().click();
 await page.getByTestId("review-attachments").waitFor({ state: "visible", timeout: 15000 });
 await page.getByTestId("review-scan-camera").click();
 await page.getByTestId("review-note").waitFor({ state: "visible", timeout: 10000 });
-await page.waitForTimeout(600);
+await page.getByText("Fixture scan preview").waitFor({ state: "visible", timeout: 10000 });
+await page.getByText("Fixture scan preview").scrollIntoViewIfNeeded();
+await page.waitForTimeout(500);
 await shot("05-review-document-scan.png");
+await shot("19-evidence-preview.png");
+
+const removeBtn = page.getByText("Remove", { exact: true }).first();
+await removeBtn.scrollIntoViewIfNeeded();
+await removeBtn.click();
+await page.getByTestId("review-attachments-empty").waitFor({ state: "visible", timeout: 10000 });
+await page.waitForTimeout(400);
+await shot("20-evidence-removed.png");
+
+// Re-attach so later share/offline shots still have a document if needed
+await page.getByTestId("review-scan-camera").click();
+await page.getByTestId("review-note").waitFor({ state: "visible", timeout: 10000 });
 
 await page.getByTestId("review-share").click();
 await page.getByTestId("review-note").waitFor({ state: "visible", timeout: 10000 });

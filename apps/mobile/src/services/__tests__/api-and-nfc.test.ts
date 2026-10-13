@@ -25,6 +25,7 @@ import {
   markInboxReadEffect,
   pendingReviewCountEffect,
   prependInboxItemEffect,
+  removeAttachmentEffect,
   resetFixtureStateEffect,
   revokeConnectedAppEffect,
   setNotificationPrefsEffect,
@@ -44,7 +45,7 @@ import {
   saveDevicePrefsEffect,
   unlockAppEffect,
 } from "../device-ux";
-import { captureDocumentEffect } from "../documents";
+import { attachmentPreviewFor, captureDocumentEffect } from "../documents";
 import { approveWithSecurityKeyEffect } from "../nfc-security-key";
 import {
   parseApprovalDeepLinkEffect,
@@ -251,6 +252,7 @@ describe("mobile API fixture mode", () => {
     expect(doc.uri).toMatch(/^fixture:\/\/document\//);
     expect(doc.source).toBe("camera");
     expect(doc.mimeType).toBe("image/jpeg");
+    expect(attachmentPreviewFor(doc)).toEqual({ kind: "fixture" });
     await Effect.runPromise(
       addAttachmentEffect({ session: FIXTURE_SESSION, attachment: doc })
     );
@@ -258,6 +260,30 @@ describe("mobile API fixture mode", () => {
       listAttachmentsEffect(FIXTURE_SESSION, "rev_change")
     );
     expect(listed.some((a) => a.id === doc.id)).toBe(true);
+  });
+
+  it("removes an attached document from a review", async () => {
+    const doc = await Effect.runPromise(
+      captureDocumentEffect({ reviewId: "rev_change", source: "library" })
+    );
+    await Effect.runPromise(
+      addAttachmentEffect({ session: FIXTURE_SESSION, attachment: doc })
+    );
+    await Effect.runPromise(
+      removeAttachmentEffect({
+        session: FIXTURE_SESSION,
+        reviewId: "rev_change",
+        attachmentId: doc.id,
+      })
+    );
+    const listed = await Effect.runPromise(
+      listAttachmentsEffect(FIXTURE_SESSION, "rev_change")
+    );
+    expect(listed.find((a) => a.id === doc.id)).toBeUndefined();
+    expect(attachmentPreviewFor({ ...doc, uri: "file:///tmp/scan.jpg" })).toEqual({
+      kind: "image",
+      uri: "file:///tmp/scan.jpg",
+    });
   });
 
   it("refreshes a fixture session and gates expiry", async () => {

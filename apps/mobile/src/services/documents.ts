@@ -15,6 +15,16 @@ export class DocumentError extends Data.TaggedError("DocumentError")<{
 
 export type CaptureSource = "camera" | "library";
 
+/** How Review should render an attachment thumbnail (no cloud upload). */
+export type AttachmentPreview =
+  | { readonly kind: "image"; readonly uri: string }
+  | { readonly kind: "fixture" };
+
+export function attachmentPreviewFor(doc: DocumentAttachment): AttachmentPreview {
+  if (doc.uri.startsWith("fixture://")) return { kind: "fixture" };
+  return { kind: "image", uri: doc.uri };
+}
+
 function nextAttachmentId(): string {
   return `doc_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 }

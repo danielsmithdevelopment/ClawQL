@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Platform, Share } from "react-native";
+import { Image, Platform, Share, View } from "react-native";
 
 import type {
   DocumentAttachment,
@@ -16,9 +16,11 @@ import {
   listAttachmentsEffect,
   listTeammatesEffect,
   markInboxReadByReviewEffect,
+  removeAttachmentEffect,
 } from "@/src/services/api";
 import { loadMobileConfigEffect } from "@/src/services/config";
 import {
+  attachmentPreviewFor,
   captureDocumentEffect,
   type CaptureSource,
 } from "@/src/services/documents";
@@ -26,7 +28,7 @@ import { hapticErrorEffect, hapticSuccessEffect } from "@/src/services/device-ux
 import { approveWithSecurityKeyEffect } from "@/src/services/nfc-security-key";
 import { buildReviewDeepLinkEffect } from "@/src/services/push";
 import { useSession } from "@/src/state/SessionContext";
-import { brand, color, space } from "@/src/theme";
+import { brand, color, shape, space } from "@/src/theme";
 import {
   Badge,
   Body,
@@ -259,6 +261,28 @@ export default function ReviewDetailScreen() {
     }
   };
 
+  const removeDocument = async (attachmentId: string) => {
+    if (!session || !item) return;
+    setBusy(true);
+    setError(null);
+    setNote(null);
+    try {
+      await Effect.runPromise(
+        removeAttachmentEffect({
+          session,
+          reviewId: item.id,
+          attachmentId,
+        })
+      );
+      setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
+      setNote("Attachment removed");
+    } catch (e: unknown) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) {
     return (
       <ScreenHost>
@@ -338,17 +362,60 @@ export default function ReviewDetailScreen() {
         {attachments.length === 0 ? (
           <Meta testID="review-attachments-empty">No attachments yet.</Meta>
         ) : (
-          attachments.map((doc) => (
-            <Column key={doc.id} spacing={2} testID={`review-attachment-${doc.id}`}>
-              <Body>{doc.fileName}</Body>
-              <Meta mono>{doc.uri}</Meta>
-              <Meta>
-                {`${doc.source}${doc.bytes ? ` · ${Math.round(doc.bytes / 1024)} KB` : ""} · ${new Date(
-                  doc.capturedAtMs
-                ).toLocaleString()}`}
-              </Meta>
-            </Column>
-          ))
+          attachments.map((doc) => {
+            const preview = attachmentPreviewFor(doc);
+            return (
+              <Column key={doc.id} spacing={space.sm} testID={`review-attachment-${doc.id}`}>
+                <View
+                  testID={`review-attachment-preview-${doc.id}`}
+                  style={{
+                    height: 148,
+                    borderRadius: shape.md,
+                    overflow: "hidden",
+                    backgroundColor: color.primaryContainer,
+                  }}
+                >
+                  {preview.kind === "image" ? (
+                    <Image
+                      source={{ uri: preview.uri }}
+                      style={{ width: "100%", height: "100%" }}
+                      resizeMode="cover"
+                      accessibilityLabel={doc.fileName}
+                    />
+                  ) : (
+                    <View
+                      style={{
+                        flex: 1,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: space.sm,
+                        padding: space.md,
+                        backgroundColor: color.primaryContainer,
+                      }}
+                    >
+                      <IconBubble name="document" tone="seed" size={44} iconSize={22} />
+                      <Body color={color.onPrimaryContainer}>Fixture scan preview</Body>
+                      <Meta color={color.onPrimaryContainer}>{doc.fileName}</Meta>
+                    </View>
+                  )}
+                </View>
+                <Body>{doc.fileName}</Body>
+                <Meta>
+                  {`${doc.source}${doc.bytes ? ` · ${Math.round(doc.bytes / 1024)} KB` : ""} · ${new Date(
+                    doc.capturedAtMs
+                  ).toLocaleString()}`}
+                </Meta>
+                {!decided ? (
+                  <TextButton
+                    testID={`review-attachment-remove-${doc.id}`}
+                    label="Remove"
+                    disabled={busy}
+                    onPress={() => void removeDocument(doc.id)}
+                  />
+                ) : null}
+              </Column>
+            );
+          })
         )}
         {!decided ? (
           <Column spacing={space.sm}>
