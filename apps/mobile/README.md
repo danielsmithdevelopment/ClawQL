@@ -48,9 +48,14 @@ npm start
 npm test          # vitest (schemas, API fixture, NFC mock, deep links)
 npm run typecheck
 npm run store:check   # in-repo App Store / Play packaging preflight
+npm run a11y:lh       # Lighthouse mobile a11y/BP/SEO 100 + axe WCAG 2.1 A/AA (web export)
 # with simulator/emulator + Maestro CLI:
 npm run maestro
 ```
+
+## Accessibility
+
+Fixture **web export** is gated to Lighthouse mobile **Accessibility / Best Practices / SEO = 100** and axe WCAG 2.1 A/AA (no serious/critical). Run `npm run a11y:lh` after `npm run local:web-export` (or point `CLAWQL_MOBILE_DEMO_URL` at a running serve). Native VoiceOver / TalkBack still needs a device smoke pass before store upload.
 
 ## Performance
 
@@ -58,11 +63,12 @@ There is no single “Lighthouse for iOS/Android.” We use:
 
 | Command | Role |
 | ------- | ---- |
+| `npm run a11y:lh` | WCAG gate + Lighthouse category scores on web export |
 | `npm run perf:lab` | CI/lab: export sizes + Lighthouse mobile (web proxy) + Chrome CPU **flame** + timing gates |
 | `npm run perf:android` | Device: Flashlight FPS/CPU/RAM (needs adb) |
 | `npm run perf:ios` | Device/sim: Instruments + RN DevTools runbook |
 
-See [`PERFORMANCE.md`](PERFORMANCE.md).
+Lighthouse **Performance** on the Expo web export is bundle-bound (~0.6–0.85), not 100 — treat Flashlight / Instruments as the native source of truth. See [`PERFORMANCE.md`](PERFORMANCE.md).
 
 Day-0 human checklist: [`store/DAY0-CHECKLIST.md`](store/DAY0-CHECKLIST.md).
 
@@ -82,7 +88,10 @@ Templates live in `well-known/`. Publish after replacing `TEAMID` and the Androi
 - `https://cloud.clawql.com/.well-known/apple-app-site-association`
 - `https://cloud.clawql.com/.well-known/assetlinks.json`
 
-Deep links: `clawql://review/:id` and `https://cloud.clawql.com/app/review/:id`.
+Deep links (scheme + universal):
+
+- Review: `clawql://review/:id` · `https://cloud.clawql.com/app/review/:id`
+- Surfaces: `inbox`, `digest`, `agents`, `spend`, `teammates`, `policies`, `policies/:id`
 
 ## NFC modules
 

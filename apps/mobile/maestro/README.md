@@ -9,7 +9,11 @@ EXPO_PUBLIC_CLAWQL_FIXTURE=1 npx expo start
 
 # Terminal B — after installing a development build / Expo Go with scheme clawql
 maestro test maestro/flows
+# or one flow:
+maestro test maestro/flows/mob-19-system-mark-read.yaml
 ```
+
+Catalog source of truth: [`catalog.ts`](catalog.ts).
 
 | Flow | Catalog | Covers |
 | ---- | ------- | ------ |
@@ -19,5 +23,20 @@ maestro test maestro/flows
 | `mob-04-push-deeplink.yaml` | MOB-04 | Push/deep link opens request |
 | `mob-05-revoke-and-delete.yaml` | MOB-05 | Revoke app + delete account |
 | `mob-06-sign-out.yaml` | MOB-06 | Sign out |
+| `mob-07-approve-fixture-nfc.yaml` | MOB-07 | Fixture NFC approve |
+| `mob-08-decision-and-filter.yaml` | MOB-08 | Decision answer + queue filter |
+| `mob-09-skill-and-outcome.yaml` | MOB-09 | Skill promote / outcome unknown |
+| `mob-10-sessions-and-push.yaml` | MOB-10 | Sessions + local push path |
+| `mob-11-push-register-and-scan.yaml` | MOB-11 | Push register + document scan |
+| `mob-12-session-refresh.yaml` | MOB-12 | Session refresh |
+| `mob-13-app-lock.yaml` | MOB-13 | App Lock on / lock / unlock |
+| `mob-14-offline-cache.yaml` | MOB-14 | Offline cache + mark all inbox read |
+| `mob-15-ask-teammate.yaml` | MOB-15 | Ask a named teammate |
+| `mob-16-attachment-preview-remove.yaml` | MOB-16 | Evidence preview + remove |
+| `mob-17-surface-deeplinks.yaml` | MOB-17 | Inbox / digest / agents / policy deep links |
+| `mob-18-activity-filters.yaml` | MOB-18 | Activity kind + outcome filters |
+| `mob-19-system-mark-read.yaml` | MOB-19 | System inbox Mark read |
 
 **Still device-only (Manual):** REV-13, UX-09 — physical YubiKey NFC. Use `modules/clawql-nfc-security-key` mock injection in CI until the native modules ship.
+
+**Web / CI a11y gate (not Maestro):** `npm run a11y:lh` — Lighthouse mobile a11y/BP/SEO 100 + axe WCAG 2.1 A/AA on the fixture web export.
