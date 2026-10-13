@@ -24,6 +24,7 @@ import {
   Pressable,
   RefreshControl,
   ScrollView as RnScrollView,
+  Text as RnText,
   View,
   type StyleProp,
   type ViewStyle,
@@ -254,17 +255,38 @@ export function Badge({
         : tone === "danger"
           ? color.onErrorContainer
           : color.onSecondaryContainer;
+  // Compact RN pill — avoid @expo/ui Row/Text (inflates height / mis-centers).
+  // Caps-heavy labels sit high in the web em-box (more empty below the ink). Push
+  // the line down with extra paddingTop so the glyph mass looks centered.
   return (
-    <Row
+    <View
+      testID="badge-pill"
       style={{
         backgroundColor: bg,
         borderRadius: shape.full,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        paddingHorizontal: 6,
+        paddingTop: 1,
+        paddingBottom: Platform.OS === "web" ? 2 : 1,
+        alignItems: "center",
+        justifyContent: "center",
+        alignSelf: "center",
+        flexDirection: "row",
       }}
     >
-      <Text textStyle={{ fontSize: 10, fontWeight: "700", color: fg }}>{label.toUpperCase()}</Text>
-    </Row>
+      <RnText
+        style={{
+          fontSize: 9,
+          fontWeight: "700",
+          lineHeight: 10,
+          color: fg,
+          includeFontPadding: false,
+          marginTop: Platform.OS === "android" ? -1 : 0,
+        }}
+        allowFontScaling={false}
+      >
+        {label.toUpperCase()}
+      </RnText>
+    </View>
   );
 }
 
