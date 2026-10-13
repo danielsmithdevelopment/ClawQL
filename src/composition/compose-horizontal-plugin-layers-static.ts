@@ -1,7 +1,11 @@
 /**
- * Static horizontal tier Layer composition (sync imports every package).
- * Used by tests and sync {@link getClawqlApi} bootstrap for backward compatibility.
+ * Sync horizontal tier Layer composition for {@link getClawqlApi}.
+ *
+ * `clawql-data` (DuckDB) is loaded only when `enableData` — keep it off the HTTP Ready
+ * module graph for equal-arm benches. Other tiers stay as static imports for CJS/ESM
+ * compatibility under Vitest `createRequire`.
  */
+import { createRequire } from "node:module";
 import {
   basePluginCompositionFlags,
   type ClawqlOptionalToolFlags,
@@ -15,7 +19,6 @@ import { makeMemoryLayer } from "clawql-memory/plugin";
 import { makeOntologyLayer } from "clawql-ontology/plugin";
 import { createOuroborosHarnessPlugin, makeHarnessLayer } from "clawql-harness/plugin";
 import { makeSandboxLayer } from "clawql-sandbox/plugin";
-import { makeDataLayer } from "clawql-data/plugin";
 import { makeWebLayer } from "clawql-web/plugin";
 import { makeObservabilityLayer } from "clawql-observability/plugin";
 import { makeChatgptExtensionsLayer } from "clawql-chatgpt-extensions/plugin";
@@ -28,6 +31,8 @@ import type { Layer } from "effect";
 
 export type { ClawQLHorizontalTierSpec } from "clawql-operator/spec";
 export { optionalFlagsFromHorizontalTierSpec } from "clawql-operator/spec";
+
+const requireFromHere = createRequire(import.meta.url);
 
 export type ComposeHorizontalPluginLayersOptions = {
   /** When true, include NATS workflow worker in AutomationLayer (env-gated by default). */
@@ -82,6 +87,10 @@ export function composeHorizontalPluginLayersStatic(
     layers.push(makeSandboxLayer());
   }
   if (flags.enableData) {
+    // Lazy: @duckdb native bindings are tens of MB mapped even when unused.
+    const { makeDataLayer } = requireFromHere(
+      "clawql-data/plugin"
+    ) as typeof import("clawql-data/plugin");
     layers.push(makeDataLayer({ enableClawqlSqlAlias: flags.enableClawqlSqlAlias }));
   }
   if (flags.enableWeb) {
