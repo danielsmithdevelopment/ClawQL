@@ -1,0 +1,124 @@
+{
+  "suite": "http-layer-variance-3x",
+  "measuredAt": "2026-10-13T23:00:59.592Z",
+  "config": {
+    "turns": 12,
+    "iters": 2500,
+    "reps": 3,
+    "spike_ms": 300
+  },
+  "runs": [
+    {
+      "name": "all_kill",
+      "rep": 1,
+      "ok": true,
+      "artifact": "/workspace/docs/benchmarks/gateway-multi-comparison/http-layer-variance-all_kill-r1.json",
+      "p50_ms": 40.974,
+      "p999_ms": 336.014,
+      "n_ge_300ms": 4,
+      "n_mid_ge_300ms": 3,
+      "max_mid_ms": 380.1,
+      "max_ms": 380.063
+    },
+    {
+      "name": "all_kill",
+      "rep": 2,
+      "ok": true,
+      "artifact": "/workspace/docs/benchmarks/gateway-multi-comparison/http-layer-variance-all_kill-r2.json",
+      "p50_ms": 42.095,
+      "p999_ms": 445.133,
+      "n_ge_300ms": 5,
+      "n_mid_ge_300ms": 4,
+      "max_mid_ms": 537,
+      "max_ms": 537.05
+    },
+    {
+      "name": "all_kill",
+      "rep": 3,
+      "ok": true,
+      "artifact": "/workspace/docs/benchmarks/gateway-multi-comparison/http-layer-variance-all_kill-r3.json",
+      "p50_ms": 42.12,
+      "p999_ms": 429.608,
+      "n_ge_300ms": 4,
+      "n_mid_ge_300ms": 3,
+      "max_mid_ms": 530.1,
+      "max_ms": 530.058
+    },
+    {
+      "name": "board_default",
+      "rep": 1,
+      "ok": true,
+      "artifact": "/workspace/docs/benchmarks/gateway-multi-comparison/http-layer-variance-board_default-r1.json",
+      "p50_ms": 42.372,
+      "p999_ms": 405.67,
+      "n_ge_300ms": 5,
+      "n_mid_ge_300ms": 4,
+      "max_mid_ms": 499.2,
+      "max_ms": 499.226
+    },
+    {
+      "name": "board_default",
+      "rep": 2,
+      "ok": true,
+      "artifact": "/workspace/docs/benchmarks/gateway-multi-comparison/http-layer-variance-board_default-r2.json",
+      "p50_ms": 43.477,
+      "p999_ms": 357.5,
+      "n_ge_300ms": 5,
+      "n_mid_ge_300ms": 4,
+      "max_mid_ms": 559.3,
+      "max_ms": 559.285
+    },
+    {
+      "name": "board_default",
+      "rep": 3,
+      "ok": true,
+      "artifact": "/workspace/docs/benchmarks/gateway-multi-comparison/http-layer-variance-board_default-r3.json",
+      "p50_ms": 42.081,
+      "p999_ms": 355.625,
+      "n_ge_300ms": 5,
+      "n_mid_ge_300ms": 4,
+      "max_mid_ms": 499,
+      "max_ms": 498.967
+    }
+  ],
+  "ranges": {
+    "all_kill": {
+      "n_ge_300ms": {
+        "min": 4,
+        "max": 5,
+        "mean": 4.333333333333333
+      },
+      "n_mid_ge_300ms": {
+        "min": 3,
+        "max": 4,
+        "mean": 3.3333333333333335
+      },
+      "p999_ms": {
+        "min": 336.014,
+        "max": 445.133,
+        "mean": 403.585
+      }
+    },
+    "board_default": {
+      "n_ge_300ms": {
+        "min": 5,
+        "max": 5,
+        "mean": 5
+      },
+      "n_mid_ge_300ms": {
+        "min": 4,
+        "max": 4,
+        "mean": 4
+      },
+      "p999_ms": {
+        "min": 355.625,
+        "max": 405.67,
+        "mean": 372.9316666666667
+      }
+    }
+  },
+  "verdict": {
+    "code": "ranges_overlap",
+    "note": "Spike-count ranges overlap — do not read round11's 25 vs 4 as a stable effect."
+  }
+}

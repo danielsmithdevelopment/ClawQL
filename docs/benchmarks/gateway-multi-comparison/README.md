@@ -15,6 +15,31 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`gateway-multi-multiturn.json`](./gateway-multi-multiturn.json) | **12-turn I/O tokens + task success** on a fat catalog |
 | [`gateway-multi-multiturn-24.json`](./gateway-multi-multiturn-24.json) | Same board at N=24 (compounding check) |
 | [`gateway-multi-multiturn-10k.json`](./gateway-multi-multiturn-10k.json) | **10 000 × 12-turn** flows — tokens + latency + RSS + task_success (+ **direct** baseline) |
+| [`gateway-multi-multiturn-publish-all-arms-gw2core-10k.json`](./gateway-multi-multiturn-publish-all-arms-gw2core-10k.json) | **Publish interleaved 10k** — separate mock + gateway **2 cores** (`layout_mode=gateway_2core`) |
+| [`gateway-multi-multiturn-publish-all-arms-isolated-10k.json`](./gateway-multi-multiturn-publish-all-arms-isolated-10k.json) | Diagnostic: isolated mock + **1-core** gateway pin |
+| [`stall-memory-diagnostics.md`](./stall-memory-diagnostics.md) | Equal search/exec stall localization + smaps/DuckDB Ready breakdown |
+| [`stall-memory-round2.md`](./stall-memory-round2.md) | UV pool / timer wrap / session-count — under-load RSS is not session pileup |
+| [`stall-memory-round3.md`](./stall-memory-round3.md) | Server vs client stall timing + lean/fat catalog listen RSS |
+| [`stall-memory-round4.md`](./stall-memory-round4.md) | TTFB vs complete; strace; publish p999 stays client e2e |
+| [`stall-memory-round5.md`](./stall-memory-round5.md) | Packaging homes; `--cpu-prof` — in-handler execute is off-CPU wait |
+| [`stall-memory-round6.md`](./stall-memory-round6.md) | Upstream mock probe — 1 TCP / 14k; mock &lt;3 ms; fetch not the 130 ms execute |
+| [`stall-memory-round7.md`](./stall-memory-round7.md) | parse→handler `queue_ms`; search profile; native 10k — **no default flip** |
+| [`stall-memory-round8.md`](./stall-memory-round8.md) | **Harness coupling** — separate mock + `taskset` cores; p999 under rework until isolated 10k |
+| [`stall-memory-round9.md`](./stall-memory-round9.md) | **JS helper threads** — 1-core pin vs gateway 2-core; buyer framing from latency inject |
+| [`gateway-runtime-and-catalog-memory.md`](../../architecture/gateway-runtime-and-catalog-memory.md) | Settled: ≥2 CPUs; NATS≠tail fix; fusion; Wasm later; SQLite catalog / IDP docs |
+| [`stall-memory-round10.md`](./stall-memory-round10.md) | **HTTP echo bisect** — stack clean; host noise unlikely; add ClawQL layers next |
+| [`stall-memory-round11.md`](./stall-memory-round11.md) | **HTTP-only layer bisect** — auth/OTel/budget off on board; shell kill → `tool_x_http`; execute-known still spikes |
+| [`stall-memory-round12.md`](./stall-memory-round12.md) | **Variance + phase timing** — all_kill≠worse (ranges overlap); stall after fast mock; HTTP p999 open → SQLite next |
+| [`http-layer-variance-3x.json`](./http-layer-variance-3x.json) | 3× all_kill vs board_default spike-count ranges |
+| [`http-upstream-phase-2500.json`](./http-upstream-phase-2500.json) | Phase/mock-trace board n=2500 |
+| [`http-only-layer-bisect.json`](./http-only-layer-bisect.json) | Binary kill audit/prune/ALS/auth under gw2core n=2500 |
+| [`http-tool-bisect-clawql_http.json`](./http-tool-bisect-clawql_http.json) | Tool-path control: search+execute n=2500 |
+| [`http-tool-bisect-clawql_http_known.json`](./http-tool-bisect-clawql_http_known.json) | Tool-path cut: execute-known n=2500 (still spikes) |
+| [`http-stack-echo-bisect-10k.json`](./http-stack-echo-bisect-10k.json) | Echo via Express+Streamable HTTP, gateway_2core, n=10 000 |
+| [`native-fetch-10k-matrix.json`](./native-fetch-10k-matrix.json) | 10k×3 Node/Bun native vs node-fetch control |
+| [`diagnostics-packaging.md`](./diagnostics-packaging.md) | Not `clawql-data` / `clawql-analytics` — harness vs OTel vs lazy diagnostics |
+| [`cpu-prof-stall-summary.json`](./cpu-prof-stall-summary.json) | Parsed Node CPU profile around multiturn stalls |
+| [`catalog-listen-rss.json`](./catalog-listen-rss.json) | Lean vs fat OpenAPI listen RSS / smaps |
 | [`index.html`](./index.html) | Dedicated comparison page (competitors, Bun rationale, vs direct) |
 
 ---
@@ -192,29 +217,99 @@ Credit the v2 fix. ClawQL (**20 539**) still leads v2 by **9 388** on tokens
 
 ### Publish board (one interleaved run) — share this table
 
-Artifact: [`gateway-multi-multiturn-publish-all-arms-10k.json`](./gateway-multi-multiturn-publish-all-arms-10k.json) (`2026-10-12T23:27Z`). Every arm in **one** process. ClawQL runtime flags (even): Node `--max-old-space-size=512`, Bun `--smol` (`config.runtime_flags`).
+**Current (fair isolated harness):** [`gateway-multi-multiturn-publish-all-arms-gw2core-10k.json`](./gateway-multi-multiturn-publish-all-arms-gw2core-10k.json) — separate mock, `MT_PIN_CORES=1`, `core_layout` mock=`0` / gateway=`1-2` / client=`3` (`layout_mode=gateway_2core`), compact search on. `p999_status=isolated_remeasure`.
+
+Diagnostics: 1-core isolated [`…-isolated-10k.json`](./gateway-multi-multiturn-publish-all-arms-isolated-10k.json); pre-isolation coupled [`…-publish-all-arms-10k.json`](./gateway-multi-multiturn-publish-all-arms-10k.json).
+
+ClawQL runtime flags (even): Node `--max-old-space-size=512`, Bun `--smol` (`config.runtime_flags`).
 
 | Arm | Combined @12 | RPCs/turn | ms/call p50 | Flow e2e p50 / **p999** | RSS med | Task |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| Direct HTTP | **35 002** | 1 | 0.13 | **2.2 / 10.9** | — | PASS |
-| ClawQL Node stdio | **20 539** | 2 | 0.56 | 15.2 / 42.5 | 373 | PASS |
-| **ClawQL Bun stdio** | **20 539** | 2 | **0.35** | **9.6 / 25.7** | 342 | PASS |
-| ClawQL Node HTTP | **20 539** | 2 | 1.68 | 41.6 / 443 | 366 | PASS |
-| **ClawQL Bun HTTP** | **20 539** | 2 | **1.30** | **32.7 / 461** | **312** | PASS |
-| ClawQL Node gRPC | 20 523† | 2 | 5.64 | 136.7 / 194 | 364 | PASS |
-| ClawQL Bun gRPC | 20 523† | 2 | 5.55 | 134.1 / 292 | 438 | PASS |
-| Executor v1.6.10 | 53 668 | 1 | 4.75 | 60.8 / 165 | 254 | PASS |
-| Executor v2 β.15 | 29 927 | 1 | 5.55 | 70.6 / **136** | 900 | PASS |
-| MCPJungle | 35 322 | 1 | **1.28** | 16.6 / 287 | **153** | PASS |
-| agentgateway | **35 002** | 1 | **1.23** | 16.3 / 208 | 214 | PASS |
+| Direct HTTP | **35 002** | 1 | 0.12 | **2.2 / 36.3** | — | PASS |
+| ClawQL Node stdio | **12 390** | 2 | 0.67 | **17.3 / 61.8** | 356 | PASS |
+| **ClawQL Bun stdio** | **12 390** | 2 | **0.34** | **9.3 / 36.0** | 312 | PASS |
+| ClawQL Node HTTP | **12 390** | 2 | 1.86 | **46.5 / 669** | 348 | PASS |
+| **ClawQL Bun HTTP** | **12 390** | 2 | **1.44** | **36.2 / 759** | **290** | PASS |
+| ClawQL Node gRPC | 12 374‡ | 2 | 5.08 | **129.4 / 253** | 336 | PASS |
+| ClawQL Bun gRPC | 12 374‡ | 2 | 4.89 | **124.0 / 269** | **286** | PASS |
+| Executor v1.6.10 | 53 668 | 1 | 4.93 | **64.1 / 131** | 257 | PASS |
+| Executor v2 β.15 | 29 927 | 1 | 5.58 | **71.1 / 286** | 876 | PASS |
+| MCPJungle | 35 322 | 1 | **1.29** | **16.7 / 61** | **152** | PASS |
+| agentgateway | **35 002** | 1 | **1.17** | **15.6 / 76** | 212 | PASS |
 
-† gRPC Layer1 is −16 vs stdio/HTTP (281 vs 297): protobuf omits SDK `execution.taskSupport=forbidden` on search+execute — envelope-only.
+‡ gRPC Layer1 is −16 vs stdio/HTTP (292 vs 308 under compact search): protobuf omits SDK `execution.taskSupport=forbidden` on search+execute — envelope-only. Combined @12 uses bench `CLAWQL_SEARCH_COMPACT=1` (see targets).
 
-**HTTP-to-HTTP (video / latency):** ClawQL Bun HTTP median **32.7 ms** ≈ **2.0×** agentgateway (16.3) and **~2.2×** faster than Executor v2 (70.6). Per-call: **1.30 ms** vs MCPJungle **1.28** / agentgateway **1.23**. p999 on this interleaved board trails the peers (461 vs 136–287) — do **not** claim “3×–9× tighter tail.” Claims that hold: **per-call overhead on par with Go/Rust** and **&gt;2× faster than Executor v2** on median.
+**Harness progression:** coupling fix shrank peer tails; **2-core gateway** further cut stdio ClawQL p999 (**92→62**) and MCPJungle (**117→61**). ClawQL **HTTP** p999 did **not** drop (still ~670–760) — not fixed by a second core or by Node `--single-threaded` ([`stall-memory-round9.md`](./stall-memory-round9.md)). Do **not** headline HTTP p999.
 
-**RPCs/turn:** ClawQL = 2 (search+execute); peers = 1. Session gap is mostly the second call — it buys ~41% token savings. **Next win:** skip search when the agent already knows the operation.
+**HTTP-to-HTTP (lab / zero upstream delay):** ClawQL Bun HTTP median **36.2 ms** ≈ **2.3×** agentgateway (15.6) and **~2.0×** faster than Executor v2 (71.1). Per-call: **1.44 ms** vs MCPJungle **1.29** / agentgateway **1.17**. Claims that hold in the lab: **tokens**, **per-call overhead near Go/Rust**, **~2× faster than Executor v2** on median.
+
+**Buyer framing (realistic upstream):** with `MT_UPSTREAM_LATENCY_MS=20-100`, every gateway’s session median lands ~**740–780 ms** (**~5%** of each other — smoke [`…-upstream-latency-smoke20.json`](./gateway-multi-multiturn-upstream-latency-smoke20.json)). Once a real API sits behind the gateway, **gateway speed is a rounding error; token cost isn’t** (~**4×** fewer tokens on ClawQL known-op vs pass-through peers). Prefer that line over any p999 number.
+
+**RPCs/turn:** ClawQL = 2 (search+execute); peers = 1. Session gap is mostly the second call — it buys ~41% token savings.
 
 Older solo-arm JSON rows (HTTP p999 v1–v4, bun-smol10k, etc.) are diagnostics only — p999 drifts across sessions (this is why the interleaved board exists).
+
+### Improvement targets (measurable “better”)
+
+Targets for a video-worthy board: **HTTP session p50 &lt; 20 ms**, **p999 &lt; 200 ms**, **RSS &lt; 200 MB**, **combined @12 &lt; 15 000**.
+
+#### 1. Runtime flags A/B (keep heap/--smol)
+
+Artifacts: [`flags-ab-http-peers-verdict.md`](./flags-ab-http-peers-verdict.md), `gateway-multi-multiturn-flags-{on,off}-http-peers-10k.json`.
+
+| Arm | Flags | flow p50 | flow p999 | RSS |
+| --- | --- | ---: | ---: | ---: |
+| Node HTTP | ON (512) | 37.4 | **223** | **384** |
+| Node HTTP | OFF | 38.0 | 361 | 686 |
+| Bun HTTP | ON (--smol) | 28.4 | **396** | 316 |
+| Bun HTTP | OFF | 30.3 | 540 | 316 |
+
+**Keep** Node `--max-old-space-size=512` and Bun `--smol` — they improve tails and Node RSS. GC/ELD logs barely overlap slow flows (near-zero), so the earlier 200→461 p999 jump was **not** explained by those flags.
+
+#### 2–3. First session vs known-op (steady state)
+
+A known operation means the agent already has its ID — from an earlier search, a skill, or memory. Real sessions sit between the two paths below, depending on how often operations repeat. Present them as a **pair**, not a single headline.
+
+Artifact: [`gateway-multi-multiturn-targets-http-peers-10k.json`](./gateway-multi-multiturn-targets-http-peers-10k.json) (Bun HTTP, flags ON).
+
+| Path | What it models | Combined @12 | Rebuild (defs + Σ disc + Σ res) | RPCs/turn | flow p50 / p999 | RSS | Targets |
+| --- | --- | ---: | --- | ---: | ---: | ---: | --- |
+| **First session** (search → execute) | Cold agent; must discover | **12 390** | **308 + 3 408 + 8 674** | 2 | 29.7 / 520 | 317 | tok ✓ · p50/p999/rss ✗ |
+| **Known-op** (execute by ID) | Steady state; ID already known | **8 863** | **189 + 0 + 8 674** | **1** | **15.6 / 169** | 311 | **tok ✓ p50 ✓ p999 ✓** · rss ✗ |
+| MCPJungle | Peer (1 RPC) | 35 322 | 5 840 + 0 + 29 482 | 1 | 14.8 / 132 | **153** | — |
+| agentgateway | Peer (1 RPC) | 35 002 | 5 520 + 0 + 29 482 | 1 | 15.2 / 181 | 212 | — |
+
+**Known-op rebuild (why not 297 + 8 674):** classic Layer1 on the primary board is **297** (search + execute schemas). Known-op only loads **execute** → Layer1 **189**. So 297 + 8 674 = 8 971, and measured **8 863** is **108** below that — exactly the search tool schema dropped from context (297 − 189). Discovery is already 0; results are unchanged (8 674). On this targets board Layer1 is 308 for the compact first-session path (search schema text differs slightly under the bench compact envelope); the 108 figure anchors to the familiar classic **297**.
+
+**Compact search is a benchmark setting**, not the product default. Harness sets `CLAWQL_SEARCH_COMPACT=1` (`clawql-bench-env.mjs`) so discovery drops **11 568 → 3 408**. Keep it gated until the routing evaluation clears it for product.
+
+Known-op vs MCPJungle: **35 322 ÷ 8 863 ≈ 4.0×** fewer tokens; flow median **0.8 ms** behind (15.6 vs 14.8). Three targets hit on the steady-state path.
+
+**Video line (after memory + merge — single clean render):** when operations repeat, ClawQL matches the Go and Rust gateways’ session speed with about **4× fewer tokens**, and governs every call.
+
+#### Search vs execute p999 (first-session path)
+
+Artifact: [`gateway-multi-multiturn-search-exec-split-10k.json`](./gateway-multi-multiturn-search-exec-split-10k.json) (Bun HTTP, flags ON, compact search, n=10 000).
+
+| Call | p50 | p999 | max | n ≥100 ms |
+| --- | ---: | ---: | ---: | ---: |
+| **search** | 0.99 | **3.6** | 567 | 7 |
+| **execute** | 1.32 | **4.8** | 566 | 11 |
+| flow e2e (12 turns) | 29.4 | **450** | 611 | — |
+
+Steady per-call p999 is fine (&lt;5 ms). Flow p999 is rare single-RPC spikes (~500 ms) on **either** call — of 18 turns ≥100 ms, **search owned 7 / execute owned 11**. GC correlation still empty. So the remaining tail is not “search scoring every request”; it is infrequent event-loop / scheduling stalls that can land on whichever RPC is in flight. Known-op (execute-only) still wins session p999 (**130 ms** on this split board) by removing the second RPC and half the spike surface.
+
+**Stall localization** (see [`stall-memory-round7.md`](./stall-memory-round7.md) / [`stall-memory-round8.md`](./stall-memory-round8.md)): publish p999 stays **client e2e** once cleared. `parse_t0`/`queue_ms` split pre-handler vs send-side. Round 7 identified mock+client event-loop coupling; round 8 moves the mock to a **separate process**, pins cores with `MT_PIN_CORES=1`, and records `core_layout` on the board. Native fetch stays opt-in. Packaging: [`diagnostics-packaging.md`](./diagnostics-packaging.md).
+
+#### 4. Memory (&lt;200 MB) — anonymous data at Ready
+
+Bun HTTP under-load was ~311–317 MB **with and without** `--smol` (flags A/B). Node dropped 686 → 384 MB with the heap cap; Bun did not — so on Bun the budget is **loaded modules + eager data**, not reclaimable GC.
+
+**Lazy-import pass (this branch):** HTTP no longer statically loads payments / network / GraphQL / HITL / webhooks / gRPC / chatgpt / inference / ouroboros at listen. Bench sets `CLAWQL_HTTP_SKIP_PAYMENTS=1`. Those packages stay **unmapped**.
+
+**smaps + DuckDB:** lazy `clawql-data` keeps DuckDB unmapped. Same-probe lean vs fat listen ([`catalog-listen-rss.json`](./catalog-listen-rss.json)): **233 → 280 MB** (**+47 MB** for the fat equal-arm catalog; spec file only +50 KB). Sessions stay **1**; terminate frees ~16 MB. Under-load plateau is mostly Ready + that catalog delta, not traffic growth (see [`stall-memory-round3.md`](./stall-memory-round3.md)).
+
+Bun `--smol` RSS ladder (same host): empty **13** → express **37** → effect **40** → MCP SDK **39** → `clawql-api` **88** → `import(server-http)` **165** → lean Ready (lazy DuckDB) **~155**. Fat-catalog listen / multiturn warm **~280–295**; under-load plateau **~320**.
 
 ```bash
 # Publish board — every arm, one interleaved process
@@ -395,7 +490,7 @@ ClawQL is the **heaviest serious arm** on this board:
 | Chaos min / med | 259 / 342 | 97 / 109 | Single-instance |
 | 10k under-load median | ~427 MB | ~152 MB | V8 watermark under interleaved load |
 
-Levers landed: INSTANCE_SPEC slim Core, lazy optional imports, WORM ring cap, session catalog max. **Bun runtime** trims Ready ~22% / under-load ~28% without a rewrite (see [Node vs Bun](#node-vs-bun-runtime-same-core-binary)) — still not MCPJungle-class. Remaining: further lazy `clawql-api` deps, post-GC steady-state RSS arm, Node heap tuning. **If RSS stays high, say so** — hiding a memory loss costs more than admitting it. Scale-out multiplies RSS; concurrency claims must price that in.
+Levers landed: INSTANCE_SPEC slim Core, lazy optional imports, lazy `clawql-data` (DuckDB) off HTTP Ready, WORM ring cap, session catalog max, `CLAWQL_MCP_SESSION_IDLE_MS` + `/healthz` bench stats. **Bun runtime** trims Ready ~22% / under-load ~28% without a rewrite (see [Node vs Bun](#node-vs-bun-runtime-same-core-binary)) — still not MCPJungle-class. Under-load plateau is **not** MCP session pileup; chase fat-catalog + first-flow caches ([`stall-memory-round2.md`](./stall-memory-round2.md)). **If RSS stays high, say so** — hiding a memory loss costs more than admitting it. Scale-out multiplies RSS; concurrency claims must price that in.
 
 ---
 
@@ -420,8 +515,11 @@ Default `MULTI_ARMS` / `MT_ARMS` omit both.
 6. **Multiturn fairness** — deterministic `task_success`; classic Layer1-once is primary; re-list demoted. No simulated Executor “filter” arm on the publish board (settled: gateway has no response-side projection).
 7. **Chaos until-break + topology tags** — `MULTI_CHAOS_UNTIL_BREAK`; reports carry `topology` so cross-topology claims fail the honesty check.
 8. **`clawql_bun` runtime arm** — same Core binary under Bun; board artifacts `gateway-multi-cmp-bun-10k.json` / `gateway-multi-cmp-bun-chaos.json`.
+9. **Lazy `clawql-data`** — static horizontal composer loads DuckDB only when `enableData` (HTTP Ready probe ~155 MB anon-dominated).
+10. **Stall / smaps probes** — `interleaved-stall-probe.mjs`, `bun-ready-memory-probe.mjs`, `session-rss-phase-probe.mjs`; write-ups in [`stall-memory-diagnostics.md`](./stall-memory-diagnostics.md) / [`stall-memory-round2.md`](./stall-memory-round2.md).
+11. **Bench stats + idle sessions + timer trace** — `CLAWQL_BENCH_STATS`, `CLAWQL_MCP_SESSION_IDLE_MS`, `CLAWQL_TIMER_TRACE`.
 
-**Next:** topology B (4× behind LB) for every arm before any scale-out claim; optional real-model task-success arm; RSS heap profile / lazy `clawql-api` if we want to close the memory loss beyond Bun. Date/version stamps on published executor-cmp pages (housekeeping).
+**Next:** topology B (4× behind LB) for every arm before any scale-out claim; instrument upstream fetch wait for stalls; slim fat-catalog listen + first-flow caches for under-load &lt;200 MB (session DELETE will not get there). Date/version stamps on published executor-cmp pages (housekeeping).
 
 ---
 
@@ -430,6 +528,8 @@ Default `MULTI_ARMS` / `MT_ARMS` omit both.
 - Host-bound; repeat on a dedicated bench host before publicizing.
 - **RSS is a loss** among serious arms — scope or fix before claiming efficiency without the asterisk.
 - Do not cite n=200 boards for p999.
+- Prefer the latest isolated board with `core_layout.layout_mode=gateway_2core` when present ([`stall-memory-round9.md`](./stall-memory-round9.md)); 1-core isolated (`…-isolated-10k.json`) is diagnostic for JS helper-thread contention. Pre-isolation boards remain diagnostic only ([`stall-memory-round8.md`](./stall-memory-round8.md)).
+- For buyers, lead with **tokens** and the **realistic-upstream** ~5% session-median band — not lab p999.
 - Do not mix NATS scale-out ceilings with stdio process-per-client ceilings.
 - Do not publish aggregator concurrency wins until every arm breaks on the same topology.
 - ContextForge / MetaMCP off until native equal-arm runs exist.

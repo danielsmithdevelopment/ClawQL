@@ -1,0 +1,52 @@
+{
+  "measuredAt": "2026-10-13T06:34:24.822Z",
+  "tool_count": 40,
+  "lean": {
+    "kind": "lean",
+    "spec_bytes": 3254,
+    "path_count": 40,
+    "proc_rss_mb": 233.04,
+    "smaps": {
+      "rss_mb": 233.04,
+      "anonymous_mb": 171.67,
+      "file_backed_est_mb": 61.38
+    },
+    "bench": {
+      "mcp_sessions": 0,
+      "stream_mapping_entries": 0,
+      "request_to_stream_entries": 0,
+      "audit_ring_entries": 0,
+      "audit_ring_max": 64,
+      "rss_mb": 232.65,
+      "heap_used_mb": 85.83
+    },
+    "log_tail": "viders.pack / providers.enabled in CLAWQL_INSTANCE_SPEC, or CLAWQL_PROVIDER=default|google|aws|…\n[spec-loader] OpenAPI file: /tmp/cat-rss-lean-406792/spec.json\n[spec-loader] Loaded 40 operations (lean)\n[clawql-mcp] Ready — single-spec; 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)\n[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:37885/mcp\n"
+  },
+  "fat": {
+    "kind": "fat",
+    "spec_bytes": 53425,
+    "path_count": 40,
+    "proc_rss_mb": 279.64,
+    "smaps": {
+      "rss_mb": 279.57,
+      "anonymous_mb": 217.83,
+      "file_backed_est_mb": 61.74
+    },
+    "bench": {
+      "mcp_sessions": 0,
+      "stream_mapping_entries": 0,
+      "request_to_stream_entries": 0,
+      "audit_ring_entries": 0,
+      "audit_ring_max": 64,
+      "rss_mb": 279.14,
+      "heap_used_mb": 129.8
+    },
+    "log_tail": "k / providers.enabled in CLAWQL_INSTANCE_SPEC, or CLAWQL_PROVIDER=default|google|aws|…\n[spec-loader] OpenAPI file: /tmp/cat-rss-fat-406792/spec.json\n[spec-loader] Loaded 40 operations (equalArmCatalog)\n[clawql-mcp] Ready — single-spec; 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)\n[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:45651/mcp\n"
+  },
+  "delta_mb": {
+    "proc_rss": 46.6,
+    "anon": 46.16,
+    "spec_bytes": 50171
+  },
+  "interpretation": "If fat−lean ≪ 100 MB, catalog JSON duplication is not the 155→280 gap. If fat−lean is large, inventory openapi vs operations vs validators next."
+}

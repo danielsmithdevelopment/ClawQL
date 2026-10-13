@@ -1,0 +1,163 @@
+{
+  "measuredAt": "2026-10-13T06:21:32.444Z",
+  "flows": 60,
+  "session_per_flow": false,
+  "slow_flows": [],
+  "phases": [
+    {
+      "phase": "listen",
+      "t": "2026-10-13T06:21:28.124Z",
+      "proc_rss_mb": 283.296875,
+      "bench": {
+        "mcp_sessions": 0,
+        "stream_mapping_entries": 0,
+        "request_to_stream_entries": 0,
+        "audit_ring_entries": 0,
+        "audit_ring_max": 64,
+        "rss_mb": 282.88,
+        "heap_used_mb": 129.84
+      }
+    },
+    {
+      "phase": "after_connect",
+      "t": "2026-10-13T06:21:28.160Z",
+      "proc_rss_mb": 285.078125,
+      "bench": {
+        "mcp_sessions": 1,
+        "stream_mapping_entries": 0,
+        "request_to_stream_entries": 0,
+        "audit_ring_entries": 0,
+        "audit_ring_max": 64,
+        "rss_mb": 284.77,
+        "heap_used_mb": 129.84
+      }
+    },
+    {
+      "phase": "after_list_tools",
+      "t": "2026-10-13T06:21:28.170Z",
+      "proc_rss_mb": 285.4609375,
+      "bench": {
+        "mcp_sessions": 1,
+        "stream_mapping_entries": 0,
+        "request_to_stream_entries": 0,
+        "audit_ring_entries": 0,
+        "audit_ring_max": 64,
+        "rss_mb": 285.14,
+        "heap_used_mb": 129.84
+      }
+    },
+    {
+      "phase": "flow_1",
+      "t": "2026-10-13T06:21:28.233Z",
+      "proc_rss_mb": 288.4453125,
+      "bench": {
+        "mcp_sessions": 1,
+        "stream_mapping_entries": 0,
+        "request_to_stream_entries": 0,
+        "audit_ring_entries": 12,
+        "audit_ring_max": 64,
+        "rss_mb": 287.92,
+        "heap_used_mb": 129.84
+      }
+    },
+    {
+      "phase": "flow_15",
+      "t": "2026-10-13T06:21:28.726Z",
+      "proc_rss_mb": 321.6953125,
+      "bench": {
+        "mcp_sessions": 1,
+        "stream_mapping_entries": 0,
+        "request_to_stream_entries": 0,
+        "audit_ring_entries": 64,
+        "audit_ring_max": 64,
+        "rss_mb": 321.56,
+        "heap_used_mb": 135.26
+      }
+    },
+    {
+      "phase": "flow_30",
+      "t": "2026-10-13T06:21:29.183Z",
+      "proc_rss_mb": 321.16015625,
+      "bench": {
+        "mcp_sessions": 1,
+        "stream_mapping_entries": 0,
+        "request_to_stream_entries": 0,
+        "audit_ring_entries": 64,
+        "audit_ring_max": 64,
+        "rss_mb": 321.01,
+        "heap_used_mb": 135.87
+      }
+    },
+    {
+      "phase": "flow_45",
+      "t": "2026-10-13T06:21:29.573Z",
+      "proc_rss_mb": 318.69140625,
+      "bench": {
+        "mcp_sessions": 1,
+        "stream_mapping_entries": 0,
+        "request_to_stream_entries": 0,
+        "audit_ring_entries": 64,
+        "audit_ring_max": 64,
+        "rss_mb": 318.3,
+        "heap_used_mb": 136.25
+      }
+    },
+    {
+      "phase": "flow_60",
+      "t": "2026-10-13T06:21:29.935Z",
+      "proc_rss_mb": 323.1015625,
+      "bench": {
+        "mcp_sessions": 1,
+        "stream_mapping_entries": 0,
+        "request_to_stream_entries": 0,
+        "audit_ring_entries": 64,
+        "audit_ring_max": 64,
+        "rss_mb": 322.96,
+        "heap_used_mb": 136.51
+      }
+    },
+    {
+      "phase": "before_terminate",
+      "t": "2026-10-13T06:21:29.935Z",
+      "proc_rss_mb": 323.10546875,
+      "bench": {
+        "mcp_sessions": 1,
+        "stream_mapping_entries": 0,
+        "request_to_stream_entries": 0,
+        "audit_ring_entries": 64,
+        "audit_ring_max": 64,
+        "rss_mb": 322.96,
+        "heap_used_mb": 136.51
+      }
+    },
+    {
+      "phase": "after_terminate_500ms",
+      "t": "2026-10-13T06:21:30.441Z",
+      "proc_rss_mb": 307.1328125,
+      "bench": {
+        "mcp_sessions": 0,
+        "stream_mapping_entries": 0,
+        "request_to_stream_entries": 0,
+        "audit_ring_entries": 64,
+        "audit_ring_max": 64,
+        "rss_mb": 306.99,
+        "heap_used_mb": 136.64
+      }
+    },
+    {
+      "phase": "after_terminate_2500ms",
+      "t": "2026-10-13T06:21:32.444Z",
+      "proc_rss_mb": 307.12890625,
+      "bench": {
+        "mcp_sessions": 0,
+        "stream_mapping_entries": 0,
+        "request_to_stream_entries": 0,
+        "audit_ring_entries": 64,
+        "audit_ring_max": 64,
+        "rss_mb": 306.99,
+        "heap_used_mb": 136.64
+      }
+    }
+  ],
+  "interpretation": "If after_terminate ≈ listen and mid-run mcp_sessions stays 1, session pileup is not the load delta. If after_terminate drops toward listen, session-retained state dominates under-load RSS."
+}

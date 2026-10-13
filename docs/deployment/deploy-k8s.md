@@ -103,6 +103,7 @@ For **`make local-k8s-up`** on Docker Desktop, inject **GitHub**, **Cloudflare**
 ## Notes
 
 - If your cluster uses Ingress/Gateway, switch `clawql-mcp-http` service type from `LoadBalancer` to `ClusterIP` in prod and route externally via your ingress layer.
+- **CPU ≥ 2 for the MCP pod limit.** Node/Bun run background compile and concurrent GC; a 1-core cgroup inflates rare latency tails. Chart default is `resources.limits.cpu: "2"`. Prefer `requests.cpu` of at least `"1"` (ideally `"2"`) in production. More capacity = more replicas (NATS queue groups), not Redis/NATS on the same starved core — see [`gateway-runtime-and-catalog-memory.md`](../architecture/gateway-runtime-and-catalog-memory.md).
 - Keep `CLAWQL_PROVIDER` scoped to the smallest useful preset to reduce memory and startup time.
 - The MCP **`cache`** tool is **ClawQL Core** (always registered) and is **per-pod**: each replica has its **own** empty in-process store (LRU). Durable cross-replica state belongs in the vault (**`memory_ingest`** / **`memory_recall`**) or your own backing service — see **[cache-tool.md](../mcp/cache-tool.md)**.
 - The MCP **`audit`** tool is **ClawQL Core** (with **`search`** / **`execute`**, no opt-out) and **per-pod**: each replica has its **own** in-process ring buffer — not on disk; use **`memory_ingest`** for durable trails — see **[enterprise-mcp-tools.md](../mcp/enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).

@@ -20,7 +20,7 @@ export const SEARCH_LIMIT_DESCRIPTION = "Max number of matching operations to re
 
 /** Lean tool-schema copy — keep docs/skills for long-form; Layer-1 tokens matter. */
 export const EXECUTE_OPERATION_ID_DESCRIPTION =
-  "Operation id from search (e.g. pulls.list). Large binaries: prefer MCP gRPC CallTool.";
+  "Operation id (e.g. pulls.list) — from search, or reuse a known id without searching again. Large binaries: prefer MCP gRPC CallTool.";
 
 export const EXECUTE_ARGS_DESCRIPTION =
   "Path/query/body parameters. Octet-stream: `body` (+ optional bodyEncoding/bodyContentType).";

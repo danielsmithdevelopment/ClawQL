@@ -298,8 +298,28 @@ export function tokenize(text: string): string[] {
     .filter((t) => t.length > 1);
 }
 
-function mapHitForResponse(r: RankedSearchHit): Record<string, unknown> {
+/** Compact search hits — signatures for top matches without full param/body schemas. */
+const searchCompactEffect = (): Effect.Effect<boolean> =>
+  Effect.sync(() => {
+    const v = (process.env.CLAWQL_SEARCH_COMPACT ?? "").trim().toLowerCase();
+    return v === "1" || v === "true" || v === "yes";
+  });
+
+function mapHitForResponse(
+  r: RankedSearchHit,
+  { compact }: { compact: boolean }
+): Record<string, unknown> {
   if (r.kind === "skill") {
+    if (compact) {
+      return {
+        kind: "skill" as const,
+        skillId: r.skill.skillId,
+        name: r.skill.name,
+        description: r.skill.description,
+        score: r.score,
+        fetch: { tool: "skills_get", skillId: r.skill.skillId },
+      };
+    }
     return {
       kind: "skill" as const,
       skillId: r.skill.skillId,
@@ -322,9 +342,9 @@ function mapHitForResponse(r: RankedSearchHit): Record<string, unknown> {
       url: r.url,
       href,
       title: r.title,
-      pageTitle: r.pageTitle ?? null,
+      ...(compact ? {} : { pageTitle: r.pageTitle ?? null }),
       score: r.score,
-      matchedOn: r.matchedOn,
+      ...(compact ? {} : { matchedOn: r.matchedOn }),
     };
   }
   const parameters = Object.entries(r.operation.parameters).map(([name, p]) => ({
@@ -338,6 +358,18 @@ function mapHitForResponse(r: RankedSearchHit): Record<string, unknown> {
     .map((p) => `${p.name}${p.required ? "" : "?"}: ${p.type ?? "unknown"}`)
     .join(", ");
   const signature = `${r.operation.method.toUpperCase()} ${r.operation.flatPath}(${paramSig})`;
+  if (compact) {
+    return {
+      kind: "operation" as const,
+      id: r.operation.id,
+      method: r.operation.method,
+      path: r.operation.flatPath,
+      signature,
+      description: r.operation.description,
+      score: r.score,
+      risk: r.operation.risk ?? null,
+    };
+  }
   return {
     kind: "operation" as const,
     id: r.operation.id,
@@ -367,6 +399,7 @@ export const formatSearchResultsEffect = (
   catalog?: SearchCatalogMeta
 ): Effect.Effect<string> =>
   Effect.gen(function* () {
+    const compact = yield* searchCompactEffect();
     const countsBySource = catalog?.countsBySource ?? {
       operation: results.filter((r) => r.kind === "operation").length,
       skill: results.filter((r) => r.kind === "skill").length,
@@ -387,18 +420,16 @@ export const formatSearchResultsEffect = (
       });
     }
 
-    return JSON.stringify(
-      {
-        catalogStatus: meta.catalogStatus,
-        matchedCount: meta.matchedCount,
-        totalCount: meta.totalCount,
-        countsBySource: meta.countsBySource,
-        message: meta.message,
-        results: results.map(mapHitForResponse),
-      },
-      null,
-      2
-    );
+    const body = {
+      catalogStatus: meta.catalogStatus,
+      matchedCount: meta.matchedCount,
+      totalCount: meta.totalCount,
+      countsBySource: meta.countsBySource,
+      message: meta.message,
+      results: results.map((r) => mapHitForResponse(r, { compact })),
+    };
+    // Compact: single-line JSON (fewer tokens). Default remains pretty-printed.
+    return compact ? JSON.stringify(body) : JSON.stringify(body, null, 2);
   });
 
 /** Sync façade — prefer {@link formatSearchResultsEffect} inside Effect programs. */

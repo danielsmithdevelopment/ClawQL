@@ -1,0 +1,95 @@
+{
+  "measuredAt": "2026-10-13T06:03:20.194Z",
+  "pid": 402600,
+  "skip_payments": "1",
+  "smaps_rollup": {
+    "rss_kb": 158456,
+    "pss_kb": 156146,
+    "shared_clean_kb": 2536,
+    "shared_dirty_kb": 0,
+    "private_clean_kb": 36800,
+    "private_dirty_kb": 119120,
+    "referenced_kb": 158456,
+    "anonymous_kb": 119120,
+    "lazy_free_kb": 0,
+    "anon_huge_kb": 0,
+    "swap_kb": 0,
+    "locked_kb": 0,
+    "rss_mb": 154.74,
+    "anonymous_mb": 116.33,
+    "private_dirty_mb": 116.33,
+    "file_backed_est_mb": 38.41
+  },
+  "top_anon_mappings": [
+    {
+      "rss_kb": 66120,
+      "anon_kb": 66120,
+      "path": "[anon]"
+    },
+    {
+      "rss_kb": 44964,
+      "anon_kb": 44964,
+      "path": "[anon]"
+    },
+    {
+      "rss_kb": 3844,
+      "anon_kb": 3844,
+      "path": "[anon]"
+    },
+    {
+      "rss_kb": 1764,
+      "anon_kb": 1764,
+      "path": "[anon]"
+    },
+    {
+      "rss_kb": 1136,
+      "anon_kb": 1136,
+      "path": "[anon]"
+    }
+  ],
+  "top_file_mappings": [
+    {
+      "rss_kb": 29252,
+      "anon_kb": 0,
+      "path": "/home/ubuntu/.bun/bin/bun"
+    },
+    {
+      "rss_kb": 7528,
+      "anon_kb": 0,
+      "path": "/home/ubuntu/.bun/bin/bun"
+    },
+    {
+      "rss_kb": 1420,
+      "anon_kb": 0,
+      "path": "/usr/lib/x86_64-linux-gnu/libc.so.6"
+    },
+    {
+      "rss_kb": 352,
+      "anon_kb": 0,
+      "path": "/usr/lib/x86_64-linux-gnu/libm.so.6"
+    }
+  ],
+  "heap": {
+    "rss": {
+      "rss": 153669632,
+      "heapTotal": 32148480,
+      "heapUsed": 34189987,
+      "external": 7209779,
+      "arrayBuffers": 6845
+    },
+    "stringCount": 0,
+    "nodeCount": 1361584,
+    "packageStringHits": {},
+    "topRetained": [],
+    "keys": [
+      "version",
+      "type",
+      "nodes",
+      "nodeClassNames",
+      "edges",
+      "edgeTypes",
+      "edgeNames"
+    ]
+  },
+  "note": "anonymous ≈ heap/data structures; file-backed ≈ mapped code/binaries. If anonymous dominates the post-import 145MB, chase eager caches."
+}

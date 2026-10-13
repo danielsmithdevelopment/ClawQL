@@ -51,7 +51,20 @@
  * ClawQL transport matrix (same search→execute+projection recipe):
  *   clawql / clawql_bun — stdio
  *   clawql_http / clawql_http_bun — Streamable HTTP (JSON response; standalone SSE GET disabled for bench)
+ *   clawql_http_bun_known / clawql_http_known — execute-by-ID only (skip search; agent already knows op)
  *   clawql_grpc / clawql_grpc_bun — ClawQL-only gRPC MCP (peers have no gRPC MCP on this board)
+ *
+ * MT_CLAWQL_SKIP_SEARCH=1 forces skip-search for all ClawQL arms (or use *_known arm ids).
+ *
+ * Process isolation (stall-memory-round8/9 — required for honest p999):
+ *   Catalog mock runs in a **separate** Node process (not the client event loop).
+ *   MT_PIN_CORES=1 pins mock / gateway / client via taskset (recorded as core_layout).
+ *   Default on ≥4 CPUs: mock=0, gateway=1-2 (two cores — JS needs room for
+ *   V8/JSC helper threads), client=3. On 3 CPUs: one core each (JS-hostile).
+ *   Override with MT_MOCK_CPUS / MT_GATEWAY_CPUS / MT_CLIENT_CPUS.
+ *   MT_NODE_SINGLE_THREADED=1 — diagnostic Node --single-threaded --single-threaded-gc
+ *   (not a production setting; tests helper-thread contention on 1-core pins).
+ *   MT_UPSTREAM_LATENCY_MS=N or min-max (e.g. 20-100) injects mock delay.
  *
  * Note: do NOT put a hand-written slim-return program on the publish board as
  * "Executor". That is not gateway projection and contradicts the settled blog.
@@ -59,12 +72,13 @@
 
 import { existsSync, readFileSync, readdirSync, openSync, closeSync } from "node:fs";
 import { createServer } from "node:http";
+import { cpus } from "node:os";
 import { mkdir, writeFile, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { performance } from "node:perf_hooks";
 import { spawn, spawnSync } from "node:child_process";
-import { Agent, fetch as undiciFetch } from "undici";
+import { Agent, buildConnector, fetch as undiciFetch } from "undici";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -405,6 +419,156 @@ function killProcessGroup(child, signal = "SIGTERM") {
   }
 }
 
+/** Count logical CPUs in a taskset -c list (e.g. "1-2", "0,2,4-5"). */
+function countCpuList(spec) {
+  if (!spec) return 0;
+  let n = 0;
+  for (const part of String(spec).split(",")) {
+    const t = part.trim();
+    if (!t) continue;
+    const m = t.match(/^(\d+)-(\d+)$/);
+    if (m) {
+      const a = Number(m[1]);
+      const b = Number(m[2]);
+      if (Number.isFinite(a) && Number.isFinite(b) && b >= a) n += b - a + 1;
+    } else if (/^\d+$/.test(t)) {
+      n += 1;
+    }
+  }
+  return n;
+}
+
+/**
+ * @returns {{
+ *   enabled: boolean,
+ *   nproc: number,
+ *   mock_cpus: string|null,
+ *   gateway_cpus: string|null,
+ *   client_cpus: string|null,
+ *   gateway_cpu_count: number,
+ *   layout_mode: string,
+ *   note: string
+ * }}
+ */
+function resolveCoreLayout() {
+  const nproc = cpus()?.length || 0;
+  const want = ["1", "true", "yes"].includes((process.env.MT_PIN_CORES ?? "").trim().toLowerCase());
+  const mock = (process.env.MT_MOCK_CPUS || "").trim() || null;
+  const gateway = (process.env.MT_GATEWAY_CPUS || "").trim() || null;
+  const client = (process.env.MT_CLIENT_CPUS || "").trim() || null;
+  if (!want && !mock && !gateway && !client) {
+    return {
+      enabled: false,
+      nproc,
+      mock_cpus: null,
+      gateway_cpus: null,
+      client_cpus: null,
+      gateway_cpu_count: 0,
+      layout_mode: "unpinned",
+      note: "MT_PIN_CORES off — mock is still a separate process; CPUs may share.",
+    };
+  }
+  if (nproc < 3 && want && !mock && !gateway && !client) {
+    return {
+      enabled: false,
+      nproc,
+      mock_cpus: null,
+      gateway_cpus: null,
+      client_cpus: null,
+      gateway_cpu_count: 0,
+      layout_mode: "skipped_nproc",
+      note: `MT_PIN_CORES requested but nproc=${nproc}<3 — pinning skipped (would still contend).`,
+    };
+  }
+  // Prefer 2 cores for the gateway: V8/JSC helper threads (concurrent GC +
+  // background compile) contend with the main thread on a 1-core pin.
+  // Production deploys almost always have ≥2 vCPUs — fairer equal-arm layout.
+  let mockCpus = mock;
+  let gatewayCpus = gateway;
+  let clientCpus = client;
+  let layoutMode = "custom";
+  if (!mock && !gateway && !client) {
+    if (nproc >= 4) {
+      mockCpus = "0";
+      gatewayCpus = "1-2";
+      clientCpus = "3";
+      layoutMode = "gateway_2core";
+    } else {
+      mockCpus = "0";
+      gatewayCpus = "1";
+      clientCpus = "2";
+      layoutMode = "gateway_1core_nproc3";
+    }
+  } else {
+    mockCpus = mock || "0";
+    gatewayCpus = gateway || (nproc >= 4 ? "1-2" : "1");
+    clientCpus = client || (nproc >= 4 ? "3" : "2");
+    layoutMode = countCpuList(gatewayCpus) >= 2 ? "gateway_2core_override" : "gateway_1core_override";
+  }
+  const layout = {
+    enabled: true,
+    nproc,
+    mock_cpus: mockCpus,
+    gateway_cpus: gatewayCpus,
+    client_cpus: clientCpus,
+    gateway_cpu_count: countCpuList(gatewayCpus),
+    layout_mode: layoutMode,
+    note:
+      "Dedicated CPU lists for mock / gateway / client (taskset -c). " +
+      "Gateway defaults to 2 cores when nproc≥4 so JS helper threads are not starved. " +
+      "Roles must not overlap.",
+  };
+  return layout;
+}
+
+const CORE_LAYOUT = resolveCoreLayout();
+
+/** Wrap command with `taskset -c <cpus>` when pinning is enabled for that role. */
+function withTaskset(command, args, role /* mock|gateway|client */) {
+  const cpus =
+    role === "mock"
+      ? CORE_LAYOUT.mock_cpus
+      : role === "gateway"
+        ? CORE_LAYOUT.gateway_cpus
+        : CORE_LAYOUT.client_cpus;
+  if (!CORE_LAYOUT.enabled || !cpus) return { command, args };
+  if (!existsSync("/usr/bin/taskset") && !existsSync("/bin/taskset")) {
+    return { command, args };
+  }
+  return { command: "taskset", args: ["-c", cpus, command, ...args] };
+}
+
+/** Re-exec this process under taskset so the load client owns a dedicated core. */
+function maybeReexecPinnedClient() {
+  if (!CORE_LAYOUT.enabled || !CORE_LAYOUT.client_cpus) return;
+  if (process.env.MT_CLIENT_PINNED === "1") return;
+  if (!existsSync("/usr/bin/taskset") && !existsSync("/bin/taskset")) return;
+  const node = process.execPath;
+  const script = fileURLToPath(import.meta.url);
+  const args = process.argv.slice(2);
+  console.error(`[mt] pinning client to CPUs ${CORE_LAYOUT.client_cpus} (re-exec taskset)`);
+  const child = spawnSync(
+    "taskset",
+    ["-c", CORE_LAYOUT.client_cpus, node, script, ...args],
+    {
+      cwd: process.cwd(),
+      env: { ...process.env, MT_CLIENT_PINNED: "1" },
+      stdio: "inherit",
+    }
+  );
+  process.exit(child.status ?? 1);
+}
+
+function readCpusAllowedList() {
+  try {
+    const st = readFileSync("/proc/self/status", "utf8");
+    const m = st.match(/^Cpus_allowed_list:\s*(\S+)/m);
+    return m?.[1] || null;
+  } catch {
+    return null;
+  }
+}
+
 /** Shared ClawQL latency-board runtime flags (stdio / HTTP / gRPC). */
 function clawqlLatencyRuntimeFlags() {
   const nodeMaxOldSpaceMb = Number(process.env.CLAWQL_NODE_MAX_OLD_SPACE_MB || 512) || 0;
@@ -417,7 +581,12 @@ function clawqlLatencyRuntimeFlags() {
   const httpMetrics = ["1", "true", "yes"].includes(
     (process.env.CLAWQL_ENABLE_HTTP_METRICS ?? "0").trim().toLowerCase()
   );
-  return { nodeMaxOldSpaceMb, bunSmol, httpSkipGraphql, httpMetrics };
+  // Diagnostic only — reduces V8 background compile + concurrent GC threads.
+  // Use with a 1-core gateway pin to test helper-thread contention (round 9).
+  const nodeSingleThreaded = ["1", "true", "yes"].includes(
+    (process.env.MT_NODE_SINGLE_THREADED ?? "").trim().toLowerCase()
+  );
+  return { nodeMaxOldSpaceMb, bunSmol, httpSkipGraphql, httpMetrics, nodeSingleThreaded };
 }
 
 function resolveClawqlJsRuntime(runtime = "node", { entry = "stdio" } = {}) {
@@ -438,10 +607,15 @@ function resolveClawqlJsRuntime(runtime = "node", { entry = "stdio" } = {}) {
       flags,
     };
   }
-  const args =
-    flags.nodeMaxOldSpaceMb > 0
-      ? [`--max-old-space-size=${flags.nodeMaxOldSpaceMb}`, server]
-      : [server];
+  const args = [];
+  if (flags.nodeMaxOldSpaceMb > 0) {
+    args.push(`--max-old-space-size=${flags.nodeMaxOldSpaceMb}`);
+  }
+  if (flags.nodeSingleThreaded) {
+    // V8: disable background tasks + background GC (diagnosis, not production).
+    args.push("--single-threaded", "--single-threaded-gc");
+  }
+  args.push(server);
   return {
     runtime: "node",
     runtimeVersion: process.version,
@@ -584,6 +758,8 @@ function buildTurns() {
  * client path than ClawQL HTTP (long-lived event stream vs POST-only JSON).
  */
 /** Shared keep-alive + TCP_NODELAY agent for Streamable HTTP bench clients. */
+let streamableHttpConnects = 0;
+const streamableHttpConnector = buildConnector({ noDelay: true });
 const streamableHttpAgent = new Agent({
   keepAliveTimeout: 60_000,
   keepAliveMaxTimeout: 60_000,
@@ -591,11 +767,53 @@ const streamableHttpAgent = new Agent({
   // extra sockets only add churn under rare server stalls.
   connections: 1,
   pipelining: 1,
-  connect: { noDelay: true },
+  connect: (options, callback) => {
+    streamableHttpConnects += 1;
+    return streamableHttpConnector(options, callback);
+  },
 });
 
+function stallDiagEnabled() {
+  return ["1", "true", "yes"].includes((process.env.MT_STALL_DIAG ?? "").trim().toLowerCase());
+}
+
+/** Client-side GC marks when MT_CLIENT_GC=1 (correlate with stall timestamps). */
+const clientGcEvents = [];
+async function maybeInstallClientGcObserver() {
+  if (!["1", "true", "yes"].includes((process.env.MT_CLIENT_GC ?? "").trim().toLowerCase())) {
+    return;
+  }
+  try {
+    const { PerformanceObserver } = await import("node:perf_hooks");
+    const obs = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        clientGcEvents.push({
+          t_iso: new Date().toISOString(),
+          duration_ms: Number(entry.duration.toFixed(2)),
+          kind: entry.detail?.kind ?? entry.name,
+        });
+        if (entry.duration >= 20) {
+          console.error(
+            `[mt-client-gc] duration_ms=${entry.duration.toFixed(1)} t=${new Date().toISOString()} kind=${entry.detail?.kind ?? entry.name}`
+          );
+        }
+      }
+    });
+    obs.observe({ entryTypes: ["gc"], buffered: false });
+  } catch (e) {
+    console.error(`[mt-client-gc] unavailable: ${e?.message || e}`);
+  }
+}
+
+/**
+ * Stall-diag fetch wrapper.
+ * When MT_CLIENT_SLOW_MS>0: records ttfb_ms (headers) vs complete_ms (body drained)
+ * so SSE hold-open vs JSON completion can be distinguished. Publish boards leave
+ * MT_CLIENT_SLOW_MS unset — path is pass-through; client e2e remains the publish metric.
+ */
 function fetchSkipStandaloneSse(baseFetch = undiciFetch) {
   const slowMs = Number(process.env.MT_CLIENT_SLOW_MS || 0) || 0;
+  const splitTiming = slowMs > 0;
   return async (input, init = {}) => {
     const method = String(init.method || "GET").toUpperCase();
     const headers = new Headers(init.headers || {});
@@ -603,19 +821,75 @@ function fetchSkipStandaloneSse(baseFetch = undiciFetch) {
     if (method === "GET" && accept.includes("text/event-stream")) {
       return new Response(null, { status: 405, headers: { Allow: "POST, DELETE" } });
     }
-    const t0 = slowMs > 0 ? performance.now() : 0;
-    try {
-      return await baseFetch(input, {
+    if (!splitTiming) {
+      return baseFetch(input, {
         ...init,
         dispatcher: init.dispatcher || streamableHttpAgent,
       });
-    } finally {
-      if (slowMs > 0) {
-        const dt = performance.now() - t0;
-        if (dt >= slowMs) {
-          const url = typeof input === "string" ? input : input?.url || String(input);
-          console.error(`[mt-client-slow] ${dt.toFixed(1)}ms ${method} ${url}`);
+    }
+    const t0 = performance.now();
+    const t0Iso = new Date().toISOString();
+    const connectsBefore = streamableHttpConnects;
+    let res;
+    let ttfbMs = null;
+    let completeMs = null;
+    let contentType = "-";
+    let bodyBytes = 0;
+    try {
+      res = await baseFetch(input, {
+        ...init,
+        dispatcher: init.dispatcher || streamableHttpAgent,
+      });
+      ttfbMs = performance.now() - t0;
+      contentType = res.headers?.get?.("content-type") || "-";
+      // Drain body so complete_ms includes stream end (SSE) or JSON body read.
+      if (res.body && typeof res.body.getReader === "function") {
+        const reader = res.body.getReader();
+        const chunks = [];
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value) {
+            bodyBytes += value.byteLength || value.length || 0;
+            chunks.push(value);
+          }
         }
+        completeMs = performance.now() - t0;
+        const buf = Buffer.concat(chunks.map((c) => Buffer.from(c)));
+        res = new Response(buf, {
+          status: res.status,
+          statusText: res.statusText,
+          headers: res.headers,
+        });
+      } else {
+        const text = await res.text();
+        bodyBytes = Buffer.byteLength(text);
+        completeMs = performance.now() - t0;
+        res = new Response(text, {
+          status: res.status,
+          statusText: res.statusText,
+          headers: res.headers,
+        });
+      }
+      return res;
+    } finally {
+      const dt = completeMs ?? performance.now() - t0;
+      if (dt >= slowMs) {
+        const url = typeof input === "string" ? input : input?.url || String(input);
+        const serverMs = res?.headers?.get?.("x-clawql-server-ms") ?? "-";
+        const serverT0 = res?.headers?.get?.("x-clawql-server-t0") ?? "-";
+        const parseT0 = res?.headers?.get?.("x-clawql-parse-t0") ?? "-";
+        const queueMs = res?.headers?.get?.("x-clawql-queue-ms") ?? "-";
+        const holdMs =
+          ttfbMs != null && completeMs != null ? Number((completeMs - ttfbMs).toFixed(1)) : null;
+        console.error(
+          `[mt-client-slow] ${dt.toFixed(1)}ms ${method} ${url} t0=${t0Iso} t1=${new Date().toISOString()} ` +
+            `ttfb_ms=${ttfbMs != null ? ttfbMs.toFixed(1) : "-"} complete_ms=${completeMs != null ? completeMs.toFixed(1) : "-"} ` +
+            `hold_ms=${holdMs ?? "-"} content_type=${contentType} body_bytes=${bodyBytes} ` +
+            `server_ms=${serverMs} server_t0=${serverT0} parse_t0=${parseT0} queue_ms=${queueMs} ` +
+            `connects_delta=${streamableHttpConnects - connectsBefore} ` +
+            `connects_total=${streamableHttpConnects}`
+        );
       }
     }
   };
@@ -644,6 +918,18 @@ async function connectHttpMcp(url, name = "mt-http") {
 
 function clawqlEnv(home, specPath, apiBase) {
   return clawqlEqualArmEnv({ home, specPath, apiBase });
+}
+
+function upstreamDiagEnabled() {
+  return (
+    stallDiagEnabled() ||
+    ["1", "true", "yes"].includes((process.env.MT_UPSTREAM_DIAG ?? "").trim().toLowerCase())
+  );
+}
+
+function upstreamSlowMs() {
+  const n = Number(process.env.MT_UPSTREAM_SLOW_MS || process.env.CLAWQL_UPSTREAM_FETCH_SLOW_MS || 5);
+  return Number.isFinite(n) && n > 0 ? n : 5;
 }
 
 async function startCatalogHttp() {
@@ -684,41 +970,87 @@ async function startCatalogHttp() {
     };
   }
 
-  const server = createServer((req, res) => {
-    const u = new URL(req.url || "/", "http://127.0.0.1");
-    const m = u.pathname.match(/^\/catalog\/(\d{3})$/);
-    if (!m) {
-      res.writeHead(404, { "content-type": "application/json" });
-      res.end(JSON.stringify({ error: "not found" }));
-      return;
-    }
-    const partition = Number(m[1]);
-    const limit = Math.min(100, Math.max(1, Number(u.searchParams.get("limit") ?? LIMIT) || LIMIT));
-    const status = u.searchParams.get("status") ?? "any";
-    const includeMeta = u.searchParams.get("includeMeta") !== "false";
-    const rows = [];
-    for (let i = 1; rows.length < limit; i++) {
-      const row = fatRow(i + (partition - 1) * 1000);
-      if (status !== "any" && row.status !== status) continue;
-      if (!includeMeta) {
-        rows.push({ id: row.id, name: row.name, status: row.status });
-      } else {
-        rows.push(row);
-      }
-    }
-    res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ items: rows, partition: toolName(partition) }));
+  // Separate process — must not share the load client's event loop (round 7/8).
+  const mockScript = join(LIB, "equal-arm-catalog-http-mock.mjs");
+  const mockEnv = {
+    ...process.env,
+    CATALOG_TOOL_COUNT: String(TOOL_COUNT),
+    MT_LIMIT: String(LIMIT),
+  };
+  if (upstreamDiagEnabled()) {
+    mockEnv.MT_UPSTREAM_DIAG = "1";
+    mockEnv.MT_UPSTREAM_SLOW_MS = String(upstreamSlowMs());
+  }
+  if (process.env.MT_UPSTREAM_TRACE) {
+    mockEnv.MT_UPSTREAM_TRACE = process.env.MT_UPSTREAM_TRACE;
+    // Trace implies diag so arrive/done lines emit.
+    mockEnv.MT_UPSTREAM_DIAG = "1";
+  }
+  if (process.env.MT_UPSTREAM_LATENCY_MS) {
+    mockEnv.MT_UPSTREAM_LATENCY_MS = process.env.MT_UPSTREAM_LATENCY_MS;
+  }
+  const wrapped = withTaskset(process.execPath, [mockScript], "mock");
+  const child = spawn(wrapped.command, wrapped.args, {
+    cwd: ROOT,
+    env: mockEnv,
+    stdio: ["ignore", "pipe", "pipe"],
+    detached: true,
   });
-  await new Promise((r) => server.listen(0, "127.0.0.1", r));
-  const port = server.address().port;
-  const baseUrl = `http://127.0.0.1:${port}`;
+  let lastStats = {
+    requests: 0,
+    tcp_connects: 0,
+    reused_sockets: 0,
+    new_socket_requests: 0,
+    max_handle_ms: 0,
+    slow_top: [],
+    recent: [],
+    pid: child.pid,
+    process: "separate",
+  };
+  let readyInfo = null;
+  const ready = new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("catalog mock ready timeout")), 30_000);
+    let buf = "";
+    child.stdout.on("data", (chunk) => {
+      buf += String(chunk);
+      const lines = buf.split("\n");
+      buf = lines.pop() || "";
+      for (const line of lines) {
+        const t = line.trim();
+        if (!t) continue;
+        try {
+          const j = JSON.parse(t);
+          if (j.ready && j.baseUrl) {
+            readyInfo = j;
+            clearTimeout(timer);
+            resolve(j);
+          }
+          if (j.stats) lastStats = { ...lastStats, ...j.stats };
+        } catch {
+          /* ignore non-JSON */
+        }
+      }
+    });
+    child.stderr.on("data", (chunk) => {
+      const s = String(chunk);
+      if (s.includes("[mt-upstream")) process.stderr.write(s);
+    });
+    child.on("exit", (code, signal) => {
+      if (!readyInfo) {
+        clearTimeout(timer);
+        reject(new Error(`catalog mock exited early code=${code} signal=${signal}`));
+      }
+    });
+  });
+  await ready;
+  const baseUrl = readyInfo.baseUrl;
   const specPath = join("/tmp", `mt-catalog-spec-${process.pid}.json`);
   await writeFile(
     specPath,
     JSON.stringify(
       {
         openapi: "3.0.3",
-        info: { title: "EqualArmCatalog", version: "1" },
+        info: { title: "equalArmCatalog", version: "1" },
         servers: [{ url: baseUrl }],
         paths,
       },
@@ -726,13 +1058,37 @@ async function startCatalogHttp() {
       2
     )
   );
+  console.error(
+    `[mt] catalog mock pid=${readyInfo.pid} url=${baseUrl}` +
+      (CORE_LAYOUT.mock_cpus ? ` cpus=${CORE_LAYOUT.mock_cpus}` : " (unpinned)")
+  );
+
+  async function fetchMockStats() {
+    try {
+      const res = await undiciFetch(`${baseUrl}/__bench/stats`);
+      if (res.ok) {
+        lastStats = { ...lastStats, ...(await res.json()), process: "separate" };
+      }
+    } catch {
+      /* shutting down */
+    }
+    return lastStats;
+  }
+
   return {
     baseUrl,
     specPath,
-    close: () =>
-      new Promise((resolve, reject) => {
-        server.close((err) => (err ? reject(err) : resolve()));
-      }),
+    mockPid: readyInfo.pid,
+    get upstreamStats() {
+      return lastStats;
+    },
+    refreshUpstreamStats: fetchMockStats,
+    close: async () => {
+      await fetchMockStats();
+      killProcessGroup(child, "SIGTERM");
+      await new Promise((r) => setTimeout(r, 200));
+      killProcessGroup(child, "SIGKILL");
+    },
   };
 }
 
@@ -742,9 +1098,10 @@ async function connectClawql(mock, { runtime = "node", id = "clawql" } = {}) {
   await mkdir(home, { recursive: true });
   const env = clawqlEnv(home, mock.specPath, mock.baseUrl);
   const t0 = performance.now();
+  const pinned = withTaskset(js.command, js.args, "gateway");
   const transport = new StdioClientTransport({
-    command: js.command,
-    args: js.args,
+    command: pinned.command,
+    args: pinned.args,
     cwd: ROOT,
     stderr: "pipe",
     env,
@@ -811,6 +1168,24 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     "CLAWQL_HTTP_SLOW_MS",
     "CLAWQL_AUDIT_TOOL_CALLS",
     "CLAWQL_AUDIT_MAX_ENTRIES",
+    "CLAWQL_BENCH_STATS",
+    "CLAWQL_TIMER_TRACE",
+    "CLAWQL_TIMER_TRACE_SLOW_MS",
+    "CLAWQL_MCP_SESSION_IDLE_MS",
+    "CLAWQL_HTTP_TIMING",
+    "CLAWQL_UPSTREAM_FETCH_DIAG",
+    "CLAWQL_UPSTREAM_FETCH_SLOW_MS",
+    "CLAWQL_UPSTREAM_PHASE",
+    "CLAWQL_NATIVE_FETCH",
+    "CLAWQL_UPSTREAM_KEEPALIVE",
+    "CLAWQL_HTTP_PARSE_TIMING",
+    "CLAWQL_HTTP_SKIP_AUTH",
+    "CLAWQL_HTTP_SKIP_PRUNE",
+    "CLAWQL_HTTP_SKIP_REQUEST_CONTEXT",
+    "CLAWQL_HTTP_LAYER_EVENTS",
+    "CLAWQL_HTTP_LAYER_EVENT_SLOW_MS",
+    "CLAWQL_ENABLE_OTEL_TRACING",
+    "UV_THREADPOOL_SIZE",
     "BUN_JSC_forceRAMSize",
     "BUN_JSC_useJIT",
   ]) {
@@ -818,7 +1193,23 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
       env[key] = process.env[key];
     }
   }
+  // Bench default: expose session/audit counts on /healthz for RSS localization.
+  if (env.CLAWQL_BENCH_STATS == null) env.CLAWQL_BENCH_STATS = "1";
+  // Stall localization (MT_STALL_DIAG=1): server timing headers + slow-route logs.
+  if (stallDiagEnabled()) {
+    if (env.CLAWQL_HTTP_TIMING == null) env.CLAWQL_HTTP_TIMING = "1";
+    if (env.CLAWQL_HTTP_SLOW_MS == null) env.CLAWQL_HTTP_SLOW_MS = "5";
+    // Pair ClawQL→upstream fetch timings with [mt-upstream] mock logs.
+    if (env.CLAWQL_UPSTREAM_FETCH_DIAG == null) env.CLAWQL_UPSTREAM_FETCH_DIAG = "1";
+  }
+  if (upstreamDiagEnabled() && env.CLAWQL_UPSTREAM_FETCH_DIAG == null) {
+    env.CLAWQL_UPSTREAM_FETCH_DIAG = "1";
+  }
   const wantCpuProf = runtime === "node" && process.env.MT_HTTP_CPU_PROF === "1";
+  const wantPerf = ["1", "true", "yes"].includes(
+    (process.env.CLAWQL_HTTP_PERF ?? "").trim().toLowerCase()
+  );
+  const wantTraceGc = process.env.MT_HTTP_TRACE_GC === "1";
   const cpuProfDir =
     process.env.MT_HTTP_CPU_PROF_DIR ||
     join(ROOT, "docs/benchmarks/gateway-multi-comparison/cpu-prof");
@@ -828,11 +1219,39 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     if (wantCpuProf) {
       prefixArgs.push("--cpu-prof", "--cpu-prof-dir", cpuProfDir);
     }
-    if (process.env.MT_HTTP_TRACE_GC === "1") prefixArgs.push("--trace-gc");
+    if (wantTraceGc) prefixArgs.push("--trace-gc");
   }
   if (wantCpuProf) await mkdir(cpuProfDir, { recursive: true });
+  // Ensure child enables GC/ELD diagnostics (harness sets CLAWQL_HTTP_PERF).
+  if (wantPerf) env.CLAWQL_HTTP_PERF = "1";
   const t0 = performance.now();
-  const child = spawn(js.command, [...prefixArgs, ...js.args], {
+  let spawnCmd = js.command;
+  let spawnArgs = [...prefixArgs, ...js.args];
+  const straceLog = (process.env.MT_STRACE_LOG || "").trim();
+  if (straceLog && runtime === "node") {
+    // Native syscall trace during stall hunts (GDB/Valgrind-class). Filter long T= in post.
+    await mkdir(dirname(straceLog), { recursive: true }).catch(() => {});
+    spawnCmd = "strace";
+    spawnArgs = [
+      "-f",
+      "-tt",
+      "-T",
+      "-e",
+      "trace=network,write,read,epoll_wait,poll,ppoll,futex,nanosleep,clock_nanosleep",
+      "-o",
+      straceLog,
+      js.command,
+      ...spawnArgs,
+    ];
+    console.error(`[mt] strace → ${straceLog}`);
+  }
+  // Pin outside strace so the tracer + gateway share the gateway CPUs.
+  {
+    const pinned = withTaskset(spawnCmd, spawnArgs, "gateway");
+    spawnCmd = pinned.command;
+    spawnArgs = pinned.args;
+  }
+  const child = spawn(spawnCmd, spawnArgs, {
     cwd: ROOT,
     env,
     stdio: ["ignore", "pipe", "pipe"],
@@ -844,57 +1263,141 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
   };
   child.on("exit", onEarlyExit);
   const stderrChunks = [];
+  let listenResolved = false;
+  const wantTimerTrace = ["1", "true", "yes"].includes(
+    (process.env.CLAWQL_TIMER_TRACE ?? "").trim().toLowerCase()
+  );
+  const wantHttpSlow =
+    Number(process.env.CLAWQL_HTTP_SLOW_MS || 0) > 0 ||
+    Number(env.CLAWQL_HTTP_SLOW_MS || 0) > 0 ||
+    stallDiagEnabled();
+  const onChildOut = (chunk) => {
+    const s = String(chunk);
+    // Always retain/forward HTTP layer bisect lines (banner + slow auth/prune).
+    if (s.includes("[clawql-http-layer]")) {
+      stderrChunks.push(s);
+      process.stderr.write(s);
+    }
+    if (wantPerf || wantTraceGc || wantTimerTrace || wantHttpSlow) {
+      stderrChunks.push(s);
+      if (
+        s.includes("[clawql-http-perf]") ||
+        s.includes("[clawql-http-slow]") ||
+        s.includes("[clawql-timer-trace]") ||
+        s.includes("Scavenge") ||
+        s.includes("Mark-")
+      ) {
+        process.stderr.write(s);
+      }
+    }
+  };
   await new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`${id} listening timeout`)), 90_000);
     const onData = (chunk) => {
+      onChildOut(chunk);
       const s = String(chunk);
-      if (process.env.CLAWQL_HTTP_PERF === "1" || process.env.MT_HTTP_TRACE_GC === "1") {
-        stderrChunks.push(s);
-        if (s.includes("[clawql-http-perf]") || s.includes("Scavenge") || s.includes("Mark-")) {
-          process.stderr.write(s);
-        }
-      }
-      if (s.includes("listening on") || s.includes("[clawql-mcp] Ready")) {
+      // Prefer MCP HTTP listen line — avoid resolving on unrelated "Ready" from early boot.
+      if (
+        !listenResolved &&
+        (s.includes("listening on") ||
+          s.includes(`MCP HTTP`) ||
+          (s.includes("[clawql-mcp] Ready") && s.includes(String(port))))
+      ) {
+        listenResolved = true;
         clearTimeout(timer);
-        resolve(undefined);
+        // Brief settle so accept() is ready (Bun --smol can race client connect).
+        setTimeout(resolve, runtime === "bun" ? 250 : 50);
       }
     };
     child.stderr?.on("data", onData);
     child.stdout?.on("data", onData);
     child.on("error", reject);
-  });
-  // Keep draining stderr for perf/GC lines after listen.
-  if (process.env.CLAWQL_HTTP_PERF === "1" || process.env.MT_HTTP_TRACE_GC === "1") {
-    child.stderr?.on("data", (chunk) => {
-      const s = String(chunk);
-      stderrChunks.push(s);
-      if (s.includes("[clawql-http-perf]") || s.includes("Scavenge") || s.includes("Mark-")) {
-        process.stderr.write(s);
+    child.on("exit", (code, signal) => {
+      if (!listenResolved) {
+        clearTimeout(timer);
+        reject(new Error(`${id} exited before listen code=${code} signal=${signal}`));
       }
     });
-  }
+  });
   if (earlyExit) {
     killProcessGroup(child);
     throw new Error(`${id} exited early code=${earlyExit.code} signal=${earlyExit.signal}`);
   }
   const mcpUrl = `http://127.0.0.1:${port}/mcp`;
+  // Wait until TCP accept works (Bun --smol can log listen before the socket is ready).
+  {
+    const net = await import("node:net");
+    const deadline = Date.now() + 15_000;
+    let lastErr = null;
+    while (Date.now() < deadline) {
+      const ok = await new Promise((resolve) => {
+        const s = net.createConnection({ host: "127.0.0.1", port }, () => {
+          s.end();
+          resolve(true);
+        });
+        s.on("error", (e) => {
+          lastErr = e;
+          resolve(false);
+        });
+      });
+      if (ok) break;
+      await sleep(50);
+    }
+    if (Date.now() >= deadline) {
+      killProcessGroup(child);
+      throw new Error(`${id} TCP not accepting on :${port}: ${lastErr?.message || lastErr}`);
+    }
+  }
   // Client-side SSE skip matches server CLAWQL_MCP_DISABLE_STANDALONE_SSE (and
   // the same client filter used for mcpjungle / agentgateway / executor_v2).
-  const transport = new StreamableHTTPClientTransport(
+  let transport = new StreamableHTTPClientTransport(
     new URL(mcpUrl),
     streamableHttpClientOpts()
   );
-  const client = new Client({ name: `mt-${id}`, version: "1" }, {});
+  let client = new Client({ name: `mt-${id}`, version: "1" }, {});
   await client.connect(transport);
-  return {
-    client,
+  const fetchBench = async () => {
+    try {
+      const r = await fetch(`http://127.0.0.1:${port}/healthz`);
+      const j = await r.json();
+      return j.bench ?? null;
+    } catch {
+      return null;
+    }
+  };
+  const conn = {
+    get client() {
+      return client;
+    },
     pid: child.pid,
     runtime: js.runtime,
     runtimeVersion: js.runtimeVersion,
     transport: "streamable_http_multiplex",
     mcpUrl,
+    port,
     ready_ms: Number((performance.now() - t0).toFixed(1)),
     rss_mb_ready: child.pid != null ? readTreeRssMb(child.pid) : null,
+    /** Mutable buffer — drained on close into parsed http_perf. */
+    _stderrChunks: stderrChunks,
+    fetchBench,
+    /**
+     * HTTP DELETE the MCP session then re-initialize (same serve process).
+     * Use with MT_HTTP_SESSION_PER_FLOW=1 to test session-retained RSS.
+     */
+    recycleSession: async () => {
+      try {
+        await transport.terminateSession?.();
+      } catch {
+        /* ignore */
+      }
+      await client.close().catch(() => {});
+      transport = new StreamableHTTPClientTransport(
+        new URL(mcpUrl),
+        streamableHttpClientOpts()
+      );
+      client = new Client({ name: `mt-${id}-recycle`, version: "1" }, {});
+      await client.connect(transport);
+    },
     close: async () => {
       try {
         await transport.terminateSession?.();
@@ -903,10 +1406,10 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
       }
       await client.close().catch(() => {});
       child.off("exit", onEarlyExit);
-      // SIGTERM first so --cpu-prof can flush; only SIGKILL if it hangs.
+      // SIGTERM first so --cpu-prof / perf summary can flush; only SIGKILL if it hangs.
       killProcessGroup(child, "SIGTERM");
       const exited = await new Promise((resolve) => {
-        const t = setTimeout(() => resolve(false), wantCpuProf ? 5000 : 1500);
+        const t = setTimeout(() => resolve(false), wantCpuProf || wantPerf ? 4000 : 1500);
         child.once("exit", () => {
           clearTimeout(t);
           resolve(true);
@@ -915,6 +1418,57 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
       if (!exited) killProcessGroup(child, "SIGKILL");
       await sleep(100);
     },
+  };
+  return conn;
+}
+
+/** Parse `[clawql-http-perf]` stderr lines into GC / event-loop delay stats. */
+function parseHttpPerfStderr(chunks) {
+  const text = Array.isArray(chunks) ? chunks.join("") : String(chunks || "");
+  const gc = [];
+  const eld = [];
+  let summary = null;
+  for (const line of text.split(/\r?\n/)) {
+    if (!line.includes("[clawql-http-perf]")) continue;
+    const tMatch = line.match(/\bt=([^\s]+)/);
+    const t = tMatch?.[1] ?? null;
+    if (line.includes(" summary ")) {
+      const num = (k) => {
+        const m = line.match(new RegExp(`\\b${k}=([0-9.]+)`));
+        return m ? Number(m[1]) : null;
+      };
+      summary = {
+        t,
+        why: line.match(/\bwhy=(\S+)/)?.[1] ?? null,
+        gc_events: num("gc_events"),
+        gc_max_ms: num("gc_max_ms"),
+        gc_sum_ms: num("gc_sum_ms"),
+        eld_max_ms: num("eld_max_ms"),
+        eld_p99_max_ms: num("eld_p99_max_ms"),
+      };
+      continue;
+    }
+    if (line.includes(" gc ")) {
+      const dur = Number(line.match(/duration_ms=([0-9.]+)/)?.[1] ?? NaN);
+      if (Number.isFinite(dur)) gc.push({ t, duration_ms: dur, line: line.slice(0, 200) });
+      continue;
+    }
+    if (line.includes("event_loop_delay")) {
+      const maxMs = Number(line.match(/max_ms=([0-9.]+)/)?.[1] ?? NaN);
+      const p99Ms = Number(line.match(/p99_ms=([0-9.]+)/)?.[1] ?? NaN);
+      if (Number.isFinite(maxMs)) eld.push({ t, max_ms: maxMs, p99_ms: p99Ms });
+    }
+  }
+  return {
+    gc_event_count: gc.length,
+    gc_max_ms: gc.length ? Math.max(...gc.map((g) => g.duration_ms)) : 0,
+    gc_sum_ms: Number(gc.reduce((a, g) => a + g.duration_ms, 0).toFixed(1)),
+    eld_event_count: eld.length,
+    eld_max_ms: eld.length ? Math.max(...eld.map((e) => e.max_ms)) : 0,
+    eld_p99_max_ms: eld.length ? Math.max(...eld.map((e) => e.p99_ms || 0)) : 0,
+    summary_last: summary,
+    gc_top: [...gc].sort((a, b) => b.duration_ms - a.duration_ms).slice(0, 10),
+    eld_top: [...eld].sort((a, b) => b.max_ms - a.max_ms).slice(0, 10),
   };
 }
 
@@ -945,7 +1499,8 @@ async function connectClawqlGrpc(mock, { id = "clawql_grpc", runtime = "node" } 
     CLAWQL_ENABLE_HTTP_METRICS: process.env.CLAWQL_ENABLE_HTTP_METRICS || "0",
   };
   const t0 = performance.now();
-  const child = spawn(js.command, js.args, {
+  const pinned = withTaskset(js.command, js.args, "gateway");
+  const child = spawn(pinned.command, pinned.args, {
     cwd: ROOT,
     env,
     stdio: ["ignore", "pipe", "pipe"],
@@ -1027,9 +1582,10 @@ async function connectClawqlGrpc(mock, { id = "clawql_grpc", runtime = "node" } 
 async function connectExecutor() {
   const bin = process.env.EXECUTOR_BIN?.trim();
   if (!bin) throw new Error("EXECUTOR_BIN required");
+  const pinned = withTaskset(bin, ["mcp"], "gateway");
   const transport = new StdioClientTransport({
-    command: bin,
-    args: ["mcp"],
+    command: pinned.command,
+    args: pinned.args,
     cwd: process.env.EXECUTOR_CWD?.trim() || dirname(bin),
     stderr: "pipe",
   });
@@ -1118,6 +1674,10 @@ async function startMcpjungleCatalog() {
   const port = await pickFreePort();
   const dbPath = join(work, "mcpjungle.db");
   const confPath = join(work, "catalog-stdio.json");
+  const catalogEnv = { CATALOG_TOOL_COUNT: String(TOOL_COUNT) };
+  if (process.env.MT_UPSTREAM_LATENCY_MS) {
+    catalogEnv.MT_UPSTREAM_LATENCY_MS = process.env.MT_UPSTREAM_LATENCY_MS;
+  }
   await writeFile(
     confPath,
     JSON.stringify(
@@ -1128,7 +1688,7 @@ async function startMcpjungleCatalog() {
         command: process.execPath,
         args: [CATALOG_MCP],
         session_mode: "stateful",
-        env: { CATALOG_TOOL_COUNT: String(TOOL_COUNT) },
+        env: catalogEnv,
       },
       null,
       2
@@ -1136,11 +1696,20 @@ async function startMcpjungleCatalog() {
   );
   const logPath = join(work, "server.log");
   const logFd = openSync(logPath, "w");
-  const child = spawn(
-    bin,
-    ["start", "--host", "127.0.0.1", "--port", String(port), "--sqlite-db-path", dbPath],
-    { cwd: work, stdio: ["ignore", logFd, logFd], env: { ...process.env } }
-  );
+  const pinned = withTaskset(bin, [
+    "start",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    String(port),
+    "--sqlite-db-path",
+    dbPath,
+  ], "gateway");
+  const child = spawn(pinned.command, pinned.args, {
+    cwd: work,
+    stdio: ["ignore", logFd, logFd],
+    env: { ...process.env },
+  });
   const registry = `http://127.0.0.1:${port}`;
   await waitHttpOk(`${registry}/`, { timeoutMs: 60_000 });
   const reg = spawnSync(bin, ["register", "-c", confPath, "--registry", registry, "--force"], {
@@ -1195,7 +1764,10 @@ async function startAgentgatewayCatalog() {
   await mkdir(work, { recursive: true });
   const port = await pickFreePort();
   const cfgPath = join(work, "config.yaml");
-  const bashCmd = `CATALOG_TOOL_COUNT=${TOOL_COUNT} exec ${JSON.stringify(process.execPath)} ${JSON.stringify(CATALOG_MCP)}`;
+  const latencyEnv = process.env.MT_UPSTREAM_LATENCY_MS
+    ? ` MT_UPSTREAM_LATENCY_MS=${JSON.stringify(process.env.MT_UPSTREAM_LATENCY_MS)}`
+    : "";
+  const bashCmd = `CATALOG_TOOL_COUNT=${TOOL_COUNT}${latencyEnv} exec ${JSON.stringify(process.execPath)} ${JSON.stringify(CATALOG_MCP)}`;
   await writeFile(
     cfgPath,
     `# yaml-language-server: $schema=https://agentgateway.dev/schema/config
@@ -1210,7 +1782,8 @@ mcp:
   );
   const logPath = join(work, "server.log");
   const logFd = openSync(logPath, "w");
-  const child = spawn(bin, ["-f", cfgPath], {
+  const pinned = withTaskset(bin, ["-f", cfgPath], "gateway");
+  const child = spawn(pinned.command, pinned.args, {
     cwd: work,
     stdio: ["ignore", logFd, logFd],
   });
@@ -1496,8 +2069,12 @@ async function runAggregatorArm(gw, turns) {
 async function runClawqlArm(
   mock,
   turns,
-  { runtime = "node", id = "clawql", transport = "stdio" } = {}
+  { runtime = "node", id = "clawql", transport = "stdio", skipSearch = false } = {}
 ) {
+  const skip =
+    skipSearch ||
+    ["1", "true", "yes"].includes((process.env.MT_CLAWQL_SKIP_SEARCH ?? "").trim().toLowerCase()) ||
+    /_known$/.test(id);
   const conn =
     transport === "http"
       ? await connectClawqlHttp(mock, { id, runtime })
@@ -1524,32 +2101,70 @@ async function runClawqlArm(
     };
   }
   sampler.start(ITERS > 1 ? 500 : 200);
+  const slowFlowMs = Number(process.env.MT_SLOW_FLOW_MS || 80) || 80;
+  const sessionPerFlow =
+    transport === "http" &&
+    ["1", "true", "yes"].includes(
+      (process.env.MT_HTTP_SESSION_PER_FLOW ?? "").trim().toLowerCase()
+    );
   try {
     const listed = await conn.client.listTools();
-    const l1 = measureLayer1FromTools(listed.tools, { onlyNames: ["search", "execute"] });
+    // Known-op path: agent already has operationId — Layer1 is execute schema only.
+    const l1 = measureLayer1FromTools(listed.tools, {
+      onlyNames: skip ? ["execute"] : ["search", "execute"],
+    });
     let perTurn = null;
     const flowE2e = [];
     const turnLat = [];
+    const searchLat = [];
+    const executeLat = [];
+    const slowFlows = [];
+    const slowSearchCalls = [];
+    const benchSeries = [];
     let successOk = 0;
     let successTotal = 0;
     let callErrors = 0;
 
+    if (typeof conn.fetchBench === "function") {
+      const b0 = await conn.fetchBench();
+      if (b0) benchSeries.push({ phase: "after_connect", flow: 0, ...b0 });
+    }
+
     for (let iter = 1; iter <= ITERS; iter++) {
       sampler.markFlow(iter);
+      const flowWall0 = Date.now();
       const flowT0 = performance.now();
       const thisPerTurn = [];
       for (const turn of turns) {
         const t0 = performance.now();
         let searchText = "";
         let execText = "";
+        let searchMs = 0;
+        let executeMs = 0;
         let ok = true;
         try {
-          const searchRes = await conn.client.callTool({
-            name: "search",
-            arguments: { query: turn.query, limit: 3 },
-          });
-          if (searchRes.isError) throw new Error(`search: ${toolText(searchRes).slice(0, 300)}`);
-          searchText = toolText(searchRes);
+          if (!skip) {
+            const tSearch = performance.now();
+            const searchRes = await conn.client.callTool({
+              name: "search",
+              arguments: { query: turn.query, limit: 3 },
+            });
+            searchMs = performance.now() - tSearch;
+            searchLat.push(searchMs);
+            if (searchRes.isError) throw new Error(`search: ${toolText(searchRes).slice(0, 300)}`);
+            searchText = toolText(searchRes);
+            const slowCallMs = Number(process.env.MT_SLOW_CALL_MS || 40) || 40;
+            if (searchMs >= slowCallMs) {
+              slowSearchCalls.push({
+                flow: iter,
+                turn: turn.n,
+                ms: Number(searchMs.toFixed(1)),
+                t_iso: new Date().toISOString(),
+                query: turn.query,
+              });
+            }
+          }
+          const tExec = performance.now();
           const execRes = await conn.client.callTool({
             name: "execute",
             arguments: {
@@ -1563,6 +2178,8 @@ async function runClawqlArm(
               fields: turn.fields,
             },
           });
+          executeMs = performance.now() - tExec;
+          executeLat.push(executeMs);
           if (execRes.isError) throw new Error(`execute: ${toolText(execRes).slice(0, 400)}`);
           execText = toolText(execRes);
         } catch (e) {
@@ -1589,12 +2206,34 @@ async function runClawqlArm(
             layer2_classic: searchTok + resultTok,
             layer2_relist_every_turn: searchTok + resultTok,
             latency_ms: Number(ms.toFixed(3)),
+            search_ms: Number(searchMs.toFixed(3)),
+            execute_ms: Number(executeMs.toFixed(3)),
             ok,
             task_success: success,
+            skip_search: skip,
           });
         }
       }
-      flowE2e.push(performance.now() - flowT0);
+      const flowMs = performance.now() - flowT0;
+      flowE2e.push(flowMs);
+      if (flowMs >= slowFlowMs) {
+        slowFlows.push({
+          flow: iter,
+          ms: Number(flowMs.toFixed(1)),
+          t_iso: new Date(flowWall0).toISOString(),
+          t_end_iso: new Date().toISOString(),
+        });
+      }
+      if (sessionPerFlow && typeof conn.recycleSession === "function") {
+        await conn.recycleSession();
+      }
+      if (
+        typeof conn.fetchBench === "function" &&
+        (iter === 1 || iter === ITERS || iter % Math.max(1, Math.floor(ITERS / 5)) === 0)
+      ) {
+        const b = await conn.fetchBench();
+        if (b) benchSeries.push({ phase: "mid_run", flow: iter, ...b });
+      }
       if (iter === 1) perTurn = thisPerTurn;
       if (iter % PROGRESS_EVERY === 0 || iter === ITERS) {
         console.log(`[mt] ${id} flows ${iter}/${ITERS}`);
@@ -1602,35 +2241,95 @@ async function runClawqlArm(
     }
 
     const resources = sampler.stop();
+    let httpLayer = null;
+    if (transport === "http" && typeof conn.fetchBench === "function") {
+      // fetchBench hits /healthz — also carries http_layer flags for bisect.
+      try {
+        const r = await fetch(`http://127.0.0.1:${conn.port}/healthz`);
+        const j = await r.json();
+        if (j?.http_layer) httpLayer = j.http_layer;
+      } catch {
+        /* ignore */
+      }
+    }
+    // Close first so server can emit perf summary on SIGTERM.
+    const stderrChunks = conn._stderrChunks || [];
+    await conn.close();
+    conn._closed = true;
+    const httpPerf =
+      transport === "http" && stderrChunks.length ? parseHttpPerfStderr(stderrChunks) : null;
+    const layerBannerLine = stderrChunks
+      .join("")
+      .split("\n")
+      .find((l) => l.includes("[clawql-http-layer] banner"));
+    // Correlate: GC/ELD events whose timestamp falls inside a slow flow window (±50ms slack).
+    let slowFlowGcHits = null;
+    if (httpPerf && slowFlows.length) {
+      const hit = (evtT, flow) => {
+        if (!evtT) return false;
+        const ts = Date.parse(evtT);
+        if (!Number.isFinite(ts)) return false;
+        const a = Date.parse(flow.t_iso) - 50;
+        const b = Date.parse(flow.t_end_iso) + 50;
+        return ts >= a && ts <= b;
+      };
+      slowFlowGcHits = {
+        slow_flow_count: slowFlows.length,
+        slow_flows_with_gc: slowFlows.filter((f) =>
+          (httpPerf.gc_top || []).some((g) => hit(g.t, f))
+        ).length,
+        slow_flows_with_eld: slowFlows.filter((f) =>
+          (httpPerf.eld_top || []).some((e) => hit(e.t, f))
+        ).length,
+        note: "Counts slow flows whose wall-clock window overlaps a logged GC/ELD event (±50ms).",
+      };
+    }
     return {
       id,
-      model: `search_plus_execute_where_fields_${conn.runtime}_${conn.transport || "stdio"}`,
+      model: skip
+        ? `execute_by_id_where_fields_${conn.runtime}_${conn.transport || "stdio"}`
+        : `search_plus_execute_where_fields_${conn.runtime}_${conn.transport || "stdio"}`,
       runtime: conn.runtime,
       runtimeVersion: conn.runtimeVersion,
       transport: conn.transport || "stdio",
       mcpUrl: conn.mcpUrl || null,
+      skip_search: skip,
+      rpcs_per_turn_override: skip ? 1 : 2,
       layer1: {
         once_schema_tokens: l1.schema_tokens,
         tools_count: l1.tools_count,
         tools_list_count_full: l1.tools_list_count_full,
         tools_list_schema_tokens_full: l1.tools_list_schema_tokens_full,
-        note: "Only search+execute schemas counted as Layer1 (catalog stays server-side)",
+        note: skip
+          ? "Known-op: Layer1 = execute schema only (search not used)"
+          : "Only search+execute schemas counted as Layer1 (catalog stays server-side)",
       },
-      discovery_note:
-        "Each turn charges search (limit 3) + execute — discovery is not zero (unlike Executor harness)",
+      discovery_note: skip
+        ? "SKIP SEARCH: execute by known operationId only (1 RPC/turn) — next-win path when agent already knows the op"
+        : "Each turn charges search (limit 3) + execute — discovery is not zero (unlike Executor harness)",
       perTurn,
       iters: ITERS,
       flow_e2e_ms: flowE2e,
       turn_latency_ms: turnLat,
+      search_latency_ms: searchLat,
+      execute_latency_ms: executeLat,
       call_errors: callErrors,
       task_success_agg: { ok: successOk, total: successTotal },
       resources,
       startup: { ready_ms: conn.ready_ms, rss_mb_ready: conn.rss_mb_ready },
+      http_perf: httpPerf,
+      http_layer: httpLayer,
+      http_layer_banner: layerBannerLine?.trim() || null,
+      slow_flows_top: [...slowFlows].sort((a, b) => b.ms - a.ms).slice(0, 20),
+      slow_search_top: [...slowSearchCalls].sort((a, b) => b.ms - a.ms).slice(0, 20),
+      slow_flow_gc_correlation: slowFlowGcHits,
+      session_per_flow: sessionPerFlow,
+      bench_series: benchSeries.length ? benchSeries : undefined,
       skipped: false,
     };
   } finally {
     sampler.stop();
-    await conn.close();
+    if (!conn._closed) await conn.close().catch(() => {});
   }
 }
 
@@ -1961,26 +2660,30 @@ function summarizeArm(arm) {
   };
   // Rebuildable classic total: definitions + Σ discovery + Σ results (= L1 + Σ L2).
   const combinedRebuild = l1 + sumDiscovery + sumResult;
-  // ClawQL search+execute = 2 RPCs/turn; aggregators / Executor / direct = 1.
+  // ClawQL search+execute = 2 RPCs/turn; known-op / skip-search = 1; peers = 1.
   const isClawql =
     typeof arm.id === "string" &&
     (arm.id === "clawql" ||
       arm.id.startsWith("clawql_") ||
-      arm.model?.includes("search_plus_execute"));
-  const rpcsPerTurn = isClawql ? 2 : 1;
+      arm.model?.includes("search_plus_execute") ||
+      arm.model?.includes("execute_by_id"));
+  const rpcsPerTurn =
+    arm.rpcs_per_turn_override ??
+    (arm.skip_search ? 1 : isClawql ? 2 : 1);
   const turnP50 = turnLat?.p50_ms ?? null;
   const msPerCallP50 =
     turnP50 != null && rpcsPerTurn > 0
       ? Number((turnP50 / rpcsPerTurn).toFixed(2))
       : null;
-  return {
+  const summarized = {
     ...arm,
     // Drop raw sample arrays from serialized arm body — board keeps summaries.
-    flow_e2e_ms: undefined,
-    turn_latency_ms: undefined,
+    // (Explicit delete below: `key: undefined` is omitted by JSON.stringify, but
+    // keep the intent obvious and strip per-turn token rows to flow-1 only.)
     cumulative_classic: classic,
     cumulative_tools_list_every_turn: relist,
     task_success: taskSuccess,
+    perTurn: Array.isArray(arm.perTurn) ? arm.perTurn.slice(0, Math.min(arm.perTurn.length, 12)) : arm.perTurn,
     board: {
       runtime: arm.runtime ?? null,
       runtime_version: arm.runtimeVersion ?? null,
@@ -2015,8 +2718,47 @@ function summarizeArm(arm) {
       call_errors: arm.call_errors ?? 0,
       task_success_ok: taskSuccess.ok,
       task_success_rate: taskSuccess.rate,
+      ...(arm.http_perf
+        ? {
+            http_perf: {
+              gc_event_count: arm.http_perf.gc_event_count,
+              gc_max_ms: arm.http_perf.gc_max_ms,
+              gc_sum_ms: arm.http_perf.gc_sum_ms,
+              eld_max_ms: arm.http_perf.eld_max_ms,
+              eld_p99_max_ms: arm.http_perf.eld_p99_max_ms,
+              summary_last: arm.http_perf.summary_last,
+            },
+          }
+        : {}),
+      ...(arm.http_layer ? { http_layer: arm.http_layer } : {}),
+      ...(arm.http_layer_banner ? { http_layer_banner: arm.http_layer_banner } : {}),
+      ...(arm.slow_flow_gc_correlation
+        ? { slow_flow_gc_correlation: arm.slow_flow_gc_correlation }
+        : {}),
+      ...(arm.slow_flows_top ? { slow_flows_top: arm.slow_flows_top } : {}),
+      ...(arm.search_latency_ms?.length
+        ? { search_latency_ms: summarizeMs(arm.search_latency_ms) }
+        : {}),
+      ...(arm.execute_latency_ms?.length
+        ? { execute_latency_ms: summarizeMs(arm.execute_latency_ms) }
+        : {}),
+      ...(arm.slow_search_top ? { slow_search_top: arm.slow_search_top } : {}),
+      ...(arm.skip_search != null ? { skip_search: arm.skip_search } : {}),
+      // Rebuildable: definitions + Σ discovery + Σ results (= combined_at_n).
+      token_rebuild_note: arm.skip_search
+        ? "Known-op Layer1 = execute schema only (no search tool in context); discovery=0."
+        : "Classic Layer1 = search+execute schemas; discovery = Σ search hit tokens.",
     },
   };
+  for (const k of [
+    "flow_e2e_ms",
+    "turn_latency_ms",
+    "search_latency_ms",
+    "execute_latency_ms",
+  ]) {
+    delete summarized[k];
+  }
+  return summarized;
 }
 
 function ratioBoard(arms) {
@@ -2120,12 +2862,19 @@ function categoryWinNarrative(arms, ratios) {
 }
 
 async function main() {
+  maybeReexecPinnedClient();
   if (!existsSync(CATALOG_MCP)) {
     throw new Error(`missing ${CATALOG_MCP}`);
   }
   if (!existsSync(join(ROOT, "dist", "server.js"))) {
     console.error("dist/server.js missing — clawql arm will skip");
   }
+  // Stall localization: MT_STALL_DIAG=1 enables client slow logs + GC observer.
+  if (stallDiagEnabled()) {
+    if (process.env.MT_CLIENT_SLOW_MS == null) process.env.MT_CLIENT_SLOW_MS = "20";
+    if (process.env.MT_CLIENT_GC == null) process.env.MT_CLIENT_GC = "1";
+  }
+  await maybeInstallClientGcObserver();
   await mkdir(OUT_DIR, { recursive: true });
   const turns = buildTurns();
   const mock = await startCatalogHttp();
@@ -2141,6 +2890,18 @@ async function main() {
     `[mt] turns=${TURNS} iters=${ITERS} catalog_tools=${TOOL_COUNT} limit=${LIMIT} arms=${ARMS.join(",")}`
   );
   console.log(`[mt] equal-arm fat≈${fatTok} tok slim(fields)≈${slimTok} tok (partition 1)`);
+  console.log(
+    `[mt] core_layout enabled=${CORE_LAYOUT.enabled} mode=${CORE_LAYOUT.layout_mode} nproc=${CORE_LAYOUT.nproc} ` +
+      `mock=${CORE_LAYOUT.mock_cpus ?? "-"} gateway=${CORE_LAYOUT.gateway_cpus ?? "-"}` +
+      `(${CORE_LAYOUT.gateway_cpu_count || 0}c) ` +
+      `client=${CORE_LAYOUT.client_cpus ?? "-"} allowed=${readCpusAllowedList() ?? "-"} — ${CORE_LAYOUT.note}`
+  );
+  if (clawqlLatencyRuntimeFlags().nodeSingleThreaded) {
+    console.log(`[mt] MT_NODE_SINGLE_THREADED=1 — Node --single-threaded --single-threaded-gc (diagnostic)`);
+  }
+  if (process.env.MT_UPSTREAM_LATENCY_MS) {
+    console.log(`[mt] MT_UPSTREAM_LATENCY_MS=${process.env.MT_UPSTREAM_LATENCY_MS}`);
+  }
 
   /** Pin direct Layer1 to agentgateway's tools/list serialization when both arms ran. */
   const pinDirectDefsToAgentgateway = () => {
@@ -2201,22 +2962,28 @@ async function main() {
             id: arm,
             transport: "stdio",
           });
-        } else if (arm === "clawql_http" || arm === "clawql_http_bun") {
+        } else if (
+          arm === "clawql_http" ||
+          arm === "clawql_http_bun" ||
+          arm === "clawql_http_known" ||
+          arm === "clawql_http_bun_known"
+        ) {
           if (!existsSync(join(ROOT, "dist", "server-http.js"))) {
             rawArms[arm] = { skipped: true, reason: "dist/server-http.js missing" };
             continue;
           }
-          if (arm === "clawql_http_bun" && !resolveBunBin()) {
-            rawArms.clawql_http_bun = {
+          if ((arm === "clawql_http_bun" || arm === "clawql_http_bun_known") && !resolveBunBin()) {
+            rawArms[arm] = {
               skipped: true,
               reason: "bun not found (set BUN_BIN or install ~/.bun/bin/bun)",
             };
             continue;
           }
           rawArms[arm] = await runClawqlArm(mock, turns, {
-            runtime: arm === "clawql_http_bun" ? "bun" : "node",
+            runtime: arm.includes("_bun") ? "bun" : "node",
             id: arm,
             transport: "http",
+            skipSearch: arm.endsWith("_known"),
           });
         } else if (arm === "clawql_grpc" || arm === "clawql_grpc_bun") {
           if (!existsSync(join(ROOT, "dist", "server-http.js"))) {
@@ -2297,6 +3064,39 @@ async function main() {
 
     const { arms, ratios, narrative, board } = buildPartialReport(false);
     const runtimeFlags = clawqlLatencyRuntimeFlags();
+    await mock.refreshUpstreamStats?.();
+    const upstreamLatency = (process.env.MT_UPSTREAM_LATENCY_MS ?? "").trim() || null;
+    const isolatedHarness =
+      mock.upstreamStats?.process === "separate" || mock.mockPid != null;
+    const fullBoard = ITERS >= 10_000 && ARMS.length >= 5;
+    const p999Status = {
+      status: "under_rework",
+      label: "under rework: harness coupling identified",
+      publish:
+        "Cite tokens, per-call overhead (ms/call), medians, and memory. " +
+        "Do not headline p999 until a full interleaved board lands with separate mock/client/gateway " +
+        "and dedicated cores (or leave p999 labeled under rework).",
+      note:
+        "Round 7: mock+client shared the parent event loop — delayed send, delayed mock serve, delayed response read. " +
+        "That polluted every arm's tail. Round 8 splits the mock process and optionally pins cores.",
+      harness_isolated: isolatedHarness,
+      cores_pinned: CORE_LAYOUT.enabled,
+      full_board: fullBoard,
+    };
+    if (isolatedHarness && CORE_LAYOUT.enabled && fullBoard) {
+      p999Status.status = "isolated_remeasure";
+      p999Status.label = "republished under isolated harness (taskset + separate mock)";
+      p999Status.publish =
+        "Tails from this board are the gateways' own under the recorded core_layout — still host-bound.";
+    } else if (isolatedHarness && CORE_LAYOUT.enabled) {
+      p999Status.status = "harness_isolated_pending_full_board";
+      p999Status.label =
+        "harness isolated (separate mock + taskset); p999 still under rework until full interleaved 10k";
+    } else if (isolatedHarness) {
+      p999Status.status = "harness_split_unpinned";
+      p999Status.label =
+        "mock is a separate process; cores not pinned — tails may still contend on shared CPUs";
+    }
 
     const report = {
       suite: "gateway-multi-multiturn",
@@ -2305,6 +3105,55 @@ async function main() {
       bun: resolveBunBin()
         ? spawnSync(resolveBunBin(), ["--version"], { encoding: "utf8" }).stdout?.trim() || null
         : null,
+      core_layout: {
+        ...CORE_LAYOUT,
+        client_cpus_allowed: readCpusAllowedList(),
+        mock_pid: mock.mockPid ?? mock.upstreamStats?.pid ?? null,
+        mock_process: "separate",
+        upstream_latency_ms: upstreamLatency,
+      },
+      p999_status: p999Status,
+      client_diagnostics: {
+        http_connects_total: streamableHttpConnects,
+        http_agent: {
+          connections: 1,
+          pipelining: 1,
+          keepAliveTimeout: 60_000,
+          note: "Single keep-alive socket per origin; connects_total should stay near 1 per HTTP arm after warm-up.",
+        },
+        client_gc_events: clientGcEvents.length,
+        client_gc_top: [...clientGcEvents]
+          .sort((a, b) => b.duration_ms - a.duration_ms)
+          .slice(0, 20),
+        client_slow_ms_threshold: Number(process.env.MT_CLIENT_SLOW_MS || 0) || 0,
+        client_pid: process.pid,
+        client_cpus_allowed: readCpusAllowedList(),
+      },
+      // ClawQL→catalog mock (equal-arm upstream). tcp_connects≈requests ⇒ no keep-alive on that leg.
+      upstream_diagnostics: {
+        requests: mock.upstreamStats?.requests ?? 0,
+        tcp_connects: mock.upstreamStats?.tcp_connects ?? 0,
+        reused_sockets: mock.upstreamStats?.reused_sockets ?? 0,
+        new_socket_requests: mock.upstreamStats?.new_socket_requests ?? 0,
+        max_handle_ms: mock.upstreamStats?.max_handle_ms ?? 0,
+        max_latency_inject_ms: mock.upstreamStats?.max_latency_inject_ms ?? 0,
+        pid: mock.upstreamStats?.pid ?? mock.mockPid ?? null,
+        process: mock.upstreamStats?.process ?? "separate",
+        latency: mock.upstreamStats?.latency ?? null,
+        slow_top: [...(mock.upstreamStats?.slow_top || [])]
+          .sort((a, b) => b.handle_ms - a.handle_ms)
+          .slice(0, 20),
+        recent: [...(mock.upstreamStats?.recent || [])].slice(-10),
+        native_fetch: ["1", "true", "yes"].includes(
+          (process.env.CLAWQL_NATIVE_FETCH ?? "").trim().toLowerCase()
+        ),
+        upstream_keepalive: ["1", "true", "yes"].includes(
+          (process.env.CLAWQL_UPSTREAM_KEEPALIVE ?? "").trim().toLowerCase()
+        ),
+        note:
+          "Separate-process mock accept/handle. Pair with [clawql-upstream-fetch] on ClawQL stderr when CLAWQL_UPSTREAM_FETCH_DIAG=1. " +
+          "On Node 22 http.globalAgent.keepAlive defaults true — tcp_connects≈1 is expected even without CLAWQL_UPSTREAM_KEEPALIVE.",
+      },
       config: {
         turns: TURNS,
         iters: ITERS,
@@ -2315,14 +3164,20 @@ async function main() {
         arms: ARMS,
         tokenizer: "cl100k_base",
         progress_every: PROGRESS_EVERY,
+        mt_pin_cores: CORE_LAYOUT.enabled,
+        mt_upstream_latency_ms: upstreamLatency,
         runtime_flags: {
           clawql_node_max_old_space_mb: runtimeFlags.nodeMaxOldSpaceMb || null,
           clawql_bun_smol: runtimeFlags.bunSmol,
           clawql_http_skip_graphql: runtimeFlags.httpSkipGraphql,
           clawql_enable_http_metrics: runtimeFlags.httpMetrics,
+          mt_node_single_threaded: runtimeFlags.nodeSingleThreaded,
           note:
             "Applied evenly to all ClawQL arms (stdio / Streamable HTTP / gRPC). " +
-            "Override with CLAWQL_NODE_MAX_OLD_SPACE_MB=0 or CLAWQL_BUN_SMOL=0 for defaults-only.",
+            "Override with CLAWQL_NODE_MAX_OLD_SPACE_MB=0 or CLAWQL_BUN_SMOL=0 for defaults-only. " +
+            "CLAWQL_SEARCH_COMPACT=1 and CLAWQL_HTTP_SKIP_PAYMENTS=1 are bench defaults " +
+            "(compact search gated for product; payments/network routes skipped for slim RSS). " +
+            "MT_NODE_SINGLE_THREADED is diagnostic only (V8 helper-thread contention test).",
         },
       },
       equal_arm: {
@@ -2386,17 +3241,28 @@ async function main() {
         "ContextForge/MetaMCP off publish board by default.",
         "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",
         "RSS is a loss among serious arms — admit plainly. Classify Executor v2 climb via rss_trend before 'Nx heavier' headlines.",
+        `p999 STATUS: ${p999Status.status} — ${p999Status.label}. ${p999Status.publish}`,
+        `CORE LAYOUT: enabled=${CORE_LAYOUT.enabled} nproc=${CORE_LAYOUT.nproc} mock=${CORE_LAYOUT.mock_cpus ?? "unpinned"} gateway=${CORE_LAYOUT.gateway_cpus ?? "unpinned"} client=${CORE_LAYOUT.client_cpus ?? "unpinned"}. Mock is a separate process (not the client event loop).`,
+        upstreamLatency
+          ? `MT_UPSTREAM_LATENCY_MS=${upstreamLatency} — realistic upstream delay injected in mock (post-isolation follow-up arm).`
+          : "MT_UPSTREAM_LATENCY_MS unset — mock responds ASAP (isolation board). Optional 20-100ms arm after tails republish.",
       ],
     };
 
     await writeFile(OUT_PATH, JSON.stringify(report, null, 2));
     console.log(`\n[mt] wrote ${OUT_PATH}`);
+    console.log(`[mt] p999_status=${p999Status.status} — ${p999Status.label}`);
     console.log(
       `\n=== Multi-turn board (iters=${ITERS} × turns=${TURNS}) — tokens + latency + RSS + task_success ===\n`
     );
+    const p999Clear = p999Status.status === "isolated_remeasure";
+    const p999Hdr = p999Clear ? "p999" : "p999†";
     console.log(
-      "arm | L1 | mean L2 | combined@N | result tok | RPCs/turn | ms/call p50 | flow e2e p50/p999 | turn p50/p999 | RSS med | task_success"
+      `arm | L1 | mean L2 | combined@N | result tok | RPCs/turn | ms/call p50 | flow e2e p50/${p999Hdr} | turn p50/${p999Hdr} | RSS med | task_success`
     );
+    if (!p999Clear) {
+      console.log(`† ${p999Status.label} — publish medians/tokens/memory; not p999 headlines.`);
+    }
     for (const [id, b] of Object.entries(board)) {
       if (b.skipped) {
         console.log(`${id} | SKIP ${b.reason?.slice(0, 60)}`);

@@ -12,9 +12,6 @@ import {
   type LoadedSpec,
   type LoadSpecFn,
 } from "clawql-api";
-import { defaultPaymentsProxyPlugins } from "clawql-payments/plugin";
-import { closeOuroborosPgPool } from "clawql-ouroboros/plugin";
-import { closePostgresVectorPoolEffect } from "clawql-memory/vector/pgvector";
 import { createRequire } from "node:module";
 import { Effect } from "effect";
 import { composeHorizontalPluginLayersDynamicEffect } from "./compose-horizontal-plugin-layers-dynamic.js";
@@ -27,6 +24,28 @@ import {
 import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
 
 const requireFromHere = createRequire(import.meta.url);
+
+/** Match HTTP slim surface — avoid loading clawql-payments (~tens of MB) in equal-arm benches. */
+function skipPaymentsPlugins(env: NodeJS.ProcessEnv = process.env): boolean {
+  const raw = env.CLAWQL_HTTP_SKIP_PAYMENTS?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
+}
+
+function loadPaymentsProxyPluginsSync(): ReturnType<
+  typeof import("clawql-payments/plugin").defaultPaymentsProxyPlugins
+> {
+  if (skipPaymentsPlugins()) return [];
+  const mod = requireFromHere("clawql-payments/plugin") as typeof import("clawql-payments/plugin");
+  return mod.defaultPaymentsProxyPlugins();
+}
+
+async function loadPaymentsProxyPluginsAsync(): Promise<
+  ReturnType<typeof import("clawql-payments/plugin").defaultPaymentsProxyPlugins>
+> {
+  if (skipPaymentsPlugins()) return [];
+  const mod = await import("clawql-payments/plugin");
+  return mod.defaultPaymentsProxyPlugins();
+}
 
 let loadSpecOverride: LoadSpecFn | undefined;
 let shutdownHooksRegistered = false;
@@ -57,14 +76,17 @@ function asError(cause: unknown): Error {
 
 function buildClawqlApiOptions(
   pluginLayers: CreateClawQLApiOptions["pluginLayers"],
-  vaultSeedLayer?: CreateClawQLApiOptions["vaultSeedLayer"]
+  vaultSeedLayer: CreateClawQLApiOptions["vaultSeedLayer"] | undefined,
+  paymentsPlugins: ReturnType<
+    typeof import("clawql-payments/plugin").defaultPaymentsProxyPlugins
+  >
 ): CreateClawQLApiOptions {
   // Omit searchLayer — createClawQLApi wires host.skillRegistry into unified search.
   // Pass loadSpecFn so setLoadSpecForTests overrides both search and execute.
   return {
     executeLayer: buildExecuteLive(),
     loadSpecFn: resolveLoadSpec(),
-    plugins: [...composeDefaultPlugins(), ...defaultPaymentsProxyPlugins()],
+    plugins: [...composeDefaultPlugins(), ...paymentsPlugins],
     pluginLayers,
     vaultSeedLayer,
     runtimeLayers: [makeEffectOtelTracerLayer()],
@@ -76,7 +98,9 @@ function buildClawqlApi(
   pluginLayers: CreateClawQLApiOptions["pluginLayers"],
   vaultSeedLayer?: CreateClawQLApiOptions["vaultSeedLayer"]
 ): ClawQLApiHandle {
-  return createClawQLApi(buildClawqlApiOptions(pluginLayers, vaultSeedLayer));
+  return createClawQLApi(
+    buildClawqlApiOptions(pluginLayers, vaultSeedLayer, loadPaymentsProxyPluginsSync())
+  );
 }
 
 async function resolveVaultSeedLayer(): Promise<
@@ -115,7 +139,10 @@ async function ensureClawqlApiImpl(): Promise<ClawQLApiHandle> {
       composeHorizontalPluginLayersDynamicEffect(resolvePluginCompositionFlags())
     );
     const vaultSeedLayer = await resolveVaultSeedLayer();
-    apiHandle = await createClawQLApiAsync(buildClawqlApiOptions(pluginLayers, vaultSeedLayer));
+    const paymentsPlugins = await loadPaymentsProxyPluginsAsync();
+    apiHandle = await createClawQLApiAsync(
+      buildClawqlApiOptions(pluginLayers, vaultSeedLayer, paymentsPlugins)
+    );
     return apiHandle;
   })();
   try {
@@ -162,8 +189,14 @@ async function disposeClawqlApiImpl(): Promise<void> {
     await handle.dispose().catch(() => undefined);
   }
   await Promise.all([
-    Effect.runPromise(closePostgresVectorPoolEffect()).catch(() => undefined),
-    closeOuroborosPgPool().catch(() => undefined),
+    import("clawql-memory/vector/pgvector")
+      .then(({ closePostgresVectorPoolEffect }) =>
+        Effect.runPromise(closePostgresVectorPoolEffect())
+      )
+      .catch(() => undefined),
+    import("clawql-ouroboros/plugin")
+      .then(({ closeOuroborosPgPool }) => closeOuroborosPgPool())
+      .catch(() => undefined),
     Effect.runPromise(disposeProcessWormHostEffect()).catch(() => undefined),
   ]);
 }
