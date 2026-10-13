@@ -2,10 +2,14 @@ import { Effect } from "effect";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 
-import type { ReviewItem, ReviewKind } from "@/src/domain/schemas";
+import type { DataSource, ReviewItem, ReviewKind } from "@/src/domain/schemas";
 import { listReviewEffect } from "@/src/services/api";
+import {
+  listReviewFromCacheEffect,
+  loadOfflineSnapshotEffect,
+} from "@/src/services/offline-cache";
 import { useSession } from "@/src/state/SessionContext";
-import { space } from "@/src/theme";
+import { brand, space } from "@/src/theme";
 import {
   Column,
   FilterChip,
@@ -14,7 +18,9 @@ import {
   Meta,
   ReviewRow,
   ScreenHost,
+  SecondaryButton,
   SectionHeader,
+  SurfaceCard,
   WrapRow,
 } from "@/src/ui/primitives";
 
@@ -32,7 +38,8 @@ export default function ReviewQueueScreen() {
   const { session } = useSession();
   const router = useRouter();
   const [items, setItems] = useState<ReviewItem[]>([]);
-  const [source, setSource] = useState<"live" | "fixture">("fixture");
+  const [source, setSource] = useState<DataSource>("fixture");
+  const [cacheSavedAt, setCacheSavedAt] = useState<number | null>(null);
   const [filter, setFilter] = useState<FilterKind>("all");
   const [loading, setLoading] = useState(true);
   const [hydrated, setHydrated] = useState(false);
@@ -43,11 +50,23 @@ export default function ReviewQueueScreen() {
       const res = await Effect.runPromise(listReviewEffect(session));
       setItems([...res.items]);
       setSource(res.source);
+      if (res.source !== "cache") setCacheSavedAt(null);
     } finally {
       setLoading(false);
       setHydrated(true);
     }
   }, [session]);
+
+  const loadFromCache = useCallback(async () => {
+    const [cached, snap] = await Promise.all([
+      Effect.runPromise(listReviewFromCacheEffect()),
+      Effect.runPromise(loadOfflineSnapshotEffect()),
+    ]);
+    if (!cached) return;
+    setItems([...cached.items]);
+    setSource("cache");
+    setCacheSavedAt(snap?.savedAtMs ?? Date.now());
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -88,6 +107,26 @@ export default function ReviewQueueScreen() {
             subtitle={`${items.length} waiting · source ${source}`}
             tone="warn"
           />
+          {source === "cache" ? (
+            <SurfaceCard testID="review-offline-banner" tint="soft">
+              <Meta color={brand.warn}>
+                {`Offline cache${
+                  cacheSavedAt ? ` · saved ${new Date(cacheSavedAt).toLocaleString()}` : ""
+                }`}
+              </Meta>
+              <SecondaryButton
+                testID="review-reload-live"
+                label="Try live reload"
+                onPress={() => void load()}
+              />
+            </SurfaceCard>
+          ) : (
+            <SecondaryButton
+              testID="review-load-offline-cache"
+              label="Show offline cache"
+              onPress={() => void loadFromCache()}
+            />
+          )}
           <WrapRow>
             {FILTERS.map((f) => (
               <FilterChip

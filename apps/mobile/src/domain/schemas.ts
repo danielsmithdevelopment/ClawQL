@@ -83,9 +83,12 @@ export const ReviewDecision = Schema.Literals([
 ]);
 export type ReviewDecision = Schema.Schema.Type<typeof ReviewDecision>;
 
+export const DataSource = Schema.Literals(["live", "fixture", "cache"]);
+export type DataSource = Schema.Schema.Type<typeof DataSource>;
+
 export const ReviewListResponse = Schema.Struct({
   items: Schema.Array(ReviewItem),
-  source: Schema.Literals(["live", "fixture"]),
+  source: DataSource,
 });
 export type ReviewListResponse = Schema.Schema.Type<typeof ReviewListResponse>;
 
@@ -102,7 +105,7 @@ export type ActivityEvent = Schema.Schema.Type<typeof ActivityEvent>;
 
 export const ActivityListResponse = Schema.Struct({
   events: Schema.Array(ActivityEvent),
-  source: Schema.Literals(["live", "fixture"]),
+  source: DataSource,
 });
 export type ActivityListResponse = Schema.Schema.Type<typeof ActivityListResponse>;
 

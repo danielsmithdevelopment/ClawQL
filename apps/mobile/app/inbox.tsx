@@ -3,7 +3,11 @@ import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 
 import type { InboxItem } from "@/src/domain/schemas";
-import { listInboxEffect, markInboxReadEffect } from "@/src/services/api";
+import {
+  listInboxEffect,
+  markAllInboxReadEffect,
+  markInboxReadEffect,
+} from "@/src/services/api";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, space } from "@/src/theme";
 import {
@@ -80,6 +84,18 @@ export default function InboxScreen() {
         subtitle="Approval pushes, digests, and system reminders — no APNs in fixture mode."
       />
       {unread > 0 ? <Badge label={`${unread} unread`} tone="warn" /> : null}
+      {unread > 0 ? (
+        <SecondaryButton
+          testID="inbox-mark-all-read"
+          label="Mark all read"
+          onPress={() => {
+            void (async () => {
+              await Effect.runPromise(markAllInboxReadEffect(session));
+              await load();
+            })();
+          }}
+        />
+      ) : null}
 
       <Column spacing={space.sm}>
         {items.map((item) => (

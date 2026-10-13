@@ -19,13 +19,21 @@ import {
   listPushDevicesEffect,
   listReviewEffect,
   listTeammatesEffect,
+  getNotificationPrefsEffect,
+  markAllInboxReadEffect,
   markInboxReadByReviewEffect,
   markInboxReadEffect,
   pendingReviewCountEffect,
   prependInboxItemEffect,
   resetFixtureStateEffect,
   revokeConnectedAppEffect,
+  setNotificationPrefsEffect,
 } from "../api";
+import {
+  clearOfflineSnapshotEffect,
+  listReviewFromCacheEffect,
+  loadOfflineSnapshotEffect,
+} from "../offline-cache";
 import {
   ensureFreshSessionEffect,
   isSessionExpiredEffect,
@@ -255,6 +263,35 @@ describe("mobile API fixture mode", () => {
     };
     const early = await Effect.runPromise(ensureFreshSessionEffect(nearExpiry, 60_000));
     expect(early?.expiresAtMs).toBeGreaterThan(nearExpiry.expiresAtMs);
+  });
+
+  it("writes offline snapshot and serves cache source", async () => {
+    await Effect.runPromise(clearOfflineSnapshotEffect()).catch(() => undefined);
+    await Effect.runPromise(listReviewEffect(FIXTURE_SESSION));
+    const snap = await Effect.runPromise(loadOfflineSnapshotEffect());
+    expect(snap?.reviewItems.length).toBeGreaterThan(0);
+    const cached = await Effect.runPromise(listReviewFromCacheEffect());
+    expect(cached?.source).toBe("cache");
+    expect(cached?.items.length).toBe(snap?.reviewItems.length);
+  });
+
+  it("persists notification prefs to disk", async () => {
+    await Effect.runPromise(
+      setNotificationPrefsEffect({
+        session: FIXTURE_SESSION,
+        prefs: { push: false, slack: true, email: true, morningDigest: false },
+      })
+    );
+    const prefs = await Effect.runPromise(getNotificationPrefsEffect(FIXTURE_SESSION));
+    expect(prefs.push).toBe(false);
+    expect(prefs.email).toBe(true);
+  });
+
+  it("marks all inbox items read", async () => {
+    const n = await Effect.runPromise(markAllInboxReadEffect(FIXTURE_SESSION));
+    expect(n).toBeGreaterThan(0);
+    const inbox = await Effect.runPromise(listInboxEffect(FIXTURE_SESSION));
+    expect(inbox.every((i) => !i.unread)).toBe(true);
   });
 
   it("persists device prefs and fixture-unlocks app lock", async () => {

@@ -86,28 +86,34 @@ await page.getByTestId("review-note").waitFor({ state: "visible", timeout: 10000
 await page.waitForTimeout(600);
 await shot("06-review-share.png");
 
-// Home simulate push → inbox (SPA)
-await page.evaluate(() => {
-  window.history.pushState({}, "", "/");
-  window.dispatchEvent(new PopStateEvent("popstate"));
-});
-// Prefer tab home if available
-const homeTab = page.getByTestId("tab-home").first();
-if (await homeTab.isVisible().catch(() => false)) {
-  await homeTab.click();
-} else {
-  await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
-  await page.getByTestId("sign-in-fixture").click();
-  await page.getByTestId("home-screen").waitFor({ state: "visible", timeout: 15000 });
-}
+// Back to tabs from review detail (stack hides tab bar)
+await page.goBack();
+await page.getByTestId("review-queue-screen").waitFor({ state: "visible", timeout: 15000 });
+
+// Offline cache on Review queue
+await page.getByTestId("review-load-offline-cache").waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("review-load-offline-cache").click();
+await page.getByTestId("review-offline-banner").waitFor({ state: "visible", timeout: 10000 });
+await page.waitForTimeout(500);
+await shot("07-review-offline-cache.png");
+
+// Home simulate push → inbox mark-all-read (SPA)
+await page.getByTestId("tab-home").filter({ visible: true }).first().click();
 await page.getByTestId("home-simulate-push-btn").waitFor({ state: "visible", timeout: 15000 });
 await page.getByTestId("home-simulate-push-btn").click();
 await page.getByTestId("home-push-note").waitFor({ state: "visible", timeout: 10000 });
 await page.waitForTimeout(400);
+// Web sim may auto-route to review — return home for inbox nav
+if (!(await page.getByTestId("home-open-inbox").isVisible().catch(() => false))) {
+  await page.getByTestId("tab-home").filter({ visible: true }).first().click();
+  await page.getByTestId("home-open-inbox").waitFor({ state: "visible", timeout: 15000 });
+}
 await page.getByTestId("home-open-inbox").click();
 await page.getByTestId("inbox-screen").waitFor({ state: "visible", timeout: 15000 });
-await page.waitForTimeout(800);
-await shot("07-inbox-after-sim.png");
+await page.getByTestId("inbox-mark-all-read").waitFor({ state: "visible", timeout: 10000 });
+await page.getByTestId("inbox-mark-all-read").click();
+await page.waitForTimeout(600);
+await shot("08-inbox-mark-all-read.png");
 
 await context.close();
 await browser.close();

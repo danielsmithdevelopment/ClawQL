@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 
 import type { ActivityEvent, HomeSpend, ReviewItem } from "@/src/domain/schemas";
 import type { OrgSummary } from "@/src/domain/schemas";
+import type { DataSource } from "@/src/domain/schemas";
 import {
   getHomeSpendEffect,
   getOrgSummaryEffect,
@@ -11,6 +12,7 @@ import {
   listReviewEffect,
   prependInboxItemEffect,
 } from "@/src/services/api";
+import { listReviewFromCacheEffect, loadOfflineSnapshotEffect } from "@/src/services/offline-cache";
 import { scheduleLocalApprovalNotificationEffect } from "@/src/services/push";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, space } from "@/src/theme";
@@ -50,6 +52,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pushNote, setPushNote] = useState<string | null>(null);
+  const [dataSource, setDataSource] = useState<DataSource>("fixture");
   const [hydrated, setHydrated] = useState(false);
 
   const load = useCallback(async () => {
@@ -63,6 +66,7 @@ export default function HomeScreen() {
         Effect.runPromise(getOrgSummaryEffect(session)),
       ]);
       setItems([...review.items]);
+      setDataSource(review.source);
       setSpend(spendRes);
       setActivity([...activityRes.events].slice(0, 5));
       setOrg(orgRes);
@@ -202,6 +206,46 @@ export default function HomeScreen() {
             label="See all activity"
             onPress={() => router.push("/(tabs)/activity")}
           />
+          {dataSource === "cache" ? (
+            <SurfaceCard testID="home-offline-banner" tint="soft">
+              <Meta color={brand.warn} testID="home-offline-meta">
+                Showing offline cache — pull to refresh when you are back online.
+              </Meta>
+            </SurfaceCard>
+          ) : null}
+          <SurfaceCard testID="home-offline-tools" tint="soft">
+            <IconBubble name="shield" tone="neutral" size={32} iconSize={16} />
+            <Subtitle>Offline cache</Subtitle>
+            <Meta>{`Queue snapshots save automatically. Source: ${dataSource}.`}</Meta>
+            <SecondaryButton
+              testID="home-show-offline-cache"
+              label="Show offline cache"
+              onPress={() => {
+                void (async () => {
+                  const [cached, snap] = await Promise.all([
+                    Effect.runPromise(listReviewFromCacheEffect()),
+                    Effect.runPromise(loadOfflineSnapshotEffect()),
+                  ]);
+                  if (!cached) {
+                    setPushNote("No offline snapshot yet — open Review once first");
+                    return;
+                  }
+                  setItems([...cached.items]);
+                  setDataSource("cache");
+                  setPushNote(
+                    `Offline cache · ${cached.items.length} items · saved ${
+                      snap ? new Date(snap.savedAtMs).toLocaleString() : "just now"
+                    }`
+                  );
+                })();
+              }}
+            />
+            {pushNote && dataSource === "cache" ? (
+              <Meta testID="home-offline-note" color={brand.ok}>
+                {pushNote}
+              </Meta>
+            ) : null}
+          </SurfaceCard>
           {items[0] ? (
             <SurfaceCard testID="home-simulate-push" tint="soft">
               <IconBubble name="inbox" tone="neutral" size={32} iconSize={16} />

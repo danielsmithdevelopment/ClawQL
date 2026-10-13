@@ -54,8 +54,11 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | App Lock (biometrics / fixture unlock) | ✅ Profile |
 | Haptics on decide | ✅ Review |
 | Home-screen icon badge = pending count | ✅ |
+| Offline queue snapshot + cache banner | ✅ Home / Review |
+| Notification prefs persisted on device | ✅ |
+| Mark all inbox read | ✅ |
 | Activity drill-in to decided archive | ✅ |
-| Deep link parsing / Maestro MOB-01…13 | ✅ (sim/emulator or web) |
+| Deep link parsing / Maestro MOB-01…14 | ✅ (sim/emulator or web) |
 | Unit tests | `npm test` |
 | Packaging preflight (no upload) | `npm run store:check` |
 

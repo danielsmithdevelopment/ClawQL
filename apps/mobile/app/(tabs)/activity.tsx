@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 
-import type { ActivityEvent } from "@/src/domain/schemas";
+import type { ActivityEvent, DataSource } from "@/src/domain/schemas";
 import { listActivityEffect } from "@/src/services/api";
 import { useSession } from "@/src/state/SessionContext";
 import { space } from "@/src/theme";
@@ -33,7 +33,7 @@ export default function ActivityScreen() {
   const { session } = useSession();
   const router = useRouter();
   const [events, setEvents] = useState<ActivityEvent[]>([]);
-  const [source, setSource] = useState<"live" | "fixture">("fixture");
+  const [source, setSource] = useState<DataSource>("fixture");
   const [loading, setLoading] = useState(true);
   const [hydrated, setHydrated] = useState(false);
 

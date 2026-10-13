@@ -106,6 +106,13 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-13-app-lock.yaml",
   },
   {
+    id: "MOB-14",
+    run: "Maestro",
+    title: "Offline cache banner and mark all inbox read",
+    passWhen: "Review shows offline cache banner; Inbox mark-all-read clears unread",
+    flow: "maestro/flows/mob-14-offline-cache.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',

@@ -166,6 +166,9 @@ export default function ProfileScreen() {
             <IconBubble name="key" tone="ok" size={32} iconSize={16} />
             <Subtitle>Your security keys</Subtitle>
             <Meta>You need two keys that can approve.</Meta>
+            <Meta testID="profile-keys-honesty" color={brand.inkFaint}>
+              Fixture-shaped list on phone — manage keys in the web console when live.
+            </Meta>
             {keys.map((key) => (
               <Column key={key.id} spacing={4} testID="profile-security-key">
                 <Body>{key.name}</Body>
