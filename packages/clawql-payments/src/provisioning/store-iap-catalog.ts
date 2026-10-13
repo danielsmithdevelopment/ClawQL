@@ -49,9 +49,7 @@ export class StoreIapCatalogService extends Context.Service<
   {
     readonly lookup: (productId: string) => Effect.Effect<StoreIapProduct | undefined>;
     readonly fixtureToken: (token: string) => Effect.Effect<boolean>;
-    readonly fixtureEnabled: (
-      env?: NodeJS.ProcessEnv
-    ) => Effect.Effect<boolean>;
+    readonly fixtureEnabled: (env?: NodeJS.ProcessEnv) => Effect.Effect<boolean>;
   }
 >()(CLAWQL_STORE_IAP_CATALOG_TAG) {}
 

@@ -143,9 +143,9 @@ export function verifyStorePurchaseEffect(
       input.store === "play" ? "play" : input.store === "app_store" ? "app_store" : "fixture";
 
     if (orgIdHint) {
-      const existing = yield* orgs.get(orgIdHint).pipe(
-        Effect.mapError((e) => mapOrgErr(e, "org_missing"))
-      );
+      const existing = yield* orgs
+        .get(orgIdHint)
+        .pipe(Effect.mapError((e) => mapOrgErr(e, "org_missing")));
       if (!existing) {
         return yield* Effect.fail(
           new StoreIapVerifyError({
@@ -216,13 +216,11 @@ export function getBillingEntitlementsEffect(
   return Effect.gen(function* () {
     const orgs = yield* OrgCreditsService;
     const catalog = yield* StoreIapCatalogService;
-    const org = yield* orgs.get(orgId.trim().toLowerCase()).pipe(
-      Effect.mapError((e) => mapOrgErr(e, "org_missing"))
-    );
+    const org = yield* orgs
+      .get(orgId.trim().toLowerCase())
+      .pipe(Effect.mapError((e) => mapOrgErr(e, "org_missing")));
     if (!org) return null;
-    const product = org.storeProductId
-      ? yield* catalog.lookup(org.storeProductId)
-      : undefined;
+    const product = org.storeProductId ? yield* catalog.lookup(org.storeProductId) : undefined;
     return toEntitlements(org, product, org.storePlatform, org.storeOriginalTransactionId);
   });
 }

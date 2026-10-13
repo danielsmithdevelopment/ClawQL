@@ -517,8 +517,7 @@ export function attachProvisioningRoutes(
 
   app.get(`${base}/billing/entitlements`, auth, (req, res) => {
     void (async () => {
-      const orgId =
-        typeof req.query.orgId === "string" ? req.query.orgId.trim() : "";
+      const orgId = typeof req.query.orgId === "string" ? req.query.orgId.trim() : "";
       if (!orgId) {
         res.status(400).json({ error: "orgId query param is required" });
         return;
@@ -548,17 +547,14 @@ function isStorePlatform(v: unknown): v is StoreIapPlatform {
   return v === "app_store" || v === "play" || v === "fixture";
 }
 
-function parseStoreVerifyBody(
-  body: unknown
-): StoreIapVerifyInput | { error: string } {
+function parseStoreVerifyBody(body: unknown): StoreIapVerifyInput | { error: string } {
   if (!body || typeof body !== "object") return { error: "JSON body required" };
   const b = body as Record<string, unknown>;
   if (!isStorePlatform(b.store)) {
     return { error: "store must be app_store|play|fixture" };
   }
   const productId = typeof b.productId === "string" ? b.productId.trim() : "";
-  const purchaseToken =
-    typeof b.purchaseToken === "string" ? b.purchaseToken.trim() : "";
+  const purchaseToken = typeof b.purchaseToken === "string" ? b.purchaseToken.trim() : "";
   if (!productId) return { error: "productId is required" };
   if (!purchaseToken) return { error: "purchaseToken is required" };
   return {
