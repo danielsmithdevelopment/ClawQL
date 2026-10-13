@@ -84,7 +84,11 @@ Those live only under [`store/DAY0-CHECKLIST.md`](store/DAY0-CHECKLIST.md). Day-
 
 ## Fixture client status
 
-PhoneApprove **fixture UX** (approve paths, inbox, deep links, offline cache, a11y gate, Maestro MOB-01…19) is the local product surface. The next product step off-fixture is **backend**: managed push register (`POST /api/managed/devices/push`), APNs/EAS delivery, evidence upload, and live keys/activity — not more client chrome.
+PhoneApprove **fixture UX** (approve paths, inbox, deep links, offline cache, a11y gate, Maestro MOB-01…19) is the local product surface.
+
+**Near-term backend:** managed push register (`POST /api/managed/devices/push`), APNs/EAS delivery, evidence upload, and live keys/activity.
+
+**North star:** sign up + subscribe **in-app** via App Store / Play Billing (Apple Pay / Google Pay wallet UX), and grow console jobs onto the phone so people rarely leave the app. Web Stripe Checkout stays for browser self-serve. Design: [`docs/specs/billing/mobile-store-iap-v0.1.md`](../../docs/specs/billing/mobile-store-iap-v0.1.md).
 
 ## Optional: static web export (CI / screenshots)
 
