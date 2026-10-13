@@ -746,6 +746,18 @@ function clawqlEnv(home, specPath, apiBase) {
   return clawqlEqualArmEnv({ home, specPath, apiBase });
 }
 
+function upstreamDiagEnabled() {
+  return (
+    stallDiagEnabled() ||
+    ["1", "true", "yes"].includes((process.env.MT_UPSTREAM_DIAG ?? "").trim().toLowerCase())
+  );
+}
+
+function upstreamSlowMs() {
+  const n = Number(process.env.MT_UPSTREAM_SLOW_MS || process.env.CLAWQL_UPSTREAM_FETCH_SLOW_MS || 5);
+  return Number.isFinite(n) && n > 0 ? n : 5;
+}
+
 async function startCatalogHttp() {
   const paths = {};
   for (let i = 1; i <= TOOL_COUNT; i++) {
@@ -784,7 +796,51 @@ async function startCatalogHttp() {
     };
   }
 
+  const diag = upstreamDiagEnabled();
+  const slowMs = upstreamSlowMs();
+  const stats = {
+    requests: 0,
+    tcp_connects: 0,
+    reused_sockets: 0,
+    new_socket_requests: 0,
+    max_handle_ms: 0,
+    slow_top: [],
+    /** Ring of recent arrivals (even when fast) for issue_iso correlation. */
+    recent: [],
+  };
+  const seenSockets = new WeakSet();
+
   const server = createServer((req, res) => {
+    const tArrive = performance.now();
+    const arriveIso = new Date().toISOString();
+    stats.requests += 1;
+    const sock = req.socket;
+    const newConn = sock && !seenSockets.has(sock);
+    if (sock) {
+      if (newConn) {
+        seenSockets.add(sock);
+        stats.new_socket_requests += 1;
+      } else {
+        stats.reused_sockets += 1;
+      }
+    }
+    if (diag) {
+      stats.recent.push({
+        arrive_iso: arriveIso,
+        path: (req.url || "").split("?")[0],
+        new_conn: newConn ? 1 : 0,
+        remote_port: sock?.remotePort ?? null,
+      });
+      if (stats.recent.length > 80) stats.recent.splice(0, stats.recent.length - 80);
+      // Heartbeat every 500 requests — proves keep-alive vs connect-per-request.
+      if (stats.requests === 1 || stats.requests % 500 === 0) {
+        console.error(
+          `[mt-upstream-stats] requests=${stats.requests} tcp_connects=${stats.tcp_connects} ` +
+            `new_socket_requests=${stats.new_socket_requests} reused=${stats.reused_sockets} ` +
+            `max_handle_ms=${stats.max_handle_ms.toFixed(1)}`
+        );
+      }
+    }
     const u = new URL(req.url || "/", "http://127.0.0.1");
     const m = u.pathname.match(/^\/catalog\/(\d{3})$/);
     if (!m) {
@@ -806,8 +862,34 @@ async function startCatalogHttp() {
         rows.push(row);
       }
     }
+    const body = JSON.stringify({ items: rows, partition: toolName(partition) });
     res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ items: rows, partition: toolName(partition) }));
+    res.end(body);
+    const handleMs = performance.now() - tArrive;
+    if (handleMs > stats.max_handle_ms) stats.max_handle_ms = handleMs;
+    if (diag && handleMs >= slowMs) {
+      const entry = {
+        handle_ms: Number(handleMs.toFixed(1)),
+        arrive_iso: arriveIso,
+        path: u.pathname,
+        new_conn: newConn ? 1 : 0,
+        remote_port: sock?.remotePort ?? null,
+        body_bytes: Buffer.byteLength(body),
+      };
+      stats.slow_top.push(entry);
+      if (stats.slow_top.length > 40) {
+        stats.slow_top.sort((a, b) => b.handle_ms - a.handle_ms);
+        stats.slow_top.length = 20;
+      }
+      console.error(
+        `[mt-upstream] ${entry.handle_ms}ms path=${entry.path} arrive=${arriveIso} ` +
+          `new_conn=${entry.new_conn} tcp_connects=${stats.tcp_connects} ` +
+          `remote_port=${entry.remote_port ?? "-"} body_bytes=${entry.body_bytes}`
+      );
+    }
+  });
+  server.on("connection", () => {
+    stats.tcp_connects += 1;
   });
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const port = server.address().port;
@@ -818,7 +900,7 @@ async function startCatalogHttp() {
     JSON.stringify(
       {
         openapi: "3.0.3",
-        info: { title: "EqualArmCatalog", version: "1" },
+        info: { title: "equalArmCatalog", version: "1" },
         servers: [{ url: baseUrl }],
         paths,
       },
@@ -829,6 +911,7 @@ async function startCatalogHttp() {
   return {
     baseUrl,
     specPath,
+    upstreamStats: stats,
     close: () =>
       new Promise((resolve, reject) => {
         server.close((err) => (err ? reject(err) : resolve()));
@@ -916,6 +999,10 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     "CLAWQL_TIMER_TRACE_SLOW_MS",
     "CLAWQL_MCP_SESSION_IDLE_MS",
     "CLAWQL_HTTP_TIMING",
+    "CLAWQL_UPSTREAM_FETCH_DIAG",
+    "CLAWQL_UPSTREAM_FETCH_SLOW_MS",
+    "CLAWQL_NATIVE_FETCH",
+    "CLAWQL_UPSTREAM_KEEPALIVE",
     "UV_THREADPOOL_SIZE",
     "BUN_JSC_forceRAMSize",
     "BUN_JSC_useJIT",
@@ -930,6 +1017,11 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
   if (stallDiagEnabled()) {
     if (env.CLAWQL_HTTP_TIMING == null) env.CLAWQL_HTTP_TIMING = "1";
     if (env.CLAWQL_HTTP_SLOW_MS == null) env.CLAWQL_HTTP_SLOW_MS = "5";
+    // Pair ClawQL→upstream fetch timings with [mt-upstream] mock logs.
+    if (env.CLAWQL_UPSTREAM_FETCH_DIAG == null) env.CLAWQL_UPSTREAM_FETCH_DIAG = "1";
+  }
+  if (upstreamDiagEnabled() && env.CLAWQL_UPSTREAM_FETCH_DIAG == null) {
+    env.CLAWQL_UPSTREAM_FETCH_DIAG = "1";
   }
   const wantCpuProf = runtime === "node" && process.env.MT_HTTP_CPU_PROF === "1";
   const wantPerf = ["1", "true", "yes"].includes(
@@ -2749,6 +2841,27 @@ async function main() {
           .sort((a, b) => b.duration_ms - a.duration_ms)
           .slice(0, 20),
         client_slow_ms_threshold: Number(process.env.MT_CLIENT_SLOW_MS || 0) || 0,
+      },
+      // ClawQL→catalog mock (equal-arm upstream). tcp_connects≈requests ⇒ no keep-alive on that leg.
+      upstream_diagnostics: {
+        requests: mock.upstreamStats?.requests ?? 0,
+        tcp_connects: mock.upstreamStats?.tcp_connects ?? 0,
+        reused_sockets: mock.upstreamStats?.reused_sockets ?? 0,
+        new_socket_requests: mock.upstreamStats?.new_socket_requests ?? 0,
+        max_handle_ms: mock.upstreamStats?.max_handle_ms ?? 0,
+        slow_top: [...(mock.upstreamStats?.slow_top || [])]
+          .sort((a, b) => b.handle_ms - a.handle_ms)
+          .slice(0, 20),
+        recent: [...(mock.upstreamStats?.recent || [])].slice(-10),
+        native_fetch: ["1", "true", "yes"].includes(
+          (process.env.CLAWQL_NATIVE_FETCH ?? "").trim().toLowerCase()
+        ),
+        upstream_keepalive: ["1", "true", "yes"].includes(
+          (process.env.CLAWQL_UPSTREAM_KEEPALIVE ?? "").trim().toLowerCase()
+        ),
+        note:
+          "Mock-side accept/handle. Pair with [clawql-upstream-fetch] on ClawQL stderr when CLAWQL_UPSTREAM_FETCH_DIAG=1. " +
+          "On Node 22 http.globalAgent.keepAlive defaults true — tcp_connects≈1 is expected even without CLAWQL_UPSTREAM_KEEPALIVE.",
       },
       config: {
         turns: TURNS,

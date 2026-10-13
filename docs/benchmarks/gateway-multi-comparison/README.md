@@ -20,6 +20,7 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`stall-memory-round3.md`](./stall-memory-round3.md) | Server vs client stall timing + lean/fat catalog listen RSS |
 | [`stall-memory-round4.md`](./stall-memory-round4.md) | TTFB vs complete; strace; publish p999 stays client e2e |
 | [`stall-memory-round5.md`](./stall-memory-round5.md) | Packaging homes; `--cpu-prof` — in-handler execute is off-CPU wait |
+| [`stall-memory-round6.md`](./stall-memory-round6.md) | Upstream mock probe — 1 TCP / 14k; mock &lt;3 ms; fetch not the 130 ms execute |
 | [`diagnostics-packaging.md`](./diagnostics-packaging.md) | Not `clawql-data` / `clawql-analytics` — harness vs OTel vs lazy diagnostics |
 | [`cpu-prof-stall-summary.json`](./cpu-prof-stall-summary.json) | Parsed Node CPU profile around multiturn stalls |
 | [`catalog-listen-rss.json`](./catalog-listen-rss.json) | Lean vs fat OpenAPI listen RSS / smaps |
@@ -274,7 +275,7 @@ Artifact: [`gateway-multi-multiturn-search-exec-split-10k.json`](./gateway-multi
 
 Steady per-call p999 is fine (&lt;5 ms). Flow p999 is rare single-RPC spikes (~500 ms) on **either** call — of 18 turns ≥100 ms, **search owned 7 / execute owned 11**. GC correlation still empty. So the remaining tail is not “search scoring every request”; it is infrequent event-loop / scheduling stalls that can land on whichever RPC is in flight. Known-op (execute-only) still wins session p999 (**130 ms** on this split board) by removing the second RPC and half the spike surface.
 
-**Stall localization** (see [`stall-memory-round5.md`](./stall-memory-round5.md)): publish p999 stays **client e2e**. JSON responses (`hold_ms≈0`) — not SSE hold-open. Classes: **in-handler** execute (CPU profile ≈**78% idle** → off-CPU/I/O wait, not JS grind), **pre-handler event-loop queue** (`server_t0` late), and rare **client-long / server-short** POSTs with no matching `[clawql-http-slow]`. Diagnostics packaging: [`diagnostics-packaging.md`](./diagnostics-packaging.md) — not `clawql-data` / `clawql-analytics`. `MT_STALL_DIAG=1` / `MT_HTTP_CPU_PROF=1`.
+**Stall localization** (see [`stall-memory-round6.md`](./stall-memory-round6.md)): publish p999 stays **client e2e**. Upstream mock probe: **1 TCP / 14 400** executes, mock handle max **2.6 ms** — not connect churn and not mock GC. Node 22 `globalAgent.keepAlive` already true. Remaining tails: search-sized client-long POSTs + in-handler execute time **outside** REST fetch. Packaging: [`diagnostics-packaging.md`](./diagnostics-packaging.md). `MT_STALL_DIAG=1` / `CLAWQL_UPSTREAM_FETCH_DIAG=1` / `CLAWQL_NATIVE_FETCH=1`.
 
 #### 4. Memory (&lt;200 MB) — anonymous data at Ready
 
