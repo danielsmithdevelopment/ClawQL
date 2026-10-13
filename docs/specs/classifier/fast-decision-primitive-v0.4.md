@@ -481,20 +481,20 @@ Every entry carries: `useSiteId`, candidates scored, top candidate and confidenc
 
 ## Implementation appendix (repo)
 
-| Concern                                   | Location                                                                                                                                                                                    |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Primitive (registry, contract, execution) | `packages/clawql-core/src/classifier/`                                                                                                                                                      |
-| Primary scorer                            | `GlinerFastDecisionScorerLive` / `FastDecisionGlinerStackLive` (`scorer.ts`, `gliner-config.ts`)                                                                                            |
+| Concern                                   | Location                                                                                                                                                                                   |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Primitive (registry, contract, execution) | `packages/clawql-core/src/classifier/`                                                                                                                                                     |
+| Primary scorer                            | `GlinerFastDecisionScorerLive` / `FastDecisionGlinerStackLive` (`scorer.ts`, `gliner-config.ts`)                                                                                           |
 | Env                                       | `CLAWQL_FAST_DECISION_GLINER_URL`, `CLAWQL_FAST_DECISION_GLINER_MODEL` (default `fastino/GLiNER2.5-Decide`), `CLAWQL_FAST_DECISION_GLINER_TOKEN`, `CLAWQL_FAST_DECISION_GLINER_TIMEOUT_MS` |
-| Optional Needle secondary                 | `NeedleFastDecisionScorerLive`                                                                                                                                                              |
-| Tests / offline                           | `HeuristicFastDecisionScorerLive`                                                                                                                                                           |
-| Skill fast path                           | `skill-fast-path.ts` + live `SkillValidityStore`                                                                                                                                            |
-| SGDOP prefilter                           | `sgdop-prefilter.ts`                                                                                                                                                                        |
-| Pre-compaction hook + stable cache        | `pre-compaction.ts`, `pre-compaction-hook.ts`, `stable-cache-block.ts`                                                                                                                      |
-| §7 harness                                | `validation.ts` + `held-out/` (`runHeldOutValidationSuite`; `productionTrusted` requires frontier adjudication)                                                                             |
-| GLiNER sidecar                            | [`infra/gliner-sidecar/`](../../../infra/gliner-sidecar/) — `POST /v1/fast-decision/classify` (mock default)                                                                                |
-| Threshold policy                          | `threshold-policy.ts`                                                                                                                                                                       |
-| Built-in use sites                        | `use-sites/builtins.ts`                                                                                                                                                                     |
+| Optional Needle secondary                 | `NeedleFastDecisionScorerLive`                                                                                                                                                             |
+| Tests / offline                           | `HeuristicFastDecisionScorerLive`                                                                                                                                                          |
+| Skill fast path                           | `skill-fast-path.ts` + live `SkillValidityStore`                                                                                                                                           |
+| SGDOP prefilter                           | `sgdop-prefilter.ts`                                                                                                                                                                       |
+| Pre-compaction hook + stable cache        | `pre-compaction.ts`, `pre-compaction-hook.ts`, `stable-cache-block.ts`                                                                                                                     |
+| §7 harness                                | `validation.ts` + `held-out/` (`runHeldOutValidationSuite`; `productionTrusted` requires frontier adjudication)                                                                            |
+| GLiNER sidecar                            | [`infra/gliner-sidecar/`](../../../infra/gliner-sidecar/) — `POST /v1/fast-decision/classify` (mock default)                                                                               |
+| Threshold policy                          | `threshold-policy.ts`                                                                                                                                                                      |
+| Built-in use sites                        | `use-sites/builtins.ts`                                                                                                                                                                    |
 
 ### Related docs
 
