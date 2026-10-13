@@ -56,12 +56,19 @@
  *
  * MT_CLAWQL_SKIP_SEARCH=1 forces skip-search for all ClawQL arms (or use *_known arm ids).
  *
+ * Process isolation (stall-memory-round8 — required for honest p999):
+ *   Catalog mock runs in a **separate** Node process (not the client event loop).
+ *   MT_PIN_CORES=1 pins mock / gateway / client to distinct CPUs via taskset
+ *   (needs ≥3 online CPUs; layout recorded on the board as core_layout).
+ *   MT_UPSTREAM_LATENCY_MS=N or min-max (e.g. 20-100) injects mock delay.
+ *
  * Note: do NOT put a hand-written slim-return program on the publish board as
  * "Executor". That is not gateway projection and contradicts the settled blog.
  */
 
 import { existsSync, readFileSync, readdirSync, openSync, closeSync } from "node:fs";
 import { createServer } from "node:http";
+import { cpus } from "node:os";
 import { mkdir, writeFile, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -405,6 +412,94 @@ function killProcessGroup(child, signal = "SIGTERM") {
     } catch {
       /* ignore */
     }
+  }
+}
+
+/** @returns {{ enabled: boolean, nproc: number, mock_cpus: string|null, gateway_cpus: string|null, client_cpus: string|null, note: string }} */
+function resolveCoreLayout() {
+  const nproc = cpus()?.length || 0;
+  const want = ["1", "true", "yes"].includes((process.env.MT_PIN_CORES ?? "").trim().toLowerCase());
+  const mock = (process.env.MT_MOCK_CPUS || "").trim() || null;
+  const gateway = (process.env.MT_GATEWAY_CPUS || "").trim() || null;
+  const client = (process.env.MT_CLIENT_CPUS || "").trim() || null;
+  if (!want && !mock && !gateway && !client) {
+    return {
+      enabled: false,
+      nproc,
+      mock_cpus: null,
+      gateway_cpus: null,
+      client_cpus: null,
+      note: "MT_PIN_CORES off — mock is still a separate process; CPUs may share.",
+    };
+  }
+  if (nproc < 3 && want && !mock && !gateway && !client) {
+    return {
+      enabled: false,
+      nproc,
+      mock_cpus: null,
+      gateway_cpus: null,
+      client_cpus: null,
+      note: `MT_PIN_CORES requested but nproc=${nproc}<3 — pinning skipped (would still contend).`,
+    };
+  }
+  const layout = {
+    enabled: true,
+    nproc,
+    mock_cpus: mock || "0",
+    gateway_cpus: gateway || "1",
+    client_cpus: client || "2",
+    note:
+      "Dedicated CPU lists for mock / gateway / client (taskset -c). " +
+      "Requires enough cores that roles do not overlap.",
+  };
+  return layout;
+}
+
+const CORE_LAYOUT = resolveCoreLayout();
+
+/** Wrap command with `taskset -c <cpus>` when pinning is enabled for that role. */
+function withTaskset(command, args, role /* mock|gateway|client */) {
+  const cpus =
+    role === "mock"
+      ? CORE_LAYOUT.mock_cpus
+      : role === "gateway"
+        ? CORE_LAYOUT.gateway_cpus
+        : CORE_LAYOUT.client_cpus;
+  if (!CORE_LAYOUT.enabled || !cpus) return { command, args };
+  if (!existsSync("/usr/bin/taskset") && !existsSync("/bin/taskset")) {
+    return { command, args };
+  }
+  return { command: "taskset", args: ["-c", cpus, command, ...args] };
+}
+
+/** Re-exec this process under taskset so the load client owns a dedicated core. */
+function maybeReexecPinnedClient() {
+  if (!CORE_LAYOUT.enabled || !CORE_LAYOUT.client_cpus) return;
+  if (process.env.MT_CLIENT_PINNED === "1") return;
+  if (!existsSync("/usr/bin/taskset") && !existsSync("/bin/taskset")) return;
+  const node = process.execPath;
+  const script = fileURLToPath(import.meta.url);
+  const args = process.argv.slice(2);
+  console.error(`[mt] pinning client to CPUs ${CORE_LAYOUT.client_cpus} (re-exec taskset)`);
+  const child = spawnSync(
+    "taskset",
+    ["-c", CORE_LAYOUT.client_cpus, node, script, ...args],
+    {
+      cwd: process.cwd(),
+      env: { ...process.env, MT_CLIENT_PINNED: "1" },
+      stdio: "inherit",
+    }
+  );
+  process.exit(child.status ?? 1);
+}
+
+function readCpusAllowedList() {
+  try {
+    const st = readFileSync("/proc/self/status", "utf8");
+    const m = st.match(/^Cpus_allowed_list:\s*(\S+)/m);
+    return m?.[1] || null;
+  } catch {
+    return null;
   }
 }
 
@@ -799,104 +894,75 @@ async function startCatalogHttp() {
     };
   }
 
-  const diag = upstreamDiagEnabled();
-  const slowMs = upstreamSlowMs();
-  const stats = {
+  // Separate process — must not share the load client's event loop (round 7/8).
+  const mockScript = join(LIB, "equal-arm-catalog-http-mock.mjs");
+  const mockEnv = {
+    ...process.env,
+    CATALOG_TOOL_COUNT: String(TOOL_COUNT),
+    MT_LIMIT: String(LIMIT),
+  };
+  if (upstreamDiagEnabled()) {
+    mockEnv.MT_UPSTREAM_DIAG = "1";
+    mockEnv.MT_UPSTREAM_SLOW_MS = String(upstreamSlowMs());
+  }
+  if (process.env.MT_UPSTREAM_LATENCY_MS) {
+    mockEnv.MT_UPSTREAM_LATENCY_MS = process.env.MT_UPSTREAM_LATENCY_MS;
+  }
+  const wrapped = withTaskset(process.execPath, [mockScript], "mock");
+  const child = spawn(wrapped.command, wrapped.args, {
+    cwd: ROOT,
+    env: mockEnv,
+    stdio: ["ignore", "pipe", "pipe"],
+    detached: true,
+  });
+  let lastStats = {
     requests: 0,
     tcp_connects: 0,
     reused_sockets: 0,
     new_socket_requests: 0,
     max_handle_ms: 0,
     slow_top: [],
-    /** Ring of recent arrivals (even when fast) for issue_iso correlation. */
     recent: [],
+    pid: child.pid,
+    process: "separate",
   };
-  const seenSockets = new WeakSet();
-
-  const server = createServer((req, res) => {
-    const tArrive = performance.now();
-    const arriveIso = new Date().toISOString();
-    stats.requests += 1;
-    const sock = req.socket;
-    const newConn = sock && !seenSockets.has(sock);
-    if (sock) {
-      if (newConn) {
-        seenSockets.add(sock);
-        stats.new_socket_requests += 1;
-      } else {
-        stats.reused_sockets += 1;
+  let readyInfo = null;
+  const ready = new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("catalog mock ready timeout")), 30_000);
+    let buf = "";
+    child.stdout.on("data", (chunk) => {
+      buf += String(chunk);
+      const lines = buf.split("\n");
+      buf = lines.pop() || "";
+      for (const line of lines) {
+        const t = line.trim();
+        if (!t) continue;
+        try {
+          const j = JSON.parse(t);
+          if (j.ready && j.baseUrl) {
+            readyInfo = j;
+            clearTimeout(timer);
+            resolve(j);
+          }
+          if (j.stats) lastStats = { ...lastStats, ...j.stats };
+        } catch {
+          /* ignore non-JSON */
+        }
       }
-    }
-    if (diag) {
-      stats.recent.push({
-        arrive_iso: arriveIso,
-        path: (req.url || "").split("?")[0],
-        new_conn: newConn ? 1 : 0,
-        remote_port: sock?.remotePort ?? null,
-      });
-      if (stats.recent.length > 80) stats.recent.splice(0, stats.recent.length - 80);
-      // Heartbeat every 500 requests — proves keep-alive vs connect-per-request.
-      if (stats.requests === 1 || stats.requests % 500 === 0) {
-        console.error(
-          `[mt-upstream-stats] requests=${stats.requests} tcp_connects=${stats.tcp_connects} ` +
-            `new_socket_requests=${stats.new_socket_requests} reused=${stats.reused_sockets} ` +
-            `max_handle_ms=${stats.max_handle_ms.toFixed(1)}`
-        );
+    });
+    child.stderr.on("data", (chunk) => {
+      const s = String(chunk);
+      if (s.includes("[mt-upstream")) process.stderr.write(s);
+    });
+    child.on("exit", (code, signal) => {
+      if (!readyInfo) {
+        clearTimeout(timer);
+        reject(new Error(`catalog mock exited early code=${code} signal=${signal}`));
       }
-    }
-    const u = new URL(req.url || "/", "http://127.0.0.1");
-    const m = u.pathname.match(/^\/catalog\/(\d{3})$/);
-    if (!m) {
-      res.writeHead(404, { "content-type": "application/json" });
-      res.end(JSON.stringify({ error: "not found" }));
-      return;
-    }
-    const partition = Number(m[1]);
-    const limit = Math.min(100, Math.max(1, Number(u.searchParams.get("limit") ?? LIMIT) || LIMIT));
-    const status = u.searchParams.get("status") ?? "any";
-    const includeMeta = u.searchParams.get("includeMeta") !== "false";
-    const rows = [];
-    for (let i = 1; rows.length < limit; i++) {
-      const row = fatRow(i + (partition - 1) * 1000);
-      if (status !== "any" && row.status !== status) continue;
-      if (!includeMeta) {
-        rows.push({ id: row.id, name: row.name, status: row.status });
-      } else {
-        rows.push(row);
-      }
-    }
-    const body = JSON.stringify({ items: rows, partition: toolName(partition) });
-    res.writeHead(200, { "content-type": "application/json" });
-    res.end(body);
-    const handleMs = performance.now() - tArrive;
-    if (handleMs > stats.max_handle_ms) stats.max_handle_ms = handleMs;
-    if (diag && handleMs >= slowMs) {
-      const entry = {
-        handle_ms: Number(handleMs.toFixed(1)),
-        arrive_iso: arriveIso,
-        path: u.pathname,
-        new_conn: newConn ? 1 : 0,
-        remote_port: sock?.remotePort ?? null,
-        body_bytes: Buffer.byteLength(body),
-      };
-      stats.slow_top.push(entry);
-      if (stats.slow_top.length > 40) {
-        stats.slow_top.sort((a, b) => b.handle_ms - a.handle_ms);
-        stats.slow_top.length = 20;
-      }
-      console.error(
-        `[mt-upstream] ${entry.handle_ms}ms path=${entry.path} arrive=${arriveIso} ` +
-          `new_conn=${entry.new_conn} tcp_connects=${stats.tcp_connects} ` +
-          `remote_port=${entry.remote_port ?? "-"} body_bytes=${entry.body_bytes}`
-      );
-    }
+    });
   });
-  server.on("connection", () => {
-    stats.tcp_connects += 1;
-  });
-  await new Promise((r) => server.listen(0, "127.0.0.1", r));
-  const port = server.address().port;
-  const baseUrl = `http://127.0.0.1:${port}`;
+  await ready;
+  const baseUrl = readyInfo.baseUrl;
   const specPath = join("/tmp", `mt-catalog-spec-${process.pid}.json`);
   await writeFile(
     specPath,
@@ -911,14 +977,37 @@ async function startCatalogHttp() {
       2
     )
   );
+  console.error(
+    `[mt] catalog mock pid=${readyInfo.pid} url=${baseUrl}` +
+      (CORE_LAYOUT.mock_cpus ? ` cpus=${CORE_LAYOUT.mock_cpus}` : " (unpinned)")
+  );
+
+  async function fetchMockStats() {
+    try {
+      const res = await undiciFetch(`${baseUrl}/__bench/stats`);
+      if (res.ok) {
+        lastStats = { ...lastStats, ...(await res.json()), process: "separate" };
+      }
+    } catch {
+      /* shutting down */
+    }
+    return lastStats;
+  }
+
   return {
     baseUrl,
     specPath,
-    upstreamStats: stats,
-    close: () =>
-      new Promise((resolve, reject) => {
-        server.close((err) => (err ? reject(err) : resolve()));
-      }),
+    mockPid: readyInfo.pid,
+    get upstreamStats() {
+      return lastStats;
+    },
+    refreshUpstreamStats: fetchMockStats,
+    close: async () => {
+      await fetchMockStats();
+      killProcessGroup(child, "SIGTERM");
+      await new Promise((r) => setTimeout(r, 200));
+      killProcessGroup(child, "SIGKILL");
+    },
   };
 }
 
@@ -928,9 +1017,10 @@ async function connectClawql(mock, { runtime = "node", id = "clawql" } = {}) {
   await mkdir(home, { recursive: true });
   const env = clawqlEnv(home, mock.specPath, mock.baseUrl);
   const t0 = performance.now();
+  const pinned = withTaskset(js.command, js.args, "gateway");
   const transport = new StdioClientTransport({
-    command: js.command,
-    args: js.args,
+    command: pinned.command,
+    args: pinned.args,
     cwd: ROOT,
     stderr: "pipe",
     env,
@@ -1066,6 +1156,12 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
       ...spawnArgs,
     ];
     console.error(`[mt] strace → ${straceLog}`);
+  }
+  // Pin outside strace so the tracer + gateway share the gateway CPUs.
+  {
+    const pinned = withTaskset(spawnCmd, spawnArgs, "gateway");
+    spawnCmd = pinned.command;
+    spawnArgs = pinned.args;
   }
   const child = spawn(spawnCmd, spawnArgs, {
     cwd: ROOT,
@@ -1310,7 +1406,8 @@ async function connectClawqlGrpc(mock, { id = "clawql_grpc", runtime = "node" } 
     CLAWQL_ENABLE_HTTP_METRICS: process.env.CLAWQL_ENABLE_HTTP_METRICS || "0",
   };
   const t0 = performance.now();
-  const child = spawn(js.command, js.args, {
+  const pinned = withTaskset(js.command, js.args, "gateway");
+  const child = spawn(pinned.command, pinned.args, {
     cwd: ROOT,
     env,
     stdio: ["ignore", "pipe", "pipe"],
@@ -1392,9 +1489,10 @@ async function connectClawqlGrpc(mock, { id = "clawql_grpc", runtime = "node" } 
 async function connectExecutor() {
   const bin = process.env.EXECUTOR_BIN?.trim();
   if (!bin) throw new Error("EXECUTOR_BIN required");
+  const pinned = withTaskset(bin, ["mcp"], "gateway");
   const transport = new StdioClientTransport({
-    command: bin,
-    args: ["mcp"],
+    command: pinned.command,
+    args: pinned.args,
     cwd: process.env.EXECUTOR_CWD?.trim() || dirname(bin),
     stderr: "pipe",
   });
@@ -1501,11 +1599,20 @@ async function startMcpjungleCatalog() {
   );
   const logPath = join(work, "server.log");
   const logFd = openSync(logPath, "w");
-  const child = spawn(
-    bin,
-    ["start", "--host", "127.0.0.1", "--port", String(port), "--sqlite-db-path", dbPath],
-    { cwd: work, stdio: ["ignore", logFd, logFd], env: { ...process.env } }
-  );
+  const pinned = withTaskset(bin, [
+    "start",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    String(port),
+    "--sqlite-db-path",
+    dbPath,
+  ], "gateway");
+  const child = spawn(pinned.command, pinned.args, {
+    cwd: work,
+    stdio: ["ignore", logFd, logFd],
+    env: { ...process.env },
+  });
   const registry = `http://127.0.0.1:${port}`;
   await waitHttpOk(`${registry}/`, { timeoutMs: 60_000 });
   const reg = spawnSync(bin, ["register", "-c", confPath, "--registry", registry, "--force"], {
@@ -1575,7 +1682,8 @@ mcp:
   );
   const logPath = join(work, "server.log");
   const logFd = openSync(logPath, "w");
-  const child = spawn(bin, ["-f", cfgPath], {
+  const pinned = withTaskset(bin, ["-f", cfgPath], "gateway");
+  const child = spawn(pinned.command, pinned.args, {
     cwd: work,
     stdio: ["ignore", logFd, logFd],
   });
@@ -2635,6 +2743,7 @@ function categoryWinNarrative(arms, ratios) {
 }
 
 async function main() {
+  maybeReexecPinnedClient();
   if (!existsSync(CATALOG_MCP)) {
     throw new Error(`missing ${CATALOG_MCP}`);
   }
@@ -2662,6 +2771,14 @@ async function main() {
     `[mt] turns=${TURNS} iters=${ITERS} catalog_tools=${TOOL_COUNT} limit=${LIMIT} arms=${ARMS.join(",")}`
   );
   console.log(`[mt] equal-arm fat≈${fatTok} tok slim(fields)≈${slimTok} tok (partition 1)`);
+  console.log(
+    `[mt] core_layout enabled=${CORE_LAYOUT.enabled} nproc=${CORE_LAYOUT.nproc} ` +
+      `mock=${CORE_LAYOUT.mock_cpus ?? "-"} gateway=${CORE_LAYOUT.gateway_cpus ?? "-"} ` +
+      `client=${CORE_LAYOUT.client_cpus ?? "-"} allowed=${readCpusAllowedList() ?? "-"} — ${CORE_LAYOUT.note}`
+  );
+  if (process.env.MT_UPSTREAM_LATENCY_MS) {
+    console.log(`[mt] MT_UPSTREAM_LATENCY_MS=${process.env.MT_UPSTREAM_LATENCY_MS}`);
+  }
 
   /** Pin direct Layer1 to agentgateway's tools/list serialization when both arms ran. */
   const pinDirectDefsToAgentgateway = () => {
@@ -2824,6 +2941,39 @@ async function main() {
 
     const { arms, ratios, narrative, board } = buildPartialReport(false);
     const runtimeFlags = clawqlLatencyRuntimeFlags();
+    await mock.refreshUpstreamStats?.();
+    const upstreamLatency = (process.env.MT_UPSTREAM_LATENCY_MS ?? "").trim() || null;
+    const isolatedHarness =
+      mock.upstreamStats?.process === "separate" || mock.mockPid != null;
+    const fullBoard = ITERS >= 10_000 && ARMS.length >= 5;
+    const p999Status = {
+      status: "under_rework",
+      label: "under rework: harness coupling identified",
+      publish:
+        "Cite tokens, per-call overhead (ms/call), medians, and memory. " +
+        "Do not headline p999 until a full interleaved board lands with separate mock/client/gateway " +
+        "and dedicated cores (or leave p999 labeled under rework).",
+      note:
+        "Round 7: mock+client shared the parent event loop — delayed send, delayed mock serve, delayed response read. " +
+        "That polluted every arm's tail. Round 8 splits the mock process and optionally pins cores.",
+      harness_isolated: isolatedHarness,
+      cores_pinned: CORE_LAYOUT.enabled,
+      full_board: fullBoard,
+    };
+    if (isolatedHarness && CORE_LAYOUT.enabled && fullBoard) {
+      p999Status.status = "isolated_remeasure";
+      p999Status.label = "republished under isolated harness (taskset + separate mock)";
+      p999Status.publish =
+        "Tails from this board are the gateways' own under the recorded core_layout — still host-bound.";
+    } else if (isolatedHarness && CORE_LAYOUT.enabled) {
+      p999Status.status = "harness_isolated_pending_full_board";
+      p999Status.label =
+        "harness isolated (separate mock + taskset); p999 still under rework until full interleaved 10k";
+    } else if (isolatedHarness) {
+      p999Status.status = "harness_split_unpinned";
+      p999Status.label =
+        "mock is a separate process; cores not pinned — tails may still contend on shared CPUs";
+    }
 
     const report = {
       suite: "gateway-multi-multiturn",
@@ -2832,6 +2982,14 @@ async function main() {
       bun: resolveBunBin()
         ? spawnSync(resolveBunBin(), ["--version"], { encoding: "utf8" }).stdout?.trim() || null
         : null,
+      core_layout: {
+        ...CORE_LAYOUT,
+        client_cpus_allowed: readCpusAllowedList(),
+        mock_pid: mock.mockPid ?? mock.upstreamStats?.pid ?? null,
+        mock_process: "separate",
+        upstream_latency_ms: upstreamLatency,
+      },
+      p999_status: p999Status,
       client_diagnostics: {
         http_connects_total: streamableHttpConnects,
         http_agent: {
@@ -2845,6 +3003,8 @@ async function main() {
           .sort((a, b) => b.duration_ms - a.duration_ms)
           .slice(0, 20),
         client_slow_ms_threshold: Number(process.env.MT_CLIENT_SLOW_MS || 0) || 0,
+        client_pid: process.pid,
+        client_cpus_allowed: readCpusAllowedList(),
       },
       // ClawQL→catalog mock (equal-arm upstream). tcp_connects≈requests ⇒ no keep-alive on that leg.
       upstream_diagnostics: {
@@ -2853,6 +3013,10 @@ async function main() {
         reused_sockets: mock.upstreamStats?.reused_sockets ?? 0,
         new_socket_requests: mock.upstreamStats?.new_socket_requests ?? 0,
         max_handle_ms: mock.upstreamStats?.max_handle_ms ?? 0,
+        max_latency_inject_ms: mock.upstreamStats?.max_latency_inject_ms ?? 0,
+        pid: mock.upstreamStats?.pid ?? mock.mockPid ?? null,
+        process: mock.upstreamStats?.process ?? "separate",
+        latency: mock.upstreamStats?.latency ?? null,
         slow_top: [...(mock.upstreamStats?.slow_top || [])]
           .sort((a, b) => b.handle_ms - a.handle_ms)
           .slice(0, 20),
@@ -2864,7 +3028,7 @@ async function main() {
           (process.env.CLAWQL_UPSTREAM_KEEPALIVE ?? "").trim().toLowerCase()
         ),
         note:
-          "Mock-side accept/handle. Pair with [clawql-upstream-fetch] on ClawQL stderr when CLAWQL_UPSTREAM_FETCH_DIAG=1. " +
+          "Separate-process mock accept/handle. Pair with [clawql-upstream-fetch] on ClawQL stderr when CLAWQL_UPSTREAM_FETCH_DIAG=1. " +
           "On Node 22 http.globalAgent.keepAlive defaults true — tcp_connects≈1 is expected even without CLAWQL_UPSTREAM_KEEPALIVE.",
       },
       config: {
@@ -2877,6 +3041,8 @@ async function main() {
         arms: ARMS,
         tokenizer: "cl100k_base",
         progress_every: PROGRESS_EVERY,
+        mt_pin_cores: CORE_LAYOUT.enabled,
+        mt_upstream_latency_ms: upstreamLatency,
         runtime_flags: {
           clawql_node_max_old_space_mb: runtimeFlags.nodeMaxOldSpaceMb || null,
           clawql_bun_smol: runtimeFlags.bunSmol,
@@ -2950,17 +3116,28 @@ async function main() {
         "ContextForge/MetaMCP off publish board by default.",
         "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",
         "RSS is a loss among serious arms — admit plainly. Classify Executor v2 climb via rss_trend before 'Nx heavier' headlines.",
+        `p999 STATUS: ${p999Status.status} — ${p999Status.label}. ${p999Status.publish}`,
+        `CORE LAYOUT: enabled=${CORE_LAYOUT.enabled} nproc=${CORE_LAYOUT.nproc} mock=${CORE_LAYOUT.mock_cpus ?? "unpinned"} gateway=${CORE_LAYOUT.gateway_cpus ?? "unpinned"} client=${CORE_LAYOUT.client_cpus ?? "unpinned"}. Mock is a separate process (not the client event loop).`,
+        upstreamLatency
+          ? `MT_UPSTREAM_LATENCY_MS=${upstreamLatency} — realistic upstream delay injected in mock (post-isolation follow-up arm).`
+          : "MT_UPSTREAM_LATENCY_MS unset — mock responds ASAP (isolation board). Optional 20-100ms arm after tails republish.",
       ],
     };
 
     await writeFile(OUT_PATH, JSON.stringify(report, null, 2));
     console.log(`\n[mt] wrote ${OUT_PATH}`);
+    console.log(`[mt] p999_status=${p999Status.status} — ${p999Status.label}`);
     console.log(
       `\n=== Multi-turn board (iters=${ITERS} × turns=${TURNS}) — tokens + latency + RSS + task_success ===\n`
     );
+    const p999Clear = p999Status.status === "isolated_remeasure";
+    const p999Hdr = p999Clear ? "p999" : "p999†";
     console.log(
-      "arm | L1 | mean L2 | combined@N | result tok | RPCs/turn | ms/call p50 | flow e2e p50/p999 | turn p50/p999 | RSS med | task_success"
+      `arm | L1 | mean L2 | combined@N | result tok | RPCs/turn | ms/call p50 | flow e2e p50/${p999Hdr} | turn p50/${p999Hdr} | RSS med | task_success`
     );
+    if (!p999Clear) {
+      console.log(`† ${p999Status.label} — publish medians/tokens/memory; not p999 headlines.`);
+    }
     for (const [id, b] of Object.entries(board)) {
       if (b.skipped) {
         console.log(`${id} | SKIP ${b.reason?.slice(0, 60)}`);
