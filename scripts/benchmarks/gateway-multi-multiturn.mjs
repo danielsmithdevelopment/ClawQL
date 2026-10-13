@@ -56,10 +56,14 @@
  *
  * MT_CLAWQL_SKIP_SEARCH=1 forces skip-search for all ClawQL arms (or use *_known arm ids).
  *
- * Process isolation (stall-memory-round8 — required for honest p999):
+ * Process isolation (stall-memory-round8/9 — required for honest p999):
  *   Catalog mock runs in a **separate** Node process (not the client event loop).
- *   MT_PIN_CORES=1 pins mock / gateway / client to distinct CPUs via taskset
- *   (needs ≥3 online CPUs; layout recorded on the board as core_layout).
+ *   MT_PIN_CORES=1 pins mock / gateway / client via taskset (recorded as core_layout).
+ *   Default on ≥4 CPUs: mock=0, gateway=1-2 (two cores — JS needs room for
+ *   V8/JSC helper threads), client=3. On 3 CPUs: one core each (JS-hostile).
+ *   Override with MT_MOCK_CPUS / MT_GATEWAY_CPUS / MT_CLIENT_CPUS.
+ *   MT_NODE_SINGLE_THREADED=1 — diagnostic Node --single-threaded --single-threaded-gc
+ *   (not a production setting; tests helper-thread contention on 1-core pins).
  *   MT_UPSTREAM_LATENCY_MS=N or min-max (e.g. 20-100) injects mock delay.
  *
  * Note: do NOT put a hand-written slim-return program on the publish board as
@@ -415,7 +419,37 @@ function killProcessGroup(child, signal = "SIGTERM") {
   }
 }
 
-/** @returns {{ enabled: boolean, nproc: number, mock_cpus: string|null, gateway_cpus: string|null, client_cpus: string|null, note: string }} */
+/** Count logical CPUs in a taskset -c list (e.g. "1-2", "0,2,4-5"). */
+function countCpuList(spec) {
+  if (!spec) return 0;
+  let n = 0;
+  for (const part of String(spec).split(",")) {
+    const t = part.trim();
+    if (!t) continue;
+    const m = t.match(/^(\d+)-(\d+)$/);
+    if (m) {
+      const a = Number(m[1]);
+      const b = Number(m[2]);
+      if (Number.isFinite(a) && Number.isFinite(b) && b >= a) n += b - a + 1;
+    } else if (/^\d+$/.test(t)) {
+      n += 1;
+    }
+  }
+  return n;
+}
+
+/**
+ * @returns {{
+ *   enabled: boolean,
+ *   nproc: number,
+ *   mock_cpus: string|null,
+ *   gateway_cpus: string|null,
+ *   client_cpus: string|null,
+ *   gateway_cpu_count: number,
+ *   layout_mode: string,
+ *   note: string
+ * }}
+ */
 function resolveCoreLayout() {
   const nproc = cpus()?.length || 0;
   const want = ["1", "true", "yes"].includes((process.env.MT_PIN_CORES ?? "").trim().toLowerCase());
@@ -429,6 +463,8 @@ function resolveCoreLayout() {
       mock_cpus: null,
       gateway_cpus: null,
       client_cpus: null,
+      gateway_cpu_count: 0,
+      layout_mode: "unpinned",
       note: "MT_PIN_CORES off — mock is still a separate process; CPUs may share.",
     };
   }
@@ -439,18 +475,48 @@ function resolveCoreLayout() {
       mock_cpus: null,
       gateway_cpus: null,
       client_cpus: null,
+      gateway_cpu_count: 0,
+      layout_mode: "skipped_nproc",
       note: `MT_PIN_CORES requested but nproc=${nproc}<3 — pinning skipped (would still contend).`,
     };
+  }
+  // Prefer 2 cores for the gateway: V8/JSC helper threads (concurrent GC +
+  // background compile) contend with the main thread on a 1-core pin.
+  // Production deploys almost always have ≥2 vCPUs — fairer equal-arm layout.
+  let mockCpus = mock;
+  let gatewayCpus = gateway;
+  let clientCpus = client;
+  let layoutMode = "custom";
+  if (!mock && !gateway && !client) {
+    if (nproc >= 4) {
+      mockCpus = "0";
+      gatewayCpus = "1-2";
+      clientCpus = "3";
+      layoutMode = "gateway_2core";
+    } else {
+      mockCpus = "0";
+      gatewayCpus = "1";
+      clientCpus = "2";
+      layoutMode = "gateway_1core_nproc3";
+    }
+  } else {
+    mockCpus = mock || "0";
+    gatewayCpus = gateway || (nproc >= 4 ? "1-2" : "1");
+    clientCpus = client || (nproc >= 4 ? "3" : "2");
+    layoutMode = countCpuList(gatewayCpus) >= 2 ? "gateway_2core_override" : "gateway_1core_override";
   }
   const layout = {
     enabled: true,
     nproc,
-    mock_cpus: mock || "0",
-    gateway_cpus: gateway || "1",
-    client_cpus: client || "2",
+    mock_cpus: mockCpus,
+    gateway_cpus: gatewayCpus,
+    client_cpus: clientCpus,
+    gateway_cpu_count: countCpuList(gatewayCpus),
+    layout_mode: layoutMode,
     note:
       "Dedicated CPU lists for mock / gateway / client (taskset -c). " +
-      "Requires enough cores that roles do not overlap.",
+      "Gateway defaults to 2 cores when nproc≥4 so JS helper threads are not starved. " +
+      "Roles must not overlap.",
   };
   return layout;
 }
@@ -515,7 +581,12 @@ function clawqlLatencyRuntimeFlags() {
   const httpMetrics = ["1", "true", "yes"].includes(
     (process.env.CLAWQL_ENABLE_HTTP_METRICS ?? "0").trim().toLowerCase()
   );
-  return { nodeMaxOldSpaceMb, bunSmol, httpSkipGraphql, httpMetrics };
+  // Diagnostic only — reduces V8 background compile + concurrent GC threads.
+  // Use with a 1-core gateway pin to test helper-thread contention (round 9).
+  const nodeSingleThreaded = ["1", "true", "yes"].includes(
+    (process.env.MT_NODE_SINGLE_THREADED ?? "").trim().toLowerCase()
+  );
+  return { nodeMaxOldSpaceMb, bunSmol, httpSkipGraphql, httpMetrics, nodeSingleThreaded };
 }
 
 function resolveClawqlJsRuntime(runtime = "node", { entry = "stdio" } = {}) {
@@ -536,10 +607,15 @@ function resolveClawqlJsRuntime(runtime = "node", { entry = "stdio" } = {}) {
       flags,
     };
   }
-  const args =
-    flags.nodeMaxOldSpaceMb > 0
-      ? [`--max-old-space-size=${flags.nodeMaxOldSpaceMb}`, server]
-      : [server];
+  const args = [];
+  if (flags.nodeMaxOldSpaceMb > 0) {
+    args.push(`--max-old-space-size=${flags.nodeMaxOldSpaceMb}`);
+  }
+  if (flags.nodeSingleThreaded) {
+    // V8: disable background tasks + background GC (diagnosis, not production).
+    args.push("--single-threaded", "--single-threaded-gc");
+  }
+  args.push(server);
   return {
     runtime: "node",
     runtimeVersion: process.version,
@@ -2779,10 +2855,14 @@ async function main() {
   );
   console.log(`[mt] equal-arm fat≈${fatTok} tok slim(fields)≈${slimTok} tok (partition 1)`);
   console.log(
-    `[mt] core_layout enabled=${CORE_LAYOUT.enabled} nproc=${CORE_LAYOUT.nproc} ` +
-      `mock=${CORE_LAYOUT.mock_cpus ?? "-"} gateway=${CORE_LAYOUT.gateway_cpus ?? "-"} ` +
+    `[mt] core_layout enabled=${CORE_LAYOUT.enabled} mode=${CORE_LAYOUT.layout_mode} nproc=${CORE_LAYOUT.nproc} ` +
+      `mock=${CORE_LAYOUT.mock_cpus ?? "-"} gateway=${CORE_LAYOUT.gateway_cpus ?? "-"}` +
+      `(${CORE_LAYOUT.gateway_cpu_count || 0}c) ` +
       `client=${CORE_LAYOUT.client_cpus ?? "-"} allowed=${readCpusAllowedList() ?? "-"} — ${CORE_LAYOUT.note}`
   );
+  if (clawqlLatencyRuntimeFlags().nodeSingleThreaded) {
+    console.log(`[mt] MT_NODE_SINGLE_THREADED=1 — Node --single-threaded --single-threaded-gc (diagnostic)`);
+  }
   if (process.env.MT_UPSTREAM_LATENCY_MS) {
     console.log(`[mt] MT_UPSTREAM_LATENCY_MS=${process.env.MT_UPSTREAM_LATENCY_MS}`);
   }
@@ -3055,11 +3135,13 @@ async function main() {
           clawql_bun_smol: runtimeFlags.bunSmol,
           clawql_http_skip_graphql: runtimeFlags.httpSkipGraphql,
           clawql_enable_http_metrics: runtimeFlags.httpMetrics,
+          mt_node_single_threaded: runtimeFlags.nodeSingleThreaded,
           note:
             "Applied evenly to all ClawQL arms (stdio / Streamable HTTP / gRPC). " +
             "Override with CLAWQL_NODE_MAX_OLD_SPACE_MB=0 or CLAWQL_BUN_SMOL=0 for defaults-only. " +
             "CLAWQL_SEARCH_COMPACT=1 and CLAWQL_HTTP_SKIP_PAYMENTS=1 are bench defaults " +
-            "(compact search gated for product; payments/network routes skipped for slim RSS).",
+            "(compact search gated for product; payments/network routes skipped for slim RSS). " +
+            "MT_NODE_SINGLE_THREADED is diagnostic only (V8 helper-thread contention test).",
         },
       },
       equal_arm: {
