@@ -15,6 +15,12 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { pruneOrphanJsonStreamMappings } from "./prune-json-stream-mappings.js";
 import { benchStatsEnabled, collectMcpBenchStats } from "./mcp-bench-stats.js";
+import {
+  CLAWQL_PARSE_T0_ISO,
+  installHttpParseTiming,
+  parseToHandlerQueueMs,
+  type IncomingMessageWithParseTiming,
+} from "./mcp-http-parse-timing.js";
 import { resolveSessionIdleMs, startSessionIdleWatcher } from "./mcp-session-idle.js";
 import { installTimerTrace } from "./mcp-timer-trace.js";
 import { createRegisteredMcpServer } from "../mcp/mcp-server-factory.js";
@@ -241,6 +247,8 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   const transports = new Map<string, StreamableHTTPServerTransport>();
   const sessionIdleMs = Effect.runSync(resolveSessionIdleMs());
   const sessionIdle = Effect.runSync(startSessionIdleWatcher(transports, sessionIdleMs));
+  // Stamp parse-complete on IncomingMessage for parse→handler queue_ms (stall class split).
+  Effect.runSync(installHttpParseTiming());
 
   const app = createClawqlMcpExpressApp({
     host: options.host || process.env.MCP_HOST || "0.0.0.0",
@@ -695,9 +703,17 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       ["1", "true", "yes"].includes((process.env.CLAWQL_HTTP_TIMING ?? "").trim().toLowerCase());
     const tRoute0 = timingOn ? performance.now() : 0;
     const tRouteIso = timingOn ? new Date().toISOString() : "";
+    const queueMs = timingOn
+      ? Effect.runSync(parseToHandlerQueueMs(req as IncomingMessageWithParseTiming, tRoute0))
+      : null;
+    const parseT0Iso = timingOn
+      ? ((req as IncomingMessageWithParseTiming)[CLAWQL_PARSE_T0_ISO] ?? "-")
+      : "-";
     if (timingOn && !res.headersSent) {
       // Echo request start so the client can compare without log merges.
       res.setHeader("x-clawql-server-t0", tRouteIso);
+      if (parseT0Iso !== "-") res.setHeader("x-clawql-parse-t0", parseT0Iso);
+      if (queueMs != null) res.setHeader("x-clawql-queue-ms", queueMs.toFixed(3));
     }
     const logSlowRoute = (phase: string) => {
       if (!timingOn) return;
@@ -707,7 +723,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       } else {
         // Headers already flushed by Streamable HTTP — still log for client correlation.
       }
-      if (slowMs <= 0 || dt < slowMs) return;
+      // Log when handler is slow OR parse→handler queue is material (pre-handler class).
+      const queueSlow = queueMs != null && slowMs > 0 && queueMs >= slowMs;
+      if (slowMs <= 0 || (dt < slowMs && !queueSlow)) return;
       const body =
         req.body && typeof req.body === "object" && !Array.isArray(req.body)
           ? (req.body as {
@@ -722,7 +740,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           : "-";
       console.error(
         `[clawql-http-slow] ${dt.toFixed(1)}ms phase=${phase} method=${method} tool=${tool} ` +
-          `t0=${tRouteIso} t1=${new Date().toISOString()} session=${req.header("mcp-session-id") ?? "-"}`
+          `t0=${tRouteIso} t1=${new Date().toISOString()} ` +
+          `parse_t0=${parseT0Iso} queue_ms=${queueMs != null ? queueMs.toFixed(1) : "-"} ` +
+          `session=${req.header("mcp-session-id") ?? "-"}`
       );
     };
     const protocolVersion = resolveHttpMcpProtocolVersion(req.header("mcp-protocol-version"));

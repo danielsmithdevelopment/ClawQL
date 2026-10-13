@@ -707,13 +707,16 @@ function fetchSkipStandaloneSse(baseFetch = undiciFetch) {
         const url = typeof input === "string" ? input : input?.url || String(input);
         const serverMs = res?.headers?.get?.("x-clawql-server-ms") ?? "-";
         const serverT0 = res?.headers?.get?.("x-clawql-server-t0") ?? "-";
+        const parseT0 = res?.headers?.get?.("x-clawql-parse-t0") ?? "-";
+        const queueMs = res?.headers?.get?.("x-clawql-queue-ms") ?? "-";
         const holdMs =
           ttfbMs != null && completeMs != null ? Number((completeMs - ttfbMs).toFixed(1)) : null;
         console.error(
           `[mt-client-slow] ${dt.toFixed(1)}ms ${method} ${url} t0=${t0Iso} t1=${new Date().toISOString()} ` +
             `ttfb_ms=${ttfbMs != null ? ttfbMs.toFixed(1) : "-"} complete_ms=${completeMs != null ? completeMs.toFixed(1) : "-"} ` +
             `hold_ms=${holdMs ?? "-"} content_type=${contentType} body_bytes=${bodyBytes} ` +
-            `server_ms=${serverMs} server_t0=${serverT0} connects_delta=${streamableHttpConnects - connectsBefore} ` +
+            `server_ms=${serverMs} server_t0=${serverT0} parse_t0=${parseT0} queue_ms=${queueMs} ` +
+            `connects_delta=${streamableHttpConnects - connectsBefore} ` +
             `connects_total=${streamableHttpConnects}`
         );
       }
@@ -1003,6 +1006,7 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     "CLAWQL_UPSTREAM_FETCH_SLOW_MS",
     "CLAWQL_NATIVE_FETCH",
     "CLAWQL_UPSTREAM_KEEPALIVE",
+    "CLAWQL_HTTP_PARSE_TIMING",
     "UV_THREADPOOL_SIZE",
     "BUN_JSC_forceRAMSize",
     "BUN_JSC_useJIT",
