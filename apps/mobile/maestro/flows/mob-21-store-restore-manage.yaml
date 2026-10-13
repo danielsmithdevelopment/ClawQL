@@ -1,0 +1,20 @@
+# MOB-21 — Restore purchases + manage subscriptions affordance (fixture)
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- assertVisible:
+    id: "profile-plan-billing"
+- tapOn:
+    id: "profile-subscribe-pro"
+- assertVisible:
+    id: "profile-plan-label"
+- tapOn:
+    id: "profile-restore-purchases"
+- assertVisible:
+    id: "profile-manage-subscriptions"
+- assertVisible:
+    id: "profile-plan-mode"

@@ -1,6 +1,6 @@
 /**
- * Mobile E2E catalog (MOB-*) — Maestro on simulator/emulator.
- * Kept separate from the dashboard cloud catalog (197 scenarios) so assertCatalogComplete stays stable.
+ * Mobile E2E catalog (MOB-*) — Maestro on simulator/emulator (+ CI web Playwright).
+ * Kept separate from the dashboard cloud catalog (202 scenarios) so assertCatalogComplete stays stable.
  * REV-13 / UX-09 remain Manual (physical YubiKey NFC).
  */
 
@@ -155,6 +155,27 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-20-store-subscribe-sandbox.yaml",
   },
   {
+    id: "MOB-21",
+    run: "Maestro",
+    title: "Restore purchases and manage-subscriptions affordance",
+    passWhen: "After Pro sandbox subscribe, Restore and Manage in App Store / Play are visible",
+    flow: "maestro/flows/mob-21-store-restore-manage.yaml",
+  },
+  {
+    id: "MOB-22",
+    run: "Maestro",
+    title: "Face ID / Touch ID App Lock labels and unlock",
+    passWhen: "Bio capability shown; Lock now → Unlock with Face ID fixture returns to Profile",
+    flow: "maestro/flows/mob-22-faceid-app-lock-labels.yaml",
+  },
+  {
+    id: "MOB-23",
+    run: "Maestro",
+    title: "Spend free-plan upgrade CTA opens Profile billing",
+    passWhen: "Spend shows upgrade CTA; View plan & billing lands on Profile Plan & billing",
+    flow: "maestro/flows/mob-23-spend-upgrade-cta.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',
@@ -167,3 +188,17 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     passWhen: "Approved; audit records phone and key",
   },
 ];
+
+export function assertMobileCatalogComplete(): void {
+  const maestro = MOBILE_SCENARIOS.filter((s) => s.run === "Maestro");
+  const manual = MOBILE_SCENARIOS.filter((s) => s.run === "Manual");
+  if (maestro.length !== 23) {
+    throw new Error(`Expected 23 Maestro MOB scenarios, got ${maestro.length}`);
+  }
+  if (manual.length !== 2) {
+    throw new Error(`Expected 2 Manual scenarios (REV-13, UX-09), got ${manual.length}`);
+  }
+  for (const s of maestro) {
+    if (!s.flow) throw new Error(`${s.id} missing flow path`);
+  }
+}
