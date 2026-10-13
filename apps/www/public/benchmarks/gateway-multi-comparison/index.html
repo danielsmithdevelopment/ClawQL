@@ -250,14 +250,69 @@
       <li>Artifact: <a href="./gateway-multi-multiturn-publish-all-arms-10k.json">gateway-multi-multiturn-publish-all-arms-10k.json</a> (one interleaved run — preferred for a single publish table).</li>
     </ul>
 
+    <h3>First session vs known-op (steady state)</h3>
+    <p>
+      A known operation means the agent already has its ID — earlier search, skill, or memory.
+      Real sessions fall between these two paths. Artifact:
+      <a href="./gateway-multi-multiturn-targets-http-peers-10k.json">targets-http-peers-10k.json</a>
+      (Bun HTTP, flags ON).
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Path</th><th>Combined @12</th><th>Rebuild</th><th>RPCs</th>
+          <th>Flow p50 / <strong>p999</strong></th><th>RSS</th><th>Targets</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>First session (search→execute)</td>
+          <td><strong>12,390</strong></td>
+          <td>308 + 3,408 + 8,674</td>
+          <td>2</td>
+          <td>29.7 / <strong>520</strong></td>
+          <td>317</td>
+          <td>tok ✓ · p50/p999/rss ✗</td>
+        </tr>
+        <tr class="hl">
+          <td>Known-op (execute by ID)</td>
+          <td><strong>8,863</strong></td>
+          <td>189 + 0 + 8,674</td>
+          <td>1</td>
+          <td><strong>15.6 / 169</strong></td>
+          <td>311</td>
+          <td><strong>tok ✓ p50 ✓ p999 ✓</strong> · rss ✗</td>
+        </tr>
+        <tr><td>MCPJungle</td><td>35,322</td><td>5,840 + 0 + 29,482</td><td>1</td><td>14.8 / 132</td><td><strong>153</strong></td><td>—</td></tr>
+        <tr><td>agentgateway</td><td>35,002</td><td>5,520 + 0 + 29,482</td><td>1</td><td>15.2 / 181</td><td>212</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <p class="meta">
+      Known-op is <strong>108</strong> tokens below classic defs + results (297 + 8,674 = 8,971):
+      Layer1 shrinks from search+execute (<strong>297</strong>) to execute-only (<strong>189</strong>).
+      Discovery is already 0; results unchanged. Compact search (<code>CLAWQL_SEARCH_COMPACT=1</code>) is a
+      <strong>benchmark setting</strong> until routing eval clears it as product default — it cuts discovery 11,568 → 3,408 on the first-session path.
+      Known-op vs MCPJungle: 35,322 ÷ 8,863 ≈ <strong>4×</strong> fewer tokens; median 0.8 ms behind (15.6 vs 14.8).
+    </p>
+    <div class="callout">
+      <strong>Video line (after memory work + merge — one clean render):</strong>
+      when operations repeat, ClawQL matches the Go and Rust gateways’ session speed with about 4× fewer tokens, and governs every call.
+    </div>
+    <p class="meta">
+      Search vs execute split (same Bun HTTP first-session path): per-call p999 is 3.6 ms (search) / 4.8 ms (execute);
+      flow p999 (~450 ms) is rare ~500 ms spikes on <em>either</em> RPC (7 search / 11 execute among turns ≥100 ms), not sustained search scoring.
+      Artifact: <a href="./gateway-multi-multiturn-search-exec-split-10k.json">search-exec-split-10k.json</a>.
+      Bun RSS ~310 MB after lazy-importing unused payments/network/GraphQL — baseline runtime + core modules; optional packages are already off the map.
+    </p>
+
     <h3>Where ClawQL’s next token win is</h3>
     <p>
-      Discovery is <strong>11,568</strong> tokens —
-      56% of ClawQL’s combined total — about 964 search tokens/turn, larger than projected tool results (~723/turn). Projection already won Layer2; discovery is the next lever (no change to functionality):
+      Discovery is <strong>11,568</strong> tokens on the classic first-session board —
+      56% of that combined total — about 964 search tokens/turn, larger than projected tool results (~723/turn). Projection already won Layer2; discovery is the next lever (no change to functionality):
     </p>
     <ul>
-      <li><strong>Leaner search results</strong> — return compact typed signatures for top matches, not fuller entries. ~300 tok/turn (vs ~964) would cut ~8 000 from the 12-turn total.</li>
-      <li><strong>Skip search when the agent already knows the operation</strong> — allow <code>execute</code> by operation ID directly when the same ops recur across turns, and measure how often the flow repeats operations.</li>
+      <li><strong>Leaner search results</strong> — compact typed signatures (<strong>bench setting</strong> today via <code>CLAWQL_SEARCH_COMPACT</code>). ~284 tok/turn measured under compact → first-session combined <strong>12,390</strong>.</li>
+      <li><strong>Skip search when the agent already knows the operation</strong> — known-op path above (1 RPC/turn); measure op-repeat rate in real sessions.</li>
     </ul>
 
     <h2>2. Cost of the gateway — latency &amp; memory</h2>

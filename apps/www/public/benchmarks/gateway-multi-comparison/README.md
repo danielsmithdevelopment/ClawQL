@@ -233,24 +233,46 @@ Artifacts: [`flags-ab-http-peers-verdict.md`](./flags-ab-http-peers-verdict.md),
 
 **Keep** Node `--max-old-space-size=512` and Bun `--smol` — they improve tails and Node RSS. GC/ELD logs barely overlap slow flows (near-zero), so the earlier 200→461 p999 jump was **not** explained by those flags.
 
-#### 2–3. Known-op + compact search (targets board)
+#### 2–3. First session vs known-op (steady state)
 
-Artifact: [`gateway-multi-multiturn-targets-http-peers-10k.json`](./gateway-multi-multiturn-targets-http-peers-10k.json) (Bun HTTP, flags ON, `CLAWQL_SEARCH_COMPACT=1` bench default).
+A known operation means the agent already has its ID — from an earlier search, a skill, or memory. Real sessions sit between the two paths below, depending on how often operations repeat. Present them as a **pair**, not a single headline.
 
-| Arm | Combined | RPCs | flow p50 / p999 | RSS | Targets |
-| --- | ---: | ---: | ---: | ---: | --- |
-| Bun HTTP search+execute (compact) | **12 390** | 2 | 29.7 / 520 | 317 | tok ✓ · p50/p999/rss ✗ |
-| **Bun HTTP known-op** | **8 863** | **1** | **15.6 / 169** | 311 | **tok ✓ p50 ✓ p999 ✓** · rss ✗ |
-| MCPJungle | 35 322 | 1 | 14.8 / 132 | **153** | — |
-| agentgateway | 35 002 | 1 | 15.2 / 181 | 212 | — |
+Artifact: [`gateway-multi-multiturn-targets-http-peers-10k.json`](./gateway-multi-multiturn-targets-http-peers-10k.json) (Bun HTTP, flags ON).
 
-Product already accepts `execute({ operationId })` without searching. Compact search (`CLAWQL_SEARCH_COMPACT`) drops discovery **11 568 → 3 408**; gate product default on routing eval.
+| Path | What it models | Combined @12 | Rebuild (defs + Σ disc + Σ res) | RPCs/turn | flow p50 / p999 | RSS | Targets |
+| --- | --- | ---: | --- | ---: | ---: | ---: | --- |
+| **First session** (search → execute) | Cold agent; must discover | **12 390** | **308 + 3 408 + 8 674** | 2 | 29.7 / 520 | 317 | tok ✓ · p50/p999/rss ✗ |
+| **Known-op** (execute by ID) | Steady state; ID already known | **8 863** | **189 + 0 + 8 674** | **1** | **15.6 / 169** | 311 | **tok ✓ p50 ✓ p999 ✓** · rss ✗ |
+| MCPJungle | Peer (1 RPC) | 35 322 | 5 840 + 0 + 29 482 | 1 | 14.8 / 132 | **153** | — |
+| agentgateway | Peer (1 RPC) | 35 002 | 5 520 + 0 + 29 482 | 1 | 15.2 / 181 | 212 | — |
 
-**Video path when ops repeat:** known-op — matches Go/Rust session speed, **~4× fewer tokens** than MCPJungle, governance intact.
+**Known-op rebuild (why not 297 + 8 674):** classic Layer1 on the primary board is **297** (search + execute schemas). Known-op only loads **execute** → Layer1 **189**. So 297 + 8 674 = 8 971, and measured **8 863** is **108** below that — exactly the search tool schema dropped from context (297 − 189). Discovery is already 0; results are unchanged (8 674). On this targets board Layer1 is 308 for the compact first-session path (search schema text differs slightly under the bench compact envelope); the 108 figure anchors to the familiar classic **297**.
 
-#### 4. Memory (&lt;200 MB) — still open
+**Compact search is a benchmark setting**, not the product default. Harness sets `CLAWQL_SEARCH_COMPACT=1` (`clawql-bench-env.mjs`) so discovery drops **11 568 → 3 408**. Keep it gated until the routing evaluation clears it for product.
 
-Bun HTTP RSS ~311 MB with flags. Heap snapshot after warm-up is next (parsed specs, unused modules, audit ring, tracing).
+Known-op vs MCPJungle: **35 322 ÷ 8 863 ≈ 4.0×** fewer tokens; flow median **0.8 ms** behind (15.6 vs 14.8). Three targets hit on the steady-state path.
+
+**Video line (after memory + merge — single clean render):** when operations repeat, ClawQL matches the Go and Rust gateways’ session speed with about **4× fewer tokens**, and governs every call.
+
+#### Search vs execute p999 (first-session path)
+
+Artifact: [`gateway-multi-multiturn-search-exec-split-10k.json`](./gateway-multi-multiturn-search-exec-split-10k.json) (Bun HTTP, flags ON, compact search, n=10 000).
+
+| Call | p50 | p999 | max | n ≥100 ms |
+| --- | ---: | ---: | ---: | ---: |
+| **search** | 0.99 | **3.6** | 567 | 7 |
+| **execute** | 1.32 | **4.8** | 566 | 11 |
+| flow e2e (12 turns) | 29.4 | **450** | 611 | — |
+
+Steady per-call p999 is fine (&lt;5 ms). Flow p999 is rare single-RPC spikes (~500 ms) on **either** call — of 18 turns ≥100 ms, **search owned 7 / execute owned 11**. GC correlation still empty. So the remaining tail is not “search scoring every request”; it is infrequent event-loop / scheduling stalls that can land on whichever RPC is in flight. Known-op (execute-only) still wins session p999 (**130 ms** on this split board) by removing the second RPC and half the spike surface.
+
+#### 4. Memory (&lt;200 MB) — baseline, not reclaimable GC
+
+Bun HTTP RSS ~311–317 MB **with and without** `--smol` (flags A/B). Node dropped 686 → 384 MB with the heap cap; Bun did not — so on Bun the budget is **loaded code / modules / runtime**, not garbage the collector could free.
+
+**Lazy-import pass (this branch):** HTTP no longer statically loads payments / network / GraphQL / HITL / webhooks / gRPC / chatgpt / inference / ouroboros at listen. Bench sets `CLAWQL_HTTP_SKIP_PAYMENTS=1` (also skips payments proxy plugins in `clawql-api-adapters`). `/proc/maps` confirms `clawql-payments`, `viem`, `mcp-grpc`, `graphql` are **unmapped** under that flag — but Ready RSS stays ~**306–312 MB**.
+
+Bun `--smol` RSS ladder (same host): empty **13** → express **37** → effect **40** → MCP SDK **39** → `clawql-api` **88** → `import(server-http)` **165** → listen+warm Ready **~310**. Next cut has to shrink **core** (composition after import + catalog), not optional packages.
 
 ```bash
 # Publish board — every arm, one interleaved process

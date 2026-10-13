@@ -13,7 +13,6 @@ import {
 } from "@modelcontextprotocol/sdk/server/middleware/hostHeaderValidation.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
 import { pruneOrphanJsonStreamMappings } from "./prune-json-stream-mappings.js";
 import { createRegisteredMcpServer } from "../mcp/mcp-server-factory.js";
 import { runWithMcpRequestContext } from "../mcp/mcp-request-context.js";
@@ -25,7 +24,6 @@ import {
 } from "clawql-api";
 import { getClawqlApi } from "../composition/clawql-api-adapters.js";
 import { preloadSchemaFieldCacheFromDisk } from "../mcp/tools.js";
-import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
 import {
   buildHttpDiscoverResponse,
   isDiscoverJsonRpc,
@@ -33,14 +31,12 @@ import {
   resolveHttpMcpProtocolVersion,
   shouldUseStatelessHttpTransport,
 } from "../mcp/mcp-http-protocol.js";
-import { chatgptExtensionsDiscoverFragment } from "clawql-chatgpt-extensions";
 import {
   handleMcpEventsJsonRpc,
   isMcpEventsEnabledSync,
   isMcpEventsJsonRpc,
   McpEventsServiceLive,
 } from "clawql-mcp-events";
-import { getObsidianVaultPath } from "clawql-memory/vault/config";
 import {
   getVaultStartupStatus,
   validateOrDegradeObsidianVaultAtStartup,
@@ -49,14 +45,7 @@ import { type ClawqlOptionalToolFlags } from "clawql-api";
 import { resolvePluginCompositionFlags } from "../composition/resolve-plugin-flags.js";
 import { getNativeProtocolMetricsSnapshot, nativeProtocolMetricsEnabled } from "clawql-api";
 import { httpMetricsEnabledForHttp, renderPrometheusMetrics } from "clawql-api";
-import { maybeInitOtelTracing } from "../observability/otel-tracing.js";
 import { maybeVerifyReleaseManifestAtStartup } from "../host/release-manifest-startup.js";
-import { handleLabelStudioWebhookRequest } from "clawql-automation/hitl/label-studio";
-import { configureHitlTransportDeps } from "./hitl-transport.js";
-import { handleConeshareWebhookRequest } from "./webhooks/coneshare-webhook.js";
-import { handleNextcloudWebhookRequest } from "./webhooks/nextcloud-webhook.js";
-import { handleIdpPipelineRunRequest } from "./idp-pipeline-run-http.js";
-import { handleLangfuseEvalWebhookRequest } from "./webhooks/langfuse-eval-webhook.js";
 import { createWebhookRateLimiter } from "./webhooks/webhook-rate-limit.js";
 import { createMcpOAuthRateLimiter } from "./mcp-oauth-rate-limit.js";
 import {
@@ -75,23 +64,36 @@ import {
   type McpOAuthRuntime,
 } from "clawql-auth";
 import { Effect } from "effect";
-import { attachCreditsHateoasRoutes, attachProvisioningRoutes } from "clawql-payments";
-import { attachPaymentsWellKnownRoutes } from "clawql-payments/discovery";
-import { attachMppOpenApiRoutes, isMppOpenApiEnabled } from "clawql-payments/mpp";
-import { attachGatewayRegistryRoutes } from "clawql-network";
-import {
-  headersFromExpressRequest,
-  registerMcpX402TransportHooks,
-  runWithMcpX402Context,
-} from "./mcp-x402-transport.js";
-import { isX402EnforcementActive } from "clawql-payments/x402";
 import {
   buildGatewayAuthConfig,
   createInferenceVirtualKeyClaimsResolver,
 } from "../composition/gateway-auth.js";
 
-function resolveChatgptDiscoverExtensions(): Record<string, unknown> | undefined {
+/** Env truthy — keep local so we do not pull clawql-payments just to read a flag. */
+function envFlagOn(name: string, env: NodeJS.ProcessEnv = process.env): boolean {
+  const raw = env[name]?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
+}
+
+/** Mirror of clawql-payments `isX402EnforcementActive` without loading that package. */
+function isX402EnforcementActiveLocal(env: NodeJS.ProcessEnv = process.env): boolean {
+  return envFlagOn("CLAWQL_X402_ENFORCE", env);
+}
+
+/**
+ * Bench / slim MCP surface: skip payments + gateway-registry route trees so Bun/Node
+ * do not load clawql-payments (~tens of MB JS) or clawql-network at startup.
+ * Product default remains attach-on. Set `CLAWQL_HTTP_SKIP_PAYMENTS=1` in equal-arm benches.
+ */
+function skipPaymentsAndNetworkRoutes(env: NodeJS.ProcessEnv = process.env): boolean {
+  return envFlagOn("CLAWQL_HTTP_SKIP_PAYMENTS", env);
+}
+
+async function resolveChatgptDiscoverExtensions(): Promise<
+  Record<string, unknown> | undefined
+> {
   if (!resolvePluginCompositionFlags().enableChatgptExtensions) return undefined;
+  const { chatgptExtensionsDiscoverFragment } = await import("clawql-chatgpt-extensions");
   return chatgptExtensionsDiscoverFragment();
 }
 
@@ -207,8 +209,16 @@ export type CreateMcpHttpAppOptions = {
  * Each call uses a fresh session transport map (safe for parallel tests).
  */
 export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): Promise<Express> {
-  configureHitlTransportDeps();
-  registerMcpX402TransportHooks();
+  // HITL / x402 hooks pull clawql-automation + clawql-payments — only wire when enabled.
+  const earlyFlags = options.optionalFlagsSnapshot ?? resolvePluginCompositionFlags();
+  if (earlyFlags.enableHitlLabelStudio) {
+    const { configureHitlTransportDeps } = await import("./hitl-transport.js");
+    configureHitlTransportDeps();
+  }
+  if (isX402EnforcementActiveLocal()) {
+    const { registerMcpX402TransportHooks } = await import("./mcp-x402-transport.js");
+    registerMcpX402TransportHooks();
+  }
   try {
     const { configureMcpEventsProcessEmitter } = await import("../mcp/mcp-events-host.js");
     configureMcpEventsProcessEmitter();
@@ -346,19 +356,27 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       emaAdminAuth.adminApiKey || mcpOAuthRuntime || idJagIssuer ? emaAdminAuth : undefined,
   });
 
-  attachPaymentsWellKnownRoutes(app, { serverName: "ClawQL MCP" });
-  // HTMX forms on /credits/* (invite claim / accept / decline)
-  app.use("/credits", express.urlencoded({ extended: false }));
-  attachCreditsHateoasRoutes(app, { authConfig: gatewayAuthConfig });
-  // Gap A gateway registry HTTP (Bearer CLAWQL_NETWORK_REGISTRY_TOKEN or PUBLIC=1)
-  attachGatewayRegistryRoutes(app, {
-    env: process.env,
-    home: process.env.CLAWQL_HOME?.trim(),
-  });
-  // CPC internal provision / usage (Bearer CLAWQL_CPC_PROVISION_TOKEN; 503 if unset)
-  attachProvisioningRoutes(app);
-  if (isMppOpenApiEnabled(process.env)) {
-    attachMppOpenApiRoutes(app, { serverName: "ClawQL MCP" });
+  if (!skipPaymentsAndNetworkRoutes()) {
+    const { attachPaymentsWellKnownRoutes } = await import("clawql-payments/discovery");
+    const { attachCreditsHateoasRoutes, attachProvisioningRoutes } = await import(
+      "clawql-payments"
+    );
+    const { attachMppOpenApiRoutes, isMppOpenApiEnabled } = await import("clawql-payments/mpp");
+    const { attachGatewayRegistryRoutes } = await import("clawql-network");
+    attachPaymentsWellKnownRoutes(app, { serverName: "ClawQL MCP" });
+    // HTMX forms on /credits/* (invite claim / accept / decline)
+    app.use("/credits", express.urlencoded({ extended: false }));
+    attachCreditsHateoasRoutes(app, { authConfig: gatewayAuthConfig });
+    // Gap A gateway registry HTTP (Bearer CLAWQL_NETWORK_REGISTRY_TOKEN or PUBLIC=1)
+    attachGatewayRegistryRoutes(app, {
+      env: process.env,
+      home: process.env.CLAWQL_HOME?.trim(),
+    });
+    // CPC internal provision / usage (Bearer CLAWQL_CPC_PROVISION_TOKEN; 503 if unset)
+    attachProvisioningRoutes(app);
+    if (isMppOpenApiEnabled(process.env)) {
+      attachMppOpenApiRoutes(app, { serverName: "ClawQL MCP" });
+    }
   }
 
   /**
@@ -449,6 +467,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       (process.env.CLAWQL_HTTP_SKIP_GRAPHQL ?? "").trim().toLowerCase()
     );
   if (!skipGraphql) {
+    const { attachGraphqlHttpToMcpApp } = await import("./graphql-http-attach.js");
     await attachGraphqlHttpToMcpApp(app);
   }
 
@@ -482,6 +501,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     }
     if (process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS?.trim() === "1") {
       try {
+        const { getObsidianVaultPath } = await import("clawql-memory/vault/config");
         const vault = getObsidianVaultPath();
         if (vault) {
           const {
@@ -508,11 +528,14 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     res.json(base);
   });
 
-  const optionalFlags = options.optionalFlagsSnapshot ?? resolvePluginCompositionFlags();
+  const optionalFlags = earlyFlags;
 
   if (optionalFlags.enableHitlLabelStudio) {
     app.post("/hitl/label-studio/webhook", async (req, res) => {
       try {
+        const { handleLabelStudioWebhookRequest } = await import(
+          "clawql-automation/hitl/label-studio"
+        );
         await handleLabelStudioWebhookRequest(req, res);
       } catch (err: unknown) {
         console.error("[clawql-mcp-http] POST /hitl/label-studio/webhook error:", err);
@@ -529,6 +552,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (optionalFlags.enableConeshare) {
     app.post("/idp/coneshare/webhook", createWebhookRateLimiter(), async (req, res) => {
       try {
+        const { handleConeshareWebhookRequest } = await import(
+          "./webhooks/coneshare-webhook.js"
+        );
         await handleConeshareWebhookRequest(req, res);
       } catch (err: unknown) {
         console.error("[clawql-mcp-http] POST /idp/coneshare/webhook error:", err);
@@ -545,6 +571,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (optionalFlags.enableDocuments) {
     app.post("/idp/nextcloud/webhook", createWebhookRateLimiter(), async (req, res) => {
       try {
+        const { handleNextcloudWebhookRequest } = await import(
+          "./webhooks/nextcloud-webhook.js"
+        );
         await handleNextcloudWebhookRequest(req, res);
       } catch (err: unknown) {
         console.error("[clawql-mcp-http] POST /idp/nextcloud/webhook error:", err);
@@ -561,6 +590,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (optionalFlags.enableIdpPipeline) {
     app.post("/idp/pipeline/run", createWebhookRateLimiter(), async (req, res) => {
       try {
+        const { handleIdpPipelineRunRequest } = await import("./idp-pipeline-run-http.js");
         await handleIdpPipelineRunRequest(req, res);
       } catch (err: unknown) {
         console.error("[clawql-mcp-http] POST /idp/pipeline/run error:", err);
@@ -577,6 +607,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (optionalFlags.enableLangfuseEval) {
     app.post("/observability/langfuse/webhook", createWebhookRateLimiter(), async (req, res) => {
       try {
+        const { handleLangfuseEvalWebhookRequest } = await import(
+          "./webhooks/langfuse-eval-webhook.js"
+        );
         await handleLangfuseEvalWebhookRequest(req, res);
       } catch (err: unknown) {
         console.error("[clawql-mcp-http] POST /observability/langfuse/webhook error:", err);
@@ -677,7 +710,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         protocolVersion,
         clientInfo: body.params?.clientInfo,
         clientCapabilities: body.params?.clientCapabilities,
-        extensions: resolveChatgptDiscoverExtensions(),
+        extensions: await resolveChatgptDiscoverExtensions(),
       });
       res.status(200).json({
         jsonrpc: "2.0",
@@ -815,7 +848,11 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
             transport!.handleRequest(req, res, req.body)
           );
         // Skip x402 AsyncLocalStorage + Promise.resolve wrapper when enforcement is off.
-        if (isX402EnforcementActive(process.env)) {
+        if (isX402EnforcementActiveLocal()) {
+          const {
+            headersFromExpressRequest,
+            runWithMcpX402Context,
+          } = await import("./mcp-x402-transport.js");
           await runWithMcpX402Context(headersFromExpressRequest(req), runHandle);
         } else {
           await runHandle();
@@ -845,7 +882,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   });
 
   // Explicit discover endpoint (blog / edge clients).
-  app.post(`${mcpPath}/discover`, applyGatewayAuth, (req, res) => {
+  app.post(`${mcpPath}/discover`, applyGatewayAuth, async (req, res) => {
     const protocolVersion = resolveHttpMcpProtocolVersion(
       req.header("mcp-protocol-version") ?? MCP_PROTOCOL_VERSION_2026_07_28
     );
@@ -859,7 +896,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         protocolVersion,
         clientInfo: body.clientInfo,
         clientCapabilities: body.clientCapabilities,
-        extensions: resolveChatgptDiscoverExtensions(),
+        extensions: await resolveChatgptDiscoverExtensions(),
       })
     );
   });
@@ -886,9 +923,17 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       jsonRpcError(res, "Bad Request: invalid mcp-session-id.");
       return;
     }
-    await runWithMcpX402Context(headersFromExpressRequest(req), () =>
-      runWithMcpRequestContext({ sessionId }, () => transport.handleRequest(req, res))
-    );
+    const handleGet = () =>
+      runWithMcpRequestContext({ sessionId }, () => transport.handleRequest(req, res));
+    if (isX402EnforcementActiveLocal()) {
+      const {
+        headersFromExpressRequest,
+        runWithMcpX402Context,
+      } = await import("./mcp-x402-transport.js");
+      await runWithMcpX402Context(headersFromExpressRequest(req), handleGet);
+    } else {
+      await handleGet();
+    }
   });
 
   app.delete(mcpPath, applyGatewayAuth, async (req, res) => {
@@ -902,9 +947,17 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       jsonRpcError(res, "Bad Request: invalid mcp-session-id.");
       return;
     }
-    await runWithMcpX402Context(headersFromExpressRequest(req), () =>
-      runWithMcpRequestContext({ sessionId }, () => transport.handleRequest(req, res))
-    );
+    const handleDelete = () =>
+      runWithMcpRequestContext({ sessionId }, () => transport.handleRequest(req, res));
+    if (isX402EnforcementActiveLocal()) {
+      const {
+        headersFromExpressRequest,
+        runWithMcpX402Context,
+      } = await import("./mcp-x402-transport.js");
+      await runWithMcpX402Context(headersFromExpressRequest(req), handleDelete);
+    } else {
+      await handleDelete();
+    }
   });
 
   return app;
@@ -997,6 +1050,7 @@ function maybeInstallHttpPerfDiagnostics(): void {
 }
 
 export async function startMcpHttpServer(): Promise<void> {
+  const { maybeInitOtelTracing } = await import("../observability/otel-tracing.js");
   await maybeInitOtelTracing();
   await maybeVerifyReleaseManifestAtStartup();
   registerSpecCacheShutdownHooks();
@@ -1019,9 +1073,14 @@ export async function startMcpHttpServer(): Promise<void> {
   const app = await createMcpHttpApp();
   const { logStartupSummary } = await import("../host/startup-summary.js");
   await logStartupSummary();
-  const grpcPromise = maybeStartGrpcMcpServer({
-    createMcpServer: () => createRegisteredMcpServer(),
-  });
+  // Do not load mcp-grpc-transport (and grpc-js) unless ENABLE_GRPC is on.
+  const grpcPromise = envFlagOn("ENABLE_GRPC")
+    ? import("mcp-grpc-transport").then(({ maybeStartGrpcMcpServer }) =>
+        maybeStartGrpcMcpServer({
+          createMcpServer: () => createRegisteredMcpServer(),
+        })
+      )
+    : Promise.resolve(undefined);
 
   const httpServer = app.listen(PORT, () => {
     const path = process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;

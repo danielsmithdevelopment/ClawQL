@@ -1632,7 +1632,10 @@ async function runClawqlArm(
     let perTurn = null;
     const flowE2e = [];
     const turnLat = [];
+    const searchLat = [];
+    const executeLat = [];
     const slowFlows = [];
+    const slowSearchCalls = [];
     let successOk = 0;
     let successTotal = 0;
     let callErrors = 0;
@@ -1646,16 +1649,32 @@ async function runClawqlArm(
         const t0 = performance.now();
         let searchText = "";
         let execText = "";
+        let searchMs = 0;
+        let executeMs = 0;
         let ok = true;
         try {
           if (!skip) {
+            const tSearch = performance.now();
             const searchRes = await conn.client.callTool({
               name: "search",
               arguments: { query: turn.query, limit: 3 },
             });
+            searchMs = performance.now() - tSearch;
+            searchLat.push(searchMs);
             if (searchRes.isError) throw new Error(`search: ${toolText(searchRes).slice(0, 300)}`);
             searchText = toolText(searchRes);
+            const slowCallMs = Number(process.env.MT_SLOW_CALL_MS || 40) || 40;
+            if (searchMs >= slowCallMs) {
+              slowSearchCalls.push({
+                flow: iter,
+                turn: turn.n,
+                ms: Number(searchMs.toFixed(1)),
+                t_iso: new Date().toISOString(),
+                query: turn.query,
+              });
+            }
           }
+          const tExec = performance.now();
           const execRes = await conn.client.callTool({
             name: "execute",
             arguments: {
@@ -1669,6 +1688,8 @@ async function runClawqlArm(
               fields: turn.fields,
             },
           });
+          executeMs = performance.now() - tExec;
+          executeLat.push(executeMs);
           if (execRes.isError) throw new Error(`execute: ${toolText(execRes).slice(0, 400)}`);
           execText = toolText(execRes);
         } catch (e) {
@@ -1695,6 +1716,8 @@ async function runClawqlArm(
             layer2_classic: searchTok + resultTok,
             layer2_relist_every_turn: searchTok + resultTok,
             latency_ms: Number(ms.toFixed(3)),
+            search_ms: Number(searchMs.toFixed(3)),
+            execute_ms: Number(executeMs.toFixed(3)),
             ok,
             task_success: success,
             skip_search: skip,
@@ -1773,12 +1796,15 @@ async function runClawqlArm(
       iters: ITERS,
       flow_e2e_ms: flowE2e,
       turn_latency_ms: turnLat,
+      search_latency_ms: searchLat,
+      execute_latency_ms: executeLat,
       call_errors: callErrors,
       task_success_agg: { ok: successOk, total: successTotal },
       resources,
       startup: { ready_ms: conn.ready_ms, rss_mb_ready: conn.rss_mb_ready },
       http_perf: httpPerf,
       slow_flows_top: [...slowFlows].sort((a, b) => b.ms - a.ms).slice(0, 20),
+      slow_search_top: [...slowSearchCalls].sort((a, b) => b.ms - a.ms).slice(0, 20),
       slow_flow_gc_correlation: slowFlowGcHits,
       skipped: false,
     };
@@ -2130,14 +2156,15 @@ function summarizeArm(arm) {
     turnP50 != null && rpcsPerTurn > 0
       ? Number((turnP50 / rpcsPerTurn).toFixed(2))
       : null;
-  return {
+  const summarized = {
     ...arm,
     // Drop raw sample arrays from serialized arm body — board keeps summaries.
-    flow_e2e_ms: undefined,
-    turn_latency_ms: undefined,
+    // (Explicit delete below: `key: undefined` is omitted by JSON.stringify, but
+    // keep the intent obvious and strip per-turn token rows to flow-1 only.)
     cumulative_classic: classic,
     cumulative_tools_list_every_turn: relist,
     task_success: taskSuccess,
+    perTurn: Array.isArray(arm.perTurn) ? arm.perTurn.slice(0, Math.min(arm.perTurn.length, 12)) : arm.perTurn,
     board: {
       runtime: arm.runtime ?? null,
       runtime_version: arm.runtimeVersion ?? null,
@@ -2188,8 +2215,29 @@ function summarizeArm(arm) {
         ? { slow_flow_gc_correlation: arm.slow_flow_gc_correlation }
         : {}),
       ...(arm.slow_flows_top ? { slow_flows_top: arm.slow_flows_top } : {}),
+      ...(arm.search_latency_ms?.length
+        ? { search_latency_ms: summarizeMs(arm.search_latency_ms) }
+        : {}),
+      ...(arm.execute_latency_ms?.length
+        ? { execute_latency_ms: summarizeMs(arm.execute_latency_ms) }
+        : {}),
+      ...(arm.slow_search_top ? { slow_search_top: arm.slow_search_top } : {}),
+      ...(arm.skip_search != null ? { skip_search: arm.skip_search } : {}),
+      // Rebuildable: definitions + Σ discovery + Σ results (= combined_at_n).
+      token_rebuild_note: arm.skip_search
+        ? "Known-op Layer1 = execute schema only (no search tool in context); discovery=0."
+        : "Classic Layer1 = search+execute schemas; discovery = Σ search hit tokens.",
     },
   };
+  for (const k of [
+    "flow_e2e_ms",
+    "turn_latency_ms",
+    "search_latency_ms",
+    "execute_latency_ms",
+  ]) {
+    delete summarized[k];
+  }
+  return summarized;
 }
 
 function ratioBoard(arms) {
@@ -2501,7 +2549,9 @@ async function main() {
           clawql_enable_http_metrics: runtimeFlags.httpMetrics,
           note:
             "Applied evenly to all ClawQL arms (stdio / Streamable HTTP / gRPC). " +
-            "Override with CLAWQL_NODE_MAX_OLD_SPACE_MB=0 or CLAWQL_BUN_SMOL=0 for defaults-only.",
+            "Override with CLAWQL_NODE_MAX_OLD_SPACE_MB=0 or CLAWQL_BUN_SMOL=0 for defaults-only. " +
+            "CLAWQL_SEARCH_COMPACT=1 and CLAWQL_HTTP_SKIP_PAYMENTS=1 are bench defaults " +
+            "(compact search gated for product; payments/network routes skipped for slim RSS).",
         },
       },
       equal_arm: {
