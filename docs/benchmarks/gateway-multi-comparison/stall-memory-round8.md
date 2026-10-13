@@ -35,7 +35,34 @@ Needs a machine with enough cores that roles do not overlap. On a 2-CPU host, pi
 
 Publish metric remains **client e2e** p999 once cleared; server `queue_ms` / upstream handle ms stay diagnostic only.
 
+## Isolated 10k result
+
+Artifact: [`gateway-multi-multiturn-publish-all-arms-isolated-10k.json`](./gateway-multi-multiturn-publish-all-arms-isolated-10k.json) (`p999_status=isolated_remeasure`, `core_layout` mock=`0` / gateway=`1` / client=`2`, nproc=4).
+
+| Observation | Detail |
+| --- | --- |
+| Peer tails shrank | MCPJungle flow p999 **287→117**; agentgateway **208→82** — confirms harness coupling polluted shared-mock arms |
+| ClawQL HTTP tails did not | Bun **461→715**; Node **443→588** — remaining spike is gateway/client side under isolation, not mock loop sharing |
+| Medians stable | Bun HTTP p50 **~33 ms**; ms/call **~1.29** vs peers **~1.23–1.30** |
+| Mock process | separate pid; **840 001** upstream requests; max handle **~9.6 ms**; tcp_connects **9** |
+| Host caveat | 4 CPUs — roles do not overlap, but the machine is small; re-run on a larger dedicated host before external video |
+
+Smoke (2 iters, same pin layout): [`gateway-multi-multiturn-harness-iso-smoke2.json`](./gateway-multi-multiturn-harness-iso-smoke2.json).
+
+## Realistic upstream hook (smoke)
+
+`MT_UPSTREAM_LATENCY_MS=20-100` applies to the HTTP mock **and** the stdio catalog MCP (peer backends). Smoke n=20 HTTP peers: [`gateway-multi-multiturn-upstream-latency-smoke20.json`](./gateway-multi-multiturn-upstream-latency-smoke20.json).
+
+| Arm | ms/call p50 | Flow e2e p50 |
+| --- | ---: | ---: |
+| Direct | 57 | 738 |
+| ClawQL Bun HTTP | 33† | 779 |
+| MCPJungle | 64 | 761 |
+| agentgateway | 61 | 749 |
+
+† ClawQL still does 2 RPCs/turn; only execute pays upstream delay, so ms/call ≈ turn/2. Session medians converge once injected latency dominates — the useful buyer-facing follow-up board (full 10k optional).
+
 ## Next
 
-1. Full interleaved board, every arm, `MT_PIN_CORES=1`, record `core_layout`.
-2. Optional arm with `MT_UPSTREAM_LATENCY_MS=20-100` — shows how gateway own-tail shrinks when real network time dominates.
+1. Full `MT_UPSTREAM_LATENCY_MS=20-100` interleaved board when product wants the “network dominates” slide.
+2. Re-measure zero-latency tails on a host with ≥6–8 dedicated cores if ClawQL HTTP p999 stays elevated.

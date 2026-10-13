@@ -1581,6 +1581,10 @@ async function startMcpjungleCatalog() {
   const port = await pickFreePort();
   const dbPath = join(work, "mcpjungle.db");
   const confPath = join(work, "catalog-stdio.json");
+  const catalogEnv = { CATALOG_TOOL_COUNT: String(TOOL_COUNT) };
+  if (process.env.MT_UPSTREAM_LATENCY_MS) {
+    catalogEnv.MT_UPSTREAM_LATENCY_MS = process.env.MT_UPSTREAM_LATENCY_MS;
+  }
   await writeFile(
     confPath,
     JSON.stringify(
@@ -1591,7 +1595,7 @@ async function startMcpjungleCatalog() {
         command: process.execPath,
         args: [CATALOG_MCP],
         session_mode: "stateful",
-        env: { CATALOG_TOOL_COUNT: String(TOOL_COUNT) },
+        env: catalogEnv,
       },
       null,
       2
@@ -1667,7 +1671,10 @@ async function startAgentgatewayCatalog() {
   await mkdir(work, { recursive: true });
   const port = await pickFreePort();
   const cfgPath = join(work, "config.yaml");
-  const bashCmd = `CATALOG_TOOL_COUNT=${TOOL_COUNT} exec ${JSON.stringify(process.execPath)} ${JSON.stringify(CATALOG_MCP)}`;
+  const latencyEnv = process.env.MT_UPSTREAM_LATENCY_MS
+    ? ` MT_UPSTREAM_LATENCY_MS=${JSON.stringify(process.env.MT_UPSTREAM_LATENCY_MS)}`
+    : "";
+  const bashCmd = `CATALOG_TOOL_COUNT=${TOOL_COUNT}${latencyEnv} exec ${JSON.stringify(process.execPath)} ${JSON.stringify(CATALOG_MCP)}`;
   await writeFile(
     cfgPath,
     `# yaml-language-server: $schema=https://agentgateway.dev/schema/config
