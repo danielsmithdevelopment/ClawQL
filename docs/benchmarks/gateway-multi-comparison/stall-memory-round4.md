@@ -39,7 +39,7 @@ Yes — those tools apply to `node`/`bun` as native processes. What we ran here:
 | **Off-CPU / eBPF** | Why threads sleep | Not installed here; next on a fuller host (`offcputime` / bpftrace) |
 | **Heap snapshots / `--heap-prof`** | Valgrind-like for JS heaps | Prefer over Valgrind on JIT runtimes |
 
-**strace finding (n=1200 under trace):** every syscall ≥20 ms was **`futex` resumed** (worker idle waits). **No** long `write`/`send*`/`epoll_wait`. That fits **main-thread userspace time** (JS/runtime) during stalls — invisible as a long syscall — plus workers parked on futex. Next: Node `--cpu-prof` / clinic Bubbleprof on an in-handler execute stall, and gdb backtraces when libs are available.
+**strace finding (n=1200 under trace):** every syscall ≥20 ms was **`futex` resumed** (worker idle waits). **No** long `write`/`send*`/`epoll_wait`. That fits **main-thread userspace** (JS or off-CPU awaits invisible as long syscalls) plus workers parked on futex. Follow-up CPU profile: [`stall-memory-round5.md`](./stall-memory-round5.md) — logged 332 ms in-handler execute is **~78% idle** (I/O wait), not a JS CPU grind.
 
 Enable: `MT_STALL_DIAG=1 MT_STRACE_LOG=/tmp/stall.strace`.
 
