@@ -26,6 +26,7 @@ export default function DigestScreen() {
   const router = useRouter();
   const [digest, setDigest] = useState<MorningDigest | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -49,7 +50,18 @@ export default function DigestScreen() {
   }
 
   return (
-    <ScreenScroll testID="digest-screen">
+    <ScreenScroll
+      testID="digest-screen"
+      refreshing={refreshing}
+      onRefresh={async () => {
+        setRefreshing(true);
+        try {
+          await load();
+        } finally {
+          setRefreshing(false);
+        }
+      }}
+    >
       <SectionHeader icon="digest" title={digest.headline} subtitle={digest.whenLabel} tone="seed" />
       <Body>{digest.summary}</Body>
 

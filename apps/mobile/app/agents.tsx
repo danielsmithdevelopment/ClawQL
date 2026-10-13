@@ -32,6 +32,7 @@ export default function AgentsScreen() {
   const router = useRouter();
   const [agents, setAgents] = useState<readonly AgentSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -57,7 +58,18 @@ export default function AgentsScreen() {
   const needsYou = agents.filter((a) => a.status === "needs_you").length;
 
   return (
-    <ScreenScroll testID="agents-screen">
+    <ScreenScroll
+      testID="agents-screen"
+      refreshing={refreshing}
+      onRefresh={async () => {
+        setRefreshing(true);
+        try {
+          await load();
+        } finally {
+          setRefreshing(false);
+        }
+      }}
+    >
       <SectionHeader
         icon="agents"
         title="Your agents"

@@ -9,6 +9,7 @@ import {
   getHomeSpendEffect,
   getOrgSummaryEffect,
   listActivityEffect,
+  listInboxEffect,
   listReviewEffect,
   prependInboxItemEffect,
 } from "@/src/services/api";
@@ -54,22 +55,25 @@ export default function HomeScreen() {
   const [pushNote, setPushNote] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<DataSource>("fixture");
   const [hydrated, setHydrated] = useState(false);
+  const [inboxUnread, setInboxUnread] = useState(0);
 
   const load = useCallback(async () => {
     if (!session) return;
     setError(null);
     try {
-      const [review, spendRes, activityRes, orgRes] = await Promise.all([
+      const [review, spendRes, activityRes, orgRes, inbox] = await Promise.all([
         Effect.runPromise(listReviewEffect(session)),
         Effect.runPromise(getHomeSpendEffect(session)),
         Effect.runPromise(listActivityEffect(session)),
         Effect.runPromise(getOrgSummaryEffect(session)),
+        Effect.runPromise(listInboxEffect(session)),
       ]);
       setItems([...review.items]);
       setDataSource(review.source);
       setSpend(spendRes);
       setActivity([...activityRes.events].slice(0, 5));
       setOrg(orgRes);
+      setInboxUnread(inbox.filter((i) => i.unread).length);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -152,7 +156,11 @@ export default function HomeScreen() {
           testID="home-open-inbox"
           icon="inbox"
           label="Notifications"
-          help="Approval pushes and reminders"
+          help={
+            inboxUnread > 0
+              ? `${inboxUnread} unread · approval pushes and reminders`
+              : "Approval pushes and reminders"
+          }
           onPress={() => router.push("/inbox")}
         />
 

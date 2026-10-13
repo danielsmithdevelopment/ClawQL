@@ -21,6 +21,8 @@ import {
 import {
   ActivityIndicator,
   Platform,
+  RefreshControl,
+  ScrollView as RnScrollView,
   View,
   type StyleProp,
   type ViewStyle,
@@ -120,20 +122,43 @@ export function ScreenHost({
 export function ScreenScroll({
   children,
   testID,
+  refreshing = false,
+  onRefresh,
 }: {
   children: ReactNode;
   testID?: string;
-  /** @deprecated Prefer List onRefresh — kept so call sites typecheck during migration. */
   refreshing?: boolean;
   onRefresh?: () => void | Promise<void>;
 }) {
+  const body = (
+    <Column spacing={space.md} style={{ padding: space.md, paddingBottom: space.xl }}>
+      {children}
+    </Column>
+  );
+  // Pull-to-refresh needs RN ScrollView + RefreshControl; @expo/ui ScrollView has no hook.
+  if (onRefresh) {
+    return (
+      <ScreenHost testID={testID}>
+        <RnScrollView
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                void onRefresh();
+              }}
+              tintColor={color.primary}
+              colors={[color.primary]}
+            />
+          }
+        >
+          {body}
+        </RnScrollView>
+      </ScreenHost>
+    );
+  }
   return (
     <ScreenHost testID={testID}>
-      <ScrollView>
-        <Column spacing={space.md} style={{ padding: space.md, paddingBottom: space.xl }}>
-          {children}
-        </Column>
-      </ScrollView>
+      <ScrollView>{body}</ScrollView>
     </ScreenHost>
   );
 }

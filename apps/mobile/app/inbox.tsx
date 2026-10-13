@@ -52,6 +52,7 @@ export default function InboxScreen() {
   const router = useRouter();
   const [items, setItems] = useState<readonly InboxItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -77,7 +78,18 @@ export default function InboxScreen() {
   const unread = items.filter((i) => i.unread).length;
 
   return (
-    <ScreenScroll testID="inbox-screen">
+    <ScreenScroll
+      testID="inbox-screen"
+      refreshing={refreshing}
+      onRefresh={async () => {
+        setRefreshing(true);
+        try {
+          await load();
+        } finally {
+          setRefreshing(false);
+        }
+      }}
+    >
       <SectionHeader
         icon="inbox"
         title="Notifications"
@@ -96,6 +108,14 @@ export default function InboxScreen() {
             })();
           }}
         />
+      ) : null}
+
+      {items.length === 0 ? (
+        <SurfaceCard testID="inbox-empty">
+          <IconBubble name="inbox" tone="seed" size={36} iconSize={18} />
+          <Subtitle>All caught up</Subtitle>
+          <Meta>No notifications yet. Simulate a local push from Home to see one here.</Meta>
+        </SurfaceCard>
       ) : null}
 
       <Column spacing={space.sm}>

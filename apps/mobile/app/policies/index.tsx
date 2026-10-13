@@ -51,7 +51,11 @@ export default function PoliciesScreen() {
 
   return (
     <ScreenHost testID="policies-screen">
-      <List>
+      <List
+        onRefresh={async () => {
+          await load();
+        }}
+      >
         <Column spacing={space.sm} style={{ padding: space.md }}>
           <SectionHeader
             icon="policies"
