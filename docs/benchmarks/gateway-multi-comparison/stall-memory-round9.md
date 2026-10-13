@@ -26,6 +26,8 @@ Artifact: [`gateway-multi-multiturn-publish-all-arms-gw2core-10k.json`](./gatewa
 
 **Verdict:** 2 cores helps **stdio** ClawQL and several peers. It does **not** drop ClawQL **HTTP** p999 — so the remaining HTTP spike is not “just starve V8 of a second core.” Keep `gateway_2core` as the fair default layout anyway; cite medians/tokens; treat HTTP p999 as still open.
 
+**Host noise is unlikely.** Peers also speak HTTP on this same 4-CPU machine and their tails improved with a second core; ClawQL stdio improved too. Only ClawQL’s HTTP path did not — so the cause is almost certainly **path-specific**, not general host noise. A larger host is a costly way to reconfirm that; prefer the HTTP stack echo bisect ([`stall-memory-round10.md`](./stall-memory-round10.md)).
+
 ## Test B — Node `--single-threaded` (diagnosis only)
 
 `MT_NODE_SINGLE_THREADED=1` → Node `--single-threaded --single-threaded-gc` on a forced 1-core gateway pin. n=3000 Node HTTP:

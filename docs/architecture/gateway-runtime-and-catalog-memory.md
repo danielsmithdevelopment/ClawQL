@@ -25,6 +25,8 @@ Decisions from the equal-arm multiturn stall work ([`stall-memory-round8.md`](..
 
 Order: confirm with the 2-core bench → fix is **configuration and documentation**, not new infrastructure.
 
+**Do not blame host noise for ClawQL HTTP-only spikes** when peers’ HTTP tails improved on the same machine. Next latency diagnostic is a **trivial echo through the same Streamable HTTP + Express stack** ([`stall-memory-round10.md`](../benchmarks/gateway-multi-comparison/stall-memory-round10.md)) before demoting HTTP p999 chase entirely.
+
 ## 2. Kernel fusion → ClawQL tool fusion
 
 GPU kernel fusion removes launch overhead by batching work into one kernel. In an agent, the expensive “launch” is usually the **model turn** (seconds + re-read tokens), not the ~1 ms gateway hop. Fusing three tool calls into one can save two model turns — worth far more than gateway p999 work. That is why code / program mode exists ([ADR 0015](../adr/0015-program-mode-alongside-search-execute.md)).

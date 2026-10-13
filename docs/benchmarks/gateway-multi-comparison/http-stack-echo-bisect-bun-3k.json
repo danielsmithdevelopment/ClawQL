@@ -1,0 +1,113 @@
+{
+  "suite": "http-stack-echo-bisect",
+  "measuredAt": "2026-10-13T21:27:53.000Z",
+  "node": "v22.14.0",
+  "runtime": "bun",
+  "core_layout": {
+    "enabled": true,
+    "nproc": 4,
+    "mock_cpus": "0",
+    "gateway_cpus": "1-2",
+    "client_cpus": "3",
+    "gateway_cpu_count": 2,
+    "layout_mode": "gateway_2core",
+    "note": "Same pin layout as multiturn gateway_2core (mock unused here; CPUs reserved).",
+    "client_cpus_allowed": "3"
+  },
+  "config": {
+    "turns": 12,
+    "iters": 3000,
+    "rpcs_per_turn": 2,
+    "posts_per_flow": 24,
+    "enableJsonResponse": true,
+    "disableStandaloneSse": true
+  },
+  "echo_http": {
+    "flow_e2e_ms": {
+      "n": 3000,
+      "p50_ms": 9.008,
+      "p95_ms": 18.517,
+      "p99_ms": 42.648,
+      "p999_ms": 64.318,
+      "mean_ms": 10.483,
+      "min_ms": 5.411,
+      "max_ms": 85.815,
+      "n_ge_100ms": 0,
+      "n_ge_200ms": 0,
+      "n_ge_300ms": 0
+    },
+    "call_ms": {
+      "n": 72000,
+      "p50_ms": 0.341,
+      "p95_ms": 0.783,
+      "p99_ms": 2.979,
+      "p999_ms": 7.323,
+      "mean_ms": 0.436,
+      "min_ms": 0.198,
+      "max_ms": 41.639,
+      "n_ge_100ms": 0,
+      "n_ge_200ms": 0,
+      "n_ge_300ms": 0
+    },
+    "errors": 0,
+    "ms_per_call_p50": 0.341
+  },
+  "reference_clawql_http_gw2core": {
+    "arm": "clawql_http_bun",
+    "flow_e2e_ms": {
+      "n": 10000,
+      "p50_ms": 36.161,
+      "p95_ms": 43.45,
+      "p99_ms": 47.832,
+      "p999_ms": 759.422,
+      "mean_ms": 37.396,
+      "min_ms": 22.834,
+      "max_ms": 848.151,
+      "n_ge_100ms": 20,
+      "n_ge_200ms": 18,
+      "n_ge_300ms": 16,
+      "worst": [
+        {
+          "i": 4919,
+          "ms": 848.151
+        },
+        {
+          "i": 5502,
+          "ms": 821.603
+        },
+        {
+          "i": 2610,
+          "ms": 819.791
+        },
+        {
+          "i": 7249,
+          "ms": 806.056
+        },
+        {
+          "i": 7836,
+          "ms": 802.563
+        },
+        {
+          "i": 8424,
+          "ms": 802.377
+        },
+        {
+          "i": 3762,
+          "ms": 796.938
+        },
+        {
+          "i": 6085,
+          "ms": 790.435
+        }
+      ]
+    },
+    "note": "Same host layout (gateway_2core). Compare p999 — not absolute proof across sessions."
+  },
+  "verdict": "stack_clean — echo tails stay tight; next add ClawQL layers until spikes return",
+  "honesty": [
+    "Echo uses Express + MCP StreamableHTTPServerTransport (sessionful, JSON response, SSE GET 405) — same shape as ClawQL bench, not every ClawQL middleware/auth route.",
+    "Host noise is unlikely: peers' HTTP tails improved with 2 cores on this machine; only ClawQL HTTP did not.",
+    "If stack_suspect: swap Express→raw http / Bun.serve, then stateful→stateless, then strip middleware.",
+    "If stack_clean: reintroduce ClawQL createMcpHttpApp layers until spikes return."
+  ]
+}
