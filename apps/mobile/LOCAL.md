@@ -70,8 +70,12 @@ Those live only under [`store/DAY0-CHECKLIST.md`](store/DAY0-CHECKLIST.md). Day-
 
 ```bash
 npm run local:web-export   # → dist-web/ (no EAS login)
-npx serve dist-web         # or any static file server
+npx serve dist-web -l 4173
+npm run demo:parity-iphone # Playwright @ iPhone 14 viewport (390×844) — never desktop width
 ```
+
+Web export is a **CI stand-in** when no iOS Simulator / Android emulator is available.
+Always demo at phone viewport (`scripts/record-*.mjs`). App Store / Play validation still needs a real device or EAS build.
 
 ## Sanity check
 

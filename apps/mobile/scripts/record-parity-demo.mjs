@@ -1,0 +1,117 @@
+/**
+ * PhoneApprove parity demo at iPhone viewport (390×844) — never desktop width.
+ * Covers push register, document scan, session refresh, share clipboard.
+ * Requires fixture web export served (default http://127.0.0.1:4173).
+ */
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { chromium, devices } from "playwright";
+
+const BASE = process.env.CLAWQL_MOBILE_DEMO_URL || "http://127.0.0.1:4173";
+const OUT = process.env.CLAWQL_MOBILE_DEMO_OUT || "/opt/cursor/artifacts/mobile-parity-iphone";
+const VIDEO_DIR = path.join(OUT, "playwright-video");
+
+fs.mkdirSync(OUT, { recursive: true });
+fs.rmSync(VIDEO_DIR, { recursive: true, force: true });
+fs.mkdirSync(VIDEO_DIR, { recursive: true });
+
+const iphone = devices["iPhone 14"];
+const browser = await chromium.launch({ headless: true });
+const context = await browser.newContext({
+  ...iphone,
+  recordVideo: {
+    dir: VIDEO_DIR,
+    size: { width: iphone.viewport.width, height: iphone.viewport.height },
+  },
+});
+const page = await context.newPage();
+
+async function shot(name) {
+  const dest = path.join(OUT, name);
+  await page.screenshot({ path: dest, type: "png" });
+  console.log("shot", dest);
+}
+
+await page.goto(`${BASE}/sign-in`, { waitUntil: "networkidle" });
+await page.getByTestId("sign-in-fixture").waitFor({ state: "visible" });
+await page.waitForTimeout(600);
+await shot("01-sign-in.png");
+
+await page.getByTestId("sign-in-fixture").click();
+await page.getByTestId("home-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.waitForTimeout(800);
+await shot("02-home.png");
+
+// Profile → register push + refresh session
+await page.getByTestId("tab-profile").first().click();
+await page.getByTestId("profile-push-devices").waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("profile-register-push").click();
+await page.getByTestId("profile-push-note").waitFor({ state: "visible", timeout: 10000 });
+await page.waitForTimeout(500);
+await shot("03-profile-push.png");
+
+await page.getByTestId("profile-refresh-session").click();
+await page.getByTestId("profile-note").waitFor({ state: "visible", timeout: 10000 });
+await page.waitForTimeout(500);
+await shot("04-profile-session-refresh.png");
+
+// Review → document scan + share
+await page.getByTestId("tab-review").first().click();
+await page.getByTestId("review-item-rev_change").first().waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("review-item-rev_change").first().click();
+await page.getByTestId("review-attachments").waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("review-scan-camera").click();
+await page.getByTestId("review-note").waitFor({ state: "visible", timeout: 10000 });
+await page.waitForTimeout(600);
+await shot("05-review-document-scan.png");
+
+await page.getByTestId("review-share").click();
+await page.getByTestId("review-note").waitFor({ state: "visible", timeout: 10000 });
+await page.waitForTimeout(600);
+await shot("06-review-share.png");
+
+// Home simulate push → inbox (SPA)
+await page.evaluate(() => {
+  window.history.pushState({}, "", "/");
+  window.dispatchEvent(new PopStateEvent("popstate"));
+});
+// Prefer tab home if available
+const homeTab = page.getByTestId("tab-home").first();
+if (await homeTab.isVisible().catch(() => false)) {
+  await homeTab.click();
+} else {
+  await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
+  await page.getByTestId("sign-in-fixture").click();
+  await page.getByTestId("home-screen").waitFor({ state: "visible", timeout: 15000 });
+}
+await page.getByTestId("home-simulate-push-btn").waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("home-simulate-push-btn").click();
+await page.getByTestId("home-push-note").waitFor({ state: "visible", timeout: 10000 });
+await page.waitForTimeout(400);
+await page.getByTestId("home-open-inbox").click();
+await page.getByTestId("inbox-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.waitForTimeout(800);
+await shot("07-inbox-after-sim.png");
+
+await context.close();
+await browser.close();
+
+const videos = fs.readdirSync(VIDEO_DIR).filter((f) => f.endsWith(".webm"));
+if (videos.length === 0) throw new Error("no playwright video produced");
+const src = path.join(VIDEO_DIR, videos[0]);
+const destWebm = path.join(OUT, "parity-iphone.webm");
+fs.copyFileSync(src, destWebm);
+
+const mp4 = "/opt/cursor/artifacts/phoneapprove-parity-iphone.mp4";
+const conv = spawnSync(
+  "ffmpeg",
+  ["-y", "-i", destWebm, "-c:v", "libx264", "-pix_fmt", "yuv420p", mp4],
+  { encoding: "utf8" }
+);
+if (conv.status !== 0) {
+  console.error(conv.stderr);
+  throw new Error("ffmpeg failed");
+}
+console.log("mp4", mp4, fs.statSync(mp4).size);
+console.log("demo ok", OUT);
