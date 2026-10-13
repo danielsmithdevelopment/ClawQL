@@ -148,6 +148,13 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-19-system-mark-read.yaml",
   },
   {
+    id: "MOB-20",
+    run: "Maestro",
+    title: "Fixture store subscribe + biometrics capability",
+    passWhen: "Profile Subscribe Pro (sandbox) upgrades plan; Face ID / App Lock capability shown",
+    flow: "maestro/flows/mob-20-store-subscribe-sandbox.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',

@@ -56,6 +56,15 @@ await page.getByTestId("profile-note").waitFor({ state: "visible", timeout: 1000
 await page.waitForTimeout(500);
 await shot("04-profile-session-refresh.png");
 
+// Plan & billing — fixture store_iap subscribe (Face ID confirm is one-tap in fixture)
+await page.getByTestId("profile-plan-billing").scrollIntoViewIfNeeded();
+await page.waitForTimeout(400);
+await shot("04d-profile-plan-free.png");
+await page.getByTestId("profile-subscribe-pro").click();
+await page.getByTestId("profile-note").waitFor({ state: "visible", timeout: 10000 });
+await page.waitForTimeout(500);
+await shot("04e-profile-plan-pro.png");
+
 // App Lock → lock now → unlock (fixture)
 const appLockRow = page.getByTestId("pref-app-lock");
 await appLockRow.scrollIntoViewIfNeeded();

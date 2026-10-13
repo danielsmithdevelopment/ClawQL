@@ -36,6 +36,7 @@ Catalog source of truth: [`catalog.ts`](catalog.ts).
 | `mob-17-surface-deeplinks.yaml` | MOB-17 | Inbox / digest / agents / policy deep links |
 | `mob-18-activity-filters.yaml` | MOB-18 | Activity kind + outcome filters |
 | `mob-19-system-mark-read.yaml` | MOB-19 | System inbox Mark read |
+| `mob-20-store-subscribe-sandbox.yaml` | MOB-20 | Fixture store_iap Pro subscribe + Face ID / App Lock |
 
 **Still device-only (Manual):** REV-13, UX-09 — physical YubiKey NFC. Use `modules/clawql-nfc-security-key` mock injection in CI until the native modules ship.
 

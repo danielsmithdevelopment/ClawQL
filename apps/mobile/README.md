@@ -106,7 +106,7 @@ Until linked, production sessions get `nfc_module_unavailable`. **Fixture mode**
 
 | Id | Coverage |
 | -- | -------- |
-| MOB-01…19 | Maestro flows (+ push, scan, session, app lock, offline, ask teammate, evidence, deep links, activity filters, system mark-read) |
+| MOB-01…20 | Maestro flows (+ push, scan, session, app lock, offline, ask teammate, evidence, deep links, activity filters, system mark-read, store subscribe sandbox) |
 | a11y:lh | Lighthouse mobile a11y/BP/SEO **100** + axe WCAG 2.1 A/AA on fixture screens (`npm run a11y:lh`) |
 | REV-13 / UX-09 | Physical YubiKey — still Manual |
 

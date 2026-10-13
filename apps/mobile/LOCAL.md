@@ -56,7 +56,9 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Session refresh + expiry gate (fixture renew) | ✅ Profile / boot |
 | Mark inbox read on open | ✅ |
 | Share request deep link | ✅ Review detail |
-| App Lock (biometrics / fixture unlock) | ✅ Profile |
+| App Lock (Face ID / Touch ID / fixture unlock) | ✅ Profile |
+| Plan & billing fixture store_iap subscribe | ✅ Profile sandbox Pro/Team |
+| Biometric capability label (Face ID / Touch ID) | ✅ Profile + App Lock |
 | Haptics on decide | ✅ Review |
 | Home-screen icon badge = pending count | ✅ |
 | Offline queue snapshot + cache banner | ✅ Home / Review |
