@@ -50,7 +50,7 @@ export default function DigestScreen() {
 
   return (
     <ScreenScroll testID="digest-screen">
-      <SectionHeader icon="digest" title={digest.headline} subtitle={digest.whenLabel} tone="warn" />
+      <SectionHeader icon="digest" title={digest.headline} subtitle={digest.whenLabel} tone="seed" />
       <Body>{digest.summary}</Body>
 
       {digest.awaitingYou > 0 ? (
@@ -72,7 +72,7 @@ export default function DigestScreen() {
             <Column spacing={space.sm}>
               <IconBubble
                 name={item.tone === "warn" ? "change" : item.tone === "ok" ? "activity" : "agents"}
-                tone={item.tone === "ok" ? "ok" : item.tone === "warn" ? "warn" : "neutral"}
+                tone="seed"
                 size={32}
                 iconSize={16}
               />

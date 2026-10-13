@@ -292,7 +292,7 @@ export default function ReviewDetailScreen() {
       {item.kind === "source" ? <SourceBody /> : null}
 
       <SurfaceCard testID="review-attachments">
-        <IconBubble name="document" tone="neutral" size={32} iconSize={16} />
+        <IconBubble name="document" tone="seed" size={32} iconSize={16} />
         <Subtitle>Evidence photos</Subtitle>
         <Meta>
           {`Scan a contract, invoice, or screenshot to attach to this request.${

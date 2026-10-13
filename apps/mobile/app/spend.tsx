@@ -62,7 +62,7 @@ export default function SpendScreen() {
           {(spend.lines ?? []).map((line) => (
             <Column key={line.agent} spacing={4} testID={`spend-line-${line.agent}`}>
               <Column spacing={space.sm}>
-                <IconBubble name="agents" tone="neutral" size={28} iconSize={14} />
+                <IconBubble name="agents" tone="seed" size={28} iconSize={14} />
                 <Body>{`${line.agent} · ${line.amount}`}</Body>
                 <Meta>{line.note}</Meta>
               </Column>

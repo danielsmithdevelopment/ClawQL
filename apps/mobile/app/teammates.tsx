@@ -74,7 +74,7 @@ export default function TeammatesScreen() {
             <Column spacing={space.sm}>
               <IconBubble
                 name={person.canApprove ? "key" : "people"}
-                tone={person.canApprove ? (person.keysReady ? "ok" : "warn") : "neutral"}
+                tone="seed"
                 size={36}
                 iconSize={18}
               />

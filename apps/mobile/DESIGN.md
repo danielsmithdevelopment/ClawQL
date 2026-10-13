@@ -35,8 +35,8 @@ Do **not** paint surfaces, cards, and icons in orange tints. Orange is the Q —
 | `surfaceContainerLowest` → `Highest` | Cards / nested plates (tonal depth, **no** heavy border) |
 | `onSurface` / `onSurfaceVariant` | Body / meta |
 | `primary` / `onPrimary` | Active tab, selected chips, blue filled controls |
-| `primaryContainer` / `onPrimaryContainer` | One standout plate per screen (e.g. spend) — **blue**, not orange |
-| `secondaryContainer` / `onSecondaryContainer` | Default icon bubbles |
+| `primaryContainer` / `onPrimaryContainer` | Icon bubbles (seed blue, app-wide) + one standout plate per screen |
+| `secondaryContainer` / `onSecondaryContainer` | Rare secondary plates only |
 | `accent` / `onAccent` | Filled action CTAs (Approve, Sign in, …) |
 | `accentContainer` / `onAccentContainer` | Rare orange tonal highlight (brand mark, not every card) |
 | `warn*` | Needs-you / caution |

@@ -110,7 +110,7 @@ export default function HomeScreen() {
             <SurfaceCard testID="home-org" tint="soft">
               <Column spacing={space.sm}>
                 <Column spacing={4}>
-                  <IconBubble name="org" tone="neutral" size={36} iconSize={18} />
+                  <IconBubble name="org" tone="seed" size={36} iconSize={18} />
                   <Subtitle>{org.name}</Subtitle>
                   <Meta>{`${org.plan} · ${org.role} · ${org.members}`}</Meta>
                 </Column>
@@ -146,7 +146,6 @@ export default function HomeScreen() {
           icon="digest"
           label="Morning digest"
           help="Overnight from your agents"
-          tone="warn"
           onPress={() => router.push("/digest")}
         />
         <NavRow
@@ -214,7 +213,7 @@ export default function HomeScreen() {
             </SurfaceCard>
           ) : null}
           <SurfaceCard testID="home-offline-tools" tint="soft">
-            <IconBubble name="shield" tone="neutral" size={32} iconSize={16} />
+            <IconBubble name="shield" tone="seed" size={32} iconSize={16} />
             <Subtitle>Offline cache</Subtitle>
             <Meta>{`Queue snapshots save automatically. Source: ${dataSource}.`}</Meta>
             <SecondaryButton
@@ -248,7 +247,7 @@ export default function HomeScreen() {
           </SurfaceCard>
           {items[0] ? (
             <SurfaceCard testID="home-simulate-push" tint="soft">
-              <IconBubble name="inbox" tone="neutral" size={32} iconSize={16} />
+              <IconBubble name="inbox" tone="seed" size={32} iconSize={16} />
               <Subtitle>Local push (fixture)</Subtitle>
               <Meta>
                 Schedule a local notification that opens the top request — no EAS or APNs needed.

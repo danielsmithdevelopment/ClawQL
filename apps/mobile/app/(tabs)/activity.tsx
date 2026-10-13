@@ -75,7 +75,7 @@ export default function ActivityScreen() {
             icon="activity"
             title="Activity"
             subtitle={`Your recent decisions · source ${source}`}
-            tone="neutral"
+            tone="seed"
           />
           {events.length === 0 ? (
             <Meta testID="activity-empty">

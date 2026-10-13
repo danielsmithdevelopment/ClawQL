@@ -67,7 +67,7 @@ export default function PoliciesScreen() {
             leading={
               <IconBubble
                 name={pol.blocked ? "shield" : "policies"}
-                tone={pol.blocked ? "danger" : "seed"}
+                tone="seed"
                 size={36}
                 iconSize={18}
               />

@@ -78,7 +78,7 @@ export default function AgentsScreen() {
             <Column spacing={space.sm}>
               <IconBubble
                 name="agents"
-                tone={toneFor(agent.status)}
+                tone="seed"
                 size={36}
                 iconSize={18}
               />

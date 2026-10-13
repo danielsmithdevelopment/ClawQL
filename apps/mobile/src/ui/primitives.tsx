@@ -247,12 +247,13 @@ export function SectionHeader({
   title,
   subtitle,
   icon,
-  tone = "neutral",
+  tone = "seed",
   testID,
 }: {
   title: string;
   subtitle?: string;
   icon?: AppIconName;
+  /** Icon chrome only — prefer seed blue; status belongs on badges. */
   tone?: "seed" | "ok" | "warn" | "danger" | "neutral";
   testID?: string;
 }) {
@@ -276,13 +277,14 @@ export function NavRow({
   icon,
   onPress,
   testID,
-  tone = "neutral",
+  tone = "seed",
 }: {
   label: string;
   help?: string;
   icon: AppIconName;
   onPress: () => void;
   testID?: string;
+  /** Icon chrome only — prefer seed blue; status belongs on badges. */
   tone?: "seed" | "ok" | "warn" | "danger" | "neutral";
 }) {
   return (

@@ -39,7 +39,7 @@ export default function SignInScreen() {
       <Fill style={{ justifyContent: "center", padding: space.lg }}>
         <Column spacing={space.md} alignment="center">
         <Column spacing={space.sm} style={{ width: "100%" }} alignment="center">
-          <IconBubble name="shield" tone="accent" size={56} iconSize={28} />
+          <IconBubble name="shield" tone="seed" size={56} iconSize={28} />
           <Title>ClawQL</Title>
           <Body color={brand.inkMuted}>
             Approve exact changes from your phone — tap your security key, not another push.

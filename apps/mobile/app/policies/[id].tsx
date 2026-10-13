@@ -63,21 +63,21 @@ export default function PolicyDetailScreen() {
       <SectionHeader icon="policies" title={detail.title} subtitle={detail.lastChanged} />
 
       <SurfaceCard testID="policy-applies" tint="soft">
-        <IconBubble name="change" tone="neutral" size={28} iconSize={14} />
+        <IconBubble name="change" tone="seed" size={28} iconSize={14} />
         <Subtitle>Applies to</Subtitle>
         <Body>{detail.appliesTo}</Body>
         <Meta>{detail.appliesHelp}</Meta>
       </SurfaceCard>
 
       <SurfaceCard testID="policy-who">
-        <IconBubble name="people" tone="neutral" size={28} iconSize={14} />
+        <IconBubble name="people" tone="seed" size={28} iconSize={14} />
         <Subtitle>Who approves</Subtitle>
         <Body>{detail.whoApproves}</Body>
         <Meta>{detail.whoHelp}</Meta>
       </SurfaceCard>
 
       <SurfaceCard testID="policy-rules">
-        <IconBubble name="key" tone={detail.requireSecurityKey ? "warn" : "neutral"} size={28} iconSize={14} />
+        <IconBubble name="key" tone="seed" size={28} iconSize={14} />
         <Subtitle>Rules</Subtitle>
         <Meta>{`Approvals needed · ${detail.approvalsNeeded}`}</Meta>
         <Meta>{`Expires after · ${detail.expiresAfter}`}</Meta>
