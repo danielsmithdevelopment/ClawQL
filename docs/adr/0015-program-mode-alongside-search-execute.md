@@ -26,6 +26,7 @@ The live compare at [`/mcp-ui/trace/compare/executor`](https://clawql.com/mcp-ui
 1. Publish a run where Executor’s program filters to the same fields (fair comparison next to today’s dump).
 2. Expand beyond one task: ten or more, including multi-step work; measure **outputs**, not just inputs. Single-call listing is ClawQL’s best case.
 3. Rerun against Executor v2 once its code mode ships.
+4. **Fusion board:** tasks that need several lookups per step (joins, fan-out, lookup chains). Count **model turns** as well as tokens and gateway latency — the sequential 12-turn equal-arm board cannot show fusion wins. MCP dropped JSON-RPC batching (June 2025); batching lives inside ClawQL tools (batched execute / program mode), not the protocol. See [`gateway-runtime-and-catalog-memory.md`](../architecture/gateway-runtime-and-catalog-memory.md) §2.
 
 ## Decision
 

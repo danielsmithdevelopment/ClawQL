@@ -26,6 +26,7 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`stall-memory-round7.md`](./stall-memory-round7.md) | parse→handler `queue_ms`; search profile; native 10k — **no default flip** |
 | [`stall-memory-round8.md`](./stall-memory-round8.md) | **Harness coupling** — separate mock + `taskset` cores; p999 under rework until isolated 10k |
 | [`stall-memory-round9.md`](./stall-memory-round9.md) | **JS helper threads** — 1-core pin vs gateway 2-core; buyer framing from latency inject |
+| [`gateway-runtime-and-catalog-memory.md`](../../architecture/gateway-runtime-and-catalog-memory.md) | Settled: ≥2 CPUs; NATS≠tail fix; fusion; Wasm later; SQLite catalog / IDP docs |
 | [`native-fetch-10k-matrix.json`](./native-fetch-10k-matrix.json) | 10k×3 Node/Bun native vs node-fetch control |
 | [`diagnostics-packaging.md`](./diagnostics-packaging.md) | Not `clawql-data` / `clawql-analytics` — harness vs OTel vs lazy diagnostics |
 | [`cpu-prof-stall-summary.json`](./cpu-prof-stall-summary.json) | Parsed Node CPU profile around multiturn stalls |
