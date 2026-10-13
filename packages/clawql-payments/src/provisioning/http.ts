@@ -74,7 +74,12 @@ function requireProvisionToken(
 
 function isBillingMode(v: unknown): v is OrgBillingMode {
   return (
-    v === "stripe_checkout" || v === "stripe_invoice" || v === "hybrid" || v === "credits_only"
+    v === "stripe_checkout" ||
+    v === "stripe_invoice" ||
+    v === "hybrid" ||
+    v === "credits_only" ||
+    v === "store_iap" ||
+    v === "dual"
   );
 }
 
@@ -134,7 +139,8 @@ function parseProvisionBody(body: unknown): ProvisionOrgInput | { error: string 
   }
   if (!isBillingMode(b.billingMode)) {
     return {
-      error: "billingMode must be stripe_checkout|stripe_invoice|hybrid|credits_only",
+      error:
+        "billingMode must be stripe_checkout|stripe_invoice|hybrid|credits_only|store_iap|dual",
     };
   }
   const additional =

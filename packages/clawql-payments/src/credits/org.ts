@@ -71,8 +71,16 @@ export type OrgCreatedVia = "self_serve" | "enterprise_sales";
  * - stripe_invoice: enterprise NET terms / manual invoice
  * - hybrid: subscription included quota + prepaid credits beyond / beside it
  * - credits_only: no recurring subscription; prepaid top-ups only
+ * - store_iap: App Store / Play Billing subscription (PhoneApprove)
+ * - dual: web Stripe **or** store IAP can grant the same plan entitlements
  */
-export type OrgBillingMode = "stripe_checkout" | "stripe_invoice" | "hybrid" | "credits_only";
+export type OrgBillingMode =
+  | "stripe_checkout"
+  | "stripe_invoice"
+  | "hybrid"
+  | "credits_only"
+  | "store_iap"
+  | "dual";
 
 /** Additive CPC billing fields on {@link OrgRecord}. */
 export type OrgBillingFields = {

@@ -102,6 +102,14 @@ export function reportUsageLiveLayer(
             };
           }
 
+          if (org.billingMode === "store_iap") {
+            return {
+              reported: false as const,
+              reason: "billingMode store_iap settles via App Store / Play, not Stripe meters",
+              ...base,
+            };
+          }
+
           if (overageUnits <= 0) {
             return {
               reported: false as const,

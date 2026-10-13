@@ -36,7 +36,9 @@ function mapBillingMode(mode: string | undefined, explicit: string | undefined):
     explicit === "stripe_checkout" ||
     explicit === "stripe_invoice" ||
     explicit === "hybrid" ||
-    explicit === "credits_only"
+    explicit === "credits_only" ||
+    explicit === "store_iap" ||
+    explicit === "dual"
   ) {
     return explicit;
   }

@@ -390,7 +390,12 @@ export async function runPaymentsOrgProvision(options: OrgCliOptions): Promise<n
   }
   const billingMode = (options.billingMode?.trim() ||
     (options.createdVia === "self_serve" ? "stripe_checkout" : "stripe_invoice")) as
-    "stripe_checkout" | "stripe_invoice" | "hybrid" | "credits_only";
+    | "stripe_checkout"
+    | "stripe_invoice"
+    | "hybrid"
+    | "credits_only"
+    | "store_iap"
+    | "dual";
   const createdVia =
     options.createdVia?.trim() === "self_serve" ? "self_serve" : "enterprise_sales";
   const memberEmails = options.memberEmails
