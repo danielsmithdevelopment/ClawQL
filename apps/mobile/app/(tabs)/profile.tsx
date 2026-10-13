@@ -34,10 +34,13 @@ import {
 } from "@/src/services/device-ux";
 import {
   loadEntitlementsEffect,
-  subscribeStoreSandboxEffect,
-  restorePurchasesEffect,
   type MobileEntitlements,
 } from "@/src/services/entitlements";
+import {
+  openManageSubscriptionsEffect,
+  purchaseStorePlanEffect,
+  restoreStorePurchasesEffect,
+} from "@/src/services/store-iap";
 import { registerForPushEffect } from "@/src/services/push";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, space } from "@/src/theme";
@@ -134,7 +137,7 @@ export default function ProfileScreen() {
           setNote("Subscribe cancelled");
           return;
         }
-        const next = await Effect.runPromise(subscribeStoreSandboxEffect(planId));
+        const next = await Effect.runPromise(purchaseStorePlanEffect(planId));
         setEntitlements(next);
         setNote(
           `Subscribed to ${next.planLabel} (fixture store_iap · ${next.productId ?? "sandbox"})`
@@ -165,7 +168,7 @@ export default function ProfileScreen() {
           setNote("Restore cancelled");
           return;
         }
-        const next = await Effect.runPromise(restorePurchasesEffect());
+        const next = await Effect.runPromise(restoreStorePurchasesEffect());
         setEntitlements(next);
         setNote(
           next.planId === "free"
@@ -617,6 +620,22 @@ export default function ProfileScreen() {
           label="Restore purchases"
           disabled={busy}
           onPress={onRestorePurchases}
+        />
+        <SecondaryButton
+          testID="profile-manage-subscriptions"
+          label="Manage in App Store / Play"
+          disabled={busy}
+          onPress={() => {
+            void Effect.runPromise(openManageSubscriptionsEffect()).catch((e: unknown) => {
+              setNote(
+                e && typeof e === "object" && "reason" in e
+                  ? String((e as { reason: string }).reason)
+                  : e instanceof Error
+                    ? e.message
+                    : String(e)
+              );
+            });
+          }}
         />
       </SurfaceCard>
 

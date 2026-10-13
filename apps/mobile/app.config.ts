@@ -19,7 +19,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     infoPlist: {
       NFCReaderUsageDescription:
         "ClawQL reads your security key over NFC to approve exact-change requests.",
-      NSFaceIDUsageDescription: "ClawQL uses Face ID for the App Store reviewer demo org only.",
+      NSFaceIDUsageDescription:
+        "ClawQL uses Face ID to unlock the app, confirm purchases, and for the App Store reviewer demo approve path.",
       NSCameraUsageDescription:
         "ClawQL uses the camera to scan documents and attach evidence to approval requests.",
       NSPhotoLibraryUsageDescription:
@@ -84,7 +85,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       "expo-local-authentication",
       {
-        faceIDPermission: "Allow ClawQL to use Face ID for the reviewer demo org.",
+        faceIDPermission:
+          "Allow ClawQL to use Face ID to unlock the app, confirm purchases, and approve as the reviewer demo org.",
       },
     ],
     [

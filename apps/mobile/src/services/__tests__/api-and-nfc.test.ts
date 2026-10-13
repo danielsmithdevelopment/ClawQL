@@ -377,6 +377,19 @@ describe("mobile API fixture mode", () => {
     await Effect.runPromise(clearEntitlementsEffect());
   });
 
+  it("store-iap adapter purchases Pro and reports plan gate", async () => {
+    const { purchaseStorePlanEffect, planMeetsMinimumEffect, manageSubscriptionsUrlEffect } =
+      await import("../store-iap");
+    await Effect.runPromise(clearEntitlementsEffect());
+    const pro = await Effect.runPromise(purchaseStorePlanEffect("pro"));
+    expect(pro.planId).toBe("pro");
+    expect(await Effect.runPromise(planMeetsMinimumEffect("pro"))).toBe(true);
+    expect(await Effect.runPromise(planMeetsMinimumEffect("team"))).toBe(false);
+    const url = await Effect.runPromise(manageSubscriptionsUrlEffect());
+    expect(url).toMatch(/apple|play|docs\.clawql/);
+    await Effect.runPromise(clearEntitlementsEffect());
+  });
+
   it("marks inbox items read by id and by review", async () => {
     await Effect.runPromise(markInboxReadEffect(FIXTURE_SESSION, "inbox_1"));
     let inbox = await Effect.runPromise(listInboxEffect(FIXTURE_SESSION));

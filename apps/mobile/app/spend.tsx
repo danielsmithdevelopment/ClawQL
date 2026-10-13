@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { HomeSpend } from "@/src/domain/schemas";
 import { getHomeSpendEffect } from "@/src/services/api";
+import { loadEntitlementsEffect, type MobileEntitlements } from "@/src/services/entitlements";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, space } from "@/src/theme";
 import {
@@ -12,6 +13,7 @@ import {
   IconBubble,
   LoadingBlock,
   Meta,
+  PrimaryButton,
   ScreenHost,
   ScreenScroll,
   SecondaryButton,
@@ -25,13 +27,19 @@ export default function SpendScreen() {
   const { session } = useSession();
   const router = useRouter();
   const [spend, setSpend] = useState<HomeSpend | null>(null);
+  const [entitlements, setEntitlements] = useState<MobileEntitlements | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!session) return;
     try {
-      setSpend(await Effect.runPromise(getHomeSpendEffect(session)));
+      const [s, ent] = await Promise.all([
+        Effect.runPromise(getHomeSpendEffect(session)),
+        Effect.runPromise(loadEntitlementsEffect()),
+      ]);
+      setSpend(s);
+      setEntitlements(ent);
     } finally {
       setLoading(false);
     }
@@ -66,7 +74,27 @@ export default function SpendScreen() {
       <SurfaceCard tint="seed" elevated>
         <Title testID="spend-amount">{spend.amount}</Title>
         {spend.budget ? <Meta>{`Budget ${spend.budget}`}</Meta> : null}
+        {entitlements ? (
+          <Meta testID="spend-plan-label">
+            {`Plan · ${entitlements.planLabel} (${entitlements.billingMode})`}
+          </Meta>
+        ) : null}
       </SurfaceCard>
+
+      {entitlements?.planId === "free" ? (
+        <SurfaceCard testID="spend-upgrade-cta" tint="soft">
+          <Subtitle>Unlock Pro on this phone</Subtitle>
+          <Meta>
+            Fixture sandbox subscribe lives on Profile — live App Store / Play sheets
+            after Day-0 enrollment.
+          </Meta>
+          <PrimaryButton
+            testID="spend-open-plan-billing"
+            label="View plan & billing"
+            onPress={() => router.push("/(tabs)/profile")}
+          />
+        </SurfaceCard>
+      ) : null}
 
       <SurfaceCard testID="spend-by-agent">
         <Subtitle>By agent</Subtitle>
