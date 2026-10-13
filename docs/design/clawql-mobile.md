@@ -4,12 +4,12 @@ Expo approval client. Scope is intentionally narrow so the App Store does not tr
 
 ## Surfaces
 
-| Screen  | Job                                                                                     |
-| ------- | --------------------------------------------------------------------------------------- |
-| Sign in | System browser OAuth + app/universal link return; fixture + reviewer-demo for CI/review |
-| Home    | Needs-you queue snapshot + today's spend                                                |
-| Review  | Queue + exact-change detail; Decline; Approve with security key                         |
-| Profile | Keys, connected apps (Revoke), notification prefs, voice prefs, sign out, **delete account** |
+| Screen  | Job                                                                                                                         |
+| ------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Sign in | System browser OAuth + app/universal link return; fixture + reviewer-demo for CI/review                                     |
+| Home    | Needs-you queue snapshot + today's spend                                                                                    |
+| Review  | Queue + exact-change detail; Decline; Approve with security key                                                             |
+| Profile | Keys, connected apps (Revoke), notification prefs, voice prefs, sign out, **delete account**                                |
 | Voice   | In-app assistant — list/read/decline pending; TTS; Siri App Intents later ([spec](../specs/mobile/voice-assistant-v0.1.md)) |
 
 All other product surfaces deep-link or open the web console.

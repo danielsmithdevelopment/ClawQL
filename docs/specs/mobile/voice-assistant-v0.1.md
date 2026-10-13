@@ -13,29 +13,29 @@ People can **talk to ClawQL on the phone**:
 
 ## Naming
 
-| User says | What we implement |
-| --------- | ----------------- |
-| “Talk to the app” / dictation | In-app command parser + mic (Web Speech / `expo-speech-recognition`) |
-| “Read them out” | TTS via `expo-speech` (Phase 1) |
-| “Hey Siri, …” | iOS **App Intents** + App Shortcuts (Phase 2 — needs SDK 58 `expo-app-intents` or custom Swift + Day-0) |
-| “Google, …” | Android App Actions (Phase 3) |
+| User says                     | What we implement                                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------- |
+| “Talk to the app” / dictation | In-app command parser + mic (Web Speech / `expo-speech-recognition`)                                    |
+| “Read them out”               | TTS via `expo-speech` (Phase 1)                                                                         |
+| “Hey Siri, …”                 | iOS **App Intents** + App Shortcuts (Phase 2 — needs SDK 58 `expo-app-intents` or custom Swift + Day-0) |
+| “Google, …”                   | Android App Actions (Phase 3)                                                                           |
 
 ## Safety (hard rules)
 
-- **Approve never skips the security key.** Voice may *confirm intent* and open the approve path; NFC / Face ID / reviewer-demo biometric still required.
+- **Approve never skips the security key.** Voice may _confirm intent_ and open the approve path; NFC / Face ID / reviewer-demo biometric still required.
 - Decline / open / list are allowed after voice (same as taps).
 - Spoken content is **titles + short status only** — no secrets, API keys, or full digests by default.
 
 ## Phase 1 (shipped without Day-0)
 
-| Piece | Status |
-| ----- | ------ |
+| Piece                                                           | Status                                        |
+| --------------------------------------------------------------- | --------------------------------------------- |
 | Command grammar (`list` / `read` / `decline` / `open` / `help`) | `apps/mobile/src/services/voice-assistant.ts` |
-| Typed + fixture dictate on `/voice` | `apps/mobile/app/voice.tsx` |
-| TTS read-out (`expo-speech`, web `speechSynthesis` fallback) | Same service |
-| Prefs: Voice assistant on, Speak replies | DevicePrefs |
-| Deep link `clawql://voice?q=…` | Deep-link parser |
-| Maestro MOB-24 + Playwright e2e | Catalog |
+| Typed + fixture dictate on `/voice`                             | `apps/mobile/app/voice.tsx`                   |
+| TTS read-out (`expo-speech`, web `speechSynthesis` fallback)    | Same service                                  |
+| Prefs: Voice assistant on, Speak replies                        | DevicePrefs                                   |
+| Deep link `clawql://voice?q=…`                                  | Deep-link parser                              |
+| Maestro MOB-24 + Playwright e2e                                 | Catalog                                       |
 
 Mic STT on device and Siri phrases wait for native enrollment.
 
@@ -43,13 +43,13 @@ Mic STT on device and Siri phrases wait for native enrollment.
 
 Suggested intents (Swift / `expo-app-intents` when on SDK 58+):
 
-| Intent | Example phrases | App action |
-| ------ | --------------- | ---------- |
-| `ListPendingApprovalsIntent` | “List my ClawQL approvals”, “What’s waiting in ClawQL” | Speak pending titles; open `/voice` |
-| `ReadNextApprovalIntent` | “Read my next ClawQL request” | TTS first pending summary |
-| `DeclineApprovalIntent` | “Decline the first ClawQL request” | `decideReview(decline)` after confirm |
-| `OpenApprovalIntent` | “Open ClawQL review …” | Deep link `/review/:id` |
-| `StartApproveIntent` | “Approve with ClawQL” | Open review detail → existing key path |
+| Intent                       | Example phrases                                        | App action                             |
+| ---------------------------- | ------------------------------------------------------ | -------------------------------------- |
+| `ListPendingApprovalsIntent` | “List my ClawQL approvals”, “What’s waiting in ClawQL” | Speak pending titles; open `/voice`    |
+| `ReadNextApprovalIntent`     | “Read my next ClawQL request”                          | TTS first pending summary              |
+| `DeclineApprovalIntent`      | “Decline the first ClawQL request”                     | `decideReview(decline)` after confirm  |
+| `OpenApprovalIntent`         | “Open ClawQL review …”                                 | Deep link `/review/:id`                |
+| `StartApproveIntent`         | “Approve with ClawQL”                                  | Open review detail → existing key path |
 
 Donation / App Shortcuts: show in Shortcuts app after first use. Locked-device Siri needs Foreground App Intent entitlements.
 
