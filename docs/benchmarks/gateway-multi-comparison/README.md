@@ -29,6 +29,9 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`gateway-runtime-and-catalog-memory.md`](../../architecture/gateway-runtime-and-catalog-memory.md) | Settled: ≥2 CPUs; NATS≠tail fix; fusion; Wasm later; SQLite catalog / IDP docs |
 | [`stall-memory-round10.md`](./stall-memory-round10.md) | **HTTP echo bisect** — stack clean; host noise unlikely; add ClawQL layers next |
 | [`stall-memory-round11.md`](./stall-memory-round11.md) | **HTTP-only layer bisect** — auth/OTel/budget off on board; shell kill → `tool_x_http`; execute-known still spikes |
+| [`stall-memory-round12.md`](./stall-memory-round12.md) | **Variance + phase timing** — all_kill≠worse (ranges overlap); stall after fast mock; HTTP p999 open → SQLite next |
+| [`http-layer-variance-3x.json`](./http-layer-variance-3x.json) | 3× all_kill vs board_default spike-count ranges |
+| [`http-upstream-phase-2500.json`](./http-upstream-phase-2500.json) | Phase/mock-trace board n=2500 |
 | [`http-only-layer-bisect.json`](./http-only-layer-bisect.json) | Binary kill audit/prune/ALS/auth under gw2core n=2500 |
 | [`http-tool-bisect-clawql_http.json`](./http-tool-bisect-clawql_http.json) | Tool-path control: search+execute n=2500 |
 | [`http-tool-bisect-clawql_http_known.json`](./http-tool-bisect-clawql_http_known.json) | Tool-path cut: execute-known n=2500 (still spikes) |

@@ -14,6 +14,13 @@ import { isAwsSpecLabelEffect } from "../auth/aws-auth.js";
 import { maybeSignAwsRequestEffect, normalizeAwsExecuteUrlEffect } from "../auth/aws-sigv4.js";
 import type { Operation } from "../spec/operation-types.js";
 import { resolveApiBaseUrlForOperation, type OpenAPIDoc } from "../spec/spec-loader.js";
+import {
+  beginUpstreamClientPhase,
+  classifyUpstreamPhase,
+  formatUpstreamPhaseLog,
+  runWithUpstreamClientPhase,
+  upstreamPhaseEnabled,
+} from "./upstream-client-phase.js";
 
 /** Env flag reader — Effect so domain config stays on the Effect surface. */
 const envTruthyEffect = (name: string): Effect.Effect<boolean> =>
@@ -429,13 +436,19 @@ async function executeRestOperationImpl(
 
     const { fetch: doFetch, backend } = Effect.runSync(getFetchImplForRestEffect());
     const diag = Effect.runSync(envTruthyEffect("CLAWQL_UPSTREAM_FETCH_DIAG"));
+    const phaseOn = Effect.runSync(upstreamPhaseEnabled());
     const slowMs = Effect.runSync(upstreamFetchSlowMsEffect());
     // tPrep0 marks start of signed-request → response parse (fetch is the middle slice).
     const tPrep0 = performance.now();
     const tIssueIso = new Date().toISOString();
     const tcpBefore = Effect.runSync(outboundTcpConnectsEffect());
+    const phaseSlot = phaseOn
+      ? Effect.runSync(beginUpstreamClientPhase({ url: url.toString(), backend }))
+      : null;
     const tFetch0 = performance.now();
-    const res = await doFetch(url.toString(), init);
+    const res = phaseSlot
+      ? await runWithUpstreamClientPhase(phaseSlot, () => doFetch(url.toString(), init))
+      : await doFetch(url.toString(), init);
     const tHeaders = performance.now();
     // Optional chaining: unit-test fetch stubs often omit Headers.
     const contentType = res.headers?.get?.("content-type") ?? "";
@@ -450,20 +463,41 @@ async function executeRestOperationImpl(
       parseDoneAt: number;
       phase: "json" | "binary";
     }) => {
-      if (!diag) return;
+      if (!diag && !phaseOn) return;
       const headersMs = tHeaders - tFetch0;
       const bodyMs = opts.parseDoneAt - tHeaders;
       const fetchMs = opts.parseDoneAt - tFetch0;
       const totalMs = opts.parseDoneAt - tPrep0;
-      if (totalMs < slowMs && headersMs < slowMs) return;
+      // FETCH_DIAG: slow-only. UPSTREAM_PHASE=1: every execute (phase bisect).
+      const slow = totalMs >= slowMs || headersMs >= slowMs;
+      if (!phaseOn && !slow) return;
       const tcpAfter = Effect.runSync(outboundTcpConnectsEffect());
-      console.error(
-        `[clawql-upstream-fetch] total_ms=${totalMs.toFixed(1)} fetch_ms=${fetchMs.toFixed(1)} ` +
-          `headers_ms=${headersMs.toFixed(1)} body_ms=${bodyMs.toFixed(1)} ` +
-          `status=${res.status} backend=${backend} phase=${opts.phase} ` +
-          `tcp_connects_delta=${tcpAfter - tcpBefore} tcp_connects_total=${tcpAfter} ` +
-          `issue_iso=${tIssueIso} method=${method} url=${url.toString()} body_bytes=${opts.bodyBytes}`
-      );
+      if (diag && slow) {
+        console.error(
+          `[clawql-upstream-fetch] total_ms=${totalMs.toFixed(1)} fetch_ms=${fetchMs.toFixed(1)} ` +
+            `headers_ms=${headersMs.toFixed(1)} body_ms=${bodyMs.toFixed(1)} ` +
+            `status=${res.status} backend=${backend} phase=${opts.phase} ` +
+            `tcp_connects_delta=${tcpAfter - tcpBefore} tcp_connects_total=${tcpAfter} ` +
+            `issue_iso=${tIssueIso} method=${method} url=${url.toString()} body_bytes=${opts.bodyBytes}`
+        );
+      }
+      if (phaseSlot && (phaseOn || slow)) {
+        const breakdown = Effect.runSync(
+          classifyUpstreamPhase(phaseSlot, {
+            tFetch0,
+            tHeaders,
+            tDone: opts.parseDoneAt,
+          })
+        );
+        console.error(
+          formatUpstreamPhaseLog(phaseSlot, breakdown, {
+            total_ms: Number(totalMs.toFixed(1)),
+            status: res.status,
+            body_bytes: opts.bodyBytes,
+            tcp_connects_delta: tcpAfter - tcpBefore,
+          })
+        );
+      }
     };
 
     if (binary && typeof res.arrayBuffer === "function") {

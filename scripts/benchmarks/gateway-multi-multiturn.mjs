@@ -981,6 +981,11 @@ async function startCatalogHttp() {
     mockEnv.MT_UPSTREAM_DIAG = "1";
     mockEnv.MT_UPSTREAM_SLOW_MS = String(upstreamSlowMs());
   }
+  if (process.env.MT_UPSTREAM_TRACE) {
+    mockEnv.MT_UPSTREAM_TRACE = process.env.MT_UPSTREAM_TRACE;
+    // Trace implies diag so arrive/done lines emit.
+    mockEnv.MT_UPSTREAM_DIAG = "1";
+  }
   if (process.env.MT_UPSTREAM_LATENCY_MS) {
     mockEnv.MT_UPSTREAM_LATENCY_MS = process.env.MT_UPSTREAM_LATENCY_MS;
   }
@@ -1170,6 +1175,7 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     "CLAWQL_HTTP_TIMING",
     "CLAWQL_UPSTREAM_FETCH_DIAG",
     "CLAWQL_UPSTREAM_FETCH_SLOW_MS",
+    "CLAWQL_UPSTREAM_PHASE",
     "CLAWQL_NATIVE_FETCH",
     "CLAWQL_UPSTREAM_KEEPALIVE",
     "CLAWQL_HTTP_PARSE_TIMING",

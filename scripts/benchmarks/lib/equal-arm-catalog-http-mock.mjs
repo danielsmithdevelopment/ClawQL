@@ -149,26 +149,34 @@ const server = createServer(async (req, res) => {
   const body = JSON.stringify({ items: rows, partition: toolName(partition) });
   res.writeHead(200, { "content-type": "application/json" });
   res.end(body);
+  const doneIso = new Date().toISOString();
 
   const handleMs = performance.now() - tArrive;
   if (handleMs > stats.max_handle_ms) stats.max_handle_ms = handleMs;
-  if (diag && handleMs >= slowThreshold) {
+  // MT_UPSTREAM_TRACE=1: log every catalog hit (arrive/done) for phase bisect — noisy.
+  const traceAll = ["1", "true", "yes"].includes(
+    (process.env.MT_UPSTREAM_TRACE ?? "").trim().toLowerCase()
+  );
+  if (diag && (traceAll || handleMs >= slowThreshold)) {
     const entry = {
       handle_ms: Number(handleMs.toFixed(1)),
       inject_ms: Number(injectMs.toFixed(1)),
       arrive_iso: arriveIso,
+      done_iso: doneIso,
       path: u.pathname,
       new_conn: newConn ? 1 : 0,
       remote_port: sock?.remotePort ?? null,
       body_bytes: Buffer.byteLength(body),
     };
-    stats.slow_top.push(entry);
-    if (stats.slow_top.length > 40) {
-      stats.slow_top.sort((a, b) => b.handle_ms - a.handle_ms);
-      stats.slow_top.length = 20;
+    if (handleMs >= slowThreshold) {
+      stats.slow_top.push(entry);
+      if (stats.slow_top.length > 40) {
+        stats.slow_top.sort((a, b) => b.handle_ms - a.handle_ms);
+        stats.slow_top.length = 20;
+      }
     }
     console.error(
-      `[mt-upstream] ${entry.handle_ms}ms path=${entry.path} arrive=${arriveIso} ` +
+      `[mt-upstream] ${entry.handle_ms}ms path=${entry.path} arrive=${arriveIso} done=${doneIso} ` +
         `inject_ms=${entry.inject_ms} new_conn=${entry.new_conn} tcp_connects=${stats.tcp_connects} ` +
         `remote_port=${entry.remote_port ?? "-"} body_bytes=${entry.body_bytes}`
     );
