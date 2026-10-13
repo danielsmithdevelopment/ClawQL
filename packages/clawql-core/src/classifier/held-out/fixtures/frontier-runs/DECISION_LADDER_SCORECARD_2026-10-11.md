@@ -23,10 +23,10 @@ Honest readout after merging spend-ledger → provider pricing → Decision-1 fl
 Artifacts: [`laya-v04-held-out-measure.json`](./laya-v04-held-out-measure.json) · [`laya-vs-gliner-v04-compare.json`](./laya-vs-gliner-v04-compare.json)  
 Source: local `laya-serve` (`LAYA_DEVICE=cpu`), frozen labels `v0.4-routing-fresh-gha-36144911649`, `CLAWQL_FLIP_RATE_GATE=0`.
 
-| Arm | Scorer | rawAccuracy | meanCalibrationError | passedCriteria | productionTrusted |
-| --- | --- | --- | --- | --- | --- |
-| GLiNER2 (frozen trusted readout) | `gliner2` | **0.80** | ~0.12 | yes | **true** |
-| Laya English (self-host SystemOne) | `convai/laya` | **0.925** (37/40) | ~0.164 | no (cal > 0.15) | **false** (≠ gliner2) |
+| Arm                                | Scorer        | rawAccuracy       | meanCalibrationError | passedCriteria  | productionTrusted     |
+| ---------------------------------- | ------------- | ----------------- | -------------------- | --------------- | --------------------- |
+| GLiNER2 (frozen trusted readout)   | `gliner2`     | **0.80**          | ~0.12                | yes             | **true**              |
+| Laya English (self-host SystemOne) | `convai/laya` | **0.925** (37/40) | ~0.164               | no (cal > 0.15) | **false** (≠ gliner2) |
 
 - **Winner rawAccuracy:** Laya (+0.125 vs GLiNER).
 - **Honesty rails held** — Laya cannot light `productionTrusted` under current gate; GLiNER remains the only trusted path.
