@@ -814,6 +814,11 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     "CLAWQL_HTTP_SLOW_MS",
     "CLAWQL_AUDIT_TOOL_CALLS",
     "CLAWQL_AUDIT_MAX_ENTRIES",
+    "CLAWQL_BENCH_STATS",
+    "CLAWQL_TIMER_TRACE",
+    "CLAWQL_TIMER_TRACE_SLOW_MS",
+    "CLAWQL_MCP_SESSION_IDLE_MS",
+    "UV_THREADPOOL_SIZE",
     "BUN_JSC_forceRAMSize",
     "BUN_JSC_useJIT",
   ]) {
@@ -821,6 +826,8 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
       env[key] = process.env[key];
     }
   }
+  // Bench default: expose session/audit counts on /healthz for RSS localization.
+  if (env.CLAWQL_BENCH_STATS == null) env.CLAWQL_BENCH_STATS = "1";
   const wantCpuProf = runtime === "node" && process.env.MT_HTTP_CPU_PROF === "1";
   const wantPerf = ["1", "true", "yes"].includes(
     (process.env.CLAWQL_HTTP_PERF ?? "").trim().toLowerCase()
@@ -854,11 +861,19 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
   child.on("exit", onEarlyExit);
   const stderrChunks = [];
   let listenResolved = false;
+  const wantTimerTrace = ["1", "true", "yes"].includes(
+    (process.env.CLAWQL_TIMER_TRACE ?? "").trim().toLowerCase()
+  );
   const onChildOut = (chunk) => {
     const s = String(chunk);
-    if (wantPerf || wantTraceGc) {
+    if (wantPerf || wantTraceGc || wantTimerTrace) {
       stderrChunks.push(s);
-      if (s.includes("[clawql-http-perf]") || s.includes("Scavenge") || s.includes("Mark-")) {
+      if (
+        s.includes("[clawql-http-perf]") ||
+        s.includes("[clawql-timer-trace]") ||
+        s.includes("Scavenge") ||
+        s.includes("Mark-")
+      ) {
         process.stderr.write(s);
       }
     }
@@ -922,23 +937,54 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
   }
   // Client-side SSE skip matches server CLAWQL_MCP_DISABLE_STANDALONE_SSE (and
   // the same client filter used for mcpjungle / agentgateway / executor_v2).
-  const transport = new StreamableHTTPClientTransport(
+  let transport = new StreamableHTTPClientTransport(
     new URL(mcpUrl),
     streamableHttpClientOpts()
   );
-  const client = new Client({ name: `mt-${id}`, version: "1" }, {});
+  let client = new Client({ name: `mt-${id}`, version: "1" }, {});
   await client.connect(transport);
-  return {
-    client,
+  const fetchBench = async () => {
+    try {
+      const r = await fetch(`http://127.0.0.1:${port}/healthz`);
+      const j = await r.json();
+      return j.bench ?? null;
+    } catch {
+      return null;
+    }
+  };
+  const conn = {
+    get client() {
+      return client;
+    },
     pid: child.pid,
     runtime: js.runtime,
     runtimeVersion: js.runtimeVersion,
     transport: "streamable_http_multiplex",
     mcpUrl,
+    port,
     ready_ms: Number((performance.now() - t0).toFixed(1)),
     rss_mb_ready: child.pid != null ? readTreeRssMb(child.pid) : null,
     /** Mutable buffer — drained on close into parsed http_perf. */
     _stderrChunks: stderrChunks,
+    fetchBench,
+    /**
+     * HTTP DELETE the MCP session then re-initialize (same serve process).
+     * Use with MT_HTTP_SESSION_PER_FLOW=1 to test session-retained RSS.
+     */
+    recycleSession: async () => {
+      try {
+        await transport.terminateSession?.();
+      } catch {
+        /* ignore */
+      }
+      await client.close().catch(() => {});
+      transport = new StreamableHTTPClientTransport(
+        new URL(mcpUrl),
+        streamableHttpClientOpts()
+      );
+      client = new Client({ name: `mt-${id}-recycle`, version: "1" }, {});
+      await client.connect(transport);
+    },
     close: async () => {
       try {
         await transport.terminateSession?.();
@@ -960,6 +1006,7 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
       await sleep(100);
     },
   };
+  return conn;
 }
 
 /** Parse `[clawql-http-perf]` stderr lines into GC / event-loop delay stats. */
@@ -1623,6 +1670,11 @@ async function runClawqlArm(
   }
   sampler.start(ITERS > 1 ? 500 : 200);
   const slowFlowMs = Number(process.env.MT_SLOW_FLOW_MS || 80) || 80;
+  const sessionPerFlow =
+    transport === "http" &&
+    ["1", "true", "yes"].includes(
+      (process.env.MT_HTTP_SESSION_PER_FLOW ?? "").trim().toLowerCase()
+    );
   try {
     const listed = await conn.client.listTools();
     // Known-op path: agent already has operationId — Layer1 is execute schema only.
@@ -1636,9 +1688,15 @@ async function runClawqlArm(
     const executeLat = [];
     const slowFlows = [];
     const slowSearchCalls = [];
+    const benchSeries = [];
     let successOk = 0;
     let successTotal = 0;
     let callErrors = 0;
+
+    if (typeof conn.fetchBench === "function") {
+      const b0 = await conn.fetchBench();
+      if (b0) benchSeries.push({ phase: "after_connect", flow: 0, ...b0 });
+    }
 
     for (let iter = 1; iter <= ITERS; iter++) {
       sampler.markFlow(iter);
@@ -1734,6 +1792,16 @@ async function runClawqlArm(
           t_end_iso: new Date().toISOString(),
         });
       }
+      if (sessionPerFlow && typeof conn.recycleSession === "function") {
+        await conn.recycleSession();
+      }
+      if (
+        typeof conn.fetchBench === "function" &&
+        (iter === 1 || iter === ITERS || iter % Math.max(1, Math.floor(ITERS / 5)) === 0)
+      ) {
+        const b = await conn.fetchBench();
+        if (b) benchSeries.push({ phase: "mid_run", flow: iter, ...b });
+      }
       if (iter === 1) perTurn = thisPerTurn;
       if (iter % PROGRESS_EVERY === 0 || iter === ITERS) {
         console.log(`[mt] ${id} flows ${iter}/${ITERS}`);
@@ -1806,6 +1874,8 @@ async function runClawqlArm(
       slow_flows_top: [...slowFlows].sort((a, b) => b.ms - a.ms).slice(0, 20),
       slow_search_top: [...slowSearchCalls].sort((a, b) => b.ms - a.ms).slice(0, 20),
       slow_flow_gc_correlation: slowFlowGcHits,
+      session_per_flow: sessionPerFlow,
+      bench_series: benchSeries.length ? benchSeries : undefined,
       skipped: false,
     };
   } finally {

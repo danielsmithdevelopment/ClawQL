@@ -16,6 +16,7 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`gateway-multi-multiturn-24.json`](./gateway-multi-multiturn-24.json) | Same board at N=24 (compounding check) |
 | [`gateway-multi-multiturn-10k.json`](./gateway-multi-multiturn-10k.json) | **10 000 × 12-turn** flows — tokens + latency + RSS + task_success (+ **direct** baseline) |
 | [`stall-memory-diagnostics.md`](./stall-memory-diagnostics.md) | Equal search/exec stall localization + smaps/DuckDB Ready breakdown |
+| [`stall-memory-round2.md`](./stall-memory-round2.md) | UV pool / timer wrap / session-count — under-load RSS is not session pileup |
 | [`index.html`](./index.html) | Dedicated comparison page (competitors, Bun rationale, vs direct) |
 
 ---
@@ -267,7 +268,7 @@ Artifact: [`gateway-multi-multiturn-search-exec-split-10k.json`](./gateway-multi
 
 Steady per-call p999 is fine (&lt;5 ms). Flow p999 is rare single-RPC spikes (~500 ms) on **either** call — of 18 turns ≥100 ms, **search owned 7 / execute owned 11**. GC correlation still empty. So the remaining tail is not “search scoring every request”; it is infrequent event-loop / scheduling stalls that can land on whichever RPC is in flight. Known-op (execute-only) still wins session p999 (**130 ms** on this split board) by removing the second RPC and half the spike surface.
 
-**Stall localization** (see [`stall-memory-diagnostics.md`](./stall-memory-diagnostics.md)): equal search/execute maxima ⇒ process-wide block. Interleaved ClawQL+MCPJungle (1500 flows) did **not** reproduce ~500 ms stalls. Solo 4k + host-lag sidecar (**0 slips**) still saw ClawQL slow flows up to ~362 ms ⇒ **in-process**, not host steal. Gaps ~6–15 s (weak ~12 s cluster) — no crisp timer match yet.
+**Stall localization** (see [`stall-memory-diagnostics.md`](./stall-memory-diagnostics.md), [`stall-memory-round2.md`](./stall-memory-round2.md)): equal search/execute maxima ⇒ wait off the hot path, not call body. Host-lag **0 slips**; ELD quiet. **`UV_THREADPOOL_SIZE=16` did not help** (Node n=800). Timer wrap found **no ≥5 ms** `setInterval`/`setTimeout` bodies on a Bun smoke. Still hunting off-thread I/O (upstream fetch / runtime pool).
 
 #### 4. Memory (&lt;200 MB) — anonymous data at Ready
 
@@ -275,9 +276,9 @@ Bun HTTP under-load was ~311–317 MB **with and without** `--smol` (flags A/B
 
 **Lazy-import pass (this branch):** HTTP no longer statically loads payments / network / GraphQL / HITL / webhooks / gRPC / chatgpt / inference / ouroboros at listen. Bench sets `CLAWQL_HTTP_SKIP_PAYMENTS=1`. Those packages stay **unmapped**.
 
-**smaps + DuckDB:** Ready probe ([`bun-ready-memory.json`](./bun-ready-memory.json)) after lazy `clawql-data` — RSS **~155 MB**, **anon ~116 MB** / file-backed **~38 MB** (mostly the `bun` binary); DuckDB mappings gone. Multiturn smoke after the same change ([`gateway-multi-multiturn-clawql-http-bun-rss-post-duckdb-lazy.json`](./gateway-multi-multiturn-clawql-http-bun-rss-post-duckdb-lazy.json)): under-load med **~283 MB** (was ~317). Still short of **&lt;200 MB** — remaining cut is other eager anon structures on the Ready path, not optional packages.
+**smaps + DuckDB:** lean Ready probe ([`bun-ready-memory.json`](./bun-ready-memory.json)) after lazy `clawql-data` — RSS **~155 MB**, **anon ~116 MB** / file-backed **~38 MB**; DuckDB gone. Equal-arm **fat catalog listen** is already **~280–295 MB** before traffic. Under load, `mcp_sessions` stays **1**, audit capped/off does not explain the climb, and `terminateSession` frees only **~16 MB** — **not** session pileup (see [`stall-memory-round2.md`](./stall-memory-round2.md)). Remaining cut is fat-catalog residency + first-flow process-global caches.
 
-Bun `--smol` RSS ladder (same host): empty **13** → express **37** → effect **40** → MCP SDK **39** → `clawql-api` **88** → `import(server-http)` **165** → Ready probe (lazy DuckDB) **~155**. Multiturn warm Ready still **~290** once the fat catalog path runs.
+Bun `--smol` RSS ladder (same host): empty **13** → express **37** → effect **40** → MCP SDK **39** → `clawql-api` **88** → `import(server-http)` **165** → lean Ready (lazy DuckDB) **~155**. Fat-catalog listen / multiturn warm **~280–295**; under-load plateau **~320**.
 
 ```bash
 # Publish board — every arm, one interleaved process
@@ -458,7 +459,7 @@ ClawQL is the **heaviest serious arm** on this board:
 | Chaos min / med | 259 / 342 | 97 / 109 | Single-instance |
 | 10k under-load median | ~427 MB | ~152 MB | V8 watermark under interleaved load |
 
-Levers landed: INSTANCE_SPEC slim Core, lazy optional imports, lazy `clawql-data` (DuckDB) off HTTP Ready, WORM ring cap, session catalog max. **Bun runtime** trims Ready ~22% / under-load ~28% without a rewrite (see [Node vs Bun](#node-vs-bun-runtime-same-core-binary)) — still not MCPJungle-class. smaps says chase **anonymous** eager init next (see [`stall-memory-diagnostics.md`](./stall-memory-diagnostics.md)). **If RSS stays high, say so** — hiding a memory loss costs more than admitting it. Scale-out multiplies RSS; concurrency claims must price that in.
+Levers landed: INSTANCE_SPEC slim Core, lazy optional imports, lazy `clawql-data` (DuckDB) off HTTP Ready, WORM ring cap, session catalog max, `CLAWQL_MCP_SESSION_IDLE_MS` + `/healthz` bench stats. **Bun runtime** trims Ready ~22% / under-load ~28% without a rewrite (see [Node vs Bun](#node-vs-bun-runtime-same-core-binary)) — still not MCPJungle-class. Under-load plateau is **not** MCP session pileup; chase fat-catalog + first-flow caches ([`stall-memory-round2.md`](./stall-memory-round2.md)). **If RSS stays high, say so** — hiding a memory loss costs more than admitting it. Scale-out multiplies RSS; concurrency claims must price that in.
 
 ---
 
@@ -484,9 +485,10 @@ Default `MULTI_ARMS` / `MT_ARMS` omit both.
 7. **Chaos until-break + topology tags** — `MULTI_CHAOS_UNTIL_BREAK`; reports carry `topology` so cross-topology claims fail the honesty check.
 8. **`clawql_bun` runtime arm** — same Core binary under Bun; board artifacts `gateway-multi-cmp-bun-10k.json` / `gateway-multi-cmp-bun-chaos.json`.
 9. **Lazy `clawql-data`** — static horizontal composer loads DuckDB only when `enableData` (HTTP Ready probe ~155 MB anon-dominated).
-10. **Stall / smaps probes** — `interleaved-stall-probe.mjs`, `bun-ready-memory-probe.mjs`; write-up in [`stall-memory-diagnostics.md`](./stall-memory-diagnostics.md).
+10. **Stall / smaps probes** — `interleaved-stall-probe.mjs`, `bun-ready-memory-probe.mjs`, `session-rss-phase-probe.mjs`; write-ups in [`stall-memory-diagnostics.md`](./stall-memory-diagnostics.md) / [`stall-memory-round2.md`](./stall-memory-round2.md).
+11. **Bench stats + idle sessions + timer trace** — `CLAWQL_BENCH_STATS`, `CLAWQL_MCP_SESSION_IDLE_MS`, `CLAWQL_TIMER_TRACE`.
 
-**Next:** topology B (4× behind LB) for every arm before any scale-out claim; longer concurrent ClawQL+peer stall board if hunting the 500 ms timer; further lazy anon caches on Ready for &lt;200 MB. Date/version stamps on published executor-cmp pages (housekeeping).
+**Next:** topology B (4× behind LB) for every arm before any scale-out claim; instrument upstream fetch wait for stalls; slim fat-catalog listen + first-flow caches for under-load &lt;200 MB (session DELETE will not get there). Date/version stamps on published executor-cmp pages (housekeeping).
 
 ---
 

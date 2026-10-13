@@ -14,6 +14,9 @@ import {
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { pruneOrphanJsonStreamMappings } from "./prune-json-stream-mappings.js";
+import { benchStatsEnabled, collectMcpBenchStats } from "./mcp-bench-stats.js";
+import { resolveSessionIdleMs, startSessionIdleWatcher } from "./mcp-session-idle.js";
+import { installTimerTrace } from "./mcp-timer-trace.js";
 import { createRegisteredMcpServer } from "../mcp/mcp-server-factory.js";
 import { runWithMcpRequestContext } from "../mcp/mcp-request-context.js";
 import {
@@ -236,6 +239,8 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
   const mcpPath = options.mcpPath?.trim() || process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;
   const transports = new Map<string, StreamableHTTPServerTransport>();
+  const sessionIdleMs = Effect.runSync(resolveSessionIdleMs());
+  const sessionIdle = Effect.runSync(startSessionIdleWatcher(transports, sessionIdleMs));
 
   const app = createClawqlMcpExpressApp({
     host: options.host || process.env.MCP_HOST || "0.0.0.0",
@@ -498,6 +503,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     };
     if (nativeProtocolMetricsEnabled()) {
       base.nativeProtocolMetrics = getNativeProtocolMetricsSnapshot();
+    }
+    if (Effect.runSync(benchStatsEnabled())) {
+      base.bench = Effect.runSync(collectMcpBenchStats(transports));
+      if (sessionIdleMs > 0) base.session_idle_ms = sessionIdleMs;
     }
     if (process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS?.trim() === "1") {
       try {
@@ -793,6 +802,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (sid) => {
             transports.set(sid, transport!);
+            sessionIdle?.touch(sid);
             // 8.0 session-scope hooks (spec §5) — fire-and-forget; never block init.
             const api = getClawqlApi();
             void fireSessionStart({
@@ -842,6 +852,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         sessionId ??
         (typeof transport.sessionId === "string" ? transport.sessionId : undefined) ??
         "mcp";
+      if (sessionIdle && mcpSession !== "mcp") sessionIdle.touch(mcpSession);
       try {
         const runHandle = () =>
           runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens }, () =>
@@ -923,6 +934,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       jsonRpcError(res, "Bad Request: invalid mcp-session-id.");
       return;
     }
+    sessionIdle?.touch(sessionId);
     const handleGet = () =>
       runWithMcpRequestContext({ sessionId }, () => transport.handleRequest(req, res));
     if (isX402EnforcementActiveLocal()) {
@@ -947,6 +959,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       jsonRpcError(res, "Bad Request: invalid mcp-session-id.");
       return;
     }
+    sessionIdle?.touch(sessionId);
     const handleDelete = () =>
       runWithMcpRequestContext({ sessionId }, () => transport.handleRequest(req, res));
     if (isX402EnforcementActiveLocal()) {
@@ -1050,6 +1063,7 @@ function maybeInstallHttpPerfDiagnostics(): void {
 }
 
 export async function startMcpHttpServer(): Promise<void> {
+  Effect.runSync(installTimerTrace());
   const { maybeInitOtelTracing } = await import("../observability/otel-tracing.js");
   await maybeInitOtelTracing();
   await maybeVerifyReleaseManifestAtStartup();

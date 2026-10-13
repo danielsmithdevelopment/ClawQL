@@ -1,0 +1,1328 @@
+{
+  "suite": "gateway-multi-multiturn",
+  "measuredAt": "2026-10-13T06:25:15.702Z",
+  "node": "v22.14.0",
+  "bun": "1.4.3",
+  "config": {
+    "turns": 12,
+    "iters": 80,
+    "catalog_tool_count": 40,
+    "limit": 25,
+    "where": "items",
+    "fields": [
+      "id",
+      "name",
+      "status"
+    ],
+    "arms": [
+      "clawql_http_bun"
+    ],
+    "tokenizer": "cl100k_base",
+    "progress_every": 100,
+    "runtime_flags": {
+      "clawql_node_max_old_space_mb": 512,
+      "clawql_bun_smol": true,
+      "clawql_http_skip_graphql": true,
+      "clawql_enable_http_metrics": false,
+      "note": "Applied evenly to all ClawQL arms (stdio / Streamable HTTP / gRPC). Override with CLAWQL_NODE_MAX_OLD_SPACE_MB=0 or CLAWQL_BUN_SMOL=0 for defaults-only. CLAWQL_SEARCH_COMPACT=1 and CLAWQL_HTTP_SKIP_PAYMENTS=1 are bench defaults (compact search gated for product; payments/network routes skipped for slim RSS)."
+    }
+  },
+  "equal_arm": {
+    "fat_result_tokens_partition_1": 2411,
+    "slim_fields_tokens_partition_1": 353,
+    "projection_ratio": 6.83,
+    "note": "Same underlying rows; ClawQL where+fields project to {id,name,status}; Executor/aggregators return full envelope (Executor: no gateway projection — settled)"
+  },
+  "board": {
+    "clawql_http_bun": {
+      "runtime": "bun",
+      "runtime_version": "1.4.3",
+      "ready_ms": 1030,
+      "transport": "streamable_http_multiplex",
+      "rss_mb_ready": 294.5,
+      "rss_mb_min": 294.49609375,
+      "rss_mb_median": 318.921875,
+      "rss_mb_max": 327.734375,
+      "rss_trend": {
+        "classification": "plateau",
+        "reason": "late-window RSS stable relative to mid-window",
+        "early_median_mb": 294.5,
+        "mid_median_mb": 315.16,
+        "late_median_mb": 318.92,
+        "rise_early_to_late_mb": 24.42,
+        "rise_mid_to_late_mb": 3.76,
+        "mb_per_1000_flows": 309.11,
+        "n_series": 7
+      },
+      "definitions_tokens": 308,
+      "discovery_tokens_sum": 3408,
+      "mean_discovery_tokens": 284,
+      "result_tokens_sum": 8674,
+      "mean_result_tokens": 722.8,
+      "layer1_once_tokens": 308,
+      "mean_layer2_tokens": 1006.8,
+      "combined_at_n": 12390,
+      "combined_rebuild": 12390,
+      "combined_relist_every_turn_at_n": 12082,
+      "flows": 80,
+      "turns_per_flow": 12,
+      "total_turns": 960,
+      "rpcs_per_turn": 2,
+      "ms_per_call_p50": 1.45,
+      "flow_e2e_ms": {
+        "n": 80,
+        "p50_ms": 35.515,
+        "p95_ms": 51.329,
+        "p99_ms": 98.805,
+        "p999_ms": 98.805,
+        "mean_ms": 37.926,
+        "min_ms": 27.854,
+        "max_ms": 98.805,
+        "n_ge_100ms": 0,
+        "n_ge_200ms": 0,
+        "n_ge_300ms": 0,
+        "worst": [
+          {
+            "i": 1,
+            "ms": 98.805
+          },
+          {
+            "i": 2,
+            "ms": 55.251
+          },
+          {
+            "i": 30,
+            "ms": 54.268
+          },
+          {
+            "i": 7,
+            "ms": 51.655
+          },
+          {
+            "i": 3,
+            "ms": 51.329
+          },
+          {
+            "i": 68,
+            "ms": 49.047
+          },
+          {
+            "i": 6,
+            "ms": 48.925
+          },
+          {
+            "i": 4,
+            "ms": 48.516
+          }
+        ]
+      },
+      "turn_latency_ms": {
+        "n": 960,
+        "p50_ms": 2.905,
+        "p95_ms": 4.373,
+        "p99_ms": 6.129,
+        "p999_ms": 25.061,
+        "mean_ms": 3.105,
+        "min_ms": 1.985,
+        "max_ms": 25.061,
+        "n_ge_100ms": 0,
+        "n_ge_200ms": 0,
+        "n_ge_300ms": 0,
+        "worst": [
+          {
+            "i": 1,
+            "ms": 25.061
+          },
+          {
+            "i": 353,
+            "ms": 12.214
+          },
+          {
+            "i": 813,
+            "ms": 11.159
+          },
+          {
+            "i": 816,
+            "ms": 10.195
+          },
+          {
+            "i": 349,
+            "ms": 9.867
+          },
+          {
+            "i": 75,
+            "ms": 7.549
+          },
+          {
+            "i": 3,
+            "ms": 7.133
+          },
+          {
+            "i": 2,
+            "ms": 6.729
+          }
+        ]
+      },
+      "call_errors": 0,
+      "task_success_ok": true,
+      "task_success_rate": 1,
+      "slow_flows_top": [
+        {
+          "flow": 1,
+          "ms": 98.8,
+          "t_iso": "2026-10-13T06:25:12.534Z",
+          "t_end_iso": "2026-10-13T06:25:12.633Z"
+        }
+      ],
+      "search_latency_ms": {
+        "n": 960,
+        "p50_ms": 1.201,
+        "p95_ms": 1.916,
+        "p99_ms": 2.769,
+        "p999_ms": 11.727,
+        "mean_ms": 1.289,
+        "min_ms": 0.847,
+        "max_ms": 11.727,
+        "n_ge_100ms": 0,
+        "n_ge_200ms": 0,
+        "n_ge_300ms": 0,
+        "worst": [
+          {
+            "i": 1,
+            "ms": 11.727
+          },
+          {
+            "i": 353,
+            "ms": 6.577
+          },
+          {
+            "i": 816,
+            "ms": 5.472
+          },
+          {
+            "i": 8,
+            "ms": 3.569
+          },
+          {
+            "i": 36,
+            "ms": 3.123
+          },
+          {
+            "i": 4,
+            "ms": 3.039
+          },
+          {
+            "i": 3,
+            "ms": 3.033
+          },
+          {
+            "i": 2,
+            "ms": 2.939
+          }
+        ]
+      },
+      "execute_latency_ms": {
+        "n": 960,
+        "p50_ms": 1.671,
+        "p95_ms": 2.712,
+        "p99_ms": 3.881,
+        "p999_ms": 13.298,
+        "mean_ms": 1.806,
+        "min_ms": 1.103,
+        "max_ms": 13.298,
+        "n_ge_100ms": 0,
+        "n_ge_200ms": 0,
+        "n_ge_300ms": 0,
+        "worst": [
+          {
+            "i": 1,
+            "ms": 13.298
+          },
+          {
+            "i": 349,
+            "ms": 8.722
+          },
+          {
+            "i": 813,
+            "ms": 8.54
+          },
+          {
+            "i": 75,
+            "ms": 5.656
+          },
+          {
+            "i": 353,
+            "ms": 5.626
+          },
+          {
+            "i": 816,
+            "ms": 4.712
+          },
+          {
+            "i": 121,
+            "ms": 4.538
+          },
+          {
+            "i": 410,
+            "ms": 4.181
+          }
+        ]
+      },
+      "slow_search_top": [],
+      "skip_search": false,
+      "token_rebuild_note": "Classic Layer1 = search+execute schemas; discovery = Σ search hit tokens."
+    }
+  },
+  "ratios_vs_clawql": {},
+  "task_success": {
+    "clawql_http_bun": {
+      "turns_ok": 960,
+      "turns_total": 960,
+      "flows": 80,
+      "turns_per_flow": 12,
+      "ok": true,
+      "rate": 1
+    }
+  },
+  "cumulative_table": {
+    "clawql_http_bun": [
+      {
+        "n": 1,
+        "combined": 1269,
+        "layer2Cumulative": 961
+      },
+      {
+        "n": 2,
+        "combined": 2280,
+        "layer2Cumulative": 1972
+      },
+      {
+        "n": 3,
+        "combined": 3291,
+        "layer2Cumulative": 2983
+      },
+      {
+        "n": 4,
+        "combined": 4302,
+        "layer2Cumulative": 3994
+      },
+      {
+        "n": 5,
+        "combined": 5313,
+        "layer2Cumulative": 5005
+      },
+      {
+        "n": 6,
+        "combined": 6324,
+        "layer2Cumulative": 6016
+      },
+      {
+        "n": 7,
+        "combined": 7335,
+        "layer2Cumulative": 7027
+      },
+      {
+        "n": 8,
+        "combined": 8346,
+        "layer2Cumulative": 8038
+      },
+      {
+        "n": 9,
+        "combined": 9357,
+        "layer2Cumulative": 9049
+      },
+      {
+        "n": 10,
+        "combined": 10368,
+        "layer2Cumulative": 10060
+      },
+      {
+        "n": 11,
+        "combined": 11379,
+        "layer2Cumulative": 11071
+      },
+      {
+        "n": 12,
+        "combined": 12390,
+        "layer2Cumulative": 12082
+      }
+    ]
+  },
+  "arms": {
+    "clawql_http_bun": {
+      "id": "clawql_http_bun",
+      "model": "search_plus_execute_where_fields_bun_streamable_http_multiplex",
+      "runtime": "bun",
+      "runtimeVersion": "1.4.3",
+      "transport": "streamable_http_multiplex",
+      "mcpUrl": "http://127.0.0.1:37471/mcp",
+      "skip_search": false,
+      "rpcs_per_turn_override": 2,
+      "layer1": {
+        "once_schema_tokens": 308,
+        "tools_count": 2,
+        "tools_list_count_full": 8,
+        "tools_list_schema_tokens_full": 1200,
+        "note": "Only search+execute schemas counted as Layer1 (catalog stays server-side)"
+      },
+      "discovery_note": "Each turn charges search (limit 3) + execute — discovery is not zero (unlike Executor harness)",
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "catalog_list_001",
+          "search_tokens": 284,
+          "result_tokens": 677,
+          "result_chars": 1840,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 961,
+          "layer2_relist_every_turn": 961,
+          "latency_ms": 25.061,
+          "search_ms": 11.727,
+          "execute_ms": 13.298,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 2,
+          "tool": "catalog_list_002",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 6.729,
+          "search_ms": 2.939,
+          "execute_ms": 3.776,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 3,
+          "tool": "catalog_list_003",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 7.133,
+          "search_ms": 3.033,
+          "execute_ms": 4.086,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 4,
+          "tool": "catalog_list_004",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 6.129,
+          "search_ms": 3.039,
+          "execute_ms": 3.075,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 5,
+          "tool": "catalog_list_005",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 5.739,
+          "search_ms": 2.65,
+          "execute_ms": 3.069,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 6,
+          "tool": "catalog_list_006",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 5.15,
+          "search_ms": 2.364,
+          "execute_ms": 2.771,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 7,
+          "tool": "catalog_list_007",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 5.225,
+          "search_ms": 2.455,
+          "execute_ms": 2.755,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 8,
+          "tool": "catalog_list_008",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 6.683,
+          "search_ms": 3.569,
+          "execute_ms": 3.1,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 9,
+          "tool": "catalog_list_009",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 5.344,
+          "search_ms": 2.356,
+          "execute_ms": 2.973,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 10,
+          "tool": "catalog_list_010",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 5.022,
+          "search_ms": 2.215,
+          "execute_ms": 2.792,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 11,
+          "tool": "catalog_list_011",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 2002,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 4.808,
+          "search_ms": 1.911,
+          "execute_ms": 2.882,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 12,
+          "tool": "catalog_list_012",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 2002,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 4.96,
+          "search_ms": 2.396,
+          "execute_ms": 2.549,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        }
+      ],
+      "iters": 80,
+      "call_errors": 0,
+      "task_success_agg": {
+        "ok": 960,
+        "total": 960
+      },
+      "resources": {
+        "label": "clawql_http_bun",
+        "pid": 405429,
+        "n": 7,
+        "rss_mb": {
+          "min": 294.49609375,
+          "median": 318.921875,
+          "max": 327.734375
+        },
+        "series": [
+          {
+            "t_s": 0,
+            "flow": 0,
+            "rss_mb": 294.5
+          },
+          {
+            "t_s": 0.5,
+            "flow": 9,
+            "rss_mb": 322.48
+          },
+          {
+            "t_s": 1,
+            "flow": 21,
+            "rss_mb": 316.6
+          },
+          {
+            "t_s": 1.5,
+            "flow": 33,
+            "rss_mb": 315.16
+          },
+          {
+            "t_s": 2,
+            "flow": 48,
+            "rss_mb": 327.73
+          },
+          {
+            "t_s": 2.5,
+            "flow": 63,
+            "rss_mb": 319.54
+          },
+          {
+            "t_s": 3,
+            "flow": 79,
+            "rss_mb": 318.92
+          }
+        ],
+        "trend": {
+          "classification": "plateau",
+          "reason": "late-window RSS stable relative to mid-window",
+          "early_median_mb": 294.5,
+          "mid_median_mb": 315.16,
+          "late_median_mb": 318.92,
+          "rise_early_to_late_mb": 24.42,
+          "rise_mid_to_late_mb": 3.76,
+          "mb_per_1000_flows": 309.11,
+          "n_series": 7
+        }
+      },
+      "startup": {
+        "ready_ms": 1030,
+        "rss_mb_ready": 294.5
+      },
+      "http_perf": null,
+      "slow_flows_top": [
+        {
+          "flow": 1,
+          "ms": 98.8,
+          "t_iso": "2026-10-13T06:25:12.534Z",
+          "t_end_iso": "2026-10-13T06:25:12.633Z"
+        }
+      ],
+      "slow_search_top": [],
+      "slow_flow_gc_correlation": null,
+      "session_per_flow": false,
+      "bench_series": [
+        {
+          "phase": "after_connect",
+          "flow": 0,
+          "mcp_sessions": 1,
+          "stream_mapping_entries": 0,
+          "request_to_stream_entries": 0,
+          "audit_ring_entries": 0,
+          "audit_ring_max": 64,
+          "rss_mb": 294.49,
+          "heap_used_mb": 131.21
+        },
+        {
+          "phase": "mid_run",
+          "flow": 1,
+          "mcp_sessions": 1,
+          "stream_mapping_entries": 0,
+          "request_to_stream_entries": 0,
+          "audit_ring_entries": 0,
+          "audit_ring_max": 64,
+          "rss_mb": 295.15,
+          "heap_used_mb": 131.21
+        },
+        {
+          "phase": "mid_run",
+          "flow": 16,
+          "mcp_sessions": 1,
+          "stream_mapping_entries": 0,
+          "request_to_stream_entries": 0,
+          "audit_ring_entries": 0,
+          "audit_ring_max": 64,
+          "rss_mb": 311.62,
+          "heap_used_mb": 135.42
+        },
+        {
+          "phase": "mid_run",
+          "flow": 32,
+          "mcp_sessions": 1,
+          "stream_mapping_entries": 0,
+          "request_to_stream_entries": 0,
+          "audit_ring_entries": 0,
+          "audit_ring_max": 64,
+          "rss_mb": 317.11,
+          "heap_used_mb": 135.98
+        },
+        {
+          "phase": "mid_run",
+          "flow": 48,
+          "mcp_sessions": 1,
+          "stream_mapping_entries": 0,
+          "request_to_stream_entries": 0,
+          "audit_ring_entries": 0,
+          "audit_ring_max": 64,
+          "rss_mb": 327.24,
+          "heap_used_mb": 136.62
+        },
+        {
+          "phase": "mid_run",
+          "flow": 64,
+          "mcp_sessions": 1,
+          "stream_mapping_entries": 0,
+          "request_to_stream_entries": 0,
+          "audit_ring_entries": 0,
+          "audit_ring_max": 64,
+          "rss_mb": 317.82,
+          "heap_used_mb": 136.96
+        },
+        {
+          "phase": "mid_run",
+          "flow": 80,
+          "mcp_sessions": 1,
+          "stream_mapping_entries": 0,
+          "request_to_stream_entries": 0,
+          "audit_ring_entries": 0,
+          "audit_ring_max": 64,
+          "rss_mb": 319.12,
+          "heap_used_mb": 137.17
+        }
+      ],
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 308,
+          "layer2ThisTurn": 961,
+          "layer2Cumulative": 961,
+          "combined": 1269,
+          "layer2ShareOfCombined": 75.7
+        },
+        {
+          "n": 2,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 1972,
+          "combined": 2280,
+          "layer2ShareOfCombined": 86.5
+        },
+        {
+          "n": 3,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 2983,
+          "combined": 3291,
+          "layer2ShareOfCombined": 90.6
+        },
+        {
+          "n": 4,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 3994,
+          "combined": 4302,
+          "layer2ShareOfCombined": 92.8
+        },
+        {
+          "n": 5,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 5005,
+          "combined": 5313,
+          "layer2ShareOfCombined": 94.2
+        },
+        {
+          "n": 6,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 6016,
+          "combined": 6324,
+          "layer2ShareOfCombined": 95.1
+        },
+        {
+          "n": 7,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 7027,
+          "combined": 7335,
+          "layer2ShareOfCombined": 95.8
+        },
+        {
+          "n": 8,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 8038,
+          "combined": 8346,
+          "layer2ShareOfCombined": 96.3
+        },
+        {
+          "n": 9,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 9049,
+          "combined": 9357,
+          "layer2ShareOfCombined": 96.7
+        },
+        {
+          "n": 10,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 10060,
+          "combined": 10368,
+          "layer2ShareOfCombined": 97
+        },
+        {
+          "n": 11,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 11071,
+          "combined": 11379,
+          "layer2ShareOfCombined": 97.3
+        },
+        {
+          "n": 12,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 12082,
+          "combined": 12390,
+          "layer2ShareOfCombined": 97.5
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 961,
+          "layer2Cumulative": 961,
+          "combined": 961,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 1972,
+          "combined": 1972,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 2983,
+          "combined": 2983,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 3994,
+          "combined": 3994,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 5005,
+          "combined": 5005,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 6016,
+          "combined": 6016,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 7027,
+          "combined": 7027,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 8038,
+          "combined": 8038,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 9049,
+          "combined": 9049,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 10060,
+          "combined": 10060,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 11071,
+          "combined": 11071,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 12082,
+          "combined": 12082,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 960,
+        "turns_total": 960,
+        "flows": 80,
+        "turns_per_flow": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "runtime": "bun",
+        "runtime_version": "1.4.3",
+        "ready_ms": 1030,
+        "transport": "streamable_http_multiplex",
+        "rss_mb_ready": 294.5,
+        "rss_mb_min": 294.49609375,
+        "rss_mb_median": 318.921875,
+        "rss_mb_max": 327.734375,
+        "rss_trend": {
+          "classification": "plateau",
+          "reason": "late-window RSS stable relative to mid-window",
+          "early_median_mb": 294.5,
+          "mid_median_mb": 315.16,
+          "late_median_mb": 318.92,
+          "rise_early_to_late_mb": 24.42,
+          "rise_mid_to_late_mb": 3.76,
+          "mb_per_1000_flows": 309.11,
+          "n_series": 7
+        },
+        "definitions_tokens": 308,
+        "discovery_tokens_sum": 3408,
+        "mean_discovery_tokens": 284,
+        "result_tokens_sum": 8674,
+        "mean_result_tokens": 722.8,
+        "layer1_once_tokens": 308,
+        "mean_layer2_tokens": 1006.8,
+        "combined_at_n": 12390,
+        "combined_rebuild": 12390,
+        "combined_relist_every_turn_at_n": 12082,
+        "flows": 80,
+        "turns_per_flow": 12,
+        "total_turns": 960,
+        "rpcs_per_turn": 2,
+        "ms_per_call_p50": 1.45,
+        "flow_e2e_ms": {
+          "n": 80,
+          "p50_ms": 35.515,
+          "p95_ms": 51.329,
+          "p99_ms": 98.805,
+          "p999_ms": 98.805,
+          "mean_ms": 37.926,
+          "min_ms": 27.854,
+          "max_ms": 98.805,
+          "n_ge_100ms": 0,
+          "n_ge_200ms": 0,
+          "n_ge_300ms": 0,
+          "worst": [
+            {
+              "i": 1,
+              "ms": 98.805
+            },
+            {
+              "i": 2,
+              "ms": 55.251
+            },
+            {
+              "i": 30,
+              "ms": 54.268
+            },
+            {
+              "i": 7,
+              "ms": 51.655
+            },
+            {
+              "i": 3,
+              "ms": 51.329
+            },
+            {
+              "i": 68,
+              "ms": 49.047
+            },
+            {
+              "i": 6,
+              "ms": 48.925
+            },
+            {
+              "i": 4,
+              "ms": 48.516
+            }
+          ]
+        },
+        "turn_latency_ms": {
+          "n": 960,
+          "p50_ms": 2.905,
+          "p95_ms": 4.373,
+          "p99_ms": 6.129,
+          "p999_ms": 25.061,
+          "mean_ms": 3.105,
+          "min_ms": 1.985,
+          "max_ms": 25.061,
+          "n_ge_100ms": 0,
+          "n_ge_200ms": 0,
+          "n_ge_300ms": 0,
+          "worst": [
+            {
+              "i": 1,
+              "ms": 25.061
+            },
+            {
+              "i": 353,
+              "ms": 12.214
+            },
+            {
+              "i": 813,
+              "ms": 11.159
+            },
+            {
+              "i": 816,
+              "ms": 10.195
+            },
+            {
+              "i": 349,
+              "ms": 9.867
+            },
+            {
+              "i": 75,
+              "ms": 7.549
+            },
+            {
+              "i": 3,
+              "ms": 7.133
+            },
+            {
+              "i": 2,
+              "ms": 6.729
+            }
+          ]
+        },
+        "call_errors": 0,
+        "task_success_ok": true,
+        "task_success_rate": 1,
+        "slow_flows_top": [
+          {
+            "flow": 1,
+            "ms": 98.8,
+            "t_iso": "2026-10-13T06:25:12.534Z",
+            "t_end_iso": "2026-10-13T06:25:12.633Z"
+          }
+        ],
+        "search_latency_ms": {
+          "n": 960,
+          "p50_ms": 1.201,
+          "p95_ms": 1.916,
+          "p99_ms": 2.769,
+          "p999_ms": 11.727,
+          "mean_ms": 1.289,
+          "min_ms": 0.847,
+          "max_ms": 11.727,
+          "n_ge_100ms": 0,
+          "n_ge_200ms": 0,
+          "n_ge_300ms": 0,
+          "worst": [
+            {
+              "i": 1,
+              "ms": 11.727
+            },
+            {
+              "i": 353,
+              "ms": 6.577
+            },
+            {
+              "i": 816,
+              "ms": 5.472
+            },
+            {
+              "i": 8,
+              "ms": 3.569
+            },
+            {
+              "i": 36,
+              "ms": 3.123
+            },
+            {
+              "i": 4,
+              "ms": 3.039
+            },
+            {
+              "i": 3,
+              "ms": 3.033
+            },
+            {
+              "i": 2,
+              "ms": 2.939
+            }
+          ]
+        },
+        "execute_latency_ms": {
+          "n": 960,
+          "p50_ms": 1.671,
+          "p95_ms": 2.712,
+          "p99_ms": 3.881,
+          "p999_ms": 13.298,
+          "mean_ms": 1.806,
+          "min_ms": 1.103,
+          "max_ms": 13.298,
+          "n_ge_100ms": 0,
+          "n_ge_200ms": 0,
+          "n_ge_300ms": 0,
+          "worst": [
+            {
+              "i": 1,
+              "ms": 13.298
+            },
+            {
+              "i": 349,
+              "ms": 8.722
+            },
+            {
+              "i": 813,
+              "ms": 8.54
+            },
+            {
+              "i": 75,
+              "ms": 5.656
+            },
+            {
+              "i": 353,
+              "ms": 5.626
+            },
+            {
+              "i": 816,
+              "ms": 4.712
+            },
+            {
+              "i": 121,
+              "ms": 4.538
+            },
+            {
+              "i": 410,
+              "ms": 4.181
+            }
+          ]
+        },
+        "slow_search_top": [],
+        "skip_search": false,
+        "token_rebuild_note": "Classic Layer1 = search+execute schemas; discovery = Σ search hit tokens."
+      }
+    }
+  },
+  "errors": {},
+  "category_win": [
+    "Category story: most efficient governed gateway — multi-turn I/O tokens with equal task success.",
+    "1. Primary model — classic Layer1 once + Σ Layer2 (clients that cache tools/list).",
+    "2. Input side — ClawQL Layer1 is search+execute only; aggregators pay the full fat tools/list once.",
+    "3. Output side — ClawQL gateway fields/where projection; Executor measured path is full payload pass-through.",
+    "4. Re-list-every-turn is secondary sensitivity only (most clients cache; lazy clients shrink aggregators further).",
+    "5. Settled: do not label a hand-written slim-return program as Executor (Both Sides of Context Compression).",
+    "RSS is a loss among serious arms — admit or fix before memory claims."
+  ],
+  "primary_metric": "classic_layer1_once_plus_sum_layer2_with_task_success",
+  "secondary_metric": "tools_list_every_turn_sensitivity",
+  "honesty": [
+    "Fat catalog equal-arm: N MCP tools mirrored as N OpenAPI operationIds.",
+    "PRIMARY tokens: classic Layer1_once + sum(Layer2) with deterministic task_success (tokens from flow 1; spot-stable).",
+    "MT_ITERS=80: each arm completes that many full 12-turn flows on one warm connection.",
+    "Also reports flow e2e + per-turn latency percentiles and RSS (do not drop these for publish).",
+    "direct: no MCP gateway — raw HTTP fat catalog; Layer1=0. Prices token savings vs latency/RSS tax of each gateway.",
+    "SECONDARY: tools_list_every_turn — measured once on flow 1; most clients cache ListTools.",
+    "Executor Layer2 is fat JSON — matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
+    "Do not publish a hand-written slim-return program as Executor.",
+    "clawql_bun: same dist/server.js as clawql; only JS runtime changes.",
+    "executor + executor_v2 share the same runExecutorArm loop and fat fixture (discovery=0).",
+    "Executor 2 removed stdio MCP (`executor mcp` is v1-only) — product transport is HTTP; harness equalization is the shared loop, not pretending v2 has stdio.",
+    "Do not compare Executor v2 latency/RSS to ClawQL Bun stdio as same-topology. Tokens remain comparable.",
+    "ClawQL transport matrix: clawql/clawql_bun (stdio), clawql_http/clawql_http_bun (Streamable HTTP), clawql_grpc/clawql_grpc_bun (gRPC MCP).",
+    "All Streamable HTTP clients skip standalone GET SSE (fetch returns 405) — same filter for ClawQL HTTP, Executor v2, MCPJungle, agentgateway.",
+    "ClawQL HTTP server also sets CLAWQL_MCP_DISABLE_STANDALONE_SSE=1; client filter equalizes peers that would otherwise open SSE.",
+    "gRPC is ClawQL-only on this board — Executor / MCPJungle / agentgateway have no gRPC MCP peer here.",
+    "RUNTIME FLAGS (even across all ClawQL arms): Node --max-old-space-size=512; Bun --smol. See config.runtime_flags. Memory deltas vs older default-heap boards partly reflect these knobs.",
+    "gRPC Layer1 is 16 tokens below stdio/HTTP (281 vs 297): protobuf Tool omits SDK execution.taskSupport=forbidden on search+execute. Envelope-only — CallTool result bodies match; not a dropped content field.",
+    "RPCs/turn: ClawQL = 2 (search+execute); peers = 1. Publish ms/call = turn_p50 / rpcs_per_turn. Session latency gap is mostly the second call, which buys projection token savings.",
+    "LATENCY CLAIMS (HTTP-to-HTTP): per-call overhead on par with Go/Rust gateways; ClawQL Bun HTTP median ~2.3× agentgateway and >2× faster than Executor v2. Do not claim '3×–9× tighter tail'.",
+    "Publish board must be one interleaved run of every arm — do not stitch rows from separate solo runs (p999 drifts across sessions).",
+    "VIDEO: latency section uses same-transport HTTP numbers only (ClawQL HTTP vs Executor v2 / MCPJungle / agentgateway). Replace '3× to 9× tighter tail' with per-call parity + >2× vs Executor v2.",
+    "NEXT WIN: skip search when the agent already knows the operation (execute by ID) — halves remaining latency gap and cuts discovery tokens on repeat turns.",
+    "Executor discovery=0 on both versions (harness-authored execute). ClawQL charges search each turn.",
+    "ContextForge/MetaMCP off publish board by default.",
+    "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",
+    "RSS is a loss among serious arms — admit plainly. Classify Executor v2 climb via rss_trend before 'Nx heavier' headlines."
+  ]
+}
