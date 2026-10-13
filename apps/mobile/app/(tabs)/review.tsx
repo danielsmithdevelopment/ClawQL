@@ -105,7 +105,7 @@ export default function ReviewQueueScreen() {
             icon="change"
             title="Review"
             subtitle={`${items.length} waiting · source ${source}`}
-            tone="warn"
+            tone="seed"
           />
           {source === "cache" ? (
             <SurfaceCard testID="review-offline-banner" tint="soft">

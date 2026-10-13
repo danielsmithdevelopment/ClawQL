@@ -455,13 +455,6 @@ function kindIcon(kindLabel: string): AppIconName {
   return "activity";
 }
 
-function kindTone(badgeTone: "warn" | "neutral" | "ok" | "danger"): "seed" | "ok" | "warn" | "danger" | "neutral" {
-  if (badgeTone === "ok") return "ok";
-  if (badgeTone === "warn") return "warn";
-  if (badgeTone === "danger") return "danger";
-  return "neutral";
-}
-
 export function ReviewRow({
   kindLabel,
   badge,
@@ -488,7 +481,8 @@ export function ReviewRow({
       leading={
         <IconBubble
           name={kindIcon(kindLabel)}
-          tone={kindTone(badgeTone)}
+          // One blue chrome tone for all list glyphs — status lives on badges, not icons.
+          tone="seed"
           size={36}
           iconSize={18}
         />

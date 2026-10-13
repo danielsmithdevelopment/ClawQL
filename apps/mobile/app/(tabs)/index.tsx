@@ -158,7 +158,7 @@ export default function HomeScreen() {
         />
 
         <Column spacing={space.sm} style={{ padding: space.md }}>
-          <SectionHeader icon="change" title="Needs action" tone="warn" />
+          <SectionHeader icon="change" title="Needs action" tone="seed" />
           {error ? <Meta color={brand.danger}>{error}</Meta> : null}
           {items.length === 0 ? (
             <Meta testID="home-empty">Nothing waiting. You are clear.</Meta>
@@ -180,7 +180,7 @@ export default function HomeScreen() {
         ))}
 
         <Column spacing={space.sm} style={{ padding: space.md }}>
-          <SectionHeader icon="activity" title="Recent activity" tone="neutral" />
+          <SectionHeader icon="activity" title="Recent activity" tone="seed" />
           {activity.length === 0 ? (
             <Meta testID="home-activity-empty">No recent decisions yet.</Meta>
           ) : null}

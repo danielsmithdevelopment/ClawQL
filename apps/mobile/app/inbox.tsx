@@ -82,6 +82,7 @@ export default function InboxScreen() {
         icon="inbox"
         title="Notifications"
         subtitle="Approval pushes, digests, and system reminders — no APNs in fixture mode."
+        tone="seed"
       />
       {unread > 0 ? <Badge label={`${unread} unread`} tone="warn" /> : null}
       {unread > 0 ? (
@@ -108,7 +109,7 @@ export default function InboxScreen() {
             <Column spacing={space.sm}>
               <IconBubble
                 name={kindIcon(item.kind)}
-                tone={item.unread ? "warn" : "neutral"}
+                tone="seed"
                 size={36}
                 iconSize={18}
               />
