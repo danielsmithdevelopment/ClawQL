@@ -118,6 +118,24 @@ describe("mobile API fixture mode", () => {
     expect(activity.events[0]?.detail).toBe("Refund request");
   });
 
+  it("asks a named teammate and records activity", async () => {
+    await Effect.runPromise(
+      decideReviewEffect({
+        session: FIXTURE_SESSION,
+        id: "rev_decision",
+        kind: "decision",
+        decision: "ask_teammate",
+        answer: "Marcus Lee",
+      })
+    );
+    const list = await Effect.runPromise(listReviewEffect(FIXTURE_SESSION));
+    expect(list.items.find((i) => i.id === "rev_decision")).toBeUndefined();
+    const activity = await Effect.runPromise(listActivityEffect(FIXTURE_SESSION));
+    expect(activity.events[0]?.decision).toBe("ask_teammate");
+    expect(activity.events[0]?.detail).toBe("Marcus Lee");
+    expect(activity.events[0]?.title).toContain("Marcus Lee");
+  });
+
   it("archives decided items for Activity drill-in", async () => {
     await Effect.runPromise(
       decideReviewEffect({

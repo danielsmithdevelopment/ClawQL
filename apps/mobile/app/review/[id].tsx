@@ -7,12 +7,14 @@ import type {
   DocumentAttachment,
   ReviewDecision,
   ReviewItem,
+  Teammate,
 } from "@/src/domain/schemas";
 import {
   addAttachmentEffect,
   decideReviewEffect,
   getReviewByIdEffect,
   listAttachmentsEffect,
+  listTeammatesEffect,
   markInboxReadByReviewEffect,
 } from "@/src/services/api";
 import { loadMobileConfigEffect } from "@/src/services/config";
@@ -55,18 +57,23 @@ export default function ReviewDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [fixtureMode, setFixtureMode] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [askingTeammate, setAskingTeammate] = useState(false);
+  const [teammates, setTeammates] = useState<readonly Teammate[]>([]);
+  const [selectedTeammateId, setSelectedTeammateId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!session || !id) return;
     try {
-      const [found, config, docs] = await Promise.all([
+      const [found, config, docs, team] = await Promise.all([
         Effect.runPromise(getReviewByIdEffect(session, id)),
         Effect.runPromise(loadMobileConfigEffect()),
         Effect.runPromise(listAttachmentsEffect(session, id)),
+        Effect.runPromise(listTeammatesEffect(session)),
       ]);
       setItem(found);
       setFixtureMode(config.fixtureMode);
       setAttachments(docs);
+      setTeammates(team);
       // Opening a request from a push / inbox marks matching notifications read.
       await Effect.runPromise(markInboxReadByReviewEffect(session, id)).catch(() => 0);
       if (found?.kind === "decision") {
@@ -75,6 +82,12 @@ export default function ReviewDetailScreen() {
           found.decisionChoices?.[0]?.label ??
           null;
         setSelectedAnswer(preferred);
+        const preferredTeammate =
+          team.find((t) => t.canApprove && t.keysReady && t.id !== "user_dana") ??
+          team.find((t) => t.canApprove && t.keysReady) ??
+          team.find((t) => t.canApprove) ??
+          null;
+        setSelectedTeammateId(preferredTeammate?.id ?? null);
       }
     } finally {
       setLoading(false);
@@ -158,7 +171,12 @@ export default function ReviewDetailScreen() {
           answer,
         })
       );
-      setNote(String(res.status));
+      setNote(
+        decision === "ask_teammate" && answer
+          ? `Asked ${answer}`
+          : String(res.status)
+      );
+      setAskingTeammate(false);
       void Effect.runPromise(hapticSuccessEffect());
       navigateBackSoon();
     } catch (e: unknown) {
@@ -167,6 +185,15 @@ export default function ReviewDetailScreen() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const askSelectedTeammate = () => {
+    const pick = teammates.find((t) => t.id === selectedTeammateId);
+    if (!pick) {
+      setError("Pick a teammate first");
+      return;
+    }
+    void decidePlain("ask_teammate", pick.name);
   };
 
   const shareRequest = async () => {
@@ -358,21 +385,64 @@ export default function ReviewDetailScreen() {
               <PrimaryButton
                 testID="review-submit-answer"
                 label={busy ? "Working…" : "Submit answer"}
-                disabled={busy || !selectedAnswer}
+                disabled={busy || !selectedAnswer || askingTeammate}
                 onPress={() => void decidePlain("answer", selectedAnswer ?? undefined)}
               />
               <SecondaryButton
                 testID="review-skip"
                 label="Skip for now"
-                disabled={busy}
+                disabled={busy || askingTeammate}
                 onPress={() => void decidePlain("skip")}
               />
-              <SecondaryButton
-                testID="review-ask-teammate"
-                label="Ask a teammate"
-                disabled={busy}
-                onPress={() => void decidePlain("ask_teammate")}
-              />
+              {!askingTeammate ? (
+                <SecondaryButton
+                  testID="review-ask-teammate"
+                  label="Ask a teammate"
+                  disabled={busy}
+                  onPress={() => setAskingTeammate(true)}
+                />
+              ) : (
+                <SurfaceCard testID="review-ask-teammate-picker">
+                  <IconBubble name="people" tone="seed" size={32} iconSize={16} />
+                  <Subtitle>Who should answer?</Subtitle>
+                  <Meta>
+                    Approvers with keys ready first. They get this decision in their queue.
+                  </Meta>
+                  <Column spacing={space.sm}>
+                    {[...teammates]
+                      .filter((t) => t.canApprove)
+                      .sort((a, b) => Number(b.keysReady) - Number(a.keysReady))
+                      .map((person) => (
+                        <ChoiceRow
+                          key={person.id}
+                          testID={`ask-teammate-${person.id}`}
+                          label={person.name}
+                          score={person.keysReady ? "Keys ready" : "Keys incomplete"}
+                          selected={selectedTeammateId === person.id}
+                          onPress={() => setSelectedTeammateId(person.id)}
+                        />
+                      ))}
+                  </Column>
+                  <PrimaryButton
+                    testID="review-ask-teammate-confirm"
+                    label={
+                      busy
+                        ? "Working…"
+                        : `Ask ${
+                            teammates.find((t) => t.id === selectedTeammateId)?.name ?? "teammate"
+                          }`
+                    }
+                    disabled={busy || !selectedTeammateId}
+                    onPress={() => askSelectedTeammate()}
+                  />
+                  <SecondaryButton
+                    testID="review-ask-teammate-cancel"
+                    label="Cancel"
+                    disabled={busy}
+                    onPress={() => setAskingTeammate(false)}
+                  />
+                </SurfaceCard>
+              )}
             </>
           ) : item.kind === "change" && item.changeStatus === "outcome_unknown" ? (
             <>

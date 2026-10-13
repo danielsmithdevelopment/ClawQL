@@ -104,7 +104,11 @@ function nextActivityId(): string {
 function activityTitle(item: ReviewItem, decision: ReviewDecision, answer?: string): string {
   if (decision === "answer") return `Answered ${item.decisionSite ?? item.title}`;
   if (decision === "skip") return `Skipped ${item.title}`;
-  if (decision === "ask_teammate") return `Asked teammate about ${item.title}`;
+  if (decision === "ask_teammate") {
+    return answer
+      ? `Asked ${answer} about ${item.title}`
+      : `Asked teammate about ${item.title}`;
+  }
   if (decision === "approve" && item.kind === "skill") return `Promoted ${item.title}`;
   if (decision === "approve") return `Approved ${item.title}`;
   if (decision === "decline") return `Declined ${item.title}`;

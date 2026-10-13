@@ -113,6 +113,13 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-14-offline-cache.yaml",
   },
   {
+    id: "MOB-15",
+    run: "Maestro",
+    title: "Ask a named teammate on a decision",
+    passWhen: "Picker lists approvers; Ask confirms; Activity names the teammate",
+    flow: "maestro/flows/mob-15-ask-teammate.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',

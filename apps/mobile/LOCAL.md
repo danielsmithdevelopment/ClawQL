@@ -37,11 +37,12 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Review filters (change / source / decision / skill) | ✅ |
 | Approve with simulated NFC (fixture session) | ✅ no YubiKey needed |
 | Approve with reviewer-demo biometrics | ✅ |
-| Decision answer / skip / ask teammate | ✅ |
+| Decision answer / skip / ask named teammate | ✅ |
 | Skill promote / decline | ✅ |
 | Outcome-unknown mark applied / retry with key | ✅ |
 | Activity feed (after decisions) | ✅ |
-| Pull-to-refresh on Home / Review / Activity | ✅ |
+| Pull-to-refresh on Home / Review / Activity + secondary screens | ✅ |
+| Inbox empty state | ✅ |
 | Profile keys, revoke, delete-account UI | ✅ |
 | Signed-in sessions + sign out elsewhere | ✅ |
 | Local push simulate (no APNs/EAS) | ✅ |
@@ -58,7 +59,7 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Notification prefs persisted on device | ✅ |
 | Mark all inbox read | ✅ |
 | Activity drill-in to decided archive | ✅ |
-| Deep link parsing / Maestro MOB-01…14 | ✅ (sim/emulator or web) |
+| Deep link parsing / Maestro MOB-01…15 | ✅ (sim/emulator or web) |
 | Unit tests | `npm test` |
 | Packaging preflight (no upload) | `npm run store:check` |
 

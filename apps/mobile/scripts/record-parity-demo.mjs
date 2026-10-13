@@ -115,6 +115,26 @@ await page.getByTestId("inbox-mark-all-read").click();
 await page.waitForTimeout(600);
 await shot("08-inbox-mark-all-read.png");
 
+// Decision → ask a named teammate picker (inbox is stacked — leave first)
+await page.goBack();
+await page.getByTestId("home-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("tab-review").filter({ visible: true }).first().click();
+await page.getByTestId("review-queue-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("filter-decision").click();
+await page.getByTestId("review-item-rev_decision").first().waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("review-item-rev_decision").first().click();
+await page.getByTestId("review-ask-teammate").waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("review-ask-teammate").click();
+await page.getByTestId("review-ask-teammate-picker").waitFor({ state: "visible", timeout: 10000 });
+await page.getByTestId("ask-teammate-user_marcus").scrollIntoViewIfNeeded();
+await page.waitForTimeout(500);
+await shot("16-ask-teammate-picker.png");
+await page.getByTestId("ask-teammate-user_marcus").click();
+await page.getByTestId("review-ask-teammate-confirm").click();
+await page.getByTestId("review-note").waitFor({ state: "visible", timeout: 10000 });
+await page.waitForTimeout(500);
+await shot("17-ask-teammate-done.png");
+
 await context.close();
 await browser.close();
 
