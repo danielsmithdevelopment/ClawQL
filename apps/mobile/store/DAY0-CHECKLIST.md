@@ -38,8 +38,18 @@ Complete before first TestFlight / Play internal upload. Items marked **agent** 
 | 13 | human | Confirm Sign-in → **App Store reviewer demo** works on the uploaded build |
 | 14 | agent | Maestro MOB-01…20 green on simulator/emulator before upload; `npm run a11y:lh` green on web export |
 
+## In-app subscriptions (when you plug in stores)
+
+| # | Owner | Item | Done when |
+| - | ----- | ---- | --------- |
+| 15 | human | Create subscription group + SKUs from [`iap-catalog.json`](./iap-catalog.json) in App Store Connect | Product ids match catalog |
+| 16 | human | Create matching Play Billing subscriptions | Same product ids (or documented mapping) |
+| 17 | human | Paste Apple IAP / Play service-account secrets into managed hosting env | `POST /payments/store/verify` accepts live tokens (fixture path already works) |
+| 18 | agent | Wire StoreKit / Play sheet behind `apps/mobile/src/services/store-iap.ts` | Profile Subscribe stops saying sandbox |
+
 ## Not blocking first internal track
 
 - D-U-N-S / org Apple account (needed for company seller name later)
 - Play production (needs org **or** 12 closed testers × 14 days)
 - Physical YubiKey NFC (REV-13 / UX-09 remain Manual)
+- Live StoreKit / Play sheets (fixture `store_iap` + Face ID / Touch ID ship without Day-0)

@@ -26,7 +26,7 @@ Apple and Google require IAP for digital subscriptions sold inside the app. Embe
 | Hybrid subscription + credits        | Spec                                        |
 | PhoneApprove approve / inbox / prefs | Shipped on phone (fixture → live APIs next) |
 | Mobile billing / team / gateways     | Explicitly “open web console” today         |
-| StoreKit / Play Billing              | **Not started**                             |
+| StoreKit / Play Billing              | Adapter + verify scaffolding (fixture); live sheets after Day-0 |
 
 ## Entitlement model (Phase 1)
 
@@ -85,10 +85,10 @@ North star copy replaces Profile’s “Gateways, billing, and team live in the 
 
 ## Suggested build order
 
-1. **Entitlements API** — `GET /billing/entitlements` + `billingMode` including `store_iap` / `dual`; fixture plan switch. **Started:** mobile fixture entitlements + Profile sandbox subscribe (`apps/mobile/src/services/entitlements.ts`); `OrgBillingMode` adds `store_iap` \| `dual` in `clawql-payments`.
-2. **Verify endpoint** — `POST /billing/store/verify` (Apple JWS / Play purchase token) → provision / renew.
-3. **Mobile paywall shell** — Profile + blocked-feature gate; fixture subscribe first. **Started:** Profile Plan & billing + Face ID / Touch ID confirm.
-4. **Wire StoreKit / Play** behind the same shell once Day-0 accounts exist.
+1. **Entitlements API** — `GET /payments/billing/entitlements?orgId=` + `billingMode` including `store_iap` / `dual`; fixture plan switch. **Done (v0):** mobile fixture entitlements + Profile sandbox; CPC HTTP entitlements route; org store_* billing fields.
+2. **Verify endpoint** — `POST /payments/store/verify` (fixture_iap_* tokens / `CLAWQL_STORE_IAP_FIXTURE=1`) → provision / renew. **Done (v0 fixture);** live Apple JWS / Play token after Day-0 secrets.
+3. **Mobile paywall shell** — Profile + Spend upgrade CTA; fixture subscribe + Face ID / Touch ID confirm + manage-subscriptions deep link. **Done (v0).**
+4. **Wire StoreKit / Play** behind `apps/mobile/src/services/store-iap.ts` once Day-0 SKUs exist (catalog: `apps/mobile/store/iap-catalog.json`).
 5. **Expand in-app admin** surface-by-surface (team → policies → keys → billing status).
 
 ## Acceptance (when Phase 3 is done)

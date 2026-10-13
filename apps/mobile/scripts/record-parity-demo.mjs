@@ -64,6 +64,9 @@ await page.getByTestId("profile-subscribe-pro").click();
 await page.getByTestId("profile-note").waitFor({ state: "visible", timeout: 10000 });
 await page.waitForTimeout(500);
 await shot("04e-profile-plan-pro.png");
+await page.getByTestId("profile-manage-subscriptions").scrollIntoViewIfNeeded();
+await page.waitForTimeout(300);
+await shot("04f-profile-manage-subscriptions.png");
 
 // App Lock → lock now → unlock (fixture)
 const appLockRow = page.getByTestId("pref-app-lock");

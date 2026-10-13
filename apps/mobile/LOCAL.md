@@ -58,7 +58,11 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Share request deep link | ✅ Review detail |
 | App Lock (Face ID / Touch ID / fixture unlock) | ✅ Profile |
 | Plan & billing fixture store_iap subscribe | ✅ Profile sandbox Pro/Team |
+| Store IAP adapter + manage subscriptions link | ✅ `store-iap.ts` + Profile |
+| Spend plan label + free upgrade CTA | ✅ Spend → Profile |
+| Soft restore entitlements on session | ✅ SessionProvider |
 | Biometric capability label (Face ID / Touch ID) | ✅ Profile + App Lock |
+| Face ID usage copy (App Lock + purchases) | ✅ `app.config.ts` |
 | Haptics on decide | ✅ Review |
 | Home-screen icon badge = pending count | ✅ |
 | Offline queue snapshot + cache banner | ✅ Home / Review |
