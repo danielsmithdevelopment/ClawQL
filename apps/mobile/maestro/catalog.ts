@@ -134,6 +134,13 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-17-surface-deeplinks.yaml",
   },
   {
+    id: "MOB-18",
+    run: "Maestro",
+    title: "Activity kind and outcome filters",
+    passWhen: "Source filter hides decision events; Answered filter shows answer only",
+    flow: "maestro/flows/mob-18-activity-filters.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',

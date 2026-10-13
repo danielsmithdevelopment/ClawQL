@@ -98,6 +98,17 @@ export default function AgentsScreen() {
               <Badge label={agent.statusLabel} tone={toneFor(agent.status)} />
               <Meta>{agent.role}</Meta>
               <Meta>{`${agent.spendToday} today · last run ${agent.lastRun}`}</Meta>
+              {agent.status === "needs_you" ? (
+                <SecondaryButton
+                  testID={`agent-open-review-${agent.id}`}
+                  label={
+                    agent.waiting && agent.waiting > 1
+                      ? `See ${agent.waiting} waiting requests`
+                      : "See waiting request"
+                  }
+                  onPress={() => router.push("/(tabs)/review")}
+                />
+              ) : null}
             </Column>
           </SurfaceCard>
         ))}

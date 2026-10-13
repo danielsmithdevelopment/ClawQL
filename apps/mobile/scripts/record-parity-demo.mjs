@@ -174,6 +174,30 @@ async function openSurface(path, testId, shotName) {
 await openSurface("/inbox", "inbox-screen", "21-deeplink-inbox.png");
 await openSurface("/digest", "digest-screen", "22-deeplink-digest.png");
 await openSurface("/agents", "agents-screen", "23-deeplink-agents.png");
+// Agents needs-you → Review CTA
+await ensureUnlocked();
+await page
+  .getByTestId("agent-open-review-agent_legal")
+  .filter({ visible: true })
+  .first()
+  .click();
+await page.getByTestId("review-queue-screen").filter({ visible: true }).first().waitFor({
+  state: "visible",
+  timeout: 15000,
+});
+await page.waitForTimeout(400);
+await shot("25-agents-to-review.png");
+
+// Activity filters
+await page.getByTestId("tab-activity").filter({ visible: true }).first().click();
+await page.getByTestId("activity-filters").waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("activity-filter-kind-source").click();
+await page.waitForTimeout(400);
+await shot("26-activity-filter-source.png");
+await page.getByTestId("activity-filter-kind-all").click();
+await page.getByTestId("activity-filter-decision-answer").click();
+await page.waitForTimeout(400);
+await shot("27-activity-filter-answer.png");
 await page.goto(`${BASE}/policies`, { waitUntil: "networkidle" });
 if (await page.getByTestId("sign-in-fixture").isVisible().catch(() => false)) {
   await page.getByTestId("sign-in-fixture").click();

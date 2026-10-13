@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import * as WebBrowser from "expo-web-browser";
-import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import { Alert } from "react-native";
 
 import type {
@@ -60,33 +60,40 @@ export default function ProfileScreen() {
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [devicePrefs, setDevicePrefs] = useState<DevicePrefs | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hydrated, setHydrated] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!session) return;
-    const [k, a, p, s, d, dp] = await Promise.all([
-      Effect.runPromise(listSecurityKeysEffect(session)),
-      Effect.runPromise(listConnectedAppsEffect(session)),
-      Effect.runPromise(getNotificationPrefsEffect(session)),
-      Effect.runPromise(listDeviceSessionsEffect(session)),
-      Effect.runPromise(listPushDevicesEffect(session)),
-      Effect.runPromise(loadDevicePrefsEffect()),
-    ]);
-    setKeys(k);
-    setApps(a);
-    setPrefs(p);
-    setDeviceSessions(s);
-    setPushDevices(d);
-    setDevicePrefs(dp);
-    setLoading(false);
+    try {
+      const [k, a, p, s, d, dp] = await Promise.all([
+        Effect.runPromise(listSecurityKeysEffect(session)),
+        Effect.runPromise(listConnectedAppsEffect(session)),
+        Effect.runPromise(getNotificationPrefsEffect(session)),
+        Effect.runPromise(listDeviceSessionsEffect(session)),
+        Effect.runPromise(listPushDevicesEffect(session)),
+        Effect.runPromise(loadDevicePrefsEffect()),
+      ]);
+      setKeys(k);
+      setApps(a);
+      setPrefs(p);
+      setDeviceSessions(s);
+      setPushDevices(d);
+      setDevicePrefs(dp);
+    } finally {
+      setLoading(false);
+      setHydrated(true);
+    }
   }, [session]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load])
+  );
 
-  if (!session || loading || !prefs || !devicePrefs) {
+  if (!session || (loading && !hydrated) || !prefs || !devicePrefs) {
     return (
       <ScreenHost>
         <LoadingBlock />

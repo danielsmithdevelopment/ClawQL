@@ -41,6 +41,9 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Skill promote / decline | ✅ |
 | Outcome-unknown mark applied / retry with key | ✅ |
 | Activity feed (after decisions) | ✅ |
+| Activity kind + outcome filters | ✅ |
+| Profile reloads on tab focus | ✅ |
+| Agents “needs you” → Review | ✅ |
 | Pull-to-refresh on Home / Review / Activity + secondary screens | ✅ |
 | Inbox empty state | ✅ |
 | Profile keys, revoke, delete-account UI | ✅ |
@@ -61,7 +64,7 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Mark all inbox read | ✅ |
 | Activity drill-in to decided archive | ✅ |
 | Deep links: review + inbox/digest/agents/spend/teammates/policies | ✅ |
-| Deep link parsing / Maestro MOB-01…17 | ✅ (sim/emulator or web) |
+| Deep link parsing / Maestro MOB-01…18 | ✅ (sim/emulator or web) |
 | Unit tests | `npm test` |
 | Packaging preflight (no upload) | `npm run store:check` |
 
