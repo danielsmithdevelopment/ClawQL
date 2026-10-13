@@ -18,6 +18,7 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`stall-memory-diagnostics.md`](./stall-memory-diagnostics.md) | Equal search/exec stall localization + smaps/DuckDB Ready breakdown |
 | [`stall-memory-round2.md`](./stall-memory-round2.md) | UV pool / timer wrap / session-count — under-load RSS is not session pileup |
 | [`stall-memory-round3.md`](./stall-memory-round3.md) | Server vs client stall timing + lean/fat catalog listen RSS |
+| [`stall-memory-round4.md`](./stall-memory-round4.md) | TTFB vs complete; strace; publish p999 stays client e2e |
 | [`catalog-listen-rss.json`](./catalog-listen-rss.json) | Lean vs fat OpenAPI listen RSS / smaps |
 | [`index.html`](./index.html) | Dedicated comparison page (competitors, Bun rationale, vs direct) |
 
@@ -270,7 +271,7 @@ Artifact: [`gateway-multi-multiturn-search-exec-split-10k.json`](./gateway-multi
 
 Steady per-call p999 is fine (&lt;5 ms). Flow p999 is rare single-RPC spikes (~500 ms) on **either** call — of 18 turns ≥100 ms, **search owned 7 / execute owned 11**. GC correlation still empty. So the remaining tail is not “search scoring every request”; it is infrequent event-loop / scheduling stalls that can land on whichever RPC is in flight. Known-op (execute-only) still wins session p999 (**130 ms** on this split board) by removing the second RPC and half the spike surface.
 
-**Stall localization** (see [`stall-memory-round3.md`](./stall-memory-round3.md)): keep-alive **1 connect/arm**. Server vs client pairing is **mixed** — some slows match server duration (real ClawQL), others have clean server + large client gap (harness/transport). Client GC tops ~11 ms. Use `MT_STALL_DIAG=1`.
+**Stall localization** (see [`stall-memory-round4.md`](./stall-memory-round4.md)): publish p999 stays **client e2e**. JSON responses (`hold_ms≈0`) — not SSE hold-open. Two classes: **in-handler** execute stalls, and **pre-handler event-loop queue** (`server_t0` late). `strace` shows long **futex** waits only (main-thread userspace). `MT_STALL_DIAG=1`.
 
 #### 4. Memory (&lt;200 MB) — anonymous data at Ready
 

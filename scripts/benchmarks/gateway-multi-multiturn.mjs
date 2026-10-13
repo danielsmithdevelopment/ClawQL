@@ -634,8 +634,15 @@ async function maybeInstallClientGcObserver() {
   }
 }
 
+/**
+ * Stall-diag fetch wrapper.
+ * When MT_CLIENT_SLOW_MS>0: records ttfb_ms (headers) vs complete_ms (body drained)
+ * so SSE hold-open vs JSON completion can be distinguished. Publish boards leave
+ * MT_CLIENT_SLOW_MS unset — path is pass-through; client e2e remains the publish metric.
+ */
 function fetchSkipStandaloneSse(baseFetch = undiciFetch) {
   const slowMs = Number(process.env.MT_CLIENT_SLOW_MS || 0) || 0;
+  const splitTiming = slowMs > 0;
   return async (input, init = {}) => {
     const method = String(init.method || "GET").toUpperCase();
     const headers = new Headers(init.headers || {});
@@ -643,24 +650,69 @@ function fetchSkipStandaloneSse(baseFetch = undiciFetch) {
     if (method === "GET" && accept.includes("text/event-stream")) {
       return new Response(null, { status: 405, headers: { Allow: "POST, DELETE" } });
     }
+    if (!splitTiming) {
+      return baseFetch(input, {
+        ...init,
+        dispatcher: init.dispatcher || streamableHttpAgent,
+      });
+    }
     const t0 = performance.now();
     const t0Iso = new Date().toISOString();
     const connectsBefore = streamableHttpConnects;
     let res;
+    let ttfbMs = null;
+    let completeMs = null;
+    let contentType = "-";
+    let bodyBytes = 0;
     try {
       res = await baseFetch(input, {
         ...init,
         dispatcher: init.dispatcher || streamableHttpAgent,
       });
+      ttfbMs = performance.now() - t0;
+      contentType = res.headers?.get?.("content-type") || "-";
+      // Drain body so complete_ms includes stream end (SSE) or JSON body read.
+      if (res.body && typeof res.body.getReader === "function") {
+        const reader = res.body.getReader();
+        const chunks = [];
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value) {
+            bodyBytes += value.byteLength || value.length || 0;
+            chunks.push(value);
+          }
+        }
+        completeMs = performance.now() - t0;
+        const buf = Buffer.concat(chunks.map((c) => Buffer.from(c)));
+        res = new Response(buf, {
+          status: res.status,
+          statusText: res.statusText,
+          headers: res.headers,
+        });
+      } else {
+        const text = await res.text();
+        bodyBytes = Buffer.byteLength(text);
+        completeMs = performance.now() - t0;
+        res = new Response(text, {
+          status: res.status,
+          statusText: res.statusText,
+          headers: res.headers,
+        });
+      }
       return res;
     } finally {
-      const dt = performance.now() - t0;
-      if (slowMs > 0 && dt >= slowMs) {
+      const dt = completeMs ?? performance.now() - t0;
+      if (dt >= slowMs) {
         const url = typeof input === "string" ? input : input?.url || String(input);
         const serverMs = res?.headers?.get?.("x-clawql-server-ms") ?? "-";
         const serverT0 = res?.headers?.get?.("x-clawql-server-t0") ?? "-";
+        const holdMs =
+          ttfbMs != null && completeMs != null ? Number((completeMs - ttfbMs).toFixed(1)) : null;
         console.error(
           `[mt-client-slow] ${dt.toFixed(1)}ms ${method} ${url} t0=${t0Iso} t1=${new Date().toISOString()} ` +
+            `ttfb_ms=${ttfbMs != null ? ttfbMs.toFixed(1) : "-"} complete_ms=${completeMs != null ? completeMs.toFixed(1) : "-"} ` +
+            `hold_ms=${holdMs ?? "-"} content_type=${contentType} body_bytes=${bodyBytes} ` +
             `server_ms=${serverMs} server_t0=${serverT0} connects_delta=${streamableHttpConnects - connectsBefore} ` +
             `connects_total=${streamableHttpConnects}`
         );
@@ -864,7 +916,6 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     "CLAWQL_TIMER_TRACE_SLOW_MS",
     "CLAWQL_MCP_SESSION_IDLE_MS",
     "CLAWQL_HTTP_TIMING",
-    "CLAWQL_HTTP_SLOW_MS",
     "UV_THREADPOOL_SIZE",
     "BUN_JSC_forceRAMSize",
     "BUN_JSC_useJIT",
@@ -900,7 +951,27 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
   // Ensure child enables GC/ELD diagnostics (harness sets CLAWQL_HTTP_PERF).
   if (wantPerf) env.CLAWQL_HTTP_PERF = "1";
   const t0 = performance.now();
-  const child = spawn(js.command, [...prefixArgs, ...js.args], {
+  let spawnCmd = js.command;
+  let spawnArgs = [...prefixArgs, ...js.args];
+  const straceLog = (process.env.MT_STRACE_LOG || "").trim();
+  if (straceLog && runtime === "node") {
+    // Native syscall trace during stall hunts (GDB/Valgrind-class). Filter long T= in post.
+    await mkdir(dirname(straceLog), { recursive: true }).catch(() => {});
+    spawnCmd = "strace";
+    spawnArgs = [
+      "-f",
+      "-tt",
+      "-T",
+      "-e",
+      "trace=network,write,read,epoll_wait,poll,ppoll,futex,nanosleep,clock_nanosleep",
+      "-o",
+      straceLog,
+      js.command,
+      ...spawnArgs,
+    ];
+    console.error(`[mt] strace → ${straceLog}`);
+  }
+  const child = spawn(spawnCmd, spawnArgs, {
     cwd: ROOT,
     env,
     stdio: ["ignore", "pipe", "pipe"],
@@ -916,7 +987,10 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
   const wantTimerTrace = ["1", "true", "yes"].includes(
     (process.env.CLAWQL_TIMER_TRACE ?? "").trim().toLowerCase()
   );
-  const wantHttpSlow = Number(process.env.CLAWQL_HTTP_SLOW_MS || 0) > 0;
+  const wantHttpSlow =
+    Number(process.env.CLAWQL_HTTP_SLOW_MS || 0) > 0 ||
+    Number(env.CLAWQL_HTTP_SLOW_MS || 0) > 0 ||
+    stallDiagEnabled();
   const onChildOut = (chunk) => {
     const s = String(chunk);
     if (wantPerf || wantTraceGc || wantTimerTrace || wantHttpSlow) {

@@ -24,7 +24,9 @@ Examples (Node HTTP, n=2000):
 | 108.6 | *(no server log)* | — | Same pattern |
 | 52.0 | 6.4 | **45.6** | Mostly **outside** server handler |
 
-**Verdict:** Not a pure measurement artifact. Some tails are **inside ClawQL** (server duration ≈ client). Others have a clean/quick server with a large client gap — those are **client / transport completion**, not search/execute work. Fix both: keep hunting the server-side ~80–130 ms execute path, and treat client-only gaps as harness noise for publish p999 (or isolate with server_ms).
+**Verdict:** Not a pure measurement artifact. Some tails are **inside ClawQL** (server duration ≈ client). Others have a clean/quick server with a large client gap — those are **response-path / transport completion** (still felt by agents). Hunt both: server-side ~80–130 ms execute path, and after-handler hold (TTFB vs body-complete; see round 4).
+
+**Publish metric:** keep **client e2e** as the board p999 (peers are client-measured). Report server handler ms as a **diagnostic column only** — never replace publish p999 with server-side duration. A 320 ms wait after a fast handler is still ClawQL latency if the response stream is held open.
 
 Bun n=1500 this session was quiet (flow p999 ~98 ms); use Node or longer interleaved boards to reproduce 500 ms-class spikes.
 
@@ -38,7 +40,9 @@ Artifact: [`catalog-listen-rss.json`](./catalog-listen-rss.json) / `scripts/benc
 | Fat (equal-arm multiturn) | 53 KB | **280 MB** | 218 | 130 |
 | **Delta** | +50 KB | **+47 MB** | +46 | +44 |
 
-**Verdict:** Fat catalog costs ~**47 MB** at listen — real, but **not** the whole 155→280 story. Lean listen here is already **~233 MB** (earlier ~155 probe was a lighter/earlier snapshot). Spec JSON itself is tiny; the +47 MB is object graph / parser overhead around richer schemas, not “three copies of a huge document.” `rawSource` aliases `openapi` for OpenAPI loads (same reference). Lazy validators alone will not get fat under-load under 200 MB while lean listen is already ~230 MB on this host — need broader Ready slimming, then the ~47 MB catalog delta.
+**Canonical Ready numbers:** use [`catalog-listen-rss-probe.mjs`](../../../../scripts/benchmarks/catalog-listen-rss-probe.mjs) / [`catalog-listen-rss.json`](./catalog-listen-rss.json) only. The earlier ~155 MB figure from `bun-ready-memory-probe` is a **different probe** (earlier settle / different heap path) — do not mix it with this listen board.
+
+**Verdict:** Fat catalog costs ~**47 MB** at listen — real, but secondary. Lean listen is already **~233 MB**. Spec JSON itself is tiny; the +47 MB is object graph / parser overhead around richer schemas, not “three copies of a huge document.” `rawSource` aliases `openapi` for OpenAPI loads (same reference). Lazy validators alone will not get under-load under 200 MB while lean listen is already ~230 MB — need broader Ready slimming first.
 
 ## Knobs
 
