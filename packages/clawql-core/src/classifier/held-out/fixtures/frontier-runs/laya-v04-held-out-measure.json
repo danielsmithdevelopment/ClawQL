@@ -1,0 +1,299 @@
+{
+  "protocol": "Laya held-out measure on frozen v0.4 labels; not productionTrusted",
+  "filledAt": "2026-10-13T02:58:13.496Z",
+  "labelsPath": "/workspace/packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.4-routing-fresh-gha-36144911649-labels.json",
+  "suiteId": "fast-decision-held-out-v0.4-routing-fresh",
+  "scorerBackend": "convai/laya",
+  "variant": "english",
+  "flipRateGate": "0",
+  "transport": "self-host-systemone",
+  "summary": {
+    "suiteId": "fast-decision-held-out-v0.4-routing-fresh",
+    "adjudicationMode": "live",
+    "judgeModel": "claude-sonnet-4-6",
+    "labelCount": 40,
+    "labelsIn": "/workspace/packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.4-routing-fresh-gha-36144911649-labels.json",
+    "scorerBackend": "convai/laya",
+    "glinerLiveConfigured": false,
+    "ontologyEnrichment": false,
+    "ontologyDigest": null,
+    "validationCriteria": {
+      "minAccuracy": 0.7,
+      "maxMeanCalibrationError": 0.15,
+      "minCases": 1
+    },
+    "candidateIdRemapPolicy": "cosmetic-only (quote/case); semantic label/suffix remaps fail the case — never counted",
+    "candidateIdRemaps": [],
+    "reports": [
+      {
+        "useSiteId": "search_provider_tool_routing",
+        "adjudicatedCount": 40,
+        "caseCount": 40,
+        "passedCriteria": false,
+        "productionTrusted": false,
+        "scorerBackend": "convai/laya",
+        "meanCalibrationError": 0.16428571428571428,
+        "rawAccuracy": 0.925,
+        "failureReasons": [
+          "meanCalibrationError 0.164 > max 0.15",
+          "scorer backend \"convai/laya\" is not live gliner2 (stub/fallback/heuristic/prior cannot light productionTrusted)"
+        ],
+        "cases": [
+          {
+            "caseId": "route-v04-001",
+            "topCandidateId": "mcp.search",
+            "topConfidence": 0.5741,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-002",
+            "topCandidateId": "mcp.execute",
+            "topConfidence": 0.7152,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-003",
+            "topCandidateId": "mcp.search",
+            "topConfidence": 0.4848,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-004",
+            "topCandidateId": "mcp.execute",
+            "topConfidence": 0.5598,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-005",
+            "topCandidateId": "mcp.skills_list",
+            "topConfidence": 0.913,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-006",
+            "topCandidateId": "mcp.skills_get",
+            "topConfidence": 0.7042,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-007",
+            "topCandidateId": "mcp.skills_get",
+            "topConfidence": 0.7539,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-008",
+            "topCandidateId": "mcp.skills_list",
+            "topConfidence": 0.8278,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-009",
+            "topCandidateId": "mcp.cache",
+            "topConfidence": 0.8731,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-010",
+            "topCandidateId": "mcp.audit",
+            "topConfidence": 0.6869,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-011",
+            "topCandidateId": "mcp.audit",
+            "topConfidence": 0.8789,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-012",
+            "topCandidateId": "mcp.cache",
+            "topConfidence": 0.6491,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-013",
+            "topCandidateId": "mcp.audit",
+            "topConfidence": 0.6116,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-014",
+            "topCandidateId": "mcp.notify",
+            "topConfidence": 0.9853,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-015",
+            "topCandidateId": "mcp.schedule",
+            "topConfidence": 0.8973,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-016",
+            "topCandidateId": "mcp.notify",
+            "topConfidence": 0.7434,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-017",
+            "topCandidateId": "mcp.schedule",
+            "topConfidence": 0.9271,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-018",
+            "topCandidateId": "mcp.memory_recall_title_flag_a",
+            "topConfidence": 0.586,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-019",
+            "topCandidateId": "mcp.memory_recall_title_flag_b",
+            "topConfidence": 0.637,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-020",
+            "topCandidateId": "mcp.memory_recall_overbroad",
+            "topConfidence": 0.6952,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-021",
+            "topCandidateId": "mcp.memory_recall_title_flag_a",
+            "topConfidence": 0.6435,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-022",
+            "topCandidateId": "mcp.memory_recall_overbroad",
+            "topConfidence": 0.8675,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-023",
+            "topCandidateId": "mcp.memory_recall_title_flag_b",
+            "topConfidence": 0.6406,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-024",
+            "topCandidateId": "mcp.data_query",
+            "topConfidence": 0.8432,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-025",
+            "topCandidateId": "mcp.data_query_cohort_count",
+            "topConfidence": 0.9909,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-026",
+            "topCandidateId": "mcp.data_query",
+            "topConfidence": 0.5841,
+            "correct": false
+          },
+          {
+            "caseId": "route-v04-027",
+            "topCandidateId": "mcp.data_query",
+            "topConfidence": 0.5815,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-028",
+            "topCandidateId": "mcp.data_query_cohort_count",
+            "topConfidence": 0.9885,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-029",
+            "topCandidateId": "mcp.search",
+            "topConfidence": 0.5954,
+            "correct": false
+          },
+          {
+            "caseId": "route-v04-030",
+            "topCandidateId": "tool.generic_web_search",
+            "topConfidence": 0.6962,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-031",
+            "topCandidateId": "tool.bash_workspace_hunt",
+            "topConfidence": 0.5067,
+            "correct": false
+          },
+          {
+            "caseId": "route-v04-032",
+            "topCandidateId": "tool.generic_web_search",
+            "topConfidence": 0.6104,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-033",
+            "topCandidateId": "mcp.pageindex_build_tree",
+            "topConfidence": 0.7588,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-034",
+            "topCandidateId": "mcp.knowledge_search_onyx",
+            "topConfidence": 0.498,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-035",
+            "topCandidateId": "mcp.ingest_external_knowledge",
+            "topConfidence": 0.9555,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-036",
+            "topCandidateId": "mcp.search",
+            "topConfidence": 0.6547,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-037",
+            "topCandidateId": "mcp.clawql_think",
+            "topConfidence": 0.762,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-038",
+            "topCandidateId": "mcp.audit",
+            "topConfidence": 0.8019,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-039",
+            "topCandidateId": "mcp.audit",
+            "topConfidence": 0.7449,
+            "correct": true
+          },
+          {
+            "caseId": "route-v04-040",
+            "topCandidateId": "skill.clawql-composed-mcp-workflows",
+            "topConfidence": 0.6458,
+            "correct": true
+          }
+        ]
+      }
+    ],
+    "honesty": "live labels loaded from /workspace/packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.4-routing-fresh-gha-36144911649-labels.json; scorer=convai/laya (CLAWQL_HELD_OUT_SCORER=laya; measure-only); productionTrusted requires DEFAULT_VALIDATION_CRITERIA (minAccuracy=0.7, maxMeanCalibrationError=0.15) — wiring criteria cannot light the flag; productionTrusted remains false — Laya measure scorer backend ≠ gliner2; no candidateId remaps on this run"
+  },
+  "honesty": [
+    "measure-only — CLAWQL_HELD_OUT_SCORER=laya",
+    "backendId=convai/laya ≠ gliner2",
+    "self-host SystemOne only (CLAWQL_LAYA_SYSTEMONE_URL) — CPU-class encoder peer to GLiNER",
+    "does not light calibrated or held-out productionTrusted",
+    "CLAWQL_FLIP_RATE_GATE=0 bounds spend (flip-rate skipped)"
+  ],
+  "verdict": {
+    "productionTrustedClaim": false,
+    "calibratedClaim": false,
+    "citeAs": "Laya held-out measure readout — not a trusted path"
+  }
+}

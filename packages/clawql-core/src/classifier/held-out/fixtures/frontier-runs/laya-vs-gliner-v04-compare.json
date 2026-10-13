@@ -1,0 +1,51 @@
+{
+  "protocol": "Laya vs GLiNER2 on frozen v0.4 routing held-out — measure, not trust transfer",
+  "comparedAt": "2026-10-13T02:58:18.825Z",
+  "suiteId": "fast-decision-held-out-v0.4-routing-fresh",
+  "useSiteId": "search_provider_tool_routing",
+  "arms": {
+    "gliner2": {
+      "source": "/workspace/packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.4-routing-fresh-productionTrusted-readout.json",
+      "scorerBackend": "gliner2",
+      "n": 40,
+      "rawAccuracy": 0.8,
+      "meanCalibrationError": 0.11764705882352941,
+      "passedCriteria": true,
+      "productionTrusted": true,
+      "tau": 0.7,
+      "coverageAtTau": 0.45,
+      "acceptedCount": 18,
+      "amongAcceptedAcc": 1
+    },
+    "laya": {
+      "source": "/workspace/packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/laya-v04-held-out-measure.json",
+      "scorerBackend": "convai/laya",
+      "variant": "english",
+      "transport": "self-host-systemone",
+      "n": 40,
+      "rawAccuracy": 0.925,
+      "meanCalibrationError": 0.16428571428571428,
+      "passedCriteria": false,
+      "productionTrusted": false,
+      "failureReasons": [
+        "meanCalibrationError 0.164 > max 0.15",
+        "scorer backend \"convai/laya\" is not live gliner2 (stub/fallback/heuristic/prior cannot light productionTrusted)"
+      ]
+    }
+  },
+  "deltas": {
+    "rawAccuracy": 0.125,
+    "meanCalibrationError": 0.046638655462184875
+  },
+  "winnerRawAccuracy": "laya",
+  "honesty": [
+    "GLiNER arm is the frozen productionTrusted readout (live sidecar + criteria + flip).",
+    "Laya arm is measure-only (backend ≠ gliner2) — cannot light productionTrusted under current gate.",
+    "Both arms are CPU-class Apache-2.0 encoders; Laya served via self-host SystemOne.",
+    "Among-accepted@τ is GLiNER policy semantics — Laya measure reports forced top-1 rawAccuracy."
+  ],
+  "verdict": {
+    "productionTrustedClaim": false,
+    "citeAs": "Laya vs GLiNER v0.4 comparative measure — not a trusted-path swap"
+  }
+}

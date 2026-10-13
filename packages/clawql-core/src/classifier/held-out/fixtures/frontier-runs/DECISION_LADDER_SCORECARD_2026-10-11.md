@@ -15,7 +15,22 @@ Honest readout after merging spend-ledger → provider pricing → Decision-1 fl
 | Twin-aware fan-out `matchMode`             | #1279   | Merged                              |
 | Candidate costSource / local costPerCase=0 | #1281   | Merged                              |
 | Measure-only Decision-1 held-out scorer    | #1282   | Merged                              |
-| Operator held-out measure (frozen labels)  | this PR | Filled                              |
+| Operator held-out measure (frozen labels)  | #1284   | Filled                              |
+| Laya vs GLiNER held-out measure (CPU)      | this PR | Filled                              |
+
+## Live Laya vs GLiNER held-out measure (CPU self-host)
+
+Artifacts: [`laya-v04-held-out-measure.json`](./laya-v04-held-out-measure.json) · [`laya-vs-gliner-v04-compare.json`](./laya-vs-gliner-v04-compare.json)  
+Source: local `laya-serve` (`LAYA_DEVICE=cpu`), frozen labels `v0.4-routing-fresh-gha-36144911649`, `CLAWQL_FLIP_RATE_GATE=0`.
+
+| Arm                                | Scorer        | rawAccuracy       | meanCalibrationError | passedCriteria  | productionTrusted     |
+| ---------------------------------- | ------------- | ----------------- | -------------------- | --------------- | --------------------- |
+| GLiNER2 (frozen trusted readout)   | `gliner2`     | **0.80**          | ~0.12                | yes             | **true**              |
+| Laya English (self-host SystemOne) | `convai/laya` | **0.925** (37/40) | ~0.164               | no (cal > 0.15) | **false** (≠ gliner2) |
+
+- **Winner rawAccuracy:** Laya (+0.125 vs GLiNER).
+- **Honesty rails held** — Laya cannot light `productionTrusted` under current gate; GLiNER remains the only trusted path.
+- Laya warning on load: shipped temperatures clamped — treat confidences as partially uncalibrated (matches cal miss).
 
 ## Live Decision-1 held-out measure scorer (Actions, keyed)
 
