@@ -6,41 +6,44 @@ Follow-up to [`stall-memory-round8.md`](./stall-memory-round8.md).
 
 Round 8 separated the harness’s tail from ClawQL’s own. Peer flow p999 roughly halved (MCPJungle **287→117**, agentgateway **208→82**). ClawQL HTTP p999 got **worse** (Bun **461→715**, Node **443→588**) under a **1-core** gateway pin.
 
-That pattern is the clue: JavaScript runtimes are not single-threaded underneath. V8 and JavaScriptCore run background threads for compiling hot code and for concurrent GC. Pin the whole process to one core and those helpers compete with the main thread — matching:
+Hypothesis: V8/JSC helper threads (background compile + concurrent GC) contend with the main thread on a 1-core pin — matching prior `futex` waits and ~78% idle during in-handler stalls. Go/Rust adapt; JS may not.
 
-| Prior signal | Fit |
-| --- | --- |
-| Long `futex` waits | Threads waiting on locks / signals |
-| ~78% CPU idle during in-handler stalls | Main thread waiting, not working |
-| Worse tails on 1 dedicated core than when the process could spread | Helper-thread starvation |
+## Test A — gateway gets two cores
 
-Go/Rust gateways adapt to available cores; a single-core layout penalizes ClawQL’s runtime specifically.
+Default when `MT_PIN_CORES=1` and `nproc≥4`: mock=`0`, gateway=`1-2`, client=`3` (same for every arm). Production almost always has ≥2 vCPUs.
 
-## Test A — gateway gets two cores (fair layout)
+Artifact: [`gateway-multi-multiturn-publish-all-arms-gw2core-10k.json`](./gateway-multi-multiturn-publish-all-arms-gw2core-10k.json) vs 1-core [`…-isolated-10k.json`](./gateway-multi-multiturn-publish-all-arms-isolated-10k.json).
 
-Default when `MT_PIN_CORES=1` and `nproc≥4`:
+| Arm | 1c p999 | 2c p999 | Δ |
+| --- | ---: | ---: | ---: |
+| ClawQL Node stdio | 92 | **62** | **−31** |
+| ClawQL Bun stdio | 41 | **36** | −5 |
+| ClawQL Node HTTP | 588 | 669 | +81 |
+| ClawQL Bun HTTP | 715 | 759 | +44 |
+| MCPJungle | 117 | **61** | **−56** |
+| agentgateway | 82 | **76** | −6 |
+| Executor v1 | 188 | **131** | **−56** |
 
-| Role | CPUs |
-| --- | --- |
-| Mock | `0` |
-| Gateway (every arm) | `1-2` |
-| Client | `3` |
+**Verdict:** 2 cores helps **stdio** ClawQL and several peers. It does **not** drop ClawQL **HTTP** p999 — so the remaining HTTP spike is not “just starve V8 of a second core.” Keep `gateway_2core` as the fair default layout anyway; cite medians/tokens; treat HTTP p999 as still open.
 
-Production deploys almost always have ≥2 vCPUs. Artifact (full interleaved 10k): [`gateway-multi-multiturn-publish-all-arms-gw2core-10k.json`](./gateway-multi-multiturn-publish-all-arms-gw2core-10k.json). Compare to 1-core isolated board [`…-isolated-10k.json`](./gateway-multi-multiturn-publish-all-arms-isolated-10k.json).
+## Test B — Node `--single-threaded` (diagnosis only)
 
-If ClawQL’s HTTP p999 drops sharply with the second core, helper-thread contention was the cause.
+`MT_NODE_SINGLE_THREADED=1` → Node `--single-threaded --single-threaded-gc` on a forced 1-core gateway pin. n=3000 Node HTTP:
 
-## Test B — Node single-threaded V8 (diagnosis only)
+| Condition | flow p50 | flow p999 |
+| --- | ---: | ---: |
+| 1-core control | 40.5 | **411** |
+| 1-core + V8 single-threaded | 44.2 | **519** |
 
-`MT_NODE_SINGLE_THREADED=1` adds Node `--single-threaded --single-threaded-gc` (not a production setting). Pair with an explicit 1-core gateway pin (`MT_GATEWAY_CPUS=1`) and compare tails to 1-core without the flags. Shrink ⇒ confirms V8 background work was the 1-core penalty.
+**Verdict:** serializing background GC/compile onto the main thread did **not** shrink the 1-core HTTP tail (got worse at this n). Not a production setting. Bun has no harness equivalent — rely on Test A for Bun.
 
-Bun: no equivalent public single-thread GC/compile switch in this harness; rely on Test A for Bun arms.
+Artifacts: [`…-1core-control-3k.json`](./gateway-multi-multiturn-clawql-http-1core-control-3k.json), [`…-1core-v8single-3k.json`](./gateway-multi-multiturn-clawql-http-1core-v8single-3k.json).
 
 ## Buyer framing — realistic upstream
 
 With `MT_UPSTREAM_LATENCY_MS=20-100`, session medians land ~**740–780 ms** across gateways (**~5%** band). Smoke: [`gateway-multi-multiturn-upstream-latency-smoke20.json`](./gateway-multi-multiturn-upstream-latency-smoke20.json).
 
-**Honest real-world line:** once an actual API sits behind the gateway, gateway latency is a rounding error; token cost is not (~**4×** fewer tokens on ClawQL known-op vs pass-through peers). Prefer that story over any p999 number for buyers.
+**Honest real-world line:** once an actual API sits behind the gateway, gateway latency is a rounding error; token cost is not (~**4×** fewer tokens on ClawQL known-op vs pass-through peers). Prefer that story over any lab p999.
 
 ## Knobs
 
@@ -49,3 +52,7 @@ With `MT_UPSTREAM_LATENCY_MS=20-100`, session medians land ~**740–780 ms** a
 | `MT_PIN_CORES=1` | Enable pin; default `gateway_2core` when nproc≥4 |
 | `MT_GATEWAY_CPUS=1-2` | Explicit gateway list (same for every arm) |
 | `MT_NODE_SINGLE_THREADED=1` | Diagnostic V8 single-thread GC/compile |
+
+## Next
+
+HTTP tail remains open under isolation + 2-core pin. Do not chase production defaults from the failed single-threaded probe. Prefer buyer framing (tokens + realistic upstream) until a larger dedicated host remeasures HTTP p999.

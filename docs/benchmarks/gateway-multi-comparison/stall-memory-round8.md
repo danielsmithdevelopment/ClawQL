@@ -64,5 +64,4 @@ Smoke (2 iters, same pin layout): [`gateway-multi-multiturn-harness-iso-smoke2.j
 
 ## Next
 
-1. Full `MT_UPSTREAM_LATENCY_MS=20-100` interleaved board when product wants the “network dominates” slide.
-2. Re-measure zero-latency tails on a host with ≥6–8 dedicated cores if ClawQL HTTP p999 stays elevated.
+See [`stall-memory-round9.md`](./stall-memory-round9.md) — gateway 2-core remeasure + buyer framing. Full `MT_UPSTREAM_LATENCY_MS=20-100` 10k board still optional for the “network dominates” slide.
