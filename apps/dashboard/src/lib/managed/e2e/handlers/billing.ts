@@ -8,6 +8,13 @@ import { NextResponse } from "next/server";
 import { E2eHarness } from "@/lib/managed/e2e/service";
 import { appendAudit, getWorld } from "@/lib/managed/e2e/world";
 
+const STORE_PRODUCT_PLAN: Record<string, "pro" | "team"> = {
+  clawql_pro_monthly: "pro",
+  clawql_pro_annual: "pro",
+  clawql_team_monthly: "team",
+  clawql_team_annual: "team",
+};
+
 export function usageSnapshot() {
   const world = getWorld();
   return {
@@ -15,6 +22,10 @@ export function usageSnapshot() {
     monthBudgetCents: world.monthBudgetCents,
     hardStop: world.hardStop,
     creditsCents: world.creditsCents,
+    planId: world.planId,
+    billingMode: world.billingMode,
+    storeProductId: world.storeProductId,
+    storePlatform: world.storePlatform,
     teamBudgets: world.teamBudgets,
     invoiceCard: world.invoiceCard,
     invoices: world.invoices,
@@ -94,5 +105,110 @@ export function postBillingCard(req: Request): Effect.Effect<NextResponse, unkno
     world.invoiceCard = lastFour;
     appendAudit("Dana Reyes", "billing.card", "Changed", { lastFour });
     return NextResponse.json({ ok: true, invoiceCard: world.invoiceCard });
+  });
+}
+
+type StoreVerifyBody = {
+  store?: "app_store" | "play" | "fixture";
+  productId?: string;
+  purchaseToken?: string;
+  orgId?: string;
+};
+
+/**
+ * Fixture App Store / Play verify — mirrors CPC POST /payments/store/verify.
+ * Live Apple/Play tokens are out of scope for the harness (Day-0).
+ */
+export function postBillingStoreVerify(
+  req: Request
+): Effect.Effect<NextResponse, unknown, E2eHarness> {
+  return Effect.gen(function* () {
+    const h = yield* E2eHarness;
+    if (!(yield* h.enabled())) {
+      return NextResponse.json({ error: "E2E harness disabled" }, { status: 404 });
+    }
+    const body = (yield* Effect.tryPromise({
+      try: () => req.json() as Promise<StoreVerifyBody>,
+      catch: () => ({}),
+    })) as StoreVerifyBody;
+    const productId = body.productId?.trim() ?? "";
+    const purchaseToken = body.purchaseToken?.trim() ?? "";
+    const store = body.store ?? "fixture";
+    const planId = STORE_PRODUCT_PLAN[productId];
+    if (!planId) {
+      return NextResponse.json(
+        { error: `Unknown store product: ${productId || "(empty)"}`, code: "unknown_product" },
+        { status: 400 }
+      );
+    }
+    if (!purchaseToken.startsWith("fixture_iap_") && store !== "fixture") {
+      return NextResponse.json(
+        {
+          error:
+            "store_iap_not_configured — harness accepts fixture_iap_* tokens or store=fixture only",
+          code: "not_configured",
+        },
+        { status: 503 }
+      );
+    }
+    const world = getWorld();
+    const replay =
+      !!world.storeOriginalTransactionId &&
+      world.storeOriginalTransactionId === purchaseToken &&
+      world.billingMode === "store_iap";
+    if (!replay) {
+      world.planId = planId;
+      world.billingMode = "store_iap";
+      world.storeProductId = productId;
+      world.storeOriginalTransactionId = purchaseToken || `fixture_iap_${planId}`;
+      world.storePlatform = store === "play" ? "play" : store === "app_store" ? "app_store" : "fixture";
+      appendAudit("Dana Reyes", "billing.store_iap", "Provisioned", {
+        productId,
+        planId,
+        store: world.storePlatform,
+      });
+    } else {
+      appendAudit("Dana Reyes", "billing.store_iap", "Ignored replay", {
+        productId,
+        purchaseToken,
+      });
+    }
+    return NextResponse.json({
+      ok: true,
+      provisioned: !replay,
+      fixture: true,
+      entitlements: {
+        orgId: world.orgId,
+        planId: world.planId,
+        billingMode: world.billingMode,
+        productId: world.storeProductId,
+        store: world.storePlatform,
+        seats: planId === "team" ? 20 : 1,
+        originalTransactionId: world.storeOriginalTransactionId,
+      },
+    });
+  });
+}
+
+export function getBillingEntitlements(
+  _req: Request
+): Effect.Effect<NextResponse, unknown, E2eHarness> {
+  return Effect.gen(function* () {
+    const h = yield* E2eHarness;
+    if (!(yield* h.enabled())) {
+      return NextResponse.json({ error: "E2E harness disabled" }, { status: 404 });
+    }
+    const world = getWorld();
+    return NextResponse.json({
+      entitlements: {
+        orgId: world.orgId,
+        planId: world.planId,
+        billingMode: world.billingMode,
+        productId: world.storeProductId,
+        store: world.storePlatform,
+        seats: world.planId === "team" ? 20 : world.planId === "enterprise" ? 999 : 1,
+        originalTransactionId: world.storeOriginalTransactionId,
+      },
+    });
   });
 }

@@ -1,6 +1,6 @@
 # ClawQL Cloud E2E catalog
 
-199 catalog IDs (`catalog/scenarios.ts`) exercised by Playwright under `specs/`.
+202 catalog IDs (`catalog/scenarios.ts`) exercised by Playwright under `specs/`.
 
 ## Pass-when rule (portable suite)
 
@@ -22,7 +22,9 @@ Never treat Manual NFC skips as passes.
 npm run test:e2e:cloud:catalog
 ```
 
-Fails if any catalog ID is missing from its tier’s specs, appears in the wrong tier, or is double-counted across files. That is how `37 + 160 + 2 = 199` stays honest (not “161 Nightly titles”).
+Fails if any catalog ID is missing from its tier’s specs, appears in the wrong tier, or is double-counted across files. That is how `38 + 162 + 2 = 202` stays honest (not “161 Nightly titles”).
+
+PhoneApprove `store_iap` is covered by fixture rails (`SU-08` / `SU-09` / `ADM-20`) via `POST /billing/store/verify` — no App Store / Play secrets required.
 
 ## Production builds
 
@@ -34,6 +36,7 @@ The dashboard Dockerfile **deletes** `src/app/api/e2e` before `next build`. CI r
 |---|---|
 | WebAuthn | CDP virtual authenticator (`helpers/webauthn-cdp.ts` + `webauthn-ceremony.ts`). Use `localhost` rpId. KEY/SI ceremonies migrated. |
 | Stripe | `/billing/checkout` Session + `/events/inbound/stripe` (`stripe listen` / signed helper) |
+| Store IAP (PhoneApprove) | `/billing/store/verify` + `/billing/entitlements` (fixture_iap_* tokens; live sheets after Day-0) |
 | Okta | Live Keycloak Admin API → `/sync/scim` (`helpers/keycloak.ts`); Compose CI smoke |
 | Multi-instance | Compose kill (`helpers/compose.ts`) → `/gateway/restart`; CI `smoke-compose.sh` |
 | NFC (REV-13, UX-09) | Physical phone — Manual `test.skip` (only true CI impossibility) |

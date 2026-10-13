@@ -221,6 +221,18 @@ export type World = {
   creditsCents: number;
   invoiceCard: string;
   invoices: { id: string; amountCents: number; pdf: string }[];
+  /** Plan + settlement rail (Stripe vs PhoneApprove store_iap). */
+  planId: "free" | "pro" | "team" | "enterprise";
+  billingMode:
+    | "stripe_checkout"
+    | "stripe_invoice"
+    | "hybrid"
+    | "credits_only"
+    | "store_iap"
+    | "dual";
+  storeProductId?: string;
+  storeOriginalTransactionId?: string;
+  storePlatform?: "app_store" | "play" | "fixture";
   alerts: { channel: string; kind: string; at: string }[];
   redaction: { phone: boolean; email: boolean; bank: boolean; cardAlways: true };
   allowedWebhookHosts: string[];
@@ -666,6 +678,8 @@ function seedWorld(): World {
     creditsCents: 0,
     invoiceCard: "4242",
     invoices: [{ id: "inv_001", amountCents: 9900, pdf: "INV-001.pdf" }],
+    planId: "pro",
+    billingMode: "stripe_checkout",
     alerts: [],
     redaction: { phone: true, email: true, bank: true, cardAlways: true },
     allowedWebhookHosts: [

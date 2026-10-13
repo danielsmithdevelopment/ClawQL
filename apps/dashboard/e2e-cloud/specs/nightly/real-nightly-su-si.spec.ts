@@ -36,6 +36,8 @@ import {
   retryAllEvents,
   searchErased,
   setWebhookMode,
+  storeIapVerify,
+  getBillingEntitlements,
   stripeCheckout,
   subscriptionAction,
   systemOne,
@@ -56,6 +58,37 @@ const PII = 'Contact jane.okafor@example.com or call 415-555-0199. Bank 12345678
 
 test.beforeEach(async () => {
   await resetWorld()
+})
+
+test('SU-09 Fixture store purchase replay does not re-provision', async () => {
+  await control({
+    setPlan: { planId: 'free', billingMode: 'credits_only', clearStore: true },
+  })
+  const token = `fixture_iap_clawql_pro_monthly_replay_${Date.now()}`
+  const first = await storeIapVerify({
+    productId: 'clawql_pro_monthly',
+    purchaseToken: token,
+    store: 'fixture',
+  })
+  expect(first.status).toBe(200)
+  expect(first.body.provisioned).toBe(true)
+  const second = await storeIapVerify({
+    productId: 'clawql_pro_monthly',
+    purchaseToken: token,
+    store: 'fixture',
+  })
+  expect(second.status).toBe(200)
+  expect(second.body.provisioned).toBe(false)
+  const snap = await getBillingEntitlements()
+  const ent = (snap.body.entitlements ?? {}) as Record<string, unknown>
+  expect(ent.planId).toBe('pro')
+  expect(ent.billingMode).toBe('store_iap')
+  const audit = await getAudit()
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'billing.store_iap' && /Ignored replay/i.test(e.outcome),
+    ),
+  ).toBe(true)
 })
 
 test('SU-02 Stripe checkout replay does not double-provision', async () => {
