@@ -1,0 +1,221 @@
+{
+  "suite": "http-only-layer-bisect",
+  "measuredAt": "2026-10-13T21:46:51.182Z",
+  "config": {
+    "turns": 12,
+    "iters": 2500,
+    "spike_ms": 300,
+    "layers": [
+      "audit",
+      "prune",
+      "als",
+      "auth"
+    ],
+    "steps": [
+      "all_kill",
+      "board_default"
+    ],
+    "pin_cores": "1"
+  },
+  "board_suspect_map": {
+    "auth_cache_jwks": "off on equal-arm (CLAWQL_AUTH_MODE=noAuth) — falsified for publish board",
+    "otel_batch_export": "off unless CLAWQL_ENABLE_OTEL_TRACING=1 — falsified for publish board",
+    "budget_flush": "no VK/payments path under SKIP_PAYMENTS — falsified for publish board",
+    "remaining_killable": [
+      "audit",
+      "prune",
+      "als",
+      "auth"
+    ]
+  },
+  "steps": [
+    {
+      "name": "all_kill",
+      "layers_on": [],
+      "kill_env": {
+        "CLAWQL_AUDIT_TOOL_CALLS": "0",
+        "CLAWQL_HTTP_SKIP_PRUNE": "1",
+        "CLAWQL_HTTP_SKIP_REQUEST_CONTEXT": "1",
+        "CLAWQL_HTTP_SKIP_AUTH": "1"
+      },
+      "ok": true,
+      "exit_code": 0,
+      "artifact": "/workspace/docs/benchmarks/gateway-multi-comparison/http-only-layer-bisect-all_kill.json",
+      "banner": "[clawql-http-layer] banner auth_mode=noAuth skip_auth=1 otel=0 session_idle_ms=0 audit=0 skip_prune=1 skip_als=1 skip_payments=1 skip_graphql=1 http_perf=0 loki_url=0 events=0",
+      "http_layer": null,
+      "slow_layer_events": [],
+      "clawql_http": {
+        "id": "clawql_http",
+        "p50_ms": 44.978,
+        "p99_ms": 295.107,
+        "p999_ms": 635.857,
+        "n": 2500,
+        "n_ge_spike_ms": 25,
+        "n_mid_ge_spike_ms": 19,
+        "max_ms": 685.281,
+        "max_mid_ms": 685.3,
+        "http_layer": null,
+        "http_layer_banner": "[clawql-http-layer] banner auth_mode=noAuth skip_auth=1 otel=0 session_idle_ms=0 audit=0 skip_prune=1 skip_als=1 skip_payments=1 skip_graphql=1 http_perf=0 loki_url=0 events=0",
+        "slow_flows_top": [
+          {
+            "flow": 2466,
+            "ms": 685.3,
+            "t_iso": "2026-10-13T21:44:38.436Z",
+            "t_end_iso": "2026-10-13T21:44:39.122Z"
+          },
+          {
+            "flow": 2498,
+            "ms": 661.3,
+            "t_iso": "2026-10-13T21:44:43.915Z",
+            "t_end_iso": "2026-10-13T21:44:44.577Z"
+          },
+          {
+            "flow": 2443,
+            "ms": 635.9,
+            "t_iso": "2026-10-13T21:44:35.748Z",
+            "t_end_iso": "2026-10-13T21:44:36.384Z"
+          },
+          {
+            "flow": 2494,
+            "ms": 598.8,
+            "t_iso": "2026-10-13T21:44:42.843Z",
+            "t_end_iso": "2026-10-13T21:44:43.442Z"
+          },
+          {
+            "flow": 2490,
+            "ms": 595.9,
+            "t_iso": "2026-10-13T21:44:42.085Z",
+            "t_end_iso": "2026-10-13T21:44:42.681Z"
+          },
+          {
+            "flow": 2332,
+            "ms": 491.2,
+            "t_iso": "2026-10-13T21:44:26.431Z",
+            "t_end_iso": "2026-10-13T21:44:26.923Z"
+          },
+          {
+            "flow": 2392,
+            "ms": 465.5,
+            "t_iso": "2026-10-13T21:44:30.727Z",
+            "t_end_iso": "2026-10-13T21:44:31.192Z"
+          },
+          {
+            "flow": 2482,
+            "ms": 408.9,
+            "t_iso": "2026-10-13T21:44:41.025Z",
+            "t_end_iso": "2026-10-13T21:44:41.434Z"
+          }
+        ]
+      },
+      "spiked": true,
+      "spike_ms": 300
+    },
+    {
+      "name": "board_default",
+      "layers_on": [
+        "audit",
+        "prune",
+        "als",
+        "auth"
+      ],
+      "kill_env": {},
+      "ok": true,
+      "exit_code": 0,
+      "artifact": "/workspace/docs/benchmarks/gateway-multi-comparison/http-only-layer-bisect-board_default.json",
+      "banner": "[clawql-http-layer] banner auth_mode=noAuth skip_auth=0 otel=0 session_idle_ms=0 audit=1 skip_prune=0 skip_als=0 skip_payments=1 skip_graphql=1 http_perf=0 loki_url=0 events=0",
+      "http_layer": {
+        "auth_mode": "noAuth",
+        "skip_auth": false,
+        "otel": false,
+        "session_idle_ms": 0,
+        "audit": true,
+        "skip_prune": false,
+        "skip_als": false,
+        "skip_payments": true,
+        "skip_graphql": true,
+        "loki_url": false
+      },
+      "slow_layer_events": [],
+      "clawql_http": {
+        "id": "clawql_http",
+        "p50_ms": 46.283,
+        "p99_ms": 82.176,
+        "p999_ms": 416.551,
+        "n": 2500,
+        "n_ge_spike_ms": 4,
+        "n_mid_ge_spike_ms": 3,
+        "max_ms": 512.237,
+        "max_mid_ms": 512.2,
+        "http_layer": {
+          "auth_mode": "noAuth",
+          "skip_auth": false,
+          "otel": false,
+          "session_idle_ms": 0,
+          "audit": true,
+          "skip_prune": false,
+          "skip_als": false,
+          "skip_payments": true,
+          "skip_graphql": true,
+          "loki_url": false
+        },
+        "http_layer_banner": "[clawql-http-layer] banner auth_mode=noAuth skip_auth=0 otel=0 session_idle_ms=0 audit=1 skip_prune=0 skip_als=0 skip_payments=1 skip_graphql=1 http_perf=0 loki_url=0 events=0",
+        "slow_flows_top": [
+          {
+            "flow": 2031,
+            "ms": 512.2,
+            "t_iso": "2026-10-13T21:46:27.667Z",
+            "t_end_iso": "2026-10-13T21:46:28.179Z"
+          },
+          {
+            "flow": 1544,
+            "ms": 489,
+            "t_iso": "2026-10-13T21:46:05.226Z",
+            "t_end_iso": "2026-10-13T21:46:05.715Z"
+          },
+          {
+            "flow": 1053,
+            "ms": 416.6,
+            "t_iso": "2026-10-13T21:45:42.120Z",
+            "t_end_iso": "2026-10-13T21:45:42.537Z"
+          },
+          {
+            "flow": 1,
+            "ms": 321,
+            "t_iso": "2026-10-13T21:44:49.655Z",
+            "t_end_iso": "2026-10-13T21:44:49.976Z"
+          },
+          {
+            "flow": 418,
+            "ms": 257.6,
+            "t_iso": "2026-10-13T21:45:13.051Z",
+            "t_end_iso": "2026-10-13T21:45:13.308Z"
+          },
+          {
+            "flow": 586,
+            "ms": 126.3,
+            "t_iso": "2026-10-13T21:45:20.614Z",
+            "t_end_iso": "2026-10-13T21:45:20.740Z"
+          },
+          {
+            "flow": 417,
+            "ms": 122,
+            "t_iso": "2026-10-13T21:45:12.929Z",
+            "t_end_iso": "2026-10-13T21:45:13.051Z"
+          },
+          {
+            "flow": 1008,
+            "ms": 108,
+            "t_iso": "2026-10-13T21:45:39.771Z",
+            "t_end_iso": "2026-10-13T21:45:39.879Z"
+          }
+        ]
+      },
+      "spiked": true,
+      "spike_ms": 300
+    }
+  ],
+  "verdict": {
+    "code": "tool_x_http",
+    "note": "Spikes remain with audit/prune/als/auth killed — not those shell layers; next: createMcpHttpApp + lean catalog / search vs execute."
+  }
+}

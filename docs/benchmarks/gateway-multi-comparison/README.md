@@ -28,6 +28,10 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`stall-memory-round9.md`](./stall-memory-round9.md) | **JS helper threads** — 1-core pin vs gateway 2-core; buyer framing from latency inject |
 | [`gateway-runtime-and-catalog-memory.md`](../../architecture/gateway-runtime-and-catalog-memory.md) | Settled: ≥2 CPUs; NATS≠tail fix; fusion; Wasm later; SQLite catalog / IDP docs |
 | [`stall-memory-round10.md`](./stall-memory-round10.md) | **HTTP echo bisect** — stack clean; host noise unlikely; add ClawQL layers next |
+| [`stall-memory-round11.md`](./stall-memory-round11.md) | **HTTP-only layer bisect** — auth/OTel/budget off on board; shell kill → `tool_x_http`; execute-known still spikes |
+| [`http-only-layer-bisect.json`](./http-only-layer-bisect.json) | Binary kill audit/prune/ALS/auth under gw2core n=2500 |
+| [`http-tool-bisect-clawql_http.json`](./http-tool-bisect-clawql_http.json) | Tool-path control: search+execute n=2500 |
+| [`http-tool-bisect-clawql_http_known.json`](./http-tool-bisect-clawql_http_known.json) | Tool-path cut: execute-known n=2500 (still spikes) |
 | [`http-stack-echo-bisect-10k.json`](./http-stack-echo-bisect-10k.json) | Echo via Express+Streamable HTTP, gateway_2core, n=10 000 |
 | [`native-fetch-10k-matrix.json`](./native-fetch-10k-matrix.json) | 10k×3 Node/Bun native vs node-fetch control |
 | [`diagnostics-packaging.md`](./diagnostics-packaging.md) | Not `clawql-data` / `clawql-analytics` — harness vs OTel vs lazy diagnostics |
