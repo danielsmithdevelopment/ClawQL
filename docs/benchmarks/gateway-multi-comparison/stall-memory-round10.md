@@ -14,7 +14,7 @@ Do-nothing `echo` tool via Express + MCP `StreamableHTTPServerTransport` (sessio
 | --- | ---: | ---: | ---: | ---: |
 | Echo Node n=10 000 | **11.3** | **105** | **1** | ClawQL Node **669** (18× ≥300 ms) |
 | Echo Node n=3 000 | 11.7 | 89 | 0 | — |
-| Echo Bun n=3 000 | *(see artifact)* | | | ClawQL Bun **759** |
+| Echo Bun n=3 000 | **9.0** | **64** | **0** | ClawQL Bun **759** (16× ≥300 ms) |
 
 Artifacts: [`http-stack-echo-bisect-10k.json`](./http-stack-echo-bisect-10k.json), [`http-stack-echo-bisect-3k.json`](./http-stack-echo-bisect-3k.json), [`http-stack-echo-bisect-bun-3k.json`](./http-stack-echo-bisect-bun-3k.json).
 
