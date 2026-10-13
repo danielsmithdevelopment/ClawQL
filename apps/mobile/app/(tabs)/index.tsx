@@ -280,12 +280,9 @@ export default function HomeScreen() {
                       );
                       setPushNote(
                         res.simulated
-                          ? `Web simulated · open /review/${top.id}`
+                          ? `Web simulated · open Notifications or /review/${top.id}`
                           : `Notification scheduled · ${res.notificationId}`
                       );
-                      if (res.simulated) {
-                        setTimeout(() => router.push(`/review/${top.id}`), 800);
-                      }
                     } catch (e: unknown) {
                       setPushNote(e instanceof Error ? e.message : String(e));
                     }
