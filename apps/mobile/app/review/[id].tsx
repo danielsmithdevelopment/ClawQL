@@ -20,6 +20,7 @@ import {
   captureDocumentEffect,
   type CaptureSource,
 } from "@/src/services/documents";
+import { hapticErrorEffect, hapticSuccessEffect } from "@/src/services/device-ux";
 import { approveWithSecurityKeyEffect } from "@/src/services/nfc-security-key";
 import { buildReviewDeepLinkEffect } from "@/src/services/push";
 import { useSession } from "@/src/state/SessionContext";
@@ -132,8 +133,10 @@ export default function ReviewDetailScreen() {
             : "Approved"
           : "Declined";
       setNote(preNote ?? `${verb} · ${res.status}`);
+      void Effect.runPromise(hapticSuccessEffect());
       navigateBackSoon();
     } catch (e: unknown) {
+      void Effect.runPromise(hapticErrorEffect());
       setError(errorMessage(e));
     } finally {
       setBusy(false);
@@ -156,8 +159,10 @@ export default function ReviewDetailScreen() {
         })
       );
       setNote(String(res.status));
+      void Effect.runPromise(hapticSuccessEffect());
       navigateBackSoon();
     } catch (e: unknown) {
+      void Effect.runPromise(hapticErrorEffect());
       setError(errorMessage(e));
     } finally {
       setBusy(false);

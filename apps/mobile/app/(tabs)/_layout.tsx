@@ -3,6 +3,7 @@ import { Redirect, Tabs, usePathname } from "expo-router";
 import { useEffect, useState } from "react";
 
 import { pendingReviewCountEffect } from "@/src/services/api";
+import { clearIconBadgeEffect, syncIconBadgeEffect } from "@/src/services/device-ux";
 import { useSession } from "@/src/state/SessionContext";
 import { color } from "@/src/theme";
 import { TabGlyph } from "@/src/ui/TabGlyph";
@@ -16,10 +17,14 @@ export default function TabLayout() {
   useEffect(() => {
     if (!session) {
       setPending(0);
+      void Effect.runPromise(clearIconBadgeEffect());
       return;
     }
     void Effect.runPromise(pendingReviewCountEffect(session))
-      .then(setPending)
+      .then((n) => {
+        setPending(n);
+        void Effect.runPromise(syncIconBadgeEffect(n));
+      })
       .catch(() => setPending(0));
   }, [session, pathname]);
 

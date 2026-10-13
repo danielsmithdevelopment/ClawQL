@@ -51,8 +51,11 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Session refresh + expiry gate (fixture renew) | ✅ Profile / boot |
 | Mark inbox read on open | ✅ |
 | Share request deep link | ✅ Review detail |
+| App Lock (biometrics / fixture unlock) | ✅ Profile |
+| Haptics on decide | ✅ Review |
+| Home-screen icon badge = pending count | ✅ |
 | Activity drill-in to decided archive | ✅ |
-| Deep link parsing / Maestro MOB-01…12 | ✅ (sim/emulator or web) |
+| Deep link parsing / Maestro MOB-01…13 | ✅ (sim/emulator or web) |
 | Unit tests | `npm test` |
 | Packaging preflight (no upload) | `npm run store:check` |
 

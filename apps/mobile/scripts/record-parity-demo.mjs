@@ -56,6 +56,21 @@ await page.getByTestId("profile-note").waitFor({ state: "visible", timeout: 1000
 await page.waitForTimeout(500);
 await shot("04-profile-session-refresh.png");
 
+// App Lock → lock now → unlock (fixture)
+const appLockRow = page.getByTestId("pref-app-lock");
+await appLockRow.scrollIntoViewIfNeeded();
+// Expo Switch uses a visually-hidden checkbox — click the label text.
+await appLockRow.getByText("App Lock", { exact: true }).click({ force: true });
+await page.getByTestId("profile-lock-now").waitFor({ state: "visible", timeout: 10000 });
+await page.getByTestId("profile-lock-now").click();
+await page.getByTestId("app-lock-screen").waitFor({ state: "visible", timeout: 10000 });
+await page.waitForTimeout(500);
+await shot("04b-app-lock.png");
+await page.getByTestId("app-lock-unlock").click();
+await page.getByTestId("profile-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.waitForTimeout(400);
+await shot("04c-app-unlocked.png");
+
 // Review → document scan + share
 await page.getByTestId("tab-review").first().click();
 await page.getByTestId("review-item-rev_change").first().waitFor({ state: "visible", timeout: 15000 });

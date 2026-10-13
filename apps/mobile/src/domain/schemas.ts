@@ -240,6 +240,17 @@ export const NotificationPrefs = Schema.Struct({
 });
 export type NotificationPrefs = Schema.Schema.Type<typeof NotificationPrefs>;
 
+/** On-device prefs (persisted locally — not console notification prefs). */
+export const DevicePrefs = Schema.Struct({
+  /** Require Face ID / biometrics (or fixture unlock) when returning to the app. */
+  appLock: Schema.Boolean,
+  /** Haptic feedback on approve / decline / errors. */
+  haptics: Schema.Boolean,
+  /** Home-screen icon badge = pending review count. */
+  iconBadge: Schema.Boolean,
+});
+export type DevicePrefs = Schema.Schema.Type<typeof DevicePrefs>;
+
 /** Registered Expo / APNs / FCM push endpoint for this phone. */
 export const PushDevice = Schema.Struct({
   id: Schema.String,

@@ -6,6 +6,7 @@ import { Alert } from "react-native";
 
 import type {
   ConnectedApp,
+  DevicePrefs,
   DeviceSession,
   NotificationPrefs,
   PushDevice,
@@ -24,6 +25,10 @@ import {
   setNotificationPrefsEffect,
 } from "@/src/services/api";
 import { loadMobileConfigEffect } from "@/src/services/config";
+import {
+  loadDevicePrefsEffect,
+  saveDevicePrefsEffect,
+} from "@/src/services/device-ux";
 import { registerForPushEffect } from "@/src/services/push";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, space } from "@/src/theme";
@@ -53,24 +58,27 @@ export default function ProfileScreen() {
   const [deviceSessions, setDeviceSessions] = useState<readonly DeviceSession[]>([]);
   const [pushDevices, setPushDevices] = useState<readonly PushDevice[]>([]);
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
+  const [devicePrefs, setDevicePrefs] = useState<DevicePrefs | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!session) return;
-    const [k, a, p, s, d] = await Promise.all([
+    const [k, a, p, s, d, dp] = await Promise.all([
       Effect.runPromise(listSecurityKeysEffect(session)),
       Effect.runPromise(listConnectedAppsEffect(session)),
       Effect.runPromise(getNotificationPrefsEffect(session)),
       Effect.runPromise(listDeviceSessionsEffect(session)),
       Effect.runPromise(listPushDevicesEffect(session)),
+      Effect.runPromise(loadDevicePrefsEffect()),
     ]);
     setKeys(k);
     setApps(a);
     setPrefs(p);
     setDeviceSessions(s);
     setPushDevices(d);
+    setDevicePrefs(dp);
     setLoading(false);
   }, [session]);
 
@@ -78,7 +86,7 @@ export default function ProfileScreen() {
     void load();
   }, [load]);
 
-  if (!session || loading || !prefs) {
+  if (!session || loading || !prefs || !devicePrefs) {
     return (
       <ScreenHost>
         <LoadingBlock />
@@ -251,6 +259,63 @@ export default function ProfileScreen() {
               <Meta testID="connected-apps-empty">No connected apps.</Meta>
             ) : null}
           </SurfaceCard>
+
+          <FieldGroup>
+            <FieldGroup.Section title="On this phone">
+              <PrefRow
+                testID="pref-app-lock"
+                label="App Lock"
+                help="Require Face ID / biometrics when you leave and come back. Fixture mode uses a one-tap unlock."
+                value={devicePrefs.appLock}
+                onChange={(appLock) => {
+                  const next = { ...devicePrefs, appLock };
+                  setDevicePrefs(next);
+                  void Effect.runPromise(saveDevicePrefsEffect(next)).then(() => {
+                    globalThis.dispatchEvent?.(new Event("clawql-device-prefs-changed"));
+                    setNote(appLock ? "App Lock on — lock after background" : "App Lock off");
+                  });
+                }}
+              />
+              {devicePrefs.appLock ? (
+                <SecondaryButton
+                  testID="profile-lock-now"
+                  label="Lock now"
+                  onPress={() => {
+                    // AppLockGate listens for a custom event on web / fixture demos.
+                    globalThis.dispatchEvent?.(new Event("clawql-app-lock-now"));
+                    setNote("Locked — unlock from the lock screen");
+                  }}
+                />
+              ) : null}
+              <PrefRow
+                testID="pref-haptics"
+                label="Haptics"
+                help="Vibrate lightly on approve, decline, and errors."
+                value={devicePrefs.haptics}
+                onChange={(haptics) => {
+                  const next = { ...devicePrefs, haptics };
+                  setDevicePrefs(next);
+                  void Effect.runPromise(saveDevicePrefsEffect(next)).then(() => {
+                    globalThis.dispatchEvent?.(new Event("clawql-device-prefs-changed"));
+                  });
+                }}
+              />
+              <PrefRow
+                testID="pref-icon-badge"
+                label="Home screen badge"
+                help="Show the pending review count on the app icon."
+                value={devicePrefs.iconBadge}
+                onChange={(iconBadge) => {
+                  const next = { ...devicePrefs, iconBadge };
+                  setDevicePrefs(next);
+                  void Effect.runPromise(saveDevicePrefsEffect(next)).then(() => {
+                    globalThis.dispatchEvent?.(new Event("clawql-device-prefs-changed"));
+                    setNote(iconBadge ? "Icon badge on" : "Icon badge off");
+                  });
+                }}
+              />
+            </FieldGroup.Section>
+          </FieldGroup>
 
           <FieldGroup>
             <FieldGroup.Section title="When something needs you">

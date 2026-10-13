@@ -31,6 +31,11 @@ import {
   isSessionExpiredEffect,
   refreshSessionEffect,
 } from "../auth";
+import {
+  loadDevicePrefsEffect,
+  saveDevicePrefsEffect,
+  unlockAppEffect,
+} from "../device-ux";
 import { captureDocumentEffect } from "../documents";
 import { approveWithSecurityKeyEffect } from "../nfc-security-key";
 import {
@@ -250,6 +255,18 @@ describe("mobile API fixture mode", () => {
     };
     const early = await Effect.runPromise(ensureFreshSessionEffect(nearExpiry, 60_000));
     expect(early?.expiresAtMs).toBeGreaterThan(nearExpiry.expiresAtMs);
+  });
+
+  it("persists device prefs and fixture-unlocks app lock", async () => {
+    const saved = await Effect.runPromise(
+      saveDevicePrefsEffect({ appLock: true, haptics: false, iconBadge: true })
+    );
+    expect(saved.appLock).toBe(true);
+    const loaded = await Effect.runPromise(loadDevicePrefsEffect());
+    expect(loaded.haptics).toBe(false);
+    expect(loaded.iconBadge).toBe(true);
+    const unlocked = await Effect.runPromise(unlockAppEffect());
+    expect(unlocked).toBe(true);
   });
 
   it("marks inbox items read by id and by review", async () => {

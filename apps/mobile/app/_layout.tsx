@@ -13,6 +13,7 @@ import {
   parseApprovalNotificationDataEffect,
 } from "@/src/services/push";
 import { color } from "@/src/theme";
+import { AppLockGate } from "@/src/ui/AppLockGate";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -74,24 +75,26 @@ function RootNavigator() {
   void loading;
 
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: color.surface },
-        headerTintColor: color.onSurface,
-        contentStyle: { backgroundColor: color.surface },
-      }}
-    >
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="sign-in" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="review/[id]" options={{ title: "Request" }} />
-      <Stack.Screen name="policies/index" options={{ title: "Policies" }} />
-      <Stack.Screen name="policies/[id]" options={{ title: "Policy" }} />
-      <Stack.Screen name="spend" options={{ title: "Spend" }} />
-      <Stack.Screen name="agents" options={{ title: "Agents" }} />
-      <Stack.Screen name="digest" options={{ title: "Morning digest" }} />
-      <Stack.Screen name="teammates" options={{ title: "Team" }} />
-      <Stack.Screen name="inbox" options={{ title: "Notifications" }} />
-    </Stack>
+    <AppLockGate enabled={Boolean(session) && !loading}>
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: color.surface },
+          headerTintColor: color.onSurface,
+          contentStyle: { backgroundColor: color.surface },
+        }}
+      >
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="review/[id]" options={{ title: "Request" }} />
+        <Stack.Screen name="policies/index" options={{ title: "Policies" }} />
+        <Stack.Screen name="policies/[id]" options={{ title: "Policy" }} />
+        <Stack.Screen name="spend" options={{ title: "Spend" }} />
+        <Stack.Screen name="agents" options={{ title: "Agents" }} />
+        <Stack.Screen name="digest" options={{ title: "Morning digest" }} />
+        <Stack.Screen name="teammates" options={{ title: "Team" }} />
+        <Stack.Screen name="inbox" options={{ title: "Notifications" }} />
+      </Stack>
+    </AppLockGate>
   );
 }

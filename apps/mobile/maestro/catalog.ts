@@ -99,6 +99,13 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-12-session-refresh.yaml",
   },
   {
+    id: "MOB-13",
+    run: "Maestro",
+    title: "App Lock on, lock now, unlock",
+    passWhen: "Lock screen appears after Lock now; fixture Unlock returns to Profile",
+    flow: "maestro/flows/mob-13-app-lock.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',

@@ -1,0 +1,20 @@
+# MOB-13 — Enable App Lock, lock now, unlock (fixture one-tap)
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- tapOn:
+    id: "pref-app-lock"
+- assertVisible:
+    id: "profile-lock-now"
+- tapOn:
+    id: "profile-lock-now"
+- assertVisible:
+    id: "app-lock-screen"
+- tapOn:
+    id: "app-lock-unlock"
+- assertVisible:
+    id: "profile-screen"
