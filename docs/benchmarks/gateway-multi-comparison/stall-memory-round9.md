@@ -56,3 +56,5 @@ With `MT_UPSTREAM_LATENCY_MS=20-100`, session medians land ~**740–780 ms** a
 ## Next
 
 HTTP tail remains open under isolation + 2-core pin. Do not chase production defaults from the failed single-threaded probe. Prefer buyer framing (tokens + realistic upstream) until a larger dedicated host remeasures HTTP p999.
+
+**Settled (not NATS/Redis/Wasm for this tail):** ≥2 CPUs per gateway process in Helm/deploy docs; fusion measured on multi-lookup tasks; catalog/IDP memory via colocated SQLite — see [`docs/architecture/gateway-runtime-and-catalog-memory.md`](../../architecture/gateway-runtime-and-catalog-memory.md).

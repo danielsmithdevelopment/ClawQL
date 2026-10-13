@@ -223,11 +223,13 @@ flink:
 resources:
   # With Istio sidecar, total pod request must fit ~free allocatable on a 16GiB single-node (full stack).
   # Heap 768Mi needs matching cgroup headroom (512Mi heap OOMs loading all-providers discovery specs).
+  # Limit ≥2 so V8/JSC helper threads are not CFS-pinned to one core (lab latency; see
+  # docs/architecture/gateway-runtime-and-catalog-memory.md). Request stays low for packing.
   requests:
     cpu: 50m
     memory: 768Mi
   limits:
-    cpu: "1"
+    cpu: "2"
     memory: 1792Mi
 
 # Distroless image runs as nonroot GID 65532 (USER nonroot). HostPath hides the image's /vault chown;

@@ -67,7 +67,7 @@ PROJECT_ID="your-project-id" REGION="us-central1" bash scripts/deploy/deploy-clo
 ## Notes
 
 - For private deployments, set `ALLOW_UNAUTH=false`.
-- Default sizing: `2 vCPU`, `2Gi`, `min-instances=1` on the MCP service.
+- Default sizing: `2 vCPU`, `2Gi`, `min-instances=1` on the MCP service (keep **≥2 vCPU** — JS helper threads; see [`gateway-runtime-and-catalog-memory.md`](../architecture/gateway-runtime-and-catalog-memory.md)).
 - Tune provider scope (`PROVIDER`) for latency/cost.
 - **Optional tools** (`sandbox_exec` when **`CLAWQL_ENABLE_SANDBOX=1`**, `memory_*`) use env on the same service.
 - With **no** optional env vars set, behavior matches a **search + execute** deployment (image defaults may still set `CLAWQL_OBSIDIAN_VAULT_PATH=/vault` in the container).
