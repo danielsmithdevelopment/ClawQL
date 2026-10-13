@@ -75,12 +75,7 @@ export type OrgCreatedVia = "self_serve" | "enterprise_sales";
  * - dual: web Stripe **or** store IAP can grant the same plan entitlements
  */
 export type OrgBillingMode =
-  | "stripe_checkout"
-  | "stripe_invoice"
-  | "hybrid"
-  | "credits_only"
-  | "store_iap"
-  | "dual";
+  "stripe_checkout" | "stripe_invoice" | "hybrid" | "credits_only" | "store_iap" | "dual";
 
 /** Additive CPC billing fields on {@link OrgRecord}. */
 export type OrgBillingFields = {
