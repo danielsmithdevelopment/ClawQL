@@ -2,8 +2,8 @@
  * Pluggable scorer for the Fast Decision Primitive.
  *
  * Primary production backend: **GLiNER2.5-Decide** (Apache 2.0), reported as
- * backend id `gliner-decide` (legacy alias `gliner2`). Optional secondary:
- * Needle 3 stub. Tests use HeuristicScorer. No TypeSafe Jev (closed API).
+ * backend id `gliner-decide`. Optional secondary: Needle 3 stub. Tests use
+ * HeuristicScorer. No TypeSafe Jev (closed API).
  */
 
 import { Context, Effect, Layer } from "effect";

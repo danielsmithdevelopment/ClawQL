@@ -1,7 +1,7 @@
 /**
  * §7 held-out case shapes — frontier-adjudicated ground truth for calibration gate.
  * Synthetic fixtures ship with `adjudicated: false`; productionTrusted requires all true
- * with live (non-dry-run) provenance, live gliner2, and flip-rate pass (unless opted out).
+ * with live (non-dry-run) provenance, live gliner-decide, and flip-rate pass (unless opted out).
  */
 
 import type { FastDecisionCandidate, FastDecisionScore } from "../types.js";
@@ -78,7 +78,7 @@ export type HeldOutValidationRunReport = {
   readonly scorerBackend: string;
   /**
    * True only when criteria pass, every case has `adjudicationKind: "live"`,
-   * scorerBackend is live `gliner2`, and flip-rate gate passes (or is opted out
+   * scorerBackend is live `gliner-decide`, and flip-rate gate passes (or is opted out
    * via `CLAWQL_FLIP_RATE_GATE=0`).
    */
   readonly productionTrusted: boolean;

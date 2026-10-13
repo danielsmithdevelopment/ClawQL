@@ -47,12 +47,9 @@ const {
       return s.backendId();
     }).pipe(Effect.provide(layer))
   );
-  if (backendId === "gliner-decide" || backendId === "gliner2")
+  if (backendId === "gliner-decide")
     fail("GLINER_BACKEND_ID_LIE", `still live id ${backendId} after 503`);
-  else if (
-    backendId === "gliner-decide-http-fallback-heuristic" ||
-    backendId === "gliner2-http-fallback-heuristic"
-  )
+  else if (backendId === "gliner-decide-http-fallback-heuristic")
     ok("GLINER_BACKEND_ID_LIE", backendId);
   else warn("GLINER_BACKEND_ID_LIE", `unexpected ${backendId}`);
 }

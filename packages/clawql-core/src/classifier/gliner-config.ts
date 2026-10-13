@@ -3,9 +3,8 @@
  * Primary production backend for the Fast Decision Primitive — mature Apache-2.0
  * encoder family (live checkpoint: GLiNER2.5-Decide), not Needle/Laya/Jev.
  *
- * Backend / model family ids (WORM + /v1/decisions):
- * - Canonical live: `gliner-decide` (HF default `fastino/GLiNER2.5-Decide`)
- * - Legacy alias: `gliner2` still accepted on the API; do not use it in new prose
+ * Backend / model family id (WORM + /v1/decisions): `gliner-decide`
+ * (HF default `fastino/GLiNER2.5-Decide`).
  */
 
 import { Context, Effect, Layer } from "effect";
@@ -22,39 +21,25 @@ export type GlinerScorerConfig = {
 /** Live routing path — Decide cutover (v0.6 spend). See DECIDE_V05_SCORE_ONCE_CLOSEOUT.md. */
 export const DEFAULT_GLINER_MODEL_ID = "fastino/GLiNER2.5-Decide";
 
-/**
- * Canonical live scorer / model family id for Decide.
- * Prefer this over the legacy `gliner2` alias in new code and docs.
- */
+/** Live scorer / model family id for Decide. */
 export const GLINER_DECIDE_BACKEND_ID = "gliner-decide";
-
-/** Legacy API / WORM id — still accepted as an input alias; live scorer emits Decide. */
-export const LEGACY_GLINER_BACKEND_ID = "gliner2";
 
 export const GLINER_DECIDE_STUB_BACKEND_ID = "gliner-decide-stub";
 export const GLINER_DECIDE_HTTP_FALLBACK_BACKEND_ID = "gliner-decide-http-fallback-heuristic";
 
-/** @deprecated Use {@link GLINER_DECIDE_STUB_BACKEND_ID}. */
-export const LEGACY_GLINER_STUB_BACKEND_ID = "gliner2-stub";
-/** @deprecated Use {@link GLINER_DECIDE_HTTP_FALLBACK_BACKEND_ID}. */
-export const LEGACY_GLINER_HTTP_FALLBACK_BACKEND_ID = "gliner2-http-fallback-heuristic";
-
-/** True when `backendId` is the live Decide scorer (canonical or legacy alias). */
+/** True when `backendId` is the live Decide scorer. */
 export function isLiveGlinerDecideBackendId(backendId: string): boolean {
-  return backendId === GLINER_DECIDE_BACKEND_ID || backendId === LEGACY_GLINER_BACKEND_ID;
+  return backendId === GLINER_DECIDE_BACKEND_ID;
 }
 
-/** True when a /v1/decisions `model` names the local Decide family (incl. legacy). */
+/** True when a /v1/decisions `model` names the local Decide family. */
 export function isGlinerDecideModelId(model: string): boolean {
   const m = model.trim().toLowerCase();
   return (
-    m === GLINER_DECIDE_BACKEND_ID ||
-    m === LEGACY_GLINER_BACKEND_ID ||
-    m === "gliner" ||
-    m === GLINER_DECIDE_STUB_BACKEND_ID ||
-    m === LEGACY_GLINER_STUB_BACKEND_ID
+    m === GLINER_DECIDE_BACKEND_ID || m === "gliner" || m === GLINER_DECIDE_STUB_BACKEND_ID
   );
 }
+
 export class GlinerScorerConfigService extends Context.Service<
   GlinerScorerConfigService,
   {

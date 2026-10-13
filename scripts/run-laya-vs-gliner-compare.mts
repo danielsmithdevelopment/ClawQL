@@ -101,7 +101,7 @@ function main(): void {
     arms: {
       gliner2: {
         source: glinerPath,
-        scorerBackend: gliner.scorerBackend ?? "gliner2",
+        scorerBackend: gliner.scorerBackend ?? "gliner-decide",
         n: gliner.n,
         rawAccuracy: gliner.rawAccuracy,
         meanCalibrationError: gliner.meanCalibrationError,
@@ -133,10 +133,10 @@ function main(): void {
       routing.rawAccuracy > (gliner.rawAccuracy ?? 0)
         ? "laya"
         : routing.rawAccuracy < (gliner.rawAccuracy ?? 0)
-          ? "gliner2"
+          ? "gliner-decide"
           : "tie",
     honesty: [
-      "GLiNER arm is the frozen productionTrusted readout (live sidecar + criteria + flip); historical scorerBackend may still say gliner2 — canonical id is now gliner-decide.",
+      "GLiNER arm is the frozen productionTrusted readout (live sidecar + criteria + flip); frozen readout may still record archival scorerBackend gliner2; live id is gliner-decide only.",
       "Laya arm is measure-only (backend ≠ gliner-decide) — cannot light productionTrusted under current gate.",
       "Both arms are CPU-class Apache-2.0 encoders; Laya served via self-host SystemOne.",
       "Among-accepted@τ is GLiNER policy semantics — Laya measure reports forced top-1 rawAccuracy.",

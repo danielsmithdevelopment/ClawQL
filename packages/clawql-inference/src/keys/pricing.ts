@@ -32,7 +32,7 @@ const MODEL_RATES_PER_1M: Readonly<Record<string, TokenRatesPerMillion>> = {
   // Local / in-process — no metered token bill
   clawql: ZERO,
   "clawql-auto": ZERO,
-  gliner2: ZERO,
+  "gliner-decide": ZERO,
   // OpenAI
   "gpt-4o-mini": { inputUsdPer1M: 0.15, outputUsdPer1M: 0.6 },
   "openai/gpt-4o-mini": { inputUsdPer1M: 0.15, outputUsdPer1M: 0.6 },
@@ -102,7 +102,6 @@ function isLocalKey(key: string): boolean {
     key === "clawql" ||
     key === "clawql-auto" ||
     key === "gliner-decide" ||
-    key === "gliner2" ||
     key.startsWith("mlx/") ||
     key.startsWith("ollama/") ||
     key.startsWith("local/")

@@ -10,7 +10,6 @@ import {
 describe("remote-laya", () => {
   it("resolves backend id and self-host availability", () => {
     expect(isLayaBackendId(LAYA_BACKEND_ID)).toBe(true);
-    expect(isLayaBackendId("gliner2")).toBe(false);
     expect(isLayaBackendId("gliner-decide")).toBe(false);
     expect(selfHostedLayaAvailable({ CLAWQL_LAYA_SYSTEMONE_URL: "http://127.0.0.1:8000" })).toBe(
       true

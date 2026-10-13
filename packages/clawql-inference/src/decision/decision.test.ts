@@ -271,7 +271,7 @@ describe("decision gateway", () => {
         method: "POST",
         headers: UNCALIBRATED_HEADER,
         body: JSON.stringify({
-          model: "gliner2",
+          model: "gliner-decide",
           input: "The package arrived with a deep crack across the plastic housing.",
           questions: [
             {
@@ -654,7 +654,7 @@ describe("decision gateway", () => {
             abstained: false,
             escalated: false,
             calibrated: false,
-            backendId: "gliner2",
+            backendId: "gliner-decide",
             useSiteId: "search_provider_tool_routing",
           },
         ],

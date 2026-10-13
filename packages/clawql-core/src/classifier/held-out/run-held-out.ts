@@ -35,10 +35,7 @@ import { candidatesEquivalent } from "../candidate-equivalence.js";
 import { loadClawqlCapabilityOntology } from "../capability-ontology.js";
 import { enrichFastDecisionRequest } from "../ontology-enrichment.js";
 
-/**
- * Canonical live Decide backend id that may light `productionTrusted`.
- * Legacy WORM/API alias `gliner2` is accepted via {@link isLiveGlinerDecideBackendId}.
- */
+/** Canonical live Decide backend id that may light `productionTrusted`. */
 export const PRODUCTION_TRUSTED_SCORER_BACKEND = "gliner-decide";
 
 /** Named suites selectable via `--suite` / resolveHeldOutSuite. */
