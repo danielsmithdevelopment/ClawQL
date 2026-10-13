@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### Changed
+
+- **Decide family id `gliner-decide`** — live Fast Decision / WORM backend id is now `gliner-decide` (stub `gliner-decide-stub`, HTTP fallback `gliner-decide-http-fallback-heuristic`) so the name matches GLiNER2.5-Decide. Legacy `gliner2` / `gliner2-stub` / `gliner2-http-fallback-heuristic` remain accepted as aliases on `/v1/decisions` and for trust-gate matching of old WORM rows. `PRODUCTION_TRUSTED_SCORER_BACKEND` is `gliner-decide`.
+
 ### Added
 
 - **Formal methods (ADR 0014)** — adopt TLA+/Quint for protocol races and Lean for the policy-kernel oracle (differential tests; not production runtime). Starter TLA+ mandate lifecycle under [`formal/tla/mandate/`](formal/tla/mandate/) (target atomic consume; `WeakConsume` mode exposes the historical double-execute race). gdp-ts remains layer 1. TLC dual CI (atomic pass + weak counterexample): `.github/workflows/formal-mandate-tlc.yml` / `scripts/formal/run-mandate-tlc.sh`. Audit hunt: `scripts/formal/audit-mandate-double-execute.mjs`. Lean approval-policy oracle + differential tests under `formal/lean/` / `packages/clawql-api/src/policy/`. Concurrent consume regression (50 parallel → exactly one win).

@@ -101,13 +101,13 @@ function isLocalKey(key: string): boolean {
   return (
     key === "clawql" ||
     key === "clawql-auto" ||
+    key === "gliner-decide" ||
     key === "gliner2" ||
     key.startsWith("mlx/") ||
     key.startsWith("ollama/") ||
     key.startsWith("local/")
   );
 }
-
 function providerFromKey(key: string): string | undefined {
   const slash = key.indexOf("/");
   if (slash <= 0) return undefined;

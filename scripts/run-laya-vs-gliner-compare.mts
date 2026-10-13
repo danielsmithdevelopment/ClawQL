@@ -93,7 +93,8 @@ function main(): void {
   mkdirSync(dirname(outPath), { recursive: true });
 
   const compare = {
-    protocol: "Laya vs GLiNER2 on frozen v0.4 routing held-out — measure, not trust transfer",
+    protocol:
+      "Laya vs GLiNER Decide family on frozen v0.4 routing held-out — measure, not trust transfer",
     comparedAt: new Date().toISOString(),
     suiteId: "fast-decision-held-out-v0.4-routing-fresh",
     useSiteId: "search_provider_tool_routing",
@@ -135,8 +136,8 @@ function main(): void {
           ? "gliner2"
           : "tie",
     honesty: [
-      "GLiNER arm is the frozen productionTrusted readout (live sidecar + criteria + flip).",
-      "Laya arm is measure-only (backend ≠ gliner2) — cannot light productionTrusted under current gate.",
+      "GLiNER arm is the frozen productionTrusted readout (live sidecar + criteria + flip); historical scorerBackend may still say gliner2 — canonical id is now gliner-decide.",
+      "Laya arm is measure-only (backend ≠ gliner-decide) — cannot light productionTrusted under current gate.",
       "Both arms are CPU-class Apache-2.0 encoders; Laya served via self-host SystemOne.",
       "Among-accepted@τ is GLiNER policy semantics — Laya measure reports forced top-1 rawAccuracy.",
     ],

@@ -1,7 +1,7 @@
 /**
  * Decision gateway — Effect Tag wrapping Fast Decision for HTTP /decision.
  * Calibration honesty: only productionTrusted use sites may set calibrated=true
- * when the live scorer backend is gliner2.
+ * when the live scorer backend is gliner-decide.
  */
 
 import { randomUUID } from "node:crypto";
@@ -10,6 +10,7 @@ import {
   FastDecisionDefaultStackLive,
   FastDecisionScorer,
   FastDecisionTestStackLive,
+  isLiveGlinerDecideBackendId,
   routingCatalogAlignedForProductionTrust,
   runFastDecision,
   seedBuiltinUseSites,
@@ -242,7 +243,7 @@ function mapResult(opts: {
 }): DecisionAnswer {
   const calibrated =
     PRODUCTION_TRUSTED_USE_SITES.has(opts.useSiteId) &&
-    opts.backendId === "gliner2" &&
+    isLiveGlinerDecideBackendId(opts.backendId) &&
     routingCatalogAlignedForProductionTrust();
   const abstained = opts.result.outcome === "below_threshold_fallback";
   const escalated = abstained && opts.escalationMode === "escalate";

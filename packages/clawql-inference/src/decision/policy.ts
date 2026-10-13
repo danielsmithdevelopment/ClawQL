@@ -13,6 +13,9 @@ import { isLunaModelId, isMicrosoftDecision1ModelId } from "./openai-adapt.js";
 export const LOCAL_DECISION_MODELS = new Set([
   "clawql",
   "clawql-auto",
+  /** Canonical Decide family id (HF: fastino/GLiNER2.5-Decide). */
+  "gliner-decide",
+  /** @deprecated Legacy alias for `gliner-decide`; still accepted. */
   "gliner2",
   "gliner",
   "heuristic",
@@ -192,7 +195,7 @@ export function refusalsForUncalibratedRemote(opts: {
 
 export function supportedModelsMessage(): Effect.Effect<string> {
   return Effect.succeed(
-    "Supported models: clawql-auto (local-first + escalate), clawql, gliner2, gliner, heuristic, gpt-6-luna, microsoft-decision-1 (via OpenRouter)"
+    "Supported models: clawql-auto (local-first + escalate), clawql, gliner-decide (alias: gliner2), gliner, heuristic, gpt-6-luna, microsoft-decision-1 (via OpenRouter)"
   );
 }
 

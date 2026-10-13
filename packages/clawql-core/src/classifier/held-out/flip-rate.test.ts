@@ -186,7 +186,7 @@ describe("productionTrusted flip-rate coupling", () => {
       }).pipe(Effect.provide(glinerLayer))
     );
     expect(report.passedCriteria).toBe(true);
-    expect(report.scorerBackend).toBe("gliner2");
+    expect(report.scorerBackend).toBe("gliner-decide");
     expect(report.flipRate.passed).toBe(false);
     expect(report.productionTrusted).toBe(false);
     expect(report.failureReasons.some((x) => x.includes("flip-rate gate failed"))).toBe(true);

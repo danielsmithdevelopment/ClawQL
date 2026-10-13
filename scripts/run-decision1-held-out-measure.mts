@@ -4,7 +4,7 @@
  *
  * Replays live frontier labels via --labels-in, scores with
  * CLAWQL_HELD_OUT_SCORER=openrouter-decision-1, and bounds flip-rate spend
- * with CLAWQL_FLIP_RATE_GATE=0. productionTrusted stays false (backend ≠ gliner2).
+ * with CLAWQL_FLIP_RATE_GATE=0. productionTrusted stays false (backend ≠ gliner-decide).
  *
  * Usage:
  *   OPENROUTER_API_KEY=… npx tsx scripts/run-decision1-held-out-measure.mts
@@ -126,7 +126,7 @@ async function main(): Promise<void> {
     summary,
     honesty: [
       "measure-only — CLAWQL_HELD_OUT_SCORER=openrouter-decision-1",
-      `backendId=${OPENROUTER_DECISION1_SCORER_BACKEND_ID} ≠ gliner2`,
+      `backendId=${OPENROUTER_DECISION1_SCORER_BACKEND_ID} ≠ gliner-decide`,
       "does not light calibrated or held-out productionTrusted (still GLiNER2-only)",
       "CLAWQL_FLIP_RATE_GATE=0 bounds spend (flip-rate skipped)",
     ],

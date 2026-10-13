@@ -23,9 +23,9 @@ LAYA_MEASURE=…/laya-v04-held-out-measure.json \
   npx tsx scripts/run-laya-vs-gliner-compare.mts
 ```
 
-`backendId` is `convai/laya` — **≠ `gliner2`**, so `productionTrusted` stays false.
+`backendId` is `convai/laya` — **≠ `gliner-decide`**, so `productionTrusted` stays false.
 
 ## Honesty
 
 - Measure / candidate only until a deliberate trust program exists.
-- GLiNER2.5-Decide remains the only `PRODUCTION_TRUSTED_SCORER_BACKEND` today.
+- GLiNER2.5-Decide (`gliner-decide`, legacy alias `gliner2`) remains the only `PRODUCTION_TRUSTED_SCORER_BACKEND` today.

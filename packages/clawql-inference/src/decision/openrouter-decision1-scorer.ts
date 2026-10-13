@@ -1,6 +1,6 @@
 /**
  * Measure-only FastDecisionScorer backed by OpenRouter Microsoft-Decision-1.
- * backendId is never `gliner2` — cannot light held-out productionTrusted.
+ * backendId is never `gliner-decide` — cannot light held-out productionTrusted.
  */
 
 import { Effect, Layer } from "effect";
@@ -13,7 +13,7 @@ import {
 } from "./remote-openrouter-decisions.js";
 import type { OpenAiDecisionCreateRequest, OpenAiDecisionCreateResponse } from "./openai-types.js";
 
-/** Stable scorer id — must remain ≠ PRODUCTION_TRUSTED_SCORER_BACKEND (`gliner2`). */
+/** Stable scorer id — must remain ≠ PRODUCTION_TRUSTED_SCORER_BACKEND (`gliner-decide`). */
 export const OPENROUTER_DECISION1_SCORER_BACKEND_ID =
   "openrouter/microsoft/microsoft-decision-1" as const;
 

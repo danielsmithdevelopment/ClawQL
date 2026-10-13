@@ -1,6 +1,6 @@
 /**
  * Measure-only FastDecisionScorer backed by self-hosted Convai Laya.
- * backendId is never `gliner2` — cannot light held-out productionTrusted.
+ * backendId is never `gliner-decide` — cannot light held-out productionTrusted.
  *
  * Transport: CLAWQL_LAYA_SYSTEMONE_URL → POST /v1/systemone (CPU-friendly).
  */

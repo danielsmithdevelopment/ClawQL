@@ -625,7 +625,7 @@ export function createDecisionRouter(options: CreateDecisionRouterOptions = {}):
     res.json({
       object: "decision",
       methods: ["POST"],
-      models: ["clawql-auto", "clawql", "gliner2", "gpt-6-luna"],
+      models: ["clawql-auto", "clawql", "gliner-decide", "gliner2", "gpt-6-luna"],
       question_types: ["predicate", "choice", "score"],
       fail_closed:
         "Uncalibrated answers (including all score answers) return type=refusal unless x-clawql-allow-uncalibrated: 1",
