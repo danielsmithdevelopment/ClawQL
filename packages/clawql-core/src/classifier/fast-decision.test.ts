@@ -1089,11 +1089,8 @@ describe("candidatesEquivalent (twins)", () => {
   });
 
   it("names the live Decide family gliner-decide only", async () => {
-    const {
-      GLINER_DECIDE_BACKEND_ID,
-      isLiveGlinerDecideBackendId,
-      isGlinerDecideModelId,
-    } = await import("./gliner-config.js");
+    const { GLINER_DECIDE_BACKEND_ID, isLiveGlinerDecideBackendId, isGlinerDecideModelId } =
+      await import("./gliner-config.js");
     expect(GLINER_DECIDE_BACKEND_ID).toBe("gliner-decide");
     expect(isLiveGlinerDecideBackendId("gliner-decide")).toBe(true);
     expect(isLiveGlinerDecideBackendId("gliner2")).toBe(false);

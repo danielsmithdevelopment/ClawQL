@@ -35,9 +35,7 @@ export function isLiveGlinerDecideBackendId(backendId: string): boolean {
 /** True when a /v1/decisions `model` names the local Decide family. */
 export function isGlinerDecideModelId(model: string): boolean {
   const m = model.trim().toLowerCase();
-  return (
-    m === GLINER_DECIDE_BACKEND_ID || m === "gliner" || m === GLINER_DECIDE_STUB_BACKEND_ID
-  );
+  return m === GLINER_DECIDE_BACKEND_ID || m === "gliner" || m === GLINER_DECIDE_STUB_BACKEND_ID;
 }
 
 export class GlinerScorerConfigService extends Context.Service<
