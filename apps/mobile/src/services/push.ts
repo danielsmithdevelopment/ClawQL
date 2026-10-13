@@ -38,27 +38,31 @@ export type AppDeepLinkTarget =
   | { readonly surface: "spend" }
   | { readonly surface: "teammates" }
   | { readonly surface: "policies" }
-  | { readonly surface: "policy"; readonly id: string };
+  | { readonly surface: "policy"; readonly id: string }
+  | { readonly surface: "voice"; readonly query?: string };
 
 const CLOUD_HOSTS = new Set(["cloud.clawql.com", "acme.cloud.clawql.com"]);
 
 function pathSegmentsFromUrl(url: string): {
   segments: string[];
   requestIdQuery: string | null;
+  voiceQuery: string | null;
 } {
   const u = new URL(url);
   const requestIdQuery = u.searchParams.get("requestId");
+  const voiceQuery = u.searchParams.get("q");
   const parts = [
     u.hostname && !CLOUD_HOSTS.has(u.hostname) ? u.hostname : null,
     ...u.pathname.split("/"),
   ].filter((p): p is string => Boolean(p && p.length > 0));
   if (parts[0] === "app") parts.shift();
-  return { segments: parts, requestIdQuery };
+  return { segments: parts, requestIdQuery, voiceQuery };
 }
 
 function targetFromSegments(
   segments: string[],
-  requestIdQuery: string | null
+  requestIdQuery: string | null,
+  voiceQuery: string | null = null
 ): AppDeepLinkTarget | null {
   if (requestIdQuery) return { surface: "review", id: requestIdQuery };
   const [head, next] = segments;
@@ -71,6 +75,9 @@ function targetFromSegments(
   if (head === "teammates") return { surface: "teammates" };
   if (head === "policies" && next) return { surface: "policy", id: next };
   if (head === "policies") return { surface: "policies" };
+  if (head === "voice") {
+    return voiceQuery ? { surface: "voice", query: voiceQuery } : { surface: "voice" };
+  }
   return null;
 }
 
@@ -79,8 +86,8 @@ export function parseAppDeepLinkEffect(
 ): Effect.Effect<AppDeepLinkTarget | null> {
   return Effect.sync(() => {
     try {
-      const { segments, requestIdQuery } = pathSegmentsFromUrl(url);
-      const fromUrl = targetFromSegments(segments, requestIdQuery);
+      const { segments, requestIdQuery, voiceQuery } = pathSegmentsFromUrl(url);
+      const fromUrl = targetFromSegments(segments, requestIdQuery, voiceQuery);
       if (fromUrl) return fromUrl;
 
       // Fallback: expo-linking parse for odd schemes
@@ -92,7 +99,9 @@ export function parseAppDeepLinkEffect(
         parsed.queryParams?.requestId != null
           ? String(parsed.queryParams.requestId)
           : null;
-      return targetFromSegments(linkSegments, q);
+      const vq =
+        parsed.queryParams?.q != null ? String(parsed.queryParams.q) : null;
+      return targetFromSegments(linkSegments, q, vq);
     } catch {
       return null;
     }
@@ -297,6 +306,10 @@ export function buildAppDeepLinkEffect(
         return `${base}/teammates`;
       case "policies":
         return `${base}/policies`;
+      case "voice":
+        return target.query
+          ? `${base}/voice?q=${encodeURIComponent(target.query)}`
+          : `${base}/voice`;
     }
   });
 }
@@ -320,6 +333,8 @@ export function hrefForDeepLink(target: AppDeepLinkTarget): string {
       return "/teammates";
     case "policies":
       return "/policies";
+    case "voice":
+      return target.query ? `/voice?q=${encodeURIComponent(target.query)}` : "/voice";
   }
 }
 

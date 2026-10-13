@@ -176,6 +176,13 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-23-spend-upgrade-cta.yaml",
   },
   {
+    id: "MOB-24",
+    run: "Maestro",
+    title: "Voice assistant list pending (fixture dictate)",
+    passWhen: "Voice screen runs list pending and shows spoken pending titles",
+    flow: "maestro/flows/mob-24-voice-list-pending.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',
@@ -192,8 +199,8 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
 export function assertMobileCatalogComplete(): void {
   const maestro = MOBILE_SCENARIOS.filter((s) => s.run === "Maestro");
   const manual = MOBILE_SCENARIOS.filter((s) => s.run === "Manual");
-  if (maestro.length !== 23) {
-    throw new Error(`Expected 23 Maestro MOB scenarios, got ${maestro.length}`);
+  if (maestro.length !== 24) {
+    throw new Error(`Expected 24 Maestro MOB scenarios, got ${maestro.length}`);
   }
   if (manual.length !== 2) {
     throw new Error(`Expected 2 Manual scenarios (REV-13, UX-09), got ${manual.length}`);

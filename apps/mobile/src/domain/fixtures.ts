@@ -473,6 +473,8 @@ export const FIXTURE_DEVICE_PREFS: DevicePrefs = {
   appLock: false,
   haptics: true,
   iconBadge: true,
+  voiceAssistant: true,
+  voiceSpeak: true,
 };
 
 export const FIXTURE_DEVICE_SESSIONS: readonly DeviceSession[] = [

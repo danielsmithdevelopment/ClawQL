@@ -38,6 +38,16 @@ Complete before first TestFlight / Play internal upload. Items marked **agent** 
 | 13 | human | Confirm Sign-in → **App Store reviewer demo** works on the uploaded build |
 | 14 | agent | Maestro MOB-01…20 green on simulator/emulator before upload; `npm run a11y:lh` green on web export |
 
+## Siri / App Intents (when you plug in native voice)
+
+| # | Owner | Item | Done when |
+| - | ----- | ---- | --------- |
+| 19 | human | EAS / Xcode build with App Intents (Expo SDK 58 `expo-app-intents` or custom Swift) | “Hey Siri, list my ClawQL approvals” works on device |
+| 20 | human | Mic + speech privacy strings live in App Store Connect privacy labels | Review notes match `NSMicrophoneUsageDescription` / speech recognition |
+| 21 | agent | Wire App Intent handlers to `voice-assistant.ts` commands | Same grammar as `/voice` (list / read / decline / open) |
+
+In-app typed + TTS voice assistant ships without this list (`docs/specs/mobile/voice-assistant-v0.1.md`).
+
 ## In-app subscriptions (when you plug in stores)
 
 | # | Owner | Item | Done when |

@@ -434,6 +434,37 @@ export default function ProfileScreen() {
               });
             }}
           />
+          <PrefRow
+            testID="pref-voice-assistant"
+            label="Voice assistant"
+            help="Dictate or type commands — list pending, read next, decline. Approve still needs your security key. Siri App Intents land after Day-0."
+            value={devicePrefs.voiceAssistant}
+            onChange={(voiceAssistant) => {
+              const next = { ...devicePrefs, voiceAssistant };
+              setDevicePrefs(next);
+              void Effect.runPromise(saveDevicePrefsEffect(next)).then(() => {
+                setNote(voiceAssistant ? "Voice assistant on" : "Voice assistant off");
+              });
+            }}
+          />
+          <PrefRow
+            testID="pref-voice-speak"
+            label="Speak replies"
+            help="Read assistant answers aloud (Siri-style TTS in-app)."
+            value={devicePrefs.voiceSpeak}
+            onChange={(voiceSpeak) => {
+              const next = { ...devicePrefs, voiceSpeak };
+              setDevicePrefs(next);
+              void Effect.runPromise(saveDevicePrefsEffect(next));
+            }}
+          />
+          {devicePrefs.voiceAssistant ? (
+            <SecondaryButton
+              testID="profile-open-voice"
+              label="Open voice assistant"
+              onPress={() => router.push("/voice")}
+            />
+          ) : null}
         </FieldGroup.Section>
       </FieldGroup>
 

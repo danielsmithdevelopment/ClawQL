@@ -49,6 +49,13 @@ vi.mock("expo-haptics", () => ({
   },
 }));
 
+vi.mock("expo-speech", () => ({
+  speak: (_text: string, opts?: { onDone?: () => void }) => {
+    opts?.onDone?.();
+  },
+  stop: () => undefined,
+}));
+
 vi.mock("@react-native-async-storage/async-storage", () => {
   const store = new Map<string, string>();
   return {

@@ -350,12 +350,20 @@ describe("mobile API fixture mode", () => {
 
   it("persists device prefs and fixture-unlocks app lock", async () => {
     const saved = await Effect.runPromise(
-      saveDevicePrefsEffect({ appLock: true, haptics: false, iconBadge: true })
+      saveDevicePrefsEffect({
+        appLock: true,
+        haptics: false,
+        iconBadge: true,
+        voiceAssistant: true,
+        voiceSpeak: false,
+      })
     );
     expect(saved.appLock).toBe(true);
     const loaded = await Effect.runPromise(loadDevicePrefsEffect());
     expect(loaded.haptics).toBe(false);
     expect(loaded.iconBadge).toBe(true);
+    expect(loaded.voiceAssistant).toBe(true);
+    expect(loaded.voiceSpeak).toBe(false);
     const unlocked = await Effect.runPromise(unlockAppEffect());
     expect(unlocked).toBe(true);
     const bio = await Effect.runPromise(biometricCapabilityEffect());
@@ -493,6 +501,8 @@ describe("mobile API fixture mode", () => {
       ["clawql://teammates", "/teammates"],
       ["clawql://policies", "/policies"],
       ["clawql://policies/pol_contracts", "/policies/pol_contracts"],
+      ["clawql://voice", "/voice"],
+      ["clawql://voice?q=list%20pending", "/voice?q=list%20pending"],
       ["https://cloud.clawql.com/app/inbox", "/inbox"],
       ["https://cloud.clawql.com/app/policies/pol_block", "/policies/pol_block"],
       ["https://cloud.clawql.com/app/review/rev_change", "/review/rev_change"],

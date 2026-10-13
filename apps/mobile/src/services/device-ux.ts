@@ -42,6 +42,8 @@ export function loadDevicePrefsEffect(): Effect.Effect<DevicePrefs, DeviceUxErro
         appLock: Boolean(parsed.appLock),
         haptics: parsed.haptics !== false,
         iconBadge: parsed.iconBadge !== false,
+        voiceAssistant: parsed.voiceAssistant !== false,
+        voiceSpeak: parsed.voiceSpeak !== false,
       };
     },
     catch: (cause) =>

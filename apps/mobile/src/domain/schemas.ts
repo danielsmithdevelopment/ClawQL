@@ -251,6 +251,10 @@ export const DevicePrefs = Schema.Struct({
   haptics: Schema.Boolean,
   /** Home-screen icon badge = pending review count. */
   iconBadge: Schema.Boolean,
+  /** Show Voice assistant entry points (Profile + /voice). */
+  voiceAssistant: Schema.Boolean,
+  /** Speak assistant replies (expo-speech / web speechSynthesis). */
+  voiceSpeak: Schema.Boolean,
 });
 export type DevicePrefs = Schema.Schema.Type<typeof DevicePrefs>;
 

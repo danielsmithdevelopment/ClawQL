@@ -50,6 +50,22 @@ test.describe("PhoneApprove store_iap + Face ID (fixture web)", () => {
     await expect(page.getByTestId("profile-screen")).toBeVisible({ timeout: 15_000 });
   });
 
+  test("MOB-24 Voice assistant lists pending", async ({ page }) => {
+    await signInFixture(page);
+    await page.getByTestId("tab-profile").first().click();
+    await page.getByTestId("profile-open-voice").filter({ visible: true }).first().click();
+    await expect(page.getByTestId("voice-screen").filter({ visible: true }).first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.getByTestId("voice-dictate-fixture").filter({ visible: true }).first().click();
+    await expect(page.getByTestId("voice-spoken").filter({ visible: true }).first()).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(
+      page.getByTestId("voice-pending-count").filter({ visible: true }).first()
+    ).toContainText(/Pending/i);
+  });
+
   test("MOB-23 Spend upgrade CTA opens Profile billing", async ({ page }) => {
     await signInFixture(page);
     await page.goto("/spend", { waitUntil: "networkidle" });

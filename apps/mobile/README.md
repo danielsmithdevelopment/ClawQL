@@ -106,7 +106,7 @@ Until linked, production sessions get `nfc_module_unavailable`. **Fixture mode**
 
 | Id | Coverage |
 | -- | -------- |
-| MOB-01…23 | Maestro flows (+ store restore/manage, Face ID App Lock, Spend upgrade CTA); CI web Playwright `npm run test:e2e` |
+| MOB-01…24 | Maestro flows (+ voice assistant, store IAP, Face ID); CI web Playwright `npm run test:e2e` |
 | a11y:lh | Lighthouse mobile a11y/BP/SEO **100** + axe WCAG 2.1 A/AA on fixture screens (`npm run a11y:lh`) |
 | REV-13 / UX-09 | Physical YubiKey — still Manual |
 

@@ -68,6 +68,17 @@ await page.getByTestId("profile-manage-subscriptions").scrollIntoViewIfNeeded();
 await page.waitForTimeout(300);
 await shot("04f-profile-manage-subscriptions.png");
 
+// Voice assistant — fixture list pending
+await page.getByTestId("profile-open-voice").scrollIntoViewIfNeeded();
+await page.getByTestId("profile-open-voice").click();
+await page.getByTestId("voice-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("voice-dictate-fixture").click();
+await page.getByTestId("voice-spoken").waitFor({ state: "visible", timeout: 10000 });
+await page.waitForTimeout(400);
+await shot("04g-voice-list-pending.png");
+await page.goBack();
+await page.getByTestId("profile-screen").waitFor({ state: "visible", timeout: 15000 });
+
 // App Lock → lock now → unlock (fixture)
 const appLockRow = page.getByTestId("pref-app-lock");
 await appLockRow.scrollIntoViewIfNeeded();

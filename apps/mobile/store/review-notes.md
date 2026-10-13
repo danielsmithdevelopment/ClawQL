@@ -26,6 +26,10 @@ v0.1 uses company SSO / browser OAuth (Okta-style) and fixture/demo paths. We do
 
 App Lock and purchase confirm use device biometrics (`expo-local-authentication`). Fixture / web builds use a one-tap unlock that stands in for Face ID / Touch ID. Production builds prompt the system Face ID or Touch ID sheet when enrolled.
 
+## Voice assistant
+
+Profile → **Open voice assistant** (or `clawql://voice`) accepts typed / fixture commands: list pending, read next, decline first. Replies can be spoken with on-device TTS. **Approve never completes from voice alone** — the security-key / Face ID path on the review screen still runs. Siri App Intents are not in this build; they land after Day-0 native enrollment.
+
 ## In-app subscribe (sandbox)
 
 Profile → **Plan & billing** → **Subscribe Pro (sandbox)** flips fixture `store_iap` entitlements (no real charge). Live App Store / Play sheets land after Day-0 SKU enrollment. Reviewers can exercise the sandbox path without a paid Apple/Google account.

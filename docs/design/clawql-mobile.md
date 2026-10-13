@@ -9,7 +9,8 @@ Expo approval client. Scope is intentionally narrow so the App Store does not tr
 | Sign in | System browser OAuth + app/universal link return; fixture + reviewer-demo for CI/review |
 | Home    | Needs-you queue snapshot + today's spend                                                |
 | Review  | Queue + exact-change detail; Decline; Approve with security key                         |
-| Profile | Keys, connected apps (Revoke), notification prefs, sign out, **delete account**         |
+| Profile | Keys, connected apps (Revoke), notification prefs, voice prefs, sign out, **delete account** |
+| Voice   | In-app assistant — list/read/decline pending; TTS; Siri App Intents later ([spec](../specs/mobile/voice-assistant-v0.1.md)) |
 
 All other product surfaces deep-link or open the web console.
 
@@ -33,7 +34,7 @@ All other product surfaces deep-link or open the web console.
 ## Testing
 
 - Vitest for Effect domain/API/NFC/deeplink
-- Maestro MOB-01…06 on simulator/emulator
+- Maestro MOB-01…24 on simulator/emulator (+ CI Playwright web export)
 - REV-13 / UX-09 remain Manual on device
 
-See `apps/mobile/README.md`.
+See `apps/mobile/README.md` · voice: [`docs/specs/mobile/voice-assistant-v0.1.md`](../specs/mobile/voice-assistant-v0.1.md).

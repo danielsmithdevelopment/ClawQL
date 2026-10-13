@@ -74,9 +74,10 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Chrome a11y labels (buttons / rows / chips / prefs) | ✅ |
 | Activity drill-in to decided archive | ✅ |
 | Deep links: review + inbox/digest/agents/spend/teammates/policies | ✅ |
-| Deep link parsing / Maestro MOB-01…23 | ✅ (sim/emulator or web Playwright) |
+| Deep link parsing / Maestro MOB-01…24 | ✅ (sim/emulator or web Playwright) |
+| Voice assistant (typed + TTS fixture) | ✅ `/voice` + Profile |
 | Unit tests | `npm test` |
-| Web e2e (store_iap + Face ID) | `npm run local:web-export && npm run test:e2e` |
+| Web e2e (store_iap + Face ID + voice) | `npm run local:web-export && npm run test:e2e` |
 | Packaging preflight (no upload) | `npm run store:check` |
 
 ## What you can skip until you are ready
