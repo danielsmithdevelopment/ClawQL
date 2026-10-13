@@ -1,0 +1,18 @@
+# MOB-17 — Surface deep links open inbox / digest / agents / policy detail
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- openLink: clawql://inbox
+- assertVisible:
+    id: "inbox-screen"
+- openLink: clawql://digest
+- assertVisible:
+    id: "digest-screen"
+- openLink: clawql://agents
+- assertVisible:
+    id: "agents-screen"
+- openLink: clawql://policies/pol_contracts
+- assertVisible:
+    id: "policy-applies"

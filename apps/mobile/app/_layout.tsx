@@ -1,4 +1,4 @@
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, type Href } from "expo-router";
 import * as Linking from "expo-linking";
 import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
@@ -9,7 +9,8 @@ import "react-native-reanimated";
 
 import { SessionProvider, useSession } from "@/src/state/SessionContext";
 import {
-  parseApprovalDeepLinkEffect,
+  hrefForDeepLink,
+  parseAppDeepLinkEffect,
   parseApprovalNotificationDataEffect,
 } from "@/src/services/push";
 import { color } from "@/src/theme";
@@ -45,7 +46,10 @@ function RootNavigator() {
       if (id) router.push(`/review/${id}`);
     };
     const handleUrl = (url: string) => {
-      void Effect.runPromise(parseApprovalDeepLinkEffect(url)).then(openReview);
+      void Effect.runPromise(parseAppDeepLinkEffect(url)).then((target) => {
+        if (!target) return;
+        router.push(hrefForDeepLink(target) as Href);
+      });
     };
     const sub = Linking.addEventListener("url", ({ url }) => handleUrl(url));
     void Linking.getInitialURL().then((url) => {

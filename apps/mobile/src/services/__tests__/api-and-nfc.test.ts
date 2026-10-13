@@ -48,6 +48,9 @@ import {
 import { attachmentPreviewFor, captureDocumentEffect } from "../documents";
 import { approveWithSecurityKeyEffect } from "../nfc-security-key";
 import {
+  buildAppDeepLinkEffect,
+  hrefForDeepLink,
+  parseAppDeepLinkEffect,
   parseApprovalDeepLinkEffect,
   parseApprovalNotificationDataEffect,
   registerForPushEffect,
@@ -442,6 +445,30 @@ describe("mobile API fixture mode", () => {
     );
     expect(a).toBe("rev_change");
     expect(b).toBe("rev_change");
+  });
+
+  it("parses surface deep links for inbox digest agents policies", async () => {
+    const cases: Array<[string, string]> = [
+      ["clawql://inbox", "/inbox"],
+      ["clawql://digest", "/digest"],
+      ["clawql://agents", "/agents"],
+      ["clawql://spend", "/spend"],
+      ["clawql://teammates", "/teammates"],
+      ["clawql://policies", "/policies"],
+      ["clawql://policies/pol_contracts", "/policies/pol_contracts"],
+      ["https://cloud.clawql.com/app/inbox", "/inbox"],
+      ["https://cloud.clawql.com/app/policies/pol_block", "/policies/pol_block"],
+      ["https://cloud.clawql.com/app/review/rev_change", "/review/rev_change"],
+    ];
+    for (const [url, href] of cases) {
+      const target = await Effect.runPromise(parseAppDeepLinkEffect(url));
+      expect(target).not.toBeNull();
+      expect(hrefForDeepLink(target!)).toBe(href);
+    }
+    const built = await Effect.runPromise(
+      buildAppDeepLinkEffect({ surface: "policy", id: "pol_contracts" })
+    );
+    expect(built).toContain("/app/policies/pol_contracts");
   });
 
   it("reviewer demo approves via biometric path", async () => {

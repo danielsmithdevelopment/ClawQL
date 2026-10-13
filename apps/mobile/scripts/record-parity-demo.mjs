@@ -149,6 +149,54 @@ await page.getByTestId("review-note").waitFor({ state: "visible", timeout: 10000
 await page.waitForTimeout(500);
 await shot("17-ask-teammate-done.png");
 
+// Surface deep-link targets (same hrefs as parseAppDeepLink → hrefForDeepLink).
+async function ensureUnlocked() {
+  if (await page.getByTestId("app-lock-screen").isVisible().catch(() => false)) {
+    await page.getByTestId("app-lock-unlock").click();
+    await page.getByTestId("app-lock-screen").waitFor({ state: "hidden", timeout: 10000 });
+  }
+}
+async function openSurface(path, testId, shotName) {
+  await page.goto(`${BASE}${path}`, { waitUntil: "networkidle" });
+  if (await page.getByTestId("sign-in-fixture").isVisible().catch(() => false)) {
+    await page.getByTestId("sign-in-fixture").click();
+    await page.getByTestId("home-screen").waitFor({ state: "visible", timeout: 15000 });
+    await page.goto(`${BASE}${path}`, { waitUntil: "networkidle" });
+  }
+  await ensureUnlocked();
+  await page.getByTestId(testId).filter({ visible: true }).first().waitFor({
+    state: "visible",
+    timeout: 15000,
+  });
+  await page.waitForTimeout(400);
+  await shot(shotName);
+}
+await openSurface("/inbox", "inbox-screen", "21-deeplink-inbox.png");
+await openSurface("/digest", "digest-screen", "22-deeplink-digest.png");
+await openSurface("/agents", "agents-screen", "23-deeplink-agents.png");
+await page.goto(`${BASE}/policies`, { waitUntil: "networkidle" });
+if (await page.getByTestId("sign-in-fixture").isVisible().catch(() => false)) {
+  await page.getByTestId("sign-in-fixture").click();
+  await page.getByTestId("home-screen").waitFor({ state: "visible", timeout: 15000 });
+  await page.goto(`${BASE}/policies`, { waitUntil: "networkidle" });
+}
+await ensureUnlocked();
+await page.getByTestId("policies-screen").filter({ visible: true }).first().waitFor({
+  state: "visible",
+  timeout: 15000,
+});
+await page
+  .getByTestId("policy-pol_contracts")
+  .filter({ visible: true })
+  .first()
+  .click();
+await page.getByTestId("policy-detail-screen").filter({ visible: true }).first().waitFor({
+  state: "visible",
+  timeout: 15000,
+});
+await page.waitForTimeout(400);
+await shot("24-deeplink-policy.png");
+
 await context.close();
 await browser.close();
 

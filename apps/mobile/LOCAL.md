@@ -60,7 +60,8 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Notification prefs persisted on device | ✅ |
 | Mark all inbox read | ✅ |
 | Activity drill-in to decided archive | ✅ |
-| Deep link parsing / Maestro MOB-01…16 | ✅ (sim/emulator or web) |
+| Deep links: review + inbox/digest/agents/spend/teammates/policies | ✅ |
+| Deep link parsing / Maestro MOB-01…17 | ✅ (sim/emulator or web) |
 | Unit tests | `npm test` |
 | Packaging preflight (no upload) | `npm run store:check` |
 

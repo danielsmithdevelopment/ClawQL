@@ -127,6 +127,13 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-16-attachment-preview-remove.yaml",
   },
   {
+    id: "MOB-17",
+    run: "Maestro",
+    title: "Surface deep links (inbox digest agents policy)",
+    passWhen: "clawql://inbox|digest|agents|policies/:id land on the matching screen",
+    flow: "maestro/flows/mob-17-surface-deeplinks.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',

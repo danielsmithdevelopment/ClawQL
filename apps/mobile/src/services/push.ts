@@ -1,5 +1,5 @@
 /**
- * Push registration + deep-link routing into Review detail.
+ * Push registration + deep-link routing into app surfaces.
  * Fixture mode can schedule a local notification (no APNs/FCM/EAS).
  */
 import * as Notifications from "expo-notifications";
@@ -29,37 +29,83 @@ export type ApprovalPushPayload = {
   readonly requestId: string;
 };
 
-export function parseApprovalDeepLinkEffect(
+/** Parsed clawql:// or https://cloud.clawql.com/app/… target. */
+export type AppDeepLinkTarget =
+  | { readonly surface: "review"; readonly id: string }
+  | { readonly surface: "inbox" }
+  | { readonly surface: "digest" }
+  | { readonly surface: "agents" }
+  | { readonly surface: "spend" }
+  | { readonly surface: "teammates" }
+  | { readonly surface: "policies" }
+  | { readonly surface: "policy"; readonly id: string };
+
+const CLOUD_HOSTS = new Set(["cloud.clawql.com", "acme.cloud.clawql.com"]);
+
+function pathSegmentsFromUrl(url: string): {
+  segments: string[];
+  requestIdQuery: string | null;
+} {
+  const u = new URL(url);
+  const requestIdQuery = u.searchParams.get("requestId");
+  const parts = [
+    u.hostname && !CLOUD_HOSTS.has(u.hostname) ? u.hostname : null,
+    ...u.pathname.split("/"),
+  ].filter((p): p is string => Boolean(p && p.length > 0));
+  if (parts[0] === "app") parts.shift();
+  return { segments: parts, requestIdQuery };
+}
+
+function targetFromSegments(
+  segments: string[],
+  requestIdQuery: string | null
+): AppDeepLinkTarget | null {
+  if (requestIdQuery) return { surface: "review", id: requestIdQuery };
+  const [head, next] = segments;
+  if (!head) return null;
+  if (head === "review" && next) return { surface: "review", id: next };
+  if (head === "inbox") return { surface: "inbox" };
+  if (head === "digest") return { surface: "digest" };
+  if (head === "agents") return { surface: "agents" };
+  if (head === "spend") return { surface: "spend" };
+  if (head === "teammates") return { surface: "teammates" };
+  if (head === "policies" && next) return { surface: "policy", id: next };
+  if (head === "policies") return { surface: "policies" };
+  return null;
+}
+
+export function parseAppDeepLinkEffect(
   url: string
-): Effect.Effect<string | null> {
+): Effect.Effect<AppDeepLinkTarget | null> {
   return Effect.sync(() => {
     try {
-      // Prefer URL so clawql://review/id (host=review, path=/id) works.
-      const u = new URL(url);
-      const fromQuery = u.searchParams.get("requestId");
-      if (fromQuery) return fromQuery;
-      const parts = [
-        u.hostname && u.hostname !== "cloud.clawql.com" && u.hostname !== "acme.cloud.clawql.com"
-          ? u.hostname
-          : null,
-        ...u.pathname.split("/"),
-      ]
-        .filter((p): p is string => Boolean(p && p.length > 0));
-      if (parts[0] === "app") parts.shift();
-      if (parts[0] === "review" && parts[1]) return parts[1];
+      const { segments, requestIdQuery } = pathSegmentsFromUrl(url);
+      const fromUrl = targetFromSegments(segments, requestIdQuery);
+      if (fromUrl) return fromUrl;
 
       // Fallback: expo-linking parse for odd schemes
       const parsed = Linking.parse(url);
       const path = parsed.path ?? "";
-      const segments = path.replace(/^\//, "").split("/").filter(Boolean);
-      if (segments[0] === "app") segments.shift();
-      if (segments[0] === "review" && segments[1]) return segments[1];
-      if (parsed.queryParams?.requestId) return String(parsed.queryParams.requestId);
-      return null;
+      const linkSegments = path.replace(/^\//, "").split("/").filter(Boolean);
+      if (linkSegments[0] === "app") linkSegments.shift();
+      const q =
+        parsed.queryParams?.requestId != null
+          ? String(parsed.queryParams.requestId)
+          : null;
+      return targetFromSegments(linkSegments, q);
     } catch {
       return null;
     }
   });
+}
+
+/** @deprecated Prefer parseAppDeepLinkEffect — kept for approval-only callers. */
+export function parseApprovalDeepLinkEffect(
+  url: string
+): Effect.Effect<string | null> {
+  return parseAppDeepLinkEffect(url).pipe(
+    Effect.map((target) => (target?.surface === "review" ? target.id : null))
+  );
 }
 
 /** Extract request id from a notification response / content data blob. */
@@ -225,10 +271,56 @@ export function registerForPushEffect(
 }
 
 export function buildReviewDeepLinkEffect(requestId: string): Effect.Effect<string> {
+  return buildAppDeepLinkEffect({ surface: "review", id: requestId });
+}
+
+export function buildAppDeepLinkEffect(
+  target: AppDeepLinkTarget
+): Effect.Effect<string> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
-    return `${config.apiBase}/app/review/${encodeURIComponent(requestId)}`;
+    const base = `${config.apiBase}/app`;
+    switch (target.surface) {
+      case "review":
+        return `${base}/review/${encodeURIComponent(target.id)}`;
+      case "policy":
+        return `${base}/policies/${encodeURIComponent(target.id)}`;
+      case "inbox":
+        return `${base}/inbox`;
+      case "digest":
+        return `${base}/digest`;
+      case "agents":
+        return `${base}/agents`;
+      case "spend":
+        return `${base}/spend`;
+      case "teammates":
+        return `${base}/teammates`;
+      case "policies":
+        return `${base}/policies`;
+    }
   });
+}
+
+/** Expo Router href for a parsed deep link. */
+export function hrefForDeepLink(target: AppDeepLinkTarget): string {
+  switch (target.surface) {
+    case "review":
+      return `/review/${target.id}`;
+    case "policy":
+      return `/policies/${target.id}`;
+    case "inbox":
+      return "/inbox";
+    case "digest":
+      return "/digest";
+    case "agents":
+      return "/agents";
+    case "spend":
+      return "/spend";
+    case "teammates":
+      return "/teammates";
+    case "policies":
+      return "/policies";
+  }
 }
 
 export const CLAWQL_PUSH_TAG = "clawql/MobilePush" as const;
@@ -239,6 +331,9 @@ export class MobilePush extends Context.Service<
     readonly register: (
       session: MobileSession
     ) => Effect.Effect<{ token: string | null; fixture: boolean }, PushError>;
+    readonly parseAppDeepLink: (
+      url: string
+    ) => Effect.Effect<AppDeepLinkTarget | null>;
     readonly parseApprovalDeepLink: (url: string) => Effect.Effect<string | null>;
     readonly parseApprovalNotificationData: (
       data: unknown
@@ -250,13 +345,16 @@ export class MobilePush extends Context.Service<
       delaySeconds?: number;
     }) => Effect.Effect<{ notificationId: string; simulated: boolean }, PushError>;
     readonly buildReviewDeepLink: (requestId: string) => Effect.Effect<string>;
+    readonly buildAppDeepLink: (target: AppDeepLinkTarget) => Effect.Effect<string>;
   }
 >()(CLAWQL_PUSH_TAG) {}
 
 export const MobilePushLive = Layer.succeed(MobilePush, {
   register: registerForPushEffect,
+  parseAppDeepLink: parseAppDeepLinkEffect,
   parseApprovalDeepLink: parseApprovalDeepLinkEffect,
   parseApprovalNotificationData: parseApprovalNotificationDataEffect,
   scheduleLocalApprovalNotification: scheduleLocalApprovalNotificationEffect,
   buildReviewDeepLink: buildReviewDeepLinkEffect,
+  buildAppDeepLink: buildAppDeepLinkEffect,
 });
