@@ -82,11 +82,16 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 
 Those live only under [`store/DAY0-CHECKLIST.md`](store/DAY0-CHECKLIST.md). Day-0 items are **warnings**, not blockers for local work.
 
+## Fixture client status
+
+PhoneApprove **fixture UX** (approve paths, inbox, deep links, offline cache, a11y gate, Maestro MOB-01…19) is the local product surface. The next product step off-fixture is **backend**: managed push register (`POST /api/managed/devices/push`), APNs/EAS delivery, evidence upload, and live keys/activity — not more client chrome.
+
 ## Optional: static web export (CI / screenshots)
 
 ```bash
 npm run local:web-export   # → dist-web/ (no EAS login)
 npx serve dist-web -l 4173
+npm run a11y:lh            # Lighthouse a11y/BP/SEO 100 + axe WCAG (or set CLAWQL_MOBILE_DEMO_URL)
 npm run demo:parity-iphone # Playwright @ iPhone 14 viewport (390×844) — never desktop width
 ```
 
