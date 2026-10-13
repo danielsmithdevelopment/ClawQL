@@ -68,6 +68,7 @@
     "local:web-export": "EXPO_PUBLIC_CLAWQL_FIXTURE=1 expo export --platform web --output-dir dist-web",
     "demo:iphone": "node scripts/record-demo.mjs",
     "demo:parity-iphone": "node scripts/record-parity-demo.mjs",
+    "a11y:lh": "node scripts/a11y-lh.mjs",
     "perf:lab": "node scripts/perf-lab.mjs",
     "perf:assert": "node scripts/perf-assert.mjs",
     "perf:bundle": "node scripts/perf-bundle.mjs",

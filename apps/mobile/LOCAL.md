@@ -104,6 +104,7 @@ Runs typecheck, vitest, and confirms fixture defaults — exit 0 means you can k
 ## Performance (Lighthouse equivalents)
 
 ```bash
+npm run a11y:lh        # Lighthouse mobile (a11y=100) + axe WCAG 2.1 A/AA on fixture screens
 npm run perf:lab       # bundle (web/ios/android) + LH mobile + CPU flame + assert
 npm run perf:android   # Flashlight on a connected Android device
 npm run perf:ios       # Instruments / RN DevTools runbook

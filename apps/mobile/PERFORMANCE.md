@@ -101,4 +101,5 @@ Mapped from Expo/RN 2026 playbook + our lab baseline:
 ## Relation to console Lighthouse / OTEL flames
 
 - Cloud console / docs Lighthouse CI is **web-only** (`scripts/dev/assert-lighthouse-scores.mjs`).
+- PhoneApprove WCAG gate: `npm run a11y:lh` (Lighthouse accessibility **1.0** + axe WCAG 2.1 A/AA on authenticated fixture routes). Performance is still gated by `perf:lab` — Expo’s single large JS bundle caps Lighthouse Performance well below 100; treat Flashlight / Instruments as the native source of truth.
 - Server OTEL span flamegraphs (Tempo) are **backend** — different problem than RN FPS.

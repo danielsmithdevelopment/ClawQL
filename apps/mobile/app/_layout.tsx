@@ -1,9 +1,11 @@
 import { Stack, useRouter, type Href } from "expo-router";
+import Head from "expo-router/head";
 import * as Linking from "expo-linking";
 import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
 import { Effect } from "effect";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
@@ -31,6 +33,14 @@ export default function RootLayout() {
 
   return (
     <SessionProvider>
+      {/* react-helmet owns document.title — static <title> in +html is wiped without this */}
+      <Head>
+        <title>ClawQL — PhoneApprove</title>
+        <meta
+          name="description"
+          content="Approve exact-change requests from your phone with ClawQL PhoneApprove."
+        />
+      </Head>
       <StatusBar style="dark" />
       <RootNavigator />
     </SessionProvider>
@@ -56,21 +66,25 @@ function RootNavigator() {
       if (url) handleUrl(url);
     });
 
-    const notifSub = Notifications.addNotificationResponseReceivedListener((response) => {
-      void Effect.runPromise(
-        parseApprovalNotificationDataEffect(response.notification.request.content.data)
-      ).then(openReview);
-    });
-    void Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (!response) return;
-      void Effect.runPromise(
-        parseApprovalNotificationDataEffect(response.notification.request.content.data)
-      ).then(openReview);
-    });
+    // expo-notifications last-response APIs throw on web and poison Lighthouse BP.
+    let notifSub: { remove: () => void } | undefined;
+    if (Platform.OS !== "web") {
+      notifSub = Notifications.addNotificationResponseReceivedListener((response) => {
+        void Effect.runPromise(
+          parseApprovalNotificationDataEffect(response.notification.request.content.data)
+        ).then(openReview);
+      });
+      void Notifications.getLastNotificationResponseAsync().then((response) => {
+        if (!response) return;
+        void Effect.runPromise(
+          parseApprovalNotificationDataEffect(response.notification.request.content.data)
+        ).then(openReview);
+      });
+    }
 
     return () => {
       sub.remove();
-      notifSub.remove();
+      notifSub?.remove();
     };
   }, [router]);
 

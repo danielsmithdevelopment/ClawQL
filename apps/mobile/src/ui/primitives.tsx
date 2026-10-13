@@ -335,22 +335,17 @@ export function NavRow({
   /** Icon chrome only — prefer seed blue; status belongs on badges. */
   tone?: "seed" | "ok" | "warn" | "danger" | "neutral";
 }) {
+  // No outer role=button wrapper — ListItem is already interactive (nested-interactive / WCAG).
   return (
-    <View
-      accessible
-      accessibilityRole="button"
-      accessibilityLabel={help ? `${label}. ${help}` : label}
+    <ListItem
+      testID={testID}
+      onPress={onPress}
+      leading={<IconBubble name={icon} tone={tone} size={36} iconSize={18} />}
+      trailing={<Icon name={Icons.chevron} size={14} color={color.onSurfaceVariant} />}
+      supportingText={help}
     >
-      <ListItem
-        testID={testID}
-        onPress={onPress}
-        leading={<IconBubble name={icon} tone={tone} size={36} iconSize={18} />}
-        trailing={<Icon name={Icons.chevron} size={14} color={color.onSurfaceVariant} />}
-        supportingText={help}
-      >
-        {label}
-      </ListItem>
-    </View>
+      {label}
+    </ListItem>
   );
 }
 
@@ -367,23 +362,17 @@ export function PrimaryButton({
   testID?: string;
   danger?: boolean;
 }) {
+  // Button.label already names the control — do not wrap with another role=button.
   return (
-    <View
-      accessible
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled: Boolean(disabled) }}
-    >
-      <Button
-        testID={testID}
-        label={label}
-        variant="filled"
-        disabled={disabled}
-        onPress={onPress}
-        // Brand action accent (orange). Chrome/selection stay primary blue.
-        style={{ backgroundColor: danger ? color.error : color.accent }}
-      />
-    </View>
+    <Button
+      testID={testID}
+      label={label}
+      variant="filled"
+      disabled={disabled}
+      onPress={onPress}
+      // Brand action accent (orange). Chrome/selection stay primary blue.
+      style={{ backgroundColor: danger ? color.error : color.accent }}
+    />
   );
 }
 
@@ -399,20 +388,13 @@ export function SecondaryButton({
   testID?: string;
 }) {
   return (
-    <View
-      accessible
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled: Boolean(disabled) }}
-    >
-      <Button
-        testID={testID}
-        label={label}
-        variant="outlined"
-        disabled={disabled}
-        onPress={onPress}
-      />
-    </View>
+    <Button
+      testID={testID}
+      label={label}
+      variant="outlined"
+      disabled={disabled}
+      onPress={onPress}
+    />
   );
 }
 
@@ -428,20 +410,13 @@ export function TextButton({
   testID?: string;
 }) {
   return (
-    <View
-      accessible
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled: Boolean(disabled) }}
-    >
-      <Button
-        testID={testID}
-        label={label}
-        variant="text"
-        disabled={disabled}
-        onPress={onPress}
-      />
-    </View>
+    <Button
+      testID={testID}
+      label={label}
+      variant="text"
+      disabled={disabled}
+      onPress={onPress}
+    />
   );
 }
 
@@ -587,8 +562,13 @@ export function SelectRow({
 
 export function LoadingBlock({ label = "Loading…" }: { label?: string }) {
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: space.xl }} testID="loading">
-      <ActivityIndicator color={color.primary} />
+    <View
+      style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: space.xl }}
+      testID="loading"
+      accessibilityRole="progressbar"
+      accessibilityLabel={label}
+    >
+      <ActivityIndicator color={color.primary} accessibilityLabel={label} />
       <View style={{ height: space.sm }} />
       <Text textStyle={type.meta}>{label}</Text>
     </View>
@@ -608,15 +588,9 @@ export function PrefRow({
   onChange: (next: boolean) => void;
   testID?: string;
 }) {
+  // Switch owns the switch role + checked state — outer role=switch lacked aria-checked on web.
   return (
-    <View
-      testID={testID}
-      accessible
-      accessibilityRole="switch"
-      accessibilityLabel={`${label}. ${help}`}
-      accessibilityState={{ checked: value }}
-      style={{ paddingVertical: space.sm }}
-    >
+    <View testID={testID} style={{ paddingVertical: space.sm }}>
       <Column spacing={4}>
         <Switch label={label} value={value} onValueChange={onChange} />
         <Meta>{help}</Meta>
@@ -654,29 +628,23 @@ export function ReviewRow({
   onPress: () => void;
 }) {
   return (
-    <View
-      accessible
-      accessibilityRole="button"
-      accessibilityLabel={`${title}. ${kindLabel}. ${badge}. ${listMeta}. ${statusLine}`}
+    <ListItem
+      testID={testID}
+      onPress={onPress}
+      leading={
+        <IconBubble
+          name={kindIcon(kindLabel)}
+          // One blue chrome tone for all list glyphs — status lives on badges, not icons.
+          tone="seed"
+          size={36}
+          iconSize={18}
+        />
+      }
+      trailing={<Icon name={Icons.chevron} size={14} color={color.onSurfaceVariant} />}
+      supportingText={`${kindLabel} · ${badge}\n${listMeta}\n${statusLine}`}
     >
-      <ListItem
-        testID={testID}
-        onPress={onPress}
-        leading={
-          <IconBubble
-            name={kindIcon(kindLabel)}
-            // One blue chrome tone for all list glyphs — status lives on badges, not icons.
-            tone="seed"
-            size={36}
-            iconSize={18}
-          />
-        }
-        trailing={<Icon name={Icons.chevron} size={14} color={color.onSurfaceVariant} />}
-        supportingText={`${kindLabel} · ${badge}\n${listMeta}\n${statusLine}`}
-      >
-        {title}
-      </ListItem>
-    </View>
+      {title}
+    </ListItem>
   );
 }
 
