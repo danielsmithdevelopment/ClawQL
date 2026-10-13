@@ -30,6 +30,24 @@ export {
 } from "./checkout-handoff.js";
 export { attachProvisioningRoutes, type AttachProvisioningRoutesOptions } from "./http.js";
 export {
+  STORE_IAP_PRODUCTS,
+  StoreIapCatalogService,
+  storeIapCatalogLiveLayer,
+  lookupStoreIapProductEffect,
+  type StoreIapPlatform,
+  type StoreIapProduct,
+} from "./store-iap-catalog.js";
+export {
+  StoreIapVerifyError,
+  StoreIapVerifyService,
+  storeIapVerifyLiveLayer,
+  verifyStorePurchaseEffect,
+  getBillingEntitlementsEffect,
+  type BillingEntitlements,
+  type StoreIapVerifyInput,
+  type StoreIapVerifyResult,
+} from "./store-iap-verify.js";
+export {
   AccountDeletionError,
   AccountDeletionIncompleteError,
   AccountDeletionService,
