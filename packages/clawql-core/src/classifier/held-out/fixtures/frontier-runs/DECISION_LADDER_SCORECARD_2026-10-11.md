@@ -23,13 +23,13 @@ Honest readout after merging spend-ledger → provider pricing → Decision-1 fl
 Artifacts: [`laya-v04-held-out-measure.json`](./laya-v04-held-out-measure.json) · [`laya-vs-gliner-v04-compare.json`](./laya-vs-gliner-v04-compare.json)  
 Source: local `laya-serve` (`LAYA_DEVICE=cpu`), frozen labels `v0.4-routing-fresh-gha-36144911649`, `CLAWQL_FLIP_RATE_GATE=0`.
 
-| Arm                                | Scorer        | rawAccuracy       | meanCalibrationError | passedCriteria  | productionTrusted     |
-| ---------------------------------- | ------------- | ----------------- | -------------------- | --------------- | --------------------- |
-| GLiNER2 (frozen trusted readout)   | `gliner2`     | **0.80**          | ~0.12                | yes             | **true**              |
-| Laya English (self-host SystemOne) | `convai/laya` | **0.925** (37/40) | ~0.164               | no (cal > 0.15) | **false** (≠ gliner2) |
+| Arm                                | Scorer                                           | rawAccuracy       | meanCalibrationError | passedCriteria  | productionTrusted             |
+| ---------------------------------- | ------------------------------------------------ | ----------------- | -------------------- | --------------- | ----------------------------- |
+| Frozen trusted readout (v0.4)      | archival `gliner2` → live id now `gliner-decide` | **0.80**          | ~0.12                | yes             | **true** (historical row)     |
+| Laya English (self-host SystemOne) | `convai/laya`                                    | **0.925** (37/40) | ~0.164               | no (cal > 0.15) | **false** (≠ `gliner-decide`) |
 
-- **Winner rawAccuracy:** Laya (+0.125 vs GLiNER).
-- **Honesty rails held** — Laya cannot light `productionTrusted` under current gate; GLiNER remains the only trusted path.
+- **Winner rawAccuracy:** Laya (+0.125 vs frozen readout).
+- **Honesty rails held** — Laya cannot light `productionTrusted` under current gate; live trusted family id is **`gliner-decide`** (GLiNER2.5-Decide).
 - Laya warning on load: shipped temperatures clamped — treat confidences as partially uncalibrated (matches cal miss).
 
 ## Live Decision-1 held-out measure scorer (Actions, keyed)
@@ -44,10 +44,10 @@ Source: filled via marker + `decision1-held-out-measure.yml` (GHA run 3829767875
 | rawAccuracy          | **1.0** (40/40)                             |
 | meanCalibrationError | ~0.10                                       |
 | passedCriteria       | yes                                         |
-| productionTrusted    | **false** (not live gliner2)                |
+| productionTrusted    | **false** (not live `gliner-decide`)        |
 
 - **Honesty rails held** — perfect accuracy still cannot light trust.
-- Compare GLiNER2 trusted path: ~0.80 rawAcc / 18 accepted @ τ=0.70 (`v0.4-routing-fresh-productionTrusted-readout.json`).
+- Compare frozen GLiNER trusted path: ~0.80 rawAcc / 18 accepted @ τ=0.70 (`v0.4-routing-fresh-productionTrusted-readout.json`). Live path today is Decide (`gliner-decide`).
 
 ## Live Decision-1 v0.4 candidate (Actions, keyed — full families)
 
@@ -69,7 +69,7 @@ Source: filledAt `2026-10-12T04:34:40.310Z`, `flipFamilies=["whitespace","case",
 - **Decision-1 clears the fan-out quality bar on labeled v0.4** (40/40 exact option-id) while local stub does not (6/8 answered).
 - **Non-vacuous flip-rate pass** under Decision-1 model pin (200 comparable perturbations, 0 flips).
 - **Vacuous synonym passes fail closed** (`totalPerturbations === 0`).
-- **Honesty rails held**: remotes stay `productionTrustedClaim: false`; GLiNER2 remains the only path that can light trust.
+- **Honesty rails held**: remotes stay `productionTrustedClaim: false`; `gliner-decide` remains the only path that can light trust.
 
 ## What did _not_ improve
 
@@ -79,8 +79,8 @@ Source: filledAt `2026-10-12T04:34:40.310Z`, `flipFamilies=["whitespace","case",
 
 ## Baseline references
 
-| Artifact                                            | Meaning                                       |
-| --------------------------------------------------- | --------------------------------------------- |
-| `v0.4-routing-fresh-productionTrusted-readout.json` | Live GLiNER2 + frontier labels — trusted path |
-| `decision1-v04-routing-candidate-TEMPLATE.json`     | Empty measure template                        |
-| `decision1-v04-routing-candidate.json`              | Filled Decision-1 candidate (this PR)         |
+| Artifact                                            | Meaning                                                                                     |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `v0.4-routing-fresh-productionTrusted-readout.json` | Frozen trusted-path readout (archival `scorerBackend: gliner2`; live id is `gliner-decide`) |
+| `decision1-v04-routing-candidate-TEMPLATE.json`     | Empty measure template                                                                      |
+| `decision1-v04-routing-candidate.json`              | Filled Decision-1 candidate (this PR)                                                       |

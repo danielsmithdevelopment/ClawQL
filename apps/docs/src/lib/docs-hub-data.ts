@@ -120,7 +120,7 @@ export const architectureHubCards: Array<ReferenceCard> = [
     href: '/specs/classifier/fast-decision-routing-closeout',
     name: 'Fast Decision routing closeout',
     description:
-      'Stock GLiNER 2.5 reject rule is productionTrusted on frozen n=40; Decide measured, not live.',
+      'Live: GLiNER2.5-Decide (gliner-decide) @ τ=0.80. v0.4 stock reject is the historical productionTrusted claim.',
     icon: DocumentIcon,
   }),
   card({

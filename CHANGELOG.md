@@ -2,7 +2,7 @@
 
 ### Changed
 
-- **Decide family id `gliner-decide`** — live Fast Decision / WORM backend id is now `gliner-decide` (stub `gliner-decide-stub`, HTTP fallback `gliner-decide-http-fallback-heuristic`) so the name matches GLiNER2.5-Decide. The old `gliner2` family id is **removed** (no alias). `PRODUCTION_TRUSTED_SCORER_BACKEND` is `gliner-decide`. Frozen historical fixtures may still say `scorerBackend: "gliner2"`; that is archival only.
+- **Decide family id `gliner-decide`** — live Fast Decision / WORM backend id is now `gliner-decide` (stub `gliner-decide-stub`, HTTP fallback `gliner-decide-http-fallback-heuristic`) so the name matches GLiNER2.5-Decide. The old `gliner2` family id is **removed** (no alias). `PRODUCTION_TRUSTED_SCORER_BACKEND` is `gliner-decide`. Frozen historical fixtures may still say `scorerBackend: "gliner2"`; that is archival only. Docs / docs.clawql.com closeout hub + `/v1/decisions` model table updated to match.
 
 ### Added
 

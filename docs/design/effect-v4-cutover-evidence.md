@@ -54,7 +54,7 @@ Live default-on Core MCP tools (no `CLAWQL_ENABLE_*`, no instance spec) vs freez
 
 MCP ListTools JSON Schemas are still **Zod at the SDK edge**; Effect Schema v4 is the in-handler decoder. Wire schemas did not switch to Schema v4 JSON Schema generation.
 
-**Honesty:** `routingCatalogAlignedForProductionTrust()` is **false**. `/decision` returns `calibrated: false` even when `useSiteId=search_provider_tool_routing` and the scorer backend is `gliner2`, until a new freeze (or a v0.6-style suite whose catalog is the live default-on set) passes. Code: `packages/clawql-core/src/classifier/held-out/routing-catalog-drift.ts`.
+**Honesty:** `routingCatalogAlignedForProductionTrust()` is **false**. `/decision` returns `calibrated: false` even when `useSiteId=search_provider_tool_routing` and the scorer backend is `gliner-decide`, until a new freeze (or a v0.6-style suite whose catalog is the live default-on set) passes. Code: `packages/clawql-core/src/classifier/held-out/routing-catalog-drift.ts`.
 
 v0.6 already scored is **not** that suite — same 38 bodies, including PageIndex.
 

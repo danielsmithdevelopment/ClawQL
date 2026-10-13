@@ -20,11 +20,12 @@ HTTP sidecar matching `packages/clawql-core` `scoreViaGlinerHttp` contract.
 
 ```bash
 export CLAWQL_FAST_DECISION_GLINER_URL=http://127.0.0.1:8080
-# optional: CLAWQL_FAST_DECISION_GLINER_MODEL=fastino/gliner2.5-base-v1
+# default in clawql-core: CLAWQL_FAST_DECISION_GLINER_MODEL=fastino/GLiNER2.5-Decide
 # optional: CLAWQL_FAST_DECISION_GLINER_TOKEN=...
 ```
 
-Without `CLAWQL_FAST_DECISION_GLINER_URL`, the classifier reports honest `gliner2-stub`.
+Without `CLAWQL_FAST_DECISION_GLINER_URL`, the classifier reports honest `gliner-decide-stub`.
+Live HTTP success reports backend id `gliner-decide` (the Python package / sidecar mode name `gliner2` is unrelated).
 
 ## Run (mock)
 
@@ -42,7 +43,7 @@ python app.py
 ```bash
 pip install gliner2 peft tiktoken protobuf torch
 export CLAWQL_GLINER_SIDECAR_MODE=gliner2
-export CLAWQL_FAST_DECISION_GLINER_MODEL=fastino/gliner2.5-base-v1
+export CLAWQL_FAST_DECISION_GLINER_MODEL=fastino/GLiNER2.5-Decide
 python app.py
 # Docker: docker compose --profile live up --build gliner-sidecar-live
 # Image target installs gliner2+torch (large). HF cache volume recommended.
