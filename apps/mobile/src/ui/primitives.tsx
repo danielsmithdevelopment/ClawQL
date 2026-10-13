@@ -265,7 +265,7 @@ export function Badge({
         backgroundColor: bg,
         borderRadius: shape.full,
         paddingHorizontal: 6,
-        paddingTop: 1,
+        paddingTop: Platform.OS === "web" ? 2 : 1,
         paddingBottom: Platform.OS === "web" ? 2 : 1,
         alignItems: "center",
         justifyContent: "center",
