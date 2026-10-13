@@ -10,23 +10,23 @@ People can **sign up and pay for ClawQL from the phone** using the normal store 
 
 ## Naming (important)
 
-| User says | What we implement |
-| --------- | ----------------- |
+| User says                    | What we implement                                                                       |
+| ---------------------------- | --------------------------------------------------------------------------------------- |
 | “Apple Pay in the App Store” | **App Store In-App Purchase** (StoreKit 2) — subscriptions that unlock digital features |
-| “Android Pay / Play” | **Google Play Billing** — same role on Android |
-| Stripe Checkout | **Web / console** self-serve (already shipping) |
+| “Android Pay / Play”         | **Google Play Billing** — same role on Android                                          |
+| Stripe Checkout              | **Web / console** self-serve (already shipping)                                         |
 
 Apple and Google require IAP for digital subscriptions sold inside the app. Embedding Stripe Checkout (or a raw Apple Pay → Stripe charge) to unlock the same cloud plan **inside iOS** is not the compliant path. Keep Stripe for www + console; keep IAP for the native paywall.
 
 ## Current state
 
-| Rail | Status |
-| ---- | ------ |
-| Stripe Checkout → `provisionOrg` | Spec + `clawql-payments` (web) |
-| Hybrid subscription + credits | Spec |
+| Rail                                 | Status                                      |
+| ------------------------------------ | ------------------------------------------- |
+| Stripe Checkout → `provisionOrg`     | Spec + `clawql-payments` (web)              |
+| Hybrid subscription + credits        | Spec                                        |
 | PhoneApprove approve / inbox / prefs | Shipped on phone (fixture → live APIs next) |
-| Mobile billing / team / gateways | Explicitly “open web console” today |
-| StoreKit / Play Billing | **Not started** |
+| Mobile billing / team / gateways     | Explicitly “open web console” today         |
+| StoreKit / Play Billing              | **Not started**                             |
 
 ## Entitlement model (Phase 1)
 
@@ -45,12 +45,12 @@ clawql_billing_mode = stripe_checkout | hybrid | credits_only | store_iap | dual
 
 Mirror web plans that are self-serve today:
 
-| Plan | Store product (sketch) | Notes |
-| ---- | ---------------------- | ----- |
-| Pro | `clawql_pro_monthly` / `clawql_pro_annual` | Auto-renewable subscription |
-| Team | `clawql_team_monthly` / `clawql_team_annual` | Seat rules still server-enforced |
-| Free | — | No IAP; fixture / trial gates |
-| Enterprise | — | Stay invoice / Stripe sales; no public IAP |
+| Plan       | Store product (sketch)                       | Notes                                      |
+| ---------- | -------------------------------------------- | ------------------------------------------ |
+| Pro        | `clawql_pro_monthly` / `clawql_pro_annual`   | Auto-renewable subscription                |
+| Team       | `clawql_team_monthly` / `clawql_team_annual` | Seat rules still server-enforced           |
+| Free       | —                                            | No IAP; fixture / trial gates              |
+| Enterprise | —                                            | Stay invoice / Stripe sales; no public IAP |
 
 Sandbox: StoreKit Configuration / Play license testers before production SKUs.
 
@@ -66,13 +66,13 @@ Sandbox: StoreKit Configuration / Play license testers before production SKUs.
 
 Bring console work onto the phone **where a phone is the right surface**:
 
-| Keep / deepen in-app | Stay web-first |
-| -------------------- | -------------- |
-| Review / approve / ask teammate | Heavy gateway / MCP mesh admin |
-| Inbox, digest, activity | Complex audit explorers |
-| Spend + plan status + store manage | Enterprise invoice ops |
-| Teammate invite + approval groups | Full policy DSL editors (start with common edits) |
-| Security keys list + enroll guidance | Rare break-glass tools |
+| Keep / deepen in-app                 | Stay web-first                                    |
+| ------------------------------------ | ------------------------------------------------- |
+| Review / approve / ask teammate      | Heavy gateway / MCP mesh admin                    |
+| Inbox, digest, activity              | Complex audit explorers                           |
+| Spend + plan status + store manage   | Enterprise invoice ops                            |
+| Teammate invite + approval groups    | Full policy DSL editors (start with common edits) |
+| Security keys list + enroll guidance | Rare break-glass tools                            |
 
 North star copy replaces Profile’s “Gateways, billing, and team live in the web console” with in-app destinations as each surface lands.
 
