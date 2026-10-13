@@ -21,6 +21,7 @@ import {
 import {
   ActivityIndicator,
   Platform,
+  Pressable,
   RefreshControl,
   ScrollView as RnScrollView,
   View,
@@ -439,6 +440,75 @@ export function ChoiceRow({
       onPress={onPress}
       label={score ? `${label}  ${score}` : label}
     />
+  );
+}
+
+/**
+ * Single-select person/option row (M3 radio list).
+ * Selection = radio + quiet container tint. Status never changes the row chrome —
+ * put readiness/risk on a trailing Badge.
+ */
+export function SelectRow({
+  label,
+  supporting,
+  badge,
+  badgeTone = "neutral",
+  selected,
+  onPress,
+  testID,
+}: {
+  label: string;
+  supporting?: string;
+  badge?: string;
+  badgeTone?: "warn" | "neutral" | "ok" | "danger";
+  selected: boolean;
+  onPress: () => void;
+  testID?: string;
+}) {
+  return (
+    <Pressable
+      testID={testID}
+      onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: space.sm,
+        paddingVertical: space.sm,
+        paddingHorizontal: space.sm,
+        borderRadius: shape.md,
+        backgroundColor: selected ? color.primaryContainer : color.surfaceContainerLow,
+      }}
+    >
+      <View
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: 11,
+          borderWidth: 2,
+          borderColor: selected ? color.primary : color.outline,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {selected ? (
+          <View
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: 6,
+              backgroundColor: color.primary,
+            }}
+          />
+        ) : null}
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text textStyle={type.body}>{label}</Text>
+        {supporting ? <Text textStyle={type.meta}>{supporting}</Text> : null}
+      </View>
+      {badge ? <Badge label={badge} tone={badgeTone} /> : null}
+    </Pressable>
   );
 }
 

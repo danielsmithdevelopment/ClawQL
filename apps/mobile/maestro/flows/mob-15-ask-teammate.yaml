@@ -18,6 +18,9 @@ appId: com.clawql.app
     id: "review-ask-teammate"
 - assertVisible:
     id: "review-ask-teammate-picker"
+# Submit/Skip must leave the tree while the picker owns the footer
+- assertNotVisible:
+    id: "review-submit-answer"
 - tapOn:
     id: "ask-teammate-user_marcus"
 - tapOn:

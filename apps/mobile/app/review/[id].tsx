@@ -39,8 +39,10 @@ import {
   ScreenHost,
   ScreenScroll,
   SecondaryButton,
+  SelectRow,
   Subtitle,
   SurfaceCard,
+  TextButton,
   Title,
   WrapRow,
 } from "@/src/ui/primitives";
@@ -307,7 +309,7 @@ export default function ReviewDetailScreen() {
       ) : null}
 
       {item.kind === "skill" ? <SkillBody item={item} /> : null}
-      {item.kind === "decision" ? (
+      {item.kind === "decision" && !askingTeammate ? (
         <DecisionBody
           item={item}
           selectedAnswer={selectedAnswer}
@@ -315,9 +317,16 @@ export default function ReviewDetailScreen() {
           readOnly={decided}
         />
       ) : null}
+      {item.kind === "decision" && askingTeammate ? (
+        <SurfaceCard testID="decision-ask-context" tint="none">
+          <Meta>{item.decisionSite ?? "Decision"}</Meta>
+          <Body>{item.decisionQuote ?? item.title}</Body>
+        </SurfaceCard>
+      ) : null}
       {item.kind === "change" ? <ChangeBody item={item} /> : null}
       {item.kind === "source" ? <SourceBody /> : null}
 
+      {!askingTeammate ? (
       <SurfaceCard testID="review-attachments">
         <IconBubble name="document" tone="seed" size={32} iconSize={16} />
         <Subtitle>Evidence photos</Subtitle>
@@ -358,6 +367,7 @@ export default function ReviewDetailScreen() {
           </Column>
         ) : null}
       </SurfaceCard>
+      ) : null}
 
       {!decided && item.kind !== "decision" ? (
         <SurfaceCard>
@@ -381,69 +391,75 @@ export default function ReviewDetailScreen() {
       {!decided ? (
         <Column spacing={space.sm}>
           {item.kind === "decision" ? (
-            <>
-              <PrimaryButton
-                testID="review-submit-answer"
-                label={busy ? "Working…" : "Submit answer"}
-                disabled={busy || !selectedAnswer || askingTeammate}
-                onPress={() => void decidePlain("answer", selectedAnswer ?? undefined)}
-              />
-              <SecondaryButton
-                testID="review-skip"
-                label="Skip for now"
-                disabled={busy || askingTeammate}
-                onPress={() => void decidePlain("skip")}
-              />
-              {!askingTeammate ? (
+            askingTeammate ? (
+              <SurfaceCard testID="review-ask-teammate-picker" tint="soft">
+                <Column spacing={space.md}>
+                  <Column spacing={space.sm}>
+                    <IconBubble name="people" tone="seed" size={36} iconSize={18} />
+                    <Subtitle>Ask a teammate</Subtitle>
+                    <Meta>Pick one approver. They get this decision in their queue.</Meta>
+                  </Column>
+                  <Column spacing={space.sm}>
+                    {[...teammates]
+                      .filter((t) => t.canApprove)
+                      .sort((a, b) => Number(b.keysReady) - Number(a.keysReady))
+                      .map((person) => (
+                        <SelectRow
+                          key={person.id}
+                          testID={`ask-teammate-${person.id}`}
+                          label={person.name}
+                          supporting={person.role}
+                          badge={person.keysReady ? "Keys ready" : "Keys incomplete"}
+                          badgeTone={person.keysReady ? "ok" : "warn"}
+                          selected={selectedTeammateId === person.id}
+                          onPress={() => setSelectedTeammateId(person.id)}
+                        />
+                      ))}
+                  </Column>
+                  <Column spacing={space.sm}>
+                    <PrimaryButton
+                      testID="review-ask-teammate-confirm"
+                      label={
+                        busy
+                          ? "Working…"
+                          : `Ask ${
+                              teammates.find((t) => t.id === selectedTeammateId)?.name ?? "teammate"
+                            }`
+                      }
+                      disabled={busy || !selectedTeammateId}
+                      onPress={() => askSelectedTeammate()}
+                    />
+                    <TextButton
+                      testID="review-ask-teammate-cancel"
+                      label="Back to my answer"
+                      disabled={busy}
+                      onPress={() => setAskingTeammate(false)}
+                    />
+                  </Column>
+                </Column>
+              </SurfaceCard>
+            ) : (
+              <>
+                <PrimaryButton
+                  testID="review-submit-answer"
+                  label={busy ? "Working…" : "Submit answer"}
+                  disabled={busy || !selectedAnswer}
+                  onPress={() => void decidePlain("answer", selectedAnswer ?? undefined)}
+                />
+                <SecondaryButton
+                  testID="review-skip"
+                  label="Skip for now"
+                  disabled={busy}
+                  onPress={() => void decidePlain("skip")}
+                />
                 <SecondaryButton
                   testID="review-ask-teammate"
                   label="Ask a teammate"
                   disabled={busy}
                   onPress={() => setAskingTeammate(true)}
                 />
-              ) : (
-                <SurfaceCard testID="review-ask-teammate-picker">
-                  <IconBubble name="people" tone="seed" size={32} iconSize={16} />
-                  <Subtitle>Who should answer?</Subtitle>
-                  <Meta>
-                    Approvers with keys ready first. They get this decision in their queue.
-                  </Meta>
-                  <Column spacing={space.sm}>
-                    {[...teammates]
-                      .filter((t) => t.canApprove)
-                      .sort((a, b) => Number(b.keysReady) - Number(a.keysReady))
-                      .map((person) => (
-                        <ChoiceRow
-                          key={person.id}
-                          testID={`ask-teammate-${person.id}`}
-                          label={person.name}
-                          score={person.keysReady ? "Keys ready" : "Keys incomplete"}
-                          selected={selectedTeammateId === person.id}
-                          onPress={() => setSelectedTeammateId(person.id)}
-                        />
-                      ))}
-                  </Column>
-                  <PrimaryButton
-                    testID="review-ask-teammate-confirm"
-                    label={
-                      busy
-                        ? "Working…"
-                        : `Ask ${
-                            teammates.find((t) => t.id === selectedTeammateId)?.name ?? "teammate"
-                          }`
-                    }
-                    disabled={busy || !selectedTeammateId}
-                    onPress={() => askSelectedTeammate()}
-                  />
-                  <SecondaryButton
-                    testID="review-ask-teammate-cancel"
-                    label="Cancel"
-                    disabled={busy}
-                    onPress={() => setAskingTeammate(false)}
-                  />
-                </SurfaceCard>
-              )}
-            </>
+              </>
+            )
           ) : item.kind === "change" && item.changeStatus === "outcome_unknown" ? (
             <>
               <PrimaryButton
