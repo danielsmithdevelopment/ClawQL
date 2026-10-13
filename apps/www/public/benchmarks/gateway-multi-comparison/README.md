@@ -190,16 +190,67 @@ Credit the v2 fix. ClawQL (**20 539**) still leads v2 by **9 388** on tokens
 
 **Do not** compare v2 flow latency / RSS to ClawQL Bun stdio as same-topology — use the ClawQL HTTP rows below for same-transport latency peers.
 
-### Publishability (one table)
+### Publish board (one interleaved run) — share this table
 
-Before sharing a single competitor table:
+Artifact: [`gateway-multi-multiturn-publish-all-arms-10k.json`](./gateway-multi-multiturn-publish-all-arms-10k.json) (`2026-10-12T23:27Z`). Every arm in **one** process. ClawQL runtime flags (even): Node `--max-old-space-size=512`, Bun `--smol` (`config.runtime_flags`).
 
-1. **One interleaved run** — every arm in one `MT_ITERS=10000` process (`gateway-multi-multiturn-publish-all-arms-10k.json`). Solo-run rows drift (Executor v2 p999 moved 126→143 ms across sessions).
-2. **Even ClawQL runtime flags** — harness defaults Node `--max-old-space-size=512` and Bun `--smol` on **all** ClawQL arms (stdio / HTTP / gRPC). Disclosed in `config.runtime_flags` + honesty. Override with `CLAWQL_NODE_MAX_OLD_SPACE_MB=0` / `CLAWQL_BUN_SMOL=0` for defaults-only.
-3. **gRPC −16 tokens** — Layer1 only: protobuf `Tool` omits SDK `execution.taskSupport=forbidden` on search+execute (8+8). Envelope-only; CallTool bodies match.
-4. **Latency framing (HTTP-to-HTTP)** — claims that hold: per-call overhead on par with Go/Rust (turn p50 ÷ 2 RPCs); &gt;2× faster than Executor v2 median. Do **not** claim “3×–9× tighter tail.” Video latency section: same-transport numbers only.
+| Arm | Combined @12 | RPCs/turn | ms/call p50 | Flow e2e p50 / **p999** | RSS med | Task |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Direct HTTP | **35 002** | 1 | 0.13 | **2.2 / 10.9** | — | PASS |
+| ClawQL Node stdio | **20 539** | 2 | 0.56 | 15.2 / 42.5 | 373 | PASS |
+| **ClawQL Bun stdio** | **20 539** | 2 | **0.35** | **9.6 / 25.7** | 342 | PASS |
+| ClawQL Node HTTP | **20 539** | 2 | 1.68 | 41.6 / 443 | 366 | PASS |
+| **ClawQL Bun HTTP** | **20 539** | 2 | **1.30** | **32.7 / 461** | **312** | PASS |
+| ClawQL Node gRPC | 20 523† | 2 | 5.64 | 136.7 / 194 | 364 | PASS |
+| ClawQL Bun gRPC | 20 523† | 2 | 5.55 | 134.1 / 292 | 438 | PASS |
+| Executor v1.6.10 | 53 668 | 1 | 4.75 | 60.8 / 165 | 254 | PASS |
+| Executor v2 β.15 | 29 927 | 1 | 5.55 | 70.6 / **136** | 900 | PASS |
+| MCPJungle | 35 322 | 1 | **1.28** | 16.6 / 287 | **153** | PASS |
+| agentgateway | **35 002** | 1 | **1.23** | 16.3 / 208 | 214 | PASS |
 
-**RPCs/turn:** ClawQL = 2 (search+execute); peers = 1. Session gap is mostly the second call — it buys ~41% token savings. **Next win:** skip search when the agent already knows the operation.
+† gRPC Layer1 is −16 vs stdio/HTTP (281 vs 297): protobuf omits SDK `execution.taskSupport=forbidden` on search+execute — envelope-only.
+
+**HTTP-to-HTTP (video / latency):** ClawQL Bun HTTP median **32.7 ms** ≈ **2.0×** agentgateway (16.3) and **~2.2×** faster than Executor v2 (70.6). Per-call: **1.30 ms** vs MCPJungle **1.28** / agentgateway **1.23**. p999 on this interleaved board trails the peers (461 vs 136–287) — do **not** claim “3×–9× tighter tail.” Claims that hold: **per-call overhead on par with Go/Rust** and **&gt;2× faster than Executor v2** on median.
+
+**RPCs/turn:** ClawQL = 2 (search+execute); peers = 1. Session gap is mostly the second call — it buys ~41% token savings.
+
+Older solo-arm JSON rows (HTTP p999 v1–v4, bun-smol10k, etc.) are diagnostics only — p999 drifts across sessions (this is why the interleaved board exists).
+
+### Improvement targets (measurable “better”)
+
+Targets for a video-worthy board: **HTTP session p50 &lt; 20 ms**, **p999 &lt; 200 ms**, **RSS &lt; 200 MB**, **combined @12 &lt; 15 000**.
+
+#### 1. Runtime flags A/B (keep heap/--smol)
+
+Artifacts: [`flags-ab-http-peers-verdict.md`](./flags-ab-http-peers-verdict.md), `gateway-multi-multiturn-flags-{on,off}-http-peers-10k.json`.
+
+| Arm | Flags | flow p50 | flow p999 | RSS |
+| --- | --- | ---: | ---: | ---: |
+| Node HTTP | ON (512) | 37.4 | **223** | **384** |
+| Node HTTP | OFF | 38.0 | 361 | 686 |
+| Bun HTTP | ON (--smol) | 28.4 | **396** | 316 |
+| Bun HTTP | OFF | 30.3 | 540 | 316 |
+
+**Keep** Node `--max-old-space-size=512` and Bun `--smol` — they improve tails and Node RSS. GC/ELD logs barely overlap slow flows (near-zero), so the earlier 200→461 p999 jump was **not** explained by those flags.
+
+#### 2–3. Known-op + compact search (targets board)
+
+Artifact: [`gateway-multi-multiturn-targets-http-peers-10k.json`](./gateway-multi-multiturn-targets-http-peers-10k.json) (Bun HTTP, flags ON, `CLAWQL_SEARCH_COMPACT=1` bench default).
+
+| Arm | Combined | RPCs | flow p50 / p999 | RSS | Targets |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Bun HTTP search+execute (compact) | **12 390** | 2 | 29.7 / 520 | 317 | tok ✓ · p50/p999/rss ✗ |
+| **Bun HTTP known-op** | **8 863** | **1** | **15.6 / 169** | 311 | **tok ✓ p50 ✓ p999 ✓** · rss ✗ |
+| MCPJungle | 35 322 | 1 | 14.8 / 132 | **153** | — |
+| agentgateway | 35 002 | 1 | 15.2 / 181 | 212 | — |
+
+Product already accepts `execute({ operationId })` without searching. Compact search (`CLAWQL_SEARCH_COMPACT`) drops discovery **11 568 → 3 408**; gate product default on routing eval.
+
+**Video path when ops repeat:** known-op — matches Go/Rust session speed, **~4× fewer tokens** than MCPJungle, governance intact.
+
+#### 4. Memory (&lt;200 MB) — still open
+
+Bun HTTP RSS ~311 MB with flags. Heap snapshot after warm-up is next (parsed specs, unused modules, audit ring, tracing).
 
 ```bash
 # Publish board — every arm, one interleaved process

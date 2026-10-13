@@ -51,7 +51,10 @@
  * ClawQL transport matrix (same search→execute+projection recipe):
  *   clawql / clawql_bun — stdio
  *   clawql_http / clawql_http_bun — Streamable HTTP (JSON response; standalone SSE GET disabled for bench)
+ *   clawql_http_bun_known / clawql_http_known — execute-by-ID only (skip search; agent already knows op)
  *   clawql_grpc / clawql_grpc_bun — ClawQL-only gRPC MCP (peers have no gRPC MCP on this board)
+ *
+ * MT_CLAWQL_SKIP_SEARCH=1 forces skip-search for all ClawQL arms (or use *_known arm ids).
  *
  * Note: do NOT put a hand-written slim-return program on the publish board as
  * "Executor". That is not gateway projection and contradicts the settled blog.
@@ -819,6 +822,10 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     }
   }
   const wantCpuProf = runtime === "node" && process.env.MT_HTTP_CPU_PROF === "1";
+  const wantPerf = ["1", "true", "yes"].includes(
+    (process.env.CLAWQL_HTTP_PERF ?? "").trim().toLowerCase()
+  );
+  const wantTraceGc = process.env.MT_HTTP_TRACE_GC === "1";
   const cpuProfDir =
     process.env.MT_HTTP_CPU_PROF_DIR ||
     join(ROOT, "docs/benchmarks/gateway-multi-comparison/cpu-prof");
@@ -828,9 +835,11 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     if (wantCpuProf) {
       prefixArgs.push("--cpu-prof", "--cpu-prof-dir", cpuProfDir);
     }
-    if (process.env.MT_HTTP_TRACE_GC === "1") prefixArgs.push("--trace-gc");
+    if (wantTraceGc) prefixArgs.push("--trace-gc");
   }
   if (wantCpuProf) await mkdir(cpuProfDir, { recursive: true });
+  // Ensure child enables GC/ELD diagnostics (harness sets CLAWQL_HTTP_PERF).
+  if (wantPerf) env.CLAWQL_HTTP_PERF = "1";
   const t0 = performance.now();
   const child = spawn(js.command, [...prefixArgs, ...js.args], {
     cwd: ROOT,
@@ -844,40 +853,73 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
   };
   child.on("exit", onEarlyExit);
   const stderrChunks = [];
+  let listenResolved = false;
+  const onChildOut = (chunk) => {
+    const s = String(chunk);
+    if (wantPerf || wantTraceGc) {
+      stderrChunks.push(s);
+      if (s.includes("[clawql-http-perf]") || s.includes("Scavenge") || s.includes("Mark-")) {
+        process.stderr.write(s);
+      }
+    }
+  };
   await new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`${id} listening timeout`)), 90_000);
     const onData = (chunk) => {
+      onChildOut(chunk);
       const s = String(chunk);
-      if (process.env.CLAWQL_HTTP_PERF === "1" || process.env.MT_HTTP_TRACE_GC === "1") {
-        stderrChunks.push(s);
-        if (s.includes("[clawql-http-perf]") || s.includes("Scavenge") || s.includes("Mark-")) {
-          process.stderr.write(s);
-        }
-      }
-      if (s.includes("listening on") || s.includes("[clawql-mcp] Ready")) {
+      // Prefer MCP HTTP listen line — avoid resolving on unrelated "Ready" from early boot.
+      if (
+        !listenResolved &&
+        (s.includes("listening on") ||
+          s.includes(`MCP HTTP`) ||
+          (s.includes("[clawql-mcp] Ready") && s.includes(String(port))))
+      ) {
+        listenResolved = true;
         clearTimeout(timer);
-        resolve(undefined);
+        // Brief settle so accept() is ready (Bun --smol can race client connect).
+        setTimeout(resolve, runtime === "bun" ? 250 : 50);
       }
     };
     child.stderr?.on("data", onData);
     child.stdout?.on("data", onData);
     child.on("error", reject);
-  });
-  // Keep draining stderr for perf/GC lines after listen.
-  if (process.env.CLAWQL_HTTP_PERF === "1" || process.env.MT_HTTP_TRACE_GC === "1") {
-    child.stderr?.on("data", (chunk) => {
-      const s = String(chunk);
-      stderrChunks.push(s);
-      if (s.includes("[clawql-http-perf]") || s.includes("Scavenge") || s.includes("Mark-")) {
-        process.stderr.write(s);
+    child.on("exit", (code, signal) => {
+      if (!listenResolved) {
+        clearTimeout(timer);
+        reject(new Error(`${id} exited before listen code=${code} signal=${signal}`));
       }
     });
-  }
+  });
   if (earlyExit) {
     killProcessGroup(child);
     throw new Error(`${id} exited early code=${earlyExit.code} signal=${earlyExit.signal}`);
   }
   const mcpUrl = `http://127.0.0.1:${port}/mcp`;
+  // Wait until TCP accept works (Bun --smol can log listen before the socket is ready).
+  {
+    const net = await import("node:net");
+    const deadline = Date.now() + 15_000;
+    let lastErr = null;
+    while (Date.now() < deadline) {
+      const ok = await new Promise((resolve) => {
+        const s = net.createConnection({ host: "127.0.0.1", port }, () => {
+          s.end();
+          resolve(true);
+        });
+        s.on("error", (e) => {
+          lastErr = e;
+          resolve(false);
+        });
+      });
+      if (ok) break;
+      await sleep(50);
+    }
+    if (Date.now() >= deadline) {
+      killProcessGroup(child);
+      throw new Error(`${id} TCP not accepting on :${port}: ${lastErr?.message || lastErr}`);
+    }
+  }
   // Client-side SSE skip matches server CLAWQL_MCP_DISABLE_STANDALONE_SSE (and
   // the same client filter used for mcpjungle / agentgateway / executor_v2).
   const transport = new StreamableHTTPClientTransport(
@@ -895,6 +937,8 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     mcpUrl,
     ready_ms: Number((performance.now() - t0).toFixed(1)),
     rss_mb_ready: child.pid != null ? readTreeRssMb(child.pid) : null,
+    /** Mutable buffer — drained on close into parsed http_perf. */
+    _stderrChunks: stderrChunks,
     close: async () => {
       try {
         await transport.terminateSession?.();
@@ -903,10 +947,10 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
       }
       await client.close().catch(() => {});
       child.off("exit", onEarlyExit);
-      // SIGTERM first so --cpu-prof can flush; only SIGKILL if it hangs.
+      // SIGTERM first so --cpu-prof / perf summary can flush; only SIGKILL if it hangs.
       killProcessGroup(child, "SIGTERM");
       const exited = await new Promise((resolve) => {
-        const t = setTimeout(() => resolve(false), wantCpuProf ? 5000 : 1500);
+        const t = setTimeout(() => resolve(false), wantCpuProf || wantPerf ? 4000 : 1500);
         child.once("exit", () => {
           clearTimeout(t);
           resolve(true);
@@ -915,6 +959,56 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
       if (!exited) killProcessGroup(child, "SIGKILL");
       await sleep(100);
     },
+  };
+}
+
+/** Parse `[clawql-http-perf]` stderr lines into GC / event-loop delay stats. */
+function parseHttpPerfStderr(chunks) {
+  const text = Array.isArray(chunks) ? chunks.join("") : String(chunks || "");
+  const gc = [];
+  const eld = [];
+  let summary = null;
+  for (const line of text.split(/\r?\n/)) {
+    if (!line.includes("[clawql-http-perf]")) continue;
+    const tMatch = line.match(/\bt=([^\s]+)/);
+    const t = tMatch?.[1] ?? null;
+    if (line.includes(" summary ")) {
+      const num = (k) => {
+        const m = line.match(new RegExp(`\\b${k}=([0-9.]+)`));
+        return m ? Number(m[1]) : null;
+      };
+      summary = {
+        t,
+        why: line.match(/\bwhy=(\S+)/)?.[1] ?? null,
+        gc_events: num("gc_events"),
+        gc_max_ms: num("gc_max_ms"),
+        gc_sum_ms: num("gc_sum_ms"),
+        eld_max_ms: num("eld_max_ms"),
+        eld_p99_max_ms: num("eld_p99_max_ms"),
+      };
+      continue;
+    }
+    if (line.includes(" gc ")) {
+      const dur = Number(line.match(/duration_ms=([0-9.]+)/)?.[1] ?? NaN);
+      if (Number.isFinite(dur)) gc.push({ t, duration_ms: dur, line: line.slice(0, 200) });
+      continue;
+    }
+    if (line.includes("event_loop_delay")) {
+      const maxMs = Number(line.match(/max_ms=([0-9.]+)/)?.[1] ?? NaN);
+      const p99Ms = Number(line.match(/p99_ms=([0-9.]+)/)?.[1] ?? NaN);
+      if (Number.isFinite(maxMs)) eld.push({ t, max_ms: maxMs, p99_ms: p99Ms });
+    }
+  }
+  return {
+    gc_event_count: gc.length,
+    gc_max_ms: gc.length ? Math.max(...gc.map((g) => g.duration_ms)) : 0,
+    gc_sum_ms: Number(gc.reduce((a, g) => a + g.duration_ms, 0).toFixed(1)),
+    eld_event_count: eld.length,
+    eld_max_ms: eld.length ? Math.max(...eld.map((e) => e.max_ms)) : 0,
+    eld_p99_max_ms: eld.length ? Math.max(...eld.map((e) => e.p99_ms || 0)) : 0,
+    summary_last: summary,
+    gc_top: [...gc].sort((a, b) => b.duration_ms - a.duration_ms).slice(0, 10),
+    eld_top: [...eld].sort((a, b) => b.max_ms - a.max_ms).slice(0, 10),
   };
 }
 
@@ -1496,8 +1590,12 @@ async function runAggregatorArm(gw, turns) {
 async function runClawqlArm(
   mock,
   turns,
-  { runtime = "node", id = "clawql", transport = "stdio" } = {}
+  { runtime = "node", id = "clawql", transport = "stdio", skipSearch = false } = {}
 ) {
+  const skip =
+    skipSearch ||
+    ["1", "true", "yes"].includes((process.env.MT_CLAWQL_SKIP_SEARCH ?? "").trim().toLowerCase()) ||
+    /_known$/.test(id);
   const conn =
     transport === "http"
       ? await connectClawqlHttp(mock, { id, runtime })
@@ -1524,18 +1622,24 @@ async function runClawqlArm(
     };
   }
   sampler.start(ITERS > 1 ? 500 : 200);
+  const slowFlowMs = Number(process.env.MT_SLOW_FLOW_MS || 80) || 80;
   try {
     const listed = await conn.client.listTools();
-    const l1 = measureLayer1FromTools(listed.tools, { onlyNames: ["search", "execute"] });
+    // Known-op path: agent already has operationId — Layer1 is execute schema only.
+    const l1 = measureLayer1FromTools(listed.tools, {
+      onlyNames: skip ? ["execute"] : ["search", "execute"],
+    });
     let perTurn = null;
     const flowE2e = [];
     const turnLat = [];
+    const slowFlows = [];
     let successOk = 0;
     let successTotal = 0;
     let callErrors = 0;
 
     for (let iter = 1; iter <= ITERS; iter++) {
       sampler.markFlow(iter);
+      const flowWall0 = Date.now();
       const flowT0 = performance.now();
       const thisPerTurn = [];
       for (const turn of turns) {
@@ -1544,12 +1648,14 @@ async function runClawqlArm(
         let execText = "";
         let ok = true;
         try {
-          const searchRes = await conn.client.callTool({
-            name: "search",
-            arguments: { query: turn.query, limit: 3 },
-          });
-          if (searchRes.isError) throw new Error(`search: ${toolText(searchRes).slice(0, 300)}`);
-          searchText = toolText(searchRes);
+          if (!skip) {
+            const searchRes = await conn.client.callTool({
+              name: "search",
+              arguments: { query: turn.query, limit: 3 },
+            });
+            if (searchRes.isError) throw new Error(`search: ${toolText(searchRes).slice(0, 300)}`);
+            searchText = toolText(searchRes);
+          }
           const execRes = await conn.client.callTool({
             name: "execute",
             arguments: {
@@ -1591,10 +1697,20 @@ async function runClawqlArm(
             latency_ms: Number(ms.toFixed(3)),
             ok,
             task_success: success,
+            skip_search: skip,
           });
         }
       }
-      flowE2e.push(performance.now() - flowT0);
+      const flowMs = performance.now() - flowT0;
+      flowE2e.push(flowMs);
+      if (flowMs >= slowFlowMs) {
+        slowFlows.push({
+          flow: iter,
+          ms: Number(flowMs.toFixed(1)),
+          t_iso: new Date(flowWall0).toISOString(),
+          t_end_iso: new Date().toISOString(),
+        });
+      }
       if (iter === 1) perTurn = thisPerTurn;
       if (iter % PROGRESS_EVERY === 0 || iter === ITERS) {
         console.log(`[mt] ${id} flows ${iter}/${ITERS}`);
@@ -1602,22 +1718,57 @@ async function runClawqlArm(
     }
 
     const resources = sampler.stop();
+    // Close first so server can emit perf summary on SIGTERM.
+    const stderrChunks = conn._stderrChunks || [];
+    await conn.close();
+    conn._closed = true;
+    const httpPerf =
+      transport === "http" && stderrChunks.length ? parseHttpPerfStderr(stderrChunks) : null;
+    // Correlate: GC/ELD events whose timestamp falls inside a slow flow window (±50ms slack).
+    let slowFlowGcHits = null;
+    if (httpPerf && slowFlows.length) {
+      const hit = (evtT, flow) => {
+        if (!evtT) return false;
+        const ts = Date.parse(evtT);
+        if (!Number.isFinite(ts)) return false;
+        const a = Date.parse(flow.t_iso) - 50;
+        const b = Date.parse(flow.t_end_iso) + 50;
+        return ts >= a && ts <= b;
+      };
+      slowFlowGcHits = {
+        slow_flow_count: slowFlows.length,
+        slow_flows_with_gc: slowFlows.filter((f) =>
+          (httpPerf.gc_top || []).some((g) => hit(g.t, f))
+        ).length,
+        slow_flows_with_eld: slowFlows.filter((f) =>
+          (httpPerf.eld_top || []).some((e) => hit(e.t, f))
+        ).length,
+        note: "Counts slow flows whose wall-clock window overlaps a logged GC/ELD event (±50ms).",
+      };
+    }
     return {
       id,
-      model: `search_plus_execute_where_fields_${conn.runtime}_${conn.transport || "stdio"}`,
+      model: skip
+        ? `execute_by_id_where_fields_${conn.runtime}_${conn.transport || "stdio"}`
+        : `search_plus_execute_where_fields_${conn.runtime}_${conn.transport || "stdio"}`,
       runtime: conn.runtime,
       runtimeVersion: conn.runtimeVersion,
       transport: conn.transport || "stdio",
       mcpUrl: conn.mcpUrl || null,
+      skip_search: skip,
+      rpcs_per_turn_override: skip ? 1 : 2,
       layer1: {
         once_schema_tokens: l1.schema_tokens,
         tools_count: l1.tools_count,
         tools_list_count_full: l1.tools_list_count_full,
         tools_list_schema_tokens_full: l1.tools_list_schema_tokens_full,
-        note: "Only search+execute schemas counted as Layer1 (catalog stays server-side)",
+        note: skip
+          ? "Known-op: Layer1 = execute schema only (search not used)"
+          : "Only search+execute schemas counted as Layer1 (catalog stays server-side)",
       },
-      discovery_note:
-        "Each turn charges search (limit 3) + execute — discovery is not zero (unlike Executor harness)",
+      discovery_note: skip
+        ? "SKIP SEARCH: execute by known operationId only (1 RPC/turn) — next-win path when agent already knows the op"
+        : "Each turn charges search (limit 3) + execute — discovery is not zero (unlike Executor harness)",
       perTurn,
       iters: ITERS,
       flow_e2e_ms: flowE2e,
@@ -1626,11 +1777,14 @@ async function runClawqlArm(
       task_success_agg: { ok: successOk, total: successTotal },
       resources,
       startup: { ready_ms: conn.ready_ms, rss_mb_ready: conn.rss_mb_ready },
+      http_perf: httpPerf,
+      slow_flows_top: [...slowFlows].sort((a, b) => b.ms - a.ms).slice(0, 20),
+      slow_flow_gc_correlation: slowFlowGcHits,
       skipped: false,
     };
   } finally {
     sampler.stop();
-    await conn.close();
+    if (!conn._closed) await conn.close().catch(() => {});
   }
 }
 
@@ -1961,13 +2115,16 @@ function summarizeArm(arm) {
   };
   // Rebuildable classic total: definitions + Σ discovery + Σ results (= L1 + Σ L2).
   const combinedRebuild = l1 + sumDiscovery + sumResult;
-  // ClawQL search+execute = 2 RPCs/turn; aggregators / Executor / direct = 1.
+  // ClawQL search+execute = 2 RPCs/turn; known-op / skip-search = 1; peers = 1.
   const isClawql =
     typeof arm.id === "string" &&
     (arm.id === "clawql" ||
       arm.id.startsWith("clawql_") ||
-      arm.model?.includes("search_plus_execute"));
-  const rpcsPerTurn = isClawql ? 2 : 1;
+      arm.model?.includes("search_plus_execute") ||
+      arm.model?.includes("execute_by_id"));
+  const rpcsPerTurn =
+    arm.rpcs_per_turn_override ??
+    (arm.skip_search ? 1 : isClawql ? 2 : 1);
   const turnP50 = turnLat?.p50_ms ?? null;
   const msPerCallP50 =
     turnP50 != null && rpcsPerTurn > 0
@@ -2015,6 +2172,22 @@ function summarizeArm(arm) {
       call_errors: arm.call_errors ?? 0,
       task_success_ok: taskSuccess.ok,
       task_success_rate: taskSuccess.rate,
+      ...(arm.http_perf
+        ? {
+            http_perf: {
+              gc_event_count: arm.http_perf.gc_event_count,
+              gc_max_ms: arm.http_perf.gc_max_ms,
+              gc_sum_ms: arm.http_perf.gc_sum_ms,
+              eld_max_ms: arm.http_perf.eld_max_ms,
+              eld_p99_max_ms: arm.http_perf.eld_p99_max_ms,
+              summary_last: arm.http_perf.summary_last,
+            },
+          }
+        : {}),
+      ...(arm.slow_flow_gc_correlation
+        ? { slow_flow_gc_correlation: arm.slow_flow_gc_correlation }
+        : {}),
+      ...(arm.slow_flows_top ? { slow_flows_top: arm.slow_flows_top } : {}),
     },
   };
 }
@@ -2201,22 +2374,28 @@ async function main() {
             id: arm,
             transport: "stdio",
           });
-        } else if (arm === "clawql_http" || arm === "clawql_http_bun") {
+        } else if (
+          arm === "clawql_http" ||
+          arm === "clawql_http_bun" ||
+          arm === "clawql_http_known" ||
+          arm === "clawql_http_bun_known"
+        ) {
           if (!existsSync(join(ROOT, "dist", "server-http.js"))) {
             rawArms[arm] = { skipped: true, reason: "dist/server-http.js missing" };
             continue;
           }
-          if (arm === "clawql_http_bun" && !resolveBunBin()) {
-            rawArms.clawql_http_bun = {
+          if ((arm === "clawql_http_bun" || arm === "clawql_http_bun_known") && !resolveBunBin()) {
+            rawArms[arm] = {
               skipped: true,
               reason: "bun not found (set BUN_BIN or install ~/.bun/bin/bun)",
             };
             continue;
           }
           rawArms[arm] = await runClawqlArm(mock, turns, {
-            runtime: arm === "clawql_http_bun" ? "bun" : "node",
+            runtime: arm.includes("_bun") ? "bun" : "node",
             id: arm,
             transport: "http",
+            skipSearch: arm.endsWith("_known"),
           });
         } else if (arm === "clawql_grpc" || arm === "clawql_grpc_bun") {
           if (!existsSync(join(ROOT, "dist", "server-http.js"))) {

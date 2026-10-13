@@ -914,31 +914,86 @@ function maybeInstallHttpPerfDiagnostics(): void {
   if (!["1", "true", "yes"].includes((process.env.CLAWQL_HTTP_PERF ?? "").trim().toLowerCase())) {
     return;
   }
-  const h = monitorEventLoopDelay({ resolution: 10 });
-  h.enable();
-  const gcObs = new PerformanceObserver((list) => {
-    for (const entry of list.getEntries()) {
-      if (entry.duration >= 20) {
+  const gcThresholdMs = Number.parseFloat(process.env.CLAWQL_HTTP_PERF_GC_MS ?? "10") || 10;
+  const eldThresholdMs = Number.parseFloat(process.env.CLAWQL_HTTP_PERF_ELD_MS ?? "10") || 10;
+  const summary: {
+    gc_events: number;
+    gc_max_ms: number;
+    gc_sum_ms: number;
+    eld_samples: number;
+    eld_max_ms: number;
+    eld_p99_max_ms: number;
+  } = {
+    gc_events: 0,
+    gc_max_ms: 0,
+    gc_sum_ms: 0,
+    eld_samples: 0,
+    eld_max_ms: 0,
+    eld_p99_max_ms: 0,
+  };
+  const stamp = () => new Date().toISOString();
+  const emitSummary = (why: string) => {
+    console.error(
+      `[clawql-http-perf] summary why=${why} t=${stamp()} ` +
+        `gc_events=${summary.gc_events} gc_max_ms=${summary.gc_max_ms.toFixed(1)} ` +
+        `gc_sum_ms=${summary.gc_sum_ms.toFixed(1)} eld_max_ms=${summary.eld_max_ms.toFixed(1)} ` +
+        `eld_p99_max_ms=${summary.eld_p99_max_ms.toFixed(1)}`
+    );
+  };
+
+  // Event-loop delay (Node; Bun may implement a subset of perf_hooks).
+  try {
+    const h = monitorEventLoopDelay({ resolution: 10 });
+    h.enable();
+    const timer = setInterval(() => {
+      const maxMs = h.max / 1e6;
+      const p99Ms = h.percentile(99) / 1e6;
+      summary.eld_samples += 1;
+      if (maxMs > summary.eld_max_ms) summary.eld_max_ms = maxMs;
+      if (p99Ms > summary.eld_p99_max_ms) summary.eld_p99_max_ms = p99Ms;
+      if (maxMs >= eldThresholdMs) {
+        console.error(
+          `[clawql-http-perf] t=${stamp()} event_loop_delay max_ms=${maxMs.toFixed(1)} p99_ms=${p99Ms.toFixed(1)}`
+        );
+      }
+      h.reset();
+    }, 1000);
+    timer.unref?.();
+  } catch (err) {
+    console.error(
+      `[clawql-http-perf] event_loop_delay unavailable: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+
+  // GC marks (V8; may be a no-op or unsupported on Bun).
+  try {
+    const gcObs = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (entry.duration < gcThresholdMs) continue;
+        summary.gc_events += 1;
+        summary.gc_sum_ms += entry.duration;
+        if (entry.duration > summary.gc_max_ms) summary.gc_max_ms = entry.duration;
         const detail = (entry as PerformanceEntry & { detail?: { kind?: number | string } })
           .detail;
         console.error(
-          `[clawql-http-perf] gc kind=${detail?.kind ?? entry.name} duration_ms=${entry.duration.toFixed(1)}`
+          `[clawql-http-perf] t=${stamp()} gc kind=${detail?.kind ?? entry.name} duration_ms=${entry.duration.toFixed(1)}`
         );
       }
-    }
-  });
-  gcObs.observe({ entryTypes: ["gc"], buffered: false });
-  const timer = setInterval(() => {
-    const maxMs = h.max / 1e6;
-    const p99Ms = h.percentile(99) / 1e6;
-    if (maxMs >= 20) {
-      console.error(
-        `[clawql-http-perf] event_loop_delay max_ms=${maxMs.toFixed(1)} p99_ms=${p99Ms.toFixed(1)}`
-      );
-    }
-    h.reset();
-  }, 2000);
-  timer.unref?.();
+    });
+    gcObs.observe({ entryTypes: ["gc"], buffered: false });
+  } catch (err) {
+    console.error(
+      `[clawql-http-perf] gc observer unavailable: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+
+  const onShutdown = () => emitSummary("shutdown");
+  process.once("SIGTERM", onShutdown);
+  process.once("SIGINT", onShutdown);
+  process.once("beforeExit", onShutdown);
+  // Periodic rollup so harness can parse mid-run without waiting for kill.
+  const rollup = setInterval(() => emitSummary("rollup"), 30_000);
+  rollup.unref?.();
 }
 
 export async function startMcpHttpServer(): Promise<void> {
