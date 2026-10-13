@@ -33,6 +33,30 @@ vi.mock("expo-local-authentication", () => ({
   authenticateAsync: async () => ({ success: true }),
 }));
 
+vi.mock("expo-haptics", () => ({
+  notificationAsync: async () => undefined,
+  NotificationFeedbackType: {
+    Success: "success",
+    Warning: "warning",
+    Error: "error",
+  },
+}));
+
+vi.mock("@react-native-async-storage/async-storage", () => {
+  const store = new Map<string, string>();
+  return {
+    default: {
+      getItem: async (k: string) => store.get(k) ?? null,
+      setItem: async (k: string, v: string) => {
+        store.set(k, v);
+      },
+      removeItem: async (k: string) => {
+        store.delete(k);
+      },
+    },
+  };
+});
+
 vi.mock("expo-notifications", () => ({
   setNotificationHandler: () => undefined,
   getPermissionsAsync: async () => ({ status: "granted" }),
@@ -41,7 +65,39 @@ vi.mock("expo-notifications", () => ({
   scheduleNotificationAsync: async () => "notif_fixture_1",
   getLastNotificationResponseAsync: async () => null,
   addNotificationResponseReceivedListener: () => ({ remove: () => undefined }),
+  setBadgeCountAsync: async () => true,
+  getBadgeCountAsync: async () => 0,
   SchedulableTriggerInputTypes: { TIME_INTERVAL: "timeInterval" },
+}));
+
+vi.mock("expo-image-picker", () => ({
+  requestCameraPermissionsAsync: async () => ({ granted: true, status: "granted" }),
+  requestMediaLibraryPermissionsAsync: async () => ({
+    granted: true,
+    status: "granted",
+  }),
+  launchCameraAsync: async () => ({
+    canceled: false,
+    assets: [
+      {
+        uri: "file:///tmp/scan-test.jpg",
+        fileName: "scan-test.jpg",
+        mimeType: "image/jpeg",
+        fileSize: 12_340,
+      },
+    ],
+  }),
+  launchImageLibraryAsync: async () => ({
+    canceled: false,
+    assets: [
+      {
+        uri: "file:///tmp/library-test.jpg",
+        fileName: "library-test.jpg",
+        mimeType: "image/jpeg",
+        fileSize: 9_876,
+      },
+    ],
+  }),
 }));
 
 vi.mock("expo-linking", () => ({
@@ -66,4 +122,10 @@ vi.mock("expo-auth-session", () => ({
 
 vi.mock("react-native", () => ({
   Platform: { OS: "ios" },
+  Share: {
+    share: async () => ({ action: "sharedAction" }),
+  },
+  AppState: {
+    addEventListener: () => ({ remove: () => undefined }),
+  },
 }));

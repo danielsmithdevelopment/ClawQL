@@ -154,7 +154,8 @@ export const brand = {
   accentSoft: color.accentContainer,
   ink: color.onSurface,
   inkMuted: color.onSurfaceVariant,
-  inkFaint: color.outline,
+  /** AA-safe on soft cards (surfaceContainer / primaryContainer), not outline. */
+  inkFaint: "#5a5b64",
   surface: color.surface,
   surfaceElevated: color.surfaceContainerLow,
   card: color.surfaceContainerLowest,

@@ -3,7 +3,11 @@ import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 
 import type { InboxItem } from "@/src/domain/schemas";
-import { listInboxEffect } from "@/src/services/api";
+import {
+  listInboxEffect,
+  markAllInboxReadEffect,
+  markInboxReadEffect,
+} from "@/src/services/api";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, space } from "@/src/theme";
 import {
@@ -48,6 +52,7 @@ export default function InboxScreen() {
   const router = useRouter();
   const [items, setItems] = useState<readonly InboxItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -73,13 +78,45 @@ export default function InboxScreen() {
   const unread = items.filter((i) => i.unread).length;
 
   return (
-    <ScreenScroll testID="inbox-screen">
+    <ScreenScroll
+      testID="inbox-screen"
+      refreshing={refreshing}
+      onRefresh={async () => {
+        setRefreshing(true);
+        try {
+          await load();
+        } finally {
+          setRefreshing(false);
+        }
+      }}
+    >
       <SectionHeader
         icon="inbox"
         title="Notifications"
         subtitle="Approval pushes, digests, and system reminders — no APNs in fixture mode."
+        tone="seed"
       />
       {unread > 0 ? <Badge label={`${unread} unread`} tone="warn" /> : null}
+      {unread > 0 ? (
+        <SecondaryButton
+          testID="inbox-mark-all-read"
+          label="Mark all read"
+          onPress={() => {
+            void (async () => {
+              await Effect.runPromise(markAllInboxReadEffect(session));
+              await load();
+            })();
+          }}
+        />
+      ) : null}
+
+      {items.length === 0 ? (
+        <SurfaceCard testID="inbox-empty">
+          <IconBubble name="inbox" tone="seed" size={36} iconSize={18} />
+          <Subtitle>All caught up</Subtitle>
+          <Meta>No notifications yet. Simulate a local push from Home to see one here.</Meta>
+        </SurfaceCard>
+      ) : null}
 
       <Column spacing={space.sm}>
         {items.map((item) => (
@@ -92,7 +129,7 @@ export default function InboxScreen() {
             <Column spacing={space.sm}>
               <IconBubble
                 name={kindIcon(item.kind)}
-                tone={item.unread ? "warn" : "neutral"}
+                tone="seed"
                 size={36}
                 iconSize={18}
               />
@@ -104,14 +141,40 @@ export default function InboxScreen() {
                 <SecondaryButton
                   testID={`inbox-open-${item.id}`}
                   label="Open request"
-                  onPress={() => router.push(`/review/${item.reviewId}`)}
+                  onPress={() => {
+                    void (async () => {
+                      if (item.unread) {
+                        await Effect.runPromise(markInboxReadEffect(session, item.id));
+                      }
+                      router.push(`/review/${item.reviewId}`);
+                    })();
+                  }}
                 />
               ) : null}
               {item.kind === "digest" ? (
                 <SecondaryButton
                   testID={`inbox-open-digest-${item.id}`}
                   label="Open digest"
-                  onPress={() => router.push("/digest")}
+                  onPress={() => {
+                    void (async () => {
+                      if (item.unread) {
+                        await Effect.runPromise(markInboxReadEffect(session, item.id));
+                      }
+                      router.push("/digest");
+                    })();
+                  }}
+                />
+              ) : null}
+              {item.kind === "system" && item.unread ? (
+                <SecondaryButton
+                  testID={`inbox-mark-read-${item.id}`}
+                  label="Mark read"
+                  onPress={() => {
+                    void (async () => {
+                      await Effect.runPromise(markInboxReadEffect(session, item.id));
+                      await load();
+                    })();
+                  }}
                 />
               ) : null}
             </Column>

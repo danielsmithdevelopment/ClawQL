@@ -36,7 +36,7 @@ Complete before first TestFlight / Play internal upload. Items marked **agent** 
 | - | ----- | ---- |
 | 12 | human | Attach `store/review-notes.md` in App Review notes |
 | 13 | human | Confirm Sign-in → **App Store reviewer demo** works on the uploaded build |
-| 14 | agent | Maestro MOB-01…06 green on simulator/emulator before upload |
+| 14 | agent | Maestro MOB-01…19 green on simulator/emulator before upload; `npm run a11y:lh` green on web export |
 
 ## Not blocking first internal track
 

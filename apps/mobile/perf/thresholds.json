@@ -8,9 +8,9 @@
   },
   "lighthouseMobile": {
     "minPerformance": 0.55,
-    "minAccessibility": 0.85,
-    "minBestPractices": 0.7,
-    "minSeo": 0.7
+    "minAccessibility": 1,
+    "minBestPractices": 0.9,
+    "minSeo": 0.9
   },
   "runtime": {
     "maxSignInToHomeMs": 8000,

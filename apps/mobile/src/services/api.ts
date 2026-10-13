@@ -2,6 +2,7 @@
  * Managed console API client for Home / Review / Profile / account deletion.
  * Fixture mode mirrors dashboard fixtures so Maestro can run offline.
  */
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Context, Data, Effect, Layer, Ref } from "effect";
 
 import {
@@ -30,11 +31,13 @@ import {
   ApprovalPolicyDetail,
   ConnectedApp,
   DeviceSession,
+  DocumentAttachment,
   HomeSpend,
   InboxItem,
   MorningDigest,
   NotificationPrefs,
   OrgSummary,
+  PushDevice,
   ReviewDecision,
   ReviewItem,
   ReviewKind,
@@ -45,6 +48,10 @@ import {
   type MobileSession,
 } from "../domain/schemas";
 import { loadMobileConfigEffect } from "./config";
+import {
+  loadOfflineSnapshotEffect,
+  saveOfflineSnapshotEffect,
+} from "./offline-cache";
 
 export class MobileApiError extends Data.TaggedError("MobileApiError")<{
   readonly reason: string;
@@ -59,6 +66,9 @@ type MutableState = {
   notificationPrefs: NotificationPrefs;
   activity: ActivityEvent[];
   deviceSessions: DeviceSession[];
+  inbox: InboxItem[];
+  pushDevices: PushDevice[];
+  attachments: DocumentAttachment[];
   deleted: boolean;
 };
 
@@ -69,6 +79,9 @@ const stateRef = Ref.makeUnsafe<MutableState>({
   notificationPrefs: { ...FIXTURE_NOTIFICATION_PREFS },
   activity: [...FIXTURE_ACTIVITY],
   deviceSessions: [...FIXTURE_DEVICE_SESSIONS],
+  inbox: [...FIXTURE_INBOX],
+  pushDevices: [],
+  attachments: [],
   deleted: false,
 });
 
@@ -91,7 +104,11 @@ function nextActivityId(): string {
 function activityTitle(item: ReviewItem, decision: ReviewDecision, answer?: string): string {
   if (decision === "answer") return `Answered ${item.decisionSite ?? item.title}`;
   if (decision === "skip") return `Skipped ${item.title}`;
-  if (decision === "ask_teammate") return `Asked teammate about ${item.title}`;
+  if (decision === "ask_teammate") {
+    return answer
+      ? `Asked ${answer} about ${item.title}`
+      : `Asked teammate about ${item.title}`;
+  }
   if (decision === "approve" && item.kind === "skill") return `Promoted ${item.title}`;
   if (decision === "approve") return `Approved ${item.title}`;
   if (decision === "decline") return `Declined ${item.title}`;
@@ -99,6 +116,17 @@ function activityTitle(item: ReviewItem, decision: ReviewDecision, answer?: stri
   if (decision === "mark_not_applied") return `Marked not applied · ${item.title}`;
   if (decision === "retry_with_key") return `Keyed retry · ${item.title}`;
   return `${decision} · ${item.title}${answer ? ` · ${answer}` : ""}`;
+}
+
+function persistOfflineSnapshotEffect(): Effect.Effect<void> {
+  return Effect.gen(function* () {
+    const state = yield* Ref.get(stateRef);
+    yield* saveOfflineSnapshotEffect({
+      reviewItems: state.items,
+      activityEvents: state.activity,
+      inbox: state.inbox,
+    }).pipe(Effect.catch(() => Effect.void));
+  });
 }
 
 export function listReviewEffect(
@@ -112,25 +140,50 @@ export function listReviewEffect(
       const kind = filter?.kind;
       const items =
         !kind || kind === "all" ? state.items : state.items.filter((i) => i.kind === kind);
+      yield* persistOfflineSnapshotEffect();
       return { items, source: "fixture" as const };
     }
-    const res = yield* Effect.tryPromise({
-      try: async () => {
-        const r = await fetch(`${config.apiBase}/api/managed/review`, {
-          headers: authHeaders(session),
-        });
-        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
-        return r.json();
-      },
-      catch: (cause) =>
-        new MobileApiError({
-          reason: cause instanceof Error ? cause.message : String(cause),
-          status: (cause as { status?: number })?.status,
-        }),
-    });
-    const decoded = yield* decodeUnknownEffect(ReviewListResponse, res).pipe(
-      Effect.mapError((e) => new MobileApiError({ reason: e.message }))
+    const decoded = yield* Effect.gen(function* () {
+      const res = yield* Effect.tryPromise({
+        try: async () => {
+          const r = await fetch(`${config.apiBase}/api/managed/review`, {
+            headers: authHeaders(session),
+          });
+          if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+          return r.json();
+        },
+        catch: (cause) =>
+          new MobileApiError({
+            reason: cause instanceof Error ? cause.message : String(cause),
+            status: (cause as { status?: number })?.status,
+          }),
+      });
+      return yield* decodeUnknownEffect(ReviewListResponse, res).pipe(
+        Effect.mapError((e) => new MobileApiError({ reason: e.message }))
+      );
+    }).pipe(
+      Effect.catch((err) =>
+        Effect.gen(function* () {
+          const snap = yield* loadOfflineSnapshotEffect().pipe(
+            Effect.mapError(() => err)
+          );
+          if (!snap || snap.reviewItems.length === 0) {
+            return yield* Effect.fail(err);
+          }
+          return {
+            items: snap.reviewItems,
+            source: "cache" as const,
+          } satisfies ReviewListResponse;
+        })
+      )
     );
+    if (decoded.source !== "cache") {
+      yield* saveOfflineSnapshotEffect({
+        reviewItems: decoded.items,
+        activityEvents: [],
+        inbox: [],
+      }).pipe(Effect.catch(() => Effect.void));
+    }
     const kind = filter?.kind;
     if (!kind || kind === "all") return decoded;
     return { ...decoded, items: decoded.items.filter((i) => i.kind === kind) };
@@ -251,9 +304,16 @@ export function listActivityEffect(
     const config = yield* loadMobileConfigEffect();
     if (isFixtureSession(session, config.fixtureMode)) {
       const state = yield* Ref.get(stateRef);
+      yield* persistOfflineSnapshotEffect();
       return { events: state.activity, source: "fixture" as const };
     }
-    // Live activity comes from the audit surface; until wired, return empty.
+    // Live activity comes from the audit surface; until wired, serve offline cache if any.
+    const snap = yield* loadOfflineSnapshotEffect().pipe(
+      Effect.catch(() => Effect.succeed(null))
+    );
+    if (snap && snap.activityEvents.length > 0) {
+      return { events: snap.activityEvents, source: "cache" as const };
+    }
     return { events: [], source: "live" as const };
   });
 }
@@ -319,9 +379,15 @@ export function getHomeSpendEffect(
 }
 
 export function listSecurityKeysEffect(
-  _session: MobileSession
+  session: MobileSession
 ): Effect.Effect<readonly SecurityKey[], MobileApiError> {
-  return Effect.succeed(FIXTURE_KEYS);
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    // Live key inventory is console-managed; phone shows the fixture-shaped list with honesty tag.
+    void session;
+    void config;
+    return FIXTURE_KEYS;
+  });
 }
 
 export function listConnectedAppsEffect(
@@ -371,20 +437,47 @@ export function revokeConnectedAppEffect(input: {
   });
 }
 
+const NOTIFICATION_PREFS_KEY = "clawql.mobile.notificationPrefs.v1";
+
 export function getNotificationPrefsEffect(
   _session: MobileSession
 ): Effect.Effect<NotificationPrefs, MobileApiError> {
-  return Ref.get(stateRef).pipe(Effect.map((s) => s.notificationPrefs));
+  return Effect.gen(function* () {
+    void _session;
+    const fromDisk = yield* Effect.tryPromise({
+      try: async () => {
+        const raw = await AsyncStorage.getItem(NOTIFICATION_PREFS_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw) as NotificationPrefs;
+      },
+      catch: () => new MobileApiError({ reason: "prefs_read_failed" }),
+    }).pipe(Effect.catch(() => Effect.succeed(null as NotificationPrefs | null)));
+    if (fromDisk) {
+      yield* Ref.update(stateRef, (s) => ({ ...s, notificationPrefs: fromDisk }));
+      return fromDisk;
+    }
+    return yield* Ref.get(stateRef).pipe(Effect.map((s) => s.notificationPrefs));
+  });
 }
 
 export function setNotificationPrefsEffect(input: {
   session: MobileSession;
   prefs: NotificationPrefs;
 }): Effect.Effect<NotificationPrefs, MobileApiError> {
-  return Ref.update(stateRef, (s) => ({
-    ...s,
-    notificationPrefs: input.prefs,
-  })).pipe(Effect.as(input.prefs));
+  return Effect.gen(function* () {
+    void input.session;
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      notificationPrefs: input.prefs,
+    }));
+    yield* Effect.tryPromise({
+      try: async () => {
+        await AsyncStorage.setItem(NOTIFICATION_PREFS_KEY, JSON.stringify(input.prefs));
+      },
+      catch: () => new MobileApiError({ reason: "prefs_write_failed" }),
+    }).pipe(Effect.catch(() => Effect.void));
+    return input.prefs;
+  });
 }
 
 export function deleteAccountEffect(
@@ -535,12 +628,164 @@ export function listInboxEffect(
   session: MobileSession
 ): Effect.Effect<readonly InboxItem[], MobileApiError> {
   return Effect.gen(function* () {
-    const config = yield* loadMobileConfigEffect();
-    if (isFixtureSession(session, config.fixtureMode)) {
-      return FIXTURE_INBOX;
-    }
-    return FIXTURE_INBOX;
+    void session;
+    const state = yield* Ref.get(stateRef);
+    return state.inbox;
   });
+}
+
+export function markInboxReadEffect(
+  session: MobileSession,
+  inboxId: string
+): Effect.Effect<void, MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      inbox: s.inbox.map((item) =>
+        item.id === inboxId ? { ...item, unread: false } : item
+      ),
+    }));
+  });
+}
+
+export function markInboxReadByReviewEffect(
+  session: MobileSession,
+  reviewId: string
+): Effect.Effect<number, MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    const before = yield* Ref.get(stateRef);
+    const marked = before.inbox.filter(
+      (item) => item.reviewId === reviewId && item.unread
+    ).length;
+    if (marked === 0) return 0;
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      inbox: s.inbox.map((item) =>
+        item.reviewId === reviewId && item.unread
+          ? { ...item, unread: false }
+          : item
+      ),
+    }));
+    yield* persistOfflineSnapshotEffect();
+    return marked;
+  });
+}
+
+export function markAllInboxReadEffect(
+  session: MobileSession
+): Effect.Effect<number, MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    const before = yield* Ref.get(stateRef);
+    const marked = before.inbox.filter((item) => item.unread).length;
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      inbox: s.inbox.map((item) => (item.unread ? { ...item, unread: false } : item)),
+    }));
+    yield* persistOfflineSnapshotEffect();
+    return marked;
+  });
+}
+
+export function registerPushDeviceEffect(input: {
+  session: MobileSession;
+  token: string;
+  platform: "ios" | "android" | "web";
+  label: string;
+  fixture: boolean;
+}): Effect.Effect<PushDevice, MobileApiError> {
+  return Effect.gen(function* () {
+    void input.session;
+    const device: PushDevice = {
+      id: `push_${input.platform}_${input.token.slice(-12)}`,
+      token: input.token,
+      platform: input.platform,
+      label: input.label,
+      registeredAtMs: Date.now(),
+      fixture: input.fixture,
+    };
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      pushDevices: [device, ...s.pushDevices.filter((d) => d.token !== device.token)],
+    }));
+    return device;
+  });
+}
+
+export function listPushDevicesEffect(
+  session: MobileSession
+): Effect.Effect<readonly PushDevice[], MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    const state = yield* Ref.get(stateRef);
+    return state.pushDevices;
+  });
+}
+
+export function clearPushDevicesEffect(
+  session: MobileSession
+): Effect.Effect<void, MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    yield* Ref.update(stateRef, (s) => ({ ...s, pushDevices: [] }));
+  });
+}
+
+export function listAttachmentsEffect(
+  session: MobileSession,
+  reviewId: string
+): Effect.Effect<readonly DocumentAttachment[], MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    const state = yield* Ref.get(stateRef);
+    return state.attachments.filter((a) => a.reviewId === reviewId);
+  });
+}
+
+export function addAttachmentEffect(input: {
+  session: MobileSession;
+  attachment: DocumentAttachment;
+}): Effect.Effect<DocumentAttachment, MobileApiError> {
+  return Effect.gen(function* () {
+    void input.session;
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      attachments: [input.attachment, ...s.attachments],
+    }));
+    return input.attachment;
+  });
+}
+
+export function removeAttachmentEffect(input: {
+  session: MobileSession;
+  reviewId: string;
+  attachmentId: string;
+}): Effect.Effect<void, MobileApiError> {
+  return Effect.gen(function* () {
+    void input.session;
+    const before = yield* Ref.get(stateRef);
+    const found = before.attachments.some(
+      (a) => a.id === input.attachmentId && a.reviewId === input.reviewId
+    );
+    if (!found) {
+      return yield* Effect.fail(new MobileApiError({ reason: "not_found", status: 404 }));
+    }
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      attachments: s.attachments.filter(
+        (a) => !(a.id === input.attachmentId && a.reviewId === input.reviewId)
+      ),
+    }));
+  });
+}
+
+export function prependInboxItemEffect(item: InboxItem): Effect.Effect<void> {
+  return Ref.update(stateRef, (s) => ({
+    ...s,
+    inbox: [item, ...s.inbox],
+  }));
 }
 
 /** Test helper — reset fixture queue between Maestro / unit runs. */
@@ -552,6 +797,9 @@ export function resetFixtureStateEffect(): Effect.Effect<void> {
     notificationPrefs: { ...FIXTURE_NOTIFICATION_PREFS },
     activity: [...FIXTURE_ACTIVITY],
     deviceSessions: [...FIXTURE_DEVICE_SESSIONS],
+    inbox: [...FIXTURE_INBOX],
+    pushDevices: [],
+    attachments: [],
     deleted: false,
   });
 }
@@ -607,6 +855,17 @@ export class MobileApi extends Context.Service<
     readonly listInbox: (
       session: MobileSession
     ) => Effect.Effect<readonly InboxItem[], MobileApiError>;
+    readonly markInboxRead: (
+      session: MobileSession,
+      inboxId: string
+    ) => Effect.Effect<void, MobileApiError>;
+    readonly markInboxReadByReview: (
+      session: MobileSession,
+      reviewId: string
+    ) => Effect.Effect<number, MobileApiError>;
+    readonly markAllInboxRead: (
+      session: MobileSession
+    ) => Effect.Effect<number, MobileApiError>;
     readonly listSecurityKeys: (
       session: MobileSession
     ) => Effect.Effect<readonly SecurityKey[], MobileApiError>;
@@ -624,6 +883,32 @@ export class MobileApi extends Context.Service<
       session: MobileSession;
       prefs: NotificationPrefs;
     }) => Effect.Effect<NotificationPrefs, MobileApiError>;
+    readonly registerPushDevice: (input: {
+      session: MobileSession;
+      token: string;
+      platform: "ios" | "android" | "web";
+      label: string;
+      fixture: boolean;
+    }) => Effect.Effect<PushDevice, MobileApiError>;
+    readonly listPushDevices: (
+      session: MobileSession
+    ) => Effect.Effect<readonly PushDevice[], MobileApiError>;
+    readonly clearPushDevices: (
+      session: MobileSession
+    ) => Effect.Effect<void, MobileApiError>;
+    readonly listAttachments: (
+      session: MobileSession,
+      reviewId: string
+    ) => Effect.Effect<readonly DocumentAttachment[], MobileApiError>;
+    readonly addAttachment: (input: {
+      session: MobileSession;
+      attachment: DocumentAttachment;
+    }) => Effect.Effect<DocumentAttachment, MobileApiError>;
+    readonly removeAttachment: (input: {
+      session: MobileSession;
+      reviewId: string;
+      attachmentId: string;
+    }) => Effect.Effect<void, MobileApiError>;
     readonly deleteAccount: (
       session: MobileSession
     ) => Effect.Effect<AccountDeletionResult, MobileApiError>;
@@ -643,10 +928,19 @@ export const MobileApiLive = Layer.succeed(MobileApi, {
   getMorningDigest: getMorningDigestEffect,
   listTeammates: listTeammatesEffect,
   listInbox: listInboxEffect,
+  markInboxRead: markInboxReadEffect,
+  markInboxReadByReview: markInboxReadByReviewEffect,
+  markAllInboxRead: markAllInboxReadEffect,
   listSecurityKeys: listSecurityKeysEffect,
   listConnectedApps: listConnectedAppsEffect,
   revokeConnectedApp: revokeConnectedAppEffect,
   getNotificationPrefs: getNotificationPrefsEffect,
   setNotificationPrefs: setNotificationPrefsEffect,
+  registerPushDevice: registerPushDeviceEffect,
+  listPushDevices: listPushDevicesEffect,
+  clearPushDevices: clearPushDevicesEffect,
+  listAttachments: listAttachmentsEffect,
+  addAttachment: addAttachmentEffect,
+  removeAttachment: removeAttachmentEffect,
   deleteAccount: deleteAccountEffect,
 });

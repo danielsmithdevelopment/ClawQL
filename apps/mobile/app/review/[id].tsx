@@ -1,26 +1,50 @@
 import { Effect } from "effect";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
+import { Image, Platform, Share, View } from "react-native";
 
-import type { ReviewDecision, ReviewItem } from "@/src/domain/schemas";
-import { decideReviewEffect, getReviewByIdEffect } from "@/src/services/api";
+import type {
+  DocumentAttachment,
+  ReviewDecision,
+  ReviewItem,
+  Teammate,
+} from "@/src/domain/schemas";
+import {
+  addAttachmentEffect,
+  decideReviewEffect,
+  getReviewByIdEffect,
+  listAttachmentsEffect,
+  listTeammatesEffect,
+  markInboxReadByReviewEffect,
+  removeAttachmentEffect,
+} from "@/src/services/api";
 import { loadMobileConfigEffect } from "@/src/services/config";
+import {
+  attachmentPreviewFor,
+  captureDocumentEffect,
+  type CaptureSource,
+} from "@/src/services/documents";
+import { hapticErrorEffect, hapticSuccessEffect } from "@/src/services/device-ux";
 import { approveWithSecurityKeyEffect } from "@/src/services/nfc-security-key";
+import { buildReviewDeepLinkEffect } from "@/src/services/push";
 import { useSession } from "@/src/state/SessionContext";
-import { brand, color, space } from "@/src/theme";
+import { brand, color, shape, space } from "@/src/theme";
 import {
   Badge,
   Body,
   ChoiceRow,
   Column,
+  IconBubble,
   LoadingBlock,
   Meta,
   PrimaryButton,
   ScreenHost,
   ScreenScroll,
   SecondaryButton,
+  SelectRow,
   Subtitle,
   SurfaceCard,
+  TextButton,
   Title,
   WrapRow,
 } from "@/src/ui/primitives";
@@ -30,28 +54,44 @@ export default function ReviewDetailScreen() {
   const { session } = useSession();
   const router = useRouter();
   const [item, setItem] = useState<ReviewItem | null>(null);
+  const [attachments, setAttachments] = useState<readonly DocumentAttachment[]>([]);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [fixtureMode, setFixtureMode] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [askingTeammate, setAskingTeammate] = useState(false);
+  const [teammates, setTeammates] = useState<readonly Teammate[]>([]);
+  const [selectedTeammateId, setSelectedTeammateId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!session || !id) return;
     try {
-      const [found, config] = await Promise.all([
+      const [found, config, docs, team] = await Promise.all([
         Effect.runPromise(getReviewByIdEffect(session, id)),
         Effect.runPromise(loadMobileConfigEffect()),
+        Effect.runPromise(listAttachmentsEffect(session, id)),
+        Effect.runPromise(listTeammatesEffect(session)),
       ]);
       setItem(found);
       setFixtureMode(config.fixtureMode);
+      setAttachments(docs);
+      setTeammates(team);
+      // Opening a request from a push / inbox marks matching notifications read.
+      await Effect.runPromise(markInboxReadByReviewEffect(session, id)).catch(() => 0);
       if (found?.kind === "decision") {
         const preferred =
           found.decisionChoices?.find((c) => c.label === "Refund request")?.label ??
           found.decisionChoices?.[0]?.label ??
           null;
         setSelectedAnswer(preferred);
+        const preferredTeammate =
+          team.find((t) => t.canApprove && t.keysReady && t.id !== "user_dana") ??
+          team.find((t) => t.canApprove && t.keysReady) ??
+          team.find((t) => t.canApprove) ??
+          null;
+        setSelectedTeammateId(preferredTeammate?.id ?? null);
       }
     } finally {
       setLoading(false);
@@ -110,8 +150,10 @@ export default function ReviewDetailScreen() {
             : "Approved"
           : "Declined";
       setNote(preNote ?? `${verb} · ${res.status}`);
+      void Effect.runPromise(hapticSuccessEffect());
       navigateBackSoon();
     } catch (e: unknown) {
+      void Effect.runPromise(hapticErrorEffect());
       setError(errorMessage(e));
     } finally {
       setBusy(false);
@@ -133,8 +175,107 @@ export default function ReviewDetailScreen() {
           answer,
         })
       );
-      setNote(String(res.status));
+      setNote(
+        decision === "ask_teammate" && answer
+          ? `Asked ${answer}`
+          : String(res.status)
+      );
+      setAskingTeammate(false);
+      void Effect.runPromise(hapticSuccessEffect());
       navigateBackSoon();
+    } catch (e: unknown) {
+      void Effect.runPromise(hapticErrorEffect());
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const askSelectedTeammate = () => {
+    const pick = teammates.find((t) => t.id === selectedTeammateId);
+    if (!pick) {
+      setError("Pick a teammate first");
+      return;
+    }
+    void decidePlain("ask_teammate", pick.name);
+  };
+
+  const shareRequest = async () => {
+    if (!item) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const url = await Effect.runPromise(buildReviewDeepLinkEffect(item.id));
+      const message = `${item.title}\n${url}`;
+      // Web browsers often lack navigator.share — copy the deep link instead.
+      if (Platform.OS === "web") {
+        const clipboard = (
+          globalThis as unknown as { navigator?: { clipboard?: { writeText?: (t: string) => Promise<void> } } }
+        ).navigator?.clipboard;
+        if (clipboard?.writeText) {
+          await clipboard.writeText(url);
+          setNote(`Link copied · ${url}`);
+          return;
+        }
+      }
+      await Share.share({
+        title: item.title,
+        message,
+        url,
+      });
+      setNote("Share sheet opened");
+    } catch (e: unknown) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const attachDocument = async (source: CaptureSource) => {
+    if (!session || !item) return;
+    setBusy(true);
+    setError(null);
+    setNote(null);
+    try {
+      const captured = await Effect.runPromise(
+        captureDocumentEffect({ reviewId: item.id, source })
+      );
+      const saved = await Effect.runPromise(
+        addAttachmentEffect({ session, attachment: captured })
+      );
+      setAttachments((prev) => [saved, ...prev]);
+      setNote(
+        fixtureMode || saved.uri.startsWith("fixture://")
+          ? `Attached ${saved.fileName} (fixture scan)`
+          : `Attached ${saved.fileName}`
+      );
+    } catch (e: unknown) {
+      const reason = errorMessage(e);
+      if (reason === "capture_cancelled") {
+        setNote(null);
+      } else {
+        setError(reason);
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeDocument = async (attachmentId: string) => {
+    if (!session || !item) return;
+    setBusy(true);
+    setError(null);
+    setNote(null);
+    try {
+      await Effect.runPromise(
+        removeAttachmentEffect({
+          session,
+          reviewId: item.id,
+          attachmentId,
+        })
+      );
+      setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
+      setNote("Attachment removed");
     } catch (e: unknown) {
       setError(errorMessage(e));
     } finally {
@@ -172,6 +313,12 @@ export default function ReviewDetailScreen() {
       <Title>{item.title}</Title>
       <Meta>{item.listMeta}</Meta>
       <Meta>{item.statusLine}</Meta>
+      <SecondaryButton
+        testID="review-share"
+        label="Share request link"
+        disabled={busy}
+        onPress={() => void shareRequest()}
+      />
 
       {decided ? (
         <SurfaceCard testID="review-decided-banner">
@@ -186,7 +333,7 @@ export default function ReviewDetailScreen() {
       ) : null}
 
       {item.kind === "skill" ? <SkillBody item={item} /> : null}
-      {item.kind === "decision" ? (
+      {item.kind === "decision" && !askingTeammate ? (
         <DecisionBody
           item={item}
           selectedAnswer={selectedAnswer}
@@ -194,8 +341,100 @@ export default function ReviewDetailScreen() {
           readOnly={decided}
         />
       ) : null}
+      {item.kind === "decision" && askingTeammate ? (
+        <SurfaceCard testID="decision-ask-context" tint="none">
+          <Meta>{item.decisionSite ?? "Decision"}</Meta>
+          <Body>{item.decisionQuote ?? item.title}</Body>
+        </SurfaceCard>
+      ) : null}
       {item.kind === "change" ? <ChangeBody item={item} /> : null}
       {item.kind === "source" ? <SourceBody /> : null}
+
+      {!askingTeammate ? (
+      <SurfaceCard testID="review-attachments">
+        <IconBubble name="document" tone="seed" size={32} iconSize={16} />
+        <Subtitle>Evidence photos</Subtitle>
+        <Meta>
+          {`Scan a contract, invoice, or screenshot to attach to this request.${
+            fixtureMode ? " Fixture mode uses a synthetic scan — no camera needed." : ""
+          }`}
+        </Meta>
+        {attachments.length === 0 ? (
+          <Meta testID="review-attachments-empty">No attachments yet.</Meta>
+        ) : (
+          attachments.map((doc) => {
+            const preview = attachmentPreviewFor(doc);
+            return (
+              <Column key={doc.id} spacing={space.sm} testID={`review-attachment-${doc.id}`}>
+                <View
+                  testID={`review-attachment-preview-${doc.id}`}
+                  style={{
+                    height: 148,
+                    borderRadius: shape.md,
+                    overflow: "hidden",
+                    backgroundColor: color.primaryContainer,
+                  }}
+                >
+                  {preview.kind === "image" ? (
+                    <Image
+                      source={{ uri: preview.uri }}
+                      style={{ width: "100%", height: "100%" }}
+                      resizeMode="cover"
+                      accessibilityLabel={doc.fileName}
+                    />
+                  ) : (
+                    <View
+                      style={{
+                        flex: 1,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: space.sm,
+                        padding: space.md,
+                        backgroundColor: color.primaryContainer,
+                      }}
+                    >
+                      <IconBubble name="document" tone="seed" size={44} iconSize={22} />
+                      <Body color={color.onPrimaryContainer}>Fixture scan preview</Body>
+                      <Meta color={color.onPrimaryContainer}>{doc.fileName}</Meta>
+                    </View>
+                  )}
+                </View>
+                <Body>{doc.fileName}</Body>
+                <Meta>
+                  {`${doc.source}${doc.bytes ? ` · ${Math.round(doc.bytes / 1024)} KB` : ""} · ${new Date(
+                    doc.capturedAtMs
+                  ).toLocaleString()}`}
+                </Meta>
+                {!decided ? (
+                  <TextButton
+                    testID={`review-attachment-remove-${doc.id}`}
+                    label="Remove"
+                    disabled={busy}
+                    onPress={() => void removeDocument(doc.id)}
+                  />
+                ) : null}
+              </Column>
+            );
+          })
+        )}
+        {!decided ? (
+          <Column spacing={space.sm}>
+            <SecondaryButton
+              testID="review-scan-camera"
+              label={busy ? "Working…" : "Scan with camera"}
+              disabled={busy}
+              onPress={() => void attachDocument("camera")}
+            />
+            <SecondaryButton
+              testID="review-pick-library"
+              label="Choose from photos"
+              disabled={busy}
+              onPress={() => void attachDocument("library")}
+            />
+          </Column>
+        ) : null}
+      </SurfaceCard>
+      ) : null}
 
       {!decided && item.kind !== "decision" ? (
         <SurfaceCard>
@@ -219,26 +458,75 @@ export default function ReviewDetailScreen() {
       {!decided ? (
         <Column spacing={space.sm}>
           {item.kind === "decision" ? (
-            <>
-              <PrimaryButton
-                testID="review-submit-answer"
-                label={busy ? "Working…" : "Submit answer"}
-                disabled={busy || !selectedAnswer}
-                onPress={() => void decidePlain("answer", selectedAnswer ?? undefined)}
-              />
-              <SecondaryButton
-                testID="review-skip"
-                label="Skip for now"
-                disabled={busy}
-                onPress={() => void decidePlain("skip")}
-              />
-              <SecondaryButton
-                testID="review-ask-teammate"
-                label="Ask a teammate"
-                disabled={busy}
-                onPress={() => void decidePlain("ask_teammate")}
-              />
-            </>
+            askingTeammate ? (
+              <SurfaceCard testID="review-ask-teammate-picker" tint="soft">
+                <Column spacing={space.md}>
+                  <Column spacing={space.sm}>
+                    <IconBubble name="people" tone="seed" size={36} iconSize={18} />
+                    <Subtitle>Ask a teammate</Subtitle>
+                    <Meta>Pick one approver. They get this decision in their queue.</Meta>
+                  </Column>
+                  <Column spacing={space.sm}>
+                    {[...teammates]
+                      .filter((t) => t.canApprove)
+                      .sort((a, b) => Number(b.keysReady) - Number(a.keysReady))
+                      .map((person) => (
+                        <SelectRow
+                          key={person.id}
+                          testID={`ask-teammate-${person.id}`}
+                          label={person.name}
+                          supporting={person.role}
+                          badge={person.keysReady ? "Keys ready" : "Keys incomplete"}
+                          badgeTone={person.keysReady ? "ok" : "warn"}
+                          selected={selectedTeammateId === person.id}
+                          onPress={() => setSelectedTeammateId(person.id)}
+                        />
+                      ))}
+                  </Column>
+                  <Column spacing={space.sm}>
+                    <PrimaryButton
+                      testID="review-ask-teammate-confirm"
+                      label={
+                        busy
+                          ? "Working…"
+                          : `Ask ${
+                              teammates.find((t) => t.id === selectedTeammateId)?.name ?? "teammate"
+                            }`
+                      }
+                      disabled={busy || !selectedTeammateId}
+                      onPress={() => askSelectedTeammate()}
+                    />
+                    <TextButton
+                      testID="review-ask-teammate-cancel"
+                      label="Back to my answer"
+                      disabled={busy}
+                      onPress={() => setAskingTeammate(false)}
+                    />
+                  </Column>
+                </Column>
+              </SurfaceCard>
+            ) : (
+              <>
+                <PrimaryButton
+                  testID="review-submit-answer"
+                  label={busy ? "Working…" : "Submit answer"}
+                  disabled={busy || !selectedAnswer}
+                  onPress={() => void decidePlain("answer", selectedAnswer ?? undefined)}
+                />
+                <SecondaryButton
+                  testID="review-skip"
+                  label="Skip for now"
+                  disabled={busy}
+                  onPress={() => void decidePlain("skip")}
+                />
+                <SecondaryButton
+                  testID="review-ask-teammate"
+                  label="Ask a teammate"
+                  disabled={busy}
+                  onPress={() => setAskingTeammate(true)}
+                />
+              </>
+            )
           ) : item.kind === "change" && item.changeStatus === "outcome_unknown" ? (
             <>
               <PrimaryButton

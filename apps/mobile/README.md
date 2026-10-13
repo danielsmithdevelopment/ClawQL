@@ -12,15 +12,16 @@ Everything else opens the web console.
 
 Apple rejects thin website wrappers. This app ships the PhoneApprove surface from the managed console fixtures:
 
-- **Home** — what needs you + today's spend + recent activity + local push simulate
-- **Review** — kind filters, exact-change / skill / decision detail, Approve (NFC or fixture)
+- **Home** — what needs you + today's spend + recent activity + local push simulate (inbox)
+- **Review** — kind filters, exact-change / skill / decision detail, document scan/attach, Approve (NFC or fixture)
 - **Activity** — decided history (drill-in to read-only request)
-- **Profile** — keys, signed-in sessions, connected apps, prefs, delete account
+- **Profile** — keys, signed-in sessions, push device registration, connected apps, prefs, delete account
 
 ## Stack
 
 - Expo SDK 57 + Expo Router (TypeScript)
-- **Design system: Material 3 (dark)** — see [`DESIGN.md`](DESIGN.md); brand navy + orange QL seed `#FF5636`
+- **Design system: Material 3 (light)** — see [`DESIGN.md`](DESIGN.md); blue primary + orange action accent
+- `expo-notifications` + `expo-image-picker` for push + camera/library evidence
 - Effect 4 services/schemas (same discipline as `packages/*`)
 - EAS Build / Submit (`eas.json`)
 - Maestro goal-oriented flows (`maestro/flows`)
@@ -47,9 +48,14 @@ npm start
 npm test          # vitest (schemas, API fixture, NFC mock, deep links)
 npm run typecheck
 npm run store:check   # in-repo App Store / Play packaging preflight
+npm run a11y:lh       # Lighthouse mobile a11y/BP/SEO 100 + axe WCAG 2.1 A/AA (web export)
 # with simulator/emulator + Maestro CLI:
 npm run maestro
 ```
+
+## Accessibility
+
+Fixture **web export** is gated to Lighthouse mobile **Accessibility / Best Practices / SEO = 100** and axe WCAG 2.1 A/AA (no serious/critical). Run `npm run a11y:lh` after `npm run local:web-export` (or point `CLAWQL_MOBILE_DEMO_URL` at a running serve). Native VoiceOver / TalkBack still needs a device smoke pass before store upload.
 
 ## Performance
 
@@ -57,11 +63,12 @@ There is no single “Lighthouse for iOS/Android.” We use:
 
 | Command | Role |
 | ------- | ---- |
+| `npm run a11y:lh` | WCAG gate + Lighthouse category scores on web export |
 | `npm run perf:lab` | CI/lab: export sizes + Lighthouse mobile (web proxy) + Chrome CPU **flame** + timing gates |
 | `npm run perf:android` | Device: Flashlight FPS/CPU/RAM (needs adb) |
 | `npm run perf:ios` | Device/sim: Instruments + RN DevTools runbook |
 
-See [`PERFORMANCE.md`](PERFORMANCE.md).
+Lighthouse **Performance** on the Expo web export is bundle-bound (~0.6–0.85), not 100 — treat Flashlight / Instruments as the native source of truth. See [`PERFORMANCE.md`](PERFORMANCE.md).
 
 Day-0 human checklist: [`store/DAY0-CHECKLIST.md`](store/DAY0-CHECKLIST.md).
 
@@ -81,7 +88,10 @@ Templates live in `well-known/`. Publish after replacing `TEAMID` and the Androi
 - `https://cloud.clawql.com/.well-known/apple-app-site-association`
 - `https://cloud.clawql.com/.well-known/assetlinks.json`
 
-Deep links: `clawql://review/:id` and `https://cloud.clawql.com/app/review/:id`.
+Deep links (scheme + universal):
+
+- Review: `clawql://review/:id` · `https://cloud.clawql.com/app/review/:id`
+- Surfaces: `inbox`, `digest`, `agents`, `spend`, `teammates`, `policies`, `policies/:id`
 
 ## NFC modules
 
@@ -96,7 +106,8 @@ Until linked, production sessions get `nfc_module_unavailable`. **Fixture mode**
 
 | Id | Coverage |
 | -- | -------- |
-| MOB-01…10 | Maestro flows in this app (fixture NFC, decision, skill, sessions, local push) |
+| MOB-01…19 | Maestro flows (+ push, scan, session, app lock, offline, ask teammate, evidence, deep links, activity filters, system mark-read) |
+| a11y:lh | Lighthouse mobile a11y/BP/SEO **100** + axe WCAG 2.1 A/AA on fixture screens (`npm run a11y:lh`) |
 | REV-13 / UX-09 | Physical YubiKey — still Manual |
 
 See `store/review-notes.md` for App Review copy.

@@ -26,6 +26,7 @@ export default function SpendScreen() {
   const router = useRouter();
   const [spend, setSpend] = useState<HomeSpend | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -49,7 +50,18 @@ export default function SpendScreen() {
   }
 
   return (
-    <ScreenScroll testID="spend-screen">
+    <ScreenScroll
+      testID="spend-screen"
+      refreshing={refreshing}
+      onRefresh={async () => {
+        setRefreshing(true);
+        try {
+          await load();
+        } finally {
+          setRefreshing(false);
+        }
+      }}
+    >
       <SectionHeader icon="spend" title={spend.label} subtitle={spend.note} />
       <SurfaceCard tint="seed" elevated>
         <Title testID="spend-amount">{spend.amount}</Title>
@@ -62,7 +74,7 @@ export default function SpendScreen() {
           {(spend.lines ?? []).map((line) => (
             <Column key={line.agent} spacing={4} testID={`spend-line-${line.agent}`}>
               <Column spacing={space.sm}>
-                <IconBubble name="agents" tone="neutral" size={28} iconSize={14} />
+                <IconBubble name="agents" tone="seed" size={28} iconSize={14} />
                 <Body>{`${line.agent} · ${line.amount}`}</Body>
                 <Meta>{line.note}</Meta>
               </Column>

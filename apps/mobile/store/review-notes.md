@@ -22,6 +22,10 @@ Profile → **Delete account** runs the existing cascade (keys → org → Strip
 
 v0.1 uses company SSO / browser OAuth (Okta-style) and fixture/demo paths. We do **not** offer Google or other consumer social sign-in in v0.1, so Sign in with Apple is not required for this submission. If consumer social IdPs are added later, Sign in with Apple will ship in the same release.
 
+## Accessibility
+
+v0.1 ships with a WCAG-oriented gate on the fixture **web export** (`npm run a11y:lh`: Lighthouse Accessibility / Best Practices / SEO at 100, axe WCAG 2.1 A/AA with no serious findings). Store review should still spot-check VoiceOver (iOS) and TalkBack (Android) on a device build.
+
 ## Privacy
 
 See `store/privacy/apple-privacy-labels.md` and `store/privacy/play-data-safety.md`.

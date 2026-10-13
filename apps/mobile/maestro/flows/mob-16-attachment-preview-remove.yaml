@@ -1,0 +1,25 @@
+# MOB-16 — Evidence preview after scan; remove restores empty state
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-review"
+- tapOn:
+    id: "review-item-rev_change"
+- assertVisible:
+    id: "review-attachments"
+- assertVisible:
+    id: "review-attachments-empty"
+- tapOn:
+    id: "review-scan-camera"
+- assertVisible:
+    id: "review-note"
+- assertNotVisible:
+    id: "review-attachments-empty"
+- assertVisible: "Fixture scan preview"
+- tapOn:
+    text: "Remove"
+- assertVisible:
+    id: "review-attachments-empty"

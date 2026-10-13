@@ -21,6 +21,10 @@ import {
 import {
   ActivityIndicator,
   Platform,
+  Pressable,
+  RefreshControl,
+  ScrollView as RnScrollView,
+  Text as RnText,
   View,
   type StyleProp,
   type ViewStyle,
@@ -120,20 +124,43 @@ export function ScreenHost({
 export function ScreenScroll({
   children,
   testID,
+  refreshing = false,
+  onRefresh,
 }: {
   children: ReactNode;
   testID?: string;
-  /** @deprecated Prefer List onRefresh — kept so call sites typecheck during migration. */
   refreshing?: boolean;
   onRefresh?: () => void | Promise<void>;
 }) {
+  const body = (
+    <Column spacing={space.md} style={{ padding: space.md, paddingBottom: space.xl }}>
+      {children}
+    </Column>
+  );
+  // Pull-to-refresh needs RN ScrollView + RefreshControl; @expo/ui ScrollView has no hook.
+  if (onRefresh) {
+    return (
+      <ScreenHost testID={testID}>
+        <RnScrollView
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                void onRefresh();
+              }}
+              tintColor={color.primary}
+              colors={[color.primary]}
+            />
+          }
+        >
+          {body}
+        </RnScrollView>
+      </ScreenHost>
+    );
+  }
   return (
     <ScreenHost testID={testID}>
-      <ScrollView>
-        <Column spacing={space.md} style={{ padding: space.md, paddingBottom: space.xl }}>
-          {children}
-        </Column>
-      </ScrollView>
+      <ScrollView>{body}</ScrollView>
     </ScreenHost>
   );
 }
@@ -228,17 +255,38 @@ export function Badge({
         : tone === "danger"
           ? color.onErrorContainer
           : color.onSecondaryContainer;
+  // Compact RN pill — avoid @expo/ui Row/Text (inflates height / mis-centers).
+  // Caps-heavy labels sit high in the web em-box (more empty below the ink). Push
+  // the line down with extra paddingTop so the glyph mass looks centered.
   return (
-    <Row
+    <View
+      testID="badge-pill"
       style={{
         backgroundColor: bg,
         borderRadius: shape.full,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        paddingHorizontal: 6,
+        paddingTop: Platform.OS === "web" ? 2 : 1,
+        paddingBottom: Platform.OS === "web" ? 2 : 1,
+        alignItems: "center",
+        justifyContent: "center",
+        alignSelf: "center",
+        flexDirection: "row",
       }}
     >
-      <Text textStyle={{ fontSize: 10, fontWeight: "700", color: fg }}>{label.toUpperCase()}</Text>
-    </Row>
+      <RnText
+        style={{
+          fontSize: 9,
+          fontWeight: "700",
+          lineHeight: 10,
+          color: fg,
+          includeFontPadding: false,
+          marginTop: Platform.OS === "android" ? -1 : 0,
+        }}
+        allowFontScaling={false}
+      >
+        {label.toUpperCase()}
+      </RnText>
+    </View>
   );
 }
 
@@ -247,12 +295,13 @@ export function SectionHeader({
   title,
   subtitle,
   icon,
-  tone = "neutral",
+  tone = "seed",
   testID,
 }: {
   title: string;
   subtitle?: string;
   icon?: AppIconName;
+  /** Icon chrome only — prefer seed blue; status belongs on badges. */
   tone?: "seed" | "ok" | "warn" | "danger" | "neutral";
   testID?: string;
 }) {
@@ -276,15 +325,17 @@ export function NavRow({
   icon,
   onPress,
   testID,
-  tone = "neutral",
+  tone = "seed",
 }: {
   label: string;
   help?: string;
   icon: AppIconName;
   onPress: () => void;
   testID?: string;
+  /** Icon chrome only — prefer seed blue; status belongs on badges. */
   tone?: "seed" | "ok" | "warn" | "danger" | "neutral";
 }) {
+  // No outer role=button wrapper — ListItem is already interactive (nested-interactive / WCAG).
   return (
     <ListItem
       testID={testID}
@@ -311,6 +362,7 @@ export function PrimaryButton({
   testID?: string;
   danger?: boolean;
 }) {
+  // Button.label already names the control — do not wrap with another role=button.
   return (
     <Button
       testID={testID}
@@ -381,14 +433,38 @@ export function FilterChip({
   testID?: string;
   count?: number;
 }) {
+  const text = typeof count === "number" ? `${label} ${count}` : label;
   return (
-    <Button
+    <Pressable
       testID={testID}
-      label={typeof count === "number" ? `${label} ${count}` : label}
-      variant={selected ? "filled" : "outlined"}
       onPress={onPress}
-      style={selected ? { backgroundColor: color.primary } : undefined}
-    />
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      accessibilityLabel={selected ? `${text}, selected` : text}
+      style={{
+        height: 32,
+        paddingHorizontal: 12,
+        borderRadius: shape.full,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: selected ? color.primary : color.surfaceContainerLowest,
+        borderWidth: selected ? 0 : 1,
+        borderColor: color.outlineVariant,
+      }}
+    >
+      <RnText
+        style={{
+          fontSize: 12,
+          fontWeight: "600",
+          lineHeight: 14,
+          color: selected ? color.onPrimary : color.onSurface,
+          includeFontPadding: false,
+        }}
+        allowFontScaling={false}
+      >
+        {text}
+      </RnText>
+    </Pressable>
   );
 }
 
@@ -415,10 +491,84 @@ export function ChoiceRow({
   );
 }
 
+/**
+ * Single-select person/option row (M3 radio list).
+ * Selection = radio + quiet container tint. Status never changes the row chrome —
+ * put readiness/risk on a trailing Badge.
+ */
+export function SelectRow({
+  label,
+  supporting,
+  badge,
+  badgeTone = "neutral",
+  selected,
+  onPress,
+  testID,
+}: {
+  label: string;
+  supporting?: string;
+  badge?: string;
+  badgeTone?: "warn" | "neutral" | "ok" | "danger";
+  selected: boolean;
+  onPress: () => void;
+  testID?: string;
+}) {
+  return (
+    <Pressable
+      testID={testID}
+      onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: space.sm,
+        paddingVertical: space.sm,
+        paddingHorizontal: space.sm,
+        borderRadius: shape.md,
+        backgroundColor: selected ? color.primaryContainer : color.surfaceContainerLow,
+      }}
+    >
+      <View
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: 11,
+          borderWidth: 2,
+          borderColor: selected ? color.primary : color.outline,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {selected ? (
+          <View
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: 6,
+              backgroundColor: color.primary,
+            }}
+          />
+        ) : null}
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text textStyle={type.body}>{label}</Text>
+        {supporting ? <Text textStyle={type.meta}>{supporting}</Text> : null}
+      </View>
+      {badge ? <Badge label={badge} tone={badgeTone} /> : null}
+    </Pressable>
+  );
+}
+
 export function LoadingBlock({ label = "Loading…" }: { label?: string }) {
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: space.xl }} testID="loading">
-      <ActivityIndicator color={color.primary} />
+    <View
+      style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: space.xl }}
+      testID="loading"
+      accessibilityRole="progressbar"
+      accessibilityLabel={label}
+    >
+      <ActivityIndicator color={color.primary} accessibilityLabel={label} />
       <View style={{ height: space.sm }} />
       <Text textStyle={type.meta}>{label}</Text>
     </View>
@@ -438,11 +588,14 @@ export function PrefRow({
   onChange: (next: boolean) => void;
   testID?: string;
 }) {
+  // Switch owns the switch role + checked state — outer role=switch lacked aria-checked on web.
   return (
-    <Column testID={testID} spacing={4} style={{ paddingVertical: space.sm }}>
-      <Switch label={label} value={value} onValueChange={onChange} />
-      <Meta>{help}</Meta>
-    </Column>
+    <View testID={testID} style={{ paddingVertical: space.sm }}>
+      <Column spacing={4}>
+        <Switch label={label} value={value} onValueChange={onChange} />
+        <Meta>{help}</Meta>
+      </Column>
+    </View>
   );
 }
 
@@ -453,13 +606,6 @@ function kindIcon(kindLabel: string): AppIconName {
   if (k.includes("DECISION")) return "decision";
   if (k.includes("CHANGE")) return "change";
   return "activity";
-}
-
-function kindTone(badgeTone: "warn" | "neutral" | "ok" | "danger"): "seed" | "ok" | "warn" | "danger" | "neutral" {
-  if (badgeTone === "ok") return "ok";
-  if (badgeTone === "warn") return "warn";
-  if (badgeTone === "danger") return "danger";
-  return "neutral";
 }
 
 export function ReviewRow({
@@ -488,7 +634,8 @@ export function ReviewRow({
       leading={
         <IconBubble
           name={kindIcon(kindLabel)}
-          tone={kindTone(badgeTone)}
+          // One blue chrome tone for all list glyphs — status lives on badges, not icons.
+          tone="seed"
           size={36}
           iconSize={18}
         />

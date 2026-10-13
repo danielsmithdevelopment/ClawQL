@@ -1,18 +1,22 @@
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, type Href } from "expo-router";
+import Head from "expo-router/head";
 import * as Linking from "expo-linking";
 import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
 import { Effect } from "effect";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
 import { SessionProvider, useSession } from "@/src/state/SessionContext";
 import {
-  parseApprovalDeepLinkEffect,
+  hrefForDeepLink,
+  parseAppDeepLinkEffect,
   parseApprovalNotificationDataEffect,
 } from "@/src/services/push";
 import { color } from "@/src/theme";
+import { AppLockGate } from "@/src/ui/AppLockGate";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -29,6 +33,14 @@ export default function RootLayout() {
 
   return (
     <SessionProvider>
+      {/* react-helmet owns document.title — static <title> in +html is wiped without this */}
+      <Head>
+        <title>ClawQL — PhoneApprove</title>
+        <meta
+          name="description"
+          content="Approve exact-change requests from your phone with ClawQL PhoneApprove."
+        />
+      </Head>
       <StatusBar style="dark" />
       <RootNavigator />
     </SessionProvider>
@@ -44,28 +56,35 @@ function RootNavigator() {
       if (id) router.push(`/review/${id}`);
     };
     const handleUrl = (url: string) => {
-      void Effect.runPromise(parseApprovalDeepLinkEffect(url)).then(openReview);
+      void Effect.runPromise(parseAppDeepLinkEffect(url)).then((target) => {
+        if (!target) return;
+        router.push(hrefForDeepLink(target) as Href);
+      });
     };
     const sub = Linking.addEventListener("url", ({ url }) => handleUrl(url));
     void Linking.getInitialURL().then((url) => {
       if (url) handleUrl(url);
     });
 
-    const notifSub = Notifications.addNotificationResponseReceivedListener((response) => {
-      void Effect.runPromise(
-        parseApprovalNotificationDataEffect(response.notification.request.content.data)
-      ).then(openReview);
-    });
-    void Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (!response) return;
-      void Effect.runPromise(
-        parseApprovalNotificationDataEffect(response.notification.request.content.data)
-      ).then(openReview);
-    });
+    // expo-notifications last-response APIs throw on web and poison Lighthouse BP.
+    let notifSub: { remove: () => void } | undefined;
+    if (Platform.OS !== "web") {
+      notifSub = Notifications.addNotificationResponseReceivedListener((response) => {
+        void Effect.runPromise(
+          parseApprovalNotificationDataEffect(response.notification.request.content.data)
+        ).then(openReview);
+      });
+      void Notifications.getLastNotificationResponseAsync().then((response) => {
+        if (!response) return;
+        void Effect.runPromise(
+          parseApprovalNotificationDataEffect(response.notification.request.content.data)
+        ).then(openReview);
+      });
+    }
 
     return () => {
       sub.remove();
-      notifSub.remove();
+      notifSub?.remove();
     };
   }, [router]);
 
@@ -74,24 +93,26 @@ function RootNavigator() {
   void loading;
 
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: color.surface },
-        headerTintColor: color.onSurface,
-        contentStyle: { backgroundColor: color.surface },
-      }}
-    >
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="sign-in" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="review/[id]" options={{ title: "Request" }} />
-      <Stack.Screen name="policies/index" options={{ title: "Policies" }} />
-      <Stack.Screen name="policies/[id]" options={{ title: "Policy" }} />
-      <Stack.Screen name="spend" options={{ title: "Spend" }} />
-      <Stack.Screen name="agents" options={{ title: "Agents" }} />
-      <Stack.Screen name="digest" options={{ title: "Morning digest" }} />
-      <Stack.Screen name="teammates" options={{ title: "Team" }} />
-      <Stack.Screen name="inbox" options={{ title: "Notifications" }} />
-    </Stack>
+    <AppLockGate enabled={Boolean(session) && !loading}>
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: color.surface },
+          headerTintColor: color.onSurface,
+          contentStyle: { backgroundColor: color.surface },
+        }}
+      >
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="review/[id]" options={{ title: "Request" }} />
+        <Stack.Screen name="policies/index" options={{ title: "Policies" }} />
+        <Stack.Screen name="policies/[id]" options={{ title: "Policy" }} />
+        <Stack.Screen name="spend" options={{ title: "Spend" }} />
+        <Stack.Screen name="agents" options={{ title: "Agents" }} />
+        <Stack.Screen name="digest" options={{ title: "Morning digest" }} />
+        <Stack.Screen name="teammates" options={{ title: "Team" }} />
+        <Stack.Screen name="inbox" options={{ title: "Notifications" }} />
+      </Stack>
+    </AppLockGate>
   );
 }

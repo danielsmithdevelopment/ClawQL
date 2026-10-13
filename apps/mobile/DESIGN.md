@@ -35,8 +35,8 @@ Do **not** paint surfaces, cards, and icons in orange tints. Orange is the Q —
 | `surfaceContainerLowest` → `Highest` | Cards / nested plates (tonal depth, **no** heavy border) |
 | `onSurface` / `onSurfaceVariant` | Body / meta |
 | `primary` / `onPrimary` | Active tab, selected chips, blue filled controls |
-| `primaryContainer` / `onPrimaryContainer` | One standout plate per screen (e.g. spend) — **blue**, not orange |
-| `secondaryContainer` / `onSecondaryContainer` | Default icon bubbles |
+| `primaryContainer` / `onPrimaryContainer` | Icon bubbles (seed blue, app-wide) + one standout plate per screen |
+| `secondaryContainer` / `onSecondaryContainer` | Rare secondary plates only |
 | `accent` / `onAccent` | Filled action CTAs (Approve, Sign in, …) |
 | `accentContainer` / `onAccentContainer` | Rare orange tonal highlight (brand mark, not every card) |
 | `warn*` | Needs-you / caution |
@@ -54,7 +54,9 @@ node scripts/generate-m3-theme.mjs
 - **Selected filter chip** → `primary` + `onPrimary` (blue)  
 - **Outlined button** → outline + `primary` label  
 - **Card** → `surfaceContainer*` / rare `primaryContainer`, corner `shape.lg` (16)  
-- **List leading icon** → `IconBubble` on `secondaryContainer` by default  
+- **List leading icon** → `IconBubble` seed blue  
+- **Person / single-select list** → `SelectRow` (radio + quiet tint). Never invert the whole row to filled primary — that reads as a different status. Keys/risk → trailing `Badge` only.  
+- **Secondary flow (Ask teammate)** → replace the primary action stack; do not stack a second CTA under Submit / Skip.  
 - **Navigation bar** → `surfaceContainerLowest`, active icon `primary`  
 
 ## References

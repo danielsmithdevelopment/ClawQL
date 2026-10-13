@@ -1,0 +1,26 @@
+# MOB-18 — Activity kind + outcome filters
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-activity"
+- assertVisible:
+    id: "activity-screen"
+- assertVisible:
+    id: "activity-filters"
+- tapOn:
+    id: "activity-filter-kind-source"
+- assertVisible:
+    id: "activity-event-act_seed_1"
+- assertNotVisible:
+    id: "activity-event-act_seed_2"
+- tapOn:
+    id: "activity-filter-kind-all"
+- tapOn:
+    id: "activity-filter-decision-answer"
+- assertVisible:
+    id: "activity-event-act_seed_2"
+- assertNotVisible:
+    id: "activity-event-act_seed_1"

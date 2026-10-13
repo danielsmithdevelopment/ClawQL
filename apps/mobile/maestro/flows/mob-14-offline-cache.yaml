@@ -1,0 +1,22 @@
+# MOB-14 — Offline cache banner + mark all inbox read
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-review"
+- assertVisible:
+    id: "review-load-offline-cache"
+- tapOn:
+    id: "review-load-offline-cache"
+- assertVisible:
+    id: "review-offline-banner"
+- tapOn:
+    id: "tab-home"
+- tapOn:
+    id: "home-open-inbox"
+- assertVisible:
+    id: "inbox-screen"
+- tapOn:
+    id: "inbox-mark-all-read"

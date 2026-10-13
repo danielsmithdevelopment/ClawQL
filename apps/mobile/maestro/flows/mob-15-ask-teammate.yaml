@@ -1,0 +1,33 @@
+# MOB-15 — Ask a named teammate on a decision HITL item
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-review"
+- assertVisible:
+    id: "review-queue-screen"
+- tapOn:
+    id: "filter-decision"
+- tapOn:
+    id: "review-item-rev_decision"
+- assertVisible:
+    id: "decision-body"
+- tapOn:
+    id: "review-ask-teammate"
+- assertVisible:
+    id: "review-ask-teammate-picker"
+# Submit/Skip must leave the tree while the picker owns the footer
+- assertNotVisible:
+    id: "review-submit-answer"
+- tapOn:
+    id: "ask-teammate-user_marcus"
+- tapOn:
+    id: "review-ask-teammate-confirm"
+- assertVisible:
+    id: "review-note"
+- tapOn:
+    id: "tab-activity"
+- assertVisible:
+    id: "activity-screen"

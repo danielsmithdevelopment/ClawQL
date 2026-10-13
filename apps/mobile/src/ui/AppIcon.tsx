@@ -78,13 +78,14 @@ export function AppIcon({
 /** M3 tonal icon container — primaryContainer / secondaryContainer / etc. */
 export function IconBubble({
   name,
-  tone = "secondary",
+  tone = "seed",
   size = 40,
   iconSize = 20,
   testID,
   style,
 }: {
   name: AppIconName;
+  /** Prefer seed (primary blue). Status/risk belongs on badges, not icon chrome. */
   tone?: IconTone;
   size?: number;
   iconSize?: number;

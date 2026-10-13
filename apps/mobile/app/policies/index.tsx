@@ -51,7 +51,11 @@ export default function PoliciesScreen() {
 
   return (
     <ScreenHost testID="policies-screen">
-      <List>
+      <List
+        onRefresh={async () => {
+          await load();
+        }}
+      >
         <Column spacing={space.sm} style={{ padding: space.md }}>
           <SectionHeader
             icon="policies"
@@ -67,7 +71,7 @@ export default function PoliciesScreen() {
             leading={
               <IconBubble
                 name={pol.blocked ? "shield" : "policies"}
-                tone={pol.blocked ? "danger" : "seed"}
+                tone="seed"
                 size={36}
                 iconSize={18}
               />

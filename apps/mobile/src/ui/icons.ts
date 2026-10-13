@@ -23,7 +23,9 @@ export type AppIconName =
   | "shield"
   | "activity"
   | "sessions"
-  | "console";
+  | "console"
+  | "camera"
+  | "document";
 
 export const Icons = {
   chevron: Icon.select({
@@ -98,6 +100,14 @@ export const Icons = {
     ios: "safari.fill",
     android: import("@expo/material-symbols/open_in_browser.xml"),
   }),
+  camera: Icon.select({
+    ios: "camera.fill",
+    android: import("@expo/material-symbols/photo_camera.xml"),
+  }),
+  document: Icon.select({
+    ios: "doc.text.fill",
+    android: import("@expo/material-symbols/description.xml"),
+  }),
 } as const;
 
 /** Lucide-style 24×24 stroke paths for web (no icon font / TTF). */
@@ -120,4 +130,6 @@ export const WEB_ICON_PATHS: Record<AppIconName, string> = {
   activity: "M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 3",
   sessions: "M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9M2 20h20M8 20v-2h8v2",
   console: "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3",
+  camera: "M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+  document: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8",
 };

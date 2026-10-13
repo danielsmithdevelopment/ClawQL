@@ -8,6 +8,7 @@ import type {
   HomeSpend,
   InboxItem,
   MorningDigest,
+  DevicePrefs,
   NotificationPrefs,
   OrgSummary,
   ReviewItem,
@@ -305,7 +306,7 @@ export const FIXTURE_INBOX: readonly InboxItem[] = [
     body: "Keep a second key that can approve — passkeys can't.",
     atMs: Date.now() - 86_400_000,
     kind: "system",
-    unread: false,
+    unread: true,
   },
 ];
 
@@ -466,6 +467,12 @@ export const FIXTURE_NOTIFICATION_PREFS: NotificationPrefs = {
   slack: true,
   email: false,
   morningDigest: true,
+};
+
+export const FIXTURE_DEVICE_PREFS: DevicePrefs = {
+  appLock: false,
+  haptics: true,
+  iconBadge: true,
 };
 
 export const FIXTURE_DEVICE_SESSIONS: readonly DeviceSession[] = [

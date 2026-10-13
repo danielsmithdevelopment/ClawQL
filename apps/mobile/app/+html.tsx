@@ -1,39 +1,61 @@
-import { ScrollViewStyleReset } from 'expo-router/html';
-import type { ReactNode } from 'react';
+import { ScrollViewStyleReset } from "expo-router/html";
+import type { ReactNode } from "react";
 
-// This file is web-only and used to configure the root HTML for every
-// web page during static rendering.
-// The contents of this function only run in Node.js environments and
-// do not have access to the DOM or browser APIs.
+// Web-only root HTML for static rendering (Node — no DOM APIs).
 export default function Root({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-
-        {/*
-          Disable body scrolling on web. This makes ScrollView components work closer to how they do on native.
-          However, body scrolling is often nice to have for mobile web. If you want to enable it, remove this line.
-        */}
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, shrink-to-fit=no"
+        />
+        <title>ClawQL — PhoneApprove</title>
+        <meta
+          name="description"
+          content="Approve exact-change requests from your phone with ClawQL PhoneApprove."
+        />
+        <meta name="theme-color" content="#fbf8fd" />
         <ScrollViewStyleReset />
-
-        {/* Using raw CSS styles as an escape-hatch to ensure the background color never flickers in dark-mode. */}
-        <style dangerouslySetInnerHTML={{ __html: responsiveBackground }} />
-        {/* Add any additional <head> elements that you want globally available on web... */}
+        <style dangerouslySetInnerHTML={{ __html: rootStyles }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <a href="#main" className="skip-link">
+          Skip to main content
+        </a>
+        <main id="main">{children}</main>
+      </body>
     </html>
   );
 }
 
-const responsiveBackground = `
-body {
-  background-color: #fff;
+const rootStyles = `
+html, body, #main, #root {
+  height: 100%;
 }
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #000;
-  }
-}`;
+body {
+  margin: 0;
+  background-color: #fbf8fd;
+}
+#main {
+  display: flex;
+  flex-direction: column;
+}
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 9999;
+  padding: 8px 12px;
+  background: #3f5aa9;
+  color: #ffffff;
+  font: 600 14px/1.2 system-ui, sans-serif;
+  text-decoration: none;
+  border-radius: 0 0 8px 0;
+}
+.skip-link:focus {
+  left: 0;
+}
+`;

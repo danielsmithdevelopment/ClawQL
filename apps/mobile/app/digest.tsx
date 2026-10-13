@@ -26,6 +26,7 @@ export default function DigestScreen() {
   const router = useRouter();
   const [digest, setDigest] = useState<MorningDigest | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -49,8 +50,19 @@ export default function DigestScreen() {
   }
 
   return (
-    <ScreenScroll testID="digest-screen">
-      <SectionHeader icon="digest" title={digest.headline} subtitle={digest.whenLabel} tone="warn" />
+    <ScreenScroll
+      testID="digest-screen"
+      refreshing={refreshing}
+      onRefresh={async () => {
+        setRefreshing(true);
+        try {
+          await load();
+        } finally {
+          setRefreshing(false);
+        }
+      }}
+    >
+      <SectionHeader icon="digest" title={digest.headline} subtitle={digest.whenLabel} tone="seed" />
       <Body>{digest.summary}</Body>
 
       {digest.awaitingYou > 0 ? (
@@ -72,7 +84,7 @@ export default function DigestScreen() {
             <Column spacing={space.sm}>
               <IconBubble
                 name={item.tone === "warn" ? "change" : item.tone === "ok" ? "activity" : "agents"}
-                tone={item.tone === "ok" ? "ok" : item.tone === "warn" ? "warn" : "neutral"}
+                tone="seed"
                 size={32}
                 iconSize={16}
               />

@@ -20,6 +20,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       NFCReaderUsageDescription:
         "ClawQL reads your security key over NFC to approve exact-change requests.",
       NSFaceIDUsageDescription: "ClawQL uses Face ID for the App Store reviewer demo org only.",
+      NSCameraUsageDescription:
+        "ClawQL uses the camera to scan documents and attach evidence to approval requests.",
+      NSPhotoLibraryUsageDescription:
+        "ClawQL attaches photos from your library as evidence on approval requests.",
+      UIBackgroundModes: ["remote-notification"],
     },
     privacyManifests: {
       NSPrivacyAccessedAPITypes: [
@@ -63,6 +68,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       "android.permission.NFC",
       "android.permission.USE_BIOMETRIC",
       "android.permission.POST_NOTIFICATIONS",
+      "android.permission.CAMERA",
+      "android.permission.READ_MEDIA_IMAGES",
     ],
     predictiveBackGestureEnabled: false,
   },
@@ -85,6 +92,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         icon: "./assets/images/icon.png",
         color: "#FF5636",
+      },
+    ],
+    [
+      "expo-image-picker",
+      {
+        photosPermission:
+          "Allow ClawQL to attach photos as evidence on approval requests.",
+        cameraPermission:
+          "Allow ClawQL to scan documents for approval evidence.",
       },
     ],
     [

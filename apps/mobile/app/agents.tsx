@@ -32,6 +32,7 @@ export default function AgentsScreen() {
   const router = useRouter();
   const [agents, setAgents] = useState<readonly AgentSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -57,7 +58,18 @@ export default function AgentsScreen() {
   const needsYou = agents.filter((a) => a.status === "needs_you").length;
 
   return (
-    <ScreenScroll testID="agents-screen">
+    <ScreenScroll
+      testID="agents-screen"
+      refreshing={refreshing}
+      onRefresh={async () => {
+        setRefreshing(true);
+        try {
+          await load();
+        } finally {
+          setRefreshing(false);
+        }
+      }}
+    >
       <SectionHeader
         icon="agents"
         title="Your agents"
@@ -78,7 +90,7 @@ export default function AgentsScreen() {
             <Column spacing={space.sm}>
               <IconBubble
                 name="agents"
-                tone={toneFor(agent.status)}
+                tone="seed"
                 size={36}
                 iconSize={18}
               />
@@ -86,6 +98,17 @@ export default function AgentsScreen() {
               <Badge label={agent.statusLabel} tone={toneFor(agent.status)} />
               <Meta>{agent.role}</Meta>
               <Meta>{`${agent.spendToday} today · last run ${agent.lastRun}`}</Meta>
+              {agent.status === "needs_you" ? (
+                <SecondaryButton
+                  testID={`agent-open-review-${agent.id}`}
+                  label={
+                    agent.waiting && agent.waiting > 1
+                      ? `See ${agent.waiting} waiting requests`
+                      : "See waiting request"
+                  }
+                  onPress={() => router.push("/(tabs)/review")}
+                />
+              ) : null}
             </Column>
           </SurfaceCard>
         ))}

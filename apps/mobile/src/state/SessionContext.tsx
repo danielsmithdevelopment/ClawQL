@@ -11,6 +11,8 @@ import {
 
 import type { MobileSession } from "../domain/schemas";
 import {
+  ensureFreshSessionEffect,
+  refreshSessionEffect,
   signInAsFixtureEffect,
   signInAsReviewerDemoEffect,
   signInWithBrowserEffect,
@@ -27,6 +29,8 @@ type SessionContextValue = {
   signInFixture: () => Promise<void>;
   signInReviewerDemo: () => Promise<void>;
   signOut: () => Promise<void>;
+  /** Extend / rotate access token; fixture mode renews locally. */
+  refreshSession: () => Promise<MobileSession | null>;
   setSession: (session: MobileSession | null) => void;
 };
 
@@ -39,16 +43,28 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    void Effect.runPromise(loadSessionEffect())
-      .then((s) => {
-        if (!cancelled) setSession(s);
-      })
-      .catch(() => {
+    void (async () => {
+      try {
+        const loaded = await Effect.runPromise(loadSessionEffect());
+        if (cancelled) return;
+        if (!loaded) {
+          setSession(null);
+          return;
+        }
+        const fresh = await Effect.runPromise(ensureFreshSessionEffect(loaded));
+        if (cancelled) return;
+        if (!fresh) {
+          await Effect.runPromise(signOutEffect()).catch(() => undefined);
+          setSession(null);
+          return;
+        }
+        setSession(fresh);
+      } catch {
         if (!cancelled) setSession(null);
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -57,6 +73,26 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!session) return;
     void Effect.runPromise(registerForPushEffect(session)).catch(() => undefined);
+  }, [session?.userId, session?.accessToken]);
+
+  // Soft expiry gate while the app is open — refresh early, else sign out.
+  useEffect(() => {
+    if (!session) return;
+    const tick = () => {
+      void (async () => {
+        const fresh = await Effect.runPromise(ensureFreshSessionEffect(session));
+        if (!fresh) {
+          await Effect.runPromise(signOutEffect()).catch(() => undefined);
+          setSession(null);
+          return;
+        }
+        if (fresh.accessToken !== session.accessToken || fresh.expiresAtMs !== session.expiresAtMs) {
+          setSession(fresh);
+        }
+      })();
+    };
+    const id = setInterval(tick, 60_000);
+    return () => clearInterval(id);
   }, [session]);
 
   const runAuth = useCallback(async (effect: Effect.Effect<MobileSession, { reason: string }>) => {
@@ -76,6 +112,27 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const refreshSession = useCallback(async () => {
+    if (!session) return null;
+    setError(null);
+    try {
+      const next = await Effect.runPromise(refreshSessionEffect(session));
+      setSession(next);
+      return next;
+    } catch (e: unknown) {
+      const reason =
+        e && typeof e === "object" && "reason" in e
+          ? String((e as { reason: string }).reason)
+          : e instanceof Error
+            ? e.message
+            : String(e);
+      setError(reason);
+      await Effect.runPromise(signOutEffect()).catch(() => undefined);
+      setSession(null);
+      return null;
+    }
+  }, [session]);
+
   const value = useMemo<SessionContextValue>(
     () => ({
       session,
@@ -89,8 +146,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         await Effect.runPromise(signOutEffect());
         setSession(null);
       },
+      refreshSession,
     }),
-    [session, loading, error, runAuth]
+    [session, loading, error, runAuth, refreshSession]
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

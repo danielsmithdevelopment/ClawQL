@@ -22,9 +22,9 @@
   },
   "lighthouse": {
     "performance": 0.85,
-    "accessibility": 0.93,
-    "bestPractices": 0.96,
-    "seo": 0.8,
+    "accessibility": 1,
+    "bestPractices": 1,
+    "seo": 1,
     "audits": {
       "fcp": 627.6115,
       "lcp": 627.6115,

@@ -26,6 +26,7 @@ export default function TeammatesScreen() {
   const router = useRouter();
   const [people, setPeople] = useState<readonly Teammate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -52,7 +53,18 @@ export default function TeammatesScreen() {
   const keysMissing = people.filter((p) => p.canApprove && !p.keysReady).length;
 
   return (
-    <ScreenScroll testID="teammates-screen">
+    <ScreenScroll
+      testID="teammates-screen"
+      refreshing={refreshing}
+      onRefresh={async () => {
+        setRefreshing(true);
+        try {
+          await load();
+        } finally {
+          setRefreshing(false);
+        }
+      }}
+    >
       <SectionHeader
         icon="people"
         title="Who can approve"
@@ -74,7 +86,7 @@ export default function TeammatesScreen() {
             <Column spacing={space.sm}>
               <IconBubble
                 name={person.canApprove ? "key" : "people"}
-                tone={person.canApprove ? (person.keysReady ? "ok" : "warn") : "neutral"}
+                tone="seed"
                 size={36}
                 iconSize={18}
               />

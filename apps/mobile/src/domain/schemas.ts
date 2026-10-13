@@ -83,9 +83,12 @@ export const ReviewDecision = Schema.Literals([
 ]);
 export type ReviewDecision = Schema.Schema.Type<typeof ReviewDecision>;
 
+export const DataSource = Schema.Literals(["live", "fixture", "cache"]);
+export type DataSource = Schema.Schema.Type<typeof DataSource>;
+
 export const ReviewListResponse = Schema.Struct({
   items: Schema.Array(ReviewItem),
-  source: Schema.Literals(["live", "fixture"]),
+  source: DataSource,
 });
 export type ReviewListResponse = Schema.Schema.Type<typeof ReviewListResponse>;
 
@@ -102,7 +105,7 @@ export type ActivityEvent = Schema.Schema.Type<typeof ActivityEvent>;
 
 export const ActivityListResponse = Schema.Struct({
   events: Schema.Array(ActivityEvent),
-  source: Schema.Literals(["live", "fixture"]),
+  source: DataSource,
 });
 export type ActivityListResponse = Schema.Schema.Type<typeof ActivityListResponse>;
 
@@ -239,6 +242,41 @@ export const NotificationPrefs = Schema.Struct({
   morningDigest: Schema.Boolean,
 });
 export type NotificationPrefs = Schema.Schema.Type<typeof NotificationPrefs>;
+
+/** On-device prefs (persisted locally — not console notification prefs). */
+export const DevicePrefs = Schema.Struct({
+  /** Require Face ID / biometrics (or fixture unlock) when returning to the app. */
+  appLock: Schema.Boolean,
+  /** Haptic feedback on approve / decline / errors. */
+  haptics: Schema.Boolean,
+  /** Home-screen icon badge = pending review count. */
+  iconBadge: Schema.Boolean,
+});
+export type DevicePrefs = Schema.Schema.Type<typeof DevicePrefs>;
+
+/** Registered Expo / APNs / FCM push endpoint for this phone. */
+export const PushDevice = Schema.Struct({
+  id: Schema.String,
+  token: Schema.String,
+  platform: Schema.Literals(["ios", "android", "web"]),
+  label: Schema.String,
+  registeredAtMs: Schema.Number,
+  fixture: Schema.Boolean,
+});
+export type PushDevice = Schema.Schema.Type<typeof PushDevice>;
+
+/** Photo / scan attached to a review request (evidence for approve). */
+export const DocumentAttachment = Schema.Struct({
+  id: Schema.String,
+  reviewId: Schema.String,
+  uri: Schema.String,
+  fileName: Schema.String,
+  mimeType: Schema.String,
+  source: Schema.Literals(["camera", "library"]),
+  capturedAtMs: Schema.Number,
+  bytes: Schema.optional(Schema.Number),
+});
+export type DocumentAttachment = Schema.Schema.Type<typeof DocumentAttachment>;
 
 export const MobileSession = Schema.Struct({
   accessToken: Schema.String,
