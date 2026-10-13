@@ -42,9 +42,16 @@ import {
 } from "../auth";
 import {
   loadDevicePrefsEffect,
+  biometricCapabilityEffect,
   saveDevicePrefsEffect,
   unlockAppEffect,
 } from "../device-ux";
+import {
+  clearEntitlementsEffect,
+  loadEntitlementsEffect,
+  restorePurchasesEffect,
+  subscribeStoreSandboxEffect,
+} from "../entitlements";
 import { attachmentPreviewFor, captureDocumentEffect } from "../documents";
 import { approveWithSecurityKeyEffect } from "../nfc-security-key";
 import {
@@ -351,6 +358,23 @@ describe("mobile API fixture mode", () => {
     expect(loaded.iconBadge).toBe(true);
     const unlocked = await Effect.runPromise(unlockAppEffect());
     expect(unlocked).toBe(true);
+    const bio = await Effect.runPromise(biometricCapabilityEffect());
+    expect(bio.available).toBe(true);
+    expect(bio.label).toMatch(/Face ID|Face unlock/);
+  });
+
+  it("subscribes Pro via fixture store_iap and restores", async () => {
+    await Effect.runPromise(clearEntitlementsEffect());
+    const free = await Effect.runPromise(loadEntitlementsEffect());
+    expect(free.planId).toBe("free");
+    const pro = await Effect.runPromise(subscribeStoreSandboxEffect("pro"));
+    expect(pro.planId).toBe("pro");
+    expect(pro.billingMode).toBe("store_iap");
+    expect(pro.productId).toBe("clawql_pro_monthly");
+    expect(pro.fixturePurchaseId).toBeTruthy();
+    const restored = await Effect.runPromise(restorePurchasesEffect());
+    expect(restored.planId).toBe("pro");
+    await Effect.runPromise(clearEntitlementsEffect());
   });
 
   it("marks inbox items read by id and by review", async () => {

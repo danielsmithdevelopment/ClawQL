@@ -26,9 +26,18 @@ import {
 } from "@/src/services/api";
 import { loadMobileConfigEffect } from "@/src/services/config";
 import {
+  biometricCapabilityEffect,
+  confirmWithBiometricsEffect,
   loadDevicePrefsEffect,
   saveDevicePrefsEffect,
+  type BiometricCapability,
 } from "@/src/services/device-ux";
+import {
+  loadEntitlementsEffect,
+  subscribeStoreSandboxEffect,
+  restorePurchasesEffect,
+  type MobileEntitlements,
+} from "@/src/services/entitlements";
 import { registerForPushEffect } from "@/src/services/push";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, space } from "@/src/theme";
@@ -59,6 +68,8 @@ export default function ProfileScreen() {
   const [pushDevices, setPushDevices] = useState<readonly PushDevice[]>([]);
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [devicePrefs, setDevicePrefs] = useState<DevicePrefs | null>(null);
+  const [entitlements, setEntitlements] = useState<MobileEntitlements | null>(null);
+  const [bio, setBio] = useState<BiometricCapability | null>(null);
   const [loading, setLoading] = useState(true);
   const [hydrated, setHydrated] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -68,13 +79,15 @@ export default function ProfileScreen() {
   const load = useCallback(async () => {
     if (!session) return;
     try {
-      const [k, a, p, s, d, dp] = await Promise.all([
+      const [k, a, p, s, d, dp, ent, cap] = await Promise.all([
         Effect.runPromise(listSecurityKeysEffect(session)),
         Effect.runPromise(listConnectedAppsEffect(session)),
         Effect.runPromise(getNotificationPrefsEffect(session)),
         Effect.runPromise(listDeviceSessionsEffect(session)),
         Effect.runPromise(listPushDevicesEffect(session)),
         Effect.runPromise(loadDevicePrefsEffect()),
+        Effect.runPromise(loadEntitlementsEffect()),
+        Effect.runPromise(biometricCapabilityEffect()),
       ]);
       setKeys(k);
       setApps(a);
@@ -82,6 +95,8 @@ export default function ProfileScreen() {
       setDeviceSessions(s);
       setPushDevices(d);
       setDevicePrefs(dp);
+      setEntitlements(ent);
+      setBio(cap);
     } finally {
       setLoading(false);
       setHydrated(true);
@@ -94,13 +109,82 @@ export default function ProfileScreen() {
     }, [load])
   );
 
-  if (!session || (loading && !hydrated) || !prefs || !devicePrefs) {
+  if (!session || (loading && !hydrated) || !prefs || !devicePrefs || !entitlements) {
     return (
       <ScreenHost>
         <LoadingBlock />
       </ScreenHost>
     );
   }
+
+  const bioLabel = bio?.label ?? "Face ID / Touch ID";
+  const appLockHelp = bio?.fixture
+    ? `Require ${bioLabel} when you leave and come back. Fixture mode uses a one-tap unlock that stands in for ${bioLabel}.`
+    : `Require ${bioLabel} when you leave and come back.`;
+
+  const onSubscribeSandbox = (planId: "pro" | "team") => {
+    void (async () => {
+      setBusy(true);
+      setNote(null);
+      try {
+        const ok = await Effect.runPromise(
+          confirmWithBiometricsEffect(`Confirm ${planId === "pro" ? "Pro" : "Team"} with ${bioLabel}`)
+        );
+        if (!ok) {
+          setNote("Subscribe cancelled");
+          return;
+        }
+        const next = await Effect.runPromise(subscribeStoreSandboxEffect(planId));
+        setEntitlements(next);
+        setNote(
+          `Subscribed to ${next.planLabel} (fixture store_iap · ${next.productId ?? "sandbox"})`
+        );
+      } catch (e: unknown) {
+        setNote(
+          e && typeof e === "object" && "reason" in e
+            ? String((e as { reason: string }).reason)
+            : e instanceof Error
+              ? e.message
+              : String(e)
+        );
+      } finally {
+        setBusy(false);
+      }
+    })();
+  };
+
+  const onRestorePurchases = () => {
+    void (async () => {
+      setBusy(true);
+      setNote(null);
+      try {
+        const ok = await Effect.runPromise(
+          confirmWithBiometricsEffect(`Restore purchases with ${bioLabel}`)
+        );
+        if (!ok) {
+          setNote("Restore cancelled");
+          return;
+        }
+        const next = await Effect.runPromise(restorePurchasesEffect());
+        setEntitlements(next);
+        setNote(
+          next.planId === "free"
+            ? "No purchases to restore"
+            : `Restored ${next.planLabel} (${next.billingMode})`
+        );
+      } catch (e: unknown) {
+        setNote(
+          e && typeof e === "object" && "reason" in e
+            ? String((e as { reason: string }).reason)
+            : e instanceof Error
+              ? e.message
+              : String(e)
+        );
+      } finally {
+        setBusy(false);
+      }
+    })();
+  };
 
   const openConsole = async () => {
     const config = await Effect.runPromise(loadMobileConfigEffect());
@@ -285,17 +369,30 @@ export default function ProfileScreen() {
           <PrefRow
             testID="pref-app-lock"
             label="App Lock"
-            help="Require Face ID / biometrics when you leave and come back. Fixture mode uses a one-tap unlock."
+            help={appLockHelp}
             value={devicePrefs.appLock}
             onChange={(appLock) => {
               const next = { ...devicePrefs, appLock };
               setDevicePrefs(next);
               void Effect.runPromise(saveDevicePrefsEffect(next)).then(() => {
                 globalThis.dispatchEvent?.(new Event("clawql-device-prefs-changed"));
-                setNote(appLock ? "App Lock on — lock after background" : "App Lock off");
+                setNote(
+                  appLock
+                    ? `App Lock on — ${bioLabel} after background`
+                    : "App Lock off"
+                );
               });
             }}
           />
+          <Meta testID="profile-bio-capability" color={brand.inkFaint}>
+            {bio?.fixture
+              ? `${bioLabel} ready (fixture)`
+              : bio?.available && bio.enrolled
+                ? `${bioLabel} ready on this phone`
+                : bio?.available
+                  ? `${bioLabel} hardware found — enroll in system settings`
+                  : "No Face ID / Touch ID hardware detected"}
+          </Meta>
           {devicePrefs.appLock ? (
             <SecondaryButton
               testID="profile-lock-now"
@@ -303,7 +400,7 @@ export default function ProfileScreen() {
               onPress={() => {
                 // AppLockGate listens for a custom event on web / fixture demos.
                 globalThis.dispatchEvent?.(new Event("clawql-app-lock-now"));
-                setNote("Locked — unlock from the lock screen");
+                setNote(`Locked — unlock with ${bioLabel}`);
               }}
             />
           ) : null}
@@ -481,10 +578,52 @@ export default function ProfileScreen() {
         />
       </SurfaceCard>
 
+      <SurfaceCard testID="profile-plan-billing" tint="soft">
+        <IconBubble name="spend" tone="seed" size={32} iconSize={16} />
+        <Subtitle>Plan & billing</Subtitle>
+        <Body testID="profile-plan-label">{`Current plan · ${entitlements.planLabel}`}</Body>
+        <Meta testID="profile-plan-mode">
+          {`${entitlements.billingMode}${entitlements.productId ? ` · ${entitlements.productId}` : ""}${
+            entitlements.seats ? ` · ${entitlements.seats} seat${entitlements.seats === 1 ? "" : "s"}` : ""
+          }`}
+        </Meta>
+        <Meta testID="profile-plan-honesty" color={brand.inkFaint}>
+          Fixture sandbox uses store_iap entitlements. Live App Store / Play sheets
+          land after Day-0 enrollment — web Stripe Checkout stays for browser signup.
+        </Meta>
+        {entitlements.planId === "free" ? (
+          <Column spacing={space.sm}>
+            <PrimaryButton
+              testID="profile-subscribe-pro"
+              label="Subscribe Pro (sandbox)"
+              disabled={busy}
+              onPress={() => onSubscribeSandbox("pro")}
+            />
+            <SecondaryButton
+              testID="profile-subscribe-team"
+              label="Subscribe Team (sandbox)"
+              disabled={busy}
+              onPress={() => onSubscribeSandbox("team")}
+            />
+          </Column>
+        ) : (
+          <Badge
+            label={`${entitlements.planLabel} · ${entitlements.billingMode}`}
+            tone="ok"
+          />
+        )}
+        <SecondaryButton
+          testID="profile-restore-purchases"
+          label="Restore purchases"
+          disabled={busy}
+          onPress={onRestorePurchases}
+        />
+      </SurfaceCard>
+
       <SurfaceCard>
         <IconBubble name="console" tone="seed" size={32} iconSize={16} />
         <Subtitle>Everything else</Subtitle>
-        <Meta>Gateways, billing, and team live in the web console.</Meta>
+        <Meta>Gateways and advanced admin still open in the web console.</Meta>
         <SecondaryButton
           testID="open-console"
           label="Open web console"
