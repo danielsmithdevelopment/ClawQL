@@ -62,9 +62,13 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Offline queue snapshot + cache banner | ✅ Home / Review |
 | Notification prefs persisted on device | ✅ |
 | Mark all inbox read | ✅ |
+| System inbox Mark read | ✅ |
+| Compact filter chips (~32px) | ✅ Review / Activity |
+| Profile pull-to-refresh | ✅ |
+| Chrome a11y labels (buttons / rows / chips / prefs) | ✅ |
 | Activity drill-in to decided archive | ✅ |
 | Deep links: review + inbox/digest/agents/spend/teammates/policies | ✅ |
-| Deep link parsing / Maestro MOB-01…18 | ✅ (sim/emulator or web) |
+| Deep link parsing / Maestro MOB-01…19 | ✅ (sim/emulator or web) |
 | Unit tests | `npm test` |
 | Packaging preflight (no upload) | `npm run store:check` |
 

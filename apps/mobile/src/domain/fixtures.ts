@@ -306,7 +306,7 @@ export const FIXTURE_INBOX: readonly InboxItem[] = [
     body: "Keep a second key that can approve — passkeys can't.",
     atMs: Date.now() - 86_400_000,
     kind: "system",
-    unread: false,
+    unread: true,
   },
 ];
 

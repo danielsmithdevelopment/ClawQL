@@ -336,15 +336,21 @@ export function NavRow({
   tone?: "seed" | "ok" | "warn" | "danger" | "neutral";
 }) {
   return (
-    <ListItem
-      testID={testID}
-      onPress={onPress}
-      leading={<IconBubble name={icon} tone={tone} size={36} iconSize={18} />}
-      trailing={<Icon name={Icons.chevron} size={14} color={color.onSurfaceVariant} />}
-      supportingText={help}
+    <View
+      accessible
+      accessibilityRole="button"
+      accessibilityLabel={help ? `${label}. ${help}` : label}
     >
-      {label}
-    </ListItem>
+      <ListItem
+        testID={testID}
+        onPress={onPress}
+        leading={<IconBubble name={icon} tone={tone} size={36} iconSize={18} />}
+        trailing={<Icon name={Icons.chevron} size={14} color={color.onSurfaceVariant} />}
+        supportingText={help}
+      >
+        {label}
+      </ListItem>
+    </View>
   );
 }
 
@@ -362,15 +368,22 @@ export function PrimaryButton({
   danger?: boolean;
 }) {
   return (
-    <Button
-      testID={testID}
-      label={label}
-      variant="filled"
-      disabled={disabled}
-      onPress={onPress}
-      // Brand action accent (orange). Chrome/selection stay primary blue.
-      style={{ backgroundColor: danger ? color.error : color.accent }}
-    />
+    <View
+      accessible
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: Boolean(disabled) }}
+    >
+      <Button
+        testID={testID}
+        label={label}
+        variant="filled"
+        disabled={disabled}
+        onPress={onPress}
+        // Brand action accent (orange). Chrome/selection stay primary blue.
+        style={{ backgroundColor: danger ? color.error : color.accent }}
+      />
+    </View>
   );
 }
 
@@ -386,13 +399,20 @@ export function SecondaryButton({
   testID?: string;
 }) {
   return (
-    <Button
-      testID={testID}
-      label={label}
-      variant="outlined"
-      disabled={disabled}
-      onPress={onPress}
-    />
+    <View
+      accessible
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: Boolean(disabled) }}
+    >
+      <Button
+        testID={testID}
+        label={label}
+        variant="outlined"
+        disabled={disabled}
+        onPress={onPress}
+      />
+    </View>
   );
 }
 
@@ -408,13 +428,20 @@ export function TextButton({
   testID?: string;
 }) {
   return (
-    <Button
-      testID={testID}
-      label={label}
-      variant="text"
-      disabled={disabled}
-      onPress={onPress}
-    />
+    <View
+      accessible
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: Boolean(disabled) }}
+    >
+      <Button
+        testID={testID}
+        label={label}
+        variant="text"
+        disabled={disabled}
+        onPress={onPress}
+      />
+    </View>
   );
 }
 
@@ -431,14 +458,38 @@ export function FilterChip({
   testID?: string;
   count?: number;
 }) {
+  const text = typeof count === "number" ? `${label} ${count}` : label;
   return (
-    <Button
+    <Pressable
       testID={testID}
-      label={typeof count === "number" ? `${label} ${count}` : label}
-      variant={selected ? "filled" : "outlined"}
       onPress={onPress}
-      style={selected ? { backgroundColor: color.primary } : undefined}
-    />
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      accessibilityLabel={selected ? `${text}, selected` : text}
+      style={{
+        height: 32,
+        paddingHorizontal: 12,
+        borderRadius: shape.full,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: selected ? color.primary : color.surfaceContainerLowest,
+        borderWidth: selected ? 0 : 1,
+        borderColor: color.outlineVariant,
+      }}
+    >
+      <RnText
+        style={{
+          fontSize: 12,
+          fontWeight: "600",
+          lineHeight: 14,
+          color: selected ? color.onPrimary : color.onSurface,
+          includeFontPadding: false,
+        }}
+        allowFontScaling={false}
+      >
+        {text}
+      </RnText>
+    </Pressable>
   );
 }
 
@@ -558,10 +609,19 @@ export function PrefRow({
   testID?: string;
 }) {
   return (
-    <Column testID={testID} spacing={4} style={{ paddingVertical: space.sm }}>
-      <Switch label={label} value={value} onValueChange={onChange} />
-      <Meta>{help}</Meta>
-    </Column>
+    <View
+      testID={testID}
+      accessible
+      accessibilityRole="switch"
+      accessibilityLabel={`${label}. ${help}`}
+      accessibilityState={{ checked: value }}
+      style={{ paddingVertical: space.sm }}
+    >
+      <Column spacing={4}>
+        <Switch label={label} value={value} onValueChange={onChange} />
+        <Meta>{help}</Meta>
+      </Column>
+    </View>
   );
 }
 
@@ -594,23 +654,29 @@ export function ReviewRow({
   onPress: () => void;
 }) {
   return (
-    <ListItem
-      testID={testID}
-      onPress={onPress}
-      leading={
-        <IconBubble
-          name={kindIcon(kindLabel)}
-          // One blue chrome tone for all list glyphs — status lives on badges, not icons.
-          tone="seed"
-          size={36}
-          iconSize={18}
-        />
-      }
-      trailing={<Icon name={Icons.chevron} size={14} color={color.onSurfaceVariant} />}
-      supportingText={`${kindLabel} · ${badge}\n${listMeta}\n${statusLine}`}
+    <View
+      accessible
+      accessibilityRole="button"
+      accessibilityLabel={`${title}. ${kindLabel}. ${badge}. ${listMeta}. ${statusLine}`}
     >
-      {title}
-    </ListItem>
+      <ListItem
+        testID={testID}
+        onPress={onPress}
+        leading={
+          <IconBubble
+            name={kindIcon(kindLabel)}
+            // One blue chrome tone for all list glyphs — status lives on badges, not icons.
+            tone="seed"
+            size={36}
+            iconSize={18}
+          />
+        }
+        trailing={<Icon name={Icons.chevron} size={14} color={color.onSurfaceVariant} />}
+        supportingText={`${kindLabel} · ${badge}\n${listMeta}\n${statusLine}`}
+      >
+        {title}
+      </ListItem>
+    </View>
   );
 }
 

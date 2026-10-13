@@ -1,0 +1,24 @@
+# MOB-19 — System inbox Mark read + compact filter chips visible on Activity
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-home"
+- tapOn:
+    id: "home-open-inbox"
+- assertVisible:
+    id: "inbox-screen"
+- assertVisible:
+    id: "inbox-mark-read-inbox_4"
+- tapOn:
+    id: "inbox-mark-read-inbox_4"
+- assertNotVisible:
+    id: "inbox-mark-read-inbox_4"
+- tapOn:
+    id: "tab-activity"
+- assertVisible:
+    id: "activity-filters"
+- assertVisible:
+    id: "activity-filter-kind-all"

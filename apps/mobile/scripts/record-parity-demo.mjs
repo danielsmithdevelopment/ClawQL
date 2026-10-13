@@ -124,9 +124,19 @@ if (!(await page.getByTestId("home-open-inbox").isVisible().catch(() => false)))
 }
 await page.getByTestId("home-open-inbox").click();
 await page.getByTestId("inbox-screen").waitFor({ state: "visible", timeout: 15000 });
-await page.getByTestId("inbox-mark-all-read").waitFor({ state: "visible", timeout: 10000 });
-await page.getByTestId("inbox-mark-all-read").click();
-await page.waitForTimeout(600);
+// System reminder Mark read (MOB-19) before clearing the rest
+await page.getByTestId("inbox-mark-read-inbox_4").waitFor({ state: "visible", timeout: 10000 });
+await page.getByTestId("inbox-mark-read-inbox_4").scrollIntoViewIfNeeded();
+await page.waitForTimeout(400);
+await shot("08a-inbox-system-mark-read.png");
+await page.getByTestId("inbox-mark-read-inbox_4").click();
+await page.getByTestId("inbox-mark-read-inbox_4").waitFor({ state: "hidden", timeout: 10000 });
+await page.waitForTimeout(400);
+await shot("08b-inbox-system-marked.png");
+if (await page.getByTestId("inbox-mark-all-read").isVisible().catch(() => false)) {
+  await page.getByTestId("inbox-mark-all-read").click();
+  await page.waitForTimeout(600);
+}
 await shot("08-inbox-mark-all-read.png");
 
 // Decision → ask a named teammate picker (inbox is stacked — leave first)

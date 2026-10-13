@@ -141,6 +141,13 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-18-activity-filters.yaml",
   },
   {
+    id: "MOB-19",
+    run: "Maestro",
+    title: "System inbox Mark read",
+    passWhen: "Unread system row shows Mark read; tap clears the action",
+    flow: "maestro/flows/mob-19-system-mark-read.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',

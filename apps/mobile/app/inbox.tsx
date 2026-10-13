@@ -165,6 +165,18 @@ export default function InboxScreen() {
                   }}
                 />
               ) : null}
+              {item.kind === "system" && item.unread ? (
+                <SecondaryButton
+                  testID={`inbox-mark-read-${item.id}`}
+                  label="Mark read"
+                  onPress={() => {
+                    void (async () => {
+                      await Effect.runPromise(markInboxReadEffect(session, item.id));
+                      await load();
+                    })();
+                  }}
+                />
+              ) : null}
             </Column>
           </SurfaceCard>
         ))}
