@@ -17,6 +17,8 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`gateway-multi-multiturn-10k.json`](./gateway-multi-multiturn-10k.json) | **10 000 × 12-turn** flows — tokens + latency + RSS + task_success (+ **direct** baseline) |
 | [`stall-memory-diagnostics.md`](./stall-memory-diagnostics.md) | Equal search/exec stall localization + smaps/DuckDB Ready breakdown |
 | [`stall-memory-round2.md`](./stall-memory-round2.md) | UV pool / timer wrap / session-count — under-load RSS is not session pileup |
+| [`stall-memory-round3.md`](./stall-memory-round3.md) | Server vs client stall timing + lean/fat catalog listen RSS |
+| [`catalog-listen-rss.json`](./catalog-listen-rss.json) | Lean vs fat OpenAPI listen RSS / smaps |
 | [`index.html`](./index.html) | Dedicated comparison page (competitors, Bun rationale, vs direct) |
 
 ---
@@ -268,7 +270,7 @@ Artifact: [`gateway-multi-multiturn-search-exec-split-10k.json`](./gateway-multi
 
 Steady per-call p999 is fine (&lt;5 ms). Flow p999 is rare single-RPC spikes (~500 ms) on **either** call — of 18 turns ≥100 ms, **search owned 7 / execute owned 11**. GC correlation still empty. So the remaining tail is not “search scoring every request”; it is infrequent event-loop / scheduling stalls that can land on whichever RPC is in flight. Known-op (execute-only) still wins session p999 (**130 ms** on this split board) by removing the second RPC and half the spike surface.
 
-**Stall localization** (see [`stall-memory-diagnostics.md`](./stall-memory-diagnostics.md), [`stall-memory-round2.md`](./stall-memory-round2.md)): equal search/execute maxima ⇒ wait off the hot path, not call body. Host-lag **0 slips**; ELD quiet. **`UV_THREADPOOL_SIZE=16` did not help** (Node n=800). Timer wrap found **no ≥5 ms** `setInterval`/`setTimeout` bodies on a Bun smoke. Still hunting off-thread I/O (upstream fetch / runtime pool).
+**Stall localization** (see [`stall-memory-round3.md`](./stall-memory-round3.md)): keep-alive **1 connect/arm**. Server vs client pairing is **mixed** — some slows match server duration (real ClawQL), others have clean server + large client gap (harness/transport). Client GC tops ~11 ms. Use `MT_STALL_DIAG=1`.
 
 #### 4. Memory (&lt;200 MB) — anonymous data at Ready
 
@@ -276,7 +278,7 @@ Bun HTTP under-load was ~311–317 MB **with and without** `--smol` (flags A/B
 
 **Lazy-import pass (this branch):** HTTP no longer statically loads payments / network / GraphQL / HITL / webhooks / gRPC / chatgpt / inference / ouroboros at listen. Bench sets `CLAWQL_HTTP_SKIP_PAYMENTS=1`. Those packages stay **unmapped**.
 
-**smaps + DuckDB:** lean Ready probe ([`bun-ready-memory.json`](./bun-ready-memory.json)) after lazy `clawql-data` — RSS **~155 MB**, **anon ~116 MB** / file-backed **~38 MB**; DuckDB gone. Equal-arm **fat catalog listen** is already **~280–295 MB** before traffic. Under load, `mcp_sessions` stays **1**, audit capped/off does not explain the climb, and `terminateSession` frees only **~16 MB** — **not** session pileup (see [`stall-memory-round2.md`](./stall-memory-round2.md)). Remaining cut is fat-catalog residency + first-flow process-global caches.
+**smaps + DuckDB:** lazy `clawql-data` keeps DuckDB unmapped. Same-probe lean vs fat listen ([`catalog-listen-rss.json`](./catalog-listen-rss.json)): **233 → 280 MB** (**+47 MB** for the fat equal-arm catalog; spec file only +50 KB). Sessions stay **1**; terminate frees ~16 MB. Under-load plateau is mostly Ready + that catalog delta, not traffic growth (see [`stall-memory-round3.md`](./stall-memory-round3.md)).
 
 Bun `--smol` RSS ladder (same host): empty **13** → express **37** → effect **40** → MCP SDK **39** → `clawql-api` **88** → `import(server-http)` **165** → lean Ready (lazy DuckDB) **~155**. Fat-catalog listen / multiturn warm **~280–295**; under-load plateau **~320**.
 

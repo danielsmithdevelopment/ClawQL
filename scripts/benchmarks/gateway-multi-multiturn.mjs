@@ -67,7 +67,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { performance } from "node:perf_hooks";
 import { spawn, spawnSync } from "node:child_process";
-import { Agent, fetch as undiciFetch } from "undici";
+import { Agent, buildConnector, fetch as undiciFetch } from "undici";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -587,6 +587,8 @@ function buildTurns() {
  * client path than ClawQL HTTP (long-lived event stream vs POST-only JSON).
  */
 /** Shared keep-alive + TCP_NODELAY agent for Streamable HTTP bench clients. */
+let streamableHttpConnects = 0;
+const streamableHttpConnector = buildConnector({ noDelay: true });
 const streamableHttpAgent = new Agent({
   keepAliveTimeout: 60_000,
   keepAliveMaxTimeout: 60_000,
@@ -594,8 +596,43 @@ const streamableHttpAgent = new Agent({
   // extra sockets only add churn under rare server stalls.
   connections: 1,
   pipelining: 1,
-  connect: { noDelay: true },
+  connect: (options, callback) => {
+    streamableHttpConnects += 1;
+    return streamableHttpConnector(options, callback);
+  },
 });
+
+function stallDiagEnabled() {
+  return ["1", "true", "yes"].includes((process.env.MT_STALL_DIAG ?? "").trim().toLowerCase());
+}
+
+/** Client-side GC marks when MT_CLIENT_GC=1 (correlate with stall timestamps). */
+const clientGcEvents = [];
+async function maybeInstallClientGcObserver() {
+  if (!["1", "true", "yes"].includes((process.env.MT_CLIENT_GC ?? "").trim().toLowerCase())) {
+    return;
+  }
+  try {
+    const { PerformanceObserver } = await import("node:perf_hooks");
+    const obs = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        clientGcEvents.push({
+          t_iso: new Date().toISOString(),
+          duration_ms: Number(entry.duration.toFixed(2)),
+          kind: entry.detail?.kind ?? entry.name,
+        });
+        if (entry.duration >= 20) {
+          console.error(
+            `[mt-client-gc] duration_ms=${entry.duration.toFixed(1)} t=${new Date().toISOString()} kind=${entry.detail?.kind ?? entry.name}`
+          );
+        }
+      }
+    });
+    obs.observe({ entryTypes: ["gc"], buffered: false });
+  } catch (e) {
+    console.error(`[mt-client-gc] unavailable: ${e?.message || e}`);
+  }
+}
 
 function fetchSkipStandaloneSse(baseFetch = undiciFetch) {
   const slowMs = Number(process.env.MT_CLIENT_SLOW_MS || 0) || 0;
@@ -606,19 +643,27 @@ function fetchSkipStandaloneSse(baseFetch = undiciFetch) {
     if (method === "GET" && accept.includes("text/event-stream")) {
       return new Response(null, { status: 405, headers: { Allow: "POST, DELETE" } });
     }
-    const t0 = slowMs > 0 ? performance.now() : 0;
+    const t0 = performance.now();
+    const t0Iso = new Date().toISOString();
+    const connectsBefore = streamableHttpConnects;
+    let res;
     try {
-      return await baseFetch(input, {
+      res = await baseFetch(input, {
         ...init,
         dispatcher: init.dispatcher || streamableHttpAgent,
       });
+      return res;
     } finally {
-      if (slowMs > 0) {
-        const dt = performance.now() - t0;
-        if (dt >= slowMs) {
-          const url = typeof input === "string" ? input : input?.url || String(input);
-          console.error(`[mt-client-slow] ${dt.toFixed(1)}ms ${method} ${url}`);
-        }
+      const dt = performance.now() - t0;
+      if (slowMs > 0 && dt >= slowMs) {
+        const url = typeof input === "string" ? input : input?.url || String(input);
+        const serverMs = res?.headers?.get?.("x-clawql-server-ms") ?? "-";
+        const serverT0 = res?.headers?.get?.("x-clawql-server-t0") ?? "-";
+        console.error(
+          `[mt-client-slow] ${dt.toFixed(1)}ms ${method} ${url} t0=${t0Iso} t1=${new Date().toISOString()} ` +
+            `server_ms=${serverMs} server_t0=${serverT0} connects_delta=${streamableHttpConnects - connectsBefore} ` +
+            `connects_total=${streamableHttpConnects}`
+        );
       }
     }
   };
@@ -818,6 +863,8 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     "CLAWQL_TIMER_TRACE",
     "CLAWQL_TIMER_TRACE_SLOW_MS",
     "CLAWQL_MCP_SESSION_IDLE_MS",
+    "CLAWQL_HTTP_TIMING",
+    "CLAWQL_HTTP_SLOW_MS",
     "UV_THREADPOOL_SIZE",
     "BUN_JSC_forceRAMSize",
     "BUN_JSC_useJIT",
@@ -828,6 +875,11 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
   }
   // Bench default: expose session/audit counts on /healthz for RSS localization.
   if (env.CLAWQL_BENCH_STATS == null) env.CLAWQL_BENCH_STATS = "1";
+  // Stall localization (MT_STALL_DIAG=1): server timing headers + slow-route logs.
+  if (stallDiagEnabled()) {
+    if (env.CLAWQL_HTTP_TIMING == null) env.CLAWQL_HTTP_TIMING = "1";
+    if (env.CLAWQL_HTTP_SLOW_MS == null) env.CLAWQL_HTTP_SLOW_MS = "5";
+  }
   const wantCpuProf = runtime === "node" && process.env.MT_HTTP_CPU_PROF === "1";
   const wantPerf = ["1", "true", "yes"].includes(
     (process.env.CLAWQL_HTTP_PERF ?? "").trim().toLowerCase()
@@ -864,12 +916,14 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
   const wantTimerTrace = ["1", "true", "yes"].includes(
     (process.env.CLAWQL_TIMER_TRACE ?? "").trim().toLowerCase()
   );
+  const wantHttpSlow = Number(process.env.CLAWQL_HTTP_SLOW_MS || 0) > 0;
   const onChildOut = (chunk) => {
     const s = String(chunk);
-    if (wantPerf || wantTraceGc || wantTimerTrace) {
+    if (wantPerf || wantTraceGc || wantTimerTrace || wantHttpSlow) {
       stderrChunks.push(s);
       if (
         s.includes("[clawql-http-perf]") ||
+        s.includes("[clawql-http-slow]") ||
         s.includes("[clawql-timer-trace]") ||
         s.includes("Scavenge") ||
         s.includes("Mark-")
@@ -2417,6 +2471,12 @@ async function main() {
   if (!existsSync(join(ROOT, "dist", "server.js"))) {
     console.error("dist/server.js missing — clawql arm will skip");
   }
+  // Stall localization: MT_STALL_DIAG=1 enables client slow logs + GC observer.
+  if (stallDiagEnabled()) {
+    if (process.env.MT_CLIENT_SLOW_MS == null) process.env.MT_CLIENT_SLOW_MS = "20";
+    if (process.env.MT_CLIENT_GC == null) process.env.MT_CLIENT_GC = "1";
+  }
+  await maybeInstallClientGcObserver();
   await mkdir(OUT_DIR, { recursive: true });
   const turns = buildTurns();
   const mock = await startCatalogHttp();
@@ -2602,6 +2662,20 @@ async function main() {
       bun: resolveBunBin()
         ? spawnSync(resolveBunBin(), ["--version"], { encoding: "utf8" }).stdout?.trim() || null
         : null,
+      client_diagnostics: {
+        http_connects_total: streamableHttpConnects,
+        http_agent: {
+          connections: 1,
+          pipelining: 1,
+          keepAliveTimeout: 60_000,
+          note: "Single keep-alive socket per origin; connects_total should stay near 1 per HTTP arm after warm-up.",
+        },
+        client_gc_events: clientGcEvents.length,
+        client_gc_top: [...clientGcEvents]
+          .sort((a, b) => b.duration_ms - a.duration_ms)
+          .slice(0, 20),
+        client_slow_ms_threshold: Number(process.env.MT_CLIENT_SLOW_MS || 0) || 0,
+      },
       config: {
         turns: TURNS,
         iters: ITERS,
