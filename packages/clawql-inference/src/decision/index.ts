@@ -86,6 +86,21 @@ export {
 } from "./openrouter-decision1-scorer.js";
 
 export {
+  callRemoteLaya,
+  callRemoteLayaEffect,
+  selfHostedLayaAvailable,
+  isLayaBackendId,
+  LAYA_BACKEND_ID,
+  DEFAULT_LAYA_MODEL,
+  type CallLayaOptions,
+} from "./remote-laya.js";
+
+export {
+  createLayaFastDecisionScorerLayer,
+  type LayaFastDecisionScorerLayerOptions,
+} from "./laya-fast-decision-scorer.js";
+
+export {
   FanoutSpendCostService,
   FanoutSpendCostLive,
   buildSpendCostLookup,
