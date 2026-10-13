@@ -86,9 +86,9 @@ describe("openrouter-decision1-scorer", () => {
 
       expect(report.passedCriteria).toBe(true);
       expect(report.scorerBackend).toBe(OPENROUTER_DECISION1_SCORER_BACKEND_ID);
-      expect(report.scorerBackend).not.toBe("gliner2");
+      expect(report.scorerBackend).not.toBe("gliner-decide");
       expect(report.productionTrusted).toBe(false);
-      expect(report.failureReasons.some((x) => /not live gliner2/i.test(x))).toBe(true);
+      expect(report.failureReasons.some((x) => /not live gliner-decide/i.test(x))).toBe(true);
     } finally {
       if (prevFlip === undefined) delete process.env.CLAWQL_FLIP_RATE_GATE;
       else process.env.CLAWQL_FLIP_RATE_GATE = prevFlip;

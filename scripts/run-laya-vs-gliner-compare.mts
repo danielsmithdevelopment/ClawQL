@@ -93,14 +93,15 @@ function main(): void {
   mkdirSync(dirname(outPath), { recursive: true });
 
   const compare = {
-    protocol: "Laya vs GLiNER2 on frozen v0.4 routing held-out — measure, not trust transfer",
+    protocol:
+      "Laya vs GLiNER Decide family on frozen v0.4 routing held-out — measure, not trust transfer",
     comparedAt: new Date().toISOString(),
     suiteId: "fast-decision-held-out-v0.4-routing-fresh",
     useSiteId: "search_provider_tool_routing",
     arms: {
       gliner2: {
         source: glinerPath,
-        scorerBackend: gliner.scorerBackend ?? "gliner2",
+        scorerBackend: gliner.scorerBackend ?? "gliner-decide",
         n: gliner.n,
         rawAccuracy: gliner.rawAccuracy,
         meanCalibrationError: gliner.meanCalibrationError,
@@ -132,11 +133,11 @@ function main(): void {
       routing.rawAccuracy > (gliner.rawAccuracy ?? 0)
         ? "laya"
         : routing.rawAccuracy < (gliner.rawAccuracy ?? 0)
-          ? "gliner2"
+          ? "gliner-decide"
           : "tie",
     honesty: [
-      "GLiNER arm is the frozen productionTrusted readout (live sidecar + criteria + flip).",
-      "Laya arm is measure-only (backend ≠ gliner2) — cannot light productionTrusted under current gate.",
+      "GLiNER arm is the frozen productionTrusted readout (live sidecar + criteria + flip); frozen readout may still record archival scorerBackend gliner2; live id is gliner-decide only.",
+      "Laya arm is measure-only (backend ≠ gliner-decide) — cannot light productionTrusted under current gate.",
       "Both arms are CPU-class Apache-2.0 encoders; Laya served via self-host SystemOne.",
       "Among-accepted@τ is GLiNER policy semantics — Laya measure reports forced top-1 rawAccuracy.",
     ],

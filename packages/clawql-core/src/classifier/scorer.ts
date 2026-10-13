@@ -1,15 +1,18 @@
 /**
  * Pluggable scorer for the Fast Decision Primitive.
  *
- * Primary production backend: **GLiNER2 / GLiNER2.5** (Apache 2.0, mature IE +
- * classification family — NAACL 2024 / EMNLP 2025). Optional secondary: Needle 3
- * stub. Tests use HeuristicScorer. No TypeSafe Jev (closed API).
+ * Primary production backend: **GLiNER2.5-Decide** (Apache 2.0), reported as
+ * backend id `gliner-decide`. Optional secondary: Needle 3 stub. Tests use
+ * HeuristicScorer. No TypeSafe Jev (closed API).
  */
 
 import { Context, Effect, Layer } from "effect";
 import type { CapabilityOntology } from "./capability-ontology.js";
 import {
   DEFAULT_GLINER_MODEL_ID,
+  GLINER_DECIDE_BACKEND_ID,
+  GLINER_DECIDE_HTTP_FALLBACK_BACKEND_ID,
+  GLINER_DECIDE_STUB_BACKEND_ID,
   type GlinerScorerConfig,
   readGlinerScorerConfigFromEnv,
 } from "./gliner-config.js";
@@ -47,7 +50,7 @@ export class FastDecisionScorer extends Context.Service<
     readonly score: (
       request: FastDecisionScoreRequest
     ) => Effect.Effect<readonly FastDecisionScore[]>;
-    /** Backend id recorded in WORM metadata (gliner2, needle3-stub, heuristic, …). */
+    /** Backend id recorded in WORM metadata (gliner-decide, needle3-stub, heuristic, …). */
     readonly backendId: () => string;
   }
 >()("clawql/FastDecisionScorer") {}
@@ -239,12 +242,12 @@ function maybeCalibrate(
 }
 
 /**
- * GLiNER2 Fast Decision scorer — **primary** production Layer.
+ * GLiNER Decide Fast Decision scorer — **primary** production Layer.
  *
- * - No `CLAWQL_FAST_DECISION_GLINER_URL` → `backendId: gliner2-stub`
- * - URL set + live HTTP success → `backendId: gliner2`
- * - URL set + HTTP/parse failure → `backendId: gliner2-http-fallback-heuristic`
- *   (never claim live GLiNER when the sidecar did not answer)
+ * - No `CLAWQL_FAST_DECISION_GLINER_URL` → `backendId: gliner-decide-stub`
+ * - URL set + live HTTP success → `backendId: gliner-decide`
+ * - URL set + HTTP/parse failure → `backendId: gliner-decide-http-fallback-heuristic`
+ *   (never claim live Decide when the sidecar did not answer)
  */
 export function createGlinerFastDecisionScorerLayer(
   options: GlinerScorerLayerOptions = {}
@@ -253,18 +256,21 @@ export function createGlinerFastDecisionScorerLayer(
   const calibration = options.calibration ?? readCalibrationConfigFromEnv();
   const liveConfigured = Boolean(config.endpointUrl?.trim());
   const fetchImpl = options.fetchImpl ?? fetch;
-  let lastBackendId = liveConfigured ? "gliner2" : "gliner2-stub";
+  let lastBackendId = liveConfigured ? GLINER_DECIDE_BACKEND_ID : GLINER_DECIDE_STUB_BACKEND_ID;
 
   return Layer.succeed(FastDecisionScorer, {
     backendId: () => lastBackendId,
     score: (request) => {
       if (!liveConfigured) {
-        lastBackendId = "gliner2-stub";
+        lastBackendId = GLINER_DECIDE_STUB_BACKEND_ID;
         return Effect.sync(() => maybeCalibrate(heuristicScores(request), calibration));
       }
       return scoreViaGlinerHttp(config, request, fetchImpl).pipe(
         Effect.map((result) => {
-          lastBackendId = result.source === "live" ? "gliner2" : "gliner2-http-fallback-heuristic";
+          lastBackendId =
+            result.source === "live"
+              ? GLINER_DECIDE_BACKEND_ID
+              : GLINER_DECIDE_HTTP_FALLBACK_BACKEND_ID;
           return maybeCalibrate(result.scores, calibration);
         })
       );
@@ -272,9 +278,8 @@ export function createGlinerFastDecisionScorerLayer(
   });
 }
 
-/** Default production Layer: GLiNER2 (stub until sidecar URL configured). */
+/** Default production Layer: GLiNER Decide (stub until sidecar URL configured). */
 export const GlinerFastDecisionScorerLive = createGlinerFastDecisionScorerLayer();
-
 /**
  * Needle 3 adapter — **secondary / optional** (edge / tiny deployments).
  * Not the default primary; kept for operators who prefer cactus-needle.

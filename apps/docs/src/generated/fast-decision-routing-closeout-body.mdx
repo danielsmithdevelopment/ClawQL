@@ -11,6 +11,8 @@
 
 `fastino/GLiNER2.5-Decide`, **T=0.75**, routing **τ=0.80**, CPU, fail-closed remaps, abstain to fallback. Declared `mcp.*` ↔ `skill.clawql-*` twins count as correct. PR [#1149](https://github.com/danielsmithdevelopment/ClawQL/pull/1149).
 
+**Family / backend id.** Live WORM + `/v1/decisions` model id is **`gliner-decide`** (not the old `gliner2` shorthand). Stub without a sidecar reports `gliner-decide-stub`. HF checkpoint remains `fastino/GLiNER2.5-Decide` via `CLAWQL_FAST_DECISION_GLINER_MODEL`.
+
 **Cite line.** Live router is calibrated GLiNER2.5-Decide @ τ=0.80. On twin-aware v0.5 rematch (**n=75**): **45/75** fires, **0** errors among fires, 95% CP lower bound **≈92%** (45/45 → 92.1%). Stock reject on the same rematch: **32/75**, **0** errors, LB **≈89%** (32/32 → 89.1%). Coverage is why Decide is live.
 
 **How earned.** Not a new freeze. Twin collapse + declared spend rule (equal fire errors → prefer coverage) + rematch of the same v0.5 dumps — no τ move, no GT relabel. Details: [`DECIDE_V06_CUTOVER.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V06_CUTOVER.md) · [`CATALOG_TWIN_EQUIVALENCE.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-core/src/classifier/held-out/fixtures/CATALOG_TWIN_EQUIVALENCE.md) · [`V06_SHIP_RULE_SPEND.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-core/src/classifier/held-out/fixtures/V06_SHIP_RULE_SPEND.md).

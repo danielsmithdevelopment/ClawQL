@@ -284,7 +284,7 @@ describe("§7 correctness + calibration gate", () => {
 });
 
 describe("GLiNER2 primary scorer", () => {
-  it("defaults to gliner2-stub without sidecar URL", async () => {
+  it("defaults to gliner-decide-stub without sidecar URL", async () => {
     const prev = process.env.CLAWQL_FAST_DECISION_GLINER_URL;
     delete process.env.CLAWQL_FAST_DECISION_GLINER_URL;
     const { createGlinerFastDecisionScorerLayer, FastDecisionScorer } = await import("./scorer.js");
@@ -295,7 +295,7 @@ describe("GLiNER2 primary scorer", () => {
         return scorer.backendId();
       }).pipe(Effect.provide(layer))
     );
-    expect(id).toBe("gliner2-stub");
+    expect(id).toBe("gliner-decide-stub");
     if (prev !== undefined) process.env.CLAWQL_FAST_DECISION_GLINER_URL = prev;
   });
 
@@ -341,7 +341,7 @@ describe("GLiNER2 primary scorer", () => {
       }).pipe(Effect.provide(layer))
     );
 
-    expect(backendId).toBe("gliner2");
+    expect(backendId).toBe("gliner-decide");
     expect(scores[0]?.candidateId).toBe("tool.a");
     expect(scores[0]?.confidence).toBeCloseTo(0.91);
     expect(capturedBody).toMatchObject({
@@ -350,7 +350,7 @@ describe("GLiNER2 primary scorer", () => {
     });
   });
 
-  it("does not claim gliner2 backendId when sidecar HTTP fails", async () => {
+  it("does not claim gliner-decide backendId when sidecar HTTP fails", async () => {
     const { createGlinerFastDecisionScorerLayer, FastDecisionScorer } = await import("./scorer.js");
     const layer = createGlinerFastDecisionScorerLayer({
       config: {
@@ -376,7 +376,7 @@ describe("GLiNER2 primary scorer", () => {
       }).pipe(Effect.provide(layer))
     );
 
-    expect(backendId).toBe("gliner2-http-fallback-heuristic");
+    expect(backendId).toBe("gliner-decide-http-fallback-heuristic");
   });
 });
 
@@ -617,7 +617,7 @@ describe("§7 held-out suite runner", () => {
     ).toThrow(/unknown id/);
   });
 
-  it("marks productionTrusted only with live adjudicationKind + live gliner2 scorer", async () => {
+  it("marks productionTrusted only with live adjudicationKind + live gliner-decide scorer", async () => {
     const { createGlinerFastDecisionScorerLayer } = await import("./scorer.js");
     const { runHeldOutValidationForUseSite } = await import("./held-out/index.js");
     const suite = {
@@ -652,7 +652,7 @@ describe("§7 held-out suite runner", () => {
               { id: "hit", confidence: 0.95 },
               { id: "miss", confidence: 0.1 },
             ],
-            backend: "gliner2:test",
+            backend: "gliner-decide:test",
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         )) as unknown as typeof fetch,
@@ -665,7 +665,7 @@ describe("§7 held-out suite runner", () => {
       }).pipe(Effect.provide(glinerLayer))
     );
     expect(report.passedCriteria).toBe(true);
-    expect(report.scorerBackend).toBe("gliner2");
+    expect(report.scorerBackend).toBe("gliner-decide");
     expect(report.productionTrusted).toBe(true);
   });
 
@@ -724,7 +724,7 @@ describe("§7 held-out suite runner", () => {
     const { runHeldOutValidationForUseSite } = await import("./held-out/index.js");
     const suite = {
       suiteId: "prior-not-gliner",
-      description: "prior scorer is not live gliner2",
+      description: "prior scorer is not live gliner-decide",
       cases: [
         {
           caseId: "p1",
@@ -750,7 +750,7 @@ describe("§7 held-out suite runner", () => {
     expect(report.passedCriteria).toBe(true);
     expect(report.scorerBackend).toBe("prior-confidence");
     expect(report.productionTrusted).toBe(false);
-    expect(report.failureReasons.some((x) => x.includes("not live gliner2"))).toBe(true);
+    expect(report.failureReasons.some((x) => x.includes("not live gliner-decide"))).toBe(true);
   });
 
   it("dry-run adjudication never lights productionTrusted even when criteria pass", async () => {
@@ -818,7 +818,7 @@ describe("§7 held-out suite runner", () => {
     ).toThrow(/refusing dry-run/);
   });
 
-  it("labels-in path + live gliner2 can light productionTrusted", async () => {
+  it("labels-in path + live gliner-decide can light productionTrusted", async () => {
     const { createGlinerFastDecisionScorerLayer } = await import("./scorer.js");
     const { applyAdjudicationLabels, parseLiveAdjudicationLabels, runHeldOutValidationForUseSite } =
       await import("./held-out/index.js");
@@ -882,11 +882,11 @@ describe("§7 held-out suite runner", () => {
         minCases: 1,
       }).pipe(Effect.provide(glinerLayer))
     );
-    expect(report.scorerBackend).toBe("gliner2");
+    expect(report.scorerBackend).toBe("gliner-decide");
     expect(report.productionTrusted).toBe(true);
   });
 
-  it("HTTP adjudicator + live gliner2 HTTP can light productionTrusted on a mini suite", async () => {
+  it("HTTP adjudicator + live gliner-decide HTTP can light productionTrusted on a mini suite", async () => {
     const { createGlinerFastDecisionScorerLayer } = await import("./scorer.js");
     const {
       adjudicateHeldOutSuite,
@@ -968,7 +968,7 @@ describe("§7 held-out suite runner", () => {
         minCases: 1,
       }).pipe(Effect.provide(glinerLayer))
     );
-    expect(report.scorerBackend).toBe("gliner2");
+    expect(report.scorerBackend).toBe("gliner-decide");
     expect(report.productionTrusted).toBe(true);
   });
 });
@@ -1086,6 +1086,17 @@ describe("candidatesEquivalent (twins)", () => {
     expect(readGlinerScorerConfigFromEnv().modelId).toBe("fastino/GLiNER2.5-Decide");
     if (prev !== undefined) process.env.CLAWQL_FAST_DECISION_GLINER_MODEL = prev;
     else delete process.env.CLAWQL_FAST_DECISION_GLINER_MODEL;
+  });
+
+  it("names the live Decide family gliner-decide only", async () => {
+    const { GLINER_DECIDE_BACKEND_ID, isLiveGlinerDecideBackendId, isGlinerDecideModelId } =
+      await import("./gliner-config.js");
+    expect(GLINER_DECIDE_BACKEND_ID).toBe("gliner-decide");
+    expect(isLiveGlinerDecideBackendId("gliner-decide")).toBe(true);
+    expect(isLiveGlinerDecideBackendId("gliner2")).toBe(false);
+    expect(isLiveGlinerDecideBackendId("gliner-decide-stub")).toBe(false);
+    expect(isGlinerDecideModelId("gliner-decide")).toBe(true);
+    expect(isGlinerDecideModelId("gliner2")).toBe(false);
   });
 
   it("defaults search_provider_tool_routing τ to 0.80", async () => {

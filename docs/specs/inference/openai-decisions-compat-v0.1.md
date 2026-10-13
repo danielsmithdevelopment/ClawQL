@@ -22,12 +22,12 @@ OpenAI’s Decisions API (gpt-6-luna) and Microsoft-Decision-1 made “decision 
 
 ## Model field
 
-| `model` value                                    | Behavior                                                                              |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| `clawql-auto`                                    | Local Fast Decision first; escalate to Luna on abstain when keyed                     |
-| `clawql` \| `gliner2` \| `gliner` \| `heuristic` | Local Fast Decision only                                                              |
-| `gpt-6-luna`                                     | Remote OpenAI Decisions when `OPENAI_API_KEY` / `CLAWQL_DECISIONS_OPENAI_API_KEY` set |
-| Anything else                                    | HTTP 400 OpenAI error shape (`invalid_request_error`) so SDKs raise                   |
+| `model` value                                          | Behavior                                                                              |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `clawql-auto`                                          | Local Fast Decision first; escalate to Luna on abstain when keyed                     |
+| `clawql` \| `gliner-decide` \| `gliner` \| `heuristic` | Local Fast Decision only (HF default: `fastino/GLiNER2.5-Decide`)                     |
+| `gpt-6-luna`                                           | Remote OpenAI Decisions when `OPENAI_API_KEY` / `CLAWQL_DECISIONS_OPENAI_API_KEY` set |
+| Anything else                                          | HTTP 400 OpenAI error shape (`invalid_request_error`) so SDKs raise                   |
 
 ## OpenAI request mapping
 
@@ -70,7 +70,7 @@ Always included:
 | `calibrated`  | Site + backend earned trust on **your** held-out data (false for Luna / score) |
 | `escalated`   | Local abstain → Luna / Review path engaged                                     |
 | `use_site_id` | Decision site                                                                  |
-| `backend_id`  | e.g. `gliner2`, `heuristic`, `openai/gpt-6-luna`                               |
+| `backend_id`  | e.g. `gliner-decide`, `heuristic`, `openai/gpt-6-luna`                         |
 | `trace_id`    | WORM / audit correlation                                                       |
 | `clawql`      | Nested ClawQL metadata                                                         |
 

@@ -132,7 +132,7 @@ describe("evaluateHeldOutFlipRate", () => {
 });
 
 describe("productionTrusted flip-rate coupling", () => {
-  it("blocks productionTrusted when flip-rate fails under live gliner2", async () => {
+  it("blocks productionTrusted when flip-rate fails under live gliner-decide", async () => {
     const suite = {
       suiteId: "flip-block",
       description: "flip-rate must gate trust",
@@ -172,7 +172,7 @@ describe("productionTrusted flip-rate coupling", () => {
                   { id: "hit", confidence: 0.95 },
                   { id: "miss", confidence: 0.1 },
                 ],
-            backend: "gliner2:test",
+            backend: "gliner-decide:test",
           }),
           { status: 200, headers: { "content-type": "application/json" } }
         );
@@ -186,7 +186,7 @@ describe("productionTrusted flip-rate coupling", () => {
       }).pipe(Effect.provide(glinerLayer))
     );
     expect(report.passedCriteria).toBe(true);
-    expect(report.scorerBackend).toBe("gliner2");
+    expect(report.scorerBackend).toBe("gliner-decide");
     expect(report.flipRate.passed).toBe(false);
     expect(report.productionTrusted).toBe(false);
     expect(report.failureReasons.some((x) => x.includes("flip-rate gate failed"))).toBe(true);

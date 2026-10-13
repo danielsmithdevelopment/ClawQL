@@ -1,12 +1,13 @@
 /**
  * §7 held-out runner — score cases via FastDecisionScorer, then correctness/calibration.
  * productionTrusted stays false until every case is live-frontier-adjudicated,
- * the scorer backend is live `gliner2`, criteria pass, AND flip-rate gate passes
+ * the scorer backend is live `gliner-decide`, criteria pass, AND flip-rate gate passes
  * (unless CLAWQL_FLIP_RATE_GATE=0).
  */
 
 import { readFileSync } from "node:fs";
 import { Context, Effect, Layer } from "effect";
+import { isLiveGlinerDecideBackendId } from "../gliner-config.js";
 import { FastDecisionScorer } from "../scorer.js";
 import type { FastDecisionContext } from "../types.js";
 import { BUILTIN_FAST_DECISION_USE_SITES } from "../use-sites/builtins.js";
@@ -34,8 +35,8 @@ import { candidatesEquivalent } from "../candidate-equivalence.js";
 import { loadClawqlCapabilityOntology } from "../capability-ontology.js";
 import { enrichFastDecisionRequest } from "../ontology-enrichment.js";
 
-/** Only live GLiNER2 HTTP success lights the productionTrusted scorer gate. */
-export const PRODUCTION_TRUSTED_SCORER_BACKEND = "gliner2";
+/** Canonical live Decide backend id that may light `productionTrusted`. */
+export const PRODUCTION_TRUSTED_SCORER_BACKEND = "gliner-decide";
 
 /** Named suites selectable via `--suite` / resolveHeldOutSuite. */
 export type HeldOutSuiteName =
@@ -227,7 +228,7 @@ export function runHeldOutValidationForUseSite(
     const allAdjudicated = scored.length > 0 && adjudicatedCount === scored.length;
     const liveKindCount = scored.filter((s) => s.adjudicationKind === "live").length;
     const liveAdjudicated = allAdjudicated && liveKindCount === scored.length;
-    const liveGliner = scorerBackend === PRODUCTION_TRUSTED_SCORER_BACKEND;
+    const liveGliner = isLiveGlinerDecideBackendId(scorerBackend);
     const failureReasons = [...cal.failureReasons];
     if (!allAdjudicated) {
       failureReasons.push(

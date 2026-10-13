@@ -134,7 +134,7 @@ async function main(): Promise<void> {
     summary,
     honesty: [
       "measure-only — CLAWQL_HELD_OUT_SCORER=laya",
-      `backendId=${LAYA_BACKEND_ID} ≠ gliner2`,
+      `backendId=${LAYA_BACKEND_ID} ≠ gliner-decide`,
       "self-host SystemOne only (CLAWQL_LAYA_SYSTEMONE_URL) — CPU-class encoder peer to GLiNER",
       "does not light calibrated or held-out productionTrusted",
       "CLAWQL_FLIP_RATE_GATE=0 bounds spend (flip-rate skipped)",

@@ -84,7 +84,7 @@ export const DECISION_SITES: readonly DecisionSite[] = [
   {
     id: "tool-routing",
     name: "tool-routing",
-    model: "GLINER2 Decide",
+    model: "GLiNER2.5-Decide",
     stage: "re-proving",
     stageLabel: "Re-proving",
     answers: "None while re-proving",
@@ -95,7 +95,7 @@ export const DECISION_SITES: readonly DecisionSite[] = [
   {
     id: "pii-check",
     name: "pii-check",
-    model: "GLINER2 Decide",
+    model: "GLiNER2.5-Decide",
     stage: "trusted",
     stageLabel: "Trusted",
     answers: "81% of calls, 0 wrong in evaluation",

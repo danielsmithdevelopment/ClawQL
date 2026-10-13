@@ -5,7 +5,7 @@
  * (pip install "laya[serve]"; LAYA_DEVICE=cpu laya-serve).
  *
  * Apache-2.0 encoder (~322–421M) — CPU-class peer to GLiNER2.5-Decide.
- * Never lights productionTrusted (backendId ≠ gliner2).
+ * Never lights productionTrusted (backendId ≠ gliner-decide).
  */
 
 import { Effect } from "effect";

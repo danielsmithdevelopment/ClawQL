@@ -1,7 +1,10 @@
 /**
- * GLiNER2 Fast Decision scorer config (Effect-primary).
+ * GLiNER Decide Fast Decision scorer config (Effect-primary).
  * Primary production backend for the Fast Decision Primitive — mature Apache-2.0
- * encoder family (GLiNER → GLiNER2/2.5), not Needle/Laya/Jev.
+ * encoder family (live checkpoint: GLiNER2.5-Decide), not Needle/Laya/Jev.
+ *
+ * Backend / model family id (WORM + /v1/decisions): `gliner-decide`
+ * (HF default `fastino/GLiNER2.5-Decide`).
  */
 
 import { Context, Effect, Layer } from "effect";
@@ -17,6 +20,23 @@ export type GlinerScorerConfig = {
 
 /** Live routing path — Decide cutover (v0.6 spend). See DECIDE_V05_SCORE_ONCE_CLOSEOUT.md. */
 export const DEFAULT_GLINER_MODEL_ID = "fastino/GLiNER2.5-Decide";
+
+/** Live scorer / model family id for Decide. */
+export const GLINER_DECIDE_BACKEND_ID = "gliner-decide";
+
+export const GLINER_DECIDE_STUB_BACKEND_ID = "gliner-decide-stub";
+export const GLINER_DECIDE_HTTP_FALLBACK_BACKEND_ID = "gliner-decide-http-fallback-heuristic";
+
+/** True when `backendId` is the live Decide scorer. */
+export function isLiveGlinerDecideBackendId(backendId: string): boolean {
+  return backendId === GLINER_DECIDE_BACKEND_ID;
+}
+
+/** True when a /v1/decisions `model` names the local Decide family. */
+export function isGlinerDecideModelId(model: string): boolean {
+  const m = model.trim().toLowerCase();
+  return m === GLINER_DECIDE_BACKEND_ID || m === "gliner" || m === GLINER_DECIDE_STUB_BACKEND_ID;
+}
 
 export class GlinerScorerConfigService extends Context.Service<
   GlinerScorerConfigService,

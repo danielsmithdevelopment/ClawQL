@@ -3,7 +3,7 @@
  *
  * Dry-run / recorded fixtures keep CI honest without calling a frontier API.
  * productionTrusted requires `adjudicationKind: "live"` on every case AND live
- * `gliner2` scorer backend (dry-run labels / stub / prior / heuristic never light
+ * `gliner-decide` scorer backend (dry-run labels / stub / prior / heuristic never light
  * the gate).
  */
 
