@@ -1173,6 +1173,12 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     "CLAWQL_NATIVE_FETCH",
     "CLAWQL_UPSTREAM_KEEPALIVE",
     "CLAWQL_HTTP_PARSE_TIMING",
+    "CLAWQL_HTTP_SKIP_AUTH",
+    "CLAWQL_HTTP_SKIP_PRUNE",
+    "CLAWQL_HTTP_SKIP_REQUEST_CONTEXT",
+    "CLAWQL_HTTP_LAYER_EVENTS",
+    "CLAWQL_HTTP_LAYER_EVENT_SLOW_MS",
+    "CLAWQL_ENABLE_OTEL_TRACING",
     "UV_THREADPOOL_SIZE",
     "BUN_JSC_forceRAMSize",
     "BUN_JSC_useJIT",
@@ -1261,6 +1267,11 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
     stallDiagEnabled();
   const onChildOut = (chunk) => {
     const s = String(chunk);
+    // Always retain/forward HTTP layer bisect lines (banner + slow auth/prune).
+    if (s.includes("[clawql-http-layer]")) {
+      stderrChunks.push(s);
+      process.stderr.write(s);
+    }
     if (wantPerf || wantTraceGc || wantTimerTrace || wantHttpSlow) {
       stderrChunks.push(s);
       if (
@@ -2224,12 +2235,27 @@ async function runClawqlArm(
     }
 
     const resources = sampler.stop();
+    let httpLayer = null;
+    if (transport === "http" && typeof conn.fetchBench === "function") {
+      // fetchBench hits /healthz — also carries http_layer flags for bisect.
+      try {
+        const r = await fetch(`http://127.0.0.1:${conn.port}/healthz`);
+        const j = await r.json();
+        if (j?.http_layer) httpLayer = j.http_layer;
+      } catch {
+        /* ignore */
+      }
+    }
     // Close first so server can emit perf summary on SIGTERM.
     const stderrChunks = conn._stderrChunks || [];
     await conn.close();
     conn._closed = true;
     const httpPerf =
       transport === "http" && stderrChunks.length ? parseHttpPerfStderr(stderrChunks) : null;
+    const layerBannerLine = stderrChunks
+      .join("")
+      .split("\n")
+      .find((l) => l.includes("[clawql-http-layer] banner"));
     // Correlate: GC/ELD events whose timestamp falls inside a slow flow window (±50ms slack).
     let slowFlowGcHits = null;
     if (httpPerf && slowFlows.length) {
@@ -2286,6 +2312,8 @@ async function runClawqlArm(
       resources,
       startup: { ready_ms: conn.ready_ms, rss_mb_ready: conn.rss_mb_ready },
       http_perf: httpPerf,
+      http_layer: httpLayer,
+      http_layer_banner: layerBannerLine?.trim() || null,
       slow_flows_top: [...slowFlows].sort((a, b) => b.ms - a.ms).slice(0, 20),
       slow_search_top: [...slowSearchCalls].sort((a, b) => b.ms - a.ms).slice(0, 20),
       slow_flow_gc_correlation: slowFlowGcHits,
@@ -2696,6 +2724,8 @@ function summarizeArm(arm) {
             },
           }
         : {}),
+      ...(arm.http_layer ? { http_layer: arm.http_layer } : {}),
+      ...(arm.http_layer_banner ? { http_layer_banner: arm.http_layer_banner } : {}),
       ...(arm.slow_flow_gc_correlation
         ? { slow_flow_gc_correlation: arm.slow_flow_gc_correlation }
         : {}),

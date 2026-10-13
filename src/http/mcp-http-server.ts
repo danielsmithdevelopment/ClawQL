@@ -5,7 +5,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { PerformanceObserver, monitorEventLoopDelay } from "node:perf_hooks";
+import { performance, PerformanceObserver, monitorEventLoopDelay } from "node:perf_hooks";
 import express, { type Express } from "express";
 import {
   hostHeaderValidation,
@@ -21,6 +21,11 @@ import {
   parseToHandlerQueueMs,
   type IncomingMessageWithParseTiming,
 } from "./mcp-http-parse-timing.js";
+import {
+  logHttpLayerBanner,
+  logHttpLayerEvent,
+  type HttpLayerFlags,
+} from "./mcp-http-layer-diag.js";
 import { resolveSessionIdleMs, startSessionIdleWatcher } from "./mcp-session-idle.js";
 import { installTimerTrace } from "./mcp-timer-trace.js";
 import { createRegisteredMcpServer } from "../mcp/mcp-server-factory.js";
@@ -61,6 +66,7 @@ import {
   attachMcpOAuthRoutes,
   createIdJagIssuerFromEnv,
   createMcpOAuthFromEnv,
+  defaultAdminAtrClaims,
   isIdJagIssuerEnabled,
   isMcpOAuthEnabled,
   resolveAtrClaimsFromHeadersEffect,
@@ -247,6 +253,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   const transports = new Map<string, StreamableHTTPServerTransport>();
   const sessionIdleMs = Effect.runSync(resolveSessionIdleMs());
   const sessionIdle = Effect.runSync(startSessionIdleWatcher(transports, sessionIdleMs));
+  const httpLayerFlags: HttpLayerFlags = Effect.runSync(logHttpLayerBanner());
   // Stamp parse-complete on IncomingMessage for parse→handler queue_ms (stall class split).
   Effect.runSync(installHttpParseTiming());
 
@@ -444,13 +451,32 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     res: import("express").Response,
     next: import("express").NextFunction
   ): void {
+    // Diagnostic kill switch — never a product default (banner records skip_auth).
+    if (httpLayerFlags.skipAuth) {
+      attachClaimsAndNext(req, next, defaultAdminAtrClaims("http-skip-auth"));
+      return;
+    }
+
     if (!gatewayAuthNeedsAsync) {
+      // Time sync auth when hunting TTL/cache stalls (apiKey/oidc); noAuth is sub-ms.
+      const timeAuth =
+        httpLayerFlags.layerEvents || gatewayAuthConfig.mode !== "noAuth";
+      const t0 = timeAuth ? performance.now() : 0;
       const result = Effect.runSync(
         resolveAtrClaimsFromHeadersEffect(req.headers, gatewayAuthConfig).pipe(
           Effect.map((claims) => ({ ok: true, claims }) as const),
           Effect.catch((err) => Effect.succeed({ ok: false, error: err.reason } as const))
         )
       );
+      if (timeAuth) {
+        Effect.runSync(
+          logHttpLayerEvent({
+            kind: "auth_resolve",
+            durationMs: performance.now() - t0,
+            detail: `mode=${gatewayAuthConfig.mode} ok=${result.ok ? 1 : 0}`,
+          })
+        );
+      }
       if (!result.ok) {
         void sendGatewayAuthFailure(req, res, result.error);
         return;
@@ -460,11 +486,19 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     }
 
     void (async () => {
+      const t0 = performance.now();
       const result = await Effect.runPromise(
         resolveAtrClaimsFromHeadersEffect(req.headers, gatewayAuthConfig).pipe(
           Effect.map((claims) => ({ ok: true, claims }) as const),
           Effect.catch((err) => Effect.succeed({ ok: false, error: err.reason } as const))
         )
+      );
+      Effect.runSync(
+        logHttpLayerEvent({
+          kind: "auth_resolve",
+          durationMs: performance.now() - t0,
+          detail: `mode=${gatewayAuthConfig.mode} ok=${result.ok ? 1 : 0} async=1`,
+        })
       );
       if (!result.ok) {
         await sendGatewayAuthFailure(req, res, result.error);
@@ -508,6 +542,19 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       transport: "streamable-http",
       endpoint: mcpPath,
       vault: getVaultStartupStatus(),
+      // Stall bisect: which HTTP-only layers are active (auth/otel/idle/audit/prune/…).
+      http_layer: {
+        auth_mode: httpLayerFlags.authMode,
+        skip_auth: httpLayerFlags.skipAuth,
+        otel: httpLayerFlags.otelTracing,
+        session_idle_ms: httpLayerFlags.sessionIdleMs,
+        audit: httpLayerFlags.auditToolCalls,
+        skip_prune: httpLayerFlags.skipPrune,
+        skip_als: httpLayerFlags.skipRequestContext,
+        skip_payments: httpLayerFlags.httpSkipPayments,
+        skip_graphql: httpLayerFlags.httpSkipGraphql,
+        loki_url: httpLayerFlags.lokiPushUrlSet,
+      },
     };
     if (nativeProtocolMetricsEnabled()) {
       base.nativeProtocolMetrics = getNativeProtocolMetricsSnapshot();
@@ -896,10 +943,14 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         "mcp";
       if (sessionIdle && mcpSession !== "mcp") sessionIdle.touch(mcpSession);
       try {
-        const runHandle = () =>
-          runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens }, () =>
+        const runHandle = () => {
+          if (httpLayerFlags.skipRequestContext) {
+            return transport!.handleRequest(req, res, req.body);
+          }
+          return runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens }, () =>
             transport!.handleRequest(req, res, req.body)
           );
+        };
         // Skip x402 AsyncLocalStorage + Promise.resolve wrapper when enforcement is off.
         if (isX402EnforcementActiveLocal()) {
           const {
@@ -913,8 +964,17 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       } finally {
         // SDK JSON-response mode leaves `_streamMapping` entries after resolveJson;
         // prune orphans so sessionful multiturn does not retain one entry per POST.
-        if (!closeTransportAfter) {
-          pruneOrphanJsonStreamMappings(transport);
+        if (!closeTransportAfter && !httpLayerFlags.skipPrune) {
+          const tPrune = performance.now();
+          const pruned = pruneOrphanJsonStreamMappings(transport);
+          // Slow-only by default (LAYER_EVENTS forces every prune line — noisy under load).
+          Effect.runSync(
+            logHttpLayerEvent({
+              kind: "prune",
+              durationMs: performance.now() - tPrune,
+              detail: `pruned=${pruned}`,
+            })
+          );
         }
         if (closeTransportAfter) {
           await transport.close().catch(() => undefined);
