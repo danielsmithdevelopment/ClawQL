@@ -2,10 +2,11 @@
 /**
  * Cloudflare zone-audit multi-arm board (Streamable HTTP).
  *
- *   CF_MT_ITERS=20 CF_MT_ARMS=direct,clawql_default,clawql_known_op,executor_v2,mcpjungle,agentgateway \
+ *   CF_MT_ITERS=20 CF_MT_ARMS=direct,clawql_default,clawql_compact_search,clawql_known_op,executor_v2,mcpjungle,agentgateway \
  *     node scripts/benchmarks/cloudflare-multiturn/run-board.mjs
  *
- *   CF_MT_ITERS=10000 CF_MT_REPS=3 …  # full protocol (long)
+ *   CF_MT_ITERS=10000 CF_MT_REPS=3 …  # publish protocol (3 interleaved × 10k)
+ *   Smoke (N<10000 or REPS<3) writes smoke-* artifacts; only 3×10k writes board-*.
  */
 import { spawn, spawnSync } from "node:child_process";
 import { createServer as createNetServer, createConnection } from "node:net";
@@ -31,8 +32,10 @@ import { FAKE } from "./lib/fixture-ids.mjs";
 import { buildExpectations, checkStep } from "./lib/success-checks.mjs";
 import {
   CLOUDFLARE_CODE_MODE,
-  executorV2ScriptsFromWorld,
+  CLOUDFLARE_CODEMODE_DEFINITION_TOKENS,
+  executorV2ToolScripts,
 } from "./code-mode/published-scripts.mjs";
+import { ensureExecutorOpenapiApp } from "./lib/ensure-executor-openapi-app.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "../../..");
@@ -44,9 +47,10 @@ const OUT_DIR = process.env.CF_MT_OUT_DIR || join(ROOT, "docs/benchmarks/cloudfl
 const ITERS = Math.max(1, Number(process.env.CF_MT_ITERS || 20) || 20);
 const REPS = Math.max(1, Number(process.env.CF_MT_REPS || 1) || 1);
 const LATENCY = process.env.MT_UPSTREAM_LATENCY || "0";
+const IS_PUBLISH_BOARD = ITERS >= 10000 && REPS >= 3;
 const ARMS = (
   process.env.CF_MT_ARMS ||
-  "direct,clawql_default,clawql_known_op,executor_v2,mcpjungle,agentgateway,cloudflare_codemode"
+  "direct,clawql_default,clawql_compact_search,clawql_known_op,executor_v2,mcpjungle,agentgateway,cloudflare_codemode"
 )
   .split(",")
   .map((s) => s.trim())
@@ -204,8 +208,8 @@ async function startMock() {
   return { child, baseUrl: ready.baseUrl, pid: child.pid };
 }
 
-async function startClawql(mockBase) {
-  const home = join(tmpdir(), `cf-clawql-${process.pid}-${Math.random().toString(16).slice(2)}`);
+async function startClawql(mockBase, { searchCompact = false, label = "clawql" } = {}) {
+  const home = join(tmpdir(), `cf-${label}-${process.pid}-${Math.random().toString(16).slice(2)}`);
   mkdirSync(home, { recursive: true });
   const port = await pickPort();
   const env = clawqlEqualArmEnv({
@@ -220,6 +224,8 @@ async function startClawql(mockBase) {
     CLAWQL_CATALOG_SQLITE: process.env.CLAWQL_CATALOG_SQLITE ?? "1",
     // DNS list is large; projection keeps success under budget. Raise ceiling as a safety net.
     CLAWQL_EXECUTE_RESULT_MAX_CHARS: process.env.CLAWQL_EXECUTE_RESULT_MAX_CHARS || "2000000",
+    // Labeled setting — default arm leaves compact off; clawql_compact_search turns it on.
+    CLAWQL_SEARCH_COMPACT: searchCompact ? "1" : "0",
   });
   const logPath = join(home, "clawql.log");
   const logFd = openSync(logPath, "w");
@@ -259,7 +265,8 @@ async function startClawql(mockBase) {
   }
   await waitTcp(port, 10000);
   return {
-    id: "clawql",
+    id: label,
+    searchCompact: !!searchCompact,
     mcpUrl,
     pid: child.pid,
     home,
@@ -848,64 +855,93 @@ async function runExecutorV2Session(client, scripts, expectations) {
       step,
       calls: 1,
       discoveryTokens: 0,
-      resultTokens: countTokens(text),
+      // Program return value only (code-mode contracts) — not the MCP execute envelope.
+      resultTokens: countTokens(JSON.stringify(observed)),
       codeTokens,
       latency_ms: ms,
       check,
-      note: "static_upstream0 — Executor sandbox has no fetch",
+      note: "openapi_tools → mock HTTP (host fetch)",
+      upstream: "mock",
     });
   }
   return summarizeSession("executor_v2", ok, t0, steps);
 }
 
+function expectationObservation(step, expectations) {
+  const exp = expectations[step];
+  if (!exp) return null;
+  if (step === 12) return { proposal: exp.proposal, gated: true };
+  return exp;
+}
+
 function runCloudflareCodemodeTokensOnly(expectations) {
-  // Tokens-only arm: no live server — count published scripts + fixture-derived result sizes from direct session shape.
+  // Tokens-only: no self-hosted CF code-mode server — count published code + fixture-derived returns.
   const steps = [];
   let ok = true;
   const t0 = performance.now();
   for (let step = 1; step <= 12; step++) {
     const code = CLOUDFLARE_CODE_MODE[step];
     const codeTokens = countTokens(code);
-    // Success assumed for scripted harness; results not executed.
-    const check = { ok: true, note: "tokens_only_no_execute" };
+    const observed = expectationObservation(step, expectations);
+    const check = checkStep(step, observed, expectations);
+    ok &&= check.ok;
     steps.push({
       step,
       calls: 0,
       discoveryTokens: 0,
-      resultTokens: 0,
+      resultTokens: countTokens(JSON.stringify(observed)),
       codeTokens,
       latency_ms: null,
       check,
-      note: "tokens-only — CF code-mode server not self-hosted in this run",
+      note: "tokens-only — CF code-mode server not self-hosted; latency N/A",
+      upstream: "none",
     });
   }
-  // Still validate proposal step expectation structure
-  const propCheck = checkStep(
-    12,
-    { proposal: { recordId: FAKE.unproxiedRecordId, proxied: true } },
-    expectations
-  );
-  ok = propCheck.ok;
-  steps[11].check = propCheck;
   return summarizeSession("cloudflare_codemode", ok, t0, steps);
 }
 
-async function runArmSessions({ arm, mock, clawql, mj, ag, expectations, iters, execScripts }) {
+async function runArmSessions({
+  arm,
+  mock,
+  clawqlDefault,
+  clawqlCompact,
+  mj,
+  ag,
+  expectations,
+  iters,
+  execScripts,
+  executorMeta,
+}) {
   const sessions = [];
   const memSamples = [];
   let definitionTokens = null;
   let pid = null;
+  let settings = {};
+  let upstream = "mock";
 
   if (arm === "direct") {
-    definitionTokens = null; // baseline: would be full curated tools/list if MCP-native
+    definitionTokens = 0; // no MCP Layer-1; rebuildable as 0 + discovery + result + code
+    settings = { catalog: "curated_rest", layer1: "none" };
     for (let i = 1; i <= iters; i++) {
       sessions.push(await runDirectSession(mock.baseUrl, expectations));
       if (i === 1 || i % Math.max(1, Math.floor(iters / 5)) === 0 || i === iters) {
         console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
       }
     }
-  } else if (arm === "clawql_default" || arm === "clawql_known_op") {
+  } else if (
+    arm === "clawql_default" ||
+    arm === "clawql_compact_search" ||
+    arm === "clawql_known_op"
+  ) {
+    const clawql =
+      arm === "clawql_compact_search" ? clawqlCompact || clawqlDefault : clawqlDefault;
+    if (!clawql) throw new Error(`${arm} requires ClawQL server`);
     pid = clawql.pid;
+    settings = {
+      CLAWQL_SEARCH_COMPACT: arm === "clawql_compact_search" ? "1" : "0",
+      known_op: arm === "clawql_known_op",
+      catalog_sqlite: process.env.CLAWQL_CATALOG_SQLITE ?? "1",
+    };
     const conn = await connectHttpMcp(clawql.mcpUrl, arm);
     try {
       const listed = await conn.client.listTools();
@@ -914,7 +950,9 @@ async function runArmSessions({ arm, mock, clawql, mj, ag, expectations, iters, 
         .reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
       for (let i = 1; i <= iters; i++) {
         sessions.push(
-          await runClawqlSession(conn.client, expectations, { knownOp: arm === "clawql_known_op" })
+          await runClawqlSession(conn.client, expectations, {
+            knownOp: arm === "clawql_known_op",
+          })
         );
         if (i % Math.max(1, Math.floor(iters / 10)) === 0 || i === 1 || i === iters) {
           memSamples.push({ i, ...treeSmaps(pid) });
@@ -950,6 +988,18 @@ async function runArmSessions({ arm, mock, clawql, mj, ag, expectations, iters, 
       await conn.close();
     }
   } else if (arm === "executor_v2") {
+    if (!executorMeta?.deploymentId) {
+      throw new Error("executor_v2 requires ensureExecutorOpenapiApp before sessions");
+    }
+    settings = {
+      model: "openapi_tools_host_http",
+      app_slug: executorMeta.slug,
+      app_id: executorMeta.appId,
+      deployment: executorMeta.deploymentId,
+      framework: executorMeta.frameworkVersion,
+      mock_origin: executorMeta.origin,
+    };
+    upstream = "mock";
     const url = process.env.EXECUTOR_V2_URL || "http://127.0.0.1:4312/mcp";
     const key =
       process.env.EXECUTOR_V2_API_KEY?.trim() ||
@@ -980,16 +1030,16 @@ async function runArmSessions({ arm, mock, clawql, mj, ag, expectations, iters, 
       await client.close().catch(() => {});
     }
   } else if (arm === "cloudflare_codemode") {
+    upstream = "none";
+    settings = {
+      tokens_only: true,
+      latency: "N/A",
+      definition_source: "cloudflare_docs_~1000_two_tool",
+    };
     for (let i = 1; i <= iters; i++) {
       sessions.push(runCloudflareCodemodeTokensOnly(expectations));
     }
-    definitionTokens = countTokens(
-      JSON.stringify([
-        { name: "search", description: "stub" },
-        { name: "execute", description: "stub" },
-      ])
-    );
-    // Approx Layer1 from CF docs (~1000) — use published scripts sum as code tokens only
+    definitionTokens = CLOUDFLARE_CODEMODE_DEFINITION_TOKENS;
   } else {
     throw new Error(`unknown arm ${arm}`);
   }
@@ -1001,24 +1051,42 @@ async function runArmSessions({ arm, mock, clawql, mj, ag, expectations, iters, 
   const plateau = memSamples.slice(-Math.min(5, memSamples.length));
   const memRss = plateau.map((m) => m.rss_mb).filter((x) => x != null).sort((a, b) => a - b);
   const memAnon = plateau.map((m) => m.anonymous_mb).filter((x) => x != null).sort((a, b) => a - b);
+  const def = definitionTokens ?? 0;
+  const discoveryMean = discoveryTok.reduce((a, b) => a + b, 0) / discoveryTok.length;
+  const resultMean = resultTok.reduce((a, b) => a + b, 0) / resultTok.length;
+  const codeMean = codeTok.reduce((a, b) => a + b, 0) / codeTok.length;
+  const combinedMean = def + discoveryMean + resultMean + codeMean;
+  const combinedAtN = def + discoveryTok.reduce((a, b) => a + b, 0) + resultTok.reduce((a, b) => a + b, 0) + codeTok.reduce((a, b) => a + b, 0);
 
   return {
     id: arm,
     iters,
     task_success_rate: sessions.filter((s) => s.ok).length / sessions.length,
-    definition_tokens: definitionTokens,
-    discovery_tokens_mean: discoveryTok.reduce((a, b) => a + b, 0) / discoveryTok.length,
-    result_tokens_mean: resultTok.reduce((a, b) => a + b, 0) / resultTok.length,
-    code_tokens_mean: codeTok.reduce((a, b) => a + b, 0) / codeTok.length,
-    combined_input_estimate:
-      (definitionTokens || 0) +
-      discoveryTok.reduce((a, b) => a + b, 0) / discoveryTok.length +
-      resultTok.reduce((a, b) => a + b, 0) / resultTok.length,
+    settings,
+    upstream,
+    definition_tokens: def,
+    discovery_tokens_mean: discoveryMean,
+    result_tokens_mean: resultMean,
+    code_tokens_mean: codeMean,
+    /** Rebuildable: definition + discovery + result + code (per-session means). */
+    combined_mean: combinedMean,
+    /** Rebuildable at N: Layer1 once + sum(discovery+result+code) over sessions. */
+    combined_at_n: combinedAtN,
+    rebuild_check: {
+      combined_mean_ok:
+        Math.abs(combinedMean - (def + discoveryMean + resultMean + codeMean)) < 1e-6,
+      formula: "definition + discovery + result + code",
+    },
     calls_mean: sessions.reduce((n, s) => n + s.calls_sum, 0) / sessions.length,
     session_ms: {
       p50: percentile(sessionMs, 50),
       p99: percentile(sessionMs, 99),
       p999: percentile(sessionMs, 99.9),
+      comparable: upstream === "mock",
+      note:
+        upstream === "none"
+          ? "latency N/A — tokens-only / no upstream"
+          : "upstream=mock (same replay fixture as peers)",
     },
     memory_plateau:
       memRss.length || memAnon.length
@@ -1045,24 +1113,42 @@ async function main() {
 
   const recording = JSON.parse(readFileSync(FIXTURE, "utf8"));
   const expectations = buildExpectations(recording.world);
-  const execScripts = executorV2ScriptsFromWorld(recording.world);
+  const openapiDoc = JSON.parse(readFileSync(CURATED_OAS, "utf8"));
+  const execScripts = executorV2ToolScripts();
   mkdirSync(OUT_DIR, { recursive: true });
 
   console.log(
-    `[cf-board] iters=${ITERS} reps=${REPS} latency=${LATENCY} arms=${ARMS.join(",")} fixture=${recording.source}`
+    `[cf-board] iters=${ITERS} reps=${REPS} publish=${IS_PUBLISH_BOARD} latency=${LATENCY} arms=${ARMS.join(",")} fixture=${recording.source}`
   );
 
   const mock = await startMock();
   const closers = [async () => mock.child.kill("SIGTERM")];
-  let clawql = null;
+  let clawqlDefault = null;
+  let clawqlCompact = null;
   let mj = null;
   let ag = null;
+  let executorMeta = null;
 
   try {
-    if (ARMS.some((a) => a.startsWith("clawql"))) {
-      clawql = await startClawql(mock.baseUrl);
-      closers.push(clawql.close);
-      console.log(`[cf-board] clawql ${clawql.mcpUrl}`);
+    const needDefault =
+      ARMS.includes("clawql_default") ||
+      ARMS.includes("clawql_known_op") ||
+      (ARMS.includes("clawql_compact_search") && !ARMS.includes("clawql_default"));
+    if (needDefault || ARMS.includes("clawql_known_op") || ARMS.includes("clawql_default")) {
+      clawqlDefault = await startClawql(mock.baseUrl, {
+        searchCompact: false,
+        label: "clawql-default",
+      });
+      closers.push(clawqlDefault.close);
+      console.log(`[cf-board] clawql_default ${clawqlDefault.mcpUrl} SEARCH_COMPACT=0`);
+    }
+    if (ARMS.includes("clawql_compact_search")) {
+      clawqlCompact = await startClawql(mock.baseUrl, {
+        searchCompact: true,
+        label: "clawql-compact",
+      });
+      closers.push(clawqlCompact.close);
+      console.log(`[cf-board] clawql_compact_search ${clawqlCompact.mcpUrl} SEARCH_COMPACT=1`);
     }
     if (ARMS.includes("mcpjungle")) {
       mj = await startMcpjungle(mock.baseUrl);
@@ -1074,37 +1160,48 @@ async function main() {
       closers.push(ag.close);
       console.log(`[cf-board] agentgateway ${ag.mcpUrl}`);
     }
+    if (ARMS.includes("executor_v2")) {
+      console.log(`[cf-board] deploying Executor OpenAPI app → ${mock.baseUrl}`);
+      executorMeta = ensureExecutorOpenapiApp({ mockBase: mock.baseUrl, openapiDoc });
+      console.log(
+        `[cf-board] executor app ${executorMeta.slug} dpl=${executorMeta.deploymentId} origin=${executorMeta.origin}`
+      );
+    }
 
     const repBoards = [];
     for (let rep = 1; rep <= REPS; rep++) {
       console.log(`[cf-board] === rep ${rep}/${REPS} ===`);
       const board = {};
-      // Interleave: run every arm within this rep
       for (const arm of ARMS) {
         console.log(`[cf-board] run ${arm}`);
         board[arm] = await runArmSessions({
           arm,
           mock,
-          clawql,
+          clawqlDefault,
+          clawqlCompact,
           mj,
           ag,
           expectations,
           iters: ITERS,
           execScripts,
+          executorMeta,
         });
       }
       repBoards.push({ rep, board });
-      const outRep = join(OUT_DIR, `board-rep${rep}-n${ITERS}.json`);
+      const prefix = IS_PUBLISH_BOARD ? "board" : "smoke";
+      const outRep = join(OUT_DIR, `${prefix}-rep${rep}-n${ITERS}.json`);
       writeFileSync(
         outRep,
         JSON.stringify(
           {
             measuredAt: new Date().toISOString(),
+            kind: IS_PUBLISH_BOARD ? "publish_board" : "smoke",
             rep,
             iters: ITERS,
             latency_mode: LATENCY,
             fixture: { source: recording.source, label: recording.label, path: FIXTURE },
             tokenizer: "js-tiktoken cl100k_base",
+            executor: executorMeta,
             board,
           },
           null,
@@ -1116,12 +1213,14 @@ async function main() {
 
     const summary = {
       measuredAt: new Date().toISOString(),
+      kind: IS_PUBLISH_BOARD ? "publish_board" : "smoke",
       iters: ITERS,
       reps: REPS,
       latency_mode: LATENCY,
       fixture: { source: recording.source, label: recording.label },
       tokenizer: "js-tiktoken cl100k_base",
       arms: ARMS,
+      executor: executorMeta,
       range_across_reps: {},
       latest: repBoards.at(-1)?.board,
     };
@@ -1129,18 +1228,32 @@ async function main() {
       const rows = repBoards.map((r) => r.board[arm]).filter(Boolean);
       summary.range_across_reps[arm] = {
         task_success_rate: rows.map((r) => r.task_success_rate),
+        definition_tokens: rows.map((r) => r.definition_tokens),
+        discovery_tokens_mean: rows.map((r) => r.discovery_tokens_mean),
         result_tokens_mean: rows.map((r) => r.result_tokens_mean),
+        code_tokens_mean: rows.map((r) => r.code_tokens_mean),
+        combined_mean: rows.map((r) => r.combined_mean),
+        combined_at_n: rows.map((r) => r.combined_at_n),
         session_p50_ms: rows.map((r) => r.session_ms.p50),
         session_p999_ms: rows.map((r) => r.session_ms.p999),
-        definition_tokens: rows.map((r) => r.definition_tokens),
         memory_rss_median: rows.map((r) => r.memory_plateau?.rss_mb_median ?? null),
         memory_anon_median: rows.map((r) => r.memory_plateau?.anonymous_mb_median ?? null),
       };
     }
-    const summaryPath = join(OUT_DIR, `board-summary-n${ITERS}-r${REPS}.json`);
+    const prefix = IS_PUBLISH_BOARD ? "board" : "smoke";
+    const summaryPath = join(OUT_DIR, `${prefix}-summary-n${ITERS}-r${REPS}.json`);
     writeFileSync(summaryPath, JSON.stringify(summary, null, 2) + "\n");
-    writeFileSync("/opt/cursor/artifacts/cloudflare-mt-board-summary.json", JSON.stringify(summary, null, 2) + "\n");
-    console.log(JSON.stringify({ wrote: summaryPath, arms: ARMS, iters: ITERS, reps: REPS }, null, 2));
+    writeFileSync(
+      `/opt/cursor/artifacts/cloudflare-mt-${prefix}-summary.json`,
+      JSON.stringify(summary, null, 2) + "\n"
+    );
+    console.log(
+      JSON.stringify(
+        { wrote: summaryPath, kind: summary.kind, arms: ARMS, iters: ITERS, reps: REPS },
+        null,
+        2
+      )
+    );
   } finally {
     for (const c of closers.reverse()) {
       try {

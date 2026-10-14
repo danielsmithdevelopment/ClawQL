@@ -18,7 +18,7 @@ import { performance } from "node:perf_hooks";
 import { getEncoding } from "js-tiktoken";
 import { FAKE } from "./lib/fixture-ids.mjs";
 import { buildExpectations, checkStep } from "./lib/success-checks.mjs";
-import { executorV2Scripts, CLOUDFLARE_CODE_MODE } from "./code-mode/published-scripts.mjs";
+import { executorV2ToolScripts, CLOUDFLARE_CODE_MODE } from "./code-mode/published-scripts.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "../../..");
@@ -255,7 +255,7 @@ async function main() {
   const codeTok = Object.fromEntries(
     Object.entries(CLOUDFLARE_CODE_MODE).map(([k, v]) => [k, countTokens(v)])
   );
-  const execScripts = executorV2Scripts(mock.baseUrl);
+  const execScripts = executorV2ToolScripts();
   const execTok = Object.fromEntries(
     Object.entries(execScripts).map(([k, v]) => [k, countTokens(v)])
   );

@@ -10,69 +10,65 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | Curated ~60-op subset | **Frozen** 2026-10-14 |
 | Synthetic fixture + replay mock | Done (label: real schemas, synthetic content) |
 | 12-step scripted success checks | Done |
-| Direct baseline smoke | Done (`run-zone-audit.mjs`) |
-| Live read-only recorder + sanitize | Done (needs token to produce live fixture) |
-| ClawQL / Executor / MJ / AG / CF code-mode arms | **Wired** (`run-board.mjs`) |
-| Interleaved board (N=100 / N=1000) | **Done** — see results below; 3×10k still open |
-| Real-model 50-session validation | **Next** |
+| Arms wired (Streamable HTTP) | Done — see `run-board.mjs` |
+| Executor OpenAPI → mock | Done — `liveOpenapiRouter` app `cf-zone-audit-mock` (host HTTP; no inlined fixture) |
+| ClawQL `CLAWQL_SEARCH_COMPACT` labeled arm | Done — `clawql_compact_search` |
+| **Publish board: 3×10k interleaved** | Running / see `board-summary-n10000-r3.json` when complete |
+| Real-model 50-session validation | Next |
+| CF code-mode self-host | Tokens-only until self-host works |
 
-## Quick start (no Cloudflare credentials)
+N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the board.
+
+## Rebuildable token formula
+
+Every arm row reports:
+
+`definition + discovery + result + code = combined_mean` (per session)
+
+Also `combined_at_n` = Layer-1 once + Σ(discovery+result+code) over N sessions.
+
+## Quick start
 
 ```bash
-# Fixture + direct smoke
-npm run benchmark:cloudflare-multiturn:smoke
 npm run benchmark:cloudflare-multiturn:test
 
-# Multi-arm interleaved board (Streamable HTTP)
-export EXECUTOR_V2_API_KEY="$(cat /tmp/executor-v2-data/api_key.txt)"   # if measuring executor_v2
-export MCPJUNGLE_BIN=/tmp/gw-bins/mcpjungle
-export AGENTGATEWAY_BIN=/tmp/gw-bins/agentgateway
-CF_MT_ITERS=100 CF_MT_REPS=1 npm run benchmark:cloudflare-multiturn:board
+export EXECUTOR_BIN=/tmp/executor-v2/node_modules/.bin/executor
+export EXECUTOR_V2_API_KEY="$(cat /tmp/executor-v2-data/api_key.txt)"
+export EXECUTOR_API_KEY="$EXECUTOR_V2_API_KEY"
+export EXECUTOR_HOST=http://127.0.0.1:4312
+export MCPJUNGLE_BIN=/tmp/gw-bins/mcpjungle AGENTGATEWAY_BIN=/tmp/gw-bins/agentgateway
+
+# Smoke (not publishable)
+CF_MT_ITERS=2 CF_MT_REPS=1 npm run benchmark:cloudflare-multiturn:board
+
+# Publish protocol
+CF_MT_ITERS=10000 CF_MT_REPS=3 npm run benchmark:cloudflare-multiturn:board
 ```
 
-## Board results (synthetic fixture, zero injected latency)
+## Smoke check (tool-path Executor, N=2)
 
-Measured 2026-10-14 · N=1000 · 1 rep · tokenizer `js-tiktoken cl100k_base` · [`board-summary-n1000-r1.json`](./board-summary-n1000-r1.json) (N=100 companion: [`board-summary-n100-r1.json`](./board-summary-n100-r1.json))
+| Arm | Def | Discovery | Result | Code | Combined | p50 / p999 (ms) | Upstream |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `direct` | 0 | 0 | 47361 | 0 | 47361 | 47 / 60 | mock |
+| `clawql_default` | 308 | 16012 | 7030 | 0 | 23350 | 88 / 155 | mock |
+| `clawql_compact_search` | 308 | 4092 | 7030 | 0 | 11430 | 76 / 131 | mock |
+| `clawql_known_op` | 308 | 0 | 7030 | 0 | 7338 | 42 / 43 | mock |
+| `executor_v2` | 181 | 0 | 357 | 958 | 1496 | 258 / 602 | mock |
+| `mcpjungle` | 7760 | 0 | 47361 | 0 | 55121 | 64 / 254 | mock |
+| `agentgateway` | 7344 | 0 | 47361 | 0 | 54705 | 57 / 88 | mock |
+| `cloudflare_codemode` | 1000† | 0 | 357 | 518 | 1875 | N/A‡ | none |
 
-| Arm | Task success | Def tok | Discovery mean | Result mean | Code mean | Session p50 / p999 (ms) | RSS / anon median (MB) |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `direct` | 100% | — | 0 | 47361 | 0 | 37 / 71 | — |
-| `clawql_default` | 100% | 308 | 16012 | 7030 | 0 | 61 / 128 | 648 / 579 |
-| `clawql_known_op` | 100% | 308 | 0 | 7030 | 0 | 28 / 71 | 660 / 591 |
-| `executor_v2` | 100% | 181 | 0 | 625 | 40419 | 104 / 449 | — (remote serve) |
-| `mcpjungle` | 100% | 7760 | 0 | 47361 | 0 | 50 / 252 | 171 / 102 |
-| `agentgateway` | 100% | 7344 | 0 | 47361 | 0 | 48 / 84 | 232 / 115 |
-| `cloudflare_codemode` | 100%* | 19† | 0 | 0* | 518 | —* | — |
+† Documented CF two-tool Layer-1 (~1000).  
+‡ Tokens-only — no self-hosted CF code-mode server; latency not comparable.
 
-\* Tokens-only arm (no self-hosted CF code-mode server this run).  
-† Stub search/execute defs for Layer-1 placeholder.  
-`executor_v2` uses **static_upstream0**: QuickJS has no `fetch`; compact fixture slices are inlined in published scripts (`executorV2ScriptsFromWorld`). Code tokens are dominated by the DNS list × steps 4–6. Pin: `executor@2.0.0-beta.15`.
-
-ClawQL result shrinkage (~47k → ~7k) comes from `where` projections + `CLAWQL_EXECUTE_RESULT_MAX_CHARS`. Known-op drops discovery to zero vs default search-per-step.
+Executor code tokens (~958) are model-written tool-calling scripts only; DNS data returns as tool results (host HTTP to mock). Compact search is a **labeled setting** (`CLAWQL_SEARCH_COMPACT=1`), not the default row.
 
 ## Live recording (once)
 
 ```bash
-# Read-only token: zones, DNS, Workers scripts, R2 buckets, firewall — no writes
 CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=… AUDIT_ZONE_NAME=example.com \
   node scripts/benchmarks/cloudflare-multiturn/record/record-cloudflare-reads.mjs
-# Inspect fixtures/recording.live.sanitized.json → update MANIFEST → FIXTURE=… for runs
 ```
-
-## Layout
-
-| Path | Role |
-| --- | --- |
-| `scripts/benchmarks/cloudflare-multiturn/mock/` | Isolated HTTP replay mock |
-| `scripts/benchmarks/cloudflare-multiturn/fixtures/` | Recording + curated subset + MANIFEST |
-| `scripts/benchmarks/cloudflare-multiturn/code-mode/` | Published JS for CF code-mode / Executor v2 |
-| `scripts/benchmarks/cloudflare-multiturn/lib/` | Sanitize, scale, success checks, REST→MCP |
-| `scripts/benchmarks/cloudflare-multiturn/run-board.mjs` | Interleaved multi-arm board |
-| `scripts/benchmarks/cloudflare-multiturn/record/` | One-time read-only recorder |
-
-## Board claims (when complete)
-
-Only: tokens (rebuildable), task success, latency (zero vs recorded), memory (RSS+anon), full-spec feasibility. No live API performance claims; no writes beyond gated proposals.
 
 ## Open questions
 

@@ -11,6 +11,11 @@
       "sha256": "e1a1e3be0703143f6c96a5a3863903398dd1b73a086fa2d8364500c056d241ce",
       "operationCount": 60,
       "frozenAt": "2026-10-14"
+    },
+    "curated-openapi.json": {
+      "sha256": "9d751f779c21f18809d96a9615b57534caa786ce1e2fa30a54160727c5186594",
+      "bytes": 111338,
+      "note": "path/query identifier schemas coerced to string for Executor OpenAPI import"
     }
   },
   "safety": {

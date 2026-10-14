@@ -5,19 +5,18 @@ All arms use **Streamable HTTP**. Full Cloudflare v4 (~2.9k ops in repo OpenAPI)
 | Arm | Catalog | Adapter status | Notes |
 | --- | --- | --- | --- |
 | `direct` | curated (implicit) | **Wired** | Raw REST to replay mock |
-| `clawql_default` | curated OAS via ClawQL | **Wired** | Streamable HTTP, SQLite catalog on, search→execute |
-| `clawql_known_op` | curated OAS via ClawQL | **Wired** | Execute by operationId; no search on steady-state turns |
-| `cloudflare_codemode` | full (2-tool) | **Tokens-only** | Self-host [cloudflare/mcp](https://github.com/cloudflare/mcp) still open; published scripts counted |
-| `executor_v2` | code | **Wired (static_upstream0)** | QuickJS has no `fetch`; compact fixture slices inlined (`executorV2ScriptsFromWorld`); pin `executor@2.0.0-beta.15` |
-| `mcpjungle` | curated only | **Wired** | REST-to-MCP child (`cf-rest-mcp.mjs`); tree RSS+anon |
-| `agentgateway` | curated only | **Wired** | Same REST-to-MCP child as MCPJungle |
+| `clawql_default` | curated OAS | **Wired** | `CLAWQL_SEARCH_COMPACT=0` (labeled) |
+| `clawql_compact_search` | curated OAS | **Wired** | `CLAWQL_SEARCH_COMPACT=1` (labeled setting) |
+| `clawql_known_op` | curated OAS | **Wired** | Execute by operationId; no search |
+| `cloudflare_codemode` | full (2-tool) | **Tokens-only** | Def≈1000 from CF docs; result tokens from fixture returns; latency N/A |
+| `executor_v2` | code + OpenAPI app | **Wired** | `ensure-executor-openapi-app.mjs` deploys `liveOpenapiRouter` → mock; scripts call `tools["cf-zone-audit-mock"].…` |
+| `mcpjungle` | curated only | **Wired** | REST→MCP child (`cf-rest-mcp.mjs`); tree RSS+anon |
+| `agentgateway` | curated only | **Wired** | Same REST→MCP child |
 
-**Full-spec feasibility row:** MCPJungle / agentgateway mark **N/A — context overflow** (~1.17M tokens native / ~244k required-only) rather than a failed run.
-
-**Interleaved board:** `run-board.mjs` starts mock + each gateway, rotates arms within each rep.
+**Publish gate:** `CF_MT_ITERS≥10000` and `CF_MT_REPS≥3` → `board-*`. Otherwise `smoke-*`.
 
 ```bash
-CF_MT_ITERS=20 CF_MT_REPS=1 \
-  EXECUTOR_V2_API_KEY="$(cat /tmp/executor-v2-data/api_key.txt)" \
-  npm run benchmark:cloudflare-multiturn:board
+export EXECUTOR_BIN=/tmp/executor-v2/node_modules/.bin/executor
+export EXECUTOR_V2_API_KEY="$(cat /tmp/executor-v2-data/api_key.txt)"
+CF_MT_ITERS=10000 CF_MT_REPS=3 npm run benchmark:cloudflare-multiturn:board
 ```
