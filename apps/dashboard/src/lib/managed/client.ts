@@ -103,6 +103,22 @@ export async function fetchManagedTeam(): Promise<unknown> {
   return getJson('/api/managed/team')
 }
 
+export async function fetchManagedGateway(): Promise<unknown> {
+  return getJson('/api/managed/gateway')
+}
+
+export async function fetchManagedAutomations(): Promise<unknown> {
+  return getJson('/api/managed/automations')
+}
+
+export async function fetchManagedAudit(): Promise<unknown> {
+  return getJson('/api/managed/audit')
+}
+
+export async function fetchManagedSettings(): Promise<unknown> {
+  return getJson('/api/managed/settings')
+}
+
 export async function fetchManagedReview(): Promise<{
   items: ReviewItem[]
   source: 'live' | 'fixture'

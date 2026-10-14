@@ -1,9 +1,16 @@
-import { Effect } from "effect";
+import { Effect, Ref } from "effect";
 
-import { MEMORY_FIELDS, MEMORY_RESULTS } from "@/lib/managed/fixtures-ops";
+import {
+  MEMORY_FIELDS,
+  MEMORY_RESULTS,
+  MEMORY_UPLOADS,
+} from "@/lib/managed/fixtures-ops";
 
 export type ManagedMemoryResult = (typeof MEMORY_RESULTS)[number];
 export type ManagedMemoryField = (typeof MEMORY_FIELDS)[number];
+export type ManagedMemoryUpload = (typeof MEMORY_UPLOADS)[number];
+
+const erasedSubjectsRef = Ref.makeUnsafe<string[]>([]);
 
 export const listManagedMemoryEffect = (input?: {
   readonly query?: string;
@@ -42,3 +49,42 @@ export const getManagedMemoryEffect = (
       source: "fixture" as const,
     };
   });
+
+export const listManagedMemoryUploadsEffect = (): Effect.Effect<{
+  readonly uploads: readonly ManagedMemoryUpload[];
+  readonly erasedSubjects: readonly string[];
+  readonly source: "fixture";
+}> =>
+  Effect.gen(function* () {
+    const erasedSubjects = yield* Ref.get(erasedSubjectsRef);
+    return {
+      uploads: MEMORY_UPLOADS,
+      erasedSubjects,
+      source: "fixture" as const,
+    };
+  });
+
+export const eraseManagedMemorySubjectEffect = (input: {
+  readonly subject: string;
+  readonly acceptIrreversible: boolean;
+  readonly acceptAuditKept: boolean;
+}): Effect.Effect<
+  { readonly ok: true; readonly subject: string; readonly source: "fixture" },
+  Error
+> =>
+  Effect.gen(function* () {
+    const subject = input.subject.trim();
+    if (!subject) {
+      return yield* Effect.fail(new Error("subject required"));
+    }
+    if (!input.acceptIrreversible || !input.acceptAuditKept) {
+      return yield* Effect.fail(new Error("acceptance_required"));
+    }
+    yield* Ref.update(erasedSubjectsRef, (rows) =>
+      rows.includes(subject) ? rows : [...rows, subject],
+    );
+    return { ok: true as const, subject, source: "fixture" as const };
+  });
+
+export const resetManagedMemoryEraseEffect = (): Effect.Effect<void> =>
+  Ref.set(erasedSubjectsRef, []);
