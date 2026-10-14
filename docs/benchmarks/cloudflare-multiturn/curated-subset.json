@@ -1,0 +1,640 @@
+{
+  "frozenAt": "2026-10-14",
+  "policy": "Fixed before first published run. Do not retune after publication.",
+  "sourceSpec": "providers/cloudflare/openapi.yaml",
+  "sourceOpCount": 2966,
+  "targetSize": 60,
+  "actualSize": 60,
+  "workflowCoreCount": 12,
+  "missingNeighborIds": [
+    "zones-list-zones",
+    "zone-list",
+    "zone-rate-plan",
+    "zone-subscription",
+    "account-settings-get-account-settings",
+    "worker-account-settings-get-account-settings",
+    "firewall-lockdown-list-lockdown-rules",
+    "firewall-access-rules-list",
+    "firewall-ua-rules-list",
+    "zone-analytics",
+    "analytics-dashboard",
+    "zone-subscription-get",
+    "available-rate-plans",
+    "zone-activation-check",
+    "zone-hold-get"
+  ],
+  "operations": [
+    {
+      "operationId": "accounts-list-accounts",
+      "method": "GET",
+      "path": "/accounts",
+      "tags": [
+        "Accounts"
+      ],
+      "summary": "List Accounts",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "accounts-account-details",
+      "method": "GET",
+      "path": "/accounts/{account_id}",
+      "tags": [
+        "Accounts"
+      ],
+      "summary": "Account Details",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "ListAbuseReports",
+      "method": "GET",
+      "path": "/accounts/{account_id}/abuse-reports",
+      "tags": [
+        "tseng-abuse-complaint-processor_other"
+      ],
+      "summary": "List abuse reports",
+      "role": "neighbor_fill"
+    },
+    {
+      "operationId": "ListEmails",
+      "method": "GET",
+      "path": "/accounts/{account_id}/abuse-reports/{report_id}/emails",
+      "tags": [
+        "tseng-abuse-complaint-processor_other"
+      ],
+      "summary": "List abuse report emails",
+      "role": "neighbor_fill"
+    },
+    {
+      "operationId": "ListMitigations",
+      "method": "GET",
+      "path": "/accounts/{account_id}/abuse-reports/{report_id}/mitigations",
+      "tags": [
+        "tseng-abuse-complaint-processor_other"
+      ],
+      "summary": "List abuse report mitigations",
+      "role": "neighbor_fill"
+    },
+    {
+      "operationId": "GetAbuseReport",
+      "method": "GET",
+      "path": "/accounts/{account_id}/abuse-reports/{report_param}",
+      "tags": [
+        "tseng-abuse-complaint-processor_other"
+      ],
+      "summary": "Abuse Report Details",
+      "role": "neighbor_fill"
+    },
+    {
+      "operationId": "mcp-portals-api-list-portals",
+      "method": "GET",
+      "path": "/accounts/{account_id}/access/ai-controls/mcp/portals",
+      "tags": [
+        "MCP Portal"
+      ],
+      "summary": "List MCP Portals",
+      "role": "neighbor_fill"
+    },
+    {
+      "operationId": "mcp-portals-api-fetch-gateways",
+      "method": "GET",
+      "path": "/accounts/{account_id}/access/ai-controls/mcp/portals/{id}",
+      "tags": [
+        "MCP Portal"
+      ],
+      "summary": "Read details of an MCP Portal",
+      "role": "neighbor_fill"
+    },
+    {
+      "operationId": "mcp-portals-api-list-servers",
+      "method": "GET",
+      "path": "/accounts/{account_id}/access/ai-controls/mcp/servers",
+      "tags": [
+        "MCP Portal Servers"
+      ],
+      "summary": "List MCP Servers",
+      "role": "neighbor_fill"
+    },
+    {
+      "operationId": "mcp-portals-api-fetch-servers",
+      "method": "GET",
+      "path": "/accounts/{account_id}/access/ai-controls/mcp/servers/{id}",
+      "tags": [
+        "MCP Portal Servers"
+      ],
+      "summary": "Read the details of a MCP Server",
+      "role": "neighbor_fill"
+    },
+    {
+      "operationId": "access-applications-list-access-applications",
+      "method": "GET",
+      "path": "/accounts/{account_id}/access/apps",
+      "tags": [
+        "Access applications"
+      ],
+      "summary": "List Access applications",
+      "role": "neighbor_fill"
+    },
+    {
+      "operationId": "access-applications-get-an-access-application",
+      "method": "GET",
+      "path": "/accounts/{account_id}/access/apps/{app_id}",
+      "tags": [
+        "Access applications"
+      ],
+      "summary": "Get an Access application",
+      "role": "neighbor_fill"
+    },
+    {
+      "operationId": "access-short-lived-certificate-c-as-get-a-short-lived-certificate-ca",
+      "method": "GET",
+      "path": "/accounts/{account_id}/access/apps/{app_id}/ca",
+      "tags": [
+        "Access short-lived certificate CAs"
+      ],
+      "summary": "Get a short-lived certificate CA",
+      "role": "neighbor_fill"
+    },
+    {
+      "operationId": "access-policies-list-access-app-policies",
+      "method": "GET",
+      "path": "/accounts/{account_id}/access/apps/{app_id}/policies",
+      "tags": [
+        "Access application-scoped policies"
+      ],
+      "summary": "List Access application policies",
+      "role": "neighbor_fill"
+    },
+    {
+      "operationId": "access-policies-get-an-access-policy",
+      "method": "GET",
+      "path": "/accounts/{account_id}/access/apps/{app_id}/policies/{policy_id}",
+      "tags": [
+        "Access application-scoped policies"
+      ],
+      "summary": "Get an Access application policy",
+      "role": "neighbor_fill"
+    },
+    {
+      "operationId": "access-applications-test-access-policies",
+      "method": "GET",
+      "path": "/accounts/{account_id}/access/apps/{app_id}/user_policy_checks",
+      "tags": [
+        "Access applications"
+      ],
+      "summary": "Test Access policies",
+      "role": "neighbor_fill"
+    },
+    {
+      "operationId": "r2-list-buckets",
+      "method": "GET",
+      "path": "/accounts/{account_id}/r2/buckets",
+      "tags": [
+        "R2 Bucket"
+      ],
+      "summary": "List Buckets",
+      "role": "workflow",
+      "workflowStep": 10
+    },
+    {
+      "operationId": "r2-get-bucket",
+      "method": "GET",
+      "path": "/accounts/{account_id}/r2/buckets/{bucket_name}",
+      "tags": [
+        "R2 Bucket"
+      ],
+      "summary": "Get Bucket",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "r2-get-bucket-cors-policy",
+      "method": "GET",
+      "path": "/accounts/{account_id}/r2/buckets/{bucket_name}/cors",
+      "tags": [
+        "R2 Bucket"
+      ],
+      "summary": "Get Bucket CORS Policy",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "r2-list-custom-domains",
+      "method": "GET",
+      "path": "/accounts/{account_id}/r2/buckets/{bucket_name}/domains/custom",
+      "tags": [
+        "R2 Bucket"
+      ],
+      "summary": "List Custom Domains of Bucket",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "r2-get-bucket-lifecycle-configuration",
+      "method": "GET",
+      "path": "/accounts/{account_id}/r2/buckets/{bucket_name}/lifecycle",
+      "tags": [
+        "R2 Bucket"
+      ],
+      "summary": "Get Object Lifecycle Rules",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "r2-get-bucket-lock-configuration",
+      "method": "GET",
+      "path": "/accounts/{account_id}/r2/buckets/{bucket_name}/lock",
+      "tags": [
+        "R2 Bucket"
+      ],
+      "summary": "Get Bucket Lock Rules",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "worker-script-list-workers",
+      "method": "GET",
+      "path": "/accounts/{account_id}/workers/scripts",
+      "tags": [
+        "Worker Script"
+      ],
+      "summary": "List Workers",
+      "role": "workflow",
+      "workflowStep": 7
+    },
+    {
+      "operationId": "worker-script-download-worker",
+      "method": "GET",
+      "path": "/accounts/{account_id}/workers/scripts/{script_name}",
+      "tags": [
+        "Worker Script"
+      ],
+      "summary": "Download Worker",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "worker-script-get-content",
+      "method": "GET",
+      "path": "/accounts/{account_id}/workers/scripts/{script_name}/content/v2",
+      "tags": [
+        "Worker Script"
+      ],
+      "summary": "Get script content",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "worker-deployments-list-deployments",
+      "method": "GET",
+      "path": "/accounts/{account_id}/workers/scripts/{script_name}/deployments",
+      "tags": [
+        "Worker Deployments"
+      ],
+      "summary": "List Deployments",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "worker-cron-trigger-get-cron-triggers",
+      "method": "GET",
+      "path": "/accounts/{account_id}/workers/scripts/{script_name}/schedules",
+      "tags": [
+        "Worker Cron Trigger"
+      ],
+      "summary": "Get Cron Triggers",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "worker-script-settings-get-settings",
+      "method": "GET",
+      "path": "/accounts/{account_id}/workers/scripts/{script_name}/script-settings",
+      "tags": [
+        "Worker Script"
+      ],
+      "summary": "Get Script Settings",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "worker-script-get-settings",
+      "method": "GET",
+      "path": "/accounts/{account_id}/workers/scripts/{script_name}/settings",
+      "tags": [
+        "Worker Script"
+      ],
+      "summary": "Get Settings",
+      "role": "workflow",
+      "workflowStep": 8
+    },
+    {
+      "operationId": "worker-script-get-subdomain",
+      "method": "GET",
+      "path": "/accounts/{account_id}/workers/scripts/{script_name}/subdomain",
+      "tags": [
+        "Worker Script"
+      ],
+      "summary": "Get Worker subdomain",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "worker-versions-list-versions",
+      "method": "GET",
+      "path": "/accounts/{account_id}/workers/scripts/{script_name}/versions",
+      "tags": [
+        "Worker Versions"
+      ],
+      "summary": "List Versions",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "zones-get",
+      "method": "GET",
+      "path": "/zones",
+      "tags": [
+        "Zone"
+      ],
+      "summary": "List Zones",
+      "role": "workflow",
+      "workflowStep": 1
+    },
+    {
+      "operationId": "zones-post",
+      "method": "POST",
+      "path": "/zones",
+      "tags": [
+        "Zone"
+      ],
+      "summary": "Create Zone",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "zones-0-delete",
+      "method": "DELETE",
+      "path": "/zones/{zone_id}",
+      "tags": [
+        "Zone"
+      ],
+      "summary": "Delete Zone",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "zones-0-get",
+      "method": "GET",
+      "path": "/zones/{zone_id}",
+      "tags": [
+        "Zone"
+      ],
+      "summary": "Zone Details",
+      "role": "workflow",
+      "workflowStep": 2
+    },
+    {
+      "operationId": "zones-0-patch",
+      "method": "PATCH",
+      "path": "/zones/{zone_id}",
+      "tags": [
+        "Zone"
+      ],
+      "summary": "Edit Zone",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "total-tls-total-tls-settings-details",
+      "method": "GET",
+      "path": "/zones/{zone_id}/acm/total_tls",
+      "tags": [
+        "Total TLS"
+      ],
+      "summary": "Total TLS Settings Details",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "dns-analytics-table",
+      "method": "GET",
+      "path": "/zones/{zone_id}/dns_analytics/report",
+      "tags": [
+        "DNS Analytics"
+      ],
+      "summary": "Table",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "dns-records-for-a-zone-list-dns-records",
+      "method": "GET",
+      "path": "/zones/{zone_id}/dns_records",
+      "tags": [
+        "DNS Records for a Zone"
+      ],
+      "summary": "List DNS Records",
+      "role": "workflow",
+      "workflowStep": 4
+    },
+    {
+      "operationId": "dns-records-for-a-zone-create-dns-record",
+      "method": "POST",
+      "path": "/zones/{zone_id}/dns_records",
+      "tags": [
+        "DNS Records for a Zone"
+      ],
+      "summary": "Create DNS Record",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "dns-records-for-a-zone-delete-dns-record",
+      "method": "DELETE",
+      "path": "/zones/{zone_id}/dns_records/{dns_record_id}",
+      "tags": [
+        "DNS Records for a Zone"
+      ],
+      "summary": "Delete DNS Record",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "dns-records-for-a-zone-dns-record-details",
+      "method": "GET",
+      "path": "/zones/{zone_id}/dns_records/{dns_record_id}",
+      "tags": [
+        "DNS Records for a Zone"
+      ],
+      "summary": "DNS Record Details",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "dns-records-for-a-zone-patch-dns-record",
+      "method": "PATCH",
+      "path": "/zones/{zone_id}/dns_records/{dns_record_id}",
+      "tags": [
+        "DNS Records for a Zone"
+      ],
+      "summary": "Update DNS Record",
+      "role": "workflow_gated_write",
+      "workflowStep": 12,
+      "notes": "proposal only — never sent"
+    },
+    {
+      "operationId": "dns-records-for-a-zone-update-dns-record",
+      "method": "PUT",
+      "path": "/zones/{zone_id}/dns_records/{dns_record_id}",
+      "tags": [
+        "DNS Records for a Zone"
+      ],
+      "summary": "Overwrite DNS Record",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "dns-records-for-a-zone-export-dns-records",
+      "method": "GET",
+      "path": "/zones/{zone_id}/dns_records/export",
+      "tags": [
+        "DNS Records for a Zone"
+      ],
+      "summary": "Export DNS Records",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "dns-records-for-a-zone-import-dns-records",
+      "method": "POST",
+      "path": "/zones/{zone_id}/dns_records/import",
+      "tags": [
+        "DNS Records for a Zone"
+      ],
+      "summary": "Import DNS Records",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "dns-records-for-a-zone-scan-dns-records",
+      "method": "POST",
+      "path": "/zones/{zone_id}/dns_records/scan",
+      "tags": [
+        "DNS Records for a Zone"
+      ],
+      "summary": "Scan DNS Records",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "firewall-rules-list-firewall-rules",
+      "method": "GET",
+      "path": "/zones/{zone_id}/firewall/rules",
+      "tags": [
+        "Firewall rules"
+      ],
+      "summary": "List firewall rules",
+      "role": "workflow",
+      "workflowStep": 11
+    },
+    {
+      "operationId": "firewall-rules-get-a-firewall-rule",
+      "method": "GET",
+      "path": "/zones/{zone_id}/firewall/rules/{rule_id}",
+      "tags": [
+        "Firewall rules"
+      ],
+      "summary": "Get a firewall rule",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "listZoneRulesets",
+      "method": "GET",
+      "path": "/zones/{zone_id}/rulesets",
+      "tags": [
+        "Zone Rulesets"
+      ],
+      "summary": "List zone rulesets",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "getZoneRuleset",
+      "method": "GET",
+      "path": "/zones/{zone_id}/rulesets/{ruleset_id}",
+      "tags": [
+        "Zone Rulesets"
+      ],
+      "summary": "Get a zone ruleset",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "getZoneEntrypointRuleset",
+      "method": "GET",
+      "path": "/zones/{zone_id}/rulesets/phases/{ruleset_phase}/entrypoint",
+      "tags": [
+        "Zone Rulesets"
+      ],
+      "summary": "Get a zone entry point ruleset",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "listZoneEntrypointRulesetVersions",
+      "method": "GET",
+      "path": "/zones/{zone_id}/rulesets/phases/{ruleset_phase}/entrypoint/versions",
+      "tags": [
+        "Zone Rulesets"
+      ],
+      "summary": "List a zone entry point ruleset's versions",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "zone-settings-get-all-zone-settings",
+      "method": "GET",
+      "path": "/zones/{zone_id}/settings",
+      "tags": [
+        "Zone Settings"
+      ],
+      "summary": "Get all zone settings",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "zone-settings-get-single-setting",
+      "method": "GET",
+      "path": "/zones/{zone_id}/settings/{setting_id}",
+      "tags": [
+        "Zone Settings"
+      ],
+      "summary": "Get zone setting",
+      "role": "workflow",
+      "workflowStep": 3,
+      "notes": "setting_id=ssl"
+    },
+    {
+      "operationId": "zone-settings-edit-single-setting",
+      "method": "PATCH",
+      "path": "/zones/{zone_id}/settings/{setting_id}",
+      "tags": [
+        "Zone Settings"
+      ],
+      "summary": "Edit zone setting",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "ssl-detector-automatic-mode-get-enrollment",
+      "method": "GET",
+      "path": "/zones/{zone_id}/settings/ssl_automatic_mode",
+      "tags": [
+        "Automatic SSL/TLS"
+      ],
+      "summary": "Get Automatic SSL/TLS enrollment status for the given zone",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "universal-ssl-settings-for-a-zone-universal-ssl-settings-details",
+      "method": "GET",
+      "path": "/zones/{zone_id}/ssl/universal/settings",
+      "tags": [
+        "Universal SSL Settings for a Zone"
+      ],
+      "summary": "Universal SSL Settings Details",
+      "role": "neighbor"
+    },
+    {
+      "operationId": "worker-routes-list-routes",
+      "method": "GET",
+      "path": "/zones/{zone_id}/workers/routes",
+      "tags": [
+        "Worker Routes"
+      ],
+      "summary": "List Routes",
+      "role": "workflow",
+      "workflowStep": 9
+    },
+    {
+      "operationId": "worker-routes-get-route",
+      "method": "GET",
+      "path": "/zones/{zone_id}/workers/routes/{route_id}",
+      "tags": [
+        "Worker Routes"
+      ],
+      "summary": "Get Route",
+      "role": "neighbor"
+    }
+  ]
+}

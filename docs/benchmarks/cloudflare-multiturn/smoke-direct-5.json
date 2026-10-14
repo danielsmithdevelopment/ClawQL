@@ -1,0 +1,154 @@
+{
+  "measuredAt": "2026-10-14T03:29:49.980Z",
+  "arm": "direct",
+  "catalog": "fixture-replay",
+  "fixture": {
+    "path": "/workspace/scripts/benchmarks/cloudflare-multiturn/fixtures/recording.synthetic.json",
+    "source": "synthetic",
+    "label": "real schemas, synthetic content",
+    "dnsCount": 300
+  },
+  "tokenizer": "js-tiktoken cl100k_base",
+  "iters": 5,
+  "latency_mode": "0",
+  "task_success_rate": 1,
+  "result_tokens": {
+    "mean": 47361,
+    "first_session": 47361
+  },
+  "session_ms": {
+    "p50": 41.004616,
+    "p99": 72.38449599999996,
+    "p999": 72.38449599999996
+  },
+  "first_session_steps": [
+    {
+      "step": 1,
+      "calls": 1,
+      "resultTokens": 384,
+      "latency_ms": 21.961,
+      "ok": true
+    },
+    {
+      "step": 2,
+      "calls": 1,
+      "resultTokens": 273,
+      "latency_ms": 1.857,
+      "ok": true
+    },
+    {
+      "step": 3,
+      "calls": 1,
+      "resultTokens": 44,
+      "latency_ms": 1.565,
+      "ok": true
+    },
+    {
+      "step": 4,
+      "calls": 1,
+      "resultTokens": 45668,
+      "latency_ms": 1.995,
+      "ok": true
+    },
+    {
+      "step": 5,
+      "calls": 0,
+      "resultTokens": 0,
+      "latency_ms": 0,
+      "ok": true,
+      "note": "client filter from step 4"
+    },
+    {
+      "step": 6,
+      "calls": 0,
+      "resultTokens": 0,
+      "latency_ms": 0,
+      "ok": true,
+      "note": "client filter from step 4"
+    },
+    {
+      "step": 7,
+      "calls": 1,
+      "resultTokens": 144,
+      "latency_ms": 1.419,
+      "ok": true
+    },
+    {
+      "step": 8,
+      "calls": 1,
+      "resultTokens": 55,
+      "latency_ms": 1.024,
+      "ok": true
+    },
+    {
+      "step": 9,
+      "calls": 1,
+      "resultTokens": 87,
+      "latency_ms": 0.868,
+      "ok": true
+    },
+    {
+      "step": 10,
+      "calls": 1,
+      "resultTokens": 108,
+      "latency_ms": 0.842,
+      "ok": true
+    },
+    {
+      "step": 11,
+      "calls": 1,
+      "resultTokens": 570,
+      "latency_ms": 1.629,
+      "ok": true
+    },
+    {
+      "step": 12,
+      "calls": 0,
+      "resultTokens": 28,
+      "latency_ms": 0,
+      "ok": true,
+      "note": "gated proposal — not sent to mock/Cloudflare"
+    }
+  ],
+  "code_mode_published_tokens": {
+    "cloudflare_api_mcp": {
+      "per_step": {
+        "1": 33,
+        "2": 32,
+        "3": 32,
+        "4": 42,
+        "5": 60,
+        "6": 79,
+        "7": 31,
+        "8": 39,
+        "9": 45,
+        "10": 42,
+        "11": 35,
+        "12": 48
+      },
+      "sum": 518
+    },
+    "executor_v2": {
+      "per_step": {
+        "1": 54,
+        "2": 81,
+        "3": 79,
+        "4": 94,
+        "5": 110,
+        "6": 121,
+        "7": 84,
+        "8": 90,
+        "9": 98,
+        "10": 97,
+        "11": 89,
+        "12": 30
+      },
+      "sum": 1027
+    }
+  },
+  "claims_scope": [
+    "scripted direct baseline against synthetic fixture",
+    "no Cloudflare network I/O",
+    "step 12 gated proposal never sent"
+  ]
+}
