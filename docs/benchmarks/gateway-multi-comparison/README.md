@@ -51,12 +51,12 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 
 | Claim | Status | Bound |
 | --- | --- | --- |
-| **Fewest tokens among MCP aggregators + live Executor with equal task success** | **Primary** — classic Layer1-once + Σ Layer2 @12; all arms `task_success` PASS | ClawQL **20.5k** vs MCPJungle **35.3k** (1.72×) and Executor **53.7k** (2.61×). Layer 2 is the win — same gap as [Both Sides of Context Compression](https://pragmaticvectors.com/posts/both-sides-of-context-compression). |
+| **Fewest tokens among MCP aggregators + Executor v2 with equal task success** | **Primary** — classic Layer1-once + Σ Layer2 @12; all arms `task_success` PASS | Product default ClawQL **20 539** vs MCPJungle **35 322** (**1.72×**) and **Executor v2** **29 927** (**1.46×**). Via **projection and a server-side catalog** (defs 5 520 → &lt;300; search still costs discovery tokens). Compact / known-op ratios are **labeled modes**, not the default ([§ targets](#improvement-targets-measurable-better)). |
 | **Lowest governed gateway cost** | **Supported** on n=10k — ClawQL gateway_cost p50 **0.70 ms** vs Executor **2.36 ms** | Same equal-arm pets upstream contract |
-| **Latency competitive with the fastest aggregators while doing more per call** | **Supported** — ClawQL best p50; MCPJungle best p999; essentially a tie at the top | Read with [path matrix](#path-matrix-what-each-arm-does) |
+| **Per-call HTTP overhead at parity; session median slower (2 RPCs)** | **Supported** — Bun HTTP ms/call **1.44** vs MJ **1.29** / ag **1.17**; session p50 **36.2** vs **16.7 / 15.6** (~**2.2×**) | Always label **transport**. Do not stack stdio 9.3 ms next to HTTP-only peers. |
 | **Scale-out concurrency win** | **Not claimed yet** | Only after same-topology boards (1-instance **and** 4-replica behind LB) for every arm, pushed until break |
 
-Coherent publish line: **most efficient governed gateway** — output projection at the gateway layer (`fields`/`where`), which live Executor does not provide (measured full REST pass-through; see blog + `executor-cmp-001.live.json`).
+Coherent publish line: **most efficient governed gateway** — projection + server-side catalog at the gateway layer, which live Executor does not provide (measured full REST pass-through; see blog + `executor-cmp-001.live.json`). Quote **Executor v2** in the matrix; name v1.6.10 on-screen if citing 53 668.
 
 Do **not** cite “135 vs 19” (ClawQL NATS 4-replica vs Executor process-per-client) as a same-board concurrency win.
 
@@ -84,11 +84,12 @@ At n=10 000: ClawQL fastest at **p50**; MCPJungle fastest at **p999**. That is
 
 | Dimension | Verdict |
 | --- | --- |
-| **Multi-turn I/O tokens (classic)** | **Lead** vs aggregators (~1.7× combined @12) and fat Executor (~2.6×). Re-list-every-turn is **secondary** (most clients cache `tools/list`; lazy clients shrink aggregator schema cost further). |
+| **Multi-turn I/O tokens (product default)** | **Lead** ~**1.7×** vs aggregators and ~**1.5×** vs **Executor v2** @12 (`20 539`). Savings via **projection and a server-side catalog**. Compact (`12 390`) / known-op (`8 863`) are **labeled modes** until routing eval clears compact as default. |
 | **Task success** | Deterministic inventory checks in harness (`task_success`); LLM-as-judge optional when a model key is present. Publish only if ClawQL success ≥ peers. |
-| **Latency e2e / gateway_cost** | **Win on governed cost**; e2e competitive (best p50, near-tie p999). |
+| **Latency e2e / gateway_cost** | **Win on governed cost**; **HTTP** per-call at parity; **HTTP session** median ~**2.2×** slower than MJ/ag (2 RPCs/turn). Label transport on every row. |
 | **Chaos (single-instance equal-arm)** | **Win vs Executor** — ClawQL **63/64** vs Executor **23/24**. **Loss vs MCPJungle** — **204/205**. **Tie vs agentgateway** — **62/63**. Do not claim aggregator concurrency wins. |
-| **RSS** | **Loss among serious arms** — ClawQL cold Ready ~**232 MB**, chaos min ~**259 MB**, under-load median ~**427 MB** vs MCPJungle ~**148–152 MB**. Scale-out multiplies the gap. Admit it; profile heap before claiming memory wins. |
+| **RSS — equal-arm under load** | **Loss** — Bun HTTP under-load ~**290–320 MB** vs MCPJungle ~**152 MB**. Cold Ready ~232 Node / ~180 Bun is a different number. |
+| **RSS — fat catalog Ready (SQLite)** | **Strong Ready cut** — Sentry `LOAD=db` **154 / anon 114** (−138 RSS vs in-memory). **Not** under-load parity vs MJ until same-catalog multiturn A/B (anon/PSS + RSS). |
 | **ContextForge / MetaMCP** | **Off the publish board.** ContextForge was previously nested behind MCPJungle (inflates latency/RSS/chaos). MetaMCP needs Docker. Re-add only with native REST/virtualization (CF → `/pets` direct) or a real MetaMCP run. |
 
 ---
@@ -244,7 +245,7 @@ ClawQL runtime flags (even): Node `--max-old-space-size=512`, Bun `--smol` (`con
 
 **Harness progression:** coupling fix shrank peer tails; **2-core gateway** further cut stdio ClawQL p999 (**92→62**) and MCPJungle (**117→61**). ClawQL **HTTP** p999 did **not** drop (still ~670–760) — not fixed by a second core or by Node `--single-threaded` ([`stall-memory-round9.md`](./stall-memory-round9.md)). Do **not** headline HTTP p999.
 
-**HTTP-to-HTTP (lab / zero upstream delay):** ClawQL Bun HTTP median **36.2 ms** ≈ **2.3×** agentgateway (15.6) and **~2.0×** faster than Executor v2 (71.1). Per-call: **1.44 ms** vs MCPJungle **1.29** / agentgateway **1.17**. Claims that hold in the lab: **tokens**, **per-call overhead near Go/Rust**, **~2× faster than Executor v2** on median.
+**HTTP-to-HTTP (lab / zero upstream delay):** ClawQL Bun HTTP session median **36.2 ms** is ~**2.2×** MCPJungle (**16.7**) / ~**2.3×** agentgateway (**15.6**) because ClawQL does **2 RPCs/turn**; it is ~**2×** faster than Executor v2 (**71.1**) on median. Per-call: **1.44 ms** vs MCPJungle **1.29** / agentgateway **1.17** (parity). **Do not** cite Bun stdio **9.3 / 36** next to HTTP-only peers. Executor v2 flow p999 **286 ms** on this 2-core board (vs **136 ms** on the 1-core isolated diagnostic) moved opposite every other arm — **3× rerun before quoting**.
 
 **Buyer framing (realistic upstream):** with `MT_UPSTREAM_LATENCY_MS=20-100`, every gateway’s session median lands ~**740–780 ms** (**~5%** of each other — smoke [`…-upstream-latency-smoke20.json`](./gateway-multi-multiturn-upstream-latency-smoke20.json)). Once a real API sits behind the gateway, **gateway speed is a rounding error; token cost isn’t** (~**4×** fewer tokens on ClawQL known-op vs pass-through peers). Prefer that line over any p999 number.
 
@@ -483,17 +484,20 @@ BUN_BIN=~/.bun/bin/bun \
 
 ---
 
-## RSS — admit the loss
+## RSS — admit the equal-arm loss; don’t over-claim SQLite
 
-ClawQL is the **heaviest serious arm** on this board:
+ClawQL is still the **heaviest serious arm on the equal-arm publish board**:
 
 | Signal | ClawQL | MCPJungle | Notes |
 | --- | ---: | ---: | --- |
-| Cold Ready | ~232 MB | — | After composition slim + lazy optional imports |
+| Cold Ready (equal-arm) | ~232 MB Node / ~180 MB Bun | — | After composition slim + lazy optional imports |
 | Chaos min / med | 259 / 342 | 97 / 109 | Single-instance |
-| 10k under-load median | ~427 MB | ~152 MB | V8 watermark under interleaved load |
+| Multiturn under-load med (Bun HTTP) | ~290–320 MB | ~152 MB | Publish / targets boards |
+| Fat vendor Ready (Sentry, `LOAD=db`) | **154 MB** RSS / **114 MB** anon | — | Own A/B vs in-memory **292 / 230** — not MJ under-load |
 
-Levers landed: INSTANCE_SPEC slim Core, lazy optional imports, lazy `clawql-data` (DuckDB) off HTTP Ready, WORM ring cap, session catalog max, `CLAWQL_MCP_SESSION_IDLE_MS` + `/healthz` bench stats. **Bun runtime** trims Ready ~22% / under-load ~28% without a rewrite (see [Node vs Bun](#node-vs-bun-runtime-same-core-binary)) — still not MCPJungle-class. Under-load plateau is **not** MCP session pileup; chase fat-catalog + first-flow caches ([`stall-memory-round2.md`](./stall-memory-round2.md)). **If RSS stays high, say so** — hiding a memory loss costs more than admitting it. Scale-out multiplies RSS; concurrency claims must price that in.
+**SQLite Ready cut is real** (−138 MB on Sentry) but **Ready(Sentry) ≠ under-load(40-op MJ)**. Claim parity only after both gateways run the **same** catalog under the **same** multiturn load (anon/PSS + RSS). Design: make `CLAWQL_CATALOG_SQLITE` / `LOAD=db` the **default** once that check passes on 40-op **and** Sentry, then remasure equal-arm under-load — if it lands near MJ, that flips the clearest loss to parity ([`catalog-sqlite-ready-rss.md`](./catalog-sqlite-ready-rss.md)).
+
+Levers landed: INSTANCE_SPEC slim Core, lazy optional imports, lazy `clawql-data`, Bun `--smol`, colocated SQLite (opt-in). Under-load plateau is **not** MCP session pileup ([`stall-memory-round2.md`](./stall-memory-round2.md)). Scale-out multiplies RSS.
 
 ---
 

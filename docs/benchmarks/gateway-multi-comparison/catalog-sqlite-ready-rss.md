@@ -27,7 +27,9 @@ Artifact: [`catalog-sqlite-rss-ab.json`](./catalog-sqlite-rss-ab.json)
 
 **Deltas vs in-memory:** `LOAD=db` ≈ **−138 MB RSS / −117 MB anon / −137 MB PSS**.
 
-Equal-arm **40-tool fat** catalog ([`catalog-listen-rss.json`](./catalog-listen-rss.json)) is too small for this lever (~+47 MB fat−lean); SQLite savings show on **multi‑MB** vendor specs.
+**Not yet under-load parity vs MCPJungle.** MJ’s ~150 MB is **under-load on the 40-op equal-arm board**. ClawQL historically adds **≥100 MB** on top of Ready under multiturn. Do **not** publish “memory gap closed” from Ready(Sentry) vs under-load(MJ). Required next: same Sentry (and 40-op) catalog, both gateways, multiturn load, compare **anon/PSS + RSS**.
+
+Equal-arm **40-tool fat** catalog ([`catalog-listen-rss.json`](./catalog-listen-rss.json)) is too small for the Ready lever (~+47 MB fat−lean); SQLite Ready savings show on **multi‑MB** vendor specs.
 
 ## Compile
 
@@ -45,7 +47,8 @@ CLAWQL_CATALOG_SQLITE=1 CLAWQL_CATALOG_SQLITE_LOAD=db \
 
 - File-backed pages still appear in RSS — publish **anon/PSS** with RSS.
 - Hot path still holds full `Operation[]` for search; OAS is what leaves the heap until execute touches a doc.
-- Equal-arm publish board remains a **40-tool** lean catalog — this lever is for **fat vendor / multi-provider** Ready RSS, not the pets board delta.
+- Equal-arm publish board remains a **40-tool** catalog — Ready SQLite wins are for **fat vendor** specs until under-load remasure.
+- **Default-on path:** after under-load + catalog behavior check out on 40-op **and** Sentry, flip `CLAWQL_CATALOG_SQLITE` / `LOAD=db` to default, then remasure equal-arm under-load. If near MCPJungle, that is the video memory line.
 
 
 ## Latency (equal-arm HTTP, n=2500)
@@ -62,4 +65,4 @@ Bun HTTP, gateway `taskset` cores 2–3, synthetic 40-op fat catalog, search+exe
 | turn p50 / p99 / **p999** (ms) | 1.78 / 6.16 / **10.4** | 1.56 / 6.19 / **8.1** | −0.22 / +0.03 / **−2.3** |
 | ≥300 ms spikes | 0 | 0 | — |
 
-**Verdict:** memory-only win on Ready RSS; **no steady-state latency regression** (p50/p99 within noise; p999 not worse). Search never touches SQLite. Execute pays at most a **one-time** gunzip+JSON materialize on first OAS property access per doc, then uses the in-process cache — not the open publish-board HTTP p999 stall (round 12).
+**Verdict:** Ready RSS win without steady-state latency regression (p50/p99 within noise; p999 not worse). Search never touches SQLite. Execute pays at most a **one-time** gunzip+JSON materialize on first OAS property access per doc, then uses the in-process cache — not the open publish-board HTTP p999 stall (round 12).
