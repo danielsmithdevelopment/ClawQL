@@ -968,8 +968,8 @@ async function tryLoadCatalogSqliteOnly(): Promise<LoadedSpec | null> {
   if (!Effect.runSync(catalogSqliteEnabled())) return null;
   const path = Effect.runSync(resolveCatalogSqlitePath());
   const { existsSync } = await import("node:fs");
-  if (!existsSync(path)) return null;
   const loadMode = (process.env.CLAWQL_CATALOG_SQLITE_LOAD ?? "").trim().toLowerCase();
+  const loadDbRequested = loadMode === "db" || loadMode === "sqlite";
   // Prefer DB when explicitly requested, or when no OpenAPI source env is set.
   const hasSpecSource = Boolean(
     process.env.CLAWQL_SPEC_PATH?.trim() ||
@@ -980,7 +980,15 @@ async function tryLoadCatalogSqliteOnly(): Promise<LoadedSpec | null> {
       process.env.CLAWQL_PROVIDER?.trim() ||
       process.env.CLAWQL_BUNDLED_PROVIDERS?.trim()
   );
-  if (loadMode !== "db" && loadMode !== "sqlite" && hasSpecSource) return null;
+  if (!loadDbRequested && hasSpecSource) return null;
+  if (!existsSync(path)) {
+    if (loadDbRequested) {
+      throw new Error(
+        `[catalog-sqlite] CLAWQL_CATALOG_SQLITE_LOAD=db but missing file: ${path}`
+      );
+    }
+    return null;
+  }
   const { loadCatalogSqliteSlimEffect } = await import("../catalog/catalog-sqlite.js");
   try {
     const slim = await Effect.runPromise(loadCatalogSqliteSlimEffect(path));
@@ -990,7 +998,12 @@ async function tryLoadCatalogSqliteOnly(): Promise<LoadedSpec | null> {
     return slim;
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error(`[catalog-sqlite] LOAD=db failed: ${msg}`);
+    if (loadDbRequested) {
+      throw new Error(
+        `[catalog-sqlite] CLAWQL_CATALOG_SQLITE_LOAD=db failed for ${path}: ${msg}`
+      );
+    }
+    console.error(`[catalog-sqlite] optional DB load failed, falling back to OpenAPI: ${msg}`);
     return null;
   }
 }

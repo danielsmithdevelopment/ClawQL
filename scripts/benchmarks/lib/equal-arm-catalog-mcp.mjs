@@ -13,7 +13,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 
-const N = Math.max(4, Math.min(200, Number(process.env.CATALOG_TOOL_COUNT ?? 40) || 40));
+const N = Math.max(4, Math.min(250, Number(process.env.CATALOG_TOOL_COUNT ?? 40) || 40));
 
 function parseLatencyMs() {
   const raw = (process.env.MT_UPSTREAM_LATENCY_MS ?? "").trim();

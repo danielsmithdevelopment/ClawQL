@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Effect } from "effect";
@@ -91,5 +91,11 @@ describe("catalog-sqlite", () => {
     // Lazy materialise
     expect(slim.openapi.info?.title).toBe("A");
     expect(slim.openapis?.[1]?.info?.title).toBe("B");
+  });
+
+  it("rejects corrupt sqlite files instead of half-loading", async () => {
+    const path = join(dir, "corrupt.sqlite");
+    writeFileSync(path, "not-a-sqlite-database");
+    await expect(Effect.runPromise(loadCatalogSqliteSlimEffect(path))).rejects.toThrow();
   });
 });

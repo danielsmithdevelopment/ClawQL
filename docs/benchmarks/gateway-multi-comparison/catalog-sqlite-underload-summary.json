@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-14T02:02:22.332Z",
+  "measuredAt": "2026-10-14T03:15:00.000Z",
   "equal40": {
     "memory_under_rss_median": 319.2,
     "memory_under_anon_median": 256.34,
@@ -26,41 +26,47 @@
       "under_pss_median": -116.85
     }
   },
+  "mcpjungle_equal40_smaps": {
+    "tree_rss_plateau_median": 152.64,
+    "tree_anon_plateau_median": 86.29,
+    "gateway_anon_plateau_median": 14.0,
+    "n": 40000
+  },
+  "mcpjungle_sentry_count_smaps": {
+    "tool_count": 209,
+    "tree_rss_plateau_median": 154.41,
+    "tree_anon_plateau_median": 88.02,
+    "n": 40000
+  },
+  "anon_vs_anon_equal40": {
+    "clawql_loaddb_anon": 146.23,
+    "mcpjungle_tree_anon": 86.29,
+    "anon_gap_mb": 59.94,
+    "rss_gap_mb": 35.77,
+    "verdict": "MJ tree anon (~86) is well below its ~153 RSS. Anon-vs-anon gap (~60 MB) is larger than RSS gap (~36 MB) — not near parity."
+  },
   "mcpjungle_anchor_underload_mb": 152,
-  "executor_v2_p999_3x": {
+  "executor_v2_p999_solo_3x": {
     "n_per_rep": 2500,
     "layout": "MT_PIN_CORES=1 gateway_2core solo",
     "reps": [
-      {
-        "rep": 1,
-        "p50_ms": 70.235,
-        "p99_ms": 114.734,
-        "p999_ms": 198.785,
-        "n": 2500
-      },
-      {
-        "rep": 2,
-        "p50_ms": 69.061,
-        "p99_ms": 103.683,
-        "p999_ms": 173.171,
-        "n": 2500
-      },
-      {
-        "rep": 3,
-        "p50_ms": 72.533,
-        "p99_ms": 109.031,
-        "p999_ms": 185.873,
-        "n": 2500
-      }
+      { "rep": 1, "p50_ms": 70.235, "p99_ms": 114.734, "p999_ms": 198.785, "n": 2500 },
+      { "rep": 2, "p50_ms": 69.061, "p99_ms": 103.683, "p999_ms": 173.171, "n": 2500 },
+      { "rep": 3, "p50_ms": 72.533, "p99_ms": 109.031, "p999_ms": 185.873, "n": 2500 }
     ],
-    "p999_range_ms": [
-      173.171,
-      198.785
+    "p999_range_ms": [173.171, 198.785],
+    "label": "solo"
+  },
+  "executor_v2_p999_interleaved_3x": {
+    "n_per_rep": 2500,
+    "layout": "MT_PIN_CORES=1 gateway_2core interleaved MT_ARMS=mcpjungle,agentgateway,executor_v2",
+    "reps": [
+      { "rep": 1, "p50_ms": 69.528, "p99_ms": 107.927, "p999_ms": 168.42, "n": 2500 },
+      { "rep": 2, "p50_ms": 67.459, "p99_ms": 96.497, "p999_ms": 181.704, "n": 2500 },
+      { "rep": 3, "p50_ms": 68.655, "p99_ms": 101.698, "p999_ms": 213.682, "n": 2500 }
     ],
-    "p50_range_ms": [
-      69.061,
-      72.533
-    ],
-    "verdict": "Publish-board 286 ms looks like run noise; solo 2-core p999 clusters 173\u2013199. Prefer ~186 median of 3 or withhold until interleaved 3\u00d7."
+    "p999_range_ms": [168.42, 213.682],
+    "p999_median_of_3": 181.704,
+    "verdict": "Interleaved 3× clusters with solo; publish-board 286 ms remains an outlier. Prefer interleaved median ~182 when quoting vs HTTP peers."
   }
 }

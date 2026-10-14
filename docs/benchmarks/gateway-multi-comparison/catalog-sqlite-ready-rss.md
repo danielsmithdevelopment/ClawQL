@@ -48,7 +48,7 @@ CLAWQL_CATALOG_SQLITE=1 CLAWQL_CATALOG_SQLITE_LOAD=db \
 - File-backed pages still appear in RSS — publish **anon/PSS** with RSS.
 - Hot path still holds full `Operation[]` for search; OAS is what leaves the heap until execute touches a doc.
 - Equal-arm publish board remains a **40-tool** catalog — Ready SQLite wins are for **fat vendor** specs until under-load remasure.
-- **Default on** after under-load cleared on 40-op + Sentry — see [`catalog-sqlite-underload.md`](./catalog-sqlite-underload.md). Equal-arm under-load anon ~146 ≈ MJ; RSS ~188 still slightly above.
+- **Default on** after under-load cleared on 40-op + Sentry — see [`catalog-sqlite-underload.md`](./catalog-sqlite-underload.md). Equal-arm under-load **RSS ~188 vs MJ tree ~153**; **anon 146 vs MJ tree anon ~86** (anon gap ~60 MB — not near parity).
 
 
 ## Latency (equal-arm HTTP, n=2500)
