@@ -176,15 +176,29 @@ export function verifyStorePurchaseEffect(
         );
       }
       const provision = yield* ProvisionOrgService;
-      const result = yield* provision.provisionOrg({
-        orgName,
-        ownerEmail,
-        planId: product.planId,
-        createdVia: "self_serve",
-        billingMode: "store_iap",
-        correlationId: input.correlationId,
-        env,
-      });
+      const result = yield* provision
+        .provisionOrg({
+          orgName,
+          ownerEmail,
+          planId: product.planId,
+          createdVia: "self_serve",
+          billingMode: "store_iap",
+          correlationId: input.correlationId,
+          env,
+        })
+        .pipe(
+          Effect.mapError((e) =>
+            e instanceof ProvisionOrgError
+              ? e
+              : new StoreIapVerifyError({
+                  reason:
+                    e && typeof e === "object" && "reason" in e
+                      ? String((e as { reason: string }).reason)
+                      : "store_iap provision failed",
+                  code: "provision_failed",
+                }),
+          ),
+        );
       provisioned = !result.idempotentReplay;
       org = yield* orgs
         .patchBilling({

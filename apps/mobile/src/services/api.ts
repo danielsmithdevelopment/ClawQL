@@ -145,8 +145,15 @@ function isFixtureSession(session: MobileSession, fixtureMode: boolean): boolean
   return fixtureMode || session.accessToken.startsWith("fixture-");
 }
 
+/** Cryptographically random hex for fixture ids/secrets (avoids CodeQL insecure-randomness). */
+function fixtureRandomHex(byteCount: number): string {
+  const buf = new Uint8Array(byteCount);
+  globalThis.crypto.getRandomValues(buf);
+  return Array.from(buf, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 function nextActivityId(): string {
-  return `act_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+  return `act_${Date.now().toString(36)}_${fixtureRandomHex(3)}`;
 }
 
 function activityTitle(item: ReviewItem, decision: ReviewDecision, answer?: string): string {
@@ -1047,7 +1054,7 @@ export function issueApiKeyEffect(input: {
       });
       return { key: res.key, secret: res.secret };
     }
-    const endsIn = Math.random().toString(16).slice(2, 6);
+    const endsIn = fixtureRandomHex(2);
     const key: ApiKeyItem = {
       id: `key_${Date.now().toString(36)}`,
       name,
@@ -1058,7 +1065,7 @@ export function issueApiKeyEffect(input: {
       dailyCap: "$50",
       lastUsed: "Never",
     };
-    const secret = `cqk_fixture_${endsIn}_${Math.random().toString(36).slice(2, 10)}`;
+    const secret = `cqk_fixture_${endsIn}_${fixtureRandomHex(5)}`;
     yield* Ref.update(stateRef, (s) => ({
       ...s,
       apiKeys: [key, ...s.apiKeys],

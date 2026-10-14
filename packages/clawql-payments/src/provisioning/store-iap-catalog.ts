@@ -42,16 +42,14 @@ export function storeIapFixtureEnabledEffect(
   });
 }
 
-const CLAWQL_STORE_IAP_CATALOG_TAG = "clawql/StoreIapCatalog" as const;
-
 export class StoreIapCatalogService extends Context.Service<
-  typeof CLAWQL_STORE_IAP_CATALOG_TAG,
+  StoreIapCatalogService,
   {
     readonly lookup: (productId: string) => Effect.Effect<StoreIapProduct | undefined>;
     readonly fixtureToken: (token: string) => Effect.Effect<boolean>;
     readonly fixtureEnabled: (env?: NodeJS.ProcessEnv) => Effect.Effect<boolean>;
   }
->()(CLAWQL_STORE_IAP_CATALOG_TAG) {}
+>()("clawql/StoreIapCatalog") {}
 
 export const storeIapCatalogLiveLayer: Layer.Layer<StoreIapCatalogService> = Layer.succeed(
   StoreIapCatalogService,
