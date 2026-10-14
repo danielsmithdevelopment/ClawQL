@@ -12,21 +12,21 @@ Corrected: earlier agent notes that marked Gateway / Automations / Memory / Audi
 
 ## Managed console map → phone
 
-| Console | Phone route (target) | Phase |
-| ------- | -------------------- | ----- |
-| Home | Tabs Home | Shipped |
-| Sessions | `/sessions` | Agent timeline shipped |
-| Review | Tabs Review | Shipped |
-| Gateway | `/gateway` | Fixture list shipped |
-| Automations | `/automations` | Fixture list shipped |
-| Skills | `/skills` + Review skill decide | Proposed/active shipped |
-| Memory & documents | `/memory` + `/memory/:id` | Explorer shipped |
-| Connections & keys | `/connections` + `/keys` | Connections + keys; live keys/connections adapters |
-| Audit | `/audit` | Entries + chain incident shipped |
-| Team | `/teammates` | Read-only → invite next |
-| Usage & billing | `/spend` + Profile plan | Partial |
-| Settings | `/settings` | Org + network + retention shipped |
-| Profile | Tabs Profile | Shipped |
+| Console            | Phone route (target)            | Phase                                              |
+| ------------------ | ------------------------------- | -------------------------------------------------- |
+| Home               | Tabs Home                       | Shipped                                            |
+| Sessions           | `/sessions`                     | Agent timeline shipped                             |
+| Review             | Tabs Review                     | Shipped                                            |
+| Gateway            | `/gateway`                      | Fixture list shipped                               |
+| Automations        | `/automations`                  | Fixture list shipped                               |
+| Skills             | `/skills` + Review skill decide | Proposed/active shipped                            |
+| Memory & documents | `/memory` + `/memory/:id`       | Explorer shipped                                   |
+| Connections & keys | `/connections` + `/keys`        | Connections + keys; live keys/connections adapters |
+| Audit              | `/audit`                        | Entries + chain incident shipped                   |
+| Team               | `/teammates`                    | Read-only → invite next                            |
+| Usage & billing    | `/spend` + Profile plan         | Partial                                            |
+| Settings           | `/settings`                     | Org + network + retention shipped                  |
+| Profile            | Tabs Profile                    | Shipped                                            |
 
 Phone-native extras (Voice, NFC, App Lock, push inbox) stay additive.
 
