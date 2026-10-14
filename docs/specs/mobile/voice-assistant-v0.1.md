@@ -28,28 +28,17 @@ People can **talk to ClawQL on the phone**:
 
 ## Phase 1 (shipped without Day-0)
 
-<<<<<<< HEAD
-| Piece                                                           | Status                                        |
-| --------------------------------------------------------------- | --------------------------------------------- |
-| Command grammar (`list` / `read` / `decline` / `open` / `help`) | `apps/mobile/src/services/voice-assistant.ts` |
-| Typed + fixture dictate on `/voice`                             | `apps/mobile/app/voice.tsx`                   |
-| TTS read-out (`expo-speech`, web `speechSynthesis` fallback)    | Same service                                  |
-| Prefs: Voice assistant on, Speak replies                        | DevicePrefs                                   |
-| Deep link `clawql://voice?q=…`                                  | Deep-link parser                              |
-| Maestro MOB-24 + Playwright e2e                                 | Catalog                                       |
-=======
-| Piece | Status |
-| ----- | ------ |
-| Command grammar (`list` / `read` / `decline` / `open` / `ask` / `start workflow` / `help`) | `apps/mobile/src/services/voice-assistant.ts` |
-| Typed + fixture dictate on `/voice` | `apps/mobile/app/voice.tsx` |
-| Web browser mic (`SpeechRecognition`) | `webDictateEffect` (no Info.plist) |
-| TTS read-out (`expo-speech`, web `speechSynthesis` fallback) | Same service |
-| Prefs: Voice assistant on, Speak replies | DevicePrefs |
-| Deep link `clawql://voice?q=…` · `clawql://workflows` | Deep-link parser |
-| Shortcuts / App Actions donation catalog | `shortcuts-donation.ts` + `store/android/actions.xml` |
-| Fixture workflows list / start | `/workflows` + voice |
-| Maestro MOB-24…25 + Playwright e2e | Catalog |
->>>>>>> a9dd3dfb (feat(mobile): Shortcuts donation, voice ask/start workflow, App Actions stub)
+| Piece                                                                          | Status                                        |
+| ------------------------------------------------------------------------------ | --------------------------------------------- |
+| Command grammar (`list` / `read` / `decline` / `open` / `ask` / `start` / help) | `apps/mobile/src/services/voice-assistant.ts` |
+| Typed + fixture dictate on `/voice`                                            | `apps/mobile/app/voice.tsx`                   |
+| Web browser mic (`SpeechRecognition`)                                          | `webDictateEffect` (no Info.plist)            |
+| TTS read-out (`expo-speech`, web `speechSynthesis` fallback)                   | Same service                                  |
+| Prefs: Voice assistant on, Speak replies                                       | DevicePrefs                                   |
+| Deep link `clawql://voice?q=…` · `clawql://workflows`                          | Deep-link parser                              |
+| Shortcuts / App Actions donation catalog                                       | `shortcuts-donation.ts` + `actions.xml`       |
+| Fixture workflows list / start                                                 | `/workflows` + voice                          |
+| Maestro MOB-24…25 + Playwright e2e                                             | Catalog                                       |
 
 Native mic STT and Siri phrases wait for Day-0 enrollment.
 
