@@ -49,6 +49,8 @@ Catalog source of truth: [`catalog.ts`](catalog.ts).
 | `mob-30-connections-settings.yaml` | MOB-30 | Connections + Settings network |
 | `mob-31-team-invite.yaml` | MOB-31 | Team invite + roles |
 | `mob-32-usage-depth.yaml` | MOB-32 | Usage month + team budgets |
+| `mob-33-gateway-memory-erase.yaml` | MOB-33 | Gateway routes + Memory erase |
+| `mob-34-billing-portal.yaml` | MOB-34 | Billing portal fixture honesty |
 
 **Still device-only (Manual):** REV-13, UX-09 — physical YubiKey NFC. Use `modules/clawql-nfc-security-key` mock injection in CI until the native modules ship.
 

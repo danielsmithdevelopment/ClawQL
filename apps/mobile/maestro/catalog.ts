@@ -239,6 +239,20 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-32-usage-depth.yaml",
   },
   {
+    id: "MOB-33",
+    run: "Maestro",
+    title: "Gateway routes and Memory pipelines erase",
+    passWhen: "Gateway shows standard route; erase Jane Okafor after checks",
+    flow: "maestro/flows/mob-33-gateway-memory-erase.yaml",
+  },
+  {
+    id: "MOB-34",
+    run: "Maestro",
+    title: "Billing portal CTA fixture honesty",
+    passWhen: "Spend portal button shows fixture honesty note",
+    flow: "maestro/flows/mob-34-billing-portal.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',

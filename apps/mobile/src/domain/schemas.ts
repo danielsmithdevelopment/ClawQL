@@ -378,6 +378,36 @@ export const GatewayEndpoint = Schema.Struct({
 });
 export type GatewayEndpoint = Schema.Schema.Type<typeof GatewayEndpoint>;
 
+export const GatewayRoute = Schema.Struct({
+  id: Schema.String,
+  label: Schema.String,
+  chain: Schema.String,
+  status: Schema.String,
+  tone: BadgeTone,
+});
+export type GatewayRoute = Schema.Schema.Type<typeof GatewayRoute>;
+
+export const GatewayBundle = Schema.Struct({
+  base: Schema.String,
+  endpoints: Schema.Array(GatewayEndpoint),
+  routes: Schema.Array(GatewayRoute),
+  source: Schema.optional(Schema.Literals(["live", "fixture"])),
+});
+export type GatewayBundle = Schema.Schema.Type<typeof GatewayBundle>;
+
+export const MemoryUpload = Schema.Struct({
+  id: Schema.String,
+  file: Schema.String,
+  meta: Schema.String,
+  addedBy: Schema.String,
+  pipeline: Schema.String,
+  added: Schema.String,
+  status: Schema.String,
+  tone: BadgeTone,
+  source: Schema.String,
+});
+export type MemoryUpload = Schema.Schema.Type<typeof MemoryUpload>;
+
 export const AutomationSub = Schema.Struct({
   id: Schema.String,
   name: Schema.String,

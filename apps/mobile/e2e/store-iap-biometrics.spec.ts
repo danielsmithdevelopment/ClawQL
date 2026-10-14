@@ -210,4 +210,32 @@ test.describe("PhoneApprove store_iap + Face ID (fixture web)", () => {
     await expect(spend.getByTestId("spend-month-amount")).toBeVisible();
     await expect(spend.getByTestId("spend-team-documents")).toBeVisible();
   });
+
+  test("MOB-33 Gateway routes and Memory erase", async ({ page }) => {
+    await signInFixture(page);
+    await page.getByTestId("tab-profile").first().click();
+    await page.getByTestId("profile-open-gateway").filter({ visible: true }).first().click();
+    const gateway = page.getByTestId("gateway-screen").filter({ visible: true }).first();
+    await expect(gateway).toBeVisible({ timeout: 15_000 });
+    await expect(gateway.getByTestId("gateway-route-standard")).toBeVisible();
+    await page.goto("/memory", { waitUntil: "networkidle" });
+    const memory = page.getByTestId("memory-screen").filter({ visible: true }).first();
+    await expect(memory).toBeVisible({ timeout: 15_000 });
+    await memory.getByTestId("memory-tab-pipelines").click();
+    await expect(memory.getByTestId("memory-upload-up_nw")).toBeVisible();
+    await memory.getByTestId("memory-tab-erase").click();
+    await memory.getByTestId("memory-erase-accept-irreversible").click();
+    await memory.getByTestId("memory-erase-accept-audit").click();
+    await memory.getByTestId("memory-erase-run").click();
+    await expect(memory.getByTestId("memory-erase-note")).toContainText(/Erased/i);
+  });
+
+  test("MOB-34 Billing portal fixture honesty", async ({ page }) => {
+    await signInFixture(page);
+    await page.goto("/spend", { waitUntil: "networkidle" });
+    const spend = page.getByTestId("spend-screen").filter({ visible: true }).first();
+    await expect(spend).toBeVisible({ timeout: 15_000 });
+    await spend.getByTestId("spend-open-billing-portal").click();
+    await expect(spend.getByTestId("spend-billing-portal-note")).toContainText(/Fixture/i);
+  });
 });

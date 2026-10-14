@@ -32,6 +32,8 @@ import type {
   ProposedSkill,
   ActiveSkill,
   ConnectionItem,
+  GatewayRoute,
+  MemoryUpload,
 } from "./schemas";
 
 export const FIXTURE_SESSION: MobileSession = {
@@ -742,6 +744,66 @@ export const FIXTURE_GATEWAY_ENDPOINTS: readonly GatewayEndpoint[] = [
   { path: "/memory", description: "Ingest, search, and erase team memory" },
   { path: "/decision", description: "Fast, calibrated decisions (System One compatible)" },
   { path: "/events", description: "Subscribe by webhook or stream live events" },
+];
+
+export const FIXTURE_GATEWAY_ROUTES: readonly GatewayRoute[] = [
+  {
+    id: "standard",
+    label: "standard",
+    chain: "Claude Sonnet 4.6 → GPT-4o",
+    status: "Healthy",
+    tone: "ok",
+  },
+  {
+    id: "frugal",
+    label: "frugal",
+    chain: "Gemini 2.5 Flash-Lite → DeepSeek",
+    status: "Using fallback",
+    tone: "warn",
+  },
+  {
+    id: "private",
+    label: "private",
+    chain: "Local GPU",
+    status: "Healthy",
+    tone: "ok",
+  },
+];
+
+export const FIXTURE_MEMORY_UPLOADS: readonly MemoryUpload[] = [
+  {
+    id: "up_inv",
+    file: "Invoice 88213.pdf",
+    meta: "PDF, 3 pages, 180 KB",
+    addedBy: "Jordan Kim",
+    pipeline: "Invoices",
+    added: "10:04",
+    status: "Step 3 of 5",
+    tone: "neutral",
+    source: "people",
+  },
+  {
+    id: "up_globex",
+    file: "Globex renewal.pdf",
+    meta: "PDF, 14 pages, 1.1 MB",
+    addedBy: "Google Drive",
+    pipeline: "Contracts",
+    added: "10:02",
+    status: "1 field needs a person",
+    tone: "warn",
+    source: "connections",
+  },
+  {
+    id: "up_nw",
+    file: "Northwind MSA Amendment 2.pdf",
+    meta: "PDF, 12 pages, 980 KB",
+    addedBy: "legal-ops agent",
+    pipeline: "Contracts",
+    added: "09:23",
+    status: "Stored",
+    tone: "ok",
+    source: "agents",
+  },
 ];
 
 export const FIXTURE_AUTOMATIONS: readonly AutomationSub[] = [

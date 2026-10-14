@@ -2,11 +2,12 @@ import { Effect } from "effect";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 
-import type { GatewayEndpoint } from "@/src/domain/schemas";
-import { listGatewayEndpointsEffect } from "@/src/services/api";
+import type { GatewayBundle } from "@/src/domain/schemas";
+import { getGatewayBundleEffect } from "@/src/services/api";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, space } from "@/src/theme";
 import {
+  Badge,
   Body,
   Column,
   LoadingBlock,
@@ -21,14 +22,14 @@ import {
 export default function GatewayScreen() {
   const { session } = useSession();
   const router = useRouter();
-  const [rows, setRows] = useState<readonly GatewayEndpoint[]>([]);
+  const [bundle, setBundle] = useState<GatewayBundle | null>(null);
 
   useEffect(() => {
     if (!session) return;
-    void Effect.runPromise(listGatewayEndpointsEffect(session)).then(setRows);
+    void Effect.runPromise(getGatewayBundleEffect(session)).then(setBundle);
   }, [session]);
 
-  if (!session) {
+  if (!session || !bundle) {
     return (
       <ScreenHost>
         <LoadingBlock />
@@ -41,11 +42,29 @@ export default function GatewayScreen() {
       <SectionHeader
         icon="console"
         title="Gateway"
-        subtitle="Inference, MCP, memory, decisions, and events — console Gateway on phone."
+        subtitle="Inference routes, MCP, memory, decisions, and events — console Gateway on phone."
       />
-      <SurfaceCard testID="gateway-endpoints">
+      <Meta testID="gateway-base" mono color={brand.inkFaint}>
+        {bundle.base}
+      </Meta>
+
+      <SurfaceCard testID="gateway-routes">
+        <Body>Model routes</Body>
         <Column spacing={space.sm}>
-          {rows.map((row) => (
+          {bundle.routes.map((row) => (
+            <SurfaceCard key={row.id} testID={`gateway-route-${row.id}`} tint="soft">
+              <Badge label={row.status} tone={row.tone} />
+              <Meta mono>{row.label}</Meta>
+              <Meta color={brand.inkFaint}>{row.chain}</Meta>
+            </SurfaceCard>
+          ))}
+        </Column>
+      </SurfaceCard>
+
+      <SurfaceCard testID="gateway-endpoints">
+        <Body>Endpoints</Body>
+        <Column spacing={space.sm}>
+          {bundle.endpoints.map((row) => (
             <SurfaceCard key={row.path} testID={`gateway-row-${row.path.replace("/", "")}`} tint="soft">
               <Meta mono>{row.path}</Meta>
               <Meta color={brand.inkFaint}>{row.description}</Meta>

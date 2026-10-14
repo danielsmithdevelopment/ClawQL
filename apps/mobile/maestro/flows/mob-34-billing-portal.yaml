@@ -1,0 +1,15 @@
+# MOB-34 — Billing portal CTA honesty (fixture)
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- openLink: clawql://spend
+- assertVisible:
+    id: "spend-screen"
+- assertVisible:
+    id: "spend-billing-portal"
+- tapOn:
+    id: "spend-open-billing-portal"
+- assertVisible:
+    id: "spend-billing-portal-note"
