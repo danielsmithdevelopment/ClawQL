@@ -13,11 +13,25 @@ describe("managed team live layer", () => {
   });
 
   it("lists fixture people, groups, and roles", async () => {
-    const listed = await Effect.runPromise(listManagedTeamEffect());
+    const listed = await Effect.runPromise(
+      listManagedTeamEffect({ ...process.env, CLAWQL_MANAGED_DATA_SOURCE: "fixture" }),
+    );
     expect(listed.source).toBe("fixture");
     expect(listed.people.some((p) => p.id === "dana")).toBe(true);
     expect(listed.groups.length).toBeGreaterThan(0);
     expect(listed.roles.some((r) => r.id === "admin")).toBe(true);
+  });
+
+  it("falls back to fixture when live org spend has no useful members", async () => {
+    const listed = await Effect.runPromise(
+      listManagedTeamEffect({
+        ...process.env,
+        CLAWQL_MANAGED_DATA_SOURCE: "live",
+        CLAWQL_MANAGED_ORG_ID: "",
+      }),
+    );
+    expect(listed.source).toBe("fixture");
+    expect(listed.people.some((p) => p.id === "dana")).toBe(true);
   });
 
   it("requires acceptance checkboxes before invite", async () => {
@@ -45,7 +59,9 @@ describe("managed team live layer", () => {
     );
     expect(invited.person.email).toBe("alex@acme.example");
     expect(invited.person.invitePending).toBe(true);
-    const listed = await Effect.runPromise(listManagedTeamEffect());
+    const listed = await Effect.runPromise(
+      listManagedTeamEffect({ ...process.env, CLAWQL_MANAGED_DATA_SOURCE: "fixture" }),
+    );
     expect(listed.people.some((p) => p.email === "alex@acme.example")).toBe(true);
   });
 });

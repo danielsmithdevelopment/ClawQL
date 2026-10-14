@@ -1,5 +1,12 @@
+import { getOrgUnifiedSpendSummaryEffect } from "clawql-payments";
 import { Effect, Ref } from "effect";
 
+import {
+  managedOrgId,
+  managedTenantId,
+  readManagedDataSource,
+  resolveWithFallbackEffect,
+} from "@/lib/managed/data-source";
 import {
   TEAM_APPROVERS,
   TEAM_GROUPS,
@@ -25,7 +32,6 @@ export type ManagedTeamInviteInput = {
   readonly email: string;
   readonly name?: string;
   readonly role?: string;
-  /** Acceptance checklist from the phone invite flow. */
   readonly acceptCanApprove?: boolean;
   readonly acceptSecurityKeys?: boolean;
   readonly acceptAuditRecorded?: boolean;
@@ -50,24 +56,70 @@ function mapFixturePerson(person: (typeof TEAM_PEOPLE)[number]): ManagedTeamPers
   };
 }
 
-export const listManagedTeamEffect = (): Effect.Effect<{
+function fixturePeopleWithInvites(
+  invites: readonly ManagedTeamPerson[],
+): ManagedTeamPerson[] {
+  const base = TEAM_PEOPLE.map(mapFixturePerson);
+  const seen = new Set(base.map((p) => p.email.toLowerCase()));
+  const extra = invites.filter((p) => !seen.has(p.email.toLowerCase()));
+  return [...base, ...extra];
+}
+
+export const listManagedTeamEffect = (
+  env: NodeJS.ProcessEnv = process.env,
+): Effect.Effect<{
   readonly people: readonly ManagedTeamPerson[];
   readonly groups: typeof TEAM_GROUPS;
   readonly roles: typeof TEAM_ROLES;
   readonly approvers: typeof TEAM_APPROVERS;
-  readonly source: "fixture";
+  readonly source: "live" | "fixture";
 }> =>
   Effect.gen(function* () {
     const invites = yield* Ref.get(invitesRef);
-    const base = TEAM_PEOPLE.map(mapFixturePerson);
-    const seen = new Set(base.map((p) => p.email.toLowerCase()));
-    const extra = invites.filter((p) => !seen.has(p.email.toLowerCase()));
+    const fixturePeople = fixturePeopleWithInvites(invites);
+
+    const resolved = yield* resolveWithFallbackEffect({
+      source: readManagedDataSource(env),
+      fixture: fixturePeople,
+      isLiveUseful: (people) => people.length > 0 && people[0]?.id.startsWith("member_") === true,
+      live: Effect.gen(function* () {
+        const orgId = managedOrgId(env);
+        if (!orgId) {
+          return yield* Effect.fail(new Error("CLAWQL_MANAGED_ORG_ID required for live team"));
+        }
+        const summary = yield* getOrgUnifiedSpendSummaryEffect({
+          orgId,
+          actorTenantId: managedTenantId(env),
+          includeWormSpend: false,
+        });
+        if (summary.members.length === 0) {
+          return yield* Effect.fail(new Error("no org members"));
+        }
+        return summary.members.map((m) => {
+          const email = m.email?.trim() || `${m.memberTenantId}@org.local`;
+          const name = m.displayName?.trim() || email;
+          return {
+            id: `member_${m.memberTenantId}`,
+            name,
+            email,
+            role: "Member",
+            groups: ["Org"],
+            canApprove: false,
+            keysReady: false,
+            lastActive: "Live org member",
+            canApproveSummary: "From org spend roster",
+            keysLabel: "Managed via IdP",
+          } satisfies ManagedTeamPerson;
+        });
+      }),
+    });
+
     return {
-      people: [...base, ...extra],
+      people: resolved.data,
       groups: TEAM_GROUPS,
       roles: TEAM_ROLES,
       approvers: TEAM_APPROVERS,
-      source: "fixture" as const,
+      source: resolved.source,
     };
   });
 
@@ -84,7 +136,11 @@ export const inviteManagedTeamPersonEffect = (
         new Error("acceptCanApprove, acceptSecurityKeys, and acceptAuditRecorded are required"),
       );
     }
-    const existing = yield* listManagedTeamEffect();
+    const existing = yield* listManagedTeamEffect({
+      ...process.env,
+      CLAWQL_MANAGED_DATA_SOURCE: "fixture",
+    });
+
     if (existing.people.some((p) => p.email.toLowerCase() === email)) {
       return yield* Effect.fail(new Error("already_invited"));
     }
@@ -106,6 +162,5 @@ export const inviteManagedTeamPersonEffect = (
     return { person, source: "fixture" as const };
   });
 
-/** Test helper — clears in-process invites. */
 export const resetManagedTeamInvitesEffect = (): Effect.Effect<void> =>
   Ref.set(invitesRef, []);
