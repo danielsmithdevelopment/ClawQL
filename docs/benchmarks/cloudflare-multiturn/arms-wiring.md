@@ -4,14 +4,20 @@ All arms use **Streamable HTTP**. Full Cloudflare v4 (~2.9k ops in repo OpenAPI)
 
 | Arm | Catalog | Adapter status | Notes |
 | --- | --- | --- | --- |
-| `direct` | curated (implicit) | **Smoke done** | Raw REST to replay mock |
-| `clawql_default` | full + curated | Next | Bun/Node HTTP, SQLite catalog on, search→execute |
-| `clawql_known_op` | full + curated | Next | Execute by operationId; no search on steady-state turns |
-| `cloudflare_codemode` | full (2-tool) | Next | Self-host [cloudflare/mcp](https://github.com/cloudflare/mcp) if possible; else tokens-only |
-| `executor_v2` | code | Next | Published scripts in `code-mode/published-scripts.mjs`; pin beta version |
-| `mcpjungle` | curated only | Next | Same REST-to-MCP child as agentgateway; tree RSS+anon |
-| `agentgateway` | curated only | Next | Same REST-to-MCP child |
+| `direct` | curated (implicit) | **Wired** | Raw REST to replay mock |
+| `clawql_default` | curated OAS via ClawQL | **Wired** | Streamable HTTP, SQLite catalog on, search→execute |
+| `clawql_known_op` | curated OAS via ClawQL | **Wired** | Execute by operationId; no search on steady-state turns |
+| `cloudflare_codemode` | full (2-tool) | **Tokens-only** | Self-host [cloudflare/mcp](https://github.com/cloudflare/mcp) still open; published scripts counted |
+| `executor_v2` | code | **Wired (static_upstream0)** | QuickJS has no `fetch`; compact fixture slices inlined (`executorV2ScriptsFromWorld`); pin `executor@2.0.0-beta.15` |
+| `mcpjungle` | curated only | **Wired** | REST-to-MCP child (`cf-rest-mcp.mjs`); tree RSS+anon |
+| `agentgateway` | curated only | **Wired** | Same REST-to-MCP child as MCPJungle |
 
 **Full-spec feasibility row:** MCPJungle / agentgateway mark **N/A — context overflow** (~1.17M tokens native / ~244k required-only) rather than a failed run.
 
-**Interleaved board:** extend `run-zone-audit.mjs` (or a sibling `run-board.mjs`) to start each gateway, pin cores like `gateway-multi-multiturn.mjs`, and rotate arms within each of 3 runs × 10k sessions.
+**Interleaved board:** `run-board.mjs` starts mock + each gateway, rotates arms within each rep.
+
+```bash
+CF_MT_ITERS=20 CF_MT_REPS=1 \
+  EXECUTOR_V2_API_KEY="$(cat /tmp/executor-v2-data/api_key.txt)" \
+  npm run benchmark:cloudflare-multiturn:board
+```
