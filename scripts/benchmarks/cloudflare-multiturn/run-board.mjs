@@ -673,7 +673,8 @@ async function runClawqlProgramSession(client, expectations) {
   }
   const results = envelope?.result?.results || [];
   for (let step = 1; step <= 11; step++) {
-    const row = results.find((r) => r.id === `step_${step}`) || results[step - 1];
+    const row =
+      results.find((r) => r.id === String(step) || r.id === `step_${step}`) || results[step - 1];
     let value = row?.value;
     if (typeof value === "string") value = parseJsonLoose(value);
     // Host execute returns MCP text content; runner may stash parsed JSON or raw text.

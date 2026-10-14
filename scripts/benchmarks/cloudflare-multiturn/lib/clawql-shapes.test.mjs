@@ -54,12 +54,16 @@ describe("clawql observation-shaped where", () => {
     }
   });
 
-  it("program plan source is valid JSON with 11 execute calls", () => {
+  it("program plan source is compact JSON with 11 calls (tool omitted)", () => {
     const plan = JSON.parse(programPlanSource());
     assert.equal(plan.v, 1);
     assert.equal(plan.mode, "sequential");
     assert.equal(plan.calls.length, 11);
-    assert.ok(plan.calls.every((c) => c.tool === "execute" && typeof c.where === "string"));
+    assert.ok(plan.calls.every((c) => c.tool === undefined && typeof c.where === "string"));
+    assert.ok(plan.calls.every((c) => typeof c.operationId === "string"));
+    // Compact: empty args omitted on step 1
+    assert.equal(plan.calls[0].args, undefined);
+    assert.ok(plan.calls[1].args?.zone_id);
   });
 
   it("modelWrittenShapeText includes where (harness builds args only)", () => {

@@ -101,7 +101,11 @@ function parseCall(raw: unknown, index: number): ParseResult<ProgramPlanCall> {
     );
   }
   const id = typeof raw.id === "string" ? raw.id : `call_${index}`;
-  const tool = raw.tool;
+  // Compact plans may omit tool when operationId is present (defaults to execute).
+  const tool =
+    raw.tool === undefined && typeof raw.operationId === "string" && raw.operationId.trim()
+      ? "execute"
+      : raw.tool;
   if (tool === "execute") {
     const operationId = typeof raw.operationId === "string" ? raw.operationId.trim() : "";
     if (!operationId) {

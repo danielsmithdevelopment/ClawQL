@@ -1,13 +1,20 @@
 #!/usr/bin/env node
 /**
- * Real-model validation (SPEC): 50 sessions per arm, pinned model, mock only.
+ * Real-model validation (SPEC): 50 sessions per arm × model, mock only.
  *
- *   CF_MT_MODEL=openai/gpt-4.1-mini OPENAI_API_KEY=… \
+ * Secrets (never paste into chat / logs):
+ *   OPENAI_API_KEY          — required
+ *   OPENAI_BASE_URL         — optional (default https://api.openai.com/v1)
+ *   CF_MT_MODEL_FRONTIER    — frontier model id
+ *   CF_MT_MODEL_SMALL       — smaller/cheaper model id
+ *   CF_MT_MODEL             — optional single-model override (runs that one only)
+ *
  *   CF_MT_REAL_ITERS=50 CF_MT_REAL_ARMS=clawql_known_op,clawql_program,executor_v2 \
  *     npm run benchmark:cloudflare-multiturn:real-model
  *
- * Requires an OpenAI-compatible Chat Completions API (OPENAI_API_KEY + optional
- * OPENAI_BASE_URL). Does not publish into the scripted board table.
+ * Settings fixed across arms: temperature 0, shared system prompt, each gateway's
+ * own tool descriptions from listTools. Reports failures (malformed where, retries,
+ * turns) alongside tokens and task success.
  */
 import { spawn } from "node:child_process";
 import {
@@ -31,6 +38,8 @@ import { FAKE } from "./lib/fixture-ids.mjs";
 import { buildExpectations, checkStep } from "./lib/success-checks.mjs";
 import { CLAWQL_STEP_SHAPES } from "./lib/clawql-shapes.mjs";
 import { createServer as createNetServer, createConnection } from "node:net";
+import { ensureExecutorOpenapiApp } from "./lib/ensure-executor-openapi-app.mjs";
+import { executorV2ToolScripts } from "./code-mode/published-scripts.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "../../..");
@@ -39,18 +48,34 @@ const CURATED_OAS = join(HERE, "fixtures/curated-openapi.json");
 const MOCK_JS = join(HERE, "mock/cloudflare-replay-mock.mjs");
 const OUT_DIR = process.env.CF_MT_OUT_DIR || join(ROOT, "docs/benchmarks/cloudflare-multiturn");
 const ITERS = Math.max(1, Number(process.env.CF_MT_REAL_ITERS || 50) || 50);
-const MODEL = process.env.CF_MT_MODEL || process.env.OPENAI_MODEL || "";
 const API_KEY = process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || "";
 const BASE_URL = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "");
 const ARMS = (
-  process.env.CF_MT_REAL_ARMS ||
-  "clawql_known_op,clawql_program,executor_v2,cloudflare_codemode"
+  process.env.CF_MT_REAL_ARMS || "clawql_known_op,clawql_program,executor_v2"
 )
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
 const MAX_TURNS = Math.max(4, Number(process.env.CF_MT_REAL_MAX_TURNS || 24) || 24);
+const TEMPERATURE = 0;
 const enc = getEncoding("cl100k_base");
+
+function resolveModels() {
+  if (process.env.CF_MT_MODEL || process.env.OPENAI_MODEL) {
+    return [
+      {
+        id: process.env.CF_MT_MODEL || process.env.OPENAI_MODEL,
+        label: "single",
+      },
+    ];
+  }
+  const frontier = process.env.CF_MT_MODEL_FRONTIER || "";
+  const small = process.env.CF_MT_MODEL_SMALL || "";
+  const out = [];
+  if (frontier) out.push({ id: frontier, label: "frontier" });
+  if (small) out.push({ id: small, label: "small" });
+  return out;
+}
 
 function countTokens(text) {
   if (text == null || text === "") return 0;
@@ -87,11 +112,51 @@ async function waitTcp(port, ms = 60000) {
   throw new Error(`tcp timeout :${port}`);
 }
 
-async function chatCompletions({ messages, tools }) {
+/** Shared system prompt — arm differences come from tool descriptions only. */
+function systemPrompt() {
+  return [
+    "You complete a 12-step Cloudflare zone audit using only the provided tools.",
+    `Zone name: ${FAKE.auditZoneName}. Target IP: ${FAKE.targetIp}. Account id: ${FAKE.accountId}.`,
+    "Return lean observations. Prefer server-side filtering when the tools support it.",
+    "Step 12 is a gated proposal only — do not PATCH DNS. Submit { proposal: { recordId, proxied: true }, gated: true }.",
+    "Call submit_observation for every step 1–12 when you have the answer.",
+  ].join("\n");
+}
+
+function mcpToolsToOpenAI(tools, { includeSubmit = true } = {}) {
+  const out = tools.map((t) => ({
+    type: "function",
+    function: {
+      name: t.name,
+      description: t.description || t.name,
+      parameters: t.inputSchema || { type: "object", properties: {} },
+    },
+  }));
+  if (includeSubmit) {
+    out.push({
+      type: "function",
+      function: {
+        name: "submit_observation",
+        description: "Submit the final observation for one workflow step (1–12).",
+        parameters: {
+          type: "object",
+          properties: {
+            step: { type: "integer", minimum: 1, maximum: 12 },
+            observation: {},
+          },
+          required: ["step", "observation"],
+        },
+      },
+    });
+  }
+  return out;
+}
+
+async function chatCompletions({ model, messages, tools }) {
   const body = {
-    model: MODEL,
+    model,
     messages,
-    temperature: 0,
+    temperature: TEMPERATURE,
     ...(tools?.length ? { tools, tool_choice: "auto" } : {}),
   };
   const res = await fetch(`${BASE_URL}/chat/completions`, {
@@ -105,75 +170,6 @@ async function chatCompletions({ messages, tools }) {
   const text = await res.text();
   if (!res.ok) throw new Error(`chat completions ${res.status}: ${text.slice(0, 400)}`);
   return JSON.parse(text);
-}
-
-function systemPrompt(arm) {
-  return [
-    "You are validating a 12-step Cloudflare zone audit against a local mock via MCP tools.",
-    `Arm: ${arm}. Fixture zone name: ${FAKE.auditZoneName}. Target IP: ${FAKE.targetIp}.`,
-    "Use tools only. Prefer lean responses.",
-    arm.startsWith("clawql")
-      ? "For ClawQL execute, use JMESPath `where` (server-side) to return only the observation you need — e.g. counts via length(), name lists, scalars. Do not dump full DNS rows."
-      : "For code mode, write a short program that filters in the sandbox and returns only the observation object.",
-    "Finish by calling the harness-facing summary: return JSON for steps 1–12 matching the check schema when you are done, or keep using tools until each step is satisfied.",
-    "Step 12 is a gated proposal only: { proposal: { recordId, proxied: true }, gated: true } — do not PATCH.",
-  ].join("\n");
-}
-
-function clawqlTools(includeProgram) {
-  const tools = [
-    {
-      type: "function",
-      function: {
-        name: "execute",
-        description:
-          "Run one OpenAPI operation. Optional where = JMESPath filter/extract (server-side; length() ok).",
-        parameters: {
-          type: "object",
-          properties: {
-            operationId: { type: "string" },
-            args: { type: "object" },
-            where: { type: "string", description: "JMESPath, max 512 chars" },
-            fields: { type: "array", items: { type: "string" } },
-          },
-          required: ["operationId"],
-        },
-      },
-    },
-  ];
-  if (includeProgram) {
-    tools.push({
-      type: "function",
-      function: {
-        name: "execute_program",
-        description: "Run a read-only JSON plan of execute/search calls in one round trip.",
-        parameters: {
-          type: "object",
-          properties: {
-            source: { type: "string", description: "JSON plan string" },
-            timeoutMs: { type: "number" },
-          },
-          required: ["source"],
-        },
-      },
-    });
-  }
-  tools.push({
-    type: "function",
-    function: {
-      name: "submit_observation",
-      description: "Submit the final observation for one workflow step (1–12).",
-      parameters: {
-        type: "object",
-        properties: {
-          step: { type: "integer", minimum: 1, maximum: 12 },
-          observation: {},
-        },
-        required: ["step", "observation"],
-      },
-    },
-  });
-  return tools;
 }
 
 async function startMock() {
@@ -253,9 +249,9 @@ async function startClawql(mockBase, { enablePrograms = false } = {}) {
   };
 }
 
-async function connectHttpMcp(mcpUrl) {
+async function connectHttpMcp(mcpUrl, name = "cf-real") {
   const transport = new StreamableHTTPClientTransport(new URL(mcpUrl));
-  const client = new Client({ name: "cf-real-model", version: "1" }, {});
+  const client = new Client({ name, version: "1" }, {});
   await client.connect(transport);
   return {
     client,
@@ -265,44 +261,86 @@ async function connectHttpMcp(mcpUrl) {
   };
 }
 
-async function runClawqlModelSession(client, expectations, { program = false } = {}) {
+function classifyToolFailure(name, args, resultText) {
+  const failures = [];
+  let json = null;
+  try {
+    json = JSON.parse(resultText);
+  } catch {
+    /* ignore */
+  }
+  if (json?.status === "where_invalid" || /where_invalid|Invalid where JMESPath/i.test(resultText)) {
+    failures.push({
+      kind: "malformed_where",
+      tool: name,
+      where: typeof args?.where === "string" ? args.where : null,
+      detail: (json?.error || resultText).slice(0, 240),
+    });
+  }
+  if (json?.ok === false && json?.status !== "where_invalid") {
+    failures.push({
+      kind: "tool_error",
+      tool: name,
+      detail: (json?.error || resultText).slice(0, 240),
+    });
+  }
+  return failures;
+}
+
+async function runToolSession({
+  model,
+  arm,
+  client,
+  expectations,
+  openaiTools,
+  allowedToolNames,
+}) {
   const t0 = performance.now();
   const observations = {};
+  const failures = [];
   let turns = 0;
+  let retries = 0;
   let inputTokens = 0;
   let outputTokens = 0;
   let toolCalls = 0;
+  let whereAttempts = 0;
+  let whereMalformed = 0;
+
   const messages = [
-    { role: "system", content: systemPrompt(program ? "clawql_program" : "clawql_known_op") },
+    { role: "system", content: systemPrompt() },
     {
       role: "user",
       content:
-        "Complete the 12-step zone audit. Known useful operationIds include: " +
+        `Arm=${arm}. Complete steps 1–12. Useful operationIds: ` +
         Object.values(CLAWQL_STEP_SHAPES)
           .map((s) => s.operationId)
           .filter((v, i, a) => a.indexOf(v) === i)
           .join(", ") +
-        ". Submit each step observation via submit_observation.",
+        ".",
     },
   ];
-  const tools = clawqlTools(program);
 
   while (turns < MAX_TURNS) {
     turns++;
-    const completion = await chatCompletions({ messages, tools });
+    const completion = await chatCompletions({ model, messages, tools: openaiTools });
     const choice = completion.choices?.[0]?.message;
     if (!choice) throw new Error("empty model message");
     inputTokens += completion.usage?.prompt_tokens || countTokens(JSON.stringify(messages));
     outputTokens +=
-      completion.usage?.completion_tokens || countTokens(JSON.stringify(choice.content || "")) +
-      countTokens(JSON.stringify(choice.tool_calls || []));
+      completion.usage?.completion_tokens ||
+      countTokens(JSON.stringify(choice.content || "")) +
+        countTokens(JSON.stringify(choice.tool_calls || []));
     messages.push(choice);
     const calls = choice.tool_calls || [];
     if (!calls.length) {
-      if (Object.keys(observations).length >= 12) break;
+      if ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].every((s) => observations[s] != null)) break;
+      retries++;
       messages.push({
         role: "user",
-        content: `Still missing steps: ${[...Array(12)].map((_, i) => i + 1).filter((s) => !observations[s]).join(", ")}`,
+        content: `Missing steps: ${[...Array(12)]
+          .map((_, i) => i + 1)
+          .filter((s) => !observations[s])
+          .join(", ")}. Continue with tools.`,
       });
       continue;
     }
@@ -313,16 +351,27 @@ async function runClawqlModelSession(client, expectations, { program = false } =
       try {
         args = JSON.parse(call.function?.arguments || "{}");
       } catch {
+        failures.push({ kind: "malformed_tool_args", tool: name, detail: "arguments JSON parse failed" });
         args = {};
       }
       let resultText = "";
       if (name === "submit_observation") {
         observations[args.step] = args.observation;
         resultText = JSON.stringify({ ok: true, step: args.step });
-      } else if (name === "execute" || name === "execute_program") {
+      } else if (allowedToolNames.has(name)) {
+        if (typeof args.where === "string") whereAttempts++;
         const res = await client.callTool({ name, arguments: args });
         resultText = toolText(res);
+        const classified = classifyToolFailure(name, args, resultText);
+        for (const f of classified) {
+          failures.push(f);
+          if (f.kind === "malformed_where") {
+            whereMalformed++;
+            retries++;
+          }
+        }
       } else {
+        failures.push({ kind: "unknown_tool", tool: name });
         resultText = JSON.stringify({ ok: false, error: `unknown tool ${name}` });
       }
       messages.push({
@@ -340,27 +389,63 @@ async function runClawqlModelSession(client, expectations, { program = false } =
     const check = checkStep(step, observations[step], expectations);
     ok &&= check.ok;
     stepChecks.push({ step, ok: check.ok, reason: check.reason || null });
+    if (!check.ok) failures.push({ kind: "step_check_failed", step, detail: check.reason || null });
   }
+  if (turns >= MAX_TURNS && !ok) {
+    failures.push({ kind: "max_turns", detail: `hit MAX_TURNS=${MAX_TURNS}` });
+  }
+
   return {
     ok,
     turns,
+    retries,
     toolCalls,
     inputTokens,
     outputTokens,
+    whereAttempts,
+    whereMalformed,
     session_ms: performance.now() - t0,
     stepChecks,
+    failures,
+  };
+}
+
+function aggregateSessions(sessions) {
+  const n = sessions.length || 1;
+  const failKinds = {};
+  for (const s of sessions) {
+    for (const f of s.failures || []) {
+      failKinds[f.kind] = (failKinds[f.kind] || 0) + 1;
+    }
+  }
+  return {
+    task_success_rate: sessions.filter((s) => s.ok).length / sessions.length,
+    turns_mean: sessions.reduce((a, s) => a + s.turns, 0) / n,
+    retries_mean: sessions.reduce((a, s) => a + s.retries, 0) / n,
+    tool_calls_mean: sessions.reduce((a, s) => a + s.toolCalls, 0) / n,
+    input_tokens_mean: sessions.reduce((a, s) => a + s.inputTokens, 0) / n,
+    output_tokens_mean: sessions.reduce((a, s) => a + s.outputTokens, 0) / n,
+    session_ms_mean: sessions.reduce((a, s) => a + s.session_ms, 0) / n,
+    where_attempts_mean: sessions.reduce((a, s) => a + (s.whereAttempts || 0), 0) / n,
+    where_malformed_mean: sessions.reduce((a, s) => a + (s.whereMalformed || 0), 0) / n,
+    failure_counts: failKinds,
+    sessions_failed: sessions.filter((s) => !s.ok).length,
   };
 }
 
 async function main() {
-  if (!API_KEY || !MODEL) {
+  const models = resolveModels();
+  if (!API_KEY || !models.length) {
     console.error(
       JSON.stringify(
         {
           error: "missing_model_credentials",
-          need: ["CF_MT_MODEL (or OPENAI_MODEL)", "OPENAI_API_KEY or OPENROUTER_API_KEY"],
+          need: [
+            "OPENAI_API_KEY (or OPENROUTER_API_KEY)",
+            "CF_MT_MODEL_FRONTIER and CF_MT_MODEL_SMALL (or CF_MT_MODEL for one model)",
+          ],
           optional: ["OPENAI_BASE_URL"],
-          note: "Real-model 50-session run blocked until a chat-completions key is available.",
+          note: "Set secrets in the environment — never paste keys into chat.",
         },
         null,
         2
@@ -371,75 +456,117 @@ async function main() {
   if (!existsSync(FIXTURE) || !existsSync(CURATED_OAS) || !existsSync(join(ROOT, "dist/server-http.js"))) {
     throw new Error("fixture, curated OAS, or dist/server-http.js missing");
   }
+
   const recording = JSON.parse(readFileSync(FIXTURE, "utf8"));
   const expectations = buildExpectations(recording.world);
+  const openapiDoc = JSON.parse(readFileSync(CURATED_OAS, "utf8"));
   mkdirSync(OUT_DIR, { recursive: true });
 
   const mock = await startMock();
   const closers = [async () => mock.child.kill("SIGTERM")];
+  let executorMeta = null;
+  const execScripts = executorV2ToolScripts();
+
   const summary = {
     measuredAt: new Date().toISOString(),
     kind: "real_model_validation",
     iters: ITERS,
-    model: MODEL,
+    temperature: TEMPERATURE,
     baseUrl: BASE_URL,
+    models: models.map((m) => ({ label: m.label, id: m.id })),
     arms: ARMS,
     fixture: { source: recording.source, label: recording.label },
+    settings: {
+      temperature: TEMPERATURE,
+      system_prompt: "shared across arms; tool descriptions from each gateway listTools",
+      max_turns: MAX_TURNS,
+    },
     results: {},
   };
 
   try {
-    for (const arm of ARMS) {
-      console.log(`[cf-real] arm=${arm}`);
-      if (arm === "cloudflare_codemode") {
-        summary.results[arm] = {
-          note: "tokens-only arm — real-model CF self-host not wired; skipped",
-          skipped: true,
-        };
-        continue;
-      }
-      if (arm === "executor_v2") {
-        summary.results[arm] = {
-          note: "executor real-model path not wired in this scaffold; use clawql_* first",
-          skipped: true,
-        };
-        continue;
-      }
-      if (!arm.startsWith("clawql_")) {
-        summary.results[arm] = { skipped: true, note: "arm not in real-model scaffold yet" };
-        continue;
-      }
-      const clawql = await startClawql(mock.baseUrl, {
-        enablePrograms: arm === "clawql_program",
-      });
-      closers.push(clawql.close);
-      const conn = await connectHttpMcp(clawql.mcpUrl);
-      const sessions = [];
-      try {
-        for (let i = 1; i <= ITERS; i++) {
-          const s = await runClawqlModelSession(conn.client, expectations, {
-            program: arm === "clawql_program",
+    if (ARMS.includes("executor_v2")) {
+      executorMeta = ensureExecutorOpenapiApp({ mockBase: mock.baseUrl, openapiDoc });
+    }
+
+    for (const model of models) {
+      summary.results[model.label] = { model: model.id, arms: {} };
+      for (const arm of ARMS) {
+        console.log(`[cf-real] model=${model.label} arm=${arm}`);
+        let clientWrap = null;
+        let openaiTools = null;
+        let allowed = new Set();
+        let clawql = null;
+
+        if (arm === "clawql_known_op" || arm === "clawql_program") {
+          clawql = await startClawql(mock.baseUrl, {
+            enablePrograms: arm === "clawql_program",
           });
-          sessions.push(s);
-          console.log(
-            `[cf-real] ${arm} ${i}/${ITERS} ok=${s.ok} turns=${s.turns} outTok=${s.outputTokens}`
-          );
-          if (!s.ok) {
-            console.error(JSON.stringify(s.stepChecks.filter((c) => !c.ok), null, 2));
-          }
+          closers.push(clawql.close);
+          clientWrap = await connectHttpMcp(clawql.mcpUrl, arm);
+          const listed = await clientWrap.client.listTools();
+          const names =
+            arm === "clawql_program"
+              ? ["execute", "execute_program", "search"]
+              : ["execute", "search"];
+          const filtered = listed.tools.filter((t) => names.includes(t.name));
+          allowed = new Set(filtered.map((t) => t.name));
+          openaiTools = mcpToolsToOpenAI(filtered);
+        } else if (arm === "executor_v2") {
+          const url = process.env.EXECUTOR_V2_URL || "http://127.0.0.1:4312/mcp";
+          const key =
+            process.env.EXECUTOR_V2_API_KEY?.trim() ||
+            (existsSync("/tmp/executor-v2-data/api_key.txt")
+              ? readFileSync("/tmp/executor-v2-data/api_key.txt", "utf8").trim()
+              : "");
+          if (!key) throw new Error("EXECUTOR_V2_API_KEY required for executor_v2 real-model");
+          const transport = new StreamableHTTPClientTransport(new URL(url), {
+            requestInit: { headers: { Authorization: `Bearer ${key}` } },
+          });
+          const client = new Client({ name: "cf-real-exec", version: "1" }, {});
+          await client.connect(transport);
+          clientWrap = {
+            client,
+            close: async () => {
+              await client.close().catch(() => {});
+            },
+          };
+          const listed = await client.listTools();
+          const executeTool = listed.tools.find((t) => t.name === "execute");
+          allowed = new Set(["execute"]);
+          openaiTools = mcpToolsToOpenAI(executeTool ? [executeTool] : listed.tools);
+          // Hint: model writes JS into execute.code — scripts in published-scripts are the scripted peer.
+          void execScripts;
+          void executorMeta;
+        } else {
+          summary.results[model.label].arms[arm] = {
+            skipped: true,
+            note: "arm not wired for real-model yet",
+          };
+          continue;
         }
-      } finally {
-        await conn.close();
+
+        const sessions = [];
+        try {
+          for (let i = 1; i <= ITERS; i++) {
+            const s = await runToolSession({
+              model: model.id,
+              arm,
+              client: clientWrap.client,
+              expectations,
+              openaiTools,
+              allowedToolNames: allowed,
+            });
+            sessions.push(s);
+            console.log(
+              `[cf-real] ${model.label}/${arm} ${i}/${ITERS} ok=${s.ok} turns=${s.turns} retries=${s.retries} whereBad=${s.whereMalformed}`
+            );
+          }
+        } finally {
+          await clientWrap.close();
+        }
+        summary.results[model.label].arms[arm] = aggregateSessions(sessions);
       }
-      summary.results[arm] = {
-        task_success_rate: sessions.filter((s) => s.ok).length / sessions.length,
-        turns_mean: sessions.reduce((n, s) => n + s.turns, 0) / sessions.length,
-        tool_calls_mean: sessions.reduce((n, s) => n + s.toolCalls, 0) / sessions.length,
-        input_tokens_mean: sessions.reduce((n, s) => n + s.inputTokens, 0) / sessions.length,
-        output_tokens_mean: sessions.reduce((n, s) => n + s.outputTokens, 0) / sessions.length,
-        session_ms_mean: sessions.reduce((n, s) => n + s.session_ms, 0) / sessions.length,
-        sessions,
-      };
     }
   } finally {
     for (const c of closers.reverse()) {
@@ -451,10 +578,24 @@ async function main() {
     }
   }
 
-  const out = join(OUT_DIR, `real-model-${MODEL.replace(/[^\w.-]+/g, "_")}-n${ITERS}.json`);
+  const stamp = models.map((m) => m.label).join("_");
+  const out = join(OUT_DIR, `real-model-${stamp}-n${ITERS}.json`);
   writeFileSync(out, JSON.stringify(summary, null, 2) + "\n");
   writeFileSync(`/opt/cursor/artifacts/cf-mt-real-model-summary.json`, JSON.stringify(summary, null, 2) + "\n");
-  console.log(JSON.stringify({ wrote: out, kind: summary.kind, model: MODEL, iters: ITERS }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        wrote: out,
+        kind: summary.kind,
+        models: summary.models,
+        iters: ITERS,
+        // never echo key material
+        apiKeySet: true,
+      },
+      null,
+      2
+    )
+  );
 }
 
 main().catch((e) => {

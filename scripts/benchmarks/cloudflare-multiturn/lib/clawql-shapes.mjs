@@ -99,24 +99,32 @@ export const CLAWQL_STEP_SHAPES = Object.freeze({
 });
 
 /**
- * JSON plan source a model would write for execute_program (ADR 0015 v0).
- * Reads only — step 12 stays a harness-gated proposal (same as other arms).
+ * Compact JSON plan for execute_program (ADR 0015 v0).
+ * Omits tool (defaults to execute when operationId is set), omits empty args,
+ * uses short ids. Reads only — step 12 stays a harness-gated proposal.
  */
 export function buildZoneAuditProgramPlan() {
   const calls = [];
   for (let step = 1; step <= 11; step++) {
     const s = CLAWQL_STEP_SHAPES[step];
-    calls.push({
-      id: `step_${step}`,
-      tool: "execute",
+    const call = {
+      id: String(step),
       operationId: s.operationId,
-      args: s.args,
       where: s.where,
-    });
+    };
+    if (s.args && Object.keys(s.args).length > 0) {
+      call.args = s.args;
+    }
+    calls.push(call);
   }
   return { v: 1, mode: "sequential", calls };
 }
 
 export function programPlanSource() {
   return JSON.stringify(buildZoneAuditProgramPlan());
+}
+
+/** Id used in compact plans for step N (1–11). */
+export function programCallId(step) {
+  return String(step);
 }
