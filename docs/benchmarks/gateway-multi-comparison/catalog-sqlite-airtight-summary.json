@@ -1,0 +1,95 @@
+{
+  "measuredAt": "2026-10-14T03:09:39.723840Z",
+  "equal40_clawql": {
+    "memory_under_rss_median": 319.2,
+    "memory_under_anon_median": 256.34,
+    "loaddb_under_rss_median": 188.41,
+    "loaddb_under_anon_median": 146.23,
+    "loaddb_file_backed_est_mb": 42.18
+  },
+  "equal40_mcpjungle_smaps": {
+    "n": 40000,
+    "tree_rss_plateau_median": 152.64,
+    "tree_anon_plateau_median": 86.29,
+    "gateway_anon_plateau_median": 14,
+    "note": "tree = Go MJ + Node equal-arm catalog child (matches publish-board ResourceSampler RSS ~152)"
+  },
+  "anon_vs_anon_equal40": {
+    "clawql_loaddb_anon": 146.23,
+    "mcpjungle_tree_anon": 86.29,
+    "anon_gap_mb": 59.94,
+    "rss_gap_mb": 35.77,
+    "verdict": "MJ tree anon (~86) is well below its ~153 RSS. Anon-vs-anon gap (~60 MB) is LARGER than RSS gap (~36 MB) \u2014 not near parity. ClawQL file-backed (~42 MB) does not close the anon gap."
+  },
+  "sentry_clawql": {
+    "loaddb_under_rss_median": 192.7,
+    "loaddb_under_anon_median": 150.69
+  },
+  "sentry_count_mcpjungle_smaps": {
+    "tool_count": 209,
+    "n": 40000,
+    "tree_rss_plateau_median": 154.41,
+    "tree_anon_plateau_median": 88.02,
+    "note": "Equal-arm CATALOG_TOOL_COUNT=209 (Sentry op count), not ClawQL OpenAPI schemas inside MJ"
+  },
+  "cold_first_op": {
+    "n": 40,
+    "p50_ms": 2.462,
+    "p95_ms": 34.251,
+    "p99_ms": 128.998,
+    "max_ms": 128.998,
+    "mean_ms": 8.898
+  },
+  "warm_exec": {
+    "n": 200,
+    "p50_ms": 1.644,
+    "p95_ms": 2.184,
+    "p99_ms": 2.697,
+    "max_ms": 5.775,
+    "mean_ms": 1.694
+  },
+  "executor_v2_p999_solo_3x": {
+    "layout": "MT_PIN_CORES=1 gateway_2core solo",
+    "p999_range_ms": [
+      173.171,
+      198.785
+    ],
+    "label": "solo"
+  },
+  "executor_v2_p999_interleaved_3x": {
+    "n_per_rep": 2500,
+    "layout": "MT_PIN_CORES=1 gateway_2core interleaved MT_ARMS=mcpjungle,agentgateway,executor_v2",
+    "reps": [
+      {
+        "rep": 1,
+        "p50_ms": 69.528,
+        "p99_ms": 107.927,
+        "p999_ms": 168.42,
+        "n": 2500,
+        "ms_per_call_p50": 5.43
+      },
+      {
+        "rep": 2,
+        "p50_ms": 67.459,
+        "p99_ms": 96.497,
+        "p999_ms": 181.704,
+        "n": 2500,
+        "ms_per_call_p50": 5.35
+      },
+      {
+        "rep": 3,
+        "p50_ms": 68.655,
+        "p99_ms": 101.698,
+        "p999_ms": 213.682,
+        "n": 2500,
+        "ms_per_call_p50": 5.43
+      }
+    ],
+    "p999_range_ms": [
+      168.42,
+      213.682
+    ],
+    "p999_median_of_3": 181.704,
+    "verdict": "Interleaved 3\u00d7 p999 clusters with solo (not the publish-board 286). Quote interleaved range or solo range \u2014 both labeled."
+  }
+}

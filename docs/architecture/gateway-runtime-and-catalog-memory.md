@@ -61,20 +61,25 @@ Crossing the boundary has copy/convert cost; for small ops it can be slower.
 
 ## 4. Catalog + IDP memory → colocated SQLite
 
-Sound direction for bundled specs and long documents: keep hot indexes / working set in memory; leave the rest in a SQLite file next to ClawQL so RSS scales with use, not with everything bundled.
+**Shipped (default on):** `CLAWQL_CATALOG_SQLITE` (opt out `=0`) — Ready + under-load A/Bs in [`catalog-sqlite-underload.md`](../benchmarks/gateway-multi-comparison/catalog-sqlite-underload.md).
+
+Keep hot indexes / working set in memory; leave cold OAS in a SQLite file next to ClawQL so Ready RSS scales with use, not with everything bundled.
 
 **Why for bundled OpenAPI catalogs:**
 
 - Most of the catalog is cold; JS object overhead is large vs compact rows
 - OS page cache is reclaimable and **shared across replicas** on one host (PSS/anon matter more than raw RSS)
-- Startup skips parsing unused providers
-- Point reads stay microseconds (`bun:sqlite` / `node:sqlite` — no new dep required)
+- Startup can skip parsing unused providers (`CLAWQL_CATALOG_SQLITE_LOAD=db`)
+- Point reads stay microseconds (`node:sqlite` / Bun — no new npm dep)
 
-**How:**
+**How (v1):**
 
-1. Compile specs into read-only SQLite at build time (ops, compressed schemas, **existing** search index format — do not switch to SQLite FTS BM25 unless routing eval clears it; BM25 was removed from retrieval in #1186).
-2. Prefer SQLite for catalog point reads; leave DuckDB to `clawql-data` analytics.
-3. Keep hot mutable state in memory (audit ring, sessions).
+1. Compile specs into read-only SQLite (`scripts/benchmarks/compile-catalog-sqlite.mjs` or listen-time persist): compact `Operation[]` JSON + gzip'd OpenAPI docs. Search stays the **existing** in-memory weighted keyword scan — **no** SQLite FTS/BM25 (#1186).
+2. Slim `LoadedSpec`: ops hot; OAS materialised lazily on first property access.
+3. Prefer SQLite for catalog cold storage; leave DuckDB to `clawql-data` analytics.
+4. Keep hot mutable state in memory (audit ring, sessions).
+
+**Measured (Sentry ~3.3 MB OpenAPI, 209 ops):** in-memory Ready **~292 MB** RSS → `LOAD=db` **~154 MB** (−138 MB RSS / −117 MB anon). Artifact: [`catalog-sqlite-rss-ab.json`](../benchmarks/gateway-multi-comparison/catalog-sqlite-rss-ab.json).
 
 **Long Harvey-scale documents:** process in a **separate worker / celld cell**, page by page, writing chunks and page refs to SQLite as you go (“every fact keeps its source”). Bound concurrency so peak memory stays capped.
 

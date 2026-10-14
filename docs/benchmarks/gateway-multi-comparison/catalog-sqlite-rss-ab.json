@@ -1,0 +1,88 @@
+{
+  "measuredAt": "2026-10-14T00:00:52.645Z",
+  "spec": "/workspace/providers/sentry/openapi.json",
+  "spec_bytes": 3256746,
+  "compile": {
+    "out": "/tmp/cat-sqlite-ab-436098/catalog.sqlite",
+    "ops": 209,
+    "docs": 1,
+    "spec": "/tmp/cat-sqlite-ab-436098/spec.json",
+    "spec_bytes": 3256746
+  },
+  "memory": {
+    "mode": "memory",
+    "proc_rss_mb": 292.21,
+    "smaps": {
+      "rss_mb": 292.21,
+      "anonymous_mb": 230.13,
+      "pss_mb": 289,
+      "file_backed_est_mb": 62.09
+    },
+    "bench": {
+      "mcp_sessions": 0,
+      "stream_mapping_entries": 0,
+      "request_to_stream_entries": 0,
+      "audit_ring_entries": 0,
+      "audit_ring_max": 64,
+      "rss_mb": 291.94,
+      "heap_used_mb": 137.63
+    },
+    "catalog_sqlite_bytes": null,
+    "log_tail": "[spec-loader] BREAKING (8.0.0): CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE no longer select the provider stack. Use providers.pack / providers.enabled in CLAWQL_INSTANCE_SPEC, or CLAWQL_PROVIDER=default|google|aws|…\n[spec-loader] OpenAPI file: /tmp/cat-sqlite-ab-436098/spec.json\n[spec-loader] Loaded 209 operations (API Reference)\n[clawql-http-layer] banner auth_mode=noAuth skip_auth=0 otel=0 session_idle_ms=0 audit=1 skip_prune=0 skip_als=0 skip_payments=1 skip_graphql=1 http_perf=0 loki_url=0 events=0\n[clawql-mcp] Ready — single-spec; 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)\n[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:37547/mcp\n"
+  },
+  "sqlite_persist": {
+    "mode": "sqlite_persist",
+    "proc_rss_mb": 158.95,
+    "smaps": {
+      "rss_mb": 158.88,
+      "anonymous_mb": 117.43,
+      "pss_mb": 156.61,
+      "file_backed_est_mb": 41.46
+    },
+    "bench": {
+      "mcp_sessions": 0,
+      "stream_mapping_entries": 0,
+      "request_to_stream_entries": 0,
+      "audit_ring_entries": 0,
+      "audit_ring_max": 64,
+      "rss_mb": 158.49,
+      "heap_used_mb": 34.58
+    },
+    "catalog_sqlite_bytes": 565248,
+    "log_tail": "[spec-loader] BREAKING (8.0.0): CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE no longer select the provider stack. Use providers.pack / providers.enabled in CLAWQL_INSTANCE_SPEC, or CLAWQL_PROVIDER=default|google|aws|…\n[spec-loader] OpenAPI file: /tmp/cat-sqlite-ab-436098/spec.json\n[spec-loader] Loaded 209 operations (API Reference)\n[catalog-sqlite] wrote /tmp/cat-sqlite-ab-436098/persist.sqlite ops=209 docs=1\n[clawql-http-layer] banner auth_mode=noAuth skip_auth=0 otel=0 session_idle_ms=0 audit=1 skip_prune=0 skip_als=0 skip_payments=1 skip_graphql=1 http_perf=0 loki_url=0 events=0\n[clawql-mcp] Ready — single-spec; 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)\n[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:39461/mcp\n"
+  },
+  "sqlite_loaddb": {
+    "mode": "sqlite_loaddb",
+    "proc_rss_mb": 154.25,
+    "smaps": {
+      "rss_mb": 154.25,
+      "anonymous_mb": 113.57,
+      "pss_mb": 152,
+      "file_backed_est_mb": 40.68
+    },
+    "bench": {
+      "mcp_sessions": 0,
+      "stream_mapping_entries": 0,
+      "request_to_stream_entries": 0,
+      "audit_ring_entries": 0,
+      "audit_ring_max": 64,
+      "rss_mb": 153.86,
+      "heap_used_mb": 33.97
+    },
+    "catalog_sqlite_bytes": 536576,
+    "log_tail": "[catalog-sqlite] loaded 209 operations from /tmp/cat-sqlite-ab-436098/catalog.sqlite (LOAD=db)\n[clawql-http-layer] banner auth_mode=noAuth skip_auth=0 otel=0 session_idle_ms=0 audit=1 skip_prune=0 skip_als=0 skip_payments=1 skip_graphql=1 http_perf=0 loki_url=0 events=0\n[clawql-mcp] Ready — default stack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx); 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)\n[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:37183/mcp\n"
+  },
+  "delta_vs_memory_mb": {
+    "persist": {
+      "proc_rss": -133.26,
+      "anon": -112.7,
+      "pss": -132.39
+    },
+    "loaddb": {
+      "proc_rss": -137.96,
+      "anon": -116.56,
+      "pss": -137
+    }
+  },
+  "interpretation": "Negative loaddb deltas mean SQLite LOAD=db cut Ready memory vs parsing the OAS graph. Report anon/PSS alongside RSS (file pages still count in RSS)."
+}

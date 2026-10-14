@@ -940,22 +940,95 @@ async function loadSpecUncached(): Promise<LoadedSpec> {
   return loaded;
 }
 
+/**
+ * Optional colocated SQLite catalog (`CLAWQL_CATALOG_SQLITE=1`):
+ * - `CLAWQL_CATALOG_SQLITE_LOAD=db` (or unset SPEC/URL sources with an existing DB):
+ *   load compact ops from SQLite only — never parse OAS JSON at listen.
+ * - otherwise: normal load, then persist + return slim view so the OAS graph can GC.
+ */
+async function maybeLoadOrPersistCatalogSqlite(loaded: LoadedSpec): Promise<LoadedSpec> {
+  const { catalogSqliteEnabled, persistLoadedSpecToCatalogSqliteEffect } = await import(
+    "../catalog/catalog-sqlite.js"
+  );
+  if (!Effect.runSync(catalogSqliteEnabled())) return loaded;
+  try {
+    return await Effect.runPromise(persistLoadedSpecToCatalogSqliteEffect(loaded));
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[catalog-sqlite] persist failed, keeping in-memory catalog: ${msg}`);
+    return loaded;
+  }
+}
+
+async function tryLoadCatalogSqliteOnly(): Promise<LoadedSpec | null> {
+  const {
+    catalogSqliteEnabled,
+    resolveCatalogSqlitePath,
+  } = await import("../catalog/catalog-sqlite.js");
+  if (!Effect.runSync(catalogSqliteEnabled())) return null;
+  const path = Effect.runSync(resolveCatalogSqlitePath());
+  const { existsSync } = await import("node:fs");
+  const loadMode = (process.env.CLAWQL_CATALOG_SQLITE_LOAD ?? "").trim().toLowerCase();
+  const loadDbRequested = loadMode === "db" || loadMode === "sqlite";
+  // Prefer DB when explicitly requested, or when no OpenAPI source env is set.
+  const hasSpecSource = Boolean(
+    process.env.CLAWQL_SPEC_PATH?.trim() ||
+      process.env.OPENAPI_SPEC_PATH?.trim() ||
+      process.env.OPENAPI_FILE?.trim() ||
+      process.env.CLAWQL_SPEC_URL?.trim() ||
+      process.env.CLAWQL_SPEC_PATHS?.trim() ||
+      process.env.CLAWQL_PROVIDER?.trim() ||
+      process.env.CLAWQL_BUNDLED_PROVIDERS?.trim()
+  );
+  if (!loadDbRequested && hasSpecSource) return null;
+  if (!existsSync(path)) {
+    if (loadDbRequested) {
+      throw new Error(
+        `[catalog-sqlite] CLAWQL_CATALOG_SQLITE_LOAD=db but missing file: ${path}`
+      );
+    }
+    return null;
+  }
+  const { loadCatalogSqliteSlimEffect } = await import("../catalog/catalog-sqlite.js");
+  try {
+    const slim = await Effect.runPromise(loadCatalogSqliteSlimEffect(path));
+    console.error(
+      `[catalog-sqlite] loaded ${slim.operations.length} operations from ${path} (LOAD=db)`
+    );
+    return slim;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (loadDbRequested) {
+      throw new Error(
+        `[catalog-sqlite] CLAWQL_CATALOG_SQLITE_LOAD=db failed for ${path}: ${msg}`
+      );
+    }
+    console.error(`[catalog-sqlite] optional DB load failed, falling back to OpenAPI: ${msg}`);
+    return null;
+  }
+}
+
 async function loadSpecImpl(): Promise<LoadedSpec> {
   if (cachedSpec) return cachedSpec;
   const generation = loadGeneration;
   if (!loadInFlight) {
-    loadInFlight = loadSpecUncached()
-      .then((loaded) => {
-        if (generation === loadGeneration) {
-          cachedSpec = loaded;
-        }
-        return loaded;
-      })
-      .finally(() => {
-        if (generation === loadGeneration) {
-          loadInFlight = null;
-        }
-      });
+    loadInFlight = (async () => {
+      const fromDb = await tryLoadCatalogSqliteOnly();
+      if (fromDb) {
+        if (generation === loadGeneration) cachedSpec = fromDb;
+        return fromDb;
+      }
+      const loaded = await loadSpecUncached();
+      const maybeSlim = await maybeLoadOrPersistCatalogSqlite(loaded);
+      if (generation === loadGeneration) {
+        cachedSpec = maybeSlim;
+      }
+      return maybeSlim;
+    })().finally(() => {
+      if (generation === loadGeneration) {
+        loadInFlight = null;
+      }
+    });
   }
   return loadInFlight;
 }

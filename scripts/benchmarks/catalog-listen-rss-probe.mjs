@@ -1,7 +1,8 @@
 /**
- * Same Bun HTTP Ready path, lean vs fat OpenAPI catalog — listen RSS + smaps + inventory.
+ * Same Bun HTTP Ready path — lean vs fat OpenAPI catalog, optional SQLite slim/LOAD=db.
  *
  *   node scripts/benchmarks/catalog-listen-rss-probe.mjs
+ *   COMPARE_SQLITE=1 node scripts/benchmarks/catalog-listen-rss-probe.mjs
  */
 import { spawn } from "node:child_process";
 import { createServer as createNetServer, createConnection } from "node:net";
@@ -10,11 +11,14 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-
 const ROOT = "/workspace";
 const BUN = process.env.BUN_BIN || `${process.env.HOME}/.bun/bin/bun`;
 const OUT = process.env.OUT || "/opt/cursor/artifacts/catalog-listen-rss.json";
 const TOOL_COUNT = Math.max(4, Number(process.env.CATALOG_TOOL_COUNT || 40) || 40);
+const COMPARE_SQLITE =
+  process.env.COMPARE_SQLITE === "1" ||
+  process.env.COMPARE_SQLITE === "true" ||
+  process.env.COMPARE_SQLITE === "yes";
 
 const { clawqlEqualArmEnv } = await import(
   join(ROOT, "scripts/benchmarks/lib/clawql-bench-env.mjs")
@@ -66,9 +70,11 @@ function smapsRollup(pid) {
   };
   const rss = get("Rss");
   const anon = get("Anonymous");
+  const pss = get("Pss");
   return {
     rss_mb: rss != null ? Number((rss / 1024).toFixed(2)) : null,
     anonymous_mb: anon != null ? Number((anon / 1024).toFixed(2)) : null,
+    pss_mb: pss != null ? Number((pss / 1024).toFixed(2)) : null,
     file_backed_est_mb:
       rss != null && anon != null ? Number(((rss - anon) / 1024).toFixed(2)) : null,
   };
@@ -127,8 +133,13 @@ function buildSpec(kind, baseUrl) {
   };
 }
 
-async function measure(kind) {
-  const home = join(tmpdir(), `cat-rss-${kind}-${process.pid}`);
+/**
+ * @param {"lean"|"fat"} kind
+ * @param {{ sqlite?: "off"|"persist"|"loaddb" }} opts
+ */
+async function measure(kind, opts = {}) {
+  const sqliteMode = opts.sqlite ?? "off";
+  const home = join(tmpdir(), `cat-rss-${kind}-${sqliteMode}-${process.pid}-${Date.now()}`);
   await mkdir(home, { recursive: true });
   const port = await pickPort();
   const mockPort = await pickPort();
@@ -142,6 +153,30 @@ async function measure(kind) {
   const specText = JSON.stringify(spec, null, kind === "fat" ? 2 : 0);
   await writeFile(specPath, specText);
 
+  const catalogPath = join(home, "catalog.sqlite");
+  if (sqliteMode === "loaddb") {
+    const compile = spawn(
+      process.execPath,
+      [
+        join(ROOT, "scripts/benchmarks/compile-catalog-sqlite.mjs"),
+        "--spec",
+        specPath,
+        "--out",
+        catalogPath,
+      ],
+      { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"], env: process.env }
+    );
+    let cErr = "";
+    compile.stderr?.on("data", (c) => {
+      cErr += c;
+    });
+    const code = await new Promise((resolve) => compile.on("close", resolve));
+    if (code !== 0) {
+      mock.close();
+      throw new Error(`compile-catalog-sqlite failed: ${cErr.slice(-800)}`);
+    }
+  }
+
   const env = {
     ...clawqlEqualArmEnv({ home, specPath, apiBase: `http://127.0.0.1:${mockPort}` }),
     PORT: String(port),
@@ -154,6 +189,23 @@ async function measure(kind) {
     CLAWQL_ENABLE_HTTP_METRICS: "0",
     CLAWQL_BENCH_STATS: "1",
   };
+
+  if (sqliteMode === "persist") {
+    env.CLAWQL_CATALOG_SQLITE = "1";
+    env.CLAWQL_CATALOG_SQLITE_PATH = catalogPath;
+  } else if (sqliteMode === "loaddb") {
+    env.CLAWQL_CATALOG_SQLITE = "1";
+    env.CLAWQL_CATALOG_SQLITE_PATH = catalogPath;
+    env.CLAWQL_CATALOG_SQLITE_LOAD = "db";
+    // Prefer DB; keep SPEC unset so tryLoadCatalogSqliteOnly does not need LOAD=db only —
+    // LOAD=db is set anyway so SPEC could remain, but clear for a clean "ops-only" listen.
+    delete env.CLAWQL_SPEC_PATH;
+    delete env.OPENAPI_SPEC_PATH;
+    delete env.OPENAPI_FILE;
+  } else {
+    // Historical lean/fat baseline = in-memory OAS (product default is now SQLite on).
+    env.CLAWQL_CATALOG_SQLITE = "0";
+  }
 
   const child = spawn(BUN, ["--smol", join(ROOT, "dist/server-http.js")], {
     cwd: ROOT,
@@ -171,12 +223,16 @@ async function measure(kind) {
     const hz = await (await fetch(`http://127.0.0.1:${port}/healthz`)).json();
     return {
       kind,
+      sqlite: sqliteMode,
       spec_bytes: specText.length,
       path_count: Object.keys(spec.paths).length,
+      catalog_sqlite_bytes: existsSync(catalogPath)
+        ? readFileSync(catalogPath).byteLength
+        : null,
       proc_rss_mb: rssMb(child.pid),
       smaps: smapsRollup(child.pid),
       bench: hz.bench ?? null,
-      log_tail: log.slice(-400),
+      log_tail: log.slice(-600),
     };
   } finally {
     try {
@@ -192,26 +248,64 @@ async function measure(kind) {
   }
 }
 
+function delta(a, b, key) {
+  const av = a?.[key];
+  const bv = b?.[key];
+  if (av == null || bv == null) return null;
+  return Number((bv - av).toFixed(2));
+}
+
+function smapDelta(a, b, key) {
+  const av = a?.smaps?.[key];
+  const bv = b?.smaps?.[key];
+  if (av == null || bv == null) return null;
+  return Number((bv - av).toFixed(2));
+}
+
 const lean = await measure("lean");
 const fat = await measure("fat");
 const out = {
   measuredAt: new Date().toISOString(),
   tool_count: TOOL_COUNT,
+  compare_sqlite: COMPARE_SQLITE,
   lean,
   fat,
   delta_mb: {
-    proc_rss: lean.proc_rss_mb != null && fat.proc_rss_mb != null
-      ? Number((fat.proc_rss_mb - lean.proc_rss_mb).toFixed(2))
-      : null,
-    anon:
-      lean.smaps?.anonymous_mb != null && fat.smaps?.anonymous_mb != null
-        ? Number((fat.smaps.anonymous_mb - lean.smaps.anonymous_mb).toFixed(2))
-        : null,
+    proc_rss: delta(lean, fat, "proc_rss_mb"),
+    anon: smapDelta(lean, fat, "anonymous_mb"),
+    pss: smapDelta(lean, fat, "pss_mb"),
     spec_bytes: fat.spec_bytes - lean.spec_bytes,
   },
   interpretation:
     "If fat−lean ≪ 100 MB, catalog JSON duplication is not the 155→280 gap. " +
-    "If fat−lean is large, inventory openapi vs operations vs validators next.",
+    "If fat−lean is large, inventory openapi vs operations vs validators next. " +
+    "With COMPARE_SQLITE=1, fat_sqlite_* vs fat shows whether slim/LOAD=db cuts anon/PSS.",
 };
+
+if (COMPARE_SQLITE) {
+  const fatPersist = await measure("fat", { sqlite: "persist" });
+  const fatLoadDb = await measure("fat", { sqlite: "loaddb" });
+  out.fat_sqlite_persist = fatPersist;
+  out.fat_sqlite_loaddb = fatLoadDb;
+  out.sqlite_delta_vs_fat_mb = {
+    persist: {
+      proc_rss: delta(fat, fatPersist, "proc_rss_mb"),
+      anon: smapDelta(fat, fatPersist, "anonymous_mb"),
+      pss: smapDelta(fat, fatPersist, "pss_mb"),
+    },
+    loaddb: {
+      proc_rss: delta(fat, fatLoadDb, "proc_rss_mb"),
+      anon: smapDelta(fat, fatLoadDb, "anonymous_mb"),
+      pss: smapDelta(fat, fatLoadDb, "pss_mb"),
+    },
+  };
+}
+
+await mkdir(dirnameSafe(OUT), { recursive: true });
 await writeFile(OUT, JSON.stringify(out, null, 2));
 console.log(JSON.stringify(out, null, 2));
+
+function dirnameSafe(p) {
+  const i = p.lastIndexOf("/");
+  return i >= 0 ? p.slice(0, i) : ".";
+}
