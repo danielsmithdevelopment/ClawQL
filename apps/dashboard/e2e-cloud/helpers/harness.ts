@@ -382,6 +382,29 @@ export async function billingChangeCard(lastFour: string) {
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 
+/** Fixture store_iap verify (PhoneApprove rail) — Pass-when via /billing/entitlements + /audit. */
+export async function storeIapVerify(input: {
+  productId: string
+  purchaseToken?: string
+  store?: 'app_store' | 'play' | 'fixture'
+}) {
+  const res = await fetchRetry(`${base()}/billing/store/verify`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      store: input.store ?? 'fixture',
+      productId: input.productId,
+      purchaseToken: input.purchaseToken ?? `fixture_iap_${input.productId}_${Date.now()}`,
+    }),
+  })
+  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+}
+
+export async function getBillingEntitlements() {
+  const res = await fetchRetry(`${base()}/billing/entitlements`)
+  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+}
+
 export async function gatewayRestart(input?: { replica?: string; compose?: boolean }) {
   const res = await fetchRetry(`${base()}/gateway/restart`, {
     method: 'POST',

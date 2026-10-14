@@ -41,6 +41,7 @@ import {
   searchErased,
   setWebhookMode,
   settingsMutate,
+  storeIapVerify,
   stripeCheckout,
   subscriptionAction,
   systemOne,
@@ -189,6 +190,23 @@ test('ADM-10 Only exhausted team keys stop', async () => {
     messages: [{ role: 'user', content: 'legal still' }],
   })
   expect(legal.status).toBe(200)
+})
+
+test('ADM-20 Usage reflects store_iap plan after PhoneApprove verify', async () => {
+  await control({
+    setPlan: { planId: 'free', billingMode: 'credits_only', clearStore: true },
+  })
+  const verified = await storeIapVerify({
+    productId: 'clawql_pro_monthly',
+    purchaseToken: `fixture_iap_adm20_${Date.now()}`,
+    store: 'fixture',
+  })
+  expect(verified.status).toBe(200)
+  const usage = await getUsage()
+  expect(usage.status).toBe(200)
+  expect(usage.body.planId).toBe('pro')
+  expect(usage.body.billingMode).toBe('store_iap')
+  expect(usage.body.storeProductId).toBe('clawql_pro_monthly')
 })
 
 test('ADM-11 Credits rise and usage draws credits first', async () => {

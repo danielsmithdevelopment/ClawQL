@@ -1,6 +1,6 @@
 /**
- * Mobile E2E catalog (MOB-*) — Maestro on simulator/emulator.
- * Kept separate from the dashboard cloud catalog (197 scenarios) so assertCatalogComplete stays stable.
+ * Mobile E2E catalog (MOB-*) — Maestro on simulator/emulator (+ CI web Playwright).
+ * Kept separate from the dashboard cloud catalog (202 scenarios) so assertCatalogComplete stays stable.
  * REV-13 / UX-09 remain Manual (physical YubiKey NFC).
  */
 
@@ -148,6 +148,111 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-19-system-mark-read.yaml",
   },
   {
+    id: "MOB-20",
+    run: "Maestro",
+    title: "Fixture store subscribe + biometrics capability",
+    passWhen: "Profile Subscribe Pro (sandbox) upgrades plan; Face ID / App Lock capability shown",
+    flow: "maestro/flows/mob-20-store-subscribe-sandbox.yaml",
+  },
+  {
+    id: "MOB-21",
+    run: "Maestro",
+    title: "Restore purchases and manage-subscriptions affordance",
+    passWhen: "After Pro sandbox subscribe, Restore and Manage in App Store / Play are visible",
+    flow: "maestro/flows/mob-21-store-restore-manage.yaml",
+  },
+  {
+    id: "MOB-22",
+    run: "Maestro",
+    title: "Face ID / Touch ID App Lock labels and unlock",
+    passWhen: "Bio capability shown; Lock now → Unlock with Face ID fixture returns to Profile",
+    flow: "maestro/flows/mob-22-faceid-app-lock-labels.yaml",
+  },
+  {
+    id: "MOB-23",
+    run: "Maestro",
+    title: "Spend free-plan upgrade CTA opens Profile billing",
+    passWhen: "Spend shows upgrade CTA; View plan & billing lands on Profile Plan & billing",
+    flow: "maestro/flows/mob-23-spend-upgrade-cta.yaml",
+  },
+  {
+    id: "MOB-24",
+    run: "Maestro",
+    title: "Voice assistant list pending (fixture dictate)",
+    passWhen: "Voice screen runs list pending and shows spoken pending titles",
+    flow: "maestro/flows/mob-24-voice-list-pending.yaml",
+  },
+  {
+    id: "MOB-25",
+    run: "Maestro",
+    title: "Voice start workflow + Shortcuts donation share",
+    passWhen: "start standup digest navigates to Workflows; Shortcuts share note appears",
+    flow: "maestro/flows/mob-25-voice-workflow-shortcuts.yaml",
+  },
+  {
+    id: "MOB-26",
+    run: "Maestro",
+    title: "Memory explorer search and detail",
+    passWhen: "Memory list filters; open Northwind entity shows fields",
+    flow: "maestro/flows/mob-26-memory-explorer.yaml",
+  },
+  {
+    id: "MOB-27",
+    run: "Maestro",
+    title: "API keys issue revoke and copy secret",
+    passWhen: "Issue key shows secret; revoke removes row",
+    flow: "maestro/flows/mob-27-api-keys.yaml",
+  },
+  {
+    id: "MOB-28",
+    run: "Maestro",
+    title: "Sessions timeline lists active agents",
+    passWhen: "Sessions screen shows legal-ops waiting row",
+    flow: "maestro/flows/mob-28-sessions.yaml",
+  },
+  {
+    id: "MOB-29",
+    run: "Maestro",
+    title: "Skills proposed and active queues",
+    passWhen: "Skills screen shows proposed + active sections",
+    flow: "maestro/flows/mob-29-skills.yaml",
+  },
+  {
+    id: "MOB-30",
+    run: "Maestro",
+    title: "Connections accounts and Settings network",
+    passWhen: "Connections shows GitHub accounts; Settings shows webhook hosts",
+    flow: "maestro/flows/mob-30-connections-settings.yaml",
+  },
+  {
+    id: "MOB-31",
+    run: "Maestro",
+    title: "Team invite with acceptance checks and roles",
+    passWhen: "Invite sends after checkboxes; Roles tab shows Admin",
+    flow: "maestro/flows/mob-31-team-invite.yaml",
+  },
+  {
+    id: "MOB-32",
+    run: "Maestro",
+    title: "Usage month forecast and team budgets",
+    passWhen: "Spend shows month usage and documents team row",
+    flow: "maestro/flows/mob-32-usage-depth.yaml",
+  },
+  {
+    id: "MOB-33",
+    run: "Maestro",
+    title: "Gateway routes and Memory pipelines erase",
+    passWhen: "Gateway shows standard route; erase Jane Okafor after checks",
+    flow: "maestro/flows/mob-33-gateway-memory-erase.yaml",
+  },
+  {
+    id: "MOB-34",
+    run: "Maestro",
+    title: "Billing portal CTA fixture honesty",
+    passWhen: "Spend and Profile portal buttons show fixture honesty notes",
+    flow: "maestro/flows/mob-34-billing-portal.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',
@@ -160,3 +265,17 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     passWhen: "Approved; audit records phone and key",
   },
 ];
+
+export function assertMobileCatalogComplete(): void {
+  const maestro = MOBILE_SCENARIOS.filter((s) => s.run === "Maestro");
+  const manual = MOBILE_SCENARIOS.filter((s) => s.run === "Manual");
+  if (maestro.length !== 34) {
+    throw new Error(`Expected 34 Maestro MOB scenarios, got ${maestro.length}`);
+  }
+  if (manual.length !== 2) {
+    throw new Error(`Expected 2 Manual scenarios (REV-13, UX-09), got ${manual.length}`);
+  }
+  for (const s of maestro) {
+    if (!s.flow) throw new Error(`${s.id} missing flow path`);
+  }
+}

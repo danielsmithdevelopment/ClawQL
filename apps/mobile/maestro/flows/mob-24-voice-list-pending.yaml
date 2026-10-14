@@ -1,0 +1,20 @@
+# MOB-24 — Voice assistant list pending (fixture typed dictate)
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- tapOn:
+    id: "profile-open-voice"
+- assertVisible:
+    id: "voice-screen"
+- tapOn:
+    id: "voice-dictate-fixture"
+- assertVisible:
+    id: "voice-result"
+- assertVisible:
+    id: "voice-spoken"
+- assertVisible:
+    id: "voice-pending-count"

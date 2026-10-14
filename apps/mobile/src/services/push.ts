@@ -38,27 +38,41 @@ export type AppDeepLinkTarget =
   | { readonly surface: "spend" }
   | { readonly surface: "teammates" }
   | { readonly surface: "policies" }
-  | { readonly surface: "policy"; readonly id: string };
+  | { readonly surface: "policy"; readonly id: string }
+  | { readonly surface: "voice"; readonly query?: string }
+  | { readonly surface: "workflows" }
+  | { readonly surface: "memory"; readonly id?: string }
+  | { readonly surface: "keys" }
+  | { readonly surface: "gateway" }
+  | { readonly surface: "automations" }
+  | { readonly surface: "audit" }
+  | { readonly surface: "settings" }
+  | { readonly surface: "sessions" }
+  | { readonly surface: "skills" }
+  | { readonly surface: "connections" };
 
 const CLOUD_HOSTS = new Set(["cloud.clawql.com", "acme.cloud.clawql.com"]);
 
 function pathSegmentsFromUrl(url: string): {
   segments: string[];
   requestIdQuery: string | null;
+  voiceQuery: string | null;
 } {
   const u = new URL(url);
   const requestIdQuery = u.searchParams.get("requestId");
+  const voiceQuery = u.searchParams.get("q");
   const parts = [
     u.hostname && !CLOUD_HOSTS.has(u.hostname) ? u.hostname : null,
     ...u.pathname.split("/"),
   ].filter((p): p is string => Boolean(p && p.length > 0));
   if (parts[0] === "app") parts.shift();
-  return { segments: parts, requestIdQuery };
+  return { segments: parts, requestIdQuery, voiceQuery };
 }
 
 function targetFromSegments(
   segments: string[],
-  requestIdQuery: string | null
+  requestIdQuery: string | null,
+  voiceQuery: string | null = null
 ): AppDeepLinkTarget | null {
   if (requestIdQuery) return { surface: "review", id: requestIdQuery };
   const [head, next] = segments;
@@ -71,6 +85,20 @@ function targetFromSegments(
   if (head === "teammates") return { surface: "teammates" };
   if (head === "policies" && next) return { surface: "policy", id: next };
   if (head === "policies") return { surface: "policies" };
+  if (head === "voice") {
+    return voiceQuery ? { surface: "voice", query: voiceQuery } : { surface: "voice" };
+  }
+  if (head === "workflows") return { surface: "workflows" };
+  if (head === "memory" && next) return { surface: "memory", id: next };
+  if (head === "memory") return { surface: "memory" };
+  if (head === "keys") return { surface: "keys" };
+  if (head === "gateway") return { surface: "gateway" };
+  if (head === "automations") return { surface: "automations" };
+  if (head === "audit") return { surface: "audit" };
+  if (head === "settings") return { surface: "settings" };
+  if (head === "sessions") return { surface: "sessions" };
+  if (head === "skills") return { surface: "skills" };
+  if (head === "connections") return { surface: "connections" };
   return null;
 }
 
@@ -79,8 +107,8 @@ export function parseAppDeepLinkEffect(
 ): Effect.Effect<AppDeepLinkTarget | null> {
   return Effect.sync(() => {
     try {
-      const { segments, requestIdQuery } = pathSegmentsFromUrl(url);
-      const fromUrl = targetFromSegments(segments, requestIdQuery);
+      const { segments, requestIdQuery, voiceQuery } = pathSegmentsFromUrl(url);
+      const fromUrl = targetFromSegments(segments, requestIdQuery, voiceQuery);
       if (fromUrl) return fromUrl;
 
       // Fallback: expo-linking parse for odd schemes
@@ -92,7 +120,9 @@ export function parseAppDeepLinkEffect(
         parsed.queryParams?.requestId != null
           ? String(parsed.queryParams.requestId)
           : null;
-      return targetFromSegments(linkSegments, q);
+      const vq =
+        parsed.queryParams?.q != null ? String(parsed.queryParams.q) : null;
+      return targetFromSegments(linkSegments, q, vq);
     } catch {
       return null;
     }
@@ -239,31 +269,13 @@ export function registerForPushEffect(
     });
 
     const platform = Platform.OS === "ios" ? "ios" : "android";
+    // registerPushDeviceEffect POSTs to /api/managed/devices/push on live sessions.
     yield* registerPushDeviceEffect({
       session,
       token,
       platform,
       label: "This phone",
       fixture: false,
-    }).pipe(Effect.catch(() => Effect.void));
-
-    // Best-effort register with managed console (no-op if route not yet deployed).
-    yield* Effect.tryPromise({
-      try: async () => {
-        await fetch(`${config.apiBase}/api/managed/devices/push`, {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            authorization: `Bearer ${session.accessToken}`,
-          },
-          body: JSON.stringify({
-            token,
-            platform,
-            userId: session.userId,
-          }),
-        }).catch(() => undefined);
-      },
-      catch: () => new PushError({ reason: "register_failed" }),
     }).pipe(Effect.catch(() => Effect.void));
 
     return { token, fixture: false };
@@ -297,6 +309,32 @@ export function buildAppDeepLinkEffect(
         return `${base}/teammates`;
       case "policies":
         return `${base}/policies`;
+      case "voice":
+        return target.query
+          ? `${base}/voice?q=${encodeURIComponent(target.query)}`
+          : `${base}/voice`;
+      case "workflows":
+        return `${base}/workflows`;
+      case "memory":
+        return target.id
+          ? `${base}/memory/${encodeURIComponent(target.id)}`
+          : `${base}/memory`;
+      case "keys":
+        return `${base}/keys`;
+      case "gateway":
+        return `${base}/gateway`;
+      case "automations":
+        return `${base}/automations`;
+      case "audit":
+        return `${base}/audit`;
+      case "settings":
+        return `${base}/settings`;
+      case "sessions":
+        return `${base}/sessions`;
+      case "skills":
+        return `${base}/skills`;
+      case "connections":
+        return `${base}/connections`;
     }
   });
 }
@@ -320,6 +358,28 @@ export function hrefForDeepLink(target: AppDeepLinkTarget): string {
       return "/teammates";
     case "policies":
       return "/policies";
+    case "voice":
+      return target.query ? `/voice?q=${encodeURIComponent(target.query)}` : "/voice";
+    case "workflows":
+      return "/workflows";
+    case "memory":
+      return target.id ? `/memory/${target.id}` : "/memory";
+    case "keys":
+      return "/keys";
+    case "gateway":
+      return "/gateway";
+    case "automations":
+      return "/automations";
+    case "audit":
+      return "/audit";
+    case "settings":
+      return "/settings";
+    case "sessions":
+      return "/sessions";
+    case "skills":
+      return "/skills";
+    case "connections":
+      return "/connections";
   }
 }
 

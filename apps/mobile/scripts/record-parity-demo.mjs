@@ -56,6 +56,38 @@ await page.getByTestId("profile-note").waitFor({ state: "visible", timeout: 1000
 await page.waitForTimeout(500);
 await shot("04-profile-session-refresh.png");
 
+// Plan & billing — fixture store_iap subscribe (Face ID confirm is one-tap in fixture)
+await page.getByTestId("profile-plan-billing").scrollIntoViewIfNeeded();
+await page.waitForTimeout(400);
+await shot("04d-profile-plan-free.png");
+await page.getByTestId("profile-subscribe-pro").click();
+await page.getByTestId("profile-note").waitFor({ state: "visible", timeout: 10000 });
+await page.waitForTimeout(500);
+await shot("04e-profile-plan-pro.png");
+await page.getByTestId("profile-manage-subscriptions").scrollIntoViewIfNeeded();
+await page.waitForTimeout(300);
+await shot("04f-profile-manage-subscriptions.png");
+
+// Voice assistant — fixture list pending
+await page.getByTestId("profile-open-voice").scrollIntoViewIfNeeded();
+await page.getByTestId("profile-open-voice").click();
+await page.getByTestId("voice-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("voice-dictate-fixture").click();
+await page.getByTestId("voice-spoken").waitFor({ state: "visible", timeout: 10000 });
+await page.waitForTimeout(400);
+await shot("04g-voice-list-pending.png");
+await page.getByTestId("voice-shortcuts").scrollIntoViewIfNeeded();
+await page.waitForTimeout(300);
+await shot("04h-voice-shortcuts.png");
+await page.getByTestId("voice-suggest-start-standup-digest").scrollIntoViewIfNeeded();
+await page.getByTestId("voice-suggest-start-standup-digest").click();
+await page.getByTestId("workflows-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("workflows-runs").waitFor({ state: "visible", timeout: 10000 });
+await page.waitForTimeout(400);
+await shot("04i-workflows-started.png");
+await page.getByTestId("tab-profile").first().click();
+await page.getByTestId("profile-screen").waitFor({ state: "visible", timeout: 15000 });
+
 // App Lock → lock now → unlock (fixture)
 const appLockRow = page.getByTestId("pref-app-lock");
 await appLockRow.scrollIntoViewIfNeeded();

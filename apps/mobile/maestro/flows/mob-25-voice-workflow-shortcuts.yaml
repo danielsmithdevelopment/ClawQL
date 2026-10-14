@@ -1,0 +1,26 @@
+# MOB-25 — Voice start workflow + Shortcuts donation share
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- tapOn:
+    id: "profile-open-voice"
+- assertVisible:
+    id: "voice-screen"
+- tapOn:
+    id: "voice-suggest-start-standup-digest"
+- assertVisible:
+    id: "workflows-screen"
+- assertVisible:
+    id: "workflows-runs"
+- tapOn:
+    id: "workflows-open-voice"
+- assertVisible:
+    id: "voice-shortcuts"
+- tapOn:
+    id: "voice-shortcut-list_pending"
+- assertVisible:
+    id: "voice-shortcut-note"

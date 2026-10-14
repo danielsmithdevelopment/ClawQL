@@ -204,8 +204,62 @@ export const Teammate = Schema.Struct({
   canApprove: Schema.Boolean,
   keysReady: Schema.Boolean,
   lastActive: Schema.String,
+  invitePending: Schema.optional(Schema.Boolean),
 });
 export type Teammate = Schema.Schema.Type<typeof Teammate>;
+
+export const TeamGroup = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  people: Schema.String,
+  role: Schema.String,
+  usedIn: Schema.String,
+});
+export type TeamGroup = Schema.Schema.Type<typeof TeamGroup>;
+
+export const TeamRole = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  people: Schema.String,
+  console: Schema.String,
+  connections: Schema.String,
+  policies: Schema.String,
+  peopleManage: Schema.String,
+  exportAudit: Schema.String,
+  billing: Schema.String,
+});
+export type TeamRole = Schema.Schema.Type<typeof TeamRole>;
+
+export const TeamBundle = Schema.Struct({
+  people: Schema.Array(Teammate),
+  groups: Schema.Array(TeamGroup),
+  roles: Schema.Array(TeamRole),
+  source: Schema.optional(Schema.Literals(["live", "fixture"])),
+});
+export type TeamBundle = Schema.Schema.Type<typeof TeamBundle>;
+
+export const ManagedUsageTeamRow = Schema.Struct({
+  team: Schema.String,
+  spent: Schema.Number,
+  budget: Schema.Number,
+  requests: Schema.Number,
+  toolCalls: Schema.Number,
+  alert: Schema.optional(Schema.String),
+});
+export type ManagedUsageTeamRow = Schema.Schema.Type<typeof ManagedUsageTeamRow>;
+
+export const ManagedUsage = Schema.Struct({
+  monthSpent: Schema.Number,
+  monthBudget: Schema.Number,
+  forecast: Schema.Number,
+  forecastNote: Schema.String,
+  todaySpent: Schema.Number,
+  todayNote: Schema.String,
+  planRenews: Schema.String,
+  teamRows: Schema.Array(ManagedUsageTeamRow),
+  source: Schema.Literals(["live", "fixture"]),
+});
+export type ManagedUsage = Schema.Schema.Type<typeof ManagedUsage>;
 
 export const InboxItem = Schema.Struct({
   id: Schema.String,
@@ -251,6 +305,10 @@ export const DevicePrefs = Schema.Struct({
   haptics: Schema.Boolean,
   /** Home-screen icon badge = pending review count. */
   iconBadge: Schema.Boolean,
+  /** Show Voice assistant entry points (Profile + /voice). */
+  voiceAssistant: Schema.Boolean,
+  /** Speak assistant replies (expo-speech / web speechSynthesis). */
+  voiceSpeak: Schema.Boolean,
 });
 export type DevicePrefs = Schema.Schema.Type<typeof DevicePrefs>;
 
@@ -277,6 +335,221 @@ export const DocumentAttachment = Schema.Struct({
   bytes: Schema.optional(Schema.Number),
 });
 export type DocumentAttachment = Schema.Schema.Type<typeof DocumentAttachment>;
+
+/** Memory explorer hit (console MemoryPage / MEMORY_RESULTS). */
+export const MemoryResult = Schema.Struct({
+  id: Schema.String,
+  kind: Schema.Literals(["ENTITY", "DOCUMENT", "NOTE"]),
+  title: Schema.String,
+  summary: Schema.String,
+  badge: Schema.String,
+  badgeTone: BadgeTone,
+});
+export type MemoryResult = Schema.Schema.Type<typeof MemoryResult>;
+
+export const MemoryField = Schema.Struct({
+  field: Schema.String,
+  value: Schema.String,
+  source: Schema.String,
+  confidence: Schema.String,
+  tone: BadgeTone,
+});
+export type MemoryField = Schema.Schema.Type<typeof MemoryField>;
+
+/** Gateway API key (not hardware SecurityKey / OAuth ConnectedApp). */
+export const ApiKeyItem = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  expiresLabel: Schema.String,
+  keyGroup: Schema.String,
+  canUse: Schema.String,
+  dailyCap: Schema.String,
+  endsIn: Schema.optional(Schema.String),
+  lastUsed: Schema.optional(Schema.String),
+  capReached: Schema.optional(Schema.Boolean),
+  expiresHighlight: Schema.optional(Schema.Boolean),
+  revoked: Schema.optional(Schema.Boolean),
+});
+export type ApiKeyItem = Schema.Schema.Type<typeof ApiKeyItem>;
+
+export const GatewayEndpoint = Schema.Struct({
+  path: Schema.String,
+  description: Schema.String,
+});
+export type GatewayEndpoint = Schema.Schema.Type<typeof GatewayEndpoint>;
+
+export const GatewayRoute = Schema.Struct({
+  id: Schema.String,
+  label: Schema.String,
+  chain: Schema.String,
+  status: Schema.String,
+  tone: BadgeTone,
+});
+export type GatewayRoute = Schema.Schema.Type<typeof GatewayRoute>;
+
+export const GatewayBundle = Schema.Struct({
+  base: Schema.String,
+  endpoints: Schema.Array(GatewayEndpoint),
+  routes: Schema.Array(GatewayRoute),
+  source: Schema.optional(Schema.Literals(["live", "fixture"])),
+});
+export type GatewayBundle = Schema.Schema.Type<typeof GatewayBundle>;
+
+export const MemoryUpload = Schema.Struct({
+  id: Schema.String,
+  file: Schema.String,
+  meta: Schema.String,
+  addedBy: Schema.String,
+  pipeline: Schema.String,
+  added: Schema.String,
+  status: Schema.String,
+  tone: BadgeTone,
+  source: Schema.String,
+});
+export type MemoryUpload = Schema.Schema.Type<typeof MemoryUpload>;
+
+export const AutomationSub = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  target: Schema.String,
+  events: Schema.String,
+  via: Schema.String,
+  last: Schema.String,
+  health: Schema.String,
+  tone: BadgeTone,
+});
+export type AutomationSub = Schema.Schema.Type<typeof AutomationSub>;
+
+export const AuditEntry = Schema.Struct({
+  id: Schema.String,
+  time: Schema.String,
+  actor: Schema.String,
+  action: Schema.String,
+  outcome: Schema.String,
+  tone: BadgeTone,
+});
+export type AuditEntry = Schema.Schema.Type<typeof AuditEntry>;
+
+export const OrgSettings = Schema.Struct({
+  name: Schema.String,
+  consoleAddress: Schema.String,
+  dataRegion: Schema.String,
+  timeZone: Schema.String,
+  securityContact: Schema.String,
+});
+export type OrgSettings = Schema.Schema.Type<typeof OrgSettings>;
+
+export const SettingsWebhookHost = Schema.Struct({
+  host: Schema.String,
+  subscriptions: Schema.Number,
+});
+export type SettingsWebhookHost = Schema.Schema.Type<typeof SettingsWebhookHost>;
+
+export const SettingsRetentionRow = Schema.Struct({
+  label: Schema.String,
+  help: Schema.String,
+  value: Schema.String,
+  locked: Schema.optional(Schema.Boolean),
+});
+export type SettingsRetentionRow = Schema.Schema.Type<typeof SettingsRetentionRow>;
+
+export const OrgSettingsBundle = Schema.Struct({
+  org: OrgSettings,
+  webhookHosts: Schema.Array(SettingsWebhookHost),
+  egressDomains: Schema.Array(Schema.String),
+  retention: Schema.Array(SettingsRetentionRow),
+});
+export type OrgSettingsBundle = Schema.Schema.Type<typeof OrgSettingsBundle>;
+
+export const AuditIncident = Schema.Struct({
+  entryId: Schema.String,
+  incidentId: Schema.String,
+  foundAt: Schema.String,
+  summary: Schema.String,
+  explanation: Schema.String,
+  paymentNote: Schema.String,
+});
+export type AuditIncident = Schema.Schema.Type<typeof AuditIncident>;
+
+/** Agent session timeline row (console Sessions). */
+export const AgentSession = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  meta: Schema.String,
+  stats: Schema.String,
+  status: Schema.String,
+  tone: BadgeTone,
+  active: Schema.Boolean,
+});
+export type AgentSession = Schema.Schema.Type<typeof AgentSession>;
+
+export const ProposedSkill = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  description: Schema.String,
+  attribution: Schema.String,
+  canProve: Schema.Boolean,
+  blocker: Schema.optional(Schema.String),
+  blockerTone: Schema.optional(BadgeTone),
+});
+export type ProposedSkill = Schema.Schema.Type<typeof ProposedSkill>;
+
+export const ActiveSkill = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  description: Schema.String,
+  keyGroup: Schema.String,
+  touchesLabel: Schema.String,
+  runs7d: Schema.Number,
+});
+export type ActiveSkill = Schema.Schema.Type<typeof ActiveSkill>;
+
+export const ConnectionAccount = Schema.Struct({
+  id: Schema.String,
+  handle: Schema.String,
+  ownershipLabel: Schema.String,
+  detail: Schema.String,
+  action: Schema.String,
+  alert: Schema.optional(Schema.Boolean),
+});
+export type ConnectionAccount = Schema.Schema.Type<typeof ConnectionAccount>;
+
+export const ConnectionItem = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  summary: Schema.String,
+  lastUsed: Schema.String,
+  status: Schema.String,
+  statusLabel: Schema.String,
+  accounts: Schema.Array(ConnectionAccount),
+  ops: Schema.Struct({
+    readsAllowed: Schema.Number,
+    writesMandate: Schema.Number,
+    deletesBlocked: Schema.Number,
+  }),
+  usedBy: Schema.Array(Schema.String),
+});
+export type ConnectionItem = Schema.Schema.Type<typeof ConnectionItem>;
+
+/** Fixture / console-parity workflow (skill program) the voice assistant can start. */
+export const WorkflowProgram = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  title: Schema.String,
+  summary: Schema.String,
+  stage: Schema.Literals(["active", "proving", "proposed", "retired"]),
+});
+export type WorkflowProgram = Schema.Schema.Type<typeof WorkflowProgram>;
+
+export const WorkflowRun = Schema.Struct({
+  id: Schema.String,
+  workflowId: Schema.String,
+  name: Schema.String,
+  startedAtMs: Schema.Number,
+  status: Schema.Literals(["started", "running", "done"]),
+  fixture: Schema.Boolean,
+});
+export type WorkflowRun = Schema.Schema.Type<typeof WorkflowRun>;
 
 export const MobileSession = Schema.Struct({
   accessToken: Schema.String,

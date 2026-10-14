@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android App Actions stub — checked in for Day-0.
+  Wire via shortcuts.xml / actions.intent.OPEN_APP_FEATURE once Play enrollment lands.
+  Runtime catalog: apps/mobile/src/services/shortcuts-donation.ts
+-->
+<actions>
+  <action intentName="actions.intent.OPEN_APP_FEATURE">
+    <fulfillment urlTemplate="clawql://voice{?q}">
+      <parameter-mapping intentParameter="feature" urlParameter="q" required="false" />
+    </fulfillment>
+    <parameter name="feature">
+      <entity-set-reference entitySetId="clawqlFeatureEntitySet" />
+    </parameter>
+  </action>
+  <entity-set entitySetId="clawqlFeatureEntitySet">
+    <entity name="ListPending" alternateName="@array/clawql_list_pending" url="clawql://voice?q=list%20pending" />
+    <entity name="ReadNext" alternateName="@array/clawql_read_next" url="clawql://voice?q=read%20next" />
+    <entity name="DeclineFirst" alternateName="@array/clawql_decline_first" url="clawql://voice?q=decline%20first" />
+    <entity name="AskDana" alternateName="@array/clawql_ask_dana" url="clawql://voice?q=ask%20dana" />
+    <entity name="StartStandup" alternateName="@array/clawql_start_standup" url="clawql://voice?q=start%20standup%20digest" />
+    <entity name="StartSpend" alternateName="@array/clawql_start_spend" url="clawql://voice?q=start%20weekly%20spend%20digest" />
+    <entity name="ListWorkflows" alternateName="@array/clawql_list_workflows" url="clawql://voice?q=list%20workflows" />
+    <entity name="OpenVoice" alternateName="@array/clawql_open_voice" url="clawql://voice" />
+  </entity-set>
+</actions>

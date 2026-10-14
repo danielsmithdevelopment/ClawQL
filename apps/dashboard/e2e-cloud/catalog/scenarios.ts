@@ -1,6 +1,6 @@
 /**
- * ClawQL Cloud E2E Test Catalog — full registry (199 scenarios).
- * Source: Oct 5, 2026 catalog (@Daniel). Titles and passWhen are verbatim.
+ * ClawQL Cloud E2E Test Catalog — full registry (202 scenarios).
+ * Source: Oct 5, 2026 catalog (@Daniel) + store_iap fixture rails (SU-08/09, ADM-20).
  */
 
 export type ScenarioRun = "Smoke" | "Nightly" | "Manual";
@@ -37,6 +37,8 @@ const EXPECTED_IDS: readonly string[] = [
   "SU-05",
   "SU-06",
   "SU-07",
+  "SU-08",
+  "SU-09",
   "SI-01",
   "SI-02",
   "SI-03",
@@ -197,6 +199,7 @@ const EXPECTED_IDS: readonly string[] = [
   "ADM-17",
   "ADM-18",
   "ADM-19",
+  "ADM-20",
   "UX-01",
   "UX-02",
   "UX-03",
@@ -282,6 +285,22 @@ export const CLOUD_E2E_SCENARIOS: readonly Scenario[] = [
     title: "Open Sessions, Review and Audit in the new org",
     passWhen:
       "Sessions and Review show their empty-state text. Audit shows 3 entries and a verified chain.",
+  },
+  {
+    id: "SU-08",
+    run: "Smoke",
+    area: "sign-up",
+    title: "Provision Pro via fixture store_iap verify (PhoneApprove rail)",
+    passWhen:
+      "Entitlements show plan Pro and billingMode store_iap; audit records billing.store_iap Provisioned",
+  },
+  {
+    id: "SU-09",
+    run: "Nightly",
+    area: "sign-up",
+    title: "Replay the same fixture store purchase token",
+    passWhen:
+      "Second verify does not re-provision; entitlements stay Pro store_iap; audit shows Ignored replay",
   },
   {
     id: "SI-01",
@@ -1438,6 +1457,14 @@ export const CLOUD_E2E_SCENARIOS: readonly Scenario[] = [
       "The archive holds memory, documents, skills, settings and the audit log with proofs. Deletion finishes with a certificate, and nobody can sign in.",
   },
   {
+    id: "ADM-20",
+    run: "Nightly",
+    area: "admin",
+    title: "Usage & billing reflects store_iap plan after PhoneApprove verify",
+    passWhen:
+      "GET /billing/usage shows planId Pro, billingMode store_iap, and storeProductId clawql_pro_monthly",
+  },
+  {
     id: "UX-01",
     run: "Smoke",
     area: "ux",
@@ -1685,8 +1712,8 @@ export function scenarioById(id: string): Scenario | undefined {
 }
 
 export function assertCatalogComplete(): void {
-  if (CLOUD_E2E_SCENARIOS.length !== 199) {
-    throw new Error(`Expected 199 scenarios, got ${CLOUD_E2E_SCENARIOS.length}`);
+  if (CLOUD_E2E_SCENARIOS.length !== 202) {
+    throw new Error(`Expected 202 scenarios, got ${CLOUD_E2E_SCENARIOS.length}`);
   }
   const have = new Set(CLOUD_E2E_SCENARIOS.map((s) => s.id));
   const missing = EXPECTED_IDS.filter((id) => !have.has(id));

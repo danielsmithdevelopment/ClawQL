@@ -1,0 +1,22 @@
+# MOB-20 — Fixture store_iap subscribe (Pro) + Face ID / App Lock labels
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- assertVisible:
+    id: "profile-plan-billing"
+- assertVisible:
+    id: "profile-subscribe-pro"
+- tapOn:
+    id: "profile-subscribe-pro"
+- assertVisible:
+    id: "profile-plan-label"
+- assertVisible:
+    id: "profile-bio-capability"
+- tapOn:
+    id: "pref-app-lock"
+- assertVisible:
+    id: "profile-lock-now"

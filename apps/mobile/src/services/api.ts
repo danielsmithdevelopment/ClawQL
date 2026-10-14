@@ -20,38 +20,75 @@ import {
   FIXTURE_POLICY_DETAIL,
   FIXTURE_REVIEW_ITEMS,
   FIXTURE_SPEND,
+  FIXTURE_ACTIVE_SKILLS,
+  FIXTURE_AGENT_SESSIONS,
+  FIXTURE_API_KEYS,
+  FIXTURE_AUDIT_ENTRIES,
+  FIXTURE_AUDIT_INCIDENT,
+  FIXTURE_AUTOMATIONS,
+  FIXTURE_CONNECTIONS,
+  FIXTURE_GATEWAY_ENDPOINTS,
+  FIXTURE_GATEWAY_ROUTES,
+  FIXTURE_MANAGED_USAGE,
+  FIXTURE_MEMORY_FIELDS,
+  FIXTURE_MEMORY_RESULTS,
+  FIXTURE_MEMORY_UPLOADS,
+  FIXTURE_ORG_SETTINGS,
+  FIXTURE_ORG_SETTINGS_BUNDLE,
+  FIXTURE_PROPOSED_SKILLS,
+  FIXTURE_TEAM_GROUPS,
+  FIXTURE_TEAM_ROLES,
   FIXTURE_TEAMMATES,
+  FIXTURE_WORKFLOWS,
 } from "../domain/fixtures";
 import {
   AccountDeletionResult,
+  ActiveSkill,
   ActivityEvent,
   ActivityListResponse,
+  AgentSession,
   AgentSummary,
+  ApiKeyItem,
   ApprovalPolicy,
   ApprovalPolicyDetail,
+  AuditEntry,
+  AuditIncident,
+  AutomationSub,
   ConnectedApp,
+  ConnectionItem,
   DeviceSession,
   DocumentAttachment,
+  GatewayBundle,
+  GatewayEndpoint,
   HomeSpend,
+  MemoryUpload,
   InboxItem,
+  ManagedUsage,
+  MemoryField,
+  MemoryResult,
   MorningDigest,
   NotificationPrefs,
+  OrgSettings,
+  OrgSettingsBundle,
   OrgSummary,
+  ProposedSkill,
   PushDevice,
   ReviewDecision,
   ReviewItem,
   ReviewKind,
   ReviewListResponse,
   SecurityKey,
+  TeamBundle,
+  TeamGroup,
+  TeamRole,
   Teammate,
+  WorkflowProgram,
+  WorkflowRun,
   decodeUnknownEffect,
   type MobileSession,
 } from "../domain/schemas";
 import { loadMobileConfigEffect } from "./config";
-import {
-  loadOfflineSnapshotEffect,
-  saveOfflineSnapshotEffect,
-} from "./offline-cache";
+import { loadOfflineSnapshotEffect, saveOfflineSnapshotEffect } from "./offline-cache";
 
 export class MobileApiError extends Data.TaggedError("MobileApiError")<{
   readonly reason: string;
@@ -69,6 +106,10 @@ type MutableState = {
   inbox: InboxItem[];
   pushDevices: PushDevice[];
   attachments: DocumentAttachment[];
+  workflowRuns: WorkflowRun[];
+  apiKeys: ApiKeyItem[];
+  teammates: Teammate[];
+  erasedSubjects: string[];
   deleted: boolean;
 };
 
@@ -82,6 +123,10 @@ const stateRef = Ref.makeUnsafe<MutableState>({
   inbox: [...FIXTURE_INBOX],
   pushDevices: [],
   attachments: [],
+  workflowRuns: [],
+  apiKeys: [...FIXTURE_API_KEYS],
+  teammates: [...FIXTURE_TEAMMATES],
+  erasedSubjects: [],
   deleted: false,
 });
 
@@ -97,17 +142,22 @@ function isFixtureSession(session: MobileSession, fixtureMode: boolean): boolean
   return fixtureMode || session.accessToken.startsWith("fixture-");
 }
 
+/** Cryptographically random hex for fixture ids/secrets (avoids CodeQL insecure-randomness). */
+function fixtureRandomHex(byteCount: number): string {
+  const buf = new Uint8Array(byteCount);
+  globalThis.crypto.getRandomValues(buf);
+  return Array.from(buf, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 function nextActivityId(): string {
-  return `act_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+  return `act_${Date.now().toString(36)}_${fixtureRandomHex(3)}`;
 }
 
 function activityTitle(item: ReviewItem, decision: ReviewDecision, answer?: string): string {
   if (decision === "answer") return `Answered ${item.decisionSite ?? item.title}`;
   if (decision === "skip") return `Skipped ${item.title}`;
   if (decision === "ask_teammate") {
-    return answer
-      ? `Asked ${answer} about ${item.title}`
-      : `Asked teammate about ${item.title}`;
+    return answer ? `Asked ${answer} about ${item.title}` : `Asked teammate about ${item.title}`;
   }
   if (decision === "approve" && item.kind === "skill") return `Promoted ${item.title}`;
   if (decision === "approve") return `Approved ${item.title}`;
@@ -164,9 +214,7 @@ export function listReviewEffect(
     }).pipe(
       Effect.catch((err) =>
         Effect.gen(function* () {
-          const snap = yield* loadOfflineSnapshotEffect().pipe(
-            Effect.mapError(() => err)
-          );
+          const snap = yield* loadOfflineSnapshotEffect().pipe(Effect.mapError(() => err));
           if (!snap || snap.reviewItems.length === 0) {
             return yield* Effect.fail(err);
           }
@@ -198,11 +246,7 @@ export function getReviewByIdEffect(
     const config = yield* loadMobileConfigEffect();
     if (isFixtureSession(session, config.fixtureMode)) {
       const state = yield* Ref.get(stateRef);
-      return (
-        state.items.find((i) => i.id === id) ??
-        state.decided.find((i) => i.id === id) ??
-        null
-      );
+      return state.items.find((i) => i.id === id) ?? state.decided.find((i) => i.id === id) ?? null;
     }
     const list = yield* listReviewEffect(session);
     return list.items.find((i) => i.id === id) ?? null;
@@ -235,8 +279,7 @@ export function decideReviewEffect(input: {
         return yield* Effect.fail(new MobileApiError({ reason: "not_found", status: 404 }));
       }
       const leaveInQueue = input.decision === "retry_with_key";
-      const status =
-        input.decision === "answer" ? (input.answer ?? "answer") : input.decision;
+      const status = input.decision === "answer" ? (input.answer ?? "answer") : input.decision;
       const detail =
         input.answer ??
         input.approvalProof?.method ??
@@ -308,9 +351,7 @@ export function listActivityEffect(
       return { events: state.activity, source: "fixture" as const };
     }
     // Live activity comes from the audit surface; until wired, serve offline cache if any.
-    const snap = yield* loadOfflineSnapshotEffect().pipe(
-      Effect.catch(() => Effect.succeed(null))
-    );
+    const snap = yield* loadOfflineSnapshotEffect().pipe(Effect.catch(() => Effect.succeed(null)));
     if (snap && snap.activityEvents.length > 0) {
       return { events: snap.activityEvents, source: "cache" as const };
     }
@@ -351,6 +392,50 @@ export function endOtherDeviceSessionsEffect(
   });
 }
 
+export function getManagedUsageEffect(
+  session: MobileSession
+): Effect.Effect<ManagedUsage, MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return FIXTURE_MANAGED_USAGE;
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/usage`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{
+          usage?: Omit<ManagedUsage, "source">;
+          source?: "live" | "fixture";
+        }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(
+      Effect.catch(() =>
+        Effect.succeed({ usage: FIXTURE_MANAGED_USAGE, source: "fixture" as const })
+      )
+    );
+    const usage = res.usage ?? FIXTURE_MANAGED_USAGE;
+    return {
+      monthSpent: usage.monthSpent,
+      monthBudget: usage.monthBudget,
+      forecast: usage.forecast,
+      forecastNote: usage.forecastNote,
+      todaySpent: usage.todaySpent,
+      todayNote: usage.todayNote,
+      planRenews: usage.planRenews,
+      teamRows: usage.teamRows ?? [],
+      source: res.source ?? "fixture",
+    };
+  });
+}
+
 export function getHomeSpendEffect(
   session: MobileSession
 ): Effect.Effect<HomeSpend, MobileApiError> {
@@ -359,22 +444,8 @@ export function getHomeSpendEffect(
     if (isFixtureSession(session, config.fixtureMode)) {
       return FIXTURE_SPEND;
     }
-    const res = yield* Effect.tryPromise({
-      try: async () => {
-        const r = await fetch(`${config.apiBase}/api/managed/spend/today`, {
-          headers: authHeaders(session),
-        });
-        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
-        return r.json();
-      },
-      catch: (cause) =>
-        new MobileApiError({
-          reason: cause instanceof Error ? cause.message : String(cause),
-        }),
-    });
-    return yield* decodeUnknownEffect(HomeSpend, res).pipe(
-      Effect.mapError((e) => new MobileApiError({ reason: e.message }))
-    );
+    const usage = yield* getManagedUsageEffect(session);
+    return homeSpendFromUsage(usage);
   });
 }
 
@@ -510,10 +581,9 @@ export function deleteAccountEffect(
         });
         const body = (await r.json().catch(() => ({}))) as Record<string, unknown>;
         if (!r.ok) {
-          throw Object.assign(
-            new Error(String(body.error ?? `http_${r.status}`)),
-            { status: r.status }
-          );
+          throw Object.assign(new Error(String(body.error ?? `http_${r.status}`)), {
+            status: r.status,
+          });
         }
         return body;
       },
@@ -562,10 +632,15 @@ export function getPolicyDetailEffect(
       appliesTo: row.whenDetail || row.when,
       appliesHelp: row.blockedNote ?? "Phone shows a summary; edit policies on the console.",
       whoApproves: row.who,
-      whoHelp: row.blocked ? "No approvers — always blocked." : `Approvals needed: ${row.approvals}.`,
+      whoHelp: row.blocked
+        ? "No approvers — always blocked."
+        : `Approvals needed: ${row.approvals}.`,
       approvalsNeeded: row.approvals,
       expiresAfter: row.waits,
-      expiresHelp: row.securityKey === "Required" ? "Security key required to approve." : "No security key required.",
+      expiresHelp:
+        row.securityKey === "Required"
+          ? "Security key required to approve."
+          : "No security key required.",
       requireSecurityKey: row.securityKey === "Required",
       notify: "Phone push, Slack",
     } satisfies ApprovalPolicyDetail;
@@ -612,15 +687,833 @@ export function getMorningDigestEffect(
   });
 }
 
-export function listTeammatesEffect(
+export function getTeamBundleEffect(
   session: MobileSession
-): Effect.Effect<readonly Teammate[], MobileApiError> {
+): Effect.Effect<TeamBundle, MobileApiError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
     if (isFixtureSession(session, config.fixtureMode)) {
-      return FIXTURE_TEAMMATES;
+      const state = yield* Ref.get(stateRef);
+      return {
+        people: state.teammates,
+        groups: FIXTURE_TEAM_GROUPS,
+        roles: FIXTURE_TEAM_ROLES,
+        source: "fixture" as const,
+      };
     }
-    return FIXTURE_TEAMMATES;
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/team`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{
+          people?: Teammate[];
+          groups?: TeamGroup[];
+          roles?: TeamRole[];
+          source?: "live" | "fixture";
+        }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(
+      Effect.catch(() =>
+        Effect.succeed({
+          people: [...FIXTURE_TEAMMATES],
+          groups: [...FIXTURE_TEAM_GROUPS],
+          roles: [...FIXTURE_TEAM_ROLES],
+          source: "fixture" as const,
+        })
+      )
+    );
+    return {
+      people: res.people ?? FIXTURE_TEAMMATES,
+      groups: res.groups ?? FIXTURE_TEAM_GROUPS,
+      roles: res.roles ?? FIXTURE_TEAM_ROLES,
+      source: res.source ?? "fixture",
+    };
+  });
+}
+
+export function listTeammatesEffect(
+  session: MobileSession
+): Effect.Effect<readonly Teammate[], MobileApiError> {
+  return Effect.map(getTeamBundleEffect(session), (b) => b.people);
+}
+
+export function inviteTeammateEffect(input: {
+  session: MobileSession;
+  email: string;
+  name?: string;
+  role?: string;
+  acceptCanApprove: boolean;
+  acceptSecurityKeys: boolean;
+  acceptAuditRecorded: boolean;
+}): Effect.Effect<Teammate, MobileApiError> {
+  return Effect.gen(function* () {
+    const email = input.email.trim().toLowerCase();
+    if (!email.includes("@")) {
+      return yield* Effect.fail(new MobileApiError({ reason: "email_required" }));
+    }
+    if (!input.acceptCanApprove || !input.acceptSecurityKeys || !input.acceptAuditRecorded) {
+      return yield* Effect.fail(new MobileApiError({ reason: "acceptance_required" }));
+    }
+    const config = yield* loadMobileConfigEffect();
+    if (!isFixtureSession(input.session, config.fixtureMode)) {
+      const res = yield* Effect.tryPromise({
+        try: async () => {
+          const r = await fetch(`${config.apiBase}/api/managed/team`, {
+            method: "POST",
+            headers: authHeaders(input.session),
+            body: JSON.stringify({
+              email,
+              name: input.name,
+              role: input.role,
+              acceptCanApprove: input.acceptCanApprove,
+              acceptSecurityKeys: input.acceptSecurityKeys,
+              acceptAuditRecorded: input.acceptAuditRecorded,
+            }),
+          });
+          if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+          return r.json() as Promise<{ person: Teammate }>;
+        },
+        catch: (cause) =>
+          new MobileApiError({
+            reason: cause instanceof Error ? cause.message : String(cause),
+            status: (cause as { status?: number })?.status,
+          }),
+      });
+      return res.person;
+    }
+    const state = yield* Ref.get(stateRef);
+    if (state.teammates.some((p) => p.email.toLowerCase() === email)) {
+      return yield* Effect.fail(new MobileApiError({ reason: "already_invited" }));
+    }
+    const local = email.split("@")[0] || "invitee";
+    const person: Teammate = {
+      id: `invite_${Date.now().toString(36)}`,
+      name: (input.name ?? local).trim() || local,
+      email,
+      role: (input.role ?? "Member").trim() || "Member",
+      groups: ["Invited"],
+      canApprove: false,
+      keysReady: false,
+      lastActive: "Invite sent",
+      invitePending: true,
+    };
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      teammates: [...s.teammates, person],
+    }));
+    return person;
+  });
+}
+
+export function listWorkflowsEffect(
+  session: MobileSession
+): Effect.Effect<readonly WorkflowProgram[], MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return FIXTURE_WORKFLOWS.filter((w) => w.stage !== "retired");
+    }
+    return FIXTURE_WORKFLOWS.filter((w) => w.stage !== "retired");
+  });
+}
+
+export function startWorkflowEffect(input: {
+  session: MobileSession;
+  workflowId: string;
+}): Effect.Effect<WorkflowRun, MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    const catalog = isFixtureSession(input.session, config.fixtureMode)
+      ? FIXTURE_WORKFLOWS
+      : FIXTURE_WORKFLOWS;
+    const program =
+      catalog.find((w) => w.id === input.workflowId || w.name === input.workflowId) ?? null;
+    if (!program) {
+      return yield* Effect.fail(
+        new MobileApiError({ reason: `workflow_not_found:${input.workflowId}` })
+      );
+    }
+    if (program.stage === "retired") {
+      return yield* Effect.fail(new MobileApiError({ reason: `workflow_retired:${program.id}` }));
+    }
+    const run: WorkflowRun = {
+      id: `wfrun_${Date.now().toString(36)}`,
+      workflowId: program.id,
+      name: program.name,
+      startedAtMs: Date.now(),
+      status: "started",
+      fixture: true,
+    };
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      workflowRuns: [run, ...s.workflowRuns],
+      activity: [
+        {
+          id: nextActivityId(),
+          atMs: run.startedAtMs,
+          title: `Started workflow ${program.title}`,
+          detail: `fixture · ${program.id}`,
+          kind: "skill" as const,
+          decision: "start_workflow",
+          reviewId: program.id,
+        },
+        ...s.activity,
+      ],
+    }));
+    return run;
+  });
+}
+
+export function listWorkflowRunsEffect(
+  session: MobileSession
+): Effect.Effect<readonly WorkflowRun[], MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    const state = yield* Ref.get(stateRef);
+    return state.workflowRuns;
+  });
+}
+
+export function searchMemoryEffect(
+  session: MobileSession,
+  query?: string,
+  kind?: MemoryResult["kind"] | "all"
+): Effect.Effect<readonly MemoryResult[], MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      const q = (query ?? "").trim().toLowerCase();
+      return FIXTURE_MEMORY_RESULTS.filter((row) => {
+        if (kind && kind !== "all" && row.kind !== kind) return false;
+        if (!q) return true;
+        return (
+          row.title.toLowerCase().includes(q) ||
+          row.summary.toLowerCase().includes(q) ||
+          row.id.toLowerCase().includes(q)
+        );
+      });
+    }
+    const params = new URLSearchParams();
+    if (query?.trim()) params.set("q", query.trim());
+    if (kind && kind !== "all") params.set("kind", kind);
+    const qs = params.toString();
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/memory${qs ? `?${qs}` : ""}`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{ results?: MemoryResult[] }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(
+      Effect.catch(() => {
+        const q = (query ?? "").trim().toLowerCase();
+        return Effect.succeed({
+          results: FIXTURE_MEMORY_RESULTS.filter((row) => {
+            if (kind && kind !== "all" && row.kind !== kind) return false;
+            if (!q) return true;
+            return (
+              row.title.toLowerCase().includes(q) ||
+              row.summary.toLowerCase().includes(q) ||
+              row.id.toLowerCase().includes(q)
+            );
+          }),
+        });
+      })
+    );
+    return res.results ?? [];
+  });
+}
+
+export function getMemoryByIdEffect(
+  session: MobileSession,
+  id: string
+): Effect.Effect<{ result: MemoryResult; fields: readonly MemoryField[] } | null, MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      const result = FIXTURE_MEMORY_RESULTS.find((r) => r.id === id) ?? null;
+      if (!result) return null;
+      return { result, fields: FIXTURE_MEMORY_FIELDS };
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/memory?id=${encodeURIComponent(id)}`, {
+          headers: authHeaders(session),
+        });
+        if (r.status === 404) return null;
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{
+          result: MemoryResult;
+          fields: MemoryField[];
+        }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(
+      Effect.catch(() => {
+        const result = FIXTURE_MEMORY_RESULTS.find((r) => r.id === id) ?? null;
+        return Effect.succeed(result ? { result, fields: [...FIXTURE_MEMORY_FIELDS] } : null);
+      })
+    );
+    return res;
+  });
+}
+
+export function listApiKeysEffect(
+  session: MobileSession
+): Effect.Effect<readonly ApiKeyItem[], MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      const state = yield* Ref.get(stateRef);
+      return state.apiKeys.filter((k) => !k.revoked);
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/keys`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{ keys?: ApiKeyItem[] }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    });
+    return (res.keys ?? []).filter((k) => !k.revoked);
+  });
+}
+
+export function issueApiKeyEffect(input: {
+  session: MobileSession;
+  name: string;
+  canUse?: string;
+  keyGroup?: string;
+}): Effect.Effect<{ key: ApiKeyItem; secret: string }, MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    const name = input.name.trim();
+    if (!name) {
+      return yield* Effect.fail(new MobileApiError({ reason: "name_required" }));
+    }
+    if (!isFixtureSession(input.session, config.fixtureMode)) {
+      const res = yield* Effect.tryPromise({
+        try: async () => {
+          const r = await fetch(`${config.apiBase}/api/managed/keys`, {
+            method: "POST",
+            headers: authHeaders(input.session),
+            body: JSON.stringify({
+              name,
+              teamId: input.keyGroup,
+              scope: ["execute", "search", "memory"],
+            }),
+          });
+          if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+          return r.json() as Promise<{ key: ApiKeyItem; secret: string }>;
+        },
+        catch: (cause) =>
+          new MobileApiError({
+            reason: cause instanceof Error ? cause.message : String(cause),
+            status: (cause as { status?: number })?.status,
+          }),
+      });
+      return { key: res.key, secret: res.secret };
+    }
+    const endsIn = fixtureRandomHex(2);
+    const key: ApiKeyItem = {
+      id: `key_${Date.now().toString(36)}`,
+      name,
+      endsIn,
+      expiresLabel: "Jan 1, 2028",
+      keyGroup: input.keyGroup ?? "Engineering",
+      canUse: input.canUse ?? "Models, tools",
+      dailyCap: "$50",
+      lastUsed: "Never",
+    };
+    const secret = `cqk_fixture_${endsIn}_${fixtureRandomHex(5)}`;
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      apiKeys: [key, ...s.apiKeys],
+    }));
+    return { key, secret };
+  });
+}
+
+export function revokeApiKeyEffect(input: {
+  session: MobileSession;
+  keyId: string;
+}): Effect.Effect<{ ok: true; keyId: string }, MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (!isFixtureSession(input.session, config.fixtureMode)) {
+      yield* Effect.tryPromise({
+        try: async () => {
+          const r = await fetch(`${config.apiBase}/api/managed/keys`, {
+            method: "POST",
+            headers: authHeaders(input.session),
+            body: JSON.stringify({ action: "revoke", keyId: input.keyId }),
+          });
+          if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+          return r.json();
+        },
+        catch: (cause) =>
+          new MobileApiError({
+            reason: cause instanceof Error ? cause.message : String(cause),
+            status: (cause as { status?: number })?.status,
+          }),
+      });
+      return { ok: true as const, keyId: input.keyId };
+    }
+    const state = yield* Ref.get(stateRef);
+    if (!state.apiKeys.some((k) => k.id === input.keyId)) {
+      return yield* Effect.fail(
+        new MobileApiError({ reason: `key_not_found:${input.keyId}`, status: 404 })
+      );
+    }
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      apiKeys: s.apiKeys.map((k) => (k.id === input.keyId ? { ...k, revoked: true } : k)),
+    }));
+    return { ok: true as const, keyId: input.keyId };
+  });
+}
+
+export function listConnectionsEffect(
+  session: MobileSession
+): Effect.Effect<readonly ConnectionItem[], MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return FIXTURE_CONNECTIONS;
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/connections`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{ connections?: ConnectionItem[] }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(Effect.catch(() => Effect.succeed({ connections: [...FIXTURE_CONNECTIONS] })));
+    return res.connections ?? FIXTURE_CONNECTIONS;
+  });
+}
+
+export function listAgentSessionsEffect(
+  session: MobileSession
+): Effect.Effect<readonly AgentSession[], MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return FIXTURE_AGENT_SESSIONS;
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/sessions`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{ sessions?: AgentSession[] }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(Effect.catch(() => Effect.succeed({ sessions: [...FIXTURE_AGENT_SESSIONS] })));
+    return res.sessions ?? FIXTURE_AGENT_SESSIONS;
+  });
+}
+
+export function listProposedSkillsEffect(
+  session: MobileSession
+): Effect.Effect<readonly ProposedSkill[], MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return FIXTURE_PROPOSED_SKILLS;
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/skills`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{ proposed?: ProposedSkill[] }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(Effect.catch(() => Effect.succeed({ proposed: [...FIXTURE_PROPOSED_SKILLS] })));
+    return res.proposed ?? FIXTURE_PROPOSED_SKILLS;
+  });
+}
+
+export function listActiveSkillsEffect(
+  session: MobileSession
+): Effect.Effect<readonly ActiveSkill[], MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return FIXTURE_ACTIVE_SKILLS;
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/skills`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{ active?: ActiveSkill[] }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(Effect.catch(() => Effect.succeed({ active: [...FIXTURE_ACTIVE_SKILLS] })));
+    return (res.active ?? FIXTURE_ACTIVE_SKILLS).map((row) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      keyGroup: row.keyGroup,
+      touchesLabel: row.touchesLabel,
+      runs7d: row.runs7d,
+    }));
+  });
+}
+
+export function getGatewayBundleEffect(
+  session: MobileSession
+): Effect.Effect<GatewayBundle, MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return {
+        base: "https://acme.cloud.clawql.com",
+        endpoints: FIXTURE_GATEWAY_ENDPOINTS,
+        routes: FIXTURE_GATEWAY_ROUTES,
+        source: "fixture" as const,
+      };
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/gateway`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<GatewayBundle>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(
+      Effect.catch(() =>
+        Effect.succeed({
+          base: "https://acme.cloud.clawql.com",
+          endpoints: [...FIXTURE_GATEWAY_ENDPOINTS],
+          routes: [...FIXTURE_GATEWAY_ROUTES],
+          source: "fixture" as const,
+        })
+      )
+    );
+    return {
+      base: res.base ?? "https://acme.cloud.clawql.com",
+      endpoints: res.endpoints ?? FIXTURE_GATEWAY_ENDPOINTS,
+      routes: res.routes ?? FIXTURE_GATEWAY_ROUTES,
+      source: res.source ?? "fixture",
+    };
+  });
+}
+
+export function listGatewayEndpointsEffect(
+  session: MobileSession
+): Effect.Effect<readonly GatewayEndpoint[], MobileApiError> {
+  return Effect.map(getGatewayBundleEffect(session), (b) => b.endpoints);
+}
+
+export function listAutomationsEffect(
+  session: MobileSession
+): Effect.Effect<readonly AutomationSub[], MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return FIXTURE_AUTOMATIONS;
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/automations`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{ automations?: AutomationSub[] }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(Effect.catch(() => Effect.succeed({ automations: [...FIXTURE_AUTOMATIONS] })));
+    return res.automations ?? FIXTURE_AUTOMATIONS;
+  });
+}
+
+export function listAuditEntriesEffect(
+  session: MobileSession
+): Effect.Effect<readonly AuditEntry[], MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return FIXTURE_AUDIT_ENTRIES;
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/audit`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{ entries?: AuditEntry[] }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(Effect.catch(() => Effect.succeed({ entries: [...FIXTURE_AUDIT_ENTRIES] })));
+    return res.entries ?? FIXTURE_AUDIT_ENTRIES;
+  });
+}
+
+export function getAuditIncidentEffect(
+  session: MobileSession
+): Effect.Effect<AuditIncident, MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return { ...FIXTURE_AUDIT_INCIDENT };
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/audit`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{ incident?: AuditIncident }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(Effect.catch(() => Effect.succeed({ incident: { ...FIXTURE_AUDIT_INCIDENT } })));
+    return res.incident ?? FIXTURE_AUDIT_INCIDENT;
+  });
+}
+
+export function getOrgSettingsBundleEffect(
+  session: MobileSession
+): Effect.Effect<OrgSettingsBundle, MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return {
+        ...FIXTURE_ORG_SETTINGS_BUNDLE,
+        org: { ...FIXTURE_ORG_SETTINGS },
+      };
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/settings`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<OrgSettingsBundle & { source?: string }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(
+      Effect.catch(() =>
+        Effect.succeed({
+          ...FIXTURE_ORG_SETTINGS_BUNDLE,
+          org: { ...FIXTURE_ORG_SETTINGS },
+        })
+      )
+    );
+    return {
+      org: res.org ?? FIXTURE_ORG_SETTINGS,
+      webhookHosts: res.webhookHosts ?? FIXTURE_ORG_SETTINGS_BUNDLE.webhookHosts,
+      egressDomains: res.egressDomains ?? FIXTURE_ORG_SETTINGS_BUNDLE.egressDomains,
+      retention: res.retention ?? FIXTURE_ORG_SETTINGS_BUNDLE.retention,
+    };
+  });
+}
+
+export function getOrgSettingsEffect(
+  session: MobileSession
+): Effect.Effect<OrgSettings, MobileApiError> {
+  return getOrgSettingsBundleEffect(session).pipe(Effect.map((b) => b.org));
+}
+
+export function listMemoryUploadsEffect(
+  session: MobileSession
+): Effect.Effect<
+  { uploads: readonly MemoryUpload[]; erasedSubjects: readonly string[] },
+  MobileApiError
+> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      const state = yield* Ref.get(stateRef);
+      return { uploads: FIXTURE_MEMORY_UPLOADS, erasedSubjects: state.erasedSubjects };
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/memory?view=uploads`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{
+          uploads?: MemoryUpload[];
+          erasedSubjects?: string[];
+        }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(
+      Effect.catch(() =>
+        Effect.succeed({
+          uploads: [...FIXTURE_MEMORY_UPLOADS],
+          erasedSubjects: [] as string[],
+        })
+      )
+    );
+    return {
+      uploads: res.uploads ?? FIXTURE_MEMORY_UPLOADS,
+      erasedSubjects: res.erasedSubjects ?? [],
+    };
+  });
+}
+
+export function eraseMemorySubjectEffect(input: {
+  session: MobileSession;
+  subject: string;
+  acceptIrreversible: boolean;
+  acceptAuditKept: boolean;
+}): Effect.Effect<{ ok: true; subject: string; jobId?: string }, MobileApiError> {
+  return Effect.gen(function* () {
+    const subject = input.subject.trim();
+    if (!subject) {
+      return yield* Effect.fail(new MobileApiError({ reason: "subject_required" }));
+    }
+    if (!input.acceptIrreversible || !input.acceptAuditKept) {
+      return yield* Effect.fail(new MobileApiError({ reason: "acceptance_required" }));
+    }
+    const config = yield* loadMobileConfigEffect();
+    if (!isFixtureSession(input.session, config.fixtureMode)) {
+      const res = yield* Effect.tryPromise({
+        try: async () => {
+          const r = await fetch(`${config.apiBase}/api/managed/memory`, {
+            method: "POST",
+            headers: authHeaders(input.session),
+            body: JSON.stringify({
+              action: "erase",
+              subject,
+              acceptIrreversible: input.acceptIrreversible,
+              acceptAuditKept: input.acceptAuditKept,
+            }),
+          });
+          if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+          return r.json() as Promise<{ ok: true; subject: string; jobId?: string }>;
+        },
+        catch: (cause) =>
+          new MobileApiError({
+            reason: cause instanceof Error ? cause.message : String(cause),
+            status: (cause as { status?: number })?.status,
+          }),
+      });
+      return { ok: true as const, subject: res.subject, jobId: res.jobId };
+    }
+    const jobId = `era_${Date.now().toString(36)}`;
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      erasedSubjects: s.erasedSubjects.includes(subject)
+        ? s.erasedSubjects
+        : [...s.erasedSubjects, subject],
+    }));
+    return { ok: true as const, subject, jobId };
+  });
+}
+
+export function openBillingPortalEffect(
+  session: MobileSession,
+  returnUrl?: string
+): Effect.Effect<{ url: string; source: "live" | "fixture" }, MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return {
+        url: "fixture://billing-portal",
+        source: "fixture" as const,
+      };
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/billing/portal`, {
+          method: "POST",
+          headers: authHeaders(session),
+          body: JSON.stringify({ returnUrl }),
+        });
+        const body = (await r.json().catch(() => ({}))) as {
+          url?: string;
+          error?: string;
+        };
+        if (!r.ok || !body.url) {
+          throw Object.assign(new Error(body.error || `http_${r.status}`), {
+            status: r.status,
+          });
+        }
+        return { url: body.url, source: "live" as const };
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    });
+    return res;
   });
 }
 
@@ -642,9 +1535,7 @@ export function markInboxReadEffect(
     void session;
     yield* Ref.update(stateRef, (s) => ({
       ...s,
-      inbox: s.inbox.map((item) =>
-        item.id === inboxId ? { ...item, unread: false } : item
-      ),
+      inbox: s.inbox.map((item) => (item.id === inboxId ? { ...item, unread: false } : item)),
     }));
   });
 }
@@ -656,16 +1547,12 @@ export function markInboxReadByReviewEffect(
   return Effect.gen(function* () {
     void session;
     const before = yield* Ref.get(stateRef);
-    const marked = before.inbox.filter(
-      (item) => item.reviewId === reviewId && item.unread
-    ).length;
+    const marked = before.inbox.filter((item) => item.reviewId === reviewId && item.unread).length;
     if (marked === 0) return 0;
     yield* Ref.update(stateRef, (s) => ({
       ...s,
       inbox: s.inbox.map((item) =>
-        item.reviewId === reviewId && item.unread
-          ? { ...item, unread: false }
-          : item
+        item.reviewId === reviewId && item.unread ? { ...item, unread: false } : item
       ),
     }));
     yield* persistOfflineSnapshotEffect();
@@ -697,7 +1584,7 @@ export function registerPushDeviceEffect(input: {
   fixture: boolean;
 }): Effect.Effect<PushDevice, MobileApiError> {
   return Effect.gen(function* () {
-    void input.session;
+    const config = yield* loadMobileConfigEffect();
     const device: PushDevice = {
       id: `push_${input.platform}_${input.token.slice(-12)}`,
       token: input.token,
@@ -706,6 +1593,30 @@ export function registerPushDeviceEffect(input: {
       registeredAtMs: Date.now(),
       fixture: input.fixture,
     };
+    if (!isFixtureSession(input.session, config.fixtureMode) && !input.fixture) {
+      yield* Effect.tryPromise({
+        try: async () => {
+          const r = await fetch(`${config.apiBase}/api/managed/devices/push`, {
+            method: "POST",
+            headers: authHeaders(input.session),
+            body: JSON.stringify({
+              token: input.token,
+              platform: input.platform,
+              label: input.label,
+              userId: input.session.userId,
+              fixture: false,
+            }),
+          });
+          if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+          return r.json();
+        },
+        catch: (cause) =>
+          new MobileApiError({
+            reason: cause instanceof Error ? cause.message : String(cause),
+            status: (cause as { status?: number })?.status,
+          }),
+      }).pipe(Effect.catch(() => Effect.void));
+    }
     yield* Ref.update(stateRef, (s) => ({
       ...s,
       pushDevices: [device, ...s.pushDevices.filter((d) => d.token !== device.token)],
@@ -718,9 +1629,26 @@ export function listPushDevicesEffect(
   session: MobileSession
 ): Effect.Effect<readonly PushDevice[], MobileApiError> {
   return Effect.gen(function* () {
-    void session;
-    const state = yield* Ref.get(stateRef);
-    return state.pushDevices;
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      const state = yield* Ref.get(stateRef);
+      return state.pushDevices;
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/devices/push`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{ devices?: PushDevice[] }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(Effect.catch(() => Effect.succeed({ devices: [] as PushDevice[] })));
+    return res.devices ?? [];
   });
 }
 
@@ -728,7 +1656,24 @@ export function clearPushDevicesEffect(
   session: MobileSession
 ): Effect.Effect<void, MobileApiError> {
   return Effect.gen(function* () {
-    void session;
+    const config = yield* loadMobileConfigEffect();
+    if (!isFixtureSession(session, config.fixtureMode)) {
+      yield* Effect.tryPromise({
+        try: async () => {
+          const r = await fetch(
+            `${config.apiBase}/api/managed/devices/push?userId=${encodeURIComponent(session.userId)}`,
+            { method: "DELETE", headers: authHeaders(session) }
+          );
+          if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+          return r.json();
+        },
+        catch: (cause) =>
+          new MobileApiError({
+            reason: cause instanceof Error ? cause.message : String(cause),
+            status: (cause as { status?: number })?.status,
+          }),
+      }).pipe(Effect.catch(() => Effect.void));
+    }
     yield* Ref.update(stateRef, (s) => ({ ...s, pushDevices: [] }));
   });
 }
@@ -738,9 +1683,27 @@ export function listAttachmentsEffect(
   reviewId: string
 ): Effect.Effect<readonly DocumentAttachment[], MobileApiError> {
   return Effect.gen(function* () {
-    void session;
-    const state = yield* Ref.get(stateRef);
-    return state.attachments.filter((a) => a.reviewId === reviewId);
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      const state = yield* Ref.get(stateRef);
+      return state.attachments.filter((a) => a.reviewId === reviewId);
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(
+          `${config.apiBase}/api/managed/evidence?reviewId=${encodeURIComponent(reviewId)}`,
+          { headers: authHeaders(session) }
+        );
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{ attachments?: DocumentAttachment[] }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(Effect.catch(() => Effect.succeed({ attachments: [] as DocumentAttachment[] })));
+    return res.attachments ?? [];
   });
 }
 
@@ -749,7 +1712,25 @@ export function addAttachmentEffect(input: {
   attachment: DocumentAttachment;
 }): Effect.Effect<DocumentAttachment, MobileApiError> {
   return Effect.gen(function* () {
-    void input.session;
+    const config = yield* loadMobileConfigEffect();
+    if (!isFixtureSession(input.session, config.fixtureMode)) {
+      yield* Effect.tryPromise({
+        try: async () => {
+          const r = await fetch(`${config.apiBase}/api/managed/evidence`, {
+            method: "POST",
+            headers: authHeaders(input.session),
+            body: JSON.stringify(input.attachment),
+          });
+          if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+          return r.json();
+        },
+        catch: (cause) =>
+          new MobileApiError({
+            reason: cause instanceof Error ? cause.message : String(cause),
+            status: (cause as { status?: number })?.status,
+          }),
+      }).pipe(Effect.catch(() => Effect.void));
+    }
     yield* Ref.update(stateRef, (s) => ({
       ...s,
       attachments: [input.attachment, ...s.attachments],
@@ -764,7 +1745,30 @@ export function removeAttachmentEffect(input: {
   attachmentId: string;
 }): Effect.Effect<void, MobileApiError> {
   return Effect.gen(function* () {
-    void input.session;
+    const config = yield* loadMobileConfigEffect();
+    if (!isFixtureSession(input.session, config.fixtureMode)) {
+      yield* Effect.tryPromise({
+        try: async () => {
+          const r = await fetch(`${config.apiBase}/api/managed/evidence`, {
+            method: "POST",
+            headers: authHeaders(input.session),
+            body: JSON.stringify({
+              action: "remove",
+              reviewId: input.reviewId,
+              attachmentId: input.attachmentId,
+            }),
+          });
+          if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+          return r.json();
+        },
+        catch: (cause) =>
+          new MobileApiError({
+            reason: cause instanceof Error ? cause.message : String(cause),
+            status: (cause as { status?: number })?.status,
+          }),
+      }).pipe(Effect.catch(() => Effect.void));
+      return;
+    }
     const before = yield* Ref.get(stateRef);
     const found = before.attachments.some(
       (a) => a.id === input.attachmentId && a.reviewId === input.reviewId
@@ -800,8 +1804,30 @@ export function resetFixtureStateEffect(): Effect.Effect<void> {
     inbox: [...FIXTURE_INBOX],
     pushDevices: [],
     attachments: [],
+    workflowRuns: [],
+    apiKeys: [...FIXTURE_API_KEYS],
+    teammates: [...FIXTURE_TEAMMATES],
+    erasedSubjects: [],
     deleted: false,
   });
+}
+
+function money(n: number): string {
+  return `$${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+}
+
+function homeSpendFromUsage(usage: ManagedUsage): HomeSpend {
+  return {
+    label: "Today's spend",
+    amount: money(usage.todaySpent),
+    note: usage.todayNote,
+    budget: `${money(usage.monthBudget)}/mo`,
+    lines: usage.teamRows.map((row) => ({
+      agent: row.team,
+      amount: money(row.spent),
+      note: row.alert ?? `${row.requests.toLocaleString()} requests · ${money(row.budget)} budget`,
+    })),
+  };
 }
 
 export const CLAWQL_MOBILE_API_TAG = "clawql/MobileApi" as const;
@@ -831,18 +1857,17 @@ export class MobileApi extends Context.Service<
     readonly listActivity: (
       session: MobileSession
     ) => Effect.Effect<ActivityListResponse, MobileApiError>;
-    readonly pendingReviewCount: (
-      session: MobileSession
-    ) => Effect.Effect<number, MobileApiError>;
+    readonly pendingReviewCount: (session: MobileSession) => Effect.Effect<number, MobileApiError>;
     readonly listDeviceSessions: (
       session: MobileSession
     ) => Effect.Effect<readonly DeviceSession[], MobileApiError>;
     readonly endOtherDeviceSessions: (
       session: MobileSession
     ) => Effect.Effect<{ ended: number }, MobileApiError>;
-    readonly getHomeSpend: (
+    readonly getHomeSpend: (session: MobileSession) => Effect.Effect<HomeSpend, MobileApiError>;
+    readonly getManagedUsage: (
       session: MobileSession
-    ) => Effect.Effect<HomeSpend, MobileApiError>;
+    ) => Effect.Effect<ManagedUsage, MobileApiError>;
     readonly listAgents: (
       session: MobileSession
     ) => Effect.Effect<readonly AgentSummary[], MobileApiError>;
@@ -852,6 +1877,98 @@ export class MobileApi extends Context.Service<
     readonly listTeammates: (
       session: MobileSession
     ) => Effect.Effect<readonly Teammate[], MobileApiError>;
+    readonly getTeamBundle: (session: MobileSession) => Effect.Effect<TeamBundle, MobileApiError>;
+    readonly inviteTeammate: (input: {
+      session: MobileSession;
+      email: string;
+      name?: string;
+      role?: string;
+      acceptCanApprove: boolean;
+      acceptSecurityKeys: boolean;
+      acceptAuditRecorded: boolean;
+    }) => Effect.Effect<Teammate, MobileApiError>;
+    readonly listWorkflows: (
+      session: MobileSession
+    ) => Effect.Effect<readonly WorkflowProgram[], MobileApiError>;
+    readonly startWorkflow: (input: {
+      session: MobileSession;
+      workflowId: string;
+    }) => Effect.Effect<WorkflowRun, MobileApiError>;
+    readonly listWorkflowRuns: (
+      session: MobileSession
+    ) => Effect.Effect<readonly WorkflowRun[], MobileApiError>;
+    readonly searchMemory: (
+      session: MobileSession,
+      query?: string,
+      kind?: MemoryResult["kind"] | "all"
+    ) => Effect.Effect<readonly MemoryResult[], MobileApiError>;
+    readonly getMemoryById: (
+      session: MobileSession,
+      id: string
+    ) => Effect.Effect<
+      { result: MemoryResult; fields: readonly MemoryField[] } | null,
+      MobileApiError
+    >;
+    readonly listApiKeys: (
+      session: MobileSession
+    ) => Effect.Effect<readonly ApiKeyItem[], MobileApiError>;
+    readonly issueApiKey: (input: {
+      session: MobileSession;
+      name: string;
+      canUse?: string;
+      keyGroup?: string;
+    }) => Effect.Effect<{ key: ApiKeyItem; secret: string }, MobileApiError>;
+    readonly revokeApiKey: (input: {
+      session: MobileSession;
+      keyId: string;
+    }) => Effect.Effect<{ ok: true; keyId: string }, MobileApiError>;
+    readonly listConnections: (
+      session: MobileSession
+    ) => Effect.Effect<readonly ConnectionItem[], MobileApiError>;
+    readonly listAgentSessions: (
+      session: MobileSession
+    ) => Effect.Effect<readonly AgentSession[], MobileApiError>;
+    readonly listProposedSkills: (
+      session: MobileSession
+    ) => Effect.Effect<readonly ProposedSkill[], MobileApiError>;
+    readonly listActiveSkills: (
+      session: MobileSession
+    ) => Effect.Effect<readonly ActiveSkill[], MobileApiError>;
+    readonly getAuditIncident: (
+      session: MobileSession
+    ) => Effect.Effect<AuditIncident, MobileApiError>;
+    readonly getOrgSettingsBundle: (
+      session: MobileSession
+    ) => Effect.Effect<OrgSettingsBundle, MobileApiError>;
+    readonly getGatewayBundle: (
+      session: MobileSession
+    ) => Effect.Effect<GatewayBundle, MobileApiError>;
+    readonly listGatewayEndpoints: (
+      session: MobileSession
+    ) => Effect.Effect<readonly GatewayEndpoint[], MobileApiError>;
+    readonly listAutomations: (
+      session: MobileSession
+    ) => Effect.Effect<readonly AutomationSub[], MobileApiError>;
+    readonly listAuditEntries: (
+      session: MobileSession
+    ) => Effect.Effect<readonly AuditEntry[], MobileApiError>;
+    readonly getOrgSettings: (session: MobileSession) => Effect.Effect<OrgSettings, MobileApiError>;
+    readonly listMemoryUploads: (
+      session: MobileSession
+    ) => Effect.Effect<
+      { uploads: readonly MemoryUpload[]; erasedSubjects: readonly string[] },
+      MobileApiError
+    >;
+    readonly eraseMemorySubject: (input: {
+      session: MobileSession;
+      subject: string;
+      acceptIrreversible: boolean;
+      acceptAuditKept: boolean;
+    }) => Effect.Effect<{ ok: true; subject: string; jobId?: string }, MobileApiError>;
+    readonly openBillingPortal: (
+      session: MobileSession,
+      returnUrl?: string
+    ) => Effect.Effect<{ url: string; source: "live" | "fixture" }, MobileApiError>;
     readonly listInbox: (
       session: MobileSession
     ) => Effect.Effect<readonly InboxItem[], MobileApiError>;
@@ -863,9 +1980,7 @@ export class MobileApi extends Context.Service<
       session: MobileSession,
       reviewId: string
     ) => Effect.Effect<number, MobileApiError>;
-    readonly markAllInboxRead: (
-      session: MobileSession
-    ) => Effect.Effect<number, MobileApiError>;
+    readonly markAllInboxRead: (session: MobileSession) => Effect.Effect<number, MobileApiError>;
     readonly listSecurityKeys: (
       session: MobileSession
     ) => Effect.Effect<readonly SecurityKey[], MobileApiError>;
@@ -893,9 +2008,7 @@ export class MobileApi extends Context.Service<
     readonly listPushDevices: (
       session: MobileSession
     ) => Effect.Effect<readonly PushDevice[], MobileApiError>;
-    readonly clearPushDevices: (
-      session: MobileSession
-    ) => Effect.Effect<void, MobileApiError>;
+    readonly clearPushDevices: (session: MobileSession) => Effect.Effect<void, MobileApiError>;
     readonly listAttachments: (
       session: MobileSession,
       reviewId: string
@@ -924,9 +2037,34 @@ export const MobileApiLive = Layer.succeed(MobileApi, {
   listDeviceSessions: listDeviceSessionsEffect,
   endOtherDeviceSessions: endOtherDeviceSessionsEffect,
   getHomeSpend: getHomeSpendEffect,
+  getManagedUsage: getManagedUsageEffect,
   listAgents: listAgentsEffect,
   getMorningDigest: getMorningDigestEffect,
   listTeammates: listTeammatesEffect,
+  getTeamBundle: getTeamBundleEffect,
+  inviteTeammate: inviteTeammateEffect,
+  listWorkflows: listWorkflowsEffect,
+  startWorkflow: startWorkflowEffect,
+  listWorkflowRuns: listWorkflowRunsEffect,
+  searchMemory: searchMemoryEffect,
+  getMemoryById: getMemoryByIdEffect,
+  listApiKeys: listApiKeysEffect,
+  issueApiKey: issueApiKeyEffect,
+  revokeApiKey: revokeApiKeyEffect,
+  listConnections: listConnectionsEffect,
+  listAgentSessions: listAgentSessionsEffect,
+  listProposedSkills: listProposedSkillsEffect,
+  listActiveSkills: listActiveSkillsEffect,
+  getAuditIncident: getAuditIncidentEffect,
+  getOrgSettingsBundle: getOrgSettingsBundleEffect,
+  getGatewayBundle: getGatewayBundleEffect,
+  listGatewayEndpoints: listGatewayEndpointsEffect,
+  listAutomations: listAutomationsEffect,
+  listAuditEntries: listAuditEntriesEffect,
+  getOrgSettings: getOrgSettingsEffect,
+  listMemoryUploads: listMemoryUploadsEffect,
+  eraseMemorySubject: eraseMemorySubjectEffect,
+  openBillingPortal: openBillingPortalEffect,
   listInbox: listInboxEffect,
   markInboxRead: markInboxReadEffect,
   markInboxReadByReview: markInboxReadByReviewEffect,

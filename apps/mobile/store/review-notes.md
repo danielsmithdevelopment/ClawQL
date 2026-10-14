@@ -2,7 +2,7 @@
 
 ## What this app is
 
-ClawQL is an approval app for agentic tooling. Operators review exact-change requests from agents, then Approve (security key) or Decline. The web console covers everything else.
+ClawQL PhoneApprove is the phone client for ClawQL Cloud: review exact-change requests (Approve with security key / Decline), plus managed-console jobs on device (Memory explorer, API keys, Gateway, Automations, Audit, Settings, spend, team). The web console remains available; it is not the only place for those jobs.
 
 ## Sign-in for reviewers
 
@@ -21,6 +21,18 @@ Profile → **Delete account** runs the existing cascade (keys → org → Strip
 ## Sign in with Apple
 
 v0.1 uses company SSO / browser OAuth (Okta-style) and fixture/demo paths. We do **not** offer Google or other consumer social sign-in in v0.1, so Sign in with Apple is not required for this submission. If consumer social IdPs are added later, Sign in with Apple will ship in the same release.
+
+## Face ID / Touch ID
+
+App Lock and purchase confirm use device biometrics (`expo-local-authentication`). Fixture / web builds use a one-tap unlock that stands in for Face ID / Touch ID. Production builds prompt the system Face ID or Touch ID sheet when enrolled.
+
+## Voice assistant
+
+Profile → **Open voice assistant** (or `clawql://voice`) accepts typed / fixture commands: list pending, read next, decline first, ask a teammate, start a workflow. Replies can be spoken with on-device TTS. **Approve never completes from voice alone** — the security-key / Face ID path on the review screen still runs. Shortcuts / App Actions donation cards copy the same deep links; native Siri App Intents land after Day-0.
+
+## In-app subscribe (sandbox)
+
+Profile → **Plan & billing** → **Subscribe Pro (sandbox)** flips fixture `store_iap` entitlements (no real charge). Live App Store / Play sheets land after Day-0 SKU enrollment. Reviewers can exercise the sandbox path without a paid Apple/Google account.
 
 ## Accessibility
 

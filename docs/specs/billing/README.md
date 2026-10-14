@@ -6,6 +6,7 @@
 | [hybrid-billing-v0.1.md](./hybrid-billing-v0.1.md)                               | `clawql-payments` Stripe + credits ledger           | Subscription tiers + prepaid credits + hybrid |
 | [customer-dashboard-full-scope-v0.1.md](./customer-dashboard-full-scope-v0.1.md) | `clawql-payments` `/credits/org` + `src/dashboard/` | Topology tree + embedded traces (8.0.0 bar)   |
 | [self-serve-stripe-checkout-v0.1.md](./self-serve-stripe-checkout-v0.1.md)       | `clawql-payments` + `apps/www`                      | Public Checkout Session + www CTA             |
+| [mobile-store-iap-v0.1.md](./mobile-store-iap-v0.1.md)                           | `apps/mobile` + `clawql-payments`                   | App Store / Play subscriptions + full-app NS  |
 
 **Operator guides:** [customer-provisioning-core.md](../../payments/customer-provisioning-core.md) · [stripe-products-ops.md](../../payments/stripe-products-ops.md)
 

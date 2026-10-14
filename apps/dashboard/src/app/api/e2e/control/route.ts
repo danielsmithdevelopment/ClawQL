@@ -177,6 +177,18 @@ type ControlBody = {
   inflateSignatureCounter?: { person: string; to: number; label?: string };
   setAaguid?: { person: string; aaguid: string; label?: string };
   markFirstRun?: number;
+  /** Arrange: set plan / billing rail before store_iap or Stripe scenarios. */
+  setPlan?: {
+    planId?: "free" | "pro" | "team" | "enterprise";
+    billingMode?:
+      | "stripe_checkout"
+      | "stripe_invoice"
+      | "hybrid"
+      | "credits_only"
+      | "store_iap"
+      | "dual";
+    clearStore?: boolean;
+  };
   stripeWebhookReplay?: boolean;
   stripeCheckoutForeignId?: string;
   stopEraseJob?: string;
@@ -328,6 +340,15 @@ export async function POST(req: Request) {
       }
       if (body.ipAllowlist !== undefined) world.ipAllowlist = body.ipAllowlist;
       if (typeof body.markFirstRun === "number") world.firstRunStep = body.markFirstRun;
+      if (body.setPlan) {
+        if (body.setPlan.planId) world.planId = body.setPlan.planId;
+        if (body.setPlan.billingMode) world.billingMode = body.setPlan.billingMode;
+        if (body.setPlan.clearStore) {
+          world.storeProductId = undefined;
+          world.storeOriginalTransactionId = undefined;
+          world.storePlatform = undefined;
+        }
+      }
       if (typeof body.signedInUserId === "string") world.signedInUserId = body.signedInUserId;
       if (typeof body.lumenAccess === "boolean") world.lumenFreightDenied = !body.lumenAccess;
       if (typeof body.stripeProvisioningDone === "boolean") {

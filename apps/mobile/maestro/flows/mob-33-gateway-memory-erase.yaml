@@ -1,0 +1,35 @@
+# MOB-33 — Gateway routes + Memory pipelines/erase
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- tapOn:
+    id: "profile-open-gateway"
+- assertVisible:
+    id: "gateway-screen"
+- assertVisible:
+    id: "gateway-routes"
+- assertVisible:
+    id: "gateway-route-standard"
+- openLink: clawql://memory
+- assertVisible:
+    id: "memory-screen"
+- tapOn:
+    id: "memory-tab-pipelines"
+- assertVisible:
+    id: "memory-pipelines"
+- assertVisible:
+    id: "memory-upload-up_nw"
+- tapOn:
+    id: "memory-tab-erase"
+- tapOn:
+    id: "memory-erase-accept-irreversible"
+- tapOn:
+    id: "memory-erase-accept-audit"
+- tapOn:
+    id: "memory-erase-run"
+- assertVisible:
+    id: "memory-erase-note"

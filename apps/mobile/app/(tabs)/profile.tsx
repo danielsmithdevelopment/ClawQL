@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import * as WebBrowser from "expo-web-browser";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert } from "react-native";
+import { Alert, Linking, Platform } from "react-native";
 
 import type {
   ConnectedApp,
@@ -21,14 +21,27 @@ import {
   listDeviceSessionsEffect,
   listPushDevicesEffect,
   listSecurityKeysEffect,
+  openBillingPortalEffect,
   revokeConnectedAppEffect,
   setNotificationPrefsEffect,
 } from "@/src/services/api";
 import { loadMobileConfigEffect } from "@/src/services/config";
 import {
+  biometricCapabilityEffect,
+  confirmWithBiometricsEffect,
   loadDevicePrefsEffect,
   saveDevicePrefsEffect,
+  type BiometricCapability,
 } from "@/src/services/device-ux";
+import {
+  loadEntitlementsEffect,
+  type MobileEntitlements,
+} from "@/src/services/entitlements";
+import {
+  openManageSubscriptionsEffect,
+  purchaseStorePlanEffect,
+  restoreStorePurchasesEffect,
+} from "@/src/services/store-iap";
 import { registerForPushEffect } from "@/src/services/push";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, space } from "@/src/theme";
@@ -59,22 +72,28 @@ export default function ProfileScreen() {
   const [pushDevices, setPushDevices] = useState<readonly PushDevice[]>([]);
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [devicePrefs, setDevicePrefs] = useState<DevicePrefs | null>(null);
+  const [entitlements, setEntitlements] = useState<MobileEntitlements | null>(null);
+  const [bio, setBio] = useState<BiometricCapability | null>(null);
   const [loading, setLoading] = useState(true);
   const [hydrated, setHydrated] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [portalBusy, setPortalBusy] = useState(false);
+  const [portalNote, setPortalNote] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!session) return;
     try {
-      const [k, a, p, s, d, dp] = await Promise.all([
+      const [k, a, p, s, d, dp, ent, cap] = await Promise.all([
         Effect.runPromise(listSecurityKeysEffect(session)),
         Effect.runPromise(listConnectedAppsEffect(session)),
         Effect.runPromise(getNotificationPrefsEffect(session)),
         Effect.runPromise(listDeviceSessionsEffect(session)),
         Effect.runPromise(listPushDevicesEffect(session)),
         Effect.runPromise(loadDevicePrefsEffect()),
+        Effect.runPromise(loadEntitlementsEffect()),
+        Effect.runPromise(biometricCapabilityEffect()),
       ]);
       setKeys(k);
       setApps(a);
@@ -82,6 +101,8 @@ export default function ProfileScreen() {
       setDeviceSessions(s);
       setPushDevices(d);
       setDevicePrefs(dp);
+      setEntitlements(ent);
+      setBio(cap);
     } finally {
       setLoading(false);
       setHydrated(true);
@@ -94,13 +115,82 @@ export default function ProfileScreen() {
     }, [load])
   );
 
-  if (!session || (loading && !hydrated) || !prefs || !devicePrefs) {
+  if (!session || (loading && !hydrated) || !prefs || !devicePrefs || !entitlements) {
     return (
       <ScreenHost>
         <LoadingBlock />
       </ScreenHost>
     );
   }
+
+  const bioLabel = bio?.label ?? "Face ID / Touch ID";
+  const appLockHelp = bio?.fixture
+    ? `Require ${bioLabel} when you leave and come back. Fixture mode uses a one-tap unlock that stands in for ${bioLabel}.`
+    : `Require ${bioLabel} when you leave and come back.`;
+
+  const onSubscribeSandbox = (planId: "pro" | "team") => {
+    void (async () => {
+      setBusy(true);
+      setNote(null);
+      try {
+        const ok = await Effect.runPromise(
+          confirmWithBiometricsEffect(`Confirm ${planId === "pro" ? "Pro" : "Team"} with ${bioLabel}`)
+        );
+        if (!ok) {
+          setNote("Subscribe cancelled");
+          return;
+        }
+        const next = await Effect.runPromise(purchaseStorePlanEffect(planId));
+        setEntitlements(next);
+        setNote(
+          `Subscribed to ${next.planLabel} (fixture store_iap · ${next.productId ?? "sandbox"})`
+        );
+      } catch (e: unknown) {
+        setNote(
+          e && typeof e === "object" && "reason" in e
+            ? String((e as { reason: string }).reason)
+            : e instanceof Error
+              ? e.message
+              : String(e)
+        );
+      } finally {
+        setBusy(false);
+      }
+    })();
+  };
+
+  const onRestorePurchases = () => {
+    void (async () => {
+      setBusy(true);
+      setNote(null);
+      try {
+        const ok = await Effect.runPromise(
+          confirmWithBiometricsEffect(`Restore purchases with ${bioLabel}`)
+        );
+        if (!ok) {
+          setNote("Restore cancelled");
+          return;
+        }
+        const next = await Effect.runPromise(restoreStorePurchasesEffect());
+        setEntitlements(next);
+        setNote(
+          next.planId === "free"
+            ? "No purchases to restore"
+            : `Restored ${next.planLabel} (${next.billingMode})`
+        );
+      } catch (e: unknown) {
+        setNote(
+          e && typeof e === "object" && "reason" in e
+            ? String((e as { reason: string }).reason)
+            : e instanceof Error
+              ? e.message
+              : String(e)
+        );
+      } finally {
+        setBusy(false);
+      }
+    })();
+  };
 
   const openConsole = async () => {
     const config = await Effect.runPromise(loadMobileConfigEffect());
@@ -184,7 +274,8 @@ export default function ProfileScreen() {
         <Subtitle>Your security keys</Subtitle>
         <Meta>You need two keys that can approve.</Meta>
         <Meta testID="profile-keys-honesty" color={brand.inkFaint}>
-          Fixture-shaped list on phone — manage keys in the web console when live.
+          Hardware security keys on this phone. Gateway API keys are under Cloud
+          console on phone → API keys.
         </Meta>
         {keys.map((key) => (
           <Column key={key.id} spacing={4} testID="profile-security-key">
@@ -285,17 +376,30 @@ export default function ProfileScreen() {
           <PrefRow
             testID="pref-app-lock"
             label="App Lock"
-            help="Require Face ID / biometrics when you leave and come back. Fixture mode uses a one-tap unlock."
+            help={appLockHelp}
             value={devicePrefs.appLock}
             onChange={(appLock) => {
               const next = { ...devicePrefs, appLock };
               setDevicePrefs(next);
               void Effect.runPromise(saveDevicePrefsEffect(next)).then(() => {
                 globalThis.dispatchEvent?.(new Event("clawql-device-prefs-changed"));
-                setNote(appLock ? "App Lock on — lock after background" : "App Lock off");
+                setNote(
+                  appLock
+                    ? `App Lock on — ${bioLabel} after background`
+                    : "App Lock off"
+                );
               });
             }}
           />
+          <Meta testID="profile-bio-capability" color={brand.inkFaint}>
+            {bio?.fixture
+              ? `${bioLabel} ready (fixture)`
+              : bio?.available && bio.enrolled
+                ? `${bioLabel} ready on this phone`
+                : bio?.available
+                  ? `${bioLabel} hardware found — enroll in system settings`
+                  : "No Face ID / Touch ID hardware detected"}
+          </Meta>
           {devicePrefs.appLock ? (
             <SecondaryButton
               testID="profile-lock-now"
@@ -303,7 +407,7 @@ export default function ProfileScreen() {
               onPress={() => {
                 // AppLockGate listens for a custom event on web / fixture demos.
                 globalThis.dispatchEvent?.(new Event("clawql-app-lock-now"));
-                setNote("Locked — unlock from the lock screen");
+                setNote(`Locked — unlock with ${bioLabel}`);
               }}
             />
           ) : null}
@@ -334,6 +438,37 @@ export default function ProfileScreen() {
               });
             }}
           />
+          <PrefRow
+            testID="pref-voice-assistant"
+            label="Voice assistant"
+            help="Dictate or type commands — list pending, read next, decline. Approve still needs your security key. Siri App Intents land after Day-0."
+            value={devicePrefs.voiceAssistant}
+            onChange={(voiceAssistant) => {
+              const next = { ...devicePrefs, voiceAssistant };
+              setDevicePrefs(next);
+              void Effect.runPromise(saveDevicePrefsEffect(next)).then(() => {
+                setNote(voiceAssistant ? "Voice assistant on" : "Voice assistant off");
+              });
+            }}
+          />
+          <PrefRow
+            testID="pref-voice-speak"
+            label="Speak replies"
+            help="Read assistant answers aloud (Siri-style TTS in-app)."
+            value={devicePrefs.voiceSpeak}
+            onChange={(voiceSpeak) => {
+              const next = { ...devicePrefs, voiceSpeak };
+              setDevicePrefs(next);
+              void Effect.runPromise(saveDevicePrefsEffect(next));
+            }}
+          />
+          {devicePrefs.voiceAssistant ? (
+            <SecondaryButton
+              testID="profile-open-voice"
+              label="Open voice assistant"
+              onPress={() => router.push("/voice")}
+            />
+          ) : null}
         </FieldGroup.Section>
       </FieldGroup>
 
@@ -472,22 +607,172 @@ export default function ProfileScreen() {
 
       <SurfaceCard testID="profile-teammates" tint="soft">
         <IconBubble name="people" tone="seed" size={32} iconSize={16} />
-        <Subtitle>Who can approve</Subtitle>
-        <Meta>People in approval groups — read-only on phone.</Meta>
+        <Subtitle>Team</Subtitle>
+        <Meta>Invite people, review roles and groups — same job as the cloud console Team page.</Meta>
         <SecondaryButton
           testID="profile-open-teammates"
-          label="View team"
+          label="Open team"
           onPress={() => router.push("/teammates")}
         />
       </SurfaceCard>
 
-      <SurfaceCard>
+      <SurfaceCard testID="profile-plan-billing" tint="soft">
+        <IconBubble name="spend" tone="seed" size={32} iconSize={16} />
+        <Subtitle>Plan & billing</Subtitle>
+        <Body testID="profile-plan-label">{`Current plan · ${entitlements.planLabel}`}</Body>
+        <Meta testID="profile-plan-mode">
+          {`${entitlements.billingMode}${entitlements.productId ? ` · ${entitlements.productId}` : ""}${
+            entitlements.seats ? ` · ${entitlements.seats} seat${entitlements.seats === 1 ? "" : "s"}` : ""
+          }`}
+        </Meta>
+        <Meta testID="profile-plan-honesty" color={brand.inkFaint}>
+          Fixture sandbox uses store_iap entitlements. Live App Store / Play sheets
+          land after Day-0 enrollment — web Stripe Checkout stays for browser signup.
+        </Meta>
+        {entitlements.planId === "free" ? (
+          <Column spacing={space.sm}>
+            <PrimaryButton
+              testID="profile-subscribe-pro"
+              label="Subscribe Pro (sandbox)"
+              disabled={busy}
+              onPress={() => onSubscribeSandbox("pro")}
+            />
+            <SecondaryButton
+              testID="profile-subscribe-team"
+              label="Subscribe Team (sandbox)"
+              disabled={busy}
+              onPress={() => onSubscribeSandbox("team")}
+            />
+          </Column>
+        ) : (
+          <Badge
+            label={`${entitlements.planLabel} · ${entitlements.billingMode}`}
+            tone="ok"
+          />
+        )}
+        <SecondaryButton
+          testID="profile-restore-purchases"
+          label="Restore purchases"
+          disabled={busy}
+          onPress={onRestorePurchases}
+        />
+        <SecondaryButton
+          testID="profile-manage-subscriptions"
+          label="Manage in App Store / Play"
+          disabled={busy}
+          onPress={() => {
+            void Effect.runPromise(openManageSubscriptionsEffect()).catch((e: unknown) => {
+              setNote(
+                e && typeof e === "object" && "reason" in e
+                  ? String((e as { reason: string }).reason)
+                  : e instanceof Error
+                    ? e.message
+                    : String(e)
+              );
+            });
+          }}
+        />
+        <SecondaryButton
+          testID="profile-open-billing-portal"
+          label={portalBusy ? "Opening…" : "Open billing portal (Stripe)"}
+          disabled={portalBusy || busy}
+          onPress={() => {
+            setPortalBusy(true);
+            setPortalNote(null);
+            void Effect.runPromise(openBillingPortalEffect(session))
+              .then(async (out) => {
+                if (out.source === "fixture" || out.url.startsWith("fixture://")) {
+                  setPortalNote(
+                    "Fixture mode — Stripe portal needs CLAWQL_STRIPE_CUSTOMER_ID on a live session."
+                  );
+                  return;
+                }
+                if (Platform.OS === "web") {
+                  globalThis.location?.assign?.(out.url);
+                } else {
+                  await Linking.openURL(out.url);
+                }
+              })
+              .catch((e: unknown) => {
+                const reason =
+                  e && typeof e === "object" && "reason" in e
+                    ? String((e as { reason: string }).reason)
+                    : e instanceof Error
+                      ? e.message
+                      : String(e);
+                setPortalNote(reason);
+              })
+              .finally(() => setPortalBusy(false));
+          }}
+        />
+        {portalNote ? (
+          <Meta testID="profile-billing-portal-note" color={brand.inkMuted}>
+            {portalNote}
+          </Meta>
+        ) : null}
+      </SurfaceCard>
+
+      <SurfaceCard testID="profile-console-parity" tint="soft">
         <IconBubble name="console" tone="seed" size={32} iconSize={16} />
-        <Subtitle>Everything else</Subtitle>
-        <Meta>Gateways, billing, and team live in the web console.</Meta>
+        <Subtitle>Cloud console on phone</Subtitle>
+        <Meta>
+          Full managed-console parity — Memory, API keys, Gateway, Automations,
+          Audit, Settings. Depth deepens over time; nothing is permanently
+          web-only.
+        </Meta>
+        <SecondaryButton
+          testID="profile-open-memory"
+          label="Memory explorer"
+          onPress={() => router.push("/memory")}
+        />
+        <SecondaryButton
+          testID="profile-open-sessions"
+          label="Sessions"
+          onPress={() => router.push("/sessions")}
+        />
+        <SecondaryButton
+          testID="profile-open-skills"
+          label="Skills"
+          onPress={() => router.push("/skills")}
+        />
+        <SecondaryButton
+          testID="profile-open-connections"
+          label="Connections"
+          onPress={() => router.push("/connections")}
+        />
+        <SecondaryButton
+          testID="profile-open-keys"
+          label="API keys"
+          onPress={() => router.push("/keys")}
+        />
+        <SecondaryButton
+          testID="profile-open-gateway"
+          label="Gateway"
+          onPress={() => router.push("/gateway")}
+        />
+        <SecondaryButton
+          testID="profile-open-automations"
+          label="Automations"
+          onPress={() => router.push("/automations")}
+        />
+        <SecondaryButton
+          testID="profile-open-audit"
+          label="Audit"
+          onPress={() => router.push("/audit")}
+        />
+        <SecondaryButton
+          testID="profile-open-settings"
+          label="Settings"
+          onPress={() => router.push("/settings")}
+        />
+        <SecondaryButton
+          testID="profile-open-workflows"
+          label="Workflows"
+          onPress={() => router.push("/workflows")}
+        />
         <SecondaryButton
           testID="open-console"
-          label="Open web console"
+          label="Also open web console"
           onPress={() => void openConsole()}
         />
       </SurfaceCard>

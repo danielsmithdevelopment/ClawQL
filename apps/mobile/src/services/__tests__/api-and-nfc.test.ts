@@ -42,9 +42,16 @@ import {
 } from "../auth";
 import {
   loadDevicePrefsEffect,
+  biometricCapabilityEffect,
   saveDevicePrefsEffect,
   unlockAppEffect,
 } from "../device-ux";
+import {
+  clearEntitlementsEffect,
+  loadEntitlementsEffect,
+  restorePurchasesEffect,
+  subscribeStoreSandboxEffect,
+} from "../entitlements";
 import { attachmentPreviewFor, captureDocumentEffect } from "../documents";
 import { approveWithSecurityKeyEffect } from "../nfc-security-key";
 import {
@@ -343,14 +350,52 @@ describe("mobile API fixture mode", () => {
 
   it("persists device prefs and fixture-unlocks app lock", async () => {
     const saved = await Effect.runPromise(
-      saveDevicePrefsEffect({ appLock: true, haptics: false, iconBadge: true })
+      saveDevicePrefsEffect({
+        appLock: true,
+        haptics: false,
+        iconBadge: true,
+        voiceAssistant: true,
+        voiceSpeak: false,
+      })
     );
     expect(saved.appLock).toBe(true);
     const loaded = await Effect.runPromise(loadDevicePrefsEffect());
     expect(loaded.haptics).toBe(false);
     expect(loaded.iconBadge).toBe(true);
+    expect(loaded.voiceAssistant).toBe(true);
+    expect(loaded.voiceSpeak).toBe(false);
     const unlocked = await Effect.runPromise(unlockAppEffect());
     expect(unlocked).toBe(true);
+    const bio = await Effect.runPromise(biometricCapabilityEffect());
+    expect(bio.available).toBe(true);
+    expect(bio.label).toMatch(/Face ID|Face unlock/);
+  });
+
+  it("subscribes Pro via fixture store_iap and restores", async () => {
+    await Effect.runPromise(clearEntitlementsEffect());
+    const free = await Effect.runPromise(loadEntitlementsEffect());
+    expect(free.planId).toBe("free");
+    const pro = await Effect.runPromise(subscribeStoreSandboxEffect("pro"));
+    expect(pro.planId).toBe("pro");
+    expect(pro.billingMode).toBe("store_iap");
+    expect(pro.productId).toBe("clawql_pro_monthly");
+    expect(pro.fixturePurchaseId).toBeTruthy();
+    const restored = await Effect.runPromise(restorePurchasesEffect());
+    expect(restored.planId).toBe("pro");
+    await Effect.runPromise(clearEntitlementsEffect());
+  });
+
+  it("store-iap adapter purchases Pro and reports plan gate", async () => {
+    const { purchaseStorePlanEffect, planMeetsMinimumEffect, manageSubscriptionsUrlEffect } =
+      await import("../store-iap");
+    await Effect.runPromise(clearEntitlementsEffect());
+    const pro = await Effect.runPromise(purchaseStorePlanEffect("pro"));
+    expect(pro.planId).toBe("pro");
+    expect(await Effect.runPromise(planMeetsMinimumEffect("pro"))).toBe(true);
+    expect(await Effect.runPromise(planMeetsMinimumEffect("team"))).toBe(false);
+    const url = await Effect.runPromise(manageSubscriptionsUrlEffect());
+    expect(url).toMatch(/apple|play|docs\.clawql/);
+    await Effect.runPromise(clearEntitlementsEffect());
   });
 
   it("marks inbox items read by id and by review", async () => {
@@ -456,6 +501,9 @@ describe("mobile API fixture mode", () => {
       ["clawql://teammates", "/teammates"],
       ["clawql://policies", "/policies"],
       ["clawql://policies/pol_contracts", "/policies/pol_contracts"],
+      ["clawql://voice", "/voice"],
+      ["clawql://voice?q=list%20pending", "/voice?q=list%20pending"],
+      ["clawql://workflows", "/workflows"],
       ["https://cloud.clawql.com/app/inbox", "/inbox"],
       ["https://cloud.clawql.com/app/policies/pol_block", "/policies/pol_block"],
       ["https://cloud.clawql.com/app/review/rev_change", "/review/rev_change"],

@@ -14,7 +14,26 @@ import type {
   ReviewItem,
   SecurityKey,
   Teammate,
+  TeamGroup,
+  TeamRole,
+  ManagedUsage,
   MobileSession,
+  WorkflowProgram,
+  MemoryResult,
+  MemoryField,
+  ApiKeyItem,
+  GatewayEndpoint,
+  AutomationSub,
+  AuditEntry,
+  AuditIncident,
+  OrgSettings,
+  OrgSettingsBundle,
+  AgentSession,
+  ProposedSkill,
+  ActiveSkill,
+  ConnectionItem,
+  GatewayRoute,
+  MemoryUpload,
 } from "./schemas";
 
 export const FIXTURE_SESSION: MobileSession = {
@@ -235,8 +254,8 @@ export const FIXTURE_TEAMMATES: readonly Teammate[] = [
     id: "user_dana",
     name: "Dana Reyes",
     email: "dana@acme.example",
-    role: "Approver",
-    groups: ["Contract approvers", "Admins"],
+    role: "Org admin",
+    groups: ["Engineering", "Legal"],
     canApprove: true,
     keysReady: true,
     lastActive: "Now · this phone",
@@ -245,33 +264,128 @@ export const FIXTURE_TEAMMATES: readonly Teammate[] = [
     id: "user_marcus",
     name: "Marcus Lee",
     email: "marcus@acme.example",
-    role: "Approver",
-    groups: ["Contract approvers", "Source approvers"],
+    role: "Admin",
+    groups: ["Engineering"],
     canApprove: true,
-    keysReady: true,
+    keysReady: false,
     lastActive: "Today at 08:55",
   },
   {
     id: "user_priya",
     name: "Priya Shah",
     email: "priya@acme.example",
-    role: "Requester",
-    groups: ["Support group"],
+    role: "Member",
+    groups: ["Legal"],
     canApprove: false,
-    keysReady: false,
+    keysReady: true,
     lastActive: "Yesterday",
   },
   {
     id: "user_jordan",
     name: "Jordan Kim",
     email: "jordan@acme.example",
-    role: "Approver",
-    groups: ["Source approvers"],
+    role: "Member",
+    groups: ["Support"],
     canApprove: true,
-    keysReady: false,
+    keysReady: true,
     lastActive: "3 days ago",
   },
 ];
+
+export const FIXTURE_TEAM_GROUPS: readonly TeamGroup[] = [
+  {
+    id: "engineering",
+    name: "Engineering",
+    people: "Dana Reyes, Marcus Lee",
+    role: "Admin",
+    usedIn: "Approves new sources",
+  },
+  {
+    id: "legal",
+    name: "Legal",
+    people: "Dana Reyes, Priya Shah",
+    role: "Member",
+    usedIn: "Contract approvers come from this group",
+  },
+  {
+    id: "support",
+    name: "Support",
+    people: "Jordan Kim",
+    role: "Member",
+    usedIn: "Answers ticket-triage decisions",
+  },
+];
+
+export const FIXTURE_TEAM_ROLES: readonly TeamRole[] = [
+  {
+    id: "owner",
+    name: "Owner",
+    people: "1 person",
+    console: "Yes",
+    connections: "Yes",
+    policies: "Yes",
+    peopleManage: "Yes",
+    exportAudit: "Yes",
+    billing: "Yes",
+  },
+  {
+    id: "admin",
+    name: "Admin",
+    people: "1 person",
+    console: "Yes",
+    connections: "Yes",
+    policies: "Yes",
+    peopleManage: "Yes",
+    exportAudit: "Yes",
+    billing: "No",
+  },
+  {
+    id: "member",
+    name: "Member",
+    people: "2 people",
+    console: "Yes",
+    connections: "No",
+    policies: "No",
+    peopleManage: "No",
+    exportAudit: "No",
+    billing: "No",
+  },
+  {
+    id: "auditor",
+    name: "Auditor",
+    people: "1 invited",
+    console: "Read only",
+    connections: "No",
+    policies: "No",
+    peopleManage: "No",
+    exportAudit: "Yes",
+    billing: "No",
+  },
+];
+
+export const FIXTURE_MANAGED_USAGE: ManagedUsage = {
+  monthSpent: 1284,
+  monthBudget: 3000,
+  forecast: 7800,
+  forecastNote: "At this pace you'll pass the budget around Oct 11.",
+  todaySpent: 96.4,
+  todayNote: "Weekdays usually land between $250 and $400",
+  planRenews: "Team plan, renews Nov 1",
+  teamRows: [
+    { team: "documents", spent: 612, budget: 1200, requests: 22410, toolCalls: 8904 },
+    { team: "support", spent: 341, budget: 800, requests: 31088, toolCalls: 5216 },
+    { team: "operations", spent: 209, budget: 500, requests: 9730, toolCalls: 3051 },
+    {
+      team: "experiments",
+      spent: 122,
+      budget: 150,
+      requests: 4206,
+      toolCalls: 1233,
+      alert: "Daily cap reached today",
+    },
+  ],
+  source: "fixture",
+};
 
 export const FIXTURE_INBOX: readonly InboxItem[] = [
   {
@@ -473,6 +587,8 @@ export const FIXTURE_DEVICE_PREFS: DevicePrefs = {
   appLock: false,
   haptics: true,
   iconBadge: true,
+  voiceAssistant: true,
+  voiceSpeak: true,
 };
 
 export const FIXTURE_DEVICE_SESSIONS: readonly DeviceSession[] = [
@@ -499,6 +615,489 @@ export const FIXTURE_DEVICE_SESSIONS: readonly DeviceSession[] = [
     current: false,
     lastActive: "Yesterday",
     ended: false,
+  },
+];
+
+/** Console Memory explorer (MEMORY_RESULTS). */
+export const FIXTURE_MEMORY_RESULTS: readonly MemoryResult[] = [
+  {
+    id: "ct_4471",
+    kind: "ENTITY",
+    title: "CONTRACT — Northwind MSA",
+    summary: "Annual value $48,500.00 · Renews Jan 1, 2026",
+    badge: "Entity",
+    badgeTone: "neutral",
+  },
+  {
+    id: "doc_amend2",
+    kind: "DOCUMENT",
+    title: "Northwind MSA Amendment 2.pdf",
+    summary: "Processed 09:41 · 12 fields, 2 redacted",
+    badge: "Document",
+    badgeTone: "neutral",
+  },
+  {
+    id: "note_pricing",
+    kind: "NOTE",
+    title: "Northwind pricing history",
+    summary: "Verified · from CRM + Amendment 2",
+    badge: "Verified",
+    badgeTone: "ok",
+  },
+  {
+    id: "note_checklist",
+    kind: "NOTE",
+    title: "Vendor renewal checklist",
+    summary: "Not verified · proposed by research agent",
+    badge: "Not verified",
+    badgeTone: "warn",
+  },
+];
+
+export const FIXTURE_MEMORY_FIELDS: readonly MemoryField[] = [
+  {
+    field: "Counterparty",
+    value: "Northwind Partners",
+    source: "CRM record",
+    confidence: "Extracted",
+    tone: "ok",
+  },
+  {
+    field: "Annual value",
+    value: "$48,500.00 (change pending)",
+    source: "CRM record",
+    confidence: "Extracted",
+    tone: "ok",
+  },
+  {
+    field: "Renewal date",
+    value: "Jan 1, 2026",
+    source: "CRM record",
+    confidence: "Extracted",
+    tone: "ok",
+  },
+  {
+    field: "Escrow percentage",
+    value: "10%",
+    source: "Pricing history note",
+    confidence: "Inferred",
+    tone: "warn",
+  },
+  {
+    field: "Signatory email",
+    value: "Redacted",
+    source: "Amendment 2…",
+    confidence: "Personal data",
+    tone: "neutral",
+  },
+];
+
+/** Gateway API keys (console API_KEYS) — mutable copy lives in api stateRef. */
+export const FIXTURE_API_KEYS: readonly ApiKeyItem[] = [
+  {
+    id: "key_billing",
+    name: "billing-sync",
+    endsIn: "9f1c",
+    expiresLabel: "Jan 3, 2027",
+    keyGroup: "Operations",
+    canUse: "Models, tools",
+    dailyCap: "$50",
+    lastUsed: "10:14",
+  },
+  {
+    id: "key_experiments",
+    name: "experiments",
+    endsIn: "a2e4",
+    expiresLabel: "Nov 2",
+    keyGroup: "Engineering",
+    canUse: "Models",
+    dailyCap: "$20",
+    lastUsed: "07:30",
+    capReached: true,
+    expiresHighlight: true,
+  },
+  {
+    id: "key_legal",
+    name: "legal-ops",
+    endsIn: "7d02",
+    expiresLabel: "Nov 30",
+    keyGroup: "Legal",
+    canUse: "Models, tools, memory",
+    dailyCap: "$75",
+    lastUsed: "09:22",
+  },
+  {
+    id: "key_docs",
+    name: "docs-pipeline",
+    endsIn: "11af",
+    expiresLabel: "Feb 1, 2027",
+    keyGroup: "Operations",
+    canUse: "Models, tools, memory",
+    dailyCap: "$45",
+    lastUsed: "09:41",
+  },
+];
+
+export const FIXTURE_GATEWAY_ENDPOINTS: readonly GatewayEndpoint[] = [
+  { path: "/v1", description: "OpenAI-compatible inference" },
+  { path: "/mcp", description: "Every connected tool for MCP clients (Claude, Cursor, …)" },
+  { path: "/memory", description: "Ingest, search, and erase team memory" },
+  { path: "/decision", description: "Fast, calibrated decisions (System One compatible)" },
+  { path: "/events", description: "Subscribe by webhook or stream live events" },
+];
+
+export const FIXTURE_GATEWAY_ROUTES: readonly GatewayRoute[] = [
+  {
+    id: "standard",
+    label: "standard",
+    chain: "Claude Sonnet 4.6 → GPT-4o",
+    status: "Healthy",
+    tone: "ok",
+  },
+  {
+    id: "frugal",
+    label: "frugal",
+    chain: "Gemini 2.5 Flash-Lite → DeepSeek",
+    status: "Using fallback",
+    tone: "warn",
+  },
+  {
+    id: "private",
+    label: "private",
+    chain: "Local GPU",
+    status: "Healthy",
+    tone: "ok",
+  },
+];
+
+export const FIXTURE_MEMORY_UPLOADS: readonly MemoryUpload[] = [
+  {
+    id: "up_inv",
+    file: "Invoice 88213.pdf",
+    meta: "PDF, 3 pages, 180 KB",
+    addedBy: "Jordan Kim",
+    pipeline: "Invoices",
+    added: "10:04",
+    status: "Step 3 of 5",
+    tone: "neutral",
+    source: "people",
+  },
+  {
+    id: "up_globex",
+    file: "Globex renewal.pdf",
+    meta: "PDF, 14 pages, 1.1 MB",
+    addedBy: "Google Drive",
+    pipeline: "Contracts",
+    added: "10:02",
+    status: "1 field needs a person",
+    tone: "warn",
+    source: "connections",
+  },
+  {
+    id: "up_nw",
+    file: "Northwind MSA Amendment 2.pdf",
+    meta: "PDF, 12 pages, 980 KB",
+    addedBy: "legal-ops agent",
+    pipeline: "Contracts",
+    added: "09:23",
+    status: "Stored",
+    tone: "ok",
+    source: "agents",
+  },
+];
+
+export const FIXTURE_AUTOMATIONS: readonly AutomationSub[] = [
+  {
+    id: "sec_slack",
+    name: "Security alerts to Slack",
+    target: "hooks.slack.com",
+    events: "hook.blocked, budget.exhausted",
+    via: "Webhook",
+    last: "Yesterday 18:02",
+    health: "Failing",
+    tone: "danger",
+  },
+  {
+    id: "renewals",
+    name: "Contract renewals",
+    target: "ChatGPT automation",
+    events: "document.processed, contracts only",
+    via: "Webhook",
+    last: "09:41",
+    health: "Healthy",
+    tone: "ok",
+  },
+  {
+    id: "finance",
+    name: "Finance digest",
+    target: "finance.acme.example",
+    events: "schedule.completed",
+    via: "Webhook",
+    last: "08:55",
+    health: "Healthy",
+    tone: "ok",
+  },
+];
+
+export const FIXTURE_AUDIT_ENTRIES: readonly AuditEntry[] = [
+  {
+    id: "wrm_4912",
+    time: "09:41:02",
+    actor: "docs-pipeline",
+    action: "document.processed Q3 vendor contract",
+    outcome: "12 fields, 2 redacted",
+    tone: "ok",
+  },
+  {
+    id: "wrm_4911",
+    time: "09:38:12",
+    actor: "support-bot",
+    action: "payments.transfer",
+    outcome: "Blocked by policy",
+    tone: "danger",
+  },
+  {
+    id: "wrm_4910",
+    time: "09:31:44",
+    actor: "Dana Reyes",
+    action: "review.approve Linear source",
+    outcome: "nfc_security_key",
+    tone: "ok",
+  },
+];
+
+export const FIXTURE_ORG_SETTINGS: OrgSettings = {
+  name: "Acme Robotics",
+  consoleAddress: "acme.cloud.clawql.com",
+  dataRegion: "United States",
+  timeZone: "Pacific Time (Los Angeles)",
+  securityContact: "security@acme.example",
+};
+
+export const FIXTURE_ORG_SETTINGS_BUNDLE: OrgSettingsBundle = {
+  org: FIXTURE_ORG_SETTINGS,
+  webhookHosts: [
+    { host: "hooks.slack.com", subscriptions: 1 },
+    { host: "chatgpt.com", subscriptions: 2 },
+    { host: "finance.acme.example", subscriptions: 1 },
+  ],
+  egressDomains: [
+    "api.github.com",
+    "acme.atlassian.net",
+    "slack.com",
+    "api.stripe.com",
+    "crm.acme.example",
+  ],
+  retention: [
+    {
+      label: "Audit log",
+      help: "Can be extended, never shortened below 1 year.",
+      value: "7 years",
+    },
+    {
+      label: "Session transcripts",
+      help: "The steps behind each session in Sessions.",
+      value: "90 days",
+    },
+    {
+      label: "Memory and documents",
+      help: "Kept until someone deletes or erases them.",
+      value: "Until erased",
+      locked: true,
+    },
+  ],
+};
+
+export const FIXTURE_AUDIT_INCIDENT: AuditIncident = {
+  entryId: "wrm_4877",
+  incidentId: "inc_1005_01",
+  foundAt: "03:15 today",
+  summary:
+    "One stored entry, wrm_4877, was changed after it was written. Found by the scheduled check at 03:15 today.",
+  explanation:
+    "ClawQL doesn't edit entries. Someone with write access to the log storage, or a storage corruption, changed this one.",
+  paymentNote:
+    "The record was altered to show a blocked payment as allowed. The payment itself never ran.",
+};
+
+export const FIXTURE_AGENT_SESSIONS: readonly AgentSession[] = [
+  {
+    id: "sess_7f2a91c4",
+    name: "legal-ops agent",
+    meta: "Claude Code, Priya Shah, started 09:22",
+    stats: "34 tool calls, $1.82, active for 19 min",
+    status: "Waiting on a person",
+    tone: "warn",
+    active: true,
+  },
+  {
+    id: "sess_support",
+    name: "support-bot",
+    meta: "ChatGPT, service agent, started 09:31",
+    stats: "12 tool calls, $0.41, active for 10 min",
+    status: "Blocked call",
+    tone: "danger",
+    active: true,
+  },
+  {
+    id: "sess_docs",
+    name: "docs-pipeline",
+    meta: "Codex, service agent, started 09:40",
+    stats: "6 tool calls, $0.22, active for 1 min",
+    status: "Running",
+    tone: "ok",
+    active: true,
+  },
+  {
+    id: "sess_release",
+    name: "release-agent",
+    meta: "Cursor, Marcus Lee, started 08:47",
+    stats: "58 tool calls, $2.95, ran 42 min",
+    status: "Completed",
+    tone: "neutral",
+    active: false,
+  },
+];
+
+export const FIXTURE_PROPOSED_SKILLS: readonly ProposedSkill[] = [
+  {
+    id: "contract-redline-check",
+    name: "contract-redline-check",
+    description:
+      "Compares a counterparty's redlines against your standard terms and lists what changed.",
+    attribution: "Proposed by legal-ops agent after 7 similar sessions. Read only.",
+    canProve: true,
+  },
+  {
+    id: "summarize-pr-risk",
+    name: "summarize-pr-risk",
+    description: "Rates a pull request's risk from the files it touches and its test coverage.",
+    attribution: "Proposed by release-agent after 9 similar sessions. Read only.",
+    canProve: true,
+  },
+  {
+    id: "linear-issue-sync",
+    name: "linear-issue-sync",
+    description: "Keeps support tickets and Linear issues in step.",
+    attribution: "Proposed by support-bot after 4 similar sessions. Writes, with a mandate.",
+    canProve: false,
+    blocker: "Waiting on the Linear connection, now in Review",
+    blockerTone: "warn",
+  },
+];
+
+export const FIXTURE_ACTIVE_SKILLS: readonly ActiveSkill[] = [
+  {
+    id: "standup-digest",
+    name: "standup-digest",
+    description: "Posts a daily summary to Slack",
+    keyGroup: "Operations",
+    touchesLabel: "Writes, with a mandate",
+    runs7d: 5,
+  },
+  {
+    id: "ticket-summary",
+    name: "ticket-summary",
+    description: "Summarizes a support thread for handoff",
+    keyGroup: "Support",
+    touchesLabel: "Read only",
+    runs7d: 412,
+  },
+  {
+    id: "triage-ci-failure",
+    name: "triage-ci-failure",
+    description: "Finds the likely cause of a failed build",
+    keyGroup: "Engineering",
+    touchesLabel: "Read only",
+    runs7d: 63,
+  },
+];
+
+export const FIXTURE_CONNECTIONS: readonly ConnectionItem[] = [
+  {
+    id: "github",
+    name: "GitHub",
+    summary: "2 accounts: work, personal",
+    lastUsed: "09:20",
+    status: "needs-signin",
+    statusLabel: "1 needs sign-in",
+    accounts: [
+      {
+        id: "gh_work",
+        handle: "dana-acme",
+        ownershipLabel: "Org data",
+        detail: "OAuth sign-in expired at 08:58. The acme/web watch is paused.",
+        action: "reconnect",
+        alert: true,
+      },
+      {
+        id: "gh_personal",
+        handle: "danareyes",
+        ownershipLabel: "Private to Dana",
+        detail: "Connected, last used yesterday",
+        action: "manage",
+      },
+    ],
+    ops: { readsAllowed: 604, writesMandate: 431, deletesBlocked: 47 },
+    usedBy: ["release-agent key", "New pull requests automation"],
+  },
+  {
+    id: "slack",
+    name: "Slack",
+    summary: "Acme workspace",
+    lastUsed: "08:12",
+    status: "connected",
+    statusLabel: "Connected",
+    accounts: [],
+    ops: { readsAllowed: 120, writesMandate: 40, deletesBlocked: 0 },
+    usedBy: ["Operations key group"],
+  },
+  {
+    id: "linear",
+    name: "Linear",
+    summary: "Proposed by support-bot",
+    lastUsed: "Not connected yet",
+    status: "waiting-review",
+    statusLabel: "Waiting in Review",
+    accounts: [],
+    ops: { readsAllowed: 0, writesMandate: 0, deletesBlocked: 0 },
+    usedBy: [],
+  },
+  {
+    id: "stripe",
+    name: "Stripe",
+    summary: "Read-only access",
+    lastUsed: "yesterday",
+    status: "connected",
+    statusLabel: "Connected",
+    accounts: [],
+    ops: { readsAllowed: 64, writesMandate: 0, deletesBlocked: 12 },
+    usedBy: ["billing-sync key"],
+  },
+];
+
+/** Console-parity workflows the voice assistant can list / start (fixture). */
+export const FIXTURE_WORKFLOWS: readonly WorkflowProgram[] = [
+  {
+    id: "weekly-spend-digest",
+    name: "weekly-spend-digest",
+    title: "Weekly spend digest",
+    summary: "Summarizes weekly spend for finance and posts a digest.",
+    stage: "proving",
+  },
+  {
+    id: "standup-digest",
+    name: "standup-digest",
+    title: "Standup digest",
+    summary: "Posts a daily summary to Slack.",
+    stage: "active",
+  },
+  {
+    id: "intake-msa",
+    name: "intake-msa",
+    title: "MSA intake",
+    summary: "Normalizes MSA intake fields into the CRM.",
+    stage: "active",
   },
 ];
 

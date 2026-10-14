@@ -34,6 +34,8 @@ import {
   resetWorld,
   searchErased,
   settingsMutate,
+  storeIapVerify,
+  getBillingEntitlements,
   stripeCheckout,
   uploadDocument,
   waitForServer,
@@ -63,6 +65,37 @@ test('SU-01 Sign up via Stripe test card lands in console', async ({ page }) => 
   await page.goto('/')
   await expect(page.getByText('Acme Robotics').first()).toBeVisible()
   await expect(page.getByRole('heading', { name: /Welcome back|Get started|First run/i })).toBeVisible()
+})
+
+test('SU-08 Fixture store_iap verify provisions Pro entitlements', async () => {
+  await control({
+    setPlan: { planId: 'free', billingMode: 'credits_only', clearStore: true },
+  })
+  const token = `fixture_iap_clawql_pro_monthly_${Date.now()}`
+  const verified = await storeIapVerify({
+    productId: 'clawql_pro_monthly',
+    purchaseToken: token,
+    store: 'fixture',
+  })
+  expect(verified.status).toBe(200)
+  expect(verified.body.provisioned).toBe(true)
+  const entitlements = verified.body.entitlements as Record<string, unknown>
+  expect(entitlements.planId).toBe('pro')
+  expect(entitlements.billingMode).toBe('store_iap')
+  expect(entitlements.productId).toBe('clawql_pro_monthly')
+
+  const snap = await getBillingEntitlements()
+  expect(snap.status).toBe(200)
+  const ent = (snap.body.entitlements ?? {}) as Record<string, unknown>
+  expect(ent.planId).toBe('pro')
+  expect(ent.billingMode).toBe('store_iap')
+
+  const audit = await getAudit()
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'billing.store_iap' && /Provisioned/i.test(e.outcome),
+    ),
+  ).toBe(true)
 })
 
 test('SU-04 First-run key issue blocked until security keys', async ({ page }) => {

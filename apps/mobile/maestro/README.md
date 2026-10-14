@@ -36,7 +36,24 @@ Catalog source of truth: [`catalog.ts`](catalog.ts).
 | `mob-17-surface-deeplinks.yaml` | MOB-17 | Inbox / digest / agents / policy deep links |
 | `mob-18-activity-filters.yaml` | MOB-18 | Activity kind + outcome filters |
 | `mob-19-system-mark-read.yaml` | MOB-19 | System inbox Mark read |
+| `mob-20-store-subscribe-sandbox.yaml` | MOB-20 | Fixture store_iap Pro subscribe + Face ID / App Lock |
+| `mob-21-store-restore-manage.yaml` | MOB-21 | Restore purchases + Manage subscriptions |
+| `mob-22-faceid-app-lock-labels.yaml` | MOB-22 | Face ID / Touch ID App Lock unlock |
+| `mob-23-spend-upgrade-cta.yaml` | MOB-23 | Spend upgrade CTA → Profile billing |
+| `mob-24-voice-list-pending.yaml` | MOB-24 | Voice assistant list pending (fixture) |
+| `mob-25-voice-workflow-shortcuts.yaml` | MOB-25 | Voice start workflow + Shortcuts share |
+| `mob-26-memory-explorer.yaml` | MOB-26 | Memory explorer search + detail |
+| `mob-27-api-keys.yaml` | MOB-27 | API keys issue + secret |
+| `mob-28-sessions.yaml` | MOB-28 | Sessions timeline |
+| `mob-29-skills.yaml` | MOB-29 | Skills proposed + active |
+| `mob-30-connections-settings.yaml` | MOB-30 | Connections + Settings network |
+| `mob-31-team-invite.yaml` | MOB-31 | Team invite + roles |
+| `mob-32-usage-depth.yaml` | MOB-32 | Usage month + team budgets |
+| `mob-33-gateway-memory-erase.yaml` | MOB-33 | Gateway routes + Memory erase |
+| `mob-34-billing-portal.yaml` | MOB-34 | Billing portal fixture honesty |
 
 **Still device-only (Manual):** REV-13, UX-09 — physical YubiKey NFC. Use `modules/clawql-nfc-security-key` mock injection in CI until the native modules ship.
+
+**CI web e2e (Playwright on fixture export):** `npm run test:e2e` — MOB-20…30 style paths without a simulator (see `e2e/`).
 
 **Web / CI a11y gate (not Maestro):** `npm run a11y:lh` — Lighthouse mobile a11y/BP/SEO 100 + axe WCAG 2.1 A/AA on the fixture web export.

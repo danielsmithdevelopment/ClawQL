@@ -27,11 +27,11 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Surface | Local without signup |
 | ------- | -------------------- |
 | Home queue + org card + spend + recent activity | ✅ fixtures |
-| Spend by agent | ✅ |
+| Spend by agent + month usage / team budgets | ✅ (+ `/api/managed/usage`) |
 | Agents roster (status / spend / waiting) | ✅ |
 | Morning digest preview | ✅ |
 | Notification inbox (fixture pushes / digest) | ✅ |
-| Who can approve (teammates) | ✅ read-only |
+| Team invite / roles / groups | ✅ fixtures (+ `/api/managed/team`) |
 | Approval policies (list + detail) | ✅ read-only |
 | Seeded decided archive (Activity drill-in) | ✅ |
 | Review filters (change / source / decision / skill) | ✅ |
@@ -56,7 +56,13 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Session refresh + expiry gate (fixture renew) | ✅ Profile / boot |
 | Mark inbox read on open | ✅ |
 | Share request deep link | ✅ Review detail |
-| App Lock (biometrics / fixture unlock) | ✅ Profile |
+| App Lock (Face ID / Touch ID / fixture unlock) | ✅ Profile |
+| Plan & billing fixture store_iap subscribe | ✅ Profile sandbox Pro/Team |
+| Store IAP adapter + manage subscriptions link | ✅ `store-iap.ts` + Profile |
+| Spend plan label + free upgrade CTA | ✅ Spend → Profile |
+| Soft restore entitlements on session | ✅ SessionProvider |
+| Biometric capability label (Face ID / Touch ID) | ✅ Profile + App Lock |
+| Face ID usage copy (App Lock + purchases) | ✅ `app.config.ts` |
 | Haptics on decide | ✅ Review |
 | Home-screen icon badge = pending count | ✅ |
 | Offline queue snapshot + cache banner | ✅ Home / Review |
@@ -68,8 +74,19 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Chrome a11y labels (buttons / rows / chips / prefs) | ✅ |
 | Activity drill-in to decided archive | ✅ |
 | Deep links: review + inbox/digest/agents/spend/teammates/policies | ✅ |
-| Deep link parsing / Maestro MOB-01…19 | ✅ (sim/emulator or web) |
+| Voice assistant (typed + TTS + web mic) | ✅ `/voice` + Profile |
+| Shortcuts / App Actions donation catalog | ✅ `/voice` share + `store/android/actions.xml` |
+| Fixture workflows list / start | ✅ `/workflows` + voice “start …” |
+| Memory explorer (search + detail + pipelines + erase) | ✅ `/memory` |
+| API keys (issue / copy / revoke) | ✅ `/keys` (+ live `/api/managed/keys`) |
+| Connections accounts | ✅ `/connections` (+ live `/api/managed/connections`) |
+| Sessions / Skills | ✅ `/sessions` · `/skills` (+ `/api/managed/sessions|skills`) |
+| Memory live adapter | ✅ `/api/managed/memory` (fixture-backed) |
+| Gateway / Automations / Audit / Settings | ✅ in-app + managed APIs (routes, incident, network/privacy) |
+| Billing portal CTA | ✅ Spend (fixture honesty / live Stripe) |
+| Deep link parsing / Maestro MOB-01…34 | ✅ |
 | Unit tests | `npm test` |
+| Web e2e (store_iap + Face ID + voice + memory/keys) | `npm run local:web-export && npm run test:e2e` |
 | Packaging preflight (no upload) | `npm run store:check` |
 
 ## What you can skip until you are ready
@@ -84,7 +101,7 @@ Those live only under [`store/DAY0-CHECKLIST.md`](store/DAY0-CHECKLIST.md). Day-
 
 ## Fixture client status
 
-PhoneApprove **fixture UX** (approve paths, inbox, deep links, offline cache, a11y gate, Maestro MOB-01…19) is the local product surface. The next product step off-fixture is **backend**: managed push register (`POST /api/managed/devices/push`), APNs/EAS delivery, evidence upload, and live keys/activity — not more client chrome.
+PhoneApprove **fixture UX** covers approval plus console-parity surfaces (Memory, API keys, Gateway, Automations, Audit, Settings, Team invite, Usage depth). Managed live routes also cover push register (`/api/managed/devices/push`), evidence attachments (`/api/managed/evidence`), durable memory erase, team-from-org-spend fallback, and billing portal CTAs on Spend + Profile.
 
 ## Optional: static web export (CI / screenshots)
 

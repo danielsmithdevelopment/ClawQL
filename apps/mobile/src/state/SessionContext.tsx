@@ -19,6 +19,7 @@ import {
   signOutEffect,
 } from "../services/auth";
 import { loadSessionEffect } from "../services/session-store";
+import { restorePurchasesEffect } from "../services/entitlements";
 import { registerForPushEffect } from "../services/push";
 
 type SessionContextValue = {
@@ -73,6 +74,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!session) return;
     void Effect.runPromise(registerForPushEffect(session)).catch(() => undefined);
+    // Soft restore — reloads fixture / local store_iap entitlements after reinstall path.
+    void Effect.runPromise(restorePurchasesEffect()).catch(() => undefined);
   }, [session?.userId, session?.accessToken]);
 
   // Soft expiry gate while the app is open — refresh early, else sign out.

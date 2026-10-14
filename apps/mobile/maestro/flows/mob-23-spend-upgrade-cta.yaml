@@ -1,0 +1,19 @@
+# MOB-23 — Spend free-plan upgrade CTA → Profile plan billing
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- openLink: clawql://spend
+- assertVisible:
+    id: "spend-screen"
+- assertVisible:
+    id: "spend-plan-label"
+- assertVisible:
+    id: "spend-upgrade-cta"
+- tapOn:
+    id: "spend-open-plan-billing"
+- assertVisible:
+    id: "profile-plan-billing"
+- assertVisible:
+    id: "profile-subscribe-pro"

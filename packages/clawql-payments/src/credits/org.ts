@@ -71,8 +71,11 @@ export type OrgCreatedVia = "self_serve" | "enterprise_sales";
  * - stripe_invoice: enterprise NET terms / manual invoice
  * - hybrid: subscription included quota + prepaid credits beyond / beside it
  * - credits_only: no recurring subscription; prepaid top-ups only
+ * - store_iap: App Store / Play Billing subscription (PhoneApprove)
+ * - dual: web Stripe **or** store IAP can grant the same plan entitlements
  */
-export type OrgBillingMode = "stripe_checkout" | "stripe_invoice" | "hybrid" | "credits_only";
+export type OrgBillingMode =
+  "stripe_checkout" | "stripe_invoice" | "hybrid" | "credits_only" | "store_iap" | "dual";
 
 /** Additive CPC billing fields on {@link OrgRecord}. */
 export type OrgBillingFields = {
@@ -82,6 +85,11 @@ export type OrgBillingFields = {
   stripeSubscriptionId?: string;
   /** Stripe Checkout Session id that last provisioned this org (webhook idempotency). */
   stripeCheckoutSessionId?: string;
+  /** App Store / Play product id when billingMode is store_iap / dual. */
+  storeProductId?: string;
+  /** Original transaction / purchase token id (fixture or store). */
+  storeOriginalTransactionId?: string;
+  storePlatform?: "app_store" | "play" | "fixture";
 };
 
 export type OrgRecord = {
@@ -113,6 +121,11 @@ export type OrgRecord = {
   stripeSubscriptionId?: string;
   /** Stripe Checkout Session that provisioned this org (idempotent webhook replay). */
   stripeCheckoutSessionId?: string;
+  /** App Store / Play product id when billingMode is store_iap / dual. */
+  storeProductId?: string;
+  /** Original transaction / purchase token id (fixture or store). */
+  storeOriginalTransactionId?: string;
+  storePlatform?: "app_store" | "play" | "fixture";
   createdAt: string;
   updatedAt: string;
 };
@@ -313,6 +326,9 @@ export type PatchOrgBillingInput = {
   stripeCustomerId?: string | null;
   stripeSubscriptionId?: string | null;
   stripeCheckoutSessionId?: string | null;
+  storeProductId?: string | null;
+  storeOriginalTransactionId?: string | null;
+  storePlatform?: "app_store" | "play" | "fixture" | null;
   seatLimit?: number;
 };
 
@@ -340,6 +356,18 @@ async function patchOrgBillingImpl(
   if (input.stripeCheckoutSessionId === null) delete org.stripeCheckoutSessionId;
   else if (input.stripeCheckoutSessionId !== undefined) {
     org.stripeCheckoutSessionId = input.stripeCheckoutSessionId.trim() || undefined;
+  }
+  if (input.storeProductId === null) delete org.storeProductId;
+  else if (input.storeProductId !== undefined) {
+    org.storeProductId = input.storeProductId.trim() || undefined;
+  }
+  if (input.storeOriginalTransactionId === null) delete org.storeOriginalTransactionId;
+  else if (input.storeOriginalTransactionId !== undefined) {
+    org.storeOriginalTransactionId = input.storeOriginalTransactionId.trim() || undefined;
+  }
+  if (input.storePlatform === null) delete org.storePlatform;
+  else if (input.storePlatform !== undefined) {
+    org.storePlatform = input.storePlatform;
   }
   org.updatedAt = new Date().toISOString();
   file.orgs[key] = org;

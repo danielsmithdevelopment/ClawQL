@@ -1,5 +1,5 @@
 /**
- * Phone-native UX — app lock, haptics, home-screen icon badge.
+ * Phone-native UX — app lock, haptics, home-screen icon badge, Face ID / Touch ID.
  * Fixture / web: biometrics unlock with a one-tap fixture path (no Face ID hardware).
  */
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -19,6 +19,19 @@ export class DeviceUxError extends Data.TaggedError("DeviceUxError")<{
   readonly reason: string;
 }> {}
 
+/** Preferred unlock label for the current device (Face ID, Touch ID, …). */
+export type BiometricKind = "face" | "fingerprint" | "iris" | "none";
+
+export type BiometricCapability = {
+  readonly available: boolean;
+  readonly enrolled: boolean;
+  readonly kind: BiometricKind;
+  /** Short UI label — "Face ID", "Touch ID", "Fingerprint", "Biometrics". */
+  readonly label: string;
+  /** Fixture / web always reports a synthetic Face ID capability for demos. */
+  readonly fixture: boolean;
+};
+
 export function loadDevicePrefsEffect(): Effect.Effect<DevicePrefs, DeviceUxError> {
   return Effect.tryPromise({
     try: async () => {
@@ -29,6 +42,8 @@ export function loadDevicePrefsEffect(): Effect.Effect<DevicePrefs, DeviceUxErro
         appLock: Boolean(parsed.appLock),
         haptics: parsed.haptics !== false,
         iconBadge: parsed.iconBadge !== false,
+        voiceAssistant: parsed.voiceAssistant !== false,
+        voiceSpeak: parsed.voiceSpeak !== false,
       };
     },
     catch: (cause) =>
@@ -111,15 +126,33 @@ export function clearIconBadgeEffect(): Effect.Effect<void> {
   return syncIconBadgeEffect(0);
 }
 
-/**
- * Prompt for device biometrics (or fixture unlock on web / fixture mode).
- * Returns true when the user unlocked successfully.
- */
-export function unlockAppEffect(): Effect.Effect<boolean, DeviceUxError> {
+function kindFromTypes(types: readonly LocalAuthentication.AuthenticationType[]): BiometricKind {
+  // expo: FACIAL_RECOGNITION = 2, FINGERPRINT = 1, IRIS = 3 (numeric enums).
+  if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) return "face";
+  if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) return "fingerprint";
+  if (types.includes(LocalAuthentication.AuthenticationType.IRIS)) return "iris";
+  return "none";
+}
+
+function labelForKind(kind: BiometricKind, os: string): string {
+  if (kind === "face") return os === "ios" ? "Face ID" : "Face unlock";
+  if (kind === "fingerprint") return os === "ios" ? "Touch ID" : "Fingerprint";
+  if (kind === "iris") return "Iris";
+  return "Biometrics";
+}
+
+/** Probe Face ID / Touch ID / fingerprint availability for Profile + App Lock copy. */
+export function biometricCapabilityEffect(): Effect.Effect<BiometricCapability, DeviceUxError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
     if (config.fixtureMode || Platform.OS === "web") {
-      return true;
+      return {
+        available: true,
+        enrolled: true,
+        kind: "face" as const,
+        label: Platform.OS === "android" ? "Face unlock" : "Face ID",
+        fixture: true,
+      };
     }
     const hasHardware = yield* Effect.tryPromise({
       try: () => LocalAuthentication.hasHardwareAsync(),
@@ -128,15 +161,61 @@ export function unlockAppEffect(): Effect.Effect<boolean, DeviceUxError> {
           reason: cause instanceof Error ? cause.message : String(cause),
         }),
     });
-    if (!hasHardware) {
+    const enrolled = yield* Effect.tryPromise({
+      try: () => LocalAuthentication.isEnrolledAsync(),
+      catch: (cause) =>
+        new DeviceUxError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+        }),
+    });
+    const types = yield* Effect.tryPromise({
+      try: () => LocalAuthentication.supportedAuthenticationTypesAsync(),
+      catch: (cause) =>
+        new DeviceUxError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+        }),
+    });
+    const kind = kindFromTypes(types);
+    return {
+      available: hasHardware,
+      enrolled,
+      kind,
+      label: labelForKind(kind, Platform.OS),
+      fixture: false,
+    };
+  });
+}
+
+/**
+ * Prompt for device biometrics (or fixture unlock on web / fixture mode).
+ * Returns true when the user unlocked successfully.
+ */
+export function unlockAppEffect(promptMessage?: string): Effect.Effect<boolean, DeviceUxError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    const cap = yield* biometricCapabilityEffect();
+    if (config.fixtureMode || Platform.OS === "web") {
+      return true;
+    }
+    if (!cap.available || !cap.enrolled) {
       return yield* Effect.fail(new DeviceUxError({ reason: "biometric_unavailable" }));
     }
+    const message =
+      promptMessage ??
+      (cap.kind === "face"
+        ? "Unlock with Face ID"
+        : cap.kind === "fingerprint"
+          ? Platform.OS === "ios"
+            ? "Unlock with Touch ID"
+            : "Unlock with fingerprint"
+          : "Unlock ClawQL");
     const result = yield* Effect.tryPromise({
       try: () =>
         LocalAuthentication.authenticateAsync({
-          promptMessage: "Unlock ClawQL",
+          promptMessage: message,
           cancelLabel: "Cancel",
           disableDeviceFallback: false,
+          biometricsSecurityLevel: "strong",
         }),
       catch: (cause) =>
         new DeviceUxError({
@@ -145,6 +224,13 @@ export function unlockAppEffect(): Effect.Effect<boolean, DeviceUxError> {
     });
     return result.success === true;
   });
+}
+
+/** Confirm a sensitive action (subscribe, restore) with Face ID / Touch ID. */
+export function confirmWithBiometricsEffect(
+  purpose: string
+): Effect.Effect<boolean, DeviceUxError> {
+  return unlockAppEffect(purpose);
 }
 
 export const CLAWQL_DEVICE_UX_TAG = "clawql/MobileDeviceUx" as const;
@@ -157,7 +243,9 @@ export class MobileDeviceUx extends Context.Service<
     readonly hapticSuccess: () => Effect.Effect<void>;
     readonly hapticError: () => Effect.Effect<void>;
     readonly syncIconBadge: (pendingCount: number) => Effect.Effect<void>;
-    readonly unlockApp: () => Effect.Effect<boolean, DeviceUxError>;
+    readonly unlockApp: (promptMessage?: string) => Effect.Effect<boolean, DeviceUxError>;
+    readonly biometricCapability: () => Effect.Effect<BiometricCapability, DeviceUxError>;
+    readonly confirmWithBiometrics: (purpose: string) => Effect.Effect<boolean, DeviceUxError>;
   }
 >()(CLAWQL_DEVICE_UX_TAG) {}
 
@@ -168,4 +256,6 @@ export const MobileDeviceUxLive = Layer.succeed(MobileDeviceUx, {
   hapticError: hapticErrorEffect,
   syncIconBadge: syncIconBadgeEffect,
   unlockApp: unlockAppEffect,
+  biometricCapability: biometricCapabilityEffect,
+  confirmWithBiometrics: confirmWithBiometricsEffect,
 });

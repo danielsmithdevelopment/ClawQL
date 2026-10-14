@@ -28,6 +28,12 @@ import {
 } from "./account-deletion-service.js";
 import { ProvisionOrgService } from "./provision-org-service.js";
 import { ReportUsageService } from "./report-usage.js";
+import {
+  StoreIapVerifyError,
+  StoreIapVerifyService,
+  type StoreIapVerifyInput,
+} from "./store-iap-verify.js";
+import type { StoreIapPlatform } from "./store-iap-catalog.js";
 import type { ProvisionOrgInput, ReportUsageToStripeInput } from "./types.js";
 import type { OrgBillingMode, OrgCreatedVia } from "../credits/org.js";
 import { verifiedCheckoutSessionUserEffect } from "../proofs/verified-checkout-session-user.js";
@@ -74,7 +80,12 @@ function requireProvisionToken(
 
 function isBillingMode(v: unknown): v is OrgBillingMode {
   return (
-    v === "stripe_checkout" || v === "stripe_invoice" || v === "hybrid" || v === "credits_only"
+    v === "stripe_checkout" ||
+    v === "stripe_invoice" ||
+    v === "hybrid" ||
+    v === "credits_only" ||
+    v === "store_iap" ||
+    v === "dual"
   );
 }
 
@@ -134,7 +145,8 @@ function parseProvisionBody(body: unknown): ProvisionOrgInput | { error: string 
   }
   if (!isBillingMode(b.billingMode)) {
     return {
-      error: "billingMode must be stripe_checkout|stripe_invoice|hybrid|credits_only",
+      error:
+        "billingMode must be stripe_checkout|stripe_invoice|hybrid|credits_only|store_iap|dual",
     };
   }
   const additional =
@@ -459,4 +471,99 @@ export function attachProvisioningRoutes(
       }
     })();
   });
+
+  // Store IAP verify + entitlements (PhoneApprove). Fixture tokens when
+  // CLAWQL_STORE_IAP_FIXTURE=1 or purchaseToken starts with fixture_iap_.
+  app.post(`${base}/store/verify`, auth, (req, res) => {
+    void (async () => {
+      const parsed = parseStoreVerifyBody(req.body);
+      if ("error" in parsed) {
+        res.status(400).json({ error: parsed.error });
+        return;
+      }
+      try {
+        const result = await runPaymentsEffect(
+          Effect.gen(function* () {
+            const svc = yield* StoreIapVerifyService;
+            return yield* svc.verify({ ...parsed, env });
+          }),
+          env
+        );
+        res.status(200).json(result);
+      } catch (err) {
+        if (err instanceof StoreIapVerifyError) {
+          const status =
+            err.code === "not_configured"
+              ? 503
+              : err.code === "org_missing"
+                ? 404
+                : err.code === "unknown_product" ||
+                    err.code === "invalid_body" ||
+                    err.code === "invalid_token"
+                  ? 400
+                  : 500;
+          res.status(status).json({ error: err.reason, code: err.code });
+          return;
+        }
+        const message = err instanceof Error ? err.message : String(err);
+        if (/store_iap_not_configured|StoreIapVerifyError/i.test(message)) {
+          res.status(503).json({ error: message });
+          return;
+        }
+        res.status(500).json({ error: message });
+      }
+    })();
+  });
+
+  app.get(`${base}/billing/entitlements`, auth, (req, res) => {
+    void (async () => {
+      const orgId = typeof req.query.orgId === "string" ? req.query.orgId.trim() : "";
+      if (!orgId) {
+        res.status(400).json({ error: "orgId query param is required" });
+        return;
+      }
+      try {
+        const entitlements = await runPaymentsEffect(
+          Effect.gen(function* () {
+            const svc = yield* StoreIapVerifyService;
+            return yield* svc.entitlements(orgId);
+          }),
+          env
+        );
+        if (!entitlements) {
+          res.status(404).json({ error: "org not found" });
+          return;
+        }
+        res.status(200).json({ entitlements });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        res.status(500).json({ error: message });
+      }
+    })();
+  });
+}
+
+function isStorePlatform(v: unknown): v is StoreIapPlatform {
+  return v === "app_store" || v === "play" || v === "fixture";
+}
+
+function parseStoreVerifyBody(body: unknown): StoreIapVerifyInput | { error: string } {
+  if (!body || typeof body !== "object") return { error: "JSON body required" };
+  const b = body as Record<string, unknown>;
+  if (!isStorePlatform(b.store)) {
+    return { error: "store must be app_store|play|fixture" };
+  }
+  const productId = typeof b.productId === "string" ? b.productId.trim() : "";
+  const purchaseToken = typeof b.purchaseToken === "string" ? b.purchaseToken.trim() : "";
+  if (!productId) return { error: "productId is required" };
+  if (!purchaseToken) return { error: "purchaseToken is required" };
+  return {
+    store: b.store,
+    productId,
+    purchaseToken,
+    orgId: typeof b.orgId === "string" ? b.orgId : undefined,
+    orgName: typeof b.orgName === "string" ? b.orgName : undefined,
+    ownerEmail: typeof b.ownerEmail === "string" ? b.ownerEmail : undefined,
+    correlationId: typeof b.correlationId === "string" ? b.correlationId : undefined,
+  };
 }

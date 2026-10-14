@@ -29,8 +29,15 @@ vi.mock("expo-secure-store", () => {
 });
 
 vi.mock("expo-local-authentication", () => ({
-  hasHardwareAsync: async () => false,
+  hasHardwareAsync: async () => true,
+  isEnrolledAsync: async () => true,
+  supportedAuthenticationTypesAsync: async () => [2], // FACIAL_RECOGNITION
   authenticateAsync: async () => ({ success: true }),
+  AuthenticationType: {
+    FINGERPRINT: 1,
+    FACIAL_RECOGNITION: 2,
+    IRIS: 3,
+  },
 }));
 
 vi.mock("expo-haptics", () => ({
@@ -40,6 +47,13 @@ vi.mock("expo-haptics", () => ({
     Warning: "warning",
     Error: "error",
   },
+}));
+
+vi.mock("expo-speech", () => ({
+  speak: (_text: string, opts?: { onDone?: () => void }) => {
+    opts?.onDone?.();
+  },
+  stop: () => undefined,
 }));
 
 vi.mock("@react-native-async-storage/async-storage", () => {

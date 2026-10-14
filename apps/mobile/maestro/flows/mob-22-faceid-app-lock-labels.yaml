@@ -1,0 +1,24 @@
+# MOB-22 — Face ID / Touch ID labels on App Lock + bio capability
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- assertVisible:
+    id: "profile-bio-capability"
+- tapOn:
+    id: "pref-app-lock"
+- assertVisible:
+    id: "profile-lock-now"
+- tapOn:
+    id: "profile-lock-now"
+- assertVisible:
+    id: "app-lock-screen"
+- assertVisible:
+    id: "app-lock-unlock"
+- tapOn:
+    id: "app-lock-unlock"
+- assertVisible:
+    id: "profile-screen"

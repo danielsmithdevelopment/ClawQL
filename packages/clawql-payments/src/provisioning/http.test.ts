@@ -178,6 +178,43 @@ describe("attachProvisioningRoutes", () => {
     });
   });
 
+  it("verifies fixture store_iap purchase and reads entitlements", async () => {
+    const fixtureEnv = { ...env, CLAWQL_STORE_IAP_FIXTURE: "1" };
+    await withApp(fixtureEnv, async (base) => {
+      const verify = await fetch(`${base}/payments/store/verify`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: "Bearer test-cpc-token",
+        },
+        body: JSON.stringify({
+          store: "fixture",
+          productId: "clawql_pro_monthly",
+          purchaseToken: `fixture_iap_http_${Date.now()}`,
+          orgName: "Http Store Co",
+          ownerEmail: "store@http.co",
+        }),
+      });
+      expect(verify.status).toBe(200);
+      const body = (await verify.json()) as {
+        entitlements: { orgId: string; planId: string; billingMode: string };
+      };
+      expect(body.entitlements.planId).toBe("pro");
+      expect(body.entitlements.billingMode).toBe("store_iap");
+
+      const ent = await fetch(
+        `${base}/payments/billing/entitlements?orgId=${encodeURIComponent(body.entitlements.orgId)}`,
+        { headers: { authorization: "Bearer test-cpc-token" } }
+      );
+      expect(ent.status).toBe(200);
+      const entBody = (await ent.json()) as {
+        entitlements: { planId: string; productId?: string };
+      };
+      expect(entBody.entitlements.planId).toBe("pro");
+      expect(entBody.entitlements.productId).toBe("clawql_pro_monthly");
+    });
+  });
+
   it("requires a Supabase bearer when the plugin is enabled and ignores client supabaseUserId", async () => {
     const selfServeEnv = {
       ...env,

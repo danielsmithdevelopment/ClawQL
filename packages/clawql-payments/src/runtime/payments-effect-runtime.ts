@@ -64,6 +64,8 @@ import {
 } from "../provisioning/index.js";
 import { accountDeletionLiveLayer } from "../provisioning/account-deletion-service.js";
 import { accountDeletionJobStoreLiveLayer } from "../provisioning/account-deletion-job-store.js";
+import { storeIapCatalogLiveLayer } from "../provisioning/store-iap-catalog.js";
+import { storeIapVerifyLiveLayer } from "../provisioning/store-iap-verify.js";
 import { topologyLiveLayer } from "../dashboard/topology-service.js";
 
 export type PaymentsServices =
@@ -126,6 +128,8 @@ export type PaymentsServices =
   | import("../provisioning/report-usage.js").ReportUsageService
   | import("../provisioning/account-deletion-service.js").AccountDeletionService
   | import("../provisioning/account-deletion-job-store.js").AccountDeletionJobStoreService
+  | import("../provisioning/store-iap-catalog.js").StoreIapCatalogService
+  | import("../provisioning/store-iap-verify.js").StoreIapVerifyService
   | import("../dashboard/topology-service.js").TopologyService
   | import("clawql-auth").IssuedApiKeyStoreService
   | import("clawql-auth").IdentityStoreService
@@ -249,6 +253,8 @@ export function paymentsServicesLiveLayer(
     )
   );
   const topology = topologyLiveLayer(env);
+  const storeIapCatalog = storeIapCatalogLiveLayer;
+  const storeIapVerify = storeIapVerifyLiveLayer();
 
   const layer = Layer.mergeAll(
     config,
@@ -274,6 +280,8 @@ export function paymentsServicesLiveLayer(
     reportUsage,
     deletionJobs,
     accountDeletion,
+    storeIapCatalog,
+    storeIapVerify,
     topology,
     ap2,
     acp,

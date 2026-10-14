@@ -1,0 +1,31 @@
+{
+  "$comment": "Keep product ids in sync with packages/clawql-payments store-iap-catalog and apps/mobile/src/services/store-iap.ts. Human creates these SKUs in App Store Connect / Play Console at Day-0.",
+  "bundleId": "com.clawql.app",
+  "subscriptionGroup": "clawql_plans",
+  "products": [
+    {
+      "productId": "clawql_pro_monthly",
+      "planId": "pro",
+      "period": "monthly",
+      "referenceName": "ClawQL Pro Monthly"
+    },
+    {
+      "productId": "clawql_pro_annual",
+      "planId": "pro",
+      "period": "annual",
+      "referenceName": "ClawQL Pro Annual"
+    },
+    {
+      "productId": "clawql_team_monthly",
+      "planId": "team",
+      "period": "monthly",
+      "referenceName": "ClawQL Team Monthly"
+    },
+    {
+      "productId": "clawql_team_annual",
+      "planId": "team",
+      "period": "annual",
+      "referenceName": "ClawQL Team Annual"
+    }
+  ]
+}

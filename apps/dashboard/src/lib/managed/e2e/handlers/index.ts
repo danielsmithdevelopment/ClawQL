@@ -1,8 +1,10 @@
 export { getAudit } from "./audit";
 export {
+  getBillingEntitlements,
   getBillingUsage,
   postBillingCard,
   postBillingCredits,
+  postBillingStoreVerify,
   usageSnapshot,
 } from "./billing";
 export { postChatCompletions } from "./chat-completions";

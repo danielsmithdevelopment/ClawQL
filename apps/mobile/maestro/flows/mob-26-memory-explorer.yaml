@@ -1,0 +1,25 @@
+# MOB-26 — Memory explorer search + detail
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- tapOn:
+    id: "profile-open-memory"
+- assertVisible:
+    id: "memory-screen"
+- tapOn:
+    id: "memory-query"
+- inputText: "Northwind"
+- tapOn:
+    id: "memory-run-search"
+- assertVisible:
+    id: "memory-row-ct_4471"
+- tapOn:
+    id: "memory-open-ct_4471"
+- assertVisible:
+    id: "memory-detail-screen"
+- assertVisible:
+    id: "memory-fields"
