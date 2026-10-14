@@ -12,21 +12,21 @@ Corrected: earlier agent notes that marked Gateway / Automations / Memory / Audi
 
 ## Managed console map → phone
 
-| Console | Phone route (target) | Phase |
-| ------- | -------------------- | ----- |
-| Home | Tabs Home | Shipped |
-| Sessions | `/sessions` (agent timeline) | Next |
-| Review | Tabs Review | Shipped |
-| Gateway | `/gateway` | Fixture list shipped |
-| Automations | `/automations` | Fixture list shipped |
-| Skills | Review skill decide + dedicated `/skills` | Partial → next |
-| Memory & documents | `/memory` + `/memory/:id` | Explorer shipped |
-| Connections & keys | `/keys` (+ connections later) | API keys shipped |
-| Audit | `/audit` | Fixture list shipped |
-| Team | `/teammates` | Read-only → invite next |
-| Usage & billing | `/spend` + Profile plan | Partial |
-| Settings | `/settings` | Fixture org/network shipped |
-| Profile | Tabs Profile | Shipped |
+| Console            | Phone route (target)                      | Phase                       |
+| ------------------ | ----------------------------------------- | --------------------------- |
+| Home               | Tabs Home                                 | Shipped                     |
+| Sessions           | `/sessions` (agent timeline)              | Next                        |
+| Review             | Tabs Review                               | Shipped                     |
+| Gateway            | `/gateway`                                | Fixture list shipped        |
+| Automations        | `/automations`                            | Fixture list shipped        |
+| Skills             | Review skill decide + dedicated `/skills` | Partial → next              |
+| Memory & documents | `/memory` + `/memory/:id`                 | Explorer shipped            |
+| Connections & keys | `/keys` (+ connections later)             | API keys shipped            |
+| Audit              | `/audit`                                  | Fixture list shipped        |
+| Team               | `/teammates`                              | Read-only → invite next     |
+| Usage & billing    | `/spend` + Profile plan                   | Partial                     |
+| Settings           | `/settings`                               | Fixture org/network shipped |
+| Profile            | Tabs Profile                              | Shipped                     |
 
 Phone-native extras (Voice, NFC, App Lock, push inbox) stay additive.
 
