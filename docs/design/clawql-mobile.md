@@ -4,6 +4,7 @@ Expo approval client. Scope is intentionally narrow so the App Store does not tr
 
 ## Surfaces
 
+<<<<<<< HEAD
 | Screen  | Job                                                                                                                         |
 | ------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Sign in | System browser OAuth + app/universal link return; fixture + reviewer-demo for CI/review                                     |
@@ -11,6 +12,16 @@ Expo approval client. Scope is intentionally narrow so the App Store does not tr
 | Review  | Queue + exact-change detail; Decline; Approve with security key                                                             |
 | Profile | Keys, connected apps (Revoke), notification prefs, voice prefs, sign out, **delete account**                                |
 | Voice   | In-app assistant — list/read/decline pending; TTS; Siri App Intents later ([spec](../specs/mobile/voice-assistant-v0.1.md)) |
+=======
+| Screen  | Job                                                                                     |
+| ------- | --------------------------------------------------------------------------------------- |
+| Sign in | System browser OAuth + app/universal link return; fixture + reviewer-demo for CI/review |
+| Home    | Needs-you queue snapshot + today's spend                                                |
+| Review  | Queue + exact-change detail; Decline; Approve with security key                         |
+| Profile | Keys, connected apps (Revoke), notification prefs, voice prefs, sign out, **delete account** |
+| Voice   | In-app assistant — list/read/decline/ask/start workflow; TTS; Shortcuts donation; Siri later ([spec](../specs/mobile/voice-assistant-v0.1.md)) |
+| Workflows | Fixture programs startable by tap or voice |
+>>>>>>> a9dd3dfb (feat(mobile): Shortcuts donation, voice ask/start workflow, App Actions stub)
 
 All other product surfaces deep-link or open the web console.
 
@@ -34,7 +45,7 @@ All other product surfaces deep-link or open the web console.
 ## Testing
 
 - Vitest for Effect domain/API/NFC/deeplink
-- Maestro MOB-01…24 on simulator/emulator (+ CI Playwright web export)
+- Maestro MOB-01…25 on simulator/emulator (+ CI Playwright web export)
 - REV-13 / UX-09 remain Manual on device
 
 See `apps/mobile/README.md` · voice: [`docs/specs/mobile/voice-assistant-v0.1.md`](../specs/mobile/voice-assistant-v0.1.md).

@@ -28,7 +28,7 @@ App Lock and purchase confirm use device biometrics (`expo-local-authentication`
 
 ## Voice assistant
 
-Profile → **Open voice assistant** (or `clawql://voice`) accepts typed / fixture commands: list pending, read next, decline first. Replies can be spoken with on-device TTS. **Approve never completes from voice alone** — the security-key / Face ID path on the review screen still runs. Siri App Intents are not in this build; they land after Day-0 native enrollment.
+Profile → **Open voice assistant** (or `clawql://voice`) accepts typed / fixture commands: list pending, read next, decline first, ask a teammate, start a workflow. Replies can be spoken with on-device TTS. **Approve never completes from voice alone** — the security-key / Face ID path on the review screen still runs. Shortcuts / App Actions donation cards copy the same deep links; native Siri App Intents land after Day-0.
 
 ## In-app subscribe (sandbox)
 

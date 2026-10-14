@@ -1,12 +1,18 @@
 import { Effect } from "effect";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { TextInput } from "react-native";
+import { Platform, TextInput } from "react-native";
 
 import { useSession } from "@/src/state/SessionContext";
 import {
+  listShortcutDonationsEffect,
+  shareShortcutDonationEffect,
+  type ShortcutDonation,
+} from "@/src/services/shortcuts-donation";
+import {
   fixtureDictateEffect,
   runVoiceCommandEffect,
+  webDictateEffect,
   type VoiceAssistantResult,
 } from "@/src/services/voice-assistant";
 import { brand, space } from "@/src/theme";
@@ -26,8 +32,10 @@ import {
 const SUGGESTIONS = [
   "list pending",
   "read next",
+  "ask dana",
+  "list workflows",
+  "start standup digest",
   "decline first",
-  "open first",
   "approve first",
   "help",
 ] as const;
@@ -40,6 +48,12 @@ export default function VoiceScreen() {
   const [result, setResult] = useState<VoiceAssistantResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [donations, setDonations] = useState<readonly ShortcutDonation[]>([]);
+  const [shareNote, setShareNote] = useState<string | null>(null);
+
+  useEffect(() => {
+    void Effect.runPromise(listShortcutDonationsEffect()).then(setDonations);
+  }, []);
 
   const run = useCallback(
     async (phrase: string, speak = true) => {
@@ -96,14 +110,14 @@ export default function VoiceScreen() {
 
       <SurfaceCard testID="voice-composer" tint="soft">
         <Meta color={brand.inkFaint}>
-          Fixture mode uses typed commands (and Siri deep links later). Mic STT
-          lands with Day-0 native speech.
+          Typed / fixture commands work everywhere. Web mic uses the browser Speech
+          API. Siri App Intents land after Day-0.
         </Meta>
         <TextInput
           testID="voice-input"
           value={utterance}
           onChangeText={setUtterance}
-          placeholder='Try “list pending”'
+          placeholder='Try “list pending” or “ask dana”'
           placeholderTextColor={brand.inkFaint}
           accessibilityLabel="Voice command"
           autoCapitalize="none"
@@ -132,6 +146,25 @@ export default function VoiceScreen() {
             disabled={busy}
             onPress={() => void run("list pending")}
           />
+          {Platform.OS === "web" ? (
+            <SecondaryButton
+              testID="voice-dictate-web"
+              label="Listen (browser mic)"
+              disabled={busy}
+              onPress={() => {
+                setBusy(true);
+                void Effect.runPromise(webDictateEffect({ lastHint: utterance }))
+                  .then((text) => {
+                    if (text) return run(text);
+                    setError("No speech captured — try typed commands.");
+                  })
+                  .catch((e: unknown) =>
+                    setError(e instanceof Error ? e.message : String(e))
+                  )
+                  .finally(() => setBusy(false));
+              }}
+            />
+          ) : null}
         </Column>
       </SurfaceCard>
 
@@ -150,6 +183,40 @@ export default function VoiceScreen() {
         </Column>
       </SurfaceCard>
 
+      <SurfaceCard testID="voice-shortcuts">
+        <Body>Add to Shortcuts / App Actions</Body>
+        <Meta color={brand.inkFaint}>
+          Copy a deep link now. Native Siri donation wires the same phrases after
+          Day-0.
+        </Meta>
+        <Column spacing={space.sm}>
+          {donations.slice(0, 6).map((donation) => (
+            <SecondaryButton
+              key={donation.id}
+              testID={`voice-shortcut-${donation.id}`}
+              label={donation.phrase}
+              disabled={busy}
+              onPress={() => {
+                void Effect.runPromise(shareShortcutDonationEffect(donation)).then(
+                  (out) => {
+                    setShareNote(
+                      out.shared
+                        ? `Shared / copied · ${donation.utterance}`
+                        : `Copy this URL: ${donation.deepLink}`
+                    );
+                  }
+                );
+              }}
+            />
+          ))}
+        </Column>
+        {shareNote ? (
+          <Meta testID="voice-shortcut-note" color={brand.ok}>
+            {shareNote}
+          </Meta>
+        ) : null}
+      </SurfaceCard>
+
       {error ? (
         <Meta testID="voice-error" color={brand.danger}>
           {error}
@@ -165,9 +232,20 @@ export default function VoiceScreen() {
           {result.pendingCount != null ? (
             <Meta testID="voice-pending-count">{`Pending · ${result.pendingCount}`}</Meta>
           ) : null}
+          {result.startedWorkflowId ? (
+            <Meta testID="voice-started-workflow">{`Started · ${result.startedWorkflowId}`}</Meta>
+          ) : null}
+          {result.askedTeammate ? (
+            <Meta testID="voice-asked-teammate">{`Asked · ${result.askedTeammate}`}</Meta>
+          ) : null}
         </SurfaceCard>
       ) : null}
 
+      <SecondaryButton
+        testID="voice-open-workflows"
+        label="Browse workflows"
+        onPress={() => router.push("/workflows")}
+      />
       <SecondaryButton label="Back" onPress={() => router.back()} />
     </ScreenScroll>
   );

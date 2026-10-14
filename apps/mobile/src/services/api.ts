@@ -21,6 +21,7 @@ import {
   FIXTURE_REVIEW_ITEMS,
   FIXTURE_SPEND,
   FIXTURE_TEAMMATES,
+  FIXTURE_WORKFLOWS,
 } from "../domain/fixtures";
 import {
   AccountDeletionResult,
@@ -44,6 +45,8 @@ import {
   ReviewListResponse,
   SecurityKey,
   Teammate,
+  WorkflowProgram,
+  WorkflowRun,
   decodeUnknownEffect,
   type MobileSession,
 } from "../domain/schemas";
@@ -69,6 +72,7 @@ type MutableState = {
   inbox: InboxItem[];
   pushDevices: PushDevice[];
   attachments: DocumentAttachment[];
+  workflowRuns: WorkflowRun[];
   deleted: boolean;
 };
 
@@ -82,6 +86,7 @@ const stateRef = Ref.makeUnsafe<MutableState>({
   inbox: [...FIXTURE_INBOX],
   pushDevices: [],
   attachments: [],
+  workflowRuns: [],
   deleted: false,
 });
 
@@ -624,6 +629,79 @@ export function listTeammatesEffect(
   });
 }
 
+export function listWorkflowsEffect(
+  session: MobileSession
+): Effect.Effect<readonly WorkflowProgram[], MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return FIXTURE_WORKFLOWS.filter((w) => w.stage !== "retired");
+    }
+    return FIXTURE_WORKFLOWS.filter((w) => w.stage !== "retired");
+  });
+}
+
+export function startWorkflowEffect(input: {
+  session: MobileSession;
+  workflowId: string;
+}): Effect.Effect<WorkflowRun, MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    const catalog = isFixtureSession(input.session, config.fixtureMode)
+      ? FIXTURE_WORKFLOWS
+      : FIXTURE_WORKFLOWS;
+    const program =
+      catalog.find((w) => w.id === input.workflowId || w.name === input.workflowId) ??
+      null;
+    if (!program) {
+      return yield* Effect.fail(
+        new MobileApiError({ reason: `workflow_not_found:${input.workflowId}` })
+      );
+    }
+    if (program.stage === "retired") {
+      return yield* Effect.fail(
+        new MobileApiError({ reason: `workflow_retired:${program.id}` })
+      );
+    }
+    const run: WorkflowRun = {
+      id: `wfrun_${Date.now().toString(36)}`,
+      workflowId: program.id,
+      name: program.name,
+      startedAtMs: Date.now(),
+      status: "started",
+      fixture: true,
+    };
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      workflowRuns: [run, ...s.workflowRuns],
+      activity: [
+        {
+          id: nextActivityId(),
+          atMs: run.startedAtMs,
+          title: `Started workflow ${program.title}`,
+          detail: `fixture · ${program.id}`,
+          kind: "skill" as const,
+          decision: "start_workflow",
+          reviewId: program.id,
+        },
+        ...s.activity,
+      ],
+    }));
+    return run;
+  });
+}
+
+export function listWorkflowRunsEffect(
+  session: MobileSession
+): Effect.Effect<readonly WorkflowRun[], MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    const state = yield* Ref.get(stateRef);
+    return state.workflowRuns;
+  });
+}
+
 export function listInboxEffect(
   session: MobileSession
 ): Effect.Effect<readonly InboxItem[], MobileApiError> {
@@ -800,6 +878,7 @@ export function resetFixtureStateEffect(): Effect.Effect<void> {
     inbox: [...FIXTURE_INBOX],
     pushDevices: [],
     attachments: [],
+    workflowRuns: [],
     deleted: false,
   });
 }
@@ -852,6 +931,16 @@ export class MobileApi extends Context.Service<
     readonly listTeammates: (
       session: MobileSession
     ) => Effect.Effect<readonly Teammate[], MobileApiError>;
+    readonly listWorkflows: (
+      session: MobileSession
+    ) => Effect.Effect<readonly WorkflowProgram[], MobileApiError>;
+    readonly startWorkflow: (input: {
+      session: MobileSession;
+      workflowId: string;
+    }) => Effect.Effect<WorkflowRun, MobileApiError>;
+    readonly listWorkflowRuns: (
+      session: MobileSession
+    ) => Effect.Effect<readonly WorkflowRun[], MobileApiError>;
     readonly listInbox: (
       session: MobileSession
     ) => Effect.Effect<readonly InboxItem[], MobileApiError>;
@@ -927,6 +1016,9 @@ export const MobileApiLive = Layer.succeed(MobileApi, {
   listAgents: listAgentsEffect,
   getMorningDigest: getMorningDigestEffect,
   listTeammates: listTeammatesEffect,
+  listWorkflows: listWorkflowsEffect,
+  startWorkflow: startWorkflowEffect,
+  listWorkflowRuns: listWorkflowRunsEffect,
   listInbox: listInboxEffect,
   markInboxRead: markInboxReadEffect,
   markInboxReadByReview: markInboxReadByReviewEffect,

@@ -503,6 +503,7 @@ describe("mobile API fixture mode", () => {
       ["clawql://policies/pol_contracts", "/policies/pol_contracts"],
       ["clawql://voice", "/voice"],
       ["clawql://voice?q=list%20pending", "/voice?q=list%20pending"],
+      ["clawql://workflows", "/workflows"],
       ["https://cloud.clawql.com/app/inbox", "/inbox"],
       ["https://cloud.clawql.com/app/policies/pol_block", "/policies/pol_block"],
       ["https://cloud.clawql.com/app/review/rev_change", "/review/rev_change"],

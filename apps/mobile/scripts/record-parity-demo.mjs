@@ -76,7 +76,16 @@ await page.getByTestId("voice-dictate-fixture").click();
 await page.getByTestId("voice-spoken").waitFor({ state: "visible", timeout: 10000 });
 await page.waitForTimeout(400);
 await shot("04g-voice-list-pending.png");
-await page.goBack();
+await page.getByTestId("voice-shortcuts").scrollIntoViewIfNeeded();
+await page.waitForTimeout(300);
+await shot("04h-voice-shortcuts.png");
+await page.getByTestId("voice-suggest-start-standup-digest").scrollIntoViewIfNeeded();
+await page.getByTestId("voice-suggest-start-standup-digest").click();
+await page.getByTestId("workflows-screen").waitFor({ state: "visible", timeout: 15000 });
+await page.getByTestId("workflows-runs").waitFor({ state: "visible", timeout: 10000 });
+await page.waitForTimeout(400);
+await shot("04i-workflows-started.png");
+await page.getByTestId("tab-profile").first().click();
 await page.getByTestId("profile-screen").waitFor({ state: "visible", timeout: 15000 });
 
 // App Lock → lock now → unlock (fixture)

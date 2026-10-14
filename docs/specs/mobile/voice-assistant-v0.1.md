@@ -28,6 +28,7 @@ People can **talk to ClawQL on the phone**:
 
 ## Phase 1 (shipped without Day-0)
 
+<<<<<<< HEAD
 | Piece                                                           | Status                                        |
 | --------------------------------------------------------------- | --------------------------------------------- |
 | Command grammar (`list` / `read` / `decline` / `open` / `help`) | `apps/mobile/src/services/voice-assistant.ts` |
@@ -36,8 +37,21 @@ People can **talk to ClawQL on the phone**:
 | Prefs: Voice assistant on, Speak replies                        | DevicePrefs                                   |
 | Deep link `clawql://voice?q=…`                                  | Deep-link parser                              |
 | Maestro MOB-24 + Playwright e2e                                 | Catalog                                       |
+=======
+| Piece | Status |
+| ----- | ------ |
+| Command grammar (`list` / `read` / `decline` / `open` / `ask` / `start workflow` / `help`) | `apps/mobile/src/services/voice-assistant.ts` |
+| Typed + fixture dictate on `/voice` | `apps/mobile/app/voice.tsx` |
+| Web browser mic (`SpeechRecognition`) | `webDictateEffect` (no Info.plist) |
+| TTS read-out (`expo-speech`, web `speechSynthesis` fallback) | Same service |
+| Prefs: Voice assistant on, Speak replies | DevicePrefs |
+| Deep link `clawql://voice?q=…` · `clawql://workflows` | Deep-link parser |
+| Shortcuts / App Actions donation catalog | `shortcuts-donation.ts` + `store/android/actions.xml` |
+| Fixture workflows list / start | `/workflows` + voice |
+| Maestro MOB-24…25 + Playwright e2e | Catalog |
+>>>>>>> a9dd3dfb (feat(mobile): Shortcuts donation, voice ask/start workflow, App Actions stub)
 
-Mic STT on device and Siri phrases wait for native enrollment.
+Native mic STT and Siri phrases wait for Day-0 enrollment.
 
 ## Phase 2 — Siri / App Intents (your plug-in)
 
@@ -53,10 +67,15 @@ Suggested intents (Swift / `expo-app-intents` when on SDK 58+):
 
 Donation / App Shortcuts: show in Shortcuts app after first use. Locked-device Siri needs Foreground App Intent entitlements.
 
+## Phase 1.5 — ask teammate + start workflow (shipped fixture)
+
+- “ask dana” / “ask marcus” → `decideReview(ask_teammate)` on first pending
+- “list workflows” / “start standup digest” / “start weekly spend digest” → fixture `/workflows`
+- Share Shortcut / App Actions deep-link cards on `/voice`
+
 ## Phase 3 — richer workflows
 
-- “Start the invoice workflow” → agent / MCP program cell (console parity)
-- Ask teammate by name via voice
+- Live console program cells (not fixture-only)
 - Continuous listen while Review is open (push-to-talk)
 
 ## Out of scope for v0.1

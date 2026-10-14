@@ -1,18 +1,21 @@
 /**
  * In-app voice assistant — parse spoken/typed commands, speak pending reviews,
- * decline/open (approve still requires security key).
- * Fixture / web: typed commands + expo-speech / speechSynthesis TTS.
+ * decline/open/ask teammate/start workflow (approve still requires security key).
+ * Fixture / web: typed commands + Web Speech STT + expo-speech TTS.
  * Siri App Intents land later (see docs/specs/mobile/voice-assistant-v0.1.md).
  */
 import * as Speech from "expo-speech";
 import { Context, Data, Effect, Layer } from "effect";
 import { Platform } from "react-native";
 
+import { FIXTURE_TEAMMATES } from "../domain/fixtures";
 import type { MobileSession, ReviewItem } from "../domain/schemas";
 import {
   decideReviewEffect,
   getReviewByIdEffect,
   listReviewEffect,
+  listWorkflowsEffect,
+  startWorkflowEffect,
 } from "./api";
 import { loadDevicePrefsEffect } from "./device-ux";
 
@@ -28,12 +31,17 @@ export type VoiceCommandKind =
   | "open_first"
   | "open_id"
   | "approve_intent"
+  | "ask_teammate"
+  | "list_workflows"
+  | "start_workflow"
   | "help"
   | "unknown";
 
 export type ParsedVoiceCommand = {
   readonly kind: VoiceCommandKind;
   readonly reviewId?: string;
+  readonly teammateName?: string;
+  readonly workflowId?: string;
   readonly raw: string;
 };
 
@@ -44,11 +52,45 @@ export type VoiceAssistantResult = {
   /** When set, UI should navigate here after the command. */
   readonly navigateTo?: string;
   readonly declinedId?: string;
+  readonly askedTeammate?: string;
+  readonly startedWorkflowId?: string;
   readonly pendingCount?: number;
 };
 
 const HELP =
-  "Try: list pending, read next, decline first, open first, or approve first. Approve always needs your security key.";
+  "Try: list pending, read next, decline first, open first, ask dana, list workflows, start standup digest, or approve first. Approve always needs your security key.";
+
+function matchTeammateName(text: string): string | null {
+  for (const person of FIXTURE_TEAMMATES) {
+    const first = person.name.split(/\s+/)[0]?.toLowerCase();
+    if (!first) continue;
+    if (new RegExp(`\\b${first}\\b`).test(text)) return person.name;
+  }
+  return null;
+}
+
+function matchWorkflowSlug(text: string): string | null {
+  const compact = text.replace(/[_\s]+/g, " ").trim();
+  const aliases: Array<{ id: string; patterns: RegExp[] }> = [
+    {
+      id: "standup-digest",
+      patterns: [/standup\s*digest/, /stand\s*up\s*digest/, /standup/],
+    },
+    {
+      id: "weekly-spend-digest",
+      patterns: [/weekly\s*spend(\s*digest)?/, /spend\s*digest/],
+    },
+    {
+      id: "intake-msa",
+      patterns: [/intake\s*msa/, /msa\s*intake/],
+    },
+  ];
+  for (const row of aliases) {
+    if (row.patterns.some((p) => p.test(compact))) return row.id;
+  }
+  const bare = compact.match(/\b([a-z0-9]+(?:-[a-z0-9]+)+)\b/);
+  return bare?.[1] ?? null;
+}
 
 export function parseVoiceCommandEffect(raw: string): Effect.Effect<ParsedVoiceCommand> {
   return Effect.sync(() => {
@@ -56,6 +98,23 @@ export function parseVoiceCommandEffect(raw: string): Effect.Effect<ParsedVoiceC
     if (!text) return { kind: "unknown" as const, raw };
     if (/^(help|what can you do|commands)\b/.test(text)) {
       return { kind: "help", raw };
+    }
+    if (
+      /^(list|show)\s+workflows?\b/.test(text) ||
+      text === "what workflows" ||
+      text === "available workflows"
+    ) {
+      return { kind: "list_workflows", raw };
+    }
+    if (/^(start|run)\b/.test(text)) {
+      const workflowId = matchWorkflowSlug(text.replace(/^(start|run)\s+(workflow\s+)?/, ""));
+      if (workflowId) return { kind: "start_workflow", workflowId, raw };
+      return { kind: "list_workflows", raw };
+    }
+    if (/^(ask|ping)\b/.test(text)) {
+      const teammateName = matchTeammateName(text);
+      if (teammateName) return { kind: "ask_teammate", teammateName, raw };
+      return { kind: "unknown", raw };
     }
     if (
       /^(list|show|what('?s| is)?)\b.*\b(pending|waiting|approvals?|requests?)\b/.test(text) ||
@@ -157,6 +216,38 @@ export function runVoiceCommandEffect(input: {
       });
     }
 
+    if (command.kind === "list_workflows") {
+      const workflows = yield* listWorkflowsEffect(input.session).pipe(
+        Effect.mapError((e) => new VoiceAssistantError({ reason: e.reason }))
+      );
+      if (workflows.length === 0) {
+        const spoken = "No workflows are available.";
+        return yield* finish({ command, spoken, detail: spoken });
+      }
+      const spoken = `Workflows: ${workflows.map((w) => w.title).join(", ")}. Say start and the name.`;
+      return yield* finish({
+        command,
+        spoken,
+        detail: workflows.map((w) => `• ${w.id} — ${w.title}`).join("\n"),
+        navigateTo: "/workflows",
+      });
+    }
+
+    if (command.kind === "start_workflow" && command.workflowId) {
+      const run = yield* startWorkflowEffect({
+        session: input.session,
+        workflowId: command.workflowId,
+      }).pipe(Effect.mapError((e) => new VoiceAssistantError({ reason: e.reason })));
+      const spoken = `Started ${run.name}.`;
+      return yield* finish({
+        command,
+        spoken,
+        detail: `Run ${run.id} · ${run.status}`,
+        startedWorkflowId: run.workflowId,
+        navigateTo: "/workflows",
+      });
+    }
+
     const list = yield* listReviewEffect(input.session).pipe(
       Effect.mapError((e) => new VoiceAssistantError({ reason: e.reason }))
     );
@@ -245,6 +336,29 @@ export function runVoiceCommandEffect(input: {
       });
     }
 
+    if (command.kind === "ask_teammate" && command.teammateName) {
+      const first = items[0];
+      if (!first) {
+        const spoken = "Nothing is waiting to ask about.";
+        return yield* finish({ command, spoken, detail: spoken, pendingCount: 0 });
+      }
+      yield* decideReviewEffect({
+        session: input.session,
+        id: first.id,
+        kind: first.kind,
+        decision: "ask_teammate",
+        answer: command.teammateName,
+      }).pipe(Effect.mapError((e) => new VoiceAssistantError({ reason: e.reason })));
+      const spoken = `Asked ${command.teammateName} about ${first.title}.`;
+      return yield* finish({
+        command,
+        spoken,
+        detail: spoken,
+        askedTeammate: command.teammateName,
+        pendingCount: Math.max(0, items.length - 1),
+      });
+    }
+
     if (command.kind === "approve_intent") {
       const first = items[0];
       const spoken = first
@@ -274,6 +388,70 @@ export function fixtureDictateEffect(
   return Effect.succeed(phrase.trim());
 }
 
+/**
+ * Web Speech API dictation (Chrome). No Info.plist / Day-0.
+ * On native or unsupported browsers, falls back to fixtureDictate of lastHint.
+ */
+export function webDictateEffect(input?: {
+  lastHint?: string;
+  timeoutMs?: number;
+}): Effect.Effect<string, VoiceAssistantError> {
+  return Effect.tryPromise({
+    try: () =>
+      new Promise<string>((resolve, reject) => {
+        if (Platform.OS !== "web") {
+          resolve((input?.lastHint ?? "").trim());
+          return;
+        }
+        const g = globalThis as unknown as {
+          SpeechRecognition?: new () => WebSpeechRecognition;
+          webkitSpeechRecognition?: new () => WebSpeechRecognition;
+        };
+        const Ctor = g.SpeechRecognition ?? g.webkitSpeechRecognition;
+        if (!Ctor) {
+          resolve((input?.lastHint ?? "").trim());
+          return;
+        }
+        const rec = new Ctor();
+        rec.lang = "en-US";
+        rec.interimResults = false;
+        rec.maxAlternatives = 1;
+        const timer = setTimeout(() => {
+          try {
+            rec.stop();
+          } catch {
+            /* ignore */
+          }
+          reject(new Error("dictate_timeout"));
+        }, input?.timeoutMs ?? 8_000);
+        rec.onresult = (ev: { results?: ArrayLike<ArrayLike<{ transcript?: string }>> }) => {
+          clearTimeout(timer);
+          const transcript = ev.results?.[0]?.[0]?.transcript?.trim() ?? "";
+          resolve(transcript || (input?.lastHint ?? ""));
+        };
+        rec.onerror = () => {
+          clearTimeout(timer);
+          resolve((input?.lastHint ?? "").trim());
+        };
+        rec.start();
+      }),
+    catch: (cause) =>
+      new VoiceAssistantError({
+        reason: cause instanceof Error ? cause.message : String(cause),
+      }),
+  });
+}
+
+type WebSpeechRecognition = {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onresult: ((ev: { results?: ArrayLike<ArrayLike<{ transcript?: string }>> }) => void) | null;
+  onerror: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+
 const CLAWQL_VOICE_TAG = "clawql/MobileVoiceAssistant" as const;
 
 export class MobileVoiceAssistantService extends Context.Service<
@@ -287,6 +465,10 @@ export class MobileVoiceAssistantService extends Context.Service<
     }) => Effect.Effect<VoiceAssistantResult, VoiceAssistantError>;
     readonly speak: (text: string) => Effect.Effect<void, VoiceAssistantError>;
     readonly fixtureDictate: (phrase: string) => Effect.Effect<string, VoiceAssistantError>;
+    readonly webDictate: (input?: {
+      lastHint?: string;
+      timeoutMs?: number;
+    }) => Effect.Effect<string, VoiceAssistantError>;
   }
 >()(CLAWQL_VOICE_TAG) {}
 
@@ -295,4 +477,5 @@ export const MobileVoiceAssistantLive = Layer.succeed(MobileVoiceAssistantServic
   run: runVoiceCommandEffect,
   speak: speakTextEffect,
   fixtureDictate: fixtureDictateEffect,
+  webDictate: webDictateEffect,
 });

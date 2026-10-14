@@ -66,6 +66,31 @@ test.describe("PhoneApprove store_iap + Face ID (fixture web)", () => {
     ).toContainText(/Pending/i);
   });
 
+  test("MOB-25 Voice start workflow + Shortcuts donation", async ({ page }) => {
+    await signInFixture(page);
+    await page.getByTestId("tab-profile").first().click();
+    await page.getByTestId("profile-open-voice").filter({ visible: true }).first().click();
+    await expect(page.getByTestId("voice-screen").filter({ visible: true }).first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await page
+      .getByTestId("voice-suggest-start-standup-digest")
+      .filter({ visible: true })
+      .first()
+      .click();
+    await expect(
+      page.getByTestId("workflows-screen").filter({ visible: true }).first()
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(
+      page.getByTestId("workflows-runs").filter({ visible: true }).first()
+    ).toBeVisible({ timeout: 10_000 });
+    await page.getByTestId("workflows-open-voice").filter({ visible: true }).first().click();
+    await page.getByTestId("voice-shortcut-list_pending").filter({ visible: true }).first().click();
+    await expect(
+      page.getByTestId("voice-shortcut-note").filter({ visible: true }).first()
+    ).toBeVisible({ timeout: 10_000 });
+  });
+
   test("MOB-23 Spend upgrade CTA opens Profile billing", async ({ page }) => {
     await signInFixture(page);
     await page.goto("/spend", { waitUntil: "networkidle" });

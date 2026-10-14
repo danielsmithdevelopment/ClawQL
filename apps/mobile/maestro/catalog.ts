@@ -183,6 +183,13 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-24-voice-list-pending.yaml",
   },
   {
+    id: "MOB-25",
+    run: "Maestro",
+    title: "Voice start workflow + Shortcuts donation share",
+    passWhen: "start standup digest navigates to Workflows; Shortcuts share note appears",
+    flow: "maestro/flows/mob-25-voice-workflow-shortcuts.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',
@@ -199,8 +206,8 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
 export function assertMobileCatalogComplete(): void {
   const maestro = MOBILE_SCENARIOS.filter((s) => s.run === "Maestro");
   const manual = MOBILE_SCENARIOS.filter((s) => s.run === "Manual");
-  if (maestro.length !== 24) {
-    throw new Error(`Expected 24 Maestro MOB scenarios, got ${maestro.length}`);
+  if (maestro.length !== 25) {
+    throw new Error(`Expected 25 Maestro MOB scenarios, got ${maestro.length}`);
   }
   if (manual.length !== 2) {
     throw new Error(`Expected 2 Manual scenarios (REV-13, UX-09), got ${manual.length}`);

@@ -282,6 +282,26 @@ export const DocumentAttachment = Schema.Struct({
 });
 export type DocumentAttachment = Schema.Schema.Type<typeof DocumentAttachment>;
 
+/** Fixture / console-parity workflow (skill program) the voice assistant can start. */
+export const WorkflowProgram = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  title: Schema.String,
+  summary: Schema.String,
+  stage: Schema.Literals(["active", "proving", "proposed", "retired"]),
+});
+export type WorkflowProgram = Schema.Schema.Type<typeof WorkflowProgram>;
+
+export const WorkflowRun = Schema.Struct({
+  id: Schema.String,
+  workflowId: Schema.String,
+  name: Schema.String,
+  startedAtMs: Schema.Number,
+  status: Schema.Literals(["started", "running", "done"]),
+  fixture: Schema.Boolean,
+});
+export type WorkflowRun = Schema.Schema.Type<typeof WorkflowRun>;
+
 export const MobileSession = Schema.Struct({
   accessToken: Schema.String,
   refreshToken: Schema.optional(Schema.String),

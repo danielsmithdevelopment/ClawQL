@@ -15,6 +15,7 @@ import type {
   SecurityKey,
   Teammate,
   MobileSession,
+  WorkflowProgram,
 } from "./schemas";
 
 export const FIXTURE_SESSION: MobileSession = {
@@ -501,6 +502,31 @@ export const FIXTURE_DEVICE_SESSIONS: readonly DeviceSession[] = [
     current: false,
     lastActive: "Yesterday",
     ended: false,
+  },
+];
+
+/** Console-parity workflows the voice assistant can list / start (fixture). */
+export const FIXTURE_WORKFLOWS: readonly WorkflowProgram[] = [
+  {
+    id: "weekly-spend-digest",
+    name: "weekly-spend-digest",
+    title: "Weekly spend digest",
+    summary: "Summarizes weekly spend for finance and posts a digest.",
+    stage: "proving",
+  },
+  {
+    id: "standup-digest",
+    name: "standup-digest",
+    title: "Standup digest",
+    summary: "Posts a daily summary to Slack.",
+    stage: "active",
+  },
+  {
+    id: "intake-msa",
+    name: "intake-msa",
+    title: "MSA intake",
+    summary: "Normalizes MSA intake fields into the CRM.",
+    stage: "active",
   },
 ];
 

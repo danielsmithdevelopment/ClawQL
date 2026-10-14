@@ -39,7 +39,8 @@ export type AppDeepLinkTarget =
   | { readonly surface: "teammates" }
   | { readonly surface: "policies" }
   | { readonly surface: "policy"; readonly id: string }
-  | { readonly surface: "voice"; readonly query?: string };
+  | { readonly surface: "voice"; readonly query?: string }
+  | { readonly surface: "workflows" };
 
 const CLOUD_HOSTS = new Set(["cloud.clawql.com", "acme.cloud.clawql.com"]);
 
@@ -78,6 +79,7 @@ function targetFromSegments(
   if (head === "voice") {
     return voiceQuery ? { surface: "voice", query: voiceQuery } : { surface: "voice" };
   }
+  if (head === "workflows") return { surface: "workflows" };
   return null;
 }
 
@@ -310,6 +312,8 @@ export function buildAppDeepLinkEffect(
         return target.query
           ? `${base}/voice?q=${encodeURIComponent(target.query)}`
           : `${base}/voice`;
+      case "workflows":
+        return `${base}/workflows`;
     }
   });
 }
@@ -335,6 +339,8 @@ export function hrefForDeepLink(target: AppDeepLinkTarget): string {
       return "/policies";
     case "voice":
       return target.query ? `/voice?q=${encodeURIComponent(target.query)}` : "/voice";
+    case "workflows":
+      return "/workflows";
   }
 }
 
