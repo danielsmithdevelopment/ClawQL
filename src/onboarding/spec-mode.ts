@@ -1,5 +1,17 @@
+function envTruthy(raw: string | undefined): boolean {
+  const t = raw?.trim().toLowerCase();
+  return t === "1" || t === "true" || t === "yes";
+}
+
 /** Infer human-readable spec / provider mode from environment (no spec load). */
 export function inferSpecMode(): string {
+  const sqliteLoad = (process.env.CLAWQL_CATALOG_SQLITE_LOAD ?? "").trim().toLowerCase();
+  if (
+    envTruthy(process.env.CLAWQL_CATALOG_SQLITE) &&
+    (sqliteLoad === "db" || sqliteLoad === "sqlite")
+  ) {
+    return "catalog-sqlite";
+  }
   if (
     process.env.CLAWQL_SPEC_PATH?.trim() ||
     process.env.CLAWQL_SPEC_URL?.trim() ||
