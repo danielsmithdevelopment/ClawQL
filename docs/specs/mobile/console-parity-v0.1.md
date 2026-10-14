@@ -12,47 +12,21 @@ Corrected: earlier agent notes that marked Gateway / Automations / Memory / Audi
 
 ## Managed console map → phone
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-=======
->>>>>>> 0bab0bc4 (feat(mobile): Gateway routes, Memory erase, billing portal CTA)
-| Console            | Phone route (target)            | Phase                                              |
-| ------------------ | ------------------------------- | -------------------------------------------------- |
-| Home               | Tabs Home                       | Shipped                                            |
-| Sessions           | `/sessions`                     | Agent timeline + managed API                       |
-| Review             | Tabs Review                     | Shipped                                            |
-| Gateway            | `/gateway`                      | Endpoints + model routes; managed API              |
-| Automations        | `/automations`                  | Subscriptions; managed API                         |
-| Skills             | `/skills` + Review skill decide | Proposed/active + managed API                      |
-| Memory & documents | `/memory` + `/memory/:id`       | Explorer + pipelines + erase; managed API          |
-| Connections & keys | `/connections` + `/keys`        | Live keys/connections adapters                     |
-| Audit              | `/audit`                        | Entries + incident; managed API                    |
-| Team               | `/teammates`                    | Invite + roles/groups; `/api/managed/team`         |
-| Usage & billing    | `/spend` + Profile plan         | Usage depth + billing portal CTA                   |
-| Settings           | `/settings`                     | Org + network + retention; managed API             |
-| Profile            | Tabs Profile                    | Shipped                                            |
-<<<<<<< HEAD
-| =======            |
-| Console            | Phone route (target)            | Phase                                              |
-| -------            | --------------------            | -----                                              |
-| Home               | Tabs Home                       | Shipped                                            |
-| Sessions           | `/sessions`                     | Agent timeline shipped                             |
-| Review             | Tabs Review                     | Shipped                                            |
-| Gateway            | `/gateway`                      | Fixture list shipped                               |
-| Automations        | `/automations`                  | Fixture list shipped                               |
-| Skills             | `/skills` + Review skill decide | Proposed/active shipped                            |
-| Memory & documents | `/memory` + `/memory/:id`       | Explorer shipped                                   |
-| Connections & keys | `/connections` + `/keys`        | Connections + keys; live keys/connections adapters |
-| Audit              | `/audit`                        | Entries + chain incident shipped                   |
-| Team               | `/teammates`                    | Invite + roles/groups; live `/api/managed/team`    |
-| Usage & billing    | `/spend` + Profile plan         | Month/forecast/team rows via `/api/managed/usage`  |
-| Settings           | `/settings`                     | Org + network + retention shipped                  |
-| Profile            | Tabs Profile                    | Shipped                                            |
-
-> > > > > > > 2515bf00 (feat(mobile): Team invite/roles and deeper Usage via managed APIs)
-=======
->>>>>>> 0bab0bc4 (feat(mobile): Gateway routes, Memory erase, billing portal CTA)
+| Console            | Phone route (target)            | Phase                                     |
+| ------------------ | ------------------------------- | ----------------------------------------- |
+| Home               | Tabs Home                       | Shipped                                   |
+| Sessions           | `/sessions`                     | Agent timeline + managed API              |
+| Review             | Tabs Review                     | Shipped                                   |
+| Gateway            | `/gateway`                      | Endpoints + model routes; managed API     |
+| Automations        | `/automations`                  | Subscriptions; managed API                |
+| Skills             | `/skills` + Review skill decide | Proposed/active + managed API             |
+| Memory & documents | `/memory` + `/memory/:id`       | Explorer + pipelines + erase; managed API |
+| Connections & keys | `/connections` + `/keys`        | Live keys/connections adapters            |
+| Audit              | `/audit`                        | Entries + incident; managed API           |
+| Team               | `/teammates`                    | Invite + roles/groups; managed team API   |
+| Usage & billing    | `/spend` + Profile plan         | Usage depth + billing portal CTA          |
+| Settings           | `/settings`                     | Org + network + retention; managed API    |
+| Profile            | Tabs Profile                    | Shipped                                   |
 
 Phone-native extras (Voice, NFC, App Lock, push inbox) stay additive.
 
