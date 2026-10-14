@@ -38,8 +38,12 @@ import {
 import { ensureExecutorOpenapiApp } from "./lib/ensure-executor-openapi-app.mjs";
 import {
   CLAWQL_STEP_SHAPES,
+  modelWrittenShapeText,
   programPlanSource,
 } from "./lib/clawql-shapes.mjs";
+
+/** Price-weight: model-written code/where/plan at 5× input (blog / board convention). */
+const CODE_PRICE_WEIGHT = Number(process.env.CF_MT_CODE_PRICE_WEIGHT || 5) || 5;
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "../../..");
@@ -589,14 +593,17 @@ async function runClawqlSession(client, expectations, { knownOp = false } = {}) 
       if (sRes.isError) throw new Error(`search ${step}: ${toolText(sRes).slice(0, 200)}`);
       discoveryTokens = countTokens(toolText(sRes));
     }
+    const execArgs = {
+      operationId: shape.operationId,
+      args: shape.args,
+      where: shape.where,
+    };
+    // Model-written shaping (where/fields) — same bucket as code-mode script tokens.
+    const codeTokens = countTokens(modelWrittenShapeText(shape));
     const tE = performance.now();
     const eRes = await client.callTool({
       name: "execute",
-      arguments: {
-        operationId: shape.operationId,
-        args: shape.args,
-        where: shape.where,
-      },
+      arguments: execArgs,
     });
     const execMs = performance.now() - tE;
     if (eRes.isError) throw new Error(`execute ${step}: ${toolText(eRes).slice(0, 300)}`);
@@ -608,7 +615,7 @@ async function runClawqlSession(client, expectations, { knownOp = false } = {}) 
     if (json?.status === "where_invalid") {
       throw new Error(`execute ${step} where_invalid: ${json.error || text.slice(0, 200)}`);
     }
-    // Observation-sized where returns the check payload directly (code-mode Layer-2 peer).
+    // Result tokens = server MCP text only (no client reshape). where ran on ClawQL.
     const observed = json;
     const check = checkStep(step, observed, expectations);
     ok &&= check.ok;
@@ -617,10 +624,11 @@ async function runClawqlSession(client, expectations, { knownOp = false } = {}) 
       calls: knownOp ? 1 : 2,
       discoveryTokens,
       resultTokens: countTokens(text),
-      codeTokens: 0,
+      codeTokens,
       latency_ms: discoveryMs + execMs,
       check,
       where: shape.where,
+      model_written: modelWrittenShapeText(shape),
     });
   }
 
@@ -1075,6 +1083,7 @@ async function runArmSessions({
   const resultMean = resultTok.reduce((a, b) => a + b, 0) / resultTok.length;
   const codeMean = codeTok.reduce((a, b) => a + b, 0) / codeTok.length;
   const combinedMean = def + discoveryMean + resultMean + codeMean;
+  const weightedMean = def + discoveryMean + resultMean + CODE_PRICE_WEIGHT * codeMean;
   const combinedAtN = def + discoveryTok.reduce((a, b) => a + b, 0) + resultTok.reduce((a, b) => a + b, 0) + codeTok.reduce((a, b) => a + b, 0);
 
   return {
@@ -1087,14 +1096,18 @@ async function runArmSessions({
     discovery_tokens_mean: discoveryMean,
     result_tokens_mean: resultMean,
     code_tokens_mean: codeMean,
+    code_price_weight: CODE_PRICE_WEIGHT,
     /** Rebuildable: definition + discovery + result + code (per-session means). */
     combined_mean: combinedMean,
+    /** Price-weighted: definition + discovery + result + weight×code. */
+    weighted_mean: weightedMean,
     /** Rebuildable at N: Layer1 once + sum(discovery+result+code) over sessions. */
     combined_at_n: combinedAtN,
     rebuild_check: {
       combined_mean_ok:
         Math.abs(combinedMean - (def + discoveryMean + resultMean + codeMean)) < 1e-6,
       formula: "definition + discovery + result + code",
+      weighted_formula: `definition + discovery + result + ${CODE_PRICE_WEIGHT}*code`,
     },
     calls_mean: sessions.reduce((n, s) => n + s.calls_sum, 0) / sessions.length,
     session_ms: {
@@ -1263,6 +1276,7 @@ async function main() {
         result_tokens_mean: rows.map((r) => r.result_tokens_mean),
         code_tokens_mean: rows.map((r) => r.code_tokens_mean),
         combined_mean: rows.map((r) => r.combined_mean),
+        weighted_mean: rows.map((r) => r.weighted_mean),
         combined_at_n: rows.map((r) => r.combined_at_n),
         session_p50_ms: rows.map((r) => r.session_ms.p50),
         session_p999_ms: rows.map((r) => r.session_ms.p999),

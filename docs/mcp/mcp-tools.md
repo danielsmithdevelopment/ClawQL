@@ -201,9 +201,17 @@ Returns ranked **`operationId`** candidates and metadata — no upstream HTTP.
     "parent": "projects/my-proj/locations/us-central1",
     "pageSize": 10
   },
-  "fields": ["name", "uri"]
+  "fields": ["name", "uri"],
+  "where": "result[?state=='ACTIVE'].{name: name, uri: uri}"
 }
 ```
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `operationId` | yes | From **`search`** (or known). |
+| `args` | no | Operation parameters. |
+| `fields` | no | Optional top-level key projection after `where`. Omit for defaults. |
+| `where` | no | Optional **JMESPath** filter/extract applied **server-side** after the provider response and **before** `fields` (max 512 chars; complexity caps; fail-closed). Standard JMESPath functions apply — including **`length()`** for counts, e.g. `{aRecordCount: length(result[?type==\`A\`])}`. Invalid expressions return `where_invalid` (never unfiltered provider data). |
 
 `fields` is optional; omit for defaults. For **OpenAPI/Discovery** operations, single-spec mode prefers **REST** when `fields` are plain keys (`CLAWQL_OPENAPI_EXECUTE_PATH=auto`); nested GraphQL selection sets (`nodes { id }`) still use in-process OpenAPI→GraphQL (schema cached). Set `graphql` to force the legacy GraphQL-first path. **Native** GraphQL / gRPC operations ignore that path; see below.
 

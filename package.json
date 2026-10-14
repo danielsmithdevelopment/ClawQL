@@ -110,6 +110,7 @@
     "benchmark:cloudflare-multiturn:fixture": "node scripts/benchmarks/cloudflare-multiturn/generate-synthetic-fixture.mjs",
     "benchmark:cloudflare-multiturn:smoke": "node scripts/benchmarks/cloudflare-multiturn/generate-synthetic-fixture.mjs && node scripts/benchmarks/cloudflare-multiturn/run-zone-audit.mjs",
     "benchmark:cloudflare-multiturn:board": "node scripts/benchmarks/cloudflare-multiturn/run-board.mjs",
+    "benchmark:cloudflare-multiturn:real-model": "node scripts/benchmarks/cloudflare-multiturn/run-real-model.mjs",
     "benchmark:cloudflare-multiturn:test": "node --test scripts/benchmarks/cloudflare-multiturn/lib/success-checks.test.mjs scripts/benchmarks/cloudflare-multiturn/lib/clawql-shapes.test.mjs",
     "generate:executor-cmp-latency-html": "node scripts/benchmarks/generate-executor-cmp-latency-html.mjs",
     "generate:executor-cmp-static": "npm run generate:executor-cmp-static -w mcp-api-adapter",

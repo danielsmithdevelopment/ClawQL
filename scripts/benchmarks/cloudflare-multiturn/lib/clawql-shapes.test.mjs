@@ -5,7 +5,11 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import jmespath from "jmespath";
 import { buildExpectations, checkStep } from "./success-checks.mjs";
-import { CLAWQL_STEP_SHAPES, programPlanSource } from "./clawql-shapes.mjs";
+import {
+  CLAWQL_STEP_SHAPES,
+  modelWrittenShapeText,
+  programPlanSource,
+} from "./clawql-shapes.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const fixture = JSON.parse(
@@ -56,5 +60,11 @@ describe("clawql observation-shaped where", () => {
     assert.equal(plan.mode, "sequential");
     assert.equal(plan.calls.length, 11);
     assert.ok(plan.calls.every((c) => c.tool === "execute" && typeof c.where === "string"));
+  });
+
+  it("modelWrittenShapeText includes where (harness builds args only)", () => {
+    const text = modelWrittenShapeText(CLAWQL_STEP_SHAPES[4]);
+    assert.match(text, /length\(result/);
+    assert.ok(text.length > 10);
   });
 });

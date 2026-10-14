@@ -9,25 +9,44 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | Spec + fairness rules | Done |
 | Curated ~60-op subset | **Frozen** 2026-10-14 |
 | Synthetic fixture + replay mock | Done (label: real schemas, synthetic content) |
-| 12-step scripted success checks | Done |
-| Arms wired (Streamable HTTP) | Done — see `run-board.mjs` |
-| Executor OpenAPI → mock | Done — `liveOpenapiRouter` app `cf-zone-audit-mock` |
-| Observation-sized `where` on ClawQL | Done — `lib/clawql-shapes.mjs` (Layer-2 ≈ code mode) |
-| `clawql_program` (ADR 0015 v0 plan runner) | Done — `CLAWQL_ENABLE_PROGRAMS=1` |
-| ClawQL `CLAWQL_SEARCH_COMPACT` labeled arm | Done — `clawql_compact_search` |
-| **Publish board: 3×10k interleaved** | **Re-run required** after where + program arm (prior board used weak where) |
-| Real-model 50-session validation | Next |
-| CF code-mode self-host | Tokens-only until self-host works |
+| Observation-sized `where` (server-side JMESPath) | Done — harness builds args only; see scrutiny notes |
+| `where` / plan args counted as code tokens | Done — same bucket as code-mode scripts |
+| `clawql_program` (ADR 0015 v0 plan runner) | Done |
+| **Publish board: 3×10k** | **Pending** (re-run with code-arg accounting) |
+| **Real-model 50 sessions / arm** | **Harness ready; blocked on `OPENAI_API_KEY` + `CF_MT_MODEL`** |
+| Blog / public headline | **Hold** until publish board + real-model land |
 
-N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the board.
+N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the board. Do **not** ship the reversed-headline blog until both gates pass.
+
+## Scrutiny (must hold before believing the reversal)
+
+### 1. Shaping is on the ClawQL server
+
+`lib/clawql-shapes.mjs` only builds `execute` / `execute_program` **arguments** (the ClawQL peer of harness-authored code-mode scripts). The board counts `resultTokens` from **MCP response text** (`toolText(eRes)`). There is no client-side reshape of rows into counts. Aggregates use standard JMESPath **`length()`** via product `execute.where` ([docs](../../mcp/mcp-tools.md#execute), [jmespath.org](https://jmespath.org/specification.html)).
+
+### 2. Model-written `where` / plan count as code
+
+| Arm | What counts as `code` |
+| --- | --- |
+| `clawql_*` execute steps | tokens of `where` (+ `fields` if any) |
+| `clawql_program` | tokens of the JSON plan `source` |
+| `executor_v2` / `cloudflare_codemode` | tokens of published JS |
+
+`weighted_mean = definition + discovery + result + 5×code` is on every arm row.
+
+### 3. Real-model gate
+
+```bash
+CF_MT_MODEL=… OPENAI_API_KEY=… CF_MT_REAL_ITERS=50 \
+  npm run benchmark:cloudflare-multiturn:real-model
+```
+
+Models must write correct `where` (or program plans / JS) themselves. Scripted board success alone does not prove the product claim.
 
 ## Rebuildable token formula
 
-Every arm row reports:
-
-`definition + discovery + result + code = combined_mean` (per session)
-
-Also `combined_at_n` = Layer-1 once + Σ(discovery+result+code) over N sessions.
+`definition + discovery + result + code = combined_mean`  
+`definition + discovery + result + 5×code = weighted_mean`
 
 ## Quick start
 
@@ -47,38 +66,25 @@ CF_MT_ITERS=2 CF_MT_REPS=1 npm run benchmark:cloudflare-multiturn:board
 CF_MT_ITERS=10000 CF_MT_REPS=3 npm run benchmark:cloudflare-multiturn:board
 ```
 
-## Smoke evidence (where + program — N=2, not the board)
+## Smoke evidence (N=2 — not the board; `where` charged as code)
 
-Artifact: [`smoke-summary-n2-r1.json`](./smoke-summary-n2-r1.json) · task success **100%** · observation-shaped `where` · `clawql_program` via `execute_program`.
+Artifact: [`smoke-summary-n2-r1.json`](./smoke-summary-n2-r1.json) · 100% task success · **not publishable**.
 
-| Arm | Def | Discovery | Result | Code | Combined | Price-weighted (5× code) | Upstream |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| `clawql_known_op` | 308 | 0 | 480 | 0 | **788** | **788** | mock |
-| `executor_v2` | 181 | 0 | 357 | 958 | 1496 | 5328 | mock |
-| `cloudflare_codemode` | 1000† | 0 | 357 | 518 | 1875 | 3947 | none |
-| `clawql_program` | 685 | 0 | **357** | 872 | 1914 | 5402 | mock |
-| `clawql_compact_search` | 308 | 4092 | 480 | 0 | 4880 | 4880 | mock |
-| `clawql_default` | 308 | 15988 | 480 | 0 | 16776 | 16776 | mock |
-| `direct` | 0 | 0 | 47361 | 0 | 47361 | 47361 | mock |
-| `agentgateway` | 7344 | 0 | 47361 | 0 | 54705 | 54705 | mock |
-| `mcpjungle` | 7760 | 0 | 47361 | 0 | 55121 | 55121 | mock |
+| Arm | Def | Disc | Result | Code | Combined | Weighted (5×) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `clawql_known_op` | 308 | 0 | 480 | 191 | **979** | **1743** |
+| `executor_v2` | 181 | 0 | 357 | 958 | 1496 | 5328 |
+| `cloudflare_codemode` | 1000 | 0 | 357 | 518 | 1875 | 3947 |
+| `clawql_program` | 685 | 0 | 357 | 872 | 1914 | 5402 |
+| `clawql_compact_search` | 308 | 4092 | 480 | 191 | 5071 | 5835 |
+| `clawql_default` | 308 | 15988 | 480 | 191 | 16967 | 17731 |
+| `direct` | 0 | 0 | 47361 | 0 | 47361 | 47361 |
 
-† Documented CF two-tool Layer-1 (~1000). CF latency N/A (tokens-only).
+With `where` counted as output, known-op still beats code mode on **both** raw and weighted in this smoke. Hold the public claim until 3×10k + real-model.
 
-**Finding:** with observation-sized `where`, ClawQL known-op **beats raw code-mode totals** (788 vs 1496 / 1875) and stays competitive when code is price-weighted 5×. `clawql_program` matches code-mode **result tokens (357)** in one round trip; its plan JSON is counted as code. Compact search remains a labeled setting.
+## Framing (if full board + real-model clear)
 
-ADR 0015: filtering wins belong to declarative `where`; program mode (plan runner today; celld JS later) is for fan-out / joins and governed one-shot plans.
-
-## Prior publish board (pre-where — superseded)
-
-[`board-summary-n10000-r3.json`](./board-summary-n10000-r3.json) measured weak DNS `where` (step 4 returned all A names). Kept for history; do not cite as the current comparison. Re-run 3×10k after this change.
-
-## Live recording (once)
-
-```bash
-CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=… AUDIT_ZONE_NAME=example.com \
-  node scripts/benchmarks/cloudflare-multiturn/record/record-cloudflare-reads.mjs
-```
+Declarative `where` is the strong position: server-enforced, cheap to express, no interpreter to secure, every call individually governed. Programs handle fan-out, joins, and governed multi-step reads (ADR 0015). Hold the blog headline until both gates land.
 
 ## Open questions
 

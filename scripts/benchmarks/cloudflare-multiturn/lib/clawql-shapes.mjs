@@ -1,8 +1,25 @@
 /**
  * Observation-sized JMESPath `where` for ClawQL execute / execute_program.
+ *
+ * Honesty: this module only **builds tool arguments** a model would send
+ * (`operationId`, `args`, `where`). Shaping runs **on the ClawQL server** via
+ * product `execute.where` (JMESPath, including standard `length()`). The board
+ * counts result tokens from MCP response text bytes — never client-side
+ * post-processing of rows into counts/names.
+ *
  * Shapes match code-mode program returns so Layer-2 tokens compare fairly (~357).
  */
 import { FAKE } from "./fixture-ids.mjs";
+
+/** Model-written shaping args (parallel to code-mode script tokens). */
+export function modelWrittenShapeText(shape) {
+  const parts = [];
+  if (shape?.where) parts.push(String(shape.where));
+  if (Array.isArray(shape?.fields) && shape.fields.length) {
+    parts.push(JSON.stringify(shape.fields));
+  }
+  return parts.join("\n");
+}
 
 const zone = FAKE.auditZoneName;
 const ip = FAKE.targetIp;
