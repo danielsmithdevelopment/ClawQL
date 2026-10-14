@@ -685,6 +685,21 @@ export default function ProfileScreen() {
           onPress={() => router.push("/memory")}
         />
         <SecondaryButton
+          testID="profile-open-sessions"
+          label="Sessions"
+          onPress={() => router.push("/sessions")}
+        />
+        <SecondaryButton
+          testID="profile-open-skills"
+          label="Skills"
+          onPress={() => router.push("/skills")}
+        />
+        <SecondaryButton
+          testID="profile-open-connections"
+          label="Connections"
+          onPress={() => router.push("/connections")}
+        />
+        <SecondaryButton
           testID="profile-open-keys"
           label="API keys"
           onPress={() => router.push("/keys")}

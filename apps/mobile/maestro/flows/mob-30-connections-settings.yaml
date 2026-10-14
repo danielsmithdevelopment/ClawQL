@@ -1,0 +1,24 @@
+# MOB-30 — Connections + Settings network
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- tapOn:
+    id: "profile-open-connections"
+- assertVisible:
+    id: "connections-screen"
+- assertVisible:
+    id: "connection-row-github"
+- assertVisible:
+    id: "connection-account-gh_work"
+- tapOn:
+    id: "connections-open-settings"
+- assertVisible:
+    id: "settings-screen"
+- assertVisible:
+    id: "settings-network"
+- assertVisible:
+    id: "settings-privacy"

@@ -46,7 +46,10 @@ export type AppDeepLinkTarget =
   | { readonly surface: "gateway" }
   | { readonly surface: "automations" }
   | { readonly surface: "audit" }
-  | { readonly surface: "settings" };
+  | { readonly surface: "settings" }
+  | { readonly surface: "sessions" }
+  | { readonly surface: "skills" }
+  | { readonly surface: "connections" };
 
 const CLOUD_HOSTS = new Set(["cloud.clawql.com", "acme.cloud.clawql.com"]);
 
@@ -93,6 +96,9 @@ function targetFromSegments(
   if (head === "automations") return { surface: "automations" };
   if (head === "audit") return { surface: "audit" };
   if (head === "settings") return { surface: "settings" };
+  if (head === "sessions") return { surface: "sessions" };
+  if (head === "skills") return { surface: "skills" };
+  if (head === "connections") return { surface: "connections" };
   return null;
 }
 
@@ -341,6 +347,12 @@ export function buildAppDeepLinkEffect(
         return `${base}/audit`;
       case "settings":
         return `${base}/settings`;
+      case "sessions":
+        return `${base}/sessions`;
+      case "skills":
+        return `${base}/skills`;
+      case "connections":
+        return `${base}/connections`;
     }
   });
 }
@@ -380,6 +392,12 @@ export function hrefForDeepLink(target: AppDeepLinkTarget): string {
       return "/audit";
     case "settings":
       return "/settings";
+    case "sessions":
+      return "/sessions";
+    case "skills":
+      return "/skills";
+    case "connections":
+      return "/connections";
   }
 }
 

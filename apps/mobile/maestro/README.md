@@ -44,9 +44,12 @@ Catalog source of truth: [`catalog.ts`](catalog.ts).
 | `mob-25-voice-workflow-shortcuts.yaml` | MOB-25 | Voice start workflow + Shortcuts share |
 | `mob-26-memory-explorer.yaml` | MOB-26 | Memory explorer search + detail |
 | `mob-27-api-keys.yaml` | MOB-27 | API keys issue + secret |
+| `mob-28-sessions.yaml` | MOB-28 | Sessions timeline |
+| `mob-29-skills.yaml` | MOB-29 | Skills proposed + active |
+| `mob-30-connections-settings.yaml` | MOB-30 | Connections + Settings network |
 
 **Still device-only (Manual):** REV-13, UX-09 — physical YubiKey NFC. Use `modules/clawql-nfc-security-key` mock injection in CI until the native modules ship.
 
-**CI web e2e (Playwright on fixture export):** `npm run test:e2e` — MOB-20…27 style paths without a simulator (see `e2e/`).
+**CI web e2e (Playwright on fixture export):** `npm run test:e2e` — MOB-20…30 style paths without a simulator (see `e2e/`).
 
 **Web / CI a11y gate (not Maestro):** `npm run a11y:lh` — Lighthouse mobile a11y/BP/SEO 100 + axe WCAG 2.1 A/AA on the fixture web export.

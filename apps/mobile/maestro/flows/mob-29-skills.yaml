@@ -1,0 +1,18 @@
+# MOB-29 — Skills proposed + active
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- tapOn:
+    id: "profile-open-skills"
+- assertVisible:
+    id: "skills-screen"
+- assertVisible:
+    id: "skills-proposed"
+- assertVisible:
+    id: "skill-proposed-contract-redline-check"
+- assertVisible:
+    id: "skills-active"

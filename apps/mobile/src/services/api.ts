@@ -20,27 +20,37 @@ import {
   FIXTURE_POLICY_DETAIL,
   FIXTURE_REVIEW_ITEMS,
   FIXTURE_SPEND,
+  FIXTURE_ACTIVE_SKILLS,
+  FIXTURE_AGENT_SESSIONS,
   FIXTURE_API_KEYS,
   FIXTURE_AUDIT_ENTRIES,
+  FIXTURE_AUDIT_INCIDENT,
   FIXTURE_AUTOMATIONS,
+  FIXTURE_CONNECTIONS,
   FIXTURE_GATEWAY_ENDPOINTS,
   FIXTURE_MEMORY_FIELDS,
   FIXTURE_MEMORY_RESULTS,
   FIXTURE_ORG_SETTINGS,
+  FIXTURE_ORG_SETTINGS_BUNDLE,
+  FIXTURE_PROPOSED_SKILLS,
   FIXTURE_TEAMMATES,
   FIXTURE_WORKFLOWS,
 } from "../domain/fixtures";
 import {
   AccountDeletionResult,
+  ActiveSkill,
   ActivityEvent,
   ActivityListResponse,
+  AgentSession,
   AgentSummary,
   ApiKeyItem,
   ApprovalPolicy,
   ApprovalPolicyDetail,
   AuditEntry,
+  AuditIncident,
   AutomationSub,
   ConnectedApp,
+  ConnectionItem,
   DeviceSession,
   DocumentAttachment,
   GatewayEndpoint,
@@ -51,7 +61,9 @@ import {
   MorningDigest,
   NotificationPrefs,
   OrgSettings,
+  OrgSettingsBundle,
   OrgSummary,
+  ProposedSkill,
   PushDevice,
   ReviewDecision,
   ReviewItem,
@@ -758,9 +770,26 @@ export function listApiKeysEffect(
   session: MobileSession
 ): Effect.Effect<readonly ApiKeyItem[], MobileApiError> {
   return Effect.gen(function* () {
-    void session;
-    const state = yield* Ref.get(stateRef);
-    return state.apiKeys.filter((k) => !k.revoked);
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      const state = yield* Ref.get(stateRef);
+      return state.apiKeys.filter((k) => !k.revoked);
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/keys`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{ keys?: ApiKeyItem[] }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    });
+    return (res.keys ?? []).filter((k) => !k.revoked);
   });
 }
 
@@ -771,10 +800,33 @@ export function issueApiKeyEffect(input: {
   keyGroup?: string;
 }): Effect.Effect<{ key: ApiKeyItem; secret: string }, MobileApiError> {
   return Effect.gen(function* () {
-    void input.session;
+    const config = yield* loadMobileConfigEffect();
     const name = input.name.trim();
     if (!name) {
       return yield* Effect.fail(new MobileApiError({ reason: "name_required" }));
+    }
+    if (!isFixtureSession(input.session, config.fixtureMode)) {
+      const res = yield* Effect.tryPromise({
+        try: async () => {
+          const r = await fetch(`${config.apiBase}/api/managed/keys`, {
+            method: "POST",
+            headers: authHeaders(input.session),
+            body: JSON.stringify({
+              name,
+              teamId: input.keyGroup,
+              scope: ["execute", "search", "memory"],
+            }),
+          });
+          if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+          return r.json() as Promise<{ key: ApiKeyItem; secret: string }>;
+        },
+        catch: (cause) =>
+          new MobileApiError({
+            reason: cause instanceof Error ? cause.message : String(cause),
+            status: (cause as { status?: number })?.status,
+          }),
+      });
+      return { key: res.key, secret: res.secret };
     }
     const endsIn = Math.random().toString(16).slice(2, 6);
     const key: ApiKeyItem = {
@@ -801,7 +853,26 @@ export function revokeApiKeyEffect(input: {
   keyId: string;
 }): Effect.Effect<{ ok: true; keyId: string }, MobileApiError> {
   return Effect.gen(function* () {
-    void input.session;
+    const config = yield* loadMobileConfigEffect();
+    if (!isFixtureSession(input.session, config.fixtureMode)) {
+      yield* Effect.tryPromise({
+        try: async () => {
+          const r = await fetch(`${config.apiBase}/api/managed/keys`, {
+            method: "POST",
+            headers: authHeaders(input.session),
+            body: JSON.stringify({ action: "revoke", keyId: input.keyId }),
+          });
+          if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+          return r.json();
+        },
+        catch: (cause) =>
+          new MobileApiError({
+            reason: cause instanceof Error ? cause.message : String(cause),
+            status: (cause as { status?: number })?.status,
+          }),
+      });
+      return { ok: true as const, keyId: input.keyId };
+    }
     const state = yield* Ref.get(stateRef);
     if (!state.apiKeys.some((k) => k.id === input.keyId)) {
       return yield* Effect.fail(
@@ -816,6 +887,92 @@ export function revokeApiKeyEffect(input: {
     }));
     return { ok: true as const, keyId: input.keyId };
   });
+}
+
+export function listConnectionsEffect(
+  session: MobileSession
+): Effect.Effect<readonly ConnectionItem[], MobileApiError> {
+  return Effect.gen(function* () {
+    const config = yield* loadMobileConfigEffect();
+    if (isFixtureSession(session, config.fixtureMode)) {
+      return FIXTURE_CONNECTIONS;
+    }
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/api/managed/connections`, {
+          headers: authHeaders(session),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<{ connections?: ConnectionItem[] }>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(
+      Effect.catch(() => Effect.succeed({ connections: [...FIXTURE_CONNECTIONS] }))
+    );
+    return res.connections ?? FIXTURE_CONNECTIONS;
+  });
+}
+
+export function listAgentSessionsEffect(
+  session: MobileSession
+): Effect.Effect<readonly AgentSession[], MobileApiError> {
+  return Effect.succeed(FIXTURE_AGENT_SESSIONS).pipe(
+    Effect.map((rows) => {
+      void session;
+      return rows;
+    })
+  );
+}
+
+export function listProposedSkillsEffect(
+  session: MobileSession
+): Effect.Effect<readonly ProposedSkill[], MobileApiError> {
+  return Effect.succeed(FIXTURE_PROPOSED_SKILLS).pipe(
+    Effect.map((rows) => {
+      void session;
+      return rows;
+    })
+  );
+}
+
+export function listActiveSkillsEffect(
+  session: MobileSession
+): Effect.Effect<readonly ActiveSkill[], MobileApiError> {
+  return Effect.succeed(FIXTURE_ACTIVE_SKILLS).pipe(
+    Effect.map((rows) => {
+      void session;
+      return rows;
+    })
+  );
+}
+
+export function getAuditIncidentEffect(
+  session: MobileSession
+): Effect.Effect<AuditIncident, MobileApiError> {
+  return Effect.succeed({ ...FIXTURE_AUDIT_INCIDENT }).pipe(
+    Effect.map((row) => {
+      void session;
+      return row;
+    })
+  );
+}
+
+export function getOrgSettingsBundleEffect(
+  session: MobileSession
+): Effect.Effect<OrgSettingsBundle, MobileApiError> {
+  return Effect.succeed({
+    ...FIXTURE_ORG_SETTINGS_BUNDLE,
+    org: { ...FIXTURE_ORG_SETTINGS },
+  }).pipe(
+    Effect.map((row) => {
+      void session;
+      return row;
+    })
+  );
 }
 
 export function listGatewayEndpointsEffect(
@@ -848,10 +1005,7 @@ export function listAuditEntriesEffect(
 export function getOrgSettingsEffect(
   session: MobileSession
 ): Effect.Effect<OrgSettings, MobileApiError> {
-  return Effect.succeed({ ...FIXTURE_ORG_SETTINGS }).pipe(Effect.map((row) => {
-    void session;
-    return row;
-  }));
+  return getOrgSettingsBundleEffect(session).pipe(Effect.map((b) => b.org));
 }
 
 export function listInboxEffect(
@@ -1119,6 +1273,24 @@ export class MobileApi extends Context.Service<
       session: MobileSession;
       keyId: string;
     }) => Effect.Effect<{ ok: true; keyId: string }, MobileApiError>;
+    readonly listConnections: (
+      session: MobileSession
+    ) => Effect.Effect<readonly ConnectionItem[], MobileApiError>;
+    readonly listAgentSessions: (
+      session: MobileSession
+    ) => Effect.Effect<readonly AgentSession[], MobileApiError>;
+    readonly listProposedSkills: (
+      session: MobileSession
+    ) => Effect.Effect<readonly ProposedSkill[], MobileApiError>;
+    readonly listActiveSkills: (
+      session: MobileSession
+    ) => Effect.Effect<readonly ActiveSkill[], MobileApiError>;
+    readonly getAuditIncident: (
+      session: MobileSession
+    ) => Effect.Effect<AuditIncident, MobileApiError>;
+    readonly getOrgSettingsBundle: (
+      session: MobileSession
+    ) => Effect.Effect<OrgSettingsBundle, MobileApiError>;
     readonly listGatewayEndpoints: (
       session: MobileSession
     ) => Effect.Effect<readonly GatewayEndpoint[], MobileApiError>;
@@ -1214,6 +1386,12 @@ export const MobileApiLive = Layer.succeed(MobileApi, {
   listApiKeys: listApiKeysEffect,
   issueApiKey: issueApiKeyEffect,
   revokeApiKey: revokeApiKeyEffect,
+  listConnections: listConnectionsEffect,
+  listAgentSessions: listAgentSessionsEffect,
+  listProposedSkills: listProposedSkillsEffect,
+  listActiveSkills: listActiveSkillsEffect,
+  getAuditIncident: getAuditIncidentEffect,
+  getOrgSettingsBundle: getOrgSettingsBundleEffect,
   listGatewayEndpoints: listGatewayEndpointsEffect,
   listAutomations: listAutomationsEffect,
   listAuditEntries: listAuditEntriesEffect,

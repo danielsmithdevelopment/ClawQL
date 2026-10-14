@@ -204,6 +204,27 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-27-api-keys.yaml",
   },
   {
+    id: "MOB-28",
+    run: "Maestro",
+    title: "Sessions timeline lists active agents",
+    passWhen: "Sessions screen shows legal-ops waiting row",
+    flow: "maestro/flows/mob-28-sessions.yaml",
+  },
+  {
+    id: "MOB-29",
+    run: "Maestro",
+    title: "Skills proposed and active queues",
+    passWhen: "Skills screen shows proposed + active sections",
+    flow: "maestro/flows/mob-29-skills.yaml",
+  },
+  {
+    id: "MOB-30",
+    run: "Maestro",
+    title: "Connections accounts and Settings network",
+    passWhen: "Connections shows GitHub accounts; Settings shows webhook hosts",
+    flow: "maestro/flows/mob-30-connections-settings.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',
@@ -220,8 +241,8 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
 export function assertMobileCatalogComplete(): void {
   const maestro = MOBILE_SCENARIOS.filter((s) => s.run === "Maestro");
   const manual = MOBILE_SCENARIOS.filter((s) => s.run === "Manual");
-  if (maestro.length !== 27) {
-    throw new Error(`Expected 27 Maestro MOB scenarios, got ${maestro.length}`);
+  if (maestro.length !== 30) {
+    throw new Error(`Expected 30 Maestro MOB scenarios, got ${maestro.length}`);
   }
   if (manual.length !== 2) {
     throw new Error(`Expected 2 Manual scenarios (REV-13, UX-09), got ${manual.length}`);

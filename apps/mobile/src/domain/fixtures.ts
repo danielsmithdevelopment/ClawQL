@@ -22,7 +22,13 @@ import type {
   GatewayEndpoint,
   AutomationSub,
   AuditEntry,
+  AuditIncident,
   OrgSettings,
+  OrgSettingsBundle,
+  AgentSession,
+  ProposedSkill,
+  ActiveSkill,
+  ConnectionItem,
 } from "./schemas";
 
 export const FIXTURE_SESSION: MobileSession = {
@@ -707,6 +713,208 @@ export const FIXTURE_ORG_SETTINGS: OrgSettings = {
   timeZone: "Pacific Time (Los Angeles)",
   securityContact: "security@acme.example",
 };
+
+export const FIXTURE_ORG_SETTINGS_BUNDLE: OrgSettingsBundle = {
+  org: FIXTURE_ORG_SETTINGS,
+  webhookHosts: [
+    { host: "hooks.slack.com", subscriptions: 1 },
+    { host: "chatgpt.com", subscriptions: 2 },
+    { host: "finance.acme.example", subscriptions: 1 },
+  ],
+  egressDomains: [
+    "api.github.com",
+    "acme.atlassian.net",
+    "slack.com",
+    "api.stripe.com",
+    "crm.acme.example",
+  ],
+  retention: [
+    {
+      label: "Audit log",
+      help: "Can be extended, never shortened below 1 year.",
+      value: "7 years",
+    },
+    {
+      label: "Session transcripts",
+      help: "The steps behind each session in Sessions.",
+      value: "90 days",
+    },
+    {
+      label: "Memory and documents",
+      help: "Kept until someone deletes or erases them.",
+      value: "Until erased",
+      locked: true,
+    },
+  ],
+};
+
+export const FIXTURE_AUDIT_INCIDENT: AuditIncident = {
+  entryId: "wrm_4877",
+  incidentId: "inc_1005_01",
+  foundAt: "03:15 today",
+  summary:
+    "One stored entry, wrm_4877, was changed after it was written. Found by the scheduled check at 03:15 today.",
+  explanation:
+    "ClawQL doesn't edit entries. Someone with write access to the log storage, or a storage corruption, changed this one.",
+  paymentNote:
+    "The record was altered to show a blocked payment as allowed. The payment itself never ran.",
+};
+
+export const FIXTURE_AGENT_SESSIONS: readonly AgentSession[] = [
+  {
+    id: "sess_7f2a91c4",
+    name: "legal-ops agent",
+    meta: "Claude Code, Priya Shah, started 09:22",
+    stats: "34 tool calls, $1.82, active for 19 min",
+    status: "Waiting on a person",
+    tone: "warn",
+    active: true,
+  },
+  {
+    id: "sess_support",
+    name: "support-bot",
+    meta: "ChatGPT, service agent, started 09:31",
+    stats: "12 tool calls, $0.41, active for 10 min",
+    status: "Blocked call",
+    tone: "danger",
+    active: true,
+  },
+  {
+    id: "sess_docs",
+    name: "docs-pipeline",
+    meta: "Codex, service agent, started 09:40",
+    stats: "6 tool calls, $0.22, active for 1 min",
+    status: "Running",
+    tone: "ok",
+    active: true,
+  },
+  {
+    id: "sess_release",
+    name: "release-agent",
+    meta: "Cursor, Marcus Lee, started 08:47",
+    stats: "58 tool calls, $2.95, ran 42 min",
+    status: "Completed",
+    tone: "neutral",
+    active: false,
+  },
+];
+
+export const FIXTURE_PROPOSED_SKILLS: readonly ProposedSkill[] = [
+  {
+    id: "contract-redline-check",
+    name: "contract-redline-check",
+    description:
+      "Compares a counterparty's redlines against your standard terms and lists what changed.",
+    attribution: "Proposed by legal-ops agent after 7 similar sessions. Read only.",
+    canProve: true,
+  },
+  {
+    id: "summarize-pr-risk",
+    name: "summarize-pr-risk",
+    description: "Rates a pull request's risk from the files it touches and its test coverage.",
+    attribution: "Proposed by release-agent after 9 similar sessions. Read only.",
+    canProve: true,
+  },
+  {
+    id: "linear-issue-sync",
+    name: "linear-issue-sync",
+    description: "Keeps support tickets and Linear issues in step.",
+    attribution: "Proposed by support-bot after 4 similar sessions. Writes, with a mandate.",
+    canProve: false,
+    blocker: "Waiting on the Linear connection, now in Review",
+    blockerTone: "warn",
+  },
+];
+
+export const FIXTURE_ACTIVE_SKILLS: readonly ActiveSkill[] = [
+  {
+    id: "standup-digest",
+    name: "standup-digest",
+    description: "Posts a daily summary to Slack",
+    keyGroup: "Operations",
+    touchesLabel: "Writes, with a mandate",
+    runs7d: 5,
+  },
+  {
+    id: "ticket-summary",
+    name: "ticket-summary",
+    description: "Summarizes a support thread for handoff",
+    keyGroup: "Support",
+    touchesLabel: "Read only",
+    runs7d: 412,
+  },
+  {
+    id: "triage-ci-failure",
+    name: "triage-ci-failure",
+    description: "Finds the likely cause of a failed build",
+    keyGroup: "Engineering",
+    touchesLabel: "Read only",
+    runs7d: 63,
+  },
+];
+
+export const FIXTURE_CONNECTIONS: readonly ConnectionItem[] = [
+  {
+    id: "github",
+    name: "GitHub",
+    summary: "2 accounts: work, personal",
+    lastUsed: "09:20",
+    status: "needs-signin",
+    statusLabel: "1 needs sign-in",
+    accounts: [
+      {
+        id: "gh_work",
+        handle: "dana-acme",
+        ownershipLabel: "Org data",
+        detail: "OAuth sign-in expired at 08:58. The acme/web watch is paused.",
+        action: "reconnect",
+        alert: true,
+      },
+      {
+        id: "gh_personal",
+        handle: "danareyes",
+        ownershipLabel: "Private to Dana",
+        detail: "Connected, last used yesterday",
+        action: "manage",
+      },
+    ],
+    ops: { readsAllowed: 604, writesMandate: 431, deletesBlocked: 47 },
+    usedBy: ["release-agent key", "New pull requests automation"],
+  },
+  {
+    id: "slack",
+    name: "Slack",
+    summary: "Acme workspace",
+    lastUsed: "08:12",
+    status: "connected",
+    statusLabel: "Connected",
+    accounts: [],
+    ops: { readsAllowed: 120, writesMandate: 40, deletesBlocked: 0 },
+    usedBy: ["Operations key group"],
+  },
+  {
+    id: "linear",
+    name: "Linear",
+    summary: "Proposed by support-bot",
+    lastUsed: "Not connected yet",
+    status: "waiting-review",
+    statusLabel: "Waiting in Review",
+    accounts: [],
+    ops: { readsAllowed: 0, writesMandate: 0, deletesBlocked: 0 },
+    usedBy: [],
+  },
+  {
+    id: "stripe",
+    name: "Stripe",
+    summary: "Read-only access",
+    lastUsed: "yesterday",
+    status: "connected",
+    statusLabel: "Connected",
+    accounts: [],
+    ops: { readsAllowed: 64, writesMandate: 0, deletesBlocked: 12 },
+    usedBy: ["billing-sync key"],
+  },
+];
 
 /** Console-parity workflows the voice assistant can list / start (fixture). */
 export const FIXTURE_WORKFLOWS: readonly WorkflowProgram[] = [

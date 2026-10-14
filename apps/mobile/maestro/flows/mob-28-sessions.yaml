@@ -1,0 +1,14 @@
+# MOB-28 — Sessions timeline
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- tapOn:
+    id: "profile-open-sessions"
+- assertVisible:
+    id: "sessions-screen"
+- assertVisible:
+    id: "session-row-sess_7f2a91c4"

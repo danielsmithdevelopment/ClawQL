@@ -85,6 +85,48 @@ test.describe("PhoneApprove store_iap + Face ID (fixture web)", () => {
     await expect(page.getByTestId("memory-fields").filter({ visible: true }).first()).toBeVisible();
   });
 
+  test("MOB-28 Sessions timeline", async ({ page }) => {
+    await signInFixture(page);
+    await page.getByTestId("tab-profile").first().click();
+    await page.getByTestId("profile-open-sessions").filter({ visible: true }).first().click();
+    await expect(page.getByTestId("sessions-screen").filter({ visible: true }).first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(
+      page.getByTestId("session-row-sess_7f2a91c4").filter({ visible: true }).first()
+    ).toBeVisible();
+  });
+
+  test("MOB-29 Skills proposed and active", async ({ page }) => {
+    await signInFixture(page);
+    await page.getByTestId("tab-profile").first().click();
+    await page.getByTestId("profile-open-skills").filter({ visible: true }).first().click();
+    await expect(page.getByTestId("skills-screen").filter({ visible: true }).first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(
+      page.getByTestId("skill-proposed-contract-redline-check").filter({ visible: true }).first()
+    ).toBeVisible();
+    await expect(page.getByTestId("skills-active").filter({ visible: true }).first()).toBeVisible();
+  });
+
+  test("MOB-30 Connections and Settings network", async ({ page }) => {
+    await signInFixture(page);
+    await page.getByTestId("tab-profile").first().click();
+    await page.getByTestId("profile-open-connections").filter({ visible: true }).first().click();
+    await expect(
+      page.getByTestId("connections-screen").filter({ visible: true }).first()
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(
+      page.getByTestId("connection-account-gh_work").filter({ visible: true }).first()
+    ).toBeVisible();
+    await page.goto("/settings", { waitUntil: "networkidle" });
+    await expect(page.getByTestId("settings-network").filter({ visible: true }).first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByTestId("settings-privacy").filter({ visible: true }).first()).toBeVisible();
+  });
+
   test("MOB-27 API keys issue and secret", async ({ page }) => {
     await signInFixture(page);
     await page.getByTestId("tab-profile").first().click();

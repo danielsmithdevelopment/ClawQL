@@ -355,6 +355,98 @@ export const OrgSettings = Schema.Struct({
 });
 export type OrgSettings = Schema.Schema.Type<typeof OrgSettings>;
 
+export const SettingsWebhookHost = Schema.Struct({
+  host: Schema.String,
+  subscriptions: Schema.Number,
+});
+export type SettingsWebhookHost = Schema.Schema.Type<typeof SettingsWebhookHost>;
+
+export const SettingsRetentionRow = Schema.Struct({
+  label: Schema.String,
+  help: Schema.String,
+  value: Schema.String,
+  locked: Schema.optional(Schema.Boolean),
+});
+export type SettingsRetentionRow = Schema.Schema.Type<typeof SettingsRetentionRow>;
+
+export const OrgSettingsBundle = Schema.Struct({
+  org: OrgSettings,
+  webhookHosts: Schema.Array(SettingsWebhookHost),
+  egressDomains: Schema.Array(Schema.String),
+  retention: Schema.Array(SettingsRetentionRow),
+});
+export type OrgSettingsBundle = Schema.Schema.Type<typeof OrgSettingsBundle>;
+
+export const AuditIncident = Schema.Struct({
+  entryId: Schema.String,
+  incidentId: Schema.String,
+  foundAt: Schema.String,
+  summary: Schema.String,
+  explanation: Schema.String,
+  paymentNote: Schema.String,
+});
+export type AuditIncident = Schema.Schema.Type<typeof AuditIncident>;
+
+/** Agent session timeline row (console Sessions). */
+export const AgentSession = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  meta: Schema.String,
+  stats: Schema.String,
+  status: Schema.String,
+  tone: BadgeTone,
+  active: Schema.Boolean,
+});
+export type AgentSession = Schema.Schema.Type<typeof AgentSession>;
+
+export const ProposedSkill = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  description: Schema.String,
+  attribution: Schema.String,
+  canProve: Schema.Boolean,
+  blocker: Schema.optional(Schema.String),
+  blockerTone: Schema.optional(BadgeTone),
+});
+export type ProposedSkill = Schema.Schema.Type<typeof ProposedSkill>;
+
+export const ActiveSkill = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  description: Schema.String,
+  keyGroup: Schema.String,
+  touchesLabel: Schema.String,
+  runs7d: Schema.Number,
+});
+export type ActiveSkill = Schema.Schema.Type<typeof ActiveSkill>;
+
+export const ConnectionAccount = Schema.Struct({
+  id: Schema.String,
+  handle: Schema.String,
+  ownershipLabel: Schema.String,
+  detail: Schema.String,
+  action: Schema.String,
+  alert: Schema.optional(Schema.Boolean),
+});
+export type ConnectionAccount = Schema.Schema.Type<typeof ConnectionAccount>;
+
+export const ConnectionItem = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  summary: Schema.String,
+  lastUsed: Schema.String,
+  status: Schema.String,
+  statusLabel: Schema.String,
+  accounts: Schema.Array(ConnectionAccount),
+  ops: Schema.Struct({
+    readsAllowed: Schema.Number,
+    writesMandate: Schema.Number,
+    deletesBlocked: Schema.Number,
+  }),
+  usedBy: Schema.Array(Schema.String),
+});
+export type ConnectionItem = Schema.Schema.Type<typeof ConnectionItem>;
+
 /** Fixture / console-parity workflow (skill program) the voice assistant can start. */
 export const WorkflowProgram = Schema.Struct({
   id: Schema.String,

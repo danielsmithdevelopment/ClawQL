@@ -12,6 +12,7 @@ Corrected: earlier agent notes that marked Gateway / Automations / Memory / Audi
 
 ## Managed console map → phone
 
+<<<<<<< HEAD
 | Console            | Phone route (target)                      | Phase                       |
 | ------------------ | ----------------------------------------- | --------------------------- |
 | Home               | Tabs Home                                 | Shipped                     |
@@ -27,6 +28,23 @@ Corrected: earlier agent notes that marked Gateway / Automations / Memory / Audi
 | Usage & billing    | `/spend` + Profile plan                   | Partial                     |
 | Settings           | `/settings`                               | Fixture org/network shipped |
 | Profile            | Tabs Profile                              | Shipped                     |
+=======
+| Console | Phone route (target) | Phase |
+| ------- | -------------------- | ----- |
+| Home | Tabs Home | Shipped |
+| Sessions | `/sessions` | Agent timeline shipped |
+| Review | Tabs Review | Shipped |
+| Gateway | `/gateway` | Fixture list shipped |
+| Automations | `/automations` | Fixture list shipped |
+| Skills | `/skills` + Review skill decide | Proposed/active shipped |
+| Memory & documents | `/memory` + `/memory/:id` | Explorer shipped |
+| Connections & keys | `/connections` + `/keys` | Connections + keys; live keys/connections adapters |
+| Audit | `/audit` | Entries + chain incident shipped |
+| Team | `/teammates` | Read-only → invite next |
+| Usage & billing | `/spend` + Profile plan | Partial |
+| Settings | `/settings` | Org + network + retention shipped |
+| Profile | Tabs Profile | Shipped |
+>>>>>>> 394bc5fb (feat(mobile): Sessions, Skills, Connections + live keys adapters)
 
 Phone-native extras (Voice, NFC, App Lock, push inbox) stay additive.
 
@@ -42,5 +60,8 @@ Phone-native extras (Voice, NFC, App Lock, push inbox) stay additive.
 - [x] API keys list + create + one-time secret + revoke
 - [x] Gateway / Automations / Audit / Settings reachable in-app (fixture)
 - [x] Docs no longer say “everything else is web console”
-- [ ] Live `/api/managed/*` adapters for memory + keys
-- [ ] Sessions timeline + Skills admin queue + Connections accounts
+- [x] Sessions timeline + Skills proposed/active + Connections accounts
+- [x] Richer Audit (incident) + Settings (network/privacy)
+- [x] Live adapters for `/api/managed/keys` + `/api/managed/connections` (fixture fallback)
+- [ ] Live `/api/managed/memory` + Sessions/Skills managed APIs
+- [ ] Team invite / roles on phone

@@ -78,9 +78,11 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Shortcuts / App Actions donation catalog | ✅ `/voice` share + `store/android/actions.xml` |
 | Fixture workflows list / start | ✅ `/workflows` + voice “start …” |
 | Memory explorer (search + detail) | ✅ `/memory` |
-| API keys (issue / copy / revoke) | ✅ `/keys` |
-| Gateway / Automations / Audit / Settings | ✅ fixture screens in-app |
-| Deep link parsing / Maestro MOB-01…27 | ✅ |
+| API keys (issue / copy / revoke) | ✅ `/keys` (+ live `/api/managed/keys`) |
+| Connections accounts | ✅ `/connections` (+ live `/api/managed/connections`) |
+| Sessions / Skills | ✅ `/sessions` · `/skills` |
+| Gateway / Automations / Audit / Settings | ✅ in-app (Audit incident + Settings network/privacy) |
+| Deep link parsing / Maestro MOB-01…30 | ✅ |
 | Unit tests | `npm test` |
 | Web e2e (store_iap + Face ID + voice + memory/keys) | `npm run local:web-export && npm run test:e2e` |
 | Packaging preflight (no upload) | `npm run store:check` |
