@@ -36,12 +36,19 @@ N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the boa
 
 ### 3. Real-model gate
 
+Set secrets **in the environment** (never paste keys into chat):
+
+- `OPENAI_API_KEY` (required)
+- `OPENAI_BASE_URL` (optional)
+- `CF_MT_MODEL_FRONTIER` and `CF_MT_MODEL_SMALL` (run both)
+
 ```bash
-CF_MT_MODEL=… OPENAI_API_KEY=… CF_MT_REAL_ITERS=50 \
+CF_MT_REAL_ITERS=50 \
+  CF_MT_REAL_ARMS=clawql_known_op,clawql_program,executor_v2 \
   npm run benchmark:cloudflare-multiturn:real-model
 ```
 
-Models must write correct `where` (or program plans / JS) themselves. Scripted board success alone does not prove the product claim.
+Fixed settings: temperature 0, shared system prompt, each arm’s tool descriptions from `listTools`. Reports malformed `where`, retries, turns, failure counts — not just averages.
 
 ## Rebuildable token formula
 
@@ -74,13 +81,10 @@ Artifact: [`smoke-summary-n2-r1.json`](./smoke-summary-n2-r1.json) · 100% task 
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `clawql_known_op` | 308 | 0 | 480 | 191 | **979** | **1743** |
 | `executor_v2` | 181 | 0 | 357 | 958 | 1496 | 5328 |
+| `clawql_program` | 685 | 0 | 357 | **811** | 1853 | 5097 |
 | `cloudflare_codemode` | 1000 | 0 | 357 | 518 | 1875 | 3947 |
-| `clawql_program` | 685 | 0 | 357 | 872 | 1914 | 5402 |
-| `clawql_compact_search` | 308 | 4092 | 480 | 191 | 5071 | 5835 |
-| `clawql_default` | 308 | 15988 | 480 | 191 | 16967 | 17731 |
-| `direct` | 0 | 0 | 47361 | 0 | 47361 | 47361 |
 
-With `where` counted as output, known-op still beats code mode on **both** raw and weighted in this smoke. Hold the public claim until 3×10k + real-model.
+Compact plan (tool omitted when `operationId` set; short ids; empty args dropped): program code **872 → 811**. Program remains the costliest ClawQL arm on this filter workflow — expected; fan-out/join benches are where it should win. Hold the public claim until 3×10k + dual-model real-model.
 
 ## Framing (if full board + real-model clear)
 

@@ -12,7 +12,8 @@ Track decisions here before publication. Unchecked items block a “final” boa
 - [x] **`clawql_program` arm:** ADR 0015 v0 `execute_program` plan runner on the board (`CLAWQL_ENABLE_PROGRAMS=1`). Free-form JS / celld isolate still open.
 - [x] **Charge `where`/plan as code tokens:** execute `where` (+fields) and program plan JSON count in the same bucket as code-mode scripts; `weighted_mean` on every arm.
 - [ ] **Re-publish 3×10k board** with code-arg accounting (prior boards are not the claim).
-- [ ] **Real-model 50 sessions / arm:** harness at `run-real-model.mjs`; needs `OPENAI_API_KEY` + `CF_MT_MODEL`.
+- [x] **Compact program plan:** omit `tool` when `operationId` set (parser default); short ids; drop empty args (872 → 811 code tokens on this workflow).
+- [ ] **Real-model 50 sessions / arm × 2 models:** harness ready (`CF_MT_MODEL_FRONTIER` + `CF_MT_MODEL_SMALL` + `OPENAI_API_KEY` as env secrets — never in chat). Reports failures/retries/turns.
 - [ ] **Blog headline:** hold until publish board + real-model clear.
 - [ ] **Full-spec ClawQL load:** Confirm SQLite catalog can load full `providers/cloudflare/openapi.yaml` under Ready memory budget.
 - [ ] **Maintainer review window:** Invite Cloudflare / Executor / MCPJungle / agentgateway maintainers before publication.
