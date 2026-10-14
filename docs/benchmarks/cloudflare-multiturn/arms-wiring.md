@@ -5,13 +5,16 @@ All arms use **Streamable HTTP**. Full Cloudflare v4 (~2.9k ops in repo OpenAPI)
 | Arm | Catalog | Adapter status | Notes |
 | --- | --- | --- | --- |
 | `direct` | curated (implicit) | **Wired** | Raw REST to replay mock |
-| `clawql_default` | curated OAS | **Wired** | `CLAWQL_SEARCH_COMPACT=0` (labeled) |
+| `clawql_default` | curated OAS | **Wired** | `CLAWQL_SEARCH_COMPACT=0`; observation-shaped `where` |
 | `clawql_compact_search` | curated OAS | **Wired** | `CLAWQL_SEARCH_COMPACT=1` (labeled setting) |
-| `clawql_known_op` | curated OAS | **Wired** | Execute by operationId; no search |
+| `clawql_known_op` | curated OAS | **Wired** | Execute by operationId; no search; same `where` |
+| `clawql_program` | curated OAS | **Wired** | `CLAWQL_ENABLE_PROGRAMS=1`; one `execute_program` JSON plan (ADR 0015 v0); not free-form JS |
 | `cloudflare_codemode` | full (2-tool) | **Tokens-only** | Def≈1000 from CF docs; result tokens from fixture returns; latency N/A |
-| `executor_v2` | code + OpenAPI app | **Wired** | `ensure-executor-openapi-app.mjs` deploys `liveOpenapiRouter` → mock; scripts call `tools["cf-zone-audit-mock"].…` |
+| `executor_v2` | code + OpenAPI app | **Wired** | `liveOpenapiRouter` → mock; scripts call `tools["cf-zone-audit-mock"].…` |
 | `mcpjungle` | curated only | **Wired** | REST→MCP child (`cf-rest-mcp.mjs`); tree RSS+anon |
 | `agentgateway` | curated only | **Wired** | Same REST→MCP child |
+
+Shapes: [`lib/clawql-shapes.mjs`](../../scripts/benchmarks/cloudflare-multiturn/lib/clawql-shapes.mjs).
 
 **Publish gate:** `CF_MT_ITERS≥10000` and `CF_MT_REPS≥3` → `board-*`. Otherwise `smoke-*`.
 

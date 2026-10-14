@@ -11,9 +11,11 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | Synthetic fixture + replay mock | Done (label: real schemas, synthetic content) |
 | 12-step scripted success checks | Done |
 | Arms wired (Streamable HTTP) | Done — see `run-board.mjs` |
-| Executor OpenAPI → mock | Done — `liveOpenapiRouter` app `cf-zone-audit-mock` (host HTTP; no inlined fixture) |
+| Executor OpenAPI → mock | Done — `liveOpenapiRouter` app `cf-zone-audit-mock` |
+| Observation-sized `where` on ClawQL | Done — `lib/clawql-shapes.mjs` (Layer-2 ≈ code mode) |
+| `clawql_program` (ADR 0015 v0 plan runner) | Done — `CLAWQL_ENABLE_PROGRAMS=1` |
 | ClawQL `CLAWQL_SEARCH_COMPACT` labeled arm | Done — `clawql_compact_search` |
-| **Publish board: 3×10k interleaved** | **Done** — [`board-summary-n10000-r3.json`](./board-summary-n10000-r3.json) |
+| **Publish board: 3×10k interleaved** | **Re-run required** after where + program arm (prior board used weak where) |
 | Real-model 50-session validation | Next |
 | CF code-mode self-host | Tokens-only until self-host works |
 
@@ -45,27 +47,31 @@ CF_MT_ITERS=2 CF_MT_REPS=1 npm run benchmark:cloudflare-multiturn:board
 CF_MT_ITERS=10000 CF_MT_REPS=3 npm run benchmark:cloudflare-multiturn:board
 ```
 
-## Publish board (3×10k interleaved, zero latency, synthetic fixture)
+## Smoke evidence (where + program — N=2, not the board)
 
-Artifact: [`board-summary-n10000-r3.json`](./board-summary-n10000-r3.json) · ranges across 3 reps · task success **100%** every arm every rep · `definition + discovery + result + code = combined`.
+Artifact: [`smoke-summary-n2-r1.json`](./smoke-summary-n2-r1.json) · task success **100%** · observation-shaped `where` · `clawql_program` via `execute_program`.
 
-| Arm | Def | Discovery | Result | Code | Combined | Session p50 / p999 (ms) | Upstream |
+| Arm | Def | Discovery | Result | Code | Combined | Price-weighted (5× code) | Upstream |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| `direct` | 0 | 0 | 47361 | 0 | 47361 | 38–40 / 63–74 | mock |
-| `clawql_default` | 308 | 16012 | 7030 | 0 | 23350 | 64–68 / 156–399 | mock |
-| `clawql_compact_search` | 308 | 4092 | 7030 | 0 | 11430 | 52–54 / 329–373 | mock |
-| `clawql_known_op` | 308 | 0 | 7030 | 0 | 7338 | 28–30 / 81–218 | mock |
-| `executor_v2` | 181 | 0 | 357 | 958 | 1496 | 216–221 / 532–635 | mock |
-| `mcpjungle` | 7760 | 0 | 47361 | 0 | 55121 | 50–51 / 93–136 | mock |
-| `agentgateway` | 7344 | 0 | 47361 | 0 | 54705 | 48–49 / 74–103 | mock |
-| `cloudflare_codemode` | 1000† | 0 | 357 | 518 | 1875 | N/A‡ | none |
+| `clawql_known_op` | 308 | 0 | 480 | 0 | **788** | **788** | mock |
+| `executor_v2` | 181 | 0 | 357 | 958 | 1496 | 5328 | mock |
+| `cloudflare_codemode` | 1000† | 0 | 357 | 518 | 1875 | 3947 | none |
+| `clawql_program` | 685 | 0 | **357** | 872 | 1914 | 5402 | mock |
+| `clawql_compact_search` | 308 | 4092 | 480 | 0 | 4880 | 4880 | mock |
+| `clawql_default` | 308 | 15988 | 480 | 0 | 16776 | 16776 | mock |
+| `direct` | 0 | 0 | 47361 | 0 | 47361 | 47361 | mock |
+| `agentgateway` | 7344 | 0 | 47361 | 0 | 54705 | 54705 | mock |
+| `mcpjungle` | 7760 | 0 | 47361 | 0 | 55121 | 55121 | mock |
 
-† Documented CF two-tool Layer-1 (~1000).  
-‡ Tokens-only — no self-hosted CF code-mode server; latency not comparable.
+† Documented CF two-tool Layer-1 (~1000). CF latency N/A (tokens-only).
 
-Executor code tokens (958) are model-written tool-calling scripts only; DNS data returns via OpenAPI tools (host HTTP to mock). Compact search is a **labeled setting** (`CLAWQL_SEARCH_COMPACT=1`), not the default product row.
+**Finding:** with observation-sized `where`, ClawQL known-op **beats raw code-mode totals** (788 vs 1496 / 1875) and stays competitive when code is price-weighted 5×. `clawql_program` matches code-mode **result tokens (357)** in one round trip; its plan JSON is counted as code. Compact search remains a labeled setting.
 
-Memory plateaus (RSS / anon MB median): ClawQL arms ~650–677 / ~596–608; MCPJungle ~169 / ~101; agentgateway ~167–169 / ~98–100.
+ADR 0015: filtering wins belong to declarative `where`; program mode (plan runner today; celld JS later) is for fan-out / joins and governed one-shot plans.
+
+## Prior publish board (pre-where — superseded)
+
+[`board-summary-n10000-r3.json`](./board-summary-n10000-r3.json) measured weak DNS `where` (step 4 returned all A names). Kept for history; do not cite as the current comparison. Re-run 3×10k after this change.
 
 ## Live recording (once)
 
