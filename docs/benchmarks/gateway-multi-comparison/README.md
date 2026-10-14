@@ -30,6 +30,8 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`stall-memory-round10.md`](./stall-memory-round10.md) | **HTTP echo bisect** — stack clean; host noise unlikely; add ClawQL layers next |
 | [`stall-memory-round11.md`](./stall-memory-round11.md) | **HTTP-only layer bisect** — auth/OTel/budget off on board; shell kill → `tool_x_http`; execute-known still spikes |
 | [`stall-memory-round12.md`](./stall-memory-round12.md) | **Variance + phase timing** — all_kill≠worse (ranges overlap); stall after fast mock; HTTP p999 open → SQLite next |
+| [`catalog-sqlite-ready-rss.md`](./catalog-sqlite-ready-rss.md) | **SQLite catalog** — Sentry Ready RSS −138 MB / anon −117 MB (`LOAD=db`) |
+| [`catalog-sqlite-rss-ab.json`](./catalog-sqlite-rss-ab.json) | In-memory vs persist vs `LOAD=db` smaps A/B |
 | [`http-layer-variance-3x.json`](./http-layer-variance-3x.json) | 3× all_kill vs board_default spike-count ranges |
 | [`http-upstream-phase-2500.json`](./http-upstream-phase-2500.json) | Phase/mock-trace board n=2500 |
 | [`http-only-layer-bisect.json`](./http-only-layer-bisect.json) | Binary kill audit/prune/ALS/auth under gw2core n=2500 |
@@ -518,8 +520,9 @@ Default `MULTI_ARMS` / `MT_ARMS` omit both.
 9. **Lazy `clawql-data`** — static horizontal composer loads DuckDB only when `enableData` (HTTP Ready probe ~155 MB anon-dominated).
 10. **Stall / smaps probes** — `interleaved-stall-probe.mjs`, `bun-ready-memory-probe.mjs`, `session-rss-phase-probe.mjs`; write-ups in [`stall-memory-diagnostics.md`](./stall-memory-diagnostics.md) / [`stall-memory-round2.md`](./stall-memory-round2.md).
 11. **Bench stats + idle sessions + timer trace** — `CLAWQL_BENCH_STATS`, `CLAWQL_MCP_SESSION_IDLE_MS`, `CLAWQL_TIMER_TRACE`.
+12. **Colocated SQLite catalog** — `CLAWQL_CATALOG_SQLITE` / `LOAD=db`; compile script + Ready RSS A/B ([`catalog-sqlite-ready-rss.md`](./catalog-sqlite-ready-rss.md)).
 
-**Next:** topology B (4× behind LB) for every arm before any scale-out claim; instrument upstream fetch wait for stalls; slim fat-catalog listen + first-flow caches for under-load &lt;200 MB (session DELETE will not get there). Date/version stamps on published executor-cmp pages (housekeeping).
+**Next:** topology B (4× behind LB) for every arm before any scale-out claim; wire `CLAWQL_CATALOG_SQLITE` into fat multi-provider Ready boards (Sentry A/B already −138 MB RSS); post-mock HTTP p999 remains open (round 12). Date/version stamps on published executor-cmp pages (housekeeping).
 
 ---
 
