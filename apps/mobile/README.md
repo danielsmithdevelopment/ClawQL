@@ -2,7 +2,7 @@
 
 Expo Router app for **phone-native** approval: system-browser sign-in (no localhost), push deep links, exact-change review, NFC security-key approve (stub + reviewer biometric demo), profile with revoke + **in-app account deletion**.
 
-Everything else opens the web console.
+Today, gateways / billing / heavy admin still open the web console. **North star:** in-app signup + App Store / Play subscriptions, then bring day-to-day console work onto the phone — see [`docs/specs/billing/mobile-store-iap-v0.1.md`](../../docs/specs/billing/mobile-store-iap-v0.1.md).
 
 > **No Apple / Google / EAS signup required for local work.**  
 > See **[LOCAL.md](LOCAL.md)** — `npm start` → **Continue with fixture session**.  
