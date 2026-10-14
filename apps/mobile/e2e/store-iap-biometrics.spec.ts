@@ -184,4 +184,30 @@ test.describe("PhoneApprove store_iap + Face ID (fixture web)", () => {
       page.getByTestId("profile-subscribe-pro").filter({ visible: true }).first()
     ).toBeVisible();
   });
+
+  test("MOB-31 Team invite and roles", async ({ page }) => {
+    await signInFixture(page);
+    await page.getByTestId("tab-profile").first().click();
+    await page.getByTestId("profile-open-teammates").filter({ visible: true }).first().click();
+    const team = page.getByTestId("teammates-screen").filter({ visible: true }).first();
+    await expect(team).toBeVisible({ timeout: 15_000 });
+    await team.getByTestId("teammates-invite-email").fill("alex@acme.example");
+    await team.getByTestId("teammates-accept-approve").click();
+    await team.getByTestId("teammates-accept-keys").click();
+    await team.getByTestId("teammates-accept-audit").click();
+    await team.getByTestId("teammates-invite-send").click();
+    await expect(team.getByTestId("teammates-invite-note")).toBeVisible({ timeout: 10_000 });
+    await team.getByTestId("teammates-tab-roles").click();
+    await expect(page.getByTestId("team-role-admin").filter({ visible: true }).first()).toBeVisible();
+  });
+
+  test("MOB-32 Usage depth month and team budgets", async ({ page }) => {
+    await signInFixture(page);
+    await page.goto("/spend", { waitUntil: "networkidle" });
+    const spend = page.getByTestId("spend-screen").filter({ visible: true }).first();
+    await expect(spend).toBeVisible({ timeout: 15_000 });
+    await expect(spend.getByTestId("spend-usage-month")).toBeVisible();
+    await expect(spend.getByTestId("spend-month-amount")).toBeVisible();
+    await expect(spend.getByTestId("spend-team-documents")).toBeVisible();
+  });
 });

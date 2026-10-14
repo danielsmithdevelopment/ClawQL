@@ -225,6 +225,20 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-30-connections-settings.yaml",
   },
   {
+    id: "MOB-31",
+    run: "Maestro",
+    title: "Team invite with acceptance checks and roles",
+    passWhen: "Invite sends after checkboxes; Roles tab shows Admin",
+    flow: "maestro/flows/mob-31-team-invite.yaml",
+  },
+  {
+    id: "MOB-32",
+    run: "Maestro",
+    title: "Usage month forecast and team budgets",
+    passWhen: "Spend shows month usage and documents team row",
+    flow: "maestro/flows/mob-32-usage-depth.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',

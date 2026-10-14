@@ -27,11 +27,11 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Surface | Local without signup |
 | ------- | -------------------- |
 | Home queue + org card + spend + recent activity | ✅ fixtures |
-| Spend by agent | ✅ |
+| Spend by agent + month usage / team budgets | ✅ (+ `/api/managed/usage`) |
 | Agents roster (status / spend / waiting) | ✅ |
 | Morning digest preview | ✅ |
 | Notification inbox (fixture pushes / digest) | ✅ |
-| Who can approve (teammates) | ✅ read-only |
+| Team invite / roles / groups | ✅ fixtures (+ `/api/managed/team`) |
 | Approval policies (list + detail) | ✅ read-only |
 | Seeded decided archive (Activity drill-in) | ✅ |
 | Review filters (change / source / decision / skill) | ✅ |
@@ -80,9 +80,10 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Memory explorer (search + detail) | ✅ `/memory` |
 | API keys (issue / copy / revoke) | ✅ `/keys` (+ live `/api/managed/keys`) |
 | Connections accounts | ✅ `/connections` (+ live `/api/managed/connections`) |
-| Sessions / Skills | ✅ `/sessions` · `/skills` |
+| Sessions / Skills | ✅ `/sessions` · `/skills` (+ `/api/managed/sessions|skills`) |
+| Memory live adapter | ✅ `/api/managed/memory` (fixture-backed) |
 | Gateway / Automations / Audit / Settings | ✅ in-app (Audit incident + Settings network/privacy) |
-| Deep link parsing / Maestro MOB-01…30 | ✅ |
+| Deep link parsing / Maestro MOB-01…32 | ✅ |
 | Unit tests | `npm test` |
 | Web e2e (store_iap + Face ID + voice + memory/keys) | `npm run local:web-export && npm run test:e2e` |
 | Packaging preflight (no upload) | `npm run store:check` |
@@ -99,7 +100,7 @@ Those live only under [`store/DAY0-CHECKLIST.md`](store/DAY0-CHECKLIST.md). Day-
 
 ## Fixture client status
 
-PhoneApprove **fixture UX** covers approval plus console-parity surfaces (Memory, API keys, Gateway, Automations, Audit, Settings). Off-fixture work is **live managed APIs** for those screens (`/api/managed/memory`, keys already partially live on dashboard, push register, evidence upload, activity).
+PhoneApprove **fixture UX** covers approval plus console-parity surfaces (Memory, API keys, Gateway, Automations, Audit, Settings, Team invite, Usage depth). Managed routes exist for memory/sessions/skills/team/usage/keys/connections; deeper live backends (push register, evidence upload) remain.
 
 ## Optional: static web export (CI / screenshots)
 

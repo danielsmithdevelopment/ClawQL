@@ -204,8 +204,62 @@ export const Teammate = Schema.Struct({
   canApprove: Schema.Boolean,
   keysReady: Schema.Boolean,
   lastActive: Schema.String,
+  invitePending: Schema.optional(Schema.Boolean),
 });
 export type Teammate = Schema.Schema.Type<typeof Teammate>;
+
+export const TeamGroup = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  people: Schema.String,
+  role: Schema.String,
+  usedIn: Schema.String,
+});
+export type TeamGroup = Schema.Schema.Type<typeof TeamGroup>;
+
+export const TeamRole = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  people: Schema.String,
+  console: Schema.String,
+  connections: Schema.String,
+  policies: Schema.String,
+  peopleManage: Schema.String,
+  exportAudit: Schema.String,
+  billing: Schema.String,
+});
+export type TeamRole = Schema.Schema.Type<typeof TeamRole>;
+
+export const TeamBundle = Schema.Struct({
+  people: Schema.Array(Teammate),
+  groups: Schema.Array(TeamGroup),
+  roles: Schema.Array(TeamRole),
+  source: Schema.optional(Schema.Literals(["live", "fixture"])),
+});
+export type TeamBundle = Schema.Schema.Type<typeof TeamBundle>;
+
+export const ManagedUsageTeamRow = Schema.Struct({
+  team: Schema.String,
+  spent: Schema.Number,
+  budget: Schema.Number,
+  requests: Schema.Number,
+  toolCalls: Schema.Number,
+  alert: Schema.optional(Schema.String),
+});
+export type ManagedUsageTeamRow = Schema.Schema.Type<typeof ManagedUsageTeamRow>;
+
+export const ManagedUsage = Schema.Struct({
+  monthSpent: Schema.Number,
+  monthBudget: Schema.Number,
+  forecast: Schema.Number,
+  forecastNote: Schema.String,
+  todaySpent: Schema.Number,
+  todayNote: Schema.String,
+  planRenews: Schema.String,
+  teamRows: Schema.Array(ManagedUsageTeamRow),
+  source: Schema.Literals(["live", "fixture"]),
+});
+export type ManagedUsage = Schema.Schema.Type<typeof ManagedUsage>;
 
 export const InboxItem = Schema.Struct({
   id: Schema.String,

@@ -1,0 +1,17 @@
+# MOB-32 — Usage depth from managed usage
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- openLink: clawql://spend
+- assertVisible:
+    id: "spend-screen"
+- assertVisible:
+    id: "spend-usage-month"
+- assertVisible:
+    id: "spend-month-amount"
+- assertVisible:
+    id: "spend-team-rows"
+- assertVisible:
+    id: "spend-team-documents"

@@ -1,0 +1,33 @@
+# MOB-31 — Team invite + roles
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- tapOn:
+    id: "profile-open-teammates"
+- assertVisible:
+    id: "teammates-screen"
+- assertVisible:
+    id: "teammates-invite"
+- tapOn:
+    id: "teammates-accept-approve"
+- tapOn:
+    id: "teammates-accept-keys"
+- tapOn:
+    id: "teammates-accept-audit"
+- tapOn:
+    id: "teammates-invite-email"
+- inputText: "alex@acme.example"
+- tapOn:
+    id: "teammates-invite-send"
+- assertVisible:
+    id: "teammates-invite-note"
+- tapOn:
+    id: "teammates-tab-roles"
+- assertVisible:
+    id: "teammates-roles"
+- assertVisible:
+    id: "team-role-admin"

@@ -604,11 +604,11 @@ export default function ProfileScreen() {
 
       <SurfaceCard testID="profile-teammates" tint="soft">
         <IconBubble name="people" tone="seed" size={32} iconSize={16} />
-        <Subtitle>Who can approve</Subtitle>
-        <Meta>People in approval groups — read-only on phone.</Meta>
+        <Subtitle>Team</Subtitle>
+        <Meta>Invite people, review roles and groups — same job as the cloud console Team page.</Meta>
         <SecondaryButton
           testID="profile-open-teammates"
-          label="View team"
+          label="Open team"
           onPress={() => router.push("/teammates")}
         />
       </SurfaceCard>

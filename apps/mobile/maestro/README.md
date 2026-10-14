@@ -47,6 +47,8 @@ Catalog source of truth: [`catalog.ts`](catalog.ts).
 | `mob-28-sessions.yaml` | MOB-28 | Sessions timeline |
 | `mob-29-skills.yaml` | MOB-29 | Skills proposed + active |
 | `mob-30-connections-settings.yaml` | MOB-30 | Connections + Settings network |
+| `mob-31-team-invite.yaml` | MOB-31 | Team invite + roles |
+| `mob-32-usage-depth.yaml` | MOB-32 | Usage month + team budgets |
 
 **Still device-only (Manual):** REV-13, UX-09 — physical YubiKey NFC. Use `modules/clawql-nfc-security-key` mock injection in CI until the native modules ship.
 
