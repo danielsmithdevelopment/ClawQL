@@ -1,0 +1,1597 @@
+{
+  "measuredAt": "2026-10-14T18:41:59.137Z",
+  "kind": "publish_board",
+  "rep": 3,
+  "iters": 10000,
+  "latency_mode": "0",
+  "fixture": {
+    "source": "synthetic",
+    "label": "real schemas, synthetic content",
+    "path": "/workspace/scripts/benchmarks/cloudflare-multiturn/fixtures/recording.synthetic.json"
+  },
+  "tokenizer": "js-tiktoken cl100k_base",
+  "executor": {
+    "appId": "app_ead4ce53-9b2f-4b74-b5a6-b876e3b639cf",
+    "slug": "cf-zone-audit-mock",
+    "deploymentId": "dpl_a2b50a3a-590e-4bfc-84d0-fafa297d0da7",
+    "origin": "http://127.0.0.1:39103",
+    "frameworkVersion": "0.0.1-beta.81"
+  },
+  "board": {
+    "direct": {
+      "id": "direct",
+      "iters": 10000,
+      "task_success_rate": 1,
+      "settings": {
+        "catalog": "curated_rest",
+        "layer1": "none"
+      },
+      "upstream": "mock",
+      "definition_tokens": 0,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 47361,
+      "code_tokens_mean": 0,
+      "combined_mean": 47361,
+      "combined_at_n": 473610000,
+      "rebuild_check": {
+        "combined_mean_ok": true,
+        "formula": "definition + discovery + result + code"
+      },
+      "calls_mean": 9,
+      "session_ms": {
+        "p50": 40.125253999605775,
+        "p99": 59.53704899922013,
+        "p999": 65.43374999985099,
+        "comparable": true,
+        "note": "upstream=mock (same replay fixture as peers)"
+      },
+      "memory_plateau": null,
+      "first_session": {
+        "arm": "direct",
+        "ok": true,
+        "session_ms": 43.56631899997592,
+        "steps": [
+          {
+            "step": 1,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 384,
+            "codeTokens": 0,
+            "latency_ms": 2.7783439997583628,
+            "check": {
+              "ok": true,
+              "label": "zoneId"
+            }
+          },
+          {
+            "step": 2,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 273,
+            "codeTokens": 0,
+            "latency_ms": 0.5311629995703697,
+            "check": {
+              "ok": true
+            }
+          },
+          {
+            "step": 3,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 44,
+            "codeTokens": 0,
+            "latency_ms": 0.24226099997758865,
+            "check": {
+              "ok": true,
+              "label": "ssl"
+            }
+          },
+          {
+            "step": 4,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 45668,
+            "codeTokens": 0,
+            "latency_ms": 0.6913580000400543,
+            "check": {
+              "ok": true,
+              "label": "aRecordCount"
+            }
+          },
+          {
+            "step": 5,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 0,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true,
+              "label": "names"
+            },
+            "note": "client filter"
+          },
+          {
+            "step": 6,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 0,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true,
+              "label": "unproxiedNames"
+            },
+            "note": "client filter"
+          },
+          {
+            "step": 7,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 144,
+            "codeTokens": 0,
+            "latency_ms": 3.283306000754237,
+            "check": {
+              "ok": true,
+              "label": "scriptNames"
+            }
+          },
+          {
+            "step": 8,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 55,
+            "codeTokens": 0,
+            "latency_ms": 0.5060930009931326,
+            "check": {
+              "ok": true,
+              "label": "compatibilityDate"
+            }
+          },
+          {
+            "step": 9,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 87,
+            "codeTokens": 0,
+            "latency_ms": 0.40025500021874905,
+            "check": {
+              "ok": true
+            }
+          },
+          {
+            "step": 10,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 108,
+            "codeTokens": 0,
+            "latency_ms": 0.4156470000743866,
+            "check": {
+              "ok": true,
+              "label": "buckets"
+            }
+          },
+          {
+            "step": 11,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 570,
+            "codeTokens": 0,
+            "latency_ms": 0.1889800000935793,
+            "check": {
+              "ok": true,
+              "label": "enabledRuleCount"
+            }
+          },
+          {
+            "step": 12,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 28,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true
+            },
+            "note": "gated"
+          }
+        ],
+        "discovery_tokens_sum": 0,
+        "result_tokens_sum": 47361,
+        "code_tokens_sum": 0,
+        "calls_sum": 9
+      }
+    },
+    "clawql_default": {
+      "id": "clawql_default",
+      "iters": 10000,
+      "task_success_rate": 1,
+      "settings": {
+        "CLAWQL_SEARCH_COMPACT": "0",
+        "known_op": false,
+        "catalog_sqlite": "1"
+      },
+      "upstream": "mock",
+      "definition_tokens": 308,
+      "discovery_tokens_mean": 16012,
+      "result_tokens_mean": 7030,
+      "code_tokens_mean": 0,
+      "combined_mean": 23350,
+      "combined_at_n": 230420308,
+      "rebuild_check": {
+        "combined_mean_ok": true,
+        "formula": "definition + discovery + result + code"
+      },
+      "calls_mean": 22,
+      "session_ms": {
+        "p50": 66.80279899947345,
+        "p99": 89.5527740009129,
+        "p999": 398.6441329997033,
+        "comparable": true,
+        "note": "upstream=mock (same replay fixture as peers)"
+      },
+      "memory_plateau": {
+        "rss_mb_median": 654.5,
+        "anonymous_mb_median": 607.52,
+        "samples": 5
+      },
+      "first_session": {
+        "arm": "clawql_default",
+        "ok": true,
+        "session_ms": 103.49325600080192,
+        "steps": [
+          {
+            "step": 1,
+            "calls": 2,
+            "discoveryTokens": 2433,
+            "resultTokens": 587,
+            "codeTokens": 0,
+            "latency_ms": 18.999531000852585,
+            "check": {
+              "ok": true,
+              "label": "zoneId"
+            },
+            "where": null
+          },
+          {
+            "step": 2,
+            "calls": 2,
+            "discoveryTokens": 902,
+            "resultTokens": 398,
+            "codeTokens": 0,
+            "latency_ms": 7.448139999061823,
+            "check": {
+              "ok": true
+            },
+            "where": null
+          },
+          {
+            "step": 3,
+            "calls": 2,
+            "discoveryTokens": 851,
+            "resultTokens": 67,
+            "codeTokens": 0,
+            "latency_ms": 4.14580599963665,
+            "check": {
+              "ok": true,
+              "label": "ssl"
+            },
+            "where": null
+          },
+          {
+            "step": 4,
+            "calls": 2,
+            "discoveryTokens": 2193,
+            "resultTokens": 4386,
+            "codeTokens": 0,
+            "latency_ms": 7.384781999513507,
+            "check": {
+              "ok": true,
+              "label": "aRecordCount"
+            },
+            "where": "result[?type==`A`]"
+          },
+          {
+            "step": 5,
+            "calls": 2,
+            "discoveryTokens": 2205,
+            "resultTokens": 140,
+            "codeTokens": 0,
+            "latency_ms": 12.013654001057148,
+            "check": {
+              "ok": true,
+              "label": "names"
+            },
+            "where": "result[?type==`A` && content==`203.0.113.50`].name"
+          },
+          {
+            "step": 6,
+            "calls": 2,
+            "discoveryTokens": 2205,
+            "resultTokens": 30,
+            "codeTokens": 0,
+            "latency_ms": 6.638004999607801,
+            "check": {
+              "ok": true,
+              "label": "unproxiedNames"
+            },
+            "where": "result[?type==`A` && content==`203.0.113.50` && proxied==`false`].name"
+          },
+          {
+            "step": 7,
+            "calls": 2,
+            "discoveryTokens": 1089,
+            "resultTokens": 207,
+            "codeTokens": 0,
+            "latency_ms": 5.378068000078201,
+            "check": {
+              "ok": true,
+              "label": "scriptNames"
+            },
+            "where": null
+          },
+          {
+            "step": 8,
+            "calls": 2,
+            "discoveryTokens": 955,
+            "resultTokens": 83,
+            "codeTokens": 0,
+            "latency_ms": 5.78141799941659,
+            "check": {
+              "ok": true,
+              "label": "compatibilityDate"
+            },
+            "where": null
+          },
+          {
+            "step": 9,
+            "calls": 2,
+            "discoveryTokens": 851,
+            "resultTokens": 128,
+            "codeTokens": 0,
+            "latency_ms": 4.253464998677373,
+            "check": {
+              "ok": true
+            },
+            "where": null
+          },
+          {
+            "step": 10,
+            "calls": 2,
+            "discoveryTokens": 1127,
+            "resultTokens": 162,
+            "codeTokens": 0,
+            "latency_ms": 4.513839000836015,
+            "check": {
+              "ok": true,
+              "label": "buckets"
+            },
+            "where": null
+          },
+          {
+            "step": 11,
+            "calls": 2,
+            "discoveryTokens": 1201,
+            "resultTokens": 814,
+            "codeTokens": 0,
+            "latency_ms": 4.855182999745011,
+            "check": {
+              "ok": true,
+              "label": "enabledRuleCount"
+            },
+            "where": null
+          },
+          {
+            "step": 12,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 28,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true
+            },
+            "note": "gated"
+          }
+        ],
+        "discovery_tokens_sum": 16012,
+        "result_tokens_sum": 7030,
+        "code_tokens_sum": 0,
+        "calls_sum": 22
+      }
+    },
+    "clawql_compact_search": {
+      "id": "clawql_compact_search",
+      "iters": 10000,
+      "task_success_rate": 1,
+      "settings": {
+        "CLAWQL_SEARCH_COMPACT": "1",
+        "known_op": false,
+        "catalog_sqlite": "1"
+      },
+      "upstream": "mock",
+      "definition_tokens": 308,
+      "discovery_tokens_mean": 4092,
+      "result_tokens_mean": 7030,
+      "code_tokens_mean": 0,
+      "combined_mean": 11430,
+      "combined_at_n": 111220308,
+      "rebuild_check": {
+        "combined_mean_ok": true,
+        "formula": "definition + discovery + result + code"
+      },
+      "calls_mean": 22,
+      "session_ms": {
+        "p50": 52.495792999863625,
+        "p99": 72.20525699853897,
+        "p999": 372.635332999751,
+        "comparable": true,
+        "note": "upstream=mock (same replay fixture as peers)"
+      },
+      "memory_plateau": {
+        "rss_mb_median": 646.51,
+        "anonymous_mb_median": 599.46,
+        "samples": 5
+      },
+      "first_session": {
+        "arm": "clawql_default",
+        "ok": true,
+        "session_ms": 92.35623000003397,
+        "steps": [
+          {
+            "step": 1,
+            "calls": 2,
+            "discoveryTokens": 453,
+            "resultTokens": 587,
+            "codeTokens": 0,
+            "latency_ms": 19.85097000002861,
+            "check": {
+              "ok": true,
+              "label": "zoneId"
+            },
+            "where": null
+          },
+          {
+            "step": 2,
+            "calls": 2,
+            "discoveryTokens": 316,
+            "resultTokens": 398,
+            "codeTokens": 0,
+            "latency_ms": 6.455397998914123,
+            "check": {
+              "ok": true
+            },
+            "where": null
+          },
+          {
+            "step": 3,
+            "calls": 2,
+            "discoveryTokens": 317,
+            "resultTokens": 67,
+            "codeTokens": 0,
+            "latency_ms": 5.060821998864412,
+            "check": {
+              "ok": true,
+              "label": "ssl"
+            },
+            "where": null
+          },
+          {
+            "step": 4,
+            "calls": 2,
+            "discoveryTokens": 463,
+            "resultTokens": 4386,
+            "codeTokens": 0,
+            "latency_ms": 7.7132939994335175,
+            "check": {
+              "ok": true,
+              "label": "aRecordCount"
+            },
+            "where": "result[?type==`A`]"
+          },
+          {
+            "step": 5,
+            "calls": 2,
+            "discoveryTokens": 463,
+            "resultTokens": 140,
+            "codeTokens": 0,
+            "latency_ms": 8.809040999040008,
+            "check": {
+              "ok": true,
+              "label": "names"
+            },
+            "where": "result[?type==`A` && content==`203.0.113.50`].name"
+          },
+          {
+            "step": 6,
+            "calls": 2,
+            "discoveryTokens": 463,
+            "resultTokens": 30,
+            "codeTokens": 0,
+            "latency_ms": 9.853987999260426,
+            "check": {
+              "ok": true,
+              "label": "unproxiedNames"
+            },
+            "where": "result[?type==`A` && content==`203.0.113.50` && proxied==`false`].name"
+          },
+          {
+            "step": 7,
+            "calls": 2,
+            "discoveryTokens": 326,
+            "resultTokens": 207,
+            "codeTokens": 0,
+            "latency_ms": 6.144887002184987,
+            "check": {
+              "ok": true,
+              "label": "scriptNames"
+            },
+            "where": null
+          },
+          {
+            "step": 8,
+            "calls": 2,
+            "discoveryTokens": 307,
+            "resultTokens": 83,
+            "codeTokens": 0,
+            "latency_ms": 4.120662000030279,
+            "check": {
+              "ok": true,
+              "label": "compatibilityDate"
+            },
+            "where": null
+          },
+          {
+            "step": 9,
+            "calls": 2,
+            "discoveryTokens": 298,
+            "resultTokens": 128,
+            "codeTokens": 0,
+            "latency_ms": 4.357028000056744,
+            "check": {
+              "ok": true
+            },
+            "where": null
+          },
+          {
+            "step": 10,
+            "calls": 2,
+            "discoveryTokens": 347,
+            "resultTokens": 162,
+            "codeTokens": 0,
+            "latency_ms": 5.238459998741746,
+            "check": {
+              "ok": true,
+              "label": "buckets"
+            },
+            "where": null
+          },
+          {
+            "step": 11,
+            "calls": 2,
+            "discoveryTokens": 339,
+            "resultTokens": 814,
+            "codeTokens": 0,
+            "latency_ms": 4.057801999151707,
+            "check": {
+              "ok": true,
+              "label": "enabledRuleCount"
+            },
+            "where": null
+          },
+          {
+            "step": 12,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 28,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true
+            },
+            "note": "gated"
+          }
+        ],
+        "discovery_tokens_sum": 4092,
+        "result_tokens_sum": 7030,
+        "code_tokens_sum": 0,
+        "calls_sum": 22
+      }
+    },
+    "clawql_known_op": {
+      "id": "clawql_known_op",
+      "iters": 10000,
+      "task_success_rate": 1,
+      "settings": {
+        "CLAWQL_SEARCH_COMPACT": "0",
+        "known_op": true,
+        "catalog_sqlite": "1"
+      },
+      "upstream": "mock",
+      "definition_tokens": 308,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 7030,
+      "code_tokens_mean": 0,
+      "combined_mean": 7338,
+      "combined_at_n": 70300308,
+      "rebuild_check": {
+        "combined_mean_ok": true,
+        "formula": "definition + discovery + result + code"
+      },
+      "calls_mean": 11,
+      "session_ms": {
+        "p50": 28.344956999644637,
+        "p99": 40.817158998921514,
+        "p999": 108.16325099952519,
+        "comparable": true,
+        "note": "upstream=mock (same replay fixture as peers)"
+      },
+      "memory_plateau": {
+        "rss_mb_median": 655.13,
+        "anonymous_mb_median": 608.14,
+        "samples": 5
+      },
+      "first_session": {
+        "arm": "clawql_known_op",
+        "ok": true,
+        "session_ms": 59.196796000003815,
+        "steps": [
+          {
+            "step": 1,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 587,
+            "codeTokens": 0,
+            "latency_ms": 13.410807000473142,
+            "check": {
+              "ok": true,
+              "label": "zoneId"
+            },
+            "where": null
+          },
+          {
+            "step": 2,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 398,
+            "codeTokens": 0,
+            "latency_ms": 3.209519000723958,
+            "check": {
+              "ok": true
+            },
+            "where": null
+          },
+          {
+            "step": 3,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 67,
+            "codeTokens": 0,
+            "latency_ms": 2.8241060003638268,
+            "check": {
+              "ok": true,
+              "label": "ssl"
+            },
+            "where": null
+          },
+          {
+            "step": 4,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 4386,
+            "codeTokens": 0,
+            "latency_ms": 6.404400000348687,
+            "check": {
+              "ok": true,
+              "label": "aRecordCount"
+            },
+            "where": "result[?type==`A`]"
+          },
+          {
+            "step": 5,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 140,
+            "codeTokens": 0,
+            "latency_ms": 4.43572000041604,
+            "check": {
+              "ok": true,
+              "label": "names"
+            },
+            "where": "result[?type==`A` && content==`203.0.113.50`].name"
+          },
+          {
+            "step": 6,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 30,
+            "codeTokens": 0,
+            "latency_ms": 6.253142999485135,
+            "check": {
+              "ok": true,
+              "label": "unproxiedNames"
+            },
+            "where": "result[?type==`A` && content==`203.0.113.50` && proxied==`false`].name"
+          },
+          {
+            "step": 7,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 207,
+            "codeTokens": 0,
+            "latency_ms": 2.82132999971509,
+            "check": {
+              "ok": true,
+              "label": "scriptNames"
+            },
+            "where": null
+          },
+          {
+            "step": 8,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 83,
+            "codeTokens": 0,
+            "latency_ms": 5.659679999575019,
+            "check": {
+              "ok": true,
+              "label": "compatibilityDate"
+            },
+            "where": null
+          },
+          {
+            "step": 9,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 128,
+            "codeTokens": 0,
+            "latency_ms": 2.75169799849391,
+            "check": {
+              "ok": true
+            },
+            "where": null
+          },
+          {
+            "step": 10,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 162,
+            "codeTokens": 0,
+            "latency_ms": 2.9492740016430616,
+            "check": {
+              "ok": true,
+              "label": "buckets"
+            },
+            "where": null
+          },
+          {
+            "step": 11,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 814,
+            "codeTokens": 0,
+            "latency_ms": 2.5351119991391897,
+            "check": {
+              "ok": true,
+              "label": "enabledRuleCount"
+            },
+            "where": null
+          },
+          {
+            "step": 12,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 28,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true
+            },
+            "note": "gated"
+          }
+        ],
+        "discovery_tokens_sum": 0,
+        "result_tokens_sum": 7030,
+        "code_tokens_sum": 0,
+        "calls_sum": 11
+      }
+    },
+    "executor_v2": {
+      "id": "executor_v2",
+      "iters": 10000,
+      "task_success_rate": 1,
+      "settings": {
+        "model": "openapi_tools_host_http",
+        "app_slug": "cf-zone-audit-mock",
+        "app_id": "app_ead4ce53-9b2f-4b74-b5a6-b876e3b639cf",
+        "deployment": "dpl_a2b50a3a-590e-4bfc-84d0-fafa297d0da7",
+        "framework": "0.0.1-beta.81",
+        "mock_origin": "http://127.0.0.1:39103"
+      },
+      "upstream": "mock",
+      "definition_tokens": 181,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 357,
+      "code_tokens_mean": 958,
+      "combined_mean": 1496,
+      "combined_at_n": 13150181,
+      "rebuild_check": {
+        "combined_mean_ok": true,
+        "formula": "definition + discovery + result + code"
+      },
+      "calls_mean": 12,
+      "session_ms": {
+        "p50": 220.56185299903154,
+        "p99": 333.4361629988998,
+        "p999": 532.0853610001504,
+        "comparable": true,
+        "note": "upstream=mock (same replay fixture as peers)"
+      },
+      "memory_plateau": null,
+      "first_session": {
+        "arm": "executor_v2",
+        "ok": true,
+        "session_ms": 776.3104660008103,
+        "steps": [
+          {
+            "step": 1,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 37,
+            "codeTokens": 42,
+            "latency_ms": 410.10427399910986,
+            "check": {
+              "ok": true,
+              "label": "zoneId"
+            },
+            "note": "openapi_tools → mock HTTP (host fetch)",
+            "upstream": "mock"
+          },
+          {
+            "step": 2,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 11,
+            "codeTokens": 77,
+            "latency_ms": 40.00252200104296,
+            "check": {
+              "ok": true
+            },
+            "note": "openapi_tools → mock HTTP (host fetch)",
+            "upstream": "mock"
+          },
+          {
+            "step": 3,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 5,
+            "codeTokens": 77,
+            "latency_ms": 34.20479400083423,
+            "check": {
+              "ok": true,
+              "label": "ssl"
+            },
+            "note": "openapi_tools → mock HTTP (host fetch)",
+            "upstream": "mock"
+          },
+          {
+            "step": 4,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 7,
+            "codeTokens": 90,
+            "latency_ms": 52.03266300074756,
+            "check": {
+              "ok": true,
+              "label": "aRecordCount"
+            },
+            "note": "openapi_tools → mock HTTP (host fetch)",
+            "upstream": "mock"
+          },
+          {
+            "step": 5,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 114,
+            "codeTokens": 106,
+            "latency_ms": 47.07918400131166,
+            "check": {
+              "ok": true,
+              "label": "names"
+            },
+            "note": "openapi_tools → mock HTTP (host fetch)",
+            "upstream": "mock"
+          },
+          {
+            "step": 6,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 29,
+            "codeTokens": 117,
+            "latency_ms": 45.739401999861,
+            "check": {
+              "ok": true,
+              "label": "unproxiedNames"
+            },
+            "note": "openapi_tools → mock HTTP (host fetch)",
+            "upstream": "mock"
+          },
+          {
+            "step": 7,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 11,
+            "codeTokens": 76,
+            "latency_ms": 30.656868999823928,
+            "check": {
+              "ok": true,
+              "label": "scriptNames"
+            },
+            "note": "openapi_tools → mock HTTP (host fetch)",
+            "upstream": "mock"
+          },
+          {
+            "step": 8,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 12,
+            "codeTokens": 80,
+            "latency_ms": 27.83386999927461,
+            "check": {
+              "ok": true,
+              "label": "compatibilityDate"
+            },
+            "note": "openapi_tools → mock HTTP (host fetch)",
+            "upstream": "mock"
+          },
+          {
+            "step": 9,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 16,
+            "codeTokens": 90,
+            "latency_ms": 29.458960998803377,
+            "check": {
+              "ok": true
+            },
+            "note": "openapi_tools → mock HTTP (host fetch)",
+            "upstream": "mock"
+          },
+          {
+            "step": 10,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 80,
+            "codeTokens": 89,
+            "latency_ms": 25.6652429997921,
+            "check": {
+              "ok": true,
+              "label": "buckets"
+            },
+            "note": "openapi_tools → mock HTTP (host fetch)",
+            "upstream": "mock"
+          },
+          {
+            "step": 11,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 7,
+            "codeTokens": 84,
+            "latency_ms": 25.47042000107467,
+            "check": {
+              "ok": true,
+              "label": "enabledRuleCount"
+            },
+            "note": "openapi_tools → mock HTTP (host fetch)",
+            "upstream": "mock"
+          },
+          {
+            "step": 12,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 28,
+            "codeTokens": 30,
+            "latency_ms": 3.8134449999779463,
+            "check": {
+              "ok": true
+            },
+            "note": "openapi_tools → mock HTTP (host fetch)",
+            "upstream": "mock"
+          }
+        ],
+        "discovery_tokens_sum": 0,
+        "result_tokens_sum": 357,
+        "code_tokens_sum": 958,
+        "calls_sum": 12
+      }
+    },
+    "mcpjungle": {
+      "id": "mcpjungle",
+      "iters": 10000,
+      "task_success_rate": 1,
+      "settings": {},
+      "upstream": "mock",
+      "definition_tokens": 7760,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 47361,
+      "code_tokens_mean": 0,
+      "combined_mean": 55121,
+      "combined_at_n": 473617760,
+      "rebuild_check": {
+        "combined_mean_ok": true,
+        "formula": "definition + discovery + result + code"
+      },
+      "calls_mean": 9,
+      "session_ms": {
+        "p50": 50.285707999020815,
+        "p99": 68.03942000120878,
+        "p999": 102.09289199858904,
+        "comparable": true,
+        "note": "upstream=mock (same replay fixture as peers)"
+      },
+      "memory_plateau": {
+        "rss_mb_median": 169.08,
+        "anonymous_mb_median": 101.43,
+        "samples": 5
+      },
+      "first_session": {
+        "arm": "mcpjungle",
+        "ok": true,
+        "session_ms": 278.70255099982023,
+        "steps": [
+          {
+            "step": 1,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 384,
+            "codeTokens": 0,
+            "latency_ms": 200.53070100024343,
+            "check": {
+              "ok": true,
+              "label": "zoneId"
+            },
+            "tool": "cloudflare__zones-get"
+          },
+          {
+            "step": 2,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 273,
+            "codeTokens": 0,
+            "latency_ms": 3.379145000129938,
+            "check": {
+              "ok": true
+            },
+            "tool": "cloudflare__zones-0-get"
+          },
+          {
+            "step": 3,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 44,
+            "codeTokens": 0,
+            "latency_ms": 3.017798000946641,
+            "check": {
+              "ok": true,
+              "label": "ssl"
+            },
+            "tool": "cloudflare__zone-settings-get-single-setting"
+          },
+          {
+            "step": 4,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 45668,
+            "codeTokens": 0,
+            "latency_ms": 9.587655998766422,
+            "check": {
+              "ok": true,
+              "label": "aRecordCount"
+            },
+            "tool": "cloudflare__dns-records-for-a-zone-list-dns-records"
+          },
+          {
+            "step": 5,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 0,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true,
+              "label": "names"
+            }
+          },
+          {
+            "step": 6,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 0,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true,
+              "label": "unproxiedNames"
+            }
+          },
+          {
+            "step": 7,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 144,
+            "codeTokens": 0,
+            "latency_ms": 4.898770000785589,
+            "check": {
+              "ok": true,
+              "label": "scriptNames"
+            },
+            "tool": "cloudflare__worker-script-list-workers"
+          },
+          {
+            "step": 8,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 55,
+            "codeTokens": 0,
+            "latency_ms": 2.7697489988058805,
+            "check": {
+              "ok": true,
+              "label": "compatibilityDate"
+            },
+            "tool": "cloudflare__worker-script-get-settings"
+          },
+          {
+            "step": 9,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 87,
+            "codeTokens": 0,
+            "latency_ms": 2.2241629995405674,
+            "check": {
+              "ok": true
+            },
+            "tool": "cloudflare__worker-routes-list-routes"
+          },
+          {
+            "step": 10,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 108,
+            "codeTokens": 0,
+            "latency_ms": 2.052005000412464,
+            "check": {
+              "ok": true,
+              "label": "buckets"
+            },
+            "tool": "cloudflare__r2-list-buckets"
+          },
+          {
+            "step": 11,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 570,
+            "codeTokens": 0,
+            "latency_ms": 3.2973299995064735,
+            "check": {
+              "ok": true,
+              "label": "enabledRuleCount"
+            },
+            "tool": "cloudflare__firewall-rules-list-firewall-rules"
+          },
+          {
+            "step": 12,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 28,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true
+            }
+          }
+        ],
+        "discovery_tokens_sum": 0,
+        "result_tokens_sum": 47361,
+        "code_tokens_sum": 0,
+        "calls_sum": 9
+      }
+    },
+    "agentgateway": {
+      "id": "agentgateway",
+      "iters": 10000,
+      "task_success_rate": 1,
+      "settings": {},
+      "upstream": "mock",
+      "definition_tokens": 7344,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 47361,
+      "code_tokens_mean": 0,
+      "combined_mean": 54705,
+      "combined_at_n": 473617344,
+      "rebuild_check": {
+        "combined_mean_ok": true,
+        "formula": "definition + discovery + result + code"
+      },
+      "calls_mean": 9,
+      "session_ms": {
+        "p50": 48.396604001522064,
+        "p99": 61.70528000034392,
+        "p999": 74.27532800100744,
+        "comparable": true,
+        "note": "upstream=mock (same replay fixture as peers)"
+      },
+      "memory_plateau": {
+        "rss_mb_median": 169,
+        "anonymous_mb_median": 99.5,
+        "samples": 5
+      },
+      "first_session": {
+        "arm": "agentgateway",
+        "ok": true,
+        "session_ms": 87.38113499991596,
+        "steps": [
+          {
+            "step": 1,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 384,
+            "codeTokens": 0,
+            "latency_ms": 28.51508699916303,
+            "check": {
+              "ok": true,
+              "label": "zoneId"
+            },
+            "tool": "zones-get"
+          },
+          {
+            "step": 2,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 273,
+            "codeTokens": 0,
+            "latency_ms": 3.103523001074791,
+            "check": {
+              "ok": true
+            },
+            "tool": "zones-0-get"
+          },
+          {
+            "step": 3,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 44,
+            "codeTokens": 0,
+            "latency_ms": 2.861014999449253,
+            "check": {
+              "ok": true,
+              "label": "ssl"
+            },
+            "tool": "zone-settings-get-single-setting"
+          },
+          {
+            "step": 4,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 45668,
+            "codeTokens": 0,
+            "latency_ms": 5.896647999063134,
+            "check": {
+              "ok": true,
+              "label": "aRecordCount"
+            },
+            "tool": "dns-records-for-a-zone-list-dns-records"
+          },
+          {
+            "step": 5,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 0,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true,
+              "label": "names"
+            }
+          },
+          {
+            "step": 6,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 0,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true,
+              "label": "unproxiedNames"
+            }
+          },
+          {
+            "step": 7,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 144,
+            "codeTokens": 0,
+            "latency_ms": 5.427000999450684,
+            "check": {
+              "ok": true,
+              "label": "scriptNames"
+            },
+            "tool": "worker-script-list-workers"
+          },
+          {
+            "step": 8,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 55,
+            "codeTokens": 0,
+            "latency_ms": 2.8415620010346174,
+            "check": {
+              "ok": true,
+              "label": "compatibilityDate"
+            },
+            "tool": "worker-script-get-settings"
+          },
+          {
+            "step": 9,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 87,
+            "codeTokens": 0,
+            "latency_ms": 2.5517100002616644,
+            "check": {
+              "ok": true
+            },
+            "tool": "worker-routes-list-routes"
+          },
+          {
+            "step": 10,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 108,
+            "codeTokens": 0,
+            "latency_ms": 1.9964329991489649,
+            "check": {
+              "ok": true,
+              "label": "buckets"
+            },
+            "tool": "r2-list-buckets"
+          },
+          {
+            "step": 11,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 570,
+            "codeTokens": 0,
+            "latency_ms": 2.9437090009450912,
+            "check": {
+              "ok": true,
+              "label": "enabledRuleCount"
+            },
+            "tool": "firewall-rules-list-firewall-rules"
+          },
+          {
+            "step": 12,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 28,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true
+            }
+          }
+        ],
+        "discovery_tokens_sum": 0,
+        "result_tokens_sum": 47361,
+        "code_tokens_sum": 0,
+        "calls_sum": 9
+      }
+    },
+    "cloudflare_codemode": {
+      "id": "cloudflare_codemode",
+      "iters": 10000,
+      "task_success_rate": 1,
+      "settings": {
+        "tokens_only": true,
+        "latency": "N/A",
+        "definition_source": "cloudflare_docs_~1000_two_tool"
+      },
+      "upstream": "none",
+      "definition_tokens": 1000,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 357,
+      "code_tokens_mean": 518,
+      "combined_mean": 1875,
+      "combined_at_n": 8751000,
+      "rebuild_check": {
+        "combined_mean_ok": true,
+        "formula": "definition + discovery + result + code"
+      },
+      "calls_mean": 0,
+      "session_ms": {
+        "p50": 1.1569020003080368,
+        "p99": 2.902715001255274,
+        "p999": 3.2104259990155697,
+        "comparable": false,
+        "note": "latency N/A — tokens-only / no upstream"
+      },
+      "memory_plateau": null,
+      "first_session": {
+        "arm": "cloudflare_codemode",
+        "ok": true,
+        "session_ms": 1.381361000239849,
+        "steps": [
+          {
+            "step": 1,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 37,
+            "codeTokens": 33,
+            "latency_ms": null,
+            "check": {
+              "ok": true,
+              "label": "zoneId"
+            },
+            "note": "tokens-only — CF code-mode server not self-hosted; latency N/A",
+            "upstream": "none"
+          },
+          {
+            "step": 2,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 11,
+            "codeTokens": 32,
+            "latency_ms": null,
+            "check": {
+              "ok": true
+            },
+            "note": "tokens-only — CF code-mode server not self-hosted; latency N/A",
+            "upstream": "none"
+          },
+          {
+            "step": 3,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 5,
+            "codeTokens": 32,
+            "latency_ms": null,
+            "check": {
+              "ok": true,
+              "label": "ssl"
+            },
+            "note": "tokens-only — CF code-mode server not self-hosted; latency N/A",
+            "upstream": "none"
+          },
+          {
+            "step": 4,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 7,
+            "codeTokens": 42,
+            "latency_ms": null,
+            "check": {
+              "ok": true,
+              "label": "aRecordCount"
+            },
+            "note": "tokens-only — CF code-mode server not self-hosted; latency N/A",
+            "upstream": "none"
+          },
+          {
+            "step": 5,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 114,
+            "codeTokens": 60,
+            "latency_ms": null,
+            "check": {
+              "ok": true,
+              "label": "names"
+            },
+            "note": "tokens-only — CF code-mode server not self-hosted; latency N/A",
+            "upstream": "none"
+          },
+          {
+            "step": 6,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 29,
+            "codeTokens": 79,
+            "latency_ms": null,
+            "check": {
+              "ok": true,
+              "label": "unproxiedNames"
+            },
+            "note": "tokens-only — CF code-mode server not self-hosted; latency N/A",
+            "upstream": "none"
+          },
+          {
+            "step": 7,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 11,
+            "codeTokens": 31,
+            "latency_ms": null,
+            "check": {
+              "ok": true,
+              "label": "scriptNames"
+            },
+            "note": "tokens-only — CF code-mode server not self-hosted; latency N/A",
+            "upstream": "none"
+          },
+          {
+            "step": 8,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 12,
+            "codeTokens": 39,
+            "latency_ms": null,
+            "check": {
+              "ok": true,
+              "label": "compatibilityDate"
+            },
+            "note": "tokens-only — CF code-mode server not self-hosted; latency N/A",
+            "upstream": "none"
+          },
+          {
+            "step": 9,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 16,
+            "codeTokens": 45,
+            "latency_ms": null,
+            "check": {
+              "ok": true
+            },
+            "note": "tokens-only — CF code-mode server not self-hosted; latency N/A",
+            "upstream": "none"
+          },
+          {
+            "step": 10,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 80,
+            "codeTokens": 42,
+            "latency_ms": null,
+            "check": {
+              "ok": true,
+              "label": "buckets"
+            },
+            "note": "tokens-only — CF code-mode server not self-hosted; latency N/A",
+            "upstream": "none"
+          },
+          {
+            "step": 11,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 7,
+            "codeTokens": 35,
+            "latency_ms": null,
+            "check": {
+              "ok": true,
+              "label": "enabledRuleCount"
+            },
+            "note": "tokens-only — CF code-mode server not self-hosted; latency N/A",
+            "upstream": "none"
+          },
+          {
+            "step": 12,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 28,
+            "codeTokens": 48,
+            "latency_ms": null,
+            "check": {
+              "ok": true
+            },
+            "note": "tokens-only — CF code-mode server not self-hosted; latency N/A",
+            "upstream": "none"
+          }
+        ],
+        "discovery_tokens_sum": 0,
+        "result_tokens_sum": 357,
+        "code_tokens_sum": 518,
+        "calls_sum": 0
+      }
+    }
+  }
+}

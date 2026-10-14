@@ -117,6 +117,44 @@ describe("spec-search", () => {
     expect(json.results).toHaveLength(3);
   });
 
+  it("CLAWQL_SEARCH_COMPACT omits parameters/requestBody and uses compact JSON", () => {
+    const prev = process.env.CLAWQL_SEARCH_COMPACT;
+    process.env.CLAWQL_SEARCH_COMPACT = "1";
+    try {
+      const operations: Operation[] = [
+        {
+          ...baseOp,
+          id: "svc.list",
+          description: "list widgets",
+          parameters: {
+            limit: {
+              location: "query",
+              required: false,
+              type: "integer",
+              description: "page size",
+            },
+          },
+          requestBody: { type: "object" },
+          responseBody: { type: "array" },
+        } as Operation,
+      ];
+      const hits = searchOperations(operations, "widget", 5);
+      const text = formatSearchResults(hits);
+      expect(text.includes("\n")).toBe(false);
+      const json = JSON.parse(text) as {
+        results: Array<Record<string, unknown>>;
+      };
+      expect(json.results[0]).toMatchObject({ id: "svc.list", kind: "operation" });
+      expect(json.results[0].parameters).toBeUndefined();
+      expect(json.results[0].requestBody).toBeUndefined();
+      expect(json.results[0].responseSchema).toBeUndefined();
+      expect(typeof json.results[0].signature).toBe("string");
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_SEARCH_COMPACT;
+      else process.env.CLAWQL_SEARCH_COMPACT = prev;
+    }
+  });
+
   it("boosts score when query term matches specLabel", () => {
     const operations: Operation[] = [
       {

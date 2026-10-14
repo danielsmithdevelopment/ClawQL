@@ -1,0 +1,26 @@
+{
+  "generatedAt": "2026-10-14T03:29:49.302Z",
+  "files": {
+    "recording.synthetic.json": {
+      "sha256": "d6f4bf41db6d432a8779a8643be88e9b980b6c24b18aafadd57f9adbe410bd7b",
+      "bytes": 386589,
+      "source": "synthetic",
+      "dnsCount": 300
+    },
+    "curated-subset.json": {
+      "sha256": "e1a1e3be0703143f6c96a5a3863903398dd1b73a086fa2d8364500c056d241ce",
+      "operationCount": 60,
+      "frozenAt": "2026-10-14"
+    },
+    "curated-openapi.json": {
+      "sha256": "9d751f779c21f18809d96a9615b57534caa786ce1e2fa30a54160727c5186594",
+      "bytes": 111338,
+      "note": "path/query identifier schemas coerced to string for Executor OpenAPI import"
+    }
+  },
+  "safety": {
+    "writes": "mock returns 403 for PATCH dns; harness proposes only",
+    "credentials": "none in fixture",
+    "r2": "list buckets only — no object listing"
+  }
+}
