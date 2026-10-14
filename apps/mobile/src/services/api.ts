@@ -88,10 +88,7 @@ import {
   type MobileSession,
 } from "../domain/schemas";
 import { loadMobileConfigEffect } from "./config";
-import {
-  loadOfflineSnapshotEffect,
-  saveOfflineSnapshotEffect,
-} from "./offline-cache";
+import { loadOfflineSnapshotEffect, saveOfflineSnapshotEffect } from "./offline-cache";
 
 export class MobileApiError extends Data.TaggedError("MobileApiError")<{
   readonly reason: string;
@@ -160,9 +157,7 @@ function activityTitle(item: ReviewItem, decision: ReviewDecision, answer?: stri
   if (decision === "answer") return `Answered ${item.decisionSite ?? item.title}`;
   if (decision === "skip") return `Skipped ${item.title}`;
   if (decision === "ask_teammate") {
-    return answer
-      ? `Asked ${answer} about ${item.title}`
-      : `Asked teammate about ${item.title}`;
+    return answer ? `Asked ${answer} about ${item.title}` : `Asked teammate about ${item.title}`;
   }
   if (decision === "approve" && item.kind === "skill") return `Promoted ${item.title}`;
   if (decision === "approve") return `Approved ${item.title}`;
@@ -219,9 +214,7 @@ export function listReviewEffect(
     }).pipe(
       Effect.catch((err) =>
         Effect.gen(function* () {
-          const snap = yield* loadOfflineSnapshotEffect().pipe(
-            Effect.mapError(() => err)
-          );
+          const snap = yield* loadOfflineSnapshotEffect().pipe(Effect.mapError(() => err));
           if (!snap || snap.reviewItems.length === 0) {
             return yield* Effect.fail(err);
           }
@@ -253,11 +246,7 @@ export function getReviewByIdEffect(
     const config = yield* loadMobileConfigEffect();
     if (isFixtureSession(session, config.fixtureMode)) {
       const state = yield* Ref.get(stateRef);
-      return (
-        state.items.find((i) => i.id === id) ??
-        state.decided.find((i) => i.id === id) ??
-        null
-      );
+      return state.items.find((i) => i.id === id) ?? state.decided.find((i) => i.id === id) ?? null;
     }
     const list = yield* listReviewEffect(session);
     return list.items.find((i) => i.id === id) ?? null;
@@ -290,8 +279,7 @@ export function decideReviewEffect(input: {
         return yield* Effect.fail(new MobileApiError({ reason: "not_found", status: 404 }));
       }
       const leaveInQueue = input.decision === "retry_with_key";
-      const status =
-        input.decision === "answer" ? (input.answer ?? "answer") : input.decision;
+      const status = input.decision === "answer" ? (input.answer ?? "answer") : input.decision;
       const detail =
         input.answer ??
         input.approvalProof?.method ??
@@ -363,9 +351,7 @@ export function listActivityEffect(
       return { events: state.activity, source: "fixture" as const };
     }
     // Live activity comes from the audit surface; until wired, serve offline cache if any.
-    const snap = yield* loadOfflineSnapshotEffect().pipe(
-      Effect.catch(() => Effect.succeed(null))
-    );
+    const snap = yield* loadOfflineSnapshotEffect().pipe(Effect.catch(() => Effect.succeed(null)));
     if (snap && snap.activityEvents.length > 0) {
       return { events: snap.activityEvents, source: "cache" as const };
     }
@@ -430,7 +416,11 @@ export function getManagedUsageEffect(
           reason: cause instanceof Error ? cause.message : String(cause),
           status: (cause as { status?: number })?.status,
         }),
-    }).pipe(Effect.catch(() => Effect.succeed({ usage: FIXTURE_MANAGED_USAGE, source: "fixture" as const })));
+    }).pipe(
+      Effect.catch(() =>
+        Effect.succeed({ usage: FIXTURE_MANAGED_USAGE, source: "fixture" as const })
+      )
+    );
     const usage = res.usage ?? FIXTURE_MANAGED_USAGE;
     return {
       monthSpent: usage.monthSpent,
@@ -591,10 +581,9 @@ export function deleteAccountEffect(
         });
         const body = (await r.json().catch(() => ({}))) as Record<string, unknown>;
         if (!r.ok) {
-          throw Object.assign(
-            new Error(String(body.error ?? `http_${r.status}`)),
-            { status: r.status }
-          );
+          throw Object.assign(new Error(String(body.error ?? `http_${r.status}`)), {
+            status: r.status,
+          });
         }
         return body;
       },
@@ -643,10 +632,15 @@ export function getPolicyDetailEffect(
       appliesTo: row.whenDetail || row.when,
       appliesHelp: row.blockedNote ?? "Phone shows a summary; edit policies on the console.",
       whoApproves: row.who,
-      whoHelp: row.blocked ? "No approvers — always blocked." : `Approvals needed: ${row.approvals}.`,
+      whoHelp: row.blocked
+        ? "No approvers — always blocked."
+        : `Approvals needed: ${row.approvals}.`,
       approvalsNeeded: row.approvals,
       expiresAfter: row.waits,
-      expiresHelp: row.securityKey === "Required" ? "Security key required to approve." : "No security key required.",
+      expiresHelp:
+        row.securityKey === "Required"
+          ? "Security key required to approve."
+          : "No security key required.",
       requireSecurityKey: row.securityKey === "Required",
       notify: "Phone push, Slack",
     } satisfies ApprovalPolicyDetail;
@@ -841,17 +835,14 @@ export function startWorkflowEffect(input: {
       ? FIXTURE_WORKFLOWS
       : FIXTURE_WORKFLOWS;
     const program =
-      catalog.find((w) => w.id === input.workflowId || w.name === input.workflowId) ??
-      null;
+      catalog.find((w) => w.id === input.workflowId || w.name === input.workflowId) ?? null;
     if (!program) {
       return yield* Effect.fail(
         new MobileApiError({ reason: `workflow_not_found:${input.workflowId}` })
       );
     }
     if (program.stage === "retired") {
-      return yield* Effect.fail(
-        new MobileApiError({ reason: `workflow_retired:${program.id}` })
-      );
+      return yield* Effect.fail(new MobileApiError({ reason: `workflow_retired:${program.id}` }));
     }
     const run: WorkflowRun = {
       id: `wfrun_${Date.now().toString(36)}`,
@@ -916,10 +907,9 @@ export function searchMemoryEffect(
     const qs = params.toString();
     const res = yield* Effect.tryPromise({
       try: async () => {
-        const r = await fetch(
-          `${config.apiBase}/api/managed/memory${qs ? `?${qs}` : ""}`,
-          { headers: authHeaders(session) }
-        );
+        const r = await fetch(`${config.apiBase}/api/managed/memory${qs ? `?${qs}` : ""}`, {
+          headers: authHeaders(session),
+        });
         if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
         return r.json() as Promise<{ results?: MemoryResult[] }>;
       },
@@ -951,10 +941,7 @@ export function searchMemoryEffect(
 export function getMemoryByIdEffect(
   session: MobileSession,
   id: string
-): Effect.Effect<
-  { result: MemoryResult; fields: readonly MemoryField[] } | null,
-  MobileApiError
-> {
+): Effect.Effect<{ result: MemoryResult; fields: readonly MemoryField[] } | null, MobileApiError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
     if (isFixtureSession(session, config.fixtureMode)) {
@@ -964,10 +951,9 @@ export function getMemoryByIdEffect(
     }
     const res = yield* Effect.tryPromise({
       try: async () => {
-        const r = await fetch(
-          `${config.apiBase}/api/managed/memory?id=${encodeURIComponent(id)}`,
-          { headers: authHeaders(session) }
-        );
+        const r = await fetch(`${config.apiBase}/api/managed/memory?id=${encodeURIComponent(id)}`, {
+          headers: authHeaders(session),
+        });
         if (r.status === 404) return null;
         if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
         return r.json() as Promise<{
@@ -983,9 +969,7 @@ export function getMemoryByIdEffect(
     }).pipe(
       Effect.catch(() => {
         const result = FIXTURE_MEMORY_RESULTS.find((r) => r.id === id) ?? null;
-        return Effect.succeed(
-          result ? { result, fields: [...FIXTURE_MEMORY_FIELDS] } : null
-        );
+        return Effect.succeed(result ? { result, fields: [...FIXTURE_MEMORY_FIELDS] } : null);
       })
     );
     return res;
@@ -1107,9 +1091,7 @@ export function revokeApiKeyEffect(input: {
     }
     yield* Ref.update(stateRef, (s) => ({
       ...s,
-      apiKeys: s.apiKeys.map((k) =>
-        k.id === input.keyId ? { ...k, revoked: true } : k
-      ),
+      apiKeys: s.apiKeys.map((k) => (k.id === input.keyId ? { ...k, revoked: true } : k)),
     }));
     return { ok: true as const, keyId: input.keyId };
   });
@@ -1136,9 +1118,7 @@ export function listConnectionsEffect(
           reason: cause instanceof Error ? cause.message : String(cause),
           status: (cause as { status?: number })?.status,
         }),
-    }).pipe(
-      Effect.catch(() => Effect.succeed({ connections: [...FIXTURE_CONNECTIONS] }))
-    );
+    }).pipe(Effect.catch(() => Effect.succeed({ connections: [...FIXTURE_CONNECTIONS] })));
     return res.connections ?? FIXTURE_CONNECTIONS;
   });
 }
@@ -1555,9 +1535,7 @@ export function markInboxReadEffect(
     void session;
     yield* Ref.update(stateRef, (s) => ({
       ...s,
-      inbox: s.inbox.map((item) =>
-        item.id === inboxId ? { ...item, unread: false } : item
-      ),
+      inbox: s.inbox.map((item) => (item.id === inboxId ? { ...item, unread: false } : item)),
     }));
   });
 }
@@ -1569,16 +1547,12 @@ export function markInboxReadByReviewEffect(
   return Effect.gen(function* () {
     void session;
     const before = yield* Ref.get(stateRef);
-    const marked = before.inbox.filter(
-      (item) => item.reviewId === reviewId && item.unread
-    ).length;
+    const marked = before.inbox.filter((item) => item.reviewId === reviewId && item.unread).length;
     if (marked === 0) return 0;
     yield* Ref.update(stateRef, (s) => ({
       ...s,
       inbox: s.inbox.map((item) =>
-        item.reviewId === reviewId && item.unread
-          ? { ...item, unread: false }
-          : item
+        item.reviewId === reviewId && item.unread ? { ...item, unread: false } : item
       ),
     }));
     yield* persistOfflineSnapshotEffect();
@@ -1883,18 +1857,14 @@ export class MobileApi extends Context.Service<
     readonly listActivity: (
       session: MobileSession
     ) => Effect.Effect<ActivityListResponse, MobileApiError>;
-    readonly pendingReviewCount: (
-      session: MobileSession
-    ) => Effect.Effect<number, MobileApiError>;
+    readonly pendingReviewCount: (session: MobileSession) => Effect.Effect<number, MobileApiError>;
     readonly listDeviceSessions: (
       session: MobileSession
     ) => Effect.Effect<readonly DeviceSession[], MobileApiError>;
     readonly endOtherDeviceSessions: (
       session: MobileSession
     ) => Effect.Effect<{ ended: number }, MobileApiError>;
-    readonly getHomeSpend: (
-      session: MobileSession
-    ) => Effect.Effect<HomeSpend, MobileApiError>;
+    readonly getHomeSpend: (session: MobileSession) => Effect.Effect<HomeSpend, MobileApiError>;
     readonly getManagedUsage: (
       session: MobileSession
     ) => Effect.Effect<ManagedUsage, MobileApiError>;
@@ -1907,9 +1877,7 @@ export class MobileApi extends Context.Service<
     readonly listTeammates: (
       session: MobileSession
     ) => Effect.Effect<readonly Teammate[], MobileApiError>;
-    readonly getTeamBundle: (
-      session: MobileSession
-    ) => Effect.Effect<TeamBundle, MobileApiError>;
+    readonly getTeamBundle: (session: MobileSession) => Effect.Effect<TeamBundle, MobileApiError>;
     readonly inviteTeammate: (input: {
       session: MobileSession;
       email: string;
@@ -1984,9 +1952,7 @@ export class MobileApi extends Context.Service<
     readonly listAuditEntries: (
       session: MobileSession
     ) => Effect.Effect<readonly AuditEntry[], MobileApiError>;
-    readonly getOrgSettings: (
-      session: MobileSession
-    ) => Effect.Effect<OrgSettings, MobileApiError>;
+    readonly getOrgSettings: (session: MobileSession) => Effect.Effect<OrgSettings, MobileApiError>;
     readonly listMemoryUploads: (
       session: MobileSession
     ) => Effect.Effect<
@@ -2014,9 +1980,7 @@ export class MobileApi extends Context.Service<
       session: MobileSession,
       reviewId: string
     ) => Effect.Effect<number, MobileApiError>;
-    readonly markAllInboxRead: (
-      session: MobileSession
-    ) => Effect.Effect<number, MobileApiError>;
+    readonly markAllInboxRead: (session: MobileSession) => Effect.Effect<number, MobileApiError>;
     readonly listSecurityKeys: (
       session: MobileSession
     ) => Effect.Effect<readonly SecurityKey[], MobileApiError>;
@@ -2044,9 +2008,7 @@ export class MobileApi extends Context.Service<
     readonly listPushDevices: (
       session: MobileSession
     ) => Effect.Effect<readonly PushDevice[], MobileApiError>;
-    readonly clearPushDevices: (
-      session: MobileSession
-    ) => Effect.Effect<void, MobileApiError>;
+    readonly clearPushDevices: (session: MobileSession) => Effect.Effect<void, MobileApiError>;
     readonly listAttachments: (
       session: MobileSession,
       reviewId: string
