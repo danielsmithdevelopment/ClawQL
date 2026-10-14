@@ -121,7 +121,8 @@ async function measure(mode, { home, specPath, catalogPath }) {
   };
 
   if (mode === "memory") {
-    // baseline: parse OpenAPI into heap
+    // baseline: parse OpenAPI into heap (explicit opt-out — product default is on)
+    env.CLAWQL_CATALOG_SQLITE = "0";
   } else if (mode === "sqlite_persist") {
     env.CLAWQL_CATALOG_SQLITE = "1";
     env.CLAWQL_CATALOG_SQLITE_PATH = catalogPath;

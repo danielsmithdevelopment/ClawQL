@@ -67,6 +67,9 @@ describe("catalog-sqlite", () => {
   it("resolves path under CLAWQL_HOME by default", () => {
     const p = Effect.runSync(resolveCatalogSqlitePath());
     expect(p).toBe(join(dir, "catalog.sqlite"));
+    // Default on when unset
+    expect(Effect.runSync(catalogSqliteEnabled())).toBe(true);
+    process.env.CLAWQL_CATALOG_SQLITE = "0";
     expect(Effect.runSync(catalogSqliteEnabled())).toBe(false);
     process.env.CLAWQL_CATALOG_SQLITE = "1";
     expect(Effect.runSync(catalogSqliteEnabled())).toBe(true);

@@ -31,7 +31,9 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`stall-memory-round11.md`](./stall-memory-round11.md) | **HTTP-only layer bisect** — auth/OTel/budget off on board; shell kill → `tool_x_http`; execute-known still spikes |
 | [`stall-memory-round12.md`](./stall-memory-round12.md) | **Variance + phase timing** — all_kill≠worse (ranges overlap); stall after fast mock; HTTP p999 open → SQLite next |
 | [`catalog-sqlite-ready-rss.md`](./catalog-sqlite-ready-rss.md) | **SQLite catalog** — Sentry Ready RSS −138 MB / anon −117 MB (`LOAD=db`) |
+| [`catalog-sqlite-underload.md`](./catalog-sqlite-underload.md) | Under-load A/B 40-op + Sentry; default-on; Executor v2 p999 3× |
 | [`catalog-sqlite-rss-ab.json`](./catalog-sqlite-rss-ab.json) | In-memory vs persist vs `LOAD=db` smaps A/B |
+| [`catalog-sqlite-underload-summary.json`](./catalog-sqlite-underload-summary.json) | Under-load + Executor v2 p999 3× summary |
 | [`catalog-sqlite-latency-ab.json`](./catalog-sqlite-latency-ab.json) | HTTP search+execute latency A/B memory vs `LOAD=db` (n=2500) |
 | [`http-layer-variance-3x.json`](./http-layer-variance-3x.json) | 3× all_kill vs board_default spike-count ranges |
 | [`http-upstream-phase-2500.json`](./http-upstream-phase-2500.json) | Phase/mock-trace board n=2500 |
@@ -88,8 +90,8 @@ At n=10 000: ClawQL fastest at **p50**; MCPJungle fastest at **p999**. That is
 | **Task success** | Deterministic inventory checks in harness (`task_success`); LLM-as-judge optional when a model key is present. Publish only if ClawQL success ≥ peers. |
 | **Latency e2e / gateway_cost** | **Win on governed cost**; **HTTP** per-call at parity; **HTTP session** median ~**2.2×** slower than MJ/ag (2 RPCs/turn). Label transport on every row. |
 | **Chaos (single-instance equal-arm)** | **Win vs Executor** — ClawQL **63/64** vs Executor **23/24**. **Loss vs MCPJungle** — **204/205**. **Tie vs agentgateway** — **62/63**. Do not claim aggregator concurrency wins. |
-| **RSS — equal-arm under load** | **Loss** — Bun HTTP under-load ~**290–320 MB** vs MCPJungle ~**152 MB**. Cold Ready ~232 Node / ~180 Bun is a different number. |
-| **RSS — fat catalog Ready (SQLite)** | **Strong Ready cut** — Sentry `LOAD=db` **154 / anon 114** (−138 RSS vs in-memory). **Not** under-load parity vs MJ until same-catalog multiturn A/B (anon/PSS + RSS). |
+| **RSS — equal-arm under load** | **Narrowed, not parity** — with `LOAD=db`, Bun HTTP under-load median **~188 MB RSS / ~146 MB anon** (was ~319 / 256 in-memory) vs MCPJungle ~**152**. Anon in-band; RSS still ~36 MB above MJ. Same-catalog MJ run still required ([`catalog-sqlite-underload.md`](./catalog-sqlite-underload.md)). |
+| **RSS — fat catalog (SQLite)** | **Strong** — Sentry Ready **154 / anon 114**; under-load **193 / 151**. Product default **on** (`CLAWQL_CATALOG_SQLITE=0` opt out). |
 | **ContextForge / MetaMCP** | **Off the publish board.** ContextForge was previously nested behind MCPJungle (inflates latency/RSS/chaos). MetaMCP needs Docker. Re-add only with native REST/virtualization (CF → `/pets` direct) or a real MetaMCP run. |
 
 ---
@@ -245,7 +247,7 @@ ClawQL runtime flags (even): Node `--max-old-space-size=512`, Bun `--smol` (`con
 
 **Harness progression:** coupling fix shrank peer tails; **2-core gateway** further cut stdio ClawQL p999 (**92→62**) and MCPJungle (**117→61**). ClawQL **HTTP** p999 did **not** drop (still ~670–760) — not fixed by a second core or by Node `--single-threaded` ([`stall-memory-round9.md`](./stall-memory-round9.md)). Do **not** headline HTTP p999.
 
-**HTTP-to-HTTP (lab / zero upstream delay):** ClawQL Bun HTTP session median **36.2 ms** is ~**2.2×** MCPJungle (**16.7**) / ~**2.3×** agentgateway (**15.6**) because ClawQL does **2 RPCs/turn**; it is ~**2×** faster than Executor v2 (**71.1**) on median. Per-call: **1.44 ms** vs MCPJungle **1.29** / agentgateway **1.17** (parity). **Do not** cite Bun stdio **9.3 / 36** next to HTTP-only peers. Executor v2 flow p999 **286 ms** on this 2-core board (vs **136 ms** on the 1-core isolated diagnostic) moved opposite every other arm — **3× rerun before quoting**.
+**HTTP-to-HTTP (lab / zero upstream delay):** ClawQL Bun HTTP session median **36.2 ms** is ~**2.2×** MCPJungle (**16.7**) / ~**2.3×** agentgateway (**15.6**) because ClawQL does **2 RPCs/turn**; it is ~**2×** faster than Executor v2 (**71.1**) on median. Per-call: **1.44 ms** vs MCPJungle **1.29** / agentgateway **1.17** (parity). **Do not** cite Bun stdio **9.3 / 36** next to HTTP-only peers. Executor v2 flow p999: publish-board **286 ms** was noise — solo 2-core 3× (n=2500) lands **173–199 ms** (median ~**186**); prefer that or an interleaved 3× before quoting ([`catalog-sqlite-underload.md`](./catalog-sqlite-underload.md)).
 
 **Buyer framing (realistic upstream):** with `MT_UPSTREAM_LATENCY_MS=20-100`, every gateway’s session median lands ~**740–780 ms** (**~5%** of each other — smoke [`…-upstream-latency-smoke20.json`](./gateway-multi-multiturn-upstream-latency-smoke20.json)). Once a real API sits behind the gateway, **gateway speed is a rounding error; token cost isn’t** (~**4×** fewer tokens on ClawQL known-op vs pass-through peers). Prefer that line over any p999 number.
 
@@ -495,9 +497,9 @@ ClawQL is still the **heaviest serious arm on the equal-arm publish board**:
 | Multiturn under-load med (Bun HTTP) | ~290–320 MB | ~152 MB | Publish / targets boards |
 | Fat vendor Ready (Sentry, `LOAD=db`) | **154 MB** RSS / **114 MB** anon | — | Own A/B vs in-memory **292 / 230** — not MJ under-load |
 
-**SQLite Ready cut is real** (−138 MB on Sentry) but **Ready(Sentry) ≠ under-load(40-op MJ)**. Claim parity only after both gateways run the **same** catalog under the **same** multiturn load (anon/PSS + RSS). Design: make `CLAWQL_CATALOG_SQLITE` / `LOAD=db` the **default** once that check passes on 40-op **and** Sentry, then remasure equal-arm under-load — if it lands near MJ, that flips the clearest loss to parity ([`catalog-sqlite-ready-rss.md`](./catalog-sqlite-ready-rss.md)).
+**SQLite under-load cleared on 40-op + Sentry** ([`catalog-sqlite-underload.md`](./catalog-sqlite-underload.md)): equal-arm `LOAD=db` under-load **~188 RSS / 146 anon** (−131 / −110 vs in-memory). **Anon ≈ MJ (~152); RSS still ~36 MB above.** Claim full parity only after a same-catalog MJ multiturn. Product default is now **on** (`CLAWQL_CATALOG_SQLITE=0` to opt out).
 
-Levers landed: INSTANCE_SPEC slim Core, lazy optional imports, lazy `clawql-data`, Bun `--smol`, colocated SQLite (opt-in). Under-load plateau is **not** MCP session pileup ([`stall-memory-round2.md`](./stall-memory-round2.md)). Scale-out multiplies RSS.
+Levers landed: INSTANCE_SPEC slim Core, lazy optional imports, lazy `clawql-data`, Bun `--smol`, colocated SQLite (**default on**). Under-load plateau is **not** MCP session pileup ([`stall-memory-round2.md`](./stall-memory-round2.md)). Scale-out multiplies RSS.
 
 ---
 
@@ -525,9 +527,9 @@ Default `MULTI_ARMS` / `MT_ARMS` omit both.
 9. **Lazy `clawql-data`** — static horizontal composer loads DuckDB only when `enableData` (HTTP Ready probe ~155 MB anon-dominated).
 10. **Stall / smaps probes** — `interleaved-stall-probe.mjs`, `bun-ready-memory-probe.mjs`, `session-rss-phase-probe.mjs`; write-ups in [`stall-memory-diagnostics.md`](./stall-memory-diagnostics.md) / [`stall-memory-round2.md`](./stall-memory-round2.md).
 11. **Bench stats + idle sessions + timer trace** — `CLAWQL_BENCH_STATS`, `CLAWQL_MCP_SESSION_IDLE_MS`, `CLAWQL_TIMER_TRACE`.
-12. **Colocated SQLite catalog** — `CLAWQL_CATALOG_SQLITE` / `LOAD=db`; compile script + Ready RSS A/B ([`catalog-sqlite-ready-rss.md`](./catalog-sqlite-ready-rss.md)).
+12. **Colocated SQLite catalog** — **default on**; Ready + under-load A/Bs; Executor v2 p999 3× ([`catalog-sqlite-underload.md`](./catalog-sqlite-underload.md)).
 
-**Next:** topology B (4× behind LB) for every arm before any scale-out claim; wire `CLAWQL_CATALOG_SQLITE` into fat multi-provider Ready boards (Sentry A/B already −138 MB RSS); post-mock HTTP p999 remains open (round 12). Date/version stamps on published executor-cmp pages (housekeeping).
+**Next:** same-catalog MCPJungle under-load (anon/PSS+RSS) before claiming memory parity; interleaved Executor v2 p999 3× if quoting vs peers; topology B (4× behind LB); HTTP p999 stall still open (round 12).
 
 ---
 

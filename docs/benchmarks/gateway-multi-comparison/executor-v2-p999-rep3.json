@@ -1,0 +1,1432 @@
+{
+  "suite": "gateway-multi-multiturn",
+  "measuredAt": "2026-10-14T02:12:09.808Z",
+  "node": "v22.14.0",
+  "bun": "1.4.3",
+  "core_layout": {
+    "enabled": true,
+    "nproc": 4,
+    "mock_cpus": "0",
+    "gateway_cpus": "1-2",
+    "client_cpus": "3",
+    "gateway_cpu_count": 2,
+    "layout_mode": "gateway_2core",
+    "note": "Dedicated CPU lists for mock / gateway / client (taskset -c). Gateway defaults to 2 cores when nproc≥4 so JS helper threads are not starved. Roles must not overlap.",
+    "client_cpus_allowed": "3",
+    "mock_pid": 441454,
+    "mock_process": "separate",
+    "upstream_latency_ms": null
+  },
+  "p999_status": {
+    "status": "harness_isolated_pending_full_board",
+    "label": "harness isolated (separate mock + taskset); p999 still under rework until full interleaved 10k",
+    "publish": "Cite tokens, per-call overhead (ms/call), medians, and memory. Do not headline p999 until a full interleaved board lands with separate mock/client/gateway and dedicated cores (or leave p999 labeled under rework).",
+    "note": "Round 7: mock+client shared the parent event loop — delayed send, delayed mock serve, delayed response read. That polluted every arm's tail. Round 8 splits the mock process and optionally pins cores.",
+    "harness_isolated": true,
+    "cores_pinned": true,
+    "full_board": false
+  },
+  "client_diagnostics": {
+    "http_connects_total": 1,
+    "http_agent": {
+      "connections": 1,
+      "pipelining": 1,
+      "keepAliveTimeout": 60000,
+      "note": "Single keep-alive socket per origin; connects_total should stay near 1 per HTTP arm after warm-up."
+    },
+    "client_gc_events": 0,
+    "client_gc_top": [],
+    "client_slow_ms_threshold": 0,
+    "client_pid": 441443,
+    "client_cpus_allowed": "3"
+  },
+  "upstream_diagnostics": {
+    "requests": 1,
+    "tcp_connects": 1,
+    "reused_sockets": 0,
+    "new_socket_requests": 1,
+    "max_handle_ms": 0,
+    "max_latency_inject_ms": 0,
+    "pid": 441454,
+    "process": "separate",
+    "latency": {
+      "kind": "none"
+    },
+    "slow_top": [],
+    "recent": [],
+    "native_fetch": false,
+    "upstream_keepalive": false,
+    "note": "Separate-process mock accept/handle. Pair with [clawql-upstream-fetch] on ClawQL stderr when CLAWQL_UPSTREAM_FETCH_DIAG=1. On Node 22 http.globalAgent.keepAlive defaults true — tcp_connects≈1 is expected even without CLAWQL_UPSTREAM_KEEPALIVE."
+  },
+  "config": {
+    "turns": 12,
+    "iters": 2500,
+    "catalog_tool_count": 40,
+    "limit": 25,
+    "where": "items",
+    "fields": [
+      "id",
+      "name",
+      "status"
+    ],
+    "arms": [
+      "executor_v2"
+    ],
+    "tokenizer": "cl100k_base",
+    "progress_every": 500,
+    "mt_pin_cores": true,
+    "mt_upstream_latency_ms": null,
+    "runtime_flags": {
+      "clawql_node_max_old_space_mb": 512,
+      "clawql_bun_smol": true,
+      "clawql_http_skip_graphql": true,
+      "clawql_enable_http_metrics": false,
+      "mt_node_single_threaded": false,
+      "note": "Applied evenly to all ClawQL arms (stdio / Streamable HTTP / gRPC). Override with CLAWQL_NODE_MAX_OLD_SPACE_MB=0 or CLAWQL_BUN_SMOL=0 for defaults-only. CLAWQL_SEARCH_COMPACT=1 and CLAWQL_HTTP_SKIP_PAYMENTS=1 are bench defaults (compact search gated for product; payments/network routes skipped for slim RSS). MT_NODE_SINGLE_THREADED is diagnostic only (V8 helper-thread contention test)."
+    }
+  },
+  "equal_arm": {
+    "fat_result_tokens_partition_1": 2411,
+    "slim_fields_tokens_partition_1": 353,
+    "projection_ratio": 6.83,
+    "note": "Same underlying rows; ClawQL where+fields project to {id,name,status}; Executor/aggregators return full envelope (Executor: no gateway projection — settled)"
+  },
+  "board": {
+    "executor_v2": {
+      "runtime": "executor-v2",
+      "runtime_version": "2.0.0-beta.15",
+      "ready_ms": 26.7,
+      "transport": "streamable_http",
+      "rss_mb_ready": 559.671875,
+      "rss_mb_min": 559.671875,
+      "rss_mb_median": 852.30859375,
+      "rss_mb_max": 1192.59375,
+      "rss_trend": {
+        "classification": "plateau",
+        "reason": "late-window RSS stable relative to mid-window",
+        "early_median_mb": 846.64,
+        "mid_median_mb": 879.05,
+        "late_median_mb": 844.8,
+        "rise_early_to_late_mb": -1.84,
+        "rise_mid_to_late_mb": -34.25,
+        "mb_per_1000_flows": 97.56,
+        "n_series": 95
+      },
+      "definitions_tokens": 181,
+      "discovery_tokens_sum": 0,
+      "mean_discovery_tokens": 0,
+      "result_tokens_sum": 29746,
+      "mean_result_tokens": 2478.8,
+      "layer1_once_tokens": 181,
+      "mean_layer2_tokens": 2478.8,
+      "combined_at_n": 29927,
+      "combined_rebuild": 29927,
+      "combined_relist_every_turn_at_n": 29746,
+      "flows": 2500,
+      "turns_per_flow": 12,
+      "total_turns": 30000,
+      "rpcs_per_turn": 1,
+      "ms_per_call_p50": 5.68,
+      "flow_e2e_ms": {
+        "n": 2500,
+        "p50_ms": 72.533,
+        "p95_ms": 91.202,
+        "p99_ms": 109.031,
+        "p999_ms": 185.873,
+        "mean_ms": 74.697,
+        "min_ms": 61.022,
+        "max_ms": 272.591,
+        "n_ge_100ms": 50,
+        "n_ge_200ms": 1,
+        "n_ge_300ms": 0,
+        "worst": [
+          {
+            "i": 1,
+            "ms": 272.591
+          },
+          {
+            "i": 496,
+            "ms": 198.587
+          },
+          {
+            "i": 2362,
+            "ms": 185.873
+          },
+          {
+            "i": 1780,
+            "ms": 180.995
+          },
+          {
+            "i": 1946,
+            "ms": 177.877
+          },
+          {
+            "i": 297,
+            "ms": 155.683
+          },
+          {
+            "i": 2422,
+            "ms": 154.702
+          },
+          {
+            "i": 2416,
+            "ms": 144.552
+          }
+        ]
+      },
+      "turn_latency_ms": {
+        "n": 30000,
+        "p50_ms": 5.679,
+        "p95_ms": 9.354,
+        "p99_ms": 15.007,
+        "p999_ms": 24.045,
+        "mean_ms": 6.149,
+        "min_ms": 4.665,
+        "max_ms": 93.033,
+        "n_ge_100ms": 0,
+        "n_ge_200ms": 0,
+        "n_ge_300ms": 0,
+        "worst": [
+          {
+            "i": 5946,
+            "ms": 93.033
+          },
+          {
+            "i": 23344,
+            "ms": 92.362
+          },
+          {
+            "i": 28343,
+            "ms": 88.235
+          },
+          {
+            "i": 21355,
+            "ms": 40.666
+          },
+          {
+            "i": 28815,
+            "ms": 38.96
+          },
+          {
+            "i": 21642,
+            "ms": 38.772
+          },
+          {
+            "i": 18251,
+            "ms": 36.417
+          },
+          {
+            "i": 18025,
+            "ms": 33.37
+          }
+        ]
+      },
+      "call_errors": 0,
+      "task_success_ok": true,
+      "task_success_rate": 1,
+      "token_rebuild_note": "Classic Layer1 = search+execute schemas; discovery = Σ search hit tokens."
+    }
+  },
+  "ratios_vs_clawql": {},
+  "task_success": {
+    "executor_v2": {
+      "turns_ok": 30000,
+      "turns_total": 30000,
+      "flows": 2500,
+      "turns_per_flow": 12,
+      "ok": true,
+      "rate": 1
+    }
+  },
+  "cumulative_table": {
+    "executor_v2": [
+      {
+        "n": 1,
+        "combined": 2614,
+        "layer2Cumulative": 2433
+      },
+      {
+        "n": 2,
+        "combined": 5097,
+        "layer2Cumulative": 4916
+      },
+      {
+        "n": 3,
+        "combined": 7580,
+        "layer2Cumulative": 7399
+      },
+      {
+        "n": 4,
+        "combined": 10063,
+        "layer2Cumulative": 9882
+      },
+      {
+        "n": 5,
+        "combined": 12546,
+        "layer2Cumulative": 12365
+      },
+      {
+        "n": 6,
+        "combined": 15029,
+        "layer2Cumulative": 14848
+      },
+      {
+        "n": 7,
+        "combined": 17512,
+        "layer2Cumulative": 17331
+      },
+      {
+        "n": 8,
+        "combined": 19995,
+        "layer2Cumulative": 19814
+      },
+      {
+        "n": 9,
+        "combined": 22478,
+        "layer2Cumulative": 22297
+      },
+      {
+        "n": 10,
+        "combined": 24961,
+        "layer2Cumulative": 24780
+      },
+      {
+        "n": 11,
+        "combined": 27444,
+        "layer2Cumulative": 27263
+      },
+      {
+        "n": 12,
+        "combined": 29927,
+        "layer2Cumulative": 29746
+      }
+    ]
+  },
+  "arms": {
+    "executor_v2": {
+      "id": "executor_v2",
+      "model": "streamable_http_mcp_code_execute_fat_static",
+      "runtime": "executor-v2",
+      "runtimeVersion": "2.0.0-beta.15",
+      "transport": "streamable_http",
+      "mcpUrl": "http://127.0.0.1:4312/mcp",
+      "discovery_note": "Harness-authored execute returns fatPayload; skills/search not called (discovery=0)",
+      "layer1": {
+        "once_schema_tokens": 181,
+        "tools_count": 1,
+        "tools_list_count_full": 3,
+        "tools_list_schema_tokens_full": 815,
+        "note": "execute schema only (catalog not published as N tools)"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2433,
+          "result_chars": 7746,
+          "layer2_classic": 2433,
+          "layer2_relist_every_turn": 2433,
+          "latency_ms": 18.387,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 2,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 8.241,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 3,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 7.71,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 4,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 7.293,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 5,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 6.855,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 6,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 7.755,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 7,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 7.842,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 8,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 6.908,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 9,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 6.381,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 10,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 6.385,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 11,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7908,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 6.51,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 12,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7908,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 6.456,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        }
+      ],
+      "iters": 2500,
+      "call_errors": 0,
+      "task_success_agg": {
+        "ok": 30000,
+        "total": 30000
+      },
+      "resources": {
+        "label": "executor_v2",
+        "pid": 335516,
+        "n": 374,
+        "rss_mb": {
+          "min": 559.671875,
+          "median": 852.30859375,
+          "max": 1192.59375
+        },
+        "series": [
+          {
+            "t_s": 0,
+            "flow": 0,
+            "rss_mb": 559.67
+          },
+          {
+            "t_s": 2,
+            "flow": 23,
+            "rss_mb": 836.13
+          },
+          {
+            "t_s": 4,
+            "flow": 49,
+            "rss_mb": 851.04
+          },
+          {
+            "t_s": 6,
+            "flow": 75,
+            "rss_mb": 873.76
+          },
+          {
+            "t_s": 8,
+            "flow": 100,
+            "rss_mb": 813.38
+          },
+          {
+            "t_s": 10,
+            "flow": 127,
+            "rss_mb": 816.49
+          },
+          {
+            "t_s": 12.01,
+            "flow": 154,
+            "rss_mb": 909.28
+          },
+          {
+            "t_s": 14.01,
+            "flow": 181,
+            "rss_mb": 805.63
+          },
+          {
+            "t_s": 16.01,
+            "flow": 207,
+            "rss_mb": 805.5
+          },
+          {
+            "t_s": 18.01,
+            "flow": 233,
+            "rss_mb": 786.66
+          },
+          {
+            "t_s": 20.01,
+            "flow": 259,
+            "rss_mb": 775.79
+          },
+          {
+            "t_s": 22.01,
+            "flow": 286,
+            "rss_mb": 1184.71
+          },
+          {
+            "t_s": 24.01,
+            "flow": 311,
+            "rss_mb": 888.63
+          },
+          {
+            "t_s": 26.02,
+            "flow": 337,
+            "rss_mb": 846.64
+          },
+          {
+            "t_s": 28.02,
+            "flow": 363,
+            "rss_mb": 1071
+          },
+          {
+            "t_s": 30.02,
+            "flow": 388,
+            "rss_mb": 934.64
+          },
+          {
+            "t_s": 32.02,
+            "flow": 412,
+            "rss_mb": 870.2
+          },
+          {
+            "t_s": 34.02,
+            "flow": 437,
+            "rss_mb": 853.05
+          },
+          {
+            "t_s": 36.02,
+            "flow": 463,
+            "rss_mb": 836.01
+          },
+          {
+            "t_s": 38.01,
+            "flow": 490,
+            "rss_mb": 1124.39
+          },
+          {
+            "t_s": 40.02,
+            "flow": 514,
+            "rss_mb": 841.97
+          },
+          {
+            "t_s": 42.02,
+            "flow": 541,
+            "rss_mb": 828.23
+          },
+          {
+            "t_s": 44.02,
+            "flow": 568,
+            "rss_mb": 979.36
+          },
+          {
+            "t_s": 46.02,
+            "flow": 594,
+            "rss_mb": 866.55
+          },
+          {
+            "t_s": 48.02,
+            "flow": 620,
+            "rss_mb": 859.93
+          },
+          {
+            "t_s": 50.02,
+            "flow": 645,
+            "rss_mb": 954.38
+          },
+          {
+            "t_s": 52.02,
+            "flow": 670,
+            "rss_mb": 755.2
+          },
+          {
+            "t_s": 54.02,
+            "flow": 698,
+            "rss_mb": 849.41
+          },
+          {
+            "t_s": 56.02,
+            "flow": 726,
+            "rss_mb": 948.18
+          },
+          {
+            "t_s": 58.02,
+            "flow": 754,
+            "rss_mb": 975.48
+          },
+          {
+            "t_s": 60.02,
+            "flow": 783,
+            "rss_mb": 793.49
+          },
+          {
+            "t_s": 62.02,
+            "flow": 811,
+            "rss_mb": 895.22
+          },
+          {
+            "t_s": 64.02,
+            "flow": 839,
+            "rss_mb": 855.01
+          },
+          {
+            "t_s": 66.02,
+            "flow": 868,
+            "rss_mb": 856.77
+          },
+          {
+            "t_s": 68.02,
+            "flow": 897,
+            "rss_mb": 755.04
+          },
+          {
+            "t_s": 70.03,
+            "flow": 926,
+            "rss_mb": 789.11
+          },
+          {
+            "t_s": 72.03,
+            "flow": 955,
+            "rss_mb": 791.66
+          },
+          {
+            "t_s": 74.03,
+            "flow": 985,
+            "rss_mb": 771.63
+          },
+          {
+            "t_s": 76.03,
+            "flow": 1013,
+            "rss_mb": 802.68
+          },
+          {
+            "t_s": 78.03,
+            "flow": 1041,
+            "rss_mb": 901.07
+          },
+          {
+            "t_s": 80.03,
+            "flow": 1066,
+            "rss_mb": 1015.31
+          },
+          {
+            "t_s": 82.03,
+            "flow": 1093,
+            "rss_mb": 1085.82
+          },
+          {
+            "t_s": 84.03,
+            "flow": 1120,
+            "rss_mb": 989.86
+          },
+          {
+            "t_s": 86.03,
+            "flow": 1147,
+            "rss_mb": 878.43
+          },
+          {
+            "t_s": 88.03,
+            "flow": 1177,
+            "rss_mb": 879.05
+          },
+          {
+            "t_s": 90.03,
+            "flow": 1205,
+            "rss_mb": 876.2
+          },
+          {
+            "t_s": 92.03,
+            "flow": 1233,
+            "rss_mb": 947.87
+          },
+          {
+            "t_s": 94.04,
+            "flow": 1259,
+            "rss_mb": 1039.51
+          },
+          {
+            "t_s": 96.04,
+            "flow": 1286,
+            "rss_mb": 966.68
+          },
+          {
+            "t_s": 98.04,
+            "flow": 1312,
+            "rss_mb": 851.37
+          },
+          {
+            "t_s": 100.04,
+            "flow": 1337,
+            "rss_mb": 887.73
+          },
+          {
+            "t_s": 102.04,
+            "flow": 1365,
+            "rss_mb": 826.21
+          },
+          {
+            "t_s": 104.04,
+            "flow": 1391,
+            "rss_mb": 800.54
+          },
+          {
+            "t_s": 106.04,
+            "flow": 1419,
+            "rss_mb": 820.93
+          },
+          {
+            "t_s": 108.04,
+            "flow": 1445,
+            "rss_mb": 863.15
+          },
+          {
+            "t_s": 110.04,
+            "flow": 1471,
+            "rss_mb": 1100.79
+          },
+          {
+            "t_s": 112.04,
+            "flow": 1496,
+            "rss_mb": 872.56
+          },
+          {
+            "t_s": 114.05,
+            "flow": 1521,
+            "rss_mb": 912.57
+          },
+          {
+            "t_s": 116.05,
+            "flow": 1546,
+            "rss_mb": 837.63
+          },
+          {
+            "t_s": 118.06,
+            "flow": 1571,
+            "rss_mb": 1010.98
+          },
+          {
+            "t_s": 120.06,
+            "flow": 1596,
+            "rss_mb": 897.43
+          },
+          {
+            "t_s": 122.06,
+            "flow": 1623,
+            "rss_mb": 887.84
+          },
+          {
+            "t_s": 124.06,
+            "flow": 1650,
+            "rss_mb": 854.73
+          },
+          {
+            "t_s": 126.06,
+            "flow": 1678,
+            "rss_mb": 871.51
+          },
+          {
+            "t_s": 128.06,
+            "flow": 1705,
+            "rss_mb": 891.18
+          },
+          {
+            "t_s": 130.06,
+            "flow": 1732,
+            "rss_mb": 860.32
+          },
+          {
+            "t_s": 132.06,
+            "flow": 1759,
+            "rss_mb": 1110.17
+          },
+          {
+            "t_s": 134.06,
+            "flow": 1783,
+            "rss_mb": 872.34
+          },
+          {
+            "t_s": 136.06,
+            "flow": 1809,
+            "rss_mb": 820.54
+          },
+          {
+            "t_s": 138.06,
+            "flow": 1835,
+            "rss_mb": 764.18
+          },
+          {
+            "t_s": 140.06,
+            "flow": 1863,
+            "rss_mb": 756.18
+          },
+          {
+            "t_s": 142.07,
+            "flow": 1889,
+            "rss_mb": 765.81
+          },
+          {
+            "t_s": 144.07,
+            "flow": 1916,
+            "rss_mb": 790.48
+          },
+          {
+            "t_s": 146.07,
+            "flow": 1945,
+            "rss_mb": 825.08
+          },
+          {
+            "t_s": 148.07,
+            "flow": 1972,
+            "rss_mb": 931.1
+          },
+          {
+            "t_s": 150.07,
+            "flow": 2002,
+            "rss_mb": 837
+          },
+          {
+            "t_s": 152.07,
+            "flow": 2032,
+            "rss_mb": 837.43
+          },
+          {
+            "t_s": 154.07,
+            "flow": 2061,
+            "rss_mb": 778.95
+          },
+          {
+            "t_s": 156.07,
+            "flow": 2091,
+            "rss_mb": 1020.82
+          },
+          {
+            "t_s": 158.07,
+            "flow": 2118,
+            "rss_mb": 758.19
+          },
+          {
+            "t_s": 160.07,
+            "flow": 2147,
+            "rss_mb": 764.8
+          },
+          {
+            "t_s": 162.07,
+            "flow": 2176,
+            "rss_mb": 774.95
+          },
+          {
+            "t_s": 164.07,
+            "flow": 2204,
+            "rss_mb": 844.8
+          },
+          {
+            "t_s": 166.07,
+            "flow": 2233,
+            "rss_mb": 852.46
+          },
+          {
+            "t_s": 168.07,
+            "flow": 2260,
+            "rss_mb": 839.46
+          },
+          {
+            "t_s": 170.07,
+            "flow": 2288,
+            "rss_mb": 845.33
+          },
+          {
+            "t_s": 172.07,
+            "flow": 2317,
+            "rss_mb": 841.25
+          },
+          {
+            "t_s": 174.08,
+            "flow": 2346,
+            "rss_mb": 865.89
+          },
+          {
+            "t_s": 176.08,
+            "flow": 2371,
+            "rss_mb": 854.43
+          },
+          {
+            "t_s": 178.08,
+            "flow": 2399,
+            "rss_mb": 899.82
+          },
+          {
+            "t_s": 180.08,
+            "flow": 2422,
+            "rss_mb": 809.25
+          },
+          {
+            "t_s": 182.08,
+            "flow": 2445,
+            "rss_mb": 859.19
+          },
+          {
+            "t_s": 184.08,
+            "flow": 2468,
+            "rss_mb": 859.14
+          },
+          {
+            "t_s": 186.08,
+            "flow": 2492,
+            "rss_mb": 877.41
+          },
+          {
+            "t_s": 186.58,
+            "flow": 2498,
+            "rss_mb": 803.37
+          }
+        ],
+        "trend": {
+          "classification": "plateau",
+          "reason": "late-window RSS stable relative to mid-window",
+          "early_median_mb": 846.64,
+          "mid_median_mb": 879.05,
+          "late_median_mb": 844.8,
+          "rise_early_to_late_mb": -1.84,
+          "rise_mid_to_late_mb": -34.25,
+          "mb_per_1000_flows": 97.56,
+          "n_series": 95
+        }
+      },
+      "startup": {
+        "ready_ms": 26.7,
+        "rss_mb_ready": 559.671875
+      },
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2433,
+          "layer2Cumulative": 2433,
+          "combined": 2614,
+          "layer2ShareOfCombined": 93.1
+        },
+        {
+          "n": 2,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 4916,
+          "combined": 5097,
+          "layer2ShareOfCombined": 96.4
+        },
+        {
+          "n": 3,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 7399,
+          "combined": 7580,
+          "layer2ShareOfCombined": 97.6
+        },
+        {
+          "n": 4,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 9882,
+          "combined": 10063,
+          "layer2ShareOfCombined": 98.2
+        },
+        {
+          "n": 5,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 12365,
+          "combined": 12546,
+          "layer2ShareOfCombined": 98.6
+        },
+        {
+          "n": 6,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 14848,
+          "combined": 15029,
+          "layer2ShareOfCombined": 98.8
+        },
+        {
+          "n": 7,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 17331,
+          "combined": 17512,
+          "layer2ShareOfCombined": 99
+        },
+        {
+          "n": 8,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 19814,
+          "combined": 19995,
+          "layer2ShareOfCombined": 99.1
+        },
+        {
+          "n": 9,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 22297,
+          "combined": 22478,
+          "layer2ShareOfCombined": 99.2
+        },
+        {
+          "n": 10,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 24780,
+          "combined": 24961,
+          "layer2ShareOfCombined": 99.3
+        },
+        {
+          "n": 11,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 27263,
+          "combined": 27444,
+          "layer2ShareOfCombined": 99.3
+        },
+        {
+          "n": 12,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 29746,
+          "combined": 29927,
+          "layer2ShareOfCombined": 99.4
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2433,
+          "layer2Cumulative": 2433,
+          "combined": 2433,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 4916,
+          "combined": 4916,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 7399,
+          "combined": 7399,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 9882,
+          "combined": 9882,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 12365,
+          "combined": 12365,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 14848,
+          "combined": 14848,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 17331,
+          "combined": 17331,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 19814,
+          "combined": 19814,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 22297,
+          "combined": 22297,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 24780,
+          "combined": 24780,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 27263,
+          "combined": 27263,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 29746,
+          "combined": 29746,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 30000,
+        "turns_total": 30000,
+        "flows": 2500,
+        "turns_per_flow": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "runtime": "executor-v2",
+        "runtime_version": "2.0.0-beta.15",
+        "ready_ms": 26.7,
+        "transport": "streamable_http",
+        "rss_mb_ready": 559.671875,
+        "rss_mb_min": 559.671875,
+        "rss_mb_median": 852.30859375,
+        "rss_mb_max": 1192.59375,
+        "rss_trend": {
+          "classification": "plateau",
+          "reason": "late-window RSS stable relative to mid-window",
+          "early_median_mb": 846.64,
+          "mid_median_mb": 879.05,
+          "late_median_mb": 844.8,
+          "rise_early_to_late_mb": -1.84,
+          "rise_mid_to_late_mb": -34.25,
+          "mb_per_1000_flows": 97.56,
+          "n_series": 95
+        },
+        "definitions_tokens": 181,
+        "discovery_tokens_sum": 0,
+        "mean_discovery_tokens": 0,
+        "result_tokens_sum": 29746,
+        "mean_result_tokens": 2478.8,
+        "layer1_once_tokens": 181,
+        "mean_layer2_tokens": 2478.8,
+        "combined_at_n": 29927,
+        "combined_rebuild": 29927,
+        "combined_relist_every_turn_at_n": 29746,
+        "flows": 2500,
+        "turns_per_flow": 12,
+        "total_turns": 30000,
+        "rpcs_per_turn": 1,
+        "ms_per_call_p50": 5.68,
+        "flow_e2e_ms": {
+          "n": 2500,
+          "p50_ms": 72.533,
+          "p95_ms": 91.202,
+          "p99_ms": 109.031,
+          "p999_ms": 185.873,
+          "mean_ms": 74.697,
+          "min_ms": 61.022,
+          "max_ms": 272.591,
+          "n_ge_100ms": 50,
+          "n_ge_200ms": 1,
+          "n_ge_300ms": 0,
+          "worst": [
+            {
+              "i": 1,
+              "ms": 272.591
+            },
+            {
+              "i": 496,
+              "ms": 198.587
+            },
+            {
+              "i": 2362,
+              "ms": 185.873
+            },
+            {
+              "i": 1780,
+              "ms": 180.995
+            },
+            {
+              "i": 1946,
+              "ms": 177.877
+            },
+            {
+              "i": 297,
+              "ms": 155.683
+            },
+            {
+              "i": 2422,
+              "ms": 154.702
+            },
+            {
+              "i": 2416,
+              "ms": 144.552
+            }
+          ]
+        },
+        "turn_latency_ms": {
+          "n": 30000,
+          "p50_ms": 5.679,
+          "p95_ms": 9.354,
+          "p99_ms": 15.007,
+          "p999_ms": 24.045,
+          "mean_ms": 6.149,
+          "min_ms": 4.665,
+          "max_ms": 93.033,
+          "n_ge_100ms": 0,
+          "n_ge_200ms": 0,
+          "n_ge_300ms": 0,
+          "worst": [
+            {
+              "i": 5946,
+              "ms": 93.033
+            },
+            {
+              "i": 23344,
+              "ms": 92.362
+            },
+            {
+              "i": 28343,
+              "ms": 88.235
+            },
+            {
+              "i": 21355,
+              "ms": 40.666
+            },
+            {
+              "i": 28815,
+              "ms": 38.96
+            },
+            {
+              "i": 21642,
+              "ms": 38.772
+            },
+            {
+              "i": 18251,
+              "ms": 36.417
+            },
+            {
+              "i": 18025,
+              "ms": 33.37
+            }
+          ]
+        },
+        "call_errors": 0,
+        "task_success_ok": true,
+        "task_success_rate": 1,
+        "token_rebuild_note": "Classic Layer1 = search+execute schemas; discovery = Σ search hit tokens."
+      }
+    }
+  },
+  "errors": {},
+  "category_win": [
+    "Category story: most efficient governed gateway — multi-turn I/O tokens with equal task success.",
+    "1. Primary model — classic Layer1 once + Σ Layer2 (clients that cache tools/list).",
+    "2. Input side — ClawQL Layer1 is search+execute only; aggregators pay the full fat tools/list once.",
+    "3. Output side — ClawQL gateway fields/where projection; Executor measured path is full payload pass-through.",
+    "4. Re-list-every-turn is secondary sensitivity only (most clients cache; lazy clients shrink aggregators further).",
+    "5. Settled: do not label a hand-written slim-return program as Executor (Both Sides of Context Compression).",
+    "RSS is a loss among serious arms — admit or fix before memory claims."
+  ],
+  "primary_metric": "classic_layer1_once_plus_sum_layer2_with_task_success",
+  "secondary_metric": "tools_list_every_turn_sensitivity",
+  "honesty": [
+    "Fat catalog equal-arm: N MCP tools mirrored as N OpenAPI operationIds.",
+    "PRIMARY tokens: classic Layer1_once + sum(Layer2) with deterministic task_success (tokens from flow 1; spot-stable).",
+    "MT_ITERS=2500: each arm completes that many full 12-turn flows on one warm connection.",
+    "Also reports flow e2e + per-turn latency percentiles and RSS (do not drop these for publish).",
+    "direct: no MCP gateway — raw HTTP fat catalog; Layer1=0. Prices token savings vs latency/RSS tax of each gateway.",
+    "SECONDARY: tools_list_every_turn — measured once on flow 1; most clients cache ListTools.",
+    "Executor Layer2 is fat JSON — matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
+    "Do not publish a hand-written slim-return program as Executor.",
+    "clawql_bun: same dist/server.js as clawql; only JS runtime changes.",
+    "executor + executor_v2 share the same runExecutorArm loop and fat fixture (discovery=0).",
+    "Executor 2 removed stdio MCP (`executor mcp` is v1-only) — product transport is HTTP; harness equalization is the shared loop, not pretending v2 has stdio.",
+    "Do not compare Executor v2 latency/RSS to ClawQL Bun stdio as same-topology. Tokens remain comparable.",
+    "ClawQL transport matrix: clawql/clawql_bun (stdio), clawql_http/clawql_http_bun (Streamable HTTP), clawql_grpc/clawql_grpc_bun (gRPC MCP).",
+    "All Streamable HTTP clients skip standalone GET SSE (fetch returns 405) — same filter for ClawQL HTTP, Executor v2, MCPJungle, agentgateway.",
+    "ClawQL HTTP server also sets CLAWQL_MCP_DISABLE_STANDALONE_SSE=1; client filter equalizes peers that would otherwise open SSE.",
+    "gRPC is ClawQL-only on this board — Executor / MCPJungle / agentgateway have no gRPC MCP peer here.",
+    "RUNTIME FLAGS (even across all ClawQL arms): Node --max-old-space-size=512; Bun --smol. See config.runtime_flags. Memory deltas vs older default-heap boards partly reflect these knobs.",
+    "gRPC Layer1 is 16 tokens below stdio/HTTP (281 vs 297): protobuf Tool omits SDK execution.taskSupport=forbidden on search+execute. Envelope-only — CallTool result bodies match; not a dropped content field.",
+    "RPCs/turn: ClawQL = 2 (search+execute); peers = 1. Publish ms/call = turn_p50 / rpcs_per_turn. Session latency gap is mostly the second call, which buys projection token savings.",
+    "LATENCY CLAIMS (HTTP-to-HTTP): per-call overhead on par with Go/Rust gateways; ClawQL Bun HTTP median ~2.3× agentgateway and >2× faster than Executor v2. Do not claim '3×–9× tighter tail'.",
+    "Publish board must be one interleaved run of every arm — do not stitch rows from separate solo runs (p999 drifts across sessions).",
+    "VIDEO: latency section uses same-transport HTTP numbers only (ClawQL HTTP vs Executor v2 / MCPJungle / agentgateway). Replace '3× to 9× tighter tail' with per-call parity + >2× vs Executor v2.",
+    "NEXT WIN: skip search when the agent already knows the operation (execute by ID) — halves remaining latency gap and cuts discovery tokens on repeat turns.",
+    "Executor discovery=0 on both versions (harness-authored execute). ClawQL charges search each turn.",
+    "ContextForge/MetaMCP off publish board by default.",
+    "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",
+    "RSS is a loss among serious arms — admit plainly. Classify Executor v2 climb via rss_trend before 'Nx heavier' headlines.",
+    "p999 STATUS: harness_isolated_pending_full_board — harness isolated (separate mock + taskset); p999 still under rework until full interleaved 10k. Cite tokens, per-call overhead (ms/call), medians, and memory. Do not headline p999 until a full interleaved board lands with separate mock/client/gateway and dedicated cores (or leave p999 labeled under rework).",
+    "CORE LAYOUT: enabled=true nproc=4 mock=0 gateway=1-2 client=3. Mock is a separate process (not the client event loop).",
+    "MT_UPSTREAM_LATENCY_MS unset — mock responds ASAP (isolation board). Optional 20-100ms arm after tails republish."
+  ]
+}

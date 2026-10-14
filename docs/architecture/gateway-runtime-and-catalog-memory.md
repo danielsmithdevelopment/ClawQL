@@ -61,7 +61,7 @@ Crossing the boundary has copy/convert cost; for small ops it can be slower.
 
 ## 4. Catalog + IDP memory → colocated SQLite
 
-**Shipped (opt-in):** `CLAWQL_CATALOG_SQLITE=1` — see [`catalog-sqlite-ready-rss.md`](../benchmarks/gateway-multi-comparison/catalog-sqlite-ready-rss.md).
+**Shipped (default on):** `CLAWQL_CATALOG_SQLITE` (opt out `=0`) — Ready + under-load A/Bs in [`catalog-sqlite-underload.md`](../benchmarks/gateway-multi-comparison/catalog-sqlite-underload.md).
 
 Keep hot indexes / working set in memory; leave cold OAS in a SQLite file next to ClawQL so Ready RSS scales with use, not with everything bundled.
 

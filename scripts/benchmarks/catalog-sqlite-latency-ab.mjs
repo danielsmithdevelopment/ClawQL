@@ -222,7 +222,9 @@ async function measureMode(mode, { home, specPath, catalogPath, mockPort }) {
     CLAWQL_ENABLE_HTTP_METRICS: "0",
     CLAWQL_BENCH_STATS: "1",
   };
-  if (mode === "sqlite_loaddb") {
+  if (mode === "memory") {
+    env.CLAWQL_CATALOG_SQLITE = "0";
+  } else if (mode === "sqlite_loaddb") {
     env.CLAWQL_CATALOG_SQLITE = "1";
     env.CLAWQL_CATALOG_SQLITE_PATH = catalogPath;
     env.CLAWQL_CATALOG_SQLITE_LOAD = "db";

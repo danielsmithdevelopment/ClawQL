@@ -1,13 +1,14 @@
-function envTruthy(raw: string | undefined): boolean {
-  const t = raw?.trim().toLowerCase();
-  return t === "1" || t === "true" || t === "yes";
+function catalogSqliteOn(raw: string | undefined): boolean {
+  if (raw == null || raw.trim() === "") return true;
+  const t = raw.trim().toLowerCase();
+  return t !== "0" && t !== "false" && t !== "no" && t !== "off";
 }
 
 /** Infer human-readable spec / provider mode from environment (no spec load). */
 export function inferSpecMode(): string {
   const sqliteLoad = (process.env.CLAWQL_CATALOG_SQLITE_LOAD ?? "").trim().toLowerCase();
   if (
-    envTruthy(process.env.CLAWQL_CATALOG_SQLITE) &&
+    catalogSqliteOn(process.env.CLAWQL_CATALOG_SQLITE) &&
     (sqliteLoad === "db" || sqliteLoad === "sqlite")
   ) {
     return "catalog-sqlite";

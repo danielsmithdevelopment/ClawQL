@@ -202,6 +202,9 @@ async function measure(kind, opts = {}) {
     delete env.CLAWQL_SPEC_PATH;
     delete env.OPENAPI_SPEC_PATH;
     delete env.OPENAPI_FILE;
+  } else {
+    // Historical lean/fat baseline = in-memory OAS (product default is now SQLite on).
+    env.CLAWQL_CATALOG_SQLITE = "0";
   }
 
   const child = spawn(BUN, ["--smol", join(ROOT, "dist/server-http.js")], {

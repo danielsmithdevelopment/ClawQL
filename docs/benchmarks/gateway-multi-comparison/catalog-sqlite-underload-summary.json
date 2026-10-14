@@ -1,0 +1,66 @@
+{
+  "measuredAt": "2026-10-14T02:02:22.332Z",
+  "equal40": {
+    "memory_under_rss_median": 319.2,
+    "memory_under_anon_median": 256.34,
+    "loaddb_under_rss_median": 188.41,
+    "loaddb_under_anon_median": 146.23,
+    "delta": {
+      "ready_rss": -129.03,
+      "ready_anon": -107.93,
+      "under_rss_median": -130.79,
+      "under_anon_median": -110.11,
+      "under_pss_median": -129.87
+    }
+  },
+  "sentry": {
+    "memory_under_rss_median": 310.45,
+    "memory_under_anon_median": 247.84,
+    "loaddb_under_rss_median": 192.7,
+    "loaddb_under_anon_median": 150.69,
+    "delta": {
+      "ready_rss": -135.96,
+      "ready_anon": -114.57,
+      "under_rss_median": -117.75,
+      "under_anon_median": -97.15,
+      "under_pss_median": -116.85
+    }
+  },
+  "mcpjungle_anchor_underload_mb": 152,
+  "executor_v2_p999_3x": {
+    "n_per_rep": 2500,
+    "layout": "MT_PIN_CORES=1 gateway_2core solo",
+    "reps": [
+      {
+        "rep": 1,
+        "p50_ms": 70.235,
+        "p99_ms": 114.734,
+        "p999_ms": 198.785,
+        "n": 2500
+      },
+      {
+        "rep": 2,
+        "p50_ms": 69.061,
+        "p99_ms": 103.683,
+        "p999_ms": 173.171,
+        "n": 2500
+      },
+      {
+        "rep": 3,
+        "p50_ms": 72.533,
+        "p99_ms": 109.031,
+        "p999_ms": 185.873,
+        "n": 2500
+      }
+    ],
+    "p999_range_ms": [
+      173.171,
+      198.785
+    ],
+    "p50_range_ms": [
+      69.061,
+      72.533
+    ],
+    "verdict": "Publish-board 286 ms looks like run noise; solo 2-core p999 clusters 173\u2013199. Prefer ~186 median of 3 or withhold until interleaved 3\u00d7."
+  }
+}

@@ -5,8 +5,9 @@
  * search) instead of retaining the full OAS object graph. Cold OpenAPI docs are
  * gzip'd in SQLite and materialised on first execute touch.
  *
- * Enable: **`CLAWQL_CATALOG_SQLITE=1`**
+ * Default **on** (persist-then-slim after OpenAPI load). Opt out: **`CLAWQL_CATALOG_SQLITE=0`**.
  * Path: **`CLAWQL_CATALOG_SQLITE_PATH`** (default `$CLAWQL_HOME/catalog.sqlite`)
+ * Precompiled listen: **`CLAWQL_CATALOG_SQLITE_LOAD=db`** (skip OAS parse when DB exists).
  *
  * Search stays the in-memory weighted keyword scan over `operations` — no FTS/BM25.
  */
@@ -45,14 +46,16 @@ function loadDatabaseSync(): DatabaseSyncCtor {
   }
 }
 
-function envTruthy(raw: string | undefined): boolean {
-  const t = raw?.trim().toLowerCase();
-  return t === "1" || t === "true" || t === "yes";
+/** Default on; only `0` / `false` / `no` / `off` disable. */
+function envFlagDefaultOn(raw: string | undefined): boolean {
+  if (raw == null || raw.trim() === "") return true;
+  const t = raw.trim().toLowerCase();
+  return t !== "0" && t !== "false" && t !== "no" && t !== "off";
 }
 
 export const catalogSqliteEnabled = (
   env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<boolean> => Effect.sync(() => envTruthy(env.CLAWQL_CATALOG_SQLITE));
+): Effect.Effect<boolean> => Effect.sync(() => envFlagDefaultOn(env.CLAWQL_CATALOG_SQLITE));
 
 export const resolveCatalogSqlitePath = (
   env: NodeJS.ProcessEnv = process.env
