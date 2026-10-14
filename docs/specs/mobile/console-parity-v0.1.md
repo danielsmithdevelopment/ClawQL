@@ -49,5 +49,8 @@ Phone-native extras (Voice, NFC, App Lock, push inbox) stay additive.
 - [x] Team invite / roles / groups on phone (`/api/managed/team`)
 - [x] Deeper Usage from `/api/managed/usage` (month, forecast, team budgets)
 - [x] Managed `/api/managed/{gateway,automations,audit,settings}` + mobile adapters
-- [x] Memory pipelines list + subject erase (fixture)
-- [x] Billing portal CTA from Spend (live Stripe or honesty fallback)
+- [x] Memory pipelines list + subject erase (durable under `CLAWQL_HOME`)
+- [x] Billing portal CTA from Spend + Profile (live Stripe or honesty fallback)
+- [x] Push device register/list/clear via `/api/managed/devices/push`
+- [x] Review evidence attachments via `/api/managed/evidence`
+- [x] Team live roster from org spend members (fixture fallback)

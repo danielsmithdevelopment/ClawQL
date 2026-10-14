@@ -269,31 +269,13 @@ export function registerForPushEffect(
     });
 
     const platform = Platform.OS === "ios" ? "ios" : "android";
+    // registerPushDeviceEffect POSTs to /api/managed/devices/push on live sessions.
     yield* registerPushDeviceEffect({
       session,
       token,
       platform,
       label: "This phone",
       fixture: false,
-    }).pipe(Effect.catch(() => Effect.void));
-
-    // Best-effort register with managed console (no-op if route not yet deployed).
-    yield* Effect.tryPromise({
-      try: async () => {
-        await fetch(`${config.apiBase}/api/managed/devices/push`, {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            authorization: `Bearer ${session.accessToken}`,
-          },
-          body: JSON.stringify({
-            token,
-            platform,
-            userId: session.userId,
-          }),
-        }).catch(() => undefined);
-      },
-      catch: () => new PushError({ reason: "register_failed" }),
     }).pipe(Effect.catch(() => Effect.void));
 
     return { token, fixture: false };

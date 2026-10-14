@@ -237,5 +237,12 @@ test.describe("PhoneApprove store_iap + Face ID (fixture web)", () => {
     await expect(spend).toBeVisible({ timeout: 15_000 });
     await spend.getByTestId("spend-open-billing-portal").click();
     await expect(spend.getByTestId("spend-billing-portal-note")).toContainText(/Fixture/i);
+
+    await page.goto("/(tabs)/profile", { waitUntil: "networkidle" });
+    const profile = page.getByTestId("profile-screen").filter({ visible: true }).first();
+    await expect(profile).toBeVisible({ timeout: 15_000 });
+    await profile.getByTestId("profile-plan-billing").scrollIntoViewIfNeeded();
+    await profile.getByTestId("profile-open-billing-portal").click();
+    await expect(profile.getByTestId("profile-billing-portal-note")).toContainText(/Fixture/i);
   });
 });

@@ -249,7 +249,7 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     id: "MOB-34",
     run: "Maestro",
     title: "Billing portal CTA fixture honesty",
-    passWhen: "Spend portal button shows fixture honesty note",
+    passWhen: "Spend and Profile portal buttons show fixture honesty notes",
     flow: "maestro/flows/mob-34-billing-portal.yaml",
   },
   {
@@ -269,8 +269,8 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
 export function assertMobileCatalogComplete(): void {
   const maestro = MOBILE_SCENARIOS.filter((s) => s.run === "Maestro");
   const manual = MOBILE_SCENARIOS.filter((s) => s.run === "Manual");
-  if (maestro.length !== 30) {
-    throw new Error(`Expected 30 Maestro MOB scenarios, got ${maestro.length}`);
+  if (maestro.length !== 34) {
+    throw new Error(`Expected 34 Maestro MOB scenarios, got ${maestro.length}`);
   }
   if (manual.length !== 2) {
     throw new Error(`Expected 2 Manual scenarios (REV-13, UX-09), got ${manual.length}`);

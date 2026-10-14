@@ -3,13 +3,16 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { FIXTURE_SESSION } from "../../domain/fixtures";
 import {
+  clearPushDevicesEffect,
   eraseMemorySubjectEffect,
   getGatewayBundleEffect,
   getOrgSettingsBundleEffect,
   listAutomationsEffect,
   listAuditEntriesEffect,
   listMemoryUploadsEffect,
+  listPushDevicesEffect,
   openBillingPortalEffect,
+  registerPushDeviceEffect,
   resetFixtureStateEffect,
 } from "../api";
 
@@ -45,6 +48,7 @@ describe("ops parity gateway/automations/audit/settings/memory erase", () => {
       })
     );
     expect(erased.ok).toBe(true);
+    expect(erased.jobId).toMatch(/^era_/);
     const after = await Effect.runPromise(listMemoryUploadsEffect(FIXTURE_SESSION));
     expect(after.erasedSubjects).toContain("Jane Okafor");
   });
@@ -53,5 +57,22 @@ describe("ops parity gateway/automations/audit/settings/memory erase", () => {
     const portal = await Effect.runPromise(openBillingPortalEffect(FIXTURE_SESSION));
     expect(portal.source).toBe("fixture");
     expect(portal.url).toContain("fixture://");
+  });
+
+  it("registers and clears fixture push devices locally", async () => {
+    await Effect.runPromise(
+      registerPushDeviceEffect({
+        session: FIXTURE_SESSION,
+        token: "ExponentPushToken[ops-parity]",
+        platform: "ios",
+        label: "Ops parity phone",
+        fixture: true,
+      })
+    );
+    const listed = await Effect.runPromise(listPushDevicesEffect(FIXTURE_SESSION));
+    expect(listed.some((d) => d.token.includes("ops-parity"))).toBe(true);
+    await Effect.runPromise(clearPushDevicesEffect(FIXTURE_SESSION));
+    const after = await Effect.runPromise(listPushDevicesEffect(FIXTURE_SESSION));
+    expect(after).toHaveLength(0);
   });
 });

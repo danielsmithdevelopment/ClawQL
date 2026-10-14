@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import * as WebBrowser from "expo-web-browser";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert } from "react-native";
+import { Alert, Linking, Platform } from "react-native";
 
 import type {
   ConnectedApp,
@@ -21,6 +21,7 @@ import {
   listDeviceSessionsEffect,
   listPushDevicesEffect,
   listSecurityKeysEffect,
+  openBillingPortalEffect,
   revokeConnectedAppEffect,
   setNotificationPrefsEffect,
 } from "@/src/services/api";
@@ -77,6 +78,8 @@ export default function ProfileScreen() {
   const [hydrated, setHydrated] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [portalBusy, setPortalBusy] = useState(false);
+  const [portalNote, setPortalNote] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -669,6 +672,44 @@ export default function ProfileScreen() {
             });
           }}
         />
+        <SecondaryButton
+          testID="profile-open-billing-portal"
+          label={portalBusy ? "Opening…" : "Open billing portal (Stripe)"}
+          disabled={portalBusy || busy}
+          onPress={() => {
+            setPortalBusy(true);
+            setPortalNote(null);
+            void Effect.runPromise(openBillingPortalEffect(session))
+              .then(async (out) => {
+                if (out.source === "fixture" || out.url.startsWith("fixture://")) {
+                  setPortalNote(
+                    "Fixture mode — Stripe portal needs CLAWQL_STRIPE_CUSTOMER_ID on a live session."
+                  );
+                  return;
+                }
+                if (Platform.OS === "web") {
+                  globalThis.location?.assign?.(out.url);
+                } else {
+                  await Linking.openURL(out.url);
+                }
+              })
+              .catch((e: unknown) => {
+                const reason =
+                  e && typeof e === "object" && "reason" in e
+                    ? String((e as { reason: string }).reason)
+                    : e instanceof Error
+                      ? e.message
+                      : String(e);
+                setPortalNote(reason);
+              })
+              .finally(() => setPortalBusy(false));
+          }}
+        />
+        {portalNote ? (
+          <Meta testID="profile-billing-portal-note" color={brand.inkMuted}>
+            {portalNote}
+          </Meta>
+        ) : null}
       </SurfaceCard>
 
       <SurfaceCard testID="profile-console-parity" tint="soft">

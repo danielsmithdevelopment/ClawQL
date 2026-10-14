@@ -101,7 +101,7 @@ Those live only under [`store/DAY0-CHECKLIST.md`](store/DAY0-CHECKLIST.md). Day-
 
 ## Fixture client status
 
-PhoneApprove **fixture UX** covers approval plus console-parity surfaces (Memory, API keys, Gateway, Automations, Audit, Settings, Team invite, Usage depth). Managed routes exist for memory/sessions/skills/team/usage/keys/connections; deeper live backends (push register, evidence upload) remain.
+PhoneApprove **fixture UX** covers approval plus console-parity surfaces (Memory, API keys, Gateway, Automations, Audit, Settings, Team invite, Usage depth). Managed live routes also cover push register (`/api/managed/devices/push`), evidence attachments (`/api/managed/evidence`), durable memory erase, team-from-org-spend fallback, and billing portal CTAs on Spend + Profile.
 
 ## Optional: static web export (CI / screenshots)
 
