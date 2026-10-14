@@ -78,6 +78,31 @@ export async function fetchManagedUsage(): Promise<{
   return getJson('/api/managed/usage')
 }
 
+export async function fetchManagedMemory(input?: {
+  query?: string
+  kind?: string
+  id?: string
+}): Promise<unknown> {
+  const params = new URLSearchParams()
+  if (input?.id) params.set('id', input.id)
+  if (input?.query) params.set('q', input.query)
+  if (input?.kind) params.set('kind', input.kind)
+  const qs = params.toString()
+  return getJson(`/api/managed/memory${qs ? `?${qs}` : ''}`)
+}
+
+export async function fetchManagedSessions(): Promise<unknown> {
+  return getJson('/api/managed/sessions')
+}
+
+export async function fetchManagedSkills(): Promise<unknown> {
+  return getJson('/api/managed/skills')
+}
+
+export async function fetchManagedTeam(): Promise<unknown> {
+  return getJson('/api/managed/team')
+}
+
 export async function fetchManagedReview(): Promise<{
   items: ReviewItem[]
   source: 'live' | 'fixture'
