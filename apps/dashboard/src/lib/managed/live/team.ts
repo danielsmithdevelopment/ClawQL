@@ -78,7 +78,7 @@ export const listManagedTeamEffect = (
     const invites = yield* Ref.get(invitesRef);
     const fixturePeople = fixturePeopleWithInvites(invites);
 
-    const resolved = yield* resolveWithFallbackEffect({
+    const resolved = yield* resolveWithFallbackEffect<ManagedTeamPerson[]>({
       source: readManagedDataSource(env),
       fixture: fixturePeople,
       isLiveUseful: (people) => people.length > 0 && people[0]?.id.startsWith("member_") === true,
@@ -95,7 +95,7 @@ export const listManagedTeamEffect = (
         if (summary.members.length === 0) {
           return yield* Effect.fail(new Error("no org members"));
         }
-        return summary.members.map((m) => {
+        const people: ManagedTeamPerson[] = summary.members.map((m) => {
           const email = m.email?.trim() || `${m.memberTenantId}@org.local`;
           const name = m.displayName?.trim() || email;
           return {
@@ -109,8 +109,9 @@ export const listManagedTeamEffect = (
             lastActive: "Live org member",
             canApproveSummary: "From org spend roster",
             keysLabel: "Managed via IdP",
-          } satisfies ManagedTeamPerson;
+          };
         });
+        return people;
       }),
     });
 

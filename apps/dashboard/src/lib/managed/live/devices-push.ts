@@ -52,13 +52,16 @@ const writeDevicesFileEffect = (
 
 export const listManagedPushDevicesEffect = (
   env: NodeJS.ProcessEnv = process.env,
-): Effect.Effect<{
-  readonly devices: ManagedPushDevice[];
-  readonly source: "live" | "fixture";
-}> =>
+): Effect.Effect<
+  {
+    readonly devices: ManagedPushDevice[];
+    readonly source: "live" | "fixture";
+  },
+  Error
+> =>
   Effect.gen(function* () {
     if (readManagedDataSource(env) === "fixture") {
-      return { devices: [], source: "fixture" as const };
+      return { devices: [] as ManagedPushDevice[], source: "fixture" as const };
     }
     const path = resolveDevicesPath(env);
     const devices = yield* readDevicesFileEffect(path);

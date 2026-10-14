@@ -58,14 +58,20 @@ const writeEvidenceFileEffect = (
 export const listManagedEvidenceEffect = (input: {
   readonly reviewId: string;
   readonly env?: NodeJS.ProcessEnv;
-}): Effect.Effect<{
-  readonly attachments: ManagedEvidenceAttachment[];
-  readonly source: "live" | "fixture";
-}> =>
+}): Effect.Effect<
+  {
+    readonly attachments: ManagedEvidenceAttachment[];
+    readonly source: "live" | "fixture";
+  },
+  Error
+> =>
   Effect.gen(function* () {
     const env = input.env ?? process.env;
     if (readManagedDataSource(env) === "fixture") {
-      return { attachments: [], source: "fixture" as const };
+      return {
+        attachments: [] as ManagedEvidenceAttachment[],
+        source: "fixture" as const,
+      };
     }
     const all = yield* readEvidenceFileEffect(resolveEvidencePath(env));
     return {
