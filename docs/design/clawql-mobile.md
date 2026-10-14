@@ -6,18 +6,6 @@ See [`docs/specs/mobile/console-parity-v0.1.md`](../specs/mobile/console-parity-
 
 ## Surfaces
 
-<<<<<<< HEAD
-| Screen    | Job                                                                                                                                            |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sign in   | System browser OAuth + app/universal link return; fixture + reviewer-demo for CI/review                                                        |
-| Home      | Needs-you queue snapshot + today's spend                                                                                                       |
-| Review    | Queue + exact-change detail; Decline; Approve with security key                                                                                |
-| Profile   | Keys, connected apps (Revoke), notification prefs, voice prefs, sign out, **delete account**                                                   |
-| Voice     | In-app assistant — list/read/decline/ask/start workflow; TTS; Shortcuts donation; Siri later ([spec](../specs/mobile/voice-assistant-v0.1.md)) |
-| Workflows | Fixture programs startable by tap or voice                                                                                                     |
-
-All other product surfaces deep-link or open the web console.
-=======
 | Screen | Job |
 | ------ | --- |
 | Sign in | System browser OAuth + app/universal link return; fixture + reviewer-demo for CI/review |
@@ -33,7 +21,6 @@ All other product surfaces deep-link or open the web console.
 | Settings | Org general settings |
 | Voice / Workflows | Phone-native assistant + fixture program start |
 | Spend / Agents / Digest / Inbox / Teammates / Policies | Console-parity secondary surfaces |
->>>>>>> e61d43e3 (feat(mobile): full console parity — Memory explorer and API keys)
 
 ## Auth
 
