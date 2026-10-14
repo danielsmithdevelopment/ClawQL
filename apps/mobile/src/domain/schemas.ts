@@ -282,6 +282,79 @@ export const DocumentAttachment = Schema.Struct({
 });
 export type DocumentAttachment = Schema.Schema.Type<typeof DocumentAttachment>;
 
+/** Memory explorer hit (console MemoryPage / MEMORY_RESULTS). */
+export const MemoryResult = Schema.Struct({
+  id: Schema.String,
+  kind: Schema.Literals(["ENTITY", "DOCUMENT", "NOTE"]),
+  title: Schema.String,
+  summary: Schema.String,
+  badge: Schema.String,
+  badgeTone: BadgeTone,
+});
+export type MemoryResult = Schema.Schema.Type<typeof MemoryResult>;
+
+export const MemoryField = Schema.Struct({
+  field: Schema.String,
+  value: Schema.String,
+  source: Schema.String,
+  confidence: Schema.String,
+  tone: BadgeTone,
+});
+export type MemoryField = Schema.Schema.Type<typeof MemoryField>;
+
+/** Gateway API key (not hardware SecurityKey / OAuth ConnectedApp). */
+export const ApiKeyItem = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  expiresLabel: Schema.String,
+  keyGroup: Schema.String,
+  canUse: Schema.String,
+  dailyCap: Schema.String,
+  endsIn: Schema.optional(Schema.String),
+  lastUsed: Schema.optional(Schema.String),
+  capReached: Schema.optional(Schema.Boolean),
+  expiresHighlight: Schema.optional(Schema.Boolean),
+  revoked: Schema.optional(Schema.Boolean),
+});
+export type ApiKeyItem = Schema.Schema.Type<typeof ApiKeyItem>;
+
+export const GatewayEndpoint = Schema.Struct({
+  path: Schema.String,
+  description: Schema.String,
+});
+export type GatewayEndpoint = Schema.Schema.Type<typeof GatewayEndpoint>;
+
+export const AutomationSub = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  target: Schema.String,
+  events: Schema.String,
+  via: Schema.String,
+  last: Schema.String,
+  health: Schema.String,
+  tone: BadgeTone,
+});
+export type AutomationSub = Schema.Schema.Type<typeof AutomationSub>;
+
+export const AuditEntry = Schema.Struct({
+  id: Schema.String,
+  time: Schema.String,
+  actor: Schema.String,
+  action: Schema.String,
+  outcome: Schema.String,
+  tone: BadgeTone,
+});
+export type AuditEntry = Schema.Schema.Type<typeof AuditEntry>;
+
+export const OrgSettings = Schema.Struct({
+  name: Schema.String,
+  consoleAddress: Schema.String,
+  dataRegion: Schema.String,
+  timeZone: Schema.String,
+  securityContact: Schema.String,
+});
+export type OrgSettings = Schema.Schema.Type<typeof OrgSettings>;
+
 /** Fixture / console-parity workflow (skill program) the voice assistant can start. */
 export const WorkflowProgram = Schema.Struct({
   id: Schema.String,

@@ -1,0 +1,22 @@
+# MOB-27 — API keys issue + revoke
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- tapOn:
+    id: "tab-profile"
+- tapOn:
+    id: "profile-open-keys"
+- assertVisible:
+    id: "keys-screen"
+- tapOn:
+    id: "keys-issue"
+- assertVisible:
+    id: "keys-secret"
+- assertVisible:
+    id: "keys-secret-value"
+- tapOn:
+    id: "keys-copy-secret"
+- assertVisible:
+    id: "keys-note"

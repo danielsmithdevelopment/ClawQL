@@ -74,12 +74,15 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Chrome a11y labels (buttons / rows / chips / prefs) | ✅ |
 | Activity drill-in to decided archive | ✅ |
 | Deep links: review + inbox/digest/agents/spend/teammates/policies | ✅ |
-| Deep link parsing / Maestro MOB-01…25 | ✅ (sim/emulator or web Playwright) |
 | Voice assistant (typed + TTS + web mic) | ✅ `/voice` + Profile |
 | Shortcuts / App Actions donation catalog | ✅ `/voice` share + `store/android/actions.xml` |
 | Fixture workflows list / start | ✅ `/workflows` + voice “start …” |
+| Memory explorer (search + detail) | ✅ `/memory` |
+| API keys (issue / copy / revoke) | ✅ `/keys` |
+| Gateway / Automations / Audit / Settings | ✅ fixture screens in-app |
+| Deep link parsing / Maestro MOB-01…27 | ✅ |
 | Unit tests | `npm test` |
-| Web e2e (store_iap + Face ID + voice) | `npm run local:web-export && npm run test:e2e` |
+| Web e2e (store_iap + Face ID + voice + memory/keys) | `npm run local:web-export && npm run test:e2e` |
 | Packaging preflight (no upload) | `npm run store:check` |
 
 ## What you can skip until you are ready
@@ -94,7 +97,7 @@ Those live only under [`store/DAY0-CHECKLIST.md`](store/DAY0-CHECKLIST.md). Day-
 
 ## Fixture client status
 
-PhoneApprove **fixture UX** (approve paths, inbox, deep links, offline cache, a11y gate, Maestro MOB-01…19) is the local product surface. The next product step off-fixture is **backend**: managed push register (`POST /api/managed/devices/push`), APNs/EAS delivery, evidence upload, and live keys/activity — not more client chrome.
+PhoneApprove **fixture UX** covers approval plus console-parity surfaces (Memory, API keys, Gateway, Automations, Audit, Settings). Off-fixture work is **live managed APIs** for those screens (`/api/managed/memory`, keys already partially live on dashboard, push register, evidence upload, activity).
 
 ## Optional: static web export (CI / screenshots)
 

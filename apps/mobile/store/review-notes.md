@@ -2,7 +2,7 @@
 
 ## What this app is
 
-ClawQL is an approval app for agentic tooling. Operators review exact-change requests from agents, then Approve (security key) or Decline. The web console covers everything else.
+ClawQL PhoneApprove is the phone client for ClawQL Cloud: review exact-change requests (Approve with security key / Decline), plus managed-console jobs on device (Memory explorer, API keys, Gateway, Automations, Audit, Settings, spend, team). The web console remains available; it is not the only place for those jobs.
 
 ## Sign-in for reviewers
 

@@ -20,6 +20,13 @@ import {
   FIXTURE_POLICY_DETAIL,
   FIXTURE_REVIEW_ITEMS,
   FIXTURE_SPEND,
+  FIXTURE_API_KEYS,
+  FIXTURE_AUDIT_ENTRIES,
+  FIXTURE_AUTOMATIONS,
+  FIXTURE_GATEWAY_ENDPOINTS,
+  FIXTURE_MEMORY_FIELDS,
+  FIXTURE_MEMORY_RESULTS,
+  FIXTURE_ORG_SETTINGS,
   FIXTURE_TEAMMATES,
   FIXTURE_WORKFLOWS,
 } from "../domain/fixtures";
@@ -28,15 +35,22 @@ import {
   ActivityEvent,
   ActivityListResponse,
   AgentSummary,
+  ApiKeyItem,
   ApprovalPolicy,
   ApprovalPolicyDetail,
+  AuditEntry,
+  AutomationSub,
   ConnectedApp,
   DeviceSession,
   DocumentAttachment,
+  GatewayEndpoint,
   HomeSpend,
   InboxItem,
+  MemoryField,
+  MemoryResult,
   MorningDigest,
   NotificationPrefs,
+  OrgSettings,
   OrgSummary,
   PushDevice,
   ReviewDecision,
@@ -73,6 +87,7 @@ type MutableState = {
   pushDevices: PushDevice[];
   attachments: DocumentAttachment[];
   workflowRuns: WorkflowRun[];
+  apiKeys: ApiKeyItem[];
   deleted: boolean;
 };
 
@@ -87,6 +102,7 @@ const stateRef = Ref.makeUnsafe<MutableState>({
   pushDevices: [],
   attachments: [],
   workflowRuns: [],
+  apiKeys: [...FIXTURE_API_KEYS],
   deleted: false,
 });
 
@@ -702,6 +718,142 @@ export function listWorkflowRunsEffect(
   });
 }
 
+export function searchMemoryEffect(
+  session: MobileSession,
+  query?: string,
+  kind?: MemoryResult["kind"] | "all"
+): Effect.Effect<readonly MemoryResult[], MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    const q = (query ?? "").trim().toLowerCase();
+    const rows = FIXTURE_MEMORY_RESULTS.filter((row) => {
+      if (kind && kind !== "all" && row.kind !== kind) return false;
+      if (!q) return true;
+      return (
+        row.title.toLowerCase().includes(q) ||
+        row.summary.toLowerCase().includes(q) ||
+        row.id.toLowerCase().includes(q)
+      );
+    });
+    return rows;
+  });
+}
+
+export function getMemoryByIdEffect(
+  session: MobileSession,
+  id: string
+): Effect.Effect<
+  { result: MemoryResult; fields: readonly MemoryField[] } | null,
+  MobileApiError
+> {
+  return Effect.gen(function* () {
+    void session;
+    const result = FIXTURE_MEMORY_RESULTS.find((r) => r.id === id) ?? null;
+    if (!result) return null;
+    return { result, fields: FIXTURE_MEMORY_FIELDS };
+  });
+}
+
+export function listApiKeysEffect(
+  session: MobileSession
+): Effect.Effect<readonly ApiKeyItem[], MobileApiError> {
+  return Effect.gen(function* () {
+    void session;
+    const state = yield* Ref.get(stateRef);
+    return state.apiKeys.filter((k) => !k.revoked);
+  });
+}
+
+export function issueApiKeyEffect(input: {
+  session: MobileSession;
+  name: string;
+  canUse?: string;
+  keyGroup?: string;
+}): Effect.Effect<{ key: ApiKeyItem; secret: string }, MobileApiError> {
+  return Effect.gen(function* () {
+    void input.session;
+    const name = input.name.trim();
+    if (!name) {
+      return yield* Effect.fail(new MobileApiError({ reason: "name_required" }));
+    }
+    const endsIn = Math.random().toString(16).slice(2, 6);
+    const key: ApiKeyItem = {
+      id: `key_${Date.now().toString(36)}`,
+      name,
+      endsIn,
+      expiresLabel: "Jan 1, 2028",
+      keyGroup: input.keyGroup ?? "Engineering",
+      canUse: input.canUse ?? "Models, tools",
+      dailyCap: "$50",
+      lastUsed: "Never",
+    };
+    const secret = `cqk_fixture_${endsIn}_${Math.random().toString(36).slice(2, 10)}`;
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      apiKeys: [key, ...s.apiKeys],
+    }));
+    return { key, secret };
+  });
+}
+
+export function revokeApiKeyEffect(input: {
+  session: MobileSession;
+  keyId: string;
+}): Effect.Effect<{ ok: true; keyId: string }, MobileApiError> {
+  return Effect.gen(function* () {
+    void input.session;
+    const state = yield* Ref.get(stateRef);
+    if (!state.apiKeys.some((k) => k.id === input.keyId)) {
+      return yield* Effect.fail(
+        new MobileApiError({ reason: `key_not_found:${input.keyId}`, status: 404 })
+      );
+    }
+    yield* Ref.update(stateRef, (s) => ({
+      ...s,
+      apiKeys: s.apiKeys.map((k) =>
+        k.id === input.keyId ? { ...k, revoked: true } : k
+      ),
+    }));
+    return { ok: true as const, keyId: input.keyId };
+  });
+}
+
+export function listGatewayEndpointsEffect(
+  session: MobileSession
+): Effect.Effect<readonly GatewayEndpoint[], MobileApiError> {
+  return Effect.succeed(FIXTURE_GATEWAY_ENDPOINTS).pipe(Effect.map((rows) => {
+    void session;
+    return rows;
+  }));
+}
+
+export function listAutomationsEffect(
+  session: MobileSession
+): Effect.Effect<readonly AutomationSub[], MobileApiError> {
+  return Effect.succeed(FIXTURE_AUTOMATIONS).pipe(Effect.map((rows) => {
+    void session;
+    return rows;
+  }));
+}
+
+export function listAuditEntriesEffect(
+  session: MobileSession
+): Effect.Effect<readonly AuditEntry[], MobileApiError> {
+  return Effect.succeed(FIXTURE_AUDIT_ENTRIES).pipe(Effect.map((rows) => {
+    void session;
+    return rows;
+  }));
+}
+
+export function getOrgSettingsEffect(
+  session: MobileSession
+): Effect.Effect<OrgSettings, MobileApiError> {
+  return Effect.succeed({ ...FIXTURE_ORG_SETTINGS }).pipe(Effect.map((row) => {
+    void session;
+    return row;
+  }));
+}
+
 export function listInboxEffect(
   session: MobileSession
 ): Effect.Effect<readonly InboxItem[], MobileApiError> {
@@ -879,6 +1031,7 @@ export function resetFixtureStateEffect(): Effect.Effect<void> {
     pushDevices: [],
     attachments: [],
     workflowRuns: [],
+    apiKeys: [...FIXTURE_API_KEYS],
     deleted: false,
   });
 }
@@ -941,6 +1094,43 @@ export class MobileApi extends Context.Service<
     readonly listWorkflowRuns: (
       session: MobileSession
     ) => Effect.Effect<readonly WorkflowRun[], MobileApiError>;
+    readonly searchMemory: (
+      session: MobileSession,
+      query?: string,
+      kind?: MemoryResult["kind"] | "all"
+    ) => Effect.Effect<readonly MemoryResult[], MobileApiError>;
+    readonly getMemoryById: (
+      session: MobileSession,
+      id: string
+    ) => Effect.Effect<
+      { result: MemoryResult; fields: readonly MemoryField[] } | null,
+      MobileApiError
+    >;
+    readonly listApiKeys: (
+      session: MobileSession
+    ) => Effect.Effect<readonly ApiKeyItem[], MobileApiError>;
+    readonly issueApiKey: (input: {
+      session: MobileSession;
+      name: string;
+      canUse?: string;
+      keyGroup?: string;
+    }) => Effect.Effect<{ key: ApiKeyItem; secret: string }, MobileApiError>;
+    readonly revokeApiKey: (input: {
+      session: MobileSession;
+      keyId: string;
+    }) => Effect.Effect<{ ok: true; keyId: string }, MobileApiError>;
+    readonly listGatewayEndpoints: (
+      session: MobileSession
+    ) => Effect.Effect<readonly GatewayEndpoint[], MobileApiError>;
+    readonly listAutomations: (
+      session: MobileSession
+    ) => Effect.Effect<readonly AutomationSub[], MobileApiError>;
+    readonly listAuditEntries: (
+      session: MobileSession
+    ) => Effect.Effect<readonly AuditEntry[], MobileApiError>;
+    readonly getOrgSettings: (
+      session: MobileSession
+    ) => Effect.Effect<OrgSettings, MobileApiError>;
     readonly listInbox: (
       session: MobileSession
     ) => Effect.Effect<readonly InboxItem[], MobileApiError>;
@@ -1019,6 +1209,15 @@ export const MobileApiLive = Layer.succeed(MobileApi, {
   listWorkflows: listWorkflowsEffect,
   startWorkflow: startWorkflowEffect,
   listWorkflowRuns: listWorkflowRunsEffect,
+  searchMemory: searchMemoryEffect,
+  getMemoryById: getMemoryByIdEffect,
+  listApiKeys: listApiKeysEffect,
+  issueApiKey: issueApiKeyEffect,
+  revokeApiKey: revokeApiKeyEffect,
+  listGatewayEndpoints: listGatewayEndpointsEffect,
+  listAutomations: listAutomationsEffect,
+  listAuditEntries: listAuditEntriesEffect,
+  getOrgSettings: getOrgSettingsEffect,
   listInbox: listInboxEffect,
   markInboxRead: markInboxReadEffect,
   markInboxReadByReview: markInboxReadByReviewEffect,

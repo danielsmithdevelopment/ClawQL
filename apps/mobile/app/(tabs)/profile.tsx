@@ -271,7 +271,8 @@ export default function ProfileScreen() {
         <Subtitle>Your security keys</Subtitle>
         <Meta>You need two keys that can approve.</Meta>
         <Meta testID="profile-keys-honesty" color={brand.inkFaint}>
-          Fixture-shaped list on phone — manage keys in the web console when live.
+          Hardware security keys on this phone. Gateway API keys are under Cloud
+          console on phone → API keys.
         </Meta>
         {keys.map((key) => (
           <Column key={key.id} spacing={4} testID="profile-security-key">
@@ -670,13 +671,52 @@ export default function ProfileScreen() {
         />
       </SurfaceCard>
 
-      <SurfaceCard>
+      <SurfaceCard testID="profile-console-parity" tint="soft">
         <IconBubble name="console" tone="seed" size={32} iconSize={16} />
-        <Subtitle>Everything else</Subtitle>
-        <Meta>Gateways and advanced admin still open in the web console.</Meta>
+        <Subtitle>Cloud console on phone</Subtitle>
+        <Meta>
+          Full managed-console parity — Memory, API keys, Gateway, Automations,
+          Audit, Settings. Depth deepens over time; nothing is permanently
+          web-only.
+        </Meta>
+        <SecondaryButton
+          testID="profile-open-memory"
+          label="Memory explorer"
+          onPress={() => router.push("/memory")}
+        />
+        <SecondaryButton
+          testID="profile-open-keys"
+          label="API keys"
+          onPress={() => router.push("/keys")}
+        />
+        <SecondaryButton
+          testID="profile-open-gateway"
+          label="Gateway"
+          onPress={() => router.push("/gateway")}
+        />
+        <SecondaryButton
+          testID="profile-open-automations"
+          label="Automations"
+          onPress={() => router.push("/automations")}
+        />
+        <SecondaryButton
+          testID="profile-open-audit"
+          label="Audit"
+          onPress={() => router.push("/audit")}
+        />
+        <SecondaryButton
+          testID="profile-open-settings"
+          label="Settings"
+          onPress={() => router.push("/settings")}
+        />
+        <SecondaryButton
+          testID="profile-open-workflows"
+          label="Workflows"
+          onPress={() => router.push("/workflows")}
+        />
         <SecondaryButton
           testID="open-console"
-          label="Open web console"
+          label="Also open web console"
           onPress={() => void openConsole()}
         />
       </SurfaceCard>

@@ -2,7 +2,7 @@
 
 Expo Router app for **phone-native** approval: system-browser sign-in (no localhost), push deep links, exact-change review, NFC security-key approve (stub + reviewer biometric demo), profile with revoke + **in-app account deletion**.
 
-Everything else opens the web console.
+Full managed-console parity is in scope (Memory, API keys, Gateway, Automations, Audit, Settings, …) — see [`docs/specs/mobile/console-parity-v0.1.md`](../../docs/specs/mobile/console-parity-v0.1.md).
 
 > **No Apple / Google / EAS signup required for local work.**  
 > See **[LOCAL.md](LOCAL.md)** — `npm start` → **Continue with fixture session**.  
@@ -106,7 +106,7 @@ Until linked, production sessions get `nfc_module_unavailable`. **Fixture mode**
 
 | Id | Coverage |
 | -- | -------- |
-| MOB-01…25 | Maestro flows (+ voice/workflows/Shortcuts, store IAP, Face ID); CI web Playwright `npm run test:e2e` |
+| MOB-01…27 | Maestro flows (+ Memory/API keys, voice, store IAP, Face ID); CI web Playwright `npm run test:e2e` |
 | a11y:lh | Lighthouse mobile a11y/BP/SEO **100** + axe WCAG 2.1 A/AA on fixture screens (`npm run a11y:lh`) |
 | REV-13 / UX-09 | Physical YubiKey — still Manual |
 

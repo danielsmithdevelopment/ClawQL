@@ -40,7 +40,13 @@ export type AppDeepLinkTarget =
   | { readonly surface: "policies" }
   | { readonly surface: "policy"; readonly id: string }
   | { readonly surface: "voice"; readonly query?: string }
-  | { readonly surface: "workflows" };
+  | { readonly surface: "workflows" }
+  | { readonly surface: "memory"; readonly id?: string }
+  | { readonly surface: "keys" }
+  | { readonly surface: "gateway" }
+  | { readonly surface: "automations" }
+  | { readonly surface: "audit" }
+  | { readonly surface: "settings" };
 
 const CLOUD_HOSTS = new Set(["cloud.clawql.com", "acme.cloud.clawql.com"]);
 
@@ -80,6 +86,13 @@ function targetFromSegments(
     return voiceQuery ? { surface: "voice", query: voiceQuery } : { surface: "voice" };
   }
   if (head === "workflows") return { surface: "workflows" };
+  if (head === "memory" && next) return { surface: "memory", id: next };
+  if (head === "memory") return { surface: "memory" };
+  if (head === "keys") return { surface: "keys" };
+  if (head === "gateway") return { surface: "gateway" };
+  if (head === "automations") return { surface: "automations" };
+  if (head === "audit") return { surface: "audit" };
+  if (head === "settings") return { surface: "settings" };
   return null;
 }
 
@@ -314,6 +327,20 @@ export function buildAppDeepLinkEffect(
           : `${base}/voice`;
       case "workflows":
         return `${base}/workflows`;
+      case "memory":
+        return target.id
+          ? `${base}/memory/${encodeURIComponent(target.id)}`
+          : `${base}/memory`;
+      case "keys":
+        return `${base}/keys`;
+      case "gateway":
+        return `${base}/gateway`;
+      case "automations":
+        return `${base}/automations`;
+      case "audit":
+        return `${base}/audit`;
+      case "settings":
+        return `${base}/settings`;
     }
   });
 }
@@ -341,6 +368,18 @@ export function hrefForDeepLink(target: AppDeepLinkTarget): string {
       return target.query ? `/voice?q=${encodeURIComponent(target.query)}` : "/voice";
     case "workflows":
       return "/workflows";
+    case "memory":
+      return target.id ? `/memory/${target.id}` : "/memory";
+    case "keys":
+      return "/keys";
+    case "gateway":
+      return "/gateway";
+    case "automations":
+      return "/automations";
+    case "audit":
+      return "/audit";
+    case "settings":
+      return "/settings";
   }
 }
 

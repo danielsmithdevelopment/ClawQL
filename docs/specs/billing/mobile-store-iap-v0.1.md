@@ -25,7 +25,7 @@ Apple and Google require IAP for digital subscriptions sold inside the app. Embe
 | Stripe Checkout → `provisionOrg`     | Spec + `clawql-payments` (web)                                  |
 | Hybrid subscription + credits        | Spec                                                            |
 | PhoneApprove approve / inbox / prefs | Shipped on phone (fixture → live APIs next)                     |
-| Mobile billing / team / gateways     | Explicitly “open web console” today                             |
+| Mobile billing / team / gateways     | In-app destinations landing (see console-parity-v0.1)           |
 | StoreKit / Play Billing              | Adapter + verify scaffolding (fixture); live sheets after Day-0 |
 
 ## Entitlement model (Phase 1)

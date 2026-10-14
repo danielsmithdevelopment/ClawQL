@@ -190,6 +190,20 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
     flow: "maestro/flows/mob-25-voice-workflow-shortcuts.yaml",
   },
   {
+    id: "MOB-26",
+    run: "Maestro",
+    title: "Memory explorer search and detail",
+    passWhen: "Memory list filters; open Northwind entity shows fields",
+    flow: "maestro/flows/mob-26-memory-explorer.yaml",
+  },
+  {
+    id: "MOB-27",
+    run: "Maestro",
+    title: "API keys issue revoke and copy secret",
+    passWhen: "Issue key shows secret; revoke removes row",
+    flow: "maestro/flows/mob-27-api-keys.yaml",
+  },
+  {
     id: "REV-13",
     run: "Manual",
     title: 'Choose "use my phone instead" and approve by tapping the YubiKey to the phone',
@@ -206,8 +220,8 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
 export function assertMobileCatalogComplete(): void {
   const maestro = MOBILE_SCENARIOS.filter((s) => s.run === "Maestro");
   const manual = MOBILE_SCENARIOS.filter((s) => s.run === "Manual");
-  if (maestro.length !== 25) {
-    throw new Error(`Expected 25 Maestro MOB scenarios, got ${maestro.length}`);
+  if (maestro.length !== 27) {
+    throw new Error(`Expected 27 Maestro MOB scenarios, got ${maestro.length}`);
   }
   if (manual.length !== 2) {
     throw new Error(`Expected 2 Manual scenarios (REV-13, UX-09), got ${manual.length}`);

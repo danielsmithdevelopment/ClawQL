@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { assertMobileCatalogComplete, MOBILE_SCENARIOS } from "../maestro/catalog";
 
 describe("MOBILE_SCENARIOS catalog", () => {
-  it("is complete (25 Maestro + 2 Manual)", () => {
+  it("is complete (27 Maestro + 2 Manual)", () => {
     expect(() => assertMobileCatalogComplete()).not.toThrow();
-    expect(MOBILE_SCENARIOS.filter((s) => s.run === "Maestro")).toHaveLength(25);
+    expect(MOBILE_SCENARIOS.filter((s) => s.run === "Maestro")).toHaveLength(27);
     expect(MOBILE_SCENARIOS.filter((s) => s.run === "Manual")).toHaveLength(2);
   });
 });

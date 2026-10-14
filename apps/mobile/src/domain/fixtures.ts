@@ -16,6 +16,13 @@ import type {
   Teammate,
   MobileSession,
   WorkflowProgram,
+  MemoryResult,
+  MemoryField,
+  ApiKeyItem,
+  GatewayEndpoint,
+  AutomationSub,
+  AuditEntry,
+  OrgSettings,
 } from "./schemas";
 
 export const FIXTURE_SESSION: MobileSession = {
@@ -504,6 +511,202 @@ export const FIXTURE_DEVICE_SESSIONS: readonly DeviceSession[] = [
     ended: false,
   },
 ];
+
+/** Console Memory explorer (MEMORY_RESULTS). */
+export const FIXTURE_MEMORY_RESULTS: readonly MemoryResult[] = [
+  {
+    id: "ct_4471",
+    kind: "ENTITY",
+    title: "CONTRACT — Northwind MSA",
+    summary: "Annual value $48,500.00 · Renews Jan 1, 2026",
+    badge: "Entity",
+    badgeTone: "neutral",
+  },
+  {
+    id: "doc_amend2",
+    kind: "DOCUMENT",
+    title: "Northwind MSA Amendment 2.pdf",
+    summary: "Processed 09:41 · 12 fields, 2 redacted",
+    badge: "Document",
+    badgeTone: "neutral",
+  },
+  {
+    id: "note_pricing",
+    kind: "NOTE",
+    title: "Northwind pricing history",
+    summary: "Verified · from CRM + Amendment 2",
+    badge: "Verified",
+    badgeTone: "ok",
+  },
+  {
+    id: "note_checklist",
+    kind: "NOTE",
+    title: "Vendor renewal checklist",
+    summary: "Not verified · proposed by research agent",
+    badge: "Not verified",
+    badgeTone: "warn",
+  },
+];
+
+export const FIXTURE_MEMORY_FIELDS: readonly MemoryField[] = [
+  {
+    field: "Counterparty",
+    value: "Northwind Partners",
+    source: "CRM record",
+    confidence: "Extracted",
+    tone: "ok",
+  },
+  {
+    field: "Annual value",
+    value: "$48,500.00 (change pending)",
+    source: "CRM record",
+    confidence: "Extracted",
+    tone: "ok",
+  },
+  {
+    field: "Renewal date",
+    value: "Jan 1, 2026",
+    source: "CRM record",
+    confidence: "Extracted",
+    tone: "ok",
+  },
+  {
+    field: "Escrow percentage",
+    value: "10%",
+    source: "Pricing history note",
+    confidence: "Inferred",
+    tone: "warn",
+  },
+  {
+    field: "Signatory email",
+    value: "Redacted",
+    source: "Amendment 2…",
+    confidence: "Personal data",
+    tone: "neutral",
+  },
+];
+
+/** Gateway API keys (console API_KEYS) — mutable copy lives in api stateRef. */
+export const FIXTURE_API_KEYS: readonly ApiKeyItem[] = [
+  {
+    id: "key_billing",
+    name: "billing-sync",
+    endsIn: "9f1c",
+    expiresLabel: "Jan 3, 2027",
+    keyGroup: "Operations",
+    canUse: "Models, tools",
+    dailyCap: "$50",
+    lastUsed: "10:14",
+  },
+  {
+    id: "key_experiments",
+    name: "experiments",
+    endsIn: "a2e4",
+    expiresLabel: "Nov 2",
+    keyGroup: "Engineering",
+    canUse: "Models",
+    dailyCap: "$20",
+    lastUsed: "07:30",
+    capReached: true,
+    expiresHighlight: true,
+  },
+  {
+    id: "key_legal",
+    name: "legal-ops",
+    endsIn: "7d02",
+    expiresLabel: "Nov 30",
+    keyGroup: "Legal",
+    canUse: "Models, tools, memory",
+    dailyCap: "$75",
+    lastUsed: "09:22",
+  },
+  {
+    id: "key_docs",
+    name: "docs-pipeline",
+    endsIn: "11af",
+    expiresLabel: "Feb 1, 2027",
+    keyGroup: "Operations",
+    canUse: "Models, tools, memory",
+    dailyCap: "$45",
+    lastUsed: "09:41",
+  },
+];
+
+export const FIXTURE_GATEWAY_ENDPOINTS: readonly GatewayEndpoint[] = [
+  { path: "/v1", description: "OpenAI-compatible inference" },
+  { path: "/mcp", description: "Every connected tool for MCP clients (Claude, Cursor, …)" },
+  { path: "/memory", description: "Ingest, search, and erase team memory" },
+  { path: "/decision", description: "Fast, calibrated decisions (System One compatible)" },
+  { path: "/events", description: "Subscribe by webhook or stream live events" },
+];
+
+export const FIXTURE_AUTOMATIONS: readonly AutomationSub[] = [
+  {
+    id: "sec_slack",
+    name: "Security alerts to Slack",
+    target: "hooks.slack.com",
+    events: "hook.blocked, budget.exhausted",
+    via: "Webhook",
+    last: "Yesterday 18:02",
+    health: "Failing",
+    tone: "danger",
+  },
+  {
+    id: "renewals",
+    name: "Contract renewals",
+    target: "ChatGPT automation",
+    events: "document.processed, contracts only",
+    via: "Webhook",
+    last: "09:41",
+    health: "Healthy",
+    tone: "ok",
+  },
+  {
+    id: "finance",
+    name: "Finance digest",
+    target: "finance.acme.example",
+    events: "schedule.completed",
+    via: "Webhook",
+    last: "08:55",
+    health: "Healthy",
+    tone: "ok",
+  },
+];
+
+export const FIXTURE_AUDIT_ENTRIES: readonly AuditEntry[] = [
+  {
+    id: "wrm_4912",
+    time: "09:41:02",
+    actor: "docs-pipeline",
+    action: "document.processed Q3 vendor contract",
+    outcome: "12 fields, 2 redacted",
+    tone: "ok",
+  },
+  {
+    id: "wrm_4911",
+    time: "09:38:12",
+    actor: "support-bot",
+    action: "payments.transfer",
+    outcome: "Blocked by policy",
+    tone: "danger",
+  },
+  {
+    id: "wrm_4910",
+    time: "09:31:44",
+    actor: "Dana Reyes",
+    action: "review.approve Linear source",
+    outcome: "nfc_security_key",
+    tone: "ok",
+  },
+];
+
+export const FIXTURE_ORG_SETTINGS: OrgSettings = {
+  name: "Acme Robotics",
+  consoleAddress: "acme.cloud.clawql.com",
+  dataRegion: "United States",
+  timeZone: "Pacific Time (Los Angeles)",
+  securityContact: "security@acme.example",
+};
 
 /** Console-parity workflows the voice assistant can list / start (fixture). */
 export const FIXTURE_WORKFLOWS: readonly WorkflowProgram[] = [

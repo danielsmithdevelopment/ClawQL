@@ -66,6 +66,41 @@ test.describe("PhoneApprove store_iap + Face ID (fixture web)", () => {
     ).toContainText(/Pending/i);
   });
 
+  test("MOB-26 Memory explorer search and detail", async ({ page }) => {
+    await signInFixture(page);
+    await page.getByTestId("tab-profile").first().click();
+    await page.getByTestId("profile-open-memory").filter({ visible: true }).first().click();
+    await expect(page.getByTestId("memory-screen").filter({ visible: true }).first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.getByTestId("memory-query").filter({ visible: true }).first().fill("Northwind");
+    await page.getByTestId("memory-run-search").filter({ visible: true }).first().click();
+    await expect(
+      page.getByTestId("memory-row-ct_4471").filter({ visible: true }).first()
+    ).toBeVisible({ timeout: 10_000 });
+    await page.getByTestId("memory-open-ct_4471").filter({ visible: true }).first().click();
+    await expect(
+      page.getByTestId("memory-detail-screen").filter({ visible: true }).first()
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("memory-fields").filter({ visible: true }).first()).toBeVisible();
+  });
+
+  test("MOB-27 API keys issue and secret", async ({ page }) => {
+    await signInFixture(page);
+    await page.getByTestId("tab-profile").first().click();
+    await page.getByTestId("profile-open-keys").filter({ visible: true }).first().click();
+    await expect(page.getByTestId("keys-screen").filter({ visible: true }).first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.getByTestId("keys-issue").filter({ visible: true }).first().click();
+    await expect(page.getByTestId("keys-secret").filter({ visible: true }).first()).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(
+      page.getByTestId("keys-secret-value").filter({ visible: true }).first()
+    ).toContainText(/cqk_fixture_/);
+  });
+
   test("MOB-25 Voice start workflow + Shortcuts donation", async ({ page }) => {
     await signInFixture(page);
     await page.getByTestId("tab-profile").first().click();
