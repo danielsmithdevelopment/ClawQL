@@ -6,23 +6,6 @@ See [`docs/specs/mobile/console-parity-v0.1.md`](../specs/mobile/console-parity-
 
 ## Surfaces
 
-<<<<<<< HEAD
-| Screen                                                 | Job                                                                                     |
-| ------------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| Sign in                                                | System browser OAuth + app/universal link return; fixture + reviewer-demo for CI/review |
-| Home                                                   | Needs-you queue snapshot + today's spend                                                |
-| Review                                                 | Queue + exact-change detail; Decline; Approve with security key                         |
-| Activity                                               | Decision / archive feed                                                                 |
-| Profile                                                | Keys, apps, prefs, plan, **console destinations**, sign out, delete account             |
-| Memory                                                 | Explorer search + field detail                                                          |
-| API keys                                               | Issue / copy secret once / revoke (gateway keys)                                        |
-| Gateway                                                | Endpoint catalog                                                                        |
-| Automations                                            | Subscription health list                                                                |
-| Audit                                                  | Recent WORM-style entries                                                               |
-| Settings                                               | Org general settings                                                                    |
-| Voice / Workflows                                      | Phone-native assistant + fixture program start                                          |
-| Spend / Agents / Digest / Inbox / Teammates / Policies | Console-parity secondary surfaces                                                       |
-=======
 | Screen | Job |
 | ------ | --- |
 | Sign in | System browser OAuth + app/universal link return; fixture + reviewer-demo for CI/review |
@@ -41,7 +24,6 @@ See [`docs/specs/mobile/console-parity-v0.1.md`](../specs/mobile/console-parity-
 | Settings | Org + network + retention |
 | Voice / Workflows | Phone-native assistant + fixture program start |
 | Spend / Agents / Digest / Inbox / Teammates / Policies | Console-parity secondary surfaces |
->>>>>>> 394bc5fb (feat(mobile): Sessions, Skills, Connections + live keys adapters)
 
 ## Auth
 
