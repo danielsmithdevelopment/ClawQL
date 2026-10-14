@@ -46,3 +46,20 @@ CLAWQL_CATALOG_SQLITE=1 CLAWQL_CATALOG_SQLITE_LOAD=db \
 - File-backed pages still appear in RSS — publish **anon/PSS** with RSS.
 - Hot path still holds full `Operation[]` for search; OAS is what leaves the heap until execute touches a doc.
 - Equal-arm publish board remains a **40-tool** lean catalog — this lever is for **fat vendor / multi-provider** Ready RSS, not the pets board delta.
+
+
+## Latency (equal-arm HTTP, n=2500)
+
+Probe: `scripts/benchmarks/catalog-sqlite-latency-ab.mjs`  
+Artifact: [`catalog-sqlite-latency-ab.json`](./catalog-sqlite-latency-ab.json)
+
+Bun HTTP, gateway `taskset` cores 2–3, synthetic 40-op fat catalog, search+execute turns:
+
+| Metric | Memory | `LOAD=db` | Δ (db−mem) |
+| --- | ---: | ---: | ---: |
+| search p50 / p99 / **p999** (ms) | 0.72 / 2.52 / **9.1** | 0.65 / 2.40 / **5.5** | −0.07 / −0.12 / **−3.6** |
+| execute p50 / p99 / **p999** (ms) | 0.99 / 4.52 / **7.6** | 0.85 / 4.77 / **6.6** | −0.14 / +0.25 / **−1.0** |
+| turn p50 / p99 / **p999** (ms) | 1.78 / 6.16 / **10.4** | 1.56 / 6.19 / **8.1** | −0.22 / +0.03 / **−2.3** |
+| ≥300 ms spikes | 0 | 0 | — |
+
+**Verdict:** memory-only win on Ready RSS; **no steady-state latency regression** (p50/p99 within noise; p999 not worse). Search never touches SQLite. Execute pays at most a **one-time** gunzip+JSON materialize on first OAS property access per doc, then uses the in-process cache — not the open publish-board HTTP p999 stall (round 12).

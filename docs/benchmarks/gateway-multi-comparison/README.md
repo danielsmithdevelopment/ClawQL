@@ -32,6 +32,7 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`stall-memory-round12.md`](./stall-memory-round12.md) | **Variance + phase timing** — all_kill≠worse (ranges overlap); stall after fast mock; HTTP p999 open → SQLite next |
 | [`catalog-sqlite-ready-rss.md`](./catalog-sqlite-ready-rss.md) | **SQLite catalog** — Sentry Ready RSS −138 MB / anon −117 MB (`LOAD=db`) |
 | [`catalog-sqlite-rss-ab.json`](./catalog-sqlite-rss-ab.json) | In-memory vs persist vs `LOAD=db` smaps A/B |
+| [`catalog-sqlite-latency-ab.json`](./catalog-sqlite-latency-ab.json) | HTTP search+execute latency A/B memory vs `LOAD=db` (n=2500) |
 | [`http-layer-variance-3x.json`](./http-layer-variance-3x.json) | 3× all_kill vs board_default spike-count ranges |
 | [`http-upstream-phase-2500.json`](./http-upstream-phase-2500.json) | Phase/mock-trace board n=2500 |
 | [`http-only-layer-bisect.json`](./http-only-layer-bisect.json) | Binary kill audit/prune/ALS/auth under gw2core n=2500 |
