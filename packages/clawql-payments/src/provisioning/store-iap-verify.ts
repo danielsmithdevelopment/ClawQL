@@ -196,8 +196,8 @@ export function verifyStorePurchaseEffect(
                       ? String((e as { reason: string }).reason)
                       : "store_iap provision failed",
                   code: "provision_failed",
-                }),
-          ),
+                })
+          )
         );
       provisioned = !result.idempotentReplay;
       org = yield* orgs
