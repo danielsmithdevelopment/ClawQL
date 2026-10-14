@@ -13,6 +13,7 @@ Corrected: earlier agent notes that marked Gateway / Automations / Memory / Audi
 ## Managed console map → phone
 
 <<<<<<< HEAD
+
 | Console            | Phone route (target)            | Phase                                              |
 | ------------------ | ------------------------------- | -------------------------------------------------- |
 | Home               | Tabs Home                       | Shipped                                            |
@@ -28,23 +29,24 @@ Corrected: earlier agent notes that marked Gateway / Automations / Memory / Audi
 | Usage & billing    | `/spend` + Profile plan         | Partial                                            |
 | Settings           | `/settings`                     | Org + network + retention shipped                  |
 | Profile            | Tabs Profile                    | Shipped                                            |
-=======
-| Console | Phone route (target) | Phase |
-| ------- | -------------------- | ----- |
-| Home | Tabs Home | Shipped |
-| Sessions | `/sessions` | Agent timeline shipped |
-| Review | Tabs Review | Shipped |
-| Gateway | `/gateway` | Fixture list shipped |
-| Automations | `/automations` | Fixture list shipped |
-| Skills | `/skills` + Review skill decide | Proposed/active shipped |
-| Memory & documents | `/memory` + `/memory/:id` | Explorer shipped |
-| Connections & keys | `/connections` + `/keys` | Connections + keys; live keys/connections adapters |
-| Audit | `/audit` | Entries + chain incident shipped |
-| Team | `/teammates` | Invite + roles/groups; live `/api/managed/team` |
-| Usage & billing | `/spend` + Profile plan | Month/forecast/team rows via `/api/managed/usage` |
-| Settings | `/settings` | Org + network + retention shipped |
-| Profile | Tabs Profile | Shipped |
->>>>>>> 2515bf00 (feat(mobile): Team invite/roles and deeper Usage via managed APIs)
+| =======            |
+| Console            | Phone route (target)            | Phase                                              |
+| -------            | --------------------            | -----                                              |
+| Home               | Tabs Home                       | Shipped                                            |
+| Sessions           | `/sessions`                     | Agent timeline shipped                             |
+| Review             | Tabs Review                     | Shipped                                            |
+| Gateway            | `/gateway`                      | Fixture list shipped                               |
+| Automations        | `/automations`                  | Fixture list shipped                               |
+| Skills             | `/skills` + Review skill decide | Proposed/active shipped                            |
+| Memory & documents | `/memory` + `/memory/:id`       | Explorer shipped                                   |
+| Connections & keys | `/connections` + `/keys`        | Connections + keys; live keys/connections adapters |
+| Audit              | `/audit`                        | Entries + chain incident shipped                   |
+| Team               | `/teammates`                    | Invite + roles/groups; live `/api/managed/team`    |
+| Usage & billing    | `/spend` + Profile plan         | Month/forecast/team rows via `/api/managed/usage`  |
+| Settings           | `/settings`                     | Org + network + retention shipped                  |
+| Profile            | Tabs Profile                    | Shipped                                            |
+
+> > > > > > > 2515bf00 (feat(mobile): Team invite/roles and deeper Usage via managed APIs)
 
 Phone-native extras (Voice, NFC, App Lock, push inbox) stay additive.
 

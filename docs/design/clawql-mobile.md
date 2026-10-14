@@ -7,6 +7,7 @@ See [`docs/specs/mobile/console-parity-v0.1.md`](../specs/mobile/console-parity-
 ## Surfaces
 
 <<<<<<< HEAD
+
 | Screen                                                 | Job                                                                                     |
 | ------------------------------------------------------ | --------------------------------------------------------------------------------------- |
 | Sign in                                                | System browser OAuth + app/universal link return; fixture + reviewer-demo for CI/review |
@@ -25,26 +26,27 @@ See [`docs/specs/mobile/console-parity-v0.1.md`](../specs/mobile/console-parity-
 | Settings                                               | Org + network + retention                                                               |
 | Voice / Workflows                                      | Phone-native assistant + fixture program start                                          |
 | Spend / Agents / Digest / Inbox / Teammates / Policies | Console-parity secondary surfaces                                                       |
-=======
-| Screen | Job |
-| ------ | --- |
-| Sign in | System browser OAuth + app/universal link return; fixture + reviewer-demo for CI/review |
-| Home | Needs-you queue snapshot + today's spend |
-| Review | Queue + exact-change detail; Decline; Approve with security key |
-| Activity | Decision / archive feed |
-| Profile | Keys, apps, prefs, plan, **console destinations**, sign out, delete account |
-| Memory | Explorer search + field detail |
-| Sessions | Agent session timeline |
-| Skills | Proposed queue + active skills |
-| Connections | Accounts / sources (+ live adapter) |
-| API keys | Issue / copy secret once / revoke (+ live adapter) |
-| Gateway | Endpoint catalog |
-| Automations | Subscription health list |
-| Audit | Recent entries + chain incident |
-| Settings | Org + network + retention |
-| Voice / Workflows | Phone-native assistant + fixture program start |
-| Spend / Agents / Digest / Inbox / Teammates / Policies | Console-parity secondary surfaces (Team invite + Usage depth) |
->>>>>>> 2515bf00 (feat(mobile): Team invite/roles and deeper Usage via managed APIs)
+| =======                                                |
+| Screen                                                 | Job                                                                                     |
+| ------                                                 | ---                                                                                     |
+| Sign in                                                | System browser OAuth + app/universal link return; fixture + reviewer-demo for CI/review |
+| Home                                                   | Needs-you queue snapshot + today's spend                                                |
+| Review                                                 | Queue + exact-change detail; Decline; Approve with security key                         |
+| Activity                                               | Decision / archive feed                                                                 |
+| Profile                                                | Keys, apps, prefs, plan, **console destinations**, sign out, delete account             |
+| Memory                                                 | Explorer search + field detail                                                          |
+| Sessions                                               | Agent session timeline                                                                  |
+| Skills                                                 | Proposed queue + active skills                                                          |
+| Connections                                            | Accounts / sources (+ live adapter)                                                     |
+| API keys                                               | Issue / copy secret once / revoke (+ live adapter)                                      |
+| Gateway                                                | Endpoint catalog                                                                        |
+| Automations                                            | Subscription health list                                                                |
+| Audit                                                  | Recent entries + chain incident                                                         |
+| Settings                                               | Org + network + retention                                                               |
+| Voice / Workflows                                      | Phone-native assistant + fixture program start                                          |
+| Spend / Agents / Digest / Inbox / Teammates / Policies | Console-parity secondary surfaces (Team invite + Usage depth)                           |
+
+> > > > > > > 2515bf00 (feat(mobile): Team invite/roles and deeper Usage via managed APIs)
 
 ## Auth
 
