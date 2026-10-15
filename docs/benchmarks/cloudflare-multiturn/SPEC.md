@@ -83,11 +83,59 @@ Until a live recording exists, the repo ships [`recording.synthetic.json`](../..
 
 ## Real-model validation
 
-**50 sessions per arm**, same workflow and fixture, one pinned model. Report task success, turns/calls, input/output tokens, wall time. Compare with the scripted board. Hits only the mock.
+**50 sessions per arm × two models**, same workflow and fixture, mock only. Hosted Cloudflare code-mode is out of this gate (live API / write risk). Peers: `clawql_known_op`, `clawql_program`, `executor_v2`.
+
+### Pre-committed gate (freeze before the run — do not edit after seeing results)
+
+These rules are committed **before** secrets are set and the gate runs. Blog / explainer claims must follow them; mixed outcomes may not be re-read in a flattering light.
+
+#### Models and settings
+
+| Knob | Pre-commit |
+| --- | --- |
+| Frontier model | **`gpt-4.1`** (OpenAI family) — env `CF_MT_MODEL_FRONTIER` must match this string for the dual-model claim |
+| Small model | **`claude-3-5-haiku-20241022`** (Anthropic family) — env `CF_MT_MODEL_SMALL` must match; smaller, different family |
+| Temperature | `0` for every arm |
+| System prompt | Shared across arms (tool descriptions differ per gateway `listTools` only) |
+| Sessions | `CF_MT_REAL_ITERS=50` per arm per model |
+
+Serve both over one OpenAI-compatible base URL (`OPENAI_BASE_URL`, e.g. OpenRouter). The harness freezes these IDs into `precommit.models` before the first session and never overwrites them. A single-model override (`CF_MT_MODEL`) may smoke-test but **cannot** support the dual-model claim. Any other frontier/small pair is a different experiment — not this gate.
+
+#### Ordering
+
+**Interleave sessions across arms** within each model: for `i = 1..50`, run arm A session `i`, then arm B session `i`, then arm C session `i` (arm order fixed in `CF_MT_REAL_ARMS`). Provider drift during the run hits every arm equally. Do not run 50×A then 50×B then 50×C.
+
+#### Comparison metrics (per model)
+
+Primary head-to-head: **`clawql_known_op` vs `executor_v2`**, using:
+
+| Metric | Definition |
+| --- | --- |
+| Median weighted tokens | Session `weighted = definition + observation + 5×code` (same code bucket as the scripted board: `where` / plan / JS) |
+| p90 weighted tokens | 90th percentile of the same |
+| Sessions over 10,000 | Count of sessions with `observation_tokens > 10_000` (`CF_MT_REAL_TOKEN_CEILING`) |
+| Task success | Fraction of sessions that pass all 12 scripted checks |
+
+`clawql_program` is reported for context; it does not decide the headline claim.
+
+#### Claims each outcome allows
+
+Let **win** on a model mean: known-op is strictly better on **median weighted** and **p90 weighted**, has **task success ≥** Executor, and has **sessions-over-ceiling ≤** Executor.
+
+| Outcome | Allowed claim |
+| --- | --- |
+| Win on **both** frontier and small | “known-op beats code mode for real models” (this gate) |
+| Win on exactly one model | Report that one model only — e.g. “wins on frontier; mixed/loss on small” — **not** the dual-model claim |
+| Win on median but lose p90 (or vice versa) on a model | No win on that model; report the split metrics |
+| Task success lower than Executor on a model | No win on that model, even if tokens look better |
+| Any other mix | State the metrics; no stronger claim than the table allows |
+
+The harness writes `precommit.verdict_rules` (copy of this section’s rule IDs) and `verdict` (computed only from those rules) into the result artifact. Do not hand-edit `verdict` after the run.
 
 ## Fairness rules
 
 - Label every mode and setting; invite maintainers to submit config fixes; version-scope claims; never mix zero-latency with recorded-latency or scripted with real-model in one table.
+- Never mix real-model ClawQL with scripted Executor / Cloudflare token rows in one claim table.
 
 ## Open questions
 

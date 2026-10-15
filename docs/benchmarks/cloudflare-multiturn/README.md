@@ -15,7 +15,7 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | Product: `where` examples in execute schema + fix-named `where_invalid` | Done (+37 where-desc tokens; full execute tool def **218**) |
 | Product: observation budget (no where/fields → truncated preview) | Done (`truncated:true` + note; opt-in `full:true`) |
 | **Publish board: 3×10k** | **Pending** (re-run with code-arg accounting; rep 1 matches smoke) |
-| **Real-model 50 sessions / arm × 2 model families** | **Harness ready; blocked on secrets; Composer pilots ≠ SPEC gate** |
+| **Real-model 50 sessions / arm × 2 model families** | **Pre-commit frozen in SPEC (`gpt-4.1` + `claude-3-5-haiku-20241022`); harness ready; blocked on secrets** |
 | Blog / public headline | **Hold** until publish board + dual-model real-model land |
 
 N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the board. Do **not** ship the reversed-headline blog until both gates pass.
@@ -48,19 +48,23 @@ N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the boa
 
 Hosted Cloudflare code-mode is excluded because a real model would use your Cloudflare token against the real account; step 12 could write (enable proxy). Scripted board keeps CF as **tokens-only**. Re-add to the gate only with an explicit **read-only** token policy. Default arms: `clawql_known_op,clawql_program,executor_v2`.
 
+**Pre-committed win rules** (do not edit after seeing results): [`SPEC.md` § Pre-committed gate](./SPEC.md#pre-committed-gate-freeze-before-the-run--do-not-edit-after-seeing-results). Blog / explainer claims follow that table only.
+
 Set secrets **in the environment** (never paste keys into chat):
 
 - `OPENAI_API_KEY` (required)
-- `OPENAI_BASE_URL` (optional)
-- `CF_MT_MODEL_FRONTIER` and `CF_MT_MODEL_SMALL` (run both — **different families**; include a smaller model)
+- `OPENAI_BASE_URL` (OpenAI-compatible endpoint that can serve both pinned models, e.g. OpenRouter)
+- `CF_MT_MODEL_FRONTIER=gpt-4.1` and `CF_MT_MODEL_SMALL=claude-3-5-haiku-20241022` (exact pinned IDs)
 
 ```bash
-CF_MT_REAL_ITERS=50 \
+CF_MT_MODEL_FRONTIER=gpt-4.1 \
+  CF_MT_MODEL_SMALL=claude-3-5-haiku-20241022 \
+  CF_MT_REAL_ITERS=50 \
   CF_MT_REAL_ARMS=clawql_known_op,clawql_program,executor_v2 \
   npm run benchmark:cloudflare-multiturn:real-model
 ```
 
-Fixed settings: temperature 0, shared system prompt, each arm’s tool descriptions from `listTools`. Per arm the report includes **median / p90** observation tokens, **sessions over ceiling** (default 10k, `CF_MT_REAL_TOKEN_CEILING`), malformed `where`, observation-budget hits, retries, turns. Task success still checks count steps (4, 11, …) — models must use `totalCount` on truncated envelopes, not preview length. Cursor-subscription Composer pilots are cheap signal, not this gate.
+Fixed settings: temperature 0, shared system prompt, **sessions interleaved across arms**, each arm’s tool descriptions from `listTools`. Artifact freezes `precommit` + computed `verdict`. Per arm: **median / p90 weighted tokens**, **sessions over ceiling** (default 10k), task success, malformed `where`, observation-budget hits, retries, turns. Count steps must use `totalCount` on truncated envelopes. Cursor-subscription Composer pilots are cheap signal, not this gate.
 
 ### 4. Observation budget (product — **default on**)
 

@@ -13,18 +13,19 @@
  *
  * Secrets (never paste into chat / logs):
  *   OPENAI_API_KEY          — required
- *   OPENAI_BASE_URL         — optional (default https://api.openai.com/v1)
- *   CF_MT_MODEL_FRONTIER    — frontier model id (different family from SMALL)
- *   CF_MT_MODEL_SMALL       — smaller/cheaper model id
- *   CF_MT_MODEL             — optional single-model override (runs that one only)
+ *   OPENAI_BASE_URL         — OpenAI-compatible (must serve both pinned models)
+ *   CF_MT_MODEL_FRONTIER    — must be gpt-4.1 for dual-model claim
+ *   CF_MT_MODEL_SMALL       — must be claude-3-5-haiku-20241022 for dual-model claim
+ *   CF_MT_MODEL             — optional single-model override (smoke only; no dual claim)
  *
+ *   CF_MT_MODEL_FRONTIER=gpt-4.1 \
+ *   CF_MT_MODEL_SMALL=claude-3-5-haiku-20241022 \
  *   CF_MT_REAL_ITERS=50 \
  *   CF_MT_REAL_ARMS=clawql_known_op,clawql_program,executor_v2 \
  *     npm run benchmark:cloudflare-multiturn:real-model
  *
- * Settings fixed across arms: temperature 0, shared system prompt, each gateway's
- * own tool descriptions from listTools. Reports failures, retries, turns, and
- * **token distributions** (median / p90 / sessions over ceiling) — not just means.
+ * Pre-commit (SPEC): temperature 0, shared system prompt, sessions interleaved
+ * across arms, verdict from GATE_VERDICT_RULES only. Do not edit rules after a run.
  */
 import { spawn } from "node:child_process";
 import {
@@ -38,7 +39,7 @@ import {
 } from "node:fs";
 import { join, dirname } from "node:path";
 import { tmpdir } from "node:os";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { performance } from "node:perf_hooks";
 import { getEncoding } from "js-tiktoken";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -73,6 +74,9 @@ const TOKEN_CEILING = Math.max(
   Number(process.env.CF_MT_REAL_TOKEN_CEILING || 10_000) || 10_000
 );
 const TEMPERATURE = 0;
+/** Pinned in SPEC — dual-model claim requires these exact IDs. */
+const PINNED_FRONTIER = "gpt-4.1";
+const PINNED_SMALL = "claude-3-5-haiku-20241022";
 const enc = getEncoding("cl100k_base");
 
 function resolveModels() {
@@ -84,12 +88,19 @@ function resolveModels() {
       },
     ];
   }
-  const frontier = process.env.CF_MT_MODEL_FRONTIER || "";
-  const small = process.env.CF_MT_MODEL_SMALL || "";
-  const out = [];
-  if (frontier) out.push({ id: frontier, label: "frontier" });
-  if (small) out.push({ id: small, label: "small" });
-  return out;
+  const frontier = process.env.CF_MT_MODEL_FRONTIER || PINNED_FRONTIER;
+  const small = process.env.CF_MT_MODEL_SMALL || PINNED_SMALL;
+  return [
+    { id: frontier, label: "frontier" },
+    { id: small, label: "small" },
+  ];
+}
+
+function dualModelClaimEligible(models) {
+  if (process.env.CF_MT_MODEL || process.env.OPENAI_MODEL) return false;
+  if (models.length !== 2) return false;
+  const byLabel = Object.fromEntries(models.map((m) => [m.label, m.id]));
+  return byLabel.frontier === PINNED_FRONTIER && byLabel.small === PINNED_SMALL;
 }
 
 function countTokens(text) {
@@ -328,6 +339,7 @@ async function runToolSession({
   expectations,
   openaiTools,
   allowedToolNames,
+  definitionTokens = 0,
 }) {
   const t0 = performance.now();
   const observations = {};
@@ -337,6 +349,7 @@ async function runToolSession({
   let inputTokens = 0;
   let outputTokens = 0;
   let observationTokens = 0;
+  let codeTokens = 0;
   let toolCalls = 0;
   let whereAttempts = 0;
   let whereMalformed = 0;
@@ -396,6 +409,12 @@ async function runToolSession({
         resultText = JSON.stringify({ ok: true, step: args.step });
       } else if (allowedToolNames.has(name)) {
         if (typeof args.where === "string") whereAttempts++;
+        // Model-written code bucket (same as scripted board): where/fields, plan source, or JS.
+        if (typeof args.where === "string") codeTokens += countTokens(args.where);
+        if (Array.isArray(args.fields)) codeTokens += countTokens(JSON.stringify(args.fields));
+        if (typeof args.source === "string") codeTokens += countTokens(args.source);
+        if (typeof args.code === "string") codeTokens += countTokens(args.code);
+        if (args.plan != null) codeTokens += countTokens(JSON.stringify(args.plan));
         const res = await client.callTool({ name, arguments: args });
         resultText = toolText(res);
         observationTokens += countTokens(resultText);
@@ -436,6 +455,7 @@ async function runToolSession({
     failures.push({ kind: "max_turns", detail: `hit MAX_TURNS=${MAX_TURNS}` });
   }
 
+  const weightedTokens = definitionTokens + observationTokens + 5 * codeTokens;
   return {
     ok,
     turns,
@@ -444,6 +464,9 @@ async function runToolSession({
     inputTokens,
     outputTokens,
     observationTokens,
+    codeTokens,
+    definitionTokens,
+    weightedTokens,
     whereAttempts,
     whereMalformed,
     observationBudgetHits,
@@ -462,6 +485,8 @@ function aggregateSessions(sessions) {
     }
   }
   const obs = sessions.map((s) => s.observationTokens || 0).sort((a, b) => a - b);
+  const weighted = sessions.map((s) => s.weightedTokens || 0).sort((a, b) => a - b);
+  const code = sessions.map((s) => s.codeTokens || 0).sort((a, b) => a - b);
   const turns = sessions.map((s) => s.turns).sort((a, b) => a - b);
   const input = sessions.map((s) => s.inputTokens).sort((a, b) => a - b);
   const output = sessions.map((s) => s.outputTokens).sort((a, b) => a - b);
@@ -479,18 +504,178 @@ function aggregateSessions(sessions) {
     output_tokens_mean: mean(output),
     output_tokens_median: medianSorted(output),
     output_tokens_p90: percentileSorted(output, 90),
+    code_tokens_mean: mean(code),
+    code_tokens_median: medianSorted(code),
     observation_tokens_mean: mean(obs),
     observation_tokens_median: medianSorted(obs),
     observation_tokens_p90: percentileSorted(obs, 90),
     observation_tokens_over_ceiling: sessions.filter((s) => (s.observationTokens || 0) > TOKEN_CEILING)
       .length,
     observation_token_ceiling: TOKEN_CEILING,
+    weighted_tokens_mean: mean(weighted),
+    weighted_tokens_median: medianSorted(weighted),
+    weighted_tokens_p90: percentileSorted(weighted, 90),
     session_ms_mean: mean(sessions.map((s) => s.session_ms)),
     where_attempts_mean: mean(sessions.map((s) => s.whereAttempts || 0)),
     where_malformed_mean: mean(sessions.map((s) => s.whereMalformed || 0)),
     observation_budget_hits_mean: mean(sessions.map((s) => s.observationBudgetHits || 0)),
     failure_counts: failKinds,
     sessions_failed: sessions.filter((s) => !s.ok).length,
+  };
+}
+
+/** Pre-committed SPEC rules — do not edit after a gate run has started. */
+export const GATE_VERDICT_RULES = {
+  id: "cf-mt-real-model-gate-v1",
+  spec: "docs/benchmarks/cloudflare-multiturn/SPEC.md#pre-committed-gate-freeze-before-the-run--do-not-edit-after-seeing-results",
+  primary_pair: ["clawql_known_op", "executor_v2"],
+  win_requires: [
+    "known_op.weighted_tokens_median < executor.weighted_tokens_median",
+    "known_op.weighted_tokens_p90 < executor.weighted_tokens_p90",
+    "known_op.task_success_rate >= executor.task_success_rate",
+    "known_op.observation_tokens_over_ceiling <= executor.observation_tokens_over_ceiling",
+  ],
+  dual_model_claim:
+    "known-op beats code mode for real models — only if win on both frontier and small",
+  single_model_claim: "report that model only; not the dual-model claim",
+};
+
+function armWinsKnownOp(known, exec) {
+  if (!known || known.skipped || !exec || exec.skipped) {
+    return { win: false, reason: "missing_arm" };
+  }
+  const checks = {
+    median_weighted:
+      known.weighted_tokens_median < exec.weighted_tokens_median,
+    p90_weighted: known.weighted_tokens_p90 < exec.weighted_tokens_p90,
+    task_success: known.task_success_rate >= exec.task_success_rate,
+    over_ceiling:
+      known.observation_tokens_over_ceiling <= exec.observation_tokens_over_ceiling,
+  };
+  return {
+    win: Object.values(checks).every(Boolean),
+    checks,
+    known_op: {
+      weighted_tokens_median: known.weighted_tokens_median,
+      weighted_tokens_p90: known.weighted_tokens_p90,
+      task_success_rate: known.task_success_rate,
+      observation_tokens_over_ceiling: known.observation_tokens_over_ceiling,
+    },
+    executor_v2: {
+      weighted_tokens_median: exec.weighted_tokens_median,
+      weighted_tokens_p90: exec.weighted_tokens_p90,
+      task_success_rate: exec.task_success_rate,
+      observation_tokens_over_ceiling: exec.observation_tokens_over_ceiling,
+    },
+  };
+}
+
+export function computeVerdict(summary) {
+  const perModel = {};
+  for (const [label, block] of Object.entries(summary.results || {})) {
+    const arms = block.arms || {};
+    perModel[label] = armWinsKnownOp(arms.clawql_known_op, arms.executor_v2);
+  }
+  const labels = Object.keys(perModel);
+  const dualEligible = summary.precommit?.dual_model_claim_eligible === true;
+  const wins = labels.filter((l) => perModel[l].win);
+  let claim = "no_win";
+  let detail = "No model met the pre-committed win rule.";
+  if (!dualEligible) {
+    claim = "not_dual_model_run";
+    detail = `Dual-model claim requires exact pinned IDs ${PINNED_FRONTIER} + ${PINNED_SMALL} (no CF_MT_MODEL override).`;
+  } else if (wins.length === labels.length && labels.length >= 2) {
+    claim = "known_op_beats_code_mode_for_real_models";
+    detail = GATE_VERDICT_RULES.dual_model_claim;
+  } else if (wins.length === 1) {
+    claim = `win_on_${wins[0]}_only`;
+    detail = GATE_VERDICT_RULES.single_model_claim;
+  } else if (wins.length > 1 && wins.length < labels.length) {
+    claim = "partial_wins";
+    detail = `Wins on: ${wins.join(", ")}. Not both models.`;
+  }
+  return {
+    rules_id: GATE_VERDICT_RULES.id,
+    per_model: perModel,
+    claim,
+    detail,
+  };
+}
+
+async function openArmHandle(arm, mockBase, openapiDoc, closers) {
+  if (arm === "cloudflare_codemode") {
+    console.log(`[cf-real] skip cloudflare_codemode (hosted / write risk)`);
+    return {
+      arm,
+      skipped: true,
+      skipInfo: {
+        skipped: true,
+        note:
+          "Out of real-model gate: hosted Cloudflare code-mode would hit the live API " +
+          "(step 12 could write). Scripted board stays tokens-only against the fixture. " +
+          "Real-model peers are clawql_* + executor_v2 on the local mock. " +
+          "Re-add only with an explicit read-only Cloudflare token policy.",
+      },
+    };
+  }
+  if (arm === "clawql_known_op" || arm === "clawql_program") {
+    const clawql = await startClawql(mockBase, {
+      enablePrograms: arm === "clawql_program",
+    });
+    closers.push(clawql.close);
+    const clientWrap = await connectHttpMcp(clawql.mcpUrl, arm);
+    closers.push(clientWrap.close);
+    const listed = await clientWrap.client.listTools();
+    const names =
+      arm === "clawql_program"
+        ? ["execute", "execute_program", "search"]
+        : ["execute", "search"];
+    const filtered = listed.tools.filter((t) => names.includes(t.name));
+    const definitionTokens = filtered.reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
+    return {
+      arm,
+      skipped: false,
+      client: clientWrap.client,
+      openaiTools: mcpToolsToOpenAI(filtered),
+      allowed: new Set(filtered.map((t) => t.name)),
+      definitionTokens,
+    };
+  }
+  if (arm === "executor_v2") {
+    ensureExecutorOpenapiApp({ mockBase, openapiDoc });
+    void executorV2ToolScripts();
+    const url = process.env.EXECUTOR_V2_URL || "http://127.0.0.1:4312/mcp";
+    const key =
+      process.env.EXECUTOR_V2_API_KEY?.trim() ||
+      (existsSync("/tmp/executor-v2-data/api_key.txt")
+        ? readFileSync("/tmp/executor-v2-data/api_key.txt", "utf8").trim()
+        : "");
+    if (!key) throw new Error("EXECUTOR_V2_API_KEY required for executor_v2 real-model");
+    const transport = new StreamableHTTPClientTransport(new URL(url), {
+      requestInit: { headers: { Authorization: `Bearer ${key}` } },
+    });
+    const client = new Client({ name: "cf-real-exec", version: "1" }, {});
+    await client.connect(transport);
+    closers.push(async () => {
+      await client.close().catch(() => {});
+    });
+    const listed = await client.listTools();
+    const executeTool = listed.tools.find((t) => t.name === "execute");
+    const toolsForModel = executeTool ? [executeTool] : listed.tools;
+    const definitionTokens = toolsForModel.reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
+    return {
+      arm,
+      skipped: false,
+      client,
+      openaiTools: mcpToolsToOpenAI(toolsForModel),
+      allowed: new Set(["execute"]),
+      definitionTokens,
+    };
+  }
+  return {
+    arm,
+    skipped: true,
+    skipInfo: { skipped: true, note: "arm not wired for real-model yet" },
   };
 }
 
@@ -503,10 +688,12 @@ async function main() {
           error: "missing_model_credentials",
           need: [
             "OPENAI_API_KEY (or OPENROUTER_API_KEY)",
-            "CF_MT_MODEL_FRONTIER and CF_MT_MODEL_SMALL (or CF_MT_MODEL for one model)",
+            `CF_MT_MODEL_FRONTIER=${PINNED_FRONTIER}`,
+            `CF_MT_MODEL_SMALL=${PINNED_SMALL}`,
           ],
-          optional: ["OPENAI_BASE_URL"],
+          optional: ["OPENAI_BASE_URL (OpenAI-compatible host for both pinned models)"],
           note: "Set secrets in the environment — never paste keys into chat.",
+          precommit_pinned: { frontier: PINNED_FRONTIER, small: PINNED_SMALL },
         },
         null,
         2
@@ -523,13 +710,10 @@ async function main() {
   const openapiDoc = JSON.parse(readFileSync(CURATED_OAS, "utf8"));
   mkdirSync(OUT_DIR, { recursive: true });
 
-  const mock = await startMock();
-  const closers = [async () => mock.child.kill("SIGTERM")];
-  let executorMeta = null;
-  const execScripts = executorV2ToolScripts();
-
+  const frozenAt = new Date().toISOString();
+  const dualEligible = dualModelClaimEligible(models);
   const summary = {
-    measuredAt: new Date().toISOString(),
+    measuredAt: frozenAt,
     kind: "real_model_validation",
     iters: ITERS,
     temperature: TEMPERATURE,
@@ -537,111 +721,104 @@ async function main() {
     models: models.map((m) => ({ label: m.label, id: m.id })),
     arms: ARMS,
     fixture: { source: recording.source, label: recording.label },
+    precommit: {
+      frozen_at: frozenAt,
+      models: models.map((m) => ({ label: m.label, id: m.id })),
+      pinned: { frontier: PINNED_FRONTIER, small: PINNED_SMALL },
+      temperature: TEMPERATURE,
+      system_prompt_shared: true,
+      ordering: "interleave_sessions_across_arms",
+      arms: [...ARMS],
+      iters_per_arm: ITERS,
+      token_ceiling: TOKEN_CEILING,
+      primary_pair: GATE_VERDICT_RULES.primary_pair,
+      comparison_metrics: [
+        "weighted_tokens_median",
+        "weighted_tokens_p90",
+        "observation_tokens_over_ceiling",
+        "task_success_rate",
+      ],
+      verdict_rules: GATE_VERDICT_RULES,
+      dual_model_claim_eligible: dualEligible,
+      note:
+        "Frozen before the first session. Blog/explainer claims must follow verdict_rules; do not re-interpret after seeing results.",
+    },
     settings: {
       temperature: TEMPERATURE,
       system_prompt: "shared across arms; tool descriptions from each gateway listTools",
+      ordering: "interleave_sessions_across_arms",
       max_turns: MAX_TURNS,
       token_ceiling: TOKEN_CEILING,
       comparison: "real_model_vs_real_model_only",
     },
     results: {},
+    verdict: null,
   };
 
+  // Persist precommit immediately so a crash mid-run still leaves the frozen rules.
+  const stamp = models.map((m) => m.label).join("_");
+  const out = join(OUT_DIR, `real-model-${stamp}-n${ITERS}.json`);
+  writeFileSync(out, JSON.stringify(summary, null, 2) + "\n");
+  console.log(
+    JSON.stringify(
+      {
+        event: "precommit_frozen",
+        wrote: out,
+        models: summary.precommit.models,
+        dual_model_claim_eligible: dualEligible,
+        ordering: summary.precommit.ordering,
+        verdict_rules_id: GATE_VERDICT_RULES.id,
+      },
+      null,
+      2
+    )
+  );
+
+  const mock = await startMock();
+  const closers = [async () => mock.child.kill("SIGTERM")];
+
   try {
-    if (ARMS.includes("executor_v2")) {
-      executorMeta = ensureExecutorOpenapiApp({ mockBase: mock.baseUrl, openapiDoc });
+    const handles = [];
+    for (const arm of ARMS) {
+      console.log(`[cf-real] open arm=${arm}`);
+      handles.push(await openArmHandle(arm, mock.baseUrl, openapiDoc, closers));
     }
 
     for (const model of models) {
       summary.results[model.label] = { model: model.id, arms: {} };
-      for (const arm of ARMS) {
-        console.log(`[cf-real] model=${model.label} arm=${arm}`);
-        let clientWrap = null;
-        let openaiTools = null;
-        let allowed = new Set();
-        let clawql = null;
+      const sessionsByArm = Object.fromEntries(ARMS.map((a) => [a, []]));
 
-        if (arm === "clawql_known_op" || arm === "clawql_program") {
-          clawql = await startClawql(mock.baseUrl, {
-            enablePrograms: arm === "clawql_program",
+      for (let i = 1; i <= ITERS; i++) {
+        for (const handle of handles) {
+          if (handle.skipped) continue;
+          const s = await runToolSession({
+            model: model.id,
+            arm: handle.arm,
+            client: handle.client,
+            expectations,
+            openaiTools: handle.openaiTools,
+            allowedToolNames: handle.allowed,
+            definitionTokens: handle.definitionTokens || 0,
           });
-          closers.push(clawql.close);
-          clientWrap = await connectHttpMcp(clawql.mcpUrl, arm);
-          const listed = await clientWrap.client.listTools();
-          const names =
-            arm === "clawql_program"
-              ? ["execute", "execute_program", "search"]
-              : ["execute", "search"];
-          const filtered = listed.tools.filter((t) => names.includes(t.name));
-          allowed = new Set(filtered.map((t) => t.name));
-          openaiTools = mcpToolsToOpenAI(filtered);
-        } else if (arm === "executor_v2") {
-          const url = process.env.EXECUTOR_V2_URL || "http://127.0.0.1:4312/mcp";
-          const key =
-            process.env.EXECUTOR_V2_API_KEY?.trim() ||
-            (existsSync("/tmp/executor-v2-data/api_key.txt")
-              ? readFileSync("/tmp/executor-v2-data/api_key.txt", "utf8").trim()
-              : "");
-          if (!key) throw new Error("EXECUTOR_V2_API_KEY required for executor_v2 real-model");
-          const transport = new StreamableHTTPClientTransport(new URL(url), {
-            requestInit: { headers: { Authorization: `Bearer ${key}` } },
-          });
-          const client = new Client({ name: "cf-real-exec", version: "1" }, {});
-          await client.connect(transport);
-          clientWrap = {
-            client,
-            close: async () => {
-              await client.close().catch(() => {});
-            },
-          };
-          const listed = await client.listTools();
-          const executeTool = listed.tools.find((t) => t.name === "execute");
-          allowed = new Set(["execute"]);
-          openaiTools = mcpToolsToOpenAI(executeTool ? [executeTool] : listed.tools);
-          // Hint: model writes JS into execute.code — scripts in published-scripts are the scripted peer.
-          void execScripts;
-          void executorMeta;
-        } else if (arm === "cloudflare_codemode") {
-          summary.results[model.label].arms[arm] = {
-            skipped: true,
-            note:
-              "Out of real-model gate: hosted Cloudflare code-mode would hit the live API " +
-              "(step 12 could write). Scripted board stays tokens-only against the fixture. " +
-              "Real-model peers are clawql_* + executor_v2 on the local mock. " +
-              "Re-add only with an explicit read-only Cloudflare token policy.",
-          };
-          console.log(`[cf-real] skip cloudflare_codemode (hosted / write risk)`);
-          continue;
+          sessionsByArm[handle.arm].push(s);
+          console.log(
+            `[cf-real] ${model.label}/${handle.arm} ${i}/${ITERS} ok=${s.ok} turns=${s.turns} retries=${s.retries} weighted=${s.weightedTokens} whereBad=${s.whereMalformed}`
+          );
+        }
+      }
+
+      for (const handle of handles) {
+        if (handle.skipped) {
+          summary.results[model.label].arms[handle.arm] = handle.skipInfo;
         } else {
-          summary.results[model.label].arms[arm] = {
-            skipped: true,
-            note: "arm not wired for real-model yet",
-          };
-          continue;
+          summary.results[model.label].arms[handle.arm] = aggregateSessions(
+            sessionsByArm[handle.arm]
+          );
         }
-
-        const sessions = [];
-        try {
-          for (let i = 1; i <= ITERS; i++) {
-            const s = await runToolSession({
-              model: model.id,
-              arm,
-              client: clientWrap.client,
-              expectations,
-              openaiTools,
-              allowedToolNames: allowed,
-            });
-            sessions.push(s);
-            console.log(
-              `[cf-real] ${model.label}/${arm} ${i}/${ITERS} ok=${s.ok} turns=${s.turns} retries=${s.retries} whereBad=${s.whereMalformed}`
-            );
-          }
-        } finally {
-          await clientWrap.close();
-        }
-        summary.results[model.label].arms[arm] = aggregateSessions(sessions);
       }
     }
+
+    summary.verdict = computeVerdict(summary);
   } finally {
     for (const c of closers.reverse()) {
       try {
@@ -652,10 +829,12 @@ async function main() {
     }
   }
 
-  const stamp = models.map((m) => m.label).join("_");
-  const out = join(OUT_DIR, `real-model-${stamp}-n${ITERS}.json`);
   writeFileSync(out, JSON.stringify(summary, null, 2) + "\n");
-  writeFileSync(`/opt/cursor/artifacts/cf-mt-real-model-summary.json`, JSON.stringify(summary, null, 2) + "\n");
+  mkdirSync("/opt/cursor/artifacts", { recursive: true });
+  writeFileSync(
+    `/opt/cursor/artifacts/cf-mt-real-model-summary.json`,
+    JSON.stringify(summary, null, 2) + "\n"
+  );
   console.log(
     JSON.stringify(
       {
@@ -663,7 +842,9 @@ async function main() {
         kind: summary.kind,
         models: summary.models,
         iters: ITERS,
-        // never echo key material
+        ordering: "interleave_sessions_across_arms",
+        dual_model_claim_eligible: dualEligible,
+        verdict: summary.verdict,
         apiKeySet: true,
       },
       null,
@@ -672,7 +853,13 @@ async function main() {
   );
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+const isDirectRun =
+  Boolean(process.argv[1]) &&
+  import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isDirectRun) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}
