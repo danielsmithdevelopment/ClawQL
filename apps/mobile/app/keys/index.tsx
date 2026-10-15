@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { TextInput } from "react-native";
+import { Text as RnText, TextInput } from "react-native";
 
 import type { ApiKeyItem } from "@/src/domain/schemas";
 import {
@@ -101,21 +101,31 @@ export default function ApiKeysScreen() {
         />
         {secret ? (
           <SurfaceCard testID="keys-secret" tint="seed">
-            <Meta color={brand.inkFaint}>Secret shown once — copy it now.</Meta>
-            <Meta testID="keys-secret-value" mono>
-              {secret}
+            <Meta color={brand.inkFaint}>
+              Secret shown once. Prefer Copy (this device only). If Copy is unavailable, select the
+              secret text manually — we never write secrets to a syncing clipboard.
             </Meta>
+            <RnText
+              testID="keys-secret-value"
+              selectable
+              style={{
+                fontFamily: "Menlo",
+                fontSize: 13,
+                color: brand.ink,
+                marginTop: space.sm,
+              }}
+            >
+              {secret}
+            </RnText>
             <SecondaryButton
               testID="keys-copy-secret"
-              label="Copy secret (clears in 60s)"
+              label="Copy secret (this device only)"
               onPress={() => {
                 void Effect.runPromise(copySecretEffect(secret)).then((out) =>
                   setNote(
-                    out.copied
-                      ? out.localOnly
-                        ? `Secret copied (this device only) · expires in ${Math.round(out.clearedAfterMs / 1000)}s`
-                        : `Secret copied · pasteboard clears in ${Math.round(out.clearedAfterMs / 1000)}s`
-                      : "Copy unavailable — select the secret text"
+                    out.copied && out.localOnly
+                      ? `Secret copied on this device only · expires in ${Math.round(out.clearedAfterMs / 1000)}s`
+                      : "Select the secret text above to copy manually (local-only pasteboard unavailable)"
                   )
                 );
               }}

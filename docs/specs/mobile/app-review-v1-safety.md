@@ -3,7 +3,7 @@
 **Status:** Settled for first store submission  
 **Date:** 2026-10-15  
 **Branch:** `cursor/app-review-v1-safety-f8cd`  
-**Related:** [console-parity-v0.1](./console-parity-v0.1.md) · [mobile-store-iap-v0.1](../billing/mobile-store-iap-v0.1.md) · Apple [Guideline 3.1](https://developer.apple.com/app-store/review/guidelines/#payments)
+**Related:** [console-parity-v0.1](./console-parity-v0.1.md) · [mobile-store-iap-v0.1](../billing/mobile-store-iap-v0.1.md) · Apple [Guideline 3.1](https://developer.apple.com/app-store/review/guidelines/#payments) · [`store/review-notes.md`](../../../apps/mobile/store/review-notes.md)
 
 ## Context
 
@@ -11,7 +11,7 @@ Full console parity shipped more surface area than a minimal v1. Before App Stor
 
 ## Decision 1 — Billing: sell nothing in the app (v1)
 
-**Choose:** Plan status is **read-only** on PhoneApprove. Org billing stays on the **web** console (Stripe). Do **not** present in-app purchase subscribe CTAs or Stripe portal CTAs in production store builds.
+**Choose:** Plan status is **read-only** on PhoneApprove. Do **not** present in-app purchase subscribe CTAs, Stripe portal CTAs, prices, upgrades, or “where to pay” copy in production store builds — including empty states and plan screens. Sign-up / sign-in may create accounts; they must not lead toward payment.
 
 **Why (Apple 3.1, verified 2026-10-15 against current App Review Guidelines):**
 
@@ -19,11 +19,11 @@ Full console parity shipped more surface area than a minimal v1. Before App Stor
 - **3.1.3(a) Reader** — Narrow content types (magazines, books, audio, video, etc.). A B2B approval client is a poor reader fit.
 - **3.1.3(b) Multiplatform** — Access to web-purchased entitlements is allowed **if** the same items are also offered as IAP in-app. That forces a dual catalog we are not ready to support for v1.
 - **3.1.3(c) Enterprise Services** — Org-sold B2B tools may let enterprise users access previously purchased subscriptions without IAP (consumer/family sales still need IAP). Matches ClawQL’s org-pays model.
-- **3.1.3(f) Free Stand-alone Apps** — A free companion to a paid web tool needs **no purchasing inside the app and no calls to action for purchase outside the app**. This is the cleanest v1 posture: show plan read-only; manage billing only on the web.
+- **3.1.3(f) Free Stand-alone Apps** — A free companion to a paid web tool needs **no purchasing inside the app and no calls to action for purchase outside the app**. Cleanest v1 posture.
 
 **Demo / Maestro:** Fixture builds (`EXPO_PUBLIC_CLAWQL_FIXTURE=1`) may still show sandbox subscribe for MOB-* flows.
 
-**North star:** Later IAP (StoreKit / Play) remains a post–Day-0 option; it is **not** the v1 submission posture. See store-iap spec — v1 supersedes “pay from the phone” for the first binary.
+**North star:** Later IAP (StoreKit / Play) remains a post–Day-0 option; it is **not** the v1 submission posture.
 
 ## Decision 2 — Fixtures never silently appear in production
 
@@ -33,21 +33,29 @@ Full console parity shipped more surface area than a minimal v1. Before App Stor
 
 ## Decision 3 — Offline cache, approve-online, lock-screen notifications
 
-- Offline snapshot is **AES-GCM encrypted**; key in `expo-secure-store` (`WHEN_UNLOCKED_THIS_DEVICE_ONLY` on iOS). Legacy plaintext v1 blobs are deleted on read.
+- Offline snapshot is **AES-GCM encrypted**; key in `expo-secure-store` (`WHEN_UNLOCKED_THIS_DEVICE_ONLY` on iOS).
+- Blob lives under the app **Caches** directory (not backed up) and is marked `isExcludedFromBackup` via the secure-clipboard native module.
+- Legacy AsyncStorage blobs are deleted on read/write — never re-promoted.
 - Cache cleared on **sign-out**.
 - Cache is **browse-only**. Approving requires a live round-trip so mandate digest binding can reject a stale screen — offline banners say this explicitly.
-- Push / local notification **content is always generic** on the lock screen (“A change needs your review”) — no contract titles or amounts until unlock. Detail stays in the notification `data` payload / in-app inbox only.
+- Push / local notification **content is always generic** on the lock screen (“A change needs your review”).
 
 ## Decision 4 — API key secret clipboard
 
-- Prefer native `UIPasteboard` **localOnly + expirationDate** when a bridge is installed (`__CLAWQL_SECURE_CLIPBOARD__`).
-- Fallback: `expo-clipboard` + **auto-clear after 60s** when the pasteboard still matches what we wrote (expo-clipboard 57 does not expose localOnly yet).
-- Avoid `Share.share` for secrets (spreads the secret into the share sheet / other apps).
+- Native Expo module `clawql-secure-clipboard`:
+  - **iOS:** `UIPasteboard.setItems` with `.localOnly` + `.expirationDate` (no Universal Clipboard sync).
+  - **Android:** sensitive clip extras + TTL clear.
+- Without the native bridge (web / unrebuilt Expo Go): **do not auto-copy** — show the secret for manual selection only.
+- Avoid `Share.share` for secrets.
 
 ## Decision 5 — v1 read-only ops surfaces
 
-Keep screens reachable for parity, but mark **Gateway**, **Automations**, and **Settings** as **read-only in v1** (browse; mutations stay on web). Shrinks review/maintain risk without deleting routes.
+Keep screens reachable for parity, but mark **Gateway**, **Automations**, and **Settings** as **read-only in v1** (browse; mutations stay on web).
 
-## Day-0 reminder
+## Day-0 / review path
 
-App Store enrollment still has the longest waiting period — start that first if not already underway. Physical NFC, live IAP secrets, and real IdP/Stripe remain human Day-0 items.
+1. **Start App Store enrollment now** (longest wait).
+2. TestFlight with the **reviewer demo** account.
+3. Review notes (`apps/mobile/store/review-notes.md`) cover: what ClawQL is, why hardware keys, how demo biometrics approve.
+
+Physical NFC, live IAP secrets, and real IdP/Stripe remain human Day-0 items.

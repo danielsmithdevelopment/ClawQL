@@ -628,17 +628,23 @@ export default function ProfileScreen() {
 
       <SurfaceCard testID="profile-plan-billing" tint="soft">
         <IconBubble name="spend" tone="seed" size={32} iconSize={16} />
-        <Subtitle>Plan & billing</Subtitle>
+        <Subtitle>Plan</Subtitle>
         <Body testID="profile-plan-label">{`Current plan · ${entitlements.planLabel}`}</Body>
         <Meta testID="profile-plan-mode">
-          {`${entitlements.billingMode}${entitlements.productId ? ` · ${entitlements.productId}` : ""}${
-            entitlements.seats ? ` · ${entitlements.seats} seat${entitlements.seats === 1 ? "" : "s"}` : ""
-          }`}
+          {showCommerce
+            ? `${entitlements.billingMode}${entitlements.productId ? ` · ${entitlements.productId}` : ""}${
+                entitlements.seats
+                  ? ` · ${entitlements.seats} seat${entitlements.seats === 1 ? "" : "s"}`
+                  : ""
+              }`
+            : entitlements.seats
+              ? `${entitlements.seats} seat${entitlements.seats === 1 ? "" : "s"}`
+              : "Entitlements for this organization"}
         </Meta>
         <Meta testID="profile-plan-honesty" color={brand.inkFaint}>
           {showCommerce
             ? "Demo / fixture sandbox — Subscribe buttons are for Maestro and local demos only."
-            : "Plan is read-only on this phone. Org billing stays on the web console. PhoneApprove does not sell digital subscriptions in-app (App Store Review 3.1)."}
+            : "Your organization's plan is shown here for reference. PhoneApprove does not sell subscriptions or upgrades in the app."}
         </Meta>
         {showCommerce ? (
           <>

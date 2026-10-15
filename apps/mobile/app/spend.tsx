@@ -93,7 +93,9 @@ export default function SpendScreen() {
         {spend.budget ? <Meta>{`Budget ${spend.budget}`}</Meta> : null}
         {entitlements ? (
           <Meta testID="spend-plan-label">
-            {`Plan · ${entitlements.planLabel} (${entitlements.billingMode})`}
+            {showCommerce
+              ? `Plan · ${entitlements.planLabel} (${entitlements.billingMode})`
+              : `Plan · ${entitlements.planLabel}`}
           </Meta>
         ) : null}
       </SurfaceCard>
@@ -117,9 +119,14 @@ export default function SpendScreen() {
         <Subtitle>Plan</Subtitle>
         <Meta testID="spend-plan-readonly-note">
           {showCommerce
-            ? "Demo build — sandbox subscribe lives on Profile. Store builds show plan read-only; org billing stays on the web."
-            : "Plan is read-only on this phone. Your organization manages billing on the web console — PhoneApprove does not sell subscriptions in-app (App Store 3.1)."}
+            ? "Demo build — sandbox subscribe lives on Profile. Store builds show plan status only."
+            : "Plan status is shown for reference. This app does not sell subscriptions or upgrades."}
         </Meta>
+        {showCommerce && entitlements?.planId === "free" ? (
+          <Meta testID="spend-upgrade-cta" color={brand.inkFaint}>
+            Demo sandbox: open Profile to exercise Subscribe Pro / Team.
+          </Meta>
+        ) : null}
         <PrimaryButton
           testID="spend-open-plan-billing"
           label="View plan status"

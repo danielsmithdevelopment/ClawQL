@@ -1,14 +1,17 @@
 /**
  * Offline snapshot of Review / Activity / Inbox for flaky mobile networks.
  * Payload is AES-GCM encrypted with a key kept in expo-secure-store (Keychain /
- * Keystore). Cleared on sign-out. Approving still requires a live round-trip —
- * cache is browse-only.
+ * Keystore). Stored under the app **Caches** directory (not backed up to iCloud
+ * / device backups) and additionally marked excludedFromBackup on iOS.
+ * Cleared on sign-out. Approving still requires a live round-trip — cache is browse-only.
  */
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { File, Paths } from "expo-file-system";
 import * as SecureStore from "expo-secure-store";
 import { Context, Data, Effect, Layer } from "effect";
 import { Platform } from "react-native";
 
+import { excludePathFromBackup } from "../../modules/clawql-secure-clipboard/src";
 import type {
   ActivityEvent,
   InboxItem,
@@ -16,8 +19,9 @@ import type {
   ReviewListResponse,
 } from "../domain/schemas";
 
-const SNAPSHOT_KEY = "clawql.mobile.offlineSnapshot.v2.enc";
-const LEGACY_SNAPSHOT_KEY = "clawql.mobile.offlineSnapshot.v1";
+const SNAPSHOT_FILENAME = "clawql.mobile.offlineSnapshot.v2.enc.json";
+const LEGACY_ASYNC_KEY = "clawql.mobile.offlineSnapshot.v2.enc";
+const LEGACY_PLAINTEXT_KEY = "clawql.mobile.offlineSnapshot.v1";
 const KEY_ALIAS = "clawql.mobile.offlineCacheKey.v1";
 
 export class OfflineCacheError extends Data.TaggedError("OfflineCacheError")<{
@@ -35,6 +39,36 @@ const secureStoreOptions: SecureStore.SecureStoreOptions =
   Platform.OS === "ios"
     ? { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY }
     : {};
+
+function snapshotFile(): File {
+  return new File(Paths.cache, SNAPSHOT_FILENAME);
+}
+
+async function writeSnapshotBlob(enc: string): Promise<void> {
+  const file = snapshotFile();
+  if (!file.exists) {
+    file.create();
+  }
+  file.write(enc);
+  try {
+    await excludePathFromBackup(file.uri);
+  } catch {
+    /* cache dir is already excluded from backup on iOS; native mark is belt-and-suspenders */
+  }
+}
+
+async function readSnapshotBlob(): Promise<string | null> {
+  const file = snapshotFile();
+  if (!file.exists) return null;
+  return file.text();
+}
+
+async function deleteSnapshotBlob(): Promise<void> {
+  const file = snapshotFile();
+  if (file.exists) {
+    file.delete();
+  }
+}
 
 async function getOrCreateKeyBytes(): Promise<Uint8Array> {
   const existing = await SecureStore.getItemAsync(KEY_ALIAS, secureStoreOptions);
@@ -112,6 +146,13 @@ function normalizeSnapshot(parsed: Partial<OfflineSnapshot>): OfflineSnapshot | 
   };
 }
 
+async function purgeLegacyAsyncStorage(): Promise<void> {
+  await Promise.all([
+    AsyncStorage.removeItem(LEGACY_ASYNC_KEY),
+    AsyncStorage.removeItem(LEGACY_PLAINTEXT_KEY),
+  ]);
+}
+
 export function saveOfflineSnapshotEffect(input: {
   reviewItems: readonly ReviewItem[];
   activityEvents: readonly ActivityEvent[];
@@ -126,8 +167,8 @@ export function saveOfflineSnapshotEffect(input: {
         inbox: [...input.inbox],
       };
       const enc = await encryptJson(snap);
-      await AsyncStorage.setItem(SNAPSHOT_KEY, enc);
-      await AsyncStorage.removeItem(LEGACY_SNAPSHOT_KEY);
+      await writeSnapshotBlob(enc);
+      await purgeLegacyAsyncStorage();
       return snap;
     },
     catch: (cause) =>
@@ -143,19 +184,16 @@ export function loadOfflineSnapshotEffect(): Effect.Effect<
 > {
   return Effect.tryPromise({
     try: async () => {
-      const enc = await AsyncStorage.getItem(SNAPSHOT_KEY);
+      const enc = await readSnapshotBlob();
       if (enc) {
         try {
           return normalizeSnapshot((await decryptJson(enc)) as Partial<OfflineSnapshot>);
         } catch {
-          await AsyncStorage.removeItem(SNAPSHOT_KEY);
+          await deleteSnapshotBlob();
         }
       }
-      // Drop legacy plaintext cache — never promote it into the encrypted store.
-      const legacy = await AsyncStorage.getItem(LEGACY_SNAPSHOT_KEY);
-      if (legacy) {
-        await AsyncStorage.removeItem(LEGACY_SNAPSHOT_KEY);
-      }
+      // Drop legacy AsyncStorage blobs — never promote them into the cache store.
+      await purgeLegacyAsyncStorage();
       return null;
     },
     catch: (cause) =>
@@ -168,10 +206,8 @@ export function loadOfflineSnapshotEffect(): Effect.Effect<
 export function clearOfflineSnapshotEffect(): Effect.Effect<void, OfflineCacheError> {
   return Effect.tryPromise({
     try: async () => {
-      await Promise.all([
-        AsyncStorage.removeItem(SNAPSHOT_KEY),
-        AsyncStorage.removeItem(LEGACY_SNAPSHOT_KEY),
-      ]);
+      await deleteSnapshotBlob();
+      await purgeLegacyAsyncStorage();
       await SecureStore.deleteItemAsync(KEY_ALIAS, secureStoreOptions).catch(() => undefined);
     },
     catch: (cause) =>

@@ -1,5 +1,16 @@
 import { vi } from "vitest";
 
+(globalThis as { __DEV__?: boolean }).__DEV__ = false;
+
+vi.mock("expo-modules-core", () => ({
+  requireNativeModule: () => {
+    throw new Error("native module unavailable in vitest");
+  },
+  NativeModule: class {},
+  Platform: { OS: "ios" },
+  UnavailabilityError: class UnavailabilityError extends Error {},
+}));
+
 vi.mock("expo-constants", () => ({
   default: {
     get expoConfig() {
@@ -85,6 +96,53 @@ vi.mock("expo-clipboard", () => {
     getStringAsync: async () => value,
   };
 });
+
+vi.mock("expo-file-system", () => {
+  const files = new Map<string, string>();
+  class Directory {
+    constructor(..._parts: unknown[]) {}
+  }
+  class File {
+    readonly uri: string;
+    constructor(...parts: unknown[]) {
+      const name = String(parts[parts.length - 1] ?? "file");
+      this.uri = `file:///cache/${name}`;
+    }
+    get exists() {
+      return files.has(this.uri);
+    }
+    create() {
+      if (!files.has(this.uri)) files.set(this.uri, "");
+    }
+    write(content: string) {
+      files.set(this.uri, content);
+    }
+    async text() {
+      return files.get(this.uri) ?? "";
+    }
+    delete() {
+      files.delete(this.uri);
+    }
+  }
+  return {
+    File,
+    Paths: { cache: new Directory("cache") },
+  };
+});
+
+vi.mock("../../modules/clawql-secure-clipboard/src", () => ({
+  setSecretLocalOnly: async () => false,
+  excludePathFromBackup: async () => true,
+  isSecureClipboardAvailable: async () => false,
+  getSecureClipboardNative: () => null,
+}));
+
+vi.mock("@/modules/clawql-secure-clipboard/src", () => ({
+  setSecretLocalOnly: async () => false,
+  excludePathFromBackup: async () => true,
+  isSecureClipboardAvailable: async () => false,
+  getSecureClipboardNative: () => null,
+}));
 
 vi.mock("expo-notifications", () => ({
   setNotificationHandler: () => undefined,

@@ -2,7 +2,7 @@
  * App Store / Play submission posture for PhoneApprove v1.
  *
  * Decisions (2026-10-15):
- * - Sell nothing in the app: plan is read-only; billing stays on the web.
+ * - Sell nothing in the app: plan is read-only; no prices/upgrades/pay CTAs in production.
  * - Fixture / sample data only in explicit demo modes, never as silent production fallback.
  * - Gateway / Automations / Settings ship read-only in v1.
  *

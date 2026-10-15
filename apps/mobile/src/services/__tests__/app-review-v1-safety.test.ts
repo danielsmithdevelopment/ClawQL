@@ -19,7 +19,7 @@ import {
   isFixtureBuild,
   V1_READ_ONLY_SURFACES,
 } from "../release-policy";
-import { copySecretEffect } from "../secure-clipboard";
+import { copySecretEffect, isSecureClipboardBridgeAvailable } from "../secure-clipboard";
 import type { MobileConfig } from "../config";
 
 const fixtureConfig = {
@@ -86,7 +86,7 @@ describe("production empty states (no silent fixtures)", () => {
   });
 });
 
-describe("encrypted offline cache", () => {
+describe("encrypted offline cache (no-backup path)", () => {
   afterEach(async () => {
     await Effect.runPromise(clearOfflineSnapshotEffect()).catch(() => undefined);
   });
@@ -112,20 +112,23 @@ describe("secure clipboard", () => {
     delete globalThis.__CLAWQL_SECURE_CLIPBOARD__;
   });
 
-  it("copies with TTL clear on portable path", async () => {
+  it("does not auto-copy without a local-only bridge", async () => {
+    expect(isSecureClipboardBridgeAvailable()).toBe(false);
     const out = await Effect.runPromise(copySecretEffect("cqk_secret_test", { ttlMs: 50 }));
-    expect(out.copied).toBe(true);
+    expect(out.copied).toBe(false);
     expect(out.localOnly).toBe(false);
-    expect(out.clearedAfterMs).toBe(50);
+    expect(out.manualOnly).toBe(true);
   });
 
   it("uses native localOnly bridge when installed", async () => {
     globalThis.__CLAWQL_SECURE_CLIPBOARD__ = {
       setSecret: async () => true,
     };
+    expect(isSecureClipboardBridgeAvailable()).toBe(true);
     const out = await Effect.runPromise(copySecretEffect("cqk_secret_native", { ttlMs: 30_000 }));
     expect(out.copied).toBe(true);
     expect(out.localOnly).toBe(true);
+    expect(out.manualOnly).toBe(false);
     expect(out.clearedAfterMs).toBe(30_000);
   });
 });
