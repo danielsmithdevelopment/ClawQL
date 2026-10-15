@@ -4,7 +4,7 @@
 
 import { z } from "zod";
 import { Effect } from "effect";
-import { KubeConfig, CustomObjectsApi } from "@kubernetes/client-node";
+import type { CustomObjectsApi } from "@kubernetes/client-node";
 import {
   ARGO_CD_CRD,
   argocdSyncAllowed,
@@ -119,7 +119,9 @@ async function getArgocdK8sClient(): Promise<CustomObjectsApi> {
   if (createClientsOverride) return createClientsOverride();
   if (!clientsPromise) {
     clientsPromise = (async () => {
-      const kc = new KubeConfig();
+      // Dynamic: keep @kubernetes/client-node off the Ready graph until argocd runs.
+      const k8s = await import("@kubernetes/client-node");
+      const kc = new k8s.KubeConfig();
       const kubeconfigPath = getArgocdKubeconfigPath();
       if (kubeconfigPath) {
         kc.loadFromFile(kubeconfigPath);
@@ -130,8 +132,11 @@ async function getArgocdK8sClient(): Promise<CustomObjectsApi> {
           kc.loadFromDefault();
         }
       }
-      return kc.makeApiClient(CustomObjectsApi);
-    })();
+      return kc.makeApiClient(k8s.CustomObjectsApi);
+    })().catch((err) => {
+      clientsPromise = null;
+      throw err;
+    });
   }
   return clientsPromise;
 }

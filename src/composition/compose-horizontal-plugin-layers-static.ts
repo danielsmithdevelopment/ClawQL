@@ -1,9 +1,10 @@
 /**
  * Sync horizontal tier Layer composition for {@link getClawqlApi}.
  *
- * `clawql-data` (DuckDB) is loaded only when `enableData` — keep it off the HTTP Ready
- * module graph for equal-arm benches. Other tiers stay as static imports for CJS/ESM
- * compatibility under Vitest `createRequire`.
+ * Every optional package is loaded via `createRequire` only when its flag is on —
+ * same pattern as DuckDB (`clawql-data`). Static `import` of those packages would
+ * map Kubernetes clients, Stripe, embedding stacks, etc. into every slim listen
+ * (equal-arm / board), even when the tier is disabled.
  */
 import { createRequire } from "node:module";
 import {
@@ -12,17 +13,6 @@ import {
   type ClawQLApiRuntimeError,
   type ClawQLApiRuntimeServices,
 } from "clawql-api";
-import { makeAutomationLayer } from "clawql-automation/plugin";
-import { natsConfiguredForConsumer } from "clawql-automation/nats/env";
-import { makeDocumentsLayer } from "clawql-documents/plugin";
-import { makeMemoryLayer } from "clawql-memory/plugin";
-import { makeOntologyLayer } from "clawql-ontology/plugin";
-import { createOuroborosHarnessPlugin, makeHarnessLayer } from "clawql-harness/plugin";
-import { makeSandboxLayer } from "clawql-sandbox/plugin";
-import { makeWebLayer } from "clawql-web/plugin";
-import { makeObservabilityLayer } from "clawql-observability/plugin";
-import { makeChatgptExtensionsLayer } from "clawql-chatgpt-extensions/plugin";
-import { makeSupabaseLayer } from "clawql-supabase/plugin";
 import {
   optionalFlagsFromHorizontalTierSpec,
   type ClawQLHorizontalTierSpec,
@@ -39,6 +29,23 @@ export type ComposeHorizontalPluginLayersOptions = {
   readonly includeNatsWorker?: boolean;
 };
 
+/** Env-only NATS consumer probe — avoid loading clawql-automation just to check. */
+function natsConsumerWantedFromEnv(): boolean {
+  const truthy = (v: string | undefined): boolean => {
+    const t = v?.trim().toLowerCase();
+    return t === "1" || t === "true" || t === "yes";
+  };
+  if (!process.env.CLAWQL_NATS_URL?.trim()) return false;
+  if (!truthy(process.env.CLAWQL_NATS_JETSTREAM) || !truthy(process.env.CLAWQL_NATS_ENABLE_CONSUMER)) {
+    return false;
+  }
+  return (
+    truthy(process.env.CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW) ||
+    truthy(process.env.CLAWQL_NATS_CONSUMER_IDP_PIPELINE) ||
+    truthy(process.env.CLAWQL_NATS_CONSUMER_CONESHARE_FOLLOWUP)
+  );
+}
+
 /**
  * Builds Effect Layers for all enabled horizontal tiers from parsed optional flags.
  */
@@ -46,12 +53,19 @@ export function composeHorizontalPluginLayersStatic(
   flags: ClawqlOptionalToolFlags,
   options: ComposeHorizontalPluginLayersOptions = {}
 ): readonly Layer.Layer<never, ClawQLApiRuntimeError, ClawQLApiRuntimeServices>[] {
-  const includeNatsWorker = options.includeNatsWorker ?? natsConfiguredForConsumer();
+  const includeNatsWorker = options.includeNatsWorker ?? natsConsumerWantedFromEnv();
   const layers: Layer.Layer<never, ClawQLApiRuntimeError, ClawQLApiRuntimeServices>[] = [];
+
   if (flags.enableMemory) {
+    const { makeMemoryLayer } = requireFromHere(
+      "clawql-memory/plugin"
+    ) as typeof import("clawql-memory/plugin");
     layers.push(makeMemoryLayer());
   }
   if (flags.enableDocuments) {
+    const { makeDocumentsLayer } = requireFromHere(
+      "clawql-documents/plugin"
+    ) as typeof import("clawql-documents/plugin");
     layers.push(
       makeDocumentsLayer({
         enableExternalIngest: flags.externalIngestPreview,
@@ -72,6 +86,9 @@ export function composeHorizontalPluginLayersStatic(
     flags.enableHitlLabelStudio ||
     includeNatsWorker
   ) {
+    const { makeAutomationLayer } = requireFromHere(
+      "clawql-automation/plugin"
+    ) as typeof import("clawql-automation/plugin");
     layers.push(
       makeAutomationLayer({
         enableSchedule: flags.enableSchedule,
@@ -84,6 +101,9 @@ export function composeHorizontalPluginLayersStatic(
     );
   }
   if (flags.enableSandbox) {
+    const { makeSandboxLayer } = requireFromHere(
+      "clawql-sandbox/plugin"
+    ) as typeof import("clawql-sandbox/plugin");
     layers.push(makeSandboxLayer());
   }
   if (flags.enableData) {
@@ -94,22 +114,40 @@ export function composeHorizontalPluginLayersStatic(
     layers.push(makeDataLayer({ enableClawqlSqlAlias: flags.enableClawqlSqlAlias }));
   }
   if (flags.enableWeb) {
+    const { makeWebLayer } = requireFromHere(
+      "clawql-web/plugin"
+    ) as typeof import("clawql-web/plugin");
     layers.push(makeWebLayer());
   }
   if (flags.enableObservability) {
+    const { makeObservabilityLayer } = requireFromHere(
+      "clawql-observability/plugin"
+    ) as typeof import("clawql-observability/plugin");
     layers.push(makeObservabilityLayer());
   }
   if (flags.enableChatgptExtensions) {
+    const { makeChatgptExtensionsLayer } = requireFromHere(
+      "clawql-chatgpt-extensions/plugin"
+    ) as typeof import("clawql-chatgpt-extensions/plugin");
     layers.push(makeChatgptExtensionsLayer());
   }
   if (flags.enableOntology) {
+    const { makeOntologyLayer } = requireFromHere(
+      "clawql-ontology/plugin"
+    ) as typeof import("clawql-ontology/plugin");
     layers.push(makeOntologyLayer({ enableWrites: flags.enableOntologyWrites }));
   }
   if (flags.enableSupabase) {
+    const { makeSupabaseLayer } = requireFromHere(
+      "clawql-supabase/plugin"
+    ) as typeof import("clawql-supabase/plugin");
     layers.push(makeSupabaseLayer());
   }
   // Ouroboros / clawql_think (8.0 demotion): opt-in via enableOuroborosTools.
   if (flags.enableOuroborosTools) {
+    const { createOuroborosHarnessPlugin, makeHarnessLayer } = requireFromHere(
+      "clawql-harness/plugin"
+    ) as typeof import("clawql-harness/plugin");
     layers.push(
       makeHarnessLayer({
         plugins: [createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval })],

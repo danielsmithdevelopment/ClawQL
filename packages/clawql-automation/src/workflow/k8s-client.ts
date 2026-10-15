@@ -1,9 +1,13 @@
 /**
  * Kubernetes client factory for Argo Workflows CRDs (`@kubernetes/client-node`).
  * Domain APIs are Effect-primary; thin Promise façades for workflow tool edges.
+ *
+ * The k8s client package is **dynamically imported** on first use so slim MCP listen
+ * (automation off) never maps the multi‑MB generated API surface
+ * (AdmissionregistrationApi, etc.).
  */
 
-import { CoreV1Api, CustomObjectsApi, KubeConfig, type V1Pod } from "@kubernetes/client-node";
+import type { CoreV1Api, CustomObjectsApi, V1Pod } from "@kubernetes/client-node";
 import { Context, Effect, Layer } from "effect";
 import { getWorkflowKubeconfigPath } from "./env.js";
 import { automationFromPromise } from "../effect/automation-effect-utils.js";
@@ -24,28 +28,23 @@ export function configureWorkflowK8sFactory(
   clientsPromise = null;
 }
 
-function loadKubeConfigEffect(): Effect.Effect<KubeConfig, AutomationError> {
-  return Effect.try({
-    try: () => {
-      const kc = new KubeConfig();
-      const kubeconfigPath = getWorkflowKubeconfigPath();
-      if (kubeconfigPath) {
-        kc.loadFromFile(kubeconfigPath);
-      } else {
-        try {
-          kc.loadFromCluster();
-        } catch {
-          kc.loadFromDefault();
-        }
-      }
-      return kc;
-    },
-    catch: (cause) =>
-      new AutomationError({
-        reason: "failed to load kubeconfig",
-        cause,
-      }),
-  });
+async function createWorkflowK8sClients(): Promise<WorkflowK8sClients> {
+  const k8s = await import("@kubernetes/client-node");
+  const kc = new k8s.KubeConfig();
+  const kubeconfigPath = getWorkflowKubeconfigPath();
+  if (kubeconfigPath) {
+    kc.loadFromFile(kubeconfigPath);
+  } else {
+    try {
+      kc.loadFromCluster();
+    } catch {
+      kc.loadFromDefault();
+    }
+  }
+  return {
+    customObjects: kc.makeApiClient(k8s.CustomObjectsApi),
+    coreV1: kc.makeApiClient(k8s.CoreV1Api),
+  };
 }
 
 export function getWorkflowK8sClientsEffect(): Effect.Effect<WorkflowK8sClients, AutomationError> {
@@ -54,15 +53,10 @@ export function getWorkflowK8sClientsEffect(): Effect.Effect<WorkflowK8sClients,
       return yield* automationFromPromise(() => createClientsOverride!());
     }
     if (!clientsPromise) {
-      clientsPromise = Effect.runPromise(
-        Effect.gen(function* () {
-          const kc = yield* loadKubeConfigEffect();
-          return {
-            customObjects: kc.makeApiClient(CustomObjectsApi),
-            coreV1: kc.makeApiClient(CoreV1Api),
-          };
-        })
-      );
+      clientsPromise = createWorkflowK8sClients().catch((err) => {
+        clientsPromise = null;
+        throw err;
+      });
     }
     return yield* automationFromPromise(() => clientsPromise!);
   });

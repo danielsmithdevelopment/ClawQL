@@ -1,0 +1,62 @@
+{
+  "measuredAt": "2026-10-15T17:37:22.236Z",
+  "spec": "/tmp/slim-mem-spec-789268/spec.json",
+  "iters": 120,
+  "known_op_model_on_path": false,
+  "note": "known-op execute is JMESPath where only — no GLiNER/ONNX/Decide. Native estimate = smaps Anonymous − V8 heapUsed.",
+  "at_ready": {
+    "smaps": {
+      "rss_mb": 155.48,
+      "anonymous_mb": 105.39,
+      "pss_mb": 108.55
+    },
+    "heap_used_mb": 60.12,
+    "external_mb": null,
+    "process_rss_mb": 154.97,
+    "native_anon_minus_heap_mb": 45.27,
+    "maps_hits": {
+      "kubernetes": false,
+      "xenova": false,
+      "onnx": false,
+      "stripe": false,
+      "duckdb": false
+    }
+  },
+  "under_load": {
+    "smaps": {
+      "rss_mb": 162.13,
+      "anonymous_mb": 111.86,
+      "pss_mb": 115.03
+    },
+    "heap_used_mb": 68.65,
+    "external_mb": null,
+    "process_rss_mb": 161.79,
+    "native_anon_minus_heap_mb": 43.21,
+    "maps_hits": {
+      "kubernetes": false,
+      "xenova": false,
+      "onnx": false,
+      "stripe": false,
+      "duckdb": false
+    }
+  },
+  "log_tail": [
+    "[catalog-sqlite] oop-build starting → /tmp/slim-mem-789268-1792085839893/catalog.sqlite via /workspace/packages/clawql-api/dist/catalog/build-catalog-sqlite-cli.js",
+    "[spec-loader] BREAKING (8.0.0): CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE no longer select the provider stack. Use providers.pack / providers.enabled in CLAWQL_INSTANCE_SPEC, or CLAWQL_PROVIDER=default|google|aws|…",
+    "[spec-loader] OpenAPI file: /tmp/slim-mem-spec-789268/spec.json",
+    "[spec-loader] Loaded 60 operations (slimMem)",
+    "[catalog-sqlite] wrote /tmp/slim-mem-789268-1792085839893/catalog.sqlite ops=60 docs=1",
+    "[catalog-sqlite] oop-wrote /tmp/slim-mem-789268-1792085839893/catalog.sqlite ops=60 pid=789293",
+    "(node:789293) ExperimentalWarning: SQLite is an experimental feature and might change at any time",
+    "(Use `node --trace-warnings ...` to show where the warning was created)",
+    "[catalog-sqlite] loaded 60 operations from /tmp/slim-mem-789268-1792085839893/catalog.sqlite (LOAD=db after oop-build)",
+    "[clawql-http-layer] banner auth_mode=noAuth skip_auth=0 otel=0 session_idle_ms=0 audit=1 skip_prune=0 skip_als=0 skip_payments=1 skip_graphql=1 http_perf=0 loki_url=0 events=0",
+    "(node:789282) ExperimentalWarning: SQLite is an experimental feature and might change at any time",
+    "(Use `node --trace-warnings ...` to show where the warning was created)",
+    "[clawql-mcp] Ready — single-spec; 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)",
+    "[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:38989/mcp"
+  ],
+  "target_band_mb": {
+    "anon_goal": "150–190 (smaller boards / underload LOAD=db)"
+  }
+}
