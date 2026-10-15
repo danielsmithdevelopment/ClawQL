@@ -118,7 +118,15 @@ function eq(got, want, label) {
 }
 
 function eqArr(got, want, label) {
-  const g = [...(got || [])].map(String).sort();
+  const gRaw = Array.isArray(got) ? got : got == null ? [] : null;
+  if (gRaw == null) {
+    return {
+      ok: false,
+      label,
+      reason: `${label}: got non-array ${JSON.stringify(got)?.slice?.(0, 120) ?? got}`,
+    };
+  }
+  const g = [...gRaw].map(String).sort();
   const w = [...(want || [])].map(String).sort();
   const ok = g.length === w.length && g.every((x, i) => x === w[i]);
   return ok
