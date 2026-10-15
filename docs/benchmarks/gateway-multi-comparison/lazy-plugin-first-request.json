@@ -1,0 +1,52 @@
+{
+  "measuredAt": "2026-10-15T17:46:06.058Z",
+  "note": "First MCP tool call after enabling a lazy tier; k8s measured via getWorkflowK8sClients() in a fresh process.",
+  "memory": {
+    "feature": "memory",
+    "maps_at_ready": {
+      "kubernetes": false,
+      "xenova": false,
+      "onnx": true,
+      "stripe": false,
+      "duckdb": false
+    },
+    "maps_after_first": {
+      "kubernetes": false,
+      "xenova": false,
+      "onnx": true,
+      "stripe": false,
+      "duckdb": false
+    },
+    "first_tool_ms": 188.6,
+    "second_tool_ms": 142.8,
+    "first_is_error": false,
+    "second_is_error": false,
+    "first_text_head": "{\n  \"ok\": true,\n  \"path\": \"Memory/lazy-first-hit.md\",\n  \"wormRef\": \"sha256:149d58f9c119702aedcedf31ba4179494fb8c4bf112f509c9c01f2f7714f0d69\",\n  \"rebuild\": {\n    \"embeddings\": {\n      \"synced\": true\n    }\n  },\n  \"git\": {\n    \"committed\": fal",
+    "second_text_head": "{\n  \"ok\": true,\n  \"path\": \"Memory/lazy-first-hit.md\",\n  \"wormRef\": \"sha256:36176e501744d2378a3fc863a938588a547de3088f4b3e1cf56d10a70ca92200\",\n  \"rebuild\": {\n    \"embeddings\": {\n      \"synced\": true\n    }\n  },\n  \"git\": {\n    \"committed\": fal"
+  },
+  "automation_listen": {
+    "feature": "automation_listen",
+    "maps_at_ready": {
+      "kubernetes": false,
+      "xenova": false,
+      "onnx": false,
+      "stripe": false,
+      "duckdb": false
+    },
+    "list_tools_ms": 10.14,
+    "tool_names": [
+      "workflow"
+    ],
+    "note": "workflow enabled loads automation plugin; k8s maps should still be false until getWorkflowK8sClients"
+  },
+  "kubernetes": {
+    "feature": "kubernetes",
+    "wall_ms": 389.98,
+    "ok": true,
+    "resolved": "/workspace/packages/clawql-automation/node_modules/@kubernetes/client-node/dist/index.js",
+    "first_import_ms": 362.53,
+    "second_import_ms": 0.03,
+    "admission_surface": true,
+    "export_count": 880
+  }
+}

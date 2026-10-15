@@ -147,6 +147,43 @@ Probe: `scripts/benchmarks/slim-listen-memory-probe.mjs`
 | Ready | **105 MB** | 60 MB | 45 MB | none |
 | After 120 executes | **112 MB** | 69 MB | 43 MB | none |
 
-That lands **under** the 150–190 MB underload band. Full CF multiturn 3×10k board
-remasure still needs this branch stacked into the board harness (not present on
-this tip); expect ClawQL anon to stop being the weak cell once it does.
+That lands **under** the 150–190 MB underload band.
+
+### Lazy first-hit cost + fail-closed imports (this branch)
+
+Artifacts: [`lazy-plugin-first-hit.json`](./lazy-plugin-first-hit.json),
+[`lazy-plugin-first-request.json`](./lazy-plugin-first-request.json)
+
+| Package / path | First cost | Warm | Notes |
+| --- | ---: | ---: | --- |
+| `clawql-memory/plugin` require | ~646 ms | cached | Pulls ONNX / embedding graph when memory is **on** |
+| `memory_ingest` first MCP call | ~189 ms | ~143 ms | ONNX already mapped at Ready when memory enabled |
+| `clawql-automation/plugin` require | ~39 ms | ~0 | Workflow tools appear; **k8s maps stay false** |
+| `@kubernetes/client-node` dynamic import | ~363–365 ms | ~0.03 ms | Admission surface present (880 exports) |
+| `clawql-payments/plugin` require | ~176–359 ms | cached | Stripe |
+| `clawql-data/plugin` require | ~44–54 ms | cached | DuckDB |
+
+Failed imports **fail closed** (no half-built Layer list):
+
+- Missing package → `MODULE_NOT_FOUND` / “Cannot find module”
+- Bad plugin subpath → `ERR_PACKAGE_PATH_NOT_EXPORTED`
+- Sync composer has no try/catch around `require` — flag-on + missing plugin aborts listen
+
+### CF multiturn 3×10k remasure (in flight)
+
+Harness on `cursor/cf-mt-slim-memory-board-a621` now records **tree RSS / anon / PSS**,
+~100-sample `memory_series`, and `memory_flatness` (range + drift) for ClawQL,
+MCPJungle, and agentgateway in the same run. Publish protocol
+`CF_MT_ITERS=10000 CF_MT_REPS=3` started 2026-10-15 — board homes show
+`oop-build` → `LOAD=db after oop-build` (catalog flag no longer a no-op).
+
+Smoke (N=5, same harness, peers only) already landed side-by-side:
+
+| Arm | RSS | Anon | PSS |
+| --- | ---: | ---: | ---: |
+| `clawql_known_op` | 166.6 | **116.5** | 119.7 |
+| MCPJungle tree | 111.6 | **43.7** | 66.4 |
+| agentgateway tree | 180.7 | **67.7** | 93.4 |
+
+Replace the published board’s ~630 MB anon cells and the comparison-page / video
+~188 MB under-load line once the 3×10k series confirms flatness near ~112 MB.

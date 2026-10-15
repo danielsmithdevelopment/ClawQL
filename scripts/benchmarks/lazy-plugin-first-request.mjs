@@ -187,11 +187,11 @@ async function measureMemoryFirstHit() {
     // Re-point vault into home so ingest has a writable path
     const first = await mcpCall(listen.mcpUrl, "lazy-mem-1", "memory_ingest", {
       title: "lazy-first-hit",
-      insights: ["probe first hit"],
+      insights: "probe first hit",
     });
     const second = await mcpCall(listen.mcpUrl, "lazy-mem-2", "memory_ingest", {
       title: "lazy-first-hit",
-      insights: ["probe second hit"],
+      insights: "probe second hit",
       append: true,
     });
     return {
@@ -211,37 +211,37 @@ async function measureMemoryFirstHit() {
 }
 
 async function measureK8sFirstUse() {
-  // Same path as packages/clawql-automation/src/workflow/k8s-client.ts
-  const k8sClientPath = join(ROOT, "packages/clawql-automation/dist/workflow/k8s-client.js");
-  if (!existsSync(k8sClientPath)) {
-    return { feature: "kubernetes", ok: false, error: "k8s-client.js missing — build clawql-automation" };
-  }
-  // Clear module cache by using a fresh dynamic import URL with query — Node caches by URL.
-  // Instead: spawn a child that imports once then again.
+  // k8s-client is bundled into workflow.js (not a separate dist file). Measure the
+  // same dynamic import(@kubernetes/client-node) path, resolved from automation.
+  const resolveFrom = join(ROOT, "packages/clawql-automation/package.json");
   const childCode = `
+    import { createRequire } from 'node:module';
     import { performance } from 'node:perf_hooks';
-    import { pathToFileURL } from 'node:url';
-    const modUrl = pathToFileURL(${JSON.stringify(k8sClientPath)}).href;
+    const req = createRequire(${JSON.stringify(resolveFrom)});
+    const resolved = req.resolve('@kubernetes/client-node');
     const t0 = performance.now();
-    const mod = await import(modUrl);
-    const loadMs = performance.now() - t0;
-    const t1 = performance.now();
     try {
-      await mod.getWorkflowK8sClients();
-      const firstMs = performance.now() - t1;
-      const t2 = performance.now();
-      await mod.getWorkflowK8sClients();
-      const secondMs = performance.now() - t2;
-      console.log(JSON.stringify({ ok: true, module_load_ms: +loadMs.toFixed(2), first_get_clients_ms: +firstMs.toFixed(2), second_get_clients_ms: +secondMs.toFixed(2) }));
+      const k8s = await import(resolved);
+      const firstMs = performance.now() - t0;
+      const t1 = performance.now();
+      await import(resolved);
+      const secondMs = performance.now() - t1;
+      const keys = Object.keys(k8s);
+      console.log(JSON.stringify({
+        ok: true,
+        resolved,
+        first_import_ms: +firstMs.toFixed(2),
+        second_import_ms: +secondMs.toFixed(2),
+        admission_surface: keys.some((k) => /Admission/i.test(k)),
+        export_count: keys.length,
+      }));
     } catch (err) {
-      const firstMs = performance.now() - t1;
       console.log(JSON.stringify({
         ok: false,
-        module_load_ms: +loadMs.toFixed(2),
-        first_get_clients_ms: +firstMs.toFixed(2),
+        first_import_ms: +(performance.now() - t0).toFixed(2),
         error: err instanceof Error ? (err.name + ': ' + err.message) : String(err),
         clear_error: true,
-        note: 'Failed k8s client init must surface; automation tools should not silently half-work',
+        note: 'Failed k8s import must surface; automation tools should not silently half-work',
       }));
     }
   `;
