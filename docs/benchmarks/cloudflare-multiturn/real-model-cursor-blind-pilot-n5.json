@@ -1,0 +1,112 @@
+{
+  "measuredAt": "2026-10-15T00:35:56.420Z",
+  "kind": "real_model_cursor_blind_pilot",
+  "model": "composer-2.5-fast",
+  "billing": "cursor_subscription_subagents",
+  "arm": "clawql_known_op",
+  "iters": 5,
+  "honesty": {
+    "shapesFileHidden": true,
+    "priorSessionsForbidden": true,
+    "allowedReads": [
+      "fixture-hint.json",
+      "execute-tool-schema.json",
+      "mcp-url"
+    ],
+    "operationIdsProvided": true,
+    "note": "Blind vs shapes file: agents invented JMESPath from execute.where schema + workflow goals. operationIds still provided (known-op)."
+  },
+  "task_success_rate": 1,
+  "where_malformed_total": 2,
+  "tool_errors_total": 3,
+  "turns_mean": 13.4,
+  "observation_byte_sizes": [
+    {
+      "id": 1,
+      "step4": 20,
+      "step5": 440,
+      "step11": 22
+    },
+    {
+      "id": 2,
+      "step4": 3,
+      "step5": 430,
+      "step11": 1
+    },
+    {
+      "id": 3,
+      "step4": 3,
+      "step5": 430,
+      "step11": 1
+    },
+    {
+      "id": 4,
+      "step4": 3,
+      "step5": 430,
+      "step11": 1
+    },
+    {
+      "id": 5,
+      "step4": 3,
+      "step5": 430,
+      "step11": 1
+    }
+  ],
+  "details": [
+    {
+      "id": 1,
+      "ok": true,
+      "turns": 11,
+      "whereAttempts": 11,
+      "whereMalformed": 0,
+      "toolErrors": 0,
+      "cheated": false,
+      "notes": "Blind session: JMESPath where invented from execute schema only; fixture-hint for auditZoneName/targetIp/workerScriptName/unproxiedRecordId/accountId. Step 12 proposal_only_no_patch (proxied true for unproxiedRecordId).",
+      "failed": []
+    },
+    {
+      "id": 2,
+      "ok": true,
+      "turns": 18,
+      "whereAttempts": 22,
+      "whereMalformed": 2,
+      "toolErrors": 3,
+      "cheated": false,
+      "notes": "Step 4 A count uses list without type filter + length(result[?type=='A']) (258); type:A query total_count was 300. Step 12 gated: recordId from fixture matches unproxied origin record; no PATCH.",
+      "failed": []
+    },
+    {
+      "id": 3,
+      "ok": true,
+      "turns": 11,
+      "whereAttempts": 11,
+      "whereMalformed": 0,
+      "toolErrors": 0,
+      "cheated": false,
+      "notes": "Blind JMESPath where on all execute calls; step 12 proposal only (no PATCH).",
+      "failed": []
+    },
+    {
+      "id": 4,
+      "ok": true,
+      "turns": 11,
+      "whereAttempts": 11,
+      "whereMalformed": 0,
+      "toolErrors": 0,
+      "cheated": false,
+      "notes": "Blind session-4: JMESPath where on all 11 execute turns; step 12 propose proxied=true for unproxiedRecordId only (no PATCH).",
+      "failed": []
+    },
+    {
+      "id": 5,
+      "ok": true,
+      "turns": 16,
+      "whereAttempts": 16,
+      "whereMalformed": 0,
+      "toolErrors": 0,
+      "cheated": false,
+      "notes": "Initial DNS queries used content filter without JMESPath type==A; corrected to length(result[?type==`A`]) and content/proxied filters on result. Step 2 uses planName; step 9 routePattern object; step 12 gated proposal for unproxiedRecordId.",
+      "failed": []
+    }
+  ]
+}
