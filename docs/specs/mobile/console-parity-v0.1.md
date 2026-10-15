@@ -12,21 +12,21 @@ Corrected: earlier agent notes that marked Gateway / Automations / Memory / Audi
 
 ## Managed console map → phone
 
-| Console            | Phone route (target)            | Phase                                     |
-| ------------------ | ------------------------------- | ----------------------------------------- |
-| Home               | Tabs Home                       | Shipped                                   |
-| Sessions           | `/sessions`                     | Agent timeline + managed API              |
-| Review             | Tabs Review                     | Shipped                                   |
-| Gateway            | `/gateway`                      | Endpoints + model routes; managed API     |
-| Automations        | `/automations`                  | Subscriptions; managed API                |
-| Skills             | `/skills` + Review skill decide | Proposed/active + managed API             |
-| Memory & documents | `/memory` + `/memory/:id`       | Explorer + pipelines + erase; managed API |
-| Connections & keys | `/connections` + `/keys`        | Live keys/connections adapters            |
-| Audit              | `/audit`                        | Entries + incident; managed API           |
-| Team               | `/teammates`                    | Invite + roles/groups; managed team API   |
+| Console            | Phone route (target)            | Phase                                          |
+| ------------------ | ------------------------------- | ---------------------------------------------- |
+| Home               | Tabs Home                       | Shipped                                        |
+| Sessions           | `/sessions`                     | Agent timeline + managed API                   |
+| Review             | Tabs Review                     | Shipped                                        |
+| Gateway            | `/gateway`                      | Endpoints + model routes; managed API          |
+| Automations        | `/automations`                  | Subscriptions; managed API                     |
+| Skills             | `/skills` + Review skill decide | Proposed/active + managed API                  |
+| Memory & documents | `/memory` + `/memory/:id`       | Explorer + pipelines + erase; managed API      |
+| Connections & keys | `/connections` + `/keys`        | Live keys/connections adapters                 |
+| Audit              | `/audit`                        | Entries + incident; managed API                |
+| Team               | `/teammates`                    | Invite + roles/groups; managed team API        |
 | Usage & billing    | `/spend` + Profile plan         | Usage depth; plan read-only in v1 store builds |
-| Settings           | `/settings`                     | Org + network + retention; managed API    |
-| Profile            | Tabs Profile                    | Shipped                                   |
+| Settings           | `/settings`                     | Org + network + retention; managed API         |
+| Profile            | Tabs Profile                    | Shipped                                        |
 
 Phone-native extras (Voice, NFC, App Lock, push inbox) stay additive.
 
