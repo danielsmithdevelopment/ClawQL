@@ -13,6 +13,8 @@ Track decisions here before publication. Unchecked items block a “final” boa
 - [x] **Measured defaults vs program-as-core:** ship SQLite OOP + lazy + `where` + observation budget (+ Bun/2-CPU deploy); keep programs **alongside** `execute`. Known-op ≠ program (discovery vs multi-op). Path to single core tool: shrink one-step plan ≈ `execute` size → re-prove CF board + dual-model gate → fan-out board. See [`measured-defaults.md`](./measured-defaults.md).
 - [ ] **Cheap one-step program format:** plan boilerplate must not cost ~811 vs known-op’s ~191 code tokens before programs can be the core tool.
 - [ ] **Fan-out / join board** + dual-model gate on that board (promotion signal for multi-op programs).
+- [ ] **celld isolate-boundary spike** (cold start, per-call cost, memory/cell vs plan runner) — may run **in parallel** with the fan-out board (ADR 0015).
+- [ ] **Heap-vs-anon at plateau** + Node/Bun old-space A/B (memory + latency) — see [`memory-plateau.md`](./memory-plateau.md).
 - [x] **Charge `where`/plan as code tokens:** execute `where` (+fields) and program plan JSON count in the same bucket as code-mode scripts; `weighted_mean` on every arm.
 - [ ] **Re-publish 3×10k board** with code-arg accounting (prior boards are not the claim).
 - [x] **Compact program plan:** omit `tool` when `operationId` set (parser default); short ids; drop empty args (872 → 811 code tokens on this workflow).

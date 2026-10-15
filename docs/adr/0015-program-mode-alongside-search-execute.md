@@ -253,9 +253,11 @@ OpenCode’s package is MIT but unpublished (private workspace). A maintained, p
 **Earned-claim sequence (do not publish the runtime until these hold):**
 
 1. Build as program mode step 2 inside ClawQL on the **pinned** celld version.
-2. Benchmark vs OpenCode’s interpreter: latency per tool call (isolate boundary cost), cold start, memory, first-attempt success on multi-step tasks.
+2. Benchmark vs OpenCode’s interpreter / plan runner: latency per tool call (isolate boundary cost), cold start, memory per cell, first-attempt success on multi-step tasks.
 3. **Crash demo:** kill a node mid-program in the three-arm load-test setup; show resume **without repeating a call**, plus audit entries. Prefer a short clip or Sessions/trace link as the public reply that turns “with the hopes of” into a result.
 4. Extract and publish the runtime once those numbers hold.
+
+**Parallelism:** step 3 does **not** wait for step 2 to finish — start the crash-demo harness as soon as the isolate path runs at all. Separately, a **short isolate-boundary spike** (cold start, cost per tool call, memory per cell vs the v0 plan runner) may run **in parallel with the fan-out / join board**, so those numbers are ready when the board justifies switching the durable path to celld.
 
 ### Public positioning (honest until proven)
 

@@ -17,6 +17,7 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | **Publish board: 3×10k** | **Remeasuring** on slim listen (OOP+lazy) — prior board ~630 MB anon; process-tree fairness notes in [`process-tree-memory.md`](./process-tree-memory.md) |
 | **Real-model 50 sessions / arm × 2 model families** | **Done** — dual-win `known_op_beats_code_mode_for_real_models` ([`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json)) |
 | **Measured defaults (not program-as-core)** | Locked — [`measured-defaults.md`](./measured-defaults.md): known-op/`where` is the filter winner; programs stay alongside until one-step plans are as cheap as `execute` and a fan-out board clears |
+| **Memory under load (slim)** | Rep 1: start ~80 MB → plateau ~**290 MB** anon (all ClawQL arms); MJ ~88 / AG ~98 — [`memory-plateau.md`](./memory-plateau.md). Report plateau, not the 112 start. |
 | Blog / public headline | Cleared by pre-committed rules (board + dual-model gate both green) |
 
 N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the board. Do **not** ship the reversed-headline blog until both gates pass.

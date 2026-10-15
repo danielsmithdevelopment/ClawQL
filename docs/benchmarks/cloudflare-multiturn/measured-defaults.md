@@ -70,9 +70,10 @@ ones stay in the same tool.
 Until (1)–(2) hold, keep `execute` as the measured default for one-op work and
 programs as the opt-in multi-op path.
 
-## Memory line (same-run; do not mix)
+## Memory line (same-run; report the plateau)
 
-Smoke N=5 tree smaps after OOP+lazy: ClawQL known-op **~117 MB** anon vs
-MCPJungle Go+REST **~44 MB** (~**73 MB** gap) vs agentgateway **~68 MB** (~**49 MB** gap).
-3×10k flatness remasure in flight — update comparison/video numbers from that
-series, not from mixed-run MJ ~86 MB.
+See [`memory-plateau.md`](./memory-plateau.md). Rep 1 of the slim 3×10k board:
+every ClawQL arm (including known-op) starts ~**80 MB** anon and plateaus
+~**290 MB**; MJ ~**88**, AG ~**98** (gaps ~**200 MB**). The ~112 MB / 120-execute
+smoke number was the **start**, not steady state. Post/video: plateau vs peers,
+and “down from ~630” — not “near Go.” Heap-vs-anon + old-space A/B next.
