@@ -81,6 +81,13 @@ for (const name of readdirSync(dir).sort()) {
 }
 
 const n = sessions.length || 1;
+const mean = (xs) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
+const median = (xs) => {
+  const s = [...xs].sort((a, b) => a - b);
+  if (!s.length) return 0;
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+};
 const report = {
   measuredAt: new Date().toISOString(),
   kind,
@@ -92,12 +99,15 @@ const report = {
   task_success_rate: sessions.filter((s) => s.ok).length / sessions.length,
   where_malformed_total: sessions.reduce((a, s) => a + s.whereMalformed, 0),
   tool_errors_total: sessions.reduce((a, s) => a + s.toolErrors, 0),
-  turns_mean: sessions.reduce((a, s) => a + (s.turns || 0), 0) / n,
+  turns_mean: mean(sessions.map((s) => s.turns || 0)),
+  turns_median: median(sessions.map((s) => s.turns || 0)),
   definition_tokens: defTokens,
-  code_tokens_mean: sessions.reduce((a, s) => a + s.code_tokens, 0) / n,
-  result_tokens_mean: sessions.reduce((a, s) => a + s.result_tokens, 0) / n,
-  combined_tokens_mean: sessions.reduce((a, s) => a + s.combined_tokens, 0) / n,
-  weighted_tokens_mean: sessions.reduce((a, s) => a + s.weighted_tokens, 0) / n,
+  code_tokens_mean: mean(sessions.map((s) => s.code_tokens)),
+  result_tokens_mean: mean(sessions.map((s) => s.result_tokens)),
+  result_tokens_median: median(sessions.map((s) => s.result_tokens)),
+  combined_tokens_mean: mean(sessions.map((s) => s.combined_tokens)),
+  weighted_tokens_mean: mean(sessions.map((s) => s.weighted_tokens)),
+  weighted_tokens_median: median(sessions.map((s) => s.weighted_tokens)),
   details: sessions,
 };
 
