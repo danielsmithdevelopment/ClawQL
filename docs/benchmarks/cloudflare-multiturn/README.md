@@ -86,6 +86,21 @@ Artifact: [`smoke-summary-n2-r1.json`](./smoke-summary-n2-r1.json) · 100% task 
 
 Compact plan (tool omitted when `operationId` set; short ids; empty args dropped): program code **872 → 811**. Program remains the costliest ClawQL arm on this filter workflow — expected; fan-out/join benches are where it should win. Hold the public claim until 3×10k + dual-model real-model.
 
+## Cursor-subscription pilot (N=5, not the SPEC 50)
+
+Artifact: [`real-model-cursor-pilot-n5.json`](./real-model-cursor-pilot-n5.json)
+
+| Setting | Value |
+| --- | --- |
+| Model | `composer-2.5-fast` (Cursor subagents) |
+| Arm | `clawql_known_op` |
+| Sessions | 5 |
+| Task success | **100%** |
+| where_malformed | 0 |
+| tool_errors | 1 (CLI JSON escape; recovered) |
+
+**Honesty:** operationIds were provided; agents could read `clawql-shapes.mjs`. This is a cheap pilot, not the SPEC 50-session dual-model gate. A stricter follow-up should hide the shapes file and rely on the `execute` tool description alone.
+
 ## Framing (if full board + real-model clear)
 
 Declarative `where` is the strong position: server-enforced, cheap to express, no interpreter to secure, every call individually governed. Programs handle fan-out, joins, and governed multi-step reads (ADR 0015). Hold the blog headline until both gates land.

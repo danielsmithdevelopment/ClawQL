@@ -1,0 +1,86 @@
+{
+  "measuredAt": "2026-10-15T00:32:02.785Z",
+  "kind": "real_model_cursor_pilot",
+  "model": "composer-2.5-fast",
+  "billing": "cursor_subscription_subagents",
+  "arm": "clawql_known_op",
+  "iters": 5,
+  "honesty": {
+    "operationIdsProvided": true,
+    "shapesFileReadableInWorkspace": true,
+    "note": "Pilot: agents had operationIds and could read clawql-shapes.mjs. Stricter follow-up should hide shapes and rely only on execute tool description for JMESPath."
+  },
+  "sessions": [
+    {
+      "id": 1,
+      "turns": 12,
+      "whereAttempts": 12,
+      "whereMalformed": 0,
+      "toolErrors": 1
+    },
+    {
+      "id": 2,
+      "turns": 11,
+      "whereAttempts": 11,
+      "whereMalformed": 0,
+      "toolErrors": 0
+    },
+    {
+      "id": 3,
+      "turns": 11,
+      "whereAttempts": 11,
+      "whereMalformed": 0,
+      "toolErrors": 0
+    },
+    {
+      "id": 4,
+      "turns": 11,
+      "whereAttempts": 11,
+      "whereMalformed": 0,
+      "toolErrors": 0
+    },
+    {
+      "id": 5,
+      "turns": 11,
+      "whereAttempts": 11,
+      "whereMalformed": 0,
+      "toolErrors": 0
+    }
+  ],
+  "task_success_rate": 1,
+  "where_malformed_total": 0,
+  "tool_errors_total": 1,
+  "turns_mean": 11.2,
+  "details": [
+    {
+      "id": 1,
+      "ok": true,
+      "exit": 0,
+      "failed": []
+    },
+    {
+      "id": 2,
+      "ok": true,
+      "exit": 0,
+      "failed": []
+    },
+    {
+      "id": 3,
+      "ok": true,
+      "exit": 0,
+      "failed": []
+    },
+    {
+      "id": 4,
+      "ok": true,
+      "exit": 0,
+      "failed": []
+    },
+    {
+      "id": 5,
+      "ok": true,
+      "exit": 0,
+      "failed": []
+    }
+  ]
+}
