@@ -49,27 +49,28 @@ Capped/Bun vs uncapped-board peers (MJ ~88 / AG ~98): about **35–45 MB**, no
 | `memory_ingest` ~305 KB document | ok but anon ~**255–261** → prefer **384** when memory is on |
 | 8-step `execute_program` fan-out | ok |
 
-### Concurrency — not a board doubling claim
+### HTTP concurrency A/B (p99 ≤ 100 ms) — cap costs clients
 
-An early stress pass reported “sustained 128” under Node 256. That run broke only on
-error rate, **not** the gateway-multi SLO (**p99 ≤ 100 ms**, error rate ≤ 0.02).
+Same-session multiplex HTTP
+([`http-concurrency-heap-ab.json`](./http-concurrency-heap-ab.json)):
 
-Re-run with that SLO (HTTP multiplex, one ClawQL process — still **not** equal-arm
-stdio chaos):
-
-| Runtime | Sustained before break | First break |
+| Arm | Sustained | Notes |
 | --- | ---: | --- |
-| Node 256 | **16** | 32 (p99 ~224 ms) |
-| Bun `--smol` | **32** | 64 (p99 ~101 ms) |
+| Node uncapped | **44** | |
+| Node 256 | **31** | ~**30%** fewer than uncapped — heap cap concurrency tax |
+| Bun `--smol` | **72** | Best single-instance HTTP arm; still ~130 MB plateau |
+| MCPJungle HTTP | **26** | Larger body (no `where`) |
+| agentgateway HTTP | **24** | Larger body (no `where`) |
 
-The published gateway-multi single-instance row remains ClawQL **63/64** vs MCPJungle
-**204/205** (stdio equal-arm + refine). Do **not** claim a concurrency win from this
-stress harness. Put equal-arm chaos on the next publish board.
+Cloud Node may want **384** when HTTP client count matters; Bun is preferred for
+Cloud HTTP. Horizontal scale (NATS ~135) remains the capacity path. Early stress
+“128” lacked this SLO — retracted. Stdio equal-arm chaos (63 vs MJ 204) is a
+different topology — do not mix.
 
 ## Heap limits by profile
 
-See [`measured-defaults.md`](./measured-defaults.md): lean Node **256**, memory-enabled
-**384**, docker-desktop all-providers **768**, Bun **`--smol`**.
+See [`measured-defaults.md`](./measured-defaults.md): lean Node **256**, Cloud/HTTP Node
+prefer **384**, memory-enabled **384**, docker-desktop **768**, Bun **`--smol`**.
 
 ## Post lines
 
