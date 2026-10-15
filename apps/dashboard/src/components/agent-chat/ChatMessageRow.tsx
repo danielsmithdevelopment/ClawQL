@@ -89,8 +89,12 @@ export function ChatMessageRow({ message }: { message: ChatMessage }) {
           </div>
         ) : null}
         <IdpAttachmentList attachments={attachments} />
-        {message.steps && message.steps.length > 0 ? (
-          <ToolStepsPanel steps={message.steps} active={message.status === 'running'} />
+        {(message.steps?.length || message.toolCalls?.length) ? (
+          <ToolStepsPanel
+            steps={message.steps ?? []}
+            toolCalls={message.toolCalls}
+            active={message.status === 'running'}
+          />
         ) : null}
       </MessageContent>
     </Message>
