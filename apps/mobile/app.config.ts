@@ -26,6 +26,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       NSPhotoLibraryUsageDescription:
         "ClawQL attaches photos from your library as evidence on approval requests.",
       UIBackgroundModes: ["remote-notification"],
+      /**
+       * Export compliance: the app uses encryption (TLS + AES-GCM for the offline
+       * review cache). That use is limited to protecting the app's own data /
+       * transport and qualifies for the standard exemption — set false so Connect
+       * does not re-ask on every build. Do NOT answer the Connect prompt as
+       * "no encryption"; the exemption answers "uses encryption, exempt."
+       * @see store/export-compliance.md
+       */
+      ITSAppUsesNonExemptEncryption: false,
     },
     privacyManifests: {
       NSPrivacyAccessedAPITypes: [

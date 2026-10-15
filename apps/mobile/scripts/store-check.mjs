@@ -28,6 +28,8 @@ function readJson(rel) {
 const requiredFiles = [
   "store/DAY0-CHECKLIST.md",
   "store/review-notes.md",
+  "store/export-compliance.md",
+  "store/HARDWARE-VERIFY.md",
   "store/privacy/apple-privacy-labels.md",
   "store/privacy/play-data-safety.md",
   "store/privacy/privacy-policy.md",
@@ -35,6 +37,7 @@ const requiredFiles = [
   "well-known/assetlinks.json",
   "eas.json",
   "app.config.ts",
+  "modules/clawql-secure-clipboard/ios/PrivacyInfo.xcprivacy",
   "maestro/flows/mob-01-sign-in-fixture.yaml",
   "maestro/flows/mob-06-sign-out.yaml",
 ];
@@ -69,6 +72,31 @@ if (/REPLACE_WITH_|00:11:22:33|CHANGEME/i.test(assetlinks)) {
 const pkg = readJson("package.json");
 if (pkg.version !== "0.1.0") ok(`package version ${pkg.version}`);
 else ok("package version 0.1.0 (first store track)");
+
+const appConfigSrc = readFileSync(join(root, "app.config.ts"), "utf8");
+if (/ITSAppUsesNonExemptEncryption:\s*false/.test(appConfigSrc)) {
+  ok("ITSAppUsesNonExemptEncryption=false (exempt encryption declared)");
+} else {
+  bad("app.config.ts missing ITSAppUsesNonExemptEncryption: false");
+}
+
+const modulePrivacy = readFileSync(
+  join(root, "modules/clawql-secure-clipboard/ios/PrivacyInfo.xcprivacy"),
+  "utf8"
+);
+if (
+  modulePrivacy.includes("NSPrivacyAccessedAPITypes") &&
+  modulePrivacy.includes("<array/>")
+) {
+  ok("clawql-secure-clipboard PrivacyInfo declares no Required Reason APIs");
+} else if (
+  modulePrivacy.includes("NSPrivacyAccessedAPITypes") &&
+  !modulePrivacy.includes("NSPrivacyAccessedAPICategoryFileTimestamp")
+) {
+  ok("clawql-secure-clipboard PrivacyInfo has no FileTimestamp category");
+} else {
+  warn("Review clawql-secure-clipboard PrivacyInfo.xcprivacy for Required Reason APIs");
+}
 
 if (failed > 0) {
   console.error(`\nstore-check failed (${failed} error(s))`);

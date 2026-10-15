@@ -39,4 +39,8 @@ v1 ships with a WCAG-oriented gate on the fixture **web export** (`npm run a11y:
 
 ## Privacy
 
-See `store/privacy/apple-privacy-labels.md` and `store/privacy/play-data-safety.md`. Offline review cache is encrypted and stored outside backup (Caches + excludedFromBackup). API key secrets copy via local-only pasteboard with short expiry when the native bridge is present.
+See `store/privacy/apple-privacy-labels.md` and `store/privacy/play-data-safety.md`. Offline review cache is encrypted and stored outside backup (Caches + excludedFromBackup). API key secrets copy via local-only pasteboard with short expiry when the native bridge is present. Photos are collected only when the user attaches evidence.
+
+## Export compliance
+
+The binary declares `ITSAppUsesNonExemptEncryption = false` (exempt encryption only: TLS + AES-GCM protecting the app’s own offline cache). In Connect, treat the app as **using encryption that qualifies for exemption** — never answer “no encryption.” Details: `store/export-compliance.md`.

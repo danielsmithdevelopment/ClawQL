@@ -26,9 +26,17 @@ Complete before first TestFlight / Play internal upload. Items marked **agent** 
 
 | # | Owner | Item | Command |
 | - | ----- | ---- | ------- |
-| 9 | agent/human | Preview / reviewer-demo build | `npm run eas:reviewer` |
+| 9 | agent/human | Preview / reviewer-demo / **development** build (needed for native clipboard module) | `npm run eas:reviewer` or EAS `development` profile |
 | 10 | human | Production iOS → TestFlight | `npm run eas:ios && npm run eas:submit:ios` |
 | 11 | human | Production Android → Play internal | `npm run eas:android-internal && npm run eas:submit:android` |
+
+## Pre-TestFlight hardware + Connect
+
+| # | Owner | Item | Done when |
+| - | ----- | ---- | --------- |
+| 9a | human | Clipboard hardware checks in [`HARDWARE-VERIFY.md`](./HARDWARE-VERIFY.md) | Secret does not Universal-Clipboard to Mac; expires ~60s; Android sensitive preview |
+| 9b | agent | `ITSAppUsesNonExemptEncryption: false` in `app.config.ts` + [`export-compliance.md`](./export-compliance.md) | Connect skips per-build questionnaire; answer path is “uses encryption, exempt” |
+| 9c | agent | `clawql-secure-clipboard` ships `PrivacyInfo.xcprivacy`; App Privacy labels match [`privacy/apple-privacy-labels.md`](./privacy/apple-privacy-labels.md) | Manifest has no undeclared Required Reason APIs; Photos listed for evidence attach |
 
 ## Reviewer package
 

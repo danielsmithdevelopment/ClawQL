@@ -55,7 +55,9 @@ Keep screens reachable for parity, but mark **Gateway**, **Automations**, and **
 ## Day-0 / review path
 
 1. **Start App Store enrollment now** (longest wait).
-2. TestFlight with the **reviewer demo** account.
-3. Review notes (`apps/mobile/store/review-notes.md`) cover: what ClawQL is, why hardware keys, how demo biometrics approve.
+2. Development / preview build on hardware — run [`HARDWARE-VERIFY.md`](../../../apps/mobile/store/HARDWARE-VERIFY.md) (Universal Clipboard + Android sensitive clip).
+3. Export compliance: `ITSAppUsesNonExemptEncryption=false` + [`export-compliance.md`](../../../apps/mobile/store/export-compliance.md) (“uses encryption, exempt” — never “no”).
+4. Privacy: module `PrivacyInfo.xcprivacy` + App Privacy labels in [`apple-privacy-labels.md`](../../../apps/mobile/store/privacy/apple-privacy-labels.md).
+5. TestFlight with the **reviewer demo** account; submit with [`review-notes.md`](../../../apps/mobile/store/review-notes.md).
 
 Physical NFC, live IAP secrets, and real IdP/Stripe remain human Day-0 items.
