@@ -123,6 +123,8 @@ Primary head-to-head: **`clawql_known_op` vs `executor_v2`**, using:
 | Task success | Fraction of sessions that pass all 12 scripted checks |
 
 `clawql_program` is reported for context; it does not decide the headline claim.
+(Known-op answers “which op / one call”; program answers “several ops in one turn” —
+see [`measured-defaults.md`](./measured-defaults.md).)
 
 #### Claims each outcome allows
 

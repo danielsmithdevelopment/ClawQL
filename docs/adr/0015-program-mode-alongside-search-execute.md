@@ -34,6 +34,20 @@ Adopt **confined programs as an additional tool**, alongside unchanged `search` 
 
 > **A program may never see or do anything the same agent could not do with individual `search` / `execute` calls.** Programs only change how many round trips it takes. The rule is testable.
 
+### Known-op vs program (two axes — do not conflate)
+
+| Question | Clear | Unclear |
+| --- | --- | --- |
+| Which operation? | Known-op → `execute` by id | Discovery (`search` / future routed Decide) — **not** a program |
+| How many ops per turn? | One → `execute` (+ `where`) | Several → `execute_program` |
+
+Known-op is **not** “program mode when the action is clear.” A one-step program
+*could* become that if its format costs ~the same as `execute` args; until the
+Cloudflare board and real-model gate show parity on filter tasks (and a fan-out
+board shows multi-step wins), **`execute` stays the measured default** and
+programs stay opt-in (`CLAWQL_ENABLE_PROGRAMS` default off). See
+[`measured-defaults.md`](../benchmarks/cloudflare-multiturn/measured-defaults.md).
+
 ### Keep each advantage
 
 | Advantage                             | How programs keep it                                                                                                                                                                                                                                                                                                  |
