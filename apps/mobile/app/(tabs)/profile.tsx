@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import * as WebBrowser from "expo-web-browser";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, Linking, Platform } from "react-native";
+import { Alert } from "react-native";
 
 import type {
   ConnectedApp,
@@ -21,7 +21,6 @@ import {
   listDeviceSessionsEffect,
   listPushDevicesEffect,
   listSecurityKeysEffect,
-  openBillingPortalEffect,
   revokeConnectedAppEffect,
   setNotificationPrefsEffect,
 } from "@/src/services/api";
@@ -43,6 +42,7 @@ import {
   restoreStorePurchasesEffect,
 } from "@/src/services/store-iap";
 import { registerForPushEffect } from "@/src/services/push";
+import { loadReleasePolicyEffect } from "@/src/services/release-policy";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, space } from "@/src/theme";
 import {
@@ -78,14 +78,13 @@ export default function ProfileScreen() {
   const [hydrated, setHydrated] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [portalBusy, setPortalBusy] = useState(false);
-  const [portalNote, setPortalNote] = useState<string | null>(null);
+  const [showCommerce, setShowCommerce] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!session) return;
     try {
-      const [k, a, p, s, d, dp, ent, cap] = await Promise.all([
+      const [k, a, p, s, d, dp, ent, cap, policy] = await Promise.all([
         Effect.runPromise(listSecurityKeysEffect(session)),
         Effect.runPromise(listConnectedAppsEffect(session)),
         Effect.runPromise(getNotificationPrefsEffect(session)),
@@ -94,6 +93,7 @@ export default function ProfileScreen() {
         Effect.runPromise(loadDevicePrefsEffect()),
         Effect.runPromise(loadEntitlementsEffect()),
         Effect.runPromise(biometricCapabilityEffect()),
+        Effect.runPromise(loadReleasePolicyEffect()),
       ]);
       setKeys(k);
       setApps(a);
@@ -103,6 +103,7 @@ export default function ProfileScreen() {
       setDevicePrefs(dp);
       setEntitlements(ent);
       setBio(cap);
+      setShowCommerce(policy.allowsInAppCommerce);
     } finally {
       setLoading(false);
       setHydrated(true);
@@ -268,6 +269,15 @@ export default function ProfileScreen() {
         title={session.displayName}
         subtitle={`${session.email} · ${session.role}${session.reviewerDemo ? " · reviewer demo" : ""}`}
       />
+
+      {session.reviewerDemo ? (
+        <SurfaceCard testID="profile-reviewer-demo-banner" tint="soft">
+          <Badge label="Reviewer demo" tone="warn" />
+          <Meta color={brand.warn}>
+            Sample data is labeled and for App Review only — not a real organization.
+          </Meta>
+        </SurfaceCard>
+      ) : null}
 
       <SurfaceCard testID="profile-security-keys">
         <IconBubble name="key" tone="seed" size={32} iconSize={16} />
@@ -626,90 +636,62 @@ export default function ProfileScreen() {
           }`}
         </Meta>
         <Meta testID="profile-plan-honesty" color={brand.inkFaint}>
-          Fixture sandbox uses store_iap entitlements. Live App Store / Play sheets
-          land after Day-0 enrollment — web Stripe Checkout stays for browser signup.
+          {showCommerce
+            ? "Demo / fixture sandbox — Subscribe buttons are for Maestro and local demos only."
+            : "Plan is read-only on this phone. Org billing stays on the web console. PhoneApprove does not sell digital subscriptions in-app (App Store Review 3.1)."}
         </Meta>
-        {entitlements.planId === "free" ? (
-          <Column spacing={space.sm}>
-            <PrimaryButton
-              testID="profile-subscribe-pro"
-              label="Subscribe Pro (sandbox)"
+        {showCommerce ? (
+          <>
+            {entitlements.planId === "free" ? (
+              <Column spacing={space.sm}>
+                <PrimaryButton
+                  testID="profile-subscribe-pro"
+                  label="Subscribe Pro (sandbox)"
+                  disabled={busy}
+                  onPress={() => onSubscribeSandbox("pro")}
+                />
+                <SecondaryButton
+                  testID="profile-subscribe-team"
+                  label="Subscribe Team (sandbox)"
+                  disabled={busy}
+                  onPress={() => onSubscribeSandbox("team")}
+                />
+              </Column>
+            ) : (
+              <Badge
+                label={`${entitlements.planLabel} · ${entitlements.billingMode}`}
+                tone="ok"
+              />
+            )}
+            <SecondaryButton
+              testID="profile-restore-purchases"
+              label="Restore purchases"
               disabled={busy}
-              onPress={() => onSubscribeSandbox("pro")}
+              onPress={onRestorePurchases}
             />
             <SecondaryButton
-              testID="profile-subscribe-team"
-              label="Subscribe Team (sandbox)"
+              testID="profile-manage-subscriptions"
+              label="Manage in App Store / Play"
               disabled={busy}
-              onPress={() => onSubscribeSandbox("team")}
+              onPress={() => {
+                void Effect.runPromise(openManageSubscriptionsEffect()).catch((e: unknown) => {
+                  setNote(
+                    e && typeof e === "object" && "reason" in e
+                      ? String((e as { reason: string }).reason)
+                      : e instanceof Error
+                        ? e.message
+                        : String(e)
+                  );
+                });
+              }}
             />
-          </Column>
+          </>
         ) : (
           <Badge
-            label={`${entitlements.planLabel} · ${entitlements.billingMode}`}
-            tone="ok"
+            label={`${entitlements.planLabel} · read-only`}
+            tone="neutral"
           />
         )}
-        <SecondaryButton
-          testID="profile-restore-purchases"
-          label="Restore purchases"
-          disabled={busy}
-          onPress={onRestorePurchases}
-        />
-        <SecondaryButton
-          testID="profile-manage-subscriptions"
-          label="Manage in App Store / Play"
-          disabled={busy}
-          onPress={() => {
-            void Effect.runPromise(openManageSubscriptionsEffect()).catch((e: unknown) => {
-              setNote(
-                e && typeof e === "object" && "reason" in e
-                  ? String((e as { reason: string }).reason)
-                  : e instanceof Error
-                    ? e.message
-                    : String(e)
-              );
-            });
-          }}
-        />
-        <SecondaryButton
-          testID="profile-open-billing-portal"
-          label={portalBusy ? "Opening…" : "Open billing portal (Stripe)"}
-          disabled={portalBusy || busy}
-          onPress={() => {
-            setPortalBusy(true);
-            setPortalNote(null);
-            void Effect.runPromise(openBillingPortalEffect(session))
-              .then(async (out) => {
-                if (out.source === "fixture" || out.url.startsWith("fixture://")) {
-                  setPortalNote(
-                    "Fixture mode — Stripe portal needs CLAWQL_STRIPE_CUSTOMER_ID on a live session."
-                  );
-                  return;
-                }
-                if (Platform.OS === "web") {
-                  globalThis.location?.assign?.(out.url);
-                } else {
-                  await Linking.openURL(out.url);
-                }
-              })
-              .catch((e: unknown) => {
-                const reason =
-                  e && typeof e === "object" && "reason" in e
-                    ? String((e as { reason: string }).reason)
-                    : e instanceof Error
-                      ? e.message
-                      : String(e);
-                setPortalNote(reason);
-              })
-              .finally(() => setPortalBusy(false));
-          }}
-        />
-        {portalNote ? (
-          <Meta testID="profile-billing-portal-note" color={brand.inkMuted}>
-            {portalNote}
-          </Meta>
-        ) : null}
       </SurfaceCard>
 
       <SurfaceCard testID="profile-console-parity" tint="soft">

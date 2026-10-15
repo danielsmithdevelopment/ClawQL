@@ -189,10 +189,15 @@ export function scheduleLocalApprovalNotificationEffect(input: {
         if (permissions.status !== "granted") {
           await Notifications.requestPermissionsAsync();
         }
+        // Lock-screen content is always generic. Callers may pass title/body for
+        // inbox/simulation UI, but the OS notification must not leak contract
+        // titles or amounts before unlock / App Lock.
+        void input.title;
+        void input.body;
         return Notifications.scheduleNotificationAsync({
           content: {
-            title: input.title ?? "Something needs you",
-            body: input.body ?? "Open the request to approve with your security key.",
+            title: "A change needs your review",
+            body: "Unlock PhoneApprove to open the request.",
             data: {
               type: "approval_request",
               requestId: input.requestId,

@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Platform, Share, TextInput } from "react-native";
+import { TextInput } from "react-native";
 
 import type { ApiKeyItem } from "@/src/domain/schemas";
 import {
@@ -9,6 +9,7 @@ import {
   listApiKeysEffect,
   revokeApiKeyEffect,
 } from "@/src/services/api";
+import { copySecretEffect } from "@/src/services/secure-clipboard";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, space } from "@/src/theme";
 import {
@@ -24,19 +25,6 @@ import {
   SectionHeader,
   SurfaceCard,
 } from "@/src/ui/primitives";
-
-async function copyText(text: string): Promise<boolean> {
-  if (Platform.OS === "web") {
-    const nav = globalThis.navigator as Navigator | undefined;
-    if (nav?.clipboard?.writeText) {
-      await nav.clipboard.writeText(text);
-      return true;
-    }
-    return false;
-  }
-  await Share.share({ message: text });
-  return true;
-}
 
 export default function ApiKeysScreen() {
   const { session } = useSession();
@@ -119,10 +107,16 @@ export default function ApiKeysScreen() {
             </Meta>
             <SecondaryButton
               testID="keys-copy-secret"
-              label="Copy secret"
+              label="Copy secret (clears in 60s)"
               onPress={() => {
-                void copyText(secret).then((ok) =>
-                  setNote(ok ? "Secret copied" : "Copy unavailable — select the secret text")
+                void Effect.runPromise(copySecretEffect(secret)).then((out) =>
+                  setNote(
+                    out.copied
+                      ? out.localOnly
+                        ? `Secret copied (this device only) · expires in ${Math.round(out.clearedAfterMs / 1000)}s`
+                        : `Secret copied · pasteboard clears in ${Math.round(out.clearedAfterMs / 1000)}s`
+                      : "Copy unavailable — select the secret text"
+                  )
                 );
               }}
             />

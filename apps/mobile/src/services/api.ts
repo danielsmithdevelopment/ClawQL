@@ -87,8 +87,9 @@ import {
   decodeUnknownEffect,
   type MobileSession,
 } from "../domain/schemas";
-import { loadMobileConfigEffect } from "./config";
+import { loadMobileConfigEffect, type MobileConfig } from "./config";
 import { loadOfflineSnapshotEffect, saveOfflineSnapshotEffect } from "./offline-cache";
+import { allowsDemoData } from "./release-policy";
 
 export class MobileApiError extends Data.TaggedError("MobileApiError")<{
   readonly reason: string;
@@ -140,6 +141,14 @@ function authHeaders(session: MobileSession): Record<string, string> {
 
 function isFixtureSession(session: MobileSession, fixtureMode: boolean): boolean {
   return fixtureMode || session.accessToken.startsWith("fixture-");
+}
+
+/**
+ * Live / production paths must never promote sample catalogs as real org data.
+ * Fixture builds and labeled reviewer-demo sessions may still use demo payloads.
+ */
+function demoFallbackAllowed(session: MobileSession, config: MobileConfig): boolean {
+  return allowsDemoData(session, config);
 }
 
 /** Cryptographically random hex for fixture ids/secrets (avoids CodeQL insecure-randomness). */
@@ -417,11 +426,39 @@ export function getManagedUsageEffect(
           status: (cause as { status?: number })?.status,
         }),
     }).pipe(
-      Effect.catch(() =>
-        Effect.succeed({ usage: FIXTURE_MANAGED_USAGE, source: "fixture" as const })
-      )
+      Effect.catch((): Effect.Effect<{
+        usage: Omit<ManagedUsage, "source">;
+        source: "live" | "fixture";
+      }> => {
+        if (allowsDemoData(session, config)) {
+          return Effect.succeed({ usage: FIXTURE_MANAGED_USAGE, source: "fixture" });
+        }
+        return Effect.succeed({
+          usage: {
+            monthSpent: 0,
+            monthBudget: 0,
+            forecast: 0,
+            forecastNote: "Connect live usage to see spend.",
+            todaySpent: 0,
+            todayNote: "",
+            planRenews: "—",
+            teamRows: [] as ManagedUsage["teamRows"],
+          },
+          source: "live",
+        });
+      })
     );
-    const usage = res.usage ?? FIXTURE_MANAGED_USAGE;
+    const emptyUsage = {
+      monthSpent: 0,
+      monthBudget: 0,
+      forecast: 0,
+      forecastNote: "Connect live usage to see spend.",
+      todaySpent: 0,
+      todayNote: "",
+      planRenews: "—",
+      teamRows: [] as ManagedUsage["teamRows"],
+    };
+    const usage = res.usage ?? (allowsDemoData(session, config) ? FIXTURE_MANAGED_USAGE : emptyUsage);
     return {
       monthSpent: usage.monthSpent,
       monthBudget: usage.monthBudget,
@@ -431,7 +468,7 @@ export function getManagedUsageEffect(
       todayNote: usage.todayNote,
       planRenews: usage.planRenews,
       teamRows: usage.teamRows ?? [],
-      source: res.source ?? "fixture",
+      source: res.source ?? (allowsDemoData(session, config) ? "fixture" : "live"),
     };
   });
 }
@@ -454,10 +491,11 @@ export function listSecurityKeysEffect(
 ): Effect.Effect<readonly SecurityKey[], MobileApiError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
-    // Live key inventory is console-managed; phone shows the fixture-shaped list with honesty tag.
-    void session;
-    void config;
-    return FIXTURE_KEYS;
+    if (demoFallbackAllowed(session, config)) {
+      return FIXTURE_KEYS;
+    }
+    // Live inventory not yet wired — empty state, never sample keys as real.
+    return [];
   });
 }
 
@@ -470,7 +508,10 @@ export function listConnectedAppsEffect(
       const state = yield* Ref.get(stateRef);
       return state.connectedApps;
     }
-    return FIXTURE_CONNECTED_APPS;
+    if (demoFallbackAllowed(session, config)) {
+      return FIXTURE_CONNECTED_APPS;
+    }
+    return [];
   });
 }
 
@@ -610,8 +651,11 @@ export function listPoliciesEffect(
     if (isFixtureSession(session, config.fixtureMode)) {
       return FIXTURE_POLICIES;
     }
-    // Live: policies remain console-authored; phone shows fixture-shaped empty until API lands.
-    return FIXTURE_POLICIES;
+    if (demoFallbackAllowed(session, config)) {
+      return FIXTURE_POLICIES;
+    }
+    // Live: policies remain console-authored; empty until API lands — never silent fixtures.
+    return [];
   });
 }
 
@@ -620,8 +664,10 @@ export function getPolicyDetailEffect(
   id: string
 ): Effect.Effect<ApprovalPolicyDetail | null, MobileApiError> {
   return Effect.gen(function* () {
-    yield* Effect.void;
-    void session;
+    const config = yield* loadMobileConfigEffect();
+    if (!demoFallbackAllowed(session, config)) {
+      return null;
+    }
     if (id === FIXTURE_POLICY_DETAIL.id) return FIXTURE_POLICY_DETAIL;
     const row = FIXTURE_POLICIES.find((p) => p.id === id);
     if (!row) return null;
@@ -668,10 +714,10 @@ export function listAgentsEffect(
 ): Effect.Effect<readonly AgentSummary[], MobileApiError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
-    if (isFixtureSession(session, config.fixtureMode)) {
+    if (demoFallbackAllowed(session, config)) {
       return FIXTURE_AGENTS;
     }
-    return FIXTURE_AGENTS;
+    return [];
   });
 }
 
@@ -680,10 +726,16 @@ export function getMorningDigestEffect(
 ): Effect.Effect<MorningDigest, MobileApiError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
-    if (isFixtureSession(session, config.fixtureMode)) {
+    if (demoFallbackAllowed(session, config)) {
       return FIXTURE_DIGEST;
     }
-    return FIXTURE_DIGEST;
+    return {
+      headline: "Morning digest",
+      whenLabel: "—",
+      summary: "Connect live digest to see overnight agent activity.",
+      items: [] as MorningDigest["items"],
+      awaitingYou: 0,
+    };
   });
 }
 
@@ -720,20 +772,39 @@ export function getTeamBundleEffect(
           status: (cause as { status?: number })?.status,
         }),
     }).pipe(
-      Effect.catch(() =>
-        Effect.succeed({
-          people: [...FIXTURE_TEAMMATES],
-          groups: [...FIXTURE_TEAM_GROUPS],
-          roles: [...FIXTURE_TEAM_ROLES],
-          source: "fixture" as const,
-        })
-      )
+      Effect.catch((): Effect.Effect<{
+        people: Teammate[];
+        groups: TeamGroup[];
+        roles: TeamRole[];
+        source: "live" | "fixture";
+      }> => {
+        if (demoFallbackAllowed(session, config)) {
+          return Effect.succeed({
+            people: [...FIXTURE_TEAMMATES],
+            groups: [...FIXTURE_TEAM_GROUPS],
+            roles: [...FIXTURE_TEAM_ROLES],
+            source: "fixture",
+          });
+        }
+        return Effect.succeed({
+          people: [],
+          groups: [],
+          roles: [],
+          source: "live",
+        });
+      })
     );
+    const emptyTeam = {
+      people: [] as Teammate[],
+      groups: [] as TeamGroup[],
+      roles: [] as TeamRole[],
+    };
+    const useDemo = demoFallbackAllowed(session, config);
     return {
-      people: res.people ?? FIXTURE_TEAMMATES,
-      groups: res.groups ?? FIXTURE_TEAM_GROUPS,
-      roles: res.roles ?? FIXTURE_TEAM_ROLES,
-      source: res.source ?? "fixture",
+      people: res.people ?? (useDemo ? FIXTURE_TEAMMATES : emptyTeam.people),
+      groups: res.groups ?? (useDemo ? FIXTURE_TEAM_GROUPS : emptyTeam.groups),
+      roles: res.roles ?? (useDemo ? FIXTURE_TEAM_ROLES : emptyTeam.roles),
+      source: res.source ?? (useDemo ? ("fixture" as const) : ("live" as const)),
     };
   });
 }
@@ -818,10 +889,10 @@ export function listWorkflowsEffect(
   return Effect.gen(function* () {
     void session;
     const config = yield* loadMobileConfigEffect();
-    if (isFixtureSession(session, config.fixtureMode)) {
+    if (demoFallbackAllowed(session, config)) {
       return FIXTURE_WORKFLOWS.filter((w) => w.stage !== "retired");
     }
-    return FIXTURE_WORKFLOWS.filter((w) => w.stage !== "retired");
+    return [];
   });
 }
 
@@ -831,9 +902,9 @@ export function startWorkflowEffect(input: {
 }): Effect.Effect<WorkflowRun, MobileApiError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
-    const catalog = isFixtureSession(input.session, config.fixtureMode)
+    const catalog = demoFallbackAllowed(input.session, config)
       ? FIXTURE_WORKFLOWS
-      : FIXTURE_WORKFLOWS;
+      : [];
     const program =
       catalog.find((w) => w.id === input.workflowId || w.name === input.workflowId) ?? null;
     if (!program) {
@@ -920,6 +991,9 @@ export function searchMemoryEffect(
         }),
     }).pipe(
       Effect.catch(() => {
+        if (!demoFallbackAllowed(session, config)) {
+          return Effect.succeed({ results: [] as MemoryResult[] });
+        }
         const q = (query ?? "").trim().toLowerCase();
         return Effect.succeed({
           results: FIXTURE_MEMORY_RESULTS.filter((row) => {
@@ -968,6 +1042,9 @@ export function getMemoryByIdEffect(
         }),
     }).pipe(
       Effect.catch(() => {
+        if (!demoFallbackAllowed(session, config)) {
+          return Effect.succeed(null);
+        }
         const result = FIXTURE_MEMORY_RESULTS.find((r) => r.id === id) ?? null;
         return Effect.succeed(result ? { result, fields: [...FIXTURE_MEMORY_FIELDS] } : null);
       })
@@ -1118,8 +1195,14 @@ export function listConnectionsEffect(
           reason: cause instanceof Error ? cause.message : String(cause),
           status: (cause as { status?: number })?.status,
         }),
-    }).pipe(Effect.catch(() => Effect.succeed({ connections: [...FIXTURE_CONNECTIONS] })));
-    return res.connections ?? FIXTURE_CONNECTIONS;
+    }).pipe(
+      Effect.catch(() =>
+        demoFallbackAllowed(session, config)
+          ? Effect.succeed({ connections: [...FIXTURE_CONNECTIONS] })
+          : Effect.succeed({ connections: [] as ConnectionItem[] })
+      )
+    );
+    return res.connections ?? (demoFallbackAllowed(session, config) ? FIXTURE_CONNECTIONS : []);
   });
 }
 
@@ -1144,8 +1227,14 @@ export function listAgentSessionsEffect(
           reason: cause instanceof Error ? cause.message : String(cause),
           status: (cause as { status?: number })?.status,
         }),
-    }).pipe(Effect.catch(() => Effect.succeed({ sessions: [...FIXTURE_AGENT_SESSIONS] })));
-    return res.sessions ?? FIXTURE_AGENT_SESSIONS;
+    }).pipe(
+      Effect.catch(() =>
+        demoFallbackAllowed(session, config)
+          ? Effect.succeed({ sessions: [...FIXTURE_AGENT_SESSIONS] })
+          : Effect.succeed({ sessions: [] as AgentSession[] })
+      )
+    );
+    return res.sessions ?? (demoFallbackAllowed(session, config) ? FIXTURE_AGENT_SESSIONS : []);
   });
 }
 
@@ -1170,8 +1259,14 @@ export function listProposedSkillsEffect(
           reason: cause instanceof Error ? cause.message : String(cause),
           status: (cause as { status?: number })?.status,
         }),
-    }).pipe(Effect.catch(() => Effect.succeed({ proposed: [...FIXTURE_PROPOSED_SKILLS] })));
-    return res.proposed ?? FIXTURE_PROPOSED_SKILLS;
+    }).pipe(
+      Effect.catch(() =>
+        demoFallbackAllowed(session, config)
+          ? Effect.succeed({ proposed: [...FIXTURE_PROPOSED_SKILLS] })
+          : Effect.succeed({ proposed: [] as ProposedSkill[] })
+      )
+    );
+    return res.proposed ?? (demoFallbackAllowed(session, config) ? FIXTURE_PROPOSED_SKILLS : []);
   });
 }
 
@@ -1196,8 +1291,14 @@ export function listActiveSkillsEffect(
           reason: cause instanceof Error ? cause.message : String(cause),
           status: (cause as { status?: number })?.status,
         }),
-    }).pipe(Effect.catch(() => Effect.succeed({ active: [...FIXTURE_ACTIVE_SKILLS] })));
-    return (res.active ?? FIXTURE_ACTIVE_SKILLS).map((row) => ({
+    }).pipe(
+      Effect.catch(() =>
+        demoFallbackAllowed(session, config)
+          ? Effect.succeed({ active: [...FIXTURE_ACTIVE_SKILLS] })
+          : Effect.succeed({ active: [] as ActiveSkill[] })
+      )
+    );
+    return (res.active ?? (demoFallbackAllowed(session, config) ? FIXTURE_ACTIVE_SKILLS : [])).map((row) => ({
       id: row.id,
       name: row.name,
       description: row.description,
@@ -1235,20 +1336,34 @@ export function getGatewayBundleEffect(
           status: (cause as { status?: number })?.status,
         }),
     }).pipe(
-      Effect.catch(() =>
-        Effect.succeed({
-          base: "https://acme.cloud.clawql.com",
-          endpoints: [...FIXTURE_GATEWAY_ENDPOINTS],
-          routes: [...FIXTURE_GATEWAY_ROUTES],
-          source: "fixture" as const,
-        })
-      )
+      Effect.catch((): Effect.Effect<{
+        base: string;
+        endpoints: GatewayEndpoint[];
+        routes: GatewayBundle["routes"] extends readonly (infer R)[] ? R[] : never;
+        source: "live" | "fixture";
+      }> => {
+        if (demoFallbackAllowed(session, config)) {
+          return Effect.succeed({
+            base: "https://acme.cloud.clawql.com",
+            endpoints: [...FIXTURE_GATEWAY_ENDPOINTS],
+            routes: [...FIXTURE_GATEWAY_ROUTES],
+            source: "fixture",
+          });
+        }
+        return Effect.succeed({
+          base: config.apiBase,
+          endpoints: [],
+          routes: [],
+          source: "live",
+        });
+      })
     );
+    const useDemo = demoFallbackAllowed(session, config);
     return {
-      base: res.base ?? "https://acme.cloud.clawql.com",
-      endpoints: res.endpoints ?? FIXTURE_GATEWAY_ENDPOINTS,
-      routes: res.routes ?? FIXTURE_GATEWAY_ROUTES,
-      source: res.source ?? "fixture",
+      base: res.base ?? (useDemo ? "https://acme.cloud.clawql.com" : config.apiBase),
+      endpoints: res.endpoints ?? (useDemo ? FIXTURE_GATEWAY_ENDPOINTS : []),
+      routes: res.routes ?? (useDemo ? FIXTURE_GATEWAY_ROUTES : []),
+      source: res.source ?? (useDemo ? ("fixture" as const) : ("live" as const)),
     };
   });
 }
@@ -1280,8 +1395,14 @@ export function listAutomationsEffect(
           reason: cause instanceof Error ? cause.message : String(cause),
           status: (cause as { status?: number })?.status,
         }),
-    }).pipe(Effect.catch(() => Effect.succeed({ automations: [...FIXTURE_AUTOMATIONS] })));
-    return res.automations ?? FIXTURE_AUTOMATIONS;
+    }).pipe(
+      Effect.catch(() =>
+        demoFallbackAllowed(session, config)
+          ? Effect.succeed({ automations: [...FIXTURE_AUTOMATIONS] })
+          : Effect.succeed({ automations: [] as AutomationSub[] })
+      )
+    );
+    return res.automations ?? (demoFallbackAllowed(session, config) ? FIXTURE_AUTOMATIONS : []);
   });
 }
 
@@ -1306,8 +1427,14 @@ export function listAuditEntriesEffect(
           reason: cause instanceof Error ? cause.message : String(cause),
           status: (cause as { status?: number })?.status,
         }),
-    }).pipe(Effect.catch(() => Effect.succeed({ entries: [...FIXTURE_AUDIT_ENTRIES] })));
-    return res.entries ?? FIXTURE_AUDIT_ENTRIES;
+    }).pipe(
+      Effect.catch(() =>
+        demoFallbackAllowed(session, config)
+          ? Effect.succeed({ entries: [...FIXTURE_AUDIT_ENTRIES] })
+          : Effect.succeed({ entries: [] as AuditEntry[] })
+      )
+    );
+    return res.entries ?? (demoFallbackAllowed(session, config) ? FIXTURE_AUDIT_ENTRIES : []);
   });
 }
 
@@ -1332,7 +1459,23 @@ export function getAuditIncidentEffect(
           reason: cause instanceof Error ? cause.message : String(cause),
           status: (cause as { status?: number })?.status,
         }),
-    }).pipe(Effect.catch(() => Effect.succeed({ incident: { ...FIXTURE_AUDIT_INCIDENT } })));
+    }).pipe(
+      Effect.catch(() =>
+        demoFallbackAllowed(session, config)
+          ? Effect.succeed({ incident: { ...FIXTURE_AUDIT_INCIDENT } })
+          : Effect.succeed({ incident: null as AuditIncident | null })
+      )
+    );
+    if (!res.incident && !demoFallbackAllowed(session, config)) {
+      return {
+        entryId: "—",
+        incidentId: "—",
+        foundAt: "—",
+        summary: "No open incident. Connect live audit to see detail.",
+        explanation: "",
+        paymentNote: "",
+      };
+    }
     return res.incident ?? FIXTURE_AUDIT_INCIDENT;
   });
 }
@@ -1363,17 +1506,52 @@ export function getOrgSettingsBundleEffect(
         }),
     }).pipe(
       Effect.catch(() =>
-        Effect.succeed({
-          ...FIXTURE_ORG_SETTINGS_BUNDLE,
-          org: { ...FIXTURE_ORG_SETTINGS },
-        })
+        demoFallbackAllowed(session, config)
+          ? Effect.succeed({
+              ...FIXTURE_ORG_SETTINGS_BUNDLE,
+              org: { ...FIXTURE_ORG_SETTINGS },
+            })
+          : Effect.succeed({
+              org: {
+                name: session.orgId.replace(/^org_/, "").replace(/_/g, " ") || "Organization",
+                consoleAddress: config.apiBase,
+                dataRegion: "—",
+                timeZone: "—",
+                securityContact: "—",
+              },
+              webhookHosts: [] as OrgSettingsBundle["webhookHosts"],
+              egressDomains: [] as string[],
+              retention: [
+                {
+                  label: "Retention",
+                  help: "Connect live settings to see retention policy.",
+                  value: "—",
+                },
+              ],
+            })
       )
     );
+    const useDemo = demoFallbackAllowed(session, config);
+    const emptyRetention = [
+      {
+        label: "Retention",
+        help: "Connect live settings to see retention policy.",
+        value: "—",
+      },
+    ];
     return {
-      org: res.org ?? FIXTURE_ORG_SETTINGS,
-      webhookHosts: res.webhookHosts ?? FIXTURE_ORG_SETTINGS_BUNDLE.webhookHosts,
-      egressDomains: res.egressDomains ?? FIXTURE_ORG_SETTINGS_BUNDLE.egressDomains,
-      retention: res.retention ?? FIXTURE_ORG_SETTINGS_BUNDLE.retention,
+      org: res.org ?? (useDemo
+        ? FIXTURE_ORG_SETTINGS
+        : {
+            name: session.orgId.replace(/^org_/, "").replace(/_/g, " ") || "Organization",
+            consoleAddress: config.apiBase,
+            dataRegion: "—",
+            timeZone: "—",
+            securityContact: "—",
+          }),
+      webhookHosts: res.webhookHosts ?? (useDemo ? FIXTURE_ORG_SETTINGS_BUNDLE.webhookHosts : []),
+      egressDomains: res.egressDomains ?? (useDemo ? FIXTURE_ORG_SETTINGS_BUNDLE.egressDomains : []),
+      retention: res.retention ?? (useDemo ? FIXTURE_ORG_SETTINGS_BUNDLE.retention : emptyRetention),
     };
   });
 }
@@ -1414,14 +1592,19 @@ export function listMemoryUploadsEffect(
         }),
     }).pipe(
       Effect.catch(() =>
-        Effect.succeed({
-          uploads: [...FIXTURE_MEMORY_UPLOADS],
-          erasedSubjects: [] as string[],
-        })
+        demoFallbackAllowed(session, config)
+          ? Effect.succeed({
+              uploads: [...FIXTURE_MEMORY_UPLOADS],
+              erasedSubjects: [] as string[],
+            })
+          : Effect.succeed({
+              uploads: [] as MemoryUpload[],
+              erasedSubjects: [] as string[],
+            })
       )
     );
     return {
-      uploads: res.uploads ?? FIXTURE_MEMORY_UPLOADS,
+      uploads: res.uploads ?? (demoFallbackAllowed(session, config) ? FIXTURE_MEMORY_UPLOADS : []),
       erasedSubjects: res.erasedSubjects ?? [],
     };
   });

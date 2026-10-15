@@ -24,7 +24,7 @@ Corrected: earlier agent notes that marked Gateway / Automations / Memory / Audi
 | Connections & keys | `/connections` + `/keys`        | Live keys/connections adapters            |
 | Audit              | `/audit`                        | Entries + incident; managed API           |
 | Team               | `/teammates`                    | Invite + roles/groups; managed team API   |
-| Usage & billing    | `/spend` + Profile plan         | Usage depth + billing portal CTA          |
+| Usage & billing    | `/spend` + Profile plan         | Usage depth; plan read-only in v1 store builds |
 | Settings           | `/settings`                     | Org + network + retention; managed API    |
 | Profile            | Tabs Profile                    | Shipped                                   |
 
@@ -50,7 +50,18 @@ Phone-native extras (Voice, NFC, App Lock, push inbox) stay additive.
 - [x] Deeper Usage from `/api/managed/usage` (month, forecast, team budgets)
 - [x] Managed `/api/managed/{gateway,automations,audit,settings}` + mobile adapters
 - [x] Memory pipelines list + subject erase (durable under `CLAWQL_HOME`)
-- [x] Billing portal CTA from Spend + Profile (live Stripe or honesty fallback)
+- [x] Billing portal CTA from Spend + Profile (demo/fixture only; v1 store builds are plan read-only — see app-review-v1-safety)
 - [x] Push device register/list/clear via `/api/managed/devices/push`
 - [x] Review evidence attachments via `/api/managed/evidence`
 - [x] Team live roster from org spend members (fixture fallback)
+
+## App Review / v1 safety (2026-10-15)
+
+See [`app-review-v1-safety.md`](./app-review-v1-safety.md). For the **first store binary**:
+
+- Plan is **read-only** in production (no IAP subscribe / Stripe portal CTAs).
+- Fixtures only in fixture builds or labeled reviewer-demo sessions.
+- Offline cache encrypted + cleared on sign-out; approve requires live digest check.
+- Lock-screen notifications stay generic by default.
+- API key copy auto-clears pasteboard after 60s.
+- Gateway / Automations / Settings are **read-only** in v1.

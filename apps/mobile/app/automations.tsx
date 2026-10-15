@@ -44,6 +44,12 @@ export default function AutomationsScreen() {
         title="Automations"
         subtitle="Subscriptions, webhooks, and streams — same catalog as the cloud console."
       />
+      <SurfaceCard testID="automations-readonly-banner" tint="soft">
+        <Badge label="Read-only in v1" tone="neutral" />
+        <Meta color={brand.inkFaint}>
+          Browse subscriptions here. Create/edit stays on the web console for v1.
+        </Meta>
+      </SurfaceCard>
       <SurfaceCard testID="automations-list">
         <Column spacing={space.sm}>
           {rows.map((row) => (

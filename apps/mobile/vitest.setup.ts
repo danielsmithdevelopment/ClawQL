@@ -18,6 +18,7 @@ vi.mock("expo-constants", () => ({
 vi.mock("expo-secure-store", () => {
   const store = new Map<string, string>();
   return {
+    WHEN_UNLOCKED_THIS_DEVICE_ONLY: "WHEN_UNLOCKED_THIS_DEVICE_ONLY",
     setItemAsync: async (k: string, v: string) => {
       store.set(k, v);
     },
@@ -67,7 +68,21 @@ vi.mock("@react-native-async-storage/async-storage", () => {
       removeItem: async (k: string) => {
         store.delete(k);
       },
+      multiRemove: async (keys: string[]) => {
+        for (const k of keys) store.delete(k);
+      },
     },
+  };
+});
+
+vi.mock("expo-clipboard", () => {
+  let value = "";
+  return {
+    setStringAsync: async (text: string) => {
+      value = text;
+      return true;
+    },
+    getStringAsync: async () => value,
   };
 });
 
