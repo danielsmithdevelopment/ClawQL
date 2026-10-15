@@ -100,13 +100,13 @@ Then re-measure blind. If malformed filters drop toward zero, known-op’s lead 
 
 Model: `composer-2.5-fast` subagents · arm: `clawql_known_op` · billed via Cursor subscription.
 
-| Pilot | Artifact | Success | where_malformed | tool_errors | turns mean | code tok mean | result tok mean | weighted mean | Honesty |
+| Pilot | Artifact | Success | where_malformed | tool_errors | turns mean (med) | code tok mean | result tok mean (med) | weighted mean (med) | Honesty |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | Shapes visible (pre-fix) | [`real-model-cursor-pilot-n5.json`](./real-model-cursor-pilot-n5.json) | 5/5 | 0 | 1 | 11.2 | n/a | n/a | n/a | harness shapes readable — **not production** |
 | Blind (pre-fix) | [`real-model-cursor-blind-pilot-n5.json`](./real-model-cursor-blind-pilot-n5.json) | 5/5 | 2 | 3 | 13.4 | n/a | n/a | n/a | shapes hidden; schema had no examples |
-| Blind (post-fix) | [`real-model-cursor-blind-pilot-v2-n5.json`](./real-model-cursor-blind-pilot-v2-n5.json) | *pending* | | | | | | | schema examples + fix-named errors; call JSONL tokens |
+| Blind (post-fix) | [`real-model-cursor-blind-pilot-v2-n5.json`](./real-model-cursor-blind-pilot-v2-n5.json) | **5/5** | 2 | **0** | 15.8 (**13**) | 206 | 13287 (**520**) | 14534 (**1643**) | schema examples + fix-named errors; JSONL tokens |
 
-Pre-fix blind: agents invented JMESPath from a one-line schema; sessions with retries burned ~2 extra turns. Post-fix retest in flight. Still not the SPEC dual-model × 50 gate.
+Post-fix: tool errors cleared (3→0); malformed still 2 (sessions 3 & 5 fixed via `example`). Median weighted **1643** ≈ scripted known-op **1743**. Mean is skewed by session 2, which omitted `where` on DNS list (~60k result tokens) — examples help syntax, they do not force filtering. Still not the SPEC dual-model × 50 gate.
 
 ## Framing (if full board + real-model clear)
 
