@@ -233,8 +233,14 @@ async function startClawql(
     MCP_HOST: "127.0.0.1",
     CLOUDFLARE_API_TOKEN: "bench-fake-token",
     CLAWQL_CATALOG_SQLITE: process.env.CLAWQL_CATALOG_SQLITE ?? "1",
-    // DNS list is large; projection keeps success under budget. Raise ceiling as a safety net.
+    // DNS list is large; projection keeps success under budget. Raise hard ceiling as a safety net.
     CLAWQL_EXECUTE_RESULT_MAX_CHARS: process.env.CLAWQL_EXECUTE_RESULT_MAX_CHARS || "2000000",
+    // Soft observation budget stays at product default (~8k chars) unless overridden.
+    // Scripted shapes always pass where, so publish rows stay observation-sized; the
+    // default is recorded so readers know ClawQL token numbers include this behavior.
+    ...(process.env.CLAWQL_EXECUTE_OBSERVATION_BUDGET_CHARS != null
+      ? { CLAWQL_EXECUTE_OBSERVATION_BUDGET_CHARS: process.env.CLAWQL_EXECUTE_OBSERVATION_BUDGET_CHARS }
+      : {}),
     // Labeled setting — default arm leaves compact off; clawql_compact_search turns it on.
     CLAWQL_SEARCH_COMPACT: searchCompact ? "1" : "0",
     // ADR 0015 v0 plan runner — only for clawql_program arm.
@@ -1265,6 +1271,13 @@ async function main() {
       tokenizer: "js-tiktoken cl100k_base",
       arms: ARMS,
       executor: executorMeta,
+      product_defaults: {
+        clawql_observation_budget_chars:
+          process.env.CLAWQL_EXECUTE_OBSERVATION_BUDGET_CHARS ?? "8000 (package default)",
+        clawql_observation_budget_note:
+          "Default on for ClawQL arms. Lists over budget without where/fields return truncated:true with totalCount; single objects size-truncate (shape:object). Scripted board shapes always pass where.",
+        real_model_excludes_hosted_cloudflare_codemode: true,
+      },
       range_across_reps: {},
       latest: repBoards.at(-1)?.board,
     };
