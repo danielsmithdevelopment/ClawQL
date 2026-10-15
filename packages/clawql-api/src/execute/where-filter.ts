@@ -23,13 +23,22 @@ export const WHERE_MAX_FUNCTION_CALLS = 8;
 
 export type WhereFilterIssue = "empty" | "too_long" | "too_complex" | "invalid_expression";
 
+/** Canonical short examples returned on every fail-closed `where` error. */
+export const WHERE_FIX_EXAMPLES = {
+  filter: "result[?type==`A`]",
+  count: "length(result[?state=='ACTIVE'])",
+  extract: "result[0].id",
+} as const;
+
 /** Tagged fail-closed error for invalid or over-budget `where` expressions. */
 export class WhereFilterError extends Error {
   readonly _tag = "WhereFilterError";
   constructor(
     message: string,
     readonly issue: WhereFilterIssue,
-    readonly fixHint: string
+    readonly fixHint: string,
+    /** One corrected JMESPath the model can paste/adapt. */
+    readonly example: string = WHERE_FIX_EXAMPLES.filter
   ) {
     super(message);
     this.name = "WhereFilterError";
@@ -88,7 +97,8 @@ export const validateWhereCapsEffect = (where: string): Effect.Effect<string, Wh
         new WhereFilterError(
           "where expression is empty",
           "empty",
-          "Provide a non-empty JMESPath expression, e.g. [?state=='open'], or omit where."
+          `Provide a non-empty JMESPath, or omit where. Example: ${WHERE_FIX_EXAMPLES.filter}`,
+          WHERE_FIX_EXAMPLES.filter
         )
       );
     }
@@ -97,7 +107,8 @@ export const validateWhereCapsEffect = (where: string): Effect.Effect<string, Wh
         new WhereFilterError(
           `where expression exceeds max length ${WHERE_MAX_LENGTH} (got ${trimmed.length})`,
           "too_long",
-          `Shorten the JMESPath to at most ${WHERE_MAX_LENGTH} characters.`
+          `Shorten to ≤${WHERE_MAX_LENGTH} chars. Prefer a tight filter like ${WHERE_FIX_EXAMPLES.filter} over returning whole arrays.`,
+          WHERE_FIX_EXAMPLES.filter
         )
       );
     }
@@ -107,7 +118,8 @@ export const validateWhereCapsEffect = (where: string): Effect.Effect<string, Wh
         new WhereFilterError(
           `where expression is too complex: ${pipes} pipe operators (max ${WHERE_MAX_PIPES})`,
           "too_complex",
-          `Reduce | pipes to at most ${WHERE_MAX_PIPES}, or split filtering across calls.`
+          `Reduce | pipes to ≤${WHERE_MAX_PIPES}, or split across calls. Example without pipes: ${WHERE_FIX_EXAMPLES.count}`,
+          WHERE_FIX_EXAMPLES.count
         )
       );
     }
@@ -117,7 +129,8 @@ export const validateWhereCapsEffect = (where: string): Effect.Effect<string, Wh
         new WhereFilterError(
           `where expression is too complex: nest depth ${nest} (max ${WHERE_MAX_NEST_DEPTH})`,
           "too_complex",
-          `Flatten the JMESPath so [] / () nesting is at most ${WHERE_MAX_NEST_DEPTH}.`
+          `Flatten [] / () nesting to ≤${WHERE_MAX_NEST_DEPTH}. Example: ${WHERE_FIX_EXAMPLES.extract}`,
+          WHERE_FIX_EXAMPLES.extract
         )
       );
     }
@@ -127,7 +140,8 @@ export const validateWhereCapsEffect = (where: string): Effect.Effect<string, Wh
         new WhereFilterError(
           `where expression is too complex: ${fns} function calls (max ${WHERE_MAX_FUNCTION_CALLS})`,
           "too_complex",
-          `Use at most ${WHERE_MAX_FUNCTION_CALLS} JMESPath functions (e.g. contains, length).`
+          `Use ≤${WHERE_MAX_FUNCTION_CALLS} functions (length, contains, …). Example: ${WHERE_FIX_EXAMPLES.count}`,
+          WHERE_FIX_EXAMPLES.count
         )
       );
     }
@@ -149,14 +163,35 @@ export const applyWhereEffect = (
       try: () => jmespath.search(data, expression) as unknown,
       catch: (cause) => {
         const detail = cause instanceof Error ? cause.message : String(cause);
+        const shown = expression.length > 80 ? `${expression.slice(0, 77)}…` : expression;
+        const example = suggestWhereExample(expression);
         return new WhereFilterError(
-          `Invalid where JMESPath: ${detail}`,
+          `Invalid where JMESPath (${detail}). Got: ${shown}`,
           "invalid_expression",
-          "Fix the JMESPath syntax. Examples: [?state=='open'], items[?label=='bug'], user.login"
+          `Fix the syntax, then retry. Corrected example: ${example}. ` +
+            `Also valid: ${WHERE_FIX_EXAMPLES.count}; ${WHERE_FIX_EXAMPLES.extract}.`,
+          example
         );
       },
     });
   });
+
+/** Pick a paste-ready example based on what the model was likely trying to do. */
+export function suggestWhereExample(expression: string): string {
+  const e = expression.toLowerCase();
+  if (e.includes("length") || e.includes("count") || e.includes("total")) {
+    return WHERE_FIX_EXAMPLES.count;
+  }
+  if (
+    e.includes("[0]") ||
+    e.endsWith(".id") ||
+    e.includes(".name") ||
+    (!e.includes("[?") && e.includes("."))
+  ) {
+    return WHERE_FIX_EXAMPLES.extract;
+  }
+  return WHERE_FIX_EXAMPLES.filter;
+}
 
 /**
  * Compose execute shaping: **where** (filter/extract) then **fields** projection.

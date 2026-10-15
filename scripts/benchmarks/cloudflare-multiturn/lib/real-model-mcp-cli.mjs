@@ -2,12 +2,20 @@
 /**
  * One-shot MCP tool call for Cursor-subagent real-model sessions.
  * Env: CF_MT_REAL_MCP_URL
+ * Optional: CF_MT_REAL_CALL_LOG=/path/to/calls.jsonl — append tokenized call records
  *
  *   node real-model-mcp-cli.mjs execute '{"operationId":"…","where":"…"}'
  *   node real-model-mcp-cli.mjs list-tools
  */
+import { appendFileSync } from "node:fs";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { getEncoding } from "js-tiktoken";
+
+const enc = getEncoding("cl100k_base");
+function countTokens(text) {
+  return enc.encode(typeof text === "string" ? text : JSON.stringify(text ?? "")).length;
+}
 
 const url = process.env.CF_MT_REAL_MCP_URL;
 if (!url) {
@@ -54,6 +62,30 @@ try {
       .filter((c) => c?.type === "text")
       .map((c) => c.text)
       .join("\n");
+    const callLog = process.env.CF_MT_REAL_CALL_LOG?.trim();
+    if (callLog) {
+      let parsed = null;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        /* raw */
+      }
+      const where = typeof args.where === "string" ? args.where : "";
+      const fields = Array.isArray(args.fields) ? args.fields : undefined;
+      const codeText = [where, fields ? JSON.stringify(fields) : ""].filter(Boolean).join("\n");
+      const record = {
+        t: new Date().toISOString(),
+        tool: cmd,
+        operationId: args.operationId || null,
+        where,
+        where_malformed: parsed?.status === "where_invalid",
+        isError: Boolean(res.isError),
+        code_tokens: countTokens(codeText),
+        result_tokens: countTokens(text),
+        result_chars: text.length,
+      };
+      appendFileSync(callLog, `${JSON.stringify(record)}\n`);
+    }
     console.log(text);
     if (res.isError) process.exit(1);
   } else {

@@ -73,6 +73,7 @@ function shapedSuccessContent(
             error: err.message,
             issue: err.issue,
             fix: err.fixHint,
+            example: err.example,
           })
         );
       }

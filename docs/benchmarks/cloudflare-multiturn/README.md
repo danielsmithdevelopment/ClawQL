@@ -12,9 +12,10 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | Observation-sized `where` (server-side JMESPath) | Done — harness builds args only; see scrutiny notes |
 | `where` / plan args counted as code tokens | Done — same bucket as code-mode scripts |
 | `clawql_program` (ADR 0015 v0 plan runner) | Done |
-| **Publish board: 3×10k** | **Pending** (re-run with code-arg accounting) |
-| **Real-model 50 sessions / arm** | **Harness ready; blocked on `OPENAI_API_KEY` + `CF_MT_MODEL`** |
-| Blog / public headline | **Hold** until publish board + real-model land |
+| Product: `where` examples in execute schema + fix-named `where_invalid` | Done (+37 where-desc tokens; full execute tool def **218**) |
+| **Publish board: 3×10k** | **Pending** (re-run with code-arg accounting; rep 1 matches smoke) |
+| **Real-model 50 sessions / arm × 2 model families** | **Harness ready; blocked on secrets; Composer pilots ≠ SPEC gate** |
+| Blog / public headline | **Hold** until publish board + dual-model real-model land |
 
 N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the board. Do **not** ship the reversed-headline blog until both gates pass.
 
@@ -34,13 +35,13 @@ N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the boa
 
 `weighted_mean = definition + discovery + result + 5×code` is on every arm row.
 
-### 3. Real-model gate
+### 3. Real-model gate (SPEC)
 
 Set secrets **in the environment** (never paste keys into chat):
 
 - `OPENAI_API_KEY` (required)
 - `OPENAI_BASE_URL` (optional)
-- `CF_MT_MODEL_FRONTIER` and `CF_MT_MODEL_SMALL` (run both)
+- `CF_MT_MODEL_FRONTIER` and `CF_MT_MODEL_SMALL` (run both — **different families**; include a smaller model)
 
 ```bash
 CF_MT_REAL_ITERS=50 \
@@ -48,7 +49,7 @@ CF_MT_REAL_ITERS=50 \
   npm run benchmark:cloudflare-multiturn:real-model
 ```
 
-Fixed settings: temperature 0, shared system prompt, each arm’s tool descriptions from `listTools`. Reports malformed `where`, retries, turns, failure counts — not just averages.
+Fixed settings: temperature 0, shared system prompt, each arm’s tool descriptions from `listTools`. Reports malformed `where`, retries, turns, **tokens**, failure counts — not just averages. Cursor-subscription Composer pilots are cheap signal, not this gate.
 
 ## Rebuildable token formula
 
@@ -84,18 +85,28 @@ Artifact: [`smoke-summary-n2-r1.json`](./smoke-summary-n2-r1.json) · 100% task 
 | `clawql_program` | 685 | 0 | 357 | **811** | 1853 | 5097 |
 | `cloudflare_codemode` | 1000 | 0 | 357 | 518 | 1875 | 3947 |
 
-Compact plan (tool omitted when `operationId` set; short ids; empty args dropped): program code **872 → 811**. Program remains the costliest ClawQL arm on this filter workflow — expected; fan-out/join benches are where it should win. Hold the public claim until 3×10k + dual-model real-model.
+On weighted tokens, known-op (**1743**) is about **3.1×** cheaper than Executor (**5328**) and about **2.3×** cheaper than Cloudflare code-mode (**3947**). Compact plan (tool omitted when `operationId` set; short ids; empty args dropped): program code **872 → 811**. Program remains the costliest ClawQL arm on this filter workflow — expected; fan-out/join benches are where it should win. Hold the public claim until 3×10k + dual-model real-model.
+
+## Product fix for real models (ship the “shapes” cue)
+
+Harness-visible shapes are not a production condition. The honest path is to put the same cues in the product:
+
+1. **`execute.where` schema description** now includes three short examples (filter / count / extract). Where-description tokens: **19 → 56** (+37). Full execute tool JSON definition: **218** tokens.
+2. **`where_invalid` errors** return `fix` (what was wrong) plus a paste-ready `example` chosen from the failed expression.
+
+Then re-measure blind. If malformed filters drop toward zero, known-op’s lead holds for real models, not just scripted ones.
 
 ## Cursor-subscription pilots (N=5 each, not the SPEC 50)
 
 Model: `composer-2.5-fast` subagents · arm: `clawql_known_op` · billed via Cursor subscription.
 
-| Pilot | Artifact | Success | where_malformed | tool_errors | turns mean | Honesty |
-| --- | --- | ---: | ---: | ---: | ---: | --- |
-| Shapes visible | [`real-model-cursor-pilot-n5.json`](./real-model-cursor-pilot-n5.json) | 5/5 | 0 | 1 | 11.2 | operationIds + shapes file readable |
-| **Blind** | [`real-model-cursor-blind-pilot-n5.json`](./real-model-cursor-blind-pilot-n5.json) | **5/5** | 2 | 3 | 13.4 | shapes hidden; only execute schema + fixture IDs |
+| Pilot | Artifact | Success | where_malformed | tool_errors | turns mean | code tok mean | result tok mean | weighted mean | Honesty |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| Shapes visible (pre-fix) | [`real-model-cursor-pilot-n5.json`](./real-model-cursor-pilot-n5.json) | 5/5 | 0 | 1 | 11.2 | n/a | n/a | n/a | harness shapes readable — **not production** |
+| Blind (pre-fix) | [`real-model-cursor-blind-pilot-n5.json`](./real-model-cursor-blind-pilot-n5.json) | 5/5 | 2 | 3 | 13.4 | n/a | n/a | n/a | shapes hidden; schema had no examples |
+| Blind (post-fix) | [`real-model-cursor-blind-pilot-v2-n5.json`](./real-model-cursor-blind-pilot-v2-n5.json) | *pending* | | | | | | | schema examples + fix-named errors; call JSONL tokens |
 
-Blind run: agents invented JMESPath from `execute.where` schema (“Optional JMESPath filter/extract…”). Sessions 2 and 5 needed retries (shell escaping / wrong first filters) then recovered. Still not the SPEC dual-model × 50 gate.
+Pre-fix blind: agents invented JMESPath from a one-line schema; sessions with retries burned ~2 extra turns. Post-fix retest in flight. Still not the SPEC dual-model × 50 gate.
 
 ## Framing (if full board + real-model clear)
 
