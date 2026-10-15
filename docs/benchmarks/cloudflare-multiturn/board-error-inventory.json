@@ -1,0 +1,228 @@
+{
+  "measuredAt": "2026-10-15T22:22:23.977537Z",
+  "board": "cloudflare-multiturn slim listen 3\u00d710k",
+  "completed_reps_error_rates": {
+    "direct": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      }
+    ],
+    "clawql_default": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      }
+    ],
+    "clawql_compact_search": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      }
+    ],
+    "clawql_known_op": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      }
+    ],
+    "clawql_program": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      }
+    ],
+    "executor_v2": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      }
+    ],
+    "mcpjungle": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      }
+    ],
+    "agentgateway": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      }
+    ],
+    "cloudflare_codemode": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "source": "board-rep JSON (fail-fast harness; completed arm \u21d2 zero recorded failures)"
+      }
+    ]
+  },
+  "aborted_attempts": [
+    {
+      "rep": 3,
+      "status": "aborted_hard_fail",
+      "arm": "executor_v2",
+      "sessions_progress_logged_ok": 7000,
+      "error_kind": "http_502",
+      "error": "Error: executor_v2 step 10: ToolCallFailed (HTTP 502): The app's API call failed: GET /accounts/{account_id}/r2/buckets failed before a response arrived. Recovery: Read the reported error and check the corresponding request or configuration. Retryable (unchanged call): no.",
+      "note": "Slim publish board rep3 aborted mid-executor_v2 under the prior fail-fast harness. Session progress logged ok through 7000/10000; the next session threw ToolCallFailed (HTTP 502) on step 10 (r2-list-buckets) and exited the process \u2014 no board-rep3 artifact was written. That is an Executor under-load result, not only a harness glitch. Rep3 was restarted with continue-on-error so further 502s count toward error_rate.",
+      "log_line": 1706
+    }
+  ],
+  "log_error_events": [
+    {
+      "rep": 3,
+      "arm": "executor_v2",
+      "line": 1706,
+      "text": "Error: executor_v2 step 10: ToolCallFailed (HTTP 502): The app's API call failed: GET /accounts/{account_id}/r2/buckets failed before a response arrived. Recovery: Read the reported error and check the corresponding request or configuration. Retryable (unchanged call): no."
+    }
+  ],
+  "interpretation": {
+    "rep1_rep2": "All arms finished with task_success_rate=1.0 under fail-fast (any failure would have aborted the arm). Recorded error_rate=0 for completed arms.",
+    "rep3_aborted": "executor_v2 returned HTTP 502 on r2-list-buckets after \u22657000 successful sessions. Lower bound error count for that incomplete arm: \u22651 hard failure; process exit prevented a full N=10000 rate. Rep3 restarted with continue-on-error + published error_rate fields."
+  }
+}

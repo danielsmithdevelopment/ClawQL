@@ -62,6 +62,13 @@ const FORCE_PUBLISH = ["1", "true", "yes"].includes(
 const IS_PUBLISH_BOARD = ITERS >= 10000 && (REPS >= 3 || FORCE_PUBLISH);
 /** First rep index written to board-rep{N}-… (default 1). Use with CF_MT_REPS=1 to recover rep 3. */
 const REP_START = Math.max(1, Number(process.env.CF_MT_REP_START || 1) || 1);
+/**
+ * When false (default), a failed session is counted and the arm continues so error_rate
+ * lands on the board. Set CF_MT_ABORT_ON_ERROR=1 to restore fail-fast (old behavior).
+ */
+const ABORT_ON_ERROR = ["1", "true", "yes"].includes(
+  (process.env.CF_MT_ABORT_ON_ERROR ?? "").trim().toLowerCase()
+);
 const ARMS = (
   process.env.CF_MT_ARMS ||
   "direct,clawql_default,clawql_compact_search,clawql_known_op,clawql_program,executor_v2,mcpjungle,agentgateway,cloudflare_codemode"
@@ -665,7 +672,19 @@ async function runRestSession(baseUrl, expectations, armId) {
   return summarizeSession(armId, ok, t0, steps);
 }
 
-function summarizeSession(armId, ok, t0, steps) {
+function classifyBoardError(err) {
+  const msg = String(err?.message || err || "");
+  if (/HTTP 502|502/.test(msg)) return "http_502";
+  if (/HTTP 503|503/.test(msg)) return "http_503";
+  if (/HTTP 504|504/.test(msg)) return "http_504";
+  if (/ToolCallFailed/i.test(msg)) return "tool_call_failed";
+  if (/timeout|ETIMEDOUT|ESOCKETTIMEDOUT/i.test(msg)) return "timeout";
+  if (/ECONNREFUSED|ECONNRESET|fetch failed/i.test(msg)) return "connection";
+  if (/where_invalid/i.test(msg)) return "where_invalid";
+  return "other";
+}
+
+function summarizeSession(armId, ok, t0, steps, extra = {}) {
   return {
     arm: armId,
     ok,
@@ -675,7 +694,45 @@ function summarizeSession(armId, ok, t0, steps) {
     result_tokens_sum: steps.reduce((n, s) => n + (s.resultTokens || 0), 0),
     code_tokens_sum: steps.reduce((n, s) => n + (s.codeTokens || 0), 0),
     calls_sum: steps.reduce((n, s) => n + (s.calls || 0), 0),
+    ...extra,
   };
+}
+
+function failedSessionFromError(armId, t0, err, step = null) {
+  const message = String(err?.message || err || "unknown");
+  return summarizeSession(armId, false, t0, [], {
+    error: message.slice(0, 500),
+    error_kind: classifyBoardError(err),
+    error_step: step,
+  });
+}
+
+/** Record a session; on throw, count as failed session instead of aborting the arm. */
+async function runCountedSession(armId, sessions, fn) {
+  const t0 = performance.now();
+  try {
+    sessions.push(await fn());
+  } catch (e) {
+    const stepMatch = String(e?.message || "").match(/step\s+(\d+)/i);
+    const step = stepMatch ? Number(stepMatch[1]) : null;
+    sessions.push(failedSessionFromError(armId, t0, e, step));
+  }
+}
+
+function noteSessionOutcome(arm, i, iters, session, { extraLog = "" } = {}) {
+  const errBit = session.ok ? "" : ` error_kind=${session.error_kind || "task_check"}`;
+  console.log(`[cf-board] ${arm} ${i}/${iters} ok=${session.ok}${errBit}${extraLog}`);
+  if (!session.ok) {
+    const failedSteps = (session.steps || []).filter((s) => s.check && !s.check.ok);
+    if (failedSteps.length) {
+      console.error(JSON.stringify(failedSteps, null, 2));
+    } else if (session.error) {
+      console.error(`[cf-board] ${arm} session ${i} error: ${session.error}`);
+    }
+    if (ABORT_ON_ERROR) {
+      throw new Error(`${arm} task success failed at session ${i}`);
+    }
+  }
 }
 
 async function runClawqlSession(client, expectations, { knownOp = false } = {}) {
@@ -933,22 +990,33 @@ async function runExecutorV2Session(client, scripts, expectations) {
   const steps = [];
   let ok = true;
   const t0 = performance.now();
+  let fatal = null;
   for (let step = 1; step <= 12; step++) {
     const code = scripts[step];
     const codeTokens = countTokens(code);
     const t1 = performance.now();
-    const res = await client.callTool({
-      name: "execute",
-      arguments: { code, timeoutMs: 30_000 },
-    });
+    let res;
+    try {
+      res = await client.callTool({
+        name: "execute",
+        arguments: { code, timeoutMs: 30_000 },
+      });
+    } catch (e) {
+      fatal = new Error(`executor_v2 step ${step}: ${e.message || e}`);
+      break;
+    }
     const ms = performance.now() - t1;
     const text = toolText(res);
-    if (res.isError) throw new Error(`executor_v2 step ${step}: ${text.slice(0, 300)}`);
+    if (res.isError) {
+      fatal = new Error(`executor_v2 step ${step}: ${text.slice(0, 300)}`);
+      break;
+    }
     let observed;
     try {
       observed = unwrapExecutorValue(text);
     } catch (e) {
-      throw new Error(`executor_v2 step ${step}: ${e.message}`);
+      fatal = new Error(`executor_v2 step ${step}: ${e.message}`);
+      break;
     }
     const check = checkStep(step, observed, expectations);
     ok &&= check.ok;
@@ -964,6 +1032,14 @@ async function runExecutorV2Session(client, scripts, expectations) {
       note: "openapi_tools → mock HTTP (host fetch)",
       upstream: "mock",
     });
+  }
+  if (fatal) {
+    return failedSessionFromError(
+      "executor_v2",
+      t0,
+      fatal,
+      Number(String(fatal.message).match(/step\s+(\d+)/i)?.[1]) || null
+    );
   }
   return summarizeSession("executor_v2", ok, t0, steps);
 }
@@ -1025,9 +1101,9 @@ async function runArmSessions({
     definitionTokens = 0; // no MCP Layer-1; rebuildable as 0 + discovery + result + code
     settings = { catalog: "curated_rest", layer1: "none" };
     for (let i = 1; i <= iters; i++) {
-      sessions.push(await runDirectSession(mock.baseUrl, expectations));
-      if (i === 1 || i % Math.max(1, Math.floor(iters / 5)) === 0 || i === iters) {
-        console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
+      await runCountedSession(arm, sessions, () => runDirectSession(mock.baseUrl, expectations));
+      if (i === 1 || i % Math.max(1, Math.floor(iters / 5)) === 0 || i === iters || !sessions.at(-1).ok) {
+        noteSessionOutcome(arm, i, iters, sessions.at(-1));
       }
     }
   } else if (
@@ -1052,8 +1128,8 @@ async function runArmSessions({
         .filter((t) => t.name === "search" || t.name === "execute")
         .reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
       for (let i = 1; i <= iters; i++) {
-        sessions.push(
-          await runClawqlSession(conn.client, expectations, {
+        await runCountedSession(arm, sessions, () =>
+          runClawqlSession(conn.client, expectations, {
             knownOp: arm === "clawql_known_op",
           })
         );
@@ -1068,11 +1144,9 @@ async function runArmSessions({
             has_rest_mcp: inv.has_rest_mcp,
             processes: inv.processes,
           });
-          console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
         }
-        if (!sessions.at(-1).ok) {
-          console.error(JSON.stringify(sessions.at(-1).steps.filter((s) => !s.check.ok), null, 2));
-          throw new Error(`${arm} task success failed at session ${i}`);
+        if (shouldSampleMemory(i, iters) || !sessions.at(-1).ok) {
+          noteSessionOutcome(arm, i, iters, sessions.at(-1));
         }
       }
     } finally {
@@ -1094,7 +1168,9 @@ async function runArmSessions({
         .filter((t) => t.name === "execute_program" || t.name === "search" || t.name === "execute")
         .reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
       for (let i = 1; i <= iters; i++) {
-        sessions.push(await runClawqlProgramSession(conn.client, expectations));
+        await runCountedSession(arm, sessions, () =>
+          runClawqlProgramSession(conn.client, expectations)
+        );
         if (shouldSampleMemory(i, iters)) {
           const inv = treeProcessInventory(pid);
           memSamples.push({
@@ -1106,11 +1182,9 @@ async function runArmSessions({
             has_rest_mcp: inv.has_rest_mcp,
             processes: inv.processes,
           });
-          console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
         }
-        if (!sessions.at(-1).ok) {
-          console.error(JSON.stringify(sessions.at(-1).steps.filter((s) => !s.check.ok), null, 2));
-          throw new Error(`${arm} task success failed at session ${i}`);
+        if (shouldSampleMemory(i, iters) || !sessions.at(-1).ok) {
+          noteSessionOutcome(arm, i, iters, sessions.at(-1));
         }
       }
     } finally {
@@ -1124,7 +1198,9 @@ async function runArmSessions({
       const listed = await conn.client.listTools();
       definitionTokens = listed.tools.reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
       for (let i = 1; i <= iters; i++) {
-        sessions.push(await runAggregatorSession(conn.client, listed.tools, expectations, arm));
+        await runCountedSession(arm, sessions, () =>
+          runAggregatorSession(conn.client, listed.tools, expectations, arm)
+        );
         if (shouldSampleMemory(i, iters)) {
           const inv = treeProcessInventory(pid);
           // Aggregators without a live REST→MCP child under-count vs ClawQL (one process does both).
@@ -1142,13 +1218,14 @@ async function runArmSessions({
             has_rest_mcp: inv.has_rest_mcp,
             processes: inv.processes,
           });
-          console.log(
-            `[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok} tree_procs=${inv.process_count} rest_mcp=${inv.has_rest_mcp} anon=${inv.anonymous_mb}`
-          );
         }
-        if (!sessions.at(-1).ok) {
-          console.error(JSON.stringify(sessions.at(-1).steps.filter((s) => !s.check.ok), null, 2));
-          throw new Error(`${arm} task success failed at session ${i}`);
+        if (shouldSampleMemory(i, iters) || !sessions.at(-1).ok) {
+          const inv = memSamples.at(-1);
+          const extra =
+            inv && shouldSampleMemory(i, iters)
+              ? ` tree_procs=${inv.process_count} rest_mcp=${inv.has_rest_mcp} anon=${inv.anonymous_mb}`
+              : "";
+          noteSessionOutcome(arm, i, iters, sessions.at(-1), { extraLog: extra });
         }
       }
     } finally {
@@ -1184,13 +1261,16 @@ async function runArmSessions({
       const executeTool = listed.tools.find((t) => t.name === "execute");
       definitionTokens = executeTool ? countTokens(JSON.stringify(executeTool)) : 0;
       for (let i = 1; i <= iters; i++) {
-        sessions.push(await runExecutorV2Session(client, execScripts, expectations));
-        if (i % Math.max(1, Math.floor(iters / 10)) === 0 || i === 1 || i === iters) {
-          console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
-        }
-        if (!sessions.at(-1).ok) {
-          console.error(JSON.stringify(sessions.at(-1).steps.filter((s) => !s.check.ok), null, 2));
-          throw new Error(`${arm} task success failed at session ${i}`);
+        await runCountedSession(arm, sessions, () =>
+          runExecutorV2Session(client, execScripts, expectations)
+        );
+        if (
+          i % Math.max(1, Math.floor(iters / 10)) === 0 ||
+          i === 1 ||
+          i === iters ||
+          !sessions.at(-1).ok
+        ) {
+          noteSessionOutcome(arm, i, iters, sessions.at(-1));
         }
       }
     } finally {
@@ -1220,17 +1300,39 @@ async function runArmSessions({
   const memAnon = plateau.map((m) => m.anonymous_mb).filter((x) => x != null).sort((a, b) => a - b);
   const memPss = plateau.map((m) => m.pss_mb).filter((x) => x != null).sort((a, b) => a - b);
   const def = definitionTokens ?? 0;
-  const discoveryMean = discoveryTok.reduce((a, b) => a + b, 0) / discoveryTok.length;
-  const resultMean = resultTok.reduce((a, b) => a + b, 0) / resultTok.length;
-  const codeMean = codeTok.reduce((a, b) => a + b, 0) / codeTok.length;
+  const nSess = Math.max(1, sessions.length);
+  const discoveryMean = discoveryTok.reduce((a, b) => a + b, 0) / nSess;
+  const resultMean = resultTok.reduce((a, b) => a + b, 0) / nSess;
+  const codeMean = codeTok.reduce((a, b) => a + b, 0) / nSess;
   const combinedMean = def + discoveryMean + resultMean + codeMean;
   const weightedMean = def + discoveryMean + resultMean + CODE_PRICE_WEIGHT * codeMean;
   const combinedAtN = def + discoveryTok.reduce((a, b) => a + b, 0) + resultTok.reduce((a, b) => a + b, 0) + codeTok.reduce((a, b) => a + b, 0);
+  const sessionsOk = sessions.filter((s) => s.ok).length;
+  const sessionsFailed = sessions.length - sessionsOk;
+  const errorsByKind = {};
+  const errorSamples = [];
+  for (const s of sessions) {
+    if (s.ok) continue;
+    const kind = s.error_kind || (s.steps?.some((st) => st.check && !st.check.ok) ? "task_check" : "other");
+    errorsByKind[kind] = (errorsByKind[kind] || 0) + 1;
+    if (errorSamples.length < 5) {
+      errorSamples.push({
+        error_kind: kind,
+        error: s.error || null,
+        error_step: s.error_step ?? null,
+      });
+    }
+  }
 
   return {
     id: arm,
     iters,
-    task_success_rate: sessions.filter((s) => s.ok).length / sessions.length,
+    task_success_rate: sessionsOk / nSess,
+    sessions_ok: sessionsOk,
+    sessions_failed: sessionsFailed,
+    error_rate: sessionsFailed / nSess,
+    errors_by_kind: errorsByKind,
+    error_samples: errorSamples,
     settings,
     upstream,
     definition_tokens: def,
@@ -1414,6 +1516,12 @@ async function main() {
             fixture: { source: recording.source, label: recording.label, path: FIXTURE },
             tokenizer: "js-tiktoken cl100k_base",
             executor: executorMeta,
+            error_policy: {
+              abort_on_error: ABORT_ON_ERROR,
+              note: ABORT_ON_ERROR
+                ? "Fail-fast: first failed session aborts the arm/board."
+                : "Continue-on-error: failed sessions counted in error_rate / errors_by_kind.",
+            },
             board,
           },
           null,
@@ -1447,6 +1555,10 @@ async function main() {
       const rows = repBoards.map((r) => r.board[arm]).filter(Boolean);
       summary.range_across_reps[arm] = {
         task_success_rate: rows.map((r) => r.task_success_rate),
+        sessions_ok: rows.map((r) => r.sessions_ok ?? null),
+        sessions_failed: rows.map((r) => r.sessions_failed ?? null),
+        error_rate: rows.map((r) => r.error_rate ?? null),
+        errors_by_kind: rows.map((r) => r.errors_by_kind ?? {}),
         definition_tokens: rows.map((r) => r.definition_tokens),
         discovery_tokens_mean: rows.map((r) => r.discovery_tokens_mean),
         result_tokens_mean: rows.map((r) => r.result_tokens_mean),
