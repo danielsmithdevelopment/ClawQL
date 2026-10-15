@@ -109,3 +109,44 @@ Artifact: [`catalog-oop-rss-cloudflare.json`](./catalog-oop-rss-cloudflare.json)
 The OOP child peaked ~800 MB RSS while parsing, then exited — listen RSS stayed
 near the prebuilt `LOAD=db` path. That is the product claim: **gateway memory
 independent of spec size**.
+
+## Slim listen — lazy horizontal plugins (follow-up)
+
+### Known-op path does not run a model
+
+`execute` with a known `operationId` + JMESPath `where` never calls GLiNER / Decide,
+ONNX embeddings, or ranking. Redaction ML stays off unless
+`CLAWQL_ENABLE_PRESIDIO` / `CLAWQL_ENABLE_PRIVACY_FILTER` is set. The board’s
+native-memory climb was **not** inference weights on the known-op path.
+
+### What was loading at Ready
+
+`compose-horizontal-plugin-layers-static.ts` statically imported
+`clawql-automation` / `clawql-memory` / … even when tiers were disabled, so
+`@kubernetes/client-node` (AdmissionregistrationApi codegen) and the memory
+plugin graph mapped into every listen. Payments/DuckDB were already skip/lazy in
+source; the sync composer was the remaining poison.
+
+### Fix
+
+- Sync composer: **DuckDB-style `createRequire` only when the flag is on** for
+  every horizontal package (memory, documents, automation, …).
+- Adapters: load the sync composer only inside `getClawqlApi()`; vault-seed
+  imports memory only when `enableMemory`.
+- HTTP: drop the static `getClawqlApi` import (dynamic in session hooks).
+- Automation: dynamic `import("@kubernetes/client-node")` on first workflow/argocd use.
+
+### Remasure (OOP + lazy, equal-arm 60-op, 120 known-op executes)
+
+Artifact: [`slim-listen-memory-oop-lazy.json`](./slim-listen-memory-oop-lazy.json)  
+Probe: `scripts/benchmarks/slim-listen-memory-probe.mjs`  
+(`native ≈ smaps Anonymous − V8 heapUsed`; maps checked for k8s/xenova/onnx/stripe/duckdb)
+
+| Phase | Anon | JS heap | Native (anon−heap) | Heavy maps |
+| --- | ---: | ---: | ---: | --- |
+| Ready | **105 MB** | 60 MB | 45 MB | none |
+| After 120 executes | **112 MB** | 69 MB | 43 MB | none |
+
+That lands **under** the 150–190 MB underload band. Full CF multiturn 3×10k board
+remasure still needs this branch stacked into the board harness (not present on
+this tip); expect ClawQL anon to stop being the weak cell once it does.
