@@ -1,0 +1,107 @@
+{
+  "measuredAt": "2026-10-15T17:06:42.890Z",
+  "spec": "/tmp/cat-oop-spec-784954/spec.json",
+  "spec_bytes": 113833,
+  "arms": {
+    "inprocess": {
+      "label": "inprocess",
+      "buildMode": "inprocess",
+      "loadDb": false,
+      "pid": 784967,
+      "home": "/tmp/cat-oop-inprocess-784954-1792084002890",
+      "smaps": {
+        "rss_mb": 392.36,
+        "anonymous_mb": 313.63,
+        "pss_mb": 321.42
+      },
+      "catalog_sqlite_bytes": 57344,
+      "banners": {
+        "oop_build": false,
+        "oop_wrote": false,
+        "wrote_inprocess": true,
+        "load_db": false,
+        "loaded_ops": "80"
+      },
+      "log_tail": [
+        "[spec-loader] BREAKING (8.0.0): CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE no longer select the provider stack. Use providers.pack / providers.enabled in CLAWQL_INSTANCE_SPEC, or CLAWQL_PROVIDER=default|google|aws|\u2026",
+        "[spec-loader] OpenAPI file: /tmp/cat-oop-spec-784954/spec.json",
+        "[spec-loader] Loaded 80 operations (oopProbe)",
+        "[catalog-sqlite] wrote /tmp/cat-oop-inprocess-784954-1792084002890/catalog.sqlite ops=80 docs=1",
+        "(node:784967) ExperimentalWarning: SQLite is an experimental feature and might change at any time",
+        "(Use `node --trace-warnings ...` to show where the warning was created)",
+        "[clawql-mcp-http] Building in-process GraphQL for /graphql \u2026",
+        "[clawql-mcp] Ready \u2014 single-spec; 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)",
+        "[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:43875/mcp"
+      ]
+    },
+    "oop_first_boot": {
+      "label": "oop-first",
+      "buildMode": "oop",
+      "loadDb": false,
+      "pid": 784992,
+      "home": "/tmp/cat-oop-oop-first-784954-1792084005190",
+      "smaps": {
+        "rss_mb": 366.85,
+        "anonymous_mb": 288.04,
+        "pss_mb": 294.65
+      },
+      "catalog_sqlite_bytes": 57344,
+      "banners": {
+        "oop_build": true,
+        "oop_wrote": true,
+        "wrote_inprocess": false,
+        "load_db": true,
+        "loaded_ops": "80"
+      },
+      "log_tail": [
+        "[catalog-sqlite] oop-build starting \u2192 /tmp/cat-oop-oop-first-784954-1792084005190/catalog.sqlite via /workspace/packages/clawql-api/dist/catalog/build-catalog-sqlite-cli.js",
+        "[spec-loader] BREAKING (8.0.0): CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE no longer select the provider stack. Use providers.pack / providers.enabled in CLAWQL_INSTANCE_SPEC, or CLAWQL_PROVIDER=default|google|aws|\u2026",
+        "[spec-loader] OpenAPI file: /tmp/cat-oop-spec-784954/spec.json",
+        "[spec-loader] Loaded 80 operations (oopProbe)",
+        "[catalog-sqlite] wrote /tmp/cat-oop-oop-first-784954-1792084005190/catalog.sqlite ops=80 docs=1",
+        "[catalog-sqlite] oop-wrote /tmp/cat-oop-oop-first-784954-1792084005190/catalog.sqlite ops=80 pid=785003",
+        "(node:785003) ExperimentalWarning: SQLite is an experimental feature and might change at any time",
+        "(Use `node --trace-warnings ...` to show where the warning was created)",
+        "[catalog-sqlite] loaded 80 operations from /tmp/cat-oop-oop-first-784954-1792084005190/catalog.sqlite (LOAD=db after oop-build)",
+        "(node:784992) ExperimentalWarning: SQLite is an experimental feature and might change at any time",
+        "(Use `node --trace-warnings ...` to show where the warning was created)",
+        "[clawql-mcp-http] Building in-process GraphQL for /graphql \u2026",
+        "[clawql-mcp] Ready \u2014 single-spec; 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)",
+        "[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:34701/mcp"
+      ]
+    },
+    "loaddb_only": {
+      "label": "loaddb",
+      "buildMode": "oop",
+      "loadDb": true,
+      "pid": 785017,
+      "home": "/tmp/cat-oop-loaddb-784954-1792084008049",
+      "smaps": {
+        "rss_mb": 373.67,
+        "anonymous_mb": 295,
+        "pss_mb": 300.86
+      },
+      "catalog_sqlite_bytes": 57344,
+      "banners": {
+        "oop_build": false,
+        "oop_wrote": false,
+        "wrote_inprocess": false,
+        "load_db": true,
+        "loaded_ops": "80"
+      },
+      "log_tail": [
+        "[catalog-sqlite] loaded 80 operations from /tmp/cat-oop-loaddb-784954-1792084008049/catalog.sqlite (LOAD=db)",
+        "(node:785017) ExperimentalWarning: SQLite is an experimental feature and might change at any time",
+        "(Use `node --trace-warnings ...` to show where the warning was created)",
+        "[clawql-mcp-http] Building in-process GraphQL for /graphql \u2026",
+        "[clawql-mcp] Ready \u2014 single-spec; 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)",
+        "[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:40385/mcp"
+      ]
+    }
+  },
+  "delta_mb": {
+    "oop_vs_inprocess_anon": -25.59,
+    "loaddb_vs_inprocess_anon": -18.63
+  },
+  "interpretation": "oop_first_boot should show oop_build+load_db banners and anon near loaddb_only. inprocess may keep higher anon after parse even with persist-then-slim (JS rarely returns RSS)."
+}

@@ -54,6 +54,7 @@ export function clawqlEqualArmEnv({ home, specPath, apiBase, baseEnv = process.e
     // Slim HTTP surface: do not load clawql-payments / clawql-network at MCP listen
     // (equal-arm benches never hit /.well-known/payments or registry). Override with =0.
     CLAWQL_HTTP_SKIP_PAYMENTS: baseEnv.CLAWQL_HTTP_SKIP_PAYMENTS ?? "1",
+    CLAWQL_HTTP_SKIP_GRAPHQL: baseEnv.CLAWQL_HTTP_SKIP_GRAPHQL ?? "1",
   };
   for (const key of [
     "CLAWQL_PROVIDER",

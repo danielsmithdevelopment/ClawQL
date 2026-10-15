@@ -5,17 +5,26 @@
  * search) instead of retaining the full OAS object graph. Cold OpenAPI docs are
  * gzip'd in SQLite and materialised on first execute touch.
  *
- * Default **on** (persist-then-slim after OpenAPI load). Opt out: **`CLAWQL_CATALOG_SQLITE=0`**.
+ * Default **on**. Opt out: **`CLAWQL_CATALOG_SQLITE=0`**.
  * Path: **`CLAWQL_CATALOG_SQLITE_PATH`** (default `$CLAWQL_HOME/catalog.sqlite`)
  * Precompiled listen: **`CLAWQL_CATALOG_SQLITE_LOAD=db`** (skip OAS parse when DB exists).
+ *
+ * **Build mode (default `oop`):** when the gateway would otherwise parse a spec to
+ * create/refresh `catalog.sqlite`, it spawns
+ * `catalog/build-catalog-sqlite-cli` in a short-lived child, waits for exit, then
+ * opens the DB read-only (`LOAD=db`). The parsed OAS dies with the child — JS
+ * runtimes rarely return that RSS to the OS otherwise. Opt into the old
+ * in-process persist path with **`CLAWQL_CATALOG_SQLITE_BUILD=inprocess`**.
  *
  * Search stays the in-memory weighted keyword scan over `operations` — no FTS/BM25.
  */
 
 import { gzipSync, gunzipSync } from "node:zlib";
-import { mkdirSync, existsSync } from "node:fs";
+import { mkdirSync, existsSync, statSync } from "node:fs";
+import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Context, Effect, Layer } from "effect";
 import { resolveClawqlHome } from "../spec/custom-sources-store.js";
 import type { Operation } from "../spec/operation-types.js";
@@ -75,6 +84,84 @@ export const catalogSqliteReadonlyLoad = (
     const path = yield* resolveCatalogSqlitePath(env);
     return existsSync(path);
   });
+
+/** Default `oop`; only `inprocess` / `inline` / `0` keep parse+persist inside the gateway. */
+export const catalogSqliteBuildOutOfProcess = (
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<boolean> =>
+  Effect.sync(() => {
+    const raw = (env.CLAWQL_CATALOG_SQLITE_BUILD ?? "oop").trim().toLowerCase();
+    if (raw === "inprocess" || raw === "inline" || raw === "0" || raw === "off") {
+      return false;
+    }
+    return true;
+  });
+
+export const catalogSqliteForceRebuild = (
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<boolean> =>
+  Effect.sync(() => {
+    const t = (env.CLAWQL_CATALOG_SQLITE_REBUILD ?? "").trim().toLowerCase();
+    return t === "1" || t === "true" || t === "yes" || t === "on";
+  });
+
+function localSpecPaths(env: NodeJS.ProcessEnv): string[] {
+  return [
+    env.CLAWQL_SPEC_PATH,
+    env.OPENAPI_SPEC_PATH,
+    env.OPENAPI_FILE,
+    ...(env.CLAWQL_SPEC_PATHS ?? "")
+      .split(/[,:\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean),
+  ].filter((p): p is string => Boolean(p?.trim()));
+}
+
+/**
+ * True when the gateway should (re)build catalog.sqlite before LOAD=db.
+ * File specs: rebuild if DB missing or any local OAS is newer than the DB.
+ * Non-file sources (URL / provider packs): rebuild only when DB missing or
+ * `CLAWQL_CATALOG_SQLITE_REBUILD=1`.
+ */
+export const catalogSqliteNeedsRebuild = (
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<boolean> =>
+  Effect.gen(function* () {
+    if (!(yield* catalogSqliteEnabled(env))) return false;
+    if (yield* catalogSqliteForceRebuild(env)) return true;
+    const path = yield* resolveCatalogSqlitePath(env);
+    if (!existsSync(path)) return true;
+    let dbMtime: number;
+    try {
+      dbMtime = statSync(path).mtimeMs;
+    } catch {
+      return true;
+    }
+    for (const spec of localSpecPaths(env)) {
+      try {
+        if (existsSync(spec) && statSync(spec).mtimeMs > dbMtime) return true;
+      } catch {
+        /* ignore unreadable paths */
+      }
+    }
+    return false;
+  });
+
+function resolveBuildCatalogCliPath(): string {
+  const here = dirname(fileURLToPath(import.meta.url));
+  // tsup may place this module in dist/chunk-*.js while the CLI entry is
+  // dist/catalog/build-catalog-sqlite-cli.js — probe both layouts.
+  const candidates = [
+    join(here, "catalog", "build-catalog-sqlite-cli.js"),
+    join(here, "build-catalog-sqlite-cli.js"),
+    join(here, "catalog", "build-catalog-sqlite-cli.ts"),
+    join(here, "build-catalog-sqlite-cli.ts"),
+  ];
+  for (const c of candidates) {
+    if (existsSync(c)) return c;
+  }
+  return candidates[0]!;
+}
 
 const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -258,6 +345,61 @@ export function loadCatalogSqliteSlim(path: string): CatalogSqliteSlim {
 }
 
 /**
+ * Spawn a short-lived builder that parses sources and writes catalog.sqlite,
+ * then load the slim view in this process (never parse OAS here).
+ */
+export const buildCatalogSqliteOutOfProcessEffect = (
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<CatalogSqliteSlim, Error> =>
+  Effect.gen(function* () {
+    const path = yield* resolveCatalogSqlitePath(env);
+    const cli = resolveBuildCatalogCliPath();
+    if (!existsSync(cli)) {
+      return yield* Effect.fail(
+        new Error(`[catalog-sqlite] oop builder missing: ${cli} (rebuild clawql-api)`)
+      );
+    }
+    mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+    console.error(`[catalog-sqlite] oop-build starting → ${path} via ${cli}`);
+    yield* Effect.tryPromise({
+      try: () =>
+        new Promise<void>((resolve, reject) => {
+          const child = spawn(process.execPath, [cli], {
+            env: {
+              ...env,
+              CLAWQL_CATALOG_SQLITE: "0",
+              CLAWQL_CATALOG_SQLITE_PATH: path,
+              CLAWQL_CATALOG_SQLITE_OOP_CHILD: "1",
+            },
+            stdio: ["ignore", "inherit", "inherit"],
+          });
+          child.on("error", reject);
+          child.on("exit", (code, signal) => {
+            if (code === 0) resolve();
+            else {
+              reject(
+                new Error(
+                  `[catalog-sqlite] oop-build exited code=${code} signal=${signal ?? ""}`
+                )
+              );
+            }
+          });
+        }),
+      catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+    });
+    if (!existsSync(path)) {
+      return yield* Effect.fail(
+        new Error(`[catalog-sqlite] oop-build finished but missing ${path}`)
+      );
+    }
+    const slim = yield* loadCatalogSqliteSlimEffect(path);
+    console.error(
+      `[catalog-sqlite] loaded ${slim.operations.length} operations from ${path} (LOAD=db after oop-build)`
+    );
+    return slim;
+  });
+
+/**
  * Persist a fully-parsed `LoadedSpec` to SQLite and return a slim view that keeps
  * only `operations` hot; OAS graphs are GC-eligible after this returns.
  */
@@ -290,6 +432,8 @@ export const persistLoadedSpecToCatalogSqliteEffect = (
 export type CatalogSqliteApi = {
   readonly enabled: (env?: NodeJS.ProcessEnv) => Effect.Effect<boolean>;
   readonly resolvePath: (env?: NodeJS.ProcessEnv) => Effect.Effect<string>;
+  readonly buildOutOfProcess: (env?: NodeJS.ProcessEnv) => Effect.Effect<boolean>;
+  readonly needsRebuild: (env?: NodeJS.ProcessEnv) => Effect.Effect<boolean>;
   readonly write: (
     path: string,
     input: CatalogSqliteWriteInput
@@ -297,6 +441,9 @@ export type CatalogSqliteApi = {
   readonly loadSlim: (path: string) => Effect.Effect<CatalogSqliteSlim, Error>;
   readonly persistLoaded: (
     loaded: LoadedSpec,
+    env?: NodeJS.ProcessEnv
+  ) => Effect.Effect<CatalogSqliteSlim, Error>;
+  readonly buildOutOfProcessAndLoad: (
     env?: NodeJS.ProcessEnv
   ) => Effect.Effect<CatalogSqliteSlim, Error>;
 };
@@ -309,7 +456,10 @@ export class CatalogSqliteService extends Context.Service<
 export const CatalogSqliteLive = Layer.succeed(CatalogSqliteService, {
   enabled: catalogSqliteEnabled,
   resolvePath: resolveCatalogSqlitePath,
+  buildOutOfProcess: catalogSqliteBuildOutOfProcess,
+  needsRebuild: catalogSqliteNeedsRebuild,
   write: writeCatalogSqliteEffect,
   loadSlim: loadCatalogSqliteSlimEffect,
   persistLoaded: persistLoadedSpecToCatalogSqliteEffect,
+  buildOutOfProcessAndLoad: buildCatalogSqliteOutOfProcessEffect,
 });
