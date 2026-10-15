@@ -1,0 +1,52 @@
+{
+  "profile": "/opt/cursor/artifacts/cpu-prof-stall/CPU.20261013.070311.409706.0.001.cpuprofile",
+  "board": "gateway-multi-multiturn-clawql-http-cpuprof-2.5k.json",
+  "measuredAt": "2026-10-13T07:03:11Z",
+  "runtime": "node",
+  "flows": 2500,
+  "profile_duration_s": 110.167,
+  "samples": 100653,
+  "board_highlights": {
+    "flow_e2e_p999_ms": 392.264,
+    "execute_max_ms_client": 401.423,
+    "search_max_ms_client": 341.391,
+    "top_server_execute_ms": 332.3,
+    "slow_flows_with_gc": 0,
+    "slow_flows_with_eld": 0
+  },
+  "in_handler_execute_332ms": {
+    "client_ms": 333.2,
+    "server_ms": 332.3,
+    "cpu_window_idle_pct": 78.2,
+    "cpu_window_gc_pct": 1.1,
+    "verdict": "off_cpu_wait_inside_handler_not_js_cpu_bound"
+  },
+  "aggregate_self_top_non_idle": [
+    { "frame": "(garbage collector)", "self_pct_of_total": 2.77 },
+    { "frame": "writev", "self_pct_of_total": 2.0 },
+    { "frame": "scoreOperation", "self_pct_of_total": 1.59 },
+    { "frame": "executeRestOperationImpl", "self_pct_of_total": 1.3 },
+    { "frame": "addSpanStackTrace", "self_pct_of_total": 0.72 }
+  ],
+  "under_executeRestOperationImpl": {
+    "total_pct_of_profile": 4.65,
+    "note": "Hot leaves are executeRestOperationImpl self-time and node-fetch/http.ClientRequest — upstream I/O path"
+  },
+  "under_scoreOperation": {
+    "total_pct_of_profile": 1.85,
+    "note": "Almost entirely under searchOperations; not the 332ms execute stall"
+  },
+  "anomalies_client_long_server_short": [
+    {
+      "client_ms": 401.0,
+      "server_t0": "2026-10-13T07:04:27.246Z",
+      "matching_clawql_http_slow_ge_50ms": false
+    },
+    {
+      "client_ms": 341.1,
+      "server_t0": "2026-10-13T07:04:56.607Z",
+      "matching_clawql_http_slow_ge_50ms": false,
+      "body_bytes": 1410
+    }
+  ]
+}

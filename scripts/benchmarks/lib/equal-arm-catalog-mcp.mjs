@@ -6,13 +6,44 @@
  *
  * Env:
  *   CATALOG_TOOL_COUNT (default 40)
+ *   MT_UPSTREAM_LATENCY_MS — fixed ms or "min-max" (same as HTTP mock; peer equal-arm)
  *   EQUAL_ARM_UPSTREAM (optional) — unused; results are synthetic
  */
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 
-const N = Math.max(4, Math.min(200, Number(process.env.CATALOG_TOOL_COUNT ?? 40) || 40));
+const N = Math.max(4, Math.min(250, Number(process.env.CATALOG_TOOL_COUNT ?? 40) || 40));
+
+function parseLatencyMs() {
+  const raw = (process.env.MT_UPSTREAM_LATENCY_MS ?? "").trim();
+  if (!raw) return { kind: "none" };
+  const range = raw.match(/^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)$/);
+  if (range) {
+    const min = Number(range[1]);
+    const max = Number(range[2]);
+    if (Number.isFinite(min) && Number.isFinite(max) && max >= min && min >= 0) {
+      return { kind: "range", min, max };
+    }
+  }
+  const n = Number(raw);
+  if (Number.isFinite(n) && n > 0) return { kind: "fixed", ms: n };
+  return { kind: "none" };
+}
+
+const LATENCY = parseLatencyMs();
+
+function latencySampleMs() {
+  if (LATENCY.kind === "fixed") return LATENCY.ms;
+  if (LATENCY.kind === "range") {
+    return LATENCY.min + Math.random() * (LATENCY.max - LATENCY.min);
+  }
+  return 0;
+}
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 function fatRow(i) {
   return {
@@ -74,6 +105,8 @@ function makeServer() {
     if (!tool) {
       return { isError: true, content: [{ type: "text", text: `unknown tool ${req.params.name}` }] };
     }
+    const injectMs = latencySampleMs();
+    if (injectMs > 0) await sleep(injectMs);
     const args = req.params.arguments || {};
     const limit = Math.min(100, Math.max(1, Number(args.limit ?? 25) || 25));
     const status = args.status ?? "any";

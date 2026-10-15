@@ -1174,9 +1174,16 @@ hashicorpvault:
       enabled: true
       size: 10Gi
 
+# MCP gateway sizing (latency): Node/Bun run background compile + concurrent GC threads.
+# A CPU **limit below 2** pins the process to one core under CFS and inflates rare tails
+# (see docs/benchmarks/gateway-multi-comparison/stall-memory-round9.md).
+# Production: keep limits.cpu ≥ "2"; prefer requests.cpu ≥ "1" (ideally "2") so replicas
+# are not scheduled onto oversubscribed nodes. Scale capacity with more replicas + NATS
+# queue groups — not by adding Redis/NATS onto a 1-core pod hoping to fix JS tails.
+# Docs: docs/architecture/gateway-runtime-and-catalog-memory.md
 resources:
   requests:
-    cpu: 500m
+    cpu: "1"
     memory: 1Gi
   limits:
     cpu: "2"

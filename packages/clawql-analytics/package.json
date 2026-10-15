@@ -1,7 +1,7 @@
 {
   "name": "clawql-analytics",
   "version": "0.1.0",
-  "description": "ClawQL product analytics: provider adapters (PostHog v0), clawql-auth scopes, clawql-audit governance events — distinct from audit and observability",
+  "description": "ClawQL product analytics: provider adapters (PostHog v0), clawql-auth scopes, clawql-audit governance events \u2014 distinct from audit and observability",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -39,7 +39,7 @@
     "@types/node": "^26.1.1",
     "posthog-node": "^5.51.6",
     "tsup": "^8.3.0",
-    "typescript": "^6.0.3",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vitest": "^5.0.0"
   },
   "files": [

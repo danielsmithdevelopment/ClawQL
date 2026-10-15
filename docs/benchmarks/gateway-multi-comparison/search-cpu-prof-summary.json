@@ -1,0 +1,15 @@
+{
+  "board": "gateway-multi-multiturn-clawql-http-search-cpuprof-3k.json",
+  "profile": "/opt/cursor/artifacts/search-cpu-prof/CPU.20261013.073701.414317.0.001.cpuprofile",
+  "native_fetch": true,
+  "flows": 3000,
+  "findings": {
+    "parse_queue": "Long client stalls had queue_ms≈0.2 — not Express backlog. Late parse_t0 vs client t0 seen on warmup search (+164ms) → send-side/harness.",
+    "search_max_ms": 172.177,
+    "search_p999_ms": 9.758,
+    "search_profile_window": "Around 172ms sample: ~40% idle, ~4% GC, scoreOperation ~1% — not CPU-bound scoring grind.",
+    "execute_max_ms": 466.547,
+    "execute_with_upstream": "439ms server execute paired with clawql-upstream-fetch headers_ms=438.5 backend=native while mock handle stays small when scheduled — parent event-loop coupling.",
+    "client_long_server_short": "466ms client / 12ms server with parse≈server t0 — parent not reading after ClawQL wrote."
+  }
+}

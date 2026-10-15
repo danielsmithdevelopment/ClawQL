@@ -1,0 +1,133 @@
+{
+  "measuredAt": "2026-10-14T02:02:22.332Z",
+  "n": 800,
+  "warmup": 30,
+  "sample_every": 40,
+  "spec": "equal",
+  "spec_bytes": 18339,
+  "catalog_sqlite_bytes": 32768,
+  "memory": {
+    "mode": "memory",
+    "op_id": "listPets",
+    "ready": {
+      "rss_mb": 281.04,
+      "anonymous_mb": 219.88,
+      "pss_mb": 277.86
+    },
+    "under_load": {
+      "n": 21,
+      "rss_mb": {
+        "min": 301.8,
+        "median": 319.2,
+        "max": 357.99
+      },
+      "anonymous_mb": {
+        "min": 239.45,
+        "median": 256.34,
+        "max": 295.14
+      },
+      "pss_mb": {
+        "min": 298.56,
+        "median": 315.97,
+        "max": 354.76
+      },
+      "first": {
+        "at": "load",
+        "flow": 1,
+        "rss_mb": 301.8,
+        "anonymous_mb": 239.45,
+        "pss_mb": 298.56
+      },
+      "last": {
+        "at": "load",
+        "flow": 800,
+        "rss_mb": 326.72,
+        "anonymous_mb": 263.87,
+        "pss_mb": 323.49
+      }
+    },
+    "samples_n": 22,
+    "turn": {
+      "n": 800,
+      "p50_ms": 2.386,
+      "p99_ms": 7.857,
+      "p999_ms": 10.689
+    },
+    "bench": {
+      "mcp_sessions": 1,
+      "stream_mapping_entries": 0,
+      "request_to_stream_entries": 0,
+      "audit_ring_entries": 64,
+      "audit_ring_max": 64,
+      "rss_mb": 326.82,
+      "heap_used_mb": 137.78
+    },
+    "log_tail": "rations (equalArmCatalog)\n[clawql-http-layer] banner auth_mode=noAuth skip_auth=0 otel=0 session_idle_ms=0 audit=1 skip_prune=0 skip_als=0 skip_payments=1 skip_graphql=1 http_perf=0 loki_url=0 events=0\n[clawql-mcp] Ready — single-spec; 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)\n[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:44339/mcp\n"
+  },
+  "sqlite_loaddb": {
+    "mode": "sqlite_loaddb",
+    "op_id": "listPets",
+    "ready": {
+      "rss_mb": 152.01,
+      "anonymous_mb": 111.95,
+      "pss_mb": 149.76
+    },
+    "under_load": {
+      "n": 21,
+      "rss_mb": {
+        "min": 171.87,
+        "median": 188.41,
+        "max": 198.16
+      },
+      "anonymous_mb": {
+        "min": 130.13,
+        "median": 146.23,
+        "max": 155.98
+      },
+      "pss_mb": {
+        "min": 169.56,
+        "median": 186.1,
+        "max": 195.85
+      },
+      "first": {
+        "at": "load",
+        "flow": 1,
+        "rss_mb": 171.87,
+        "anonymous_mb": 130.13,
+        "pss_mb": 169.56
+      },
+      "last": {
+        "at": "load",
+        "flow": 800,
+        "rss_mb": 188.41,
+        "anonymous_mb": 146.23,
+        "pss_mb": 186.1
+      }
+    },
+    "samples_n": 22,
+    "turn": {
+      "n": 800,
+      "p50_ms": 2.242,
+      "p99_ms": 9.058,
+      "p999_ms": 25.061
+    },
+    "bench": {
+      "mcp_sessions": 1,
+      "stream_mapping_entries": 0,
+      "request_to_stream_entries": 0,
+      "audit_ring_entries": 64,
+      "audit_ring_max": 64,
+      "rss_mb": 188.38,
+      "heap_used_mb": 42.1
+    },
+    "log_tail": "talog.sqlite (LOAD=db)\n[clawql-http-layer] banner auth_mode=noAuth skip_auth=0 otel=0 session_idle_ms=0 audit=1 skip_prune=0 skip_als=0 skip_payments=1 skip_graphql=1 http_perf=0 loki_url=0 events=0\n[clawql-mcp] Ready — catalog-sqlite; 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)\n[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:42471/mcp\n"
+  },
+  "delta_loaddb_minus_memory_mb": {
+    "ready_rss": -129.03,
+    "ready_anon": -107.93,
+    "under_rss_median": -130.79,
+    "under_anon_median": -110.11,
+    "under_pss_median": -129.87
+  },
+  "interpretation": "Negative under_* deltas = SQLite helps under load. Compare to MCPJungle ~152 MB only after a same-catalog peer run — this file is ClawQL memory vs LOAD=db only."
+}

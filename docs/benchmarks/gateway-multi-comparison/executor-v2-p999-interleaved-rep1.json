@@ -1,0 +1,3940 @@
+{
+  "suite": "gateway-multi-multiturn",
+  "measuredAt": "2026-10-14T03:00:45.666Z",
+  "node": "v22.14.0",
+  "bun": "1.4.3",
+  "core_layout": {
+    "enabled": true,
+    "nproc": 4,
+    "mock_cpus": "0",
+    "gateway_cpus": "1-2",
+    "client_cpus": "3",
+    "gateway_cpu_count": 2,
+    "layout_mode": "gateway_2core",
+    "note": "Dedicated CPU lists for mock / gateway / client (taskset -c). Gateway defaults to 2 cores when nproc≥4 so JS helper threads are not starved. Roles must not overlap.",
+    "client_cpus_allowed": "3",
+    "mock_pid": 444685,
+    "mock_process": "separate",
+    "upstream_latency_ms": null
+  },
+  "p999_status": {
+    "status": "harness_isolated_pending_full_board",
+    "label": "harness isolated (separate mock + taskset); p999 still under rework until full interleaved 10k",
+    "publish": "Cite tokens, per-call overhead (ms/call), medians, and memory. Do not headline p999 until a full interleaved board lands with separate mock/client/gateway and dedicated cores (or leave p999 labeled under rework).",
+    "note": "Round 7: mock+client shared the parent event loop — delayed send, delayed mock serve, delayed response read. That polluted every arm's tail. Round 8 splits the mock process and optionally pins cores.",
+    "harness_isolated": true,
+    "cores_pinned": true,
+    "full_board": false
+  },
+  "client_diagnostics": {
+    "http_connects_total": 3,
+    "http_agent": {
+      "connections": 1,
+      "pipelining": 1,
+      "keepAliveTimeout": 60000,
+      "note": "Single keep-alive socket per origin; connects_total should stay near 1 per HTTP arm after warm-up."
+    },
+    "client_gc_events": 0,
+    "client_gc_top": [],
+    "client_slow_ms_threshold": 0,
+    "client_pid": 444674,
+    "client_cpus_allowed": "3"
+  },
+  "upstream_diagnostics": {
+    "requests": 1,
+    "tcp_connects": 1,
+    "reused_sockets": 0,
+    "new_socket_requests": 1,
+    "max_handle_ms": 0,
+    "max_latency_inject_ms": 0,
+    "pid": 444685,
+    "process": "separate",
+    "latency": {
+      "kind": "none"
+    },
+    "slow_top": [],
+    "recent": [],
+    "native_fetch": false,
+    "upstream_keepalive": false,
+    "note": "Separate-process mock accept/handle. Pair with [clawql-upstream-fetch] on ClawQL stderr when CLAWQL_UPSTREAM_FETCH_DIAG=1. On Node 22 http.globalAgent.keepAlive defaults true — tcp_connects≈1 is expected even without CLAWQL_UPSTREAM_KEEPALIVE."
+  },
+  "config": {
+    "turns": 12,
+    "iters": 2500,
+    "catalog_tool_count": 40,
+    "limit": 25,
+    "where": "items",
+    "fields": [
+      "id",
+      "name",
+      "status"
+    ],
+    "arms": [
+      "mcpjungle",
+      "agentgateway",
+      "executor_v2"
+    ],
+    "tokenizer": "cl100k_base",
+    "progress_every": 500,
+    "mt_pin_cores": true,
+    "mt_upstream_latency_ms": null,
+    "runtime_flags": {
+      "clawql_node_max_old_space_mb": 512,
+      "clawql_bun_smol": true,
+      "clawql_http_skip_graphql": true,
+      "clawql_enable_http_metrics": false,
+      "mt_node_single_threaded": false,
+      "note": "Applied evenly to all ClawQL arms (stdio / Streamable HTTP / gRPC). Override with CLAWQL_NODE_MAX_OLD_SPACE_MB=0 or CLAWQL_BUN_SMOL=0 for defaults-only. CLAWQL_SEARCH_COMPACT=1 and CLAWQL_HTTP_SKIP_PAYMENTS=1 are bench defaults (compact search gated for product; payments/network routes skipped for slim RSS). MT_NODE_SINGLE_THREADED is diagnostic only (V8 helper-thread contention test)."
+    }
+  },
+  "equal_arm": {
+    "fat_result_tokens_partition_1": 2411,
+    "slim_fields_tokens_partition_1": 353,
+    "projection_ratio": 6.83,
+    "note": "Same underlying rows; ClawQL where+fields project to {id,name,status}; Executor/aggregators return full envelope (Executor: no gateway projection — settled)"
+  },
+  "board": {
+    "mcpjungle": {
+      "runtime": null,
+      "runtime_version": null,
+      "ready_ms": null,
+      "transport": null,
+      "rss_mb_ready": 31.52,
+      "rss_mb_min": 31.52,
+      "rss_mb_median": 150.94,
+      "rss_mb_max": 152.16,
+      "rss_trend": {
+        "classification": "rise_then_plateau",
+        "reason": "RSS rises from ready/early samples then flattens in the last fifth of the run",
+        "early_median_mb": 127.2,
+        "mid_median_mb": 151.83,
+        "late_median_mb": 152.1,
+        "rise_early_to_late_mb": 24.9,
+        "rise_mid_to_late_mb": 0.27,
+        "mb_per_1000_flows": null,
+        "n_series": 86
+      },
+      "definitions_tokens": 5840,
+      "discovery_tokens_sum": 0,
+      "mean_discovery_tokens": 0,
+      "result_tokens_sum": 29482,
+      "mean_result_tokens": 2456.8,
+      "layer1_once_tokens": 5840,
+      "mean_layer2_tokens": 2456.8,
+      "combined_at_n": 35322,
+      "combined_rebuild": 35322,
+      "combined_relist_every_turn_at_n": 99562,
+      "flows": 2500,
+      "turns_per_flow": 12,
+      "total_turns": 30000,
+      "rpcs_per_turn": 1,
+      "ms_per_call_p50": 1.22,
+      "flow_e2e_ms": {
+        "n": 2500,
+        "p50_ms": 16.214,
+        "p95_ms": 21.726,
+        "p99_ms": 29.572,
+        "p999_ms": 223.906,
+        "mean_ms": 17.115,
+        "min_ms": 12.214,
+        "max_ms": 366.674,
+        "n_ge_100ms": 3,
+        "n_ge_200ms": 3,
+        "n_ge_300ms": 2,
+        "worst": [
+          {
+            "i": 1,
+            "ms": 366.674
+          },
+          {
+            "i": 976,
+            "ms": 312.136
+          },
+          {
+            "i": 1934,
+            "ms": 223.906
+          },
+          {
+            "i": 1164,
+            "ms": 79.872
+          },
+          {
+            "i": 251,
+            "ms": 59.038
+          },
+          {
+            "i": 318,
+            "ms": 55.73
+          },
+          {
+            "i": 975,
+            "ms": 51.964
+          },
+          {
+            "i": 125,
+            "ms": 47.53
+          }
+        ]
+      },
+      "turn_latency_ms": {
+        "n": 30000,
+        "p50_ms": 1.22,
+        "p95_ms": 2,
+        "p99_ms": 3.402,
+        "p999_ms": 7.113,
+        "mean_ms": 1.353,
+        "min_ms": 0.841,
+        "max_ms": 260.746,
+        "n_ge_100ms": 3,
+        "n_ge_200ms": 1,
+        "n_ge_300ms": 0,
+        "worst": [
+          {
+            "i": 11704,
+            "ms": 260.746
+          },
+          {
+            "i": 1,
+            "ms": 169.215
+          },
+          {
+            "i": 23207,
+            "ms": 154.004
+          },
+          {
+            "i": 11703,
+            "ms": 38.057
+          },
+          {
+            "i": 13961,
+            "ms": 33.338
+          },
+          {
+            "i": 13962,
+            "ms": 24.399
+          },
+          {
+            "i": 3805,
+            "ms": 21.719
+          },
+          {
+            "i": 23206,
+            "ms": 20.336
+          }
+        ]
+      },
+      "call_errors": 0,
+      "task_success_ok": true,
+      "task_success_rate": 1,
+      "token_rebuild_note": "Classic Layer1 = search+execute schemas; discovery = Σ search hit tokens."
+    },
+    "agentgateway": {
+      "runtime": null,
+      "runtime_version": null,
+      "ready_ms": null,
+      "transport": null,
+      "rss_mb_ready": 173.49,
+      "rss_mb_min": 173.49,
+      "rss_mb_median": 210.73,
+      "rss_mb_max": 211.18,
+      "rss_trend": {
+        "classification": "plateau",
+        "reason": "late-window RSS stable relative to mid-window",
+        "early_median_mb": 196.77,
+        "mid_median_mb": 211.06,
+        "late_median_mb": 211.09,
+        "rise_early_to_late_mb": 14.32,
+        "rise_mid_to_late_mb": 0.03,
+        "mb_per_1000_flows": null,
+        "n_series": 72
+      },
+      "definitions_tokens": 5520,
+      "discovery_tokens_sum": 0,
+      "mean_discovery_tokens": 0,
+      "result_tokens_sum": 29482,
+      "mean_result_tokens": 2456.8,
+      "layer1_once_tokens": 5520,
+      "mean_layer2_tokens": 2456.8,
+      "combined_at_n": 35002,
+      "combined_rebuild": 35002,
+      "combined_relist_every_turn_at_n": 95722,
+      "flows": 2500,
+      "turns_per_flow": 12,
+      "total_turns": 30000,
+      "rpcs_per_turn": 1,
+      "ms_per_call_p50": 1.04,
+      "flow_e2e_ms": {
+        "n": 2500,
+        "p50_ms": 13.738,
+        "p95_ms": 18.003,
+        "p99_ms": 23.228,
+        "p999_ms": 129.766,
+        "mean_ms": 14.351,
+        "min_ms": 9.509,
+        "max_ms": 520.334,
+        "n_ge_100ms": 3,
+        "n_ge_200ms": 1,
+        "n_ge_300ms": 1,
+        "worst": [
+          {
+            "i": 1605,
+            "ms": 520.334
+          },
+          {
+            "i": 1,
+            "ms": 182.528
+          },
+          {
+            "i": 497,
+            "ms": 129.766
+          },
+          {
+            "i": 1604,
+            "ms": 71.631
+          },
+          {
+            "i": 126,
+            "ms": 56.975
+          },
+          {
+            "i": 251,
+            "ms": 56.14
+          },
+          {
+            "i": 81,
+            "ms": 51.238
+          },
+          {
+            "i": 80,
+            "ms": 46.356
+          }
+        ]
+      },
+      "turn_latency_ms": {
+        "n": 30000,
+        "p50_ms": 1.039,
+        "p95_ms": 1.537,
+        "p99_ms": 2.56,
+        "p999_ms": 6.722,
+        "mean_ms": 1.13,
+        "min_ms": 0.709,
+        "max_ms": 473.144,
+        "n_ge_100ms": 1,
+        "n_ge_200ms": 1,
+        "n_ge_300ms": 1,
+        "worst": [
+          {
+            "i": 19250,
+            "ms": 473.144
+          },
+          {
+            "i": 5958,
+            "ms": 57.684
+          },
+          {
+            "i": 19249,
+            "ms": 34.984
+          },
+          {
+            "i": 5954,
+            "ms": 32.992
+          },
+          {
+            "i": 19243,
+            "ms": 30.011
+          },
+          {
+            "i": 5957,
+            "ms": 27.32
+          },
+          {
+            "i": 3008,
+            "ms": 20.597
+          },
+          {
+            "i": 1501,
+            "ms": 16.17
+          }
+        ]
+      },
+      "call_errors": 0,
+      "task_success_ok": true,
+      "task_success_rate": 1,
+      "token_rebuild_note": "Classic Layer1 = search+execute schemas; discovery = Σ search hit tokens."
+    },
+    "executor_v2": {
+      "runtime": "executor-v2",
+      "runtime_version": "2.0.0-beta.15",
+      "ready_ms": 9.1,
+      "transport": "streamable_http",
+      "rss_mb_ready": 537.7734375,
+      "rss_mb_min": 537.7734375,
+      "rss_mb_median": 880.87109375,
+      "rss_mb_max": 1267.7734375,
+      "rss_trend": {
+        "classification": "rise_then_plateau",
+        "reason": "RSS rises from ready/early samples then flattens in the last fifth of the run",
+        "early_median_mb": 816.05,
+        "mid_median_mb": 874.21,
+        "late_median_mb": 903.06,
+        "rise_early_to_late_mb": 87.01,
+        "rise_mid_to_late_mb": 28.85,
+        "mb_per_1000_flows": 257.32,
+        "n_series": 121
+      },
+      "definitions_tokens": 181,
+      "discovery_tokens_sum": 0,
+      "mean_discovery_tokens": 0,
+      "result_tokens_sum": 29746,
+      "mean_result_tokens": 2478.8,
+      "layer1_once_tokens": 181,
+      "mean_layer2_tokens": 2478.8,
+      "combined_at_n": 29927,
+      "combined_rebuild": 29927,
+      "combined_relist_every_turn_at_n": 29746,
+      "flows": 2500,
+      "turns_per_flow": 12,
+      "total_turns": 30000,
+      "rpcs_per_turn": 1,
+      "ms_per_call_p50": 5.43,
+      "flow_e2e_ms": {
+        "n": 2500,
+        "p50_ms": 69.528,
+        "p95_ms": 87.908,
+        "p99_ms": 107.927,
+        "p999_ms": 168.42,
+        "mean_ms": 71.952,
+        "min_ms": 59.814,
+        "max_ms": 264.812,
+        "n_ge_100ms": 42,
+        "n_ge_200ms": 1,
+        "n_ge_300ms": 0,
+        "worst": [
+          {
+            "i": 1,
+            "ms": 264.812
+          },
+          {
+            "i": 2001,
+            "ms": 193.734
+          },
+          {
+            "i": 2196,
+            "ms": 168.42
+          },
+          {
+            "i": 186,
+            "ms": 150.71
+          },
+          {
+            "i": 1467,
+            "ms": 150.617
+          },
+          {
+            "i": 975,
+            "ms": 147.357
+          },
+          {
+            "i": 444,
+            "ms": 137.766
+          },
+          {
+            "i": 316,
+            "ms": 134.24
+          }
+        ]
+      },
+      "turn_latency_ms": {
+        "n": 30000,
+        "p50_ms": 5.43,
+        "p95_ms": 8.881,
+        "p99_ms": 14.384,
+        "p999_ms": 26.301,
+        "mean_ms": 5.921,
+        "min_ms": 4.664,
+        "max_ms": 90.355,
+        "n_ge_100ms": 0,
+        "n_ge_200ms": 0,
+        "n_ge_300ms": 0,
+        "worst": [
+          {
+            "i": 24007,
+            "ms": 90.355
+          },
+          {
+            "i": 5319,
+            "ms": 65.407
+          },
+          {
+            "i": 11696,
+            "ms": 52.718
+          },
+          {
+            "i": 5383,
+            "ms": 51.671
+          },
+          {
+            "i": 11697,
+            "ms": 41.398
+          },
+          {
+            "i": 17602,
+            "ms": 38.188
+          },
+          {
+            "i": 3103,
+            "ms": 35.736
+          },
+          {
+            "i": 6456,
+            "ms": 35.596
+          }
+        ]
+      },
+      "call_errors": 0,
+      "task_success_ok": true,
+      "task_success_rate": 1,
+      "token_rebuild_note": "Classic Layer1 = search+execute schemas; discovery = Σ search hit tokens."
+    }
+  },
+  "ratios_vs_clawql": {},
+  "task_success": {
+    "mcpjungle": {
+      "turns_ok": 30000,
+      "turns_total": 30000,
+      "flows": 2500,
+      "turns_per_flow": 12,
+      "ok": true,
+      "rate": 1
+    },
+    "agentgateway": {
+      "turns_ok": 30000,
+      "turns_total": 30000,
+      "flows": 2500,
+      "turns_per_flow": 12,
+      "ok": true,
+      "rate": 1
+    },
+    "executor_v2": {
+      "turns_ok": 30000,
+      "turns_total": 30000,
+      "flows": 2500,
+      "turns_per_flow": 12,
+      "ok": true,
+      "rate": 1
+    }
+  },
+  "cumulative_table": {
+    "mcpjungle": [
+      {
+        "n": 1,
+        "combined": 8251,
+        "layer2Cumulative": 2411
+      },
+      {
+        "n": 2,
+        "combined": 10712,
+        "layer2Cumulative": 4872
+      },
+      {
+        "n": 3,
+        "combined": 13173,
+        "layer2Cumulative": 7333
+      },
+      {
+        "n": 4,
+        "combined": 15634,
+        "layer2Cumulative": 9794
+      },
+      {
+        "n": 5,
+        "combined": 18095,
+        "layer2Cumulative": 12255
+      },
+      {
+        "n": 6,
+        "combined": 20556,
+        "layer2Cumulative": 14716
+      },
+      {
+        "n": 7,
+        "combined": 23017,
+        "layer2Cumulative": 17177
+      },
+      {
+        "n": 8,
+        "combined": 25478,
+        "layer2Cumulative": 19638
+      },
+      {
+        "n": 9,
+        "combined": 27939,
+        "layer2Cumulative": 22099
+      },
+      {
+        "n": 10,
+        "combined": 30400,
+        "layer2Cumulative": 24560
+      },
+      {
+        "n": 11,
+        "combined": 32861,
+        "layer2Cumulative": 27021
+      },
+      {
+        "n": 12,
+        "combined": 35322,
+        "layer2Cumulative": 29482
+      }
+    ],
+    "agentgateway": [
+      {
+        "n": 1,
+        "combined": 7931,
+        "layer2Cumulative": 2411
+      },
+      {
+        "n": 2,
+        "combined": 10392,
+        "layer2Cumulative": 4872
+      },
+      {
+        "n": 3,
+        "combined": 12853,
+        "layer2Cumulative": 7333
+      },
+      {
+        "n": 4,
+        "combined": 15314,
+        "layer2Cumulative": 9794
+      },
+      {
+        "n": 5,
+        "combined": 17775,
+        "layer2Cumulative": 12255
+      },
+      {
+        "n": 6,
+        "combined": 20236,
+        "layer2Cumulative": 14716
+      },
+      {
+        "n": 7,
+        "combined": 22697,
+        "layer2Cumulative": 17177
+      },
+      {
+        "n": 8,
+        "combined": 25158,
+        "layer2Cumulative": 19638
+      },
+      {
+        "n": 9,
+        "combined": 27619,
+        "layer2Cumulative": 22099
+      },
+      {
+        "n": 10,
+        "combined": 30080,
+        "layer2Cumulative": 24560
+      },
+      {
+        "n": 11,
+        "combined": 32541,
+        "layer2Cumulative": 27021
+      },
+      {
+        "n": 12,
+        "combined": 35002,
+        "layer2Cumulative": 29482
+      }
+    ],
+    "executor_v2": [
+      {
+        "n": 1,
+        "combined": 2614,
+        "layer2Cumulative": 2433
+      },
+      {
+        "n": 2,
+        "combined": 5097,
+        "layer2Cumulative": 4916
+      },
+      {
+        "n": 3,
+        "combined": 7580,
+        "layer2Cumulative": 7399
+      },
+      {
+        "n": 4,
+        "combined": 10063,
+        "layer2Cumulative": 9882
+      },
+      {
+        "n": 5,
+        "combined": 12546,
+        "layer2Cumulative": 12365
+      },
+      {
+        "n": 6,
+        "combined": 15029,
+        "layer2Cumulative": 14848
+      },
+      {
+        "n": 7,
+        "combined": 17512,
+        "layer2Cumulative": 17331
+      },
+      {
+        "n": 8,
+        "combined": 19995,
+        "layer2Cumulative": 19814
+      },
+      {
+        "n": 9,
+        "combined": 22478,
+        "layer2Cumulative": 22297
+      },
+      {
+        "n": 10,
+        "combined": 24961,
+        "layer2Cumulative": 24780
+      },
+      {
+        "n": 11,
+        "combined": 27444,
+        "layer2Cumulative": 27263
+      },
+      {
+        "n": 12,
+        "combined": 29927,
+        "layer2Cumulative": 29746
+      }
+    ]
+  },
+  "arms": {
+    "mcpjungle": {
+      "id": "mcpjungle",
+      "model": "aggregator_tools_list_plus_fat_call",
+      "runtime": null,
+      "runtimeVersion": null,
+      "layer1": {
+        "once_schema_tokens": 5840,
+        "tools_count": 40,
+        "note": "Full tools/list dump (fat catalog surface); classic counts Layer1 once"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "catalog__catalog_list_001",
+          "result_tokens": 2411,
+          "result_chars": 7655,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2411,
+          "layer2_relist_every_turn": 8251,
+          "latency_ms": 169.215,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 2,
+          "tool": "catalog__catalog_list_002",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 3.701,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 3,
+          "tool": "catalog__catalog_list_003",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 3.145,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 4,
+          "tool": "catalog__catalog_list_004",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.55,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 5,
+          "tool": "catalog__catalog_list_005",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.669,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 6,
+          "tool": "catalog__catalog_list_006",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.552,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 7,
+          "tool": "catalog__catalog_list_007",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.334,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 8,
+          "tool": "catalog__catalog_list_008",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.571,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 9,
+          "tool": "catalog__catalog_list_009",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.576,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 10,
+          "tool": "catalog__catalog_list_010",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 2.397,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 11,
+          "tool": "catalog__catalog_list_011",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 1.97,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 12,
+          "tool": "catalog__catalog_list_012",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "tools_list_tokens": 5840,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 8301,
+          "latency_ms": 1.947,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        }
+      ],
+      "iters": 2500,
+      "call_errors": 0,
+      "task_success_agg": {
+        "ok": 30000,
+        "total": 30000
+      },
+      "resources": {
+        "label": "mcpjungle",
+        "pid": 444696,
+        "n": 86,
+        "rss_mb": {
+          "min": 31.52,
+          "median": 150.94,
+          "max": 152.16
+        },
+        "series": [
+          {
+            "t_s": 0.01,
+            "flow": 0,
+            "rss_mb": 31.52
+          },
+          {
+            "t_s": 0.51,
+            "flow": 0,
+            "rss_mb": 106.44
+          },
+          {
+            "t_s": 1.01,
+            "flow": 0,
+            "rss_mb": 111.72
+          },
+          {
+            "t_s": 1.51,
+            "flow": 0,
+            "rss_mb": 111.97
+          },
+          {
+            "t_s": 2.01,
+            "flow": 0,
+            "rss_mb": 112.32
+          },
+          {
+            "t_s": 2.51,
+            "flow": 0,
+            "rss_mb": 112.69
+          },
+          {
+            "t_s": 3.01,
+            "flow": 0,
+            "rss_mb": 113.76
+          },
+          {
+            "t_s": 3.51,
+            "flow": 0,
+            "rss_mb": 120.77
+          },
+          {
+            "t_s": 4.01,
+            "flow": 0,
+            "rss_mb": 127.2
+          },
+          {
+            "t_s": 4.51,
+            "flow": 0,
+            "rss_mb": 128.03
+          },
+          {
+            "t_s": 5.01,
+            "flow": 0,
+            "rss_mb": 128.32
+          },
+          {
+            "t_s": 5.51,
+            "flow": 0,
+            "rss_mb": 129.14
+          },
+          {
+            "t_s": 6.01,
+            "flow": 0,
+            "rss_mb": 130.04
+          },
+          {
+            "t_s": 6.51,
+            "flow": 0,
+            "rss_mb": 130.67
+          },
+          {
+            "t_s": 7.01,
+            "flow": 0,
+            "rss_mb": 131.67
+          },
+          {
+            "t_s": 7.51,
+            "flow": 0,
+            "rss_mb": 132.39
+          },
+          {
+            "t_s": 8.01,
+            "flow": 0,
+            "rss_mb": 133.08
+          },
+          {
+            "t_s": 8.51,
+            "flow": 0,
+            "rss_mb": 133.2
+          },
+          {
+            "t_s": 9.01,
+            "flow": 0,
+            "rss_mb": 134.13
+          },
+          {
+            "t_s": 9.51,
+            "flow": 0,
+            "rss_mb": 134.98
+          },
+          {
+            "t_s": 10.01,
+            "flow": 0,
+            "rss_mb": 135.65
+          },
+          {
+            "t_s": 10.51,
+            "flow": 0,
+            "rss_mb": 136.35
+          },
+          {
+            "t_s": 11.01,
+            "flow": 0,
+            "rss_mb": 137.29
+          },
+          {
+            "t_s": 11.51,
+            "flow": 0,
+            "rss_mb": 137.76
+          },
+          {
+            "t_s": 12.01,
+            "flow": 0,
+            "rss_mb": 138.49
+          },
+          {
+            "t_s": 12.51,
+            "flow": 0,
+            "rss_mb": 139.21
+          },
+          {
+            "t_s": 13.01,
+            "flow": 0,
+            "rss_mb": 139.99
+          },
+          {
+            "t_s": 13.51,
+            "flow": 0,
+            "rss_mb": 140.65
+          },
+          {
+            "t_s": 14.01,
+            "flow": 0,
+            "rss_mb": 141.35
+          },
+          {
+            "t_s": 14.51,
+            "flow": 0,
+            "rss_mb": 142.27
+          },
+          {
+            "t_s": 15.01,
+            "flow": 0,
+            "rss_mb": 142.93
+          },
+          {
+            "t_s": 15.51,
+            "flow": 0,
+            "rss_mb": 143.56
+          },
+          {
+            "t_s": 16.01,
+            "flow": 0,
+            "rss_mb": 144.21
+          },
+          {
+            "t_s": 16.51,
+            "flow": 0,
+            "rss_mb": 144.86
+          },
+          {
+            "t_s": 17.01,
+            "flow": 0,
+            "rss_mb": 145.5
+          },
+          {
+            "t_s": 17.51,
+            "flow": 0,
+            "rss_mb": 146.09
+          },
+          {
+            "t_s": 18.02,
+            "flow": 0,
+            "rss_mb": 146.77
+          },
+          {
+            "t_s": 18.52,
+            "flow": 0,
+            "rss_mb": 147.09
+          },
+          {
+            "t_s": 19.02,
+            "flow": 0,
+            "rss_mb": 147.75
+          },
+          {
+            "t_s": 19.52,
+            "flow": 0,
+            "rss_mb": 148.71
+          },
+          {
+            "t_s": 20.02,
+            "flow": 0,
+            "rss_mb": 149.38
+          },
+          {
+            "t_s": 20.52,
+            "flow": 0,
+            "rss_mb": 150.28
+          },
+          {
+            "t_s": 21.02,
+            "flow": 0,
+            "rss_mb": 150.94
+          },
+          {
+            "t_s": 21.52,
+            "flow": 0,
+            "rss_mb": 151.57
+          },
+          {
+            "t_s": 22.02,
+            "flow": 0,
+            "rss_mb": 151.86
+          },
+          {
+            "t_s": 22.52,
+            "flow": 0,
+            "rss_mb": 151.86
+          },
+          {
+            "t_s": 23.02,
+            "flow": 0,
+            "rss_mb": 151.86
+          },
+          {
+            "t_s": 23.52,
+            "flow": 0,
+            "rss_mb": 151.93
+          },
+          {
+            "t_s": 24.02,
+            "flow": 0,
+            "rss_mb": 151.93
+          },
+          {
+            "t_s": 24.52,
+            "flow": 0,
+            "rss_mb": 151.93
+          },
+          {
+            "t_s": 25.02,
+            "flow": 0,
+            "rss_mb": 151.94
+          },
+          {
+            "t_s": 25.52,
+            "flow": 0,
+            "rss_mb": 151.83
+          },
+          {
+            "t_s": 26.02,
+            "flow": 0,
+            "rss_mb": 151.83
+          },
+          {
+            "t_s": 26.52,
+            "flow": 0,
+            "rss_mb": 151.77
+          },
+          {
+            "t_s": 27.02,
+            "flow": 0,
+            "rss_mb": 152.08
+          },
+          {
+            "t_s": 27.52,
+            "flow": 0,
+            "rss_mb": 152.08
+          },
+          {
+            "t_s": 28.02,
+            "flow": 0,
+            "rss_mb": 152.08
+          },
+          {
+            "t_s": 28.52,
+            "flow": 0,
+            "rss_mb": 152.08
+          },
+          {
+            "t_s": 29.02,
+            "flow": 0,
+            "rss_mb": 152.08
+          },
+          {
+            "t_s": 29.52,
+            "flow": 0,
+            "rss_mb": 152.08
+          },
+          {
+            "t_s": 30.02,
+            "flow": 0,
+            "rss_mb": 152.08
+          },
+          {
+            "t_s": 30.52,
+            "flow": 0,
+            "rss_mb": 152.11
+          },
+          {
+            "t_s": 31.02,
+            "flow": 0,
+            "rss_mb": 152.11
+          },
+          {
+            "t_s": 31.52,
+            "flow": 0,
+            "rss_mb": 152.05
+          },
+          {
+            "t_s": 32.02,
+            "flow": 0,
+            "rss_mb": 152.05
+          },
+          {
+            "t_s": 32.52,
+            "flow": 0,
+            "rss_mb": 152.05
+          },
+          {
+            "t_s": 33.02,
+            "flow": 0,
+            "rss_mb": 152.05
+          },
+          {
+            "t_s": 33.52,
+            "flow": 0,
+            "rss_mb": 152.05
+          },
+          {
+            "t_s": 34.02,
+            "flow": 0,
+            "rss_mb": 152.11
+          },
+          {
+            "t_s": 34.52,
+            "flow": 0,
+            "rss_mb": 152.11
+          },
+          {
+            "t_s": 35.02,
+            "flow": 0,
+            "rss_mb": 152.16
+          },
+          {
+            "t_s": 35.52,
+            "flow": 0,
+            "rss_mb": 152.16
+          },
+          {
+            "t_s": 36.02,
+            "flow": 0,
+            "rss_mb": 152.1
+          },
+          {
+            "t_s": 36.52,
+            "flow": 0,
+            "rss_mb": 152.1
+          },
+          {
+            "t_s": 37.02,
+            "flow": 0,
+            "rss_mb": 152.1
+          },
+          {
+            "t_s": 37.52,
+            "flow": 0,
+            "rss_mb": 152.1
+          },
+          {
+            "t_s": 38.02,
+            "flow": 0,
+            "rss_mb": 152.1
+          },
+          {
+            "t_s": 38.52,
+            "flow": 0,
+            "rss_mb": 152.1
+          },
+          {
+            "t_s": 39.02,
+            "flow": 0,
+            "rss_mb": 152.1
+          },
+          {
+            "t_s": 39.52,
+            "flow": 0,
+            "rss_mb": 152.1
+          },
+          {
+            "t_s": 40.02,
+            "flow": 0,
+            "rss_mb": 152.11
+          },
+          {
+            "t_s": 40.52,
+            "flow": 0,
+            "rss_mb": 152
+          },
+          {
+            "t_s": 41.03,
+            "flow": 0,
+            "rss_mb": 152.16
+          },
+          {
+            "t_s": 41.53,
+            "flow": 0,
+            "rss_mb": 152.01
+          },
+          {
+            "t_s": 42.03,
+            "flow": 0,
+            "rss_mb": 152.12
+          },
+          {
+            "t_s": 42.53,
+            "flow": 0,
+            "rss_mb": 152.12
+          }
+        ],
+        "trend": {
+          "classification": "rise_then_plateau",
+          "reason": "RSS rises from ready/early samples then flattens in the last fifth of the run",
+          "early_median_mb": 127.2,
+          "mid_median_mb": 151.83,
+          "late_median_mb": 152.1,
+          "rise_early_to_late_mb": 24.9,
+          "rise_mid_to_late_mb": 0.27,
+          "mb_per_1000_flows": null,
+          "n_series": 86
+        }
+      },
+      "startup": {
+        "ready_ms": null,
+        "rss_mb_ready": 31.52
+      },
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2411,
+          "layer2Cumulative": 2411,
+          "combined": 8251,
+          "layer2ShareOfCombined": 29.2
+        },
+        {
+          "n": 2,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 4872,
+          "combined": 10712,
+          "layer2ShareOfCombined": 45.5
+        },
+        {
+          "n": 3,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 7333,
+          "combined": 13173,
+          "layer2ShareOfCombined": 55.7
+        },
+        {
+          "n": 4,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 9794,
+          "combined": 15634,
+          "layer2ShareOfCombined": 62.6
+        },
+        {
+          "n": 5,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 12255,
+          "combined": 18095,
+          "layer2ShareOfCombined": 67.7
+        },
+        {
+          "n": 6,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 14716,
+          "combined": 20556,
+          "layer2ShareOfCombined": 71.6
+        },
+        {
+          "n": 7,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 17177,
+          "combined": 23017,
+          "layer2ShareOfCombined": 74.6
+        },
+        {
+          "n": 8,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 19638,
+          "combined": 25478,
+          "layer2ShareOfCombined": 77.1
+        },
+        {
+          "n": 9,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 22099,
+          "combined": 27939,
+          "layer2ShareOfCombined": 79.1
+        },
+        {
+          "n": 10,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 24560,
+          "combined": 30400,
+          "layer2ShareOfCombined": 80.8
+        },
+        {
+          "n": 11,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 27021,
+          "combined": 32861,
+          "layer2ShareOfCombined": 82.2
+        },
+        {
+          "n": 12,
+          "layer1Once": 5840,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 29482,
+          "combined": 35322,
+          "layer2ShareOfCombined": 83.5
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8251,
+          "layer2Cumulative": 8251,
+          "combined": 8251,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 16552,
+          "combined": 16552,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 24853,
+          "combined": 24853,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 33154,
+          "combined": 33154,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 41455,
+          "combined": 41455,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 49756,
+          "combined": 49756,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 58057,
+          "combined": 58057,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 66358,
+          "combined": 66358,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 74659,
+          "combined": 74659,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 82960,
+          "combined": 82960,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 91261,
+          "combined": 91261,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 8301,
+          "layer2Cumulative": 99562,
+          "combined": 99562,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 30000,
+        "turns_total": 30000,
+        "flows": 2500,
+        "turns_per_flow": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "runtime": null,
+        "runtime_version": null,
+        "ready_ms": null,
+        "transport": null,
+        "rss_mb_ready": 31.52,
+        "rss_mb_min": 31.52,
+        "rss_mb_median": 150.94,
+        "rss_mb_max": 152.16,
+        "rss_trend": {
+          "classification": "rise_then_plateau",
+          "reason": "RSS rises from ready/early samples then flattens in the last fifth of the run",
+          "early_median_mb": 127.2,
+          "mid_median_mb": 151.83,
+          "late_median_mb": 152.1,
+          "rise_early_to_late_mb": 24.9,
+          "rise_mid_to_late_mb": 0.27,
+          "mb_per_1000_flows": null,
+          "n_series": 86
+        },
+        "definitions_tokens": 5840,
+        "discovery_tokens_sum": 0,
+        "mean_discovery_tokens": 0,
+        "result_tokens_sum": 29482,
+        "mean_result_tokens": 2456.8,
+        "layer1_once_tokens": 5840,
+        "mean_layer2_tokens": 2456.8,
+        "combined_at_n": 35322,
+        "combined_rebuild": 35322,
+        "combined_relist_every_turn_at_n": 99562,
+        "flows": 2500,
+        "turns_per_flow": 12,
+        "total_turns": 30000,
+        "rpcs_per_turn": 1,
+        "ms_per_call_p50": 1.22,
+        "flow_e2e_ms": {
+          "n": 2500,
+          "p50_ms": 16.214,
+          "p95_ms": 21.726,
+          "p99_ms": 29.572,
+          "p999_ms": 223.906,
+          "mean_ms": 17.115,
+          "min_ms": 12.214,
+          "max_ms": 366.674,
+          "n_ge_100ms": 3,
+          "n_ge_200ms": 3,
+          "n_ge_300ms": 2,
+          "worst": [
+            {
+              "i": 1,
+              "ms": 366.674
+            },
+            {
+              "i": 976,
+              "ms": 312.136
+            },
+            {
+              "i": 1934,
+              "ms": 223.906
+            },
+            {
+              "i": 1164,
+              "ms": 79.872
+            },
+            {
+              "i": 251,
+              "ms": 59.038
+            },
+            {
+              "i": 318,
+              "ms": 55.73
+            },
+            {
+              "i": 975,
+              "ms": 51.964
+            },
+            {
+              "i": 125,
+              "ms": 47.53
+            }
+          ]
+        },
+        "turn_latency_ms": {
+          "n": 30000,
+          "p50_ms": 1.22,
+          "p95_ms": 2,
+          "p99_ms": 3.402,
+          "p999_ms": 7.113,
+          "mean_ms": 1.353,
+          "min_ms": 0.841,
+          "max_ms": 260.746,
+          "n_ge_100ms": 3,
+          "n_ge_200ms": 1,
+          "n_ge_300ms": 0,
+          "worst": [
+            {
+              "i": 11704,
+              "ms": 260.746
+            },
+            {
+              "i": 1,
+              "ms": 169.215
+            },
+            {
+              "i": 23207,
+              "ms": 154.004
+            },
+            {
+              "i": 11703,
+              "ms": 38.057
+            },
+            {
+              "i": 13961,
+              "ms": 33.338
+            },
+            {
+              "i": 13962,
+              "ms": 24.399
+            },
+            {
+              "i": 3805,
+              "ms": 21.719
+            },
+            {
+              "i": 23206,
+              "ms": 20.336
+            }
+          ]
+        },
+        "call_errors": 0,
+        "task_success_ok": true,
+        "task_success_rate": 1,
+        "token_rebuild_note": "Classic Layer1 = search+execute schemas; discovery = Σ search hit tokens."
+      }
+    },
+    "agentgateway": {
+      "id": "agentgateway",
+      "model": "aggregator_tools_list_plus_fat_call",
+      "runtime": null,
+      "runtimeVersion": null,
+      "layer1": {
+        "once_schema_tokens": 5520,
+        "tools_count": 40,
+        "note": "Full tools/list dump (fat catalog surface); classic counts Layer1 once"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "catalog_list_001",
+          "result_tokens": 2411,
+          "result_chars": 7655,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2411,
+          "layer2_relist_every_turn": 7931,
+          "latency_ms": 5.335,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 2,
+          "tool": "catalog_list_002",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.596,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 3,
+          "tool": "catalog_list_003",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.901,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 4,
+          "tool": "catalog_list_004",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.865,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 5,
+          "tool": "catalog_list_005",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.394,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 6,
+          "tool": "catalog_list_006",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.023,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 7,
+          "tool": "catalog_list_007",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 4.996,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 8,
+          "tool": "catalog_list_008",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.871,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 9,
+          "tool": "catalog_list_009",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.893,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 10,
+          "tool": "catalog_list_010",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.917,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 11,
+          "tool": "catalog_list_011",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.613,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 12,
+          "tool": "catalog_list_012",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.828,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        }
+      ],
+      "iters": 2500,
+      "call_errors": 0,
+      "task_success_agg": {
+        "ok": 30000,
+        "total": 30000
+      },
+      "resources": {
+        "label": "agentgateway",
+        "pid": 444746,
+        "n": 72,
+        "rss_mb": {
+          "min": 173.49,
+          "median": 210.73,
+          "max": 211.18
+        },
+        "series": [
+          {
+            "t_s": 0,
+            "flow": 0,
+            "rss_mb": 173.49
+          },
+          {
+            "t_s": 0.51,
+            "flow": 0,
+            "rss_mb": 180.84
+          },
+          {
+            "t_s": 1.01,
+            "flow": 0,
+            "rss_mb": 181.6
+          },
+          {
+            "t_s": 1.51,
+            "flow": 0,
+            "rss_mb": 182.36
+          },
+          {
+            "t_s": 2.01,
+            "flow": 0,
+            "rss_mb": 182.64
+          },
+          {
+            "t_s": 2.51,
+            "flow": 0,
+            "rss_mb": 183.74
+          },
+          {
+            "t_s": 3.01,
+            "flow": 0,
+            "rss_mb": 196.77
+          },
+          {
+            "t_s": 3.51,
+            "flow": 0,
+            "rss_mb": 197.57
+          },
+          {
+            "t_s": 4.01,
+            "flow": 0,
+            "rss_mb": 198.25
+          },
+          {
+            "t_s": 4.51,
+            "flow": 0,
+            "rss_mb": 199.17
+          },
+          {
+            "t_s": 5.01,
+            "flow": 0,
+            "rss_mb": 200.41
+          },
+          {
+            "t_s": 5.51,
+            "flow": 0,
+            "rss_mb": 201.38
+          },
+          {
+            "t_s": 6.01,
+            "flow": 0,
+            "rss_mb": 202.36
+          },
+          {
+            "t_s": 6.51,
+            "flow": 0,
+            "rss_mb": 203.31
+          },
+          {
+            "t_s": 7.01,
+            "flow": 0,
+            "rss_mb": 204.27
+          },
+          {
+            "t_s": 7.51,
+            "flow": 0,
+            "rss_mb": 205.21
+          },
+          {
+            "t_s": 8.01,
+            "flow": 0,
+            "rss_mb": 196.92
+          },
+          {
+            "t_s": 8.51,
+            "flow": 0,
+            "rss_mb": 197.88
+          },
+          {
+            "t_s": 9.01,
+            "flow": 0,
+            "rss_mb": 198.31
+          },
+          {
+            "t_s": 9.51,
+            "flow": 0,
+            "rss_mb": 199.28
+          },
+          {
+            "t_s": 10.01,
+            "flow": 0,
+            "rss_mb": 200.2
+          },
+          {
+            "t_s": 10.51,
+            "flow": 0,
+            "rss_mb": 201.15
+          },
+          {
+            "t_s": 11.01,
+            "flow": 0,
+            "rss_mb": 202.37
+          },
+          {
+            "t_s": 11.51,
+            "flow": 0,
+            "rss_mb": 203.31
+          },
+          {
+            "t_s": 12.01,
+            "flow": 0,
+            "rss_mb": 204.25
+          },
+          {
+            "t_s": 12.51,
+            "flow": 0,
+            "rss_mb": 205.19
+          },
+          {
+            "t_s": 13.01,
+            "flow": 0,
+            "rss_mb": 206.13
+          },
+          {
+            "t_s": 13.51,
+            "flow": 0,
+            "rss_mb": 207.05
+          },
+          {
+            "t_s": 14.01,
+            "flow": 0,
+            "rss_mb": 207.71
+          },
+          {
+            "t_s": 14.51,
+            "flow": 0,
+            "rss_mb": 208.59
+          },
+          {
+            "t_s": 15.01,
+            "flow": 0,
+            "rss_mb": 209.52
+          },
+          {
+            "t_s": 15.51,
+            "flow": 0,
+            "rss_mb": 210.45
+          },
+          {
+            "t_s": 16.01,
+            "flow": 0,
+            "rss_mb": 211.06
+          },
+          {
+            "t_s": 16.51,
+            "flow": 0,
+            "rss_mb": 211.06
+          },
+          {
+            "t_s": 17.01,
+            "flow": 0,
+            "rss_mb": 211.06
+          },
+          {
+            "t_s": 17.51,
+            "flow": 0,
+            "rss_mb": 211.06
+          },
+          {
+            "t_s": 18.01,
+            "flow": 0,
+            "rss_mb": 211.06
+          },
+          {
+            "t_s": 18.51,
+            "flow": 0,
+            "rss_mb": 211.09
+          },
+          {
+            "t_s": 19.01,
+            "flow": 0,
+            "rss_mb": 211.09
+          },
+          {
+            "t_s": 19.51,
+            "flow": 0,
+            "rss_mb": 211.02
+          },
+          {
+            "t_s": 20.01,
+            "flow": 0,
+            "rss_mb": 211.02
+          },
+          {
+            "t_s": 20.51,
+            "flow": 0,
+            "rss_mb": 211.02
+          },
+          {
+            "t_s": 21.01,
+            "flow": 0,
+            "rss_mb": 211.18
+          },
+          {
+            "t_s": 21.51,
+            "flow": 0,
+            "rss_mb": 211.18
+          },
+          {
+            "t_s": 22.02,
+            "flow": 0,
+            "rss_mb": 211.18
+          },
+          {
+            "t_s": 22.51,
+            "flow": 0,
+            "rss_mb": 211.08
+          },
+          {
+            "t_s": 23.02,
+            "flow": 0,
+            "rss_mb": 211.08
+          },
+          {
+            "t_s": 23.62,
+            "flow": 0,
+            "rss_mb": 211.08
+          },
+          {
+            "t_s": 24.12,
+            "flow": 0,
+            "rss_mb": 211.08
+          },
+          {
+            "t_s": 24.62,
+            "flow": 0,
+            "rss_mb": 211.06
+          },
+          {
+            "t_s": 25.12,
+            "flow": 0,
+            "rss_mb": 211.06
+          },
+          {
+            "t_s": 25.62,
+            "flow": 0,
+            "rss_mb": 211.06
+          },
+          {
+            "t_s": 26.12,
+            "flow": 0,
+            "rss_mb": 211.06
+          },
+          {
+            "t_s": 26.62,
+            "flow": 0,
+            "rss_mb": 211.07
+          },
+          {
+            "t_s": 27.12,
+            "flow": 0,
+            "rss_mb": 211.07
+          },
+          {
+            "t_s": 27.62,
+            "flow": 0,
+            "rss_mb": 211.08
+          },
+          {
+            "t_s": 28.12,
+            "flow": 0,
+            "rss_mb": 211.08
+          },
+          {
+            "t_s": 28.77,
+            "flow": 0,
+            "rss_mb": 211.08
+          },
+          {
+            "t_s": 29.27,
+            "flow": 0,
+            "rss_mb": 211.09
+          },
+          {
+            "t_s": 29.77,
+            "flow": 0,
+            "rss_mb": 211.09
+          },
+          {
+            "t_s": 30.27,
+            "flow": 0,
+            "rss_mb": 211.09
+          },
+          {
+            "t_s": 30.77,
+            "flow": 0,
+            "rss_mb": 211.09
+          },
+          {
+            "t_s": 31.27,
+            "flow": 0,
+            "rss_mb": 211.09
+          },
+          {
+            "t_s": 31.77,
+            "flow": 0,
+            "rss_mb": 211.09
+          },
+          {
+            "t_s": 32.27,
+            "flow": 0,
+            "rss_mb": 211.09
+          },
+          {
+            "t_s": 32.77,
+            "flow": 0,
+            "rss_mb": 211.09
+          },
+          {
+            "t_s": 33.27,
+            "flow": 0,
+            "rss_mb": 210.73
+          },
+          {
+            "t_s": 33.77,
+            "flow": 0,
+            "rss_mb": 210.73
+          },
+          {
+            "t_s": 34.27,
+            "flow": 0,
+            "rss_mb": 210.73
+          },
+          {
+            "t_s": 34.77,
+            "flow": 0,
+            "rss_mb": 210.61
+          },
+          {
+            "t_s": 35.27,
+            "flow": 0,
+            "rss_mb": 210.59
+          },
+          {
+            "t_s": 35.78,
+            "flow": 0,
+            "rss_mb": 210.59
+          }
+        ],
+        "trend": {
+          "classification": "plateau",
+          "reason": "late-window RSS stable relative to mid-window",
+          "early_median_mb": 196.77,
+          "mid_median_mb": 211.06,
+          "late_median_mb": 211.09,
+          "rise_early_to_late_mb": 14.32,
+          "rise_mid_to_late_mb": 0.03,
+          "mb_per_1000_flows": null,
+          "n_series": 72
+        }
+      },
+      "startup": {
+        "ready_ms": null,
+        "rss_mb_ready": 173.49
+      },
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2411,
+          "layer2Cumulative": 2411,
+          "combined": 7931,
+          "layer2ShareOfCombined": 30.4
+        },
+        {
+          "n": 2,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 4872,
+          "combined": 10392,
+          "layer2ShareOfCombined": 46.9
+        },
+        {
+          "n": 3,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 7333,
+          "combined": 12853,
+          "layer2ShareOfCombined": 57.1
+        },
+        {
+          "n": 4,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 9794,
+          "combined": 15314,
+          "layer2ShareOfCombined": 64
+        },
+        {
+          "n": 5,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 12255,
+          "combined": 17775,
+          "layer2ShareOfCombined": 68.9
+        },
+        {
+          "n": 6,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 14716,
+          "combined": 20236,
+          "layer2ShareOfCombined": 72.7
+        },
+        {
+          "n": 7,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 17177,
+          "combined": 22697,
+          "layer2ShareOfCombined": 75.7
+        },
+        {
+          "n": 8,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 19638,
+          "combined": 25158,
+          "layer2ShareOfCombined": 78.1
+        },
+        {
+          "n": 9,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 22099,
+          "combined": 27619,
+          "layer2ShareOfCombined": 80
+        },
+        {
+          "n": 10,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 24560,
+          "combined": 30080,
+          "layer2ShareOfCombined": 81.6
+        },
+        {
+          "n": 11,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 27021,
+          "combined": 32541,
+          "layer2ShareOfCombined": 83
+        },
+        {
+          "n": 12,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 29482,
+          "combined": 35002,
+          "layer2ShareOfCombined": 84.2
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7931,
+          "layer2Cumulative": 7931,
+          "combined": 7931,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 15912,
+          "combined": 15912,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 23893,
+          "combined": 23893,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 31874,
+          "combined": 31874,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 39855,
+          "combined": 39855,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 47836,
+          "combined": 47836,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 55817,
+          "combined": 55817,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 63798,
+          "combined": 63798,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 71779,
+          "combined": 71779,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 79760,
+          "combined": 79760,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 87741,
+          "combined": 87741,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 95722,
+          "combined": 95722,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 30000,
+        "turns_total": 30000,
+        "flows": 2500,
+        "turns_per_flow": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "runtime": null,
+        "runtime_version": null,
+        "ready_ms": null,
+        "transport": null,
+        "rss_mb_ready": 173.49,
+        "rss_mb_min": 173.49,
+        "rss_mb_median": 210.73,
+        "rss_mb_max": 211.18,
+        "rss_trend": {
+          "classification": "plateau",
+          "reason": "late-window RSS stable relative to mid-window",
+          "early_median_mb": 196.77,
+          "mid_median_mb": 211.06,
+          "late_median_mb": 211.09,
+          "rise_early_to_late_mb": 14.32,
+          "rise_mid_to_late_mb": 0.03,
+          "mb_per_1000_flows": null,
+          "n_series": 72
+        },
+        "definitions_tokens": 5520,
+        "discovery_tokens_sum": 0,
+        "mean_discovery_tokens": 0,
+        "result_tokens_sum": 29482,
+        "mean_result_tokens": 2456.8,
+        "layer1_once_tokens": 5520,
+        "mean_layer2_tokens": 2456.8,
+        "combined_at_n": 35002,
+        "combined_rebuild": 35002,
+        "combined_relist_every_turn_at_n": 95722,
+        "flows": 2500,
+        "turns_per_flow": 12,
+        "total_turns": 30000,
+        "rpcs_per_turn": 1,
+        "ms_per_call_p50": 1.04,
+        "flow_e2e_ms": {
+          "n": 2500,
+          "p50_ms": 13.738,
+          "p95_ms": 18.003,
+          "p99_ms": 23.228,
+          "p999_ms": 129.766,
+          "mean_ms": 14.351,
+          "min_ms": 9.509,
+          "max_ms": 520.334,
+          "n_ge_100ms": 3,
+          "n_ge_200ms": 1,
+          "n_ge_300ms": 1,
+          "worst": [
+            {
+              "i": 1605,
+              "ms": 520.334
+            },
+            {
+              "i": 1,
+              "ms": 182.528
+            },
+            {
+              "i": 497,
+              "ms": 129.766
+            },
+            {
+              "i": 1604,
+              "ms": 71.631
+            },
+            {
+              "i": 126,
+              "ms": 56.975
+            },
+            {
+              "i": 251,
+              "ms": 56.14
+            },
+            {
+              "i": 81,
+              "ms": 51.238
+            },
+            {
+              "i": 80,
+              "ms": 46.356
+            }
+          ]
+        },
+        "turn_latency_ms": {
+          "n": 30000,
+          "p50_ms": 1.039,
+          "p95_ms": 1.537,
+          "p99_ms": 2.56,
+          "p999_ms": 6.722,
+          "mean_ms": 1.13,
+          "min_ms": 0.709,
+          "max_ms": 473.144,
+          "n_ge_100ms": 1,
+          "n_ge_200ms": 1,
+          "n_ge_300ms": 1,
+          "worst": [
+            {
+              "i": 19250,
+              "ms": 473.144
+            },
+            {
+              "i": 5958,
+              "ms": 57.684
+            },
+            {
+              "i": 19249,
+              "ms": 34.984
+            },
+            {
+              "i": 5954,
+              "ms": 32.992
+            },
+            {
+              "i": 19243,
+              "ms": 30.011
+            },
+            {
+              "i": 5957,
+              "ms": 27.32
+            },
+            {
+              "i": 3008,
+              "ms": 20.597
+            },
+            {
+              "i": 1501,
+              "ms": 16.17
+            }
+          ]
+        },
+        "call_errors": 0,
+        "task_success_ok": true,
+        "task_success_rate": 1,
+        "token_rebuild_note": "Classic Layer1 = search+execute schemas; discovery = Σ search hit tokens."
+      }
+    },
+    "executor_v2": {
+      "id": "executor_v2",
+      "model": "streamable_http_mcp_code_execute_fat_static",
+      "runtime": "executor-v2",
+      "runtimeVersion": "2.0.0-beta.15",
+      "transport": "streamable_http",
+      "mcpUrl": "http://127.0.0.1:4312/mcp",
+      "discovery_note": "Harness-authored execute returns fatPayload; skills/search not called (discovery=0)",
+      "layer1": {
+        "once_schema_tokens": 181,
+        "tools_count": 1,
+        "tools_list_count_full": 3,
+        "tools_list_schema_tokens_full": 815,
+        "note": "execute schema only (catalog not published as N tools)"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2433,
+          "result_chars": 7746,
+          "layer2_classic": 2433,
+          "layer2_relist_every_turn": 2433,
+          "latency_ms": 28.248,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 2,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 11.163,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 3,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 10.038,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 4,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 11.056,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 5,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 9.075,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 6,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 9.08,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 7,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 9.38,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 8,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 7.832,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 9,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 7.608,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 10,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 7.611,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 11,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7908,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 7.38,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 12,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7908,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 7.374,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        }
+      ],
+      "iters": 2500,
+      "call_errors": 0,
+      "task_success_agg": {
+        "ok": 30000,
+        "total": 30000
+      },
+      "resources": {
+        "label": "executor_v2",
+        "pid": 335516,
+        "n": 360,
+        "rss_mb": {
+          "min": 537.7734375,
+          "median": 880.87109375,
+          "max": 1267.7734375
+        },
+        "series": [
+          {
+            "t_s": 0,
+            "flow": 0,
+            "rss_mb": 537.77
+          },
+          {
+            "t_s": 1.5,
+            "flow": 17,
+            "rss_mb": 764.96
+          },
+          {
+            "t_s": 3,
+            "flow": 36,
+            "rss_mb": 923.96
+          },
+          {
+            "t_s": 4.5,
+            "flow": 55,
+            "rss_mb": 744.04
+          },
+          {
+            "t_s": 6,
+            "flow": 76,
+            "rss_mb": 776.78
+          },
+          {
+            "t_s": 7.5,
+            "flow": 95,
+            "rss_mb": 748.72
+          },
+          {
+            "t_s": 9,
+            "flow": 115,
+            "rss_mb": 774.37
+          },
+          {
+            "t_s": 10.5,
+            "flow": 135,
+            "rss_mb": 781.02
+          },
+          {
+            "t_s": 12.01,
+            "flow": 155,
+            "rss_mb": 801.02
+          },
+          {
+            "t_s": 13.52,
+            "flow": 173,
+            "rss_mb": 784.03
+          },
+          {
+            "t_s": 15.02,
+            "flow": 191,
+            "rss_mb": 866.33
+          },
+          {
+            "t_s": 16.52,
+            "flow": 210,
+            "rss_mb": 820.74
+          },
+          {
+            "t_s": 18.02,
+            "flow": 230,
+            "rss_mb": 1023
+          },
+          {
+            "t_s": 19.52,
+            "flow": 248,
+            "rss_mb": 898.87
+          },
+          {
+            "t_s": 21.02,
+            "flow": 267,
+            "rss_mb": 1053.57
+          },
+          {
+            "t_s": 22.52,
+            "flow": 286,
+            "rss_mb": 931.68
+          },
+          {
+            "t_s": 24.02,
+            "flow": 305,
+            "rss_mb": 931.19
+          },
+          {
+            "t_s": 25.52,
+            "flow": 323,
+            "rss_mb": 792.53
+          },
+          {
+            "t_s": 27.02,
+            "flow": 342,
+            "rss_mb": 1014.7
+          },
+          {
+            "t_s": 28.53,
+            "flow": 360,
+            "rss_mb": 842.57
+          },
+          {
+            "t_s": 30.03,
+            "flow": 381,
+            "rss_mb": 823.39
+          },
+          {
+            "t_s": 31.53,
+            "flow": 400,
+            "rss_mb": 881.63
+          },
+          {
+            "t_s": 33.03,
+            "flow": 420,
+            "rss_mb": 816.05
+          },
+          {
+            "t_s": 34.53,
+            "flow": 439,
+            "rss_mb": 808.44
+          },
+          {
+            "t_s": 36.03,
+            "flow": 457,
+            "rss_mb": 818.8
+          },
+          {
+            "t_s": 37.53,
+            "flow": 476,
+            "rss_mb": 1146.95
+          },
+          {
+            "t_s": 39.03,
+            "flow": 495,
+            "rss_mb": 908.08
+          },
+          {
+            "t_s": 40.53,
+            "flow": 514,
+            "rss_mb": 886.39
+          },
+          {
+            "t_s": 42.03,
+            "flow": 534,
+            "rss_mb": 1070.81
+          },
+          {
+            "t_s": 43.53,
+            "flow": 553,
+            "rss_mb": 744
+          },
+          {
+            "t_s": 45.04,
+            "flow": 573,
+            "rss_mb": 786.17
+          },
+          {
+            "t_s": 46.54,
+            "flow": 593,
+            "rss_mb": 739.84
+          },
+          {
+            "t_s": 48.05,
+            "flow": 613,
+            "rss_mb": 765.68
+          },
+          {
+            "t_s": 49.55,
+            "flow": 634,
+            "rss_mb": 751.46
+          },
+          {
+            "t_s": 51.05,
+            "flow": 655,
+            "rss_mb": 839.22
+          },
+          {
+            "t_s": 52.55,
+            "flow": 675,
+            "rss_mb": 839.66
+          },
+          {
+            "t_s": 54.05,
+            "flow": 697,
+            "rss_mb": 785.55
+          },
+          {
+            "t_s": 55.55,
+            "flow": 719,
+            "rss_mb": 856.1
+          },
+          {
+            "t_s": 57.05,
+            "flow": 741,
+            "rss_mb": 1022.7
+          },
+          {
+            "t_s": 58.55,
+            "flow": 763,
+            "rss_mb": 971.69
+          },
+          {
+            "t_s": 60.05,
+            "flow": 785,
+            "rss_mb": 975.46
+          },
+          {
+            "t_s": 61.55,
+            "flow": 807,
+            "rss_mb": 972.1
+          },
+          {
+            "t_s": 63.06,
+            "flow": 830,
+            "rss_mb": 879.92
+          },
+          {
+            "t_s": 64.56,
+            "flow": 852,
+            "rss_mb": 878.88
+          },
+          {
+            "t_s": 66.06,
+            "flow": 874,
+            "rss_mb": 881.02
+          },
+          {
+            "t_s": 67.56,
+            "flow": 896,
+            "rss_mb": 879.62
+          },
+          {
+            "t_s": 69.06,
+            "flow": 919,
+            "rss_mb": 880.86
+          },
+          {
+            "t_s": 70.56,
+            "flow": 941,
+            "rss_mb": 882.23
+          },
+          {
+            "t_s": 72.06,
+            "flow": 964,
+            "rss_mb": 883.16
+          },
+          {
+            "t_s": 73.56,
+            "flow": 985,
+            "rss_mb": 872.68
+          },
+          {
+            "t_s": 75.06,
+            "flow": 1008,
+            "rss_mb": 874.21
+          },
+          {
+            "t_s": 76.56,
+            "flow": 1030,
+            "rss_mb": 1045.77
+          },
+          {
+            "t_s": 78.06,
+            "flow": 1052,
+            "rss_mb": 873.35
+          },
+          {
+            "t_s": 79.56,
+            "flow": 1074,
+            "rss_mb": 874.64
+          },
+          {
+            "t_s": 81.06,
+            "flow": 1097,
+            "rss_mb": 885.99
+          },
+          {
+            "t_s": 82.56,
+            "flow": 1119,
+            "rss_mb": 900.36
+          },
+          {
+            "t_s": 84.06,
+            "flow": 1141,
+            "rss_mb": 761.06
+          },
+          {
+            "t_s": 85.56,
+            "flow": 1163,
+            "rss_mb": 778.99
+          },
+          {
+            "t_s": 87.06,
+            "flow": 1186,
+            "rss_mb": 778.46
+          },
+          {
+            "t_s": 88.56,
+            "flow": 1208,
+            "rss_mb": 806.82
+          },
+          {
+            "t_s": 90.06,
+            "flow": 1228,
+            "rss_mb": 875.11
+          },
+          {
+            "t_s": 91.56,
+            "flow": 1249,
+            "rss_mb": 1130.42
+          },
+          {
+            "t_s": 93.06,
+            "flow": 1269,
+            "rss_mb": 905.44
+          },
+          {
+            "t_s": 94.56,
+            "flow": 1290,
+            "rss_mb": 1120.91
+          },
+          {
+            "t_s": 96.06,
+            "flow": 1311,
+            "rss_mb": 825.77
+          },
+          {
+            "t_s": 97.56,
+            "flow": 1331,
+            "rss_mb": 838
+          },
+          {
+            "t_s": 99.06,
+            "flow": 1352,
+            "rss_mb": 847.58
+          },
+          {
+            "t_s": 100.56,
+            "flow": 1373,
+            "rss_mb": 839.52
+          },
+          {
+            "t_s": 102.06,
+            "flow": 1394,
+            "rss_mb": 862.98
+          },
+          {
+            "t_s": 103.57,
+            "flow": 1415,
+            "rss_mb": 859.27
+          },
+          {
+            "t_s": 105.07,
+            "flow": 1436,
+            "rss_mb": 872.93
+          },
+          {
+            "t_s": 106.57,
+            "flow": 1456,
+            "rss_mb": 827.01
+          },
+          {
+            "t_s": 108.07,
+            "flow": 1476,
+            "rss_mb": 972.21
+          },
+          {
+            "t_s": 109.57,
+            "flow": 1497,
+            "rss_mb": 863.32
+          },
+          {
+            "t_s": 111.07,
+            "flow": 1518,
+            "rss_mb": 851.34
+          },
+          {
+            "t_s": 112.57,
+            "flow": 1540,
+            "rss_mb": 1267.77
+          },
+          {
+            "t_s": 114.07,
+            "flow": 1560,
+            "rss_mb": 932.64
+          },
+          {
+            "t_s": 115.57,
+            "flow": 1583,
+            "rss_mb": 888.89
+          },
+          {
+            "t_s": 117.07,
+            "flow": 1605,
+            "rss_mb": 912.93
+          },
+          {
+            "t_s": 118.57,
+            "flow": 1626,
+            "rss_mb": 1259.3
+          },
+          {
+            "t_s": 120.08,
+            "flow": 1646,
+            "rss_mb": 911.68
+          },
+          {
+            "t_s": 121.58,
+            "flow": 1667,
+            "rss_mb": 905.75
+          },
+          {
+            "t_s": 123.08,
+            "flow": 1688,
+            "rss_mb": 909.32
+          },
+          {
+            "t_s": 124.58,
+            "flow": 1710,
+            "rss_mb": 800.46
+          },
+          {
+            "t_s": 126.08,
+            "flow": 1731,
+            "rss_mb": 802.99
+          },
+          {
+            "t_s": 127.58,
+            "flow": 1753,
+            "rss_mb": 777.43
+          },
+          {
+            "t_s": 129.08,
+            "flow": 1776,
+            "rss_mb": 812.96
+          },
+          {
+            "t_s": 130.58,
+            "flow": 1797,
+            "rss_mb": 813.46
+          },
+          {
+            "t_s": 132.08,
+            "flow": 1818,
+            "rss_mb": 843.54
+          },
+          {
+            "t_s": 133.58,
+            "flow": 1840,
+            "rss_mb": 789.56
+          },
+          {
+            "t_s": 135.08,
+            "flow": 1861,
+            "rss_mb": 864.09
+          },
+          {
+            "t_s": 136.59,
+            "flow": 1882,
+            "rss_mb": 827.47
+          },
+          {
+            "t_s": 138.09,
+            "flow": 1904,
+            "rss_mb": 908.83
+          },
+          {
+            "t_s": 139.59,
+            "flow": 1923,
+            "rss_mb": 902.46
+          },
+          {
+            "t_s": 141.09,
+            "flow": 1944,
+            "rss_mb": 909.2
+          },
+          {
+            "t_s": 142.59,
+            "flow": 1965,
+            "rss_mb": 898.98
+          },
+          {
+            "t_s": 144.09,
+            "flow": 1987,
+            "rss_mb": 910.48
+          },
+          {
+            "t_s": 145.6,
+            "flow": 2007,
+            "rss_mb": 903.06
+          },
+          {
+            "t_s": 147.1,
+            "flow": 2029,
+            "rss_mb": 902.74
+          },
+          {
+            "t_s": 148.6,
+            "flow": 2051,
+            "rss_mb": 903.82
+          },
+          {
+            "t_s": 150.1,
+            "flow": 2073,
+            "rss_mb": 902.96
+          },
+          {
+            "t_s": 151.6,
+            "flow": 2096,
+            "rss_mb": 903.72
+          },
+          {
+            "t_s": 153.1,
+            "flow": 2119,
+            "rss_mb": 994.57
+          },
+          {
+            "t_s": 154.6,
+            "flow": 2140,
+            "rss_mb": 1006.01
+          },
+          {
+            "t_s": 156.1,
+            "flow": 2162,
+            "rss_mb": 897.59
+          },
+          {
+            "t_s": 157.6,
+            "flow": 2185,
+            "rss_mb": 896.52
+          },
+          {
+            "t_s": 159.1,
+            "flow": 2205,
+            "rss_mb": 1044.04
+          },
+          {
+            "t_s": 160.6,
+            "flow": 2226,
+            "rss_mb": 926.67
+          },
+          {
+            "t_s": 162.1,
+            "flow": 2248,
+            "rss_mb": 927.23
+          },
+          {
+            "t_s": 163.6,
+            "flow": 2270,
+            "rss_mb": 941.72
+          },
+          {
+            "t_s": 165.1,
+            "flow": 2292,
+            "rss_mb": 949.14
+          },
+          {
+            "t_s": 166.6,
+            "flow": 2314,
+            "rss_mb": 953.05
+          },
+          {
+            "t_s": 168.11,
+            "flow": 2335,
+            "rss_mb": 888.5
+          },
+          {
+            "t_s": 169.61,
+            "flow": 2357,
+            "rss_mb": 882.96
+          },
+          {
+            "t_s": 171.11,
+            "flow": 2380,
+            "rss_mb": 885.15
+          },
+          {
+            "t_s": 172.61,
+            "flow": 2401,
+            "rss_mb": 873.07
+          },
+          {
+            "t_s": 174.11,
+            "flow": 2422,
+            "rss_mb": 788.97
+          },
+          {
+            "t_s": 175.61,
+            "flow": 2442,
+            "rss_mb": 790.84
+          },
+          {
+            "t_s": 177.11,
+            "flow": 2463,
+            "rss_mb": 773.9
+          },
+          {
+            "t_s": 178.61,
+            "flow": 2483,
+            "rss_mb": 820.76
+          },
+          {
+            "t_s": 179.61,
+            "flow": 2497,
+            "rss_mb": 1180.29
+          }
+        ],
+        "trend": {
+          "classification": "rise_then_plateau",
+          "reason": "RSS rises from ready/early samples then flattens in the last fifth of the run",
+          "early_median_mb": 816.05,
+          "mid_median_mb": 874.21,
+          "late_median_mb": 903.06,
+          "rise_early_to_late_mb": 87.01,
+          "rise_mid_to_late_mb": 28.85,
+          "mb_per_1000_flows": 257.32,
+          "n_series": 121
+        }
+      },
+      "startup": {
+        "ready_ms": 9.1,
+        "rss_mb_ready": 537.7734375
+      },
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2433,
+          "layer2Cumulative": 2433,
+          "combined": 2614,
+          "layer2ShareOfCombined": 93.1
+        },
+        {
+          "n": 2,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 4916,
+          "combined": 5097,
+          "layer2ShareOfCombined": 96.4
+        },
+        {
+          "n": 3,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 7399,
+          "combined": 7580,
+          "layer2ShareOfCombined": 97.6
+        },
+        {
+          "n": 4,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 9882,
+          "combined": 10063,
+          "layer2ShareOfCombined": 98.2
+        },
+        {
+          "n": 5,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 12365,
+          "combined": 12546,
+          "layer2ShareOfCombined": 98.6
+        },
+        {
+          "n": 6,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 14848,
+          "combined": 15029,
+          "layer2ShareOfCombined": 98.8
+        },
+        {
+          "n": 7,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 17331,
+          "combined": 17512,
+          "layer2ShareOfCombined": 99
+        },
+        {
+          "n": 8,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 19814,
+          "combined": 19995,
+          "layer2ShareOfCombined": 99.1
+        },
+        {
+          "n": 9,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 22297,
+          "combined": 22478,
+          "layer2ShareOfCombined": 99.2
+        },
+        {
+          "n": 10,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 24780,
+          "combined": 24961,
+          "layer2ShareOfCombined": 99.3
+        },
+        {
+          "n": 11,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 27263,
+          "combined": 27444,
+          "layer2ShareOfCombined": 99.3
+        },
+        {
+          "n": 12,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 29746,
+          "combined": 29927,
+          "layer2ShareOfCombined": 99.4
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2433,
+          "layer2Cumulative": 2433,
+          "combined": 2433,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 4916,
+          "combined": 4916,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 7399,
+          "combined": 7399,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 9882,
+          "combined": 9882,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 12365,
+          "combined": 12365,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 14848,
+          "combined": 14848,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 17331,
+          "combined": 17331,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 19814,
+          "combined": 19814,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 22297,
+          "combined": 22297,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 24780,
+          "combined": 24780,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 27263,
+          "combined": 27263,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 29746,
+          "combined": 29746,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 30000,
+        "turns_total": 30000,
+        "flows": 2500,
+        "turns_per_flow": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "runtime": "executor-v2",
+        "runtime_version": "2.0.0-beta.15",
+        "ready_ms": 9.1,
+        "transport": "streamable_http",
+        "rss_mb_ready": 537.7734375,
+        "rss_mb_min": 537.7734375,
+        "rss_mb_median": 880.87109375,
+        "rss_mb_max": 1267.7734375,
+        "rss_trend": {
+          "classification": "rise_then_plateau",
+          "reason": "RSS rises from ready/early samples then flattens in the last fifth of the run",
+          "early_median_mb": 816.05,
+          "mid_median_mb": 874.21,
+          "late_median_mb": 903.06,
+          "rise_early_to_late_mb": 87.01,
+          "rise_mid_to_late_mb": 28.85,
+          "mb_per_1000_flows": 257.32,
+          "n_series": 121
+        },
+        "definitions_tokens": 181,
+        "discovery_tokens_sum": 0,
+        "mean_discovery_tokens": 0,
+        "result_tokens_sum": 29746,
+        "mean_result_tokens": 2478.8,
+        "layer1_once_tokens": 181,
+        "mean_layer2_tokens": 2478.8,
+        "combined_at_n": 29927,
+        "combined_rebuild": 29927,
+        "combined_relist_every_turn_at_n": 29746,
+        "flows": 2500,
+        "turns_per_flow": 12,
+        "total_turns": 30000,
+        "rpcs_per_turn": 1,
+        "ms_per_call_p50": 5.43,
+        "flow_e2e_ms": {
+          "n": 2500,
+          "p50_ms": 69.528,
+          "p95_ms": 87.908,
+          "p99_ms": 107.927,
+          "p999_ms": 168.42,
+          "mean_ms": 71.952,
+          "min_ms": 59.814,
+          "max_ms": 264.812,
+          "n_ge_100ms": 42,
+          "n_ge_200ms": 1,
+          "n_ge_300ms": 0,
+          "worst": [
+            {
+              "i": 1,
+              "ms": 264.812
+            },
+            {
+              "i": 2001,
+              "ms": 193.734
+            },
+            {
+              "i": 2196,
+              "ms": 168.42
+            },
+            {
+              "i": 186,
+              "ms": 150.71
+            },
+            {
+              "i": 1467,
+              "ms": 150.617
+            },
+            {
+              "i": 975,
+              "ms": 147.357
+            },
+            {
+              "i": 444,
+              "ms": 137.766
+            },
+            {
+              "i": 316,
+              "ms": 134.24
+            }
+          ]
+        },
+        "turn_latency_ms": {
+          "n": 30000,
+          "p50_ms": 5.43,
+          "p95_ms": 8.881,
+          "p99_ms": 14.384,
+          "p999_ms": 26.301,
+          "mean_ms": 5.921,
+          "min_ms": 4.664,
+          "max_ms": 90.355,
+          "n_ge_100ms": 0,
+          "n_ge_200ms": 0,
+          "n_ge_300ms": 0,
+          "worst": [
+            {
+              "i": 24007,
+              "ms": 90.355
+            },
+            {
+              "i": 5319,
+              "ms": 65.407
+            },
+            {
+              "i": 11696,
+              "ms": 52.718
+            },
+            {
+              "i": 5383,
+              "ms": 51.671
+            },
+            {
+              "i": 11697,
+              "ms": 41.398
+            },
+            {
+              "i": 17602,
+              "ms": 38.188
+            },
+            {
+              "i": 3103,
+              "ms": 35.736
+            },
+            {
+              "i": 6456,
+              "ms": 35.596
+            }
+          ]
+        },
+        "call_errors": 0,
+        "task_success_ok": true,
+        "task_success_rate": 1,
+        "token_rebuild_note": "Classic Layer1 = search+execute schemas; discovery = Σ search hit tokens."
+      }
+    }
+  },
+  "errors": {},
+  "category_win": [
+    "Category story: most efficient governed gateway — multi-turn I/O tokens with equal task success.",
+    "1. Primary model — classic Layer1 once + Σ Layer2 (clients that cache tools/list).",
+    "2. Input side — ClawQL Layer1 is search+execute only; aggregators pay the full fat tools/list once.",
+    "3. Output side — ClawQL gateway fields/where projection; Executor measured path is full payload pass-through.",
+    "4. Re-list-every-turn is secondary sensitivity only (most clients cache; lazy clients shrink aggregators further).",
+    "5. Settled: do not label a hand-written slim-return program as Executor (Both Sides of Context Compression).",
+    "RSS is a loss among serious arms — admit or fix before memory claims."
+  ],
+  "primary_metric": "classic_layer1_once_plus_sum_layer2_with_task_success",
+  "secondary_metric": "tools_list_every_turn_sensitivity",
+  "honesty": [
+    "Fat catalog equal-arm: N MCP tools mirrored as N OpenAPI operationIds.",
+    "PRIMARY tokens: classic Layer1_once + sum(Layer2) with deterministic task_success (tokens from flow 1; spot-stable).",
+    "MT_ITERS=2500: each arm completes that many full 12-turn flows on one warm connection.",
+    "Also reports flow e2e + per-turn latency percentiles and RSS (do not drop these for publish).",
+    "direct: no MCP gateway — raw HTTP fat catalog; Layer1=0. Prices token savings vs latency/RSS tax of each gateway.",
+    "SECONDARY: tools_list_every_turn — measured once on flow 1; most clients cache ListTools.",
+    "Executor Layer2 is fat JSON — matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
+    "Do not publish a hand-written slim-return program as Executor.",
+    "clawql_bun: same dist/server.js as clawql; only JS runtime changes.",
+    "executor + executor_v2 share the same runExecutorArm loop and fat fixture (discovery=0).",
+    "Executor 2 removed stdio MCP (`executor mcp` is v1-only) — product transport is HTTP; harness equalization is the shared loop, not pretending v2 has stdio.",
+    "Do not compare Executor v2 latency/RSS to ClawQL Bun stdio as same-topology. Tokens remain comparable.",
+    "ClawQL transport matrix: clawql/clawql_bun (stdio), clawql_http/clawql_http_bun (Streamable HTTP), clawql_grpc/clawql_grpc_bun (gRPC MCP).",
+    "All Streamable HTTP clients skip standalone GET SSE (fetch returns 405) — same filter for ClawQL HTTP, Executor v2, MCPJungle, agentgateway.",
+    "ClawQL HTTP server also sets CLAWQL_MCP_DISABLE_STANDALONE_SSE=1; client filter equalizes peers that would otherwise open SSE.",
+    "gRPC is ClawQL-only on this board — Executor / MCPJungle / agentgateway have no gRPC MCP peer here.",
+    "RUNTIME FLAGS (even across all ClawQL arms): Node --max-old-space-size=512; Bun --smol. See config.runtime_flags. Memory deltas vs older default-heap boards partly reflect these knobs.",
+    "gRPC Layer1 is 16 tokens below stdio/HTTP (281 vs 297): protobuf Tool omits SDK execution.taskSupport=forbidden on search+execute. Envelope-only — CallTool result bodies match; not a dropped content field.",
+    "RPCs/turn: ClawQL = 2 (search+execute); peers = 1. Publish ms/call = turn_p50 / rpcs_per_turn. Session latency gap is mostly the second call, which buys projection token savings.",
+    "LATENCY CLAIMS (HTTP-to-HTTP): per-call overhead on par with Go/Rust gateways; ClawQL Bun HTTP median ~2.3× agentgateway and >2× faster than Executor v2. Do not claim '3×–9× tighter tail'.",
+    "Publish board must be one interleaved run of every arm — do not stitch rows from separate solo runs (p999 drifts across sessions).",
+    "VIDEO: latency section uses same-transport HTTP numbers only (ClawQL HTTP vs Executor v2 / MCPJungle / agentgateway). Replace '3× to 9× tighter tail' with per-call parity + >2× vs Executor v2.",
+    "NEXT WIN: skip search when the agent already knows the operation (execute by ID) — halves remaining latency gap and cuts discovery tokens on repeat turns.",
+    "Executor discovery=0 on both versions (harness-authored execute). ClawQL charges search each turn.",
+    "ContextForge/MetaMCP off publish board by default.",
+    "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",
+    "RSS is a loss among serious arms — admit plainly. Classify Executor v2 climb via rss_trend before 'Nx heavier' headlines.",
+    "p999 STATUS: harness_isolated_pending_full_board — harness isolated (separate mock + taskset); p999 still under rework until full interleaved 10k. Cite tokens, per-call overhead (ms/call), medians, and memory. Do not headline p999 until a full interleaved board lands with separate mock/client/gateway and dedicated cores (or leave p999 labeled under rework).",
+    "CORE LAYOUT: enabled=true nproc=4 mock=0 gateway=1-2 client=3. Mock is a separate process (not the client event loop).",
+    "MT_UPSTREAM_LATENCY_MS unset — mock responds ASAP (isolation board). Optional 20-100ms arm after tails republish."
+  ]
+}

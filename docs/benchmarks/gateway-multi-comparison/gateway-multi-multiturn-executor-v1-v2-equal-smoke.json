@@ -1,0 +1,1466 @@
+{
+  "suite": "gateway-multi-multiturn",
+  "measuredAt": "2026-10-12T15:42:34.451Z",
+  "node": "v22.14.0",
+  "bun": "1.4.3",
+  "config": {
+    "turns": 12,
+    "iters": 30,
+    "catalog_tool_count": 40,
+    "limit": 25,
+    "where": "items",
+    "fields": [
+      "id",
+      "name",
+      "status"
+    ],
+    "arms": [
+      "executor",
+      "executor_v2"
+    ],
+    "tokenizer": "cl100k_base",
+    "progress_every": 10
+  },
+  "equal_arm": {
+    "fat_result_tokens_partition_1": 2411,
+    "slim_fields_tokens_partition_1": 353,
+    "projection_ratio": 6.83,
+    "note": "Same underlying rows; ClawQL where+fields project to {id,name,status}; Executor/aggregators return full envelope (Executor: no gateway projection — settled)"
+  },
+  "board": {
+    "executor": {
+      "runtime": "executor-v1",
+      "runtime_version": "1.6.10",
+      "ready_ms": null,
+      "transport": "stdio",
+      "rss_mb_ready": 190.3,
+      "rss_mb_min": 190.3,
+      "rss_mb_median": 200.2,
+      "rss_mb_max": 209.65,
+      "rss_trend": {
+        "classification": "plateau",
+        "reason": "late-window RSS stable relative to mid-window",
+        "early_median_mb": 192.73,
+        "mid_median_mb": 200.2,
+        "late_median_mb": 201.98,
+        "rise_early_to_late_mb": 9.25,
+        "rise_mid_to_late_mb": 1.78,
+        "mb_per_1000_flows": 370,
+        "n_series": 5
+      },
+      "definitions_tokens": 90,
+      "discovery_tokens_sum": 0,
+      "mean_discovery_tokens": 0,
+      "result_tokens_sum": 53578,
+      "mean_result_tokens": 4464.8,
+      "layer1_once_tokens": 90,
+      "mean_layer2_tokens": 4464.8,
+      "combined_at_n": 53668,
+      "combined_rebuild": 53668,
+      "combined_relist_every_turn_at_n": 53578,
+      "flows": 30,
+      "turns_per_flow": 12,
+      "total_turns": 360,
+      "flow_e2e_ms": {
+        "n": 30,
+        "p50_ms": 68.317,
+        "p95_ms": 87.902,
+        "p99_ms": 331.473,
+        "p999_ms": 331.473,
+        "mean_ms": 79.214,
+        "min_ms": 63.225,
+        "max_ms": 331.473
+      },
+      "turn_latency_ms": {
+        "n": 360,
+        "p50_ms": 5.443,
+        "p95_ms": 8.126,
+        "p99_ms": 19.064,
+        "p999_ms": 37.954,
+        "mean_ms": 6.02,
+        "min_ms": 4.09,
+        "max_ms": 37.954
+      },
+      "call_errors": 0,
+      "task_success_ok": true,
+      "task_success_rate": 1
+    },
+    "executor_v2": {
+      "runtime": "executor-v2",
+      "runtime_version": "2.0.0-beta.15",
+      "ready_ms": 43.2,
+      "transport": "streamable_http",
+      "rss_mb_ready": 549.765625,
+      "rss_mb_min": 549.765625,
+      "rss_mb_median": 764.69921875,
+      "rss_mb_max": 926.33984375,
+      "rss_trend": {
+        "classification": "rise_then_plateau",
+        "reason": "RSS rises from ready/early samples then flattens in the last fifth of the run",
+        "early_median_mb": 549.77,
+        "mid_median_mb": 749.06,
+        "late_median_mb": 764.7,
+        "rise_early_to_late_mb": 214.93,
+        "rise_mid_to_late_mb": 15.64,
+        "mb_per_1000_flows": 13947.04,
+        "n_series": 7
+      },
+      "definitions_tokens": 181,
+      "discovery_tokens_sum": 0,
+      "mean_discovery_tokens": 0,
+      "result_tokens_sum": 29746,
+      "mean_result_tokens": 2478.8,
+      "layer1_once_tokens": 181,
+      "mean_layer2_tokens": 2478.8,
+      "combined_at_n": 29927,
+      "combined_rebuild": 29927,
+      "combined_relist_every_turn_at_n": 29746,
+      "flows": 30,
+      "turns_per_flow": 12,
+      "total_turns": 360,
+      "flow_e2e_ms": {
+        "n": 30,
+        "p50_ms": 99.924,
+        "p95_ms": 142.297,
+        "p99_ms": 384.258,
+        "p999_ms": 384.258,
+        "mean_ms": 111.671,
+        "min_ms": 79.871,
+        "max_ms": 384.258
+      },
+      "turn_latency_ms": {
+        "n": 360,
+        "p50_ms": 7.504,
+        "p95_ms": 15.28,
+        "p99_ms": 25.555,
+        "p999_ms": 62.329,
+        "mean_ms": 8.794,
+        "min_ms": 5.596,
+        "max_ms": 62.329
+      },
+      "call_errors": 0,
+      "task_success_ok": false,
+      "task_success_rate": 0
+    }
+  },
+  "ratios_vs_clawql": {},
+  "task_success": {
+    "executor": {
+      "turns_ok": 360,
+      "turns_total": 360,
+      "flows": 30,
+      "turns_per_flow": 12,
+      "ok": true,
+      "rate": 1
+    },
+    "executor_v2": {
+      "turns_ok": 0,
+      "turns_total": 360,
+      "flows": 30,
+      "turns_per_flow": 12,
+      "ok": false,
+      "rate": 0
+    }
+  },
+  "cumulative_table": {
+    "executor": [
+      {
+        "n": 1,
+        "combined": 4509,
+        "layer2Cumulative": 4419
+      },
+      {
+        "n": 2,
+        "combined": 8978,
+        "layer2Cumulative": 8888
+      },
+      {
+        "n": 3,
+        "combined": 13447,
+        "layer2Cumulative": 13357
+      },
+      {
+        "n": 4,
+        "combined": 17916,
+        "layer2Cumulative": 17826
+      },
+      {
+        "n": 5,
+        "combined": 22385,
+        "layer2Cumulative": 22295
+      },
+      {
+        "n": 6,
+        "combined": 26854,
+        "layer2Cumulative": 26764
+      },
+      {
+        "n": 7,
+        "combined": 31323,
+        "layer2Cumulative": 31233
+      },
+      {
+        "n": 8,
+        "combined": 35792,
+        "layer2Cumulative": 35702
+      },
+      {
+        "n": 9,
+        "combined": 40261,
+        "layer2Cumulative": 40171
+      },
+      {
+        "n": 10,
+        "combined": 44730,
+        "layer2Cumulative": 44640
+      },
+      {
+        "n": 11,
+        "combined": 49199,
+        "layer2Cumulative": 49109
+      },
+      {
+        "n": 12,
+        "combined": 53668,
+        "layer2Cumulative": 53578
+      }
+    ],
+    "executor_v2": [
+      {
+        "n": 1,
+        "combined": 2614,
+        "layer2Cumulative": 2433
+      },
+      {
+        "n": 2,
+        "combined": 5097,
+        "layer2Cumulative": 4916
+      },
+      {
+        "n": 3,
+        "combined": 7580,
+        "layer2Cumulative": 7399
+      },
+      {
+        "n": 4,
+        "combined": 10063,
+        "layer2Cumulative": 9882
+      },
+      {
+        "n": 5,
+        "combined": 12546,
+        "layer2Cumulative": 12365
+      },
+      {
+        "n": 6,
+        "combined": 15029,
+        "layer2Cumulative": 14848
+      },
+      {
+        "n": 7,
+        "combined": 17512,
+        "layer2Cumulative": 17331
+      },
+      {
+        "n": 8,
+        "combined": 19995,
+        "layer2Cumulative": 19814
+      },
+      {
+        "n": 9,
+        "combined": 22478,
+        "layer2Cumulative": 22297
+      },
+      {
+        "n": 10,
+        "combined": 24961,
+        "layer2Cumulative": 24780
+      },
+      {
+        "n": 11,
+        "combined": 27444,
+        "layer2Cumulative": 27263
+      },
+      {
+        "n": 12,
+        "combined": 29927,
+        "layer2Cumulative": 29746
+      }
+    ]
+  },
+  "arms": {
+    "executor": {
+      "id": "executor",
+      "model": "stdio_mcp_code_execute_fat_static",
+      "runtime": "executor-v1",
+      "runtimeVersion": "1.6.10",
+      "transport": "stdio",
+      "mcpUrl": null,
+      "discovery_note": "Harness-authored execute returns fatPayload; skills/search not called (discovery=0)",
+      "layer1": {
+        "once_schema_tokens": 90,
+        "tools_count": 1,
+        "tools_list_count_full": 7,
+        "tools_list_schema_tokens_full": 2243,
+        "note": "execute schema only (catalog not published as N tools)"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 4419,
+          "result_chars": 16317,
+          "layer2_classic": 4419,
+          "layer2_relist_every_turn": 4419,
+          "latency_ms": 33.161,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; Executor MCP text is pretty-printed same payload (see executor-vs-mock-compare.json)"
+        },
+        {
+          "n": 2,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 37.954,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; Executor MCP text is pretty-printed same payload (see executor-vs-mock-compare.json)"
+        },
+        {
+          "n": 3,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 9.725,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; Executor MCP text is pretty-printed same payload (see executor-vs-mock-compare.json)"
+        },
+        {
+          "n": 4,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 8.082,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; Executor MCP text is pretty-printed same payload (see executor-vs-mock-compare.json)"
+        },
+        {
+          "n": 5,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 9.54,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; Executor MCP text is pretty-printed same payload (see executor-vs-mock-compare.json)"
+        },
+        {
+          "n": 6,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 8.773,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; Executor MCP text is pretty-printed same payload (see executor-vs-mock-compare.json)"
+        },
+        {
+          "n": 7,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 7.215,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; Executor MCP text is pretty-printed same payload (see executor-vs-mock-compare.json)"
+        },
+        {
+          "n": 8,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 8.627,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; Executor MCP text is pretty-printed same payload (see executor-vs-mock-compare.json)"
+        },
+        {
+          "n": 9,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 7.434,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; Executor MCP text is pretty-printed same payload (see executor-vs-mock-compare.json)"
+        },
+        {
+          "n": 10,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 4469,
+          "result_chars": 16429,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 7.879,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; Executor MCP text is pretty-printed same payload (see executor-vs-mock-compare.json)"
+        },
+        {
+          "n": 11,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 4469,
+          "result_chars": 16479,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 8.789,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; Executor MCP text is pretty-printed same payload (see executor-vs-mock-compare.json)"
+        },
+        {
+          "n": 12,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 4469,
+          "result_chars": 16479,
+          "layer2_classic": 4469,
+          "layer2_relist_every_turn": 4469,
+          "latency_ms": 6.599,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "note": "Fat equal-arm JSON via code; Executor MCP text is pretty-printed same payload (see executor-vs-mock-compare.json)"
+        }
+      ],
+      "iters": 30,
+      "call_errors": 0,
+      "task_success_agg": {
+        "ok": 360,
+        "total": 360
+      },
+      "resources": {
+        "label": "executor",
+        "pid": 334923,
+        "n": 5,
+        "rss_mb": {
+          "min": 190.3,
+          "median": 200.2,
+          "max": 209.65
+        },
+        "series": [
+          {
+            "t_s": 0,
+            "flow": 0,
+            "rss_mb": 192.73
+          },
+          {
+            "t_s": 0.5,
+            "flow": 3,
+            "rss_mb": 190.3
+          },
+          {
+            "t_s": 1.01,
+            "flow": 10,
+            "rss_mb": 200.2
+          },
+          {
+            "t_s": 1.5,
+            "flow": 17,
+            "rss_mb": 209.65
+          },
+          {
+            "t_s": 2.01,
+            "flow": 25,
+            "rss_mb": 201.98
+          }
+        ],
+        "trend": {
+          "classification": "plateau",
+          "reason": "late-window RSS stable relative to mid-window",
+          "early_median_mb": 192.73,
+          "mid_median_mb": 200.2,
+          "late_median_mb": 201.98,
+          "rise_early_to_late_mb": 9.25,
+          "rise_mid_to_late_mb": 1.78,
+          "mb_per_1000_flows": 370,
+          "n_series": 5
+        }
+      },
+      "startup": {
+        "ready_ms": null,
+        "rss_mb_ready": 190.3
+      },
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4419,
+          "layer2Cumulative": 4419,
+          "combined": 4509,
+          "layer2ShareOfCombined": 98
+        },
+        {
+          "n": 2,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 8888,
+          "combined": 8978,
+          "layer2ShareOfCombined": 99
+        },
+        {
+          "n": 3,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 13357,
+          "combined": 13447,
+          "layer2ShareOfCombined": 99.3
+        },
+        {
+          "n": 4,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 17826,
+          "combined": 17916,
+          "layer2ShareOfCombined": 99.5
+        },
+        {
+          "n": 5,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 22295,
+          "combined": 22385,
+          "layer2ShareOfCombined": 99.6
+        },
+        {
+          "n": 6,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 26764,
+          "combined": 26854,
+          "layer2ShareOfCombined": 99.7
+        },
+        {
+          "n": 7,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 31233,
+          "combined": 31323,
+          "layer2ShareOfCombined": 99.7
+        },
+        {
+          "n": 8,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 35702,
+          "combined": 35792,
+          "layer2ShareOfCombined": 99.7
+        },
+        {
+          "n": 9,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 40171,
+          "combined": 40261,
+          "layer2ShareOfCombined": 99.8
+        },
+        {
+          "n": 10,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 44640,
+          "combined": 44730,
+          "layer2ShareOfCombined": 99.8
+        },
+        {
+          "n": 11,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 49109,
+          "combined": 49199,
+          "layer2ShareOfCombined": 99.8
+        },
+        {
+          "n": 12,
+          "layer1Once": 90,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 53578,
+          "combined": 53668,
+          "layer2ShareOfCombined": 99.8
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4419,
+          "layer2Cumulative": 4419,
+          "combined": 4419,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 8888,
+          "combined": 8888,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 13357,
+          "combined": 13357,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 17826,
+          "combined": 17826,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 22295,
+          "combined": 22295,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 26764,
+          "combined": 26764,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 31233,
+          "combined": 31233,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 35702,
+          "combined": 35702,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 40171,
+          "combined": 40171,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 44640,
+          "combined": 44640,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 49109,
+          "combined": 49109,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 4469,
+          "layer2Cumulative": 53578,
+          "combined": 53578,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 360,
+        "turns_total": 360,
+        "flows": 30,
+        "turns_per_flow": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "runtime": "executor-v1",
+        "runtime_version": "1.6.10",
+        "ready_ms": null,
+        "transport": "stdio",
+        "rss_mb_ready": 190.3,
+        "rss_mb_min": 190.3,
+        "rss_mb_median": 200.2,
+        "rss_mb_max": 209.65,
+        "rss_trend": {
+          "classification": "plateau",
+          "reason": "late-window RSS stable relative to mid-window",
+          "early_median_mb": 192.73,
+          "mid_median_mb": 200.2,
+          "late_median_mb": 201.98,
+          "rise_early_to_late_mb": 9.25,
+          "rise_mid_to_late_mb": 1.78,
+          "mb_per_1000_flows": 370,
+          "n_series": 5
+        },
+        "definitions_tokens": 90,
+        "discovery_tokens_sum": 0,
+        "mean_discovery_tokens": 0,
+        "result_tokens_sum": 53578,
+        "mean_result_tokens": 4464.8,
+        "layer1_once_tokens": 90,
+        "mean_layer2_tokens": 4464.8,
+        "combined_at_n": 53668,
+        "combined_rebuild": 53668,
+        "combined_relist_every_turn_at_n": 53578,
+        "flows": 30,
+        "turns_per_flow": 12,
+        "total_turns": 360,
+        "flow_e2e_ms": {
+          "n": 30,
+          "p50_ms": 68.317,
+          "p95_ms": 87.902,
+          "p99_ms": 331.473,
+          "p999_ms": 331.473,
+          "mean_ms": 79.214,
+          "min_ms": 63.225,
+          "max_ms": 331.473
+        },
+        "turn_latency_ms": {
+          "n": 360,
+          "p50_ms": 5.443,
+          "p95_ms": 8.126,
+          "p99_ms": 19.064,
+          "p999_ms": 37.954,
+          "mean_ms": 6.02,
+          "min_ms": 4.09,
+          "max_ms": 37.954
+        },
+        "call_errors": 0,
+        "task_success_ok": true,
+        "task_success_rate": 1
+      }
+    },
+    "executor_v2": {
+      "id": "executor_v2",
+      "model": "streamable_http_mcp_code_execute_fat_static",
+      "runtime": "executor-v2",
+      "runtimeVersion": "2.0.0-beta.15",
+      "transport": "streamable_http",
+      "mcpUrl": "http://127.0.0.1:4312/mcp",
+      "discovery_note": "Harness-authored execute returns fatPayload; skills/search not called (discovery=0)",
+      "layer1": {
+        "once_schema_tokens": 181,
+        "tools_count": 1,
+        "tools_list_count_full": 3,
+        "tools_list_schema_tokens_full": 815,
+        "note": "execute schema only (catalog not published as N tools)"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2433,
+          "result_chars": 7746,
+          "layer2_classic": 2433,
+          "layer2_relist_every_turn": 2433,
+          "latency_ms": 62.329,
+          "ok": true,
+          "task_success": {
+            "ok": false,
+            "matched": 0,
+            "expected": 25,
+            "failures": [
+              "no_row_array"
+            ]
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 2,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 21.472,
+          "ok": true,
+          "task_success": {
+            "ok": false,
+            "matched": 0,
+            "expected": 25,
+            "failures": [
+              "no_row_array"
+            ]
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 3,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 14.259,
+          "ok": true,
+          "task_success": {
+            "ok": false,
+            "matched": 0,
+            "expected": 25,
+            "failures": [
+              "no_row_array"
+            ]
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 4,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 13.486,
+          "ok": true,
+          "task_success": {
+            "ok": false,
+            "matched": 0,
+            "expected": 25,
+            "failures": [
+              "no_row_array"
+            ]
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 5,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 20.023,
+          "ok": true,
+          "task_success": {
+            "ok": false,
+            "matched": 0,
+            "expected": 25,
+            "failures": [
+              "no_row_array"
+            ]
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 6,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 26.403,
+          "ok": true,
+          "task_success": {
+            "ok": false,
+            "matched": 0,
+            "expected": 25,
+            "failures": [
+              "no_row_array"
+            ]
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 7,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 12.527,
+          "ok": true,
+          "task_success": {
+            "ok": false,
+            "matched": 0,
+            "expected": 25,
+            "failures": [
+              "no_row_array"
+            ]
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 8,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 12.033,
+          "ok": true,
+          "task_success": {
+            "ok": false,
+            "matched": 0,
+            "expected": 25,
+            "failures": [
+              "no_row_array"
+            ]
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 9,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 12.378,
+          "ok": true,
+          "task_success": {
+            "ok": false,
+            "matched": 0,
+            "expected": 25,
+            "failures": [
+              "no_row_array"
+            ]
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 10,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7858,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 11.902,
+          "ok": true,
+          "task_success": {
+            "ok": false,
+            "matched": 0,
+            "expected": 25,
+            "failures": [
+              "no_row_array"
+            ]
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 11,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7908,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 9.259,
+          "ok": true,
+          "task_success": {
+            "ok": false,
+            "matched": 0,
+            "expected": 25,
+            "failures": [
+              "no_row_array"
+            ]
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        },
+        {
+          "n": 12,
+          "tool": "execute",
+          "search_tokens": 0,
+          "result_tokens": 2483,
+          "result_chars": 7908,
+          "layer2_classic": 2483,
+          "layer2_relist_every_turn": 2483,
+          "latency_ms": 10.529,
+          "ok": true,
+          "task_success": {
+            "ok": false,
+            "matched": 0,
+            "expected": 25,
+            "failures": [
+              "no_row_array"
+            ]
+          },
+          "note": "Fat equal-arm JSON via code over HTTP /mcp (Executor 2 dropped stdio; same harness loop as v1)"
+        }
+      ],
+      "iters": 30,
+      "call_errors": 0,
+      "task_success_agg": {
+        "ok": 0,
+        "total": 360
+      },
+      "resources": {
+        "label": "executor_v2",
+        "pid": 331964,
+        "n": 7,
+        "rss_mb": {
+          "min": 549.765625,
+          "median": 764.69921875,
+          "max": 926.33984375
+        },
+        "series": [
+          {
+            "t_s": 0,
+            "flow": 0,
+            "rss_mb": 549.77
+          },
+          {
+            "t_s": 0.5,
+            "flow": 2,
+            "rss_mb": 624.47
+          },
+          {
+            "t_s": 1,
+            "flow": 7,
+            "rss_mb": 819.16
+          },
+          {
+            "t_s": 1.5,
+            "flow": 11,
+            "rss_mb": 749.06
+          },
+          {
+            "t_s": 2,
+            "flow": 17,
+            "rss_mb": 852.54
+          },
+          {
+            "t_s": 2.5,
+            "flow": 22,
+            "rss_mb": 764.7
+          },
+          {
+            "t_s": 3,
+            "flow": 27,
+            "rss_mb": 926.34
+          }
+        ],
+        "trend": {
+          "classification": "rise_then_plateau",
+          "reason": "RSS rises from ready/early samples then flattens in the last fifth of the run",
+          "early_median_mb": 549.77,
+          "mid_median_mb": 749.06,
+          "late_median_mb": 764.7,
+          "rise_early_to_late_mb": 214.93,
+          "rise_mid_to_late_mb": 15.64,
+          "mb_per_1000_flows": 13947.04,
+          "n_series": 7
+        }
+      },
+      "startup": {
+        "ready_ms": 43.2,
+        "rss_mb_ready": 549.765625
+      },
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2433,
+          "layer2Cumulative": 2433,
+          "combined": 2614,
+          "layer2ShareOfCombined": 93.1
+        },
+        {
+          "n": 2,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 4916,
+          "combined": 5097,
+          "layer2ShareOfCombined": 96.4
+        },
+        {
+          "n": 3,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 7399,
+          "combined": 7580,
+          "layer2ShareOfCombined": 97.6
+        },
+        {
+          "n": 4,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 9882,
+          "combined": 10063,
+          "layer2ShareOfCombined": 98.2
+        },
+        {
+          "n": 5,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 12365,
+          "combined": 12546,
+          "layer2ShareOfCombined": 98.6
+        },
+        {
+          "n": 6,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 14848,
+          "combined": 15029,
+          "layer2ShareOfCombined": 98.8
+        },
+        {
+          "n": 7,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 17331,
+          "combined": 17512,
+          "layer2ShareOfCombined": 99
+        },
+        {
+          "n": 8,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 19814,
+          "combined": 19995,
+          "layer2ShareOfCombined": 99.1
+        },
+        {
+          "n": 9,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 22297,
+          "combined": 22478,
+          "layer2ShareOfCombined": 99.2
+        },
+        {
+          "n": 10,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 24780,
+          "combined": 24961,
+          "layer2ShareOfCombined": 99.3
+        },
+        {
+          "n": 11,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 27263,
+          "combined": 27444,
+          "layer2ShareOfCombined": 99.3
+        },
+        {
+          "n": 12,
+          "layer1Once": 181,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 29746,
+          "combined": 29927,
+          "layer2ShareOfCombined": 99.4
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2433,
+          "layer2Cumulative": 2433,
+          "combined": 2433,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 4916,
+          "combined": 4916,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 7399,
+          "combined": 7399,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 9882,
+          "combined": 9882,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 12365,
+          "combined": 12365,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 14848,
+          "combined": 14848,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 17331,
+          "combined": 17331,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 19814,
+          "combined": 19814,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 22297,
+          "combined": 22297,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 24780,
+          "combined": 24780,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 27263,
+          "combined": 27263,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 2483,
+          "layer2Cumulative": 29746,
+          "combined": 29746,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 0,
+        "turns_total": 360,
+        "flows": 30,
+        "turns_per_flow": 12,
+        "ok": false,
+        "rate": 0
+      },
+      "board": {
+        "runtime": "executor-v2",
+        "runtime_version": "2.0.0-beta.15",
+        "ready_ms": 43.2,
+        "transport": "streamable_http",
+        "rss_mb_ready": 549.765625,
+        "rss_mb_min": 549.765625,
+        "rss_mb_median": 764.69921875,
+        "rss_mb_max": 926.33984375,
+        "rss_trend": {
+          "classification": "rise_then_plateau",
+          "reason": "RSS rises from ready/early samples then flattens in the last fifth of the run",
+          "early_median_mb": 549.77,
+          "mid_median_mb": 749.06,
+          "late_median_mb": 764.7,
+          "rise_early_to_late_mb": 214.93,
+          "rise_mid_to_late_mb": 15.64,
+          "mb_per_1000_flows": 13947.04,
+          "n_series": 7
+        },
+        "definitions_tokens": 181,
+        "discovery_tokens_sum": 0,
+        "mean_discovery_tokens": 0,
+        "result_tokens_sum": 29746,
+        "mean_result_tokens": 2478.8,
+        "layer1_once_tokens": 181,
+        "mean_layer2_tokens": 2478.8,
+        "combined_at_n": 29927,
+        "combined_rebuild": 29927,
+        "combined_relist_every_turn_at_n": 29746,
+        "flows": 30,
+        "turns_per_flow": 12,
+        "total_turns": 360,
+        "flow_e2e_ms": {
+          "n": 30,
+          "p50_ms": 99.924,
+          "p95_ms": 142.297,
+          "p99_ms": 384.258,
+          "p999_ms": 384.258,
+          "mean_ms": 111.671,
+          "min_ms": 79.871,
+          "max_ms": 384.258
+        },
+        "turn_latency_ms": {
+          "n": 360,
+          "p50_ms": 7.504,
+          "p95_ms": 15.28,
+          "p99_ms": 25.555,
+          "p999_ms": 62.329,
+          "mean_ms": 8.794,
+          "min_ms": 5.596,
+          "max_ms": 62.329
+        },
+        "call_errors": 0,
+        "task_success_ok": false,
+        "task_success_rate": 0
+      }
+    }
+  },
+  "errors": {},
+  "category_win": [
+    "Category story: most efficient governed gateway — multi-turn I/O tokens with equal task success.",
+    "1. Primary model — classic Layer1 once + Σ Layer2 (clients that cache tools/list).",
+    "2. Input side — ClawQL Layer1 is search+execute only; aggregators pay the full fat tools/list once.",
+    "3. Output side — ClawQL gateway fields/where projection; Executor measured path is full payload pass-through.",
+    "4. Re-list-every-turn is secondary sensitivity only (most clients cache; lazy clients shrink aggregators further).",
+    "5. Settled: do not label a hand-written slim-return program as Executor (Both Sides of Context Compression).",
+    "RSS is a loss among serious arms — admit or fix before memory claims."
+  ],
+  "primary_metric": "classic_layer1_once_plus_sum_layer2_with_task_success",
+  "secondary_metric": "tools_list_every_turn_sensitivity",
+  "honesty": [
+    "Fat catalog equal-arm: N MCP tools mirrored as N OpenAPI operationIds.",
+    "PRIMARY tokens: classic Layer1_once + sum(Layer2) with deterministic task_success (tokens from flow 1; spot-stable).",
+    "MT_ITERS=30: each arm completes that many full 12-turn flows on one warm connection.",
+    "Also reports flow e2e + per-turn latency percentiles and RSS (do not drop these for publish).",
+    "direct: no MCP gateway — raw HTTP fat catalog; Layer1=0. Prices token savings vs latency/RSS tax of each gateway.",
+    "SECONDARY: tools_list_every_turn — measured once on flow 1; most clients cache ListTools.",
+    "Executor Layer2 is fat JSON — matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
+    "Do not publish a hand-written slim-return program as Executor.",
+    "clawql_bun: same dist/server.js as clawql; only JS runtime changes.",
+    "executor + executor_v2 share the same runExecutorArm loop and fat fixture (discovery=0).",
+    "Executor 2 removed stdio MCP (`executor mcp` is v1-only) — product transport is HTTP; harness equalization is the shared loop, not pretending v2 has stdio.",
+    "Do not compare Executor v2 latency/RSS to ClawQL Bun stdio as same-topology. Tokens remain comparable.",
+    "clawql_http is optional diagnostic only (HTTP RSS climb under investigation) — not a default publish peer.",
+    "Executor discovery=0 on both versions (harness-authored execute). ClawQL charges search each turn.",
+    "ContextForge/MetaMCP off publish board by default.",
+    "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",
+    "RSS is a loss among serious arms — admit plainly. Classify Executor v2 climb via rss_trend before 'Nx heavier' headlines."
+  ]
+}

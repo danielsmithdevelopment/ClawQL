@@ -45,8 +45,16 @@ export function clawqlEqualArmEnv({ home, specPath, apiBase, baseEnv = process.e
     CLAWQL_CAPABILITY_LIFECYCLE: "0",
     CLAWQL_ALLOW_NO_ENFORCEMENT: "1",
     CLAWQL_OPENAPI_EXECUTE_PATH: "rest",
+    // Product default is catalog SQLite on; keep explicit for A/B clarity.
+    CLAWQL_CATALOG_SQLITE: baseEnv.CLAWQL_CATALOG_SQLITE ?? "1",
     // Bounded ephemeral ring — keep audit on, avoid retaining fat summaries under microbench load.
     CLAWQL_AUDIT_MAX_ENTRIES: "64",
+    // Lean search hits for multiturn discovery cost (gate routing eval separately for product default).
+    CLAWQL_SEARCH_COMPACT: baseEnv.CLAWQL_SEARCH_COMPACT ?? "1",
+    // Slim HTTP surface: do not load clawql-payments / clawql-network at MCP listen
+    // (equal-arm benches never hit /.well-known/payments or registry). Override with =0.
+    CLAWQL_HTTP_SKIP_PAYMENTS: baseEnv.CLAWQL_HTTP_SKIP_PAYMENTS ?? "1",
+    CLAWQL_HTTP_SKIP_GRAPHQL: baseEnv.CLAWQL_HTTP_SKIP_GRAPHQL ?? "1",
   };
   for (const key of [
     "CLAWQL_PROVIDER",

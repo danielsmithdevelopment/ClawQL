@@ -1,0 +1,223 @@
+{
+  "measuredAt": "2026-10-14T02:58:52.864Z",
+  "arm": "mcpjungle",
+  "tool_count": 209,
+  "n": 40000,
+  "warmup": 50,
+  "tools_listed": 209,
+  "after_list_tools": {
+    "root_pid": 445104,
+    "gateway_pid": 445104,
+    "pids": [
+      445104
+    ],
+    "parts": [
+      {
+        "pid": 445104,
+        "cmdline": "/tmp/gw-bins/mcpjungle start --host 127.0.0.1 --port 32797 --sqlite-db-path /tmp/mj-smaps-445060/mcpjungle.db",
+        "rss_mb": 34.68,
+        "anonymous_mb": 13.64,
+        "pss_mb": 24.16,
+        "file_backed_est_mb": 21.04
+      }
+    ],
+    "tree": {
+      "rss_mb": 34.68,
+      "anonymous_mb": 13.64,
+      "pss_mb": 24.16,
+      "file_backed_est_mb": 21.04
+    },
+    "gateway_only": {
+      "rss_mb": 34.68,
+      "anonymous_mb": 13.64,
+      "pss_mb": 24.16,
+      "file_backed_est_mb": 21.04
+    }
+  },
+  "ready": {
+    "root_pid": 445104,
+    "gateway_pid": 445104,
+    "pids": [
+      445104
+    ],
+    "parts": [
+      {
+        "pid": 445104,
+        "cmdline": "/tmp/gw-bins/mcpjungle start --host 127.0.0.1 --port 32797 --sqlite-db-path /tmp/mj-smaps-445060/mcpjungle.db",
+        "rss_mb": 34.34,
+        "anonymous_mb": 13.35,
+        "pss_mb": 23.85,
+        "file_backed_est_mb": 20.98
+      }
+    ],
+    "tree": {
+      "rss_mb": 34.34,
+      "anonymous_mb": 13.35,
+      "pss_mb": 23.85,
+      "file_backed_est_mb": 20.99
+    },
+    "gateway_only": {
+      "rss_mb": 34.34,
+      "anonymous_mb": 13.35,
+      "pss_mb": 23.85,
+      "file_backed_est_mb": 20.98
+    }
+  },
+  "under_load": {
+    "gateway_rss": {
+      "min": 34.77,
+      "median": 37.74,
+      "max": 37.97,
+      "n": 41
+    },
+    "gateway_anon": {
+      "min": 13.67,
+      "median": 15.64,
+      "max": 15.8,
+      "n": 41
+    },
+    "gateway_pss": {
+      "min": 24.22,
+      "median": 26.79,
+      "max": 27,
+      "n": 41
+    },
+    "tree_rss": {
+      "min": 106.42,
+      "median": 154.28,
+      "max": 154.52,
+      "n": 41
+    },
+    "tree_anon": {
+      "min": 41.24,
+      "median": 87.96,
+      "max": 88.14,
+      "n": 41
+    },
+    "tree_pss": {
+      "min": 56.51,
+      "median": 103.87,
+      "max": 104.08,
+      "n": 41
+    },
+    "samples_n": 41,
+    "last": {
+      "flow": 40000,
+      "root_pid": 445104,
+      "gateway_pid": 445104,
+      "pids": [
+        445104,
+        445162
+      ],
+      "parts": [
+        {
+          "pid": 445104,
+          "cmdline": "/tmp/gw-bins/mcpjungle start --host 127.0.0.1 --port 32797 --sqlite-db-path /tmp/mj-smaps-445060/mcpjungle.db",
+          "rss_mb": 37.81,
+          "anonymous_mb": 15.64,
+          "pss_mb": 26.84,
+          "file_backed_est_mb": 22.18
+        },
+        {
+          "pid": 445162,
+          "cmdline": "/exec-daemon/node /workspace/scripts/benchmarks/lib/equal-arm-catalog-mcp.mjs",
+          "rss_mb": 116.6,
+          "anonymous_mb": 72.38,
+          "pss_mb": 77.12,
+          "file_backed_est_mb": 44.21
+        }
+      ],
+      "tree": {
+        "rss_mb": 154.41,
+        "anonymous_mb": 88.02,
+        "pss_mb": 103.96,
+        "file_backed_est_mb": 66.39
+      },
+      "gateway_only": {
+        "rss_mb": 37.81,
+        "anonymous_mb": 15.64,
+        "pss_mb": 26.84,
+        "file_backed_est_mb": 22.18
+      }
+    }
+  },
+  "under_load_plateau": {
+    "note": "Last 15 samples (post-climb); compare to publish-board ~152 RSS",
+    "gateway_rss": {
+      "min": 37.59,
+      "median": 37.84,
+      "max": 37.97,
+      "n": 15
+    },
+    "gateway_anon": {
+      "min": 15.41,
+      "median": 15.66,
+      "max": 15.8,
+      "n": 15
+    },
+    "tree_rss": {
+      "min": 154.19,
+      "median": 154.41,
+      "max": 154.52,
+      "n": 15
+    },
+    "tree_anon": {
+      "min": 87.79,
+      "median": 88.02,
+      "max": 88.14,
+      "n": 15
+    },
+    "tree_pss": {
+      "min": 103.74,
+      "median": 103.96,
+      "max": 104.08,
+      "n": 15
+    },
+    "last": {
+      "flow": 40000,
+      "root_pid": 445104,
+      "gateway_pid": 445104,
+      "pids": [
+        445104,
+        445162
+      ],
+      "parts": [
+        {
+          "pid": 445104,
+          "cmdline": "/tmp/gw-bins/mcpjungle start --host 127.0.0.1 --port 32797 --sqlite-db-path /tmp/mj-smaps-445060/mcpjungle.db",
+          "rss_mb": 37.81,
+          "anonymous_mb": 15.64,
+          "pss_mb": 26.84,
+          "file_backed_est_mb": 22.18
+        },
+        {
+          "pid": 445162,
+          "cmdline": "/exec-daemon/node /workspace/scripts/benchmarks/lib/equal-arm-catalog-mcp.mjs",
+          "rss_mb": 116.6,
+          "anonymous_mb": 72.38,
+          "pss_mb": 77.12,
+          "file_backed_est_mb": 44.21
+        }
+      ],
+      "tree": {
+        "rss_mb": 154.41,
+        "anonymous_mb": 88.02,
+        "pss_mb": 103.96,
+        "file_backed_est_mb": 66.39
+      },
+      "gateway_only": {
+        "rss_mb": 37.81,
+        "anonymous_mb": 15.64,
+        "pss_mb": 26.84,
+        "file_backed_est_mb": 22.18
+      }
+    }
+  },
+  "call": {
+    "n": 40000,
+    "p50_ms": 1.066,
+    "p99_ms": 4.246,
+    "p999_ms": 9.332
+  },
+  "interpretation": "Publish-board MJ ~152 MB is tree RSS (ResourceSampler /proc PPID tree). Quote under_load_plateau.tree_anon vs ClawQL process anon (smaps Anonymous). gateway_only is the Go multiplexer; catalog Node child dominates tree growth."
+}

@@ -15,6 +15,7 @@ const ROUTES: Array<{
   { path: '/signup/thanks', changeFrequency: 'yearly', priority: 0.2 },
   { path: '/about', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/demo', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/benchmarks', changeFrequency: 'weekly', priority: 0.92 },
   { path: '/status', changeFrequency: 'weekly', priority: 0.7 },
   { path: '/inference/gtm', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/idp', changeFrequency: 'monthly', priority: 0.9 },

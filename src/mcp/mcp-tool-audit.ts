@@ -4,7 +4,10 @@
  */
 
 import { Effect } from "effect";
-import { handleAuditToolInput } from "./clawql-audit.js";
+import { getDefaultAuditRingBuffer } from "clawql-core";
+import { maybePushAuditEntryToLoki } from "../observability/clawql-audit-loki.js";
+import { logMcpToolShape } from "./mcp-tool-log.js";
+import { prometheusRecordAuditAppend } from "clawql-api";
 
 const SENSITIVE_KEY =
   /^(password|passwd|secret|token|api[_-]?key|authorization|bearer|cookie|private[_-]?key)$/i;
@@ -135,21 +138,43 @@ export const recordMcpToolCallAuditEffect = (event: McpToolAuditEvent): Effect.E
   Effect.gen(function* () {
     const params = yield* buildMcpToolAuditAppend(event);
     if (!params) return;
-    yield* Effect.tryPromise({
-      try: async () => {
-        await handleAuditToolInput(params);
-      },
-      catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-    }).pipe(
-      Effect.catch((err) =>
-        Effect.sync(() => {
-          console.error("[clawql-mcp-tool-audit] append failed:", err.message);
-        })
-      )
-    );
+    // Sync ring append — no Promise/schema decode on the MCP tool hot path.
+    yield* Effect.sync(() => {
+      try {
+        const { total, dropped, entry } = getDefaultAuditRingBuffer().append({
+          ts: new Date().toISOString(),
+          category: params.category,
+          action: params.action,
+          summary: params.summary,
+          correlationId: params.correlationId,
+        });
+        logMcpToolShape("audit", {
+          operation: "append",
+          categoryLen: params.category.length,
+          actionLen: params.action.length,
+          summaryLen: params.summary.length,
+          correlationIdLen: params.correlationId?.length,
+        });
+        prometheusRecordAuditAppend(total, dropped);
+        maybePushAuditEntryToLoki(entry);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("[clawql-mcp-tool-audit] append failed:", message);
+      }
+    });
   });
 
-/** MCP host façade — never throws. */
+/**
+ * MCP host façade — sync, never throws.
+ * Kept as `async` returning a resolved path only for call-site compatibility;
+ * prefer {@link recordMcpToolCallAuditSync} on the hot path.
+ */
+export function recordMcpToolCallAuditSync(event: McpToolAuditEvent): void {
+  if (envFlagOff(process.env.CLAWQL_AUDIT_TOOL_CALLS)) return;
+  Effect.runSync(recordMcpToolCallAuditEffect(event));
+}
+
+/** @deprecated Prefer {@link recordMcpToolCallAuditSync} — Promise façade for older callers. */
 export async function recordMcpToolCallAudit(event: McpToolAuditEvent): Promise<void> {
-  await Effect.runPromise(recordMcpToolCallAuditEffect(event));
+  recordMcpToolCallAuditSync(event);
 }

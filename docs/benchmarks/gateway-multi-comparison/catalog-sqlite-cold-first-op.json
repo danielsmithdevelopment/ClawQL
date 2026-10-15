@@ -1,0 +1,24 @@
+{
+  "measuredAt": "2026-10-14T02:54:13.735Z",
+  "spec": "synthetic-multi-doc",
+  "multi_doc": true,
+  "ops_measured": 40,
+  "catalog_bytes": 40960,
+  "cold_first_exec_per_op": {
+    "n": 40,
+    "p50_ms": 2.462,
+    "p95_ms": 34.251,
+    "p99_ms": 128.998,
+    "max_ms": 128.998,
+    "mean_ms": 8.898
+  },
+  "warm_exec": {
+    "n": 200,
+    "p50_ms": 1.644,
+    "p95_ms": 2.184,
+    "p99_ms": 2.697,
+    "max_ms": 5.775,
+    "mean_ms": 1.694
+  },
+  "note": "MULTI_DOC=1: one OAS gzip blob per op — cold p99 is true per-op materialize."
+}

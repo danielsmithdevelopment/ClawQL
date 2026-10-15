@@ -1,0 +1,30 @@
+{
+  "measuredAt": "2026-10-13T07:27:00Z",
+  "iters": 1200,
+  "arm": "clawql_http",
+  "node": "keepAlive_default_true",
+  "nodefetch": {
+    "board": "gateway-multi-multiturn-clawql-http-upstream-nodefetch-1.2k.json",
+    "flow_p999_ms": 361.141,
+    "execute_max_ms": 134.988,
+    "search_max_ms": 421.195,
+    "tcp_connects": 1,
+    "requests": 14400,
+    "max_handle_ms": 2.64
+  },
+  "native": {
+    "board": "gateway-multi-multiturn-clawql-http-upstream-native-1.2k.json",
+    "flow_p999_ms": 149.559,
+    "execute_max_ms": 109.858,
+    "search_max_ms": 126.074,
+    "tcp_connects": 1,
+    "requests": 14400,
+    "max_handle_ms": 2.82
+  },
+  "verdict": {
+    "mock_slow": false,
+    "connect_churn": false,
+    "native_fetch_helps_tails": "suggestive_on_1.2k_needs_larger_n",
+    "next": "profile search / non-fetch execute path; fix client-long server-short log gap"
+  }
+}
