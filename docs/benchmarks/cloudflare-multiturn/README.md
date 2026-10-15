@@ -18,7 +18,7 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | **Real-model 50 sessions / arm × 2 model families** | **Done** — dual-win `known_op_beats_code_mode_for_real_models` ([`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json)) |
 | **Measured defaults (not program-as-core)** | Locked — [`measured-defaults.md`](./measured-defaults.md): known-op/`where` is the filter winner; programs stay alongside until one-step plans are as cheap as `execute` and a fan-out board clears |
 | **Memory under load (slim)** | Uncapped ~**290 MB**; Node **256** → **132 MB** (+**3.5 ms** p99); Bun `--smol` → **130 MB** and faster — [`memory-plateau.md`](./memory-plateau.md). |
-| **HTTP concurrency (Cloud)** | Interim 1×: uncapped **44** / Node256&384 **31** / Bun **72** / MJ **26** / AG **24** (p99≤100 ms). Cap tax unsettled until `REPS≥3`. MJ pets **204** ≠ this payload — [`http-concurrency-heap-ab.json`](./http-concurrency-heap-ab.json). |
+| **HTTP concurrency (Cloud)** | Node `REPS=3`: uncapped **[30,31]** / 256 **[27,29]** / 384 **[25,30]** — prior uncapped **44** outlier; **no ~30% cap tax**. Bun **72**; MJ **26**; AG stock **24** (tuned **17**). [`http-concurrency-heap-ab.json`](./http-concurrency-heap-ab.json). |
 | Blog / public headline | Cleared by pre-committed rules (board + dual-model gate both green) |
 
 N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the board. Do **not** ship the reversed-headline blog until both gates pass.

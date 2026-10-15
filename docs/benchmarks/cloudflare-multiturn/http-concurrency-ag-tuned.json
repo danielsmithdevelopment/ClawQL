@@ -1,0 +1,272 @@
+{
+  "measuredAt": "2026-10-15T22:15:43.318Z",
+  "topology": "A_single_instance_http_multiplex",
+  "claim_rules": [
+    "One Streamable HTTP MCP process per arm; N concurrent clients.",
+    "Comparable across arms in this file only (same host, same mock, same session).",
+    "Not equal-arm stdio chaos (gateway-multi 63/204); not NATS 4-replica (135).",
+    "ClawQL uses known-op execute+where; aggregators call the same DNS op without where (larger body).",
+    "Do not claim heap-cap concurrency cost from a single pass — 384 sits above the uncapped plateau (~296 MB)."
+  ],
+  "slo": {
+    "break_p99_ms": 100,
+    "break_error_rate": 0.02,
+    "step_ms": 3000,
+    "warmup": 4,
+    "hard_max": 256,
+    "reps": 1
+  },
+  "operationId": "dns-records-for-a-zone-list-dns-records",
+  "ranges": {
+    "agentgateway_tuned": {
+      "reps": [
+        17
+      ],
+      "min": 17,
+      "max": 17,
+      "median": 17
+    }
+  },
+  "board": {
+    "agentgateway_tuned": {
+      "sustained": 17,
+      "first_break": 18,
+      "break_reason": "p99 5915.9ms",
+      "runtime": "rust",
+      "node_max_old_space_mb": null,
+      "bun_smol": null,
+      "rep": 1
+    }
+  },
+  "interpretation": {
+    "heap_cap_vs_concurrency": null,
+    "bun_vs_node": null,
+    "vs_peers_http": {
+      "clawql_node_uncapped": null,
+      "clawql_node_256": null,
+      "clawql_node_384": null,
+      "clawql_bun_smol": null,
+      "mcpjungle": null,
+      "agentgateway": {
+        "reps": [
+          17
+        ],
+        "min": 17,
+        "max": 17,
+        "median": 17
+      },
+      "note": "Like-for-like HTTP multiplex; aggregator payloads are larger (no where)."
+    },
+    "cloud_profile_hint": "Bun --smol remains the Cloud HTTP default (highest clients + ~130 MB). Do not cite Node cap concurrency tax until REPS≥3 settles variance vs flag-behavior.",
+    "related": "Open HTTP tail stalls (300–700 ms) likely amplify under concurrency — same investigation track."
+  },
+  "arms": [
+    {
+      "id": "agentgateway_tuned",
+      "kind": "aggregator",
+      "runtime": "rust",
+      "node_max_old_space_mb": null,
+      "bun_smol": null,
+      "toolName": "dns-records-for-a-zone-list-dns-records",
+      "note": "Tuned: workerThreads=4, backend.poolMaxSize=256, frontendPolicies.http.maxConcurrentRequests=1024. Still no where (larger body).",
+      "sustained_concurrency_before_break": 17,
+      "first_break_clients": 18,
+      "break_reason": "p99 5915.9ms",
+      "steps": [
+        {
+          "concurrency": 1,
+          "ok": 565,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 188.3,
+          "latency_ms": {
+            "p50": 4.613667000000078,
+            "p99": 13.232346999999663,
+            "p999": 19.8879579999998
+          },
+          "memory": {
+            "rss_mb": 37.84,
+            "anonymous_mb": 12.18,
+            "pss_mb": 22.96
+          },
+          "broken": false,
+          "break_reason": null
+        },
+        {
+          "concurrency": 2,
+          "ok": 699,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 233,
+          "latency_ms": {
+            "p50": 7.765072000000146,
+            "p99": 21.393232999999782,
+            "p999": 27.715567000000192
+          },
+          "memory": {
+            "rss_mb": 39.55,
+            "anonymous_mb": 13.9,
+            "pss_mb": 24.67
+          },
+          "broken": false,
+          "break_reason": null
+        },
+        {
+          "concurrency": 4,
+          "ok": 798,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 266,
+          "latency_ms": {
+            "p50": 13.411990999999034,
+            "p99": 44.18462299999919,
+            "p999": 71.8357560000004
+          },
+          "memory": {
+            "rss_mb": 41.17,
+            "anonymous_mb": 15.52,
+            "pss_mb": 26.29
+          },
+          "broken": false,
+          "break_reason": null
+        },
+        {
+          "concurrency": 8,
+          "ok": 948,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 316,
+          "latency_ms": {
+            "p50": 24.094874999998865,
+            "p99": 54.65755200000058,
+            "p999": 66.44918400000097
+          },
+          "memory": {
+            "rss_mb": 44.27,
+            "anonymous_mb": 18.62,
+            "pss_mb": 29.39
+          },
+          "broken": false,
+          "break_reason": null
+        },
+        {
+          "concurrency": 16,
+          "ok": 1475,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 491.7,
+          "latency_ms": {
+            "p50": 31.72198699999717,
+            "p99": 67.5407269999996,
+            "p999": 82.50435000000289
+          },
+          "memory": {
+            "rss_mb": 50.63,
+            "anonymous_mb": 25.09,
+            "pss_mb": 35.82
+          },
+          "broken": false,
+          "break_reason": null
+        },
+        {
+          "concurrency": 32,
+          "ok": 1088,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 362.7,
+          "latency_ms": {
+            "p50": 84.4156060000023,
+            "p99": 181.47568899999897,
+            "p999": 222.00001299999713
+          },
+          "memory": {
+            "rss_mb": 40.36,
+            "anonymous_mb": 36.29,
+            "pss_mb": 38.73
+          },
+          "broken": true,
+          "break_reason": "p99 181.5ms"
+        }
+      ],
+      "refine": [
+        {
+          "concurrency": 24,
+          "ok": 196,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 65.3,
+          "latency_ms": {
+            "p50": 279.0031730000046,
+            "p99": 1672.8730159999977,
+            "p999": 1805.6293839999998
+          },
+          "memory": {
+            "rss_mb": 42.54,
+            "anonymous_mb": 37.56,
+            "pss_mb": 41.65
+          },
+          "broken": true,
+          "break_reason": "p99 1672.9ms"
+        },
+        {
+          "concurrency": 20,
+          "ok": 92,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 30.7,
+          "latency_ms": {
+            "p50": 458.5133910000004,
+            "p99": 2387.168826999987,
+            "p999": 2387.168826999987
+          },
+          "memory": {
+            "rss_mb": 42.62,
+            "anonymous_mb": 39.57,
+            "pss_mb": 42.22
+          },
+          "broken": true,
+          "break_reason": "p99 2387.2ms"
+        },
+        {
+          "concurrency": 18,
+          "ok": 183,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 61,
+          "latency_ms": {
+            "p50": 103.67843599995831,
+            "p99": 5915.908687999996,
+            "p999": 5919.168183000002
+          },
+          "memory": {
+            "rss_mb": 53.18,
+            "anonymous_mb": 42.14,
+            "pss_mb": 47.72
+          },
+          "broken": true,
+          "break_reason": "p99 5915.9ms"
+        },
+        {
+          "concurrency": 17,
+          "ok": 2227,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 742.3,
+          "latency_ms": {
+            "p50": 21.732414000027347,
+            "p99": 43.99443700001575,
+            "p999": 60.271231000020634
+          },
+          "memory": {
+            "rss_mb": 61.43,
+            "anonymous_mb": 48.24,
+            "pss_mb": 61.43
+          },
+          "broken": false,
+          "break_reason": null
+        }
+      ],
+      "rep": 1
+    }
+  ]
+}

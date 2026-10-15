@@ -49,24 +49,23 @@ Capped/Bun vs uncapped-board peers (MJ ~88 / AG ~98): about **35–45 MB**, no
 | `memory_ingest` ~305 KB document | ok but anon ~**255–261** → prefer **384** when memory is on |
 | 8-step `execute_program` fan-out | ok |
 
-### HTTP concurrency A/B (p99 ≤ 100 ms) — interim single-pass
+### HTTP concurrency A/B (p99 ≤ 100 ms)
 
 Same-session multiplex HTTP
-([`http-concurrency-heap-ab.json`](./http-concurrency-heap-ab.json)):
+([`http-concurrency-heap-ab.json`](./http-concurrency-heap-ab.json);
+Node variance: [`http-concurrency-node-variance-3x.json`](./http-concurrency-node-variance-3x.json)):
 
-| Arm | Sustained (1×) | Notes |
+| Arm | Sustained | Notes |
 | --- | ---: | --- |
-| Node uncapped | **44** | Uncapped plateau ~296 MB — below a 384 cap |
-| Node 256 | **31** | Single pass; do **not** cite as “~30% cap tax” yet |
-| Node 384 | **31** | Should be unbound vs ~296 MB plateau — pending `REPS≥3` |
-| Bun `--smol` | **72** | Cloud HTTP default; still ~130 MB plateau |
+| Node uncapped | **[30, 31]** (median **31**) | `REPS=3`; prior single-pass **44** was an outlier |
+| Node 256 | **[27, 29]** (median **27**) | 1–4 clients under uncapped — **not** a ~30% tax |
+| Node 384 | **[25, 30]** (median **28**) | Overlaps uncapped; unbound vs ~296 MB plateau |
+| Bun `--smol` | **72** | Cloud HTTP default; still ~130 MB plateau (prior 1×) |
 | MCPJungle HTTP | **26** | Larger body (no `where`); ≠ pets-board **204** (tiny payload) |
-| agentgateway HTTP | **24** | Larger body (no `where`); stock defaults — tuned smoke pending |
+| agentgateway HTTP | **24** stock / **17** tuned | Raising pool/workers/concurrency did **not** help |
 
-**Open:** uncapped **44** vs capped **31** may be run variance or flag-behavior even
-when the limit is not reached. Settle with same-session `REPS=3` on uncapped / 256 /
-384 before any “cap costs concurrency” claim. Bun’s lead does not depend on that
-verdict. Horizontal scale (NATS ~135) remains the multi-instance path.
+**Verdict:** do **not** claim the heap cap costs ~30% concurrency. Bun’s lead does not
+depend on that. Horizontal scale (NATS ~135) remains the multi-instance path.
 
 ## Heap limits by profile
 

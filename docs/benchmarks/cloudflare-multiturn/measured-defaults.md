@@ -47,7 +47,7 @@ Node setting. Pick the row that matches what the pod actually enables:
 | Feature profile | What is on | Node `NODE_OPTIONS` / Helm `nodeOptions` | Bun | Notes |
 | --- | --- | --- | --- | --- |
 | **Lean listen** (search/execute, SQLite OOP, no vault memory, no documents, pack none) | Core MCP only | **`--max-old-space-size=256`** (Helm / kustomize base default) | **`--smol`** | Plateau ~**132 MB** (Node) / ~**130 MB** (Bun). No OOM on `full:true` / program fan-out. |
-| **ClawQL Cloud / HTTP multiplex** (managed serving path) | Lean listen over Streamable HTTP | **256** lean Node default (concurrency vs uncapped unsettled — see HTTP table) | **`--smol` (Cloud default)** | Bun sustains **72** clients vs peers MJ 26 / AG 24 — see HTTP table. |
+| **ClawQL Cloud / HTTP multiplex** (managed serving path) | Lean listen over Streamable HTTP | **256** lean Node default | **`--smol` (Cloud default)** | Bun **72** vs Node256 median **27** / MJ **26** / AG stock **24** — see HTTP table. |
 | **Memory-enabled** (`enableMemory` / vault ingest, embeddings rebuild) | + `memory_ingest` / recall | **`--max-old-space-size=384`** | `--smol` (raise host RAM if needed) | Long ingest (~305 KB doc) hit **~255–261 MB** anon under a 256 cap. Prefer **384** for ingest headroom. Do **not** run ingest on lean 256. |
 | **Docker Desktop / all-providers demo** | memory + documents + large catalog | **768** (`values-docker-desktop.yaml`) | — | Catalog startup OOMs at 512. |
 | **Heavy prod overlay** (kustomize `overlays/prod`) | site-specific | **3072** (existing overlay; leave unless remeasured) | — | Not the lean product claim. |
@@ -69,37 +69,38 @@ anon. Capped/Bun gap vs those peers is about **35–45 MB** (132−88 / 130−
 **Prefer quoting plateau + peer gaps from the next publish board** (Node 256 default +
 Bun arm), where memory series are same-run.
 
-### HTTP concurrency (Cloud-shaped) — interim; cap tax unsettled
+### HTTP concurrency (Cloud-shaped) — cap tax retracted
 
 Artifact: [`http-concurrency-heap-ab.json`](./http-concurrency-heap-ab.json)
 (same host; p99 ≤ 100 ms; binary refine). ClawQL = known-op `execute`+`where`;
 peers = same DNS op via `cf-rest-mcp` (no where → larger body).
+Node ranges: [`http-concurrency-node-variance-3x.json`](./http-concurrency-node-variance-3x.json).
 
-| Arm | Sustained (1×) | First break |
-| --- | ---: | ---: |
-| Node uncapped | **44** | 45 |
-| Node `--max-old-space-size=256` | **31** | 32 |
-| Node `--max-old-space-size=384` | **31** | 32 |
-| Bun `--smol` | **72** | 73 |
-| MCPJungle (HTTP) | **26** | 27 |
-| agentgateway (HTTP) | **24** | 25 |
+| Arm | Sustained | Source |
+| --- | ---: | --- |
+| Node uncapped | **[30, 31]** median **31** | `REPS=3` (prior 1× **44** outlier) |
+| Node `--max-old-space-size=256` | **[27, 29]** median **27** | `REPS=3` |
+| Node `--max-old-space-size=384` | **[25, 30]** median **28** | `REPS=3` |
+| Bun `--smol` | **72** | prior 1× same session |
+| MCPJungle (HTTP) | **26** | prior 1× |
+| agentgateway stock | **24** | prior 1× |
+| agentgateway tuned | **17** | `AG_TUNED=1` smoke |
 
-**Heap cap vs concurrency (open):** a 384 MB limit sits above the uncapped plateau
-(~296 MB), so that arm should not have been memory-bound — yet the single pass matched
-256 at **31**, not uncapped **44**. Until same-session `REPS≥3` settles ranges, do
-**not** claim the cap costs ~30% concurrency (may be variance or flag-behavior below
-the limit). **Bun `--smol`** remains the Cloud HTTP default regardless: **72** clients
-and ~130 MB plateau.
+**Heap cap vs concurrency:** same-session `REPS=3` puts uncapped at **30–31**, not 44.
+256 is **1–4** clients under that band — **not** ~30%. 384 overlaps uncapped (should be
+unbound vs ~296 MB plateau). Do **not** claim a cap concurrency tax. **Bun `--smol`**
+remains the Cloud HTTP default: **72** clients and ~130 MB plateau.
 
 **Peers over HTTP (this workflow):** ClawQL moves answers (`where`); peers move full
 DNS lists. Framing: fair, specific — not “peers are slower gateways.”
 
 **Peer settings in this bench:** MCPJungle registered with `session_mode: stateful`
 (keeps stdio `cf-rest-mcp` warm — better than the product default of a new upstream
-connection per tool call). agentgateway left `workerThreads` /
-`maxConcurrentRequests` / `poolMaxSize` at stock defaults; tuned smoke
-(`AG_TUNED=1`) checks whether raising those knobs moves the ceiling. **Invite both
-maintainers** to suggest production concurrency knobs before these numbers go public (same courtesy
+connection per tool call). agentgateway stock left `workerThreads` /
+`maxConcurrentRequests` / `poolMaxSize` at defaults; `AG_TUNED=1` (workers=4,
+`poolMaxSize=256`, `maxConcurrentRequests=1024`) sustained **17** — knobs did **not**
+raise the ceiling past stock **24**, so publishing stock is not unfair on that axis.
+**Invite both maintainers** before these numbers go public (same courtesy
 as the token board).
 
 ### Reconcile the two concurrency boards (both valid)
@@ -163,7 +164,8 @@ Three measured claims, same workflow family, each labeled for what it covers:
 
 > On Node with `--max-old-space-size=256`, ClawQL plateaus near **132 MB**, within about
 > **35–45 MB** of the Go and Rust gateways, at about **3.5 ms** p99 versus uncapped.
-> (HTTP client counts vs uncapped / 384 pending `REPS≥3` — do not cite a cap tax yet.)
+> HTTP clients land near uncapped on this workflow (median **27** vs **31**; not a ~30%
+> cap tax).
 
 Replace plateau/peer memory gaps with the next publish board’s same-run series when it
 lands.
