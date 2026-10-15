@@ -42,6 +42,11 @@ export const EXECUTE_WHERE_DESCRIPTION =
   "length(result[?state=='ACTIVE']) (count matches); " +
   "result[0].id (extract one value).";
 
+export const EXECUTE_FULL_DESCRIPTION =
+  "Opt out of the soft observation budget. When false/omitted, large responses without " +
+  "where/fields return a truncated preview (truncated:true) instead of the full payload. " +
+  "Use true only when you genuinely need every row.";
+
 /** MCP `search` tool arguments — Effect Schema (source of truth). */
 export const SearchInputSchema = Schema.Struct({
   query: Schema.String.annotate({ description: SEARCH_QUERY_DESCRIPTION }),
@@ -69,6 +74,7 @@ export const ExecuteInputSchema = Schema.Struct({
       description: EXECUTE_WHERE_DESCRIPTION,
     })
   ),
+  full: Schema.optional(Schema.Boolean.annotate({ description: EXECUTE_FULL_DESCRIPTION })),
 });
 
 export type ExecuteInputDecoded = Schema.Schema.Type<typeof ExecuteInputSchema>;

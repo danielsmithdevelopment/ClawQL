@@ -13,6 +13,7 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | `where` / plan args counted as code tokens | Done — same bucket as code-mode scripts |
 | `clawql_program` (ADR 0015 v0 plan runner) | Done |
 | Product: `where` examples in execute schema + fix-named `where_invalid` | Done (+37 where-desc tokens; full execute tool def **218**) |
+| Product: observation budget (no where/fields → truncated preview) | Done (`truncated:true` + note; opt-in `full:true`) |
 | **Publish board: 3×10k** | **Pending** (re-run with code-arg accounting; rep 1 matches smoke) |
 | **Real-model 50 sessions / arm × 2 model families** | **Harness ready; blocked on secrets; Composer pilots ≠ SPEC gate** |
 | Blog / public headline | **Hold** until publish board + dual-model real-model land |
@@ -37,6 +38,8 @@ N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the boa
 
 ### 3. Real-model gate (SPEC)
 
+**Compare real-model results only with real-model results.** Scripted Executor / Cloudflare code-mode rows are not a fair peer for Cursor/OpenAI ClawQL sessions — code-mode agents can also dump whole lists or retry broken programs. Default arms include `executor_v2`.
+
 Set secrets **in the environment** (never paste keys into chat):
 
 - `OPENAI_API_KEY` (required)
@@ -49,8 +52,11 @@ CF_MT_REAL_ITERS=50 \
   npm run benchmark:cloudflare-multiturn:real-model
 ```
 
-Fixed settings: temperature 0, shared system prompt, each arm’s tool descriptions from `listTools`. Reports malformed `where`, retries, turns, **tokens**, failure counts — not just averages. Cursor-subscription Composer pilots are cheap signal, not this gate.
+Fixed settings: temperature 0, shared system prompt, each arm’s tool descriptions from `listTools`. Per arm the report includes **median / p90** observation tokens, **sessions over ceiling** (default 10k, `CF_MT_REAL_TOKEN_CEILING`), malformed `where`, observation-budget hits, retries, turns. Cursor-subscription Composer pilots are cheap signal, not this gate.
 
+### 4. Observation budget (product)
+
+Large `execute` responses with neither `where` nor `fields` hit a soft budget (~8k chars / ~2k tokens, `CLAWQL_EXECUTE_OBSERVATION_BUDGET_CHARS`). The server returns `truncated: true`, an honest note (“do not treat the preview as the full answer”), first ~20 rows, and a suggested `where`. Pass `full: true` only when every row is required (hard `CLAWQL_EXECUTE_RESULT_MAX_CHARS` still applies). Session-2’s ~60k unfiltered DNS dump is exactly what this turns into a short preview + one filtered retry.
 ## Rebuildable token formula
 
 `definition + discovery + result + code = combined_mean`  
@@ -106,7 +112,7 @@ Model: `composer-2.5-fast` subagents · arm: `clawql_known_op` · billed via Cur
 | Blind (pre-fix) | [`real-model-cursor-blind-pilot-n5.json`](./real-model-cursor-blind-pilot-n5.json) | 5/5 | 2 | 3 | 13.4 | n/a | n/a | n/a | shapes hidden; schema had no examples |
 | Blind (post-fix) | [`real-model-cursor-blind-pilot-v2-n5.json`](./real-model-cursor-blind-pilot-v2-n5.json) | **5/5** | 2 | **0** | 15.8 (**13**) | 206 | 13287 (**520**) | 14534 (**1643**) | schema examples + fix-named errors; JSONL tokens |
 
-Post-fix: tool errors cleared (3→0); malformed still 2 (sessions 3 & 5 fixed via `example`). Median weighted **1643** ≈ scripted known-op **1743**. Mean is skewed by session 2, which omitted `where` on DNS list (~60k result tokens) — examples help syntax, they do not force filtering. Still not the SPEC dual-model × 50 gate.
+Post-fix: tool errors cleared (3→0); malformed still 2 (sessions 3 & 5 fixed via `example`). Median weighted **1643** ≈ scripted known-op **1743**. Mean skewed by session 2, which omitted `where` on DNS list (~60k result tokens) — that outlier motivated the **observation budget** product change above. Still not the SPEC dual-model × 50 gate (and do not compare these Composer rows to scripted code-mode).
 
 ## Framing (if full board + real-model clear)
 

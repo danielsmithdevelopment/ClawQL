@@ -44,6 +44,17 @@ describe("SearchInputSchema / ExecuteInputSchema", () => {
     expect(decoded.where).toBe("[?state=='open']");
   });
 
+  it("decodes optional full flag for observation-budget opt-out", async () => {
+    const decoded = await Effect.runPromise(
+      decodeExecuteInput({
+        operationId: "pulls/list",
+        args: {},
+        full: true,
+      })
+    );
+    expect(decoded.full).toBe(true);
+  });
+
   it("rejects where longer than 512 characters", async () => {
     await expect(
       Effect.runPromise(

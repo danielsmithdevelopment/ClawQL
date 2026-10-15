@@ -2,19 +2,25 @@
 /**
  * Real-model validation (SPEC): 50 sessions per arm × model, mock only.
  *
+ * Fairness: every published comparison is **real-model vs real-model**. Do not
+ * compare Cursor/OpenAI ClawQL sessions against scripted Executor / Cloudflare
+ * code-mode token rows — code-mode arms must run through the same dual-model
+ * gate (default arms include `executor_v2`).
+ *
  * Secrets (never paste into chat / logs):
  *   OPENAI_API_KEY          — required
  *   OPENAI_BASE_URL         — optional (default https://api.openai.com/v1)
- *   CF_MT_MODEL_FRONTIER    — frontier model id
+ *   CF_MT_MODEL_FRONTIER    — frontier model id (different family from SMALL)
  *   CF_MT_MODEL_SMALL       — smaller/cheaper model id
  *   CF_MT_MODEL             — optional single-model override (runs that one only)
  *
- *   CF_MT_REAL_ITERS=50 CF_MT_REAL_ARMS=clawql_known_op,clawql_program,executor_v2 \
+ *   CF_MT_REAL_ITERS=50 \
+ *   CF_MT_REAL_ARMS=clawql_known_op,clawql_program,executor_v2 \
  *     npm run benchmark:cloudflare-multiturn:real-model
  *
  * Settings fixed across arms: temperature 0, shared system prompt, each gateway's
- * own tool descriptions from listTools. Reports failures (malformed where, retries,
- * turns) alongside tokens and task success.
+ * own tool descriptions from listTools. Reports failures, retries, turns, and
+ * **token distributions** (median / p90 / sessions over ceiling) — not just means.
  */
 import { spawn } from "node:child_process";
 import {
@@ -57,6 +63,11 @@ const ARMS = (
   .map((s) => s.trim())
   .filter(Boolean);
 const MAX_TURNS = Math.max(4, Number(process.env.CF_MT_REAL_MAX_TURNS || 24) || 24);
+/** Session observation-token ceiling for “how often does context blow up”. */
+const TOKEN_CEILING = Math.max(
+  1000,
+  Number(process.env.CF_MT_REAL_TOKEN_CEILING || 10_000) || 10_000
+);
 const TEMPERATURE = 0;
 const enc = getEncoding("cl100k_base");
 
@@ -85,6 +96,16 @@ function toolText(res) {
   const c = res?.content;
   if (!Array.isArray(c)) return "";
   return c.filter((x) => x?.type === "text").map((x) => x.text).join("\n");
+}
+function percentileSorted(sorted, p) {
+  if (!sorted.length) return 0;
+  const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil((p / 100) * sorted.length) - 1));
+  return sorted[idx];
+}
+function medianSorted(sorted) {
+  if (!sorted.length) return 0;
+  const m = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[m] : (sorted[m - 1] + sorted[m]) / 2;
 }
 function pickPort() {
   return new Promise((resolve, reject) => {
@@ -118,6 +139,7 @@ function systemPrompt() {
     "You complete a 12-step Cloudflare zone audit using only the provided tools.",
     `Zone name: ${FAKE.auditZoneName}. Target IP: ${FAKE.targetIp}. Account id: ${FAKE.accountId}.`,
     "Return lean observations. Prefer server-side filtering when the tools support it.",
+    "If a tool returns truncated:true, the preview is incomplete — retry with where/fields (or a tighter program), not full:true, unless you truly need every row.",
     "Step 12 is a gated proposal only — do not PATCH DNS. Submit { proposal: { recordId, proxied: true }, gated: true }.",
     "Call submit_observation for every step 1–12 when you have the answer.",
   ].join("\n");
@@ -277,6 +299,13 @@ function classifyToolFailure(name, args, resultText) {
       detail: (json?.error || resultText).slice(0, 240),
     });
   }
+  if (json?.truncated === true && json?.reason === "observation_budget") {
+    failures.push({
+      kind: "observation_budget_truncated",
+      tool: name,
+      detail: (json?.note || "truncated preview").slice(0, 240),
+    });
+  }
   if (json?.ok === false && json?.status !== "where_invalid") {
     failures.push({
       kind: "tool_error",
@@ -302,9 +331,11 @@ async function runToolSession({
   let retries = 0;
   let inputTokens = 0;
   let outputTokens = 0;
+  let observationTokens = 0;
   let toolCalls = 0;
   let whereAttempts = 0;
   let whereMalformed = 0;
+  let observationBudgetHits = 0;
 
   const messages = [
     { role: "system", content: systemPrompt() },
@@ -362,11 +393,16 @@ async function runToolSession({
         if (typeof args.where === "string") whereAttempts++;
         const res = await client.callTool({ name, arguments: args });
         resultText = toolText(res);
+        observationTokens += countTokens(resultText);
         const classified = classifyToolFailure(name, args, resultText);
         for (const f of classified) {
           failures.push(f);
           if (f.kind === "malformed_where") {
             whereMalformed++;
+            retries++;
+          }
+          if (f.kind === "observation_budget_truncated") {
+            observationBudgetHits++;
             retries++;
           }
         }
@@ -402,8 +438,10 @@ async function runToolSession({
     toolCalls,
     inputTokens,
     outputTokens,
+    observationTokens,
     whereAttempts,
     whereMalformed,
+    observationBudgetHits,
     session_ms: performance.now() - t0,
     stepChecks,
     failures,
@@ -418,16 +456,34 @@ function aggregateSessions(sessions) {
       failKinds[f.kind] = (failKinds[f.kind] || 0) + 1;
     }
   }
+  const obs = sessions.map((s) => s.observationTokens || 0).sort((a, b) => a - b);
+  const turns = sessions.map((s) => s.turns).sort((a, b) => a - b);
+  const input = sessions.map((s) => s.inputTokens).sort((a, b) => a - b);
+  const output = sessions.map((s) => s.outputTokens).sort((a, b) => a - b);
+  const mean = (xs) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
   return {
     task_success_rate: sessions.filter((s) => s.ok).length / sessions.length,
-    turns_mean: sessions.reduce((a, s) => a + s.turns, 0) / n,
-    retries_mean: sessions.reduce((a, s) => a + s.retries, 0) / n,
-    tool_calls_mean: sessions.reduce((a, s) => a + s.toolCalls, 0) / n,
-    input_tokens_mean: sessions.reduce((a, s) => a + s.inputTokens, 0) / n,
-    output_tokens_mean: sessions.reduce((a, s) => a + s.outputTokens, 0) / n,
-    session_ms_mean: sessions.reduce((a, s) => a + s.session_ms, 0) / n,
-    where_attempts_mean: sessions.reduce((a, s) => a + (s.whereAttempts || 0), 0) / n,
-    where_malformed_mean: sessions.reduce((a, s) => a + (s.whereMalformed || 0), 0) / n,
+    turns_mean: mean(turns),
+    turns_median: medianSorted(turns),
+    turns_p90: percentileSorted(turns, 90),
+    retries_mean: mean(sessions.map((s) => s.retries)),
+    tool_calls_mean: mean(sessions.map((s) => s.toolCalls)),
+    input_tokens_mean: mean(input),
+    input_tokens_median: medianSorted(input),
+    input_tokens_p90: percentileSorted(input, 90),
+    output_tokens_mean: mean(output),
+    output_tokens_median: medianSorted(output),
+    output_tokens_p90: percentileSorted(output, 90),
+    observation_tokens_mean: mean(obs),
+    observation_tokens_median: medianSorted(obs),
+    observation_tokens_p90: percentileSorted(obs, 90),
+    observation_tokens_over_ceiling: sessions.filter((s) => (s.observationTokens || 0) > TOKEN_CEILING)
+      .length,
+    observation_token_ceiling: TOKEN_CEILING,
+    session_ms_mean: mean(sessions.map((s) => s.session_ms)),
+    where_attempts_mean: mean(sessions.map((s) => s.whereAttempts || 0)),
+    where_malformed_mean: mean(sessions.map((s) => s.whereMalformed || 0)),
+    observation_budget_hits_mean: mean(sessions.map((s) => s.observationBudgetHits || 0)),
     failure_counts: failKinds,
     sessions_failed: sessions.filter((s) => !s.ok).length,
   };
@@ -480,6 +536,8 @@ async function main() {
       temperature: TEMPERATURE,
       system_prompt: "shared across arms; tool descriptions from each gateway listTools",
       max_turns: MAX_TURNS,
+      token_ceiling: TOKEN_CEILING,
+      comparison: "real_model_vs_real_model_only",
     },
     results: {},
   };
