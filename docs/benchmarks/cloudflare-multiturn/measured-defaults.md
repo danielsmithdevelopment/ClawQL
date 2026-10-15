@@ -46,8 +46,9 @@ Node setting. Pick the row that matches what the pod actually enables:
 
 | Feature profile | What is on | Node `NODE_OPTIONS` / Helm `nodeOptions` | Bun | Notes |
 | --- | --- | --- | --- | --- |
-| **Lean listen** (search/execute, SQLite OOP, no vault memory, no documents, pack none) | Core MCP only | **`--max-old-space-size=256`** (Helm / kustomize base default) | **`--smol`** | A/B plateau ~**132 MB** (Node) / ~**130 MB** (Bun). Stress: no OOM on `full:true`, program fan-out. HTTP multiplex SLO (p99≤100 ms): Node sustained **16**, Bun **32** — not the equal-arm chaos board. |
-| **Memory-enabled** (`enableMemory` / vault ingest, embeddings rebuild) | + `memory_ingest` / recall | **`--max-old-space-size=384`** | `--smol` (raise host RAM if needed) | Long ingest (~305 KB doc) hit **~255–261 MB** anon under a 256 cap — survived but no headroom. |
+| **Lean listen** (search/execute, SQLite OOP, no vault memory, no documents, pack none) | Core MCP only | **`--max-old-space-size=256`** (Helm / kustomize base default) | **`--smol`** | Plateau ~**132 MB** (Node) / ~**130 MB** (Bun). No OOM on `full:true` / program fan-out. |
+| **ClawQL Cloud / HTTP multiplex** (managed serving path) | Lean listen over Streamable HTTP | Prefer **384** on Node if per-instance client count matters; else 256 | **`--smol` (preferred)** | Heap cap costs concurrency (below). Bun holds the most clients. |
+| **Memory-enabled** (`enableMemory` / vault ingest, embeddings rebuild) | + `memory_ingest` / recall | **`--max-old-space-size=384`** | `--smol` (raise host RAM if needed) | Long ingest (~305 KB doc) hit **~255–261 MB** anon under a 256 cap — survived but no headroom. Do **not** run ingest on lean 256. |
 | **Docker Desktop / all-providers demo** | memory + documents + large catalog | **768** (`values-docker-desktop.yaml`) | — | Catalog startup OOMs at 512. |
 | **Heavy prod overlay** (kustomize `overlays/prod`) | site-specific | **3072** (existing overlay; leave unless remeasured) | — | Not the lean product claim. |
 
@@ -68,13 +69,35 @@ anon. Capped/Bun gap vs those peers is about **35–45 MB** (132−88 / 130−
 **Prefer quoting plateau + peer gaps from the next publish board** (Node 256 default +
 Bun arm), where memory series are same-run.
 
-### Concurrency (do not over-claim)
+### HTTP concurrency (Cloud-shaped) — heap cap has a cost
 
-Earlier gateway-multi single-instance chaos (p99 ≤ 100 ms): ClawQL **63/64**, MCPJungle
-**204/205**, agentgateway **62/63** (stdio equal-arm + refine). Heap-cap stress first
-claimed “128” without that SLO; with p99 ≤ 100 ms it sustains Node **16** / Bun **32**
-(HTTP multiplex only). Re-measure equal-arm chaos on the next publish board before any
-concurrency headline.
+Artifact: [`http-concurrency-heap-ab.json`](./http-concurrency-heap-ab.json)
+(same host/session; p99 ≤ 100 ms; binary refine). ClawQL = known-op `execute`+`where`;
+peers = same DNS op via `cf-rest-mcp` (no where → larger body).
+
+| Arm | Sustained clients | First break |
+| --- | ---: | ---: |
+| Node uncapped | **44** | 45 |
+| Node `--max-old-space-size=256` | **31** | 32 |
+| Bun `--smol` | **72** | 73 |
+| MCPJungle (HTTP) | **26** | 27 |
+| agentgateway (HTTP) | **24** | 25 |
+
+**Heap cap vs concurrency:** uncapped **44 → 31** under 256 (~**30%** fewer clients).
+The sequential plateau A/B did not show this — more live data under many clients +
+tighter heap → more GC at the worst time. **Cloud Node profile:** consider **384**
+(same as memory-enabled) when per-instance HTTP capacity matters; keep **256** for
+lean memory-first deploys. **Bun `--smol`** is the strongest single-instance HTTP arm
+here (72) and still ~130 MB plateau.
+
+**Peers over HTTP:** ClawQL (even capped Node 31) beats MJ 26 / AG 24 on this fixture
+partly because `where` shrinks the response — honest for the Cloud product path, not
+a claim that peers are slower gateways in general.
+
+**Stdio chaos board (different topology):** ClawQL **63/64**, MJ **204/205**, AG
+**62/63** — do not mix with these HTTP numbers. NATS 4-replica ~**135** remains the
+near-term capacity answer; raising per-instance HTTP concurrency is the same track as
+the open HTTP tail (300–700 ms stalls) investigation.
 
 ## Why program mode is not the core *yet*
 

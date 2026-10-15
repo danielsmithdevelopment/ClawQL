@@ -16,7 +16,8 @@ Track decisions here before publication. Unchecked items block a “final” boa
 - [ ] **celld isolate-boundary spike** (cold start, per-call cost, memory/cell vs plan runner) — may run **in parallel** with the fan-out board (ADR 0015).
 - [x] **Heap-vs-anon at plateau** + Node/Bun old-space A/B (memory + latency + p999/GC + stress) — Node **256** lean default; Bun **`--smol`**; memory profile prefer **384**. See [`memory-plateau.md`](./memory-plateau.md) / [`measured-defaults.md`](./measured-defaults.md).
 - [x] **Charge `where`/plan as code tokens:** execute `where` (+fields) and program plan JSON count in the same bucket as code-mode scripts; `weighted_mean` on every arm.
-- [ ] **Re-publish 3×10k board** with Node **256** default (+ Bun `--smol` arm): quote same-run capped plateau / peer gaps; include equal-arm chaos (p99≤100 ms) — do not reuse stress “128”.
+- [ ] **Re-publish 3×10k board** with Node **256** default (+ Bun `--smol` arm): quote same-run capped plateau / peer gaps; include **HTTP multiplex chaos** (p99≤100 ms) for uncapped / 256 / Bun / MJ / AG — see interim [`http-concurrency-heap-ab.json`](./http-concurrency-heap-ab.json) (cap costs ~30% clients: 44→31).
+- [ ] **HTTP tail × concurrency:** rare 300–700 ms stalls under load are the likely driver of the low per-instance HTTP ceiling — same investigation.
 - [x] **Compact program plan:** omit `tool` when `operationId` set (parser default); short ids; drop empty args (872 → 811 code tokens on this workflow).
 - [x] **Real-model 50 sessions / arm × 2 models:** Cursor Task gate cleared — `known_op_beats_code_mode_for_real_models` ([`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json)). Program was not the headline peer.
 - [x] **Product: `where` examples in execute schema** + fix-named `where_invalid` (`fix` + `example`) so blind real models see the same cues as “shapes visible” without harness leakage.

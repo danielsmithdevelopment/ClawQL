@@ -17,7 +17,8 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | **Publish board: 3×10k** | **Remeasuring** on slim listen (OOP+lazy) — prior board ~630 MB anon; process-tree fairness notes in [`process-tree-memory.md`](./process-tree-memory.md) |
 | **Real-model 50 sessions / arm × 2 model families** | **Done** — dual-win `known_op_beats_code_mode_for_real_models` ([`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json)) |
 | **Measured defaults (not program-as-core)** | Locked — [`measured-defaults.md`](./measured-defaults.md): known-op/`where` is the filter winner; programs stay alongside until one-step plans are as cheap as `execute` and a fan-out board clears |
-| **Memory under load (slim)** | Uncapped ~**290 MB**; Node **256** → **132 MB** (+**3.5 ms** p99, ~35–45 MB vs MJ/AG); Bun `--smol` → **130 MB** and **faster than uncapped Node** — [`memory-plateau.md`](./memory-plateau.md). Quote peers from next publish board. |
+| **Memory under load (slim)** | Uncapped ~**290 MB**; Node **256** → **132 MB** (+**3.5 ms** p99); Bun `--smol` → **130 MB** and faster — [`memory-plateau.md`](./memory-plateau.md). |
+| **HTTP concurrency (Cloud)** | Cap costs clients: uncapped **44** → Node256 **31**; Bun **72**; MJ **26** / AG **24** (p99≤100 ms) — [`http-concurrency-heap-ab.json`](./http-concurrency-heap-ab.json). Cloud Node may want **384**. |
 | Blog / public headline | Cleared by pre-committed rules (board + dual-model gate both green) |
 
 N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the board. Do **not** ship the reversed-headline blog until both gates pass.
