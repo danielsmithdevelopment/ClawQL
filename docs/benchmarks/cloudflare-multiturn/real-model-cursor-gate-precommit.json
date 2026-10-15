@@ -1,0 +1,61 @@
+{
+  "frozen_at": "2026-10-15T04:27:18.475Z",
+  "models_pin_revision": "2026-10-15-cursor-native",
+  "transport": "cursor_subscription_subagents",
+  "models": [
+    {
+      "label": "frontier",
+      "id": "gpt-5.6-sol-medium"
+    },
+    {
+      "label": "small",
+      "id": "composer-2.5-fast"
+    }
+  ],
+  "pinned": {
+    "frontier": "gpt-5.6-sol-medium",
+    "small": "composer-2.5-fast"
+  },
+  "temperature": "cursor_task_default",
+  "system_prompt_shared": true,
+  "ordering": "interleave_sessions_across_arms",
+  "arms": [
+    "clawql_known_op",
+    "executor_v2"
+  ],
+  "iters_per_arm": 50,
+  "token_ceiling": 10000,
+  "primary_pair": [
+    "clawql_known_op",
+    "executor_v2"
+  ],
+  "comparison_metrics": [
+    "weighted_tokens_median",
+    "weighted_tokens_p90",
+    "observation_tokens_over_ceiling",
+    "task_success_rate"
+  ],
+  "verdict_rules": {
+    "id": "cf-mt-real-model-gate-v1",
+    "models_pin_revision": "2026-10-15-cursor-native",
+    "pinned_models": {
+      "frontier": "gpt-5.6-sol-medium",
+      "small": "composer-2.5-fast"
+    },
+    "spec": "docs/benchmarks/cloudflare-multiturn/SPEC.md#pre-committed-gate-freeze-before-the-run--do-not-edit-after-seeing-results",
+    "primary_pair": [
+      "clawql_known_op",
+      "executor_v2"
+    ],
+    "win_requires": [
+      "known_op.weighted_tokens_median < executor.weighted_tokens_median",
+      "known_op.weighted_tokens_p90 < executor.weighted_tokens_p90",
+      "known_op.task_success_rate >= executor.task_success_rate",
+      "known_op.observation_tokens_over_ceiling <= executor.observation_tokens_over_ceiling"
+    ],
+    "dual_model_claim": "known-op beats code mode for real models — only if win on both frontier and small",
+    "single_model_claim": "report that model only; not the dual-model claim"
+  },
+  "dual_model_claim_eligible": true,
+  "note": "Frozen before the first session. Blog/explainer claims must follow verdict_rules; do not re-interpret after seeing results."
+}

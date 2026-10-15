@@ -18,7 +18,7 @@ import {
 import { mandateArgsMatchEffect, type MandateArgsMatch } from "../proofs/mandate-args-match.js";
 import { defaultFields, executeOutputFields } from "./field-projection.js";
 import { preferRestOpenApiExecuteEffect } from "./openapi-execute-path.js";
-import { serializeExecuteResultEffect } from "./result-truncation.js";
+import { serializeExecuteResultWithBudgetsEffect } from "./result-truncation.js";
 import { unknownOperationIdErrorEffect } from "./suggest-operation-ids.js";
 import { shapeExecuteDataEffect, WhereFilterError } from "./where-filter.js";
 import { executeNativeGraphQL } from "./native-graphql.js";
@@ -54,15 +54,21 @@ function textContentEffect(text: string): Effect.Effect<McpTextContent[], Error>
  * Apply `where` then `fields` projection, then bound the serialized payload.
  * Fail-closed where errors become MCP error JSON (never return unfiltered provider data).
  * Oversized success bodies get an explicit `truncated: true` envelope (never a silent cut).
+ * Without where/fields (and without `full:true`), the soft observation budget applies first.
  */
 function shapedSuccessContent(
   data: unknown,
   outputFields: string[] | undefined,
-  where: string | undefined
+  where: string | undefined,
+  full?: boolean
 ): Effect.Effect<McpTextContent[], Error> {
   return shapeExecuteDataEffect(data, { where, fields: outputFields }).pipe(
     Effect.flatMap((shaped) =>
-      serializeExecuteResultEffect(shaped).pipe(Effect.flatMap((text) => textContentEffect(text)))
+      serializeExecuteResultWithBudgetsEffect(shaped, {
+        where,
+        fields: outputFields,
+        full,
+      }).pipe(Effect.flatMap((text) => textContentEffect(text)))
     ),
     Effect.catch((err: unknown) => {
       if (err instanceof WhereFilterError) {
@@ -73,6 +79,7 @@ function shapedSuccessContent(
             error: err.message,
             issue: err.issue,
             fix: err.fixHint,
+            example: err.example,
           })
         );
       }
@@ -121,7 +128,7 @@ export function executeClawqlOperationEffect(
   loadSpecFn: LoadSpecFn = loadSpec
 ): Effect.Effect<McpTextContent[], Error> {
   return Effect.gen(function* () {
-    const { operationId, args, fields, where } = params;
+    const { operationId, args, fields, where, full } = params;
     const loaded = yield* fromPromise(() => loadSpecFn());
     const { operations, openapi, openapis, multi } = loaded;
     const op = operations.find((o) => o.id === operationId);
@@ -272,7 +279,7 @@ export function executeClawqlOperationEffect(
           root && typeof root === "object" && op.nativeGraphQL.fieldName in root
             ? root[op.nativeGraphQL.fieldName]
             : exec.data;
-        return yield* shapedSuccessContent(inner, outputFields, where);
+        return yield* shapedSuccessContent(inner, outputFields, where, full);
       }
 
       if (op.protocolKind === "grpc" && op.nativeGrpc) {
@@ -286,7 +293,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* shapedSuccessContent(exec.data, outputFields, where);
+        return yield* shapedSuccessContent(exec.data, outputFields, where, full);
       }
 
       if (op.protocolKind === "mcp" && op.nativeMcp) {
@@ -300,7 +307,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* shapedSuccessContent(exec.data, outputFields, where);
+        return yield* shapedSuccessContent(exec.data, outputFields, where, full);
       }
 
       if (op.protocolKind === "cli" && op.nativeCli) {
@@ -314,7 +321,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* shapedSuccessContent(exec.data, outputFields, where);
+        return yield* shapedSuccessContent(exec.data, outputFields, where, full);
       }
 
       if (op.protocolKind === "webmcp" && op.nativeWebmcp) {
@@ -328,7 +335,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* shapedSuccessContent(exec.data, outputFields, where);
+        return yield* shapedSuccessContent(exec.data, outputFields, where, full);
       }
 
       if (multi) {
@@ -344,7 +351,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* shapedSuccessContent(fallback.data, outputFields, where);
+        return yield* shapedSuccessContent(fallback.data, outputFields, where, full);
       }
 
       if (
@@ -363,7 +370,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* shapedSuccessContent(rest.data, outputFields, where);
+        return yield* shapedSuccessContent(rest.data, outputFields, where, full);
       }
 
       // Plain `fields` keys: REST (same shaping as multi-spec). Nested GraphQL
@@ -382,7 +389,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* shapedSuccessContent(rest.data, outputFields, where);
+        return yield* shapedSuccessContent(rest.data, outputFields, where, full);
       }
 
       const selectedFields = outputFields?.length
@@ -401,7 +408,7 @@ export function executeClawqlOperationEffect(
         if (!inProc.ok) {
           return yield* Effect.fail(new Error(inProc.error));
         }
-        return yield* shapedSuccessContent(inProc.data, outputFields, where);
+        return yield* shapedSuccessContent(inProc.data, outputFields, where, full);
       }).pipe(
         Effect.catch((err) =>
           Effect.gen(function* () {
@@ -418,7 +425,7 @@ export function executeClawqlOperationEffect(
                 })
               );
             }
-            return yield* shapedSuccessContent(fallback.data, outputFields, where);
+            return yield* shapedSuccessContent(fallback.data, outputFields, where, full);
           })
         )
       );

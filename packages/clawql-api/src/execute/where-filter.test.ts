@@ -39,7 +39,7 @@ describe("where filter (JMESPath)", () => {
     expect(shaped).toBe("alice");
   });
 
-  it("fails closed on invalid JMESPath with a fix hint", async () => {
+  it("fails closed on invalid JMESPath with a named fix + example", async () => {
     const failed = await Effect.runPromise(
       applyWhereEffect(sample, "[?").pipe(
         Effect.match({
@@ -50,8 +50,22 @@ describe("where filter (JMESPath)", () => {
     );
     expect(failed).toBeInstanceOf(WhereFilterError);
     expect((failed as WhereFilterError).issue).toBe("invalid_expression");
-    expect((failed as WhereFilterError).fixHint).toMatch(/JMESPath/);
+    expect((failed as WhereFilterError).fixHint).toMatch(/Corrected example:/);
+    expect((failed as WhereFilterError).example).toMatch(/result\[/);
     expect((failed as WhereFilterError)._tag).toBe("WhereFilterError");
+  });
+
+  it("suggests a count example when the bad expression mentions length", async () => {
+    const failed = await Effect.runPromise(
+      applyWhereEffect(sample, "length(result[?").pipe(
+        Effect.match({
+          onFailure: (e) => e,
+          onSuccess: () => null,
+        })
+      )
+    );
+    expect(failed).toBeInstanceOf(WhereFilterError);
+    expect((failed as WhereFilterError).example).toContain("length(");
   });
 
   it("rejects over-long expressions (size cap)", async () => {

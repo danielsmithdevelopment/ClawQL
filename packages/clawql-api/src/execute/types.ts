@@ -10,6 +10,11 @@ export type ExecuteClawqlOperationParams = {
    */
   where?: string;
   /**
+   * Opt out of the soft observation budget (still subject to the hard char limit).
+   * See {@link ./result-truncation.js}.
+   */
+  full?: boolean;
+  /**
    * After `clawql resume` / MCP `resume` approves a parked mandate call, pass the
    * pending `executionId` so execute may run that exact payload once.
    */

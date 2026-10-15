@@ -83,11 +83,76 @@ Until a live recording exists, the repo ships [`recording.synthetic.json`](../..
 
 ## Real-model validation
 
-**50 sessions per arm**, same workflow and fixture, one pinned model. Report task success, turns/calls, input/output tokens, wall time. Compare with the scripted board. Hits only the mock.
+**50 sessions per arm × two models**, same workflow and fixture, mock only. Hosted Cloudflare code-mode is out of this gate (live API / write risk). Peers: `clawql_known_op`, `clawql_program`, `executor_v2`.
+
+### Pre-committed gate (freeze before the run — do not edit after seeing results)
+
+These rules are committed **before the first session**. Blog / explainer claims must follow them; mixed outcomes may not be re-read in a flattering light.
+
+#### Transport
+
+**Cursor subscription Task subagents** (`billing: cursor_subscription_subagents`). No external `OPENAI_API_KEY` / provider secrets. Each session is a blind subagent that calls the local mock-backed MCP via `real-model-mcp-cli.mjs`. An OpenAI Chat Completions harness remains an optional alternate for operators who prefer API keys — it is **not** this gate.
+
+#### Models and settings
+
+| Knob | Pre-commit |
+| --- | --- |
+| Frontier model | **`gpt-5.6-sol-medium`** (OpenAI family via Cursor) |
+| Small model | **`composer-2.5-fast`** (Composer family via Cursor; smaller / faster) |
+| Temperature | Cursor Task defaults (temperature not exposed on this transport); same shared workflow prompt for every arm |
+| System prompt | Shared workflow across arms (tool descriptions differ per gateway `listTools` only) |
+| Sessions | `CF_MT_REAL_ITERS=50` per arm per model |
+
+**Why these IDs (revision `2026-10-15-cursor-native`, before any gate session):** operator preference is Cursor-native models with no secrets. Pins must be Task-available slugs from **different families**, one smaller. Prior API pins (`gpt-4.1` + `claude-haiku-4-5-20251001`) are retired for this gate because they require provider keys.
+
+The orchestrator freezes these IDs into `precommit.models` before the first session and never overwrites them. Any other pair is a different experiment — not this gate.
+
+#### Ordering
+
+**Interleave sessions across arms** within each model: for `i = 1..50`, run arm A session `i`, then arm B session `i`, then arm C session `i` (arm order fixed in `CF_MT_REAL_ARMS`). Provider drift during the run hits every arm equally. Do not run 50×A then 50×B then 50×C.
+
+#### Comparison metrics (per model)
+
+Primary head-to-head: **`clawql_known_op` vs `executor_v2`**, using:
+
+| Metric | Definition |
+| --- | --- |
+| Median weighted tokens | Session `weighted = definition + observation + 5×code` (same code bucket as the scripted board: `where` / plan / JS) |
+| p90 weighted tokens | 90th percentile of the same |
+| Sessions over 10,000 | Count of sessions with `observation_tokens > 10_000` (`CF_MT_REAL_TOKEN_CEILING`) |
+| Task success | Fraction of sessions that pass all 12 scripted checks |
+
+`clawql_program` is reported for context; it does not decide the headline claim.
+
+#### Claims each outcome allows
+
+Let **win** on a model mean: known-op is strictly better on **median weighted** and **p90 weighted**, has **task success ≥** Executor, and has **sessions-over-ceiling ≤** Executor.
+
+| Outcome | Allowed claim |
+| --- | --- |
+| Win on **both** frontier and small | “known-op beats code mode for real models” (this gate) |
+| Win on exactly one model | Report that one model only — e.g. “wins on frontier; mixed/loss on small” — **not** the dual-model claim |
+| Win on median but lose p90 (or vice versa) on a model | No win on that model; report the split metrics |
+| Task success lower than Executor on a model | No win on that model, even if tokens look better |
+| Any other mix | State the metrics; no stronger claim than the table allows |
+
+The harness writes `precommit.verdict_rules` (copy of this section’s rule IDs) and `verdict` (computed only from those rules) into the result artifact. Do not hand-edit `verdict` after the run.
+
+### Next lever after the dual-model gate: `clawql_routed`
+
+Known-op’s lead (1,743 weighted vs default’s 17,731) is mostly **discovery**. Closing the first-session gap without leaking candidates to the model:
+
+1. Agent calls `execute` with a **description** + `where` (no `operationId`).
+2. ClawQL narrows candidates server-side (same search index; nothing returned).
+3. **GLiNER2-Decide** picks among the top ~10 as a calibrated choice.
+4. On calibrated confidence → run the op. Else → return top-three **compact signatures** (hundreds of tokens, not full search).
+
+Constraints: auto-resolve **reads only** (writes still proposal-gated); missing args return the chosen op’s compact signature for one retry; re-prove routing on a held-out Cloudflare (description → op) set before trusting; measure GLiNER memory (prefer a shared decision service if RSS regresses). Prove with a `clawql_routed` board arm beside known-op and default.
 
 ## Fairness rules
 
 - Label every mode and setting; invite maintainers to submit config fixes; version-scope claims; never mix zero-latency with recorded-latency or scripted with real-model in one table.
+- Never mix real-model ClawQL with scripted Executor / Cloudflare token rows in one claim table.
 
 ## Open questions
 

@@ -36,6 +36,14 @@ import {
   executorV2ToolScripts,
 } from "./code-mode/published-scripts.mjs";
 import { ensureExecutorOpenapiApp } from "./lib/ensure-executor-openapi-app.mjs";
+import {
+  CLAWQL_STEP_SHAPES,
+  modelWrittenShapeText,
+  programPlanSource,
+} from "./lib/clawql-shapes.mjs";
+
+/** Price-weight: model-written code/where/plan at 5× input (blog / board convention). */
+const CODE_PRICE_WEIGHT = Number(process.env.CF_MT_CODE_PRICE_WEIGHT || 5) || 5;
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "../../..");
@@ -50,7 +58,7 @@ const LATENCY = process.env.MT_UPSTREAM_LATENCY || "0";
 const IS_PUBLISH_BOARD = ITERS >= 10000 && REPS >= 3;
 const ARMS = (
   process.env.CF_MT_ARMS ||
-  "direct,clawql_default,clawql_compact_search,clawql_known_op,executor_v2,mcpjungle,agentgateway,cloudflare_codemode"
+  "direct,clawql_default,clawql_compact_search,clawql_known_op,clawql_program,executor_v2,mcpjungle,agentgateway,cloudflare_codemode"
 )
   .split(",")
   .map((s) => s.trim())
@@ -208,7 +216,10 @@ async function startMock() {
   return { child, baseUrl: ready.baseUrl, pid: child.pid };
 }
 
-async function startClawql(mockBase, { searchCompact = false, label = "clawql" } = {}) {
+async function startClawql(
+  mockBase,
+  { searchCompact = false, enablePrograms = false, label = "clawql" } = {}
+) {
   const home = join(tmpdir(), `cf-${label}-${process.pid}-${Math.random().toString(16).slice(2)}`);
   mkdirSync(home, { recursive: true });
   const port = await pickPort();
@@ -222,10 +233,18 @@ async function startClawql(mockBase, { searchCompact = false, label = "clawql" }
     MCP_HOST: "127.0.0.1",
     CLOUDFLARE_API_TOKEN: "bench-fake-token",
     CLAWQL_CATALOG_SQLITE: process.env.CLAWQL_CATALOG_SQLITE ?? "1",
-    // DNS list is large; projection keeps success under budget. Raise ceiling as a safety net.
+    // DNS list is large; projection keeps success under budget. Raise hard ceiling as a safety net.
     CLAWQL_EXECUTE_RESULT_MAX_CHARS: process.env.CLAWQL_EXECUTE_RESULT_MAX_CHARS || "2000000",
+    // Soft observation budget stays at product default (~8k chars) unless overridden.
+    // Scripted shapes always pass where, so publish rows stay observation-sized; the
+    // default is recorded so readers know ClawQL token numbers include this behavior.
+    ...(process.env.CLAWQL_EXECUTE_OBSERVATION_BUDGET_CHARS != null
+      ? { CLAWQL_EXECUTE_OBSERVATION_BUDGET_CHARS: process.env.CLAWQL_EXECUTE_OBSERVATION_BUDGET_CHARS }
+      : {}),
     // Labeled setting — default arm leaves compact off; clawql_compact_search turns it on.
     CLAWQL_SEARCH_COMPACT: searchCompact ? "1" : "0",
+    // ADR 0015 v0 plan runner — only for clawql_program arm.
+    ...(enablePrograms ? { CLAWQL_ENABLE_PROGRAMS: "1" } : { CLAWQL_ENABLE_PROGRAMS: "0" }),
   });
   const logPath = join(home, "clawql.log");
   const logFd = openSync(logPath, "w");
@@ -267,6 +286,7 @@ async function startClawql(mockBase, { searchCompact = false, label = "clawql" }
   return {
     id: label,
     searchCompact: !!searchCompact,
+    enablePrograms: !!enablePrograms,
     mcpUrl,
     pid: child.pid,
     home,
@@ -564,51 +584,32 @@ async function runClawqlSession(client, expectations, { knownOp = false } = {}) 
   const steps = [];
   let ok = true;
   const t0 = performance.now();
-  const queries = {
-    1: "list zones",
-    2: "get zone details",
-    3: "ssl tls mode setting",
-    4: "list dns records",
-    7: "list workers scripts",
-    8: "worker script settings compatibility",
-    9: "worker routes",
-    10: "list r2 buckets",
-    11: "firewall rules",
-  };
-  const opIds = {
-    1: "zones-get",
-    2: "zones-0-get",
-    3: "zone-settings-get-single-setting",
-    4: "dns-records-for-a-zone-list-dns-records",
-    7: "worker-script-list-workers",
-    8: "worker-script-get-settings",
-    9: "worker-routes-list-routes",
-    10: "r2-list-buckets",
-    11: "firewall-rules-list-firewall-rules",
-  };
 
-  async function execStep(step, operationId, args, observe, shape = {}) {
+  for (let step = 1; step <= 11; step++) {
+    const shape = CLAWQL_STEP_SHAPES[step];
     let discoveryTokens = 0;
     let discoveryMs = 0;
     if (!knownOp) {
       const tS = performance.now();
       const sRes = await client.callTool({
         name: "search",
-        arguments: { query: queries[step] || operationId, limit: 3 },
+        arguments: { query: shape.query || shape.operationId, limit: 3 },
       });
       discoveryMs = performance.now() - tS;
       if (sRes.isError) throw new Error(`search ${step}: ${toolText(sRes).slice(0, 200)}`);
       discoveryTokens = countTokens(toolText(sRes));
     }
+    const execArgs = {
+      operationId: shape.operationId,
+      args: shape.args,
+      where: shape.where,
+    };
+    // Model-written shaping (where/fields) — same bucket as code-mode script tokens.
+    const codeTokens = countTokens(modelWrittenShapeText(shape));
     const tE = performance.now();
     const eRes = await client.callTool({
       name: "execute",
-      arguments: {
-        operationId,
-        args,
-        ...(shape.where ? { where: shape.where } : {}),
-        ...(shape.fields ? { fields: shape.fields } : {}),
-      },
+      arguments: execArgs,
     });
     const execMs = performance.now() - tE;
     if (eRes.isError) throw new Error(`execute ${step}: ${toolText(eRes).slice(0, 300)}`);
@@ -617,7 +618,11 @@ async function runClawqlSession(client, expectations, { knownOp = false } = {}) 
     if (json?.truncated) {
       throw new Error(`execute ${step} truncated byteCount=${json.byteCount} limit=${json.limit}`);
     }
-    const observed = observe(json);
+    if (json?.status === "where_invalid") {
+      throw new Error(`execute ${step} where_invalid: ${json.error || text.slice(0, 200)}`);
+    }
+    // Result tokens = server MCP text only (no client reshape). where ran on ClawQL.
+    const observed = json;
     const check = checkStep(step, observed, expectations);
     ok &&= check.ok;
     steps.push({
@@ -625,81 +630,13 @@ async function runClawqlSession(client, expectations, { knownOp = false } = {}) 
       calls: knownOp ? 1 : 2,
       discoveryTokens,
       resultTokens: countTokens(text),
-      codeTokens: 0,
+      codeTokens,
       latency_ms: discoveryMs + execMs,
       check,
-      where: shape.where || null,
+      where: shape.where,
+      model_written: modelWrittenShapeText(shape),
     });
-    return json;
   }
-
-  await execStep(1, opIds[1], {}, (j) => {
-    const result = j?.result || j;
-    const zones = Array.isArray(result) ? result : result?.result;
-    const zone = (zones || []).find((z) => z.name === FAKE.auditZoneName);
-    return { zoneId: zone?.id };
-  });
-  const zoneId = FAKE.auditZoneId;
-
-  await execStep(2, opIds[2], { zone_id: zoneId }, (j) => {
-    const z = j?.result || j;
-    return { status: z?.status, planName: z?.plan?.name };
-  });
-  await execStep(3, opIds[3], { zone_id: zoneId, setting_id: "ssl" }, (j) => {
-    const s = j?.result || j;
-    return { ssl: s?.value };
-  });
-
-  // Steps 4–6: server-side JMESPath projection (product path vs aggregator pass-through).
-  await execStep(
-    4,
-    opIds[4],
-    { zone_id: zoneId, per_page: 500 },
-    (j) => {
-      const rows = Array.isArray(j) ? j : j?.result || [];
-      return { aRecordCount: Array.isArray(rows) ? rows.length : 0 };
-    },
-    { where: "result[?type==`A`]", fields: ["name"] }
-  );
-  await execStep(
-    5,
-    opIds[4],
-    { zone_id: zoneId, per_page: 500 },
-    (j) => ({ names: Array.isArray(j) ? j : j?.result || [] }),
-    { where: `result[?type==\`A\` && content==\`${FAKE.targetIp}\`].name` }
-  );
-  await execStep(
-    6,
-    opIds[4],
-    { zone_id: zoneId, per_page: 500 },
-    (j) => ({ unproxiedNames: Array.isArray(j) ? j : j?.result || [] }),
-    {
-      where: `result[?type==\`A\` && content==\`${FAKE.targetIp}\` && proxied==\`false\`].name`,
-    }
-  );
-
-  await execStep(7, opIds[7], { account_id: FAKE.accountId }, (j) => ({
-    scriptNames: (j?.result || []).map((s) => s.id),
-  }));
-  await execStep(
-    8,
-    opIds[8],
-    { account_id: FAKE.accountId, script_name: FAKE.workerScriptName },
-    (j) => ({ compatibilityDate: (j?.result || j)?.compatibility_date })
-  );
-  await execStep(9, opIds[9], { zone_id: zoneId }, (j) => {
-    const route = (j?.result || []).find((x) => x.script === FAKE.workerScriptName);
-    return { routePattern: route?.pattern, script: route?.script };
-  });
-  await execStep(10, opIds[10], { account_id: FAKE.accountId }, (j) => {
-    const buckets = j?.result?.buckets || j?.buckets || [];
-    return {
-      buckets: buckets.map((b) => ({ name: b.name, creation_date: b.creation_date })),
-    };
-  });
-  await execStep(11, opIds[11], { zone_id: zoneId }, (j) => ({
-    enabledRuleCount: (j?.result || []).filter((x) => x.paused === false).length,
-  }));
 
   const proposal = { proposal: { recordId: FAKE.unproxiedRecordId, proxied: true }, gated: true };
   let check = checkStep(12, proposal, expectations);
@@ -716,6 +653,72 @@ async function runClawqlSession(client, expectations, { knownOp = false } = {}) 
   });
 
   return summarizeSession(knownOp ? "clawql_known_op" : "clawql_default", ok, t0, steps);
+}
+
+/**
+ * ADR 0015 v0: one execute_program with a JSON plan (where on every call).
+ * Result tokens = filtered call values (code-mode peer); code tokens = plan source.
+ */
+async function runClawqlProgramSession(client, expectations) {
+  const steps = [];
+  let ok = true;
+  const t0 = performance.now();
+  const source = programPlanSource();
+  const codeTokens = countTokens(source);
+  const t1 = performance.now();
+  const res = await client.callTool({
+    name: "execute_program",
+    arguments: { source, timeoutMs: 60_000 },
+  });
+  const ms = performance.now() - t1;
+  const text = toolText(res);
+  if (res.isError) throw new Error(`execute_program: ${text.slice(0, 400)}`);
+  const envelope = parseJsonLoose(text);
+  if (!envelope?.ok) {
+    throw new Error(`execute_program not ok: ${text.slice(0, 400)}`);
+  }
+  const results = envelope?.result?.results || [];
+  for (let step = 1; step <= 11; step++) {
+    const row =
+      results.find((r) => r.id === String(step) || r.id === `step_${step}`) || results[step - 1];
+    let value = row?.value;
+    if (typeof value === "string") value = parseJsonLoose(value);
+    // Host execute returns MCP text content; runner may stash parsed JSON or raw text.
+    if (value && typeof value === "object" && Array.isArray(value.content)) {
+      const inner = value.content
+        .filter((c) => c?.type === "text")
+        .map((c) => c.text)
+        .join("\n");
+      value = parseJsonLoose(inner);
+    }
+    const check = checkStep(step, value, expectations);
+    ok &&= check.ok;
+    steps.push({
+      step,
+      calls: step === 1 ? 1 : 0,
+      discoveryTokens: 0,
+      // Program-filtered return for this step (not the full execute_program envelope).
+      resultTokens: countTokens(JSON.stringify(value)),
+      codeTokens: step === 1 ? codeTokens : 0,
+      latency_ms: step === 1 ? ms : 0,
+      check,
+      note: "execute_program plan-runner-v0",
+    });
+  }
+  const proposal = { proposal: { recordId: FAKE.unproxiedRecordId, proxied: true }, gated: true };
+  const check12 = checkStep(12, proposal, expectations);
+  ok &&= check12.ok;
+  steps.push({
+    step: 12,
+    calls: 0,
+    discoveryTokens: 0,
+    resultTokens: countTokens(JSON.stringify(proposal)),
+    codeTokens: 0,
+    latency_ms: 0,
+    check: check12,
+    note: "gated",
+  });
+  return summarizeSession("clawql_program", ok, t0, steps);
 }
 
 async function runAggregatorSession(client, tools, expectations, armId) {
@@ -905,6 +908,7 @@ async function runArmSessions({
   mock,
   clawqlDefault,
   clawqlCompact,
+  clawqlProgram,
   mj,
   ag,
   expectations,
@@ -941,6 +945,7 @@ async function runArmSessions({
       CLAWQL_SEARCH_COMPACT: arm === "clawql_compact_search" ? "1" : "0",
       known_op: arm === "clawql_known_op",
       catalog_sqlite: process.env.CLAWQL_CATALOG_SQLITE ?? "1",
+      where: "observation_shaped",
     };
     const conn = await connectHttpMcp(clawql.mcpUrl, arm);
     try {
@@ -954,6 +959,35 @@ async function runArmSessions({
             knownOp: arm === "clawql_known_op",
           })
         );
+        if (i % Math.max(1, Math.floor(iters / 10)) === 0 || i === 1 || i === iters) {
+          memSamples.push({ i, ...treeSmaps(pid) });
+          console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
+        }
+        if (!sessions.at(-1).ok) {
+          console.error(JSON.stringify(sessions.at(-1).steps.filter((s) => !s.check.ok), null, 2));
+          throw new Error(`${arm} task success failed at session ${i}`);
+        }
+      }
+    } finally {
+      await conn.close();
+    }
+  } else if (arm === "clawql_program") {
+    if (!clawqlProgram) throw new Error("clawql_program requires ClawQL with CLAWQL_ENABLE_PROGRAMS=1");
+    pid = clawqlProgram.pid;
+    settings = {
+      CLAWQL_ENABLE_PROGRAMS: "1",
+      interpreter: "plan-runner-v0",
+      where: "observation_shaped",
+      catalog_sqlite: process.env.CLAWQL_CATALOG_SQLITE ?? "1",
+    };
+    const conn = await connectHttpMcp(clawqlProgram.mcpUrl, arm);
+    try {
+      const listed = await conn.client.listTools();
+      definitionTokens = listed.tools
+        .filter((t) => t.name === "execute_program" || t.name === "search" || t.name === "execute")
+        .reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
+      for (let i = 1; i <= iters; i++) {
+        sessions.push(await runClawqlProgramSession(conn.client, expectations));
         if (i % Math.max(1, Math.floor(iters / 10)) === 0 || i === 1 || i === iters) {
           memSamples.push({ i, ...treeSmaps(pid) });
           console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
@@ -1056,6 +1090,7 @@ async function runArmSessions({
   const resultMean = resultTok.reduce((a, b) => a + b, 0) / resultTok.length;
   const codeMean = codeTok.reduce((a, b) => a + b, 0) / codeTok.length;
   const combinedMean = def + discoveryMean + resultMean + codeMean;
+  const weightedMean = def + discoveryMean + resultMean + CODE_PRICE_WEIGHT * codeMean;
   const combinedAtN = def + discoveryTok.reduce((a, b) => a + b, 0) + resultTok.reduce((a, b) => a + b, 0) + codeTok.reduce((a, b) => a + b, 0);
 
   return {
@@ -1068,14 +1103,18 @@ async function runArmSessions({
     discovery_tokens_mean: discoveryMean,
     result_tokens_mean: resultMean,
     code_tokens_mean: codeMean,
+    code_price_weight: CODE_PRICE_WEIGHT,
     /** Rebuildable: definition + discovery + result + code (per-session means). */
     combined_mean: combinedMean,
+    /** Price-weighted: definition + discovery + result + weight×code. */
+    weighted_mean: weightedMean,
     /** Rebuildable at N: Layer1 once + sum(discovery+result+code) over sessions. */
     combined_at_n: combinedAtN,
     rebuild_check: {
       combined_mean_ok:
         Math.abs(combinedMean - (def + discoveryMean + resultMean + codeMean)) < 1e-6,
       formula: "definition + discovery + result + code",
+      weighted_formula: `definition + discovery + result + ${CODE_PRICE_WEIGHT}*code`,
     },
     calls_mean: sessions.reduce((n, s) => n + s.calls_sum, 0) / sessions.length,
     session_ms: {
@@ -1125,6 +1164,7 @@ async function main() {
   const closers = [async () => mock.child.kill("SIGTERM")];
   let clawqlDefault = null;
   let clawqlCompact = null;
+  let clawqlProgram = null;
   let mj = null;
   let ag = null;
   let executorMeta = null;
@@ -1149,6 +1189,15 @@ async function main() {
       });
       closers.push(clawqlCompact.close);
       console.log(`[cf-board] clawql_compact_search ${clawqlCompact.mcpUrl} SEARCH_COMPACT=1`);
+    }
+    if (ARMS.includes("clawql_program")) {
+      clawqlProgram = await startClawql(mock.baseUrl, {
+        searchCompact: false,
+        enablePrograms: true,
+        label: "clawql-program",
+      });
+      closers.push(clawqlProgram.close);
+      console.log(`[cf-board] clawql_program ${clawqlProgram.mcpUrl} ENABLE_PROGRAMS=1`);
     }
     if (ARMS.includes("mcpjungle")) {
       mj = await startMcpjungle(mock.baseUrl);
@@ -1179,6 +1228,7 @@ async function main() {
           mock,
           clawqlDefault,
           clawqlCompact,
+          clawqlProgram,
           mj,
           ag,
           expectations,
@@ -1221,6 +1271,13 @@ async function main() {
       tokenizer: "js-tiktoken cl100k_base",
       arms: ARMS,
       executor: executorMeta,
+      product_defaults: {
+        clawql_observation_budget_chars:
+          process.env.CLAWQL_EXECUTE_OBSERVATION_BUDGET_CHARS ?? "8000 (package default)",
+        clawql_observation_budget_note:
+          "Default on for ClawQL arms. Lists over budget without where/fields return truncated:true with totalCount; single objects size-truncate (shape:object). Scripted board shapes always pass where.",
+        real_model_excludes_hosted_cloudflare_codemode: true,
+      },
       range_across_reps: {},
       latest: repBoards.at(-1)?.board,
     };
@@ -1233,6 +1290,7 @@ async function main() {
         result_tokens_mean: rows.map((r) => r.result_tokens_mean),
         code_tokens_mean: rows.map((r) => r.code_tokens_mean),
         combined_mean: rows.map((r) => r.combined_mean),
+        weighted_mean: rows.map((r) => r.weighted_mean),
         combined_at_n: rows.map((r) => r.combined_at_n),
         session_p50_ms: rows.map((r) => r.session_ms.p50),
         session_p999_ms: rows.map((r) => r.session_ms.p999),

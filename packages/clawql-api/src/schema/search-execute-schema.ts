@@ -31,8 +31,21 @@ export const EXECUTE_FIELDS_DESCRIPTION =
 /** Max length for execute `where` JMESPath (must match where-filter caps). */
 export const EXECUTE_WHERE_MAX_LENGTH = 512;
 
+/**
+ * Lean Layer-1 copy with two–three short examples so production models see the
+ * same JMESPath patterns the board’s “shapes visible” pilot previously leaked
+ * via harness files. Keep under ~400 chars — definition tokens matter.
+ */
 export const EXECUTE_WHERE_DESCRIPTION =
-  "Optional JMESPath filter/extract before fields (max 512 chars; fail-closed).";
+  "Optional JMESPath filter/extract before fields (max 512 chars; fail-closed). " +
+  "Examples: result[?type==`A`] (filter by field); " +
+  "length(result[?state=='ACTIVE']) (count matches); " +
+  "result[0].id (extract one value).";
+
+export const EXECUTE_FULL_DESCRIPTION =
+  "Opt out of the soft observation budget. When false/omitted, large responses without " +
+  "where/fields return a truncated preview (truncated:true) instead of the full payload. " +
+  "Use true only when you genuinely need every row.";
 
 /** MCP `search` tool arguments — Effect Schema (source of truth). */
 export const SearchInputSchema = Schema.Struct({
@@ -61,6 +74,7 @@ export const ExecuteInputSchema = Schema.Struct({
       description: EXECUTE_WHERE_DESCRIPTION,
     })
   ),
+  full: Schema.optional(Schema.Boolean.annotate({ description: EXECUTE_FULL_DESCRIPTION })),
 });
 
 export type ExecuteInputDecoded = Schema.Schema.Type<typeof ExecuteInputSchema>;
