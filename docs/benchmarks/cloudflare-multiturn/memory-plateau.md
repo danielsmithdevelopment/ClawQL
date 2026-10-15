@@ -17,9 +17,6 @@ not steady state under sustained load.
 **Same-run gaps at plateau (uncapped):** ClawQL ~**290** anon vs MJ ~**88** (~**200 MB**)
 and AG ~**98** (~**190 MB**). Still a large win vs the pre-slim board (~630 anon).
 
-A plateau (not unbounded climb) usually means the runtime settled at a working
-size — GC headroom / unreclaimed allocator space — not a classic leak.
-
 ## Old-space A/B (N=4000 known-op, TRACE_GC)
 
 | Arm | Anon plateau | Heap median | p50 / p99 / p999 ms | GC pauses | GC pause sum |
@@ -27,44 +24,68 @@ size — GC headroom / unreclaimed allocator space — not a classic leak.
 | Node uncapped | **296** | 108 | 2.9 / 9.8 / **17.3** | 244 | 698 ms |
 | Node `--max-old-space-size=256` | **132** | 58 | 3.3 / **13.4** / **21.1** | 269 | 1059 ms |
 | Bun default | **130** | 38 | 2.1 / 8.8 / 26.8 | — | — |
-| Bun `--smol` | **130** | 37 | 2.1 / 8.9 / **15.4** | — | — |
+| Bun `--smol` | **130** | 37 | **2.1 / 8.9 / 15.4** | — | — |
 
 Artifacts: [`heap-vs-anon-plateau-n4000.json`](./heap-vs-anon-plateau-n4000.json),
 [`heap-vs-anon-plateau-old256-n4000.json`](./heap-vs-anon-plateau-old256-n4000.json),
 [`heap-vs-anon-plateau-bun-n4000.json`](./heap-vs-anon-plateau-bun-n4000.json),
 [`heap-vs-anon-plateau-bun-smol-n4000.json`](./heap-vs-anon-plateau-bun-smol-n4000.json).
 
-**~165 MB anon saved** on Node for ~0.4 ms p50 / ~**3.5 ms p99** / ~3.8 ms p999, with
-~10% more GC pauses and ~360 ms more pause time across the run. Bun already
-plateaus near **130 MB**; `--smol` does not cut the plateau further but improves p999.
+**Node:** ~**164 MB** anon saved for ~0.4 ms p50 / ~**3.5 ms p99** / ~3.8 ms p999, with
+~10% more GC pauses. **Bun `--smol`:** same ~**130 MB** plateau as capped Node, and
+**faster than uncapped Node at every percentile** — memory savings with no latency tax.
 
-## Stress under the Node 256 cap
+Capped/Bun vs uncapped-board peers (MJ ~88 / AG ~98): about **35–45 MB**, not “~30.”
+**Quote same-run peers from the next publish board** (defaults to Node 256).
 
-[`heap-cap-stress-node-old256.json`](./heap-cap-stress-node-old256.json) (no OOM / no crash):
+## Stress under the Node 256 cap (OOM survival)
 
-| Case | Result | Anon |
-| --- | --- | ---: |
-| `full:true` DNS list (~160 KB, hard limit raised to 2 MB) | ok | 107 |
-| Peak concurrency (single-instance multiplex) | sustained **128** | ~191 at N=128 |
-| `memory_ingest` ~305 KB document | ok (tight) | **255** |
-| 8-step `execute_program` fan-out | ok | 106 |
+[`heap-cap-stress-node-old256.json`](./heap-cap-stress-node-old256.json) — no OOM / no crash:
 
-Bun `--smol` stress: same cases ok; long ingest anon ~**322** (Bun has no Node old-space flag).
+| Case | Result |
+| --- | --- |
+| `full:true` DNS list (~160 KB) | ok (~105 MB anon) |
+| HTTP multiplex concurrency | Survives high N; see SLO note below |
+| `memory_ingest` ~305 KB document | ok but anon ~**255–261** → prefer **384** when memory is on |
+| 8-step `execute_program` fan-out | ok |
 
-**Product defaults:** Node lean listen **256**; memory-enabled / heavy catalog **384**
-(ingest sat at the 256 ceiling); docker-desktop all-providers keep **768**. Bun deploy
-with **`--smol`**. Recorded in [`measured-defaults.md`](./measured-defaults.md) and Helm
-`nodeOptions`.
+### Concurrency — not a board doubling claim
 
-## Post line (capped)
+An early stress pass reported “sustained 128” under Node 256. That run broke only on
+error rate, **not** the gateway-multi SLO (**p99 ≤ 100 ms**, error rate ≤ 0.02).
 
-> Plateaus near **125 MB** under sustained load, within about **30 MB** of the Go and
-> Rust gateways, at a cost of about **3 ms** at p99. Down from ~**630 MB** before OOP
-> catalog + lazy listen (uncapped slim board was ~**290 MB**).
+Re-run with that SLO (HTTP multiplex, one ClawQL process — still **not** equal-arm
+stdio chaos):
 
-The next publish 3×10k board defaults to `--max-old-space-size=256` (override
-`CLAWQL_NODE_MAX_OLD_SPACE_MB=0` for uncapped). Quote the capped plateau from that
-board when it lands; until then cite this A/B.
+| Runtime | Sustained before break | First break |
+| --- | ---: | --- |
+| Node 256 | **16** | 32 (p99 ~224 ms) |
+| Bun `--smol` | **32** | 64 (p99 ~101 ms) |
 
-Artifact (uncapped board): [`board-rep1-n10000.json`](./board-rep1-n10000.json).
-Probe: `scripts/benchmarks/heap-vs-anon-plateau.mjs`, `scripts/benchmarks/heap-cap-stress.mjs`.
+The published gateway-multi single-instance row remains ClawQL **63/64** vs MCPJungle
+**204/205** (stdio equal-arm + refine). Do **not** claim a concurrency win from this
+stress harness. Put equal-arm chaos on the next publish board.
+
+## Heap limits by profile
+
+See [`measured-defaults.md`](./measured-defaults.md): lean Node **256**, memory-enabled
+**384**, docker-desktop all-providers **768**, Bun **`--smol`**.
+
+## Post lines
+
+**Preferred (Bun primary):**
+
+> On Bun, ClawQL plateaus near **130 MB** under sustained load, within about **40 MB**
+> of the Go and Rust gateways, and runs faster than uncapped Node.
+
+**Node lean (state the tail cost):**
+
+> On Node with `--max-old-space-size=256`, ClawQL plateaus near **132 MB** under
+> sustained load, within about **35–45 MB** of the Go and Rust gateways, at a cost of
+> about **3.5 ms** at p99. Down from ~**630 MB** before OOP catalog + lazy listen.
+
+Take plateau + peer gaps from the next publish board when it lands.
+
+Probes: `scripts/benchmarks/heap-vs-anon-plateau.mjs`,
+`scripts/benchmarks/heap-cap-stress.mjs`. Uncapped board artifact:
+[`board-rep1-n10000.json`](./board-rep1-n10000.json).

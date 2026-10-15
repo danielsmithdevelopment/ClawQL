@@ -37,6 +37,12 @@ const BUN_SMOL = !["0", "false", "no"].includes((process.env.BUN_SMOL ?? "1").tr
 const BUN_BIN = process.env.BUN_BIN || "bun";
 const CONC_MAX = Math.max(1, Number(process.env.CONC_MAX || 128) || 128);
 const CONC_STEP_MS = Math.max(500, Number(process.env.CONC_STEP_MS || 3000) || 3000);
+/** Match gateway-multi single-instance chaos SLO (do not claim vs board without this). */
+const BREAK_P99_MS = Math.max(1, Number(process.env.BREAK_P99_MS || 100) || 100);
+const BREAK_ERROR_RATE = Math.min(
+  1,
+  Math.max(0, Number(process.env.BREAK_ERROR_RATE ?? 0.02) || 0.02)
+);
 const OUT =
   process.env.OUT ||
   join(
@@ -340,6 +346,9 @@ async function caseConcurrency(mock) {
       const errorRate = total > 0 ? err / total : 1;
       const mem = smaps(srv.child.pid);
       const exit = srv.getExit();
+      const p99 = percentile(sorted, 99);
+      const brokenSlo =
+        errorRate > BREAK_ERROR_RATE || (p99 != null && p99 > BREAK_P99_MS);
       const step = {
         concurrency: n,
         ok,
@@ -347,11 +356,20 @@ async function caseConcurrency(mock) {
         error_rate: Number(errorRate.toFixed(4)),
         latency_ms: {
           p50: percentile(sorted, 50),
-          p99: percentile(sorted, 99),
+          p99,
           p999: percentile(sorted, 99.9),
         },
         memory: mem,
         process_alive: exit == null,
+        broken_slo: brokenSlo,
+        break_reason: brokenSlo
+          ? [
+              errorRate > BREAK_ERROR_RATE ? `error_rate ${errorRate.toFixed(3)}` : null,
+              p99 != null && p99 > BREAK_P99_MS ? `p99 ${p99.toFixed(1)}ms` : null,
+            ]
+              .filter(Boolean)
+              .join(" + ")
+          : null,
       };
       steps.push(step);
       if (exit) {
@@ -362,9 +380,13 @@ async function caseConcurrency(mock) {
         brokeAt = n;
         break;
       }
-      if (errorRate > 0.05) {
+      // OOM-survival continues past SLO break; record first SLO break separately.
+      if (brokenSlo && brokeAt == null) {
         brokeAt = n;
-        break;
+        // Keep going only if CONC_UNTIL_OOM=1; default stops at first SLO break (board-comparable).
+        if (!["1", "true", "yes"].includes((process.env.CONC_UNTIL_OOM ?? "").trim().toLowerCase())) {
+          break;
+        }
       }
     }
   } catch (e) {
@@ -389,14 +411,22 @@ async function caseConcurrency(mock) {
       /* ignore */
     }
   }
-  const lastOk = [...steps].reverse().find((s) => s.process_alive && s.error_rate <= 0.05);
+  const lastOk = [...steps]
+    .reverse()
+    .find((s) => s.process_alive && !s.broken_slo);
   const result = {
     case: "peak_concurrency_single_instance",
+    note:
+      "HTTP multiplex Streamable clients on one ClawQL process — not equal-arm stdio chaos. " +
+      `SLO matches gateway-multi: p99≤${BREAK_P99_MS}ms and error_rate≤${BREAK_ERROR_RATE}. ` +
+      "Do not claim vs board 63/204 without the multi-comparison chaos harness.",
     ok: processDied == null || !processDied.oom,
     crashed: Boolean(processDied?.crashed || processDied?.oom),
     oom: Boolean(processDied?.oom),
+    slo: { break_p99_ms: BREAK_P99_MS, break_error_rate: BREAK_ERROR_RATE, step_ms: CONC_STEP_MS },
     sustained_concurrency_before_break: lastOk?.concurrency ?? 0,
     broke_at: brokeAt,
+    break_reason: steps.find((s) => s.concurrency === brokeAt)?.break_reason ?? null,
     process_died: processDied,
     steps,
     max_tried: CONC_MAX,

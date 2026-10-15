@@ -5,7 +5,8 @@ gate actually proved. Program mode stays **alongside** `search` / `execute`, not
 the core tool — until evidence says otherwise (below).
 
 Related: [ADR 0015](../../adr/0015-program-mode-alongside-search-execute.md) ·
-[`SPEC.md`](./SPEC.md) · [`lazy-plugin-costs.md`](../gateway-multi-comparison/lazy-plugin-costs.md)
+[`SPEC.md`](./SPEC.md) · [`lazy-plugin-costs.md`](../gateway-multi-comparison/lazy-plugin-costs.md) ·
+[`memory-plateau.md`](./memory-plateau.md)
 
 ## Two different questions (known-op ≠ program)
 
@@ -30,12 +31,50 @@ unclear, what is missing is **discovery**, not a plan runner.
 | **Lazy horizontal plugins** (require-on-flag; k8s dynamic import) | **Shipped** | Ready maps free of k8s/xenova/stripe when tiers off; first k8s import ~363 ms; fail-closed |
 | **Server-side `where`** + examples in tool schema + fix-named `where_invalid` | **Default product** | Scripted known-op **1743** weighted; dual-model gate win vs Executor |
 | **Observation budget** (`totalCount` in truncated list notes; `full:true` opt-out) | **Default on** (~8k chars) | Stops blind models from eating ~60k DNS dumps |
-| **Bun + memory flags, ≥2 CPUs** | **Deploy recommendation** | Gateway runtime notes; Helm CPU limit ≥2 |
+| **Bun + `--smol`, ≥2 CPUs** | **Preferred deploy runtime** | Plateau ~**130 MB** anon; faster than uncapped Node at p50/p99/p999 — see heap table below |
+| **Node `--max-old-space-size=256`** | **Lean Node default** | Caps plateau ~**132 MB**; costs ~**3.5 ms** at p99 vs uncapped |
 | **Compact search** (`CLAWQL_SEARCH_COMPACT`) | **Labeled arm only** until routing eval clears it | Cuts first-session discovery; not product default yet |
 | **Known-op reuse** (skills / memory → steady-state execute-by-id) | **Product intent** | Cheapest arm on this workflow |
 
 **Flag:** `CLAWQL_ENABLE_PROGRAMS` stays **off** by default. When on, programs sit
 beside `execute`; agents choose them for multi-call work.
+
+## Heap limits by feature profile
+
+Do **not** run memory ingest (or other heavy in-process features) on the lean 256 MB
+Node setting. Pick the row that matches what the pod actually enables:
+
+| Feature profile | What is on | Node `NODE_OPTIONS` / Helm `nodeOptions` | Bun | Notes |
+| --- | --- | --- | --- | --- |
+| **Lean listen** (search/execute, SQLite OOP, no vault memory, no documents, pack none) | Core MCP only | **`--max-old-space-size=256`** (Helm / kustomize base default) | **`--smol`** | A/B plateau ~**132 MB** (Node) / ~**130 MB** (Bun). Stress: no OOM on `full:true`, program fan-out. HTTP multiplex SLO (p99≤100 ms): Node sustained **16**, Bun **32** — not the equal-arm chaos board. |
+| **Memory-enabled** (`enableMemory` / vault ingest, embeddings rebuild) | + `memory_ingest` / recall | **`--max-old-space-size=384`** | `--smol` (raise host RAM if needed) | Long ingest (~305 KB doc) hit **~255–261 MB** anon under a 256 cap — survived but no headroom. |
+| **Docker Desktop / all-providers demo** | memory + documents + large catalog | **768** (`values-docker-desktop.yaml`) | — | Catalog startup OOMs at 512. |
+| **Heavy prod overlay** (kustomize `overlays/prod`) | site-specific | **3072** (existing overlay; leave unless remeasured) | — | Not the lean product claim. |
+
+Helm lean default: `manifests/charts/clawql-mcp/values.yaml` →
+`nodeOptions: "--max-old-space-size=256"`. Board harness:
+`CLAWQL_NODE_MAX_OLD_SPACE_MB` defaults to **256** (`=0` uncapped).
+
+### Heap A/B (N=4000 known-op) — interim until capped publish board
+
+| Arm | Anon plateau | p50 / p99 / p999 ms | vs uncapped Node |
+| --- | ---: | ---: | --- |
+| Node uncapped | **296** | 2.9 / 9.8 / 17.3 | baseline |
+| Node `--max-old-space-size=256` | **132** | 3.3 / **13.4** / 21.1 | −164 MB; **+3.5 ms p99**; +GC pauses |
+| Bun `--smol` | **130** | **2.1 / 8.9 / 15.4** | −166 MB; **faster at every percentile** |
+
+Same-run peers on the uncapped slim board: MCPJungle ~**88**, agentgateway ~**98**
+anon. Capped/Bun gap vs those peers is about **35–45 MB** (132−88 / 130−98) — not “~30.”
+**Prefer quoting plateau + peer gaps from the next publish board** (Node 256 default +
+Bun arm), where memory series are same-run.
+
+### Concurrency (do not over-claim)
+
+Earlier gateway-multi single-instance chaos (p99 ≤ 100 ms): ClawQL **63/64**, MCPJungle
+**204/205**, agentgateway **62/63** (stdio equal-arm + refine). Heap-cap stress first
+claimed “128” without that SLO; with p99 ≤ 100 ms it sustains Node **16** / Bun **32**
+(HTTP multiplex only). Re-measure equal-arm chaos on the next publish board before any
+concurrency headline.
 
 ## Why program mode is not the core *yet*
 
@@ -70,22 +109,19 @@ ones stay in the same tool.
 Until (1)–(2) hold, keep `execute` as the measured default for one-op work and
 programs as the opt-in multi-op path.
 
-## Memory line (same-run; report the plateau)
+## Post lines
 
-See [`memory-plateau.md`](./memory-plateau.md).
+**Preferred (Bun primary):**
 
-| Deploy profile | Runtime flag | Justification |
-| --- | --- | --- |
-| **Lean Node listen** (board / equal-arm / Helm default) | `--max-old-space-size=256` | A/B: uncapped plateau ~**296 MB** anon → capped ~**132 MB**; p99 **9.8 → 13.4 ms** (~+3.5 ms); p999 **17 → 21 ms**; GC pauses **244 → 269**. Stress under 256: `full:true` ~160 KB ok, concurrency **128** sustained, 8-step program ok — no OOM. |
-| **Memory-enabled / heavy in-process** | Node **384** (or isolate heavy work) | Long `memory_ingest` (~305 KB doc) survived at **~255 MB** anon under a 256 cap — too tight for a product default when vault ingest is on. |
-| **Docker Desktop all-providers** | **768** (`values-docker-desktop.yaml`) | Catalog startup + memory/documents; 512 OOMs at load. |
-| **Bun listen** | `--smol` | Plateau already ~**130 MB** with or without `--smol`; `--smol` improves p999 (**27 → 15 ms**). No Node `--max-old-space-size` equivalent. |
+> On Bun, ClawQL plateaus near **130 MB** under sustained load, within about **40 MB**
+> of the Go and Rust gateways, and runs faster than uncapped Node.
 
-Helm: `manifests/charts/clawql-mcp/values.yaml` → `nodeOptions: "--max-old-space-size=256"`.
-Board harness: `CLAWQL_NODE_MAX_OLD_SPACE_MB` defaults to **256** (`=0` uncapped).
+**Node lean default (state the tail cost):**
 
-**Post (capped):** plateaus near **125 MB** under sustained load, within about **30 MB**
-of the Go/Rust gateways, at a cost of about **3 ms** at p99 — down from ~**630**.
+> On Node with `--max-old-space-size=256`, ClawQL plateaus near **132 MB** under
+> sustained load, within about **35–45 MB** of the Go and Rust gateways, at a cost of
+> about **3.5 ms** at p99 versus uncapped Node. Down from ~**630 MB** before OOP catalog
+> + lazy listen.
 
-Uncapped slim board (rep 1) still shows ~**290 MB** plateau vs MJ ~**88** / AG ~**98**;
-quote the capped number from the next publish board (or this A/B until then).
+Replace plateau/peer gaps with the next publish board’s same-run series when it lands
+(Node 256 + Bun `--smol` arms).

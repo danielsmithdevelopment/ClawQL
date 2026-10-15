@@ -1,11 +1,11 @@
 {
-  "measuredAt": "2026-10-15T20:21:10.652Z",
+  "measuredAt": "2026-10-15T20:38:48.428Z",
   "runtime": "bun",
   "bun_smol": true,
   "node_max_old_space_mb": null,
   "any_oom": false,
   "any_crash": false,
-  "memory_profile_anon_mb": 357.35,
+  "memory_profile_anon_mb": 369.18,
   "recommendation": "256_mb_survives_stress_cases",
   "cases": [
     {
@@ -15,11 +15,11 @@
       "oom": false,
       "byte_count": 160473,
       "truncated": false,
-      "latency_ms": 38.36,
+      "latency_ms": 30.77,
       "memory": {
-        "rss_mb": 115.28,
-        "anonymous_mb": 75.82,
-        "pss_mb": 112.92
+        "rss_mb": 114.74,
+        "anonymous_mb": 75.4,
+        "pss_mb": 112.38
       },
       "truncation_reason": null,
       "is_error": false,
@@ -27,152 +27,156 @@
     },
     {
       "case": "peak_concurrency_single_instance",
+      "note": "HTTP multiplex Streamable clients on one ClawQL process — not equal-arm stdio chaos. SLO matches gateway-multi: p99≤100ms and error_rate≤0.02. Do not claim vs board 63/204 without the multi-comparison chaos harness.",
       "ok": true,
       "crashed": false,
       "oom": false,
-      "sustained_concurrency_before_break": 128,
-      "broke_at": null,
+      "slo": {
+        "break_p99_ms": 100,
+        "break_error_rate": 0.02,
+        "step_ms": 3000
+      },
+      "sustained_concurrency_before_break": 32,
+      "broke_at": 64,
+      "break_reason": "p99 100.7ms",
       "process_died": null,
       "steps": [
         {
           "concurrency": 1,
-          "ok": 617,
+          "ok": 941,
           "err": 0,
           "error_rate": 0,
           "latency_ms": {
-            "p50": 2.658332999999402,
-            "p99": 9.434994000000188,
-            "p999": 25.046264000000065
+            "p50": 2.593467000000601,
+            "p99": 9.04424199999994,
+            "p999": 24.621152000000166
           },
           "memory": {
-            "rss_mb": 155.42,
-            "anonymous_mb": 113.62,
-            "pss_mb": 153.06
+            "rss_mb": 165.39,
+            "anonymous_mb": 123.69,
+            "pss_mb": 163.02
           },
-          "process_alive": true
+          "process_alive": true,
+          "broken_slo": false,
+          "break_reason": null
         },
         {
           "concurrency": 2,
-          "ok": 1101,
+          "ok": 1827,
           "err": 0,
           "error_rate": 0,
           "latency_ms": {
-            "p50": 3.164463000000069,
-            "p99": 12.962244999999712,
-            "p999": 21.047225999999682
+            "p50": 2.8644699999995282,
+            "p99": 8.897831000000224,
+            "p999": 19.208896999999524
           },
           "memory": {
-            "rss_mb": 171.62,
-            "anonymous_mb": 129.7,
-            "pss_mb": 169.26
+            "rss_mb": 180.49,
+            "anonymous_mb": 138.56,
+            "pss_mb": 178.13
           },
-          "process_alive": true
+          "process_alive": true,
+          "broken_slo": false,
+          "break_reason": null
         },
         {
           "concurrency": 4,
-          "ok": 1541,
+          "ok": 2720,
           "err": 0,
           "error_rate": 0,
           "latency_ms": {
-            "p50": 4.621932000000015,
-            "p99": 13.392354999999952,
-            "p999": 18.32317900000089
+            "p50": 3.8778290000009292,
+            "p99": 12.65393099999892,
+            "p999": 17.768577000000732
           },
           "memory": {
-            "rss_mb": 198.89,
-            "anonymous_mb": 156.75,
-            "pss_mb": 196.53
+            "rss_mb": 203.31,
+            "anonymous_mb": 161.22,
+            "pss_mb": 200.95
           },
-          "process_alive": true
+          "process_alive": true,
+          "broken_slo": false,
+          "break_reason": null
         },
         {
           "concurrency": 8,
-          "ok": 2090,
+          "ok": 3019,
           "err": 0,
           "error_rate": 0,
           "latency_ms": {
-            "p50": 7.128156000000672,
-            "p99": 18.362086000001,
-            "p999": 22.271026000000347
+            "p50": 7.00467000000026,
+            "p99": 21.614245999999184,
+            "p999": 29.171680999999808
           },
           "memory": {
-            "rss_mb": 203.54,
-            "anonymous_mb": 161.35,
-            "pss_mb": 201.19
+            "rss_mb": 217.19,
+            "anonymous_mb": 174.92,
+            "pss_mb": 214.82
           },
-          "process_alive": true
+          "process_alive": true,
+          "broken_slo": false,
+          "break_reason": null
         },
         {
           "concurrency": 16,
-          "ok": 2380,
+          "ok": 3322,
           "err": 0,
           "error_rate": 0,
           "latency_ms": {
-            "p50": 12.048383999999714,
-            "p99": 33.29025100000035,
-            "p999": 38.76952900000106
+            "p50": 13.682095000000118,
+            "p99": 33.06465200000093,
+            "p999": 45.55700599999909
           },
           "memory": {
-            "rss_mb": 223.66,
-            "anonymous_mb": 181.28,
-            "pss_mb": 221.3
+            "rss_mb": 226.78,
+            "anonymous_mb": 184.38,
+            "pss_mb": 224.41
           },
-          "process_alive": true
+          "process_alive": true,
+          "broken_slo": false,
+          "break_reason": null
         },
         {
           "concurrency": 32,
-          "ok": 2571,
+          "ok": 3504,
           "err": 0,
           "error_rate": 0,
           "latency_ms": {
-            "p50": 22.604254999998375,
-            "p99": 55.2734300000011,
-            "p999": 68.60477100000026
+            "p50": 25.18217299999742,
+            "p99": 60.400244000000384,
+            "p999": 70.02413499999966
           },
           "memory": {
-            "rss_mb": 234.89,
-            "anonymous_mb": 192.46,
-            "pss_mb": 232.54
+            "rss_mb": 235.38,
+            "anonymous_mb": 192.99,
+            "pss_mb": 233.02
           },
-          "process_alive": true
+          "process_alive": true,
+          "broken_slo": false,
+          "break_reason": null
         },
         {
           "concurrency": 64,
-          "ok": 2544,
+          "ok": 3853,
           "err": 0,
           "error_rate": 0,
           "latency_ms": {
-            "p50": 47.596849999999904,
-            "p99": 108.48326000000088,
-            "p999": 168.81000700000004
+            "p50": 46.29308200000014,
+            "p99": 100.72300100000211,
+            "p999": 113.61679799999911
           },
           "memory": {
-            "rss_mb": 269.39,
-            "anonymous_mb": 226.95,
-            "pss_mb": 267.03
+            "rss_mb": 249.74,
+            "anonymous_mb": 207.35,
+            "pss_mb": 247.38
           },
-          "process_alive": true
-        },
-        {
-          "concurrency": 128,
-          "ok": 2695,
-          "err": 0,
-          "error_rate": 0,
-          "latency_ms": {
-            "p50": 91.2504200000003,
-            "p99": 191.95487499999945,
-            "p999": 221.0405780000001
-          },
-          "memory": {
-            "rss_mb": 281.16,
-            "anonymous_mb": 238.66,
-            "pss_mb": 278.8
-          },
-          "process_alive": true
+          "process_alive": true,
+          "broken_slo": true,
+          "break_reason": "p99 100.7ms"
         }
       ],
-      "max_tried": 128,
-      "step_ms": 2000
+      "max_tried": 256,
+      "step_ms": 3000
     },
     {
       "case": "memory_ingest_long_document",
@@ -180,14 +184,14 @@
       "crashed": false,
       "oom": false,
       "doc_chars": 305269,
-      "latency_ms": 12165.06,
+      "latency_ms": 10757.86,
       "memory": {
-        "rss_mb": 421.31,
-        "anonymous_mb": 357.35,
-        "pss_mb": 404.25
+        "rss_mb": 433.14,
+        "anonymous_mb": 369.18,
+        "pss_mb": 417.2
       },
       "is_error": false,
-      "response_head": "{\n  \"ok\": true,\n  \"path\": \"Memory/heap-cap-stress-long-doc.md\",\n  \"wormRef\": \"sha256:7a1b02e452ddcfa12421a8fdb7ff457c9283856b64927b795fc70dfb57c7ab50\",\n  \"rebuild\": {\n    \"embeddings\": {\n      \"synced",
+      "response_head": "{\n  \"ok\": true,\n  \"path\": \"Memory/heap-cap-stress-long-doc.md\",\n  \"wormRef\": \"sha256:afd7a07da542a28ffbfc358e112059217522543da33d7ae867a3325326bb9b1c\",\n  \"rebuild\": {\n    \"embeddings\": {\n      \"synced",
       "exit": null
     },
     {
@@ -196,14 +200,14 @@
       "crashed": false,
       "oom": false,
       "steps": 8,
-      "latency_ms": 33.75,
+      "latency_ms": 36.78,
       "memory": {
-        "rss_mb": 119.27,
-        "anonymous_mb": 79.49,
-        "pss_mb": 116.89
+        "rss_mb": 119.47,
+        "anonymous_mb": 79.85,
+        "pss_mb": 117.11
       },
       "is_error": false,
-      "response_head": "{\"ok\":true,\"programId\":\"prog_eabc2ad2ad6339fe07550ac7\",\"result\":{\"mode\":\"sequential\",\"results\":[{\"id\":\"1\",\"tool\":\"execute\",\"operationId\":\"dns-records-for-a-zone-list-dns-records\",\"ok\":true,\"value\":{\"n\":300}},{\"id\":\"2\",\"tool\":\"execute\",\"oper",
+      "response_head": "{\"ok\":true,\"programId\":\"prog_afc27455f435c2359e165364\",\"result\":{\"mode\":\"sequential\",\"results\":[{\"id\":\"1\",\"tool\":\"execute\",\"operationId\":\"dns-records-for-a-zone-list-dns-records\",\"ok\":true,\"value\":{\"n\":300}},{\"id\":\"2\",\"tool\":\"execute\",\"oper",
       "exit": null
     }
   ]

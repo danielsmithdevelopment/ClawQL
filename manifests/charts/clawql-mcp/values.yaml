@@ -92,9 +92,9 @@ obsidianVaultPath: /vault
 port: "8080"
 mcpPath: /mcp
 # Lean listen default (CF multiturn heap A/B + stress): Node --max-old-space-size=256
-# plateaus ~125–132 MB anon vs uncapped ~290; +~3 ms p99; no OOM on full:true / conc≤128 /
-# program fan-out. Memory-enabled / all-providers profiles: prefer 384 (long ingest anon ~255
-# under 256) or keep 768 on docker-desktop. See docs/benchmarks/cloudflare-multiturn/measured-defaults.md.
+# plateaus ~132 MB anon vs uncapped ~290; +~3.5 ms p99; no OOM on full:true / program fan-out.
+# Memory-enabled: prefer 384 (long ingest anon ~255 under 256). Docker-desktop all-providers: 768.
+# Bun deploy: --smol (~130 MB, faster than uncapped Node). See measured-defaults.md (heap by profile).
 nodeOptions: "--max-old-space-size=256"
 
 # Max protobuf send/receive per frame for MCP gRPC (`GRPC_MAX_MESSAGE_LENGTH`). Large `execute` bodies
