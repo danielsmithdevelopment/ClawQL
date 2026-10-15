@@ -169,6 +169,21 @@ function smapsRollup(pid) {
     pss_mb: pss != null ? pss / 1024 : null,
   };
 }
+function cmdlineOf(pid) {
+  try {
+    return readFileSync(`/proc/${pid}/cmdline`, "utf8").replace(/\0/g, " ").trim().slice(0, 160);
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Sum smaps over the gateway process tree (PPID walk).
+ * MCPJungle/agentgateway must include their REST→MCP stdio child when a
+ * stateful session is open — that child does the OpenAPI work ClawQL does
+ * in-process. Idle MJ (no session) is Go-only (~10–14 MB anon); do not compare
+ * that to ClawQL. Board samples during live sessions.
+ */
 function treeSmaps(rootPid) {
   let rss = 0;
   let anon = 0;
@@ -184,6 +199,38 @@ function treeSmaps(rootPid) {
     rss_mb: Number(rss.toFixed(2)),
     anonymous_mb: Number(anon.toFixed(2)),
     pss_mb: Number(pss.toFixed(2)),
+  };
+}
+
+/** Per-PID inventory for fairness audits (gateway + REST→MCP child, etc.). */
+function treeProcessInventory(rootPid) {
+  const processes = [];
+  for (const pid of processTreePids(rootPid)) {
+    const s = smapsRollup(pid);
+    const cmd = cmdlineOf(pid);
+    processes.push({
+      pid,
+      cmd,
+      role: /cf-rest-mcp\.mjs|equal-arm-catalog-mcp\.mjs/.test(cmd)
+        ? "rest_mcp"
+        : /mcpjungle/.test(cmd)
+          ? "mcpjungle_gateway"
+          : /agentgateway/.test(cmd)
+            ? "agentgateway"
+            : /server-http\.js|dist\/server/.test(cmd)
+              ? "clawql_http"
+              : "other",
+      rss_mb: s?.rss_mb ?? null,
+      anonymous_mb: s?.anonymous_mb ?? null,
+      pss_mb: s?.pss_mb ?? null,
+    });
+  }
+  const tree = treeSmaps(rootPid);
+  return {
+    ...tree,
+    process_count: processes.length,
+    has_rest_mcp: processes.some((p) => p.role === "rest_mcp"),
+    processes,
   };
 }
 
@@ -995,7 +1042,16 @@ async function runArmSessions({
           })
         );
         if (shouldSampleMemory(i, iters)) {
-          memSamples.push({ i, ...treeSmaps(pid) });
+          const inv = treeProcessInventory(pid);
+          memSamples.push({
+            i,
+            rss_mb: inv.rss_mb,
+            anonymous_mb: inv.anonymous_mb,
+            pss_mb: inv.pss_mb,
+            process_count: inv.process_count,
+            has_rest_mcp: inv.has_rest_mcp,
+            processes: inv.processes,
+          });
           console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
         }
         if (!sessions.at(-1).ok) {
@@ -1024,7 +1080,16 @@ async function runArmSessions({
       for (let i = 1; i <= iters; i++) {
         sessions.push(await runClawqlProgramSession(conn.client, expectations));
         if (shouldSampleMemory(i, iters)) {
-          memSamples.push({ i, ...treeSmaps(pid) });
+          const inv = treeProcessInventory(pid);
+          memSamples.push({
+            i,
+            rss_mb: inv.rss_mb,
+            anonymous_mb: inv.anonymous_mb,
+            pss_mb: inv.pss_mb,
+            process_count: inv.process_count,
+            has_rest_mcp: inv.has_rest_mcp,
+            processes: inv.processes,
+          });
           console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
         }
         if (!sessions.at(-1).ok) {
@@ -1045,8 +1110,25 @@ async function runArmSessions({
       for (let i = 1; i <= iters; i++) {
         sessions.push(await runAggregatorSession(conn.client, listed.tools, expectations, arm));
         if (shouldSampleMemory(i, iters)) {
-          memSamples.push({ i, ...treeSmaps(pid) });
-          console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
+          const inv = treeProcessInventory(pid);
+          // Aggregators without a live REST→MCP child under-count vs ClawQL (one process does both).
+          if (!inv.has_rest_mcp) {
+            console.warn(
+              `[cf-board] WARN ${arm} session ${i}: process tree missing REST→MCP child (count=${inv.process_count}) — memory sample may under-count`
+            );
+          }
+          memSamples.push({
+            i,
+            rss_mb: inv.rss_mb,
+            anonymous_mb: inv.anonymous_mb,
+            pss_mb: inv.pss_mb,
+            process_count: inv.process_count,
+            has_rest_mcp: inv.has_rest_mcp,
+            processes: inv.processes,
+          });
+          console.log(
+            `[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok} tree_procs=${inv.process_count} rest_mcp=${inv.has_rest_mcp} anon=${inv.anonymous_mb}`
+          );
         }
         if (!sessions.at(-1).ok) {
           console.error(JSON.stringify(sessions.at(-1).steps.filter((s) => !s.check.ok), null, 2));
@@ -1175,6 +1257,29 @@ async function runArmSessions({
     /** Full sample trail (session index → tree RSS/anon/PSS) for flatness checks. */
     memory_series: memSamples,
     memory_flatness: memorySeriesFlatness(memSamples),
+    /**
+     * Fairness: aggregators must show REST→MCP in-tree during sessions.
+     * ClawQL is a single server-http process (has_rest_mcp=false is expected).
+     */
+    memory_process_tree: memSamples.length
+      ? {
+          samples_with_inventory: memSamples.filter((m) => m.processes).length,
+          rest_mcp_present_frac:
+            memSamples.filter((m) => m.processes).length > 0
+              ? Number(
+                  (
+                    memSamples.filter((m) => m.has_rest_mcp).length /
+                    memSamples.filter((m) => m.processes).length
+                  ).toFixed(3)
+                )
+              : null,
+          last_inventory: memSamples.at(-1)?.processes ?? null,
+          note:
+            arm === "mcpjungle" || arm === "agentgateway"
+              ? "Tree must include cf-rest-mcp.mjs (OpenAPI→tools) while the stateful session is open; idle gateway-only (~10–14 MB anon) is not a peer for ClawQL."
+              : "ClawQL serves catalog+execute in one Node process — no separate REST→MCP child.",
+        }
+      : null,
     first_session: sessions[0],
   };
 }

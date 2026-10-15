@@ -149,41 +149,33 @@ Probe: `scripts/benchmarks/slim-listen-memory-probe.mjs`
 
 That lands **under** the 150–190 MB underload band.
 
-### Lazy first-hit cost + fail-closed imports (this branch)
+### Lazy first-hit cost + fail-closed imports
 
-Artifacts: [`lazy-plugin-first-hit.json`](./lazy-plugin-first-hit.json),
-[`lazy-plugin-first-request.json`](./lazy-plugin-first-request.json)
+See [`lazy-plugin-costs.md`](./lazy-plugin-costs.md) — Kubernetes first import
+**~363 ms**, first `memory_ingest` **~189 ms**, imports fail closed.
 
-| Package / path | First cost | Warm | Notes |
-| --- | ---: | ---: | --- |
-| `clawql-memory/plugin` require | ~646 ms | cached | Pulls ONNX / embedding graph when memory is **on** |
-| `memory_ingest` first MCP call | ~189 ms | ~143 ms | ONNX already mapped at Ready when memory enabled |
-| `clawql-automation/plugin` require | ~39 ms | ~0 | Workflow tools appear; **k8s maps stay false** |
-| `@kubernetes/client-node` dynamic import | ~363–365 ms | ~0.03 ms | Admission surface present (880 exports) |
-| `clawql-payments/plugin` require | ~176–359 ms | cached | Stripe |
-| `clawql-data/plugin` require | ~44–54 ms | cached | DuckDB |
+### Same-run gaps (corrected — do not mix runs)
 
-Failed imports **fail closed** (no half-built Layer list):
+Smoke N=5 tree smaps (same harness): ClawQL **116.5** anon vs MCPJungle **43.7**
+(~**73 MB** gap) vs agentgateway **67.7** (~**49 MB** gap). Do **not** cite a
+~26 MB gap against MJ’s earlier ~86 MB underload figure from a different run.
 
-- Missing package → `MODULE_NOT_FOUND` / “Cannot find module”
-- Bad plugin subpath → `ERR_PACKAGE_PATH_NOT_EXPORTED`
-- Sync composer has no try/catch around `require` — flag-on + missing plugin aborts listen
+### Process-tree fairness (MCPJungle REST→MCP)
+
+MCPJungle registers `cf-rest-mcp.mjs` (stdio OpenAPI→tools). Idle gateway is
+~10 MB anon (Go only). With a **stateful MCP session** open (board/smoke), the
+REST child is in the PPID tree (~17 MB anon at list-tools; grows under load).
+Smoke’s **43.7 MB** is Go+REST — fair vs ClawQL’s single process. Agentgateway
+keeps a persistent REST child. Harness now records per-sample `processes` /
+`has_rest_mcp` and warns if an aggregator sample lacks the child.
+
+Earlier equal-arm underload **86.3 MB** MJ tree used a different Node catalog
+MCP and N=40k — not interchangeable with this board’s curated REST adapter.
 
 ### CF multiturn 3×10k remasure (in flight)
 
-Harness on `cursor/cf-mt-slim-memory-board-a621` now records **tree RSS / anon / PSS**,
-~100-sample `memory_series`, and `memory_flatness` (range + drift) for ClawQL,
-MCPJungle, and agentgateway in the same run. Publish protocol
-`CF_MT_ITERS=10000 CF_MT_REPS=3` started 2026-10-15 — board homes show
-`oop-build` → `LOAD=db after oop-build` (catalog flag no longer a no-op).
+Harness records tree **RSS / anon / PSS**, `memory_series`, `memory_flatness`,
+and process inventories. Board homes show `oop-build` → `LOAD=db after oop-build`.
 
-Smoke (N=5, same harness, peers only) already landed side-by-side:
-
-| Arm | RSS | Anon | PSS |
-| --- | ---: | ---: | ---: |
-| `clawql_known_op` | 166.6 | **116.5** | 119.7 |
-| MCPJungle tree | 111.6 | **43.7** | 66.4 |
-| agentgateway tree | 180.7 | **67.7** | 93.4 |
-
-Replace the published board’s ~630 MB anon cells and the comparison-page / video
-~188 MB under-load line once the 3×10k series confirms flatness near ~112 MB.
+Replace published ~630 MB anon cells and the comparison-page / video ~188 MB line
+once the 3×10k series reports flatness (or documents climb) with same-run peers.
