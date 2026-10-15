@@ -83,7 +83,7 @@ export function CreateKeyModal({
                   For a client or service that talks to your gateway. Each key gets only what it needs.
                 </p>
               </div>
-              <button type="button" className="text-slate-400 hover:text-slate-700" onClick={resetAndClose}>
+              <button type="button" className="text-slate-600 hover:text-slate-700" onClick={resetAndClose}>
                 ✕
               </button>
             </div>
@@ -117,7 +117,7 @@ export function CreateKeyModal({
                       onChange={(e) => setCaps((prev) => ({ ...prev, [cap.id]: e.target.checked }))}
                     />
                     <span className="font-medium">{cap.label}</span>
-                    <span className="mt-0.5 block font-mono text-[11px] text-slate-500">{cap.path}</span>
+                    <span className="mt-0.5 block font-mono text-[11px] text-slate-600">{cap.path}</span>
                   </label>
                 ))}
               </div>
@@ -126,20 +126,20 @@ export function CreateKeyModal({
             <label className="mt-5 block text-sm font-medium text-slate-800">
               Daily cap
               <div className="mt-1.5 flex items-center gap-2">
-                <span className="text-slate-500">$</span>
+                <span className="text-slate-600">$</span>
                 <input
                   value={dailyCap}
                   onChange={(e) => setDailyCap(e.target.value)}
                   className="h-9 w-28 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
                 />
               </div>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-slate-600">
                 Soft UI limit for now — enforcement lands with metering. Requests stop until midnight UTC once
                 it&apos;s reached.
               </p>
             </label>
 
-            <p className="mt-5 text-xs text-slate-500">
+            <p className="mt-5 text-xs text-slate-600">
               Creating a key needs your security key. We store only a hash, so you&apos;ll see the key once.
             </p>
             {error ? (
@@ -221,7 +221,7 @@ export function CreateKeyModal({
               <pre className="mt-1.5 overflow-x-auto rounded-lg bg-slate-900 p-3 font-mono text-[11px] leading-relaxed text-slate-100">
                 {`OPENAI_BASE_URL=${GATEWAY_BASE}/v1\nOPENAI_API_KEY=${secret.slice(0, 14)}...${secret.slice(-3)}`}
               </pre>
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-slate-600">
                 For an MCP client, use the same key with <code className="font-mono">clawql mcp-config</code>.
               </p>
             </div>
@@ -234,7 +234,7 @@ export function CreateKeyModal({
                 ['Expires', createdKey?.expiresLabel ?? 'No expiry'],
               ].map(([k, v]) => (
                 <div key={k} className="rounded-lg bg-slate-50 px-3 py-2">
-                  <p className="text-[11px] text-slate-500">{k}</p>
+                  <p className="text-[11px] text-slate-600">{k}</p>
                   <p className="font-medium text-slate-800">{v}</p>
                 </div>
               ))}
@@ -245,7 +245,7 @@ export function CreateKeyModal({
               I&apos;ve saved this key somewhere safe.
             </label>
             <div className="mt-4 flex items-center justify-between gap-3">
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-600">
                 Recorded against org keys under <span className="font-mono text-sky-700">$CLAWQL_HOME</span>.
               </p>
               <Button type="button" disabled={!saved} onClick={resetAndClose}>

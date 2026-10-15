@@ -57,7 +57,7 @@ export function SkillsPage() {
             <span className={cn('rounded-md px-2 py-0.5 text-xs font-medium', cls)}>{label}</span>
           </span>
         ))}
-        <span className="text-xs text-slate-500">Any code change starts it over. Drift or expiry retires it.</span>
+        <span className="text-xs text-slate-600">Any code change starts it over. Drift or expiry retires it.</span>
       </div>
 
       <TabBar
@@ -94,7 +94,7 @@ function ActiveSkillsPanel() {
     <div className="space-y-3" data-testid="skills-active">
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[48rem] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="px-4 py-3 font-medium">Skill</th>
               <th className="px-4 py-3 font-medium">Key group</th>
@@ -108,7 +108,7 @@ function ActiveSkillsPanel() {
               <tr key={row.id} className="hover:bg-slate-50/80">
                 <td className="px-4 py-3">
                   <p className="font-mono text-sm font-semibold text-slate-900">{row.name}</p>
-                  <p className="text-xs text-slate-500">{row.description}</p>
+                  <p className="text-xs text-slate-600">{row.description}</p>
                 </td>
                 <td className="px-4 py-3 text-slate-600">{row.keyGroup}</td>
                 <td className="px-4 py-3">
@@ -130,7 +130,7 @@ function ActiveSkillsPanel() {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-slate-600">
         Each skill runs sandboxed and can only touch what it was approved for. If its behavior drifts from what it
         showed during review, it&apos;s retired automatically and moves to Retired.
       </p>
@@ -156,7 +156,7 @@ function ProposedSkillsPanel() {
               <div className="min-w-0 flex-1">
                 <h3 className="font-mono text-sm font-semibold text-slate-900">{skill.name}</h3>
                 <p className="mt-1 text-sm text-slate-700">{skill.description}</p>
-                <p className="mt-1 text-xs text-slate-500">{skill.attribution}</p>
+                <p className="mt-1 text-xs text-slate-600">{skill.attribution}</p>
                 {skill.blocker ? (
                   <span
                     className={cn(
@@ -197,7 +197,7 @@ function RetiredSkillsPanel() {
     <div className="space-y-3" data-testid="skills-retired">
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[48rem] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="px-4 py-3 font-medium">Skill</th>
               <th className="px-4 py-3 font-medium">Why it was retired</th>
@@ -210,7 +210,7 @@ function RetiredSkillsPanel() {
               <tr key={row.id}>
                 <td className="px-4 py-3">
                   <p className="font-mono text-sm font-semibold text-slate-900">{row.name}</p>
-                  <p className="text-xs text-slate-500">{row.keyGroup}</p>
+                  <p className="text-xs text-slate-600">{row.keyGroup}</p>
                 </td>
                 <td className="px-4 py-3">
                   <span
@@ -237,7 +237,7 @@ function RetiredSkillsPanel() {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-slate-600">
         A retired skill can&apos;t run. Bringing one back means proving it again from the start, and its history
         stays in the audit log either way.
       </p>
@@ -286,7 +286,7 @@ function ProvingSkillsPanel({
                   {skill.badge}
                 </span>
               </div>
-              <p className="mt-1 text-xs text-slate-500">{skill.summary}</p>
+              <p className="mt-1 text-xs text-slate-600">{skill.summary}</p>
             </button>
           </li>
         ))}
@@ -330,7 +330,7 @@ function ProvingSkillsPanel({
               ['Spend', 'Up to $2 per run'],
             ].map(([k, v]) => (
               <div key={k} className="rounded-lg bg-slate-50 px-3 py-2">
-                <dt className="text-xs font-medium text-slate-500">{k}</dt>
+                <dt className="text-xs font-medium text-slate-600">{k}</dt>
                 <dd className="text-slate-800">{v}</dd>
               </div>
             ))}

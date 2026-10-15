@@ -75,12 +75,12 @@ export function MemoryPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-semibold text-slate-900">{step.title}</p>
                     {step.at ? (
-                      <span className="text-xs text-slate-400">{step.at}</span>
+                      <span className="text-xs text-slate-600">{step.at}</span>
                     ) : (
                       <span
                         className={cn(
                           'text-xs font-medium',
-                          step.state === 'running' ? 'text-sky-700' : 'text-slate-400',
+                          step.state === 'running' ? 'text-sky-700' : 'text-slate-600',
                         )}
                       >
                         {step.state === 'running' ? 'Running' : 'Waiting'}
@@ -207,7 +207,7 @@ export function MemoryPage() {
                     )}
                   >
                     <span>{t.name}</span>
-                    <span className="tabular-nums text-slate-500">{t.count.toLocaleString()}</span>
+                    <span className="tabular-nums text-slate-600">{t.count.toLocaleString()}</span>
                   </button>
                 </li>
               ))}
@@ -216,7 +216,7 @@ export function MemoryPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">{ontology.name}</h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-slate-600">
                     {ontology.count.toLocaleString()} records, filled from the contracts pipeline and the CRM
                   </p>
                 </div>
@@ -227,7 +227,7 @@ export function MemoryPage() {
               {ontology.id === 'contract' ? (
                 <>
                   <table className="mt-4 w-full text-left text-sm">
-                    <thead className="text-xs uppercase tracking-wide text-slate-500">
+                    <thead className="text-xs uppercase tracking-wide text-slate-600">
                       <tr>
                         <th className="pb-2 font-medium">Field</th>
                         <th className="pb-2 font-medium">Type</th>
@@ -241,7 +241,7 @@ export function MemoryPage() {
                           <td className="py-2">
                             <span className="font-mono text-slate-900">{f.name}</span>
                             {f.required ? (
-                              <span className="ml-2 text-[10px] font-semibold uppercase text-slate-400">
+                              <span className="ml-2 text-[10px] font-semibold uppercase text-slate-600">
                                 required
                               </span>
                             ) : null}
@@ -258,7 +258,7 @@ export function MemoryPage() {
                       ))}
                     </tbody>
                   </table>
-                  <p className="mt-3 text-xs text-slate-500">
+                  <p className="mt-3 text-xs text-slate-600">
                     &quot;Since Mar 2025&quot; means the field started then — older records stay null and queries
                     should treat them that way.
                   </p>
@@ -281,7 +281,7 @@ export function MemoryPage() {
                   </div>
                 </>
               ) : (
-                <p className="mt-4 text-sm text-slate-500">
+                <p className="mt-4 text-sm text-slate-600">
                   Contract is the fully mocked type. Other types reuse the same schema browser shape.
                 </p>
               )}
@@ -293,7 +293,7 @@ export function MemoryPage() {
           <div className="space-y-4">
             <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
               <table className="w-full min-w-[44rem] text-left text-sm">
-                <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
                   <tr>
                     <th className="px-4 py-3 font-medium">Document</th>
                     <th className="px-4 py-3 font-medium">Pipeline</th>
@@ -314,7 +314,7 @@ export function MemoryPage() {
                     >
                       <td className="px-4 py-3">
                         <p className="font-medium text-slate-900">{doc.document}</p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-slate-600">
                           {doc.received}, {doc.from}
                         </p>
                       </td>
@@ -382,7 +382,7 @@ export function MemoryPage() {
                       Leave empty
                     </Button>
                   </div>
-                  <p className="mt-3 text-xs text-slate-500">
+                  <p className="mt-3 text-xs text-slate-600">
                     Your answer is stored as verified, with your name as the verifier.
                   </p>
                 </div>
@@ -417,13 +417,13 @@ export function MemoryPage() {
               ))}
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700">
                 Contract.counterparty = Northwind
-                <button type="button" className="text-slate-400 hover:text-slate-700">
+                <button type="button" className="text-slate-600 hover:text-slate-700">
                   ×
                 </button>
               </span>
               <button
                 type="button"
-                className="rounded-full border border-dashed border-slate-300 px-3 py-1 text-xs text-slate-500"
+                className="rounded-full border border-dashed border-slate-300 px-3 py-1 text-xs text-slate-600"
               >
                 Add typed filter
               </button>
@@ -447,7 +447,7 @@ export function MemoryPage() {
                       )}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-600">
                           {row.kind}
                         </span>
                         <span
@@ -462,7 +462,7 @@ export function MemoryPage() {
                         </span>
                       </div>
                       <p className="mt-1 text-sm font-semibold text-slate-900">{row.title}</p>
-                      <p className="mt-1 text-xs text-slate-500">{row.summary}</p>
+                      <p className="mt-1 text-xs text-slate-600">{row.summary}</p>
                     </button>
                   </li>
                 ))}
@@ -472,7 +472,7 @@ export function MemoryPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h2 className="text-lg font-semibold text-slate-900">{selected.title}</h2>
-                    <p className="font-mono text-xs text-slate-500">{selected.id}</p>
+                    <p className="font-mono text-xs text-slate-600">{selected.id}</p>
                   </div>
                   <div className="flex gap-2">
                     <Button type="button" variant="outline" size="sm" onClick={() => setView('erase-confirm')}>
@@ -484,7 +484,7 @@ export function MemoryPage() {
                   </div>
                 </div>
                 <table className="mt-4 w-full text-left text-sm">
-                  <thead className="text-xs uppercase tracking-wide text-slate-500">
+                  <thead className="text-xs uppercase tracking-wide text-slate-600">
                     <tr>
                       <th className="pb-2 font-medium">Field</th>
                       <th className="pb-2 font-medium">Value</th>
@@ -518,7 +518,7 @@ export function MemoryPage() {
                     ))}
                   </tbody>
                 </table>
-                <p className="mt-4 text-xs text-slate-500">
+                <p className="mt-4 text-xs text-slate-600">
                   Linked: Amendment 2.pdf · Northwind pricing history · Recalled by legal-ops agent, today 09:22
                 </p>
                 <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2 text-xs text-amber-950">
@@ -548,7 +548,7 @@ export function MemoryPage() {
             </p>
             <h3 className="mt-5 text-sm font-semibold text-slate-900">What will be erased</h3>
             <table className="mt-2 w-full text-left text-sm">
-              <thead className="text-xs uppercase tracking-wide text-slate-500">
+              <thead className="text-xs uppercase tracking-wide text-slate-600">
                 <tr>
                   <th className="pb-2 font-medium">Where</th>
                   <th className="pb-2 font-medium">Found</th>
@@ -598,7 +598,7 @@ export function MemoryPage() {
               />
               I understand this can&apos;t be undone
             </label>
-            <p className="mt-4 text-xs text-slate-500">
+            <p className="mt-4 text-xs text-slate-600">
               Erasing needs your security key. It runs as a job you can leave, and ends with a check of every
               store.
             </p>
@@ -643,11 +643,11 @@ function UploadsPanel({
   return (
     <div className="space-y-4" data-testid="memory-uploads">
       <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-6 py-10 text-center">
-        <div className="mb-2 flex size-10 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm ring-1 ring-slate-200">
+        <div className="mb-2 flex size-10 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200">
           ↑
         </div>
         <p className="text-sm font-medium text-slate-800">Drop files here, or choose files</p>
-        <p className="mt-1 max-w-md text-xs text-slate-500">
+        <p className="mt-1 max-w-md text-xs text-slate-600">
           PDF, Word, Excel, PowerPoint, images and .eml email. Personal data is redacted before anything is stored.
         </p>
         <Button type="button" variant="outline" size="sm" className="mt-4">
@@ -689,7 +689,7 @@ function UploadsPanel({
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[48rem] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="px-4 py-3 font-medium">File</th>
               <th className="px-4 py-3 font-medium">Added by</th>
@@ -703,7 +703,7 @@ function UploadsPanel({
               <tr key={row.id} className="hover:bg-slate-50/80">
                 <td className="px-4 py-3">
                   <p className="font-medium text-slate-900">{row.file}</p>
-                  <p className="text-xs text-slate-500">{row.meta}</p>
+                  <p className="text-xs text-slate-600">{row.meta}</p>
                 </td>
                 <td className="px-4 py-3 text-slate-600">{row.addedBy}</td>
                 <td className="px-4 py-3 text-slate-600">{row.pipeline}</td>
@@ -726,7 +726,7 @@ function UploadsPanel({
           </tbody>
         </table>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
         <p>
           Showing {rows.length} of 1,284
         </p>

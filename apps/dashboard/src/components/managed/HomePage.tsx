@@ -56,7 +56,7 @@ export function HomePage() {
             key={card.id}
             className="rounded-xl border border-slate-200/80 bg-white px-3.5 py-3 shadow-sm shadow-slate-900/5"
           >
-            <p className="text-xs font-medium text-slate-500">{card.label}</p>
+            <p className="text-xs font-medium text-slate-600">{card.label}</p>
             <p className="mt-1.5 flex items-center gap-2 text-sm font-semibold text-slate-900">
               <StatusDot tone={card.tone} />
               {card.value}
@@ -94,7 +94,7 @@ export function HomePage() {
             </Button>
           </div>
         </div>
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-slate-600">
           PDFs, Office files, and email. Personal data is redacted before anything is stored.
         </p>
       </section>
@@ -124,7 +124,7 @@ export function HomePage() {
                   </span>
                 </div>
                 <p className="mt-1.5 text-sm text-slate-600">{item.body}</p>
-                <p className="mt-1 font-mono text-[11px] text-slate-500">{item.meta}</p>
+                <p className="mt-1 font-mono text-[11px] text-slate-600">{item.meta}</p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <Button type="button" size="sm">
                     Approve with security key
@@ -151,14 +151,14 @@ export function HomePage() {
                 <StatusDot tone="ok" /> Live
               </span>
             </h2>
-            <Link href="/audit" className="text-xs font-medium text-sky-700 hover:underline">
+            <Link href="/console/audit" className="text-xs font-medium text-sky-700 hover:underline">
               Open audit log
             </Link>
           </div>
           <ol className="space-y-3 border-l border-slate-200 pl-3">
             {HOME_ACTIVITY.map((item) => (
               <li key={item.id}>
-                <p className="font-mono text-[11px] text-slate-500">{item.kind}</p>
+                <p className="font-mono text-[11px] text-slate-600">{item.kind}</p>
                 <p className="text-sm text-slate-700">{item.summary}</p>
               </li>
             ))}
@@ -185,7 +185,7 @@ export function HomePage() {
             <li key={ep.path} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
               <div>
                 <p className="font-mono text-sm font-medium text-slate-900">{ep.path}</p>
-                <p className="text-xs text-slate-500">{ep.description}</p>
+                <p className="text-xs text-slate-600">{ep.description}</p>
               </div>
               <button
                 type="button"

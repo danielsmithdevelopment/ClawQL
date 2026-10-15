@@ -81,7 +81,7 @@ export function GatewayPage() {
                 ['Spend today', '$96.40'],
               ].map(([k, v]) => (
                 <div key={k} className="rounded-lg bg-slate-50 px-3 py-2">
-                  <p className="text-xs text-slate-500">{k}</p>
+                  <p className="text-xs text-slate-600">{k}</p>
                   <p className="text-lg font-semibold text-slate-900">{v}</p>
                 </div>
               ))}
@@ -94,7 +94,7 @@ export function GatewayPage() {
                 <li key={route.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
                   <div>
                     <p className="font-mono text-sm font-medium text-slate-900">{route.label}</p>
-                    <p className="text-xs text-slate-500">{route.chain}</p>
+                    <p className="text-xs text-slate-600">{route.chain}</p>
                   </div>
                   <span className="inline-flex items-center gap-1.5 text-sm text-slate-700">
                     <StatusDot tone={route.tone} />
@@ -181,7 +181,7 @@ export function GatewayPage() {
               ].map(([title, body]) => (
                 <div key={title} className="rounded-lg bg-slate-50 px-3 py-2 text-sm">
                   <p className="font-medium text-slate-800">{title}</p>
-                  <p className="mt-1 text-xs text-slate-500">{body}</p>
+                  <p className="mt-1 text-xs text-slate-600">{body}</p>
                 </div>
               ))}
             </div>
@@ -194,7 +194,7 @@ export function GatewayPage() {
                 <li key={row.client} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
                   <div>
                     <p className="font-medium text-slate-900">{row.client}</p>
-                    <p className="font-mono text-xs text-slate-500">{row.keys}</p>
+                    <p className="font-mono text-xs text-slate-600">{row.keys}</p>
                   </div>
                   <p className="text-slate-600">{row.sessions} sessions</p>
                 </li>
@@ -213,7 +213,7 @@ export function GatewayPage() {
           </div>
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
                 <tr>
                   <th className="px-4 py-3 font-medium">Site</th>
                   <th className="px-4 py-3 font-medium">Model</th>
@@ -280,7 +280,7 @@ export function GatewayPage() {
                 ['Now', 'Re-proving', 'Needs a fresh set on the new catalog'],
               ].map(([when, stage, body]) => (
                 <div key={when} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-slate-600">
                     {when} · {stage}
                   </p>
                   <p className="mt-1 text-xs text-slate-700">{body}</p>

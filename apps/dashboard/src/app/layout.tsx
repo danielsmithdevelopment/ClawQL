@@ -19,11 +19,17 @@ export const metadata: Metadata = managed
       title: 'ClawQL Cloud',
       description:
         'Managed ClawQL console — gateway, keys, billing, review, and audit for your organization.',
+      icons: {
+        icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+      },
     }
   : {
       title: 'ClawQL — Dashboard',
       description:
         'Agent chat, fleet status, and Vault-backed cluster configuration for ClawQL MCP.',
+      icons: {
+        icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+      },
     }
 
 export const viewport: Viewport = {
@@ -60,6 +66,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       className={cn(managedSurface ? 'managed' : 'dark', 'h-full', 'font-sans', geist.variable)}
     >
       <body
+        data-clawql-e2e={process.env.CLAWQL_E2E_HARNESS === '1' ? '1' : '0'}
         className={cn(
           'min-h-dvh antialiased',
           managedSurface

@@ -40,7 +40,7 @@ export function TeamPage() {
             Everyone signs in through Okta. Approvals need a security key, and each person must register at least
             two.
           </p>
-          <Link href="/settings" className="font-medium text-sky-700 hover:underline">
+          <Link href="/settings" className="font-medium text-sky-700 underline underline-offset-2">
             Sign-in settings
           </Link>
         </div>
@@ -64,7 +64,7 @@ export function TeamPage() {
         <>
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
             <table className="w-full min-w-[56rem] text-left text-sm">
-              <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
                 <tr>
                   <th className="px-4 py-3 font-medium">Person</th>
                   <th className="px-4 py-3 font-medium">Role</th>
@@ -72,7 +72,9 @@ export function TeamPage() {
                   <th className="px-4 py-3 font-medium">Can approve</th>
                   <th className="px-4 py-3 font-medium">Security keys</th>
                   <th className="px-4 py-3 font-medium">Last active</th>
-                  <th className="px-4 py-3 font-medium" />
+                  <th className="px-4 py-3 font-medium">
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -80,7 +82,7 @@ export function TeamPage() {
                   <tr key={person.id}>
                     <td className="px-4 py-3">
                       <p className="font-medium text-slate-900">{person.name}</p>
-                      <p className="text-xs text-slate-500">{person.email}</p>
+                      <p className="text-xs text-slate-600">{person.email}</p>
                     </td>
                     <td className="px-4 py-3 text-slate-700">{person.role}</td>
                     <td className="px-4 py-3 text-slate-600">{person.groups}</td>
@@ -99,7 +101,7 @@ export function TeamPage() {
                     </td>
                     <td className="px-4 py-3 text-slate-600">{person.lastActive}</td>
                     <td className="px-4 py-3">
-                      <button type="button" className="text-sky-700 hover:underline">
+                      <button type="button" className="text-sky-700 underline underline-offset-2">
                         {person.action}
                       </button>
                     </td>
@@ -113,7 +115,7 @@ export function TeamPage() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="text-sm font-semibold text-slate-900">Approvers</h2>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-slate-600">
                   Who can approve what agents ask for. The rules themselves live in Review, Approval policies.
                 </p>
               </div>
@@ -125,7 +127,7 @@ export function TeamPage() {
               {TEAM_APPROVERS.map((rule) => (
                 <li key={rule.id} className="rounded-lg border border-slate-200 px-3 py-3">
                   <p className="text-sm font-semibold text-slate-900">{rule.title}</p>
-                  <p className="text-xs text-slate-500">{rule.summary}</p>
+                  <p className="text-xs text-slate-600">{rule.summary}</p>
                   <p className="mt-2 text-sm text-slate-700">
                     Approvers: {rule.people}. {rule.rule}
                   </p>
@@ -134,9 +136,9 @@ export function TeamPage() {
             </ul>
           </section>
 
-          <p className="mt-4 text-xs text-slate-500">
+          <p className="mt-4 text-xs text-slate-600">
             Agents aren&apos;t team members. Their access comes from keys in{' '}
-            <Link href="/connections" className="text-sky-700 hover:underline">
+            <Link href="/connections" className="text-sky-700 underline underline-offset-2">
               Connections & keys
             </Link>
             .
@@ -157,14 +159,14 @@ function GroupsPanel() {
           </span>
           Last synced from Okta 6 minutes ago. Edit membership in Okta; it lands here on the next sync.
         </p>
-        <button type="button" className="font-medium text-sky-700 hover:underline">
+        <button type="button" className="font-medium text-sky-700 underline underline-offset-2">
           Sync now
         </button>
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[40rem] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="px-4 py-3 font-medium">Group</th>
               <th className="px-4 py-3 font-medium">People</th>
@@ -185,9 +187,9 @@ function GroupsPanel() {
         </table>
       </div>
 
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-slate-600">
         People groups are separate from key groups. Key groups decide what agents&apos; keys can reach, in{' '}
-        <Link href="/connections" className="text-sky-700 hover:underline">
+        <Link href="/connections" className="text-sky-700 underline underline-offset-2">
           Connections & keys
         </Link>
         .
@@ -198,14 +200,14 @@ function GroupsPanel() {
 
 function RolesPanel() {
   const cell = (value: string) => (
-    <span className={cn(value === 'No' ? 'text-slate-400' : 'text-slate-800')}>{value}</span>
+    <span className={cn(value === 'No' ? 'text-slate-600' : 'text-slate-800')}>{value}</span>
   )
 
   return (
     <div className="space-y-4" data-testid="team-roles">
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[56rem] text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="px-4 py-3 font-medium">Role</th>
               <th className="px-4 py-3 font-medium">Use the console</th>
@@ -221,7 +223,7 @@ function RolesPanel() {
               <tr key={role.id}>
                 <td className="px-4 py-3">
                   <p className="font-medium text-slate-900">{role.name}</p>
-                  <p className="text-xs text-slate-500">{role.people}</p>
+                  <p className="text-xs text-slate-600">{role.people}</p>
                 </td>
                 <td className="px-4 py-3">{cell(role.console)}</td>
                 <td className="px-4 py-3">{cell(role.connections)}</td>
@@ -240,7 +242,7 @@ function RolesPanel() {
         <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-700">
           <li>
             Approving needs an approval area, set per rule in{' '}
-            <Link href="/review" className="text-sky-700 hover:underline">
+            <Link href="/review" className="text-sky-700 underline underline-offset-2">
               Review, Approval policies
             </Link>
             . A role alone isn&apos;t enough.

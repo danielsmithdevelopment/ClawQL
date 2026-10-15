@@ -13,7 +13,7 @@ export function StubPage({
     <PageChrome crumbs={[title]} title={title} description={description}>
       <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
         <p className="text-sm font-medium text-slate-800">Fixture shell — UI coming next</p>
-        <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+        <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
           Navigation and chrome match the ClawQL Cloud mockups. This view is stubbed so we can land Home, keys, and
           billing first.
         </p>

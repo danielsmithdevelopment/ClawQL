@@ -101,7 +101,7 @@ export function UsageBillingPage() {
         ) : undefined
       }
     >
-      <p className="mb-3 text-xs text-slate-500" data-testid="usage-data-source">
+      <p className="mb-3 text-xs text-slate-600" data-testid="usage-data-source">
         Usage source:{' '}
         {source === 'live'
           ? `Unified spend (${usage.meta.orgId})`
@@ -124,7 +124,7 @@ export function UsageBillingPage() {
               'border-b-2 px-0.5 pb-2 font-medium transition-colors',
               tab === id
                 ? 'border-slate-900 text-slate-900'
-                : 'border-transparent text-slate-500 hover:text-slate-800',
+                : 'border-transparent text-slate-600 hover:text-slate-800',
             )}
             data-testid={`usage-tab-${id}`}
           >
@@ -164,14 +164,14 @@ export function UsageBillingPage() {
         <div className="space-y-6">
           <section className="grid gap-3 md:grid-cols-3">
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-              <p className="text-xs font-medium text-slate-500">Spent this period</p>
+              <p className="text-xs font-medium text-slate-600">Spent this period</p>
               <p className="mt-2 text-2xl font-semibold text-slate-900">
                 ${usage.monthSpent.toLocaleString()}
               </p>
               <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
                 <div className="h-full rounded-full bg-amber-500" style={{ width: `${Math.min(100, pct)}%` }} />
               </div>
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-slate-600">
                 {pct}% of the ${usage.monthBudget.toLocaleString()} budget
               </p>
             </div>
@@ -183,18 +183,18 @@ export function UsageBillingPage() {
               <p className="mt-2 text-xs text-amber-900">{usage.forecastNote}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-              <p className="text-xs font-medium text-slate-500">Spent today, so far</p>
+              <p className="text-xs font-medium text-slate-600">Spent today, so far</p>
               <p className="mt-2 text-2xl font-semibold text-slate-900">
                 ${usage.todaySpent.toFixed(2)}
               </p>
-              <p className="mt-2 text-xs text-slate-500">{usage.todayNote}</p>
+              <p className="mt-2 text-xs text-slate-600">{usage.todayNote}</p>
             </div>
           </section>
 
           <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
             <div className="flex flex-wrap items-end justify-between gap-2">
               <h2 className="text-sm font-semibold text-slate-900">Daily spend, last 14 days</h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-600">
                 {source === 'live'
                   ? 'Daily series stays fixture-shaped until usage metering is connected'
                   : 'Weekends run lighter; busiest days highlighted in the fixture'}
@@ -203,7 +203,7 @@ export function UsageBillingPage() {
             <div className="mt-4 flex h-44 items-end gap-1.5 sm:gap-2">
               {usage.daily.map((d) => (
                 <div key={d.label} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-                  <span className="text-[10px] tabular-nums text-slate-500">{d.amount}</span>
+                  <span className="text-[10px] tabular-nums text-slate-600">{d.amount}</span>
                   <div
                     className={cn(
                       'w-full max-w-[2rem] rounded-t-sm',
@@ -213,13 +213,13 @@ export function UsageBillingPage() {
                     style={{ height: `${Math.max(8, (d.amount / maxBar) * 100)}%` }}
                     title={`${d.label}: $${d.amount}`}
                   />
-                  <span className="truncate text-[9px] text-slate-400">
+                  <span className="truncate text-[9px] text-slate-600">
                     {d.today ? 'Today' : d.label.replace(/^\w+ /, '')}
                   </span>
                 </div>
               ))}
             </div>
-            <p className="mt-3 text-xs text-slate-500">
+            <p className="mt-3 text-xs text-slate-600">
               Dollars per day. Lighter bars are weekends; today&apos;s bar is still filling in.
             </p>
           </section>
@@ -245,14 +245,14 @@ export function UsageBillingPage() {
             </div>
 
             {breakdown !== 'team' ? (
-              <p className="mt-4 text-sm text-slate-500">
+              <p className="mt-4 text-sm text-slate-600">
                 Showing team / member breakdown for now. Key / model / connection views will use the same CPC
                 usage API.
               </p>
             ) : (
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full min-w-[36rem] text-left text-sm">
-                  <thead className="text-xs uppercase tracking-wide text-slate-500">
+                  <thead className="text-xs uppercase tracking-wide text-slate-600">
                     <tr>
                       <th className="pb-2 font-medium">Team</th>
                       <th className="pb-2 font-medium">Spent</th>
@@ -268,7 +268,7 @@ export function UsageBillingPage() {
                         <tr key={row.team} className={cn(row.alert && 'bg-amber-50/60')}>
                           <td className="py-3 pr-3">
                             <p className="font-medium text-slate-900">{row.team}</p>
-                            {row.alert ? <p className="text-xs text-rose-600">{row.alert}</p> : null}
+                            {row.alert ? <p className="text-xs font-medium text-rose-800">{row.alert}</p> : null}
                           </td>
                           <td className="py-3 pr-3 tabular-nums">${row.spent}</td>
                           <td className="py-3 pr-3">
@@ -279,7 +279,7 @@ export function UsageBillingPage() {
                                   style={{ width: `${Math.min(100, share)}%` }}
                                 />
                               </div>
-                              <span className="text-xs text-slate-500">
+                              <span className="text-xs text-slate-600">
                                 {share}% of ${row.budget.toLocaleString()}
                               </span>
                             </div>
@@ -339,7 +339,7 @@ function PlanCreditsPanel({
 }) {
   return (
     <div className="space-y-4" data-testid="usage-plan">
-      {poolNote ? <p className="text-xs text-slate-500">{poolNote}</p> : null}
+      {poolNote ? <p className="text-xs text-slate-600">{poolNote}</p> : null}
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-2">
@@ -347,7 +347,7 @@ function PlanCreditsPanel({
               <h2 className="text-sm font-semibold text-slate-900">
                 Current plan: <span className="text-slate-900">{PLAN_CREDITS.planName}</span>
               </h2>
-              <p className="mt-1 text-sm text-slate-500">{PLAN_CREDITS.renews}</p>
+              <p className="mt-1 text-sm text-slate-600">{PLAN_CREDITS.renews}</p>
             </div>
             <Button type="button" variant="outline" size="sm" disabled={portalBusy} onClick={onOpenPortal}>
               Compare plans
@@ -372,7 +372,7 @@ function PlanCreditsPanel({
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-slate-900">Prepaid credits</h2>
           <p className="mt-2 text-3xl font-semibold text-slate-900">{PLAN_CREDITS.creditBalance}</p>
-          <p className="mt-2 text-sm text-slate-500">{PLAN_CREDITS.creditNote}</p>
+          <p className="mt-2 text-sm text-slate-600">{PLAN_CREDITS.creditNote}</p>
           <label className="mt-4 flex items-start gap-2 text-sm text-slate-700">
             <input type="checkbox" defaultChecked={PLAN_CREDITS.autoTopUp} className="mt-1" />
             <span>Top up automatically below $100</span>
@@ -388,7 +388,7 @@ function PlanCreditsPanel({
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-900">Invoices</h2>
         <table className="mt-4 w-full text-left text-sm">
-          <thead className="text-xs uppercase tracking-wide text-slate-500">
+          <thead className="text-xs uppercase tracking-wide text-slate-600">
             <tr>
               <th className="pb-2 font-medium">Period</th>
               <th className="pb-2 font-medium">Amount</th>
@@ -410,7 +410,7 @@ function PlanCreditsPanel({
                       PDF
                     </button>
                   ) : (
-                    <span className="ml-2 text-xs text-slate-400">{inv.extra}</span>
+                    <span className="ml-2 text-xs text-slate-600">{inv.extra}</span>
                   )}
                 </td>
               </tr>
@@ -464,7 +464,7 @@ function PaymentLimitsPanel({
           </li>
           <li className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-slate-700">
-              Tax ID: <span className="text-slate-500">{PAYMENT_LIMITS.taxId}</span>
+              Tax ID: <span className="text-slate-600">{PAYMENT_LIMITS.taxId}</span>
             </span>
             <button
               type="button"
@@ -476,7 +476,7 @@ function PaymentLimitsPanel({
             </button>
           </li>
         </ul>
-        <p className="mt-4 text-xs text-slate-500">
+        <p className="mt-4 text-xs text-slate-600">
           Payments are handled by Stripe. ClawQL never sees your full card number.
         </p>
       </section>
@@ -491,13 +491,13 @@ function PaymentLimitsPanel({
         <label className="mt-4 block text-sm">
           <span className="font-medium text-slate-800">Monthly budget</span>
           <div className="mt-1.5 flex items-center gap-2">
-            <span className="text-slate-500">$</span>
+            <span className="text-slate-600">$</span>
             <input
               type="number"
               defaultValue={monthBudget}
               className="h-9 w-32 rounded-lg border border-slate-200 px-3"
             />
-            <span className="text-xs text-slate-500">for the whole organization</span>
+            <span className="text-xs text-slate-600">for the whole organization</span>
           </div>
         </label>
         <p className="mt-3 text-sm text-slate-600">
@@ -517,7 +517,7 @@ function PaymentLimitsPanel({
               Hard stop
             </button>
           </div>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-slate-600">
             A hard stop pauses model calls while keeping tools and approvals functional.
           </p>
         </div>
@@ -526,9 +526,9 @@ function PaymentLimitsPanel({
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h2 className="text-sm font-semibold text-slate-900">Team budgets</h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-600">
             Daily caps per key are set on each key in{' '}
-            <a href="/connections" className="text-sky-700 hover:underline">
+            <a href="/connections" className="text-sky-700 underline underline-offset-2">
               Connections & keys
             </a>
             .
@@ -539,7 +539,7 @@ function PaymentLimitsPanel({
             <label key={row.team} className="block text-sm">
               <span className="font-medium text-slate-800">{row.team}</span>
               <div className="mt-1.5 flex items-center gap-2">
-                <span className="text-slate-500">$</span>
+                <span className="text-slate-600">$</span>
                 <input
                   type="number"
                   defaultValue={row.amount}
@@ -550,7 +550,7 @@ function PaymentLimitsPanel({
           ))}
         </div>
         <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-slate-500">Changes to limits are recorded in the audit log.</p>
+          <p className="text-xs text-slate-600">Changes to limits are recorded in the audit log.</p>
           <Button type="button">Save limits</Button>
         </div>
       </section>

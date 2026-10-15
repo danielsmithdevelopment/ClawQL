@@ -37,6 +37,8 @@
   ],
   "exclude": [
     "node_modules",
-    "e2e-cloud"
+    "e2e-cloud",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ]
 }

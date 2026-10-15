@@ -50,7 +50,7 @@ export function SessionsPage() {
           placeholder="Search agents, people, tools"
           className="h-9 min-w-[16rem] flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm"
         />
-        <select className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm">
+        <select aria-label="Filter sessions" className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm">
           <option>Last 24 hours</option>
         </select>
       </div>
@@ -71,7 +71,7 @@ export function SessionsPage() {
                 )}
               >
                 <p className="text-sm font-semibold text-slate-900">{session.name}</p>
-                <p className="mt-0.5 text-xs text-slate-500">{session.meta}</p>
+                <p className="mt-0.5 text-xs text-slate-600">{session.meta}</p>
                 <p className="mt-1 text-xs text-slate-600">{session.stats}</p>
                 <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-700">
                   <StatusDot tone={session.tone} />
@@ -86,7 +86,7 @@ export function SessionsPage() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">{selected.name}</h2>
-              <p className="font-mono text-xs text-slate-500">{selected.id}</p>
+              <p className="font-mono text-xs text-slate-600">{selected.id}</p>
               <p className="mt-1 text-sm text-slate-600">{selected.meta}</p>
             </div>
             <div className="flex gap-2">
@@ -110,7 +110,7 @@ export function SessionsPage() {
               ['Redactions', '2'],
             ].map(([k, v]) => (
               <div key={k} className="rounded-lg bg-slate-50 px-3 py-2">
-                <p className="text-xs text-slate-500">{k}</p>
+                <p className="text-xs text-slate-600">{k}</p>
                 <p className="font-semibold text-slate-900">{v}</p>
               </div>
             ))}
@@ -147,7 +147,7 @@ export function SessionsPage() {
                 ],
               ].map(([time, tool, status, body]) => (
                 <li key={time}>
-                  <p className="font-mono text-[11px] text-slate-500">
+                  <p className="font-mono text-[11px] text-slate-600">
                     {time} · {tool} · {status}
                   </p>
                   <p className="text-sm text-slate-700">{body}</p>
@@ -155,9 +155,9 @@ export function SessionsPage() {
               ))}
             </ol>
           </section>
-          <p className="mt-4 text-xs text-slate-500">
+          <p className="mt-4 text-xs text-slate-600">
             Every step is in the audit log, and the chain verifies.{' '}
-            <Link href="/audit" className="text-sky-700 hover:underline">
+            <Link href="/console/audit" className="text-sky-700 underline underline-offset-2">
               Open in Audit
             </Link>
           </p>

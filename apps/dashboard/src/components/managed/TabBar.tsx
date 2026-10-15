@@ -31,7 +31,7 @@ export function TabBar<T extends string>({
             'border-b-2 px-0.5 pb-2 font-medium transition-colors',
             value === tab.id
               ? 'border-slate-900 text-slate-900'
-              : 'border-transparent text-slate-500 hover:text-slate-800',
+              : 'border-transparent text-slate-600 hover:text-slate-800',
           )}
         >
           {tab.label}

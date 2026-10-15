@@ -28,7 +28,7 @@ export function PageChrome({
     <div className={cn('flex min-h-0 flex-1 flex-col overflow-y-auto', className)}>
       <header className="shrink-0 px-6 pt-5 pb-4 sm:px-8">
         <div className="mb-4 flex items-center justify-between gap-4">
-          <p className="text-xs text-slate-500">{trail.join(' / ')}</p>
+          <p className="text-xs text-slate-600">{trail.join(' / ')}</p>
           <Link
             href="https://docs.clawql.com"
             className="text-sm text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline"

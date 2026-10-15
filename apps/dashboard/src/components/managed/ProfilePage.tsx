@@ -51,6 +51,9 @@ export function ProfilePage() {
   const [endOthersBusy, setEndOthersBusy] = useState(false)
 
   useEffect(() => {
+    // Only poll arrange surfaces when the E2E harness is on (see layout `data-clawql-e2e`).
+    // Avoids harness-off 404 noise in Lighthouse / local mock console.
+    if (typeof document === 'undefined' || document.body.dataset.clawqlE2e !== '1') return
     let cancelled = false
     void (async () => {
       try {
@@ -88,6 +91,7 @@ export function ProfilePage() {
   }, [session.displayName])
 
   useEffect(() => {
+    if (typeof document === 'undefined' || document.body.dataset.clawqlE2e !== '1') return
     let cancelled = false
     void (async () => {
       try {
@@ -139,7 +143,7 @@ export function ProfilePage() {
             <p className="text-sm text-slate-600">
               {session.email}, {session.role} in Engineering and Legal
             </p>
-            <p className="text-xs text-slate-500">Name and email come from Okta and update there.</p>
+            <p className="text-xs text-slate-600">Name and email come from Okta and update there.</p>
           </div>
         </div>
         <Button type="button" variant="outline" data-testid="profile-sign-out">
@@ -156,7 +160,7 @@ export function ProfilePage() {
                 Add a key
               </Button>
             </div>
-            <p className="mt-1 text-sm text-slate-500">You meet the org rule: two keys that can approve.</p>
+            <p className="mt-1 text-sm text-slate-600">You meet the org rule: two keys that can approve.</p>
             <ul className="mt-4 space-y-3" data-testid="profile-security-keys">
               {keys.map((key) => (
                 <li
@@ -178,13 +182,13 @@ export function ProfilePage() {
                       >
                         {key.badge}
                       </span>
-                      <p className="mt-1 text-xs text-slate-500">{key.detail}</p>
+                      <p className="mt-1 text-xs text-slate-600">{key.detail}</p>
                     </div>
                     <div className="flex gap-2 text-xs">
                       <button type="button" className="text-sky-700 hover:underline">
                         Rename
                       </button>
-                      <button type="button" className="text-slate-500 hover:underline">
+                      <button type="button" className="text-slate-600 hover:underline">
                         Remove
                       </button>
                     </div>
@@ -199,13 +203,13 @@ export function ProfilePage() {
                   Make new codes
                 </Button>
               </div>
-              <p className="mt-1 text-xs text-slate-500">8 of 10 left. Each works once if you lose both keys.</p>
+              <p className="mt-1 text-xs text-slate-600">8 of 10 left. Each works once if you lose both keys.</p>
             </div>
           </section>
 
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-sm font-semibold text-slate-900">When something needs you</h2>
-            <p className="mt-1 text-sm text-slate-500">How approval requests and alerts reach you.</p>
+            <p className="mt-1 text-sm text-slate-600">How approval requests and alerts reach you.</p>
             <ul className="mt-4 space-y-3 text-sm">
               {[
                 ['Push to the ClawQL app', 'Approve from your phone by tapping your YubiKey to it.', true],
@@ -213,13 +217,15 @@ export function ProfilePage() {
                 ['Email', 'For requests still waiting after 30 minutes.', false],
                 ['Morning digest', "What your agents did overnight, at 8:00 in your time zone.", true],
               ].map(([label, help, on]) => (
-                <label key={String(label)} className="flex items-start gap-2">
-                  <input type="checkbox" defaultChecked={Boolean(on)} className="mt-1" />
-                  <span>
-                    <strong className="text-slate-800">{label}</strong>
-                    <span className="mt-0.5 block text-xs text-slate-500">{help}</span>
-                  </span>
-                </label>
+                <li key={String(label)}>
+                  <label className="flex items-start gap-2">
+                    <input type="checkbox" defaultChecked={Boolean(on)} className="mt-1" />
+                    <span>
+                      <strong className="text-slate-800">{label}</strong>
+                      <span className="mt-0.5 block text-xs text-slate-600">{help}</span>
+                    </span>
+                  </label>
+                </li>
               ))}
             </ul>
           </section>
@@ -243,11 +249,11 @@ export function ProfilePage() {
                   data-session-ended={s.ended ? 'true' : 'false'}
                   data-session-device={s.device}
                 >
-                  <span className={s.ended ? 'text-slate-400 line-through' : undefined}>{s.device}</span>
+                  <span className={s.ended ? 'text-slate-600 line-through' : undefined}>{s.device}</span>
                   {i === 0 && !s.ended ? (
-                    <span className="text-xs text-slate-500">This device</span>
+                    <span className="text-xs text-slate-600">This device</span>
                   ) : s.ended ? (
-                    <span className="text-xs text-slate-500">Signed out</span>
+                    <span className="text-xs text-slate-600">Signed out</span>
                   ) : (
                     <button type="button" className="text-xs text-sky-700 hover:underline">
                       Sign out
@@ -297,7 +303,7 @@ export function ProfilePage() {
                 Private to you
               </span>
             </p>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-600">
               Only you see results from personal accounts. They stay out of org memory and shared audit content.
             </p>
             <Link href="/connections" className="mt-2 inline-block text-xs text-sky-700 hover:underline">
@@ -329,7 +335,7 @@ export function ProfilePage() {
                 </button>
               ))}
             </div>
-            <Link href="/audit" className="mt-3 inline-block text-xs text-sky-700 hover:underline">
+            <Link href="/console/audit" className="mt-3 inline-block text-xs text-sky-700 hover:underline">
               Your activity in the audit log
             </Link>
           </section>

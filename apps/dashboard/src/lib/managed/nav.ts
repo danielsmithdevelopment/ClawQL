@@ -8,6 +8,7 @@ export type ManagedNavHref =
   | "/memory"
   | "/connections"
   | "/audit"
+  | "/console/audit"
   | "/team"
   | "/usage"
   | "/settings"
@@ -32,7 +33,10 @@ export const MANAGED_PRIMARY_NAV: readonly ManagedNavItem[] = [
 
 export const MANAGED_SECONDARY_NAV: readonly ManagedNavItem[] = [
   { href: "/connections", label: "Connections & keys", implemented: true },
-  { href: "/audit", label: "Audit", implemented: true },
+  // Page lives at `/console/audit`; `/audit` is the JSON witness API (middleware
+  // still rewrites document GETs). Nav must not Link-prefetch `/audit` or the
+  // route handler 404s in the browser console when the E2E harness is off.
+  { href: "/console/audit", label: "Audit", implemented: true },
   { href: "/team", label: "Team", implemented: true },
   { href: "/usage", label: "Usage & billing", implemented: true },
   { href: "/settings", label: "Settings", implemented: true },
@@ -40,5 +44,8 @@ export const MANAGED_SECONDARY_NAV: readonly ManagedNavItem[] = [
 
 export function isManagedNavActive(pathname: string, href: ManagedNavHref): boolean {
   if (href === "/") return pathname === "/";
+  if (href === "/console/audit" || href === "/audit") {
+    return pathname === "/audit" || pathname === "/console/audit" || pathname.startsWith("/console/audit/");
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }

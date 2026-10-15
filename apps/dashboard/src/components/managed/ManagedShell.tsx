@@ -14,8 +14,20 @@ export function ManagedShell({
   return (
     <ManagedSessionProvider session={session}>
       <div className="flex h-dvh min-h-0 bg-[var(--cloud-canvas)] text-slate-900">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-slate-900 focus:shadow"
+        >
+          Skip to main content
+        </a>
         <ManagedSidebar />
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
+        <main
+          id="main-content"
+          className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+          tabIndex={-1}
+        >
+          {children}
+        </main>
       </div>
     </ManagedSessionProvider>
   )
