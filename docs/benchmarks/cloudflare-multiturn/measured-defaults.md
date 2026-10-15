@@ -81,9 +81,9 @@ Node ranges: [`http-concurrency-node-variance-3x.json`](./http-concurrency-node-
 | Node uncapped | **[30, 31]** median **31** | `REPS=3` (prior 1× **44** outlier) |
 | Node `--max-old-space-size=256` | **[27, 29]** median **27** | `REPS=3` |
 | Node `--max-old-space-size=384` | **[25, 30]** median **28** | `REPS=3` |
-| Bun `--smol` | **72** | prior 1× same session |
-| MCPJungle (HTTP) | **26** | prior 1× |
-| agentgateway stock | **24** | prior 1× |
+| Bun `--smol` | **72** (1×; `REPS=3` in flight) | pending peer/bun variance |
+| MCPJungle (HTTP) | **26** (1×; `REPS=3` in flight) | pending peer/bun variance |
+| agentgateway stock | **24** (1×; `REPS=3` in flight) | pending peer/bun variance |
 | agentgateway tuned | **17** | `AG_TUNED=1` smoke |
 
 **Heap cap vs concurrency:** same-session `REPS=3` puts uncapped at **30–31**, not 44.
