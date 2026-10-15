@@ -1,0 +1,229 @@
+{
+  "measuredAt": "2026-10-15T17:43:41.439Z",
+  "note": "Cold require() of each plugin package in this Node process (order as listed). Operator/k8s first use is the dynamic import of @kubernetes/client-node resolved from clawql-automation.",
+  "plugin_first_hits": [
+    {
+      "id": "clawql-memory/plugin",
+      "label": "memory",
+      "heavy": [
+        "@xenova",
+        "onnx"
+      ],
+      "first_require": {
+        "ok": true,
+        "ms": 645.65,
+        "keys": [
+          "EmbeddingService",
+          "MEMORY_PLUGIN_ID",
+          "MemoryDbService",
+          "MemoryError",
+          "MemoryIngestInputSchema",
+          "MemoryIngestService",
+          "MemoryRecallInputSchema",
+          "MemoryRecallService",
+          "MemoryVaultSeedLive",
+          "VaultConfigService",
+          "createMemoryPlugin",
+          "createMemoryProviderPlugin"
+        ]
+      }
+    },
+    {
+      "id": "clawql-documents/plugin",
+      "label": "documents",
+      "heavy": [],
+      "first_require": {
+        "ok": true,
+        "ms": 31.49,
+        "keys": [
+          "DOCUMENTS_PLUGIN_ID",
+          "ONYX_SEND_SEARCH_OPERATION_ID",
+          "classifyDocumentToolZodShape",
+          "configureDocumentsPluginDeps",
+          "createDocumentsPlugin",
+          "decodeClassifyDocumentInput",
+          "decodeExtractDocumentInput",
+          "decodeIngestExternalKnowledgeInput",
+          "decodeKnowledgeSearchOnyxInput",
+          "decodeRunIdpPipelineInput",
+          "extractDocumentToolZodShape",
+          "getDocumentsPluginDeps"
+        ]
+      }
+    },
+    {
+      "id": "clawql-automation/plugin",
+      "label": "automation",
+      "heavy": [
+        "@kubernetes"
+      ],
+      "first_require": {
+        "ok": true,
+        "ms": 39.37,
+        "keys": [
+          "AUTOMATION_PLUGIN_ID",
+          "AutomationError",
+          "AutomationToolsService",
+          "SLACK_NOTIFY_OPERATION_ID",
+          "argocdToolSchema",
+          "automationArgocdProgram",
+          "automationNotifyProgram",
+          "automationScheduleProgram",
+          "automationServicesLiveLayer",
+          "automationToolsLiveLayer",
+          "automationWorkflowProgram",
+          "configureAutomationPluginDeps"
+        ]
+      }
+    },
+    {
+      "id": "clawql-data/plugin",
+      "label": "data/duckdb",
+      "heavy": [
+        "@duckdb"
+      ],
+      "first_require": {
+        "ok": true,
+        "ms": 54.3,
+        "keys": [
+          "DATA_PLUGIN_ID",
+          "createDataPlugin",
+          "dataIngestSchema",
+          "dataQuerySchema",
+          "handleDataIngestToolInput",
+          "handleDataQueryToolInput",
+          "handleDataStatusToolInput",
+          "makeDataLayer"
+        ]
+      }
+    },
+    {
+      "id": "clawql-sandbox/plugin",
+      "label": "sandbox",
+      "heavy": [],
+      "first_require": {
+        "ok": true,
+        "ms": 4.55,
+        "keys": [
+          "SANDBOX_PLUGIN_ID",
+          "SandboxError",
+          "SandboxExecService",
+          "callSandboxBridge",
+          "createSandboxPlugin",
+          "executeSandboxExecEffect",
+          "handleClawqlCodeToolInput",
+          "handleSandboxExecToolInput",
+          "makeSandboxLayer",
+          "runSandboxEffect",
+          "sandboxCodeSchema",
+          "sandboxExecLiveLayer"
+        ]
+      }
+    },
+    {
+      "id": "clawql-observability/plugin",
+      "label": "observability",
+      "heavy": [],
+      "first_require": {
+        "ok": false,
+        "ms": 3.58,
+        "error": "TypeError: The \"path\" argument must be of type string or an instance of URL. Received undefined",
+        "code": "ERR_INVALID_ARG_TYPE"
+      }
+    },
+    {
+      "id": "clawql-payments/plugin",
+      "label": "payments/stripe",
+      "heavy": [
+        "stripe"
+      ],
+      "first_require": {
+        "ok": true,
+        "ms": 175.85,
+        "keys": [
+          "AchTopupService",
+          "AcpCheckoutService",
+          "AdyenCheckoutService",
+          "AgentCompensationService",
+          "Ap2MandateService",
+          "CloudflareWalletService",
+          "ConsumerOffRampService",
+          "CreditsService",
+          "DeductionEventBus",
+          "DeductionService",
+          "EntitlementService",
+          "HIGH_IMPACT_PAYMENT_TOOLS"
+        ]
+      }
+    }
+  ],
+  "automation_second_require_ms": 0,
+  "kubernetes_dynamic_import": {
+    "first": {
+      "ok": true,
+      "ms": 364.7,
+      "resolve_from": "/workspace/packages/clawql-automation/src/workflow/k8s-client.ts",
+      "resolved": "/workspace/packages/clawql-automation/node_modules/@kubernetes/client-node/dist/index.js",
+      "exports_sample": [
+        "AdmissionregistrationApi",
+        "AdmissionregistrationV1Api",
+        "AdmissionregistrationV1alpha1Api",
+        "AdmissionregistrationV1beta1Api",
+        "ApiextensionsApi",
+        "ApiextensionsV1Api",
+        "ApiregistrationApi",
+        "ApiregistrationV1Api"
+      ],
+      "admission_surface": true,
+      "export_count": 880
+    },
+    "second_cached": {
+      "ok": true,
+      "ms": 0.14,
+      "resolve_from": "/workspace/packages/clawql-automation/src/workflow/k8s-client.ts",
+      "resolved": "/workspace/packages/clawql-automation/node_modules/@kubernetes/client-node/dist/index.js",
+      "exports_sample": [
+        "AdmissionregistrationApi",
+        "AdmissionregistrationV1Api",
+        "AdmissionregistrationV1alpha1Api",
+        "AdmissionregistrationV1beta1Api",
+        "ApiextensionsApi",
+        "ApiextensionsV1Api",
+        "ApiregistrationApi",
+        "ApiregistrationV1Api"
+      ],
+      "admission_surface": true,
+      "export_count": 880
+    }
+  },
+  "failed_import": {
+    "all_clear": true,
+    "cases": [
+      {
+        "case": "missing_package",
+        "ok": true,
+        "ms": 0.16,
+        "code": "MODULE_NOT_FOUND",
+        "message": "Cannot find module 'clawql-plugin-definitely-missing-1792086221439'\nRequire stack:\n- /workspace/scripts/benchmarks/lazy-plugin-first-hit.mjs",
+        "clear_module_not_found": true
+      },
+      {
+        "case": "bad_export_subpath",
+        "ok": true,
+        "ms": 0.12,
+        "code": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+        "message": "Package subpath './plugin-does-not-exist-1792086221439' is not defined by \"exports\" in /workspace/node_modules/clawql-automation/package.json",
+        "clear_exports_error": true
+      },
+      {
+        "case": "composer_style_bad_plugin",
+        "ok": true,
+        "ms": 0.08,
+        "code": "ERR_PACKAGE_PATH_NOT_EXPORTED",
+        "message": "Package subpath './plugin-typo-missing' is not defined by \"exports\" in /workspace/node_modules/clawql-memory/package.json",
+        "fails_closed": true,
+        "note": "compose-horizontal has no try/catch around require — flag-on + missing plugin aborts listen"
+      }
+    ]
+  }
+}

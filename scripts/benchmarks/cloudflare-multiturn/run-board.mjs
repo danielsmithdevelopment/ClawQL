@@ -162,21 +162,56 @@ function smapsRollup(pid) {
   };
   const rss = get("Rss");
   const anon = get("Anonymous");
+  const pss = get("Pss");
   return {
     rss_mb: rss != null ? rss / 1024 : null,
     anonymous_mb: anon != null ? anon / 1024 : null,
+    pss_mb: pss != null ? pss / 1024 : null,
   };
 }
 function treeSmaps(rootPid) {
   let rss = 0;
   let anon = 0;
+  let pss = 0;
   for (const pid of processTreePids(rootPid)) {
     const s = smapsRollup(pid);
     if (!s) continue;
     if (s.rss_mb != null) rss += s.rss_mb;
     if (s.anonymous_mb != null) anon += s.anonymous_mb;
+    if (s.pss_mb != null) pss += s.pss_mb;
   }
-  return { rss_mb: Number(rss.toFixed(2)), anonymous_mb: Number(anon.toFixed(2)) };
+  return {
+    rss_mb: Number(rss.toFixed(2)),
+    anonymous_mb: Number(anon.toFixed(2)),
+    pss_mb: Number(pss.toFixed(2)),
+  };
+}
+
+/** ~100 samples on publish boards (flatness); ~10 on smoke. */
+function memSampleStride(iters) {
+  if (iters >= 1000) return Math.max(1, Math.floor(iters / 100));
+  return Math.max(1, Math.floor(iters / 10));
+}
+function shouldSampleMemory(i, iters) {
+  const stride = memSampleStride(iters);
+  return i === 1 || i === iters || i % stride === 0;
+}
+function memorySeriesFlatness(series) {
+  const anon = (series || []).map((m) => m.anonymous_mb).filter((x) => x != null);
+  if (anon.length < 2) return null;
+  const first = anon[0];
+  const last = anon[anon.length - 1];
+  const min = Math.min(...anon);
+  const max = Math.max(...anon);
+  return {
+    samples: anon.length,
+    anonymous_mb_first: first,
+    anonymous_mb_last: last,
+    anonymous_mb_min: min,
+    anonymous_mb_max: max,
+    anonymous_mb_range: Number((max - min).toFixed(2)),
+    anonymous_mb_drift: Number((last - first).toFixed(2)),
+  };
 }
 
 async function connectHttpMcp(mcpUrl, name) {
@@ -959,7 +994,7 @@ async function runArmSessions({
             knownOp: arm === "clawql_known_op",
           })
         );
-        if (i % Math.max(1, Math.floor(iters / 10)) === 0 || i === 1 || i === iters) {
+        if (shouldSampleMemory(i, iters)) {
           memSamples.push({ i, ...treeSmaps(pid) });
           console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
         }
@@ -988,7 +1023,7 @@ async function runArmSessions({
         .reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
       for (let i = 1; i <= iters; i++) {
         sessions.push(await runClawqlProgramSession(conn.client, expectations));
-        if (i % Math.max(1, Math.floor(iters / 10)) === 0 || i === 1 || i === iters) {
+        if (shouldSampleMemory(i, iters)) {
           memSamples.push({ i, ...treeSmaps(pid) });
           console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
         }
@@ -1009,7 +1044,7 @@ async function runArmSessions({
       definitionTokens = listed.tools.reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
       for (let i = 1; i <= iters; i++) {
         sessions.push(await runAggregatorSession(conn.client, listed.tools, expectations, arm));
-        if (i % Math.max(1, Math.floor(iters / 10)) === 0 || i === 1 || i === iters) {
+        if (shouldSampleMemory(i, iters)) {
           memSamples.push({ i, ...treeSmaps(pid) });
           console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
         }
@@ -1085,6 +1120,7 @@ async function runArmSessions({
   const plateau = memSamples.slice(-Math.min(5, memSamples.length));
   const memRss = plateau.map((m) => m.rss_mb).filter((x) => x != null).sort((a, b) => a - b);
   const memAnon = plateau.map((m) => m.anonymous_mb).filter((x) => x != null).sort((a, b) => a - b);
+  const memPss = plateau.map((m) => m.pss_mb).filter((x) => x != null).sort((a, b) => a - b);
   const def = definitionTokens ?? 0;
   const discoveryMean = discoveryTok.reduce((a, b) => a + b, 0) / discoveryTok.length;
   const resultMean = resultTok.reduce((a, b) => a + b, 0) / resultTok.length;
@@ -1128,13 +1164,17 @@ async function runArmSessions({
           : "upstream=mock (same replay fixture as peers)",
     },
     memory_plateau:
-      memRss.length || memAnon.length
+      memRss.length || memAnon.length || memPss.length
         ? {
             rss_mb_median: percentile(memRss, 50),
             anonymous_mb_median: percentile(memAnon, 50),
+            pss_mb_median: percentile(memPss, 50),
             samples: plateau.length,
           }
         : null,
+    /** Full sample trail (session index → tree RSS/anon/PSS) for flatness checks. */
+    memory_series: memSamples,
+    memory_flatness: memorySeriesFlatness(memSamples),
     first_session: sessions[0],
   };
 }
@@ -1296,6 +1336,9 @@ async function main() {
         session_p999_ms: rows.map((r) => r.session_ms.p999),
         memory_rss_median: rows.map((r) => r.memory_plateau?.rss_mb_median ?? null),
         memory_anon_median: rows.map((r) => r.memory_plateau?.anonymous_mb_median ?? null),
+        memory_pss_median: rows.map((r) => r.memory_plateau?.pss_mb_median ?? null),
+        memory_anon_range: rows.map((r) => r.memory_flatness?.anonymous_mb_range ?? null),
+        memory_anon_drift: rows.map((r) => r.memory_flatness?.anonymous_mb_drift ?? null),
       };
     }
     const prefix = IS_PUBLISH_BOARD ? "board" : "smoke";
