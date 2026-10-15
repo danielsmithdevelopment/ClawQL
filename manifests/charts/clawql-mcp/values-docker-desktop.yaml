@@ -48,7 +48,8 @@ ingress:
         - path: /
           pathType: Prefix
 
-# Heap vs cgroup request: all-providers loads 60+ discovery specs; 512Mi heap reliably OOMs during startup.
+# Heavy local profile (memory + documents + all-providers): keep 768 — lean product default is 256
+# (see values.yaml / measured-defaults.md). 512Mi heap OOMs during all-providers startup.
 # If the pod stays Pending, raise Rancher VM RAM or scale flink taskmanager to 0 temporarily.
 nodeOptions: "--max-old-space-size=768"
 

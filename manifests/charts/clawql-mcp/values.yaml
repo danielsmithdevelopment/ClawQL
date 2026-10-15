@@ -91,7 +91,11 @@ clawql-mcp-grpc:
 obsidianVaultPath: /vault
 port: "8080"
 mcpPath: /mcp
-nodeOptions: "--max-old-space-size=1536"
+# Lean listen default (CF multiturn heap A/B + stress): Node --max-old-space-size=256
+# plateaus ~125–132 MB anon vs uncapped ~290; +~3 ms p99; no OOM on full:true / conc≤128 /
+# program fan-out. Memory-enabled / all-providers profiles: prefer 384 (long ingest anon ~255
+# under 256) or keep 768 on docker-desktop. See docs/benchmarks/cloudflare-multiturn/measured-defaults.md.
+nodeOptions: "--max-old-space-size=256"
 
 # Max protobuf send/receive per frame for MCP gRPC (`GRPC_MAX_MESSAGE_LENGTH`). Large `execute` bodies
 # (e.g. base64 PDF → Tika) should use **`model_context_protocol.Mcp/CallTool`** on the gRPC port, not Streamable HTTP JSON.

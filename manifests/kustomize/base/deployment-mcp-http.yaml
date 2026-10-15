@@ -37,7 +37,7 @@ spec:
               value: "1"
             # Multi-spec merge can exceed Node's default ~512Mi heap; size within cgroup limit (leave headroom for native alloc).
             - name: NODE_OPTIONS
-              value: "--max-old-space-size=1536"
+              value: "--max-old-space-size=256"
           startupProbe:
             httpGet:
               path: /healthz
