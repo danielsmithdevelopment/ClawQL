@@ -94,10 +94,12 @@ These rules are committed **before** secrets are set and the gate runs. Blog / e
 | Knob | Pre-commit |
 | --- | --- |
 | Frontier model | **`gpt-4.1`** (OpenAI family) — env `CF_MT_MODEL_FRONTIER` must match this string for the dual-model claim |
-| Small model | **`claude-3-5-haiku-20241022`** (Anthropic family) — env `CF_MT_MODEL_SMALL` must match; smaller, different family |
+| Small model | **`claude-haiku-4-5-20251001`** (Anthropic family) — env `CF_MT_MODEL_SMALL` must match; smaller, different family |
 | Temperature | `0` for every arm |
 | System prompt | Shared across arms (tool descriptions differ per gateway `listTools` only) |
 | Sessions | `CF_MT_REAL_ITERS=50` per arm per model |
+
+**Why these IDs (revised 2026-10-15, before any gate session):** `claude-3-5-haiku-20241022` is retired; Haiku 4.5 is the current small Anthropic peer. `gpt-4.1` stays the OpenAI frontier for this gate because the harness uses **Chat Completions + tools**; current GPT-6 flagships (`gpt-6.1-sol`, `gpt-6-astra`) require the **Responses API** for tool calling, and upgrading the transport mid-gate would change more than the model pin. `gpt-4.1` remains available on the API (removal scheduled 2027-01-14).
 
 Serve both over one OpenAI-compatible base URL (`OPENAI_BASE_URL`, e.g. OpenRouter). The harness freezes these IDs into `precommit.models` before the first session and never overwrites them. A single-model override (`CF_MT_MODEL`) may smoke-test but **cannot** support the dual-model claim. Any other frontier/small pair is a different experiment — not this gate.
 
@@ -131,6 +133,17 @@ Let **win** on a model mean: known-op is strictly better on **median weighted** 
 | Any other mix | State the metrics; no stronger claim than the table allows |
 
 The harness writes `precommit.verdict_rules` (copy of this section’s rule IDs) and `verdict` (computed only from those rules) into the result artifact. Do not hand-edit `verdict` after the run.
+
+### Next lever after the dual-model gate: `clawql_routed`
+
+Known-op’s lead (1,743 weighted vs default’s 17,731) is mostly **discovery**. Closing the first-session gap without leaking candidates to the model:
+
+1. Agent calls `execute` with a **description** + `where` (no `operationId`).
+2. ClawQL narrows candidates server-side (same search index; nothing returned).
+3. **GLiNER2-Decide** picks among the top ~10 as a calibrated choice.
+4. On calibrated confidence → run the op. Else → return top-three **compact signatures** (hundreds of tokens, not full search).
+
+Constraints: auto-resolve **reads only** (writes still proposal-gated); missing args return the chosen op’s compact signature for one retry; re-prove routing on a held-out Cloudflare (description → op) set before trusting; measure GLiNER memory (prefer a shared decision service if RSS regresses). Prove with a `clawql_routed` board arm beside known-op and default.
 
 ## Fairness rules
 

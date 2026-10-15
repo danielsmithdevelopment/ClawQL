@@ -15,7 +15,7 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | Product: `where` examples in execute schema + fix-named `where_invalid` | Done (+37 where-desc tokens; full execute tool def **218**) |
 | Product: observation budget (no where/fields → truncated preview) | Done (`truncated:true` + note; opt-in `full:true`) |
 | **Publish board: 3×10k** | **Pending** (re-run with code-arg accounting; rep 1 matches smoke) |
-| **Real-model 50 sessions / arm × 2 model families** | **Pre-commit frozen in SPEC (`gpt-4.1` + `claude-3-5-haiku-20241022`); harness ready; blocked on secrets** |
+| **Real-model 50 sessions / arm × 2 model families** | **Pre-commit frozen in SPEC (`gpt-4.1` + `claude-haiku-4-5-20251001`); harness ready; blocked on secrets** |
 | Blog / public headline | **Hold** until publish board + dual-model real-model land |
 
 N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the board. Do **not** ship the reversed-headline blog until both gates pass.
@@ -54,11 +54,11 @@ Set secrets **in the environment** (never paste keys into chat):
 
 - `OPENAI_API_KEY` (required)
 - `OPENAI_BASE_URL` (OpenAI-compatible endpoint that can serve both pinned models, e.g. OpenRouter)
-- `CF_MT_MODEL_FRONTIER=gpt-4.1` and `CF_MT_MODEL_SMALL=claude-3-5-haiku-20241022` (exact pinned IDs)
+- `CF_MT_MODEL_FRONTIER=gpt-4.1` and `CF_MT_MODEL_SMALL=claude-haiku-4-5-20251001` (exact pinned IDs; Haiku 3.5 retired)
 
 ```bash
 CF_MT_MODEL_FRONTIER=gpt-4.1 \
-  CF_MT_MODEL_SMALL=claude-3-5-haiku-20241022 \
+  CF_MT_MODEL_SMALL=claude-haiku-4-5-20251001 \
   CF_MT_REAL_ITERS=50 \
   CF_MT_REAL_ARMS=clawql_known_op,clawql_program,executor_v2 \
   npm run benchmark:cloudflare-multiturn:real-model

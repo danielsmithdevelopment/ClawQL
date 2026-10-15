@@ -15,11 +15,11 @@
  *   OPENAI_API_KEY          — required
  *   OPENAI_BASE_URL         — OpenAI-compatible (must serve both pinned models)
  *   CF_MT_MODEL_FRONTIER    — must be gpt-4.1 for dual-model claim
- *   CF_MT_MODEL_SMALL       — must be claude-3-5-haiku-20241022 for dual-model claim
+ *   CF_MT_MODEL_SMALL       — must be claude-haiku-4-5-20251001 for dual-model claim
  *   CF_MT_MODEL             — optional single-model override (smoke only; no dual claim)
  *
  *   CF_MT_MODEL_FRONTIER=gpt-4.1 \
- *   CF_MT_MODEL_SMALL=claude-3-5-haiku-20241022 \
+ *   CF_MT_MODEL_SMALL=claude-haiku-4-5-20251001 \
  *   CF_MT_REAL_ITERS=50 \
  *   CF_MT_REAL_ARMS=clawql_known_op,clawql_program,executor_v2 \
  *     npm run benchmark:cloudflare-multiturn:real-model
@@ -76,7 +76,9 @@ const TOKEN_CEILING = Math.max(
 const TEMPERATURE = 0;
 /** Pinned in SPEC — dual-model claim requires these exact IDs. */
 const PINNED_FRONTIER = "gpt-4.1";
-const PINNED_SMALL = "claude-3-5-haiku-20241022";
+const PINNED_SMALL = "claude-haiku-4-5-20251001";
+/** Bump when model pins change before a run (never after results). */
+const MODELS_PIN_REVISION = "2026-10-15-haiku45";
 const enc = getEncoding("cl100k_base");
 
 function resolveModels() {
@@ -527,6 +529,8 @@ function aggregateSessions(sessions) {
 /** Pre-committed SPEC rules — do not edit after a gate run has started. */
 export const GATE_VERDICT_RULES = {
   id: "cf-mt-real-model-gate-v1",
+  models_pin_revision: MODELS_PIN_REVISION,
+  pinned_models: { frontier: PINNED_FRONTIER, small: PINNED_SMALL },
   spec: "docs/benchmarks/cloudflare-multiturn/SPEC.md#pre-committed-gate-freeze-before-the-run--do-not-edit-after-seeing-results",
   primary_pair: ["clawql_known_op", "executor_v2"],
   win_requires: [
@@ -725,6 +729,7 @@ async function main() {
       frozen_at: frozenAt,
       models: models.map((m) => ({ label: m.label, id: m.id })),
       pinned: { frontier: PINNED_FRONTIER, small: PINNED_SMALL },
+      models_pin_revision: MODELS_PIN_REVISION,
       temperature: TEMPERATURE,
       system_prompt_shared: true,
       ordering: "interleave_sessions_across_arms",
