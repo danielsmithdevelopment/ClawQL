@@ -14,18 +14,15 @@
  * Secrets (never paste into chat / logs):
  *   OPENAI_API_KEY          — required
  *   OPENAI_BASE_URL         — OpenAI-compatible (must serve both pinned models)
- *   CF_MT_MODEL_FRONTIER    — must be gpt-4.1 for dual-model claim
- *   CF_MT_MODEL_SMALL       — must be claude-haiku-4-5-20251001 for dual-model claim
- *   CF_MT_MODEL             — optional single-model override (smoke only; no dual claim)
+ * OPTIONAL API alternate (not the SPEC Cursor gate):
+ *   OPENAI_API_KEY + CF_MT_MODEL_FRONTIER / CF_MT_MODEL_SMALL
  *
- *   CF_MT_MODEL_FRONTIER=gpt-4.1 \
- *   CF_MT_MODEL_SMALL=claude-haiku-4-5-20251001 \
- *   CF_MT_REAL_ITERS=50 \
- *   CF_MT_REAL_ARMS=clawql_known_op,clawql_program,executor_v2 \
- *     npm run benchmark:cloudflare-multiturn:real-model
+ * SPEC gate (preferred, no secrets): Cursor Task subagents — see
+ * prepare-real-model-cursor-gate.mjs and SPEC § Pre-committed gate
+ * (pins: gpt-5.6-sol-medium + composer-2.5-fast).
  *
- * Pre-commit (SPEC): temperature 0, shared system prompt, sessions interleaved
- * across arms, verdict from GATE_VERDICT_RULES only. Do not edit rules after a run.
+ * Pre-commit: shared workflow prompt, sessions interleaved across arms,
+ * verdict from GATE_VERDICT_RULES only. Do not edit rules after a run.
  */
 import { spawn } from "node:child_process";
 import {
@@ -74,11 +71,11 @@ const TOKEN_CEILING = Math.max(
   Number(process.env.CF_MT_REAL_TOKEN_CEILING || 10_000) || 10_000
 );
 const TEMPERATURE = 0;
-/** Pinned in SPEC — dual-model claim requires these exact IDs. */
-const PINNED_FRONTIER = "gpt-4.1";
-const PINNED_SMALL = "claude-haiku-4-5-20251001";
+/** Pinned in SPEC — dual-model claim requires these exact Cursor Task slugs. */
+const PINNED_FRONTIER = "gpt-5.6-sol-medium";
+const PINNED_SMALL = "composer-2.5-fast";
 /** Bump when model pins change before a run (never after results). */
-const MODELS_PIN_REVISION = "2026-10-15-haiku45";
+const MODELS_PIN_REVISION = "2026-10-15-cursor-native";
 const enc = getEncoding("cl100k_base");
 
 function resolveModels() {

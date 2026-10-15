@@ -15,7 +15,7 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | Product: `where` examples in execute schema + fix-named `where_invalid` | Done (+37 where-desc tokens; full execute tool def **218**) |
 | Product: observation budget (no where/fields → truncated preview) | Done (`truncated:true` + note; opt-in `full:true`) |
 | **Publish board: 3×10k** | **Pending** (re-run with code-arg accounting; rep 1 matches smoke) |
-| **Real-model 50 sessions / arm × 2 model families** | **Pre-commit frozen in SPEC (`gpt-4.1` + `claude-haiku-4-5-20251001`); harness ready; blocked on secrets** |
+| **Real-model 50 sessions / arm × 2 model families** | **Cursor Task gate: `gpt-5.6-sol-medium` + `composer-2.5-fast` (no API secrets)** |
 | Blog / public headline | **Hold** until publish board + dual-model real-model land |
 
 N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the board. Do **not** ship the reversed-headline blog until both gates pass.
@@ -50,21 +50,21 @@ Hosted Cloudflare code-mode is excluded because a real model would use your Clou
 
 **Pre-committed win rules** (do not edit after seeing results): [`SPEC.md` § Pre-committed gate](./SPEC.md#pre-committed-gate-freeze-before-the-run--do-not-edit-after-seeing-results). Blog / explainer claims follow that table only.
 
-Set secrets **in the environment** (never paste keys into chat):
+**SPEC gate transport: Cursor Task subagents** (no provider API secrets):
 
-- `OPENAI_API_KEY` (required)
-- `OPENAI_BASE_URL` (OpenAI-compatible endpoint that can serve both pinned models, e.g. OpenRouter)
-- `CF_MT_MODEL_FRONTIER=gpt-4.1` and `CF_MT_MODEL_SMALL=claude-haiku-4-5-20251001` (exact pinned IDs; Haiku 3.5 retired)
+| Pin | Cursor model slug |
+| --- | --- |
+| Frontier | `gpt-5.6-sol-medium` |
+| Small | `composer-2.5-fast` |
 
 ```bash
-CF_MT_MODEL_FRONTIER=gpt-4.1 \
-  CF_MT_MODEL_SMALL=claude-haiku-4-5-20251001 \
-  CF_MT_REAL_ITERS=50 \
-  CF_MT_REAL_ARMS=clawql_known_op,clawql_program,executor_v2 \
-  npm run benchmark:cloudflare-multiturn:real-model
+node scripts/benchmarks/cloudflare-multiturn/prepare-real-model-cursor-gate.mjs
+# Then run 50 interleaved sessions / arm / model via Task subagents (see WORKFLOW.md under the gate state dir).
+# Aggregate + verdict:
+node scripts/benchmarks/cloudflare-multiturn/lib/aggregate-cursor-gate.mjs --state /tmp/cf-mt-real-gate
 ```
 
-Fixed settings: temperature 0, shared system prompt, **sessions interleaved across arms**, each arm’s tool descriptions from `listTools`. Artifact freezes `precommit` + computed `verdict`. Per arm: **median / p90 weighted tokens**, **sessions over ceiling** (default 10k), task success, malformed `where`, observation-budget hits, retries, turns. Count steps must use `totalCount` on truncated envelopes. Cursor-subscription Composer pilots are cheap signal, not this gate.
+Shared workflow prompt across arms; **sessions interleaved across arms**. Artifact freezes `precommit` + computed `verdict`. Per arm: **median / p90 weighted tokens**, **sessions over ceiling** (default 10k), task success. Count steps must use `totalCount` on truncated envelopes. Optional OpenAI Chat Completions harness remains for operators with keys — not this gate.
 
 ### 4. Observation budget (product — **default on**)
 

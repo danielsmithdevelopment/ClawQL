@@ -25,11 +25,20 @@ if (!url) {
 
 const [cmd, argJson] = process.argv.slice(2);
 if (!cmd) {
-  console.error("usage: real-model-mcp-cli.mjs list-tools | execute <json> | execute_program <json>");
+  console.error("usage: real-model-mcp-cli.mjs list-tools | execute <json> | execute_program <json> | search <json>");
   process.exit(2);
 }
 
-const transport = new StreamableHTTPClientTransport(new URL(url));
+const bearer =
+  process.env.CF_MT_REAL_MCP_BEARER?.trim() ||
+  process.env.EXECUTOR_V2_API_KEY?.trim() ||
+  "";
+const transport = new StreamableHTTPClientTransport(
+  new URL(url),
+  bearer
+    ? { requestInit: { headers: { Authorization: `Bearer ${bearer}` } } }
+    : undefined
+);
 const client = new Client({ name: "cf-real-cli", version: "1" }, {});
 await client.connect(transport);
 try {
@@ -72,7 +81,11 @@ try {
       }
       const where = typeof args.where === "string" ? args.where : "";
       const fields = Array.isArray(args.fields) ? args.fields : undefined;
-      const codeText = [where, fields ? JSON.stringify(fields) : ""].filter(Boolean).join("\n");
+      const js = typeof args.code === "string" ? args.code : "";
+      const source = typeof args.source === "string" ? args.source : "";
+      const codeText = [where, fields ? JSON.stringify(fields) : "", js, source]
+        .filter(Boolean)
+        .join("\n");
       const record = {
         t: new Date().toISOString(),
         tool: cmd,

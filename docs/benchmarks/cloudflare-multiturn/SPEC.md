@@ -87,21 +87,25 @@ Until a live recording exists, the repo ships [`recording.synthetic.json`](../..
 
 ### Pre-committed gate (freeze before the run — do not edit after seeing results)
 
-These rules are committed **before** secrets are set and the gate runs. Blog / explainer claims must follow them; mixed outcomes may not be re-read in a flattering light.
+These rules are committed **before the first session**. Blog / explainer claims must follow them; mixed outcomes may not be re-read in a flattering light.
+
+#### Transport
+
+**Cursor subscription Task subagents** (`billing: cursor_subscription_subagents`). No external `OPENAI_API_KEY` / provider secrets. Each session is a blind subagent that calls the local mock-backed MCP via `real-model-mcp-cli.mjs`. An OpenAI Chat Completions harness remains an optional alternate for operators who prefer API keys — it is **not** this gate.
 
 #### Models and settings
 
 | Knob | Pre-commit |
 | --- | --- |
-| Frontier model | **`gpt-4.1`** (OpenAI family) — env `CF_MT_MODEL_FRONTIER` must match this string for the dual-model claim |
-| Small model | **`claude-haiku-4-5-20251001`** (Anthropic family) — env `CF_MT_MODEL_SMALL` must match; smaller, different family |
-| Temperature | `0` for every arm |
-| System prompt | Shared across arms (tool descriptions differ per gateway `listTools` only) |
+| Frontier model | **`gpt-5.6-sol-medium`** (OpenAI family via Cursor) |
+| Small model | **`composer-2.5-fast`** (Composer family via Cursor; smaller / faster) |
+| Temperature | Cursor Task defaults (temperature not exposed on this transport); same shared workflow prompt for every arm |
+| System prompt | Shared workflow across arms (tool descriptions differ per gateway `listTools` only) |
 | Sessions | `CF_MT_REAL_ITERS=50` per arm per model |
 
-**Why these IDs (revised 2026-10-15, before any gate session):** `claude-3-5-haiku-20241022` is retired; Haiku 4.5 is the current small Anthropic peer. `gpt-4.1` stays the OpenAI frontier for this gate because the harness uses **Chat Completions + tools**; current GPT-6 flagships (`gpt-6.1-sol`, `gpt-6-astra`) require the **Responses API** for tool calling, and upgrading the transport mid-gate would change more than the model pin. `gpt-4.1` remains available on the API (removal scheduled 2027-01-14).
+**Why these IDs (revision `2026-10-15-cursor-native`, before any gate session):** operator preference is Cursor-native models with no secrets. Pins must be Task-available slugs from **different families**, one smaller. Prior API pins (`gpt-4.1` + `claude-haiku-4-5-20251001`) are retired for this gate because they require provider keys.
 
-Serve both over one OpenAI-compatible base URL (`OPENAI_BASE_URL`, e.g. OpenRouter). The harness freezes these IDs into `precommit.models` before the first session and never overwrites them. A single-model override (`CF_MT_MODEL`) may smoke-test but **cannot** support the dual-model claim. Any other frontier/small pair is a different experiment — not this gate.
+The orchestrator freezes these IDs into `precommit.models` before the first session and never overwrites them. Any other pair is a different experiment — not this gate.
 
 #### Ordering
 
