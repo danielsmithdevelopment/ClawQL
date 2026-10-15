@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "clawql-merkle": "0.1.0",
-    "effect": "4.0.0"
+    "effect": "4.0.2"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

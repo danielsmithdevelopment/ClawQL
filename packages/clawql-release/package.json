@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "clawql-core": "0.1.0",
-    "effect": "4.0.0",
+    "effect": "4.0.2",
     "zod": "4.6.5"
   },
   "devDependencies": {

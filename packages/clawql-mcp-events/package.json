@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "clawql-api": "0.1.0",
-    "effect": "4.0.0",
+    "effect": "4.0.2",
     "standardwebhooks": "^1.1.1",
     "clawql-gdp": "0.1.0",
     "@gdp-ts/core": "^0.1.0"
