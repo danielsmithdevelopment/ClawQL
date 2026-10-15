@@ -27,9 +27,36 @@ import { clawqlEqualArmEnv } from "./lib/clawql-bench-env.mjs";
 
 const ROOT = "/workspace";
 const N = Math.max(50, Number(process.env.N || 4000) || 4000);
-const OLD_MB = process.env.NODE_MAX_OLD_SPACE_MB
-  ? Math.max(64, Number(process.env.NODE_MAX_OLD_SPACE_MB) || 0)
-  : null;
+const OLD_MB =
+  process.env.NODE_MAX_OLD_SPACE_MB === "0" || process.env.NODE_MAX_OLD_SPACE_MB === "false"
+    ? null
+    : process.env.NODE_MAX_OLD_SPACE_MB
+      ? Math.max(64, Number(process.env.NODE_MAX_OLD_SPACE_MB) || 0)
+      : null;
+const TRACE_GC = !["0", "false", "no"].includes((process.env.TRACE_GC ?? "1").trim().toLowerCase());
+
+function percentile(sorted, p) {
+  if (!sorted.length) return null;
+  return sorted[Math.min(sorted.length - 1, Math.max(0, Math.ceil((p / 100) * sorted.length) - 1))];
+}
+
+/** Parse Node `--trace-gc` lines for pause durations (ms). */
+function parseTraceGc(logText) {
+  const pauses = [];
+  for (const line of logText.split("\n")) {
+    // e.g. "... 12.3 / 0.0 ms ..." or "Scavenge ... 1.2 ms"
+    const m =
+      line.match(/(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*ms/) ||
+      line.match(/,\s*(\d+(?:\.\d+)?)\s*ms\b/) ||
+      line.match(/\b(\d+(?:\.\d+)?)\s+ms:\s*(?:Scavenge|Mark-sweep|Mark-Compact|Minor|Major)/i);
+    if (!m) continue;
+    const dur = Number(m[1]);
+    if (Number.isFinite(dur) && dur >= 0 && dur < 60_000) {
+      pauses.push(dur);
+    }
+  }
+  return pauses;
+}
 const OUT =
   process.env.OUT ||
   join(
@@ -139,6 +166,7 @@ async function main() {
   });
   const nodeArgs = [join(ROOT, "dist/server-http.js")];
   if (OLD_MB) nodeArgs.unshift(`--max-old-space-size=${OLD_MB}`);
+  if (TRACE_GC) nodeArgs.unshift("--trace-gc");
   const logPath = join(home, "clawql.log");
   const fd = openSync(logPath, "w");
   const child = spawn(process.execPath, nodeArgs, { env, stdio: ["ignore", fd, fd] });
@@ -220,11 +248,14 @@ async function main() {
     return s.length ? s[Math.floor(s.length / 2)] : null;
   };
   const latSorted = [...latencies].sort((a, b) => a - b);
+  const gcPauses = TRACE_GC && existsSync(logPath) ? parseTraceGc(readFileSync(logPath, "utf8")) : [];
+  const gcSorted = [...gcPauses].sort((a, b) => a - b);
   const report = {
     measuredAt: new Date().toISOString(),
     n: N,
     operationId,
     node_max_old_space_mb: OLD_MB,
+    trace_gc: TRACE_GC,
     plateau: {
       anonymous_mb_median: med(anonP),
       heap_used_mb_median: med(heapP),
@@ -236,8 +267,18 @@ async function main() {
     },
     series_ends: { first: series[0], last: series.at(-1) },
     latency_ms: {
-      p50: latSorted[Math.floor(latSorted.length * 0.5)],
-      p99: latSorted[Math.min(latSorted.length - 1, Math.ceil(latSorted.length * 0.99) - 1)],
+      p50: percentile(latSorted, 50),
+      p99: percentile(latSorted, 99),
+      p999: percentile(latSorted, 99.9),
+    },
+    gc: {
+      pause_count: gcPauses.length,
+      pause_ms_p50: percentile(gcSorted, 50),
+      pause_ms_p99: percentile(gcSorted, 99),
+      pause_ms_max: gcSorted.length ? gcSorted[gcSorted.length - 1] : null,
+      pause_ms_sum: gcPauses.length
+        ? Number(gcPauses.reduce((a, b) => a + b, 0).toFixed(2))
+        : null,
     },
     interpretation:
       med(heapP) != null && med(anonP) != null
@@ -257,7 +298,19 @@ async function main() {
   } catch {
     /* ignore */
   }
-  console.log(JSON.stringify({ wrote: OUT, plateau: report.plateau, interpretation: report.interpretation, latency_ms: report.latency_ms }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        wrote: OUT,
+        plateau: report.plateau,
+        interpretation: report.interpretation,
+        latency_ms: report.latency_ms,
+        gc: report.gc,
+      },
+      null,
+      2
+    )
+  );
 
   try {
     child.kill("SIGTERM");
