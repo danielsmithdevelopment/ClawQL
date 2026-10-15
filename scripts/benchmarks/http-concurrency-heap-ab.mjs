@@ -55,6 +55,9 @@ const BREAK_ERROR_RATE = Math.min(
 const CONC_HARD_MAX = Math.max(2, Number(process.env.CONC_HARD_MAX || 256) || 256);
 const CONC_STEP_MS = Math.max(1000, Number(process.env.CONC_STEP_MS || 3000) || 3000);
 const CONC_WARMUP = Math.max(0, Number(process.env.CONC_WARMUP || 4) || 4);
+/** Repeat each arm N times (interleaved by arm order) for range/variance. */
+const REPS = Math.max(1, Number(process.env.REPS || 1) || 1);
+const AG_TUNED = ["1", "true", "yes"].includes((process.env.AG_TUNED ?? "").trim().toLowerCase());
 const OUT =
   process.env.OUT ||
   join(ROOT, "docs/benchmarks/cloudflare-multiturn/http-concurrency-heap-ab.json");
@@ -331,12 +334,24 @@ async function startAgentgateway(mockBase) {
   const bashCmd = `CF_MOCK_BASE=${JSON.stringify(mockBase)} CF_CURATED_OPENAPI=${JSON.stringify(CURATED)} CF_ACCOUNT_ID=${JSON.stringify(FAKE.accountId)} CF_ZONE_ID=${JSON.stringify(FAKE.auditZoneId)} exec ${JSON.stringify(process.execPath)} ${JSON.stringify(REST_MCP)}`;
   const cfgPath = join(work, "config.yaml");
   // Unique admin/readiness/stats — defaults (15000/15021/15020) collide with the CF board's AG.
+  // AG_TUNED=1 raises stock pool / worker / in-flight limits for a production-ish smoke.
+  const tunedBlock = AG_TUNED
+    ? `
+  workerThreads: 4
+  backend:
+    poolMaxSize: 256
+    poolIdleTimeout: "2m"
+frontendPolicies:
+  http:
+    maxConcurrentRequests: 1024
+`
+    : "";
   writeFileSync(
     cfgPath,
     `config:
   adminAddr: "127.0.0.1:${adminPort}"
   readinessAddr: "127.0.0.1:${readyPort}"
-  statsAddr: "127.0.0.1:${statsPort}"
+  statsAddr: "127.0.0.1:${statsPort}"${tunedBlock}
 mcp:
   port: ${port}
   targets:
@@ -382,14 +397,17 @@ mcp:
     }
   }
   return {
-    id: "agentgateway",
+    id: AG_TUNED ? "agentgateway_tuned" : "agentgateway",
     kind: "aggregator",
     runtime: "rust",
     mcpUrl,
     pid: child.pid,
     toolName,
     callArgs: { zone_id: ZONE, per_page: 50 },
-    note: "No server-side where; response body larger than ClawQL known-op path.",
+    note: AG_TUNED
+      ? "Tuned: workerThreads=4, backend.poolMaxSize=256, frontendPolicies.http.maxConcurrentRequests=1024. Still no where (larger body)."
+      : "Stock defaults. No server-side where; response body larger than ClawQL known-op path.",
+    ag_tuned: AG_TUNED,
     close: async () => {
       try {
         process.kill(child.pid, "SIGTERM");
@@ -557,40 +575,76 @@ async function main() {
     ["agentgateway", () => startAgentgateway(mock.baseUrl)],
   ].filter(([id]) => want.has(id));
   try {
-    // Start → chaos → close per arm (same session / same mock). Avoids holding five
-    // gateways + REST children while the CF board is also running.
-    for (const [, start] of starters) {
-      const arm = await start();
-      try {
-        results.push(await chaosArm(arm));
-      } finally {
+    // Round-robin reps across arms (same mock) so host drift hits each arm similarly.
+    for (let rep = 1; rep <= REPS; rep++) {
+      for (const [id, start] of starters) {
+        console.error(`[http-conc] === ${id} rep ${rep}/${REPS} ===`);
+        const arm = await start();
         try {
-          await arm.close();
-        } catch {
-          /* ignore */
+          const row = await chaosArm(arm);
+          row.rep = rep;
+          results.push(row);
+        } finally {
+          try {
+            await arm.close();
+          } catch {
+            /* ignore */
+          }
+          await new Promise((r) => setTimeout(r, 400));
         }
-        await new Promise((r) => setTimeout(r, 400));
       }
     }
   } finally {
     await mock.close();
   }
 
-  const byId = Object.fromEntries(results.map((r) => [r.id, r]));
-  const uncapped = byId.clawql_node_uncapped?.sustained_concurrency_before_break ?? null;
-  const capped = byId.clawql_node_256?.sustained_concurrency_before_break ?? null;
-  const bun = byId.clawql_bun_smol?.sustained_concurrency_before_break ?? null;
-  const mj = byId.mcpjungle?.sustained_concurrency_before_break ?? null;
-  const ag = byId.agentgateway?.sustained_concurrency_before_break ?? null;
+  const byArm = new Map();
+  for (const r of results) {
+    if (!byArm.has(r.id)) byArm.set(r.id, []);
+    byArm.get(r.id).push(r.sustained_concurrency_before_break);
+  }
+  const ranges = Object.fromEntries(
+    [...byArm.entries()].map(([id, vals]) => {
+      const sorted = [...vals].sort((a, b) => a - b);
+      return [
+        id,
+        {
+          reps: vals,
+          min: sorted[0],
+          max: sorted[sorted.length - 1],
+          median: sorted[Math.floor(sorted.length / 2)],
+        },
+      ];
+    })
+  );
+  const uncapped = ranges.clawql_node_uncapped;
+  const n256 = ranges.clawql_node_256;
+  const n384 = ranges.clawql_node_384;
+  const bun = ranges.clawql_bun_smol;
+  const mj = ranges.mcpjungle;
+  const ag = ranges.agentgateway || ranges.agentgateway_tuned;
 
-  let heapCapCost = null;
-  if (uncapped != null && capped != null) {
-    heapCapCost =
-      uncapped > capped
-        ? `heap_cap_costs_concurrency — uncapped ${uncapped} → 256 ${capped} (Δ ${uncapped - capped})`
-        : uncapped < capped
-          ? `heap_cap_no_concurrency_loss — uncapped ${uncapped} → 256 ${capped}`
-          : `heap_cap_neutral — both ${capped}`;
+  let heapCapVerdict = null;
+  if (uncapped && n256 && n384 && REPS >= 3) {
+    const overlap256 =
+      uncapped.min <= n256.max && n256.min <= uncapped.max;
+    const overlap384 =
+      uncapped.min <= n384.max && n384.min <= uncapped.max;
+    if (overlap256 && overlap384) {
+      heapCapVerdict =
+        `within_run_variance — uncapped [${uncapped.min},${uncapped.max}] overlaps 256 [${n256.min},${n256.max}] and 384 [${n384.min},${n384.max}]; do not claim cap costs concurrency`;
+    } else if (!overlap384 && n384.max < uncapped.min) {
+      heapCapVerdict =
+        `flag_changes_behavior_below_limit — 384 plateau (~296 MB uncapped) should not bind, yet sustained [${n384.min},${n384.max}] stays below uncapped [${uncapped.min},${uncapped.max}] across ${REPS} reps`;
+    } else if (!overlap256 && n256.max < uncapped.min) {
+      heapCapVerdict =
+        `cap_or_flag_effect — 256 [${n256.min},${n256.max}] below uncapped [${uncapped.min},${uncapped.max}] across ${REPS} reps (384 ${n384 ? `[${n384.min},${n384.max}]` : "n/a"})`;
+    } else {
+      heapCapVerdict = `mixed_ranges — uncapped [${uncapped.min},${uncapped.max}] 256 [${n256.min},${n256.max}] 384 [${n384.min},${n384.max}]`;
+    }
+  } else if (uncapped && n256) {
+    heapCapVerdict =
+      `single_pass_only — uncapped ${uncapped.median} vs 256 ${n256.median}${n384 ? ` vs 384 ${n384.median}` : ""}; need REPS≥3 before claiming cap cost (384 may be unbound)`;
   }
 
   const report = {
@@ -601,6 +655,7 @@ async function main() {
       "Comparable across arms in this file only (same host, same mock, same session).",
       "Not equal-arm stdio chaos (gateway-multi 63/204); not NATS 4-replica (135).",
       "ClawQL uses known-op execute+where; aggregators call the same DNS op without where (larger body).",
+      "Do not claim heap-cap concurrency cost from a single pass — 384 sits above the uncapped plateau (~296 MB).",
     ],
     slo: {
       break_p99_ms: BREAK_P99_MS,
@@ -608,11 +663,13 @@ async function main() {
       step_ms: CONC_STEP_MS,
       warmup: CONC_WARMUP,
       hard_max: CONC_HARD_MAX,
+      reps: REPS,
     },
     operationId: OP_ID,
+    ranges,
     board: Object.fromEntries(
       results.map((r) => [
-        r.id,
+        `${r.id}${REPS > 1 ? `_rep${r.rep}` : ""}`,
         {
           sustained: r.sustained_concurrency_before_break,
           first_break: r.first_break_clients,
@@ -620,29 +677,27 @@ async function main() {
           runtime: r.runtime,
           node_max_old_space_mb: r.node_max_old_space_mb,
           bun_smol: r.bun_smol,
+          rep: r.rep ?? 1,
         },
       ])
     ),
     interpretation: {
-      heap_cap_vs_concurrency: heapCapCost,
-      bun_vs_node256:
-        bun != null && capped != null
-          ? bun > capped
-            ? `bun_holds_more — Bun ${bun} vs Node256 ${capped}`
-            : bun < capped
-              ? `node256_holds_more — Node256 ${capped} vs Bun ${bun}`
-              : `tie — ${bun}`
+      heap_cap_vs_concurrency: heapCapVerdict,
+      bun_vs_node:
+        bun && n256
+          ? `bun_holds_more — Bun median ${bun.median} [${bun.min},${bun.max}] vs Node256 median ${n256.median} [${n256.min},${n256.max}]`
           : null,
       vs_peers_http: {
-        clawql_best: Math.max(uncapped ?? 0, capped ?? 0, bun ?? 0),
-        mcpjungle: mj,
-        agentgateway: ag,
+        clawql_node_uncapped: uncapped ?? null,
+        clawql_node_256: n256 ?? null,
+        clawql_node_384: n384 ?? null,
+        clawql_bun_smol: bun ?? null,
+        mcpjungle: mj ?? null,
+        agentgateway: ag ?? null,
         note: "Like-for-like HTTP multiplex; aggregator payloads are larger (no where).",
       },
       cloud_profile_hint:
-        heapCapCost?.startsWith("heap_cap_costs")
-          ? "Cloud HTTP profile may want a higher Node old-space than lean 256 if concurrency loss is material."
-          : "Lean 256 / Bun --smol remain default; scale out (NATS replicas) for capacity.",
+        "Bun --smol remains the Cloud HTTP default (highest clients + ~130 MB). Do not cite Node cap concurrency tax until REPS≥3 settles variance vs flag-behavior.",
       related:
         "Open HTTP tail stalls (300–700 ms) likely amplify under concurrency — same investigation track.",
     },
