@@ -38,7 +38,15 @@ N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the boa
 
 ### 3. Real-model gate (SPEC)
 
-**Compare real-model results only with real-model results.** Scripted Executor / Cloudflare code-mode rows are not a fair peer for Cursor/OpenAI ClawQL sessions — code-mode agents can also dump whole lists or retry broken programs. Default arms include `executor_v2`.
+**Compare real-model results only with real-model results.** Scripted Executor / Cloudflare code-mode rows are not a fair peer for Cursor/OpenAI ClawQL sessions — code-mode agents can also dump whole lists or retry broken programs.
+
+| Real-model arm | Upstream | In gate? |
+| --- | --- | --- |
+| `clawql_known_op` / `clawql_program` | Local mock | **Yes** |
+| `executor_v2` | Local mock (OpenAPI app → mock) | **Yes** |
+| `cloudflare_codemode` | Hosted CF server → **live API** | **No** — out of gate |
+
+Hosted Cloudflare code-mode is excluded because a real model would use your Cloudflare token against the real account; step 12 could write (enable proxy). Scripted board keeps CF as **tokens-only**. Re-add to the gate only with an explicit **read-only** token policy. Default arms: `clawql_known_op,clawql_program,executor_v2`.
 
 Set secrets **in the environment** (never paste keys into chat):
 
@@ -52,11 +60,18 @@ CF_MT_REAL_ITERS=50 \
   npm run benchmark:cloudflare-multiturn:real-model
 ```
 
-Fixed settings: temperature 0, shared system prompt, each arm’s tool descriptions from `listTools`. Per arm the report includes **median / p90** observation tokens, **sessions over ceiling** (default 10k, `CF_MT_REAL_TOKEN_CEILING`), malformed `where`, observation-budget hits, retries, turns. Cursor-subscription Composer pilots are cheap signal, not this gate.
+Fixed settings: temperature 0, shared system prompt, each arm’s tool descriptions from `listTools`. Per arm the report includes **median / p90** observation tokens, **sessions over ceiling** (default 10k, `CF_MT_REAL_TOKEN_CEILING`), malformed `where`, observation-budget hits, retries, turns. Task success still checks count steps (4, 11, …) — models must use `totalCount` on truncated envelopes, not preview length. Cursor-subscription Composer pilots are cheap signal, not this gate.
 
-### 4. Observation budget (product)
+### 4. Observation budget (product — **default on**)
 
-Large `execute` responses with neither `where` nor `fields` hit a soft budget (~8k chars / ~2k tokens, `CLAWQL_EXECUTE_OBSERVATION_BUDGET_CHARS`). The server returns `truncated: true`, an honest note (“do not treat the preview as the full answer”), first ~20 rows, and a suggested `where`. Pass `full: true` only when every row is required (hard `CLAWQL_EXECUTE_RESULT_MAX_CHARS` still applies). Session-2’s ~60k unfiltered DNS dump is exactly what this turns into a short preview + one filtered retry.
+Board ClawQL arms run with the product default: soft observation budget enabled (~8k chars / ~2k tokens, `CLAWQL_EXECUTE_OBSERVATION_BUDGET_CHARS`; `0` disables). Token numbers on ClawQL rows therefore include this behavior.
+
+| Shape | When over budget (no `where`/`fields`, not `full:true`) |
+| --- | --- |
+| **List** (`result: [...]` or top-level array) | `truncated: true`, `shape: "list"`, `totalCount` / `previewCount`, note **“N records, first K shown”** + `totalCount=N`, first ~20 rows, suggested `where` |
+| **Single object** (large nested blob, no row array) | `truncated: true`, `shape: "object"`, **no row count** — size-truncated preview + note to extract with `where` or pass `full:true` |
+
+Hard `CLAWQL_EXECUTE_RESULT_MAX_CHARS` still applies either way. Session-2’s ~60k unfiltered DNS dump is the list case: short preview + one filtered retry.
 ## Rebuildable token formula
 
 `definition + discovery + result + code = combined_mean`  

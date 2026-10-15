@@ -79,16 +79,30 @@ describe("observation budget", () => {
     expect(n).toBe(DEFAULT_OBSERVATION_BUDGET_CHARS);
   });
 
-  it("buildObservationPreview counts rows and marks truncated in the note", () => {
+  it("buildObservationPreview puts totalCount in the note (not just preview length)", () => {
     const built = buildObservationPreview(bigList, 20);
+    expect(built.shape).toBe("list");
     expect(built.totalCount).toBe(287);
     expect(built.previewCount).toBe(20);
-    expect(built.note).toMatch(/287 records/);
+    expect(built.note).toMatch(/287 records, first 20 shown/);
+    expect(built.note).toMatch(/totalCount=287/);
+    expect(built.note).toMatch(/previewCount=20/);
+    expect(built.note).toMatch(/use totalCount/i);
     expect(built.note).toMatch(/truncated/i);
     expect(built.note).toMatch(/full:true/);
     const preview = built.preview as { result: unknown[]; result_info: { truncated: boolean } };
     expect(preview.result).toHaveLength(20);
     expect(preview.result_info.truncated).toBe(true);
+  });
+
+  it("truncates large non-list objects by size (no fake row count)", () => {
+    const bulky = { id: "z1", blob: "x".repeat(12_000), nested: { a: 1 } };
+    const built = buildObservationPreview(bulky, 20, { budgetChars: 8000 });
+    expect(built.shape).toBe("object");
+    expect(built.totalCount).toBeUndefined();
+    expect(built.note).toMatch(/Single object truncated by size/);
+    expect(built.note).toMatch(/no row count/i);
+    expect(built.note).toMatch(/truncated/i);
   });
 
   it("applies soft budget when where/fields omitted", async () => {
@@ -103,11 +117,16 @@ describe("observation budget", () => {
       reason: string;
       note: string;
       totalCount: number;
+      previewCount: number;
+      shape: string;
       example: string;
     };
     expect(parsed.truncated).toBe(true);
     expect(parsed.reason).toBe("observation_budget");
+    expect(parsed.shape).toBe("list");
     expect(parsed.totalCount).toBe(287);
+    expect(parsed.previewCount).toBe(20);
+    expect(parsed.note).toMatch(/totalCount=287/);
     expect(parsed.note).toMatch(/do not treat the preview as the full answer/i);
     expect(parsed.example).toMatch(/result\[/);
   });

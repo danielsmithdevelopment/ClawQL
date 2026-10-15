@@ -5,7 +5,11 @@
  * Fairness: every published comparison is **real-model vs real-model**. Do not
  * compare Cursor/OpenAI ClawQL sessions against scripted Executor / Cloudflare
  * code-mode token rows — code-mode arms must run through the same dual-model
- * gate (default arms include `executor_v2`).
+ * gate (default arms include `executor_v2` against the local mock).
+ *
+ * Hosted Cloudflare code-mode is **out of this gate**: a real model on that
+ * server would hit the live Cloudflare API (and could write on step 12). Use a
+ * read-only token only if you deliberately add it later; otherwise leave it out.
  *
  * Secrets (never paste into chat / logs):
  *   OPENAI_API_KEY          — required
@@ -140,6 +144,7 @@ function systemPrompt() {
     `Zone name: ${FAKE.auditZoneName}. Target IP: ${FAKE.targetIp}. Account id: ${FAKE.accountId}.`,
     "Return lean observations. Prefer server-side filtering when the tools support it.",
     "If a tool returns truncated:true, the preview is incomplete — retry with where/fields (or a tighter program), not full:true, unless you truly need every row.",
+    "For count questions (A records, enabled firewall rules, …): when truncated, use the envelope totalCount field / note — never count the preview rows.",
     "Step 12 is a gated proposal only — do not PATCH DNS. Submit { proposal: { recordId, proxied: true }, gated: true }.",
     "Call submit_observation for every step 1–12 when you have the answer.",
   ].join("\n");
@@ -596,6 +601,17 @@ async function main() {
           // Hint: model writes JS into execute.code — scripts in published-scripts are the scripted peer.
           void execScripts;
           void executorMeta;
+        } else if (arm === "cloudflare_codemode") {
+          summary.results[model.label].arms[arm] = {
+            skipped: true,
+            note:
+              "Out of real-model gate: hosted Cloudflare code-mode would hit the live API " +
+              "(step 12 could write). Scripted board stays tokens-only against the fixture. " +
+              "Real-model peers are clawql_* + executor_v2 on the local mock. " +
+              "Re-add only with an explicit read-only Cloudflare token policy.",
+          };
+          console.log(`[cf-real] skip cloudflare_codemode (hosted / write risk)`);
+          continue;
         } else {
           summary.results[model.label].arms[arm] = {
             skipped: true,

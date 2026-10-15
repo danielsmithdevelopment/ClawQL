@@ -41,8 +41,11 @@ export type TruncatedExecuteEnvelope = {
   readonly preview: unknown;
   readonly reason?: "hard_limit" | "observation_budget";
   readonly note?: string;
+  /** Present for list previews — always use this for count questions, not preview length. */
   readonly totalCount?: number;
   readonly previewCount?: number;
+  /** `list` = row preview; `object` = single payload truncated by size (no row count). */
+  readonly shape?: "list" | "object";
   /** Suggested JMESPath when the caller omitted where/fields. */
   readonly example?: string;
 };
@@ -101,11 +104,21 @@ function findPrimaryArray(data: unknown): ArraySite | null {
   return null;
 }
 
-function observationNote(totalCount: number, previewCount: number, example: string): string {
+function listObservationNote(totalCount: number, previewCount: number, example: string): string {
   return (
-    `${totalCount} records; first ${previewCount} shown. ` +
-    `This result is truncated — do not treat the preview as the full answer. ` +
+    `${totalCount} records, first ${previewCount} shown. ` +
+    `totalCount=${totalCount}; previewCount=${previewCount}. ` +
+    `This result is truncated — do not treat the preview as the full answer; ` +
+    `for count questions use totalCount, not the number of preview rows. ` +
     `Filter with where, for example ${example}, or pass full:true if you genuinely need everything.`
+  );
+}
+
+function objectObservationNote(byteCount: number, limit: number, example: string): string {
+  return (
+    `Single object truncated by size (${byteCount} bytes > observation budget ${limit} chars). ` +
+    `This result is truncated — do not treat the preview as the full answer. ` +
+    `There is no row count; extract fields with where (e.g. ${example}) or pass full:true.`
   );
 }
 
@@ -114,20 +127,25 @@ function observationNote(totalCount: number, previewCount: number, example: stri
  */
 export function buildObservationPreview(
   data: unknown,
-  previewItems: number = DEFAULT_OBSERVATION_PREVIEW_ITEMS
+  previewItems: number = DEFAULT_OBSERVATION_PREVIEW_ITEMS,
+  options?: { readonly budgetChars?: number }
 ): {
   readonly preview: unknown;
-  readonly totalCount: number;
-  readonly previewCount: number;
+  readonly totalCount?: number;
+  readonly previewCount?: number;
+  readonly shape: "list" | "object";
   readonly example: string;
   readonly note: string;
+  readonly byteCount: number;
 } {
+  const full = JSON.stringify(data);
+  const byteCount = utf8ByteLength(full);
   const site = findPrimaryArray(data);
-  const example = WHERE_FIX_EXAMPLES.filter;
   if (site) {
     const totalCount = site.items.length;
     const previewCount = Math.min(previewItems, totalCount);
     const slice = site.items.slice(0, previewCount);
+    const example = WHERE_FIX_EXAMPLES.filter;
     const preview =
       site.path === "root"
         ? slice
@@ -147,20 +165,21 @@ export function buildObservationPreview(
       preview,
       totalCount,
       previewCount,
+      shape: "list",
       example,
-      note: observationNote(totalCount, previewCount, example),
+      note: listObservationNote(totalCount, previewCount, example),
+      byteCount,
     };
   }
-  // Non-array: keep a short JSON slice as preview text via serialize path.
-  const full = JSON.stringify(data);
+  // Large single object / nested blob: truncate by size (no row preview).
+  const limit = options?.budgetChars ?? DEFAULT_OBSERVATION_BUDGET_CHARS;
+  const example = WHERE_FIX_EXAMPLES.extract;
   return {
     preview: full.slice(0, 400) + EXECUTE_TRUNCATION_MARKER,
-    totalCount: 1,
-    previewCount: 1,
-    example: WHERE_FIX_EXAMPLES.extract,
-    note:
-      `Payload exceeds the observation budget. This result is truncated — do not treat the preview as complete. ` +
-      `Filter with where (e.g. ${WHERE_FIX_EXAMPLES.extract}) or pass full:true.`,
+    shape: "object",
+    example,
+    note: objectObservationNote(byteCount, limit, example),
+    byteCount,
   };
 }
 
@@ -270,16 +289,18 @@ export const serializeExecuteResultWithBudgetsEffect = (
       if (full.length > obsBudget) {
         const built = buildObservationPreview(
           data,
-          options?.previewItems ?? DEFAULT_OBSERVATION_PREVIEW_ITEMS
+          options?.previewItems ?? DEFAULT_OBSERVATION_PREVIEW_ITEMS,
+          { budgetChars: obsBudget }
         );
         const envelope: TruncatedExecuteEnvelope = {
           truncated: true,
           reason: "observation_budget",
           note: built.note,
-          totalCount: built.totalCount,
-          previewCount: built.previewCount,
+          shape: built.shape,
+          ...(built.totalCount !== undefined ? { totalCount: built.totalCount } : {}),
+          ...(built.previewCount !== undefined ? { previewCount: built.previewCount } : {}),
           example: built.example,
-          byteCount: utf8ByteLength(full),
+          byteCount: built.byteCount,
           limit: obsBudget,
           marker: EXECUTE_TRUNCATION_MARKER,
           preview: built.preview,
@@ -288,7 +309,6 @@ export const serializeExecuteResultWithBudgetsEffect = (
         return fitEnvelopeToLimit(envelope, Math.min(hardLimit, Math.max(obsBudget, 1024)));
       }
     }
-
     return yield* serializeExecuteResultEffect(data, { limit: hardLimit, env });
   });
 

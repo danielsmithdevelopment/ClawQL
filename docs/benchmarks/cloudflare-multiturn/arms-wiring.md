@@ -9,8 +9,11 @@ All arms use **Streamable HTTP**. Full Cloudflare v4 (~2.9k ops in repo OpenAPI)
 | `clawql_compact_search` | curated OAS | **Wired** | `CLAWQL_SEARCH_COMPACT=1` (labeled setting) |
 | `clawql_known_op` | curated OAS | **Wired** | Execute by operationId; no search; same `where` |
 | `clawql_program` | curated OAS | **Wired** | `CLAWQL_ENABLE_PROGRAMS=1`; one `execute_program` JSON plan (ADR 0015 v0); not free-form JS |
-| `cloudflare_codemode` | full (2-tool) | **Tokens-only** | Def≈1000 from CF docs; result tokens from fixture returns; latency N/A |
-| `executor_v2` | code + OpenAPI app | **Wired** | `liveOpenapiRouter` → mock; scripts call `tools["cf-zone-audit-mock"].…` |
+| `cloudflare_codemode` | full (2-tool) | **Tokens-only (scripted board)** | Def≈1000 from CF docs; result tokens from fixture; latency N/A. **Out of real-model gate** (hosted → live API / write risk). |
+| `executor_v2` | code + OpenAPI app | **Wired** | `liveOpenapiRouter` → mock; scripts call `tools["cf-zone-audit-mock"].…`; **in real-model gate** |
+
+**ClawQL default product behavior on the board:** observation budget on (`~8k` chars when no `where`/`fields`); scripted shapes always pass `where`, so publish rows stay observation-sized.
+
 | `mcpjungle` | curated only | **Wired** | REST→MCP child (`cf-rest-mcp.mjs`); tree RSS+anon |
 | `agentgateway` | curated only | **Wired** | Same REST→MCP child |
 
