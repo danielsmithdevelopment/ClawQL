@@ -5,6 +5,7 @@
  *   N=4000 node scripts/benchmarks/heap-vs-anon-plateau.mjs
  *   NODE_MAX_OLD_SPACE_MB=256 N=4000 OUT=.../heap-vs-anon-old256.json \
  *     node scripts/benchmarks/heap-vs-anon-plateau.mjs
+ *   BUN_RUNTIME=1 BUN_SMOL=1 N=4000 node scripts/benchmarks/heap-vs-anon-plateau.mjs
  *
  * Distinguishes GC headroom (small heap, large anon) from retained live heap.
  */
@@ -27,13 +28,17 @@ import { clawqlEqualArmEnv } from "./lib/clawql-bench-env.mjs";
 
 const ROOT = "/workspace";
 const N = Math.max(50, Number(process.env.N || 4000) || 4000);
+const USE_BUN = ["1", "true", "yes"].includes((process.env.BUN_RUNTIME ?? "").trim().toLowerCase());
+const BUN_SMOL = !["0", "false", "no"].includes((process.env.BUN_SMOL ?? "1").trim().toLowerCase());
+const BUN_BIN = process.env.BUN_BIN || "bun";
 const OLD_MB =
   process.env.NODE_MAX_OLD_SPACE_MB === "0" || process.env.NODE_MAX_OLD_SPACE_MB === "false"
     ? null
     : process.env.NODE_MAX_OLD_SPACE_MB
       ? Math.max(64, Number(process.env.NODE_MAX_OLD_SPACE_MB) || 0)
       : null;
-const TRACE_GC = !["0", "false", "no"].includes((process.env.TRACE_GC ?? "1").trim().toLowerCase());
+const TRACE_GC =
+  !USE_BUN && !["0", "false", "no"].includes((process.env.TRACE_GC ?? "1").trim().toLowerCase());
 
 function percentile(sorted, p) {
   if (!sorted.length) return null;
@@ -62,7 +67,11 @@ const OUT =
   join(
     ROOT,
     "docs/benchmarks/cloudflare-multiturn",
-    OLD_MB ? `heap-vs-anon-plateau-old${OLD_MB}-n${N}.json` : `heap-vs-anon-plateau-n${N}.json`
+    USE_BUN
+      ? `heap-vs-anon-plateau-bun${BUN_SMOL ? "-smol" : ""}-n${N}.json`
+      : OLD_MB
+        ? `heap-vs-anon-plateau-old${OLD_MB}-n${N}.json`
+        : `heap-vs-anon-plateau-n${N}.json`
   );
 const CURATED = join(ROOT, "scripts/benchmarks/cloudflare-multiturn/fixtures/curated-openapi.json");
 const MOCK_JS = join(ROOT, "scripts/benchmarks/cloudflare-multiturn/mock/cloudflare-replay-mock.mjs");
@@ -164,12 +173,21 @@ async function main() {
     CLAWQL_HTTP_SKIP_PAYMENTS: "1",
     CLAWQL_HTTP_SKIP_GRAPHQL: "1",
   });
-  const nodeArgs = [join(ROOT, "dist/server-http.js")];
-  if (OLD_MB) nodeArgs.unshift(`--max-old-space-size=${OLD_MB}`);
-  if (TRACE_GC) nodeArgs.unshift("--trace-gc");
+  const server = join(ROOT, "dist/server-http.js");
+  let bin;
+  let nodeArgs;
+  if (USE_BUN) {
+    bin = BUN_BIN;
+    nodeArgs = BUN_SMOL ? ["--smol", server] : [server];
+  } else {
+    bin = process.execPath;
+    nodeArgs = [server];
+    if (OLD_MB) nodeArgs.unshift(`--max-old-space-size=${OLD_MB}`);
+    if (TRACE_GC) nodeArgs.unshift("--trace-gc");
+  }
   const logPath = join(home, "clawql.log");
   const fd = openSync(logPath, "w");
-  const child = spawn(process.execPath, nodeArgs, { env, stdio: ["ignore", fd, fd] });
+  const child = spawn(bin, nodeArgs, { env, stdio: ["ignore", fd, fd] });
   const deadline = Date.now() + 180000;
   while (Date.now() < deadline) {
     if (existsSync(logPath) && readFileSync(logPath, "utf8").includes("listening on")) break;
@@ -254,7 +272,9 @@ async function main() {
     measuredAt: new Date().toISOString(),
     n: N,
     operationId,
-    node_max_old_space_mb: OLD_MB,
+    runtime: USE_BUN ? "bun" : "node",
+    bun_smol: USE_BUN ? BUN_SMOL : null,
+    node_max_old_space_mb: USE_BUN ? null : OLD_MB,
     trace_gc: TRACE_GC,
     plateau: {
       anonymous_mb_median: med(anonP),
