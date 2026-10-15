@@ -53,5 +53,19 @@ Artifact: [`heap-vs-anon-plateau-n4000.json`](./heap-vs-anon-plateau-n4000.json)
 
 When heap dips (~72 MB mid-run), anon stays ~**279 MB** — large unreclaimed /
 native band beside a swinging live heap. Classification: **mixed** (not pure
-tiny-heap headroom, not pure retained live). Next: old-space A/B
-(`NODE_MAX_OLD_SPACE_MB=256` then 192) measuring plateau anon **and** latency.
+tiny-heap headroom, not pure retained live).
+
+## Old-space A/B (N=4000 known-op, same fixture)
+
+| Arm | Anon plateau | Heap median | Anon−heap | p50 / p99 ms |
+| --- | ---: | ---: | ---: | ---: |
+| Default Node (no cap) | **278.5** | 130 | 149 | 3.1 / 10.7 |
+| `--max-old-space-size=256` | **123.5** | 68 | 56 | 3.2 / 13.4 |
+
+Artifacts: [`heap-vs-anon-plateau-n4000.json`](./heap-vs-anon-plateau-n4000.json),
+[`heap-vs-anon-plateau-old256-n4000.json`](./heap-vs-anon-plateau-old256-n4000.json).
+
+**~155 MB anon saved** for ~0.2 ms p50 / ~2.7 ms p99. Worth adopting as the
+bench/product Node listen default. Re-run the CF 3×10k (or cite this A/B beside
+the uncapped board) so the post can say ~**125 MB** plateau vs peers ~90–100,
+not ~290.

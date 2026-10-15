@@ -1,0 +1,417 @@
+{
+  "measuredAt": "2026-10-15T20:02:24.096Z",
+  "n": 4000,
+  "operationId": "dns-records-for-a-zone-list-dns-records",
+  "node_max_old_space_mb": 256,
+  "plateau": {
+    "anonymous_mb_median": 123.5,
+    "heap_used_mb_median": 67.72,
+    "native_anon_minus_heap_mb_median": 55.78,
+    "samples": 5
+  },
+  "series_ends": {
+    "first": {
+      "i": 0,
+      "rss_mb": 148.89,
+      "anonymous_mb": 99.24,
+      "pss_mb": 104.44,
+      "heap_used_mb": 55.79,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 43.45
+    },
+    "last": {
+      "i": 4000,
+      "rss_mb": 174.33,
+      "anonymous_mb": 124.56,
+      "pss_mb": 129.71,
+      "heap_used_mb": 73.98,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 50.58
+    }
+  },
+  "latency_ms": {
+    "p50": 3.2311079999999492,
+    "p99": 13.359042000000045
+  },
+  "interpretation": "mixed — inspect native_anon_minus_heap and snapshots",
+  "series": [
+    {
+      "i": 0,
+      "rss_mb": 148.89,
+      "anonymous_mb": 99.24,
+      "pss_mb": 104.44,
+      "heap_used_mb": 55.79,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 43.45
+    },
+    {
+      "i": 1,
+      "rss_mb": 149.39,
+      "anonymous_mb": 99.75,
+      "pss_mb": 104.9,
+      "heap_used_mb": 58.29,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 41.46
+    },
+    {
+      "i": 100,
+      "rss_mb": 163.09,
+      "anonymous_mb": 113.38,
+      "pss_mb": 118.53,
+      "heap_used_mb": 71.57,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 41.81
+    },
+    {
+      "i": 200,
+      "rss_mb": 168.33,
+      "anonymous_mb": 118.62,
+      "pss_mb": 123.77,
+      "heap_used_mb": 67.06,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 51.56
+    },
+    {
+      "i": 300,
+      "rss_mb": 170.39,
+      "anonymous_mb": 120.68,
+      "pss_mb": 125.83,
+      "heap_used_mb": 71.22,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 49.46
+    },
+    {
+      "i": 400,
+      "rss_mb": 168.57,
+      "anonymous_mb": 118.86,
+      "pss_mb": 124.01,
+      "heap_used_mb": 71.64,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 47.22
+    },
+    {
+      "i": 500,
+      "rss_mb": 167.54,
+      "anonymous_mb": 117.84,
+      "pss_mb": 122.99,
+      "heap_used_mb": 55.87,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 61.97
+    },
+    {
+      "i": 600,
+      "rss_mb": 169.8,
+      "anonymous_mb": 120.09,
+      "pss_mb": 125.24,
+      "heap_used_mb": 63.53,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 56.56
+    },
+    {
+      "i": 700,
+      "rss_mb": 169.67,
+      "anonymous_mb": 119.96,
+      "pss_mb": 125.11,
+      "heap_used_mb": 66.39,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 53.57
+    },
+    {
+      "i": 800,
+      "rss_mb": 172.22,
+      "anonymous_mb": 122.51,
+      "pss_mb": 127.66,
+      "heap_used_mb": 71.73,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 50.78
+    },
+    {
+      "i": 900,
+      "rss_mb": 171.29,
+      "anonymous_mb": 121.59,
+      "pss_mb": 126.74,
+      "heap_used_mb": 53.87,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 67.72
+    },
+    {
+      "i": 1000,
+      "rss_mb": 168.89,
+      "anonymous_mb": 119.18,
+      "pss_mb": 124.33,
+      "heap_used_mb": 58.75,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 60.43
+    },
+    {
+      "i": 1100,
+      "rss_mb": 170.99,
+      "anonymous_mb": 121.29,
+      "pss_mb": 126.43,
+      "heap_used_mb": 66.09,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 55.2
+    },
+    {
+      "i": 1200,
+      "rss_mb": 169.24,
+      "anonymous_mb": 119.54,
+      "pss_mb": 124.68,
+      "heap_used_mb": 64.77,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 54.77
+    },
+    {
+      "i": 1300,
+      "rss_mb": 174.01,
+      "anonymous_mb": 124.3,
+      "pss_mb": 129.45,
+      "heap_used_mb": 64.45,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 59.85
+    },
+    {
+      "i": 1400,
+      "rss_mb": 173.3,
+      "anonymous_mb": 123.59,
+      "pss_mb": 128.74,
+      "heap_used_mb": 60.68,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 62.91
+    },
+    {
+      "i": 1500,
+      "rss_mb": 169.86,
+      "anonymous_mb": 120.15,
+      "pss_mb": 125.3,
+      "heap_used_mb": 65.62,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 54.53
+    },
+    {
+      "i": 1600,
+      "rss_mb": 169.75,
+      "anonymous_mb": 120.04,
+      "pss_mb": 125.19,
+      "heap_used_mb": 57.04,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 63
+    },
+    {
+      "i": 1700,
+      "rss_mb": 169.58,
+      "anonymous_mb": 119.87,
+      "pss_mb": 125.02,
+      "heap_used_mb": 59.58,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 60.29
+    },
+    {
+      "i": 1800,
+      "rss_mb": 170.48,
+      "anonymous_mb": 120.77,
+      "pss_mb": 125.92,
+      "heap_used_mb": 65.98,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 54.79
+    },
+    {
+      "i": 1900,
+      "rss_mb": 171.92,
+      "anonymous_mb": 122.21,
+      "pss_mb": 127.36,
+      "heap_used_mb": 71.48,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 50.73
+    },
+    {
+      "i": 2000,
+      "rss_mb": 171.22,
+      "anonymous_mb": 121.52,
+      "pss_mb": 126.66,
+      "heap_used_mb": 59.23,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 62.29
+    },
+    {
+      "i": 2100,
+      "rss_mb": 169.4,
+      "anonymous_mb": 119.7,
+      "pss_mb": 124.84,
+      "heap_used_mb": 61.49,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 58.21
+    },
+    {
+      "i": 2200,
+      "rss_mb": 170.48,
+      "anonymous_mb": 120.77,
+      "pss_mb": 125.92,
+      "heap_used_mb": 66.8,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 53.97
+    },
+    {
+      "i": 2300,
+      "rss_mb": 168.53,
+      "anonymous_mb": 118.82,
+      "pss_mb": 123.97,
+      "heap_used_mb": 65.61,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 53.21
+    },
+    {
+      "i": 2400,
+      "rss_mb": 173.67,
+      "anonymous_mb": 123.9,
+      "pss_mb": 129.05,
+      "heap_used_mb": 64.21,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 59.69
+    },
+    {
+      "i": 2500,
+      "rss_mb": 169.64,
+      "anonymous_mb": 119.88,
+      "pss_mb": 125.03,
+      "heap_used_mb": 61.22,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 58.66
+    },
+    {
+      "i": 2600,
+      "rss_mb": 169.27,
+      "anonymous_mb": 119.5,
+      "pss_mb": 124.65,
+      "heap_used_mb": 65.74,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 53.76
+    },
+    {
+      "i": 2700,
+      "rss_mb": 169.57,
+      "anonymous_mb": 119.8,
+      "pss_mb": 124.95,
+      "heap_used_mb": 54.46,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 65.34
+    },
+    {
+      "i": 2800,
+      "rss_mb": 174.03,
+      "anonymous_mb": 124.26,
+      "pss_mb": 129.41,
+      "heap_used_mb": 65.94,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 58.32
+    },
+    {
+      "i": 2900,
+      "rss_mb": 169.45,
+      "anonymous_mb": 119.68,
+      "pss_mb": 124.83,
+      "heap_used_mb": 62.75,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 56.93
+    },
+    {
+      "i": 3000,
+      "rss_mb": 170.64,
+      "anonymous_mb": 120.87,
+      "pss_mb": 126.02,
+      "heap_used_mb": 67.49,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 53.38
+    },
+    {
+      "i": 3100,
+      "rss_mb": 169.64,
+      "anonymous_mb": 119.88,
+      "pss_mb": 125.03,
+      "heap_used_mb": 57.94,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 61.94
+    },
+    {
+      "i": 3200,
+      "rss_mb": 169.89,
+      "anonymous_mb": 120.12,
+      "pss_mb": 125.27,
+      "heap_used_mb": 61.05,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 59.07
+    },
+    {
+      "i": 3300,
+      "rss_mb": 170.75,
+      "anonymous_mb": 120.98,
+      "pss_mb": 126.13,
+      "heap_used_mb": 66.7,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 54.28
+    },
+    {
+      "i": 3400,
+      "rss_mb": 172.66,
+      "anonymous_mb": 122.89,
+      "pss_mb": 128.04,
+      "heap_used_mb": 71.66,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 51.23
+    },
+    {
+      "i": 3500,
+      "rss_mb": 172.14,
+      "anonymous_mb": 122.37,
+      "pss_mb": 127.52,
+      "heap_used_mb": 60.36,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 62.01
+    },
+    {
+      "i": 3600,
+      "rss_mb": 172.63,
+      "anonymous_mb": 122.86,
+      "pss_mb": 128.01,
+      "heap_used_mb": 59.5,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 63.36
+    },
+    {
+      "i": 3700,
+      "rss_mb": 171.77,
+      "anonymous_mb": 122,
+      "pss_mb": 127.15,
+      "heap_used_mb": 60.91,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 61.09
+    },
+    {
+      "i": 3800,
+      "rss_mb": 173.27,
+      "anonymous_mb": 123.5,
+      "pss_mb": 128.65,
+      "heap_used_mb": 67.72,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 55.78
+    },
+    {
+      "i": 3900,
+      "rss_mb": 173.79,
+      "anonymous_mb": 124.02,
+      "pss_mb": 129.17,
+      "heap_used_mb": 72.87,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 51.15
+    },
+    {
+      "i": 4000,
+      "rss_mb": 174.33,
+      "anonymous_mb": 124.56,
+      "pss_mb": 129.71,
+      "heap_used_mb": 73.98,
+      "external_mb": null,
+      "native_anon_minus_heap_mb": 50.58
+    }
+  ]
+}
