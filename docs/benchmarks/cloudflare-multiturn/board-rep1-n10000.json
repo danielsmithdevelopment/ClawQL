@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-15T02:14:45.654Z",
+  "measuredAt": "2026-10-15T19:22:41.393Z",
   "kind": "publish_board",
   "rep": 1,
   "iters": 10000,
@@ -13,8 +13,8 @@
   "executor": {
     "appId": "app_ead4ce53-9b2f-4b74-b5a6-b876e3b639cf",
     "slug": "cf-zone-audit-mock",
-    "deploymentId": "dpl_c7b3b33d-f2ba-4e56-b9d3-80dd185b542b",
-    "origin": "http://127.0.0.1:36945",
+    "deploymentId": "dpl_8872cb01-ec24-44d9-901c-2fbc2de2bc94",
+    "origin": "http://127.0.0.1:35605",
     "frameworkVersion": "0.0.1-beta.81"
   },
   "board": {
@@ -42,17 +42,19 @@
       },
       "calls_mean": 9,
       "session_ms": {
-        "p50": 39.329323000012664,
-        "p99": 58.41230899997754,
-        "p999": 65.34598300000653,
+        "p50": 39.49150400000508,
+        "p99": 60.47213199996622,
+        "p999": 84.35859600000003,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": null,
+      "memory_series": [],
+      "memory_flatness": null,
       "first_session": {
         "arm": "direct",
         "ok": true,
-        "session_ms": 67.67647500000021,
+        "session_ms": 84.35859600000003,
         "steps": [
           {
             "step": 1,
@@ -60,7 +62,7 @@
             "discoveryTokens": 0,
             "resultTokens": 384,
             "codeTokens": 0,
-            "latency_ms": 5.456299000001309,
+            "latency_ms": 26.580916000000798,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -72,7 +74,7 @@
             "discoveryTokens": 0,
             "resultTokens": 273,
             "codeTokens": 0,
-            "latency_ms": 2.729221999999936,
+            "latency_ms": 2.13269500000024,
             "check": {
               "ok": true
             }
@@ -83,7 +85,7 @@
             "discoveryTokens": 0,
             "resultTokens": 44,
             "codeTokens": 0,
-            "latency_ms": 1.3844829999998183,
+            "latency_ms": 0.9681440000003931,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -95,7 +97,7 @@
             "discoveryTokens": 0,
             "resultTokens": 45668,
             "codeTokens": 0,
-            "latency_ms": 1.944156000001385,
+            "latency_ms": 2.418478999999934,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -133,7 +135,7 @@
             "discoveryTokens": 0,
             "resultTokens": 144,
             "codeTokens": 0,
-            "latency_ms": 1.1452599999993254,
+            "latency_ms": 1.07766200000151,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -145,7 +147,7 @@
             "discoveryTokens": 0,
             "resultTokens": 55,
             "codeTokens": 0,
-            "latency_ms": 1.2375259999989794,
+            "latency_ms": 0.8952960000005987,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -157,7 +159,7 @@
             "discoveryTokens": 0,
             "resultTokens": 87,
             "codeTokens": 0,
-            "latency_ms": 0.9647729999996955,
+            "latency_ms": 0.9331009999987145,
             "check": {
               "ok": true
             }
@@ -168,7 +170,7 @@
             "discoveryTokens": 0,
             "resultTokens": 108,
             "codeTokens": 0,
-            "latency_ms": 0.6978799999997136,
+            "latency_ms": 1.2369280000002618,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -180,7 +182,7 @@
             "discoveryTokens": 0,
             "resultTokens": 570,
             "codeTokens": 0,
-            "latency_ms": 1.0190549999988434,
+            "latency_ms": 1.226701999999932,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -216,14 +218,14 @@
         "where": "observation_shaped"
       },
       "upstream": "mock",
-      "definition_tokens": 308,
+      "definition_tokens": 398,
       "discovery_tokens_mean": 15988,
       "result_tokens_mean": 480,
       "code_tokens_mean": 191,
       "code_price_weight": 5,
-      "combined_mean": 16967,
-      "weighted_mean": 17731,
-      "combined_at_n": 166590308,
+      "combined_mean": 17057,
+      "weighted_mean": 17821,
+      "combined_at_n": 166590398,
       "rebuild_check": {
         "combined_mean_ok": true,
         "formula": "definition + discovery + result + code",
@@ -231,21 +233,639 @@
       },
       "calls_mean": 22,
       "session_ms": {
-        "p50": 58.75870100001339,
-        "p99": 85.8053549999604,
-        "p999": 321.48758100008126,
+        "p50": 57.219858999946155,
+        "p99": 73.35979200003203,
+        "p999": 284.2833840000676,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 701.66,
-        "anonymous_mb_median": 623,
+        "rss_mb_median": 337.85,
+        "anonymous_mb_median": 287.64,
+        "pss_mb_median": 290.93,
         "samples": 5
+      },
+      "memory_series": [
+        {
+          "i": 1,
+          "rss_mb": 136.73,
+          "anonymous_mb": 86.65,
+          "pss_mb": 90.1
+        },
+        {
+          "i": 100,
+          "rss_mb": 257.52,
+          "anonymous_mb": 207.38,
+          "pss_mb": 210.83
+        },
+        {
+          "i": 200,
+          "rss_mb": 314.71,
+          "anonymous_mb": 264.51,
+          "pss_mb": 267.97
+        },
+        {
+          "i": 300,
+          "rss_mb": 318.7,
+          "anonymous_mb": 268.49,
+          "pss_mb": 271.96
+        },
+        {
+          "i": 400,
+          "rss_mb": 319.17,
+          "anonymous_mb": 268.96,
+          "pss_mb": 272.43
+        },
+        {
+          "i": 500,
+          "rss_mb": 327.31,
+          "anonymous_mb": 277.11,
+          "pss_mb": 280.57
+        },
+        {
+          "i": 600,
+          "rss_mb": 327.38,
+          "anonymous_mb": 277.18,
+          "pss_mb": 280.64
+        },
+        {
+          "i": 700,
+          "rss_mb": 327.44,
+          "anonymous_mb": 277.23,
+          "pss_mb": 280.7
+        },
+        {
+          "i": 800,
+          "rss_mb": 327.44,
+          "anonymous_mb": 277.23,
+          "pss_mb": 280.7
+        },
+        {
+          "i": 900,
+          "rss_mb": 328.43,
+          "anonymous_mb": 278.22,
+          "pss_mb": 281.69
+        },
+        {
+          "i": 1000,
+          "rss_mb": 331.28,
+          "anonymous_mb": 281.07,
+          "pss_mb": 284.53
+        },
+        {
+          "i": 1100,
+          "rss_mb": 331.49,
+          "anonymous_mb": 281.28,
+          "pss_mb": 284.74
+        },
+        {
+          "i": 1200,
+          "rss_mb": 331.68,
+          "anonymous_mb": 281.48,
+          "pss_mb": 284.94
+        },
+        {
+          "i": 1300,
+          "rss_mb": 331.84,
+          "anonymous_mb": 281.63,
+          "pss_mb": 285.1
+        },
+        {
+          "i": 1400,
+          "rss_mb": 332.25,
+          "anonymous_mb": 282.05,
+          "pss_mb": 285.51
+        },
+        {
+          "i": 1500,
+          "rss_mb": 332.25,
+          "anonymous_mb": 282.05,
+          "pss_mb": 285.51
+        },
+        {
+          "i": 1600,
+          "rss_mb": 332.51,
+          "anonymous_mb": 282.3,
+          "pss_mb": 285.76
+        },
+        {
+          "i": 1700,
+          "rss_mb": 332.64,
+          "anonymous_mb": 282.43,
+          "pss_mb": 285.9
+        },
+        {
+          "i": 1800,
+          "rss_mb": 332.74,
+          "anonymous_mb": 282.53,
+          "pss_mb": 285.99
+        },
+        {
+          "i": 1900,
+          "rss_mb": 332.74,
+          "anonymous_mb": 282.53,
+          "pss_mb": 285.99
+        },
+        {
+          "i": 2000,
+          "rss_mb": 332.74,
+          "anonymous_mb": 282.53,
+          "pss_mb": 285.99
+        },
+        {
+          "i": 2100,
+          "rss_mb": 332.75,
+          "anonymous_mb": 282.54,
+          "pss_mb": 286.01
+        },
+        {
+          "i": 2200,
+          "rss_mb": 333.07,
+          "anonymous_mb": 282.86,
+          "pss_mb": 286.32
+        },
+        {
+          "i": 2300,
+          "rss_mb": 333.14,
+          "anonymous_mb": 282.94,
+          "pss_mb": 286.4
+        },
+        {
+          "i": 2400,
+          "rss_mb": 333.98,
+          "anonymous_mb": 283.77,
+          "pss_mb": 287.24
+        },
+        {
+          "i": 2500,
+          "rss_mb": 334.14,
+          "anonymous_mb": 283.93,
+          "pss_mb": 287.39
+        },
+        {
+          "i": 2600,
+          "rss_mb": 334.24,
+          "anonymous_mb": 284.04,
+          "pss_mb": 287.5
+        },
+        {
+          "i": 2700,
+          "rss_mb": 334.52,
+          "anonymous_mb": 284.31,
+          "pss_mb": 287.77
+        },
+        {
+          "i": 2800,
+          "rss_mb": 334.72,
+          "anonymous_mb": 284.52,
+          "pss_mb": 287.98
+        },
+        {
+          "i": 2900,
+          "rss_mb": 334.88,
+          "anonymous_mb": 284.67,
+          "pss_mb": 288.13
+        },
+        {
+          "i": 3000,
+          "rss_mb": 334.93,
+          "anonymous_mb": 284.72,
+          "pss_mb": 288.19
+        },
+        {
+          "i": 3100,
+          "rss_mb": 334.96,
+          "anonymous_mb": 284.76,
+          "pss_mb": 288.22
+        },
+        {
+          "i": 3200,
+          "rss_mb": 335.16,
+          "anonymous_mb": 284.95,
+          "pss_mb": 288.41
+        },
+        {
+          "i": 3300,
+          "rss_mb": 335.16,
+          "anonymous_mb": 284.95,
+          "pss_mb": 288.24
+        },
+        {
+          "i": 3400,
+          "rss_mb": 335.21,
+          "anonymous_mb": 285,
+          "pss_mb": 288.29
+        },
+        {
+          "i": 3500,
+          "rss_mb": 335.4,
+          "anonymous_mb": 285.19,
+          "pss_mb": 288.48
+        },
+        {
+          "i": 3600,
+          "rss_mb": 334.86,
+          "anonymous_mb": 284.65,
+          "pss_mb": 287.94
+        },
+        {
+          "i": 3700,
+          "rss_mb": 335.81,
+          "anonymous_mb": 285.6,
+          "pss_mb": 288.89
+        },
+        {
+          "i": 3800,
+          "rss_mb": 335.81,
+          "anonymous_mb": 285.6,
+          "pss_mb": 288.89
+        },
+        {
+          "i": 3900,
+          "rss_mb": 335.81,
+          "anonymous_mb": 285.6,
+          "pss_mb": 288.89
+        },
+        {
+          "i": 4000,
+          "rss_mb": 335.81,
+          "anonymous_mb": 285.6,
+          "pss_mb": 288.89
+        },
+        {
+          "i": 4100,
+          "rss_mb": 335.81,
+          "anonymous_mb": 285.6,
+          "pss_mb": 288.89
+        },
+        {
+          "i": 4200,
+          "rss_mb": 335.81,
+          "anonymous_mb": 285.6,
+          "pss_mb": 288.89
+        },
+        {
+          "i": 4300,
+          "rss_mb": 335.81,
+          "anonymous_mb": 285.6,
+          "pss_mb": 288.89
+        },
+        {
+          "i": 4400,
+          "rss_mb": 335.82,
+          "anonymous_mb": 285.61,
+          "pss_mb": 288.9
+        },
+        {
+          "i": 4500,
+          "rss_mb": 335.82,
+          "anonymous_mb": 285.61,
+          "pss_mb": 288.9
+        },
+        {
+          "i": 4600,
+          "rss_mb": 335.82,
+          "anonymous_mb": 285.61,
+          "pss_mb": 288.9
+        },
+        {
+          "i": 4700,
+          "rss_mb": 335.93,
+          "anonymous_mb": 285.72,
+          "pss_mb": 289
+        },
+        {
+          "i": 4800,
+          "rss_mb": 336.11,
+          "anonymous_mb": 285.91,
+          "pss_mb": 289.19
+        },
+        {
+          "i": 4900,
+          "rss_mb": 336.11,
+          "anonymous_mb": 285.91,
+          "pss_mb": 289.19
+        },
+        {
+          "i": 5000,
+          "rss_mb": 336.11,
+          "anonymous_mb": 285.91,
+          "pss_mb": 289.19
+        },
+        {
+          "i": 5100,
+          "rss_mb": 336.11,
+          "anonymous_mb": 285.91,
+          "pss_mb": 289.19
+        },
+        {
+          "i": 5200,
+          "rss_mb": 336.11,
+          "anonymous_mb": 285.91,
+          "pss_mb": 289.19
+        },
+        {
+          "i": 5300,
+          "rss_mb": 336.11,
+          "anonymous_mb": 285.91,
+          "pss_mb": 289.19
+        },
+        {
+          "i": 5400,
+          "rss_mb": 335.72,
+          "anonymous_mb": 285.51,
+          "pss_mb": 288.8
+        },
+        {
+          "i": 5500,
+          "rss_mb": 336.08,
+          "anonymous_mb": 285.87,
+          "pss_mb": 289.16
+        },
+        {
+          "i": 5600,
+          "rss_mb": 336.08,
+          "anonymous_mb": 285.87,
+          "pss_mb": 289.16
+        },
+        {
+          "i": 5700,
+          "rss_mb": 336.08,
+          "anonymous_mb": 285.87,
+          "pss_mb": 289.16
+        },
+        {
+          "i": 5800,
+          "rss_mb": 336.08,
+          "anonymous_mb": 285.87,
+          "pss_mb": 289.16
+        },
+        {
+          "i": 5900,
+          "rss_mb": 336.08,
+          "anonymous_mb": 285.87,
+          "pss_mb": 289.16
+        },
+        {
+          "i": 6000,
+          "rss_mb": 336.08,
+          "anonymous_mb": 285.87,
+          "pss_mb": 289.16
+        },
+        {
+          "i": 6100,
+          "rss_mb": 336.08,
+          "anonymous_mb": 285.87,
+          "pss_mb": 289.16
+        },
+        {
+          "i": 6200,
+          "rss_mb": 336.1,
+          "anonymous_mb": 285.89,
+          "pss_mb": 289.18
+        },
+        {
+          "i": 6300,
+          "rss_mb": 336.1,
+          "anonymous_mb": 285.89,
+          "pss_mb": 289.18
+        },
+        {
+          "i": 6400,
+          "rss_mb": 336.1,
+          "anonymous_mb": 285.89,
+          "pss_mb": 289.18
+        },
+        {
+          "i": 6500,
+          "rss_mb": 336.1,
+          "anonymous_mb": 285.89,
+          "pss_mb": 289.18
+        },
+        {
+          "i": 6600,
+          "rss_mb": 336.1,
+          "anonymous_mb": 285.89,
+          "pss_mb": 289.18
+        },
+        {
+          "i": 6700,
+          "rss_mb": 336.8,
+          "anonymous_mb": 286.6,
+          "pss_mb": 289.88
+        },
+        {
+          "i": 6800,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 6900,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 7000,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 7100,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 7200,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 7300,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 7400,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 7500,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 7600,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 7700,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 7800,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 7900,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 8000,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 8100,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 8200,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 8300,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 8400,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 8500,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 8600,
+          "rss_mb": 337.1,
+          "anonymous_mb": 286.89,
+          "pss_mb": 290.18
+        },
+        {
+          "i": 8700,
+          "rss_mb": 337.85,
+          "anonymous_mb": 287.64,
+          "pss_mb": 290.93
+        },
+        {
+          "i": 8800,
+          "rss_mb": 337.85,
+          "anonymous_mb": 287.64,
+          "pss_mb": 290.93
+        },
+        {
+          "i": 8900,
+          "rss_mb": 337.85,
+          "anonymous_mb": 287.64,
+          "pss_mb": 290.93
+        },
+        {
+          "i": 9000,
+          "rss_mb": 337.85,
+          "anonymous_mb": 287.64,
+          "pss_mb": 290.93
+        },
+        {
+          "i": 9100,
+          "rss_mb": 337.85,
+          "anonymous_mb": 287.64,
+          "pss_mb": 290.93
+        },
+        {
+          "i": 9200,
+          "rss_mb": 337.85,
+          "anonymous_mb": 287.64,
+          "pss_mb": 290.93
+        },
+        {
+          "i": 9300,
+          "rss_mb": 337.85,
+          "anonymous_mb": 287.64,
+          "pss_mb": 290.93
+        },
+        {
+          "i": 9400,
+          "rss_mb": 337.85,
+          "anonymous_mb": 287.64,
+          "pss_mb": 290.93
+        },
+        {
+          "i": 9500,
+          "rss_mb": 337.85,
+          "anonymous_mb": 287.64,
+          "pss_mb": 290.93
+        },
+        {
+          "i": 9600,
+          "rss_mb": 337.85,
+          "anonymous_mb": 287.64,
+          "pss_mb": 290.93
+        },
+        {
+          "i": 9700,
+          "rss_mb": 337.85,
+          "anonymous_mb": 287.64,
+          "pss_mb": 290.93
+        },
+        {
+          "i": 9800,
+          "rss_mb": 337.85,
+          "anonymous_mb": 287.64,
+          "pss_mb": 290.93
+        },
+        {
+          "i": 9900,
+          "rss_mb": 337.85,
+          "anonymous_mb": 287.64,
+          "pss_mb": 290.93
+        },
+        {
+          "i": 10000,
+          "rss_mb": 337.85,
+          "anonymous_mb": 287.64,
+          "pss_mb": 290.93
+        }
+      ],
+      "memory_flatness": {
+        "samples": 101,
+        "anonymous_mb_first": 86.65,
+        "anonymous_mb_last": 287.64,
+        "anonymous_mb_min": 86.65,
+        "anonymous_mb_max": 287.64,
+        "anonymous_mb_range": 200.99,
+        "anonymous_mb_drift": 200.99
       },
       "first_session": {
         "arm": "clawql_default",
         "ok": true,
-        "session_ms": 140.14335100003518,
+        "session_ms": 127.24846900004195,
         "steps": [
           {
             "step": 1,
@@ -253,7 +873,7 @@
             "discoveryTokens": 2433,
             "resultTokens": 41,
             "codeTokens": 20,
-            "latency_ms": 33.93900199997006,
+            "latency_ms": 29.710344999970403,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -267,7 +887,7 @@
             "discoveryTokens": 902,
             "resultTokens": 18,
             "codeTokens": 12,
-            "latency_ms": 9.729748999990989,
+            "latency_ms": 9.544236000045203,
             "check": {
               "ok": true
             },
@@ -280,7 +900,7 @@
             "discoveryTokens": 851,
             "resultTokens": 9,
             "codeTokens": 6,
-            "latency_ms": 10.884828999987803,
+            "latency_ms": 9.577637000009418,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -294,7 +914,7 @@
             "discoveryTokens": 2193,
             "resultTokens": 11,
             "codeTokens": 16,
-            "latency_ms": 11.486347000056412,
+            "latency_ms": 9.665124999999534,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -308,7 +928,7 @@
             "discoveryTokens": 2193,
             "resultTokens": 147,
             "codeTokens": 26,
-            "latency_ms": 10.643154999997932,
+            "latency_ms": 10.715621000039391,
             "check": {
               "ok": true,
               "label": "names"
@@ -322,7 +942,7 @@
             "discoveryTokens": 2193,
             "resultTokens": 40,
             "codeTokens": 36,
-            "latency_ms": 10.399681000038981,
+            "latency_ms": 8.298343000060413,
             "check": {
               "ok": true,
               "label": "unproxiedNames"
@@ -336,7 +956,7 @@
             "discoveryTokens": 1089,
             "resultTokens": 21,
             "codeTokens": 8,
-            "latency_ms": 7.505023000063375,
+            "latency_ms": 6.565005999989808,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -350,7 +970,7 @@
             "discoveryTokens": 955,
             "resultTokens": 16,
             "codeTokens": 10,
-            "latency_ms": 8.597545000026003,
+            "latency_ms": 7.18803099996876,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -364,7 +984,7 @@
             "discoveryTokens": 851,
             "resultTokens": 23,
             "codeTokens": 23,
-            "latency_ms": 8.578954000025988,
+            "latency_ms": 7.096120000001974,
             "check": {
               "ok": true
             },
@@ -377,7 +997,7 @@
             "discoveryTokens": 1127,
             "resultTokens": 115,
             "codeTokens": 18,
-            "latency_ms": 6.36104799999157,
+            "latency_ms": 6.442142000014428,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -391,7 +1011,7 @@
             "discoveryTokens": 1201,
             "resultTokens": 11,
             "codeTokens": 16,
-            "latency_ms": 6.0977980000316165,
+            "latency_ms": 5.897350999992341,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -429,14 +1049,14 @@
         "where": "observation_shaped"
       },
       "upstream": "mock",
-      "definition_tokens": 308,
+      "definition_tokens": 398,
       "discovery_tokens_mean": 4092,
       "result_tokens_mean": 480,
       "code_tokens_mean": 191,
       "code_price_weight": 5,
-      "combined_mean": 5071,
-      "weighted_mean": 5835,
-      "combined_at_n": 47630308,
+      "combined_mean": 5161,
+      "weighted_mean": 5925,
+      "combined_at_n": 47630398,
       "rebuild_check": {
         "combined_mean_ok": true,
         "formula": "definition + discovery + result + code",
@@ -444,21 +1064,639 @@
       },
       "calls_mean": 22,
       "session_ms": {
-        "p50": 47.50199900008738,
-        "p99": 67.52751599997282,
-        "p999": 285.8636940000579,
+        "p50": 44.12145199999213,
+        "p99": 58.654042000183836,
+        "p999": 319.76619199989364,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 725.04,
-        "anonymous_mb_median": 646.32,
+        "rss_mb_median": 332.16,
+        "anonymous_mb_median": 281.96,
+        "pss_mb_median": 285.25,
         "samples": 5
+      },
+      "memory_series": [
+        {
+          "i": 1,
+          "rss_mb": 133.8,
+          "anonymous_mb": 83.73,
+          "pss_mb": 87
+        },
+        {
+          "i": 100,
+          "rss_mb": 246.91,
+          "anonymous_mb": 196.78,
+          "pss_mb": 200.05
+        },
+        {
+          "i": 200,
+          "rss_mb": 313.93,
+          "anonymous_mb": 263.73,
+          "pss_mb": 267.01
+        },
+        {
+          "i": 300,
+          "rss_mb": 320.57,
+          "anonymous_mb": 270.37,
+          "pss_mb": 273.65
+        },
+        {
+          "i": 400,
+          "rss_mb": 320.7,
+          "anonymous_mb": 270.5,
+          "pss_mb": 273.77
+        },
+        {
+          "i": 500,
+          "rss_mb": 326.3,
+          "anonymous_mb": 276.11,
+          "pss_mb": 279.39
+        },
+        {
+          "i": 600,
+          "rss_mb": 327.13,
+          "anonymous_mb": 276.93,
+          "pss_mb": 280.21
+        },
+        {
+          "i": 700,
+          "rss_mb": 327.79,
+          "anonymous_mb": 277.59,
+          "pss_mb": 280.87
+        },
+        {
+          "i": 800,
+          "rss_mb": 327.79,
+          "anonymous_mb": 277.59,
+          "pss_mb": 280.87
+        },
+        {
+          "i": 900,
+          "rss_mb": 327.79,
+          "anonymous_mb": 277.59,
+          "pss_mb": 280.87
+        },
+        {
+          "i": 1000,
+          "rss_mb": 327.8,
+          "anonymous_mb": 277.6,
+          "pss_mb": 280.88
+        },
+        {
+          "i": 1100,
+          "rss_mb": 327.8,
+          "anonymous_mb": 277.6,
+          "pss_mb": 280.88
+        },
+        {
+          "i": 1200,
+          "rss_mb": 329.53,
+          "anonymous_mb": 279.33,
+          "pss_mb": 282.61
+        },
+        {
+          "i": 1300,
+          "rss_mb": 330.55,
+          "anonymous_mb": 280.36,
+          "pss_mb": 283.64
+        },
+        {
+          "i": 1400,
+          "rss_mb": 330.55,
+          "anonymous_mb": 280.36,
+          "pss_mb": 283.64
+        },
+        {
+          "i": 1500,
+          "rss_mb": 330.55,
+          "anonymous_mb": 280.36,
+          "pss_mb": 283.64
+        },
+        {
+          "i": 1600,
+          "rss_mb": 330.55,
+          "anonymous_mb": 280.36,
+          "pss_mb": 283.64
+        },
+        {
+          "i": 1700,
+          "rss_mb": 330.55,
+          "anonymous_mb": 280.36,
+          "pss_mb": 283.64
+        },
+        {
+          "i": 1800,
+          "rss_mb": 330.55,
+          "anonymous_mb": 280.36,
+          "pss_mb": 283.64
+        },
+        {
+          "i": 1900,
+          "rss_mb": 330.55,
+          "anonymous_mb": 280.36,
+          "pss_mb": 283.64
+        },
+        {
+          "i": 2000,
+          "rss_mb": 330.55,
+          "anonymous_mb": 280.36,
+          "pss_mb": 283.64
+        },
+        {
+          "i": 2100,
+          "rss_mb": 330.55,
+          "anonymous_mb": 280.36,
+          "pss_mb": 283.64
+        },
+        {
+          "i": 2200,
+          "rss_mb": 330.55,
+          "anonymous_mb": 280.36,
+          "pss_mb": 283.64
+        },
+        {
+          "i": 2300,
+          "rss_mb": 330.55,
+          "anonymous_mb": 280.36,
+          "pss_mb": 283.64
+        },
+        {
+          "i": 2400,
+          "rss_mb": 330.55,
+          "anonymous_mb": 280.36,
+          "pss_mb": 283.64
+        },
+        {
+          "i": 2500,
+          "rss_mb": 330.77,
+          "anonymous_mb": 280.57,
+          "pss_mb": 283.85
+        },
+        {
+          "i": 2600,
+          "rss_mb": 330.82,
+          "anonymous_mb": 280.62,
+          "pss_mb": 283.9
+        },
+        {
+          "i": 2700,
+          "rss_mb": 330.82,
+          "anonymous_mb": 280.62,
+          "pss_mb": 283.9
+        },
+        {
+          "i": 2800,
+          "rss_mb": 330.82,
+          "anonymous_mb": 280.62,
+          "pss_mb": 283.9
+        },
+        {
+          "i": 2900,
+          "rss_mb": 330.82,
+          "anonymous_mb": 280.62,
+          "pss_mb": 283.9
+        },
+        {
+          "i": 3000,
+          "rss_mb": 330.82,
+          "anonymous_mb": 280.62,
+          "pss_mb": 283.9
+        },
+        {
+          "i": 3100,
+          "rss_mb": 330.82,
+          "anonymous_mb": 280.62,
+          "pss_mb": 283.9
+        },
+        {
+          "i": 3200,
+          "rss_mb": 330.82,
+          "anonymous_mb": 280.62,
+          "pss_mb": 283.9
+        },
+        {
+          "i": 3300,
+          "rss_mb": 330.82,
+          "anonymous_mb": 280.62,
+          "pss_mb": 283.9
+        },
+        {
+          "i": 3400,
+          "rss_mb": 330.82,
+          "anonymous_mb": 280.62,
+          "pss_mb": 283.9
+        },
+        {
+          "i": 3500,
+          "rss_mb": 330.82,
+          "anonymous_mb": 280.62,
+          "pss_mb": 283.9
+        },
+        {
+          "i": 3600,
+          "rss_mb": 330.82,
+          "anonymous_mb": 280.62,
+          "pss_mb": 283.9
+        },
+        {
+          "i": 3700,
+          "rss_mb": 330.82,
+          "anonymous_mb": 280.62,
+          "pss_mb": 283.9
+        },
+        {
+          "i": 3800,
+          "rss_mb": 330.82,
+          "anonymous_mb": 280.62,
+          "pss_mb": 283.9
+        },
+        {
+          "i": 3900,
+          "rss_mb": 330.87,
+          "anonymous_mb": 280.67,
+          "pss_mb": 283.95
+        },
+        {
+          "i": 4000,
+          "rss_mb": 331.29,
+          "anonymous_mb": 281.09,
+          "pss_mb": 284.37
+        },
+        {
+          "i": 4100,
+          "rss_mb": 331.43,
+          "anonymous_mb": 281.23,
+          "pss_mb": 284.51
+        },
+        {
+          "i": 4200,
+          "rss_mb": 331.48,
+          "anonymous_mb": 281.29,
+          "pss_mb": 284.57
+        },
+        {
+          "i": 4300,
+          "rss_mb": 331.48,
+          "anonymous_mb": 281.29,
+          "pss_mb": 284.57
+        },
+        {
+          "i": 4400,
+          "rss_mb": 331.48,
+          "anonymous_mb": 281.29,
+          "pss_mb": 284.57
+        },
+        {
+          "i": 4500,
+          "rss_mb": 331.48,
+          "anonymous_mb": 281.29,
+          "pss_mb": 284.57
+        },
+        {
+          "i": 4600,
+          "rss_mb": 331.48,
+          "anonymous_mb": 281.29,
+          "pss_mb": 284.57
+        },
+        {
+          "i": 4700,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 4800,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 4900,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 5000,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 5100,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 5200,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 5300,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 5400,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 5500,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 5600,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 5700,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 5800,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 5900,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 6000,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 6100,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 6200,
+          "rss_mb": 331.6,
+          "anonymous_mb": 281.4,
+          "pss_mb": 284.68
+        },
+        {
+          "i": 6300,
+          "rss_mb": 331.91,
+          "anonymous_mb": 281.71,
+          "pss_mb": 285
+        },
+        {
+          "i": 6400,
+          "rss_mb": 331.91,
+          "anonymous_mb": 281.71,
+          "pss_mb": 285
+        },
+        {
+          "i": 6500,
+          "rss_mb": 331.91,
+          "anonymous_mb": 281.71,
+          "pss_mb": 285
+        },
+        {
+          "i": 6600,
+          "rss_mb": 331.92,
+          "anonymous_mb": 281.72,
+          "pss_mb": 285
+        },
+        {
+          "i": 6700,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.76,
+          "pss_mb": 285.04
+        },
+        {
+          "i": 6800,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.76,
+          "pss_mb": 285.04
+        },
+        {
+          "i": 6900,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 7000,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 7100,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 7200,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 7300,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 7400,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 7500,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 7600,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 7700,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 7800,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 7900,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 8000,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 8100,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 8200,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 8300,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 8400,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 8500,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 8600,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 8700,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 8800,
+          "rss_mb": 331.96,
+          "anonymous_mb": 281.77,
+          "pss_mb": 285.05
+        },
+        {
+          "i": 8900,
+          "rss_mb": 331.91,
+          "anonymous_mb": 281.71,
+          "pss_mb": 285
+        },
+        {
+          "i": 9000,
+          "rss_mb": 331.88,
+          "anonymous_mb": 281.68,
+          "pss_mb": 284.96
+        },
+        {
+          "i": 9100,
+          "rss_mb": 331.88,
+          "anonymous_mb": 281.68,
+          "pss_mb": 284.96
+        },
+        {
+          "i": 9200,
+          "rss_mb": 331.88,
+          "anonymous_mb": 281.68,
+          "pss_mb": 284.96
+        },
+        {
+          "i": 9300,
+          "rss_mb": 332.16,
+          "anonymous_mb": 281.96,
+          "pss_mb": 285.25
+        },
+        {
+          "i": 9400,
+          "rss_mb": 332.16,
+          "anonymous_mb": 281.96,
+          "pss_mb": 285.25
+        },
+        {
+          "i": 9500,
+          "rss_mb": 332.16,
+          "anonymous_mb": 281.96,
+          "pss_mb": 285.25
+        },
+        {
+          "i": 9600,
+          "rss_mb": 332.16,
+          "anonymous_mb": 281.96,
+          "pss_mb": 285.25
+        },
+        {
+          "i": 9700,
+          "rss_mb": 332.16,
+          "anonymous_mb": 281.96,
+          "pss_mb": 285.25
+        },
+        {
+          "i": 9800,
+          "rss_mb": 332.16,
+          "anonymous_mb": 281.96,
+          "pss_mb": 285.25
+        },
+        {
+          "i": 9900,
+          "rss_mb": 332.16,
+          "anonymous_mb": 281.96,
+          "pss_mb": 285.25
+        },
+        {
+          "i": 10000,
+          "rss_mb": 332.16,
+          "anonymous_mb": 281.96,
+          "pss_mb": 285.25
+        }
+      ],
+      "memory_flatness": {
+        "samples": 101,
+        "anonymous_mb_first": 83.73,
+        "anonymous_mb_last": 281.96,
+        "anonymous_mb_min": 83.73,
+        "anonymous_mb_max": 281.96,
+        "anonymous_mb_range": 198.23,
+        "anonymous_mb_drift": 198.23
       },
       "first_session": {
         "arm": "clawql_default",
         "ok": true,
-        "session_ms": 149.18279600003734,
+        "session_ms": 104.39182900008745,
         "steps": [
           {
             "step": 1,
@@ -466,7 +1704,7 @@
             "discoveryTokens": 453,
             "resultTokens": 41,
             "codeTokens": 20,
-            "latency_ms": 43.237220000009984,
+            "latency_ms": 26.813828999875113,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -480,7 +1718,7 @@
             "discoveryTokens": 316,
             "resultTokens": 18,
             "codeTokens": 12,
-            "latency_ms": 10.69654100004118,
+            "latency_ms": 8.472463000100106,
             "check": {
               "ok": true
             },
@@ -493,7 +1731,7 @@
             "discoveryTokens": 317,
             "resultTokens": 9,
             "codeTokens": 6,
-            "latency_ms": 11.025448999949731,
+            "latency_ms": 8.60405899991747,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -507,7 +1745,7 @@
             "discoveryTokens": 463,
             "resultTokens": 11,
             "codeTokens": 16,
-            "latency_ms": 10.591024999972433,
+            "latency_ms": 7.8839650000445545,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -521,7 +1759,7 @@
             "discoveryTokens": 463,
             "resultTokens": 147,
             "codeTokens": 26,
-            "latency_ms": 13.700282000005245,
+            "latency_ms": 9.07197599997744,
             "check": {
               "ok": true,
               "label": "names"
@@ -535,7 +1773,7 @@
             "discoveryTokens": 463,
             "resultTokens": 40,
             "codeTokens": 36,
-            "latency_ms": 12.927102999994531,
+            "latency_ms": 7.170136000029743,
             "check": {
               "ok": true,
               "label": "unproxiedNames"
@@ -549,7 +1787,7 @@
             "discoveryTokens": 326,
             "resultTokens": 21,
             "codeTokens": 8,
-            "latency_ms": 7.8525929999304935,
+            "latency_ms": 5.561165999970399,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -563,7 +1801,7 @@
             "discoveryTokens": 307,
             "resultTokens": 16,
             "codeTokens": 10,
-            "latency_ms": 7.6668200000422075,
+            "latency_ms": 6.4163240001071244,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -577,7 +1815,7 @@
             "discoveryTokens": 298,
             "resultTokens": 23,
             "codeTokens": 23,
-            "latency_ms": 8.11358099989593,
+            "latency_ms": 5.7896949999267235,
             "check": {
               "ok": true
             },
@@ -590,7 +1828,7 @@
             "discoveryTokens": 347,
             "resultTokens": 115,
             "codeTokens": 18,
-            "latency_ms": 6.881156999967061,
+            "latency_ms": 5.133328999974765,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -604,7 +1842,7 @@
             "discoveryTokens": 339,
             "resultTokens": 11,
             "codeTokens": 16,
-            "latency_ms": 7.587185999960639,
+            "latency_ms": 5.8368679999839514,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -642,14 +1880,14 @@
         "where": "observation_shaped"
       },
       "upstream": "mock",
-      "definition_tokens": 308,
+      "definition_tokens": 398,
       "discovery_tokens_mean": 0,
       "result_tokens_mean": 480,
       "code_tokens_mean": 191,
       "code_price_weight": 5,
-      "combined_mean": 979,
-      "weighted_mean": 1743,
-      "combined_at_n": 6710308,
+      "combined_mean": 1069,
+      "weighted_mean": 1833,
+      "combined_at_n": 6710398,
       "rebuild_check": {
         "combined_mean_ok": true,
         "formula": "definition + discovery + result + code",
@@ -657,21 +1895,639 @@
       },
       "calls_mean": 11,
       "session_ms": {
-        "p50": 24.005815000040457,
-        "p99": 33.492863999912515,
-        "p999": 155.9226689999923,
+        "p50": 22.344762000022456,
+        "p99": 31.754143999889493,
+        "p999": 88.179673000006,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 707.08,
-        "anonymous_mb_median": 628.36,
+        "rss_mb_median": 342.08,
+        "anonymous_mb_median": 291.68,
+        "pss_mb_median": 295,
         "samples": 5
+      },
+      "memory_series": [
+        {
+          "i": 1,
+          "rss_mb": 136.34,
+          "anonymous_mb": 85.95,
+          "pss_mb": 89.26
+        },
+        {
+          "i": 100,
+          "rss_mb": 195.85,
+          "anonymous_mb": 145.45,
+          "pss_mb": 148.77
+        },
+        {
+          "i": 200,
+          "rss_mb": 278.25,
+          "anonymous_mb": 227.86,
+          "pss_mb": 231.17
+        },
+        {
+          "i": 300,
+          "rss_mb": 329.09,
+          "anonymous_mb": 278.7,
+          "pss_mb": 282.01
+        },
+        {
+          "i": 400,
+          "rss_mb": 329.49,
+          "anonymous_mb": 279.1,
+          "pss_mb": 282.41
+        },
+        {
+          "i": 500,
+          "rss_mb": 332.2,
+          "anonymous_mb": 281.8,
+          "pss_mb": 285.12
+        },
+        {
+          "i": 600,
+          "rss_mb": 332.34,
+          "anonymous_mb": 281.94,
+          "pss_mb": 285.26
+        },
+        {
+          "i": 700,
+          "rss_mb": 335.31,
+          "anonymous_mb": 284.91,
+          "pss_mb": 288.23
+        },
+        {
+          "i": 800,
+          "rss_mb": 336.09,
+          "anonymous_mb": 285.69,
+          "pss_mb": 289.01
+        },
+        {
+          "i": 900,
+          "rss_mb": 336.1,
+          "anonymous_mb": 285.7,
+          "pss_mb": 289.02
+        },
+        {
+          "i": 1000,
+          "rss_mb": 336.1,
+          "anonymous_mb": 285.7,
+          "pss_mb": 289.02
+        },
+        {
+          "i": 1100,
+          "rss_mb": 336.1,
+          "anonymous_mb": 285.7,
+          "pss_mb": 289.02
+        },
+        {
+          "i": 1200,
+          "rss_mb": 337.3,
+          "anonymous_mb": 286.91,
+          "pss_mb": 290.22
+        },
+        {
+          "i": 1300,
+          "rss_mb": 337.41,
+          "anonymous_mb": 287.01,
+          "pss_mb": 290.33
+        },
+        {
+          "i": 1400,
+          "rss_mb": 340.01,
+          "anonymous_mb": 289.61,
+          "pss_mb": 292.93
+        },
+        {
+          "i": 1500,
+          "rss_mb": 340.17,
+          "anonymous_mb": 289.77,
+          "pss_mb": 293.09
+        },
+        {
+          "i": 1600,
+          "rss_mb": 340.4,
+          "anonymous_mb": 290,
+          "pss_mb": 293.32
+        },
+        {
+          "i": 1700,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 1800,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 1900,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 2000,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 2100,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 2200,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 2300,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 2400,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 2500,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 2600,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 2700,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 2800,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 2900,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 3000,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 3100,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 3200,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 3300,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 3400,
+          "rss_mb": 340.41,
+          "anonymous_mb": 290.02,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 3500,
+          "rss_mb": 340.95,
+          "anonymous_mb": 290.55,
+          "pss_mb": 293.87
+        },
+        {
+          "i": 3600,
+          "rss_mb": 340.95,
+          "anonymous_mb": 290.55,
+          "pss_mb": 293.87
+        },
+        {
+          "i": 3700,
+          "rss_mb": 340.95,
+          "anonymous_mb": 290.55,
+          "pss_mb": 293.87
+        },
+        {
+          "i": 3800,
+          "rss_mb": 340.95,
+          "anonymous_mb": 290.55,
+          "pss_mb": 293.87
+        },
+        {
+          "i": 3900,
+          "rss_mb": 340.95,
+          "anonymous_mb": 290.55,
+          "pss_mb": 293.87
+        },
+        {
+          "i": 4000,
+          "rss_mb": 340.95,
+          "anonymous_mb": 290.55,
+          "pss_mb": 293.87
+        },
+        {
+          "i": 4100,
+          "rss_mb": 340.95,
+          "anonymous_mb": 290.55,
+          "pss_mb": 293.87
+        },
+        {
+          "i": 4200,
+          "rss_mb": 340.95,
+          "anonymous_mb": 290.55,
+          "pss_mb": 293.87
+        },
+        {
+          "i": 4300,
+          "rss_mb": 340.95,
+          "anonymous_mb": 290.55,
+          "pss_mb": 293.87
+        },
+        {
+          "i": 4400,
+          "rss_mb": 340.95,
+          "anonymous_mb": 290.55,
+          "pss_mb": 293.87
+        },
+        {
+          "i": 4500,
+          "rss_mb": 340.95,
+          "anonymous_mb": 290.55,
+          "pss_mb": 293.87
+        },
+        {
+          "i": 4600,
+          "rss_mb": 340.95,
+          "anonymous_mb": 290.55,
+          "pss_mb": 293.87
+        },
+        {
+          "i": 4700,
+          "rss_mb": 341.04,
+          "anonymous_mb": 290.64,
+          "pss_mb": 293.96
+        },
+        {
+          "i": 4800,
+          "rss_mb": 341.18,
+          "anonymous_mb": 290.79,
+          "pss_mb": 294.1
+        },
+        {
+          "i": 4900,
+          "rss_mb": 341.18,
+          "anonymous_mb": 290.79,
+          "pss_mb": 294.1
+        },
+        {
+          "i": 5000,
+          "rss_mb": 341.18,
+          "anonymous_mb": 290.79,
+          "pss_mb": 294.1
+        },
+        {
+          "i": 5100,
+          "rss_mb": 341.34,
+          "anonymous_mb": 290.95,
+          "pss_mb": 294.26
+        },
+        {
+          "i": 5200,
+          "rss_mb": 341.34,
+          "anonymous_mb": 290.95,
+          "pss_mb": 294.26
+        },
+        {
+          "i": 5300,
+          "rss_mb": 341.71,
+          "anonymous_mb": 291.31,
+          "pss_mb": 294.63
+        },
+        {
+          "i": 5400,
+          "rss_mb": 341.84,
+          "anonymous_mb": 291.45,
+          "pss_mb": 294.76
+        },
+        {
+          "i": 5500,
+          "rss_mb": 341.84,
+          "anonymous_mb": 291.45,
+          "pss_mb": 294.76
+        },
+        {
+          "i": 5600,
+          "rss_mb": 341.84,
+          "anonymous_mb": 291.45,
+          "pss_mb": 294.76
+        },
+        {
+          "i": 5700,
+          "rss_mb": 341.84,
+          "anonymous_mb": 291.45,
+          "pss_mb": 294.76
+        },
+        {
+          "i": 5800,
+          "rss_mb": 341.84,
+          "anonymous_mb": 291.45,
+          "pss_mb": 294.76
+        },
+        {
+          "i": 5900,
+          "rss_mb": 341.84,
+          "anonymous_mb": 291.45,
+          "pss_mb": 294.76
+        },
+        {
+          "i": 6000,
+          "rss_mb": 341.84,
+          "anonymous_mb": 291.45,
+          "pss_mb": 294.76
+        },
+        {
+          "i": 6100,
+          "rss_mb": 341.84,
+          "anonymous_mb": 291.45,
+          "pss_mb": 294.76
+        },
+        {
+          "i": 6200,
+          "rss_mb": 341.84,
+          "anonymous_mb": 291.45,
+          "pss_mb": 294.76
+        },
+        {
+          "i": 6300,
+          "rss_mb": 341.84,
+          "anonymous_mb": 291.45,
+          "pss_mb": 294.76
+        },
+        {
+          "i": 6400,
+          "rss_mb": 341.84,
+          "anonymous_mb": 291.45,
+          "pss_mb": 294.76
+        },
+        {
+          "i": 6500,
+          "rss_mb": 341.84,
+          "anonymous_mb": 291.45,
+          "pss_mb": 294.76
+        },
+        {
+          "i": 6600,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.67,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 6700,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.67,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 6800,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.67,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 6900,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.67,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 7000,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 7100,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 7200,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 7300,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 7400,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 7500,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 7600,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 7700,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 7800,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 7900,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 8000,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 8100,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 8200,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 8300,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 8400,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 8500,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 8600,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 8700,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 8800,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 8900,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 9000,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 9100,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 9200,
+          "rss_mb": 342.07,
+          "anonymous_mb": 291.68,
+          "pss_mb": 294.99
+        },
+        {
+          "i": 9300,
+          "rss_mb": 342.08,
+          "anonymous_mb": 291.68,
+          "pss_mb": 295
+        },
+        {
+          "i": 9400,
+          "rss_mb": 342.08,
+          "anonymous_mb": 291.68,
+          "pss_mb": 295
+        },
+        {
+          "i": 9500,
+          "rss_mb": 342.08,
+          "anonymous_mb": 291.68,
+          "pss_mb": 295
+        },
+        {
+          "i": 9600,
+          "rss_mb": 342.08,
+          "anonymous_mb": 291.68,
+          "pss_mb": 295
+        },
+        {
+          "i": 9700,
+          "rss_mb": 342.08,
+          "anonymous_mb": 291.68,
+          "pss_mb": 295
+        },
+        {
+          "i": 9800,
+          "rss_mb": 342.08,
+          "anonymous_mb": 291.68,
+          "pss_mb": 295
+        },
+        {
+          "i": 9900,
+          "rss_mb": 342.08,
+          "anonymous_mb": 291.68,
+          "pss_mb": 295
+        },
+        {
+          "i": 10000,
+          "rss_mb": 342.08,
+          "anonymous_mb": 291.68,
+          "pss_mb": 295
+        }
+      ],
+      "memory_flatness": {
+        "samples": 101,
+        "anonymous_mb_first": 85.95,
+        "anonymous_mb_last": 291.68,
+        "anonymous_mb_min": 85.95,
+        "anonymous_mb_max": 291.68,
+        "anonymous_mb_range": 205.73,
+        "anonymous_mb_drift": 205.73
       },
       "first_session": {
         "arm": "clawql_known_op",
         "ok": true,
-        "session_ms": 45.37986800004728,
+        "session_ms": 40.00588999991305,
         "steps": [
           {
             "step": 1,
@@ -679,7 +2535,7 @@
             "discoveryTokens": 0,
             "resultTokens": 41,
             "codeTokens": 20,
-            "latency_ms": 9.399176000151783,
+            "latency_ms": 7.825231999857351,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -693,7 +2549,7 @@
             "discoveryTokens": 0,
             "resultTokens": 18,
             "codeTokens": 12,
-            "latency_ms": 4.724435000214726,
+            "latency_ms": 3.4313370001036674,
             "check": {
               "ok": true
             },
@@ -706,7 +2562,7 @@
             "discoveryTokens": 0,
             "resultTokens": 9,
             "codeTokens": 6,
-            "latency_ms": 2.951818000059575,
+            "latency_ms": 2.747923000017181,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -720,7 +2576,7 @@
             "discoveryTokens": 0,
             "resultTokens": 11,
             "codeTokens": 16,
-            "latency_ms": 4.176743000047281,
+            "latency_ms": 4.13006000011228,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -734,7 +2590,7 @@
             "discoveryTokens": 0,
             "resultTokens": 147,
             "codeTokens": 26,
-            "latency_ms": 3.975230999989435,
+            "latency_ms": 3.702820000005886,
             "check": {
               "ok": true,
               "label": "names"
@@ -748,7 +2604,7 @@
             "discoveryTokens": 0,
             "resultTokens": 40,
             "codeTokens": 36,
-            "latency_ms": 5.286858999868855,
+            "latency_ms": 3.5208059998694807,
             "check": {
               "ok": true,
               "label": "unproxiedNames"
@@ -762,7 +2618,7 @@
             "discoveryTokens": 0,
             "resultTokens": 21,
             "codeTokens": 8,
-            "latency_ms": 2.5097930000629276,
+            "latency_ms": 3.0777140001300722,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -776,7 +2632,7 @@
             "discoveryTokens": 0,
             "resultTokens": 16,
             "codeTokens": 10,
-            "latency_ms": 2.9544760000426322,
+            "latency_ms": 2.474790000123903,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -790,7 +2646,7 @@
             "discoveryTokens": 0,
             "resultTokens": 23,
             "codeTokens": 23,
-            "latency_ms": 2.6202759998850524,
+            "latency_ms": 2.750963999889791,
             "check": {
               "ok": true
             },
@@ -803,7 +2659,7 @@
             "discoveryTokens": 0,
             "resultTokens": 115,
             "codeTokens": 18,
-            "latency_ms": 2.336054999846965,
+            "latency_ms": 2.191340000135824,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -817,7 +2673,7 @@
             "discoveryTokens": 0,
             "resultTokens": 11,
             "codeTokens": 16,
-            "latency_ms": 2.6978289999533445,
+            "latency_ms": 2.4770540001336485,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -855,14 +2711,14 @@
         "catalog_sqlite": "1"
       },
       "upstream": "mock",
-      "definition_tokens": 685,
+      "definition_tokens": 775,
       "discovery_tokens_mean": 0,
       "result_tokens_mean": 357,
       "code_tokens_mean": 811,
       "code_price_weight": 5,
-      "combined_mean": 1853,
-      "weighted_mean": 5097,
-      "combined_at_n": 11680685,
+      "combined_mean": 1943,
+      "weighted_mean": 5187,
+      "combined_at_n": 11680775,
       "rebuild_check": {
         "combined_mean_ok": true,
         "formula": "definition + discovery + result + code",
@@ -870,21 +2726,639 @@
       },
       "calls_mean": 1,
       "session_ms": {
-        "p50": 11.34565500007011,
-        "p99": 18.61394799989648,
-        "p999": 28.632125000003725,
+        "p50": 11.264039000030607,
+        "p99": 17.707827999955043,
+        "p999": 27.124807000160217,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 717.52,
-        "anonymous_mb_median": 638.82,
+        "rss_mb_median": 334.77,
+        "anonymous_mb_median": 284.57,
+        "pss_mb_median": 287.84,
         "samples": 5
+      },
+      "memory_series": [
+        {
+          "i": 1,
+          "rss_mb": 124.49,
+          "anonymous_mb": 74.41,
+          "pss_mb": 77.68
+        },
+        {
+          "i": 100,
+          "rss_mb": 185.87,
+          "anonymous_mb": 135.73,
+          "pss_mb": 139
+        },
+        {
+          "i": 200,
+          "rss_mb": 249.35,
+          "anonymous_mb": 199.21,
+          "pss_mb": 202.48
+        },
+        {
+          "i": 300,
+          "rss_mb": 304.84,
+          "anonymous_mb": 254.7,
+          "pss_mb": 257.97
+        },
+        {
+          "i": 400,
+          "rss_mb": 307.37,
+          "anonymous_mb": 257.23,
+          "pss_mb": 260.5
+        },
+        {
+          "i": 500,
+          "rss_mb": 308.2,
+          "anonymous_mb": 258.05,
+          "pss_mb": 261.33
+        },
+        {
+          "i": 600,
+          "rss_mb": 312.92,
+          "anonymous_mb": 262.78,
+          "pss_mb": 266.05
+        },
+        {
+          "i": 700,
+          "rss_mb": 313.55,
+          "anonymous_mb": 263.41,
+          "pss_mb": 266.69
+        },
+        {
+          "i": 800,
+          "rss_mb": 313.61,
+          "anonymous_mb": 263.47,
+          "pss_mb": 266.75
+        },
+        {
+          "i": 900,
+          "rss_mb": 316.4,
+          "anonymous_mb": 266.26,
+          "pss_mb": 269.54
+        },
+        {
+          "i": 1000,
+          "rss_mb": 317.39,
+          "anonymous_mb": 267.25,
+          "pss_mb": 270.52
+        },
+        {
+          "i": 1100,
+          "rss_mb": 322,
+          "anonymous_mb": 271.86,
+          "pss_mb": 275.13
+        },
+        {
+          "i": 1200,
+          "rss_mb": 320.67,
+          "anonymous_mb": 270.53,
+          "pss_mb": 273.8
+        },
+        {
+          "i": 1300,
+          "rss_mb": 320.79,
+          "anonymous_mb": 270.64,
+          "pss_mb": 273.92
+        },
+        {
+          "i": 1400,
+          "rss_mb": 322.35,
+          "anonymous_mb": 272.21,
+          "pss_mb": 275.48
+        },
+        {
+          "i": 1500,
+          "rss_mb": 322.99,
+          "anonymous_mb": 272.85,
+          "pss_mb": 276.13
+        },
+        {
+          "i": 1600,
+          "rss_mb": 323.53,
+          "anonymous_mb": 273.39,
+          "pss_mb": 276.66
+        },
+        {
+          "i": 1700,
+          "rss_mb": 322.08,
+          "anonymous_mb": 271.94,
+          "pss_mb": 275.21
+        },
+        {
+          "i": 1800,
+          "rss_mb": 320.45,
+          "anonymous_mb": 270.31,
+          "pss_mb": 273.59
+        },
+        {
+          "i": 1900,
+          "rss_mb": 321.12,
+          "anonymous_mb": 270.98,
+          "pss_mb": 274.25
+        },
+        {
+          "i": 2000,
+          "rss_mb": 321.14,
+          "anonymous_mb": 271,
+          "pss_mb": 274.28
+        },
+        {
+          "i": 2100,
+          "rss_mb": 321.14,
+          "anonymous_mb": 271,
+          "pss_mb": 274.28
+        },
+        {
+          "i": 2200,
+          "rss_mb": 321.87,
+          "anonymous_mb": 271.73,
+          "pss_mb": 275
+        },
+        {
+          "i": 2300,
+          "rss_mb": 321.98,
+          "anonymous_mb": 271.84,
+          "pss_mb": 275.11
+        },
+        {
+          "i": 2400,
+          "rss_mb": 322.05,
+          "anonymous_mb": 271.84,
+          "pss_mb": 275.12
+        },
+        {
+          "i": 2500,
+          "rss_mb": 323.03,
+          "anonymous_mb": 272.82,
+          "pss_mb": 276.1
+        },
+        {
+          "i": 2600,
+          "rss_mb": 323.6,
+          "anonymous_mb": 273.4,
+          "pss_mb": 276.68
+        },
+        {
+          "i": 2700,
+          "rss_mb": 323.11,
+          "anonymous_mb": 272.91,
+          "pss_mb": 276.19
+        },
+        {
+          "i": 2800,
+          "rss_mb": 322.42,
+          "anonymous_mb": 272.21,
+          "pss_mb": 275.49
+        },
+        {
+          "i": 2900,
+          "rss_mb": 322.87,
+          "anonymous_mb": 272.66,
+          "pss_mb": 275.94
+        },
+        {
+          "i": 3000,
+          "rss_mb": 323.71,
+          "anonymous_mb": 273.5,
+          "pss_mb": 276.78
+        },
+        {
+          "i": 3100,
+          "rss_mb": 323.12,
+          "anonymous_mb": 272.92,
+          "pss_mb": 276.2
+        },
+        {
+          "i": 3200,
+          "rss_mb": 324.27,
+          "anonymous_mb": 274.06,
+          "pss_mb": 277.34
+        },
+        {
+          "i": 3300,
+          "rss_mb": 323.55,
+          "anonymous_mb": 273.34,
+          "pss_mb": 276.62
+        },
+        {
+          "i": 3400,
+          "rss_mb": 323.55,
+          "anonymous_mb": 273.35,
+          "pss_mb": 276.63
+        },
+        {
+          "i": 3500,
+          "rss_mb": 324.47,
+          "anonymous_mb": 274.27,
+          "pss_mb": 277.55
+        },
+        {
+          "i": 3600,
+          "rss_mb": 325.25,
+          "anonymous_mb": 275.05,
+          "pss_mb": 278.33
+        },
+        {
+          "i": 3700,
+          "rss_mb": 324.48,
+          "anonymous_mb": 274.27,
+          "pss_mb": 277.55
+        },
+        {
+          "i": 3800,
+          "rss_mb": 326.27,
+          "anonymous_mb": 276.06,
+          "pss_mb": 279.34
+        },
+        {
+          "i": 3900,
+          "rss_mb": 325.98,
+          "anonymous_mb": 275.78,
+          "pss_mb": 279.06
+        },
+        {
+          "i": 4000,
+          "rss_mb": 328.44,
+          "anonymous_mb": 278.24,
+          "pss_mb": 281.52
+        },
+        {
+          "i": 4100,
+          "rss_mb": 327.55,
+          "anonymous_mb": 277.35,
+          "pss_mb": 280.63
+        },
+        {
+          "i": 4200,
+          "rss_mb": 327.67,
+          "anonymous_mb": 277.47,
+          "pss_mb": 280.75
+        },
+        {
+          "i": 4300,
+          "rss_mb": 327.28,
+          "anonymous_mb": 277.08,
+          "pss_mb": 280.36
+        },
+        {
+          "i": 4400,
+          "rss_mb": 328.07,
+          "anonymous_mb": 277.86,
+          "pss_mb": 281.14
+        },
+        {
+          "i": 4500,
+          "rss_mb": 326.11,
+          "anonymous_mb": 275.91,
+          "pss_mb": 279.19
+        },
+        {
+          "i": 4600,
+          "rss_mb": 329.24,
+          "anonymous_mb": 279.04,
+          "pss_mb": 282.32
+        },
+        {
+          "i": 4700,
+          "rss_mb": 329.31,
+          "anonymous_mb": 279.11,
+          "pss_mb": 282.39
+        },
+        {
+          "i": 4800,
+          "rss_mb": 331.27,
+          "anonymous_mb": 281.06,
+          "pss_mb": 284.34
+        },
+        {
+          "i": 4900,
+          "rss_mb": 331.92,
+          "anonymous_mb": 281.71,
+          "pss_mb": 284.99
+        },
+        {
+          "i": 5000,
+          "rss_mb": 330.47,
+          "anonymous_mb": 280.27,
+          "pss_mb": 283.54
+        },
+        {
+          "i": 5100,
+          "rss_mb": 330.75,
+          "anonymous_mb": 280.55,
+          "pss_mb": 283.83
+        },
+        {
+          "i": 5200,
+          "rss_mb": 330.75,
+          "anonymous_mb": 280.55,
+          "pss_mb": 283.83
+        },
+        {
+          "i": 5300,
+          "rss_mb": 330.27,
+          "anonymous_mb": 280.07,
+          "pss_mb": 283.35
+        },
+        {
+          "i": 5400,
+          "rss_mb": 330.27,
+          "anonymous_mb": 280.07,
+          "pss_mb": 283.35
+        },
+        {
+          "i": 5500,
+          "rss_mb": 331.48,
+          "anonymous_mb": 281.28,
+          "pss_mb": 284.56
+        },
+        {
+          "i": 5600,
+          "rss_mb": 331.48,
+          "anonymous_mb": 281.28,
+          "pss_mb": 284.56
+        },
+        {
+          "i": 5700,
+          "rss_mb": 331.59,
+          "anonymous_mb": 281.39,
+          "pss_mb": 284.67
+        },
+        {
+          "i": 5800,
+          "rss_mb": 332.04,
+          "anonymous_mb": 281.84,
+          "pss_mb": 285.12
+        },
+        {
+          "i": 5900,
+          "rss_mb": 331.99,
+          "anonymous_mb": 281.79,
+          "pss_mb": 285.07
+        },
+        {
+          "i": 6000,
+          "rss_mb": 332.41,
+          "anonymous_mb": 282.21,
+          "pss_mb": 285.49
+        },
+        {
+          "i": 6100,
+          "rss_mb": 331.22,
+          "anonymous_mb": 281.02,
+          "pss_mb": 284.3
+        },
+        {
+          "i": 6200,
+          "rss_mb": 331.22,
+          "anonymous_mb": 281.02,
+          "pss_mb": 284.3
+        },
+        {
+          "i": 6300,
+          "rss_mb": 331.21,
+          "anonymous_mb": 281.01,
+          "pss_mb": 284.29
+        },
+        {
+          "i": 6400,
+          "rss_mb": 330.78,
+          "anonymous_mb": 280.57,
+          "pss_mb": 283.85
+        },
+        {
+          "i": 6500,
+          "rss_mb": 330.95,
+          "anonymous_mb": 280.74,
+          "pss_mb": 284.02
+        },
+        {
+          "i": 6600,
+          "rss_mb": 330.84,
+          "anonymous_mb": 280.64,
+          "pss_mb": 283.92
+        },
+        {
+          "i": 6700,
+          "rss_mb": 331.28,
+          "anonymous_mb": 281.07,
+          "pss_mb": 284.35
+        },
+        {
+          "i": 6800,
+          "rss_mb": 330.87,
+          "anonymous_mb": 280.67,
+          "pss_mb": 283.95
+        },
+        {
+          "i": 6900,
+          "rss_mb": 331.34,
+          "anonymous_mb": 281.14,
+          "pss_mb": 284.42
+        },
+        {
+          "i": 7000,
+          "rss_mb": 330.89,
+          "anonymous_mb": 280.69,
+          "pss_mb": 283.97
+        },
+        {
+          "i": 7100,
+          "rss_mb": 331.37,
+          "anonymous_mb": 281.16,
+          "pss_mb": 284.44
+        },
+        {
+          "i": 7200,
+          "rss_mb": 331.37,
+          "anonymous_mb": 281.16,
+          "pss_mb": 284.44
+        },
+        {
+          "i": 7300,
+          "rss_mb": 333.25,
+          "anonymous_mb": 283.05,
+          "pss_mb": 286.33
+        },
+        {
+          "i": 7400,
+          "rss_mb": 331.7,
+          "anonymous_mb": 281.49,
+          "pss_mb": 284.77
+        },
+        {
+          "i": 7500,
+          "rss_mb": 331.89,
+          "anonymous_mb": 281.68,
+          "pss_mb": 284.96
+        },
+        {
+          "i": 7600,
+          "rss_mb": 332.68,
+          "anonymous_mb": 282.47,
+          "pss_mb": 285.75
+        },
+        {
+          "i": 7700,
+          "rss_mb": 331.84,
+          "anonymous_mb": 281.63,
+          "pss_mb": 284.91
+        },
+        {
+          "i": 7800,
+          "rss_mb": 331.84,
+          "anonymous_mb": 281.63,
+          "pss_mb": 284.91
+        },
+        {
+          "i": 7900,
+          "rss_mb": 331.86,
+          "anonymous_mb": 281.66,
+          "pss_mb": 284.93
+        },
+        {
+          "i": 8000,
+          "rss_mb": 332.53,
+          "anonymous_mb": 282.33,
+          "pss_mb": 285.61
+        },
+        {
+          "i": 8100,
+          "rss_mb": 332.66,
+          "anonymous_mb": 282.45,
+          "pss_mb": 285.73
+        },
+        {
+          "i": 8200,
+          "rss_mb": 332.43,
+          "anonymous_mb": 282.23,
+          "pss_mb": 285.5
+        },
+        {
+          "i": 8300,
+          "rss_mb": 333.91,
+          "anonymous_mb": 283.7,
+          "pss_mb": 286.98
+        },
+        {
+          "i": 8400,
+          "rss_mb": 333.43,
+          "anonymous_mb": 283.23,
+          "pss_mb": 286.51
+        },
+        {
+          "i": 8500,
+          "rss_mb": 332.44,
+          "anonymous_mb": 282.23,
+          "pss_mb": 285.51
+        },
+        {
+          "i": 8600,
+          "rss_mb": 332.65,
+          "anonymous_mb": 282.45,
+          "pss_mb": 285.73
+        },
+        {
+          "i": 8700,
+          "rss_mb": 331.93,
+          "anonymous_mb": 281.73,
+          "pss_mb": 285.01
+        },
+        {
+          "i": 8800,
+          "rss_mb": 332.1,
+          "anonymous_mb": 281.9,
+          "pss_mb": 285.18
+        },
+        {
+          "i": 8900,
+          "rss_mb": 331.93,
+          "anonymous_mb": 281.73,
+          "pss_mb": 285.01
+        },
+        {
+          "i": 9000,
+          "rss_mb": 334.07,
+          "anonymous_mb": 283.87,
+          "pss_mb": 287.15
+        },
+        {
+          "i": 9100,
+          "rss_mb": 334.17,
+          "anonymous_mb": 283.96,
+          "pss_mb": 287.24
+        },
+        {
+          "i": 9200,
+          "rss_mb": 336.18,
+          "anonymous_mb": 285.98,
+          "pss_mb": 289.25
+        },
+        {
+          "i": 9300,
+          "rss_mb": 335.18,
+          "anonymous_mb": 284.98,
+          "pss_mb": 288.26
+        },
+        {
+          "i": 9400,
+          "rss_mb": 333.54,
+          "anonymous_mb": 283.34,
+          "pss_mb": 286.61
+        },
+        {
+          "i": 9500,
+          "rss_mb": 333.54,
+          "anonymous_mb": 283.34,
+          "pss_mb": 286.61
+        },
+        {
+          "i": 9600,
+          "rss_mb": 334.76,
+          "anonymous_mb": 284.55,
+          "pss_mb": 287.83
+        },
+        {
+          "i": 9700,
+          "rss_mb": 335.53,
+          "anonymous_mb": 285.33,
+          "pss_mb": 288.61
+        },
+        {
+          "i": 9800,
+          "rss_mb": 334.77,
+          "anonymous_mb": 284.57,
+          "pss_mb": 287.84
+        },
+        {
+          "i": 9900,
+          "rss_mb": 335.21,
+          "anonymous_mb": 285,
+          "pss_mb": 288.28
+        },
+        {
+          "i": 10000,
+          "rss_mb": 334.77,
+          "anonymous_mb": 284.57,
+          "pss_mb": 287.84
+        }
+      ],
+      "memory_flatness": {
+        "samples": 101,
+        "anonymous_mb_first": 74.41,
+        "anonymous_mb_last": 284.57,
+        "anonymous_mb_min": 74.41,
+        "anonymous_mb_max": 285.98,
+        "anonymous_mb_range": 211.57,
+        "anonymous_mb_drift": 210.16
       },
       "first_session": {
         "arm": "clawql_program",
         "ok": true,
-        "session_ms": 69.92810800019652,
+        "session_ms": 54.92101599997841,
         "steps": [
           {
             "step": 1,
@@ -892,7 +3366,7 @@
             "discoveryTokens": 0,
             "resultTokens": 37,
             "codeTokens": 811,
-            "latency_ms": 67.94808800006285,
+            "latency_ms": 52.96094499994069,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -1054,9 +3528,9 @@
         "model": "openapi_tools_host_http",
         "app_slug": "cf-zone-audit-mock",
         "app_id": "app_ead4ce53-9b2f-4b74-b5a6-b876e3b639cf",
-        "deployment": "dpl_c7b3b33d-f2ba-4e56-b9d3-80dd185b542b",
+        "deployment": "dpl_8872cb01-ec24-44d9-901c-2fbc2de2bc94",
         "framework": "0.0.1-beta.81",
-        "mock_origin": "http://127.0.0.1:36945"
+        "mock_origin": "http://127.0.0.1:35605"
       },
       "upstream": "mock",
       "definition_tokens": 181,
@@ -1074,17 +3548,19 @@
       },
       "calls_mean": 12,
       "session_ms": {
-        "p50": 219.78458999982104,
-        "p99": 324.9009620002471,
-        "p999": 589.2717999997549,
+        "p50": 228.88999099982902,
+        "p99": 380.24256399972364,
+        "p999": 902.1387809999287,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": null,
+      "memory_series": [],
+      "memory_flatness": null,
       "first_session": {
         "arm": "executor_v2",
         "ok": true,
-        "session_ms": 856.4565820000134,
+        "session_ms": 739.2617030001711,
         "steps": [
           {
             "step": 1,
@@ -1092,7 +3568,7 @@
             "discoveryTokens": 0,
             "resultTokens": 37,
             "codeTokens": 42,
-            "latency_ms": 465.72240299987607,
+            "latency_ms": 410.93373099993914,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -1106,7 +3582,7 @@
             "discoveryTokens": 0,
             "resultTokens": 11,
             "codeTokens": 77,
-            "latency_ms": 41.83328300016001,
+            "latency_ms": 36.509769999887794,
             "check": {
               "ok": true
             },
@@ -1119,7 +3595,7 @@
             "discoveryTokens": 0,
             "resultTokens": 5,
             "codeTokens": 77,
-            "latency_ms": 38.32249099994078,
+            "latency_ms": 27.455308000091463,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -1133,7 +3609,7 @@
             "discoveryTokens": 0,
             "resultTokens": 7,
             "codeTokens": 90,
-            "latency_ms": 50.7859359998256,
+            "latency_ms": 48.72257800004445,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -1147,7 +3623,7 @@
             "discoveryTokens": 0,
             "resultTokens": 114,
             "codeTokens": 106,
-            "latency_ms": 59.177969000069425,
+            "latency_ms": 40.90763700008392,
             "check": {
               "ok": true,
               "label": "names"
@@ -1161,7 +3637,7 @@
             "discoveryTokens": 0,
             "resultTokens": 29,
             "codeTokens": 117,
-            "latency_ms": 44.218164999969304,
+            "latency_ms": 48.90721300011501,
             "check": {
               "ok": true,
               "label": "unproxiedNames"
@@ -1175,7 +3651,7 @@
             "discoveryTokens": 0,
             "resultTokens": 11,
             "codeTokens": 76,
-            "latency_ms": 27.647705000126734,
+            "latency_ms": 24.72986300010234,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -1189,7 +3665,7 @@
             "discoveryTokens": 0,
             "resultTokens": 12,
             "codeTokens": 80,
-            "latency_ms": 31.176560000050813,
+            "latency_ms": 21.650177999865264,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -1203,7 +3679,7 @@
             "discoveryTokens": 0,
             "resultTokens": 16,
             "codeTokens": 90,
-            "latency_ms": 30.902296000160277,
+            "latency_ms": 22.604404999874532,
             "check": {
               "ok": true
             },
@@ -1216,7 +3692,7 @@
             "discoveryTokens": 0,
             "resultTokens": 80,
             "codeTokens": 89,
-            "latency_ms": 33.961765999905765,
+            "latency_ms": 26.831048999913037,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -1230,7 +3706,7 @@
             "discoveryTokens": 0,
             "resultTokens": 7,
             "codeTokens": 84,
-            "latency_ms": 24.25390199990943,
+            "latency_ms": 22.109703000169247,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -1244,7 +3720,7 @@
             "discoveryTokens": 0,
             "resultTokens": 28,
             "codeTokens": 30,
-            "latency_ms": 3.9256840001326054,
+            "latency_ms": 3.8444900000467896,
             "check": {
               "ok": true
             },
@@ -1279,21 +3755,639 @@
       },
       "calls_mean": 9,
       "session_ms": {
-        "p50": 51.09676000010222,
-        "p99": 73.14932100009173,
-        "p999": 107.25390200037509,
+        "p50": 55.11776200029999,
+        "p99": 78.87775199953467,
+        "p999": 116.21019100025296,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 171.48,
-        "anonymous_mb_median": 101.7,
+        "rss_mb_median": 146.34,
+        "anonymous_mb_median": 88.13,
+        "pss_mb_median": 117.22,
         "samples": 5
+      },
+      "memory_series": [
+        {
+          "i": 1,
+          "rss_mb": 91.45,
+          "anonymous_mb": 35.08,
+          "pss_mb": 62.65
+        },
+        {
+          "i": 100,
+          "rss_mb": 131.57,
+          "anonymous_mb": 74.06,
+          "pss_mb": 102.67
+        },
+        {
+          "i": 200,
+          "rss_mb": 137.99,
+          "anonymous_mb": 80.4,
+          "pss_mb": 109.09
+        },
+        {
+          "i": 300,
+          "rss_mb": 141.09,
+          "anonymous_mb": 83.5,
+          "pss_mb": 112.18
+        },
+        {
+          "i": 400,
+          "rss_mb": 141.96,
+          "anonymous_mb": 84.32,
+          "pss_mb": 113.05
+        },
+        {
+          "i": 500,
+          "rss_mb": 142.61,
+          "anonymous_mb": 84.96,
+          "pss_mb": 113.69
+        },
+        {
+          "i": 600,
+          "rss_mb": 143.16,
+          "anonymous_mb": 85.51,
+          "pss_mb": 114.25
+        },
+        {
+          "i": 700,
+          "rss_mb": 144.03,
+          "anonymous_mb": 86.38,
+          "pss_mb": 115.11
+        },
+        {
+          "i": 800,
+          "rss_mb": 143.82,
+          "anonymous_mb": 86.17,
+          "pss_mb": 114.9
+        },
+        {
+          "i": 900,
+          "rss_mb": 143.95,
+          "anonymous_mb": 86.29,
+          "pss_mb": 115.03
+        },
+        {
+          "i": 1000,
+          "rss_mb": 144.57,
+          "anonymous_mb": 86.91,
+          "pss_mb": 115.65
+        },
+        {
+          "i": 1100,
+          "rss_mb": 144.27,
+          "anonymous_mb": 86.61,
+          "pss_mb": 115.35
+        },
+        {
+          "i": 1200,
+          "rss_mb": 144.53,
+          "anonymous_mb": 86.88,
+          "pss_mb": 115.61
+        },
+        {
+          "i": 1300,
+          "rss_mb": 145,
+          "anonymous_mb": 87.29,
+          "pss_mb": 116.09
+        },
+        {
+          "i": 1400,
+          "rss_mb": 145.24,
+          "anonymous_mb": 87.5,
+          "pss_mb": 116.33
+        },
+        {
+          "i": 1500,
+          "rss_mb": 145.33,
+          "anonymous_mb": 87.58,
+          "pss_mb": 116.42
+        },
+        {
+          "i": 1600,
+          "rss_mb": 144.64,
+          "anonymous_mb": 86.88,
+          "pss_mb": 115.73
+        },
+        {
+          "i": 1700,
+          "rss_mb": 144.88,
+          "anonymous_mb": 87.12,
+          "pss_mb": 115.96
+        },
+        {
+          "i": 1800,
+          "rss_mb": 145.28,
+          "anonymous_mb": 87.52,
+          "pss_mb": 116.36
+        },
+        {
+          "i": 1900,
+          "rss_mb": 145.07,
+          "anonymous_mb": 87.3,
+          "pss_mb": 116.15
+        },
+        {
+          "i": 2000,
+          "rss_mb": 145.54,
+          "anonymous_mb": 87.69,
+          "pss_mb": 116.63
+        },
+        {
+          "i": 2100,
+          "rss_mb": 145,
+          "anonymous_mb": 87.14,
+          "pss_mb": 116.08
+        },
+        {
+          "i": 2200,
+          "rss_mb": 144.6,
+          "anonymous_mb": 86.75,
+          "pss_mb": 115.69
+        },
+        {
+          "i": 2300,
+          "rss_mb": 145.45,
+          "anonymous_mb": 87.59,
+          "pss_mb": 116.53
+        },
+        {
+          "i": 2400,
+          "rss_mb": 145.49,
+          "anonymous_mb": 87.64,
+          "pss_mb": 116.58
+        },
+        {
+          "i": 2500,
+          "rss_mb": 145.27,
+          "anonymous_mb": 87.39,
+          "pss_mb": 116.35
+        },
+        {
+          "i": 2600,
+          "rss_mb": 145.61,
+          "anonymous_mb": 87.73,
+          "pss_mb": 116.69
+        },
+        {
+          "i": 2700,
+          "rss_mb": 145.46,
+          "anonymous_mb": 87.59,
+          "pss_mb": 116.55
+        },
+        {
+          "i": 2800,
+          "rss_mb": 144.83,
+          "anonymous_mb": 86.95,
+          "pss_mb": 115.92
+        },
+        {
+          "i": 2900,
+          "rss_mb": 145.9,
+          "anonymous_mb": 88.02,
+          "pss_mb": 116.99
+        },
+        {
+          "i": 3000,
+          "rss_mb": 144.99,
+          "anonymous_mb": 87.11,
+          "pss_mb": 116.08
+        },
+        {
+          "i": 3100,
+          "rss_mb": 145.4,
+          "anonymous_mb": 87.5,
+          "pss_mb": 116.49
+        },
+        {
+          "i": 3200,
+          "rss_mb": 145.83,
+          "anonymous_mb": 87.93,
+          "pss_mb": 116.92
+        },
+        {
+          "i": 3300,
+          "rss_mb": 144.98,
+          "anonymous_mb": 87.04,
+          "pss_mb": 116.04
+        },
+        {
+          "i": 3400,
+          "rss_mb": 145.77,
+          "anonymous_mb": 87.83,
+          "pss_mb": 116.83
+        },
+        {
+          "i": 3500,
+          "rss_mb": 145.98,
+          "anonymous_mb": 88,
+          "pss_mb": 117.04
+        },
+        {
+          "i": 3600,
+          "rss_mb": 145.28,
+          "anonymous_mb": 87.31,
+          "pss_mb": 116.34
+        },
+        {
+          "i": 3700,
+          "rss_mb": 145.08,
+          "anonymous_mb": 87.11,
+          "pss_mb": 116.14
+        },
+        {
+          "i": 3800,
+          "rss_mb": 146.83,
+          "anonymous_mb": 88.86,
+          "pss_mb": 117.89
+        },
+        {
+          "i": 3900,
+          "rss_mb": 146.23,
+          "anonymous_mb": 88.26,
+          "pss_mb": 117.29
+        },
+        {
+          "i": 4000,
+          "rss_mb": 145.63,
+          "anonymous_mb": 87.66,
+          "pss_mb": 116.69
+        },
+        {
+          "i": 4100,
+          "rss_mb": 145.98,
+          "anonymous_mb": 88.01,
+          "pss_mb": 117.04
+        },
+        {
+          "i": 4200,
+          "rss_mb": 146.15,
+          "anonymous_mb": 88.18,
+          "pss_mb": 117.21
+        },
+        {
+          "i": 4300,
+          "rss_mb": 145.7,
+          "anonymous_mb": 87.73,
+          "pss_mb": 116.76
+        },
+        {
+          "i": 4400,
+          "rss_mb": 145.5,
+          "anonymous_mb": 87.52,
+          "pss_mb": 116.55
+        },
+        {
+          "i": 4500,
+          "rss_mb": 145.93,
+          "anonymous_mb": 87.96,
+          "pss_mb": 116.99
+        },
+        {
+          "i": 4600,
+          "rss_mb": 145.3,
+          "anonymous_mb": 87.33,
+          "pss_mb": 116.36
+        },
+        {
+          "i": 4700,
+          "rss_mb": 146.09,
+          "anonymous_mb": 88.12,
+          "pss_mb": 117.15
+        },
+        {
+          "i": 4800,
+          "rss_mb": 145.48,
+          "anonymous_mb": 87.45,
+          "pss_mb": 116.54
+        },
+        {
+          "i": 4900,
+          "rss_mb": 146.97,
+          "anonymous_mb": 88.86,
+          "pss_mb": 118.03
+        },
+        {
+          "i": 5000,
+          "rss_mb": 145.54,
+          "anonymous_mb": 87.43,
+          "pss_mb": 116.6
+        },
+        {
+          "i": 5100,
+          "rss_mb": 146.83,
+          "anonymous_mb": 88.72,
+          "pss_mb": 117.71
+        },
+        {
+          "i": 5200,
+          "rss_mb": 145.78,
+          "anonymous_mb": 87.67,
+          "pss_mb": 116.66
+        },
+        {
+          "i": 5300,
+          "rss_mb": 146.09,
+          "anonymous_mb": 87.97,
+          "pss_mb": 116.96
+        },
+        {
+          "i": 5400,
+          "rss_mb": 146.81,
+          "anonymous_mb": 88.7,
+          "pss_mb": 117.68
+        },
+        {
+          "i": 5500,
+          "rss_mb": 145.95,
+          "anonymous_mb": 87.84,
+          "pss_mb": 116.83
+        },
+        {
+          "i": 5600,
+          "rss_mb": 145.95,
+          "anonymous_mb": 87.83,
+          "pss_mb": 116.82
+        },
+        {
+          "i": 5700,
+          "rss_mb": 145.66,
+          "anonymous_mb": 87.54,
+          "pss_mb": 116.53
+        },
+        {
+          "i": 5800,
+          "rss_mb": 146.75,
+          "anonymous_mb": 88.64,
+          "pss_mb": 117.63
+        },
+        {
+          "i": 5900,
+          "rss_mb": 146.58,
+          "anonymous_mb": 88.44,
+          "pss_mb": 117.45
+        },
+        {
+          "i": 6000,
+          "rss_mb": 146.36,
+          "anonymous_mb": 88.21,
+          "pss_mb": 117.23
+        },
+        {
+          "i": 6100,
+          "rss_mb": 145.98,
+          "anonymous_mb": 87.84,
+          "pss_mb": 116.86
+        },
+        {
+          "i": 6200,
+          "rss_mb": 145.72,
+          "anonymous_mb": 87.58,
+          "pss_mb": 116.6
+        },
+        {
+          "i": 6300,
+          "rss_mb": 145.65,
+          "anonymous_mb": 87.51,
+          "pss_mb": 116.53
+        },
+        {
+          "i": 6400,
+          "rss_mb": 146.02,
+          "anonymous_mb": 87.88,
+          "pss_mb": 116.9
+        },
+        {
+          "i": 6500,
+          "rss_mb": 145.28,
+          "anonymous_mb": 87.14,
+          "pss_mb": 116.16
+        },
+        {
+          "i": 6600,
+          "rss_mb": 146.95,
+          "anonymous_mb": 88.79,
+          "pss_mb": 117.83
+        },
+        {
+          "i": 6700,
+          "rss_mb": 145.75,
+          "anonymous_mb": 87.58,
+          "pss_mb": 116.63
+        },
+        {
+          "i": 6800,
+          "rss_mb": 145.23,
+          "anonymous_mb": 87.06,
+          "pss_mb": 116.11
+        },
+        {
+          "i": 6900,
+          "rss_mb": 147.05,
+          "anonymous_mb": 88.88,
+          "pss_mb": 117.92
+        },
+        {
+          "i": 7000,
+          "rss_mb": 145.99,
+          "anonymous_mb": 87.82,
+          "pss_mb": 116.87
+        },
+        {
+          "i": 7100,
+          "rss_mb": 146.13,
+          "anonymous_mb": 87.96,
+          "pss_mb": 117
+        },
+        {
+          "i": 7200,
+          "rss_mb": 147.54,
+          "anonymous_mb": 89.34,
+          "pss_mb": 118.42
+        },
+        {
+          "i": 7300,
+          "rss_mb": 146.99,
+          "anonymous_mb": 88.79,
+          "pss_mb": 117.87
+        },
+        {
+          "i": 7400,
+          "rss_mb": 146.88,
+          "anonymous_mb": 88.68,
+          "pss_mb": 117.75
+        },
+        {
+          "i": 7500,
+          "rss_mb": 146.4,
+          "anonymous_mb": 88.2,
+          "pss_mb": 117.28
+        },
+        {
+          "i": 7600,
+          "rss_mb": 146.21,
+          "anonymous_mb": 88,
+          "pss_mb": 117.08
+        },
+        {
+          "i": 7700,
+          "rss_mb": 146.85,
+          "anonymous_mb": 88.64,
+          "pss_mb": 117.72
+        },
+        {
+          "i": 7800,
+          "rss_mb": 146.25,
+          "anonymous_mb": 88.05,
+          "pss_mb": 117.13
+        },
+        {
+          "i": 7900,
+          "rss_mb": 146.43,
+          "anonymous_mb": 88.22,
+          "pss_mb": 117.3
+        },
+        {
+          "i": 8000,
+          "rss_mb": 146.24,
+          "anonymous_mb": 88.03,
+          "pss_mb": 117.12
+        },
+        {
+          "i": 8100,
+          "rss_mb": 146.75,
+          "anonymous_mb": 88.54,
+          "pss_mb": 117.62
+        },
+        {
+          "i": 8200,
+          "rss_mb": 146.2,
+          "anonymous_mb": 87.98,
+          "pss_mb": 117.07
+        },
+        {
+          "i": 8300,
+          "rss_mb": 146.04,
+          "anonymous_mb": 87.83,
+          "pss_mb": 116.91
+        },
+        {
+          "i": 8400,
+          "rss_mb": 145.48,
+          "anonymous_mb": 87.27,
+          "pss_mb": 116.36
+        },
+        {
+          "i": 8500,
+          "rss_mb": 145.61,
+          "anonymous_mb": 87.4,
+          "pss_mb": 116.49
+        },
+        {
+          "i": 8600,
+          "rss_mb": 146.2,
+          "anonymous_mb": 87.98,
+          "pss_mb": 117.07
+        },
+        {
+          "i": 8700,
+          "rss_mb": 145.99,
+          "anonymous_mb": 87.77,
+          "pss_mb": 116.86
+        },
+        {
+          "i": 8800,
+          "rss_mb": 146.7,
+          "anonymous_mb": 88.48,
+          "pss_mb": 117.58
+        },
+        {
+          "i": 8900,
+          "rss_mb": 145.36,
+          "anonymous_mb": 87.14,
+          "pss_mb": 116.23
+        },
+        {
+          "i": 9000,
+          "rss_mb": 146.07,
+          "anonymous_mb": 87.85,
+          "pss_mb": 116.95
+        },
+        {
+          "i": 9100,
+          "rss_mb": 146.17,
+          "anonymous_mb": 87.95,
+          "pss_mb": 117.04
+        },
+        {
+          "i": 9200,
+          "rss_mb": 146.9,
+          "anonymous_mb": 88.68,
+          "pss_mb": 117.77
+        },
+        {
+          "i": 9300,
+          "rss_mb": 146.75,
+          "anonymous_mb": 88.54,
+          "pss_mb": 117.63
+        },
+        {
+          "i": 9400,
+          "rss_mb": 145.36,
+          "anonymous_mb": 87.14,
+          "pss_mb": 116.24
+        },
+        {
+          "i": 9500,
+          "rss_mb": 146.4,
+          "anonymous_mb": 88.18,
+          "pss_mb": 117.27
+        },
+        {
+          "i": 9600,
+          "rss_mb": 146.12,
+          "anonymous_mb": 87.9,
+          "pss_mb": 117
+        },
+        {
+          "i": 9700,
+          "rss_mb": 147.09,
+          "anonymous_mb": 88.87,
+          "pss_mb": 117.96
+        },
+        {
+          "i": 9800,
+          "rss_mb": 146.18,
+          "anonymous_mb": 87.96,
+          "pss_mb": 117.05
+        },
+        {
+          "i": 9900,
+          "rss_mb": 147.28,
+          "anonymous_mb": 89.06,
+          "pss_mb": 118.16
+        },
+        {
+          "i": 10000,
+          "rss_mb": 146.34,
+          "anonymous_mb": 88.13,
+          "pss_mb": 117.22
+        }
+      ],
+      "memory_flatness": {
+        "samples": 101,
+        "anonymous_mb_first": 35.08,
+        "anonymous_mb_last": 88.13,
+        "anonymous_mb_min": 35.08,
+        "anonymous_mb_max": 89.34,
+        "anonymous_mb_range": 54.26,
+        "anonymous_mb_drift": 53.05
       },
       "first_session": {
         "arm": "mcpjungle",
         "ok": true,
-        "session_ms": 315.17339899996296,
+        "session_ms": 357.9063559998758,
         "steps": [
           {
             "step": 1,
@@ -1301,7 +4395,7 @@
             "discoveryTokens": 0,
             "resultTokens": 384,
             "codeTokens": 0,
-            "latency_ms": 222.39575899997726,
+            "latency_ms": 242.27591999992728,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -1314,7 +4408,7 @@
             "discoveryTokens": 0,
             "resultTokens": 273,
             "codeTokens": 0,
-            "latency_ms": 3.6735910000279546,
+            "latency_ms": 6.942764000035822,
             "check": {
               "ok": true
             },
@@ -1326,7 +4420,7 @@
             "discoveryTokens": 0,
             "resultTokens": 44,
             "codeTokens": 0,
-            "latency_ms": 2.972892999649048,
+            "latency_ms": 4.519936999771744,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -1339,7 +4433,7 @@
             "discoveryTokens": 0,
             "resultTokens": 45668,
             "codeTokens": 0,
-            "latency_ms": 14.286690999753773,
+            "latency_ms": 25.44699600012973,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -1376,7 +4470,7 @@
             "discoveryTokens": 0,
             "resultTokens": 144,
             "codeTokens": 0,
-            "latency_ms": 2.7961169998161495,
+            "latency_ms": 3.289288000203669,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -1389,7 +4483,7 @@
             "discoveryTokens": 0,
             "resultTokens": 55,
             "codeTokens": 0,
-            "latency_ms": 2.576811000239104,
+            "latency_ms": 2.469633999746293,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -1402,7 +4496,7 @@
             "discoveryTokens": 0,
             "resultTokens": 87,
             "codeTokens": 0,
-            "latency_ms": 7.686867999844253,
+            "latency_ms": 2.3162269997410476,
             "check": {
               "ok": true
             },
@@ -1414,7 +4508,7 @@
             "discoveryTokens": 0,
             "resultTokens": 108,
             "codeTokens": 0,
-            "latency_ms": 2.3698340002447367,
+            "latency_ms": 2.3178480002097785,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -1427,7 +4521,7 @@
             "discoveryTokens": 0,
             "resultTokens": 570,
             "codeTokens": 0,
-            "latency_ms": 3.31884799990803,
+            "latency_ms": 3.8348970003426075,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -1473,21 +4567,639 @@
       },
       "calls_mean": 9,
       "session_ms": {
-        "p50": 49.47148099914193,
-        "p99": 66.91842500027269,
-        "p999": 105.77912699989974,
+        "p50": 49.42222199961543,
+        "p99": 68.50419200025499,
+        "p999": 113.39041600003839,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 171.1,
-        "anonymous_mb_median": 98.02,
+        "rss_mb_median": 166.26,
+        "anonymous_mb_median": 97.97,
+        "pss_mb_median": 134.46,
         "samples": 5
+      },
+      "memory_series": [
+        {
+          "i": 1,
+          "rss_mb": 105.95,
+          "anonymous_mb": 37.73,
+          "pss_mb": 74.25
+        },
+        {
+          "i": 100,
+          "rss_mb": 151.16,
+          "anonymous_mb": 82.88,
+          "pss_mb": 119.37
+        },
+        {
+          "i": 200,
+          "rss_mb": 162.68,
+          "anonymous_mb": 94.39,
+          "pss_mb": 130.89
+        },
+        {
+          "i": 300,
+          "rss_mb": 164.51,
+          "anonymous_mb": 96.22,
+          "pss_mb": 132.71
+        },
+        {
+          "i": 400,
+          "rss_mb": 165.16,
+          "anonymous_mb": 96.87,
+          "pss_mb": 133.36
+        },
+        {
+          "i": 500,
+          "rss_mb": 165.69,
+          "anonymous_mb": 97.4,
+          "pss_mb": 133.9
+        },
+        {
+          "i": 600,
+          "rss_mb": 165.71,
+          "anonymous_mb": 97.42,
+          "pss_mb": 133.91
+        },
+        {
+          "i": 700,
+          "rss_mb": 165.74,
+          "anonymous_mb": 97.45,
+          "pss_mb": 133.94
+        },
+        {
+          "i": 800,
+          "rss_mb": 165.81,
+          "anonymous_mb": 97.52,
+          "pss_mb": 134.02
+        },
+        {
+          "i": 900,
+          "rss_mb": 165.93,
+          "anonymous_mb": 97.64,
+          "pss_mb": 134.13
+        },
+        {
+          "i": 1000,
+          "rss_mb": 166.01,
+          "anonymous_mb": 97.72,
+          "pss_mb": 134.21
+        },
+        {
+          "i": 1100,
+          "rss_mb": 165.97,
+          "anonymous_mb": 97.68,
+          "pss_mb": 134.18
+        },
+        {
+          "i": 1200,
+          "rss_mb": 166.23,
+          "anonymous_mb": 97.94,
+          "pss_mb": 134.43
+        },
+        {
+          "i": 1300,
+          "rss_mb": 165.94,
+          "anonymous_mb": 97.65,
+          "pss_mb": 134.14
+        },
+        {
+          "i": 1400,
+          "rss_mb": 166.05,
+          "anonymous_mb": 97.76,
+          "pss_mb": 134.25
+        },
+        {
+          "i": 1500,
+          "rss_mb": 166.02,
+          "anonymous_mb": 97.73,
+          "pss_mb": 134.22
+        },
+        {
+          "i": 1600,
+          "rss_mb": 166.18,
+          "anonymous_mb": 97.89,
+          "pss_mb": 134.39
+        },
+        {
+          "i": 1700,
+          "rss_mb": 166.11,
+          "anonymous_mb": 97.82,
+          "pss_mb": 134.32
+        },
+        {
+          "i": 1800,
+          "rss_mb": 166.14,
+          "anonymous_mb": 97.86,
+          "pss_mb": 134.35
+        },
+        {
+          "i": 1900,
+          "rss_mb": 165.93,
+          "anonymous_mb": 97.64,
+          "pss_mb": 134.14
+        },
+        {
+          "i": 2000,
+          "rss_mb": 166.06,
+          "anonymous_mb": 97.77,
+          "pss_mb": 134.27
+        },
+        {
+          "i": 2100,
+          "rss_mb": 166.01,
+          "anonymous_mb": 97.72,
+          "pss_mb": 134.21
+        },
+        {
+          "i": 2200,
+          "rss_mb": 166.15,
+          "anonymous_mb": 97.86,
+          "pss_mb": 134.36
+        },
+        {
+          "i": 2300,
+          "rss_mb": 166.09,
+          "anonymous_mb": 97.8,
+          "pss_mb": 134.29
+        },
+        {
+          "i": 2400,
+          "rss_mb": 166.09,
+          "anonymous_mb": 97.8,
+          "pss_mb": 134.3
+        },
+        {
+          "i": 2500,
+          "rss_mb": 166.09,
+          "anonymous_mb": 97.8,
+          "pss_mb": 134.3
+        },
+        {
+          "i": 2600,
+          "rss_mb": 166.14,
+          "anonymous_mb": 97.85,
+          "pss_mb": 134.35
+        },
+        {
+          "i": 2700,
+          "rss_mb": 166.12,
+          "anonymous_mb": 97.83,
+          "pss_mb": 134.33
+        },
+        {
+          "i": 2800,
+          "rss_mb": 166.21,
+          "anonymous_mb": 97.92,
+          "pss_mb": 134.42
+        },
+        {
+          "i": 2900,
+          "rss_mb": 166.06,
+          "anonymous_mb": 97.77,
+          "pss_mb": 134.27
+        },
+        {
+          "i": 3000,
+          "rss_mb": 166.21,
+          "anonymous_mb": 97.92,
+          "pss_mb": 134.42
+        },
+        {
+          "i": 3100,
+          "rss_mb": 166.16,
+          "anonymous_mb": 97.88,
+          "pss_mb": 134.37
+        },
+        {
+          "i": 3200,
+          "rss_mb": 166.15,
+          "anonymous_mb": 97.86,
+          "pss_mb": 134.36
+        },
+        {
+          "i": 3300,
+          "rss_mb": 166.05,
+          "anonymous_mb": 97.77,
+          "pss_mb": 134.26
+        },
+        {
+          "i": 3400,
+          "rss_mb": 166.15,
+          "anonymous_mb": 97.86,
+          "pss_mb": 134.36
+        },
+        {
+          "i": 3500,
+          "rss_mb": 166.11,
+          "anonymous_mb": 97.82,
+          "pss_mb": 134.31
+        },
+        {
+          "i": 3600,
+          "rss_mb": 166.13,
+          "anonymous_mb": 97.84,
+          "pss_mb": 134.33
+        },
+        {
+          "i": 3700,
+          "rss_mb": 166.18,
+          "anonymous_mb": 97.89,
+          "pss_mb": 134.39
+        },
+        {
+          "i": 3800,
+          "rss_mb": 166.24,
+          "anonymous_mb": 97.95,
+          "pss_mb": 134.45
+        },
+        {
+          "i": 3900,
+          "rss_mb": 166.36,
+          "anonymous_mb": 98.07,
+          "pss_mb": 134.57
+        },
+        {
+          "i": 4000,
+          "rss_mb": 166.22,
+          "anonymous_mb": 97.93,
+          "pss_mb": 134.43
+        },
+        {
+          "i": 4100,
+          "rss_mb": 166.18,
+          "anonymous_mb": 97.89,
+          "pss_mb": 134.38
+        },
+        {
+          "i": 4200,
+          "rss_mb": 166,
+          "anonymous_mb": 97.71,
+          "pss_mb": 134.21
+        },
+        {
+          "i": 4300,
+          "rss_mb": 166.13,
+          "anonymous_mb": 97.84,
+          "pss_mb": 134.34
+        },
+        {
+          "i": 4400,
+          "rss_mb": 166.17,
+          "anonymous_mb": 97.88,
+          "pss_mb": 134.38
+        },
+        {
+          "i": 4500,
+          "rss_mb": 166.2,
+          "anonymous_mb": 97.91,
+          "pss_mb": 134.41
+        },
+        {
+          "i": 4600,
+          "rss_mb": 166.27,
+          "anonymous_mb": 97.98,
+          "pss_mb": 134.47
+        },
+        {
+          "i": 4700,
+          "rss_mb": 166.21,
+          "anonymous_mb": 97.92,
+          "pss_mb": 134.42
+        },
+        {
+          "i": 4800,
+          "rss_mb": 166.19,
+          "anonymous_mb": 97.9,
+          "pss_mb": 134.4
+        },
+        {
+          "i": 4900,
+          "rss_mb": 165.45,
+          "anonymous_mb": 97.16,
+          "pss_mb": 133.66
+        },
+        {
+          "i": 5000,
+          "rss_mb": 166.15,
+          "anonymous_mb": 97.86,
+          "pss_mb": 134.36
+        },
+        {
+          "i": 5100,
+          "rss_mb": 166.15,
+          "anonymous_mb": 97.86,
+          "pss_mb": 134.36
+        },
+        {
+          "i": 5200,
+          "rss_mb": 166.05,
+          "anonymous_mb": 97.77,
+          "pss_mb": 134.26
+        },
+        {
+          "i": 5300,
+          "rss_mb": 166.24,
+          "anonymous_mb": 97.95,
+          "pss_mb": 134.45
+        },
+        {
+          "i": 5400,
+          "rss_mb": 166.14,
+          "anonymous_mb": 97.86,
+          "pss_mb": 134.35
+        },
+        {
+          "i": 5500,
+          "rss_mb": 165.26,
+          "anonymous_mb": 96.97,
+          "pss_mb": 133.47
+        },
+        {
+          "i": 5600,
+          "rss_mb": 166.39,
+          "anonymous_mb": 98.1,
+          "pss_mb": 134.6
+        },
+        {
+          "i": 5700,
+          "rss_mb": 166.2,
+          "anonymous_mb": 97.91,
+          "pss_mb": 134.41
+        },
+        {
+          "i": 5800,
+          "rss_mb": 166.04,
+          "anonymous_mb": 97.75,
+          "pss_mb": 134.25
+        },
+        {
+          "i": 5900,
+          "rss_mb": 166.03,
+          "anonymous_mb": 97.74,
+          "pss_mb": 134.24
+        },
+        {
+          "i": 6000,
+          "rss_mb": 166.42,
+          "anonymous_mb": 98.13,
+          "pss_mb": 134.63
+        },
+        {
+          "i": 6100,
+          "rss_mb": 165.56,
+          "anonymous_mb": 97.27,
+          "pss_mb": 133.77
+        },
+        {
+          "i": 6200,
+          "rss_mb": 166.23,
+          "anonymous_mb": 97.95,
+          "pss_mb": 134.44
+        },
+        {
+          "i": 6300,
+          "rss_mb": 166.48,
+          "anonymous_mb": 98.2,
+          "pss_mb": 134.69
+        },
+        {
+          "i": 6400,
+          "rss_mb": 166.26,
+          "anonymous_mb": 97.97,
+          "pss_mb": 134.47
+        },
+        {
+          "i": 6500,
+          "rss_mb": 166.25,
+          "anonymous_mb": 97.96,
+          "pss_mb": 134.46
+        },
+        {
+          "i": 6600,
+          "rss_mb": 166.27,
+          "anonymous_mb": 97.98,
+          "pss_mb": 134.47
+        },
+        {
+          "i": 6700,
+          "rss_mb": 166.33,
+          "anonymous_mb": 98.04,
+          "pss_mb": 134.54
+        },
+        {
+          "i": 6800,
+          "rss_mb": 166.27,
+          "anonymous_mb": 97.98,
+          "pss_mb": 134.47
+        },
+        {
+          "i": 6900,
+          "rss_mb": 166.29,
+          "anonymous_mb": 98,
+          "pss_mb": 134.5
+        },
+        {
+          "i": 7000,
+          "rss_mb": 166.32,
+          "anonymous_mb": 98.03,
+          "pss_mb": 134.53
+        },
+        {
+          "i": 7100,
+          "rss_mb": 166.41,
+          "anonymous_mb": 98.13,
+          "pss_mb": 134.62
+        },
+        {
+          "i": 7200,
+          "rss_mb": 166.26,
+          "anonymous_mb": 97.97,
+          "pss_mb": 134.47
+        },
+        {
+          "i": 7300,
+          "rss_mb": 166.16,
+          "anonymous_mb": 97.87,
+          "pss_mb": 134.37
+        },
+        {
+          "i": 7400,
+          "rss_mb": 166.14,
+          "anonymous_mb": 97.85,
+          "pss_mb": 134.35
+        },
+        {
+          "i": 7500,
+          "rss_mb": 166.35,
+          "anonymous_mb": 98.06,
+          "pss_mb": 134.56
+        },
+        {
+          "i": 7600,
+          "rss_mb": 166.34,
+          "anonymous_mb": 98.05,
+          "pss_mb": 134.55
+        },
+        {
+          "i": 7700,
+          "rss_mb": 166.24,
+          "anonymous_mb": 97.95,
+          "pss_mb": 134.45
+        },
+        {
+          "i": 7800,
+          "rss_mb": 166.34,
+          "anonymous_mb": 98.05,
+          "pss_mb": 134.55
+        },
+        {
+          "i": 7900,
+          "rss_mb": 166.22,
+          "anonymous_mb": 97.93,
+          "pss_mb": 134.43
+        },
+        {
+          "i": 8000,
+          "rss_mb": 166.23,
+          "anonymous_mb": 97.94,
+          "pss_mb": 134.43
+        },
+        {
+          "i": 8100,
+          "rss_mb": 166.23,
+          "anonymous_mb": 97.94,
+          "pss_mb": 134.43
+        },
+        {
+          "i": 8200,
+          "rss_mb": 166.11,
+          "anonymous_mb": 97.82,
+          "pss_mb": 134.31
+        },
+        {
+          "i": 8300,
+          "rss_mb": 166.23,
+          "anonymous_mb": 97.94,
+          "pss_mb": 134.44
+        },
+        {
+          "i": 8400,
+          "rss_mb": 166.1,
+          "anonymous_mb": 97.81,
+          "pss_mb": 134.31
+        },
+        {
+          "i": 8500,
+          "rss_mb": 166.17,
+          "anonymous_mb": 97.88,
+          "pss_mb": 134.38
+        },
+        {
+          "i": 8600,
+          "rss_mb": 165.89,
+          "anonymous_mb": 97.61,
+          "pss_mb": 134.1
+        },
+        {
+          "i": 8700,
+          "rss_mb": 166.22,
+          "anonymous_mb": 97.93,
+          "pss_mb": 134.43
+        },
+        {
+          "i": 8800,
+          "rss_mb": 166.25,
+          "anonymous_mb": 97.96,
+          "pss_mb": 134.46
+        },
+        {
+          "i": 8900,
+          "rss_mb": 166.28,
+          "anonymous_mb": 97.99,
+          "pss_mb": 134.49
+        },
+        {
+          "i": 9000,
+          "rss_mb": 166.29,
+          "anonymous_mb": 98,
+          "pss_mb": 134.49
+        },
+        {
+          "i": 9100,
+          "rss_mb": 166.25,
+          "anonymous_mb": 97.96,
+          "pss_mb": 134.46
+        },
+        {
+          "i": 9200,
+          "rss_mb": 166.21,
+          "anonymous_mb": 97.92,
+          "pss_mb": 134.41
+        },
+        {
+          "i": 9300,
+          "rss_mb": 166.08,
+          "anonymous_mb": 97.79,
+          "pss_mb": 134.29
+        },
+        {
+          "i": 9400,
+          "rss_mb": 166.22,
+          "anonymous_mb": 97.93,
+          "pss_mb": 134.42
+        },
+        {
+          "i": 9500,
+          "rss_mb": 166.38,
+          "anonymous_mb": 98.09,
+          "pss_mb": 134.58
+        },
+        {
+          "i": 9600,
+          "rss_mb": 165.89,
+          "anonymous_mb": 97.61,
+          "pss_mb": 134.1
+        },
+        {
+          "i": 9700,
+          "rss_mb": 166.41,
+          "anonymous_mb": 98.12,
+          "pss_mb": 134.61
+        },
+        {
+          "i": 9800,
+          "rss_mb": 166.36,
+          "anonymous_mb": 98.07,
+          "pss_mb": 134.56
+        },
+        {
+          "i": 9900,
+          "rss_mb": 166.26,
+          "anonymous_mb": 97.97,
+          "pss_mb": 134.46
+        },
+        {
+          "i": 10000,
+          "rss_mb": 165.45,
+          "anonymous_mb": 97.16,
+          "pss_mb": 133.65
+        }
+      ],
+      "memory_flatness": {
+        "samples": 101,
+        "anonymous_mb_first": 37.73,
+        "anonymous_mb_last": 97.16,
+        "anonymous_mb_min": 37.73,
+        "anonymous_mb_max": 98.2,
+        "anonymous_mb_range": 60.47,
+        "anonymous_mb_drift": 59.43
       },
       "first_session": {
         "arm": "agentgateway",
         "ok": true,
-        "session_ms": 93.00189800001681,
+        "session_ms": 99.48656800016761,
         "steps": [
           {
             "step": 1,
@@ -1495,7 +5207,7 @@
             "discoveryTokens": 0,
             "resultTokens": 384,
             "codeTokens": 0,
-            "latency_ms": 28.465646999888122,
+            "latency_ms": 29.199942999519408,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -1508,7 +5220,7 @@
             "discoveryTokens": 0,
             "resultTokens": 273,
             "codeTokens": 0,
-            "latency_ms": 3.0188920004293323,
+            "latency_ms": 3.378953999839723,
             "check": {
               "ok": true
             },
@@ -1520,7 +5232,7 @@
             "discoveryTokens": 0,
             "resultTokens": 44,
             "codeTokens": 0,
-            "latency_ms": 2.8019580002874136,
+            "latency_ms": 3.078142000362277,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -1533,7 +5245,7 @@
             "discoveryTokens": 0,
             "resultTokens": 45668,
             "codeTokens": 0,
-            "latency_ms": 5.968748999759555,
+            "latency_ms": 5.947522999718785,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -1570,7 +5282,7 @@
             "discoveryTokens": 0,
             "resultTokens": 144,
             "codeTokens": 0,
-            "latency_ms": 6.227474000304937,
+            "latency_ms": 6.096721000038087,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -1583,7 +5295,7 @@
             "discoveryTokens": 0,
             "resultTokens": 55,
             "codeTokens": 0,
-            "latency_ms": 2.6790739996358752,
+            "latency_ms": 2.567943999543786,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -1596,7 +5308,7 @@
             "discoveryTokens": 0,
             "resultTokens": 87,
             "codeTokens": 0,
-            "latency_ms": 2.576450999826193,
+            "latency_ms": 2.4049389995634556,
             "check": {
               "ok": true
             },
@@ -1608,7 +5320,7 @@
             "discoveryTokens": 0,
             "resultTokens": 108,
             "codeTokens": 0,
-            "latency_ms": 1.9100080002099276,
+            "latency_ms": 1.8850659998133779,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -1621,7 +5333,7 @@
             "discoveryTokens": 0,
             "resultTokens": 570,
             "codeTokens": 0,
-            "latency_ms": 3.0333169996738434,
+            "latency_ms": 2.9817850003018975,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -1671,17 +5383,19 @@
       },
       "calls_mean": 0,
       "session_ms": {
-        "p50": 1.1667530005797744,
-        "p99": 3.002127000130713,
-        "p999": 3.622252999804914,
+        "p50": 1.180035000666976,
+        "p99": 3.03311900049448,
+        "p999": 3.37701699975878,
         "comparable": false,
         "note": "latency N/A — tokens-only / no upstream"
       },
       "memory_plateau": null,
+      "memory_series": [],
+      "memory_flatness": null,
       "first_session": {
         "arm": "cloudflare_codemode",
         "ok": true,
-        "session_ms": 1.6419679997488856,
+        "session_ms": 1.4656389998272061,
         "steps": [
           {
             "step": 1,

@@ -136,18 +136,16 @@ source; the sync composer was the remaining poison.
 - HTTP: drop the static `getClawqlApi` import (dynamic in session hooks).
 - Automation: dynamic `import("@kubernetes/client-node")` on first workflow/argocd use.
 
-### Remasure (OOP + lazy, equal-arm 60-op, 120 known-op executes)
+### Remasure (OOP + lazy)
 
-Artifact: [`slim-listen-memory-oop-lazy.json`](./slim-listen-memory-oop-lazy.json)  
-Probe: `scripts/benchmarks/slim-listen-memory-probe.mjs`  
-(`native ≈ smaps Anonymous − V8 heapUsed`; maps checked for k8s/xenova/onnx/stripe/duckdb)
+**Short probe** (120 known-op executes): Ready ~105 / after ~**112 MB** anon —
+[`slim-listen-memory-oop-lazy.json`](./slim-listen-memory-oop-lazy.json). That is the
+**start band**, not the sustained plateau.
 
-| Phase | Anon | JS heap | Native (anon−heap) | Heavy maps |
-| --- | ---: | ---: | ---: | --- |
-| Ready | **105 MB** | 60 MB | 45 MB | none |
-| After 120 executes | **112 MB** | 69 MB | 43 MB | none |
-
-That lands **under** the 150–190 MB underload band.
+**CF board rep 1 (10k sessions):** every ClawQL arm (incl. known-op) starts
+~75–87 MB anon and plateaus ~**282–292 MB**; MJ ~88 / AG ~98 (same-run tree).
+See [`../cloudflare-multiturn/memory-plateau.md`](../cloudflare-multiturn/memory-plateau.md).
+Post/video must quote the **plateau**, not 112.
 
 ### Lazy first-hit cost + fail-closed imports
 

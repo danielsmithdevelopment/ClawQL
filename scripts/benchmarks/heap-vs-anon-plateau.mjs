@@ -193,8 +193,8 @@ async function main() {
         name: "execute",
         arguments: {
           operationId,
-          arguments: { zone_id: "z0z0z0z0z0z0z0z0z0z0z0z0z0z0z0z0" },
-          where: "length(result)",
+          args: { zone_id: "z0z0z0z0z0z0z0z0z0z0z0z0z0z0z0z0", per_page: 500 },
+          where: "{aRecordCount: length(result[?type==`A`])}",
         },
       });
       if (res?.isError && i === 1) {
