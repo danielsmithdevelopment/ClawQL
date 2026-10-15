@@ -55,7 +55,13 @@ const OUT_DIR = process.env.CF_MT_OUT_DIR || join(ROOT, "docs/benchmarks/cloudfl
 const ITERS = Math.max(1, Number(process.env.CF_MT_ITERS || 20) || 20);
 const REPS = Math.max(1, Number(process.env.CF_MT_REPS || 1) || 1);
 const LATENCY = process.env.MT_UPSTREAM_LATENCY || "0";
-const IS_PUBLISH_BOARD = ITERS >= 10000 && REPS >= 3;
+/** Force board-* prefix when ITERS≥10000 (e.g. single-rep recovery after a crashed publish run). */
+const FORCE_PUBLISH = ["1", "true", "yes"].includes(
+  (process.env.CF_MT_PUBLISH ?? "").trim().toLowerCase()
+);
+const IS_PUBLISH_BOARD = ITERS >= 10000 && (REPS >= 3 || FORCE_PUBLISH);
+/** First rep index written to board-rep{N}-… (default 1). Use with CF_MT_REPS=1 to recover rep 3. */
+const REP_START = Math.max(1, Number(process.env.CF_MT_REP_START || 1) || 1);
 const ARMS = (
   process.env.CF_MT_ARMS ||
   "direct,clawql_default,clawql_compact_search,clawql_known_op,clawql_program,executor_v2,mcpjungle,agentgateway,cloudflare_codemode"
@@ -1373,8 +1379,9 @@ async function main() {
     }
 
     const repBoards = [];
-    for (let rep = 1; rep <= REPS; rep++) {
-      console.log(`[cf-board] === rep ${rep}/${REPS} ===`);
+    for (let i = 0; i < REPS; i++) {
+      const rep = REP_START + i;
+      console.log(`[cf-board] === rep ${rep} (${i + 1}/${REPS}; start=${REP_START}) ===`);
       const board = {};
       for (const arm of ARMS) {
         console.log(`[cf-board] run ${arm}`);
