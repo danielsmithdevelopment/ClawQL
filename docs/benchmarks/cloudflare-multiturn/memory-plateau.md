@@ -60,12 +60,13 @@ Node variance: [`http-concurrency-node-variance-3x.json`](./http-concurrency-nod
 | Node uncapped | **[30, 31]** (median **31**) | `REPS=3`; prior single-pass **44** was an outlier |
 | Node 256 | **[27, 29]** (median **27**) | 1–4 clients under uncapped — **not** a ~30% tax |
 | Node 384 | **[25, 30]** (median **28**) | Overlaps uncapped; unbound vs ~296 MB plateau |
-| Bun `--smol` | **72** | Cloud HTTP default; still ~130 MB plateau (prior 1×) |
-| MCPJungle HTTP | **26** | Larger body (no `where`); ≠ pets-board **204** (tiny payload) |
-| agentgateway HTTP | **24** stock / **17** tuned | Raising pool/workers/concurrency did **not** help |
+| Bun `--smol` | **[79, 87]** (median **84**) | Cloud HTTP default; ~130 MB plateau |
+| MCPJungle HTTP | **[31, 31]** (median **31**) | Larger body (no `where`); ≠ pets-board **204** |
+| agentgateway HTTP | **[34, 38]** (median **38**) / tuned **17** | Stock `REPS=3`; tuned smoke did not help |
 
-**Verdict:** do **not** claim the heap cap costs ~30% concurrency. Bun’s lead does not
-depend on that. Horizontal scale (NATS ~135) remains the multi-instance path.
+**Verdict:** do **not** claim the heap cap costs ~30% concurrency. Bun’s lead holds on
+the same `REPS=3` standard as peers. Horizontal scale (NATS ~135) remains the
+multi-instance path.
 
 ## Heap limits by profile
 

@@ -18,7 +18,7 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | **Real-model 50 sessions / arm × 2 model families** | **Done** — dual-win `known_op_beats_code_mode_for_real_models` ([`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json)) |
 | **Measured defaults (not program-as-core)** | Locked — [`measured-defaults.md`](./measured-defaults.md): known-op/`where` is the filter winner; programs stay alongside until one-step plans are as cheap as `execute` and a fan-out board clears |
 | **Memory under load (slim)** | Uncapped ~**290 MB**; Node **256** → **132 MB** (+**3.5 ms** p99); Bun `--smol` → **130 MB** and faster — [`memory-plateau.md`](./memory-plateau.md). |
-| **HTTP concurrency (Cloud)** | Node `REPS=3`: uncapped **[30,31]** / 256 **[27,29]** / 384 **[25,30]** — **no ~30% cap tax**. Bun/MJ/AG `REPS=3` in flight (was 1× 72/26/24). AG tuned **17**. [`http-concurrency-heap-ab.json`](./http-concurrency-heap-ab.json). |
+| **HTTP concurrency (Cloud)** | All arms `REPS=3`: Node uncapped **[30,31]** / 256 **[27,29]** / 384 **[25,30]**; Bun **[79,87]**; MJ **[31]**; AG **[34,38]** — **no ~30% cap tax**; Bun still leads. AG tuned **17**. [`http-concurrency-heap-ab.json`](./http-concurrency-heap-ab.json). |
 | **Board errors** | Slim rep3 aborted: `executor_v2` HTTP **502** (r2-list-buckets) after ≥7000 ok — counted, not discarded. Rep3 restart + continue-on-error — [`board-error-inventory.json`](./board-error-inventory.json). |
 | Blog / public headline | Cleared by pre-committed rules (board + dual-model gate both green) |
 
