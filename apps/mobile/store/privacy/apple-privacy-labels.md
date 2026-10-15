@@ -11,7 +11,9 @@ Fill App Store Connect **App Privacy** to match this table. `NSPrivacyTracking` 
 | Photos or Videos | Yes | No | App functionality | Only when the user attaches evidence via camera / library |
 | Product interaction | Yes | No | App functionality / Analytics | Approve / decline / ask teammate (audit) |
 
-**Not collected for v1:** Health, Financial Info (bank accounts / credit cards — org spend *display* is not payment instrument collection), Precise Location, Contacts, Browsing History, Advertising Data, Purchases (app does not sell IAP in v1).
+**Not collected for v1:** Audio Data (voice is typed commands + **on-device** TTS — the store binary does not listen on the microphone and does not send speech audio to Apple or ClawQL), Health, Financial Info (bank accounts / credit cards — org spend *display* is not payment instrument collection), Precise Location, Contacts, Browsing History, Advertising Data, Purchases (app does not sell IAP in v1).
+
+When native mic speech recognition ships, add specific `NSMicrophoneUsageDescription` / `NSSpeechRecognitionUsageDescription` strings, declare Audio Data if recognition leaves the device, and prefer on-device recognition.
 
 ## Privacy manifests in the binary
 

@@ -9,6 +9,7 @@ import {
   shareShortcutDonationEffect,
   type ShortcutDonation,
 } from "@/src/services/shortcuts-donation";
+import { allowsVoiceMicListening } from "@/src/services/release-policy";
 import {
   fixtureDictateEffect,
   runVoiceCommandEffect,
@@ -105,13 +106,14 @@ export default function VoiceScreen() {
       <SectionHeader
         icon="agents"
         title="Voice assistant"
-        subtitle="Dictate or type a command. Approve still needs your security key."
+        subtitle="Type a command like “read the next request.” Approve still needs your security key."
       />
 
       <SurfaceCard testID="voice-composer" tint="soft">
-        <Meta color={brand.inkFaint}>
-          Typed / fixture commands work everywhere. Web mic uses the browser Speech
-          API. Siri App Intents land after Day-0.
+        <Meta color={brand.inkFaint} testID="voice-privacy-note">
+          {allowsVoiceMicListening()
+            ? "Web demo: browser Speech Recognition may send audio to the browser vendor. Typed commands always work. Spoken replies use on-device TTS when available."
+            : "This phone build does not listen on the microphone. Type commands (or use fixture buttons). Spoken replies use on-device text-to-speech — no audio leaves the device. Native mic recognition ships in a later update with specific privacy strings."}
         </Meta>
         <TextInput
           testID="voice-input"
@@ -146,7 +148,7 @@ export default function VoiceScreen() {
             disabled={busy}
             onPress={() => void run("list pending")}
           />
-          {Platform.OS === "web" ? (
+          {allowsVoiceMicListening() ? (
             <SecondaryButton
               testID="voice-dictate-web"
               label="Listen (browser mic)"

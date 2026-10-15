@@ -33,6 +33,10 @@ v1 uses company SSO / browser OAuth and fixture/demo paths. We do **not** offer 
 
 App Lock and the reviewer-demo approve path use device biometrics (`expo-local-authentication`). Fixture / web builds use a one-tap unlock that stands in for Face ID / Touch ID. Production builds prompt the system sheet when enrolled.
 
+## Voice assistant (typed + on-device TTS)
+
+Profile → **Open voice assistant** accepts **typed** commands (and fixture buttons in demo builds): list pending, read next, decline first, ask a teammate, start a workflow. Replies can be spoken with **on-device** text-to-speech (`expo-speech` / AVSpeechSynthesizer). **No microphone listening** in this binary — Audio Data is not collected. **Approve never completes from voice alone** — the security-key / Face ID path on the review screen still runs. Native mic recognition and Siri App Intents are deferred.
+
 ## Accessibility
 
 v1 ships with a WCAG-oriented gate on the fixture **web export** (`npm run a11y:lh`). Store review should still spot-check VoiceOver (iOS) and TalkBack (Android) on a device build.

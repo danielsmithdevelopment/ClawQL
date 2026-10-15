@@ -16,6 +16,7 @@ import {
 import {
   allowsDemoData,
   allowsInAppCommerce,
+  allowsVoiceMicListening,
   isFixtureBuild,
   V1_READ_ONLY_SURFACES,
 } from "../release-policy";
@@ -57,6 +58,11 @@ describe("release policy", () => {
 
   it("marks gateway / automations / settings read-only in v1", () => {
     expect(V1_READ_ONLY_SURFACES).toEqual(["gateway", "automations", "settings"]);
+  });
+
+  it("disables mic listening on native store platforms", () => {
+    // vitest mocks Platform.OS as ios — store binary must not listen.
+    expect(allowsVoiceMicListening()).toBe(false);
   });
 });
 

@@ -80,6 +80,16 @@ if (/ITSAppUsesNonExemptEncryption:\s*false/.test(appConfigSrc)) {
   bad("app.config.ts missing ITSAppUsesNonExemptEncryption: false");
 }
 
+// Store binary must not claim mic/speech recognition until native STT ships with
+// specific usage strings. Absence is correct for typed + on-device TTS v1.
+if (/NSMicrophoneUsageDescription|NSSpeechRecognitionUsageDescription/.test(appConfigSrc)) {
+  bad(
+    "app.config.ts declares mic/speech strings — only add with specific copy when native STT ships"
+  );
+} else {
+  ok("no NSMicrophone/NSSpeechRecognition usage strings (typed voice + on-device TTS only)");
+}
+
 const modulePrivacy = readFileSync(
   join(root, "modules/clawql-secure-clipboard/ios/PrivacyInfo.xcprivacy"),
   "utf8"

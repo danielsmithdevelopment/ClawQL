@@ -5,10 +5,12 @@
  * - Sell nothing in the app: plan is read-only; no prices/upgrades/pay CTAs in production.
  * - Fixture / sample data only in explicit demo modes, never as silent production fallback.
  * - Gateway / Automations / Settings ship read-only in v1.
+ * - Voice: typed commands + on-device TTS only — no microphone listening in the store binary.
  *
  * @see docs/specs/mobile/app-review-v1-safety.md
  */
 import { Effect } from "effect";
+import { Platform } from "react-native";
 
 import type { MobileSession } from "../domain/schemas";
 import { loadMobileConfigEffect, type MobileConfig } from "./config";
@@ -40,6 +42,17 @@ export function allowsDemoData(
   return false;
 }
 
+/**
+ * Mic / speech-recognition listening is **off** for the App Store / Play binary.
+ * v1 voice is typed (or fixture) commands plus on-device TTS (`expo-speech` /
+ * AVSpeechSynthesizer). Browser Web Speech STT is web-only demo — it never ships
+ * as a native permission. When native STT lands, add specific Info.plist strings
+ * and update App Privacy audio collection.
+ */
+export function allowsVoiceMicListening(): boolean {
+  return Platform.OS === "web";
+}
+
 /** Surfaces kept browse-only in the first store release. */
 export const V1_READ_ONLY_SURFACES = ["gateway", "automations", "settings"] as const;
 export type V1ReadOnlySurface = (typeof V1_READ_ONLY_SURFACES)[number];
@@ -52,6 +65,7 @@ export function loadReleasePolicyEffect(): Effect.Effect<{
   readonly config: MobileConfig;
   readonly allowsInAppCommerce: boolean;
   readonly isFixtureBuild: boolean;
+  readonly allowsVoiceMicListening: boolean;
 }> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
@@ -59,6 +73,7 @@ export function loadReleasePolicyEffect(): Effect.Effect<{
       config,
       allowsInAppCommerce: allowsInAppCommerce(config),
       isFixtureBuild: isFixtureBuild(config),
+      allowsVoiceMicListening: allowsVoiceMicListening(),
     };
   });
 }

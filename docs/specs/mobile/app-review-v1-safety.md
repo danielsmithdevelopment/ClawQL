@@ -52,6 +52,12 @@ Full console parity shipped more surface area than a minimal v1. Before App Stor
 
 Keep screens reachable for parity, but mark **Gateway**, **Automations**, and **Settings** as **read-only in v1** (browse; mutations stay on web).
 
+## Decision 6 — Voice: typed + on-device TTS only (no mic in store binary)
+
+**Audit (2026-10-15):** Native `/voice` uses typed / fixture commands + `expo-speech` TTS (AVSpeechSynthesizer — on-device). Browser Web Speech STT is **web-only**. There is no `NSMicrophoneUsageDescription` / `NSSpeechRecognitionUsageDescription` because the phone binary does not listen.
+
+**Choose:** Keep the assistant for App Review (reviewers can type commands). Do **not** enable mic listening until Day-0 native STT ships with specific usage strings and App Privacy Audio Data updated if audio leaves the device. `allowsVoiceMicListening()` is false on iOS/Android.
+
 ## Day-0 / review path
 
 1. **Start App Store enrollment now** (longest wait).
