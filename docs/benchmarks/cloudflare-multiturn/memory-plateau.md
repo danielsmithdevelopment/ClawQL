@@ -39,3 +39,19 @@ If not, memory remains the board’s weak cell — say so plainly.
 
 Artifact: [`board-rep1-n10000.json`](./board-rep1-n10000.json) (`memory_series` /
 `memory_flatness`). Probe: `scripts/benchmarks/heap-vs-anon-plateau.mjs`.
+
+## Heap vs anon at plateau (N=4000 known-op)
+
+Artifact: [`heap-vs-anon-plateau-n4000.json`](./heap-vs-anon-plateau-n4000.json)
+
+| Metric | Value |
+| --- | ---: |
+| Anon plateau median | **278.5 MB** |
+| Live heap median | **130 MB** (series min/max **60–220**) |
+| Anon − heap median | **~149 MB** |
+| Execute latency p50 / p99 | **3.1 ms / 10.7 ms** |
+
+When heap dips (~72 MB mid-run), anon stays ~**279 MB** — large unreclaimed /
+native band beside a swinging live heap. Classification: **mixed** (not pure
+tiny-heap headroom, not pure retained live). Next: old-space A/B
+(`NODE_MAX_OLD_SPACE_MB=256` then 192) measuring plateau anon **and** latency.
