@@ -330,7 +330,17 @@ async function startClawql(
   });
   const logPath = join(home, "clawql.log");
   const logFd = openSync(logPath, "w");
-  const child = spawn(process.execPath, [join(ROOT, "dist/server-http.js")], {
+  // Default 256 — heap-vs-anon A/B cut plateau anon ~278→~124 with ~0.2 ms p50 cost
+  // (see memory-plateau.md). Override CLAWQL_NODE_MAX_OLD_SPACE_MB=0 for uncapped.
+  const oldMbRaw = process.env.CLAWQL_NODE_MAX_OLD_SPACE_MB;
+  const oldMb =
+    oldMbRaw === "0" || oldMbRaw === "false"
+      ? null
+      : Math.max(64, Number(oldMbRaw || 256) || 256);
+  const nodeArgs = oldMb
+    ? [`--max-old-space-size=${oldMb}`, join(ROOT, "dist/server-http.js")]
+    : [join(ROOT, "dist/server-http.js")];
+  const child = spawn(process.execPath, nodeArgs, {
     env,
     stdio: ["ignore", logFd, logFd],
   });
