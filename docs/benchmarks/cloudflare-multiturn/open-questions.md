@@ -14,7 +14,7 @@ Track decisions here before publication. Unchecked items block a “final” boa
 - [ ] **Cheap one-step program format:** plan boilerplate must not cost ~811 vs known-op’s ~191 code tokens before programs can be the core tool.
 - [ ] **Fan-out / join board** + dual-model gate on that board (promotion signal for multi-op programs).
 - [ ] **celld isolate-boundary spike** (cold start, per-call cost, memory/cell vs plan runner) — may run **in parallel** with the fan-out board (ADR 0015).
-- [ ] **Heap-vs-anon at plateau** + Node/Bun old-space A/B (memory + latency) — see [`memory-plateau.md`](./memory-plateau.md).
+- [x] **Heap-vs-anon at plateau** + Node/Bun old-space A/B (memory + latency + p999/GC + stress) — Node **256** lean default; Bun **`--smol`**; memory profile prefer **384**. See [`memory-plateau.md`](./memory-plateau.md) / [`measured-defaults.md`](./measured-defaults.md).
 - [x] **Charge `where`/plan as code tokens:** execute `where` (+fields) and program plan JSON count in the same bucket as code-mode scripts; `weighted_mean` on every arm.
 - [ ] **Re-publish 3×10k board** with code-arg accounting (prior boards are not the claim).
 - [x] **Compact program plan:** omit `tool` when `operationId` set (parser default); short ids; drop empty args (872 → 811 code tokens on this workflow).

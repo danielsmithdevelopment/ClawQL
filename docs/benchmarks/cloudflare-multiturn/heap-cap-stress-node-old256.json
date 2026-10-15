@@ -1,0 +1,210 @@
+{
+  "measuredAt": "2026-10-15T20:20:34.533Z",
+  "runtime": "node",
+  "bun_smol": null,
+  "node_max_old_space_mb": 256,
+  "any_oom": false,
+  "any_crash": false,
+  "memory_profile_anon_mb": 261.09,
+  "recommendation": "lean_256_ok_memory_profile_prefer_384 — survived; long memory_ingest anon near old-space cap",
+  "cases": [
+    {
+      "case": "full_true_unfiltered_list",
+      "ok": true,
+      "crashed": false,
+      "oom": false,
+      "byte_count": 160473,
+      "truncated": false,
+      "latency_ms": 31.22,
+      "memory": {
+        "rss_mb": 154.95,
+        "anonymous_mb": 105.3,
+        "pss_mb": 110.45
+      },
+      "truncation_reason": null,
+      "is_error": false,
+      "exit": null
+    },
+    {
+      "case": "peak_concurrency_single_instance",
+      "ok": true,
+      "crashed": false,
+      "oom": false,
+      "sustained_concurrency_before_break": 128,
+      "broke_at": null,
+      "process_died": null,
+      "steps": [
+        {
+          "concurrency": 1,
+          "ok": 410,
+          "err": 0,
+          "error_rate": 0,
+          "latency_ms": {
+            "p50": 4.037338000000091,
+            "p99": 15.181172000000515,
+            "p999": 23.45401700000002
+          },
+          "memory": {
+            "rss_mb": 176.09,
+            "anonymous_mb": 126.3,
+            "pss_mb": 131.46
+          },
+          "process_alive": true
+        },
+        {
+          "concurrency": 2,
+          "ok": 623,
+          "err": 0,
+          "error_rate": 0,
+          "latency_ms": {
+            "p50": 5.335554999999658,
+            "p99": 18.786584999999832,
+            "p999": 26.26255200000014
+          },
+          "memory": {
+            "rss_mb": 178.68,
+            "anonymous_mb": 128.83,
+            "pss_mb": 134
+          },
+          "process_alive": true
+        },
+        {
+          "concurrency": 4,
+          "ok": 775,
+          "err": 0,
+          "error_rate": 0,
+          "latency_ms": {
+            "p50": 9.16415600000073,
+            "p99": 31.043397999999797,
+            "p999": 40.52605299999959
+          },
+          "memory": {
+            "rss_mb": 188.51,
+            "anonymous_mb": 138.6,
+            "pss_mb": 143.78
+          },
+          "process_alive": true
+        },
+        {
+          "concurrency": 8,
+          "ok": 783,
+          "err": 0,
+          "error_rate": 0,
+          "latency_ms": {
+            "p50": 19.04166400000031,
+            "p99": 50.52999000000091,
+            "p999": 68.47024000000056
+          },
+          "memory": {
+            "rss_mb": 194.86,
+            "anonymous_mb": 144.89,
+            "pss_mb": 150.08
+          },
+          "process_alive": true
+        },
+        {
+          "concurrency": 16,
+          "ok": 861,
+          "err": 0,
+          "error_rate": 0,
+          "latency_ms": {
+            "p50": 35.00355199999831,
+            "p99": 96.92284099999961,
+            "p999": 134.847984
+          },
+          "memory": {
+            "rss_mb": 206.65,
+            "anonymous_mb": 156.68,
+            "pss_mb": 161.87
+          },
+          "process_alive": true
+        },
+        {
+          "concurrency": 32,
+          "ok": 966,
+          "err": 0,
+          "error_rate": 0,
+          "latency_ms": {
+            "p50": 59.64911700000084,
+            "p99": 333.35530800000015,
+            "p999": 532.6572130000004
+          },
+          "memory": {
+            "rss_mb": 213.51,
+            "anonymous_mb": 163.54,
+            "pss_mb": 168.73
+          },
+          "process_alive": true
+        },
+        {
+          "concurrency": 64,
+          "ok": 1013,
+          "err": 0,
+          "error_rate": 0,
+          "latency_ms": {
+            "p50": 129.22254899999825,
+            "p99": 252.9144269999997,
+            "p999": 340.32974000000104
+          },
+          "memory": {
+            "rss_mb": 238.57,
+            "anonymous_mb": 188.61,
+            "pss_mb": 193.79
+          },
+          "process_alive": true
+        },
+        {
+          "concurrency": 128,
+          "ok": 1037,
+          "err": 0,
+          "error_rate": 0,
+          "latency_ms": {
+            "p50": 129.51370099999986,
+            "p99": 2179.548257000002,
+            "p999": 2193.792106000001
+          },
+          "memory": {
+            "rss_mb": 239.02,
+            "anonymous_mb": 189.05,
+            "pss_mb": 194.24
+          },
+          "process_alive": true
+        }
+      ],
+      "max_tried": 128,
+      "step_ms": 2000
+    },
+    {
+      "case": "memory_ingest_long_document",
+      "ok": true,
+      "crashed": false,
+      "oom": false,
+      "doc_chars": 305269,
+      "latency_ms": 12448.65,
+      "memory": {
+        "rss_mb": 331.19,
+        "anonymous_mb": 261.09,
+        "pss_mb": 272.11
+      },
+      "is_error": false,
+      "response_head": "{\n  \"ok\": true,\n  \"path\": \"Memory/heap-cap-stress-long-doc.md\",\n  \"wormRef\": \"sha256:ddbb5c95416418bc3c1e63f8e3efbf2fc54f3c613b1b6ecbeed1df585dc531fd\",\n  \"rebuild\": {\n    \"embeddings\": {\n      \"synced",
+      "exit": null
+    },
+    {
+      "case": "program_fanout",
+      "ok": true,
+      "crashed": false,
+      "oom": false,
+      "steps": 8,
+      "latency_ms": 99.9,
+      "memory": {
+        "rss_mb": 160.3,
+        "anonymous_mb": 110.65,
+        "pss_mb": 115.79
+      },
+      "is_error": false,
+      "response_head": "{\"ok\":true,\"programId\":\"prog_282da24fb737ab4c125288a1\",\"result\":{\"mode\":\"sequential\",\"results\":[{\"id\":\"1\",\"tool\":\"execute\",\"operationId\":\"dns-records-for-a-zone-list-dns-records\",\"ok\":true,\"value\":{\"n\":300}},{\"id\":\"2\",\"tool\":\"execute\",\"oper",
+      "exit": null
+    }
+  ]
+}

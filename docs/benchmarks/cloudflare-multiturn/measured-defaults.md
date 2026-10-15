@@ -72,8 +72,20 @@ programs as the opt-in multi-op path.
 
 ## Memory line (same-run; report the plateau)
 
-See [`memory-plateau.md`](./memory-plateau.md). Rep 1 of the slim 3×10k board:
-every ClawQL arm (including known-op) starts ~**80 MB** anon and plateaus
-~**290 MB**; MJ ~**88**, AG ~**98** (gaps ~**200 MB**). The ~112 MB / 120-execute
-smoke number was the **start**, not steady state. Post/video: plateau vs peers,
-and “down from ~630” — not “near Go.” Heap-vs-anon + old-space A/B next.
+See [`memory-plateau.md`](./memory-plateau.md).
+
+| Deploy profile | Runtime flag | Justification |
+| --- | --- | --- |
+| **Lean Node listen** (board / equal-arm / Helm default) | `--max-old-space-size=256` | A/B: uncapped plateau ~**296 MB** anon → capped ~**132 MB**; p99 **9.8 → 13.4 ms** (~+3.5 ms); p999 **17 → 21 ms**; GC pauses **244 → 269**. Stress under 256: `full:true` ~160 KB ok, concurrency **128** sustained, 8-step program ok — no OOM. |
+| **Memory-enabled / heavy in-process** | Node **384** (or isolate heavy work) | Long `memory_ingest` (~305 KB doc) survived at **~255 MB** anon under a 256 cap — too tight for a product default when vault ingest is on. |
+| **Docker Desktop all-providers** | **768** (`values-docker-desktop.yaml`) | Catalog startup + memory/documents; 512 OOMs at load. |
+| **Bun listen** | `--smol` | Plateau already ~**130 MB** with or without `--smol`; `--smol` improves p999 (**27 → 15 ms**). No Node `--max-old-space-size` equivalent. |
+
+Helm: `manifests/charts/clawql-mcp/values.yaml` → `nodeOptions: "--max-old-space-size=256"`.
+Board harness: `CLAWQL_NODE_MAX_OLD_SPACE_MB` defaults to **256** (`=0` uncapped).
+
+**Post (capped):** plateaus near **125 MB** under sustained load, within about **30 MB**
+of the Go/Rust gateways, at a cost of about **3 ms** at p99 — down from ~**630**.
+
+Uncapped slim board (rep 1) still shows ~**290 MB** plateau vs MJ ~**88** / AG ~**98**;
+quote the capped number from the next publish board (or this A/B until then).

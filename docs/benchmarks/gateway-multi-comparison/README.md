@@ -274,7 +274,10 @@ Artifacts: [`flags-ab-http-peers-verdict.md`](./flags-ab-http-peers-verdict.md),
 | Bun HTTP | ON (--smol) | 28.4 | **396** | 316 |
 | Bun HTTP | OFF | 30.3 | 540 | 316 |
 
-**Keep** Node `--max-old-space-size=512` and Bun `--smol` — they improve tails and Node RSS. GC/ELD logs barely overlap slow flows (near-zero), so the earlier 200→461 p999 jump was **not** explained by those flags.
+**Historical board row kept 512.** Lean product / Helm default is now Node
+`--max-old-space-size=256` (CF multiturn plateau A/B + stress — see
+[`../cloudflare-multiturn/measured-defaults.md`](../cloudflare-multiturn/measured-defaults.md));
+Bun still **`--smol`**. Memory-enabled profiles prefer **384**.
 
 #### 2–3. First session vs known-op (steady state)
 
