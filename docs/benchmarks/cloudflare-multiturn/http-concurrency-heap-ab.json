@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-15T20:56:09.847732Z",
+  "measuredAt": "2026-10-15T21:13:44.245740Z",
   "topology": "A_single_instance_http_multiplex",
   "claim_rules": [
     "One Streamable HTTP MCP process per arm; N concurrent clients; p99\u2264100ms / error_rate\u22640.02; power-of-two + binary refine.",
@@ -28,6 +28,13 @@
       "node_max_old_space_mb": 256,
       "bun_smol": null
     },
+    "clawql_node_384": {
+      "sustained": 31,
+      "first_break": 32,
+      "runtime": "node",
+      "node_max_old_space_mb": 384,
+      "bun_smol": null
+    },
     "clawql_bun_smol": {
       "sustained": 72,
       "first_break": 73,
@@ -51,18 +58,20 @@
     }
   },
   "interpretation": {
-    "heap_cap_vs_concurrency": "heap_cap_costs_concurrency \u2014 uncapped 44 \u2192 256 31 (\u0394 13, ~30% fewer clients)",
-    "bun_vs_node256": "bun_holds_more \u2014 Bun 72 vs Node256 31 (also beats uncapped Node 44)",
+    "heap_cap_vs_concurrency": "heap_cap_costs_concurrency \u2014 uncapped 44 \u2192 256 31 / 384 31 (384 does not recover vs 256 on this fixture)",
+    "bun_vs_node_caps": "bun_holds_more \u2014 Bun 72 vs Node256/384 31 (also beats uncapped 44)",
     "vs_peers_http": {
       "clawql_node_uncapped": 44,
       "clawql_node_256": 31,
+      "clawql_node_384": 31,
       "clawql_bun_smol": 72,
       "mcpjungle": 26,
       "agentgateway": 24,
-      "note": "Like-for-like HTTP multiplex. Aggregator payloads larger (no where) \u2014 still the Cloud-shaped peer comparison."
+      "note": "Like-for-like HTTP multiplex. Aggregator payloads larger (no where). MJ session_mode=stateful (prod-friendly); AG workerThreads/pool/maxConcurrentRequests left at stock defaults \u2014 invite maintainer settings before public claim."
     },
-    "cloud_profile_hint": "Node Cloud HTTP may want >256 (e.g. 384) if per-instance concurrency matters; Bun --smol is the strongest single-instance HTTP arm here. Horizontal scale (NATS 4-replica ~135) remains the capacity path.",
-    "related": "Open HTTP tail stalls (300\u2013700 ms) amplify under concurrency \u2014 same investigation track as this p99\u2264100 ceiling."
+    "cloud_profile_hint": "Bun --smol is the Cloud HTTP default (72 clients, ~130 MB). Node 384 matches Node 256 concurrency (31) \u2014 keep 384 for memory-ingest headroom, not as a concurrency fix. Scale out (NATS ~135) for capacity.",
+    "related": "Open HTTP tail stalls (300\u2013700 ms) amplify under concurrency \u2014 same investigation track.",
+    "reconcile_mj_204_vs_26": "MCPJungle 204 (gateway-multi pets board, tiny list_pets) and 26 (CF DNS lists without where) are both valid \u2014 different payloads, same HTTP 1\u00d7 topology."
   },
   "arms": [
     {
@@ -300,6 +309,213 @@
         }
       ],
       "source_log": "http-concurrency-heap-ab.log"
+    },
+    {
+      "id": "clawql_node_384",
+      "kind": "clawql",
+      "runtime": "node",
+      "node_max_old_space_mb": 384,
+      "bun_smol": null,
+      "toolName": "execute",
+      "note": "Measured after uncapped/256/Bun/MJ/AG pass; same host/SLO. Sustained 31 = same as Node 256 \u2014 384 does not recover the concurrency tax on this fixture.",
+      "sustained_concurrency_before_break": 31,
+      "first_break_clients": 32,
+      "break_reason": "p99 137.1ms",
+      "steps": [
+        {
+          "concurrency": 1,
+          "ok": 741,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 247,
+          "latency_ms": {
+            "p50": 3.6179430000001958,
+            "p99": 10.367095999999947,
+            "p999": 14.679595000000063
+          },
+          "memory": {
+            "rss_mb": 175.32,
+            "anonymous_mb": 124.96,
+            "pss_mb": 136.59
+          },
+          "broken": false,
+          "break_reason": null
+        },
+        {
+          "concurrency": 2,
+          "ok": 1278,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 426,
+          "latency_ms": {
+            "p50": 3.993586000000505,
+            "p99": 12.163700000000063,
+            "p999": 19.32958899999994
+          },
+          "memory": {
+            "rss_mb": 179.13,
+            "anonymous_mb": 128.71,
+            "pss_mb": 140.37
+          },
+          "broken": false,
+          "break_reason": null
+        },
+        {
+          "concurrency": 4,
+          "ok": 1368,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 456,
+          "latency_ms": {
+            "p50": 7.936912999999549,
+            "p99": 22.188506999998935,
+            "p999": 30.672425000000658
+          },
+          "memory": {
+            "rss_mb": 193.31,
+            "anonymous_mb": 142.83,
+            "pss_mb": 154.5
+          },
+          "broken": false,
+          "break_reason": null
+        },
+        {
+          "concurrency": 8,
+          "ok": 1643,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 547.7,
+          "latency_ms": {
+            "p50": 13.739928999999393,
+            "p99": 29.457155000000057,
+            "p999": 47.480202999999165
+          },
+          "memory": {
+            "rss_mb": 199.59,
+            "anonymous_mb": 149.12,
+            "pss_mb": 160.79
+          },
+          "broken": false,
+          "break_reason": null
+        },
+        {
+          "concurrency": 16,
+          "ok": 1665,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 555,
+          "latency_ms": {
+            "p50": 26.88254500000039,
+            "p99": 94.74474799999916,
+            "p999": 122.75893600000018
+          },
+          "memory": {
+            "rss_mb": 207.62,
+            "anonymous_mb": 157.14,
+            "pss_mb": 168.81
+          },
+          "broken": false,
+          "break_reason": null
+        },
+        {
+          "concurrency": 32,
+          "ok": 1762,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 587.3,
+          "latency_ms": {
+            "p50": 51.981259000000136,
+            "p99": 137.1278659999989,
+            "p999": 379.6144469999999
+          },
+          "memory": {
+            "rss_mb": 215.58,
+            "anonymous_mb": 165.1,
+            "pss_mb": 176.77
+          },
+          "broken": true,
+          "break_reason": "p99 137.1ms"
+        }
+      ],
+      "refine": [
+        {
+          "concurrency": 24,
+          "ok": 1840,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 613.3,
+          "latency_ms": {
+            "p50": 37.99905800000124,
+            "p99": 69.98488799999905,
+            "p999": 81.82024799999999
+          },
+          "memory": {
+            "rss_mb": 219.05,
+            "anonymous_mb": 168.57,
+            "pss_mb": 180.25
+          },
+          "broken": false,
+          "break_reason": null
+        },
+        {
+          "concurrency": 28,
+          "ok": 1802,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 600.7,
+          "latency_ms": {
+            "p50": 45.429573000001255,
+            "p99": 80.91769800000111,
+            "p999": 88.08058299999902
+          },
+          "memory": {
+            "rss_mb": 219.91,
+            "anonymous_mb": 169.43,
+            "pss_mb": 181.1
+          },
+          "broken": false,
+          "break_reason": null
+        },
+        {
+          "concurrency": 30,
+          "ok": 1908,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 636,
+          "latency_ms": {
+            "p50": 45.6278229999989,
+            "p99": 82.15939299999809,
+            "p999": 90.82733499999813
+          },
+          "memory": {
+            "rss_mb": 224.51,
+            "anonymous_mb": 174.03,
+            "pss_mb": 185.7
+          },
+          "broken": false,
+          "break_reason": null
+        },
+        {
+          "concurrency": 31,
+          "ok": 1902,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 634,
+          "latency_ms": {
+            "p50": 47.89108000000124,
+            "p99": 86.84060599999793,
+            "p999": 95.76627200000075
+          },
+          "memory": {
+            "rss_mb": 230.75,
+            "anonymous_mb": 180.27,
+            "pss_mb": 191.95
+          },
+          "broken": false,
+          "break_reason": null
+        }
+      ],
+      "source_log": "http-concurrency-node384.log"
     },
     {
       "id": "clawql_bun_smol",
@@ -763,5 +979,19 @@
       ],
       "source_log": "http-concurrency-ag-only.log"
     }
-  ]
+  ],
+  "peer_settings": {
+    "mcpjungle": {
+      "session_mode": "stateful",
+      "note": "Bench sets stateful (keeps stdio upstream warm). Product default is often stateless (new upstream conn per tool call) \u2014 stateful is the better production-like choice for stdio REST\u2192MCP.",
+      "SESSION_IDLE_TIMEOUT_SEC": "unset (upstream default -1 = no idle timeout)"
+    },
+    "agentgateway": {
+      "workerThreads": "default (unset)",
+      "maxConcurrentRequests": "default (unset)",
+      "poolMaxSize": "default (null in schema examples)",
+      "adminAddr_readinessAddr_statsAddr": "unique per harness instance (avoid clash with board AG)",
+      "note": "Stock defaults only \u2014 invite agentgateway maintainers for recommended concurrency knobs before public Cloud comparison."
+    }
+  }
 }

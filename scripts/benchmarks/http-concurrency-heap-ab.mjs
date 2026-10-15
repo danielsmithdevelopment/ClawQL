@@ -5,6 +5,7 @@
  * Arms (one Streamable HTTP process each, N concurrent clients):
  *   - clawql_node_uncapped
  *   - clawql_node_256  (--max-old-space-size=256)
+ *   - clawql_node_384  (--max-old-space-size=384) — Cloud Node capacity profile
  *   - clawql_bun_smol   (bun --smol)
  *   - mcpjungle        (HTTP gateway + cf-rest-mcp → mock)
  *   - agentgateway     (HTTP gateway + cf-rest-mcp → mock)
@@ -539,7 +540,10 @@ async function main() {
   const mock = await startMock();
   const results = [];
   const want = new Set(
-    (process.env.ARMS || "clawql_node_uncapped,clawql_node_256,clawql_bun_smol,mcpjungle,agentgateway")
+    (
+      process.env.ARMS ||
+      "clawql_node_uncapped,clawql_node_256,clawql_node_384,clawql_bun_smol,mcpjungle,agentgateway"
+    )
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean)
@@ -547,6 +551,7 @@ async function main() {
   const starters = [
     ["clawql_node_uncapped", () => startClawql(mock.baseUrl, { id: "clawql_node_uncapped", oldMb: null })],
     ["clawql_node_256", () => startClawql(mock.baseUrl, { id: "clawql_node_256", oldMb: 256 })],
+    ["clawql_node_384", () => startClawql(mock.baseUrl, { id: "clawql_node_384", oldMb: 384 })],
     ["clawql_bun_smol", () => startClawql(mock.baseUrl, { id: "clawql_bun_smol", bunSmol: true })],
     ["mcpjungle", () => startMcpjungle(mock.baseUrl)],
     ["agentgateway", () => startAgentgateway(mock.baseUrl)],

@@ -58,14 +58,13 @@ Same-session multiplex HTTP
 | --- | ---: | --- |
 | Node uncapped | **44** | |
 | Node 256 | **31** | ~**30%** fewer than uncapped — heap cap concurrency tax |
-| Bun `--smol` | **72** | Best single-instance HTTP arm; still ~130 MB plateau |
-| MCPJungle HTTP | **26** | Larger body (no `where`) |
-| agentgateway HTTP | **24** | Larger body (no `where`) |
+| Node 384 | **31** | Does **not** recover clients vs 256 — keep 384 for ingest headroom |
+| Bun `--smol` | **72** | Cloud HTTP default; still ~130 MB plateau |
+| MCPJungle HTTP | **26** | Larger body (no `where`); ≠ pets-board **204** (tiny payload) |
+| agentgateway HTTP | **24** | Larger body (no `where`); stock pool/worker defaults |
 
-Cloud Node may want **384** when HTTP client count matters; Bun is preferred for
-Cloud HTTP. Horizontal scale (NATS ~135) remains the capacity path. Early stress
-“128” lacked this SLO — retracted. Stdio equal-arm chaos (63 vs MJ 204) is a
-different topology — do not mix.
+Bun is the Cloud HTTP default. Horizontal scale (NATS ~135) remains the multi-instance
+capacity path. MJ **204** (pets) and **26** (CF DNS) are both valid — different payloads.
 
 ## Heap limits by profile
 

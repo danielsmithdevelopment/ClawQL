@@ -93,8 +93,8 @@ port: "8080"
 mcpPath: /mcp
 # Lean listen default (CF multiturn heap A/B + stress): Node --max-old-space-size=256
 # plateaus ~132 MB anon vs uncapped ~290; +~3.5 ms p99; no OOM on full:true / program fan-out.
-# HTTP multiplex concurrency: 256 costs ~30% clients vs uncapped (44→31); Cloud HTTP may want 384.
-# Memory-enabled: 384. Docker-desktop all-providers: 768. Bun: --smol (~130 MB, 72 HTTP clients).
+# HTTP multiplex: 256/384 both sustain 31 clients (384 ≠ concurrency fix); uncapped 44; Bun --smol 72.
+# Memory-enabled: 384 (ingest headroom). Docker-desktop all-providers: 768. Cloud HTTP: prefer Bun.
 # See docs/benchmarks/cloudflare-multiturn/measured-defaults.md (heap by profile).
 nodeOptions: "--max-old-space-size=256"
 

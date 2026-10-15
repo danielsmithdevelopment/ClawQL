@@ -150,7 +150,9 @@ At n=10 000: ClawQL fastest at **p50**; MCPJungle fastest at **p999**. That is
 | MCPJungle | HTTP 1× | **204 / 205** | p99 112 ms | **97 / 97** |
 | agentgateway | HTTP 1× | **62 / 63** | p99 111 ms | — |
 
-On equal single-instance footing: **MCPJungle leads concurrency** (204); ClawQL ≈ agentgateway (~63); Executor trails (23). Publishable chaos claim on this board is **vs Executor only** (~2.7× clients) — not vs MCPJungle.
+On equal single-instance footing **for this tiny `list_pets` payload**: **MCPJungle leads concurrency** (204); ClawQL ≈ agentgateway (~63); Executor trails (23). Publishable chaos claim on this board is **vs Executor only** (~2.7× clients) — not vs MCPJungle.
+
+**Do not contradict with the CF HTTP board:** MCPJungle sustains **26** clients on the Cloudflare DNS workflow ([`http-concurrency-heap-ab.json`](../cloudflare-multiturn/http-concurrency-heap-ab.json)) where peers return full DNS lists (no `where`) and ClawQL Bun holds **72**. **204 and 26 are both right** — different payloads, same HTTP 1× topology for MJ. ClawQL’s **63** here is **stdio** process-per-client, not HTTP multiplex.
 
 ### Latency / chaos run
 
