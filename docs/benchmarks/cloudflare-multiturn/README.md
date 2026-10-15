@@ -14,7 +14,7 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | `clawql_program` (ADR 0015 v0 plan runner) | Done |
 | Product: `where` examples in execute schema + fix-named `where_invalid` | Done (+37 where-desc tokens; full execute tool def **218**) |
 | Product: observation budget (no where/fields → truncated preview) | Done (`truncated:true` + note; opt-in `full:true`) |
-| **Publish board: 3×10k** | **Done** — [`board-summary-n10000-r3.json`](./board-summary-n10000-r3.json) (9 arms, `where` as code) |
+| **Publish board: 3×10k** | **Remeasuring** on slim listen (OOP+lazy) — prior board ~630 MB anon; process-tree fairness notes in [`process-tree-memory.md`](./process-tree-memory.md) |
 | **Real-model 50 sessions / arm × 2 model families** | **Done** — dual-win `known_op_beats_code_mode_for_real_models` ([`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json)) |
 | Blog / public headline | Cleared by pre-committed rules (board + dual-model gate both green) |
 
