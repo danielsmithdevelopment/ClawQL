@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-14T18:41:59.137Z",
+  "measuredAt": "2026-10-15T05:36:27.781Z",
   "kind": "publish_board",
   "rep": 3,
   "iters": 10000,
@@ -13,8 +13,8 @@
   "executor": {
     "appId": "app_ead4ce53-9b2f-4b74-b5a6-b876e3b639cf",
     "slug": "cf-zone-audit-mock",
-    "deploymentId": "dpl_a2b50a3a-590e-4bfc-84d0-fafa297d0da7",
-    "origin": "http://127.0.0.1:39103",
+    "deploymentId": "dpl_c7b3b33d-f2ba-4e56-b9d3-80dd185b542b",
+    "origin": "http://127.0.0.1:36945",
     "frameworkVersion": "0.0.1-beta.81"
   },
   "board": {
@@ -31,17 +31,20 @@
       "discovery_tokens_mean": 0,
       "result_tokens_mean": 47361,
       "code_tokens_mean": 0,
+      "code_price_weight": 5,
       "combined_mean": 47361,
+      "weighted_mean": 47361,
       "combined_at_n": 473610000,
       "rebuild_check": {
         "combined_mean_ok": true,
-        "formula": "definition + discovery + result + code"
+        "formula": "definition + discovery + result + code",
+        "weighted_formula": "definition + discovery + result + 5*code"
       },
       "calls_mean": 9,
       "session_ms": {
-        "p50": 40.125253999605775,
-        "p99": 59.53704899922013,
-        "p999": 65.43374999985099,
+        "p50": 39.654091998934746,
+        "p99": 57.511641999706626,
+        "p999": 64.57207699865103,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
@@ -49,7 +52,7 @@
       "first_session": {
         "arm": "direct",
         "ok": true,
-        "session_ms": 43.56631899997592,
+        "session_ms": 42.562713999301195,
         "steps": [
           {
             "step": 1,
@@ -57,7 +60,7 @@
             "discoveryTokens": 0,
             "resultTokens": 384,
             "codeTokens": 0,
-            "latency_ms": 2.7783439997583628,
+            "latency_ms": 3.079255999997258,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -69,7 +72,7 @@
             "discoveryTokens": 0,
             "resultTokens": 273,
             "codeTokens": 0,
-            "latency_ms": 0.5311629995703697,
+            "latency_ms": 0.6838859990239143,
             "check": {
               "ok": true
             }
@@ -80,7 +83,7 @@
             "discoveryTokens": 0,
             "resultTokens": 44,
             "codeTokens": 0,
-            "latency_ms": 0.24226099997758865,
+            "latency_ms": 0.42012500017881393,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -92,7 +95,7 @@
             "discoveryTokens": 0,
             "resultTokens": 45668,
             "codeTokens": 0,
-            "latency_ms": 0.6913580000400543,
+            "latency_ms": 0.8758629988878965,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -130,7 +133,7 @@
             "discoveryTokens": 0,
             "resultTokens": 144,
             "codeTokens": 0,
-            "latency_ms": 3.283306000754237,
+            "latency_ms": 1.3334899991750717,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -142,7 +145,7 @@
             "discoveryTokens": 0,
             "resultTokens": 55,
             "codeTokens": 0,
-            "latency_ms": 0.5060930009931326,
+            "latency_ms": 3.6442709993571043,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -154,7 +157,7 @@
             "discoveryTokens": 0,
             "resultTokens": 87,
             "codeTokens": 0,
-            "latency_ms": 0.40025500021874905,
+            "latency_ms": 0.6276510003954172,
             "check": {
               "ok": true
             }
@@ -165,7 +168,7 @@
             "discoveryTokens": 0,
             "resultTokens": 108,
             "codeTokens": 0,
-            "latency_ms": 0.4156470000743866,
+            "latency_ms": 0.3891709987074137,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -177,7 +180,7 @@
             "discoveryTokens": 0,
             "resultTokens": 570,
             "codeTokens": 0,
-            "latency_ms": 0.1889800000935793,
+            "latency_ms": 0.1884320005774498,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -209,177 +212,192 @@
       "settings": {
         "CLAWQL_SEARCH_COMPACT": "0",
         "known_op": false,
-        "catalog_sqlite": "1"
+        "catalog_sqlite": "1",
+        "where": "observation_shaped"
       },
       "upstream": "mock",
       "definition_tokens": 308,
-      "discovery_tokens_mean": 16012,
-      "result_tokens_mean": 7030,
-      "code_tokens_mean": 0,
-      "combined_mean": 23350,
-      "combined_at_n": 230420308,
+      "discovery_tokens_mean": 15988,
+      "result_tokens_mean": 480,
+      "code_tokens_mean": 191,
+      "code_price_weight": 5,
+      "combined_mean": 16967,
+      "weighted_mean": 17731,
+      "combined_at_n": 166590308,
       "rebuild_check": {
         "combined_mean_ok": true,
-        "formula": "definition + discovery + result + code"
+        "formula": "definition + discovery + result + code",
+        "weighted_formula": "definition + discovery + result + 5*code"
       },
       "calls_mean": 22,
       "session_ms": {
-        "p50": 66.80279899947345,
-        "p99": 89.5527740009129,
-        "p999": 398.6441329997033,
+        "p50": 59.7229750007391,
+        "p99": 84.71205899864435,
+        "p999": 420.34788299910724,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 654.5,
-        "anonymous_mb_median": 607.52,
+        "rss_mb_median": 709.65,
+        "anonymous_mb_median": 631.63,
         "samples": 5
       },
       "first_session": {
         "arm": "clawql_default",
         "ok": true,
-        "session_ms": 103.49325600080192,
+        "session_ms": 96.9900509994477,
         "steps": [
           {
             "step": 1,
             "calls": 2,
             "discoveryTokens": 2433,
-            "resultTokens": 587,
-            "codeTokens": 0,
-            "latency_ms": 18.999531000852585,
+            "resultTokens": 41,
+            "codeTokens": 20,
+            "latency_ms": 21.086129000410438,
             "check": {
               "ok": true,
               "label": "zoneId"
             },
-            "where": null
+            "where": "{zoneId: result[?name==`audit-target.example`].id | [0]}",
+            "model_written": "{zoneId: result[?name==`audit-target.example`].id | [0]}"
           },
           {
             "step": 2,
             "calls": 2,
             "discoveryTokens": 902,
-            "resultTokens": 398,
-            "codeTokens": 0,
-            "latency_ms": 7.448139999061823,
+            "resultTokens": 18,
+            "codeTokens": 12,
+            "latency_ms": 6.6496130004525185,
             "check": {
               "ok": true
             },
-            "where": null
+            "where": "result.{status: status, planName: plan.name}",
+            "model_written": "result.{status: status, planName: plan.name}"
           },
           {
             "step": 3,
             "calls": 2,
             "discoveryTokens": 851,
-            "resultTokens": 67,
-            "codeTokens": 0,
-            "latency_ms": 4.14580599963665,
+            "resultTokens": 9,
+            "codeTokens": 6,
+            "latency_ms": 5.839133000001311,
             "check": {
               "ok": true,
               "label": "ssl"
             },
-            "where": null
+            "where": "{ssl: result.value}",
+            "model_written": "{ssl: result.value}"
           },
           {
             "step": 4,
             "calls": 2,
             "discoveryTokens": 2193,
-            "resultTokens": 4386,
-            "codeTokens": 0,
-            "latency_ms": 7.384781999513507,
+            "resultTokens": 11,
+            "codeTokens": 16,
+            "latency_ms": 6.001390000805259,
             "check": {
               "ok": true,
               "label": "aRecordCount"
             },
-            "where": "result[?type==`A`]"
+            "where": "{aRecordCount: length(result[?type==`A`])}",
+            "model_written": "{aRecordCount: length(result[?type==`A`])}"
           },
           {
             "step": 5,
             "calls": 2,
-            "discoveryTokens": 2205,
-            "resultTokens": 140,
-            "codeTokens": 0,
-            "latency_ms": 12.013654001057148,
+            "discoveryTokens": 2193,
+            "resultTokens": 147,
+            "codeTokens": 26,
+            "latency_ms": 9.653344001621008,
             "check": {
               "ok": true,
               "label": "names"
             },
-            "where": "result[?type==`A` && content==`203.0.113.50`].name"
+            "where": "{names: result[?type==`A` && content==`203.0.113.50`].name}",
+            "model_written": "{names: result[?type==`A` && content==`203.0.113.50`].name}"
           },
           {
             "step": 6,
             "calls": 2,
-            "discoveryTokens": 2205,
-            "resultTokens": 30,
-            "codeTokens": 0,
-            "latency_ms": 6.638004999607801,
+            "discoveryTokens": 2193,
+            "resultTokens": 40,
+            "codeTokens": 36,
+            "latency_ms": 6.512242000550032,
             "check": {
               "ok": true,
               "label": "unproxiedNames"
             },
-            "where": "result[?type==`A` && content==`203.0.113.50` && proxied==`false`].name"
+            "where": "{unproxiedNames: result[?type==`A` && content==`203.0.113.50` && proxied==`false`].name}",
+            "model_written": "{unproxiedNames: result[?type==`A` && content==`203.0.113.50` && proxied==`false`].name}"
           },
           {
             "step": 7,
             "calls": 2,
             "discoveryTokens": 1089,
-            "resultTokens": 207,
-            "codeTokens": 0,
-            "latency_ms": 5.378068000078201,
+            "resultTokens": 21,
+            "codeTokens": 8,
+            "latency_ms": 4.605601999908686,
             "check": {
               "ok": true,
               "label": "scriptNames"
             },
-            "where": null
+            "where": "{scriptNames: result[].id}",
+            "model_written": "{scriptNames: result[].id}"
           },
           {
             "step": 8,
             "calls": 2,
             "discoveryTokens": 955,
-            "resultTokens": 83,
-            "codeTokens": 0,
-            "latency_ms": 5.78141799941659,
+            "resultTokens": 16,
+            "codeTokens": 10,
+            "latency_ms": 5.758131999522448,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
             },
-            "where": null
+            "where": "{compatibilityDate: result.compatibility_date}",
+            "model_written": "{compatibilityDate: result.compatibility_date}"
           },
           {
             "step": 9,
             "calls": 2,
             "discoveryTokens": 851,
-            "resultTokens": 128,
-            "codeTokens": 0,
-            "latency_ms": 4.253464998677373,
+            "resultTokens": 23,
+            "codeTokens": 23,
+            "latency_ms": 5.067925998941064,
             "check": {
               "ok": true
             },
-            "where": null
+            "where": "result[?script==`edge-router`] | [0].{routePattern: pattern, script: script}",
+            "model_written": "result[?script==`edge-router`] | [0].{routePattern: pattern, script: script}"
           },
           {
             "step": 10,
             "calls": 2,
             "discoveryTokens": 1127,
-            "resultTokens": 162,
-            "codeTokens": 0,
-            "latency_ms": 4.513839000836015,
+            "resultTokens": 115,
+            "codeTokens": 18,
+            "latency_ms": 4.876103999093175,
             "check": {
               "ok": true,
               "label": "buckets"
             },
-            "where": null
+            "where": "{buckets: result.buckets[].{name: name, creation_date: creation_date}}",
+            "model_written": "{buckets: result.buckets[].{name: name, creation_date: creation_date}}"
           },
           {
             "step": 11,
             "calls": 2,
             "discoveryTokens": 1201,
-            "resultTokens": 814,
-            "codeTokens": 0,
-            "latency_ms": 4.855182999745011,
+            "resultTokens": 11,
+            "codeTokens": 16,
+            "latency_ms": 4.9672179985791445,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
             },
-            "where": null
+            "where": "{enabledRuleCount: length(result[?paused==`false`])}",
+            "model_written": "{enabledRuleCount: length(result[?paused==`false`])}"
           },
           {
             "step": 12,
@@ -394,9 +412,9 @@
             "note": "gated"
           }
         ],
-        "discovery_tokens_sum": 16012,
-        "result_tokens_sum": 7030,
-        "code_tokens_sum": 0,
+        "discovery_tokens_sum": 15988,
+        "result_tokens_sum": 480,
+        "code_tokens_sum": 191,
         "calls_sum": 22
       }
     },
@@ -407,177 +425,192 @@
       "settings": {
         "CLAWQL_SEARCH_COMPACT": "1",
         "known_op": false,
-        "catalog_sqlite": "1"
+        "catalog_sqlite": "1",
+        "where": "observation_shaped"
       },
       "upstream": "mock",
       "definition_tokens": 308,
       "discovery_tokens_mean": 4092,
-      "result_tokens_mean": 7030,
-      "code_tokens_mean": 0,
-      "combined_mean": 11430,
-      "combined_at_n": 111220308,
+      "result_tokens_mean": 480,
+      "code_tokens_mean": 191,
+      "code_price_weight": 5,
+      "combined_mean": 5071,
+      "weighted_mean": 5835,
+      "combined_at_n": 47630308,
       "rebuild_check": {
         "combined_mean_ok": true,
-        "formula": "definition + discovery + result + code"
+        "formula": "definition + discovery + result + code",
+        "weighted_formula": "definition + discovery + result + 5*code"
       },
       "calls_mean": 22,
       "session_ms": {
-        "p50": 52.495792999863625,
-        "p99": 72.20525699853897,
-        "p999": 372.635332999751,
+        "p50": 46.21607800014317,
+        "p99": 72.43897799961269,
+        "p999": 273.32556499913335,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 646.51,
-        "anonymous_mb_median": 599.46,
+        "rss_mb_median": 726.97,
+        "anonymous_mb_median": 648.63,
         "samples": 5
       },
       "first_session": {
         "arm": "clawql_default",
         "ok": true,
-        "session_ms": 92.35623000003397,
+        "session_ms": 98.25808000005782,
         "steps": [
           {
             "step": 1,
             "calls": 2,
             "discoveryTokens": 453,
-            "resultTokens": 587,
-            "codeTokens": 0,
-            "latency_ms": 19.85097000002861,
+            "resultTokens": 41,
+            "codeTokens": 20,
+            "latency_ms": 21.43822999857366,
             "check": {
               "ok": true,
               "label": "zoneId"
             },
-            "where": null
+            "where": "{zoneId: result[?name==`audit-target.example`].id | [0]}",
+            "model_written": "{zoneId: result[?name==`audit-target.example`].id | [0]}"
           },
           {
             "step": 2,
             "calls": 2,
             "discoveryTokens": 316,
-            "resultTokens": 398,
-            "codeTokens": 0,
-            "latency_ms": 6.455397998914123,
+            "resultTokens": 18,
+            "codeTokens": 12,
+            "latency_ms": 7.063509000465274,
             "check": {
               "ok": true
             },
-            "where": null
+            "where": "result.{status: status, planName: plan.name}",
+            "model_written": "result.{status: status, planName: plan.name}"
           },
           {
             "step": 3,
             "calls": 2,
             "discoveryTokens": 317,
-            "resultTokens": 67,
-            "codeTokens": 0,
-            "latency_ms": 5.060821998864412,
+            "resultTokens": 9,
+            "codeTokens": 6,
+            "latency_ms": 5.907588999718428,
             "check": {
               "ok": true,
               "label": "ssl"
             },
-            "where": null
+            "where": "{ssl: result.value}",
+            "model_written": "{ssl: result.value}"
           },
           {
             "step": 4,
             "calls": 2,
             "discoveryTokens": 463,
-            "resultTokens": 4386,
-            "codeTokens": 0,
-            "latency_ms": 7.7132939994335175,
+            "resultTokens": 11,
+            "codeTokens": 16,
+            "latency_ms": 6.70516699925065,
             "check": {
               "ok": true,
               "label": "aRecordCount"
             },
-            "where": "result[?type==`A`]"
+            "where": "{aRecordCount: length(result[?type==`A`])}",
+            "model_written": "{aRecordCount: length(result[?type==`A`])}"
           },
           {
             "step": 5,
             "calls": 2,
             "discoveryTokens": 463,
-            "resultTokens": 140,
-            "codeTokens": 0,
-            "latency_ms": 8.809040999040008,
+            "resultTokens": 147,
+            "codeTokens": 26,
+            "latency_ms": 6.571070000529289,
             "check": {
               "ok": true,
               "label": "names"
             },
-            "where": "result[?type==`A` && content==`203.0.113.50`].name"
+            "where": "{names: result[?type==`A` && content==`203.0.113.50`].name}",
+            "model_written": "{names: result[?type==`A` && content==`203.0.113.50`].name}"
           },
           {
             "step": 6,
             "calls": 2,
             "discoveryTokens": 463,
-            "resultTokens": 30,
-            "codeTokens": 0,
-            "latency_ms": 9.853987999260426,
+            "resultTokens": 40,
+            "codeTokens": 36,
+            "latency_ms": 12.490757999941707,
             "check": {
               "ok": true,
               "label": "unproxiedNames"
             },
-            "where": "result[?type==`A` && content==`203.0.113.50` && proxied==`false`].name"
+            "where": "{unproxiedNames: result[?type==`A` && content==`203.0.113.50` && proxied==`false`].name}",
+            "model_written": "{unproxiedNames: result[?type==`A` && content==`203.0.113.50` && proxied==`false`].name}"
           },
           {
             "step": 7,
             "calls": 2,
             "discoveryTokens": 326,
-            "resultTokens": 207,
-            "codeTokens": 0,
-            "latency_ms": 6.144887002184987,
+            "resultTokens": 21,
+            "codeTokens": 8,
+            "latency_ms": 6.714422998949885,
             "check": {
               "ok": true,
               "label": "scriptNames"
             },
-            "where": null
+            "where": "{scriptNames: result[].id}",
+            "model_written": "{scriptNames: result[].id}"
           },
           {
             "step": 8,
             "calls": 2,
             "discoveryTokens": 307,
-            "resultTokens": 83,
-            "codeTokens": 0,
-            "latency_ms": 4.120662000030279,
+            "resultTokens": 16,
+            "codeTokens": 10,
+            "latency_ms": 6.763057000935078,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
             },
-            "where": null
+            "where": "{compatibilityDate: result.compatibility_date}",
+            "model_written": "{compatibilityDate: result.compatibility_date}"
           },
           {
             "step": 9,
             "calls": 2,
             "discoveryTokens": 298,
-            "resultTokens": 128,
-            "codeTokens": 0,
-            "latency_ms": 4.357028000056744,
+            "resultTokens": 23,
+            "codeTokens": 23,
+            "latency_ms": 5.945988999679685,
             "check": {
               "ok": true
             },
-            "where": null
+            "where": "result[?script==`edge-router`] | [0].{routePattern: pattern, script: script}",
+            "model_written": "result[?script==`edge-router`] | [0].{routePattern: pattern, script: script}"
           },
           {
             "step": 10,
             "calls": 2,
             "discoveryTokens": 347,
-            "resultTokens": 162,
-            "codeTokens": 0,
-            "latency_ms": 5.238459998741746,
+            "resultTokens": 115,
+            "codeTokens": 18,
+            "latency_ms": 4.945061000064015,
             "check": {
               "ok": true,
               "label": "buckets"
             },
-            "where": null
+            "where": "{buckets: result.buckets[].{name: name, creation_date: creation_date}}",
+            "model_written": "{buckets: result.buckets[].{name: name, creation_date: creation_date}}"
           },
           {
             "step": 11,
             "calls": 2,
             "discoveryTokens": 339,
-            "resultTokens": 814,
-            "codeTokens": 0,
-            "latency_ms": 4.057801999151707,
+            "resultTokens": 11,
+            "codeTokens": 16,
+            "latency_ms": 5.741217998787761,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
             },
-            "where": null
+            "where": "{enabledRuleCount: length(result[?paused==`false`])}",
+            "model_written": "{enabledRuleCount: length(result[?paused==`false`])}"
           },
           {
             "step": 12,
@@ -593,8 +626,8 @@
           }
         ],
         "discovery_tokens_sum": 4092,
-        "result_tokens_sum": 7030,
-        "code_tokens_sum": 0,
+        "result_tokens_sum": 480,
+        "code_tokens_sum": 191,
         "calls_sum": 22
       }
     },
@@ -605,177 +638,192 @@
       "settings": {
         "CLAWQL_SEARCH_COMPACT": "0",
         "known_op": true,
-        "catalog_sqlite": "1"
+        "catalog_sqlite": "1",
+        "where": "observation_shaped"
       },
       "upstream": "mock",
       "definition_tokens": 308,
       "discovery_tokens_mean": 0,
-      "result_tokens_mean": 7030,
-      "code_tokens_mean": 0,
-      "combined_mean": 7338,
-      "combined_at_n": 70300308,
+      "result_tokens_mean": 480,
+      "code_tokens_mean": 191,
+      "code_price_weight": 5,
+      "combined_mean": 979,
+      "weighted_mean": 1743,
+      "combined_at_n": 6710308,
       "rebuild_check": {
         "combined_mean_ok": true,
-        "formula": "definition + discovery + result + code"
+        "formula": "definition + discovery + result + code",
+        "weighted_formula": "definition + discovery + result + 5*code"
       },
       "calls_mean": 11,
       "session_ms": {
-        "p50": 28.344956999644637,
-        "p99": 40.817158998921514,
-        "p999": 108.16325099952519,
+        "p50": 23.83040999993682,
+        "p99": 44.65409700013697,
+        "p999": 141.97903400100768,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 655.13,
-        "anonymous_mb_median": 608.14,
+        "rss_mb_median": 716.29,
+        "anonymous_mb_median": 637.9,
         "samples": 5
       },
       "first_session": {
         "arm": "clawql_known_op",
         "ok": true,
-        "session_ms": 59.196796000003815,
+        "session_ms": 43.95027899928391,
         "steps": [
           {
             "step": 1,
             "calls": 1,
             "discoveryTokens": 0,
-            "resultTokens": 587,
-            "codeTokens": 0,
-            "latency_ms": 13.410807000473142,
+            "resultTokens": 41,
+            "codeTokens": 20,
+            "latency_ms": 9.68265200033784,
             "check": {
               "ok": true,
               "label": "zoneId"
             },
-            "where": null
+            "where": "{zoneId: result[?name==`audit-target.example`].id | [0]}",
+            "model_written": "{zoneId: result[?name==`audit-target.example`].id | [0]}"
           },
           {
             "step": 2,
             "calls": 1,
             "discoveryTokens": 0,
-            "resultTokens": 398,
-            "codeTokens": 0,
-            "latency_ms": 3.209519000723958,
+            "resultTokens": 18,
+            "codeTokens": 12,
+            "latency_ms": 3.123344000428915,
             "check": {
               "ok": true
             },
-            "where": null
+            "where": "result.{status: status, planName: plan.name}",
+            "model_written": "result.{status: status, planName: plan.name}"
           },
           {
             "step": 3,
             "calls": 1,
             "discoveryTokens": 0,
-            "resultTokens": 67,
-            "codeTokens": 0,
-            "latency_ms": 2.8241060003638268,
+            "resultTokens": 9,
+            "codeTokens": 6,
+            "latency_ms": 3.2197919990867376,
             "check": {
               "ok": true,
               "label": "ssl"
             },
-            "where": null
+            "where": "{ssl: result.value}",
+            "model_written": "{ssl: result.value}"
           },
           {
             "step": 4,
             "calls": 1,
             "discoveryTokens": 0,
-            "resultTokens": 4386,
-            "codeTokens": 0,
-            "latency_ms": 6.404400000348687,
+            "resultTokens": 11,
+            "codeTokens": 16,
+            "latency_ms": 3.191619999706745,
             "check": {
               "ok": true,
               "label": "aRecordCount"
             },
-            "where": "result[?type==`A`]"
+            "where": "{aRecordCount: length(result[?type==`A`])}",
+            "model_written": "{aRecordCount: length(result[?type==`A`])}"
           },
           {
             "step": 5,
             "calls": 1,
             "discoveryTokens": 0,
-            "resultTokens": 140,
-            "codeTokens": 0,
-            "latency_ms": 4.43572000041604,
+            "resultTokens": 147,
+            "codeTokens": 26,
+            "latency_ms": 6.75263300165534,
             "check": {
               "ok": true,
               "label": "names"
             },
-            "where": "result[?type==`A` && content==`203.0.113.50`].name"
+            "where": "{names: result[?type==`A` && content==`203.0.113.50`].name}",
+            "model_written": "{names: result[?type==`A` && content==`203.0.113.50`].name}"
           },
           {
             "step": 6,
             "calls": 1,
             "discoveryTokens": 0,
-            "resultTokens": 30,
-            "codeTokens": 0,
-            "latency_ms": 6.253142999485135,
+            "resultTokens": 40,
+            "codeTokens": 36,
+            "latency_ms": 3.769972998648882,
             "check": {
               "ok": true,
               "label": "unproxiedNames"
             },
-            "where": "result[?type==`A` && content==`203.0.113.50` && proxied==`false`].name"
+            "where": "{unproxiedNames: result[?type==`A` && content==`203.0.113.50` && proxied==`false`].name}",
+            "model_written": "{unproxiedNames: result[?type==`A` && content==`203.0.113.50` && proxied==`false`].name}"
           },
           {
             "step": 7,
             "calls": 1,
             "discoveryTokens": 0,
-            "resultTokens": 207,
-            "codeTokens": 0,
-            "latency_ms": 2.82132999971509,
+            "resultTokens": 21,
+            "codeTokens": 8,
+            "latency_ms": 3.718460999429226,
             "check": {
               "ok": true,
               "label": "scriptNames"
             },
-            "where": null
+            "where": "{scriptNames: result[].id}",
+            "model_written": "{scriptNames: result[].id}"
           },
           {
             "step": 8,
             "calls": 1,
             "discoveryTokens": 0,
-            "resultTokens": 83,
-            "codeTokens": 0,
-            "latency_ms": 5.659679999575019,
+            "resultTokens": 16,
+            "codeTokens": 10,
+            "latency_ms": 2.0815019998699427,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
             },
-            "where": null
+            "where": "{compatibilityDate: result.compatibility_date}",
+            "model_written": "{compatibilityDate: result.compatibility_date}"
           },
           {
             "step": 9,
             "calls": 1,
             "discoveryTokens": 0,
-            "resultTokens": 128,
-            "codeTokens": 0,
-            "latency_ms": 2.75169799849391,
+            "resultTokens": 23,
+            "codeTokens": 23,
+            "latency_ms": 2.5175319984555244,
             "check": {
               "ok": true
             },
-            "where": null
+            "where": "result[?script==`edge-router`] | [0].{routePattern: pattern, script: script}",
+            "model_written": "result[?script==`edge-router`] | [0].{routePattern: pattern, script: script}"
           },
           {
             "step": 10,
             "calls": 1,
             "discoveryTokens": 0,
-            "resultTokens": 162,
-            "codeTokens": 0,
-            "latency_ms": 2.9492740016430616,
+            "resultTokens": 115,
+            "codeTokens": 18,
+            "latency_ms": 2.2051669992506504,
             "check": {
               "ok": true,
               "label": "buckets"
             },
-            "where": null
+            "where": "{buckets: result.buckets[].{name: name, creation_date: creation_date}}",
+            "model_written": "{buckets: result.buckets[].{name: name, creation_date: creation_date}}"
           },
           {
             "step": 11,
             "calls": 1,
             "discoveryTokens": 0,
-            "resultTokens": 814,
-            "codeTokens": 0,
-            "latency_ms": 2.5351119991391897,
+            "resultTokens": 11,
+            "codeTokens": 16,
+            "latency_ms": 2.036922998726368,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
             },
-            "where": null
+            "where": "{enabledRuleCount: length(result[?paused==`false`])}",
+            "model_written": "{enabledRuleCount: length(result[?paused==`false`])}"
           },
           {
             "step": 12,
@@ -791,9 +839,211 @@
           }
         ],
         "discovery_tokens_sum": 0,
-        "result_tokens_sum": 7030,
-        "code_tokens_sum": 0,
+        "result_tokens_sum": 480,
+        "code_tokens_sum": 191,
         "calls_sum": 11
+      }
+    },
+    "clawql_program": {
+      "id": "clawql_program",
+      "iters": 10000,
+      "task_success_rate": 1,
+      "settings": {
+        "CLAWQL_ENABLE_PROGRAMS": "1",
+        "interpreter": "plan-runner-v0",
+        "where": "observation_shaped",
+        "catalog_sqlite": "1"
+      },
+      "upstream": "mock",
+      "definition_tokens": 685,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 357,
+      "code_tokens_mean": 811,
+      "code_price_weight": 5,
+      "combined_mean": 1853,
+      "weighted_mean": 5097,
+      "combined_at_n": 11680685,
+      "rebuild_check": {
+        "combined_mean_ok": true,
+        "formula": "definition + discovery + result + code",
+        "weighted_formula": "definition + discovery + result + 5*code"
+      },
+      "calls_mean": 1,
+      "session_ms": {
+        "p50": 11.17250799946487,
+        "p99": 21.792450999841094,
+        "p999": 39.210142999887466,
+        "comparable": true,
+        "note": "upstream=mock (same replay fixture as peers)"
+      },
+      "memory_plateau": {
+        "rss_mb_median": 720.92,
+        "anonymous_mb_median": 642.59,
+        "samples": 5
+      },
+      "first_session": {
+        "arm": "clawql_program",
+        "ok": true,
+        "session_ms": 46.97307299822569,
+        "steps": [
+          {
+            "step": 1,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 37,
+            "codeTokens": 811,
+            "latency_ms": 45.06904299929738,
+            "check": {
+              "ok": true,
+              "label": "zoneId"
+            },
+            "note": "execute_program plan-runner-v0"
+          },
+          {
+            "step": 2,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 11,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true
+            },
+            "note": "execute_program plan-runner-v0"
+          },
+          {
+            "step": 3,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 5,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true,
+              "label": "ssl"
+            },
+            "note": "execute_program plan-runner-v0"
+          },
+          {
+            "step": 4,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 7,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true,
+              "label": "aRecordCount"
+            },
+            "note": "execute_program plan-runner-v0"
+          },
+          {
+            "step": 5,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 114,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true,
+              "label": "names"
+            },
+            "note": "execute_program plan-runner-v0"
+          },
+          {
+            "step": 6,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 29,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true,
+              "label": "unproxiedNames"
+            },
+            "note": "execute_program plan-runner-v0"
+          },
+          {
+            "step": 7,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 11,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true,
+              "label": "scriptNames"
+            },
+            "note": "execute_program plan-runner-v0"
+          },
+          {
+            "step": 8,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 12,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true,
+              "label": "compatibilityDate"
+            },
+            "note": "execute_program plan-runner-v0"
+          },
+          {
+            "step": 9,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 16,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true
+            },
+            "note": "execute_program plan-runner-v0"
+          },
+          {
+            "step": 10,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 80,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true,
+              "label": "buckets"
+            },
+            "note": "execute_program plan-runner-v0"
+          },
+          {
+            "step": 11,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 7,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true,
+              "label": "enabledRuleCount"
+            },
+            "note": "execute_program plan-runner-v0"
+          },
+          {
+            "step": 12,
+            "calls": 0,
+            "discoveryTokens": 0,
+            "resultTokens": 28,
+            "codeTokens": 0,
+            "latency_ms": 0,
+            "check": {
+              "ok": true
+            },
+            "note": "gated"
+          }
+        ],
+        "discovery_tokens_sum": 0,
+        "result_tokens_sum": 357,
+        "code_tokens_sum": 811,
+        "calls_sum": 1
       }
     },
     "executor_v2": {
@@ -804,26 +1054,29 @@
         "model": "openapi_tools_host_http",
         "app_slug": "cf-zone-audit-mock",
         "app_id": "app_ead4ce53-9b2f-4b74-b5a6-b876e3b639cf",
-        "deployment": "dpl_a2b50a3a-590e-4bfc-84d0-fafa297d0da7",
+        "deployment": "dpl_c7b3b33d-f2ba-4e56-b9d3-80dd185b542b",
         "framework": "0.0.1-beta.81",
-        "mock_origin": "http://127.0.0.1:39103"
+        "mock_origin": "http://127.0.0.1:36945"
       },
       "upstream": "mock",
       "definition_tokens": 181,
       "discovery_tokens_mean": 0,
       "result_tokens_mean": 357,
       "code_tokens_mean": 958,
+      "code_price_weight": 5,
       "combined_mean": 1496,
+      "weighted_mean": 5328,
       "combined_at_n": 13150181,
       "rebuild_check": {
         "combined_mean_ok": true,
-        "formula": "definition + discovery + result + code"
+        "formula": "definition + discovery + result + code",
+        "weighted_formula": "definition + discovery + result + 5*code"
       },
       "calls_mean": 12,
       "session_ms": {
-        "p50": 220.56185299903154,
-        "p99": 333.4361629988998,
-        "p999": 532.0853610001504,
+        "p50": 232.67976799979806,
+        "p99": 412.97800399921834,
+        "p999": 705.7755340002477,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
@@ -831,7 +1084,7 @@
       "first_session": {
         "arm": "executor_v2",
         "ok": true,
-        "session_ms": 776.3104660008103,
+        "session_ms": 276.8155320007354,
         "steps": [
           {
             "step": 1,
@@ -839,7 +1092,7 @@
             "discoveryTokens": 0,
             "resultTokens": 37,
             "codeTokens": 42,
-            "latency_ms": 410.10427399910986,
+            "latency_ms": 29.891145000234246,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -853,7 +1106,7 @@
             "discoveryTokens": 0,
             "resultTokens": 11,
             "codeTokens": 77,
-            "latency_ms": 40.00252200104296,
+            "latency_ms": 25.409589000046253,
             "check": {
               "ok": true
             },
@@ -866,7 +1119,7 @@
             "discoveryTokens": 0,
             "resultTokens": 5,
             "codeTokens": 77,
-            "latency_ms": 34.20479400083423,
+            "latency_ms": 20.97567200101912,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -880,7 +1133,7 @@
             "discoveryTokens": 0,
             "resultTokens": 7,
             "codeTokens": 90,
-            "latency_ms": 52.03266300074756,
+            "latency_ms": 31.41237200051546,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -894,7 +1147,7 @@
             "discoveryTokens": 0,
             "resultTokens": 114,
             "codeTokens": 106,
-            "latency_ms": 47.07918400131166,
+            "latency_ms": 32.03046599961817,
             "check": {
               "ok": true,
               "label": "names"
@@ -908,7 +1161,7 @@
             "discoveryTokens": 0,
             "resultTokens": 29,
             "codeTokens": 117,
-            "latency_ms": 45.739401999861,
+            "latency_ms": 30.061443999409676,
             "check": {
               "ok": true,
               "label": "unproxiedNames"
@@ -922,7 +1175,7 @@
             "discoveryTokens": 0,
             "resultTokens": 11,
             "codeTokens": 76,
-            "latency_ms": 30.656868999823928,
+            "latency_ms": 20.083476001396775,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -936,7 +1189,7 @@
             "discoveryTokens": 0,
             "resultTokens": 12,
             "codeTokens": 80,
-            "latency_ms": 27.83386999927461,
+            "latency_ms": 18.908634999766946,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -950,7 +1203,7 @@
             "discoveryTokens": 0,
             "resultTokens": 16,
             "codeTokens": 90,
-            "latency_ms": 29.458960998803377,
+            "latency_ms": 19.90426700003445,
             "check": {
               "ok": true
             },
@@ -963,7 +1216,7 @@
             "discoveryTokens": 0,
             "resultTokens": 80,
             "codeTokens": 89,
-            "latency_ms": 25.6652429997921,
+            "latency_ms": 20.448854999616742,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -977,7 +1230,7 @@
             "discoveryTokens": 0,
             "resultTokens": 7,
             "codeTokens": 84,
-            "latency_ms": 25.47042000107467,
+            "latency_ms": 20.772378999739885,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -991,7 +1244,7 @@
             "discoveryTokens": 0,
             "resultTokens": 28,
             "codeTokens": 30,
-            "latency_ms": 3.8134449999779463,
+            "latency_ms": 3.62627299875021,
             "check": {
               "ok": true
             },
@@ -1015,29 +1268,32 @@
       "discovery_tokens_mean": 0,
       "result_tokens_mean": 47361,
       "code_tokens_mean": 0,
+      "code_price_weight": 5,
       "combined_mean": 55121,
+      "weighted_mean": 55121,
       "combined_at_n": 473617760,
       "rebuild_check": {
         "combined_mean_ok": true,
-        "formula": "definition + discovery + result + code"
+        "formula": "definition + discovery + result + code",
+        "weighted_formula": "definition + discovery + result + 5*code"
       },
       "calls_mean": 9,
       "session_ms": {
-        "p50": 50.285707999020815,
-        "p99": 68.03942000120878,
-        "p999": 102.09289199858904,
+        "p50": 50.350074999034405,
+        "p99": 79.06762599945068,
+        "p999": 115.4234449993819,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 169.08,
-        "anonymous_mb_median": 101.43,
+        "rss_mb_median": 173.62,
+        "anonymous_mb_median": 103.5,
         "samples": 5
       },
       "first_session": {
         "arm": "mcpjungle",
         "ok": true,
-        "session_ms": 278.70255099982023,
+        "session_ms": 264.2304389998317,
         "steps": [
           {
             "step": 1,
@@ -1045,7 +1301,7 @@
             "discoveryTokens": 0,
             "resultTokens": 384,
             "codeTokens": 0,
-            "latency_ms": 200.53070100024343,
+            "latency_ms": 185.19068000093102,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -1058,7 +1314,7 @@
             "discoveryTokens": 0,
             "resultTokens": 273,
             "codeTokens": 0,
-            "latency_ms": 3.379145000129938,
+            "latency_ms": 3.2505379989743233,
             "check": {
               "ok": true
             },
@@ -1070,7 +1326,7 @@
             "discoveryTokens": 0,
             "resultTokens": 44,
             "codeTokens": 0,
-            "latency_ms": 3.017798000946641,
+            "latency_ms": 2.427064999938011,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -1083,7 +1339,7 @@
             "discoveryTokens": 0,
             "resultTokens": 45668,
             "codeTokens": 0,
-            "latency_ms": 9.587655998766422,
+            "latency_ms": 10.488140000030398,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -1120,7 +1376,7 @@
             "discoveryTokens": 0,
             "resultTokens": 144,
             "codeTokens": 0,
-            "latency_ms": 4.898770000785589,
+            "latency_ms": 4.888242999091744,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -1133,7 +1389,7 @@
             "discoveryTokens": 0,
             "resultTokens": 55,
             "codeTokens": 0,
-            "latency_ms": 2.7697489988058805,
+            "latency_ms": 2.5033439993858337,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -1146,7 +1402,7 @@
             "discoveryTokens": 0,
             "resultTokens": 87,
             "codeTokens": 0,
-            "latency_ms": 2.2241629995405674,
+            "latency_ms": 2.3340370003134012,
             "check": {
               "ok": true
             },
@@ -1158,7 +1414,7 @@
             "discoveryTokens": 0,
             "resultTokens": 108,
             "codeTokens": 0,
-            "latency_ms": 2.052005000412464,
+            "latency_ms": 2.102206999436021,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -1171,7 +1427,7 @@
             "discoveryTokens": 0,
             "resultTokens": 570,
             "codeTokens": 0,
-            "latency_ms": 3.2973299995064735,
+            "latency_ms": 2.9198419991880655,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -1206,29 +1462,32 @@
       "discovery_tokens_mean": 0,
       "result_tokens_mean": 47361,
       "code_tokens_mean": 0,
+      "code_price_weight": 5,
       "combined_mean": 54705,
+      "weighted_mean": 54705,
       "combined_at_n": 473617344,
       "rebuild_check": {
         "combined_mean_ok": true,
-        "formula": "definition + discovery + result + code"
+        "formula": "definition + discovery + result + code",
+        "weighted_formula": "definition + discovery + result + 5*code"
       },
       "calls_mean": 9,
       "session_ms": {
-        "p50": 48.396604001522064,
-        "p99": 61.70528000034392,
-        "p999": 74.27532800100744,
+        "p50": 50.41647000052035,
+        "p99": 88.238022999838,
+        "p999": 150.95018299855292,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 169,
-        "anonymous_mb_median": 99.5,
+        "rss_mb_median": 196.29,
+        "anonymous_mb_median": 123.14,
         "samples": 5
       },
       "first_session": {
         "arm": "agentgateway",
         "ok": true,
-        "session_ms": 87.38113499991596,
+        "session_ms": 82.66107099875808,
         "steps": [
           {
             "step": 1,
@@ -1236,7 +1495,7 @@
             "discoveryTokens": 0,
             "resultTokens": 384,
             "codeTokens": 0,
-            "latency_ms": 28.51508699916303,
+            "latency_ms": 25.290897000581026,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -1249,7 +1508,7 @@
             "discoveryTokens": 0,
             "resultTokens": 273,
             "codeTokens": 0,
-            "latency_ms": 3.103523001074791,
+            "latency_ms": 3.0363139994442463,
             "check": {
               "ok": true
             },
@@ -1261,7 +1520,7 @@
             "discoveryTokens": 0,
             "resultTokens": 44,
             "codeTokens": 0,
-            "latency_ms": 2.861014999449253,
+            "latency_ms": 2.5204420015215874,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -1274,7 +1533,7 @@
             "discoveryTokens": 0,
             "resultTokens": 45668,
             "codeTokens": 0,
-            "latency_ms": 5.896647999063134,
+            "latency_ms": 5.349052999168634,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -1311,7 +1570,7 @@
             "discoveryTokens": 0,
             "resultTokens": 144,
             "codeTokens": 0,
-            "latency_ms": 5.427000999450684,
+            "latency_ms": 5.434240000322461,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -1324,7 +1583,7 @@
             "discoveryTokens": 0,
             "resultTokens": 55,
             "codeTokens": 0,
-            "latency_ms": 2.8415620010346174,
+            "latency_ms": 2.546279000118375,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -1337,7 +1596,7 @@
             "discoveryTokens": 0,
             "resultTokens": 87,
             "codeTokens": 0,
-            "latency_ms": 2.5517100002616644,
+            "latency_ms": 2.009824000298977,
             "check": {
               "ok": true
             },
@@ -1349,7 +1608,7 @@
             "discoveryTokens": 0,
             "resultTokens": 108,
             "codeTokens": 0,
-            "latency_ms": 1.9964329991489649,
+            "latency_ms": 2.0765840001404285,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -1362,7 +1621,7 @@
             "discoveryTokens": 0,
             "resultTokens": 570,
             "codeTokens": 0,
-            "latency_ms": 2.9437090009450912,
+            "latency_ms": 2.7413699999451637,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -1401,17 +1660,20 @@
       "discovery_tokens_mean": 0,
       "result_tokens_mean": 357,
       "code_tokens_mean": 518,
+      "code_price_weight": 5,
       "combined_mean": 1875,
+      "weighted_mean": 3947,
       "combined_at_n": 8751000,
       "rebuild_check": {
         "combined_mean_ok": true,
-        "formula": "definition + discovery + result + code"
+        "formula": "definition + discovery + result + code",
+        "weighted_formula": "definition + discovery + result + 5*code"
       },
       "calls_mean": 0,
       "session_ms": {
-        "p50": 1.1569020003080368,
-        "p99": 2.902715001255274,
-        "p999": 3.2104259990155697,
+        "p50": 1.1688829995691776,
+        "p99": 3.2426920011639595,
+        "p999": 7.140339000150561,
         "comparable": false,
         "note": "latency N/A — tokens-only / no upstream"
       },
@@ -1419,7 +1681,7 @@
       "first_session": {
         "arm": "cloudflare_codemode",
         "ok": true,
-        "session_ms": 1.381361000239849,
+        "session_ms": 1.3526050001382828,
         "steps": [
           {
             "step": 1,

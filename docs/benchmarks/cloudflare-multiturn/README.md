@@ -14,9 +14,9 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | `clawql_program` (ADR 0015 v0 plan runner) | Done |
 | Product: `where` examples in execute schema + fix-named `where_invalid` | Done (+37 where-desc tokens; full execute tool def **218**) |
 | Product: observation budget (no where/fields → truncated preview) | Done (`truncated:true` + note; opt-in `full:true`) |
-| **Publish board: 3×10k** | **Pending** (re-run with code-arg accounting; rep 1 matches smoke) |
-| **Real-model 50 sessions / arm × 2 model families** | **Cursor Task gate: `gpt-5.6-sol-medium` + `composer-2.5-fast` (no API secrets)** |
-| Blog / public headline | **Hold** until publish board + dual-model real-model land |
+| **Publish board: 3×10k** | **Done** — [`board-summary-n10000-r3.json`](./board-summary-n10000-r3.json) (9 arms, `where` as code) |
+| **Real-model 50 sessions / arm × 2 model families** | **Done** — dual-win `known_op_beats_code_mode_for_real_models` ([`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json)) |
+| Blog / public headline | Cleared by pre-committed rules (board + dual-model gate both green) |
 
 N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the board. Do **not** ship the reversed-headline blog until both gates pass.
 
@@ -110,7 +110,36 @@ Artifact: [`smoke-summary-n2-r1.json`](./smoke-summary-n2-r1.json) · 100% task 
 | `clawql_program` | 685 | 0 | 357 | **811** | 1853 | 5097 |
 | `cloudflare_codemode` | 1000 | 0 | 357 | 518 | 1875 | 3947 |
 
-On weighted tokens, known-op (**1743**) is about **3.1×** cheaper than Executor (**5328**) and about **2.3×** cheaper than Cloudflare code-mode (**3947**). Compact plan (tool omitted when `operationId` set; short ids; empty args dropped): program code **872 → 811**. Program remains the costliest ClawQL arm on this filter workflow — expected; fan-out/join benches are where it should win. Hold the public claim until 3×10k + dual-model real-model.
+On weighted tokens, known-op (**1743**) is about **3.1×** cheaper than Executor (**5328**) and about **2.3×** cheaper than Cloudflare code-mode (**3947**). Compact plan (tool omitted when `operationId` set; short ids; empty args dropped): program code **872 → 811**. Program remains the costliest ClawQL arm on this filter workflow — expected; fan-out/join benches are where it should win.
+
+## Publish board (3×10k, `where` as code)
+
+Artifact: [`board-summary-n10000-r3.json`](./board-summary-n10000-r3.json) · 100% task success · weighted = definition + discovery + result + 5×code.
+
+| Arm | Weighted mean | Code mean | Result mean |
+| --- | ---: | ---: | ---: |
+| `clawql_known_op` | **1743** | 191 | 480 |
+| `cloudflare_codemode` | 3947 | 518 | 357 |
+| `clawql_program` | 5097 | 811 | 357 |
+| `executor_v2` | 5328 | 958 | 357 |
+| `clawql_compact_search` | 5835 | 191 | 480 |
+| `clawql_default` | 17731 | 191 | 480 |
+| `direct` | 47361 | 0 | 47361 |
+| `agentgateway` | 54705 | 0 | 47361 |
+| `mcpjungle` | 55121 | 0 | 47361 |
+
+Known-op stays the cheapest arm on this filter workflow. Gateways that dump full observations pay the unfiltered DNS list (~47k result tokens).
+
+## Dual-model real-model gate (Cursor Task, 50×2×2)
+
+Artifact: [`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json) · rules: `cf-mt-real-model-gate-v1` · pins: frontier `gpt-5.6-sol-medium`, small `composer-2.5-fast` · hosted CF code-mode excluded (explicit).
+
+| Model | Known-op median / p90 weighted | Executor median / p90 weighted | Over ceiling (KO / EX) | Win |
+| --- | ---: | ---: | ---: | --- |
+| Frontier | **1658** / **1793** | 15336 / 37977 | 0 / 21 | yes |
+| Small | **1499.5** / **1954** | 7326 / 35107 | 1 / 10 | yes |
+
+**Claim (pre-committed):** `known_op_beats_code_mode_for_real_models` — known-op wins median weighted, p90 weighted, task success, and ceiling count on **both** models. Task success 50/50 on every arm.
 
 ## Product fix for real models (ship the “shapes” cue)
 
@@ -133,9 +162,9 @@ Model: `composer-2.5-fast` subagents · arm: `clawql_known_op` · billed via Cur
 
 Post-fix: tool errors cleared (3→0); malformed still 2 (sessions 3 & 5 fixed via `example`). Median weighted **1643** ≈ scripted known-op **1743**. Mean skewed by session 2, which omitted `where` on DNS list (~60k result tokens) — that outlier motivated the **observation budget** product change above. Still not the SPEC dual-model × 50 gate (and do not compare these Composer rows to scripted code-mode).
 
-## Framing (if full board + real-model clear)
+## Framing
 
-Declarative `where` is the strong position: server-enforced, cheap to express, no interpreter to secure, every call individually governed. Programs handle fan-out, joins, and governed multi-step reads (ADR 0015). Hold the blog headline until both gates land.
+Declarative `where` is the strong position: server-enforced, cheap to express, no interpreter to secure, every call individually governed. Programs handle fan-out, joins, and governed multi-step reads (ADR 0015). Both the 3×10k scripted board and the dual-model Cursor real-model gate clear the pre-committed bar for that claim.
 
 ## Open questions
 
