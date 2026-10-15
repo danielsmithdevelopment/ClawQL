@@ -1,6 +1,6 @@
 # SQLite catalog — under-load RSS / anon / PSS
 
-Follows Ready A/B in [`catalog-sqlite-ready-rss.md`](./catalog-sqlite-ready-rss.md). Product default is now **on** (`CLAWQL_CATALOG_SQLITE=0` to opt out).
+Follows Ready A/B in [`catalog-sqlite-ready-rss.md`](./catalog-sqlite-ready-rss.md). Product default is now **on** (`CLAWQL_CATALOG_SQLITE=0` to opt out). Stale/missing DBs are built **out of process** by default (`CLAWQL_CATALOG_SQLITE_BUILD=oop`) — see [`catalog-oop-build.md`](./catalog-oop-build.md).
 
 Probes: `scripts/benchmarks/catalog-sqlite-underload-ab.mjs`, `scripts/benchmarks/mcpjungle-underload-smaps.mjs`  
 Summaries: [`catalog-sqlite-underload-summary.json`](./catalog-sqlite-underload-summary.json), [`catalog-sqlite-airtight-summary.json`](./catalog-sqlite-airtight-summary.json)  

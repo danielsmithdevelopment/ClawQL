@@ -941,10 +941,11 @@ async function loadSpecUncached(): Promise<LoadedSpec> {
 }
 
 /**
- * Optional colocated SQLite catalog (`CLAWQL_CATALOG_SQLITE=1`):
- * - `CLAWQL_CATALOG_SQLITE_LOAD=db` (or unset SPEC/URL sources with an existing DB):
- *   load compact ops from SQLite only — never parse OAS JSON at listen.
- * - otherwise: normal load, then persist + return slim view so the OAS graph can GC.
+ * Colocated SQLite catalog (`CLAWQL_CATALOG_SQLITE`, default on):
+ * 1. Fresh `catalog.sqlite` → LOAD=db (never parse OAS in the gateway).
+ * 2. Stale/missing DB + build mode `oop` (default) → short-lived child parses and
+ *    writes the DB; gateway only opens it read-only afterward.
+ * 3. Fallback `CLAWQL_CATALOG_SQLITE_BUILD=inprocess` → parse here, persist-then-slim.
  */
 async function maybeLoadOrPersistCatalogSqlite(loaded: LoadedSpec): Promise<LoadedSpec> {
   const { catalogSqliteEnabled, persistLoadedSpecToCatalogSqliteEffect } = await import(
@@ -964,23 +965,20 @@ async function tryLoadCatalogSqliteOnly(): Promise<LoadedSpec | null> {
   const {
     catalogSqliteEnabled,
     resolveCatalogSqlitePath,
+    catalogSqliteNeedsRebuild,
   } = await import("../catalog/catalog-sqlite.js");
   if (!Effect.runSync(catalogSqliteEnabled())) return null;
+  // Builder child must parse sources itself — never short-circuit to DB.
+  if ((process.env.CLAWQL_CATALOG_SQLITE_OOP_CHILD ?? "").trim() === "1") return null;
   const path = Effect.runSync(resolveCatalogSqlitePath());
   const { existsSync } = await import("node:fs");
   const loadMode = (process.env.CLAWQL_CATALOG_SQLITE_LOAD ?? "").trim().toLowerCase();
   const loadDbRequested = loadMode === "db" || loadMode === "sqlite";
-  // Prefer DB when explicitly requested, or when no OpenAPI source env is set.
-  const hasSpecSource = Boolean(
-    process.env.CLAWQL_SPEC_PATH?.trim() ||
-      process.env.OPENAPI_SPEC_PATH?.trim() ||
-      process.env.OPENAPI_FILE?.trim() ||
-      process.env.CLAWQL_SPEC_URL?.trim() ||
-      process.env.CLAWQL_SPEC_PATHS?.trim() ||
-      process.env.CLAWQL_PROVIDER?.trim() ||
-      process.env.CLAWQL_BUNDLED_PROVIDERS?.trim()
-  );
-  if (!loadDbRequested && hasSpecSource) return null;
+  const needsRebuild = Effect.runSync(catalogSqliteNeedsRebuild());
+  // Explicit LOAD=db always uses the file (hard-fail if missing/corrupt).
+  // Otherwise: use an existing fresh DB even when SPEC_PATH is set — that is the
+  // point of prebuilt / OOP catalogs (gateway never re-parses).
+  if (!loadDbRequested && needsRebuild) return null;
   if (!existsSync(path)) {
     if (loadDbRequested) {
       throw new Error(
@@ -1008,6 +1006,28 @@ async function tryLoadCatalogSqliteOnly(): Promise<LoadedSpec | null> {
   }
 }
 
+async function tryBuildCatalogSqliteOutOfProcess(): Promise<LoadedSpec | null> {
+  const {
+    catalogSqliteEnabled,
+    catalogSqliteBuildOutOfProcess,
+    catalogSqliteNeedsRebuild,
+    buildCatalogSqliteOutOfProcessEffect,
+  } = await import("../catalog/catalog-sqlite.js");
+  if (!Effect.runSync(catalogSqliteEnabled())) return null;
+  if ((process.env.CLAWQL_CATALOG_SQLITE_OOP_CHILD ?? "").trim() === "1") return null;
+  if (!Effect.runSync(catalogSqliteBuildOutOfProcess())) return null;
+  if (!Effect.runSync(catalogSqliteNeedsRebuild())) return null;
+  try {
+    return await Effect.runPromise(buildCatalogSqliteOutOfProcessEffect());
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[catalog-sqlite] oop-build failed (${msg}); falling back to in-process persist`
+    );
+    return null;
+  }
+}
+
 async function loadSpecImpl(): Promise<LoadedSpec> {
   if (cachedSpec) return cachedSpec;
   const generation = loadGeneration;
@@ -1017,6 +1037,11 @@ async function loadSpecImpl(): Promise<LoadedSpec> {
       if (fromDb) {
         if (generation === loadGeneration) cachedSpec = fromDb;
         return fromDb;
+      }
+      const fromOop = await tryBuildCatalogSqliteOutOfProcess();
+      if (fromOop) {
+        if (generation === loadGeneration) cachedSpec = fromOop;
+        return fromOop;
       }
       const loaded = await loadSpecUncached();
       const maybeSlim = await maybeLoadOrPersistCatalogSqlite(loaded);

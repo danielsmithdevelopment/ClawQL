@@ -74,10 +74,11 @@ Keep hot indexes / working set in memory; leave cold OAS in a SQLite file next t
 
 **How (v1):**
 
-1. Compile specs into read-only SQLite (`scripts/benchmarks/compile-catalog-sqlite.mjs` or listen-time persist): compact `Operation[]` JSON + gzip'd OpenAPI docs. Search stays the **existing** in-memory weighted keyword scan — **no** SQLite FTS/BM25 (#1186).
-2. Slim `LoadedSpec`: ops hot; OAS materialised lazily on first property access.
-3. Prefer SQLite for catalog cold storage; leave DuckDB to `clawql-data` analytics.
-4. Keep hot mutable state in memory (audit ring, sessions).
+1. Compile specs into read-only SQLite (`scripts/benchmarks/compile-catalog-sqlite.mjs`, listen-time **out-of-process** build, or `CLAWQL_CATALOG_SQLITE_BUILD=inprocess` persist): compact `Operation[]` JSON + gzip'd OpenAPI docs. Search stays the **existing** in-memory weighted keyword scan — **no** SQLite FTS/BM25 (#1186).
+2. **Default build mode `oop`:** when `catalog.sqlite` is missing or older than a local `CLAWQL_SPEC_PATH`, the gateway spawns `packages/clawql-api` `catalog/build-catalog-sqlite-cli`, which parses sources, writes the DB, and exits. The listen process then **`LOAD=db` only** — gateway RSS stays independent of spec size (Cloudflare / GCP-scale OAS). Opt out with `CLAWQL_CATALOG_SQLITE_BUILD=inprocess`.
+3. Slim `LoadedSpec`: ops hot; OAS materialised lazily on first property access.
+4. Prefer SQLite for catalog cold storage; leave DuckDB to `clawql-data` analytics.
+5. Keep hot mutable state in memory (audit ring, sessions).
 
 **Measured (Sentry ~3.3 MB OpenAPI, 209 ops):** in-memory Ready **~292 MB** RSS → `LOAD=db` **~154 MB** (−138 MB RSS / −117 MB anon). Artifact: [`catalog-sqlite-rss-ab.json`](../benchmarks/gateway-multi-comparison/catalog-sqlite-rss-ab.json).
 

@@ -36,7 +36,6 @@ import {
   loadSpec,
   registerSpecCacheShutdownHooks,
 } from "clawql-api";
-import { getClawqlApi } from "../composition/clawql-api-adapters.js";
 import { preloadSchemaFieldCacheFromDisk } from "../mcp/tools.js";
 import {
   buildHttpDiscoverResponse,
@@ -893,11 +892,14 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
             transports.set(sid, transport!);
             sessionIdle?.touch(sid);
             // 8.0 session-scope hooks (spec §5) — fire-and-forget; never block init.
-            const api = getClawqlApi();
-            void fireSessionStart({
-              hookRegistry: api.hookRegistry,
-              worm: api.worm,
-              sessionId: sid,
+            // Lazy getClawqlApi so this module does not static-import adapters (k8s/memory graph).
+            void import("../composition/clawql-api-adapters.js").then(({ getClawqlApi }) => {
+              const api = getClawqlApi();
+              return fireSessionStart({
+                hookRegistry: api.hookRegistry,
+                worm: api.worm,
+                sessionId: sid,
+              });
             }).catch(() => undefined);
           },
           // JSON bodies instead of SSE for each POST — helps some MCP clients / proxies (e.g. Cursor + tight buffering).
@@ -907,11 +909,13 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           const sid = transport!.sessionId;
           if (sid) {
             transports.delete(sid);
-            const api = getClawqlApi();
-            void fireSessionEnd({
-              hookRegistry: api.hookRegistry,
-              worm: api.worm,
-              sessionId: sid,
+            void import("../composition/clawql-api-adapters.js").then(({ getClawqlApi }) => {
+              const api = getClawqlApi();
+              return fireSessionEnd({
+                hookRegistry: api.hookRegistry,
+                worm: api.worm,
+                sessionId: sid,
+              });
             }).catch(() => undefined);
           }
         };

@@ -15,7 +15,6 @@ import {
 import { createRequire } from "node:module";
 import { Effect } from "effect";
 import { composeHorizontalPluginLayersDynamicEffect } from "./compose-horizontal-plugin-layers-dynamic.js";
-import { composeHorizontalPluginLayersStatic } from "./compose-horizontal-plugin-layers-static.js";
 import { attachActiveOtelParent, makeEffectOtelTracerLayer } from "./effect-otel-bridge.js";
 import {
   disposeProcessWormHostEffect,
@@ -106,6 +105,8 @@ function buildClawqlApi(
 async function resolveVaultSeedLayer(): Promise<
   CreateClawQLApiOptions["vaultSeedLayer"] | undefined
 > {
+  // Do not import clawql-memory (embedding / ONNX graph) when memory is off.
+  if (!resolvePluginCompositionFlags().enableMemory) return undefined;
   try {
     const mem = await import("clawql-memory/plugin");
     if (typeof mem.MemoryVaultSeedLive !== "undefined") {
@@ -119,6 +120,7 @@ async function resolveVaultSeedLayer(): Promise<
 
 /** Sync vault-seed for {@link getClawqlApi} — same Layer as async when memory is installed. */
 function resolveVaultSeedLayerSync(): CreateClawQLApiOptions["vaultSeedLayer"] | undefined {
+  if (!resolvePluginCompositionFlags().enableMemory) return undefined;
   try {
     const mem = requireFromHere("clawql-memory/plugin") as typeof import("clawql-memory/plugin");
     if (typeof mem.MemoryVaultSeedLive !== "undefined") {
@@ -173,6 +175,11 @@ export function getClawqlApi(): ClawQLApiHandle {
   if (!apiHandle) {
     // Fire-and-forget: durable WORM when CLAWQL_WORM_ENABLED=1 (does not block API build).
     void Effect.runPromise(ensureProcessWormHostBootedEffect()).catch(() => undefined);
+    // Lazy-load the sync composer so HTTP Ready via ensureClawqlApi() never evaluates
+    // the sync module graph when only the dynamic path is used.
+    const { composeHorizontalPluginLayersStatic } = requireFromHere(
+      "./compose-horizontal-plugin-layers-static.js"
+    ) as typeof import("./compose-horizontal-plugin-layers-static.js");
     apiHandle = buildClawqlApi(
       composeHorizontalPluginLayersStatic(resolvePluginCompositionFlags()),
       resolveVaultSeedLayerSync()
