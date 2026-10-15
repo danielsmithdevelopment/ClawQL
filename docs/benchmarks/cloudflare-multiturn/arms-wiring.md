@@ -22,6 +22,11 @@ Shapes: [`lib/clawql-shapes.mjs`](../../scripts/benchmarks/cloudflare-multiturn/
 
 **Publish gate:** `CF_MT_ITERS≥10000` and `CF_MT_REPS≥3` → `board-*`. Otherwise `smoke-*`.
 
+**Failed-session metrics (every arm):** `task_success_rate + error_rate = 1`. Primary
+token/latency means cover **all attempted sessions**; a failed session keeps work up to
+the failing step (not dropped). `success_only_*` is side-by-side diagnostic only. See
+board `metrics_policy` / [`board-error-inventory.json`](./board-error-inventory.json).
+
 ```bash
 export EXECUTOR_BIN=/tmp/executor-v2/node_modules/.bin/executor
 export EXECUTOR_V2_API_KEY="$(cat /tmp/executor-v2-data/api_key.txt)"

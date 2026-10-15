@@ -698,6 +698,11 @@ function summarizeSession(armId, ok, t0, steps, extra = {}) {
   };
 }
 
+/**
+ * Failed session with no completed steps (hard fail before any work).
+ * Prefer {@link partialFailedSession} when steps already ran — dropping them
+ * would zero tokens/latency and flatter the arm.
+ */
 function failedSessionFromError(armId, t0, err, step = null) {
   const message = String(err?.message || err || "unknown");
   return summarizeSession(armId, false, t0, [], {
@@ -707,6 +712,34 @@ function failedSessionFromError(armId, t0, err, step = null) {
   });
 }
 
+/** Failed session that still counts tokens/latency up to the failing step. */
+function partialFailedSession(armId, t0, steps, err, step = null) {
+  const message = String(err?.message || err || "unknown");
+  return summarizeSession(armId, false, t0, steps, {
+    error: message.slice(0, 500),
+    error_kind: classifyBoardError(err),
+    error_step: step,
+    partial: true,
+  });
+}
+
+/**
+ * Board metrics policy (every arm):
+ * - task_success_rate + error_rate = 1 (failed sessions always count against success).
+ * - Primary token/latency means use every attempted session; a failed session
+ *   contributes work completed before the failure (partial steps), not zero.
+ * - success_only_* mirrors the same means over ok sessions only (side-by-side).
+ */
+const METRICS_POLICY = {
+  id: "all_attempted_sessions_primary",
+  task_success: "Failed sessions count against task_success_rate; success_rate + error_rate = 1.",
+  tokens_latency_primary:
+    "discovery/result/code means and session_ms percentiles include every attempted session; failed sessions count tokens/latency up to the failing step.",
+  tokens_latency_success_only:
+    "success_only_* fields report the same aggregates over ok sessions only (diagnostic; not the headline).",
+  applies_to: "all arms",
+};
+
 /** Record a session; on throw, count as failed session instead of aborting the arm. */
 async function runCountedSession(armId, sessions, fn) {
   const t0 = performance.now();
@@ -715,6 +748,7 @@ async function runCountedSession(armId, sessions, fn) {
   } catch (e) {
     const stepMatch = String(e?.message || "").match(/step\s+(\d+)/i);
     const step = stepMatch ? Number(stepMatch[1]) : null;
+    // Runners should return partialFailedSession themselves; this is a last resort.
     sessions.push(failedSessionFromError(armId, t0, e, step));
   }
 }
@@ -739,58 +773,76 @@ async function runClawqlSession(client, expectations, { knownOp = false } = {}) 
   const steps = [];
   let ok = true;
   const t0 = performance.now();
+  let fatal = null;
+  let fatalStep = null;
 
   for (let step = 1; step <= 11; step++) {
     const shape = CLAWQL_STEP_SHAPES[step];
     let discoveryTokens = 0;
     let discoveryMs = 0;
-    if (!knownOp) {
-      const tS = performance.now();
-      const sRes = await client.callTool({
-        name: "search",
-        arguments: { query: shape.query || shape.operationId, limit: 3 },
+    try {
+      if (!knownOp) {
+        const tS = performance.now();
+        const sRes = await client.callTool({
+          name: "search",
+          arguments: { query: shape.query || shape.operationId, limit: 3 },
+        });
+        discoveryMs = performance.now() - tS;
+        if (sRes.isError) throw new Error(`search ${step}: ${toolText(sRes).slice(0, 200)}`);
+        discoveryTokens = countTokens(toolText(sRes));
+      }
+      const execArgs = {
+        operationId: shape.operationId,
+        args: shape.args,
+        where: shape.where,
+      };
+      // Model-written shaping (where/fields) — same bucket as code-mode script tokens.
+      const codeTokens = countTokens(modelWrittenShapeText(shape));
+      const tE = performance.now();
+      const eRes = await client.callTool({
+        name: "execute",
+        arguments: execArgs,
       });
-      discoveryMs = performance.now() - tS;
-      if (sRes.isError) throw new Error(`search ${step}: ${toolText(sRes).slice(0, 200)}`);
-      discoveryTokens = countTokens(toolText(sRes));
+      const execMs = performance.now() - tE;
+      if (eRes.isError) throw new Error(`execute ${step}: ${toolText(eRes).slice(0, 300)}`);
+      const text = toolText(eRes);
+      const json = parseJsonLoose(text);
+      if (json?.truncated) {
+        throw new Error(`execute ${step} truncated byteCount=${json.byteCount} limit=${json.limit}`);
+      }
+      if (json?.status === "where_invalid") {
+        throw new Error(`execute ${step} where_invalid: ${json.error || text.slice(0, 200)}`);
+      }
+      // Result tokens = server MCP text only (no client reshape). where ran on ClawQL.
+      const observed = json;
+      const check = checkStep(step, observed, expectations);
+      ok &&= check.ok;
+      steps.push({
+        step,
+        calls: knownOp ? 1 : 2,
+        discoveryTokens,
+        resultTokens: countTokens(text),
+        codeTokens,
+        latency_ms: discoveryMs + execMs,
+        check,
+        where: shape.where,
+        model_written: modelWrittenShapeText(shape),
+      });
+    } catch (e) {
+      fatal = e;
+      fatalStep = step;
+      break;
     }
-    const execArgs = {
-      operationId: shape.operationId,
-      args: shape.args,
-      where: shape.where,
-    };
-    // Model-written shaping (where/fields) — same bucket as code-mode script tokens.
-    const codeTokens = countTokens(modelWrittenShapeText(shape));
-    const tE = performance.now();
-    const eRes = await client.callTool({
-      name: "execute",
-      arguments: execArgs,
-    });
-    const execMs = performance.now() - tE;
-    if (eRes.isError) throw new Error(`execute ${step}: ${toolText(eRes).slice(0, 300)}`);
-    const text = toolText(eRes);
-    const json = parseJsonLoose(text);
-    if (json?.truncated) {
-      throw new Error(`execute ${step} truncated byteCount=${json.byteCount} limit=${json.limit}`);
-    }
-    if (json?.status === "where_invalid") {
-      throw new Error(`execute ${step} where_invalid: ${json.error || text.slice(0, 200)}`);
-    }
-    // Result tokens = server MCP text only (no client reshape). where ran on ClawQL.
-    const observed = json;
-    const check = checkStep(step, observed, expectations);
-    ok &&= check.ok;
-    steps.push({
-      step,
-      calls: knownOp ? 1 : 2,
-      discoveryTokens,
-      resultTokens: countTokens(text),
-      codeTokens,
-      latency_ms: discoveryMs + execMs,
-      check,
-      where: shape.where,
-      model_written: modelWrittenShapeText(shape),
-    });
+  }
+
+  if (fatal) {
+    return partialFailedSession(
+      knownOp ? "clawql_known_op" : "clawql_default",
+      t0,
+      steps,
+      fatal,
+      fatalStep
+    );
   }
 
   const proposal = { proposal: { recordId: FAKE.unproxiedRecordId, proxied: true }, gated: true };
@@ -818,62 +870,66 @@ async function runClawqlProgramSession(client, expectations) {
   const steps = [];
   let ok = true;
   const t0 = performance.now();
-  const source = programPlanSource();
-  const codeTokens = countTokens(source);
-  const t1 = performance.now();
-  const res = await client.callTool({
-    name: "execute_program",
-    arguments: { source, timeoutMs: 60_000 },
-  });
-  const ms = performance.now() - t1;
-  const text = toolText(res);
-  if (res.isError) throw new Error(`execute_program: ${text.slice(0, 400)}`);
-  const envelope = parseJsonLoose(text);
-  if (!envelope?.ok) {
-    throw new Error(`execute_program not ok: ${text.slice(0, 400)}`);
-  }
-  const results = envelope?.result?.results || [];
-  for (let step = 1; step <= 11; step++) {
-    const row =
-      results.find((r) => r.id === String(step) || r.id === `step_${step}`) || results[step - 1];
-    let value = row?.value;
-    if (typeof value === "string") value = parseJsonLoose(value);
-    // Host execute returns MCP text content; runner may stash parsed JSON or raw text.
-    if (value && typeof value === "object" && Array.isArray(value.content)) {
-      const inner = value.content
-        .filter((c) => c?.type === "text")
-        .map((c) => c.text)
-        .join("\n");
-      value = parseJsonLoose(inner);
-    }
-    const check = checkStep(step, value, expectations);
-    ok &&= check.ok;
-    steps.push({
-      step,
-      calls: step === 1 ? 1 : 0,
-      discoveryTokens: 0,
-      // Program-filtered return for this step (not the full execute_program envelope).
-      resultTokens: countTokens(JSON.stringify(value)),
-      codeTokens: step === 1 ? codeTokens : 0,
-      latency_ms: step === 1 ? ms : 0,
-      check,
-      note: "execute_program plan-runner-v0",
+  try {
+    const source = programPlanSource();
+    const codeTokens = countTokens(source);
+    const t1 = performance.now();
+    const res = await client.callTool({
+      name: "execute_program",
+      arguments: { source, timeoutMs: 60_000 },
     });
+    const ms = performance.now() - t1;
+    const text = toolText(res);
+    if (res.isError) throw new Error(`execute_program: ${text.slice(0, 400)}`);
+    const envelope = parseJsonLoose(text);
+    if (!envelope?.ok) {
+      throw new Error(`execute_program not ok: ${text.slice(0, 400)}`);
+    }
+    const results = envelope?.result?.results || [];
+    for (let step = 1; step <= 11; step++) {
+      const row =
+        results.find((r) => r.id === String(step) || r.id === `step_${step}`) || results[step - 1];
+      let value = row?.value;
+      if (typeof value === "string") value = parseJsonLoose(value);
+      // Host execute returns MCP text content; runner may stash parsed JSON or raw text.
+      if (value && typeof value === "object" && Array.isArray(value.content)) {
+        const inner = value.content
+          .filter((c) => c?.type === "text")
+          .map((c) => c.text)
+          .join("\n");
+        value = parseJsonLoose(inner);
+      }
+      const check = checkStep(step, value, expectations);
+      ok &&= check.ok;
+      steps.push({
+        step,
+        calls: step === 1 ? 1 : 0,
+        discoveryTokens: 0,
+        // Program-filtered return for this step (not the full execute_program envelope).
+        resultTokens: countTokens(JSON.stringify(value)),
+        codeTokens: step === 1 ? codeTokens : 0,
+        latency_ms: step === 1 ? ms : 0,
+        check,
+        note: "execute_program plan-runner-v0",
+      });
+    }
+    const proposal = { proposal: { recordId: FAKE.unproxiedRecordId, proxied: true }, gated: true };
+    const check12 = checkStep(12, proposal, expectations);
+    ok &&= check12.ok;
+    steps.push({
+      step: 12,
+      calls: 0,
+      discoveryTokens: 0,
+      resultTokens: countTokens(JSON.stringify(proposal)),
+      codeTokens: 0,
+      latency_ms: 0,
+      check: check12,
+      note: "gated",
+    });
+    return summarizeSession("clawql_program", ok, t0, steps);
+  } catch (e) {
+    return partialFailedSession("clawql_program", t0, steps, e, null);
   }
-  const proposal = { proposal: { recordId: FAKE.unproxiedRecordId, proxied: true }, gated: true };
-  const check12 = checkStep(12, proposal, expectations);
-  ok &&= check12.ok;
-  steps.push({
-    step: 12,
-    calls: 0,
-    discoveryTokens: 0,
-    resultTokens: countTokens(JSON.stringify(proposal)),
-    codeTokens: 0,
-    latency_ms: 0,
-    check: check12,
-    note: "gated",
-  });
-  return summarizeSession("clawql_program", ok, t0, steps);
 }
 
 async function runAggregatorSession(client, tools, expectations, armId) {
@@ -905,6 +961,7 @@ async function runAggregatorSession(client, tools, expectations, armId) {
     return json;
   }
 
+  try {
   await callOp(1, "zones-get", {}, (j) => {
     const zone = (j?.result || []).find((z) => z.name === FAKE.auditZoneName);
     return { zoneId: zone?.id };
@@ -966,6 +1023,16 @@ async function runAggregatorSession(client, tools, expectations, armId) {
   });
 
   return summarizeSession(armId, ok, t0, steps);
+  } catch (e) {
+    const stepMatch = String(e?.message || "").match(/step\s+(\d+)/i);
+    return partialFailedSession(
+      armId,
+      t0,
+      steps,
+      e,
+      stepMatch ? Number(stepMatch[1]) : steps.at(-1)?.step ?? null
+    );
+  }
 }
 
 function unwrapExecutorValue(text) {
@@ -1034,9 +1101,11 @@ async function runExecutorV2Session(client, scripts, expectations) {
     });
   }
   if (fatal) {
-    return failedSessionFromError(
+    // Keep steps 1..(fail-1): tokens/latency up to the failure, not a zeroed session.
+    return partialFailedSession(
       "executor_v2",
       t0,
+      steps,
       fatal,
       Number(String(fatal.message).match(/step\s+(\d+)/i)?.[1]) || null
     );
@@ -1291,23 +1360,37 @@ async function runArmSessions({
     throw new Error(`unknown arm ${arm}`);
   }
 
+  const meanOf = (arr) =>
+    arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+  const okSessions = sessions.filter((s) => s.ok);
   const sessionMs = sessions.map((s) => s.session_ms).filter((x) => x != null).sort((a, b) => a - b);
+  const sessionMsOk = okSessions.map((s) => s.session_ms).filter((x) => x != null).sort((a, b) => a - b);
   const resultTok = sessions.map((s) => s.result_tokens_sum);
   const discoveryTok = sessions.map((s) => s.discovery_tokens_sum);
   const codeTok = sessions.map((s) => s.code_tokens_sum);
+  const resultTokOk = okSessions.map((s) => s.result_tokens_sum);
+  const discoveryTokOk = okSessions.map((s) => s.discovery_tokens_sum);
+  const codeTokOk = okSessions.map((s) => s.code_tokens_sum);
   const plateau = memSamples.slice(-Math.min(5, memSamples.length));
   const memRss = plateau.map((m) => m.rss_mb).filter((x) => x != null).sort((a, b) => a - b);
   const memAnon = plateau.map((m) => m.anonymous_mb).filter((x) => x != null).sort((a, b) => a - b);
   const memPss = plateau.map((m) => m.pss_mb).filter((x) => x != null).sort((a, b) => a - b);
   const def = definitionTokens ?? 0;
   const nSess = Math.max(1, sessions.length);
-  const discoveryMean = discoveryTok.reduce((a, b) => a + b, 0) / nSess;
-  const resultMean = resultTok.reduce((a, b) => a + b, 0) / nSess;
-  const codeMean = codeTok.reduce((a, b) => a + b, 0) / nSess;
+  // Primary: every attempted session (failed sessions keep partial step tokens).
+  const discoveryMean = meanOf(discoveryTok);
+  const resultMean = meanOf(resultTok);
+  const codeMean = meanOf(codeTok);
   const combinedMean = def + discoveryMean + resultMean + codeMean;
   const weightedMean = def + discoveryMean + resultMean + CODE_PRICE_WEIGHT * codeMean;
   const combinedAtN = def + discoveryTok.reduce((a, b) => a + b, 0) + resultTok.reduce((a, b) => a + b, 0) + codeTok.reduce((a, b) => a + b, 0);
-  const sessionsOk = sessions.filter((s) => s.ok).length;
+  // Side-by-side: ok sessions only (diagnostic; do not use as headline if error_rate > 0).
+  const discoveryMeanOk = meanOf(discoveryTokOk);
+  const resultMeanOk = meanOf(resultTokOk);
+  const codeMeanOk = meanOf(codeTokOk);
+  const combinedMeanOk = def + discoveryMeanOk + resultMeanOk + codeMeanOk;
+  const weightedMeanOk = def + discoveryMeanOk + resultMeanOk + CODE_PRICE_WEIGHT * codeMeanOk;
+  const sessionsOk = okSessions.length;
   const sessionsFailed = sessions.length - sessionsOk;
   const errorsByKind = {};
   const errorSamples = [];
@@ -1320,6 +1403,9 @@ async function runArmSessions({
         error_kind: kind,
         error: s.error || null,
         error_step: s.error_step ?? null,
+        partial: Boolean(s.partial),
+        result_tokens_sum: s.result_tokens_sum,
+        code_tokens_sum: s.code_tokens_sum,
       });
     }
   }
@@ -1327,10 +1413,13 @@ async function runArmSessions({
   return {
     id: arm,
     iters,
+    metrics_policy: METRICS_POLICY,
     task_success_rate: sessionsOk / nSess,
     sessions_ok: sessionsOk,
     sessions_failed: sessionsFailed,
     error_rate: sessionsFailed / nSess,
+    /** Invariant: task_success_rate + error_rate === 1 */
+    success_plus_error: Number(((sessionsOk + sessionsFailed) / nSess).toFixed(6)),
     errors_by_kind: errorsByKind,
     error_samples: errorSamples,
     settings,
@@ -1346,11 +1435,26 @@ async function runArmSessions({
     weighted_mean: weightedMean,
     /** Rebuildable at N: Layer1 once + sum(discovery+result+code) over sessions. */
     combined_at_n: combinedAtN,
+    success_only: {
+      n: sessionsOk,
+      discovery_tokens_mean: discoveryMeanOk,
+      result_tokens_mean: resultMeanOk,
+      code_tokens_mean: codeMeanOk,
+      combined_mean: combinedMeanOk,
+      weighted_mean: weightedMeanOk,
+      session_ms: {
+        p50: percentile(sessionMsOk, 50),
+        p99: percentile(sessionMsOk, 99),
+        p999: percentile(sessionMsOk, 99.9),
+      },
+      note: "Diagnostic only — headline means use all attempted sessions.",
+    },
     rebuild_check: {
       combined_mean_ok:
         Math.abs(combinedMean - (def + discoveryMean + resultMean + codeMean)) < 1e-6,
       formula: "definition + discovery + result + code",
       weighted_formula: `definition + discovery + result + ${CODE_PRICE_WEIGHT}*code`,
+      scope: "all_attempted_sessions",
     },
     calls_mean: sessions.reduce((n, s) => n + s.calls_sum, 0) / sessions.length,
     session_ms: {
@@ -1358,10 +1462,11 @@ async function runArmSessions({
       p99: percentile(sessionMs, 99),
       p999: percentile(sessionMs, 99.9),
       comparable: upstream === "mock",
+      scope: "all_attempted_sessions",
       note:
         upstream === "none"
           ? "latency N/A — tokens-only / no upstream"
-          : "upstream=mock (same replay fixture as peers)",
+          : "upstream=mock (same replay fixture as peers); includes failed sessions",
     },
     memory_plateau:
       memRss.length || memAnon.length || memPss.length
@@ -1522,6 +1627,7 @@ async function main() {
                 ? "Fail-fast: first failed session aborts the arm/board."
                 : "Continue-on-error: failed sessions counted in error_rate / errors_by_kind.",
             },
+            metrics_policy: METRICS_POLICY,
             board,
           },
           null,
@@ -1541,6 +1647,7 @@ async function main() {
       tokenizer: "js-tiktoken cl100k_base",
       arms: ARMS,
       executor: executorMeta,
+      metrics_policy: METRICS_POLICY,
       product_defaults: {
         clawql_observation_budget_chars:
           process.env.CLAWQL_EXECUTE_OBSERVATION_BUDGET_CHARS ?? "8000 (package default)",

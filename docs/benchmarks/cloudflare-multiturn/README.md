@@ -19,7 +19,7 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | **Measured defaults (not program-as-core)** | Locked — [`measured-defaults.md`](./measured-defaults.md): known-op/`where` is the filter winner; programs stay alongside until one-step plans are as cheap as `execute` and a fan-out board clears |
 | **Memory under load (slim)** | Uncapped ~**290 MB**; Node **256** → **132 MB** (+**3.5 ms** p99); Bun `--smol` → **130 MB** and faster — [`memory-plateau.md`](./memory-plateau.md). |
 | **HTTP concurrency (Cloud)** | All arms `REPS=3`: Node uncapped **[30,31]** / 256 **[27,29]** / 384 **[25,30]**; Bun **[79,87]**; MJ **[31]**; AG **[34,38]** — **no ~30% cap tax**; Bun still leads. AG tuned **17**. [`http-concurrency-heap-ab.json`](./http-concurrency-heap-ab.json). |
-| **Board errors** | Slim rep3 aborted: `executor_v2` HTTP **502** (r2-list-buckets) after ≥7000 ok — counted, not discarded. Rep3 restart + continue-on-error — [`board-error-inventory.json`](./board-error-inventory.json). |
+| **Board errors** | Slim rep3 aborted: `executor_v2` HTTP **502** after ≥7000 ok (~**0.01%** order) — counted in proportion. Metrics: success+error=1; tokens/latency over all attempts (partial kept). [`board-error-inventory.json`](./board-error-inventory.json). |
 | Blog / public headline | Cleared by pre-committed rules (board + dual-model gate both green) |
 
 N&lt;10k or REPS&lt;3 writes `smoke-*` only. Do **not** publish smoke as the board. Do **not** ship the reversed-headline blog until both gates pass.
