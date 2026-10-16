@@ -3,8 +3,9 @@
 Artifact: [`board-rep4-n10000.json`](./board-rep4-n10000.json)  
 Arm: `executor_v2` · 10 000 sessions · Node-256 ClawQL peers same run · measuredAt 2026-10-16T03:14:59Z
 
-**Headline plateau (product path):** anonymous **2103 MB** median (last-5 samples); RSS **2194 MB**.  
-Motel diagnostics workerd is inventoried but **excluded** from that sum.
+**Headline for the page:** about **2.1 GB under sustained load** — native serve about **0.8 GB** plus sandbox about **1.2 GB**, each process counted once. Stock `executor serve` also starts a diagnostics (motel) workerd; that process is **excluded** here (generous to Executor; real deployments may carry it too).
+
+**Measured plateau (product path):** anonymous **2103 MB** median (last-5 samples); RSS **2194 MB**.
 
 ## Plateau or growth?
 
