@@ -85,6 +85,7 @@ Node ranges: [`http-concurrency-node-variance-3x.json`](./http-concurrency-node-
 | MCPJungle (HTTP) | **[31, 31]** median **31** | `REPS=3` (prior 1× **26**) |
 | agentgateway stock | **[34, 38]** median **38** | `REPS=3` (prior 1× **24**) |
 | agentgateway tuned | **17** | `AG_TUNED=1` smoke (1×; under load) |
+| Executor v2 HTTP | **[2, 2, 2]** median **2** | same-session with peers — [`http-concurrency-with-executor.json`](./http-concurrency-with-executor.json); sanity [`http-concurrency-executor-sanity.md`](./http-concurrency-executor-sanity.md) |
 
 **Heap cap vs concurrency:** same-session `REPS=3` puts uncapped at **30–31**, not 44.
 256 is **1–4** clients under that band — **not** ~30%. 384 overlaps uncapped (should be
@@ -94,6 +95,12 @@ still well above MJ **31** / AG **38**.
 
 **Peers over HTTP (this workflow):** ClawQL moves answers (`where`); peers move full
 DNS lists. Framing: fair, specific — not “peers are slower gateways.”
+
+**Executor v2 = 2 is real (HTTP multiplex):** stock `executor serve` beta.15; same
+`tools/call` p99 unit; **0 errors**; latency scales with client count (serialize /
+queue on one host). Not the older stdio process-per-client ~19–23 ceiling. Page
+footnote: code-mode `execute` serializes concurrent calls. Send Rhys the config in
+the sanity note before publish.
 
 **Peer settings in this bench:** MCPJungle registered with `session_mode: stateful`
 (keeps stdio `cf-rest-mcp` warm — better than the product default of a new upstream
