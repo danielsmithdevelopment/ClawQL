@@ -21,6 +21,12 @@
  *   CURVE=1 THRESHOLDS=100,250,500 CONC_STEP_MS=10000 REPS=3 \
  *     ARMS=clawql_bun_smol,clawql_node_256,mcpjungle,agentgateway,executor_v2 \
  *     OUT=…/http-concurrency-curves.json node scripts/benchmarks/http-concurrency-heap-ab.mjs
+ *
+ * CURVE mode climbs until p99 exceeds the loosest THRESHOLDS cutoff (or error_rate
+ * breaks). CONC_HARD_MAX is only a loop guard (default 8192 when CURVE=1), not a
+ * measured ceiling — do not "cap" arms to protect weaker peers. Host MemAvailable
+ * abort is recorded as host_censored (observational). Partial JSON flushes after
+ * each arm so a later peer OOM cannot erase completed rows.
  */
 import { spawn, spawnSync } from "node:child_process";
 import { createServer as createNetServer, createConnection } from "node:net";
@@ -65,7 +71,6 @@ const BREAK_ERROR_RATE = Math.min(
   1,
   Math.max(0, Number(process.env.BREAK_ERROR_RATE ?? 0.02) || 0.02)
 );
-const CONC_HARD_MAX = Math.max(2, Number(process.env.CONC_HARD_MAX || 256) || 256);
 const CONC_STEP_MS = Math.max(1000, Number(process.env.CONC_STEP_MS || 3000) || 3000);
 const CONC_WARMUP = Math.max(0, Number(process.env.CONC_WARMUP || 4) || 4);
 /** Repeat each arm N times (interleaved by arm order) for range/variance. */
@@ -73,6 +78,15 @@ const REPS = Math.max(1, Number(process.env.REPS || 1) || 1);
 const AG_TUNED = ["1", "true", "yes"].includes((process.env.AG_TUNED ?? "").trim().toLowerCase());
 /** Climb past the primary 100 ms break; publish clients@each threshold + p99 curve. */
 const CURVE = ["1", "true", "yes"].includes((process.env.CURVE ?? "").trim().toLowerCase());
+/**
+ * Loop guard only — not a measured concurrency ceiling.
+ * CURVE mode stops on p99 > curve_stop / error_rate / host_censored; this bound
+ * exists solely to prevent an infinite ladder if those never fire.
+ */
+const CONC_HARD_MAX = Math.max(
+  2,
+  Number(process.env.CONC_HARD_MAX || (CURVE ? 8192 : 256)) || (CURVE ? 8192 : 256)
+);
 const THRESHOLDS = (
   process.env.THRESHOLDS || (CURVE ? "100,250,500" : String(BREAK_P99_MS))
 )
@@ -81,38 +95,6 @@ const THRESHOLDS = (
   .filter((n) => Number.isFinite(n) && n > 0)
   .sort((a, b) => a - b);
 const CURVE_STOP_P99_MS = Math.max(BREAK_P99_MS, ...THRESHOLDS);
-/**
- * Per-arm client ceilings. ClawQL/Bun must not inherit a low global cap chosen
- * because agentgateway OOMs the host — that would unfairly understate ClawQL.
- * Override with CONC_HARD_MAX_BY_ARM=id:n,id:n (falls back to CONC_HARD_MAX).
- * Curve defaults: Bun climbs to 512; AG stays at 128 (host OOM above that).
- */
-const DEFAULT_HARD_MAX_BY_ARM = CURVE
-  ? {
-      clawql_bun_smol: 512,
-      clawql_node_256: 256,
-      clawql_node_384: 256,
-      clawql_node_uncapped: 256,
-      mcpjungle: 256,
-      agentgateway: 128,
-      executor_v2: 16,
-    }
-  : {};
-function parseHardMaxByArm() {
-  const map = { ...DEFAULT_HARD_MAX_BY_ARM };
-  const raw = (process.env.CONC_HARD_MAX_BY_ARM || "").trim();
-  if (!raw) return map;
-  for (const part of raw.split(",")) {
-    const [id, nStr] = part.split(":").map((s) => s.trim());
-    const n = Number(nStr);
-    if (id && Number.isFinite(n) && n >= 2) map[id] = Math.floor(n);
-  }
-  return map;
-}
-const HARD_MAX_BY_ARM = parseHardMaxByArm();
-function hardMaxFor(armId) {
-  return Math.max(2, HARD_MAX_BY_ARM[armId] ?? CONC_HARD_MAX);
-}
 const OUT =
   process.env.OUT ||
   join(ROOT, "docs/benchmarks/cloudflare-multiturn/http-concurrency-heap-ab.json");
@@ -726,22 +708,20 @@ async function chaosStep(arm, n) {
 }
 
 async function chaosArm(arm) {
-  const armHardMax = hardMaxFor(arm.id);
   console.error(
-    `[http-conc] === ${arm.id}${CURVE ? " (curve)" : ""} === hard_max=${armHardMax}`
+    `[http-conc] === ${arm.id}${CURVE ? " (curve)" : ""} === (climb until p99/errors; loop_guard=${CONC_HARD_MAX})`
   );
   const steps = [];
   const stopP99 = CURVE ? CURVE_STOP_P99_MS : BREAK_P99_MS;
   let lastOkPrimary = null;
   let firstBreakPrimary = null;
   let censoredAt = null;
-  for (let n = 1; n <= armHardMax; n *= 2) {
+  for (let n = 1; n <= CONC_HARD_MAX; n *= 2) {
     const availBefore = memAvailableMb();
-    // Only refuse a step when the host is already starved — do not pre-cap
-    // ClawQL/Bun just because a weaker peer OOMs at lower n on other reps.
+    // Observational host stop — not a predetermined arm ceiling.
     if (availBefore != null && availBefore < 2000 && n >= 64) {
       console.error(
-        `[http-conc] ${arm.id} abort climb at n=${n}: MemAvailable=${availBefore.toFixed(0)}MB (host pressure; not an arm SLO break)`
+        `[http-conc] ${arm.id} host_censored at n=${n}: MemAvailable=${availBefore.toFixed(0)}MB (not an SLO break)`
       );
       censoredAt = n;
       break;
@@ -756,42 +736,10 @@ async function chaosArm(arm) {
     else if (firstBreakPrimary == null) {
       firstBreakPrimary = { concurrency: n, reason: step.break_reason };
     }
-    // Curve mode climbs until the loosest publish threshold (or errors); legacy stops at primary break.
+    // Stop when the thing under test breaks — never because we invented a cap.
     if (step.error_rate > BREAK_ERROR_RATE) break;
     if (step.latency_ms?.p99 != null && step.latency_ms.p99 > stopP99) break;
     if (!CURVE && step.broken) break;
-    // When the next power-of-two exceeds this arm's hard max, probe armHardMax
-    // once (if still under stop) so Bun can land between 256 and 512, etc.
-    // Skip only when p99 is already near the stop — never because another arm is weak.
-    const next = n * 2;
-    if (next > armHardMax) {
-      const avail = memAvailableMb();
-      const p99 = step.latency_ms?.p99;
-      const nearStop = p99 != null && p99 > stopP99 * 0.75;
-      const lowMem = avail != null && avail < 2000;
-      if (
-        CURVE &&
-        n < armHardMax &&
-        p99 != null &&
-        p99 <= stopP99 &&
-        !nearStop &&
-        !lowMem
-      ) {
-        console.error(
-          `[http-conc] ${arm.id} clients=${armHardMax} (arm hard-max probe; avail=${avail?.toFixed?.(0)}MB)`
-        );
-        const extra = await chaosStep(arm, armHardMax);
-        steps.push(extra);
-        console.error(
-          `[http-conc] ${arm.id} n=${armHardMax} p99=${extra.latency_ms.p99?.toFixed?.(1)} err=${extra.error_rate}`
-        );
-      } else if (CURVE && (nearStop || lowMem)) {
-        console.error(
-          `[http-conc] ${arm.id} skip arm hard-max probe (p99=${p99?.toFixed?.(1)} nearStop=${nearStop} lowMem=${lowMem} avail=${avail?.toFixed?.(0)}MB)`
-        );
-      }
-      break;
-    }
   }
   const refine = [];
   const thresholdsToRefine = CURVE ? THRESHOLDS : [BREAK_P99_MS];
@@ -853,7 +801,7 @@ async function chaosArm(arm) {
     bun_smol: arm.bun_smol ?? null,
     toolName: arm.toolName,
     note: arm.note ?? null,
-    hard_max: armHardMax,
+    loop_guard: CONC_HARD_MAX,
     host_censored_at_clients: censoredAt,
     sustained_concurrency_before_break: primary.sustained_concurrency,
     first_break_clients: primary.first_break_clients ?? firstBreakPrimary?.concurrency ?? null,
@@ -966,7 +914,7 @@ function writeReport(results, { partial = false } = {}) {
       "Not equal-arm stdio chaos (gateway-multi 63/204); not NATS 4-replica (135).",
       "ClawQL uses known-op execute+where; aggregators/Executor call the same DNS op without where (larger body).",
       "Do not claim heap-cap concurrency cost from a single pass — 384 sits above the uncapped plateau (~296 MB).",
-      "Per-arm hard_max: ClawQL/Bun may climb higher than agentgateway. AG is capped to avoid host OOM aborting the shared run — that cap is not applied to ClawQL.",
+      "No predetermined client ceiling: climb until p99/errors break (or host_censored). CONC_HARD_MAX is a loop guard only.",
       ...(CURVE
         ? [
             "CURVE=1: p99 recorded at every client step; clients reported at each THRESHOLDS cutoff (default 100/250/500).",
@@ -979,10 +927,8 @@ function writeReport(results, { partial = false } = {}) {
       break_error_rate: BREAK_ERROR_RATE,
       step_ms: CONC_STEP_MS,
       warmup: CONC_WARMUP,
-      hard_max: CONC_HARD_MAX,
-      hard_max_by_arm: Object.fromEntries(
-        [...new Set(results.map((r) => r.id))].map((id) => [id, hardMaxFor(id)])
-      ),
+      loop_guard: CONC_HARD_MAX,
+      hard_max: CONC_HARD_MAX, // legacy alias — loop guard, not a measured ceiling
       reps: REPS,
       curve: CURVE,
       thresholds_p99_ms: THRESHOLDS,
@@ -1001,7 +947,7 @@ function writeReport(results, { partial = false } = {}) {
           break_reason: r.break_reason,
           thresholds: r.thresholds ?? null,
           saturation_throughput: r.saturation_throughput ?? null,
-          hard_max: r.hard_max ?? hardMaxFor(r.id),
+          loop_guard: r.loop_guard ?? CONC_HARD_MAX,
           host_censored_at_clients: r.host_censored_at_clients ?? null,
           runtime: r.runtime,
           node_max_old_space_mb: r.node_max_old_space_mb,
@@ -1024,7 +970,7 @@ function writeReport(results, { partial = false } = {}) {
         mcpjungle: mj ?? null,
         agentgateway: ag ?? null,
         executor_v2: exec ?? null,
-        note: "Like-for-like HTTP multiplex; aggregator/Executor payloads are larger (no where). Executor is external serve + Bearer. Per-arm hard_max keeps ClawQL uncapped by AG host limits.",
+        note: "Like-for-like HTTP multiplex; aggregator/Executor payloads are larger (no where). Executor is external serve + Bearer. No predetermined client caps — ceilings come from p99/errors (or host_censored).",
       },
       multi_threshold:
         CURVE
@@ -1084,9 +1030,7 @@ async function main() {
     // Round-robin reps across arms (same mock) so host drift hits each arm similarly.
     for (let rep = 1; rep <= REPS; rep++) {
       for (const [id, start] of starters) {
-        console.error(
-          `[http-conc] === ${id} rep ${rep}/${REPS} === hard_max=${hardMaxFor(id)}`
-        );
+        console.error(`[http-conc] === ${id} rep ${rep}/${REPS} ===`);
         const arm = await start();
         try {
           const row = await chaosArm(arm);
@@ -1113,7 +1057,7 @@ async function main() {
     JSON.stringify(
       {
         wrote: OUT,
-        hard_max_by_arm: report.slo.hard_max_by_arm,
+        loop_guard: report.slo.loop_guard,
         board: report.board,
         interpretation: report.interpretation,
       },
