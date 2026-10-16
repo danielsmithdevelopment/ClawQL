@@ -57,4 +57,4 @@ Claim gate is ≥50 sessions/arm/model; N=5 is a pilot under the same frozen rul
 **v2** ([`real-model-cursor-pilot-n5-v2.json`](./real-model-cursor-pilot-n5-v2.json)) after scalar-merge + schema cues:
 
 - Program code ~401–420; weighted medians beat known-op on **both** models
-- Dual-model win on N=5 pilot; **≥50 claim run in flight** (`/tmp/cf-mt-fanout-gate-claim50`, same frozen rules)
+- Dual-model win on N=5 pilot; **≥50 claim cleared** — [`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json)
