@@ -81,6 +81,38 @@ const THRESHOLDS = (
   .filter((n) => Number.isFinite(n) && n > 0)
   .sort((a, b) => a - b);
 const CURVE_STOP_P99_MS = Math.max(BREAK_P99_MS, ...THRESHOLDS);
+/**
+ * Per-arm client ceilings. ClawQL/Bun must not inherit a low global cap chosen
+ * because agentgateway OOMs the host — that would unfairly understate ClawQL.
+ * Override with CONC_HARD_MAX_BY_ARM=id:n,id:n (falls back to CONC_HARD_MAX).
+ * Curve defaults: Bun climbs to 512; AG stays at 128 (host OOM above that).
+ */
+const DEFAULT_HARD_MAX_BY_ARM = CURVE
+  ? {
+      clawql_bun_smol: 512,
+      clawql_node_256: 256,
+      clawql_node_384: 256,
+      clawql_node_uncapped: 256,
+      mcpjungle: 256,
+      agentgateway: 128,
+      executor_v2: 16,
+    }
+  : {};
+function parseHardMaxByArm() {
+  const map = { ...DEFAULT_HARD_MAX_BY_ARM };
+  const raw = (process.env.CONC_HARD_MAX_BY_ARM || "").trim();
+  if (!raw) return map;
+  for (const part of raw.split(",")) {
+    const [id, nStr] = part.split(":").map((s) => s.trim());
+    const n = Number(nStr);
+    if (id && Number.isFinite(n) && n >= 2) map[id] = Math.floor(n);
+  }
+  return map;
+}
+const HARD_MAX_BY_ARM = parseHardMaxByArm();
+function hardMaxFor(armId) {
+  return Math.max(2, HARD_MAX_BY_ARM[armId] ?? CONC_HARD_MAX);
+}
 const OUT =
   process.env.OUT ||
   join(ROOT, "docs/benchmarks/cloudflare-multiturn/http-concurrency-heap-ab.json");
@@ -694,12 +726,26 @@ async function chaosStep(arm, n) {
 }
 
 async function chaosArm(arm) {
-  console.error(`[http-conc] === ${arm.id}${CURVE ? " (curve)" : ""} ===`);
+  const armHardMax = hardMaxFor(arm.id);
+  console.error(
+    `[http-conc] === ${arm.id}${CURVE ? " (curve)" : ""} === hard_max=${armHardMax}`
+  );
   const steps = [];
   const stopP99 = CURVE ? CURVE_STOP_P99_MS : BREAK_P99_MS;
   let lastOkPrimary = null;
   let firstBreakPrimary = null;
-  for (let n = 1; n <= CONC_HARD_MAX; n *= 2) {
+  let censoredAt = null;
+  for (let n = 1; n <= armHardMax; n *= 2) {
+    const availBefore = memAvailableMb();
+    // Only refuse a step when the host is already starved — do not pre-cap
+    // ClawQL/Bun just because a weaker peer OOMs at lower n on other reps.
+    if (availBefore != null && availBefore < 2000 && n >= 64) {
+      console.error(
+        `[http-conc] ${arm.id} abort climb at n=${n}: MemAvailable=${availBefore.toFixed(0)}MB (host pressure; not an arm SLO break)`
+      );
+      censoredAt = n;
+      break;
+    }
     console.error(`[http-conc] ${arm.id} clients=${n}`);
     const step = await chaosStep(arm, n);
     steps.push(step);
@@ -714,33 +760,34 @@ async function chaosArm(arm) {
     if (step.error_rate > BREAK_ERROR_RATE) break;
     if (step.latency_ms?.p99 != null && step.latency_ms.p99 > stopP99) break;
     if (!CURVE && step.broken) break;
-    // Avoid 128→256 client jumps on tight hosts (OOM mid-step leaves orphans).
-    // If still under the curve stop, take one point at CONC_HARD_MAX then refine —
-    // but skip when p99 is already near the stop (AG @128 ~390ms) or MemAvailable is low.
+    // When the next power-of-two exceeds this arm's hard max, probe armHardMax
+    // once (if still under stop) so Bun can land between 256 and 512, etc.
+    // Skip only when p99 is already near the stop — never because another arm is weak.
     const next = n * 2;
-    if (CURVE && next > CONC_HARD_MAX) {
+    if (next > armHardMax) {
       const avail = memAvailableMb();
       const p99 = step.latency_ms?.p99;
       const nearStop = p99 != null && p99 > stopP99 * 0.75;
-      const lowMem = avail != null && avail < 3500;
+      const lowMem = avail != null && avail < 2000;
       if (
-        n < CONC_HARD_MAX &&
+        CURVE &&
+        n < armHardMax &&
         p99 != null &&
         p99 <= stopP99 &&
         !nearStop &&
         !lowMem
       ) {
         console.error(
-          `[http-conc] ${arm.id} clients=${CONC_HARD_MAX} (hard-max probe; avail=${avail?.toFixed?.(0)}MB)`
+          `[http-conc] ${arm.id} clients=${armHardMax} (arm hard-max probe; avail=${avail?.toFixed?.(0)}MB)`
         );
-        const extra = await chaosStep(arm, CONC_HARD_MAX);
+        const extra = await chaosStep(arm, armHardMax);
         steps.push(extra);
         console.error(
-          `[http-conc] ${arm.id} n=${CONC_HARD_MAX} p99=${extra.latency_ms.p99?.toFixed?.(1)} err=${extra.error_rate}`
+          `[http-conc] ${arm.id} n=${armHardMax} p99=${extra.latency_ms.p99?.toFixed?.(1)} err=${extra.error_rate}`
         );
-      } else if (nearStop || lowMem) {
+      } else if (CURVE && (nearStop || lowMem)) {
         console.error(
-          `[http-conc] ${arm.id} skip hard-max probe (p99=${p99?.toFixed?.(1)} nearStop=${nearStop} lowMem=${lowMem} avail=${avail?.toFixed?.(0)}MB)`
+          `[http-conc] ${arm.id} skip arm hard-max probe (p99=${p99?.toFixed?.(1)} nearStop=${nearStop} lowMem=${lowMem} avail=${avail?.toFixed?.(0)}MB)`
         );
       }
       break;
@@ -806,6 +853,8 @@ async function chaosArm(arm) {
     bun_smol: arm.bun_smol ?? null,
     toolName: arm.toolName,
     note: arm.note ?? null,
+    hard_max: armHardMax,
+    host_censored_at_clients: censoredAt,
     sustained_concurrency_before_break: primary.sustained_concurrency,
     first_break_clients: primary.first_break_clients ?? firstBreakPrimary?.concurrency ?? null,
     break_reason: primary.break_reason ?? firstBreakPrimary?.reason ?? null,
@@ -817,61 +866,8 @@ async function chaosArm(arm) {
   };
 }
 
-async function main() {
-  if (!existsSync(join(ROOT, "dist/server-http.js"))) {
-    throw new Error("dist/server-http.js missing — build first");
-  }
-  for (const [bin, label] of [
-    [MCPJUNGLE, "MCPJUNGLE_BIN"],
-    [AGENTGATEWAY, "AGENTGATEWAY_BIN"],
-  ]) {
-    if (!existsSync(bin)) throw new Error(`${label} not found at ${bin}`);
-  }
-
-  const mock = await startMock();
-  const results = [];
-  const want = new Set(
-    (
-      process.env.ARMS ||
-      "clawql_node_uncapped,clawql_node_256,clawql_node_384,clawql_bun_smol,mcpjungle,agentgateway,executor_v2"
-    )
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean)
-  );
-  const starters = [
-    ["clawql_node_uncapped", () => startClawql(mock.baseUrl, { id: "clawql_node_uncapped", oldMb: null })],
-    ["clawql_node_256", () => startClawql(mock.baseUrl, { id: "clawql_node_256", oldMb: 256 })],
-    ["clawql_node_384", () => startClawql(mock.baseUrl, { id: "clawql_node_384", oldMb: 384 })],
-    ["clawql_bun_smol", () => startClawql(mock.baseUrl, { id: "clawql_bun_smol", bunSmol: true })],
-    ["mcpjungle", () => startMcpjungle(mock.baseUrl)],
-    ["agentgateway", () => startAgentgateway(mock.baseUrl)],
-    ["executor_v2", () => startExecutorV2(mock.baseUrl)],
-  ].filter(([id]) => want.has(id));
-  try {
-    // Round-robin reps across arms (same mock) so host drift hits each arm similarly.
-    for (let rep = 1; rep <= REPS; rep++) {
-      for (const [id, start] of starters) {
-        console.error(`[http-conc] === ${id} rep ${rep}/${REPS} ===`);
-        const arm = await start();
-        try {
-          const row = await chaosArm(arm);
-          row.rep = rep;
-          results.push(row);
-        } finally {
-          try {
-            await arm.close();
-          } catch {
-            /* ignore */
-          }
-          await new Promise((r) => setTimeout(r, 400));
-        }
-      }
-    }
-  } finally {
-    await mock.close();
-  }
-
+/** Aggregate + write so a later arm OOM cannot erase completed ClawQL rows. */
+function writeReport(results, { partial = false } = {}) {
   const byArm = new Map();
   for (const r of results) {
     if (!byArm.has(r.id)) byArm.set(r.id, []);
@@ -891,7 +887,6 @@ async function main() {
       ];
     })
   );
-  /** clients@threshold medians across reps — multi-cutoff publish table. */
   const ranges_by_threshold = {};
   for (const T of THRESHOLDS) {
     const key = String(T);
@@ -942,10 +937,8 @@ async function main() {
 
   let heapCapVerdict = null;
   if (uncapped && n256 && n384 && REPS >= 3) {
-    const overlap256 =
-      uncapped.min <= n256.max && n256.min <= uncapped.max;
-    const overlap384 =
-      uncapped.min <= n384.max && n384.min <= uncapped.max;
+    const overlap256 = uncapped.min <= n256.max && n256.min <= uncapped.max;
+    const overlap384 = uncapped.min <= n384.max && n384.min <= uncapped.max;
     if (overlap256 && overlap384) {
       heapCapVerdict =
         `within_run_variance — uncapped [${uncapped.min},${uncapped.max}] overlaps 256 [${n256.min},${n256.max}] and 384 [${n384.min},${n384.max}]; do not claim cap costs concurrency`;
@@ -965,6 +958,7 @@ async function main() {
 
   const report = {
     measuredAt: new Date().toISOString(),
+    partial,
     topology: "A_single_instance_http_multiplex",
     claim_rules: [
       "One Streamable HTTP MCP process per arm; N concurrent clients.",
@@ -972,6 +966,7 @@ async function main() {
       "Not equal-arm stdio chaos (gateway-multi 63/204); not NATS 4-replica (135).",
       "ClawQL uses known-op execute+where; aggregators/Executor call the same DNS op without where (larger body).",
       "Do not claim heap-cap concurrency cost from a single pass — 384 sits above the uncapped plateau (~296 MB).",
+      "Per-arm hard_max: ClawQL/Bun may climb higher than agentgateway. AG is capped to avoid host OOM aborting the shared run — that cap is not applied to ClawQL.",
       ...(CURVE
         ? [
             "CURVE=1: p99 recorded at every client step; clients reported at each THRESHOLDS cutoff (default 100/250/500).",
@@ -985,6 +980,9 @@ async function main() {
       step_ms: CONC_STEP_MS,
       warmup: CONC_WARMUP,
       hard_max: CONC_HARD_MAX,
+      hard_max_by_arm: Object.fromEntries(
+        [...new Set(results.map((r) => r.id))].map((id) => [id, hardMaxFor(id)])
+      ),
       reps: REPS,
       curve: CURVE,
       thresholds_p99_ms: THRESHOLDS,
@@ -1003,6 +1001,8 @@ async function main() {
           break_reason: r.break_reason,
           thresholds: r.thresholds ?? null,
           saturation_throughput: r.saturation_throughput ?? null,
+          hard_max: r.hard_max ?? hardMaxFor(r.id),
+          host_censored_at_clients: r.host_censored_at_clients ?? null,
           runtime: r.runtime,
           node_max_old_space_mb: r.node_max_old_space_mb,
           bun_smol: r.bun_smol,
@@ -1024,7 +1024,7 @@ async function main() {
         mcpjungle: mj ?? null,
         agentgateway: ag ?? null,
         executor_v2: exec ?? null,
-        note: "Like-for-like HTTP multiplex; aggregator/Executor payloads are larger (no where). Executor is external serve + Bearer.",
+        note: "Like-for-like HTTP multiplex; aggregator/Executor payloads are larger (no where). Executor is external serve + Bearer. Per-arm hard_max keeps ClawQL uncapped by AG host limits.",
       },
       multi_threshold:
         CURVE
@@ -1045,10 +1045,75 @@ async function main() {
   } catch {
     /* ignore */
   }
+  return report;
+}
+
+async function main() {
+  if (!existsSync(join(ROOT, "dist/server-http.js"))) {
+    throw new Error("dist/server-http.js missing — build first");
+  }
+  for (const [bin, label] of [
+    [MCPJUNGLE, "MCPJUNGLE_BIN"],
+    [AGENTGATEWAY, "AGENTGATEWAY_BIN"],
+  ]) {
+    if (!existsSync(bin)) throw new Error(`${label} not found at ${bin}`);
+  }
+
+  const mock = await startMock();
+  const results = [];
+  const want = new Set(
+    (
+      process.env.ARMS ||
+      "clawql_bun_smol,clawql_node_256,mcpjungle,agentgateway,executor_v2"
+    )
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+  );
+  // ClawQL first so Bun/Node land before peers that can OOM the host.
+  const starters = [
+    ["clawql_bun_smol", () => startClawql(mock.baseUrl, { id: "clawql_bun_smol", bunSmol: true })],
+    ["clawql_node_256", () => startClawql(mock.baseUrl, { id: "clawql_node_256", oldMb: 256 })],
+    ["clawql_node_uncapped", () => startClawql(mock.baseUrl, { id: "clawql_node_uncapped", oldMb: null })],
+    ["clawql_node_384", () => startClawql(mock.baseUrl, { id: "clawql_node_384", oldMb: 384 })],
+    ["mcpjungle", () => startMcpjungle(mock.baseUrl)],
+    ["agentgateway", () => startAgentgateway(mock.baseUrl)],
+    ["executor_v2", () => startExecutorV2(mock.baseUrl)],
+  ].filter(([id]) => want.has(id));
+  try {
+    // Round-robin reps across arms (same mock) so host drift hits each arm similarly.
+    for (let rep = 1; rep <= REPS; rep++) {
+      for (const [id, start] of starters) {
+        console.error(
+          `[http-conc] === ${id} rep ${rep}/${REPS} === hard_max=${hardMaxFor(id)}`
+        );
+        const arm = await start();
+        try {
+          const row = await chaosArm(arm);
+          row.rep = rep;
+          results.push(row);
+          writeReport(results, { partial: true });
+          console.error(`[http-conc] wrote partial ${OUT} after ${id} rep ${rep}`);
+        } finally {
+          try {
+            await arm.close();
+          } catch {
+            /* ignore */
+          }
+          await new Promise((r) => setTimeout(r, 400));
+        }
+      }
+    }
+  } finally {
+    await mock.close();
+  }
+
+  const report = writeReport(results, { partial: false });
   console.log(
     JSON.stringify(
       {
         wrote: OUT,
+        hard_max_by_arm: report.slo.hard_max_by_arm,
         board: report.board,
         interpretation: report.interpretation,
       },
