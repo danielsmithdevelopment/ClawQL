@@ -403,6 +403,7 @@ export function endOtherDeviceSessionsEffect(
       }));
       return { ended: toEnd };
     }
+    type EndOthersBody = { readonly ended?: number; readonly endedCount?: number };
     const res = yield* Effect.tryPromise({
       try: async () => {
         const r = await fetch(`${config.apiBase}/session/end-others`, {
@@ -411,14 +412,14 @@ export function endOtherDeviceSessionsEffect(
           body: JSON.stringify({}),
         });
         if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
-        return r.json() as Promise<{ ended?: number; endedCount?: number }>;
+        return r.json() as Promise<EndOthersBody>;
       },
       catch: (cause) =>
         new MobileApiError({
           reason: cause instanceof Error ? cause.message : String(cause),
           status: (cause as { status?: number })?.status,
         }),
-    }).pipe(Effect.catch(() => Effect.succeed({ ended: 0 })));
+    }).pipe(Effect.catch(() => Effect.succeed({} as EndOthersBody)));
     return { ended: res.ended ?? res.endedCount ?? 0 };
   });
 }
