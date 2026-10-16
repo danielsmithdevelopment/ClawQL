@@ -41,6 +41,10 @@ import {
   modelWrittenShapeText,
   programPlanSource,
 } from "./lib/clawql-shapes.mjs";
+import {
+  executorV2ApiKey,
+  findExecutorV2ServeRootPid,
+} from "../lib/find-executor-v2-pid.mjs";
 
 /** Price-weight: model-written code/where/plan at 5× input (blog / board convention). */
 const CODE_PRICE_WEIGHT = Number(process.env.CF_MT_CODE_PRICE_WEIGHT || 5) || 5;
@@ -215,8 +219,27 @@ function treeSmaps(rootPid) {
   };
 }
 
+function roleForCmd(cmd) {
+  if (/cf-rest-mcp\.mjs|equal-arm-catalog-mcp\.mjs/.test(cmd)) return "rest_mcp";
+  if (/mcpjungle/.test(cmd)) return "mcpjungle_gateway";
+  if (/agentgateway/.test(cmd)) return "agentgateway";
+  if (/server-http\.js|dist\/server/.test(cmd)) return "clawql_http";
+  // Executor motel = always-on diagnostics telemetry — inventory only, not plateau sum.
+  if (/workerd/.test(cmd) && /motel\.capnp|motel-data|motel-assets/.test(cmd)) {
+    return "executor_motel";
+  }
+  if (/workerd/.test(cmd)) return "executor_sandbox";
+  if (/\bexecutor\b/.test(cmd)) return "executor_serve";
+  return "other";
+}
+
+/** Roles that count toward Executor headline RSS/anon (CLI + HTTP + sandbox). */
+function countsTowardExecutorPlateau(role) {
+  return role === "executor_serve" || role === "executor_sandbox";
+}
+
 /** Per-PID inventory for fairness audits (gateway + REST→MCP child, etc.). */
-function treeProcessInventory(rootPid) {
+function treeProcessInventory(rootPid, { arm = null } = {}) {
   const processes = [];
   for (const pid of processTreePids(rootPid)) {
     const s = smapsRollup(pid);
@@ -224,25 +247,38 @@ function treeProcessInventory(rootPid) {
     processes.push({
       pid,
       cmd,
-      role: /cf-rest-mcp\.mjs|equal-arm-catalog-mcp\.mjs/.test(cmd)
-        ? "rest_mcp"
-        : /mcpjungle/.test(cmd)
-          ? "mcpjungle_gateway"
-          : /agentgateway/.test(cmd)
-            ? "agentgateway"
-            : /server-http\.js|dist\/server/.test(cmd)
-              ? "clawql_http"
-              : "other",
+      role: roleForCmd(cmd),
       rss_mb: s?.rss_mb ?? null,
       anonymous_mb: s?.anonymous_mb ?? null,
       pss_mb: s?.pss_mb ?? null,
     });
   }
-  const tree = treeSmaps(rootPid);
+  let tree;
+  if (arm === "executor_v2") {
+    let rss = 0;
+    let anon = 0;
+    let pss = 0;
+    for (const p of processes) {
+      if (!countsTowardExecutorPlateau(p.role)) continue;
+      if (p.rss_mb != null) rss += p.rss_mb;
+      if (p.anonymous_mb != null) anon += p.anonymous_mb;
+      if (p.pss_mb != null) pss += p.pss_mb;
+    }
+    tree = {
+      rss_mb: Number(rss.toFixed(2)),
+      anonymous_mb: Number(anon.toFixed(2)),
+      pss_mb: Number(pss.toFixed(2)),
+      plateau_excludes: "executor_motel (diagnostics workerd)",
+    };
+  } else {
+    tree = treeSmaps(rootPid);
+  }
   return {
     ...tree,
     process_count: processes.length,
     has_rest_mcp: processes.some((p) => p.role === "rest_mcp"),
+    has_executor_serve: processes.some((p) => p.role === "executor_serve"),
+    has_executor_sandbox: processes.some((p) => p.role === "executor_sandbox"),
     processes,
   };
 }
@@ -1203,7 +1239,7 @@ async function runArmSessions({
           })
         );
         if (shouldSampleMemory(i, iters)) {
-          const inv = treeProcessInventory(pid);
+          const inv = treeProcessInventory(pid, { arm });
           memSamples.push({
             i,
             rss_mb: inv.rss_mb,
@@ -1241,7 +1277,7 @@ async function runArmSessions({
           runClawqlProgramSession(conn.client, expectations)
         );
         if (shouldSampleMemory(i, iters)) {
-          const inv = treeProcessInventory(pid);
+          const inv = treeProcessInventory(pid, { arm });
           memSamples.push({
             i,
             rss_mb: inv.rss_mb,
@@ -1271,7 +1307,7 @@ async function runArmSessions({
           runAggregatorSession(conn.client, listed.tools, expectations, arm)
         );
         if (shouldSampleMemory(i, iters)) {
-          const inv = treeProcessInventory(pid);
+          const inv = treeProcessInventory(pid, { arm });
           // Aggregators without a live REST→MCP child under-count vs ClawQL (one process does both).
           if (!inv.has_rest_mcp) {
             console.warn(
@@ -1314,12 +1350,16 @@ async function runArmSessions({
     };
     upstream = "mock";
     const url = process.env.EXECUTOR_V2_URL || "http://127.0.0.1:4312/mcp";
-    const key =
-      process.env.EXECUTOR_V2_API_KEY?.trim() ||
-      (existsSync("/tmp/executor-v2-data/api_key.txt")
-        ? readFileSync("/tmp/executor-v2-data/api_key.txt", "utf8").trim()
-        : "");
+    const key = executorV2ApiKey();
     if (!key) throw new Error("EXECUTOR_V2_API_KEY required");
+    pid = findExecutorV2ServeRootPid();
+    if (pid == null) {
+      console.warn(
+        `[cf-board] WARN executor_v2: empty process tree (pid=null) — set EXECUTOR_V2_PID or ensure \`executor serve\` is running; memory samples will be skipped`
+      );
+    } else {
+      console.error(`[cf-board] executor_v2 memory root pid=${pid}`);
+    }
     const transport = new StreamableHTTPClientTransport(new URL(url), {
       requestInit: { headers: { Authorization: `Bearer ${key}` } },
     });
@@ -1333,13 +1373,46 @@ async function runArmSessions({
         await runCountedSession(arm, sessions, () =>
           runExecutorV2Session(client, execScripts, expectations)
         );
-        if (
-          i % Math.max(1, Math.floor(iters / 10)) === 0 ||
-          i === 1 ||
-          i === iters ||
-          !sessions.at(-1).ok
-        ) {
-          noteSessionOutcome(arm, i, iters, sessions.at(-1));
+        if (shouldSampleMemory(i, iters)) {
+          if (pid == null) {
+            console.warn(
+              `[cf-board] WARN executor_v2 session ${i}: empty process tree (pid=null) — memory sample skipped`
+            );
+          } else {
+            const inv = treeProcessInventory(pid, { arm });
+            if (inv.process_count === 0) {
+              console.warn(
+                `[cf-board] WARN executor_v2 session ${i}: empty process tree (pid=${pid}) — memory sample under-count`
+              );
+            }
+            if (!inv.has_executor_serve) {
+              console.warn(
+                `[cf-board] WARN executor_v2 session ${i}: process tree missing executor_serve (count=${inv.process_count}) — memory sample may under-count`
+              );
+            }
+            memSamples.push({
+              i,
+              rss_mb: inv.rss_mb,
+              anonymous_mb: inv.anonymous_mb,
+              pss_mb: inv.pss_mb,
+              process_count: inv.process_count,
+              has_rest_mcp: inv.has_rest_mcp,
+              has_executor_serve: inv.has_executor_serve,
+              has_executor_sandbox: inv.has_executor_sandbox,
+              plateau_excludes: inv.plateau_excludes ?? null,
+              processes: inv.processes,
+            });
+          }
+        }
+        if (shouldSampleMemory(i, iters) || !sessions.at(-1).ok) {
+          const inv = memSamples.at(-1);
+          const extra =
+            inv && shouldSampleMemory(i, iters)
+              ? ` tree_procs=${inv.process_count} anon=${inv.anonymous_mb}`
+              : pid == null
+                ? " tree_procs=0 (pid null)"
+                : "";
+          noteSessionOutcome(arm, i, iters, sessions.at(-1), { extraLog: extra });
         }
       }
     } finally {
@@ -1500,7 +1573,9 @@ async function runArmSessions({
           note:
             arm === "mcpjungle" || arm === "agentgateway"
               ? "Tree must include cf-rest-mcp.mjs (OpenAPI→tools) while the stateful session is open; idle gateway-only (~10–14 MB anon) is not a peer for ClawQL."
-              : "ClawQL serves catalog+execute in one Node process — no separate REST→MCP child.",
+              : arm === "executor_v2"
+                ? "Tree rooted at Executor serve (node launcher → native binary → sandbox workerd). Motel diagnostics workerd is inventoried but excluded from plateau. Empty tree warns; set EXECUTOR_V2_PID if discovery fails."
+                : "ClawQL serves catalog+execute in one Node process — no separate REST→MCP child.",
         }
       : null,
     first_session: sessions[0],

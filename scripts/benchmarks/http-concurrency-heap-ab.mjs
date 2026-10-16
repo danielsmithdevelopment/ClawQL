@@ -9,6 +9,7 @@
  *   - clawql_bun_smol   (bun --smol)
  *   - mcpjungle        (HTTP gateway + cf-rest-mcp → mock)
  *   - agentgateway     (HTTP gateway + cf-rest-mcp → mock)
+ *   - executor_v2      (existing Executor serve + OpenAPI app → mock; Bearer auth)
  *
  * SLO matches gateway-multi single-instance chaos: p99 ≤ 100 ms, error_rate ≤ 0.02.
  * Power-of-two ladder + binary refine. Does NOT claim vs stdio equal-arm 63/204.
@@ -26,6 +27,7 @@ import {
   openSync,
   closeSync,
   rmSync,
+  readdirSync,
 } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -33,7 +35,13 @@ import { performance } from "node:perf_hooks";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { clawqlEqualArmEnv } from "./lib/clawql-bench-env.mjs";
+import {
+  executorV2ApiKey,
+  findExecutorV2ServeRootPid,
+} from "./lib/find-executor-v2-pid.mjs";
 import { FAKE } from "./cloudflare-multiturn/lib/fixture-ids.mjs";
+import { ensureExecutorOpenapiApp } from "./cloudflare-multiturn/lib/ensure-executor-openapi-app.mjs";
+import { executorV2ToolScripts } from "./cloudflare-multiturn/code-mode/published-scripts.mjs";
 
 const ROOT = "/workspace";
 const HERE = join(ROOT, "scripts/benchmarks/cloudflare-multiturn");
@@ -157,8 +165,11 @@ async function startMock() {
   };
 }
 
-async function connectHttpMcp(mcpUrl, name) {
-  const transport = new StreamableHTTPClientTransport(new URL(mcpUrl));
+async function connectHttpMcp(mcpUrl, name, { headers } = {}) {
+  const transport = new StreamableHTTPClientTransport(
+    new URL(mcpUrl),
+    headers ? { requestInit: { headers } } : undefined
+  );
   const client = new Client({ name, version: "1" }, {});
   await client.connect(transport);
   return {
@@ -166,6 +177,66 @@ async function connectHttpMcp(mcpUrl, name) {
     close: async () => {
       await client.close().catch(() => {});
     },
+  };
+}
+
+function cmdlineOf(pid) {
+  try {
+    return readFileSync(`/proc/${pid}/cmdline`, "utf8").replace(/\0/g, " ").trim();
+  } catch {
+    return "";
+  }
+}
+
+/** Sum smaps over PPID tree (Executor: serve + sandbox; exclude motel diagnostics). */
+function treeSmaps(rootPid, { excludeMotel = false } = {}) {
+  if (rootPid == null) return null;
+  const kids = (pid) => {
+    const out = [];
+    try {
+      for (const ent of readdirSync("/proc")) {
+        if (!/^\d+$/.test(ent)) continue;
+        try {
+          const text = readFileSync(`/proc/${ent}/status`, "utf8");
+          const m = text.match(/^PPid:\s+(\d+)/m);
+          if (m && Number(m[1]) === pid) out.push(Number(ent));
+        } catch {
+          /* ignore */
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    return out;
+  };
+  const seen = new Set();
+  const q = [rootPid];
+  let rss = 0;
+  let anon = 0;
+  let pss = 0;
+  let counted = 0;
+  while (q.length) {
+    const pid = q.shift();
+    if (seen.has(pid)) continue;
+    seen.add(pid);
+    const cmd = cmdlineOf(pid);
+    const motel = /motel\.capnp|motel-data|motel-assets/.test(cmd);
+    q.push(...kids(pid));
+    if (excludeMotel && motel) continue;
+    const s = smaps(pid);
+    if (s) {
+      if (s.rss_mb != null) rss += s.rss_mb;
+      if (s.anonymous_mb != null) anon += s.anonymous_mb;
+      if (s.pss_mb != null) pss += s.pss_mb;
+      counted += 1;
+    }
+  }
+  return {
+    rss_mb: Number(rss.toFixed(2)),
+    anonymous_mb: Number(anon.toFixed(2)),
+    pss_mb: Number(pss.toFixed(2)),
+    process_count: counted,
+    tree_process_count: seen.size,
   };
 }
 
@@ -428,10 +499,55 @@ mcp:
   };
 }
 
+async function startExecutorV2(mockBase) {
+  if (!existsSync(CURATED)) throw new Error(`missing ${CURATED}`);
+  const openapiDoc = JSON.parse(readFileSync(CURATED, "utf8"));
+  const meta = ensureExecutorOpenapiApp({ mockBase, openapiDoc });
+  const key = executorV2ApiKey();
+  if (!key) throw new Error("EXECUTOR_V2_API_KEY or /tmp/executor-v2-data/api_key.txt required");
+  const mcpUrl = process.env.EXECUTOR_V2_URL?.trim() || "http://127.0.0.1:4312/mcp";
+  const pid = findExecutorV2ServeRootPid();
+  if (pid == null) {
+    console.warn(
+      "[http-conc] WARN executor_v2: empty process tree (pid=null) — set EXECUTOR_V2_PID; memory samples may be null"
+    );
+  }
+  const headers = { Authorization: `Bearer ${key}` };
+  const probe = await connectHttpMcp(mcpUrl, "exec-probe", { headers });
+  const listed = await probe.client.listTools();
+  const executeTool = listed.tools.find((t) => t.name === "execute");
+  if (!executeTool) throw new Error("executor_v2: execute tool missing");
+  await probe.close();
+  const scripts = executorV2ToolScripts({ appSlug: meta.slug });
+  // Same DNS list + A-count as ClawQL known-op / aggregator OP_ID (step 4).
+  const code = scripts[4];
+  return {
+    id: "executor_v2",
+    kind: "executor",
+    runtime: "executor_v2_http",
+    mcpUrl,
+    pid,
+    toolName: "execute",
+    callArgs: { code },
+    authHeaders: headers,
+    memoryTree: true,
+    note: `OpenAPI tools host (${meta.slug}); code-mode execute of DNS list (no where). External serve — close() does not kill host.`,
+    executor: {
+      slug: meta.slug,
+      deployment: meta.deploymentId,
+      origin: meta.origin,
+    },
+    close: async () => {
+      /* shared Executor host — do not SIGTERM */
+    },
+  };
+}
+
 async function chaosStep(arm, n) {
   const clients = [];
+  const connectOpts = arm.authHeaders ? { headers: arm.authHeaders } : {};
   for (let i = 0; i < n; i++) {
-    clients.push(await connectHttpMcp(arm.mcpUrl, `${arm.id}-${n}-${i}`));
+    clients.push(await connectHttpMcp(arm.mcpUrl, `${arm.id}-${n}-${i}`, connectOpts));
   }
   for (const c of clients) {
     for (let w = 0; w < CONC_WARMUP; w++) {
@@ -482,7 +598,9 @@ async function chaosStep(arm, n) {
       p99,
       p999: percentile(sorted, 99.9),
     },
-    memory: smaps(arm.pid),
+    memory: arm.memoryTree
+      ? treeSmaps(arm.pid, { excludeMotel: true })
+      : smaps(arm.pid),
     broken,
     break_reason: broken ? reasons.join(" + ") : null,
   };
@@ -560,7 +678,7 @@ async function main() {
   const want = new Set(
     (
       process.env.ARMS ||
-      "clawql_node_uncapped,clawql_node_256,clawql_node_384,clawql_bun_smol,mcpjungle,agentgateway"
+      "clawql_node_uncapped,clawql_node_256,clawql_node_384,clawql_bun_smol,mcpjungle,agentgateway,executor_v2"
     )
       .split(",")
       .map((s) => s.trim())
@@ -573,6 +691,7 @@ async function main() {
     ["clawql_bun_smol", () => startClawql(mock.baseUrl, { id: "clawql_bun_smol", bunSmol: true })],
     ["mcpjungle", () => startMcpjungle(mock.baseUrl)],
     ["agentgateway", () => startAgentgateway(mock.baseUrl)],
+    ["executor_v2", () => startExecutorV2(mock.baseUrl)],
   ].filter(([id]) => want.has(id));
   try {
     // Round-robin reps across arms (same mock) so host drift hits each arm similarly.
@@ -623,6 +742,7 @@ async function main() {
   const bun = ranges.clawql_bun_smol;
   const mj = ranges.mcpjungle;
   const ag = ranges.agentgateway || ranges.agentgateway_tuned;
+  const exec = ranges.executor_v2;
 
   let heapCapVerdict = null;
   if (uncapped && n256 && n384 && REPS >= 3) {
@@ -694,7 +814,8 @@ async function main() {
         clawql_bun_smol: bun ?? null,
         mcpjungle: mj ?? null,
         agentgateway: ag ?? null,
-        note: "Like-for-like HTTP multiplex; aggregator payloads are larger (no where).",
+        executor_v2: exec ?? null,
+        note: "Like-for-like HTTP multiplex; aggregator/Executor payloads are larger (no where). Executor is external serve + Bearer.",
       },
       cloud_profile_hint:
         "Bun --smol remains the Cloud HTTP default (highest clients + ~130 MB). Do not cite Node cap concurrency tax until REPS≥3 settles variance vs flag-behavior.",
