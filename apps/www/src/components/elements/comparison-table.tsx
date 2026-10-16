@@ -9,12 +9,21 @@ import type { ComponentProps } from 'react'
  * keeps shadcn in `apps/dashboard` (product console only).
  */
 
-/** Shared class tokens — prefer these over one-off table chrome. */
+/**
+ * Shared class tokens — prefer these over one-off table chrome.
+ *
+ * No position:sticky: these tables sit in overflow-x-auto wrappers, and sticky
+ * thead cells paint over / through body rows while scrolling (Capability matrix).
+ * Headers scroll away with the table; keep solid mist bg + padding only.
+ */
 export const comparisonTableClass = 'w-full border-collapse text-left text-sm/5'
-export const comparisonThClass =
-  'sticky top-(--scroll-padding-top) bg-mist-100 px-3 py-4 font-medium text-mist-950 dark:bg-mist-950 dark:text-white'
-export const comparisonTdClass = 'px-3 py-4'
-export const comparisonRowThClass = 'px-3 py-4 font-normal text-mist-700 dark:text-mist-400'
+export const comparisonThClass = clsx(
+  'bg-mist-100 px-4 py-5 font-medium text-mist-950',
+  'border-b border-mist-950/15',
+  'dark:bg-mist-950 dark:text-white dark:border-white/15',
+)
+export const comparisonTdClass = 'px-4 py-4'
+export const comparisonRowThClass = 'px-4 py-4 font-normal text-mist-700 dark:text-mist-400'
 
 export function ComparisonTable({
   className,
