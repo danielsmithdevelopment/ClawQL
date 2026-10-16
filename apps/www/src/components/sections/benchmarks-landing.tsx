@@ -1,21 +1,26 @@
+import { ComparisonRowTh, ComparisonTable, ComparisonTd, ComparisonTh } from '@/components/elements/comparison-table'
 import { Section } from '@/components/elements/section'
 import { CheckmarkIcon } from '@/components/icons/checkmark-icon'
 import { MinusIcon } from '@/components/icons/minus-icon'
 import {
-  cfBenchmarkHonesty,
   cfBenchmarkHeadline,
+  cfBenchmarkHonesty,
   cfBenchmarkMeta,
   cfBenchmarkSummary,
   cfHttpConcRows,
   cfStdioConcRows,
   cfTokenRows,
+  fanoutBenchmarkHonesty,
+  fanoutBenchmarkMeta,
+  fanoutGateRows,
+  fanoutScriptedRows,
 } from '@/lib/cloudflare-benchmarks'
 import {
   BENCHMARK_VIDEO_META,
   BENCHMARK_VIDEO_SRC,
   gatewayBenchmarkClaim,
-  gatewayBenchmarkHonesty,
   gatewayBenchmarkHeadline,
+  gatewayBenchmarkHonesty,
   gatewayBenchmarkLinks,
   gatewayBenchmarkMeta,
   gatewayBenchmarkSummary,
@@ -52,13 +57,7 @@ function BenchmarkVideoSlot() {
   if (BENCHMARK_VIDEO_SRC) {
     return (
       <div className="overflow-hidden rounded-xl bg-mist-950/5 ring-1 ring-mist-950/10 dark:bg-white/5 dark:ring-white/10">
-        <video
-          className="aspect-video w-full"
-          controls
-          playsInline
-          preload="metadata"
-          src={BENCHMARK_VIDEO_SRC}
-        >
+        <video className="aspect-video w-full" controls playsInline preload="metadata" src={BENCHMARK_VIDEO_SRC}>
           <track kind="captions" />
         </video>
       </div>
@@ -71,7 +70,7 @@ function BenchmarkVideoSlot() {
       role="img"
       aria-label={`${BENCHMARK_VIDEO_META.placeholderLabel} — ${BENCHMARK_VIDEO_META.placeholderHint}`}
     >
-      <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:48px_48px] text-mist-950 dark:text-white" />
+      <div className="absolute inset-0 [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:48px_48px] text-mist-950 opacity-[0.07] dark:text-white" />
       <div className="relative flex flex-col items-center gap-3 px-6 text-center">
         <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-mist-950/90 text-white shadow-lg shadow-mist-950/20 dark:bg-white/90 dark:text-mist-950">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -107,25 +106,42 @@ export function BenchmarksLanding() {
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium text-mist-800 dark:text-mist-200">
               {cfBenchmarkMeta.measuredLabel}{' '}
-              <span className="font-normal text-mist-600 dark:text-mist-400">
-                · {cfBenchmarkMeta.boardLabel}
-              </span>
+              <span className="font-normal text-mist-600 dark:text-mist-400">· {cfBenchmarkMeta.boardLabel}</span>
             </p>
             <p className="text-xs/6 text-mist-600 dark:text-mist-400">
               Jump:{' '}
-              <a href="#cf-tokens" className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white">
-                tokens
+              <a
+                href="#cf-tokens"
+                className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
+              >
+                zone-audit
               </a>
               {' · '}
-              <a href="#cf-http-conc" className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white">
+              <a
+                href="#cf-fanout"
+                className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
+              >
+                fan-out
+              </a>
+              {' · '}
+              <a
+                href="#cf-http-conc"
+                className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
+              >
                 HTTP concurrency
               </a>
               {' · '}
-              <a href="#cf-stdio-conc" className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white">
+              <a
+                href="#cf-stdio-conc"
+                className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
+              >
                 stdio concurrency
               </a>
               {' · '}
-              <a href="#token-board" className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white">
+              <a
+                href="#token-board"
+                className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
+              >
                 pets multiturn
               </a>
             </p>
@@ -147,71 +163,228 @@ export function BenchmarksLanding() {
           </p>
         }
       >
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[920px] border-collapse text-left text-sm/5">
-            <caption className="sr-only">
-              Cloudflare multiturn board: weighted tokens, memory, and session latency by arm
-            </caption>
-            <thead>
-              <tr className="text-mist-950 dark:text-white">
-                <th className="py-3 pr-3 font-medium">Arm</th>
-                <th className="px-2 py-3 text-right font-medium">Weighted tokens</th>
-                <th className="px-2 py-3 text-right font-medium">Anon MB</th>
-                <th className="px-2 py-3 text-right font-medium">Session p50</th>
-                <th className="px-2 py-3 text-center font-medium">Transport</th>
-                <th className="px-2 py-3 text-center font-medium">Success</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cfTokenRows.map((row) => (
-                <tr
-                  key={row.arm}
+        <ComparisonTable minWidthClass="min-w-[920px]">
+          <caption className="sr-only">
+            Cloudflare multiturn board: weighted tokens, memory, and session latency by arm
+          </caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Weighted tokens</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Anon MB</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Session p50</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Transport</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Success</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {cfTokenRows.map((row) => (
+              <tr
+                key={row.arm}
+                className={clsx(
+                  'border-t border-mist-950/5 dark:border-white/10',
+                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                )}
+              >
+                <ComparisonRowTh
                   className={clsx(
-                    'border-t border-mist-950/5 dark:border-white/10',
-                    row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                    'font-normal',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
                   )}
                 >
-                  <th
-                    scope="row"
-                    className={clsx(
-                      'py-3 pr-3 font-normal',
-                      row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
-                    )}
-                  >
-                    <div className="flex flex-col gap-0.5">
-                      <span>{row.arm}</span>
-                      {row.note ? (
-                        <span className="max-w-md text-xs/5 font-normal text-mist-600 dark:text-mist-600">
-                          {row.note}
-                        </span>
-                      ) : null}
-                    </div>
-                  </th>
-                  <td
-                    className={clsx(
-                      'px-2 py-3 text-right tabular-nums font-semibold',
-                      row.highlight ? 'text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
-                    )}
-                  >
-                    {row.weighted}
-                  </td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-700 dark:text-mist-400">{row.anonMb}</td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-700 dark:text-mist-400">
-                    {row.sessionP50}
-                  </td>
-                  <td className="px-2 py-3 text-center text-mist-700 dark:text-mist-400">{row.transport}</td>
-                  <td className="px-2 py-3 text-center font-medium text-mist-800 dark:text-mist-200">
-                    {row.taskSuccess}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  <div className="flex flex-col gap-1">
+                    <span>{row.arm}</span>
+                    {row.note ? (
+                      <span className="max-w-md text-xs/5 font-normal text-mist-600 dark:text-mist-500">
+                        {row.note}
+                      </span>
+                    ) : null}
+                  </div>
+                </ComparisonRowTh>
+                <ComparisonTd
+                  className={clsx(
+                    'text-right font-semibold tabular-nums',
+                    row.highlight ? 'text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
+                  )}
+                >
+                  {row.weighted}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.anonMb}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.sessionP50}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-center text-mist-700 dark:text-mist-400')}>
+                  {row.transport}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-center font-medium text-mist-800 dark:text-mist-200')}>
+                  {row.taskSuccess}
+                </ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
         <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
-          Artifact: {cfBenchmarkMeta.artifactBoard}. Executor v2 is the promoted Executor column; v1 is the stable-release
-          second column on the same mock.
+          Artifact: {cfBenchmarkMeta.artifactBoard}. Executor v2 is the promoted Executor column; v1 is the
+          stable-release second column on the same mock.
         </p>
+      </Section>
+
+      <Section
+        id="cf-fanout"
+        eyebrow="Fan-out / join"
+        headline="Program mode clears the multi-op inventory board"
+        subheadline={
+          <p>
+            Six independent Cloudflare reads plus a workers⋈routes join no single <code>where</code> can express.
+            Scripted claim cleared; blind real-model gate is frontier-only so far ({fanoutBenchmarkMeta.claimReal}).
+          </p>
+        }
+      >
+        <h3 className="mb-3 text-base font-semibold text-mist-950 dark:text-white">
+          Scripted 3×10 000 — {fanoutBenchmarkMeta.claimScripted}
+        </h3>
+        <p className="mb-4 text-sm/6 text-mist-600 dark:text-mist-400">{fanoutBenchmarkMeta.scriptedLabel}</p>
+        <ComparisonTable minWidthClass="min-w-[640px]">
+          <caption className="sr-only">Scripted fan-out board: weighted tokens and turns</caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Weighted mean</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Turns</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Success</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {fanoutScriptedRows.map((row) => (
+              <tr
+                key={row.arm}
+                className={clsx(
+                  'border-t border-mist-950/5 dark:border-white/10',
+                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                )}
+              >
+                <ComparisonRowTh
+                  className={clsx(
+                    'font-normal',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
+                  )}
+                >
+                  <div className="flex flex-col gap-1">
+                    <span>{row.arm}</span>
+                    {row.note ? (
+                      <span className="max-w-lg text-xs/5 font-normal text-mist-600 dark:text-mist-500">
+                        {row.note}
+                      </span>
+                    ) : null}
+                  </div>
+                </ComparisonRowTh>
+                <ComparisonTd
+                  className={clsx(
+                    'text-right font-semibold tabular-nums',
+                    row.highlight ? 'text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
+                  )}
+                >
+                  {row.weighted}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.turns}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-center font-medium text-mist-800 dark:text-mist-200')}>
+                  {row.taskSuccess}
+                </ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
+        <p className="mt-3 text-xs/6 text-mist-600 dark:text-mist-400">
+          Artifact: {fanoutBenchmarkMeta.artifactScripted}. Win = turns_win + token_promotion on every rep.
+        </p>
+
+        <h3 className="mt-10 mb-3 text-base font-semibold text-mist-950 dark:text-white">
+          Blind dual-model gate (N=50) — single_model_only
+        </h3>
+        <p className="mb-4 text-sm/6 text-mist-600 dark:text-mist-400">
+          {fanoutBenchmarkMeta.gateLabel}. Dual headline needs a win on both models; report frontier only.
+        </p>
+        <ComparisonTable minWidthClass="min-w-[880px]">
+          <caption className="sr-only">
+            Fan-out real-model Cursor gate: weighted median and p90 by model and arm
+          </caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Model</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>w median</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>w p90</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Turns</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Success</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Model win</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {fanoutGateRows.map((row) => (
+              <tr
+                key={`${row.model}-${row.arm}`}
+                className={clsx(
+                  'border-t border-mist-950/5 dark:border-white/10',
+                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                )}
+              >
+                <ComparisonRowTh className={clsx('font-normal text-mist-700 dark:text-mist-400')}>
+                  {row.model}
+                </ComparisonRowTh>
+                <ComparisonTd
+                  className={clsx(
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
+                  )}
+                >
+                  <div className="flex flex-col gap-1">
+                    <span>{row.arm}</span>
+                    {row.note ? (
+                      <span className="max-w-xs text-xs/5 font-normal text-mist-600 dark:text-mist-500">
+                        {row.note}
+                      </span>
+                    ) : null}
+                  </div>
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-800 tabular-nums dark:text-mist-200')}>
+                  {row.wMed}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-800 tabular-nums dark:text-mist-200')}>
+                  {row.wP90}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.turns}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-center font-medium text-mist-800 dark:text-mist-200')}>
+                  {row.taskSuccess}
+                </ComparisonTd>
+                <ComparisonTd
+                  className={clsx(
+                    'text-center font-medium',
+                    row.modelWin === 'Win' ? 'text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
+                  )}
+                >
+                  {row.modelWin}
+                </ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
+        <p className="mt-3 text-xs/6 text-mist-600 dark:text-mist-400">
+          Artifact: {fanoutBenchmarkMeta.artifactGate}. {fanoutBenchmarkMeta.measuredLabel}.
+        </p>
+
+        <div className="mt-8 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {fanoutBenchmarkHonesty.map((note) => (
+            <div key={note.title} className="flex flex-col gap-2 rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
+              <h3 className="text-base font-semibold text-mist-950 dark:text-white">{note.title}</h3>
+              <p className="text-sm/7 text-mist-700 dark:text-mist-400">{note.body}</p>
+            </div>
+          ))}
+        </div>
       </Section>
 
       <Section
@@ -225,54 +398,57 @@ export function BenchmarksLanding() {
           </p>
         }
       >
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse text-left text-sm/5">
-            <caption className="sr-only">HTTP multiplex concurrency at p99 cutoffs</caption>
-            <thead>
-              <tr className="text-mist-950 dark:text-white">
-                <th className="py-3 pr-3 font-medium">Arm</th>
-                <th className="px-2 py-3 text-right font-medium">@100 ms</th>
-                <th className="px-2 py-3 text-right font-medium">@250 ms</th>
-                <th className="px-2 py-3 text-right font-medium">@500 ms</th>
-                <th className="px-2 py-3 text-right font-medium">Peak RPS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cfHttpConcRows.map((row) => (
-                <tr
-                  key={row.arm}
+        <ComparisonTable minWidthClass="min-w-[720px]">
+          <caption className="sr-only">HTTP multiplex concurrency at p99 cutoffs</caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>@100 ms</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>@250 ms</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>@500 ms</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Peak RPS</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {cfHttpConcRows.map((row) => (
+              <tr
+                key={row.arm}
+                className={clsx(
+                  'border-t border-mist-950/5 dark:border-white/10',
+                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                )}
+              >
+                <ComparisonRowTh
                   className={clsx(
-                    'border-t border-mist-950/5 dark:border-white/10',
-                    row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                    'font-normal',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
                   )}
                 >
-                  <th
-                    scope="row"
-                    className={clsx(
-                      'py-3 pr-3 font-normal',
-                      row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
-                    )}
-                  >
-                    <div className="flex flex-col gap-0.5">
-                      <span>{row.arm}</span>
-                      {row.note ? (
-                        <span className="max-w-md text-xs/5 font-normal text-mist-600 dark:text-mist-600">
-                          {row.note}
-                        </span>
-                      ) : null}
-                    </div>
-                  </th>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-800 dark:text-mist-200">{row.at100}</td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-800 dark:text-mist-200">{row.at250}</td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-800 dark:text-mist-200">{row.at500}</td>
-                  <td className="px-2 py-3 text-right tabular-nums font-semibold text-mist-950 dark:text-white">
-                    {row.peakRps}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  <div className="flex flex-col gap-1">
+                    <span>{row.arm}</span>
+                    {row.note ? (
+                      <span className="max-w-md text-xs/5 font-normal text-mist-600 dark:text-mist-500">
+                        {row.note}
+                      </span>
+                    ) : null}
+                  </div>
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-right text-mist-800 tabular-nums dark:text-mist-200')}>
+                  {row.at100}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-800 tabular-nums dark:text-mist-200')}>
+                  {row.at250}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-800 tabular-nums dark:text-mist-200')}>
+                  {row.at500}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right font-semibold text-mist-950 tabular-nums dark:text-white')}>
+                  {row.peakRps}
+                </ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
         <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
           Artifact: {cfBenchmarkMeta.artifactHttp}. Executor v1 is not in this table (stdio MCP).
         </p>
@@ -289,54 +465,57 @@ export function BenchmarksLanding() {
           </p>
         }
       >
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse text-left text-sm/5">
-            <caption className="sr-only">Stdio process-per-client concurrency at p99 cutoffs</caption>
-            <thead>
-              <tr className="text-mist-950 dark:text-white">
-                <th className="py-3 pr-3 font-medium">Arm</th>
-                <th className="px-2 py-3 text-right font-medium">@100 ms</th>
-                <th className="px-2 py-3 text-right font-medium">@250 ms</th>
-                <th className="px-2 py-3 text-right font-medium">@500 ms</th>
-                <th className="px-2 py-3 text-right font-medium">Peak RPS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cfStdioConcRows.map((row) => (
-                <tr
-                  key={row.arm}
+        <ComparisonTable minWidthClass="min-w-[720px]">
+          <caption className="sr-only">Stdio process-per-client concurrency at p99 cutoffs</caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>@100 ms</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>@250 ms</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>@500 ms</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Peak RPS</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {cfStdioConcRows.map((row) => (
+              <tr
+                key={row.arm}
+                className={clsx(
+                  'border-t border-mist-950/5 dark:border-white/10',
+                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                )}
+              >
+                <ComparisonRowTh
                   className={clsx(
-                    'border-t border-mist-950/5 dark:border-white/10',
-                    row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                    'font-normal',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
                   )}
                 >
-                  <th
-                    scope="row"
-                    className={clsx(
-                      'py-3 pr-3 font-normal',
-                      row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
-                    )}
-                  >
-                    <div className="flex flex-col gap-0.5">
-                      <span>{row.arm}</span>
-                      {row.note ? (
-                        <span className="max-w-md text-xs/5 font-normal text-mist-600 dark:text-mist-600">
-                          {row.note}
-                        </span>
-                      ) : null}
-                    </div>
-                  </th>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-800 dark:text-mist-200">{row.at100}</td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-800 dark:text-mist-200">{row.at250}</td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-800 dark:text-mist-200">{row.at500}</td>
-                  <td className="px-2 py-3 text-right tabular-nums font-semibold text-mist-950 dark:text-white">
-                    {row.peakRps}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  <div className="flex flex-col gap-1">
+                    <span>{row.arm}</span>
+                    {row.note ? (
+                      <span className="max-w-md text-xs/5 font-normal text-mist-600 dark:text-mist-500">
+                        {row.note}
+                      </span>
+                    ) : null}
+                  </div>
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-right text-mist-800 tabular-nums dark:text-mist-200')}>
+                  {row.at100}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-800 tabular-nums dark:text-mist-200')}>
+                  {row.at250}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-800 tabular-nums dark:text-mist-200')}>
+                  {row.at500}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right font-semibold text-mist-950 tabular-nums dark:text-white')}>
+                  {row.peakRps}
+                </ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
         <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
           Artifact: {cfBenchmarkMeta.artifactStdio}. Do not mix these cells with the HTTP multiplex table.
         </p>
@@ -366,58 +545,54 @@ export function BenchmarksLanding() {
             · {gatewayBenchmarkMeta.measuredLabel} · {gatewayBenchmarkMeta.multiturnLabel}
           </span>
         </p>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse text-left text-sm/5">
-            <caption className="sr-only">
-              Competitive feature matrix comparing ClawQL, Executor, MCPJungle, and agentgateway
-            </caption>
-            <thead>
-              <tr>
-                <th className="sticky top-(--scroll-padding-top) bg-mist-100 py-4 pr-4 font-medium text-mist-950 dark:bg-mist-950 dark:text-white">
-                  Capability
-                </th>
+        <ComparisonTable minWidthClass="min-w-[720px]">
+          <caption className="sr-only">
+            Competitive feature matrix comparing ClawQL, Executor, MCPJungle, and agentgateway
+          </caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Capability</ComparisonTh>
+              {gatewayCompetitorColumns.map((col) => (
+                <ComparisonTh
+                  key={col}
+                  className={clsx(
+                    'text-center font-semibold',
+                    col === 'ClawQL' ? 'text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
+                  )}
+                >
+                  {col}
+                </ComparisonTh>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {gatewayFeatureRows.map((row) => (
+              <tr key={row.feature} className="border-t border-mist-950/10 dark:border-white/10">
+                <ComparisonRowTh className={clsx('align-top font-normal text-mist-700 dark:text-mist-400')}>
+                  <div className="flex flex-col gap-1.5">
+                    <span>{row.feature}</span>
+                    {row.footnote ? (
+                      <span className="text-xs/6 font-normal text-mist-600 dark:text-mist-500">{row.footnote}</span>
+                    ) : null}
+                  </div>
+                </ComparisonRowTh>
                 {gatewayCompetitorColumns.map((col) => (
-                  <th
+                  <ComparisonTd
                     key={col}
                     className={clsx(
-                      'sticky top-(--scroll-padding-top) bg-mist-100 px-3 py-4 text-center font-semibold dark:bg-mist-950',
-                      col === 'ClawQL' ? 'text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
+                      'text-center align-top',
+                      col === 'ClawQL'
+                        ? 'bg-mist-950/[0.03] text-mist-700 dark:bg-white/[0.03] dark:text-mist-300'
+                        : 'text-mist-700 dark:text-mist-400',
                     )}
                   >
-                    {col}
-                  </th>
+                    <CellValue value={row.values[col]} />
+                  </ComparisonTd>
                 ))}
               </tr>
-            </thead>
-            <tbody>
-              {gatewayFeatureRows.map((row) => (
-                <tr key={row.feature} className="border-t border-mist-950/5 dark:border-white/10">
-                  <th scope="row" className="py-4 pr-4 font-normal text-mist-700 dark:text-mist-400">
-                    <div className="flex flex-col gap-1">
-                      <span>{row.feature}</span>
-                      {row.footnote ? (
-                        <span className="text-xs/6 font-normal text-mist-600 dark:text-mist-600">{row.footnote}</span>
-                      ) : null}
-                    </div>
-                  </th>
-                  {gatewayCompetitorColumns.map((col) => (
-                    <td
-                      key={col}
-                      className={clsx(
-                        'px-3 py-4 text-center',
-                        col === 'ClawQL'
-                          ? 'bg-mist-950/[0.03] text-mist-700 dark:bg-white/[0.03] dark:text-mist-300'
-                          : 'text-mist-700 dark:text-mist-400',
-                      )}
-                    >
-                      <CellValue value={row.values[col]} />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </ComparisonTable>
       </Section>
 
       <Section
@@ -426,76 +601,89 @@ export function BenchmarksLanding() {
         headline="12-turn I/O tokens — equal task success"
         subheadline={
           <p>
-            <code className="text-mist-800 dark:text-mist-200">combined @12 = definitions + Σ discovery + Σ results</code>
+            <code className="text-mist-800 dark:text-mist-200">
+              combined @12 = definitions + Σ discovery + Σ results
+            </code>
             . Earlier equal-arm pets catalog board (separate fixture from the Cloudflare zone-audit board above).
           </p>
         }
       >
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[960px] border-collapse text-left text-sm/5">
-            <caption className="sr-only">Multi-turn token scorecard across gateway arms</caption>
-            <thead>
-              <tr className="text-mist-950 dark:text-white">
-                <th className="py-3 pr-3 font-medium">Arm</th>
-                <th className="px-2 py-3 text-right font-medium">Defs</th>
-                <th className="px-2 py-3 text-right font-medium">Σ Disc</th>
-                <th className="px-2 py-3 text-right font-medium">Σ Res</th>
-                <th className="px-2 py-3 text-right font-medium">Combined</th>
-                <th className="px-2 py-3 text-right font-medium">vs direct</th>
-                <th className="px-2 py-3 text-right font-medium">Flow p50</th>
-                <th className="px-2 py-3 text-right font-medium">Flow p999</th>
-                <th className="px-2 py-3 text-right font-medium">RSS</th>
-                <th className="px-2 py-3 text-center font-medium">Task</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tokenScorecardRows.map((row) => (
-                <tr
-                  key={row.arm}
+        <ComparisonTable minWidthClass="min-w-[960px]">
+          <caption className="sr-only">Multi-turn token scorecard across gateway arms</caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Defs</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Σ Disc</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Σ Res</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Combined</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>vs direct</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Flow p50</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Flow p999</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>RSS</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Task</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {tokenScorecardRows.map((row) => (
+              <tr
+                key={row.arm}
+                className={clsx(
+                  'border-t border-mist-950/5 dark:border-white/10',
+                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                )}
+              >
+                <ComparisonRowTh
                   className={clsx(
-                    'border-t border-mist-950/5 dark:border-white/10',
-                    row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                    'font-normal',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
                   )}
                 >
-                  <th
-                    scope="row"
-                    className={clsx(
-                      'py-3 pr-3 font-normal',
-                      row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
-                    )}
-                  >
-                    <div className="flex flex-col gap-0.5">
-                      <span>{row.arm}</span>
-                      {row.note ? (
-                        <span className="max-w-xs text-xs/5 font-normal text-mist-600 dark:text-mist-600">
-                          {row.note}
-                        </span>
-                      ) : null}
-                    </div>
-                  </th>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-700 dark:text-mist-400">{row.definitions}</td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-700 dark:text-mist-400">{row.discovery}</td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-700 dark:text-mist-400">{row.results}</td>
-                  <td
-                    className={clsx(
-                      'px-2 py-3 text-right tabular-nums font-semibold',
-                      row.highlight ? 'text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
-                    )}
-                  >
-                    {row.combined}
-                  </td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-700 dark:text-mist-400">{row.vsDirect}</td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-700 dark:text-mist-400">{row.flowP50}</td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-700 dark:text-mist-400">{row.flowP999}</td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-700 dark:text-mist-400">{row.rssMed}</td>
-                  <td className="px-2 py-3 text-center font-medium text-mist-800 dark:text-mist-200">
-                    {row.taskSuccess}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  <div className="flex flex-col gap-1">
+                    <span>{row.arm}</span>
+                    {row.note ? (
+                      <span className="max-w-xs text-xs/5 font-normal text-mist-600 dark:text-mist-500">
+                        {row.note}
+                      </span>
+                    ) : null}
+                  </div>
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-right text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.definitions}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.discovery}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.results}
+                </ComparisonTd>
+                <ComparisonTd
+                  className={clsx(
+                    'text-right font-semibold tabular-nums',
+                    row.highlight ? 'text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
+                  )}
+                >
+                  {row.combined}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.vsDirect}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.flowP50}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.flowP999}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.rssMed}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-center font-medium text-mist-800 dark:text-mist-200')}>
+                  {row.taskSuccess}
+                </ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
         <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
           Artifacts: {gatewayBenchmarkMeta.artifactMultiturn} · {gatewayBenchmarkMeta.artifactExecutorV2}
         </p>
@@ -511,51 +699,56 @@ export function BenchmarksLanding() {
           </p>
         }
       >
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px] border-collapse text-left text-sm/5">
-            <caption className="sr-only">Interleaved latency scorecard</caption>
-            <thead>
-              <tr className="text-mist-950 dark:text-white">
-                <th className="py-3 pr-3 font-medium">Arm</th>
-                <th className="px-2 py-3 font-medium">e2e p50–p999</th>
-                <th className="px-2 py-3 font-medium">Gateway cost p50/p99/p999</th>
-                <th className="px-2 py-3 text-right font-medium">RSS med</th>
-                <th className="px-2 py-3 text-right font-medium">List tok</th>
-                <th className="px-2 py-3 text-right font-medium">Invoked</th>
-                <th className="px-2 py-3 text-right font-medium">Result</th>
-              </tr>
-            </thead>
-            <tbody>
-              {latencyScorecardRows.map((row) => (
-                <tr
-                  key={row.arm}
+        <ComparisonTable minWidthClass="min-w-[800px]">
+          <caption className="sr-only">Interleaved latency scorecard</caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>e2e p50–p999</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Gateway cost p50/p99/p999</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>RSS med</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>List tok</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Invoked</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Result</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {latencyScorecardRows.map((row) => (
+              <tr
+                key={row.arm}
+                className={clsx(
+                  'border-t border-mist-950/5 dark:border-white/10',
+                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                )}
+              >
+                <ComparisonRowTh
                   className={clsx(
-                    'border-t border-mist-950/5 dark:border-white/10',
-                    row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                    'font-normal',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
                   )}
                 >
-                  <th
-                    scope="row"
-                    className={clsx(
-                      'py-3 pr-3 font-normal',
-                      row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
-                    )}
-                  >
-                    {row.arm}
-                  </th>
-                  <td className="px-2 py-3 tabular-nums text-mist-700 dark:text-mist-400">{row.e2e}</td>
-                  <td className="px-2 py-3 tabular-nums text-mist-700 dark:text-mist-400">{row.gatewayCost}</td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-700 dark:text-mist-400">{row.rssMed}</td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-700 dark:text-mist-400">{row.listTok}</td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-700 dark:text-mist-400">
-                    {row.invokedSchema}
-                  </td>
-                  <td className="px-2 py-3 text-right tabular-nums text-mist-700 dark:text-mist-400">{row.resultTok}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  {row.arm}
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-mist-700 tabular-nums dark:text-mist-400')}>{row.e2e}</ComparisonTd>
+                <ComparisonTd className={clsx('text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.gatewayCost}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.rssMed}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.listTok}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.invokedSchema}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right text-mist-700 tabular-nums dark:text-mist-400')}>
+                  {row.resultTok}
+                </ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
         <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
           Artifact: {gatewayBenchmarkMeta.artifactLatency}.
         </p>

@@ -4,10 +4,10 @@
  * Host-bound — update when board-final-summary.md is remeasured.
  */
 
-export const cfBenchmarkHeadline = 'Cloudflare zone-audit board — tokens, memory, concurrency.'
+export const cfBenchmarkHeadline = 'Cloudflare boards — zone-audit, fan-out/join, concurrency.'
 
 export const cfBenchmarkSummary =
-  'Same 12-step zone audit on a curated OpenAPI → replay mock. ClawQL known-op leads tokens and memory. Executor v2 (promoted beta) is the main Executor column; v1 stable is measured on the same workload. HTTP concurrency is multiplex; stdio concurrency is a separate process-per-client table.'
+  'Zone-audit: ClawQL known-op leads tokens and memory on a curated OpenAPI → replay mock. Fan-out/join: scripted program claim cleared; blind real-model gate is frontier-only so far. Executor v2 is the promoted Executor column. HTTP concurrency is multiplex; stdio is process-per-client.'
 
 export const cfBenchmarkMeta = {
   measuredLabel: 'Measured Oct 2026 · host-bound',
@@ -196,5 +196,126 @@ export const cfBenchmarkHonesty = [
   {
     title: 'Session latency transports',
     body: 'ClawQL known-op 23.8 ms and program 11.2 ms are HTTP board figures. Executor v1 ~84 ms is stdio. Executor v2 ~216 ms is HTTP. Label the transport when comparing.',
+  },
+] as const
+
+/* ── Fan-out / join board (ADR 0015 program promotion) ─────────────────── */
+
+export const fanoutBenchmarkMeta = {
+  measuredLabel: 'Measured Oct 2026 · host-bound',
+  scriptedLabel: '3 × 10 000 scripted sessions · known-op vs program',
+  gateLabel: 'Blind Cursor Task gate · N=50 / arm / model · frozen cf-mt-fanout-real-model-gate-v1',
+  artifactScripted: 'docs/benchmarks/cloudflare-multiturn/fanout-join/board-summary-n10000-r3.json',
+  artifactGate: 'docs/benchmarks/cloudflare-multiturn/fanout-join/real-model-cursor-gate-frontier_small.json',
+  claimScripted: 'program_beats_known_op_on_fanout_join',
+  claimReal: 'program_beats_known_op_on_fanout_join_for_real_models',
+} as const
+
+export type FanoutScriptedRow = {
+  arm: string
+  highlight?: boolean
+  weighted: string
+  turns: string
+  taskSuccess: string
+  note?: string
+}
+
+/** Scripted 3×10k fan-out board — program clears turns + token promotion. */
+export const fanoutScriptedRows: FanoutScriptedRow[] = [
+  {
+    arm: 'ClawQL known-op',
+    weighted: '2 694',
+    turns: '6',
+    taskSuccess: '1.0',
+    note: 'Six sequential execute + client-side workers⋈routes join',
+  },
+  {
+    arm: 'ClawQL program',
+    highlight: true,
+    weighted: '2 651',
+    turns: '1',
+    taskSuccess: '1.0',
+    note: 'One execute_program · return:true compact merge · claim cleared all 3 reps',
+  },
+  {
+    arm: 'Cloudflare code-mode',
+    weighted: '—',
+    turns: '1',
+    taskSuccess: '1.0',
+    note: 'Tokens-only peer on this publish set (not the claim arm)',
+  },
+]
+
+export type FanoutGateRow = {
+  model: string
+  arm: string
+  highlight?: boolean
+  wMed: string
+  wP90: string
+  turns: string
+  taskSuccess: string
+  modelWin: string
+  note?: string
+}
+
+/**
+ * Blind dual-model gate (claim50v2). Dual headline not cleared — report frontier only
+ * (`single_model_only`). Small loses weighted median/p90 (lean known-op obs vs ~414 plan code).
+ */
+export const fanoutGateRows: FanoutGateRow[] = [
+  {
+    model: 'Frontier (gpt-5.6-sol-medium)',
+    arm: 'known-op',
+    wMed: '2 813',
+    wP90: '2 878',
+    turns: '6.02',
+    taskSuccess: '1.0',
+    modelWin: '—',
+  },
+  {
+    model: 'Frontier (gpt-5.6-sol-medium)',
+    arm: 'program',
+    highlight: true,
+    wMed: '2 653',
+    wP90: '2 732',
+    turns: '1',
+    taskSuccess: '1.0',
+    modelWin: 'Win',
+    note: 'Median + p90 + turns + success — model win',
+  },
+  {
+    model: 'Small (composer-2.5-fast)',
+    arm: 'known-op',
+    wMed: '2 554',
+    wP90: '2 596',
+    turns: '6',
+    taskSuccess: '1.0',
+    modelWin: '—',
+    note: 'Very lean observations (~294 mean) — hard bar for program',
+  },
+  {
+    model: 'Small (composer-2.5-fast)',
+    arm: 'program',
+    wMed: '2 687',
+    wP90: '2 739',
+    turns: '1',
+    taskSuccess: '1.0',
+    modelWin: 'Loss (tokens)',
+    note: 'Turns win; ~414 code tokens ×5 outweigh the one-turn obs save',
+  },
+]
+
+export const fanoutBenchmarkHonesty = [
+  {
+    title: 'Scripted claim cleared',
+    body: 'program_beats_known_op_on_fanout_join wins all three 10 000-iter reps (turns 1 vs 6 + weighted tokens). Inventory card: ssl, A-count, workers, routes join, buckets, enabled-firewall count.',
+  },
+  {
+    title: 'Real-model: frontier only',
+    body: 'Blind Cursor Task N=50 under frozen rules. Frontier program beats known-op on median + p90 weighted tokens. Small does not — dual-model headline stays open (single_model_only / report frontier).',
+  },
+  {
+    title: 'Not the zone-audit board',
+    body: 'Fan-out is a different workflow (six reads + join). Zone-audit numbers above stay the filter/known-op story. Do not mix the two boards’ weighted means.',
   },
 ] as const
