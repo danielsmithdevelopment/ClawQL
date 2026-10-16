@@ -16,6 +16,11 @@
  *
  *   node scripts/benchmarks/http-concurrency-heap-ab.mjs
  *   CONC_HARD_MAX=256 CONC_STEP_MS=3000 node scripts/benchmarks/http-concurrency-heap-ab.mjs
+ *
+ * Multi-threshold curves (publish p99@clients + clients@100/250/500 without picking one cutoff):
+ *   CURVE=1 THRESHOLDS=100,250,500 CONC_STEP_MS=10000 REPS=3 \
+ *     ARMS=clawql_bun_smol,clawql_node_256,mcpjungle,agentgateway,executor_v2 \
+ *     OUT=…/http-concurrency-curves.json node scripts/benchmarks/http-concurrency-heap-ab.mjs
  */
 import { spawn, spawnSync } from "node:child_process";
 import { createServer as createNetServer, createConnection } from "node:net";
@@ -66,9 +71,68 @@ const CONC_WARMUP = Math.max(0, Number(process.env.CONC_WARMUP || 4) || 4);
 /** Repeat each arm N times (interleaved by arm order) for range/variance. */
 const REPS = Math.max(1, Number(process.env.REPS || 1) || 1);
 const AG_TUNED = ["1", "true", "yes"].includes((process.env.AG_TUNED ?? "").trim().toLowerCase());
+/** Climb past the primary 100 ms break; publish clients@each threshold + p99 curve. */
+const CURVE = ["1", "true", "yes"].includes((process.env.CURVE ?? "").trim().toLowerCase());
+const THRESHOLDS = (
+  process.env.THRESHOLDS || (CURVE ? "100,250,500" : String(BREAK_P99_MS))
+)
+  .split(",")
+  .map((s) => Number(s.trim()))
+  .filter((n) => Number.isFinite(n) && n > 0)
+  .sort((a, b) => a - b);
+const CURVE_STOP_P99_MS = Math.max(BREAK_P99_MS, ...THRESHOLDS);
 const OUT =
   process.env.OUT ||
   join(ROOT, "docs/benchmarks/cloudflare-multiturn/http-concurrency-heap-ab.json");
+
+function stepOkAtThreshold(step, thresholdMs) {
+  if (step.error_rate > BREAK_ERROR_RATE) return false;
+  const p99 = step.latency_ms?.p99;
+  if (p99 == null) return false;
+  return p99 <= thresholdMs;
+}
+
+/** Last sustained / first break clients for one p99 threshold from recorded steps. */
+function ceilingAtThreshold(allSteps, thresholdMs) {
+  const sorted = [...allSteps].sort((a, b) => a.concurrency - b.concurrency);
+  let lastOk = null;
+  let firstBreak = null;
+  let breakReason = null;
+  for (const s of sorted) {
+    if (stepOkAtThreshold(s, thresholdMs)) {
+      lastOk = s.concurrency;
+    } else if (firstBreak == null) {
+      firstBreak = s.concurrency;
+      const reasons = [];
+      if (s.error_rate > BREAK_ERROR_RATE) reasons.push(`error_rate ${s.error_rate.toFixed(3)}`);
+      if (s.latency_ms?.p99 != null && s.latency_ms.p99 > thresholdMs) {
+        reasons.push(`p99 ${s.latency_ms.p99.toFixed(1)}ms`);
+      }
+      breakReason = reasons.join(" + ") || "unknown";
+    }
+  }
+  const atOk = sorted.find((s) => s.concurrency === lastOk);
+  return {
+    threshold_p99_ms: thresholdMs,
+    sustained_concurrency: lastOk ?? 0,
+    first_break_clients: firstBreak,
+    break_reason: breakReason,
+    rps_at_sustained: atOk?.rps ?? null,
+    p99_at_sustained: atOk?.latency_ms?.p99 ?? null,
+  };
+}
+
+/** Peak successful RPS on the measured curve (threshold-independent capacity). */
+function saturationThroughput(allSteps) {
+  const ok = allSteps.filter((s) => s.error_rate <= BREAK_ERROR_RATE && s.rps != null);
+  if (!ok.length) return null;
+  const best = ok.reduce((a, b) => (b.rps > a.rps ? b : a));
+  return {
+    peak_rps: best.rps,
+    at_clients: best.concurrency,
+    p99_ms: best.latency_ms?.p99 ?? null,
+  };
+}
 
 function pickPort() {
   return new Promise((resolve, reject) => {
@@ -607,45 +671,75 @@ async function chaosStep(arm, n) {
 }
 
 async function chaosArm(arm) {
-  console.error(`[http-conc] === ${arm.id} ===`);
+  console.error(`[http-conc] === ${arm.id}${CURVE ? " (curve)" : ""} ===`);
   const steps = [];
-  let lastOk = null;
-  let firstBreak = null;
+  const stopP99 = CURVE ? CURVE_STOP_P99_MS : BREAK_P99_MS;
+  let lastOkPrimary = null;
+  let firstBreakPrimary = null;
   for (let n = 1; n <= CONC_HARD_MAX; n *= 2) {
     console.error(`[http-conc] ${arm.id} clients=${n}`);
     const step = await chaosStep(arm, n);
     steps.push(step);
     console.error(
-      `[http-conc] ${arm.id} n=${n} p99=${step.latency_ms.p99?.toFixed?.(1)} err=${step.error_rate} broken=${step.broken} anon=${step.memory?.anonymous_mb}`
+      `[http-conc] ${arm.id} n=${n} p99=${step.latency_ms.p99?.toFixed?.(1)} err=${step.error_rate} broken@${BREAK_P99_MS}=${step.broken} anon=${step.memory?.anonymous_mb}`
     );
-    if (step.broken) {
-      firstBreak = { concurrency: n, reason: step.break_reason };
-      break;
+    if (stepOkAtThreshold(step, BREAK_P99_MS)) lastOkPrimary = n;
+    else if (firstBreakPrimary == null) {
+      firstBreakPrimary = { concurrency: n, reason: step.break_reason };
     }
-    lastOk = n;
+    // Curve mode climbs until the loosest publish threshold (or errors); legacy stops at primary break.
+    if (step.error_rate > BREAK_ERROR_RATE) break;
+    if (step.latency_ms?.p99 != null && step.latency_ms.p99 > stopP99) break;
+    if (!CURVE && step.broken) break;
   }
-  // Binary refine between lastOk and firstBreak
   const refine = [];
-  if (lastOk != null && firstBreak != null && firstBreak.concurrency - lastOk > 1) {
-    let lo = lastOk;
-    let hi = firstBreak.concurrency;
+  const thresholdsToRefine = CURVE ? THRESHOLDS : [BREAK_P99_MS];
+  for (const T of thresholdsToRefine) {
+    const all = [...steps, ...refine];
+    let lo = null;
+    let hi = null;
+    for (const s of all.sort((a, b) => a.concurrency - b.concurrency)) {
+      if (stepOkAtThreshold(s, T)) lo = s.concurrency;
+      else if (hi == null && (lo == null || s.concurrency > lo)) hi = s.concurrency;
+    }
+    if (lo == null || hi == null || hi - lo <= 1) continue;
     while (hi - lo > 1) {
       const mid = Math.floor((lo + hi) / 2);
-      console.error(`[http-conc] ${arm.id} refine mid=${mid} (lo=${lo} hi=${hi})`);
+      if (all.some((s) => s.concurrency === mid) || refine.some((s) => s.concurrency === mid)) {
+        // Already measured — advance using existing point.
+        const existing = [...steps, ...refine].find((s) => s.concurrency === mid);
+        if (existing && stepOkAtThreshold(existing, T)) lo = mid;
+        else hi = mid;
+        continue;
+      }
+      console.error(`[http-conc] ${arm.id} refine@${T}ms mid=${mid} (lo=${lo} hi=${hi})`);
       const step = await chaosStep(arm, mid);
       refine.push(step);
       console.error(
-        `[http-conc] ${arm.id} refine n=${mid} p99=${step.latency_ms.p99?.toFixed?.(1)} broken=${step.broken}`
+        `[http-conc] ${arm.id} refine@${T}ms n=${mid} p99=${step.latency_ms.p99?.toFixed?.(1)} ok=${stepOkAtThreshold(step, T)}`
       );
-      if (step.broken) {
-        hi = mid;
-        firstBreak = { concurrency: mid, reason: step.break_reason };
-      } else {
-        lo = mid;
-        lastOk = mid;
-      }
+      if (stepOkAtThreshold(step, T)) lo = mid;
+      else hi = mid;
     }
   }
+  const allSteps = [...steps, ...refine];
+  const byThreshold = Object.fromEntries(
+    THRESHOLDS.map((T) => [String(T), ceilingAtThreshold(allSteps, T)])
+  );
+  const primary = byThreshold[String(BREAK_P99_MS)] || ceilingAtThreshold(allSteps, BREAK_P99_MS);
+  const curve = allSteps
+    .slice()
+    .sort((a, b) => a.concurrency - b.concurrency)
+    .map((s) => ({
+      clients: s.concurrency,
+      rps: s.rps,
+      p50: s.latency_ms?.p50 ?? null,
+      p99: s.latency_ms?.p99 ?? null,
+      p999: s.latency_ms?.p999 ?? null,
+      error_rate: s.error_rate,
+      ok: s.ok,
+      err: s.err,
+    }));
   return {
     id: arm.id,
     kind: arm.kind,
@@ -654,9 +748,12 @@ async function chaosArm(arm) {
     bun_smol: arm.bun_smol ?? null,
     toolName: arm.toolName,
     note: arm.note ?? null,
-    sustained_concurrency_before_break: lastOk ?? 0,
-    first_break_clients: firstBreak?.concurrency ?? null,
-    break_reason: firstBreak?.reason ?? null,
+    sustained_concurrency_before_break: primary.sustained_concurrency,
+    first_break_clients: primary.first_break_clients ?? firstBreakPrimary?.concurrency ?? null,
+    break_reason: primary.break_reason ?? firstBreakPrimary?.reason ?? null,
+    thresholds: byThreshold,
+    saturation_throughput: saturationThroughput(allSteps),
+    curve,
     steps,
     refine,
   };
@@ -736,6 +833,47 @@ async function main() {
       ];
     })
   );
+  /** clients@threshold medians across reps — multi-cutoff publish table. */
+  const ranges_by_threshold = {};
+  for (const T of THRESHOLDS) {
+    const key = String(T);
+    const by = new Map();
+    for (const r of results) {
+      const sus = r.thresholds?.[key]?.sustained_concurrency;
+      if (sus == null) continue;
+      if (!by.has(r.id)) by.set(r.id, []);
+      by.get(r.id).push(sus);
+    }
+    ranges_by_threshold[key] = Object.fromEntries(
+      [...by.entries()].map(([id, vals]) => {
+        const sorted = [...vals].sort((a, b) => a - b);
+        return [
+          id,
+          {
+            reps: vals,
+            min: sorted[0],
+            max: sorted[sorted.length - 1],
+            median: sorted[Math.floor(sorted.length / 2)],
+          },
+        ];
+      })
+    );
+  }
+  const saturation_by_arm = {};
+  for (const r of results) {
+    if (!r.saturation_throughput) continue;
+    if (!saturation_by_arm[r.id]) saturation_by_arm[r.id] = [];
+    saturation_by_arm[r.id].push(r.saturation_throughput);
+  }
+  for (const [id, vals] of Object.entries(saturation_by_arm)) {
+    const rps = vals.map((v) => v.peak_rps).sort((a, b) => a - b);
+    saturation_by_arm[id] = {
+      reps: vals,
+      peak_rps_median: rps[Math.floor(rps.length / 2)],
+      peak_rps_min: rps[0],
+      peak_rps_max: rps[rps.length - 1],
+    };
+  }
   const uncapped = ranges.clawql_node_uncapped;
   const n256 = ranges.clawql_node_256;
   const n384 = ranges.clawql_node_384;
@@ -774,8 +912,14 @@ async function main() {
       "One Streamable HTTP MCP process per arm; N concurrent clients.",
       "Comparable across arms in this file only (same host, same mock, same session).",
       "Not equal-arm stdio chaos (gateway-multi 63/204); not NATS 4-replica (135).",
-      "ClawQL uses known-op execute+where; aggregators call the same DNS op without where (larger body).",
+      "ClawQL uses known-op execute+where; aggregators/Executor call the same DNS op without where (larger body).",
       "Do not claim heap-cap concurrency cost from a single pass — 384 sits above the uncapped plateau (~296 MB).",
+      ...(CURVE
+        ? [
+            "CURVE=1: p99 recorded at every client step; clients reported at each THRESHOLDS cutoff (default 100/250/500).",
+            "Headline capacity: saturation_throughput (peak RPS) — does not depend on a latency cutoff.",
+          ]
+        : []),
     ],
     slo: {
       break_p99_ms: BREAK_P99_MS,
@@ -784,9 +928,14 @@ async function main() {
       warmup: CONC_WARMUP,
       hard_max: CONC_HARD_MAX,
       reps: REPS,
+      curve: CURVE,
+      thresholds_p99_ms: THRESHOLDS,
+      curve_stop_p99_ms: CURVE ? CURVE_STOP_P99_MS : BREAK_P99_MS,
     },
     operationId: OP_ID,
     ranges,
+    ranges_by_threshold,
+    saturation_by_arm,
     board: Object.fromEntries(
       results.map((r) => [
         `${r.id}${REPS > 1 ? `_rep${r.rep}` : ""}`,
@@ -794,6 +943,8 @@ async function main() {
           sustained: r.sustained_concurrency_before_break,
           first_break: r.first_break_clients,
           break_reason: r.break_reason,
+          thresholds: r.thresholds ?? null,
+          saturation_throughput: r.saturation_throughput ?? null,
           runtime: r.runtime,
           node_max_old_space_mb: r.node_max_old_space_mb,
           bun_smol: r.bun_smol,
@@ -817,6 +968,10 @@ async function main() {
         executor_v2: exec ?? null,
         note: "Like-for-like HTTP multiplex; aggregator/Executor payloads are larger (no where). Executor is external serve + Bearer.",
       },
+      multi_threshold:
+        CURVE
+          ? "Publish clients@100/250/500 from ranges_by_threshold; lead capacity with saturation_by_arm peak RPS; curves in arms[].curve."
+          : null,
       cloud_profile_hint:
         "Bun --smol remains the Cloud HTTP default (highest clients + ~130 MB). Do not cite Node cap concurrency tax until REPS≥3 settles variance vs flag-behavior.",
       related:
