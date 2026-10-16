@@ -695,20 +695,24 @@ async function chaosArm(arm) {
   const refine = [];
   const thresholdsToRefine = CURVE ? THRESHOLDS : [BREAK_P99_MS];
   for (const T of thresholdsToRefine) {
-    const all = [...steps, ...refine];
-    let lo = null;
-    let hi = null;
-    for (const s of all.sort((a, b) => a.concurrency - b.concurrency)) {
-      if (stepOkAtThreshold(s, T)) lo = s.concurrency;
-      else if (hi == null && (lo == null || s.concurrency > lo)) hi = s.concurrency;
-    }
+    const bounds = () => {
+      const sorted = [...steps, ...refine].sort((a, b) => a.concurrency - b.concurrency);
+      let lo = null;
+      let hi = null;
+      for (const s of sorted) {
+        if (stepOkAtThreshold(s, T)) lo = s.concurrency;
+        else if (hi == null && (lo == null || s.concurrency > lo)) hi = s.concurrency;
+      }
+      return { lo, hi };
+    };
+    let { lo, hi } = bounds();
     if (lo == null || hi == null || hi - lo <= 1) continue;
-    while (hi - lo > 1) {
+    let guard = 0;
+    while (hi - lo > 1 && guard++ < 32) {
       const mid = Math.floor((lo + hi) / 2);
-      if (all.some((s) => s.concurrency === mid) || refine.some((s) => s.concurrency === mid)) {
-        // Already measured — advance using existing point.
-        const existing = [...steps, ...refine].find((s) => s.concurrency === mid);
-        if (existing && stepOkAtThreshold(existing, T)) lo = mid;
+      const existing = [...steps, ...refine].find((s) => s.concurrency === mid);
+      if (existing) {
+        if (stepOkAtThreshold(existing, T)) lo = mid;
         else hi = mid;
         continue;
       }
