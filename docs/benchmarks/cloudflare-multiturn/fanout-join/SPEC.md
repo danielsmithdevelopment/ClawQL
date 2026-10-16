@@ -125,10 +125,35 @@ Arms: `clawql_known_op`, `clawql_program`, `cloudflare_codemode`
 Across all three reps: **`turns_win`: true**, **`token_promotion`: true**, **`win`: true**.  
 Token margin ≈ **43–44** weighted tokens; turn win is 1 vs 6.
 
+## Real-model gate freeze
+
+<a id="real-model-gate-freeze"></a>
+
+Rules committed **before the first session**. Artifact:
+[`real-model-cursor-gate-precommit.json`](./real-model-cursor-gate-precommit.json).
+Do not edit after seeing results.
+
+| Knob | Pre-commit |
+| --- | --- |
+| Transport | Cursor Task subagents (`billing: cursor_subscription_subagents`) |
+| Frontier | **`gpt-5.6-sol-medium`** |
+| Small | **`composer-2.5-fast`** |
+| Arms | `clawql_known_op`, `clawql_program` (no hosted CF code-mode) |
+| Sessions | `CF_MT_REAL_ITERS` (claim gate ≥ 50; pilots may use 5) |
+| Ordering | Interleave arms within each model |
+| Code tokens | Full execute args JSON (`CF_MT_REAL_CODE_PARITY=execute_args`); program = plan `source` |
+| Known-op observation | Cumulative re-reads (same honesty as scripted board) |
+| Claim id | `program_beats_known_op_on_fanout_join_for_real_models` |
+
+**Win on a model:** program strictly better on median + p90 weighted tokens, task success ≥ known-op, sessions-over-ceiling ≤ known-op, and `turns_mean` < known-op.
+
+**Dual-model claim:** win on **both** frontier and small. Win on one model only → report that model; do not claim the dual headline.
+
+Prepare: `prepare-fanout-real-model-cursor-gate.mjs` · aggregate: `lib/aggregate-fanout-cursor-gate.mjs`.
+
 ## What this board does not claim
 
 - Filter-only workflows (zone-audit board already covers those).
-- Real-model gate (follow-up; freeze rules before the first session).
 - celld isolate / crash survival (separate spike).
 - Live `executor_v2` publish numbers (arm not in this publish set).
 - That programs should become the single core tool (still needs cheap one-step plans

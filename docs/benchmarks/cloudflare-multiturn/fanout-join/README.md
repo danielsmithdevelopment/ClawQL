@@ -37,3 +37,15 @@ Artifacts land in this directory (`smoke-*` or `board-*`).
 - All three reps: `win: true` (`turns_win` + `token_promotion`), task success 1.0
 - Program ~**2 650.6** weighted / 1 turn vs known-op **2 694** / 6 turns
 - Arms published: known-op, program, cloudflare_codemode (`executor_v2` deferred)
+
+### Real-model gate
+
+Rules frozen in [`real-model-cursor-gate-precommit.json`](./real-model-cursor-gate-precommit.json) (see SPEC).
+
+```bash
+CF_MT_REAL_ITERS=5 node scripts/benchmarks/cloudflare-multiturn/prepare-fanout-real-model-cursor-gate.mjs
+# Run interleaved Cursor Task sessions per WORKFLOW.md under /tmp/cf-mt-fanout-gate
+node scripts/benchmarks/cloudflare-multiturn/lib/aggregate-fanout-cursor-gate.mjs --state /tmp/cf-mt-fanout-gate
+```
+
+Claim gate is ≥50 sessions/arm/model; N=5 is a pilot under the same frozen rules.
