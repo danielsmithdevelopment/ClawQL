@@ -1,7 +1,7 @@
 # Restore drill (managed / self-hosted)
 
 **Status:** Operator runbook — 2026-10-15  
-**Pairs with:** [Disaster recovery curriculum §28](../security/security-best-practices-series/28-disaster-recovery-business-continuity.md), [Quarterly security checklist](../security/security-best-practices-series/25-quarterly-security-review-checklist.md)
+**Pairs with:** [Disaster recovery curriculum §28](../security/security-best-practices-series/28-disaster-recovery-business-continuity.md), [Quarterly security checklist](../security/security-best-practices-series/25-quarterly-security-review-checklist.md), [SOC 2 Type II readiness packaging](../security/soc2-type2-readiness-packaging.md) (A1 availability evidence)
 
 A backup you have never restored is a hope. Run this **at least quarterly** and after any major storage change. Record actual RTO/RPO below.
 

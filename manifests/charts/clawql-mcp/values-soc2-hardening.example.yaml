@@ -1,0 +1,118 @@
+# SOC 2 / HIPAA readiness hardening overlay for clawql-mcp (#133).
+#
+# Usage:
+#   helm upgrade --install clawql ./manifests/charts/clawql-mcp \
+#     -n clawql --create-namespace \
+#     -f manifests/charts/clawql-mcp/values-soc2-hardening.example.yaml \
+#     -f path/to/your-hosts-and-secrets.yaml
+#
+# This file is a baseline — not a certification. Pair with:
+#   docs/security/soc2-type2-readiness-packaging.md
+#   docs/deployment/restore-drill.md
+#
+# Do NOT commit production secrets here. Use Vault + External Secrets
+# (chart default: secretSourcing.requireVaultBackedSecrets=true).
+
+# Prefer digest-pinned images in production (example uses tag for readability).
+# image:
+#   repository: ghcr.io/danielsmithdevelopment/clawql-mcp
+#   tag: ""  # leave empty when digest is set
+#   digest: sha256:...
+
+# MCP workload — least privilege
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# Cosign verifyImages ClusterPolicy (install Kyverno in-cluster first)
+kyverno:
+  imageSignaturePolicy:
+    enabled: true
+
+# Optional Kata / gVisor RuntimeClass — enable only when cluster RuntimeClass exists
+security:
+  kata:
+    enabled: false
+    # runtimeClassName: kata-qemu
+
+# AI / ATR enforcement posture (also set matching flags on any MCP proxy / Panguard).
+# Never set CLAWQL_ALLOW_NO_ENFORCEMENT=1 in regulated production.
+# Dashboard console banner (optional): set NEXT_PUBLIC_CLAWQL_PANGUARD_ENFORCEMENT=1
+# on the dashboard Deployment via dashboard.extraEnv in your overlay.
+extraEnv:
+  - name: CLAWQL_PANGUARD_PROXY_PLUGIN
+    value: "1"
+  - name: CLAWQL_PANGUARD_IN_PROCESS
+    value: "1"
+
+# Managed edge (when enabled) — keep NetworkPolicy on
+managedGateway:
+  # enabled: true   # set in your overlay when using /mcp+/v1 edge
+  networkPolicy:
+    enabled: true
+  podSecurityContext:
+    fsGroup: 101
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 101
+    runAsGroup: 101
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+# Ingress TLS — replace hosts/secrets for your domain
+ingress:
+  enabled: true
+  # className: nginx
+  # hosts:
+  #   - host: mcp.example.com
+  #     paths:
+  #       - path: /
+  #         pathType: Prefix
+  tls: []
+  # tls:
+  #   - secretName: clawql-mcp-tls
+  #     hosts:
+  #       - mcp.example.com
+
+dashboard:
+  # enabled: true
+  ingress:
+    tls: []
+    # tls:
+    #   - secretName: clawql-dashboard-tls
+    #     hosts:
+    #       - console.example.com
+
+ui:
+  ingress:
+    tls: []
+
+# Metrics / health: keep scrapes private (NetworkPolicy / mesh) — see
+# docs/mcp/enterprise-mcp-tools.md § Regulated deployments.
+# Do not put PHI or end-user ids in sourceLabel / metric labels.
+
+# Backup / PITR is deployment-specific. Schedule quarterly restore drills:
+# docs/deployment/restore-drill.md
+
+# HashiCorp Vault remains mandatory in this chart. Keep:
+# secretSourcing.requireVaultBackedSecrets: true
+# and wire envFromSecret / envFromSecrets to ESO-synced Secrets.

@@ -122,6 +122,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - Defense-in-depth reference guide: `security/clawql-security-defense-in-depth.md`
 - **Defense-in-Depth Security Guide** (condensed deployment reference — what you deploy): [`security/clawql-defense-in-depth-security-guide.md`](security/clawql-defense-in-depth-security-guide.md) — [`/security/defense-in-depth`](https://docs.clawql.com/security/defense-in-depth)
 - Deliverables matrix (shipped vs partial vs planned): `security/clawql-security-defense-deliverables.md`
+- **SOC 2 Type II readiness packaging** (checklist + Helm — not a certification): [`security/soc2-type2-readiness-packaging.md`](security/soc2-type2-readiness-packaging.md) ([#133](https://github.com/danielsmithdevelopment/ClawQL/issues/133))
 - npm publish hardening: `security/npm-supply-chain.md`
 - Image signature enforcement at deploy (Kyverno / policy): `security/image-signature-enforcement.md`
 

@@ -6,6 +6,7 @@ Deploys **ClawQL** as **`clawql-mcp-http`**: Streamable HTTP MCP (`/mcp`), healt
 
 - **Full guide:** [`docs/deployment/helm.md`](../../../docs/deployment/helm.md) in this repository
 - **Kustomize alternative:** [`docs/deployment/deploy-k8s.md`](../../../docs/deployment/deploy-k8s.md)
+- **SOC 2 / HIPAA readiness overlay:** [`values-soc2-hardening.example.yaml`](values-soc2-hardening.example.yaml) — narrative + TSC checklist: [`docs/security/soc2-type2-readiness-packaging.md`](../../../docs/security/soc2-type2-readiness-packaging.md) ([#133](https://github.com/danielsmithdevelopment/ClawQL/issues/133))
 
 ## Quick install
 
