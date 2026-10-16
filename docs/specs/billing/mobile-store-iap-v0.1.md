@@ -6,7 +6,9 @@
 
 ## Goal
 
-People can **sign up and pay for ClawQL from the phone** using the normal store purchase sheet (Apple Pay / Google Pay as the wallet UX), and over time do **nearly everything in-app** without opening the web console.
+**Long-term north star:** people can sign up and pay for ClawQL from the phone using store purchase sheets (Apple Pay / Google Pay as wallet UX).
+
+**v1 store submission (supersedes for the first binary):** sell **nothing** in the app. Plan status is read-only; org billing stays on the web. See [`app-review-v1-safety.md`](../mobile/app-review-v1-safety.md) and Apple Guideline 3.1 — dual IAP+web catalog (3.1.3(b)) is deferred until Day-0 enrollment is ready.
 
 ## Naming (important)
 

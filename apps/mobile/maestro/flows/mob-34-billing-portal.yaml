@@ -1,4 +1,4 @@
-# MOB-34 — Billing portal CTA honesty (fixture) — Spend + Profile
+# MOB-34 — Plan read-only honesty (store builds sell nothing in-app)
 appId: com.clawql.app
 ---
 - launchApp
@@ -8,11 +8,9 @@ appId: com.clawql.app
 - assertVisible:
     id: "spend-screen"
 - assertVisible:
-    id: "spend-billing-portal"
-- tapOn:
-    id: "spend-open-billing-portal"
+    id: "spend-plan-readonly"
 - assertVisible:
-    id: "spend-billing-portal-note"
+    id: "spend-plan-readonly-note"
 - tapOn:
     id: "tab-profile"
 - assertVisible:
@@ -20,7 +18,5 @@ appId: com.clawql.app
 - scrollUntilVisible:
     element:
       id: "profile-plan-billing"
-- tapOn:
-    id: "profile-open-billing-portal"
 - assertVisible:
-    id: "profile-billing-portal-note"
+    id: "profile-plan-honesty"

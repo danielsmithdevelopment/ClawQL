@@ -112,11 +112,11 @@ export default function ReviewQueueScreen() {
               <Meta color={brand.warn}>
                 {`Offline cache${
                   cacheSavedAt ? ` · saved ${new Date(cacheSavedAt).toLocaleString()}` : ""
-                }`}
+                } — browse only. Approving requires a live connection so digest binding can verify the request has not changed.`}
               </Meta>
               <SecondaryButton
                 testID="review-reload-live"
-                label="Try live reload"
+                label="Go online to approve"
                 onPress={() => void load()}
               />
             </SurfaceCard>

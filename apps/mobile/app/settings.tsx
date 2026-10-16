@@ -7,6 +7,7 @@ import { getOrgSettingsBundleEffect } from "@/src/services/api";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, space } from "@/src/theme";
 import {
+  Badge,
   Body,
   Column,
   LoadingBlock,
@@ -43,6 +44,12 @@ export default function SettingsScreen() {
         title="Settings"
         subtitle="Org general, network allowlist, and retention — console Settings on phone."
       />
+      <SurfaceCard testID="settings-readonly-banner" tint="soft">
+        <Badge label="Read-only in v1" tone="neutral" />
+        <Meta color={brand.inkFaint}>
+          View org and network settings. Edits stay on the web console for v1.
+        </Meta>
+      </SurfaceCard>
       <SurfaceCard testID="settings-org">
         {bundle ? (
           <Column spacing={space.sm}>

@@ -44,6 +44,12 @@ export default function GatewayScreen() {
         title="Gateway"
         subtitle="Inference routes, MCP, memory, decisions, and events — console Gateway on phone."
       />
+      <SurfaceCard testID="gateway-readonly-banner" tint="soft">
+        <Badge label="Read-only in v1" tone="neutral" />
+        <Meta color={brand.inkFaint}>
+          Browse routes here. Changes stay on the web console for the first store release.
+        </Meta>
+      </SurfaceCard>
       <Meta testID="gateway-base" mono color={brand.inkFaint}>
         {bundle.base}
       </Meta>
