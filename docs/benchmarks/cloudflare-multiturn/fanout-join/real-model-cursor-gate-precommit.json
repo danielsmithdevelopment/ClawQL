@@ -24,7 +24,7 @@
     "clawql_known_op",
     "clawql_program"
   ],
-  "iters_per_arm": 5,
+  "iters_per_arm": 50,
   "token_ceiling": 10000,
   "primary_pair": [
     "clawql_program",
@@ -62,5 +62,9 @@
     "single_model_claim": "report that model only; not the dual-model claim"
   },
   "dual_model_claim_eligible": true,
-  "note": "Frozen before the first session. Blog/explainer claims must follow verdict_rules; do not re-interpret after seeing results."
+  "note": "Frozen before the first session. Blog/explainer claims must follow verdict_rules; do not re-interpret after seeing results.",
+  "claim_run": {
+    "started_at": "2026-10-16T19:06:00.498Z",
+    "note": "Official ≥50 dual-model claim under frozen verdict_rules / model pins; iters elevated from pilot 5 → 50"
+  }
 }
