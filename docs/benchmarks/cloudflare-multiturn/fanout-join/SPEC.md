@@ -1,6 +1,6 @@
 # Fan-out / join board — SPEC
 
-**Status:** harness + smoke  
+**Status:** harness + smoke + **3×10k publish**  
 **Parent:** [cloudflare-multiturn](../) · [ADR 0015](../../../adr/0015-program-mode-alongside-search-execute.md) · [measured-defaults](../measured-defaults.md)
 
 ## Why this board exists
@@ -111,10 +111,25 @@ After `plan.return: true` (merge compact card) + fair known-op code (full execut
 **`turns_win`: true. `token_promotion`: true** — program leads on weighted tokens and
 turns. Margin is small on tokens (~44); the large win is model turns (1 vs 6).
 
+### Publish finding (2026-10-16, 3×10 000)
+
+Artifact: [`board-summary-n10000-r3.json`](./board-summary-n10000-r3.json)  
+Arms: `clawql_known_op`, `clawql_program`, `cloudflare_codemode`  
+(`executor_v2` deferred — auth/URL wiring against live Executor still open.)
+
+| Arm | Weighted (rep means) | Turns | Success |
+| --- | ---: | ---: | ---: |
+| known-op | **2 694** / **2 694** / **2 694** | 6 | 1.0 |
+| program | **2 650.59** / **2 650.58** / **2 650.59** | 1 | 1.0 |
+
+Across all three reps: **`turns_win`: true**, **`token_promotion`: true**, **`win`: true**.  
+Token margin ≈ **43–44** weighted tokens; turn win is 1 vs 6.
+
 ## What this board does not claim
 
 - Filter-only workflows (zone-audit board already covers those).
 - Real-model gate (follow-up; freeze rules before the first session).
 - celld isolate / crash survival (separate spike).
+- Live `executor_v2` publish numbers (arm not in this publish set).
 - That programs should become the single core tool (still needs cheap one-step plans
   per measured-defaults).
