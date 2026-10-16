@@ -198,6 +198,10 @@ Product/prompt follow-up before the honest re-run: inventory field **types** in 
 session prompt (counts are numbers) + `EXECUTE_WHERE_DESCRIPTION` cue that count fields
 must not be id arrays.
 
+**Blind re-run (claim50v2):** Cursor Task batches for N=50×2 models×2 arms under
+`/tmp/cf-mt-fanout-gate-claim50v2` (same frozen rules + field-type cues). Aggregate when
+complete; replace this section’s official status only from that artifact.
+
 ## What this board does not claim
 
 - Filter-only workflows (zone-audit board already covers those).
