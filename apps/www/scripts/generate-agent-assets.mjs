@@ -134,15 +134,15 @@ npx clawql-mcp
 - Sign up: ${origin}/signup/
 - Pricing: ${origin}/pricing/
 - Agents: ${origin}/agents/
-- Protocol Fabric: ${origin}/protocol-fabric/
-- Streams: ${origin}/streams/
+- Streams (incl. Protocol Fabric): ${origin}/streams/
+- Security: ${origin}/security/
 `,
     '/pricing': `# Pricing\n\nSee ${origin}/pricing/ for ClawQL tiers.`,
     '/about': `# About\n\nSee ${origin}/about/.`,
     '/inference/gtm': `# Inference-first GTM playbook\n\nClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Zero-Trust Agentic Fabric (Regional Hubs, Dedicated Virtual Gateways with NATS/Valkey, Edge swarm).\n\nSee ${origin}/inference/gtm/.`,
     '/enterprise/gtm': `# Enterprise GTM playbook\n\nSecondary enterprise / Palantir-facing motion — Auditable Production AI on the Zero-Trust Agentic Fabric; sovereign alternative to Palantir AIP.\n\nSee ${origin}/enterprise/gtm/.`,
-    '/protocol-fabric': `# ClawQL Protocol Fabric\n\nAny protocol to any protocol via MCP — Core inbound, mcp-api-adapter outbound.\n\nSee ${origin}/protocol-fabric/.\n\nDocs: ${docs}/mcp/protocol-fabric · ${docs}/mcp/mcp-api-adapter`,
-    '/streams': `# ClawQL Streams\n\nEvent-driven autonomous agents with WORM audit, Protocol Fabric, and Durable Object / K8s scale.\n\nSee ${origin}/streams/.\n\nSpecs: ${docs}/streams/clawql-streams · ${docs}/streams/clawql-durable-objects`,
+    '/streams': `# ClawQL Streams\n\nEvent-driven agents + Protocol Fabric (Core + mcp-api-adapter). Fabric: ${origin}/streams/#fabric\n\nSee ${origin}/streams/.\n\nDocs: ${docs}/streams/clawql-streams · ${docs}/mcp/protocol-fabric · ${docs}/streams/clawql-durable-objects`,
+    '/security': `# ClawQL Security\n\nDefense-in-depth stack for agentic production.\n\nSee ${origin}/security/.\n\nDocs: ${docs}/security`,
     '/idp': `# Intelligent Document Processing\n\nSee ${origin}/idp/.`,
     '/signup': `# Sign up\n\n${origin}/signup/`,
     '/privacy-policy': `# Privacy Policy\n\n${origin}/privacy-policy/`,
@@ -441,6 +441,11 @@ writeText(
     '# Apex is canonical; www should 301 here (Cloudflare Pages / Redirect Rules).',
     'https://www.clawql.com/* https://clawql.com/:splat 301',
     '/install.sh /install 301',
+    '# Nav collapse: Fabric → Streams; Demo retired ahead of cloud launch.',
+    '/protocol-fabric /streams 301',
+    '/protocol-fabric/ /streams 301',
+    '/demo /signup 301',
+    '/demo/ /signup 301',
     '',
   ].join('\n'),
 )

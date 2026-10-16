@@ -3,6 +3,7 @@ import { Link } from '@/components/elements/link'
 import { Section } from '@/components/elements/section'
 import { ArrowNarrowRightIcon } from '@/components/icons/arrow-narrow-right-icon'
 import { CallToActionSimpleCentered } from '@/components/sections/call-to-action-simple-centered'
+import { protocolFabricSurfaces } from '@/lib/marketing'
 import { site } from '@/lib/site'
 
 import './streams-landing.css'
@@ -10,7 +11,8 @@ import './streams-landing.css'
 const STREAMS_SPEC = `${site.urls.docs}/streams/clawql-streams`
 const DO_SPEC = `${site.urls.docs}/streams/clawql-durable-objects`
 const CELLD_SPEC = `${site.urls.docs}/streams/clawql-celld`
-const ADAPTER_DOCS = `${site.urls.docs}/mcp/mcp-api-adapter`
+const ADAPTER_DOCS = protocolFabricSurfaces.adapterHref
+const FABRIC_DOCS = protocolFabricSurfaces.docsHref
 
 const modes = [
   {
@@ -148,17 +150,29 @@ export function StreamsLanding() {
       <Section
         id="fabric"
         className="streams-surface"
-        eyebrow="Architecture"
+        eyebrow="Protocol Fabric"
         headline="Anything in. Anything out. Events on the bus."
         subheadline={
           <p>
-            ClawQL Core turns any API — or a page&apos;s own WebMCP tools — into MCP.{' '}
-            <Link href={ADAPTER_DOCS}>mcp-api-adapter</Link> turns MCP back into OpenAPI, GraphQL, gRPC, CLI,
-            WebSocket, QR, or <code className="font-mono text-[0.9em]">/mcp-ui</code>. Streams wraps that fabric with
-            NATS JetStream so the bus can act without a human at the console — Event Stream in, WORM and RTP out.
+            Protocol Fabric is the event-driven integration layer Streams builds on. ClawQL Core turns any API — or a
+            page&apos;s own WebMCP tools — into MCP. <Link href={ADAPTER_DOCS}>mcp-api-adapter</Link> turns MCP back
+            into OpenAPI, GraphQL, gRPC, CLI, WebSocket, or <code className="font-mono text-[0.9em]">/mcp-ui</code> (
+            {protocolFabricSurfaces.shippedCount} surfaces shipped). NATS JetStream wraps the fabric so the bus can act
+            without a human at the console — Event Stream in, WORM and RTP out.
           </p>
         }
       >
+        <div className="mb-10 grid gap-8 md:grid-cols-2">
+          <div>
+            <h3 className="streams-mode__label">In — Core → MCP</h3>
+            <p className="streams-mode__detail mt-3">{protocolFabricSurfaces.inbound}</p>
+          </div>
+          <div>
+            <h3 className="streams-mode__label">Out — adapter → surfaces</h3>
+            <p className="streams-mode__detail mt-3">{protocolFabricSurfaces.outbound}</p>
+          </div>
+        </div>
+        <p className="streams-mode__detail mb-10 max-w-2xl">{protocolFabricSurfaces.plannedNote}</p>
         <figure className="streams-diagram">
           <picture>
             <source type="image/webp" srcSet="/streams/clawql-streams-architecture.webp" />
@@ -171,11 +185,12 @@ export function StreamsLanding() {
               decoding="async"
             />
           </picture>
-          <figcaption>ClawQL Streams — observable event-driven autonomous agents</figcaption>
+          <figcaption>ClawQL Streams — Protocol Fabric plus the event loop</figcaption>
         </figure>
         <p className="streams-mode__detail mt-10 max-w-2xl">
           ESB lesson, agent era: N×M protocol integrations collapse to N+M. Streams is how the fabric reacts to
-          webhooks, NATS topics, cron, and live sockets — not only interactive MCP clients.
+          webhooks, NATS topics, cron, and live sockets — not only interactive MCP clients.{' '}
+          <Link href={FABRIC_DOCS}>Protocol Fabric docs</Link>.
         </p>
       </Section>
 

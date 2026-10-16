@@ -10,8 +10,7 @@ export const site = {
     pricingNote:
       'Self-host free forever on Apache 2.0, or request early access for managed hosting. One MCP endpoint on every tier — same URL when you upgrade. Gateway tiers include vault memory; Teams adds Onyx; IDP tiers (Starter $299+) activate document processing on a dedicated tenant.',
   },
-  waitlistPromise:
-    'Request early access or self-host free with npx or Helm — full Apache 2.0 stack, no license fee.',
+  waitlistPromise: 'Request early access or self-host free with npx or Helm — full Apache 2.0 stack, no license fee.',
   urls: {
     home: '/',
     docs: 'https://docs.clawql.com',
@@ -21,10 +20,10 @@ export const site = {
     signup: '/signup',
     pricing: '/pricing',
     about: '/about',
-    /** Interactive edge demo (no signup) — sandboxed 5-minute session. */
-    demo: '/demo',
     /** Equal-arm multi-gateway + Cloudflare multiturn benchmarks. */
     benchmarks: '/benchmarks',
+    /** Defense-in-depth security stack (marketing). */
+    security: '/security',
     /** Public status surface (gateway health + components). */
     status: '/status',
     /** X / Twitter — GTM Phase 1 footer checklist. */
@@ -35,10 +34,10 @@ export const site = {
     idp: '/idp',
     /** IDP-first GTM playbook — strategy source of truth for the IDP motion. */
     idpGtm: '/idp/gtm',
-    /** ClawQL Streams — event-driven autonomous agents / Protocol Fabric. */
+    /** ClawQL Streams — event-driven agents + Protocol Fabric (see #fabric). */
     streams: '/streams',
-    /** Protocol Fabric — any protocol ↔ any protocol via MCP (Core + mcp-api-adapter). */
-    protocolFabric: '/protocol-fabric',
+    /** Protocol Fabric canonical marketing URL (section on Streams). */
+    protocolFabric: '/streams#fabric',
     /** Agentic Platform marketing landing — Streams + ontology + /mcp-ui + TEE. */
     agents: '/agents',
     /** Secondary enterprise / Palantir-facing GTM motion. */

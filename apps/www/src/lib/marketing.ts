@@ -240,8 +240,8 @@ export const protocolFabricSurfaces = {
   outbound: 'OpenAPI · GraphQL · Streamable HTTP · gRPC · gen-cli · WebSocket · /mcp-ui · QR (planned)',
   shippedCount: 7,
   plannedNote: 'QR optical channel is planned as the 8th mcp-api-adapter surface — not shipped yet.',
-  /** Dedicated marketing landing on clawql.com. */
-  pageHref: '/protocol-fabric',
+  /** Protocol Fabric section on Streams (Fabric nav collapsed into Streams). */
+  pageHref: '/streams#fabric',
   docsHref: 'https://docs.clawql.com/mcp/protocol-fabric',
   adapterHref: 'https://docs.clawql.com/mcp/mcp-api-adapter',
 } as const
