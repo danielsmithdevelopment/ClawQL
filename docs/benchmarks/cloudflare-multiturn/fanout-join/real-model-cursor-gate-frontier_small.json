@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-16T19:10:20.866Z",
+  "measuredAt": "2026-10-16T19:12:03.262Z",
   "kind": "fanout_real_model_validation",
   "transport": "cursor_subscription_subagents",
   "iters": 50,
@@ -99,7 +99,7 @@
       "model": "gpt-5.6-sol-medium",
       "arms": {
         "clawql_known_op": {
-          "task_success_rate": 0.8,
+          "task_success_rate": 1,
           "turns_mean": 6.26,
           "code_tokens_mean": 404.5,
           "observation_tokens_mean": 475.78,
@@ -109,29 +109,29 @@
           "weighted_tokens_mean": 2875.28,
           "weighted_tokens_median": 2792.5,
           "weighted_tokens_p90": 3486,
-          "sessions_failed": 10,
+          "sessions_failed": 0,
           "iters_completed": 50
         },
         "clawql_program": {
-          "task_success_rate": 0.8,
-          "turns_mean": 1.08,
-          "code_tokens_mean": 438.28,
-          "observation_tokens_mean": 300.74,
+          "task_success_rate": 1,
+          "turns_mean": 1.28,
+          "code_tokens_mean": 519.68,
+          "observation_tokens_mean": 352.3,
           "observation_tokens_median": 259,
           "observation_tokens_over_ceiling": 0,
           "observation_token_ceiling": 10000,
-          "weighted_tokens_mean": 2855.14,
+          "weighted_tokens_mean": 3313.7,
           "weighted_tokens_median": 2659.5,
-          "weighted_tokens_p90": 2742,
-          "sessions_failed": 10,
+          "weighted_tokens_p90": 5032,
+          "sessions_failed": 0,
           "iters_completed": 50
         }
       },
       "model_win": {
-        "win": true,
+        "win": false,
         "checks": {
           "weighted_median": true,
-          "weighted_p90": true,
+          "weighted_p90": false,
           "task_success": true,
           "over_ceiling": true,
           "turns": true
@@ -185,15 +185,17 @@
   "verdict": {
     "rules_id": "cf-mt-fanout-real-model-gate-v1",
     "dual_model_claim_eligible": true,
-    "frontier_win": true,
+    "frontier_win": false,
     "small_win": true,
-    "dual_model_claim": "program beats known-op on fan-out/join for real models — only if win on both frontier and small",
-    "claim": "program_beats_known_op_on_fanout_join_for_real_models",
+    "dual_model_claim": null,
+    "claim": "single_model_only",
     "detail": "program beats known-op on fan-out/join for real models — only if win on both frontier and small"
   },
   "claim_notes": {
-    "frontier_task_success": "0.8 on both arms — sessions 41–50 failed enabledFirewallRules (null); equal impact so program still ≥ known_op",
-    "small_task_success": "1.0 both arms",
-    "official_claim": "program_beats_known_op_on_fanout_join_for_real_models"
+    "final_on_disk": "After frontier 41–50 corrections: task_success 1.0 both arms/models",
+    "frontier_loss": "program weighted_p90 5032 > known_op 3486 — retry execute_program turns (firewall id-list → count) inflate 5×code",
+    "small_win": true,
+    "official_claim": "single_model_only — report small; not the dual-model headline",
+    "dual_model_claim": null
   }
 }

@@ -179,19 +179,20 @@ Task success 1.0 on both arms/models; turns 1 vs 6. **Dual-model win on this N=5
 (`program_beats_known_op_on_fanout_join_for_real_models`). Official claim bar remains
 **≥50 sessions / arm / model** under the same frozen rules.
 
-### Claim run (2026-10-16, N=50)
+### Claim run (2026-10-16, N=50) — final on-disk
 
 Artifact: [`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json)  
 Rules: `cf-mt-fanout-real-model-gate-v1` (frozen).
 
 | Model | known-op w_med / p90 | program w_med / p90 | Success | Turns | Win |
 | --- | ---: | ---: | ---: | ---: | --- |
-| frontier | 2792.5 / 3486 | **2659.5 / 2742** | 0.8 / 0.8 | 6.26 / 1.08 | **true** |
+| frontier | 2792.5 / **3486** | 2659.5 / **5032** | 1.0 / 1.0 | ~6.3 / ~1.2 | **false** (p90) |
 | small | 2800 / 2880 | **2650 / 2740** | 1.0 / 1.0 | 6 / 1 | **true** |
 
-**Dual-model claim cleared:** `program_beats_known_op_on_fanout_join_for_real_models`.  
-Frontier sessions 41–50 failed `enabledFirewallRules` (null) on **both** arms equally
-(task-success check still holds).
+**Dual-model claim not cleared** — report **small only** (`single_model_only`).  
+Frontier loses on `weighted_p90`: sessions 41–50 retried `execute_program` after a
+firewall id-list vs count miss; retry plan tokens at 5× push program p90 above known-op.
+Median + turns still favor program on frontier.
 
 ## What this board does not claim
 
