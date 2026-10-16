@@ -181,26 +181,23 @@ Task success 1.0 on both arms/models; turns 1 vs 6. **Dual-model win on this N=5
 
 ### Claim run (2026-10-16, N=50) — invalidated (scripted fill)
 
-Artifact on disk: [`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json)  
-Rules: `cf-mt-fanout-real-model-gate-v1` (frozen).
+Earlier on-disk N=50 was methodology scrap (hardcoded-`where` fill / gold-plan repair).
+Superseded by blind claim50v2 below.
+
+### Claim run v2 (2026-10-16, N=50) — blind Cursor Tasks
+
+Artifact: [`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json)  
+State: `/tmp/cf-mt-fanout-gate-claim50v2` · Rules: `cf-mt-fanout-real-model-gate-v1` (frozen).  
+Transport: Cursor Task subagents (`gpt-5.6-sol-medium` / `composer-2.5-fast`).
 
 | Model | known-op w_med / p90 | program w_med / p90 | Success | Turns | Win |
 | --- | ---: | ---: | ---: | ---: | --- |
-| frontier | 2792.5 / **3486** | 2659.5 / **5032** | 1.0 / 1.0 | ~6.3 / ~1.2 | **false** (p90) |
-| small | 2800 / 2880 | **2650 / 2740** | 1.0 / 1.0 | 6 / 1 | **true** |
+| frontier | 2813 / 2878 | **2653 / 2732** | 1.0 / 1.0 | ~6.0 / ~1.0 | **true** |
+| small | **2553.5 / 2596** | 2687 / 2739 | 1.0 / 1.0 | 6 / 1 | **false** (tokens) |
 
-**Not a valid dual-model claim.** Large ranges were filled with hardcoded-`where` Node
-scripts (not Cursor Task subagents), and frontier 41–50 used a gold-plan repair after
-firewall id-list vs count misses. Treat as methodology scrap; official status remains
-**open** / `single_model_only` until a blind Cursor Task N=50 clears both models.
-
-Product/prompt follow-up before the honest re-run: inventory field **types** in the
-session prompt (counts are numbers) + `EXECUTE_WHERE_DESCRIPTION` cue that count fields
-must not be id arrays.
-
-**Blind re-run (claim50v2):** Cursor Task batches for N=50×2 models×2 arms under
-`/tmp/cf-mt-fanout-gate-claim50v2` (same frozen rules + field-type cues). Aggregate when
-complete; replace this section’s official status only from that artifact.
+**Dual-model claim not cleared** — `single_model_only` (report **frontier**).  
+Small loses weighted median/p90: known-op observations are very lean (~294 mean) while
+program plans stay ~414 code tokens (×5). Turns still favor program (1 vs 6) on both models.
 
 ## What this board does not claim
 

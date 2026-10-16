@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-16T19:12:03.262Z",
+  "measuredAt": "2026-10-16T19:21:27.968Z",
   "kind": "fanout_real_model_validation",
   "transport": "cursor_subscription_subagents",
   "iters": 50,
@@ -77,14 +77,14 @@
         "program.observation_tokens_over_ceiling <= known_op.observation_tokens_over_ceiling",
         "program.turns_mean < known_op.turns_mean"
       ],
-      "dual_model_claim": "program beats known-op on fan-out/join for real models — only if win on both frontier and small",
+      "dual_model_claim": "program beats known-op on fan-out/join for real models \u2014 only if win on both frontier and small",
       "single_model_claim": "report that model only; not the dual-model claim"
     },
     "dual_model_claim_eligible": true,
     "note": "Frozen before the first session. Blog/explainer claims must follow verdict_rules; do not re-interpret after seeing results.",
     "claim_run": {
       "started_at": "2026-10-16T19:06:00.498Z",
-      "note": "Official ≥50 dual-model claim under frozen verdict_rules / model pins; iters elevated from pilot 5 → 50"
+      "note": "Official \u226550 dual-model claim under frozen verdict_rules / model pins; iters elevated from pilot 5 \u2192 50"
     }
   },
   "settings": {
@@ -100,72 +100,29 @@
       "arms": {
         "clawql_known_op": {
           "task_success_rate": 1,
-          "turns_mean": 6.26,
-          "code_tokens_mean": 404.5,
-          "observation_tokens_mean": 475.78,
+          "turns_mean": 6.02,
+          "code_tokens_mean": 396.6,
+          "observation_tokens_mean": 419.84,
           "observation_tokens_median": 433,
           "observation_tokens_over_ceiling": 0,
           "observation_token_ceiling": 10000,
-          "weighted_tokens_mean": 2875.28,
-          "weighted_tokens_median": 2792.5,
-          "weighted_tokens_p90": 3486,
+          "weighted_tokens_mean": 2797.84,
+          "weighted_tokens_median": 2813,
+          "weighted_tokens_p90": 2878,
           "sessions_failed": 0,
           "iters_completed": 50
         },
         "clawql_program": {
           "task_success_rate": 1,
-          "turns_mean": 1.28,
-          "code_tokens_mean": 519.68,
-          "observation_tokens_mean": 352.3,
-          "observation_tokens_median": 259,
+          "turns_mean": 1.02,
+          "code_tokens_mean": 418.14,
+          "observation_tokens_mean": 263.78,
+          "observation_tokens_median": 258.5,
           "observation_tokens_over_ceiling": 0,
           "observation_token_ceiling": 10000,
-          "weighted_tokens_mean": 3313.7,
-          "weighted_tokens_median": 2659.5,
-          "weighted_tokens_p90": 5032,
-          "sessions_failed": 0,
-          "iters_completed": 50
-        }
-      },
-      "model_win": {
-        "win": false,
-        "checks": {
-          "weighted_median": true,
-          "weighted_p90": false,
-          "task_success": true,
-          "over_ceiling": true,
-          "turns": true
-        }
-      }
-    },
-    "small": {
-      "model": "composer-2.5-fast",
-      "arms": {
-        "clawql_known_op": {
-          "task_success_rate": 1,
-          "turns_mean": 6,
-          "code_tokens_mean": 393,
-          "observation_tokens_mean": 382.6,
-          "observation_tokens_median": 433,
-          "observation_tokens_over_ceiling": 0,
-          "observation_token_ceiling": 10000,
-          "weighted_tokens_mean": 2724.6,
-          "weighted_tokens_median": 2800,
-          "weighted_tokens_p90": 2880,
-          "sessions_failed": 0,
-          "iters_completed": 50
-        },
-        "clawql_program": {
-          "task_success_rate": 1,
-          "turns_mean": 1,
-          "code_tokens_mean": 411.2,
-          "observation_tokens_mean": 252.26,
-          "observation_tokens_median": 252,
-          "observation_tokens_over_ceiling": 0,
-          "observation_token_ceiling": 10000,
-          "weighted_tokens_mean": 2671.26,
-          "weighted_tokens_median": 2650,
-          "weighted_tokens_p90": 2740,
+          "weighted_tokens_mean": 2717.48,
+          "weighted_tokens_median": 2653,
+          "weighted_tokens_p90": 2732,
           "sessions_failed": 0,
           "iters_completed": 50
         }
@@ -180,23 +137,68 @@
           "turns": true
         }
       }
+    },
+    "small": {
+      "model": "composer-2.5-fast",
+      "arms": {
+        "clawql_known_op": {
+          "task_success_rate": 1,
+          "turns_mean": 6,
+          "code_tokens_mean": 375.42,
+          "observation_tokens_mean": 294.4,
+          "observation_tokens_median": 271,
+          "observation_tokens_over_ceiling": 0,
+          "observation_token_ceiling": 10000,
+          "weighted_tokens_mean": 2566.5,
+          "weighted_tokens_median": 2553.5,
+          "weighted_tokens_p90": 2596,
+          "sessions_failed": 0,
+          "iters_completed": 50
+        },
+        "clawql_program": {
+          "task_success_rate": 1,
+          "turns_mean": 1,
+          "code_tokens_mean": 414.04,
+          "observation_tokens_mean": 256.56,
+          "observation_tokens_median": 255,
+          "observation_tokens_over_ceiling": 0,
+          "observation_token_ceiling": 10000,
+          "weighted_tokens_mean": 2689.76,
+          "weighted_tokens_median": 2687,
+          "weighted_tokens_p90": 2739,
+          "sessions_failed": 0,
+          "iters_completed": 50
+        }
+      },
+      "model_win": {
+        "win": false,
+        "checks": {
+          "weighted_median": false,
+          "weighted_p90": false,
+          "task_success": true,
+          "over_ceiling": true,
+          "turns": true
+        }
+      }
     }
   },
   "verdict": {
     "rules_id": "cf-mt-fanout-real-model-gate-v1",
     "dual_model_claim_eligible": true,
-    "frontier_win": false,
-    "small_win": true,
+    "frontier_win": true,
+    "small_win": false,
     "dual_model_claim": null,
     "claim": "single_model_only",
-    "detail": "program beats known-op on fan-out/join for real models — only if win on both frontier and small"
+    "detail": "program beats known-op on fan-out/join for real models \u2014 only if win on both frontier and small"
   },
   "claim_notes": {
-    "final_on_disk": "After frontier 41–50 corrections: task_success 1.0 both arms/models",
-    "frontier_loss": "program weighted_p90 5032 > known_op 3486 — retry execute_program turns (firewall id-list → count) inflate 5×code",
-    "small_win": true,
-    "official_claim": "invalidated — scripted fill / gold-plan repair; not Cursor Task transport",
-    "methodology": "Do not cite this artifact for program_beats_known_op_on_fanout_join_for_real_models",
-    "dual_model_claim": null
+    "run": "claim50v2 blind Cursor Tasks",
+    "state": "/tmp/cf-mt-fanout-gate-claim50v2",
+    "frontier_win": true,
+    "small_win": false,
+    "small_loss": "program weighted_median 2687 > known_op 2553.5 (and p90) \u2014 lean known-op obs + ~414 program code",
+    "official_claim": "single_model_only \u2014 report frontier; dual headline still open",
+    "dual_model_claim": null,
+    "note": "frontier program sessions 25/35 had double-appended call logs during restore; one-shot cleanup Task in flight \u2014 re-aggregate after"
   }
 }
