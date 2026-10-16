@@ -118,7 +118,7 @@ export function TeamPage() {
                       <div className="flex flex-wrap items-center justify-end gap-3">
                         {showViewAs &&
                         person.role !== 'Org admin' &&
-                        person.role !== 'Owner' &&
+                        (person.role as string) !== 'Owner' &&
                         person.id !== session.userId ? (
                           <SupportViewAsButton
                             targetUserId={person.id}

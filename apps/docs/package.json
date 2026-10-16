@@ -65,7 +65,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
-    "@opennextjs/cloudflare": "1.18.0",
+    "@opennextjs/cloudflare": "1.20.2",
     "@playwright/test": "^1.55.0",
     "@types/node": "^24.1.0",
     "@types/react": "19.2.14",

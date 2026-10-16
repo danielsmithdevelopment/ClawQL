@@ -18,7 +18,7 @@ export type ManagedAuditEntry = {
   readonly actor: string;
   readonly action: string;
   readonly outcome: string;
-  readonly tone: "ok" | "warn" | "danger";
+  readonly tone: "ok" | "warn" | "danger" | "neutral";
 };
 
 export const listManagedAuditEffect = (): Effect.Effect<{
