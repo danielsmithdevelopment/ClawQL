@@ -106,6 +106,57 @@ return { enabledRuleCount: j.result.filter(r => r.paused === false).length };`,
   };
 }
 
+/**
+ * Executor v1.x (stable) OpenAPI tools — connection-scoped path + `{ok,data}` unwrap.
+ * Same mock-backed ops as v2; stdio MCP pretty-prints return values (larger Layer-2 tokens).
+ * @param {{ appSlug?: string, connectionName?: string }} [opts]
+ */
+export function executorV1ToolScripts(opts = {}) {
+  const slug = opts.appSlug || process.env.EXECUTOR_V1_APP_SLUG || DEFAULT_APP_SLUG;
+  const conn =
+    opts.connectionName ||
+    process.env.EXECUTOR_V1_CONNECTION_NAME ||
+    process.env.EXECUTOR_V1_CONNECTION ||
+    "cfMock";
+  const T = `tools[${JSON.stringify(slug)}].user.${conn}`;
+  const zone = JSON.stringify(FAKE.auditZoneId);
+  const acct = JSON.stringify(FAKE.accountId);
+  const zoneName = JSON.stringify(FAKE.auditZoneName);
+  const ip = JSON.stringify(FAKE.targetIp);
+  const worker = JSON.stringify(FAKE.workerScriptName);
+  const rec = JSON.stringify(FAKE.unproxiedRecordId);
+  const unwrap = (expr) =>
+    `(async () => { const __r = await ${expr}; if (__r && __r.ok === false) throw new Error(JSON.stringify(__r.error)); return (__r && __r.data !== undefined) ? __r.data : __r; })()`;
+
+  return {
+    1: `const j = await ${unwrap(`${T}.zone.zonesGet({})`)};
+const zone = j.result.find(z => z.name === ${zoneName});
+return { zoneId: zone.id };`,
+    2: `const j = await ${unwrap(`${T}.zone.zones0Get({ path: { zone_id: ${zone} } })`)};
+return { status: j.result.status, planName: j.result.plan.name };`,
+    3: `const j = await ${unwrap(`${T}.zoneSettings.zoneSettingsGetSingleSetting({ path: { zone_id: ${zone}, setting_id: "ssl" } })`)};
+return { ssl: j.result.value };`,
+    4: `const j = await ${unwrap(`${T}.dnsRecordsForAZone.dnsRecordsForAZoneListDnsRecords({ path: { zone_id: ${zone} } })`)};
+return { aRecordCount: j.result.filter(r => r.type === "A").length };`,
+    5: `const j = await ${unwrap(`${T}.dnsRecordsForAZone.dnsRecordsForAZoneListDnsRecords({ path: { zone_id: ${zone} } })`)};
+return { names: j.result.filter(r => r.type === "A" && r.content === ${ip}).map(r => r.name) };`,
+    6: `const j = await ${unwrap(`${T}.dnsRecordsForAZone.dnsRecordsForAZoneListDnsRecords({ path: { zone_id: ${zone} } })`)};
+return { unproxiedNames: j.result.filter(r => r.type === "A" && r.content === ${ip} && r.proxied === false).map(r => r.name) };`,
+    7: `const j = await ${unwrap(`${T}.workerScript.workerScriptListWorkers({ path: { account_id: ${acct} } })`)};
+return { scriptNames: j.result.map(s => s.id) };`,
+    8: `const j = await ${unwrap(`${T}.workerScript.workerScriptGetSettings({ path: { account_id: ${acct}, script_name: ${worker} } })`)};
+return { compatibilityDate: j.result.compatibility_date };`,
+    9: `const j = await ${unwrap(`${T}.workerRoutes.workerRoutesListRoutes({ path: { zone_id: ${zone} } })`)};
+const route = j.result.find(r => r.script === ${worker});
+return { routePattern: route.pattern, script: route.script };`,
+    10: `const j = await ${unwrap(`${T}.r2Bucket.r2ListBuckets({ path: { account_id: ${acct} } })`)};
+return { buckets: j.result.buckets.map(b => ({ name: b.name, creation_date: b.creation_date })) };`,
+    11: `const j = await ${unwrap(`${T}.firewallRules.firewallRulesListFirewallRules({ path: { zone_id: ${zone} } })`)};
+return { enabledRuleCount: j.result.filter(r => r.paused === false).length };`,
+    12: `return { proposal: { recordId: ${rec}, proxied: true }, gated: true };`,
+  };
+}
+
 /** @deprecated Use executorV2ToolScripts — kept so smoke token estimates still import. */
 export function executorV2Scripts() {
   return executorV2ToolScripts();
