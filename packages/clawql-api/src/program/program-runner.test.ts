@@ -139,6 +139,88 @@ describe("parseProgramPlanEffect", () => {
       where: "{zoneId: result[0].id}",
     });
   });
+
+  it("resolves plan.c constants into execute args via $name", async () => {
+    const plan = await Effect.runPromise(
+      parseProgramPlanEffect(
+        JSON.stringify({
+          return: true,
+          c: { z: "zone-aaa", a: "acct-bbb" },
+          calls: [
+            {
+              operationId: "zone-settings-get-single-setting",
+              args: { zone_id: "$z", setting_id: "ssl" },
+              where: "{ssl: result.value}",
+            },
+            {
+              operationId: "r2-list-buckets",
+              args: { account_id: "$a" },
+              where: "{bucketNames: sort(result.buckets[].name)}",
+            },
+          ],
+        })
+      )
+    );
+    if ("ok" in plan && plan.ok === false) throw new Error(plan.error);
+    expect(plan.constants).toEqual({ z: "zone-aaa", a: "acct-bbb" });
+    expect(plan.calls[0]).toMatchObject({
+      tool: "execute",
+      args: { zone_id: "zone-aaa", setting_id: "ssl" },
+    });
+    expect(plan.calls[1]).toMatchObject({
+      tool: "execute",
+      args: { account_id: "acct-bbb" },
+    });
+  });
+
+  it("rejects unknown $constant placeholders in call args", async () => {
+    const err = await Effect.runPromise(
+      parseProgramPlanEffect(
+        JSON.stringify({
+          c: { z: "zone-aaa" },
+          calls: [{ operationId: "x.get", args: { zone_id: "$missing" } }],
+        })
+      )
+    );
+    expect(err).toMatchObject({ ok: false });
+    if (!("ok" in err) || err.ok !== false) throw new Error("expected parse error");
+    expect(err.error).toMatch(/unknown constant/i);
+  });
+
+  it("passes constant-substituted args to the execute host", async () => {
+    const executeArgs: Array<Record<string, unknown>> = [];
+    const { host } = mockHost();
+    const custom: ProgramHost = {
+      resolveRisk: host.resolveRisk,
+      search: host.search,
+      execute: (input) =>
+        Effect.sync(() => {
+          executeArgs.push({ ...(input.args ?? {}) });
+          return { content: [{ type: "text" as const, text: JSON.stringify({ ok: true }) }] };
+        }),
+    };
+    const out = await Effect.runPromise(
+      runProgramEffect(
+        {
+          source: JSON.stringify({
+            return: true,
+            c: { z: "zone-shared" },
+            calls: [
+              {
+                operationId: "zone.get",
+                args: { zone_id: "$z" },
+                where: "{ok: result.ok}",
+              },
+            ],
+          }),
+        },
+        custom,
+        {}
+      )
+    );
+    expect(out.ok).toBe(true);
+    expect(executeArgs).toEqual([{ zone_id: "zone-shared" }]);
+  });
 });
 
 describe("runProgramEffect", () => {
