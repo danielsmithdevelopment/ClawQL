@@ -2,10 +2,12 @@
  * Parse v0 program `source` as a JSON plan (host-callback runner).
  *
  * Honest MVP: not a JS AST interpreter. Accepted shapes:
- * - `{ "v": 1, "mode": "parallel"|"sequential", "calls": [ ... ], "proposals"?: [ ... ], "return"?: … }`
+ * - `{ "v": 1, "mode": "parallel"|"sequential", "calls": [ ... ], "c"|"constants"?: {…}, "proposals"?: [ ... ], "return"?: … }`
  * - bare array of call objects (implies parallel, no proposals)
  * - optional `return`: JSON template with `{ "$ref": "<callId>.result…" }` for a compact
  *   model-facing result (fan-out / join cards) instead of the full per-call envelope
+ * - optional `c` / `constants`: scalar map; call args may use `"$name"` to reuse values
+ *   (token win for repeated zone/account ids under 5× code weight)
  *
  * `proposals` are writes the program returns for the gateway to run later through
  * normal `execute` (ADR 0015 § Proposed writes). They may carry `$ref` placeholders
@@ -58,12 +60,20 @@ export type ProgramPlanProposal = {
   readonly refs: readonly ProposalRefSite[];
 };
 
+/**
+ * Plan-level constants for compact fan-out plans (token win under 5× code weight).
+ * Declared as `c` or `constants` on the plan root; referenced from call args as `"$name"`.
+ */
+export type ProgramPlanConstants = Readonly<Record<string, string | number | boolean | null>>;
+
 export type ProgramPlan = {
   readonly v: 1;
   readonly mode: ProgramPlanMode;
   readonly calls: readonly ProgramPlanCall[];
   /** Always set by the parser; absent from plans journaled before proposals existed. */
   readonly proposals?: readonly ProgramPlanProposal[];
+  /** Resolved constants map when the plan set `c` / `constants` (omitted when empty). */
+  readonly constants?: ProgramPlanConstants;
   /**
    * Optional compact result template. When set, `execute_program` returns the resolved
    * value as `result.return` and omits full per-call values from the model-facing payload.
@@ -93,6 +103,12 @@ function parseError(error: string, fixHint: string): ProgramPlanParseError {
   return { ok: false, error, fixHint };
 }
 
+/** Constant id in `"$name"` arg placeholders. */
+export const PROGRAM_CONSTANT_ID_PATTERN = /^[A-Za-z_][A-Za-z0-9_]{0,31}$/;
+
+/** Exact `"$name"` form used in call args to pull from plan `c` / `constants`. */
+const CONSTANT_ARG_PATTERN = /^\$([A-Za-z_][A-Za-z0-9_]{0,31})$/;
+
 function hasRefKey(node: unknown, depth = 0): boolean {
   if (node === null || typeof node !== "object" || depth > PROPOSAL_ARGS_MAX_NESTING) return false;
   if (Array.isArray(node)) return node.some((v) => hasRefKey(v, depth + 1));
@@ -100,7 +116,105 @@ function hasRefKey(node: unknown, depth = 0): boolean {
   return Object.values(node).some((v) => hasRefKey(v, depth + 1));
 }
 
-function parseCall(raw: unknown, index: number): ParseResult<ProgramPlanCall> {
+function parseConstants(raw: unknown): ParseResult<ProgramPlanConstants> {
+  if (raw === undefined) return {};
+  if (!isRecord(raw)) {
+    return parseError(
+      "plan.c / plan.constants must be an object",
+      'Use "c": { "z": "<zone_id>", "a": "<account_id>" } and reference them as "$z" / "$a" in call args.'
+    );
+  }
+  const out: Record<string, string | number | boolean | null> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (!PROGRAM_CONSTANT_ID_PATTERN.test(key)) {
+      return parseError(
+        `plan constant key "${key}" is invalid`,
+        "Use short keys: letters, digits, underscore; max 32 chars; start with a letter or _."
+      );
+    }
+    if (
+      value !== null &&
+      typeof value !== "string" &&
+      typeof value !== "number" &&
+      typeof value !== "boolean"
+    ) {
+      return parseError(
+        `plan constant "${key}" must be a JSON string, number, boolean, or null`,
+        "Keep constants scalar so fan-out args stay cheap under 5× code weight."
+      );
+    }
+    out[key] = value;
+  }
+  return out;
+}
+
+/**
+ * Substitute `"$name"` string leaves in call args from plan constants.
+ * Fail-closed on unknown names. Nested objects/arrays are walked.
+ */
+function resolveConstantArgs(
+  args: Record<string, unknown>,
+  constants: ProgramPlanConstants,
+  at: string
+): ParseResult<Record<string, unknown>> {
+  const walk = (node: unknown, path: string, depth: number): ParseResult<unknown> => {
+    if (depth > PROPOSAL_ARGS_MAX_NESTING) {
+      return parseError(
+        `${at} nests deeper than ${PROPOSAL_ARGS_MAX_NESTING} levels`,
+        "Flatten args or move shared values into plan.c."
+      );
+    }
+    if (typeof node === "string") {
+      const m = CONSTANT_ARG_PATTERN.exec(node);
+      if (!m) return node;
+      const name = m[1]!;
+      if (!Object.prototype.hasOwnProperty.call(constants, name)) {
+        return parseError(
+          `${path}: unknown constant "${node}"`,
+          'Declare it under plan "c" / "constants", e.g. "c": { "z": "…" } then use "$z".'
+        );
+      }
+      return constants[name]!;
+    }
+    if (Array.isArray(node)) {
+      const out: unknown[] = [];
+      for (let i = 0; i < node.length; i++) {
+        const v = walk(node[i], `${path}[${i}]`, depth + 1);
+        if (isParseError(v)) return v;
+        out.push(v);
+      }
+      return out;
+    }
+    if (isRecord(node)) {
+      if (Object.prototype.hasOwnProperty.call(node, PROPOSAL_REF_KEY)) {
+        return parseError(
+          `${path} contains a $ref placeholder`,
+          'Refs are resolved only inside proposals. Use "$name" constants for read-call args.'
+        );
+      }
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(node)) {
+        const next = walk(v, `${path}.${k}`, depth + 1);
+        if (isParseError(next)) return next;
+        out[k] = next;
+      }
+      return out;
+    }
+    return node;
+  };
+  const resolved = walk(args, at, 0);
+  if (isParseError(resolved)) return resolved;
+  if (!isRecord(resolved)) {
+    return parseError(`${at} must resolve to an object`, 'Use "args": { ... }.');
+  }
+  return resolved;
+}
+
+function parseCall(
+  raw: unknown,
+  index: number,
+  constants: ProgramPlanConstants
+): ParseResult<ProgramPlanCall> {
   if (!isRecord(raw)) {
     return parseError(
       `calls[${index}] must be an object`,
@@ -121,16 +235,18 @@ function parseCall(raw: unknown, index: number): ParseResult<ProgramPlanCall> {
         "Set operationId from a prior search result."
       );
     }
-    const args =
+    const rawArgs =
       raw.args && isRecord(raw.args)
         ? (raw.args as Record<string, unknown>)
         : ({} as Record<string, unknown>);
-    if (hasRefKey(args)) {
+    if (hasRefKey(rawArgs)) {
       return parseError(
         `calls[${index}].args contains a $ref placeholder`,
-        "Refs are resolved only inside proposals. Use literal args for read calls."
+        'Refs are resolved only inside proposals. Use "$name" constants from plan.c for read calls.'
       );
     }
+    const args = resolveConstantArgs(rawArgs, constants, `calls[${index}].args`);
+    if (isParseError(args)) return args;
     const fields = Array.isArray(raw.fields)
       ? raw.fields.filter((f): f is string => typeof f === "string")
       : undefined;
@@ -337,17 +453,16 @@ export function parseProgramPlanEffect(
       );
     }
 
-    const parseCalls = (raw: readonly unknown[]): ParseResult<ProgramPlanCall[]> => {
-      const calls: ProgramPlanCall[] = [];
-      for (let i = 0; i < raw.length; i++) {
-        const c = parseCall(raw[i], i);
-        if (isParseError(c)) return c;
-        calls.push(c);
-      }
-      return calls;
-    };
-
     if (Array.isArray(parsed)) {
+      const parseCalls = (raw: readonly unknown[]): ParseResult<ProgramPlanCall[]> => {
+        const calls: ProgramPlanCall[] = [];
+        for (let i = 0; i < raw.length; i++) {
+          const c = parseCall(raw[i], i, {});
+          if (isParseError(c)) return c;
+          calls.push(c);
+        }
+        return calls;
+      };
       const calls = parseCalls(parsed);
       if (isParseError(calls)) return calls;
       return {
@@ -366,6 +481,25 @@ export function parseProgramPlanEffect(
         'Use { "v": 1, "mode": "parallel", "calls": [...] }'
       );
     }
+
+    if (parsed.c !== undefined && parsed.constants !== undefined) {
+      return parseError(
+        'plan cannot set both "c" and "constants"',
+        'Use one: short "c" for compact plans, or "constants" for readability.'
+      );
+    }
+    const constants = parseConstants(parsed.c ?? parsed.constants);
+    if (isParseError(constants)) return constants;
+
+    const parseCalls = (raw: readonly unknown[]): ParseResult<ProgramPlanCall[]> => {
+      const calls: ProgramPlanCall[] = [];
+      for (let i = 0; i < raw.length; i++) {
+        const c = parseCall(raw[i], i, constants);
+        if (isParseError(c)) return c;
+        calls.push(c);
+      }
+      return calls;
+    };
 
     const modeRaw = parsed.mode;
     if (modeRaw !== undefined && modeRaw !== "parallel" && modeRaw !== "sequential") {
@@ -408,6 +542,7 @@ export function parseProgramPlanEffect(
       mode,
       calls,
       proposals,
+      ...(Object.keys(constants).length > 0 ? { constants } : {}),
       return: returnTemplate,
       kind: "plan" as const,
     };
