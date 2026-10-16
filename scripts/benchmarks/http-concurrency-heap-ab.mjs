@@ -631,6 +631,19 @@ function memAvailableMb() {
   }
 }
 
+/** Wait for RSS to return after a heavy arm so the next arm is not host-starved. */
+async function waitForHostReclaim({ minMb = 8000, maxWaitMs = 90000 } = {}) {
+  const t0 = performance.now();
+  let avail = memAvailableMb();
+  while (avail != null && avail < minMb && performance.now() - t0 < maxWaitMs) {
+    await new Promise((r) => setTimeout(r, 2000));
+    avail = memAvailableMb();
+  }
+  console.error(
+    `[http-conc] host reclaim: avail_mb=${avail?.toFixed?.(0) ?? "?"} waited_ms=${Math.round(performance.now() - t0)}`
+  );
+}
+
 async function chaosStep(arm, n) {
   const clients = [];
   const connectOpts = arm.authHeaders ? { headers: arm.authHeaders } : {};
@@ -717,17 +730,18 @@ async function chaosArm(arm) {
   let firstBreakPrimary = null;
   let censoredAt = null;
   for (let n = 1; n <= CONC_HARD_MAX; n *= 2) {
-    const availBefore = memAvailableMb();
-    // Observational host stop — not a predetermined arm ceiling.
-    if (availBefore != null && availBefore < 2000 && n >= 64) {
-      console.error(
-        `[http-conc] ${arm.id} host_censored at n=${n}: MemAvailable=${availBefore.toFixed(0)}MB (not an SLO break)`
-      );
+    // Do not abort the climb on soft MemAvailable thresholds — that understates
+    // later arms after a heavy Bun run. Only record host_censored if a step
+    // cannot even connect (thrown) or the process is killed (exit 137).
+    console.error(`[http-conc] ${arm.id} clients=${n} avail_mb=${memAvailableMb()?.toFixed?.(0) ?? "?"}`);
+    let step;
+    try {
+      step = await chaosStep(arm, n);
+    } catch (e) {
+      console.error(`[http-conc] ${arm.id} step failed at n=${n}: ${e?.message || e}`);
       censoredAt = n;
       break;
     }
-    console.error(`[http-conc] ${arm.id} clients=${n}`);
-    const step = await chaosStep(arm, n);
     steps.push(step);
     console.error(
       `[http-conc] ${arm.id} n=${n} p99=${step.latency_ms.p99?.toFixed?.(1)} err=${step.error_rate} broken@${BREAK_P99_MS}=${step.broken} anon=${step.memory?.anonymous_mb}`
@@ -914,7 +928,7 @@ function writeReport(results, { partial = false } = {}) {
       "Not equal-arm stdio chaos (gateway-multi 63/204); not NATS 4-replica (135).",
       "ClawQL uses known-op execute+where; aggregators/Executor call the same DNS op without where (larger body).",
       "Do not claim heap-cap concurrency cost from a single pass — 384 sits above the uncapped plateau (~296 MB).",
-      "No predetermined client ceiling: climb until p99/errors break (or host_censored). CONC_HARD_MAX is a loop guard only.",
+      "No predetermined client ceiling: climb until p99/errors break. CONC_HARD_MAX is a loop guard only. host_censored only if a step throws (connect/OOM), never a soft MemAvailable abort.",
       ...(CURVE
         ? [
             "CURVE=1: p99 recorded at every client step; clients reported at each THRESHOLDS cutoff (default 100/250/500).",
@@ -1044,7 +1058,7 @@ async function main() {
           } catch {
             /* ignore */
           }
-          await new Promise((r) => setTimeout(r, 400));
+          await waitForHostReclaim();
         }
       }
     }
