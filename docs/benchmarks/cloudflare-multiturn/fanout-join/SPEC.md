@@ -163,8 +163,21 @@ Artifact: [`real-model-cursor-pilot-n5.json`](./real-model-cursor-pilot-n5.json)
 **Turns win on both models; token promotion does not** — real models write fatter
 plans (~475–511 code tokens) than the scripted 403-token plan, so 5×code outweighs
 the one-turn observation win. Frontier session-1 program failed (`return:true` merge
-on scalars). Dual-model claim **not** cleared. Claim bar remains ≥50/arm/model after
-cheaper-plan product/prompt work.
+on scalars). Dual-model claim **not** cleared at v1.
+
+### Pilot v2 (2026-10-16, N=5, after product fix)
+
+Artifact: [`real-model-cursor-pilot-n5-v2.json`](./real-model-cursor-pilot-n5-v2.json)  
+Product: `return:true` scalar wrap under call id + compact plan / object-`where` schema cues.
+
+| Model | known-op w_med | program w_med | Program code mean | Model win |
+| --- | ---: | ---: | ---: | --- |
+| frontier | 2 759 | **2 721** | 420 | **true** |
+| small | 2 711 | **2 665** | 401 | **true** |
+
+Task success 1.0 on both arms/models; turns 1 vs 6. **Dual-model win on this N=5 pilot**
+(`program_beats_known_op_on_fanout_join_for_real_models`). Official claim bar remains
+**≥50 sessions / arm / model** under the same frozen rules.
 
 ## What this board does not claim
 

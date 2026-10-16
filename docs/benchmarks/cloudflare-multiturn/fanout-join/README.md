@@ -50,11 +50,11 @@ node scripts/benchmarks/cloudflare-multiturn/lib/aggregate-fanout-cursor-gate.mj
 
 Claim gate is ≥50 sessions/arm/model; N=5 is a pilot under the same frozen rules.
 
-### Pilot readout (N=5)
+### Pilot readout
 
-Artifact: [`real-model-cursor-pilot-n5.json`](./real-model-cursor-pilot-n5.json)
+**v1** ([`real-model-cursor-pilot-n5.json`](./real-model-cursor-pilot-n5.json)): turns win; tokens lose (plans ~475–522 code).
 
-- Turns: program 1 vs known-op 6 on both models
-- Tokens: program **loses** (fatter real-model plans ~475–522 code vs scripted 403)
-- Dual-model claim: **not** cleared (`frontier_win: false`, `small_win: false`)
-- Next: cheaper plan cues / schema examples, then ≥50 claim run
+**v2** ([`real-model-cursor-pilot-n5-v2.json`](./real-model-cursor-pilot-n5-v2.json)) after scalar-merge + schema cues:
+
+- Program code ~401–420; weighted medians beat known-op on **both** models
+- Dual-model win on N=5 pilot; official claim still needs **≥50**/arm/model
