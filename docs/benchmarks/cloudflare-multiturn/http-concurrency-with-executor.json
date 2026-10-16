@@ -6,7 +6,9 @@
     "Comparable across arms in this file only (same host, same mock, same session).",
     "Not equal-arm stdio chaos (gateway-multi 63/204); not NATS 4-replica (135).",
     "ClawQL uses known-op execute+where; aggregators call the same DNS op without where (larger body).",
-    "Do not claim heap-cap concurrency cost from a single pass — 384 sits above the uncapped plateau (~296 MB)."
+    "Do not claim heap-cap concurrency cost from a single pass — 384 sits above the uncapped plateau (~296 MB).",
+    "Executor v2: stock `executor serve` (beta.15); code-mode execute; same tools/call p99 unit as peers.",
+    "Executor ceiling of 2 is HTTP-multiplex serialization (0 errors) — see http-concurrency-executor-sanity.md."
   ],
   "slo": {
     "break_p99_ms": 100,
@@ -265,7 +267,36 @@
       "note": "Like-for-like HTTP multiplex; aggregator/Executor payloads are larger (no where). Executor is external serve + Bearer."
     },
     "cloud_profile_hint": "Bun --smol remains the Cloud HTTP default (highest clients + ~130 MB). Do not cite Node cap concurrency tax until REPS≥3 settles variance vs flag-behavior.",
-    "related": "Open HTTP tail stalls (300–700 ms) likely amplify under concurrency — same investigation track."
+    "related": "Open HTTP tail stalls (300–700 ms) likely amplify under concurrency — same investigation track.",
+    "executor_v2_sanity": {
+      "doc": "http-concurrency-executor-sanity.md",
+      "verdict": "holds_as_design_property_http_multiplex_serialization",
+      "config": "executor@2.0.0-beta.15 stock `executor serve`; not debug log-level; workerd --debug-port is control socket",
+      "unit": "individual tools/call latency (same as all arms); not whole-session",
+      "errors": "0 on every step of every rep; breaks are p99-only",
+      "curve_rep1": {
+        "n1_p50_p99": [
+          27,
+          40
+        ],
+        "n2": [
+          31,
+          79
+        ],
+        "n3": [
+          50,
+          102
+        ],
+        "n4": [
+          70,
+          138
+        ],
+        "rps_plateau": "~50-58 from n=2"
+      },
+      "parallel_probe": "4-way wall≈max(each) ~97ms vs serial mean ~31ms → queueing",
+      "page_one_liner": "Executor's code-mode execute path serializes concurrent tool calls on one host, so under p99≤100ms it sustains 2 clients.",
+      "not_stdio_chaos": "Do not compare to ~19-23 process-per-client stdio ceiling — different topology."
+    }
   },
   "arms": [
     {
