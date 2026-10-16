@@ -4,7 +4,9 @@ import Link from 'next/link'
 import { useState } from 'react'
 
 import { PageChrome } from '@/components/managed/PageChrome'
+import { useManagedSession } from '@/components/managed/ManagedSessionProvider'
 import { StatusDot } from '@/components/managed/StatusDot'
+import { SupportViewAsButton } from '@/components/managed/SupportViewAsButton'
 import { TabBar } from '@/components/managed/TabBar'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,7 +19,21 @@ import { cn } from '@/lib/utils'
 
 type Tab = 'people' | 'groups' | 'roles'
 
+function actorCanViewAs(role: string): boolean {
+  const r = role.trim().toLowerCase()
+  return (
+    r === 'owner' ||
+    r === 'admin' ||
+    r === 'org admin' ||
+    r === 'orgadmin' ||
+    r.includes('owner') ||
+    (r.includes('admin') && !r.includes('billing'))
+  )
+}
+
 export function TeamPage() {
+  const session = useManagedSession()
+  const showViewAs = actorCanViewAs(session.role)
   const [tab, setTab] = useState<Tab>('people')
 
   const description =
@@ -99,9 +115,21 @@ export function TeamPage() {
                     </td>
                     <td className="px-4 py-3 text-slate-600">{person.lastActive}</td>
                     <td className="px-4 py-3">
-                      <button type="button" className="text-sky-700 hover:underline">
-                        {person.action}
-                      </button>
+                      <div className="flex flex-wrap items-center justify-end gap-3">
+                        {showViewAs &&
+                        person.role !== 'Org admin' &&
+                        person.role !== 'Owner' &&
+                        person.id !== session.userId ? (
+                          <SupportViewAsButton
+                            targetUserId={person.id}
+                            targetEmail={person.email}
+                            targetDisplayName={person.name}
+                          />
+                        ) : null}
+                        <button type="button" className="text-sky-700 hover:underline">
+                          {person.action}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

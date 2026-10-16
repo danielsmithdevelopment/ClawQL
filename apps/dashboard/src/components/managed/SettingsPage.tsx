@@ -249,6 +249,19 @@ function SignInSection() {
         </table>
       </section>
 
+      <section
+        className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+        data-testid="settings-login-abuse"
+      >
+        <h2 className="text-sm font-semibold text-slate-900">Login rate limits and lockouts</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Human password / SSO login abuse controls live on the <strong>IdP</strong> (Okta / Entra / Supabase Auth),
+          not inside ClawQL. MCP OAuth token endpoints are rate-limited separately (
+          <code className="text-xs">CLAWQL_MCP_OAUTH_RATE_LIMIT_PER_MIN</code>). Ownership matrix:{' '}
+          <span className="font-mono text-xs">docs/security/idp-login-abuse-ownership.md</span>.
+        </p>
+      </section>
+
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-900">Console sessions</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -340,6 +353,19 @@ function PrivacySection() {
         <p className="mt-1 text-xs text-emerald-800">{SETTINGS_PRIVACY.auditRoots.status}</p>
       </section>
 
+      <section
+        className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+        data-testid="settings-restore-drill"
+      >
+        <h2 className="text-sm font-semibold text-slate-900">Backup restore drill</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          A backup you have never restored is a hope. Run the quarterly PITR / snapshot restore drill in an
+          isolated environment and record measured RTO/RPO. Operator runbook:{' '}
+          <span className="font-mono text-xs">docs/deployment/restore-drill.md</span>. Include support
+          impersonation JSONL and WORM audit verification in the pass criteria.
+        </p>
+      </section>
+
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-900">Exports and erasure</h2>
         <div className="mt-4 flex flex-wrap items-start justify-between gap-3 text-sm">
@@ -371,9 +397,44 @@ function PrivacySection() {
 function AdvancedSection({ readOnly = false }: { readOnly?: boolean }) {
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const enforcementOn =
+    typeof process !== 'undefined' &&
+    (process.env.NEXT_PUBLIC_CLAWQL_PANGUARD_ENFORCEMENT === '1' ||
+      process.env.NEXT_PUBLIC_CLAWQL_AI_ENFORCEMENT === '1')
 
   return (
     <div className="space-y-4" data-testid="settings-advanced">
+      <section
+        className={cn(
+          'rounded-xl border p-5 shadow-sm',
+          enforcementOn
+            ? 'border-emerald-200 bg-emerald-50/60'
+            : 'border-amber-300 bg-amber-50',
+        )}
+        data-testid="settings-ai-enforcement"
+      >
+        <h2 className="text-sm font-semibold text-slate-900">AI tool-scope enforcement</h2>
+        <p className="mt-1 text-sm text-slate-700">
+          {enforcementOn ? (
+            <>
+              Gateway enforcement is marked <strong>on</strong> for this deployment
+              (`CLAWQL_PANGUARD_PROXY_PLUGIN` / in-process hooks). Tool calls are gated before execute.
+            </>
+          ) : (
+            <>
+              <strong>Residual risk:</strong> managed Cloud defaults expect Panguard (or another blocking
+              pre-execute provider) to be enabled on the gateway. Until operators set{' '}
+              <code className="rounded bg-white/80 px-1 text-xs">CLAWQL_PANGUARD_PROXY_PLUGIN=1</code> and{' '}
+              <code className="rounded bg-white/80 px-1 text-xs">CLAWQL_PANGUARD_IN_PROCESS=1</code>, tool
+              calls may run without ATR/policy hooks. Do not set{' '}
+              <code className="rounded bg-white/80 px-1 text-xs">CLAWQL_ALLOW_NO_ENFORCEMENT=1</code> in
+              production. See{' '}
+              <span className="font-mono text-xs">docs/security/ai-enforcement-default-posture.md</span>.
+            </>
+          )}
+        </p>
+      </section>
+
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-900">Delete the organization</h2>
         <p className="mt-1 text-sm text-slate-500">
