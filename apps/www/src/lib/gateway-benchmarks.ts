@@ -331,7 +331,7 @@ export const gatewayBenchmarkHonesty = [
   },
   {
     title: 'What we do not claim',
-    body: 'Scale-out concurrency wins. Memory wins. Mixing Executor v2 latency with ClawQL Bun stdio. gRPC wins vs peers that lack gRPC MCP. Category-wide supremacy until Bifrost / mcp-gateway are on the board.',
+    body: 'Scale-out concurrency wins. Memory wins. Mixing Executor v2 latency with ClawQL Bun stdio. gRPC wins vs peers that lack gRPC MCP. Category-wide supremacy until Bifrost, TrueFoundry, Uber MCP Gateway, Obot, and other roadmap peers clear the equal-arm minimum set — see /benchmarks#dominance.',
   },
   {
     title: 'Executor version scope',
@@ -348,6 +348,11 @@ export const gatewayBenchmarkHonesty = [
 ] as const
 
 export const gatewayBenchmarkLinks = [
+  {
+    label: 'Dominance roadmap',
+    href: '/benchmarks/#dominance',
+    detail: 'Peers not yet on the board + minimum criteria for a category claim',
+  },
   {
     label: 'Cloudflare multiturn artifacts',
     href: 'https://github.com/danielsmithdevelopment/ClawQL/tree/main/docs/benchmarks/cloudflare-multiturn',

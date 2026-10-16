@@ -324,6 +324,10 @@ export const docsNavigation: Array<NavGroup> = [
         title: 'Executor comparison',
         href: '/benchmarks/executor-comparison',
       },
+      {
+        title: 'Dominance roadmap (marketing)',
+        href: 'https://clawql.com/benchmarks/#dominance',
+      },
       { title: 'Slide deck', href: '/vision/slide-deck' },
       { title: 'Changelog', href: '/resources/changelog' },
       { title: 'Legacy URLs', href: '/archive' },
