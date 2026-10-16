@@ -607,67 +607,90 @@ async function startExecutorV2(mockBase) {
   };
 }
 
+function memAvailableMb() {
+  try {
+    const txt = readFileSync("/proc/meminfo", "utf8");
+    const m = txt.match(/^MemAvailable:\s+(\d+)\s+kB/m);
+    return m ? Number(m[1]) / 1024 : null;
+  } catch {
+    return null;
+  }
+}
+
 async function chaosStep(arm, n) {
   const clients = [];
   const connectOpts = arm.authHeaders ? { headers: arm.authHeaders } : {};
-  for (let i = 0; i < n; i++) {
-    clients.push(await connectHttpMcp(arm.mcpUrl, `${arm.id}-${n}-${i}`, connectOpts));
-  }
-  for (const c of clients) {
-    for (let w = 0; w < CONC_WARMUP; w++) {
-      try {
-        await c.client.callTool({ name: arm.toolName, arguments: arm.callArgs });
-      } catch {
-        /* warmup */
-      }
+  try {
+    for (let i = 0; i < n; i++) {
+      clients.push(await connectHttpMcp(arm.mcpUrl, `${arm.id}-${n}-${i}`, connectOpts));
     }
-  }
-  const latencies = [];
-  let ok = 0;
-  let err = 0;
-  const tEnd = performance.now() + CONC_STEP_MS;
-  await Promise.all(
-    clients.map(async (c) => {
-      while (performance.now() < tEnd) {
+    for (const c of clients) {
+      for (let w = 0; w < CONC_WARMUP; w++) {
         try {
-          const t0 = performance.now();
-          const res = await c.client.callTool({ name: arm.toolName, arguments: arm.callArgs });
-          latencies.push(performance.now() - t0);
-          if (res?.isError) err += 1;
-          else ok += 1;
+          await c.client.callTool({ name: arm.toolName, arguments: arm.callArgs });
         } catch {
-          err += 1;
+          /* warmup */
         }
       }
-    })
-  );
-  for (const c of clients) await c.close();
-  const sorted = [...latencies].sort((a, b) => a - b);
-  const total = ok + err;
-  const errorRate = total > 0 ? err / total : 1;
-  const p99 = percentile(sorted, 99);
-  const broken =
-    errorRate > BREAK_ERROR_RATE || (p99 != null && p99 > BREAK_P99_MS);
-  const reasons = [];
-  if (errorRate > BREAK_ERROR_RATE) reasons.push(`error_rate ${errorRate.toFixed(3)}`);
-  if (p99 != null && p99 > BREAK_P99_MS) reasons.push(`p99 ${p99.toFixed(1)}ms`);
-  return {
-    concurrency: n,
-    ok,
-    err,
-    error_rate: Number(errorRate.toFixed(4)),
-    rps: Number((ok / (CONC_STEP_MS / 1000)).toFixed(1)),
-    latency_ms: {
-      p50: percentile(sorted, 50),
-      p99,
-      p999: percentile(sorted, 99.9),
-    },
-    memory: arm.memoryTree
-      ? treeSmaps(arm.pid, { excludeMotel: true })
-      : smaps(arm.pid),
-    broken,
-    break_reason: broken ? reasons.join(" + ") : null,
-  };
+    }
+    const latencies = [];
+    let ok = 0;
+    let err = 0;
+    const tEnd = performance.now() + CONC_STEP_MS;
+    await Promise.all(
+      clients.map(async (c) => {
+        while (performance.now() < tEnd) {
+          try {
+            const t0 = performance.now();
+            const res = await c.client.callTool({ name: arm.toolName, arguments: arm.callArgs });
+            latencies.push(performance.now() - t0);
+            if (res?.isError) err += 1;
+            else ok += 1;
+          } catch {
+            err += 1;
+          }
+        }
+      })
+    );
+    const sorted = [...latencies].sort((a, b) => a - b);
+    const total = ok + err;
+    const errorRate = total > 0 ? err / total : 1;
+    const p99 = percentile(sorted, 99);
+    const broken =
+      errorRate > BREAK_ERROR_RATE || (p99 != null && p99 > BREAK_P99_MS);
+    const reasons = [];
+    if (errorRate > BREAK_ERROR_RATE) reasons.push(`error_rate ${errorRate.toFixed(3)}`);
+    if (p99 != null && p99 > BREAK_P99_MS) reasons.push(`p99 ${p99.toFixed(1)}ms`);
+    return {
+      concurrency: n,
+      ok,
+      err,
+      error_rate: Number(errorRate.toFixed(4)),
+      rps: Number((ok / (CONC_STEP_MS / 1000)).toFixed(1)),
+      latency_ms: {
+        p50: percentile(sorted, 50),
+        p99,
+        p999: percentile(sorted, 99.9),
+      },
+      memory: arm.memoryTree
+        ? treeSmaps(arm.pid, { excludeMotel: true })
+        : smaps(arm.pid),
+      broken,
+      break_reason: broken ? reasons.join(" + ") : null,
+    };
+  } finally {
+    await Promise.all(
+      clients.map(async (c) => {
+        try {
+          await c.close();
+        } catch {
+          /* ignore */
+        }
+      })
+    );
+    // Give gateway/worker RSS a beat to reclaim before the next step.
+    if (n >= 64) await new Promise((r) => setTimeout(r, 2000));
+  }
 }
 
 async function chaosArm(arm) {
@@ -692,19 +715,32 @@ async function chaosArm(arm) {
     if (step.latency_ms?.p99 != null && step.latency_ms.p99 > stopP99) break;
     if (!CURVE && step.broken) break;
     // Avoid 128→256 client jumps on tight hosts (OOM mid-step leaves orphans).
-    // If still under the curve stop, take one point at CONC_HARD_MAX then refine.
+    // If still under the curve stop, take one point at CONC_HARD_MAX then refine —
+    // but skip when p99 is already near the stop (AG @128 ~390ms) or MemAvailable is low.
     const next = n * 2;
     if (CURVE && next > CONC_HARD_MAX) {
+      const avail = memAvailableMb();
+      const p99 = step.latency_ms?.p99;
+      const nearStop = p99 != null && p99 > stopP99 * 0.75;
+      const lowMem = avail != null && avail < 3500;
       if (
         n < CONC_HARD_MAX &&
-        step.latency_ms?.p99 != null &&
-        step.latency_ms.p99 <= stopP99
+        p99 != null &&
+        p99 <= stopP99 &&
+        !nearStop &&
+        !lowMem
       ) {
-        console.error(`[http-conc] ${arm.id} clients=${CONC_HARD_MAX} (hard-max probe)`);
+        console.error(
+          `[http-conc] ${arm.id} clients=${CONC_HARD_MAX} (hard-max probe; avail=${avail?.toFixed?.(0)}MB)`
+        );
         const extra = await chaosStep(arm, CONC_HARD_MAX);
         steps.push(extra);
         console.error(
           `[http-conc] ${arm.id} n=${CONC_HARD_MAX} p99=${extra.latency_ms.p99?.toFixed?.(1)} err=${extra.error_rate}`
+        );
+      } else if (nearStop || lowMem) {
+        console.error(
+          `[http-conc] ${arm.id} skip hard-max probe (p99=${p99?.toFixed?.(1)} nearStop=${nearStop} lowMem=${lowMem} avail=${avail?.toFixed?.(0)}MB)`
         );
       }
       break;
