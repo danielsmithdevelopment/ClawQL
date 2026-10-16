@@ -65,6 +65,8 @@ Executor tree = CLI + native serve + sandbox workerd; **motel diagnostics exclud
 
 **Page memory cell (Executor):** about **2.1 GB** anonymous under load (same-run Node-256 board; product path). ClawQL **~121–126 MB**; MJ **102**; AG **99**.
 
+**Executor check (rep4):** product-path anon sits in a **~1.9–2.4 GB** band after warmup (not a linear leak from zero); split ≈ **~0.8 GB native serve + ~1.2 GB sandbox + ~7 MB CLI** (motel excluded, grew separately). Detail: [`executor-memory-breakdown-rep4.md`](./executor-memory-breakdown-rep4.md).
+
 ## HTTP concurrency
 
 ### Clients @ p99 ≤ 100 ms (same-session with Executor)
