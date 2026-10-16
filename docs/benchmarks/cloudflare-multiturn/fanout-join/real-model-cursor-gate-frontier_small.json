@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-16T19:21:27.968Z",
+  "measuredAt": "2026-10-16T19:22:56.200Z",
   "kind": "fanout_real_model_validation",
   "transport": "cursor_subscription_subagents",
   "iters": 50,
@@ -101,12 +101,12 @@
         "clawql_known_op": {
           "task_success_rate": 1,
           "turns_mean": 6.02,
-          "code_tokens_mean": 396.6,
-          "observation_tokens_mean": 419.84,
+          "code_tokens_mean": 396.68,
+          "observation_tokens_mean": 420.26,
           "observation_tokens_median": 433,
           "observation_tokens_over_ceiling": 0,
           "observation_token_ceiling": 10000,
-          "weighted_tokens_mean": 2797.84,
+          "weighted_tokens_mean": 2798.66,
           "weighted_tokens_median": 2813,
           "weighted_tokens_p90": 2878,
           "sessions_failed": 0,
@@ -114,14 +114,14 @@
         },
         "clawql_program": {
           "task_success_rate": 1,
-          "turns_mean": 1.02,
-          "code_tokens_mean": 418.14,
-          "observation_tokens_mean": 263.78,
-          "observation_tokens_median": 258.5,
+          "turns_mean": 1,
+          "code_tokens_mean": 409.98,
+          "observation_tokens_mean": 258.52,
+          "observation_tokens_median": 258,
           "observation_tokens_over_ceiling": 0,
           "observation_token_ceiling": 10000,
-          "weighted_tokens_mean": 2717.48,
-          "weighted_tokens_median": 2653,
+          "weighted_tokens_mean": 2671.42,
+          "weighted_tokens_median": 2652.5,
           "weighted_tokens_p90": 2732,
           "sessions_failed": 0,
           "iters_completed": 50
@@ -199,6 +199,6 @@
     "small_loss": "program weighted_median 2687 > known_op 2553.5 (and p90) \u2014 lean known-op obs + ~414 program code",
     "official_claim": "single_model_only \u2014 report frontier; dual headline still open",
     "dual_model_claim": null,
-    "note": "frontier program sessions 25/35 had double-appended call logs during restore; one-shot cleanup Task in flight \u2014 re-aggregate after"
+    "cleanup": "frontier program 25/35 restored to one-shot after concurrent call-log appends"
   }
 }

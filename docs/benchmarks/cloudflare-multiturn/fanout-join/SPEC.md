@@ -192,7 +192,7 @@ Transport: Cursor Task subagents (`gpt-5.6-sol-medium` / `composer-2.5-fast`).
 
 | Model | known-op w_med / p90 | program w_med / p90 | Success | Turns | Win |
 | --- | ---: | ---: | ---: | ---: | --- |
-| frontier | 2813 / 2878 | **2653 / 2732** | 1.0 / 1.0 | ~6.0 / ~1.0 | **true** |
+| frontier | 2813 / 2878 | **2652.5 / 2732** | 1.0 / 1.0 | 6.02 / 1 | **true** |
 | small | **2553.5 / 2596** | 2687 / 2739 | 1.0 / 1.0 | 6 / 1 | **false** (tokens) |
 
 **Dual-model claim not cleared** — `single_model_only` (report **frontier**).  
