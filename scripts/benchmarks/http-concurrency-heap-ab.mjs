@@ -749,6 +749,25 @@ async function chaosArm(arm) {
     console.error(
       `[http-conc] ${arm.id} n=${n} p99=${step.latency_ms.p99?.toFixed?.(1)} err=${step.error_rate} broken@${BREAK_P99_MS}=${step.broken} anon=${step.memory?.anonymous_mb}`
     );
+    // Checkpoint after every step so exit-137 mid-arm does not lose the ladder.
+    try {
+      writeFileSync(
+        OUT + ".checkpoint.json",
+        JSON.stringify(
+          {
+            measuredAt: new Date().toISOString(),
+            arm_id: arm.id,
+            steps,
+            refine: [],
+            avail_mb: memAvailableMb(),
+          },
+          null,
+          2
+        ) + "\n"
+      );
+    } catch {
+      /* ignore */
+    }
     if (stepOkAtThreshold(step, BREAK_P99_MS)) lastOkPrimary = n;
     else if (firstBreakPrimary == null) {
       firstBreakPrimary = { concurrency: n, reason: step.break_reason };
@@ -757,7 +776,10 @@ async function chaosArm(arm) {
     if (step.error_rate > BREAK_ERROR_RATE) break;
     if (step.latency_ms?.p99 != null && step.latency_ms.p99 > stopP99) break;
     if (!CURVE && step.broken) break;
-    if (CURVE && n >= 64) n += 32;
+    // Denser sampling as concurrency grows (not a ceiling): find p99 break
+    // between 128–160 before a host-OOM leap. Still climbs until break.
+    if (CURVE && n >= 96) n += 16;
+    else if (CURVE && n >= 64) n += 32;
     else n *= 2;
   }
   const refine = [];
