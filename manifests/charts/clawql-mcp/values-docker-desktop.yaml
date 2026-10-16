@@ -48,7 +48,8 @@ ingress:
         - path: /
           pathType: Prefix
 
-# Heap vs cgroup request: all-providers loads 60+ discovery specs; 512Mi heap reliably OOMs during startup.
+# Heavy local profile (memory + documents + all-providers): keep 768 — lean product default is 256
+# (see values.yaml / measured-defaults.md). 512Mi heap OOMs during all-providers startup.
 # If the pod stays Pending, raise Rancher VM RAM or scale flink taskmanager to 0 temporarily.
 nodeOptions: "--max-old-space-size=768"
 
@@ -223,11 +224,13 @@ flink:
 resources:
   # With Istio sidecar, total pod request must fit ~free allocatable on a 16GiB single-node (full stack).
   # Heap 768Mi needs matching cgroup headroom (512Mi heap OOMs loading all-providers discovery specs).
+  # Limit ≥2 so V8/JSC helper threads are not CFS-pinned to one core (lab latency; see
+  # docs/architecture/gateway-runtime-and-catalog-memory.md). Request stays low for packing.
   requests:
     cpu: 50m
     memory: 768Mi
   limits:
-    cpu: "1"
+    cpu: "2"
     memory: 1792Mi
 
 # Distroless image runs as nonroot GID 65532 (USER nonroot). HostPath hides the image's /vault chown;

@@ -228,15 +228,29 @@ const WEIGHTS = {
   descriptionPartial: 1,
 };
 
+/** Stable Operation objects — avoid re-tokenizing fat descriptions on every search. */
+const operationDescTokenCache = new WeakMap<object, { descLower: string; words: Set<string> }>();
+
+function cachedDescriptionTokens(op: Operation): { descLower: string; words: Set<string> } {
+  const cached = operationDescTokenCache.get(op);
+  if (cached) return cached;
+  // Operation descriptions are immutable after OpenAPI load.
+  const descLower = (op.description ?? "").toLowerCase();
+  const entry = { descLower, words: new Set(tokenize(descLower)) };
+  operationDescTokenCache.set(op, entry);
+  return entry;
+}
+
 function scoreOperation(op: Operation, terms: string[]): { score: number; matchedOn: string[] } {
   let score = 0;
   const matchedOn: string[] = [];
 
   const idSegments = op.id.toLowerCase().split(".");
   const labelLower = op.specLabel?.toLowerCase() ?? "";
-  const descLower = op.description.toLowerCase();
+  const { descLower, words: descWords } = cachedDescriptionTokens(op);
   const pathLower = op.path.toLowerCase();
   const methodLower = op.method.toLowerCase();
+  const resourceLower = op.resource.toLowerCase();
   const paramNames = Object.keys(op.parameters).map((k) => k.toLowerCase());
 
   for (const term of terms) {
@@ -248,7 +262,7 @@ function scoreOperation(op: Operation, terms: string[]): { score: number; matche
       score += WEIGHTS.operationIdSegment;
       matchedOn.push(`id:${op.id}`);
     }
-    if (op.resource.toLowerCase().includes(term)) {
+    if (resourceLower.includes(term)) {
       score += WEIGHTS.resourceName;
       matchedOn.push(`resource:${op.resource}`);
     }
@@ -256,8 +270,7 @@ function scoreOperation(op: Operation, terms: string[]): { score: number; matche
       score += WEIGHTS.httpMethod;
       matchedOn.push(`method:${op.method}`);
     }
-    const descWords = tokenize(descLower);
-    if (descWords.includes(term)) {
+    if (descWords.has(term)) {
       score += WEIGHTS.descriptionExact;
       matchedOn.push(`description`);
     } else if (descLower.includes(term)) {

@@ -1,0 +1,268 @@
+{
+  "measuredAt": "2026-10-15T22:16:13.173508Z",
+  "topology": "A_single_instance_http_multiplex",
+  "claim_rules": [
+    "Same-session REPS=3 round-robin on Node uncapped / 256 / 384 only.",
+    "Do not claim heap-cap concurrency cost from the prior single-pass uncapped 44.",
+    "384 sits at/above uncapped plateau (~296\u2013340 MB) \u2014 should not bind."
+  ],
+  "slo": {
+    "break_p99_ms": 100,
+    "break_error_rate": 0.02,
+    "step_ms": 3000,
+    "warmup": 4,
+    "hard_max": 256,
+    "reps": 3
+  },
+  "operationId": "dns-records-for-a-zone-list-dns-records",
+  "ranges": {
+    "clawql_node_uncapped": {
+      "reps": [
+        31,
+        30,
+        31
+      ],
+      "min": 30,
+      "max": 31,
+      "median": 31
+    },
+    "clawql_node_256": {
+      "reps": [
+        29,
+        27,
+        27
+      ],
+      "min": 27,
+      "max": 29,
+      "median": 27
+    },
+    "clawql_node_384": {
+      "reps": [
+        30,
+        28,
+        25
+      ],
+      "min": 25,
+      "max": 30,
+      "median": 28
+    }
+  },
+  "board": {
+    "clawql_node_uncapped_rep1": {
+      "sustained": 31,
+      "first_break": 32,
+      "break_reason": "p99 119.8ms",
+      "runtime": "node",
+      "node_max_old_space_mb": null,
+      "bun_smol": null,
+      "rep": 1
+    },
+    "clawql_node_256_rep1": {
+      "sustained": 29,
+      "first_break": 30,
+      "break_reason": "p99 106.0ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 256,
+      "bun_smol": null,
+      "rep": 1
+    },
+    "clawql_node_384_rep1": {
+      "sustained": 30,
+      "first_break": 31,
+      "break_reason": "p99 142.1ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 384,
+      "bun_smol": null,
+      "rep": 1
+    },
+    "clawql_node_uncapped_rep2": {
+      "sustained": 30,
+      "first_break": 31,
+      "break_reason": "p99 101.7ms",
+      "runtime": "node",
+      "node_max_old_space_mb": null,
+      "bun_smol": null,
+      "rep": 2
+    },
+    "clawql_node_256_rep2": {
+      "sustained": 27,
+      "first_break": 28,
+      "break_reason": "p99 102.1ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 256,
+      "bun_smol": null,
+      "rep": 2
+    },
+    "clawql_node_384_rep2": {
+      "sustained": 28,
+      "first_break": 29,
+      "break_reason": "p99 105.2ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 384,
+      "bun_smol": null,
+      "rep": 2
+    },
+    "clawql_node_uncapped_rep3": {
+      "sustained": 31,
+      "first_break": 32,
+      "break_reason": "p99 131.3ms",
+      "runtime": "node",
+      "node_max_old_space_mb": null,
+      "bun_smol": null,
+      "rep": 3
+    },
+    "clawql_node_256_rep3": {
+      "sustained": 27,
+      "first_break": 28,
+      "break_reason": "p99 107.8ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 256,
+      "bun_smol": null,
+      "rep": 3
+    },
+    "clawql_node_384_rep3": {
+      "sustained": 25,
+      "first_break": 26,
+      "break_reason": "p99 119.5ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 384,
+      "bun_smol": null,
+      "rep": 3
+    }
+  },
+  "interpretation": {
+    "heap_cap_vs_concurrency": "within_run_band \u2014 prior single-pass uncapped 44 is an outlier; REPS=3 uncapped [31, 30, 31] [30,31], 256 [29, 27, 27] [27,29], 384 [30, 28, 25] [25,30]. 256 sits 1\u20134 clients under uncapped (not ~30%). 384 overlaps uncapped and should be unbound vs ~296 MB plateau \u2014 small flag/GC nudge possible, not a concurrency tax. Do not claim cap costs ~30%.",
+    "machine_range_check": "cap_or_flag_effect \u2014 256 [27,29] below uncapped [30,31] across 3 reps (384 [25,30])",
+    "vs_peers_http": {
+      "clawql_node_uncapped": {
+        "reps": [
+          31,
+          30,
+          31
+        ],
+        "min": 30,
+        "max": 31,
+        "median": 31
+      },
+      "clawql_node_256": {
+        "reps": [
+          29,
+          27,
+          27
+        ],
+        "min": 27,
+        "max": 29,
+        "median": 27
+      },
+      "clawql_node_384": {
+        "reps": [
+          30,
+          28,
+          25
+        ],
+        "min": 25,
+        "max": 30,
+        "median": 28
+      },
+      "clawql_bun_smol": null,
+      "mcpjungle": null,
+      "agentgateway": null,
+      "note": "Like-for-like HTTP multiplex; aggregator payloads are larger (no where)."
+    },
+    "cloud_profile_hint": "Bun --smol remains Cloud HTTP default (72 clients / ~130 MB from prior same-session pass). Node heap-cap concurrency tax of ~30% is retracted.",
+    "related": "Open HTTP tail stalls (300\u2013700 ms) likely amplify under concurrency \u2014 same investigation track."
+  },
+  "arms": [
+    {
+      "id": "clawql_node_uncapped",
+      "rep": 1,
+      "sustained_concurrency_before_break": 31,
+      "first_break_clients": 32,
+      "break_reason": "p99 119.8ms",
+      "runtime": "node",
+      "node_max_old_space_mb": null,
+      "bun_smol": null
+    },
+    {
+      "id": "clawql_node_256",
+      "rep": 1,
+      "sustained_concurrency_before_break": 29,
+      "first_break_clients": 30,
+      "break_reason": "p99 106.0ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 256,
+      "bun_smol": null
+    },
+    {
+      "id": "clawql_node_384",
+      "rep": 1,
+      "sustained_concurrency_before_break": 30,
+      "first_break_clients": 31,
+      "break_reason": "p99 142.1ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 384,
+      "bun_smol": null
+    },
+    {
+      "id": "clawql_node_uncapped",
+      "rep": 2,
+      "sustained_concurrency_before_break": 30,
+      "first_break_clients": 31,
+      "break_reason": "p99 101.7ms",
+      "runtime": "node",
+      "node_max_old_space_mb": null,
+      "bun_smol": null
+    },
+    {
+      "id": "clawql_node_256",
+      "rep": 2,
+      "sustained_concurrency_before_break": 27,
+      "first_break_clients": 28,
+      "break_reason": "p99 102.1ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 256,
+      "bun_smol": null
+    },
+    {
+      "id": "clawql_node_384",
+      "rep": 2,
+      "sustained_concurrency_before_break": 28,
+      "first_break_clients": 29,
+      "break_reason": "p99 105.2ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 384,
+      "bun_smol": null
+    },
+    {
+      "id": "clawql_node_uncapped",
+      "rep": 3,
+      "sustained_concurrency_before_break": 31,
+      "first_break_clients": 32,
+      "break_reason": "p99 131.3ms",
+      "runtime": "node",
+      "node_max_old_space_mb": null,
+      "bun_smol": null
+    },
+    {
+      "id": "clawql_node_256",
+      "rep": 3,
+      "sustained_concurrency_before_break": 27,
+      "first_break_clients": 28,
+      "break_reason": "p99 107.8ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 256,
+      "bun_smol": null
+    },
+    {
+      "id": "clawql_node_384",
+      "rep": 3,
+      "sustained_concurrency_before_break": 25,
+      "first_break_clients": 26,
+      "break_reason": "p99 119.5ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 384,
+      "bun_smol": null
+    }
+  ],
+  "source_log": "/opt/cursor/artifacts/http-concurrency-node-variance-3x.log"
+}

@@ -1,0 +1,363 @@
+{
+  "measuredAt": "2026-10-16T00:42:36.824138Z",
+  "board": "cloudflare-multiturn slim listen 3\u00d710k",
+  "completed_reps_error_rates": {
+    "direct": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 3,
+        "measuredAt": "2026-10-16T00:33:54.166Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep3 JSON (continue-on-error + all-attempted metrics)"
+      }
+    ],
+    "clawql_default": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 3,
+        "measuredAt": "2026-10-16T00:33:54.166Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep3 JSON (continue-on-error + all-attempted metrics)"
+      }
+    ],
+    "clawql_compact_search": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 3,
+        "measuredAt": "2026-10-16T00:33:54.166Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep3 JSON (continue-on-error + all-attempted metrics)"
+      }
+    ],
+    "clawql_known_op": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 3,
+        "measuredAt": "2026-10-16T00:33:54.166Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep3 JSON (continue-on-error + all-attempted metrics)"
+      }
+    ],
+    "clawql_program": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 3,
+        "measuredAt": "2026-10-16T00:33:54.166Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep3 JSON (continue-on-error + all-attempted metrics)"
+      }
+    ],
+    "executor_v2": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 3,
+        "measuredAt": "2026-10-16T00:33:54.166Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep3 JSON (continue-on-error + all-attempted metrics)"
+      }
+    ],
+    "mcpjungle": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 3,
+        "measuredAt": "2026-10-16T00:33:54.166Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep3 JSON (continue-on-error + all-attempted metrics)"
+      }
+    ],
+    "agentgateway": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 3,
+        "measuredAt": "2026-10-16T00:33:54.166Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep3 JSON (continue-on-error + all-attempted metrics)"
+      }
+    ],
+    "cloudflare_codemode": [
+      {
+        "rep": 1,
+        "measuredAt": "2026-10-15T19:22:41.393Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 2,
+        "measuredAt": "2026-10-15T20:59:17.091Z",
+        "task_success_rate": 1,
+        "sessions_ok": null,
+        "sessions_failed": null,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep JSON (fail-fast; completed arm \u21d2 zero recorded failures)"
+      },
+      {
+        "rep": 3,
+        "measuredAt": "2026-10-16T00:33:54.166Z",
+        "task_success_rate": 1,
+        "sessions_ok": 10000,
+        "sessions_failed": 0,
+        "error_rate": 0,
+        "errors_by_kind": {},
+        "error_samples": [],
+        "source": "board-rep3 JSON (continue-on-error + all-attempted metrics)"
+      }
+    ]
+  },
+  "aborted_attempts": [
+    {
+      "rep": 3,
+      "status": "aborted_hard_fail",
+      "arm": "executor_v2",
+      "sessions_progress_logged_ok": 7000,
+      "error_kind": "http_502",
+      "error": "Error: executor_v2 step 10: ToolCallFailed (HTTP 502): The app's API call failed: GET /accounts/{account_id}/r2/buckets failed before a response arrived. Recovery: Read the reported error and check the corresponding request or configuration. Retryable (unchanged call): no.",
+      "note": "Slim publish board rep3 aborted mid-executor_v2 under the prior fail-fast harness. Session progress logged ok through 7000/10000; the next session threw ToolCallFailed (HTTP 502) on step 10 (r2-list-buckets) and exited the process \u2014 no board-rep3 artifact was written. That is an Executor under-load result, not only a harness glitch. Rep3 was restarted with continue-on-error so further 502s count toward error_rate.",
+      "log_line": 1706,
+      "proportion_note": "One hard failure after \u22657000 ok sessions is an error rate on the order of ~0.01% for that incomplete arm (lower bound: \u22651/10000 if the arm had finished). Keep in proportion: possible Executor beta bug, resource limit under sustained load, or harness/mock interaction. Board error columns show it for every arm; do not amplify into a headline. Private repro to Executor maintainers is welcome if repeatable."
+    }
+  ],
+  "log_error_events": [
+    {
+      "rep": 3,
+      "arm": "executor_v2",
+      "line": 1706,
+      "text": "Error: executor_v2 step 10: ToolCallFailed (HTTP 502): The app's API call failed: GET /accounts/{account_id}/r2/buckets failed before a response arrived. Recovery: Read the reported error and check the corresponding request or configuration. Retryable (unchanged call): no."
+    }
+  ],
+  "interpretation": {
+    "rep1_rep2": "All arms finished with task_success_rate=1.0 under fail-fast (any failure would have aborted the arm). Recorded error_rate=0 for completed arms.",
+    "rep3_aborted": "executor_v2 returned HTTP 502 on r2-list-buckets after \u22657000 successful sessions (~0.01% order). Incomplete arm under fail-fast; rep3 restarted with continue-on-error + all-attempted-session token/latency accounting (partial steps kept).",
+    "rep3_completed": "Rep3 completed under continue-on-error with metrics_policy=all_attempted_sessions_primary. All arms error_rate=0 including executor_v2 (cleared the prior \u22657000 abort point). Prior aborted attempt remains in aborted_attempts for the record."
+  },
+  "metrics_policy": {
+    "id": "all_attempted_sessions_primary",
+    "task_success": "Failed sessions count against task_success_rate; success_rate + error_rate = 1.",
+    "tokens_latency_primary": "Means include every attempted session; failed sessions keep tokens/latency up to the failing step.",
+    "tokens_latency_success_only": "success_only_* side-by-side for diagnostics.",
+    "applies_to": "all arms"
+  },
+  "summary_run_notes": {
+    "rep3_restart": "Rep 3 was restarted after executor_v2 ToolCallFailed (HTTP 502) on step 10 (r2-list-buckets) aborted the first slim-board attempt around session 7000+ under the old fail-fast harness. See board-error-inventory.json. Restart uses continue-on-error so session failures increment error_rate instead of exiting. A later restart attempt failed harness-side (wrong EXECUTOR_BIN without `apps`); this run uses /tmp/executor-v2 CLI.",
+    "error_inventory": "board-error-inventory.json",
+    "rep1_rep2_error_policy": "fail-fast (completed arms imply recorded error_rate=0)",
+    "rep3_error_policy": {
+      "abort_on_error": false,
+      "note": "Continue-on-error: failed sessions counted in error_rate / errors_by_kind."
+    }
+  }
+}

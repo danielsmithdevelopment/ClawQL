@@ -91,7 +91,12 @@ clawql-mcp-grpc:
 obsidianVaultPath: /vault
 port: "8080"
 mcpPath: /mcp
-nodeOptions: "--max-old-space-size=1536"
+# Lean listen default (CF multiturn heap A/B + stress): Node --max-old-space-size=256
+# plateaus ~132 MB anon vs uncapped ~290; +~3.5 ms p99; no OOM on full:true / program fan-out.
+# HTTP multiplex: 256/384 both sustain 31 clients (384 ≠ concurrency fix); uncapped 44; Bun --smol 72.
+# Memory-enabled: 384 (ingest headroom). Docker-desktop all-providers: 768. Cloud HTTP: prefer Bun.
+# See docs/benchmarks/cloudflare-multiturn/measured-defaults.md (heap by profile).
+nodeOptions: "--max-old-space-size=256"
 
 # Max protobuf send/receive per frame for MCP gRPC (`GRPC_MAX_MESSAGE_LENGTH`). Large `execute` bodies
 # (e.g. base64 PDF → Tika) should use **`model_context_protocol.Mcp/CallTool`** on the gRPC port, not Streamable HTTP JSON.
@@ -1174,9 +1179,16 @@ hashicorpvault:
       enabled: true
       size: 10Gi
 
+# MCP gateway sizing (latency): Node/Bun run background compile + concurrent GC threads.
+# A CPU **limit below 2** pins the process to one core under CFS and inflates rare tails
+# (see docs/benchmarks/gateway-multi-comparison/stall-memory-round9.md).
+# Production: keep limits.cpu ≥ "2"; prefer requests.cpu ≥ "1" (ideally "2") so replicas
+# are not scheduled onto oversubscribed nodes. Scale capacity with more replicas + NATS
+# queue groups — not by adding Redis/NATS onto a 1-core pod hoping to fix JS tails.
+# Docs: docs/architecture/gateway-runtime-and-catalog-memory.md
 resources:
   requests:
-    cpu: 500m
+    cpu: "1"
     memory: 1Gi
   limits:
     cpu: "2"

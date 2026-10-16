@@ -1,0 +1,2088 @@
+{
+  "suite": "gateway-multi-multiturn",
+  "measuredAt": "2026-10-13T23:10:27.912Z",
+  "node": "v22.14.0",
+  "bun": "1.4.3",
+  "core_layout": {
+    "enabled": true,
+    "nproc": 4,
+    "mock_cpus": "0",
+    "gateway_cpus": "1-2",
+    "client_cpus": "3",
+    "gateway_cpu_count": 2,
+    "layout_mode": "gateway_2core",
+    "note": "Dedicated CPU lists for mock / gateway / client (taskset -c). Gateway defaults to 2 cores when nproc≥4 so JS helper threads are not starved. Roles must not overlap.",
+    "client_cpus_allowed": "3",
+    "mock_pid": 433097,
+    "mock_process": "separate",
+    "upstream_latency_ms": null
+  },
+  "p999_status": {
+    "status": "harness_isolated_pending_full_board",
+    "label": "harness isolated (separate mock + taskset); p999 still under rework until full interleaved 10k",
+    "publish": "Cite tokens, per-call overhead (ms/call), medians, and memory. Do not headline p999 until a full interleaved board lands with separate mock/client/gateway and dedicated cores (or leave p999 labeled under rework).",
+    "note": "Round 7: mock+client shared the parent event loop — delayed send, delayed mock serve, delayed response read. That polluted every arm's tail. Round 8 splits the mock process and optionally pins cores.",
+    "harness_isolated": true,
+    "cores_pinned": true,
+    "full_board": false
+  },
+  "client_diagnostics": {
+    "http_connects_total": 1,
+    "http_agent": {
+      "connections": 1,
+      "pipelining": 1,
+      "keepAliveTimeout": 60000,
+      "note": "Single keep-alive socket per origin; connects_total should stay near 1 per HTTP arm after warm-up."
+    },
+    "client_gc_events": 115,
+    "client_gc_top": [
+      {
+        "t_iso": "2026-10-13T23:10:27.760Z",
+        "duration_ms": 14.98,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:02.760Z",
+        "duration_ms": 14.26,
+        "kind": 8
+      },
+      {
+        "t_iso": "2026-10-13T23:10:03.020Z",
+        "duration_ms": 12.27,
+        "kind": 4
+      },
+      {
+        "t_iso": "2026-10-13T23:10:11.411Z",
+        "duration_ms": 7.97,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:07.730Z",
+        "duration_ms": 7.46,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:20.589Z",
+        "duration_ms": 6.92,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:27.910Z",
+        "duration_ms": 5.66,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:22.801Z",
+        "duration_ms": 5.63,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:21.711Z",
+        "duration_ms": 5.59,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:23.898Z",
+        "duration_ms": 5.37,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:06.052Z",
+        "duration_ms": 5.1,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:13.073Z",
+        "duration_ms": 4.81,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:13.577Z",
+        "duration_ms": 4.7,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:13.783Z",
+        "duration_ms": 4.49,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:26.089Z",
+        "duration_ms": 4.39,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:21.157Z",
+        "duration_ms": 4.38,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:13.987Z",
+        "duration_ms": 4.36,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:14.409Z",
+        "duration_ms": 4.36,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:20.787Z",
+        "duration_ms": 4.28,
+        "kind": 1
+      },
+      {
+        "t_iso": "2026-10-13T23:10:25.896Z",
+        "duration_ms": 4.25,
+        "kind": 1
+      }
+    ],
+    "client_slow_ms_threshold": 20,
+    "client_pid": 433086,
+    "client_cpus_allowed": "3"
+  },
+  "upstream_diagnostics": {
+    "requests": 4801,
+    "tcp_connects": 2,
+    "reused_sockets": 4799,
+    "new_socket_requests": 2,
+    "max_handle_ms": 5.577532999999676,
+    "max_latency_inject_ms": 0,
+    "pid": 433097,
+    "process": "separate",
+    "latency": {
+      "kind": "none"
+    },
+    "slow_top": [
+      {
+        "handle_ms": 5.6,
+        "inject_ms": 0,
+        "arrive_iso": "2026-10-13T23:10:19.182Z",
+        "done_iso": "2026-10-13T23:10:19.187Z",
+        "path": "/catalog/010",
+        "new_conn": 0,
+        "remote_port": 49096,
+        "body_bytes": 7767
+      },
+      {
+        "handle_ms": 5.4,
+        "inject_ms": 0,
+        "arrive_iso": "2026-10-13T23:10:23.287Z",
+        "done_iso": "2026-10-13T23:10:23.292Z",
+        "path": "/catalog/008",
+        "new_conn": 0,
+        "remote_port": 49096,
+        "body_bytes": 7767
+      },
+      {
+        "handle_ms": 4.3,
+        "inject_ms": 0,
+        "arrive_iso": "2026-10-13T23:10:08.909Z",
+        "done_iso": "2026-10-13T23:10:08.913Z",
+        "path": "/catalog/001",
+        "new_conn": 0,
+        "remote_port": 49096,
+        "body_bytes": 7655
+      },
+      {
+        "handle_ms": 3.8,
+        "inject_ms": 0,
+        "arrive_iso": "2026-10-13T23:10:19.967Z",
+        "done_iso": "2026-10-13T23:10:19.971Z",
+        "path": "/catalog/011",
+        "new_conn": 0,
+        "remote_port": 49096,
+        "body_bytes": 7817
+      },
+      {
+        "handle_ms": 2.3,
+        "inject_ms": 0,
+        "arrive_iso": "2026-10-13T23:10:12.271Z",
+        "done_iso": "2026-10-13T23:10:12.273Z",
+        "path": "/catalog/003",
+        "new_conn": 0,
+        "remote_port": 49096,
+        "body_bytes": 7767
+      },
+      {
+        "handle_ms": 2.2,
+        "inject_ms": 0,
+        "arrive_iso": "2026-10-13T23:10:13.391Z",
+        "done_iso": "2026-10-13T23:10:13.393Z",
+        "path": "/catalog/001",
+        "new_conn": 0,
+        "remote_port": 49096,
+        "body_bytes": 7655
+      },
+      {
+        "handle_ms": 1.4,
+        "inject_ms": 0,
+        "arrive_iso": "2026-10-13T23:10:05.184Z",
+        "done_iso": "2026-10-13T23:10:05.185Z",
+        "path": "/catalog/001",
+        "new_conn": 1,
+        "remote_port": 49096,
+        "body_bytes": 7655
+      },
+      {
+        "handle_ms": 1.4,
+        "inject_ms": 0,
+        "arrive_iso": "2026-10-13T23:10:05.956Z",
+        "done_iso": "2026-10-13T23:10:05.958Z",
+        "path": "/catalog/009",
+        "new_conn": 0,
+        "remote_port": 49096,
+        "body_bytes": 7767
+      },
+      {
+        "handle_ms": 1.2,
+        "inject_ms": 0,
+        "arrive_iso": "2026-10-13T23:10:10.975Z",
+        "done_iso": "2026-10-13T23:10:10.976Z",
+        "path": "/catalog/008",
+        "new_conn": 0,
+        "remote_port": 49096,
+        "body_bytes": 7767
+      },
+      {
+        "handle_ms": 1.1,
+        "inject_ms": 0,
+        "arrive_iso": "2026-10-13T23:10:05.541Z",
+        "done_iso": "2026-10-13T23:10:05.542Z",
+        "path": "/catalog/005",
+        "new_conn": 0,
+        "remote_port": 49096,
+        "body_bytes": 7767
+      }
+    ],
+    "recent": [],
+    "native_fetch": false,
+    "upstream_keepalive": false,
+    "note": "Separate-process mock accept/handle. Pair with [clawql-upstream-fetch] on ClawQL stderr when CLAWQL_UPSTREAM_FETCH_DIAG=1. On Node 22 http.globalAgent.keepAlive defaults true — tcp_connects≈1 is expected even without CLAWQL_UPSTREAM_KEEPALIVE."
+  },
+  "config": {
+    "turns": 12,
+    "iters": 400,
+    "catalog_tool_count": 40,
+    "limit": 25,
+    "where": "items",
+    "fields": [
+      "id",
+      "name",
+      "status"
+    ],
+    "arms": [
+      "clawql_http"
+    ],
+    "tokenizer": "cl100k_base",
+    "progress_every": 500,
+    "mt_pin_cores": true,
+    "mt_upstream_latency_ms": null,
+    "runtime_flags": {
+      "clawql_node_max_old_space_mb": 512,
+      "clawql_bun_smol": true,
+      "clawql_http_skip_graphql": true,
+      "clawql_enable_http_metrics": false,
+      "mt_node_single_threaded": false,
+      "note": "Applied evenly to all ClawQL arms (stdio / Streamable HTTP / gRPC). Override with CLAWQL_NODE_MAX_OLD_SPACE_MB=0 or CLAWQL_BUN_SMOL=0 for defaults-only. CLAWQL_SEARCH_COMPACT=1 and CLAWQL_HTTP_SKIP_PAYMENTS=1 are bench defaults (compact search gated for product; payments/network routes skipped for slim RSS). MT_NODE_SINGLE_THREADED is diagnostic only (V8 helper-thread contention test)."
+    }
+  },
+  "equal_arm": {
+    "fat_result_tokens_partition_1": 2411,
+    "slim_fields_tokens_partition_1": 353,
+    "projection_ratio": 6.83,
+    "note": "Same underlying rows; ClawQL where+fields project to {id,name,status}; Executor/aggregators return full envelope (Executor: no gateway projection — settled)"
+  },
+  "board": {
+    "clawql_http": {
+      "runtime": "node",
+      "runtime_version": "v22.14.0",
+      "ready_ms": 1949.3,
+      "transport": "streamable_http_multiplex",
+      "rss_mb_ready": 218.97,
+      "rss_mb_min": 218.97265625,
+      "rss_mb_median": 349.27734375,
+      "rss_mb_max": 378.07421875,
+      "rss_trend": {
+        "classification": "plateau",
+        "reason": "late-window RSS stable relative to mid-window",
+        "early_median_mb": 344.92,
+        "mid_median_mb": 349.23,
+        "late_median_mb": 350.41,
+        "rise_early_to_late_mb": 5.49,
+        "rise_mid_to_late_mb": 1.18,
+        "mb_per_1000_flows": 332.15,
+        "n_series": 45
+      },
+      "definitions_tokens": 308,
+      "discovery_tokens_sum": 3408,
+      "mean_discovery_tokens": 284,
+      "result_tokens_sum": 8674,
+      "mean_result_tokens": 722.8,
+      "layer1_once_tokens": 308,
+      "mean_layer2_tokens": 1006.8,
+      "combined_at_n": 12390,
+      "combined_rebuild": 12390,
+      "combined_relist_every_turn_at_n": 12082,
+      "flows": 400,
+      "turns_per_flow": 12,
+      "total_turns": 4800,
+      "rpcs_per_turn": 2,
+      "ms_per_call_p50": 2.03,
+      "flow_e2e_ms": {
+        "n": 400,
+        "p50_ms": 51.372,
+        "p95_ms": 75.134,
+        "p99_ms": 86.579,
+        "p999_ms": 415.861,
+        "mean_ms": 55.408,
+        "min_ms": 43.26,
+        "max_ms": 415.861,
+        "n_ge_100ms": 3,
+        "n_ge_200ms": 1,
+        "n_ge_300ms": 1,
+        "worst": [
+          {
+            "i": 1,
+            "ms": 415.861
+          },
+          {
+            "i": 126,
+            "ms": 136.963
+          },
+          {
+            "i": 42,
+            "ms": 101.323
+          },
+          {
+            "i": 159,
+            "ms": 98.993
+          },
+          {
+            "i": 32,
+            "ms": 86.579
+          },
+          {
+            "i": 9,
+            "ms": 85.803
+          },
+          {
+            "i": 251,
+            "ms": 85.488
+          },
+          {
+            "i": 2,
+            "ms": 83.721
+          }
+        ]
+      },
+      "turn_latency_ms": {
+        "n": 4800,
+        "p50_ms": 4.066,
+        "p95_ms": 6.931,
+        "p99_ms": 10.612,
+        "p999_ms": 25.04,
+        "mean_ms": 4.568,
+        "min_ms": 3.142,
+        "max_ms": 183.933,
+        "n_ge_100ms": 2,
+        "n_ge_200ms": 0,
+        "n_ge_300ms": 0,
+        "worst": [
+          {
+            "i": 7,
+            "ms": 183.933
+          },
+          {
+            "i": 1,
+            "ms": 107.946
+          },
+          {
+            "i": 1503,
+            "ms": 35.656
+          },
+          {
+            "i": 2,
+            "ms": 26.747
+          },
+          {
+            "i": 1905,
+            "ms": 25.04
+          },
+          {
+            "i": 3011,
+            "ms": 24
+          },
+          {
+            "i": 1506,
+            "ms": 20.604
+          },
+          {
+            "i": 1138,
+            "ms": 20.105
+          }
+        ]
+      },
+      "call_errors": 0,
+      "task_success_ok": true,
+      "task_success_rate": 1,
+      "http_perf": {
+        "gc_event_count": 0,
+        "gc_max_ms": 0,
+        "gc_sum_ms": 0,
+        "eld_max_ms": 0,
+        "eld_p99_max_ms": 0,
+        "summary_last": null
+      },
+      "http_layer": {
+        "auth_mode": "noAuth",
+        "skip_auth": false,
+        "otel": false,
+        "session_idle_ms": 0,
+        "audit": true,
+        "skip_prune": false,
+        "skip_als": false,
+        "skip_payments": true,
+        "skip_graphql": true,
+        "loki_url": false
+      },
+      "http_layer_banner": "[clawql-http-layer] banner auth_mode=noAuth skip_auth=0 otel=0 session_idle_ms=0 audit=1 skip_prune=0 skip_als=0 skip_payments=1 skip_graphql=1 http_perf=0 loki_url=0 events=0",
+      "slow_flow_gc_correlation": {
+        "slow_flow_count": 11,
+        "slow_flows_with_gc": 0,
+        "slow_flows_with_eld": 0,
+        "note": "Counts slow flows whose wall-clock window overlaps a logged GC/ELD event (±50ms)."
+      },
+      "slow_flows_top": [
+        {
+          "flow": 1,
+          "ms": 415.9,
+          "t_iso": "2026-10-13T23:10:05.089Z",
+          "t_end_iso": "2026-10-13T23:10:05.505Z"
+        },
+        {
+          "flow": 126,
+          "ms": 137,
+          "t_iso": "2026-10-13T23:10:13.388Z",
+          "t_end_iso": "2026-10-13T23:10:13.524Z"
+        },
+        {
+          "flow": 42,
+          "ms": 101.3,
+          "t_iso": "2026-10-13T23:10:08.332Z",
+          "t_end_iso": "2026-10-13T23:10:08.433Z"
+        },
+        {
+          "flow": 159,
+          "ms": 99,
+          "t_iso": "2026-10-13T23:10:15.284Z",
+          "t_end_iso": "2026-10-13T23:10:15.383Z"
+        },
+        {
+          "flow": 32,
+          "ms": 86.6,
+          "t_iso": "2026-10-13T23:10:07.686Z",
+          "t_end_iso": "2026-10-13T23:10:07.773Z"
+        },
+        {
+          "flow": 9,
+          "ms": 85.8,
+          "t_iso": "2026-10-13T23:10:06.062Z",
+          "t_end_iso": "2026-10-13T23:10:06.148Z"
+        },
+        {
+          "flow": 251,
+          "ms": 85.5,
+          "t_iso": "2026-10-13T23:10:19.976Z",
+          "t_end_iso": "2026-10-13T23:10:20.062Z"
+        },
+        {
+          "flow": 2,
+          "ms": 83.7,
+          "t_iso": "2026-10-13T23:10:05.506Z",
+          "t_end_iso": "2026-10-13T23:10:05.590Z"
+        },
+        {
+          "flow": 12,
+          "ms": 83.5,
+          "t_iso": "2026-10-13T23:10:06.292Z",
+          "t_end_iso": "2026-10-13T23:10:06.376Z"
+        },
+        {
+          "flow": 8,
+          "ms": 83.2,
+          "t_iso": "2026-10-13T23:10:05.979Z",
+          "t_end_iso": "2026-10-13T23:10:06.062Z"
+        },
+        {
+          "flow": 7,
+          "ms": 80.2,
+          "t_iso": "2026-10-13T23:10:05.899Z",
+          "t_end_iso": "2026-10-13T23:10:05.979Z"
+        }
+      ],
+      "search_latency_ms": {
+        "n": 4800,
+        "p50_ms": 1.6,
+        "p95_ms": 2.658,
+        "p99_ms": 5.653,
+        "p999_ms": 14.861,
+        "mean_ms": 1.826,
+        "min_ms": 1.207,
+        "max_ms": 172.675,
+        "n_ge_100ms": 1,
+        "n_ge_200ms": 0,
+        "n_ge_300ms": 0,
+        "worst": [
+          {
+            "i": 7,
+            "ms": 172.675
+          },
+          {
+            "i": 1,
+            "ms": 52.923
+          },
+          {
+            "i": 1435,
+            "ms": 16.492
+          },
+          {
+            "i": 1138,
+            "ms": 15.69
+          },
+          {
+            "i": 1905,
+            "ms": 14.861
+          },
+          {
+            "i": 952,
+            "ms": 13.275
+          },
+          {
+            "i": 2230,
+            "ms": 12.447
+          },
+          {
+            "i": 3011,
+            "ms": 11.947
+          }
+        ]
+      },
+      "execute_latency_ms": {
+        "n": 4800,
+        "p50_ms": 2.505,
+        "p95_ms": 4.138,
+        "p99_ms": 7.197,
+        "p999_ms": 15.261,
+        "mean_ms": 2.729,
+        "min_ms": 1.86,
+        "max_ms": 54.965,
+        "n_ge_100ms": 0,
+        "n_ge_200ms": 0,
+        "n_ge_300ms": 0,
+        "worst": [
+          {
+            "i": 1,
+            "ms": 54.965
+          },
+          {
+            "i": 1503,
+            "ms": 29.234
+          },
+          {
+            "i": 2,
+            "ms": 21.228
+          },
+          {
+            "i": 1767,
+            "ms": 15.956
+          },
+          {
+            "i": 2305,
+            "ms": 15.261
+          },
+          {
+            "i": 1504,
+            "ms": 12.45
+          },
+          {
+            "i": 3011,
+            "ms": 12.038
+          },
+          {
+            "i": 1506,
+            "ms": 11.697
+          }
+        ]
+      },
+      "slow_search_top": [
+        {
+          "flow": 1,
+          "turn": 7,
+          "ms": 172.7,
+          "t_iso": "2026-10-13T23:10:05.444Z",
+          "query": "catalog_list_007 partition 7 inventory list entities"
+        },
+        {
+          "flow": 1,
+          "turn": 1,
+          "ms": 52.9,
+          "t_iso": "2026-10-13T23:10:05.142Z",
+          "query": "catalog_list_001 partition 1 inventory list entities"
+        }
+      ],
+      "skip_search": false,
+      "token_rebuild_note": "Classic Layer1 = search+execute schemas; discovery = Σ search hit tokens."
+    }
+  },
+  "ratios_vs_clawql": {},
+  "task_success": {
+    "clawql_http": {
+      "turns_ok": 4800,
+      "turns_total": 4800,
+      "flows": 400,
+      "turns_per_flow": 12,
+      "ok": true,
+      "rate": 1
+    }
+  },
+  "cumulative_table": {
+    "clawql_http": [
+      {
+        "n": 1,
+        "combined": 1269,
+        "layer2Cumulative": 961
+      },
+      {
+        "n": 2,
+        "combined": 2280,
+        "layer2Cumulative": 1972
+      },
+      {
+        "n": 3,
+        "combined": 3291,
+        "layer2Cumulative": 2983
+      },
+      {
+        "n": 4,
+        "combined": 4302,
+        "layer2Cumulative": 3994
+      },
+      {
+        "n": 5,
+        "combined": 5313,
+        "layer2Cumulative": 5005
+      },
+      {
+        "n": 6,
+        "combined": 6324,
+        "layer2Cumulative": 6016
+      },
+      {
+        "n": 7,
+        "combined": 7335,
+        "layer2Cumulative": 7027
+      },
+      {
+        "n": 8,
+        "combined": 8346,
+        "layer2Cumulative": 8038
+      },
+      {
+        "n": 9,
+        "combined": 9357,
+        "layer2Cumulative": 9049
+      },
+      {
+        "n": 10,
+        "combined": 10368,
+        "layer2Cumulative": 10060
+      },
+      {
+        "n": 11,
+        "combined": 11379,
+        "layer2Cumulative": 11071
+      },
+      {
+        "n": 12,
+        "combined": 12390,
+        "layer2Cumulative": 12082
+      }
+    ]
+  },
+  "arms": {
+    "clawql_http": {
+      "id": "clawql_http",
+      "model": "search_plus_execute_where_fields_node_streamable_http_multiplex",
+      "runtime": "node",
+      "runtimeVersion": "v22.14.0",
+      "transport": "streamable_http_multiplex",
+      "mcpUrl": "http://127.0.0.1:40759/mcp",
+      "skip_search": false,
+      "rpcs_per_turn_override": 2,
+      "layer1": {
+        "once_schema_tokens": 308,
+        "tools_count": 2,
+        "tools_list_count_full": 8,
+        "tools_list_schema_tokens_full": 1200,
+        "note": "Only search+execute schemas counted as Layer1 (catalog stays server-side)"
+      },
+      "discovery_note": "Each turn charges search (limit 3) + execute — discovery is not zero (unlike Executor harness)",
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "catalog_list_001",
+          "search_tokens": 284,
+          "result_tokens": 677,
+          "result_chars": 1840,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 961,
+          "layer2_relist_every_turn": 961,
+          "latency_ms": 107.946,
+          "search_ms": 52.923,
+          "execute_ms": 54.965,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 2,
+          "tool": "catalog_list_002",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 26.747,
+          "search_ms": 5.508,
+          "execute_ms": 21.228,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 3,
+          "tool": "catalog_list_003",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 13.937,
+          "search_ms": 6.267,
+          "execute_ms": 7.657,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 4,
+          "tool": "catalog_list_004",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 10.612,
+          "search_ms": 4.82,
+          "execute_ms": 5.778,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 5,
+          "tool": "catalog_list_005",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 9.152,
+          "search_ms": 3.576,
+          "execute_ms": 5.559,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 6,
+          "tool": "catalog_list_006",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 9,
+          "search_ms": 3.069,
+          "execute_ms": 5.919,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 7,
+          "tool": "catalog_list_007",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 183.933,
+          "search_ms": 172.675,
+          "execute_ms": 11.232,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 8,
+          "tool": "catalog_list_008",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 8.374,
+          "search_ms": 3.036,
+          "execute_ms": 5.326,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 9,
+          "tool": "catalog_list_009",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 8.55,
+          "search_ms": 2.992,
+          "execute_ms": 5.545,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 10,
+          "tool": "catalog_list_010",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 7.575,
+          "search_ms": 2.693,
+          "execute_ms": 4.868,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 11,
+          "tool": "catalog_list_011",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 2002,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 7.883,
+          "search_ms": 3.782,
+          "execute_ms": 4.088,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        },
+        {
+          "n": 12,
+          "tool": "catalog_list_012",
+          "search_tokens": 284,
+          "result_tokens": 727,
+          "result_chars": 2002,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1011,
+          "layer2_relist_every_turn": 1011,
+          "latency_ms": 6.817,
+          "search_ms": 2.786,
+          "execute_ms": 4.018,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          },
+          "skip_search": false
+        }
+      ],
+      "iters": 400,
+      "call_errors": 0,
+      "task_success_agg": {
+        "ok": 4800,
+        "total": 4800
+      },
+      "resources": {
+        "label": "clawql_http",
+        "pid": 433108,
+        "n": 45,
+        "rss_mb": {
+          "min": 218.97265625,
+          "median": 349.27734375,
+          "max": 378.07421875
+        },
+        "series": [
+          {
+            "t_s": 0,
+            "flow": 0,
+            "rss_mb": 218.97
+          },
+          {
+            "t_s": 0.5,
+            "flow": 2,
+            "rss_mb": 344.92
+          },
+          {
+            "t_s": 1,
+            "flow": 8,
+            "rss_mb": 352.31
+          },
+          {
+            "t_s": 1.5,
+            "flow": 15,
+            "rss_mb": 359.71
+          },
+          {
+            "t_s": 2,
+            "flow": 22,
+            "rss_mb": 368.69
+          },
+          {
+            "t_s": 2.5,
+            "flow": 29,
+            "rss_mb": 378.07
+          },
+          {
+            "t_s": 3,
+            "flow": 37,
+            "rss_mb": 340.53
+          },
+          {
+            "t_s": 3.5,
+            "flow": 44,
+            "rss_mb": 340.65
+          },
+          {
+            "t_s": 4,
+            "flow": 53,
+            "rss_mb": 340.78
+          },
+          {
+            "t_s": 4.5,
+            "flow": 61,
+            "rss_mb": 340.83
+          },
+          {
+            "t_s": 5,
+            "flow": 69,
+            "rss_mb": 344.07
+          },
+          {
+            "t_s": 5.5,
+            "flow": 77,
+            "rss_mb": 347.64
+          },
+          {
+            "t_s": 6,
+            "flow": 85,
+            "rss_mb": 347.82
+          },
+          {
+            "t_s": 6.5,
+            "flow": 94,
+            "rss_mb": 347.95
+          },
+          {
+            "t_s": 7,
+            "flow": 103,
+            "rss_mb": 347.99
+          },
+          {
+            "t_s": 7.5,
+            "flow": 111,
+            "rss_mb": 347.79
+          },
+          {
+            "t_s": 8,
+            "flow": 120,
+            "rss_mb": 347.82
+          },
+          {
+            "t_s": 8.51,
+            "flow": 127,
+            "rss_mb": 348.05
+          },
+          {
+            "t_s": 9.01,
+            "flow": 135,
+            "rss_mb": 348.13
+          },
+          {
+            "t_s": 9.51,
+            "flow": 145,
+            "rss_mb": 348.16
+          },
+          {
+            "t_s": 10.01,
+            "flow": 154,
+            "rss_mb": 348.68
+          },
+          {
+            "t_s": 10.51,
+            "flow": 163,
+            "rss_mb": 348.88
+          },
+          {
+            "t_s": 11.01,
+            "flow": 172,
+            "rss_mb": 349.09
+          },
+          {
+            "t_s": 11.51,
+            "flow": 182,
+            "rss_mb": 349.12
+          },
+          {
+            "t_s": 12.01,
+            "flow": 191,
+            "rss_mb": 349.23
+          },
+          {
+            "t_s": 12.51,
+            "flow": 201,
+            "rss_mb": 349.27
+          },
+          {
+            "t_s": 13.01,
+            "flow": 211,
+            "rss_mb": 349.28
+          },
+          {
+            "t_s": 13.51,
+            "flow": 222,
+            "rss_mb": 349.69
+          },
+          {
+            "t_s": 14.01,
+            "flow": 231,
+            "rss_mb": 349.7
+          },
+          {
+            "t_s": 14.51,
+            "flow": 242,
+            "rss_mb": 349.76
+          },
+          {
+            "t_s": 15.01,
+            "flow": 251,
+            "rss_mb": 349.84
+          },
+          {
+            "t_s": 15.51,
+            "flow": 262,
+            "rss_mb": 349.9
+          },
+          {
+            "t_s": 16.01,
+            "flow": 271,
+            "rss_mb": 349.9
+          },
+          {
+            "t_s": 16.51,
+            "flow": 282,
+            "rss_mb": 349.9
+          },
+          {
+            "t_s": 17.01,
+            "flow": 292,
+            "rss_mb": 349.91
+          },
+          {
+            "t_s": 17.51,
+            "flow": 302,
+            "rss_mb": 349.93
+          },
+          {
+            "t_s": 18.01,
+            "flow": 313,
+            "rss_mb": 349.93
+          },
+          {
+            "t_s": 18.51,
+            "flow": 323,
+            "rss_mb": 350.01
+          },
+          {
+            "t_s": 19.01,
+            "flow": 333,
+            "rss_mb": 350.02
+          },
+          {
+            "t_s": 19.51,
+            "flow": 344,
+            "rss_mb": 350.28
+          },
+          {
+            "t_s": 20.01,
+            "flow": 354,
+            "rss_mb": 350.41
+          },
+          {
+            "t_s": 20.51,
+            "flow": 365,
+            "rss_mb": 350.46
+          },
+          {
+            "t_s": 21.01,
+            "flow": 375,
+            "rss_mb": 350.46
+          },
+          {
+            "t_s": 21.51,
+            "flow": 385,
+            "rss_mb": 350.48
+          },
+          {
+            "t_s": 22.01,
+            "flow": 396,
+            "rss_mb": 350.5
+          }
+        ],
+        "trend": {
+          "classification": "plateau",
+          "reason": "late-window RSS stable relative to mid-window",
+          "early_median_mb": 344.92,
+          "mid_median_mb": 349.23,
+          "late_median_mb": 350.41,
+          "rise_early_to_late_mb": 5.49,
+          "rise_mid_to_late_mb": 1.18,
+          "mb_per_1000_flows": 332.15,
+          "n_series": 45
+        }
+      },
+      "startup": {
+        "ready_ms": 1949.3,
+        "rss_mb_ready": 218.97
+      },
+      "http_perf": {
+        "gc_event_count": 0,
+        "gc_max_ms": 0,
+        "gc_sum_ms": 0,
+        "eld_event_count": 0,
+        "eld_max_ms": 0,
+        "eld_p99_max_ms": 0,
+        "summary_last": null,
+        "gc_top": [],
+        "eld_top": []
+      },
+      "http_layer": {
+        "auth_mode": "noAuth",
+        "skip_auth": false,
+        "otel": false,
+        "session_idle_ms": 0,
+        "audit": true,
+        "skip_prune": false,
+        "skip_als": false,
+        "skip_payments": true,
+        "skip_graphql": true,
+        "loki_url": false
+      },
+      "http_layer_banner": "[clawql-http-layer] banner auth_mode=noAuth skip_auth=0 otel=0 session_idle_ms=0 audit=1 skip_prune=0 skip_als=0 skip_payments=1 skip_graphql=1 http_perf=0 loki_url=0 events=0",
+      "slow_flows_top": [
+        {
+          "flow": 1,
+          "ms": 415.9,
+          "t_iso": "2026-10-13T23:10:05.089Z",
+          "t_end_iso": "2026-10-13T23:10:05.505Z"
+        },
+        {
+          "flow": 126,
+          "ms": 137,
+          "t_iso": "2026-10-13T23:10:13.388Z",
+          "t_end_iso": "2026-10-13T23:10:13.524Z"
+        },
+        {
+          "flow": 42,
+          "ms": 101.3,
+          "t_iso": "2026-10-13T23:10:08.332Z",
+          "t_end_iso": "2026-10-13T23:10:08.433Z"
+        },
+        {
+          "flow": 159,
+          "ms": 99,
+          "t_iso": "2026-10-13T23:10:15.284Z",
+          "t_end_iso": "2026-10-13T23:10:15.383Z"
+        },
+        {
+          "flow": 32,
+          "ms": 86.6,
+          "t_iso": "2026-10-13T23:10:07.686Z",
+          "t_end_iso": "2026-10-13T23:10:07.773Z"
+        },
+        {
+          "flow": 9,
+          "ms": 85.8,
+          "t_iso": "2026-10-13T23:10:06.062Z",
+          "t_end_iso": "2026-10-13T23:10:06.148Z"
+        },
+        {
+          "flow": 251,
+          "ms": 85.5,
+          "t_iso": "2026-10-13T23:10:19.976Z",
+          "t_end_iso": "2026-10-13T23:10:20.062Z"
+        },
+        {
+          "flow": 2,
+          "ms": 83.7,
+          "t_iso": "2026-10-13T23:10:05.506Z",
+          "t_end_iso": "2026-10-13T23:10:05.590Z"
+        },
+        {
+          "flow": 12,
+          "ms": 83.5,
+          "t_iso": "2026-10-13T23:10:06.292Z",
+          "t_end_iso": "2026-10-13T23:10:06.376Z"
+        },
+        {
+          "flow": 8,
+          "ms": 83.2,
+          "t_iso": "2026-10-13T23:10:05.979Z",
+          "t_end_iso": "2026-10-13T23:10:06.062Z"
+        },
+        {
+          "flow": 7,
+          "ms": 80.2,
+          "t_iso": "2026-10-13T23:10:05.899Z",
+          "t_end_iso": "2026-10-13T23:10:05.979Z"
+        }
+      ],
+      "slow_search_top": [
+        {
+          "flow": 1,
+          "turn": 7,
+          "ms": 172.7,
+          "t_iso": "2026-10-13T23:10:05.444Z",
+          "query": "catalog_list_007 partition 7 inventory list entities"
+        },
+        {
+          "flow": 1,
+          "turn": 1,
+          "ms": 52.9,
+          "t_iso": "2026-10-13T23:10:05.142Z",
+          "query": "catalog_list_001 partition 1 inventory list entities"
+        }
+      ],
+      "slow_flow_gc_correlation": {
+        "slow_flow_count": 11,
+        "slow_flows_with_gc": 0,
+        "slow_flows_with_eld": 0,
+        "note": "Counts slow flows whose wall-clock window overlaps a logged GC/ELD event (±50ms)."
+      },
+      "session_per_flow": false,
+      "bench_series": [
+        {
+          "phase": "after_connect",
+          "flow": 0,
+          "mcp_sessions": 1,
+          "stream_mapping_entries": 0,
+          "request_to_stream_entries": 0,
+          "audit_ring_entries": 0,
+          "audit_ring_max": 64,
+          "rss_mb": 228.09,
+          "heap_used_mb": 102.44
+        },
+        {
+          "phase": "mid_run",
+          "flow": 1,
+          "mcp_sessions": 1,
+          "stream_mapping_entries": 0,
+          "request_to_stream_entries": 0,
+          "audit_ring_entries": 24,
+          "audit_ring_max": 64,
+          "rss_mb": 344.55,
+          "heap_used_mb": 114.55
+        },
+        {
+          "phase": "mid_run",
+          "flow": 80,
+          "mcp_sessions": 1,
+          "stream_mapping_entries": 0,
+          "request_to_stream_entries": 0,
+          "audit_ring_entries": 64,
+          "audit_ring_max": 64,
+          "rss_mb": 347.41,
+          "heap_used_mb": 126.23
+        },
+        {
+          "phase": "mid_run",
+          "flow": 160,
+          "mcp_sessions": 1,
+          "stream_mapping_entries": 0,
+          "request_to_stream_entries": 0,
+          "audit_ring_entries": 64,
+          "audit_ring_max": 64,
+          "rss_mb": 348.57,
+          "heap_used_mb": 132.97
+        },
+        {
+          "phase": "mid_run",
+          "flow": 240,
+          "mcp_sessions": 1,
+          "stream_mapping_entries": 0,
+          "request_to_stream_entries": 0,
+          "audit_ring_entries": 64,
+          "audit_ring_max": 64,
+          "rss_mb": 349.57,
+          "heap_used_mb": 134.86
+        },
+        {
+          "phase": "mid_run",
+          "flow": 320,
+          "mcp_sessions": 1,
+          "stream_mapping_entries": 0,
+          "request_to_stream_entries": 0,
+          "audit_ring_entries": 64,
+          "audit_ring_max": 64,
+          "rss_mb": 349.69,
+          "heap_used_mb": 140.52
+        },
+        {
+          "phase": "mid_run",
+          "flow": 400,
+          "mcp_sessions": 1,
+          "stream_mapping_entries": 0,
+          "request_to_stream_entries": 0,
+          "audit_ring_entries": 64,
+          "audit_ring_max": 64,
+          "rss_mb": 350.19,
+          "heap_used_mb": 148.4
+        }
+      ],
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 308,
+          "layer2ThisTurn": 961,
+          "layer2Cumulative": 961,
+          "combined": 1269,
+          "layer2ShareOfCombined": 75.7
+        },
+        {
+          "n": 2,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 1972,
+          "combined": 2280,
+          "layer2ShareOfCombined": 86.5
+        },
+        {
+          "n": 3,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 2983,
+          "combined": 3291,
+          "layer2ShareOfCombined": 90.6
+        },
+        {
+          "n": 4,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 3994,
+          "combined": 4302,
+          "layer2ShareOfCombined": 92.8
+        },
+        {
+          "n": 5,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 5005,
+          "combined": 5313,
+          "layer2ShareOfCombined": 94.2
+        },
+        {
+          "n": 6,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 6016,
+          "combined": 6324,
+          "layer2ShareOfCombined": 95.1
+        },
+        {
+          "n": 7,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 7027,
+          "combined": 7335,
+          "layer2ShareOfCombined": 95.8
+        },
+        {
+          "n": 8,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 8038,
+          "combined": 8346,
+          "layer2ShareOfCombined": 96.3
+        },
+        {
+          "n": 9,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 9049,
+          "combined": 9357,
+          "layer2ShareOfCombined": 96.7
+        },
+        {
+          "n": 10,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 10060,
+          "combined": 10368,
+          "layer2ShareOfCombined": 97
+        },
+        {
+          "n": 11,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 11071,
+          "combined": 11379,
+          "layer2ShareOfCombined": 97.3
+        },
+        {
+          "n": 12,
+          "layer1Once": 308,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 12082,
+          "combined": 12390,
+          "layer2ShareOfCombined": 97.5
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 961,
+          "layer2Cumulative": 961,
+          "combined": 961,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 1972,
+          "combined": 1972,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 2983,
+          "combined": 2983,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 3994,
+          "combined": 3994,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 5005,
+          "combined": 5005,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 6016,
+          "combined": 6016,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 7027,
+          "combined": 7027,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 8038,
+          "combined": 8038,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 9049,
+          "combined": 9049,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 10060,
+          "combined": 10060,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 11071,
+          "combined": 11071,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1011,
+          "layer2Cumulative": 12082,
+          "combined": 12082,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 4800,
+        "turns_total": 4800,
+        "flows": 400,
+        "turns_per_flow": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "runtime": "node",
+        "runtime_version": "v22.14.0",
+        "ready_ms": 1949.3,
+        "transport": "streamable_http_multiplex",
+        "rss_mb_ready": 218.97,
+        "rss_mb_min": 218.97265625,
+        "rss_mb_median": 349.27734375,
+        "rss_mb_max": 378.07421875,
+        "rss_trend": {
+          "classification": "plateau",
+          "reason": "late-window RSS stable relative to mid-window",
+          "early_median_mb": 344.92,
+          "mid_median_mb": 349.23,
+          "late_median_mb": 350.41,
+          "rise_early_to_late_mb": 5.49,
+          "rise_mid_to_late_mb": 1.18,
+          "mb_per_1000_flows": 332.15,
+          "n_series": 45
+        },
+        "definitions_tokens": 308,
+        "discovery_tokens_sum": 3408,
+        "mean_discovery_tokens": 284,
+        "result_tokens_sum": 8674,
+        "mean_result_tokens": 722.8,
+        "layer1_once_tokens": 308,
+        "mean_layer2_tokens": 1006.8,
+        "combined_at_n": 12390,
+        "combined_rebuild": 12390,
+        "combined_relist_every_turn_at_n": 12082,
+        "flows": 400,
+        "turns_per_flow": 12,
+        "total_turns": 4800,
+        "rpcs_per_turn": 2,
+        "ms_per_call_p50": 2.03,
+        "flow_e2e_ms": {
+          "n": 400,
+          "p50_ms": 51.372,
+          "p95_ms": 75.134,
+          "p99_ms": 86.579,
+          "p999_ms": 415.861,
+          "mean_ms": 55.408,
+          "min_ms": 43.26,
+          "max_ms": 415.861,
+          "n_ge_100ms": 3,
+          "n_ge_200ms": 1,
+          "n_ge_300ms": 1,
+          "worst": [
+            {
+              "i": 1,
+              "ms": 415.861
+            },
+            {
+              "i": 126,
+              "ms": 136.963
+            },
+            {
+              "i": 42,
+              "ms": 101.323
+            },
+            {
+              "i": 159,
+              "ms": 98.993
+            },
+            {
+              "i": 32,
+              "ms": 86.579
+            },
+            {
+              "i": 9,
+              "ms": 85.803
+            },
+            {
+              "i": 251,
+              "ms": 85.488
+            },
+            {
+              "i": 2,
+              "ms": 83.721
+            }
+          ]
+        },
+        "turn_latency_ms": {
+          "n": 4800,
+          "p50_ms": 4.066,
+          "p95_ms": 6.931,
+          "p99_ms": 10.612,
+          "p999_ms": 25.04,
+          "mean_ms": 4.568,
+          "min_ms": 3.142,
+          "max_ms": 183.933,
+          "n_ge_100ms": 2,
+          "n_ge_200ms": 0,
+          "n_ge_300ms": 0,
+          "worst": [
+            {
+              "i": 7,
+              "ms": 183.933
+            },
+            {
+              "i": 1,
+              "ms": 107.946
+            },
+            {
+              "i": 1503,
+              "ms": 35.656
+            },
+            {
+              "i": 2,
+              "ms": 26.747
+            },
+            {
+              "i": 1905,
+              "ms": 25.04
+            },
+            {
+              "i": 3011,
+              "ms": 24
+            },
+            {
+              "i": 1506,
+              "ms": 20.604
+            },
+            {
+              "i": 1138,
+              "ms": 20.105
+            }
+          ]
+        },
+        "call_errors": 0,
+        "task_success_ok": true,
+        "task_success_rate": 1,
+        "http_perf": {
+          "gc_event_count": 0,
+          "gc_max_ms": 0,
+          "gc_sum_ms": 0,
+          "eld_max_ms": 0,
+          "eld_p99_max_ms": 0,
+          "summary_last": null
+        },
+        "http_layer": {
+          "auth_mode": "noAuth",
+          "skip_auth": false,
+          "otel": false,
+          "session_idle_ms": 0,
+          "audit": true,
+          "skip_prune": false,
+          "skip_als": false,
+          "skip_payments": true,
+          "skip_graphql": true,
+          "loki_url": false
+        },
+        "http_layer_banner": "[clawql-http-layer] banner auth_mode=noAuth skip_auth=0 otel=0 session_idle_ms=0 audit=1 skip_prune=0 skip_als=0 skip_payments=1 skip_graphql=1 http_perf=0 loki_url=0 events=0",
+        "slow_flow_gc_correlation": {
+          "slow_flow_count": 11,
+          "slow_flows_with_gc": 0,
+          "slow_flows_with_eld": 0,
+          "note": "Counts slow flows whose wall-clock window overlaps a logged GC/ELD event (±50ms)."
+        },
+        "slow_flows_top": [
+          {
+            "flow": 1,
+            "ms": 415.9,
+            "t_iso": "2026-10-13T23:10:05.089Z",
+            "t_end_iso": "2026-10-13T23:10:05.505Z"
+          },
+          {
+            "flow": 126,
+            "ms": 137,
+            "t_iso": "2026-10-13T23:10:13.388Z",
+            "t_end_iso": "2026-10-13T23:10:13.524Z"
+          },
+          {
+            "flow": 42,
+            "ms": 101.3,
+            "t_iso": "2026-10-13T23:10:08.332Z",
+            "t_end_iso": "2026-10-13T23:10:08.433Z"
+          },
+          {
+            "flow": 159,
+            "ms": 99,
+            "t_iso": "2026-10-13T23:10:15.284Z",
+            "t_end_iso": "2026-10-13T23:10:15.383Z"
+          },
+          {
+            "flow": 32,
+            "ms": 86.6,
+            "t_iso": "2026-10-13T23:10:07.686Z",
+            "t_end_iso": "2026-10-13T23:10:07.773Z"
+          },
+          {
+            "flow": 9,
+            "ms": 85.8,
+            "t_iso": "2026-10-13T23:10:06.062Z",
+            "t_end_iso": "2026-10-13T23:10:06.148Z"
+          },
+          {
+            "flow": 251,
+            "ms": 85.5,
+            "t_iso": "2026-10-13T23:10:19.976Z",
+            "t_end_iso": "2026-10-13T23:10:20.062Z"
+          },
+          {
+            "flow": 2,
+            "ms": 83.7,
+            "t_iso": "2026-10-13T23:10:05.506Z",
+            "t_end_iso": "2026-10-13T23:10:05.590Z"
+          },
+          {
+            "flow": 12,
+            "ms": 83.5,
+            "t_iso": "2026-10-13T23:10:06.292Z",
+            "t_end_iso": "2026-10-13T23:10:06.376Z"
+          },
+          {
+            "flow": 8,
+            "ms": 83.2,
+            "t_iso": "2026-10-13T23:10:05.979Z",
+            "t_end_iso": "2026-10-13T23:10:06.062Z"
+          },
+          {
+            "flow": 7,
+            "ms": 80.2,
+            "t_iso": "2026-10-13T23:10:05.899Z",
+            "t_end_iso": "2026-10-13T23:10:05.979Z"
+          }
+        ],
+        "search_latency_ms": {
+          "n": 4800,
+          "p50_ms": 1.6,
+          "p95_ms": 2.658,
+          "p99_ms": 5.653,
+          "p999_ms": 14.861,
+          "mean_ms": 1.826,
+          "min_ms": 1.207,
+          "max_ms": 172.675,
+          "n_ge_100ms": 1,
+          "n_ge_200ms": 0,
+          "n_ge_300ms": 0,
+          "worst": [
+            {
+              "i": 7,
+              "ms": 172.675
+            },
+            {
+              "i": 1,
+              "ms": 52.923
+            },
+            {
+              "i": 1435,
+              "ms": 16.492
+            },
+            {
+              "i": 1138,
+              "ms": 15.69
+            },
+            {
+              "i": 1905,
+              "ms": 14.861
+            },
+            {
+              "i": 952,
+              "ms": 13.275
+            },
+            {
+              "i": 2230,
+              "ms": 12.447
+            },
+            {
+              "i": 3011,
+              "ms": 11.947
+            }
+          ]
+        },
+        "execute_latency_ms": {
+          "n": 4800,
+          "p50_ms": 2.505,
+          "p95_ms": 4.138,
+          "p99_ms": 7.197,
+          "p999_ms": 15.261,
+          "mean_ms": 2.729,
+          "min_ms": 1.86,
+          "max_ms": 54.965,
+          "n_ge_100ms": 0,
+          "n_ge_200ms": 0,
+          "n_ge_300ms": 0,
+          "worst": [
+            {
+              "i": 1,
+              "ms": 54.965
+            },
+            {
+              "i": 1503,
+              "ms": 29.234
+            },
+            {
+              "i": 2,
+              "ms": 21.228
+            },
+            {
+              "i": 1767,
+              "ms": 15.956
+            },
+            {
+              "i": 2305,
+              "ms": 15.261
+            },
+            {
+              "i": 1504,
+              "ms": 12.45
+            },
+            {
+              "i": 3011,
+              "ms": 12.038
+            },
+            {
+              "i": 1506,
+              "ms": 11.697
+            }
+          ]
+        },
+        "slow_search_top": [
+          {
+            "flow": 1,
+            "turn": 7,
+            "ms": 172.7,
+            "t_iso": "2026-10-13T23:10:05.444Z",
+            "query": "catalog_list_007 partition 7 inventory list entities"
+          },
+          {
+            "flow": 1,
+            "turn": 1,
+            "ms": 52.9,
+            "t_iso": "2026-10-13T23:10:05.142Z",
+            "query": "catalog_list_001 partition 1 inventory list entities"
+          }
+        ],
+        "skip_search": false,
+        "token_rebuild_note": "Classic Layer1 = search+execute schemas; discovery = Σ search hit tokens."
+      }
+    }
+  },
+  "errors": {},
+  "category_win": [
+    "Category story: most efficient governed gateway — multi-turn I/O tokens with equal task success.",
+    "1. Primary model — classic Layer1 once + Σ Layer2 (clients that cache tools/list).",
+    "2. Input side — ClawQL Layer1 is search+execute only; aggregators pay the full fat tools/list once.",
+    "3. Output side — ClawQL gateway fields/where projection; Executor measured path is full payload pass-through.",
+    "4. Re-list-every-turn is secondary sensitivity only (most clients cache; lazy clients shrink aggregators further).",
+    "5. Settled: do not label a hand-written slim-return program as Executor (Both Sides of Context Compression).",
+    "RSS is a loss among serious arms — admit or fix before memory claims."
+  ],
+  "primary_metric": "classic_layer1_once_plus_sum_layer2_with_task_success",
+  "secondary_metric": "tools_list_every_turn_sensitivity",
+  "honesty": [
+    "Fat catalog equal-arm: N MCP tools mirrored as N OpenAPI operationIds.",
+    "PRIMARY tokens: classic Layer1_once + sum(Layer2) with deterministic task_success (tokens from flow 1; spot-stable).",
+    "MT_ITERS=400: each arm completes that many full 12-turn flows on one warm connection.",
+    "Also reports flow e2e + per-turn latency percentiles and RSS (do not drop these for publish).",
+    "direct: no MCP gateway — raw HTTP fat catalog; Layer1=0. Prices token savings vs latency/RSS tax of each gateway.",
+    "SECONDARY: tools_list_every_turn — measured once on flow 1; most clients cache ListTools.",
+    "Executor Layer2 is fat JSON — matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
+    "Do not publish a hand-written slim-return program as Executor.",
+    "clawql_bun: same dist/server.js as clawql; only JS runtime changes.",
+    "executor + executor_v2 share the same runExecutorArm loop and fat fixture (discovery=0).",
+    "Executor 2 removed stdio MCP (`executor mcp` is v1-only) — product transport is HTTP; harness equalization is the shared loop, not pretending v2 has stdio.",
+    "Do not compare Executor v2 latency/RSS to ClawQL Bun stdio as same-topology. Tokens remain comparable.",
+    "ClawQL transport matrix: clawql/clawql_bun (stdio), clawql_http/clawql_http_bun (Streamable HTTP), clawql_grpc/clawql_grpc_bun (gRPC MCP).",
+    "All Streamable HTTP clients skip standalone GET SSE (fetch returns 405) — same filter for ClawQL HTTP, Executor v2, MCPJungle, agentgateway.",
+    "ClawQL HTTP server also sets CLAWQL_MCP_DISABLE_STANDALONE_SSE=1; client filter equalizes peers that would otherwise open SSE.",
+    "gRPC is ClawQL-only on this board — Executor / MCPJungle / agentgateway have no gRPC MCP peer here.",
+    "RUNTIME FLAGS (even across all ClawQL arms): Node --max-old-space-size=512; Bun --smol. See config.runtime_flags. Memory deltas vs older default-heap boards partly reflect these knobs.",
+    "gRPC Layer1 is 16 tokens below stdio/HTTP (281 vs 297): protobuf Tool omits SDK execution.taskSupport=forbidden on search+execute. Envelope-only — CallTool result bodies match; not a dropped content field.",
+    "RPCs/turn: ClawQL = 2 (search+execute); peers = 1. Publish ms/call = turn_p50 / rpcs_per_turn. Session latency gap is mostly the second call, which buys projection token savings.",
+    "LATENCY CLAIMS (HTTP-to-HTTP): per-call overhead on par with Go/Rust gateways; ClawQL Bun HTTP median ~2.3× agentgateway and >2× faster than Executor v2. Do not claim '3×–9× tighter tail'.",
+    "Publish board must be one interleaved run of every arm — do not stitch rows from separate solo runs (p999 drifts across sessions).",
+    "VIDEO: latency section uses same-transport HTTP numbers only (ClawQL HTTP vs Executor v2 / MCPJungle / agentgateway). Replace '3× to 9× tighter tail' with per-call parity + >2× vs Executor v2.",
+    "NEXT WIN: skip search when the agent already knows the operation (execute by ID) — halves remaining latency gap and cuts discovery tokens on repeat turns.",
+    "Executor discovery=0 on both versions (harness-authored execute). ClawQL charges search each turn.",
+    "ContextForge/MetaMCP off publish board by default.",
+    "Pets interleaved p999 board remains gateway-multi-cmp-10k.json / ts7-*-10k.json.",
+    "RSS is a loss among serious arms — admit plainly. Classify Executor v2 climb via rss_trend before 'Nx heavier' headlines.",
+    "p999 STATUS: harness_isolated_pending_full_board — harness isolated (separate mock + taskset); p999 still under rework until full interleaved 10k. Cite tokens, per-call overhead (ms/call), medians, and memory. Do not headline p999 until a full interleaved board lands with separate mock/client/gateway and dedicated cores (or leave p999 labeled under rework).",
+    "CORE LAYOUT: enabled=true nproc=4 mock=0 gateway=1-2 client=3. Mock is a separate process (not the client event loop).",
+    "MT_UPSTREAM_LATENCY_MS unset — mock responds ASAP (isolation board). Optional 20-100ms arm after tails republish."
+  ]
+}

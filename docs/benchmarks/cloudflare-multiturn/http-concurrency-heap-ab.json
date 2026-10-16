@@ -1,0 +1,351 @@
+{
+  "measuredAt": "2026-10-15T22:32:33.383400Z",
+  "topology": "A_single_instance_http_multiplex",
+  "claim_rules": [
+    "One Streamable HTTP MCP process per arm; N concurrent clients.",
+    "Node uncapped/256/384: same-session REPS=3 (http-concurrency-node-variance-3x.json).",
+    "Bun / MCPJungle / agentgateway: same-session REPS=3 (http-concurrency-peers-bun-variance-3x.json).",
+    "agentgateway_tuned: AG_TUNED=1 smoke (1\u00d7) \u2014 did not beat stock.",
+    "Do not claim ~30% heap-cap concurrency tax \u2014 prior uncapped 44 was an outlier."
+  ],
+  "slo": {
+    "break_p99_ms": 100,
+    "break_error_rate": 0.02,
+    "step_ms": 3000,
+    "warmup": 4,
+    "hard_max": 256,
+    "reps_node": 3,
+    "reps_peers": 1,
+    "reps_peers_bun": 3
+  },
+  "operationId": "dns-records-for-a-zone-list-dns-records",
+  "ranges": {
+    "clawql_node_uncapped": {
+      "reps": [
+        31,
+        30,
+        31
+      ],
+      "min": 30,
+      "max": 31,
+      "median": 31
+    },
+    "clawql_node_256": {
+      "reps": [
+        29,
+        27,
+        27
+      ],
+      "min": 27,
+      "max": 29,
+      "median": 27
+    },
+    "clawql_node_384": {
+      "reps": [
+        30,
+        28,
+        25
+      ],
+      "min": 25,
+      "max": 30,
+      "median": 28
+    },
+    "clawql_bun_smol": {
+      "reps": [
+        87,
+        84,
+        79
+      ],
+      "min": 79,
+      "max": 87,
+      "median": 84
+    },
+    "mcpjungle": {
+      "reps": [
+        31,
+        31,
+        31
+      ],
+      "min": 31,
+      "max": 31,
+      "median": 31
+    },
+    "agentgateway": {
+      "reps": [
+        34,
+        38,
+        38
+      ],
+      "min": 34,
+      "max": 38,
+      "median": 38
+    },
+    "agentgateway_tuned": {
+      "reps": [
+        17
+      ],
+      "min": 17,
+      "max": 17,
+      "median": 17
+    }
+  },
+  "board": {
+    "clawql_node_uncapped_rep1": {
+      "sustained": 31,
+      "first_break": 32,
+      "break_reason": "p99 119.8ms",
+      "runtime": "node",
+      "node_max_old_space_mb": null,
+      "bun_smol": null,
+      "rep": 1
+    },
+    "clawql_node_256_rep1": {
+      "sustained": 29,
+      "first_break": 30,
+      "break_reason": "p99 106.0ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 256,
+      "bun_smol": null,
+      "rep": 1
+    },
+    "clawql_node_384_rep1": {
+      "sustained": 30,
+      "first_break": 31,
+      "break_reason": "p99 142.1ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 384,
+      "bun_smol": null,
+      "rep": 1
+    },
+    "clawql_node_uncapped_rep2": {
+      "sustained": 30,
+      "first_break": 31,
+      "break_reason": "p99 101.7ms",
+      "runtime": "node",
+      "node_max_old_space_mb": null,
+      "bun_smol": null,
+      "rep": 2
+    },
+    "clawql_node_256_rep2": {
+      "sustained": 27,
+      "first_break": 28,
+      "break_reason": "p99 102.1ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 256,
+      "bun_smol": null,
+      "rep": 2
+    },
+    "clawql_node_384_rep2": {
+      "sustained": 28,
+      "first_break": 29,
+      "break_reason": "p99 105.2ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 384,
+      "bun_smol": null,
+      "rep": 2
+    },
+    "clawql_node_uncapped_rep3": {
+      "sustained": 31,
+      "first_break": 32,
+      "break_reason": "p99 131.3ms",
+      "runtime": "node",
+      "node_max_old_space_mb": null,
+      "bun_smol": null,
+      "rep": 3
+    },
+    "clawql_node_256_rep3": {
+      "sustained": 27,
+      "first_break": 28,
+      "break_reason": "p99 107.8ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 256,
+      "bun_smol": null,
+      "rep": 3
+    },
+    "clawql_node_384_rep3": {
+      "sustained": 25,
+      "first_break": 26,
+      "break_reason": "p99 119.5ms",
+      "runtime": "node",
+      "node_max_old_space_mb": 384,
+      "bun_smol": null,
+      "rep": 3
+    },
+    "clawql_bun_smol_rep1": {
+      "sustained": 87,
+      "first_break": 88,
+      "break_reason": "p99 117.8ms",
+      "runtime": "bun",
+      "node_max_old_space_mb": null,
+      "bun_smol": true,
+      "rep": 1
+    },
+    "mcpjungle_rep1": {
+      "sustained": 31,
+      "first_break": 32,
+      "break_reason": "p99 103.0ms",
+      "runtime": "go",
+      "node_max_old_space_mb": null,
+      "bun_smol": null,
+      "rep": 1
+    },
+    "agentgateway_rep1": {
+      "sustained": 34,
+      "first_break": 35,
+      "break_reason": "p99 277.1ms",
+      "runtime": "rust",
+      "node_max_old_space_mb": null,
+      "bun_smol": null,
+      "rep": 1
+    },
+    "clawql_bun_smol_rep2": {
+      "sustained": 84,
+      "first_break": 85,
+      "break_reason": "p99 100.8ms",
+      "runtime": "bun",
+      "node_max_old_space_mb": null,
+      "bun_smol": true,
+      "rep": 2
+    },
+    "mcpjungle_rep2": {
+      "sustained": 31,
+      "first_break": 32,
+      "break_reason": "p99 104.4ms",
+      "runtime": "go",
+      "node_max_old_space_mb": null,
+      "bun_smol": null,
+      "rep": 2
+    },
+    "agentgateway_rep2": {
+      "sustained": 38,
+      "first_break": 39,
+      "break_reason": "p99 115.3ms",
+      "runtime": "rust",
+      "node_max_old_space_mb": null,
+      "bun_smol": null,
+      "rep": 2
+    },
+    "clawql_bun_smol_rep3": {
+      "sustained": 79,
+      "first_break": 80,
+      "break_reason": "p99 104.1ms",
+      "runtime": "bun",
+      "node_max_old_space_mb": null,
+      "bun_smol": true,
+      "rep": 3
+    },
+    "mcpjungle_rep3": {
+      "sustained": 31,
+      "first_break": 32,
+      "break_reason": "p99 103.3ms",
+      "runtime": "go",
+      "node_max_old_space_mb": null,
+      "bun_smol": null,
+      "rep": 3
+    },
+    "agentgateway_rep3": {
+      "sustained": 38,
+      "first_break": 39,
+      "break_reason": "p99 637.9ms",
+      "runtime": "rust",
+      "node_max_old_space_mb": null,
+      "bun_smol": null,
+      "rep": 3
+    },
+    "agentgateway_tuned": {
+      "sustained": 17,
+      "first_break": 18,
+      "break_reason": "p99 5915.9ms",
+      "runtime": "rust",
+      "node_max_old_space_mb": null,
+      "bun_smol": null,
+      "rep": 1
+    }
+  },
+  "interpretation": {
+    "heap_cap_vs_concurrency": "within_run_band \u2014 prior single-pass uncapped 44 is an outlier; REPS=3 uncapped [31, 30, 31] [30,31], 256 [29, 27, 27] [27,29], 384 [30, 28, 25] [25,30]. 256 sits 1\u20134 clients under uncapped (not ~30%). 384 overlaps uncapped and should be unbound vs ~296 MB plateau \u2014 small flag/GC nudge possible, not a concurrency tax. Do not claim cap costs ~30%.",
+    "machine_range_check": "cap_or_flag_effect \u2014 256 [27,29] below uncapped [30,31] across 3 reps (384 [25,30])",
+    "prior_single_pass_uncapped_44": "Retracted as concurrency baseline \u2014 outside REPS=3 uncapped band [30,31].",
+    "bun_vs_node": "bun_holds_more \u2014 Bun median 84 [79,87] vs Node256 median 27 [27,29]",
+    "agentgateway_tuned_vs_stock": "tuned_did_not_help \u2014 AG_TUNED sustained 17 < stock prior 24; publishing stock 24 is not unfair on knobs (invite maintainers still).",
+    "vs_peers_http": {
+      "clawql_node_uncapped": {
+        "reps": [
+          31,
+          30,
+          31
+        ],
+        "min": 30,
+        "max": 31,
+        "median": 31
+      },
+      "clawql_node_256": {
+        "reps": [
+          29,
+          27,
+          27
+        ],
+        "min": 27,
+        "max": 29,
+        "median": 27
+      },
+      "clawql_node_384": {
+        "reps": [
+          30,
+          28,
+          25
+        ],
+        "min": 25,
+        "max": 30,
+        "median": 28
+      },
+      "clawql_bun_smol": {
+        "reps": [
+          87,
+          84,
+          79
+        ],
+        "min": 79,
+        "max": 87,
+        "median": 84
+      },
+      "mcpjungle": {
+        "reps": [
+          31,
+          31,
+          31
+        ],
+        "min": 31,
+        "max": 31,
+        "median": 31
+      },
+      "agentgateway": {
+        "reps": [
+          34,
+          38,
+          38
+        ],
+        "min": 34,
+        "max": 38,
+        "median": 38
+      },
+      "agentgateway_tuned": {
+        "reps": [
+          17
+        ],
+        "min": 17,
+        "max": 17,
+        "median": 17
+      },
+      "note": "All primary arms REPS=3 except AG_TUNED smoke (1\u00d7)."
+    },
+    "cloud_profile_hint": "Bun --smol remains Cloud HTTP default when its REPS=3 range stays well above peers. Node lean 256 stays the memory default; no ~30% concurrency tax.",
+    "related": "Open HTTP tail stalls (300\u2013700 ms) likely amplify under concurrency \u2014 same investigation track.",
+    "bun_vs_peers": "bun_holds_more \u2014 Bun [79,87] median 84 vs MJ [31,31] median 31 vs AG [34,38] median 38 (all REPS=3)"
+  },
+  "artifacts": {
+    "node_variance_3x": "http-concurrency-node-variance-3x.json",
+    "peers_bun_variance_3x": "http-concurrency-peers-bun-variance-3x.json",
+    "ag_tuned": "http-concurrency-ag-tuned.json"
+  }
+}

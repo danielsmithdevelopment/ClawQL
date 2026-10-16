@@ -1,0 +1,549 @@
+{
+  "stracePath": "/opt/cursor/artifacts/stall-n1200.strace",
+  "min_ms": 50,
+  "long_call_count": 2790,
+  "by_syscall": {
+    "futex": 2790
+  },
+  "top": [
+    {
+      "pid": 408502,
+      "t": "06:55:49.347025",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 63495.65
+    },
+    {
+      "pid": 408503,
+      "t": "06:55:49.348792",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 63491.25
+    },
+    {
+      "pid": 408504,
+      "t": "06:55:49.348887",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 63489.53
+    },
+    {
+      "pid": 408501,
+      "t": "06:55:49.349107",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 63489.35
+    },
+    {
+      "pid": 408501,
+      "t": "06:54:44.878543",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 1009.76
+    },
+    {
+      "pid": 408503,
+      "t": "06:54:44.885812",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 997.22
+    },
+    {
+      "pid": 408502,
+      "t": "06:54:44.886089",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 995.87
+    },
+    {
+      "pid": 408504,
+      "t": "06:54:44.880775",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 992.45
+    },
+    {
+      "pid": 408497,
+      "t": "06:54:43.869356",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 274.4
+    },
+    {
+      "pid": 408496,
+      "t": "06:54:43.868636",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 274.06
+    },
+    {
+      "pid": 408498,
+      "t": "06:54:43.869651",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 273.35
+    },
+    {
+      "pid": 408496,
+      "t": "06:54:43.568284",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 216.73
+    },
+    {
+      "pid": 408499,
+      "t": "06:54:43.556612",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 205.35
+    },
+    {
+      "pid": 408499,
+      "t": "06:54:44.163952",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 198.92
+    },
+    {
+      "pid": 408497,
+      "t": "06:54:44.169293",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 185.22
+    },
+    {
+      "pid": 408498,
+      "t": "06:54:45.409984",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 174.22
+    },
+    {
+      "pid": 408499,
+      "t": "06:54:45.404846",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 172.69
+    },
+    {
+      "pid": 408498,
+      "t": "06:54:43.591015",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 160.88
+    },
+    {
+      "pid": 408502,
+      "t": "06:54:45.780456",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 158.2
+    },
+    {
+      "pid": 408498,
+      "t": "06:54:58.254766",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 157.64
+    },
+    {
+      "pid": 408497,
+      "t": "06:54:58.254435",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 157.5
+    },
+    {
+      "pid": 408501,
+      "t": "06:54:45.778283",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 156.09
+    },
+    {
+      "pid": 408504,
+      "t": "06:54:45.776470",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 155.93
+    },
+    {
+      "pid": 408503,
+      "t": "06:54:45.773630",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 153.13
+    },
+    {
+      "pid": 408499,
+      "t": "06:54:44.636052",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 152.2
+    },
+    {
+      "pid": 408496,
+      "t": "06:54:58.247115",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 150.21
+    },
+    {
+      "pid": 408496,
+      "t": "06:55:12.131415",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 149.75
+    },
+    {
+      "pid": 408498,
+      "t": "06:55:12.131252",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 149.62
+    },
+    {
+      "pid": 408497,
+      "t": "06:55:12.267935",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 148.13
+    },
+    {
+      "pid": 408499,
+      "t": "06:55:12.267797",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 148.04
+    },
+    {
+      "pid": 408497,
+      "t": "06:54:43.591115",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 143.95
+    },
+    {
+      "pid": 408499,
+      "t": "06:54:43.869950",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 143.38
+    },
+    {
+      "pid": 408499,
+      "t": "06:54:44.371922",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 141.25
+    },
+    {
+      "pid": 408498,
+      "t": "06:54:44.106001",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 141.04
+    },
+    {
+      "pid": 408498,
+      "t": "06:54:44.636583",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 137.68
+    },
+    {
+      "pid": 408498,
+      "t": "06:54:47.364430",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 137.28
+    },
+    {
+      "pid": 408496,
+      "t": "06:55:12.268508",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 136.83
+    },
+    {
+      "pid": 408498,
+      "t": "06:55:12.268279",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 136.63
+    },
+    {
+      "pid": 408497,
+      "t": "06:55:12.117238",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 136.35
+    },
+    {
+      "pid": 408499,
+      "t": "06:55:12.117258",
+      "syscall": "futex",
+      "args": "(resumed)",
+      "result": "0",
+      "duration_ms": 135.9
+    }
+  ],
+  "client_slows": [
+    {
+      "client_ms": 38.7,
+      "t0": "2026-10-13T06:54:45.067Z",
+      "ttfb_ms": "38.2",
+      "complete_ms": "38.7",
+      "hold_ms": "0.5",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 38.7ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:54:45.067Z t1=2026-10-13T06:54:45.107Z ttfb_ms=38.2 complete_ms=38.7 hold_ms=0.5 content_type=application/json body_bytes=165 server_ms=- server_t0=2026-10-13T06:54:45.088Z connects_delta=1 connects_total=1"
+    },
+    {
+      "client_ms": 144,
+      "t0": "2026-10-13T06:54:45.226Z",
+      "ttfb_ms": "143.9",
+      "complete_ms": "144.0",
+      "hold_ms": "0.2",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 144.0ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:54:45.226Z t1=2026-10-13T06:54:45.370Z ttfb_ms=143.9 complete_ms=144.0 hold_ms=0.2 content_type=application/json body_bytes=2289 server_ms=- server_t0=2026-10-13T06:54:45.232Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 61.1,
+      "t0": "2026-10-13T06:54:45.380Z",
+      "ttfb_ms": "60.9",
+      "complete_ms": "61.1",
+      "hold_ms": "0.2",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 61.1ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:54:45.380Z t1=2026-10-13T06:54:45.441Z ttfb_ms=60.9 complete_ms=61.1 hold_ms=0.2 content_type=application/json body_bytes=2401 server_ms=- server_t0=2026-10-13T06:54:45.416Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 31.9,
+      "t0": "2026-10-13T06:54:45.456Z",
+      "ttfb_ms": "31.8",
+      "complete_ms": "31.9",
+      "hold_ms": "0.1",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 31.9ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:54:45.456Z t1=2026-10-13T06:54:45.488Z ttfb_ms=31.8 complete_ms=31.9 hold_ms=0.1 content_type=application/json body_bytes=2401 server_ms=- server_t0=2026-10-13T06:54:45.469Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 155.5,
+      "t0": "2026-10-13T06:54:45.624Z",
+      "ttfb_ms": "155.4",
+      "complete_ms": "155.5",
+      "hold_ms": "0.1",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 155.5ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:54:45.624Z t1=2026-10-13T06:54:45.779Z ttfb_ms=155.4 complete_ms=155.5 hold_ms=0.1 content_type=application/json body_bytes=2402 server_ms=- server_t0=2026-10-13T06:54:45.777Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 21.7,
+      "t0": "2026-10-13T06:54:48.930Z",
+      "ttfb_ms": "21.6",
+      "complete_ms": "21.7",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 21.7ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:54:48.930Z t1=2026-10-13T06:54:48.951Z ttfb_ms=21.6 complete_ms=21.7 hold_ms=0 content_type=application/json body_bytes=2403 server_ms=- server_t0=2026-10-13T06:54:48.934Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 28.5,
+      "t0": "2026-10-13T06:54:51.978Z",
+      "ttfb_ms": "28.5",
+      "complete_ms": "28.5",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 28.5ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:54:51.978Z t1=2026-10-13T06:54:52.006Z ttfb_ms=28.5 complete_ms=28.5 hold_ms=0 content_type=application/json body_bytes=2404 server_ms=- server_t0=2026-10-13T06:54:51.988Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 20.8,
+      "t0": "2026-10-13T06:54:53.747Z",
+      "ttfb_ms": "20.7",
+      "complete_ms": "20.8",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 20.8ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:54:53.747Z t1=2026-10-13T06:54:53.768Z ttfb_ms=20.7 complete_ms=20.8 hold_ms=0 content_type=application/json body_bytes=2404 server_ms=- server_t0=2026-10-13T06:54:53.765Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 23,
+      "t0": "2026-10-13T06:54:54.767Z",
+      "ttfb_ms": "23.0",
+      "complete_ms": "23.0",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 23.0ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:54:54.767Z t1=2026-10-13T06:54:54.790Z ttfb_ms=23.0 complete_ms=23.0 hold_ms=0 content_type=application/json body_bytes=2404 server_ms=- server_t0=2026-10-13T06:54:54.779Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 22.3,
+      "t0": "2026-10-13T06:54:54.947Z",
+      "ttfb_ms": "22.3",
+      "complete_ms": "22.3",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 22.3ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:54:54.947Z t1=2026-10-13T06:54:54.969Z ttfb_ms=22.3 complete_ms=22.3 hold_ms=0 content_type=application/json body_bytes=2404 server_ms=- server_t0=2026-10-13T06:54:54.952Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 23.3,
+      "t0": "2026-10-13T06:54:57.578Z",
+      "ttfb_ms": "23.3",
+      "complete_ms": "23.3",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 23.3ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:54:57.578Z t1=2026-10-13T06:54:57.601Z ttfb_ms=23.3 complete_ms=23.3 hold_ms=0 content_type=application/json body_bytes=2292 server_ms=- server_t0=2026-10-13T06:54:57.582Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 47.1,
+      "t0": "2026-10-13T06:54:58.165Z",
+      "ttfb_ms": "47.0",
+      "complete_ms": "47.1",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 47.1ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:54:58.165Z t1=2026-10-13T06:54:58.212Z ttfb_ms=47.0 complete_ms=47.1 hold_ms=0 content_type=application/json body_bytes=2454 server_ms=- server_t0=2026-10-13T06:54:58.166Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 21,
+      "t0": "2026-10-13T06:55:01.966Z",
+      "ttfb_ms": "21.0",
+      "complete_ms": "21.0",
+      "hold_ms": "0.1",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 21.0ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:55:01.966Z t1=2026-10-13T06:55:01.987Z ttfb_ms=21.0 complete_ms=21.0 hold_ms=0.1 content_type=application/json body_bytes=2404 server_ms=- server_t0=2026-10-13T06:55:01.984Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 20.7,
+      "t0": "2026-10-13T06:55:08.498Z",
+      "ttfb_ms": "20.7",
+      "complete_ms": "20.7",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 20.7ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:55:08.498Z t1=2026-10-13T06:55:08.519Z ttfb_ms=20.7 complete_ms=20.7 hold_ms=0 content_type=application/json body_bytes=2404 server_ms=- server_t0=2026-10-13T06:55:08.499Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 21.6,
+      "t0": "2026-10-13T06:55:11.315Z",
+      "ttfb_ms": "21.6",
+      "complete_ms": "21.6",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 21.6ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:55:11.315Z t1=2026-10-13T06:55:11.336Z ttfb_ms=21.6 complete_ms=21.6 hold_ms=0 content_type=application/json body_bytes=2405 server_ms=- server_t0=2026-10-13T06:55:11.317Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 22.1,
+      "t0": "2026-10-13T06:55:12.149Z",
+      "ttfb_ms": "22.0",
+      "complete_ms": "22.1",
+      "hold_ms": "0.1",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 22.1ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:55:12.149Z t1=2026-10-13T06:55:12.171Z ttfb_ms=22.0 complete_ms=22.1 hold_ms=0.1 content_type=application/json body_bytes=1410 server_ms=- server_t0=2026-10-13T06:55:12.169Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 31,
+      "t0": "2026-10-13T06:55:13.229Z",
+      "ttfb_ms": "31.0",
+      "complete_ms": "31.0",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 31.0ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:55:13.229Z t1=2026-10-13T06:55:13.260Z ttfb_ms=31.0 complete_ms=31.0 hold_ms=0 content_type=application/json body_bytes=2405 server_ms=- server_t0=2026-10-13T06:55:13.238Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 21.3,
+      "t0": "2026-10-13T06:55:17.758Z",
+      "ttfb_ms": "21.3",
+      "complete_ms": "21.3",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 21.3ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:55:17.758Z t1=2026-10-13T06:55:17.779Z ttfb_ms=21.3 complete_ms=21.3 hold_ms=0 content_type=application/json body_bytes=1410 server_ms=- server_t0=2026-10-13T06:55:17.778Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 20.6,
+      "t0": "2026-10-13T06:55:17.983Z",
+      "ttfb_ms": "20.6",
+      "complete_ms": "20.6",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 20.6ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:55:17.983Z t1=2026-10-13T06:55:18.004Z ttfb_ms=20.6 complete_ms=20.6 hold_ms=0 content_type=application/json body_bytes=1410 server_ms=- server_t0=2026-10-13T06:55:17.984Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 21.3,
+      "t0": "2026-10-13T06:55:23.962Z",
+      "ttfb_ms": "21.3",
+      "complete_ms": "21.3",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 21.3ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:55:23.962Z t1=2026-10-13T06:55:23.983Z ttfb_ms=21.3 complete_ms=21.3 hold_ms=0 content_type=application/json body_bytes=1410 server_ms=- server_t0=2026-10-13T06:55:23.964Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 21.5,
+      "t0": "2026-10-13T06:55:28.815Z",
+      "ttfb_ms": "21.4",
+      "complete_ms": "21.5",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 21.5ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:55:28.815Z t1=2026-10-13T06:55:28.836Z ttfb_ms=21.4 complete_ms=21.5 hold_ms=0 content_type=application/json body_bytes=2405 server_ms=- server_t0=2026-10-13T06:55:28.820Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 26.9,
+      "t0": "2026-10-13T06:55:31.874Z",
+      "ttfb_ms": "26.8",
+      "complete_ms": "26.9",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 26.9ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:55:31.874Z t1=2026-10-13T06:55:31.901Z ttfb_ms=26.8 complete_ms=26.9 hold_ms=0 content_type=application/json body_bytes=2405 server_ms=- server_t0=2026-10-13T06:55:31.880Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 21.7,
+      "t0": "2026-10-13T06:55:33.381Z",
+      "ttfb_ms": "21.6",
+      "complete_ms": "21.7",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 21.7ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:55:33.381Z t1=2026-10-13T06:55:33.403Z ttfb_ms=21.6 complete_ms=21.7 hold_ms=0 content_type=application/json body_bytes=2405 server_ms=- server_t0=2026-10-13T06:55:33.385Z connects_delta=0 connects_total=1"
+    },
+    {
+      "client_ms": 40.8,
+      "t0": "2026-10-13T06:55:40.944Z",
+      "ttfb_ms": "40.8",
+      "complete_ms": "40.8",
+      "hold_ms": "0",
+      "content_type": "application/json",
+      "line": "[mt-client-slow] 40.8ms POST http://127.0.0.1:42741/mcp t0=2026-10-13T06:55:40.944Z t1=2026-10-13T06:55:40.985Z ttfb_ms=40.8 complete_ms=40.8 hold_ms=0 content_type=application/json body_bytes=1410 server_ms=- server_t0=2026-10-13T06:55:40.958Z connects_delta=0 connects_total=1"
+    }
+  ],
+  "note": "Long epoll_wait/futex alone is idle. Long write/send* during a client slow window implicates response path. hold_ms ≫ ttfb_ms with content_type text/event-stream ⇒ stream not closed promptly."
+}

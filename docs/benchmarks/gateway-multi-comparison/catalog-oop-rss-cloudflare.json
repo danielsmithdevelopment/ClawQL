@@ -1,0 +1,126 @@
+{
+  "measuredAt": "2026-10-15T17:13:16.431Z",
+  "spec": "/workspace/providers/cloudflare/openapi.yaml",
+  "spec_bytes": 21672520,
+  "arms": {
+    "inprocess": {
+      "label": "inprocess",
+      "buildMode": "inprocess",
+      "loadDb": false,
+      "pid": 785316,
+      "home": "/tmp/cat-oop-inprocess-785304-1792084396454",
+      "smaps": {
+        "rss_mb": 1193.21,
+        "anonymous_mb": 1114.46,
+        "pss_mb": 1125.07
+      },
+      "catalog_sqlite_bytes": 4063232,
+      "banners": {
+        "oop_build": false,
+        "oop_wrote": false,
+        "wrote_inprocess": true,
+        "load_db": false,
+        "loaded_ops": "2966"
+      },
+      "log_tail": [
+        "[2026-10-15T17:13:25.251Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:25.251Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:25.251Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:25.251Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:25.251Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:25.251Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:25.251Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:25.251Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:25.251Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:25.251Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:25.251Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:25.251Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:25.251Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[clawql-mcp-http] Skipping /graphql — OpenAPI→GraphQL build failed: Cannot get field 'additionalProperties' from type 'query_workers_ai_get_model_schema_result_input'. Field does not exist.",
+        "[clawql-mcp] Ready — single-spec; 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)",
+        "[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:38491/mcp"
+      ]
+    },
+    "oop_first_boot": {
+      "label": "oop-first",
+      "buildMode": "oop",
+      "loadDb": false,
+      "pid": 785360,
+      "home": "/tmp/cat-oop-oop-first-785304-1792084406551",
+      "smaps": {
+        "rss_mb": 434.23,
+        "anonymous_mb": 355.34,
+        "pss_mb": 363.13
+      },
+      "catalog_sqlite_bytes": 4063232,
+      "banners": {
+        "oop_build": true,
+        "oop_wrote": true,
+        "wrote_inprocess": false,
+        "load_db": true,
+        "loaded_ops": "2966"
+      },
+      "log_tail": [
+        "[2026-10-15T17:13:36.394Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:36.394Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:36.394Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:36.394Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:36.394Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:36.394Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:36.394Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:36.394Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:36.394Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:36.394Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:36.394Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:36.394Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:36.394Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[clawql-mcp-http] Skipping /graphql — OpenAPI→GraphQL build failed: Cannot get field 'additionalProperties' from type 'query_workers_ai_get_model_schema_result_input'. Field does not exist.",
+        "[clawql-mcp] Ready — single-spec; 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)",
+        "[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:40483/mcp"
+      ]
+    },
+    "loaddb_only": {
+      "label": "loaddb",
+      "buildMode": "oop",
+      "loadDb": true,
+      "pid": 785452,
+      "home": "/tmp/cat-oop-loaddb-785304-1792084417696",
+      "smaps": {
+        "rss_mb": 469.68,
+        "anonymous_mb": 390.85,
+        "pss_mb": 397.48
+      },
+      "catalog_sqlite_bytes": 4063232,
+      "banners": {
+        "oop_build": false,
+        "oop_wrote": false,
+        "wrote_inprocess": false,
+        "load_db": true,
+        "loaded_ops": "2966"
+      },
+      "log_tail": [
+        "[2026-10-15T17:13:39.797Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:39.797Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:39.797Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:39.797Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:39.797Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:39.797Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:39.797Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:39.797Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:39.797Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:39.797Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:39.797Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:39.797Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[2026-10-15T17:13:39.797Z] WARN  [\u001b[1mgetJSONSchemaOptionsFromOpenAPIOptions\u001b[0m] \u001b[48:5:166m Other styles including undefined of query parameters are not supported yet. \u001b[0m",
+        "[clawql-mcp-http] Skipping /graphql — OpenAPI→GraphQL build failed: Cannot get field 'additionalProperties' from type 'query_workers_ai_get_model_schema_result_input'. Field does not exist.",
+        "[clawql-mcp] Ready — single-spec; 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)",
+        "[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:37999/mcp"
+      ]
+    }
+  },
+  "delta_mb": {
+    "oop_vs_inprocess_anon": -759.12,
+    "loaddb_vs_inprocess_anon": -723.61
+  },
+  "interpretation": "oop_first_boot should show oop_build+load_db banners and anon near loaddb_only. inprocess may keep higher anon after parse even with persist-then-slim (JS rarely returns RSS)."
+}

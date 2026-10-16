@@ -55,7 +55,20 @@ const OUT_DIR = process.env.CF_MT_OUT_DIR || join(ROOT, "docs/benchmarks/cloudfl
 const ITERS = Math.max(1, Number(process.env.CF_MT_ITERS || 20) || 20);
 const REPS = Math.max(1, Number(process.env.CF_MT_REPS || 1) || 1);
 const LATENCY = process.env.MT_UPSTREAM_LATENCY || "0";
-const IS_PUBLISH_BOARD = ITERS >= 10000 && REPS >= 3;
+/** Force board-* prefix when ITERS≥10000 (e.g. single-rep recovery after a crashed publish run). */
+const FORCE_PUBLISH = ["1", "true", "yes"].includes(
+  (process.env.CF_MT_PUBLISH ?? "").trim().toLowerCase()
+);
+const IS_PUBLISH_BOARD = ITERS >= 10000 && (REPS >= 3 || FORCE_PUBLISH);
+/** First rep index written to board-rep{N}-… (default 1). Use with CF_MT_REPS=1 to recover rep 3. */
+const REP_START = Math.max(1, Number(process.env.CF_MT_REP_START || 1) || 1);
+/**
+ * When false (default), a failed session is counted and the arm continues so error_rate
+ * lands on the board. Set CF_MT_ABORT_ON_ERROR=1 to restore fail-fast (old behavior).
+ */
+const ABORT_ON_ERROR = ["1", "true", "yes"].includes(
+  (process.env.CF_MT_ABORT_ON_ERROR ?? "").trim().toLowerCase()
+);
 const ARMS = (
   process.env.CF_MT_ARMS ||
   "direct,clawql_default,clawql_compact_search,clawql_known_op,clawql_program,executor_v2,mcpjungle,agentgateway,cloudflare_codemode"
@@ -162,21 +175,103 @@ function smapsRollup(pid) {
   };
   const rss = get("Rss");
   const anon = get("Anonymous");
+  const pss = get("Pss");
   return {
     rss_mb: rss != null ? rss / 1024 : null,
     anonymous_mb: anon != null ? anon / 1024 : null,
+    pss_mb: pss != null ? pss / 1024 : null,
   };
 }
+function cmdlineOf(pid) {
+  try {
+    return readFileSync(`/proc/${pid}/cmdline`, "utf8").replace(/\0/g, " ").trim().slice(0, 160);
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Sum smaps over the gateway process tree (PPID walk).
+ * MCPJungle/agentgateway must include their REST→MCP stdio child when a
+ * stateful session is open — that child does the OpenAPI work ClawQL does
+ * in-process. Idle MJ (no session) is Go-only (~10–14 MB anon); do not compare
+ * that to ClawQL. Board samples during live sessions.
+ */
 function treeSmaps(rootPid) {
   let rss = 0;
   let anon = 0;
+  let pss = 0;
   for (const pid of processTreePids(rootPid)) {
     const s = smapsRollup(pid);
     if (!s) continue;
     if (s.rss_mb != null) rss += s.rss_mb;
     if (s.anonymous_mb != null) anon += s.anonymous_mb;
+    if (s.pss_mb != null) pss += s.pss_mb;
   }
-  return { rss_mb: Number(rss.toFixed(2)), anonymous_mb: Number(anon.toFixed(2)) };
+  return {
+    rss_mb: Number(rss.toFixed(2)),
+    anonymous_mb: Number(anon.toFixed(2)),
+    pss_mb: Number(pss.toFixed(2)),
+  };
+}
+
+/** Per-PID inventory for fairness audits (gateway + REST→MCP child, etc.). */
+function treeProcessInventory(rootPid) {
+  const processes = [];
+  for (const pid of processTreePids(rootPid)) {
+    const s = smapsRollup(pid);
+    const cmd = cmdlineOf(pid);
+    processes.push({
+      pid,
+      cmd,
+      role: /cf-rest-mcp\.mjs|equal-arm-catalog-mcp\.mjs/.test(cmd)
+        ? "rest_mcp"
+        : /mcpjungle/.test(cmd)
+          ? "mcpjungle_gateway"
+          : /agentgateway/.test(cmd)
+            ? "agentgateway"
+            : /server-http\.js|dist\/server/.test(cmd)
+              ? "clawql_http"
+              : "other",
+      rss_mb: s?.rss_mb ?? null,
+      anonymous_mb: s?.anonymous_mb ?? null,
+      pss_mb: s?.pss_mb ?? null,
+    });
+  }
+  const tree = treeSmaps(rootPid);
+  return {
+    ...tree,
+    process_count: processes.length,
+    has_rest_mcp: processes.some((p) => p.role === "rest_mcp"),
+    processes,
+  };
+}
+
+/** ~100 samples on publish boards (flatness); ~10 on smoke. */
+function memSampleStride(iters) {
+  if (iters >= 1000) return Math.max(1, Math.floor(iters / 100));
+  return Math.max(1, Math.floor(iters / 10));
+}
+function shouldSampleMemory(i, iters) {
+  const stride = memSampleStride(iters);
+  return i === 1 || i === iters || i % stride === 0;
+}
+function memorySeriesFlatness(series) {
+  const anon = (series || []).map((m) => m.anonymous_mb).filter((x) => x != null);
+  if (anon.length < 2) return null;
+  const first = anon[0];
+  const last = anon[anon.length - 1];
+  const min = Math.min(...anon);
+  const max = Math.max(...anon);
+  return {
+    samples: anon.length,
+    anonymous_mb_first: first,
+    anonymous_mb_last: last,
+    anonymous_mb_min: min,
+    anonymous_mb_max: max,
+    anonymous_mb_range: Number((max - min).toFixed(2)),
+    anonymous_mb_drift: Number((last - first).toFixed(2)),
+  };
 }
 
 async function connectHttpMcp(mcpUrl, name) {
@@ -248,7 +343,17 @@ async function startClawql(
   });
   const logPath = join(home, "clawql.log");
   const logFd = openSync(logPath, "w");
-  const child = spawn(process.execPath, [join(ROOT, "dist/server-http.js")], {
+  // Default 256 — heap-vs-anon A/B cut plateau anon ~278→~124 with ~0.2 ms p50 cost
+  // (see memory-plateau.md). Override CLAWQL_NODE_MAX_OLD_SPACE_MB=0 for uncapped.
+  const oldMbRaw = process.env.CLAWQL_NODE_MAX_OLD_SPACE_MB;
+  const oldMb =
+    oldMbRaw === "0" || oldMbRaw === "false"
+      ? null
+      : Math.max(64, Number(oldMbRaw || 256) || 256);
+  const nodeArgs = oldMb
+    ? [`--max-old-space-size=${oldMb}`, join(ROOT, "dist/server-http.js")]
+    : [join(ROOT, "dist/server-http.js")];
+  const child = spawn(process.execPath, nodeArgs, {
     env,
     stdio: ["ignore", logFd, logFd],
   });
@@ -567,7 +672,19 @@ async function runRestSession(baseUrl, expectations, armId) {
   return summarizeSession(armId, ok, t0, steps);
 }
 
-function summarizeSession(armId, ok, t0, steps) {
+function classifyBoardError(err) {
+  const msg = String(err?.message || err || "");
+  if (/HTTP 502|502/.test(msg)) return "http_502";
+  if (/HTTP 503|503/.test(msg)) return "http_503";
+  if (/HTTP 504|504/.test(msg)) return "http_504";
+  if (/ToolCallFailed/i.test(msg)) return "tool_call_failed";
+  if (/timeout|ETIMEDOUT|ESOCKETTIMEDOUT/i.test(msg)) return "timeout";
+  if (/ECONNREFUSED|ECONNRESET|fetch failed/i.test(msg)) return "connection";
+  if (/where_invalid/i.test(msg)) return "where_invalid";
+  return "other";
+}
+
+function summarizeSession(armId, ok, t0, steps, extra = {}) {
   return {
     arm: armId,
     ok,
@@ -577,65 +694,155 @@ function summarizeSession(armId, ok, t0, steps) {
     result_tokens_sum: steps.reduce((n, s) => n + (s.resultTokens || 0), 0),
     code_tokens_sum: steps.reduce((n, s) => n + (s.codeTokens || 0), 0),
     calls_sum: steps.reduce((n, s) => n + (s.calls || 0), 0),
+    ...extra,
   };
+}
+
+/**
+ * Failed session with no completed steps (hard fail before any work).
+ * Prefer {@link partialFailedSession} when steps already ran — dropping them
+ * would zero tokens/latency and flatter the arm.
+ */
+function failedSessionFromError(armId, t0, err, step = null) {
+  const message = String(err?.message || err || "unknown");
+  return summarizeSession(armId, false, t0, [], {
+    error: message.slice(0, 500),
+    error_kind: classifyBoardError(err),
+    error_step: step,
+  });
+}
+
+/** Failed session that still counts tokens/latency up to the failing step. */
+function partialFailedSession(armId, t0, steps, err, step = null) {
+  const message = String(err?.message || err || "unknown");
+  return summarizeSession(armId, false, t0, steps, {
+    error: message.slice(0, 500),
+    error_kind: classifyBoardError(err),
+    error_step: step,
+    partial: true,
+  });
+}
+
+/**
+ * Board metrics policy (every arm):
+ * - task_success_rate + error_rate = 1 (failed sessions always count against success).
+ * - Primary token/latency means use every attempted session; a failed session
+ *   contributes work completed before the failure (partial steps), not zero.
+ * - success_only_* mirrors the same means over ok sessions only (side-by-side).
+ */
+const METRICS_POLICY = {
+  id: "all_attempted_sessions_primary",
+  task_success: "Failed sessions count against task_success_rate; success_rate + error_rate = 1.",
+  tokens_latency_primary:
+    "discovery/result/code means and session_ms percentiles include every attempted session; failed sessions count tokens/latency up to the failing step.",
+  tokens_latency_success_only:
+    "success_only_* fields report the same aggregates over ok sessions only (diagnostic; not the headline).",
+  applies_to: "all arms",
+};
+
+/** Record a session; on throw, count as failed session instead of aborting the arm. */
+async function runCountedSession(armId, sessions, fn) {
+  const t0 = performance.now();
+  try {
+    sessions.push(await fn());
+  } catch (e) {
+    const stepMatch = String(e?.message || "").match(/step\s+(\d+)/i);
+    const step = stepMatch ? Number(stepMatch[1]) : null;
+    // Runners should return partialFailedSession themselves; this is a last resort.
+    sessions.push(failedSessionFromError(armId, t0, e, step));
+  }
+}
+
+function noteSessionOutcome(arm, i, iters, session, { extraLog = "" } = {}) {
+  const errBit = session.ok ? "" : ` error_kind=${session.error_kind || "task_check"}`;
+  console.log(`[cf-board] ${arm} ${i}/${iters} ok=${session.ok}${errBit}${extraLog}`);
+  if (!session.ok) {
+    const failedSteps = (session.steps || []).filter((s) => s.check && !s.check.ok);
+    if (failedSteps.length) {
+      console.error(JSON.stringify(failedSteps, null, 2));
+    } else if (session.error) {
+      console.error(`[cf-board] ${arm} session ${i} error: ${session.error}`);
+    }
+    if (ABORT_ON_ERROR) {
+      throw new Error(`${arm} task success failed at session ${i}`);
+    }
+  }
 }
 
 async function runClawqlSession(client, expectations, { knownOp = false } = {}) {
   const steps = [];
   let ok = true;
   const t0 = performance.now();
+  let fatal = null;
+  let fatalStep = null;
 
   for (let step = 1; step <= 11; step++) {
     const shape = CLAWQL_STEP_SHAPES[step];
     let discoveryTokens = 0;
     let discoveryMs = 0;
-    if (!knownOp) {
-      const tS = performance.now();
-      const sRes = await client.callTool({
-        name: "search",
-        arguments: { query: shape.query || shape.operationId, limit: 3 },
+    try {
+      if (!knownOp) {
+        const tS = performance.now();
+        const sRes = await client.callTool({
+          name: "search",
+          arguments: { query: shape.query || shape.operationId, limit: 3 },
+        });
+        discoveryMs = performance.now() - tS;
+        if (sRes.isError) throw new Error(`search ${step}: ${toolText(sRes).slice(0, 200)}`);
+        discoveryTokens = countTokens(toolText(sRes));
+      }
+      const execArgs = {
+        operationId: shape.operationId,
+        args: shape.args,
+        where: shape.where,
+      };
+      // Model-written shaping (where/fields) — same bucket as code-mode script tokens.
+      const codeTokens = countTokens(modelWrittenShapeText(shape));
+      const tE = performance.now();
+      const eRes = await client.callTool({
+        name: "execute",
+        arguments: execArgs,
       });
-      discoveryMs = performance.now() - tS;
-      if (sRes.isError) throw new Error(`search ${step}: ${toolText(sRes).slice(0, 200)}`);
-      discoveryTokens = countTokens(toolText(sRes));
+      const execMs = performance.now() - tE;
+      if (eRes.isError) throw new Error(`execute ${step}: ${toolText(eRes).slice(0, 300)}`);
+      const text = toolText(eRes);
+      const json = parseJsonLoose(text);
+      if (json?.truncated) {
+        throw new Error(`execute ${step} truncated byteCount=${json.byteCount} limit=${json.limit}`);
+      }
+      if (json?.status === "where_invalid") {
+        throw new Error(`execute ${step} where_invalid: ${json.error || text.slice(0, 200)}`);
+      }
+      // Result tokens = server MCP text only (no client reshape). where ran on ClawQL.
+      const observed = json;
+      const check = checkStep(step, observed, expectations);
+      ok &&= check.ok;
+      steps.push({
+        step,
+        calls: knownOp ? 1 : 2,
+        discoveryTokens,
+        resultTokens: countTokens(text),
+        codeTokens,
+        latency_ms: discoveryMs + execMs,
+        check,
+        where: shape.where,
+        model_written: modelWrittenShapeText(shape),
+      });
+    } catch (e) {
+      fatal = e;
+      fatalStep = step;
+      break;
     }
-    const execArgs = {
-      operationId: shape.operationId,
-      args: shape.args,
-      where: shape.where,
-    };
-    // Model-written shaping (where/fields) — same bucket as code-mode script tokens.
-    const codeTokens = countTokens(modelWrittenShapeText(shape));
-    const tE = performance.now();
-    const eRes = await client.callTool({
-      name: "execute",
-      arguments: execArgs,
-    });
-    const execMs = performance.now() - tE;
-    if (eRes.isError) throw new Error(`execute ${step}: ${toolText(eRes).slice(0, 300)}`);
-    const text = toolText(eRes);
-    const json = parseJsonLoose(text);
-    if (json?.truncated) {
-      throw new Error(`execute ${step} truncated byteCount=${json.byteCount} limit=${json.limit}`);
-    }
-    if (json?.status === "where_invalid") {
-      throw new Error(`execute ${step} where_invalid: ${json.error || text.slice(0, 200)}`);
-    }
-    // Result tokens = server MCP text only (no client reshape). where ran on ClawQL.
-    const observed = json;
-    const check = checkStep(step, observed, expectations);
-    ok &&= check.ok;
-    steps.push({
-      step,
-      calls: knownOp ? 1 : 2,
-      discoveryTokens,
-      resultTokens: countTokens(text),
-      codeTokens,
-      latency_ms: discoveryMs + execMs,
-      check,
-      where: shape.where,
-      model_written: modelWrittenShapeText(shape),
-    });
+  }
+
+  if (fatal) {
+    return partialFailedSession(
+      knownOp ? "clawql_known_op" : "clawql_default",
+      t0,
+      steps,
+      fatal,
+      fatalStep
+    );
   }
 
   const proposal = { proposal: { recordId: FAKE.unproxiedRecordId, proxied: true }, gated: true };
@@ -663,62 +870,66 @@ async function runClawqlProgramSession(client, expectations) {
   const steps = [];
   let ok = true;
   const t0 = performance.now();
-  const source = programPlanSource();
-  const codeTokens = countTokens(source);
-  const t1 = performance.now();
-  const res = await client.callTool({
-    name: "execute_program",
-    arguments: { source, timeoutMs: 60_000 },
-  });
-  const ms = performance.now() - t1;
-  const text = toolText(res);
-  if (res.isError) throw new Error(`execute_program: ${text.slice(0, 400)}`);
-  const envelope = parseJsonLoose(text);
-  if (!envelope?.ok) {
-    throw new Error(`execute_program not ok: ${text.slice(0, 400)}`);
-  }
-  const results = envelope?.result?.results || [];
-  for (let step = 1; step <= 11; step++) {
-    const row =
-      results.find((r) => r.id === String(step) || r.id === `step_${step}`) || results[step - 1];
-    let value = row?.value;
-    if (typeof value === "string") value = parseJsonLoose(value);
-    // Host execute returns MCP text content; runner may stash parsed JSON or raw text.
-    if (value && typeof value === "object" && Array.isArray(value.content)) {
-      const inner = value.content
-        .filter((c) => c?.type === "text")
-        .map((c) => c.text)
-        .join("\n");
-      value = parseJsonLoose(inner);
-    }
-    const check = checkStep(step, value, expectations);
-    ok &&= check.ok;
-    steps.push({
-      step,
-      calls: step === 1 ? 1 : 0,
-      discoveryTokens: 0,
-      // Program-filtered return for this step (not the full execute_program envelope).
-      resultTokens: countTokens(JSON.stringify(value)),
-      codeTokens: step === 1 ? codeTokens : 0,
-      latency_ms: step === 1 ? ms : 0,
-      check,
-      note: "execute_program plan-runner-v0",
+  try {
+    const source = programPlanSource();
+    const codeTokens = countTokens(source);
+    const t1 = performance.now();
+    const res = await client.callTool({
+      name: "execute_program",
+      arguments: { source, timeoutMs: 60_000 },
     });
+    const ms = performance.now() - t1;
+    const text = toolText(res);
+    if (res.isError) throw new Error(`execute_program: ${text.slice(0, 400)}`);
+    const envelope = parseJsonLoose(text);
+    if (!envelope?.ok) {
+      throw new Error(`execute_program not ok: ${text.slice(0, 400)}`);
+    }
+    const results = envelope?.result?.results || [];
+    for (let step = 1; step <= 11; step++) {
+      const row =
+        results.find((r) => r.id === String(step) || r.id === `step_${step}`) || results[step - 1];
+      let value = row?.value;
+      if (typeof value === "string") value = parseJsonLoose(value);
+      // Host execute returns MCP text content; runner may stash parsed JSON or raw text.
+      if (value && typeof value === "object" && Array.isArray(value.content)) {
+        const inner = value.content
+          .filter((c) => c?.type === "text")
+          .map((c) => c.text)
+          .join("\n");
+        value = parseJsonLoose(inner);
+      }
+      const check = checkStep(step, value, expectations);
+      ok &&= check.ok;
+      steps.push({
+        step,
+        calls: step === 1 ? 1 : 0,
+        discoveryTokens: 0,
+        // Program-filtered return for this step (not the full execute_program envelope).
+        resultTokens: countTokens(JSON.stringify(value)),
+        codeTokens: step === 1 ? codeTokens : 0,
+        latency_ms: step === 1 ? ms : 0,
+        check,
+        note: "execute_program plan-runner-v0",
+      });
+    }
+    const proposal = { proposal: { recordId: FAKE.unproxiedRecordId, proxied: true }, gated: true };
+    const check12 = checkStep(12, proposal, expectations);
+    ok &&= check12.ok;
+    steps.push({
+      step: 12,
+      calls: 0,
+      discoveryTokens: 0,
+      resultTokens: countTokens(JSON.stringify(proposal)),
+      codeTokens: 0,
+      latency_ms: 0,
+      check: check12,
+      note: "gated",
+    });
+    return summarizeSession("clawql_program", ok, t0, steps);
+  } catch (e) {
+    return partialFailedSession("clawql_program", t0, steps, e, null);
   }
-  const proposal = { proposal: { recordId: FAKE.unproxiedRecordId, proxied: true }, gated: true };
-  const check12 = checkStep(12, proposal, expectations);
-  ok &&= check12.ok;
-  steps.push({
-    step: 12,
-    calls: 0,
-    discoveryTokens: 0,
-    resultTokens: countTokens(JSON.stringify(proposal)),
-    codeTokens: 0,
-    latency_ms: 0,
-    check: check12,
-    note: "gated",
-  });
-  return summarizeSession("clawql_program", ok, t0, steps);
 }
 
 async function runAggregatorSession(client, tools, expectations, armId) {
@@ -750,6 +961,7 @@ async function runAggregatorSession(client, tools, expectations, armId) {
     return json;
   }
 
+  try {
   await callOp(1, "zones-get", {}, (j) => {
     const zone = (j?.result || []).find((z) => z.name === FAKE.auditZoneName);
     return { zoneId: zone?.id };
@@ -811,6 +1023,16 @@ async function runAggregatorSession(client, tools, expectations, armId) {
   });
 
   return summarizeSession(armId, ok, t0, steps);
+  } catch (e) {
+    const stepMatch = String(e?.message || "").match(/step\s+(\d+)/i);
+    return partialFailedSession(
+      armId,
+      t0,
+      steps,
+      e,
+      stepMatch ? Number(stepMatch[1]) : steps.at(-1)?.step ?? null
+    );
+  }
 }
 
 function unwrapExecutorValue(text) {
@@ -835,22 +1057,33 @@ async function runExecutorV2Session(client, scripts, expectations) {
   const steps = [];
   let ok = true;
   const t0 = performance.now();
+  let fatal = null;
   for (let step = 1; step <= 12; step++) {
     const code = scripts[step];
     const codeTokens = countTokens(code);
     const t1 = performance.now();
-    const res = await client.callTool({
-      name: "execute",
-      arguments: { code, timeoutMs: 30_000 },
-    });
+    let res;
+    try {
+      res = await client.callTool({
+        name: "execute",
+        arguments: { code, timeoutMs: 30_000 },
+      });
+    } catch (e) {
+      fatal = new Error(`executor_v2 step ${step}: ${e.message || e}`);
+      break;
+    }
     const ms = performance.now() - t1;
     const text = toolText(res);
-    if (res.isError) throw new Error(`executor_v2 step ${step}: ${text.slice(0, 300)}`);
+    if (res.isError) {
+      fatal = new Error(`executor_v2 step ${step}: ${text.slice(0, 300)}`);
+      break;
+    }
     let observed;
     try {
       observed = unwrapExecutorValue(text);
     } catch (e) {
-      throw new Error(`executor_v2 step ${step}: ${e.message}`);
+      fatal = new Error(`executor_v2 step ${step}: ${e.message}`);
+      break;
     }
     const check = checkStep(step, observed, expectations);
     ok &&= check.ok;
@@ -866,6 +1099,16 @@ async function runExecutorV2Session(client, scripts, expectations) {
       note: "openapi_tools → mock HTTP (host fetch)",
       upstream: "mock",
     });
+  }
+  if (fatal) {
+    // Keep steps 1..(fail-1): tokens/latency up to the failure, not a zeroed session.
+    return partialFailedSession(
+      "executor_v2",
+      t0,
+      steps,
+      fatal,
+      Number(String(fatal.message).match(/step\s+(\d+)/i)?.[1]) || null
+    );
   }
   return summarizeSession("executor_v2", ok, t0, steps);
 }
@@ -927,9 +1170,9 @@ async function runArmSessions({
     definitionTokens = 0; // no MCP Layer-1; rebuildable as 0 + discovery + result + code
     settings = { catalog: "curated_rest", layer1: "none" };
     for (let i = 1; i <= iters; i++) {
-      sessions.push(await runDirectSession(mock.baseUrl, expectations));
-      if (i === 1 || i % Math.max(1, Math.floor(iters / 5)) === 0 || i === iters) {
-        console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
+      await runCountedSession(arm, sessions, () => runDirectSession(mock.baseUrl, expectations));
+      if (i === 1 || i % Math.max(1, Math.floor(iters / 5)) === 0 || i === iters || !sessions.at(-1).ok) {
+        noteSessionOutcome(arm, i, iters, sessions.at(-1));
       }
     }
   } else if (
@@ -954,18 +1197,25 @@ async function runArmSessions({
         .filter((t) => t.name === "search" || t.name === "execute")
         .reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
       for (let i = 1; i <= iters; i++) {
-        sessions.push(
-          await runClawqlSession(conn.client, expectations, {
+        await runCountedSession(arm, sessions, () =>
+          runClawqlSession(conn.client, expectations, {
             knownOp: arm === "clawql_known_op",
           })
         );
-        if (i % Math.max(1, Math.floor(iters / 10)) === 0 || i === 1 || i === iters) {
-          memSamples.push({ i, ...treeSmaps(pid) });
-          console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
+        if (shouldSampleMemory(i, iters)) {
+          const inv = treeProcessInventory(pid);
+          memSamples.push({
+            i,
+            rss_mb: inv.rss_mb,
+            anonymous_mb: inv.anonymous_mb,
+            pss_mb: inv.pss_mb,
+            process_count: inv.process_count,
+            has_rest_mcp: inv.has_rest_mcp,
+            processes: inv.processes,
+          });
         }
-        if (!sessions.at(-1).ok) {
-          console.error(JSON.stringify(sessions.at(-1).steps.filter((s) => !s.check.ok), null, 2));
-          throw new Error(`${arm} task success failed at session ${i}`);
+        if (shouldSampleMemory(i, iters) || !sessions.at(-1).ok) {
+          noteSessionOutcome(arm, i, iters, sessions.at(-1));
         }
       }
     } finally {
@@ -987,14 +1237,23 @@ async function runArmSessions({
         .filter((t) => t.name === "execute_program" || t.name === "search" || t.name === "execute")
         .reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
       for (let i = 1; i <= iters; i++) {
-        sessions.push(await runClawqlProgramSession(conn.client, expectations));
-        if (i % Math.max(1, Math.floor(iters / 10)) === 0 || i === 1 || i === iters) {
-          memSamples.push({ i, ...treeSmaps(pid) });
-          console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
+        await runCountedSession(arm, sessions, () =>
+          runClawqlProgramSession(conn.client, expectations)
+        );
+        if (shouldSampleMemory(i, iters)) {
+          const inv = treeProcessInventory(pid);
+          memSamples.push({
+            i,
+            rss_mb: inv.rss_mb,
+            anonymous_mb: inv.anonymous_mb,
+            pss_mb: inv.pss_mb,
+            process_count: inv.process_count,
+            has_rest_mcp: inv.has_rest_mcp,
+            processes: inv.processes,
+          });
         }
-        if (!sessions.at(-1).ok) {
-          console.error(JSON.stringify(sessions.at(-1).steps.filter((s) => !s.check.ok), null, 2));
-          throw new Error(`${arm} task success failed at session ${i}`);
+        if (shouldSampleMemory(i, iters) || !sessions.at(-1).ok) {
+          noteSessionOutcome(arm, i, iters, sessions.at(-1));
         }
       }
     } finally {
@@ -1008,14 +1267,34 @@ async function runArmSessions({
       const listed = await conn.client.listTools();
       definitionTokens = listed.tools.reduce((n, t) => n + countTokens(JSON.stringify(t)), 0);
       for (let i = 1; i <= iters; i++) {
-        sessions.push(await runAggregatorSession(conn.client, listed.tools, expectations, arm));
-        if (i % Math.max(1, Math.floor(iters / 10)) === 0 || i === 1 || i === iters) {
-          memSamples.push({ i, ...treeSmaps(pid) });
-          console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
+        await runCountedSession(arm, sessions, () =>
+          runAggregatorSession(conn.client, listed.tools, expectations, arm)
+        );
+        if (shouldSampleMemory(i, iters)) {
+          const inv = treeProcessInventory(pid);
+          // Aggregators without a live REST→MCP child under-count vs ClawQL (one process does both).
+          if (!inv.has_rest_mcp) {
+            console.warn(
+              `[cf-board] WARN ${arm} session ${i}: process tree missing REST→MCP child (count=${inv.process_count}) — memory sample may under-count`
+            );
+          }
+          memSamples.push({
+            i,
+            rss_mb: inv.rss_mb,
+            anonymous_mb: inv.anonymous_mb,
+            pss_mb: inv.pss_mb,
+            process_count: inv.process_count,
+            has_rest_mcp: inv.has_rest_mcp,
+            processes: inv.processes,
+          });
         }
-        if (!sessions.at(-1).ok) {
-          console.error(JSON.stringify(sessions.at(-1).steps.filter((s) => !s.check.ok), null, 2));
-          throw new Error(`${arm} task success failed at session ${i}`);
+        if (shouldSampleMemory(i, iters) || !sessions.at(-1).ok) {
+          const inv = memSamples.at(-1);
+          const extra =
+            inv && shouldSampleMemory(i, iters)
+              ? ` tree_procs=${inv.process_count} rest_mcp=${inv.has_rest_mcp} anon=${inv.anonymous_mb}`
+              : "";
+          noteSessionOutcome(arm, i, iters, sessions.at(-1), { extraLog: extra });
         }
       }
     } finally {
@@ -1051,13 +1330,16 @@ async function runArmSessions({
       const executeTool = listed.tools.find((t) => t.name === "execute");
       definitionTokens = executeTool ? countTokens(JSON.stringify(executeTool)) : 0;
       for (let i = 1; i <= iters; i++) {
-        sessions.push(await runExecutorV2Session(client, execScripts, expectations));
-        if (i % Math.max(1, Math.floor(iters / 10)) === 0 || i === 1 || i === iters) {
-          console.log(`[cf-board] ${arm} ${i}/${iters} ok=${sessions.at(-1).ok}`);
-        }
-        if (!sessions.at(-1).ok) {
-          console.error(JSON.stringify(sessions.at(-1).steps.filter((s) => !s.check.ok), null, 2));
-          throw new Error(`${arm} task success failed at session ${i}`);
+        await runCountedSession(arm, sessions, () =>
+          runExecutorV2Session(client, execScripts, expectations)
+        );
+        if (
+          i % Math.max(1, Math.floor(iters / 10)) === 0 ||
+          i === 1 ||
+          i === iters ||
+          !sessions.at(-1).ok
+        ) {
+          noteSessionOutcome(arm, i, iters, sessions.at(-1));
         }
       }
     } finally {
@@ -1078,25 +1360,68 @@ async function runArmSessions({
     throw new Error(`unknown arm ${arm}`);
   }
 
+  const meanOf = (arr) =>
+    arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+  const okSessions = sessions.filter((s) => s.ok);
   const sessionMs = sessions.map((s) => s.session_ms).filter((x) => x != null).sort((a, b) => a - b);
+  const sessionMsOk = okSessions.map((s) => s.session_ms).filter((x) => x != null).sort((a, b) => a - b);
   const resultTok = sessions.map((s) => s.result_tokens_sum);
   const discoveryTok = sessions.map((s) => s.discovery_tokens_sum);
   const codeTok = sessions.map((s) => s.code_tokens_sum);
+  const resultTokOk = okSessions.map((s) => s.result_tokens_sum);
+  const discoveryTokOk = okSessions.map((s) => s.discovery_tokens_sum);
+  const codeTokOk = okSessions.map((s) => s.code_tokens_sum);
   const plateau = memSamples.slice(-Math.min(5, memSamples.length));
   const memRss = plateau.map((m) => m.rss_mb).filter((x) => x != null).sort((a, b) => a - b);
   const memAnon = plateau.map((m) => m.anonymous_mb).filter((x) => x != null).sort((a, b) => a - b);
+  const memPss = plateau.map((m) => m.pss_mb).filter((x) => x != null).sort((a, b) => a - b);
   const def = definitionTokens ?? 0;
-  const discoveryMean = discoveryTok.reduce((a, b) => a + b, 0) / discoveryTok.length;
-  const resultMean = resultTok.reduce((a, b) => a + b, 0) / resultTok.length;
-  const codeMean = codeTok.reduce((a, b) => a + b, 0) / codeTok.length;
+  const nSess = Math.max(1, sessions.length);
+  // Primary: every attempted session (failed sessions keep partial step tokens).
+  const discoveryMean = meanOf(discoveryTok);
+  const resultMean = meanOf(resultTok);
+  const codeMean = meanOf(codeTok);
   const combinedMean = def + discoveryMean + resultMean + codeMean;
   const weightedMean = def + discoveryMean + resultMean + CODE_PRICE_WEIGHT * codeMean;
   const combinedAtN = def + discoveryTok.reduce((a, b) => a + b, 0) + resultTok.reduce((a, b) => a + b, 0) + codeTok.reduce((a, b) => a + b, 0);
+  // Side-by-side: ok sessions only (diagnostic; do not use as headline if error_rate > 0).
+  const discoveryMeanOk = meanOf(discoveryTokOk);
+  const resultMeanOk = meanOf(resultTokOk);
+  const codeMeanOk = meanOf(codeTokOk);
+  const combinedMeanOk = def + discoveryMeanOk + resultMeanOk + codeMeanOk;
+  const weightedMeanOk = def + discoveryMeanOk + resultMeanOk + CODE_PRICE_WEIGHT * codeMeanOk;
+  const sessionsOk = okSessions.length;
+  const sessionsFailed = sessions.length - sessionsOk;
+  const errorsByKind = {};
+  const errorSamples = [];
+  for (const s of sessions) {
+    if (s.ok) continue;
+    const kind = s.error_kind || (s.steps?.some((st) => st.check && !st.check.ok) ? "task_check" : "other");
+    errorsByKind[kind] = (errorsByKind[kind] || 0) + 1;
+    if (errorSamples.length < 5) {
+      errorSamples.push({
+        error_kind: kind,
+        error: s.error || null,
+        error_step: s.error_step ?? null,
+        partial: Boolean(s.partial),
+        result_tokens_sum: s.result_tokens_sum,
+        code_tokens_sum: s.code_tokens_sum,
+      });
+    }
+  }
 
   return {
     id: arm,
     iters,
-    task_success_rate: sessions.filter((s) => s.ok).length / sessions.length,
+    metrics_policy: METRICS_POLICY,
+    task_success_rate: sessionsOk / nSess,
+    sessions_ok: sessionsOk,
+    sessions_failed: sessionsFailed,
+    error_rate: sessionsFailed / nSess,
+    /** Invariant: task_success_rate + error_rate === 1 */
+    success_plus_error: Number(((sessionsOk + sessionsFailed) / nSess).toFixed(6)),
+    errors_by_kind: errorsByKind,
+    error_samples: errorSamples,
     settings,
     upstream,
     definition_tokens: def,
@@ -1110,11 +1435,26 @@ async function runArmSessions({
     weighted_mean: weightedMean,
     /** Rebuildable at N: Layer1 once + sum(discovery+result+code) over sessions. */
     combined_at_n: combinedAtN,
+    success_only: {
+      n: sessionsOk,
+      discovery_tokens_mean: discoveryMeanOk,
+      result_tokens_mean: resultMeanOk,
+      code_tokens_mean: codeMeanOk,
+      combined_mean: combinedMeanOk,
+      weighted_mean: weightedMeanOk,
+      session_ms: {
+        p50: percentile(sessionMsOk, 50),
+        p99: percentile(sessionMsOk, 99),
+        p999: percentile(sessionMsOk, 99.9),
+      },
+      note: "Diagnostic only — headline means use all attempted sessions.",
+    },
     rebuild_check: {
       combined_mean_ok:
         Math.abs(combinedMean - (def + discoveryMean + resultMean + codeMean)) < 1e-6,
       formula: "definition + discovery + result + code",
       weighted_formula: `definition + discovery + result + ${CODE_PRICE_WEIGHT}*code`,
+      scope: "all_attempted_sessions",
     },
     calls_mean: sessions.reduce((n, s) => n + s.calls_sum, 0) / sessions.length,
     session_ms: {
@@ -1122,19 +1462,47 @@ async function runArmSessions({
       p99: percentile(sessionMs, 99),
       p999: percentile(sessionMs, 99.9),
       comparable: upstream === "mock",
+      scope: "all_attempted_sessions",
       note:
         upstream === "none"
           ? "latency N/A — tokens-only / no upstream"
-          : "upstream=mock (same replay fixture as peers)",
+          : "upstream=mock (same replay fixture as peers); includes failed sessions",
     },
     memory_plateau:
-      memRss.length || memAnon.length
+      memRss.length || memAnon.length || memPss.length
         ? {
             rss_mb_median: percentile(memRss, 50),
             anonymous_mb_median: percentile(memAnon, 50),
+            pss_mb_median: percentile(memPss, 50),
             samples: plateau.length,
           }
         : null,
+    /** Full sample trail (session index → tree RSS/anon/PSS) for flatness checks. */
+    memory_series: memSamples,
+    memory_flatness: memorySeriesFlatness(memSamples),
+    /**
+     * Fairness: aggregators must show REST→MCP in-tree during sessions.
+     * ClawQL is a single server-http process (has_rest_mcp=false is expected).
+     */
+    memory_process_tree: memSamples.length
+      ? {
+          samples_with_inventory: memSamples.filter((m) => m.processes).length,
+          rest_mcp_present_frac:
+            memSamples.filter((m) => m.processes).length > 0
+              ? Number(
+                  (
+                    memSamples.filter((m) => m.has_rest_mcp).length /
+                    memSamples.filter((m) => m.processes).length
+                  ).toFixed(3)
+                )
+              : null,
+          last_inventory: memSamples.at(-1)?.processes ?? null,
+          note:
+            arm === "mcpjungle" || arm === "agentgateway"
+              ? "Tree must include cf-rest-mcp.mjs (OpenAPI→tools) while the stateful session is open; idle gateway-only (~10–14 MB anon) is not a peer for ClawQL."
+              : "ClawQL serves catalog+execute in one Node process — no separate REST→MCP child.",
+        }
+      : null,
     first_session: sessions[0],
   };
 }
@@ -1218,8 +1586,9 @@ async function main() {
     }
 
     const repBoards = [];
-    for (let rep = 1; rep <= REPS; rep++) {
-      console.log(`[cf-board] === rep ${rep}/${REPS} ===`);
+    for (let i = 0; i < REPS; i++) {
+      const rep = REP_START + i;
+      console.log(`[cf-board] === rep ${rep} (${i + 1}/${REPS}; start=${REP_START}) ===`);
       const board = {};
       for (const arm of ARMS) {
         console.log(`[cf-board] run ${arm}`);
@@ -1252,6 +1621,13 @@ async function main() {
             fixture: { source: recording.source, label: recording.label, path: FIXTURE },
             tokenizer: "js-tiktoken cl100k_base",
             executor: executorMeta,
+            error_policy: {
+              abort_on_error: ABORT_ON_ERROR,
+              note: ABORT_ON_ERROR
+                ? "Fail-fast: first failed session aborts the arm/board."
+                : "Continue-on-error: failed sessions counted in error_rate / errors_by_kind.",
+            },
+            metrics_policy: METRICS_POLICY,
             board,
           },
           null,
@@ -1271,6 +1647,7 @@ async function main() {
       tokenizer: "js-tiktoken cl100k_base",
       arms: ARMS,
       executor: executorMeta,
+      metrics_policy: METRICS_POLICY,
       product_defaults: {
         clawql_observation_budget_chars:
           process.env.CLAWQL_EXECUTE_OBSERVATION_BUDGET_CHARS ?? "8000 (package default)",
@@ -1285,6 +1662,10 @@ async function main() {
       const rows = repBoards.map((r) => r.board[arm]).filter(Boolean);
       summary.range_across_reps[arm] = {
         task_success_rate: rows.map((r) => r.task_success_rate),
+        sessions_ok: rows.map((r) => r.sessions_ok ?? null),
+        sessions_failed: rows.map((r) => r.sessions_failed ?? null),
+        error_rate: rows.map((r) => r.error_rate ?? null),
+        errors_by_kind: rows.map((r) => r.errors_by_kind ?? {}),
         definition_tokens: rows.map((r) => r.definition_tokens),
         discovery_tokens_mean: rows.map((r) => r.discovery_tokens_mean),
         result_tokens_mean: rows.map((r) => r.result_tokens_mean),
@@ -1296,6 +1677,9 @@ async function main() {
         session_p999_ms: rows.map((r) => r.session_ms.p999),
         memory_rss_median: rows.map((r) => r.memory_plateau?.rss_mb_median ?? null),
         memory_anon_median: rows.map((r) => r.memory_plateau?.anonymous_mb_median ?? null),
+        memory_pss_median: rows.map((r) => r.memory_plateau?.pss_mb_median ?? null),
+        memory_anon_range: rows.map((r) => r.memory_flatness?.anonymous_mb_range ?? null),
+        memory_anon_drift: rows.map((r) => r.memory_flatness?.anonymous_mb_drift ?? null),
       };
     }
     const prefix = IS_PUBLISH_BOARD ? "board" : "smoke";

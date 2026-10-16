@@ -4,6 +4,8 @@
  */
 
 import { Buffer } from "node:buffer";
+import http from "node:http";
+import https from "node:https";
 import { Effect } from "effect";
 import baseFetch from "node-fetch";
 import type { RequestInit as FetchRequestInit, Response } from "node-fetch";
@@ -12,6 +14,67 @@ import { isAwsSpecLabelEffect } from "../auth/aws-auth.js";
 import { maybeSignAwsRequestEffect, normalizeAwsExecuteUrlEffect } from "../auth/aws-sigv4.js";
 import type { Operation } from "../spec/operation-types.js";
 import { resolveApiBaseUrlForOperation, type OpenAPIDoc } from "../spec/spec-loader.js";
+import {
+  beginUpstreamClientPhase,
+  classifyUpstreamPhase,
+  formatUpstreamPhaseLog,
+  runWithUpstreamClientPhase,
+  upstreamPhaseEnabled,
+} from "./upstream-client-phase.js";
+
+/** Env flag reader — Effect so domain config stays on the Effect surface. */
+const envTruthyEffect = (name: string): Effect.Effect<boolean> =>
+  Effect.sync(() => {
+    const v = (process.env[name] ?? "").trim().toLowerCase();
+    return v === "1" || v === "true" || v === "yes";
+  });
+
+const upstreamFetchSlowMsEffect = (): Effect.Effect<number> =>
+  Effect.sync(() => {
+    const n = Number.parseInt(process.env.CLAWQL_UPSTREAM_FETCH_SLOW_MS ?? "5", 10);
+    return Number.isFinite(n) && n > 0 ? n : 5;
+  });
+
+/** Minimal fetch surface shared by node-fetch and native undici/Bun fetch. */
+type RestFetchResponse = {
+  ok: boolean;
+  status: number;
+  headers?: { get?: (name: string) => string | null };
+  text: () => Promise<string>;
+  arrayBuffer?: () => Promise<ArrayBuffer>;
+};
+type RestFetch = (url: string | URL, init?: FetchRequestInit) => Promise<RestFetchResponse>;
+
+/** Outbound TCP connects created by our keep-alive agents (node-fetch path only). */
+let outboundTcpConnects = 0;
+let httpKeepAliveAgent: http.Agent | undefined;
+let httpsKeepAliveAgent: https.Agent | undefined;
+
+const ensureKeepAliveAgentsEffect = (): Effect.Effect<void> =>
+  Effect.sync(() => {
+    if (httpKeepAliveAgent && httpsKeepAliveAgent) return;
+    const wrapHttp = (agent: http.Agent): http.Agent => {
+      const orig = agent.createConnection.bind(agent);
+      agent.createConnection = (options, callback) => {
+        outboundTcpConnects += 1;
+        return orig(options, callback);
+      };
+      return agent;
+    };
+    const wrapHttps = (agent: https.Agent): https.Agent => {
+      const orig = agent.createConnection.bind(agent);
+      agent.createConnection = (options, callback) => {
+        outboundTcpConnects += 1;
+        return orig(options, callback);
+      };
+      return agent;
+    };
+    httpKeepAliveAgent = wrapHttp(new http.Agent({ keepAlive: true, maxSockets: 64 }));
+    httpsKeepAliveAgent = wrapHttps(new https.Agent({ keepAlive: true, maxSockets: 64 }));
+  });
+
+const outboundTcpConnectsEffect = (): Effect.Effect<number> =>
+  Effect.sync(() => outboundTcpConnects);
 
 /**
  * When **`CLAWQL_TEST_SLACK_FETCH_STUB=1`**, `executeRestOperation` does not open a real socket.
@@ -60,30 +123,69 @@ function createTestOnyxFetch(): typeof baseFetch {
  * Test stubs are resolved per request so Vitest `beforeEach` env wins over module-init order.
  * When **both** Slack and Onyx stubs are enabled (OpenBench `idp-safe-pipeline-lite`),
  * dispatch by hostname so neither stub shadows the other.
+ *
+ * Production backends (env, Effect-gated):
+ * - default: `node-fetch` (no agent — historically one TCP connect per request)
+ * - `CLAWQL_UPSTREAM_KEEPALIVE=1`: `node-fetch` + shared keep-alive `http(s).Agent`
+ * - `CLAWQL_NATIVE_FETCH=1`: runtime `globalThis.fetch` (Node undici / Bun — pools by default)
  */
-function getFetchImplForRest(): typeof baseFetch {
-  const slack = process.env.CLAWQL_TEST_SLACK_FETCH_STUB === "1";
-  const onyx = process.env.CLAWQL_TEST_ONYX_FETCH_STUB === "1";
-  if (slack && onyx) {
-    const slackFetch = createTestSlackFetch();
-    const onyxFetch = createTestOnyxFetch();
-    return ((url: string | URL, init?: FetchRequestInit) => {
-      let host: string;
-      try {
-        host = new URL(String(url)).hostname.toLowerCase();
-      } catch {
-        host = "";
-      }
-      // Hostname match only (avoid substring false positives flagged by CodeQL).
-      if (host === "slack.com" || host.endsWith(".slack.com")) {
-        return slackFetch(url, init);
-      }
-      return onyxFetch(url, init);
-    }) as typeof baseFetch;
-  }
-  if (slack) return createTestSlackFetch();
-  if (onyx) return createTestOnyxFetch();
-  return baseFetch;
+function getFetchImplForRestEffect(): Effect.Effect<{
+  fetch: RestFetch;
+  backend: "stub" | "node-fetch" | "node-fetch+keepalive" | "native";
+}> {
+  return Effect.gen(function* () {
+    const slack = yield* envTruthyEffect("CLAWQL_TEST_SLACK_FETCH_STUB");
+    const onyx = yield* envTruthyEffect("CLAWQL_TEST_ONYX_FETCH_STUB");
+    if (slack && onyx) {
+      const slackFetch = createTestSlackFetch();
+      const onyxFetch = createTestOnyxFetch();
+      return {
+        backend: "stub" as const,
+        fetch: ((url: string | URL, init?: FetchRequestInit) => {
+          let host: string;
+          try {
+            host = new URL(String(url)).hostname.toLowerCase();
+          } catch {
+            host = "";
+          }
+          if (host === "slack.com" || host.endsWith(".slack.com")) {
+            return slackFetch(url, init);
+          }
+          return onyxFetch(url, init);
+        }) as RestFetch,
+      };
+    }
+    if (slack) {
+      return { backend: "stub" as const, fetch: createTestSlackFetch() as RestFetch };
+    }
+    if (onyx) {
+      return { backend: "stub" as const, fetch: createTestOnyxFetch() as RestFetch };
+    }
+
+    const native = yield* envTruthyEffect("CLAWQL_NATIVE_FETCH");
+    if (native && typeof globalThis.fetch === "function") {
+      return {
+        backend: "native" as const,
+        fetch: ((url: string | URL, init?: FetchRequestInit) =>
+          globalThis.fetch(String(url), init as RequestInit)) as RestFetch,
+      };
+    }
+
+    const keepalive = yield* envTruthyEffect("CLAWQL_UPSTREAM_KEEPALIVE");
+    if (keepalive) {
+      yield* ensureKeepAliveAgentsEffect();
+      return {
+        backend: "node-fetch+keepalive" as const,
+        fetch: ((url: string | URL, init?: FetchRequestInit) => {
+          const u = new URL(String(url));
+          const agent = u.protocol === "https:" ? httpsKeepAliveAgent : httpKeepAliveAgent;
+          return baseFetch(url, { ...init, agent: agent as never });
+        }) as RestFetch,
+      };
+    }
+
+    return { backend: "node-fetch" as const, fetch: baseFetch as RestFetch };
+  });
 }
 
 /** Build JSON body: drop path/query args so `owner`/`repo` are not sent in PATCH/POST bodies. */
@@ -332,7 +434,22 @@ async function executeRestOperationImpl(
       };
     }
 
-    const res = await getFetchImplForRest()(url.toString(), init);
+    const { fetch: doFetch, backend } = Effect.runSync(getFetchImplForRestEffect());
+    const diag = Effect.runSync(envTruthyEffect("CLAWQL_UPSTREAM_FETCH_DIAG"));
+    const phaseOn = Effect.runSync(upstreamPhaseEnabled());
+    const slowMs = Effect.runSync(upstreamFetchSlowMsEffect());
+    // tPrep0 marks start of signed-request → response parse (fetch is the middle slice).
+    const tPrep0 = performance.now();
+    const tIssueIso = new Date().toISOString();
+    const tcpBefore = Effect.runSync(outboundTcpConnectsEffect());
+    const phaseSlot = phaseOn
+      ? Effect.runSync(beginUpstreamClientPhase({ url: url.toString(), backend }))
+      : null;
+    const tFetch0 = performance.now();
+    const res = phaseSlot
+      ? await runWithUpstreamClientPhase(phaseSlot, () => doFetch(url.toString(), init))
+      : await doFetch(url.toString(), init);
+    const tHeaders = performance.now();
     // Optional chaining: unit-test fetch stubs often omit Headers.
     const contentType = res.headers?.get?.("content-type") ?? "";
     const binary =
@@ -341,8 +458,55 @@ async function executeRestOperationImpl(
         /application\/octet-stream/i.test(contentType) ||
         /image\//i.test(contentType));
 
+    const logUpstream = (opts: {
+      bodyBytes: number;
+      parseDoneAt: number;
+      phase: "json" | "binary";
+    }) => {
+      if (!diag && !phaseOn) return;
+      const headersMs = tHeaders - tFetch0;
+      const bodyMs = opts.parseDoneAt - tHeaders;
+      const fetchMs = opts.parseDoneAt - tFetch0;
+      const totalMs = opts.parseDoneAt - tPrep0;
+      // FETCH_DIAG: slow-only. UPSTREAM_PHASE=1: every execute (phase bisect).
+      const slow = totalMs >= slowMs || headersMs >= slowMs;
+      if (!phaseOn && !slow) return;
+      const tcpAfter = Effect.runSync(outboundTcpConnectsEffect());
+      if (diag && slow) {
+        console.error(
+          `[clawql-upstream-fetch] total_ms=${totalMs.toFixed(1)} fetch_ms=${fetchMs.toFixed(1)} ` +
+            `headers_ms=${headersMs.toFixed(1)} body_ms=${bodyMs.toFixed(1)} ` +
+            `status=${res.status} backend=${backend} phase=${opts.phase} ` +
+            `tcp_connects_delta=${tcpAfter - tcpBefore} tcp_connects_total=${tcpAfter} ` +
+            `issue_iso=${tIssueIso} method=${method} url=${url.toString()} body_bytes=${opts.bodyBytes}`
+        );
+      }
+      if (phaseSlot && (phaseOn || slow)) {
+        const breakdown = Effect.runSync(
+          classifyUpstreamPhase(phaseSlot, {
+            tFetch0,
+            tHeaders,
+            tDone: opts.parseDoneAt,
+          })
+        );
+        console.error(
+          formatUpstreamPhaseLog(phaseSlot, breakdown, {
+            total_ms: Number(totalMs.toFixed(1)),
+            status: res.status,
+            body_bytes: opts.bodyBytes,
+            tcp_connects_delta: tcpAfter - tcpBefore,
+          })
+        );
+      }
+    };
+
     if (binary && typeof res.arrayBuffer === "function") {
       const buf = Buffer.from(await res.arrayBuffer());
+      logUpstream({
+        bodyBytes: buf.byteLength,
+        parseDoneAt: performance.now(),
+        phase: "binary",
+      });
       if (!res.ok) {
         return {
           ok: false,
@@ -368,6 +532,11 @@ async function executeRestOperationImpl(
     } catch {
       // keep text payload
     }
+    logUpstream({
+      bodyBytes: Buffer.byteLength(text),
+      parseDoneAt: performance.now(),
+      phase: "json",
+    });
     if (!res.ok) {
       return {
         ok: false,

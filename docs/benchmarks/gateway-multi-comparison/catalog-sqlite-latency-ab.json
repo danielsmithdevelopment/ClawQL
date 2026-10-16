@@ -1,0 +1,133 @@
+{
+  "measuredAt": "2026-10-14T00:23:11.167Z",
+  "n": 2500,
+  "warmup": 40,
+  "runtime": "bun",
+  "tool_count": 40,
+  "use_taskset_gateway_2_3": true,
+  "spec": "synthetic-equal-arm-fat",
+  "spec_bytes": 27420,
+  "catalog_sqlite_bytes": 36864,
+  "memory": {
+    "mode": "memory",
+    "runtime": "bun",
+    "search": {
+      "n": 2500,
+      "p50_ms": 0.721,
+      "p99_ms": 2.521,
+      "p999_ms": 9.1,
+      "mean_ms": 0.85,
+      "max_ms": 10.578,
+      "n_ge_100": 0,
+      "n_ge_300": 0
+    },
+    "execute": {
+      "n": 2500,
+      "p50_ms": 0.989,
+      "p99_ms": 4.522,
+      "p999_ms": 7.594,
+      "mean_ms": 1.194,
+      "max_ms": 9.676,
+      "n_ge_100": 0,
+      "n_ge_300": 0
+    },
+    "turn_search_plus_exec": {
+      "n": 2500,
+      "p50_ms": 1.78,
+      "p99_ms": 6.159,
+      "p999_ms": 10.381,
+      "mean_ms": 2.069,
+      "max_ms": 11.614,
+      "n_ge_100": 0,
+      "n_ge_300": 0
+    },
+    "first_after_new_session": {
+      "search_ms": 2.005,
+      "exec_ms": 2.456,
+      "turn_ms": 4.521
+    },
+    "bench": {
+      "mcp_sessions": 2,
+      "stream_mapping_entries": 0,
+      "request_to_stream_entries": 0,
+      "audit_ring_entries": 64,
+      "audit_ring_max": 64,
+      "rss_mb": 331.25,
+      "heap_used_mb": 140.08
+    },
+    "log_tail": "e|aws|…\n[spec-loader] OpenAPI file: /tmp/cat-sqlite-lat-438377/spec.json\n[spec-loader] Loaded 40 operations (equalArmCatalog)\n[clawql-http-layer] banner auth_mode=noAuth skip_auth=0 otel=0 session_idle_ms=0 audit=1 skip_prune=0 skip_als=0 skip_payments=1 skip_graphql=1 http_perf=0 loki_url=0 events=0\n[clawql-mcp] Ready — single-spec; 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)\n[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:35571/mcp\n"
+  },
+  "sqlite_loaddb": {
+    "mode": "sqlite_loaddb",
+    "runtime": "bun",
+    "search": {
+      "n": 2500,
+      "p50_ms": 0.65,
+      "p99_ms": 2.402,
+      "p999_ms": 5.49,
+      "mean_ms": 0.754,
+      "max_ms": 5.98,
+      "n_ge_100": 0,
+      "n_ge_300": 0
+    },
+    "execute": {
+      "n": 2500,
+      "p50_ms": 0.853,
+      "p99_ms": 4.768,
+      "p999_ms": 6.564,
+      "mean_ms": 1.094,
+      "max_ms": 8.929,
+      "n_ge_100": 0,
+      "n_ge_300": 0
+    },
+    "turn_search_plus_exec": {
+      "n": 2500,
+      "p50_ms": 1.563,
+      "p99_ms": 6.189,
+      "p999_ms": 8.095,
+      "mean_ms": 1.869,
+      "max_ms": 10.177,
+      "n_ge_100": 0,
+      "n_ge_300": 0
+    },
+    "first_after_new_session": {
+      "search_ms": 1.596,
+      "exec_ms": 4.359,
+      "turn_ms": 6.007
+    },
+    "bench": {
+      "mcp_sessions": 2,
+      "stream_mapping_entries": 0,
+      "request_to_stream_entries": 0,
+      "audit_ring_entries": 64,
+      "audit_ring_max": 64,
+      "rss_mb": 194.94,
+      "heap_used_mb": 44.51
+    },
+    "log_tail": "[catalog-sqlite] loaded 40 operations from /tmp/cat-sqlite-lat-438377/catalog.sqlite (LOAD=db)\n[clawql-http-layer] banner auth_mode=noAuth skip_auth=0 otel=0 session_idle_ms=0 audit=1 skip_prune=0 skip_als=0 skip_payments=1 skip_graphql=1 http_perf=0 loki_url=0 events=0\n[clawql-mcp] Ready — catalog-sqlite; 0 vendor label(s): none; memory=off; providerSecrets=0 (run: clawql init --interactive)\n[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:33603/mcp\n"
+  },
+  "delta_loaddb_minus_memory_ms": {
+    "search": {
+      "p50_ms": -0.071,
+      "p99_ms": -0.119,
+      "p999_ms": -3.61,
+      "mean_ms": -0.096,
+      "n_ge_300": 0
+    },
+    "execute": {
+      "p50_ms": -0.136,
+      "p99_ms": 0.246,
+      "p999_ms": -1.03,
+      "mean_ms": -0.1,
+      "n_ge_300": 0
+    },
+    "turn_search_plus_exec": {
+      "p50_ms": -0.217,
+      "p99_ms": 0.03,
+      "p999_ms": -2.286,
+      "mean_ms": -0.2,
+      "n_ge_300": 0
+    }
+  },
+  "interpretation": "Positive delta = SQLite slower. Steady-state search should be near-identical (ops already in heap). Execute may pay a one-time gunzip+JSON parse on first OAS property touch; subsequent executes use the in-process cache. p999 on this board is still dominated by the open HTTP post-mock stall (round 12), not catalog storage."
+}

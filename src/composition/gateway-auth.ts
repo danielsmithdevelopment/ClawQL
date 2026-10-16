@@ -13,8 +13,10 @@ import {
   type GatewayAuthConfig,
 } from "clawql-auth";
 import { Effect } from "effect";
-import { validateVirtualKey } from "clawql-inference";
+import { createRequire } from "node:module";
 import { resolveHostAuthEventSink } from "./auth-process-worm-sink.js";
+
+const requireFromHere = createRequire(import.meta.url);
 
 let gatewayAuth: ClawQLAuth | undefined;
 
@@ -26,6 +28,10 @@ export function createInferenceVirtualKeyClaimsResolver(
   env: NodeJS.ProcessEnv = process.env
 ): ApiKeyClaimsResolver {
   return (presented) => {
+    // Lazy: clawql-inference stays out of the slim HTTP module graph until a key is presented.
+    const { validateVirtualKey } = requireFromHere(
+      "clawql-inference"
+    ) as typeof import("clawql-inference");
     const result = validateVirtualKey(presented, env);
     if (!result.ok) {
       if (result.status === 402 || result.status === 429) {

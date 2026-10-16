@@ -47,6 +47,10 @@ afterEach(() => {
   delete process.env.CLOUDFLARE_API_TOKEN;
   delete process.env.CLAWQL_PROVIDER;
   delete process.env.PAPERLESS_BASE_URL;
+  delete process.env.CLAWQL_NATIVE_FETCH;
+  delete process.env.CLAWQL_UPSTREAM_KEEPALIVE;
+  delete process.env.CLAWQL_UPSTREAM_FETCH_DIAG;
+  delete process.env.CLAWQL_UPSTREAM_FETCH_SLOW_MS;
 });
 
 describe("rest-operation helpers", () => {
@@ -494,5 +498,38 @@ describe("executeRestOperation", () => {
     delete process.env.CLAWQL_TEST_ONYX_FETCH_STUB;
     delete process.env.CLAWQL_TEST_SLACK_FETCH_BODY;
     delete process.env.CLAWQL_TEST_ONYX_FETCH_BODY;
+  });
+
+  it("CLAWQL_NATIVE_FETCH uses globalThis.fetch for the GET path", async () => {
+    process.env.CLAWQL_NATIVE_FETCH = "1";
+    await withFetchServer(
+      async (req) => {
+        expect(req.method).toBe("GET");
+        return Response.json({ via: "native" });
+      },
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp(),
+          { itemId: "n1" },
+          makeOpenApi(origin)
+        );
+        expect(out).toEqual({ ok: true, data: { via: "native" } });
+      }
+    );
+  });
+
+  it("CLAWQL_UPSTREAM_KEEPALIVE still completes GET via node-fetch agent", async () => {
+    process.env.CLAWQL_UPSTREAM_KEEPALIVE = "1";
+    await withFetchServer(
+      async () => Response.json({ via: "keepalive" }),
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp(),
+          { itemId: "k1" },
+          makeOpenApi(origin)
+        );
+        expect(out).toEqual({ ok: true, data: { via: "keepalive" } });
+      }
+    );
   });
 });

@@ -1,3 +1,6 @@
+Latency sizing: keep MCP `resources.limits.cpu` ≥ 2 (chart default). A 1-core
+cgroup starves Node/Bun helper threads — see docs/architecture/gateway-runtime-and-catalog-memory.md.
+
 1. Get the application URL (depends on Service type):
 
 {{- if contains "LoadBalancer" .Values.service.type }}

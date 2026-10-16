@@ -12,6 +12,8 @@ describe("inferSpecMode", () => {
     delete process.env.CLAWQL_SPEC_PATHS;
     delete process.env.CLAWQL_BUNDLED_PROVIDERS;
     delete process.env.CLAWQL_PROVIDER;
+    delete process.env.CLAWQL_CATALOG_SQLITE;
+    delete process.env.CLAWQL_CATALOG_SQLITE_LOAD;
   });
 
   afterEach(() => {
@@ -30,5 +32,11 @@ describe("inferSpecMode", () => {
   it("detects CLAWQL_PROVIDER", () => {
     process.env.CLAWQL_PROVIDER = "github,slack";
     expect(inferSpecMode()).toBe("CLAWQL_PROVIDER=github,slack");
+  });
+
+  it("detects catalog-sqlite LOAD=db", () => {
+    process.env.CLAWQL_CATALOG_SQLITE = "1";
+    process.env.CLAWQL_CATALOG_SQLITE_LOAD = "db";
+    expect(inferSpecMode()).toBe("catalog-sqlite");
   });
 });

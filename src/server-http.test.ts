@@ -200,6 +200,30 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     });
   });
 
+  it("GET /healthz includes bench stats when CLAWQL_BENCH_STATS=1", async () => {
+    const saved = process.env.CLAWQL_BENCH_STATS;
+    process.env.CLAWQL_BENCH_STATS = "1";
+    try {
+      await withHttpServer(async (base) => {
+        const res = await fetch(`${base}/healthz`);
+        expect(res.ok).toBe(true);
+        const body = (await res.json()) as {
+          bench?: {
+            mcp_sessions: number;
+            audit_ring_entries: number;
+            audit_ring_max: number;
+          };
+        };
+        expect(body.bench).toBeDefined();
+        expect(body.bench!.mcp_sessions).toBe(0);
+        expect(body.bench!.audit_ring_max).toBeGreaterThan(0);
+      });
+    } finally {
+      if (saved === undefined) delete process.env.CLAWQL_BENCH_STATS;
+      else process.env.CLAWQL_BENCH_STATS = saved;
+    }
+  });
+
   it("GET /metrics returns Prometheus native-protocol metrics", async () => {
     await withHttpServer(async (base) => {
       const res = await fetch(`${base}/metrics`);

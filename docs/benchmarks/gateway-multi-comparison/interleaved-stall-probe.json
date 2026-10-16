@@ -1,0 +1,53 @@
+{
+  "measuredAt": "2026-10-13T05:30:53.813Z",
+  "schedule": "round_robin_flow_interleave",
+  "flows": 1500,
+  "turns_per_flow": 12,
+  "slow_ms": 80,
+  "elapsed_s": 50.8,
+  "summary": {
+    "clawql_http_bun": {
+      "n": 1500,
+      "p50_ms": 21.679,
+      "p999_ms": 56.823,
+      "max_ms": 84.1,
+      "slow_n": 1,
+      "slow_top": [
+        {
+          "flow": 1,
+          "ms": 84.1,
+          "t_iso": "2026-10-13T05:30:03.014Z",
+          "t_end_iso": "2026-10-13T05:30:03.098Z",
+          "err": null
+        }
+      ]
+    },
+    "mcpjungle": {
+      "n": 1500,
+      "p50_ms": 10.764,
+      "p999_ms": 27.887,
+      "max_ms": 157.5,
+      "slow_n": 1,
+      "slow_top": [
+        {
+          "flow": 1,
+          "ms": 157.5,
+          "t_iso": "2026-10-13T05:30:03.098Z",
+          "t_end_iso": "2026-10-13T05:30:03.255Z",
+          "err": null
+        }
+      ]
+    }
+  },
+  "coincidence": {
+    "claw_slow": 1,
+    "mcpjungle_slow": 1,
+    "claw_overlapping_mcpjungle": 1,
+    "claw_overlap_fraction": 1,
+    "mcpjungle_overlapping_claw": 1,
+    "mcpjungle_overlap_fraction": 1,
+    "interpretation": "High claw_overlap_fraction → shared host stalls. Near 0 with claw_slow≫peer → ClawQL-in-process."
+  },
+  "clawql_gap_seconds": [],
+  "clawql_gap_histogram_1s": {}
+}

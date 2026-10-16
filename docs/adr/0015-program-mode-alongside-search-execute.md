@@ -26,12 +26,27 @@ The live compare at [`/mcp-ui/trace/compare/executor`](https://clawql.com/mcp-ui
 1. Publish a run where Executor’s program filters to the same fields (fair comparison next to today’s dump).
 2. Expand beyond one task: ten or more, including multi-step work; measure **outputs**, not just inputs. Single-call listing is ClawQL’s best case.
 3. Rerun against Executor v2 once its code mode ships.
+4. **Fusion board:** tasks that need several lookups per step (joins, fan-out, lookup chains). Count **model turns** as well as tokens and gateway latency — the sequential 12-turn equal-arm board cannot show fusion wins. MCP dropped JSON-RPC batching (June 2025); batching lives inside ClawQL tools (batched execute / program mode), not the protocol. See [`gateway-runtime-and-catalog-memory.md`](../architecture/gateway-runtime-and-catalog-memory.md) §2.
 
 ## Decision
 
 Adopt **confined programs as an additional tool**, alongside unchanged `search` and `execute`, under one governing rule:
 
 > **A program may never see or do anything the same agent could not do with individual `search` / `execute` calls.** Programs only change how many round trips it takes. The rule is testable.
+
+### Known-op vs program (two axes — do not conflate)
+
+| Question | Clear | Unclear |
+| --- | --- | --- |
+| Which operation? | Known-op → `execute` by id | Discovery (`search` / future routed Decide) — **not** a program |
+| How many ops per turn? | One → `execute` (+ `where`) | Several → `execute_program` |
+
+Known-op is **not** “program mode when the action is clear.” A one-step program
+*could* become that if its format costs ~the same as `execute` args; until the
+Cloudflare board and real-model gate show parity on filter tasks (and a fan-out
+board shows multi-step wins), **`execute` stays the measured default** and
+programs stay opt-in (`CLAWQL_ENABLE_PROGRAMS` default off). See
+[`measured-defaults.md`](../benchmarks/cloudflare-multiturn/measured-defaults.md).
 
 ### Keep each advantage
 
@@ -238,9 +253,11 @@ OpenCode’s package is MIT but unpublished (private workspace). A maintained, p
 **Earned-claim sequence (do not publish the runtime until these hold):**
 
 1. Build as program mode step 2 inside ClawQL on the **pinned** celld version.
-2. Benchmark vs OpenCode’s interpreter: latency per tool call (isolate boundary cost), cold start, memory, first-attempt success on multi-step tasks.
+2. Benchmark vs OpenCode’s interpreter / plan runner: latency per tool call (isolate boundary cost), cold start, memory per cell, first-attempt success on multi-step tasks.
 3. **Crash demo:** kill a node mid-program in the three-arm load-test setup; show resume **without repeating a call**, plus audit entries. Prefer a short clip or Sessions/trace link as the public reply that turns “with the hopes of” into a result.
 4. Extract and publish the runtime once those numbers hold.
+
+**Parallelism:** step 3 does **not** wait for step 2 to finish — start the crash-demo harness as soon as the isolate path runs at all. Separately, a **short isolate-boundary spike** (cold start, cost per tool call, memory per cell vs the v0 plan runner) may run **in parallel with the fan-out / join board**, so those numbers are ready when the board justifies switching the durable path to celld.
 
 ### Public positioning (honest until proven)
 
