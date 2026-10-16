@@ -1,0 +1,4065 @@
+{
+  "measuredAt": "2026-10-16T13:42:45.105Z",
+  "kind": "publish_board",
+  "rep": 1,
+  "iters": 10000,
+  "latency_mode": "0",
+  "fixture": {
+    "source": "synthetic",
+    "label": "real schemas, synthetic content",
+    "path": "/workspace/scripts/benchmarks/cloudflare-multiturn/fixtures/recording.synthetic.json"
+  },
+  "tokenizer": "js-tiktoken cl100k_base",
+  "executor": null,
+  "executor_v1": {
+    "slug": "cf-zone-audit-mock",
+    "connectionName": "cfMock",
+    "origin": "http://127.0.0.1:33551",
+    "runtimeVersion": "1.6.10",
+    "transport": "stdio",
+    "bin": "/tmp/executor-try/node_modules/.bin/executor",
+    "cwd": "/tmp/executor-try",
+    "toolPathPrefix": "cf-zone-audit-mock.user.cfMock",
+    "toolCount": 60
+  },
+  "error_policy": {
+    "abort_on_error": false,
+    "note": "Continue-on-error: failed sessions counted in error_rate / errors_by_kind."
+  },
+  "metrics_policy": {
+    "id": "all_attempted_sessions_primary",
+    "task_success": "Failed sessions count against task_success_rate; success_rate + error_rate = 1.",
+    "tokens_latency_primary": "discovery/result/code means and session_ms percentiles include every attempted session; failed sessions count tokens/latency up to the failing step.",
+    "tokens_latency_success_only": "success_only_* fields report the same aggregates over ok sessions only (diagnostic; not the headline).",
+    "applies_to": "all arms"
+  },
+  "board": {
+    "executor_v1": {
+      "id": "executor_v1",
+      "iters": 10000,
+      "metrics_policy": {
+        "id": "all_attempted_sessions_primary",
+        "task_success": "Failed sessions count against task_success_rate; success_rate + error_rate = 1.",
+        "tokens_latency_primary": "discovery/result/code means and session_ms percentiles include every attempted session; failed sessions count tokens/latency up to the failing step.",
+        "tokens_latency_success_only": "success_only_* fields report the same aggregates over ok sessions only (diagnostic; not the headline).",
+        "applies_to": "all arms"
+      },
+      "task_success_rate": 1,
+      "sessions_ok": 10000,
+      "sessions_failed": 0,
+      "error_rate": 0,
+      "success_plus_error": 1,
+      "errors_by_kind": {},
+      "error_samples": [],
+      "settings": {
+        "model": "openapi_tools_stdio_mcp",
+        "app_slug": "cf-zone-audit-mock",
+        "connection": "cfMock",
+        "runtime": "1.6.10",
+        "mock_origin": "http://127.0.0.1:33551",
+        "transport": "stdio",
+        "product_lane": "stable_release",
+        "http_concurrency": "N/A — stdio process-per-client; not beside HTTP curves"
+      },
+      "upstream": "mock",
+      "definition_tokens": 128,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 493,
+      "code_tokens_mean": 1523,
+      "code_price_weight": 5,
+      "combined_mean": 2144,
+      "weighted_mean": 8236,
+      "combined_at_n": 20160128,
+      "success_only": {
+        "n": 10000,
+        "discovery_tokens_mean": 0,
+        "result_tokens_mean": 493,
+        "code_tokens_mean": 1523,
+        "combined_mean": 2144,
+        "weighted_mean": 8236,
+        "session_ms": {
+          "p50": 84.14279799995711,
+          "p99": 103.4130619999487,
+          "p999": 119.50059599999804
+        },
+        "note": "Diagnostic only — headline means use all attempted sessions."
+      },
+      "rebuild_check": {
+        "combined_mean_ok": true,
+        "formula": "definition + discovery + result + code",
+        "weighted_formula": "definition + discovery + result + 5*code",
+        "scope": "all_attempted_sessions"
+      },
+      "calls_mean": 12,
+      "session_ms": {
+        "p50": 84.14279799995711,
+        "p99": 103.4130619999487,
+        "p999": 119.50059599999804,
+        "comparable": true,
+        "scope": "all_attempted_sessions",
+        "note": "upstream=mock (same replay fixture as peers); includes failed sessions"
+      },
+      "memory_plateau": {
+        "rss_mb_median": 677.02,
+        "anonymous_mb_median": 542.87,
+        "pss_mb_median": 599.66,
+        "samples": 5
+      },
+      "memory_series": [
+        {
+          "i": 1,
+          "rss_mb": 514.25,
+          "anonymous_mb": 380.82,
+          "pss_mb": 437.36,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8671875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 196.03515625,
+              "anonymous_mb": 152.72265625,
+              "pss_mb": 173.314453125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 273.90625,
+              "anonymous_mb": 221.2734375,
+              "pss_mb": 251.1787109375
+            }
+          ]
+        },
+        {
+          "i": 100,
+          "rss_mb": 642.49,
+          "anonymous_mb": 508.63,
+          "pss_mb": 565.36,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8671875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 229.9921875,
+              "anonymous_mb": 186.6171875,
+              "pss_mb": 207.15234375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 368.1875,
+              "anonymous_mb": 315.19140625,
+              "pss_mb": 345.3408203125
+            }
+          ]
+        },
+        {
+          "i": 200,
+          "rss_mb": 618.97,
+          "anonymous_mb": 485.11,
+          "pss_mb": 541.84,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8671875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 200.00390625,
+              "anonymous_mb": 156.62890625,
+              "pss_mb": 177.1640625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 374.65625,
+              "anonymous_mb": 321.66015625,
+              "pss_mb": 351.8095703125
+            }
+          ]
+        },
+        {
+          "i": 300,
+          "rss_mb": 639.69,
+          "anonymous_mb": 505.83,
+          "pss_mb": 562.56,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8671875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 210.5390625,
+              "anonymous_mb": 167.1640625,
+              "pss_mb": 187.69921875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 384.83984375,
+              "anonymous_mb": 331.84375,
+              "pss_mb": 361.9931640625
+            }
+          ]
+        },
+        {
+          "i": 400,
+          "rss_mb": 644.03,
+          "anonymous_mb": 510.17,
+          "pss_mb": 566.9,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8671875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 217.93359375,
+              "anonymous_mb": 174.55859375,
+              "pss_mb": 195.09375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 381.78515625,
+              "anonymous_mb": 328.7890625,
+              "pss_mb": 358.9384765625
+            }
+          ]
+        },
+        {
+          "i": 500,
+          "rss_mb": 671.77,
+          "anonymous_mb": 537.91,
+          "pss_mb": 594.63,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8671875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 225.6953125,
+              "anonymous_mb": 182.3203125,
+              "pss_mb": 202.85546875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 401.7578125,
+              "anonymous_mb": 348.76171875,
+              "pss_mb": 378.9111328125
+            }
+          ]
+        },
+        {
+          "i": 600,
+          "rss_mb": 635.23,
+          "anonymous_mb": 501.37,
+          "pss_mb": 558.09,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8671875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 199.9921875,
+              "anonymous_mb": 156.6171875,
+              "pss_mb": 177.15234375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 390.921875,
+              "anonymous_mb": 337.92578125,
+              "pss_mb": 368.0751953125
+            }
+          ]
+        },
+        {
+          "i": 700,
+          "rss_mb": 643.14,
+          "anonymous_mb": 509.29,
+          "pss_mb": 566.01,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8671875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 205.96484375,
+              "anonymous_mb": 162.58984375,
+              "pss_mb": 183.125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 392.8671875,
+              "anonymous_mb": 339.87109375,
+              "pss_mb": 370.0205078125
+            }
+          ]
+        },
+        {
+          "i": 800,
+          "rss_mb": 660,
+          "anonymous_mb": 526.14,
+          "pss_mb": 582.87,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8671875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 216.234375,
+              "anonymous_mb": 172.859375,
+              "pss_mb": 193.39453125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 399.45703125,
+              "anonymous_mb": 346.4609375,
+              "pss_mb": 376.6103515625
+            }
+          ]
+        },
+        {
+          "i": 900,
+          "rss_mb": 669.64,
+          "anonymous_mb": 535.78,
+          "pss_mb": 592.51,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8671875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 224.5078125,
+              "anonymous_mb": 181.1328125,
+              "pss_mb": 201.66796875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 400.8203125,
+              "anonymous_mb": 347.82421875,
+              "pss_mb": 377.9736328125
+            }
+          ]
+        },
+        {
+          "i": 1000,
+          "rss_mb": 671.23,
+          "anonymous_mb": 537.38,
+          "pss_mb": 594.11,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 229.7734375,
+              "anonymous_mb": 186.3984375,
+              "pss_mb": 206.9375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 397.1484375,
+              "anonymous_mb": 344.15234375,
+              "pss_mb": 374.3056640625
+            }
+          ]
+        },
+        {
+          "i": 1100,
+          "rss_mb": 644.03,
+          "anonymous_mb": 510.17,
+          "pss_mb": 566.91,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 200.453125,
+              "anonymous_mb": 157.078125,
+              "pss_mb": 177.6171875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 399.26171875,
+              "anonymous_mb": 346.265625,
+              "pss_mb": 376.4189453125
+            }
+          ]
+        },
+        {
+          "i": 1200,
+          "rss_mb": 647.35,
+          "anonymous_mb": 513.49,
+          "pss_mb": 570.23,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 203.63671875,
+              "anonymous_mb": 160.26171875,
+              "pss_mb": 180.80078125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 399.40234375,
+              "anonymous_mb": 346.40625,
+              "pss_mb": 376.5595703125
+            }
+          ]
+        },
+        {
+          "i": 1300,
+          "rss_mb": 654.5,
+          "anonymous_mb": 520.64,
+          "pss_mb": 577.38,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 211.52734375,
+              "anonymous_mb": 168.15234375,
+              "pss_mb": 188.69140625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 398.65625,
+              "anonymous_mb": 345.66015625,
+              "pss_mb": 375.8134765625
+            }
+          ]
+        },
+        {
+          "i": 1400,
+          "rss_mb": 661.38,
+          "anonymous_mb": 527.52,
+          "pss_mb": 584.26,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 217.37890625,
+              "anonymous_mb": 174.00390625,
+              "pss_mb": 194.54296875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 399.69140625,
+              "anonymous_mb": 346.6953125,
+              "pss_mb": 376.8486328125
+            }
+          ]
+        },
+        {
+          "i": 1500,
+          "rss_mb": 673.36,
+          "anonymous_mb": 539.5,
+          "pss_mb": 596.23,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.3046875,
+              "anonymous_mb": 182.9296875,
+              "pss_mb": 203.46875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 402.73828125,
+              "anonymous_mb": 349.7421875,
+              "pss_mb": 379.8955078125
+            }
+          ]
+        },
+        {
+          "i": 1600,
+          "rss_mb": 669.5,
+          "anonymous_mb": 535.64,
+          "pss_mb": 592.38,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.05859375,
+              "anonymous_mb": 182.68359375,
+              "pss_mb": 203.22265625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 399.12890625,
+              "anonymous_mb": 346.1328125,
+              "pss_mb": 376.2861328125
+            }
+          ]
+        },
+        {
+          "i": 1700,
+          "rss_mb": 647.08,
+          "anonymous_mb": 513.22,
+          "pss_mb": 569.96,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 201.0234375,
+              "anonymous_mb": 157.6484375,
+              "pss_mb": 178.1875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 401.7421875,
+              "anonymous_mb": 348.74609375,
+              "pss_mb": 378.8994140625
+            }
+          ]
+        },
+        {
+          "i": 1800,
+          "rss_mb": 650.75,
+          "anonymous_mb": 516.89,
+          "pss_mb": 573.63,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 205.83984375,
+              "anonymous_mb": 162.46484375,
+              "pss_mb": 183.00390625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 400.59375,
+              "anonymous_mb": 347.59765625,
+              "pss_mb": 377.7509765625
+            }
+          ]
+        },
+        {
+          "i": 1900,
+          "rss_mb": 663.54,
+          "anonymous_mb": 529.68,
+          "pss_mb": 586.41,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 215.53515625,
+              "anonymous_mb": 172.16015625,
+              "pss_mb": 192.69921875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 403.6875,
+              "anonymous_mb": 350.69140625,
+              "pss_mb": 380.8447265625
+            }
+          ]
+        },
+        {
+          "i": 2000,
+          "rss_mb": 669.8,
+          "anonymous_mb": 535.95,
+          "pss_mb": 592.68,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 223.85546875,
+              "anonymous_mb": 180.48046875,
+              "pss_mb": 201.01953125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 401.63671875,
+              "anonymous_mb": 348.640625,
+              "pss_mb": 378.7939453125
+            }
+          ]
+        },
+        {
+          "i": 2100,
+          "rss_mb": 675.79,
+          "anonymous_mb": 541.93,
+          "pss_mb": 598.67,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.2734375,
+              "anonymous_mb": 182.8984375,
+              "pss_mb": 203.4375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 405.203125,
+              "anonymous_mb": 352.20703125,
+              "pss_mb": 382.3603515625
+            }
+          ]
+        },
+        {
+          "i": 2200,
+          "rss_mb": 645.78,
+          "anonymous_mb": 511.92,
+          "pss_mb": 568.66,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 200.0859375,
+              "anonymous_mb": 156.7109375,
+              "pss_mb": 177.25
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 401.3828125,
+              "anonymous_mb": 348.38671875,
+              "pss_mb": 378.5400390625
+            }
+          ]
+        },
+        {
+          "i": 2300,
+          "rss_mb": 652.09,
+          "anonymous_mb": 518.23,
+          "pss_mb": 574.97,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 206.78125,
+              "anonymous_mb": 163.40625,
+              "pss_mb": 183.9453125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 401,
+              "anonymous_mb": 348.00390625,
+              "pss_mb": 378.1572265625
+            }
+          ]
+        },
+        {
+          "i": 2400,
+          "rss_mb": 664.86,
+          "anonymous_mb": 531,
+          "pss_mb": 587.73,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 214.29296875,
+              "anonymous_mb": 170.91796875,
+              "pss_mb": 191.45703125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 406.25,
+              "anonymous_mb": 353.25390625,
+              "pss_mb": 383.4072265625
+            }
+          ]
+        },
+        {
+          "i": 2500,
+          "rss_mb": 675.54,
+          "anonymous_mb": 541.68,
+          "pss_mb": 598.41,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 223.6015625,
+              "anonymous_mb": 180.2265625,
+              "pss_mb": 200.765625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 407.62109375,
+              "anonymous_mb": 354.625,
+              "pss_mb": 384.7783203125
+            }
+          ]
+        },
+        {
+          "i": 2600,
+          "rss_mb": 675.98,
+          "anonymous_mb": 542.12,
+          "pss_mb": 598.86,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.13671875,
+              "anonymous_mb": 182.76171875,
+              "pss_mb": 203.30078125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 405.53125,
+              "anonymous_mb": 352.53515625,
+              "pss_mb": 382.6884765625
+            }
+          ]
+        },
+        {
+          "i": 2700,
+          "rss_mb": 649.26,
+          "anonymous_mb": 515.4,
+          "pss_mb": 572.14,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 197.23828125,
+              "anonymous_mb": 153.86328125,
+              "pss_mb": 174.40234375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 407.7109375,
+              "anonymous_mb": 354.71484375,
+              "pss_mb": 384.8681640625
+            }
+          ]
+        },
+        {
+          "i": 2800,
+          "rss_mb": 658.28,
+          "anonymous_mb": 524.42,
+          "pss_mb": 581.16,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 208.984375,
+              "anonymous_mb": 165.609375,
+              "pss_mb": 186.1484375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 404.984375,
+              "anonymous_mb": 351.98828125,
+              "pss_mb": 382.1416015625
+            }
+          ]
+        },
+        {
+          "i": 2900,
+          "rss_mb": 667.18,
+          "anonymous_mb": 533.32,
+          "pss_mb": 590.06,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 216.27734375,
+              "anonymous_mb": 172.90234375,
+              "pss_mb": 193.44140625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 406.59375,
+              "anonymous_mb": 353.59765625,
+              "pss_mb": 383.7509765625
+            }
+          ]
+        },
+        {
+          "i": 3000,
+          "rss_mb": 672.7,
+          "anonymous_mb": 538.84,
+          "pss_mb": 595.58,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 222.98046875,
+              "anonymous_mb": 179.60546875,
+              "pss_mb": 200.14453125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 405.40625,
+              "anonymous_mb": 352.41015625,
+              "pss_mb": 382.5634765625
+            }
+          ]
+        },
+        {
+          "i": 3100,
+          "rss_mb": 680.59,
+          "anonymous_mb": 546.73,
+          "pss_mb": 603.47,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 230.46875,
+              "anonymous_mb": 187.09375,
+              "pss_mb": 207.6328125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 405.8125,
+              "anonymous_mb": 352.81640625,
+              "pss_mb": 382.9697265625
+            }
+          ]
+        },
+        {
+          "i": 3200,
+          "rss_mb": 674.86,
+          "anonymous_mb": 541,
+          "pss_mb": 597.74,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.3203125,
+              "anonymous_mb": 182.9453125,
+              "pss_mb": 203.484375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 404.23046875,
+              "anonymous_mb": 351.234375,
+              "pss_mb": 381.3876953125
+            }
+          ]
+        },
+        {
+          "i": 3300,
+          "rss_mb": 650.17,
+          "anonymous_mb": 516.31,
+          "pss_mb": 573.05,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 200.99609375,
+              "anonymous_mb": 157.62109375,
+              "pss_mb": 178.16015625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 404.859375,
+              "anonymous_mb": 351.86328125,
+              "pss_mb": 382.0166015625
+            }
+          ]
+        },
+        {
+          "i": 3400,
+          "rss_mb": 663,
+          "anonymous_mb": 529.14,
+          "pss_mb": 585.88,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 207.5390625,
+              "anonymous_mb": 164.1640625,
+              "pss_mb": 184.703125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 411.1484375,
+              "anonymous_mb": 358.15234375,
+              "pss_mb": 388.3056640625
+            }
+          ]
+        },
+        {
+          "i": 3500,
+          "rss_mb": 664.4,
+          "anonymous_mb": 530.54,
+          "pss_mb": 587.28,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 212.48828125,
+              "anonymous_mb": 169.11328125,
+              "pss_mb": 189.65234375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 407.6015625,
+              "anonymous_mb": 354.60546875,
+              "pss_mb": 384.7587890625
+            }
+          ]
+        },
+        {
+          "i": 3600,
+          "rss_mb": 669.08,
+          "anonymous_mb": 534.93,
+          "pss_mb": 591.72,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 221.3671875,
+              "anonymous_mb": 177.703125,
+              "pss_mb": 198.4140625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 403.3984375,
+              "anonymous_mb": 350.40234375,
+              "pss_mb": 380.4384765625
+            }
+          ]
+        },
+        {
+          "i": 3700,
+          "rss_mb": 677.94,
+          "anonymous_mb": 543.79,
+          "pss_mb": 600.59,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.203125,
+              "anonymous_mb": 182.5390625,
+              "pss_mb": 203.25
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 407.42578125,
+              "anonymous_mb": 354.4296875,
+              "pss_mb": 384.4658203125
+            }
+          ]
+        },
+        {
+          "i": 3800,
+          "rss_mb": 679.09,
+          "anonymous_mb": 544.95,
+          "pss_mb": 601.74,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.0078125,
+              "anonymous_mb": 182.34375,
+              "pss_mb": 203.0546875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 408.7734375,
+              "anonymous_mb": 355.77734375,
+              "pss_mb": 385.8134765625
+            }
+          ]
+        },
+        {
+          "i": 3900,
+          "rss_mb": 653.65,
+          "anonymous_mb": 519.5,
+          "pss_mb": 576.3,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 204.0703125,
+              "anonymous_mb": 160.40625,
+              "pss_mb": 181.1171875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 405.26953125,
+              "anonymous_mb": 352.2734375,
+              "pss_mb": 382.3095703125
+            }
+          ]
+        },
+        {
+          "i": 4000,
+          "rss_mb": 661.26,
+          "anonymous_mb": 527.11,
+          "pss_mb": 583.9,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 211.86328125,
+              "anonymous_mb": 168.19921875,
+              "pss_mb": 188.91015625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 405.08203125,
+              "anonymous_mb": 352.0859375,
+              "pss_mb": 382.1220703125
+            }
+          ]
+        },
+        {
+          "i": 4100,
+          "rss_mb": 676.51,
+          "anonymous_mb": 542.36,
+          "pss_mb": 599.15,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 219.62109375,
+              "anonymous_mb": 175.95703125,
+              "pss_mb": 196.66796875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 412.57421875,
+              "anonymous_mb": 359.578125,
+              "pss_mb": 389.6142578125
+            }
+          ]
+        },
+        {
+          "i": 4200,
+          "rss_mb": 672.1,
+          "anonymous_mb": 537.95,
+          "pss_mb": 594.75,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 223.58203125,
+              "anonymous_mb": 179.91796875,
+              "pss_mb": 200.62890625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 404.20703125,
+              "anonymous_mb": 351.2109375,
+              "pss_mb": 381.2470703125
+            }
+          ]
+        },
+        {
+          "i": 4300,
+          "rss_mb": 674.29,
+          "anonymous_mb": 540.14,
+          "pss_mb": 596.94,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 225.75390625,
+              "anonymous_mb": 182.08984375,
+              "pss_mb": 202.80078125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 404.2265625,
+              "anonymous_mb": 351.23046875,
+              "pss_mb": 381.2666015625
+            }
+          ]
+        },
+        {
+          "i": 4400,
+          "rss_mb": 649.06,
+          "anonymous_mb": 514.91,
+          "pss_mb": 571.7,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 198.8359375,
+              "anonymous_mb": 155.171875,
+              "pss_mb": 175.8828125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 405.91015625,
+              "anonymous_mb": 352.9140625,
+              "pss_mb": 382.9501953125
+            }
+          ]
+        },
+        {
+          "i": 4500,
+          "rss_mb": 656.68,
+          "anonymous_mb": 522.53,
+          "pss_mb": 579.32,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 206.12109375,
+              "anonymous_mb": 162.45703125,
+              "pss_mb": 183.16796875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 406.24609375,
+              "anonymous_mb": 353.25,
+              "pss_mb": 383.2861328125
+            }
+          ]
+        },
+        {
+          "i": 4600,
+          "rss_mb": 663.23,
+          "anonymous_mb": 529.09,
+          "pss_mb": 585.87,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 214.3125,
+              "anonymous_mb": 170.6484375,
+              "pss_mb": 191.3564453125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 404.609375,
+              "anonymous_mb": 351.61328125,
+              "pss_mb": 381.6474609375
+            }
+          ]
+        },
+        {
+          "i": 4700,
+          "rss_mb": 671.86,
+          "anonymous_mb": 537.71,
+          "pss_mb": 594.5,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 221.8671875,
+              "anonymous_mb": 178.203125,
+              "pss_mb": 198.9111328125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 405.6796875,
+              "anonymous_mb": 352.68359375,
+              "pss_mb": 382.7177734375
+            }
+          ]
+        },
+        {
+          "i": 4800,
+          "rss_mb": 676.92,
+          "anonymous_mb": 542.77,
+          "pss_mb": 599.55,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.69921875,
+              "anonymous_mb": 183.03515625,
+              "pss_mb": 203.7421875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 405.90625,
+              "anonymous_mb": 352.91015625,
+              "pss_mb": 382.9423828125
+            }
+          ]
+        },
+        {
+          "i": 4900,
+          "rss_mb": 648.41,
+          "anonymous_mb": 514.26,
+          "pss_mb": 571.04,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 196.8203125,
+              "anonymous_mb": 153.15625,
+              "pss_mb": 173.86328125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 407.2734375,
+              "anonymous_mb": 354.27734375,
+              "pss_mb": 384.3095703125
+            }
+          ]
+        },
+        {
+          "i": 5000,
+          "rss_mb": 653.66,
+          "anonymous_mb": 519.52,
+          "pss_mb": 576.3,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 205.2734375,
+              "anonymous_mb": 161.609375,
+              "pss_mb": 182.31640625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 404.078125,
+              "anonymous_mb": 351.08203125,
+              "pss_mb": 381.1142578125
+            }
+          ]
+        },
+        {
+          "i": 5100,
+          "rss_mb": 659.43,
+          "anonymous_mb": 525.28,
+          "pss_mb": 582.06,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 210.19140625,
+              "anonymous_mb": 166.52734375,
+              "pss_mb": 187.234375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 404.921875,
+              "anonymous_mb": 351.92578125,
+              "pss_mb": 381.9580078125
+            }
+          ]
+        },
+        {
+          "i": 5200,
+          "rss_mb": 675.09,
+          "anonymous_mb": 540.94,
+          "pss_mb": 597.72,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 217.8125,
+              "anonymous_mb": 174.1484375,
+              "pss_mb": 194.85546875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 412.9609375,
+              "anonymous_mb": 359.96484375,
+              "pss_mb": 389.9970703125
+            }
+          ]
+        },
+        {
+          "i": 5300,
+          "rss_mb": 675.69,
+          "anonymous_mb": 541.54,
+          "pss_mb": 598.32,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.68359375,
+              "anonymous_mb": 183.01953125,
+              "pss_mb": 203.7265625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 404.69140625,
+              "anonymous_mb": 351.6953125,
+              "pss_mb": 381.7275390625
+            }
+          ]
+        },
+        {
+          "i": 5400,
+          "rss_mb": 675.3,
+          "anonymous_mb": 541.15,
+          "pss_mb": 597.94,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 225.1171875,
+              "anonymous_mb": 181.453125,
+              "pss_mb": 202.16015625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 405.87109375,
+              "anonymous_mb": 352.875,
+              "pss_mb": 382.9072265625
+            }
+          ]
+        },
+        {
+          "i": 5500,
+          "rss_mb": 647.8,
+          "anonymous_mb": 513.65,
+          "pss_mb": 570.44,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 198.703125,
+              "anonymous_mb": 155.0390625,
+              "pss_mb": 175.74609375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 404.78515625,
+              "anonymous_mb": 351.7890625,
+              "pss_mb": 381.8212890625
+            }
+          ]
+        },
+        {
+          "i": 5600,
+          "rss_mb": 654.07,
+          "anonymous_mb": 519.93,
+          "pss_mb": 576.71,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 202.88671875,
+              "anonymous_mb": 159.22265625,
+              "pss_mb": 179.9296875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 406.875,
+              "anonymous_mb": 353.87890625,
+              "pss_mb": 383.9111328125
+            }
+          ]
+        },
+        {
+          "i": 5700,
+          "rss_mb": 664.82,
+          "anonymous_mb": 530.67,
+          "pss_mb": 587.46,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 212.81640625,
+              "anonymous_mb": 169.15234375,
+              "pss_mb": 189.859375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 407.69140625,
+              "anonymous_mb": 354.6953125,
+              "pss_mb": 384.7275390625
+            }
+          ]
+        },
+        {
+          "i": 5800,
+          "rss_mb": 668.81,
+          "anonymous_mb": 534.66,
+          "pss_mb": 591.45,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 218.87890625,
+              "anonymous_mb": 175.21484375,
+              "pss_mb": 195.921875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 405.62109375,
+              "anonymous_mb": 352.625,
+              "pss_mb": 382.6572265625
+            }
+          ]
+        },
+        {
+          "i": 5900,
+          "rss_mb": 675.29,
+          "anonymous_mb": 541.14,
+          "pss_mb": 597.93,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 224.078125,
+              "anonymous_mb": 180.4140625,
+              "pss_mb": 201.12109375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 406.90234375,
+              "anonymous_mb": 353.90625,
+              "pss_mb": 383.9384765625
+            }
+          ]
+        },
+        {
+          "i": 6000,
+          "rss_mb": 681.39,
+          "anonymous_mb": 547.24,
+          "pss_mb": 604.02,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 230.28125,
+              "anonymous_mb": 186.6171875,
+              "pss_mb": 207.32421875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 406.79296875,
+              "anonymous_mb": 353.796875,
+              "pss_mb": 383.8291015625
+            }
+          ]
+        },
+        {
+          "i": 6100,
+          "rss_mb": 657.59,
+          "anonymous_mb": 523.44,
+          "pss_mb": 580.22,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 197.73828125,
+              "anonymous_mb": 154.07421875,
+              "pss_mb": 174.78125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 415.53515625,
+              "anonymous_mb": 362.5390625,
+              "pss_mb": 392.5712890625
+            }
+          ]
+        },
+        {
+          "i": 6200,
+          "rss_mb": 650.18,
+          "anonymous_mb": 516.04,
+          "pss_mb": 572.82,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 199.80859375,
+              "anonymous_mb": 156.14453125,
+              "pss_mb": 176.8515625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 406.0625,
+              "anonymous_mb": 353.06640625,
+              "pss_mb": 383.0986328125
+            }
+          ]
+        },
+        {
+          "i": 6300,
+          "rss_mb": 662.14,
+          "anonymous_mb": 527.99,
+          "pss_mb": 584.77,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 209.06640625,
+              "anonymous_mb": 165.40234375,
+              "pss_mb": 186.109375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 408.7578125,
+              "anonymous_mb": 355.76171875,
+              "pss_mb": 385.7939453125
+            }
+          ]
+        },
+        {
+          "i": 6400,
+          "rss_mb": 672.2,
+          "anonymous_mb": 538.05,
+          "pss_mb": 594.83,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 216.8203125,
+              "anonymous_mb": 173.15625,
+              "pss_mb": 193.86328125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 411.0625,
+              "anonymous_mb": 358.06640625,
+              "pss_mb": 388.0986328125
+            }
+          ]
+        },
+        {
+          "i": 6500,
+          "rss_mb": 677.23,
+          "anonymous_mb": 543.09,
+          "pss_mb": 599.87,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 223.87890625,
+              "anonymous_mb": 180.21484375,
+              "pss_mb": 200.921875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 409.04296875,
+              "anonymous_mb": 356.046875,
+              "pss_mb": 386.0791015625
+            }
+          ]
+        },
+        {
+          "i": 6600,
+          "rss_mb": 677.93,
+          "anonymous_mb": 543.78,
+          "pss_mb": 600.56,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.453125,
+              "anonymous_mb": 182.7890625,
+              "pss_mb": 203.49609375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 407.1640625,
+              "anonymous_mb": 354.16796875,
+              "pss_mb": 384.2001953125
+            }
+          ]
+        },
+        {
+          "i": 6700,
+          "rss_mb": 651.81,
+          "anonymous_mb": 517.66,
+          "pss_mb": 574.44,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 199.16796875,
+              "anonymous_mb": 155.50390625,
+              "pss_mb": 176.2109375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 408.328125,
+              "anonymous_mb": 355.33203125,
+              "pss_mb": 385.3642578125
+            }
+          ]
+        },
+        {
+          "i": 6800,
+          "rss_mb": 664.92,
+          "anonymous_mb": 530.77,
+          "pss_mb": 587.55,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 204.81640625,
+              "anonymous_mb": 161.15234375,
+              "pss_mb": 181.859375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 415.7890625,
+              "anonymous_mb": 362.79296875,
+              "pss_mb": 392.8251953125
+            }
+          ]
+        },
+        {
+          "i": 6900,
+          "rss_mb": 663.09,
+          "anonymous_mb": 528.95,
+          "pss_mb": 585.73,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 212.375,
+              "anonymous_mb": 168.7109375,
+              "pss_mb": 189.41796875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 406.40625,
+              "anonymous_mb": 353.41015625,
+              "pss_mb": 383.4423828125
+            }
+          ]
+        },
+        {
+          "i": 7000,
+          "rss_mb": 669.16,
+          "anonymous_mb": 535.02,
+          "pss_mb": 591.8,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 218.31640625,
+              "anonymous_mb": 174.65234375,
+              "pss_mb": 195.359375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 406.53515625,
+              "anonymous_mb": 353.5390625,
+              "pss_mb": 383.5712890625
+            }
+          ]
+        },
+        {
+          "i": 7100,
+          "rss_mb": 678.71,
+          "anonymous_mb": 544.56,
+          "pss_mb": 601.35,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 225.375,
+              "anonymous_mb": 181.7109375,
+              "pss_mb": 202.41796875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 409.0234375,
+              "anonymous_mb": 356.02734375,
+              "pss_mb": 386.0595703125
+            }
+          ]
+        },
+        {
+          "i": 7200,
+          "rss_mb": 678.5,
+          "anonymous_mb": 544.36,
+          "pss_mb": 601.14,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.375,
+              "anonymous_mb": 182.7109375,
+              "pss_mb": 203.41796875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 407.81640625,
+              "anonymous_mb": 354.8203125,
+              "pss_mb": 384.8525390625
+            }
+          ]
+        },
+        {
+          "i": 7300,
+          "rss_mb": 656.47,
+          "anonymous_mb": 522.32,
+          "pss_mb": 579.1,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 203.91796875,
+              "anonymous_mb": 160.25390625,
+              "pss_mb": 180.9609375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 408.23828125,
+              "anonymous_mb": 355.2421875,
+              "pss_mb": 385.2744140625
+            }
+          ]
+        },
+        {
+          "i": 7400,
+          "rss_mb": 664.56,
+          "anonymous_mb": 530.41,
+          "pss_mb": 587.19,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 211.32421875,
+              "anonymous_mb": 167.66015625,
+              "pss_mb": 188.3671875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 408.921875,
+              "anonymous_mb": 355.92578125,
+              "pss_mb": 385.9580078125
+            }
+          ]
+        },
+        {
+          "i": 7500,
+          "rss_mb": 668.6,
+          "anonymous_mb": 534.45,
+          "pss_mb": 591.24,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 216.36328125,
+              "anonymous_mb": 172.69921875,
+              "pss_mb": 193.40625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 407.92578125,
+              "anonymous_mb": 354.9296875,
+              "pss_mb": 384.9619140625
+            }
+          ]
+        },
+        {
+          "i": 7600,
+          "rss_mb": 679.39,
+          "anonymous_mb": 545.25,
+          "pss_mb": 602.03,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 221.62109375,
+              "anonymous_mb": 177.95703125,
+              "pss_mb": 198.6640625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 413.4609375,
+              "anonymous_mb": 360.46484375,
+              "pss_mb": 390.4970703125
+            }
+          ]
+        },
+        {
+          "i": 7700,
+          "rss_mb": 676.12,
+          "anonymous_mb": 541.97,
+          "pss_mb": 598.75,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.34375,
+              "anonymous_mb": 182.6796875,
+              "pss_mb": 203.38671875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 405.4609375,
+              "anonymous_mb": 352.46484375,
+              "pss_mb": 382.4970703125
+            }
+          ]
+        },
+        {
+          "i": 7800,
+          "rss_mb": 647.69,
+          "anonymous_mb": 513.54,
+          "pss_mb": 570.33,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 195.4921875,
+              "anonymous_mb": 151.828125,
+              "pss_mb": 172.53515625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 407.88671875,
+              "anonymous_mb": 354.890625,
+              "pss_mb": 384.9228515625
+            }
+          ]
+        },
+        {
+          "i": 7900,
+          "rss_mb": 658.52,
+          "anonymous_mb": 524.38,
+          "pss_mb": 581.16,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 202.1875,
+              "anonymous_mb": 158.5234375,
+              "pss_mb": 179.23046875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 412.0234375,
+              "anonymous_mb": 359.02734375,
+              "pss_mb": 389.0595703125
+            }
+          ]
+        },
+        {
+          "i": 8000,
+          "rss_mb": 659.75,
+          "anonymous_mb": 525.6,
+          "pss_mb": 582.38,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8681640625
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 208.36328125,
+              "anonymous_mb": 164.69921875,
+              "pss_mb": 185.40625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 407.0703125,
+              "anonymous_mb": 354.07421875,
+              "pss_mb": 384.1064453125
+            }
+          ]
+        },
+        {
+          "i": 8100,
+          "rss_mb": 666.6,
+          "anonymous_mb": 532.45,
+          "pss_mb": 589.25,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 214.07421875,
+              "anonymous_mb": 170.41015625,
+              "pss_mb": 191.12109375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 408.21484375,
+              "anonymous_mb": 355.21875,
+              "pss_mb": 385.2548828125
+            }
+          ]
+        },
+        {
+          "i": 8200,
+          "rss_mb": 674.24,
+          "anonymous_mb": 540.09,
+          "pss_mb": 596.88,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 223.828125,
+              "anonymous_mb": 180.1640625,
+              "pss_mb": 200.875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 406.09765625,
+              "anonymous_mb": 353.1015625,
+              "pss_mb": 383.1376953125
+            }
+          ]
+        },
+        {
+          "i": 8300,
+          "rss_mb": 677.33,
+          "anonymous_mb": 543.18,
+          "pss_mb": 599.98,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.4375,
+              "anonymous_mb": 182.7734375,
+              "pss_mb": 203.484375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 406.58203125,
+              "anonymous_mb": 353.5859375,
+              "pss_mb": 383.6220703125
+            }
+          ]
+        },
+        {
+          "i": 8400,
+          "rss_mb": 648.18,
+          "anonymous_mb": 514.04,
+          "pss_mb": 570.83,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 198.0703125,
+              "anonymous_mb": 154.40625,
+              "pss_mb": 175.1171875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 405.80078125,
+              "anonymous_mb": 352.8046875,
+              "pss_mb": 382.8408203125
+            }
+          ]
+        },
+        {
+          "i": 8500,
+          "rss_mb": 656.09,
+          "anonymous_mb": 521.94,
+          "pss_mb": 578.73,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 204.62109375,
+              "anonymous_mb": 160.95703125,
+              "pss_mb": 181.66796875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 407.15234375,
+              "anonymous_mb": 354.15625,
+              "pss_mb": 384.1923828125
+            }
+          ]
+        },
+        {
+          "i": 8600,
+          "rss_mb": 666.18,
+          "anonymous_mb": 532.03,
+          "pss_mb": 588.82,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 212.828125,
+              "anonymous_mb": 169.1640625,
+              "pss_mb": 189.875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 409.03515625,
+              "anonymous_mb": 356.0390625,
+              "pss_mb": 386.0751953125
+            }
+          ]
+        },
+        {
+          "i": 8700,
+          "rss_mb": 671.25,
+          "anonymous_mb": 537.1,
+          "pss_mb": 593.89,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 219.37109375,
+              "anonymous_mb": 175.70703125,
+              "pss_mb": 196.41796875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 407.5625,
+              "anonymous_mb": 354.56640625,
+              "pss_mb": 384.6025390625
+            }
+          ]
+        },
+        {
+          "i": 8800,
+          "rss_mb": 680.49,
+          "anonymous_mb": 546.34,
+          "pss_mb": 603.14,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.6796875,
+              "anonymous_mb": 183.015625,
+              "pss_mb": 203.7265625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 409.5,
+              "anonymous_mb": 356.50390625,
+              "pss_mb": 386.5400390625
+            }
+          ]
+        },
+        {
+          "i": 8900,
+          "rss_mb": 681.2,
+          "anonymous_mb": 547.05,
+          "pss_mb": 603.84,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 225.94140625,
+              "anonymous_mb": 182.27734375,
+              "pss_mb": 202.98828125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 410.94140625,
+              "anonymous_mb": 357.9453125,
+              "pss_mb": 387.9814453125
+            }
+          ]
+        },
+        {
+          "i": 9000,
+          "rss_mb": 656.11,
+          "anonymous_mb": 521.96,
+          "pss_mb": 578.76,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 201.296875,
+              "anonymous_mb": 157.6328125,
+              "pss_mb": 178.34375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 410.50390625,
+              "anonymous_mb": 357.5078125,
+              "pss_mb": 387.5439453125
+            }
+          ]
+        },
+        {
+          "i": 9100,
+          "rss_mb": 660.83,
+          "anonymous_mb": 526.68,
+          "pss_mb": 583.47,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 208.8125,
+              "anonymous_mb": 165.1484375,
+              "pss_mb": 185.859375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 407.703125,
+              "anonymous_mb": 354.70703125,
+              "pss_mb": 384.7431640625
+            }
+          ]
+        },
+        {
+          "i": 9200,
+          "rss_mb": 667.5,
+          "anonymous_mb": 533.35,
+          "pss_mb": 590.14,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 213.8125,
+              "anonymous_mb": 170.1484375,
+              "pss_mb": 190.859375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 409.37109375,
+              "anonymous_mb": 356.375,
+              "pss_mb": 386.4111328125
+            }
+          ]
+        },
+        {
+          "i": 9300,
+          "rss_mb": 676,
+          "anonymous_mb": 541.85,
+          "pss_mb": 598.64,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 222.078125,
+              "anonymous_mb": 178.4140625,
+              "pss_mb": 199.125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 409.60546875,
+              "anonymous_mb": 356.609375,
+              "pss_mb": 386.6455078125
+            }
+          ]
+        },
+        {
+          "i": 9400,
+          "rss_mb": 677.92,
+          "anonymous_mb": 543.77,
+          "pss_mb": 600.56,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.12890625,
+              "anonymous_mb": 182.46484375,
+              "pss_mb": 203.17578125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 407.4765625,
+              "anonymous_mb": 354.48046875,
+              "pss_mb": 384.5166015625
+            }
+          ]
+        },
+        {
+          "i": 9500,
+          "rss_mb": 650.6,
+          "anonymous_mb": 516.45,
+          "pss_mb": 573.24,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 194.90234375,
+              "anonymous_mb": 151.23828125,
+              "pss_mb": 171.94921875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 411.3828125,
+              "anonymous_mb": 358.38671875,
+              "pss_mb": 388.4228515625
+            }
+          ]
+        },
+        {
+          "i": 9600,
+          "rss_mb": 659.41,
+          "anonymous_mb": 525.27,
+          "pss_mb": 582.06,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 203.94140625,
+              "anonymous_mb": 160.27734375,
+              "pss_mb": 180.98828125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 411.16015625,
+              "anonymous_mb": 358.1640625,
+              "pss_mb": 388.2001953125
+            }
+          ]
+        },
+        {
+          "i": 9700,
+          "rss_mb": 662.76,
+          "anonymous_mb": 528.61,
+          "pss_mb": 585.41,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 210.3125,
+              "anonymous_mb": 166.6484375,
+              "pss_mb": 187.359375
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 408.13671875,
+              "anonymous_mb": 355.140625,
+              "pss_mb": 385.1767578125
+            }
+          ]
+        },
+        {
+          "i": 9800,
+          "rss_mb": 679.35,
+          "anonymous_mb": 545.2,
+          "pss_mb": 601.99,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 217.87109375,
+              "anonymous_mb": 174.20703125,
+              "pss_mb": 194.91796875
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 417.1640625,
+              "anonymous_mb": 364.16796875,
+              "pss_mb": 394.2041015625
+            }
+          ]
+        },
+        {
+          "i": 9900,
+          "rss_mb": 677.02,
+          "anonymous_mb": 542.87,
+          "pss_mb": 599.66,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 223.08203125,
+              "anonymous_mb": 179.41796875,
+              "pss_mb": 200.12890625
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 409.625,
+              "anonymous_mb": 356.62890625,
+              "pss_mb": 386.6650390625
+            }
+          ]
+        },
+        {
+          "i": 10000,
+          "rss_mb": 680.56,
+          "anonymous_mb": 546.41,
+          "pss_mb": 603.2,
+          "process_count": 3,
+          "has_rest_mcp": false,
+          "has_executor_daemon": true,
+          "has_executor_mcp": true,
+          "plateau_includes": "executor_mcp + executor_daemon",
+          "processes": [
+            {
+              "pid": 941262,
+              "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 44.3125,
+              "anonymous_mb": 6.82421875,
+              "pss_mb": 12.8701171875
+            },
+            {
+              "pid": 941270,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+              "role": "executor_mcp",
+              "rss_mb": 226.69140625,
+              "anonymous_mb": 183.02734375,
+              "pss_mb": 203.73828125
+            },
+            {
+              "pid": 939987,
+              "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+              "role": "executor_daemon",
+              "rss_mb": 409.5546875,
+              "anonymous_mb": 356.55859375,
+              "pss_mb": 386.5947265625
+            }
+          ]
+        }
+      ],
+      "memory_flatness": {
+        "samples": 101,
+        "anonymous_mb_first": 380.82,
+        "anonymous_mb_last": 546.41,
+        "anonymous_mb_min": 380.82,
+        "anonymous_mb_max": 547.24,
+        "anonymous_mb_range": 166.42,
+        "anonymous_mb_drift": 165.59
+      },
+      "memory_process_tree": {
+        "samples_with_inventory": 101,
+        "rest_mcp_present_frac": 0,
+        "last_inventory": [
+          {
+            "pid": 941262,
+            "cmd": "node /tmp/executor-try/node_modules/.bin/executor mcp --mode codemode --elicitation-mode model",
+            "role": "executor_mcp",
+            "rss_mb": 44.3125,
+            "anonymous_mb": 6.82421875,
+            "pss_mb": 12.8701171875
+          },
+          {
+            "pid": 941270,
+            "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor mcp --mode codemode --elicitation-mode model",
+            "role": "executor_mcp",
+            "rss_mb": 226.69140625,
+            "anonymous_mb": 183.02734375,
+            "pss_mb": 203.73828125
+          },
+          {
+            "pid": 939987,
+            "cmd": "/tmp/executor-try/node_modules/executor-linux-x64/bin/executor daemon run --port 4788 --hostname localhost --foreground",
+            "role": "executor_daemon",
+            "rss_mb": 409.5546875,
+            "anonymous_mb": 356.55859375,
+            "pss_mb": 386.5947265625
+          }
+        ],
+        "note": "Tree = stdio `executor mcp` child + local daemon (siblings). Stable 1.x has no HTTP serve; process-per-client topology — not compared on HTTP concurrency curves."
+      },
+      "first_session": {
+        "arm": "executor_v1",
+        "ok": true,
+        "session_ms": 155.40530599999965,
+        "steps": [
+          {
+            "step": 1,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 41,
+            "codeTokens": 94,
+            "latency_ms": 21.82042999999976,
+            "check": {
+              "ok": true,
+              "label": "zoneId"
+            },
+            "note": "openapi_tools → mock HTTP via stdio mcp (stable 1.x)",
+            "upstream": "mock"
+          },
+          {
+            "step": 2,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 18,
+            "codeTokens": 128,
+            "latency_ms": 14.729708999999275,
+            "check": {
+              "ok": true
+            },
+            "note": "openapi_tools → mock HTTP via stdio mcp (stable 1.x)",
+            "upstream": "mock"
+          },
+          {
+            "step": 3,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 9,
+            "codeTokens": 128,
+            "latency_ms": 8.19144999999935,
+            "check": {
+              "ok": true,
+              "label": "ssl"
+            },
+            "note": "openapi_tools → mock HTTP via stdio mcp (stable 1.x)",
+            "upstream": "mock"
+          },
+          {
+            "step": 4,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 11,
+            "codeTokens": 142,
+            "latency_ms": 15.878992999999355,
+            "check": {
+              "ok": true,
+              "label": "aRecordCount"
+            },
+            "note": "openapi_tools → mock HTTP via stdio mcp (stable 1.x)",
+            "upstream": "mock"
+          },
+          {
+            "step": 5,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 147,
+            "codeTokens": 158,
+            "latency_ms": 15.240687000000435,
+            "check": {
+              "ok": true,
+              "label": "names"
+            },
+            "note": "openapi_tools → mock HTTP via stdio mcp (stable 1.x)",
+            "upstream": "mock"
+          },
+          {
+            "step": 6,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 40,
+            "codeTokens": 169,
+            "latency_ms": 14.96447900000021,
+            "check": {
+              "ok": true,
+              "label": "unproxiedNames"
+            },
+            "note": "openapi_tools → mock HTTP via stdio mcp (stable 1.x)",
+            "upstream": "mock"
+          },
+          {
+            "step": 7,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 21,
+            "codeTokens": 127,
+            "latency_ms": 11.773215000000164,
+            "check": {
+              "ok": true,
+              "label": "scriptNames"
+            },
+            "note": "openapi_tools → mock HTTP via stdio mcp (stable 1.x)",
+            "upstream": "mock"
+          },
+          {
+            "step": 8,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 16,
+            "codeTokens": 131,
+            "latency_ms": 7.742183000000296,
+            "check": {
+              "ok": true,
+              "label": "compatibilityDate"
+            },
+            "note": "openapi_tools → mock HTTP via stdio mcp (stable 1.x)",
+            "upstream": "mock"
+          },
+          {
+            "step": 9,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 23,
+            "codeTokens": 141,
+            "latency_ms": 12.550094000000172,
+            "check": {
+              "ok": true
+            },
+            "note": "openapi_tools → mock HTTP via stdio mcp (stable 1.x)",
+            "upstream": "mock"
+          },
+          {
+            "step": 10,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 115,
+            "codeTokens": 140,
+            "latency_ms": 13.248443000000407,
+            "check": {
+              "ok": true,
+              "label": "buckets"
+            },
+            "note": "openapi_tools → mock HTTP via stdio mcp (stable 1.x)",
+            "upstream": "mock"
+          },
+          {
+            "step": 11,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 11,
+            "codeTokens": 135,
+            "latency_ms": 9.247800000000097,
+            "check": {
+              "ok": true,
+              "label": "enabledRuleCount"
+            },
+            "note": "openapi_tools → mock HTTP via stdio mcp (stable 1.x)",
+            "upstream": "mock"
+          },
+          {
+            "step": 12,
+            "calls": 1,
+            "discoveryTokens": 0,
+            "resultTokens": 41,
+            "codeTokens": 30,
+            "latency_ms": 4.020019999999931,
+            "check": {
+              "ok": true
+            },
+            "note": "openapi_tools → mock HTTP via stdio mcp (stable 1.x)",
+            "upstream": "mock"
+          }
+        ],
+        "discovery_tokens_sum": 0,
+        "result_tokens_sum": 493,
+        "code_tokens_sum": 1523,
+        "calls_sum": 12
+      }
+    }
+  }
+}

@@ -2,11 +2,12 @@
 /**
  * Cloudflare zone-audit multi-arm board (Streamable HTTP).
  *
- *   CF_MT_ITERS=20 CF_MT_ARMS=direct,clawql_default,clawql_compact_search,clawql_known_op,executor_v2,mcpjungle,agentgateway \
+ *   CF_MT_ITERS=20 CF_MT_ARMS=direct,clawql_default,clawql_compact_search,clawql_known_op,executor_v2,executor_v1,mcpjungle,agentgateway \
  *     node scripts/benchmarks/cloudflare-multiturn/run-board.mjs
  *
  *   CF_MT_ITERS=10000 CF_MT_REPS=3 …  # publish protocol (3 interleaved × 10k)
  *   Smoke (N<10000 or REPS<3) writes smoke-* artifacts; only 3×10k writes board-*.
+ *   executor_v1 = stable 1.x OpenAPI→mock over stdio (beside promoted executor_v2).
  */
 import { spawn, spawnSync } from "node:child_process";
 import { createServer as createNetServer, createConnection } from "node:net";
@@ -27,20 +28,27 @@ import { performance } from "node:perf_hooks";
 import { getEncoding } from "js-tiktoken";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { clawqlEqualArmEnv } from "../lib/clawql-bench-env.mjs";
 import { FAKE } from "./lib/fixture-ids.mjs";
 import { buildExpectations, checkStep } from "./lib/success-checks.mjs";
 import {
   CLOUDFLARE_CODE_MODE,
   CLOUDFLARE_CODEMODE_DEFINITION_TOKENS,
+  executorV1ToolScripts,
   executorV2ToolScripts,
 } from "./code-mode/published-scripts.mjs";
 import { ensureExecutorOpenapiApp } from "./lib/ensure-executor-openapi-app.mjs";
+import { ensureExecutorV1Openapi } from "./lib/ensure-executor-v1-openapi.mjs";
 import {
   CLAWQL_STEP_SHAPES,
   modelWrittenShapeText,
   programPlanSource,
 } from "./lib/clawql-shapes.mjs";
+import {
+  executorV2ApiKey,
+  findExecutorV2ServeRootPid,
+} from "../lib/find-executor-v2-pid.mjs";
 
 /** Price-weight: model-written code/where/plan at 5× input (blog / board convention). */
 const CODE_PRICE_WEIGHT = Number(process.env.CF_MT_CODE_PRICE_WEIGHT || 5) || 5;
@@ -215,36 +223,142 @@ function treeSmaps(rootPid) {
   };
 }
 
-/** Per-PID inventory for fairness audits (gateway + REST→MCP child, etc.). */
-function treeProcessInventory(rootPid) {
-  const processes = [];
-  for (const pid of processTreePids(rootPid)) {
-    const s = smapsRollup(pid);
-    const cmd = cmdlineOf(pid);
-    processes.push({
-      pid,
-      cmd,
-      role: /cf-rest-mcp\.mjs|equal-arm-catalog-mcp\.mjs/.test(cmd)
-        ? "rest_mcp"
-        : /mcpjungle/.test(cmd)
-          ? "mcpjungle_gateway"
-          : /agentgateway/.test(cmd)
-            ? "agentgateway"
-            : /server-http\.js|dist\/server/.test(cmd)
-              ? "clawql_http"
-              : "other",
-      rss_mb: s?.rss_mb ?? null,
-      anonymous_mb: s?.anonymous_mb ?? null,
-      pss_mb: s?.pss_mb ?? null,
-    });
+function roleForCmd(cmd) {
+  if (/cf-rest-mcp\.mjs|equal-arm-catalog-mcp\.mjs/.test(cmd)) return "rest_mcp";
+  if (/mcpjungle/.test(cmd)) return "mcpjungle_gateway";
+  if (/agentgateway/.test(cmd)) return "agentgateway";
+  if (/server-http\.js|dist\/server/.test(cmd)) return "clawql_http";
+  // Executor motel = always-on diagnostics telemetry — inventory only, not plateau sum.
+  if (/workerd/.test(cmd) && /motel\.capnp|motel-data|motel-assets/.test(cmd)) {
+    return "executor_motel";
   }
-  const tree = treeSmaps(rootPid);
+  if (/workerd/.test(cmd)) return "executor_sandbox";
+  if (/\bexecutor\b/.test(cmd) && /\bdaemon\b/.test(cmd)) return "executor_daemon";
+  if (/\bexecutor\b/.test(cmd) && /\bmcp\b/.test(cmd)) return "executor_mcp";
+  if (/\bexecutor\b/.test(cmd)) return "executor_serve";
+  return "other";
+}
+
+/** Roles that count toward Executor headline RSS/anon (CLI + HTTP + sandbox). */
+function countsTowardExecutorPlateau(role) {
+  return role === "executor_serve" || role === "executor_sandbox";
+}
+
+/** v1 stable: stdio MCP client + local daemon (full process tree). */
+function countsTowardExecutorV1Plateau(role) {
+  return role === "executor_mcp" || role === "executor_daemon" || role === "executor_serve";
+}
+
+function transportPid(transport) {
+  if (typeof transport?.pid === "number") return transport.pid;
+  if (typeof transport?._process?.pid === "number") return transport._process.pid;
+  return null;
+}
+
+/** Prefer EXECUTOR_V1_DAEMON_PID; else scan for `executor … daemon`. */
+function findExecutorV1DaemonPid() {
+  if (process.env.EXECUTOR_V1_DAEMON_PID) {
+    const n = Number(process.env.EXECUTOR_V1_DAEMON_PID);
+    return Number.isFinite(n) ? n : null;
+  }
+  for (const ent of readdirSync("/proc")) {
+    if (!/^\d+$/.test(ent)) continue;
+    try {
+      const cmd = readFileSync(`/proc/${ent}/cmdline`, "utf8").replace(/\0/g, " ");
+      if (/\bexecutor\b/.test(cmd) && /\bdaemon\b/.test(cmd)) return Number(ent);
+    } catch {
+      /* ignore */
+    }
+  }
+  return null;
+}
+
+/**
+ * Merge process trees from multiple roots (v1: stdio mcp + daemon are siblings).
+ * Dedupes PIDs; applies arm-specific plateau filters.
+ */
+function treeProcessInventoryMulti(rootPids, { arm = null } = {}) {
+  const seen = new Set();
+  const processes = [];
+  for (const root of rootPids.filter((p) => p != null)) {
+    for (const pid of processTreePids(root)) {
+      if (seen.has(pid)) continue;
+      seen.add(pid);
+      const s = smapsRollup(pid);
+      const cmd = cmdlineOf(pid);
+      processes.push({
+        pid,
+        cmd,
+        role: roleForCmd(cmd),
+        rss_mb: s?.rss_mb ?? null,
+        anonymous_mb: s?.anonymous_mb ?? null,
+        pss_mb: s?.pss_mb ?? null,
+      });
+    }
+  }
+  let tree;
+  if (arm === "executor_v2") {
+    let rss = 0;
+    let anon = 0;
+    let pss = 0;
+    for (const p of processes) {
+      if (!countsTowardExecutorPlateau(p.role)) continue;
+      if (p.rss_mb != null) rss += p.rss_mb;
+      if (p.anonymous_mb != null) anon += p.anonymous_mb;
+      if (p.pss_mb != null) pss += p.pss_mb;
+    }
+    tree = {
+      rss_mb: Number(rss.toFixed(2)),
+      anonymous_mb: Number(anon.toFixed(2)),
+      pss_mb: Number(pss.toFixed(2)),
+      plateau_excludes: "executor_motel (diagnostics workerd)",
+    };
+  } else if (arm === "executor_v1") {
+    let rss = 0;
+    let anon = 0;
+    let pss = 0;
+    for (const p of processes) {
+      if (!countsTowardExecutorV1Plateau(p.role)) continue;
+      if (p.rss_mb != null) rss += p.rss_mb;
+      if (p.anonymous_mb != null) anon += p.anonymous_mb;
+      if (p.pss_mb != null) pss += p.pss_mb;
+    }
+    tree = {
+      rss_mb: Number(rss.toFixed(2)),
+      anonymous_mb: Number(anon.toFixed(2)),
+      pss_mb: Number(pss.toFixed(2)),
+      plateau_includes: "executor_mcp + executor_daemon",
+    };
+  } else {
+    let rss = 0;
+    let anon = 0;
+    let pss = 0;
+    for (const p of processes) {
+      if (p.rss_mb != null) rss += p.rss_mb;
+      if (p.anonymous_mb != null) anon += p.anonymous_mb;
+      if (p.pss_mb != null) pss += p.pss_mb;
+    }
+    tree = {
+      rss_mb: Number(rss.toFixed(2)),
+      anonymous_mb: Number(anon.toFixed(2)),
+      pss_mb: Number(pss.toFixed(2)),
+    };
+  }
   return {
     ...tree,
     process_count: processes.length,
     has_rest_mcp: processes.some((p) => p.role === "rest_mcp"),
+    has_executor_serve: processes.some((p) => p.role === "executor_serve"),
+    has_executor_sandbox: processes.some((p) => p.role === "executor_sandbox"),
+    has_executor_daemon: processes.some((p) => p.role === "executor_daemon"),
+    has_executor_mcp: processes.some((p) => p.role === "executor_mcp"),
     processes,
   };
+}
+
+/** Per-PID inventory for fairness audits (gateway + REST→MCP child, etc.). */
+function treeProcessInventory(rootPid, { arm = null } = {}) {
+  return treeProcessInventoryMulti([rootPid], { arm });
 }
 
 /** ~100 samples on publish boards (flatness); ~10 on smoke. */
@@ -1113,6 +1227,69 @@ async function runExecutorV2Session(client, scripts, expectations) {
   return summarizeSession("executor_v2", ok, t0, steps);
 }
 
+/**
+ * Executor 1.x stable — same OpenAPI→mock scripts as v2, via stdio `executor mcp`.
+ * Result tokens = MCP text as returned (stdio pretty-prints; larger Layer-2 than compact JSON).
+ */
+async function runExecutorV1Session(client, scripts, expectations) {
+  const steps = [];
+  let ok = true;
+  const t0 = performance.now();
+  let fatal = null;
+  for (let step = 1; step <= 12; step++) {
+    const code = scripts[step];
+    const codeTokens = countTokens(code);
+    const t1 = performance.now();
+    let res;
+    try {
+      res = await client.callTool({
+        name: "execute",
+        arguments: { code, timeoutMs: 30_000 },
+      });
+    } catch (e) {
+      fatal = new Error(`executor_v1 step ${step}: ${e.message || e}`);
+      break;
+    }
+    const ms = performance.now() - t1;
+    const text = toolText(res);
+    if (res.isError) {
+      fatal = new Error(`executor_v1 step ${step}: ${text.slice(0, 300)}`);
+      break;
+    }
+    let observed;
+    try {
+      observed = unwrapExecutorValue(text);
+    } catch (e) {
+      fatal = new Error(`executor_v1 step ${step}: ${e.message}`);
+      break;
+    }
+    const check = checkStep(step, observed, expectations);
+    ok &&= check.ok;
+    steps.push({
+      step,
+      calls: 1,
+      discoveryTokens: 0,
+      // Model-visible MCP text (pretty-printed by stdio transport).
+      resultTokens: countTokens(text),
+      codeTokens,
+      latency_ms: ms,
+      check,
+      note: "openapi_tools → mock HTTP via stdio mcp (stable 1.x)",
+      upstream: "mock",
+    });
+  }
+  if (fatal) {
+    return partialFailedSession(
+      "executor_v1",
+      t0,
+      steps,
+      fatal,
+      Number(String(fatal.message).match(/step\s+(\d+)/i)?.[1]) || null
+    );
+  }
+  return summarizeSession("executor_v1", ok, t0, steps);
+}
+
 function expectationObservation(step, expectations) {
   const exp = expectations[step];
   if (!exp) return null;
@@ -1157,7 +1334,9 @@ async function runArmSessions({
   expectations,
   iters,
   execScripts,
+  execV1Scripts,
   executorMeta,
+  executorV1Meta,
 }) {
   const sessions = [];
   const memSamples = [];
@@ -1203,7 +1382,7 @@ async function runArmSessions({
           })
         );
         if (shouldSampleMemory(i, iters)) {
-          const inv = treeProcessInventory(pid);
+          const inv = treeProcessInventory(pid, { arm });
           memSamples.push({
             i,
             rss_mb: inv.rss_mb,
@@ -1241,7 +1420,7 @@ async function runArmSessions({
           runClawqlProgramSession(conn.client, expectations)
         );
         if (shouldSampleMemory(i, iters)) {
-          const inv = treeProcessInventory(pid);
+          const inv = treeProcessInventory(pid, { arm });
           memSamples.push({
             i,
             rss_mb: inv.rss_mb,
@@ -1271,7 +1450,7 @@ async function runArmSessions({
           runAggregatorSession(conn.client, listed.tools, expectations, arm)
         );
         if (shouldSampleMemory(i, iters)) {
-          const inv = treeProcessInventory(pid);
+          const inv = treeProcessInventory(pid, { arm });
           // Aggregators without a live REST→MCP child under-count vs ClawQL (one process does both).
           if (!inv.has_rest_mcp) {
             console.warn(
@@ -1311,15 +1490,20 @@ async function runArmSessions({
       deployment: executorMeta.deploymentId,
       framework: executorMeta.frameworkVersion,
       mock_origin: executorMeta.origin,
+      product_lane: "promoted_beta",
     };
     upstream = "mock";
     const url = process.env.EXECUTOR_V2_URL || "http://127.0.0.1:4312/mcp";
-    const key =
-      process.env.EXECUTOR_V2_API_KEY?.trim() ||
-      (existsSync("/tmp/executor-v2-data/api_key.txt")
-        ? readFileSync("/tmp/executor-v2-data/api_key.txt", "utf8").trim()
-        : "");
+    const key = executorV2ApiKey();
     if (!key) throw new Error("EXECUTOR_V2_API_KEY required");
+    pid = findExecutorV2ServeRootPid();
+    if (pid == null) {
+      console.warn(
+        `[cf-board] WARN executor_v2: empty process tree (pid=null) — set EXECUTOR_V2_PID or ensure \`executor serve\` is running; memory samples will be skipped`
+      );
+    } else {
+      console.error(`[cf-board] executor_v2 memory root pid=${pid}`);
+    }
     const transport = new StreamableHTTPClientTransport(new URL(url), {
       requestInit: { headers: { Authorization: `Bearer ${key}` } },
     });
@@ -1333,13 +1517,148 @@ async function runArmSessions({
         await runCountedSession(arm, sessions, () =>
           runExecutorV2Session(client, execScripts, expectations)
         );
-        if (
-          i % Math.max(1, Math.floor(iters / 10)) === 0 ||
-          i === 1 ||
-          i === iters ||
-          !sessions.at(-1).ok
-        ) {
-          noteSessionOutcome(arm, i, iters, sessions.at(-1));
+        if (shouldSampleMemory(i, iters)) {
+          if (pid == null) {
+            console.warn(
+              `[cf-board] WARN executor_v2 session ${i}: empty process tree (pid=null) — memory sample skipped`
+            );
+          } else {
+            const inv = treeProcessInventory(pid, { arm });
+            if (inv.process_count === 0) {
+              console.warn(
+                `[cf-board] WARN executor_v2 session ${i}: empty process tree (pid=${pid}) — memory sample under-count`
+              );
+            }
+            if (!inv.has_executor_serve) {
+              console.warn(
+                `[cf-board] WARN executor_v2 session ${i}: process tree missing executor_serve (count=${inv.process_count}) — memory sample may under-count`
+              );
+            }
+            memSamples.push({
+              i,
+              rss_mb: inv.rss_mb,
+              anonymous_mb: inv.anonymous_mb,
+              pss_mb: inv.pss_mb,
+              process_count: inv.process_count,
+              has_rest_mcp: inv.has_rest_mcp,
+              has_executor_serve: inv.has_executor_serve,
+              has_executor_sandbox: inv.has_executor_sandbox,
+              plateau_excludes: inv.plateau_excludes ?? null,
+              processes: inv.processes,
+            });
+          }
+        }
+        if (shouldSampleMemory(i, iters) || !sessions.at(-1).ok) {
+          const inv = memSamples.at(-1);
+          const extra =
+            inv && shouldSampleMemory(i, iters)
+              ? ` tree_procs=${inv.process_count} anon=${inv.anonymous_mb}`
+              : pid == null
+                ? " tree_procs=0 (pid null)"
+                : "";
+          noteSessionOutcome(arm, i, iters, sessions.at(-1), { extraLog: extra });
+        }
+      }
+    } finally {
+      await client.close().catch(() => {});
+    }
+  } else if (arm === "executor_v1") {
+    if (!executorV1Meta?.slug) {
+      throw new Error("executor_v1 requires ensureExecutorV1Openapi before sessions");
+    }
+    if (!execV1Scripts) {
+      throw new Error("executor_v1 requires execV1Scripts");
+    }
+    settings = {
+      model: "openapi_tools_stdio_mcp",
+      app_slug: executorV1Meta.slug,
+      connection: executorV1Meta.connectionName,
+      runtime: executorV1Meta.runtimeVersion || "1.6.10",
+      mock_origin: executorV1Meta.origin,
+      transport: "stdio",
+      product_lane: "stable_release",
+      http_concurrency: "N/A — stdio process-per-client; not beside HTTP curves",
+    };
+    upstream = "mock";
+    const bin =
+      executorV1Meta.bin ||
+      process.env.EXECUTOR_V1_BIN ||
+      process.env.EXECUTOR_BIN ||
+      "/tmp/executor-try/node_modules/.bin/executor";
+    const cwd =
+      executorV1Meta.cwd ||
+      process.env.EXECUTOR_V1_CWD ||
+      process.env.EXECUTOR_CWD ||
+      "/tmp/executor-try";
+    // Inherit full env — StdioClientTransport defaults strip PATH/HOME and break the CLI.
+    // Point DATA_DIR at the v1 daemon token store; drop v2 HTTP serve host/keys.
+    const v1Env = { ...process.env };
+    for (const k of [
+      "EXECUTOR_API_KEY",
+      "EXECUTOR_AUTH_TOKEN",
+      "EXECUTOR_V2_API_KEY",
+      "EXECUTOR_HOST",
+      "EXECUTOR_ENCRYPTION_KEY",
+    ]) {
+      delete v1Env[k];
+    }
+    v1Env.EXECUTOR_DATA_DIR =
+      process.env.EXECUTOR_V1_DATA_DIR || "/tmp/executor-v1-data";
+    const transport = new StdioClientTransport({
+      command: bin,
+      args: ["mcp", "--mode", "codemode", "--elicitation-mode", "model"],
+      cwd,
+      stderr: "pipe",
+      env: v1Env,
+    });
+    const client = new Client({ name: "cf-exec-v1", version: "1" }, {});
+    await client.connect(transport);
+    const mcpPid = transportPid(transport);
+    const daemonPid = findExecutorV1DaemonPid();
+    pid = mcpPid;
+    console.error(
+      `[cf-board] executor_v1 memory roots mcp=${mcpPid} daemon=${daemonPid} bin=${bin}`
+    );
+    try {
+      const listed = await client.listTools();
+      const executeTool = listed.tools.find((t) => t.name === "execute");
+      definitionTokens = executeTool ? countTokens(JSON.stringify(executeTool)) : 0;
+      for (let i = 1; i <= iters; i++) {
+        await runCountedSession(arm, sessions, () =>
+          runExecutorV1Session(client, execV1Scripts, expectations)
+        );
+        if (shouldSampleMemory(i, iters)) {
+          const inv = treeProcessInventoryMulti([mcpPid, daemonPid], { arm });
+          if (!inv.has_executor_daemon) {
+            console.warn(
+              `[cf-board] WARN executor_v1 session ${i}: daemon not in inventory — memory may under-count`
+            );
+          }
+          if (!inv.has_executor_mcp && mcpPid == null) {
+            console.warn(
+              `[cf-board] WARN executor_v1 session ${i}: mcp pid null — memory may under-count`
+            );
+          }
+          memSamples.push({
+            i,
+            rss_mb: inv.rss_mb,
+            anonymous_mb: inv.anonymous_mb,
+            pss_mb: inv.pss_mb,
+            process_count: inv.process_count,
+            has_rest_mcp: inv.has_rest_mcp,
+            has_executor_daemon: inv.has_executor_daemon,
+            has_executor_mcp: inv.has_executor_mcp,
+            plateau_includes: inv.plateau_includes ?? null,
+            processes: inv.processes,
+          });
+        }
+        if (shouldSampleMemory(i, iters) || !sessions.at(-1).ok) {
+          const inv = memSamples.at(-1);
+          const extra =
+            inv && shouldSampleMemory(i, iters)
+              ? ` tree_procs=${inv.process_count} anon=${inv.anonymous_mb}`
+              : "";
+          noteSessionOutcome(arm, i, iters, sessions.at(-1), { extraLog: extra });
         }
       }
     } finally {
@@ -1500,7 +1819,11 @@ async function runArmSessions({
           note:
             arm === "mcpjungle" || arm === "agentgateway"
               ? "Tree must include cf-rest-mcp.mjs (OpenAPI→tools) while the stateful session is open; idle gateway-only (~10–14 MB anon) is not a peer for ClawQL."
-              : "ClawQL serves catalog+execute in one Node process — no separate REST→MCP child.",
+              : arm === "executor_v2"
+                ? "Tree rooted at Executor serve (node launcher → native binary → sandbox workerd). Motel diagnostics workerd is inventoried but excluded from plateau. Empty tree warns; set EXECUTOR_V2_PID if discovery fails."
+                : arm === "executor_v1"
+                  ? "Tree = stdio `executor mcp` child + local daemon (siblings). Stable 1.x has no HTTP serve; process-per-client topology — not compared on HTTP concurrency curves."
+                  : "ClawQL serves catalog+execute in one Node process — no separate REST→MCP child.",
         }
       : null,
     first_session: sessions[0],
@@ -1522,6 +1845,7 @@ async function main() {
   const expectations = buildExpectations(recording.world);
   const openapiDoc = JSON.parse(readFileSync(CURATED_OAS, "utf8"));
   const execScripts = executorV2ToolScripts();
+  let execV1Scripts = null;
   mkdirSync(OUT_DIR, { recursive: true });
 
   console.log(
@@ -1536,6 +1860,7 @@ async function main() {
   let mj = null;
   let ag = null;
   let executorMeta = null;
+  let executorV1Meta = null;
 
   try {
     const needDefault =
@@ -1584,6 +1909,20 @@ async function main() {
         `[cf-board] executor app ${executorMeta.slug} dpl=${executorMeta.deploymentId} origin=${executorMeta.origin}`
       );
     }
+    if (ARMS.includes("executor_v1")) {
+      console.log(`[cf-board] ensuring Executor v1 (stable) OpenAPI → ${mock.baseUrl}`);
+      executorV1Meta = await ensureExecutorV1Openapi({
+        mockBase: mock.baseUrl,
+        openapiDoc,
+      });
+      execV1Scripts = executorV1ToolScripts({
+        appSlug: executorV1Meta.slug,
+        connectionName: executorV1Meta.connectionName,
+      });
+      console.log(
+        `[cf-board] executor_v1 slug=${executorV1Meta.slug} conn=${executorV1Meta.connectionName} origin=${executorV1Meta.origin} transport=stdio`
+      );
+    }
 
     const repBoards = [];
     for (let i = 0; i < REPS; i++) {
@@ -1603,7 +1942,9 @@ async function main() {
           expectations,
           iters: ITERS,
           execScripts,
+          execV1Scripts,
           executorMeta,
+          executorV1Meta,
         });
       }
       repBoards.push({ rep, board });
@@ -1621,6 +1962,7 @@ async function main() {
             fixture: { source: recording.source, label: recording.label, path: FIXTURE },
             tokenizer: "js-tiktoken cl100k_base",
             executor: executorMeta,
+            executor_v1: executorV1Meta,
             error_policy: {
               abort_on_error: ABORT_ON_ERROR,
               note: ABORT_ON_ERROR
@@ -1647,6 +1989,7 @@ async function main() {
       tokenizer: "js-tiktoken cl100k_base",
       arms: ARMS,
       executor: executorMeta,
+      executor_v1: executorV1Meta,
       metrics_policy: METRICS_POLICY,
       product_defaults: {
         clawql_observation_budget_chars:

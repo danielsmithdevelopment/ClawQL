@@ -12,7 +12,8 @@ upstream is **not** included (shared fixture, not part of the gateway).
 | `mcpjungle` | `mcpjungle start` (Go) | `cf-rest-mcp.mjs` (Node stdio child) while session open | Go multiplexer + REST→MCP OpenAPI adapter |
 | `agentgateway` | `agentgateway` | `cf-rest-mcp.mjs` (Node stdio child) | Same split; child usually persistent |
 | `direct` | — | — | No gateway; raw HTTP to mock |
-| `executor_v2` | (external Executor host) | not tree-sampled today | Hosted OpenAPI tools app |
+| `executor_v2` | `executor serve` root (node launcher → native binary) | sandbox workerd children (motel diagnostics inventoried, excluded from plateau) | Hosted OpenAPI tools app; empty tree warns |
+| `executor_v1` | stdio `executor mcp` child **and** local `executor daemon` (siblings) | both roots merged; plateau = mcp + daemon | Stable OpenAPI tools over stdio; not HTTP-multiplex |
 | `cloudflare_codemode` | — | — | Tokens-only on board |
 
 ## MCPJungle idle vs session
