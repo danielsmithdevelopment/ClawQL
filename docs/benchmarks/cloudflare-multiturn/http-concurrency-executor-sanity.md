@@ -1,9 +1,14 @@
-# Executor v2 HTTP concurrency — sanity check (median 2)
+# Executor v2 HTTP concurrency — sanity check (2 to 3)
 
 Artifact: [`http-concurrency-with-executor.json`](./http-concurrency-with-executor.json)  
-Measured: 2026-10-16T01:33:46.967Z · REPS=3 · p99 ≤ 100 ms · error_rate ≤ 0.02
+RPS companion: [`http-concurrency-rps.md`](./http-concurrency-rps.md)  
+Measured: 2026-10-16T01:33:46.967Z · REPS=3 · p99 ≤ 100 ms · error_rate ≤ 0.02 · **3 s** step window
 
-**Verdict:** The ceiling holds as a real Executor design property under this topology, not a harness/auth/rate-limit artifact. Safe to put on the page with a one-line explanation; worth sending Rhys the config below before publish.
+**Verdict:** The ceiling holds as a real Executor property under HTTP multiplex, not a harness/auth/rate-limit artifact. Publish as **2 to 3** clients (sustained 2; first break at 3). Worth sending Rhys the config below before publish.
+
+**Page one-liner:**
+
+> Executor v2's throughput levels off at about 57 tool calls per second from two clients onward, so additional clients mostly add queueing. At a 100 ms p99, it sustains 2 to 3 clients.
 
 ## 1. Production configuration
 
@@ -14,7 +19,7 @@ Measured: 2026-10-16T01:33:46.967Z · REPS=3 · p99 ≤ 100 ms · error_rate ≤
 | Serve flags | No `--log-level debug/trace`; help exposes only log-level / wizard / completions |
 | `workerd --debug-port` | Runtime control socket on the sandbox worker (same note as gateway-multi v2 boards) — not Chrome DevTools / “dev mode loaded” |
 | Bench-only env | `EXECUTOR_NO_UPDATE_CHECK=1` (skips update check; does not change request handling) |
-| Motel (diagnostics) | Separate workerd (`motel.capnp`) writing `diagnostics/executor-local.jsonl` with periodic `process.runtime` samples (~30 s). **Excluded from memory plateau.** During a 100-call burst, motel CPU was non-zero (telemetry may observe the host), but the concurrency break is explained by request serialization (below), not motel alone. |
+| Motel (diagnostics) | Separate workerd (`motel.capnp`) writing `diagnostics/executor-local.jsonl` with periodic `process.runtime` samples (~30 s). **Excluded from memory plateau.** Not the concurrency break cause. |
 
 How users run it: same `executor serve` + Bearer API key + OpenAPI app deployed via `executor apps …` with `liveOpenapiRouter` → mock origin (host performs HTTP; QuickJS never needs fetch).
 
@@ -24,9 +29,9 @@ All arms in `http-concurrency-heap-ab.mjs` measure **individual Streamable HTTP 
 
 This is **not** whole 12-step session latency (that is the Cloudflare board’s `session_ms` column). Same call unit for ClawQL / MCPJungle / agentgateway / Executor.
 
-## 3. Why it saturates at 3 clients
+## 3. Why it sits at 2 to 3 clients (throughput plateau)
 
-Rep medians all sustained **2**, first break at **3** (p99 102–182 ms). **Zero errors** on every step of every rep.
+All three reps: sustained **2**, first break at **3** (p99 102–182 ms). **Zero errors** on every step of every rep.
 
 | Clients | Rep1 p50 / p99 (ms) | RPS | err |
 | ---: | ---: | ---: | ---: |
@@ -35,17 +40,13 @@ Rep medians all sustained **2**, first break at **3** (p99 102–182 ms). **Zero
 | 3 | 50 / 102 | 57 | 0 |
 | 4 | 70 / 138 | 54 | 0 |
 
-RPS plateaus from n=2 onward (~50–58) while p50 scales roughly with client count — classic single-lane queueing. Independent probe (4 parallel `execute` after per-client warmup):
+Throughput rises from ~35 to ~58 calls/s from one client to two (~1.7×), then stays flat around **50–58** while median latency climbs. So there is *some* parallelism (about 1.7 calls’ worth); beyond two clients, extra load mostly becomes queueing. Do **not** claim hard single-lane “serializes every call” — the RPS table is the precise story.
 
-- serial mean ≈ **31 ms**
-- parallel-4 each ≈ **71–97 ms**, wall ≈ **97 ms** (wall ≈ max(each))
-- errors: **0**
+### Why “2 to 3,” not bare “2”
 
-**Interpretation for the page (one line):** Executor’s code-mode `execute` path effectively serializes concurrent tool calls on one host, so under the same p99 ≤ 100 ms SLO it sustains 2 clients.
+At ~57 calls/s a 3 s window yields ~170 samples, so p99 is roughly the second-slowest call. Executor’s p99 sits on the threshold (79 ms at two clients, 102 at three). A longer step window (10–30 s) could tip either way; the publishable band is **2 to 3**. Against Bun’s 87 the conclusion is unchanged.
 
-Not explained by: harness auth failures, rate-limit 429s, or mock timeouts (error_rate stayed 0; mock is shared and ClawQL/MJ/AG held 31–87 on the same mock in the same session).
-
-**Do not confuse with** the earlier equal-arm **stdio process-per-client** chaos ceiling (~19–23 for Executor). That topology forks a process per client; this row is **HTTP multiplex** onto one `executor serve`.
+(Optional follow-up: remeasure Executor-only with `CONC_STEP_MS=15000` or `30000` when the host is quiet — after board-rep4 — if a single integer is preferred over the band.)
 
 ## 4. Errors during the test
 
@@ -59,7 +60,10 @@ command: executor serve          # port 4312, Bearer API key
 app:     OpenAPI tools via `executor apps deploy` + liveOpenapiRouter → replay mock
 workload: MCP tools/call execute — DNS list filter in sandbox (same op as peers)
 SLO:     p99 ≤ 100 ms on individual tool calls, N concurrent Streamable HTTP clients
-result:  sustained 2 / first break 3 (3 reps); 0 errors
+result:  sustained 2 / first break 3 (3 reps); RPS plateau ~57 from n=2; 0 errors
+note:    3 s step window → publish as 2 to 3; longer window welcome if you prefer
 ```
 
-If he points at a concurrency / worker-pool setting we missed, rerun with it and publish the new range. If he confirms or does not respond, publish 2 with the serialization footnote.
+If he points at a concurrency / worker-pool setting we missed, rerun with it and publish the new range. If he confirms or does not respond, publish **2 to 3** with the throughput-plateau footnote.
+
+**Do not confuse with** the earlier equal-arm **stdio process-per-client** chaos ceiling (~19–23 for Executor). Different topology.

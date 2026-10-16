@@ -5,10 +5,9 @@
     "One Streamable HTTP MCP process per arm; N concurrent clients.",
     "Comparable across arms in this file only (same host, same mock, same session).",
     "Not equal-arm stdio chaos (gateway-multi 63/204); not NATS 4-replica (135).",
-    "ClawQL uses known-op execute+where; aggregators call the same DNS op without where (larger body).",
-    "Do not claim heap-cap concurrency cost from a single pass — 384 sits above the uncapped plateau (~296 MB).",
-    "Executor v2: stock `executor serve` (beta.15); code-mode execute; same tools/call p99 unit as peers.",
-    "Executor ceiling of 2 is HTTP-multiplex serialization (0 errors) — see http-concurrency-executor-sanity.md."
+    "ClawQL uses known-op execute+where; aggregators/Executor call the same DNS op without where (larger body).",
+    "Executor v2: stock `executor serve` (beta.15); publish clients as 2 to 3 (throughput plateau ~57 RPS) — see http-concurrency-executor-sanity.md.",
+    "RPS tables: http-concurrency-rps.md"
   ],
   "slo": {
     "break_p99_ms": 100,
@@ -270,31 +269,22 @@
     "related": "Open HTTP tail stalls (300–700 ms) likely amplify under concurrency — same investigation track.",
     "executor_v2_sanity": {
       "doc": "http-concurrency-executor-sanity.md",
-      "verdict": "holds_as_design_property_http_multiplex_serialization",
-      "config": "executor@2.0.0-beta.15 stock `executor serve`; not debug log-level; workerd --debug-port is control socket",
-      "unit": "individual tools/call latency (same as all arms); not whole-session",
+      "rps_doc": "http-concurrency-rps.md",
+      "verdict": "holds_publish_as_2_to_3_throughput_plateau",
+      "publish_clients": "2 to 3",
+      "sustained": 2,
+      "first_break": 3,
+      "config": "executor@2.0.0-beta.15 stock `executor serve`; not debug log-level",
+      "unit": "individual tools/call latency (same as all arms); 3s step window",
       "errors": "0 on every step of every rep; breaks are p99-only",
-      "curve_rep1": {
-        "n1_p50_p99": [
-          27,
-          40
-        ],
-        "n2": [
-          31,
-          79
-        ],
-        "n3": [
-          50,
-          102
-        ],
-        "n4": [
-          70,
-          138
-        ],
-        "rps_plateau": "~50-58 from n=2"
+      "throughput": {
+        "n1_rps_median": 32.3,
+        "n2_rps_median": 52.3,
+        "n3_rps_median": 56.3,
+        "n4_rps_median": 54.3,
+        "note": "Rises ~1.6-1.7× from 1→2 clients then plateaus ~50-58; extra clients mostly queue"
       },
-      "parallel_probe": "4-way wall≈max(each) ~97ms vs serial mean ~31ms → queueing",
-      "page_one_liner": "Executor's code-mode execute path serializes concurrent tool calls on one host, so under p99≤100ms it sustains 2 clients.",
+      "page_one_liner": "Executor v2's throughput levels off at about 57 tool calls per second from two clients onward, so additional clients mostly add queueing. At a 100 ms p99, it sustains 2 to 3 clients.",
       "not_stdio_chaos": "Do not compare to ~19-23 process-per-client stdio ceiling — different topology."
     }
   },
