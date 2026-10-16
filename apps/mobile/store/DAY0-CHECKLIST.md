@@ -57,6 +57,15 @@ In-app typed + TTS voice assistant ships without this list (`docs/specs/mobile/v
 | 17 | human | Paste Apple IAP / Play service-account secrets into managed hosting env | `POST /payments/store/verify` accepts live tokens (fixture path already works) |
 | 18 | agent | Wire StoreKit / Play sheet behind `apps/mobile/src/services/store-iap.ts` | Profile Subscribe stops saying sandbox |
 
+## Security ops parity (with cloud console)
+
+| # | Owner | Item | Done when |
+| - | ----- | ---- | --------- |
+| 22 | human | Confirm IdP login rate limits / lockout for mobile SSO | Same matrix as `docs/security/idp-login-abuse-ownership.md` |
+| 23 | human | Confirm gateway AI enforcement on for the org mobile talks to | `docs/security/ai-enforcement-default-posture.md` — no `CLAWQL_ALLOW_NO_ENFORCEMENT=1` |
+| 24 | agent/human | Quarterly restore drill recorded | `docs/deployment/restore-drill.md` (mobile does not run restores) |
+| 25 | agent | Support view-as stays console-only | PhoneApprove Settings / Team / Audit copy — no start API on mobile |
+
 ## Not blocking first internal track
 
 - D-U-N-S / org Apple account (needed for company seller name later)

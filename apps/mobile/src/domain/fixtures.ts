@@ -841,6 +841,14 @@ export const FIXTURE_AUTOMATIONS: readonly AutomationSub[] = [
 
 export const FIXTURE_AUDIT_ENTRIES: readonly AuditEntry[] = [
   {
+    id: "wrm_4913",
+    time: "09:44:18",
+    actor: "dana@acme.example",
+    action: "support.impersonation.start → priya@acme.example",
+    outcome: "Support ticket ST-1001 — cannot see review queue (console-only)",
+    tone: "warn",
+  },
+  {
     id: "wrm_4912",
     time: "09:41:02",
     actor: "docs-pipeline",

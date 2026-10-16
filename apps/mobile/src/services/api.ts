@@ -109,6 +109,8 @@ type MutableState = {
   workflowRuns: WorkflowRun[];
   apiKeys: ApiKeyItem[];
   teammates: Teammate[];
+  /** Runtime audit lines (session kill, etc.) prepended ahead of fixtures. */
+  auditRuntime: AuditEntry[];
   erasedSubjects: string[];
   deleted: boolean;
 };
@@ -126,6 +128,7 @@ const stateRef = Ref.makeUnsafe<MutableState>({
   workflowRuns: [],
   apiKeys: [...FIXTURE_API_KEYS],
   teammates: [...FIXTURE_TEAMMATES],
+  auditRuntime: [],
   erasedSubjects: [],
   deleted: false,
 });
@@ -380,15 +383,44 @@ export function endOtherDeviceSessionsEffect(
     if (isFixtureSession(session, config.fixtureMode)) {
       const before = yield* Ref.get(stateRef);
       const toEnd = before.deviceSessions.filter((row) => !row.current && !row.ended).length;
+      const clock = new Date().toISOString().slice(11, 19);
       yield* Ref.update(stateRef, (s) => ({
         ...s,
         deviceSessions: s.deviceSessions.map((row) =>
           row.current || row.ended ? row : { ...row, ended: true }
         ),
+        auditRuntime: [
+          {
+            id: `sess_end_${Date.now().toString(36)}`,
+            time: clock,
+            actor: session.email,
+            action: "session.end_others",
+            outcome: `Ended ${toEnd} other device session${toEnd === 1 ? "" : "s"} from PhoneApprove`,
+            tone: "warn" as const,
+          },
+          ...s.auditRuntime,
+        ].slice(0, 100),
       }));
       return { ended: toEnd };
     }
-    return { ended: 0 };
+    type EndOthersBody = { readonly ended?: number; readonly endedCount?: number };
+    const res = yield* Effect.tryPromise({
+      try: async () => {
+        const r = await fetch(`${config.apiBase}/session/end-others`, {
+          method: "POST",
+          headers: authHeaders(session),
+          body: JSON.stringify({}),
+        });
+        if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
+        return r.json() as Promise<EndOthersBody>;
+      },
+      catch: (cause) =>
+        new MobileApiError({
+          reason: cause instanceof Error ? cause.message : String(cause),
+          status: (cause as { status?: number })?.status,
+        }),
+    }).pipe(Effect.catch(() => Effect.succeed({} as EndOthersBody)));
+    return { ended: res.ended ?? res.endedCount ?? 0 };
   });
 }
 
@@ -1291,7 +1323,8 @@ export function listAuditEntriesEffect(
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
     if (isFixtureSession(session, config.fixtureMode)) {
-      return FIXTURE_AUDIT_ENTRIES;
+      const runtime = yield* Ref.get(stateRef).pipe(Effect.map((s) => s.auditRuntime));
+      return [...runtime, ...FIXTURE_AUDIT_ENTRIES];
     }
     const res = yield* Effect.tryPromise({
       try: async () => {
@@ -1807,6 +1840,7 @@ export function resetFixtureStateEffect(): Effect.Effect<void> {
     workflowRuns: [],
     apiKeys: [...FIXTURE_API_KEYS],
     teammates: [...FIXTURE_TEAMMATES],
+    auditRuntime: [],
     erasedSubjects: [],
     deleted: false,
   });

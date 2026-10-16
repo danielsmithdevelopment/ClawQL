@@ -13,6 +13,7 @@ import {
   listActivityEffect,
   listAgentsEffect,
   listAttachmentsEffect,
+  listAuditEntriesEffect,
   listDeviceSessionsEffect,
   listInboxEffect,
   listPoliciesEffect,
@@ -207,6 +208,8 @@ describe("mobile API fixture mode", () => {
     expect(res.ended).toBeGreaterThan(0);
     const after = await Effect.runPromise(listDeviceSessionsEffect(FIXTURE_SESSION));
     expect(after.every((s) => s.current)).toBe(true);
+    const audit = await Effect.runPromise(listAuditEntriesEffect(FIXTURE_SESSION));
+    expect(audit[0]?.action).toBe("session.end_others");
   });
 
   it("reports pending review count", async () => {

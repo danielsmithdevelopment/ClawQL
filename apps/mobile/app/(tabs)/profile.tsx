@@ -289,7 +289,12 @@ export default function ProfileScreen() {
       <SurfaceCard testID="profile-sessions">
         <IconBubble name="sessions" tone="seed" size={32} iconSize={16} />
         <Subtitle>Where you are signed in</Subtitle>
-        <Meta>End other sessions if a device is lost or shared.</Meta>
+        <Meta testID="profile-session-kill-help">
+          Lost or shared phone? Sign out everywhere else — that kills other
+          device sessions for your account. Login throttling / lockout still
+          lives on your IdP (not in this app). Support “View as” is
+          console-only and audited; this screen never starts it.
+        </Meta>
         <Meta testID="profile-session-expiry">
           {`This device access expires ${new Date(session.expiresAtMs).toLocaleString()}`}
         </Meta>
@@ -336,7 +341,9 @@ export default function ProfileScreen() {
                 setBusy(true);
                 try {
                   const res = await Effect.runPromise(endOtherDeviceSessionsEffect(session));
-                  setNote(`Ended ${res.ended} other session${res.ended === 1 ? "" : "s"}`);
+                  setNote(
+                    `Ended ${res.ended} other session${res.ended === 1 ? "" : "s"} · recorded for Audit`
+                  );
                   await load();
                 } catch (e: unknown) {
                   setNote(e instanceof Error ? e.message : String(e));

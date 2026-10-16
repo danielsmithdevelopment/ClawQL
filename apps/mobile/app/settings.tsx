@@ -89,6 +89,46 @@ export default function SettingsScreen() {
         </SurfaceCard>
       ) : null}
 
+      <SurfaceCard testID="settings-login-abuse">
+        <Body>Login rate limits & lockouts</Body>
+        <Meta color={brand.inkFaint}>
+          Human password / SSO abuse controls live on your IdP (Okta / Entra /
+          Supabase Auth) — not inside this app. Mobile sign-in uses the same
+          issuer as the cloud console. MCP OAuth token limits are separate
+          (`CLAWQL_MCP_OAUTH_RATE_LIMIT_PER_MIN`). See
+          docs/security/idp-login-abuse-ownership.md.
+        </Meta>
+      </SurfaceCard>
+
+      <SurfaceCard testID="settings-ai-enforcement">
+        <Body>AI tool-scope enforcement</Body>
+        <Meta color={brand.inkFaint}>
+          Production gateways must run with blocking Panguard (or equivalent)
+          pre-execute hooks. Do not set CLAWQL_ALLOW_NO_ENFORCEMENT=1 in
+          production. PhoneApprove never bypasses gateway policy — approve /
+          decline still go through the same ATR path. See
+          docs/security/ai-enforcement-default-posture.md.
+        </Meta>
+      </SurfaceCard>
+
+      <SurfaceCard testID="settings-restore-drill">
+        <Body>Backup restore drill</Body>
+        <Meta color={brand.inkFaint}>
+          Operators run the quarterly PITR / snapshot restore drill and record
+          RTO/RPO. Mobile does not start restores — follow
+          docs/deployment/restore-drill.md on the platform host.
+        </Meta>
+      </SurfaceCard>
+
+      <SurfaceCard testID="settings-support-view">
+        <Body>Support view-as</Body>
+        <Meta color={brand.inkFaint}>
+          Owner/Admin “View as” is console-only and always audited. This app
+          never starts support impersonation — use Team → View as on the web
+          console when you need it.
+        </Meta>
+      </SurfaceCard>
+
       <SecondaryButton
         testID="settings-open-keys"
         label="API keys"
@@ -98,6 +138,11 @@ export default function SettingsScreen() {
         testID="settings-open-connections"
         label="Connections"
         onPress={() => router.push("/connections")}
+      />
+      <SecondaryButton
+        testID="settings-open-sessions-kill"
+        label="Signed-in devices"
+        onPress={() => router.push("/(tabs)/profile")}
       />
       <SecondaryButton label="Back" onPress={() => router.back()} />
     </ScreenScroll>
