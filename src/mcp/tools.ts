@@ -59,6 +59,7 @@ import {
   PendingExecutionLive,
   programsEnabled,
   durableProgramsEnabled,
+  formatExecuteProgramForMcp,
   runProgramEffect,
   executeDurableProgramEffect,
   accumulateSessionIfcReadEffect,
@@ -451,7 +452,9 @@ export async function handleExecuteProgramToolInput(
         )
       : runProgramEffect({ source: source ?? "", timeoutMs, sessionId }, makeMcpProgramHost())
   );
-  return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
+  return {
+    content: [{ type: "text" as const, text: formatExecuteProgramForMcp(result) }],
+  };
 }
 
 /** Zod shape for optional Core `submit_program_proposals` (CLAWQL_ENABLE_PROGRAMS). */

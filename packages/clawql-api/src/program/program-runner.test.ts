@@ -203,6 +203,64 @@ describe("runProgramEffect", () => {
     expect(executeCalls).toHaveLength(1);
   });
 
+  it("projects plan.return into a compact result without per-call values", async () => {
+    const { host } = mockHost();
+    const source = JSON.stringify({
+      v: 1,
+      mode: "parallel",
+      calls: [
+        { tool: "execute", operationId: "repo.list", args: { org: "a" }, id: "a" },
+        { tool: "execute", operationId: "repo.list", args: { org: "b" }, id: "b" },
+      ],
+      return: {
+        first: { $ref: "a.result" },
+        secondOk: { $ref: "b.result.ok" },
+      },
+    });
+    const out = await Effect.runPromise(runProgramEffect({ source }, host, {}));
+    expect(out.ok).toBe(true);
+    expect(out.diagnostics.compactReturn).toBe(true);
+    const result = out.result as { first?: unknown; secondOk?: unknown; results?: unknown };
+    expect(result.results).toBeUndefined();
+    expect(result.first).toBeTruthy();
+    expect(result.secondOk).toBe(true);
+    // Typed result still keeps call records; MCP text is slimmed via formatExecuteProgramForMcp.
+    expect(out.calls).toHaveLength(2);
+  });
+
+  it("merges where-shaped call objects when return is true", async () => {
+    const { host } = mockHost();
+    // mockHost returns { ok, operationId, args } per call — merge would conflict on ok.
+    const executeCalls: Array<{ operationId: string }> = [];
+    const custom: ProgramHost = {
+      resolveRisk: host.resolveRisk,
+      search: host.search,
+      execute: (input, ctx) =>
+        Effect.sync(() => {
+          executeCalls.push({ operationId: input.operationId });
+          const text =
+            input.operationId === "a.get"
+              ? JSON.stringify({ ssl: "full" })
+              : JSON.stringify({ workers: ["w1"] });
+          return { content: [{ type: "text" as const, text }] };
+        }),
+    };
+    const source = JSON.stringify({
+      v: 1,
+      mode: "parallel",
+      calls: [
+        { tool: "execute", operationId: "a.get", args: {}, id: "ssl" },
+        { tool: "execute", operationId: "b.get", args: {}, id: "workers" },
+      ],
+      return: true,
+    });
+    const out = await Effect.runPromise(runProgramEffect({ source }, custom, {}));
+    expect(out.ok).toBe(true);
+    expect(out.diagnostics.compactReturn).toBe(true);
+    expect(out.result).toEqual({ ssl: "full", workers: ["w1"] });
+    expect(executeCalls).toHaveLength(2);
+  });
+
   it("enforces max tool calls cap", async () => {
     const { host, executeCalls } = mockHost();
     const calls = Array.from({ length: 3 }, (_, i) => ({

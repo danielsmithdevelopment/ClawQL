@@ -2,8 +2,10 @@
  * Parse v0 program `source` as a JSON plan (host-callback runner).
  *
  * Honest MVP: not a JS AST interpreter. Accepted shapes:
- * - `{ "v": 1, "mode": "parallel"|"sequential", "calls": [ ... ], "proposals"?: [ ... ] }`
+ * - `{ "v": 1, "mode": "parallel"|"sequential", "calls": [ ... ], "proposals"?: [ ... ], "return"?: … }`
  * - bare array of call objects (implies parallel, no proposals)
+ * - optional `return`: JSON template with `{ "$ref": "<callId>.result…" }` for a compact
+ *   model-facing result (fan-out / join cards) instead of the full per-call envelope
  *
  * `proposals` are writes the program returns for the gateway to run later through
  * normal `execute` (ADR 0015 § Proposed writes). They may carry `$ref` placeholders
@@ -62,6 +64,11 @@ export type ProgramPlan = {
   readonly calls: readonly ProgramPlanCall[];
   /** Always set by the parser; absent from plans journaled before proposals existed. */
   readonly proposals?: readonly ProgramPlanProposal[];
+  /**
+   * Optional compact result template. When set, `execute_program` returns the resolved
+   * value as `result.return` and omits full per-call values from the model-facing payload.
+   */
+  readonly return?: unknown;
   /** Honesty marker for diagnostics. */
   readonly kind: "plan";
 };
@@ -349,6 +356,7 @@ export function parseProgramPlanEffect(
         calls,
         proposals: [],
         kind: "plan" as const,
+        return: undefined,
       };
     }
 
@@ -392,6 +400,16 @@ export function parseProgramPlanEffect(
       if (isParseError(parsedProposals)) return parsedProposals;
       proposals = parsedProposals;
     }
-    return { v: 1 as const, mode, calls, proposals, kind: "plan" as const };
+    const returnTemplate = Object.prototype.hasOwnProperty.call(parsed, "return")
+      ? parsed.return
+      : undefined;
+    return {
+      v: 1 as const,
+      mode,
+      calls,
+      proposals,
+      return: returnTemplate,
+      kind: "plan" as const,
+    };
   });
 }

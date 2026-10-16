@@ -433,6 +433,15 @@ Enable with **`CLAWQL_ENABLE_PROGRAMS=1`**, or **`CLAWQL_ENABLE_DURABLE_PROGRAMS
 
 Returns `{ ok, programId, result, calls, diagnostics }`. Each nested call uses the Core **`search`** / **`execute`** path with `programId` on WORM metadata. Only operations whose risk policy is **`allow`** run inside a program; anything else fails with `program_write_rejected` — list it in `proposals` instead, or use plain **`execute`**.
 
+### Compact `return` (fan-out / join cards)
+
+Optional **`return`** projects a small model-facing result instead of the full per-call envelope:
+
+- **`return: true`** (or **`"merge"`**) — merge each successful call's object value into one card (use disjoint `where`/`fields` keys).
+- **Object template** — `{ "$ref": "<callId>.result.<path>" }` placeholders (objects/arrays allowed).
+
+MCP text then omits fat call previews; WORM still records every call. Example: `{ "return": true, "calls": [ … ] }`.
+
 ### Proposed writes
 
 Writes never run inside a program. List them after the reads in `proposals`; `execute_program` returns them resolved in `result.proposals`, and running them is a separate call — **`submit_program_proposals`**, or plain **`execute`** per proposal. Either way each one takes the normal path: gate → risk → session IFC → mandate → Review → consume ([ADR 0015](../adr/0015-program-mode-alongside-search-execute.md) § Proposed writes).
