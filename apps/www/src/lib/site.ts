@@ -23,6 +23,8 @@ export const site = {
     about: '/about',
     /** Interactive edge demo (no signup) — sandboxed 5-minute session. */
     demo: '/demo',
+    /** Equal-arm multi-gateway + Cloudflare multiturn benchmarks. */
+    benchmarks: '/benchmarks',
     /** Public status surface (gateway health + components). */
     status: '/status',
     /** X / Twitter — GTM Phase 1 footer checklist. */
