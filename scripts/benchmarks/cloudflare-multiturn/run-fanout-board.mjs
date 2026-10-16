@@ -581,11 +581,14 @@ async function runArm({ arm, clawqlKnown, clawqlProgram, expectations, executorM
     if (!executorMeta) throw new Error("executor_v2 requires ensureExecutorOpenapiApp");
     const script = executorV2FanoutJoinScript({ appSlug: executorMeta.slug });
     const key = executorV2ApiKey();
+    // Align with zone-audit board: EXECUTOR_V2_URL (default :4312), not :8787.
     const base =
+      process.env.EXECUTOR_V2_URL ||
       process.env.EXECUTOR_MCP_URL ||
       process.env.EXECUTOR_BASE_URL ||
-      "http://127.0.0.1:8787/mcp";
-    const client = await connectMcp(base, key ? { Authorization: `Bearer ${key}` } : {});
+      "http://127.0.0.1:4312/mcp";
+    if (!key) throw new Error("EXECUTOR_V2_API_KEY required for executor_v2 arm");
+    const client = await connectMcp(base, { Authorization: `Bearer ${key}` });
     try {
       for (let i = 1; i <= iters; i++) {
         const s = await runExecutorFanoutSession(client, script, expectations);
