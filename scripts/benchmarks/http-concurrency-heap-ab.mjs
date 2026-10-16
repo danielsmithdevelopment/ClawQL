@@ -691,6 +691,24 @@ async function chaosArm(arm) {
     if (step.error_rate > BREAK_ERROR_RATE) break;
     if (step.latency_ms?.p99 != null && step.latency_ms.p99 > stopP99) break;
     if (!CURVE && step.broken) break;
+    // Avoid 128→256 client jumps on tight hosts (OOM mid-step leaves orphans).
+    // If still under the curve stop, take one point at CONC_HARD_MAX then refine.
+    const next = n * 2;
+    if (CURVE && next > CONC_HARD_MAX) {
+      if (
+        n < CONC_HARD_MAX &&
+        step.latency_ms?.p99 != null &&
+        step.latency_ms.p99 <= stopP99
+      ) {
+        console.error(`[http-conc] ${arm.id} clients=${CONC_HARD_MAX} (hard-max probe)`);
+        const extra = await chaosStep(arm, CONC_HARD_MAX);
+        steps.push(extra);
+        console.error(
+          `[http-conc] ${arm.id} n=${CONC_HARD_MAX} p99=${extra.latency_ms.p99?.toFixed?.(1)} err=${extra.error_rate}`
+        );
+      }
+      break;
+    }
   }
   const refine = [];
   const thresholdsToRefine = CURVE ? THRESHOLDS : [BREAK_P99_MS];
