@@ -1057,16 +1057,25 @@ async function main() {
       .map((s) => s.trim())
       .filter(Boolean)
   );
-  // ClawQL first so Bun/Node land before peers that can OOM the host.
-  const starters = [
+  // Preserve ARMS= env order when set; otherwise default order below.
+  // Prefer measuring memory-heavy peers early on a clean host (still no client caps).
+  const starterFns = new Map([
+    ["agentgateway", () => startAgentgateway(mock.baseUrl)],
+    ["executor_v2", () => startExecutorV2(mock.baseUrl)],
     ["clawql_bun_smol", () => startClawql(mock.baseUrl, { id: "clawql_bun_smol", bunSmol: true })],
     ["clawql_node_256", () => startClawql(mock.baseUrl, { id: "clawql_node_256", oldMb: 256 })],
     ["clawql_node_uncapped", () => startClawql(mock.baseUrl, { id: "clawql_node_uncapped", oldMb: null })],
     ["clawql_node_384", () => startClawql(mock.baseUrl, { id: "clawql_node_384", oldMb: 384 })],
     ["mcpjungle", () => startMcpjungle(mock.baseUrl)],
-    ["agentgateway", () => startAgentgateway(mock.baseUrl)],
-    ["executor_v2", () => startExecutorV2(mock.baseUrl)],
-  ].filter(([id]) => want.has(id));
+  ]);
+  const armOrder = (
+    process.env.ARMS ||
+    "agentgateway,executor_v2,clawql_bun_smol,clawql_node_256,mcpjungle"
+  )
+    .split(",")
+    .map((s) => s.trim())
+    .filter((id) => want.has(id) && starterFns.has(id));
+  const starters = armOrder.map((id) => [id, starterFns.get(id)]);
   try {
     // Round-robin reps across arms (same mock) so host drift hits each arm similarly.
     for (let rep = 1; rep <= REPS; rep++) {
