@@ -72,13 +72,16 @@ Executor tree = CLI + native serve + sandbox workerd; **motel diagnostics exclud
 
 Artifact: [`executor-v1/board-summary-n10000-r3.json`](./executor-v1/board-summary-n10000-r3.json) · tree = stdio `executor mcp` + daemon.
 
-| Arm | weighted_mean | anon MB median (r1,r2,r3) | session p50 ms | HTTP concurrency |
-| --- | ---: | ---: | ---: | --- |
-| `executor_v2` (promoted) | **5328** | **2103** (rep4) | ~216 (rep4) | **2–22** clients @100–500 ms |
-| `executor_v1` (stable) | **8236** | **[543, 534, 530]** → ~**535** | ~**84** | **N/A** (stdio / process-per-client) |
-| `clawql_known_op` | **1833** | **121** (rep4) | — | Bun **82** @100 ms |
+| Arm | weighted_mean | anon MB median | session p50 ms | transport | HTTP concurrency |
+| --- | ---: | ---: | ---: | --- | --- |
+| `executor_v2` (promoted) | **5328** | **2103** (rep4) | **~216** (rep4) | Streamable HTTP | **2–22** @100–500 ms |
+| `executor_v1` (stable) | **8236** | **~535** (mcp+daemon) | **~84** | **stdio** MCP | see stdio table |
+| `clawql_known_op` | **1833** | **121** (rep4) | **23.8** (board r3) | Streamable HTTP | Bun **82** @100 ms |
+| `clawql_program` | **5187** | **126** (rep4) | **11.2** (board r3) | Streamable HTTP | — |
 
-**Framing:** v2 remains the headline Executor comparison. v1 on the identical mock workload is lighter on memory (~0.54 GB vs ~2.1 GB) and faster per session, but heavier on tokens (8236 vs 5328). ClawQL leads both on tokens and memory. The stable release does **not** reverse the token story; the beta excuse does not rescue Executor on that cell.
+Do not compare v1's **84 ms** (stdio) to ClawQL's **23.8 ms** (HTTP) as same-transport latency. Stdio-vs-stdio concurrency: [`stdio-concurrency-curves.md`](./stdio-concurrency-curves.md).
+
+**Framing:** v2 remains the headline Executor comparison. v1 on the identical mock workload is lighter on memory (~0.54 GB vs ~2.1 GB) and faster on its own transport, but heavier on tokens (8236 vs 5328). ClawQL leads both on tokens and memory. The stable release does **not** reverse the token story; the beta excuse does not rescue Executor on that cell.
 
 ## HTTP concurrency
 
@@ -134,6 +137,18 @@ Method: climb until p99/errors break (loop guard 8192 only — no predetermined 
 
 **Page takeaway:** Loosening the cutoff does not close the gap — Bun still leads at 250 ms (**211** vs AG **88** / MJ **92**) and at 500 ms (**434** vs Node **224** / MJ **192** / AG **112**). Peak RPS: Bun **~1850** vs AG **~830** vs Executor **~73**.
 
+### Clients over stdio (one process per client) — ClawQL vs Executor v1
+
+Artifact: [`stdio-concurrency-curves.json`](./stdio-concurrency-curves.json) · write-up [`stdio-concurrency-curves.md`](./stdio-concurrency-curves.md)  
+**Different topology from the HTTP table** — each client = one stdio MCP process. REPS=3 · same Cloudflare DNS call · total memory across all processes.
+
+| Arm | @100 ms | @250 ms | @500 ms | Peak RPS | anon @100 ms |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `clawql_known_op_stdio` | [30, 31] → **31** | [73, 79] → **74** | [119, 136] → **122** | **1145** | **~3.4 GB** |
+| `executor_v1_stdio` (stable) | [5, 8] → **8** | [19, 24] → **19** | [31, 48] → **42** | **123** | **~2.0 GB** |
+
+**Page takeaway (stdio):** On the fair process-per-client topology, ClawQL holds **~4×** more clients at 100 ms and **~9×** peak RPS vs Executor v1 stable. Memory grows with every client — v1’s single-client **~535 MB** becomes multi-GB under fan-out.
+
 ## Error inventory (aborted attempts)
 - rep 3 `executor_v2`: http_502 after 7000 ok — One hard failure after ≥7000 ok sessions is an error rate on the order of ~0.01% for that incomplete arm (lower bound: ≥1/10000 if the arm had finished). Keep in proportion: possible Executor beta bug, resource limit under sustained load, or harness/mock interaction. Board error columns show it for every arm; do not amplify into a headline. Private repro to Executor maintainers is welcome if repeatable.
 
@@ -152,8 +167,10 @@ Method: climb until p99/errors break (loop guard 8192 only — no predetermined 
 ## Headline cells (for post drafting)
 
 - Steady-state tokens: known_op / where path vs code-mode peers (weighted_mean table above). Executor **stable v1 = 8236**, promoted **v2 = 5328**, ClawQL known_op **1833** — same Cloudflare board.
-- HTTP clients @100 ms: Bun **82** vs Executor v2 **2** vs MJ/AG **33–34**; at 500 ms Bun **434** vs Node **224** / MJ **192** / AG **112** / Executor v2 **22**. Peak RPS Bun **~1850**. Executor v1 not in HTTP table (stdio).
-- Memory: ClawQL **~125 MB** vs MJ/AG **~100** vs Executor v2 **~2.1 GB** (rep 4) vs Executor v1 **~0.54 GB** (mcp+daemon, same board).
+- HTTP clients @100 ms: Bun **82** vs Executor v2 **2** vs MJ/AG **33–34**; at 500 ms Bun **434** vs Node **224** / MJ **192** / AG **112** / Executor v2 **22**. Peak RPS Bun **~1850**.
+- Stdio clients @100 ms (process-per-client): ClawQL **31** vs Executor v1 stable **8**; peak RPS **~1145** vs **~123**. Separate table — not beside HTTP.
+- Memory: ClawQL **~125 MB** vs MJ/AG **~100** vs Executor v2 **~2.1 GB** (rep 4) vs Executor v1 **~0.54 GB** single-client; stdio fan-out scales to multi-GB (see stdio table).
+- Session p50 (label transport): ClawQL known_op **23.8 ms** / program **11.2 ms** (HTTP board); Executor v1 **~84 ms** (stdio); Executor v2 **~216 ms** (HTTP).
 - Errors: report error_rate columns; keep Executor 502 in proportion if present.
 - Weak cells: first-session cost vs code mode; HTTP tail open; program mode fan-out not yet boarded.
 
