@@ -34,6 +34,8 @@ Iters: 10000 · Reps: 3
 
 ## Memory plateau (anon MB median, when sampled)
 
+### Reps 1–3 (original publish board; Executor not sampled)
+
 | Arm | anon median (r1,r2,r3) | rss median |
 | --- | --- | --- |
 | `direct` | [None, None, None] | [None, None, None] |
@@ -46,7 +48,44 @@ Iters: 10000 · Reps: 3
 | `agentgateway` | [97.97, 83.07, 98.92] | [166.26, 115.56, 170.24] |
 | `cloudflare_codemode` | [None, None, None] | [None, None, None] |
 
-## HTTP concurrency (p99≤100ms, REPS=3)
+### Rep 4 memory fill (2026-10-16T03:14:59Z) — Node 256, all arms, Executor tree sampled
+
+Artifact: [`board-rep4-n10000.json`](./board-rep4-n10000.json) · summary [`board-summary-n10000-rep4-memory.json`](./board-summary-n10000-rep4-memory.json)  
+Executor tree = CLI + native serve + sandbox workerd; **motel diagnostics excluded** from plateau. error_rate=0 every arm.
+
+| Arm | anon MB median | rss MB median |
+| --- | ---: | ---: |
+| `clawql_known_op` | **121.12** | 172.02 |
+| `clawql_compact_search` | **122.64** | 173.49 |
+| `clawql_default` | **125.48** | 176.32 |
+| `clawql_program` | **126.03** | 176.89 |
+| `mcpjungle` | **102.14** | 172.60 |
+| `agentgateway` | **98.73** | 169.73 |
+| `executor_v2` | **2103** | 2194 |
+
+**Page memory cell (Executor):** about **2.1 GB** anonymous under load (same-run Node-256 board; product path). ClawQL **~121–126 MB**; MJ **102**; AG **99**.
+
+## HTTP concurrency
+
+### Clients @ p99 ≤ 100 ms (same-session with Executor)
+
+Artifact: [`http-concurrency-with-executor.json`](./http-concurrency-with-executor.json) · sanity [`http-concurrency-executor-sanity.md`](./http-concurrency-executor-sanity.md)
+
+| Arm | clients | notes |
+| --- | ---: | --- |
+| `clawql_bun_smol` | [81, 98] → **87** | |
+| `clawql_node_256` | **31** | |
+| `mcpjungle` | [35, 38] → **37** | |
+| `agentgateway` | [32, 36] → **33** | |
+| `executor_v2` | **2 to 3** | sustained 2; first break 3; RPS plateau ~57 |
+
+**One-liner:** Executor v2's throughput levels off at about 57 tool calls per second from two clients onward, so additional clients mostly add queueing. At a 100 ms p99, it sustains 2 to 3 clients.
+
+### RPS at capacity / single client
+
+See [`http-concurrency-rps.md`](./http-concurrency-rps.md). At sustained ceiling: Bun **~1718**, AG **~745**, Node256 **676**, MJ **467**, Executor **~52**. At n=1: Bun **510**, Node **281**, AG **236**, MJ **172**, Executor **32**.
+
+### Earlier heap A/B (no Executor)
 
 | Arm | range [min,max] | median |
 | --- | ---: | ---: |
@@ -58,31 +97,29 @@ Iters: 10000 · Reps: 3
 | `agentgateway` | [34, 38] | 38 |
 | `agentgateway_tuned` | [17, 17] | 17 |
 
-**Heap cap:** within_run_band — prior single-pass uncapped 44 is an outlier; REPS=3 uncapped [31, 30, 31] [30,31], 256 [29, 27, 27] [27,29], 384 [30, 28, 25] [25,30]. 256 sits 1–4 clients under uncapped (not ~30%). 384 overlaps uncapped and should be unbound vs ~296 MB plateau — small flag/GC nudge possible, not a concurrency tax. Do not claim cap costs ~30%.
-
-**Bun vs peers:** bun_holds_more — Bun [79,87] median 84 vs MJ [31,31] median 31 vs AG [34,38] median 38 (all REPS=3)
+**Heap cap:** within_run_band — do not claim cap costs ~30%. Multi-threshold curves (100/250/500) next: `CURVE=1` harness.
 
 ## Error inventory (aborted attempts)
 - rep 3 `executor_v2`: http_502 after 7000 ok — One hard failure after ≥7000 ok sessions is an error rate on the order of ~0.01% for that incomplete arm (lower bound: ≥1/10000 if the arm had finished). Keep in proportion: possible Executor beta bug, resource limit under sustained load, or harness/mock interaction. Board error columns show it for every arm; do not amplify into a headline. Private repro to Executor maintainers is welcome if repeatable.
 
 ## Memory guidance for post (important)
 
-- **Rep 3 (Node `--max-old-space-size=256`, publish default):** ClawQL anon medians **~122–129 MB** (known_op **121.85**, default **125.3**, program **129**). Peers same run: MCPJungle **103**, agentgateway **99**. Gap vs peers about **20–30 MB** on this board.
-- **Rep 1–2:** ClawQL anon **~282–292 MB** (pre-restart slim pass; treat as uncapped-like / not the Node-256 product claim). Do **not** average r1–r3 for the Cloud memory line.
-- **Quote for post:** prefer rep3 same-run figures, or the earlier heap A/B (Node 256 plateau **132 MB**, +3.5 ms p99) — label which artifact.
-- Bun Cloud HTTP path still ~**130 MB** from heap A/B; HTTP concurrency Bun median **84**.
+- **Prefer rep 4 (same-run, Executor filled):** ClawQL anon **~121–126 MB**; MJ **102**; AG **99**; Executor **~2103 MB (~2.1 GB)** product-path (motel excluded).
+- **Rep 3** (without Executor sample) matches ClawQL/MJ/AG within a few MB — consistent.
+- **Rep 1–2:** ClawQL ~282–292 uncapped-like — do **not** average into the Cloud memory line.
+- Bun Cloud HTTP path still ~**130 MB** from heap A/B.
 
 ## Errors (publish)
 
-- Completed board: **error_rate=0** on every arm across all three reps, including `executor_v2`.
+- Completed board (reps 1–3 and rep 4): **error_rate=0** on every arm, including `executor_v2`.
 - Inventory still records the **aborted** first rep3 attempt (HTTP 502 after ≥7000 ok, ~0.01% order) — history, not the completed-board rate.
 
 ## Headline cells (for post drafting)
 
 - Steady-state tokens: known_op / where path vs code-mode peers (weighted_mean table above).
-- HTTP clients/instance: Bun median from concurrency table; peers MJ/AG ranges.
-- Memory: ClawQL anon medians vs MJ/AG from memory table (prefer same-run capped board when Node 256 default is on).
+- HTTP clients: Bun **87** vs Executor **2 to 3** vs MJ/AG **33–37**; lead capacity with saturation RPS where possible.
+- Memory: ClawQL **~125 MB** vs MJ/AG **~100** vs Executor **~2.1 GB** (rep 4).
 - Errors: report error_rate columns; keep Executor 502 in proportion if present.
-- Weak cells to keep honest: first-session cost vs code mode; Go/Rust still leaner; HTTP tail open.
+- Weak cells: first-session cost vs code mode; HTTP tail open; program mode fan-out not yet boarded.
 
-Artifacts: `board-rep{1,2,3}-n10000.json`, `board-summary-n10000-r3.json`, `board-error-inventory.json`, `http-concurrency-heap-ab.json`.
+Artifacts: `board-rep{1,2,3,4}-n10000.json`, `board-summary-n10000-r3.json`, `board-summary-n10000-rep4-memory.json`, `board-error-inventory.json`, `http-concurrency-with-executor.json`, `http-concurrency-rps.md`.
