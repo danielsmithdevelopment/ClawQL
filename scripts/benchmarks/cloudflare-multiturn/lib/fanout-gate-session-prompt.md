@@ -20,9 +20,18 @@ export CF_MT_REAL_CODE_PARITY=execute_args
 
 FORBIDDEN: reading `fanout-join-shapes.mjs`, `published-scripts.mjs`, other sessions, or any file containing expected `where` strings / the inventory gold card.
 
-## Inventory card fields
+## Inventory card fields (types matter)
 
-`ssl`, `aRecordCount`, `workers` (sorted ids), `routesForWorkers` (routes whose `script` ∈ workers, sorted by script then pattern), `bucketNames` (sorted), `enabledFirewallRules`
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `ssl` | string | SSL mode value |
+| `aRecordCount` | **number** | Count of DNS `A` records |
+| `workers` | string[] | Worker ids, sorted |
+| `routesForWorkers` | `{script,pattern}[]` | Routes whose `script` ∈ workers, sorted by script then pattern |
+| `bucketNames` | string[] | Bucket names, sorted |
+| `enabledFirewallRules` | **number** | Count of firewall rules that are **not** paused — **not** an id list |
+
+Count fields must be JSON numbers (typically via `length(...)` in `where`). Returning an id array for a count field fails the checker.
 
 ## Arms
 
@@ -39,13 +48,13 @@ FORBIDDEN: reading `fanout-join-shapes.mjs`, `published-scripts.mjs`, other sess
 
 ### clawql_program
 
-1. One `execute_program` call. Prefer the compact form from the tool schema:
+1. **Exactly one** `execute_program` call when possible. Prefer the compact form from the tool schema:
    `{"return":true,"calls":[{"operationId":"…","args":{},"where":"{field: …}"}]}`
    Omit `v` / `mode` / `tool` when defaults work. Keep the plan short — code tokens are 5× weighted.
-2. Give each call an `id` if `where` returns a scalar/array (merge wraps under that id), or use object `where` projections with distinct keys.
+2. Give each call an `id` if `where` returns a scalar/array (merge wraps under that id), or use object `where` projections with distinct keys. Put **counts** in object projections as `length(...)` so the merged card has numbers.
 3. Card = tool result (compact return) written to `session-<N>.json`.
 4. `definitionTokens` from `execute-program-tool-schema.json`; `turns: 1` if one program call.
-5. Same meta + check pattern.
+5. Same meta + check pattern. Do **not** script gold `where` from repo files — invent JMESPath from the schema examples + field types above.
 
 ## Return
 

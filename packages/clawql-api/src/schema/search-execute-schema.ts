@@ -39,7 +39,7 @@ export const EXECUTE_WHERE_MAX_LENGTH = 512;
 export const EXECUTE_WHERE_DESCRIPTION =
   "Optional JMESPath filter/extract before fields (max 512 chars; fail-closed). " +
   "Examples: {ssl: result.value} (object project — prefer with execute_program return:true); " +
-  "length(result[?type==`A`]) (count); " +
+  "length(result[?type==`A`]) (numeric count — never an id array for count fields); " +
   "result[?state=='ACTIVE'] (filter rows).";
 
 export const EXECUTE_FULL_DESCRIPTION =

@@ -203,10 +203,13 @@ Ordering: for each model, for i=1..${ITERS}, run known_op session i then program
 
 ## Task
 
-Produce one inventory card:
+Produce one inventory card (field **types** matter):
 
-- \`ssl\`, \`aRecordCount\`, \`workers\` (sorted), \`routesForWorkers\` (join: routes whose script ∈ workers),
-  \`bucketNames\` (sorted), \`enabledFirewallRules\`
+- \`ssl\` (string), \`aRecordCount\` (**number** count of A records),
+- \`workers\` (sorted id strings), \`routesForWorkers\` (join: routes whose script ∈ workers),
+- \`bucketNames\` (sorted names), \`enabledFirewallRules\` (**number** count of non-paused rules — not an id list)
+
+Count fields must be JSON numbers (use \`length(...)\` in \`where\`). An id array for a count field fails the checker.
 
 Zone id / account id: see \`${STATE}/fixture-hint.json\`.
 
@@ -236,8 +239,9 @@ FORBIDDEN: reading \`fanout-join-shapes.mjs\`, published-scripts, other sessions
 
 ### program
 
-One \`execute_program\` with a JSON plan (\`return: true\` recommended for a compact card).
+**One** \`execute_program\` with a JSON plan (\`return: true\` recommended for a compact card).
 You invent call \`where\` / plan shape. Do not copy a published plan from the repo.
+Prefer object \`where\` projections so counts stay numbers in the merged card.
 
 ## Outputs per session
 

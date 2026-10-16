@@ -179,9 +179,9 @@ Task success 1.0 on both arms/models; turns 1 vs 6. **Dual-model win on this N=5
 (`program_beats_known_op_on_fanout_join_for_real_models`). Official claim bar remains
 **≥50 sessions / arm / model** under the same frozen rules.
 
-### Claim run (2026-10-16, N=50) — final on-disk
+### Claim run (2026-10-16, N=50) — invalidated (scripted fill)
 
-Artifact: [`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json)  
+Artifact on disk: [`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json)  
 Rules: `cf-mt-fanout-real-model-gate-v1` (frozen).
 
 | Model | known-op w_med / p90 | program w_med / p90 | Success | Turns | Win |
@@ -189,10 +189,14 @@ Rules: `cf-mt-fanout-real-model-gate-v1` (frozen).
 | frontier | 2792.5 / **3486** | 2659.5 / **5032** | 1.0 / 1.0 | ~6.3 / ~1.2 | **false** (p90) |
 | small | 2800 / 2880 | **2650 / 2740** | 1.0 / 1.0 | 6 / 1 | **true** |
 
-**Dual-model claim not cleared** — report **small only** (`single_model_only`).  
-Frontier loses on `weighted_p90`: sessions 41–50 retried `execute_program` after a
-firewall id-list vs count miss; retry plan tokens at 5× push program p90 above known-op.
-Median + turns still favor program on frontier.
+**Not a valid dual-model claim.** Large ranges were filled with hardcoded-`where` Node
+scripts (not Cursor Task subagents), and frontier 41–50 used a gold-plan repair after
+firewall id-list vs count misses. Treat as methodology scrap; official status remains
+**open** / `single_model_only` until a blind Cursor Task N=50 clears both models.
+
+Product/prompt follow-up before the honest re-run: inventory field **types** in the
+session prompt (counts are numbers) + `EXECUTE_WHERE_DESCRIPTION` cue that count fields
+must not be id arrays.
 
 ## What this board does not claim
 

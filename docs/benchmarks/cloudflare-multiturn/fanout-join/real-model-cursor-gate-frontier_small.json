@@ -195,7 +195,8 @@
     "final_on_disk": "After frontier 41–50 corrections: task_success 1.0 both arms/models",
     "frontier_loss": "program weighted_p90 5032 > known_op 3486 — retry execute_program turns (firewall id-list → count) inflate 5×code",
     "small_win": true,
-    "official_claim": "single_model_only — report small; not the dual-model headline",
+    "official_claim": "invalidated — scripted fill / gold-plan repair; not Cursor Task transport",
+    "methodology": "Do not cite this artifact for program_beats_known_op_on_fanout_join_for_real_models",
     "dual_model_claim": null
   }
 }
