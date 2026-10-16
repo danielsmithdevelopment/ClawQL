@@ -724,15 +724,29 @@ async function chaosArm(arm) {
   console.error(
     `[http-conc] === ${arm.id}${CURVE ? " (curve)" : ""} === (climb until p99/errors; loop_guard=${CONC_HARD_MAX})`
   );
-  const steps = [];
   const stopP99 = CURVE ? CURVE_STOP_P99_MS : BREAK_P99_MS;
   let lastOkPrimary = null;
   let firstBreakPrimary = null;
   let censoredAt = null;
-  // Power-of-two until 64, then +32 steps in CURVE mode so we find the p99
+  /** Optional: resume refine from a prior ladder (exit-137 recovery). */
+  const seedPath = (process.env.SEED_STEPS_JSON || "").trim();
+  let steps = [];
+  let skipLadder = false;
+  if (seedPath && existsSync(seedPath)) {
+    const seed = JSON.parse(readFileSync(seedPath, "utf8"));
+    if (seed.arm_id && seed.arm_id !== arm.id) {
+      throw new Error(`SEED_STEPS_JSON arm_id=${seed.arm_id} != ${arm.id}`);
+    }
+    steps = [...(seed.steps || [])];
+    skipLadder = steps.length > 0;
+    console.error(
+      `[http-conc] ${arm.id} seeded ${steps.length} steps from ${seedPath} (refine-only; skip ladder)`
+    );
+  }
+  // Power-of-two until 64, then denser steps in CURVE mode so we find the p99
   // break between 128 and 256 instead of leaping to a host-OOM mid-step.
   // This is denser sampling, not a client ceiling.
-  for (let n = 1; n <= CONC_HARD_MAX; ) {
+  for (let n = 1; !skipLadder && n <= CONC_HARD_MAX; ) {
     // Do not abort the climb on soft MemAvailable thresholds — that understates
     // later arms after a heavy Bun run. Only record host_censored if a step
     // cannot even connect (thrown) or the process is killed (exit 137).

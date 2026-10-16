@@ -97,7 +97,24 @@ See [`http-concurrency-rps.md`](./http-concurrency-rps.md). At sustained ceiling
 | `agentgateway` | [34, 38] | 38 |
 | `agentgateway_tuned` | [17, 17] | 17 |
 
-**Heap cap:** within_run_band — do not claim cap costs ~30%. Multi-threshold curves (100/250/500) next: `CURVE=1` harness.
+**Heap cap:** within_run_band — do not claim cap costs ~30%.
+
+### Multi-threshold curves (uncapped climb; clients @ 100 / 250 / 500 ms p99)
+
+Artifact: [`http-concurrency-curves.json`](./http-concurrency-curves.json) · write-up [`http-concurrency-curves.md`](./http-concurrency-curves.md)  
+Method: climb until p99/errors break (loop guard 8192 only — no predetermined client caps). REPS=3 for Bun/Node/MJ/Executor.
+
+| Arm | @100 ms | @250 ms | @500 ms | Peak RPS |
+| --- | ---: | ---: | ---: | ---: |
+| `clawql_bun_smol` | [75, 85] → **82** | [209, 226] → **211** | [415, 442] → **434** | **1854** |
+| `clawql_node_256` | [32, 33] → **33** | [95, 112] → **112** | [192, 224] → **224** | **675** |
+| `mcpjungle` | [31, 38] → **34** | [91, 96] → **92** | [192, 197] → **192** | **476** |
+| `agentgateway` | **33** | **88** | **112** † | **833** |
+| `executor_v2` | **2** | [6, 10] → **10** | [21, 25] → **22** | **73** |
+
+† AG host OOM (exit 137) at 128 clients before p99 cleared 500 ms; @500 is last measured sustained (112, p99≈346 ms), not an invented cap.
+
+**Page takeaway:** Loosening the cutoff does not close the gap — Bun still leads at 250 ms (**211** vs AG **88** / MJ **92**) and at 500 ms (**434** vs Node **224** / MJ **192** / AG **112**). Peak RPS: Bun **~1850** vs AG **~830** vs Executor **~73**.
 
 ## Error inventory (aborted attempts)
 - rep 3 `executor_v2`: http_502 after 7000 ok — One hard failure after ≥7000 ok sessions is an error rate on the order of ~0.01% for that incomplete arm (lower bound: ≥1/10000 if the arm had finished). Keep in proportion: possible Executor beta bug, resource limit under sustained load, or harness/mock interaction. Board error columns show it for every arm; do not amplify into a headline. Private repro to Executor maintainers is welcome if repeatable.
@@ -117,9 +134,9 @@ See [`http-concurrency-rps.md`](./http-concurrency-rps.md). At sustained ceiling
 ## Headline cells (for post drafting)
 
 - Steady-state tokens: known_op / where path vs code-mode peers (weighted_mean table above).
-- HTTP clients: Bun **87** vs Executor **2 to 3** vs MJ/AG **33–37**; lead capacity with saturation RPS where possible.
+- HTTP clients @100 ms: Bun **82** vs Executor **2** vs MJ/AG **33–34**; at 500 ms Bun **434** vs Node **224** / MJ **192** / AG **112** / Executor **22**. Peak RPS Bun **~1850**.
 - Memory: ClawQL **~125 MB** vs MJ/AG **~100** vs Executor **~2.1 GB** (rep 4).
 - Errors: report error_rate columns; keep Executor 502 in proportion if present.
 - Weak cells: first-session cost vs code mode; HTTP tail open; program mode fan-out not yet boarded.
 
-Artifacts: `board-rep{1,2,3,4}-n10000.json`, `board-summary-n10000-r3.json`, `board-summary-n10000-rep4-memory.json`, `board-error-inventory.json`, `http-concurrency-with-executor.json`, `http-concurrency-rps.md`.
+Artifacts: `board-rep{1,2,3,4}-n10000.json`, `board-summary-n10000-r3.json`, `board-summary-n10000-rep4-memory.json`, `board-error-inventory.json`, `http-concurrency-with-executor.json`, `http-concurrency-rps.md`, `http-concurrency-curves.json`, `http-concurrency-curves.md`.
