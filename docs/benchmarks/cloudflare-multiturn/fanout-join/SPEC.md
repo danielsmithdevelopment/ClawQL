@@ -151,6 +151,21 @@ Do not edit after seeing results.
 
 Prepare: `prepare-fanout-real-model-cursor-gate.mjs` · aggregate: `lib/aggregate-fanout-cursor-gate.mjs`.
 
+### Pilot finding (2026-10-16, N=5, frozen rules)
+
+Artifact: [`real-model-cursor-pilot-n5.json`](./real-model-cursor-pilot-n5.json)
+
+| Model | known-op weighted median | program weighted median | Turns | Task success | Model win |
+| --- | ---: | ---: | ---: | ---: | --- |
+| frontier (`gpt-5.6-sol-medium`) | **2 492** | 3 289 | 6 vs 1 | 1.0 vs 0.8 | **false** (tokens + success) |
+| small (`composer-2.5-fast`) | **2 527** | 3 052 | 6 vs 1 | 1.0 vs 1.0 | **false** (tokens) |
+
+**Turns win on both models; token promotion does not** — real models write fatter
+plans (~475–511 code tokens) than the scripted 403-token plan, so 5×code outweighs
+the one-turn observation win. Frontier session-1 program failed (`return:true` merge
+on scalars). Dual-model claim **not** cleared. Claim bar remains ≥50/arm/model after
+cheaper-plan product/prompt work.
+
 ## What this board does not claim
 
 - Filter-only workflows (zone-audit board already covers those).
