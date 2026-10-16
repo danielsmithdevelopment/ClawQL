@@ -149,7 +149,7 @@ ones stay in the same tool.
 
 1. **Shrink one-step plans** toward `execute` size (target: code tokens ≈ known-op’s ~191 on this workflow).
 2. **Rerun the Cloudflare 3×10k board** and the **pre-registered dual-model gate** — program must **match** known-op on the filter workflow.
-3. **Build the fan-out / join board** — show where multi-step programs pull ahead (model turns + tokens).
+3. **Build the fan-out / join board** — show where multi-step programs pull ahead (model turns + tokens). Harness + SPEC: [`fanout-join/`](./fanout-join/). Claim id `program_beats_known_op_on_fanout_join` (smoke first; 3×10k publish next).
 4. Only then make program mode the core tool, with the same evidence standard that cleared known-op.
 5. Keep ADR 0015 celld / isolation honesty gates before any “survives a crash” claim.
 

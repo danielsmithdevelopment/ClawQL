@@ -1,0 +1,32 @@
+# Fan-out / join board
+
+Program-mode promotion board (ADR 0015): six independent Cloudflare reads plus a
+**workers ⋈ routes** join that no single `where` can express.
+
+| Doc | Role |
+| --- | --- |
+| [`SPEC.md`](./SPEC.md) | Task, arms, token policy, pre-committed claim |
+| `run-fanout-board.mjs` | Harness |
+| `lib/fanout-join-shapes.mjs` | Plan + join assembly |
+| `lib/fanout-join-checks.mjs` | Success checks |
+
+```bash
+# Unit checks
+node --test scripts/benchmarks/cloudflare-multiturn/lib/fanout-join-shapes.test.mjs
+
+# Smoke (ClawQL known-op + program + tokens-only CF code-mode)
+CF_MT_ITERS=5 CF_MT_ARMS=clawql_known_op,clawql_program,cloudflare_codemode \
+  node scripts/benchmarks/cloudflare-multiturn/run-fanout-board.mjs
+
+# Include Executor v2 (needs local Executor + ensure app)
+CF_MT_ITERS=5 CF_MT_ARMS=clawql_known_op,clawql_program,executor_v2,cloudflare_codemode \
+  node scripts/benchmarks/cloudflare-multiturn/run-fanout-board.mjs
+```
+
+Artifacts land in this directory (`smoke-*` or `board-*`).
+
+### Smoke readout (N=5)
+
+- **Turns win:** program 1 vs known-op 6 (`turns_win: true`).
+- **Token promotion:** not cleared — program ~3.4k weighted vs known-op ~1.1k
+  (plan ×5 + fat envelope). See [`SPEC.md`](./SPEC.md) smoke finding.

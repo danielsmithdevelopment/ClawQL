@@ -1,0 +1,146 @@
+{
+  "measuredAt": "2026-10-16T17:38:51.284Z",
+  "kind": "smoke",
+  "workflow": "fanout_join",
+  "rep": 1,
+  "iters": 5,
+  "fixture": {
+    "source": "synthetic",
+    "label": "real schemas, synthetic content",
+    "path": "/workspace/scripts/benchmarks/cloudflare-multiturn/fixtures/recording.synthetic.json"
+  },
+  "tokenizer": "js-tiktoken cl100k_base",
+  "metrics_policy": {
+    "id": "fanout_join_all_attempted_sessions_primary",
+    "task_success": "Failed sessions count against task_success_rate.",
+    "tokens": "definition + discovery + result + 5×code; program result = one MCP response; known-op result = cumulative re-reads (turn k charges texts 1..k).",
+    "model_turns": "Scripted tool rounds (known-op=6, program/code-mode=1).",
+    "claim": "program_beats_known_op_on_fanout_join — see fanout-join/SPEC.md"
+  },
+  "claim": {
+    "id": "program_beats_known_op_on_fanout_join",
+    "eligible": true,
+    "turns_win": true,
+    "token_promotion": false,
+    "win": false,
+    "checks": {
+      "weighted": false,
+      "turns": true,
+      "success": true
+    },
+    "known_op": {
+      "weighted_mean": 1064,
+      "model_turns_mean": 6,
+      "result_tokens_mean": 433,
+      "code_tokens_mean": 70,
+      "definition_tokens": 281,
+      "task_success_rate": 1
+    },
+    "program": {
+      "weighted_mean": 3351.2,
+      "model_turns_mean": 1,
+      "result_tokens_mean": 812.2,
+      "code_tokens_mean": 432,
+      "definition_tokens": 379,
+      "task_success_rate": 1
+    }
+  },
+  "board": {
+    "clawql_known_op": {
+      "id": "clawql_known_op",
+      "iters": 5,
+      "sessions_ok": 5,
+      "sessions_failed": 0,
+      "task_success_rate": 1,
+      "error_rate": 0,
+      "errors_by_kind": {},
+      "definition_tokens": 281,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 433,
+      "code_tokens_mean": 70,
+      "combined_mean": 784,
+      "weighted_mean": 1064,
+      "model_turns_mean": 6,
+      "session_ms": {
+        "p50": 25.18223799999987,
+        "p90": 55.540174000000206,
+        "p99": 55.540174000000206,
+        "mean": 31.73834199999992
+      },
+      "first_session": {
+        "ok": true,
+        "weighted": 1064,
+        "model_turns": 6,
+        "result_tokens": 433,
+        "code_tokens": 70,
+        "check": {
+          "ok": true
+        }
+      }
+    },
+    "clawql_program": {
+      "id": "clawql_program",
+      "iters": 5,
+      "sessions_ok": 5,
+      "sessions_failed": 0,
+      "task_success_rate": 1,
+      "error_rate": 0,
+      "errors_by_kind": {},
+      "definition_tokens": 379,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 812.2,
+      "code_tokens_mean": 432,
+      "combined_mean": 1623.2,
+      "weighted_mean": 3351.2,
+      "model_turns_mean": 1,
+      "session_ms": {
+        "p50": 15.37458400000014,
+        "p90": 40.13920400000006,
+        "p99": 40.13920400000006,
+        "mean": 20.535717400000067
+      },
+      "first_session": {
+        "ok": true,
+        "weighted": 3348,
+        "model_turns": 1,
+        "result_tokens": 809,
+        "code_tokens": 432,
+        "check": {
+          "ok": true
+        }
+      }
+    },
+    "cloudflare_codemode": {
+      "id": "cloudflare_codemode",
+      "iters": 5,
+      "sessions_ok": 5,
+      "sessions_failed": 0,
+      "task_success_rate": 1,
+      "error_rate": 0,
+      "errors_by_kind": {},
+      "definition_tokens": 1000,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 77,
+      "code_tokens_mean": 468,
+      "combined_mean": 1545,
+      "weighted_mean": 3417,
+      "model_turns_mean": 1,
+      "session_ms": {
+        "p50": 1.035551999999825,
+        "p90": 2.883176999999705,
+        "p99": 2.883176999999705,
+        "mean": 1.303907799999979
+      },
+      "first_session": {
+        "ok": true,
+        "weighted": 3417,
+        "model_turns": 1,
+        "result_tokens": 77,
+        "code_tokens": 468,
+        "check": {
+          "ok": true
+        }
+      }
+    }
+  }
+}
