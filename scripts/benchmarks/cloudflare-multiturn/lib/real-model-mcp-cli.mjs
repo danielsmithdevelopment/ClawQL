@@ -111,6 +111,8 @@ try {
         code_tokens: countTokens(codeText),
         result_tokens: countTokens(text),
         result_chars: text.length,
+        // Debug aid for fan-out gate (not charged); truncate large plans.
+        ...(source ? { source_chars: source.length } : {}),
       };
       appendFileSync(callLog, `${JSON.stringify(record)}\n`);
     }

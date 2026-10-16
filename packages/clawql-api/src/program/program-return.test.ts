@@ -63,6 +63,24 @@ describe("resolveProgramReturnEffect", () => {
     if (out.ok) expect(out.value).toEqual({ ssl: "full", aRecordCount: 3 });
   });
 
+  it("wraps scalar and array call values under call id for return:true", async () => {
+    const out = await Effect.runPromise(
+      resolveProgramReturnEffect(true, [
+        { id: "ssl", ok: true, value: "full" },
+        { id: "workers", ok: true, value: ["edge-router"] },
+        { id: "aRecordCount", ok: true, value: 12 },
+      ])
+    );
+    expect(out.ok).toBe(true);
+    if (out.ok) {
+      expect(out.value).toEqual({
+        ssl: "full",
+        workers: ["edge-router"],
+        aRecordCount: 12,
+      });
+    }
+  });
+
   it("fails closed on unknown call id", async () => {
     const out = await Effect.runPromise(
       resolveProgramReturnEffect({ x: { $ref: "missing.result" } }, [

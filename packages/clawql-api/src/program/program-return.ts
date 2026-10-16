@@ -111,30 +111,50 @@ function resolveRef(
 }
 
 /**
+ * Coerce a call value into an object for `return: true` merge.
+ * Object results merge by key; scalars/arrays wrap under the call id
+ * (so `where: "result.value"` with id `ssl` becomes `{ ssl: … }`).
+ */
+export function coerceMergeObjectEffect(
+  call: ProgramReturnCall,
+  value: unknown
+): Effect.Effect<{ readonly ok: true; readonly object: Record<string, unknown> } | ProgramReturnIssue> {
+  return Effect.sync(() => {
+    const unwrapped = unwrapExecuteValue(value);
+    if (unwrapped !== null && typeof unwrapped === "object" && !Array.isArray(unwrapped)) {
+      return { ok: true as const, object: unwrapped as Record<string, unknown> };
+    }
+    if (!call.id) {
+      return issue(
+        "scalar/array call result needs a call id to merge under return:true",
+        'Set "id" on the call, or use where object projection: "{ssl: result.value}".'
+      );
+    }
+    return { ok: true as const, object: { [call.id]: unwrapped } };
+  });
+}
+
+/**
  * Merge successful call values into one object (disjoint keys from `where` shaping).
  * Activated by `plan.return: true` or `plan.return: "merge"`.
+ * Scalars/arrays are wrapped under the call id so models that extract one value still merge.
  */
 export function mergeProgramReturnEffect(
   calls: readonly ProgramReturnCall[]
 ): Effect.Effect<ProgramReturnOk | ProgramReturnIssue> {
-  return Effect.sync(() => {
+  return Effect.gen(function* () {
     const out: Record<string, unknown> = {};
     for (const call of calls) {
       if (!call.ok) {
         return issue(`call "${call.id}" failed; cannot merge into return`);
       }
-      const value = unwrapExecuteValue(call.value);
-      if (value === null || typeof value !== "object" || Array.isArray(value)) {
-        return issue(
-          `call "${call.id}" value must be an object to merge`,
-          "Shape each call with where/fields so it returns a JSON object, or use a $ref return template."
-        );
-      }
-      for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
+      const coerced = yield* coerceMergeObjectEffect(call, call.value);
+      if (!coerced.ok) return coerced;
+      for (const [key, v] of Object.entries(coerced.object)) {
         if (Object.prototype.hasOwnProperty.call(out, key)) {
           return issue(
             `merge conflict on key "${key}" (from call "${call.id}")`,
-            "Use distinct where projections, or a $ref return template."
+            'Use distinct where object keys (e.g. "{ssl: result.value}"), distinct call ids for scalar wraps, or a $ref return template.'
           );
         }
         out[key] = v;

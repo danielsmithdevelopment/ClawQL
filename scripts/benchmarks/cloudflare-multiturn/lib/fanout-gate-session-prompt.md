@@ -39,10 +39,13 @@ FORBIDDEN: reading `fanout-join-shapes.mjs`, `published-scripts.mjs`, other sess
 
 ### clawql_program
 
-1. One `execute_program` call with a JSON plan you invent. Prefer `"return": true` and parallel calls with `where` shaping.
-2. Card = tool result (compact return) written to `session-<N>.json`.
-3. `definitionTokens` from `execute-program-tool-schema.json`; `turns: 1` if one program call.
-4. Same meta + check pattern.
+1. One `execute_program` call. Prefer the compact form from the tool schema:
+   `{"return":true,"calls":[{"operationId":"…","args":{},"where":"{field: …}"}]}`
+   Omit `v` / `mode` / `tool` when defaults work. Keep the plan short — code tokens are 5× weighted.
+2. Give each call an `id` if `where` returns a scalar/array (merge wraps under that id), or use object `where` projections with distinct keys.
+3. Card = tool result (compact return) written to `session-<N>.json`.
+4. `definitionTokens` from `execute-program-tool-schema.json`; `turns: 1` if one program call.
+5. Same meta + check pattern.
 
 ## Return
 

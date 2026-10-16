@@ -437,10 +437,12 @@ Returns `{ ok, programId, result, calls, diagnostics }`. Each nested call uses t
 
 Optional **`return`** projects a small model-facing result instead of the full per-call envelope:
 
-- **`return: true`** (or **`"merge"`**) — merge each successful call's object value into one card (use disjoint `where`/`fields` keys).
+- **`return: true`** (or **`"merge"`**) — merge each successful call's object value into one card (disjoint `where`/`fields` keys). Scalars/arrays wrap under the call `id`.
 - **Object template** — `{ "$ref": "<callId>.result.<path>" }` placeholders (objects/arrays allowed).
 
-MCP text then omits fat call previews; WORM still records every call. Example: `{ "return": true, "calls": [ … ] }`.
+MCP text then omits fat call previews; WORM still records every call. Prefer compact plans:
+`{ "return": true, "calls": [ { "operationId": "…", "args": {}, "where": "{ssl: result.value}" } ] }`
+(omit `v` / `mode` / `tool` / `id` when defaults suffice).
 
 ### Proposed writes
 
