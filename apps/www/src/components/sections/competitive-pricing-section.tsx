@@ -1,3 +1,4 @@
+import { ComparisonRowTh, ComparisonTable, ComparisonTd, ComparisonTh } from '@/components/elements/comparison-table'
 import { Link } from '@/components/elements/link'
 import {
   competitiveHeadline,
@@ -63,9 +64,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
                   <span className="font-semibold text-mist-950 dark:text-white">{benchmark.clawql}</span>
                 </p>
               </div>
-              {benchmark.note ? (
-                <p className="text-xs/6 text-mist-600 dark:text-mist-400">{benchmark.note}</p>
-              ) : null}
+              {benchmark.note ? <p className="text-xs/6 text-mist-600 dark:text-mist-400">{benchmark.note}</p> : null}
             </div>
           ))}
         </div>
@@ -180,44 +179,37 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
           </p>
         }
       >
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse text-left text-sm/5">
-            <thead>
-              <tr>
-                <th className="sticky top-(--scroll-padding-top) bg-mist-100 py-4 pr-4 font-medium text-mist-950 dark:bg-mist-950 dark:text-white">
-                  Feature
-                </th>
+        <ComparisonTable minWidthClass="min-w-[720px]">
+          <thead>
+            <tr>
+              <ComparisonTh className="pr-4 text-left">Feature</ComparisonTh>
+              {competitorColumns.map((col) => (
+                <ComparisonTh key={col} className="text-center font-semibold">
+                  {col}
+                </ComparisonTh>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {competitorFeatureRows.map((row) => (
+              <tr key={row.feature} className="group border-t border-mist-950/5 dark:border-white/10">
+                <ComparisonRowTh>
+                  <div className="flex flex-col gap-1">
+                    <span>{row.feature}</span>
+                    {row.footnote ? (
+                      <span className="text-xs/6 font-normal text-mist-600 dark:text-mist-600">{row.footnote}</span>
+                    ) : null}
+                  </div>
+                </ComparisonRowTh>
                 {competitorColumns.map((col) => (
-                  <th
-                    key={col}
-                    className="sticky top-(--scroll-padding-top) bg-mist-100 px-3 py-4 text-center font-semibold text-mist-950 dark:bg-mist-950 dark:text-white"
-                  >
-                    {col}
-                  </th>
+                  <ComparisonTd key={col} className="text-center text-mist-700 dark:text-mist-400">
+                    <CellValue value={row.values[col]} />
+                  </ComparisonTd>
                 ))}
               </tr>
-            </thead>
-            <tbody>
-              {competitorFeatureRows.map((row) => (
-                <tr key={row.feature} className="group border-t border-mist-950/5 dark:border-white/10">
-                  <th scope="row" className="py-4 pr-4 font-normal text-mist-700 dark:text-mist-400">
-                    <div className="flex flex-col gap-1">
-                      <span>{row.feature}</span>
-                      {row.footnote ? (
-                        <span className="text-xs/6 font-normal text-mist-600 dark:text-mist-600">{row.footnote}</span>
-                      ) : null}
-                    </div>
-                  </th>
-                  {competitorColumns.map((col) => (
-                    <td key={col} className="px-3 py-4 text-center text-mist-700 dark:text-mist-400">
-                      <CellValue value={row.values[col]} />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </ComparisonTable>
       </Section>
 
       <Section id="competitive-honesty" eyebrow="Competitive positioning" headline="What to expect in evaluations">

@@ -354,6 +354,11 @@ export const gatewayBenchmarkLinks = [
     detail: 'Zone-audit board summary, HTTP + stdio concurrency JSON',
   },
   {
+    label: 'Fan-out / join board (docs)',
+    href: 'https://github.com/danielsmithdevelopment/ClawQL/tree/cursor/cf-mt-fanout-join-board-a621/docs/benchmarks/cloudflare-multiturn/fanout-join',
+    detail: 'Program promotion board · scripted claim + real-model gate artifacts',
+  },
+  {
     label: 'Executor latency board',
     href: '/benchmarks/executor-comparison/',
     detail: 'Earlier side-by-side latency artifacts',
