@@ -34,3 +34,4 @@ Uncapped climb until p99 or errors break (loop guard 8192 only). REPS=3 for Claw
 - Same Streamable HTTP multiplex harness as prior concurrency A/B; per-call p99; error_rate break 0.02.
 - ClawQL known-op + where; aggregators/Executor larger body (no where).
 - Artifact: [`http-concurrency-curves.json`](./http-concurrency-curves.json)
+- **Executor v1 (stable) is not in this table.** v1 exposes MCP over stdio (`executor mcp`) with a process-per-client topology, not Streamable HTTP multiplex. Putting it beside these curves would mix topologies. See board arm `executor_v1` / [`executor-v1/`](./executor-v1/) for tokens, success, latency, and process-tree memory on the same Cloudflare mock workload.

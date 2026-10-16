@@ -11,7 +11,8 @@ All arms use **Streamable HTTP**. Full Cloudflare v4 (~2.9k ops in repo OpenAPI)
 | `clawql_routed` | curated OAS | **Planned** | Execute-by-description + GLiNER2-Decide (server-side); see SPEC § Next lever; prove beside known-op + default |
 | `clawql_program` | curated OAS | **Wired** | `CLAWQL_ENABLE_PROGRAMS=1`; one `execute_program` JSON plan (ADR 0015 v0); not free-form JS |
 | `cloudflare_codemode` | full (2-tool) | **Tokens-only (scripted board)** | Def≈1000 from CF docs; result tokens from fixture; latency N/A. **Out of real-model gate** (hosted → live API / write risk). |
-| `executor_v2` | code + OpenAPI app | **Wired** | `liveOpenapiRouter` → mock; scripts call `tools["cf-zone-audit-mock"].…`; **in real-model gate** |
+| `executor_v2` | code + OpenAPI app | **Wired** | Promoted product lane (beta). `liveOpenapiRouter` → mock; scripts call `tools["cf-zone-audit-mock"].…`; **in real-model gate** |
+| `executor_v1` | code + OpenAPI tools | **Wired** | Stable release (1.6.x). Same curated OpenAPI→mock as v2 via `openapi.addSpec` + connection; stdio `executor mcp` (not HTTP). Process-tree memory = mcp child + daemon. **HTTP concurrency N/A** (process-per-client topology — do not place beside HTTP curves). Publish artifacts under [`executor-v1/`](./executor-v1/). |
 
 **ClawQL default product behavior on the board:** observation budget on (`~8k` chars when no `where`/`fields`); scripted shapes always pass `where`, so publish rows stay observation-sized.
 

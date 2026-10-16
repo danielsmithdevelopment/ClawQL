@@ -43,12 +43,39 @@ function assertOk(parsed, label) {
   return parsed;
 }
 
+/**
+ * v1 CLI talks to the local daemon (localhost:4788). Keep EXECUTOR_DATA_DIR so the
+ * CLI finds the daemon-active bearer; strip v2 serve keys / host that point elsewhere.
+ */
+function v1CliEnv() {
+  const env = { ...process.env };
+  for (const k of [
+    "EXECUTOR_API_KEY",
+    "EXECUTOR_AUTH_TOKEN",
+    "EXECUTOR_V2_API_KEY",
+    "EXECUTOR_HOST",
+    "EXECUTOR_ENCRYPTION_KEY",
+  ]) {
+    delete env[k];
+  }
+  const v1Data =
+    process.env.EXECUTOR_V1_DATA_DIR ||
+    (existsSync("/tmp/executor-v1-data")
+      ? "/tmp/executor-v1-data"
+      : existsSync("/tmp/executor-try")
+        ? "/tmp/executor-v1-data"
+        : null);
+  if (v1Data) env.EXECUTOR_DATA_DIR = v1Data;
+  return env;
+}
+
 function runCli(args, { json = false } = {}) {
   const bin = executorBin();
+  const env = v1CliEnv();
   const r = spawnSync(bin, args, {
     encoding: "utf8",
     cwd: executorCwd(),
-    env: process.env,
+    env,
     maxBuffer: 32 * 1024 * 1024,
   });
   const out = (r.stdout || "").trim();
@@ -72,7 +99,7 @@ function runCli(args, { json = false } = {}) {
       {
         encoding: "utf8",
         cwd: executorCwd(),
-        env: process.env,
+        env,
         maxBuffer: 32 * 1024 * 1024,
       }
     );

@@ -1591,12 +1591,25 @@ async function runArmSessions({
       process.env.EXECUTOR_CWD ||
       "/tmp/executor-try";
     // Inherit full env — StdioClientTransport defaults strip PATH/HOME and break the CLI.
+    // Point DATA_DIR at the v1 daemon token store; drop v2 HTTP serve host/keys.
+    const v1Env = { ...process.env };
+    for (const k of [
+      "EXECUTOR_API_KEY",
+      "EXECUTOR_AUTH_TOKEN",
+      "EXECUTOR_V2_API_KEY",
+      "EXECUTOR_HOST",
+      "EXECUTOR_ENCRYPTION_KEY",
+    ]) {
+      delete v1Env[k];
+    }
+    v1Env.EXECUTOR_DATA_DIR =
+      process.env.EXECUTOR_V1_DATA_DIR || "/tmp/executor-v1-data";
     const transport = new StdioClientTransport({
       command: bin,
       args: ["mcp", "--mode", "codemode", "--elicitation-mode", "model"],
       cwd,
       stderr: "pipe",
-      env: { ...process.env },
+      env: v1Env,
     });
     const client = new Client({ name: "cf-exec-v1", version: "1" }, {});
     await client.connect(transport);
