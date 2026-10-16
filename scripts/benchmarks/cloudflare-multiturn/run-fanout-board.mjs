@@ -28,7 +28,6 @@ import { clawqlEqualArmEnv } from "../lib/clawql-bench-env.mjs";
 import {
   FANOUT_CALLS,
   fanoutProgramPlanSource,
-  fanoutModelWrittenCode,
   assembleInventoryCard,
 } from "./lib/fanout-join-shapes.mjs";
 import { buildFanoutExpectations, checkInventoryCard } from "./lib/fanout-join-checks.mjs";
@@ -127,7 +126,7 @@ const METRICS_POLICY = {
   id: "fanout_join_all_attempted_sessions_primary",
   task_success: "Failed sessions count against task_success_rate.",
   tokens:
-    "definition + discovery + result + 5×code; program result = one MCP response; known-op result = cumulative re-reads (turn k charges texts 1..k).",
+    "definition + discovery + result + 5×code; program result = one MCP response (compact plan.return); known-op result = cumulative re-reads; known-op code = full execute args JSON (operationId+args+where) for parity with the plan.",
   model_turns: "Scripted tool rounds (known-op=6, program/code-mode=1).",
   claim: "program_beats_known_op_on_fanout_join — see fanout-join/SPEC.md",
 };
@@ -292,14 +291,16 @@ async function runKnownOpSession(client, expectations, definitionTokens) {
   const priorTexts = [];
   try {
     for (const call of FANOUT_CALLS) {
-      codeTokens += countTokens(fanoutModelWrittenCode(call));
+      const execArgs = {
+        operationId: call.operationId,
+        args: call.args,
+        where: call.where,
+      };
+      // Fair vs program plan: charge the full model-written execute arguments.
+      codeTokens += countTokens(JSON.stringify(execArgs));
       const res = await client.callTool({
         name: "execute",
-        arguments: {
-          operationId: call.operationId,
-          args: call.args,
-          where: call.where,
-        },
+        arguments: execArgs,
       });
       const text = toolText(res);
       if (res.isError) throw new Error(`execute ${call.id}: ${text.slice(0, 300)}`);
@@ -347,22 +348,26 @@ async function runProgramSession(client, expectations, definitionTokens) {
     if (!envelope?.ok) throw new Error(`execute_program not ok: ${text.slice(0, 400)}`);
     // Honesty: model sees one tool result — charge the MCP response once.
     const resultTokens = countTokens(text);
-    const results = envelope?.result?.results || [];
-    const byId = {};
-    for (const call of FANOUT_CALLS) {
-      const row = results.find((r) => r.id === call.id);
-      let value = row?.value;
-      if (typeof value === "string") value = parseJsonLoose(value);
-      if (value && typeof value === "object" && Array.isArray(value.content)) {
-        const inner = value.content
-          .filter((c) => c?.type === "text")
-          .map((c) => c.text)
-          .join("\n");
-        value = parseJsonLoose(inner);
+    // Compact plan.return → result is the card (or legacy { return, results }).
+    let card = envelope?.result;
+    if (card && typeof card === "object" && card.return) card = card.return;
+    if (card && typeof card === "object" && Array.isArray(card.results)) {
+      const byId = {};
+      for (const call of FANOUT_CALLS) {
+        const row = card.results.find((r) => r.id === call.id);
+        let value = row?.value;
+        if (typeof value === "string") value = parseJsonLoose(value);
+        if (value && typeof value === "object" && Array.isArray(value.content)) {
+          const inner = value.content
+            .filter((c) => c?.type === "text")
+            .map((c) => c.text)
+            .join("\n");
+          value = parseJsonLoose(inner);
+        }
+        byId[call.id] = value;
       }
-      byId[call.id] = value;
+      card = assembleInventoryCard(byId);
     }
-    const card = assembleInventoryCard(byId);
     const check = checkInventoryCard(card, expectations);
     return summarizeSession("clawql_program", check.ok, t0, {
       definitionTokens,

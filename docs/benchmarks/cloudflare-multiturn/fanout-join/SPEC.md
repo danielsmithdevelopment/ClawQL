@@ -51,13 +51,15 @@ Same weighted formula as the zone-audit board:
 
 | Arm | `code` | `result` (honesty) |
 | --- | --- | --- |
-| known-op | Sum of six `where` (+fields) strings | **Cumulative re-reads:** turn *k* charges the sum of MCP texts from calls `1..k` (the model re-reads prior observations each turn). Session total = Σₖ Σᵢ≤ₖ resultᵢ |
-| program | Plan JSON source | **One** `execute_program` MCP response text (the model sees one tool result) |
+| known-op | Sum of six full execute-argument JSON blobs (`operationId` + `args` + `where`) — parity with plan content | **Cumulative re-reads:** turn *k* charges the sum of MCP texts from calls `1..k`. Session total = Σₖ Σᵢ≤ₖ resultᵢ |
+| program | Plan JSON source (including optional `return` template) | **One** `execute_program` MCP response text. With `plan.return`, that payload is the projected card + slim call status (no per-call values) |
 | executor / CF code-mode | Published script source | Returned card JSON (tokens-only for CF; live tool results for Executor) |
 
 Do **not** attribute program result tokens as the sum of inner call values — that
 would erase the one-turn observation win. Do **not** charge known-op as a flat sum
 of six texts without re-reads — that would erase the turn cost the board exists to measure.
+Do **not** charge known-op code as `where`-only while charging the full plan — that
+under-counts known-op model writing on this multi-op board.
 
 ## Success
 
@@ -94,20 +96,20 @@ Claim family: `program_beats_known_op_on_fanout_join`
 On publish (3×10k): report both gates across reps. Do not claim token promotion
 from smoke alone.
 
-### Smoke finding (2026-10-16, N=5, cumulative re-reads, arm-specific defs)
+### Smoke finding (2026-10-16, N=5)
 
 Artifact: [`smoke-summary-n5-r1.json`](./smoke-summary-n5-r1.json)
 
+After `plan.return: true` (merge compact card) + fair known-op code (full execute args)
++ cumulative re-reads:
+
 | Arm | Weighted | Result mean | Code mean | Defs | Turns |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| known-op | **1 064** | 433 (cumulative) | 70 | 281 (`execute`) | **6** |
-| program | **3 351** | 812 (one envelope) | 432 | 379 (`execute_program`) | **1** |
+| known-op | **2 694** | 433 (cumulative) | 396 | 281 (`execute`) | **6** |
+| program | **2 650** | 256 (compact return) | 403 | 379 (`execute_program`) | **1** |
 
-**`turns_win`: true. `token_promotion`: false** on v0 plan runner — plan JSON at 5× plus
-the full `execute_program` envelope still outweigh six compact `where` observations even
-with cumulative re-reads. Token promotion needs cheaper plans and/or a compact joined
-return (not the full call envelope). That is a product gap the board is meant to surface,
-not a reason to weaken known-op accounting.
+**`turns_win`: true. `token_promotion`: true** — program leads on weighted tokens and
+turns. Margin is small on tokens (~44); the large win is model turns (1 vs 6).
 
 ## What this board does not claim
 

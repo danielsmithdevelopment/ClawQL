@@ -10,9 +10,9 @@ import { FAKE } from "./fixture-ids.mjs";
 
 test("parallel plan has six calls", () => {
   const plan = buildFanoutJoinProgramPlan();
-  assert.equal(plan.mode, "parallel");
+  assert.equal(plan.return, true);
   assert.equal(plan.calls.length, 6);
-  assert.ok(plan.calls.every((c) => c.operationId && c.where && c.id));
+  assert.ok(plan.calls.every((c) => c.operationId && c.where));
 });
 
 test("join routesForWorkers filters to known workers", () => {

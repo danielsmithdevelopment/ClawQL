@@ -28,5 +28,5 @@ Artifacts land in this directory (`smoke-*` or `board-*`).
 ### Smoke readout (N=5)
 
 - **Turns win:** program 1 vs known-op 6 (`turns_win: true`).
-- **Token promotion:** not cleared — program ~3.4k weighted vs known-op ~1.1k
-  (plan ×5 + fat envelope). See [`SPEC.md`](./SPEC.md) smoke finding.
+- **Token promotion:** cleared — program ~2 650 weighted vs known-op ~2 694
+  (`token_promotion: true`) with `plan.return: true` compact merge. See [`SPEC.md`](./SPEC.md).

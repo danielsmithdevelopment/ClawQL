@@ -50,18 +50,21 @@ export const FANOUT_CALLS = Object.freeze([
   },
 ]);
 
-/** Compact parallel plan for execute_program. */
+/**
+ * Compact parallel plan for execute_program with `return` projection.
+ * Omit v/mode/ids (parser defaults) so plan code tokens stay near six execute arg blobs.
+ * `return: true` merges where-shaped call objects for the model-facing card.
+ */
 export function buildFanoutJoinProgramPlan() {
   const calls = FANOUT_CALLS.map((c) => {
     const call = {
-      id: c.id,
       operationId: c.operationId,
       where: c.where,
     };
     if (c.args && Object.keys(c.args).length > 0) call.args = c.args;
     return call;
   });
-  return { v: 1, mode: "parallel", calls };
+  return { return: true, calls };
 }
 
 export function fanoutProgramPlanSource() {

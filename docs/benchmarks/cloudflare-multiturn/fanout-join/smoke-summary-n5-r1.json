@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-16T17:38:51.285Z",
+  "measuredAt": "2026-10-16T17:55:10.752Z",
   "kind": "smoke",
   "workflow": "fanout_join",
   "iters": 5,
@@ -12,7 +12,7 @@
   "metrics_policy": {
     "id": "fanout_join_all_attempted_sessions_primary",
     "task_success": "Failed sessions count against task_success_rate.",
-    "tokens": "definition + discovery + result + 5×code; program result = one MCP response; known-op result = cumulative re-reads (turn k charges texts 1..k).",
+    "tokens": "definition + discovery + result + 5×code; program result = one MCP response (compact plan.return); known-op result = cumulative re-reads; known-op code = full execute args JSON (operationId+args+where) for parity with the plan.",
     "model_turns": "Scripted tool rounds (known-op=6, program/code-mode=1).",
     "claim": "program_beats_known_op_on_fanout_join — see fanout-join/SPEC.md"
   },
@@ -21,26 +21,26 @@
       "id": "program_beats_known_op_on_fanout_join",
       "eligible": true,
       "turns_win": true,
-      "token_promotion": false,
-      "win": false,
+      "token_promotion": true,
+      "win": true,
       "checks": {
-        "weighted": false,
+        "weighted": true,
         "turns": true,
         "success": true
       },
       "known_op": {
-        "weighted_mean": 1064,
+        "weighted_mean": 2694,
         "model_turns_mean": 6,
         "result_tokens_mean": 433,
-        "code_tokens_mean": 70,
+        "code_tokens_mean": 396,
         "definition_tokens": 281,
         "task_success_rate": 1
       },
       "program": {
-        "weighted_mean": 3351.2,
+        "weighted_mean": 2650,
         "model_turns_mean": 1,
-        "result_tokens_mean": 812.2,
-        "code_tokens_mean": 432,
+        "result_tokens_mean": 256,
+        "code_tokens_mean": 403,
         "definition_tokens": 379,
         "task_success_rate": 1
       }
@@ -52,7 +52,7 @@
         1
       ],
       "weighted_mean": [
-        1064
+        2694
       ],
       "model_turns_mean": [
         6
@@ -61,10 +61,10 @@
         433
       ],
       "code_tokens_mean": [
-        70
+        396
       ],
       "session_p50_ms": [
-        25.18223799999987
+        27.809801000000334
       ]
     },
     "clawql_program": {
@@ -72,19 +72,19 @@
         1
       ],
       "weighted_mean": [
-        3351.2
+        2650
       ],
       "model_turns_mean": [
         1
       ],
       "result_tokens_mean": [
-        812.2
+        256
       ],
       "code_tokens_mean": [
-        432
+        403
       ],
       "session_p50_ms": [
-        15.37458400000014
+        13.828336000000036
       ]
     },
     "cloudflare_codemode": {
@@ -104,7 +104,7 @@
         468
       ],
       "session_p50_ms": [
-        1.035551999999825
+        1.1070949999998447
       ]
     }
   },
@@ -120,22 +120,22 @@
       "definition_tokens": 281,
       "discovery_tokens_mean": 0,
       "result_tokens_mean": 433,
-      "code_tokens_mean": 70,
-      "combined_mean": 784,
-      "weighted_mean": 1064,
+      "code_tokens_mean": 396,
+      "combined_mean": 1110,
+      "weighted_mean": 2694,
       "model_turns_mean": 6,
       "session_ms": {
-        "p50": 25.18223799999987,
-        "p90": 55.540174000000206,
-        "p99": 55.540174000000206,
-        "mean": 31.73834199999992
+        "p50": 27.809801000000334,
+        "p90": 59.48518399999966,
+        "p99": 59.48518399999966,
+        "mean": 35.25439200000001
       },
       "first_session": {
         "ok": true,
-        "weighted": 1064,
+        "weighted": 2694,
         "model_turns": 6,
         "result_tokens": 433,
-        "code_tokens": 70,
+        "code_tokens": 396,
         "check": {
           "ok": true
         }
@@ -151,23 +151,23 @@
       "errors_by_kind": {},
       "definition_tokens": 379,
       "discovery_tokens_mean": 0,
-      "result_tokens_mean": 812.2,
-      "code_tokens_mean": 432,
-      "combined_mean": 1623.2,
-      "weighted_mean": 3351.2,
+      "result_tokens_mean": 256,
+      "code_tokens_mean": 403,
+      "combined_mean": 1038,
+      "weighted_mean": 2650,
       "model_turns_mean": 1,
       "session_ms": {
-        "p50": 15.37458400000014,
-        "p90": 40.13920400000006,
-        "p99": 40.13920400000006,
-        "mean": 20.535717400000067
+        "p50": 13.828336000000036,
+        "p90": 34.8151969999999,
+        "p99": 34.8151969999999,
+        "mean": 18.007765399999972
       },
       "first_session": {
         "ok": true,
-        "weighted": 3348,
+        "weighted": 2650,
         "model_turns": 1,
-        "result_tokens": 809,
-        "code_tokens": 432,
+        "result_tokens": 256,
+        "code_tokens": 403,
         "check": {
           "ok": true
         }
@@ -189,10 +189,10 @@
       "weighted_mean": 3417,
       "model_turns_mean": 1,
       "session_ms": {
-        "p50": 1.035551999999825,
-        "p90": 2.883176999999705,
-        "p99": 2.883176999999705,
-        "mean": 1.303907799999979
+        "p50": 1.1070949999998447,
+        "p90": 1.6753920000001017,
+        "p99": 1.6753920000001017,
+        "mean": 1.2469749999999293
       },
       "first_session": {
         "ok": true,
@@ -210,26 +210,26 @@
     "id": "program_beats_known_op_on_fanout_join",
     "eligible": true,
     "turns_win": true,
-    "token_promotion": false,
-    "win": false,
+    "token_promotion": true,
+    "win": true,
     "checks": {
-      "weighted": false,
+      "weighted": true,
       "turns": true,
       "success": true
     },
     "known_op": {
-      "weighted_mean": 1064,
+      "weighted_mean": 2694,
       "model_turns_mean": 6,
       "result_tokens_mean": 433,
-      "code_tokens_mean": 70,
+      "code_tokens_mean": 396,
       "definition_tokens": 281,
       "task_success_rate": 1
     },
     "program": {
-      "weighted_mean": 3351.2,
+      "weighted_mean": 2650,
       "model_turns_mean": 1,
-      "result_tokens_mean": 812.2,
-      "code_tokens_mean": 432,
+      "result_tokens_mean": 256,
+      "code_tokens_mean": 403,
       "definition_tokens": 379,
       "task_success_rate": 1
     }

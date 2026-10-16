@@ -70,10 +70,15 @@ function eqRoutes(a, b) {
  * @param {ReturnType<typeof buildFanoutExpectations>} exp
  */
 export function checkInventoryCard(card, exp) {
-  const c =
-    card && card.ssl != null && card.workers
-      ? card
+  let c =
+    card && card.ssl != null && (card.workers || card.routesForWorkers)
+      ? { ...card }
       : assembleInventoryCard(card || {});
+  // Compact program.return may ship workers+routes; derive the join for the check.
+  if (!c.routesForWorkers && (c.workers || c.routes)) {
+    const joined = joinRoutesForWorkers({ workers: c.workers, routes: c.routes });
+    c = { ...c, workers: joined.workers, routesForWorkers: joined.routesForWorkers };
+  }
   const checks = [
     eq(c.ssl, exp.ssl, "ssl"),
     eq(Number(c.aRecordCount), exp.aRecordCount, "aRecordCount"),
