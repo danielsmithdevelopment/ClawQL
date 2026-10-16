@@ -7,14 +7,14 @@ A backup you have never restored is a hope. Run this **at least quarterly** and 
 
 ## Scope
 
-| Artifact | Typical location | Owner |
-|----------|------------------|--------|
-| Postgres (memory / org / credits) | Managed DB or Helm PVC | Platform |
-| Dragonfly / Redis | Helm | Platform |
-| Vault / ESO secrets | Vault PVC + unseal keys | Security |
-| WORM / audit trail | clawql-audit backends / S3 | Security |
-| Support impersonation JSONL | `apps/dashboard/.data/support-impersonation-audit.jsonl` | Cloud console |
-| Object storage (evidence, exports) | R2 / S3 | Platform |
+| Artifact                           | Typical location                                         | Owner         |
+| ---------------------------------- | -------------------------------------------------------- | ------------- |
+| Postgres (memory / org / credits)  | Managed DB or Helm PVC                                   | Platform      |
+| Dragonfly / Redis                  | Helm                                                     | Platform      |
+| Vault / ESO secrets                | Vault PVC + unseal keys                                  | Security      |
+| WORM / audit trail                 | clawql-audit backends / S3                               | Security      |
+| Support impersonation JSONL        | `apps/dashboard/.data/support-impersonation-audit.jsonl` | Cloud console |
+| Object storage (evidence, exports) | R2 / S3                                                  | Platform      |
 
 ## Drill steps (isolated environment)
 
@@ -31,16 +31,16 @@ A backup you have never restored is a hope. Run this **at least quarterly** and 
 
 ## Record (copy per drill)
 
-| Field | Value |
-|-------|--------|
-| Date | |
-| Operator | |
-| Backup ID / snapshot | |
-| PITR target time | |
-| Measured RTO | |
-| Measured RPO | |
-| Failures / notes | |
-| Ticket / PR | |
+| Field                | Value |
+| -------------------- | ----- |
+| Date                 |       |
+| Operator             |       |
+| Backup ID / snapshot |       |
+| PITR target time     |       |
+| Measured RTO         |       |
+| Measured RPO         |       |
+| Failures / notes     |       |
+| Ticket / PR          |       |
 
 ## Pass criteria
 

@@ -6,13 +6,13 @@ ClawQL is **not** a human password IdP for the managed console. Login throttling
 
 ## Matrix
 
-| Surface | Who owns rate limit / lockout | ClawQL control |
-|---------|------------------------------|----------------|
-| Cloud console / clawql.com human login (Supabase Auth) | **Supabase project** (Auth rate limits, email OTP, CAPTCHA) | Configure in Supabase dashboard; document in runbook |
-| Enterprise SSO (Okta / Entra / Keycloak) | **Customer IdP** policies | Org SSO domain + SCIM offboard → key revoke |
-| MCP OAuth authorize / token | **ClawQL** | `CLAWQL_MCP_OAUTH_RATE_LIMIT_PER_MIN` (default 120) in `packages/clawql-auth/src/inbound/oauth-rate-limit.ts` |
-| Stripe / webhook ingress | **ClawQL** | Per-route limiters on MCP HTTP |
-| PhoneApprove mobile sign-in | Same as console IdP | Mobile does not implement a parallel password store |
+| Surface                                                | Who owns rate limit / lockout                               | ClawQL control                                                                                                |
+| ------------------------------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Cloud console / clawql.com human login (Supabase Auth) | **Supabase project** (Auth rate limits, email OTP, CAPTCHA) | Configure in Supabase dashboard; document in runbook                                                          |
+| Enterprise SSO (Okta / Entra / Keycloak)               | **Customer IdP** policies                                   | Org SSO domain + SCIM offboard → key revoke                                                                   |
+| MCP OAuth authorize / token                            | **ClawQL**                                                  | `CLAWQL_MCP_OAUTH_RATE_LIMIT_PER_MIN` (default 120) in `packages/clawql-auth/src/inbound/oauth-rate-limit.ts` |
+| Stripe / webhook ingress                               | **ClawQL**                                                  | Per-route limiters on MCP HTTP                                                                                |
+| PhoneApprove mobile sign-in                            | Same as console IdP                                         | Mobile does not implement a parallel password store                                                           |
 
 ## Operator checklist (before production)
 
