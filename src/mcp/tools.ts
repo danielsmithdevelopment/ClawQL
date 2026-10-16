@@ -59,6 +59,7 @@ import {
   PendingExecutionLive,
   programsEnabled,
   durableProgramsEnabled,
+  formatExecuteProgramForMcp,
   runProgramEffect,
   executeDurableProgramEffect,
   accumulateSessionIfcReadEffect,
@@ -104,8 +105,7 @@ export async function wireOptionalToolDeps(): Promise<void> {
   const needMemory = flags.enableMemory;
 
   let handleKnowledgeSearchOnyxToolInput:
-    | ((params: unknown) => Promise<{ content: { type: "text"; text: string }[] }>)
-    | null = null;
+    ((params: unknown) => Promise<{ content: { type: "text"; text: string }[] }>) | null = null;
 
   if (needDocuments) {
     const docs = await import("clawql-documents/plugin");
@@ -312,14 +312,12 @@ function docsSearchToolEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
 }
 
 const EXECUTE_PROGRAM_SOURCE_DESCRIPTION =
-  "v0 JSON plan text (not free-form JS): " +
-  '{ "v": 1, "mode": "parallel"|"sequential", "calls": [ ' +
-  '{ "id": "A", "tool": "execute", "operationId": "...", "args": {} } | ' +
-  '{ "tool": "search", "query": "..." } ], ' +
-  '"proposals": [ { "id": "W1", "operationId": "...", "args": { "title": { "$ref": "A.result.title" } } } ] }. ' +
+  "v0 JSON plan (not free-form JS). Prefer compact fan-out with shared constants: " +
+  '{"return":true,"c":{"z":"<zone_id>","a":"<account_id>"},"calls":[{"operationId":"…","args":{"zone_id":"$z"},"where":"{ssl: result.value}"}]} ' +
+  '(omit v/mode/tool/id when possible; tool defaults to execute; "c" aliases "constants"). ' +
+  "return:true merges each call's object (or wraps a scalar/array under the call id). " +
+  "Full shape: {v:1, mode:parallel|sequential, c?:{…}, calls:[…], proposals?:[…], return?:true|object}. " +
   "Calls are reads; proposals are writes the program returns but never runs. " +
-  "$ref targets a read call (<id>.result.<path>) or an earlier proposal (<id>.args.<path> / <id>.result.<path>, " +
-  "the latter filled when submitted) and must resolve to one string, number, boolean, or null. " +
   "Honesty: v0 plan runner; OpenCode vendor is next.";
 
 /** Zod shape for optional Core `execute_program` (CLAWQL_ENABLE_PROGRAMS). */
@@ -451,7 +449,9 @@ export async function handleExecuteProgramToolInput(
         )
       : runProgramEffect({ source: source ?? "", timeoutMs, sessionId }, makeMcpProgramHost())
   );
-  return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
+  return {
+    content: [{ type: "text" as const, text: formatExecuteProgramForMcp(result) }],
+  };
 }
 
 /** Zod shape for optional Core `submit_program_proposals` (CLAWQL_ENABLE_PROGRAMS). */
@@ -659,7 +659,7 @@ export function registerTools(server: McpServer) {
     } else {
       server.tool(
         "execute_program",
-        "Run a read-only JSON plan of parallel/sequential search+execute calls in one round trip (ADR 0015 v0 plan runner; OpenCode vendor is next). Writes never run inside a program: list them in plan.proposals and they come back resolved (with $ref values filled and the argsHash a mandate would bind) for submit_program_proposals or plain execute. Enable with CLAWQL_ENABLE_PROGRAMS=1.",
+        'Run a read-only JSON plan of parallel/sequential search+execute calls in one round trip (ADR 0015 v0 plan runner; OpenCode vendor is next). Prefer compact {"return":true,"calls":[…]} so the model sees one merged card. Writes never run inside a program: list them in plan.proposals for submit_program_proposals or plain execute. Enable with CLAWQL_ENABLE_PROGRAMS=1.',
         executeProgramToolZodShape,
         wrapRegisteredMcpToolHandler("execute_program", handleExecuteProgramToolInput)
       );

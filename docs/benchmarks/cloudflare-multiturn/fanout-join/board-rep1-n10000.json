@@ -1,0 +1,146 @@
+{
+  "measuredAt": "2026-10-16T18:23:21.703Z",
+  "kind": "publish_board",
+  "workflow": "fanout_join",
+  "rep": 1,
+  "iters": 10000,
+  "fixture": {
+    "source": "synthetic",
+    "label": "real schemas, synthetic content",
+    "path": "/workspace/scripts/benchmarks/cloudflare-multiturn/fixtures/recording.synthetic.json"
+  },
+  "tokenizer": "js-tiktoken cl100k_base",
+  "metrics_policy": {
+    "id": "fanout_join_all_attempted_sessions_primary",
+    "task_success": "Failed sessions count against task_success_rate.",
+    "tokens": "definition + discovery + result + 5×code; program result = one MCP response (compact plan.return); known-op result = cumulative re-reads; known-op code = full execute args JSON (operationId+args+where) for parity with the plan.",
+    "model_turns": "Scripted tool rounds (known-op=6, program/code-mode=1).",
+    "claim": "program_beats_known_op_on_fanout_join — see fanout-join/SPEC.md"
+  },
+  "claim": {
+    "id": "program_beats_known_op_on_fanout_join",
+    "eligible": true,
+    "turns_win": true,
+    "token_promotion": true,
+    "win": true,
+    "checks": {
+      "weighted": true,
+      "turns": true,
+      "success": true
+    },
+    "known_op": {
+      "weighted_mean": 2694,
+      "model_turns_mean": 6,
+      "result_tokens_mean": 433,
+      "code_tokens_mean": 396,
+      "definition_tokens": 281,
+      "task_success_rate": 1
+    },
+    "program": {
+      "weighted_mean": 2650.5904,
+      "model_turns_mean": 1,
+      "result_tokens_mean": 256.5904,
+      "code_tokens_mean": 403,
+      "definition_tokens": 379,
+      "task_success_rate": 1
+    }
+  },
+  "board": {
+    "clawql_known_op": {
+      "id": "clawql_known_op",
+      "iters": 10000,
+      "sessions_ok": 10000,
+      "sessions_failed": 0,
+      "task_success_rate": 1,
+      "error_rate": 0,
+      "errors_by_kind": {},
+      "definition_tokens": 281,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 433,
+      "code_tokens_mean": 396,
+      "combined_mean": 1110,
+      "weighted_mean": 2694,
+      "model_turns_mean": 6,
+      "session_ms": {
+        "p50": 11.831233000004431,
+        "p90": 14.741611999997986,
+        "p99": 22.8401530000001,
+        "mean": 12.56290212899993
+      },
+      "first_session": {
+        "ok": true,
+        "weighted": 2694,
+        "model_turns": 6,
+        "result_tokens": 433,
+        "code_tokens": 396,
+        "check": {
+          "ok": true
+        }
+      }
+    },
+    "clawql_program": {
+      "id": "clawql_program",
+      "iters": 10000,
+      "sessions_ok": 10000,
+      "sessions_failed": 0,
+      "task_success_rate": 1,
+      "error_rate": 0,
+      "errors_by_kind": {},
+      "definition_tokens": 379,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 256.5904,
+      "code_tokens_mean": 403,
+      "combined_mean": 1038.5904,
+      "weighted_mean": 2650.5904,
+      "model_turns_mean": 1,
+      "session_ms": {
+        "p50": 4.818580000021029,
+        "p90": 6.220759000018006,
+        "p99": 9.46271799999522,
+        "mean": 5.1633111516998556
+      },
+      "first_session": {
+        "ok": true,
+        "weighted": 2650,
+        "model_turns": 1,
+        "result_tokens": 256,
+        "code_tokens": 403,
+        "check": {
+          "ok": true
+        }
+      }
+    },
+    "cloudflare_codemode": {
+      "id": "cloudflare_codemode",
+      "iters": 10000,
+      "sessions_ok": 10000,
+      "sessions_failed": 0,
+      "task_success_rate": 1,
+      "error_rate": 0,
+      "errors_by_kind": {},
+      "definition_tokens": 1000,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 77,
+      "code_tokens_mean": 468,
+      "combined_mean": 1545,
+      "weighted_mean": 3417,
+      "model_turns_mean": 1,
+      "session_ms": {
+        "p50": 0.6496580000093672,
+        "p90": 0.8212500000081491,
+        "p99": 1.77454400001443,
+        "mean": 0.7214632281999511
+      },
+      "first_session": {
+        "ok": true,
+        "weighted": 3417,
+        "model_turns": 1,
+        "result_tokens": 77,
+        "code_tokens": 468,
+        "check": {
+          "ok": true
+        }
+      }
+    }
+  }
+}

@@ -83,9 +83,24 @@ try {
       const fields = Array.isArray(args.fields) ? args.fields : undefined;
       const js = typeof args.code === "string" ? args.code : "";
       const source = typeof args.source === "string" ? args.source : "";
-      const codeText = [where, fields ? JSON.stringify(fields) : "", js, source]
-        .filter(Boolean)
-        .join("\n");
+      const callArgs =
+        args.args && typeof args.args === "object" && !Array.isArray(args.args) ? args.args : {};
+      // Fan-out gate: charge full execute args JSON (parity with scripted board / plan).
+      const parity = (process.env.CF_MT_REAL_CODE_PARITY || "").trim().toLowerCase();
+      let codeText;
+      if (parity === "execute_args" && cmd === "execute") {
+        codeText = JSON.stringify({
+          operationId: args.operationId,
+          args: callArgs,
+          where,
+        });
+      } else if (parity === "execute_args" && cmd === "execute_program") {
+        codeText = source;
+      } else {
+        codeText = [where, fields ? JSON.stringify(fields) : "", js, source]
+          .filter(Boolean)
+          .join("\n");
+      }
       const record = {
         t: new Date().toISOString(),
         tool: cmd,
@@ -96,6 +111,8 @@ try {
         code_tokens: countTokens(codeText),
         result_tokens: countTokens(text),
         result_chars: text.length,
+        // Debug aid for fan-out gate (not charged); truncate large plans.
+        ...(source ? { source_chars: source.length } : {}),
       };
       appendFileSync(callLog, `${JSON.stringify(record)}\n`);
     }

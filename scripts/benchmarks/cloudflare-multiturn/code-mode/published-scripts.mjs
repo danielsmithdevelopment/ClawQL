@@ -157,6 +157,70 @@ return { enabledRuleCount: j.result.filter(r => r.paused === false).length };`,
   };
 }
 
+/**
+ * Fan-out / join board — one script, six tool calls, joined inventory card.
+ * @see docs/benchmarks/cloudflare-multiturn/fanout-join/SPEC.md
+ */
+export function cloudflareCodemodeFanoutJoinScript() {
+  const zone = JSON.stringify(FAKE.auditZoneId);
+  const acct = JSON.stringify(FAKE.accountId);
+  return `const [sslR, dnsR, workersR, routesR, r2R, fwR] = await Promise.all([
+  cf.zones.settings.get({ zone_id: ${zone}, setting_id: "ssl" }),
+  cf.dns.records.list({ zone_id: ${zone}, per_page: 500 }),
+  cf.workers.scripts.list({ account_id: ${acct} }),
+  cf.workers.routes.list({ zone_id: ${zone} }),
+  cf.r2.buckets.list({ account_id: ${acct} }),
+  cf.firewall.rules.list({ zone_id: ${zone} }),
+]);
+const workers = workersR.result.map(s => s.id).sort();
+const wset = new Set(workers);
+const routesForWorkers = routesR.result
+  .filter(r => wset.has(r.script))
+  .map(r => ({ script: r.script, pattern: r.pattern }))
+  .sort((a, b) => a.script.localeCompare(b.script) || a.pattern.localeCompare(b.pattern));
+return {
+  ssl: sslR.result.value,
+  aRecordCount: dnsR.result.filter(r => r.type === "A").length,
+  workers,
+  routesForWorkers,
+  bucketNames: r2R.result.buckets.map(b => b.name).sort(),
+  enabledFirewallRules: fwR.result.filter(r => r.paused === false).length,
+};`;
+}
+
+/**
+ * Executor v2 fan-out / join — one execute, OpenAPI tools → mock.
+ * @param {{ appSlug?: string }} [opts]
+ */
+export function executorV2FanoutJoinScript(opts = {}) {
+  const slug = opts.appSlug || process.env.EXECUTOR_CF_APP_SLUG || DEFAULT_APP_SLUG;
+  const A = `tools[${JSON.stringify(slug)}]`;
+  const zone = JSON.stringify(FAKE.auditZoneId);
+  const acct = JSON.stringify(FAKE.accountId);
+  return `const [sslJ, dnsJ, workersJ, routesJ, r2J, fwJ] = await Promise.all([
+  ${A}.zoneSettings.zoneSettingsGetSingleSetting({ path: { zone_id: ${zone}, setting_id: "ssl" } }),
+  ${A}.dnsRecordsForAZone.dnsRecordsForAZoneListDnsRecords({ path: { zone_id: ${zone} } }),
+  ${A}.workerScript.workerScriptListWorkers({ path: { account_id: ${acct} } }),
+  ${A}.workerRoutes.workerRoutesListRoutes({ path: { zone_id: ${zone} } }),
+  ${A}.r2Bucket.r2ListBuckets({ path: { account_id: ${acct} } }),
+  ${A}.firewallRules.firewallRulesListFirewallRules({ path: { zone_id: ${zone} } }),
+]);
+const workers = workersJ.result.map(s => s.id).sort();
+const wset = new Set(workers);
+const routesForWorkers = routesJ.result
+  .filter(r => wset.has(r.script))
+  .map(r => ({ script: r.script, pattern: r.pattern }))
+  .sort((a, b) => a.script.localeCompare(b.script) || a.pattern.localeCompare(b.pattern));
+return {
+  ssl: sslJ.result.value,
+  aRecordCount: dnsJ.result.filter(r => r.type === "A").length,
+  workers,
+  routesForWorkers,
+  bucketNames: r2J.result.buckets.map(b => b.name).sort(),
+  enabledFirewallRules: fwJ.result.filter(r => r.paused === false).length,
+};`;
+}
+
 /** @deprecated Use executorV2ToolScripts — kept so smoke token estimates still import. */
 export function executorV2Scripts() {
   return executorV2ToolScripts();

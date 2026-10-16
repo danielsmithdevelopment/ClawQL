@@ -10,5 +10,6 @@ export * from "./program-plan.js";
 export * from "./program-proposal-store.js";
 export * from "./program-proposals.js";
 export * from "./program-refs.js";
+export * from "./program-return.js";
 export * from "./program-runner.js";
 export * from "./program-submit.js";

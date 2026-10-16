@@ -38,9 +38,9 @@ export const EXECUTE_WHERE_MAX_LENGTH = 512;
  */
 export const EXECUTE_WHERE_DESCRIPTION =
   "Optional JMESPath filter/extract before fields (max 512 chars; fail-closed). " +
-  "Examples: result[?type==`A`] (filter by field); " +
-  "length(result[?state=='ACTIVE']) (count matches); " +
-  "result[0].id (extract one value).";
+  "Examples: {ssl: result.value} (object project — prefer with execute_program return:true); " +
+  "length(result[?type==`A`]) (numeric count — never an id array for count fields); " +
+  "result[?state=='ACTIVE'] (filter rows).";
 
 export const EXECUTE_FULL_DESCRIPTION =
   "Opt out of the soft observation budget. When false/omitted, large responses without " +

@@ -123,4 +123,7 @@ writeFileSync(join(STATE, "meta.json"), JSON.stringify(meta, null, 2) + "\n");
 writeFileSync(join(STATE, "mcp-url"), mcpUrl + "\n");
 writeFileSync(join(STATE, "pids"), `${mock.pid}\n${clawql.pid}\n`);
 closeSync(logFd);
-console.log(JSON.stringify(meta, null, 2));
+// One-line JSON so prepare scripts can parse stdout reliably.
+console.log(JSON.stringify(meta));
+// Detached mock/clawql keep stdio handles alive; exit so prepare scripts do not hang.
+process.exit(0);

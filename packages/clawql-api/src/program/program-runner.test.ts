@@ -139,6 +139,88 @@ describe("parseProgramPlanEffect", () => {
       where: "{zoneId: result[0].id}",
     });
   });
+
+  it("resolves plan.c constants into execute args via $name", async () => {
+    const plan = await Effect.runPromise(
+      parseProgramPlanEffect(
+        JSON.stringify({
+          return: true,
+          c: { z: "zone-aaa", a: "acct-bbb" },
+          calls: [
+            {
+              operationId: "zone-settings-get-single-setting",
+              args: { zone_id: "$z", setting_id: "ssl" },
+              where: "{ssl: result.value}",
+            },
+            {
+              operationId: "r2-list-buckets",
+              args: { account_id: "$a" },
+              where: "{bucketNames: sort(result.buckets[].name)}",
+            },
+          ],
+        })
+      )
+    );
+    if ("ok" in plan && plan.ok === false) throw new Error(plan.error);
+    expect(plan.constants).toEqual({ z: "zone-aaa", a: "acct-bbb" });
+    expect(plan.calls[0]).toMatchObject({
+      tool: "execute",
+      args: { zone_id: "zone-aaa", setting_id: "ssl" },
+    });
+    expect(plan.calls[1]).toMatchObject({
+      tool: "execute",
+      args: { account_id: "acct-bbb" },
+    });
+  });
+
+  it("rejects unknown $constant placeholders in call args", async () => {
+    const err = await Effect.runPromise(
+      parseProgramPlanEffect(
+        JSON.stringify({
+          c: { z: "zone-aaa" },
+          calls: [{ operationId: "x.get", args: { zone_id: "$missing" } }],
+        })
+      )
+    );
+    expect(err).toMatchObject({ ok: false });
+    if (!("ok" in err) || err.ok !== false) throw new Error("expected parse error");
+    expect(err.error).toMatch(/unknown constant/i);
+  });
+
+  it("passes constant-substituted args to the execute host", async () => {
+    const executeArgs: Array<Record<string, unknown>> = [];
+    const { host } = mockHost();
+    const custom: ProgramHost = {
+      resolveRisk: host.resolveRisk,
+      search: host.search,
+      execute: (input) =>
+        Effect.sync(() => {
+          executeArgs.push({ ...(input.args ?? {}) });
+          return { content: [{ type: "text" as const, text: JSON.stringify({ ok: true }) }] };
+        }),
+    };
+    const out = await Effect.runPromise(
+      runProgramEffect(
+        {
+          source: JSON.stringify({
+            return: true,
+            c: { z: "zone-shared" },
+            calls: [
+              {
+                operationId: "zone.get",
+                args: { zone_id: "$z" },
+                where: "{ok: result.ok}",
+              },
+            ],
+          }),
+        },
+        custom,
+        {}
+      )
+    );
+    expect(out.ok).toBe(true);
+    expect(executeArgs).toEqual([{ zone_id: "zone-shared" }]);
+  });
 });
 
 describe("runProgramEffect", () => {
@@ -201,6 +283,64 @@ describe("runProgramEffect", () => {
     expect(out.ok).toBe(true);
     expect(searchCalls).toHaveLength(1);
     expect(executeCalls).toHaveLength(1);
+  });
+
+  it("projects plan.return into a compact result without per-call values", async () => {
+    const { host } = mockHost();
+    const source = JSON.stringify({
+      v: 1,
+      mode: "parallel",
+      calls: [
+        { tool: "execute", operationId: "repo.list", args: { org: "a" }, id: "a" },
+        { tool: "execute", operationId: "repo.list", args: { org: "b" }, id: "b" },
+      ],
+      return: {
+        first: { $ref: "a.result" },
+        secondOk: { $ref: "b.result.ok" },
+      },
+    });
+    const out = await Effect.runPromise(runProgramEffect({ source }, host, {}));
+    expect(out.ok).toBe(true);
+    expect(out.diagnostics.compactReturn).toBe(true);
+    const result = out.result as { first?: unknown; secondOk?: unknown; results?: unknown };
+    expect(result.results).toBeUndefined();
+    expect(result.first).toBeTruthy();
+    expect(result.secondOk).toBe(true);
+    // Typed result still keeps call records; MCP text is slimmed via formatExecuteProgramForMcp.
+    expect(out.calls).toHaveLength(2);
+  });
+
+  it("merges where-shaped call objects when return is true", async () => {
+    const { host } = mockHost();
+    // mockHost returns { ok, operationId, args } per call — merge would conflict on ok.
+    const executeCalls: Array<{ operationId: string }> = [];
+    const custom: ProgramHost = {
+      resolveRisk: host.resolveRisk,
+      search: host.search,
+      execute: (input, ctx) =>
+        Effect.sync(() => {
+          executeCalls.push({ operationId: input.operationId });
+          const text =
+            input.operationId === "a.get"
+              ? JSON.stringify({ ssl: "full" })
+              : JSON.stringify({ workers: ["w1"] });
+          return { content: [{ type: "text" as const, text }] };
+        }),
+    };
+    const source = JSON.stringify({
+      v: 1,
+      mode: "parallel",
+      calls: [
+        { tool: "execute", operationId: "a.get", args: {}, id: "ssl" },
+        { tool: "execute", operationId: "b.get", args: {}, id: "workers" },
+      ],
+      return: true,
+    });
+    const out = await Effect.runPromise(runProgramEffect({ source }, custom, {}));
+    expect(out.ok).toBe(true);
+    expect(out.diagnostics.compactReturn).toBe(true);
+    expect(out.result).toEqual({ ssl: "full", workers: ["w1"] });
+    expect(executeCalls).toHaveLength(2);
   });
 
   it("enforces max tool calls cap", async () => {

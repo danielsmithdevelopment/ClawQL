@@ -33,6 +33,7 @@ import {
   type ProgramProposalRecord,
 } from "./program-proposal-store.js";
 import { resolveProgramProposalsEffect, type ResolvedProposal } from "./program-proposals.js";
+import { resolveProgramReturnEffect } from "./program-return.js";
 
 export type ProgramHostExecuteResult = {
   readonly content: readonly { readonly type: "text"; readonly text: string }[];
@@ -142,6 +143,8 @@ export type ExecuteProgramDiagnostics = {
   readonly proposalCount?: number;
   /** How returned proposals get run (they never run inside the program). */
   readonly nextStep?: string;
+  /** True when plan.return projected a compact model-facing result. */
+  readonly compactReturn?: boolean;
 };
 
 export type ExecuteProgramResult = {
@@ -704,10 +707,30 @@ export function runProgramPlanEffect<E = never>(
       ok: r.record.ok,
       value: r.value,
     }));
-    const { result: readResult, truncated } = truncateResult(
-      { mode: plan.mode, results },
-      maxOutputBytes
-    );
+
+    let compactReturn = false;
+    let readPayload: unknown = { mode: plan.mode, results };
+    if (plan.return !== undefined) {
+      const projected = yield* resolveProgramReturnEffect(
+        plan.return,
+        results.map((r) => ({ id: r.id, ok: r.ok, value: r.value }))
+      );
+      if (!projected.ok) {
+        return failResult(programId, calls, {
+          callCount: calls.length,
+          elapsedMs,
+          mode: plan.mode,
+          error: `plan.return: ${projected.error}`,
+          fixHint: projected.fixHint,
+          honesty,
+        });
+      }
+      compactReturn = true;
+      // Compact model-facing payload: the projected card only (call status stays in diagnostics).
+      readPayload = projected.value;
+    }
+
+    const { result: readResult, truncated } = truncateResult(readPayload, maxOutputBytes);
 
     const resolvedProposals = resolved?.proposals ?? [];
     if (
@@ -772,12 +795,15 @@ export function runProgramPlanEffect<E = never>(
       calls,
       diagnostics: {
         interpreter: "plan-runner-v0",
-        honesty,
+        honesty: compactReturn
+          ? "v0 plan runner; plan.return projected a compact result (per-call values omitted from MCP text)."
+          : honesty,
         programId,
         mode: plan.mode,
         callCount: calls.length,
         elapsedMs,
         truncated: truncated || undefined,
+        compactReturn: compactReturn || undefined,
         ...(proposals.length > 0
           ? { proposalCount: proposals.length, nextStep: PROPOSALS_NEXT_STEP }
           : {}),
@@ -846,6 +872,46 @@ export const ProgramRunnerLive = Layer.succeed(
     run: (input, host, env) => runProgramEffect(input, host, env),
   })
 );
+
+/**
+ * Model-facing JSON for MCP `execute_program`. When `plan.return` projected a compact
+ * result, omit fat call records / honesty prose from the tool text the model reads.
+ */
+export function formatExecuteProgramForMcpEffect(
+  result: ExecuteProgramResult
+): Effect.Effect<string> {
+  return Effect.sync(() => {
+    if (!result.diagnostics.compactReturn) {
+      return JSON.stringify(result);
+    }
+    return JSON.stringify({
+      ok: result.ok,
+      programId: result.programId,
+      result: result.result,
+      calls: result.calls.map((c) => ({
+        id: c.id,
+        ok: c.ok,
+        operationId: c.operationId,
+      })),
+      diagnostics: {
+        interpreter: result.diagnostics.interpreter,
+        compactReturn: true,
+        mode: result.diagnostics.mode,
+        callCount: result.diagnostics.callCount,
+        elapsedMs: result.diagnostics.elapsedMs,
+        truncated: result.diagnostics.truncated,
+        error: result.diagnostics.error,
+        fixHint: result.diagnostics.fixHint,
+        proposalCount: result.diagnostics.proposalCount,
+        nextStep: result.diagnostics.nextStep,
+      },
+    });
+  });
+}
+
+export function formatExecuteProgramForMcp(result: ExecuteProgramResult): string {
+  return Effect.runSync(formatExecuteProgramForMcpEffect(result));
+}
 
 /** Sync façade for thin MCP host boundary. */
 export function runProgram(
