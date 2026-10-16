@@ -243,6 +243,9 @@ export default function Page() {
         }
         cta={
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <Link href={site.urls.security}>
+              Security stack <ArrowNarrowRightIcon />
+            </Link>
             <Link href={`${site.urls.docs}/security`}>
               Security hub <ArrowNarrowRightIcon />
             </Link>

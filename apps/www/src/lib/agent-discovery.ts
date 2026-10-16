@@ -163,9 +163,7 @@ export function getOpenIdConfiguration(): Record<string, unknown> {
 export function getOAuthAuthorizationServerMetadata(): Record<string, unknown> {
   const oidc = getOpenIdConfiguration()
   const grantTypes = Array.isArray(oidc.grant_types_supported)
-    ? (oidc.grant_types_supported as string[]).filter(
-        (g) => g !== 'urn:ietf:params:oauth:grant-type:device_code',
-      )
+    ? (oidc.grant_types_supported as string[]).filter((g) => g !== 'urn:ietf:params:oauth:grant-type:device_code')
     : oidc.grant_types_supported
   // Omit Google device_authorization_endpoint until ClawQL MCP AS ships RFC 8628.
   return {
@@ -396,8 +394,8 @@ export function getAgentMarkdownMap(origin = getSiteOriginString()): Record<stri
     '/idp': `# Intelligent Document Processing\n\nClawQL IDP — full document lifecycle (ingest → VDR), flat Starter pricing vs ABBYY / Hyperscience / Intralinks, Helm deploy or request early access.\n\nSee ${origin}/idp/.`,
     '/idp/gtm': `# IDP-first GTM playbook\n\nStandalone ClawQL Intelligent Document Processing go-to-market — market reality, honest positioning, sales motion, and landing-page brief vs ABBYY, Hyperscience, and Intralinks.\n\nSee ${origin}/idp/gtm/.`,
     '/agents': `# Agentic Platform\n\nClawQL agents decide when to act, enumerate institutional knowledge exactly, scaffold their own browser interfaces via /mcp-ui, and prove everything on a WORM trail. Streams + ontology structured recall + clawql-tee.\n\nSee ${origin}/agents/.\n\nSpecs: ${docs}/streams/clawql-streams · ${docs}/mcp/mcp-ui · ${docs}/streams/clawql-tee`,
-    '/protocol-fabric': `# ClawQL Protocol Fabric\n\nAny protocol to any protocol via MCP — ClawQL Core inbound, mcp-api-adapter outbound. Proven end-to-end fabric loop.\n\nSee ${origin}/protocol-fabric/.\n\nDocs: ${docs}/mcp/protocol-fabric · ${docs}/mcp/mcp-api-adapter`,
-    '/streams': `# ClawQL Streams\n\nEvent-driven autonomous agents with WORM audit, Protocol Fabric (Core + mcp-api-adapter), and Durable Object / K8s scale — the self-sovereign alternative to managed agent runtimes.\n\nSee ${origin}/streams/.\n\nSpecs: ${docs}/streams/clawql-streams · ${docs}/streams/clawql-durable-objects`,
+    '/streams': `# ClawQL Streams\n\nEvent-driven autonomous agents with WORM audit and Protocol Fabric (Core + mcp-api-adapter) — Durable Object / K8s scale. Fabric section: ${origin}/streams/#fabric\n\nSee ${origin}/streams/.\n\nSpecs: ${docs}/streams/clawql-streams · ${docs}/streams/clawql-durable-objects · ${docs}/mcp/protocol-fabric`,
+    '/security': `# ClawQL Security\n\nDefense-in-depth stack: supply chain, model weights, identity, tool-call gate (Panguard/ATR), information-flow, containment, redaction, detect & respond, WORM audit, optional hardware TEE.\n\nSee ${origin}/security/.\n\nDocs: ${docs}/security`,
     '/enterprise/gtm': `# Enterprise GTM playbook\n\nSecondary enterprise motion — Auditable Production AI on the Zero-Trust Agentic Fabric.\n\nSee ${origin}/enterprise/gtm/.`,
   }
 }

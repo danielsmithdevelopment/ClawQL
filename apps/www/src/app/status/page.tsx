@@ -18,8 +18,8 @@ export default function StatusPage() {
         headline="ClawQL status"
         subheadline={
           <p>
-            Live probe of the edge gateway at gateway.clawql.app. Self-host operators: check your
-            own <code className="text-sm">/healthz</code> and cluster dashboards.
+            Live probe of the edge gateway at gateway.clawql.app. Self-host operators: check your own{' '}
+            <code className="text-sm">/healthz</code> and cluster dashboards.
           </p>
         }
       />
@@ -29,8 +29,7 @@ export default function StatusPage() {
         headline="Gateway components"
         subheadline={
           <p>
-            Product links: <a href={site.urls.demo}>interactive demo</a> ·{' '}
-            <a href={site.urls.signup}>request access</a> ·{' '}
+            Product links: <a href={site.urls.signup}>request access</a> · <a href={site.urls.security}>security</a> ·{' '}
             <a href={site.urls.docs}>docs</a>
           </p>
         }

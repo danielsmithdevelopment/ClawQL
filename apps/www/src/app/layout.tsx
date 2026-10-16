@@ -1,3 +1,4 @@
+import { ClawqlAnalyticsPageview } from '@/components/analytics/ClawqlAnalyticsPageview'
 import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
 import { ClawQLLogo } from '@/components/elements/clawql-logo'
 import { Main } from '@/components/elements/main'
@@ -14,9 +15,8 @@ import {
 import {
   NavbarLink,
   NavbarLogo,
-  NavbarWithLinksActionsAndCenteredLogo,
-} from '@/components/sections/navbar-with-links-actions-and-centered-logo'
-import { ClawqlAnalyticsPageview } from '@/components/analytics/ClawqlAnalyticsPageview'
+  NavbarWithLogoActionsAndLeftAlignedLinks,
+} from '@/components/sections/navbar-with-logo-actions-and-left-aligned-links'
 import { SiteStructuredData } from '@/components/SiteStructuredData'
 import { WebMcpRegister } from '@/components/WebMcpRegister'
 import { DEFAULT_OG_IMAGE_ALT, DEFAULT_OG_IMAGE_HEIGHT, DEFAULT_OG_IMAGE_PATH, DEFAULT_OG_IMAGE_WIDTH } from '@/lib/seo'
@@ -117,38 +117,29 @@ export default function RootLayout({
           <SiteStructuredData />
           <ClawqlAnalyticsPageview site="marketing" />
           <WebMcpRegister />
-          <NavbarWithLinksActionsAndCenteredLogo
+          <NavbarWithLogoActionsAndLeftAlignedLinks
             id="navbar"
+            logo={
+              <NavbarLogo href="/">
+                <ClawQLLogo />
+              </NavbarLogo>
+            }
             links={
               <>
-                <NavbarLink href={site.urls.protocolFabric}>Fabric</NavbarLink>
-                <NavbarLink href="/#autonomous" className="max-lg:hidden">
-                  Autonomous
-                </NavbarLink>
                 <NavbarLink href={site.urls.agents}>Agents</NavbarLink>
                 <NavbarLink href={site.urls.idp}>IDP</NavbarLink>
-                <NavbarLink href={site.urls.streams} className="max-lg:hidden">
-                  Streams
-                </NavbarLink>
+                <NavbarLink href={site.urls.streams}>Streams</NavbarLink>
                 <NavbarIndustriesMenu />
-                <NavbarLink href="/#security">Security</NavbarLink>
+                <NavbarLink href={site.urls.security}>Security</NavbarLink>
                 <NavbarLink href={site.urls.pricing}>Pricing</NavbarLink>
                 <NavbarLink href={site.urls.benchmarks} className="max-lg:hidden">
                   Benchmarks
-                </NavbarLink>
-                <NavbarLink href={site.urls.demo} className="max-lg:hidden">
-                  Demo
                 </NavbarLink>
                 <NavbarLink href={site.urls.docs}>Docs</NavbarLink>
                 <NavbarLink href={site.urls.signup} className="sm:hidden">
                   Sign up
                 </NavbarLink>
               </>
-            }
-            logo={
-              <NavbarLogo href="/">
-                <ClawQLLogo />
-              </NavbarLogo>
             }
             actions={
               <>
@@ -178,17 +169,15 @@ export default function RootLayout({
             links={
               <>
                 <FooterCategory title="Product">
-                  <FooterLink href={site.urls.protocolFabric}>Protocol Fabric</FooterLink>
-                  <FooterLink href="/#autonomous">Autonomous agents</FooterLink>
                   <FooterLink href="/#proof">OpenBench proof</FooterLink>
                   <FooterLink href="/#tools">Core tools</FooterLink>
                   <FooterLink href={site.urls.agents}>Agents</FooterLink>
                   <FooterLink href={site.urls.idp}>IDP</FooterLink>
                   <FooterLink href={site.urls.streams}>Streams</FooterLink>
-                  <FooterLink href="/#security">Security</FooterLink>
+                  <FooterLink href={site.urls.protocolFabric}>Protocol Fabric</FooterLink>
+                  <FooterLink href={site.urls.security}>Security</FooterLink>
                   <FooterLink href={site.urls.pricing}>Pricing</FooterLink>
                   <FooterLink href={site.urls.benchmarks}>Benchmarks</FooterLink>
-                  <FooterLink href={site.urls.demo}>Interactive demo</FooterLink>
                   <FooterLink href={site.urls.signup}>Sign up</FooterLink>
                   <FooterLink href={site.urls.status}>Status</FooterLink>
                   <FooterLink href={site.urls.docs}>Documentation</FooterLink>
