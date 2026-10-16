@@ -14,10 +14,10 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | `clawql_program` (ADR 0015 v0 plan runner) | Done |
 | Product: `where` examples in execute schema + fix-named `where_invalid` | Done (+37 where-desc tokens; full execute tool def **218**) |
 | Product: observation budget (no where/fields → truncated preview) | Done (`truncated:true` + note; opt-in `full:true`) |
-| **Publish board: 3×10k** | **Remeasuring** on slim listen (OOP+lazy) — prior board ~630 MB anon; process-tree fairness notes in [`process-tree-memory.md`](./process-tree-memory.md) |
+| **Publish board: 3×10k** | **Done** (slim listen, Node 256 on rep3) — summary [`board-final-summary.md`](./board-final-summary.md); process-tree notes in [`process-tree-memory.md`](./process-tree-memory.md) |
 | **Real-model 50 sessions / arm × 2 model families** | **Done** — dual-win `known_op_beats_code_mode_for_real_models` ([`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json)) |
 | **Measured defaults (not program-as-core)** | Locked — [`measured-defaults.md`](./measured-defaults.md): known-op/`where` is the filter winner; programs stay alongside until one-step plans are as cheap as `execute` and a fan-out board clears |
-| **Memory under load (slim)** | Uncapped ~**290 MB**; Node **256** → **132 MB** (+**3.5 ms** p99); Bun `--smol` → **130 MB** and faster — [`memory-plateau.md`](./memory-plateau.md). |
+| **Memory under load (slim)** | Publish rep3 (Node 256): ClawQL anon **~122–129 MB** vs MJ **103** / AG **99**. Heap A/B: Node 256 **132 MB** (+**3.5 ms** p99); Bun `--smol` **130 MB**. Rep1–2 were ~290 (uncapped-like) — do not average. [`board-final-summary.md`](./board-final-summary.md). |
 | **HTTP concurrency (Cloud)** | All arms `REPS=3`: Node uncapped **[30,31]** / 256 **[27,29]** / 384 **[25,30]**; Bun **[79,87]**; MJ **[31]**; AG **[34,38]** — **no ~30% cap tax**; Bun still leads. AG tuned **17**. [`http-concurrency-heap-ab.json`](./http-concurrency-heap-ab.json). |
 | **Board errors** | Slim rep3 aborted: `executor_v2` HTTP **502** after ≥7000 ok (~**0.01%** order) — counted in proportion. Metrics: success+error=1; tokens/latency over all attempts (partial kept). [`board-error-inventory.json`](./board-error-inventory.json). |
 | Blog / public headline | Cleared by pre-committed rules (board + dual-model gate both green) |

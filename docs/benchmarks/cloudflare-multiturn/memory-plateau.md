@@ -86,7 +86,9 @@ prefer **384**, memory-enabled **384**, docker-desktop **768**, Bun **`--smol`**
 > sustained load, within about **35–45 MB** of the Go and Rust gateways, at a cost of
 > about **3.5 ms** at p99. Down from ~**630 MB** before OOP catalog + lazy listen.
 
-Take plateau + peer gaps from the next publish board when it lands.
+**Publish board rep3 (Node 256):** ClawQL anon **~122–129 MB** vs MJ **103** / AG **99**.
+Rep1–2 ~**282–292 MB** were uncapped-like — quote rep3 or heap A/B, not an average.
+See [`board-final-summary.md`](./board-final-summary.md).
 
 Probes: `scripts/benchmarks/heap-vs-anon-plateau.mjs`,
 `scripts/benchmarks/heap-cap-stress.mjs`. Uncapped board artifact:

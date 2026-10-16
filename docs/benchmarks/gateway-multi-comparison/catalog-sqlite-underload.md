@@ -14,7 +14,8 @@ Default-on safety: [`catalog-sqlite-default-on-safety.md`](./catalog-sqlite-defa
 | `LOAD=db` | 152 / 112 | **188 / 146** |
 | Δ | −129 / −108 | **−131 / −110** |
 
-Video memory line: under-load **~188 MB** (was ~337 in-memory era / ~319 this A/B).
+Historical video memory line was under-load **~188 MB** (was ~337 in-memory era / ~319 this A/B).
+**Superseded for publish:** CF multiturn slim board rep3 (Node 256) ClawQL anon **~122–129 MB** vs MJ **103** / AG **99** — see [`board-final-summary.md`](../cloudflare-multiturn/board-final-summary.md).
 
 ## MCPJungle same catalog — anon vs anon (smaps)
 

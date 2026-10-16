@@ -94,7 +94,7 @@ At n=10 000: ClawQL fastest at **p50**; MCPJungle fastest at **p999**. That is
 | **Task success** | Deterministic inventory checks in harness (`task_success`); LLM-as-judge optional when a model key is present. Publish only if ClawQL success ≥ peers. |
 | **Latency e2e / gateway_cost** | **Win on governed cost**; **HTTP** per-call at parity; **HTTP session** median ~**2.2×** slower than MJ/ag (2 RPCs/turn). Label transport on every row. |
 | **Chaos (single-instance equal-arm)** | **Win vs Executor** — ClawQL **63/64** vs Executor **23/24**. **Loss vs MCPJungle** — **204/205**. **Tie vs agentgateway** — **62/63**. Do not claim aggregator concurrency wins. |
-| **RSS — equal-arm under load** | **Superseded for publish narrative** — older 40-op `LOAD=db` under-load was **~188 RSS / 146 anon** vs MJ tree **~153 / ~86** (anon gap ~60 MB). After OOP+lazy listen, same-run CF smoke is ClawQL **~117 anon** vs MJ Go+REST **~44** (~**73 MB** gap) vs AG **~68** (~**49 MB** gap). Do not mix ClawQL’s new number with MJ’s old 86. See [`lazy-plugin-costs.md`](./lazy-plugin-costs.md), [`catalog-oop-build.md`](./catalog-oop-build.md); 3×10k board remasure in flight. |
+| **RSS — equal-arm under load** | **Publish board landed** — CF multiturn slim 3×10k rep3 (Node 256): ClawQL anon **~122–129 MB** vs MJ **103** / AG **99** (gap ~**20–30 MB**). Do not average with rep1–2 (~282–292 uncapped-like). Older 40-op `LOAD=db` **~188 RSS / 146 anon** vs MJ tree **~153 / ~86** remains historical. See [`board-final-summary.md`](../cloudflare-multiturn/board-final-summary.md), [`catalog-oop-build.md`](./catalog-oop-build.md). |
 | **RSS — fat catalog (SQLite)** | **Strong** — Sentry Ready **154 / anon 114**; under-load **193 / 151**. Product default **on** (`CLAWQL_CATALOG_SQLITE=0` opt out). |
 | **ContextForge / MetaMCP** | **Off the publish board.** ContextForge was previously nested behind MCPJungle (inflates latency/RSS/chaos). MetaMCP needs Docker. Re-add only with native REST/virtualization (CF → `/pets` direct) or a real MetaMCP run. |
 
@@ -503,10 +503,10 @@ ClawQL is still the **heaviest serious arm on the equal-arm publish board**:
 | --- | ---: | ---: | --- |
 | Cold Ready (equal-arm) | ~232 MB Node / ~180 MB Bun | — | After composition slim + lazy optional imports |
 | Chaos min / med | 259 / 342 | 97 / 109 | Single-instance |
-| Multiturn under-load med (Bun HTTP) | ~290–320 MB | ~152 MB | Publish / targets boards |
+| Multiturn under-load (CF slim board rep3, Node 256) | **~122–129 MB anon** | MJ **103** / AG **99** | Prefer this for post/video; see [`board-final-summary.md`](../cloudflare-multiturn/board-final-summary.md) |
 | Fat vendor Ready (Sentry, `LOAD=db`) | **154 MB** RSS / **114 MB** anon | — | Own A/B vs in-memory **292 / 230** — not MJ under-load |
 
-**SQLite under-load cleared on 40-op + Sentry** ([`catalog-sqlite-underload.md`](./catalog-sqlite-underload.md)): equal-arm `LOAD=db` under-load **~188 RSS / 146 anon** (−131 / −110 vs in-memory). Same-catalog MJ smaps: tree **~153 RSS / ~86 anon**. **RSS gap ~36 MB; anon gap ~60 MB — not parity.** Product default is **on** (`CLAWQL_CATALOG_SQLITE=0` to opt out).
+**SQLite under-load (historical 40-op + Sentry)** ([`catalog-sqlite-underload.md`](./catalog-sqlite-underload.md)): equal-arm `LOAD=db` under-load **~188 RSS / 146 anon** vs MJ tree **~153 / ~86**. **Publish memory line:** CF slim board rep3 anon **~122–129** vs peers **99–103**. Product default SQLite remains **on** (`CLAWQL_CATALOG_SQLITE=0` to opt out).
 
 Levers landed: INSTANCE_SPEC slim Core, lazy optional imports, lazy `clawql-data`, Bun `--smol`, colocated SQLite (**default on**). Under-load plateau is **not** MCP session pileup ([`stall-memory-round2.md`](./stall-memory-round2.md)). Scale-out multiplies RSS.
 
@@ -538,7 +538,7 @@ Default `MULTI_ARMS` / `MT_ARMS` omit both.
 11. **Bench stats + idle sessions + timer trace** — `CLAWQL_BENCH_STATS`, `CLAWQL_MCP_SESSION_IDLE_MS`, `CLAWQL_TIMER_TRACE`.
 12. **Colocated SQLite catalog** — **default on**; Ready + under-load A/Bs; MJ anon↔anon; Executor v2 interleaved p999 3× ([`catalog-sqlite-underload.md`](./catalog-sqlite-underload.md)).
 
-**Next:** topology B (4× behind LB); HTTP p999 stall still open (round 12); comparison video re-render (memory **188** vs 337, Executor v2 interleaved ~182, HTTP-to-HTTP framing).
+**Next (post-board publish):** follow-up post + comparison page (retire/label old single-call page); video re-cut from published numbers (memory quote rep3 **~122–129** vs MJ/AG **99–103**, or heap A/B **132** / +**3.5 ms** p99 — label which). Engineering after that: fan-out/join board, isolation spike, Rust data-path spike. HTTP p999 stall still open (round 12); topology B (4× behind LB) still queued.
 
 ---
 

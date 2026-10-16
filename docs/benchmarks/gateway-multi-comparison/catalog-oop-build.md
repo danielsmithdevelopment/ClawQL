@@ -170,10 +170,13 @@ keeps a persistent REST child. Harness now records per-sample `processes` /
 Earlier equal-arm underload **86.3 MB** MJ tree used a different Node catalog
 MCP and N=40k — not interchangeable with this board’s curated REST adapter.
 
-### CF multiturn 3×10k remasure (in flight)
+### CF multiturn 3×10k remasure — landed
 
 Harness records tree **RSS / anon / PSS**, `memory_series`, `memory_flatness`,
 and process inventories. Board homes show `oop-build` → `LOAD=db after oop-build`.
 
-Replace published ~630 MB anon cells and the comparison-page / video ~188 MB line
-once the 3×10k series reports flatness (or documents climb) with same-run peers.
+**Publish figures** ([`board-final-summary.md`](../cloudflare-multiturn/board-final-summary.md)):
+rep3 (Node 256) ClawQL anon **~122–129 MB** vs MCPJungle **103** / agentgateway **99**.
+Replace older comparison-page / video **~188 MB** (40-op SQLite under-load) and any
+~630 MB anon cells with these same-run numbers; do not average with rep1–2
+(~282–292 uncapped-like).

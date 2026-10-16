@@ -64,10 +64,10 @@ Helm lean default: `manifests/charts/clawql-mcp/values.yaml` →
 | Node `--max-old-space-size=256` | **132** | 3.3 / **13.4** / 21.1 | −164 MB; **+3.5 ms p99**; +GC pauses |
 | Bun `--smol` | **130** | **2.1 / 8.9 / 15.4** | −166 MB; **faster at every percentile** |
 
-Same-run peers on the uncapped slim board: MCPJungle ~**88**, agentgateway ~**98**
-anon. Capped/Bun gap vs those peers is about **35–45 MB** (132−88 / 130−98) — not “~30.”
-**Prefer quoting plateau + peer gaps from the next publish board** (Node 256 default +
-Bun arm), where memory series are same-run.
+**Publish board (rep3, Node 256):** ClawQL anon **~122–129 MB** vs MCPJungle **103** /
+agentgateway **99** (gap ~**20–30 MB**). Rep1–2 were ~**282–292 MB** (uncapped-like) —
+quote rep3 or heap A/B (**132 MB** / +**3.5 ms** p99), not an r1–r3 average. See
+[`board-final-summary.md`](./board-final-summary.md).
 
 ### HTTP concurrency (Cloud-shaped) — cap tax retracted
 
@@ -167,5 +167,4 @@ Three measured claims, same workflow family, each labeled for what it covers:
 > HTTP clients land near uncapped on this workflow (median **27** vs **31**; not a ~30%
 > cap tax).
 
-Replace plateau/peer memory gaps with the next publish board’s same-run series when it
-lands.
+Publish board same-run (rep3): ClawQL **~122–129 MB** anon vs MJ **103** / AG **99**.

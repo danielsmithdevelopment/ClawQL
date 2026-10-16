@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-15T03:56:42.112Z",
+  "measuredAt": "2026-10-15T20:59:17.091Z",
   "kind": "publish_board",
   "rep": 2,
   "iters": 10000,
@@ -13,8 +13,8 @@
   "executor": {
     "appId": "app_ead4ce53-9b2f-4b74-b5a6-b876e3b639cf",
     "slug": "cf-zone-audit-mock",
-    "deploymentId": "dpl_c7b3b33d-f2ba-4e56-b9d3-80dd185b542b",
-    "origin": "http://127.0.0.1:36945",
+    "deploymentId": "dpl_8872cb01-ec24-44d9-901c-2fbc2de2bc94",
+    "origin": "http://127.0.0.1:35605",
     "frameworkVersion": "0.0.1-beta.81"
   },
   "board": {
@@ -42,17 +42,19 @@
       },
       "calls_mean": 9,
       "session_ms": {
-        "p50": 39.761172000318766,
-        "p99": 58.619572000578046,
-        "p999": 67.23694400023669,
+        "p50": 40.100322000682354,
+        "p99": 59.195324000902474,
+        "p999": 65.62922299932688,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": null,
+      "memory_series": [],
+      "memory_flatness": null,
       "first_session": {
         "arm": "direct",
         "ok": true,
-        "session_ms": 73.88399199955165,
+        "session_ms": 71.34913199953735,
         "steps": [
           {
             "step": 1,
@@ -60,7 +62,7 @@
             "discoveryTokens": 0,
             "resultTokens": 384,
             "codeTokens": 0,
-            "latency_ms": 13.106836999766529,
+            "latency_ms": 6.84226799942553,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -72,7 +74,7 @@
             "discoveryTokens": 0,
             "resultTokens": 273,
             "codeTokens": 0,
-            "latency_ms": 0.7165729999542236,
+            "latency_ms": 0.6141140004619956,
             "check": {
               "ok": true
             }
@@ -83,7 +85,7 @@
             "discoveryTokens": 0,
             "resultTokens": 44,
             "codeTokens": 0,
-            "latency_ms": 0.3523369999602437,
+            "latency_ms": 0.3508289996534586,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -95,7 +97,7 @@
             "discoveryTokens": 0,
             "resultTokens": 45668,
             "codeTokens": 0,
-            "latency_ms": 1.1177009996026754,
+            "latency_ms": 0.9898819997906685,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -133,7 +135,7 @@
             "discoveryTokens": 0,
             "resultTokens": 144,
             "codeTokens": 0,
-            "latency_ms": 10.07115999981761,
+            "latency_ms": 8.4439260000363,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -145,7 +147,7 @@
             "discoveryTokens": 0,
             "resultTokens": 55,
             "codeTokens": 0,
-            "latency_ms": 2.6887590000405908,
+            "latency_ms": 1.569888999685645,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -157,7 +159,7 @@
             "discoveryTokens": 0,
             "resultTokens": 87,
             "codeTokens": 0,
-            "latency_ms": 0.6578900003805757,
+            "latency_ms": 0.19360299967229366,
             "check": {
               "ok": true
             }
@@ -168,7 +170,7 @@
             "discoveryTokens": 0,
             "resultTokens": 108,
             "codeTokens": 0,
-            "latency_ms": 0.45069799944758415,
+            "latency_ms": 1.502113999798894,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -180,7 +182,7 @@
             "discoveryTokens": 0,
             "resultTokens": 570,
             "codeTokens": 0,
-            "latency_ms": 0.21716799959540367,
+            "latency_ms": 0.331304999999702,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -216,14 +218,14 @@
         "where": "observation_shaped"
       },
       "upstream": "mock",
-      "definition_tokens": 308,
+      "definition_tokens": 398,
       "discovery_tokens_mean": 15988,
       "result_tokens_mean": 480,
       "code_tokens_mean": 191,
       "code_price_weight": 5,
-      "combined_mean": 16967,
-      "weighted_mean": 17731,
-      "combined_at_n": 166590308,
+      "combined_mean": 17057,
+      "weighted_mean": 17821,
+      "combined_at_n": 166590398,
       "rebuild_check": {
         "combined_mean_ok": true,
         "formula": "definition + discovery + result + code",
@@ -231,21 +233,639 @@
       },
       "calls_mean": 22,
       "session_ms": {
-        "p50": 60.887999000027776,
-        "p99": 85.32271800003946,
-        "p999": 350.6647549998015,
+        "p50": 57.65175800025463,
+        "p99": 76.65812100004405,
+        "p999": 266.2251320006326,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 710.66,
-        "anonymous_mb_median": 631.94,
+        "rss_mb_median": 323.94,
+        "anonymous_mb_median": 291.35,
+        "pss_mb_median": 293.68,
         "samples": 5
+      },
+      "memory_series": [
+        {
+          "i": 1,
+          "rss_mb": 120.41,
+          "anonymous_mb": 87.99,
+          "pss_mb": 90.28
+        },
+        {
+          "i": 100,
+          "rss_mb": 220.05,
+          "anonymous_mb": 187.51,
+          "pss_mb": 189.82
+        },
+        {
+          "i": 200,
+          "rss_mb": 310.95,
+          "anonymous_mb": 278.4,
+          "pss_mb": 280.72
+        },
+        {
+          "i": 300,
+          "rss_mb": 311.39,
+          "anonymous_mb": 278.84,
+          "pss_mb": 281.16
+        },
+        {
+          "i": 400,
+          "rss_mb": 313.64,
+          "anonymous_mb": 281.1,
+          "pss_mb": 283.41
+        },
+        {
+          "i": 500,
+          "rss_mb": 313.74,
+          "anonymous_mb": 281.2,
+          "pss_mb": 283.51
+        },
+        {
+          "i": 600,
+          "rss_mb": 315.66,
+          "anonymous_mb": 283.12,
+          "pss_mb": 285.43
+        },
+        {
+          "i": 700,
+          "rss_mb": 316.32,
+          "anonymous_mb": 283.78,
+          "pss_mb": 286.09
+        },
+        {
+          "i": 800,
+          "rss_mb": 316.68,
+          "anonymous_mb": 284.14,
+          "pss_mb": 286.45
+        },
+        {
+          "i": 900,
+          "rss_mb": 316.69,
+          "anonymous_mb": 284.14,
+          "pss_mb": 286.46
+        },
+        {
+          "i": 1000,
+          "rss_mb": 316.69,
+          "anonymous_mb": 284.14,
+          "pss_mb": 286.46
+        },
+        {
+          "i": 1100,
+          "rss_mb": 316.71,
+          "anonymous_mb": 284.17,
+          "pss_mb": 286.49
+        },
+        {
+          "i": 1200,
+          "rss_mb": 316.71,
+          "anonymous_mb": 284.17,
+          "pss_mb": 286.49
+        },
+        {
+          "i": 1300,
+          "rss_mb": 316.72,
+          "anonymous_mb": 284.18,
+          "pss_mb": 286.5
+        },
+        {
+          "i": 1400,
+          "rss_mb": 316.72,
+          "anonymous_mb": 284.18,
+          "pss_mb": 286.5
+        },
+        {
+          "i": 1500,
+          "rss_mb": 316.72,
+          "anonymous_mb": 284.18,
+          "pss_mb": 286.5
+        },
+        {
+          "i": 1600,
+          "rss_mb": 316.72,
+          "anonymous_mb": 284.18,
+          "pss_mb": 286.5
+        },
+        {
+          "i": 1700,
+          "rss_mb": 316.96,
+          "anonymous_mb": 284.41,
+          "pss_mb": 286.73
+        },
+        {
+          "i": 1800,
+          "rss_mb": 317.12,
+          "anonymous_mb": 284.58,
+          "pss_mb": 286.89
+        },
+        {
+          "i": 1900,
+          "rss_mb": 317.17,
+          "anonymous_mb": 284.63,
+          "pss_mb": 286.94
+        },
+        {
+          "i": 2000,
+          "rss_mb": 317.45,
+          "anonymous_mb": 284.91,
+          "pss_mb": 287.22
+        },
+        {
+          "i": 2100,
+          "rss_mb": 317.45,
+          "anonymous_mb": 284.91,
+          "pss_mb": 287.22
+        },
+        {
+          "i": 2200,
+          "rss_mb": 317.94,
+          "anonymous_mb": 285.4,
+          "pss_mb": 287.71
+        },
+        {
+          "i": 2300,
+          "rss_mb": 318.1,
+          "anonymous_mb": 285.55,
+          "pss_mb": 287.87
+        },
+        {
+          "i": 2400,
+          "rss_mb": 318.16,
+          "anonymous_mb": 285.61,
+          "pss_mb": 287.93
+        },
+        {
+          "i": 2500,
+          "rss_mb": 318.16,
+          "anonymous_mb": 285.61,
+          "pss_mb": 287.93
+        },
+        {
+          "i": 2600,
+          "rss_mb": 318.18,
+          "anonymous_mb": 285.64,
+          "pss_mb": 287.96
+        },
+        {
+          "i": 2700,
+          "rss_mb": 318.26,
+          "anonymous_mb": 285.72,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 2800,
+          "rss_mb": 318.26,
+          "anonymous_mb": 285.72,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 2900,
+          "rss_mb": 318.43,
+          "anonymous_mb": 285.88,
+          "pss_mb": 288.2
+        },
+        {
+          "i": 3000,
+          "rss_mb": 318.58,
+          "anonymous_mb": 286.04,
+          "pss_mb": 288.35
+        },
+        {
+          "i": 3100,
+          "rss_mb": 318.64,
+          "anonymous_mb": 286.1,
+          "pss_mb": 288.41
+        },
+        {
+          "i": 3200,
+          "rss_mb": 318.64,
+          "anonymous_mb": 286.1,
+          "pss_mb": 288.41
+        },
+        {
+          "i": 3300,
+          "rss_mb": 318.64,
+          "anonymous_mb": 286.1,
+          "pss_mb": 288.41
+        },
+        {
+          "i": 3400,
+          "rss_mb": 318.64,
+          "anonymous_mb": 286.1,
+          "pss_mb": 288.41
+        },
+        {
+          "i": 3500,
+          "rss_mb": 318.71,
+          "anonymous_mb": 286.16,
+          "pss_mb": 288.48
+        },
+        {
+          "i": 3600,
+          "rss_mb": 318.86,
+          "anonymous_mb": 286.32,
+          "pss_mb": 288.63
+        },
+        {
+          "i": 3700,
+          "rss_mb": 318.86,
+          "anonymous_mb": 286.32,
+          "pss_mb": 288.63
+        },
+        {
+          "i": 3800,
+          "rss_mb": 318.86,
+          "anonymous_mb": 286.32,
+          "pss_mb": 288.63
+        },
+        {
+          "i": 3900,
+          "rss_mb": 318.86,
+          "anonymous_mb": 286.32,
+          "pss_mb": 288.63
+        },
+        {
+          "i": 4000,
+          "rss_mb": 318.88,
+          "anonymous_mb": 286.33,
+          "pss_mb": 288.65
+        },
+        {
+          "i": 4100,
+          "rss_mb": 318.88,
+          "anonymous_mb": 286.34,
+          "pss_mb": 288.65
+        },
+        {
+          "i": 4200,
+          "rss_mb": 318.88,
+          "anonymous_mb": 286.34,
+          "pss_mb": 288.65
+        },
+        {
+          "i": 4300,
+          "rss_mb": 318.92,
+          "anonymous_mb": 286.38,
+          "pss_mb": 288.69
+        },
+        {
+          "i": 4400,
+          "rss_mb": 318.92,
+          "anonymous_mb": 286.38,
+          "pss_mb": 288.69
+        },
+        {
+          "i": 4500,
+          "rss_mb": 318.92,
+          "anonymous_mb": 286.38,
+          "pss_mb": 288.69
+        },
+        {
+          "i": 4600,
+          "rss_mb": 320.45,
+          "anonymous_mb": 287.91,
+          "pss_mb": 290.22
+        },
+        {
+          "i": 4700,
+          "rss_mb": 321.67,
+          "anonymous_mb": 289.13,
+          "pss_mb": 291.44
+        },
+        {
+          "i": 4800,
+          "rss_mb": 321.67,
+          "anonymous_mb": 289.13,
+          "pss_mb": 291.44
+        },
+        {
+          "i": 4900,
+          "rss_mb": 321.67,
+          "anonymous_mb": 289.13,
+          "pss_mb": 291.44
+        },
+        {
+          "i": 5000,
+          "rss_mb": 321.67,
+          "anonymous_mb": 289.13,
+          "pss_mb": 291.44
+        },
+        {
+          "i": 5100,
+          "rss_mb": 322.25,
+          "anonymous_mb": 289.7,
+          "pss_mb": 292.02
+        },
+        {
+          "i": 5200,
+          "rss_mb": 322.25,
+          "anonymous_mb": 289.7,
+          "pss_mb": 292.02
+        },
+        {
+          "i": 5300,
+          "rss_mb": 322.27,
+          "anonymous_mb": 289.73,
+          "pss_mb": 292.04
+        },
+        {
+          "i": 5400,
+          "rss_mb": 322.27,
+          "anonymous_mb": 289.73,
+          "pss_mb": 292.04
+        },
+        {
+          "i": 5500,
+          "rss_mb": 322.54,
+          "anonymous_mb": 290,
+          "pss_mb": 292.31
+        },
+        {
+          "i": 5600,
+          "rss_mb": 322.75,
+          "anonymous_mb": 290.2,
+          "pss_mb": 292.52
+        },
+        {
+          "i": 5700,
+          "rss_mb": 322.75,
+          "anonymous_mb": 290.2,
+          "pss_mb": 292.52
+        },
+        {
+          "i": 5800,
+          "rss_mb": 322.78,
+          "anonymous_mb": 290.24,
+          "pss_mb": 292.55
+        },
+        {
+          "i": 5900,
+          "rss_mb": 322.78,
+          "anonymous_mb": 290.24,
+          "pss_mb": 292.55
+        },
+        {
+          "i": 6000,
+          "rss_mb": 322.78,
+          "anonymous_mb": 290.24,
+          "pss_mb": 292.55
+        },
+        {
+          "i": 6100,
+          "rss_mb": 322.87,
+          "anonymous_mb": 290.33,
+          "pss_mb": 292.64
+        },
+        {
+          "i": 6200,
+          "rss_mb": 322.87,
+          "anonymous_mb": 290.33,
+          "pss_mb": 292.64
+        },
+        {
+          "i": 6300,
+          "rss_mb": 322.87,
+          "anonymous_mb": 290.33,
+          "pss_mb": 292.64
+        },
+        {
+          "i": 6400,
+          "rss_mb": 322.87,
+          "anonymous_mb": 290.33,
+          "pss_mb": 292.64
+        },
+        {
+          "i": 6500,
+          "rss_mb": 322.87,
+          "anonymous_mb": 290.33,
+          "pss_mb": 292.64
+        },
+        {
+          "i": 6600,
+          "rss_mb": 322.87,
+          "anonymous_mb": 290.33,
+          "pss_mb": 292.64
+        },
+        {
+          "i": 6700,
+          "rss_mb": 322.87,
+          "anonymous_mb": 290.33,
+          "pss_mb": 292.64
+        },
+        {
+          "i": 6800,
+          "rss_mb": 322.87,
+          "anonymous_mb": 290.33,
+          "pss_mb": 292.64
+        },
+        {
+          "i": 6900,
+          "rss_mb": 322.87,
+          "anonymous_mb": 290.33,
+          "pss_mb": 292.64
+        },
+        {
+          "i": 7000,
+          "rss_mb": 322.87,
+          "anonymous_mb": 290.33,
+          "pss_mb": 292.64
+        },
+        {
+          "i": 7100,
+          "rss_mb": 322.87,
+          "anonymous_mb": 290.33,
+          "pss_mb": 292.64
+        },
+        {
+          "i": 7200,
+          "rss_mb": 322.87,
+          "anonymous_mb": 290.33,
+          "pss_mb": 292.64
+        },
+        {
+          "i": 7300,
+          "rss_mb": 322.92,
+          "anonymous_mb": 290.33,
+          "pss_mb": 292.66
+        },
+        {
+          "i": 7400,
+          "rss_mb": 322.92,
+          "anonymous_mb": 290.33,
+          "pss_mb": 292.66
+        },
+        {
+          "i": 7500,
+          "rss_mb": 322.93,
+          "anonymous_mb": 290.34,
+          "pss_mb": 292.67
+        },
+        {
+          "i": 7600,
+          "rss_mb": 322.93,
+          "anonymous_mb": 290.34,
+          "pss_mb": 292.67
+        },
+        {
+          "i": 7700,
+          "rss_mb": 322.93,
+          "anonymous_mb": 290.34,
+          "pss_mb": 292.67
+        },
+        {
+          "i": 7800,
+          "rss_mb": 323.07,
+          "anonymous_mb": 290.48,
+          "pss_mb": 292.81
+        },
+        {
+          "i": 7900,
+          "rss_mb": 323.07,
+          "anonymous_mb": 290.48,
+          "pss_mb": 292.82
+        },
+        {
+          "i": 8000,
+          "rss_mb": 323.07,
+          "anonymous_mb": 290.48,
+          "pss_mb": 292.82
+        },
+        {
+          "i": 8100,
+          "rss_mb": 323.07,
+          "anonymous_mb": 290.48,
+          "pss_mb": 292.82
+        },
+        {
+          "i": 8200,
+          "rss_mb": 323.07,
+          "anonymous_mb": 290.48,
+          "pss_mb": 292.82
+        },
+        {
+          "i": 8300,
+          "rss_mb": 323.07,
+          "anonymous_mb": 290.48,
+          "pss_mb": 292.82
+        },
+        {
+          "i": 8400,
+          "rss_mb": 323.07,
+          "anonymous_mb": 290.48,
+          "pss_mb": 292.82
+        },
+        {
+          "i": 8500,
+          "rss_mb": 323.07,
+          "anonymous_mb": 290.48,
+          "pss_mb": 292.82
+        },
+        {
+          "i": 8600,
+          "rss_mb": 323.08,
+          "anonymous_mb": 290.49,
+          "pss_mb": 292.82
+        },
+        {
+          "i": 8700,
+          "rss_mb": 323.08,
+          "anonymous_mb": 290.49,
+          "pss_mb": 292.82
+        },
+        {
+          "i": 8800,
+          "rss_mb": 323.66,
+          "anonymous_mb": 291.07,
+          "pss_mb": 293.4
+        },
+        {
+          "i": 8900,
+          "rss_mb": 323.66,
+          "anonymous_mb": 291.07,
+          "pss_mb": 293.4
+        },
+        {
+          "i": 9000,
+          "rss_mb": 323.66,
+          "anonymous_mb": 291.07,
+          "pss_mb": 293.4
+        },
+        {
+          "i": 9100,
+          "rss_mb": 323.66,
+          "anonymous_mb": 291.07,
+          "pss_mb": 293.4
+        },
+        {
+          "i": 9200,
+          "rss_mb": 323.81,
+          "anonymous_mb": 291.22,
+          "pss_mb": 293.55
+        },
+        {
+          "i": 9300,
+          "rss_mb": 323.81,
+          "anonymous_mb": 291.22,
+          "pss_mb": 293.55
+        },
+        {
+          "i": 9400,
+          "rss_mb": 323.81,
+          "anonymous_mb": 291.22,
+          "pss_mb": 293.55
+        },
+        {
+          "i": 9500,
+          "rss_mb": 323.81,
+          "anonymous_mb": 291.22,
+          "pss_mb": 293.55
+        },
+        {
+          "i": 9600,
+          "rss_mb": 323.94,
+          "anonymous_mb": 291.35,
+          "pss_mb": 293.68
+        },
+        {
+          "i": 9700,
+          "rss_mb": 323.94,
+          "anonymous_mb": 291.35,
+          "pss_mb": 293.68
+        },
+        {
+          "i": 9800,
+          "rss_mb": 323.94,
+          "anonymous_mb": 291.35,
+          "pss_mb": 293.68
+        },
+        {
+          "i": 9900,
+          "rss_mb": 323.94,
+          "anonymous_mb": 291.35,
+          "pss_mb": 293.68
+        },
+        {
+          "i": 10000,
+          "rss_mb": 323.94,
+          "anonymous_mb": 291.35,
+          "pss_mb": 293.68
+        }
+      ],
+      "memory_flatness": {
+        "samples": 101,
+        "anonymous_mb_first": 87.99,
+        "anonymous_mb_last": 291.35,
+        "anonymous_mb_min": 87.99,
+        "anonymous_mb_max": 291.35,
+        "anonymous_mb_range": 203.36,
+        "anonymous_mb_drift": 203.36
       },
       "first_session": {
         "arm": "clawql_default",
         "ok": true,
-        "session_ms": 101.99811199959368,
+        "session_ms": 97.80332800000906,
         "steps": [
           {
             "step": 1,
@@ -253,7 +873,7 @@
             "discoveryTokens": 2433,
             "resultTokens": 41,
             "codeTokens": 20,
-            "latency_ms": 18.59886800032109,
+            "latency_ms": 18.57864899840206,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -267,7 +887,7 @@
             "discoveryTokens": 902,
             "resultTokens": 18,
             "codeTokens": 12,
-            "latency_ms": 6.875134999863803,
+            "latency_ms": 5.68002999946475,
             "check": {
               "ok": true
             },
@@ -280,7 +900,7 @@
             "discoveryTokens": 851,
             "resultTokens": 9,
             "codeTokens": 6,
-            "latency_ms": 6.01394800003618,
+            "latency_ms": 5.03118999954313,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -294,7 +914,7 @@
             "discoveryTokens": 2193,
             "resultTokens": 11,
             "codeTokens": 16,
-            "latency_ms": 8.076299000531435,
+            "latency_ms": 7.4534200001508,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -308,7 +928,7 @@
             "discoveryTokens": 2193,
             "resultTokens": 147,
             "codeTokens": 26,
-            "latency_ms": 10.977825999259949,
+            "latency_ms": 12.0770920002833,
             "check": {
               "ok": true,
               "label": "names"
@@ -322,7 +942,7 @@
             "discoveryTokens": 2193,
             "resultTokens": 40,
             "codeTokens": 36,
-            "latency_ms": 6.5039100013673306,
+            "latency_ms": 7.600800999440253,
             "check": {
               "ok": true,
               "label": "unproxiedNames"
@@ -336,7 +956,7 @@
             "discoveryTokens": 1089,
             "resultTokens": 21,
             "codeTokens": 8,
-            "latency_ms": 7.285862999968231,
+            "latency_ms": 4.773413999006152,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -350,7 +970,7 @@
             "discoveryTokens": 955,
             "resultTokens": 16,
             "codeTokens": 10,
-            "latency_ms": 5.675893999636173,
+            "latency_ms": 5.997232000343502,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -364,7 +984,7 @@
             "discoveryTokens": 851,
             "resultTokens": 23,
             "codeTokens": 23,
-            "latency_ms": 5.329010999761522,
+            "latency_ms": 4.065183000639081,
             "check": {
               "ok": true
             },
@@ -377,7 +997,7 @@
             "discoveryTokens": 1127,
             "resultTokens": 115,
             "codeTokens": 18,
-            "latency_ms": 5.2664950005710125,
+            "latency_ms": 5.034703999757767,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -391,7 +1011,7 @@
             "discoveryTokens": 1201,
             "resultTokens": 11,
             "codeTokens": 16,
-            "latency_ms": 5.24507699906826,
+            "latency_ms": 5.330556999891996,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -429,14 +1049,14 @@
         "where": "observation_shaped"
       },
       "upstream": "mock",
-      "definition_tokens": 308,
+      "definition_tokens": 398,
       "discovery_tokens_mean": 4092,
       "result_tokens_mean": 480,
       "code_tokens_mean": 191,
       "code_price_weight": 5,
-      "combined_mean": 5071,
-      "weighted_mean": 5835,
-      "combined_at_n": 47630308,
+      "combined_mean": 5161,
+      "weighted_mean": 5925,
+      "combined_at_n": 47630398,
       "rebuild_check": {
         "combined_mean_ok": true,
         "formula": "definition + discovery + result + code",
@@ -444,21 +1064,639 @@
       },
       "calls_mean": 22,
       "session_ms": {
-        "p50": 47.89220399968326,
-        "p99": 64.76382299978286,
-        "p999": 324.4854540005326,
+        "p50": 44.25098000001162,
+        "p99": 58.715343000367284,
+        "p999": 269.44944499991834,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 727.45,
-        "anonymous_mb_median": 648.67,
+        "rss_mb_median": 318.37,
+        "anonymous_mb_median": 285.83,
+        "pss_mb_median": 288.05,
         "samples": 5
+      },
+      "memory_series": [
+        {
+          "i": 1,
+          "rss_mb": 115.9,
+          "anonymous_mb": 83.48,
+          "pss_mb": 85.68
+        },
+        {
+          "i": 100,
+          "rss_mb": 211.77,
+          "anonymous_mb": 179.23,
+          "pss_mb": 181.45
+        },
+        {
+          "i": 200,
+          "rss_mb": 304.63,
+          "anonymous_mb": 272.09,
+          "pss_mb": 274.31
+        },
+        {
+          "i": 300,
+          "rss_mb": 304.64,
+          "anonymous_mb": 272.11,
+          "pss_mb": 274.33
+        },
+        {
+          "i": 400,
+          "rss_mb": 309.9,
+          "anonymous_mb": 277.36,
+          "pss_mb": 279.58
+        },
+        {
+          "i": 500,
+          "rss_mb": 310.31,
+          "anonymous_mb": 277.77,
+          "pss_mb": 279.99
+        },
+        {
+          "i": 600,
+          "rss_mb": 310.31,
+          "anonymous_mb": 277.77,
+          "pss_mb": 279.99
+        },
+        {
+          "i": 700,
+          "rss_mb": 314.67,
+          "anonymous_mb": 282.13,
+          "pss_mb": 284.35
+        },
+        {
+          "i": 800,
+          "rss_mb": 314.71,
+          "anonymous_mb": 282.18,
+          "pss_mb": 284.4
+        },
+        {
+          "i": 900,
+          "rss_mb": 314.71,
+          "anonymous_mb": 282.18,
+          "pss_mb": 284.4
+        },
+        {
+          "i": 1000,
+          "rss_mb": 314.72,
+          "anonymous_mb": 282.18,
+          "pss_mb": 284.4
+        },
+        {
+          "i": 1100,
+          "rss_mb": 314.73,
+          "anonymous_mb": 282.19,
+          "pss_mb": 284.41
+        },
+        {
+          "i": 1200,
+          "rss_mb": 314.84,
+          "anonymous_mb": 282.3,
+          "pss_mb": 284.52
+        },
+        {
+          "i": 1300,
+          "rss_mb": 314.84,
+          "anonymous_mb": 282.3,
+          "pss_mb": 284.52
+        },
+        {
+          "i": 1400,
+          "rss_mb": 314.84,
+          "anonymous_mb": 282.3,
+          "pss_mb": 284.52
+        },
+        {
+          "i": 1500,
+          "rss_mb": 315.35,
+          "anonymous_mb": 282.81,
+          "pss_mb": 285.03
+        },
+        {
+          "i": 1600,
+          "rss_mb": 315.35,
+          "anonymous_mb": 282.81,
+          "pss_mb": 285.03
+        },
+        {
+          "i": 1700,
+          "rss_mb": 316.09,
+          "anonymous_mb": 283.55,
+          "pss_mb": 285.77
+        },
+        {
+          "i": 1800,
+          "rss_mb": 316.5,
+          "anonymous_mb": 283.96,
+          "pss_mb": 286.18
+        },
+        {
+          "i": 1900,
+          "rss_mb": 316.6,
+          "anonymous_mb": 284.06,
+          "pss_mb": 286.28
+        },
+        {
+          "i": 2000,
+          "rss_mb": 316.64,
+          "anonymous_mb": 284.1,
+          "pss_mb": 286.32
+        },
+        {
+          "i": 2100,
+          "rss_mb": 316.64,
+          "anonymous_mb": 284.1,
+          "pss_mb": 286.32
+        },
+        {
+          "i": 2200,
+          "rss_mb": 317.02,
+          "anonymous_mb": 284.48,
+          "pss_mb": 286.7
+        },
+        {
+          "i": 2300,
+          "rss_mb": 317.05,
+          "anonymous_mb": 284.51,
+          "pss_mb": 286.73
+        },
+        {
+          "i": 2400,
+          "rss_mb": 317.84,
+          "anonymous_mb": 285.3,
+          "pss_mb": 287.52
+        },
+        {
+          "i": 2500,
+          "rss_mb": 317.84,
+          "anonymous_mb": 285.3,
+          "pss_mb": 287.52
+        },
+        {
+          "i": 2600,
+          "rss_mb": 317.84,
+          "anonymous_mb": 285.3,
+          "pss_mb": 287.52
+        },
+        {
+          "i": 2700,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 2800,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 2900,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 3000,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 3100,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 3200,
+          "rss_mb": 318.43,
+          "anonymous_mb": 285.89,
+          "pss_mb": 288.11
+        },
+        {
+          "i": 3300,
+          "rss_mb": 318.43,
+          "anonymous_mb": 285.89,
+          "pss_mb": 288.11
+        },
+        {
+          "i": 3400,
+          "rss_mb": 318.43,
+          "anonymous_mb": 285.89,
+          "pss_mb": 288.11
+        },
+        {
+          "i": 3500,
+          "rss_mb": 318.43,
+          "anonymous_mb": 285.89,
+          "pss_mb": 288.11
+        },
+        {
+          "i": 3600,
+          "rss_mb": 318.43,
+          "anonymous_mb": 285.89,
+          "pss_mb": 288.11
+        },
+        {
+          "i": 3700,
+          "rss_mb": 318.55,
+          "anonymous_mb": 286.02,
+          "pss_mb": 288.23
+        },
+        {
+          "i": 3800,
+          "rss_mb": 318.73,
+          "anonymous_mb": 286.19,
+          "pss_mb": 288.41
+        },
+        {
+          "i": 3900,
+          "rss_mb": 318.73,
+          "anonymous_mb": 286.19,
+          "pss_mb": 288.41
+        },
+        {
+          "i": 4000,
+          "rss_mb": 318.98,
+          "anonymous_mb": 286.44,
+          "pss_mb": 288.66
+        },
+        {
+          "i": 4100,
+          "rss_mb": 318.98,
+          "anonymous_mb": 286.44,
+          "pss_mb": 288.66
+        },
+        {
+          "i": 4200,
+          "rss_mb": 318.98,
+          "anonymous_mb": 286.44,
+          "pss_mb": 288.66
+        },
+        {
+          "i": 4300,
+          "rss_mb": 318.98,
+          "anonymous_mb": 286.44,
+          "pss_mb": 288.66
+        },
+        {
+          "i": 4400,
+          "rss_mb": 318.98,
+          "anonymous_mb": 286.44,
+          "pss_mb": 288.66
+        },
+        {
+          "i": 4500,
+          "rss_mb": 318.98,
+          "anonymous_mb": 286.44,
+          "pss_mb": 288.66
+        },
+        {
+          "i": 4600,
+          "rss_mb": 318.98,
+          "anonymous_mb": 286.44,
+          "pss_mb": 288.66
+        },
+        {
+          "i": 4700,
+          "rss_mb": 318.98,
+          "anonymous_mb": 286.44,
+          "pss_mb": 288.66
+        },
+        {
+          "i": 4800,
+          "rss_mb": 318.98,
+          "anonymous_mb": 286.44,
+          "pss_mb": 288.66
+        },
+        {
+          "i": 4900,
+          "rss_mb": 318.98,
+          "anonymous_mb": 286.44,
+          "pss_mb": 288.66
+        },
+        {
+          "i": 5000,
+          "rss_mb": 318.98,
+          "anonymous_mb": 286.44,
+          "pss_mb": 288.66
+        },
+        {
+          "i": 5100,
+          "rss_mb": 318.98,
+          "anonymous_mb": 286.44,
+          "pss_mb": 288.66
+        },
+        {
+          "i": 5200,
+          "rss_mb": 318.98,
+          "anonymous_mb": 286.44,
+          "pss_mb": 288.66
+        },
+        {
+          "i": 5300,
+          "rss_mb": 318.98,
+          "anonymous_mb": 286.44,
+          "pss_mb": 288.66
+        },
+        {
+          "i": 5400,
+          "rss_mb": 319.11,
+          "anonymous_mb": 286.57,
+          "pss_mb": 288.79
+        },
+        {
+          "i": 5500,
+          "rss_mb": 318.3,
+          "anonymous_mb": 285.77,
+          "pss_mb": 287.98
+        },
+        {
+          "i": 5600,
+          "rss_mb": 318.3,
+          "anonymous_mb": 285.77,
+          "pss_mb": 287.98
+        },
+        {
+          "i": 5700,
+          "rss_mb": 318.3,
+          "anonymous_mb": 285.77,
+          "pss_mb": 287.98
+        },
+        {
+          "i": 5800,
+          "rss_mb": 318.3,
+          "anonymous_mb": 285.77,
+          "pss_mb": 287.98
+        },
+        {
+          "i": 5900,
+          "rss_mb": 318.3,
+          "anonymous_mb": 285.77,
+          "pss_mb": 287.98
+        },
+        {
+          "i": 6000,
+          "rss_mb": 318.3,
+          "anonymous_mb": 285.77,
+          "pss_mb": 287.98
+        },
+        {
+          "i": 6100,
+          "rss_mb": 318.32,
+          "anonymous_mb": 285.78,
+          "pss_mb": 288
+        },
+        {
+          "i": 6200,
+          "rss_mb": 318.32,
+          "anonymous_mb": 285.78,
+          "pss_mb": 288
+        },
+        {
+          "i": 6300,
+          "rss_mb": 318.32,
+          "anonymous_mb": 285.78,
+          "pss_mb": 288
+        },
+        {
+          "i": 6400,
+          "rss_mb": 318.32,
+          "anonymous_mb": 285.78,
+          "pss_mb": 288
+        },
+        {
+          "i": 6500,
+          "rss_mb": 318.32,
+          "anonymous_mb": 285.78,
+          "pss_mb": 288
+        },
+        {
+          "i": 6600,
+          "rss_mb": 318.32,
+          "anonymous_mb": 285.78,
+          "pss_mb": 288
+        },
+        {
+          "i": 6700,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 6800,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 6900,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 7000,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 7100,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 7200,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 7300,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 7400,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 7500,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 7600,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 7700,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 7800,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 7900,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 8000,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 8100,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 8200,
+          "rss_mb": 318.27,
+          "anonymous_mb": 285.73,
+          "pss_mb": 287.95
+        },
+        {
+          "i": 8300,
+          "rss_mb": 318.27,
+          "anonymous_mb": 285.73,
+          "pss_mb": 287.95
+        },
+        {
+          "i": 8400,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 8500,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 8600,
+          "rss_mb": 318.35,
+          "anonymous_mb": 285.81,
+          "pss_mb": 288.03
+        },
+        {
+          "i": 8700,
+          "rss_mb": 318.36,
+          "anonymous_mb": 285.82,
+          "pss_mb": 288.04
+        },
+        {
+          "i": 8800,
+          "rss_mb": 318.36,
+          "anonymous_mb": 285.82,
+          "pss_mb": 288.04
+        },
+        {
+          "i": 8900,
+          "rss_mb": 318.36,
+          "anonymous_mb": 285.82,
+          "pss_mb": 288.04
+        },
+        {
+          "i": 9000,
+          "rss_mb": 318.36,
+          "anonymous_mb": 285.82,
+          "pss_mb": 288.04
+        },
+        {
+          "i": 9100,
+          "rss_mb": 318.36,
+          "anonymous_mb": 285.82,
+          "pss_mb": 288.04
+        },
+        {
+          "i": 9200,
+          "rss_mb": 318.36,
+          "anonymous_mb": 285.82,
+          "pss_mb": 288.04
+        },
+        {
+          "i": 9300,
+          "rss_mb": 318.36,
+          "anonymous_mb": 285.82,
+          "pss_mb": 288.04
+        },
+        {
+          "i": 9400,
+          "rss_mb": 318.37,
+          "anonymous_mb": 285.83,
+          "pss_mb": 288.05
+        },
+        {
+          "i": 9500,
+          "rss_mb": 318.37,
+          "anonymous_mb": 285.83,
+          "pss_mb": 288.05
+        },
+        {
+          "i": 9600,
+          "rss_mb": 318.37,
+          "anonymous_mb": 285.83,
+          "pss_mb": 288.05
+        },
+        {
+          "i": 9700,
+          "rss_mb": 318.37,
+          "anonymous_mb": 285.83,
+          "pss_mb": 288.05
+        },
+        {
+          "i": 9800,
+          "rss_mb": 318.37,
+          "anonymous_mb": 285.83,
+          "pss_mb": 288.05
+        },
+        {
+          "i": 9900,
+          "rss_mb": 318.37,
+          "anonymous_mb": 285.83,
+          "pss_mb": 288.05
+        },
+        {
+          "i": 10000,
+          "rss_mb": 318.37,
+          "anonymous_mb": 285.83,
+          "pss_mb": 288.05
+        }
+      ],
+      "memory_flatness": {
+        "samples": 101,
+        "anonymous_mb_first": 83.48,
+        "anonymous_mb_last": 285.83,
+        "anonymous_mb_min": 83.48,
+        "anonymous_mb_max": 286.57,
+        "anonymous_mb_range": 203.09,
+        "anonymous_mb_drift": 202.35
       },
       "first_session": {
         "arm": "clawql_default",
         "ok": true,
-        "session_ms": 93.34249600023031,
+        "session_ms": 82.41650500055403,
         "steps": [
           {
             "step": 1,
@@ -466,7 +1704,7 @@
             "discoveryTokens": 453,
             "resultTokens": 41,
             "codeTokens": 20,
-            "latency_ms": 21.95088200084865,
+            "latency_ms": 18.912549999542534,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -480,7 +1718,7 @@
             "discoveryTokens": 316,
             "resultTokens": 18,
             "codeTokens": 12,
-            "latency_ms": 7.539573999121785,
+            "latency_ms": 4.754681000486016,
             "check": {
               "ok": true
             },
@@ -493,7 +1731,7 @@
             "discoveryTokens": 317,
             "resultTokens": 9,
             "codeTokens": 6,
-            "latency_ms": 6.093256000429392,
+            "latency_ms": 6.342396000400186,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -507,7 +1745,7 @@
             "discoveryTokens": 463,
             "resultTokens": 11,
             "codeTokens": 16,
-            "latency_ms": 7.799247999675572,
+            "latency_ms": 6.639497999101877,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -521,7 +1759,7 @@
             "discoveryTokens": 463,
             "resultTokens": 147,
             "codeTokens": 26,
-            "latency_ms": 6.6817089999094605,
+            "latency_ms": 6.182082999497652,
             "check": {
               "ok": true,
               "label": "names"
@@ -535,7 +1773,7 @@
             "discoveryTokens": 463,
             "resultTokens": 40,
             "codeTokens": 36,
-            "latency_ms": 9.07865200098604,
+            "latency_ms": 6.52110099978745,
             "check": {
               "ok": true,
               "label": "unproxiedNames"
@@ -549,7 +1787,7 @@
             "discoveryTokens": 326,
             "resultTokens": 21,
             "codeTokens": 8,
-            "latency_ms": 7.64582599978894,
+            "latency_ms": 6.460602999664843,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -563,7 +1801,7 @@
             "discoveryTokens": 307,
             "resultTokens": 16,
             "codeTokens": 10,
-            "latency_ms": 4.467201999388635,
+            "latency_ms": 6.40570000000298,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -577,7 +1815,7 @@
             "discoveryTokens": 298,
             "resultTokens": 23,
             "codeTokens": 23,
-            "latency_ms": 4.6949349995702505,
+            "latency_ms": 3.9368179999291897,
             "check": {
               "ok": true
             },
@@ -590,7 +1828,7 @@
             "discoveryTokens": 347,
             "resultTokens": 115,
             "codeTokens": 18,
-            "latency_ms": 4.702136999927461,
+            "latency_ms": 3.71807099878788,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -604,7 +1842,7 @@
             "discoveryTokens": 339,
             "resultTokens": 11,
             "codeTokens": 16,
-            "latency_ms": 4.5813349997624755,
+            "latency_ms": 4.037299000658095,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -642,14 +1880,14 @@
         "where": "observation_shaped"
       },
       "upstream": "mock",
-      "definition_tokens": 308,
+      "definition_tokens": 398,
       "discovery_tokens_mean": 0,
       "result_tokens_mean": 480,
       "code_tokens_mean": 191,
       "code_price_weight": 5,
-      "combined_mean": 979,
-      "weighted_mean": 1743,
-      "combined_at_n": 6710308,
+      "combined_mean": 1069,
+      "weighted_mean": 1833,
+      "combined_at_n": 6710398,
       "rebuild_check": {
         "combined_mean_ok": true,
         "formula": "definition + discovery + result + code",
@@ -657,21 +1895,639 @@
       },
       "calls_mean": 11,
       "session_ms": {
-        "p50": 24.25767199974507,
-        "p99": 33.886789000593126,
-        "p999": 195.75837900023907,
+        "p50": 23.052790000103414,
+        "p99": 31.821735999546945,
+        "p999": 177.23026300035417,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 713.44,
-        "anonymous_mb_median": 634.72,
+        "rss_mb_median": 325.09,
+        "anonymous_mb_median": 291.97,
+        "pss_mb_median": 294.32,
         "samples": 5
+      },
+      "memory_series": [
+        {
+          "i": 1,
+          "rss_mb": 119.81,
+          "anonymous_mb": 86.7,
+          "pss_mb": 89.07
+        },
+        {
+          "i": 100,
+          "rss_mb": 180.1,
+          "anonymous_mb": 146.99,
+          "pss_mb": 149.36
+        },
+        {
+          "i": 200,
+          "rss_mb": 262.35,
+          "anonymous_mb": 229.23,
+          "pss_mb": 231.58
+        },
+        {
+          "i": 300,
+          "rss_mb": 312.05,
+          "anonymous_mb": 278.94,
+          "pss_mb": 281.29
+        },
+        {
+          "i": 400,
+          "rss_mb": 312.07,
+          "anonymous_mb": 278.96,
+          "pss_mb": 281.31
+        },
+        {
+          "i": 500,
+          "rss_mb": 314.42,
+          "anonymous_mb": 281.31,
+          "pss_mb": 283.66
+        },
+        {
+          "i": 600,
+          "rss_mb": 314.84,
+          "anonymous_mb": 281.73,
+          "pss_mb": 284.08
+        },
+        {
+          "i": 700,
+          "rss_mb": 314.84,
+          "anonymous_mb": 281.73,
+          "pss_mb": 284.08
+        },
+        {
+          "i": 800,
+          "rss_mb": 314.84,
+          "anonymous_mb": 281.73,
+          "pss_mb": 284.08
+        },
+        {
+          "i": 900,
+          "rss_mb": 314.89,
+          "anonymous_mb": 281.78,
+          "pss_mb": 284.13
+        },
+        {
+          "i": 1000,
+          "rss_mb": 315.03,
+          "anonymous_mb": 281.92,
+          "pss_mb": 284.27
+        },
+        {
+          "i": 1100,
+          "rss_mb": 317.79,
+          "anonymous_mb": 284.68,
+          "pss_mb": 287.03
+        },
+        {
+          "i": 1200,
+          "rss_mb": 318.98,
+          "anonymous_mb": 285.87,
+          "pss_mb": 288.22
+        },
+        {
+          "i": 1300,
+          "rss_mb": 319.12,
+          "anonymous_mb": 286,
+          "pss_mb": 288.35
+        },
+        {
+          "i": 1400,
+          "rss_mb": 321.83,
+          "anonymous_mb": 288.72,
+          "pss_mb": 291.07
+        },
+        {
+          "i": 1500,
+          "rss_mb": 321.83,
+          "anonymous_mb": 288.72,
+          "pss_mb": 291.07
+        },
+        {
+          "i": 1600,
+          "rss_mb": 321.83,
+          "anonymous_mb": 288.72,
+          "pss_mb": 291.07
+        },
+        {
+          "i": 1700,
+          "rss_mb": 321.83,
+          "anonymous_mb": 288.72,
+          "pss_mb": 291.07
+        },
+        {
+          "i": 1800,
+          "rss_mb": 321.83,
+          "anonymous_mb": 288.72,
+          "pss_mb": 291.07
+        },
+        {
+          "i": 1900,
+          "rss_mb": 321.83,
+          "anonymous_mb": 288.72,
+          "pss_mb": 291.07
+        },
+        {
+          "i": 2000,
+          "rss_mb": 322.03,
+          "anonymous_mb": 288.91,
+          "pss_mb": 291.26
+        },
+        {
+          "i": 2100,
+          "rss_mb": 322.03,
+          "anonymous_mb": 288.91,
+          "pss_mb": 291.26
+        },
+        {
+          "i": 2200,
+          "rss_mb": 322.03,
+          "anonymous_mb": 288.91,
+          "pss_mb": 291.26
+        },
+        {
+          "i": 2300,
+          "rss_mb": 322.03,
+          "anonymous_mb": 288.91,
+          "pss_mb": 291.26
+        },
+        {
+          "i": 2400,
+          "rss_mb": 322.03,
+          "anonymous_mb": 288.91,
+          "pss_mb": 291.26
+        },
+        {
+          "i": 2500,
+          "rss_mb": 322.03,
+          "anonymous_mb": 288.91,
+          "pss_mb": 291.26
+        },
+        {
+          "i": 2600,
+          "rss_mb": 322.37,
+          "anonymous_mb": 289.25,
+          "pss_mb": 291.6
+        },
+        {
+          "i": 2700,
+          "rss_mb": 322.51,
+          "anonymous_mb": 289.4,
+          "pss_mb": 291.75
+        },
+        {
+          "i": 2800,
+          "rss_mb": 323.37,
+          "anonymous_mb": 290.25,
+          "pss_mb": 292.6
+        },
+        {
+          "i": 2900,
+          "rss_mb": 323.37,
+          "anonymous_mb": 290.25,
+          "pss_mb": 292.6
+        },
+        {
+          "i": 3000,
+          "rss_mb": 323.37,
+          "anonymous_mb": 290.25,
+          "pss_mb": 292.6
+        },
+        {
+          "i": 3100,
+          "rss_mb": 323.93,
+          "anonymous_mb": 290.82,
+          "pss_mb": 293.17
+        },
+        {
+          "i": 3200,
+          "rss_mb": 323.93,
+          "anonymous_mb": 290.82,
+          "pss_mb": 293.17
+        },
+        {
+          "i": 3300,
+          "rss_mb": 323.93,
+          "anonymous_mb": 290.82,
+          "pss_mb": 293.17
+        },
+        {
+          "i": 3400,
+          "rss_mb": 323.94,
+          "anonymous_mb": 290.83,
+          "pss_mb": 293.18
+        },
+        {
+          "i": 3500,
+          "rss_mb": 323.94,
+          "anonymous_mb": 290.83,
+          "pss_mb": 293.18
+        },
+        {
+          "i": 3600,
+          "rss_mb": 323.94,
+          "anonymous_mb": 290.83,
+          "pss_mb": 293.18
+        },
+        {
+          "i": 3700,
+          "rss_mb": 323.94,
+          "anonymous_mb": 290.83,
+          "pss_mb": 293.18
+        },
+        {
+          "i": 3800,
+          "rss_mb": 323.94,
+          "anonymous_mb": 290.83,
+          "pss_mb": 293.18
+        },
+        {
+          "i": 3900,
+          "rss_mb": 323.94,
+          "anonymous_mb": 290.83,
+          "pss_mb": 293.18
+        },
+        {
+          "i": 4000,
+          "rss_mb": 323.94,
+          "anonymous_mb": 290.83,
+          "pss_mb": 293.18
+        },
+        {
+          "i": 4100,
+          "rss_mb": 324.09,
+          "anonymous_mb": 290.98,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 4200,
+          "rss_mb": 324.09,
+          "anonymous_mb": 290.98,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 4300,
+          "rss_mb": 324.09,
+          "anonymous_mb": 290.98,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 4400,
+          "rss_mb": 324.09,
+          "anonymous_mb": 290.98,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 4500,
+          "rss_mb": 324.33,
+          "anonymous_mb": 291.21,
+          "pss_mb": 293.57
+        },
+        {
+          "i": 4600,
+          "rss_mb": 324.39,
+          "anonymous_mb": 291.28,
+          "pss_mb": 293.63
+        },
+        {
+          "i": 4700,
+          "rss_mb": 324.39,
+          "anonymous_mb": 291.28,
+          "pss_mb": 293.63
+        },
+        {
+          "i": 4800,
+          "rss_mb": 324.39,
+          "anonymous_mb": 291.28,
+          "pss_mb": 293.63
+        },
+        {
+          "i": 4900,
+          "rss_mb": 324.54,
+          "anonymous_mb": 291.43,
+          "pss_mb": 293.78
+        },
+        {
+          "i": 5000,
+          "rss_mb": 324.54,
+          "anonymous_mb": 291.43,
+          "pss_mb": 293.78
+        },
+        {
+          "i": 5100,
+          "rss_mb": 324.54,
+          "anonymous_mb": 291.43,
+          "pss_mb": 293.78
+        },
+        {
+          "i": 5200,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 5300,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 5400,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 5500,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 5600,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 5700,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 5800,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 5900,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 6000,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 6100,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 6200,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 6300,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 6400,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 6500,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 6600,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 6700,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 6800,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 6900,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 7000,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 7100,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 7200,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 7300,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 7400,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 7500,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 7600,
+          "rss_mb": 324.88,
+          "anonymous_mb": 291.77,
+          "pss_mb": 294.12
+        },
+        {
+          "i": 7700,
+          "rss_mb": 324.17,
+          "anonymous_mb": 291.06,
+          "pss_mb": 293.41
+        },
+        {
+          "i": 7800,
+          "rss_mb": 324.17,
+          "anonymous_mb": 291.06,
+          "pss_mb": 293.41
+        },
+        {
+          "i": 7900,
+          "rss_mb": 324.17,
+          "anonymous_mb": 291.06,
+          "pss_mb": 293.41
+        },
+        {
+          "i": 8000,
+          "rss_mb": 324.17,
+          "anonymous_mb": 291.06,
+          "pss_mb": 293.41
+        },
+        {
+          "i": 8100,
+          "rss_mb": 324.17,
+          "anonymous_mb": 291.06,
+          "pss_mb": 293.41
+        },
+        {
+          "i": 8200,
+          "rss_mb": 324.17,
+          "anonymous_mb": 291.06,
+          "pss_mb": 293.41
+        },
+        {
+          "i": 8300,
+          "rss_mb": 324.8,
+          "anonymous_mb": 291.69,
+          "pss_mb": 294.04
+        },
+        {
+          "i": 8400,
+          "rss_mb": 324.8,
+          "anonymous_mb": 291.69,
+          "pss_mb": 294.04
+        },
+        {
+          "i": 8500,
+          "rss_mb": 324.8,
+          "anonymous_mb": 291.69,
+          "pss_mb": 294.04
+        },
+        {
+          "i": 8600,
+          "rss_mb": 324.8,
+          "anonymous_mb": 291.69,
+          "pss_mb": 294.04
+        },
+        {
+          "i": 8700,
+          "rss_mb": 324.8,
+          "anonymous_mb": 291.69,
+          "pss_mb": 294.04
+        },
+        {
+          "i": 8800,
+          "rss_mb": 324.8,
+          "anonymous_mb": 291.69,
+          "pss_mb": 294.04
+        },
+        {
+          "i": 8900,
+          "rss_mb": 324.8,
+          "anonymous_mb": 291.69,
+          "pss_mb": 294.04
+        },
+        {
+          "i": 9000,
+          "rss_mb": 324.96,
+          "anonymous_mb": 291.85,
+          "pss_mb": 294.2
+        },
+        {
+          "i": 9100,
+          "rss_mb": 324.96,
+          "anonymous_mb": 291.85,
+          "pss_mb": 294.2
+        },
+        {
+          "i": 9200,
+          "rss_mb": 325.09,
+          "anonymous_mb": 291.97,
+          "pss_mb": 294.32
+        },
+        {
+          "i": 9300,
+          "rss_mb": 325.09,
+          "anonymous_mb": 291.97,
+          "pss_mb": 294.32
+        },
+        {
+          "i": 9400,
+          "rss_mb": 325.09,
+          "anonymous_mb": 291.97,
+          "pss_mb": 294.32
+        },
+        {
+          "i": 9500,
+          "rss_mb": 325.09,
+          "anonymous_mb": 291.97,
+          "pss_mb": 294.32
+        },
+        {
+          "i": 9600,
+          "rss_mb": 325.09,
+          "anonymous_mb": 291.97,
+          "pss_mb": 294.32
+        },
+        {
+          "i": 9700,
+          "rss_mb": 325.09,
+          "anonymous_mb": 291.97,
+          "pss_mb": 294.32
+        },
+        {
+          "i": 9800,
+          "rss_mb": 325.09,
+          "anonymous_mb": 291.97,
+          "pss_mb": 294.32
+        },
+        {
+          "i": 9900,
+          "rss_mb": 325.09,
+          "anonymous_mb": 291.97,
+          "pss_mb": 294.32
+        },
+        {
+          "i": 10000,
+          "rss_mb": 325.09,
+          "anonymous_mb": 291.97,
+          "pss_mb": 294.32
+        }
+      ],
+      "memory_flatness": {
+        "samples": 101,
+        "anonymous_mb_first": 86.7,
+        "anonymous_mb_last": 291.97,
+        "anonymous_mb_min": 86.7,
+        "anonymous_mb_max": 291.97,
+        "anonymous_mb_range": 205.27,
+        "anonymous_mb_drift": 205.27
       },
       "first_session": {
         "arm": "clawql_known_op",
         "ok": true,
-        "session_ms": 48.33775599952787,
+        "session_ms": 40.73411800060421,
         "steps": [
           {
             "step": 1,
@@ -679,7 +2535,7 @@
             "discoveryTokens": 0,
             "resultTokens": 41,
             "codeTokens": 20,
-            "latency_ms": 9.709596000611782,
+            "latency_ms": 7.61334399972111,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -693,7 +2549,7 @@
             "discoveryTokens": 0,
             "resultTokens": 18,
             "codeTokens": 12,
-            "latency_ms": 3.382196999154985,
+            "latency_ms": 3.7372359996661544,
             "check": {
               "ok": true
             },
@@ -706,7 +2562,7 @@
             "discoveryTokens": 0,
             "resultTokens": 9,
             "codeTokens": 6,
-            "latency_ms": 3.358928999863565,
+            "latency_ms": 2.9582739993929863,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -720,7 +2576,7 @@
             "discoveryTokens": 0,
             "resultTokens": 11,
             "codeTokens": 16,
-            "latency_ms": 3.802689000032842,
+            "latency_ms": 4.433900999836624,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -734,7 +2590,7 @@
             "discoveryTokens": 0,
             "resultTokens": 147,
             "codeTokens": 26,
-            "latency_ms": 3.6181149994954467,
+            "latency_ms": 4.4843370001763105,
             "check": {
               "ok": true,
               "label": "names"
@@ -748,7 +2604,7 @@
             "discoveryTokens": 0,
             "resultTokens": 40,
             "codeTokens": 36,
-            "latency_ms": 7.982874999754131,
+            "latency_ms": 3.327135999687016,
             "check": {
               "ok": true,
               "label": "unproxiedNames"
@@ -762,7 +2618,7 @@
             "discoveryTokens": 0,
             "resultTokens": 21,
             "codeTokens": 8,
-            "latency_ms": 3.190526000224054,
+            "latency_ms": 2.2525159996002913,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -776,7 +2632,7 @@
             "discoveryTokens": 0,
             "resultTokens": 16,
             "codeTokens": 10,
-            "latency_ms": 3.010098999366164,
+            "latency_ms": 2.4330779993906617,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -790,7 +2646,7 @@
             "discoveryTokens": 0,
             "resultTokens": 23,
             "codeTokens": 23,
-            "latency_ms": 3.5712440004572272,
+            "latency_ms": 2.691285999491811,
             "check": {
               "ok": true
             },
@@ -803,7 +2659,7 @@
             "discoveryTokens": 0,
             "resultTokens": 115,
             "codeTokens": 18,
-            "latency_ms": 2.447099999524653,
+            "latency_ms": 2.3862549997866154,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -817,7 +2673,7 @@
             "discoveryTokens": 0,
             "resultTokens": 11,
             "codeTokens": 16,
-            "latency_ms": 2.518836999312043,
+            "latency_ms": 2.66816100012511,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -855,14 +2711,14 @@
         "catalog_sqlite": "1"
       },
       "upstream": "mock",
-      "definition_tokens": 685,
+      "definition_tokens": 775,
       "discovery_tokens_mean": 0,
       "result_tokens_mean": 357,
       "code_tokens_mean": 811,
       "code_price_weight": 5,
-      "combined_mean": 1853,
-      "weighted_mean": 5097,
-      "combined_at_n": 11680685,
+      "combined_mean": 1943,
+      "weighted_mean": 5187,
+      "combined_at_n": 11680775,
       "rebuild_check": {
         "combined_mean_ok": true,
         "formula": "definition + discovery + result + code",
@@ -870,21 +2726,639 @@
       },
       "calls_mean": 1,
       "session_ms": {
-        "p50": 11.303996999748051,
-        "p99": 22.559798000380397,
-        "p999": 40.42317899968475,
+        "p50": 11.714309999719262,
+        "p99": 19.15417699981481,
+        "p999": 30.918593000620604,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 718.25,
-        "anonymous_mb_median": 639.48,
+        "rss_mb_median": 323.15,
+        "anonymous_mb_median": 290.6,
+        "pss_mb_median": 292.64,
         "samples": 5
+      },
+      "memory_series": [
+        {
+          "i": 1,
+          "rss_mb": 111.09,
+          "anonymous_mb": 78.56,
+          "pss_mb": 80.72
+        },
+        {
+          "i": 100,
+          "rss_mb": 152.99,
+          "anonymous_mb": 120.45,
+          "pss_mb": 122.61
+        },
+        {
+          "i": 200,
+          "rss_mb": 215.07,
+          "anonymous_mb": 182.53,
+          "pss_mb": 184.7
+        },
+        {
+          "i": 300,
+          "rss_mb": 278.62,
+          "anonymous_mb": 246.07,
+          "pss_mb": 248.24
+        },
+        {
+          "i": 400,
+          "rss_mb": 297.95,
+          "anonymous_mb": 265.4,
+          "pss_mb": 267.57
+        },
+        {
+          "i": 500,
+          "rss_mb": 300.72,
+          "anonymous_mb": 268.18,
+          "pss_mb": 270.34
+        },
+        {
+          "i": 600,
+          "rss_mb": 302.83,
+          "anonymous_mb": 270.29,
+          "pss_mb": 272.45
+        },
+        {
+          "i": 700,
+          "rss_mb": 311.64,
+          "anonymous_mb": 279.1,
+          "pss_mb": 281.27
+        },
+        {
+          "i": 800,
+          "rss_mb": 312.1,
+          "anonymous_mb": 279.55,
+          "pss_mb": 281.72
+        },
+        {
+          "i": 900,
+          "rss_mb": 312.24,
+          "anonymous_mb": 279.7,
+          "pss_mb": 281.86
+        },
+        {
+          "i": 1000,
+          "rss_mb": 312.31,
+          "anonymous_mb": 279.77,
+          "pss_mb": 281.93
+        },
+        {
+          "i": 1100,
+          "rss_mb": 312.73,
+          "anonymous_mb": 280.18,
+          "pss_mb": 282.35
+        },
+        {
+          "i": 1200,
+          "rss_mb": 315.32,
+          "anonymous_mb": 282.77,
+          "pss_mb": 284.94
+        },
+        {
+          "i": 1300,
+          "rss_mb": 315.46,
+          "anonymous_mb": 282.91,
+          "pss_mb": 285.08
+        },
+        {
+          "i": 1400,
+          "rss_mb": 315.55,
+          "anonymous_mb": 283,
+          "pss_mb": 285.17
+        },
+        {
+          "i": 1500,
+          "rss_mb": 316.54,
+          "anonymous_mb": 284,
+          "pss_mb": 286.16
+        },
+        {
+          "i": 1600,
+          "rss_mb": 316.15,
+          "anonymous_mb": 283.6,
+          "pss_mb": 285.77
+        },
+        {
+          "i": 1700,
+          "rss_mb": 315.21,
+          "anonymous_mb": 282.66,
+          "pss_mb": 284.83
+        },
+        {
+          "i": 1800,
+          "rss_mb": 315.96,
+          "anonymous_mb": 283.42,
+          "pss_mb": 285.58
+        },
+        {
+          "i": 1900,
+          "rss_mb": 315.8,
+          "anonymous_mb": 283.25,
+          "pss_mb": 285.42
+        },
+        {
+          "i": 2000,
+          "rss_mb": 316.97,
+          "anonymous_mb": 284.42,
+          "pss_mb": 286.59
+        },
+        {
+          "i": 2100,
+          "rss_mb": 315.8,
+          "anonymous_mb": 283.25,
+          "pss_mb": 285.42
+        },
+        {
+          "i": 2200,
+          "rss_mb": 316.35,
+          "anonymous_mb": 283.8,
+          "pss_mb": 285.97
+        },
+        {
+          "i": 2300,
+          "rss_mb": 315.79,
+          "anonymous_mb": 283.25,
+          "pss_mb": 285.41
+        },
+        {
+          "i": 2400,
+          "rss_mb": 315.9,
+          "anonymous_mb": 283.35,
+          "pss_mb": 285.52
+        },
+        {
+          "i": 2500,
+          "rss_mb": 315.79,
+          "anonymous_mb": 283.25,
+          "pss_mb": 285.41
+        },
+        {
+          "i": 2600,
+          "rss_mb": 316.3,
+          "anonymous_mb": 283.75,
+          "pss_mb": 285.92
+        },
+        {
+          "i": 2700,
+          "rss_mb": 318.66,
+          "anonymous_mb": 286.11,
+          "pss_mb": 288.28
+        },
+        {
+          "i": 2800,
+          "rss_mb": 316.49,
+          "anonymous_mb": 283.94,
+          "pss_mb": 286.11
+        },
+        {
+          "i": 2900,
+          "rss_mb": 322.8,
+          "anonymous_mb": 290.25,
+          "pss_mb": 292.42
+        },
+        {
+          "i": 3000,
+          "rss_mb": 322.98,
+          "anonymous_mb": 290.43,
+          "pss_mb": 292.6
+        },
+        {
+          "i": 3100,
+          "rss_mb": 322.98,
+          "anonymous_mb": 290.43,
+          "pss_mb": 292.6
+        },
+        {
+          "i": 3200,
+          "rss_mb": 323.93,
+          "anonymous_mb": 291.38,
+          "pss_mb": 293.55
+        },
+        {
+          "i": 3300,
+          "rss_mb": 322.76,
+          "anonymous_mb": 290.21,
+          "pss_mb": 292.38
+        },
+        {
+          "i": 3400,
+          "rss_mb": 324.23,
+          "anonymous_mb": 291.68,
+          "pss_mb": 293.85
+        },
+        {
+          "i": 3500,
+          "rss_mb": 323.9,
+          "anonymous_mb": 291.35,
+          "pss_mb": 293.52
+        },
+        {
+          "i": 3600,
+          "rss_mb": 323.71,
+          "anonymous_mb": 291.16,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 3700,
+          "rss_mb": 323.81,
+          "anonymous_mb": 291.27,
+          "pss_mb": 293.43
+        },
+        {
+          "i": 3800,
+          "rss_mb": 323.98,
+          "anonymous_mb": 291.44,
+          "pss_mb": 293.6
+        },
+        {
+          "i": 3900,
+          "rss_mb": 324.05,
+          "anonymous_mb": 291.51,
+          "pss_mb": 293.67
+        },
+        {
+          "i": 4000,
+          "rss_mb": 323.06,
+          "anonymous_mb": 290.52,
+          "pss_mb": 292.68
+        },
+        {
+          "i": 4100,
+          "rss_mb": 323.58,
+          "anonymous_mb": 291.03,
+          "pss_mb": 293.2
+        },
+        {
+          "i": 4200,
+          "rss_mb": 323.07,
+          "anonymous_mb": 290.52,
+          "pss_mb": 292.69
+        },
+        {
+          "i": 4300,
+          "rss_mb": 323.55,
+          "anonymous_mb": 291,
+          "pss_mb": 293.17
+        },
+        {
+          "i": 4400,
+          "rss_mb": 324.06,
+          "anonymous_mb": 291.51,
+          "pss_mb": 293.68
+        },
+        {
+          "i": 4500,
+          "rss_mb": 324.39,
+          "anonymous_mb": 291.85,
+          "pss_mb": 294.01
+        },
+        {
+          "i": 4600,
+          "rss_mb": 323.55,
+          "anonymous_mb": 291,
+          "pss_mb": 293.17
+        },
+        {
+          "i": 4700,
+          "rss_mb": 323.6,
+          "anonymous_mb": 291.05,
+          "pss_mb": 293.22
+        },
+        {
+          "i": 4800,
+          "rss_mb": 324.6,
+          "anonymous_mb": 292.05,
+          "pss_mb": 294.22
+        },
+        {
+          "i": 4900,
+          "rss_mb": 323.55,
+          "anonymous_mb": 291.01,
+          "pss_mb": 293.17
+        },
+        {
+          "i": 5000,
+          "rss_mb": 323.71,
+          "anonymous_mb": 291.16,
+          "pss_mb": 293.33
+        },
+        {
+          "i": 5100,
+          "rss_mb": 323.05,
+          "anonymous_mb": 290.5,
+          "pss_mb": 292.67
+        },
+        {
+          "i": 5200,
+          "rss_mb": 324.52,
+          "anonymous_mb": 291.97,
+          "pss_mb": 294.14
+        },
+        {
+          "i": 5300,
+          "rss_mb": 324.52,
+          "anonymous_mb": 291.97,
+          "pss_mb": 294.14
+        },
+        {
+          "i": 5400,
+          "rss_mb": 323.85,
+          "anonymous_mb": 291.3,
+          "pss_mb": 293.47
+        },
+        {
+          "i": 5500,
+          "rss_mb": 324.98,
+          "anonymous_mb": 292.43,
+          "pss_mb": 294.6
+        },
+        {
+          "i": 5600,
+          "rss_mb": 324.86,
+          "anonymous_mb": 292.31,
+          "pss_mb": 294.48
+        },
+        {
+          "i": 5700,
+          "rss_mb": 323.22,
+          "anonymous_mb": 290.68,
+          "pss_mb": 292.84
+        },
+        {
+          "i": 5800,
+          "rss_mb": 323.73,
+          "anonymous_mb": 291.18,
+          "pss_mb": 293.35
+        },
+        {
+          "i": 5900,
+          "rss_mb": 325.19,
+          "anonymous_mb": 292.64,
+          "pss_mb": 294.81
+        },
+        {
+          "i": 6000,
+          "rss_mb": 323.48,
+          "anonymous_mb": 290.93,
+          "pss_mb": 293.1
+        },
+        {
+          "i": 6100,
+          "rss_mb": 323.25,
+          "anonymous_mb": 290.71,
+          "pss_mb": 292.87
+        },
+        {
+          "i": 6200,
+          "rss_mb": 323.92,
+          "anonymous_mb": 291.37,
+          "pss_mb": 293.54
+        },
+        {
+          "i": 6300,
+          "rss_mb": 323.36,
+          "anonymous_mb": 290.81,
+          "pss_mb": 292.98
+        },
+        {
+          "i": 6400,
+          "rss_mb": 324.93,
+          "anonymous_mb": 292.38,
+          "pss_mb": 294.55
+        },
+        {
+          "i": 6500,
+          "rss_mb": 323.36,
+          "anonymous_mb": 290.81,
+          "pss_mb": 292.98
+        },
+        {
+          "i": 6600,
+          "rss_mb": 323.36,
+          "anonymous_mb": 290.81,
+          "pss_mb": 292.98
+        },
+        {
+          "i": 6700,
+          "rss_mb": 323.36,
+          "anonymous_mb": 290.81,
+          "pss_mb": 292.98
+        },
+        {
+          "i": 6800,
+          "rss_mb": 323.36,
+          "anonymous_mb": 290.81,
+          "pss_mb": 292.98
+        },
+        {
+          "i": 6900,
+          "rss_mb": 324.2,
+          "anonymous_mb": 291.65,
+          "pss_mb": 293.82
+        },
+        {
+          "i": 7000,
+          "rss_mb": 325.32,
+          "anonymous_mb": 292.78,
+          "pss_mb": 294.94
+        },
+        {
+          "i": 7100,
+          "rss_mb": 324.2,
+          "anonymous_mb": 291.66,
+          "pss_mb": 293.82
+        },
+        {
+          "i": 7200,
+          "rss_mb": 325.33,
+          "anonymous_mb": 292.79,
+          "pss_mb": 294.95
+        },
+        {
+          "i": 7300,
+          "rss_mb": 325.21,
+          "anonymous_mb": 292.66,
+          "pss_mb": 294.83
+        },
+        {
+          "i": 7400,
+          "rss_mb": 325.57,
+          "anonymous_mb": 293.03,
+          "pss_mb": 295.19
+        },
+        {
+          "i": 7500,
+          "rss_mb": 323.41,
+          "anonymous_mb": 290.86,
+          "pss_mb": 293.03
+        },
+        {
+          "i": 7600,
+          "rss_mb": 322.9,
+          "anonymous_mb": 290.35,
+          "pss_mb": 292.52
+        },
+        {
+          "i": 7700,
+          "rss_mb": 322.35,
+          "anonymous_mb": 289.8,
+          "pss_mb": 291.97
+        },
+        {
+          "i": 7800,
+          "rss_mb": 322.58,
+          "anonymous_mb": 290.04,
+          "pss_mb": 292.2
+        },
+        {
+          "i": 7900,
+          "rss_mb": 323.27,
+          "anonymous_mb": 290.72,
+          "pss_mb": 292.89
+        },
+        {
+          "i": 8000,
+          "rss_mb": 323.27,
+          "anonymous_mb": 290.72,
+          "pss_mb": 292.89
+        },
+        {
+          "i": 8100,
+          "rss_mb": 323.89,
+          "anonymous_mb": 291.34,
+          "pss_mb": 293.51
+        },
+        {
+          "i": 8200,
+          "rss_mb": 322.45,
+          "anonymous_mb": 289.9,
+          "pss_mb": 292.07
+        },
+        {
+          "i": 8300,
+          "rss_mb": 322.02,
+          "anonymous_mb": 289.48,
+          "pss_mb": 291.64
+        },
+        {
+          "i": 8400,
+          "rss_mb": 321.8,
+          "anonymous_mb": 289.25,
+          "pss_mb": 291.42
+        },
+        {
+          "i": 8500,
+          "rss_mb": 324.55,
+          "anonymous_mb": 292,
+          "pss_mb": 294.17
+        },
+        {
+          "i": 8600,
+          "rss_mb": 322.51,
+          "anonymous_mb": 289.96,
+          "pss_mb": 292.13
+        },
+        {
+          "i": 8700,
+          "rss_mb": 322.23,
+          "anonymous_mb": 289.69,
+          "pss_mb": 291.85
+        },
+        {
+          "i": 8800,
+          "rss_mb": 322.23,
+          "anonymous_mb": 289.69,
+          "pss_mb": 291.85
+        },
+        {
+          "i": 8900,
+          "rss_mb": 324.27,
+          "anonymous_mb": 291.72,
+          "pss_mb": 293.89
+        },
+        {
+          "i": 9000,
+          "rss_mb": 323.13,
+          "anonymous_mb": 290.59,
+          "pss_mb": 292.75
+        },
+        {
+          "i": 9100,
+          "rss_mb": 323.33,
+          "anonymous_mb": 290.79,
+          "pss_mb": 293.1
+        },
+        {
+          "i": 9200,
+          "rss_mb": 325.17,
+          "anonymous_mb": 292.63,
+          "pss_mb": 294.94
+        },
+        {
+          "i": 9300,
+          "rss_mb": 323.15,
+          "anonymous_mb": 290.61,
+          "pss_mb": 292.92
+        },
+        {
+          "i": 9400,
+          "rss_mb": 323.37,
+          "anonymous_mb": 290.82,
+          "pss_mb": 293.14
+        },
+        {
+          "i": 9500,
+          "rss_mb": 323.38,
+          "anonymous_mb": 290.84,
+          "pss_mb": 293.15
+        },
+        {
+          "i": 9600,
+          "rss_mb": 324.1,
+          "anonymous_mb": 291.55,
+          "pss_mb": 293.87
+        },
+        {
+          "i": 9700,
+          "rss_mb": 322.65,
+          "anonymous_mb": 290.1,
+          "pss_mb": 292.41
+        },
+        {
+          "i": 9800,
+          "rss_mb": 323.27,
+          "anonymous_mb": 290.72,
+          "pss_mb": 292.9
+        },
+        {
+          "i": 9900,
+          "rss_mb": 323.14,
+          "anonymous_mb": 290.6,
+          "pss_mb": 292.47
+        },
+        {
+          "i": 10000,
+          "rss_mb": 323.15,
+          "anonymous_mb": 290.6,
+          "pss_mb": 292.64
+        }
+      ],
+      "memory_flatness": {
+        "samples": 101,
+        "anonymous_mb_first": 78.56,
+        "anonymous_mb_last": 290.6,
+        "anonymous_mb_min": 78.56,
+        "anonymous_mb_max": 293.03,
+        "anonymous_mb_range": 214.47,
+        "anonymous_mb_drift": 212.04
       },
       "first_session": {
         "arm": "clawql_program",
         "ok": true,
-        "session_ms": 46.03928200062364,
+        "session_ms": 41.73643700033426,
         "steps": [
           {
             "step": 1,
@@ -892,7 +3366,7 @@
             "discoveryTokens": 0,
             "resultTokens": 37,
             "codeTokens": 811,
-            "latency_ms": 44.43256499990821,
+            "latency_ms": 39.669866000302136,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -1054,9 +3528,9 @@
         "model": "openapi_tools_host_http",
         "app_slug": "cf-zone-audit-mock",
         "app_id": "app_ead4ce53-9b2f-4b74-b5a6-b876e3b639cf",
-        "deployment": "dpl_c7b3b33d-f2ba-4e56-b9d3-80dd185b542b",
+        "deployment": "dpl_8872cb01-ec24-44d9-901c-2fbc2de2bc94",
         "framework": "0.0.1-beta.81",
-        "mock_origin": "http://127.0.0.1:36945"
+        "mock_origin": "http://127.0.0.1:35605"
       },
       "upstream": "mock",
       "definition_tokens": 181,
@@ -1074,17 +3548,19 @@
       },
       "calls_mean": 12,
       "session_ms": {
-        "p50": 224.40696499869227,
-        "p99": 339.3682939996943,
-        "p999": 747.6642920002341,
+        "p50": 227.0199520001188,
+        "p99": 518.9919779999182,
+        "p999": 796.5444630011916,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": null,
+      "memory_series": [],
+      "memory_flatness": null,
       "first_session": {
         "arm": "executor_v2",
         "ok": true,
-        "session_ms": 932.4030249994248,
+        "session_ms": 885.0095950001851,
         "steps": [
           {
             "step": 1,
@@ -1092,7 +3568,7 @@
             "discoveryTokens": 0,
             "resultTokens": 37,
             "codeTokens": 42,
-            "latency_ms": 390.22209899965674,
+            "latency_ms": 495.0455879997462,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -1106,7 +3582,7 @@
             "discoveryTokens": 0,
             "resultTokens": 11,
             "codeTokens": 77,
-            "latency_ms": 40.2047480000183,
+            "latency_ms": 42.10711800027639,
             "check": {
               "ok": true
             },
@@ -1119,7 +3595,7 @@
             "discoveryTokens": 0,
             "resultTokens": 5,
             "codeTokens": 77,
-            "latency_ms": 34.698309999890625,
+            "latency_ms": 39.28331100009382,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -1133,7 +3609,7 @@
             "discoveryTokens": 0,
             "resultTokens": 7,
             "codeTokens": 90,
-            "latency_ms": 53.52450000029057,
+            "latency_ms": 58.28245799988508,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -1147,7 +3623,7 @@
             "discoveryTokens": 0,
             "resultTokens": 114,
             "codeTokens": 106,
-            "latency_ms": 48.943399999290705,
+            "latency_ms": 48.34821600001305,
             "check": {
               "ok": true,
               "label": "names"
@@ -1161,7 +3637,7 @@
             "discoveryTokens": 0,
             "resultTokens": 29,
             "codeTokens": 117,
-            "latency_ms": 43.13677000068128,
+            "latency_ms": 44.513739000074565,
             "check": {
               "ok": true,
               "label": "unproxiedNames"
@@ -1175,7 +3651,7 @@
             "discoveryTokens": 0,
             "resultTokens": 11,
             "codeTokens": 76,
-            "latency_ms": 27.211041999980807,
+            "latency_ms": 36.18499400001019,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -1189,7 +3665,7 @@
             "discoveryTokens": 0,
             "resultTokens": 12,
             "codeTokens": 80,
-            "latency_ms": 50.90199999976903,
+            "latency_ms": 26.377816999331117,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -1203,7 +3679,7 @@
             "discoveryTokens": 0,
             "resultTokens": 16,
             "codeTokens": 90,
-            "latency_ms": 28.6428789999336,
+            "latency_ms": 34.024981000460684,
             "check": {
               "ok": true
             },
@@ -1216,7 +3692,7 @@
             "discoveryTokens": 0,
             "resultTokens": 80,
             "codeTokens": 89,
-            "latency_ms": 179.60302400030196,
+            "latency_ms": 25.994372999295592,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -1230,7 +3706,7 @@
             "discoveryTokens": 0,
             "resultTokens": 7,
             "codeTokens": 84,
-            "latency_ms": 27.898646999150515,
+            "latency_ms": 25.651713999919593,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -1244,7 +3720,7 @@
             "discoveryTokens": 0,
             "resultTokens": 28,
             "codeTokens": 30,
-            "latency_ms": 3.9649900002405047,
+            "latency_ms": 5.013229999691248,
             "check": {
               "ok": true
             },
@@ -1279,21 +3755,639 @@
       },
       "calls_mean": 9,
       "session_ms": {
-        "p50": 49.93357500061393,
-        "p99": 65.13888300023973,
-        "p999": 82.67501600086689,
+        "p50": 51.31745900027454,
+        "p99": 80.35587699897587,
+        "p999": 118.42590899951756,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 172.55,
-        "anonymous_mb_median": 102.47,
+        "rss_mb_median": 166.65,
+        "anonymous_mb_median": 102.07,
+        "pss_mb_median": 124.03,
         "samples": 5
+      },
+      "memory_series": [
+        {
+          "i": 1,
+          "rss_mb": 107.09,
+          "anonymous_mb": 43.5,
+          "pss_mb": 66.87
+        },
+        {
+          "i": 100,
+          "rss_mb": 150.31,
+          "anonymous_mb": 86.66,
+          "pss_mb": 110.03
+        },
+        {
+          "i": 200,
+          "rss_mb": 160.44,
+          "anonymous_mb": 96.63,
+          "pss_mb": 120.16
+        },
+        {
+          "i": 300,
+          "rss_mb": 164.46,
+          "anonymous_mb": 100.65,
+          "pss_mb": 124.18
+        },
+        {
+          "i": 400,
+          "rss_mb": 164.94,
+          "anonymous_mb": 101.05,
+          "pss_mb": 124.66
+        },
+        {
+          "i": 500,
+          "rss_mb": 164.9,
+          "anonymous_mb": 101.01,
+          "pss_mb": 124.62
+        },
+        {
+          "i": 600,
+          "rss_mb": 165.23,
+          "anonymous_mb": 101.35,
+          "pss_mb": 124.96
+        },
+        {
+          "i": 700,
+          "rss_mb": 165.48,
+          "anonymous_mb": 101.59,
+          "pss_mb": 125.2
+        },
+        {
+          "i": 800,
+          "rss_mb": 165.2,
+          "anonymous_mb": 101.31,
+          "pss_mb": 124.92
+        },
+        {
+          "i": 900,
+          "rss_mb": 165.88,
+          "anonymous_mb": 101.99,
+          "pss_mb": 125.59
+        },
+        {
+          "i": 1000,
+          "rss_mb": 165.93,
+          "anonymous_mb": 102.04,
+          "pss_mb": 125.65
+        },
+        {
+          "i": 1100,
+          "rss_mb": 165.48,
+          "anonymous_mb": 101.56,
+          "pss_mb": 125.2
+        },
+        {
+          "i": 1200,
+          "rss_mb": 165.84,
+          "anonymous_mb": 101.92,
+          "pss_mb": 125.56
+        },
+        {
+          "i": 1300,
+          "rss_mb": 164.89,
+          "anonymous_mb": 100.97,
+          "pss_mb": 124.61
+        },
+        {
+          "i": 1400,
+          "rss_mb": 166.2,
+          "anonymous_mb": 102.16,
+          "pss_mb": 125.92
+        },
+        {
+          "i": 1500,
+          "rss_mb": 165.06,
+          "anonymous_mb": 101.02,
+          "pss_mb": 124.78
+        },
+        {
+          "i": 1600,
+          "rss_mb": 165.87,
+          "anonymous_mb": 101.78,
+          "pss_mb": 125.59
+        },
+        {
+          "i": 1700,
+          "rss_mb": 165.94,
+          "anonymous_mb": 101.85,
+          "pss_mb": 125.66
+        },
+        {
+          "i": 1800,
+          "rss_mb": 165.74,
+          "anonymous_mb": 101.65,
+          "pss_mb": 125.46
+        },
+        {
+          "i": 1900,
+          "rss_mb": 165.48,
+          "anonymous_mb": 101.39,
+          "pss_mb": 125.2
+        },
+        {
+          "i": 2000,
+          "rss_mb": 166.77,
+          "anonymous_mb": 102.68,
+          "pss_mb": 126.49
+        },
+        {
+          "i": 2100,
+          "rss_mb": 166.36,
+          "anonymous_mb": 102.27,
+          "pss_mb": 126.08
+        },
+        {
+          "i": 2200,
+          "rss_mb": 165.87,
+          "anonymous_mb": 101.79,
+          "pss_mb": 125.59
+        },
+        {
+          "i": 2300,
+          "rss_mb": 164.86,
+          "anonymous_mb": 100.78,
+          "pss_mb": 124.58
+        },
+        {
+          "i": 2400,
+          "rss_mb": 166.19,
+          "anonymous_mb": 102.07,
+          "pss_mb": 125.91
+        },
+        {
+          "i": 2500,
+          "rss_mb": 166.15,
+          "anonymous_mb": 102.03,
+          "pss_mb": 125.87
+        },
+        {
+          "i": 2600,
+          "rss_mb": 165.84,
+          "anonymous_mb": 101.71,
+          "pss_mb": 125.56
+        },
+        {
+          "i": 2700,
+          "rss_mb": 166.21,
+          "anonymous_mb": 102.08,
+          "pss_mb": 125.93
+        },
+        {
+          "i": 2800,
+          "rss_mb": 165.88,
+          "anonymous_mb": 101.75,
+          "pss_mb": 125.6
+        },
+        {
+          "i": 2900,
+          "rss_mb": 165.7,
+          "anonymous_mb": 101.58,
+          "pss_mb": 125.42
+        },
+        {
+          "i": 3000,
+          "rss_mb": 165.04,
+          "anonymous_mb": 100.92,
+          "pss_mb": 124.76
+        },
+        {
+          "i": 3100,
+          "rss_mb": 166.25,
+          "anonymous_mb": 102.13,
+          "pss_mb": 125.97
+        },
+        {
+          "i": 3200,
+          "rss_mb": 165.21,
+          "anonymous_mb": 101.09,
+          "pss_mb": 124.93
+        },
+        {
+          "i": 3300,
+          "rss_mb": 165.19,
+          "anonymous_mb": 101.06,
+          "pss_mb": 124.91
+        },
+        {
+          "i": 3400,
+          "rss_mb": 165.71,
+          "anonymous_mb": 101.48,
+          "pss_mb": 125.43
+        },
+        {
+          "i": 3500,
+          "rss_mb": 165.5,
+          "anonymous_mb": 101.28,
+          "pss_mb": 125.22
+        },
+        {
+          "i": 3600,
+          "rss_mb": 165.49,
+          "anonymous_mb": 101.27,
+          "pss_mb": 125.21
+        },
+        {
+          "i": 3700,
+          "rss_mb": 165.8,
+          "anonymous_mb": 101.53,
+          "pss_mb": 125.52
+        },
+        {
+          "i": 3800,
+          "rss_mb": 166.72,
+          "anonymous_mb": 102.45,
+          "pss_mb": 126.44
+        },
+        {
+          "i": 3900,
+          "rss_mb": 166.16,
+          "anonymous_mb": 101.89,
+          "pss_mb": 125.88
+        },
+        {
+          "i": 4000,
+          "rss_mb": 165.55,
+          "anonymous_mb": 101.29,
+          "pss_mb": 125.28
+        },
+        {
+          "i": 4100,
+          "rss_mb": 165.68,
+          "anonymous_mb": 101.41,
+          "pss_mb": 125.41
+        },
+        {
+          "i": 4200,
+          "rss_mb": 166.25,
+          "anonymous_mb": 101.98,
+          "pss_mb": 125.98
+        },
+        {
+          "i": 4300,
+          "rss_mb": 165.75,
+          "anonymous_mb": 101.43,
+          "pss_mb": 125.48
+        },
+        {
+          "i": 4400,
+          "rss_mb": 165.99,
+          "anonymous_mb": 101.61,
+          "pss_mb": 125.71
+        },
+        {
+          "i": 4500,
+          "rss_mb": 166.06,
+          "anonymous_mb": 101.68,
+          "pss_mb": 125.78
+        },
+        {
+          "i": 4600,
+          "rss_mb": 166.34,
+          "anonymous_mb": 101.95,
+          "pss_mb": 126.06
+        },
+        {
+          "i": 4700,
+          "rss_mb": 166.7,
+          "anonymous_mb": 102.31,
+          "pss_mb": 123
+        },
+        {
+          "i": 4800,
+          "rss_mb": 165.64,
+          "anonymous_mb": 101.26,
+          "pss_mb": 113.89
+        },
+        {
+          "i": 4900,
+          "rss_mb": 166.7,
+          "anonymous_mb": 102.31,
+          "pss_mb": 114.94
+        },
+        {
+          "i": 5000,
+          "rss_mb": 165.32,
+          "anonymous_mb": 100.94,
+          "pss_mb": 113.57
+        },
+        {
+          "i": 5100,
+          "rss_mb": 166.26,
+          "anonymous_mb": 101.87,
+          "pss_mb": 114.5
+        },
+        {
+          "i": 5200,
+          "rss_mb": 166.67,
+          "anonymous_mb": 102.29,
+          "pss_mb": 114.92
+        },
+        {
+          "i": 5300,
+          "rss_mb": 165.76,
+          "anonymous_mb": 101.38,
+          "pss_mb": 114
+        },
+        {
+          "i": 5400,
+          "rss_mb": 166.34,
+          "anonymous_mb": 101.96,
+          "pss_mb": 114.59
+        },
+        {
+          "i": 5500,
+          "rss_mb": 166.25,
+          "anonymous_mb": 101.86,
+          "pss_mb": 114.49
+        },
+        {
+          "i": 5600,
+          "rss_mb": 166.32,
+          "anonymous_mb": 101.93,
+          "pss_mb": 114.56
+        },
+        {
+          "i": 5700,
+          "rss_mb": 166.36,
+          "anonymous_mb": 101.97,
+          "pss_mb": 114.6
+        },
+        {
+          "i": 5800,
+          "rss_mb": 166.31,
+          "anonymous_mb": 101.93,
+          "pss_mb": 114.56
+        },
+        {
+          "i": 5900,
+          "rss_mb": 166.09,
+          "anonymous_mb": 101.7,
+          "pss_mb": 114.33
+        },
+        {
+          "i": 6000,
+          "rss_mb": 166.3,
+          "anonymous_mb": 101.88,
+          "pss_mb": 126.02
+        },
+        {
+          "i": 6100,
+          "rss_mb": 165.86,
+          "anonymous_mb": 101.44,
+          "pss_mb": 125.58
+        },
+        {
+          "i": 6200,
+          "rss_mb": 165.82,
+          "anonymous_mb": 101.37,
+          "pss_mb": 125.54
+        },
+        {
+          "i": 6300,
+          "rss_mb": 166.45,
+          "anonymous_mb": 102,
+          "pss_mb": 126.17
+        },
+        {
+          "i": 6400,
+          "rss_mb": 166.28,
+          "anonymous_mb": 101.83,
+          "pss_mb": 126
+        },
+        {
+          "i": 6500,
+          "rss_mb": 166.07,
+          "anonymous_mb": 101.62,
+          "pss_mb": 125.79
+        },
+        {
+          "i": 6600,
+          "rss_mb": 165.9,
+          "anonymous_mb": 101.45,
+          "pss_mb": 125.62
+        },
+        {
+          "i": 6700,
+          "rss_mb": 165.98,
+          "anonymous_mb": 101.54,
+          "pss_mb": 125.7
+        },
+        {
+          "i": 6800,
+          "rss_mb": 165.95,
+          "anonymous_mb": 101.5,
+          "pss_mb": 125.67
+        },
+        {
+          "i": 6900,
+          "rss_mb": 166.06,
+          "anonymous_mb": 101.61,
+          "pss_mb": 125.78
+        },
+        {
+          "i": 7000,
+          "rss_mb": 166.49,
+          "anonymous_mb": 102.04,
+          "pss_mb": 126.21
+        },
+        {
+          "i": 7100,
+          "rss_mb": 165.76,
+          "anonymous_mb": 101.31,
+          "pss_mb": 125.48
+        },
+        {
+          "i": 7200,
+          "rss_mb": 165.79,
+          "anonymous_mb": 101.34,
+          "pss_mb": 125.5
+        },
+        {
+          "i": 7300,
+          "rss_mb": 165.66,
+          "anonymous_mb": 101.18,
+          "pss_mb": 124.12
+        },
+        {
+          "i": 7400,
+          "rss_mb": 166.36,
+          "anonymous_mb": 101.88,
+          "pss_mb": 126.07
+        },
+        {
+          "i": 7500,
+          "rss_mb": 166.21,
+          "anonymous_mb": 101.68,
+          "pss_mb": 125.93
+        },
+        {
+          "i": 7600,
+          "rss_mb": 166.37,
+          "anonymous_mb": 101.84,
+          "pss_mb": 126.09
+        },
+        {
+          "i": 7700,
+          "rss_mb": 166.39,
+          "anonymous_mb": 101.86,
+          "pss_mb": 126.11
+        },
+        {
+          "i": 7800,
+          "rss_mb": 166.11,
+          "anonymous_mb": 101.58,
+          "pss_mb": 125.83
+        },
+        {
+          "i": 7900,
+          "rss_mb": 167.02,
+          "anonymous_mb": 102.49,
+          "pss_mb": 126.74
+        },
+        {
+          "i": 8000,
+          "rss_mb": 166.39,
+          "anonymous_mb": 101.84,
+          "pss_mb": 123.14
+        },
+        {
+          "i": 8100,
+          "rss_mb": 165.93,
+          "anonymous_mb": 101.38,
+          "pss_mb": 122.68
+        },
+        {
+          "i": 8200,
+          "rss_mb": 166.49,
+          "anonymous_mb": 101.94,
+          "pss_mb": 123.24
+        },
+        {
+          "i": 8300,
+          "rss_mb": 166.7,
+          "anonymous_mb": 102.14,
+          "pss_mb": 123.44
+        },
+        {
+          "i": 8400,
+          "rss_mb": 166.41,
+          "anonymous_mb": 101.86,
+          "pss_mb": 123.15
+        },
+        {
+          "i": 8500,
+          "rss_mb": 166.4,
+          "anonymous_mb": 101.85,
+          "pss_mb": 123.15
+        },
+        {
+          "i": 8600,
+          "rss_mb": 167.76,
+          "anonymous_mb": 103.21,
+          "pss_mb": 124.5
+        },
+        {
+          "i": 8700,
+          "rss_mb": 166.84,
+          "anonymous_mb": 102.29,
+          "pss_mb": 123.59
+        },
+        {
+          "i": 8800,
+          "rss_mb": 166.88,
+          "anonymous_mb": 102.29,
+          "pss_mb": 123.63
+        },
+        {
+          "i": 8900,
+          "rss_mb": 168.44,
+          "anonymous_mb": 103.86,
+          "pss_mb": 125.19
+        },
+        {
+          "i": 9000,
+          "rss_mb": 165.98,
+          "anonymous_mb": 101.4,
+          "pss_mb": 122.73
+        },
+        {
+          "i": 9100,
+          "rss_mb": 166.78,
+          "anonymous_mb": 102.2,
+          "pss_mb": 123.53
+        },
+        {
+          "i": 9200,
+          "rss_mb": 166,
+          "anonymous_mb": 101.42,
+          "pss_mb": 122.75
+        },
+        {
+          "i": 9300,
+          "rss_mb": 165.8,
+          "anonymous_mb": 101.22,
+          "pss_mb": 123.19
+        },
+        {
+          "i": 9400,
+          "rss_mb": 166.09,
+          "anonymous_mb": 101.51,
+          "pss_mb": 123.47
+        },
+        {
+          "i": 9500,
+          "rss_mb": 165.78,
+          "anonymous_mb": 101.19,
+          "pss_mb": 123.16
+        },
+        {
+          "i": 9600,
+          "rss_mb": 166.84,
+          "anonymous_mb": 102.25,
+          "pss_mb": 124.22
+        },
+        {
+          "i": 9700,
+          "rss_mb": 166,
+          "anonymous_mb": 101.41,
+          "pss_mb": 123.38
+        },
+        {
+          "i": 9800,
+          "rss_mb": 166.48,
+          "anonymous_mb": 101.89,
+          "pss_mb": 123.86
+        },
+        {
+          "i": 9900,
+          "rss_mb": 166.65,
+          "anonymous_mb": 102.07,
+          "pss_mb": 124.03
+        },
+        {
+          "i": 10000,
+          "rss_mb": 167.83,
+          "anonymous_mb": 103.24,
+          "pss_mb": 125.21
+        }
+      ],
+      "memory_flatness": {
+        "samples": 101,
+        "anonymous_mb_first": 43.5,
+        "anonymous_mb_last": 103.24,
+        "anonymous_mb_min": 43.5,
+        "anonymous_mb_max": 103.86,
+        "anonymous_mb_range": 60.36,
+        "anonymous_mb_drift": 59.74
       },
       "first_session": {
         "arm": "mcpjungle",
         "ok": true,
-        "session_ms": 249.7979380004108,
+        "session_ms": 279.9968069996685,
         "steps": [
           {
             "step": 1,
@@ -1301,7 +4395,7 @@
             "discoveryTokens": 0,
             "resultTokens": 384,
             "codeTokens": 0,
-            "latency_ms": 186.06997299939394,
+            "latency_ms": 196.28124400041997,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -1314,7 +4408,7 @@
             "discoveryTokens": 0,
             "resultTokens": 273,
             "codeTokens": 0,
-            "latency_ms": 3.7453259993344545,
+            "latency_ms": 3.171876000240445,
             "check": {
               "ok": true
             },
@@ -1326,7 +4420,7 @@
             "discoveryTokens": 0,
             "resultTokens": 44,
             "codeTokens": 0,
-            "latency_ms": 2.7561530005186796,
+            "latency_ms": 2.5773239992558956,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -1339,7 +4433,7 @@
             "discoveryTokens": 0,
             "resultTokens": 45668,
             "codeTokens": 0,
-            "latency_ms": 8.151266999542713,
+            "latency_ms": 10.843692999333143,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -1376,7 +4470,7 @@
             "discoveryTokens": 0,
             "resultTokens": 144,
             "codeTokens": 0,
-            "latency_ms": 4.443034000694752,
+            "latency_ms": 5.7546410001814365,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -1389,7 +4483,7 @@
             "discoveryTokens": 0,
             "resultTokens": 55,
             "codeTokens": 0,
-            "latency_ms": 2.5917019993066788,
+            "latency_ms": 2.428660999983549,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -1402,7 +4496,7 @@
             "discoveryTokens": 0,
             "resultTokens": 87,
             "codeTokens": 0,
-            "latency_ms": 2.3311430010944605,
+            "latency_ms": 2.198580998927355,
             "check": {
               "ok": true
             },
@@ -1414,7 +4508,7 @@
             "discoveryTokens": 0,
             "resultTokens": 108,
             "codeTokens": 0,
-            "latency_ms": 1.8222830016165972,
+            "latency_ms": 2.052852999418974,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -1427,7 +4521,7 @@
             "discoveryTokens": 0,
             "resultTokens": 570,
             "codeTokens": 0,
-            "latency_ms": 3.133983999490738,
+            "latency_ms": 3.212263999506831,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -1473,21 +4567,639 @@
       },
       "calls_mean": 9,
       "session_ms": {
-        "p50": 48.477231001481414,
-        "p99": 57.813603000715375,
-        "p999": 73.53800299949944,
+        "p50": 50.49033300019801,
+        "p99": 97.84371500089765,
+        "p999": 1663.9513689987361,
         "comparable": true,
         "note": "upstream=mock (same replay fixture as peers)"
       },
       "memory_plateau": {
-        "rss_mb_median": 171.57,
-        "anonymous_mb_median": 98.49,
+        "rss_mb_median": 115.56,
+        "anonymous_mb_median": 83.07,
+        "pss_mb_median": 99.28,
         "samples": 5
+      },
+      "memory_series": [
+        {
+          "i": 1,
+          "rss_mb": 107.41,
+          "anonymous_mb": 38.91,
+          "pss_mb": 64.21
+        },
+        {
+          "i": 100,
+          "rss_mb": 151.69,
+          "anonymous_mb": 83.13,
+          "pss_mb": 107.97
+        },
+        {
+          "i": 200,
+          "rss_mb": 161.94,
+          "anonymous_mb": 93.38,
+          "pss_mb": 118.22
+        },
+        {
+          "i": 300,
+          "rss_mb": 165.04,
+          "anonymous_mb": 96.47,
+          "pss_mb": 121.31
+        },
+        {
+          "i": 400,
+          "rss_mb": 167.95,
+          "anonymous_mb": 99.38,
+          "pss_mb": 124.23
+        },
+        {
+          "i": 500,
+          "rss_mb": 167.75,
+          "anonymous_mb": 99.18,
+          "pss_mb": 124.03
+        },
+        {
+          "i": 600,
+          "rss_mb": 167.73,
+          "anonymous_mb": 99.16,
+          "pss_mb": 124.01
+        },
+        {
+          "i": 700,
+          "rss_mb": 167.66,
+          "anonymous_mb": 99.1,
+          "pss_mb": 125.91
+        },
+        {
+          "i": 800,
+          "rss_mb": 167.55,
+          "anonymous_mb": 98.99,
+          "pss_mb": 125.8
+        },
+        {
+          "i": 900,
+          "rss_mb": 167.66,
+          "anonymous_mb": 99.09,
+          "pss_mb": 125.9
+        },
+        {
+          "i": 1000,
+          "rss_mb": 167.6,
+          "anonymous_mb": 99.03,
+          "pss_mb": 125.84
+        },
+        {
+          "i": 1100,
+          "rss_mb": 167.63,
+          "anonymous_mb": 99.07,
+          "pss_mb": 125.88
+        },
+        {
+          "i": 1200,
+          "rss_mb": 167.63,
+          "anonymous_mb": 99.06,
+          "pss_mb": 125.87
+        },
+        {
+          "i": 1300,
+          "rss_mb": 167.64,
+          "anonymous_mb": 99.07,
+          "pss_mb": 125.88
+        },
+        {
+          "i": 1400,
+          "rss_mb": 167.59,
+          "anonymous_mb": 99.03,
+          "pss_mb": 125.84
+        },
+        {
+          "i": 1500,
+          "rss_mb": 167.6,
+          "anonymous_mb": 99.04,
+          "pss_mb": 125.84
+        },
+        {
+          "i": 1600,
+          "rss_mb": 167.7,
+          "anonymous_mb": 99.13,
+          "pss_mb": 125.94
+        },
+        {
+          "i": 1700,
+          "rss_mb": 166.95,
+          "anonymous_mb": 98.38,
+          "pss_mb": 125.19
+        },
+        {
+          "i": 1800,
+          "rss_mb": 166.88,
+          "anonymous_mb": 98.31,
+          "pss_mb": 125.12
+        },
+        {
+          "i": 1900,
+          "rss_mb": 167.53,
+          "anonymous_mb": 98.96,
+          "pss_mb": 125.77
+        },
+        {
+          "i": 2000,
+          "rss_mb": 167.59,
+          "anonymous_mb": 99.02,
+          "pss_mb": 125.83
+        },
+        {
+          "i": 2100,
+          "rss_mb": 167.64,
+          "anonymous_mb": 99.07,
+          "pss_mb": 125.88
+        },
+        {
+          "i": 2200,
+          "rss_mb": 167.7,
+          "anonymous_mb": 99.13,
+          "pss_mb": 125.94
+        },
+        {
+          "i": 2300,
+          "rss_mb": 167.81,
+          "anonymous_mb": 99.25,
+          "pss_mb": 126.06
+        },
+        {
+          "i": 2400,
+          "rss_mb": 167.71,
+          "anonymous_mb": 99.14,
+          "pss_mb": 125.95
+        },
+        {
+          "i": 2500,
+          "rss_mb": 167.78,
+          "anonymous_mb": 99.21,
+          "pss_mb": 126.02
+        },
+        {
+          "i": 2600,
+          "rss_mb": 167.02,
+          "anonymous_mb": 98.45,
+          "pss_mb": 125.26
+        },
+        {
+          "i": 2700,
+          "rss_mb": 167.64,
+          "anonymous_mb": 99.07,
+          "pss_mb": 125.88
+        },
+        {
+          "i": 2800,
+          "rss_mb": 167.68,
+          "anonymous_mb": 99.11,
+          "pss_mb": 125.92
+        },
+        {
+          "i": 2900,
+          "rss_mb": 167.65,
+          "anonymous_mb": 99.08,
+          "pss_mb": 125.89
+        },
+        {
+          "i": 3000,
+          "rss_mb": 167.7,
+          "anonymous_mb": 99.13,
+          "pss_mb": 125.94
+        },
+        {
+          "i": 3100,
+          "rss_mb": 167.74,
+          "anonymous_mb": 99.17,
+          "pss_mb": 125.98
+        },
+        {
+          "i": 3200,
+          "rss_mb": 167.76,
+          "anonymous_mb": 99.2,
+          "pss_mb": 126
+        },
+        {
+          "i": 3300,
+          "rss_mb": 167.05,
+          "anonymous_mb": 98.48,
+          "pss_mb": 125.29
+        },
+        {
+          "i": 3400,
+          "rss_mb": 167.77,
+          "anonymous_mb": 99.21,
+          "pss_mb": 126.02
+        },
+        {
+          "i": 3500,
+          "rss_mb": 167.78,
+          "anonymous_mb": 99.21,
+          "pss_mb": 126.02
+        },
+        {
+          "i": 3600,
+          "rss_mb": 167.85,
+          "anonymous_mb": 99.29,
+          "pss_mb": 126.09
+        },
+        {
+          "i": 3700,
+          "rss_mb": 167.86,
+          "anonymous_mb": 99.29,
+          "pss_mb": 124.14
+        },
+        {
+          "i": 3800,
+          "rss_mb": 167.88,
+          "anonymous_mb": 99.31,
+          "pss_mb": 124.16
+        },
+        {
+          "i": 3900,
+          "rss_mb": 167.98,
+          "anonymous_mb": 99.41,
+          "pss_mb": 124.72
+        },
+        {
+          "i": 4000,
+          "rss_mb": 167.93,
+          "anonymous_mb": 99.37,
+          "pss_mb": 112.9
+        },
+        {
+          "i": 4100,
+          "rss_mb": 167.95,
+          "anonymous_mb": 99.38,
+          "pss_mb": 112.53
+        },
+        {
+          "i": 4200,
+          "rss_mb": 167.68,
+          "anonymous_mb": 99.12,
+          "pss_mb": 111.33
+        },
+        {
+          "i": 4300,
+          "rss_mb": 168.06,
+          "anonymous_mb": 99.49,
+          "pss_mb": 111.14
+        },
+        {
+          "i": 4400,
+          "rss_mb": 167.85,
+          "anonymous_mb": 99.28,
+          "pss_mb": 110.6
+        },
+        {
+          "i": 4500,
+          "rss_mb": 167.66,
+          "anonymous_mb": 99.59,
+          "pss_mb": 110.64
+        },
+        {
+          "i": 4600,
+          "rss_mb": 143.37,
+          "anonymous_mb": 99.42,
+          "pss_mb": 106.79
+        },
+        {
+          "i": 4700,
+          "rss_mb": 118.48,
+          "anonymous_mb": 99.35,
+          "pss_mb": 101.84
+        },
+        {
+          "i": 4800,
+          "rss_mb": 115.62,
+          "anonymous_mb": 99.52,
+          "pss_mb": 101.72
+        },
+        {
+          "i": 4900,
+          "rss_mb": 108.23,
+          "anonymous_mb": 99.23,
+          "pss_mb": 102.16
+        },
+        {
+          "i": 5000,
+          "rss_mb": 82.95,
+          "anonymous_mb": 52.69,
+          "pss_mb": 70.97
+        },
+        {
+          "i": 5100,
+          "rss_mb": 106.15,
+          "anonymous_mb": 74.57,
+          "pss_mb": 91.08
+        },
+        {
+          "i": 5200,
+          "rss_mb": 114.69,
+          "anonymous_mb": 82.39,
+          "pss_mb": 99.44
+        },
+        {
+          "i": 5300,
+          "rss_mb": 115.06,
+          "anonymous_mb": 82.75,
+          "pss_mb": 99.42
+        },
+        {
+          "i": 5400,
+          "rss_mb": 114.25,
+          "anonymous_mb": 81.95,
+          "pss_mb": 98.58
+        },
+        {
+          "i": 5500,
+          "rss_mb": 115.27,
+          "anonymous_mb": 82.97,
+          "pss_mb": 99.51
+        },
+        {
+          "i": 5600,
+          "rss_mb": 115.01,
+          "anonymous_mb": 82.71,
+          "pss_mb": 99.19
+        },
+        {
+          "i": 5700,
+          "rss_mb": 115.16,
+          "anonymous_mb": 82.85,
+          "pss_mb": 99.34
+        },
+        {
+          "i": 5800,
+          "rss_mb": 115.41,
+          "anonymous_mb": 82.98,
+          "pss_mb": 99.58
+        },
+        {
+          "i": 5900,
+          "rss_mb": 115.25,
+          "anonymous_mb": 82.83,
+          "pss_mb": 99.43
+        },
+        {
+          "i": 6000,
+          "rss_mb": 115.38,
+          "anonymous_mb": 82.96,
+          "pss_mb": 99.55
+        },
+        {
+          "i": 6100,
+          "rss_mb": 115.36,
+          "anonymous_mb": 82.93,
+          "pss_mb": 99.53
+        },
+        {
+          "i": 6200,
+          "rss_mb": 115.36,
+          "anonymous_mb": 82.94,
+          "pss_mb": 99.36
+        },
+        {
+          "i": 6300,
+          "rss_mb": 115.25,
+          "anonymous_mb": 82.83,
+          "pss_mb": 99.2
+        },
+        {
+          "i": 6400,
+          "rss_mb": 115.21,
+          "anonymous_mb": 82.79,
+          "pss_mb": 99.12
+        },
+        {
+          "i": 6500,
+          "rss_mb": 115.14,
+          "anonymous_mb": 82.71,
+          "pss_mb": 99.04
+        },
+        {
+          "i": 6600,
+          "rss_mb": 115.12,
+          "anonymous_mb": 82.7,
+          "pss_mb": 99
+        },
+        {
+          "i": 6700,
+          "rss_mb": 115.39,
+          "anonymous_mb": 82.97,
+          "pss_mb": 99.27
+        },
+        {
+          "i": 6800,
+          "rss_mb": 115.08,
+          "anonymous_mb": 82.66,
+          "pss_mb": 98.94
+        },
+        {
+          "i": 6900,
+          "rss_mb": 115.38,
+          "anonymous_mb": 82.95,
+          "pss_mb": 99.23
+        },
+        {
+          "i": 7000,
+          "rss_mb": 115.3,
+          "anonymous_mb": 82.87,
+          "pss_mb": 99.15
+        },
+        {
+          "i": 7100,
+          "rss_mb": 115.17,
+          "anonymous_mb": 82.75,
+          "pss_mb": 99.03
+        },
+        {
+          "i": 7200,
+          "rss_mb": 115.32,
+          "anonymous_mb": 82.89,
+          "pss_mb": 99.17
+        },
+        {
+          "i": 7300,
+          "rss_mb": 115.3,
+          "anonymous_mb": 82.87,
+          "pss_mb": 99.15
+        },
+        {
+          "i": 7400,
+          "rss_mb": 115.28,
+          "anonymous_mb": 82.85,
+          "pss_mb": 99.13
+        },
+        {
+          "i": 7500,
+          "rss_mb": 115.36,
+          "anonymous_mb": 82.93,
+          "pss_mb": 99.21
+        },
+        {
+          "i": 7600,
+          "rss_mb": 115.11,
+          "anonymous_mb": 82.69,
+          "pss_mb": 98.96
+        },
+        {
+          "i": 7700,
+          "rss_mb": 115.29,
+          "anonymous_mb": 82.8,
+          "pss_mb": 99.13
+        },
+        {
+          "i": 7800,
+          "rss_mb": 115.54,
+          "anonymous_mb": 83.05,
+          "pss_mb": 99.34
+        },
+        {
+          "i": 7900,
+          "rss_mb": 115.38,
+          "anonymous_mb": 82.89,
+          "pss_mb": 99.16
+        },
+        {
+          "i": 8000,
+          "rss_mb": 115.57,
+          "anonymous_mb": 83.09,
+          "pss_mb": 99.32
+        },
+        {
+          "i": 8100,
+          "rss_mb": 115.69,
+          "anonymous_mb": 83.2,
+          "pss_mb": 99.43
+        },
+        {
+          "i": 8200,
+          "rss_mb": 115.22,
+          "anonymous_mb": 82.73,
+          "pss_mb": 98.95
+        },
+        {
+          "i": 8300,
+          "rss_mb": 115.35,
+          "anonymous_mb": 82.86,
+          "pss_mb": 99.08
+        },
+        {
+          "i": 8400,
+          "rss_mb": 115.64,
+          "anonymous_mb": 83.15,
+          "pss_mb": 99.36
+        },
+        {
+          "i": 8500,
+          "rss_mb": 115.39,
+          "anonymous_mb": 82.9,
+          "pss_mb": 99.12
+        },
+        {
+          "i": 8600,
+          "rss_mb": 115.53,
+          "anonymous_mb": 83.04,
+          "pss_mb": 99.26
+        },
+        {
+          "i": 8700,
+          "rss_mb": 115.58,
+          "anonymous_mb": 83.09,
+          "pss_mb": 99.31
+        },
+        {
+          "i": 8800,
+          "rss_mb": 115.44,
+          "anonymous_mb": 82.95,
+          "pss_mb": 99.17
+        },
+        {
+          "i": 8900,
+          "rss_mb": 115.58,
+          "anonymous_mb": 83.09,
+          "pss_mb": 99.3
+        },
+        {
+          "i": 9000,
+          "rss_mb": 115.67,
+          "anonymous_mb": 83.18,
+          "pss_mb": 99.39
+        },
+        {
+          "i": 9100,
+          "rss_mb": 115.48,
+          "anonymous_mb": 82.99,
+          "pss_mb": 99.2
+        },
+        {
+          "i": 9200,
+          "rss_mb": 115.74,
+          "anonymous_mb": 83.25,
+          "pss_mb": 99.46
+        },
+        {
+          "i": 9300,
+          "rss_mb": 115.71,
+          "anonymous_mb": 83.23,
+          "pss_mb": 99.43
+        },
+        {
+          "i": 9400,
+          "rss_mb": 115.6,
+          "anonymous_mb": 83.11,
+          "pss_mb": 99.32
+        },
+        {
+          "i": 9500,
+          "rss_mb": 115.54,
+          "anonymous_mb": 83.05,
+          "pss_mb": 99.26
+        },
+        {
+          "i": 9600,
+          "rss_mb": 115.56,
+          "anonymous_mb": 83.07,
+          "pss_mb": 99.28
+        },
+        {
+          "i": 9700,
+          "rss_mb": 115.56,
+          "anonymous_mb": 83.07,
+          "pss_mb": 99.28
+        },
+        {
+          "i": 9800,
+          "rss_mb": 115.7,
+          "anonymous_mb": 83.21,
+          "pss_mb": 99.41
+        },
+        {
+          "i": 9900,
+          "rss_mb": 115.45,
+          "anonymous_mb": 82.96,
+          "pss_mb": 99.17
+        },
+        {
+          "i": 10000,
+          "rss_mb": 115.62,
+          "anonymous_mb": 83.13,
+          "pss_mb": 99.34
+        }
+      ],
+      "memory_flatness": {
+        "samples": 101,
+        "anonymous_mb_first": 38.91,
+        "anonymous_mb_last": 83.13,
+        "anonymous_mb_min": 38.91,
+        "anonymous_mb_max": 99.59,
+        "anonymous_mb_range": 60.68,
+        "anonymous_mb_drift": 44.22
       },
       "first_session": {
         "arm": "agentgateway",
         "ok": true,
-        "session_ms": 85.91288900002837,
+        "session_ms": 103.4265960007906,
         "steps": [
           {
             "step": 1,
@@ -1495,7 +5207,7 @@
             "discoveryTokens": 0,
             "resultTokens": 384,
             "codeTokens": 0,
-            "latency_ms": 26.280139999464154,
+            "latency_ms": 30.167533999308944,
             "check": {
               "ok": true,
               "label": "zoneId"
@@ -1508,7 +5220,7 @@
             "discoveryTokens": 0,
             "resultTokens": 273,
             "codeTokens": 0,
-            "latency_ms": 3.1030850000679493,
+            "latency_ms": 3.957490000873804,
             "check": {
               "ok": true
             },
@@ -1520,7 +5232,7 @@
             "discoveryTokens": 0,
             "resultTokens": 44,
             "codeTokens": 0,
-            "latency_ms": 2.552640000358224,
+            "latency_ms": 2.2324959989637136,
             "check": {
               "ok": true,
               "label": "ssl"
@@ -1533,7 +5245,7 @@
             "discoveryTokens": 0,
             "resultTokens": 45668,
             "codeTokens": 0,
-            "latency_ms": 5.422881999984384,
+            "latency_ms": 6.118580998852849,
             "check": {
               "ok": true,
               "label": "aRecordCount"
@@ -1570,7 +5282,7 @@
             "discoveryTokens": 0,
             "resultTokens": 144,
             "codeTokens": 0,
-            "latency_ms": 5.43512099981308,
+            "latency_ms": 5.900279998779297,
             "check": {
               "ok": true,
               "label": "scriptNames"
@@ -1583,7 +5295,7 @@
             "discoveryTokens": 0,
             "resultTokens": 55,
             "codeTokens": 0,
-            "latency_ms": 2.275415999814868,
+            "latency_ms": 3.2888399995863438,
             "check": {
               "ok": true,
               "label": "compatibilityDate"
@@ -1596,7 +5308,7 @@
             "discoveryTokens": 0,
             "resultTokens": 87,
             "codeTokens": 0,
-            "latency_ms": 2.5199500005692244,
+            "latency_ms": 2.2279109992086887,
             "check": {
               "ok": true
             },
@@ -1608,7 +5320,7 @@
             "discoveryTokens": 0,
             "resultTokens": 108,
             "codeTokens": 0,
-            "latency_ms": 1.8138960003852844,
+            "latency_ms": 2.1885509993880987,
             "check": {
               "ok": true,
               "label": "buckets"
@@ -1621,7 +5333,7 @@
             "discoveryTokens": 0,
             "resultTokens": 570,
             "codeTokens": 0,
-            "latency_ms": 3.196698000654578,
+            "latency_ms": 5.5042580012232065,
             "check": {
               "ok": true,
               "label": "enabledRuleCount"
@@ -1671,17 +5383,19 @@
       },
       "calls_mean": 0,
       "session_ms": {
-        "p50": 1.1699529998004436,
-        "p99": 3.06801899895072,
-        "p999": 4.548507999628782,
+        "p50": 1.1597459986805916,
+        "p99": 2.937118999660015,
+        "p999": 4.690840000286698,
         "comparable": false,
         "note": "latency N/A — tokens-only / no upstream"
       },
       "memory_plateau": null,
+      "memory_series": [],
+      "memory_flatness": null,
       "first_session": {
         "arm": "cloudflare_codemode",
         "ok": true,
-        "session_ms": 1.3533490002155304,
+        "session_ms": 1.3801649995148182,
         "steps": [
           {
             "step": 1,
