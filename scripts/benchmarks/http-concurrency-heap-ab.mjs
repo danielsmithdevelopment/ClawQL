@@ -729,7 +729,10 @@ async function chaosArm(arm) {
   let lastOkPrimary = null;
   let firstBreakPrimary = null;
   let censoredAt = null;
-  for (let n = 1; n <= CONC_HARD_MAX; n *= 2) {
+  // Power-of-two until 64, then +32 steps in CURVE mode so we find the p99
+  // break between 128 and 256 instead of leaping to a host-OOM mid-step.
+  // This is denser sampling, not a client ceiling.
+  for (let n = 1; n <= CONC_HARD_MAX; ) {
     // Do not abort the climb on soft MemAvailable thresholds — that understates
     // later arms after a heavy Bun run. Only record host_censored if a step
     // cannot even connect (thrown) or the process is killed (exit 137).
@@ -754,6 +757,8 @@ async function chaosArm(arm) {
     if (step.error_rate > BREAK_ERROR_RATE) break;
     if (step.latency_ms?.p99 != null && step.latency_ms.p99 > stopP99) break;
     if (!CURVE && step.broken) break;
+    if (CURVE && n >= 64) n += 32;
+    else n *= 2;
   }
   const refine = [];
   const thresholdsToRefine = CURVE ? THRESHOLDS : [BREAK_P99_MS];
