@@ -52,6 +52,16 @@ export default function AuditScreen() {
         subtitle="WORM-style recent entries plus open chain-incident detail."
       />
 
+      <SurfaceCard testID="audit-support-note" tint="soft">
+        <Body>Support view-as</Body>
+        <Meta color={brand.inkFaint}>
+          Owner/Admin “View as” starts only on the cloud console and writes
+          `support.impersonation.start|stop` here (and durable JSONL on the
+          host). PhoneApprove never starts impersonation — session kill on
+          Profile is the mobile incident response for lost devices.
+        </Meta>
+      </SurfaceCard>
+
       {incident ? (
         <SurfaceCard testID="audit-incident" tint="soft">
           <Badge label="Open incident" tone="danger" />

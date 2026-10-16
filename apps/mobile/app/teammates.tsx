@@ -171,6 +171,10 @@ export default function TeammatesScreen() {
       <Meta color={brand.inkMuted}>
         {`${approvers} approvers · ${people.length} people${pending ? ` · ${pending} invited` : ""}`}
       </Meta>
+      <Meta testID="teammates-no-view-as" color={brand.inkFaint}>
+        Support “View as” is not available on mobile — use Team on the cloud
+        console (Owner/Admin). Every start/stop is audited.
+      </Meta>
       {keysMissing > 0 ? (
         <Column spacing={4} testID="teammates-keys-missing">
           <Badge label={`${keysMissing} missing keys`} tone="warn" />
