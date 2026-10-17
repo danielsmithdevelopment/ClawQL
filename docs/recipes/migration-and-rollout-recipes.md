@@ -1,5 +1,7 @@
 # Migration and Rollout Recipes
 
+**Postgres DDL rollback policy** (forward-only eng + restore/PITR): [`docs/deployment/postgres-migration-rollback.md`](../deployment/postgres-migration-rollback.md).
+
 ## 1) Documentation Reorg Rollout
 
 ### Use case

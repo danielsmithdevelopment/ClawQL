@@ -64,6 +64,10 @@ describe("payments directory email + username", () => {
 
   it("normalizes email, username, and phone", () => {
     expect(normalizeEmail("Alice@Acme.COM")).toBe("alice@acme.com");
+    expect(normalizeEmail("Alice+News@Acme.COM", {})).toBe("alice+news@acme.com");
+    expect(normalizeEmail("Alice+News@Acme.COM", { CLAWQL_EMAIL_PLUS_NORMALIZE: "1" })).toBe(
+      "alice@acme.com"
+    );
     expect(normalizeHandle("@Alice")).toBe("alice");
     expect(normalizePhone("+1 (555) 123-4567", env)).toBe("+15551234567");
     expect(normalizePhone("5551234567", env)).toBe("+15551234567");
