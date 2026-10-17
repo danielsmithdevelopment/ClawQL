@@ -61,7 +61,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
       'Same multi-turn board with their MCP proxy; measure weighted tokens + p99 clients before SLO break; compare approval binding + trail.',
     status: 'not_on_board',
     statusLabel: 'Not on board',
-    nextStep: 'Governance-depth board — Bifrost Code Mode tokens are on the harness; TrueFoundry is next peer.',
+    nextStep: 'Next unmeasured peer after Bifrost/Obot token boards — governance-depth equal-arm.',
   },
   {
     id: 'cloudflare-code-mode',
@@ -116,9 +116,10 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     criteriaToBeat: 'Token surface of curated tools; policy enforcement overhead.',
     howToProve:
       'Measure definitions + discovery tokens with their catalog model; compare audit/policy on the same workflow.',
-    status: 'not_on_board',
-    statusLabel: 'Not on board',
-    nextStep: 'Catalog-token board after Bifrost; policy overhead secondary metric.',
+    status: 'partial',
+    statusLabel: 'Tokens measured',
+    nextStep:
+      'Equal-arm N=12/C=40 via Obot mcp-connect catalog: classic 3.95× vs ClawQL (same fat aggregator path). Still need policy-overhead + governance-depth criteria.',
   },
   {
     id: 'executor',
@@ -135,10 +136,10 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
 export const dominancePriorityOrder = [
   'bifrost',
   'cloudflare-code-mode',
-  'executor',
-  'agentgateway',
   'truefoundry',
   'uber-mcp-gateway',
-  'contextforge',
+  'executor',
+  'agentgateway',
   'obot',
+  'contextforge',
 ] as const
