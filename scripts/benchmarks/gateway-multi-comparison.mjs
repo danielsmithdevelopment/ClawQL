@@ -22,7 +22,7 @@
  *   - Executor uses execute code returning the same JSON (upstream=0)
  *
  * Usage:
- *   EXECUTOR_BIN=… EXECUTOR_CWD=… \
+ *   EXECUTOR_BIN=… EXECUTOR_CWD=… EXECUTOR_DATA_DIR=… \
  *     MULTI_ITERS=200 MULTI_CHAOS_MAX=32 \
  *     node scripts/benchmarks/gateway-multi-comparison.mjs
  *
@@ -34,6 +34,9 @@
  *   MULTI_BREAK_P99_MS (default 100)  MULTI_BREAK_ERROR_RATE (default 0.02)
  *   MULTI_REFINE=1  MULTI_OUT=gateway-multi-cmp.json
  *   MCPJUNGLE_BIN  AGENTGATEWAY_BIN  MULTI_INCLUDE_CF=1
+ *   EXECUTOR_DATA_DIR — required for Executor 1.x stdio data home
+ *   EXECUTOR_ISOLATE_DATA=1 — unique DATA_DIR per connect (chaos); can spawn
+ *     one daemon per client and still hit Unauthorized on some hosts
  */
 
 import { existsSync, readFileSync, readdirSync, mkdirSync, writeFileSync, openSync, closeSync } from "node:fs";
@@ -441,13 +444,35 @@ async function connectClawqlStdio(env) {
 async function connectExecutorStdio() {
   const bin = process.env.EXECUTOR_BIN?.trim();
   if (!bin) throw new Error("EXECUTOR_BIN required for executor arm");
+  // Executor 1.x requires a data home (same as multiturn harness).
+  // Optional EXECUTOR_ISOLATE_DATA=1: unique DATA_DIR per connect for chaos
+  // concurrency (shared dir owner-locks under parallel stdio). Prefer shared
+  // dir for latency — isolate mode can spawn one daemon per client.
+  const childEnv = { ...process.env };
+  const baseData = process.env.EXECUTOR_DATA_DIR?.trim();
+  const isolate =
+    process.env.EXECUTOR_ISOLATE_DATA === "1" ||
+    process.env.EXECUTOR_ISOLATE_DATA === "true";
+  let dataDir = baseData || "";
+  if (baseData && isolate) {
+    dataDir = join(baseData, `chaos-${process.pid}-${randomId()}`);
+    mkdirSync(dataDir, { recursive: true });
+    childEnv.EXECUTOR_DATA_DIR = dataDir;
+  } else if (baseData) {
+    childEnv.EXECUTOR_DATA_DIR = baseData;
+  }
   const transport = new StdioClientTransport({
     command: bin,
     args: ["mcp"],
     cwd: process.env.EXECUTOR_CWD?.trim() || dirname(bin),
     stderr: "pipe",
+    env: childEnv,
   });
   const client = new Client({ name: "multi-executor", version: "1" }, {});
+  // Drain stderr so daemon startup logs cannot fill the pipe and stall the child.
+  if (transport.stderr) {
+    transport.stderr.on("data", () => {});
+  }
   await client.connect(transport);
   return {
     client,
@@ -455,8 +480,15 @@ async function connectExecutorStdio() {
     pid: transportPid(transport),
     close: async () => {
       await client.close().catch(() => {});
+      if (isolate && dataDir && dataDir !== baseData) {
+        await rm(dataDir, { recursive: true, force: true }).catch(() => {});
+      }
     },
   };
+}
+
+function randomId() {
+  return Math.random().toString(36).slice(2, 10);
 }
 
 async function connectHttpMcp(url, name = "multi-http") {
