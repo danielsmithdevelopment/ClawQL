@@ -62,14 +62,57 @@ export type ClassifyFailedInvoiceInput = {
   readonly hosted_invoice_url?: string | null;
   readonly customer?: string | { id?: string } | null;
   readonly subscription?: string | { id?: string } | null;
-  /** Stripe sometimes sets proration via lines; treat subscription_update as proration-shaped. */
-  readonly lines?: { data?: ReadonlyArray<{ proration?: boolean | null }> } | null;
+  /**
+   * Opaque Stripe line list — do not require `proration` on the element type
+   * (Stripe.InvoiceLineItem shapes vary by API version).
+   */
+  readonly lines?: { data?: ReadonlyArray<unknown> } | null;
 };
 
 function idFromStripeRef(ref: string | { id?: string } | null | undefined): string | null {
   if (!ref) return null;
   if (typeof ref === "string") return ref.trim() || null;
   return ref.id?.trim() || null;
+}
+
+/** True when a line looks like a proration (legacy top-level or parent.subscription_item_details). */
+export function lineLooksProrated(line: unknown): boolean {
+  if (!line || typeof line !== "object") return false;
+  const l = line as {
+    proration?: unknown;
+    parent?: { subscription_item_details?: { proration?: unknown } };
+  };
+  if (l.proration === true) return true;
+  if (l.parent?.subscription_item_details?.proration === true) return true;
+  return false;
+}
+
+/**
+ * Narrow a Stripe-like invoice object into {@link ClassifyFailedInvoiceInput}
+ * so webhook handlers never assign `Stripe.Invoice` directly into the classifier.
+ */
+export function toClassifyFailedInvoiceInput(invoice: {
+  readonly id?: string | null;
+  readonly billing_reason?: string | null;
+  readonly attempt_count?: number | null;
+  readonly next_payment_attempt?: number | null;
+  readonly amount_due?: number | null;
+  readonly hosted_invoice_url?: string | null;
+  readonly customer?: unknown;
+  readonly subscription?: unknown;
+  readonly lines?: { data?: ReadonlyArray<unknown> } | null;
+}): ClassifyFailedInvoiceInput {
+  return {
+    id: invoice.id,
+    billing_reason: invoice.billing_reason,
+    attempt_count: invoice.attempt_count,
+    next_payment_attempt: invoice.next_payment_attempt,
+    amount_due: invoice.amount_due,
+    hosted_invoice_url: invoice.hosted_invoice_url,
+    customer: idFromStripeRef(invoice.customer as string | { id?: string } | null),
+    subscription: idFromStripeRef(invoice.subscription as string | { id?: string } | null),
+    lines: invoice.lines ? { data: invoice.lines.data } : null,
+  };
 }
 
 /**
@@ -81,7 +124,7 @@ export const classifyFailedInvoiceEffect = (
 ): Effect.Effect<InvoiceDunningSignal> =>
   Effect.sync(() => {
     const billingReason = normalizeBillingReason(invoice.billing_reason);
-    const lineProration = Boolean(invoice.lines?.data?.some((l) => l.proration));
+    const lineProration = Boolean(invoice.lines?.data?.some(lineLooksProrated));
     const isProration = billingReason === "subscription_update" || lineProration;
     const attemptCount =
       typeof invoice.attempt_count === "number" && invoice.attempt_count >= 0

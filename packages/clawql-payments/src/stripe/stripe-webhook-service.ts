@@ -19,7 +19,11 @@ import {
   ProvisionOrgService,
   provisionOrgInputFromCheckoutSession,
 } from "../provisioning/index.js";
-import { classifyFailedInvoiceEffect, classifySubscriptionTransitionEffect } from "./dunning.js";
+import {
+  classifyFailedInvoiceEffect,
+  classifySubscriptionTransitionEffect,
+  toClassifyFailedInvoiceInput,
+} from "./dunning.js";
 import { StripeSignatureError } from "./stripe-errors.js";
 
 export type StripeWebhookVerifyResult =
@@ -123,7 +127,9 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
             case "invoice.paid": {
               const invoice = event.data.object as Stripe.Invoice;
               const amountUsd = (invoice.amount_paid ?? 0) / 100;
-              const paidSignal = yield* classifyFailedInvoiceEffect(invoice);
+              const paidSignal = yield* classifyFailedInvoiceEffect(
+                toClassifyFailedInvoiceInput(invoice)
+              );
               yield* audit.appendEntry(
                 buildStripeInvoicePaidEntry({
                   tenantId: tenantFromEvent(event, tenantId),
@@ -140,7 +146,9 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
             }
             case "invoice.payment_failed": {
               const invoice = event.data.object as Stripe.Invoice;
-              const signal = yield* classifyFailedInvoiceEffect(invoice);
+              const signal = yield* classifyFailedInvoiceEffect(
+                toClassifyFailedInvoiceInput(invoice)
+              );
               yield* audit.appendEntry(
                 buildStripePaymentFailedEntry({
                   tenantId: tenantFromEvent(event, tenantId),

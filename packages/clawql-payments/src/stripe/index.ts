@@ -62,6 +62,8 @@ export {
   classifyFailedInvoiceEffect,
   classifySubscriptionStatusEffect,
   classifySubscriptionTransitionEffect,
+  lineLooksProrated,
+  toClassifyFailedInvoiceInput,
   StripeDunningLive,
   StripeDunningService,
   type DunningStage,

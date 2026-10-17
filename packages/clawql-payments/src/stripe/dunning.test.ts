@@ -1,7 +1,12 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { classifyFailedInvoiceEffect, classifySubscriptionTransitionEffect } from "./dunning.js";
+import {
+  classifyFailedInvoiceEffect,
+  classifySubscriptionTransitionEffect,
+  lineLooksProrated,
+  toClassifyFailedInvoiceInput,
+} from "./dunning.js";
 
 describe("stripe dunning / proration classifier", () => {
   it("marks subscription_update invoices as proration-shaped", async () => {
@@ -48,6 +53,23 @@ describe("stripe dunning / proration classifier", () => {
       })
     );
     expect(signal.stage).toBe("exhausted");
+  });
+
+  it("maps Stripe-shaped invoices without requiring line.proration on the type", async () => {
+    const mapped = toClassifyFailedInvoiceInput({
+      id: "in_map",
+      billing_reason: "subscription_update",
+      attempt_count: 1,
+      next_payment_attempt: 1_700_000_000,
+      amount_due: 500,
+      customer: { id: "cus_m" },
+      subscription: "sub_m",
+      lines: { data: [{ parent: { subscription_item_details: { proration: true } } }] },
+    });
+    expect(mapped.customer).toBe("cus_m");
+    expect(lineLooksProrated(mapped.lines?.data?.[0])).toBe(true);
+    const signal = await Effect.runPromise(classifyFailedInvoiceEffect(mapped));
+    expect(signal.isProration).toBe(true);
   });
 
   it("emits past_due / unpaid / recovered subscription transitions", async () => {
