@@ -25,6 +25,7 @@ import type {
   MetricQueryRequest,
   ProfileQueryRequest,
   ProviderQueryHit,
+  TraceByIdRequest,
   TraceQueryRequest,
 } from "./types.js";
 
@@ -48,6 +49,15 @@ export type ObservabilityQueryServiceApi = {
   readonly queryTraces: (
     session: ObservabilitySessionContext,
     request: TraceQueryRequest
+  ) => Effect.Effect<
+    FederatedQueryResult,
+    ObservabilityError | ObservabilityAuthError,
+    ObservabilityGovernanceSink
+  >;
+  /** Tempo `GET /api/traces/{traceId}` (Jaeger or OTLP body) for span flamegraphs. */
+  readonly getTrace: (
+    session: ObservabilitySessionContext,
+    request: TraceByIdRequest
   ) => Effect.Effect<
     FederatedQueryResult,
     ObservabilityError | ObservabilityAuthError,
@@ -177,6 +187,38 @@ export const makeObservabilityQueryService = (): Effect.Effect<
         return { signalType: "trace" as const, results };
       });
 
+    const getTrace: ObservabilityQueryServiceApi["getTrace"] = (session, request) =>
+      Effect.gen(function* () {
+        yield* requireObservabilityScopeEffect(session, "observability:query_traces");
+        const traceId = request.traceId.trim();
+        if (!traceId) {
+          return yield* Effect.fail(
+            new ObservabilityError({ reason: "traceId is required for getTrace" })
+          );
+        }
+        const providers = yield* selectProvidersEffect(
+          yield* traceRegistry.list(),
+          request.selection
+        );
+        const results: ProviderQueryHit[] = [];
+        for (const entry of providers) {
+          const url = yield* resolveQueryEndpointEffect(
+            entry.config,
+            `/api/traces/${encodeURIComponent(traceId)}`
+          );
+          const headers = yield* tenantHeadersEffect(entry.config);
+          const payload = yield* transport.getJson({ url, headers });
+          yield* logRawDataAccessedEffect({
+            actorId: session.sub,
+            providerId: entry.id,
+            signalType: "trace",
+            detail: { traceId },
+          });
+          results.push({ providerId: entry.id, payload });
+        }
+        return { signalType: "trace" as const, results };
+      });
+
     const queryProfiles: ObservabilityQueryServiceApi["queryProfiles"] = (session, request) =>
       Effect.gen(function* () {
         yield* requireObservabilityScopeEffect(session, "observability:query_profiles");
@@ -205,7 +247,7 @@ export const makeObservabilityQueryService = (): Effect.Effect<
         return { signalType: "profile" as const, results };
       });
 
-    return { queryLogs, queryMetrics, queryTraces, queryProfiles };
+    return { queryLogs, queryMetrics, queryTraces, getTrace, queryProfiles };
   });
 
 export const makeObservabilityQueryServiceLayer = (): Layer.Layer<
