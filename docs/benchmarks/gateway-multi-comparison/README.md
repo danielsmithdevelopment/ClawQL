@@ -133,7 +133,7 @@ MULTI_ITERS=100 MULTI_SKIP_CHAOS=0 MULTI_CHAOS_UNTIL_BREAK=1 MULTI_CHAOS_MAX=512
   npm run benchmark:gateway-multi-comparison
 
 # Executor 2.x HTTP chaos (fair peer for aggregator 1× HTTP) — start serve first:
-#   EXECUTOR_DATA_DIR=/tmp/executor-v2-data /tmp/executor-v2/node_modules/.bin/executor serve --port 4312
+#   EXECUTOR_DATA_DIR=/tmp/executor-v2-data EXECUTOR_PORT=4312 /tmp/executor-v2/node_modules/.bin/executor serve
 MULTI_ITERS=50 MULTI_SKIP_CHAOS=0 MULTI_CHAOS_UNTIL_BREAK=1 MULTI_CHAOS_MAX=512 \
   MULTI_ARMS=executor \
   EXECUTOR_MCP_URL=http://127.0.0.1:4312/mcp \
