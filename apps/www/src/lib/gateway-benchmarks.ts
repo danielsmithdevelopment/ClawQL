@@ -27,32 +27,54 @@ export const gatewayTokenBoardProvenance = {
     status: 'current' as const,
     measuredAt: '2026-10-17',
     artifact: 'docs/benchmarks/gateway-multi-comparison/gateway-multi-multiturn.json',
-    note: 'search detail=compact + minify; execute success JSON not pretty-printed',
+    note: 'Full remasure: clawql+executor+mcpjungle+agentgateway+bifrost+bifrost_codemode+obot @N=12/24',
   },
   bifrostEqualArm: {
     status: 'current' as const,
     measuredAt: '2026-10-17',
     artifact: 'docs/benchmarks/gateway-multi-comparison/gateway-multi-multiturn-bifrost.json',
-    note: 'Code Mode 2.25× / classic 3.95× vs ClawQL combined @12',
+    note: 'Code Mode 2.25× / classic 3.95× vs ClawQL combined @12 (same-run remasure)',
+  },
+  obotEqualArm: {
+    status: 'current' as const,
+    measuredAt: '2026-10-17',
+    artifact: 'docs/benchmarks/gateway-multi-comparison/gateway-multi-multiturn-obot.json',
+    note: 'Obot mcp-connect remote catalog — classic 3.95× (same fat aggregator path)',
+  },
+  interleaved10k: {
+    status: 'current' as const,
+    measuredAt: '2026-10-17',
+    artifact: 'docs/benchmarks/gateway-multi-comparison/gateway-multi-cmp-10k.json',
+    note: 'ClawQL best p50 e2e/cost; p99/p999 host-bound — no tail-latency win claim',
+  },
+  chaosTopologyA: {
+    status: 'current' as const,
+    measuredAt: '2026-10-17',
+    artifact: 'docs/benchmarks/gateway-multi-comparison/gateway-multi-cmp-chaos-slim.json',
+    note: 'ClawQL 79/80 · MCPJungle 151/152 · agentgateway 63/64 · Executor HTTP /mcp 29/30 (stdio still blocked)',
   },
   transportMatrixLatencyRss: {
     status: 'stale_host_run' as const,
-    note: 'Flow p50/p999 + RSS still from transport-matrix host artifact; token columns refreshed from compact board',
+    note: 'Token-scorecard flow p50/p999 + RSS still from transport-matrix host artifact (not the 10k single-call board)',
   },
   executorV2EqualArm: {
-    status: 'pending_remeasure' as const,
-    note: 'v2 β combined 29 927 is pre–ClawQL-compact-execute; delta vs ClawQL widened — remeasure before tightening the v2 headline',
+    status: 'current' as const,
+    measuredAt: '2026-10-17',
+    artifact: 'docs/benchmarks/gateway-multi-comparison/gateway-multi-multiturn-executor-v2.json',
+    note: 'HTTP /mcp remasure: combined 29 927 confirmed — 3.38× vs publish ClawQL 8 866',
   },
   cloudflareMultiturn: {
-    status: 'pending_remeasure' as const,
-    note: 'Zone-audit / fan-out weighted means on /benchmarks#cf still pre-compact-execute — update cloudflare-benchmarks.ts after CF board redo',
+    status: 'current' as const,
+    measuredAt: '2026-10-17',
+    artifact: 'docs/benchmarks/cloudflare-multiturn/board-summary-n10000-r3.json',
+    note: 'Post–compact-execute 3×10k: known_op 1710 (−123); see /benchmarks#cf',
   },
 } as const
 
 export const gatewayBenchmarkHeadline = 'Most efficient governed MCP gateway — measured, not marketed.'
 
 export const gatewayBenchmarkSummary =
-  'Equal-arm board: same multiturn harness, same 40-tool fat catalog, same task success. After compact search + compact execute JSON, ClawQL lands at 8 866 combined @12 — ~4× leaner than aggregators and 6× leaner than Executor v1.6.10, with equal task success. vs fair direct-HTTP baseline (agentgateway defs): −26 136 (−75%). Executor v2 β still cited at −5 075 vs baseline until remeasured; ClawQL leads that figure by ~21k. Transport matrix (Node/Bun × stdio/HTTP + gRPC): same token recipe — compare Executor v2 latency to ClawQL HTTP, not Bun stdio. Bifrost Code Mode measured at 2.25×.'
+  'Equal-arm board: same multiturn harness, same 40-tool fat catalog, same task success. Full remasure 2026-10-17: ClawQL 8 866 combined @12 — ~4× leaner than aggregators / Obot / Bifrost classic, 2.25× leaner than Bifrost Code Mode, 3.38× leaner than Executor v2 β, 6× leaner than Executor v1.6.10, equal task success. vs fair direct-HTTP baseline: −26 136 (−75%). Interleaved n=10k: ClawQL best p50 e2e (1.02 ms) and gateway cost (0.70 ms). Topology-A chaos: ClawQL 79 · Executor HTTP 29 · MCPJungle still leads (151).'
 
 export const gatewayBenchmarkClaim =
   'Fewest I/O tokens among measured MCP aggregators and live Executor (v1 and v2 β), same harness, equal task success.'
@@ -283,7 +305,7 @@ export const tokenScorecardRows: TokenScorecardRow[] = [
     flowP999: '143.2',
     rssMed: '927',
     taskSuccess: 'PASS',
-    note: 'HTTP /mcp · compare latency to ClawQL Node/Bun HTTP (not Bun stdio). Compact envelope credited; ClawQL still −21 061 tokens on current ClawQL board (v2 arm pending remeasure).',
+    note: 'HTTP /mcp remasured 2026-10-17 · 3.38× vs ClawQL 8 866 (−21 061 tokens) · vsDirect −5 075 · compare latency to ClawQL Node/Bun HTTP',
   },
   {
     arm: 'MCPJungle',
@@ -309,7 +331,46 @@ export const tokenScorecardRows: TokenScorecardRow[] = [
     flowP999: '330.9',
     rssMed: '214',
     taskSuccess: 'PASS',
-    note: '3.95× vs ClawQL combined @12 · same fat path as Bifrost classic',
+    note: '3.95× vs ClawQL combined @12 · same fat path as Bifrost classic / Obot',
+  },
+  {
+    arm: 'Bifrost classic',
+    definitions: '5 520',
+    discovery: '0',
+    results: '29 482',
+    combined: '35 002',
+    vsDirect: 'match',
+    flowP50: '3.0',
+    flowP999: '—',
+    rssMed: '—',
+    taskSuccess: 'PASS',
+    note: '3.95× vs ClawQL @12 · full tools/list + fat callTool via /mcp · mean flow from remasure',
+  },
+  {
+    arm: 'Bifrost Code Mode',
+    definitions: '3 459',
+    discovery: '0',
+    results: '16 518',
+    combined: '19 977',
+    vsDirect: '−15 025',
+    flowP50: '3.9',
+    flowP999: '—',
+    rssMed: '—',
+    taskSuccess: 'PASS',
+    note: '2.25× vs ClawQL @12 (weighted 2.04×) · Layer2 includes TOOL print dump',
+  },
+  {
+    arm: 'Obot',
+    definitions: '5 520',
+    discovery: '0',
+    results: '29 482',
+    combined: '35 002',
+    vsDirect: 'match',
+    flowP50: '21.7',
+    flowP999: '—',
+    rssMed: '—',
+    taskSuccess: 'PASS',
+    note: '3.95× vs ClawQL @12 · equal-arm catalog via Obot mcp-connect (remote multi-user entry)',
   },
 ]
 
@@ -324,41 +385,41 @@ export type LatencyScorecardRow = {
   resultTok: string
 }
 
-/** Interleaved n=10 000 single-call board (composition slim). */
+/** Interleaved n=10 000 single-call board — remasured 2026-10-17. */
 export const latencyScorecardRows: LatencyScorecardRow[] = [
   {
     arm: 'ClawQL',
     highlight: true,
-    e2e: '1.02 / 1.95 / 3.82 / 7.41',
-    gatewayCost: '0.70 / 3.48 / 6.87',
-    rssMed: '427',
-    listTok: '1 189',
+    e2e: '1.02 / 2.33 / 7.80 / 11.27',
+    gatewayCost: '0.70 / 6.70 / 10.93',
+    rssMed: '389',
+    listTok: '1 240',
     invokedSchema: '178',
-    resultTok: '59',
+    resultTok: '28',
   },
   {
     arm: 'Executor',
-    e2e: '2.36 / 5.12 / 6.61 / 11.49',
-    gatewayCost: '2.36 / 6.61 / 11.49',
-    rssMed: '210',
-    listTok: '2 243',
-    invokedSchema: '90',
+    e2e: '2.39 / 7.86 / 10.96 / 22.78',
+    gatewayCost: '2.39 / 10.96 / 22.78',
+    rssMed: '255',
+    listTok: '2 281',
+    invokedSchema: '128',
     resultTok: '59',
   },
   {
     arm: 'MCPJungle',
-    e2e: '1.34 / 2.72 / 4.36 / 6.86',
-    gatewayCost: '1.02 / 3.99 / 6.52',
-    rssMed: '152',
+    e2e: '1.37 / 6.26 / 9.01 / 14.47',
+    gatewayCost: '1.05 / 8.66 / 13.62',
+    rssMed: '151',
     listTok: '46',
     invokedSchema: '46',
     resultTok: '28',
   },
   {
     arm: 'agentgateway',
-    e2e: '1.17 / 2.38 / 4.21 / 7.29',
-    gatewayCost: '0.84 / 3.81 / 6.87',
-    rssMed: '215',
+    e2e: '1.17 / 4.66 / 8.89 / 14.33',
+    gatewayCost: '0.85 / 8.51 / 13.14',
+    rssMed: '216',
     listTok: '37',
     invokedSchema: '37',
     resultTok: '28',
@@ -368,23 +429,27 @@ export const latencyScorecardRows: LatencyScorecardRow[] = [
 export const gatewayBenchmarkHonesty = [
   {
     title: 'What we claim',
-    body: 'Fewest tokens among measured MCP aggregators and live Executor (v1 and v2 β) with equal task success on the same multiturn harness — ClawQL 8 866 combined @12 after compact search+execute. Lowest governed gateway cost on the n=10 000 interleaved board.',
+    body: 'Fewest tokens among measured MCP aggregators, Bifrost (classic + Code Mode), Obot, and live Executor v1 + v2 β with equal task success — ClawQL 8 866 combined @12 (3.38× vs Executor v2). Best p50 e2e and governed gateway cost on the remasured n=10 000 interleaved board.',
   },
   {
     title: 'What we do not claim',
-    body: 'Scale-out concurrency wins. Memory wins. Mixing Executor v2 latency with ClawQL Bun stdio. gRPC wins vs peers that lack gRPC MCP. Category-wide supremacy until remaining roadmap peers (TrueFoundry, Uber MCP Gateway, Obot, …) clear the equal-arm minimum set — see /benchmarks#dominance. Bifrost classic + Code Mode are measured (2.25× / 3.95×).',
+    body: 'Scale-out concurrency wins. Memory wins. p999 latency wins (tails moved up on the remasure host). Mixing Executor v2 latency with ClawQL Bun stdio. Category-wide supremacy until remaining roadmap peers (TrueFoundry, Uber technique, …) clear the equal-arm minimum set — see /benchmarks#dominance. Bifrost 2.25× / 3.95×, Obot 3.95×, and Executor v2 3.38× are measured.',
   },
   {
     title: 'Executor version scope',
-    body: 'v1.6.10: fat/pretty return, +18 704 vs baseline (53 706 combined). v2 β.15: compact envelope, −5 075 — credit the fix; that v2 figure is pending remeasure against compact ClawQL. On current ClawQL board the lead vs cited v2 is ~21k. Video scenes that cite the pretty-print tax must label v1.6.10 on-screen, not only in a footer.',
+    body: 'v1.6.10: fat return, +18 704 vs baseline (53 706 combined). v2 β.15 HTTP remasure: 29 927 combined (−5 075 vs baseline) — 3.38× vs ClawQL 8 866; compact envelope credited, ClawQL still leads. Topology-A Executor chaos: HTTP /mcp 29/30 (p99 110 ms); stdio remasure still blocked (daemon Unauthorized) — historical 23/24 retained.',
   },
   {
     title: 'ClawQL transport matrix',
     body: 'Node/Bun × stdio/HTTP/gRPC on the same search→execute recipe. Tokens match across transports (8 866 after compact JSON). Fastest: Bun stdio (16.0 ms p50). HTTP is the fair peer for Executor v2 (ClawQL Node HTTP 45.9 vs Executor v2 73.5). gRPC is ClawQL-only here and slower on this small-payload board (~138 ms) — prefer it for large CallTool bodies.',
   },
   {
+    title: 'Concurrency (topology A)',
+    body: 'Until-break remasure: ClawQL 79/80, Executor HTTP 29/30, MCPJungle 151/152 (still leads), agentgateway 63/64. Publishable chaos claim vs Executor — not a scale-out win. Topology B (4× behind LB) still required before any scale-out claim.',
+  },
+  {
     title: 'Next ClawQL lever',
-    body: 'Discovery is ~42% of ClawQL’s combined @12 (3 732 / 8 866). Skip-search when the agent already knows the operationId (MT_CLAWQL_DISCOVERY=once / known-op path) cuts more without touching projection. Cloudflare zone-audit cells still need a compact-execute remeasure before publishing those weighted means as current.',
+    body: 'Discovery is ~42% of ClawQL’s combined @12 (3 732 / 8 866). Skip-search when the agent already knows the operationId (MT_CLAWQL_DISCOVERY=once / known-op path) cuts more without touching projection. Cloudflare zone-audit tokens remasured post–compact-execute (known_op 1 710).',
   },
 ] as const
 
@@ -422,13 +487,15 @@ export const gatewayBenchmarkLinks = [
 ] as const
 
 export const gatewayBenchmarkMeta = {
-  measuredLabel: 'Tokens remeasured Oct 2026 · compact search+execute · host-bound',
-  multiturnLabel: 'N=12 / C=40 fat catalog · classic Layer1-once + Σ Layer2',
-  latencyLabel: 'n=10 000 interleaved · composition slim',
+  measuredLabel: 'Full remasure Oct 2026 · compact search+execute · MT + 10k + chaos A · host-bound',
+  multiturnLabel: 'N=12 / C=40 fat catalog · classic Layer1-once + Σ Layer2 · Obot + Bifrost on board',
+  latencyLabel: 'n=10 000 interleaved · remasured 2026-10-17',
   artifactMultiturn: 'gateway-multi-multiturn.json',
   artifactMultiturn24: 'gateway-multi-multiturn-24.json',
   artifactBifrost: 'gateway-multi-multiturn-bifrost.json',
+  artifactObot: 'gateway-multi-multiturn-obot.json',
   artifactTransportMatrix: 'gateway-multi-multiturn-clawql-transport-10k.json',
   artifactExecutorV2: 'gateway-multi-multiturn-executor-v2-equal-10k.json',
   artifactLatency: 'gateway-multi-cmp-10k.json',
+  artifactChaos: 'gateway-multi-cmp-chaos-slim.json',
 } as const

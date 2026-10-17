@@ -1,34 +1,24 @@
 /**
  * Cloudflare zone-audit multiturn board for clawql.com/benchmarks.
  * Source: docs/benchmarks/cloudflare-multiturn (publish 10k×3 + concurrency curves).
- * Host-bound — update when board-final-summary.md is remeasured.
- *
- * TOKEN CELLS BELOW ARE PRE–COMPACT-EXECUTE. After gateway compact search+execute
- * lands on the cf-mt stack, redo the 3×10k board and refresh cfTokenRows /
- * cfFanoutRows weighted means before treating them as current on /benchmarks.
- * Concurrency / memory curves are unaffected by JSON pretty-print.
+ * Host-bound — token cells from 2026-10-17 post–compact-execute remasure.
+ * Concurrency curves unchanged by JSON pretty-print; Node-256 memory cites from prior rep4.
  */
 
-/** Flip to `current` only after a post-compact CF board remeasure. */
 export const cfTokenBoardProvenance = {
-  status: 'pending_remeasure' as const,
-  reason:
-    'ClawQL weighted means were measured before execute success JSON stopped pretty-printing; expect lower ClawQL result tokens after redo',
-  blockedOn: [
-    'Merge compact search+execute (PR #1330) into cf-mt lineage',
-    'Remeasure docs/benchmarks/cloudflare-multiturn 3×10k publish board',
-    'Refresh cfTokenRows + fan-out weighted cells in this file',
-  ],
-  lastMeasuredLabel: '2026-10-16 board-final-summary (pre-compact-execute)',
+  status: 'current' as const,
+  measuredAt: '2026-10-17',
+  artifact: 'docs/benchmarks/cloudflare-multiturn/board-summary-n10000-r3.json',
+  note: 'Post–compact-execute 3×10k: known_op 1710 (−123 vs 1833); program/Executor/peers unchanged',
 } as const
 
 export const cfBenchmarkHeadline = 'Cloudflare boards — zone-audit, fan-out/join, concurrency.'
 
 export const cfBenchmarkSummary =
-  'Zone-audit: ClawQL known-op leads tokens and memory on a curated OpenAPI → replay mock (weighted means below are still the pre–compact-execute board — remeasure pending). Fan-out/join: scripted program claim cleared; blind real-model gate is frontier-only so far. Executor v2 is the promoted Executor column. HTTP concurrency is multiplex; stdio is process-per-client.'
+  'Zone-audit: ClawQL known-op leads tokens on a curated OpenAPI → replay mock — post–compact-execute remasure 2026-10-17: known_op 1 710 weighted (−123). Fan-out/join: scripted program claim cleared; blind real-model gate is frontier-only so far. Executor v2 is the promoted Executor column. HTTP concurrency is multiplex; stdio is process-per-client.'
 
 export const cfBenchmarkMeta = {
-  measuredLabel: 'Tokens pending compact-execute remeasure · host-bound',
+  measuredLabel: 'Tokens remasured Oct 2026 (compact execute) · host-bound',
   boardLabel: '10 000 sessions × 3 reps · curated Cloudflare OpenAPI',
   artifactBoard: 'docs/benchmarks/cloudflare-multiturn/board-final-summary.md',
   artifactHttp: 'docs/benchmarks/cloudflare-multiturn/http-concurrency-curves.json',
@@ -51,44 +41,46 @@ export const cfTokenRows: CfTokenRow[] = [
   {
     arm: 'ClawQL known-op',
     highlight: true,
-    weighted: '1 833',
+    weighted: '1 710',
     taskSuccess: '1.0',
-    sessionP50: '23.8 ms',
+    sessionP50: '24.6 ms',
     transport: 'HTTP',
     anonMb: '~121',
-    note: 'Execute by operationId + where — primary ClawQL path',
+    note: 'Execute by operationId + where — primary ClawQL path (−123 vs pre-compact)',
   },
   {
     arm: 'ClawQL program',
     highlight: true,
     weighted: '5 187',
     taskSuccess: '1.0',
-    sessionP50: '11.2 ms',
+    sessionP50: '11.8 ms',
     transport: 'HTTP',
     anonMb: '~126',
     note: 'One execute_program plan (ADR 0015 v0)',
   },
   {
     arm: 'ClawQL compact search',
-    weighted: '5 925',
+    weighted: '5 802',
     taskSuccess: '1.0',
-    sessionP50: '—',
+    sessionP50: '46.8 ms',
     transport: 'HTTP',
     anonMb: '~123',
+    note: '−123 vs pre-compact 5 925',
   },
   {
     arm: 'ClawQL default search',
-    weighted: '17 821',
+    weighted: '17 698',
     taskSuccess: '1.0',
-    sessionP50: '—',
+    sessionP50: '58.9 ms',
     transport: 'HTTP',
     anonMb: '~125',
+    note: '−123 vs pre-compact 17 821',
   },
   {
     arm: 'Executor v2 (promoted)',
     weighted: '5 328',
     taskSuccess: '1.0',
-    sessionP50: '~216 ms',
+    sessionP50: '~218 ms',
     transport: 'HTTP',
     anonMb: '~2 103',
     note: 'Main Executor comparison column · OpenAPI tools → mock',
@@ -100,13 +92,13 @@ export const cfTokenRows: CfTokenRow[] = [
     sessionP50: '~84 ms',
     transport: 'stdio',
     anonMb: '~535',
-    note: 'Same mock workload · mcp + daemon · not in HTTP concurrency table',
+    note: 'Same mock workload · mcp + daemon · not in HTTP concurrency table · tokens not re-run',
   },
   {
     arm: 'MCPJungle',
     weighted: '55 121',
     taskSuccess: '1.0',
-    sessionP50: '—',
+    sessionP50: '50.5 ms',
     transport: 'HTTP',
     anonMb: '~102',
   },
@@ -114,7 +106,7 @@ export const cfTokenRows: CfTokenRow[] = [
     arm: 'agentgateway',
     weighted: '54 705',
     taskSuccess: '1.0',
-    sessionP50: '—',
+    sessionP50: '49.3 ms',
     transport: 'HTTP',
     anonMb: '~99',
   },
@@ -122,7 +114,7 @@ export const cfTokenRows: CfTokenRow[] = [
     arm: 'Direct REST',
     weighted: '47 361',
     taskSuccess: '1.0',
-    sessionP50: '—',
+    sessionP50: '40.0 ms',
     transport: 'HTTP',
     anonMb: '—',
     note: 'No gateway — raw calls to mock',
@@ -205,7 +197,7 @@ export const cfStdioConcRows: CfConcRow[] = [
 export const cfBenchmarkHonesty = [
   {
     title: 'What we claim',
-    body: 'On this Cloudflare board, ClawQL known-op has the fewest weighted tokens (1 833) and ~121 MB anon. Executor v2 is the promoted Executor peer (5 328 tokens, ~2.1 GB). Executor v1 stable on the same mock is 8 236 tokens and ~535 MB — the beta excuse does not reverse the token story.',
+    body: 'On this Cloudflare board, ClawQL known-op has the fewest weighted tokens (1 710 after compact execute, −123 vs 1 833) with ~121 MB anon on the Node-256 fill. Executor v2 is the promoted Executor peer (5 328 tokens, ~2.1 GB). Executor v1 stable on the same mock is 8 236 tokens and ~535 MB — the beta excuse does not reverse the token story.',
   },
   {
     title: 'Two concurrency topologies',
@@ -213,7 +205,7 @@ export const cfBenchmarkHonesty = [
   },
   {
     title: 'Session latency transports',
-    body: 'ClawQL known-op 23.8 ms and program 11.2 ms are HTTP board figures. Executor v1 ~84 ms is stdio. Executor v2 ~216 ms is HTTP. Label the transport when comparing.',
+    body: 'ClawQL known-op 24.6 ms and program 11.8 ms are HTTP board figures (2026-10-17 remasure). Executor v1 ~84 ms is stdio. Executor v2 ~218 ms is HTTP. Label the transport when comparing.',
   },
 ] as const
 
