@@ -141,14 +141,14 @@ Profile intent:
 
 ## Type II evidence calendar (minimum)
 
-| Cadence                 | Artifact                                                      | Where it lives                                                    |
-| ----------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Every merge (prod path) | CI supply-chain + CodeQL + secret scan                        | GitHub Actions retention + export to evidence store               |
-| Weekly                  | Access / offboard sample (SCIM events)                        | IdP + ClawQL audit export                                         |
-| Monthly                 | Patch / image digest report                                   | Cosign / GHCR digests                                             |
-| Quarterly               | Security review + **restore drill** with RTO/RPO              | [`restore-drill.md`](../deployment/restore-drill.md) record table |
-| Quarterly               | Evidence package (Panguard decisions, WORM roots, review PDF) | Encrypted to compliance mailbox / WORM bucket                     |
-| Continuous              | Support impersonation JSONL / Audit                           | Dashboard host `.data/` + Audit UI                                |
+| Cadence                 | Artifact                                                      | Where it lives                                                                           |
+| ----------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Every merge (prod path) | CI supply-chain + CodeQL + secret scan                        | GitHub Actions retention + export to evidence store                                      |
+| Weekly                  | Access / offboard sample (SCIM events)                        | IdP + ClawQL audit export                                                                |
+| Monthly                 | Patch / image digest report                                   | Cosign / GHCR digests                                                                    |
+| Quarterly               | Security review + **restore drill** with RTO/RPO              | [`restore-drill.md`](../deployment/restore-drill.md) record table                        |
+| Quarterly               | Evidence package (Panguard decisions, WORM roots, review PDF) | Encrypted to compliance mailbox / WORM bucket                                            |
+| Continuous              | Support impersonation JSONL / Audit                           | Dashboard host `.data/` + Audit UI                                                       |
 | Quarterly               | Stripe dunning sample (`STRIPE_PAYMENT_FAILED` → recovery)    | [`stripe-dunning-proration.md`](../payments/stripe-dunning-proration.md) + payments WORM |
 
 **Observation tip:** Start the Type II window only after the hardening profile is live and the first restore drill is logged. Auditors ask for **dates**, not aspirations.
