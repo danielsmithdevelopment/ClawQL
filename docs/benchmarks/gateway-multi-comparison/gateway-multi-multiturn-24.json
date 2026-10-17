@@ -1,6 +1,6 @@
 {
   "suite": "gateway-multi-multiturn",
-  "measuredAt": "2026-10-17T03:16:01.560Z",
+  "measuredAt": "2026-10-17T05:37:01.587Z",
   "node": "v22.14.0",
   "config": {
     "turns": 24,
@@ -16,7 +16,10 @@
       "clawql",
       "executor",
       "mcpjungle",
-      "agentgateway"
+      "agentgateway",
+      "bifrost",
+      "bifrost_codemode",
+      "obot"
     ],
     "clawql_discovery": "every_turn",
     "model_written_weight": 5,
@@ -38,7 +41,7 @@
       "model_written_tokens_sum": 1104,
       "model_written_weight": 5,
       "combined_weighted_at_n": 22954,
-      "mean_latency_ms": 16.166,
+      "mean_latency_ms": 16.662,
       "turns": 24,
       "task_success_ok": true,
       "task_success_rate": 1
@@ -52,7 +55,7 @@
       "model_written_tokens_sum": 0,
       "model_written_weight": 5,
       "combined_weighted_at_n": 107334,
-      "mean_latency_ms": 6.212,
+      "mean_latency_ms": 7.038,
       "turns": 24,
       "task_success_ok": true,
       "task_success_rate": 1
@@ -66,7 +69,7 @@
       "model_written_tokens_sum": 336,
       "model_written_weight": 5,
       "combined_weighted_at_n": 66534,
-      "mean_latency_ms": 8.538,
+      "mean_latency_ms": 9.753,
       "turns": 24,
       "task_success_ok": true,
       "task_success_rate": 1
@@ -80,7 +83,49 @@
       "model_written_tokens_sum": 336,
       "model_written_weight": 5,
       "combined_weighted_at_n": 66214,
-      "mean_latency_ms": 2.047,
+      "mean_latency_ms": 2.141,
+      "turns": 24,
+      "task_success_ok": true,
+      "task_success_rate": 1
+    },
+    "bifrost": {
+      "layer1_once_tokens": 5520,
+      "mean_layer2_tokens": 2458.9,
+      "mean_result_tokens": 2458.9,
+      "combined_at_n": 64534,
+      "combined_relist_every_turn_at_n": 191494,
+      "model_written_tokens_sum": 336,
+      "model_written_weight": 5,
+      "combined_weighted_at_n": 66214,
+      "mean_latency_ms": 2.228,
+      "turns": 24,
+      "task_success_ok": true,
+      "task_success_rate": 1
+    },
+    "bifrost_codemode": {
+      "layer1_once_tokens": 3459,
+      "mean_layer2_tokens": 1378.3,
+      "mean_result_tokens": 1378.3,
+      "combined_at_n": 36537,
+      "combined_relist_every_turn_at_n": 33078,
+      "model_written_tokens_sum": 1488,
+      "model_written_weight": 5,
+      "combined_weighted_at_n": 43977,
+      "mean_latency_ms": 3.55,
+      "turns": 24,
+      "task_success_ok": true,
+      "task_success_rate": 1
+    },
+    "obot": {
+      "layer1_once_tokens": 5520,
+      "mean_layer2_tokens": 2458.9,
+      "mean_result_tokens": 2458.9,
+      "combined_at_n": 64534,
+      "combined_relist_every_turn_at_n": 191494,
+      "model_written_tokens_sum": 336,
+      "model_written_weight": 5,
+      "combined_weighted_at_n": 66214,
+      "mean_latency_ms": 20.94,
       "turns": 24,
       "task_success_ok": true,
       "task_success_rate": 1
@@ -102,6 +147,27 @@
       "vs_clawql_layer1": 16.78
     },
     "agentgateway": {
+      "vs_clawql_combined_classic": 3.7,
+      "vs_clawql_combined_relist_every_turn": 11.21,
+      "vs_clawql_combined_weighted": 2.88,
+      "vs_clawql_mean_result": 6.13,
+      "vs_clawql_layer1": 15.86
+    },
+    "bifrost": {
+      "vs_clawql_combined_classic": 3.7,
+      "vs_clawql_combined_relist_every_turn": 11.21,
+      "vs_clawql_combined_weighted": 2.88,
+      "vs_clawql_mean_result": 6.13,
+      "vs_clawql_layer1": 15.86
+    },
+    "bifrost_codemode": {
+      "vs_clawql_combined_classic": 2.1,
+      "vs_clawql_combined_relist_every_turn": 1.94,
+      "vs_clawql_combined_weighted": 1.92,
+      "vs_clawql_mean_result": 3.44,
+      "vs_clawql_layer1": 9.94
+    },
+    "obot": {
       "vs_clawql_combined_classic": 3.7,
       "vs_clawql_combined_relist_every_turn": 11.21,
       "vs_clawql_combined_weighted": 2.88,
@@ -129,6 +195,24 @@
       "rate": 1
     },
     "agentgateway": {
+      "turns_ok": 24,
+      "turns_total": 24,
+      "ok": true,
+      "rate": 1
+    },
+    "bifrost": {
+      "turns_ok": 24,
+      "turns_total": 24,
+      "ok": true,
+      "rate": 1
+    },
+    "bifrost_codemode": {
+      "turns_ok": 24,
+      "turns_total": 24,
+      "ok": true,
+      "rate": 1
+    },
+    "obot": {
       "turns_ok": 24,
       "turns_total": 24,
       "ok": true,
@@ -623,6 +707,372 @@
         "combined": 64534,
         "layer2Cumulative": 59014
       }
+    ],
+    "bifrost": [
+      {
+        "n": 1,
+        "combined": 7931,
+        "layer2Cumulative": 2411
+      },
+      {
+        "n": 2,
+        "combined": 10392,
+        "layer2Cumulative": 4872
+      },
+      {
+        "n": 3,
+        "combined": 12853,
+        "layer2Cumulative": 7333
+      },
+      {
+        "n": 4,
+        "combined": 15314,
+        "layer2Cumulative": 9794
+      },
+      {
+        "n": 5,
+        "combined": 17775,
+        "layer2Cumulative": 12255
+      },
+      {
+        "n": 6,
+        "combined": 20236,
+        "layer2Cumulative": 14716
+      },
+      {
+        "n": 7,
+        "combined": 22697,
+        "layer2Cumulative": 17177
+      },
+      {
+        "n": 8,
+        "combined": 25158,
+        "layer2Cumulative": 19638
+      },
+      {
+        "n": 9,
+        "combined": 27619,
+        "layer2Cumulative": 22099
+      },
+      {
+        "n": 10,
+        "combined": 30080,
+        "layer2Cumulative": 24560
+      },
+      {
+        "n": 11,
+        "combined": 32541,
+        "layer2Cumulative": 27021
+      },
+      {
+        "n": 12,
+        "combined": 35002,
+        "layer2Cumulative": 29482
+      },
+      {
+        "n": 13,
+        "combined": 37463,
+        "layer2Cumulative": 31943
+      },
+      {
+        "n": 14,
+        "combined": 39924,
+        "layer2Cumulative": 34404
+      },
+      {
+        "n": 15,
+        "combined": 42385,
+        "layer2Cumulative": 36865
+      },
+      {
+        "n": 16,
+        "combined": 44846,
+        "layer2Cumulative": 39326
+      },
+      {
+        "n": 17,
+        "combined": 47307,
+        "layer2Cumulative": 41787
+      },
+      {
+        "n": 18,
+        "combined": 49768,
+        "layer2Cumulative": 44248
+      },
+      {
+        "n": 19,
+        "combined": 52229,
+        "layer2Cumulative": 46709
+      },
+      {
+        "n": 20,
+        "combined": 54690,
+        "layer2Cumulative": 49170
+      },
+      {
+        "n": 21,
+        "combined": 57151,
+        "layer2Cumulative": 51631
+      },
+      {
+        "n": 22,
+        "combined": 59612,
+        "layer2Cumulative": 54092
+      },
+      {
+        "n": 23,
+        "combined": 62073,
+        "layer2Cumulative": 56553
+      },
+      {
+        "n": 24,
+        "combined": 64534,
+        "layer2Cumulative": 59014
+      }
+    ],
+    "bifrost_codemode": [
+      {
+        "n": 1,
+        "combined": 4788,
+        "layer2Cumulative": 1329
+      },
+      {
+        "n": 2,
+        "combined": 6169,
+        "layer2Cumulative": 2710
+      },
+      {
+        "n": 3,
+        "combined": 7550,
+        "layer2Cumulative": 4091
+      },
+      {
+        "n": 4,
+        "combined": 8931,
+        "layer2Cumulative": 5472
+      },
+      {
+        "n": 5,
+        "combined": 10312,
+        "layer2Cumulative": 6853
+      },
+      {
+        "n": 6,
+        "combined": 11693,
+        "layer2Cumulative": 8234
+      },
+      {
+        "n": 7,
+        "combined": 13074,
+        "layer2Cumulative": 9615
+      },
+      {
+        "n": 8,
+        "combined": 14455,
+        "layer2Cumulative": 10996
+      },
+      {
+        "n": 9,
+        "combined": 15836,
+        "layer2Cumulative": 12377
+      },
+      {
+        "n": 10,
+        "combined": 17217,
+        "layer2Cumulative": 13758
+      },
+      {
+        "n": 11,
+        "combined": 18597,
+        "layer2Cumulative": 15138
+      },
+      {
+        "n": 12,
+        "combined": 19977,
+        "layer2Cumulative": 16518
+      },
+      {
+        "n": 13,
+        "combined": 21357,
+        "layer2Cumulative": 17898
+      },
+      {
+        "n": 14,
+        "combined": 22737,
+        "layer2Cumulative": 19278
+      },
+      {
+        "n": 15,
+        "combined": 24117,
+        "layer2Cumulative": 20658
+      },
+      {
+        "n": 16,
+        "combined": 25497,
+        "layer2Cumulative": 22038
+      },
+      {
+        "n": 17,
+        "combined": 26877,
+        "layer2Cumulative": 23418
+      },
+      {
+        "n": 18,
+        "combined": 28257,
+        "layer2Cumulative": 24798
+      },
+      {
+        "n": 19,
+        "combined": 29637,
+        "layer2Cumulative": 26178
+      },
+      {
+        "n": 20,
+        "combined": 31017,
+        "layer2Cumulative": 27558
+      },
+      {
+        "n": 21,
+        "combined": 32397,
+        "layer2Cumulative": 28938
+      },
+      {
+        "n": 22,
+        "combined": 33777,
+        "layer2Cumulative": 30318
+      },
+      {
+        "n": 23,
+        "combined": 35157,
+        "layer2Cumulative": 31698
+      },
+      {
+        "n": 24,
+        "combined": 36537,
+        "layer2Cumulative": 33078
+      }
+    ],
+    "obot": [
+      {
+        "n": 1,
+        "combined": 7931,
+        "layer2Cumulative": 2411
+      },
+      {
+        "n": 2,
+        "combined": 10392,
+        "layer2Cumulative": 4872
+      },
+      {
+        "n": 3,
+        "combined": 12853,
+        "layer2Cumulative": 7333
+      },
+      {
+        "n": 4,
+        "combined": 15314,
+        "layer2Cumulative": 9794
+      },
+      {
+        "n": 5,
+        "combined": 17775,
+        "layer2Cumulative": 12255
+      },
+      {
+        "n": 6,
+        "combined": 20236,
+        "layer2Cumulative": 14716
+      },
+      {
+        "n": 7,
+        "combined": 22697,
+        "layer2Cumulative": 17177
+      },
+      {
+        "n": 8,
+        "combined": 25158,
+        "layer2Cumulative": 19638
+      },
+      {
+        "n": 9,
+        "combined": 27619,
+        "layer2Cumulative": 22099
+      },
+      {
+        "n": 10,
+        "combined": 30080,
+        "layer2Cumulative": 24560
+      },
+      {
+        "n": 11,
+        "combined": 32541,
+        "layer2Cumulative": 27021
+      },
+      {
+        "n": 12,
+        "combined": 35002,
+        "layer2Cumulative": 29482
+      },
+      {
+        "n": 13,
+        "combined": 37463,
+        "layer2Cumulative": 31943
+      },
+      {
+        "n": 14,
+        "combined": 39924,
+        "layer2Cumulative": 34404
+      },
+      {
+        "n": 15,
+        "combined": 42385,
+        "layer2Cumulative": 36865
+      },
+      {
+        "n": 16,
+        "combined": 44846,
+        "layer2Cumulative": 39326
+      },
+      {
+        "n": 17,
+        "combined": 47307,
+        "layer2Cumulative": 41787
+      },
+      {
+        "n": 18,
+        "combined": 49768,
+        "layer2Cumulative": 44248
+      },
+      {
+        "n": 19,
+        "combined": 52229,
+        "layer2Cumulative": 46709
+      },
+      {
+        "n": 20,
+        "combined": 54690,
+        "layer2Cumulative": 49170
+      },
+      {
+        "n": 21,
+        "combined": 57151,
+        "layer2Cumulative": 51631
+      },
+      {
+        "n": 22,
+        "combined": 59612,
+        "layer2Cumulative": 54092
+      },
+      {
+        "n": 23,
+        "combined": 62073,
+        "layer2Cumulative": 56553
+      },
+      {
+        "n": 24,
+        "combined": 64534,
+        "layer2Cumulative": 59014
+      }
     ]
   },
   "arms": {
@@ -655,7 +1105,7 @@
           ],
           "layer2_classic": 664,
           "layer2_relist_every_turn": 664,
-          "latency_ms": 57.826,
+          "latency_ms": 51.528,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -679,7 +1129,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 15.565,
+          "latency_ms": 38.423,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -703,7 +1153,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 55.272,
+          "latency_ms": 48.64,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -727,7 +1177,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 39.904,
+          "latency_ms": 47.298,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -751,7 +1201,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 7.15,
+          "latency_ms": 11.796,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -775,7 +1225,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 11.294,
+          "latency_ms": 4.379,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -799,7 +1249,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 4.44,
+          "latency_ms": 4.546,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -823,7 +1273,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 5.036,
+          "latency_ms": 5.223,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -847,7 +1297,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 5.807,
+          "latency_ms": 5.841,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -871,7 +1321,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 112.058,
+          "latency_ms": 4.747,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -895,7 +1345,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 9.973,
+          "latency_ms": 4.545,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -919,7 +1369,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 6.325,
+          "latency_ms": 3.848,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -943,7 +1393,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 7.398,
+          "latency_ms": 126.703,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -967,7 +1417,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 3.955,
+          "latency_ms": 4.142,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -991,7 +1441,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 9.289,
+          "latency_ms": 4.82,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1015,7 +1465,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 4.46,
+          "latency_ms": 3.81,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1039,7 +1489,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 4.158,
+          "latency_ms": 3.732,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1063,7 +1513,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 4.567,
+          "latency_ms": 3.341,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1087,7 +1537,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 4.557,
+          "latency_ms": 3.734,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1111,7 +1561,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 4.089,
+          "latency_ms": 3.819,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1135,7 +1585,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 4.232,
+          "latency_ms": 3.878,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1159,7 +1609,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 3.532,
+          "latency_ms": 3.839,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1183,7 +1633,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 3.6,
+          "latency_ms": 3.418,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1207,7 +1657,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 3.507,
+          "latency_ms": 3.833,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1621,7 +2071,7 @@
         "model_written_tokens_sum": 1104,
         "model_written_weight": 5,
         "combined_weighted_at_n": 22954,
-        "mean_latency_ms": 16.166,
+        "mean_latency_ms": 16.662,
         "turns": 24,
         "task_success_ok": true,
         "task_success_rate": 1
@@ -1645,7 +2095,7 @@
           "result_chars": 16317,
           "layer2_classic": 4419,
           "layer2_relist_every_turn": 4419,
-          "latency_ms": 7.9,
+          "latency_ms": 14.278,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1662,7 +2112,7 @@
           "result_chars": 16429,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 6.899,
+          "latency_ms": 7.193,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1679,7 +2129,7 @@
           "result_chars": 16429,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 6.989,
+          "latency_ms": 7.051,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1696,7 +2146,7 @@
           "result_chars": 16429,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 6.481,
+          "latency_ms": 6.699,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1713,7 +2163,7 @@
           "result_chars": 16429,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 5.734,
+          "latency_ms": 7.457,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1730,7 +2180,7 @@
           "result_chars": 16429,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 6.082,
+          "latency_ms": 6.844,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1747,7 +2197,7 @@
           "result_chars": 16429,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 7.666,
+          "latency_ms": 7.822,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1764,7 +2214,7 @@
           "result_chars": 16429,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 6.406,
+          "latency_ms": 6.233,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1781,7 +2231,7 @@
           "result_chars": 16429,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 6.176,
+          "latency_ms": 6.544,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1798,7 +2248,7 @@
           "result_chars": 16429,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 7.048,
+          "latency_ms": 7.425,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1815,7 +2265,7 @@
           "result_chars": 16479,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 5.645,
+          "latency_ms": 6.56,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1832,7 +2282,7 @@
           "result_chars": 16479,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 5.45,
+          "latency_ms": 5.994,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1849,7 +2299,7 @@
           "result_chars": 16479,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 5.723,
+          "latency_ms": 6.335,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1866,7 +2316,7 @@
           "result_chars": 16479,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 5.909,
+          "latency_ms": 6.638,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1883,7 +2333,7 @@
           "result_chars": 16479,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 6.136,
+          "latency_ms": 7.956,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1900,7 +2350,7 @@
           "result_chars": 16479,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 6.188,
+          "latency_ms": 6.359,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1917,7 +2367,7 @@
           "result_chars": 16479,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 5.888,
+          "latency_ms": 6.432,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1934,7 +2384,7 @@
           "result_chars": 16479,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 5.926,
+          "latency_ms": 5.578,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1951,7 +2401,7 @@
           "result_chars": 16479,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 5.745,
+          "latency_ms": 5.882,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1968,7 +2418,7 @@
           "result_chars": 16479,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 6.142,
+          "latency_ms": 6.485,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1985,7 +2435,7 @@
           "result_chars": 16479,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 5.429,
+          "latency_ms": 6.325,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2002,7 +2452,7 @@
           "result_chars": 16479,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 5.966,
+          "latency_ms": 6.141,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2019,7 +2469,7 @@
           "result_chars": 16479,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 5.685,
+          "latency_ms": 6.131,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2036,7 +2486,7 @@
           "result_chars": 16479,
           "layer2_classic": 4469,
           "layer2_relist_every_turn": 4469,
-          "latency_ms": 5.872,
+          "latency_ms": 8.547,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2451,7 +2901,7 @@
         "model_written_tokens_sum": 0,
         "model_written_weight": 5,
         "combined_weighted_at_n": 107334,
-        "mean_latency_ms": 6.212,
+        "mean_latency_ms": 7.038,
         "turns": 24,
         "task_success_ok": true,
         "task_success_rate": 1
@@ -2475,7 +2925,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2411,
           "layer2_relist_every_turn": 8251,
-          "latency_ms": 157.98,
+          "latency_ms": 180.824,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2493,7 +2943,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 2.511,
+          "latency_ms": 2.764,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2511,7 +2961,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 2.568,
+          "latency_ms": 6.73,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2529,7 +2979,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 2.189,
+          "latency_ms": 2.182,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2547,7 +2997,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 2.344,
+          "latency_ms": 2.308,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2565,7 +3015,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 2.052,
+          "latency_ms": 2.275,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2583,7 +3033,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 2.154,
+          "latency_ms": 2.363,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2601,7 +3051,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 2.263,
+          "latency_ms": 2.3,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2619,7 +3069,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 2.078,
+          "latency_ms": 2.41,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2637,7 +3087,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 2.038,
+          "latency_ms": 2.037,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2655,7 +3105,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 1.969,
+          "latency_ms": 1.977,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2673,7 +3123,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 2.014,
+          "latency_ms": 1.894,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2691,7 +3141,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 2.042,
+          "latency_ms": 2.049,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2709,7 +3159,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 1.861,
+          "latency_ms": 1.939,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2727,7 +3177,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 1.968,
+          "latency_ms": 2.102,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2745,7 +3195,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 1.621,
+          "latency_ms": 1.876,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2763,7 +3213,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 1.938,
+          "latency_ms": 1.92,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2781,7 +3231,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 1.949,
+          "latency_ms": 1.892,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2799,7 +3249,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 1.844,
+          "latency_ms": 1.9,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2817,7 +3267,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 1.844,
+          "latency_ms": 2.159,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2835,7 +3285,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 1.936,
+          "latency_ms": 2.18,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2853,7 +3303,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 1.888,
+          "latency_ms": 1.918,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2871,7 +3321,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 1.943,
+          "latency_ms": 2.024,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -2889,7 +3339,7 @@
           "tools_list_tokens": 5840,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 8301,
-          "latency_ms": 1.907,
+          "latency_ms": 2.047,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3303,7 +3753,7 @@
         "model_written_tokens_sum": 336,
         "model_written_weight": 5,
         "combined_weighted_at_n": 66534,
-        "mean_latency_ms": 8.538,
+        "mean_latency_ms": 9.753,
         "turns": 24,
         "task_success_ok": true,
         "task_success_rate": 1
@@ -3327,7 +3777,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2411,
           "layer2_relist_every_turn": 7931,
-          "latency_ms": 3.744,
+          "latency_ms": 4.205,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3345,7 +3795,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.191,
+          "latency_ms": 2.379,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3363,7 +3813,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.274,
+          "latency_ms": 2.465,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3381,7 +3831,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.382,
+          "latency_ms": 2.102,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3399,7 +3849,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.091,
+          "latency_ms": 1.836,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3417,7 +3867,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 1.932,
+          "latency_ms": 1.645,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3435,7 +3885,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 1.672,
+          "latency_ms": 1.915,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3453,7 +3903,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 1.818,
+          "latency_ms": 1.836,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3471,7 +3921,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 1.942,
+          "latency_ms": 2.176,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3489,7 +3939,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.164,
+          "latency_ms": 2.041,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3507,7 +3957,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 1.477,
+          "latency_ms": 1.849,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3525,7 +3975,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 1.85,
+          "latency_ms": 1.895,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3543,7 +3993,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.033,
+          "latency_ms": 2.082,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3561,7 +4011,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.051,
+          "latency_ms": 2.168,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3579,7 +4029,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.053,
+          "latency_ms": 2.099,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3597,7 +4047,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 1.805,
+          "latency_ms": 2.098,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3615,7 +4065,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 1.933,
+          "latency_ms": 1.995,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3633,7 +4083,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.112,
+          "latency_ms": 1.924,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3651,7 +4101,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 1.917,
+          "latency_ms": 2.081,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3669,7 +4119,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 1.846,
+          "latency_ms": 1.96,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3687,7 +4137,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 1.807,
+          "latency_ms": 2.289,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3705,7 +4155,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 1.911,
+          "latency_ms": 2.293,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3723,7 +4173,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.117,
+          "latency_ms": 1.887,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -3741,7 +4191,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 1.994,
+          "latency_ms": 2.175,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -4155,7 +4605,2567 @@
         "model_written_tokens_sum": 336,
         "model_written_weight": 5,
         "combined_weighted_at_n": 66214,
-        "mean_latency_ms": 2.047,
+        "mean_latency_ms": 2.141,
+        "turns": 24,
+        "task_success_ok": true,
+        "task_success_rate": 1
+      }
+    },
+    "bifrost": {
+      "id": "bifrost",
+      "model": "aggregator_tools_list_plus_fat_call",
+      "layer1": {
+        "once_schema_tokens": 5520,
+        "tools_count": 40,
+        "note": "Full tools/list dump (fat catalog surface); classic counts Layer1 once"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "catalog-catalog_list_001",
+          "result_tokens": 2411,
+          "result_chars": 7655,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2411,
+          "layer2_relist_every_turn": 7931,
+          "latency_ms": 7.751,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 2,
+          "tool": "catalog-catalog_list_002",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 3.193,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 3,
+          "tool": "catalog-catalog_list_003",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.308,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 4,
+          "tool": "catalog-catalog_list_004",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.295,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 5,
+          "tool": "catalog-catalog_list_005",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.262,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 6,
+          "tool": "catalog-catalog_list_006",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.967,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 7,
+          "tool": "catalog-catalog_list_007",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.958,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 8,
+          "tool": "catalog-catalog_list_008",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.936,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 9,
+          "tool": "catalog-catalog_list_009",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.085,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 10,
+          "tool": "catalog-catalog_list_010",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.793,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 11,
+          "tool": "catalog-catalog_list_011",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.808,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 12,
+          "tool": "catalog-catalog_list_012",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.979,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 13,
+          "tool": "catalog-catalog_list_013",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.137,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 14,
+          "tool": "catalog-catalog_list_014",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.89,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 15,
+          "tool": "catalog-catalog_list_015",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.803,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 16,
+          "tool": "catalog-catalog_list_016",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.866,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 17,
+          "tool": "catalog-catalog_list_017",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.854,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 18,
+          "tool": "catalog-catalog_list_018",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.705,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 19,
+          "tool": "catalog-catalog_list_019",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.881,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 20,
+          "tool": "catalog-catalog_list_020",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.769,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 21,
+          "tool": "catalog-catalog_list_021",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.778,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 22,
+          "tool": "catalog-catalog_list_022",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.83,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 23,
+          "tool": "catalog-catalog_list_023",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.824,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 24,
+          "tool": "catalog-catalog_list_024",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.796,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        }
+      ],
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2411,
+          "layer2Cumulative": 2411,
+          "combined": 7931,
+          "layer2ShareOfCombined": 30.4
+        },
+        {
+          "n": 2,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 4872,
+          "combined": 10392,
+          "layer2ShareOfCombined": 46.9
+        },
+        {
+          "n": 3,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 7333,
+          "combined": 12853,
+          "layer2ShareOfCombined": 57.1
+        },
+        {
+          "n": 4,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 9794,
+          "combined": 15314,
+          "layer2ShareOfCombined": 64
+        },
+        {
+          "n": 5,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 12255,
+          "combined": 17775,
+          "layer2ShareOfCombined": 68.9
+        },
+        {
+          "n": 6,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 14716,
+          "combined": 20236,
+          "layer2ShareOfCombined": 72.7
+        },
+        {
+          "n": 7,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 17177,
+          "combined": 22697,
+          "layer2ShareOfCombined": 75.7
+        },
+        {
+          "n": 8,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 19638,
+          "combined": 25158,
+          "layer2ShareOfCombined": 78.1
+        },
+        {
+          "n": 9,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 22099,
+          "combined": 27619,
+          "layer2ShareOfCombined": 80
+        },
+        {
+          "n": 10,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 24560,
+          "combined": 30080,
+          "layer2ShareOfCombined": 81.6
+        },
+        {
+          "n": 11,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 27021,
+          "combined": 32541,
+          "layer2ShareOfCombined": 83
+        },
+        {
+          "n": 12,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 29482,
+          "combined": 35002,
+          "layer2ShareOfCombined": 84.2
+        },
+        {
+          "n": 13,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 31943,
+          "combined": 37463,
+          "layer2ShareOfCombined": 85.3
+        },
+        {
+          "n": 14,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 34404,
+          "combined": 39924,
+          "layer2ShareOfCombined": 86.2
+        },
+        {
+          "n": 15,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 36865,
+          "combined": 42385,
+          "layer2ShareOfCombined": 87
+        },
+        {
+          "n": 16,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 39326,
+          "combined": 44846,
+          "layer2ShareOfCombined": 87.7
+        },
+        {
+          "n": 17,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 41787,
+          "combined": 47307,
+          "layer2ShareOfCombined": 88.3
+        },
+        {
+          "n": 18,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 44248,
+          "combined": 49768,
+          "layer2ShareOfCombined": 88.9
+        },
+        {
+          "n": 19,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 46709,
+          "combined": 52229,
+          "layer2ShareOfCombined": 89.4
+        },
+        {
+          "n": 20,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 49170,
+          "combined": 54690,
+          "layer2ShareOfCombined": 89.9
+        },
+        {
+          "n": 21,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 51631,
+          "combined": 57151,
+          "layer2ShareOfCombined": 90.3
+        },
+        {
+          "n": 22,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 54092,
+          "combined": 59612,
+          "layer2ShareOfCombined": 90.7
+        },
+        {
+          "n": 23,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 56553,
+          "combined": 62073,
+          "layer2ShareOfCombined": 91.1
+        },
+        {
+          "n": 24,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 59014,
+          "combined": 64534,
+          "layer2ShareOfCombined": 91.4
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7931,
+          "layer2Cumulative": 7931,
+          "combined": 7931,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 15912,
+          "combined": 15912,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 23893,
+          "combined": 23893,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 31874,
+          "combined": 31874,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 39855,
+          "combined": 39855,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 47836,
+          "combined": 47836,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 55817,
+          "combined": 55817,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 63798,
+          "combined": 63798,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 71779,
+          "combined": 71779,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 79760,
+          "combined": 79760,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 87741,
+          "combined": 87741,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 95722,
+          "combined": 95722,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 13,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 103703,
+          "combined": 103703,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 14,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 111684,
+          "combined": 111684,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 15,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 119665,
+          "combined": 119665,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 16,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 127646,
+          "combined": 127646,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 17,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 135627,
+          "combined": 135627,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 18,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 143608,
+          "combined": 143608,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 19,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 151589,
+          "combined": 151589,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 20,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 159570,
+          "combined": 159570,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 21,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 167551,
+          "combined": 167551,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 22,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 175532,
+          "combined": 175532,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 23,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 183513,
+          "combined": 183513,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 24,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 191494,
+          "combined": 191494,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 24,
+        "turns_total": 24,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "layer1_once_tokens": 5520,
+        "mean_layer2_tokens": 2458.9,
+        "mean_result_tokens": 2458.9,
+        "combined_at_n": 64534,
+        "combined_relist_every_turn_at_n": 191494,
+        "model_written_tokens_sum": 336,
+        "model_written_weight": 5,
+        "combined_weighted_at_n": 66214,
+        "mean_latency_ms": 2.228,
+        "turns": 24,
+        "task_success_ok": true,
+        "task_success_rate": 1
+      }
+    },
+    "bifrost_codemode": {
+      "id": "bifrost_codemode",
+      "model": "bifrost_code_mode_executeToolCode_starlark",
+      "layer1": {
+        "once_schema_tokens": 3459,
+        "tools_count": 4,
+        "tools_list_count_full": 4,
+        "tools_list_schema_tokens_full": 1472,
+        "meta_schema_tokens": 1472,
+        "discovery_once_tokens": 1987,
+        "note": "Layer1 = 4 Code Mode meta-tool schemas + once listToolFiles/readToolFile(catalog.pyi). Layer2 counts full executeToolCode text (includes Bifrost TOOL print of fat upstream)."
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_001",
+          "result_tokens": 1329,
+          "result_chars": 4136,
+          "model_written_tokens": 62,
+          "layer2_classic": 1329,
+          "layer2_relist_every_turn": 1329,
+          "latency_ms": 6.895,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 2,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_002",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "model_written_tokens": 62,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.533,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 3,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_003",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "model_written_tokens": 62,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.336,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 4,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_004",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "model_written_tokens": 62,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.239,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 5,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_005",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "model_written_tokens": 62,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 6.117,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 6,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_006",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "model_written_tokens": 62,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.459,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 7,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_007",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "model_written_tokens": 62,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.325,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 8,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_008",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "model_written_tokens": 62,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.289,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 9,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_009",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "model_written_tokens": 62,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.404,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 10,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_010",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "model_written_tokens": 62,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.448,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 11,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_011",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "model_written_tokens": 62,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 3.239,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 12,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_012",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "model_written_tokens": 62,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 2.893,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 13,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_013",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "model_written_tokens": 62,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 2.854,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 14,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_014",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "model_written_tokens": 62,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 3.041,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 15,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_015",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "model_written_tokens": 62,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 3.005,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 16,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_016",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "model_written_tokens": 62,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 3.373,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 17,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_017",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "model_written_tokens": 62,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 3.039,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 18,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_018",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "model_written_tokens": 62,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 3.002,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 19,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_019",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "model_written_tokens": 62,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 3.13,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 20,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_020",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "model_written_tokens": 62,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 3.049,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 21,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_021",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "model_written_tokens": 62,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 3.044,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 22,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_022",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "model_written_tokens": 62,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 3.008,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 23,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_023",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "model_written_tokens": 62,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 4.86,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 24,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_024",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "model_written_tokens": 62,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 3.63,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        }
+      ],
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1329,
+          "layer2Cumulative": 1329,
+          "combined": 4788,
+          "layer2ShareOfCombined": 27.8
+        },
+        {
+          "n": 2,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 2710,
+          "combined": 6169,
+          "layer2ShareOfCombined": 43.9
+        },
+        {
+          "n": 3,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 4091,
+          "combined": 7550,
+          "layer2ShareOfCombined": 54.2
+        },
+        {
+          "n": 4,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 5472,
+          "combined": 8931,
+          "layer2ShareOfCombined": 61.3
+        },
+        {
+          "n": 5,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 6853,
+          "combined": 10312,
+          "layer2ShareOfCombined": 66.5
+        },
+        {
+          "n": 6,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 8234,
+          "combined": 11693,
+          "layer2ShareOfCombined": 70.4
+        },
+        {
+          "n": 7,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 9615,
+          "combined": 13074,
+          "layer2ShareOfCombined": 73.5
+        },
+        {
+          "n": 8,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 10996,
+          "combined": 14455,
+          "layer2ShareOfCombined": 76.1
+        },
+        {
+          "n": 9,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 12377,
+          "combined": 15836,
+          "layer2ShareOfCombined": 78.2
+        },
+        {
+          "n": 10,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 13758,
+          "combined": 17217,
+          "layer2ShareOfCombined": 79.9
+        },
+        {
+          "n": 11,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 15138,
+          "combined": 18597,
+          "layer2ShareOfCombined": 81.4
+        },
+        {
+          "n": 12,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 16518,
+          "combined": 19977,
+          "layer2ShareOfCombined": 82.7
+        },
+        {
+          "n": 13,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 17898,
+          "combined": 21357,
+          "layer2ShareOfCombined": 83.8
+        },
+        {
+          "n": 14,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 19278,
+          "combined": 22737,
+          "layer2ShareOfCombined": 84.8
+        },
+        {
+          "n": 15,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 20658,
+          "combined": 24117,
+          "layer2ShareOfCombined": 85.7
+        },
+        {
+          "n": 16,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 22038,
+          "combined": 25497,
+          "layer2ShareOfCombined": 86.4
+        },
+        {
+          "n": 17,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 23418,
+          "combined": 26877,
+          "layer2ShareOfCombined": 87.1
+        },
+        {
+          "n": 18,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 24798,
+          "combined": 28257,
+          "layer2ShareOfCombined": 87.8
+        },
+        {
+          "n": 19,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 26178,
+          "combined": 29637,
+          "layer2ShareOfCombined": 88.3
+        },
+        {
+          "n": 20,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 27558,
+          "combined": 31017,
+          "layer2ShareOfCombined": 88.8
+        },
+        {
+          "n": 21,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 28938,
+          "combined": 32397,
+          "layer2ShareOfCombined": 89.3
+        },
+        {
+          "n": 22,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 30318,
+          "combined": 33777,
+          "layer2ShareOfCombined": 89.8
+        },
+        {
+          "n": 23,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 31698,
+          "combined": 35157,
+          "layer2ShareOfCombined": 90.2
+        },
+        {
+          "n": 24,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 33078,
+          "combined": 36537,
+          "layer2ShareOfCombined": 90.5
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1329,
+          "layer2Cumulative": 1329,
+          "combined": 1329,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 2710,
+          "combined": 2710,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 4091,
+          "combined": 4091,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 5472,
+          "combined": 5472,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 6853,
+          "combined": 6853,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 8234,
+          "combined": 8234,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 9615,
+          "combined": 9615,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 10996,
+          "combined": 10996,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 12377,
+          "combined": 12377,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 13758,
+          "combined": 13758,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 15138,
+          "combined": 15138,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 16518,
+          "combined": 16518,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 13,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 17898,
+          "combined": 17898,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 14,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 19278,
+          "combined": 19278,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 15,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 20658,
+          "combined": 20658,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 16,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 22038,
+          "combined": 22038,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 17,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 23418,
+          "combined": 23418,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 18,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 24798,
+          "combined": 24798,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 19,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 26178,
+          "combined": 26178,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 20,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 27558,
+          "combined": 27558,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 21,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 28938,
+          "combined": 28938,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 22,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 30318,
+          "combined": 30318,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 23,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 31698,
+          "combined": 31698,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 24,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 33078,
+          "combined": 33078,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 24,
+        "turns_total": 24,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "layer1_once_tokens": 3459,
+        "mean_layer2_tokens": 1378.3,
+        "mean_result_tokens": 1378.3,
+        "combined_at_n": 36537,
+        "combined_relist_every_turn_at_n": 33078,
+        "model_written_tokens_sum": 1488,
+        "model_written_weight": 5,
+        "combined_weighted_at_n": 43977,
+        "mean_latency_ms": 3.55,
+        "turns": 24,
+        "task_success_ok": true,
+        "task_success_rate": 1
+      }
+    },
+    "obot": {
+      "id": "obot",
+      "model": "aggregator_tools_list_plus_fat_call",
+      "layer1": {
+        "once_schema_tokens": 5520,
+        "tools_count": 40,
+        "note": "Full tools/list dump (fat catalog surface); classic counts Layer1 once"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "catalog_list_001",
+          "result_tokens": 2411,
+          "result_chars": 7655,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2411,
+          "layer2_relist_every_turn": 7931,
+          "latency_ms": 21.801,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 2,
+          "tool": "catalog_list_002",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 22.833,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 3,
+          "tool": "catalog_list_003",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 21.208,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 4,
+          "tool": "catalog_list_004",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 22.703,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 5,
+          "tool": "catalog_list_005",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 23.308,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 6,
+          "tool": "catalog_list_006",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 21.232,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 7,
+          "tool": "catalog_list_007",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 19.285,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 8,
+          "tool": "catalog_list_008",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 19.874,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 9,
+          "tool": "catalog_list_009",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 20.098,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 10,
+          "tool": "catalog_list_010",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 19.323,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 11,
+          "tool": "catalog_list_011",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 19.709,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 12,
+          "tool": "catalog_list_012",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 19.748,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 13,
+          "tool": "catalog_list_013",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 19.422,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 14,
+          "tool": "catalog_list_014",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 18.807,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 15,
+          "tool": "catalog_list_015",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 19.279,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 16,
+          "tool": "catalog_list_016",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 27.397,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 17,
+          "tool": "catalog_list_017",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 20.818,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 18,
+          "tool": "catalog_list_018",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 18.288,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 19,
+          "tool": "catalog_list_019",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 19.459,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 20,
+          "tool": "catalog_list_020",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 32.225,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 21,
+          "tool": "catalog_list_021",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 18.752,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 22,
+          "tool": "catalog_list_022",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 19.224,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 23,
+          "tool": "catalog_list_023",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 18.617,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 24,
+          "tool": "catalog_list_024",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "model_written_tokens": 14,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 19.154,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        }
+      ],
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2411,
+          "layer2Cumulative": 2411,
+          "combined": 7931,
+          "layer2ShareOfCombined": 30.4
+        },
+        {
+          "n": 2,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 4872,
+          "combined": 10392,
+          "layer2ShareOfCombined": 46.9
+        },
+        {
+          "n": 3,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 7333,
+          "combined": 12853,
+          "layer2ShareOfCombined": 57.1
+        },
+        {
+          "n": 4,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 9794,
+          "combined": 15314,
+          "layer2ShareOfCombined": 64
+        },
+        {
+          "n": 5,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 12255,
+          "combined": 17775,
+          "layer2ShareOfCombined": 68.9
+        },
+        {
+          "n": 6,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 14716,
+          "combined": 20236,
+          "layer2ShareOfCombined": 72.7
+        },
+        {
+          "n": 7,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 17177,
+          "combined": 22697,
+          "layer2ShareOfCombined": 75.7
+        },
+        {
+          "n": 8,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 19638,
+          "combined": 25158,
+          "layer2ShareOfCombined": 78.1
+        },
+        {
+          "n": 9,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 22099,
+          "combined": 27619,
+          "layer2ShareOfCombined": 80
+        },
+        {
+          "n": 10,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 24560,
+          "combined": 30080,
+          "layer2ShareOfCombined": 81.6
+        },
+        {
+          "n": 11,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 27021,
+          "combined": 32541,
+          "layer2ShareOfCombined": 83
+        },
+        {
+          "n": 12,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 29482,
+          "combined": 35002,
+          "layer2ShareOfCombined": 84.2
+        },
+        {
+          "n": 13,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 31943,
+          "combined": 37463,
+          "layer2ShareOfCombined": 85.3
+        },
+        {
+          "n": 14,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 34404,
+          "combined": 39924,
+          "layer2ShareOfCombined": 86.2
+        },
+        {
+          "n": 15,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 36865,
+          "combined": 42385,
+          "layer2ShareOfCombined": 87
+        },
+        {
+          "n": 16,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 39326,
+          "combined": 44846,
+          "layer2ShareOfCombined": 87.7
+        },
+        {
+          "n": 17,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 41787,
+          "combined": 47307,
+          "layer2ShareOfCombined": 88.3
+        },
+        {
+          "n": 18,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 44248,
+          "combined": 49768,
+          "layer2ShareOfCombined": 88.9
+        },
+        {
+          "n": 19,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 46709,
+          "combined": 52229,
+          "layer2ShareOfCombined": 89.4
+        },
+        {
+          "n": 20,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 49170,
+          "combined": 54690,
+          "layer2ShareOfCombined": 89.9
+        },
+        {
+          "n": 21,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 51631,
+          "combined": 57151,
+          "layer2ShareOfCombined": 90.3
+        },
+        {
+          "n": 22,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 54092,
+          "combined": 59612,
+          "layer2ShareOfCombined": 90.7
+        },
+        {
+          "n": 23,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 56553,
+          "combined": 62073,
+          "layer2ShareOfCombined": 91.1
+        },
+        {
+          "n": 24,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 59014,
+          "combined": 64534,
+          "layer2ShareOfCombined": 91.4
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7931,
+          "layer2Cumulative": 7931,
+          "combined": 7931,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 15912,
+          "combined": 15912,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 23893,
+          "combined": 23893,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 31874,
+          "combined": 31874,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 39855,
+          "combined": 39855,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 47836,
+          "combined": 47836,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 55817,
+          "combined": 55817,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 63798,
+          "combined": 63798,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 71779,
+          "combined": 71779,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 79760,
+          "combined": 79760,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 87741,
+          "combined": 87741,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 95722,
+          "combined": 95722,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 13,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 103703,
+          "combined": 103703,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 14,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 111684,
+          "combined": 111684,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 15,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 119665,
+          "combined": 119665,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 16,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 127646,
+          "combined": 127646,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 17,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 135627,
+          "combined": 135627,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 18,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 143608,
+          "combined": 143608,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 19,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 151589,
+          "combined": 151589,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 20,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 159570,
+          "combined": 159570,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 21,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 167551,
+          "combined": 167551,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 22,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 175532,
+          "combined": 175532,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 23,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 183513,
+          "combined": 183513,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 24,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 191494,
+          "combined": 191494,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 24,
+        "turns_total": 24,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "layer1_once_tokens": 5520,
+        "mean_layer2_tokens": 2458.9,
+        "mean_result_tokens": 2458.9,
+        "combined_at_n": 64534,
+        "combined_relist_every_turn_at_n": 191494,
+        "model_written_tokens_sum": 336,
+        "model_written_weight": 5,
+        "combined_weighted_at_n": 66214,
+        "mean_latency_ms": 20.94,
         "turns": 24,
         "task_success_ok": true,
         "task_success_rate": 1
@@ -4174,6 +7184,8 @@
     "Measured vs MCPJungle @N=24: classic 3.72× (relist secondary 11.66×).",
     "Measured vs agentgateway @N=24: classic 3.7× (relist secondary 11.21×).",
     "Measured vs Executor @N=24: classic 6.16× (fat return — matches live Layer 2 pass-through; Layer1 schema still smaller).",
+    "Measured vs Bifrost classic @N=24: classic 3.7× (full tools/list + fat callTool via /mcp).",
+    "Measured vs Bifrost Code Mode @N=24: classic 2.1× / weighted(×5 model-written) 1.92× (Layer2 includes TOOL print dump; ClawQL discovery=every_turn).",
     "RSS is a loss among serious arms — admit or fix before memory claims."
   ],
   "primary_metric": "classic_layer1_once_plus_sum_layer2_with_task_success",

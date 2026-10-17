@@ -1,6 +1,6 @@
 {
   "suite": "gateway-multi-multiturn",
-  "measuredAt": "2026-10-17T04:58:14.658Z",
+  "measuredAt": "2026-10-17T05:26:41.710Z",
   "node": "v22.14.0",
   "config": {
     "turns": 12,
@@ -18,13 +18,14 @@
     ],
     "clawql_discovery": "every_turn",
     "model_written_weight": 5,
-    "tokenizer": "cl100k_base"
+    "tokenizer": "cl100k_base",
+    "derived_from": "gateway-multi-multiturn.json"
   },
   "equal_arm": {
     "fat_result_tokens_partition_1": 2411,
     "slim_fields_tokens_partition_1": 353,
     "projection_ratio": 6.83,
-    "note": "Same underlying rows; ClawQL where+fields project to {id,name,status}; Executor/aggregators return full envelope (Executor: no gateway projection — settled)"
+    "note": "Same underlying rows; ClawQL where+fields project to {id,name,status}; Executor/aggregators return full envelope (Executor: no gateway projection \u2014 settled)"
   },
   "board": {
     "clawql": {
@@ -36,7 +37,7 @@
       "model_written_tokens_sum": 552,
       "model_written_weight": 5,
       "combined_weighted_at_n": 11626,
-      "mean_latency_ms": 19.526,
+      "mean_latency_ms": 20.284,
       "turns": 12,
       "task_success_ok": true,
       "task_success_rate": 1
@@ -50,7 +51,7 @@
       "model_written_tokens_sum": 168,
       "model_written_weight": 5,
       "combined_weighted_at_n": 35842,
-      "mean_latency_ms": 20.728,
+      "mean_latency_ms": 21.744,
       "turns": 12,
       "task_success_ok": true,
       "task_success_rate": 1
@@ -235,7 +236,7 @@
           ],
           "layer2_classic": 664,
           "layer2_relist_every_turn": 664,
-          "latency_ms": 60.531,
+          "latency_ms": 50.029,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -259,7 +260,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 15.71,
+          "latency_ms": 17.786,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -283,7 +284,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 73.179,
+          "latency_ms": 14.693,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -307,7 +308,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 45.757,
+          "latency_ms": 82.055,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -331,7 +332,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 6.399,
+          "latency_ms": 35.045,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -355,7 +356,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 4.733,
+          "latency_ms": 8.378,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -379,7 +380,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 4.676,
+          "latency_ms": 6.898,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -403,7 +404,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 5.224,
+          "latency_ms": 11.166,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -427,7 +428,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 5.691,
+          "latency_ms": 5.666,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -451,7 +452,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 4.682,
+          "latency_ms": 4.445,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -475,7 +476,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 4.116,
+          "latency_ms": 3.852,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -499,7 +500,7 @@
           ],
           "layer2_classic": 714,
           "layer2_relist_every_turn": 714,
-          "latency_ms": 3.617,
+          "latency_ms": 3.392,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -721,7 +722,7 @@
         "model_written_tokens_sum": 552,
         "model_written_weight": 5,
         "combined_weighted_at_n": 11626,
-        "mean_latency_ms": 19.526,
+        "mean_latency_ms": 20.284,
         "turns": 12,
         "task_success_ok": true,
         "task_success_rate": 1
@@ -745,7 +746,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2411,
           "layer2_relist_every_turn": 7931,
-          "latency_ms": 20.66,
+          "latency_ms": 23.328,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -763,7 +764,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 20.981,
+          "latency_ms": 23.905,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -781,7 +782,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 19.338,
+          "latency_ms": 23.8,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -799,7 +800,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 19.949,
+          "latency_ms": 24.271,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -817,7 +818,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 20.948,
+          "latency_ms": 29.729,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -835,7 +836,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 20.605,
+          "latency_ms": 20.475,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -853,7 +854,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 29.622,
+          "latency_ms": 19.174,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -871,7 +872,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 19.454,
+          "latency_ms": 18.569,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -889,7 +890,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 19.588,
+          "latency_ms": 18.619,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -907,7 +908,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 19.236,
+          "latency_ms": 19.529,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -925,7 +926,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 18.773,
+          "latency_ms": 18.803,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -943,7 +944,7 @@
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 19.578,
+          "latency_ms": 20.725,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1165,7 +1166,7 @@
         "model_written_tokens_sum": 168,
         "model_written_weight": 5,
         "combined_weighted_at_n": 35842,
-        "mean_latency_ms": 20.728,
+        "mean_latency_ms": 21.744,
         "turns": 12,
         "task_success_ok": true,
         "task_success_rate": 1
@@ -1174,27 +1175,32 @@
   },
   "errors": {},
   "category_win": [
-    "Category story: most efficient governed gateway — multi-turn I/O tokens with equal task success.",
-    "1. Primary model — classic Layer1 once + Σ Layer2 (clients that cache tools/list).",
-    "2. Input side — ClawQL Layer1 is search+execute only; aggregators pay the full fat tools/list once.",
-    "3. Output side — ClawQL gateway fields/where projection; Executor measured path is full payload pass-through.",
+    "Category story: most efficient governed gateway \u2014 multi-turn I/O tokens with equal task success.",
+    "1. Primary model \u2014 classic Layer1 once + \u03a3 Layer2 (clients that cache tools/list).",
+    "2. Input side \u2014 ClawQL Layer1 is search+execute only; aggregators pay the full fat tools/list once.",
+    "3. Output side \u2014 ClawQL gateway fields/where projection; Executor measured path is full payload pass-through.",
     "4. Re-list-every-turn is secondary sensitivity only (most clients cache; lazy clients shrink aggregators further).",
     "5. Settled: do not label a hand-written slim-return program as Executor (Both Sides of Context Compression).",
     "ClawQL deterministic task_success: PASS.",
-    "RSS is a loss among serious arms — admit or fix before memory claims."
+    "Measured vs MCPJungle @N=12: classic 3.98\u00d7 (relist secondary 11.69\u00d7).",
+    "Measured vs agentgateway @N=12: classic 3.95\u00d7 (relist secondary 11.24\u00d7).",
+    "Measured vs Executor @N=12: classic 6.06\u00d7 (fat return \u2014 matches live Layer 2 pass-through; Layer1 schema still smaller).",
+    "Measured vs Bifrost classic @N=12: classic 3.95\u00d7 (full tools/list + fat callTool via /mcp).",
+    "Measured vs Bifrost Code Mode @N=12: classic 2.25\u00d7 / weighted(\u00d75 model-written) 2.04\u00d7 (Layer2 includes TOOL print dump; ClawQL discovery=every_turn).",
+    "RSS is a loss among serious arms \u2014 admit or fix before memory claims."
   ],
   "primary_metric": "classic_layer1_once_plus_sum_layer2_with_task_success",
   "secondary_metric": "tools_list_every_turn_sensitivity",
   "honesty": [
     "Fat catalog equal-arm: N MCP tools mirrored as N OpenAPI operationIds.",
     "PRIMARY: classic Layer1_once + sum(Layer2) with deterministic task_success.",
-    "SECONDARY: tools_list_every_turn — most clients cache ListTools; do not lead with this multiplier.",
-    "Executor Layer2 is fat JSON — matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
+    "SECONDARY: tools_list_every_turn \u2014 most clients cache ListTools; do not lead with this multiplier.",
+    "Executor Layer2 is fat JSON \u2014 matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
     "Do not publish a hand-written slim-return program as Executor.",
     "ContextForge/MetaMCP off publish board by default.",
     "Bifrost/bifrost_codemode are opt-in via MT_ARMS (not default) until a published board lands.",
-    "Bifrost Code Mode Layer2 counts full executeToolCode text — Bifrost may echo fat upstream in Print output.",
+    "Bifrost Code Mode Layer2 counts full executeToolCode text \u2014 Bifrost may echo fat upstream in Print output.",
     "Not a latency board; see gateway-multi-cmp-10k.json for interleaved p999.",
-    "RSS is a loss among serious arms — admit plainly."
+    "RSS is a loss among serious arms \u2014 admit plainly."
   ]
 }
