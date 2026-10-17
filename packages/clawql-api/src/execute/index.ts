@@ -3,6 +3,7 @@ export * from "./execute-live.js";
 export * from "./resume-core.js";
 export * from "./mandate-execute.js";
 export * from "./field-projection.js";
+export * from "./openapi-execute-path.js";
 export * from "./where-filter.js";
 export * from "./result-truncation.js";
 export * from "./suggest-operation-ids.js";
