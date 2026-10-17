@@ -8,6 +8,7 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`gateway-multi-cmp-chaos-slim.json`](./gateway-multi-cmp-chaos-slim.json) | Chaos ceilings — **single-instance / stdio equal-arm** (not cross-topology) |
 | [`gateway-multi-multiturn.json`](./gateway-multi-multiturn.json) | **12-turn I/O tokens + task success** on a fat catalog |
 | [`gateway-multi-multiturn-24.json`](./gateway-multi-multiturn-24.json) | Same board at N=24 (compounding check) |
+| [`gateway-multi-multiturn-bifrost.json`](./gateway-multi-multiturn-bifrost.json) | Same N=12/C=40 fixture + Bifrost classic / Code Mode (opt-in arms) |
 
 ---
 
@@ -190,24 +191,35 @@ Levers landed: INSTANCE_SPEC slim Core, lazy optional imports, WORM ring cap, se
 | --- | --- |
 | **ContextForge** | Prior run nested through MCPJungle — inflates latency, memory, and chaos. Re-add only with native REST virtualization calling `/pets` directly. |
 | **MetaMCP** | Not run (Docker Compose–first). Do not list as a peer without a measured arm. |
-| **Bifrost / Bifrost Code Mode** | Harness wired (`MT_ARMS=…,bifrost,bifrost_codemode`) but **not yet on a published board**. Highest category-claim blocker on the [dominance roadmap](../dominance-roadmap.md). Install: `npx @maximhq/bifrost` (binary under `~/.cache/bifrost/`) or set `BIFROST_BIN`. |
 
-Default `MULTI_ARMS` / `MT_ARMS` omit Bifrost, ContextForge, and MetaMCP.
+Default `MULTI_ARMS` / `MT_ARMS` omit Bifrost, ContextForge, and MetaMCP. Bifrost is measured below but stays opt-in until the category story absorbs Code Mode honestly.
 
-### Bifrost smoke (opt-in)
+### Bifrost on the N=12 / C=40 board
+
+Same fixture as the publish multiturn table (`MT_TURNS=12`, `CATALOG_TOOL_COUNT=40`, `MT_LIMIT=25`). Artifact: [`gateway-multi-multiturn-bifrost.json`](./gateway-multi-multiturn-bifrost.json). Binary: `npx @maximhq/bifrost` → `~/.cache/bifrost/<ver>/bin/bifrost-http-*` or `BIFROST_BIN`.
+
+| Arm | Layer1 once (tok) | Mean Layer2 (tok) | Mean **result** tok | Combined @12 | Task success | vs ClawQL (same session) |
+| --- | ---: | ---: | ---: | ---: | --- | ---: |
+| **ClawQL** (same session) | **413** | **1687** | **723** | **20 655** | **PASS** | 1× |
+| Bifrost classic | 5520 | 2457 | 2457 | 35 002 (1.69×) | **PASS** | ≈ agentgateway |
+| Bifrost Code Mode | 3459 | 1377 | 1377 | **19 977 (0.97×)** | **PASS** | near-tie / slight Code Mode lead |
+
+**How to read this (do not claim category dominance from it):**
+
+1. **Classic Bifrost** matches the other aggregators (~1.7× ClawQL) — full `tools/list` + fat `callTool`.
+2. **Code Mode** near-ties ClawQL on **combined** classic under the harness Layer2 definition (full MCP text). Meta-tool schemas + once `readToolFile(catalog.pyi)` still cost ~3.5k Layer1 vs ClawQL’s search+execute (~0.4k).
+3. **Result projection** still favors ClawQL (~1.9× lower mean result tok): Code Mode’s `executeToolCode` echoes the fat upstream dump in `Print output` before the slim `Return value`, so Layer2 is not slim-only.
+4. Same-session ClawQL Layer1 here is **413** vs the earlier publish board **297** (schema drift on this build); Layer2/result match the publish board. Ratios use the same-session ClawQL row.
+5. C=8 smoke ([`gateway-multi-multiturn-bifrost-smoke.json`](./gateway-multi-multiturn-bifrost-smoke.json)) had Code Mode *worse* than classic — Code Mode’s Layer1 win needs a fat catalog.
 
 ```bash
-# Binary: npx downloads bifrost-http under ~/.cache/bifrost/<ver>/bin/
 export BIFROST_BIN="${BIFROST_BIN:-$HOME/.cache/bifrost/v2.3.0/bin/bifrost-http-0}"
 
-MT_TURNS=10 CATALOG_TOOL_COUNT=8 \
-  MT_ARMS=bifrost,bifrost_codemode \
-  MT_OUT=gateway-multi-multiturn-bifrost-smoke.json \
+MT_TURNS=12 CATALOG_TOOL_COUNT=40 MT_LIMIT=25 \
+  MT_ARMS=clawql,bifrost,bifrost_codemode \
+  MT_OUT=gateway-multi-multiturn-bifrost.json \
   npm run benchmark:gateway-multi-multiturn
 ```
-
-- **bifrost** — classic aggregator path: full `tools/list` (prefixed `catalog-*`) + fat `callTool`
-- **bifrost_codemode** — four meta-tools; Layer1 includes once `listToolFiles` + `readToolFile(servers/catalog.pyi)`; Layer2 is `executeToolCode` Starlark that projects `{id,name,status}`. Count the **full** MCP text — Bifrost currently echoes the fat upstream dump in `Print output` before `Return value` (honest Layer2).
 
 ---
 
@@ -221,7 +233,7 @@ MT_TURNS=10 CATALOG_TOOL_COUNT=8 \
 6. **Multiturn fairness** — deterministic `task_success`; classic Layer1-once is primary; re-list demoted. No simulated Executor “filter” arm on the publish board (settled: gateway has no response-side projection).
 7. **Chaos until-break + topology tags** — `MULTI_CHAOS_UNTIL_BREAK`; reports carry `topology` so cross-topology claims fail the honesty check.
 
-**Next:** land Bifrost classic + Code Mode smoke numbers on this board (harness ready); topology B (4× behind LB) for every arm before any scale-out claim; optional real-model task-success arm; RSS heap profile / lazy `clawql-api` if we want to close the memory loss. Date/version stamps on published executor-cmp pages (housekeeping).
+**Next:** fold Bifrost Code Mode into the category narrative without claiming dominance (combined near-tie; ClawQL still leads result projection); update [dominance roadmap](../dominance-roadmap.md) status to partial/measured; topology B (4× behind LB) for every arm before any scale-out claim; optional real-model task-success arm; RSS heap profile / lazy `clawql-api` if we want to close the memory loss.
 
 ---
 
@@ -235,3 +247,4 @@ MT_TURNS=10 CATALOG_TOOL_COUNT=8 \
 - ContextForge / MetaMCP off until native equal-arm runs exist.
 - Multiturn ClawQL Layer2 includes per-turn `search` (discovery tax); result-only gap vs fat peers is larger (~3.4×).
 - Token wins require `task_success` — projection must not drop facts the agent needed.
+- **Do not claim category dominance over Bifrost Code Mode** from the N=12/C=40 board: combined classic is a near-tie (0.97× ClawQL) when Layer2 counts full `executeToolCode` text. ClawQL’s clear lead there is mean result tok (~1.9×) and Layer1 size — not combined tokens.
