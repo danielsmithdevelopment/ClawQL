@@ -18,6 +18,10 @@ export const SEARCH_QUERY_DESCRIPTION =
 
 export const SEARCH_LIMIT_DESCRIPTION = "Max number of matching operations to return.";
 
+export const SEARCH_DETAIL_DESCRIPTION =
+  "compact (default): id/signature/score/risk — Code Mode–peer catalog surface. " +
+  "full: include parameters[], requestBody, responseSchema, matchedOn.";
+
 /** Lean tool-schema copy — keep docs/skills for long-form; Layer-1 tokens matter. */
 export const EXECUTE_OPERATION_ID_DESCRIPTION =
   "Operation id from search (e.g. pulls.list). Large binaries: prefer MCP gRPC CallTool.";
@@ -43,6 +47,9 @@ export const SearchInputSchema = Schema.Struct({
   )
     .pipe(Schema.withDecodingDefaultType(Effect.succeed(5)))
     .annotate({ description: SEARCH_LIMIT_DESCRIPTION }),
+  detail: Schema.optional(
+    Schema.Literals(["compact", "full"]).annotate({ description: SEARCH_DETAIL_DESCRIPTION })
+  ),
 });
 
 export type SearchInputDecoded = Schema.Schema.Type<typeof SearchInputSchema>;
