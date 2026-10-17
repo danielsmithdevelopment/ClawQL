@@ -26,16 +26,15 @@ Live table: [clawql.com/benchmarks#dominance](https://clawql.com/benchmarks/#dom
 | **Uber MCP Gateway**            | 800+ servers / 5k tools; tool search + GraphQL-style projection + Code Mode default                                       | Result projection + search efficiency on multi-turn; scale-out concurrency                                    | Adapt published techniques to shared fixture; projection savings vs ClawQL JMESPath + known-ops                       | Not on board — **not OSS**; technique bake-off only          |
 | **agentgateway (Solo.io / LF)** | MCP + A2A federation; CEL policies; OpenTelemetry; already in prior boards                                                | Token efficiency and concurrency on equal-arm board; policy expressiveness                                    | Re-run pets/Cloudflare boards with latest version; A2A multi-agent turn if relevant                                   | **Measured** — re-pin latest binary                          |
 | **IBM ContextForge**            | Multi-protocol federation; 40+ plugins; already measured (higher latency)                                                 | Latency + token overhead vs nested setups; governance plugins                                                 | Direct equal-arm (no nesting); gateway-cost p50/p999 + RSS under same SLO                                             | **Partial** — nested adapter off by default                  |
-| **Obot**                        | OSS enterprise registry + per-tool policy; curated catalogs; K8s-native                                                   | Token surface of curated tools; policy enforcement overhead                                                   | Definitions + discovery with their catalog model; audit/policy on same workflow                                       | Not on board — **next OSS peer** (`OBOT_MCP_URL` harness)    |
+| **Obot**                        | OSS enterprise registry + per-tool policy; curated catalogs; K8s-native                                                   | Token surface of curated tools; policy enforcement overhead                                                   | Definitions + discovery with their catalog model; audit/policy on same workflow                                       | **Tokens measured** — classic **3.95×** @N=12 (fat aggregator path via `mcp-connect`); still need policy-depth criteria |
 | **Executor (v1/v2)**            | Closest prior peer; sandbox code execution; already on published boards                                                   | Confirm leads after their updates; multi-turn + concurrency                                                   | Re-run full board with latest versions; real-model validation under pre-committed rules                               | **Measured** — keep version-scoped                           |
 
 ## Priority order (next proofs)
 
-1. **Bifrost** — tokens on board; finish p99 concurrency + governance-depth criteria for category claim.
-2. **Obot** — next runnable OSS peer (`OBOT_MCP_URL`); see [dominance-peers-wiring](./dominance-peers-wiring.md).
-3. **Cloudflare Code Mode** — finish blind small/dual fan-out under frozen rules (plan.c constants landed).
-4. **Executor / agentgateway** — re-pin latest versions so measured leads do not rot.
-5. **Uber technique bake-off / ContextForge (direct) / TrueFoundry (when credentials)** — see wiring doc.
+1. **Bifrost / Obot** — tokens on board; finish p99 concurrency + governance/policy-depth criteria for category claim.
+2. **Cloudflare Code Mode** — finish blind small/dual fan-out under frozen rules (plan.c constants landed).
+3. **Executor / agentgateway** — re-pin latest versions so measured leads do not rot.
+4. **Uber technique bake-off / ContextForge (direct) / TrueFoundry (when credentials)** — see wiring doc.
 
 ## Related boards
 
