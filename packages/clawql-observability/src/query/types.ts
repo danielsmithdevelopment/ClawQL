@@ -39,6 +39,12 @@ export type TraceQueryRequest = {
   readonly selection?: FederatedQuerySelection;
 };
 
+/** Fetch a single Tempo / Jaeger-compatible trace by id (`GET /api/traces/{id}`). */
+export type TraceByIdRequest = {
+  readonly traceId: string;
+  readonly selection?: FederatedQuerySelection;
+};
+
 export type ProfileQueryRequest = {
   readonly query: string;
   readonly timeRange: QueryTimeRange;
