@@ -1624,6 +1624,60 @@ goose:
   podAnnotations: {}
   extraEnv: []
 
+# Optional Uptime Kuma — synthetic monitoring / status page ([#199](https://github.com/danielsmithdevelopment/ClawQL/issues/199)).
+# Pair with MCP `schedule` synthetics + `notify` — see docs/deployment/uptime-kuma-synthetics.md
+uptimeKuma:
+  enabled: false
+  replicaCount: 1
+  image:
+    repository: louislam/uptime-kuma
+    tag: "1"
+    pullPolicy: IfNotPresent
+  service:
+    port: 3001
+    targetPort: 3001
+  persistence:
+    enabled: true
+    mountPath: /app/data
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 5Gi
+    existingClaim: ""
+  podSecurityContext:
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    # Official image expects writable /app/data; keep non-root when the tag supports it.
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop:
+        - ALL
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  podAnnotations: {}
+  extraEnv: []
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: status.clawql.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
 # Hermes — natural-language platform ops (`@hermes …` in dashboard). No separate container; enables dashboard flag.
 hermes:
   enabled: false

@@ -1,0 +1,22 @@
+# Example overlay: optional Uptime Kuma + status ingress ([#199]).
+# Does not enable MCP schedule/notify by itself — flip those when you want agent-driven synthetics.
+#
+#   helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql \
+#     -f manifests/charts/clawql-mcp/values-uptime-kuma.example.yaml
+#
+# Docs: docs/deployment/uptime-kuma-synthetics.md
+
+uptimeKuma:
+  enabled: true
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: status.clawql.local
+        paths:
+          - path: /
+            pathType: Prefix
+
+# Optional companion: agent-scheduled HTTP probes + Slack notify on failure.
+# enableSchedule: true
+# enableNotify: true
