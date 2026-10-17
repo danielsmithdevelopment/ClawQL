@@ -14,6 +14,7 @@ export default defineConfig({
     dedupe: ["graphql"],
     alias: {
       graphql: graphqlMain,
+      "clawql-api/graphql/in-process-execute": `${configDir}/packages/clawql-api/src/graphql/in-process-execute.ts`,
     },
   },
   test: {
