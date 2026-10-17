@@ -16,6 +16,12 @@ import {
   fanoutScriptedRows,
 } from '@/lib/cloudflare-benchmarks'
 import {
+  dominanceCompetitors,
+  dominanceMinimumCriteria,
+  dominanceRoadmapHeadline,
+  dominanceRoadmapSummary,
+} from '@/lib/dominance-roadmap'
+import {
   BENCHMARK_VIDEO_META,
   BENCHMARK_VIDEO_SRC,
   gatewayBenchmarkClaim,
@@ -136,6 +142,13 @@ export function BenchmarksLanding() {
                 className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
               >
                 stdio concurrency
+              </a>
+              {' · '}
+              <a
+                href="#dominance"
+                className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
+              >
+                dominance roadmap
               </a>
               {' · '}
               <a
@@ -593,6 +606,77 @@ export function BenchmarksLanding() {
             ))}
           </tbody>
         </ComparisonTable>
+      </Section>
+
+      <Section
+        id="dominance"
+        className="pt-10 sm:pt-14"
+        eyebrow="Category roadmap"
+        headline={dominanceRoadmapHeadline}
+        subheadline={<p>{dominanceRoadmapSummary}</p>}
+      >
+        <div className="mb-8">
+          <h3 className="text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+            Minimum set for a conclusive claim
+          </h3>
+          <ul className="mt-3 grid list-disc gap-1.5 pl-5 text-sm/6 text-mist-700 sm:grid-cols-2 dark:text-mist-400">
+            {dominanceMinimumCriteria.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+        <ComparisonTable minWidthClass="min-w-[960px]">
+          <caption className="sr-only">
+            Dominance roadmap — competitors, criteria to beat, proof requirements, and ClawQL board status
+          </caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Competitor</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Status</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Why it matters</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Criteria to beat</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>How to prove</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {dominanceCompetitors.map((row) => (
+              <tr key={row.id} className="border-t border-mist-950/10 dark:border-white/10">
+                <ComparisonRowTh className={clsx('align-top font-semibold text-mist-950 dark:text-white')}>
+                  <div className="flex flex-col gap-1.5">
+                    <span>{row.name}</span>
+                    <span className="text-xs/5 font-normal text-mist-600 dark:text-mist-500">{row.nextStep}</span>
+                  </div>
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('align-top')}>
+                  <span
+                    className={clsx(
+                      'inline-flex rounded-md px-2 py-1 text-xs font-medium',
+                      row.status === 'measured'
+                        ? 'bg-mist-950/8 text-mist-900 dark:bg-white/10 dark:text-mist-100'
+                        : row.status === 'partial'
+                          ? 'bg-amber-500/10 text-amber-900 dark:bg-amber-400/15 dark:text-amber-100'
+                          : 'bg-mist-950/4 text-mist-600 dark:bg-white/5 dark:text-mist-400',
+                    )}
+                  >
+                    {row.statusLabel}
+                  </span>
+                </ComparisonTd>
+                <ComparisonTd className={clsx('align-top text-left text-mist-700 dark:text-mist-400')}>
+                  {row.whyItMatters}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('align-top text-left text-mist-700 dark:text-mist-400')}>
+                  {row.criteriaToBeat}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('align-top text-left text-mist-700 dark:text-mist-400')}>
+                  {row.howToProve}
+                </ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
+        <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
+          Source: docs/benchmarks/dominance-roadmap.md · Measured rows stay claim-bound to published artifacts above.
+        </p>
       </Section>
 
       <Section
