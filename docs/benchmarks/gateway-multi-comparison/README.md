@@ -9,6 +9,7 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`gateway-multi-multiturn.json`](./gateway-multi-multiturn.json) | **12-turn I/O tokens + task success** on a fat catalog |
 | [`gateway-multi-multiturn-24.json`](./gateway-multi-multiturn-24.json) | Same board at N=24 (compounding check) |
 | [`gateway-multi-multiturn-bifrost.json`](./gateway-multi-multiturn-bifrost.json) | Same N=12/C=40 fixture + Bifrost classic / Code Mode (opt-in arms) |
+| [`gateway-multi-multiturn-obot.json`](./gateway-multi-multiturn-obot.json) | Same fixture + Obot `mcp-connect` (remote equal-arm catalog) |
 
 ---
 
@@ -16,7 +17,7 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 
 | Claim | Status | Bound |
 | --- | --- | --- |
-| **Fewest tokens among MCP aggregators + live Executor with equal task success** | **Primary** — classic Layer1-once + Σ Layer2 @12; all arms `task_success` PASS | ClawQL **8.9k** vs MCPJungle **35.3k** (**3.98×**), agentgateway **35.0k** (**3.95×**), Executor **53.7k** (**6.06×**). Compact search + compact execute JSON; Layer 2 is the win — same gap as [Both Sides of Context Compression](https://pragmaticvectors.com/posts/both-sides-of-context-compression). |
+| **Fewest tokens among MCP aggregators + live Executor with equal task success** | **Primary** — classic Layer1-once + Σ Layer2 @12; all arms `task_success` PASS | ClawQL **8.9k** vs MCPJungle **35.3k** (**3.98×**), agentgateway / Obot **35.0k** (**3.95×**), Executor **53.7k** (**6.06×**). Compact search + compact execute JSON; Layer 2 is the win — same gap as [Both Sides of Context Compression](https://pragmaticvectors.com/posts/both-sides-of-context-compression). |
 | **Lowest governed gateway cost** | **Supported** on n=10k — ClawQL gateway_cost p50 **0.70 ms** vs Executor **2.36 ms** | Same equal-arm pets upstream contract |
 | **Latency competitive with the fastest aggregators while doing more per call** | **Supported** — ClawQL best p50; MCPJungle best p999; essentially a tie at the top | Read with [path matrix](#path-matrix-what-each-arm-does) |
 | **Scale-out concurrency win** | **Not claimed yet** | Only after same-topology boards (1-instance **and** 4-replica behind LB) for every arm, pushed until break |
@@ -160,6 +161,9 @@ Artifact: [`gateway-multi-multiturn.json`](./gateway-multi-multiturn.json). Agen
 | Executor | 128 | 4465 | 4465 | 53 706 (**6.06×**) | **PASS** |
 | MCPJungle | 5840 | 2457 | 2457 | 35 322 (**3.98×**) | **PASS** |
 | agentgateway | 5520 | 2457 | 2457 | 35 002 (**3.95×**) | **PASS** |
+| Obot | 5520 | 2457 | 2457 | 35 002 (**3.95×**) | **PASS** |
+
+Obot is the same fat `tools/list` + `callTool` aggregator path, proxied through Obot `mcp-connect` after registering the equal-arm catalog as a remote multi-user entry (see [dominance-peers-wiring](../dominance-peers-wiring.md)). Follow-up artifact: [`gateway-multi-multiturn-obot.json`](./gateway-multi-multiturn-obot.json).
 
 Primary publish column is **classic** (Layer1 once). **Re-list every turn** is secondary — most clients cache tool lists; lazy clients shrink aggregator Layer1 further. Secondary numbers remain in the JSON for sensitivity analysis.
 
@@ -175,6 +179,13 @@ export EXECUTOR_DATA_DIR=/tmp/executor-v1-data   # required for Executor 1.x std
 
 MT_TURNS=12 CATALOG_TOOL_COUNT=40 \
   MT_ARMS=clawql,executor,mcpjungle,agentgateway \
+  npm run benchmark:gateway-multi-multiturn
+
+# Obot (after catalog HTTP + mcp-connect registration — see dominance-peers-wiring.md)
+export OBOT_MCP_URL=http://127.0.0.1:8080/mcp-connect/<ms-id>
+export OBOT_MCP_TOKEN=clawql-bench-token
+MT_TURNS=12 CATALOG_TOOL_COUNT=40 MT_LIMIT=25 \
+  MT_ARMS=clawql,obot MT_OUT=gateway-multi-multiturn-obot.json \
   npm run benchmark:gateway-multi-multiturn
 ```
 

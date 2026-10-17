@@ -7,32 +7,50 @@ How to put the remaining [dominance roadmap](./dominance-roadmap.md) peers on a 
 | Peer | Ship form | Equal-arm path | Blocker |
 | --- | --- | --- | --- |
 | **Bifrost** | OSS binary (`npx @maximhq/bifrost`) | `MT_ARMS=…,bifrost,bifrost_codemode` on pets multiturn | Tokens **measured** (Code Mode 2.25× / classic 3.95×). Still need p99 concurrency + governance depth. |
-| **Obot** | OSS Docker / Helm ([obot-platform/obot](https://github.com/obot-platform/obot)) | Register equal-arm catalog MCP behind Obot gateway → `OBOT_MCP_URL` arm | Auth bootstrap + catalog registration; not on board yet. |
+| **Obot** | OSS Docker / Helm ([obot-platform/obot](https://github.com/obot-platform/obot)) | Equal-arm catalog Streamable HTTP → catalog entry → `OBOT_MCP_URL=/mcp-connect/…` | **On board** — classic **3.95×** vs ClawQL (same fat aggregator path as agentgateway); PASS task_success. |
 | **TrueFoundry** | Enterprise / private Helm (`tfy-llm-gateway`) | Needs tenant + `TFY_API_KEY` gateway plane | **SaaS/credentials** — cannot smoke without a TF org. Document governance bake-off once credentials exist. |
 | **Uber MCP Gateway** | Internal only (blog design) | Technique bake-off: Omni discovery + response projection vs ClawQL search/`where`/`fields` | **Not OSS** — implement a *technique peer* harness (projection field trim), not their binary. |
 | **ContextForge** | Prior nested boards | Direct `/pets` virtualization (no MCPJungle nest) | Nested adapter still inflates; direct arm next. |
 | **agentgateway / Executor** | Already measured | Re-pin latest binaries after compact JSON | Version rot. |
 
-## Obot local recipe (next OSS peer)
+## Obot local recipe (measured OSS peer)
 
 ```bash
-# Bootstrap (auth on)
+# 1) Equal-arm catalog over Streamable HTTP (host must be reachable from the Obot container)
+CATALOG_TOOL_COUNT=40 node scripts/benchmarks/lib/equal-arm-catalog-mcp.mjs --http --port 18770
+
+# 2) Bootstrap Obot (auth on; allow private/host MCP URLs)
 docker run -d --name obot -p 8080:8080 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -e OBOT_SERVER_ENABLE_AUTHENTICATION=true \
   -e OBOT_BOOTSTRAP_TOKEN=clawql-bench-token \
+  -e OBOT_SERVER_HOSTNAME=http://127.0.0.1:8080 \
+  -e OBOT_SERVER_DISALLOW_LOCALHOST_MCP=false \
+  -e OBOT_SERVER_DISALLOW_PRIVATE_IPMCP=false \
   ghcr.io/obot-platform/obot:latest
 
-# Then: register the equal-arm catalog stdio MCP as an Obot-hosted server,
-# obtain the gateway MCP URL for the curated catalog, and:
-export OBOT_MCP_URL=http://127.0.0.1:8080/…   # path from Obot UI after registration
-export OBOT_MCP_TOKEN=clawql-bench-token       # if required
+# 3) Register a multi-user remote catalog entry (v0.26+: POST /api/mcp-servers is gone;
+#    create an entry; Obot materializes ms* + connectURL). Docker bridge → host: 172.17.0.1
+curl -sS -X POST http://127.0.0.1:8080/api/mcp-catalogs/default/entries \
+  -H "Authorization: Bearer clawql-bench-token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "equal-arm-catalog",
+    "shortDescription": "Equal-arm fat catalog",
+    "description": "Synthetic fat MCP catalog for dominance peer board.",
+    "runtime": "remote",
+    "remoteConfig": { "fixedURL": "http://172.17.0.1:18770/mcp" }
+  }'
+# Response includes connectURL; server id is also under GET /api/mcp-servers (ms…).
 
-MT_ARMS=clawql,obot,mcpjungle,agentgateway \
+export OBOT_MCP_URL=http://127.0.0.1:8080/mcp-connect/<ms-or-entry-id>
+export OBOT_MCP_TOKEN=clawql-bench-token
+
+MT_ARMS=clawql,obot MT_OUT=gateway-multi-multiturn-obot.json \
   npm run benchmark:gateway-multi-multiturn
 ```
 
-Harness: `scripts/benchmarks/gateway-multi-multiturn.mjs` skips the `obot` arm unless `OBOT_MCP_URL` is set (honest skip, not a fabricated peer).
+Harness: `scripts/benchmarks/gateway-multi-multiturn.mjs` skips the `obot` arm unless `OBOT_MCP_URL` is set (honest skip, not a fabricated peer). Publish board merges the Obot row from `gateway-multi-multiturn-obot.json` (see `honesty` / `obot_followup` on `gateway-multi-multiturn.json`).
 
 ## Uber technique bake-off (no binary)
 
