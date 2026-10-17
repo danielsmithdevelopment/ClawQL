@@ -2,15 +2,33 @@
  * Cloudflare zone-audit multiturn board for clawql.com/benchmarks.
  * Source: docs/benchmarks/cloudflare-multiturn (publish 10k×3 + concurrency curves).
  * Host-bound — update when board-final-summary.md is remeasured.
+ *
+ * TOKEN CELLS BELOW ARE PRE–COMPACT-EXECUTE. After gateway compact search+execute
+ * lands on the cf-mt stack, redo the 3×10k board and refresh cfTokenRows /
+ * cfFanoutRows weighted means before treating them as current on /benchmarks.
+ * Concurrency / memory curves are unaffected by JSON pretty-print.
  */
+
+/** Flip to `current` only after a post-compact CF board remeasure. */
+export const cfTokenBoardProvenance = {
+  status: 'pending_remeasure' as const,
+  reason:
+    'ClawQL weighted means were measured before execute success JSON stopped pretty-printing; expect lower ClawQL result tokens after redo',
+  blockedOn: [
+    'Merge compact search+execute (PR #1330) into cf-mt lineage',
+    'Remeasure docs/benchmarks/cloudflare-multiturn 3×10k publish board',
+    'Refresh cfTokenRows + fan-out weighted cells in this file',
+  ],
+  lastMeasuredLabel: '2026-10-16 board-final-summary (pre-compact-execute)',
+} as const
 
 export const cfBenchmarkHeadline = 'Cloudflare boards — zone-audit, fan-out/join, concurrency.'
 
 export const cfBenchmarkSummary =
-  'Zone-audit: ClawQL known-op leads tokens and memory on a curated OpenAPI → replay mock. Fan-out/join: scripted program claim cleared; blind real-model gate is frontier-only so far. Executor v2 is the promoted Executor column. HTTP concurrency is multiplex; stdio is process-per-client.'
+  'Zone-audit: ClawQL known-op leads tokens and memory on a curated OpenAPI → replay mock (weighted means below are still the pre–compact-execute board — remeasure pending). Fan-out/join: scripted program claim cleared; blind real-model gate is frontier-only so far. Executor v2 is the promoted Executor column. HTTP concurrency is multiplex; stdio is process-per-client.'
 
 export const cfBenchmarkMeta = {
-  measuredLabel: 'Measured Oct 2026 · host-bound',
+  measuredLabel: 'Tokens pending compact-execute remeasure · host-bound',
   boardLabel: '10 000 sessions × 3 reps · curated Cloudflare OpenAPI',
   artifactBoard: 'docs/benchmarks/cloudflare-multiturn/board-final-summary.md',
   artifactHttp: 'docs/benchmarks/cloudflare-multiturn/http-concurrency-curves.json',

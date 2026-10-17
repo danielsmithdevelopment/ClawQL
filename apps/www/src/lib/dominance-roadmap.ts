@@ -46,9 +46,10 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
       'Multi-turn weighted tokens (incl. model-written), p99 concurrency under SLO, governance depth on the same fixture.',
     howToProve:
       'Interleaved multi-step OpenAPI/pets workflow vs their Code Mode; publish harness + raw results; invite maintainer config fixes.',
-    status: 'not_on_board',
-    statusLabel: 'Not on board',
-    nextStep: 'Highest category-claim blocker — add Bifrost arm to gateway-multi (or a dedicated Code Mode board).',
+    status: 'partial',
+    statusLabel: 'Tokens measured',
+    nextStep:
+      'Equal-arm N=12/C=40 board landed (Code Mode 2.25× / classic 3.95× vs ClawQL after compact JSON). Still need p99 concurrency + governance-depth criteria for a category claim.',
   },
   {
     id: 'truefoundry',
@@ -60,7 +61,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
       'Same multi-turn board with their MCP proxy; measure weighted tokens + p99 clients before SLO break; compare approval binding + trail.',
     status: 'not_on_board',
     statusLabel: 'Not on board',
-    nextStep: 'Governance-depth board after Bifrost Code Mode tokens are on the harness.',
+    nextStep: 'Governance-depth board — Bifrost Code Mode tokens are on the harness; TrueFoundry is next peer.',
   },
   {
     id: 'cloudflare-code-mode',

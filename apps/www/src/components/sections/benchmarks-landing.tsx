@@ -9,6 +9,7 @@ import {
   cfBenchmarkSummary,
   cfHttpConcRows,
   cfStdioConcRows,
+  cfTokenBoardProvenance,
   cfTokenRows,
   fanoutBenchmarkHonesty,
   fanoutBenchmarkMeta,
@@ -176,6 +177,17 @@ export function BenchmarksLanding() {
           </p>
         }
       >
+        {cfTokenBoardProvenance.status === 'pending_remeasure' ? (
+          <p className="mb-4 rounded-lg bg-mist-950/5 px-4 py-3 text-sm/6 text-mist-700 ring-1 ring-mist-950/10 dark:bg-white/5 dark:text-mist-300 dark:ring-white/10">
+            <span className="font-semibold text-mist-950 dark:text-white">Token cells pending remeasure.</span>{' '}
+            {cfTokenBoardProvenance.reason} ({cfTokenBoardProvenance.lastMeasuredLabel}). Gateway-multi compact
+            numbers are current under{' '}
+            <a href="#token-board" className="underline underline-offset-2">
+              Pets multiturn scoreboard
+            </a>
+            .
+          </p>
+        ) : null}
         <ComparisonTable minWidthClass="min-w-[920px]">
           <caption className="sr-only">
             Cloudflare multiturn board: weighted tokens, memory, and session latency by arm
