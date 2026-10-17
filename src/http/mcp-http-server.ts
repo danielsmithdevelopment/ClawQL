@@ -87,6 +87,7 @@ import {
   buildGatewayAuthConfig,
   createInferenceVirtualKeyClaimsResolver,
 } from "../composition/gateway-auth.js";
+import { applySecurityHeadersMiddleware } from "./security-headers.js";
 
 function resolveChatgptDiscoverExtensions(): Record<string, unknown> | undefined {
   if (!resolvePluginCompositionFlags().enableChatgptExtensions) return undefined;
@@ -226,6 +227,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     host: options.host || process.env.MCP_HOST || "0.0.0.0",
   });
 
+  app.use(applySecurityHeadersMiddleware);
   app.use(applyCorsIfConfigured);
 
   app.use("/oauth/token", express.urlencoded({ extended: false }));

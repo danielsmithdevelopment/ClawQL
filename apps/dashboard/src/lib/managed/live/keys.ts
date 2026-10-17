@@ -53,7 +53,7 @@ export function mapIssuedKeyToUi(record: {
 }
 
 export const listManagedKeysEffect = (
-  env: NodeJS.ProcessEnv = process.env,
+  env: NodeJS.ProcessEnv = process.env
 ): Effect.Effect<{ readonly keys: ApiKeyItem[]; readonly source: "live" | "fixture" }> =>
   resolveWithFallbackEffect({
     source: readManagedDataSource(env),
@@ -102,7 +102,7 @@ export const issueManagedKeyEffect = (input: {
         Effect.mapError((e) => ({
           _tag: "ManagedKeysError" as const,
           reason: e.reason,
-        })),
+        }))
       );
     return {
       key: mapIssuedKeyToUi(result.record),
@@ -113,6 +113,8 @@ export const issueManagedKeyEffect = (input: {
 
 export const revokeManagedKeyEffect = (input: {
   readonly keyId: string;
+  /** Trusted org from session/env — required so revoke cannot cross tenants (IDOR). */
+  readonly orgId: string;
   readonly env?: NodeJS.ProcessEnv;
 }): Effect.Effect<
   { readonly ok: true; readonly keyId: string },
@@ -121,11 +123,31 @@ export const revokeManagedKeyEffect = (input: {
   Effect.gen(function* () {
     const env = input.env ?? process.env;
     const store = createIssuedApiKeyStore({ path: resolveKeysPath(env) });
+    const existing = yield* store.findById(input.keyId);
+    if (!existing || existing.revokedAt) {
+      return yield* Effect.fail({
+        _tag: "ManagedKeysError" as const,
+        reason: `Unknown key: ${input.keyId}`,
+      });
+    }
+    const trusted = input.orgId.trim();
+    if (existing.orgId && existing.orgId !== trusted) {
+      return yield* Effect.fail({
+        _tag: "ManagedKeysError" as const,
+        reason: "org_mismatch",
+      });
+    }
+    if (!existing.orgId && managedOrgId(env) && managedOrgId(env) !== trusted) {
+      return yield* Effect.fail({
+        _tag: "ManagedKeysError" as const,
+        reason: "org_mismatch",
+      });
+    }
     const revoked = yield* store.revoke(input.keyId).pipe(
       Effect.mapError((e) => ({
         _tag: "ManagedKeysError" as const,
         reason: e.reason,
-      })),
+      }))
     );
     if (!revoked) {
       return yield* Effect.fail({
