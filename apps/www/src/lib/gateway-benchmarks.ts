@@ -58,8 +58,10 @@ export const gatewayTokenBoardProvenance = {
     note: 'Token-scorecard flow p50/p999 + RSS still from transport-matrix host artifact (not the 10k single-call board)',
   },
   executorV2EqualArm: {
-    status: 'pending_remeasure' as const,
-    note: 'v2 β combined 29 927 is pre–ClawQL-compact-execute; delta vs ClawQL widened — remeasure before tightening the v2 headline',
+    status: 'current' as const,
+    measuredAt: '2026-10-17',
+    artifact: 'docs/benchmarks/gateway-multi-comparison/gateway-multi-multiturn-executor-v2.json',
+    note: 'HTTP /mcp remasure: combined 29 927 confirmed — 3.38× vs publish ClawQL 8 866',
   },
   cloudflareMultiturn: {
     status: 'current' as const,
@@ -72,7 +74,7 @@ export const gatewayTokenBoardProvenance = {
 export const gatewayBenchmarkHeadline = 'Most efficient governed MCP gateway — measured, not marketed.'
 
 export const gatewayBenchmarkSummary =
-  'Equal-arm board: same multiturn harness, same 40-tool fat catalog, same task success. Full remasure 2026-10-17: ClawQL 8 866 combined @12 — ~4× leaner than aggregators / Obot / Bifrost classic, 2.25× leaner than Bifrost Code Mode, 6× leaner than Executor v1.6.10, equal task success. vs fair direct-HTTP baseline: −26 136 (−75%). Interleaved n=10k: ClawQL best p50 e2e (1.02 ms) and gateway cost (0.70 ms). Topology-A chaos: ClawQL 79 · Executor HTTP 29 · MCPJungle still leads (151). Executor v2 β tokens still cited at −5 075 vs baseline until remeasured.'
+  'Equal-arm board: same multiturn harness, same 40-tool fat catalog, same task success. Full remasure 2026-10-17: ClawQL 8 866 combined @12 — ~4× leaner than aggregators / Obot / Bifrost classic, 2.25× leaner than Bifrost Code Mode, 3.38× leaner than Executor v2 β, 6× leaner than Executor v1.6.10, equal task success. vs fair direct-HTTP baseline: −26 136 (−75%). Interleaved n=10k: ClawQL best p50 e2e (1.02 ms) and gateway cost (0.70 ms). Topology-A chaos: ClawQL 79 · Executor HTTP 29 · MCPJungle still leads (151).'
 
 export const gatewayBenchmarkClaim =
   'Fewest I/O tokens among measured MCP aggregators and live Executor (v1 and v2 β), same harness, equal task success.'
@@ -303,7 +305,7 @@ export const tokenScorecardRows: TokenScorecardRow[] = [
     flowP999: '143.2',
     rssMed: '927',
     taskSuccess: 'PASS',
-    note: 'HTTP /mcp · compare latency to ClawQL Node/Bun HTTP (not Bun stdio). Compact envelope credited; ClawQL still −21 061 tokens on current ClawQL board (v2 arm pending remeasure).',
+    note: 'HTTP /mcp remasured 2026-10-17 · 3.38× vs ClawQL 8 866 (−21 061 tokens) · vsDirect −5 075 · compare latency to ClawQL Node/Bun HTTP',
   },
   {
     arm: 'MCPJungle',
@@ -427,15 +429,15 @@ export const latencyScorecardRows: LatencyScorecardRow[] = [
 export const gatewayBenchmarkHonesty = [
   {
     title: 'What we claim',
-    body: 'Fewest tokens among measured MCP aggregators, Bifrost (classic + Code Mode), Obot, and live Executor v1 with equal task success — ClawQL 8 866 combined @12. Best p50 e2e and governed gateway cost on the remasured n=10 000 interleaved board.',
+    body: 'Fewest tokens among measured MCP aggregators, Bifrost (classic + Code Mode), Obot, and live Executor v1 + v2 β with equal task success — ClawQL 8 866 combined @12 (3.38× vs Executor v2). Best p50 e2e and governed gateway cost on the remasured n=10 000 interleaved board.',
   },
   {
     title: 'What we do not claim',
-    body: 'Scale-out concurrency wins. Memory wins. p999 latency wins (tails moved up on the remasure host). Mixing Executor v2 latency with ClawQL Bun stdio. Category-wide supremacy until remaining roadmap peers (TrueFoundry, Uber technique, …) clear the equal-arm minimum set — see /benchmarks#dominance. Bifrost 2.25× / 3.95× and Obot 3.95× are measured.',
+    body: 'Scale-out concurrency wins. Memory wins. p999 latency wins (tails moved up on the remasure host). Mixing Executor v2 latency with ClawQL Bun stdio. Category-wide supremacy until remaining roadmap peers (TrueFoundry, Uber technique, …) clear the equal-arm minimum set — see /benchmarks#dominance. Bifrost 2.25× / 3.95×, Obot 3.95×, and Executor v2 3.38× are measured.',
   },
   {
     title: 'Executor version scope',
-    body: 'v1.6.10: fat return, +18 704 vs baseline (53 706 combined) on the remasured board. v2 β.15: compact envelope, −5 075 — credit the fix; that v2 figure is still pending remeasure against compact ClawQL. Topology-A Executor chaos: HTTP /mcp 29/30 (p99 110 ms); stdio remasure still blocked (daemon Unauthorized) — historical 23/24 retained.',
+    body: 'v1.6.10: fat return, +18 704 vs baseline (53 706 combined). v2 β.15 HTTP remasure: 29 927 combined (−5 075 vs baseline) — 3.38× vs ClawQL 8 866; compact envelope credited, ClawQL still leads. Topology-A Executor chaos: HTTP /mcp 29/30 (p99 110 ms); stdio remasure still blocked (daemon Unauthorized) — historical 23/24 retained.',
   },
   {
     title: 'ClawQL transport matrix',

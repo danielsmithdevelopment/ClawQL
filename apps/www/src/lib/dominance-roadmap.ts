@@ -130,7 +130,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     status: 'measured',
     statusLabel: 'Measured',
     nextStep:
-      'Keep version-scoped claims; Executor HTTP chaos 29/30 on topology A (2026-10-17). Re-run when Executor ships compact/tooling changes; v2 β multiturn tokens still pending remasure.',
+      'Keep version-scoped claims; v2 β multiturn 29 927 (3.38× vs ClawQL) + HTTP chaos 29/30 remasured 2026-10-17. Re-run when Executor ships tooling changes.',
   },
 ] as const
 
