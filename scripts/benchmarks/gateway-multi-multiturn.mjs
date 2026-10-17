@@ -31,7 +31,7 @@
  *
  * Env:
  *   MT_TURNS (default 12)  CATALOG_TOOL_COUNT (default 40)
- *   MT_ARMS=clawql,executor,mcpjungle,agentgateway[,bifrost,bifrost_codemode]
+ *   MT_ARMS=clawql,executor,mcpjungle,agentgateway[,bifrost,bifrost_codemode,obot]
  *   MT_LIMIT (rows per turn, default 25)
  *   MT_OUT (default gateway-multi-multiturn.json)
  *   MT_INCLUDE_CF=1 only for nested CF experiments (off publish board)
@@ -41,6 +41,8 @@
  *   EXECUTOR_MCP_URL — Executor 2.x Streamable HTTP (e.g. http://127.0.0.1:4312/mcp);
  *     optional EXECUTOR_API_KEY / Authorization Bearer for the HTTP arm
  *   EXECUTOR_DATA_DIR — forwarded to stdio child (required for Executor 1.x data home)
+ *   OBOT_MCP_URL — Obot gateway Streamable HTTP after equal-arm catalog is registered
+ *     (opt-in; see docs/benchmarks/dominance-peers-wiring.md). OBOT_MCP_TOKEN optional Bearer.
  *   BIFROST_BIN — bifrost-http binary (npx @maximhq/bifrost caches under ~/.cache/bifrost/)
  *   BIFROST_VK — optional virtual key value (default sk-bf-clawql-mt-bench)
  *
@@ -832,6 +834,42 @@ async function startBifrostCatalog({ codeMode = false } = {}) {
   };
 }
 
+/**
+ * Obot (OSS) peer — operator registers the equal-arm catalog behind Obot, then
+ * points OBOT_MCP_URL at the gateway MCP endpoint. Same fat aggregator path as
+ * MCPJungle once tools/list + callTool are reachable.
+ */
+async function connectObotGateway() {
+  const url = process.env.OBOT_MCP_URL?.trim();
+  if (!url) throw new Error("OBOT_MCP_URL required for obot arm");
+  const token = process.env.OBOT_MCP_TOKEN?.trim() || "";
+  const headers = token ? { Authorization: `Bearer ${token}` } : null;
+  const probe = await connectHttpMcp(url, "obot-probe", headers);
+  const nameMap = new Map();
+  try {
+    const tools = await probe.client.listTools();
+    for (const t of tools.tools) {
+      for (let i = 1; i <= TOOL_COUNT; i++) {
+        const base = toolName(i);
+        if (t.name === base || t.name.endsWith(base) || t.name.includes(base)) {
+          nameMap.set(base, t.name);
+        }
+      }
+    }
+  } finally {
+    await probe.close();
+  }
+  return {
+    id: "obot",
+    mcpUrl: url,
+    headers,
+    pid: null,
+    resolveTool: (base) => nameMap.get(base) || base,
+    connect: () => connectHttpMcp(url, "obot-mt", headers),
+    close: async () => {},
+  };
+}
+
 async function runBifrostCodeModeArm(gw, turns) {
   const conn = await gw.connect();
   try {
@@ -1365,6 +1403,18 @@ async function main() {
           const gw = await startBifrostCatalog({ codeMode: true });
           gateways.push(gw);
           rawArms.bifrost_codemode = await runBifrostCodeModeArm(gw, turns);
+        } else if (arm === "obot") {
+          if (!process.env.OBOT_MCP_URL?.trim()) {
+            rawArms.obot = {
+              skipped: true,
+              reason:
+                "OBOT_MCP_URL unset — register equal-arm catalog in Obot then set URL (docs/benchmarks/dominance-peers-wiring.md)",
+            };
+            continue;
+          }
+          const gw = await connectObotGateway();
+          gateways.push(gw);
+          rawArms.obot = await runAggregatorArm(gw, turns);
         } else if (arm === "contextforge") {
           rawArms.contextforge = {
             skipped: true,
