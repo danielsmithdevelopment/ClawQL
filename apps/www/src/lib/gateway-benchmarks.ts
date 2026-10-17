@@ -51,7 +51,7 @@ export const gatewayTokenBoardProvenance = {
     status: 'current' as const,
     measuredAt: '2026-10-17',
     artifact: 'docs/benchmarks/gateway-multi-comparison/gateway-multi-cmp-chaos-slim.json',
-    note: 'ClawQL 79/80 · MCPJungle 151/152 · agentgateway 63/64; Executor stdio remasure blocked',
+    note: 'ClawQL 79/80 · MCPJungle 151/152 · agentgateway 63/64 · Executor HTTP /mcp 29/30 (stdio still blocked)',
   },
   transportMatrixLatencyRss: {
     status: 'stale_host_run' as const,
@@ -70,7 +70,7 @@ export const gatewayTokenBoardProvenance = {
 export const gatewayBenchmarkHeadline = 'Most efficient governed MCP gateway — measured, not marketed.'
 
 export const gatewayBenchmarkSummary =
-  'Equal-arm board: same multiturn harness, same 40-tool fat catalog, same task success. Full remasure 2026-10-17: ClawQL 8 866 combined @12 — ~4× leaner than aggregators / Obot / Bifrost classic, 2.25× leaner than Bifrost Code Mode, 6× leaner than Executor v1.6.10, equal task success. vs fair direct-HTTP baseline: −26 136 (−75%). Interleaved n=10k: ClawQL best p50 e2e (1.02 ms) and gateway cost (0.70 ms). Topology-A chaos: ClawQL 79 clients; MCPJungle still leads (151). Executor v2 β still cited at −5 075 vs baseline until remeasured.'
+  'Equal-arm board: same multiturn harness, same 40-tool fat catalog, same task success. Full remasure 2026-10-17: ClawQL 8 866 combined @12 — ~4× leaner than aggregators / Obot / Bifrost classic, 2.25× leaner than Bifrost Code Mode, 6× leaner than Executor v1.6.10, equal task success. vs fair direct-HTTP baseline: −26 136 (−75%). Interleaved n=10k: ClawQL best p50 e2e (1.02 ms) and gateway cost (0.70 ms). Topology-A chaos: ClawQL 79 · Executor HTTP 29 · MCPJungle still leads (151). Executor v2 β tokens still cited at −5 075 vs baseline until remeasured.'
 
 export const gatewayBenchmarkClaim =
   'Fewest I/O tokens among measured MCP aggregators and live Executor (v1 and v2 β), same harness, equal task success.'
@@ -433,7 +433,7 @@ export const gatewayBenchmarkHonesty = [
   },
   {
     title: 'Executor version scope',
-    body: 'v1.6.10: fat return, +18 704 vs baseline (53 706 combined) on the remasured board. v2 β.15: compact envelope, −5 075 — credit the fix; that v2 figure is still pending remeasure against compact ClawQL. Topology-A stdio chaos for Executor remasure was blocked (daemon Unauthorized) — historical 23/24 retained with flag.',
+    body: 'v1.6.10: fat return, +18 704 vs baseline (53 706 combined) on the remasured board. v2 β.15: compact envelope, −5 075 — credit the fix; that v2 figure is still pending remeasure against compact ClawQL. Topology-A Executor chaos: HTTP /mcp 29/30 (p99 110 ms); stdio remasure still blocked (daemon Unauthorized) — historical 23/24 retained.',
   },
   {
     title: 'ClawQL transport matrix',
@@ -441,7 +441,7 @@ export const gatewayBenchmarkHonesty = [
   },
   {
     title: 'Concurrency (topology A)',
-    body: 'Until-break remasure: ClawQL 79/80, MCPJungle 151/152 (still leads), agentgateway 63/64. Publishable chaos claim vs Executor only — not a scale-out win. Topology B (4× behind LB) still required before any scale-out claim.',
+    body: 'Until-break remasure: ClawQL 79/80, Executor HTTP 29/30, MCPJungle 151/152 (still leads), agentgateway 63/64. Publishable chaos claim vs Executor — not a scale-out win. Topology B (4× behind LB) still required before any scale-out claim.',
   },
   {
     title: 'Next ClawQL lever',

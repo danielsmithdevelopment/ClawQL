@@ -129,7 +129,8 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     howToProve: 'Re-run full board with latest versions; include real-model validation under pre-committed rules.',
     status: 'measured',
     statusLabel: 'Measured',
-    nextStep: 'Keep version-scoped claims; re-run when Executor ships compact/tooling changes.',
+    nextStep:
+      'Keep version-scoped claims; Executor HTTP chaos 29/30 on topology A (2026-10-17). Re-run when Executor ships compact/tooling changes; v2 β multiturn tokens still pending remasure.',
   },
 ] as const
 
