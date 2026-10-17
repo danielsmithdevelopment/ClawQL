@@ -37,6 +37,8 @@
  *   EXECUTOR_DATA_DIR — required for Executor 1.x stdio data home
  *   EXECUTOR_ISOLATE_DATA=1 — unique DATA_DIR per connect (chaos); can spawn
  *     one daemon per client and still hit Unauthorized on some hosts
+ *   EXECUTOR_MCP_URL — Executor 2.x Streamable HTTP (e.g. http://127.0.0.1:4312/mcp);
+ *     preferred over stdio when set. Optional EXECUTOR_API_KEY / EXECUTOR_API_KEY_FILE.
  */
 
 import { existsSync, readFileSync, readdirSync, mkdirSync, writeFileSync, openSync, closeSync } from "node:fs";
@@ -91,10 +93,14 @@ const ARMS = (process.env.MULTI_ARMS ?? DEFAULT_ARMS)
   .map((s) => s.trim())
   .filter(Boolean);
 
+const EXECUTOR_VIA_HTTP = Boolean(process.env.EXECUTOR_MCP_URL?.trim());
+
 /** Topology A — this harness. Do not claim vs NATS 4-replica without a B board. */
 const TOPOLOGY = {
   id: "A_single_instance",
-  label: "single-instance / process-per-client (ClawQL+Executor stdio; aggregators 1× HTTP)",
+  label: EXECUTOR_VIA_HTTP
+    ? "single-instance (ClawQL stdio PPC; Executor 1× HTTP /mcp; aggregators 1× HTTP)"
+    : "single-instance / process-per-client (ClawQL+Executor stdio; aggregators 1× HTTP)",
   replicas: 1,
   note: "Scale-out (4 replicas behind LB) is topology B — claim only within the same topology.",
 };
@@ -487,12 +493,37 @@ async function connectExecutorStdio() {
   };
 }
 
+function readExecutorApiKey() {
+  const inline = process.env.EXECUTOR_API_KEY?.trim();
+  if (inline) return inline;
+  try {
+    const p = process.env.EXECUTOR_API_KEY_FILE?.trim();
+    if (p && existsSync(p)) return readFileSync(p, "utf8").trim();
+  } catch {
+    /* ignore */
+  }
+  return "";
+}
+
+/** Prefer Executor 2.x Streamable HTTP when EXECUTOR_MCP_URL is set (chaos-friendly). */
+async function connectExecutor() {
+  const url = process.env.EXECUTOR_MCP_URL?.trim();
+  if (url) {
+    const key = readExecutorApiKey();
+    const headers = key ? { Authorization: `Bearer ${key}` } : null;
+    return connectHttpMcp(url, "multi-executor-http", headers);
+  }
+  return connectExecutorStdio();
+}
+
 function randomId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
-async function connectHttpMcp(url, name = "multi-http") {
-  const transport = new StreamableHTTPClientTransport(new URL(url));
+async function connectHttpMcp(url, name = "multi-http", headers = null) {
+  const transport = new StreamableHTTPClientTransport(new URL(url), {
+    requestInit: headers ? { headers } : undefined,
+  });
   const client = new Client({ name, version: "1" }, {});
   await client.connect(transport);
   return {
@@ -813,6 +844,7 @@ function makeClawqlLiveArm(mock) {
 function makeExecutorLiveArm(_mock) {
   // Executor QuickJS sandbox disables fetch — product-native equal arm is static JSON
   // with upstream_cost=0 (same as executor-comparison-latency-fair).
+  const viaHttp = EXECUTOR_VIA_HTTP;
   const call = async (client) => {
     const res = await client.callTool({
       name: "execute",
@@ -823,13 +855,17 @@ function makeExecutorLiveArm(_mock) {
   };
   return {
     id: "executor",
-    model: "stdio_mcp_code_execute_static_upstream0",
+    model: viaHttp
+      ? "streamable_http_mcp_code_execute_static_upstream0"
+      : "stdio_mcp_code_execute_static_upstream0",
     invokedToolName: "execute",
     gatewayCostFromDirect: false, // gateway_cost ≈ e2e (upstream=0 by sandbox)
-    connect: connectExecutorStdio,
+    connect: connectExecutor,
     call,
-    chaosHooks: { id: "executor", connect: connectExecutorStdio, call },
-    note: "Static equal JSON; fetch disabled in Executor sandbox — upstream_cost=0 (fair methodology)",
+    chaosHooks: { id: "executor", connect: connectExecutor, call },
+    note: viaHttp
+      ? "Executor 2.x HTTP /mcp · static equal JSON · upstream_cost=0 · fair chaos peer for aggregator 1× HTTP"
+      : "Static equal JSON; fetch disabled in Executor sandbox — upstream_cost=0 (fair methodology)",
   };
 }
 
@@ -1279,8 +1315,11 @@ async function main() {
           }
           live.push(makeClawqlLiveArm(mock));
         } else if (arm === "executor") {
-          if (!process.env.EXECUTOR_BIN?.trim()) {
-            arms.executor = { skipped: true, reason: "EXECUTOR_BIN unset" };
+          if (!process.env.EXECUTOR_BIN?.trim() && !process.env.EXECUTOR_MCP_URL?.trim()) {
+            arms.executor = {
+              skipped: true,
+              reason: "EXECUTOR_BIN / EXECUTOR_MCP_URL unset",
+            };
             continue;
           }
           live.push(makeExecutorLiveArm(mock));
