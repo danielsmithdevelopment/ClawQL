@@ -1,6 +1,6 @@
 {
   "suite": "gateway-multi-multiturn",
-  "measuredAt": "2026-10-17T00:43:26.947Z",
+  "measuredAt": "2026-10-17T01:37:21.757Z",
   "node": "v22.14.0",
   "config": {
     "turns": 12,
@@ -17,6 +17,8 @@
       "bifrost",
       "bifrost_codemode"
     ],
+    "clawql_discovery": "every_turn",
+    "model_written_weight": 5,
     "tokenizer": "cl100k_base"
   },
   "equal_arm": {
@@ -27,12 +29,15 @@
   },
   "board": {
     "clawql": {
-      "layer1_once_tokens": 413,
-      "mean_layer2_tokens": 1686.8,
+      "layer1_once_tokens": 348,
+      "mean_layer2_tokens": 1033.8,
       "mean_result_tokens": 722.8,
-      "combined_at_n": 20655,
-      "combined_relist_every_turn_at_n": 20242,
-      "mean_latency_ms": 6.452,
+      "combined_at_n": 12754,
+      "combined_relist_every_turn_at_n": 12406,
+      "model_written_tokens_sum": 552,
+      "model_written_weight": 5,
+      "combined_weighted_at_n": 15514,
+      "mean_latency_ms": 28.038,
       "turns": 12,
       "task_success_ok": true,
       "task_success_rate": 1
@@ -43,7 +48,10 @@
       "mean_result_tokens": 2456.8,
       "combined_at_n": 35002,
       "combined_relist_every_turn_at_n": 95722,
-      "mean_latency_ms": 2.608,
+      "model_written_tokens_sum": 168,
+      "model_written_weight": 5,
+      "combined_weighted_at_n": 35842,
+      "mean_latency_ms": 2.636,
       "turns": 12,
       "task_success_ok": true,
       "task_success_rate": 1
@@ -54,7 +62,10 @@
       "mean_result_tokens": 1376.5,
       "combined_at_n": 19977,
       "combined_relist_every_turn_at_n": 16518,
-      "mean_latency_ms": 3.653,
+      "model_written_tokens_sum": 744,
+      "model_written_weight": 5,
+      "combined_weighted_at_n": 23697,
+      "mean_latency_ms": 3.574,
       "turns": 12,
       "task_success_ok": true,
       "task_success_rate": 1
@@ -62,16 +73,18 @@
   },
   "ratios_vs_clawql": {
     "bifrost": {
-      "vs_clawql_combined_classic": 1.69,
-      "vs_clawql_combined_relist_every_turn": 4.73,
+      "vs_clawql_combined_classic": 2.74,
+      "vs_clawql_combined_relist_every_turn": 7.72,
+      "vs_clawql_combined_weighted": 2.31,
       "vs_clawql_mean_result": 3.4,
-      "vs_clawql_layer1": 13.37
+      "vs_clawql_layer1": 15.86
     },
     "bifrost_codemode": {
-      "vs_clawql_combined_classic": 0.97,
-      "vs_clawql_combined_relist_every_turn": 0.82,
+      "vs_clawql_combined_classic": 1.57,
+      "vs_clawql_combined_relist_every_turn": 1.33,
+      "vs_clawql_combined_weighted": 1.53,
       "vs_clawql_mean_result": 1.9,
-      "vs_clawql_layer1": 8.38
+      "vs_clawql_layer1": 9.94
     }
   },
   "task_success": {
@@ -98,63 +111,63 @@
     "clawql": [
       {
         "n": 1,
-        "combined": 2054,
-        "layer2Cumulative": 1641
+        "combined": 1336,
+        "layer2Cumulative": 988
       },
       {
         "n": 2,
-        "combined": 3745,
-        "layer2Cumulative": 3332
+        "combined": 2374,
+        "layer2Cumulative": 2026
       },
       {
         "n": 3,
-        "combined": 5436,
-        "layer2Cumulative": 5023
+        "combined": 3412,
+        "layer2Cumulative": 3064
       },
       {
         "n": 4,
-        "combined": 7127,
-        "layer2Cumulative": 6714
+        "combined": 4450,
+        "layer2Cumulative": 4102
       },
       {
         "n": 5,
-        "combined": 8818,
-        "layer2Cumulative": 8405
+        "combined": 5488,
+        "layer2Cumulative": 5140
       },
       {
         "n": 6,
-        "combined": 10509,
-        "layer2Cumulative": 10096
+        "combined": 6526,
+        "layer2Cumulative": 6178
       },
       {
         "n": 7,
-        "combined": 12200,
-        "layer2Cumulative": 11787
+        "combined": 7564,
+        "layer2Cumulative": 7216
       },
       {
         "n": 8,
-        "combined": 13891,
-        "layer2Cumulative": 13478
+        "combined": 8602,
+        "layer2Cumulative": 8254
       },
       {
         "n": 9,
-        "combined": 15582,
-        "layer2Cumulative": 15169
+        "combined": 9640,
+        "layer2Cumulative": 9292
       },
       {
         "n": 10,
-        "combined": 17273,
-        "layer2Cumulative": 16860
+        "combined": 10678,
+        "layer2Cumulative": 10330
       },
       {
         "n": 11,
-        "combined": 18964,
-        "layer2Cumulative": 18551
+        "combined": 11716,
+        "layer2Cumulative": 11368
       },
       {
         "n": 12,
-        "combined": 20655,
-        "layer2Cumulative": 20242
+        "combined": 12754,
+        "layer2Cumulative": 12406
       }
     ],
     "bifrost": [
@@ -286,29 +299,33 @@
     "clawql": {
       "id": "clawql",
       "model": "search_plus_execute_where_fields",
+      "discovery": "every_turn",
       "layer1": {
-        "once_schema_tokens": 413,
+        "once_schema_tokens": 348,
         "tools_count": 2,
         "tools_list_count_full": 8,
-        "tools_list_schema_tokens_full": 1305,
-        "note": "Only search+execute schemas counted as Layer1 (catalog stays server-side)"
+        "tools_list_schema_tokens_full": 1240,
+        "meta_schema_tokens": 348,
+        "discovery_once_tokens": 0,
+        "note": "Only search+execute schemas counted as Layer1 (catalog stays server-side); search every turn in Layer2"
       },
       "perTurn": [
         {
           "n": 1,
           "tool": "catalog_list_001",
-          "search_tokens": 964,
+          "search_tokens": 311,
           "result_tokens": 677,
           "result_chars": 1840,
+          "model_written_tokens": 46,
           "where": "items",
           "fields": [
             "id",
             "name",
             "status"
           ],
-          "layer2_classic": 1641,
-          "layer2_relist_every_turn": 1641,
-          "latency_ms": 26.497,
+          "layer2_classic": 988,
+          "layer2_relist_every_turn": 988,
+          "latency_ms": 35.168,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -320,18 +337,19 @@
         {
           "n": 2,
           "tool": "catalog_list_002",
-          "search_tokens": 964,
+          "search_tokens": 311,
           "result_tokens": 727,
           "result_chars": 1952,
+          "model_written_tokens": 46,
           "where": "items",
           "fields": [
             "id",
             "name",
             "status"
           ],
-          "layer2_classic": 1691,
-          "layer2_relist_every_turn": 1691,
-          "latency_ms": 5.61,
+          "layer2_classic": 1038,
+          "layer2_relist_every_turn": 1038,
+          "latency_ms": 25.578,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -343,18 +361,19 @@
         {
           "n": 3,
           "tool": "catalog_list_003",
-          "search_tokens": 964,
+          "search_tokens": 311,
           "result_tokens": 727,
           "result_chars": 1952,
+          "model_written_tokens": 46,
           "where": "items",
           "fields": [
             "id",
             "name",
             "status"
           ],
-          "layer2_classic": 1691,
-          "layer2_relist_every_turn": 1691,
-          "latency_ms": 5.126,
+          "layer2_classic": 1038,
+          "layer2_relist_every_turn": 1038,
+          "latency_ms": 7.874,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -366,18 +385,19 @@
         {
           "n": 4,
           "tool": "catalog_list_004",
-          "search_tokens": 964,
+          "search_tokens": 311,
           "result_tokens": 727,
           "result_chars": 1952,
+          "model_written_tokens": 46,
           "where": "items",
           "fields": [
             "id",
             "name",
             "status"
           ],
-          "layer2_classic": 1691,
-          "layer2_relist_every_turn": 1691,
-          "latency_ms": 4.637,
+          "layer2_classic": 1038,
+          "layer2_relist_every_turn": 1038,
+          "latency_ms": 16.913,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -389,18 +409,19 @@
         {
           "n": 5,
           "tool": "catalog_list_005",
-          "search_tokens": 964,
+          "search_tokens": 311,
           "result_tokens": 727,
           "result_chars": 1952,
+          "model_written_tokens": 46,
           "where": "items",
           "fields": [
             "id",
             "name",
             "status"
           ],
-          "layer2_classic": 1691,
-          "layer2_relist_every_turn": 1691,
-          "latency_ms": 6.593,
+          "layer2_classic": 1038,
+          "layer2_relist_every_turn": 1038,
+          "latency_ms": 10.93,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -412,18 +433,19 @@
         {
           "n": 6,
           "tool": "catalog_list_006",
-          "search_tokens": 964,
+          "search_tokens": 311,
           "result_tokens": 727,
           "result_chars": 1952,
+          "model_written_tokens": 46,
           "where": "items",
           "fields": [
             "id",
             "name",
             "status"
           ],
-          "layer2_classic": 1691,
-          "layer2_relist_every_turn": 1691,
-          "latency_ms": 3.672,
+          "layer2_classic": 1038,
+          "layer2_relist_every_turn": 1038,
+          "latency_ms": 20.528,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -435,18 +457,19 @@
         {
           "n": 7,
           "tool": "catalog_list_007",
-          "search_tokens": 964,
+          "search_tokens": 311,
           "result_tokens": 727,
           "result_chars": 1952,
+          "model_written_tokens": 46,
           "where": "items",
           "fields": [
             "id",
             "name",
             "status"
           ],
-          "layer2_classic": 1691,
-          "layer2_relist_every_turn": 1691,
-          "latency_ms": 3.647,
+          "layer2_classic": 1038,
+          "layer2_relist_every_turn": 1038,
+          "latency_ms": 18.536,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -458,18 +481,19 @@
         {
           "n": 8,
           "tool": "catalog_list_008",
-          "search_tokens": 964,
+          "search_tokens": 311,
           "result_tokens": 727,
           "result_chars": 1952,
+          "model_written_tokens": 46,
           "where": "items",
           "fields": [
             "id",
             "name",
             "status"
           ],
-          "layer2_classic": 1691,
-          "layer2_relist_every_turn": 1691,
-          "latency_ms": 4.979,
+          "layer2_classic": 1038,
+          "layer2_relist_every_turn": 1038,
+          "latency_ms": 144.149,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -481,18 +505,19 @@
         {
           "n": 9,
           "tool": "catalog_list_009",
-          "search_tokens": 964,
+          "search_tokens": 311,
           "result_tokens": 727,
           "result_chars": 1952,
+          "model_written_tokens": 46,
           "where": "items",
           "fields": [
             "id",
             "name",
             "status"
           ],
-          "layer2_classic": 1691,
-          "layer2_relist_every_turn": 1691,
-          "latency_ms": 5.114,
+          "layer2_classic": 1038,
+          "layer2_relist_every_turn": 1038,
+          "latency_ms": 42.832,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -504,18 +529,19 @@
         {
           "n": 10,
           "tool": "catalog_list_010",
-          "search_tokens": 964,
+          "search_tokens": 311,
           "result_tokens": 727,
           "result_chars": 1952,
+          "model_written_tokens": 46,
           "where": "items",
           "fields": [
             "id",
             "name",
             "status"
           ],
-          "layer2_classic": 1691,
-          "layer2_relist_every_turn": 1691,
-          "latency_ms": 4.345,
+          "layer2_classic": 1038,
+          "layer2_relist_every_turn": 1038,
+          "latency_ms": 4.391,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -527,18 +553,19 @@
         {
           "n": 11,
           "tool": "catalog_list_011",
-          "search_tokens": 964,
+          "search_tokens": 311,
           "result_tokens": 727,
           "result_chars": 2002,
+          "model_written_tokens": 46,
           "where": "items",
           "fields": [
             "id",
             "name",
             "status"
           ],
-          "layer2_classic": 1691,
-          "layer2_relist_every_turn": 1691,
-          "latency_ms": 3.881,
+          "layer2_classic": 1038,
+          "layer2_relist_every_turn": 1038,
+          "latency_ms": 4.401,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -550,18 +577,19 @@
         {
           "n": 12,
           "tool": "catalog_list_012",
-          "search_tokens": 964,
+          "search_tokens": 311,
           "result_tokens": 727,
           "result_chars": 2002,
+          "model_written_tokens": 46,
           "where": "items",
           "fields": [
             "id",
             "name",
             "status"
           ],
-          "layer2_classic": 1691,
-          "layer2_relist_every_turn": 1691,
-          "latency_ms": 3.318,
+          "layer2_classic": 1038,
+          "layer2_relist_every_turn": 1038,
+          "latency_ms": 5.158,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -575,196 +603,196 @@
       "cumulative_classic": [
         {
           "n": 1,
-          "layer1Once": 413,
-          "layer2ThisTurn": 1641,
-          "layer2Cumulative": 1641,
-          "combined": 2054,
-          "layer2ShareOfCombined": 79.9
+          "layer1Once": 348,
+          "layer2ThisTurn": 988,
+          "layer2Cumulative": 988,
+          "combined": 1336,
+          "layer2ShareOfCombined": 74
         },
         {
           "n": 2,
-          "layer1Once": 413,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 3332,
-          "combined": 3745,
-          "layer2ShareOfCombined": 89
+          "layer1Once": 348,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 2026,
+          "combined": 2374,
+          "layer2ShareOfCombined": 85.3
         },
         {
           "n": 3,
-          "layer1Once": 413,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 5023,
-          "combined": 5436,
-          "layer2ShareOfCombined": 92.4
+          "layer1Once": 348,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 3064,
+          "combined": 3412,
+          "layer2ShareOfCombined": 89.8
         },
         {
           "n": 4,
-          "layer1Once": 413,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 6714,
-          "combined": 7127,
-          "layer2ShareOfCombined": 94.2
+          "layer1Once": 348,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 4102,
+          "combined": 4450,
+          "layer2ShareOfCombined": 92.2
         },
         {
           "n": 5,
-          "layer1Once": 413,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 8405,
-          "combined": 8818,
-          "layer2ShareOfCombined": 95.3
+          "layer1Once": 348,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 5140,
+          "combined": 5488,
+          "layer2ShareOfCombined": 93.7
         },
         {
           "n": 6,
-          "layer1Once": 413,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 10096,
-          "combined": 10509,
-          "layer2ShareOfCombined": 96.1
+          "layer1Once": 348,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 6178,
+          "combined": 6526,
+          "layer2ShareOfCombined": 94.7
         },
         {
           "n": 7,
-          "layer1Once": 413,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 11787,
-          "combined": 12200,
-          "layer2ShareOfCombined": 96.6
+          "layer1Once": 348,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 7216,
+          "combined": 7564,
+          "layer2ShareOfCombined": 95.4
         },
         {
           "n": 8,
-          "layer1Once": 413,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 13478,
-          "combined": 13891,
-          "layer2ShareOfCombined": 97
+          "layer1Once": 348,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 8254,
+          "combined": 8602,
+          "layer2ShareOfCombined": 96
         },
         {
           "n": 9,
-          "layer1Once": 413,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 15169,
-          "combined": 15582,
-          "layer2ShareOfCombined": 97.3
+          "layer1Once": 348,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 9292,
+          "combined": 9640,
+          "layer2ShareOfCombined": 96.4
         },
         {
           "n": 10,
-          "layer1Once": 413,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 16860,
-          "combined": 17273,
-          "layer2ShareOfCombined": 97.6
+          "layer1Once": 348,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 10330,
+          "combined": 10678,
+          "layer2ShareOfCombined": 96.7
         },
         {
           "n": 11,
-          "layer1Once": 413,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 18551,
-          "combined": 18964,
-          "layer2ShareOfCombined": 97.8
+          "layer1Once": 348,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 11368,
+          "combined": 11716,
+          "layer2ShareOfCombined": 97
         },
         {
           "n": 12,
-          "layer1Once": 413,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 20242,
-          "combined": 20655,
-          "layer2ShareOfCombined": 98
+          "layer1Once": 348,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 12406,
+          "combined": 12754,
+          "layer2ShareOfCombined": 97.3
         }
       ],
       "cumulative_tools_list_every_turn": [
         {
           "n": 1,
           "layer1Once": 0,
-          "layer2ThisTurn": 1641,
-          "layer2Cumulative": 1641,
-          "combined": 1641,
+          "layer2ThisTurn": 988,
+          "layer2Cumulative": 988,
+          "combined": 988,
           "layer2ShareOfCombined": 100
         },
         {
           "n": 2,
           "layer1Once": 0,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 3332,
-          "combined": 3332,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 2026,
+          "combined": 2026,
           "layer2ShareOfCombined": 100
         },
         {
           "n": 3,
           "layer1Once": 0,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 5023,
-          "combined": 5023,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 3064,
+          "combined": 3064,
           "layer2ShareOfCombined": 100
         },
         {
           "n": 4,
           "layer1Once": 0,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 6714,
-          "combined": 6714,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 4102,
+          "combined": 4102,
           "layer2ShareOfCombined": 100
         },
         {
           "n": 5,
           "layer1Once": 0,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 8405,
-          "combined": 8405,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 5140,
+          "combined": 5140,
           "layer2ShareOfCombined": 100
         },
         {
           "n": 6,
           "layer1Once": 0,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 10096,
-          "combined": 10096,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 6178,
+          "combined": 6178,
           "layer2ShareOfCombined": 100
         },
         {
           "n": 7,
           "layer1Once": 0,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 11787,
-          "combined": 11787,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 7216,
+          "combined": 7216,
           "layer2ShareOfCombined": 100
         },
         {
           "n": 8,
           "layer1Once": 0,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 13478,
-          "combined": 13478,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 8254,
+          "combined": 8254,
           "layer2ShareOfCombined": 100
         },
         {
           "n": 9,
           "layer1Once": 0,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 15169,
-          "combined": 15169,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 9292,
+          "combined": 9292,
           "layer2ShareOfCombined": 100
         },
         {
           "n": 10,
           "layer1Once": 0,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 16860,
-          "combined": 16860,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 10330,
+          "combined": 10330,
           "layer2ShareOfCombined": 100
         },
         {
           "n": 11,
           "layer1Once": 0,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 18551,
-          "combined": 18551,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 11368,
+          "combined": 11368,
           "layer2ShareOfCombined": 100
         },
         {
           "n": 12,
           "layer1Once": 0,
-          "layer2ThisTurn": 1691,
-          "layer2Cumulative": 20242,
-          "combined": 20242,
+          "layer2ThisTurn": 1038,
+          "layer2Cumulative": 12406,
+          "combined": 12406,
           "layer2ShareOfCombined": 100
         }
       ],
@@ -775,12 +803,15 @@
         "rate": 1
       },
       "board": {
-        "layer1_once_tokens": 413,
-        "mean_layer2_tokens": 1686.8,
+        "layer1_once_tokens": 348,
+        "mean_layer2_tokens": 1033.8,
         "mean_result_tokens": 722.8,
-        "combined_at_n": 20655,
-        "combined_relist_every_turn_at_n": 20242,
-        "mean_latency_ms": 6.452,
+        "combined_at_n": 12754,
+        "combined_relist_every_turn_at_n": 12406,
+        "model_written_tokens_sum": 552,
+        "model_written_weight": 5,
+        "combined_weighted_at_n": 15514,
+        "mean_latency_ms": 28.038,
         "turns": 12,
         "task_success_ok": true,
         "task_success_rate": 1
@@ -800,10 +831,11 @@
           "tool": "catalog-catalog_list_001",
           "result_tokens": 2411,
           "result_chars": 7655,
+          "model_written_tokens": 14,
           "tools_list_tokens": 5520,
           "layer2_classic": 2411,
           "layer2_relist_every_turn": 7931,
-          "latency_ms": 6.935,
+          "latency_ms": 7.479,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -817,10 +849,11 @@
           "tool": "catalog-catalog_list_002",
           "result_tokens": 2461,
           "result_chars": 7767,
+          "model_written_tokens": 14,
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.602,
+          "latency_ms": 2.487,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -834,10 +867,11 @@
           "tool": "catalog-catalog_list_003",
           "result_tokens": 2461,
           "result_chars": 7767,
+          "model_written_tokens": 14,
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.277,
+          "latency_ms": 2.292,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -851,10 +885,11 @@
           "tool": "catalog-catalog_list_004",
           "result_tokens": 2461,
           "result_chars": 7767,
+          "model_written_tokens": 14,
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.097,
+          "latency_ms": 2.371,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -868,10 +903,11 @@
           "tool": "catalog-catalog_list_005",
           "result_tokens": 2461,
           "result_chars": 7767,
+          "model_written_tokens": 14,
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.459,
+          "latency_ms": 2.245,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -885,10 +921,11 @@
           "tool": "catalog-catalog_list_006",
           "result_tokens": 2461,
           "result_chars": 7767,
+          "model_written_tokens": 14,
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.329,
+          "latency_ms": 2.439,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -902,10 +939,11 @@
           "tool": "catalog-catalog_list_007",
           "result_tokens": 2461,
           "result_chars": 7767,
+          "model_written_tokens": 14,
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.184,
+          "latency_ms": 2.129,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -919,10 +957,11 @@
           "tool": "catalog-catalog_list_008",
           "result_tokens": 2461,
           "result_chars": 7767,
+          "model_written_tokens": 14,
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 1.806,
+          "latency_ms": 1.896,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -936,10 +975,11 @@
           "tool": "catalog-catalog_list_009",
           "result_tokens": 2461,
           "result_chars": 7767,
+          "model_written_tokens": 14,
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.375,
+          "latency_ms": 2.247,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -953,10 +993,11 @@
           "tool": "catalog-catalog_list_010",
           "result_tokens": 2461,
           "result_chars": 7767,
+          "model_written_tokens": 14,
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.172,
+          "latency_ms": 2.025,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -970,10 +1011,11 @@
           "tool": "catalog-catalog_list_011",
           "result_tokens": 2461,
           "result_chars": 7817,
+          "model_written_tokens": 14,
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 2.324,
+          "latency_ms": 2.07,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -987,10 +1029,11 @@
           "tool": "catalog-catalog_list_012",
           "result_tokens": 2461,
           "result_chars": 7817,
+          "model_written_tokens": 14,
           "tools_list_tokens": 5520,
           "layer2_classic": 2461,
           "layer2_relist_every_turn": 7981,
-          "latency_ms": 1.73,
+          "latency_ms": 1.947,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1209,7 +1252,10 @@
         "mean_result_tokens": 2456.8,
         "combined_at_n": 35002,
         "combined_relist_every_turn_at_n": 95722,
-        "mean_latency_ms": 2.608,
+        "model_written_tokens_sum": 168,
+        "model_written_weight": 5,
+        "combined_weighted_at_n": 35842,
+        "mean_latency_ms": 2.636,
         "turns": 12,
         "task_success_ok": true,
         "task_success_rate": 1
@@ -1234,9 +1280,10 @@
           "catalog_tool": "catalog_list_001",
           "result_tokens": 1329,
           "result_chars": 4136,
+          "model_written_tokens": 62,
           "layer2_classic": 1329,
           "layer2_relist_every_turn": 1329,
-          "latency_ms": 7.388,
+          "latency_ms": 6.464,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1251,9 +1298,10 @@
           "catalog_tool": "catalog_list_002",
           "result_tokens": 1381,
           "result_chars": 4248,
+          "model_written_tokens": 62,
           "layer2_classic": 1381,
           "layer2_relist_every_turn": 1381,
-          "latency_ms": 3.694,
+          "latency_ms": 3.797,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1268,9 +1316,10 @@
           "catalog_tool": "catalog_list_003",
           "result_tokens": 1381,
           "result_chars": 4248,
+          "model_written_tokens": 62,
           "layer2_classic": 1381,
           "layer2_relist_every_turn": 1381,
-          "latency_ms": 3.185,
+          "latency_ms": 3.284,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1285,9 +1334,10 @@
           "catalog_tool": "catalog_list_004",
           "result_tokens": 1381,
           "result_chars": 4248,
+          "model_written_tokens": 62,
           "layer2_classic": 1381,
           "layer2_relist_every_turn": 1381,
-          "latency_ms": 3.491,
+          "latency_ms": 3.414,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1302,9 +1352,10 @@
           "catalog_tool": "catalog_list_005",
           "result_tokens": 1381,
           "result_chars": 4248,
+          "model_written_tokens": 62,
           "layer2_classic": 1381,
           "layer2_relist_every_turn": 1381,
-          "latency_ms": 3.312,
+          "latency_ms": 3.457,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1319,9 +1370,10 @@
           "catalog_tool": "catalog_list_006",
           "result_tokens": 1381,
           "result_chars": 4248,
+          "model_written_tokens": 62,
           "layer2_classic": 1381,
           "layer2_relist_every_turn": 1381,
-          "latency_ms": 3.368,
+          "latency_ms": 3.383,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1336,9 +1388,10 @@
           "catalog_tool": "catalog_list_007",
           "result_tokens": 1381,
           "result_chars": 4248,
+          "model_written_tokens": 62,
           "layer2_classic": 1381,
           "layer2_relist_every_turn": 1381,
-          "latency_ms": 3.348,
+          "latency_ms": 3.457,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1353,9 +1406,10 @@
           "catalog_tool": "catalog_list_008",
           "result_tokens": 1381,
           "result_chars": 4248,
+          "model_written_tokens": 62,
           "layer2_classic": 1381,
           "layer2_relist_every_turn": 1381,
-          "latency_ms": 3.301,
+          "latency_ms": 3.176,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1370,9 +1424,10 @@
           "catalog_tool": "catalog_list_009",
           "result_tokens": 1381,
           "result_chars": 4248,
+          "model_written_tokens": 62,
           "layer2_classic": 1381,
           "layer2_relist_every_turn": 1381,
-          "latency_ms": 3.051,
+          "latency_ms": 3.198,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1387,9 +1442,10 @@
           "catalog_tool": "catalog_list_010",
           "result_tokens": 1381,
           "result_chars": 4248,
+          "model_written_tokens": 62,
           "layer2_classic": 1381,
           "layer2_relist_every_turn": 1381,
-          "latency_ms": 3.113,
+          "latency_ms": 3.259,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1404,9 +1460,10 @@
           "catalog_tool": "catalog_list_011",
           "result_tokens": 1380,
           "result_chars": 4298,
+          "model_written_tokens": 62,
           "layer2_classic": 1380,
           "layer2_relist_every_turn": 1380,
-          "latency_ms": 3.2,
+          "latency_ms": 3.175,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1421,9 +1478,10 @@
           "catalog_tool": "catalog_list_012",
           "result_tokens": 1380,
           "result_chars": 4298,
+          "model_written_tokens": 62,
           "layer2_classic": 1380,
           "layer2_relist_every_turn": 1380,
-          "latency_ms": 3.388,
+          "latency_ms": 2.819,
           "ok": true,
           "task_success": {
             "ok": true,
@@ -1642,7 +1700,10 @@
         "mean_result_tokens": 1376.5,
         "combined_at_n": 19977,
         "combined_relist_every_turn_at_n": 16518,
-        "mean_latency_ms": 3.653,
+        "model_written_tokens_sum": 744,
+        "model_written_weight": 5,
+        "combined_weighted_at_n": 23697,
+        "mean_latency_ms": 3.574,
         "turns": 12,
         "task_success_ok": true,
         "task_success_rate": 1
@@ -1658,8 +1719,8 @@
     "4. Re-list-every-turn is secondary sensitivity only (most clients cache; lazy clients shrink aggregators further).",
     "5. Settled: do not label a hand-written slim-return program as Executor (Both Sides of Context Compression).",
     "ClawQL deterministic task_success: PASS.",
-    "Measured vs Bifrost classic @N=12: classic 1.69× (full tools/list + fat callTool via /mcp).",
-    "Measured vs Bifrost Code Mode @N=12: classic 0.97× (4 meta-tools + executeToolCode; Layer2 includes TOOL print dump if present).",
+    "Measured vs Bifrost classic @N=12: classic 2.74× (full tools/list + fat callTool via /mcp).",
+    "Measured vs Bifrost Code Mode @N=12: classic 1.57× / weighted(×5 model-written) 1.53× (Layer2 includes TOOL print dump; ClawQL discovery=every_turn).",
     "RSS is a loss among serious arms — admit or fix before memory claims."
   ],
   "primary_metric": "classic_layer1_once_plus_sum_layer2_with_task_success",

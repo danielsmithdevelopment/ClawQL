@@ -35,6 +35,8 @@
  *   MT_LIMIT (rows per turn, default 25)
  *   MT_OUT (default gateway-multi-multiturn.json)
  *   MT_INCLUDE_CF=1 only for nested CF experiments (off publish board)
+ *   MT_CLAWQL_DISCOVERY=every_turn|once — every_turn (default) matches aggregator board;
+ *     once = Code Mode peer (one fat catalog search, then execute+fields each turn)
  *   BIFROST_BIN — bifrost-http binary (npx @maximhq/bifrost caches under ~/.cache/bifrost/)
  *   BIFROST_VK — optional virtual key value (default sk-bf-clawql-mt-bench)
  *
@@ -78,6 +80,14 @@ const ARMS = (
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+/** every_turn = publish aggregator peer; once = Bifrost Code Mode peer (discover once). */
+const CLAWQL_DISCOVERY = (process.env.MT_CLAWQL_DISCOVERY ?? "every_turn").trim().toLowerCase();
+const CLAWQL_SEARCH_ONCE = CLAWQL_DISCOVERY === "once" || CLAWQL_DISCOVERY === "search_once";
+/** Dominance-roadmap weight for model-written args/code (secondary metric). */
+const MODEL_WRITTEN_WEIGHT = Math.max(
+  1,
+  Math.min(10, Number(process.env.MT_MODEL_WRITTEN_WEIGHT ?? 5) || 5)
+);
 
 /** Project list rows after JMESPath extract — ClawQL product path for envelopes. */
 const WHERE = "items";
@@ -827,6 +837,7 @@ async function runBifrostCodeModeArm(gw, turns) {
       const code = `raw = catalog.${turn.tool}(limit=${turn.args.limit}, status=${JSON.stringify(turn.args.status)}, includeMeta=True)
 items = raw["items"] if "items" in raw else raw
 result = [{"id": x["id"], "name": x["name"], "status": x["status"]} for x in items]`;
+      const writtenTok = countTokens(code);
       const t0 = performance.now();
       const res = await conn.client.callTool({
         name: "executeToolCode",
@@ -844,6 +855,7 @@ result = [{"id": x["id"], "name": x["name"], "status": x["status"]} for x in ite
         catalog_tool: turn.tool,
         result_tokens: countTokens(text),
         result_chars: text.length,
+        model_written_tokens: writtenTok,
         layer2_classic: countTokens(text),
         layer2_relist_every_turn: countTokens(text),
         latency_ms: Number(ms.toFixed(3)),
@@ -910,6 +922,7 @@ async function runAggregatorArm(gw, turns) {
     const perTurn = [];
     for (const turn of turns) {
       const name = gw.resolveTool(turn.tool);
+      const writtenTok = countTokens(JSON.stringify(turn.args));
       const t0 = performance.now();
       const res = await conn.client.callTool({
         name,
@@ -927,6 +940,7 @@ async function runAggregatorArm(gw, turns) {
         tool: name,
         result_tokens: countTokens(text),
         result_chars: text.length,
+        model_written_tokens: writtenTok,
         tools_list_tokens: relistTok,
         layer2_classic: countTokens(text),
         layer2_relist_every_turn: relistTok + countTokens(text),
@@ -951,22 +965,61 @@ async function runAggregatorArm(gw, turns) {
   }
 }
 
+function clawqlModelWrittenTokens(turn, { searched }) {
+  // What the model must author each turn (query when searching + execute args).
+  let n = 0;
+  if (searched) n += countTokens(turn.query);
+  n += countTokens(
+    JSON.stringify({
+      operationId: turn.operationId,
+      args: turn.args,
+      where: turn.where,
+      fields: turn.fields,
+    })
+  );
+  return n;
+}
+
 async function runClawqlArm(mock, turns) {
   const conn = await connectClawql(mock);
   try {
     const listed = await conn.client.listTools();
     const l1 = measureLayer1FromTools(listed.tools, { onlyNames: ["search", "execute"] });
+    let discoveryTok = 0;
+    let discoveryText = "";
+    if (CLAWQL_SEARCH_ONCE) {
+      // Equal-arm vs Code Mode readToolFile(catalog.pyi): one catalog-wide search
+      // covering all partitions, then execute+fields each turn (no rediscovery tax).
+      const disco = await conn.client.callTool({
+        name: "search",
+        arguments: {
+          query: "catalog_list inventory list entities partition",
+          limit: Math.min(50, Math.max(TOOL_COUNT, 40)),
+          detail: "compact",
+        },
+      });
+      if (disco.isError) {
+        throw new Error(`clawql discovery search: ${toolText(disco).slice(0, 300)}`);
+      }
+      discoveryText = toolText(disco);
+      discoveryTok = countTokens(discoveryText);
+    }
     const perTurn = [];
     for (const turn of turns) {
       const t0 = performance.now();
-      const searchRes = await conn.client.callTool({
-        name: "search",
-        arguments: { query: turn.query, limit: 3 },
-      });
-      if (searchRes.isError) {
-        throw new Error(`clawql search: ${toolText(searchRes).slice(0, 300)}`);
+      let searchTok = 0;
+      let searched = false;
+      if (!CLAWQL_SEARCH_ONCE) {
+        const searchRes = await conn.client.callTool({
+          name: "search",
+          arguments: { query: turn.query, limit: 3, detail: "compact" },
+        });
+        if (searchRes.isError) {
+          throw new Error(`clawql search: ${toolText(searchRes).slice(0, 300)}`);
+        }
+        searchTok = countTokens(toolText(searchRes));
+        searched = true;
       }
-      const searchText = toolText(searchRes);
       const execRes = await conn.client.callTool({
         name: "execute",
         arguments: {
@@ -985,8 +1038,8 @@ async function runClawqlArm(mock, turns) {
         throw new Error(`clawql execute: ${toolText(execRes).slice(0, 400)}`);
       }
       const execText = toolText(execRes);
-      const searchTok = countTokens(searchText);
       const resultTok = countTokens(execText);
+      const writtenTok = clawqlModelWrittenTokens(turn, { searched });
       const success = scoreTaskSuccess(execText, turn.partition, turn.args.limit);
       perTurn.push({
         n: turn.n,
@@ -994,6 +1047,7 @@ async function runClawqlArm(mock, turns) {
         search_tokens: searchTok,
         result_tokens: resultTok,
         result_chars: execText.length,
+        model_written_tokens: writtenTok,
         where: turn.where,
         fields: turn.fields,
         layer2_classic: searchTok + resultTok,
@@ -1005,13 +1059,20 @@ async function runClawqlArm(mock, turns) {
     }
     return {
       id: "clawql",
-      model: "search_plus_execute_where_fields",
+      model: CLAWQL_SEARCH_ONCE
+        ? "search_once_plus_execute_where_fields"
+        : "search_plus_execute_where_fields",
+      discovery: CLAWQL_SEARCH_ONCE ? "once" : "every_turn",
       layer1: {
-        once_schema_tokens: l1.schema_tokens,
+        once_schema_tokens: l1.schema_tokens + discoveryTok,
         tools_count: l1.tools_count,
         tools_list_count_full: l1.tools_list_count_full,
         tools_list_schema_tokens_full: l1.tools_list_schema_tokens_full,
-        note: "Only search+execute schemas counted as Layer1 (catalog stays server-side)",
+        meta_schema_tokens: l1.schema_tokens,
+        discovery_once_tokens: discoveryTok,
+        note: CLAWQL_SEARCH_ONCE
+          ? "Code Mode peer: search+execute schemas + once catalog-wide search; Layer2 is execute+fields only"
+          : "Only search+execute schemas counted as Layer1 (catalog stays server-side); search every turn in Layer2",
       },
       perTurn,
       skipped: false,
@@ -1097,6 +1158,8 @@ function summarizeArm(arm) {
   const meanResult = arm.perTurn.reduce((a, t) => a + t.result_tokens, 0) / arm.perTurn.length;
   const meanLat =
     arm.perTurn.reduce((a, t) => a + (t.latency_ms || 0), 0) / arm.perTurn.length;
+  const writtenSum = arm.perTurn.reduce((a, t) => a + (t.model_written_tokens || 0), 0);
+  const weightedCombined = last.combined + MODEL_WRITTEN_WEIGHT * writtenSum;
   const successTurns = arm.perTurn.filter((t) => t.task_success?.ok).length;
   const taskSuccess = {
     turns_ok: successTurns,
@@ -1115,6 +1178,9 @@ function summarizeArm(arm) {
       mean_result_tokens: Number(meanResult.toFixed(1)),
       combined_at_n: last.combined,
       combined_relist_every_turn_at_n: lastRelist.combined,
+      model_written_tokens_sum: writtenSum,
+      model_written_weight: MODEL_WRITTEN_WEIGHT,
+      combined_weighted_at_n: weightedCombined,
       mean_latency_ms: Number(meanLat.toFixed(3)),
       turns: arm.perTurn.length,
       task_success_ok: taskSuccess.ok,
@@ -1133,6 +1199,9 @@ function ratioBoard(arms) {
       vs_clawql_combined_classic: +(arm.board.combined_at_n / claw.combined_at_n).toFixed(2),
       vs_clawql_combined_relist_every_turn: +(
         arm.board.combined_relist_every_turn_at_n / claw.combined_relist_every_turn_at_n
+      ).toFixed(2),
+      vs_clawql_combined_weighted: +(
+        arm.board.combined_weighted_at_n / Math.max(1, claw.combined_weighted_at_n)
       ).toFixed(2),
       vs_clawql_mean_result: +(arm.board.mean_result_tokens / claw.mean_result_tokens).toFixed(2),
       vs_clawql_layer1: +(arm.board.layer1_once_tokens / Math.max(1, claw.layer1_once_tokens)).toFixed(
@@ -1184,8 +1253,11 @@ function categoryWinNarrative(arms, ratios) {
   }
   if (ratios.bifrost_codemode) {
     lines.push(
-      `Measured vs Bifrost Code Mode @N=${TURNS}: classic ${ratios.bifrost_codemode.vs_clawql_combined_classic}× ` +
-        `(4 meta-tools + executeToolCode; Layer2 includes TOOL print dump if present).`
+      `Measured vs Bifrost Code Mode @N=${TURNS}: classic ${ratios.bifrost_codemode.vs_clawql_combined_classic}×` +
+        (ratios.bifrost_codemode.vs_clawql_combined_weighted
+          ? ` / weighted(×${MODEL_WRITTEN_WEIGHT} model-written) ${ratios.bifrost_codemode.vs_clawql_combined_weighted}×`
+          : "") +
+        ` (Layer2 includes TOOL print dump; ClawQL discovery=${CLAWQL_SEARCH_ONCE ? "once" : "every_turn"}).`
     );
   }
   lines.push("RSS is a loss among serious arms — admit or fix before memory claims.");
@@ -1297,6 +1369,8 @@ async function main() {
         where: WHERE,
         fields: FIELDS,
         arms: ARMS,
+        clawql_discovery: CLAWQL_SEARCH_ONCE ? "once" : "every_turn",
+        model_written_weight: MODEL_WRITTEN_WEIGHT,
         tokenizer: "cl100k_base",
       },
       equal_arm: {
@@ -1346,14 +1420,16 @@ async function main() {
     await writeFile(OUT_PATH, JSON.stringify(report, null, 2));
     console.log(`\n[mt] wrote ${OUT_PATH}`);
     console.log("\n=== Multi-turn cumulative (PRIMARY: classic Layer1 once + sum L2) ===\n");
-    console.log("arm | L1 once | mean L2 | combined@N | mean result tok | task_success");
+    console.log(
+      "arm | L1 once | mean L2 | combined@N | weighted@N | mean result tok | task_success"
+    );
     for (const [id, b] of Object.entries(board)) {
       if (b.skipped) {
         console.log(`${id} | SKIP ${b.reason?.slice(0, 60)}`);
         continue;
       }
       console.log(
-        `${id} | ${b.layer1_once_tokens} | ${b.mean_layer2_tokens} | ${b.combined_at_n} | ${b.mean_result_tokens} | ${b.task_success_ok ? "PASS" : "FAIL"} (${b.task_success_rate})`
+        `${id} | ${b.layer1_once_tokens} | ${b.mean_layer2_tokens} | ${b.combined_at_n} | ${b.combined_weighted_at_n} | ${b.mean_result_tokens} | ${b.task_success_ok ? "PASS" : "FAIL"} (${b.task_success_rate})`
       );
     }
     console.log("\nRatios vs ClawQL (classic primary / relist secondary):");
