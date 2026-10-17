@@ -8,6 +8,7 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | [`gateway-multi-cmp-chaos-slim.json`](./gateway-multi-cmp-chaos-slim.json) | Chaos ceilings — **single-instance / stdio equal-arm** (not cross-topology) |
 | [`gateway-multi-multiturn.json`](./gateway-multi-multiturn.json) | **12-turn I/O tokens + task success** on a fat catalog |
 | [`gateway-multi-multiturn-24.json`](./gateway-multi-multiturn-24.json) | Same board at N=24 (compounding check) |
+| [`gateway-multi-multiturn-bifrost.json`](./gateway-multi-multiturn-bifrost.json) | Same N=12/C=40 fixture + Bifrost classic / Code Mode (opt-in arms) |
 
 ---
 
@@ -15,7 +16,7 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 
 | Claim | Status | Bound |
 | --- | --- | --- |
-| **Fewest tokens among MCP aggregators + live Executor with equal task success** | **Primary** — classic Layer1-once + Σ Layer2 @12; all arms `task_success` PASS | ClawQL **20.5k** vs MCPJungle **35.3k** (1.72×) and Executor **53.7k** (2.61×). Layer 2 is the win — same gap as [Both Sides of Context Compression](https://pragmaticvectors.com/posts/both-sides-of-context-compression). |
+| **Fewest tokens among MCP aggregators + live Executor with equal task success** | **Primary** — classic Layer1-once + Σ Layer2 @12; all arms `task_success` PASS | ClawQL **8.9k** vs MCPJungle **35.3k** (**3.98×**), agentgateway **35.0k** (**3.95×**), Executor **53.7k** (**6.06×**). Compact search + compact execute JSON; Layer 2 is the win — same gap as [Both Sides of Context Compression](https://pragmaticvectors.com/posts/both-sides-of-context-compression). |
 | **Lowest governed gateway cost** | **Supported** on n=10k — ClawQL gateway_cost p50 **0.70 ms** vs Executor **2.36 ms** | Same equal-arm pets upstream contract |
 | **Latency competitive with the fastest aggregators while doing more per call** | **Supported** — ClawQL best p50; MCPJungle best p999; essentially a tie at the top | Read with [path matrix](#path-matrix-what-each-arm-does) |
 | **Scale-out concurrency win** | **Not claimed yet** | Only after same-topology boards (1-instance **and** 4-replica behind LB) for every arm, pushed until break |
@@ -48,7 +49,7 @@ At n=10 000: ClawQL fastest at **p50**; MCPJungle fastest at **p999**. That is
 
 | Dimension | Verdict |
 | --- | --- |
-| **Multi-turn I/O tokens (classic)** | **Lead** vs aggregators (~1.7× combined @12) and fat Executor (~2.6×). Re-list-every-turn is **secondary** (most clients cache `tools/list`; lazy clients shrink aggregator schema cost further). |
+| **Multi-turn I/O tokens (classic)** | **Lead** vs aggregators (~4× combined @12) and fat Executor (~6×). Re-list-every-turn is **secondary** (most clients cache `tools/list`; lazy clients shrink aggregator schema cost further). |
 | **Task success** | Deterministic inventory checks in harness (`task_success`); LLM-as-judge optional when a model key is present. Publish only if ClawQL success ≥ peers. |
 | **Latency e2e / gateway_cost** | **Win on governed cost**; e2e competitive (best p50, near-tie p999). |
 | **Chaos (single-instance equal-arm)** | **Win vs Executor** — ClawQL **63/64** vs Executor **23/24**. **Loss vs MCPJungle** — **204/205**. **Tie vs agentgateway** — **62/63**. Do not claim aggregator concurrency wins. |
@@ -149,20 +150,29 @@ Single-tool p50 is a thin slice. The category ClawQL is built for is **multi-tur
 
 **Settled (do not reopen):** Executor’s live Layer 2 is unmodified API JSON — [Both Sides of Context Compression](https://pragmaticvectors.com/posts/both-sides-of-context-compression), `executor-cmp-001.live.json` (143,466 tok `pulls.list`). A hand-written program that maps to slim fields is **not** Executor and must not appear on this board as Executor. Codemode gateways compress input; response-side field selection at the gateway layer is ClawQL’s differentiator.
 
-### Board @ N=12 (classic: Layer1 once + Σ Layer2) — re-measured
+### Board @ N=12 (classic: Layer1 once + Σ Layer2) — compact search + execute
+
+Artifact: [`gateway-multi-multiturn.json`](./gateway-multi-multiturn.json). Agent-facing MCP text is minified JSON (`detail=compact` search hits; execute success bodies no longer pretty-printed).
 
 | Arm | Layer1 once (tok) | Mean Layer2 (tok) | Mean **result** tok | Combined @12 | Task success |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| **ClawQL** | **297** (search+execute) | **1687** | **723** | **20 539** | **PASS** |
-| Executor | 90 | 4465 | 4465 | 53 668 (2.61×) | **PASS** |
-| MCPJungle | 5840 | 2457 | 2457 | 35 322 (1.72×) | **PASS** |
-| agentgateway | 5520 | 2457 | 2457 | 35 002 (1.70×) | **PASS** |
+| **ClawQL** | **348** (search+execute) | **710** | **399** | **8 866** | **PASS** |
+| Executor | 128 | 4465 | 4465 | 53 706 (**6.06×**) | **PASS** |
+| MCPJungle | 5840 | 2457 | 2457 | 35 322 (**3.98×**) | **PASS** |
+| agentgateway | 5520 | 2457 | 2457 | 35 002 (**3.95×**) | **PASS** |
 
 Primary publish column is **classic** (Layer1 once). **Re-list every turn** is secondary — most clients cache tool lists; lazy clients shrink aggregator Layer1 further. Secondary numbers remain in the JSON for sensitivity analysis.
+
+**N=24 compounding** ([`gateway-multi-multiturn-24.json`](./gateway-multi-multiturn-24.json)): ClawQL **17 434** vs MCPJungle **64 854** (**3.72×**), agentgateway **64 534** (**3.70×**), Executor **107 334** (**6.16×**) — same compact path; ratios hold as turns double.
 
 ### Multiturn run
 
 ```bash
+export EXECUTOR_BIN=/tmp/executor-try/node_modules/.bin/executor
+export EXECUTOR_CWD=/tmp/executor-try
+export EXECUTOR_DATA_DIR=/tmp/executor-v1-data   # required for Executor 1.x stdio
+# Or Executor 2.x HTTP: EXECUTOR_MCP_URL=http://127.0.0.1:4312/mcp EXECUTOR_API_KEY=…
+
 MT_TURNS=12 CATALOG_TOOL_COUNT=40 \
   MT_ARMS=clawql,executor,mcpjungle,agentgateway \
   npm run benchmark:gateway-multi-multiturn
@@ -191,7 +201,36 @@ Levers landed: INSTANCE_SPEC slim Core, lazy optional imports, WORM ring cap, se
 | **ContextForge** | Prior run nested through MCPJungle — inflates latency, memory, and chaos. Re-add only with native REST virtualization calling `/pets` directly. |
 | **MetaMCP** | Not run (Docker Compose–first). Do not list as a peer without a measured arm. |
 
-Default `MULTI_ARMS` / `MT_ARMS` omit both.
+Default `MULTI_ARMS` / `MT_ARMS` omit Bifrost, ContextForge, and MetaMCP. Bifrost is measured below but stays opt-in until the category story absorbs Code Mode honestly.
+
+### Bifrost on the N=12 / C=40 board
+
+Same fixture as the publish multiturn table (`MT_TURNS=12`, `CATALOG_TOOL_COUNT=40`, `MT_LIMIT=25`). Artifact: [`gateway-multi-multiturn-bifrost.json`](./gateway-multi-multiturn-bifrost.json). Binary: `npx @maximhq/bifrost` → `~/.cache/bifrost/<ver>/bin/bifrost-http-*` or `BIFROST_BIN`.
+
+**Product lever:** MCP `search` defaults to `detail=compact` (signature/score/risk; no `parameters[]` / schemas) and minified JSON — peer-shaped like Code Mode `.pyi` stubs. Pass `detail=full` when an agent needs deep inspect.
+
+| Arm | Layer1 once (tok) | Mean Layer2 (tok) | Mean **result** tok | Combined @12 | Weighted @12 (×5 model-written) | Task success | vs ClawQL |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: |
+| **ClawQL** (compact search + execute every turn) | **348** | **710** | **399** | **8 866** | **11 626** | **PASS** | 1× |
+| Bifrost classic | 5520 | 2457 | 2457 | 35 002 | 35 842 | **PASS** | **3.95×** |
+| Bifrost Code Mode | 3459 | 1377 | 1377 | 19 977 | 23 697 | **PASS** | **2.25×** (weighted **2.04×**) |
+
+**How to read this:**
+
+1. **Combined classic win vs Code Mode is solid** (**2.25×**) after compact search *and* compact execute — prior near-tie (0.97×) used fat pretty-printed search hits; compact-search-only still left pretty execute JSON (~12.7k / 1.57×).
+2. **Classic Bifrost** tracks aggregators (~**3.95×** here; same fat `callTool` path as agentgateway).
+3. **Result projection** still favors ClawQL (~**3.45×** leaner mean result): Code Mode’s `executeToolCode` echoes the fat upstream dump in `Print output` before the slim `Return value` (Layer2 counts full MCP text).
+4. Secondary **weighted** column adds ×5 model-written args/code (dominance roadmap); Code Mode stays ~**2.0×**.
+5. Optional `MT_CLAWQL_DISCOVERY=once` mirrors Code Mode’s discover-once path; default `every_turn` is the conservative aggregator peer. Compact JSON is the only agent-facing text format (no YAML / columnar / CBOR options).
+
+```bash
+export BIFROST_BIN="${BIFROST_BIN:-$HOME/.cache/bifrost/v2.3.0/bin/bifrost-http-0}"
+
+MT_TURNS=12 CATALOG_TOOL_COUNT=40 MT_LIMIT=25 \
+  MT_ARMS=clawql,bifrost,bifrost_codemode \
+  MT_OUT=gateway-multi-multiturn-bifrost.json \
+  npm run benchmark:gateway-multi-multiturn
+```
 
 ---
 
@@ -204,8 +243,9 @@ Default `MULTI_ARMS` / `MT_ARMS` omit both.
 5. **Chaos checkpoints** — board JSON flushed after latency and after each arm (survives host OOM mid-refine).
 6. **Multiturn fairness** — deterministic `task_success`; classic Layer1-once is primary; re-list demoted. No simulated Executor “filter” arm on the publish board (settled: gateway has no response-side projection).
 7. **Chaos until-break + topology tags** — `MULTI_CHAOS_UNTIL_BREAK`; reports carry `topology` so cross-topology claims fail the honesty check.
+8. **Compact agent-facing JSON** — `search` defaults to `detail=compact` + minify; `execute` success bodies serialize without pretty-print (no YAML/columnar/CBOR options). Executor harness accepts `EXECUTOR_DATA_DIR` / `EXECUTOR_MCP_URL`.
 
-**Next:** topology B (4× behind LB) for every arm before any scale-out claim; optional real-model task-success arm; RSS heap profile / lazy `clawql-api` if we want to close the memory loss. Date/version stamps on published executor-cmp pages (housekeeping).
+**Next:** remeasure Cloudflare multiturn / www publish boards under the same compact search+execute path (ClawQL Layer2 shrinks; peer arms unchanged); topology B (4× behind LB) for every arm before any scale-out claim; optional real-model task-success arm; RSS heap profile / lazy `clawql-api` if we want to close the memory loss.
 
 ---
 
@@ -217,5 +257,7 @@ Default `MULTI_ARMS` / `MT_ARMS` omit both.
 - Do not mix NATS scale-out ceilings with stdio process-per-client ceilings.
 - Do not publish aggregator concurrency wins until every arm breaks on the same topology.
 - ContextForge / MetaMCP off until native equal-arm runs exist.
-- Multiturn ClawQL Layer2 includes per-turn `search` (discovery tax); result-only gap vs fat peers is larger (~3.4×).
+- Multiturn ClawQL Layer2 includes per-turn `search` (discovery tax); mean **result** gap vs fat peers is larger (~6× aggregators / ~11× Executor).
 - Token wins require `task_success` — projection must not drop facts the agent needed.
+- Bifrost Code Mode board uses the same Layer2 definition (full MCP text, including TOOL print dumps). Compact `search` + compact execute JSON are ClawQL’s equal-arm surfaces — not harness-only filters.
+- Executor arm needs `EXECUTOR_DATA_DIR` (stdio / v1.x) or `EXECUTOR_MCP_URL` (+ optional `EXECUTOR_API_KEY`) for v2 HTTP.

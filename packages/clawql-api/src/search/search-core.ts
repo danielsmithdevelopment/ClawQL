@@ -78,7 +78,8 @@ export function searchClawqlOperationsEffect(
       limit,
       docHits
     );
-    const formattedText = yield* formatSearchResultsEffect(hits, catalog);
+    const detail = params.detail === "full" ? "full" : "compact";
+    const formattedText = yield* formatSearchResultsEffect(hits, catalog, detail);
     return { formattedText };
   }).pipe(Effect.withSpan("clawql.search", { attributes: { "clawql.query": params.query } }));
 }

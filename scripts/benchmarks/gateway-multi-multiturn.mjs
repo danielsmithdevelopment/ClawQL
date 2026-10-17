@@ -21,21 +21,33 @@
  * rows for the partition). Optional MT_LLM_JUDGE=1 when a model key exists.
  *
  * Usage:
- *   EXECUTOR_BIN=… EXECUTOR_CWD=… \
+ *   EXECUTOR_BIN=… EXECUTOR_CWD=… EXECUTOR_DATA_DIR=… \
  *     MCPJUNGLE_BIN=/tmp/gw-bins/mcpjungle \
  *     AGENTGATEWAY_BIN=/tmp/gw-bins/agentgateway \
+ *     BIFROST_BIN=~/.cache/bifrost/v2.3.0/bin/bifrost-http-0 \
  *     MT_TURNS=12 CATALOG_TOOL_COUNT=40 \
+ *     MT_ARMS=clawql,executor,mcpjungle,agentgateway,bifrost,bifrost_codemode \
  *     node scripts/benchmarks/gateway-multi-multiturn.mjs
  *
  * Env:
  *   MT_TURNS (default 12)  CATALOG_TOOL_COUNT (default 40)
- *   MT_ARMS=clawql,executor,mcpjungle,agentgateway
+ *   MT_ARMS=clawql,executor,mcpjungle,agentgateway[,bifrost,bifrost_codemode]
  *   MT_LIMIT (rows per turn, default 25)
  *   MT_OUT (default gateway-multi-multiturn.json)
  *   MT_INCLUDE_CF=1 only for nested CF experiments (off publish board)
+ *   MT_CLAWQL_DISCOVERY=every_turn|once — every_turn (default) matches aggregator board;
+ *     once = Code Mode peer (one fat catalog search, then execute+fields each turn)
+ *   EXECUTOR_BIN / EXECUTOR_CWD — Executor 1.x stdio (`executor mcp`)
+ *   EXECUTOR_MCP_URL — Executor 2.x Streamable HTTP (e.g. http://127.0.0.1:4312/mcp);
+ *     optional EXECUTOR_API_KEY / Authorization Bearer for the HTTP arm
+ *   EXECUTOR_DATA_DIR — forwarded to stdio child (required for Executor 1.x data home)
+ *   BIFROST_BIN — bifrost-http binary (npx @maximhq/bifrost caches under ~/.cache/bifrost/)
+ *   BIFROST_VK — optional virtual key value (default sk-bf-clawql-mt-bench)
  *
  * Note: do NOT put a hand-written slim-return program on the publish board as
  * "Executor". That is not gateway projection and contradicts the settled blog.
+ * Bifrost Code Mode may still echo fat intermediate tool dumps in executeToolCode
+ * "Print output" — Layer2 counts the full MCP text the host receives (honest).
  */
 
 import { existsSync, readFileSync, readdirSync, openSync, closeSync } from "node:fs";
@@ -72,6 +84,14 @@ const ARMS = (
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+/** every_turn = publish aggregator peer; once = Bifrost Code Mode peer (discover once). */
+const CLAWQL_DISCOVERY = (process.env.MT_CLAWQL_DISCOVERY ?? "every_turn").trim().toLowerCase();
+const CLAWQL_SEARCH_ONCE = CLAWQL_DISCOVERY === "once" || CLAWQL_DISCOVERY === "search_once";
+/** Dominance-roadmap weight for model-written args/code (secondary metric). */
+const MODEL_WRITTEN_WEIGHT = Math.max(
+  1,
+  Math.min(10, Number(process.env.MT_MODEL_WRITTEN_WEIGHT ?? 5) || 5)
+);
 
 /** Project list rows after JMESPath extract — ClawQL product path for envelopes. */
 const WHERE = "items";
@@ -224,6 +244,15 @@ function slimPayload(partitionIndex, limit = LIMIT) {
 function parseResultJson(text) {
   if (text == null || text === "") return null;
   const raw = String(text).trim();
+  // Bifrost Code Mode wraps the assigned `result` after a "Return value:" marker.
+  const rv = raw.match(/Return value:\s*(\[[\s\S]*?\]|\{[\s\S]*?\})\s*\n\s*Environment:/i);
+  if (rv) {
+    try {
+      return JSON.parse(rv[1]);
+    } catch {
+      /* fall through */
+    }
+  }
   try {
     return JSON.parse(raw);
   } catch {
@@ -250,11 +279,15 @@ function scoreTaskSuccess(text, partitionIndex, limit = LIMIT) {
     return { ok: false, matched: 0, expected: expected.length, failures: ["unparseable_json"] };
   }
   let rows = null;
-  if (Array.isArray(parsed)) rows = parsed;
-  else if (Array.isArray(parsed?.items)) rows = parsed.items;
-  else if (Array.isArray(parsed?.result)) rows = parsed.result;
-  else if (Array.isArray(parsed?.data)) rows = parsed.data;
-  else if (parsed && typeof parsed === "object" && Array.isArray(parsed.pets)) rows = parsed.pets;
+  // Executor 2.x wraps return values: { status, execution: { value } }
+  const unwrapped =
+    parsed?.execution?.value !== undefined ? parsed.execution.value : parsed;
+  if (Array.isArray(unwrapped)) rows = unwrapped;
+  else if (Array.isArray(unwrapped?.items)) rows = unwrapped.items;
+  else if (Array.isArray(unwrapped?.result)) rows = unwrapped.result;
+  else if (Array.isArray(unwrapped?.data)) rows = unwrapped.data;
+  else if (unwrapped && typeof unwrapped === "object" && Array.isArray(unwrapped.pets))
+    rows = unwrapped.pets;
   if (!rows) {
     return { ok: false, matched: 0, expected: expected.length, failures: ["no_row_array"] };
   }
@@ -303,8 +336,10 @@ function buildTurns() {
   return turns;
 }
 
-async function connectHttpMcp(url, name = "mt-http") {
-  const transport = new StreamableHTTPClientTransport(new URL(url));
+async function connectHttpMcp(url, name = "mt-http", headers = null) {
+  const transport = new StreamableHTTPClientTransport(new URL(url), {
+    requestInit: headers ? { headers } : undefined,
+  });
   const client = new Client({ name, version: "1" }, {});
   await client.connect(transport);
   return {
@@ -315,6 +350,30 @@ async function connectHttpMcp(url, name = "mt-http") {
       await client.close().catch(() => {});
     },
   };
+}
+
+function resolveBifrostBin() {
+  const fromEnv = resolveBin("BIFROST_BIN", [
+    "/tmp/gw-bins/bifrost",
+    "/tmp/gw-bins/bifrost-http",
+    join(ROOT, "tmp/gw-bins/bifrost"),
+  ]);
+  if (fromEnv) return fromEnv;
+  const cacheRoot = join(process.env.HOME || "/home/ubuntu", ".cache", "bifrost");
+  if (!existsSync(cacheRoot)) return null;
+  const versions = readdirSync(cacheRoot)
+    .filter((d) => existsSync(join(cacheRoot, d, "bin")))
+    .sort()
+    .reverse();
+  for (const v of versions) {
+    const binDir = join(cacheRoot, v, "bin");
+    const entries = readdirSync(binDir).filter((f) => f.startsWith("bifrost-http"));
+    for (const f of entries) {
+      const p = join(binDir, f);
+      if (existsSync(p)) return p;
+    }
+  }
+  return null;
 }
 
 function clawqlEnv(home, specPath, apiBase) {
@@ -444,13 +503,34 @@ async function connectClawql(mock) {
 }
 
 async function connectExecutor() {
+  const url = process.env.EXECUTOR_MCP_URL?.trim();
+  if (url) {
+    const key =
+      process.env.EXECUTOR_API_KEY?.trim() ||
+      (() => {
+        try {
+          const p = process.env.EXECUTOR_API_KEY_FILE?.trim();
+          if (p && existsSync(p)) return readFileSync(p, "utf8").trim();
+        } catch {
+          /* ignore */
+        }
+        return "";
+      })();
+    const headers = key ? { Authorization: `Bearer ${key}` } : null;
+    return connectHttpMcp(url, "mt-executor-http", headers);
+  }
   const bin = process.env.EXECUTOR_BIN?.trim();
-  if (!bin) throw new Error("EXECUTOR_BIN required");
+  if (!bin) throw new Error("EXECUTOR_BIN or EXECUTOR_MCP_URL required");
+  const childEnv = { ...process.env };
+  if (process.env.EXECUTOR_DATA_DIR?.trim()) {
+    childEnv.EXECUTOR_DATA_DIR = process.env.EXECUTOR_DATA_DIR.trim();
+  }
   const transport = new StdioClientTransport({
     command: bin,
     args: ["mcp"],
     cwd: process.env.EXECUTOR_CWD?.trim() || dirname(bin),
     stderr: "pipe",
+    env: childEnv,
   });
   const client = new Client({ name: "mt-executor", version: "1" }, {});
   await client.connect(transport);
@@ -615,6 +695,225 @@ mcp:
   };
 }
 
+/**
+ * Bifrost MCP Gateway over equal-arm catalog (stdio child).
+ * codeMode=false → classic tools/list (prefixed catalog-*) + fat callTool
+ * codeMode=true  → four meta-tools; catalog hidden behind executeToolCode
+ */
+async function startBifrostCatalog({ codeMode = false } = {}) {
+  const bin = resolveBifrostBin();
+  if (!bin) {
+    throw new Error(
+      "bifrost binary not found (set BIFROST_BIN, or install via npx @maximhq/bifrost — caches under ~/.cache/bifrost/)"
+    );
+  }
+  const id = codeMode ? "bifrost_codemode" : "bifrost";
+  const work = join("/tmp", `${id}-mt-${process.pid}`);
+  await rm(work, { recursive: true, force: true });
+  await mkdir(work, { recursive: true });
+  const port = await pickFreePort();
+  const vk =
+    process.env.BIFROST_VK?.trim() ||
+    (codeMode ? "sk-bf-clawql-mt-codemode" : "sk-bf-clawql-mt-classic");
+  const cfgPath = join(work, "config.json");
+  await writeFile(
+    cfgPath,
+    JSON.stringify(
+      {
+        setup_token: "clawql-mt-bench-setup-token",
+        client: {
+          enforce_auth_on_inference: false,
+        },
+        mcp: {
+          client_configs: [
+            {
+              name: "catalog",
+              connection_type: "stdio",
+              stdio_config: {
+                command: process.execPath,
+                args: [CATALOG_MCP],
+                envs: ["PATH", "HOME", "CATALOG_TOOL_COUNT"],
+              },
+              tools_to_execute: ["*"],
+              allow_by_default: true,
+              is_code_mode_client: !!codeMode,
+            },
+          ],
+        },
+        governance: {
+          virtual_keys: [
+            {
+              id: codeMode ? "vk-mt-codemode" : "vk-mt-classic",
+              name: id,
+              value: vk,
+              is_active: true,
+              allow_all_providers: true,
+              mcp_configs: [
+                {
+                  mcp_client_name: "catalog",
+                  tools_to_execute: ["*"],
+                },
+              ],
+            },
+          ],
+        },
+      },
+      null,
+      2
+    )
+  );
+  const logPath = join(work, "server.log");
+  const logFd = openSync(logPath, "w");
+  const child = spawn(
+    bin,
+    ["-app-dir", work, "-host", "127.0.0.1", "-port", String(port), "-log-level", "info"],
+    {
+      cwd: work,
+      stdio: ["ignore", logFd, logFd],
+      env: { ...process.env, CATALOG_TOOL_COUNT: String(TOOL_COUNT) },
+    }
+  );
+  const mcpUrl = `http://127.0.0.1:${port}/mcp`;
+  const headers = { "x-bf-vk": vk };
+  await waitHttpOk(`http://127.0.0.1:${port}/`, { timeoutMs: 90_000 });
+  // Wait until catalog MCP child is connected (tools would otherwise be empty).
+  const tConnect = Date.now();
+  for (;;) {
+    const log = existsSync(logPath) ? readFileSync(logPath, "utf8") : "";
+    if (log.includes("Connected to MCP server 'catalog'")) break;
+    if (Date.now() - tConnect > 90_000) {
+      throw new Error(`bifrost catalog connect timeout\n${log.slice(-2000)}`);
+    }
+    await sleep(200);
+  }
+  let probe;
+  const t0 = Date.now();
+  for (;;) {
+    try {
+      probe = await connectHttpMcp(mcpUrl, `${id}-probe`, headers);
+      break;
+    } catch (e) {
+      if (Date.now() - t0 > 60_000) throw e;
+      await sleep(300);
+    }
+  }
+  const nameMap = new Map();
+  try {
+    const tools = await probe.client.listTools();
+    for (const t of tools.tools) {
+      for (let i = 1; i <= TOOL_COUNT; i++) {
+        const base = toolName(i);
+        if (t.name === base || t.name.endsWith(base) || t.name.includes(base)) {
+          nameMap.set(base, t.name);
+        }
+      }
+    }
+  } finally {
+    await probe.close();
+  }
+  return {
+    id,
+    codeMode: !!codeMode,
+    mcpUrl,
+    vk,
+    headers,
+    pid: child.pid,
+    work,
+    resolveTool: (base) => nameMap.get(base) || `catalog-${base}`,
+    connect: () => connectHttpMcp(mcpUrl, `${id}-mt`, headers),
+    close: async () => {
+      killTree(child.pid);
+      try {
+        closeSync(logFd);
+      } catch {
+        /* ignore */
+      }
+    },
+  };
+}
+
+async function runBifrostCodeModeArm(gw, turns) {
+  const conn = await gw.connect();
+  try {
+    const listed = await conn.client.listTools();
+    const metaNames = ["listToolFiles", "readToolFile", "getToolDocs", "executeToolCode"];
+    const metaTools = listed.tools.filter((t) => metaNames.includes(t.name));
+    if (metaTools.length < 4) {
+      throw new Error(
+        `bifrost_codemode expected 4 meta-tools, got: ${listed.tools.map((t) => t.name).join(",")}`
+      );
+    }
+    const l1 = measureLayer1FromTools(listed.tools, { onlyNames: metaNames });
+    // Discovery once — equivalent of loading the catalog stub before scripting.
+    const listFilesRes = await conn.client.callTool({ name: "listToolFiles", arguments: {} });
+    if (listFilesRes.isError) {
+      throw new Error(`listToolFiles: ${toolText(listFilesRes).slice(0, 300)}`);
+    }
+    const listFilesText = toolText(listFilesRes);
+    const readRes = await conn.client.callTool({
+      name: "readToolFile",
+      arguments: { fileName: "servers/catalog.pyi" },
+    });
+    if (readRes.isError) {
+      throw new Error(`readToolFile: ${toolText(readRes).slice(0, 300)}`);
+    }
+    const readText = toolText(readRes);
+    const discoveryTok = countTokens(listFilesText) + countTokens(readText);
+    const perTurn = [];
+    for (const turn of turns) {
+      // Project in-sandbox to {id,name,status} — Code Mode's Layer2 promise.
+      // Honesty: Bifrost still echoes the fat upstream dump in "Print output".
+      const code = `raw = catalog.${turn.tool}(limit=${turn.args.limit}, status=${JSON.stringify(turn.args.status)}, includeMeta=True)
+items = raw["items"] if "items" in raw else raw
+result = [{"id": x["id"], "name": x["name"], "status": x["status"]} for x in items]`;
+      const writtenTok = countTokens(code);
+      const t0 = performance.now();
+      const res = await conn.client.callTool({
+        name: "executeToolCode",
+        arguments: { code },
+      });
+      const ms = performance.now() - t0;
+      if (res.isError) {
+        throw new Error(`executeToolCode ${turn.tool}: ${toolText(res).slice(0, 400)}`);
+      }
+      const text = toolText(res);
+      const success = scoreTaskSuccess(text, turn.partition, turn.args.limit);
+      perTurn.push({
+        n: turn.n,
+        tool: "executeToolCode",
+        catalog_tool: turn.tool,
+        result_tokens: countTokens(text),
+        result_chars: text.length,
+        model_written_tokens: writtenTok,
+        layer2_classic: countTokens(text),
+        layer2_relist_every_turn: countTokens(text),
+        latency_ms: Number(ms.toFixed(3)),
+        ok: true,
+        task_success: success,
+      });
+    }
+    return {
+      id: "bifrost_codemode",
+      model: "bifrost_code_mode_executeToolCode_starlark",
+      layer1: {
+        once_schema_tokens: l1.schema_tokens + discoveryTok,
+        tools_count: l1.tools_count,
+        tools_list_count_full: listed.tools.length,
+        tools_list_schema_tokens_full: l1.tools_list_schema_tokens_full,
+        meta_schema_tokens: l1.schema_tokens,
+        discovery_once_tokens: discoveryTok,
+        note:
+          "Layer1 = 4 Code Mode meta-tool schemas + once listToolFiles/readToolFile(catalog.pyi). " +
+          "Layer2 counts full executeToolCode text (includes Bifrost TOOL print of fat upstream).",
+      },
+      perTurn,
+      skipped: false,
+    };
+  } finally {
+    await conn.close();
+  }
+}
+
 function measureLayer1FromTools(tools, { onlyNames } = {}) {
   const selected = onlyNames
     ? tools.filter((t) => onlyNames.includes(t.name))
@@ -652,6 +951,7 @@ async function runAggregatorArm(gw, turns) {
     const perTurn = [];
     for (const turn of turns) {
       const name = gw.resolveTool(turn.tool);
+      const writtenTok = countTokens(JSON.stringify(turn.args));
       const t0 = performance.now();
       const res = await conn.client.callTool({
         name,
@@ -669,6 +969,7 @@ async function runAggregatorArm(gw, turns) {
         tool: name,
         result_tokens: countTokens(text),
         result_chars: text.length,
+        model_written_tokens: writtenTok,
         tools_list_tokens: relistTok,
         layer2_classic: countTokens(text),
         layer2_relist_every_turn: relistTok + countTokens(text),
@@ -693,22 +994,61 @@ async function runAggregatorArm(gw, turns) {
   }
 }
 
+function clawqlModelWrittenTokens(turn, { searched }) {
+  // What the model must author each turn (query when searching + execute args).
+  let n = 0;
+  if (searched) n += countTokens(turn.query);
+  n += countTokens(
+    JSON.stringify({
+      operationId: turn.operationId,
+      args: turn.args,
+      where: turn.where,
+      fields: turn.fields,
+    })
+  );
+  return n;
+}
+
 async function runClawqlArm(mock, turns) {
   const conn = await connectClawql(mock);
   try {
     const listed = await conn.client.listTools();
     const l1 = measureLayer1FromTools(listed.tools, { onlyNames: ["search", "execute"] });
+    let discoveryTok = 0;
+    let discoveryText = "";
+    if (CLAWQL_SEARCH_ONCE) {
+      // Equal-arm vs Code Mode readToolFile(catalog.pyi): one catalog-wide search
+      // covering all partitions, then execute+fields each turn (no rediscovery tax).
+      const disco = await conn.client.callTool({
+        name: "search",
+        arguments: {
+          query: "catalog_list inventory list entities partition",
+          limit: Math.min(50, Math.max(TOOL_COUNT, 40)),
+          detail: "compact",
+        },
+      });
+      if (disco.isError) {
+        throw new Error(`clawql discovery search: ${toolText(disco).slice(0, 300)}`);
+      }
+      discoveryText = toolText(disco);
+      discoveryTok = countTokens(discoveryText);
+    }
     const perTurn = [];
     for (const turn of turns) {
       const t0 = performance.now();
-      const searchRes = await conn.client.callTool({
-        name: "search",
-        arguments: { query: turn.query, limit: 3 },
-      });
-      if (searchRes.isError) {
-        throw new Error(`clawql search: ${toolText(searchRes).slice(0, 300)}`);
+      let searchTok = 0;
+      let searched = false;
+      if (!CLAWQL_SEARCH_ONCE) {
+        const searchRes = await conn.client.callTool({
+          name: "search",
+          arguments: { query: turn.query, limit: 3, detail: "compact" },
+        });
+        if (searchRes.isError) {
+          throw new Error(`clawql search: ${toolText(searchRes).slice(0, 300)}`);
+        }
+        searchTok = countTokens(toolText(searchRes));
+        searched = true;
       }
-      const searchText = toolText(searchRes);
       const execRes = await conn.client.callTool({
         name: "execute",
         arguments: {
@@ -727,8 +1067,8 @@ async function runClawqlArm(mock, turns) {
         throw new Error(`clawql execute: ${toolText(execRes).slice(0, 400)}`);
       }
       const execText = toolText(execRes);
-      const searchTok = countTokens(searchText);
       const resultTok = countTokens(execText);
+      const writtenTok = clawqlModelWrittenTokens(turn, { searched });
       const success = scoreTaskSuccess(execText, turn.partition, turn.args.limit);
       perTurn.push({
         n: turn.n,
@@ -736,6 +1076,7 @@ async function runClawqlArm(mock, turns) {
         search_tokens: searchTok,
         result_tokens: resultTok,
         result_chars: execText.length,
+        model_written_tokens: writtenTok,
         where: turn.where,
         fields: turn.fields,
         layer2_classic: searchTok + resultTok,
@@ -747,13 +1088,20 @@ async function runClawqlArm(mock, turns) {
     }
     return {
       id: "clawql",
-      model: "search_plus_execute_where_fields",
+      model: CLAWQL_SEARCH_ONCE
+        ? "search_once_plus_execute_where_fields"
+        : "search_plus_execute_where_fields",
+      discovery: CLAWQL_SEARCH_ONCE ? "once" : "every_turn",
       layer1: {
-        once_schema_tokens: l1.schema_tokens,
+        once_schema_tokens: l1.schema_tokens + discoveryTok,
         tools_count: l1.tools_count,
         tools_list_count_full: l1.tools_list_count_full,
         tools_list_schema_tokens_full: l1.tools_list_schema_tokens_full,
-        note: "Only search+execute schemas counted as Layer1 (catalog stays server-side)",
+        meta_schema_tokens: l1.schema_tokens,
+        discovery_once_tokens: discoveryTok,
+        note: CLAWQL_SEARCH_ONCE
+          ? "Code Mode peer: search+execute schemas + once catalog-wide search; Layer2 is execute+fields only"
+          : "Only search+execute schemas counted as Layer1 (catalog stays server-side); search every turn in Layer2",
       },
       perTurn,
       skipped: false,
@@ -766,6 +1114,7 @@ async function runClawqlArm(mock, turns) {
 async function runExecutorArm(turns, { filter = false } = {}) {
   const conn = await connectExecutor();
   const armId = filter ? "executor_filter" : "executor";
+  const viaHttp = Boolean(process.env.EXECUTOR_MCP_URL?.trim());
   try {
     const listed = await conn.client.listTools();
     const executeTool = listed.tools.find((t) => t.name === "execute");
@@ -806,8 +1155,12 @@ async function runExecutorArm(turns, { filter = false } = {}) {
     return {
       id: armId,
       model: filter
-        ? "stdio_mcp_code_execute_fields_filter"
-        : "stdio_mcp_code_execute_fat_static",
+        ? viaHttp
+          ? "http_mcp_code_execute_fields_filter"
+          : "stdio_mcp_code_execute_fields_filter"
+        : viaHttp
+          ? "http_mcp_code_execute_fat_static"
+          : "stdio_mcp_code_execute_fat_static",
       layer1: {
         once_schema_tokens: l1Tokens,
         tools_count: executeTool ? 1 : listed.tools.length,
@@ -839,6 +1192,8 @@ function summarizeArm(arm) {
   const meanResult = arm.perTurn.reduce((a, t) => a + t.result_tokens, 0) / arm.perTurn.length;
   const meanLat =
     arm.perTurn.reduce((a, t) => a + (t.latency_ms || 0), 0) / arm.perTurn.length;
+  const writtenSum = arm.perTurn.reduce((a, t) => a + (t.model_written_tokens || 0), 0);
+  const weightedCombined = last.combined + MODEL_WRITTEN_WEIGHT * writtenSum;
   const successTurns = arm.perTurn.filter((t) => t.task_success?.ok).length;
   const taskSuccess = {
     turns_ok: successTurns,
@@ -857,6 +1212,9 @@ function summarizeArm(arm) {
       mean_result_tokens: Number(meanResult.toFixed(1)),
       combined_at_n: last.combined,
       combined_relist_every_turn_at_n: lastRelist.combined,
+      model_written_tokens_sum: writtenSum,
+      model_written_weight: MODEL_WRITTEN_WEIGHT,
+      combined_weighted_at_n: weightedCombined,
       mean_latency_ms: Number(meanLat.toFixed(3)),
       turns: arm.perTurn.length,
       task_success_ok: taskSuccess.ok,
@@ -875,6 +1233,9 @@ function ratioBoard(arms) {
       vs_clawql_combined_classic: +(arm.board.combined_at_n / claw.combined_at_n).toFixed(2),
       vs_clawql_combined_relist_every_turn: +(
         arm.board.combined_relist_every_turn_at_n / claw.combined_relist_every_turn_at_n
+      ).toFixed(2),
+      vs_clawql_combined_weighted: +(
+        arm.board.combined_weighted_at_n / Math.max(1, claw.combined_weighted_at_n)
       ).toFixed(2),
       vs_clawql_mean_result: +(arm.board.mean_result_tokens / claw.mean_result_tokens).toFixed(2),
       vs_clawql_layer1: +(arm.board.layer1_once_tokens / Math.max(1, claw.layer1_once_tokens)).toFixed(
@@ -918,6 +1279,21 @@ function categoryWinNarrative(arms, ratios) {
         `(fat return — matches live Layer 2 pass-through; Layer1 schema still smaller).`
     );
   }
+  if (ratios.bifrost) {
+    lines.push(
+      `Measured vs Bifrost classic @N=${TURNS}: classic ${ratios.bifrost.vs_clawql_combined_classic}× ` +
+        `(full tools/list + fat callTool via /mcp).`
+    );
+  }
+  if (ratios.bifrost_codemode) {
+    lines.push(
+      `Measured vs Bifrost Code Mode @N=${TURNS}: classic ${ratios.bifrost_codemode.vs_clawql_combined_classic}×` +
+        (ratios.bifrost_codemode.vs_clawql_combined_weighted
+          ? ` / weighted(×${MODEL_WRITTEN_WEIGHT} model-written) ${ratios.bifrost_codemode.vs_clawql_combined_weighted}×`
+          : "") +
+        ` (Layer2 includes TOOL print dump; ClawQL discovery=${CLAWQL_SEARCH_ONCE ? "once" : "every_turn"}).`
+    );
+  }
   lines.push("RSS is a loss among serious arms — admit or fix before memory claims.");
   return lines;
 }
@@ -956,14 +1332,20 @@ async function main() {
           }
           rawArms.clawql = await runClawqlArm(mock, turns);
         } else if (arm === "executor") {
-          if (!process.env.EXECUTOR_BIN?.trim()) {
-            rawArms.executor = { skipped: true, reason: "EXECUTOR_BIN unset" };
+          if (!process.env.EXECUTOR_BIN?.trim() && !process.env.EXECUTOR_MCP_URL?.trim()) {
+            rawArms.executor = {
+              skipped: true,
+              reason: "EXECUTOR_BIN / EXECUTOR_MCP_URL unset",
+            };
             continue;
           }
           rawArms.executor = await runExecutorArm(turns, { filter: false });
         } else if (arm === "executor_filter") {
-          if (!process.env.EXECUTOR_BIN?.trim()) {
-            rawArms.executor_filter = { skipped: true, reason: "EXECUTOR_BIN unset" };
+          if (!process.env.EXECUTOR_BIN?.trim() && !process.env.EXECUTOR_MCP_URL?.trim()) {
+            rawArms.executor_filter = {
+              skipped: true,
+              reason: "EXECUTOR_BIN / EXECUTOR_MCP_URL unset",
+            };
             continue;
           }
           rawArms.executor_filter = await runExecutorArm(turns, { filter: true });
@@ -975,6 +1357,14 @@ async function main() {
           const gw = await startAgentgatewayCatalog();
           gateways.push(gw);
           rawArms.agentgateway = await runAggregatorArm(gw, turns);
+        } else if (arm === "bifrost") {
+          const gw = await startBifrostCatalog({ codeMode: false });
+          gateways.push(gw);
+          rawArms.bifrost = await runAggregatorArm(gw, turns);
+        } else if (arm === "bifrost_codemode") {
+          const gw = await startBifrostCatalog({ codeMode: true });
+          gateways.push(gw);
+          rawArms.bifrost_codemode = await runBifrostCodeModeArm(gw, turns);
         } else if (arm === "contextforge") {
           rawArms.contextforge = {
             skipped: true,
@@ -1019,6 +1409,8 @@ async function main() {
         where: WHERE,
         fields: FIELDS,
         arms: ARMS,
+        clawql_discovery: CLAWQL_SEARCH_ONCE ? "once" : "every_turn",
+        model_written_weight: MODEL_WRITTEN_WEIGHT,
         tokenizer: "cl100k_base",
       },
       equal_arm: {
@@ -1058,6 +1450,8 @@ async function main() {
         "Executor Layer2 is fat JSON — matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
         "Do not publish a hand-written slim-return program as Executor.",
         "ContextForge/MetaMCP off publish board by default.",
+        "Bifrost/bifrost_codemode are opt-in via MT_ARMS (not default) until a published board lands.",
+        "Bifrost Code Mode Layer2 counts full executeToolCode text — Bifrost may echo fat upstream in Print output.",
         "Not a latency board; see gateway-multi-cmp-10k.json for interleaved p999.",
         "RSS is a loss among serious arms — admit plainly.",
       ],
@@ -1066,14 +1460,16 @@ async function main() {
     await writeFile(OUT_PATH, JSON.stringify(report, null, 2));
     console.log(`\n[mt] wrote ${OUT_PATH}`);
     console.log("\n=== Multi-turn cumulative (PRIMARY: classic Layer1 once + sum L2) ===\n");
-    console.log("arm | L1 once | mean L2 | combined@N | mean result tok | task_success");
+    console.log(
+      "arm | L1 once | mean L2 | combined@N | weighted@N | mean result tok | task_success"
+    );
     for (const [id, b] of Object.entries(board)) {
       if (b.skipped) {
         console.log(`${id} | SKIP ${b.reason?.slice(0, 60)}`);
         continue;
       }
       console.log(
-        `${id} | ${b.layer1_once_tokens} | ${b.mean_layer2_tokens} | ${b.combined_at_n} | ${b.mean_result_tokens} | ${b.task_success_ok ? "PASS" : "FAIL"} (${b.task_success_rate})`
+        `${id} | ${b.layer1_once_tokens} | ${b.mean_layer2_tokens} | ${b.combined_at_n} | ${b.combined_weighted_at_n} | ${b.mean_result_tokens} | ${b.task_success_ok ? "PASS" : "FAIL"} (${b.task_success_rate})`
       );
     }
     console.log("\nRatios vs ClawQL (classic primary / relist secondary):");
