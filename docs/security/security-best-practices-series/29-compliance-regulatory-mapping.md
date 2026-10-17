@@ -100,6 +100,8 @@ Additional requirements:
 
 SOC 2 Type II: Control Mapping
 
+**Engineering packaging (checklist + Helm):** [`../soc2-type2-readiness-packaging.md`](../soc2-type2-readiness-packaging.md) ([#133](https://github.com/danielsmithdevelopment/ClawQL/issues/133)).
+
 SOC 2 Type II requires evidence that controls operated effectively over the audit period. Our platform produces that evidence continuously.
 
 Key mappings:

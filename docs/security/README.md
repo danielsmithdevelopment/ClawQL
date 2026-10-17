@@ -11,6 +11,7 @@ This section tracks ClawQL security architecture, shipped controls, and roadmap 
 - **Security training (32 modules):** [`security-best-practices-series/README.md`](security-best-practices-series/README.md) — canonical published modules; site: `/security/best-practices/*` (sync via `apps/docs/scripts/sync-security-training-modules.mjs`). Source bodies: [`security-curriculum-v30/`](security-curriculum-v30/README.md). Legacy monolith: [`archive/security-guide-series.md`](archive/security-guide-series.md).
 - Defense-in-depth reference guide: `clawql-security-defense-in-depth.md`
 - Engineering deliverables matrix (shipped/partial/planned): `clawql-security-defense-deliverables.md`
+- **SOC 2 Type II readiness packaging** (TSC checklist + Helm hardening — not a cert): [`soc2-type2-readiness-packaging.md`](soc2-type2-readiness-packaging.md) ([#133](https://github.com/danielsmithdevelopment/ClawQL/issues/133))
 - **npm** publish hardening (pack → scan → publish, provenance / OIDC): [`npm-supply-chain.md`](npm-supply-chain.md)
 - **Deploy-time** Cosign enforcement (Kyverno policy fields, digest pins, forks): [`image-signature-enforcement.md`](image-signature-enforcement.md)
 - **Runtime containment** (Kata vs gVisor, **`security.kata`**, Kyverno **`runtimeClassPolicy`**, issue [#274](https://github.com/danielsmithdevelopment/ClawQL/issues/274)): [`runtime-class-containment.md`](runtime-class-containment.md)
