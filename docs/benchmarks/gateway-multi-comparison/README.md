@@ -190,8 +190,24 @@ Levers landed: INSTANCE_SPEC slim Core, lazy optional imports, WORM ring cap, se
 | --- | --- |
 | **ContextForge** | Prior run nested through MCPJungle — inflates latency, memory, and chaos. Re-add only with native REST virtualization calling `/pets` directly. |
 | **MetaMCP** | Not run (Docker Compose–first). Do not list as a peer without a measured arm. |
+| **Bifrost / Bifrost Code Mode** | Harness wired (`MT_ARMS=…,bifrost,bifrost_codemode`) but **not yet on a published board**. Highest category-claim blocker on the [dominance roadmap](../dominance-roadmap.md). Install: `npx @maximhq/bifrost` (binary under `~/.cache/bifrost/`) or set `BIFROST_BIN`. |
 
-Default `MULTI_ARMS` / `MT_ARMS` omit both.
+Default `MULTI_ARMS` / `MT_ARMS` omit Bifrost, ContextForge, and MetaMCP.
+
+### Bifrost smoke (opt-in)
+
+```bash
+# Binary: npx downloads bifrost-http under ~/.cache/bifrost/<ver>/bin/
+export BIFROST_BIN="${BIFROST_BIN:-$HOME/.cache/bifrost/v2.3.0/bin/bifrost-http-0}"
+
+MT_TURNS=10 CATALOG_TOOL_COUNT=8 \
+  MT_ARMS=bifrost,bifrost_codemode \
+  MT_OUT=gateway-multi-multiturn-bifrost-smoke.json \
+  npm run benchmark:gateway-multi-multiturn
+```
+
+- **bifrost** — classic aggregator path: full `tools/list` (prefixed `catalog-*`) + fat `callTool`
+- **bifrost_codemode** — four meta-tools; Layer1 includes once `listToolFiles` + `readToolFile(servers/catalog.pyi)`; Layer2 is `executeToolCode` Starlark that projects `{id,name,status}`. Count the **full** MCP text — Bifrost currently echoes the fat upstream dump in `Print output` before `Return value` (honest Layer2).
 
 ---
 
@@ -205,7 +221,7 @@ Default `MULTI_ARMS` / `MT_ARMS` omit both.
 6. **Multiturn fairness** — deterministic `task_success`; classic Layer1-once is primary; re-list demoted. No simulated Executor “filter” arm on the publish board (settled: gateway has no response-side projection).
 7. **Chaos until-break + topology tags** — `MULTI_CHAOS_UNTIL_BREAK`; reports carry `topology` so cross-topology claims fail the honesty check.
 
-**Next:** topology B (4× behind LB) for every arm before any scale-out claim; optional real-model task-success arm; RSS heap profile / lazy `clawql-api` if we want to close the memory loss. Date/version stamps on published executor-cmp pages (housekeeping).
+**Next:** land Bifrost classic + Code Mode smoke numbers on this board (harness ready); topology B (4× behind LB) for every arm before any scale-out claim; optional real-model task-success arm; RSS heap profile / lazy `clawql-api` if we want to close the memory loss. Date/version stamps on published executor-cmp pages (housekeeping).
 
 ---
 

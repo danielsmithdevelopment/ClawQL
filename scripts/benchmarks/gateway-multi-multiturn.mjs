@@ -24,18 +24,24 @@
  *   EXECUTOR_BIN=… EXECUTOR_CWD=… \
  *     MCPJUNGLE_BIN=/tmp/gw-bins/mcpjungle \
  *     AGENTGATEWAY_BIN=/tmp/gw-bins/agentgateway \
+ *     BIFROST_BIN=~/.cache/bifrost/v2.3.0/bin/bifrost-http-0 \
  *     MT_TURNS=12 CATALOG_TOOL_COUNT=40 \
+ *     MT_ARMS=clawql,executor,mcpjungle,agentgateway,bifrost,bifrost_codemode \
  *     node scripts/benchmarks/gateway-multi-multiturn.mjs
  *
  * Env:
  *   MT_TURNS (default 12)  CATALOG_TOOL_COUNT (default 40)
- *   MT_ARMS=clawql,executor,mcpjungle,agentgateway
+ *   MT_ARMS=clawql,executor,mcpjungle,agentgateway[,bifrost,bifrost_codemode]
  *   MT_LIMIT (rows per turn, default 25)
  *   MT_OUT (default gateway-multi-multiturn.json)
  *   MT_INCLUDE_CF=1 only for nested CF experiments (off publish board)
+ *   BIFROST_BIN — bifrost-http binary (npx @maximhq/bifrost caches under ~/.cache/bifrost/)
+ *   BIFROST_VK — optional virtual key value (default sk-bf-clawql-mt-bench)
  *
  * Note: do NOT put a hand-written slim-return program on the publish board as
  * "Executor". That is not gateway projection and contradicts the settled blog.
+ * Bifrost Code Mode may still echo fat intermediate tool dumps in executeToolCode
+ * "Print output" — Layer2 counts the full MCP text the host receives (honest).
  */
 
 import { existsSync, readFileSync, readdirSync, openSync, closeSync } from "node:fs";
@@ -224,6 +230,15 @@ function slimPayload(partitionIndex, limit = LIMIT) {
 function parseResultJson(text) {
   if (text == null || text === "") return null;
   const raw = String(text).trim();
+  // Bifrost Code Mode wraps the assigned `result` after a "Return value:" marker.
+  const rv = raw.match(/Return value:\s*(\[[\s\S]*?\]|\{[\s\S]*?\})\s*\n\s*Environment:/i);
+  if (rv) {
+    try {
+      return JSON.parse(rv[1]);
+    } catch {
+      /* fall through */
+    }
+  }
   try {
     return JSON.parse(raw);
   } catch {
@@ -303,8 +318,10 @@ function buildTurns() {
   return turns;
 }
 
-async function connectHttpMcp(url, name = "mt-http") {
-  const transport = new StreamableHTTPClientTransport(new URL(url));
+async function connectHttpMcp(url, name = "mt-http", headers = null) {
+  const transport = new StreamableHTTPClientTransport(new URL(url), {
+    requestInit: headers ? { headers } : undefined,
+  });
   const client = new Client({ name, version: "1" }, {});
   await client.connect(transport);
   return {
@@ -315,6 +332,30 @@ async function connectHttpMcp(url, name = "mt-http") {
       await client.close().catch(() => {});
     },
   };
+}
+
+function resolveBifrostBin() {
+  const fromEnv = resolveBin("BIFROST_BIN", [
+    "/tmp/gw-bins/bifrost",
+    "/tmp/gw-bins/bifrost-http",
+    join(ROOT, "tmp/gw-bins/bifrost"),
+  ]);
+  if (fromEnv) return fromEnv;
+  const cacheRoot = join(process.env.HOME || "/home/ubuntu", ".cache", "bifrost");
+  if (!existsSync(cacheRoot)) return null;
+  const versions = readdirSync(cacheRoot)
+    .filter((d) => existsSync(join(cacheRoot, d, "bin")))
+    .sort()
+    .reverse();
+  for (const v of versions) {
+    const binDir = join(cacheRoot, v, "bin");
+    const entries = readdirSync(binDir).filter((f) => f.startsWith("bifrost-http"));
+    for (const f of entries) {
+      const p = join(binDir, f);
+      if (existsSync(p)) return p;
+    }
+  }
+  return null;
 }
 
 function clawqlEnv(home, specPath, apiBase) {
@@ -613,6 +654,223 @@ mcp:
       }
     },
   };
+}
+
+/**
+ * Bifrost MCP Gateway over equal-arm catalog (stdio child).
+ * codeMode=false → classic tools/list (prefixed catalog-*) + fat callTool
+ * codeMode=true  → four meta-tools; catalog hidden behind executeToolCode
+ */
+async function startBifrostCatalog({ codeMode = false } = {}) {
+  const bin = resolveBifrostBin();
+  if (!bin) {
+    throw new Error(
+      "bifrost binary not found (set BIFROST_BIN, or install via npx @maximhq/bifrost — caches under ~/.cache/bifrost/)"
+    );
+  }
+  const id = codeMode ? "bifrost_codemode" : "bifrost";
+  const work = join("/tmp", `${id}-mt-${process.pid}`);
+  await rm(work, { recursive: true, force: true });
+  await mkdir(work, { recursive: true });
+  const port = await pickFreePort();
+  const vk =
+    process.env.BIFROST_VK?.trim() ||
+    (codeMode ? "sk-bf-clawql-mt-codemode" : "sk-bf-clawql-mt-classic");
+  const cfgPath = join(work, "config.json");
+  await writeFile(
+    cfgPath,
+    JSON.stringify(
+      {
+        setup_token: "clawql-mt-bench-setup-token",
+        client: {
+          enforce_auth_on_inference: false,
+        },
+        mcp: {
+          client_configs: [
+            {
+              name: "catalog",
+              connection_type: "stdio",
+              stdio_config: {
+                command: process.execPath,
+                args: [CATALOG_MCP],
+                envs: ["PATH", "HOME", "CATALOG_TOOL_COUNT"],
+              },
+              tools_to_execute: ["*"],
+              allow_by_default: true,
+              is_code_mode_client: !!codeMode,
+            },
+          ],
+        },
+        governance: {
+          virtual_keys: [
+            {
+              id: codeMode ? "vk-mt-codemode" : "vk-mt-classic",
+              name: id,
+              value: vk,
+              is_active: true,
+              allow_all_providers: true,
+              mcp_configs: [
+                {
+                  mcp_client_name: "catalog",
+                  tools_to_execute: ["*"],
+                },
+              ],
+            },
+          ],
+        },
+      },
+      null,
+      2
+    )
+  );
+  const logPath = join(work, "server.log");
+  const logFd = openSync(logPath, "w");
+  const child = spawn(
+    bin,
+    ["-app-dir", work, "-host", "127.0.0.1", "-port", String(port), "-log-level", "info"],
+    {
+      cwd: work,
+      stdio: ["ignore", logFd, logFd],
+      env: { ...process.env, CATALOG_TOOL_COUNT: String(TOOL_COUNT) },
+    }
+  );
+  const mcpUrl = `http://127.0.0.1:${port}/mcp`;
+  const headers = { "x-bf-vk": vk };
+  await waitHttpOk(`http://127.0.0.1:${port}/`, { timeoutMs: 90_000 });
+  // Wait until catalog MCP child is connected (tools would otherwise be empty).
+  const tConnect = Date.now();
+  for (;;) {
+    const log = existsSync(logPath) ? readFileSync(logPath, "utf8") : "";
+    if (log.includes("Connected to MCP server 'catalog'")) break;
+    if (Date.now() - tConnect > 90_000) {
+      throw new Error(`bifrost catalog connect timeout\n${log.slice(-2000)}`);
+    }
+    await sleep(200);
+  }
+  let probe;
+  const t0 = Date.now();
+  for (;;) {
+    try {
+      probe = await connectHttpMcp(mcpUrl, `${id}-probe`, headers);
+      break;
+    } catch (e) {
+      if (Date.now() - t0 > 60_000) throw e;
+      await sleep(300);
+    }
+  }
+  const nameMap = new Map();
+  try {
+    const tools = await probe.client.listTools();
+    for (const t of tools.tools) {
+      for (let i = 1; i <= TOOL_COUNT; i++) {
+        const base = toolName(i);
+        if (t.name === base || t.name.endsWith(base) || t.name.includes(base)) {
+          nameMap.set(base, t.name);
+        }
+      }
+    }
+  } finally {
+    await probe.close();
+  }
+  return {
+    id,
+    codeMode: !!codeMode,
+    mcpUrl,
+    vk,
+    headers,
+    pid: child.pid,
+    work,
+    resolveTool: (base) => nameMap.get(base) || `catalog-${base}`,
+    connect: () => connectHttpMcp(mcpUrl, `${id}-mt`, headers),
+    close: async () => {
+      killTree(child.pid);
+      try {
+        closeSync(logFd);
+      } catch {
+        /* ignore */
+      }
+    },
+  };
+}
+
+async function runBifrostCodeModeArm(gw, turns) {
+  const conn = await gw.connect();
+  try {
+    const listed = await conn.client.listTools();
+    const metaNames = ["listToolFiles", "readToolFile", "getToolDocs", "executeToolCode"];
+    const metaTools = listed.tools.filter((t) => metaNames.includes(t.name));
+    if (metaTools.length < 4) {
+      throw new Error(
+        `bifrost_codemode expected 4 meta-tools, got: ${listed.tools.map((t) => t.name).join(",")}`
+      );
+    }
+    const l1 = measureLayer1FromTools(listed.tools, { onlyNames: metaNames });
+    // Discovery once — equivalent of loading the catalog stub before scripting.
+    const listFilesRes = await conn.client.callTool({ name: "listToolFiles", arguments: {} });
+    if (listFilesRes.isError) {
+      throw new Error(`listToolFiles: ${toolText(listFilesRes).slice(0, 300)}`);
+    }
+    const listFilesText = toolText(listFilesRes);
+    const readRes = await conn.client.callTool({
+      name: "readToolFile",
+      arguments: { fileName: "servers/catalog.pyi" },
+    });
+    if (readRes.isError) {
+      throw new Error(`readToolFile: ${toolText(readRes).slice(0, 300)}`);
+    }
+    const readText = toolText(readRes);
+    const discoveryTok = countTokens(listFilesText) + countTokens(readText);
+    const perTurn = [];
+    for (const turn of turns) {
+      // Project in-sandbox to {id,name,status} — Code Mode's Layer2 promise.
+      // Honesty: Bifrost still echoes the fat upstream dump in "Print output".
+      const code = `raw = catalog.${turn.tool}(limit=${turn.args.limit}, status=${JSON.stringify(turn.args.status)}, includeMeta=True)
+items = raw["items"] if "items" in raw else raw
+result = [{"id": x["id"], "name": x["name"], "status": x["status"]} for x in items]`;
+      const t0 = performance.now();
+      const res = await conn.client.callTool({
+        name: "executeToolCode",
+        arguments: { code },
+      });
+      const ms = performance.now() - t0;
+      if (res.isError) {
+        throw new Error(`executeToolCode ${turn.tool}: ${toolText(res).slice(0, 400)}`);
+      }
+      const text = toolText(res);
+      const success = scoreTaskSuccess(text, turn.partition, turn.args.limit);
+      perTurn.push({
+        n: turn.n,
+        tool: "executeToolCode",
+        catalog_tool: turn.tool,
+        result_tokens: countTokens(text),
+        result_chars: text.length,
+        layer2_classic: countTokens(text),
+        layer2_relist_every_turn: countTokens(text),
+        latency_ms: Number(ms.toFixed(3)),
+        ok: true,
+        task_success: success,
+      });
+    }
+    return {
+      id: "bifrost_codemode",
+      model: "bifrost_code_mode_executeToolCode_starlark",
+      layer1: {
+        once_schema_tokens: l1.schema_tokens + discoveryTok,
+        tools_count: l1.tools_count,
+        tools_list_count_full: listed.tools.length,
+        tools_list_schema_tokens_full: l1.tools_list_schema_tokens_full,
+        meta_schema_tokens: l1.schema_tokens,
+        discovery_once_tokens: discoveryTok,
+        note:
+          "Layer1 = 4 Code Mode meta-tool schemas + once listToolFiles/readToolFile(catalog.pyi). " +
+          "Layer2 counts full executeToolCode text (includes Bifrost TOOL print of fat upstream).",
+      },
+      perTurn,
+      skipped: false,
+    };
+  } finally {
+    await conn.close();
+  }
 }
 
 function measureLayer1FromTools(tools, { onlyNames } = {}) {
@@ -918,6 +1176,18 @@ function categoryWinNarrative(arms, ratios) {
         `(fat return — matches live Layer 2 pass-through; Layer1 schema still smaller).`
     );
   }
+  if (ratios.bifrost) {
+    lines.push(
+      `Measured vs Bifrost classic @N=${TURNS}: classic ${ratios.bifrost.vs_clawql_combined_classic}× ` +
+        `(full tools/list + fat callTool via /mcp).`
+    );
+  }
+  if (ratios.bifrost_codemode) {
+    lines.push(
+      `Measured vs Bifrost Code Mode @N=${TURNS}: classic ${ratios.bifrost_codemode.vs_clawql_combined_classic}× ` +
+        `(4 meta-tools + executeToolCode; Layer2 includes TOOL print dump if present).`
+    );
+  }
   lines.push("RSS is a loss among serious arms — admit or fix before memory claims.");
   return lines;
 }
@@ -975,6 +1245,14 @@ async function main() {
           const gw = await startAgentgatewayCatalog();
           gateways.push(gw);
           rawArms.agentgateway = await runAggregatorArm(gw, turns);
+        } else if (arm === "bifrost") {
+          const gw = await startBifrostCatalog({ codeMode: false });
+          gateways.push(gw);
+          rawArms.bifrost = await runAggregatorArm(gw, turns);
+        } else if (arm === "bifrost_codemode") {
+          const gw = await startBifrostCatalog({ codeMode: true });
+          gateways.push(gw);
+          rawArms.bifrost_codemode = await runBifrostCodeModeArm(gw, turns);
         } else if (arm === "contextforge") {
           rawArms.contextforge = {
             skipped: true,
@@ -1058,6 +1336,8 @@ async function main() {
         "Executor Layer2 is fat JSON — matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
         "Do not publish a hand-written slim-return program as Executor.",
         "ContextForge/MetaMCP off publish board by default.",
+        "Bifrost/bifrost_codemode are opt-in via MT_ARMS (not default) until a published board lands.",
+        "Bifrost Code Mode Layer2 counts full executeToolCode text — Bifrost may echo fat upstream in Print output.",
         "Not a latency board; see gateway-multi-cmp-10k.json for interleaved p999.",
         "RSS is a loss among serious arms — admit plainly.",
       ],
