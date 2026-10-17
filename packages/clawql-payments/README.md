@@ -144,7 +144,7 @@ Postgres store (`CLAWQL_PAYMENTS_AUDIT_STORE=postgres`) uses `clawql_payments_au
 
 ## Status
 
-Stripe SDK integration is **live** for customers, subscriptions, invoices, billing portal, meter events (Stripe Billing Meters), and webhook signature verification. Inference can report meter events when `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1`. Invoice payment audit events are recorded via verified `invoice.paid` webhooks only.
+Stripe SDK integration is **live** for customers, subscriptions, invoices, billing portal, meter events (Stripe Billing Meters), and webhook signature verification. Inference can report meter events when `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1`. Verified webhooks record `invoice.paid`, structured `invoice.payment_failed` (dunning/proration classifier), and subscription `past_due` / recovery signals — see [`docs/payments/stripe-dunning-proration.md`](../../docs/payments/stripe-dunning-proration.md).
 
 x402 facilitator HTTP verification is **live** (`POST /verify` against x402.org or CDP). Inference HTTP and **native MCP tool calls** can enforce gates with `CLAWQL_X402_ENFORCE=1`.
 

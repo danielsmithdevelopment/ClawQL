@@ -32,6 +32,18 @@ const KIND_MAP: Record<PaymentEventKind, Classified> = {
     taxTreatment: "non_taxable",
     counterpartyKind: "customer",
   },
+  STRIPE_SUBSCRIPTION_PAST_DUE: {
+    direction: "internal",
+    category: "other",
+    taxTreatment: "non_taxable",
+    counterpartyKind: "customer",
+  },
+  STRIPE_DUNNING_RECOVERED: {
+    direction: "internal",
+    category: "other",
+    taxTreatment: "non_taxable",
+    counterpartyKind: "customer",
+  },
   STRIPE_METER_REPORTED: {
     direction: "internal",
     category: "usage_revenue",

@@ -59,6 +59,19 @@ export {
 } from "./webhook.js";
 export { StripeNotConfiguredError, StripeWebhookVerificationError } from "./errors.js";
 export {
+  classifyFailedInvoiceEffect,
+  classifySubscriptionStatusEffect,
+  classifySubscriptionTransitionEffect,
+  lineLooksProrated,
+  toClassifyFailedInvoiceInput,
+  StripeDunningLive,
+  StripeDunningService,
+  type DunningStage,
+  type InvoiceDunningSignal,
+  type StripeBillingReason,
+  type SubscriptionDunningSignal,
+} from "./dunning.js";
+export {
   StripeCatalogService,
   DEFAULT_STRIPE_CATALOG,
   ensureStripeCatalog,

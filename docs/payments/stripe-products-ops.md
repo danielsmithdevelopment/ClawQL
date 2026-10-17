@@ -144,3 +144,4 @@ www: set `NEXT_PUBLIC_CLAWQL_SELF_SERVE_CHECKOUT=1` and `NEXT_PUBLIC_CLAWQL_CHEC
 - [customer-provisioning-core.md](./customer-provisioning-core.md)
 - [hybrid-billing-v0.1.md](../specs/billing/hybrid-billing-v0.1.md)
 - [clawql-payments.md](./clawql-payments.md) — Stripe CLI / env tables
+- [stripe-dunning-proration.md](./stripe-dunning-proration.md) — failed payments / proration on-call runbook
