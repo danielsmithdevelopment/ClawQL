@@ -62,8 +62,10 @@ export const gatewayTokenBoardProvenance = {
     note: 'v2 β combined 29 927 is pre–ClawQL-compact-execute; delta vs ClawQL widened — remeasure before tightening the v2 headline',
   },
   cloudflareMultiturn: {
-    status: 'pending_remeasure' as const,
-    note: 'Zone-audit / fan-out weighted means on /benchmarks#cf still pre-compact-execute — update cloudflare-benchmarks.ts after CF board redo',
+    status: 'current' as const,
+    measuredAt: '2026-10-17',
+    artifact: 'docs/benchmarks/cloudflare-multiturn/board-summary-n10000-r3.json',
+    note: 'Post–compact-execute 3×10k: known_op 1710 (−123); see /benchmarks#cf',
   },
 } as const
 
@@ -445,7 +447,7 @@ export const gatewayBenchmarkHonesty = [
   },
   {
     title: 'Next ClawQL lever',
-    body: 'Discovery is ~42% of ClawQL’s combined @12 (3 732 / 8 866). Skip-search when the agent already knows the operationId (MT_CLAWQL_DISCOVERY=once / known-op path) cuts more without touching projection. Cloudflare zone-audit cells still need a compact-execute remeasure before publishing those weighted means as current.',
+    body: 'Discovery is ~42% of ClawQL’s combined @12 (3 732 / 8 866). Skip-search when the agent already knows the operationId (MT_CLAWQL_DISCOVERY=once / known-op path) cuts more without touching projection. Cloudflare zone-audit tokens remasured post–compact-execute (known_op 1 710).',
   },
 ] as const
 
