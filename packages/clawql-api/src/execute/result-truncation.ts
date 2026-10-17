@@ -228,7 +228,8 @@ function fitEnvelopeToLimit(envelope: TruncatedExecuteEnvelope, limit: number): 
 }
 
 /**
- * Serialize execute success data. Under budget → pretty JSON as today.
+ * Serialize execute success data. Under budget → compact JSON (no pretty-print —
+ * indentation is pure context tax, same class of mistake as Executor v1 fat dumps).
  * Over budget → fail-closed envelope with `truncated: true` (never a silent cut).
  */
 export const serializeExecuteResultEffect = (
@@ -237,7 +238,7 @@ export const serializeExecuteResultEffect = (
 ): Effect.Effect<string> =>
   Effect.gen(function* () {
     const limit = options?.limit ?? (yield* executeResultCharLimitEffect(options?.env));
-    const full = JSON.stringify(data, null, 2);
+    const full = JSON.stringify(data);
     const byteCount = utf8ByteLength(full);
     if (full.length <= limit) {
       return full;
@@ -285,7 +286,7 @@ export const serializeExecuteResultWithBudgetsEffect = (
       options?.observationBudget ?? (yield* observationBudgetCharsEffect(env));
 
     if (!wantFull && !hasWhere && !hasFields && obsBudget > 0) {
-      const full = JSON.stringify(data, null, 2);
+      const full = JSON.stringify(data);
       if (full.length > obsBudget) {
         const built = buildObservationPreview(
           data,
