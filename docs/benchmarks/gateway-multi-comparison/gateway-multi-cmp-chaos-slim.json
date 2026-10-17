@@ -1,13 +1,13 @@
 {
   "suite": "gateway-multi-comparison",
-  "measuredAt": "2026-10-17T09:17:56.827028+00:00",
+  "measuredAt": "2026-10-17T09:49:35.266Z",
   "node": "v22.14.0",
   "partial": false,
   "topology": {
     "id": "A_single_instance",
-    "label": "single-instance / process-per-client (ClawQL+Executor stdio; aggregators 1\u00d7 HTTP)",
+    "label": "single-instance (ClawQL stdio PPC; Executor 1× HTTP /mcp; aggregators 1× HTTP)",
     "replicas": 1,
-    "note": "Scale-out (4 replicas behind LB) is topology B \u2014 claim only within the same topology."
+    "note": "Scale-out (4 replicas behind LB) is topology B — claim only within the same topology."
   },
   "path_matrix": {
     "clawql": {
@@ -131,9 +131,16 @@
       "schema_tokens_full_list": 2281,
       "tools_count": 7,
       "equal_result_tokens": 59,
-      "chaos_last_ok": 23,
-      "chaos_first_break": 24,
-      "chaos_break_reason": "remeasure_blocked_daemon_unauthorized"
+      "chaos_last_ok": 29,
+      "chaos_first_break": 30,
+      "chaos_break_reason": "p99 109.892ms",
+      "chaos_transport": "streamable_http_mcp",
+      "chaos_note": "2026-10-17 Executor 2.x HTTP /mcp until-break (EXECUTOR_MCP_URL); stdio remasure still blocked (Unauthorized). Artifact: gateway-multi-cmp-chaos-executor-http.json",
+      "chaos_stdio_historical": {
+        "last_ok": 23,
+        "first_break": 24,
+        "break_reason": "remeasure_blocked_daemon_unauthorized"
+      }
     },
     "mcpjungle": {
       "latency_e2e_ms": {
@@ -242,7 +249,7 @@
           "max_ms": 8.87
         },
         "call_errors": 0,
-        "note": "gateway_cost = e2e \u2212 paired direct HTTP /pets (interleaved equal-arm)",
+        "note": "gateway_cost = e2e − paired direct HTTP /pets (interleaved equal-arm)",
         "schedule": "interleaved_closed_loop"
       },
       "resources": {
@@ -283,9 +290,9 @@
       "chaos": {
         "topology": {
           "id": "A_single_instance",
-          "label": "single-instance / process-per-client (ClawQL+Executor stdio; aggregators 1\u00d7 HTTP)",
+          "label": "single-instance / process-per-client (ClawQL+Executor stdio; aggregators 1× HTTP)",
           "replicas": 1,
-          "note": "Scale-out (4 replicas behind LB) is topology B \u2014 claim only within the same topology."
+          "note": "Scale-out (4 replicas behind LB) is topology B — claim only within the same topology."
         },
         "slo": {
           "break_p99_ms": 100,
@@ -588,7 +595,7 @@
         "first_break_clients": 80,
         "break_reason": "p99 107.419ms",
         "incomplete_no_break": false,
-        "honesty": "Broke within topology A \u2014 comparable only to other A ceilings."
+        "honesty": "Broke within topology A — comparable only to other A ceilings."
       }
     },
     "executor": {
@@ -630,7 +637,7 @@
           "max_ms": 13.765
         },
         "call_errors": 0,
-        "note": "gateway_cost \u2248 e2e (no equal-upstream subtraction)",
+        "note": "gateway_cost ≈ e2e (no equal-upstream subtraction)",
         "schedule": "interleaved_closed_loop"
       },
       "resources": {
@@ -668,7 +675,7 @@
       },
       "pid": 1246176,
       "chaos": {
-        "error": "Executor 1.x stdio chaos blocked on this host: MCP bridge \u2192 daemon Unauthorized / Connection closed under concurrent stdio (owner-lock + per-client daemon fan-out). Latency arm remasured on n=10k. Prior topology-A ceiling 23/24 retained as historical until HTTP Executor chaos arm exists.",
+        "error": "Executor 1.x stdio chaos blocked on this host: MCP bridge → daemon Unauthorized / Connection closed under concurrent stdio (owner-lock + per-client daemon fan-out). Latency arm remasured on n=10k. Prior topology-A ceiling 23/24 retained as historical until HTTP Executor chaos arm exists.",
         "historical_last_ok_clients": 23,
         "historical_first_break_clients": 24,
         "historical_break_reason": "p99 102ms",
@@ -714,7 +721,7 @@
           "max_ms": 10.938
         },
         "call_errors": 0,
-        "note": "gateway_cost = e2e \u2212 paired direct HTTP /pets (interleaved equal-arm)",
+        "note": "gateway_cost = e2e − paired direct HTTP /pets (interleaved equal-arm)",
         "schedule": "interleaved_closed_loop"
       },
       "resources": {
@@ -748,9 +755,9 @@
       "chaos": {
         "topology": {
           "id": "A_single_instance",
-          "label": "single-instance / process-per-client (ClawQL+Executor stdio; aggregators 1\u00d7 HTTP)",
+          "label": "single-instance / process-per-client (ClawQL+Executor stdio; aggregators 1× HTTP)",
           "replicas": 1,
-          "note": "Scale-out (4 replicas behind LB) is topology B \u2014 claim only within the same topology."
+          "note": "Scale-out (4 replicas behind LB) is topology B — claim only within the same topology."
         },
         "slo": {
           "break_p99_ms": 100,
@@ -1095,7 +1102,7 @@
         "first_break_clients": 152,
         "break_reason": "p99 110.735ms",
         "incomplete_no_break": false,
-        "honesty": "Broke within topology A \u2014 comparable only to other A ceilings."
+        "honesty": "Broke within topology A — comparable only to other A ceilings."
       }
     },
     "agentgateway": {
@@ -1137,7 +1144,7 @@
           "max_ms": 8.728
         },
         "call_errors": 0,
-        "note": "gateway_cost = e2e \u2212 paired direct HTTP /pets (interleaved equal-arm)",
+        "note": "gateway_cost = e2e − paired direct HTTP /pets (interleaved equal-arm)",
         "schedule": "interleaved_closed_loop"
       },
       "resources": {
@@ -1171,9 +1178,9 @@
       "chaos": {
         "topology": {
           "id": "A_single_instance",
-          "label": "single-instance / process-per-client (ClawQL+Executor stdio; aggregators 1\u00d7 HTTP)",
+          "label": "single-instance / process-per-client (ClawQL+Executor stdio; aggregators 1× HTTP)",
           "replicas": 1,
-          "note": "Scale-out (4 replicas behind LB) is topology B \u2014 claim only within the same topology."
+          "note": "Scale-out (4 replicas behind LB) is topology B — claim only within the same topology."
         },
         "slo": {
           "break_p99_ms": 100,
@@ -1438,22 +1445,22 @@
         "first_break_clients": 64,
         "break_reason": "p99 115.404ms",
         "incomplete_no_break": false,
-        "honesty": "Broke within topology A \u2014 comparable only to other A ceilings."
+        "honesty": "Broke within topology A — comparable only to other A ceilings."
       }
     }
   },
   "errors": {},
   "honesty": [
     "Equal-arm pets JSON across all arms.",
-    "EQUAL_UPSTREAM: shared mock HTTP /pets \u2014 ClawQL OpenAPI, aggregator list_pets fetch, Executor static upstream=0; gateway_cost = e2e \u2212 paired direct when hop paid.",
-    "Latency schedule: interleaved closed-loop across live arms (n\u226510000 recommended for p999).",
+    "EQUAL_UPSTREAM: shared mock HTTP /pets — ClawQL OpenAPI, aggregator list_pets fetch, Executor static upstream=0; gateway_cost = e2e − paired direct when hop paid.",
+    "Latency schedule: interleaved closed-loop across live arms (n≥10000 recommended for p999).",
     "Primary token metric: invoked_tool_schema_tokens (not full tools/list).",
     "Chaos: topology A only (single-instance). Claim only vs same topology. MULTI_CHAOS_UNTIL_BREAK pushes past power-of-two ceiling until break.",
     "path_matrix: ClawQL latency includes risk/audit/projection; aggregators do almost none of that.",
     "ContextForge/MetaMCP off publish board by default (nested CF / Docker).",
-    "RSS: ClawQL is heaviest serious arm \u2014 admit the loss; do not hide under-load median.",
+    "RSS: ClawQL is heaviest serious arm — admit the loss; do not hide under-load median.",
     "Checkpoint writes after latency and after each chaos arm (survives OOM mid-chaos).",
-    "2026-10-17 remasure: ClawQL chaos 79/80; MCPJungle 151/152 (host-bound, was 204); agentgateway 63/64; Executor stdio chaos blocked (daemon Unauthorized) \u2014 historical 23/24 kept with flag."
+    "2026-10-17 remasure: ClawQL chaos 79/80; MCPJungle 151/152 (host-bound, was 204); agentgateway 63/64; Executor stdio chaos blocked (daemon Unauthorized) — historical 23/24 kept with flag."
   ],
   "merge_note": {
     "clawql": "from multi-arm chaos run before OOM (79/80)",
@@ -1461,5 +1468,8 @@
     "mcpjungle": "from gateway-multi-cmp-chaos-mcpjungle-until-break.json (151/152)",
     "executor": "remeasure blocked; historical 23/24 cited",
     "host_note": "Full multi-arm chaos OOM'd during agentgateway refine; orphans cleaned; arms remasured solo."
-  }
+  },
+  "notes": [
+    "2026-10-17 remasure: ClawQL chaos 79/80; MCPJungle 151/152; agentgateway 63/64; Executor HTTP /mcp 29/30 (p99 110ms) — stdio still blocked (Unauthorized). See gateway-multi-cmp-chaos-executor-http.json."
+  ]
 }

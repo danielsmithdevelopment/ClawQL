@@ -97,7 +97,7 @@ Artifact: [`gateway-multi-cmp-10k.json`](./gateway-multi-cmp-10k.json) (`measure
 
 | Topology | Arms | Artifact |
 | --- | --- | --- |
-| **A — Single instance / process-per-client** | ClawQL stdio, Executor stdio, MCPJungle 1× HTTP, agentgateway 1× HTTP | [`gateway-multi-cmp-chaos-slim.json`](./gateway-multi-cmp-chaos-slim.json) |
+| **A — Single instance** | ClawQL stdio PPC; Executor **stdio or HTTP `/mcp`**; MCPJungle / agentgateway 1× HTTP | [`gateway-multi-cmp-chaos-slim.json`](./gateway-multi-cmp-chaos-slim.json) |
 | **B — Scale-out (4 replicas behind LB)** | ClawQL NATS sticky (existing executor-cmp ceilings); MCPJungle / agentgateway **not yet on this board** | Separate — do not mix with A |
 
 **Claim only within the same topology.** Push every arm until it **actually breaks** (`MULTI_CHAOS_UNTIL_BREAK=1`, raise `MULTI_CHAOS_MAX`). Stopping at 128 without a break is incomplete for concurrency claims.
@@ -107,11 +107,11 @@ Artifact: [`gateway-multi-cmp-10k.json`](./gateway-multi-cmp-10k.json) (`measure
 | Arm | Topology | last_ok / first_break | Break reason | Notes |
 | --- | --- | ---: | --- | --- |
 | **ClawQL** | stdio 1× | **79 / 80** | p99 107 ms | Up from 63/64 |
-| Executor | stdio 1× | 23 / 24† | p99 102 ms (historical) | † Remeasure blocked: concurrent stdio → daemon `Unauthorized` / Connection closed |
+| Executor | **HTTP 1×** `/mcp` | **29 / 30** | p99 110 ms | Executor 2.x Streamable HTTP; stdio historical 23/24 still blocked (`Unauthorized`) |
 | MCPJungle | HTTP 1× | **151 / 152** | p99 111 ms | Host-bound (was 204); still leads topology A |
 | agentgateway | HTTP 1× | **63 / 64** | p99 115 ms | Matches prior ceiling |
 
-On equal single-instance footing: **MCPJungle still leads concurrency** (151); ClawQL (**79**) > agentgateway (**63**); Executor historical 23. Publishable chaos claim remains **vs Executor only** on topology A — not a scale-out win. Multi-arm chaos OOM’d once on this host; ceilings above are from completed solo until-break runs (see `merge_note` in the JSON).
+On equal single-instance footing: **MCPJungle still leads concurrency** (151); ClawQL (**79**) > agentgateway (**63**) > Executor HTTP (**29**). Publishable chaos claim remains **vs Executor** on topology A — not a scale-out win. Multi-arm chaos OOM’d once on this host; ceilings above are from completed solo until-break runs (see `merge_note` / `gateway-multi-cmp-chaos-executor-http.json`).
 
 ### Latency / chaos run
 
@@ -126,10 +126,19 @@ MULTI_ITERS=10000 MULTI_WARMUP=100 MULTI_SKIP_CHAOS=1 MULTI_EQUAL_UPSTREAM=1 \
   MULTI_OUT=gateway-multi-cmp-10k.json \
   npm run benchmark:gateway-multi-comparison
 
-# Chaos until break (single-instance)
+# Chaos until break (single-instance) — stdio Executor (may hit daemon Unauthorized)
 MULTI_ITERS=100 MULTI_SKIP_CHAOS=0 MULTI_CHAOS_UNTIL_BREAK=1 MULTI_CHAOS_MAX=512 \
   MULTI_ARMS=clawql,executor,mcpjungle,agentgateway \
   MULTI_OUT=gateway-multi-cmp-chaos-slim.json \
+  npm run benchmark:gateway-multi-comparison
+
+# Executor 2.x HTTP chaos (fair peer for aggregator 1× HTTP) — start serve first:
+#   EXECUTOR_DATA_DIR=/tmp/executor-v2-data EXECUTOR_PORT=4312 /tmp/executor-v2/node_modules/.bin/executor serve
+MULTI_ITERS=50 MULTI_SKIP_CHAOS=0 MULTI_CHAOS_UNTIL_BREAK=1 MULTI_CHAOS_MAX=512 \
+  MULTI_ARMS=executor \
+  EXECUTOR_MCP_URL=http://127.0.0.1:4312/mcp \
+  EXECUTOR_API_KEY_FILE=/tmp/executor-v2-data/api_key.txt \
+  MULTI_OUT=gateway-multi-cmp-chaos-executor-http.json \
   npm run benchmark:gateway-multi-comparison
 ```
 
@@ -260,7 +269,7 @@ MT_TURNS=12 CATALOG_TOOL_COUNT=40 MT_LIMIT=25 \
 7. **Chaos until-break + topology tags** — `MULTI_CHAOS_UNTIL_BREAK`; reports carry `topology` so cross-topology claims fail the honesty check.
 8. **Compact agent-facing JSON** — `search` defaults to `detail=compact` + minify; `execute` success bodies serialize without pretty-print (no YAML/columnar/CBOR options). Executor harness accepts `EXECUTOR_DATA_DIR` / `EXECUTOR_MCP_URL`.
 
-**Next:** Cloudflare multiturn remasure lives on `cursor/cloudflare-multiturn-bench-a621` (not in this branch tree); www publish boards when that lands. Executor chaos needs an HTTP/`EXECUTOR_MCP_URL` arm (stdio daemon Unauthorized under concurrency). Topology B (4× behind LB) before any scale-out claim; optional real-model task-success; RSS heap profile / lazy `clawql-api` if we want to close the memory loss.
+**Next:** Cloudflare multiturn remasure (compact-execute on cf-mt lineage) before flipping www CF cells. Executor HTTP chaos arm is wired (`EXECUTOR_MCP_URL`); publish `gateway-multi-cmp-chaos-executor-http.json` and merge into slim board. Topology B (4× behind LB) before any scale-out claim; optional real-model task-success; RSS heap profile / lazy `clawql-api` if we want to close the memory loss.
 
 ---
 
