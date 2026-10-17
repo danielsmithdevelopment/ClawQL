@@ -507,3 +507,21 @@ Helm enable* / providers values map here — not CLAWQL_ENABLE_* for horizontal 
  -}}
 {{- $spec | toJson -}}
 {{- end }}
+
+{{- define "clawql-mcp.uptimeKumaName" -}}
+{{- printf "%s-uptime-kuma" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.uptimeKumaPvcName" -}}
+{{- printf "%s-data" (include "clawql-mcp.uptimeKumaName" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.uptimeKumaLabels" -}}
+{{ include "clawql-mcp.labels" . }}
+app.kubernetes.io/component: uptime-kuma
+{{- end }}
+
+{{- define "clawql-mcp.uptimeKumaSelectorLabels" -}}
+{{ include "clawql-mcp.selectorLabels" . }}
+app.kubernetes.io/component: uptime-kuma
+{{- end }}

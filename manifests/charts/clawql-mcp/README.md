@@ -7,6 +7,7 @@ Deploys **ClawQL** as **`clawql-mcp-http`**: Streamable HTTP MCP (`/mcp`), healt
 - **Full guide:** [`docs/deployment/helm.md`](../../../docs/deployment/helm.md) in this repository
 - **Kustomize alternative:** [`docs/deployment/deploy-k8s.md`](../../../docs/deployment/deploy-k8s.md)
 - **SOC 2 / HIPAA readiness overlay:** [`values-soc2-hardening.example.yaml`](values-soc2-hardening.example.yaml) — narrative + TSC checklist: [`docs/security/soc2-type2-readiness-packaging.md`](../../../docs/security/soc2-type2-readiness-packaging.md) ([#133](https://github.com/danielsmithdevelopment/ClawQL/issues/133))
+- **Uptime Kuma synthetics (optional):** [`values-uptime-kuma.example.yaml`](values-uptime-kuma.example.yaml) — status host `status.clawql.local` + pairing with MCP `schedule`/`notify`: [`docs/deployment/uptime-kuma-synthetics.md`](../../../docs/deployment/uptime-kuma-synthetics.md) ([#199](https://github.com/danielsmithdevelopment/ClawQL/issues/199))
 
 ## Quick install
 

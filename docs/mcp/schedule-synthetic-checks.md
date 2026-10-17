@@ -117,3 +117,11 @@ On **failure** (and optionally on **recovery** after a failure), wire to **`noti
 ## Migration from other systems
 
 If you are moving **off** hosted synthetic products, map each external check to **one** `synthetic_test` + **frequency** + optional **notify** routing. ClawQL does not integrate those products; it only provides the **local** schedule + probe + assert + alert pattern.
+
+---
+
+## Optional Uptime Kuma (Helm)
+
+For a **status page** and always-on probe bank next to the cluster, enable optional **`uptimeKuma`** in the `clawql-mcp` chart (`status.clawql.local`). That is complementary to `schedule` synthetics — not a replacement.
+
+Recipe + on-call ownership: [`docs/deployment/uptime-kuma-synthetics.md`](../deployment/uptime-kuma-synthetics.md) ([#199](https://github.com/danielsmithdevelopment/ClawQL/issues/199)).

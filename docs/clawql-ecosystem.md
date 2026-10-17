@@ -673,10 +673,10 @@ The narrative below is a **target architecture**: consortium-grade, tamper-evide
 
 ### Uptime Kuma — Synthetic Monitoring
 
-- First-class integration with the `schedule()` MCP tool
-- HTTP, TCP, Ping, Docker, keyword, JSON, and SSL certificate checks
-- Failures trigger `notify()` to Slack and audit events
-- Auto-generates public or team status pages at `status.clawql.local`
+- Optional Helm workload (`uptimeKuma.enabled`) — status UI at `status.clawql.local`
+- Pair with MCP `schedule()` synthetics + `notify()` for agent-driven probes (Kuma does not replace `schedule`)
+- HTTP, TCP, Ping, Docker, keyword, JSON, and SSL certificate checks (in Kuma)
+- Recipe: [`docs/deployment/uptime-kuma-synthetics.md`](deployment/uptime-kuma-synthetics.md) ([#199](https://github.com/danielsmithdevelopment/ClawQL/issues/199))
 
 **Natural language example:** _“Schedule synthetic monitoring for Paperless, Onyx, and ClawQL MCP every 60 seconds with status page at status.clawql.local”_
 
@@ -900,7 +900,7 @@ The body of this doc describes a **target experience**. The bullets below are **
 
 - **Full OTel auto-instrumentation** — automatic spans across MCP, Ouroboros, every document hop, Onyx, mesh, and OSV jobs: **partial / follow-up** ([#160](https://github.com/danielsmithdevelopment/ClawQL/issues/160)).
 - **Pre-built Grafana dashboards** “for every layer” as described in prose — varies by chart overlay and env; not one guaranteed bundle.
-- **Uptime Kuma** + **`schedule`** as a turnkey pair — tracked for Helm/docs ([#199](https://github.com/danielsmithdevelopment/ClawQL/issues/199)); not a default install requirement today.
+- **Uptime Kuma** + **`schedule`** as a turnkey pair — optional Helm `uptimeKuma` + recipe [`docs/deployment/uptime-kuma-synthetics.md`](deployment/uptime-kuma-synthetics.md) ([#199](https://github.com/danielsmithdevelopment/ClawQL/issues/199)); still not a default install requirement.
 
 **Orchestration & autonomy**
 
