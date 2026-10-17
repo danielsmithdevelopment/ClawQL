@@ -178,6 +178,8 @@ Artifact: [`gateway-multi-multiturn.json`](./gateway-multi-multiturn.json). Agen
 
 Full remasure 2026-10-17 (`measuredAt` on the JSON): all arms above in one run. Obot is the same fat `tools/list` + `callTool` aggregator path via `mcp-connect` ([dominance-peers-wiring](../dominance-peers-wiring.md)). Side artifacts: [`gateway-multi-multiturn-obot.json`](./gateway-multi-multiturn-obot.json), [`gateway-multi-multiturn-bifrost.json`](./gateway-multi-multiturn-bifrost.json).
 
+**Executor 2.0.0-β.15** (HTTP `/mcp`, remasured 2026-10-17): combined @12 **29 927** (defs 181 + Σ results 29 746) — **3.38×** vs publish ClawQL **8 866**. Artifact: [`gateway-multi-multiturn-executor-v2.json`](./gateway-multi-multiturn-executor-v2.json). Reconfirms the prior v2 β board; vsDirect still **−5 075**. (Same-run ClawQL on that artifact is heavier if search responses are not compact — use publish ClawQL for ratios.)
+
 Primary publish column is **classic** (Layer1 once). **Re-list every turn** is secondary — most clients cache tool lists; lazy clients shrink aggregator Layer1 further. Secondary numbers remain in the JSON for sensitivity analysis.
 
 **N=24 compounding** ([`gateway-multi-multiturn-24.json`](./gateway-multi-multiturn-24.json), remasured): ClawQL **17 434** vs MCPJungle **64 854** (**3.72×**), agentgateway / Bifrost / Obot **64 534** (**3.70×**), Bifrost Code Mode **36 537** (**2.10×**), Executor **107 334** (**6.16×**) — ratios hold as turns double.
@@ -192,6 +194,13 @@ export EXECUTOR_DATA_DIR=/tmp/executor-v1-data   # required for Executor 1.x std
 
 MT_TURNS=12 CATALOG_TOOL_COUNT=40 \
   MT_ARMS=clawql,executor,mcpjungle,agentgateway \
+  npm run benchmark:gateway-multi-multiturn
+
+# Executor v2 HTTP only (publish side artifact)
+EXECUTOR_MCP_URL=http://127.0.0.1:4312/mcp \
+  EXECUTOR_API_KEY_FILE=/tmp/executor-v2-data/api_key.txt \
+  MT_TURNS=12 MT_ARMS=clawql,executor \
+  MT_OUT=gateway-multi-multiturn-executor-v2.json \
   npm run benchmark:gateway-multi-multiturn
 
 # Obot (after catalog HTTP + mcp-connect registration — see dominance-peers-wiring.md)
@@ -269,7 +278,7 @@ MT_TURNS=12 CATALOG_TOOL_COUNT=40 MT_LIMIT=25 \
 7. **Chaos until-break + topology tags** — `MULTI_CHAOS_UNTIL_BREAK`; reports carry `topology` so cross-topology claims fail the honesty check.
 8. **Compact agent-facing JSON** — `search` defaults to `detail=compact` + minify; `execute` success bodies serialize without pretty-print (no YAML/columnar/CBOR options). Executor harness accepts `EXECUTOR_DATA_DIR` / `EXECUTOR_MCP_URL`.
 
-**Next:** Cloudflare multiturn remasure (compact-execute on cf-mt lineage) before flipping www CF cells. Executor HTTP chaos arm is wired (`EXECUTOR_MCP_URL`); publish `gateway-multi-cmp-chaos-executor-http.json` and merge into slim board. Topology B (4× behind LB) before any scale-out claim; optional real-model task-success; RSS heap profile / lazy `clawql-api` if we want to close the memory loss.
+**Next:** Topology B (4× behind LB) before any scale-out claim. TrueFoundry equal-arm next unmeasured peer. Optional real-model task-success; RSS heap profile / lazy `clawql-api` if we want to close the memory loss. (CF compact remasure + Executor HTTP chaos + Executor v2 multiturn landed 2026-10-17.)
 
 ---
 
