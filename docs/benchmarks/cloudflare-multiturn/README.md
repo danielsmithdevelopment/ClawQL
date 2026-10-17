@@ -14,7 +14,7 @@ Spec: [`SPEC.md`](./SPEC.md) · Curated ops (frozen): [`curated-subset.json`](./
 | `clawql_program` (ADR 0015 v0 plan runner) | Done |
 | Product: `where` examples in execute schema + fix-named `where_invalid` | Done (+37 where-desc tokens; full execute tool def **218**) |
 | Product: observation budget (no where/fields → truncated preview) | Done (`truncated:true` + note; opt-in `full:true`) |
-| **Publish board: 3×10k** | **Done** (slim listen, Node 256 on rep3) — summary [`board-final-summary.md`](./board-final-summary.md); process-tree notes in [`process-tree-memory.md`](./process-tree-memory.md). **Post–compact-execute remasure pending** on `cursor/cf-mt-compact-execute-a621` (smoke n=5: known_op weighted **1710** vs published **1833**; do not publish smoke). |
+| **Publish board: 3×10k** | **Done** — post–compact-execute remasure 2026-10-17 (`ITERS=10000 REPS=3`): known_op weighted **1710** (−123 vs 1833). Summary [`board-final-summary.md`](./board-final-summary.md). |
 | **Real-model 50 sessions / arm × 2 model families** | **Done** — dual-win `known_op_beats_code_mode_for_real_models` ([`real-model-cursor-gate-frontier_small.json`](./real-model-cursor-gate-frontier_small.json)) |
 | **Measured defaults (not program-as-core)** | Locked — [`measured-defaults.md`](./measured-defaults.md): known-op/`where` is the filter winner; programs stay alongside until one-step plans are as cheap as `execute` and a fan-out board clears |
 | **Memory under load (slim)** | Publish rep3 (Node 256): ClawQL anon **~122–129 MB** vs MJ **103** / AG **99**. Heap A/B: Node 256 **132 MB** (+**3.5 ms** p99); Bun `--smol` **130 MB**. Rep1–2 were ~290 (uncapped-like) — do not average. [`board-final-summary.md`](./board-final-summary.md). |
