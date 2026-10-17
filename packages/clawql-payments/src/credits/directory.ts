@@ -7,6 +7,7 @@
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { normalizeEmailIdentity } from "clawql-auth";
 import { Context, Data, Effect, Layer } from "effect";
 import { resolvePaymentsDir } from "../config/paths.js";
 
@@ -77,13 +78,13 @@ export function resolveDirectoryPath(env: NodeJS.ProcessEnv = process.env): stri
   return join(resolvePaymentsDir(env), "directory.json");
 }
 
-export function normalizeEmail(raw: string): string {
-  const cleaned = raw.trim().toLowerCase();
-  if (!cleaned) throw new Error("Email required");
-  if (!EMAIL_RE.test(cleaned)) {
-    throw new Error(`Invalid email "${raw}"`);
-  }
-  return cleaned;
+/**
+ * Normalize an email used as a payments-directory key.
+ * When `CLAWQL_EMAIL_PLUS_NORMALIZE=1`, strips `+tag` via clawql-auth
+ * (see docs/security/email-plus-normalization.md). Human login/signup remains IdP-owned.
+ */
+export function normalizeEmail(raw: string, env: NodeJS.ProcessEnv = process.env): string {
+  return normalizeEmailIdentity(raw, { env });
 }
 
 /** Strip @, lowercase, validate username shape. Throws on invalid. */

@@ -150,6 +150,7 @@ Profile intent:
 | Quarterly               | Evidence package (Panguard decisions, WORM roots, review PDF) | Encrypted to compliance mailbox / WORM bucket                                            |
 | Continuous              | Support impersonation JSONL / Audit                           | Dashboard host `.data/` + Audit UI                                                       |
 | Quarterly               | Stripe dunning sample (`STRIPE_PAYMENT_FAILED` → recovery)    | [`stripe-dunning-proration.md`](../payments/stripe-dunning-proration.md) + payments WORM |
+| Quarterly               | Postgres migration inventory / no unlogged destructive DDL    | [`postgres-migration-rollback.md`](../deployment/postgres-migration-rollback.md)         |
 
 **Observation tip:** Start the Type II window only after the hardening profile is live and the first restore drill is logged. Auditors ask for **dates**, not aspirations.
 

@@ -2,6 +2,7 @@ import type { PoolClient } from "pg";
 import { Effect } from "effect";
 import { inferenceEmbeddingDimension } from "../cache/vector.js";
 
+/** Forward-only — see docs/deployment/postgres-migration-rollback.md */
 export const INFERENCE_PG_SCHEMA_VERSION = 2;
 
 function asError(e: unknown): Error {

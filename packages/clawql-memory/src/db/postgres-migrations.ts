@@ -1,6 +1,9 @@
 /**
  * Versioned DDL for ClawQL Postgres hybrid memory (pgvector + future Cuckoo / Merkle tables).
  * Mirrors the spirit of `schema_migrations` in sql.js `memory.db`.
+ *
+ * Forward-only: no automatic down migrations. Rollback policy:
+ * `docs/deployment/postgres-migration-rollback.md` (restore / PITR or manual reverse SQL).
  */
 
 import type { PoolClient } from "pg";

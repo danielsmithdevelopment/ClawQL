@@ -20,6 +20,7 @@ This section tracks ClawQL security architecture, shipped controls, and roadmap 
 - **clawql-auth package spec + shipped OAuth/API-key slice:** [`clawql-auth-package-spec.md`](clawql-auth-package-spec.md) — issued `cqk_` keys (org/team), mutex outbound refresh; inbound MCP OAuth 2.1 still roadmap
 - **MCP proxy JWT ATR** (mesh / Panguard chokepoint): [`mcp-proxy-jwt-atr.md`](mcp-proxy-jwt-atr.md)
 - **HTTP security headers** (CSP / HSTS on MCP + dashboard; managed API org-spoof IDOR guard): [`http-security-headers.md`](http-security-headers.md)
+- **Email `+` normalization** (IdP owns login; opt-in ClawQL directory keys): [`email-plus-normalization.md`](email-plus-normalization.md)
 - **Security ↔ ontology knowledge loop** (ATR gates as grammar-adversarial validation, `SecurityEvent` / `FailedStrategy`, capability Gate 3, one loop with WORM): [`security-ontology-knowledge-loop.md`](security-ontology-knowledge-loop.md)
 
 ## Supply-chain pipeline (summary)

@@ -52,3 +52,4 @@ A backup you have never restored is a hope. Run this **at least quarterly** and 
 
 - Vault PVC restore notes: [`external-secrets-operator-install.md`](./external-secrets-operator-install.md)
 - Hosted vs self-hosted compliance: `docs/payments/hosted-vs-self-hosted-compliance.md`
+- Postgres schema rollback (forward-only migrations): [`postgres-migration-rollback.md`](./postgres-migration-rollback.md)

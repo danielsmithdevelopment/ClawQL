@@ -51,6 +51,13 @@ export {
   type AssertToolPolicyOptions,
   type EmailDomainPolicyOptions,
 } from "./policy.js";
+export {
+  normalizeEmailIdentity,
+  normalizeEmailIdentityEffect,
+  EmailNormalizeLive,
+  EmailNormalizeService,
+  type NormalizeEmailIdentityOptions,
+} from "./email-normalize.js";
 export * from "./org-idp-routing.js";
 export * from "./create-auth.js";
 export * from "./auth-layer.js";
