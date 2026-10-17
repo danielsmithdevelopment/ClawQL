@@ -45,6 +45,8 @@ export {
   buildRampFundCreatedEntry,
   buildRampVirtualCardIssuedEntry,
   buildStripeInvoicePaidEntry,
+  buildStripePaymentFailedEntry,
+  buildStripeSubscriptionDunningEntry,
   buildStripeMeterReportedEntry,
   buildOrgProvisionedEntry,
   buildOrgMemberAddedEntry,

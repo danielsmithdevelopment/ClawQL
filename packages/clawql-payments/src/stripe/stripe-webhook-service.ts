@@ -8,6 +8,8 @@ import {
   buildPayoutFailedEntry,
   buildPayoutPaidEntry,
   buildStripeInvoicePaidEntry,
+  buildStripePaymentFailedEntry,
+  buildStripeSubscriptionDunningEntry,
 } from "../audit/events.js";
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
 import { CreditsLedgerService, TOPUP_META_KEY } from "../credits/index.js";
@@ -17,6 +19,7 @@ import {
   ProvisionOrgService,
   provisionOrgInputFromCheckoutSession,
 } from "../provisioning/index.js";
+import { classifyFailedInvoiceEffect, classifySubscriptionTransitionEffect } from "./dunning.js";
 import { StripeSignatureError } from "./stripe-errors.js";
 
 export type StripeWebhookVerifyResult =
@@ -120,31 +123,63 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
             case "invoice.paid": {
               const invoice = event.data.object as Stripe.Invoice;
               const amountUsd = (invoice.amount_paid ?? 0) / 100;
+              const paidSignal = yield* classifyFailedInvoiceEffect(invoice);
               yield* audit.appendEntry(
                 buildStripeInvoicePaidEntry({
                   tenantId: tenantFromEvent(event, tenantId),
                   amountUsd,
                   plan: config.plan,
                   correlationId: options.correlationId ?? event.id,
+                  resource: invoice.id,
+                  billingReason: paidSignal.billingReason,
+                  isProration: paidSignal.isProration,
+                  subscriptionId: paidSignal.subscriptionId ?? undefined,
                 })
               );
               break;
             }
             case "invoice.payment_failed": {
               const invoice = event.data.object as Stripe.Invoice;
+              const signal = yield* classifyFailedInvoiceEffect(invoice);
               yield* audit.appendEntry(
-                buildPaymentWormEntry({
-                  eventKind: "STRIPE_PAYMENT_FAILED",
-                  summary: `Stripe invoice payment failed for ${invoice.id}`,
+                buildStripePaymentFailedEntry({
+                  tenantId: tenantFromEvent(event, tenantId),
+                  amountUsd: signal.amountDueUsd,
+                  plan: config.plan,
                   correlationId: options.correlationId ?? event.id,
-                  payload: {
-                    provider: "stripe",
-                    amount_usd: (invoice.amount_due ?? 0) / 100,
-                    tenant_id: tenantFromEvent(event, tenantId),
-                    plan: config.plan,
-                  },
+                  invoiceId: signal.invoiceId,
+                  dunningStage: signal.stage,
+                  billingReason: signal.billingReason,
+                  attemptCount: signal.attemptCount,
+                  isProration: signal.isProration,
+                  subscriptionId: signal.subscriptionId,
+                  hostedInvoiceUrl: signal.hostedInvoiceUrl,
                 })
               );
+              break;
+            }
+            case "customer.subscription.updated": {
+              const subscription = event.data.object as Stripe.Subscription;
+              const previousStatus =
+                typeof event.data.previous_attributes?.status === "string"
+                  ? event.data.previous_attributes.status
+                  : undefined;
+              const transition = yield* classifySubscriptionTransitionEffect({
+                previousStatus,
+                subscription,
+              });
+              if (transition) {
+                yield* audit.appendEntry(
+                  buildStripeSubscriptionDunningEntry({
+                    tenantId: tenantFromEvent(event, tenantId),
+                    plan: config.plan,
+                    correlationId: options.correlationId ?? event.id,
+                    stage: transition.stage,
+                    subscriptionId: transition.subscriptionId,
+                    subscriptionStatus: transition.status,
+                  })
+                );
+              }
               break;
             }
             case "checkout.session.completed": {

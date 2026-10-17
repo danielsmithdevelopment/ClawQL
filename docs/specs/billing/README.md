@@ -8,6 +8,6 @@
 | [self-serve-stripe-checkout-v0.1.md](./self-serve-stripe-checkout-v0.1.md)       | `clawql-payments` + `apps/www`                      | Public Checkout Session + www CTA             |
 | [mobile-store-iap-v0.1.md](./mobile-store-iap-v0.1.md)                           | `apps/mobile` + `clawql-payments`                   | App Store / Play subscriptions + full-app NS  |
 
-**Operator guides:** [customer-provisioning-core.md](../../payments/customer-provisioning-core.md) · [stripe-products-ops.md](../../payments/stripe-products-ops.md)
+**Operator guides:** [customer-provisioning-core.md](../../payments/customer-provisioning-core.md) · [stripe-products-ops.md](../../payments/stripe-products-ops.md) · [stripe-dunning-proration.md](../../payments/stripe-dunning-proration.md)
 
 **Related:** [org-credits](../../payments/org-credits.md) · [clawql-payments](../../payments/clawql-payments.md) · [spend-governance (outbound only)](../spend/spend-governance-v0.1.md) · [control-plane](../../enterprise/control-plane.md)

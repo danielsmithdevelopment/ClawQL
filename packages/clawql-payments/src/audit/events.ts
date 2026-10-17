@@ -7,6 +7,8 @@ export type PaymentEventKind =
   | "STRIPE_SUBSCRIPTION_CREATED"
   | "STRIPE_INVOICE_PAID"
   | "STRIPE_PAYMENT_FAILED"
+  | "STRIPE_SUBSCRIPTION_PAST_DUE"
+  | "STRIPE_DUNNING_RECOVERED"
   | "STRIPE_METER_REPORTED"
   | "X402_PAYMENT_RECEIVED"
   | "X402_PAYMENT_FAILED"
@@ -93,6 +95,13 @@ export type PaymentWormPayload = {
   counterparty_tenant_id?: string;
   /** CPC org id (billing / provision events). */
   org_id?: string;
+  /** Dunning / proration classifier (Stripe invoice / subscription signals). */
+  dunning_stage?: string;
+  billing_reason?: string;
+  attempt_count?: number;
+  subscription_id?: string;
+  subscription_status?: string;
+  is_proration?: boolean;
 };
 
 /** Durable payment audit entry with hash-chained integrity fields on disk. */
@@ -131,6 +140,10 @@ export function buildStripeInvoicePaidEntry(input: {
   amountUsd: number;
   plan?: string;
   correlationId?: string;
+  resource?: string;
+  billingReason?: string;
+  isProration?: boolean;
+  subscriptionId?: string;
 }): PaymentWormEntry {
   return buildPaymentWormEntry({
     eventKind: "STRIPE_INVOICE_PAID",
@@ -141,6 +154,70 @@ export function buildStripeInvoicePaidEntry(input: {
       amount_usd: input.amountUsd,
       tenant_id: input.tenantId,
       plan: input.plan,
+      resource: input.resource,
+      billing_reason: input.billingReason,
+      is_proration: input.isProration,
+      subscription_id: input.subscriptionId,
+    },
+  });
+}
+
+export function buildStripePaymentFailedEntry(input: {
+  tenantId: string;
+  amountUsd: number;
+  plan?: string;
+  correlationId?: string;
+  invoiceId: string;
+  dunningStage: string;
+  billingReason: string;
+  attemptCount: number;
+  isProration: boolean;
+  subscriptionId?: string | null;
+  hostedInvoiceUrl?: string | null;
+}): PaymentWormEntry {
+  const prorationNote = input.isProration ? " (proration)" : "";
+  return buildPaymentWormEntry({
+    eventKind: "STRIPE_PAYMENT_FAILED",
+    summary: `Stripe invoice payment failed${prorationNote} for ${input.invoiceId} [${input.dunningStage}]`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "stripe",
+      amount_usd: input.amountUsd,
+      tenant_id: input.tenantId,
+      plan: input.plan,
+      resource: input.invoiceId,
+      dunning_stage: input.dunningStage,
+      billing_reason: input.billingReason,
+      attempt_count: input.attemptCount,
+      is_proration: input.isProration,
+      subscription_id: input.subscriptionId ?? undefined,
+      reason: input.hostedInvoiceUrl ?? undefined,
+    },
+  });
+}
+
+export function buildStripeSubscriptionDunningEntry(input: {
+  tenantId: string;
+  plan?: string;
+  correlationId?: string;
+  stage: "past_due" | "unpaid" | "canceled" | "recovered";
+  subscriptionId: string;
+  subscriptionStatus: string;
+}): PaymentWormEntry {
+  const eventKind =
+    input.stage === "recovered" ? "STRIPE_DUNNING_RECOVERED" : "STRIPE_SUBSCRIPTION_PAST_DUE";
+  return buildPaymentWormEntry({
+    eventKind,
+    summary: `Stripe subscription ${input.subscriptionId} ${input.stage} (status=${input.subscriptionStatus})`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "stripe",
+      tenant_id: input.tenantId,
+      plan: input.plan,
+      resource: input.subscriptionId,
+      dunning_stage: input.stage,
+      subscription_id: input.subscriptionId,
+      subscription_status: input.subscriptionStatus,
     },
   });
 }
