@@ -21,7 +21,7 @@
  * rows for the partition). Optional MT_LLM_JUDGE=1 when a model key exists.
  *
  * Usage:
- *   EXECUTOR_BIN=… EXECUTOR_CWD=… \
+ *   EXECUTOR_BIN=… EXECUTOR_CWD=… EXECUTOR_DATA_DIR=… \
  *     MCPJUNGLE_BIN=/tmp/gw-bins/mcpjungle \
  *     AGENTGATEWAY_BIN=/tmp/gw-bins/agentgateway \
  *     BIFROST_BIN=~/.cache/bifrost/v2.3.0/bin/bifrost-http-0 \
@@ -37,6 +37,10 @@
  *   MT_INCLUDE_CF=1 only for nested CF experiments (off publish board)
  *   MT_CLAWQL_DISCOVERY=every_turn|once — every_turn (default) matches aggregator board;
  *     once = Code Mode peer (one fat catalog search, then execute+fields each turn)
+ *   EXECUTOR_BIN / EXECUTOR_CWD — Executor 1.x stdio (`executor mcp`)
+ *   EXECUTOR_MCP_URL — Executor 2.x Streamable HTTP (e.g. http://127.0.0.1:4312/mcp);
+ *     optional EXECUTOR_API_KEY / Authorization Bearer for the HTTP arm
+ *   EXECUTOR_DATA_DIR — forwarded to stdio child (required for Executor 1.x data home)
  *   BIFROST_BIN — bifrost-http binary (npx @maximhq/bifrost caches under ~/.cache/bifrost/)
  *   BIFROST_VK — optional virtual key value (default sk-bf-clawql-mt-bench)
  *
@@ -275,11 +279,15 @@ function scoreTaskSuccess(text, partitionIndex, limit = LIMIT) {
     return { ok: false, matched: 0, expected: expected.length, failures: ["unparseable_json"] };
   }
   let rows = null;
-  if (Array.isArray(parsed)) rows = parsed;
-  else if (Array.isArray(parsed?.items)) rows = parsed.items;
-  else if (Array.isArray(parsed?.result)) rows = parsed.result;
-  else if (Array.isArray(parsed?.data)) rows = parsed.data;
-  else if (parsed && typeof parsed === "object" && Array.isArray(parsed.pets)) rows = parsed.pets;
+  // Executor 2.x wraps return values: { status, execution: { value } }
+  const unwrapped =
+    parsed?.execution?.value !== undefined ? parsed.execution.value : parsed;
+  if (Array.isArray(unwrapped)) rows = unwrapped;
+  else if (Array.isArray(unwrapped?.items)) rows = unwrapped.items;
+  else if (Array.isArray(unwrapped?.result)) rows = unwrapped.result;
+  else if (Array.isArray(unwrapped?.data)) rows = unwrapped.data;
+  else if (unwrapped && typeof unwrapped === "object" && Array.isArray(unwrapped.pets))
+    rows = unwrapped.pets;
   if (!rows) {
     return { ok: false, matched: 0, expected: expected.length, failures: ["no_row_array"] };
   }
@@ -495,13 +503,34 @@ async function connectClawql(mock) {
 }
 
 async function connectExecutor() {
+  const url = process.env.EXECUTOR_MCP_URL?.trim();
+  if (url) {
+    const key =
+      process.env.EXECUTOR_API_KEY?.trim() ||
+      (() => {
+        try {
+          const p = process.env.EXECUTOR_API_KEY_FILE?.trim();
+          if (p && existsSync(p)) return readFileSync(p, "utf8").trim();
+        } catch {
+          /* ignore */
+        }
+        return "";
+      })();
+    const headers = key ? { Authorization: `Bearer ${key}` } : null;
+    return connectHttpMcp(url, "mt-executor-http", headers);
+  }
   const bin = process.env.EXECUTOR_BIN?.trim();
-  if (!bin) throw new Error("EXECUTOR_BIN required");
+  if (!bin) throw new Error("EXECUTOR_BIN or EXECUTOR_MCP_URL required");
+  const childEnv = { ...process.env };
+  if (process.env.EXECUTOR_DATA_DIR?.trim()) {
+    childEnv.EXECUTOR_DATA_DIR = process.env.EXECUTOR_DATA_DIR.trim();
+  }
   const transport = new StdioClientTransport({
     command: bin,
     args: ["mcp"],
     cwd: process.env.EXECUTOR_CWD?.trim() || dirname(bin),
     stderr: "pipe",
+    env: childEnv,
   });
   const client = new Client({ name: "mt-executor", version: "1" }, {});
   await client.connect(transport);
@@ -1085,6 +1114,7 @@ async function runClawqlArm(mock, turns) {
 async function runExecutorArm(turns, { filter = false } = {}) {
   const conn = await connectExecutor();
   const armId = filter ? "executor_filter" : "executor";
+  const viaHttp = Boolean(process.env.EXECUTOR_MCP_URL?.trim());
   try {
     const listed = await conn.client.listTools();
     const executeTool = listed.tools.find((t) => t.name === "execute");
@@ -1125,8 +1155,12 @@ async function runExecutorArm(turns, { filter = false } = {}) {
     return {
       id: armId,
       model: filter
-        ? "stdio_mcp_code_execute_fields_filter"
-        : "stdio_mcp_code_execute_fat_static",
+        ? viaHttp
+          ? "http_mcp_code_execute_fields_filter"
+          : "stdio_mcp_code_execute_fields_filter"
+        : viaHttp
+          ? "http_mcp_code_execute_fat_static"
+          : "stdio_mcp_code_execute_fat_static",
       layer1: {
         once_schema_tokens: l1Tokens,
         tools_count: executeTool ? 1 : listed.tools.length,
@@ -1298,14 +1332,20 @@ async function main() {
           }
           rawArms.clawql = await runClawqlArm(mock, turns);
         } else if (arm === "executor") {
-          if (!process.env.EXECUTOR_BIN?.trim()) {
-            rawArms.executor = { skipped: true, reason: "EXECUTOR_BIN unset" };
+          if (!process.env.EXECUTOR_BIN?.trim() && !process.env.EXECUTOR_MCP_URL?.trim()) {
+            rawArms.executor = {
+              skipped: true,
+              reason: "EXECUTOR_BIN / EXECUTOR_MCP_URL unset",
+            };
             continue;
           }
           rawArms.executor = await runExecutorArm(turns, { filter: false });
         } else if (arm === "executor_filter") {
-          if (!process.env.EXECUTOR_BIN?.trim()) {
-            rawArms.executor_filter = { skipped: true, reason: "EXECUTOR_BIN unset" };
+          if (!process.env.EXECUTOR_BIN?.trim() && !process.env.EXECUTOR_MCP_URL?.trim()) {
+            rawArms.executor_filter = {
+              skipped: true,
+              reason: "EXECUTOR_BIN / EXECUTOR_MCP_URL unset",
+            };
             continue;
           }
           rawArms.executor_filter = await runExecutorArm(turns, { filter: true });
