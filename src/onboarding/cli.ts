@@ -177,6 +177,7 @@ import {
   runOntologyMeta,
 } from "./ontology-cli.js";
 import { runMemoryLint, runMemoryMigrate, runMemoryQuery } from "./memory-cli.js";
+import { runSecurityCelld, runSecurityInject } from "./security-cli.js";
 
 type Command =
   | "init"
@@ -198,6 +199,7 @@ type Command =
   | "gateway"
   | "streams"
   | "payments"
+  | "security"
   | "claude"
   | "codex"
   | "cursor"
@@ -277,6 +279,8 @@ function parse(argv: string[]): {
     else if (a === "--harness") flags.harness = argv[++i] ?? "";
     else if (a === "--port") flags.port = argv[++i] ?? "";
     else if (a === "--model") flags.model = argv[++i] ?? "";
+    else if (a === "--mode") flags.mode = argv[++i] ?? "";
+    else if (a === "--target") flags.target = argv[++i] ?? "";
     else if (a === "--message") flags.message = argv[++i] ?? "";
     else if (a === "--non-interactive") flags.nonInteractive = true;
     else if (a === "--no-start") flags.noStart = true;
@@ -449,7 +453,8 @@ function parse(argv: string[]): {
     cmd === "inference" ||
     cmd === "gateway" ||
     cmd === "streams" ||
-    cmd === "payments"
+    cmd === "payments" ||
+    cmd === "security"
       ? positional[1]
       : undefined;
   const rest =
@@ -463,7 +468,8 @@ function parse(argv: string[]): {
     cmd === "inference" ||
     cmd === "gateway" ||
     cmd === "streams" ||
-    cmd === "payments"
+    cmd === "payments" ||
+    cmd === "security"
       ? positional.slice(2)
       : cmd === "release" || cmd === "ontology" || cmd === "memory"
         ? positional.slice(2)
@@ -484,6 +490,8 @@ Usage:
   clawql onboard [--yes] [--interactive] [--from-env .env] [--write-mcp=cursor] [--skip-smoke] [--skip-mcp-write]
   clawql init [--yes] [--interactive] [--from-env .env] [--push-vault] [--write-mcp=cursor] [--home DIR] [--networking] [--offer-derp]
   clawql doctor [--verbose] [--smoke]
+  clawql security inject --mode direct|indirect|multistep [--target staging] [--json]
+  clawql security celld [--json]
   clawql secrets list
   clawql secrets set <github|slack|linear|…> [value]
   clawql mcp-config [--json] [--write cursor|claude-desktop] [--http] [--url http://host/mcp]
@@ -751,6 +759,25 @@ async function main(): Promise<void> {
     console.log(formatDoctorReport(report, Boolean(flags.verbose)));
     const failed = report.checks.some((c) => c.level === "fail");
     process.exitCode = failed ? 1 : 0;
+    return;
+  }
+
+  if (cmd === "security") {
+    if (subcmd === "inject") {
+      process.exitCode = await runSecurityInject({
+        mode: typeof flags.mode === "string" ? flags.mode : undefined,
+        target: typeof flags.target === "string" ? flags.target : undefined,
+        json: Boolean(flags.json),
+      });
+      return;
+    }
+    if (subcmd === "celld") {
+      process.exitCode = await runSecurityCelld({ json: Boolean(flags.json) });
+      return;
+    }
+    console.error("Usage: clawql security inject --mode direct|indirect|multistep [--json]");
+    console.error("       clawql security celld [--json]");
+    process.exitCode = 1;
     return;
   }
 
