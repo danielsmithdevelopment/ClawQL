@@ -1,0 +1,1679 @@
+{
+  "suite": "gateway-multi-multiturn",
+  "measuredAt": "2026-10-17T00:43:26.947Z",
+  "node": "v22.14.0",
+  "config": {
+    "turns": 12,
+    "catalog_tool_count": 40,
+    "limit": 25,
+    "where": "items",
+    "fields": [
+      "id",
+      "name",
+      "status"
+    ],
+    "arms": [
+      "clawql",
+      "bifrost",
+      "bifrost_codemode"
+    ],
+    "tokenizer": "cl100k_base"
+  },
+  "equal_arm": {
+    "fat_result_tokens_partition_1": 2411,
+    "slim_fields_tokens_partition_1": 353,
+    "projection_ratio": 6.83,
+    "note": "Same underlying rows; ClawQL where+fields project to {id,name,status}; Executor/aggregators return full envelope (Executor: no gateway projection — settled)"
+  },
+  "board": {
+    "clawql": {
+      "layer1_once_tokens": 413,
+      "mean_layer2_tokens": 1686.8,
+      "mean_result_tokens": 722.8,
+      "combined_at_n": 20655,
+      "combined_relist_every_turn_at_n": 20242,
+      "mean_latency_ms": 6.452,
+      "turns": 12,
+      "task_success_ok": true,
+      "task_success_rate": 1
+    },
+    "bifrost": {
+      "layer1_once_tokens": 5520,
+      "mean_layer2_tokens": 2456.8,
+      "mean_result_tokens": 2456.8,
+      "combined_at_n": 35002,
+      "combined_relist_every_turn_at_n": 95722,
+      "mean_latency_ms": 2.608,
+      "turns": 12,
+      "task_success_ok": true,
+      "task_success_rate": 1
+    },
+    "bifrost_codemode": {
+      "layer1_once_tokens": 3459,
+      "mean_layer2_tokens": 1376.5,
+      "mean_result_tokens": 1376.5,
+      "combined_at_n": 19977,
+      "combined_relist_every_turn_at_n": 16518,
+      "mean_latency_ms": 3.653,
+      "turns": 12,
+      "task_success_ok": true,
+      "task_success_rate": 1
+    }
+  },
+  "ratios_vs_clawql": {
+    "bifrost": {
+      "vs_clawql_combined_classic": 1.69,
+      "vs_clawql_combined_relist_every_turn": 4.73,
+      "vs_clawql_mean_result": 3.4,
+      "vs_clawql_layer1": 13.37
+    },
+    "bifrost_codemode": {
+      "vs_clawql_combined_classic": 0.97,
+      "vs_clawql_combined_relist_every_turn": 0.82,
+      "vs_clawql_mean_result": 1.9,
+      "vs_clawql_layer1": 8.38
+    }
+  },
+  "task_success": {
+    "clawql": {
+      "turns_ok": 12,
+      "turns_total": 12,
+      "ok": true,
+      "rate": 1
+    },
+    "bifrost": {
+      "turns_ok": 12,
+      "turns_total": 12,
+      "ok": true,
+      "rate": 1
+    },
+    "bifrost_codemode": {
+      "turns_ok": 12,
+      "turns_total": 12,
+      "ok": true,
+      "rate": 1
+    }
+  },
+  "cumulative_table": {
+    "clawql": [
+      {
+        "n": 1,
+        "combined": 2054,
+        "layer2Cumulative": 1641
+      },
+      {
+        "n": 2,
+        "combined": 3745,
+        "layer2Cumulative": 3332
+      },
+      {
+        "n": 3,
+        "combined": 5436,
+        "layer2Cumulative": 5023
+      },
+      {
+        "n": 4,
+        "combined": 7127,
+        "layer2Cumulative": 6714
+      },
+      {
+        "n": 5,
+        "combined": 8818,
+        "layer2Cumulative": 8405
+      },
+      {
+        "n": 6,
+        "combined": 10509,
+        "layer2Cumulative": 10096
+      },
+      {
+        "n": 7,
+        "combined": 12200,
+        "layer2Cumulative": 11787
+      },
+      {
+        "n": 8,
+        "combined": 13891,
+        "layer2Cumulative": 13478
+      },
+      {
+        "n": 9,
+        "combined": 15582,
+        "layer2Cumulative": 15169
+      },
+      {
+        "n": 10,
+        "combined": 17273,
+        "layer2Cumulative": 16860
+      },
+      {
+        "n": 11,
+        "combined": 18964,
+        "layer2Cumulative": 18551
+      },
+      {
+        "n": 12,
+        "combined": 20655,
+        "layer2Cumulative": 20242
+      }
+    ],
+    "bifrost": [
+      {
+        "n": 1,
+        "combined": 7931,
+        "layer2Cumulative": 2411
+      },
+      {
+        "n": 2,
+        "combined": 10392,
+        "layer2Cumulative": 4872
+      },
+      {
+        "n": 3,
+        "combined": 12853,
+        "layer2Cumulative": 7333
+      },
+      {
+        "n": 4,
+        "combined": 15314,
+        "layer2Cumulative": 9794
+      },
+      {
+        "n": 5,
+        "combined": 17775,
+        "layer2Cumulative": 12255
+      },
+      {
+        "n": 6,
+        "combined": 20236,
+        "layer2Cumulative": 14716
+      },
+      {
+        "n": 7,
+        "combined": 22697,
+        "layer2Cumulative": 17177
+      },
+      {
+        "n": 8,
+        "combined": 25158,
+        "layer2Cumulative": 19638
+      },
+      {
+        "n": 9,
+        "combined": 27619,
+        "layer2Cumulative": 22099
+      },
+      {
+        "n": 10,
+        "combined": 30080,
+        "layer2Cumulative": 24560
+      },
+      {
+        "n": 11,
+        "combined": 32541,
+        "layer2Cumulative": 27021
+      },
+      {
+        "n": 12,
+        "combined": 35002,
+        "layer2Cumulative": 29482
+      }
+    ],
+    "bifrost_codemode": [
+      {
+        "n": 1,
+        "combined": 4788,
+        "layer2Cumulative": 1329
+      },
+      {
+        "n": 2,
+        "combined": 6169,
+        "layer2Cumulative": 2710
+      },
+      {
+        "n": 3,
+        "combined": 7550,
+        "layer2Cumulative": 4091
+      },
+      {
+        "n": 4,
+        "combined": 8931,
+        "layer2Cumulative": 5472
+      },
+      {
+        "n": 5,
+        "combined": 10312,
+        "layer2Cumulative": 6853
+      },
+      {
+        "n": 6,
+        "combined": 11693,
+        "layer2Cumulative": 8234
+      },
+      {
+        "n": 7,
+        "combined": 13074,
+        "layer2Cumulative": 9615
+      },
+      {
+        "n": 8,
+        "combined": 14455,
+        "layer2Cumulative": 10996
+      },
+      {
+        "n": 9,
+        "combined": 15836,
+        "layer2Cumulative": 12377
+      },
+      {
+        "n": 10,
+        "combined": 17217,
+        "layer2Cumulative": 13758
+      },
+      {
+        "n": 11,
+        "combined": 18597,
+        "layer2Cumulative": 15138
+      },
+      {
+        "n": 12,
+        "combined": 19977,
+        "layer2Cumulative": 16518
+      }
+    ]
+  },
+  "arms": {
+    "clawql": {
+      "id": "clawql",
+      "model": "search_plus_execute_where_fields",
+      "layer1": {
+        "once_schema_tokens": 413,
+        "tools_count": 2,
+        "tools_list_count_full": 8,
+        "tools_list_schema_tokens_full": 1305,
+        "note": "Only search+execute schemas counted as Layer1 (catalog stays server-side)"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "catalog_list_001",
+          "search_tokens": 964,
+          "result_tokens": 677,
+          "result_chars": 1840,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1641,
+          "layer2_relist_every_turn": 1641,
+          "latency_ms": 26.497,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 2,
+          "tool": "catalog_list_002",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 5.61,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 3,
+          "tool": "catalog_list_003",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 5.126,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 4,
+          "tool": "catalog_list_004",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 4.637,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 5,
+          "tool": "catalog_list_005",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 6.593,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 6,
+          "tool": "catalog_list_006",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 3.672,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 7,
+          "tool": "catalog_list_007",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 3.647,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 8,
+          "tool": "catalog_list_008",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 4.979,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 9,
+          "tool": "catalog_list_009",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 5.114,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 10,
+          "tool": "catalog_list_010",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 1952,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 4.345,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 11,
+          "tool": "catalog_list_011",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 2002,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 3.881,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 12,
+          "tool": "catalog_list_012",
+          "search_tokens": 964,
+          "result_tokens": 727,
+          "result_chars": 2002,
+          "where": "items",
+          "fields": [
+            "id",
+            "name",
+            "status"
+          ],
+          "layer2_classic": 1691,
+          "layer2_relist_every_turn": 1691,
+          "latency_ms": 3.318,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        }
+      ],
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 413,
+          "layer2ThisTurn": 1641,
+          "layer2Cumulative": 1641,
+          "combined": 2054,
+          "layer2ShareOfCombined": 79.9
+        },
+        {
+          "n": 2,
+          "layer1Once": 413,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 3332,
+          "combined": 3745,
+          "layer2ShareOfCombined": 89
+        },
+        {
+          "n": 3,
+          "layer1Once": 413,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 5023,
+          "combined": 5436,
+          "layer2ShareOfCombined": 92.4
+        },
+        {
+          "n": 4,
+          "layer1Once": 413,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 6714,
+          "combined": 7127,
+          "layer2ShareOfCombined": 94.2
+        },
+        {
+          "n": 5,
+          "layer1Once": 413,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 8405,
+          "combined": 8818,
+          "layer2ShareOfCombined": 95.3
+        },
+        {
+          "n": 6,
+          "layer1Once": 413,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 10096,
+          "combined": 10509,
+          "layer2ShareOfCombined": 96.1
+        },
+        {
+          "n": 7,
+          "layer1Once": 413,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 11787,
+          "combined": 12200,
+          "layer2ShareOfCombined": 96.6
+        },
+        {
+          "n": 8,
+          "layer1Once": 413,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 13478,
+          "combined": 13891,
+          "layer2ShareOfCombined": 97
+        },
+        {
+          "n": 9,
+          "layer1Once": 413,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 15169,
+          "combined": 15582,
+          "layer2ShareOfCombined": 97.3
+        },
+        {
+          "n": 10,
+          "layer1Once": 413,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 16860,
+          "combined": 17273,
+          "layer2ShareOfCombined": 97.6
+        },
+        {
+          "n": 11,
+          "layer1Once": 413,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 18551,
+          "combined": 18964,
+          "layer2ShareOfCombined": 97.8
+        },
+        {
+          "n": 12,
+          "layer1Once": 413,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 20242,
+          "combined": 20655,
+          "layer2ShareOfCombined": 98
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1641,
+          "layer2Cumulative": 1641,
+          "combined": 1641,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 3332,
+          "combined": 3332,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 5023,
+          "combined": 5023,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 6714,
+          "combined": 6714,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 8405,
+          "combined": 8405,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 10096,
+          "combined": 10096,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 11787,
+          "combined": 11787,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 13478,
+          "combined": 13478,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 15169,
+          "combined": 15169,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 16860,
+          "combined": 16860,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 18551,
+          "combined": 18551,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1691,
+          "layer2Cumulative": 20242,
+          "combined": 20242,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 12,
+        "turns_total": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "layer1_once_tokens": 413,
+        "mean_layer2_tokens": 1686.8,
+        "mean_result_tokens": 722.8,
+        "combined_at_n": 20655,
+        "combined_relist_every_turn_at_n": 20242,
+        "mean_latency_ms": 6.452,
+        "turns": 12,
+        "task_success_ok": true,
+        "task_success_rate": 1
+      }
+    },
+    "bifrost": {
+      "id": "bifrost",
+      "model": "aggregator_tools_list_plus_fat_call",
+      "layer1": {
+        "once_schema_tokens": 5520,
+        "tools_count": 40,
+        "note": "Full tools/list dump (fat catalog surface); classic counts Layer1 once"
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "catalog-catalog_list_001",
+          "result_tokens": 2411,
+          "result_chars": 7655,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2411,
+          "layer2_relist_every_turn": 7931,
+          "latency_ms": 6.935,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 2,
+          "tool": "catalog-catalog_list_002",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.602,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 3,
+          "tool": "catalog-catalog_list_003",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.277,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 4,
+          "tool": "catalog-catalog_list_004",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.097,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 5,
+          "tool": "catalog-catalog_list_005",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.459,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 6,
+          "tool": "catalog-catalog_list_006",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.329,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 7,
+          "tool": "catalog-catalog_list_007",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.184,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 8,
+          "tool": "catalog-catalog_list_008",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.806,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 9,
+          "tool": "catalog-catalog_list_009",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.375,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 10,
+          "tool": "catalog-catalog_list_010",
+          "result_tokens": 2461,
+          "result_chars": 7767,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.172,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 11,
+          "tool": "catalog-catalog_list_011",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 2.324,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 12,
+          "tool": "catalog-catalog_list_012",
+          "result_tokens": 2461,
+          "result_chars": 7817,
+          "tools_list_tokens": 5520,
+          "layer2_classic": 2461,
+          "layer2_relist_every_turn": 7981,
+          "latency_ms": 1.73,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        }
+      ],
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2411,
+          "layer2Cumulative": 2411,
+          "combined": 7931,
+          "layer2ShareOfCombined": 30.4
+        },
+        {
+          "n": 2,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 4872,
+          "combined": 10392,
+          "layer2ShareOfCombined": 46.9
+        },
+        {
+          "n": 3,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 7333,
+          "combined": 12853,
+          "layer2ShareOfCombined": 57.1
+        },
+        {
+          "n": 4,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 9794,
+          "combined": 15314,
+          "layer2ShareOfCombined": 64
+        },
+        {
+          "n": 5,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 12255,
+          "combined": 17775,
+          "layer2ShareOfCombined": 68.9
+        },
+        {
+          "n": 6,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 14716,
+          "combined": 20236,
+          "layer2ShareOfCombined": 72.7
+        },
+        {
+          "n": 7,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 17177,
+          "combined": 22697,
+          "layer2ShareOfCombined": 75.7
+        },
+        {
+          "n": 8,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 19638,
+          "combined": 25158,
+          "layer2ShareOfCombined": 78.1
+        },
+        {
+          "n": 9,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 22099,
+          "combined": 27619,
+          "layer2ShareOfCombined": 80
+        },
+        {
+          "n": 10,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 24560,
+          "combined": 30080,
+          "layer2ShareOfCombined": 81.6
+        },
+        {
+          "n": 11,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 27021,
+          "combined": 32541,
+          "layer2ShareOfCombined": 83
+        },
+        {
+          "n": 12,
+          "layer1Once": 5520,
+          "layer2ThisTurn": 2461,
+          "layer2Cumulative": 29482,
+          "combined": 35002,
+          "layer2ShareOfCombined": 84.2
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7931,
+          "layer2Cumulative": 7931,
+          "combined": 7931,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 15912,
+          "combined": 15912,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 23893,
+          "combined": 23893,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 31874,
+          "combined": 31874,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 39855,
+          "combined": 39855,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 47836,
+          "combined": 47836,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 55817,
+          "combined": 55817,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 63798,
+          "combined": 63798,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 71779,
+          "combined": 71779,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 79760,
+          "combined": 79760,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 87741,
+          "combined": 87741,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 7981,
+          "layer2Cumulative": 95722,
+          "combined": 95722,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 12,
+        "turns_total": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "layer1_once_tokens": 5520,
+        "mean_layer2_tokens": 2456.8,
+        "mean_result_tokens": 2456.8,
+        "combined_at_n": 35002,
+        "combined_relist_every_turn_at_n": 95722,
+        "mean_latency_ms": 2.608,
+        "turns": 12,
+        "task_success_ok": true,
+        "task_success_rate": 1
+      }
+    },
+    "bifrost_codemode": {
+      "id": "bifrost_codemode",
+      "model": "bifrost_code_mode_executeToolCode_starlark",
+      "layer1": {
+        "once_schema_tokens": 3459,
+        "tools_count": 4,
+        "tools_list_count_full": 4,
+        "tools_list_schema_tokens_full": 1472,
+        "meta_schema_tokens": 1472,
+        "discovery_once_tokens": 1987,
+        "note": "Layer1 = 4 Code Mode meta-tool schemas + once listToolFiles/readToolFile(catalog.pyi). Layer2 counts full executeToolCode text (includes Bifrost TOOL print of fat upstream)."
+      },
+      "perTurn": [
+        {
+          "n": 1,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_001",
+          "result_tokens": 1329,
+          "result_chars": 4136,
+          "layer2_classic": 1329,
+          "layer2_relist_every_turn": 1329,
+          "latency_ms": 7.388,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 2,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_002",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.694,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 3,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_003",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.185,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 4,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_004",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.491,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 5,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_005",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.312,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 6,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_006",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.368,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 7,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_007",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.348,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 8,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_008",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.301,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 9,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_009",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.051,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 10,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_010",
+          "result_tokens": 1381,
+          "result_chars": 4248,
+          "layer2_classic": 1381,
+          "layer2_relist_every_turn": 1381,
+          "latency_ms": 3.113,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 11,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_011",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 3.2,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        },
+        {
+          "n": 12,
+          "tool": "executeToolCode",
+          "catalog_tool": "catalog_list_012",
+          "result_tokens": 1380,
+          "result_chars": 4298,
+          "layer2_classic": 1380,
+          "layer2_relist_every_turn": 1380,
+          "latency_ms": 3.388,
+          "ok": true,
+          "task_success": {
+            "ok": true,
+            "matched": 25,
+            "expected": 25,
+            "failures": []
+          }
+        }
+      ],
+      "skipped": false,
+      "cumulative_classic": [
+        {
+          "n": 1,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1329,
+          "layer2Cumulative": 1329,
+          "combined": 4788,
+          "layer2ShareOfCombined": 27.8
+        },
+        {
+          "n": 2,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 2710,
+          "combined": 6169,
+          "layer2ShareOfCombined": 43.9
+        },
+        {
+          "n": 3,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 4091,
+          "combined": 7550,
+          "layer2ShareOfCombined": 54.2
+        },
+        {
+          "n": 4,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 5472,
+          "combined": 8931,
+          "layer2ShareOfCombined": 61.3
+        },
+        {
+          "n": 5,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 6853,
+          "combined": 10312,
+          "layer2ShareOfCombined": 66.5
+        },
+        {
+          "n": 6,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 8234,
+          "combined": 11693,
+          "layer2ShareOfCombined": 70.4
+        },
+        {
+          "n": 7,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 9615,
+          "combined": 13074,
+          "layer2ShareOfCombined": 73.5
+        },
+        {
+          "n": 8,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 10996,
+          "combined": 14455,
+          "layer2ShareOfCombined": 76.1
+        },
+        {
+          "n": 9,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 12377,
+          "combined": 15836,
+          "layer2ShareOfCombined": 78.2
+        },
+        {
+          "n": 10,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 13758,
+          "combined": 17217,
+          "layer2ShareOfCombined": 79.9
+        },
+        {
+          "n": 11,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 15138,
+          "combined": 18597,
+          "layer2ShareOfCombined": 81.4
+        },
+        {
+          "n": 12,
+          "layer1Once": 3459,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 16518,
+          "combined": 19977,
+          "layer2ShareOfCombined": 82.7
+        }
+      ],
+      "cumulative_tools_list_every_turn": [
+        {
+          "n": 1,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1329,
+          "layer2Cumulative": 1329,
+          "combined": 1329,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 2,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 2710,
+          "combined": 2710,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 3,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 4091,
+          "combined": 4091,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 4,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 5472,
+          "combined": 5472,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 5,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 6853,
+          "combined": 6853,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 6,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 8234,
+          "combined": 8234,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 7,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 9615,
+          "combined": 9615,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 8,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 10996,
+          "combined": 10996,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 9,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 12377,
+          "combined": 12377,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 10,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1381,
+          "layer2Cumulative": 13758,
+          "combined": 13758,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 11,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 15138,
+          "combined": 15138,
+          "layer2ShareOfCombined": 100
+        },
+        {
+          "n": 12,
+          "layer1Once": 0,
+          "layer2ThisTurn": 1380,
+          "layer2Cumulative": 16518,
+          "combined": 16518,
+          "layer2ShareOfCombined": 100
+        }
+      ],
+      "task_success": {
+        "turns_ok": 12,
+        "turns_total": 12,
+        "ok": true,
+        "rate": 1
+      },
+      "board": {
+        "layer1_once_tokens": 3459,
+        "mean_layer2_tokens": 1376.5,
+        "mean_result_tokens": 1376.5,
+        "combined_at_n": 19977,
+        "combined_relist_every_turn_at_n": 16518,
+        "mean_latency_ms": 3.653,
+        "turns": 12,
+        "task_success_ok": true,
+        "task_success_rate": 1
+      }
+    }
+  },
+  "errors": {},
+  "category_win": [
+    "Category story: most efficient governed gateway — multi-turn I/O tokens with equal task success.",
+    "1. Primary model — classic Layer1 once + Σ Layer2 (clients that cache tools/list).",
+    "2. Input side — ClawQL Layer1 is search+execute only; aggregators pay the full fat tools/list once.",
+    "3. Output side — ClawQL gateway fields/where projection; Executor measured path is full payload pass-through.",
+    "4. Re-list-every-turn is secondary sensitivity only (most clients cache; lazy clients shrink aggregators further).",
+    "5. Settled: do not label a hand-written slim-return program as Executor (Both Sides of Context Compression).",
+    "ClawQL deterministic task_success: PASS.",
+    "Measured vs Bifrost classic @N=12: classic 1.69× (full tools/list + fat callTool via /mcp).",
+    "Measured vs Bifrost Code Mode @N=12: classic 0.97× (4 meta-tools + executeToolCode; Layer2 includes TOOL print dump if present).",
+    "RSS is a loss among serious arms — admit or fix before memory claims."
+  ],
+  "primary_metric": "classic_layer1_once_plus_sum_layer2_with_task_success",
+  "secondary_metric": "tools_list_every_turn_sensitivity",
+  "honesty": [
+    "Fat catalog equal-arm: N MCP tools mirrored as N OpenAPI operationIds.",
+    "PRIMARY: classic Layer1_once + sum(Layer2) with deterministic task_success.",
+    "SECONDARY: tools_list_every_turn — most clients cache ListTools; do not lead with this multiplier.",
+    "Executor Layer2 is fat JSON — matches measured live path (executor-cmp-001 / Both Sides post). No gateway fields.",
+    "Do not publish a hand-written slim-return program as Executor.",
+    "ContextForge/MetaMCP off publish board by default.",
+    "Bifrost/bifrost_codemode are opt-in via MT_ARMS (not default) until a published board lands.",
+    "Bifrost Code Mode Layer2 counts full executeToolCode text — Bifrost may echo fat upstream in Print output.",
+    "Not a latency board; see gateway-multi-cmp-10k.json for interleaved p999.",
+    "RSS is a loss among serious arms — admit plainly."
+  ]
+}
