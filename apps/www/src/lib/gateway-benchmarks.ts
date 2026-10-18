@@ -57,7 +57,7 @@ export const gatewayTokenBoardProvenance = {
     status: 'current' as const,
     measuredAt: '2026-10-18',
     artifact: 'docs/benchmarks/gateway-multi-comparison/gateway-multi-cmp-chaos-topology-b.json',
-    note: '4× HTTP behind sticky LB: ClawQL 121/122 ≈ MCPJungle 125/126 ≫ agentgateway 47/48 — near-tie, no scale-out win',
+    note: '4× HTTP behind sticky LB: ClawQL 121/122 ≈ MCPJungle 125/126 ≫ agentgateway 47/48 > Executor 23/24 — near-tie with MJ, no scale-out win',
   },
   transportMatrixLatencyRss: {
     status: 'stale_host_run' as const,
@@ -80,7 +80,7 @@ export const gatewayTokenBoardProvenance = {
 export const gatewayBenchmarkHeadline = 'Most efficient governed MCP gateway — measured, not marketed.'
 
 export const gatewayBenchmarkSummary =
-  'Equal-arm board: same multiturn harness, same 40-tool fat catalog, same task success. Full remasure 2026-10-17: ClawQL 8 866 combined @12 — ~4× leaner than aggregators / Obot / Bifrost classic, 2.25× leaner than Bifrost Code Mode, 3.38× leaner than Executor v2 β, 6× leaner than Executor v1.6.10, equal task success. vs fair direct-HTTP baseline: −26 136 (−75%). Interleaved n=10k: ClawQL best p50 e2e (1.02 ms) and gateway cost (0.70 ms). Topology-A chaos: ClawQL 79 · Executor HTTP 29 · MCPJungle still leads (151). Topology B (4× sticky LB): ClawQL 121 ≈ MCPJungle 125 — near-tie, no scale-out win.'
+  'Equal-arm board: same multiturn harness, same 40-tool fat catalog, same task success. Full remasure 2026-10-17: ClawQL 8 866 combined @12 — ~4× leaner than aggregators / Obot / Bifrost classic, 2.25× leaner than Bifrost Code Mode, 3.38× leaner than Executor v2 β, 6× leaner than Executor v1.6.10, equal task success. vs fair direct-HTTP baseline: −26 136 (−75%). Interleaved n=10k: ClawQL best p50 e2e (1.02 ms) and gateway cost (0.70 ms). Topology-A chaos: ClawQL 79 · Executor HTTP 29 · MCPJungle still leads (151). Topology B (4× sticky LB): ClawQL 121 ≈ MCPJungle 125 > Executor 23 — near-tie with MJ, no scale-out win.'
 
 export const gatewayBenchmarkClaim =
   'Fewest I/O tokens among measured MCP aggregators and live Executor (v1 and v2 β), same harness, equal task success.'
@@ -455,7 +455,7 @@ export const gatewayBenchmarkHonesty = [
   },
   {
     title: 'Concurrency (topology B)',
-    body: '4× HTTP replicas behind sticky Node LB (cookie clawql_bench_sticky): ClawQL 121/122 ≈ MCPJungle 125/126 ≫ agentgateway 47/48. Near-tie with MJ — not a scale-out supremacy claim. Separate from ClawQL NATS fabric sticky (135). Executor HTTP ×4 still open.',
+    body: '4× HTTP replicas behind sticky Node LB (cookie clawql_bench_sticky): ClawQL 121/122 ≈ MCPJungle 125/126 ≫ agentgateway 47/48 > Executor HTTP 23/24. Near-tie with MJ — not a scale-out supremacy claim. Publishable B claim vs Executor. Separate from ClawQL NATS fabric sticky (135).',
   },
   {
     title: 'Next ClawQL lever',
