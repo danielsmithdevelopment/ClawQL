@@ -84,7 +84,7 @@ HTTP egress only to approved model endpoints (policy manifest via inference gate
 
 Virtual key required for every /v1/\* call
 
-PAL routing + semantic cache + Langfuse/OTel as on the standalone gateway
+model escalation + semantic cache + Langfuse/OTel as on the standalone gateway
 
 DO/cell is an additional deployment context for sessions that use clawql-inference alongside stdio / HTTP / K8s. Bundle limits (64 MiB code / 1 MiB env) require inference to stay out of process — Streams v0.2 §3.1.
 
@@ -116,7 +116,7 @@ Action
 
 Create
 
-Issue key scoped to DO instance ID; budget = budgetTokens or derived from budgetUsd; TTL = maxTurns × estimated_turn_duration; PAL from subscription model alias
+Issue key scoped to DO instance ID; budget = budgetTokens or derived from budgetUsd; TTL = maxTurns × estimated_turn_duration; model escalation from subscription model alias
 
 Run
 
@@ -298,7 +298,7 @@ docs/streams/clawql-tee.md — hardware TEE + attestation-gated secrets
 
 docs/streams/clawql-tee-airgap-audit.md — QR air-gap audit transport
 
-docs/inference/clawql-inference.md — virtual keys, PAL, call store
+docs/inference/clawql-inference.md — virtual keys, model escalation, call store
 
 docs/benchmarks/openbench-trace-collection.md — OBT + RTP
 

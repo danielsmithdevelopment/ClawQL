@@ -137,7 +137,7 @@ The library **does not** call OpenAI, Anthropic, or ClawQL by default; those bel
 
 ## Relationship to [Q00/ouroboros](https://github.com/Q00/ouroboros)
 
-The popular **Python** project is a full product (interview CLI, MCP plugin, PAL routing, Double Diamond execution, persistence, TUI, etc.). **`clawql-ouroboros`** is a **small, embeddable TypeScript core**: overlapping _ideas_ (seed, wonder/reflect, convergence), **not** feature parity or a claim to be the “official” TS port. The **`clawql-`** prefix scopes naming to this ecosystem.
+The popular **Python** project is a full product (interview CLI, MCP plugin, model escalation, Double Diamond execution, persistence, TUI, etc.). **`clawql-ouroboros`** is a **small, embeddable TypeScript core**: overlapping _ideas_ (seed, wonder/reflect, convergence), **not** feature parity or a claim to be the “official” TS port. The **`clawql-`** prefix scopes naming to this ecosystem.
 
 ## Current limitations (honest scope)
 

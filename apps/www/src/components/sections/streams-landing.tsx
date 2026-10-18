@@ -198,7 +198,7 @@ export function StreamsLanding() {
             <h3 className="streams-scale-title">Virtual-key budgets</h3>
             <p className="streams-mode__detail">
               Lab sessions bind a virtual key at create and send it on every model turn; production spend ceilings land
-              through <code className="font-mono text-[0.9em]">clawql-inference</code> PAL.
+              through <code className="font-mono text-[0.9em]">clawql-inference</code> model escalation.
             </p>
           </li>
           <li>

@@ -33,7 +33,7 @@ The TypeScript version is intentionally leaner and leaves out some platform-leve
 | ---------------- | -------------------------------------------------------- | --------------------------------------------------- |
 | Primary use case | Standalone CLI, TUI, and plugin workflows                | Embedded library for Node.js / ClawQL engines       |
 | Execution model  | Double-diamond decomposition and sub-agent orchestration | Direct in-process execution or host tool delegation |
-| Routing (PAL)    | Progressive LLM escalation strategy                      | Host-dependent model routing                        |
+| Routing (model escalation)    | Progressive LLM escalation strategy                      | Host-dependent model routing                        |
 | User interface   | Built-in terminal UI (activity trees)                    | No native UI; returns data for host rendering       |
 | AI backend       | Built-in LiteLLM integration                             | MCP-oriented and host-runtime friendly              |
 
