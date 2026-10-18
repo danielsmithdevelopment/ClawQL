@@ -10,11 +10,13 @@
     "test:adapter-fetch": "node scripts/adapter-fetch.test.mjs",
     "test:worm-fetch": "node scripts/worm-fetch.test.mjs",
     "test:core-catalog": "node scripts/core-catalog.test.mjs",
+    "test:openapi-pack": "node scripts/openapi-pack.test.mjs",
     "test:significance": "node scripts/significance-filter.test.mjs",
     "dev": "celld dev --port 9876",
     "smoke": "bash scripts/smoke.sh",
     "smoke:full": "bash scripts/full-stack-smoke.sh",
-    "smoke:core-in-celld": "bash scripts/smoke-core-in-celld.sh"
+    "smoke:core-in-celld": "bash scripts/smoke-core-in-celld.sh",
+    "smoke:host-mcp-pack": "bash scripts/smoke-host-mcp-pack.sh"
   },
   "dependencies": {
     "clawql-core": "0.1.0",
