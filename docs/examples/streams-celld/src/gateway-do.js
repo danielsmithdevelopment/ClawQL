@@ -19,6 +19,17 @@ export class GatewayDO {
       });
     }
 
+    // Lab probe: read AgentSessionDO after TTL alarm (Streams §3.5).
+    const sessionMatch = url.pathname.match(/^\/admin\/session\/([^/]+)\/([^/]+)\/?$/);
+    if (sessionMatch && request.method === "GET") {
+      const subscriptionId = decodeURIComponent(sessionMatch[1]);
+      const eventId = decodeURIComponent(sessionMatch[2]);
+      const sessionName = `sess:${subscriptionId}:${eventId}`;
+      const sessionId = this.env.AGENT_SESSION.idFromName(sessionName);
+      const sessionStub = this.env.AGENT_SESSION.get(sessionId);
+      return sessionStub.fetch(new Request("https://internal/session/status", { method: "GET" }));
+    }
+
     const webhookMatch = url.pathname.match(/^\/webhook\/([^/]+)\/?$/);
     if (webhookMatch && request.method === "POST") {
       const subscriptionId = decodeURIComponent(webhookMatch[1]);
@@ -31,15 +42,23 @@ export class GatewayDO {
       const subId = this.env.SUBSCRIPTION.idFromName(subName);
       const subStub = this.env.SUBSCRIPTION.get(subId);
 
+      const bodyText = await request.text();
+      /** @type {Record<string, string>} */
+      const evalHeaders = {
+        "content-type": "application/json",
+        "x-subscription-id": subscriptionId,
+        "x-event-id": eventId,
+      };
+      const sigHeader = request.headers.get("x-clawql-significance");
+      if (sigHeader) evalHeaders["x-clawql-significance"] = sigHeader;
+      const sigCfg = request.headers.get("x-clawql-significance-config");
+      if (sigCfg) evalHeaders["x-clawql-significance-config"] = sigCfg;
+
       const significance = await subStub.fetch(
         new Request("https://internal/subscription/evaluate", {
           method: "POST",
-          headers: {
-            "content-type": "application/json",
-            "x-subscription-id": subscriptionId,
-            "x-event-id": eventId,
-          },
-          body: await request.text(),
+          headers: evalHeaders,
+          body: bodyText,
         }),
       );
       if (!significance.ok) {
@@ -53,6 +72,7 @@ export class GatewayDO {
           subscriptionId,
           eventId,
           reason: evalBody.reason ?? "not_significant",
+          filterType: evalBody.filterType ?? null,
         });
       }
 
@@ -60,14 +80,19 @@ export class GatewayDO {
       const sessionId = this.env.AGENT_SESSION.idFromName(sessionName);
       const sessionStub = this.env.AGENT_SESSION.get(sessionId);
 
+      /** @type {Record<string, string>} */
+      const sessionHeaders = {
+        "content-type": "application/json",
+        "x-subscription-id": subscriptionId,
+        "x-event-id": eventId,
+      };
+      const ttlHeader = request.headers.get("x-clawql-session-ttl-ms");
+      if (ttlHeader) sessionHeaders["x-clawql-session-ttl-ms"] = ttlHeader;
+
       const sessionRes = await sessionStub.fetch(
         new Request("https://internal/session/start", {
           method: "POST",
-          headers: {
-            "content-type": "application/json",
-            "x-subscription-id": subscriptionId,
-            "x-event-id": eventId,
-          },
+          headers: sessionHeaders,
           body: JSON.stringify({
             subscriptionId,
             eventId,
@@ -102,6 +127,8 @@ export class GatewayDO {
         eventId,
         session: sessionBody,
         spawnCount: spawned,
+        filterType: evalBody.filterType ?? null,
+        filterReason: evalBody.reason ?? null,
       });
     }
 
