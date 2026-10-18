@@ -104,6 +104,26 @@ export class AgentSessionDO {
     this.env = env;
   }
 
+  /** Streams §3.5 — hard TTL via setAlarm (no setInterval on celld). */
+  async alarm() {
+    const intent = await this.state.storage.get("alarm_intent");
+    const meta = await this.state.storage.get("session_meta");
+    if (!meta || typeof meta !== "object") return;
+    if (meta.exitReason) return;
+    if (intent?.kind === "session_ttl" || !intent) {
+      const closed = {
+        ...meta,
+        exitReason: "timeout",
+        closedAt: Date.now(),
+      };
+      await this.state.storage.put("session_meta", closed);
+      await this.state.storage.put("alarm_fired", {
+        at: Date.now(),
+        kind: "session_ttl",
+      });
+    }
+  }
+
   async fetch(request) {
     const url = new URL(request.url);
     if (url.pathname.endsWith("/start") && request.method === "POST") {
@@ -112,6 +132,13 @@ export class AgentSessionDO {
       const startedAt = Date.now();
       const doInstanceId = crypto.randomUUID();
       const virtualKeyId = `vk_lab_${eventId.slice(0, 8)}`;
+      const ttlMsRaw = Number(
+        request.headers.get("x-clawql-session-ttl-ms") ||
+          this.env.CLAWQL_SESSION_TTL_MS ||
+          0
+      );
+      const ttlMs =
+        Number.isFinite(ttlMsRaw) && ttlMsRaw > 0 ? Math.min(ttlMsRaw, 3_600_000) : 0;
 
       const existing = await this.state.storage.get("session_meta");
       if (existing) {
@@ -130,6 +157,7 @@ export class AgentSessionDO {
         virtualKeyId,
         startedAt,
         exitReason: null,
+        ttlMs: ttlMs || null,
       };
 
       // All durable DO writes before outbound fetch() — avoids celld NodeFenced
@@ -142,14 +170,24 @@ export class AgentSessionDO {
         subscriptionId,
         eventId,
       });
+      if (ttlMs > 0) {
+        await this.state.storage.put("alarm_intent", {
+          kind: "session_ttl",
+          ttlMs,
+          scheduledAt: startedAt,
+        });
+        await this.state.storage.setAlarm(startedAt + ttlMs);
+      }
 
       let audit = { ok: false };
       let cache = { ok: false };
       let auditVerify = { ok: false };
-      let auditPersisted = { ok: false };
+      let auditPersisted = { ok: false, deferred: true };
       let complianceWorm = { deferred: true };
       const wormCfg = resolveWormConfig(this.env);
 
+      // In-process ring/cache only — DO LTX flush is deferred until AFTER all
+      // outbound fetches (celld output gate: storage.put mid-handler fences later fetch).
       try {
         audit = await appendSessionCreatedAudit({
           subscriptionId,
@@ -159,11 +197,6 @@ export class AgentSessionDO {
         });
         cache = await cacheSessionMeta(eventId, meta);
         auditVerify = await verifyAuditChain();
-        auditPersisted = await persistAuditRingToLtx(this.state, {
-          verify: auditVerify,
-          eventId,
-          startedAt,
-        });
       } catch (err) {
         audit = {
           ok: false,
@@ -223,56 +256,105 @@ export class AgentSessionDO {
         );
       }
 
-      let inference = { skipped: true, reason: "no INFERENCE_URL" };
+      // All outbound fetches before any further storage.put (celld durability gate).
+      // Fan-out tools+inference in ONE Promise.all wave: a later sequential fetch
+      // after prior hops complete is NodeFenced under celld's output gate (even
+      // with no explicit mid-handler storage.put).
+      const mcp = resolveMcpConfig(this.env);
+      const adapter = resolveAdapterConfig(this.env);
+      const memoryTitle = `streams-celld session ${eventId.slice(0, 8)}`;
       const inferenceUrl = resolveInferenceUrl(this.env);
-      if (inferenceUrl) {
+
+      async function runInferenceProbe() {
+        if (!inferenceUrl) {
+          return { skipped: true, reason: "no INFERENCE_URL" };
+        }
+        const base = inferenceUrl.replace(/\/$/, "");
         try {
-          const res = await fetch(`${inferenceUrl.replace(/\/$/, "")}/healthz`, {
+          // Kick both hops without awaiting between them so healthz+turn share
+          // the same output-gate window as sibling tool fetches.
+          const healthP = fetch(`${base}/healthz`, {
             method: "GET",
             headers: { accept: "application/json" },
           });
-          inference = {
+          const turnP = fetch(`${base}/v1/messages`, {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              accept: "application/json",
+              authorization: `Bearer ${virtualKeyId}`,
+            },
+            body: JSON.stringify({
+              model: "stub-frugal",
+              prompt: `streams session ${eventId} subscription ${subscriptionId}`,
+              max_tokens: 64,
+            }),
+            signal: AbortSignal.timeout(10_000),
+          });
+          const [health, turnRes] = await Promise.all([healthP, turnP]);
+          const turnText = await turnRes.text();
+          let turnBody = null;
+          try {
+            turnBody = turnText ? JSON.parse(turnText) : null;
+          } catch {
+            turnBody = { raw: turnText.slice(0, 300) };
+          }
+          return {
             skipped: false,
-            status: res.status,
-            ok: res.ok,
+            ok: health.ok && turnRes.ok,
+            healthz: { status: health.status, ok: health.ok },
+            turn: {
+              status: turnRes.status,
+              ok: turnRes.ok,
+              id: turnBody?.id ?? null,
+              turn: turnBody?.turn ?? 1,
+              source: turnBody?.source ?? null,
+            },
+            turns: turnRes.ok ? 1 : 0,
           };
-          await this.state.storage.put("inference_probe", inference);
         } catch (err) {
-          inference = {
+          return {
             skipped: false,
             ok: false,
+            turns: 0,
             error: err instanceof Error ? err.message : String(err),
           };
         }
       }
 
-      const mcp = resolveMcpConfig(this.env);
-      const adapter = resolveAdapterConfig(this.env);
-      const memoryTitle = `streams-celld session ${eventId.slice(0, 8)}`;
+      const [search, execute, memory_ingest, memory_recall, adapter_search, inference] =
+        await Promise.all([
+          searchViaMcp(
+            mcp,
+            mcp.preferCoreInCelld
+              ? "listPets pets openapi"
+              : `subscription:${subscriptionId}`,
+            { limit: 3 }
+          ),
+          // Prefer in-cell noop (no upstream). listPets REST is exercised via Worker POST /mcp.
+          executeViaMcp(mcp, "streams.session.noop", { eventId }),
+          memoryIngestViaMcp(mcp, {
+            title: memoryTitle,
+            insights: `AgentSessionDO spawned subscription=${subscriptionId} event=${eventId}`,
+            sessionId: eventId,
+            type: "context",
+            tags: ["streams", "celld"],
+          }),
+          memoryRecallViaMcp(mcp, `streams-celld ${subscriptionId}`, {
+            limit: 3,
+          }),
+          toolViaAdapter(adapter, "search", {
+            query: `adapter:${subscriptionId}`,
+            limit: 1,
+          }),
+          runInferenceProbe(),
+        ]);
       const tools = {
-        search: await searchViaMcp(
-          mcp,
-          mcp.preferCoreInCelld ? "listPets pets openapi" : `subscription:${subscriptionId}`,
-          { limit: 3 }
-        ),
-        // Prefer in-cell noop (no upstream). listPets REST is exercised via Worker POST /mcp.
-        execute: await executeViaMcp(mcp, "streams.session.noop", { eventId }),
-        memory_ingest: await memoryIngestViaMcp(mcp, {
-          title: memoryTitle,
-          insights: `AgentSessionDO spawned subscription=${subscriptionId} event=${eventId}`,
-          sessionId: eventId,
-          type: "context",
-          tags: ["streams", "celld"],
-        }),
-        memory_recall: await memoryRecallViaMcp(
-          mcp,
-          `streams-celld ${subscriptionId}`,
-          { limit: 3 }
-        ),
-        adapter_search: await toolViaAdapter(adapter, "search", {
-          query: `adapter:${subscriptionId}`,
-          limit: 1,
-        }),
+        search,
+        execute,
+        memory_ingest,
+        memory_recall,
+        adapter_search,
       };
 
       const inProcess = ["audit", "cache", "hash-chain"];
@@ -293,6 +375,30 @@ export class AgentSessionDO {
       if (!adapter.url) deferred.push("mcp-api-adapter");
       if (!wormCfg.url) deferred.push("clawql-audit-worm");
 
+      // Final durable writes only after all outbound fetches (celld output gate).
+      // Include deferred LTX audit ring flush here — never mid-handler before fetch.
+      try {
+        auditPersisted = await persistAuditRingToLtx(this.state, {
+          verify: auditVerify,
+          eventId,
+          startedAt,
+        });
+      } catch (err) {
+        auditPersisted = {
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
+      if (inference && inference.skipped === false) {
+        await this.state.storage.put("inference_probe", inference);
+        await this.state.storage.put(`worm:inference:${startedAt}`, {
+          kind: "INFERENCE_TURN",
+          virtualKeyId,
+          eventId,
+          ok: inference.ok === true,
+          inferenceId: inference.turn?.id ?? null,
+        });
+      }
       await this.state.storage.put(`tool_calls:${startedAt}`, {
         searchOk: tools.search?.ok === true,
         executeOk: tools.execute?.ok === true,
@@ -308,6 +414,7 @@ export class AgentSessionDO {
       return Response.json({
         do: "AgentSessionDO",
         session: meta,
+        alarm: ttlMs > 0 ? { kind: "session_ttl", ttlMs, scheduled: true } : { scheduled: false },
         inference,
         audit: {
           wormKey: `worm:${startedAt}`,
@@ -322,7 +429,7 @@ export class AgentSessionDO {
         core: {
           package: "clawql-core/streams-slim",
           inProcess,
-          durable: ["audit:ring", "audit:seq:*", "worm:*", "CoreToolsDO"],
+          durable: ["audit:ring", "audit:seq:*", "worm:*", "CoreToolsDO", "alarm_intent"],
           outOfProcess,
           deferred,
           coreInCelld: Boolean(mcp.preferCoreInCelld),
@@ -335,10 +442,12 @@ export class AgentSessionDO {
 
     const meta = await this.state.storage.get("session_meta");
     const auditRing = await this.state.storage.get("audit:ring");
+    const alarmFired = await this.state.storage.get("alarm_fired");
     return Response.json({
       do: "AgentSessionDO",
       session: meta ?? null,
       auditRing: auditRing ?? null,
+      alarmFired: alarmFired ?? null,
     });
   }
 }

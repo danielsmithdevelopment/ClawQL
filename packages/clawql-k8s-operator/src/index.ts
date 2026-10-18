@@ -97,3 +97,12 @@ export {
   type OperatorLifecycleWORMEntryType,
   type SessionRoutingWORMEntryType,
 } from "./worm-types.js";
+export {
+  HostWormAppendService,
+  appendBridgedMeshDenialEffect,
+  appendHostWormEntryEffect,
+  hostWormAppendLayer,
+  resolveHostWormConfig,
+  type HostWormAppendConfig,
+  type HostWormAppendResult,
+} from "./worm-append.js";

@@ -17,7 +17,8 @@ const srcRelative = path.join('docs', 'streams', 'aws-celld-burst.md')
 function findRepoRootWithDocs() {
   let dir = websiteRoot
   for (let i = 0; i < 10; i++) {
-    if (fs.existsSync(path.join(dir, 'docs'))) {
+    // Prefer monorepo root (docs/streams/…), not apps/docs itself.
+    if (fs.existsSync(path.join(dir, srcRelative))) {
       return dir
     }
     const parent = path.dirname(dir)

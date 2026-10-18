@@ -258,6 +258,8 @@ jobs:
           node docs/examples/streams-celld/scripts/mcp-fetch.test.mjs
           node docs/examples/streams-celld/scripts/adapter-fetch.test.mjs
           node docs/examples/streams-celld/scripts/worm-fetch.test.mjs
+          node docs/examples/streams-celld/scripts/significance-filter.test.mjs
+          node docs/examples/streams-celld/scripts/core-catalog.test.mjs
 
       - name: Bundle size gate (≤64 MiB)
         run: node docs/examples/streams-celld/scripts/bundle-check.mjs
@@ -303,6 +305,11 @@ jobs:
         env:
           STREAMS_CELLD_SMOKE_REQUIRED: "1"
         run: bash docs/examples/streams-celld/scripts/smoke.sh
+
+      - name: Core-in-celld smoke (CoreToolsDO)
+        env:
+          STREAMS_CELLD_SMOKE_REQUIRED: "1"
+        run: bash docs/examples/streams-celld/scripts/smoke-core-in-celld.sh
 
   streams-celld-full-stack:
     name: Streams celld full-stack
