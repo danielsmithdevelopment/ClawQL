@@ -94,29 +94,34 @@ export PATH="$HOME/.local/bin:$PATH"
 CELLD_VERSION=v0.4.0 CLAWQL_PROGRAM_CELLD_ISOLATE=1 \
   clawql security celld --json
 
+# Same pin surface in onboarding doctor (stand-in ok; warn if isolate half-configured)
+clawql doctor
+
 clawql security inject --mode direct|indirect|multistep [--json]
 ```
 
 - `clawql security celld` — pin readiness / kill-node *eligibility* (does not spawn celld).
+- `clawql doctor` — surfaces celld pin stand-in vs `isolateReady` (warns on incomplete pin).
 - `clawql security inject` — in-process Panguard drills (§24).
 - Live MCP: openbench `memory-injection-attempt`.
 - Crash claim: only after `pin.isolateReady` **and** three-arm celld kill-node demo (ADR 0015).
 
 ### Hot-path A/B — celld env does not hurt publish boards
 
-Artifact: [`celld-hotpath-ab/celld-hotpath-ab.json`](./celld-hotpath-ab/celld-hotpath-ab.json) (remeasured 2026-10-18, n=2000).
+Publish-grade artifact: [`celld-hotpath-ab/celld-hotpath-ab-10k.json`](./celld-hotpath-ab/celld-hotpath-ab-10k.json) (2026-10-18, **n=10000**). Smoke: [`celld-hotpath-ab.json`](./celld-hotpath-ab/celld-hotpath-ab.json) (n=2000).
 
-Same equal-arm OpenAPI `execute` → `listPets` as the gateway-multi publish board:
+Same equal-arm OpenAPI `execute` → `listPets` as the gateway-multi publish board (n=10k):
 
 | Variant | e2e p50 / p99 (ms) | gateway_cost p50 / p99 | vs baseline gateway p50 |
 | --- | ---: | ---: | ---: |
-| **A** baseline (publish shape) | 1.16 / 2.51 | **0.84 / 2.16** | — |
-| **B** + `CLAWQL_ENABLE_DURABLE_PROGRAMS=1` | 1.09 / 2.29 | 0.86 / 1.96 | **+3.0%** |
-| **C** + celld pin + `CLAWQL_PROGRAM_CELLD_ISOLATE=1` | 1.05 / 2.23 | 0.87 / 1.93 | **+3.7%** |
+| **A** baseline (publish shape) | 0.73 / 1.98 | **0.60 / 1.68** | — |
+| **B** + `CLAWQL_ENABLE_DURABLE_PROGRAMS=1` | 0.73 / 2.05 | 0.61 / 1.78 | **+2.7%** |
+| **C** + celld pin + `CLAWQL_PROGRAM_CELLD_ISOLATE=1` | 0.73 / 1.91 | 0.61 / 1.69 | **+2.7%** |
 
 Gate (≤15% p50 / ≤25% p99 gateway regress): **PASS**. Enabling durable programs and the celld pin/isolate env on the Core process does **not** move publish latency outside noise — the pets board never calls celld.
 
 ```bash
-MULTI_ITERS=2000 CLAWQL_CELLD_BIN=$HOME/.local/bin/celld \
+MULTI_ITERS=10000 CLAWQL_CELLD_BIN=$HOME/.local/bin/celld \
+  CELLD_AB_OUT=celld-hotpath-ab-10k.json \
   npm run benchmark:celld-hotpath-ab
 ```
