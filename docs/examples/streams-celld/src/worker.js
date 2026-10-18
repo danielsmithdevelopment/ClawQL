@@ -6,6 +6,7 @@ export { GatewayDO } from "./gateway-do.js";
 export { SubscriptionDO } from "./subscription-do.js";
 export { AgentSessionDO } from "./agent-session-do.js";
 export { CoreToolsDO } from "./core-tools-do.js";
+export { ProgramCellDO } from "./program-cell-do.js";
 
 export default {
   async fetch(request, env) {
@@ -16,7 +17,13 @@ export default {
         service: "clawql-streams-celld-skeleton",
         celldBaseline: "v0.4.0",
         coreInCelld: true,
-        routes: ["/health", "/mcp", "/core/health", "/webhook/{subscriptionId}"],
+        routes: [
+          "/health",
+          "/mcp",
+          "/core/health",
+          "/program/*",
+          "/webhook/{subscriptionId}",
+        ],
       });
     }
 
@@ -33,6 +40,13 @@ export default {
       return env.CORE_TOOLS.get(id).fetch(
         new Request(new URL(path, request.url), request)
       );
+    }
+
+    // ADR 0015 ProgramCellDO — durable plan journal in DO storage.
+    if (url.pathname.startsWith("/program")) {
+      const programKey = url.searchParams.get("cell") || "default";
+      const id = env.PROGRAM_CELL.idFromName(`program:${programKey}`);
+      return env.PROGRAM_CELL.get(id).fetch(request);
     }
 
     const gatewayId = env.GATEWAY.idFromName("gateway");

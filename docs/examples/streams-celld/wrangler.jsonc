@@ -23,7 +23,8 @@
       { "name": "GATEWAY", "class_name": "GatewayDO" },
       { "name": "SUBSCRIPTION", "class_name": "SubscriptionDO" },
       { "name": "AGENT_SESSION", "class_name": "AgentSessionDO" },
-      { "name": "CORE_TOOLS", "class_name": "CoreToolsDO" }
+      { "name": "CORE_TOOLS", "class_name": "CoreToolsDO" },
+      { "name": "PROGRAM_CELL", "class_name": "ProgramCellDO" }
     ]
   },
   "migrations": [
@@ -34,6 +35,10 @@
     {
       "tag": "v2-core-tools",
       "new_sqlite_classes": ["CoreToolsDO"]
+    },
+    {
+      "tag": "v3-program-cell",
+      "new_sqlite_classes": ["ProgramCellDO"]
     }
   ]
 }

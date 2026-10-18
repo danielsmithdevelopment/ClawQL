@@ -22,6 +22,13 @@ export const CORE_SLIM_CATALOG = Object.freeze([
     summary: "Lab noop for celld AgentSessionDO smoke",
     tags: ["streams", "celld", "noop"],
   },
+  {
+    operationId: "owners.create",
+    summary: "Create owner (write op for ProgramCellDO kill-node)",
+    method: "POST",
+    path: "/owners",
+    tags: ["owners", "write", "program-cell"],
+  },
 ]);
 
 export const CORE_IN_CELLD_HONESTY =
