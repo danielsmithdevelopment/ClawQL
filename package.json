@@ -106,6 +106,7 @@
     "benchmark:executor-comparison:latency-fair": "node scripts/benchmarks/executor-comparison-latency-fair.mjs",
     "benchmark:executor-comparison:comprehensive": "node scripts/benchmarks/executor-comparison-comprehensive.mjs",
     "benchmark:gateway-multi-comparison": "node scripts/benchmarks/gateway-multi-comparison.mjs",
+    "benchmark:gateway-multi-topology-b": "node scripts/benchmarks/gateway-multi-topology-b.mjs",
     "benchmark:gateway-multi-multiturn": "node scripts/benchmarks/gateway-multi-multiturn.mjs",
     "generate:executor-cmp-latency-html": "node scripts/benchmarks/generate-executor-cmp-latency-html.mjs",
     "generate:executor-cmp-static": "npm run generate:executor-cmp-static -w mcp-api-adapter",
