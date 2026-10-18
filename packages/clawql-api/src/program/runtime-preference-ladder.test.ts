@@ -24,7 +24,7 @@ describe("runtime preference ladder", () => {
     expect(d.messages.join(" ")).toMatch(/celld/);
   });
 
-  it("prompts install celld then lands on bun when celld missing", () => {
+  it("prompts install celld then soft-continues to bun when celld missing", () => {
     const d = decideRuntimeLadder({
       celldPresent: false,
       celldVersion: null,
@@ -34,8 +34,10 @@ describe("runtime preference ladder", () => {
       bunDeclined: false,
     });
     expect(d.tier).toBe("bun");
-    expect(d.messages.some((m) => m.includes(INSTALL_CELLD_HINT.split(":")[0]!))).toBe(true);
+    // Missing must NOT be treated as declined — doctor needs this to prompt install.
+    expect(d.celldDeclined).toBe(false);
     expect(d.messages.join("\n")).toContain(INSTALL_CELLD_HINT);
+    expect(d.honesty).toMatch(/install recommended/);
   });
 
   it("goes bun when celld declined", () => {
@@ -48,7 +50,9 @@ describe("runtime preference ladder", () => {
       bunDeclined: false,
     });
     expect(d.tier).toBe("bun");
+    expect(d.celldDeclined).toBe(true);
     expect(d.messages.join(" ")).toMatch(/declined/i);
+    expect(d.honesty).toMatch(/declined/);
   });
 
   it("prompts bun install then node with improve hint", () => {
@@ -61,8 +65,10 @@ describe("runtime preference ladder", () => {
       bunDeclined: false,
     });
     expect(d.tier).toBe("node");
+    expect(d.bunDeclined).toBe(false);
     expect(d.messages.join("\n")).toContain(INSTALL_BUN_HINT);
     expect(d.messages.join("\n")).toContain(NODE_IMPROVE_HINT);
+    expect(d.messages.join("\n")).toMatch(/isolation and performance/);
   });
 
   it("node when both declined", () => {
@@ -76,6 +82,23 @@ describe("runtime preference ladder", () => {
     });
     expect(d.tier).toBe("node");
     expect(d.honesty).toMatch(/legacy/);
+  });
+
+  it("both missing keeps refuse flags false so doctor can prompt each rung", () => {
+    const d = decideRuntimeLadder({
+      celldPresent: false,
+      celldVersion: null,
+      bunPresent: false,
+      bunVersion: null,
+      celldDeclined: false,
+      bunDeclined: false,
+    });
+    expect(d.tier).toBe("node");
+    expect(d.celldDeclined).toBe(false);
+    expect(d.bunDeclined).toBe(false);
+    expect(d.messages.join("\n")).toContain(INSTALL_CELLD_HINT);
+    expect(d.messages.join("\n")).toContain(INSTALL_BUN_HINT);
+    expect(d.messages.join("\n")).toContain(NODE_IMPROVE_HINT);
   });
 
   it("env refuse flags", () => {

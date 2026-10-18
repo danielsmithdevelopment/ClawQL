@@ -57,9 +57,9 @@ export const INSTALL_BUN_HINT =
   "Install Bun: curl -fsSL https://bun.sh/install | bash  (then: bun run bin/clawql-mcp-http.mjs)";
 
 export const NODE_IMPROVE_HINT =
-  "On Node (legacy host). Improve isolation: install celld and use CoreToolsDO. " +
-  "Improve host RSS/latency: install Bun and run `bun run bin/clawql-mcp-http.mjs` " +
-  "(equal-arm boards: Bun ~22–28% lower RSS, ~25%+ better p50 vs Node).";
+  "On Node (legacy host). You can improve isolation and performance with the preceding " +
+  "options: install celld (CoreToolsDO / Durable Object isolation) and/or install Bun " +
+  "(`bun run bin/clawql-mcp-http.mjs` — equal-arm boards: ~22–28% lower RSS, ~25%+ better p50 vs Node).";
 
 function envFlag(name: string, env: NodeJS.ProcessEnv): boolean {
   const v = env[name]?.trim().toLowerCase();
@@ -124,7 +124,7 @@ export function decideRuntimeLadder(input: RuntimeLadderInput): RuntimeLadderDec
     );
     messages.push(INSTALL_CELLD_HINT);
     messages.push(
-      "Decline celld? Set CLAWQL_DECLINE_CELLD=1 (or answer no in `clawql doctor`) to continue on Bun."
+      "Run `clawql doctor` to install, or set CLAWQL_DECLINE_CELLD=1 to refuse and continue on Bun."
     );
   } else if (celldDeclined) {
     messages.push(
@@ -141,12 +141,15 @@ export function decideRuntimeLadder(input: RuntimeLadderInput): RuntimeLadderDec
       tier: "bun",
       celldPresent,
       bunPresent,
-      celldDeclined: celldDeclined || !celldPresent,
+      // Keep explicit refuse separate from "missing" so doctor can still prompt install.
+      celldDeclined,
       bunDeclined,
       messages,
       installCelldHint: INSTALL_CELLD_HINT,
       installBunHint: INSTALL_BUN_HINT,
-      honesty: "tier=bun (celld missing or declined)",
+      honesty: celldDeclined
+        ? "tier=bun (celld declined)"
+        : "tier=bun (celld missing — install recommended)",
     };
   }
 
@@ -156,7 +159,7 @@ export function decideRuntimeLadder(input: RuntimeLadderInput): RuntimeLadderDec
     );
     messages.push(INSTALL_BUN_HINT);
     messages.push(
-      "Decline Bun? Set CLAWQL_DECLINE_BUN=1 (or answer no in `clawql doctor`) to continue on Node."
+      "Run `clawql doctor` to install, or set CLAWQL_DECLINE_BUN=1 to refuse and continue on Node."
     );
   } else if (bunDeclined) {
     messages.push("Runtime ladder: Bun declined — continuing to Node (legacy).");
@@ -168,8 +171,8 @@ export function decideRuntimeLadder(input: RuntimeLadderInput): RuntimeLadderDec
     tier: "node",
     celldPresent,
     bunPresent,
-    celldDeclined: celldDeclined || !celldPresent,
-    bunDeclined: bunDeclined || !bunPresent,
+    celldDeclined,
+    bunDeclined,
     messages,
     installCelldHint: INSTALL_CELLD_HINT,
     installBunHint: INSTALL_BUN_HINT,
