@@ -22,7 +22,8 @@ The right demo is the **production shape**: slim cell + real sidecars.
 | -------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | Contract smoke       | celld + **mock** MCP + **mock** adapter                                                     | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke`         |
 | **Core in celld**    | celld `CoreToolsDO` handles `search`/`execute` (no host MCP) + mock pets upstream           | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:core-in-celld` |
-| **Full-stack smoke** | celld + **real** `clawql-mcp-http` + **real** `mcp-api-adapter` + inference multi-turn stub | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:full`    |
+| **Full-stack smoke** | celld + **real** `clawql-mcp-http` (Lab 5b OpenAPI pack) + **real** `mcp-api-adapter` + inference multi-turn stub | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:full`    |
+| **Host MCP pack** | Real `clawql-mcp-http` + Lab 5b OpenAPI pack — `execute(streams.session.noop)` without celld | `npm run smoke:host-mcp-pack` |
 | Containers           | MCP + adapter images (celld on host)                                                        | `docker compose -f docker-compose.full.yml up --build` |
 
 ## In-process vs out-of-process

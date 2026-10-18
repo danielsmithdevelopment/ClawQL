@@ -28,6 +28,7 @@ node "$ROOT/scripts/mcp-fetch.test.mjs"
 node "$ROOT/scripts/adapter-fetch.test.mjs"
 node "$ROOT/scripts/significance-filter.test.mjs"
 node "$ROOT/scripts/core-catalog.test.mjs"
+node "$ROOT/scripts/openapi-pack.test.mjs"
 
 # Mock MCP (memory_*) + adapter + inference stub + pets upstream for CoreToolsDO execute.
 node "$ROOT/scripts/mock-mcp-server.mjs" "$MCP_PORT" &

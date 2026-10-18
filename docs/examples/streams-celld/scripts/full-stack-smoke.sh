@@ -48,13 +48,25 @@ node "$ROOT/scripts/mcp-fetch.test.mjs"
 node "$ROOT/scripts/adapter-fetch.test.mjs"
 node "$ROOT/scripts/worm-fetch.test.mjs"
 
-# Real clawql-mcp (empty OpenAPI catalog is fine — skills + memory still register).
+# Pets upstream for CoreToolsDO + Lab 5b OpenAPI pack (listPets + streams.session.noop).
+node "$ROOT/scripts/mock-pets-upstream.mjs" "$PETS_PORT" &
+PETS_PID=$!
+
+LAB5B_OPENAPI="$ROOT/openapi/streams-lab5b.openapi.json"
+if [[ ! -f "$LAB5B_OPENAPI" ]]; then
+  echo "full-stack-smoke: FAIL — missing Lab 5b OpenAPI pack: $LAB5B_OPENAPI" >&2
+  exit 1
+fi
+node "$ROOT/scripts/openapi-pack.test.mjs"
+
+# Real clawql-mcp with Lab 5b OpenAPI pack (closes empty-catalog noop honesty gap).
 # Process WORM (clawql-audit) exposes HTTP /entries for the cell dual-write.
 (
   cd "$REPO"
   export PORT="$MCP_PORT"
   export MCP_PATH=/mcp
   export CLAWQL_ALLOW_NO_ENFORCEMENT=1
+  export CLAWQL_CAPABILITY_LIFECYCLE=0
   export CLAWQL_ENABLE_MEMORY=1
   export CLAWQL_OBSIDIAN_VAULT_PATH="$VAULT_DIR"
   export CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE=1
@@ -68,7 +80,9 @@ node "$ROOT/scripts/worm-fetch.test.mjs"
   export CLAWQL_WORM_HTTP_PORT="$WORM_PORT"
   export CLAWQL_AUDIT_API_KEY="$WORM_API_KEY"
   export CLAWQL_WORM_DEBUG=1
-  # Prefer empty catalog unless the operator set a pack.
+  export CLAWQL_SPEC_PATH="${CLAWQL_SPEC_PATH:-$LAB5B_OPENAPI}"
+  export CLAWQL_API_BASE_URL="${CLAWQL_API_BASE_URL:-http://127.0.0.1:${PETS_PORT}}"
+  export CLAWQL_OPENAPI_EXECUTE_PATH="${CLAWQL_OPENAPI_EXECUTE_PATH:-rest}"
   export CLAWQL_PROVIDER="${CLAWQL_PROVIDER:-}"
   unset CLAWQL_BUNDLED_PROVIDERS || true
   exec node bin/clawql-mcp-http.mjs
@@ -78,10 +92,6 @@ MCP_PID=$!
 # Inference stub: /healthz + multi-turn POST /v1/messages (bind-on-create vk Bearer).
 node "$ROOT/scripts/inference-health-stub.mjs" "$INFER_PORT" >/dev/null 2>&1 &
 INFER_PID=$!
-
-# Pets upstream for default CoreToolsDO execute (celld-isolate).
-node "$ROOT/scripts/mock-pets-upstream.mjs" "$PETS_PORT" &
-PETS_PID=$!
 
 wait_http() {
   local url="$1" name="$2" pid="$3" tries="${4:-60}"

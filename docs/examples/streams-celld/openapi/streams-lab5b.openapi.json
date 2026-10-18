@@ -1,0 +1,73 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "ClawQL Streams Lab 5b slim pack",
+    "version": "0.1.0",
+    "description": "Minimal OpenAPI pack for Lab 5b host MCP: equal-arm listPets + streams.session.noop. Not a production catalog."
+  },
+  "servers": [{ "url": "http://127.0.0.1:0" }],
+  "paths": {
+    "/pets": {
+      "get": {
+        "operationId": "listPets",
+        "summary": "List pets (equal-arm OpenAPI board op)",
+        "tags": ["pets", "openapi", "equal-arm"],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "integer" },
+                          "name": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/streams/session/noop": {
+      "get": {
+        "operationId": "streams.session.noop",
+        "summary": "Lab noop for celld AgentSessionDO / host MCP smoke (read — no mandate)",
+        "tags": ["streams", "celld", "noop"],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "noop ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "inCell": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
