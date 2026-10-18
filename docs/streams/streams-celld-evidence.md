@@ -165,8 +165,9 @@ node apps/docs/scripts/sync-streams-celld-evidence-doc.mjs
 **Closed (local):** host MCP OpenAPI pack · Lab VK bind/budget/expire stub · ADR 0015
 file-journal SIGKILL stand-in · AgentSessionDO expire-on-destroy via TTL alarm.
 
-**Still open (not local Lab 5b):** `ProgramCellDO` isolate kill-node · full
-`DeductionService` ledger · `stream_*` MCP package · AWS Cost Explorer measurement.
+**Still open (not local Lab 5b):** full `DeductionService` ledger / model-escalation
+spend ceilings · `stream_*` MCP package · AWS Cost Explorer measurement · fleet LTX /
+three-arm product kill-node gate (Lab `ProgramCellDO` isolate kill smoke is **Yes** above).
 
 ---
 

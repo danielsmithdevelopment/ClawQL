@@ -520,7 +520,7 @@ Arguments become `{ source?, programId?, timeoutMs? }`:
 
 **Journal directory.** **`CLAWQL_PROGRAM_JOURNAL_DIR`**, else `$CLAWQL_HOME/program-journal`, else `<os tmpdir>/clawql-program-journal`. The tmpdir default may not survive a reboot, so set one of the first two when resume matters. The directory is created `0700` and refused if another user owns it or it is world-writable; journal files are `0600`. Run one server process per journal directory: the lease that keeps two attempts off one program is in-process.
 
-**Earned scope.** Tests SIGKILL a child process mid-program and resume from the same journal directory without repeating a journaled call (a read in flight runs again; a non-read call in flight resumes as `outcome_unknown`). The celld kill-node demo, which ADR 0015 requires before claiming programs "survive a crash", is still ahead.
+**Earned scope.** Tests SIGKILL a child process mid-program and resume from the same journal directory without repeating a journaled call (a read in flight runs again; a non-read call in flight resumes as `outcome_unknown`). Lab 5b ships a local **ProgramCellDO** isolate kill-node smoke (DO journal resume; see [`streams-celld-evidence`](../streams/streams-celld-evidence.md)). Fleet LTX diagnose + three-arm product gate still required before claiming programs "survive a crash" in the wild.
 
 ---
 

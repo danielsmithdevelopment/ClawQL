@@ -39,7 +39,7 @@ The IDP pipeline processes documents before agents touch them. Multiple vendors 
 
 ## Streams
 
-A ClawQL Streams `stream_subscribe` call points at any event source: a WebSocket feed, a NATS subject, a webhook, a cron schedule, an API polled on an interval, a QR stream from an air-gapped system. When an event comes in, a significance filter decides whether to wake an agent. The agent runs, uses the full ClawQL tool surface, writes its findings to the WORM audit trail, and goes back to listening. The event source fires. The agent acts. No human starts the session.
+A planned ClawQL Streams `stream_subscribe` MCP call will point at any event source: a WebSocket feed, a NATS subject, a webhook, a cron schedule, an API polled on an interval, a QR stream from an air-gapped system. When an event comes in, a significance filter decides whether to wake an agent. Lab 5b on celld already proves that path today (Gateway / Subscription / AgentSession DOs); the `stream_*` package is not shipped yet. The agent runs, uses the full ClawQL tool surface, writes its findings to the WORM audit trail, and goes back to listening. The event source fires. The agent acts. No human starts the session.
 
 ---
 

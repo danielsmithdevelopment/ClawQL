@@ -133,8 +133,9 @@ export default function Page() {
           <p>
             Every other agent platform requires a human to start the session. Streams points a subscription at any event
             source — WebSocket, NATS, webhook, cron, polled API, or QR stream. When an event crosses the significance
-            threshold, an agent session spawns (Lab 5b on celld today; the <code className="text-sm">stream_subscribe</code>{' '}
-            MCP package is still shipping). Memory recall, tool execution, and multi-turn inference run under a
+            threshold, an agent session spawns (Lab 5b on celld today; the{' '}
+            <code className="text-sm">stream_subscribe</code> MCP package is{' '}
+            <strong>not shipped</strong> — planned). Memory recall, tool execution, and multi-turn inference run under a
             bind-on-create virtual key; humans review via <code className="text-sm">/mcp-ui</code>. The decision lands
             in the WORM trail.
           </p>
