@@ -19,6 +19,7 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 | **CoreToolsDO** slim search/execute                     | **Yes** (default)    | Mock + full-stack smoke `celld-isolate`; escape `CLAWQL_CORE_IN_CELLD=0` → host MCP (Bun) |
 | Host `clawql-audit` via `CLAWQL_AUDIT_WORM_URL`         | **No** — `fetch`     | `worm-fetch.test.mjs` + full-stack `SESSION_START` + `/chain/verify`       |
 | Streamable HTTP MCP (`CLAWQL_MCP_URL`)                  | **No** — `fetch`     | `mcp-fetch.test.mjs` + mock smoke + **full-stack** real MCP                |
+| Lab 5b OpenAPI pack (`listPets` + `streams.session.noop`) | **Host file**      | `openapi-pack.test.mjs` + `smoke-host-mcp-pack.sh` + full-stack `CLAWQL_SPEC_PATH` |
 | mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)         | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real                |
 | Inference multi-turn skeleton                           | **No** — `fetch`     | Smoke + full-stack stub 2× `POST /v1/messages` (`turns:2`, `virtualKeyBound`); real gateway via compose |
 | Helm celld StatefulSet / probes                         | Chart only           | `make helm-celld-template-tests`                                           |
@@ -46,11 +47,20 @@ node docs/examples/streams-celld/scripts/adapter-fetch.test.mjs
 node docs/examples/streams-celld/scripts/worm-fetch.test.mjs
 node docs/examples/streams-celld/scripts/significance-filter.test.mjs
 node docs/examples/streams-celld/scripts/core-catalog.test.mjs
+node docs/examples/streams-celld/scripts/openapi-pack.test.mjs
 node docs/examples/streams-celld/scripts/bundle-check.mjs
 make helm-celld-template-tests
 ```
 
 Expected: all exit **0**; bundle size printed ≈ **0.4 MiB** (must be &lt; **64 MiB**).
+
+Host MCP + Lab 5b OpenAPI pack (no celld required):
+
+```bash
+bash docs/examples/streams-celld/scripts/smoke-host-mcp-pack.sh
+```
+
+Expected: `search` finds `streams.session.noop` and `execute` succeeds against the mock upstream.
 
 ### Local E2E smoke (requires celld v0.4.0 + esbuild)
 
@@ -120,8 +130,10 @@ node apps/docs/scripts/sync-streams-celld-evidence-doc.mjs
 - In-cell Express mcp-api-adapter / in-cell disk `clawql-audit` (**use sidecars**)
 - Automated multi-node LTX / `celld diagnose` fleet proof in GitHub Actions
 - Comparative “faster than X” marketing claims
-- That empty-catalog `execute(streams.session.noop)` succeeds (OpenAPI pack needed)
 - That DO `audit:ring` / celld LTX alone is a compliance audit trail (see below)
+
+**Closed:** host MCP `execute(streams.session.noop)` with Lab 5b OpenAPI pack
+(`docs/examples/streams-celld/openapi/streams-lab5b.openapi.json`) — see `smoke-host-mcp-pack.sh`.
 
 ---
 
