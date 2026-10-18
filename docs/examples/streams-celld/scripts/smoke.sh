@@ -193,9 +193,10 @@ echo "$RESP" | grep -q 'audit:seq:' || fail "expected audit:seq WORM keys"
 echo "$RESP" | grep -q '"durable"' || fail "expected core.durable surfaces"
 echo "$RESP" | grep -q '"turns":2' || fail "expected inference multi-turn (turns:2)"
 echo "$RESP" | grep -q '"virtualKeyBound":true' || fail "expected virtualKeyBound on inference"
+echo "$RESP" | grep -q '"bind"' || fail "expected inference bind-on-create"
 echo "$RESP" | grep -q 'streams-celld-inference-stub' || fail "expected inference stub source"
 
-# TTL alarm: wait past 1500ms then confirm exitReason=timeout
+# TTL alarm: wait past 1500ms then confirm exitReason=timeout + expire-on-destroy
 sleep 2
 SESSION=$(curl -sf "$BASE/admin/session/smoke/${EVENT_ID}")
 echo "$SESSION" | tee /tmp/streams-session-ttl.json | grep -q '"exitReason":"timeout"' || {
@@ -205,6 +206,16 @@ echo "$SESSION" | tee /tmp/streams-session-ttl.json | grep -q '"exitReason":"tim
 }
 echo "$SESSION" | grep -q 'session_ttl' || {
   echo "smoke: FAIL - expected alarm_fired session_ttl" >&2
+  echo "$SESSION" >&2
+  exit 1
+}
+echo "$SESSION" | grep -q '"virtualKeyExpired":true' || {
+  echo "smoke: FAIL - expected virtualKeyExpired after TTL expire-on-destroy" >&2
+  echo "$SESSION" >&2
+  exit 1
+}
+echo "$SESSION" | grep -q 'VIRTUAL_KEY_EXPIRE\|virtualKeyExpire' || {
+  echo "smoke: FAIL - expected virtualKeyExpire on alarm_fired" >&2
   echo "$SESSION" >&2
   exit 1
 }

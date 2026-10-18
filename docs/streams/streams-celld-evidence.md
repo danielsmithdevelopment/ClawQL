@@ -21,13 +21,17 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 | Streamable HTTP MCP (`CLAWQL_MCP_URL`)                  | **No** — `fetch`     | `mcp-fetch.test.mjs` + mock smoke + **full-stack** real MCP                |
 | Lab 5b OpenAPI pack (`listPets` + `streams.session.noop`) | **Host file**      | `openapi-pack.test.mjs` + `smoke-host-mcp-pack.sh` + full-stack `CLAWQL_SPEC_PATH` |
 | mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)         | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real                |
-| Inference multi-turn skeleton                           | **No** — `fetch`     | Smoke + full-stack stub 2× `POST /v1/messages` (`turns:2`, `virtualKeyBound`); real gateway via compose |
+| Inference multi-turn skeleton                           | **No** — `fetch`     | Smoke + full-stack: bind `POST /v1/keys/bind` + 2× `POST /v1/messages` (`turns:2`, `virtualKeyBound`); TTL expire-on-destroy → `virtualKeyExpired` |
+| Lab VK budget / expire stub (local DeductionService stand-in) | **No** — stub HTTP | `bash docs/examples/streams-celld/scripts/smoke-vk-budget.sh` → bind → 402 ceiling → expire → 401 |
+| ADR 0015 kill-node stand-in (file-journal SIGKILL)      | **Host Node**        | `npm run demo:kill-node-standin` → `docs/benchmarks/program-kill-node-standin/evidence.json` — **not** celld isolate crash survival |
 | Helm celld StatefulSet / probes                         | Chart only           | `make helm-celld-template-tests`                                           |
 | Fleet LTX / multi-node diagnose                         | Manual               | `docs/examples/idp/streams-celld/README.md`                                |
 | `clawql-streams` package / `stream_*` tools             | **Not shipped**      | Spec-only — see Streams §15                                                |
-| Full DeductionService / model-escalation spend ceilings             | **Not shipped**      | Lab binds `vk_lab_*` at session create + Bearer; real model escalation on clawql-inference |
+| Full DeductionService / model-escalation spend ceilings             | **Not shipped**      | Lab stub bind/budget/expire only; real ledger + model escalation on clawql-inference / clawql-payments |
+| celld isolate kill-node (ProgramCellDO + SIGKILL celld) | **Not shipped**      | Stand-in proves file-journal resume only — do not claim V8-isolate / LTX crash survival |
 | Operator mesh denial → host WORM                        | **Package unit**     | `clawql-k8s-operator` `worm-append` + `appendMeshDenialToHostWorm` (no live Istio) |
 | cellrt / TEE / QR stream source                         | **Not shipped**      | Spec drafts under `docs/streams/`                                          |
+| AWS Cost Explorer / live cloud cost measurement         | **Deferred**         | Local-only closeout; no paid AWS keys in Lab 5b gates                      |
 
 ### Why full product is out-of-process (not “missing”)
 
@@ -62,6 +66,23 @@ bash docs/examples/streams-celld/scripts/smoke-host-mcp-pack.sh
 
 Expected: `search` finds `streams.session.noop` and `execute` succeeds against the mock upstream.
 
+Lab VK budget + expire (no celld / no provider keys):
+
+```bash
+bash docs/examples/streams-celld/scripts/smoke-vk-budget.sh
+# or: npm run smoke:vk-budget  (from docs/examples/streams-celld)
+```
+
+Expected: `smoke-vk-budget: PASS` with bind → turn1 200 → ceiling 402 → expire 200 → post-expire 401.
+
+ADR 0015 file-journal SIGKILL stand-in (no celld isolate claim):
+
+```bash
+npm run demo:kill-node-standin
+```
+
+Expected: exit 0; writes `docs/benchmarks/program-kill-node-standin/evidence.json` with both arms `ok: true`. Honesty string must say this is **not** celld isolate kill-node.
+
 ### Local E2E smoke (requires celld v0.4.0 + esbuild)
 
 ```bash
@@ -74,7 +95,7 @@ STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke-co
 
 Without `STREAMS_CELLD_SMOKE_REQUIRED=1`, missing `celld` **exits 0 with a skip message** (developer convenience). CI and release gates must set the env var (or install celld and require the smoke).
 
-Smoke covers: bundle-check → unit fetch/filter tests → mock MCP + mock adapter + inference stub → `celld dev` → significance `never`/`rate`/`composite` → webhook spawn → multi-turn inference (`turns:2`, `virtualKeyBound`) → TTL `exitReason:timeout` → streams-slim / MCP / adapter / LTX. Compliance WORM is **deferred** unless `CLAWQL_AUDIT_WORM_URL` is set (full-stack smoke sets it). Core-in-celld smoke asserts `transport: celld-isolate` for search/execute.
+Smoke covers: bundle-check → unit fetch/filter tests → mock MCP + mock adapter + inference stub → `celld dev` → significance `never`/`rate`/`composite` → webhook spawn → multi-turn inference (bind + `turns:2`, `virtualKeyBound`) → TTL `exitReason:timeout` + expire-on-destroy (`virtualKeyExpired`) → streams-slim / MCP / adapter / LTX. Compliance WORM is **deferred** unless `CLAWQL_AUDIT_WORM_URL` is set (full-stack smoke sets it). Core-in-celld smoke asserts `transport: celld-isolate` for search/execute.
 
 ### Full-stack E2E — real clawql-mcp + adapter + host clawql-audit (CI **Streams celld full-stack**)
 
@@ -132,8 +153,11 @@ node apps/docs/scripts/sync-streams-celld-evidence-doc.mjs
 - Comparative “faster than X” marketing claims
 - That DO `audit:ring` / celld LTX alone is a compliance audit trail (see below)
 
-**Closed:** host MCP `execute(streams.session.noop)` with Lab 5b OpenAPI pack
-(`docs/examples/streams-celld/openapi/streams-lab5b.openapi.json`) — see `smoke-host-mcp-pack.sh`.
+**Closed (local):** host MCP OpenAPI pack · Lab VK bind/budget/expire stub · ADR 0015
+file-journal SIGKILL stand-in · AgentSessionDO expire-on-destroy via TTL alarm.
+
+**Still open (not local Lab 5b):** `ProgramCellDO` isolate kill-node · full
+`DeductionService` ledger · `stream_*` MCP package · AWS Cost Explorer measurement.
 
 ---
 

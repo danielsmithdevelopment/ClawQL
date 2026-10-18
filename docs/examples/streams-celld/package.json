@@ -16,7 +16,8 @@
     "smoke": "bash scripts/smoke.sh",
     "smoke:full": "bash scripts/full-stack-smoke.sh",
     "smoke:core-in-celld": "bash scripts/smoke-core-in-celld.sh",
-    "smoke:host-mcp-pack": "bash scripts/smoke-host-mcp-pack.sh"
+    "smoke:host-mcp-pack": "bash scripts/smoke-host-mcp-pack.sh",
+    "smoke:vk-budget": "bash scripts/smoke-vk-budget.sh"
   },
   "dependencies": {
     "clawql-core": "0.1.0",

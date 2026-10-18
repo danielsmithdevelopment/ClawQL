@@ -49,6 +49,14 @@ function resolveInferenceUrl(env) {
   );
 }
 
+/** Lab stub budget (USD). Real DeductionService ceilings live on clawql-inference. */
+function resolveLabBudgetUsd(env) {
+  const raw = Number(
+    env.CLAWQL_LAB_VK_BUDGET_USD || env.INFERENCE_STUB_BUDGET_USD || "1"
+  );
+  return Number.isFinite(raw) && raw > 0 ? raw : 1;
+}
+
 function resolveWormConfig(env) {
   const url = (env.CLAWQL_AUDIT_WORM_URL || "").trim() || undefined;
   const apiKey =
@@ -104,22 +112,80 @@ export class AgentSessionDO {
     this.env = env;
   }
 
-  /** Streams §3.5 — hard TTL via setAlarm (no setInterval on celld). */
+  /**
+   * Streams §3.5 — hard TTL via setAlarm (no setInterval on celld).
+   * Expire-on-destroy: POST /v1/keys/expire **before** durable storage puts
+   * (celld output gate / NodeFenced if storage mutates then fetch).
+   */
   async alarm() {
     const intent = await this.state.storage.get("alarm_intent");
     const meta = await this.state.storage.get("session_meta");
     if (!meta || typeof meta !== "object") return;
     if (meta.exitReason) return;
     if (intent?.kind === "session_ttl" || !intent) {
+      const virtualKeyId =
+        typeof meta.virtualKeyId === "string" ? meta.virtualKeyId : null;
+      const inferenceUrl = resolveInferenceUrl(this.env);
+      let virtualKeyExpire = { skipped: true, reason: "no_virtual_key" };
+
+      if (virtualKeyId && inferenceUrl) {
+        const base = inferenceUrl.replace(/\/$/, "");
+        try {
+          const res = await fetch(`${base}/v1/keys/expire`, {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              accept: "application/json",
+              authorization: `Bearer ${virtualKeyId}`,
+              "x-clawql-virtual-key": virtualKeyId,
+            },
+            body: JSON.stringify({ virtualKeyId }),
+            signal: AbortSignal.timeout(5_000),
+          });
+          let body = null;
+          try {
+            body = await res.json();
+          } catch {
+            body = null;
+          }
+          virtualKeyExpire = {
+            skipped: false,
+            ok: res.ok,
+            status: res.status,
+            virtualKeyId,
+            expiredAt: body?.expiredAt ?? null,
+          };
+        } catch (err) {
+          virtualKeyExpire = {
+            skipped: false,
+            ok: false,
+            virtualKeyId,
+            error: err instanceof Error ? err.message : String(err),
+          };
+        }
+      } else if (virtualKeyId && !inferenceUrl) {
+        virtualKeyExpire = { skipped: true, reason: "no INFERENCE_URL", virtualKeyId };
+      }
+
+      const closedAt = Date.now();
       const closed = {
         ...meta,
         exitReason: "timeout",
-        closedAt: Date.now(),
+        closedAt,
+        virtualKeyExpired: virtualKeyExpire.ok === true,
       };
+      // Durable writes only after outbound expire fetch (celld output gate).
       await this.state.storage.put("session_meta", closed);
       await this.state.storage.put("alarm_fired", {
-        at: Date.now(),
+        at: closedAt,
         kind: "session_ttl",
+        virtualKeyExpire,
+      });
+      await this.state.storage.put(`worm:vk_expire:${closedAt}`, {
+        kind: "VIRTUAL_KEY_EXPIRE",
+        virtualKeyId,
+        ok: virtualKeyExpire.ok === true,
+        status: virtualKeyExpire.status ?? null,
       });
     }
   }
@@ -132,6 +198,7 @@ export class AgentSessionDO {
       const startedAt = Date.now();
       const doInstanceId = crypto.randomUUID();
       const virtualKeyId = `vk_lab_${eventId.slice(0, 8)}`;
+      const budgetUsd = resolveLabBudgetUsd(this.env);
       const ttlMsRaw = Number(
         request.headers.get("x-clawql-session-ttl-ms") ||
           this.env.CLAWQL_SESSION_TTL_MS ||
@@ -155,6 +222,7 @@ export class AgentSessionDO {
         subscriptionId,
         eventId,
         virtualKeyId,
+        budgetUsd,
         startedAt,
         exitReason: null,
         ttlMs: ttlMs || null,
@@ -275,10 +343,11 @@ export class AgentSessionDO {
       }
 
       /**
-       * Lab 5b multi-turn skeleton (§3.5): healthz + turn1 co-scheduled with
-       * tools; turn2 immediately after (still before any further storage.put).
-       * Virtual key is bound at session create (`vk_lab_*`) and sent as Bearer.
-       * Full DeductionService / model-escalation spend ceilings remain on clawql-inference.
+       * Lab 5b multi-turn skeleton (§3.5): bind-on-create + healthz + turn1
+       * co-scheduled with tools; turn2 immediately after (still before any
+       * further storage.put). Virtual key `vk_lab_*` + budgetUsd at bind;
+       * expire-on-destroy runs in alarm(). Full DeductionService / model
+       * escalation spend ceilings remain on clawql-inference.
        */
       async function runInferenceProbe() {
         if (!inferenceUrl) {
@@ -292,8 +361,13 @@ export class AgentSessionDO {
           "x-clawql-virtual-key": virtualKeyId,
         };
         try {
-          // Kick healthz+turn1 without awaiting between them so they share
-          // the same output-gate window as sibling tool fetches.
+          // Bind + healthz + turn1 in one wave (celld output gate).
+          const bindP = fetch(`${base}/v1/keys/bind`, {
+            method: "POST",
+            headers: authHeaders,
+            body: JSON.stringify({ virtualKeyId, budgetUsd }),
+            signal: AbortSignal.timeout(10_000),
+          });
           const healthP = fetch(`${base}/healthz`, {
             method: "GET",
             headers: { accept: "application/json" },
@@ -307,10 +381,16 @@ export class AgentSessionDO {
               max_tokens: 64,
               turn: 1,
               virtualKeyId,
+              budgetUsd,
             }),
             signal: AbortSignal.timeout(10_000),
           });
-          const [health, turn1Res] = await Promise.all([healthP, turn1P]);
+          const [bindRes, health, turn1Res] = await Promise.all([
+            bindP,
+            healthP,
+            turn1P,
+          ]);
+          const bindBody = await parseTurnBody(bindRes);
           const turn1Body = await parseTurnBody(turn1Res);
 
           // Second model turn before any further DO storage (celld output gate).
@@ -327,6 +407,7 @@ export class AgentSessionDO {
                 turn: 2,
                 priorId: turn1Body?.id ?? null,
                 virtualKeyId,
+                budgetUsd,
               }),
               signal: AbortSignal.timeout(10_000),
             });
@@ -336,15 +417,23 @@ export class AgentSessionDO {
           const turns =
             (turn1Res.ok ? 1 : 0) + (turn2Res && turn2Res.ok ? 1 : 0);
           const virtualKeyBound =
+            bindRes.ok === true ||
+            bindBody?.virtualKeyBound === true ||
             turn1Body?.virtualKeyBound === true ||
             turn2Body?.virtualKeyBound === true ||
             Boolean(virtualKeyId);
 
           return {
             skipped: false,
-            ok: health.ok && turns >= 2,
+            ok: bindRes.ok && health.ok && turns >= 2,
             healthz: { status: health.status, ok: health.ok },
+            bind: {
+              status: bindRes.status,
+              ok: bindRes.ok,
+              budgetUsd: bindBody?.budgetUsd ?? budgetUsd,
+            },
             virtualKeyId,
+            budgetUsd,
             virtualKeyBound,
             turn: {
               status: turn1Res.status,
@@ -352,6 +441,7 @@ export class AgentSessionDO {
               id: turn1Body?.id ?? null,
               turn: turn1Body?.turn ?? 1,
               source: turn1Body?.source ?? null,
+              spentUsd: turn1Body?.spentUsd ?? null,
             },
             turn2: turn2Res
               ? {
@@ -361,6 +451,7 @@ export class AgentSessionDO {
                   turn: turn2Body?.turn ?? 2,
                   priorId: turn2Body?.priorId ?? turn1Body?.id ?? null,
                   source: turn2Body?.source ?? null,
+                  spentUsd: turn2Body?.spentUsd ?? null,
                 }
               : null,
             turns,
@@ -371,6 +462,7 @@ export class AgentSessionDO {
             ok: false,
             turns: 0,
             virtualKeyId,
+            budgetUsd,
             virtualKeyBound: false,
             error: err instanceof Error ? err.message : String(err),
           };
@@ -449,6 +541,7 @@ export class AgentSessionDO {
         await this.state.storage.put(`worm:inference:${startedAt}`, {
           kind: "INFERENCE_MULTI_TURN",
           virtualKeyId,
+          budgetUsd,
           virtualKeyBound: inference.virtualKeyBound === true,
           eventId,
           ok: inference.ok === true,
@@ -501,11 +594,14 @@ export class AgentSessionDO {
     const meta = await this.state.storage.get("session_meta");
     const auditRing = await this.state.storage.get("audit:ring");
     const alarmFired = await this.state.storage.get("alarm_fired");
+    const inferenceProbe = await this.state.storage.get("inference_probe");
     return Response.json({
       do: "AgentSessionDO",
       session: meta ?? null,
       auditRing: auditRing ?? null,
       alarmFired: alarmFired ?? null,
+      inferenceProbe: inferenceProbe ?? null,
+      virtualKeyExpired: meta?.virtualKeyExpired === true,
     });
   }
 }

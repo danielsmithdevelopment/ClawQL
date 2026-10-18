@@ -53,9 +53,9 @@ ClawQL Streams is that pattern as a platform: any event source, any trigger type
 
 On the **celld / Cloudflare** path, each agent cell is a **Workers-safe slim core** plus **out-of-process** MCP/adapter/inference — not a sidecar fleet of containers, and **not** a full Express `mcp-api-adapter` embed (that would blow the 64 MiB budget and pull Node APIs).
 
-**Shipped today** ([`docs/examples/streams-celld`](../../docs/examples/streams-celld/)): Gateway / Subscription / AgentSession DOs, in-process `clawql-core/streams-slim`, significance filter (`always` / `never` / `threshold` / `pattern` / `rate` / `composite`), session TTL via `setAlarm`, **CoreToolsDO** in-isolate slim search/execute **by default** (`CLAWQL_CORE_IN_CELLD=0` escapes to host MCP — **Bun** preferred; Worker `POST /mcp` always hits CoreToolsDO), optional `fetch(CLAWQL_MCP_URL)` for `memory_*` + `fetch(CLAWQL_MCP_ADAPTER_URL)`, multi-turn `fetch(INFERENCE_URL)` stub path (bind-on-create `vk_lab_*`), LTX audit flush + host WORM dual-write. Evidence matrix: [`streams-celld-evidence.md`](/streams/streams-celld-evidence).
+**Shipped today** ([`docs/examples/streams-celld`](../../docs/examples/streams-celld/)): Gateway / Subscription / AgentSession DOs, in-process `clawql-core/streams-slim`, significance filter (`always` / `never` / `threshold` / `pattern` / `rate` / `composite`), session TTL via `setAlarm` (expire-on-destroy `POST /v1/keys/expire`), **CoreToolsDO** in-isolate slim search/execute **by default** (`CLAWQL_CORE_IN_CELLD=0` escapes to host MCP — **Bun** preferred; Worker `POST /mcp` always hits CoreToolsDO), optional `fetch(CLAWQL_MCP_URL)` for `memory_*` + `fetch(CLAWQL_MCP_ADAPTER_URL)`, multi-turn `fetch(INFERENCE_URL)` stub path (bind-on-create `vk_lab_*` + lab budget ceiling), LTX audit flush + host WORM dual-write. Evidence matrix: [`streams-celld-evidence.md`](/streams/streams-celld-evidence).
 
-**Still planned:** the `clawql-streams` coordination package (`stream_*` MCP tools), full DeductionService spend ceilings with model escalation (Lab 5b already runs a **multi-turn** inference skeleton with bind-on-create `vk_lab_*`), and a fuller Workers-safe `clawql-api` slim beyond CoreToolsDO.
+**Still planned:** the `clawql-streams` coordination package (`stream_*` MCP tools), full DeductionService spend ceilings with model escalation (Lab 5b already runs multi-turn + bind/budget/expire against the local inference stub — not the production ledger), and a fuller Workers-safe `clawql-api` slim beyond CoreToolsDO.
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -152,7 +152,7 @@ Filter types (configurable per subscription — Lab 5b `SubscriptionDO` / body `
 
 When the significance filter passes, Streams spawns an `AgentSessionDO`. The **model layer is always [`clawql-inference`](/inference/clawql-inference)** via `fetch()` — not a raw Anthropic/OpenAI credential and not a subprocess. The `model` field on `stream_subscribe` is a **policy alias** that resolves through model escalation (`Frugal` → `Standard` → `Frontier`).
 
-**Lab 5b honesty:** the skeleton proves **multi-turn** `POST /v1/messages` (`turns:2`) against `INFERENCE_URL` with bind-on-create `vk_lab_*` (smoke stub or real gateway). Full `runAgentLoop`, DeductionService spend ceilings, and production model escalation remain the target shape below.
+**Lab 5b honesty:** the skeleton proves **multi-turn** `POST /v1/messages` (`turns:2`) against `INFERENCE_URL` with bind-on-create `vk_lab_*`, lab stub budget → **402**, and TTL expire-on-destroy → **401** (smoke stub or real gateway). Full `runAgentLoop`, production DeductionService ledger, and model escalation remain the target shape below.
 
 ```ts
 import { DurableObject } from 'cloudflare:workers'

@@ -384,6 +384,9 @@ if inf.get("ok") is not True or (inf.get("turns") or 0) < 2:
   raise SystemExit(f"inference multi-turn not ok: {inf!r}"[:400])
 if inf.get("virtualKeyBound") is not True:
   raise SystemExit(f"inference virtualKeyBound missing: {inf!r}"[:400])
+bind=inf.get("bind") or {}
+if bind.get("ok") is not True:
+  raise SystemExit(f"inference bind-on-create not ok: {inf!r}"[:400])
 turn=inf.get("turn") or {}
 if turn.get("ok") is not True:
   raise SystemExit(f"inference turn not ok: {inf!r}"[:400])

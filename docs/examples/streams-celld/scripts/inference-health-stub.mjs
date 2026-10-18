@@ -1,36 +1,58 @@
 #!/usr/bin/env node
 /**
- * Inference stub for Lab 5b: /healthz + multi-turn chat completions.
- * Proves AgentSession fetch()es ≥2 model turns with a bind-on-create
- * virtual key Bearer. Real DeductionService / model escalation stay on clawql-inference.
+ * Inference stub for Lab 5b: /healthz + multi-turn + virtual-key budget/expire.
+ * Local stand-in for clawql-inference keys (no provider keys / DeductionService ledger).
  */
 import { createServer } from "node:http";
 
 const port = Number(process.env.INFERENCE_STUB_PORT || process.argv[2] || 19082);
-/** @type {Map<string, { turns: number, boundAt: number }>} */
+const defaultBudgetUsd = Number(process.env.INFERENCE_STUB_BUDGET_USD || "1");
+const costPerTurnUsd = Number(process.env.INFERENCE_STUB_COST_PER_TURN_USD || "0.01");
+
+/** @type {Map<string, { turns: number, boundAt: number, budgetUsd: number, spentUsd: number, expiredAt: number | null }>} */
 const keys = new Map();
 let turnCount = 0;
 
-function bindVirtualKey(req, body) {
+function readBody(req) {
+  return new Promise(async (resolve) => {
+    const chunks = [];
+    for await (const c of req) chunks.push(c);
+    try {
+      resolve(JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}"));
+    } catch {
+      resolve({});
+    }
+  });
+}
+
+function extractKeyId(req, body) {
   const auth = req.headers.authorization || "";
   const headerKey = (req.headers["x-clawql-virtual-key"] || "").toString().trim();
   const bearer =
     auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : "";
-  const virtualKeyId =
-    headerKey || bearer || (typeof body.virtualKeyId === "string" ? body.virtualKeyId : "");
-  if (!virtualKeyId) {
-    return { ok: false, error: "missing_virtual_key" };
-  }
+  return (
+    headerKey ||
+    bearer ||
+    (typeof body.virtualKeyId === "string" ? body.virtualKeyId : "")
+  );
+}
+
+function ensureKey(virtualKeyId, budgetUsd) {
   if (!keys.has(virtualKeyId)) {
-    keys.set(virtualKeyId, { turns: 0, boundAt: Date.now() });
+    keys.set(virtualKeyId, {
+      turns: 0,
+      boundAt: Date.now(),
+      budgetUsd: Number.isFinite(budgetUsd) ? budgetUsd : defaultBudgetUsd,
+      spentUsd: 0,
+      expiredAt: null,
+    });
   }
-  const rec = keys.get(virtualKeyId);
-  rec.turns += 1;
-  return { ok: true, virtualKeyId, turnsForKey: rec.turns, boundAt: rec.boundAt };
+  return keys.get(virtualKeyId);
 }
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://127.0.0.1:${port}`);
+
   if (req.method === "GET" && (url.pathname === "/healthz" || url.pathname === "/health")) {
     res.writeHead(200, { "content-type": "application/json" });
     res.end(
@@ -40,6 +62,55 @@ const server = createServer(async (req, res) => {
         transport: "http",
         turnCount,
         keysBound: keys.size,
+        defaultBudgetUsd,
+        costPerTurnUsd,
+      })
+    );
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/v1/keys/bind") {
+    const body = await readBody(req);
+    const virtualKeyId =
+      typeof body.virtualKeyId === "string" && body.virtualKeyId
+        ? body.virtualKeyId
+        : `vk_lab_${Math.random().toString(16).slice(2, 10)}`;
+    const budgetUsd =
+      typeof body.budgetUsd === "number" ? body.budgetUsd : defaultBudgetUsd;
+    const rec = ensureKey(virtualKeyId, budgetUsd);
+    rec.budgetUsd = budgetUsd;
+    rec.expiredAt = null;
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({
+        ok: true,
+        virtualKeyId,
+        budgetUsd: rec.budgetUsd,
+        spentUsd: rec.spentUsd,
+        virtualKeyBound: true,
+      })
+    );
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/v1/keys/expire") {
+    const body = await readBody(req);
+    const virtualKeyId = extractKeyId(req, body);
+    if (!virtualKeyId || !keys.has(virtualKeyId)) {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "unknown_virtual_key" }));
+      return;
+    }
+    const rec = keys.get(virtualKeyId);
+    rec.expiredAt = Date.now();
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({
+        ok: true,
+        virtualKeyId,
+        expiredAt: rec.expiredAt,
+        spentUsd: rec.spentUsd,
+        budgetUsd: rec.budgetUsd,
       })
     );
     return;
@@ -51,20 +122,45 @@ const server = createServer(async (req, res) => {
       url.pathname === "/v1/chat/completions" ||
       url.pathname === "/v1/chat");
   if (isChat) {
-    const chunks = [];
-    for await (const c of req) chunks.push(c);
-    let body = {};
-    try {
-      body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
-    } catch {
-      body = {};
-    }
-    const bound = bindVirtualKey(req, body);
-    if (!bound.ok) {
+    const body = await readBody(req);
+    const virtualKeyId = extractKeyId(req, body);
+    if (!virtualKeyId) {
       res.writeHead(401, { "content-type": "application/json" });
-      res.end(JSON.stringify({ ok: false, error: bound.error }));
+      res.end(JSON.stringify({ ok: false, error: "missing_virtual_key" }));
       return;
     }
+    const rec = ensureKey(
+      virtualKeyId,
+      typeof body.budgetUsd === "number" ? body.budgetUsd : defaultBudgetUsd
+    );
+    if (rec.expiredAt) {
+      res.writeHead(401, { "content-type": "application/json" });
+      res.end(
+        JSON.stringify({
+          ok: false,
+          error: "virtual_key_expired",
+          virtualKeyId,
+          expiredAt: rec.expiredAt,
+        })
+      );
+      return;
+    }
+    if (rec.spentUsd + costPerTurnUsd > rec.budgetUsd + 1e-12) {
+      res.writeHead(402, { "content-type": "application/json" });
+      res.end(
+        JSON.stringify({
+          ok: false,
+          error: "insufficient_quota",
+          virtualKeyId,
+          budgetUsd: rec.budgetUsd,
+          spentUsd: rec.spentUsd,
+          costPerTurnUsd,
+        })
+      );
+      return;
+    }
+    rec.turns += 1;
+    rec.spentUsd = Number((rec.spentUsd + costPerTurnUsd).toFixed(6));
     turnCount += 1;
     const text =
       typeof body.prompt === "string"
@@ -79,9 +175,11 @@ const server = createServer(async (req, res) => {
         turn: typeof body.turn === "number" ? body.turn : turnCount,
         priorId: body.priorId ?? null,
         model: body.model || "stub-frugal",
-        virtualKeyId: bound.virtualKeyId,
+        virtualKeyId,
         virtualKeyBound: true,
-        turnsForKey: bound.turnsForKey,
+        turnsForKey: rec.turns,
+        budgetUsd: rec.budgetUsd,
+        spentUsd: rec.spentUsd,
         content: [{ type: "text", text }],
         usage: { input_tokens: 8, output_tokens: 12 },
       })
@@ -94,6 +192,6 @@ const server = createServer(async (req, res) => {
 
 server.listen(port, "127.0.0.1", () => {
   console.error(
-    `inference-stub: http://127.0.0.1:${port}/healthz (+ POST /v1/messages multi-turn + vk bind)`
+    `inference-stub: http://127.0.0.1:${port}/healthz (+ bind/expire + multi-turn + budget)`
   );
 });

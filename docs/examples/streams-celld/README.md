@@ -24,6 +24,7 @@ The right demo is the **production shape**: slim cell + real sidecars.
 | **Core in celld**    | celld `CoreToolsDO` handles `search`/`execute` (no host MCP) + mock pets upstream           | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:core-in-celld` |
 | **Full-stack smoke** | celld + **real** `clawql-mcp-http` (Lab 5b OpenAPI pack) + **real** `mcp-api-adapter` + inference multi-turn stub | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:full`    |
 | **Host MCP pack** | Real `clawql-mcp-http` + Lab 5b OpenAPI pack — `execute(streams.session.noop)` without celld | `npm run smoke:host-mcp-pack` |
+| **VK budget / expire** | Inference stub only — bind → 402 ceiling → expire → 401 (no celld / no provider keys) | `npm run smoke:vk-budget` |
 | Containers           | MCP + adapter images (celld on host)                                                        | `docker compose -f docker-compose.full.yml up --build` |
 
 ## In-process vs out-of-process
@@ -34,7 +35,7 @@ The right demo is the **production shape**: slim cell + real sidecars.
 | Host `clawql-audit` (compliance)   | **Out-of-process** — `fetch(CLAWQL_AUDIT_WORM_URL)` → tip-loaded `WORMAuditTrail`      |
 | `cache` (session scratch)          | **In-process** — `clawql-core/streams-slim`                                            |
 | Hash-chain verify                  | **In-process** — via clawql-merkle (needs `nodejs_compat`)                             |
-| Inference (multi-turn skeleton)    | **Out-of-process** — `fetch(INFERENCE_URL)` `/healthz` + 2× `POST /v1/messages` (vk Bearer) |
+| Inference (multi-turn skeleton)    | **Out-of-process** — bind `POST /v1/keys/bind` + `/healthz` + 2× `POST /v1/messages` (vk Bearer); TTL alarm → `POST /v1/keys/expire` |
 | `search` / `execute` (slim)        | **In-process default** — `CoreToolsDO` (`CLAWQL_CORE_IN_CELLD=0` → Bun host MCP)       |
 | `memory_*` (and host escape Core)  | **Out-of-process** — `fetch(CLAWQL_MCP_URL)` Streamable HTTP (Bun host / full Core)    |
 | `mcp-api-adapter`                  | **Out-of-process** — `fetch(CLAWQL_MCP_ADAPTER_URL)` REST `POST /{tool}`               |
@@ -51,6 +52,8 @@ Do **not** embed `clawql-api`, `clawql-memory`, or `mcp-api-adapter` (Express/gR
 | `CLAWQL_CORE_UPSTREAM`                                        | REST origin for in-cell `execute` (e.g. mock `/pets`)  |
 | `CLAWQL_AUDIT_WORM_URL`                                       | Host `clawql-audit` HTTP origin (`POST /entries`)      |
 | `CLAWQL_AUDIT_API_KEY`                                        | ApiKey for host WORM HTTP (optional if open)           |
+| `CLAWQL_LAB_VK_BUDGET_USD`                                    | Lab stub budget at bind (default `1`; not DeductionService) |
+| `INFERENCE_URL`                                               | Inference stub/gateway origin (`/v1/keys/bind\|expire`, `/v1/messages`) |
 
 **Point any MCP client at celld for Core tools:** `POST http://127.0.0.1:<port>/mcp` (Streamable HTTP). Responses stamp `transport: "celld-isolate"`. This is the slim catalog (pets + Streams noop), not full production Core — see honesty string on every payload.
 
