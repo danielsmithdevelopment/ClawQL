@@ -1,7 +1,0 @@
-# No PAL terminology
-
-Never use the term **PAL** (or "PAL routing" / "PAL Router") for ClawQL product, docs, marketing, or code comments.
-
-That name belongs to upstream Ouroboros. In ClawQL the feature is **model escalation** (Frugal → Standard → Frontier tier routing inside `clawql-inference`).
-
-Allowed: `PayPal`, `principal`, unrelated substrings. Forbidden: presenting ClawQL model escalation as PAL.
