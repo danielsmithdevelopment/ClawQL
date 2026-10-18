@@ -1,5 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
-import { loadSpecEffect } from "clawql-api";
+import {
+  formatRuntimeLadderForLog,
+  loadSpecEffect,
+  resolveRuntimeLadderEffect,
+} from "clawql-api";
 import { Effect } from "effect";
 import { inferSpecMode } from "../onboarding/spec-mode.js";
 import { getClawqlHome, getLocalProvidersVaultPath } from "../onboarding/paths.js";
@@ -80,19 +84,28 @@ export function formatStartupSummary(summary: StartupSummary): string {
 }
 
 export function logStartupSummaryEffect(): Effect.Effect<void> {
-  return buildStartupSummaryEffect().pipe(
-    Effect.map((summary) => {
-      console.error(formatStartupSummary(summary));
-    }),
-    Effect.catch((e: unknown) =>
-      Effect.sync(() => {
-        console.error(
-          "[clawql-mcp] Startup summary unavailable:",
-          e instanceof Error ? e.message : e
-        );
-      })
-    )
-  );
+  return Effect.gen(function* () {
+    const summary = yield* buildStartupSummaryEffect().pipe(
+      Effect.catch((e: unknown) =>
+        Effect.sync(() => {
+          console.error(
+            "[clawql-mcp] Startup summary unavailable:",
+            e instanceof Error ? e.message : e
+          );
+          return null;
+        })
+      )
+    );
+    if (summary) console.error(formatStartupSummary(summary));
+
+    // Runtime ladder (non-interactive): celld → Bun → Node + improve hints
+    const ladder = yield* resolveRuntimeLadderEffect().pipe(
+      Effect.catch(() => Effect.succeed(null))
+    );
+    if (ladder) {
+      console.error(formatRuntimeLadderForLog(ladder));
+    }
+  });
 }
 
 /** Promise façade for MCP process start. */

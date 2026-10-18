@@ -100,8 +100,8 @@ clawql doctor
 
 # Core search/execute inside celld (slim CoreToolsDO — Lab smoke:core-in-celld)
 cd docs/examples/streams-celld && STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:core-in-celld
-# Host MCP (Bun preferred) prefers celld at http://127.0.0.1:9888/mcp by default
-# Escape hatch: CLAWQL_CORE_IN_CELLD=0 or CLAWQL_FORCE_HOST_CORE=1
+# Runtime ladder: celld → (install prompt) → Bun → (install prompt) → Node + improve hint
+# Refuse: CLAWQL_DECLINE_CELLD=1 / CLAWQL_DECLINE_BUN=1
 # bun run bin/clawql-mcp-http.mjs
 
 clawql security inject --mode direct|indirect|multistep [--json]
