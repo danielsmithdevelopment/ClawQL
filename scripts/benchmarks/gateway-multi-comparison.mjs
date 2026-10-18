@@ -13,7 +13,8 @@
  *     MULTI_CHAOS_MAX until break or MULTI_CHAOS_HARD_MAX.
  *
  * Topology: this harness measures single-instance / process-per-client (A).
- * Do not mix claims with NATS 4-replica ceilings (topology B).
+ * Topology B (K× HTTP behind sticky LB) is scripts/benchmarks/gateway-multi-topology-b.mjs.
+ * Do not mix A ceilings with B or with ClawQL NATS fabric sticky.
  *
  * Equal-arm contract:
  *   - Payload = two-pet JSON (same as executor-comparison comprehensive)
@@ -102,7 +103,7 @@ const TOPOLOGY = {
     ? "single-instance (ClawQL stdio PPC; Executor 1× HTTP /mcp; aggregators 1× HTTP)"
     : "single-instance / process-per-client (ClawQL+Executor stdio; aggregators 1× HTTP)",
   replicas: 1,
-  note: "Scale-out (4 replicas behind LB) is topology B — claim only within the same topology.",
+  note: "Scale-out Topology B is gateway-multi-topology-b.mjs (4× HTTP + sticky LB). Claim only within the same topology.",
 };
 
 const PATH_MATRIX = {
