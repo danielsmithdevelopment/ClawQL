@@ -74,7 +74,7 @@ node "$ROOT/scripts/worm-fetch.test.mjs"
 ) >"$MCP_LOG" 2>&1 &
 MCP_PID=$!
 
-# Inference health stub (completions remain out of scope for this smoke).
+# Inference stub: /healthz + one-turn POST /v1/messages (PAL/virtual keys still deferred).
 node "$ROOT/scripts/inference-health-stub.mjs" "$INFER_PORT" >/dev/null 2>&1 &
 INFER_PID=$!
 
@@ -241,7 +241,34 @@ else
 fi
 sleep 2
 wait_http "$BASE/health" "celld-after-rebuild" "$CELLD_PID" 80
-sleep 2
+# Quiet window: another watcher rebuild mid-webhook NodeFences nested fetches
+# (adapter_search) even when SESSION_START already tip-extended.
+quiet_deadline=$((SECONDS + 20))
+last_restart_mark="$(grep -c 'restarting the application' "$CELLD_LOG" 2>/dev/null || true)"
+while ((SECONDS < quiet_deadline)); do
+  sleep 1
+  now_mark="$(grep -c 'restarting the application' "$CELLD_LOG" 2>/dev/null || true)"
+  if [[ "$now_mark" == "$last_restart_mark" ]]; then
+    # No new restart for 1s — require 3 consecutive quiet seconds.
+    quiet_ok=1
+    for _ in 1 2 3; do
+      sleep 1
+      check_mark="$(grep -c 'restarting the application' "$CELLD_LOG" 2>/dev/null || true)"
+      if [[ "$check_mark" != "$last_restart_mark" ]]; then
+        last_restart_mark="$check_mark"
+        quiet_ok=0
+        break
+      fi
+    done
+    if ((quiet_ok == 1)); then
+      echo "full-stack-smoke: celld watcher quiet — posting webhook" >&2
+      break
+    fi
+  else
+    last_restart_mark="$now_mark"
+  fi
+done
+wait_http "$BASE/health" "celld-quiet" "$CELLD_PID" 40
 curl -sf "$BASE/health" | grep -q clawql-streams-celld-skeleton
 
 post_webhook() {
@@ -254,12 +281,31 @@ post_webhook() {
 
 EVENT_ID="full-stack-$(date +%s)-$$"
 RESP="$(post_webhook "$EVENT_ID")"
-# One retry if the startup rebuild still fenced Durable Object writes mid-flight.
-if printf '%s' "$RESP" | grep -Fq 'NodeFenced'; then
-  echo "full-stack-smoke: NodeFenced on first webhook — retrying after settle" >&2
+# Retry only when the *webhook spawn* failed. A nested tool error that mentions
+# NodeFenced (e.g. adapter_search after a mid-handler storage.put) must NOT force
+# a new eventId — that orphans the first SESSION_START tip-extend and breaks the
+# host WORM continuity assertion (spawnCount=2 / chainIndex≫tip+1).
+if printf '%s' "$RESP" | python3 -c '
+import json, sys
+raw = sys.stdin.read()
+try:
+    r = json.loads(raw)
+except Exception:
+    # Non-JSON body: retry only if the fence string is present.
+    raise SystemExit(0 if "NodeFenced" in raw else 1)
+if r.get("ok") is True and r.get("action") == "spawn":
+    sess = r.get("session") or {}
+    body = sess if isinstance(sess, dict) and "audit" in sess else r
+    cw = ((body.get("audit") or {}).get("compliance") or {})
+    # Compliance SESSION_START already tip-extended — do not retry.
+    raise SystemExit(1 if cw.get("ok") is True else 0)
+# Top-level spawn failure / bare fence page.
+raise SystemExit(0 if (r.get("ok") is False or "NodeFenced" in raw) else 1)
+'; then
+  echo "full-stack-smoke: top-level spawn fence/failure — retrying same eventId after settle" >&2
   sleep 3
   wait_http "$BASE/health" "celld-before-retry" "$CELLD_PID" 40
-  EVENT_ID="full-stack-$(date +%s)-$$"
+  # Same eventId → same AgentSessionDO (idempotent if first attempt finished).
   RESP="$(post_webhook "$EVENT_ID")"
 fi
 
@@ -308,8 +354,13 @@ ad=tools.get("adapter_search") or {}
 if ad.get("ok") is not True:
   raise SystemExit(f"adapter_search not ok: {ad!r}"[:800])
 inf=body.get("inference") or {}
-if inf.get("ok") is not True:
-  raise SystemExit(f"inference health probe not ok: {inf!r}"[:400])
+if inf.get("skipped") is True:
+  raise SystemExit(f"inference unexpectedly skipped: {inf!r}"[:400])
+if inf.get("ok") is not True or (inf.get("turns") or 0) < 1:
+  raise SystemExit(f"inference one-turn not ok: {inf!r}"[:400])
+turn=inf.get("turn") or {}
+if turn.get("ok") is not True:
+  raise SystemExit(f"inference turn not ok: {inf!r}"[:400])
 ex=tools.get("execute") or {}
 if ex.get("deferred") is True or ex.get("transport") != "streamable-http":
   raise SystemExit(f"execute did not hit streamable-http: {ex!r}"[:800])
@@ -327,18 +378,25 @@ print(f"event_id={event_id}")
 ' || fail "python assertions failed"
 
 EVENT_ID=$(echo "$RESP" | python3 -c 'import json,sys; r=json.load(sys.stdin); print(r.get("eventId") or "")')
+# Full trail (not session-filtered): prove tip-extend against the seeded tip and
+# that SESSION_START's prevHash matches the prior chain entry (no fork).
 WORM_JSON=$(curl -sf -H "Authorization: ApiKey ${WORM_API_KEY}" \
-  "http://127.0.0.1:${WORM_PORT}/entries?sessionId=${EVENT_ID}")
-echo "$WORM_JSON" | TIP_HASH="$TIP_HASH" TIP_INDEX="$TIP_INDEX" python3 -c '
+  "http://127.0.0.1:${WORM_PORT}/entries")
+echo "$WORM_JSON" | TIP_HASH="$TIP_HASH" TIP_INDEX="$TIP_INDEX" EVENT_ID="$EVENT_ID" python3 -c '
 import json,os,sys
 data=json.load(sys.stdin)
 tip_hash=os.environ["TIP_HASH"]
 tip_index=int(os.environ["TIP_INDEX"])
+event_id=os.environ["EVENT_ID"]
 entries=data.get("entries") or []
-starts=[e for e in entries if e.get("type")=="SESSION_START"]
+starts=[e for e in entries if e.get("type")=="SESSION_START" and e.get("sessionId")==event_id]
 if not starts:
-  raise SystemExit(("no SESSION_START in host clawql-audit for session: %r" % (data,))[:800])
-e=starts[-1]
+  raise SystemExit(("no SESSION_START in host clawql-audit for session %r: %r" % (event_id, data))[:800])
+if len(starts) != 1:
+  raise SystemExit(
+    "expected exactly one SESSION_START for eventId=%r got %s (orphan retry?)" % (event_id, len(starts))
+  )
+e=starts[0]
 if "hash" not in e or "chainIndex" not in e or "prevHash" not in e:
   raise SystemExit(("SESSION_START missing chain fields: %r" % (e,))[:800])
 # Exact continuity: cell dual-write must extend the pre-seeded host tip, not genesis.
@@ -352,6 +410,14 @@ if e.get("chainIndex") != expected_index:
   raise SystemExit(
     "SESSION_START chainIndex=%s expected %s (tip was %s)"
     % (e.get("chainIndex"), expected_index, tip_index)
+  )
+# Structural: prevHash must equal the entry immediately before this one on the host trail.
+by_index={en.get("chainIndex"): en for en in entries if isinstance(en.get("chainIndex"), int)}
+prev=by_index.get(e.get("chainIndex") - 1)
+if not prev or prev.get("hash") != e.get("prevHash"):
+  raise SystemExit(
+    "SESSION_START prevHash does not match prior chain entry (index %s): prev=%r"
+    % (e.get("chainIndex") - 1, prev)
   )
 print(
   "host WORM verify: SESSION_START extends tip chainIndex=%s prevHash=%s… hash=%s…"
