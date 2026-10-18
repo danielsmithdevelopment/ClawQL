@@ -1,15 +1,18 @@
 /**
  * celld pin readiness for `clawql doctor` (Streams / durable programs claim surface).
  *
- * Honesty: default Core is Node; opt-in Core-in-celld via CoreToolsDO /
- * `CLAWQL_CORE_CELLD_URL`. This check surfaces pin readiness
- * ({@link CELLD_PINNED_VERSION}) and whether the Core proxy env is set.
+ * Honesty: Core **prefers celld** (CoreToolsDO / default localhost proxy).
+ * Node Core is the escape hatch when celld is unreachable or
+ * `CLAWQL_CORE_IN_CELLD=0` / `CLAWQL_FORCE_NODE_CORE=1`.
  */
 
 import { Effect } from "effect";
 import {
   CELLD_PINNED_VERSION,
+  DEFAULT_CORE_CELLD_MCP_URL,
   celldKillNodeDemoReportEffect,
+  preferCoreInCelld,
+  resolveCoreCelldProxyConfig,
   type CelldBinaryProbe,
   type CelldKillNodeDemoReport,
 } from "clawql-api";
@@ -27,12 +30,16 @@ export function celldDoctorChecksFromReport(
 ): DoctorCheck[] {
   const { pin } = report;
   const checks: DoctorCheck[] = [];
+  const prefer = preferCoreInCelld(env);
+  const proxyCfg = resolveCoreCelldProxyConfig(env);
 
   if (pin.isolateReady) {
     checks.push({
       level: "ok",
       message: `celld pin: isolateReady (${report.pinnedVersion})`,
-      detail: `${report.honesty}. Next: ${report.nextSteps.join("; ")}`,
+      detail: `${report.honesty}. Core prefers celld${
+        proxyCfg ? ` → ${proxyCfg.url}` : ""
+      }. Next: ${report.nextSteps.join("; ")}`,
     });
     return checks;
   }
@@ -57,17 +64,25 @@ export function celldDoctorChecksFromReport(
     return checks;
   }
 
-  // Default: file-journal stand-in — fine for Core; binary-on-PATH alone is not a misconfig.
   const binaryNote = pin.binaryPresent
     ? ` binary ${pin.binaryVersion ?? "unknown"} on PATH`
     : "";
-  const coreProxy = env.CLAWQL_CORE_CELLD_URL?.trim();
+
+  if (!prefer) {
+    checks.push({
+      level: "ok",
+      message: `celld pin: stand-in (Node Core escape hatch active)`,
+      detail: `CLAWQL_CORE_IN_CELLD=0 or CLAWQL_FORCE_NODE_CORE=1 — search/execute stay on Node.${binaryNote}. Re-enable celld default by unsetting those flags; local MCP ${DEFAULT_CORE_CELLD_MCP_URL}`,
+    });
+    return checks;
+  }
+
   checks.push({
     level: "ok",
     message: `celld pin: stand-in (file journal; pin ${CELLD_PINNED_VERSION} optional)`,
-    detail: coreProxy
-      ? `CLAWQL_CORE_CELLD_URL=${coreProxy} — Node search/execute proxy into CoreToolsDO.${binaryNote}`
-      : `Default Core is Node; opt-in Core-in-celld: celld POST /mcp or CLAWQL_CORE_CELLD_URL.${binaryNote}. Streams/isolate pin: CELLD_VERSION + CLAWQL_PROGRAM_CELLD_ISOLATE=1`,
+    detail: `Core prefers celld (default ${DEFAULT_CORE_CELLD_MCP_URL}${
+      proxyCfg?.usingDefaultUrl === false ? `; override ${proxyCfg.url}` : ""
+    }). Node search/execute only if celld unreachable or escape hatch set.${binaryNote}. Streams isolate pin: CELLD_VERSION + CLAWQL_PROGRAM_CELLD_ISOLATE=1`,
   });
   return checks;
 }

@@ -22,7 +22,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Effect } from "effect";
 import {
   callCoreCelldToolEffect,
-  coreCelldProxyEnabled,
+  coreCelldProxyEnabledAsync,
   decodeExecuteInput,
   decodeResumeInput,
   decodeSearchInput,
@@ -197,8 +197,9 @@ export async function handleClawqlSearchToolInput(
   return getClawqlApi().run(
     Effect.gen(function* () {
       const params = yield* decodeSearchInput(raw);
-      // Opt-in: every search handled inside celld CoreToolsDO (CLAWQL_CORE_CELLD_URL).
-      if (coreCelldProxyEnabled()) {
+      // Default: celld CoreToolsDO when reachable; Node escape when disabled/unreachable.
+      const useCelld = yield* Effect.promise(() => coreCelldProxyEnabledAsync());
+      if (useCelld) {
         const proxied = yield* callCoreCelldToolEffect("search", {
           query: params.query,
           ...(params.limit != null ? { limit: params.limit } : {}),
@@ -219,7 +220,8 @@ export async function handleClawqlExecuteToolInput(
   return getClawqlApi().run(
     Effect.gen(function* () {
       const params = yield* decodeExecuteInput(raw);
-      if (coreCelldProxyEnabled()) {
+      const useCelld = yield* Effect.promise(() => coreCelldProxyEnabledAsync());
+      if (useCelld) {
         const proxied = yield* callCoreCelldToolEffect("execute", {
           operationId: params.operationId,
           args: params.args ?? {},
