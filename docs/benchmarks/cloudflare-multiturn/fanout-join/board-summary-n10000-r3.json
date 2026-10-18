@@ -1,0 +1,329 @@
+{
+  "measuredAt": "2026-10-16T18:29:24.997Z",
+  "kind": "publish_board",
+  "workflow": "fanout_join",
+  "iters": 10000,
+  "reps": 3,
+  "arms": [
+    "clawql_known_op",
+    "clawql_program",
+    "cloudflare_codemode"
+  ],
+  "metrics_policy": {
+    "id": "fanout_join_all_attempted_sessions_primary",
+    "task_success": "Failed sessions count against task_success_rate.",
+    "tokens": "definition + discovery + result + 5×code; program result = one MCP response (compact plan.return); known-op result = cumulative re-reads; known-op code = full execute args JSON (operationId+args+where) for parity with the plan.",
+    "model_turns": "Scripted tool rounds (known-op=6, program/code-mode=1).",
+    "claim": "program_beats_known_op_on_fanout_join — see fanout-join/SPEC.md"
+  },
+  "claim_across_reps": [
+    {
+      "id": "program_beats_known_op_on_fanout_join",
+      "eligible": true,
+      "turns_win": true,
+      "token_promotion": true,
+      "win": true,
+      "checks": {
+        "weighted": true,
+        "turns": true,
+        "success": true
+      },
+      "known_op": {
+        "weighted_mean": 2694,
+        "model_turns_mean": 6,
+        "result_tokens_mean": 433,
+        "code_tokens_mean": 396,
+        "definition_tokens": 281,
+        "task_success_rate": 1
+      },
+      "program": {
+        "weighted_mean": 2650.5904,
+        "model_turns_mean": 1,
+        "result_tokens_mean": 256.5904,
+        "code_tokens_mean": 403,
+        "definition_tokens": 379,
+        "task_success_rate": 1
+      }
+    },
+    {
+      "id": "program_beats_known_op_on_fanout_join",
+      "eligible": true,
+      "turns_win": true,
+      "token_promotion": true,
+      "win": true,
+      "checks": {
+        "weighted": true,
+        "turns": true,
+        "success": true
+      },
+      "known_op": {
+        "weighted_mean": 2694,
+        "model_turns_mean": 6,
+        "result_tokens_mean": 433,
+        "code_tokens_mean": 396,
+        "definition_tokens": 281,
+        "task_success_rate": 1
+      },
+      "program": {
+        "weighted_mean": 2650.5774,
+        "model_turns_mean": 1,
+        "result_tokens_mean": 256.5774,
+        "code_tokens_mean": 403,
+        "definition_tokens": 379,
+        "task_success_rate": 1
+      }
+    },
+    {
+      "id": "program_beats_known_op_on_fanout_join",
+      "eligible": true,
+      "turns_win": true,
+      "token_promotion": true,
+      "win": true,
+      "checks": {
+        "weighted": true,
+        "turns": true,
+        "success": true
+      },
+      "known_op": {
+        "weighted_mean": 2694,
+        "model_turns_mean": 6,
+        "result_tokens_mean": 433,
+        "code_tokens_mean": 396,
+        "definition_tokens": 281,
+        "task_success_rate": 1
+      },
+      "program": {
+        "weighted_mean": 2650.59,
+        "model_turns_mean": 1,
+        "result_tokens_mean": 256.59,
+        "code_tokens_mean": 403,
+        "definition_tokens": 379,
+        "task_success_rate": 1
+      }
+    }
+  ],
+  "range_across_reps": {
+    "clawql_known_op": {
+      "task_success_rate": [
+        1,
+        1,
+        1
+      ],
+      "weighted_mean": [
+        2694,
+        2694,
+        2694
+      ],
+      "model_turns_mean": [
+        6,
+        6,
+        6
+      ],
+      "result_tokens_mean": [
+        433,
+        433,
+        433
+      ],
+      "code_tokens_mean": [
+        396,
+        396,
+        396
+      ],
+      "session_p50_ms": [
+        11.831233000004431,
+        11.999088999989908,
+        12.056330999999773
+      ]
+    },
+    "clawql_program": {
+      "task_success_rate": [
+        1,
+        1,
+        1
+      ],
+      "weighted_mean": [
+        2650.5904,
+        2650.5774,
+        2650.59
+      ],
+      "model_turns_mean": [
+        1,
+        1,
+        1
+      ],
+      "result_tokens_mean": [
+        256.5904,
+        256.5774,
+        256.59
+      ],
+      "code_tokens_mean": [
+        403,
+        403,
+        403
+      ],
+      "session_p50_ms": [
+        4.818580000021029,
+        4.771759999974165,
+        4.729766999953426
+      ]
+    },
+    "cloudflare_codemode": {
+      "task_success_rate": [
+        1,
+        1,
+        1
+      ],
+      "weighted_mean": [
+        3417,
+        3417,
+        3417
+      ],
+      "model_turns_mean": [
+        1,
+        1,
+        1
+      ],
+      "result_tokens_mean": [
+        77,
+        77,
+        77
+      ],
+      "code_tokens_mean": [
+        468,
+        468,
+        468
+      ],
+      "session_p50_ms": [
+        0.6496580000093672,
+        0.656343000009656,
+        0.6571680000051856
+      ]
+    }
+  },
+  "latest": {
+    "clawql_known_op": {
+      "id": "clawql_known_op",
+      "iters": 10000,
+      "sessions_ok": 10000,
+      "sessions_failed": 0,
+      "task_success_rate": 1,
+      "error_rate": 0,
+      "errors_by_kind": {},
+      "definition_tokens": 281,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 433,
+      "code_tokens_mean": 396,
+      "combined_mean": 1110,
+      "weighted_mean": 2694,
+      "model_turns_mean": 6,
+      "session_ms": {
+        "p50": 12.056330999999773,
+        "p90": 13.5486169999931,
+        "p99": 21.877223999996204,
+        "mean": 12.466324231600144
+      },
+      "first_session": {
+        "ok": true,
+        "weighted": 2694,
+        "model_turns": 6,
+        "result_tokens": 433,
+        "code_tokens": 396,
+        "check": {
+          "ok": true
+        }
+      }
+    },
+    "clawql_program": {
+      "id": "clawql_program",
+      "iters": 10000,
+      "sessions_ok": 10000,
+      "sessions_failed": 0,
+      "task_success_rate": 1,
+      "error_rate": 0,
+      "errors_by_kind": {},
+      "definition_tokens": 379,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 256.59,
+      "code_tokens_mean": 403,
+      "combined_mean": 1038.59,
+      "weighted_mean": 2650.59,
+      "model_turns_mean": 1,
+      "session_ms": {
+        "p50": 4.729766999953426,
+        "p90": 5.712870999996085,
+        "p99": 8.978192000009585,
+        "mean": 4.9595746824999285
+      },
+      "first_session": {
+        "ok": true,
+        "weighted": 2649,
+        "model_turns": 1,
+        "result_tokens": 255,
+        "code_tokens": 403,
+        "check": {
+          "ok": true
+        }
+      }
+    },
+    "cloudflare_codemode": {
+      "id": "cloudflare_codemode",
+      "iters": 10000,
+      "sessions_ok": 10000,
+      "sessions_failed": 0,
+      "task_success_rate": 1,
+      "error_rate": 0,
+      "errors_by_kind": {},
+      "definition_tokens": 1000,
+      "discovery_tokens_mean": 0,
+      "result_tokens_mean": 77,
+      "code_tokens_mean": 468,
+      "combined_mean": 1545,
+      "weighted_mean": 3417,
+      "model_turns_mean": 1,
+      "session_ms": {
+        "p50": 0.6571680000051856,
+        "p90": 0.878679999965243,
+        "p99": 2.063743000035174,
+        "mean": 0.7393094562998042
+      },
+      "first_session": {
+        "ok": true,
+        "weighted": 3417,
+        "model_turns": 1,
+        "result_tokens": 77,
+        "code_tokens": 468,
+        "check": {
+          "ok": true
+        }
+      }
+    }
+  },
+  "latest_claim": {
+    "id": "program_beats_known_op_on_fanout_join",
+    "eligible": true,
+    "turns_win": true,
+    "token_promotion": true,
+    "win": true,
+    "checks": {
+      "weighted": true,
+      "turns": true,
+      "success": true
+    },
+    "known_op": {
+      "weighted_mean": 2694,
+      "model_turns_mean": 6,
+      "result_tokens_mean": 433,
+      "code_tokens_mean": 396,
+      "definition_tokens": 281,
+      "task_success_rate": 1
+    },
+    "program": {
+      "weighted_mean": 2650.59,
+      "model_turns_mean": 1,
+      "result_tokens_mean": 256.59,
+      "code_tokens_mean": 403,
+      "definition_tokens": 379,
+      "task_success_rate": 1
+    }
+  }
+}

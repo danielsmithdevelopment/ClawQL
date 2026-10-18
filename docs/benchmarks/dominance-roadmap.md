@@ -28,13 +28,15 @@ Live table: [clawql.com/benchmarks#dominance](https://clawql.com/benchmarks/#dom
 | **IBM ContextForge**            | Multi-protocol federation; 40+ plugins; already measured (higher latency)                                                 | Latency + token overhead vs nested setups; governance plugins                                                 | Direct equal-arm (no nesting); gateway-cost p50/p999 + RSS under same SLO                                             | **Partial** — nested adapter off by default                                                                             |
 | **Obot**                        | OSS enterprise registry + per-tool policy; curated catalogs; K8s-native                                                   | Token surface of curated tools; policy enforcement overhead                                                   | Definitions + discovery with their catalog model; audit/policy on same workflow                                       | **Tokens measured** — classic **3.95×** @N=12 (fat aggregator path via `mcp-connect`); still need policy-depth criteria |
 | **Executor (v1/v2)**            | Closest prior peer; sandbox code execution; already on published boards                                                   | Confirm leads after their updates; multi-turn + concurrency                                                   | Re-run full board with latest versions; real-model validation under pre-committed rules                               | **Measured** — keep version-scoped                                                                                      |
+| **celld durability (ProgramCellDO)** | Crash-survival / isolate-hosted programs — ADR 0015 kill-node gate                                                     | Lab isolate SIGKILL resume, then fleet LTX diagnose + three-arm product gate                                  | ProgramCellDO write+read smoke after SIGKILL celld; publish evidence; keep fleet Partial until measured               | **Lab Yes · fleet Partial** — isolate kill evidence ok (#1350); hot-path A/B 10k PASS (+2.7% p50)                       |
 
 ## Priority order (next proofs)
 
 1. **Bifrost / Obot** — tokens on board; finish p99 concurrency + governance/policy-depth criteria for category claim.
 2. **Cloudflare Code Mode** — finish blind small/dual fan-out under frozen rules (plan.c constants landed).
-3. **Executor / agentgateway** — re-pin latest versions so measured leads do not rot.
-4. **Uber technique bake-off / ContextForge (direct) / TrueFoundry (when credentials)** — see wiring doc.
+3. **celld durability** — Lab ProgramCellDO isolate kill shipped; close fleet three-arm / LTX diagnose before product crash-survival claim.
+4. **Executor / agentgateway** — re-pin latest versions so measured leads do not rot.
+5. **Uber technique bake-off / ContextForge (direct) / TrueFoundry (when credentials)** — see wiring doc.
 
 ## Related boards
 
