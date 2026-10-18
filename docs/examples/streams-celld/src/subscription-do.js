@@ -55,11 +55,20 @@ export class SubscriptionDO {
         }
       }
 
+      const rateKey = "rate_timestamps";
+      const prevRate = await this.state.storage.get(rateKey);
+      const rateTimestamps = Array.isArray(prevRate) ? prevRate : [];
+
       const decision = decideSignificance(bodyText, {
         forcePass,
         forceFail,
         config: headerCfg ?? stored ?? null,
+        rateTimestamps,
       });
+
+      if (Array.isArray(decision.rateTimestamps)) {
+        await this.state.storage.put(rateKey, decision.rateTimestamps);
+      }
 
       return Response.json({
         significant: decision.significant,
@@ -68,10 +77,11 @@ export class SubscriptionDO {
         preview,
         subscriptionId,
         eventId,
-        ...(decision.deferred ? { deferred: true } : {}),
+        ...(decision.eventsInWindow != null ? { eventsInWindow: decision.eventsInWindow } : {}),
         ...(decision.path != null ? { path: decision.path } : {}),
         ...(decision.got != null ? { got: decision.got } : {}),
         ...(decision.threshold != null ? { threshold: decision.threshold } : {}),
+        ...(decision.children ? { children: decision.children } : {}),
       });
     }
 

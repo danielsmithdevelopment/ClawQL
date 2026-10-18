@@ -34,9 +34,56 @@ const pat = evaluateSignificance(
 );
 assert.equal(pat.significant, true);
 
-const deferred = evaluateSignificance({ type: "rate", windowSec: 1, count: 3 }, "{}");
-assert.equal(deferred.deferred, true);
-assert.equal(deferred.significant, false);
+const t0 = 1_000_000;
+const r1 = evaluateSignificance(
+  { type: "rate", windowSec: 10, count: 3 },
+  "{}",
+  {},
+  { now: t0, rateTimestamps: [] }
+);
+assert.equal(r1.significant, false);
+assert.equal(r1.eventsInWindow, 1);
+const r2 = evaluateSignificance(
+  { type: "rate", windowSec: 10, count: 3 },
+  "{}",
+  {},
+  { now: t0 + 1000, rateTimestamps: r1.rateTimestamps }
+);
+assert.equal(r2.significant, false);
+const r3 = evaluateSignificance(
+  { type: "rate", windowSec: 10, count: 3 },
+  "{}",
+  {},
+  { now: t0 + 2000, rateTimestamps: r2.rateTimestamps }
+);
+assert.equal(r3.significant, true);
+assert.equal(r3.reason, "rate_threshold_met");
+
+const compAnd = evaluateSignificance(
+  {
+    type: "composite",
+    op: "and",
+    filters: [
+      { type: "threshold", path: "score", op: "gte", value: 5 },
+      { type: "pattern", path: "status", pattern: "ok|degraded" },
+    ],
+  },
+  JSON.stringify({ score: 9, status: "ok" })
+);
+assert.equal(compAnd.significant, true);
+
+const compOrFail = evaluateSignificance(
+  {
+    type: "composite",
+    op: "or",
+    filters: [
+      { type: "never" },
+      { type: "threshold", path: "score", op: "gt", value: 100 },
+    ],
+  },
+  JSON.stringify({ score: 1 })
+);
+assert.equal(compOrFail.significant, false);
 
 const fromBody = decideSignificance(
   JSON.stringify({ significance: { type: "never" }, probe: true })

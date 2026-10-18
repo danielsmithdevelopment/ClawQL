@@ -2,8 +2,7 @@
  * Local significance filter for SubscriptionDO (Streams §3.4).
  * Fast, no model call. Everything still buffers / WORM regardless of result.
  *
- * Shipped types: always | never | threshold | pattern
- * Deferred: rate | composite (documented; return deferred reason if requested)
+ * Shipped: always | never | threshold | pattern | rate | composite
  */
 
 /**
@@ -11,8 +10,14 @@
  * @typedef {{ type: 'never' }} NeverFilter
  * @typedef {{ type: 'threshold', path: string, op?: 'gt'|'gte'|'lt'|'lte'|'eq', value: number }} ThresholdFilter
  * @typedef {{ type: 'pattern', path?: string, pattern: string }} PatternFilter
- * @typedef {{ type: 'rate'|'composite', [k: string]: unknown }} DeferredFilter
- * @typedef {AlwaysFilter | NeverFilter | ThresholdFilter | PatternFilter | DeferredFilter} SignificanceFilter
+ * @typedef {{ type: 'rate', windowSec: number, count: number }} RateFilter
+ * @typedef {{ type: 'composite', op?: 'and'|'or', filters: SignificanceFilter[] }} CompositeFilter
+ * @typedef {AlwaysFilter | NeverFilter | ThresholdFilter | PatternFilter | RateFilter | CompositeFilter} SignificanceFilter
+ *
+ * @typedef {{
+ *   now?: number,
+ *   rateTimestamps?: number[],
+ * }} EvalContext
  */
 
 /**
@@ -66,8 +71,9 @@ export function extractSignificanceFromBody(bodyText) {
  * @param {SignificanceFilter} filter
  * @param {string} bodyText
  * @param {unknown} [parsedBody]
+ * @param {EvalContext} [ctx]
  */
-export function evaluateSignificance(filter, bodyText, parsedBody) {
+export function evaluateSignificance(filter, bodyText, parsedBody, ctx = {}) {
   let body = parsedBody;
   if (body === undefined) {
     try {
@@ -76,6 +82,7 @@ export function evaluateSignificance(filter, bodyText, parsedBody) {
       body = { raw: bodyText };
     }
   }
+  const now = typeof ctx.now === "number" ? ctx.now : Date.now();
 
   switch (filter.type) {
     case "always":
@@ -138,14 +145,75 @@ export function evaluateSignificance(filter, bodyText, parsedBody) {
         path: path ?? "(body)",
       };
     }
-    case "rate":
-    case "composite":
+    case "rate": {
+      const windowSec = Number(filter.windowSec);
+      const count = Number(filter.count);
+      if (!Number.isFinite(windowSec) || windowSec <= 0 || !Number.isFinite(count) || count < 1) {
+        return {
+          significant: false,
+          reason: "rate_bad_params",
+          filterType: "rate",
+        };
+      }
+      const windowMs = windowSec * 1000;
+      const prev = Array.isArray(ctx.rateTimestamps) ? ctx.rateTimestamps : [];
+      const kept = prev.filter((t) => typeof t === "number" && now - t <= windowMs);
+      const next = [...kept, now];
+      const ok = next.length >= count;
       return {
-        significant: false,
-        reason: `filter_deferred:${filter.type}`,
-        filterType: filter.type,
-        deferred: true,
+        significant: ok,
+        reason: ok ? "rate_threshold_met" : "rate_below_threshold",
+        filterType: "rate",
+        windowSec,
+        count,
+        eventsInWindow: next.length,
+        rateTimestamps: next,
       };
+    }
+    case "composite": {
+      const children = Array.isArray(filter.filters) ? filter.filters : [];
+      if (children.length === 0) {
+        return {
+          significant: false,
+          reason: "composite_empty",
+          filterType: "composite",
+        };
+      }
+      const op = (filter.op || "and").toLowerCase() === "or" ? "or" : "and";
+      /** @type {unknown[]} */
+      const childResults = [];
+      let rateTimestamps = Array.isArray(ctx.rateTimestamps) ? [...ctx.rateTimestamps] : [];
+      for (const child of children) {
+        if (!child || typeof child !== "object" || !("type" in child)) {
+          childResults.push({ significant: false, reason: "composite_bad_child" });
+          continue;
+        }
+        const r = evaluateSignificance(
+          /** @type {SignificanceFilter} */ (child),
+          bodyText,
+          body,
+          { now, rateTimestamps }
+        );
+        childResults.push(r);
+        if (Array.isArray(r.rateTimestamps)) {
+          rateTimestamps = r.rateTimestamps;
+        }
+      }
+      const flags = childResults.map((r) => /** @type {{ significant?: boolean }} */ (r).significant === true);
+      const ok = op === "and" ? flags.every(Boolean) : flags.some(Boolean);
+      return {
+        significant: ok,
+        reason: ok ? `composite_${op}_pass` : `composite_${op}_fail`,
+        filterType: "composite",
+        op,
+        children: childResults.map((r) => ({
+          filterType: /** @type {{ filterType?: string }} */ (r).filterType,
+          significant: /** @type {{ significant?: boolean }} */ (r).significant,
+          reason: /** @type {{ reason?: string }} */ (r).reason,
+        })),
+        rateTimestamps,
+      };
+    }
     default:
       return {
         significant: false,
@@ -159,7 +227,13 @@ export function evaluateSignificance(filter, bodyText, parsedBody) {
  * Default Lab behavior when no config: non-empty body is significant
  * (preserves historical smoke / webhook demos).
  * @param {string} bodyText
- * @param {{ forcePass?: boolean, forceFail?: boolean, config?: SignificanceFilter | null }} [opts]
+ * @param {{
+ *   forcePass?: boolean,
+ *   forceFail?: boolean,
+ *   config?: SignificanceFilter | null,
+ *   now?: number,
+ *   rateTimestamps?: number[],
+ * }} [opts]
  */
 export function decideSignificance(bodyText, opts = {}) {
   if (opts.forcePass) {
@@ -169,11 +243,17 @@ export function decideSignificance(bodyText, opts = {}) {
     return { significant: false, reason: "header_force_fail", filterType: "force" };
   }
   if (opts.config) {
-    return evaluateSignificance(opts.config, bodyText);
+    return evaluateSignificance(opts.config, bodyText, undefined, {
+      now: opts.now,
+      rateTimestamps: opts.rateTimestamps,
+    });
   }
   const fromBody = extractSignificanceFromBody(bodyText);
   if (fromBody) {
-    return evaluateSignificance(fromBody, bodyText);
+    return evaluateSignificance(fromBody, bodyText, undefined, {
+      now: opts.now,
+      rateTimestamps: opts.rateTimestamps,
+    });
   }
   const force = bodyText.length > 0;
   return {
