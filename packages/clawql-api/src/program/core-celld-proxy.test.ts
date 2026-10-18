@@ -17,10 +17,11 @@ describe("core-celld-proxy", () => {
     resetCoreCelldReachCache();
   });
 
-  it("defaults prefer-celld on; Node escape hatches work", () => {
+  it("defaults prefer-celld on; host MCP escape hatches work", () => {
     expect(preferCoreInCelld({})).toBe(true);
     expect(preferCoreInCelld({ CLAWQL_CORE_IN_CELLD: "0" })).toBe(false);
-    expect(preferCoreInCelld({ CLAWQL_FORCE_NODE_CORE: "1" })).toBe(false);
+    expect(preferCoreInCelld({ CLAWQL_FORCE_HOST_CORE: "1" })).toBe(false);
+    expect(preferCoreInCelld({ CLAWQL_FORCE_NODE_CORE: "1" })).toBe(false); // legacy alias
     expect(preferCoreInCelld({ CLAWQL_CORE_IN_CELLD: "1" })).toBe(true);
   });
 

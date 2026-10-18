@@ -197,7 +197,7 @@ export async function handleClawqlSearchToolInput(
   return getClawqlApi().run(
     Effect.gen(function* () {
       const params = yield* decodeSearchInput(raw);
-      // Default: celld CoreToolsDO when reachable; Node escape when disabled/unreachable.
+      // Default: celld CoreToolsDO when reachable; Bun/host MCP when disabled/unreachable.
       const useCelld = yield* Effect.promise(() => coreCelldProxyEnabledAsync());
       if (useCelld) {
         const proxied = yield* callCoreCelldToolEffect("search", {

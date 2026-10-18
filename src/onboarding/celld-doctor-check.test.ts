@@ -23,12 +23,13 @@ describe("celld doctor", () => {
     expect(checks[0]!.detail).toMatch(/prefers celld/i);
   });
 
-  it("reports Node escape hatch when CORE_IN_CELLD=0", async () => {
+  it("reports host MCP escape hatch when CORE_IN_CELLD=0", async () => {
     const checks = await runCelldDoctorChecks({
       env: { CLAWQL_CORE_IN_CELLD: "0" },
       probe: probeOf({ present: false, version: null, path: null }),
     });
     expect(checks[0]!.message).toMatch(/escape hatch/i);
+    expect(checks[0]!.message).toMatch(/Bun preferred/i);
   });
 
   it("warns when isolate flag set but binary missing", async () => {

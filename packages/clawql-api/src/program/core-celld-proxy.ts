@@ -1,8 +1,9 @@
 /**
- * Core-in-celld proxy: Node MCP search/execute → celld CoreToolsDO (`POST /mcp`).
+ * Core-in-celld proxy: host MCP search/execute → celld CoreToolsDO (`POST /mcp`).
  *
- * Default posture: prefer celld (slim in-isolate Core). Reasons to stay on Node:
- * - `CLAWQL_CORE_IN_CELLD=0` or `CLAWQL_FORCE_NODE_CORE=1`
+ * Default posture: prefer celld (slim in-isolate Core). Host MCP escape (Bun preferred;
+ * Node only as legacy runtime) when:
+ * - `CLAWQL_CORE_IN_CELLD=0` or `CLAWQL_FORCE_HOST_CORE=1` (alias: `CLAWQL_FORCE_NODE_CORE=1`)
  * - default localhost celld unreachable (auto fall-back; no 15s hang)
  * - memory tools / vault / gRPC never go through this proxy
  *
@@ -15,7 +16,7 @@ import { Context, Effect, Layer } from "effect";
 export const DEFAULT_CORE_CELLD_MCP_URL = "http://127.0.0.1:9888/mcp";
 
 export const CORE_CELLD_PROXY_HONESTY =
-  "Node MCP proxied to celld CoreToolsDO (default). Slim in-isolate Core — not full catalog/vault/gRPC. Escape: CLAWQL_CORE_IN_CELLD=0 or CLAWQL_FORCE_NODE_CORE=1.";
+  "Host MCP (Bun preferred) proxied to celld CoreToolsDO (default). Slim in-isolate Core — not full catalog/vault/gRPC. Escape: CLAWQL_CORE_IN_CELLD=0 or CLAWQL_FORCE_HOST_CORE=1.";
 
 export type CoreCelldProxyConfig = {
   readonly url: string;
@@ -32,9 +33,12 @@ function envFlag(name: string, env: NodeJS.ProcessEnv): boolean {
 /**
  * Prefer celld Core unless explicitly disabled.
  * Unset `CLAWQL_CORE_IN_CELLD` → prefer on (product default).
+ * Host escape runs on Bun when available (Node is legacy).
  */
 export function preferCoreInCelld(env: NodeJS.ProcessEnv = process.env): boolean {
-  if (envFlag("CLAWQL_FORCE_NODE_CORE", env)) return false;
+  if (envFlag("CLAWQL_FORCE_HOST_CORE", env) || envFlag("CLAWQL_FORCE_NODE_CORE", env)) {
+    return false;
+  }
   if (env.CLAWQL_CORE_IN_CELLD !== undefined && env.CLAWQL_CORE_IN_CELLD !== "") {
     return envFlag("CLAWQL_CORE_IN_CELLD", env);
   }
@@ -146,7 +150,7 @@ export function callCoreCelldToolEffect(
   return Effect.gen(function* () {
     const cfg = resolveCoreCelldProxyConfig(env);
     if (!cfg) {
-      return yield* Effect.fail(new Error("Core-in-celld disabled (Node escape hatch)"));
+      return yield* Effect.fail(new Error("Core-in-celld disabled (host MCP escape hatch)"));
     }
     const body = {
       jsonrpc: "2.0",

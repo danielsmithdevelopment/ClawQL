@@ -8,7 +8,7 @@
  * In-cell via CoreToolsDO (default; escape CLAWQL_CORE_IN_CELLD=0):
  * - search / execute → slim catalog + fetch upstream (transport=celld-isolate)
  *
- * Out-of-process via fetch(CLAWQL_MCP_URL) Streamable HTTP:
+ * Out-of-process via fetch(CLAWQL_MCP_URL) Streamable HTTP (Bun host preferred):
  * - memory_* always; search/execute when Core-in-celld disabled (sidecar mode)
  *
  * Out-of-process via fetch(CLAWQL_MCP_ADAPTER_URL) REST:
@@ -33,7 +33,7 @@ import { appendWormEntry } from "./worm-fetch.js";
 
 /**
  * Prefer CoreToolsDO unless explicitly disabled.
- * Unset / empty → on (product default). `0` / `false` / `off` / `no` → Node MCP.
+ * Unset / empty → on (product default). `0` / `false` / `off` / `no` → Bun host MCP.
  * @param {Record<string, unknown> | undefined} env
  */
 export function coreInCelldEnabled(env) {
