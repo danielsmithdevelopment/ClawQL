@@ -126,12 +126,12 @@ Method: climb until p99/errors break (loop guard 8192 only — no predetermined 
 Artifact: [`nats-scaleout-bun-curves.json`](./nats-scaleout-bun-curves.json) · [`nats-scaleout-bun-curves.md`](./nats-scaleout-bun-curves.md)  
 Same CF known-op as the multiplex table. Host `nproc=4`. Workers tried: **1, 2, 4, 8**.
 
-| Workers | @100 ms | @250 ms | @500 ms | Peak RPS |
-| ------: | ------: | ------: | ------: | -------: |
-|       1 |      85 |     202 |     430 |    1 824 |
+| Workers | @100 ms | @250 ms | @500 ms |  Peak RPS |
+| ------: | ------: | ------: | ------: | --------: |
+|       1 |      85 |     202 |     430 |     1 824 |
 |       2 |     107 | **322** |     507 | **3 004** |
-|   **4** | **134** |     283 | **596** |    2 623 |
-|       8 |     128 |     289 |     415 |    2 179 |
+|   **4** | **134** |     283 | **596** |     2 623 |
+|       8 |     128 |     289 |     415 |     2 179 |
 
 **Best:** 4× @100 → **134** · 2× @250 → **322** · 4× @500 → **596**. Scale-out beats 1× at every cutoff. **8× loses to 4× on this 4-core host** (contention). Do not cite historical Node/pets ~135 beside Bun 434 without labels.
 
