@@ -100,7 +100,7 @@ export async function probeCoreCelldReachable(
     });
     ok = res.ok;
   } catch {
-    ok = false;
+    // keep ok=false (unreachable / timed out)
   }
   reachCache = { url: cfg.url, ok, at: now };
   return ok;
