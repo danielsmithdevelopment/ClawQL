@@ -21,26 +21,6 @@ import {
 } from "./streams-core-facade.js";
 import { requireComplianceWorm } from "./worm-fetch.js";
 
-// #region agent log
-function dbg(hypothesisId, location, message, data = {}) {
-  // celld isolate: log via fetch to host loopback so NDJSON lands on the smoke host.
-  // Fire-and-forget; never await (would itself be an outbound hop under the output gate).
-  try {
-    const line = JSON.stringify({
-      hypothesisId,
-      location,
-      message,
-      data,
-      timestamp: Date.now(),
-    });
-    // Prefer sync console — full-stack-smoke captures celld stderr; also best-effort file via worker.
-    console.log(`[agent-dbg] ${line}`);
-  } catch {
-    /* ignore */
-  }
-}
-// #endregion
-
 function resolveMcpConfig(env) {
   const url =
     (env.CLAWQL_MCP_URL || env.CLAWQL_MCP_HTTP_URL || "").trim() || undefined;
@@ -217,13 +197,6 @@ export class AgentSessionDO {
         });
         cache = await cacheSessionMeta(eventId, meta);
         auditVerify = await verifyAuditChain();
-        // #region agent log
-        dbg("A", "agent-session-do.js:pre-compliance", "in-process audit/cache done; LTX deferred", {
-          eventId,
-          auditOk: audit?.ok === true,
-          verifyOk: auditVerify?.ok === true,
-        });
-        // #endregion
       } catch (err) {
         audit = {
           ok: false,
@@ -233,9 +206,6 @@ export class AgentSessionDO {
 
       try {
         // Compliance trail: host clawql-audit (tip-load). Ring/LTX is bookkeeping only.
-        // #region agent log
-        dbg("B", "agent-session-do.js:compliance-start", "starting SESSION_START fetch", { eventId });
-        // #endregion
         complianceWorm = await appendComplianceWorm(wormCfg, {
           type: "SESSION_START",
           sessionId: eventId,
@@ -249,13 +219,6 @@ export class AgentSessionDO {
             source: "streams-celld",
           },
         });
-        // #region agent log
-        dbg("B", "agent-session-do.js:compliance-done", "SESSION_START result", {
-          ok: complianceWorm?.ok === true,
-          chainIndex: complianceWorm?.chainIndex ?? null,
-          fenced: String(complianceWorm?.error || "").includes("NodeFenced"),
-        });
-        // #endregion
       } catch (err) {
         complianceWorm = {
           ok: false,
@@ -359,14 +322,6 @@ export class AgentSessionDO {
         }
       }
 
-      // #region agent log
-      dbg("C", "agent-session-do.js:tools-start", "Promise.all tools+adapter+inference", {
-        mcpUrl: Boolean(mcp.url),
-        adapterUrl: Boolean(adapter.url),
-        coreInCelld: Boolean(mcp.preferCoreInCelld),
-        inferenceUrl: Boolean(inferenceUrl),
-      });
-      // #endregion
       const [search, execute, memory_ingest, memory_recall, adapter_search, inference] =
         await Promise.all([
           searchViaMcp(
@@ -401,21 +356,6 @@ export class AgentSessionDO {
         memory_recall,
         adapter_search,
       };
-      // #region agent log
-      dbg("C", "agent-session-do.js:tools-done", "tool+inference hop results", {
-        searchOk: search?.ok === true,
-        executeOk: execute?.ok === true,
-        memoryIngestOk: memory_ingest?.ok === true,
-        memoryRecallOk: memory_recall?.ok === true,
-        adapterOk: adapter_search?.ok === true,
-        adapterErr: String(adapter_search?.error || "").slice(0, 120),
-        adapterFenced: String(adapter_search?.error || "").includes("NodeFenced"),
-        inferenceOk: inference?.ok === true,
-        inferenceTurns: inference?.turns ?? 0,
-        inferenceFenced: String(inference?.error || "").includes("NodeFenced"),
-        inferenceErr: String(inference?.error || "").slice(0, 120),
-      });
-      // #endregion
 
       const inProcess = ["audit", "cache", "hash-chain"];
       if (mcp.preferCoreInCelld) inProcess.push("search", "execute");
@@ -449,12 +389,6 @@ export class AgentSessionDO {
           error: err instanceof Error ? err.message : String(err),
         };
       }
-      // #region agent log
-      dbg("A", "agent-session-do.js:final-puts", "LTX+tool_calls after fetches", {
-        ltxOk: auditPersisted?.ok === true,
-        entryCount: auditPersisted?.entryCount ?? null,
-      });
-      // #endregion
       if (inference && inference.skipped === false) {
         await this.state.storage.put("inference_probe", inference);
         await this.state.storage.put(`worm:inference:${startedAt}`, {
