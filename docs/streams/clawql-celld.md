@@ -216,15 +216,17 @@ celld deploy (esbuild)
   └─ Worker + DO classes
         ├─ clawql-streams (router, filter, stream_* MCP) — planned package
         ├─ clawql-core/streams-slim (audit, cache, hash-chain) — Workers-safe entry
-        ├─ fetch(CLAWQL_MCP_URL) → clawql-mcp search/execute/memory_* (Streamable HTTP)
+        ├─ CoreToolsDO — default slim search/execute in-isolate
+        ├─ fetch(CLAWQL_MCP_URL) → clawql-mcp memory_* / full catalog / escape
+        │     (CLAWQL_CORE_IN_CELLD=0 → host Bun MCP for search/execute too)
         └─ fetch(CLAWQL_MCP_ADAPTER_URL) → mcp-api-adapter REST POST /{tool}
   env / vars ≤ 1 MiB
   code ≤ 64 MiB
 ```
 
-**In-process today:** `AgentSessionDO` imports [`clawql-core/streams-slim`](../../packages/clawql-core/README.md) for hash-chained `audit` + session `cache`. Example: [`docs/examples/streams-celld`](../../docs/examples/streams-celld/).
+**In-process today:** `AgentSessionDO` imports [`clawql-core/streams-slim`](../../packages/clawql-core/README.md) for hash-chained `audit` + session `cache`. Slim `search` / `execute` run in-isolate via **CoreToolsDO** by default. Example: [`docs/examples/streams-celld`](../../docs/examples/streams-celld/).
 
-**Out-of-process today:** `search` / `execute` / `memory_*` via Streamable HTTP MCP (`CLAWQL_MCP_URL`). Optional protocol-fabric REST via `CLAWQL_MCP_ADAPTER_URL` (`POST /{tool}` on mcp-api-adapter). Inference via `fetch(INFERENCE_URL)`. Do **not** embed full `clawql-api`, `clawql-memory`, `mcp-api-adapter`, or the full `clawql-core` barrel (`webmcp-draft` / `node:fs`).
+**Out-of-process today:** `memory_*` and full catalog via Streamable HTTP MCP (`CLAWQL_MCP_URL`); set `CLAWQL_CORE_IN_CELLD=0` to escape slim search/execute to the host MCP (**Bun** preferred). Optional protocol-fabric REST via `CLAWQL_MCP_ADAPTER_URL` (`POST /{tool}` on mcp-api-adapter). Inference via `fetch(INFERENCE_URL)`. Do **not** embed full `clawql-api`, `clawql-memory`, `mcp-api-adapter`, or the full `clawql-core` barrel (`webmcp-draft` / `node:fs`).
 
 #### Why not “full core” inside the cell?
 

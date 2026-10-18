@@ -46,9 +46,10 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
       'Multi-turn weighted tokens (incl. model-written), p99 concurrency under SLO, governance depth on the same fixture.',
     howToProve:
       'Interleaved multi-step OpenAPI/pets workflow vs their Code Mode; publish harness + raw results; invite maintainer config fixes.',
-    status: 'not_on_board',
-    statusLabel: 'Not on board',
-    nextStep: 'Highest category-claim blocker — add Bifrost arm to gateway-multi (or a dedicated Code Mode board).',
+    status: 'partial',
+    statusLabel: 'Tokens measured',
+    nextStep:
+      'Equal-arm N=12/C=40 board landed (Code Mode 2.25× / classic 3.95× vs ClawQL after compact JSON). Still need p99 concurrency + governance-depth criteria for a category claim.',
   },
   {
     id: 'truefoundry',
@@ -60,7 +61,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
       'Same multi-turn board with their MCP proxy; measure weighted tokens + p99 clients before SLO break; compare approval binding + trail.',
     status: 'not_on_board',
     statusLabel: 'Not on board',
-    nextStep: 'Governance-depth board after Bifrost Code Mode tokens are on the harness.',
+    nextStep: 'Next unmeasured peer after Bifrost/Obot token boards — governance-depth equal-arm.',
   },
   {
     id: 'cloudflare-code-mode',
@@ -115,9 +116,10 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     criteriaToBeat: 'Token surface of curated tools; policy enforcement overhead.',
     howToProve:
       'Measure definitions + discovery tokens with their catalog model; compare audit/policy on the same workflow.',
-    status: 'not_on_board',
-    statusLabel: 'Not on board',
-    nextStep: 'Catalog-token board after Bifrost; policy overhead secondary metric.',
+    status: 'partial',
+    statusLabel: 'Tokens measured',
+    nextStep:
+      'Equal-arm N=12/C=40 via Obot mcp-connect catalog: classic 3.95× vs ClawQL (same fat aggregator path). Still need policy-overhead + governance-depth criteria.',
   },
   {
     id: 'executor',
@@ -127,17 +129,33 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     howToProve: 'Re-run full board with latest versions; include real-model validation under pre-committed rules.',
     status: 'measured',
     statusLabel: 'Measured',
-    nextStep: 'Keep version-scoped claims; re-run when Executor ships compact/tooling changes.',
+    nextStep:
+      'Keep version-scoped claims; v2 β multiturn 29 927 (3.38× vs ClawQL) + HTTP chaos 29/30 remasured 2026-10-17. Re-run when Executor ships tooling changes.',
+  },
+  {
+    id: 'celld-durability',
+    name: 'celld durability (ProgramCellDO)',
+    whyItMatters:
+      'Crash-survival / isolate-hosted programs claim — ADR 0015 kill-node gate for “code mode that survives a crash.”',
+    criteriaToBeat:
+      'Lab isolate SIGKILL resume on DO journal, then fleet LTX diagnose + three-arm product gate.',
+    howToProve:
+      'ProgramCellDO write+read smoke after SIGKILL celld; publish evidence.json; keep fleet three-arm Partial until measured.',
+    status: 'partial',
+    statusLabel: 'Lab Yes · fleet Partial',
+    nextStep:
+      'Lab ProgramCellDO isolate kill shipped (#1350, evidence ok). Fleet three-arm / LTX diagnose still open. Hot-path A/B 10k PASS (+2.7% p50) — env flags do not regress pets board.',
   },
 ] as const
 
 export const dominancePriorityOrder = [
   'bifrost',
   'cloudflare-code-mode',
-  'executor',
-  'agentgateway',
+  'celld-durability',
   'truefoundry',
   'uber-mcp-gateway',
-  'contextforge',
+  'executor',
+  'agentgateway',
   'obot',
+  'contextforge',
 ] as const

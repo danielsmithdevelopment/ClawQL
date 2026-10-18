@@ -9,6 +9,7 @@ import {
   cfBenchmarkSummary,
   cfHttpConcRows,
   cfStdioConcRows,
+  cfTokenBoardProvenance,
   cfTokenRows,
   fanoutBenchmarkHonesty,
   fanoutBenchmarkMeta,
@@ -176,6 +177,10 @@ export function BenchmarksLanding() {
           </p>
         }
       >
+        <p className="mb-4 text-sm/6 text-mist-600 dark:text-mist-400">
+          Provenance: {cfTokenBoardProvenance.measuredAt} · {cfTokenBoardProvenance.note} ·{' '}
+          <code className="text-xs">{cfTokenBoardProvenance.artifact}</code>
+        </p>
         <ComparisonTable minWidthClass="min-w-[920px]">
           <caption className="sr-only">
             Cloudflare multiturn board: weighted tokens, memory, and session latency by arm

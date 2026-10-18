@@ -1,0 +1,5169 @@
+{
+  "measuredAt": "2026-10-16T16:28:05.341Z",
+  "topology": "stdio_process_per_client",
+  "label": "Clients over stdio (one process per client)",
+  "honesty": [
+    "Different topology from HTTP Streamable multiplex curves — do not place in the same table cells.",
+    "Each client owns one stdio MCP OS process. ClawQL: node dist/server.js. Executor v1: executor mcp → shared daemon.",
+    "Memory = sum of all client process trees (+ Executor daemon once).",
+    "Same Cloudflare DNS list call as HTTP concurrency (ClawQL known-op+where; Executor v1 code-mode step 4).",
+    "Climb until p99/errors break; CONC_HARD_MAX is a loop guard only."
+  ],
+  "slo": {
+    "break_p99_ms": 100,
+    "break_error_rate": 0.02,
+    "step_ms": 10000,
+    "warmup": 2,
+    "loop_guard": 256,
+    "thresholds_p99_ms": [
+      100,
+      250,
+      500
+    ],
+    "curve_stop_p99_ms": 500,
+    "clawql_node_max_old_space_mb": 256
+  },
+  "reps": 3,
+  "arms": [
+    "clawql_known_op_stdio",
+    "executor_v1_stdio"
+  ],
+  "executor_v1": {
+    "slug": "cf-zone-audit-mock",
+    "connectionName": "cfMock",
+    "origin": "http://127.0.0.1:34739",
+    "runtimeVersion": "1.6.10",
+    "transport": "stdio",
+    "bin": "/tmp/executor-try/node_modules/.bin/executor",
+    "cwd": "/tmp/executor-try",
+    "toolPathPrefix": "cf-zone-audit-mock.user.cfMock",
+    "toolCount": 60
+  },
+  "ranges_by_threshold": {
+    "100": {
+      "clawql_known_op_stdio": {
+        "sustained": [
+          31,
+          30,
+          31
+        ],
+        "median": 31,
+        "min": 30,
+        "max": 31,
+        "anon_mb_at_sustained": [
+          3375.15,
+          3276.4,
+          3379.71
+        ],
+        "anon_mb_median": 3375.15
+      },
+      "executor_v1_stdio": {
+        "sustained": [
+          8,
+          5,
+          8
+        ],
+        "median": 8,
+        "min": 5,
+        "max": 8,
+        "anon_mb_at_sustained": [
+          1903.26,
+          2023.35,
+          2877.64
+        ],
+        "anon_mb_median": 2023.35
+      }
+    },
+    "250": {
+      "clawql_known_op_stdio": {
+        "sustained": [
+          79,
+          74,
+          73
+        ],
+        "median": 74,
+        "min": 73,
+        "max": 79,
+        "anon_mb_at_sustained": [
+          7866.09,
+          7339.49,
+          7346.1
+        ],
+        "anon_mb_median": 7346.1
+      },
+      "executor_v1_stdio": {
+        "sustained": [
+          24,
+          19,
+          19
+        ],
+        "median": 19,
+        "min": 19,
+        "max": 24,
+        "anon_mb_at_sustained": [
+          4175.82,
+          4223.97,
+          4561.04
+        ],
+        "anon_mb_median": 4223.97
+      }
+    },
+    "500": {
+      "clawql_known_op_stdio": {
+        "sustained": [
+          136,
+          122,
+          119
+        ],
+        "median": 122,
+        "min": 119,
+        "max": 136,
+        "anon_mb_at_sustained": [
+          11444.42,
+          10441.17,
+          10409.15
+        ],
+        "anon_mb_median": 10441.17
+      },
+      "executor_v1_stdio": {
+        "sustained": [
+          48,
+          42,
+          31
+        ],
+        "median": 42,
+        "min": 31,
+        "max": 48,
+        "anon_mb_at_sustained": [
+          7432.89,
+          7344.36,
+          6187.65
+        ],
+        "anon_mb_median": 7344.36
+      }
+    }
+  },
+  "saturation_by_arm": {
+    "clawql_known_op_stdio": {
+      "peak_rps": [
+        1170.3,
+        1145.4,
+        1034.7
+      ],
+      "median": 1145.4
+    },
+    "executor_v1_stdio": {
+      "peak_rps": [
+        131.2,
+        122.5,
+        119.6
+      ],
+      "median": 122.5
+    }
+  },
+  "runs": [
+    {
+      "rep": 1,
+      "arms": {
+        "clawql_known_op_stdio": {
+          "id": "clawql_known_op_stdio",
+          "kind": "clawql",
+          "runtime": "node_stdio",
+          "topology": "stdio_process_per_client",
+          "toolName": "execute",
+          "note": "stdio process-per-client; Node --max-old-space-size=256; known-op + where (DNS A-count).",
+          "loop_guard": 256,
+          "host_censored_at_clients": null,
+          "sustained_concurrency_before_break": 31,
+          "first_break_clients": 32,
+          "break_reason": "p99 113.9ms",
+          "thresholds": {
+            "100": {
+              "threshold_p99_ms": 100,
+              "sustained_concurrency": 31,
+              "first_break_clients": 32,
+              "break_reason": "p99 113.9ms",
+              "rps_at_sustained": 982.6,
+              "p99_at_sustained": 91.64481600001454,
+              "anon_mb_at_sustained": 3375.15,
+              "rss_mb_at_sustained": 4947.03
+            },
+            "250": {
+              "threshold_p99_ms": 250,
+              "sustained_concurrency": 79,
+              "first_break_clients": 80,
+              "break_reason": "p99 279.3ms",
+              "rps_at_sustained": 767.3,
+              "p99_at_sustained": 238.56472600018606,
+              "anon_mb_at_sustained": 7866.09,
+              "rss_mb_at_sustained": 11870
+            },
+            "500": {
+              "threshold_p99_ms": 500,
+              "sustained_concurrency": 136,
+              "first_break_clients": 137,
+              "break_reason": "p99 655.1ms",
+              "rps_at_sustained": 649.5,
+              "p99_at_sustained": 486.7677299999632,
+              "anon_mb_at_sustained": 11444.42,
+              "rss_mb_at_sustained": 18165.6
+            }
+          },
+          "saturation": {
+            "peak_rps": 1170.3,
+            "at_clients": 8,
+            "p99_ms": 26.252146000006178,
+            "anon_mb": 892.86
+          },
+          "curve": [
+            {
+              "clients": 1,
+              "rps": 442.1,
+              "p50": 2.032902999999351,
+              "p99": 6.689097000000402,
+              "p999": 10.571359999999913,
+              "error_rate": 0,
+              "ok": 4421,
+              "err": 0,
+              "anon_mb": 119.98,
+              "rss_mb": 170.77,
+              "process_count": 1
+            },
+            {
+              "clients": 2,
+              "rps": 884.2,
+              "p50": 1.9164030000029015,
+              "p99": 7.439199000000372,
+              "p999": 11.833420999999362,
+              "error_rate": 0,
+              "ok": 8842,
+              "err": 0,
+              "anon_mb": 227.08,
+              "rss_mb": 328.62,
+              "process_count": 2
+            },
+            {
+              "clients": 4,
+              "rps": 1154.3,
+              "p50": 2.70771099999547,
+              "p99": 14.165850000004866,
+              "p999": 26.353908999997657,
+              "error_rate": 0,
+              "ok": 11543,
+              "err": 0,
+              "anon_mb": 464.53,
+              "rss_mb": 667.69,
+              "process_count": 4
+            },
+            {
+              "clients": 8,
+              "rps": 1170.3,
+              "p50": 5.559762000004412,
+              "p99": 26.252146000006178,
+              "p999": 49.61817300000257,
+              "error_rate": 0,
+              "ok": 11703,
+              "err": 0,
+              "anon_mb": 892.86,
+              "rss_mb": 1298.67,
+              "process_count": 8
+            },
+            {
+              "clients": 16,
+              "rps": 1080,
+              "p50": 12.527479999989737,
+              "p99": 53.81160400000226,
+              "p999": 88.32589200000075,
+              "error_rate": 0,
+              "ok": 10800,
+              "err": 0,
+              "anon_mb": 1732.11,
+              "rss_mb": 2543.65,
+              "process_count": 16
+            },
+            {
+              "clients": 24,
+              "rps": 987.4,
+              "p50": 20.691302999999607,
+              "p99": 87.50711699998647,
+              "p999": 151.92533700000786,
+              "error_rate": 0,
+              "ok": 9874,
+              "err": 0,
+              "anon_mb": 2588.12,
+              "rss_mb": 3805.11,
+              "process_count": 24
+            },
+            {
+              "clients": 28,
+              "rps": 959.2,
+              "p50": 26.04385999997612,
+              "p99": 86.94202499999665,
+              "p999": 132.47975200007204,
+              "error_rate": 0,
+              "ok": 9592,
+              "err": 0,
+              "anon_mb": 3032.23,
+              "rss_mb": 4451.55,
+              "process_count": 28
+            },
+            {
+              "clients": 30,
+              "rps": 988.3,
+              "p50": 26.894296000013128,
+              "p99": 91.43140900006983,
+              "p999": 139.9498710000189,
+              "error_rate": 0,
+              "ok": 9883,
+              "err": 0,
+              "anon_mb": 3239.69,
+              "rss_mb": 4760.54,
+              "process_count": 30
+            },
+            {
+              "clients": 31,
+              "rps": 982.6,
+              "p50": 27.968963999999687,
+              "p99": 91.64481600001454,
+              "p999": 175.8315650000004,
+              "error_rate": 0,
+              "ok": 9826,
+              "err": 0,
+              "anon_mb": 3375.15,
+              "rss_mb": 4947.03,
+              "process_count": 31
+            },
+            {
+              "clients": 32,
+              "rps": 911.6,
+              "p50": 30.585221000001184,
+              "p99": 113.92652900000394,
+              "p999": 183.35966099999496,
+              "error_rate": 0,
+              "ok": 9116,
+              "err": 0,
+              "anon_mb": 3410.93,
+              "rss_mb": 5033.32,
+              "process_count": 32
+            },
+            {
+              "clients": 40,
+              "rps": 929.4,
+              "p50": 39.567107999988366,
+              "p99": 117.43786700000055,
+              "p999": 168.10654799998156,
+              "error_rate": 0,
+              "ok": 9294,
+              "err": 0,
+              "anon_mb": 4316.35,
+              "rss_mb": 6345.19,
+              "process_count": 40
+            },
+            {
+              "clients": 48,
+              "rps": 814,
+              "p50": 53.40482199998223,
+              "p99": 150.0669929999858,
+              "p999": 198.67826099999365,
+              "error_rate": 0,
+              "ok": 8140,
+              "err": 0,
+              "anon_mb": 5131.65,
+              "rss_mb": 7566.41,
+              "process_count": 48
+            },
+            {
+              "clients": 56,
+              "rps": 772.9,
+              "p50": 64.23925500002224,
+              "p99": 217.0455629999924,
+              "p999": 291.83796599999187,
+              "error_rate": 0,
+              "ok": 7729,
+              "err": 0,
+              "anon_mb": 5902.31,
+              "rss_mb": 8742.86,
+              "process_count": 56
+            },
+            {
+              "clients": 64,
+              "rps": 763.7,
+              "p50": 74.58241099998122,
+              "p99": 213.92011399997864,
+              "p999": 351.54256599996006,
+              "error_rate": 0,
+              "ok": 7637,
+              "err": 0,
+              "anon_mb": 6636.52,
+              "rss_mb": 9882.56,
+              "process_count": 64
+            },
+            {
+              "clients": 72,
+              "rps": 755.2,
+              "p50": 84.8419189999695,
+              "p99": 226.39752200001385,
+              "p999": 264.59910400002263,
+              "error_rate": 0,
+              "ok": 7552,
+              "err": 0,
+              "anon_mb": 7247.49,
+              "rss_mb": 10897.37,
+              "process_count": 72
+            },
+            {
+              "clients": 76,
+              "rps": 753,
+              "p50": 90.33821900002658,
+              "p99": 238.51752500003204,
+              "p999": 293.5880869999528,
+              "error_rate": 0,
+              "ok": 7530,
+              "err": 0,
+              "anon_mb": 7578.61,
+              "rss_mb": 11430.63,
+              "process_count": 76
+            },
+            {
+              "clients": 78,
+              "rps": 789.7,
+              "p50": 87.28763699997216,
+              "p99": 229.6326930001378,
+              "p999": 329.46909499983303,
+              "error_rate": 0,
+              "ok": 7897,
+              "err": 0,
+              "anon_mb": 7809.01,
+              "rss_mb": 11762.29,
+              "process_count": 78
+            },
+            {
+              "clients": 79,
+              "rps": 767.3,
+              "p50": 91.71419500000775,
+              "p99": 238.56472600018606,
+              "p999": 308.19447099999525,
+              "error_rate": 0,
+              "ok": 7673,
+              "err": 0,
+              "anon_mb": 7866.09,
+              "rss_mb": 11870,
+              "process_count": 79
+            },
+            {
+              "clients": 80,
+              "rps": 713,
+              "p50": 98.40537499997299,
+              "p99": 279.34566599997925,
+              "p999": 360.98905699996976,
+              "error_rate": 0,
+              "ok": 7130,
+              "err": 0,
+              "anon_mb": 7741.89,
+              "rss_mb": 11798.46,
+              "process_count": 80
+            },
+            {
+              "clients": 88,
+              "rps": 656.8,
+              "p50": 117.16772999998648,
+              "p99": 322.2451609999989,
+              "p999": 399.37264000001596,
+              "error_rate": 0,
+              "ok": 6568,
+              "err": 0,
+              "anon_mb": 8280.71,
+              "rss_mb": 12736.08,
+              "process_count": 88
+            },
+            {
+              "clients": 96,
+              "rps": 668.1,
+              "p50": 126.45673099998385,
+              "p99": 361.4356179999886,
+              "p999": 444.7924589999602,
+              "error_rate": 0,
+              "ok": 6681,
+              "err": 0,
+              "anon_mb": 8854.98,
+              "rss_mb": 13720.46,
+              "process_count": 96
+            },
+            {
+              "clients": 104,
+              "rps": 709.3,
+              "p50": 128.5715060000075,
+              "p99": 392.1849879999645,
+              "p999": 464.3665280001005,
+              "error_rate": 0,
+              "ok": 7093,
+              "err": 0,
+              "anon_mb": 9489.04,
+              "rss_mb": 14760.34,
+              "process_count": 104
+            },
+            {
+              "clients": 112,
+              "rps": 703.4,
+              "p50": 142.8807670000242,
+              "p99": 374.9080369999865,
+              "p999": 545.8322000000626,
+              "error_rate": 0,
+              "ok": 7034,
+              "err": 0,
+              "anon_mb": 10067.26,
+              "rss_mb": 15744.3,
+              "process_count": 112
+            },
+            {
+              "clients": 120,
+              "rps": 683.5,
+              "p50": 152.94143299991265,
+              "p99": 446.3019399999175,
+              "p999": 670.2879810000304,
+              "error_rate": 0,
+              "ok": 6835,
+              "err": 0,
+              "anon_mb": 10562.4,
+              "rss_mb": 16644.97,
+              "process_count": 120
+            },
+            {
+              "clients": 128,
+              "rps": 647.6,
+              "p50": 180.74904100003187,
+              "p99": 462.2830570000224,
+              "p999": 659.6087409999454,
+              "error_rate": 0,
+              "ok": 6476,
+              "err": 0,
+              "anon_mb": 10977.34,
+              "rss_mb": 17464.73,
+              "process_count": 128
+            },
+            {
+              "clients": 136,
+              "rps": 649.5,
+              "p50": 190.2754530000966,
+              "p99": 486.7677299999632,
+              "p999": 553.6791209999938,
+              "error_rate": 0,
+              "ok": 6495,
+              "err": 0,
+              "anon_mb": 11444.42,
+              "rss_mb": 18165.6,
+              "process_count": 136
+            },
+            {
+              "clients": 137,
+              "rps": 615.5,
+              "p50": 191.33654300007038,
+              "p99": 655.1250110000838,
+              "p999": 1734.985006999923,
+              "error_rate": 0,
+              "ok": 6155,
+              "err": 0,
+              "anon_mb": 11563.03,
+              "rss_mb": 18502.03,
+              "process_count": 137
+            },
+            {
+              "clients": 138,
+              "rps": 628,
+              "p50": 185.27628999995068,
+              "p99": 591.1504859998822,
+              "p999": 2274.7833650000393,
+              "error_rate": 0,
+              "ok": 6280,
+              "err": 0,
+              "anon_mb": 11558.99,
+              "rss_mb": 18549.12,
+              "process_count": 138
+            },
+            {
+              "clients": 140,
+              "rps": 602,
+              "p50": 199.57562100002542,
+              "p99": 656.7268169999588,
+              "p999": 1348.1306229999755,
+              "error_rate": 0,
+              "ok": 6020,
+              "err": 0,
+              "anon_mb": 11730.36,
+              "rss_mb": 18821.15,
+              "process_count": 140
+            },
+            {
+              "clients": 144,
+              "rps": 557.9,
+              "p50": 215.43280100007541,
+              "p99": 843.6738609999884,
+              "p999": 5050.953200999997,
+              "error_rate": 0,
+              "ok": 5579,
+              "err": 0,
+              "anon_mb": 11632.12,
+              "rss_mb": 18492,
+              "process_count": 144
+            }
+          ],
+          "steps": [
+            {
+              "concurrency": 1,
+              "ok": 4421,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 442.1,
+              "latency_ms": {
+                "p50": 2.032902999999351,
+                "p99": 6.689097000000402,
+                "p999": 10.571359999999913
+              },
+              "memory": {
+                "rss_mb": 170.77,
+                "anonymous_mb": 119.98,
+                "pss_mb": 130.6,
+                "process_count": 1,
+                "root_count": 1
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 2,
+              "ok": 8842,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 884.2,
+              "latency_ms": {
+                "p50": 1.9164030000029015,
+                "p99": 7.439199000000372,
+                "p999": 11.833420999999362
+              },
+              "memory": {
+                "rss_mb": 328.62,
+                "anonymous_mb": 227.08,
+                "pss_mb": 243.74,
+                "process_count": 2,
+                "root_count": 2
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 4,
+              "ok": 11543,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1154.3,
+              "latency_ms": {
+                "p50": 2.70771099999547,
+                "p99": 14.165850000004866,
+                "p999": 26.353908999997657
+              },
+              "memory": {
+                "rss_mb": 667.69,
+                "anonymous_mb": 464.53,
+                "pss_mb": 489.05,
+                "process_count": 4,
+                "root_count": 4
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 8,
+              "ok": 11703,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1170.3,
+              "latency_ms": {
+                "p50": 5.559762000004412,
+                "p99": 26.252146000006178,
+                "p999": 49.61817300000257
+              },
+              "memory": {
+                "rss_mb": 1298.67,
+                "anonymous_mb": 892.86,
+                "pss_mb": 925.67,
+                "process_count": 8,
+                "root_count": 8
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 16,
+              "ok": 10800,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1080,
+              "latency_ms": {
+                "p50": 12.527479999989737,
+                "p99": 53.81160400000226,
+                "p999": 88.32589200000075
+              },
+              "memory": {
+                "rss_mb": 2543.65,
+                "anonymous_mb": 1732.11,
+                "pss_mb": 1772.36,
+                "process_count": 16,
+                "root_count": 16
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 24,
+              "ok": 9874,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 987.4,
+              "latency_ms": {
+                "p50": 20.691302999999607,
+                "p99": 87.50711699998647,
+                "p999": 151.92533700000786
+              },
+              "memory": {
+                "rss_mb": 3805.11,
+                "anonymous_mb": 2588.12,
+                "pss_mb": 2632.15,
+                "process_count": 24,
+                "root_count": 24
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 32,
+              "ok": 9116,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 911.6,
+              "latency_ms": {
+                "p50": 30.585221000001184,
+                "p99": 113.92652900000394,
+                "p999": 183.35966099999496
+              },
+              "memory": {
+                "rss_mb": 5033.32,
+                "anonymous_mb": 3410.93,
+                "pss_mb": 3457.36,
+                "process_count": 32,
+                "root_count": 32
+              },
+              "broken": true,
+              "break_reason": "p99 113.9ms"
+            },
+            {
+              "concurrency": 40,
+              "ok": 9294,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 929.4,
+              "latency_ms": {
+                "p50": 39.567107999988366,
+                "p99": 117.43786700000055,
+                "p999": 168.10654799998156
+              },
+              "memory": {
+                "rss_mb": 6345.19,
+                "anonymous_mb": 4316.35,
+                "pss_mb": 4364.63,
+                "process_count": 40,
+                "root_count": 40
+              },
+              "broken": true,
+              "break_reason": "p99 117.4ms"
+            },
+            {
+              "concurrency": 48,
+              "ok": 8140,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 814,
+              "latency_ms": {
+                "p50": 53.40482199998223,
+                "p99": 150.0669929999858,
+                "p999": 198.67826099999365
+              },
+              "memory": {
+                "rss_mb": 7566.41,
+                "anonymous_mb": 5131.65,
+                "pss_mb": 5181.35,
+                "process_count": 48,
+                "root_count": 48
+              },
+              "broken": true,
+              "break_reason": "p99 150.1ms"
+            },
+            {
+              "concurrency": 56,
+              "ok": 7729,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 772.9,
+              "latency_ms": {
+                "p50": 64.23925500002224,
+                "p99": 217.0455629999924,
+                "p999": 291.83796599999187
+              },
+              "memory": {
+                "rss_mb": 8742.86,
+                "anonymous_mb": 5902.31,
+                "pss_mb": 5953.28,
+                "process_count": 56,
+                "root_count": 56
+              },
+              "broken": true,
+              "break_reason": "p99 217.0ms"
+            },
+            {
+              "concurrency": 64,
+              "ok": 7637,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 763.7,
+              "latency_ms": {
+                "p50": 74.58241099998122,
+                "p99": 213.92011399997864,
+                "p999": 351.54256599996006
+              },
+              "memory": {
+                "rss_mb": 9882.56,
+                "anonymous_mb": 6636.52,
+                "pss_mb": 6688.64,
+                "process_count": 64,
+                "root_count": 64
+              },
+              "broken": true,
+              "break_reason": "p99 213.9ms"
+            },
+            {
+              "concurrency": 72,
+              "ok": 7552,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 755.2,
+              "latency_ms": {
+                "p50": 84.8419189999695,
+                "p99": 226.39752200001385,
+                "p999": 264.59910400002263
+              },
+              "memory": {
+                "rss_mb": 10897.37,
+                "anonymous_mb": 7247.49,
+                "pss_mb": 7300.78,
+                "process_count": 72,
+                "root_count": 72
+              },
+              "broken": true,
+              "break_reason": "p99 226.4ms"
+            },
+            {
+              "concurrency": 80,
+              "ok": 7130,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 713,
+              "latency_ms": {
+                "p50": 98.40537499997299,
+                "p99": 279.34566599997925,
+                "p999": 360.98905699996976
+              },
+              "memory": {
+                "rss_mb": 11798.46,
+                "anonymous_mb": 7741.89,
+                "pss_mb": 7796.24,
+                "process_count": 80,
+                "root_count": 80
+              },
+              "broken": true,
+              "break_reason": "p99 279.3ms"
+            },
+            {
+              "concurrency": 88,
+              "ok": 6568,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 656.8,
+              "latency_ms": {
+                "p50": 117.16772999998648,
+                "p99": 322.2451609999989,
+                "p999": 399.37264000001596
+              },
+              "memory": {
+                "rss_mb": 12736.08,
+                "anonymous_mb": 8280.71,
+                "pss_mb": 8335.8,
+                "process_count": 88,
+                "root_count": 88
+              },
+              "broken": true,
+              "break_reason": "p99 322.2ms"
+            },
+            {
+              "concurrency": 96,
+              "ok": 6681,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 668.1,
+              "latency_ms": {
+                "p50": 126.45673099998385,
+                "p99": 361.4356179999886,
+                "p999": 444.7924589999602
+              },
+              "memory": {
+                "rss_mb": 13720.46,
+                "anonymous_mb": 8854.98,
+                "pss_mb": 8910.87,
+                "process_count": 96,
+                "root_count": 96
+              },
+              "broken": true,
+              "break_reason": "p99 361.4ms"
+            },
+            {
+              "concurrency": 104,
+              "ok": 7093,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 709.3,
+              "latency_ms": {
+                "p50": 128.5715060000075,
+                "p99": 392.1849879999645,
+                "p999": 464.3665280001005
+              },
+              "memory": {
+                "rss_mb": 14760.34,
+                "anonymous_mb": 9489.04,
+                "pss_mb": 9545.77,
+                "process_count": 104,
+                "root_count": 104
+              },
+              "broken": true,
+              "break_reason": "p99 392.2ms"
+            },
+            {
+              "concurrency": 112,
+              "ok": 7034,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 703.4,
+              "latency_ms": {
+                "p50": 142.8807670000242,
+                "p99": 374.9080369999865,
+                "p999": 545.8322000000626
+              },
+              "memory": {
+                "rss_mb": 15744.3,
+                "anonymous_mb": 10067.26,
+                "pss_mb": 10124.92,
+                "process_count": 112,
+                "root_count": 112
+              },
+              "broken": true,
+              "break_reason": "p99 374.9ms"
+            },
+            {
+              "concurrency": 120,
+              "ok": 6835,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 683.5,
+              "latency_ms": {
+                "p50": 152.94143299991265,
+                "p99": 446.3019399999175,
+                "p999": 670.2879810000304
+              },
+              "memory": {
+                "rss_mb": 16644.97,
+                "anonymous_mb": 10562.4,
+                "pss_mb": 10620.91,
+                "process_count": 120,
+                "root_count": 120
+              },
+              "broken": true,
+              "break_reason": "p99 446.3ms"
+            },
+            {
+              "concurrency": 128,
+              "ok": 6476,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 647.6,
+              "latency_ms": {
+                "p50": 180.74904100003187,
+                "p99": 462.2830570000224,
+                "p999": 659.6087409999454
+              },
+              "memory": {
+                "rss_mb": 17464.73,
+                "anonymous_mb": 10977.34,
+                "pss_mb": 11036.56,
+                "process_count": 128,
+                "root_count": 128
+              },
+              "broken": true,
+              "break_reason": "p99 462.3ms"
+            },
+            {
+              "concurrency": 136,
+              "ok": 6495,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 649.5,
+              "latency_ms": {
+                "p50": 190.2754530000966,
+                "p99": 486.7677299999632,
+                "p999": 553.6791209999938
+              },
+              "memory": {
+                "rss_mb": 18165.6,
+                "anonymous_mb": 11444.42,
+                "pss_mb": 11503.05,
+                "process_count": 136,
+                "root_count": 136
+              },
+              "broken": true,
+              "break_reason": "p99 486.8ms"
+            },
+            {
+              "concurrency": 144,
+              "ok": 5579,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 557.9,
+              "latency_ms": {
+                "p50": 215.43280100007541,
+                "p99": 843.6738609999884,
+                "p999": 5050.953200999997
+              },
+              "memory": {
+                "rss_mb": 18492,
+                "anonymous_mb": 11632.12,
+                "pss_mb": 11690.96,
+                "process_count": 144,
+                "root_count": 144
+              },
+              "broken": true,
+              "break_reason": "p99 843.7ms"
+            },
+            {
+              "concurrency": 28,
+              "ok": 9592,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 959.2,
+              "latency_ms": {
+                "p50": 26.04385999997612,
+                "p99": 86.94202499999665,
+                "p999": 132.47975200007204
+              },
+              "memory": {
+                "rss_mb": 4451.55,
+                "anonymous_mb": 3032.23,
+                "pss_mb": 3077.68,
+                "process_count": 28,
+                "root_count": 28
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 30,
+              "ok": 9883,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 988.3,
+              "latency_ms": {
+                "p50": 26.894296000013128,
+                "p99": 91.43140900006983,
+                "p999": 139.9498710000189
+              },
+              "memory": {
+                "rss_mb": 4760.54,
+                "anonymous_mb": 3239.69,
+                "pss_mb": 3285.71,
+                "process_count": 30,
+                "root_count": 30
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 31,
+              "ok": 9826,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 982.6,
+              "latency_ms": {
+                "p50": 27.968963999999687,
+                "p99": 91.64481600001454,
+                "p999": 175.8315650000004
+              },
+              "memory": {
+                "rss_mb": 4947.03,
+                "anonymous_mb": 3375.15,
+                "pss_mb": 3421.44,
+                "process_count": 31,
+                "root_count": 31
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 76,
+              "ok": 7530,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 753,
+              "latency_ms": {
+                "p50": 90.33821900002658,
+                "p99": 238.51752500003204,
+                "p999": 293.5880869999528
+              },
+              "memory": {
+                "rss_mb": 11430.63,
+                "anonymous_mb": 7578.61,
+                "pss_mb": 7632.34,
+                "process_count": 76,
+                "root_count": 76
+              },
+              "broken": true,
+              "break_reason": "p99 238.5ms"
+            },
+            {
+              "concurrency": 78,
+              "ok": 7897,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 789.7,
+              "latency_ms": {
+                "p50": 87.28763699997216,
+                "p99": 229.6326930001378,
+                "p999": 329.46909499983303
+              },
+              "memory": {
+                "rss_mb": 11762.29,
+                "anonymous_mb": 7809.01,
+                "pss_mb": 7862.88,
+                "process_count": 78,
+                "root_count": 78
+              },
+              "broken": true,
+              "break_reason": "p99 229.6ms"
+            },
+            {
+              "concurrency": 79,
+              "ok": 7673,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 767.3,
+              "latency_ms": {
+                "p50": 91.71419500000775,
+                "p99": 238.56472600018606,
+                "p999": 308.19447099999525
+              },
+              "memory": {
+                "rss_mb": 11870,
+                "anonymous_mb": 7866.09,
+                "pss_mb": 7920.2,
+                "process_count": 79,
+                "root_count": 79
+              },
+              "broken": true,
+              "break_reason": "p99 238.6ms"
+            },
+            {
+              "concurrency": 140,
+              "ok": 6020,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 602,
+              "latency_ms": {
+                "p50": 199.57562100002542,
+                "p99": 656.7268169999588,
+                "p999": 1348.1306229999755
+              },
+              "memory": {
+                "rss_mb": 18821.15,
+                "anonymous_mb": 11730.36,
+                "pss_mb": 11790.6,
+                "process_count": 140,
+                "root_count": 140
+              },
+              "broken": true,
+              "break_reason": "p99 656.7ms"
+            },
+            {
+              "concurrency": 138,
+              "ok": 6280,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 628,
+              "latency_ms": {
+                "p50": 185.27628999995068,
+                "p99": 591.1504859998822,
+                "p999": 2274.7833650000393
+              },
+              "memory": {
+                "rss_mb": 18549.12,
+                "anonymous_mb": 11558.99,
+                "pss_mb": 11619.1,
+                "process_count": 138,
+                "root_count": 138
+              },
+              "broken": true,
+              "break_reason": "p99 591.2ms"
+            },
+            {
+              "concurrency": 137,
+              "ok": 6155,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 615.5,
+              "latency_ms": {
+                "p50": 191.33654300007038,
+                "p99": 655.1250110000838,
+                "p999": 1734.985006999923
+              },
+              "memory": {
+                "rss_mb": 18502.03,
+                "anonymous_mb": 11563.03,
+                "pss_mb": 11623.08,
+                "process_count": 137,
+                "root_count": 137
+              },
+              "broken": true,
+              "break_reason": "p99 655.1ms"
+            }
+          ]
+        },
+        "executor_v1_stdio": {
+          "id": "executor_v1_stdio",
+          "kind": "executor_v1",
+          "runtime": "executor_1.6_stdio",
+          "topology": "stdio_process_per_client",
+          "toolName": "execute",
+          "note": "stdio process-per-client; each client = executor mcp; memory includes shared daemon once.",
+          "loop_guard": 256,
+          "host_censored_at_clients": null,
+          "sustained_concurrency_before_break": 8,
+          "first_break_clients": 9,
+          "break_reason": "p99 113.7ms",
+          "thresholds": {
+            "100": {
+              "threshold_p99_ms": 100,
+              "sustained_concurrency": 8,
+              "first_break_clients": 9,
+              "break_reason": "p99 113.7ms",
+              "rps_at_sustained": 118.6,
+              "p99_at_sustained": 98.89798199990764,
+              "anon_mb_at_sustained": 1903.26,
+              "rss_mb_at_sustained": 2583.21
+            },
+            "250": {
+              "threshold_p99_ms": 250,
+              "sustained_concurrency": 24,
+              "first_break_clients": 25,
+              "break_reason": "p99 294.1ms",
+              "rps_at_sustained": 125.3,
+              "p99_at_sustained": 245.61443300009705,
+              "anon_mb_at_sustained": 4175.82,
+              "rss_mb_at_sustained": 6144.92
+            },
+            "500": {
+              "threshold_p99_ms": 500,
+              "sustained_concurrency": 48,
+              "first_break_clients": 49,
+              "break_reason": "p99 519.2ms",
+              "rps_at_sustained": 120.2,
+              "p99_at_sustained": 468.7264340000693,
+              "anon_mb_at_sustained": 7432.89,
+              "rss_mb_at_sustained": 11333.61
+            }
+          },
+          "saturation": {
+            "peak_rps": 131.2,
+            "at_clients": 32,
+            "p99_ms": 281.7999950000085,
+            "anon_mb": 5320.61
+          },
+          "curve": [
+            {
+              "clients": 1,
+              "rps": 94.3,
+              "p50": 10.500101999845356,
+              "p99": 18.265495999949053,
+              "p999": 44.58334599994123,
+              "error_rate": 0,
+              "ok": 943,
+              "err": 0,
+              "anon_mb": 567.24,
+              "rss_mb": 681.84,
+              "process_count": 3
+            },
+            {
+              "clients": 2,
+              "rps": 110.8,
+              "p50": 17.73253499995917,
+              "p99": 28.452562999911606,
+              "p999": 38.09106899984181,
+              "error_rate": 0,
+              "ok": 1108,
+              "err": 0,
+              "anon_mb": 789.71,
+              "rss_mb": 984.55,
+              "process_count": 5
+            },
+            {
+              "clients": 4,
+              "rps": 114.8,
+              "p50": 34.290812000166625,
+              "p99": 55.12597100017592,
+              "p999": 69.77330600004643,
+              "error_rate": 0,
+              "ok": 1148,
+              "err": 0,
+              "anon_mb": 1129.18,
+              "rss_mb": 1487.25,
+              "process_count": 9
+            },
+            {
+              "clients": 8,
+              "rps": 118.6,
+              "p50": 66.50427200016566,
+              "p99": 98.89798199990764,
+              "p999": 120.06817699992098,
+              "error_rate": 0,
+              "ok": 1186,
+              "err": 0,
+              "anon_mb": 1903.26,
+              "rss_mb": 2583.21,
+              "process_count": 17
+            },
+            {
+              "clients": 9,
+              "rps": 116,
+              "p50": 75.94126599980518,
+              "p99": 113.70449599996209,
+              "p999": 127.19037399999797,
+              "error_rate": 0,
+              "ok": 1160,
+              "err": 0,
+              "anon_mb": 2294.24,
+              "rss_mb": 3055.51,
+              "process_count": 19
+            },
+            {
+              "clients": 10,
+              "rps": 124,
+              "p50": 78.98021200019866,
+              "p99": 114.1036900000181,
+              "p999": 120.15654899994843,
+              "error_rate": 0,
+              "ok": 1240,
+              "err": 0,
+              "anon_mb": 2500.18,
+              "rss_mb": 3341.04,
+              "process_count": 21
+            },
+            {
+              "clients": 12,
+              "rps": 123.1,
+              "p50": 96.26745899999514,
+              "p99": 127.18743599997833,
+              "p999": 134.62799199996516,
+              "error_rate": 0,
+              "ok": 1231,
+              "err": 0,
+              "anon_mb": 2745.8,
+              "rss_mb": 3748.65,
+              "process_count": 25
+            },
+            {
+              "clients": 16,
+              "rps": 124.3,
+              "p50": 127.8165830001235,
+              "p99": 166.78627800010145,
+              "p999": 169.7839410000015,
+              "error_rate": 0,
+              "ok": 1243,
+              "err": 0,
+              "anon_mb": 3040.21,
+              "rss_mb": 4364.55,
+              "process_count": 33
+            },
+            {
+              "clients": 24,
+              "rps": 125.3,
+              "p50": 190.49968400015496,
+              "p99": 245.61443300009705,
+              "p999": 258.94904300011694,
+              "error_rate": 0,
+              "ok": 1253,
+              "err": 0,
+              "anon_mb": 4175.82,
+              "rss_mb": 6144.92,
+              "process_count": 49
+            },
+            {
+              "clients": 25,
+              "rps": 125,
+              "p50": 197.2261169999838,
+              "p99": 294.0723349999171,
+              "p999": 302.6127530001104,
+              "error_rate": 0,
+              "ok": 1250,
+              "err": 0,
+              "anon_mb": 4651.59,
+              "rss_mb": 6700.15,
+              "process_count": 51
+            },
+            {
+              "clients": 26,
+              "rps": 122.2,
+              "p50": 204.81914599984884,
+              "p99": 465.70546400011517,
+              "p999": 471.2844970000442,
+              "error_rate": 0,
+              "ok": 1222,
+              "err": 0,
+              "anon_mb": 4761.96,
+              "rss_mb": 6886.91,
+              "process_count": 53
+            },
+            {
+              "clients": 28,
+              "rps": 118.6,
+              "p50": 233.52780800010078,
+              "p99": 362.61223999992944,
+              "p999": 366.0083619998768,
+              "error_rate": 0,
+              "ok": 1186,
+              "err": 0,
+              "anon_mb": 4993.87,
+              "rss_mb": 7284.69,
+              "process_count": 57
+            },
+            {
+              "clients": 32,
+              "rps": 131.2,
+              "p50": 245.74841600004584,
+              "p99": 281.7999950000085,
+              "p999": 283.2141919999849,
+              "error_rate": 0,
+              "ok": 1312,
+              "err": 0,
+              "anon_mb": 5320.61,
+              "rss_mb": 7933.82,
+              "process_count": 65
+            },
+            {
+              "clients": 40,
+              "rps": 120,
+              "p50": 334.9487280000467,
+              "p99": 400.4359519998543,
+              "p999": 403.4831079998985,
+              "error_rate": 0,
+              "ok": 1200,
+              "err": 0,
+              "anon_mb": 6334.06,
+              "rss_mb": 9589.69,
+              "process_count": 81
+            },
+            {
+              "clients": 48,
+              "rps": 120.2,
+              "p50": 406.0405210000463,
+              "p99": 468.7264340000693,
+              "p999": 473.84858600003645,
+              "error_rate": 0,
+              "ok": 1202,
+              "err": 0,
+              "anon_mb": 7432.89,
+              "rss_mb": 11333.61,
+              "process_count": 97
+            },
+            {
+              "clients": 49,
+              "rps": 119.1,
+              "p50": 411.54763599997386,
+              "p99": 519.1665890000295,
+              "p999": 533.6636419999413,
+              "error_rate": 0,
+              "ok": 1191,
+              "err": 0,
+              "anon_mb": 7865.44,
+              "rss_mb": 11846.55,
+              "process_count": 99
+            },
+            {
+              "clients": 50,
+              "rps": 115,
+              "p50": 432.76824699994177,
+              "p99": 535.0688950000331,
+              "p999": 542.7638099999167,
+              "error_rate": 0,
+              "ok": 1150,
+              "err": 0,
+              "anon_mb": 8115.07,
+              "rss_mb": 12175.97,
+              "process_count": 101
+            },
+            {
+              "clients": 52,
+              "rps": 119.8,
+              "p50": 433.6590200001374,
+              "p99": 562.0983500001021,
+              "p999": 580.3229410001077,
+              "error_rate": 0,
+              "ok": 1198,
+              "err": 0,
+              "anon_mb": 8310.24,
+              "rss_mb": 12533.87,
+              "process_count": 105
+            },
+            {
+              "clients": 56,
+              "rps": 121.8,
+              "p50": 464.8841890001204,
+              "p99": 564.0485650000628,
+              "p999": 567.6620869999751,
+              "error_rate": 0,
+              "ok": 1218,
+              "err": 0,
+              "anon_mb": 8720.68,
+              "rss_mb": 13264.29,
+              "process_count": 113
+            }
+          ],
+          "steps": [
+            {
+              "concurrency": 1,
+              "ok": 943,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 94.3,
+              "latency_ms": {
+                "p50": 10.500101999845356,
+                "p99": 18.265495999949053,
+                "p999": 44.58334599994123
+              },
+              "memory": {
+                "rss_mb": 681.84,
+                "anonymous_mb": 567.24,
+                "pss_mb": 617.94,
+                "process_count": 3,
+                "root_count": 2
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 2,
+              "ok": 1108,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 110.8,
+              "latency_ms": {
+                "p50": 17.73253499995917,
+                "p99": 28.452562999911606,
+                "p999": 38.09106899984181
+              },
+              "memory": {
+                "rss_mb": 984.55,
+                "anonymous_mb": 789.71,
+                "pss_mb": 844.95,
+                "process_count": 5,
+                "root_count": 3
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 4,
+              "ok": 1148,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 114.8,
+              "latency_ms": {
+                "p50": 34.290812000166625,
+                "p99": 55.12597100017592,
+                "p999": 69.77330600004643
+              },
+              "memory": {
+                "rss_mb": 1487.25,
+                "anonymous_mb": 1129.18,
+                "pss_mb": 1190.69,
+                "process_count": 9,
+                "root_count": 5
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 8,
+              "ok": 1186,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 118.6,
+              "latency_ms": {
+                "p50": 66.50427200016566,
+                "p99": 98.89798199990764,
+                "p999": 120.06817699992098
+              },
+              "memory": {
+                "rss_mb": 2583.21,
+                "anonymous_mb": 1903.26,
+                "pss_mb": 1971.43,
+                "process_count": 17,
+                "root_count": 9
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 16,
+              "ok": 1243,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 124.3,
+              "latency_ms": {
+                "p50": 127.8165830001235,
+                "p99": 166.78627800010145,
+                "p999": 169.7839410000015
+              },
+              "memory": {
+                "rss_mb": 4364.55,
+                "anonymous_mb": 3040.21,
+                "pss_mb": 3114.58,
+                "process_count": 33,
+                "root_count": 17
+              },
+              "broken": true,
+              "break_reason": "p99 166.8ms"
+            },
+            {
+              "concurrency": 24,
+              "ok": 1253,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 125.3,
+              "latency_ms": {
+                "p50": 190.49968400015496,
+                "p99": 245.61443300009705,
+                "p999": 258.94904300011694
+              },
+              "memory": {
+                "rss_mb": 6144.92,
+                "anonymous_mb": 4175.82,
+                "pss_mb": 4253.44,
+                "process_count": 49,
+                "root_count": 25
+              },
+              "broken": true,
+              "break_reason": "p99 245.6ms"
+            },
+            {
+              "concurrency": 32,
+              "ok": 1312,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 131.2,
+              "latency_ms": {
+                "p50": 245.74841600004584,
+                "p99": 281.7999950000085,
+                "p999": 283.2141919999849
+              },
+              "memory": {
+                "rss_mb": 7933.82,
+                "anonymous_mb": 5320.61,
+                "pss_mb": 5400.31,
+                "process_count": 65,
+                "root_count": 33
+              },
+              "broken": true,
+              "break_reason": "p99 281.8ms"
+            },
+            {
+              "concurrency": 40,
+              "ok": 1200,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 120,
+              "latency_ms": {
+                "p50": 334.9487280000467,
+                "p99": 400.4359519998543,
+                "p999": 403.4831079998985
+              },
+              "memory": {
+                "rss_mb": 9589.69,
+                "anonymous_mb": 6334.06,
+                "pss_mb": 6415.43,
+                "process_count": 81,
+                "root_count": 41
+              },
+              "broken": true,
+              "break_reason": "p99 400.4ms"
+            },
+            {
+              "concurrency": 48,
+              "ok": 1202,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 120.2,
+              "latency_ms": {
+                "p50": 406.0405210000463,
+                "p99": 468.7264340000693,
+                "p999": 473.84858600003645
+              },
+              "memory": {
+                "rss_mb": 11333.61,
+                "anonymous_mb": 7432.89,
+                "pss_mb": 7515.6,
+                "process_count": 97,
+                "root_count": 49
+              },
+              "broken": true,
+              "break_reason": "p99 468.7ms"
+            },
+            {
+              "concurrency": 56,
+              "ok": 1218,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 121.8,
+              "latency_ms": {
+                "p50": 464.8841890001204,
+                "p99": 564.0485650000628,
+                "p999": 567.6620869999751
+              },
+              "memory": {
+                "rss_mb": 13264.29,
+                "anonymous_mb": 8720.68,
+                "pss_mb": 8804.61,
+                "process_count": 113,
+                "root_count": 57
+              },
+              "broken": true,
+              "break_reason": "p99 564.0ms"
+            },
+            {
+              "concurrency": 12,
+              "ok": 1231,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 123.1,
+              "latency_ms": {
+                "p50": 96.26745899999514,
+                "p99": 127.18743599997833,
+                "p999": 134.62799199996516
+              },
+              "memory": {
+                "rss_mb": 3748.65,
+                "anonymous_mb": 2745.8,
+                "pss_mb": 2817.67,
+                "process_count": 25,
+                "root_count": 13
+              },
+              "broken": true,
+              "break_reason": "p99 127.2ms"
+            },
+            {
+              "concurrency": 10,
+              "ok": 1240,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 124,
+              "latency_ms": {
+                "p50": 78.98021200019866,
+                "p99": 114.1036900000181,
+                "p999": 120.15654899994843
+              },
+              "memory": {
+                "rss_mb": 3341.04,
+                "anonymous_mb": 2500.18,
+                "pss_mb": 2570.43,
+                "process_count": 21,
+                "root_count": 11
+              },
+              "broken": true,
+              "break_reason": "p99 114.1ms"
+            },
+            {
+              "concurrency": 9,
+              "ok": 1160,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 116,
+              "latency_ms": {
+                "p50": 75.94126599980518,
+                "p99": 113.70449599996209,
+                "p999": 127.19037399999797
+              },
+              "memory": {
+                "rss_mb": 3055.51,
+                "anonymous_mb": 2294.24,
+                "pss_mb": 2363.55,
+                "process_count": 19,
+                "root_count": 10
+              },
+              "broken": true,
+              "break_reason": "p99 113.7ms"
+            },
+            {
+              "concurrency": 28,
+              "ok": 1186,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 118.6,
+              "latency_ms": {
+                "p50": 233.52780800010078,
+                "p99": 362.61223999992944,
+                "p999": 366.0083619998768
+              },
+              "memory": {
+                "rss_mb": 7284.69,
+                "anonymous_mb": 4993.87,
+                "pss_mb": 5072.63,
+                "process_count": 57,
+                "root_count": 29
+              },
+              "broken": true,
+              "break_reason": "p99 362.6ms"
+            },
+            {
+              "concurrency": 26,
+              "ok": 1222,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 122.2,
+              "latency_ms": {
+                "p50": 204.81914599984884,
+                "p99": 465.70546400011517,
+                "p999": 471.2844970000442
+              },
+              "memory": {
+                "rss_mb": 6886.91,
+                "anonymous_mb": 4761.96,
+                "pss_mb": 4840.05,
+                "process_count": 53,
+                "root_count": 27
+              },
+              "broken": true,
+              "break_reason": "p99 465.7ms"
+            },
+            {
+              "concurrency": 25,
+              "ok": 1250,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 125,
+              "latency_ms": {
+                "p50": 197.2261169999838,
+                "p99": 294.0723349999171,
+                "p999": 302.6127530001104
+              },
+              "memory": {
+                "rss_mb": 6700.15,
+                "anonymous_mb": 4651.59,
+                "pss_mb": 4729.51,
+                "process_count": 51,
+                "root_count": 26
+              },
+              "broken": true,
+              "break_reason": "p99 294.1ms"
+            },
+            {
+              "concurrency": 52,
+              "ok": 1198,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 119.8,
+              "latency_ms": {
+                "p50": 433.6590200001374,
+                "p99": 562.0983500001021,
+                "p999": 580.3229410001077
+              },
+              "memory": {
+                "rss_mb": 12533.87,
+                "anonymous_mb": 8310.24,
+                "pss_mb": 8393.43,
+                "process_count": 105,
+                "root_count": 53
+              },
+              "broken": true,
+              "break_reason": "p99 562.1ms"
+            },
+            {
+              "concurrency": 50,
+              "ok": 1150,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 115,
+              "latency_ms": {
+                "p50": 432.76824699994177,
+                "p99": 535.0688950000331,
+                "p999": 542.7638099999167
+              },
+              "memory": {
+                "rss_mb": 12175.97,
+                "anonymous_mb": 8115.07,
+                "pss_mb": 8197.94,
+                "process_count": 101,
+                "root_count": 51
+              },
+              "broken": true,
+              "break_reason": "p99 535.1ms"
+            },
+            {
+              "concurrency": 49,
+              "ok": 1191,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 119.1,
+              "latency_ms": {
+                "p50": 411.54763599997386,
+                "p99": 519.1665890000295,
+                "p999": 533.6636419999413
+              },
+              "memory": {
+                "rss_mb": 11846.55,
+                "anonymous_mb": 7865.44,
+                "pss_mb": 7948.3,
+                "process_count": 99,
+                "root_count": 50
+              },
+              "broken": true,
+              "break_reason": "p99 519.2ms"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rep": 2,
+      "arms": {
+        "clawql_known_op_stdio": {
+          "id": "clawql_known_op_stdio",
+          "kind": "clawql",
+          "runtime": "node_stdio",
+          "topology": "stdio_process_per_client",
+          "toolName": "execute",
+          "note": "stdio process-per-client; Node --max-old-space-size=256; known-op + where (DNS A-count).",
+          "loop_guard": 256,
+          "host_censored_at_clients": null,
+          "sustained_concurrency_before_break": 30,
+          "first_break_clients": 31,
+          "break_reason": "p99 100.4ms",
+          "thresholds": {
+            "100": {
+              "threshold_p99_ms": 100,
+              "sustained_concurrency": 30,
+              "first_break_clients": 31,
+              "break_reason": "p99 100.4ms",
+              "rps_at_sustained": 897.6,
+              "p99_at_sustained": 99.03887800034136,
+              "anon_mb_at_sustained": 3276.4,
+              "rss_mb_at_sustained": 4786.75
+            },
+            "250": {
+              "threshold_p99_ms": 250,
+              "sustained_concurrency": 74,
+              "first_break_clients": 75,
+              "break_reason": "p99 361.0ms",
+              "rps_at_sustained": 712.4,
+              "p99_at_sustained": 238.8975929999724,
+              "anon_mb_at_sustained": 7339.49,
+              "rss_mb_at_sustained": 11062.82
+            },
+            "500": {
+              "threshold_p99_ms": 500,
+              "sustained_concurrency": 122,
+              "first_break_clients": 123,
+              "break_reason": "p99 532.0ms",
+              "rps_at_sustained": 606.8,
+              "p99_at_sustained": 468.3773079998791,
+              "anon_mb_at_sustained": 10441.17,
+              "rss_mb_at_sustained": 16611.33
+            }
+          },
+          "saturation": {
+            "peak_rps": 1145.4,
+            "at_clients": 8,
+            "p99_ms": 27.772757000057027,
+            "anon_mb": 895.47
+          },
+          "curve": [
+            {
+              "clients": 1,
+              "rps": 472.2,
+              "p50": 1.887523999903351,
+              "p99": 6.284374000038952,
+              "p999": 9.447679999982938,
+              "error_rate": 0,
+              "ok": 4722,
+              "err": 0,
+              "anon_mb": 115.16,
+              "rss_mb": 165.94,
+              "process_count": 1
+            },
+            {
+              "clients": 2,
+              "rps": 922.5,
+              "p50": 1.7869130000472069,
+              "p99": 8.237227999838069,
+              "p999": 13.59859100007452,
+              "error_rate": 0,
+              "ok": 9225,
+              "err": 0,
+              "anon_mb": 239.35,
+              "rss_mb": 340.9,
+              "process_count": 2
+            },
+            {
+              "clients": 4,
+              "rps": 1099.9,
+              "p50": 2.8323409999720752,
+              "p99": 14.84027099981904,
+              "p999": 26.04933900013566,
+              "error_rate": 0,
+              "ok": 10999,
+              "err": 0,
+              "anon_mb": 460.51,
+              "rss_mb": 663.56,
+              "process_count": 4
+            },
+            {
+              "clients": 8,
+              "rps": 1145.4,
+              "p50": 5.6959319999441504,
+              "p99": 27.772757000057027,
+              "p999": 43.71756699983962,
+              "error_rate": 0,
+              "ok": 11454,
+              "err": 0,
+              "anon_mb": 895.47,
+              "rss_mb": 1298.04,
+              "process_count": 8
+            },
+            {
+              "clients": 16,
+              "rps": 1068.7,
+              "p50": 12.80830299993977,
+              "p99": 53.70646500005387,
+              "p999": 86.55128100002185,
+              "error_rate": 0,
+              "ok": 10687,
+              "err": 0,
+              "anon_mb": 1743.88,
+              "rss_mb": 2555.18,
+              "process_count": 16
+            },
+            {
+              "clients": 24,
+              "rps": 1035,
+              "p50": 20.45361700002104,
+              "p99": 78.17260799999349,
+              "p999": 126.18019700003788,
+              "error_rate": 0,
+              "ok": 10350,
+              "err": 0,
+              "anon_mb": 2619.97,
+              "rss_mb": 3836.98,
+              "process_count": 24
+            },
+            {
+              "clients": 28,
+              "rps": 951.1,
+              "p50": 25.94725099997595,
+              "p99": 95.36189199984074,
+              "p999": 185.6963209998794,
+              "error_rate": 0,
+              "ok": 9511,
+              "err": 0,
+              "anon_mb": 3055.79,
+              "rss_mb": 4465.43,
+              "process_count": 28
+            },
+            {
+              "clients": 30,
+              "rps": 897.6,
+              "p50": 29.52485299995169,
+              "p99": 99.03887800034136,
+              "p999": 191.5486849998124,
+              "error_rate": 0,
+              "ok": 8976,
+              "err": 0,
+              "anon_mb": 3276.4,
+              "rss_mb": 4786.75,
+              "process_count": 30
+            },
+            {
+              "clients": 31,
+              "rps": 916.5,
+              "p50": 30.26087399991229,
+              "p99": 100.36777999997139,
+              "p999": 156.88969400012866,
+              "error_rate": 0,
+              "ok": 9165,
+              "err": 0,
+              "anon_mb": 3328.46,
+              "rss_mb": 4889.12,
+              "process_count": 31
+            },
+            {
+              "clients": 32,
+              "rps": 849.3,
+              "p50": 33.096329000080004,
+              "p99": 111.84717299998738,
+              "p999": 162.15301200002432,
+              "error_rate": 0,
+              "ok": 8493,
+              "err": 0,
+              "anon_mb": 3408.05,
+              "rss_mb": 4958.12,
+              "process_count": 32
+            },
+            {
+              "clients": 40,
+              "rps": 865.1,
+              "p50": 41.933426999952644,
+              "p99": 129.67689600004815,
+              "p999": 180.94745199987665,
+              "error_rate": 0,
+              "ok": 8651,
+              "err": 0,
+              "anon_mb": 4248.93,
+              "rss_mb": 6261.08,
+              "process_count": 40
+            },
+            {
+              "clients": 48,
+              "rps": 778.6,
+              "p50": 55.78294499986805,
+              "p99": 162.03698200010695,
+              "p999": 231.80211000004783,
+              "error_rate": 0,
+              "ok": 7786,
+              "err": 0,
+              "anon_mb": 5092.67,
+              "rss_mb": 7507.23,
+              "process_count": 48
+            },
+            {
+              "clients": 56,
+              "rps": 726.6,
+              "p50": 70.11607700004242,
+              "p99": 184.71787099982612,
+              "p999": 260.17580000008456,
+              "error_rate": 0,
+              "ok": 7266,
+              "err": 0,
+              "anon_mb": 5944.8,
+              "rss_mb": 8763.78,
+              "process_count": 56
+            },
+            {
+              "clients": 64,
+              "rps": 720.6,
+              "p50": 79.93231899989769,
+              "p99": 220.54286899999715,
+              "p999": 295.06114099989645,
+              "error_rate": 0,
+              "ok": 7206,
+              "err": 0,
+              "anon_mb": 6632.78,
+              "rss_mb": 9854.74,
+              "process_count": 64
+            },
+            {
+              "clients": 72,
+              "rps": 686.1,
+              "p50": 93.40350900008343,
+              "p99": 249.34080299991183,
+              "p999": 311.7805540000554,
+              "error_rate": 0,
+              "ok": 6861,
+              "err": 0,
+              "anon_mb": 7061.15,
+              "rss_mb": 10684.29,
+              "process_count": 72
+            },
+            {
+              "clients": 74,
+              "rps": 712.4,
+              "p50": 92.03683400014415,
+              "p99": 238.8975929999724,
+              "p999": 284.22387099964544,
+              "error_rate": 0,
+              "ok": 7124,
+              "err": 0,
+              "anon_mb": 7339.49,
+              "rss_mb": 11062.82,
+              "process_count": 74
+            },
+            {
+              "clients": 75,
+              "rps": 578.2,
+              "p50": 111.7644750000909,
+              "p99": 361.00791000016034,
+              "p999": 428.3492380003445,
+              "error_rate": 0,
+              "ok": 5782,
+              "err": 0,
+              "anon_mb": 7030.05,
+              "rss_mb": 10630.85,
+              "process_count": 75
+            },
+            {
+              "clients": 76,
+              "rps": 728.8,
+              "p50": 92.25295000011101,
+              "p99": 261.4224020000547,
+              "p999": 359.04788600001484,
+              "error_rate": 0,
+              "ok": 7288,
+              "err": 0,
+              "anon_mb": 7611.4,
+              "rss_mb": 11434.79,
+              "process_count": 76
+            },
+            {
+              "clients": 80,
+              "rps": 732,
+              "p50": 98.31938700005412,
+              "p99": 258.1379299997352,
+              "p999": 306.91676699975505,
+              "error_rate": 0,
+              "ok": 7320,
+              "err": 0,
+              "anon_mb": 7912.26,
+              "rss_mb": 11936.66,
+              "process_count": 80
+            },
+            {
+              "clients": 88,
+              "rps": 743.9,
+              "p50": 105.43047300027683,
+              "p99": 275.91307900007814,
+              "p999": 319.05970200011507,
+              "error_rate": 0,
+              "ok": 7439,
+              "err": 0,
+              "anon_mb": 8505.23,
+              "rss_mb": 12931.63,
+              "process_count": 88
+            },
+            {
+              "clients": 96,
+              "rps": 658.5,
+              "p50": 131.42542700003833,
+              "p99": 324.7321309996769,
+              "p999": 370.6619819998741,
+              "error_rate": 0,
+              "ok": 6585,
+              "err": 0,
+              "anon_mb": 8835.22,
+              "rss_mb": 13662.32,
+              "process_count": 96
+            },
+            {
+              "clients": 104,
+              "rps": 643.9,
+              "p50": 144.88113899994642,
+              "p99": 382.94177300017327,
+              "p999": 437.76802900014445,
+              "error_rate": 0,
+              "ok": 6439,
+              "err": 0,
+              "anon_mb": 9232.45,
+              "rss_mb": 14462.09,
+              "process_count": 104
+            },
+            {
+              "clients": 112,
+              "rps": 642.4,
+              "p50": 151.60697300033644,
+              "p99": 463.2643639999442,
+              "p999": 516.5424170000479,
+              "error_rate": 0,
+              "ok": 6424,
+              "err": 0,
+              "anon_mb": 10005.95,
+              "rss_mb": 15638.33,
+              "process_count": 112
+            },
+            {
+              "clients": 120,
+              "rps": 636.1,
+              "p50": 172.49230499984697,
+              "p99": 446.366772999987,
+              "p999": 558.1657859999686,
+              "error_rate": 0,
+              "ok": 6361,
+              "err": 0,
+              "anon_mb": 10466.97,
+              "rss_mb": 16501.32,
+              "process_count": 120
+            },
+            {
+              "clients": 122,
+              "rps": 606.8,
+              "p50": 176.63758699968457,
+              "p99": 468.3773079998791,
+              "p999": 2791.360846000258,
+              "error_rate": 0,
+              "ok": 6068,
+              "err": 0,
+              "anon_mb": 10441.17,
+              "rss_mb": 16611.33,
+              "process_count": 122
+            },
+            {
+              "clients": 123,
+              "rps": 617.2,
+              "p50": 170.55766199994832,
+              "p99": 531.9922050000168,
+              "p999": 1738.8220220003277,
+              "error_rate": 0,
+              "ok": 6172,
+              "err": 0,
+              "anon_mb": 10618.53,
+              "rss_mb": 16845.02,
+              "process_count": 123
+            },
+            {
+              "clients": 124,
+              "rps": 546.3,
+              "p50": 187.57031199987978,
+              "p99": 1221.016259000171,
+              "p999": 1469.4101999998093,
+              "error_rate": 0,
+              "ok": 5463,
+              "err": 0,
+              "anon_mb": 10566.93,
+              "rss_mb": 16465.01,
+              "process_count": 124
+            },
+            {
+              "clients": 128,
+              "rps": 616.6,
+              "p50": 185.18947200011462,
+              "p99": 510.47676899982616,
+              "p999": 601.0938929999247,
+              "error_rate": 0,
+              "ok": 6166,
+              "err": 0,
+              "anon_mb": 10790.69,
+              "rss_mb": 17228.41,
+              "process_count": 128
+            }
+          ],
+          "steps": [
+            {
+              "concurrency": 1,
+              "ok": 4722,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 472.2,
+              "latency_ms": {
+                "p50": 1.887523999903351,
+                "p99": 6.284374000038952,
+                "p999": 9.447679999982938
+              },
+              "memory": {
+                "rss_mb": 165.94,
+                "anonymous_mb": 115.16,
+                "pss_mb": 126.84,
+                "process_count": 1,
+                "root_count": 1
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 2,
+              "ok": 9225,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 922.5,
+              "latency_ms": {
+                "p50": 1.7869130000472069,
+                "p99": 8.237227999838069,
+                "p999": 13.59859100007452
+              },
+              "memory": {
+                "rss_mb": 340.9,
+                "anonymous_mb": 239.35,
+                "pss_mb": 256.87,
+                "process_count": 2,
+                "root_count": 2
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 4,
+              "ok": 10999,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1099.9,
+              "latency_ms": {
+                "p50": 2.8323409999720752,
+                "p99": 14.84027099981904,
+                "p999": 26.04933900013566
+              },
+              "memory": {
+                "rss_mb": 663.56,
+                "anonymous_mb": 460.51,
+                "pss_mb": 485.64,
+                "process_count": 4,
+                "root_count": 4
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 8,
+              "ok": 11454,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1145.4,
+              "latency_ms": {
+                "p50": 5.6959319999441504,
+                "p99": 27.772757000057027,
+                "p999": 43.71756699983962
+              },
+              "memory": {
+                "rss_mb": 1298.04,
+                "anonymous_mb": 895.47,
+                "pss_mb": 928.58,
+                "process_count": 8,
+                "root_count": 8
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 16,
+              "ok": 10687,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1068.7,
+              "latency_ms": {
+                "p50": 12.80830299993977,
+                "p99": 53.70646500005387,
+                "p999": 86.55128100002185
+              },
+              "memory": {
+                "rss_mb": 2555.18,
+                "anonymous_mb": 1743.88,
+                "pss_mb": 1784.36,
+                "process_count": 16,
+                "root_count": 16
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 24,
+              "ok": 10350,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1035,
+              "latency_ms": {
+                "p50": 20.45361700002104,
+                "p99": 78.17260799999349,
+                "p999": 126.18019700003788
+              },
+              "memory": {
+                "rss_mb": 3836.98,
+                "anonymous_mb": 2619.97,
+                "pss_mb": 2664.13,
+                "process_count": 24,
+                "root_count": 24
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 32,
+              "ok": 8493,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 849.3,
+              "latency_ms": {
+                "p50": 33.096329000080004,
+                "p99": 111.84717299998738,
+                "p999": 162.15301200002432
+              },
+              "memory": {
+                "rss_mb": 4958.12,
+                "anonymous_mb": 3408.05,
+                "pss_mb": 3454.15,
+                "process_count": 32,
+                "root_count": 32
+              },
+              "broken": true,
+              "break_reason": "p99 111.8ms"
+            },
+            {
+              "concurrency": 40,
+              "ok": 8651,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 865.1,
+              "latency_ms": {
+                "p50": 41.933426999952644,
+                "p99": 129.67689600004815,
+                "p999": 180.94745199987665
+              },
+              "memory": {
+                "rss_mb": 6261.08,
+                "anonymous_mb": 4248.93,
+                "pss_mb": 4296.86,
+                "process_count": 40,
+                "root_count": 40
+              },
+              "broken": true,
+              "break_reason": "p99 129.7ms"
+            },
+            {
+              "concurrency": 48,
+              "ok": 7786,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 778.6,
+              "latency_ms": {
+                "p50": 55.78294499986805,
+                "p99": 162.03698200010695,
+                "p999": 231.80211000004783
+              },
+              "memory": {
+                "rss_mb": 7507.23,
+                "anonymous_mb": 5092.67,
+                "pss_mb": 5142.19,
+                "process_count": 48,
+                "root_count": 48
+              },
+              "broken": true,
+              "break_reason": "p99 162.0ms"
+            },
+            {
+              "concurrency": 56,
+              "ok": 7266,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 726.6,
+              "latency_ms": {
+                "p50": 70.11607700004242,
+                "p99": 184.71787099982612,
+                "p999": 260.17580000008456
+              },
+              "memory": {
+                "rss_mb": 8763.78,
+                "anonymous_mb": 5944.8,
+                "pss_mb": 5995.59,
+                "process_count": 56,
+                "root_count": 56
+              },
+              "broken": true,
+              "break_reason": "p99 184.7ms"
+            },
+            {
+              "concurrency": 64,
+              "ok": 7206,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 720.6,
+              "latency_ms": {
+                "p50": 79.93231899989769,
+                "p99": 220.54286899999715,
+                "p999": 295.06114099989645
+              },
+              "memory": {
+                "rss_mb": 9854.74,
+                "anonymous_mb": 6632.78,
+                "pss_mb": 6684.74,
+                "process_count": 64,
+                "root_count": 64
+              },
+              "broken": true,
+              "break_reason": "p99 220.5ms"
+            },
+            {
+              "concurrency": 72,
+              "ok": 6861,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 686.1,
+              "latency_ms": {
+                "p50": 93.40350900008343,
+                "p99": 249.34080299991183,
+                "p999": 311.7805540000554
+              },
+              "memory": {
+                "rss_mb": 10684.29,
+                "anonymous_mb": 7061.15,
+                "pss_mb": 7114.02,
+                "process_count": 72,
+                "root_count": 72
+              },
+              "broken": true,
+              "break_reason": "p99 249.3ms"
+            },
+            {
+              "concurrency": 80,
+              "ok": 7320,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 732,
+              "latency_ms": {
+                "p50": 98.31938700005412,
+                "p99": 258.1379299997352,
+                "p999": 306.91676699975505
+              },
+              "memory": {
+                "rss_mb": 11936.66,
+                "anonymous_mb": 7912.26,
+                "pss_mb": 7965.99,
+                "process_count": 80,
+                "root_count": 80
+              },
+              "broken": true,
+              "break_reason": "p99 258.1ms"
+            },
+            {
+              "concurrency": 88,
+              "ok": 7439,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 743.9,
+              "latency_ms": {
+                "p50": 105.43047300027683,
+                "p99": 275.91307900007814,
+                "p999": 319.05970200011507
+              },
+              "memory": {
+                "rss_mb": 12931.63,
+                "anonymous_mb": 8505.23,
+                "pss_mb": 8560.04,
+                "process_count": 88,
+                "root_count": 88
+              },
+              "broken": true,
+              "break_reason": "p99 275.9ms"
+            },
+            {
+              "concurrency": 96,
+              "ok": 6585,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 658.5,
+              "latency_ms": {
+                "p50": 131.42542700003833,
+                "p99": 324.7321309996769,
+                "p999": 370.6619819998741
+              },
+              "memory": {
+                "rss_mb": 13662.32,
+                "anonymous_mb": 8835.22,
+                "pss_mb": 8890.84,
+                "process_count": 96,
+                "root_count": 96
+              },
+              "broken": true,
+              "break_reason": "p99 324.7ms"
+            },
+            {
+              "concurrency": 104,
+              "ok": 6439,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 643.9,
+              "latency_ms": {
+                "p50": 144.88113899994642,
+                "p99": 382.94177300017327,
+                "p999": 437.76802900014445
+              },
+              "memory": {
+                "rss_mb": 14462.09,
+                "anonymous_mb": 9232.45,
+                "pss_mb": 9288.85,
+                "process_count": 104,
+                "root_count": 104
+              },
+              "broken": true,
+              "break_reason": "p99 382.9ms"
+            },
+            {
+              "concurrency": 112,
+              "ok": 6424,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 642.4,
+              "latency_ms": {
+                "p50": 151.60697300033644,
+                "p99": 463.2643639999442,
+                "p999": 516.5424170000479
+              },
+              "memory": {
+                "rss_mb": 15638.33,
+                "anonymous_mb": 10005.95,
+                "pss_mb": 10063.18,
+                "process_count": 112,
+                "root_count": 112
+              },
+              "broken": true,
+              "break_reason": "p99 463.3ms"
+            },
+            {
+              "concurrency": 120,
+              "ok": 6361,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 636.1,
+              "latency_ms": {
+                "p50": 172.49230499984697,
+                "p99": 446.366772999987,
+                "p999": 558.1657859999686
+              },
+              "memory": {
+                "rss_mb": 16501.32,
+                "anonymous_mb": 10466.97,
+                "pss_mb": 10525,
+                "process_count": 120,
+                "root_count": 120
+              },
+              "broken": true,
+              "break_reason": "p99 446.4ms"
+            },
+            {
+              "concurrency": 128,
+              "ok": 6166,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 616.6,
+              "latency_ms": {
+                "p50": 185.18947200011462,
+                "p99": 510.47676899982616,
+                "p999": 601.0938929999247
+              },
+              "memory": {
+                "rss_mb": 17228.41,
+                "anonymous_mb": 10790.69,
+                "pss_mb": 10849.59,
+                "process_count": 128,
+                "root_count": 128
+              },
+              "broken": true,
+              "break_reason": "p99 510.5ms"
+            },
+            {
+              "concurrency": 28,
+              "ok": 9511,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 951.1,
+              "latency_ms": {
+                "p50": 25.94725099997595,
+                "p99": 95.36189199984074,
+                "p999": 185.6963209998794
+              },
+              "memory": {
+                "rss_mb": 4465.43,
+                "anonymous_mb": 3055.79,
+                "pss_mb": 3100.91,
+                "process_count": 28,
+                "root_count": 28
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 30,
+              "ok": 8976,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 897.6,
+              "latency_ms": {
+                "p50": 29.52485299995169,
+                "p99": 99.03887800034136,
+                "p999": 191.5486849998124
+              },
+              "memory": {
+                "rss_mb": 4786.75,
+                "anonymous_mb": 3276.4,
+                "pss_mb": 3322.08,
+                "process_count": 30,
+                "root_count": 30
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 31,
+              "ok": 9165,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 916.5,
+              "latency_ms": {
+                "p50": 30.26087399991229,
+                "p99": 100.36777999997139,
+                "p999": 156.88969400012866
+              },
+              "memory": {
+                "rss_mb": 4889.12,
+                "anonymous_mb": 3328.46,
+                "pss_mb": 3374.42,
+                "process_count": 31,
+                "root_count": 31
+              },
+              "broken": true,
+              "break_reason": "p99 100.4ms"
+            },
+            {
+              "concurrency": 76,
+              "ok": 7288,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 728.8,
+              "latency_ms": {
+                "p50": 92.25295000011101,
+                "p99": 261.4224020000547,
+                "p999": 359.04788600001484
+              },
+              "memory": {
+                "rss_mb": 11434.79,
+                "anonymous_mb": 7611.4,
+                "pss_mb": 7664.8,
+                "process_count": 76,
+                "root_count": 76
+              },
+              "broken": true,
+              "break_reason": "p99 261.4ms"
+            },
+            {
+              "concurrency": 74,
+              "ok": 7124,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 712.4,
+              "latency_ms": {
+                "p50": 92.03683400014415,
+                "p99": 238.8975929999724,
+                "p999": 284.22387099964544
+              },
+              "memory": {
+                "rss_mb": 11062.82,
+                "anonymous_mb": 7339.49,
+                "pss_mb": 7392.64,
+                "process_count": 74,
+                "root_count": 74
+              },
+              "broken": true,
+              "break_reason": "p99 238.9ms"
+            },
+            {
+              "concurrency": 75,
+              "ok": 5782,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 578.2,
+              "latency_ms": {
+                "p50": 111.7644750000909,
+                "p99": 361.00791000016034,
+                "p999": 428.3492380003445
+              },
+              "memory": {
+                "rss_mb": 10630.85,
+                "anonymous_mb": 7030.05,
+                "pss_mb": 7083.56,
+                "process_count": 75,
+                "root_count": 75
+              },
+              "broken": true,
+              "break_reason": "p99 361.0ms"
+            },
+            {
+              "concurrency": 124,
+              "ok": 5463,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 546.3,
+              "latency_ms": {
+                "p50": 187.57031199987978,
+                "p99": 1221.016259000171,
+                "p999": 1469.4101999998093
+              },
+              "memory": {
+                "rss_mb": 16465.01,
+                "anonymous_mb": 10566.93,
+                "pss_mb": 10622.51,
+                "process_count": 124,
+                "root_count": 124
+              },
+              "broken": true,
+              "break_reason": "p99 1221.0ms"
+            },
+            {
+              "concurrency": 122,
+              "ok": 6068,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 606.8,
+              "latency_ms": {
+                "p50": 176.63758699968457,
+                "p99": 468.3773079998791,
+                "p999": 2791.360846000258
+              },
+              "memory": {
+                "rss_mb": 16611.33,
+                "anonymous_mb": 10441.17,
+                "pss_mb": 10499.78,
+                "process_count": 122,
+                "root_count": 122
+              },
+              "broken": true,
+              "break_reason": "p99 468.4ms"
+            },
+            {
+              "concurrency": 123,
+              "ok": 6172,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 617.2,
+              "latency_ms": {
+                "p50": 170.55766199994832,
+                "p99": 531.9922050000168,
+                "p999": 1738.8220220003277
+              },
+              "memory": {
+                "rss_mb": 16845.02,
+                "anonymous_mb": 10618.53,
+                "pss_mb": 10677.19,
+                "process_count": 123,
+                "root_count": 123
+              },
+              "broken": true,
+              "break_reason": "p99 532.0ms"
+            }
+          ]
+        },
+        "executor_v1_stdio": {
+          "id": "executor_v1_stdio",
+          "kind": "executor_v1",
+          "runtime": "executor_1.6_stdio",
+          "topology": "stdio_process_per_client",
+          "toolName": "execute",
+          "note": "stdio process-per-client; each client = executor mcp; memory includes shared daemon once.",
+          "loop_guard": 256,
+          "host_censored_at_clients": null,
+          "sustained_concurrency_before_break": 5,
+          "first_break_clients": 6,
+          "break_reason": "p99 105.6ms",
+          "thresholds": {
+            "100": {
+              "threshold_p99_ms": 100,
+              "sustained_concurrency": 5,
+              "first_break_clients": 6,
+              "break_reason": "p99 105.6ms",
+              "rps_at_sustained": 108.7,
+              "p99_at_sustained": 85.95044299960136,
+              "anon_mb_at_sustained": 2023.35,
+              "rss_mb_at_sustained": 2460.61
+            },
+            "250": {
+              "threshold_p99_ms": 250,
+              "sustained_concurrency": 19,
+              "first_break_clients": 20,
+              "break_reason": "p99 369.4ms",
+              "rps_at_sustained": 114,
+              "p99_at_sustained": 244.9788150000386,
+              "anon_mb_at_sustained": 4223.97,
+              "rss_mb_at_sustained": 5787.2
+            },
+            "500": {
+              "threshold_p99_ms": 500,
+              "sustained_concurrency": 42,
+              "first_break_clients": 43,
+              "break_reason": "p99 521.7ms",
+              "rps_at_sustained": 117.7,
+              "p99_at_sustained": 453.247794999741,
+              "anon_mb_at_sustained": 7344.36,
+              "rss_mb_at_sustained": 10757.53
+            }
+          },
+          "saturation": {
+            "peak_rps": 122.5,
+            "at_clients": 18,
+            "p99_ms": 193.22043099999428,
+            "anon_mb": 3983.74
+          },
+          "curve": [
+            {
+              "clients": 1,
+              "rps": 82.9,
+              "p50": 11.527084999717772,
+              "p99": 35.86583000002429,
+              "p999": 69.79854199988768,
+              "error_rate": 0,
+              "ok": 829,
+              "err": 0,
+              "anon_mb": 949.06,
+              "rss_mb": 1063.19,
+              "process_count": 3
+            },
+            {
+              "clients": 2,
+              "rps": 105.9,
+              "p50": 18.263877999968827,
+              "p99": 32.362757000140846,
+              "p999": 47.84547400008887,
+              "error_rate": 0,
+              "ok": 1059,
+              "err": 0,
+              "anon_mb": 1408.23,
+              "rss_mb": 1605.17,
+              "process_count": 5
+            },
+            {
+              "clients": 4,
+              "rps": 106.6,
+              "p50": 37.14101200038567,
+              "p99": 52.16284399991855,
+              "p999": 85.59497899981216,
+              "error_rate": 0,
+              "ok": 1066,
+              "err": 0,
+              "anon_mb": 1670.78,
+              "rss_mb": 2028.51,
+              "process_count": 9
+            },
+            {
+              "clients": 5,
+              "rps": 108.7,
+              "p50": 44.42111400002614,
+              "p99": 85.95044299960136,
+              "p999": 96.65717499982566,
+              "error_rate": 0,
+              "ok": 1087,
+              "err": 0,
+              "anon_mb": 2023.35,
+              "rss_mb": 2460.61,
+              "process_count": 11
+            },
+            {
+              "clients": 6,
+              "rps": 103.5,
+              "p50": 56.82832699967548,
+              "p99": 105.58051300002262,
+              "p999": 140.37062599975616,
+              "error_rate": 0,
+              "ok": 1035,
+              "err": 0,
+              "anon_mb": 2043.55,
+              "rss_mb": 2560.9,
+              "process_count": 13
+            },
+            {
+              "clients": 8,
+              "rps": 111.5,
+              "p50": 71.01378499995917,
+              "p99": 112.72179100010544,
+              "p999": 128.56723000016063,
+              "error_rate": 0,
+              "ok": 1115,
+              "err": 0,
+              "anon_mb": 2498.14,
+              "rss_mb": 3177.66,
+              "process_count": 17
+            },
+            {
+              "clients": 16,
+              "rps": 118.4,
+              "p50": 134.52647399995476,
+              "p99": 203.68825200013816,
+              "p999": 220.26747000031173,
+              "error_rate": 0,
+              "ok": 1184,
+              "err": 0,
+              "anon_mb": 3597.27,
+              "rss_mb": 4920.39,
+              "process_count": 33
+            },
+            {
+              "clients": 18,
+              "rps": 122.5,
+              "p50": 146.44018300017342,
+              "p99": 193.22043099999428,
+              "p999": 204.157465999946,
+              "error_rate": 0,
+              "ok": 1225,
+              "err": 0,
+              "anon_mb": 3983.74,
+              "rss_mb": 5467.03,
+              "process_count": 37
+            },
+            {
+              "clients": 19,
+              "rps": 114,
+              "p50": 165.30408400017768,
+              "p99": 244.9788150000386,
+              "p999": 268.8820340000093,
+              "error_rate": 0,
+              "ok": 1140,
+              "err": 0,
+              "anon_mb": 4223.97,
+              "rss_mb": 5787.2,
+              "process_count": 39
+            },
+            {
+              "clients": 20,
+              "rps": 111.3,
+              "p50": 171.97490799985826,
+              "p99": 369.40897500002757,
+              "p999": 371.5832179998979,
+              "error_rate": 0,
+              "ok": 1113,
+              "err": 0,
+              "anon_mb": 4312.79,
+              "rss_mb": 5956.42,
+              "process_count": 41
+            },
+            {
+              "clients": 24,
+              "rps": 122.4,
+              "p50": 195.51419399958104,
+              "p99": 266.5153640001081,
+              "p999": 284.2969299997203,
+              "error_rate": 0,
+              "ok": 1224,
+              "err": 0,
+              "anon_mb": 4720.04,
+              "rss_mb": 6685.54,
+              "process_count": 49
+            },
+            {
+              "clients": 32,
+              "rps": 118.4,
+              "p50": 271.84648399986327,
+              "p99": 378.0277400002815,
+              "p999": 392.9385189996101,
+              "error_rate": 0,
+              "ok": 1184,
+              "err": 0,
+              "anon_mb": 5835.61,
+              "rss_mb": 8444.52,
+              "process_count": 65
+            },
+            {
+              "clients": 40,
+              "rps": 120,
+              "p50": 334.1572279999964,
+              "p99": 442.6069549997337,
+              "p999": 446.14592299982905,
+              "error_rate": 0,
+              "ok": 1200,
+              "err": 0,
+              "anon_mb": 6971.16,
+              "rss_mb": 10224.03,
+              "process_count": 81
+            },
+            {
+              "clients": 42,
+              "rps": 117.7,
+              "p50": 362.2943170000799,
+              "p99": 453.247794999741,
+              "p999": 455.42879300005734,
+              "error_rate": 0,
+              "ok": 1177,
+              "err": 0,
+              "anon_mb": 7344.36,
+              "rss_mb": 10757.53,
+              "process_count": 85
+            },
+            {
+              "clients": 43,
+              "rps": 112.7,
+              "p50": 378.8783720000647,
+              "p99": 521.6637420002371,
+              "p999": 542.9081989997067,
+              "error_rate": 0,
+              "ok": 1127,
+              "err": 0,
+              "anon_mb": 7482.41,
+              "rss_mb": 10976.95,
+              "process_count": 87
+            },
+            {
+              "clients": 44,
+              "rps": 114.4,
+              "p50": 384.6908269999549,
+              "p99": 544.6966730002314,
+              "p999": 549.1357460003346,
+              "error_rate": 0,
+              "ok": 1144,
+              "err": 0,
+              "anon_mb": 7697.66,
+              "rss_mb": 11269.29,
+              "process_count": 89
+            },
+            {
+              "clients": 48,
+              "rps": 110.4,
+              "p50": 434.16632500011474,
+              "p99": 784.6349820001051,
+              "p999": 858.3577999998815,
+              "error_rate": 0,
+              "ok": 1104,
+              "err": 0,
+              "anon_mb": 8108.01,
+              "rss_mb": 12001.4,
+              "process_count": 97
+            }
+          ],
+          "steps": [
+            {
+              "concurrency": 1,
+              "ok": 829,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 82.9,
+              "latency_ms": {
+                "p50": 11.527084999717772,
+                "p99": 35.86583000002429,
+                "p999": 69.79854199988768
+              },
+              "memory": {
+                "rss_mb": 1063.19,
+                "anonymous_mb": 949.06,
+                "pss_mb": 999.12,
+                "process_count": 3,
+                "root_count": 2
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 2,
+              "ok": 1059,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 105.9,
+              "latency_ms": {
+                "p50": 18.263877999968827,
+                "p99": 32.362757000140846,
+                "p999": 47.84547400008887
+              },
+              "memory": {
+                "rss_mb": 1605.17,
+                "anonymous_mb": 1408.23,
+                "pss_mb": 1463.19,
+                "process_count": 5,
+                "root_count": 3
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 4,
+              "ok": 1066,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 106.6,
+              "latency_ms": {
+                "p50": 37.14101200038567,
+                "p99": 52.16284399991855,
+                "p999": 85.59497899981216
+              },
+              "memory": {
+                "rss_mb": 2028.51,
+                "anonymous_mb": 1670.78,
+                "pss_mb": 1731.74,
+                "process_count": 9,
+                "root_count": 5
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 8,
+              "ok": 1115,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 111.5,
+              "latency_ms": {
+                "p50": 71.01378499995917,
+                "p99": 112.72179100010544,
+                "p999": 128.56723000016063
+              },
+              "memory": {
+                "rss_mb": 3177.66,
+                "anonymous_mb": 2498.14,
+                "pss_mb": 2565.68,
+                "process_count": 17,
+                "root_count": 9
+              },
+              "broken": true,
+              "break_reason": "p99 112.7ms"
+            },
+            {
+              "concurrency": 16,
+              "ok": 1184,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 118.4,
+              "latency_ms": {
+                "p50": 134.52647399995476,
+                "p99": 203.68825200013816,
+                "p999": 220.26747000031173
+              },
+              "memory": {
+                "rss_mb": 4920.39,
+                "anonymous_mb": 3597.27,
+                "pss_mb": 3670.96,
+                "process_count": 33,
+                "root_count": 17
+              },
+              "broken": true,
+              "break_reason": "p99 203.7ms"
+            },
+            {
+              "concurrency": 24,
+              "ok": 1224,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 122.4,
+              "latency_ms": {
+                "p50": 195.51419399958104,
+                "p99": 266.5153640001081,
+                "p999": 284.2969299997203
+              },
+              "memory": {
+                "rss_mb": 6685.54,
+                "anonymous_mb": 4720.04,
+                "pss_mb": 4796.95,
+                "process_count": 49,
+                "root_count": 25
+              },
+              "broken": true,
+              "break_reason": "p99 266.5ms"
+            },
+            {
+              "concurrency": 32,
+              "ok": 1184,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 118.4,
+              "latency_ms": {
+                "p50": 271.84648399986327,
+                "p99": 378.0277400002815,
+                "p999": 392.9385189996101
+              },
+              "memory": {
+                "rss_mb": 8444.52,
+                "anonymous_mb": 5835.61,
+                "pss_mb": 5914.6,
+                "process_count": 65,
+                "root_count": 33
+              },
+              "broken": true,
+              "break_reason": "p99 378.0ms"
+            },
+            {
+              "concurrency": 40,
+              "ok": 1200,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 120,
+              "latency_ms": {
+                "p50": 334.1572279999964,
+                "p99": 442.6069549997337,
+                "p999": 446.14592299982905
+              },
+              "memory": {
+                "rss_mb": 10224.03,
+                "anonymous_mb": 6971.16,
+                "pss_mb": 7051.93,
+                "process_count": 81,
+                "root_count": 41
+              },
+              "broken": true,
+              "break_reason": "p99 442.6ms"
+            },
+            {
+              "concurrency": 48,
+              "ok": 1104,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 110.4,
+              "latency_ms": {
+                "p50": 434.16632500011474,
+                "p99": 784.6349820001051,
+                "p999": 858.3577999998815
+              },
+              "memory": {
+                "rss_mb": 12001.4,
+                "anonymous_mb": 8108.01,
+                "pss_mb": 8190.09,
+                "process_count": 97,
+                "root_count": 49
+              },
+              "broken": true,
+              "break_reason": "p99 784.6ms"
+            },
+            {
+              "concurrency": 6,
+              "ok": 1035,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 103.5,
+              "latency_ms": {
+                "p50": 56.82832699967548,
+                "p99": 105.58051300002262,
+                "p999": 140.37062599975616
+              },
+              "memory": {
+                "rss_mb": 2560.9,
+                "anonymous_mb": 2043.55,
+                "pss_mb": 2108.31,
+                "process_count": 13,
+                "root_count": 7
+              },
+              "broken": true,
+              "break_reason": "p99 105.6ms"
+            },
+            {
+              "concurrency": 5,
+              "ok": 1087,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 108.7,
+              "latency_ms": {
+                "p50": 44.42111400002614,
+                "p99": 85.95044299960136,
+                "p999": 96.65717499982566
+              },
+              "memory": {
+                "rss_mb": 2460.61,
+                "anonymous_mb": 2023.35,
+                "pss_mb": 2086.42,
+                "process_count": 11,
+                "root_count": 6
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 20,
+              "ok": 1113,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 111.3,
+              "latency_ms": {
+                "p50": 171.97490799985826,
+                "p99": 369.40897500002757,
+                "p999": 371.5832179998979
+              },
+              "memory": {
+                "rss_mb": 5956.42,
+                "anonymous_mb": 4312.79,
+                "pss_mb": 4388.4,
+                "process_count": 41,
+                "root_count": 21
+              },
+              "broken": true,
+              "break_reason": "p99 369.4ms"
+            },
+            {
+              "concurrency": 18,
+              "ok": 1225,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 122.5,
+              "latency_ms": {
+                "p50": 146.44018300017342,
+                "p99": 193.22043099999428,
+                "p999": 204.157465999946
+              },
+              "memory": {
+                "rss_mb": 5467.03,
+                "anonymous_mb": 3983.74,
+                "pss_mb": 4058.39,
+                "process_count": 37,
+                "root_count": 19
+              },
+              "broken": true,
+              "break_reason": "p99 193.2ms"
+            },
+            {
+              "concurrency": 19,
+              "ok": 1140,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 114,
+              "latency_ms": {
+                "p50": 165.30408400017768,
+                "p99": 244.9788150000386,
+                "p999": 268.8820340000093
+              },
+              "memory": {
+                "rss_mb": 5787.2,
+                "anonymous_mb": 4223.97,
+                "pss_mb": 4299.12,
+                "process_count": 39,
+                "root_count": 20
+              },
+              "broken": true,
+              "break_reason": "p99 245.0ms"
+            },
+            {
+              "concurrency": 44,
+              "ok": 1144,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 114.4,
+              "latency_ms": {
+                "p50": 384.6908269999549,
+                "p99": 544.6966730002314,
+                "p999": 549.1357460003346
+              },
+              "memory": {
+                "rss_mb": 11269.29,
+                "anonymous_mb": 7697.66,
+                "pss_mb": 7778.92,
+                "process_count": 89,
+                "root_count": 45
+              },
+              "broken": true,
+              "break_reason": "p99 544.7ms"
+            },
+            {
+              "concurrency": 42,
+              "ok": 1177,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 117.7,
+              "latency_ms": {
+                "p50": 362.2943170000799,
+                "p99": 453.247794999741,
+                "p999": 455.42879300005734
+              },
+              "memory": {
+                "rss_mb": 10757.53,
+                "anonymous_mb": 7344.36,
+                "pss_mb": 7425.26,
+                "process_count": 85,
+                "root_count": 43
+              },
+              "broken": true,
+              "break_reason": "p99 453.2ms"
+            },
+            {
+              "concurrency": 43,
+              "ok": 1127,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 112.7,
+              "latency_ms": {
+                "p50": 378.8783720000647,
+                "p99": 521.6637420002371,
+                "p999": 542.9081989997067
+              },
+              "memory": {
+                "rss_mb": 10976.95,
+                "anonymous_mb": 7482.41,
+                "pss_mb": 7563.71,
+                "process_count": 87,
+                "root_count": 44
+              },
+              "broken": true,
+              "break_reason": "p99 521.7ms"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rep": 3,
+      "arms": {
+        "clawql_known_op_stdio": {
+          "id": "clawql_known_op_stdio",
+          "kind": "clawql",
+          "runtime": "node_stdio",
+          "topology": "stdio_process_per_client",
+          "toolName": "execute",
+          "note": "stdio process-per-client; Node --max-old-space-size=256; known-op + where (DNS A-count).",
+          "loop_guard": 256,
+          "host_censored_at_clients": null,
+          "sustained_concurrency_before_break": 31,
+          "first_break_clients": 32,
+          "break_reason": "p99 107.4ms",
+          "thresholds": {
+            "100": {
+              "threshold_p99_ms": 100,
+              "sustained_concurrency": 31,
+              "first_break_clients": 32,
+              "break_reason": "p99 107.4ms",
+              "rps_at_sustained": 965.6,
+              "p99_at_sustained": 94.62500699982047,
+              "anon_mb_at_sustained": 3379.71,
+              "rss_mb_at_sustained": 4951.96
+            },
+            "250": {
+              "threshold_p99_ms": 250,
+              "sustained_concurrency": 73,
+              "first_break_clients": 74,
+              "break_reason": "p99 254.8ms",
+              "rps_at_sustained": 768.6,
+              "p99_at_sustained": 217.10623199958354,
+              "anon_mb_at_sustained": 7346.1,
+              "rss_mb_at_sustained": 11046.87
+            },
+            "500": {
+              "threshold_p99_ms": 500,
+              "sustained_concurrency": 119,
+              "first_break_clients": 120,
+              "break_reason": "p99 573.3ms",
+              "rps_at_sustained": 678.1,
+              "p99_at_sustained": 469.3308159997687,
+              "anon_mb_at_sustained": 10409.15,
+              "rss_mb_at_sustained": 16436.51
+            }
+          },
+          "saturation": {
+            "peak_rps": 1034.7,
+            "at_clients": 8,
+            "p99_ms": 30.03333600005135,
+            "anon_mb": 909.02
+          },
+          "curve": [
+            {
+              "clients": 1,
+              "rps": 459.9,
+              "p50": 1.9449569997377694,
+              "p99": 7.003467000089586,
+              "p999": 9.449339000042528,
+              "error_rate": 0,
+              "ok": 4599,
+              "err": 0,
+              "anon_mb": 122.02,
+              "rss_mb": 172.8,
+              "process_count": 1
+            },
+            {
+              "clients": 2,
+              "rps": 843.1,
+              "p50": 1.9684439999982715,
+              "p99": 8.567046000156552,
+              "p999": 12.906649999786168,
+              "error_rate": 0,
+              "ok": 8431,
+              "err": 0,
+              "anon_mb": 232.18,
+              "rss_mb": 333.71,
+              "process_count": 2
+            },
+            {
+              "clients": 4,
+              "rps": 1031,
+              "p50": 2.9711539996787906,
+              "p99": 15.920816000085324,
+              "p999": 28.69940000027418,
+              "error_rate": 0,
+              "ok": 10310,
+              "err": 0,
+              "anon_mb": 478.5,
+              "rss_mb": 681.58,
+              "process_count": 4
+            },
+            {
+              "clients": 8,
+              "rps": 1034.7,
+              "p50": 6.293392000254244,
+              "p99": 30.03333600005135,
+              "p999": 53.38700099987909,
+              "error_rate": 0,
+              "ok": 10347,
+              "err": 0,
+              "anon_mb": 909.02,
+              "rss_mb": 1314.61,
+              "process_count": 8
+            },
+            {
+              "clients": 16,
+              "rps": 989.6,
+              "p50": 13.806328000035137,
+              "p99": 56.19717100029811,
+              "p999": 109.8663110001944,
+              "error_rate": 0,
+              "ok": 9896,
+              "err": 0,
+              "anon_mb": 1725.4,
+              "rss_mb": 2536.63,
+              "process_count": 16
+            },
+            {
+              "clients": 24,
+              "rps": 912.7,
+              "p50": 22.92145200027153,
+              "p99": 85.57188099995255,
+              "p999": 157.4110649996437,
+              "error_rate": 0,
+              "ok": 9127,
+              "err": 0,
+              "anon_mb": 2617.35,
+              "rss_mb": 3834.14,
+              "process_count": 24
+            },
+            {
+              "clients": 28,
+              "rps": 898.6,
+              "p50": 27.844543000217527,
+              "p99": 93.88828400010243,
+              "p999": 150.31501300027594,
+              "error_rate": 0,
+              "ok": 8986,
+              "err": 0,
+              "anon_mb": 3037.54,
+              "rss_mb": 4457.58,
+              "process_count": 28
+            },
+            {
+              "clients": 30,
+              "rps": 936.2,
+              "p50": 28.509592999704182,
+              "p99": 95.13290199963376,
+              "p999": 163.6910819998011,
+              "error_rate": 0,
+              "ok": 9362,
+              "err": 0,
+              "anon_mb": 3256.44,
+              "rss_mb": 4777.9,
+              "process_count": 30
+            },
+            {
+              "clients": 31,
+              "rps": 965.6,
+              "p50": 28.82725799968466,
+              "p99": 94.62500699982047,
+              "p999": 159.42028599977493,
+              "error_rate": 0,
+              "ok": 9656,
+              "err": 0,
+              "anon_mb": 3379.71,
+              "rss_mb": 4951.96,
+              "process_count": 31
+            },
+            {
+              "clients": 32,
+              "rps": 919.9,
+              "p50": 31.282899000216275,
+              "p99": 107.36886599985883,
+              "p999": 152.0403140000999,
+              "error_rate": 0,
+              "ok": 9199,
+              "err": 0,
+              "anon_mb": 3485.26,
+              "rss_mb": 5107.1,
+              "process_count": 32
+            },
+            {
+              "clients": 40,
+              "rps": 883.2,
+              "p50": 41.00982199981809,
+              "p99": 122.48235799977556,
+              "p999": 173.40347599983215,
+              "error_rate": 0,
+              "ok": 8832,
+              "err": 0,
+              "anon_mb": 4294.08,
+              "rss_mb": 6322.18,
+              "process_count": 40
+            },
+            {
+              "clients": 48,
+              "rps": 843.4,
+              "p50": 51.26414499990642,
+              "p99": 146.47697800025344,
+              "p999": 191.65885799983516,
+              "error_rate": 0,
+              "ok": 8434,
+              "err": 0,
+              "anon_mb": 5129.83,
+              "rss_mb": 7563.51,
+              "process_count": 48
+            },
+            {
+              "clients": 56,
+              "rps": 792.5,
+              "p50": 63.870055000297725,
+              "p99": 172.26874399976805,
+              "p999": 228.433436000254,
+              "error_rate": 0,
+              "ok": 7925,
+              "err": 0,
+              "anon_mb": 5921.23,
+              "rss_mb": 8761.27,
+              "process_count": 56
+            },
+            {
+              "clients": 64,
+              "rps": 789.2,
+              "p50": 71.75330500025302,
+              "p99": 201.16522199986503,
+              "p999": 256.18183499993756,
+              "error_rate": 0,
+              "ok": 7892,
+              "err": 0,
+              "anon_mb": 6616.3,
+              "rss_mb": 9861.21,
+              "process_count": 64
+            },
+            {
+              "clients": 72,
+              "rps": 740.1,
+              "p50": 87.55706699984148,
+              "p99": 212.16170499986038,
+              "p999": 241.26309700030833,
+              "error_rate": 0,
+              "ok": 7401,
+              "err": 0,
+              "anon_mb": 7177.27,
+              "rss_mb": 10827.53,
+              "process_count": 72
+            },
+            {
+              "clients": 73,
+              "rps": 768.6,
+              "p50": 86.28874399978667,
+              "p99": 217.10623199958354,
+              "p999": 251.2114439997822,
+              "error_rate": 0,
+              "ok": 7686,
+              "err": 0,
+              "anon_mb": 7346.1,
+              "rss_mb": 11046.87,
+              "process_count": 73
+            },
+            {
+              "clients": 74,
+              "rps": 738.6,
+              "p50": 88.64994599996135,
+              "p99": 254.82419899990782,
+              "p999": 298.90608599968255,
+              "error_rate": 0,
+              "ok": 7386,
+              "err": 0,
+              "anon_mb": 7413.8,
+              "rss_mb": 11165.6,
+              "process_count": 74
+            },
+            {
+              "clients": 76,
+              "rps": 718.6,
+              "p50": 93.06150700012222,
+              "p99": 253.385629999917,
+              "p999": 318.1658769999631,
+              "error_rate": 0,
+              "ok": 7186,
+              "err": 0,
+              "anon_mb": 7479.81,
+              "rss_mb": 11332.45,
+              "process_count": 76
+            },
+            {
+              "clients": 80,
+              "rps": 544.6,
+              "p50": 129.70860199956223,
+              "p99": 373.89435400022194,
+              "p999": 479.8567200000398,
+              "error_rate": 0,
+              "ok": 5446,
+              "err": 0,
+              "anon_mb": 7495.23,
+              "rss_mb": 11546.23,
+              "process_count": 80
+            },
+            {
+              "clients": 88,
+              "rps": 670.4,
+              "p50": 116.54389999993145,
+              "p99": 325.3687970000319,
+              "p999": 420.373044999782,
+              "error_rate": 0,
+              "ok": 6704,
+              "err": 0,
+              "anon_mb": 8253.23,
+              "rss_mb": 12708.89,
+              "process_count": 88
+            },
+            {
+              "clients": 96,
+              "rps": 674.1,
+              "p50": 125.81542499968782,
+              "p99": 336.0383100002073,
+              "p999": 463.8828970002942,
+              "error_rate": 0,
+              "ok": 6741,
+              "err": 0,
+              "anon_mb": 8813.38,
+              "rss_mb": 13675.77,
+              "process_count": 96
+            },
+            {
+              "clients": 104,
+              "rps": 678.1,
+              "p50": 137.48105000006035,
+              "p99": 366.98252400010824,
+              "p999": 572.5884430003352,
+              "error_rate": 0,
+              "ok": 6781,
+              "err": 0,
+              "anon_mb": 9479.78,
+              "rss_mb": 14749.03,
+              "process_count": 104
+            },
+            {
+              "clients": 112,
+              "rps": 713.4,
+              "p50": 137.13846999965608,
+              "p99": 416.95415299991146,
+              "p999": 693.1667300001718,
+              "error_rate": 0,
+              "ok": 7134,
+              "err": 0,
+              "anon_mb": 10112.64,
+              "rss_mb": 15786.51,
+              "process_count": 112
+            },
+            {
+              "clients": 116,
+              "rps": 644.4,
+              "p50": 158.1237789997831,
+              "p99": 476.81165900081396,
+              "p999": 669.6014069998637,
+              "error_rate": 0,
+              "ok": 6444,
+              "err": 0,
+              "anon_mb": 10171.59,
+              "rss_mb": 16048.88,
+              "process_count": 116
+            },
+            {
+              "clients": 118,
+              "rps": 676.7,
+              "p50": 152.2143080001697,
+              "p99": 472.31548999994993,
+              "p999": 731.7975749997422,
+              "error_rate": 0,
+              "ok": 6767,
+              "err": 0,
+              "anon_mb": 10387.01,
+              "rss_mb": 16361.31,
+              "process_count": 118
+            },
+            {
+              "clients": 119,
+              "rps": 678.1,
+              "p50": 153.05475500039756,
+              "p99": 469.3308159997687,
+              "p999": 672.8029330000281,
+              "error_rate": 0,
+              "ok": 6781,
+              "err": 0,
+              "anon_mb": 10409.15,
+              "rss_mb": 16436.51,
+              "process_count": 119
+            },
+            {
+              "clients": 120,
+              "rps": 614.9,
+              "p50": 167.0559649998322,
+              "p99": 573.342073999811,
+              "p999": 889.5810010000132,
+              "error_rate": 0,
+              "ok": 6149,
+              "err": 0,
+              "anon_mb": 10434.08,
+              "rss_mb": 16513.25,
+              "process_count": 120
+            }
+          ],
+          "steps": [
+            {
+              "concurrency": 1,
+              "ok": 4599,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 459.9,
+              "latency_ms": {
+                "p50": 1.9449569997377694,
+                "p99": 7.003467000089586,
+                "p999": 9.449339000042528
+              },
+              "memory": {
+                "rss_mb": 172.8,
+                "anonymous_mb": 122.02,
+                "pss_mb": 133.76,
+                "process_count": 1,
+                "root_count": 1
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 2,
+              "ok": 8431,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 843.1,
+              "latency_ms": {
+                "p50": 1.9684439999982715,
+                "p99": 8.567046000156552,
+                "p999": 12.906649999786168
+              },
+              "memory": {
+                "rss_mb": 333.71,
+                "anonymous_mb": 232.18,
+                "pss_mb": 249.78,
+                "process_count": 2,
+                "root_count": 2
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 4,
+              "ok": 10310,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1031,
+              "latency_ms": {
+                "p50": 2.9711539996787906,
+                "p99": 15.920816000085324,
+                "p999": 28.69940000027418
+              },
+              "memory": {
+                "rss_mb": 681.58,
+                "anonymous_mb": 478.5,
+                "pss_mb": 503.69,
+                "process_count": 4,
+                "root_count": 4
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 8,
+              "ok": 10347,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1034.7,
+              "latency_ms": {
+                "p50": 6.293392000254244,
+                "p99": 30.03333600005135,
+                "p999": 53.38700099987909
+              },
+              "memory": {
+                "rss_mb": 1314.61,
+                "anonymous_mb": 909.02,
+                "pss_mb": 942.26,
+                "process_count": 8,
+                "root_count": 8
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 16,
+              "ok": 9896,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 989.6,
+              "latency_ms": {
+                "p50": 13.806328000035137,
+                "p99": 56.19717100029811,
+                "p999": 109.8663110001944
+              },
+              "memory": {
+                "rss_mb": 2536.63,
+                "anonymous_mb": 1725.4,
+                "pss_mb": 1765.96,
+                "process_count": 16,
+                "root_count": 16
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 24,
+              "ok": 9127,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 912.7,
+              "latency_ms": {
+                "p50": 22.92145200027153,
+                "p99": 85.57188099995255,
+                "p999": 157.4110649996437
+              },
+              "memory": {
+                "rss_mb": 3834.14,
+                "anonymous_mb": 2617.35,
+                "pss_mb": 2661.51,
+                "process_count": 24,
+                "root_count": 24
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 32,
+              "ok": 9199,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 919.9,
+              "latency_ms": {
+                "p50": 31.282899000216275,
+                "p99": 107.36886599985883,
+                "p999": 152.0403140000999
+              },
+              "memory": {
+                "rss_mb": 5107.1,
+                "anonymous_mb": 3485.26,
+                "pss_mb": 3531.86,
+                "process_count": 32,
+                "root_count": 32
+              },
+              "broken": true,
+              "break_reason": "p99 107.4ms"
+            },
+            {
+              "concurrency": 40,
+              "ok": 8832,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 883.2,
+              "latency_ms": {
+                "p50": 41.00982199981809,
+                "p99": 122.48235799977556,
+                "p999": 173.40347599983215
+              },
+              "memory": {
+                "rss_mb": 6322.18,
+                "anonymous_mb": 4294.08,
+                "pss_mb": 4342.44,
+                "process_count": 40,
+                "root_count": 40
+              },
+              "broken": true,
+              "break_reason": "p99 122.5ms"
+            },
+            {
+              "concurrency": 48,
+              "ok": 8434,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 843.4,
+              "latency_ms": {
+                "p50": 51.26414499990642,
+                "p99": 146.47697800025344,
+                "p999": 191.65885799983516
+              },
+              "memory": {
+                "rss_mb": 7563.51,
+                "anonymous_mb": 5129.83,
+                "pss_mb": 5179.63,
+                "process_count": 48,
+                "root_count": 48
+              },
+              "broken": true,
+              "break_reason": "p99 146.5ms"
+            },
+            {
+              "concurrency": 56,
+              "ok": 7925,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 792.5,
+              "latency_ms": {
+                "p50": 63.870055000297725,
+                "p99": 172.26874399976805,
+                "p999": 228.433436000254
+              },
+              "memory": {
+                "rss_mb": 8761.27,
+                "anonymous_mb": 5921.23,
+                "pss_mb": 5972.39,
+                "process_count": 56,
+                "root_count": 56
+              },
+              "broken": true,
+              "break_reason": "p99 172.3ms"
+            },
+            {
+              "concurrency": 64,
+              "ok": 7892,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 789.2,
+              "latency_ms": {
+                "p50": 71.75330500025302,
+                "p99": 201.16522199986503,
+                "p999": 256.18183499993756
+              },
+              "memory": {
+                "rss_mb": 9861.21,
+                "anonymous_mb": 6616.3,
+                "pss_mb": 6668.47,
+                "process_count": 64,
+                "root_count": 64
+              },
+              "broken": true,
+              "break_reason": "p99 201.2ms"
+            },
+            {
+              "concurrency": 72,
+              "ok": 7401,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 740.1,
+              "latency_ms": {
+                "p50": 87.55706699984148,
+                "p99": 212.16170499986038,
+                "p999": 241.26309700030833
+              },
+              "memory": {
+                "rss_mb": 10827.53,
+                "anonymous_mb": 7177.27,
+                "pss_mb": 7230.61,
+                "process_count": 72,
+                "root_count": 72
+              },
+              "broken": true,
+              "break_reason": "p99 212.2ms"
+            },
+            {
+              "concurrency": 80,
+              "ok": 5446,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 544.6,
+              "latency_ms": {
+                "p50": 129.70860199956223,
+                "p99": 373.89435400022194,
+                "p999": 479.8567200000398
+              },
+              "memory": {
+                "rss_mb": 11546.23,
+                "anonymous_mb": 7495.23,
+                "pss_mb": 7549.39,
+                "process_count": 80,
+                "root_count": 80
+              },
+              "broken": true,
+              "break_reason": "p99 373.9ms"
+            },
+            {
+              "concurrency": 88,
+              "ok": 6704,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 670.4,
+              "latency_ms": {
+                "p50": 116.54389999993145,
+                "p99": 325.3687970000319,
+                "p999": 420.373044999782
+              },
+              "memory": {
+                "rss_mb": 12708.89,
+                "anonymous_mb": 8253.23,
+                "pss_mb": 8308.34,
+                "process_count": 88,
+                "root_count": 88
+              },
+              "broken": true,
+              "break_reason": "p99 325.4ms"
+            },
+            {
+              "concurrency": 96,
+              "ok": 6741,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 674.1,
+              "latency_ms": {
+                "p50": 125.81542499968782,
+                "p99": 336.0383100002073,
+                "p999": 463.8828970002942
+              },
+              "memory": {
+                "rss_mb": 13675.77,
+                "anonymous_mb": 8813.38,
+                "pss_mb": 8869.3,
+                "process_count": 96,
+                "root_count": 96
+              },
+              "broken": true,
+              "break_reason": "p99 336.0ms"
+            },
+            {
+              "concurrency": 104,
+              "ok": 6781,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 678.1,
+              "latency_ms": {
+                "p50": 137.48105000006035,
+                "p99": 366.98252400010824,
+                "p999": 572.5884430003352
+              },
+              "memory": {
+                "rss_mb": 14749.03,
+                "anonymous_mb": 9479.78,
+                "pss_mb": 9536.55,
+                "process_count": 104,
+                "root_count": 104
+              },
+              "broken": true,
+              "break_reason": "p99 367.0ms"
+            },
+            {
+              "concurrency": 112,
+              "ok": 7134,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 713.4,
+              "latency_ms": {
+                "p50": 137.13846999965608,
+                "p99": 416.95415299991146,
+                "p999": 693.1667300001718
+              },
+              "memory": {
+                "rss_mb": 15786.51,
+                "anonymous_mb": 10112.64,
+                "pss_mb": 10170.22,
+                "process_count": 112,
+                "root_count": 112
+              },
+              "broken": true,
+              "break_reason": "p99 417.0ms"
+            },
+            {
+              "concurrency": 120,
+              "ok": 6149,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 614.9,
+              "latency_ms": {
+                "p50": 167.0559649998322,
+                "p99": 573.342073999811,
+                "p999": 889.5810010000132
+              },
+              "memory": {
+                "rss_mb": 16513.25,
+                "anonymous_mb": 10434.08,
+                "pss_mb": 10492.47,
+                "process_count": 120,
+                "root_count": 120
+              },
+              "broken": true,
+              "break_reason": "p99 573.3ms"
+            },
+            {
+              "concurrency": 28,
+              "ok": 8986,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 898.6,
+              "latency_ms": {
+                "p50": 27.844543000217527,
+                "p99": 93.88828400010243,
+                "p999": 150.31501300027594
+              },
+              "memory": {
+                "rss_mb": 4457.58,
+                "anonymous_mb": 3037.54,
+                "pss_mb": 3082.97,
+                "process_count": 28,
+                "root_count": 28
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 30,
+              "ok": 9362,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 936.2,
+              "latency_ms": {
+                "p50": 28.509592999704182,
+                "p99": 95.13290199963376,
+                "p999": 163.6910819998011
+              },
+              "memory": {
+                "rss_mb": 4777.9,
+                "anonymous_mb": 3256.44,
+                "pss_mb": 3302.5,
+                "process_count": 30,
+                "root_count": 30
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 31,
+              "ok": 9656,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 965.6,
+              "latency_ms": {
+                "p50": 28.82725799968466,
+                "p99": 94.62500699982047,
+                "p999": 159.42028599977493
+              },
+              "memory": {
+                "rss_mb": 4951.96,
+                "anonymous_mb": 3379.71,
+                "pss_mb": 3426.04,
+                "process_count": 31,
+                "root_count": 31
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 76,
+              "ok": 7186,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 718.6,
+              "latency_ms": {
+                "p50": 93.06150700012222,
+                "p99": 253.385629999917,
+                "p999": 318.1658769999631
+              },
+              "memory": {
+                "rss_mb": 11332.45,
+                "anonymous_mb": 7479.81,
+                "pss_mb": 7533.52,
+                "process_count": 76,
+                "root_count": 76
+              },
+              "broken": true,
+              "break_reason": "p99 253.4ms"
+            },
+            {
+              "concurrency": 74,
+              "ok": 7386,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 738.6,
+              "latency_ms": {
+                "p50": 88.64994599996135,
+                "p99": 254.82419899990782,
+                "p999": 298.90608599968255
+              },
+              "memory": {
+                "rss_mb": 11165.6,
+                "anonymous_mb": 7413.8,
+                "pss_mb": 7467.36,
+                "process_count": 74,
+                "root_count": 74
+              },
+              "broken": true,
+              "break_reason": "p99 254.8ms"
+            },
+            {
+              "concurrency": 73,
+              "ok": 7686,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 768.6,
+              "latency_ms": {
+                "p50": 86.28874399978667,
+                "p99": 217.10623199958354,
+                "p999": 251.2114439997822
+              },
+              "memory": {
+                "rss_mb": 11046.87,
+                "anonymous_mb": 7346.1,
+                "pss_mb": 7399.47,
+                "process_count": 73,
+                "root_count": 73
+              },
+              "broken": true,
+              "break_reason": "p99 217.1ms"
+            },
+            {
+              "concurrency": 116,
+              "ok": 6444,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 644.4,
+              "latency_ms": {
+                "p50": 158.1237789997831,
+                "p99": 476.81165900081396,
+                "p999": 669.6014069998637
+              },
+              "memory": {
+                "rss_mb": 16048.88,
+                "anonymous_mb": 10171.59,
+                "pss_mb": 10229.62,
+                "process_count": 116,
+                "root_count": 116
+              },
+              "broken": true,
+              "break_reason": "p99 476.8ms"
+            },
+            {
+              "concurrency": 118,
+              "ok": 6767,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 676.7,
+              "latency_ms": {
+                "p50": 152.2143080001697,
+                "p99": 472.31548999994993,
+                "p999": 731.7975749997422
+              },
+              "memory": {
+                "rss_mb": 16361.31,
+                "anonymous_mb": 10387.01,
+                "pss_mb": 10445.22,
+                "process_count": 118,
+                "root_count": 118
+              },
+              "broken": true,
+              "break_reason": "p99 472.3ms"
+            },
+            {
+              "concurrency": 119,
+              "ok": 6781,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 678.1,
+              "latency_ms": {
+                "p50": 153.05475500039756,
+                "p99": 469.3308159997687,
+                "p999": 672.8029330000281
+              },
+              "memory": {
+                "rss_mb": 16436.51,
+                "anonymous_mb": 10409.15,
+                "pss_mb": 10467.46,
+                "process_count": 119,
+                "root_count": 119
+              },
+              "broken": true,
+              "break_reason": "p99 469.3ms"
+            }
+          ]
+        },
+        "executor_v1_stdio": {
+          "id": "executor_v1_stdio",
+          "kind": "executor_v1",
+          "runtime": "executor_1.6_stdio",
+          "topology": "stdio_process_per_client",
+          "toolName": "execute",
+          "note": "stdio process-per-client; each client = executor mcp; memory includes shared daemon once.",
+          "loop_guard": 256,
+          "host_censored_at_clients": null,
+          "sustained_concurrency_before_break": 8,
+          "first_break_clients": 9,
+          "break_reason": "p99 162.1ms",
+          "thresholds": {
+            "100": {
+              "threshold_p99_ms": 100,
+              "sustained_concurrency": 8,
+              "first_break_clients": 9,
+              "break_reason": "p99 162.1ms",
+              "rps_at_sustained": 111.5,
+              "p99_at_sustained": 88.3674929998815,
+              "anon_mb_at_sustained": 2877.64,
+              "rss_mb_at_sustained": 3557.17
+            },
+            "250": {
+              "threshold_p99_ms": 250,
+              "sustained_concurrency": 19,
+              "first_break_clients": 20,
+              "break_reason": "p99 281.8ms",
+              "rps_at_sustained": 112.1,
+              "p99_at_sustained": 247.17565700039268,
+              "anon_mb_at_sustained": 4561.04,
+              "rss_mb_at_sustained": 6124.54
+            },
+            "500": {
+              "threshold_p99_ms": 500,
+              "sustained_concurrency": 31,
+              "first_break_clients": 32,
+              "break_reason": "p99 590.3ms",
+              "rps_at_sustained": 114.7,
+              "p99_at_sustained": 323.9357529999688,
+              "anon_mb_at_sustained": 6187.65,
+              "rss_mb_at_sustained": 8717.16
+            }
+          },
+          "saturation": {
+            "peak_rps": 119.6,
+            "at_clients": 24,
+            "p99_ms": 295.3844170002267,
+            "anon_mb": 4972.43
+          },
+          "curve": [
+            {
+              "clients": 1,
+              "rps": 81.7,
+              "p50": 11.841659000143409,
+              "p99": 31.933512999676168,
+              "p999": 73.05165599938482,
+              "error_rate": 0,
+              "ok": 817,
+              "err": 0,
+              "anon_mb": 1154.84,
+              "rss_mb": 1271.51,
+              "process_count": 3
+            },
+            {
+              "clients": 2,
+              "rps": 102.5,
+              "p50": 18.612748999148607,
+              "p99": 34.36401499994099,
+              "p999": 78.45274100080132,
+              "error_rate": 0,
+              "ok": 1025,
+              "err": 0,
+              "anon_mb": 1530.68,
+              "rss_mb": 1727.42,
+              "process_count": 5
+            },
+            {
+              "clients": 4,
+              "rps": 104.3,
+              "p50": 37.598227999173105,
+              "p99": 55.91081899963319,
+              "p999": 75.17840099986643,
+              "error_rate": 0,
+              "ok": 1043,
+              "err": 0,
+              "anon_mb": 2209.04,
+              "rss_mb": 2566.93,
+              "process_count": 9
+            },
+            {
+              "clients": 8,
+              "rps": 111.5,
+              "p50": 71.03699100017548,
+              "p99": 88.3674929998815,
+              "p999": 126.57032599952072,
+              "error_rate": 0,
+              "ok": 1115,
+              "err": 0,
+              "anon_mb": 2877.64,
+              "rss_mb": 3557.17,
+              "process_count": 17
+            },
+            {
+              "clients": 9,
+              "rps": 95.7,
+              "p50": 85.7087240004912,
+              "p99": 162.08262999914587,
+              "p999": 200.10720399953425,
+              "error_rate": 0,
+              "ok": 957,
+              "err": 0,
+              "anon_mb": 3105.67,
+              "rss_mb": 3865.67,
+              "process_count": 19
+            },
+            {
+              "clients": 10,
+              "rps": 85.8,
+              "p50": 116.3675130000338,
+              "p99": 216.00465499982238,
+              "p999": 230.8946879999712,
+              "error_rate": 0,
+              "ok": 858,
+              "err": 0,
+              "anon_mb": 3238.58,
+              "rss_mb": 4077.34,
+              "process_count": 21
+            },
+            {
+              "clients": 12,
+              "rps": 103.2,
+              "p50": 115.18603800050914,
+              "p99": 138.27231900021434,
+              "p999": 143.16312300041318,
+              "error_rate": 0,
+              "ok": 1032,
+              "err": 0,
+              "anon_mb": 3454.19,
+              "rss_mb": 4452.94,
+              "process_count": 25
+            },
+            {
+              "clients": 16,
+              "rps": 118.4,
+              "p50": 134.69316599983722,
+              "p99": 214.85244700033218,
+              "p999": 235.2616030005738,
+              "error_rate": 0,
+              "ok": 1184,
+              "err": 0,
+              "anon_mb": 3990.99,
+              "rss_mb": 5313.94,
+              "process_count": 33
+            },
+            {
+              "clients": 18,
+              "rps": 116,
+              "p50": 153.93591099977493,
+              "p99": 209.2129529993981,
+              "p999": 226.60674900002778,
+              "error_rate": 0,
+              "ok": 1160,
+              "err": 0,
+              "anon_mb": 4479,
+              "rss_mb": 5962.43,
+              "process_count": 37
+            },
+            {
+              "clients": 19,
+              "rps": 112.1,
+              "p50": 167.1124710002914,
+              "p99": 247.17565700039268,
+              "p999": 251.0759349996224,
+              "error_rate": 0,
+              "ok": 1121,
+              "err": 0,
+              "anon_mb": 4561.04,
+              "rss_mb": 6124.54,
+              "process_count": 39
+            },
+            {
+              "clients": 20,
+              "rps": 109.9,
+              "p50": 177.9953779997304,
+              "p99": 281.82102899998426,
+              "p999": 300.3238590005785,
+              "error_rate": 0,
+              "ok": 1099,
+              "err": 0,
+              "anon_mb": 4641.94,
+              "rss_mb": 6284.39,
+              "process_count": 41
+            },
+            {
+              "clients": 24,
+              "rps": 119.6,
+              "p50": 201.0376739995554,
+              "p99": 295.3844170002267,
+              "p999": 313.47492299973965,
+              "error_rate": 0,
+              "ok": 1196,
+              "err": 0,
+              "anon_mb": 4972.43,
+              "rss_mb": 6938.45,
+              "process_count": 49
+            },
+            {
+              "clients": 28,
+              "rps": 117.6,
+              "p50": 236.2212150003761,
+              "p99": 294.58395199943334,
+              "p999": 309.6705729998648,
+              "error_rate": 0,
+              "ok": 1176,
+              "err": 0,
+              "anon_mb": 5762.39,
+              "rss_mb": 8050.14,
+              "process_count": 57
+            },
+            {
+              "clients": 30,
+              "rps": 118.5,
+              "p50": 254.0857569994405,
+              "p99": 292.16317399963737,
+              "p999": 296.85662300046533,
+              "error_rate": 0,
+              "ok": 1185,
+              "err": 0,
+              "anon_mb": 6061.15,
+              "rss_mb": 8509.35,
+              "process_count": 61
+            },
+            {
+              "clients": 31,
+              "rps": 114.7,
+              "p50": 271.496730000712,
+              "p99": 323.9357529999688,
+              "p999": 334.2241130005568,
+              "error_rate": 0,
+              "ok": 1147,
+              "err": 0,
+              "anon_mb": 6187.65,
+              "rss_mb": 8717.16,
+              "process_count": 63
+            },
+            {
+              "clients": 32,
+              "rps": 106.3,
+              "p50": 299.7064479999244,
+              "p99": 590.3233030000702,
+              "p999": 677.4314500000328,
+              "error_rate": 0,
+              "ok": 1063,
+              "err": 0,
+              "anon_mb": 6195.04,
+              "rss_mb": 8804,
+              "process_count": 65
+            }
+          ],
+          "steps": [
+            {
+              "concurrency": 1,
+              "ok": 817,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 81.7,
+              "latency_ms": {
+                "p50": 11.841659000143409,
+                "p99": 31.933512999676168,
+                "p999": 73.05165599938482
+              },
+              "memory": {
+                "rss_mb": 1271.51,
+                "anonymous_mb": 1154.84,
+                "pss_mb": 1205.39,
+                "process_count": 3,
+                "root_count": 2
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 2,
+              "ok": 1025,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 102.5,
+              "latency_ms": {
+                "p50": 18.612748999148607,
+                "p99": 34.36401499994099,
+                "p999": 78.45274100080132
+              },
+              "memory": {
+                "rss_mb": 1727.42,
+                "anonymous_mb": 1530.68,
+                "pss_mb": 1585.65,
+                "process_count": 5,
+                "root_count": 3
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 4,
+              "ok": 1043,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 104.3,
+              "latency_ms": {
+                "p50": 37.598227999173105,
+                "p99": 55.91081899963319,
+                "p999": 75.17840099986643
+              },
+              "memory": {
+                "rss_mb": 2566.93,
+                "anonymous_mb": 2209.04,
+                "pss_mb": 2269.97,
+                "process_count": 9,
+                "root_count": 5
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 8,
+              "ok": 1115,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 111.5,
+              "latency_ms": {
+                "p50": 71.03699100017548,
+                "p99": 88.3674929998815,
+                "p999": 126.57032599952072
+              },
+              "memory": {
+                "rss_mb": 3557.17,
+                "anonymous_mb": 2877.64,
+                "pss_mb": 2945.2,
+                "process_count": 17,
+                "root_count": 9
+              },
+              "broken": false,
+              "break_reason": null
+            },
+            {
+              "concurrency": 16,
+              "ok": 1184,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 118.4,
+              "latency_ms": {
+                "p50": 134.69316599983722,
+                "p99": 214.85244700033218,
+                "p999": 235.2616030005738
+              },
+              "memory": {
+                "rss_mb": 5313.94,
+                "anonymous_mb": 3990.99,
+                "pss_mb": 4064.74,
+                "process_count": 33,
+                "root_count": 17
+              },
+              "broken": true,
+              "break_reason": "p99 214.9ms"
+            },
+            {
+              "concurrency": 24,
+              "ok": 1196,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 119.6,
+              "latency_ms": {
+                "p50": 201.0376739995554,
+                "p99": 295.3844170002267,
+                "p999": 313.47492299973965
+              },
+              "memory": {
+                "rss_mb": 6938.45,
+                "anonymous_mb": 4972.43,
+                "pss_mb": 5049.36,
+                "process_count": 49,
+                "root_count": 25
+              },
+              "broken": true,
+              "break_reason": "p99 295.4ms"
+            },
+            {
+              "concurrency": 32,
+              "ok": 1063,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 106.3,
+              "latency_ms": {
+                "p50": 299.7064479999244,
+                "p99": 590.3233030000702,
+                "p999": 677.4314500000328
+              },
+              "memory": {
+                "rss_mb": 8804,
+                "anonymous_mb": 6195.04,
+                "pss_mb": 6274.12,
+                "process_count": 65,
+                "root_count": 33
+              },
+              "broken": true,
+              "break_reason": "p99 590.3ms"
+            },
+            {
+              "concurrency": 12,
+              "ok": 1032,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 103.2,
+              "latency_ms": {
+                "p50": 115.18603800050914,
+                "p99": 138.27231900021434,
+                "p999": 143.16312300041318
+              },
+              "memory": {
+                "rss_mb": 4452.94,
+                "anonymous_mb": 3454.19,
+                "pss_mb": 3525.42,
+                "process_count": 25,
+                "root_count": 13
+              },
+              "broken": true,
+              "break_reason": "p99 138.3ms"
+            },
+            {
+              "concurrency": 10,
+              "ok": 858,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 85.8,
+              "latency_ms": {
+                "p50": 116.3675130000338,
+                "p99": 216.00465499982238,
+                "p999": 230.8946879999712
+              },
+              "memory": {
+                "rss_mb": 4077.34,
+                "anonymous_mb": 3238.58,
+                "pss_mb": 3308.17,
+                "process_count": 21,
+                "root_count": 11
+              },
+              "broken": true,
+              "break_reason": "p99 216.0ms"
+            },
+            {
+              "concurrency": 9,
+              "ok": 957,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 95.7,
+              "latency_ms": {
+                "p50": 85.7087240004912,
+                "p99": 162.08262999914587,
+                "p999": 200.10720399953425
+              },
+              "memory": {
+                "rss_mb": 3865.67,
+                "anonymous_mb": 3105.67,
+                "pss_mb": 3174.35,
+                "process_count": 19,
+                "root_count": 10
+              },
+              "broken": true,
+              "break_reason": "p99 162.1ms"
+            },
+            {
+              "concurrency": 20,
+              "ok": 1099,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 109.9,
+              "latency_ms": {
+                "p50": 177.9953779997304,
+                "p99": 281.82102899998426,
+                "p999": 300.3238590005785
+              },
+              "memory": {
+                "rss_mb": 6284.39,
+                "anonymous_mb": 4641.94,
+                "pss_mb": 4717.46,
+                "process_count": 41,
+                "root_count": 21
+              },
+              "broken": true,
+              "break_reason": "p99 281.8ms"
+            },
+            {
+              "concurrency": 18,
+              "ok": 1160,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 116,
+              "latency_ms": {
+                "p50": 153.93591099977493,
+                "p99": 209.2129529993981,
+                "p999": 226.60674900002778
+              },
+              "memory": {
+                "rss_mb": 5962.43,
+                "anonymous_mb": 4479,
+                "pss_mb": 4553.67,
+                "process_count": 37,
+                "root_count": 19
+              },
+              "broken": true,
+              "break_reason": "p99 209.2ms"
+            },
+            {
+              "concurrency": 19,
+              "ok": 1121,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 112.1,
+              "latency_ms": {
+                "p50": 167.1124710002914,
+                "p99": 247.17565700039268,
+                "p999": 251.0759349996224
+              },
+              "memory": {
+                "rss_mb": 6124.54,
+                "anonymous_mb": 4561.04,
+                "pss_mb": 4636.17,
+                "process_count": 39,
+                "root_count": 20
+              },
+              "broken": true,
+              "break_reason": "p99 247.2ms"
+            },
+            {
+              "concurrency": 28,
+              "ok": 1176,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 117.6,
+              "latency_ms": {
+                "p50": 236.2212150003761,
+                "p99": 294.58395199943334,
+                "p999": 309.6705729998648
+              },
+              "memory": {
+                "rss_mb": 8050.14,
+                "anonymous_mb": 5762.39,
+                "pss_mb": 5840.45,
+                "process_count": 57,
+                "root_count": 29
+              },
+              "broken": true,
+              "break_reason": "p99 294.6ms"
+            },
+            {
+              "concurrency": 30,
+              "ok": 1185,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 118.5,
+              "latency_ms": {
+                "p50": 254.0857569994405,
+                "p99": 292.16317399963737,
+                "p999": 296.85662300046533
+              },
+              "memory": {
+                "rss_mb": 8509.35,
+                "anonymous_mb": 6061.15,
+                "pss_mb": 6139.81,
+                "process_count": 61,
+                "root_count": 31
+              },
+              "broken": true,
+              "break_reason": "p99 292.2ms"
+            },
+            {
+              "concurrency": 31,
+              "ok": 1147,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 114.7,
+              "latency_ms": {
+                "p50": 271.496730000712,
+                "p99": 323.9357529999688,
+                "p999": 334.2241130005568
+              },
+              "memory": {
+                "rss_mb": 8717.16,
+                "anonymous_mb": 6187.65,
+                "pss_mb": 6266.51,
+                "process_count": 63,
+                "root_count": 32
+              },
+              "broken": true,
+              "break_reason": "p99 323.9ms"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
