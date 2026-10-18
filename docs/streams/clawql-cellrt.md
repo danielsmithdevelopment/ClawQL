@@ -23,7 +23,7 @@ It is **not** a general-purpose DO runtime and **not** a Node `worker_threads` r
 | ------------------ | ----------------------------------------- | ----------------------------------------------------------------------------- |
 | Status             | Alpha; hostile multi-tenant not supported | ClawQL-owned; production target                                               |
 | Security story     | V8 isolate + operator mesh                | Rust memory safety + eBPF + WASM capability sandbox                           |
-| Vault / inference  | External sidecars / HTTP                  | Embedded dynamic secrets + PAL + virtual keys                                 |
+| Vault / inference  | External sidecars / HTTP                  | Embedded dynamic secrets + model escalation + virtual keys                                 |
 | Observability      | External                                  | Embedded OTel + Prometheus + Langfuse                                         |
 | Tool execution     | JS bundle in V8                           | Bootstrap: HTTP → clawql-mcp; full: `clawql-core.wasm` in Wasmtime            |
 | Workers API parity | High (same surface as Cloudflare)         | Different API (Rust cell trait + WIT); session _contract_ shared with Streams |
@@ -97,7 +97,7 @@ clawql-cellrt binary (Rust, static, ~50–80 MB target)
 │    └─ Cosign binary attestation (verified at startup via sigstore-rs)
 │
 ├─ Inference layer (clawql-inference embedded)
-│    ├─ PAL router (Frugal → Standard → Frontier based on policy.yaml)
+│    ├─ model-escalation router (Frugal → Standard → Frontier based on policy.yaml)
 │    ├─ Virtual key manager (issue on spawn, expire on drop)
 │    ├─ Budget enforcer (hard cap, DeductionService via HTTP)
 │    └─ WORM inference call store (SQLite, LTX-replicated)
@@ -137,7 +137,7 @@ crates/
     cellrt-storage/               — SQLite + LTX WORM
     cellrt-security/              — eBPF, capability enforcer, Cosign startup
     cellrt-attestation/           — SEV-SNP/TDX remote attestation (tee path)
-    cellrt-inference/             — PAL, virtual keys, call store
+    cellrt-inference/             — model escalation, virtual keys, call store
     cellrt-vault/                 — AppRole bootstrap; attestation auth for tee
     cellrt-observability/         — OTel, Prometheus, Langfuse
     cellrt-cli/                   — start / deploy / diagnose / audit export
@@ -153,7 +153,7 @@ bucket-coordinator                — CAS leases, LTX, peer HMAC over S3/R2
 | `cellrt-storage`       | rusqlite WAL, LTX writer, WORM ack-after-replication                           |
 | `cellrt-security`      | eBPF rules, WIT import validation, Cosign binary verify                        |
 | `cellrt-attestation`   | AMD SEV-SNP / Intel TDX reports, VCEK/PCS chain, JWT delivery, QR frame bind   |
-| `cellrt-inference`     | PAL router, virtual key issue/expire, budget, WORM call store                  |
+| `cellrt-inference`     | model-escalation router, virtual key issue/expire, budget, WORM call store                  |
 | `cellrt-vault`         | Dynamic secrets; AppRole → attestation-gated release when tee enabled          |
 | `cellrt-observability` | OTel, Prometheus `/metrics`, Langfuse RTP/OBT                                  |
 | `cellrt-cli`           | Binary entry + `audit export` for air-gap QR sequence                          |
@@ -300,7 +300,7 @@ world clawql-core {
   import clawql:polyfills/node-crypto  // subset — maps to clawql:crypto/*
 
   // Inference — model calls via virtual key
-  import clawql:inference/call         // PAL-routed, budget-enforced
+  import clawql:inference/call         // model-escalated, budget-enforced
 
   // Audit — WORM writes via host (not direct SQLite)
   import clawql:audit/worm-append
@@ -546,7 +546,7 @@ CLI surface under Streams: `clawql streams cellrt start|deploy|diagnose|scale|au
 | **Language**           | JavaScript / TypeScript        | Rust + WASM component                                      |
 | **Security**           | Alpha; no hostile multi-tenant | Rust memory safety + eBPF + WASM sandbox                   |
 | **Vault**              | External sidecar               | Embedded dynamic secret injection                          |
-| **Inference**          | External HTTP                  | Embedded PAL routing + virtual keys                        |
+| **Inference**          | External HTTP                  | Embedded model escalation + virtual keys                        |
 | **Observability**      | External                       | Embedded OTel + Langfuse + Prometheus                      |
 | **Binary attestation** | Upstream GH attestation        | Cosign verify on startup                                   |
 | **Hardware TEE**       | No                             | Planned — [`clawql-tee`](./clawql-tee.md) (SEV-SNP / TDX)  |
@@ -611,7 +611,7 @@ Shipable surface at **week 4** (HTTP bootstrap). Full Wasmtime path at **week 10
 - [`docs/streams/clawql-tee.md`](./clawql-tee.md) — hardware TEE + attestation-gated secrets
 - [`docs/streams/clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) — QR air-gap audit transport
 - [`docs/streams/clawql-durable-objects.md`](./clawql-durable-objects.md) — session / sidecar / virtual key contract
-- [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md) — PAL, virtual keys, call store
+- [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md) — model escalation, virtual keys, call store
 - [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md) — six protocol surfaces
 - [`docs/plugins/codegraph.md`](../plugins/codegraph.md) — Effect scheduler feasibility / blast radius
 - [`docs/security/clawql-security-defense-in-depth.md`](../security/clawql-security-defense-in-depth.md) — security positioning

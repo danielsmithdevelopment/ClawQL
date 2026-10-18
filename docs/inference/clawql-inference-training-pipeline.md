@@ -2,7 +2,7 @@
 title: "clawql-inference Training Pipeline — Specification v0.1"
 status: "Draft · August 2026"
 package: "packages/clawql-inference/src/training/"
-depends_on: "clawql-inference (gateway, PAL routing, virtual keys) · clawql-streams (RTP/OBT traces) · OpenBench (evaluation) · Harvey LAB (Tier 1 evaluator)"
+depends_on: "clawql-inference (gateway, model escalation, virtual keys) · clawql-streams (RTP/OBT traces) · OpenBench (evaluation) · Harvey LAB (Tier 1 evaluator)"
 ---
 
 # clawql-inference Training Pipeline — Specification v0.1
@@ -17,7 +17,7 @@ depends_on: "clawql-inference (gateway, PAL routing, virtual keys) · clawql-str
 
 ## 1. What This Is
 
-The training pipeline is the fine-tuning layer inside `clawql-inference`. It closes the Intelligence Flywheel: agent sessions produce RTP/OBT traces → traces are filtered and formatted by training method → fine-tune runs on GPU → adapter registered in `tier-map.json` → PAL routing sends future sessions to the improved model → better sessions → better traces.
+The training pipeline is the fine-tuning layer inside `clawql-inference`. It closes the Intelligence Flywheel: agent sessions produce RTP/OBT traces → traces are filtered and formatted by training method → fine-tune runs on GPU → adapter registered in `tier-map.json` → model escalation sends future sessions to the improved model → better sessions → better traces.
 
 The pipeline supports every viable fine-tuning method: SFT, QLoRA, LoRA, DPO and its variants (IPO, KTO, ORPO), GRPO, RLHF, Constitutional AI, and SPIN. Each method has specific data requirements. The pipeline handles format conversion, quality filtering, training job scheduling via Argo Workflows, and adapter promotion after evaluation.
 
@@ -150,7 +150,7 @@ def harvey_lab_reward(rollout: str, task: HarveyTask) -> float:
 ```
 packages/clawql-inference/
   src/
-    gateway/            — existing (PAL routing, virtual keys, tracing)
+    gateway/            — existing (model escalation, virtual keys, tracing)
     training/           — new (scaffold landed with this spec)
       pipeline.ts       — orchestrates training runs end to end
       methods/
@@ -365,7 +365,7 @@ On promotion, domain adapters are written under the Frugal tier in an extended `
 }
 ```
 
-PAL routing checks domain adapters before every inference call. Adapter path is an R2 URL — vLLM loads it at inference time. Today's shipped `tier-map.json` remains string aliases (`frugal: "model-id"`); the domain-adapter object form is the **target** shape for this pipeline's promote step ([`registry.ts`](../../packages/clawql-inference/src/training/registry.ts)).
+model escalation checks domain adapters before every inference call. Adapter path is an R2 URL — vLLM loads it at inference time. Today's shipped `tier-map.json` remains string aliases (`frugal: "model-id"`); the domain-adapter object form is the **target** shape for this pipeline's promote step ([`registry.ts`](../../packages/clawql-inference/src/training/registry.ts)).
 
 ---
 
@@ -405,7 +405,7 @@ Round 2 DPO (ClawQL vs baseline pairs) → legal-v2
 Round 3 GRPO (Harvey rubric reward, 8 rollouts) → legal-v3
          │
          ▼
-Next Harvey LAB sweep uses legal-v3 via PAL
+Next Harvey LAB sweep uses legal-v3 via model escalation
          │
          ├─ Better traces → larger dataset
          ├─ SPIN: v3 vs v2 = automatic DPO pairs
@@ -521,7 +521,7 @@ CLAWQL_ARGO_SERVICE_ACCOUNT=clawql-training-sa
 | This specification                                       | Draft v0.1                                            |
 | Types + TraceFormatter + rewards + Argo workflow builder | Scaffold in `packages/clawql-inference/src/training/` |
 | Unsloth/TRL trainers, MCP tools, live Argo submit        | Not yet                                               |
-| Domain-adapter `tier-map.json` object form + PAL load    | Target; today's map is string aliases                 |
+| Domain-adapter `tier-map.json` object form + model-escalation load    | Target; today's map is string aliases                 |
 | Harvey LAB sweep → training data                         | Blocked on LAB resume (Phases A–E)                    |
 
 ---

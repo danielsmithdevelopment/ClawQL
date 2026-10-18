@@ -1,7 +1,7 @@
 # Upstream Q00/ouroboros sync roadmap
 
 **Status:** Planning · July 2026  
-**Upstream baseline:** [Q00/ouroboros v0.50.3](https://github.com/Q00/ouroboros/releases/tag/v0.50.3) (PAL / model-tier routing, frugality proof machinery)  
+**Upstream baseline:** [Q00/ouroboros v0.50.3](https://github.com/Q00/ouroboros/releases/tag/v0.50.3) (model-tier routing, frugality proof machinery)  
 **ClawQL target:** `clawql-ouroboros` evolutionary loop + model tier escalation + agent coordination (DAOS §6.7)
 
 **Related:** [clawql-ouroboros guide](./clawql-ouroboros.md) · [DAOS unified spec v2.7](./daos-unified-architecture-specification-v2.7.md) · [Token efficiency Layer 8](../architecture/clawql-token-efficiency.md) · [GitHub epic #556](https://github.com/danielsmithdevelopment/ClawQL/issues/556)
@@ -10,7 +10,7 @@
 
 ## Context
 
-`clawql-ouroboros` is a TypeScript port of the evolutionary loop from [Q00/ouroboros](https://github.com/Q00/ouroboros), maintained in friendly coordination with upstream (JQ Lee). Upstream has diverged since the initial port — notably **PAL Router** (frugal → standard → frontier with per-retry escalation), **3-component drift measurement**, and **frugality proof events**.
+`clawql-ouroboros` is a TypeScript port of the evolutionary loop from [Q00/ouroboros](https://github.com/Q00/ouroboros), maintained in friendly coordination with upstream (JQ Lee). Upstream has diverged since the initial port — notably **model-escalation router** (frugal → standard → frontier with per-retry escalation), **3-component drift measurement**, and **frugality proof events**.
 
 ClawQL adds governance primitives upstream does not ship: WORM audit, PEP/ATR, Manifest policy blocks, and (roadmap) **NSV/SGDOP** swarm coordination. The differentiated stack is **model tier escalation (vertical cost routing) + agent coordination (horizontal ensemble) + SGDOP (blind-spot direction) + WORM (auditable tier decisions)**.
 
@@ -26,7 +26,7 @@ This document separates **what to port** from **what to leave alone**, defines p
 | Ontology similarity convergence                                               | Shipped (`convergence.ts`)                                                                                                                             | Shipped (different math)            |
 | Stagnation / oscillation detection                                            | Shipped (fingerprint window)                                                                                                                           | Shipped (4 named patterns)          |
 | 3-component drift (Goal 50% / Constraint 30% / Ontology 20%, threshold ≤ 0.3) | **Shipped** — `ouroboros_measure_drift` + per-generation `drift_measured` events ([#557](https://github.com/danielsmithdevelopment/ClawQL/issues/557)) | Shipped (`ouroboros_measure_drift`) |
-| PAL / model-tier routing                                                      | **Foundation** — `clawql-inference` model tier escalation ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560))                        | **Shipped** (headline v0.50.3)      |
+| model-tier routing                                                      | **Foundation** — `clawql-inference` model tier escalation ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560))                        | **Shipped** (headline v0.50.3)      |
 | Frugality proof / per-AC token attribution                                    | **Not shipped**                                                                                                                                        | Shipped                             |
 | Agent coordination / multi-model consensus                                    | **Not shipped** — DAOS §6.7 roadmap                                                                                                                    | Shipped (Stage 3 + tiers)           |
 | NSV / SGDOP                                                                   | **Not shipped** — DAOS P3 roadmap                                                                                                                      | Partial (consensus triggers)        |

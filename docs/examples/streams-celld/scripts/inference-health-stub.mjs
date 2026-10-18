@@ -2,7 +2,7 @@
 /**
  * Inference stub for Lab 5b: /healthz + multi-turn chat completions.
  * Proves AgentSession fetch()es ≥2 model turns with a bind-on-create
- * virtual key Bearer. Real PAL / DeductionService stay on clawql-inference.
+ * virtual key Bearer. Real DeductionService / model escalation stay on clawql-inference.
  */
 import { createServer } from "node:http";
 

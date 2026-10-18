@@ -188,7 +188,7 @@ export function IdpGtmPlaybook() {
           <h2 id="gtm-motion">Part 3 — The Standalone IDP GTM Motion</h2>
           <p>
             The IDP buyer is often a VP of Ops, Legal Ops Manager, transaction coordinator, controller, or compliance
-            officer — not a developer optimizing PAL routing. Lead with documents, cost, auditability, and time-to-value
+            officer — not a developer optimizing model escalation. Lead with documents, cost, auditability, and time-to-value
             in their language.
           </p>
 
@@ -377,7 +377,7 @@ export function IdpGtmPlaybook() {
           <h2 id="landing-brief">Part 4 — clawql.com/idp Landing Page Brief</h2>
           <p>
             Convert an IDP buyer who has never heard of ClawQL. Answer &quot;Is this the document platform I&apos;ve
-            been looking for?&quot; in ~10 seconds; trial/demo in ~60. Do not lead with PAL, Flywheel, WORM, or
+            been looking for?&quot; in ~10 seconds; trial/demo in ~60. Do not lead with model escalation, Flywheel, WORM, or
             developer framing.
           </p>
 

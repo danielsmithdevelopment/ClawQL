@@ -55,7 +55,7 @@ export const executorComparisonRows: ExecutorComparisonRow[] = [
     dimension: 'Token efficiency architecture',
     executor: 'One layer: search-and-execute pattern only',
     clawql:
-      'Twelve compounding layers — Code Mode through response trimming, caching, PAL routing, gateway refinements, and the fine-tuning flywheel on top of search/execute',
+      'Twelve compounding layers — Code Mode through response trimming, caching, model escalation, gateway refinements, and the fine-tuning flywheel on top of search/execute',
   },
   {
     dimension: 'Agent memory',

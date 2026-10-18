@@ -278,7 +278,7 @@ export class AgentSessionDO {
        * Lab 5b multi-turn skeleton (§3.5): healthz + turn1 co-scheduled with
        * tools; turn2 immediately after (still before any further storage.put).
        * Virtual key is bound at session create (`vk_lab_*`) and sent as Bearer.
-       * Full PAL DeductionService / spend ceilings remain on clawql-inference.
+       * Full DeductionService / model-escalation spend ceilings remain on clawql-inference.
        */
       async function runInferenceProbe() {
         if (!inferenceUrl) {

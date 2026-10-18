@@ -76,7 +76,7 @@ What we say Ouroboros does, and how far that claim is backed today.
 | 8   | Hard `maxGenerations` spend bound                                                           | loop override test + CI env clamp                                                                                         | capped at ≤4 in thrash A/B                                                                                            | **Verified**                                                                           |
 | 9   | Durable Postgres lineage / event store                                                      | optional integration tests (often skipped in CI)                                                                          | not in OpenBench                                                                                                      | Library partial · ops gap                                                              |
 | 10  | Wonder/Reflect with real LLMs (not stubs)                                                   | stubs in package tests                                                                                                    | thrash task uses host default engines via MCP                                                                         | **Thin**                                                                               |
-| 11  | Model-tier / PAL-style escalation inside the loop                                           | foundation in clawql-inference ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560))                      | not an Ouroboros A/B                                                                                                  | Roadmap / foundation                                                                   |
+| 11  | Model-tier / model-escalation escalation inside the loop                                           | foundation in clawql-inference ([#560](https://github.com/danielsmithdevelopment/ClawQL/issues/560))                      | not an Ouroboros A/B                                                                                                  | Roadmap / foundation                                                                   |
 | 12  | Marketing “ontology graph continuously measures drift” style copy                           | 3-component drift shipped ([#557](https://github.com/danielsmithdevelopment/ClawQL/issues/557)); not a full graph product | n/a                                                                                                                   | Keep claims aligned with [upstream roadmap](../ouroboros/upstream-q00-sync-roadmap.md) |
 
 **Separate ClawQL (non-Ouroboros) OpenBench claims** — memory / multi-provider / token-budget A/Bs live under [#758](https://github.com/danielsmithdevelopment/ClawQL/pull/758). Do not mix those wins into the Ouroboros thrash claim.
@@ -108,7 +108,7 @@ Prioritized for **honest product claims**, not feature tourism.
 
 ### Explicit non-goals for this evidence track
 
-- Full Q00 PAL / agent-coordination / NSV-SGDOP parity — roadmap, not current claim support.
+- Full Q00 model-tier routing / agent-coordination / NSV-SGDOP parity — roadmap, not current claim support.
 - Inflating the marketing post beyond shipped drift + convergence APIs.
 
 ---

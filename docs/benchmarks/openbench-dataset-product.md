@@ -56,7 +56,7 @@ You **run** the benchmarks. Customer gets outcomes, not a DIY pipeline.
 
 | Use                    | Do not use                            |
 | ---------------------- | ------------------------------------- |
-| **model escalation**   | PAL (Ouroboros upstream term)         |
+| **model escalation**   | model escalation (Ouroboros upstream term)         |
 | **agent coordination** | MoA / Mixture of Agents (Hermes term) |
 | **PorTAL**             | only for Ramp portable LoRA adapters  |
 

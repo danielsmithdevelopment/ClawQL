@@ -24,7 +24,7 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 | Helm celld StatefulSet / probes                         | Chart only           | `make helm-celld-template-tests`                                           |
 | Fleet LTX / multi-node diagnose                         | Manual               | `docs/examples/idp/streams-celld/README.md`                                |
 | `clawql-streams` package / `stream_*` tools             | **Not shipped**      | Spec-only — see Streams §15                                                |
-| Full PAL DeductionService / spend ceilings              | **Not shipped**      | Lab binds `vk_lab_*` at session create + Bearer; real PAL on clawql-inference |
+| Full DeductionService / model-escalation spend ceilings             | **Not shipped**      | Lab binds `vk_lab_*` at session create + Bearer; real model escalation on clawql-inference |
 | Operator mesh denial → host WORM                        | **Package unit**     | `clawql-k8s-operator` `worm-append` + `appendMeshDenialToHostWorm` (no live Istio) |
 | cellrt / TEE / QR stream source                         | **Not shipped**      | Spec drafts under `docs/streams/`                                          |
 
