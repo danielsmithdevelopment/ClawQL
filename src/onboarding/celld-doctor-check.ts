@@ -1,9 +1,9 @@
 /**
  * celld pin readiness for `clawql doctor` (Streams / durable programs claim surface).
  *
- * Honesty: Core search/execute does not need celld. This check surfaces whether
- * the install pin + binary match {@link CELLD_PINNED_VERSION} so operators can
- * claim Streams / isolate eligibility without guessing env.
+ * Honesty: default Core is Node; opt-in Core-in-celld via CoreToolsDO /
+ * `CLAWQL_CORE_CELLD_URL`. This check surfaces pin readiness
+ * ({@link CELLD_PINNED_VERSION}) and whether the Core proxy env is set.
  */
 
 import { Effect } from "effect";
