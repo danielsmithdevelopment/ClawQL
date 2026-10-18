@@ -7,7 +7,7 @@ Minimal **Workers / Durable Objects** bundle for [ClawQL Streams](https://docs.c
 | `GatewayDO`      | Webhook ingress (`POST /webhook/{subscriptionId}`), spawn sessions                      |
 | `SubscriptionDO` | Significance filter (`always`/`never`/`threshold`/`pattern`/`rate`/`composite`; `sub:{id}`) |
 | `AgentSessionDO` | Session + TTL `setAlarm` + ring/LTX + optional MCP / adapter / one-turn inference / host WORM |
-| `CoreToolsDO`    | **In-isolate** slim Core `search`/`execute` (`POST /mcp`, `CLAWQL_CORE_IN_CELLD=1`)     |
+| `CoreToolsDO`    | **Default** in-isolate slim Core `search`/`execute` (`POST /mcp`; escape → Bun host MCP) |
 
 **Learn walkthrough:** [Streams getting started — Lab 5b](https://docs.clawql.com/learn/streams-getting-started#lab-5b--clawql-streams-wrangler-skeleton--bundle-check-30-min)  
 **Evidence matrix:** [`docs/streams/streams-celld-evidence.md`](../../streams/streams-celld-evidence.md)
@@ -21,7 +21,7 @@ The right demo is the **production shape**: slim cell + real sidecars.
 | Mode                 | What runs                                                                                   | Command                                                |
 | -------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | Contract smoke       | celld + **mock** MCP + **mock** adapter                                                     | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke`         |
-| **Core in celld**    | celld `CoreToolsDO` handles `search`/`execute` (no Node MCP) + mock pets upstream           | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:core-in-celld` |
+| **Core in celld**    | celld `CoreToolsDO` handles `search`/`execute` (no host MCP) + mock pets upstream           | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:core-in-celld` |
 | **Full-stack smoke** | celld + **real** `clawql-mcp-http` + **real** `mcp-api-adapter` + inference one-turn stub | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:full`    |
 | Containers           | MCP + adapter images (celld on host)                                                        | `docker compose -f docker-compose.full.yml up --build` |
 
@@ -34,8 +34,8 @@ The right demo is the **production shape**: slim cell + real sidecars.
 | `cache` (session scratch)          | **In-process** — `clawql-core/streams-slim`                                            |
 | Hash-chain verify                  | **In-process** — via clawql-merkle (needs `nodejs_compat`)                             |
 | Inference (one-turn)               | **Out-of-process** — `fetch(INFERENCE_URL)` `/healthz` + `POST /v1/messages`           |
-| `search` / `execute` (slim)        | **In-process** — `CoreToolsDO` when `CLAWQL_CORE_IN_CELLD=1` (or `POST /mcp` on Worker) |
-| `search` / `execute` / `memory_*`  | **Out-of-process** — `fetch(CLAWQL_MCP_URL)` Streamable HTTP (sidecar / full Core)     |
+| `search` / `execute` (slim)        | **In-process default** — `CoreToolsDO` (`CLAWQL_CORE_IN_CELLD=0` → Bun host MCP)       |
+| `memory_*` (and host escape Core)  | **Out-of-process** — `fetch(CLAWQL_MCP_URL)` Streamable HTTP (Bun host / full Core)    |
 | `mcp-api-adapter`                  | **Out-of-process** — `fetch(CLAWQL_MCP_ADAPTER_URL)` REST `POST /{tool}`               |
 
 Do **not** embed `clawql-api`, `clawql-memory`, or `mcp-api-adapter` (Express/gRPC/`node:fs`).
@@ -45,7 +45,8 @@ Do **not** embed `clawql-api`, `clawql-memory`, or `mcp-api-adapter` (Express/gR
 | `CLAWQL_MCP_URL`                                              | Streamable HTTP MCP endpoint (usually `…/mcp`)         |
 | `CLAWQL_MCP_ADAPTER_URL`                                      | Adapter **origin** only (e.g. `http://127.0.0.1:8090`) |
 | `CLAWQL_MCP_BEARER_TOKEN` / `CLAWQL_MCP_ADAPTER_BEARER_TOKEN` | Optional Bearer                                        |
-| `CLAWQL_CORE_IN_CELLD`                                        | `1` → AgentSession search/execute via `CoreToolsDO`    |
+| `CLAWQL_CORE_IN_CELLD`                                        | Default `1`; set `0` / `CLAWQL_DECLINE_CELLD=1` to skip celld → Bun ladder |
+| `CLAWQL_DECLINE_BUN`                                          | Skip Bun → Node (legacy) with improve-performance message         |
 | `CLAWQL_CORE_UPSTREAM`                                        | REST origin for in-cell `execute` (e.g. mock `/pets`)  |
 | `CLAWQL_AUDIT_WORM_URL`                                       | Host `clawql-audit` HTTP origin (`POST /entries`)      |
 | `CLAWQL_AUDIT_API_KEY`                                        | ApiKey for host WORM HTTP (optional if open)           |

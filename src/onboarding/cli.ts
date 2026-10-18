@@ -607,8 +607,10 @@ init:
   --write-mcp     Write MCP config for cursor or claude-desktop (with .bak backup)
 
 doctor:
-  Node, ClawQL home, memory vault, provider secrets, optional Vault probe, HTTP /healthz
+  Runtime ladder (celld → Bun → Node), ClawQL home, memory vault, secrets, HTTP /healthz
+  TTY prompts to install celld/Bun when missing; refuse continues down the ladder
   --smoke         Release manifest verify (when present) + MCP tools/list + search
+                  (non-interactive ladder messaging only)
 
 Environment (Layer 0):
   CLAWQL_RELEASE_MANIFEST       Path to manifest.json — verify at MCP startup (optional)

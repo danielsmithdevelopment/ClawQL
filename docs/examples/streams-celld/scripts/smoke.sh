@@ -4,10 +4,12 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PORT="${CELLD_DEV_PORT:-9880}"
+# Default port aligns with DEFAULT_CORE_CELLD_MCP_URL / clawql streams celld dev.
+PORT="${CELLD_DEV_PORT:-9888}"
 MCP_PORT="${MOCK_MCP_PORT:-9891}"
 ADAPTER_PORT="${MOCK_ADAPTER_PORT:-9892}"
 INFER_PORT="${MOCK_INFERENCE_PORT:-9893}"
+PETS_PORT="${MOCK_PETS_PORT:-9894}"
 BASE="http://127.0.0.1:${PORT}"
 SMOKE_CFG="$ROOT/wrangler.smoke.jsonc"
 
@@ -27,23 +29,28 @@ node "$ROOT/scripts/adapter-fetch.test.mjs"
 node "$ROOT/scripts/significance-filter.test.mjs"
 node "$ROOT/scripts/core-catalog.test.mjs"
 
-# Mock MCP + mcp-api-adapter REST + inference one-turn stub.
+# Mock MCP (memory_*) + adapter + inference stub + pets upstream for CoreToolsDO execute.
 node "$ROOT/scripts/mock-mcp-server.mjs" "$MCP_PORT" &
 MCP_PID=$!
 node "$ROOT/scripts/mock-adapter-server.mjs" "$ADAPTER_PORT" &
 ADAPTER_PID=$!
 node "$ROOT/scripts/inference-health-stub.mjs" "$INFER_PORT" >/dev/null 2>&1 &
 INFER_PID=$!
+node "$ROOT/scripts/mock-pets-upstream.mjs" "$PETS_PORT" &
+PETS_PID=$!
 
 # Point Worker vars at mocks (celld accepts a Wrangler config path).
-python3 - "$ROOT/wrangler.jsonc" "$SMOKE_CFG" "$MCP_PORT" "$ADAPTER_PORT" "$INFER_PORT" <<'PY'
+# Core-in-celld is the default (wrangler CLAWQL_CORE_IN_CELLD=1).
+python3 - "$ROOT/wrangler.jsonc" "$SMOKE_CFG" "$MCP_PORT" "$ADAPTER_PORT" "$INFER_PORT" "$PETS_PORT" <<'PY'
 import json, re, sys
-src, dst, mcp_port, adapter_port, infer_port = sys.argv[1:6]
+src, dst, mcp_port, adapter_port, infer_port, pets_port = sys.argv[1:7]
 text = open(src, encoding="utf-8").read()
 text = re.sub(r"/\*[\s\S]*?\*/", "", text)
 text = re.sub(r"^\s*//.*$", "", text, flags=re.M)
 cfg = json.loads(text)
 cfg.setdefault("vars", {})
+cfg["vars"]["CLAWQL_CORE_IN_CELLD"] = "1"
+cfg["vars"]["CLAWQL_CORE_UPSTREAM"] = f"http://127.0.0.1:{pets_port}"
 cfg["vars"]["CLAWQL_MCP_URL"] = f"http://127.0.0.1:{mcp_port}/mcp"
 cfg["vars"]["CLAWQL_MCP_ADAPTER_URL"] = f"http://127.0.0.1:{adapter_port}"
 cfg["vars"]["INFERENCE_URL"] = f"http://127.0.0.1:{infer_port}"
@@ -58,10 +65,12 @@ cleanup() {
   kill "$MCP_PID" 2>/dev/null || true
   kill "$ADAPTER_PID" 2>/dev/null || true
   kill "$INFER_PID" 2>/dev/null || true
+  kill "$PETS_PID" 2>/dev/null || true
   wait "$PID" 2>/dev/null || true
   wait "$MCP_PID" 2>/dev/null || true
   wait "$ADAPTER_PID" 2>/dev/null || true
   wait "$INFER_PID" 2>/dev/null || true
+  wait "$PETS_PID" 2>/dev/null || true
   rm -f "$SMOKE_CFG"
 }
 trap cleanup EXIT
@@ -168,12 +177,13 @@ echo "$RESP" | grep -q '"scheduled":true' || fail "expected session TTL alarm sc
 echo "$RESP" | grep -q 'clawql-core/streams-slim' || fail "expected clawql-core/streams-slim"
 echo "$RESP" | grep -q '"hash":' || fail "expected hash-chained audit append"
 echo "$RESP" | grep -q 'streams:session:' || fail "expected cache session key"
-echo "$RESP" | grep -q 'streamable-http' || fail "expected MCP streamable-http transport"
-echo "$RESP" | grep -q '"source":"mock-mcp"' || fail "expected mock-mcp search/execute payload"
-echo "$RESP" | grep -q '"mcpUrlConfigured":true' || fail "expected mcpUrlConfigured true"
+echo "$RESP" | grep -q 'celld-isolate' || fail "expected CoreToolsDO celld-isolate search/execute"
+echo "$RESP" | grep -q '"coreInCelld":true' || fail "expected coreInCelld true (default)"
+echo "$RESP" | grep -q '"mcpUrlConfigured":true' || fail "expected mcpUrlConfigured true (memory_* sidecar)"
 echo "$RESP" | grep -q 'memory_ingest' || fail "expected memory_ingest tool result"
 echo "$RESP" | grep -q 'memory_recall' || fail "expected memory_recall tool result"
 echo "$RESP" | grep -q 'memory_\*' || fail "expected memory_* in core surface list"
+echo "$RESP" | grep -q 'streamable-http' || fail "expected streamable-http for memory_* MCP"
 echo "$RESP" | grep -q 'mcp-api-adapter-rest' || fail "expected adapter REST transport"
 echo "$RESP" | grep -q '"source":"mock-adapter"' || fail "expected mock-adapter search payload"
 echo "$RESP" | grep -q '"adapterUrlConfigured":true' || fail "expected adapterUrlConfigured true"

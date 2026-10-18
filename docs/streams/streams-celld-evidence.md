@@ -16,7 +16,7 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 | Significance filter (`always`/`never`/`threshold`/`pattern`/`rate`/`composite`) | **Yes** | Unit tests + smoke `filtered` / rate 3rd-event spawn / composite AND |
 | Session TTL `setAlarm` / `alarm()`                      | **Yes**              | Smoke `exitReason:timeout` after short TTL                                 |
 | Audit LTX flush (`audit:ring`, `audit:seq:*`)           | **Yes** (DO storage) | Smoke keys — **session bookkeeping only**, not compliance WORM (see below) |
-| **CoreToolsDO** slim search/execute                     | **Yes** (opt-in)     | `smoke:core-in-celld` + `core-catalog.test.mjs` (`transport: celld-isolate`) |
+| **CoreToolsDO** slim search/execute                     | **Yes** (default)    | Mock + full-stack smoke `celld-isolate`; escape `CLAWQL_CORE_IN_CELLD=0` → host MCP (Bun) |
 | Host `clawql-audit` via `CLAWQL_AUDIT_WORM_URL`         | **No** — `fetch`     | `worm-fetch.test.mjs` + full-stack `SESSION_START` + `/chain/verify`       |
 | Streamable HTTP MCP (`CLAWQL_MCP_URL`)                  | **No** — `fetch`     | `mcp-fetch.test.mjs` + mock smoke + **full-stack** real MCP                |
 | mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)         | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real                |
@@ -58,7 +58,7 @@ Expected: all exit **0**; bundle size printed ≈ **0.4 MiB** (must be &lt; **64
 CELLD_VERSION=v0.4.0 curl -fsSL https://celld.dev/install.sh | sh
 npm run build -w clawql-merkle -w clawql-core
 STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke.sh
-# Core-in-celld (no Node MCP for search/execute):
+# Core-in-celld (no host MCP for search/execute):
 STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke-core-in-celld.sh
 ```
 
