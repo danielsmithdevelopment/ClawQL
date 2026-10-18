@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-18T01:19:31.507Z",
+  "measuredAt": "2026-10-18T01:37:38.700Z",
   "topology": {
     "id": "B_scaleout_lb",
     "label": "4× HTTP replicas behind sticky Node LB (cookie clawql_bench_sticky)",
@@ -12,7 +12,7 @@
     "platform": "linux",
     "arch": "x64",
     "node": "v22.14.0",
-    "pid": 1294734
+    "pid": 1302289
   },
   "replicas": 4,
   "arms": {
@@ -1049,9 +1049,293 @@
         "incomplete_no_break": false,
         "honesty": "Broke within topology B — comparable only to other B (same LB + replica count) ceilings."
       }
+    },
+    "executor": {
+      "id": "executor",
+      "ok": true,
+      "mcp_url": "http://127.0.0.1:35839/mcp",
+      "tool_name": "execute",
+      "replicas": [
+        {
+          "port": 41261,
+          "pid": 1302301
+        },
+        {
+          "port": 35171,
+          "pid": 1302338
+        },
+        {
+          "port": 37057,
+          "pid": 1302375
+        },
+        {
+          "port": 38539,
+          "pid": 1302430
+        }
+      ],
+      "lb": {
+        "baseUrl": "http://127.0.0.1:35839",
+        "sticky": {
+          "cookie": "clawql_bench_sticky",
+          "header": "x-bench-sticky"
+        }
+      },
+      "lb_stats": {
+        "requests": 15019,
+        "by_backend": {
+          "0": 2818,
+          "1": 3480,
+          "2": 4459,
+          "3": 4262
+        },
+        "sticky_hits": 15018,
+        "sticky_misses": 1
+      },
+      "version": "executor v2.0.0-beta.15",
+      "model": "streamable_http_4x_behind_sticky_lb_static_upstream0",
+      "chaos": {
+        "topology": {
+          "id": "B_scaleout_lb",
+          "label": "4× HTTP replicas behind sticky Node LB (cookie clawql_bench_sticky)",
+          "replicas": 4,
+          "lb": "sticky-http-lb (scripts/benchmarks/lib/sticky-http-lb.mjs)",
+          "sticky": "cookie clawql_bench_sticky + optional x-bench-sticky",
+          "note": "Equal-arm scale-out. Do not mix with Topology A single-instance or ClawQL NATS fabric sticky."
+        },
+        "slo": {
+          "break_p99_ms": 100,
+          "break_error_rate": 0.02,
+          "step_ms": 3000
+        },
+        "until_break": true,
+        "chaos_max": 32,
+        "chaos_hard_max": 512,
+        "steps": [
+          {
+            "concurrency": 1,
+            "ok": 600,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 200,
+            "latency": {
+              "n": 600,
+              "p50_ms": 4.331,
+              "p95_ms": 6.884,
+              "p99_ms": 13.033,
+              "p999_ms": 32.097,
+              "mean_ms": 4.813,
+              "min_ms": 3.631,
+              "max_ms": 32.097
+            },
+            "broken": false,
+            "break_reason": null,
+            "phase": "power_of_two"
+          },
+          {
+            "concurrency": 2,
+            "ok": 1023,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 341,
+            "latency": {
+              "n": 1023,
+              "p50_ms": 4.906,
+              "p95_ms": 10.463,
+              "p99_ms": 16.25,
+              "p999_ms": 33.522,
+              "mean_ms": 5.717,
+              "min_ms": 3.204,
+              "max_ms": 33.729
+            },
+            "broken": false,
+            "break_reason": null,
+            "phase": "power_of_two"
+          },
+          {
+            "concurrency": 4,
+            "ok": 1063,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 354.3,
+            "latency": {
+              "n": 1063,
+              "p50_ms": 9.423,
+              "p95_ms": 20.718,
+              "p99_ms": 38.933,
+              "p999_ms": 43.467,
+              "mean_ms": 10.976,
+              "min_ms": 3.732,
+              "max_ms": 44.901
+            },
+            "broken": false,
+            "break_reason": null,
+            "phase": "power_of_two"
+          },
+          {
+            "concurrency": 8,
+            "ok": 1224,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 408,
+            "latency": {
+              "n": 1224,
+              "p50_ms": 17.061,
+              "p95_ms": 37.514,
+              "p99_ms": 56.726,
+              "p999_ms": 83.809,
+              "mean_ms": 18.881,
+              "min_ms": 3.208,
+              "max_ms": 83.922
+            },
+            "broken": false,
+            "break_reason": null,
+            "phase": "power_of_two"
+          },
+          {
+            "concurrency": 16,
+            "ok": 1395,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 465,
+            "latency": {
+              "n": 1395,
+              "p50_ms": 29.691,
+              "p95_ms": 60.037,
+              "p99_ms": 83.743,
+              "p999_ms": 117.067,
+              "mean_ms": 31.98,
+              "min_ms": 4.422,
+              "max_ms": 117.153
+            },
+            "broken": false,
+            "break_reason": null,
+            "phase": "power_of_two"
+          },
+          {
+            "concurrency": 32,
+            "ok": 1425,
+            "err": 0,
+            "error_rate": 0,
+            "rps": 475,
+            "latency": {
+              "n": 1425,
+              "p50_ms": 55.884,
+              "p95_ms": 106.644,
+              "p99_ms": 179.055,
+              "p999_ms": 212.806,
+              "mean_ms": 59.965,
+              "min_ms": 6.781,
+              "max_ms": 214.619
+            },
+            "broken": true,
+            "break_reason": "p99 179.055ms",
+            "phase": "power_of_two"
+          }
+        ],
+        "refine": {
+          "method": "binary_search",
+          "tolerance": 1,
+          "last_ok_clients": 23,
+          "first_break_clients": 24,
+          "break_reason_at_first_break": "p99 110.427ms",
+          "steps": [
+            {
+              "concurrency": 24,
+              "ok": 1583,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 527.7,
+              "latency": {
+                "n": 1583,
+                "p50_ms": 37.276,
+                "p95_ms": 79.776,
+                "p99_ms": 110.427,
+                "p999_ms": 150.515,
+                "mean_ms": 41.684,
+                "min_ms": 5.311,
+                "max_ms": 150.567
+              },
+              "broken": true,
+              "break_reason": "p99 110.427ms",
+              "phase": "binary_refine"
+            },
+            {
+              "concurrency": 20,
+              "ok": 1726,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 575.3,
+              "latency": {
+                "n": 1726,
+                "p50_ms": 30.572,
+                "p95_ms": 61.783,
+                "p99_ms": 84.059,
+                "p999_ms": 118.361,
+                "mean_ms": 33.237,
+                "min_ms": 4.412,
+                "max_ms": 118.598
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "binary_refine"
+            },
+            {
+              "concurrency": 22,
+              "ok": 1700,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 566.7,
+              "latency": {
+                "n": 1700,
+                "p50_ms": 31.944,
+                "p95_ms": 73.978,
+                "p99_ms": 97.543,
+                "p999_ms": 178.6,
+                "mean_ms": 35.928,
+                "min_ms": 4.348,
+                "max_ms": 178.632
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "binary_refine"
+            },
+            {
+              "concurrency": 23,
+              "ok": 1907,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 635.7,
+              "latency": {
+                "n": 1907,
+                "p50_ms": 32.217,
+                "p95_ms": 65.356,
+                "p99_ms": 87.363,
+                "p999_ms": 109.777,
+                "mean_ms": 34.576,
+                "min_ms": 3.739,
+                "max_ms": 110.158
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "binary_refine"
+            }
+          ]
+        },
+        "last_ok_clients": 23,
+        "first_break_clients": 24,
+        "break_reason": "p99 110.427ms",
+        "incomplete_no_break": false,
+        "honesty": "Broke within topology B — comparable only to other B (same LB + replica count) ceilings."
+      }
     }
   },
   "smoke_only": false,
+  "merge": {
+    "prior_measured_at": "2026-10-18T01:19:31.507Z",
+    "merged_arms": [
+      "executor"
+    ]
+  },
   "honesty": [
     "Topology B = K HTTP replicas behind sticky Node LB for every arm on this board.",
     "Do not compare to Topology A single-instance ceilings or ClawQL NATS fabric sticky (135).",

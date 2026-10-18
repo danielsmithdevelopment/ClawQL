@@ -132,11 +132,17 @@ export async function startStickyHttpLb({
 /**
  * Fetch wrapper that persists the LB sticky cookie for one MCP client.
  * @param {string} [stickyId] — optional X-Bench-Sticky value (stable per client)
+ * @param {Record<string, string>} [extraHeaders] — e.g. Authorization for Executor
  */
-export function createStickyFetch(stickyId) {
+export function createStickyFetch(stickyId, extraHeaders = null) {
   let cookie = "";
   return async function stickyFetch(input, init = {}) {
     const headers = new Headers(init.headers || {});
+    if (extraHeaders) {
+      for (const [k, v] of Object.entries(extraHeaders)) {
+        if (v != null && v !== "" && !headers.has(k)) headers.set(k, v);
+      }
+    }
     if (cookie) headers.set("cookie", cookie);
     if (stickyId) headers.set("x-bench-sticky", stickyId);
     const res = await fetch(input, { ...init, headers });

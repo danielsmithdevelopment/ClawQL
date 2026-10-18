@@ -10,11 +10,15 @@
  *     node scripts/benchmarks/gateway-multi-topology-b.mjs
  *
  * Env:
- *   MULTI_B_ARMS=clawql,mcpjungle,agentgateway
+ *   MULTI_B_ARMS=clawql,mcpjungle,agentgateway[,executor]
  *   MULTI_B_REPLICAS=4
  *   MULTI_CHAOS_* (same semantics as gateway-multi-comparison)
  *   MULTI_B_OUT=gateway-multi-cmp-chaos-topology-b.json
+ *   MULTI_B_MERGE=1 — merge arms into existing OUT (keeps prior measured arms)
  *   MCPJUNGLE_BIN  AGENTGATEWAY_BIN
+ *   EXECUTOR_BIN (default /tmp/executor-v2/node_modules/.bin/executor)
+ *   EXECUTOR_API_KEY + EXECUTOR_ENCRYPTION_KEY — shared across replicas (headless);
+ *     if unset, harness generates ephemeral keys for the run (not written to artifact)
  *   MULTI_B_SMOKE=1 — one connect+call per arm then exit (no chaos)
  */
 import { existsSync, readFileSync, mkdirSync, writeFileSync, openSync, closeSync } from "node:fs";
@@ -24,6 +28,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { performance } from "node:perf_hooks";
 import { spawn, spawnSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { clawqlEqualArmEnv } from "./lib/clawql-bench-env.mjs";
@@ -46,7 +51,16 @@ const ARMS = (process.env.MULTI_B_ARMS ?? "clawql,mcpjungle,agentgateway")
   .filter(Boolean);
 const SMOKE =
   process.env.MULTI_B_SMOKE === "1" || process.env.MULTI_B_SMOKE === "true";
+const MERGE =
+  process.env.MULTI_B_MERGE === "1" || process.env.MULTI_B_MERGE === "true";
 const EQUAL_UPSTREAM = process.env.MULTI_EQUAL_UPSTREAM !== "0";
+
+const EXECUTOR_STATIC_CODE = `return ${JSON.stringify({
+  pets: [
+    { id: 1, name: "Ada", status: "available" },
+    { id: 2, name: "Grace", status: "available" },
+  ],
+})};`;
 
 const CHAOS_MAX = Math.max(1, Number(process.env.MULTI_CHAOS_MAX ?? 32) || 32);
 const CHAOS_STEP_MS = Math.max(1000, Number(process.env.MULTI_CHAOS_STEP_MS ?? 3000) || 3000);
@@ -239,9 +253,9 @@ async function startMockHttp() {
   };
 }
 
-async function connectHttpMcpSticky(url, name = "multi-b") {
+async function connectHttpMcpSticky(url, name = "multi-b", authHeaders = null) {
   const stickyId = `${name}-${Math.random().toString(36).slice(2, 10)}`;
-  const fetchImpl = createStickyFetch(stickyId);
+  const fetchImpl = createStickyFetch(stickyId, authHeaders);
   const transport = new StreamableHTTPClientTransport(new URL(url), {
     fetch: fetchImpl,
   });
@@ -708,10 +722,157 @@ async function buildAgentgatewayArm(mock) {
   };
 }
 
+async function startExecutorReplica(work, port, apiKey, encryptionKey) {
+  const bin = resolveBin("EXECUTOR_BIN", [
+    "/tmp/executor-v2/node_modules/.bin/executor",
+    join(ROOT, "tmp/executor-v2/node_modules/.bin/executor"),
+  ]);
+  if (!bin) throw new Error("EXECUTOR_BIN not found");
+  await mkdir(work, { recursive: true });
+  const logPath = join(work, "serve.log");
+  const logFd = openSync(logPath, "w");
+  const child = spawn(bin, ["serve", "--log-level", "warn"], {
+    cwd: work,
+    stdio: ["ignore", logFd, logFd],
+    env: {
+      ...process.env,
+      EXECUTOR_DATA_DIR: work,
+      EXECUTOR_PORT: String(port),
+      EXECUTOR_API_KEY: apiKey,
+      EXECUTOR_ENCRYPTION_KEY: encryptionKey,
+    },
+  });
+  const mcpUrl = `http://127.0.0.1:${port}/mcp`;
+  const close = async () => {
+    killTree(child.pid);
+    try {
+      closeSync(logFd);
+    } catch {
+      /* ignore */
+    }
+  };
+  try {
+    // Cold start under a busy host can exceed 90s (workerd + motel).
+    const timeoutMs = Math.max(
+      180_000,
+      Number(process.env.MULTI_B_EXECUTOR_READY_MS ?? 180_000) || 180_000
+    );
+    const t0 = Date.now();
+    let last = null;
+    while (Date.now() - t0 < timeoutMs) {
+      if (child.exitCode != null) {
+        const log = existsSync(logPath) ? readFileSync(logPath, "utf8").slice(-2000) : "";
+        throw new Error(`executor exited ${child.exitCode}\n${log}`);
+      }
+      try {
+        const res = await fetch(mcpUrl, { signal: AbortSignal.timeout(2000) });
+        if (
+          res.ok ||
+          res.status === 400 ||
+          res.status === 401 ||
+          res.status === 405 ||
+          res.status === 406
+        ) {
+          return {
+            port,
+            baseUrl: `http://127.0.0.1:${port}`,
+            pid: child.pid,
+            close,
+          };
+        }
+        last = `${res.status}`;
+      } catch (e) {
+        last = String(e?.message ?? e);
+      }
+      await sleep(500);
+    }
+    throw new Error(`timeout waiting for ${mcpUrl}: ${last}`);
+  } catch (e) {
+    await close().catch(() => {});
+    throw e;
+  }
+}
+
+function resolveExecutorAuth() {
+  let apiKey = process.env.EXECUTOR_API_KEY?.trim() || "";
+  let encryptionKey = process.env.EXECUTOR_ENCRYPTION_KEY?.trim() || "";
+  if (!apiKey || !encryptionKey) {
+    // Ephemeral headless keys for this board run — not persisted in artifacts.
+    apiKey = apiKey || `topo-b-${randomBytes(24).toString("hex")}`;
+    encryptionKey = encryptionKey || randomBytes(32).toString("hex");
+    console.log(
+      "[topo-b] generated ephemeral EXECUTOR_API_KEY + EXECUTOR_ENCRYPTION_KEY for this run"
+    );
+  }
+  if (apiKey.length < 32) throw new Error("EXECUTOR_API_KEY must be ≥32 chars");
+  if (!/^[0-9a-fA-F]{64}$/.test(encryptionKey)) {
+    throw new Error("EXECUTOR_ENCRYPTION_KEY must be 64 hex chars");
+  }
+  return { apiKey, encryptionKey };
+}
+
+async function buildExecutorArm(_mock) {
+  const { apiKey, encryptionKey } = resolveExecutorAuth();
+  const authHeaders = { Authorization: `Bearer ${apiKey}` };
+  const replicas = [];
+  const baseWork = join("/tmp", `topo-b-ex-${process.pid}`);
+  await rm(baseWork, { recursive: true, force: true });
+  for (let i = 0; i < REPLICAS; i++) {
+    const port = await pickFreePort();
+    const work = join(baseWork, `r${i}`);
+    console.log(`[topo-b] start executor replica ${i + 1}/${REPLICAS} :${port}`);
+    replicas.push(await startExecutorReplica(work, port, apiKey, encryptionKey));
+  }
+  const lb = await startStickyHttpLb({
+    backends: replicas.map((r) => r.baseUrl),
+  });
+  await waitHttpOk(lb.mcpUrl, { timeoutMs: 30_000 });
+  // Probe through VIP with auth
+  const probe = await connectHttpMcpSticky(lb.mcpUrl, "topo-b-ex-probe", authHeaders);
+  let toolName = "execute";
+  try {
+    const tools = await probe.client.listTools();
+    const hit = tools.tools.find((t) => t.name === "execute") || tools.tools[0];
+    toolName = hit?.name ?? "execute";
+  } finally {
+    await probe.close();
+  }
+  const call = async (client) => {
+    const res = await client.callTool({
+      name: toolName,
+      arguments: { code: EXECUTOR_STATIC_CODE, timeoutMs: 30_000 },
+    });
+    if (res.isError) throw new Error(toolText(res));
+    return toolText(res);
+  };
+  const bin = resolveBin("EXECUTOR_BIN", ["/tmp/executor-v2/node_modules/.bin/executor"]);
+  const ver = bin
+    ? spawnSync(bin, ["--version"], { encoding: "utf8" }).stdout?.trim() || null
+    : null;
+  return {
+    id: "executor",
+    model: `streamable_http_${REPLICAS}x_behind_sticky_lb_static_upstream0`,
+    version: ver,
+    mcpUrl: lb.mcpUrl,
+    replicas: replicas.map((r) => ({ port: r.port, pid: r.pid })),
+    lb: { baseUrl: lb.baseUrl, sticky: lb.sticky },
+    toolName,
+    connect: () => connectHttpMcpSticky(lb.mcpUrl, "topo-b-ex", authHeaders),
+    call,
+    close: async () => {
+      await lb.close().catch(() => {});
+      for (const r of replicas) await r.close().catch(() => {});
+      await rm(baseWork, { recursive: true, force: true }).catch(() => {});
+    },
+    lbStats: () => lb.stats(),
+  };
+}
+
 async function buildArm(id, mock) {
   if (id === "clawql") return buildClawqlArm(mock);
   if (id === "mcpjungle") return buildMcpjungleArm(mock);
   if (id === "agentgateway") return buildAgentgatewayArm(mock);
+  if (id === "executor") return buildExecutorArm(mock);
   throw new Error(`unknown Topology B arm: ${id}`);
 }
 
@@ -722,6 +883,17 @@ async function main() {
   }
   const mock = await startMockHttp();
   globalThis.__MULTI_MOCK_BASE__ = mock.baseUrl;
+  let prior = null;
+  if (MERGE && existsSync(OUT_PATH)) {
+    try {
+      prior = JSON.parse(readFileSync(OUT_PATH, "utf8"));
+      console.log(
+        `[topo-b] merge into existing ${OUT_NAME} arms=${Object.keys(prior.arms || {}).join(",")}`
+      );
+    } catch (e) {
+      console.warn(`[topo-b] MULTI_B_MERGE set but could not parse ${OUT_PATH}: ${e.message}`);
+    }
+  }
   const results = {
     measuredAt: new Date().toISOString(),
     topology: TOPOLOGY,
@@ -732,8 +904,14 @@ async function main() {
       pid: process.pid,
     },
     replicas: REPLICAS,
-    arms: {},
+    arms: prior?.arms && typeof prior.arms === "object" ? { ...prior.arms } : {},
     smoke_only: SMOKE,
+    merge: MERGE
+      ? {
+          prior_measured_at: prior?.measuredAt ?? null,
+          merged_arms: ARMS.slice(),
+        }
+      : null,
   };
   const closers = [() => mock.close()];
   try {
