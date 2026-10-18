@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Privacy manifest for clawql-secure-clipboard.
+
+  APIs used:
+  - UIPasteboard.setItems(_:options:) with localOnly + expirationDate — not a Required Reason API.
+  - URL.setResourceValues with isExcludedFromBackup — writes a backup flag; does not read
+    file timestamps (NSFileCreationDate / getattrlist / stat). No File Timestamp reason needed.
+
+  Collected data: none (pasteboard content stays on-device; we do not transmit clipboard data).
+-->
+<plist version="1.0">
+<dict>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array/>
+</dict>
+</plist>

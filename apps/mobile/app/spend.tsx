@@ -1,15 +1,11 @@
 import { Effect } from "effect";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Linking, Platform } from "react-native";
 
 import type { HomeSpend, ManagedUsage } from "@/src/domain/schemas";
-import {
-  getHomeSpendEffect,
-  getManagedUsageEffect,
-  openBillingPortalEffect,
-} from "@/src/services/api";
+import { getHomeSpendEffect, getManagedUsageEffect } from "@/src/services/api";
 import { loadEntitlementsEffect, type MobileEntitlements } from "@/src/services/entitlements";
+import { loadReleasePolicyEffect } from "@/src/services/release-policy";
 import { useSession } from "@/src/state/SessionContext";
 import { brand, space } from "@/src/theme";
 import {
@@ -41,20 +37,21 @@ export default function SpendScreen() {
   const [entitlements, setEntitlements] = useState<MobileEntitlements | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [portalNote, setPortalNote] = useState<string | null>(null);
-  const [portalBusy, setPortalBusy] = useState(false);
+  const [showCommerce, setShowCommerce] = useState(false);
 
   const load = useCallback(async () => {
     if (!session) return;
     try {
-      const [s, u, ent] = await Promise.all([
+      const [s, u, ent, policy] = await Promise.all([
         Effect.runPromise(getHomeSpendEffect(session)),
         Effect.runPromise(getManagedUsageEffect(session)),
         Effect.runPromise(loadEntitlementsEffect()),
+        Effect.runPromise(loadReleasePolicyEffect()),
       ]);
       setSpend(s);
       setUsage(u);
       setEntitlements(ent);
+      setShowCommerce(policy.allowsInAppCommerce);
     } finally {
       setLoading(false);
     }
@@ -96,7 +93,9 @@ export default function SpendScreen() {
         {spend.budget ? <Meta>{`Budget ${spend.budget}`}</Meta> : null}
         {entitlements ? (
           <Meta testID="spend-plan-label">
-            {`Plan · ${entitlements.planLabel} (${entitlements.billingMode})`}
+            {showCommerce
+              ? `Plan · ${entitlements.planLabel} (${entitlements.billingMode})`
+              : `Plan · ${entitlements.planLabel}`}
           </Meta>
         ) : null}
       </SurfaceCard>
@@ -116,65 +115,23 @@ export default function SpendScreen() {
         </SurfaceCard>
       ) : null}
 
-      {entitlements?.planId === "free" ? (
-        <SurfaceCard testID="spend-upgrade-cta" tint="soft">
-          <Subtitle>Unlock Pro on this phone</Subtitle>
-          <Meta>
-            Fixture sandbox subscribe lives on Profile — live App Store / Play sheets
-            after Day-0 enrollment.
-          </Meta>
-          <PrimaryButton
-            testID="spend-open-plan-billing"
-            label="View plan & billing"
-            onPress={() => router.push("/(tabs)/profile")}
-          />
-        </SurfaceCard>
-      ) : null}
-
-      <SurfaceCard testID="spend-billing-portal" tint="soft">
-        <Subtitle>Manage plan (Stripe)</Subtitle>
-        <Meta>
-          Opens the cloud billing portal when Stripe is configured. Fixture mode returns an
-          honesty note instead of a live portal URL.
+      <SurfaceCard testID="spend-plan-readonly" tint="soft">
+        <Subtitle>Plan</Subtitle>
+        <Meta testID="spend-plan-readonly-note">
+          {showCommerce
+            ? "Demo build — sandbox subscribe lives on Profile. Store builds show plan status only."
+            : "Plan status is shown for reference. This app does not sell subscriptions or upgrades."}
         </Meta>
-        <PrimaryButton
-          testID="spend-open-billing-portal"
-          label={portalBusy ? "Opening…" : "Open billing portal"}
-          disabled={portalBusy}
-          onPress={() => {
-            setPortalBusy(true);
-            setPortalNote(null);
-            void Effect.runPromise(openBillingPortalEffect(session))
-              .then(async (out) => {
-                if (out.source === "fixture" || out.url.startsWith("fixture://")) {
-                  setPortalNote(
-                    "Fixture mode — Stripe portal needs CLAWQL_STRIPE_CUSTOMER_ID on a live session."
-                  );
-                  return;
-                }
-                if (Platform.OS === "web") {
-                  globalThis.location?.assign?.(out.url);
-                } else {
-                  await Linking.openURL(out.url);
-                }
-              })
-              .catch((e: unknown) => {
-                const reason =
-                  e && typeof e === "object" && "reason" in e
-                    ? String((e as { reason: string }).reason)
-                    : e instanceof Error
-                      ? e.message
-                      : String(e);
-                setPortalNote(reason);
-              })
-              .finally(() => setPortalBusy(false));
-          }}
-        />
-        {portalNote ? (
-          <Meta testID="spend-billing-portal-note" color={brand.inkMuted}>
-            {portalNote}
+        {showCommerce && entitlements?.planId === "free" ? (
+          <Meta testID="spend-upgrade-cta" color={brand.inkFaint}>
+            Demo sandbox: open Profile to exercise Subscribe Pro / Team.
           </Meta>
         ) : null}
+        <PrimaryButton
+          testID="spend-open-plan-billing"
+          label="View plan status"
+          onPress={() => router.push("/(tabs)/profile")}
+        />
       </SurfaceCard>
 
       <SurfaceCard testID="spend-by-agent">

@@ -13,6 +13,7 @@ import {
 import type { MobileSession } from "../domain/schemas";
 import { resetFixtureStateEffect } from "./api";
 import { loadMobileConfigEffect } from "./config";
+import { clearOfflineSnapshotEffect } from "./offline-cache";
 import { clearSessionEffect, saveSessionEffect } from "./session-store";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -212,9 +213,12 @@ export function exchangeCallbackUrlEffect(
 }
 
 export function signOutEffect(): Effect.Effect<void, MobileAuthError> {
-  return clearSessionEffect().pipe(
-    Effect.mapError((e) => new MobileAuthError({ reason: e.reason }))
-  );
+  return Effect.gen(function* () {
+    yield* clearOfflineSnapshotEffect().pipe(Effect.catch(() => Effect.void));
+    yield* clearSessionEffect().pipe(
+      Effect.mapError((e) => new MobileAuthError({ reason: e.reason }))
+    );
+  });
 }
 
 function isFixtureAccessToken(token: string): boolean {
