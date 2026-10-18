@@ -82,7 +82,7 @@ Until then status stays **Not on board** with an explicit credentials blocker.
 | --- | --- | --- |
 | **ClawQL Streams** | Self-hosted Durable Objects on pinned **celld v0.4.0** (LTX → your bucket) | **Yes** — install/dev/deploy docs + Labs |
 | **Durable programs** | celld-shaped file (JSONL) journal stand-in; pin/readiness CLI | **Yes** as stand-in — not isolate crash survival |
-| **Core search/execute** (pets publish boards) | **Default celld** `CoreToolsDO` (slim in-isolate); Node when unreachable or `CLAWQL_CORE_IN_CELLD=0` / `CLAWQL_FORCE_NODE_CORE=1` | **Yes** for slim in-isolate; full catalog/vault/gRPC still Node |
+| **Core search/execute** (pets publish boards) | **Default celld** `CoreToolsDO` (slim in-isolate); host MCP (**Bun** preferred) when unreachable or `CLAWQL_CORE_IN_CELLD=0` / `CLAWQL_FORCE_HOST_CORE=1` | **Yes** for slim in-isolate; full catalog/vault/gRPC on Bun host MCP |
 | **Core (default publish boards)** | Never loads celld unless Core-in-celld flag | Hot path **independent** until you opt into isolate |
 
 **CLI**
@@ -100,15 +100,16 @@ clawql doctor
 
 # Core search/execute inside celld (slim CoreToolsDO — Lab smoke:core-in-celld)
 cd docs/examples/streams-celld && STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:core-in-celld
-# Node MCP prefers celld at http://127.0.0.1:9888/mcp by default (override CLAWQL_CORE_CELLD_URL)
-# Escape hatch: CLAWQL_CORE_IN_CELLD=0 or CLAWQL_FORCE_NODE_CORE=1
+# Host MCP (Bun preferred) prefers celld at http://127.0.0.1:9888/mcp by default
+# Escape hatch: CLAWQL_CORE_IN_CELLD=0 or CLAWQL_FORCE_HOST_CORE=1
+# bun run bin/clawql-mcp-http.mjs
 
 clawql security inject --mode direct|indirect|multistep [--json]
 ```
 
 - `clawql security celld` — pin readiness / kill-node *eligibility* (does not spawn celld).
 - `clawql doctor` — surfaces celld pin stand-in vs `isolateReady` (warns on incomplete pin).
-- **Core-in-celld (default):** Worker `POST /mcp` → `CoreToolsDO`; Node MCP probes `DEFAULT_CORE_CELLD_MCP_URL` and proxies search/execute when reachable (slim catalog honesty).
+- **Core-in-celld (default):** Worker `POST /mcp` → `CoreToolsDO`; host MCP (Bun preferred) probes `DEFAULT_CORE_CELLD_MCP_URL` and proxies search/execute when reachable (slim catalog honesty).
 - `clawql security inject` — in-process Panguard drills (§24).
 - Live MCP: openbench `memory-injection-attempt`.
 - Crash claim: only after `pin.isolateReady` **and** three-arm celld kill-node demo (ADR 0015).

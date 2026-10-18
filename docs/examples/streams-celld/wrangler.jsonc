@@ -13,7 +13,7 @@
     // Optional clawql-audit HTTP origin (POST /entries); empty → deferred compliance WORM.
     "CLAWQL_AUDIT_WORM_URL": "",
     "CLAWQL_AUDIT_API_KEY": "",
-    // Default on: AgentSessionDO search/execute use CoreToolsDO. Escape: "0" → CLAWQL_MCP_URL.
+    // Default on: AgentSessionDO search/execute use CoreToolsDO. Escape: "0" → Bun host CLAWQL_MCP_URL.
     "CLAWQL_CORE_IN_CELLD": "1",
     // REST origin for CoreToolsDO execute (e.g. mock pets http://127.0.0.1:PORT).
     "CLAWQL_CORE_UPSTREAM": ""

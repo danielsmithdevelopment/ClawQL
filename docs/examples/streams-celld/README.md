@@ -7,7 +7,7 @@ Minimal **Workers / Durable Objects** bundle for [ClawQL Streams](https://docs.c
 | `GatewayDO`      | Webhook ingress (`POST /webhook/{subscriptionId}`), spawn sessions                      |
 | `SubscriptionDO` | Significance filter (`always`/`never`/`threshold`/`pattern`/`rate`/`composite`; `sub:{id}`) |
 | `AgentSessionDO` | Session + TTL `setAlarm` + ring/LTX + optional MCP / adapter / one-turn inference / host WORM |
-| `CoreToolsDO`    | **Default** in-isolate slim Core `search`/`execute` (`POST /mcp`; escape `CLAWQL_CORE_IN_CELLD=0`) |
+| `CoreToolsDO`    | **Default** in-isolate slim Core `search`/`execute` (`POST /mcp`; escape → Bun host MCP) |
 
 **Learn walkthrough:** [Streams getting started — Lab 5b](https://docs.clawql.com/learn/streams-getting-started#lab-5b--clawql-streams-wrangler-skeleton--bundle-check-30-min)  
 **Evidence matrix:** [`docs/streams/streams-celld-evidence.md`](../../streams/streams-celld-evidence.md)
@@ -34,8 +34,8 @@ The right demo is the **production shape**: slim cell + real sidecars.
 | `cache` (session scratch)          | **In-process** — `clawql-core/streams-slim`                                            |
 | Hash-chain verify                  | **In-process** — via clawql-merkle (needs `nodejs_compat`)                             |
 | Inference (one-turn)               | **Out-of-process** — `fetch(INFERENCE_URL)` `/healthz` + `POST /v1/messages`           |
-| `search` / `execute` (slim)        | **In-process default** — `CoreToolsDO` (`CLAWQL_CORE_IN_CELLD=0` → Node MCP)            |
-| `memory_*` (and Node escape Core)  | **Out-of-process** — `fetch(CLAWQL_MCP_URL)` Streamable HTTP (sidecar / full Core)     |
+| `search` / `execute` (slim)        | **In-process default** — `CoreToolsDO` (`CLAWQL_CORE_IN_CELLD=0` → Bun host MCP)       |
+| `memory_*` (and host escape Core)  | **Out-of-process** — `fetch(CLAWQL_MCP_URL)` Streamable HTTP (Bun host / full Core)    |
 | `mcp-api-adapter`                  | **Out-of-process** — `fetch(CLAWQL_MCP_ADAPTER_URL)` REST `POST /{tool}`               |
 
 Do **not** embed `clawql-api`, `clawql-memory`, or `mcp-api-adapter` (Express/gRPC/`node:fs`).
@@ -45,7 +45,7 @@ Do **not** embed `clawql-api`, `clawql-memory`, or `mcp-api-adapter` (Express/gR
 | `CLAWQL_MCP_URL`                                              | Streamable HTTP MCP endpoint (usually `…/mcp`)         |
 | `CLAWQL_MCP_ADAPTER_URL`                                      | Adapter **origin** only (e.g. `http://127.0.0.1:8090`) |
 | `CLAWQL_MCP_BEARER_TOKEN` / `CLAWQL_MCP_ADAPTER_BEARER_TOKEN` | Optional Bearer                                        |
-| `CLAWQL_CORE_IN_CELLD`                                        | Default `1`; set `0` to force Node MCP for search/execute |
+| `CLAWQL_CORE_IN_CELLD`                                        | Default `1`; set `0` to force host MCP (Bun) for search/execute |
 | `CLAWQL_CORE_UPSTREAM`                                        | REST origin for in-cell `execute` (e.g. mock `/pets`)  |
 | `CLAWQL_AUDIT_WORM_URL`                                       | Host `clawql-audit` HTTP origin (`POST /entries`)      |
 | `CLAWQL_AUDIT_API_KEY`                                        | ApiKey for host WORM HTTP (optional if open)           |

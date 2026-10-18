@@ -10,23 +10,23 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 
 ## Architecture under test (shipped)
 
-| Layer                                                                           | In cell bundle?      | How it is proven                                                                   |
-| ------------------------------------------------------------------------------- | -------------------- | ---------------------------------------------------------------------------------- |
-| `clawql-core/streams-slim` (audit / cache / hash-chain)                         | **Yes**              | Unit tests + webhook smoke assertions                                              |
-| Significance filter (`always`/`never`/`threshold`/`pattern`/`rate`/`composite`) | **Yes**              | Unit tests + smoke `filtered` / rate 3rd-event spawn / composite AND               |
-| Session TTL `setAlarm` / `alarm()`                                              | **Yes**              | Smoke `exitReason:timeout` after short TTL                                         |
-| Audit LTX flush (`audit:ring`, `audit:seq:*`)                                   | **Yes** (DO storage) | Smoke keys — **session bookkeeping only**, not compliance WORM (see below)         |
-| **CoreToolsDO** slim search/execute                                             | **Yes** (default)    | Mock + full-stack smoke `celld-isolate`; escape `CLAWQL_CORE_IN_CELLD=0`           |
-| Host `clawql-audit` via `CLAWQL_AUDIT_WORM_URL`                                 | **No** — `fetch`     | `worm-fetch.test.mjs` + full-stack `SESSION_START` + `/chain/verify`               |
-| Streamable HTTP MCP (`CLAWQL_MCP_URL`)                                          | **No** — `fetch`     | `mcp-fetch.test.mjs` + mock smoke + **full-stack** real MCP                        |
-| mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)                                 | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real                        |
-| Inference one-turn                                                              | **No** — `fetch`     | Smoke + full-stack stub `POST /v1/messages` (`turns:1`); real gateway via compose  |
-| Helm celld StatefulSet / probes                                                 | Chart only           | `make helm-celld-template-tests`                                                   |
-| Fleet LTX / multi-node diagnose                                                 | Manual               | `docs/examples/idp/streams-celld/README.md`                                        |
-| `clawql-streams` package / `stream_*` tools                                     | **Not shipped**      | Spec-only — see Streams §15                                                        |
-| Multi-turn agent loop + PAL virtual keys                                        | **Not shipped**      | One-turn stub only — full `runAgentLoop` / bind-on-create still planned            |
-| Operator mesh denial → host WORM                                                | **Package unit**     | `clawql-k8s-operator` `worm-append` + `appendMeshDenialToHostWorm` (no live Istio) |
-| cellrt / TEE / QR stream source                                                 | **Not shipped**      | Spec drafts under `docs/streams/`                                                  |
+| Layer                                                                           | In cell bundle?      | How it is proven                                                                          |
+| ------------------------------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------- |
+| `clawql-core/streams-slim` (audit / cache / hash-chain)                         | **Yes**              | Unit tests + webhook smoke assertions                                                     |
+| Significance filter (`always`/`never`/`threshold`/`pattern`/`rate`/`composite`) | **Yes**              | Unit tests + smoke `filtered` / rate 3rd-event spawn / composite AND                      |
+| Session TTL `setAlarm` / `alarm()`                                              | **Yes**              | Smoke `exitReason:timeout` after short TTL                                                |
+| Audit LTX flush (`audit:ring`, `audit:seq:*`)                                   | **Yes** (DO storage) | Smoke keys — **session bookkeeping only**, not compliance WORM (see below)                |
+| **CoreToolsDO** slim search/execute                                             | **Yes** (default)    | Mock + full-stack smoke `celld-isolate`; escape `CLAWQL_CORE_IN_CELLD=0` → host MCP (Bun) |
+| Host `clawql-audit` via `CLAWQL_AUDIT_WORM_URL`                                 | **No** — `fetch`     | `worm-fetch.test.mjs` + full-stack `SESSION_START` + `/chain/verify`                      |
+| Streamable HTTP MCP (`CLAWQL_MCP_URL`)                                          | **No** — `fetch`     | `mcp-fetch.test.mjs` + mock smoke + **full-stack** real MCP                               |
+| mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)                                 | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real                               |
+| Inference one-turn                                                              | **No** — `fetch`     | Smoke + full-stack stub `POST /v1/messages` (`turns:1`); real gateway via compose         |
+| Helm celld StatefulSet / probes                                                 | Chart only           | `make helm-celld-template-tests`                                                          |
+| Fleet LTX / multi-node diagnose                                                 | Manual               | `docs/examples/idp/streams-celld/README.md`                                               |
+| `clawql-streams` package / `stream_*` tools                                     | **Not shipped**      | Spec-only — see Streams §15                                                               |
+| Multi-turn agent loop + PAL virtual keys                                        | **Not shipped**      | One-turn stub only — full `runAgentLoop` / bind-on-create still planned                   |
+| Operator mesh denial → host WORM                                                | **Package unit**     | `clawql-k8s-operator` `worm-append` + `appendMeshDenialToHostWorm` (no live Istio)        |
+| cellrt / TEE / QR stream source                                                 | **Not shipped**      | Spec drafts under `docs/streams/`                                                         |
 
 ### Why full product is out-of-process (not “missing”)
 

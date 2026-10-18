@@ -2,8 +2,8 @@
  * celld pin readiness for `clawql doctor` (Streams / durable programs claim surface).
  *
  * Honesty: Core **prefers celld** (CoreToolsDO / default localhost proxy).
- * Node Core is the escape hatch when celld is unreachable or
- * `CLAWQL_CORE_IN_CELLD=0` / `CLAWQL_FORCE_NODE_CORE=1`.
+ * Host MCP escape (Bun preferred; Node legacy) when celld is unreachable or
+ * `CLAWQL_CORE_IN_CELLD=0` / `CLAWQL_FORCE_HOST_CORE=1`.
  */
 
 import { Effect } from "effect";
@@ -71,8 +71,8 @@ export function celldDoctorChecksFromReport(
   if (!prefer) {
     checks.push({
       level: "ok",
-      message: `celld pin: stand-in (Node Core escape hatch active)`,
-      detail: `CLAWQL_CORE_IN_CELLD=0 or CLAWQL_FORCE_NODE_CORE=1 — search/execute stay on Node.${binaryNote}. Re-enable celld default by unsetting those flags; local MCP ${DEFAULT_CORE_CELLD_MCP_URL}`,
+      message: `celld pin: stand-in (host MCP escape hatch active — Bun preferred)`,
+      detail: `CLAWQL_CORE_IN_CELLD=0 or CLAWQL_FORCE_HOST_CORE=1 — search/execute stay on host MCP (run with bun).${binaryNote}. Re-enable celld default by unsetting those flags; local MCP ${DEFAULT_CORE_CELLD_MCP_URL}`,
     });
     return checks;
   }
@@ -82,7 +82,7 @@ export function celldDoctorChecksFromReport(
     message: `celld pin: stand-in (file journal; pin ${CELLD_PINNED_VERSION} optional)`,
     detail: `Core prefers celld (default ${DEFAULT_CORE_CELLD_MCP_URL}${
       proxyCfg?.usingDefaultUrl === false ? `; override ${proxyCfg.url}` : ""
-    }). Node search/execute only if celld unreachable or escape hatch set.${binaryNote}. Streams isolate pin: CELLD_VERSION + CLAWQL_PROGRAM_CELLD_ISOLATE=1`,
+    }). Host MCP escape (Bun preferred) only if celld unreachable or escape hatch set.${binaryNote}. Streams isolate pin: CELLD_VERSION + CLAWQL_PROGRAM_CELLD_ISOLATE=1`,
   });
   return checks;
 }
