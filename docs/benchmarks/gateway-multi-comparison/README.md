@@ -20,7 +20,7 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | **Fewest tokens among MCP aggregators + live Executor with equal task success** | **Primary** — classic Layer1-once + Σ Layer2 @12; all arms `task_success` PASS | ClawQL **8.9k** vs MCPJungle **35.3k** (**3.98×**), agentgateway / Bifrost / Obot **35.0k** (**3.95×**), Bifrost Code Mode **20.0k** (**2.25×**), Executor **53.7k** (**6.06×**). Compact search + compact execute JSON; Layer 2 is the win — same gap as [Both Sides of Context Compression](https://pragmaticvectors.com/posts/both-sides-of-context-compression). |
 | **Lowest governed gateway cost** | **Supported** on n=10k remasure — ClawQL gateway_cost p50 **0.70 ms** vs Executor **2.39 ms** | Same equal-arm pets upstream contract |
 | **Latency competitive with the fastest aggregators while doing more per call** | **Supported** — ClawQL best p50; tails host-bound (see 10k table) | Read with [path matrix](#path-matrix-what-each-arm-does) |
-| **Scale-out concurrency win** | **Not claimed yet** | Only after same-topology boards (1-instance **and** 4-replica behind LB) for every arm, pushed until break |
+| **Scale-out concurrency win** | **Not claimed** | Topology B measured (4× HTTP behind sticky LB): ClawQL **121** ≈ MCPJungle **125** > agentgateway **47**. Near-tie with MJ — not a scale-out supremacy claim |
 
 Coherent publish line: **most efficient governed gateway** — output projection at the gateway layer (`fields`/`where`), which live Executor does not provide (measured full REST pass-through; see blog + `executor-cmp-001.live.json`).
 
@@ -98,7 +98,8 @@ Artifact: [`gateway-multi-cmp-10k.json`](./gateway-multi-cmp-10k.json) (`measure
 | Topology | Arms | Artifact |
 | --- | --- | --- |
 | **A — Single instance** | ClawQL stdio PPC; Executor **stdio or HTTP `/mcp`**; MCPJungle / agentgateway 1× HTTP | [`gateway-multi-cmp-chaos-slim.json`](./gateway-multi-cmp-chaos-slim.json) |
-| **B — Scale-out (4 replicas behind LB)** | ClawQL NATS sticky (existing executor-cmp ceilings); MCPJungle / agentgateway **not yet on this board** | Separate — do not mix with A |
+| **B — Scale-out (4× HTTP behind sticky LB)** | ClawQL HTTP ×4; MCPJungle ×4; agentgateway ×4 — same Node sticky LB (`clawql_bench_sticky`) | [`gateway-multi-cmp-chaos-topology-b.json`](./gateway-multi-cmp-chaos-topology-b.json) |
+| **Fabric (not B)** | ClawQL NATS sticky assign (executor-cmp) | Separate — do not cite as Topology B |
 
 **Claim only within the same topology.** Push every arm until it **actually breaks** (`MULTI_CHAOS_UNTIL_BREAK=1`, raise `MULTI_CHAOS_MAX`). Stopping at 128 without a break is incomplete for concurrency claims.
 
@@ -112,6 +113,24 @@ Artifact: [`gateway-multi-cmp-10k.json`](./gateway-multi-cmp-10k.json) (`measure
 | agentgateway | HTTP 1× | **63 / 64** | p99 115 ms | Matches prior ceiling |
 
 On equal single-instance footing: **MCPJungle still leads concurrency** (151); ClawQL (**79**) > agentgateway (**63**) > Executor HTTP (**29**). Publishable chaos claim remains **vs Executor** on topology A — not a scale-out win. Multi-arm chaos OOM’d once on this host; ceilings above are from completed solo until-break runs (see `merge_note` / `gateway-multi-cmp-chaos-executor-http.json`).
+
+### Board B — 4× HTTP behind sticky Node LB (p99≤100 ms), until-break (2026-10-18)
+
+Harness: `npm run benchmark:gateway-multi-topology-b` (`scripts/benchmarks/gateway-multi-topology-b.mjs` + `lib/sticky-http-lb.mjs`). Each arm: **4 replicas** → VIP `/mcp` with cookie + `x-bench-sticky` affinity. LB `by_backend` counts were roughly even (ClawQL ~17–19k hits/backend).
+
+| Arm | Topology | last_ok / first_break | Break reason | Notes |
+| --- | --- | ---: | --- | --- |
+| **ClawQL** | HTTP 4× + sticky LB | **121 / 122** | p99 130 ms | Equal-arm OpenAPI `execute`; not NATS fabric |
+| **MCPJungle** | HTTP 4× + sticky LB | **125 / 126** | p99 108 ms | Near-tie with ClawQL; 1× A was 151 (host-bound) |
+| **agentgateway** | HTTP 4× + sticky LB | **47 / 48** | p99 119 ms | Unique admin/ready/stats ports per replica |
+
+**Read:** On equal Topology B, ClawQL (**121**) ≈ MCPJungle (**125**) ≫ agentgateway (**47**). **Do not claim a scale-out concurrency win** — MJ still edges ClawQL. Do not cite NATS fabric **135** or Executor stdio PPC **19** on this board. Executor HTTP ×4 behind the same LB is still open.
+
+```bash
+MULTI_CHAOS_UNTIL_BREAK=1 MULTI_CHAOS_HARD_MAX=1024 MULTI_B_REPLICAS=4 \
+  MULTI_B_ARMS=clawql,mcpjungle,agentgateway \
+  npm run benchmark:gateway-multi-topology-b
+```
 
 ### Latency / chaos run
 
@@ -269,7 +288,7 @@ MT_TURNS=12 CATALOG_TOOL_COUNT=40 MT_LIMIT=25 \
 7. **Chaos until-break + topology tags** — `MULTI_CHAOS_UNTIL_BREAK`; reports carry `topology` so cross-topology claims fail the honesty check.
 8. **Compact agent-facing JSON** — `search` defaults to `detail=compact` + minify; `execute` success bodies serialize without pretty-print (no YAML/columnar/CBOR options). Executor harness accepts `EXECUTOR_DATA_DIR` / `EXECUTOR_MCP_URL`.
 
-**Next:** Cloudflare multiturn remasure (compact-execute on cf-mt lineage) before flipping www CF cells. Executor HTTP chaos arm is wired (`EXECUTOR_MCP_URL`); publish `gateway-multi-cmp-chaos-executor-http.json` and merge into slim board. Topology B (4× behind LB) before any scale-out claim; optional real-model task-success; RSS heap profile / lazy `clawql-api` if we want to close the memory loss.
+**Next:** Flip www concurrency cells for Topology B (ClawQL 121 ≈ MJ 125). Optional Executor HTTP ×4 behind the same sticky LB. TrueFoundry equal-arm still needs tenant creds. Optional real-model task-success; RSS heap profile / lazy `clawql-api` if we want to close the memory loss.
 
 ---
 
@@ -278,8 +297,8 @@ MT_TURNS=12 CATALOG_TOOL_COUNT=40 MT_LIMIT=25 \
 - Host-bound; repeat on a dedicated bench host before publicizing.
 - **RSS is a loss** among serious arms — scope or fix before claiming efficiency without the asterisk.
 - Do not cite n=200 boards for p999.
-- Do not mix NATS scale-out ceilings with stdio process-per-client ceilings.
-- Do not publish aggregator concurrency wins until every arm breaks on the same topology.
+- Do not mix NATS fabric sticky, Topology B LB, or Topology A single-instance ceilings.
+- Topology B is measured — ClawQL ≈ MCPJungle; do not claim scale-out supremacy.
 - ContextForge / MetaMCP off until native equal-arm runs exist.
 - Multiturn ClawQL Layer2 includes per-turn `search` (discovery tax); mean **result** gap vs fat peers is larger (~6× aggregators / ~11× Executor).
 - Token wins require `task_success` — projection must not drop facts the agent needed.
