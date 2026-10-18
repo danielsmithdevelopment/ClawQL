@@ -106,8 +106,7 @@ export async function wireOptionalToolDeps(): Promise<void> {
   const needMemory = flags.enableMemory;
 
   let handleKnowledgeSearchOnyxToolInput:
-    | ((params: unknown) => Promise<{ content: { type: "text"; text: string }[] }>)
-    | null = null;
+    ((params: unknown) => Promise<{ content: { type: "text"; text: string }[] }>) | null = null;
 
   if (needDocuments) {
     const docs = await import("clawql-documents/plugin");

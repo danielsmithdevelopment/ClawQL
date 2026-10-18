@@ -23,7 +23,7 @@ It is **not** a general-purpose DO runtime and **not** a Node `worker_threads` r
 | ------------------ | ----------------------------------------- | ----------------------------------------------------------------------------- |
 | Status             | Alpha; hostile multi-tenant not supported | ClawQL-owned; production target                                               |
 | Security story     | V8 isolate + operator mesh                | Rust memory safety + eBPF + WASM capability sandbox                           |
-| Vault / inference  | External sidecars / HTTP                  | Embedded dynamic secrets + model escalation + virtual keys                                 |
+| Vault / inference  | External sidecars / HTTP                  | Embedded dynamic secrets + model escalation + virtual keys                    |
 | Observability      | External                                  | Embedded OTel + Prometheus + Langfuse                                         |
 | Tool execution     | JS bundle in V8                           | Bootstrap: HTTP → clawql-mcp; full: `clawql-core.wasm` in Wasmtime            |
 | Workers API parity | High (same surface as Cloudflare)         | Different API (Rust cell trait + WIT); session _contract_ shared with Streams |
@@ -149,7 +149,7 @@ bucket-coordinator                — CAS leases, LTX, peer HMAC over S3/R2
 | `cellrt-storage`       | rusqlite WAL, LTX writer, WORM ack-after-replication                           |
 | `cellrt-security`      | eBPF rules, WIT import validation, Cosign binary verify                        |
 | `cellrt-attestation`   | AMD SEV-SNP / Intel TDX reports, VCEK/PCS chain, JWT delivery, QR frame bind   |
-| `cellrt-inference`     | model-escalation router, virtual key issue/expire, budget, WORM call store                  |
+| `cellrt-inference`     | model-escalation router, virtual key issue/expire, budget, WORM call store     |
 | `cellrt-vault`         | Dynamic secrets; AppRole → attestation-gated release when tee enabled          |
 | `cellrt-observability` | OTel, Prometheus `/metrics`, Langfuse RTP/OBT                                  |
 | `cellrt-cli`           | Binary entry + `audit export` for air-gap QR sequence                          |
@@ -542,7 +542,7 @@ CLI surface under Streams: `clawql streams cellrt start|deploy|diagnose|scale|au
 | **Language**           | JavaScript / TypeScript        | Rust + WASM component                                         |
 | **Security**           | Alpha; no hostile multi-tenant | Rust memory safety + eBPF + WASM sandbox                      |
 | **Vault**              | External sidecar               | Embedded dynamic secret injection                             |
-| **Inference**          | External HTTP                  | Embedded model escalation + virtual keys                           |
+| **Inference**          | External HTTP                  | Embedded model escalation + virtual keys                      |
 | **Observability**      | External                       | Embedded OTel + Langfuse + Prometheus                         |
 | **Binary attestation** | Upstream GH attestation        | Cosign verify on startup                                      |
 | **Hardware TEE**       | No                             | Planned — [`clawql-tee`](/streams/clawql-tee) (SEV-SNP / TDX) |

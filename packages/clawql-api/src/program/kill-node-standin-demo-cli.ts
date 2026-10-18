@@ -11,7 +11,13 @@ import {
 const out = process.argv[2] || defaultKillNodeEvidencePath();
 const evidence = await Effect.runPromise(runKillNodeStandinDemoEffect());
 const path = writeKillNodeStandinEvidence(evidence, out);
-console.log(JSON.stringify({ path, ok: evidence.ok, arms: evidence.arms.map((a) => ({ arm: a.arm, ok: a.ok })) }, null, 2));
+console.log(
+  JSON.stringify(
+    { path, ok: evidence.ok, arms: evidence.arms.map((a) => ({ arm: a.arm, ok: a.ok })) },
+    null,
+    2
+  )
+);
 console.log(evidence.honesty);
 if (!evidence.ok) {
   for (const a of evidence.arms) {

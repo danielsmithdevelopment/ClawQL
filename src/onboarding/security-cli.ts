@@ -17,7 +17,9 @@ export async function runSecurityInject(options: {
 }): Promise<number> {
   const mode = parseInjectionMode(options.mode ?? "direct");
   if (!mode) {
-    console.error("Usage: clawql security inject --mode direct|indirect|multistep [--target staging] [--json]");
+    console.error(
+      "Usage: clawql security inject --mode direct|indirect|multistep [--target staging] [--json]"
+    );
     return 1;
   }
   const report = await Effect.runPromise(
@@ -43,7 +45,9 @@ export async function runSecurityCelld(options: { readonly json?: boolean }): Pr
     console.log(JSON.stringify(report, null, 2));
   } else {
     console.log(`celld kill-node readiness · pin=${report.pinnedVersion}`);
-    console.log(`  isolateReady=${report.pin.isolateReady} · isolateKillNodeEligible=${report.isolateKillNodeEligible}`);
+    console.log(
+      `  isolateReady=${report.pin.isolateReady} · isolateKillNodeEligible=${report.isolateKillNodeEligible}`
+    );
     console.log(`  standInDemoAvailable=${report.standInDemoAvailable}`);
     console.log(`  Honesty: ${report.honesty}`);
     for (const step of report.nextSteps) {

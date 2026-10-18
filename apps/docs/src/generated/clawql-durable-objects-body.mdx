@@ -89,12 +89,12 @@ If key issuance fails, no DO is spawned and no hold is left open.
 
 ## 5. Virtual key lifecycle
 
-| Phase    | Action                                                                                                                                                                   |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Phase    | Action                                                                                                                                                                                |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Create   | Issue key scoped to DO instance ID; budget = `budgetTokens` or derived from `budgetUsd`; TTL = `maxTurns × estimated_turn_duration`; model escalation from subscription `model` alias |
-| Run      | Every model call uses only this key via `fetch(clawql-inference)`; call-store rows include `virtual_key_id`                                                              |
-| Close    | Capture actual spend; flush training record; WORM `DO_DESTROYED`; expire key → subsequent use is 401; DO destroys itself                                                 |
-| Abnormal | Eviction / timeout / cell migration: hold expires with key TTL; WORM best-effort close; key still expired by TTL                                                         |
+| Run      | Every model call uses only this key via `fetch(clawql-inference)`; call-store rows include `virtual_key_id`                                                                           |
+| Close    | Capture actual spend; flush training record; WORM `DO_DESTROYED`; expire key → subsequent use is 401; DO destroys itself                                                              |
+| Abnormal | Eviction / timeout / cell migration: hold expires with key TTL; WORM best-effort close; key still expired by TTL                                                                      |
 
 **Security property:** compromised credentials from a finished session are already dead. Long-lived service accounts across sessions are out of scope for Streams agent DOs.
 

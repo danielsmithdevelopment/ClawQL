@@ -26,11 +26,13 @@ describe("core-celld-proxy", () => {
   });
 
   it("resolves explicit /mcp URL and default localhost", () => {
-    expect(resolveCoreCelldProxyConfig({ CLAWQL_CORE_CELLD_URL: "http://127.0.0.1:9888" })).toEqual({
-      url: "http://127.0.0.1:9888/mcp",
-      timeoutMs: 15_000,
-      usingDefaultUrl: false,
-    });
+    expect(resolveCoreCelldProxyConfig({ CLAWQL_CORE_CELLD_URL: "http://127.0.0.1:9888" })).toEqual(
+      {
+        url: "http://127.0.0.1:9888/mcp",
+        timeoutMs: 15_000,
+        usingDefaultUrl: false,
+      }
+    );
     expect(
       resolveCoreCelldProxyConfig({ CLAWQL_CORE_CELLD_URL: "http://127.0.0.1:9888/mcp" })?.url
     ).toBe("http://127.0.0.1:9888/mcp");

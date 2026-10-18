@@ -32,14 +32,10 @@ async function askYesNo(question: string, defaultYes = true): Promise<boolean> {
 
 function tryInstallCelld(): boolean {
   console.log(`\n→ ${INSTALL_CELLD_HINT}\n`);
-  const res = spawnSync(
-    "bash",
-    ["-lc", "curl -fsSL https://celld.dev/install.sh | sh"],
-    {
-      stdio: "inherit",
-      env: { ...process.env, CELLD_VERSION: CELLD_PINNED_VERSION },
-    }
-  );
+  const res = spawnSync("bash", ["-lc", "curl -fsSL https://celld.dev/install.sh | sh"], {
+    stdio: "inherit",
+    env: { ...process.env, CELLD_VERSION: CELLD_PINNED_VERSION },
+  });
   return res.status === 0;
 }
 
@@ -87,12 +83,7 @@ export async function runRuntimeLadderInteractive(
   }
 
   // Bun rung: missing and not declined → prompt install (after celld settled off-tier)
-  if (
-    decision.tier !== "celld" &&
-    !decision.bunPresent &&
-    !decision.bunDeclined &&
-    interactive
-  ) {
+  if (decision.tier !== "celld" && !decision.bunPresent && !decision.bunDeclined && interactive) {
     const install = await askYesNo(
       "Bun is preferred for host MCP (better RSS/latency than Node). Install Bun now?",
       true
@@ -122,11 +113,8 @@ export async function runRuntimeLadderInteractive(
 }
 
 /** Doctor checks from a resolved ladder decision (no TTY). */
-export function doctorChecksFromRuntimeLadder(
-  decision: RuntimeLadderDecision
-): DoctorCheck[] {
-  const level =
-    decision.tier === "celld" ? "ok" : decision.tier === "bun" ? "warn" : "warn";
+export function doctorChecksFromRuntimeLadder(decision: RuntimeLadderDecision): DoctorCheck[] {
+  const level = decision.tier === "celld" ? "ok" : decision.tier === "bun" ? "warn" : "warn";
   return [
     {
       level,

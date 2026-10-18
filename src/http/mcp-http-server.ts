@@ -216,7 +216,8 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (!options.skipSpecPreload) {
     await loadSpec();
     await preloadSchemaFieldCacheFromDisk();
-    const { resolvePluginCompositionFlags } = await import("../composition/resolve-plugin-flags.js");
+    const { resolvePluginCompositionFlags } =
+      await import("../composition/resolve-plugin-flags.js");
     if (resolvePluginCompositionFlags().enableMemory) {
       await validateOrDegradeObsidianVaultAtStartup();
     }

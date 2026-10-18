@@ -8,10 +8,10 @@ Prove that **celld pin / durable-program env** does not regress the equal-arm Cl
 
 ## Variants
 
-| Id | Env |
-| --- | --- |
-| `A_baseline` | `clawqlEqualArmEnv` only |
-| `B_durable_programs` | + `CLAWQL_ENABLE_DURABLE_PROGRAMS=1` |
+| Id                    | Env                                                                                |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| `A_baseline`          | `clawqlEqualArmEnv` only                                                           |
+| `B_durable_programs`  | + `CLAWQL_ENABLE_DURABLE_PROGRAMS=1`                                               |
 | `C_celld_pin_isolate` | B + `CELLD_VERSION=v0.4.0` + `CLAWQL_PROGRAM_CELLD_ISOLATE=1` + `CLAWQL_CELLD_BIN` |
 
 All variants call only `execute` / `listPets`. None spawn celld or run `execute_program`.
@@ -28,10 +28,10 @@ Gate defaults: gateway_cost p50 regress ≤15%, p99 ≤25% vs A (`CELLD_AB_P50_R
 
 ## Latest
 
-| Artifact | n | Gate |
-| --- | ---: | --- |
+| Artifact                                                   |     n | Gate                     |
+| ---------------------------------------------------------- | ----: | ------------------------ |
 | [`celld-hotpath-ab-10k.json`](./celld-hotpath-ab-10k.json) | 10000 | **PASS** (publish-grade) |
-| [`celld-hotpath-ab.json`](./celld-hotpath-ab.json) | 2000 | PASS (smoke) |
+| [`celld-hotpath-ab.json`](./celld-hotpath-ab.json)         |  2000 | PASS (smoke)             |
 
 Publish-grade (2026-10-18, n=10k) gateway_cost vs A: B **+2.7%** p50 / **+5.9%** p99; C **+2.7%** p50 / **+0.4%** p99 — well inside ≤15% / ≤25%.
 

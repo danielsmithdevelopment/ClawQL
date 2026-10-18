@@ -218,16 +218,11 @@ export function runKillNodeStandinDemoEffect(
   });
 }
 
-export function defaultKillNodeEvidencePath(
-  env: NodeJS.ProcessEnv = process.env
-): string {
+export function defaultKillNodeEvidencePath(env: NodeJS.ProcessEnv = process.env): string {
   if (env.CLAWQL_KILL_NODE_EVIDENCE_PATH?.trim()) {
     return env.CLAWQL_KILL_NODE_EVIDENCE_PATH.trim();
   }
-  return join(
-    process.cwd(),
-    "docs/benchmarks/program-kill-node-standin/evidence.json"
-  );
+  return join(process.cwd(), "docs/benchmarks/program-kill-node-standin/evidence.json");
 }
 
 export function writeKillNodeStandinEvidence(

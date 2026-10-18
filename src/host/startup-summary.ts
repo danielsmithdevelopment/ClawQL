@@ -1,9 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import {
-  formatRuntimeLadderForLog,
-  loadSpecEffect,
-  resolveRuntimeLadderEffect,
-} from "clawql-api";
+import { formatRuntimeLadderForLog, loadSpecEffect, resolveRuntimeLadderEffect } from "clawql-api";
 import { Effect } from "effect";
 import { inferSpecMode } from "../onboarding/spec-mode.js";
 import { getClawqlHome, getLocalProvidersVaultPath } from "../onboarding/paths.js";

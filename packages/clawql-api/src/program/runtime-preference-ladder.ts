@@ -127,9 +127,7 @@ export function decideRuntimeLadder(input: RuntimeLadderInput): RuntimeLadderDec
       "Run `clawql doctor` to install, or set CLAWQL_DECLINE_CELLD=1 to refuse and continue on Bun."
     );
   } else if (celldDeclined) {
-    messages.push(
-      "Runtime ladder: celld declined — continuing to Bun host MCP."
-    );
+    messages.push("Runtime ladder: celld declined — continuing to Bun host MCP.");
   }
 
   // 2) Bun
@@ -154,9 +152,7 @@ export function decideRuntimeLadder(input: RuntimeLadderInput): RuntimeLadderDec
   }
 
   if (!bunDeclined && !bunPresent) {
-    messages.push(
-      "Runtime ladder: Bun not found — install for better host RSS/latency vs Node."
-    );
+    messages.push("Runtime ladder: Bun not found — install for better host RSS/latency vs Node.");
     messages.push(INSTALL_BUN_HINT);
     messages.push(
       "Run `clawql doctor` to install, or set CLAWQL_DECLINE_BUN=1 to refuse and continue on Node."
@@ -220,7 +216,8 @@ export function runtimePreferenceLadderLayer(
 }
 
 export function formatRuntimeLadderForLog(decision: RuntimeLadderDecision): string {
-  return [`[clawql-runtime] ${decision.honesty}`, ...decision.messages.map((m) => `[clawql-runtime] ${m}`)].join(
-    "\n"
-  );
+  return [
+    `[clawql-runtime] ${decision.honesty}`,
+    ...decision.messages.map((m) => `[clawql-runtime] ${m}`),
+  ].join("\n");
 }

@@ -451,15 +451,15 @@ Auditor note: you can still use `sqlite3` on bucket LTX artifacts to inspect **c
 
 ### WORM event types
 
-| WORM event              | Includes                                            |
-| ----------------------- | --------------------------------------------------- |
-| `STREAM_EVENT_RECEIVED` | topic, significance result, payload hash            |
-| `DO_CREATED`            | virtual key ID + subscription ID + event hash       |
+| WORM event              | Includes                                              |
+| ----------------------- | ----------------------------------------------------- |
+| `STREAM_EVENT_RECEIVED` | topic, significance result, payload hash              |
+| `DO_CREATED`            | virtual key ID + subscription ID + event hash         |
 | `INFERENCE_CALL`        | virtual key ID + model tier + tokens + cache hit/miss |
-| `TOOL_CALL`             | virtual key ID + tool name + ATR check result       |
-| `BUDGET_EXHAUSTED`      | virtual key ID + tokens consumed                    |
-| `DO_DESTROYED`          | virtual key ID + exit reason + total spend          |
-| `VIRTUAL_KEY_EXPIRED`   | key ID (from inference gateway)                     |
+| `TOOL_CALL`             | virtual key ID + tool name + ATR check result         |
+| `BUDGET_EXHAUSTED`      | virtual key ID + tokens consumed                      |
+| `DO_DESTROYED`          | virtual key ID + exit reason + total spend            |
+| `VIRTUAL_KEY_EXPIRED`   | key ID (from inference gateway)                       |
 
 On **Cloudflare**, DO storage is the source of truth with platform replication. On **Kubernetes**, WORM continues to use Postgres (multi-replica) or JSONL (single replica) as in v0.1 — LTX applies specifically to the celld backend.
 
@@ -475,14 +475,14 @@ Every agent session is a potential **training example with cryptographic provena
 
 OpenBenchTrace (OBT) is the **collection envelope**. RTP is the **reasoning schema** (six-node sequence). They compose: OBT wraps RTP.
 
-| RTP node      | Streams / DO source                                                                      |
-| ------------- | ---------------------------------------------------------------------------------------- |
-| **Intent**    | Subscription `prompt` + summarized event                                                 |
-| **Retrieval** | `memory_recall` / `search` tool calls before reasoning                                   |
+| RTP node      | Streams / DO source                                                                        |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| **Intent**    | Subscription `prompt` + summarized event                                                   |
+| **Retrieval** | `memory_recall` / `search` tool calls before reasoning                                     |
 | **Reasoning** | Tool-selection chain + clawql-inference metadata (model tier, cache hit, tokens, model id) |
-| **Execution** | Tool calls with arguments (also in WORM)                                                 |
-| **Delta**     | State before/after via WORM hashes                                                       |
-| **Verdict**   | Session outcome (converged / timeout / budget) + optional Ouroboros evaluator            |
+| **Execution** | Tool calls with arguments (also in WORM)                                                   |
+| **Delta**     | State before/after via WORM hashes                                                         |
+| **Verdict**   | Session outcome (converged / timeout / budget) + optional Ouroboros evaluator              |
 
 WORM is append-only **forensic** evidence. RTP is structured **training** data. Both are written; destinations differ.
 
@@ -712,21 +712,21 @@ Operational detail: [`clawql-celld.md`](./clawql-celld.md) §7.
 
 ## 12. Package dependencies
 
-| Package / system     | Role in Streams                                                                          |
-| -------------------- | ---------------------------------------------------------------------------------------- |
-| `clawql-streams`     | Coordination: subscriptions, filter, spawn, MCP `stream_*` (**planned**)                 |
-| `clawql-core`        | **In-process** `streams-slim` (audit/cache/hash-chain); full barrel stays off-Worker     |
-| `mcp-api-adapter`    | **Out of process** — `fetch(CLAWQL_MCP_ADAPTER_URL)` REST `POST /{tool}`                 |
+| Package / system     | Role in Streams                                                                                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clawql-streams`     | Coordination: subscriptions, filter, spawn, MCP `stream_*` (**planned**)                                                                                |
+| `clawql-core`        | **In-process** `streams-slim` (audit/cache/hash-chain); full barrel stays off-Worker                                                                    |
+| `mcp-api-adapter`    | **Out of process** — `fetch(CLAWQL_MCP_ADAPTER_URL)` REST `POST /{tool}`                                                                                |
 | `clawql-mcp` / Core  | **Default in-isolate** slim search/execute via **CoreToolsDO**; `memory_*` + full catalog via `fetch(CLAWQL_MCP_URL)` (Bun host preferred when escaped) |
-| `clawql-inference`   | **Out of process** — `fetch()` only; model escalation, virtual keys, call store, cache                |
-| celld                | Self-hosted Durable Objects runtime (Apache 2.0, Workers API)                            |
-| `clawql-cellrt`      | ClawQL-owned Rust + Wasmtime cell runtime (planned)                                      |
-| Cloudflare Workers   | Hosted Durable Objects path                                                              |
-| NATS JetStream       | Durable event buffer for Kubernetes HPA path                                             |
-| `clawql-payments`    | `DeductionService` for credit-gated agent sessions                                       |
-| `clawql-ouroboros`   | Optional ensemble validation before kinetic actions                                      |
-| Panguard / ATR       | Tool-scope enforcement inside agent sessions                                             |
-| OpenBenchTrace / RTP | Training-data emission                                                                   |
+| `clawql-inference`   | **Out of process** — `fetch()` only; model escalation, virtual keys, call store, cache                                                                  |
+| celld                | Self-hosted Durable Objects runtime (Apache 2.0, Workers API)                                                                                           |
+| `clawql-cellrt`      | ClawQL-owned Rust + Wasmtime cell runtime (planned)                                                                                                     |
+| Cloudflare Workers   | Hosted Durable Objects path                                                                                                                             |
+| NATS JetStream       | Durable event buffer for Kubernetes HPA path                                                                                                            |
+| `clawql-payments`    | `DeductionService` for credit-gated agent sessions                                                                                                      |
+| `clawql-ouroboros`   | Optional ensemble validation before kinetic actions                                                                                                     |
+| Panguard / ATR       | Tool-scope enforcement inside agent sessions                                                                                                            |
+| OpenBenchTrace / RTP | Training-data emission                                                                                                                                  |
 
 ```text
 clawql-streams coordination (planned package; Lab 5b skeleton today)

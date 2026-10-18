@@ -4,14 +4,14 @@ How to put the remaining [dominance roadmap](./dominance-roadmap.md) peers on a 
 
 ## Status snapshot (2026-10-17)
 
-| Peer | Ship form | Equal-arm path | Blocker |
-| --- | --- | --- | --- |
-| **Bifrost** | OSS binary (`npx @maximhq/bifrost`) | `MT_ARMS=…,bifrost,bifrost_codemode` on pets multiturn | Tokens **measured** (Code Mode 2.25× / classic 3.95×). Still need p99 concurrency + governance depth. |
-| **Obot** | OSS Docker / Helm ([obot-platform/obot](https://github.com/obot-platform/obot)) | Equal-arm catalog Streamable HTTP → catalog entry → `OBOT_MCP_URL=/mcp-connect/…` | **On board** — classic **3.95×** vs ClawQL (same fat aggregator path as agentgateway); PASS task_success. |
-| **TrueFoundry** | Enterprise / private Helm (`tfy-llm-gateway`) | Needs tenant + `TFY_API_KEY` gateway plane | **SaaS/credentials** — cannot smoke without a TF org. Document governance bake-off once credentials exist. |
-| **Uber MCP Gateway** | Internal only (blog design) | Technique bake-off: Omni discovery + response projection vs ClawQL search/`where`/`fields` | **Not OSS** — implement a *technique peer* harness (projection field trim), not their binary. |
-| **ContextForge** | Prior nested boards | Direct `/pets` virtualization (no MCPJungle nest) | Nested adapter still inflates; direct arm next. |
-| **agentgateway / Executor** | Already measured | Re-pin latest binaries after compact JSON | Version rot. |
+| Peer                        | Ship form                                                                       | Equal-arm path                                                                             | Blocker                                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| **Bifrost**                 | OSS binary (`npx @maximhq/bifrost`)                                             | `MT_ARMS=…,bifrost,bifrost_codemode` on pets multiturn                                     | Tokens **measured** (Code Mode 2.25× / classic 3.95×). Still need p99 concurrency + governance depth.      |
+| **Obot**                    | OSS Docker / Helm ([obot-platform/obot](https://github.com/obot-platform/obot)) | Equal-arm catalog Streamable HTTP → catalog entry → `OBOT_MCP_URL=/mcp-connect/…`          | **On board** — classic **3.95×** vs ClawQL (same fat aggregator path as agentgateway); PASS task_success.  |
+| **TrueFoundry**             | Enterprise / private Helm (`tfy-llm-gateway`)                                   | Needs tenant + `TFY_API_KEY` gateway plane                                                 | **SaaS/credentials** — cannot smoke without a TF org. Document governance bake-off once credentials exist. |
+| **Uber MCP Gateway**        | Internal only (blog design)                                                     | Technique bake-off: Omni discovery + response projection vs ClawQL search/`where`/`fields` | **Not OSS** — implement a _technique peer_ harness (projection field trim), not their binary.              |
+| **ContextForge**            | Prior nested boards                                                             | Direct `/pets` virtualization (no MCPJungle nest)                                          | Nested adapter still inflates; direct arm next.                                                            |
+| **agentgateway / Executor** | Already measured                                                                | Re-pin latest binaries after compact JSON                                                  | Version rot.                                                                                               |
 
 ## Obot local recipe (measured OSS peer)
 
@@ -78,12 +78,12 @@ Until then status stays **Not on board** with an explicit credentials blocker.
 
 **What “builds on celld” means today**
 
-| Surface | Relationship to celld | Claimable now? |
-| --- | --- | --- |
-| **ClawQL Streams** | Self-hosted Durable Objects on pinned **celld v0.4.0** (LTX → your bucket) | **Yes** — install/dev/deploy docs + Labs |
-| **Durable programs** | celld-shaped file (JSONL) journal stand-in; pin/readiness CLI | **Yes** as stand-in — not isolate crash survival |
+| Surface                                       | Relationship to celld                                                                                                                                     | Claimable now?                                                       |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| **ClawQL Streams**                            | Self-hosted Durable Objects on pinned **celld v0.4.0** (LTX → your bucket)                                                                                | **Yes** — install/dev/deploy docs + Labs                             |
+| **Durable programs**                          | celld-shaped file (JSONL) journal stand-in; pin/readiness CLI                                                                                             | **Yes** as stand-in — not isolate crash survival                     |
 | **Core search/execute** (pets publish boards) | **Default celld** `CoreToolsDO` (slim in-isolate); host MCP (**Bun** preferred) when unreachable or `CLAWQL_CORE_IN_CELLD=0` / `CLAWQL_FORCE_HOST_CORE=1` | **Yes** for slim in-isolate; full catalog/vault/gRPC on Bun host MCP |
-| **Core (default publish boards)** | Never loads celld unless Core-in-celld flag | Hot path **independent** until you opt into isolate |
+| **Core (default publish boards)**             | Never loads celld unless Core-in-celld flag                                                                                                               | Hot path **independent** until you opt into isolate                  |
 
 **CLI**
 
@@ -107,7 +107,7 @@ cd docs/examples/streams-celld && STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:c
 clawql security inject --mode direct|indirect|multistep [--json]
 ```
 
-- `clawql security celld` — pin readiness / kill-node *eligibility* (does not spawn celld).
+- `clawql security celld` — pin readiness / kill-node _eligibility_ (does not spawn celld).
 - `clawql doctor` — surfaces celld pin stand-in vs `isolateReady` (warns on incomplete pin).
 - **Core-in-celld (default):** Worker `POST /mcp` → `CoreToolsDO`; host MCP (Bun preferred) probes `DEFAULT_CORE_CELLD_MCP_URL` and proxies search/execute when reachable (slim catalog honesty).
 - `clawql security inject` — in-process Panguard drills (§24).
@@ -120,11 +120,11 @@ Publish-grade artifact: [`celld-hotpath-ab/celld-hotpath-ab-10k.json`](./celld-h
 
 Same equal-arm OpenAPI `execute` → `listPets` as the gateway-multi publish board (n=10k):
 
-| Variant | e2e p50 / p99 (ms) | gateway_cost p50 / p99 | vs baseline gateway p50 |
-| --- | ---: | ---: | ---: |
-| **A** baseline (publish shape) | 0.73 / 1.98 | **0.60 / 1.68** | — |
-| **B** + `CLAWQL_ENABLE_DURABLE_PROGRAMS=1` | 0.73 / 2.05 | 0.61 / 1.78 | **+2.7%** |
-| **C** + celld pin + `CLAWQL_PROGRAM_CELLD_ISOLATE=1` | 0.73 / 1.91 | 0.61 / 1.69 | **+2.7%** |
+| Variant                                              | e2e p50 / p99 (ms) | gateway_cost p50 / p99 | vs baseline gateway p50 |
+| ---------------------------------------------------- | -----------------: | ---------------------: | ----------------------: |
+| **A** baseline (publish shape)                       |        0.73 / 1.98 |        **0.60 / 1.68** |                       — |
+| **B** + `CLAWQL_ENABLE_DURABLE_PROGRAMS=1`           |        0.73 / 2.05 |            0.61 / 1.78 |               **+2.7%** |
+| **C** + celld pin + `CLAWQL_PROGRAM_CELLD_ISOLATE=1` |        0.73 / 1.91 |            0.61 / 1.69 |               **+2.7%** |
 
 Gate (≤15% p50 / ≤25% p99 gateway regress): **PASS**. Enabling durable programs and the celld pin/isolate env on the Core process does **not** move publish latency outside noise — the pets board never calls celld.
 

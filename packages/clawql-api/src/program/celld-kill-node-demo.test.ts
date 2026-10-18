@@ -22,9 +22,7 @@ describe("celld kill-node demo report", () => {
     expect(report.isolateKillNodeEligible).toBe(false);
     expect(report.honesty).toContain("File-journal stand-in");
     expect(report.nextSteps.some((s) => s.includes("CELLD_VERSION"))).toBe(true);
-    expect(report.nextSteps.some((s) => s.includes("do not claim celld isolate crash"))).toBe(
-      true
-    );
+    expect(report.nextSteps.some((s) => s.includes("do not claim celld isolate crash"))).toBe(true);
     expect(report.standInEvidencePassed).toBe(false);
   });
 
@@ -55,9 +53,8 @@ describe("celld kill-node demo report", () => {
         return yield* svc.report();
       }).pipe(
         Effect.provide(
-          celldKillNodeDemoLayer(
-            { CELLD_VERSION: "v0.3.0" },
-            () => Effect.succeed({ present: false, version: null, path: null })
+          celldKillNodeDemoLayer({ CELLD_VERSION: "v0.3.0" }, () =>
+            Effect.succeed({ present: false, version: null, path: null })
           )
         )
       )

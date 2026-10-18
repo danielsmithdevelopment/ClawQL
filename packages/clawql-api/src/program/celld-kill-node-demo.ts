@@ -50,9 +50,7 @@ export function celldKillNodeDemoReportEffect(
     const pin = yield* celldPinStatusEffect(env, probe);
     const standInDemoAvailable = true;
     const isolateKillNodeEligible = pin.isolateReady;
-    const standInEvidence = loadKillNodeStandinEvidence(
-      defaultKillNodeEvidencePath(env)
-    );
+    const standInEvidence = loadKillNodeStandinEvidence(defaultKillNodeEvidencePath(env));
     const standInEvidencePassed = standInEvidence?.ok === true;
     const nextSteps: string[] = [];
     if (!standInEvidencePassed) {

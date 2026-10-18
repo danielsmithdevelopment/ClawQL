@@ -25,10 +25,7 @@ import {
 export const searchToolZodShape = {
   query: z.string().describe(SEARCH_QUERY_DESCRIPTION),
   limit: z.number().int().min(1).max(50).default(5).describe(SEARCH_LIMIT_DESCRIPTION),
-  detail: z
-    .enum(["compact", "full"])
-    .default("compact")
-    .describe(SEARCH_DETAIL_DESCRIPTION),
+  detail: z.enum(["compact", "full"]).default("compact").describe(SEARCH_DETAIL_DESCRIPTION),
 } as const;
 
 /** Zod raw shape for MCP `execute` — mirrors {@link ExecuteInputSchema}. */

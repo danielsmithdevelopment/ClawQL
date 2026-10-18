@@ -64,9 +64,7 @@ export function celldDoctorChecksFromReport(
     return checks;
   }
 
-  const binaryNote = pin.binaryPresent
-    ? ` binary ${pin.binaryVersion ?? "unknown"} on PATH`
-    : "";
+  const binaryNote = pin.binaryPresent ? ` binary ${pin.binaryVersion ?? "unknown"} on PATH` : "";
 
   if (!prefer) {
     checks.push({

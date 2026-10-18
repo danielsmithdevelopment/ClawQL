@@ -89,8 +89,7 @@ export async function probeCoreCelldReachable(
   }
 
   const probeMs = Number(env.CLAWQL_CORE_CELLD_PROBE_MS ?? DEFAULT_PROBE_TIMEOUT_MS);
-  const timeoutMs =
-    Number.isFinite(probeMs) && probeMs > 0 ? probeMs : DEFAULT_PROBE_TIMEOUT_MS;
+  const timeoutMs = Number.isFinite(probeMs) && probeMs > 0 ? probeMs : DEFAULT_PROBE_TIMEOUT_MS;
 
   let ok = false;
   try {
@@ -177,7 +176,9 @@ export function callCoreCelldToolEffect(
       catch: (e) => (e instanceof Error ? e : new Error(String(e))),
     });
     if (!res.ok) {
-      return yield* Effect.fail(new Error(`celld Core proxy HTTP ${res.status}: ${text.slice(0, 300)}`));
+      return yield* Effect.fail(
+        new Error(`celld Core proxy HTTP ${res.status}: ${text.slice(0, 300)}`)
+      );
     }
     let rpc: {
       result?: { content?: { type: string; text?: string }[]; isError?: boolean };

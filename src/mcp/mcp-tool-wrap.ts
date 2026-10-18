@@ -104,8 +104,8 @@ type PaymentToolResultErr = {
 function looksLikePaymentToolResultError(err: unknown): err is PaymentToolResultErr {
   return Boolean(
     err &&
-      typeof err === "object" &&
-      typeof (err as { toToolResult?: unknown }).toToolResult === "function"
+    typeof err === "object" &&
+    typeof (err as { toToolResult?: unknown }).toToolResult === "function"
   );
 }
 

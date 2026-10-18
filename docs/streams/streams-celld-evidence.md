@@ -10,28 +10,28 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 
 ## Architecture under test (shipped)
 
-| Layer                                                   | In cell bundle?      | How it is proven                                                           |
-| ------------------------------------------------------- | -------------------- | -------------------------------------------------------------------------- |
-| `clawql-core/streams-slim` (audit / cache / hash-chain) | **Yes**              | Unit tests + webhook smoke assertions                                      |
-| Significance filter (`always`/`never`/`threshold`/`pattern`/`rate`/`composite`) | **Yes** | Unit tests + smoke `filtered` / rate 3rd-event spawn / composite AND |
-| Session TTL `setAlarm` / `alarm()`                      | **Yes**              | Smoke `exitReason:timeout` after short TTL                                 |
-| Audit LTX flush (`audit:ring`, `audit:seq:*`)           | **Yes** (DO storage) | Smoke keys — **session bookkeeping only**, not compliance WORM (see below) |
-| **CoreToolsDO** slim search/execute                     | **Yes** (default)    | Mock + full-stack smoke `celld-isolate`; escape `CLAWQL_CORE_IN_CELLD=0` → host MCP (Bun) |
-| Host `clawql-audit` via `CLAWQL_AUDIT_WORM_URL`         | **No** — `fetch`     | `worm-fetch.test.mjs` + full-stack `SESSION_START` + `/chain/verify`       |
-| Streamable HTTP MCP (`CLAWQL_MCP_URL`)                  | **No** — `fetch`     | `mcp-fetch.test.mjs` + mock smoke + **full-stack** real MCP                |
-| Lab 5b OpenAPI pack (`listPets` + `streams.session.noop`) | **Host file**      | `openapi-pack.test.mjs` + `smoke-host-mcp-pack.sh` + full-stack `CLAWQL_SPEC_PATH` |
-| mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)         | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real                |
-| Inference multi-turn skeleton                           | **No** — `fetch`     | Smoke + full-stack: bind `POST /v1/keys/bind` + 2× `POST /v1/messages` (`turns:2`, `virtualKeyBound`); TTL expire-on-destroy → `virtualKeyExpired` |
-| Lab VK budget / expire stub (local DeductionService stand-in) | **No** — stub HTTP | `bash docs/examples/streams-celld/scripts/smoke-vk-budget.sh` → bind → 402 ceiling → expire → 401 |
-| ADR 0015 kill-node stand-in (file-journal SIGKILL)      | **Host Node**        | `npm run demo:kill-node-standin` → `docs/benchmarks/program-kill-node-standin/evidence.json` — **not** celld isolate crash survival |
-| Helm celld StatefulSet / probes                         | Chart only           | `make helm-celld-template-tests`                                           |
-| Fleet LTX / multi-node diagnose                         | Manual               | `docs/examples/idp/streams-celld/README.md`                                |
-| `clawql-streams` package / `stream_*` tools             | **Not shipped**      | Spec-only — see Streams §15                                                |
-| Full DeductionService / model-escalation spend ceilings             | **Not shipped**      | Lab stub bind/budget/expire only; real ledger + model escalation on clawql-inference / clawql-payments |
-| celld isolate kill-node (ProgramCellDO + SIGKILL celld) | **Not shipped**      | Stand-in proves file-journal resume only — do not claim V8-isolate / LTX crash survival |
-| Operator mesh denial → host WORM                        | **Package unit**     | `clawql-k8s-operator` `worm-append` + `appendMeshDenialToHostWorm` (no live Istio) |
-| cellrt / TEE / QR stream source                         | **Not shipped**      | Spec drafts under `docs/streams/`                                          |
-| AWS Cost Explorer / live cloud cost measurement         | **Deferred**         | Local-only closeout; no paid AWS keys in Lab 5b gates                      |
+| Layer                                                                           | In cell bundle?      | How it is proven                                                                                                                                   |
+| ------------------------------------------------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clawql-core/streams-slim` (audit / cache / hash-chain)                         | **Yes**              | Unit tests + webhook smoke assertions                                                                                                              |
+| Significance filter (`always`/`never`/`threshold`/`pattern`/`rate`/`composite`) | **Yes**              | Unit tests + smoke `filtered` / rate 3rd-event spawn / composite AND                                                                               |
+| Session TTL `setAlarm` / `alarm()`                                              | **Yes**              | Smoke `exitReason:timeout` after short TTL                                                                                                         |
+| Audit LTX flush (`audit:ring`, `audit:seq:*`)                                   | **Yes** (DO storage) | Smoke keys — **session bookkeeping only**, not compliance WORM (see below)                                                                         |
+| **CoreToolsDO** slim search/execute                                             | **Yes** (default)    | Mock + full-stack smoke `celld-isolate`; escape `CLAWQL_CORE_IN_CELLD=0` → host MCP (Bun)                                                          |
+| Host `clawql-audit` via `CLAWQL_AUDIT_WORM_URL`                                 | **No** — `fetch`     | `worm-fetch.test.mjs` + full-stack `SESSION_START` + `/chain/verify`                                                                               |
+| Streamable HTTP MCP (`CLAWQL_MCP_URL`)                                          | **No** — `fetch`     | `mcp-fetch.test.mjs` + mock smoke + **full-stack** real MCP                                                                                        |
+| Lab 5b OpenAPI pack (`listPets` + `streams.session.noop`)                       | **Host file**        | `openapi-pack.test.mjs` + `smoke-host-mcp-pack.sh` + full-stack `CLAWQL_SPEC_PATH`                                                                 |
+| mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)                                 | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real                                                                                        |
+| Inference multi-turn skeleton                                                   | **No** — `fetch`     | Smoke + full-stack: bind `POST /v1/keys/bind` + 2× `POST /v1/messages` (`turns:2`, `virtualKeyBound`); TTL expire-on-destroy → `virtualKeyExpired` |
+| Lab VK budget / expire stub (local DeductionService stand-in)                   | **No** — stub HTTP   | `bash docs/examples/streams-celld/scripts/smoke-vk-budget.sh` → bind → 402 ceiling → expire → 401                                                  |
+| ADR 0015 kill-node stand-in (file-journal SIGKILL)                              | **Host Node**        | `npm run demo:kill-node-standin` → `docs/benchmarks/program-kill-node-standin/evidence.json` — **not** celld isolate crash survival                |
+| Helm celld StatefulSet / probes                                                 | Chart only           | `make helm-celld-template-tests`                                                                                                                   |
+| Fleet LTX / multi-node diagnose                                                 | Manual               | `docs/examples/idp/streams-celld/README.md`                                                                                                        |
+| `clawql-streams` package / `stream_*` tools                                     | **Not shipped**      | Spec-only — see Streams §15                                                                                                                        |
+| Full DeductionService / model-escalation spend ceilings                         | **Not shipped**      | Lab stub bind/budget/expire only; real ledger + model escalation on clawql-inference / clawql-payments                                             |
+| celld isolate kill-node (ProgramCellDO + SIGKILL celld)                         | **Not shipped**      | Stand-in proves file-journal resume only — do not claim V8-isolate / LTX crash survival                                                            |
+| Operator mesh denial → host WORM                                                | **Package unit**     | `clawql-k8s-operator` `worm-append` + `appendMeshDenialToHostWorm` (no live Istio)                                                                 |
+| cellrt / TEE / QR stream source                                                 | **Not shipped**      | Spec drafts under `docs/streams/`                                                                                                                  |
+| AWS Cost Explorer / live cloud cost measurement                                 | **Deferred**         | Local-only closeout; no paid AWS keys in Lab 5b gates                                                                                              |
 
 ### Why full product is out-of-process (not “missing”)
 
@@ -123,12 +123,12 @@ Follow [`docs/examples/idp/streams-celld/README.md`](../../docs/examples/idp/str
 
 ## CI wiring
 
-| Check                                     | Where                                                    |
-| ----------------------------------------- | -------------------------------------------------------- |
-| Helm celld templates                      | `make lint-k8s-manifests` → CI `ShellCheck & actionlint` |
-| streams-slim + fetch/filter/catalog tests + bundle-check | CI job **Streams celld evidence**                 |
-| Mock `smoke.sh` + `smoke:core-in-celld` with celld | CI job **Streams celld smoke (celld)**                  |
-| Real MCP + adapter + host WORM            | CI job **Streams celld full-stack** (permanent)          |
+| Check                                                    | Where                                                    |
+| -------------------------------------------------------- | -------------------------------------------------------- |
+| Helm celld templates                                     | `make lint-k8s-manifests` → CI `ShellCheck & actionlint` |
+| streams-slim + fetch/filter/catalog tests + bundle-check | CI job **Streams celld evidence**                        |
+| Mock `smoke.sh` + `smoke:core-in-celld` with celld       | CI job **Streams celld smoke (celld)**                   |
+| Real MCP + adapter + host WORM                           | CI job **Streams celld full-stack** (permanent)          |
 
 ---
 

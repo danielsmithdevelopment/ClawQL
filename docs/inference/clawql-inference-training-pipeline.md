@@ -516,13 +516,13 @@ CLAWQL_ARGO_SERVICE_ACCOUNT=clawql-training-sa
 
 ## 14. Implementation status
 
-| Surface                                                  | Status                                                |
-| -------------------------------------------------------- | ----------------------------------------------------- |
-| This specification                                       | Draft v0.1                                            |
-| Types + TraceFormatter + rewards + Argo workflow builder | Scaffold in `packages/clawql-inference/src/training/` |
-| Unsloth/TRL trainers, MCP tools, live Argo submit        | Not yet                                               |
-| Domain-adapter `tier-map.json` object form + model-escalation load    | Target; today's map is string aliases                 |
-| Harvey LAB sweep → training data                         | Blocked on LAB resume (Phases A–E)                    |
+| Surface                                                            | Status                                                |
+| ------------------------------------------------------------------ | ----------------------------------------------------- |
+| This specification                                                 | Draft v0.1                                            |
+| Types + TraceFormatter + rewards + Argo workflow builder           | Scaffold in `packages/clawql-inference/src/training/` |
+| Unsloth/TRL trainers, MCP tools, live Argo submit                  | Not yet                                               |
+| Domain-adapter `tier-map.json` object form + model-escalation load | Target; today's map is string aliases                 |
+| Harvey LAB sweep → training data                                   | Blocked on LAB resume (Phases A–E)                    |
 
 ---
 
