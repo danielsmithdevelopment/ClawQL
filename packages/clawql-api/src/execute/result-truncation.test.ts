@@ -17,6 +17,9 @@ describe("execute result truncation", () => {
     const parsed = JSON.parse(text) as { ok: boolean; truncated?: boolean };
     expect(parsed.ok).toBe(true);
     expect(parsed.truncated).toBeUndefined();
+    // Agent-facing: never pretty-print (indentation is context tax).
+    expect(text.includes("\n")).toBe(false);
+    expect(text).toBe(JSON.stringify({ ok: true, items: [1, 2, 3] }));
   });
 
   it("fail-closed envelope when over budget", async () => {

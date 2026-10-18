@@ -21,6 +21,7 @@ export * from "./mcp-tool-registry.js";
 export * from "./plugin-registry.js";
 export * from "./plugins/index.js";
 export * from "./program/index.js";
+export * from "./security/injection-drills.js";
 export * from "./proxy/index.js";
 export * from "./schema/index.js";
 export * from "./search/index.js";

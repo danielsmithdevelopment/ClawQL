@@ -96,6 +96,30 @@ describe("spec-search", () => {
     expect(json.countsBySource.operation).toBe(20);
   });
 
+  it("compact detail omits parameters and minifies JSON", () => {
+    const operations: Operation[] = [
+      {
+        ...baseOp,
+        id: "svc.list",
+        description: "list widgets",
+        parameters: {
+          limit: { location: "query", required: false, type: "integer", description: "n" },
+        },
+      } as Operation,
+    ];
+    const hits = searchOperations(operations, "widget", 1);
+    const compact = JSON.parse(formatSearchResults(hits, undefined, "compact")) as {
+      results: Array<Record<string, unknown>>;
+    };
+    const full = JSON.parse(formatSearchResults(hits, undefined, "full")) as {
+      results: Array<Record<string, unknown>>;
+    };
+    expect(compact.results[0]?.signature).toContain("limit?");
+    expect(compact.results[0]?.parameters).toBeUndefined();
+    expect(full.results[0]?.parameters).toBeDefined();
+    expect(formatSearchResults(hits, undefined, "compact").includes("\n")).toBe(false);
+  });
+
   it("reports COMPLETE when all matches fit the limit", () => {
     const operations: Operation[] = Array.from({ length: 3 }, (_, i) => ({
       ...baseOp,

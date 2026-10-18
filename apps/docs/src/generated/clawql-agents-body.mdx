@@ -40,7 +40,7 @@ This spec catalogs **seven** agents (adds **Cline**). Agents OpenBench v0.1 is *
 
 ## 1. Purpose
 
-`clawql-agents` is the ClawQL monorepo package that provides hardened adapter integrations for the seven open-source agents supported in RockYourLobster. Each adapter connects an agent to ClawQL's full infrastructure stack — Panguard enforcement, WORM audit trail, vault memory, PAL routing, and clawql-tee attestation — without requiring changes to the agent's core code.
+`clawql-agents` is the ClawQL monorepo package that provides hardened adapter integrations for the seven open-source agents supported in RockYourLobster. Each adapter connects an agent to ClawQL's full infrastructure stack — Panguard enforcement, WORM audit trail, vault memory, model escalation, and clawql-tee attestation — without requiring changes to the agent's core code.
 
 The package provides:
 
@@ -716,7 +716,7 @@ All agent dependencies are optional peer dependencies. Installing `clawql-agents
 
 This package does not replace the agents. It wraps them. A user who installs the ClawQL OpenClaw adapter still runs OpenClaw. ClawQL sits between OpenClaw and the tools it calls — enforcing scope, logging actions, providing memory, and routing inference. The agent's own capabilities, skill ecosystem, and user interface are unchanged.
 
-This package does not modify agent weights or fine-tune agent models. The adapters operate at the tool call and session management layer. Model capability is unchanged. Behavioral differences between the baseline and ClawQL arms of the Agents OpenBench are attributable entirely to infrastructure — Panguard enforcement, vault memory, and PAL routing — not to model differences.
+This package does not modify agent weights or fine-tune agent models. The adapters operate at the tool call and session management layer. Model capability is unchanged. Behavioral differences between the baseline and ClawQL arms of the Agents OpenBench are attributable entirely to infrastructure — Panguard enforcement, vault memory, and model escalation — not to model differences.
 
 ---
 

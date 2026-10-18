@@ -41,8 +41,10 @@ function utf8ByteLength(text: string): number {
 }
 
 /**
- * Serialize execute success data. Under budget → pretty JSON as today.
- * Over budget → fail-closed envelope with `truncated: true` (never a silent cut).
+ * Serialize execute success data for the model.
+ * Always compact JSON — indentation is pure context tax (same class of mistake as
+ * Executor v1 pretty-printed tool dumps). Over budget → fail-closed envelope with
+ * `truncated: true` (never a silent cut).
  */
 export const serializeExecuteResultEffect = (
   data: unknown,
@@ -50,7 +52,7 @@ export const serializeExecuteResultEffect = (
 ): Effect.Effect<string> =>
   Effect.gen(function* () {
     const limit = options?.limit ?? (yield* executeResultCharLimitEffect(options?.env));
-    const full = JSON.stringify(data, null, 2);
+    const full = JSON.stringify(data);
     const byteCount = utf8ByteLength(full);
     if (full.length <= limit) {
       return full;
@@ -70,7 +72,7 @@ export const serializeExecuteResultEffect = (
         marker: EXECUTE_TRUNCATION_MARKER,
         preview,
       };
-      out = JSON.stringify(envelope, null, 2);
+      out = JSON.stringify(envelope);
       if (out.length <= limit) return out;
       const overflow = out.length - limit;
       previewBudget = Math.max(0, previewBudget - overflow - 32);

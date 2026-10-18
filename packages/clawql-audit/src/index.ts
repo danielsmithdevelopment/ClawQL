@@ -52,7 +52,8 @@ export {
 export { applyWORMFilter, matchesWORMFilter } from "./query/filter.js";
 export { exportToQR, type QRExportConfig, type QRExportResult } from "./query/qr-export.js";
 export type { LocalStorageBackend, StorageBackend } from "./storage/types.js";
-export { MemoryBackend } from "./storage/memory.js";
+export { MemoryBackend, memoryBackendMaxEntriesFromEnv } from "./storage/memory.js";
+export type { MemoryBackendOptions } from "./storage/memory.js";
 export { SQLiteBackend, type SQLiteBackendOptions } from "./storage/sqlite.js";
 export { S3Backend, type S3BackendConfig } from "./storage/s3.js";
 export { PostgresBackend, type PostgresBackendOptions } from "./storage/postgres.js";

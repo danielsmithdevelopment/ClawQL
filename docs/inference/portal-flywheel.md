@@ -31,7 +31,7 @@ Production traffic
   → Presidio PII scrub + WORM dataset manifest
   → Fine-tuning job (OpenAI / Anthropic / local QLoRA)
   → Custom model registered in tier-map.json (Frugal)
-  → PAL routing prefers the custom model for matching tasks
+  → model escalation prefers the custom model for matching tasks
 ```
 
 **With PorTAL (intended):**
@@ -46,12 +46,12 @@ Production traffic
 
 ### What does **not** change
 
-| Layer                        | Unchanged?                 |
-| ---------------------------- | -------------------------- |
-| Gateway / PAL routing (TS)   | Yes                        |
-| vLLM / PEFT serving          | Yes — standard LoRA load   |
-| WORM audit for inference     | Yes — richer, not replaced |
-| OKF vault as training source | Yes — gains v0.2 filters   |
+| Layer                           | Unchanged?                 |
+| ------------------------------- | -------------------------- |
+| Gateway / model escalation (TS) | Yes                        |
+| vLLM / PEFT serving             | Yes — standard LoRA load   |
+| WORM audit for inference        | Yes — richer, not replaced |
+| OKF vault as training source    | Yes — gains v0.2 filters   |
 
 PorTAL is a **Python training/export** concern. ClawQL’s TypeScript gateway continues to route to models that already have LoRAs mounted. No new serving infrastructure.
 

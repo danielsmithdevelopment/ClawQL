@@ -111,6 +111,31 @@ describe("BurstOperatorService", () => {
     expect(bridged.sessionId).toBe("sess-1");
   });
 
+  it("appendMeshDenialToHostWorm defers when URL unset", async () => {
+    const prev = process.env.CLAWQL_AUDIT_WORM_URL;
+    delete process.env.CLAWQL_AUDIT_WORM_URL;
+    delete process.env.CLAWQL_WORM_HTTP_URL;
+    try {
+      const out = await runBurstOperatorEffect(
+        Effect.gen(function* () {
+          const svc = yield* BurstOperatorService;
+          return yield* svc.appendMeshDenialToHostWorm({
+            requestId: "r-defer",
+            sourceIdentity: "spiffe://cell/x",
+            destination: "audit-worm",
+            layer: "ztunnel",
+            reason: "deny",
+          });
+        })
+      );
+      expect(out.bridged.wormType).toBe("MESH_POLICY_DENIED");
+      expect(out.append.deferred).toBe(true);
+      expect(out.append.ok).toBe(false);
+    } finally {
+      if (prev !== undefined) process.env.CLAWQL_AUDIT_WORM_URL = prev;
+    }
+  });
+
   it("detectDrift through Tag", async () => {
     const report = await Effect.runPromise(
       Effect.gen(function* () {

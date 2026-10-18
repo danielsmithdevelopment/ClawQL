@@ -428,7 +428,7 @@ Types live in `packages/clawql-k8s-operator` (draft).
 - No dollar figure in Section 3 should be read as ClawQL's own measured production cost — every figure there is derived from current, real, publicly documented rate cards, applied to a hypothetical load model. Real costs depend on your actual subscription distribution, actual cell memory footprint, and actual burst frequency. **§13 is the designed fix:** Cost Explorer numbers from the three-arm run replace projections.
 - celld's cold-start latency inherits from V8 isolate architecture in principle; it has not yet been measured on ClawQL's own AWS deployment specifically (see Section 12 / §13).
 - Istio ambient mesh's own ztunnel startup time on a freshly-provisioned node has not yet been measured as part of an end-to-end burst test (see Section 12 / §13).
-- The `clawql-k8s-operator` as described here is a specification plus Effect type/service scaffold, not yet a shipped controller.
+- The `clawql-k8s-operator` as described here is a specification plus Effect type/service scaffold, not yet a shipped controller. **Local advance (§8 denial bridge):** `appendMeshDenialToHostWorm` / `worm-append.ts` shape + POST host `clawql-audit` `/entries` (unit-tested; deferred when `CLAWQL_AUDIT_WORM_URL` unset). Live Istio access-log → tip-continuous Arm A correlation remains a §12/§13 cluster item.
 - Session-aware cell placement (Section 8.2 Modal-sourced behaviors) is specified and typed in WORM entry unions, not yet a live placement controller — variance vs Modal's "strongly sub-Poisson" result is a §12 checklist item, not a measured claim.
 - The three-arm load test (§13) is a **demo design**, not a completed experiment — no arm's latency/cost numbers exist yet.
 

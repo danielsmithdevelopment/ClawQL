@@ -5,14 +5,16 @@ import {
   decodeResumeInput,
   decodeSearchInput,
   ExecuteInputSchema,
-  SearchInputSchema,
 } from "./search-execute-schema.js";
-import { Schema } from "effect";
 
 describe("SearchInputSchema / ExecuteInputSchema", () => {
-  it("applies search limit default via Effect Schema", async () => {
+  it("applies search limit default and accepts optional detail", async () => {
     const decoded = await Effect.runPromise(decodeSearchInput({ query: "list jobs" }));
     expect(decoded).toEqual({ query: "list jobs", limit: 5 });
+    const withDetail = await Effect.runPromise(
+      decodeSearchInput({ query: "list jobs", detail: "full" })
+    );
+    expect(withDetail.detail).toBe("full");
   });
 
   it("rejects invalid search limit", async () => {

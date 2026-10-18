@@ -43,7 +43,6 @@ import {
   getVaultStartupStatus,
   validateOrDegradeObsidianVaultAtStartup,
 } from "../host/vault-config.js";
-import { registerPostgresPoolShutdownHooks } from "clawql-memory/vector/pgvector";
 import { type ClawqlOptionalToolFlags } from "clawql-api";
 import { resolvePluginCompositionFlags } from "../composition/resolve-plugin-flags.js";
 import { getNativeProtocolMetricsSnapshot, nativeProtocolMetricsEnabled } from "clawql-api";
@@ -217,7 +216,11 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (!options.skipSpecPreload) {
     await loadSpec();
     await preloadSchemaFieldCacheFromDisk();
-    await validateOrDegradeObsidianVaultAtStartup();
+    const { resolvePluginCompositionFlags } =
+      await import("../composition/resolve-plugin-flags.js");
+    if (resolvePluginCompositionFlags().enableMemory) {
+      await validateOrDegradeObsidianVaultAtStartup();
+    }
   }
 
   const mcpPath = options.mcpPath?.trim() || process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;
@@ -820,11 +823,17 @@ export async function startMcpHttpServer(): Promise<void> {
   await maybeInitOtelTracing();
   await maybeVerifyReleaseManifestAtStartup();
   registerSpecCacheShutdownHooks();
-  registerPostgresPoolShutdownHooks();
+  const { resolvePluginCompositionFlags } = await import("../composition/resolve-plugin-flags.js");
+  if (resolvePluginCompositionFlags().enableMemory) {
+    const { registerPostgresPoolShutdownHooks } = await import("clawql-memory/vector/pgvector");
+    registerPostgresPoolShutdownHooks();
+  }
   const { ensureClawqlApi, registerClawqlApiShutdownHooks } =
     await import("../composition/clawql-api-adapters.js");
   registerClawqlApiShutdownHooks();
   await ensureClawqlApi();
+  const { wireOptionalToolDeps } = await import("../mcp/tools.js");
+  await wireOptionalToolDeps();
   const { configureMcpEventsProcessEmitter } = await import("../mcp/mcp-events-host.js");
   configureMcpEventsProcessEmitter();
   const { ensureProcessWormHostBooted } = await import("../composition/process-worm-host.js");

@@ -123,7 +123,7 @@ const res = await fetch(env.INFERENCE_URL + "/v1/messages", {
 });
 ```
 
-PAL, provider SDKs, and credential vaults stay in clawql-inference — outside the 64 MiB cell bundle.
+model escalation, provider SDKs, and credential vaults stay in clawql-inference — outside the 64 MiB cell bundle.
 
 ### 3.3 WebSocket reconnect via SQLite intent
 
@@ -461,7 +461,7 @@ Track against upstream celld alpha:
 - [`docs/streams/clawql-tee.md`](./clawql-tee.md) — hardware TEE path on cellrt
 - [`docs/streams/clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) — QR air-gap audit transport
 - [`docs/streams/clawql-durable-objects.md`](./clawql-durable-objects.md) — session / sidecar / virtual key contract
-- [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md) — virtual keys, PAL
+- [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md) — virtual keys, model escalation
 - [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md) — MCP → APIs (**out-of-process** from cells today)
 - [`docs/streams/streams-celld-evidence.md`](./streams-celld-evidence.md) — evidence matrix + CI commands
 - [celld.dev](https://celld.dev/) · [docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [compat](https://celld.dev/docs/cloudflare-compat) · [GitHub](https://github.com/denoland/celld)

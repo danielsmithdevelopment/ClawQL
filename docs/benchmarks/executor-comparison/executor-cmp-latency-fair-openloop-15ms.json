@@ -1,0 +1,150 @@
+{
+  "suite": "executor-cmp-latency-fair",
+  "measuredAt": "2026-10-11T01:03:47.643Z",
+  "versions": {
+    "clawql": {
+      "version": "8.0.0",
+      "commit": "003bdc313a55511a8023440fda81a2844696c50f",
+      "branch": "cursor/executor-latency-side-by-side-a621"
+    },
+    "executor": {
+      "version": "1.6.10",
+      "bin": "/tmp/executor-try/node_modules/.bin/executor"
+    },
+    "node": "v22.14.0",
+    "measuredAt": "2026-10-11T01:03:47.643Z"
+  },
+  "config": {
+    "iters": 2000,
+    "warmup": 50,
+    "runs": 1,
+    "mock_delay_ms": 0,
+    "schedule": "open_loop_fixed_rate",
+    "arrival_ms": 15,
+    "governance_worm_memory": false,
+    "panguard_sidecar": false,
+    "transport": "stdio_both",
+    "same_host": true,
+    "body_bytes": 98,
+    "fields": [
+      "pets"
+    ]
+  },
+  "method": {
+    "definition": "gateway_cost = MCP_execute_wall − upstream_cost. ClawQL upstream_cost = paired same-host mock fetch (execute_i − direct_i). Executor upstream_cost = 0 (in-process return of identical JSON; no fetch).",
+    "interleaving": "Each round: ClawQL execute → Executor execute → direct fetch. Drift hits both.",
+    "notTotalVsOverhead": "Not comparing ClawQL overhead to Executor total-with-upstream. Executor equal arm has no upstream; subtracting 0 is the same definition.",
+    "coordinatedOmission": "Open-loop: rounds scheduled at fixed arrival; round_from_schedule includes queueing.",
+    "framing": "Lead with absolute ClawQL oversight cost (p50/p999). Executor ratio is supporting evidence."
+  },
+  "primary_run": {
+    "runIndex": 0,
+    "mode": "open_loop",
+    "arrival_ms": 15,
+    "arms": {
+      "clawql_execute_e2e": {
+        "label": "clawql_execute_e2e",
+        "n": 2000,
+        "p50_ms": 1.747,
+        "p95_ms": 2.276,
+        "p99_ms": 2.74,
+        "p999_ms": 5.109,
+        "mean_ms": 1.781,
+        "min_ms": 1.146,
+        "max_ms": 5.6
+      },
+      "executor_execute": {
+        "label": "executor_execute",
+        "n": 2000,
+        "p50_ms": 2.8,
+        "p95_ms": 4.144,
+        "p99_ms": 5.348,
+        "p999_ms": 10.746,
+        "mean_ms": 2.959,
+        "min_ms": 1.911,
+        "max_ms": 11.417
+      },
+      "direct_http": {
+        "label": "direct_http",
+        "n": 2000,
+        "p50_ms": 0.391,
+        "p95_ms": 0.52,
+        "p99_ms": 0.786,
+        "p999_ms": 2.975,
+        "mean_ms": 0.416,
+        "min_ms": 0.28,
+        "max_ms": 3.369
+      },
+      "clawql_gateway_cost": {
+        "label": "clawql_gateway_cost",
+        "n": 2000,
+        "p50_ms": 1.334,
+        "p95_ms": 1.829,
+        "p99_ms": 2.34,
+        "p999_ms": 4.16,
+        "mean_ms": 1.365,
+        "min_ms": -1.483,
+        "max_ms": 5.018
+      },
+      "executor_gateway_cost": {
+        "label": "executor_gateway_cost",
+        "n": 2000,
+        "p50_ms": 2.8,
+        "p95_ms": 4.144,
+        "p99_ms": 5.348,
+        "p999_ms": 10.746,
+        "mean_ms": 2.959,
+        "min_ms": 1.911,
+        "max_ms": 11.417
+      },
+      "open_loop_round_from_schedule": {
+        "label": "open_loop_round_from_schedule",
+        "n": 2000,
+        "p50_ms": 4.677,
+        "p95_ms": 6.332,
+        "p99_ms": 7.768,
+        "p999_ms": 13.878,
+        "mean_ms": 4.809,
+        "min_ms": 2.588,
+        "max_ms": 16.197
+      },
+      "clawql_execute_from_schedule": {
+        "label": "clawql_execute_from_schedule",
+        "n": 2000,
+        "p50_ms": 1.414,
+        "p95_ms": 2.2,
+        "p99_ms": 2.586,
+        "p999_ms": 4.64,
+        "mean_ms": 1.428,
+        "min_ms": 0.164,
+        "max_ms": 4.866
+      },
+      "executor_execute_from_schedule": {
+        "label": "executor_execute_from_schedule",
+        "n": 2000,
+        "p50_ms": 4.272,
+        "p95_ms": 5.817,
+        "p99_ms": 7.299,
+        "p999_ms": 13.166,
+        "mean_ms": 4.387,
+        "min_ms": 2.21,
+        "max_ms": 15.612
+      }
+    },
+    "ratios": {
+      "p50": 2.1,
+      "p99": 2.29,
+      "p999": 2.58
+    },
+    "headline_absolute_ms": {
+      "clawql_oversight_p50_ms": 1.334,
+      "clawql_oversight_p999_ms": 4.16,
+      "note": "Absolute cost of ClawQL oversight path (execute − paired mock). Primary publish framing — holds regardless of Executor."
+    }
+  },
+  "spread": null,
+  "publish_lines": {
+    "absolute": "Risk gates, ring audit, hooks and field projection add 1.334 ms at p50 and 4.16 ms at p999 (ephemeral ring; durable WORM off).",
+    "vs_executor_supporting": "Supporting: interleaved equal-arm Executor gateway_cost p50 2.8 ms (ratio 2.1× at p50)."
+  }
+}

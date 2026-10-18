@@ -487,12 +487,12 @@ Full deploy paths: [Kubernetes & Helm](/deployment/kubernetes) · [Operations gu
 
 ## cellrt vs celld decision
 
-| Question                                             | Prefer                                |
-| ---------------------------------------------------- | ------------------------------------- |
-| Need Cloudflare Workers API parity?                  | **celld**                             |
-| Need embedded Vault + PAL + eBPF on sovereign metal? | **cellrt**                            |
-| Need hardware attestation + air-gap audit?           | **cellrt + tee**                      |
-| Alpha tolerance for multi-tenant hostile?            | Wait for **cellrt** production target |
+| Question                                                          | Prefer                                |
+| ----------------------------------------------------------------- | ------------------------------------- |
+| Need Cloudflare Workers API parity?                               | **celld**                             |
+| Need embedded Vault + model escalation + eBPF on sovereign metal? | **cellrt**                            |
+| Need hardware attestation + air-gap audit?                        | **cellrt + tee**                      |
+| Alpha tolerance for multi-tenant hostile?                         | Wait for **cellrt** production target |
 
 Streams v0.2 **adopts celld** for the JS/Workers path; **cellrt** is the long-run ClawQL-owned production runtime.
 

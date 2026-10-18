@@ -1,10 +1,10 @@
 /**
- * Obsidian vault startup validation (MCP transport). Path resolution lives in `clawql-memory/vault/config`.
+ * Obsidian vault startup validation (MCP transport). Path resolution lives in `clawql-memory/vault/config`
+ * and is loaded via dynamic import so Core-only compositions do not pay the memory package RSS tax.
  */
 
 import { constants } from "node:fs";
 import { access, stat } from "node:fs/promises";
-import { getObsidianVaultPath } from "clawql-memory/vault/config";
 import { Effect } from "effect";
 
 export type VaultStartupStatus = {
@@ -27,12 +27,23 @@ function asError(cause: unknown): Error {
   return cause instanceof Error ? cause : new Error(String(cause));
 }
 
+function loadVaultConfigEffect(): Effect.Effect<
+  typeof import("clawql-memory/vault/config"),
+  Error
+> {
+  return Effect.tryPromise({
+    try: () => import("clawql-memory/vault/config"),
+    catch: (e: unknown) => asError(e),
+  });
+}
+
 /**
  * Ensures the vault path exists, is a directory, and is readable + writable.
  * No-op when vault is not configured.
  */
 export function validateObsidianVaultAtStartupEffect(): Effect.Effect<void, Error> {
   return Effect.gen(function* () {
+    const { getObsidianVaultPath } = yield* loadVaultConfigEffect();
     const vault = getObsidianVaultPath();
     if (vault === null) {
       return;
@@ -84,6 +95,19 @@ export function getVaultStartupStatus(): VaultStartupStatus {
  */
 export function validateOrDegradeObsidianVaultAtStartupEffect(): Effect.Effect<void> {
   return Effect.gen(function* () {
+    const { getObsidianVaultPath } = yield* loadVaultConfigEffect().pipe(
+      Effect.catch((e) =>
+        Effect.sync(() => {
+          console.error(
+            "[clawql-mcp] Vault config unavailable:",
+            e instanceof Error ? e.message : e
+          );
+          return {
+            getObsidianVaultPath: (): string | null => null,
+          } as typeof import("clawql-memory/vault/config");
+        })
+      )
+    );
     const vault = getObsidianVaultPath();
     if (vault === null) {
       vaultStartupStatus = {

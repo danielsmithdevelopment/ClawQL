@@ -10,6 +10,7 @@ import {
   appendComplianceWorm,
   appendSessionCreatedAudit,
   cacheSessionMeta,
+  coreInCelldEnabled,
   executeViaMcp,
   listAuditEntries,
   memoryIngestViaMcp,
@@ -24,7 +25,13 @@ function resolveMcpConfig(env) {
   const url =
     (env.CLAWQL_MCP_URL || env.CLAWQL_MCP_HTTP_URL || "").trim() || undefined;
   const bearer = (env.CLAWQL_MCP_BEARER_TOKEN || "").trim() || undefined;
-  return { url, bearer };
+  const preferCoreInCelld = coreInCelldEnabled(env);
+  return {
+    url,
+    bearer,
+    preferCoreInCelld,
+    coreTools: preferCoreInCelld ? env.CORE_TOOLS : undefined,
+  };
 }
 
 function resolveAdapterConfig(env) {
@@ -40,6 +47,14 @@ function resolveInferenceUrl(env) {
     (env.INFERENCE_URL || env.CLAWQL_STREAMS_INFERENCE_URL || "").trim() ||
     undefined
   );
+}
+
+/** Lab stub budget (USD). Real DeductionService ceilings live on clawql-inference. */
+function resolveLabBudgetUsd(env) {
+  const raw = Number(
+    env.CLAWQL_LAB_VK_BUDGET_USD || env.INFERENCE_STUB_BUDGET_USD || "1"
+  );
+  return Number.isFinite(raw) && raw > 0 ? raw : 1;
 }
 
 function resolveWormConfig(env) {
@@ -97,6 +112,84 @@ export class AgentSessionDO {
     this.env = env;
   }
 
+  /**
+   * Streams §3.5 — hard TTL via setAlarm (no setInterval on celld).
+   * Expire-on-destroy: POST /v1/keys/expire **before** durable storage puts
+   * (celld output gate / NodeFenced if storage mutates then fetch).
+   */
+  async alarm() {
+    const intent = await this.state.storage.get("alarm_intent");
+    const meta = await this.state.storage.get("session_meta");
+    if (!meta || typeof meta !== "object") return;
+    if (meta.exitReason) return;
+    if (intent?.kind === "session_ttl" || !intent) {
+      const virtualKeyId =
+        typeof meta.virtualKeyId === "string" ? meta.virtualKeyId : null;
+      const inferenceUrl = resolveInferenceUrl(this.env);
+      let virtualKeyExpire = { skipped: true, reason: "no_virtual_key" };
+
+      if (virtualKeyId && inferenceUrl) {
+        const base = inferenceUrl.replace(/\/$/, "");
+        try {
+          const res = await fetch(`${base}/v1/keys/expire`, {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              accept: "application/json",
+              authorization: `Bearer ${virtualKeyId}`,
+              "x-clawql-virtual-key": virtualKeyId,
+            },
+            body: JSON.stringify({ virtualKeyId }),
+            signal: AbortSignal.timeout(5_000),
+          });
+          let body = null;
+          try {
+            body = await res.json();
+          } catch {
+            body = null;
+          }
+          virtualKeyExpire = {
+            skipped: false,
+            ok: res.ok,
+            status: res.status,
+            virtualKeyId,
+            expiredAt: body?.expiredAt ?? null,
+          };
+        } catch (err) {
+          virtualKeyExpire = {
+            skipped: false,
+            ok: false,
+            virtualKeyId,
+            error: err instanceof Error ? err.message : String(err),
+          };
+        }
+      } else if (virtualKeyId && !inferenceUrl) {
+        virtualKeyExpire = { skipped: true, reason: "no INFERENCE_URL", virtualKeyId };
+      }
+
+      const closedAt = Date.now();
+      const closed = {
+        ...meta,
+        exitReason: "timeout",
+        closedAt,
+        virtualKeyExpired: virtualKeyExpire.ok === true,
+      };
+      // Durable writes only after outbound expire fetch (celld output gate).
+      await this.state.storage.put("session_meta", closed);
+      await this.state.storage.put("alarm_fired", {
+        at: closedAt,
+        kind: "session_ttl",
+        virtualKeyExpire,
+      });
+      await this.state.storage.put(`worm:vk_expire:${closedAt}`, {
+        kind: "VIRTUAL_KEY_EXPIRE",
+        virtualKeyId,
+        ok: virtualKeyExpire.ok === true,
+        status: virtualKeyExpire.status ?? null,
+      });
+    }
+  }
+
   async fetch(request) {
     const url = new URL(request.url);
     if (url.pathname.endsWith("/start") && request.method === "POST") {
@@ -105,6 +198,14 @@ export class AgentSessionDO {
       const startedAt = Date.now();
       const doInstanceId = crypto.randomUUID();
       const virtualKeyId = `vk_lab_${eventId.slice(0, 8)}`;
+      const budgetUsd = resolveLabBudgetUsd(this.env);
+      const ttlMsRaw = Number(
+        request.headers.get("x-clawql-session-ttl-ms") ||
+          this.env.CLAWQL_SESSION_TTL_MS ||
+          0
+      );
+      const ttlMs =
+        Number.isFinite(ttlMsRaw) && ttlMsRaw > 0 ? Math.min(ttlMsRaw, 3_600_000) : 0;
 
       const existing = await this.state.storage.get("session_meta");
       if (existing) {
@@ -121,8 +222,10 @@ export class AgentSessionDO {
         subscriptionId,
         eventId,
         virtualKeyId,
+        budgetUsd,
         startedAt,
         exitReason: null,
+        ttlMs: ttlMs || null,
       };
 
       // All durable DO writes before outbound fetch() — avoids celld NodeFenced
@@ -135,14 +238,24 @@ export class AgentSessionDO {
         subscriptionId,
         eventId,
       });
+      if (ttlMs > 0) {
+        await this.state.storage.put("alarm_intent", {
+          kind: "session_ttl",
+          ttlMs,
+          scheduledAt: startedAt,
+        });
+        await this.state.storage.setAlarm(startedAt + ttlMs);
+      }
 
       let audit = { ok: false };
       let cache = { ok: false };
       let auditVerify = { ok: false };
-      let auditPersisted = { ok: false };
+      let auditPersisted = { ok: false, deferred: true };
       let complianceWorm = { deferred: true };
       const wormCfg = resolveWormConfig(this.env);
 
+      // In-process ring/cache only — DO LTX flush is deferred until AFTER all
+      // outbound fetches (celld output gate: storage.put mid-handler fences later fetch).
       try {
         audit = await appendSessionCreatedAudit({
           subscriptionId,
@@ -152,11 +265,6 @@ export class AgentSessionDO {
         });
         cache = await cacheSessionMeta(eventId, meta);
         auditVerify = await verifyAuditChain();
-        auditPersisted = await persistAuditRingToLtx(this.state, {
-          verify: auditVerify,
-          eventId,
-          startedAt,
-        });
       } catch (err) {
         audit = {
           ok: false,
@@ -216,65 +324,232 @@ export class AgentSessionDO {
         );
       }
 
-      let inference = { skipped: true, reason: "no INFERENCE_URL" };
+      // All outbound fetches before any further storage.put (celld durability gate).
+      // Fan-out tools+inference in ONE Promise.all wave: a later sequential fetch
+      // after prior hops complete is NodeFenced under celld's output gate (even
+      // with no explicit mid-handler storage.put).
+      const mcp = resolveMcpConfig(this.env);
+      const adapter = resolveAdapterConfig(this.env);
+      const memoryTitle = `streams-celld session ${eventId.slice(0, 8)}`;
       const inferenceUrl = resolveInferenceUrl(this.env);
-      if (inferenceUrl) {
+
+      async function parseTurnBody(res) {
+        const turnText = await res.text();
         try {
-          const res = await fetch(`${inferenceUrl.replace(/\/$/, "")}/healthz`, {
+          return turnText ? JSON.parse(turnText) : null;
+        } catch {
+          return { raw: turnText.slice(0, 300) };
+        }
+      }
+
+      /**
+       * Lab 5b multi-turn skeleton (§3.5): bind-on-create + healthz + turn1
+       * co-scheduled with tools; turn2 immediately after (still before any
+       * further storage.put). Virtual key `vk_lab_*` + budgetUsd at bind;
+       * expire-on-destroy runs in alarm(). Full DeductionService / model
+       * escalation spend ceilings remain on clawql-inference.
+       */
+      async function runInferenceProbe() {
+        if (!inferenceUrl) {
+          return { skipped: true, reason: "no INFERENCE_URL" };
+        }
+        const base = inferenceUrl.replace(/\/$/, "");
+        const authHeaders = {
+          "content-type": "application/json",
+          accept: "application/json",
+          authorization: `Bearer ${virtualKeyId}`,
+          "x-clawql-virtual-key": virtualKeyId,
+        };
+        try {
+          // Bind + healthz + turn1 in one wave (celld output gate).
+          const bindP = fetch(`${base}/v1/keys/bind`, {
+            method: "POST",
+            headers: authHeaders,
+            body: JSON.stringify({ virtualKeyId, budgetUsd }),
+            signal: AbortSignal.timeout(10_000),
+          });
+          const healthP = fetch(`${base}/healthz`, {
             method: "GET",
             headers: { accept: "application/json" },
           });
-          inference = {
+          const turn1P = fetch(`${base}/v1/messages`, {
+            method: "POST",
+            headers: authHeaders,
+            body: JSON.stringify({
+              model: "stub-frugal",
+              prompt: `streams session ${eventId} subscription ${subscriptionId}`,
+              max_tokens: 64,
+              turn: 1,
+              virtualKeyId,
+              budgetUsd,
+            }),
+            signal: AbortSignal.timeout(10_000),
+          });
+          const [bindRes, health, turn1Res] = await Promise.all([
+            bindP,
+            healthP,
+            turn1P,
+          ]);
+          const bindBody = await parseTurnBody(bindRes);
+          const turn1Body = await parseTurnBody(turn1Res);
+
+          // Second model turn before any further DO storage (celld output gate).
+          let turn2Res = null;
+          let turn2Body = null;
+          if (turn1Res.ok) {
+            turn2Res = await fetch(`${base}/v1/messages`, {
+              method: "POST",
+              headers: authHeaders,
+              body: JSON.stringify({
+                model: "stub-frugal",
+                prompt: `follow-up session ${eventId} after ${turn1Body?.id ?? "turn1"}`,
+                max_tokens: 64,
+                turn: 2,
+                priorId: turn1Body?.id ?? null,
+                virtualKeyId,
+                budgetUsd,
+              }),
+              signal: AbortSignal.timeout(10_000),
+            });
+            turn2Body = await parseTurnBody(turn2Res);
+          }
+
+          const turns =
+            (turn1Res.ok ? 1 : 0) + (turn2Res && turn2Res.ok ? 1 : 0);
+          const virtualKeyBound =
+            bindRes.ok === true ||
+            bindBody?.virtualKeyBound === true ||
+            turn1Body?.virtualKeyBound === true ||
+            turn2Body?.virtualKeyBound === true ||
+            Boolean(virtualKeyId);
+
+          return {
             skipped: false,
-            status: res.status,
-            ok: res.ok,
+            ok: bindRes.ok && health.ok && turns >= 2,
+            healthz: { status: health.status, ok: health.ok },
+            bind: {
+              status: bindRes.status,
+              ok: bindRes.ok,
+              budgetUsd: bindBody?.budgetUsd ?? budgetUsd,
+            },
+            virtualKeyId,
+            budgetUsd,
+            virtualKeyBound,
+            turn: {
+              status: turn1Res.status,
+              ok: turn1Res.ok,
+              id: turn1Body?.id ?? null,
+              turn: turn1Body?.turn ?? 1,
+              source: turn1Body?.source ?? null,
+              spentUsd: turn1Body?.spentUsd ?? null,
+            },
+            turn2: turn2Res
+              ? {
+                  status: turn2Res.status,
+                  ok: turn2Res.ok,
+                  id: turn2Body?.id ?? null,
+                  turn: turn2Body?.turn ?? 2,
+                  priorId: turn2Body?.priorId ?? turn1Body?.id ?? null,
+                  source: turn2Body?.source ?? null,
+                  spentUsd: turn2Body?.spentUsd ?? null,
+                }
+              : null,
+            turns,
           };
-          await this.state.storage.put("inference_probe", inference);
         } catch (err) {
-          inference = {
+          return {
             skipped: false,
             ok: false,
+            turns: 0,
+            virtualKeyId,
+            budgetUsd,
+            virtualKeyBound: false,
             error: err instanceof Error ? err.message : String(err),
           };
         }
       }
 
-      const mcp = resolveMcpConfig(this.env);
-      const adapter = resolveAdapterConfig(this.env);
-      const memoryTitle = `streams-celld session ${eventId.slice(0, 8)}`;
+      const [search, execute, memory_ingest, memory_recall, adapter_search, inference] =
+        await Promise.all([
+          searchViaMcp(
+            mcp,
+            mcp.preferCoreInCelld
+              ? "listPets pets openapi"
+              : `subscription:${subscriptionId}`,
+            { limit: 3 }
+          ),
+          // Prefer in-cell noop (no upstream). listPets REST is exercised via Worker POST /mcp.
+          executeViaMcp(mcp, "streams.session.noop", { eventId }),
+          memoryIngestViaMcp(mcp, {
+            title: memoryTitle,
+            insights: `AgentSessionDO spawned subscription=${subscriptionId} event=${eventId}`,
+            sessionId: eventId,
+            type: "context",
+            tags: ["streams", "celld"],
+          }),
+          memoryRecallViaMcp(mcp, `streams-celld ${subscriptionId}`, {
+            limit: 3,
+          }),
+          toolViaAdapter(adapter, "search", {
+            query: `adapter:${subscriptionId}`,
+            limit: 1,
+          }),
+          runInferenceProbe(),
+        ]);
       const tools = {
-        search: await searchViaMcp(mcp, `subscription:${subscriptionId}`, {
-          limit: 3,
-        }),
-        execute: await executeViaMcp(mcp, "streams.session.noop", { eventId }),
-        memory_ingest: await memoryIngestViaMcp(mcp, {
-          title: memoryTitle,
-          insights: `AgentSessionDO spawned subscription=${subscriptionId} event=${eventId}`,
-          sessionId: eventId,
-          type: "context",
-          tags: ["streams", "celld"],
-        }),
-        memory_recall: await memoryRecallViaMcp(
-          mcp,
-          `streams-celld ${subscriptionId}`,
-          { limit: 3 }
-        ),
-        adapter_search: await toolViaAdapter(adapter, "search", {
-          query: `adapter:${subscriptionId}`,
-          limit: 1,
-        }),
+        search,
+        execute,
+        memory_ingest,
+        memory_recall,
+        adapter_search,
       };
 
+      const inProcess = ["audit", "cache", "hash-chain"];
+      if (mcp.preferCoreInCelld) inProcess.push("search", "execute");
+
       const outOfProcess = ["inference"];
-      if (mcp.url) outOfProcess.unshift("search", "execute", "memory_*");
+      if (mcp.url && !mcp.preferCoreInCelld) {
+        outOfProcess.unshift("search", "execute", "memory_*");
+      } else if (mcp.url) {
+        outOfProcess.unshift("memory_*");
+      }
       if (adapter.url) outOfProcess.push("mcp-api-adapter");
       if (wormCfg.url) outOfProcess.push("clawql-audit-worm");
 
       const deferred = [];
-      if (!mcp.url) deferred.push("search", "execute", "memory_*");
+      if (!mcp.preferCoreInCelld && !mcp.url) deferred.push("search", "execute", "memory_*");
+      else if (mcp.preferCoreInCelld && !mcp.url) deferred.push("memory_*");
       if (!adapter.url) deferred.push("mcp-api-adapter");
       if (!wormCfg.url) deferred.push("clawql-audit-worm");
 
+      // Final durable writes only after all outbound fetches (celld output gate).
+      // Include deferred LTX audit ring flush here — never mid-handler before fetch.
+      try {
+        auditPersisted = await persistAuditRingToLtx(this.state, {
+          verify: auditVerify,
+          eventId,
+          startedAt,
+        });
+      } catch (err) {
+        auditPersisted = {
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
+      if (inference && inference.skipped === false) {
+        await this.state.storage.put("inference_probe", inference);
+        await this.state.storage.put(`worm:inference:${startedAt}`, {
+          kind: "INFERENCE_MULTI_TURN",
+          virtualKeyId,
+          budgetUsd,
+          virtualKeyBound: inference.virtualKeyBound === true,
+          eventId,
+          ok: inference.ok === true,
+          turns: inference.turns ?? 0,
+          inferenceId: inference.turn?.id ?? null,
+          inferenceId2: inference.turn2?.id ?? null,
+        });
+      }
       await this.state.storage.put(`tool_calls:${startedAt}`, {
         searchOk: tools.search?.ok === true,
         executeOk: tools.execute?.ok === true,
@@ -290,6 +565,7 @@ export class AgentSessionDO {
       return Response.json({
         do: "AgentSessionDO",
         session: meta,
+        alarm: ttlMs > 0 ? { kind: "session_ttl", ttlMs, scheduled: true } : { scheduled: false },
         inference,
         audit: {
           wormKey: `worm:${startedAt}`,
@@ -303,10 +579,11 @@ export class AgentSessionDO {
         tools,
         core: {
           package: "clawql-core/streams-slim",
-          inProcess: ["audit", "cache", "hash-chain"],
-          durable: ["audit:ring", "audit:seq:*", "worm:*"],
+          inProcess,
+          durable: ["audit:ring", "audit:seq:*", "worm:*", "CoreToolsDO", "alarm_intent"],
           outOfProcess,
           deferred,
+          coreInCelld: Boolean(mcp.preferCoreInCelld),
           mcpUrlConfigured: Boolean(mcp.url),
           adapterUrlConfigured: Boolean(adapter.url),
           wormUrlConfigured: Boolean(wormCfg.url),
@@ -316,10 +593,15 @@ export class AgentSessionDO {
 
     const meta = await this.state.storage.get("session_meta");
     const auditRing = await this.state.storage.get("audit:ring");
+    const alarmFired = await this.state.storage.get("alarm_fired");
+    const inferenceProbe = await this.state.storage.get("inference_probe");
     return Response.json({
       do: "AgentSessionDO",
       session: meta ?? null,
       auditRing: auditRing ?? null,
+      alarmFired: alarmFired ?? null,
+      inferenceProbe: inferenceProbe ?? null,
+      virtualKeyExpired: meta?.virtualKeyExpired === true,
     });
   }
 }

@@ -38,5 +38,5 @@ Use `execute` to run an operation discovered by `search`.
 - For multi-spec runs, include provider context in your planning notes.
 - On failure, report both operationId and minimal argument diff.
 - Remember execution path differences:
-  - **OpenAPI/Discovery:** single-spec uses OpenAPI→GraphQL first with REST fallback; multi-spec uses REST per owning spec.
+  - **OpenAPI/Discovery:** single-spec prefers REST for plain `fields` (`CLAWQL_OPENAPI_EXECUTE_PATH=auto`); nested GraphQL selection sets still use in-process OpenAPI→GraphQL (cached) with REST fallback; multi-spec uses REST per owning spec.
   - **Native GraphQL / gRPC** (when `CLAWQL_GRAPHQL_SOURCES` / `CLAWQL_GRPC_SOURCES` are set): **`execute`** uses HTTP GraphQL or gRPC unary for those operation ids — independent of single- vs multi-spec OpenAPI routing.

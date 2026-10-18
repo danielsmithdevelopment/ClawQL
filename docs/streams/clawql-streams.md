@@ -53,9 +53,9 @@ ClawQL Streams is that pattern as a platform: any event source, any trigger type
 
 On the **celld / Cloudflare** path, each agent cell is a **Workers-safe slim core** plus **out-of-process** MCP/adapter/inference — not a sidecar fleet of containers, and **not** a full Express `mcp-api-adapter` embed (that would blow the 64 MiB budget and pull Node APIs).
 
-**Shipped today** ([`docs/examples/streams-celld`](../../docs/examples/streams-celld/)): Gateway / Subscription / AgentSession DOs, in-process `clawql-core/streams-slim`, optional `fetch(CLAWQL_MCP_URL)` + `fetch(CLAWQL_MCP_ADAPTER_URL)`, LTX audit flush. Evidence matrix: [`streams-celld-evidence.md`](./streams-celld-evidence.md).
+**Shipped today** ([`docs/examples/streams-celld`](../../docs/examples/streams-celld/)): Gateway / Subscription / AgentSession DOs, in-process `clawql-core/streams-slim`, significance filter (`always` / `never` / `threshold` / `pattern` / `rate` / `composite`), session TTL via `setAlarm` (expire-on-destroy `POST /v1/keys/expire`), **CoreToolsDO** in-isolate slim search/execute **by default** (`CLAWQL_CORE_IN_CELLD=0` escapes to host MCP — **Bun** preferred; Worker `POST /mcp` always hits CoreToolsDO), optional `fetch(CLAWQL_MCP_URL)` for `memory_*` + `fetch(CLAWQL_MCP_ADAPTER_URL)`, multi-turn `fetch(INFERENCE_URL)` stub path (bind-on-create `vk_lab_*` + lab budget ceiling), LTX audit flush + host WORM dual-write. Evidence matrix: [`streams-celld-evidence.md`](./streams-celld-evidence.md).
 
-**Still planned:** the `clawql-streams` coordination package (`stream_*` MCP tools) and a future optional Workers-safe `clawql-api` slim for offline search.
+**Still planned:** the `clawql-streams` coordination package (`stream_*` MCP tools), full DeductionService spend ceilings with model escalation (Lab 5b already runs multi-turn + bind/budget/expire against the local inference stub — not the production ledger), and a fuller Workers-safe `clawql-api` slim beyond CoreToolsDO.
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -77,7 +77,7 @@ On the **celld / Cloudflare** path, each agent cell is a **Workers-safe slim cor
                         │ fetch() only
                         ▼
               clawql-inference (HTTP)
-              (PAL · virtual keys · call store)
+              (model escalation · virtual keys · call store)
 ```
 
 **Constraints (Workers / celld Code Mode):**
@@ -89,7 +89,7 @@ On the **celld / Cloudflare** path, each agent cell is a **Workers-safe slim cor
 | Process model  | No `child_process` | Model + catalog tools via `fetch()`; slim audit/cache stay in-process                    |
 | Timers         | No `setInterval`   | Use `setAlarm` + SQLite intent rows                                                      |
 
-`clawql-inference` stays **out of process** — called over HTTP — so the DO bundle does not embed model SDKs, credential stores, or PAL routing tables that change independently of Streams releases.
+`clawql-inference` stays **out of process** — called over HTTP — so the DO bundle does not embed model SDKs, credential stores, or model-escalation routing tables that change independently of Streams releases.
 
 See [`clawql-celld.md`](./clawql-celld.md) for the full runtime matrix and workarounds.
 
@@ -139,18 +139,20 @@ Autonomous mode is the primary new capability. Reactive and ambient modes extend
 
 Before spawning an agent session, ClawQL runs a local significance check — fast, cheap, no model call. Only events that pass are escalated to autonomous execution. Everything still goes to the durable buffer and WORM regardless.
 
-Filter types (configurable per subscription):
+Filter types (configurable per subscription — Lab 5b `SubscriptionDO` / body `significance`):
 
-- **Threshold** — numeric value crosses a boundary (price delta, error rate, queue depth)
-- **Pattern** — event content matches a regex or JSON path expression
-- **Rate** — N events within T seconds (burst detection)
-- **Composite** — AND/OR of the above
-- **Always** — every event spawns an agent (high-value, low-volume sources)
-- **Never** — buffer and ambient delivery only (high-volume, audit-only sources)
+- **Threshold** — numeric value crosses a boundary (price delta, error rate, queue depth) — **shipped**
+- **Pattern** — event content matches a regex or JSON path expression — **shipped**
+- **Always** — every event spawns an agent (high-value, low-volume sources) — **shipped**
+- **Never** — buffer and ambient delivery only (high-volume, audit-only sources) — **shipped**
+- **Rate** — N events within T seconds (burst detection) — **shipped** (SubscriptionDO sliding window)
+- **Composite** — AND/OR of the above — **shipped**
 
 ### 3.5 Agent DO session
 
-When the significance filter passes, Streams spawns an `AgentSessionDO`. The **model layer is always [`clawql-inference`](../inference/clawql-inference.md)** via `fetch()` — not a raw Anthropic/OpenAI credential and not a subprocess. The `model` field on `stream_subscribe` is a **policy alias** that resolves through PAL routing (`Frugal` → `Standard` → `Frontier`).
+When the significance filter passes, Streams spawns an `AgentSessionDO`. The **model layer is always [`clawql-inference`](../inference/clawql-inference.md)** via `fetch()` — not a raw Anthropic/OpenAI credential and not a subprocess. The `model` field on `stream_subscribe` is a **policy alias** that resolves through model escalation (`Frugal` → `Standard` → `Frontier`).
+
+**Lab 5b honesty:** the skeleton proves **multi-turn** `POST /v1/messages` (`turns:2`) against `INFERENCE_URL` with bind-on-create `vk_lab_*`, lab stub budget → **402**, and TTL expire-on-destroy → **401** (smoke stub or real gateway). Full `runAgentLoop`, production DeductionService ledger, and model escalation remain the target shape below.
 
 ```ts
 import { DurableObject } from "cloudflare:workers";
@@ -177,7 +179,8 @@ export class AgentSessionDO extends DurableObject {
       context: body.context,
       tools: body.allowedTools,
       maxTurns: body.maxTurns,
-      // Tools: fetch(CLAWQL_MCP_URL) / fetch(CLAWQL_MCP_ADAPTER_URL) — not Express embed
+      // Tools: CoreToolsDO for slim search/execute; fetch(CLAWQL_MCP_URL) for memory_* /
+      // full catalog escape; fetch(CLAWQL_MCP_ADAPTER_URL) — not Express embed
       mcp: env.MCP_FETCH,
       // Model: fetch only — never child_process
       inference: async (req) =>
@@ -214,7 +217,7 @@ export class AgentSessionDO extends DurableObject {
 Every session gets:
 
 - Policy manifest enforcement before any model call
-- PAL routing based on task complexity
+- model escalation based on task complexity
 - WORM call-store correlation for every inference call (virtual key ID threaded)
 - Budget enforcement via a **per-session virtual key**
 - Full ClawQL MCP tool surface, scoped by ATR claims on the subscription — event content cannot expand scope
@@ -258,7 +261,7 @@ Gateway creates AgentSessionDO id + asks clawql-inference for virtual key
          ├─ key scoped to: this DO / session instance ID
          ├─ budget: subscription.budgetTokens (or budgetUsd → tokens)
          ├─ TTL: maxTurns × estimated_turn_duration
-         ├─ PAL policy: from subscription.model alias
+         ├─ model-escalation policy: from subscription.model alias
          │
          ├─ WORM DO_CREATED { doInstanceId, virtualKeyId, eventHash, … }
          └─ spawn DO with VIRTUAL_KEY binding (never log plaintext)
@@ -448,15 +451,15 @@ Auditor note: you can still use `sqlite3` on bucket LTX artifacts to inspect **c
 
 ### WORM event types
 
-| WORM event              | Includes                                            |
-| ----------------------- | --------------------------------------------------- |
-| `STREAM_EVENT_RECEIVED` | topic, significance result, payload hash            |
-| `DO_CREATED`            | virtual key ID + subscription ID + event hash       |
-| `INFERENCE_CALL`        | virtual key ID + PAL tier + tokens + cache hit/miss |
-| `TOOL_CALL`             | virtual key ID + tool name + ATR check result       |
-| `BUDGET_EXHAUSTED`      | virtual key ID + tokens consumed                    |
-| `DO_DESTROYED`          | virtual key ID + exit reason + total spend          |
-| `VIRTUAL_KEY_EXPIRED`   | key ID (from inference gateway)                     |
+| WORM event              | Includes                                              |
+| ----------------------- | ----------------------------------------------------- |
+| `STREAM_EVENT_RECEIVED` | topic, significance result, payload hash              |
+| `DO_CREATED`            | virtual key ID + subscription ID + event hash         |
+| `INFERENCE_CALL`        | virtual key ID + model tier + tokens + cache hit/miss |
+| `TOOL_CALL`             | virtual key ID + tool name + ATR check result         |
+| `BUDGET_EXHAUSTED`      | virtual key ID + tokens consumed                      |
+| `DO_DESTROYED`          | virtual key ID + exit reason + total spend            |
+| `VIRTUAL_KEY_EXPIRED`   | key ID (from inference gateway)                       |
 
 On **Cloudflare**, DO storage is the source of truth with platform replication. On **Kubernetes**, WORM continues to use Postgres (multi-replica) or JSONL (single replica) as in v0.1 — LTX applies specifically to the celld backend.
 
@@ -472,14 +475,14 @@ Every agent session is a potential **training example with cryptographic provena
 
 OpenBenchTrace (OBT) is the **collection envelope**. RTP is the **reasoning schema** (six-node sequence). They compose: OBT wraps RTP.
 
-| RTP node      | Streams / DO source                                                                      |
-| ------------- | ---------------------------------------------------------------------------------------- |
-| **Intent**    | Subscription `prompt` + summarized event                                                 |
-| **Retrieval** | `memory_recall` / `search` tool calls before reasoning                                   |
-| **Reasoning** | Tool-selection chain + clawql-inference metadata (PAL tier, cache hit, tokens, model id) |
-| **Execution** | Tool calls with arguments (also in WORM)                                                 |
-| **Delta**     | State before/after via WORM hashes                                                       |
-| **Verdict**   | Session outcome (converged / timeout / budget) + optional Ouroboros evaluator            |
+| RTP node      | Streams / DO source                                                                        |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| **Intent**    | Subscription `prompt` + summarized event                                                   |
+| **Retrieval** | `memory_recall` / `search` tool calls before reasoning                                     |
+| **Reasoning** | Tool-selection chain + clawql-inference metadata (model tier, cache hit, tokens, model id) |
+| **Execution** | Tool calls with arguments (also in WORM)                                                   |
+| **Delta**     | State before/after via WORM hashes                                                         |
+| **Verdict**   | Session outcome (converged / timeout / budget) + optional Ouroboros evaluator              |
 
 WORM is append-only **forensic** evidence. RTP is structured **training** data. Both are written; destinations differ.
 
@@ -503,13 +506,13 @@ Default scope: `community_model`. Every session inherits the subscription JWT. C
 3. On session close: wrap RTP in OBT envelope; flush to export (`r2` / `postgres` / `huggingface` / `none`).
 
 ```text
-DO session → fetch(clawql-inference) (PAL + virtual key)
+DO session → fetch(clawql-inference) (model escalation + virtual key)
            → WORM / LTX (every inference + tool call)
            → RTP trace (reasoning + tools)
            → OBT envelope (manifest hash + virtual key ID)
            → fine-tune on verified traces
            → custom Frugal model in tier-map.json
-           → next session PAL-routes to custom Frugal first
+           → next session model-escalates to custom Frugal first
            → cheaper sessions → more sessions → more traces
 ```
 
@@ -709,29 +712,30 @@ Operational detail: [`clawql-celld.md`](./clawql-celld.md) §7.
 
 ## 12. Package dependencies
 
-| Package / system     | Role in Streams                                                                          |
-| -------------------- | ---------------------------------------------------------------------------------------- |
-| `clawql-streams`     | Coordination: subscriptions, filter, spawn, MCP `stream_*` (**planned**)                 |
-| `clawql-core`        | **In-process** `streams-slim` (audit/cache/hash-chain); full barrel stays off-Worker     |
-| `mcp-api-adapter`    | **Out of process** — `fetch(CLAWQL_MCP_ADAPTER_URL)` REST `POST /{tool}`                 |
-| `clawql-mcp` / Core  | **Out of process** — `fetch(CLAWQL_MCP_URL)` Streamable HTTP for search/execute/memory_* |
-| `clawql-inference`   | **Out of process** — `fetch()` only; PAL, virtual keys, call store, cache                |
-| celld                | Self-hosted Durable Objects runtime (Apache 2.0, Workers API)                            |
-| `clawql-cellrt`      | ClawQL-owned Rust + Wasmtime cell runtime (planned)                                      |
-| Cloudflare Workers   | Hosted Durable Objects path                                                              |
-| NATS JetStream       | Durable event buffer for Kubernetes HPA path                                             |
-| `clawql-payments`    | `DeductionService` for credit-gated agent sessions                                       |
-| `clawql-ouroboros`   | Optional ensemble validation before kinetic actions                                      |
-| Panguard / ATR       | Tool-scope enforcement inside agent sessions                                             |
-| OpenBenchTrace / RTP | Training-data emission                                                                   |
+| Package / system     | Role in Streams                                                                                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clawql-streams`     | Coordination: subscriptions, filter, spawn, MCP `stream_*` (**planned**)                                                                                |
+| `clawql-core`        | **In-process** `streams-slim` (audit/cache/hash-chain); full barrel stays off-Worker                                                                    |
+| `mcp-api-adapter`    | **Out of process** — `fetch(CLAWQL_MCP_ADAPTER_URL)` REST `POST /{tool}`                                                                                |
+| `clawql-mcp` / Core  | **Default in-isolate** slim search/execute via **CoreToolsDO**; `memory_*` + full catalog via `fetch(CLAWQL_MCP_URL)` (Bun host preferred when escaped) |
+| `clawql-inference`   | **Out of process** — `fetch()` only; model escalation, virtual keys, call store, cache                                                                  |
+| celld                | Self-hosted Durable Objects runtime (Apache 2.0, Workers API)                                                                                           |
+| `clawql-cellrt`      | ClawQL-owned Rust + Wasmtime cell runtime (planned)                                                                                                     |
+| Cloudflare Workers   | Hosted Durable Objects path                                                                                                                             |
+| NATS JetStream       | Durable event buffer for Kubernetes HPA path                                                                                                            |
+| `clawql-payments`    | `DeductionService` for credit-gated agent sessions                                                                                                      |
+| `clawql-ouroboros`   | Optional ensemble validation before kinetic actions                                                                                                     |
+| Panguard / ATR       | Tool-scope enforcement inside agent sessions                                                                                                            |
+| OpenBenchTrace / RTP | Training-data emission                                                                                                                                  |
 
 ```text
 clawql-streams coordination (planned package; Lab 5b skeleton today)
   ├─ DO / cell bundle
-  │     └─ clawql-core/streams-slim (in-process audit/cache/hash-chain)
-  ├─ fetch → clawql-mcp (search / execute / memory_*)
+  │     ├─ clawql-core/streams-slim (in-process audit/cache/hash-chain)
+  │     └─ CoreToolsDO (default slim search/execute in-isolate)
+  ├─ fetch → clawql-mcp (memory_*; full catalog / escape host — Bun preferred)
   ├─ fetch → mcp-api-adapter (optional REST tool surface)
-  ├─ fetch → clawql-inference
+  ├─ fetch → clawql-inference (multi-turn + vk bind skeleton)
   ├─ celld | cellrt (planned) | Cloudflare | K8s HPA
   ├─ clawql-payments (optional holds)
   └─ clawql-ouroboros (optional ensemble)
@@ -767,7 +771,7 @@ Streams + Core + mcp-api-adapter is the **Protocol Fabric with an event loop**: 
 
 ## 15. Open questions
 
-1. **Bundle size.** **Resolved for core + MCP tools path:** `clawql-core/streams-slim` + Effect ≈ **0.4 MiB** in [`docs/examples/streams-celld`](../../docs/examples/streams-celld/); `search` / `execute` use thin `fetch(CLAWQL_MCP_URL)` (no `clawql-api` in the Worker). Remaining question: can a future offline Workers-safe `clawql-api` slim + Streams router still fit with aggressive tree-shaking?
+1. **Bundle size.** **Resolved for core + MCP tools path:** `clawql-core/streams-slim` + Effect ≈ **0.4 MiB** in [`docs/examples/streams-celld`](../../docs/examples/streams-celld/); slim `search` / `execute` run in-isolate via **CoreToolsDO** (no `clawql-api` in the Worker); `memory_*` and full catalog still `fetch(CLAWQL_MCP_URL)`. Remaining question: can a future offline Workers-safe `clawql-api` slim + Streams router still fit with aggressive tree-shaking?
 2. **celld alpha vs cellrt.** When is celld production-stable enough to prefer over K8s HPA? When does Helm default self-hosted Streams to **`cellrt`** instead of (or alongside) celld?
 3. **Replay and idempotency.** On buffer replay, significance may re-fire. Idempotency keys: `eventId + subscriptionId` (and stable DO/cell names — see celld / cellrt naming).
 4. **Kafka / Kinesis.** First-class `StreamSourceType` in v0.2 or defer to enterprise add-on?
@@ -787,7 +791,7 @@ Streams + Core + mcp-api-adapter is the **Protocol Fabric with an event loop**: 
 - [`docs/streams/clawql-celld.md`](./clawql-celld.md) — celld integration: constraints, DO classes, bucket layout, deploy
 - [`docs/streams/clawql-durable-objects.md`](./clawql-durable-objects.md) — session contract, sidecars, virtual keys
 - [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md) — MCP → APIs (inverse of ClawQL Core)
-- [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md) — Agentic Gateway / virtual keys / PAL
+- [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md) — Agentic Gateway / virtual keys / model escalation
 - [`docs/benchmarks/openbench-trace-collection.md`](../benchmarks/openbench-trace-collection.md) — OpenBenchTrace + RTP alignment
 - [`docs/mcp/schedule-synthetic-checks.md`](../mcp/schedule-synthetic-checks.md) — existing cron pattern Streams unifies
 - [celld](https://celld.dev/) · [docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [compat](https://celld.dev/docs/cloudflare-compat) · [denoland/celld](https://github.com/denoland/celld)

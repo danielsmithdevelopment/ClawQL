@@ -1,0 +1,39 @@
+{
+  "kind": "file-journal-sigkill-standin",
+  "measuredAt": "2026-10-18T05:20:22.154Z",
+  "honesty": "File-journal SIGKILL stand-in for ADR 0015. Not celld isolate kill-node — ProgramCellDO + SIGKILL celld binary still required for crash-survival claims.",
+  "arms": [
+    {
+      "arm": "read_sigkill_resume",
+      "ok": true,
+      "childSignal": "SIGKILL",
+      "hostCallsBeforeKill": [
+        "pets.get",
+        "pets.list",
+        "owners.list"
+      ],
+      "hostCallsAfterResume": [
+        "owners.list"
+      ],
+      "detail": "SIGKILL mid-read; resume replayed 2 journaled calls and re-ran interrupted read once"
+    },
+    {
+      "arm": "write_sigkill_outcome_unknown",
+      "ok": true,
+      "childSignal": "SIGKILL",
+      "hostCallsBeforeKill": [
+        "pets.get",
+        "pets.list",
+        "owners.create"
+      ],
+      "hostCallsAfterResume": [],
+      "detail": "SIGKILL mid-write; resume reports outcome_unknown and does not re-send write"
+    }
+  ],
+  "pin": {
+    "isolateReady": false,
+    "isolateKillNodeEligible": false,
+    "honesty": "file-journal program cell stand-in; pin v0.4.0; env=unset; binary=v0.4.0; isolateFlag=off; set CELLD_VERSION=v0.4.0, CLAWQL_PROGRAM_CELLD_ISOLATE=1, and install celld v0.4.0 on PATH when the isolate host is wired"
+  },
+  "ok": true
+}

@@ -102,7 +102,7 @@ Still planned: the clawql-streams coordination package (stream\_\* MCP tools) an
 
 clawql-inference (HTTP)
 
-(PAL · virtual keys · call store)
+(model escalation · virtual keys · call store)
 
 Constraints (Workers / celld Code Mode):
 
@@ -136,7 +136,7 @@ No setInterval
 
 Use setAlarm + SQLite intent rows
 
-clawql-inference stays out of process — called over HTTP — so the DO bundle does not embed model SDKs, credential stores, or PAL routing tables that change independently of Streams releases.
+clawql-inference stays out of process — called over HTTP — so the DO bundle does not embed model SDKs, credential stores, or model-escalation routing tables that change independently of Streams releases.
 
 See clawql-celld.md for the full runtime matrix and workarounds.
 
@@ -240,7 +240,7 @@ Never — buffer and ambient delivery only (high-volume, audit-only sources)
 
 3.5 Agent DO session
 
-When the significance filter passes, Streams spawns an AgentSessionDO. The model layer is always clawql-inference via fetch() — not a raw Anthropic/OpenAI credential and not a subprocess. The model field on stream_subscribe is a policy alias that resolves through PAL routing (Frugal → Standard → Frontier).
+When the significance filter passes, Streams spawns an AgentSessionDO. The model layer is always clawql-inference via fetch() — not a raw Anthropic/OpenAI credential and not a subprocess. The model field on stream_subscribe is a policy alias that resolves through model escalation (Frugal → Standard → Frontier).
 
 export class AgentSessionDO extends DurableObject {
 
@@ -344,7 +344,7 @@ Every session gets:
 
 Policy manifest enforcement before any model call
 
-PAL routing based on task complexity
+model escalation based on task complexity
 
 WORM call-store correlation for every inference call (virtual key ID threaded)
 
@@ -410,7 +410,7 @@ Gateway creates AgentSessionDO id + asks clawql-inference for virtual key
 
 ├─ TTL: maxTurns × estimated_turn_duration
 
-├─ PAL policy: from subscription.model alias
+├─ model-escalation policy: from subscription.model alias
 
 │
 
@@ -710,7 +710,7 @@ virtual key ID + subscription ID + event hash
 
 INFERENCE_CALL
 
-virtual key ID + PAL tier + tokens + cache hit/miss
+virtual key ID + model tier + tokens + cache hit/miss
 
 TOOL_CALL
 
@@ -754,7 +754,7 @@ memory_recall / search tool calls before reasoning
 
 Reasoning
 
-Tool-selection chain + clawql-inference metadata (PAL tier, cache hit, tokens, model id)
+Tool-selection chain + clawql-inference metadata (model tier, cache hit, tokens, model id)
 
 Execution
 
@@ -794,7 +794,7 @@ TrainingDataSidecar accumulates RTP turnSequence in DO SQLite as tools execute.
 
 On session close: wrap RTP in OBT envelope; flush to export (r2 / postgres / huggingface / none).
 
-DO session → fetch(clawql-inference) (PAL + virtual key)
+DO session → fetch(clawql-inference) (model escalation + virtual key)
 
 → WORM / LTX (every inference + tool call)
 
@@ -806,7 +806,7 @@ DO session → fetch(clawql-inference) (PAL + virtual key)
 
 → custom Frugal model in tier-map.json
 
-→ next session PAL-routes to custom Frugal first
+→ next session model-escalates to custom Frugal first
 
 → cheaper sessions → more sessions → more traces
 
@@ -1118,7 +1118,7 @@ Out of process — fetch(CLAWQL*MCP_URL) Streamable HTTP for search/execute/memo
 
 clawql-inference
 
-Out of process — fetch() only; PAL, virtual keys, call store, cache
+Out of process — fetch() only; model escalation, virtual keys, call store, cache
 
 celld
 
@@ -1330,7 +1330,7 @@ docs/streams/clawql-durable-objects.md — session contract, sidecars, virtual k
 
 docs/mcp/mcp-api-adapter.md — MCP → APIs (inverse of ClawQL Core)
 
-docs/inference/clawql-inference.md — Agentic Gateway / virtual keys / PAL
+docs/inference/clawql-inference.md — Agentic Gateway / virtual keys / model escalation
 
 docs/benchmarks/openbench-trace-collection.md — OpenBenchTrace + RTP alignment
 

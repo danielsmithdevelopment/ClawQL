@@ -1,10 +1,107 @@
 /**
  * Shared helpers for mapping OpenAPI operations → GraphQL field names and variables.
+ *
+ * GraphQL name sanitization is local (Effect) so equal-arm / REST-prefer boots do not
+ * pay `@graphql-mesh/utils` RSS (~20–40MB) until Omnigraph is actually needed.
  */
 
-import { sanitizeNameForGraphQL } from "@graphql-mesh/utils";
+import { Effect } from "effect";
 import type { GraphQLSchema } from "graphql";
 import { INLINE_OPENAPI_REQUEST_BODY, type Operation } from "../spec/operation-types.js";
+
+/** Mesh-compatible reserved GraphQL type names. */
+const RESERVED_GRAPHQL_NAMES = ["Query", "Mutation", "Subscription", "File"] as const;
+
+const KNOWN_GRAPHQL_NAME_CHARS: Record<string, string> = {
+  "+": "PLUS",
+  "-": "MINUS",
+  ">": "GREATER_THAN",
+  "<": "LESS_THAN",
+  "=": "EQUALS",
+  "&": "AMPERSAND",
+  "|": "PIPE",
+  "@": "AT",
+  "*": "STAR",
+  ":": "COLON",
+  "{": "LEFT_CURLY_BRACE",
+  "}": "RIGHT_CURLY_BRACE",
+  "[": "LEFT_SQUARE_BRACE",
+  "]": "RIGHT_SQUARE_BRACE",
+  ",": "COMMA",
+  "%": "PERCENT",
+  $: "DOLLAR",
+  "#": "POUND",
+  "^": "CARET",
+  "~": "TILDE",
+  "?": "QUESTION_MARK",
+  "!": "EXCLAMATION_MARK",
+  '"': "QUOTATION_MARK",
+  "'": "SINGLE_QUOTE",
+  "\\": "BACKSLASH",
+  "/": "SLASH",
+  ".": "DOT",
+  "`": "BACKTICK",
+  ";": "SEMICOLON",
+  "(": "LEFT_PARENTHESIS",
+  ")": "RIGHT_PARENTHESIS",
+};
+
+function getKnownCharacterOrCharCode(ch: string): string {
+  return KNOWN_GRAPHQL_NAME_CHARS[ch] || ch.charCodeAt(0).toString();
+}
+
+function removeClosedBrackets(val: string): string {
+  let out = val;
+  for (;;) {
+    const match = out.match(/\(.+?\)/);
+    const yesbrack = match?.[0];
+    if (!yesbrack) break;
+    out = out.replace(yesbrack, yesbrack.substring(1, yesbrack.length - 1));
+  }
+  return out;
+}
+
+/**
+ * Sanitize an OpenAPI operation id / path fragment into a GraphQL-safe name.
+ * Behavior matches `@graphql-mesh/utils` `sanitizeNameForGraphQL` (field-name parity).
+ */
+export function sanitizeNameForGraphQLEffect(unsafeName: string): Effect.Effect<string> {
+  return Effect.sync(() => {
+    let sanitizedName = removeClosedBrackets(unsafeName.trim());
+    if (!Number.isNaN(Number.parseInt(sanitizedName, 10))) {
+      if (sanitizedName.startsWith("-")) {
+        sanitizedName = sanitizedName.replace("-", "NEGATIVE_");
+      } else {
+        sanitizedName = `_${sanitizedName}`;
+      }
+    }
+    if (!/^[_a-zA-Z0-9]*$/.test(sanitizedName)) {
+      const unsanitizedName = sanitizedName;
+      sanitizedName = "";
+      for (const ch of unsanitizedName) {
+        if (/^[_a-zA-Z0-9]$/.test(ch)) {
+          sanitizedName += ch;
+        } else if (ch === " " || ch === "-" || ch === "." || ch === "/" || ch === ":") {
+          sanitizedName += "_";
+        } else {
+          sanitizedName += `_${getKnownCharacterOrCharCode(ch)}_`;
+        }
+      }
+    }
+    if (sanitizedName.startsWith("__")) {
+      sanitizedName = sanitizedName.replace("__", "_0");
+    }
+    if ((RESERVED_GRAPHQL_NAMES as readonly string[]).includes(sanitizedName)) {
+      sanitizedName += "_";
+    }
+    return sanitizedName.length === 0 ? "_" : sanitizedName;
+  });
+}
+
+/** Host façade for sync call sites inside field resolution. */
+export function sanitizeNameForGraphQL(unsafeName: string): string {
+  return Effect.runSync(sanitizeNameForGraphQLEffect(unsafeName));
+}
 
 export function operationIdToGraphQLName(op: Operation): string {
   const segments = op.flatPath.split("/").filter((s) => !s.startsWith("{") && s.length > 0);

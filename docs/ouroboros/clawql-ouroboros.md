@@ -6,7 +6,7 @@
 
 TypeScript workspace package at [`packages/clawql-ouroboros`](../packages/clawql-ouroboros): **specification-first** seeds, **Wonder / Reflect** hooks, an **evolutionary loop** over pluggable **Executor** / **Evaluator**, **ontology convergence** (similarity, stagnation, oscillation, regression gates), and optional **MCP-shaped tool definitions** for crystallizing document text into seeds.
 
-**This is not the full [Q00/ouroboros](https://github.com/Q00/ouroboros) Python product** (interview CLI, PAL routing, Double Diamond execution, LiteLLM, SQL event store, plugin, TUI, and so on). The ClawQL package is a **portable subset** aimed at embedding inside **ClawQL** and other Node runtimes. Conceptual overlap (seed, wonder/reflect, convergence) is intentional; API and feature parity are not.
+**This is not the full [Q00/ouroboros](https://github.com/Q00/ouroboros) Python product** (interview CLI, model escalation, Double Diamond execution, LiteLLM, SQL event store, plugin, TUI, and so on). The ClawQL package is a **portable subset** aimed at embedding inside **ClawQL** and other Node runtimes. Conceptual overlap (seed, wonder/reflect, convergence) is intentional; API and feature parity are not.
 
 **Status:** As of **8.0**, agent-facing Ouroboros MCP tools register via **`clawql-harness`** (`createOuroborosHarnessPlugin` / `makeHarnessLayer`) only when **`CLAWQL_ENABLE_OUROBOROS_TOOLS=1`** or instance/tier `ouroboros.enabled: true` (default **off** — demotion, not purge). Tools:
 **`clawql_think`**, **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**, and **`ouroboros_measure_drift`** ([#557](https://github.com/danielsmithdevelopment/ClawQL/issues/557)). **`CLAWQL_ENABLE_OUROBOROS`** (old name) is **deleted**. For durable lineage, configure Postgres with
@@ -236,7 +236,7 @@ stop();
 ## See also
 
 - **[OpenBench value evidence](../benchmarks/ouroboros-value-evidence.md)** — verified A/B: Ouroboros on converges vs off strategy thrash under hard spend caps ([run 30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642)).
-- **[Upstream Q00 sync roadmap](./upstream-q00-sync-roadmap.md)** — what to port from [Q00/ouroboros](https://github.com/Q00/ouroboros) v0.50.3+ (PAL Router upstream, drift measurement, model tier escalation + agent coordination sequencing) and linked GitHub tickets.
+- **[Upstream Q00 sync roadmap](./upstream-q00-sync-roadmap.md)** — what to port from [Q00/ouroboros](https://github.com/Q00/ouroboros) v0.50.3+ (model-escalation router upstream, drift measurement, model tier escalation + agent coordination sequencing) and linked GitHub tickets.
 - **[`docs/adr/0001-ouroboros-workflow-engine.md`](../adr/0001-ouroboros-workflow-engine.md)** — architecture decision record for in-process routing, seed contract, and persistence model ([#110](https://github.com/danielsmithdevelopment/ClawQL/issues/110)).
 - **[`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md)** — ClawQL MCP tools, including optional **`ouroboros_*`** wiring.
 - **[`packages/mcp-grpc-transport/README.md`](../packages/mcp-grpc-transport/README.md)** — other publishable workspace package.

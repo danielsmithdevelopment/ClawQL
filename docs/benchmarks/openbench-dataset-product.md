@@ -54,11 +54,11 @@ You **run** the benchmarks. Customer gets outcomes, not a DIY pipeline.
 
 ### Terminology (ClawQL)
 
-| Use                    | Do not use                            |
-| ---------------------- | ------------------------------------- |
-| **model escalation**   | PAL (Ouroboros upstream term)         |
-| **agent coordination** | MoA / Mixture of Agents (Hermes term) |
-| **PorTAL**             | only for Ramp portable LoRA adapters  |
+| Use                    | Do not use                                 |
+| ---------------------- | ------------------------------------------ |
+| **model escalation**   | model escalation (Ouroboros upstream term) |
+| **agent coordination** | MoA / Mixture of Agents (Hermes term)      |
+| **PorTAL**             | only for Ramp portable LoRA adapters       |
 
 ### Virtuous loop
 

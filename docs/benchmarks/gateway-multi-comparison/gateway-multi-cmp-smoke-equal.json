@@ -1,0 +1,484 @@
+{
+  "suite": "gateway-multi-comparison",
+  "measuredAt": "2026-10-11T06:23:54.121Z",
+  "node": "v22.14.0",
+  "config": {
+    "iters": 40,
+    "warmup": 5,
+    "equal_upstream": true,
+    "interleaved": true,
+    "skip_chaos": true,
+    "chaos_max": 32,
+    "chaos_step_ms": 3000,
+    "break_p99_ms": 100,
+    "break_error_rate": 0.02,
+    "refine": true,
+    "arms": [
+      "clawql",
+      "executor",
+      "mcpjungle",
+      "agentgateway"
+    ]
+  },
+  "board": {
+    "clawql": {
+      "latency_e2e_ms": {
+        "n": 40,
+        "p50_ms": 1.811,
+        "p95_ms": 3.391,
+        "p99_ms": 3.897,
+        "p999_ms": 3.897,
+        "mean_ms": 2.096,
+        "min_ms": 1.572,
+        "max_ms": 3.897
+      },
+      "gateway_cost_ms": {
+        "n": 40,
+        "p50_ms": 1.185,
+        "p95_ms": 2.779,
+        "p99_ms": 3.215,
+        "p999_ms": 3.215,
+        "mean_ms": 1.198,
+        "min_ms": -2.013,
+        "max_ms": 3.215
+      },
+      "rss_mb_median": 369.31,
+      "cpu_pct_median": 86.43,
+      "invoked_tool_schema_tokens": 178,
+      "schema_tokens_full_list": 5334,
+      "tools_count": 18,
+      "equal_result_tokens": 59,
+      "chaos_last_ok": null,
+      "chaos_first_break": null,
+      "chaos_break_reason": null
+    },
+    "executor": {
+      "latency_e2e_ms": {
+        "n": 40,
+        "p50_ms": 3.307,
+        "p95_ms": 6.07,
+        "p99_ms": 9.378,
+        "p999_ms": 9.378,
+        "mean_ms": 3.913,
+        "min_ms": 2.36,
+        "max_ms": 9.378
+      },
+      "gateway_cost_ms": {
+        "n": 40,
+        "p50_ms": 2.677,
+        "p95_ms": 5.238,
+        "p99_ms": 8.698,
+        "p999_ms": 8.698,
+        "mean_ms": 3.015,
+        "min_ms": -0.539,
+        "max_ms": 8.698
+      },
+      "rss_mb_median": 221.76,
+      "cpu_pct_median": 6.59,
+      "invoked_tool_schema_tokens": 90,
+      "schema_tokens_full_list": 2243,
+      "tools_count": 7,
+      "equal_result_tokens": 59,
+      "chaos_last_ok": null,
+      "chaos_first_break": null,
+      "chaos_break_reason": null
+    },
+    "mcpjungle": {
+      "latency_e2e_ms": {
+        "n": 40,
+        "p50_ms": 2.055,
+        "p95_ms": 3.085,
+        "p99_ms": 4.664,
+        "p999_ms": 4.664,
+        "mean_ms": 2.219,
+        "min_ms": 1.761,
+        "max_ms": 4.664
+      },
+      "gateway_cost_ms": {
+        "n": 40,
+        "p50_ms": 1.397,
+        "p95_ms": 2.424,
+        "p99_ms": 4.043,
+        "p999_ms": 4.043,
+        "mean_ms": 1.321,
+        "min_ms": -1.549,
+        "max_ms": 4.043
+      },
+      "rss_mb_median": 98.4,
+      "cpu_pct_median": 24.99,
+      "invoked_tool_schema_tokens": 46,
+      "schema_tokens_full_list": 46,
+      "tools_count": 1,
+      "equal_result_tokens": 28,
+      "chaos_last_ok": null,
+      "chaos_first_break": null,
+      "chaos_break_reason": null
+    },
+    "agentgateway": {
+      "latency_e2e_ms": {
+        "n": 40,
+        "p50_ms": 1.812,
+        "p95_ms": 2.734,
+        "p99_ms": 4.344,
+        "p999_ms": 4.344,
+        "mean_ms": 2.013,
+        "min_ms": 1.52,
+        "max_ms": 4.344
+      },
+      "gateway_cost_ms": {
+        "n": 40,
+        "p50_ms": 1.142,
+        "p95_ms": 2.058,
+        "p99_ms": 3.81,
+        "p999_ms": 3.81,
+        "mean_ms": 1.115,
+        "min_ms": -1.873,
+        "max_ms": 3.81
+      },
+      "rss_mb_median": 189.05,
+      "cpu_pct_median": 11.83,
+      "invoked_tool_schema_tokens": 37,
+      "schema_tokens_full_list": 37,
+      "tools_count": 1,
+      "equal_result_tokens": 28,
+      "chaos_last_ok": null,
+      "chaos_first_break": null,
+      "chaos_break_reason": null
+    }
+  },
+  "arms": {
+    "clawql": {
+      "id": "clawql",
+      "model": "stdio_mcp_openapi_execute",
+      "ok": true,
+      "version": null,
+      "mcp_url": null,
+      "tool_name": "execute",
+      "latency": {
+        "e2e": {
+          "n": 40,
+          "p50_ms": 1.811,
+          "p95_ms": 3.391,
+          "p99_ms": 3.897,
+          "p999_ms": 3.897,
+          "mean_ms": 2.096,
+          "min_ms": 1.572,
+          "max_ms": 3.897
+        },
+        "direct_http": {
+          "n": 40,
+          "p50_ms": 0.616,
+          "p95_ms": 2.754,
+          "p99_ms": 3.585,
+          "p999_ms": 3.585,
+          "mean_ms": 0.898,
+          "min_ms": 0.521,
+          "max_ms": 3.585
+        },
+        "gateway_cost": {
+          "n": 40,
+          "p50_ms": 1.185,
+          "p95_ms": 2.779,
+          "p99_ms": 3.215,
+          "p999_ms": 3.215,
+          "mean_ms": 1.198,
+          "min_ms": -2.013,
+          "max_ms": 3.215
+        },
+        "call_errors": 0,
+        "note": "gateway_cost = e2e − paired direct HTTP /pets (interleaved equal-arm)",
+        "schedule": "interleaved_closed_loop"
+      },
+      "resources": {
+        "label": "clawql",
+        "pid": 193928,
+        "n": 19,
+        "rss_mb": {
+          "min": 267.84,
+          "median": 369.31,
+          "max": 370.57
+        },
+        "cpu_pct": {
+          "min": 52.26,
+          "median": 86.43,
+          "max": 220.14,
+          "mean": 112.01
+        }
+      },
+      "tokens": {
+        "invoked_tool_name": "execute",
+        "invoked_tool_schema_tokens": 178,
+        "tools_list_count": 18,
+        "tools_list_schema_tokens": 5334,
+        "equal_result_tokens": 59,
+        "tool_names": [
+          "search",
+          "execute",
+          "resume",
+          "cache",
+          "audit",
+          "skills_list",
+          "skills_get",
+          "sources_propose",
+          "memory_ingest",
+          "memory_recall",
+          "read_around",
+          "clawql_settings_read",
+          "clawql_settings_update",
+          "clawql_mentions_search",
+          "clawql_evidence",
+          "clawql_console",
+          "clawql_open_file",
+          "memory_sync"
+        ],
+        "note": "Primary board uses invoked_tool_schema_tokens (apples-to-apples); tools_list_* is secondary surface size."
+      },
+      "pid": 193928,
+      "chaos": {
+        "skipped": true,
+        "reason": "MULTI_SKIP_CHAOS=1 (latency/p999 focus)"
+      }
+    },
+    "executor": {
+      "id": "executor",
+      "model": "stdio_mcp_code_execute_static_upstream0",
+      "ok": true,
+      "version": null,
+      "mcp_url": null,
+      "tool_name": "execute",
+      "latency": {
+        "e2e": {
+          "n": 40,
+          "p50_ms": 3.307,
+          "p95_ms": 6.07,
+          "p99_ms": 9.378,
+          "p999_ms": 9.378,
+          "mean_ms": 3.913,
+          "min_ms": 2.36,
+          "max_ms": 9.378
+        },
+        "direct_http": {
+          "n": 40,
+          "p50_ms": 0.616,
+          "p95_ms": 2.754,
+          "p99_ms": 3.585,
+          "p999_ms": 3.585,
+          "mean_ms": 0.898,
+          "min_ms": 0.521,
+          "max_ms": 3.585
+        },
+        "gateway_cost": {
+          "n": 40,
+          "p50_ms": 2.677,
+          "p95_ms": 5.238,
+          "p99_ms": 8.698,
+          "p999_ms": 8.698,
+          "mean_ms": 3.015,
+          "min_ms": -0.539,
+          "max_ms": 8.698
+        },
+        "call_errors": 0,
+        "note": "gateway_cost = e2e − paired direct HTTP /pets (interleaved equal-arm)",
+        "schedule": "interleaved_closed_loop"
+      },
+      "resources": {
+        "label": "executor",
+        "pid": 193939,
+        "n": 13,
+        "rss_mb": {
+          "min": 220.41,
+          "median": 221.76,
+          "max": 232.09
+        },
+        "cpu_pct": {
+          "min": 3.24,
+          "median": 6.59,
+          "max": 13.03,
+          "mean": 7.63
+        }
+      },
+      "tokens": {
+        "invoked_tool_name": "execute",
+        "invoked_tool_schema_tokens": 90,
+        "tools_list_count": 7,
+        "tools_list_schema_tokens": 2243,
+        "equal_result_tokens": 59,
+        "tool_names": [
+          "execute",
+          "skills",
+          "resume",
+          "create-artifact",
+          "edit-artifact",
+          "list-artifacts",
+          "show-artifact"
+        ],
+        "note": "Primary board uses invoked_tool_schema_tokens (apples-to-apples); tools_list_* is secondary surface size."
+      },
+      "pid": 193939,
+      "chaos": {
+        "skipped": true,
+        "reason": "MULTI_SKIP_CHAOS=1 (latency/p999 focus)"
+      }
+    },
+    "mcpjungle": {
+      "id": "mcpjungle",
+      "model": "streamable_http_gateway_stdio_upstream+shared_http_upstream",
+      "ok": true,
+      "version": null,
+      "mcp_url": "http://127.0.0.1:34607/mcp",
+      "tool_name": "pets__list_pets",
+      "latency": {
+        "e2e": {
+          "n": 40,
+          "p50_ms": 2.055,
+          "p95_ms": 3.085,
+          "p99_ms": 4.664,
+          "p999_ms": 4.664,
+          "mean_ms": 2.219,
+          "min_ms": 1.761,
+          "max_ms": 4.664
+        },
+        "direct_http": {
+          "n": 40,
+          "p50_ms": 0.616,
+          "p95_ms": 2.754,
+          "p99_ms": 3.585,
+          "p999_ms": 3.585,
+          "mean_ms": 0.898,
+          "min_ms": 0.521,
+          "max_ms": 3.585
+        },
+        "gateway_cost": {
+          "n": 40,
+          "p50_ms": 1.397,
+          "p95_ms": 2.424,
+          "p99_ms": 4.043,
+          "p999_ms": 4.043,
+          "mean_ms": 1.321,
+          "min_ms": -1.549,
+          "max_ms": 4.043
+        },
+        "call_errors": 0,
+        "note": "gateway_cost = e2e − paired direct HTTP /pets (interleaved equal-arm)",
+        "schedule": "interleaved_closed_loop"
+      },
+      "resources": {
+        "label": "mcpjungle",
+        "pid": 193870,
+        "n": 12,
+        "rss_mb": {
+          "min": 29.16,
+          "median": 98.4,
+          "max": 123.26
+        },
+        "cpu_pct": {
+          "min": 0,
+          "median": 24.99,
+          "max": 40.43,
+          "mean": 21.91
+        }
+      },
+      "tokens": {
+        "invoked_tool_name": "pets__list_pets",
+        "invoked_tool_schema_tokens": 46,
+        "tools_list_count": 1,
+        "tools_list_schema_tokens": 46,
+        "equal_result_tokens": 28,
+        "tool_names": [
+          "pets__list_pets"
+        ],
+        "note": "Primary board uses invoked_tool_schema_tokens (apples-to-apples); tools_list_* is secondary surface size."
+      },
+      "pid": 193870,
+      "chaos": {
+        "skipped": true,
+        "reason": "MULTI_SKIP_CHAOS=1 (latency/p999 focus)"
+      }
+    },
+    "agentgateway": {
+      "id": "agentgateway",
+      "model": "streamable_http_gateway_stdio_upstream+shared_http_upstream",
+      "ok": true,
+      "version": "{\n  \"version\": \"1.6.0\",\n  \"git_revision\": \"ea5608642b9d5c94c5baf5fd9f2f9849b808e963\",\n  \"rust_version\": \"1.99.0\",\n  \"build_profile\": \"release\",\n  \"build_target\": \"x86_64-unknown-linux-musl\",\n  \"crypto_backend\": \"aws-lc-rs\",\n  \"crypto_fips\": false\n}",
+      "mcp_url": "http://127.0.0.1:34349/mcp",
+      "tool_name": "list_pets",
+      "latency": {
+        "e2e": {
+          "n": 40,
+          "p50_ms": 1.812,
+          "p95_ms": 2.734,
+          "p99_ms": 4.344,
+          "p999_ms": 4.344,
+          "mean_ms": 2.013,
+          "min_ms": 1.52,
+          "max_ms": 4.344
+        },
+        "direct_http": {
+          "n": 40,
+          "p50_ms": 0.616,
+          "p95_ms": 2.754,
+          "p99_ms": 3.585,
+          "p999_ms": 3.585,
+          "mean_ms": 0.898,
+          "min_ms": 0.521,
+          "max_ms": 3.585
+        },
+        "gateway_cost": {
+          "n": 40,
+          "p50_ms": 1.142,
+          "p95_ms": 2.058,
+          "p99_ms": 3.81,
+          "p999_ms": 3.81,
+          "mean_ms": 1.115,
+          "min_ms": -1.873,
+          "max_ms": 3.81
+        },
+        "call_errors": 0,
+        "note": "gateway_cost = e2e − paired direct HTTP /pets (interleaved equal-arm)",
+        "schedule": "interleaved_closed_loop"
+      },
+      "resources": {
+        "label": "agentgateway",
+        "pid": 193901,
+        "n": 9,
+        "rss_mb": {
+          "min": 187.17,
+          "median": 189.05,
+          "max": 189.66
+        },
+        "cpu_pct": {
+          "min": 0,
+          "median": 11.83,
+          "max": 13.64,
+          "mean": 7.46
+        }
+      },
+      "tokens": {
+        "invoked_tool_name": "list_pets",
+        "invoked_tool_schema_tokens": 37,
+        "tools_list_count": 1,
+        "tools_list_schema_tokens": 37,
+        "equal_result_tokens": 28,
+        "tool_names": [
+          "list_pets"
+        ],
+        "note": "Primary board uses invoked_tool_schema_tokens (apples-to-apples); tools_list_* is secondary surface size."
+      },
+      "pid": 193901,
+      "chaos": {
+        "skipped": true,
+        "reason": "MULTI_SKIP_CHAOS=1 (latency/p999 focus)"
+      }
+    }
+  },
+  "errors": {},
+  "honesty": [
+    "Equal-arm pets JSON across all arms.",
+    "EQUAL_UPSTREAM: shared mock HTTP /pets — ClawQL OpenAPI, aggregator list_pets fetch, Executor fetch-when-allowed; gateway_cost = e2e − paired direct.",
+    "Latency schedule: interleaved closed-loop across live arms (n≥10000 recommended for p999).",
+    "Primary token metric: invoked_tool_schema_tokens (not full tools/list).",
+    "Chaos optional (MULTI_SKIP_CHAOS); when on: concurrent clients until p99>SLO / error_rate.",
+    "Panguard / durable WORM off. MetaMCP skipped without Docker.",
+    "Hold publicizing until ClawQL RAM narrative closed or scoped."
+  ]
+}

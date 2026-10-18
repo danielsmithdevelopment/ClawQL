@@ -51,6 +51,23 @@ describe("wrapRegisteredMcpToolHandler", () => {
     expect(result.content[0]?.text).toContain("Panguard policy blocked tool: execute");
   });
 
+  it("surfaces CAPABILITY_WRITE_INTERCEPTED reason when Error.message is empty", async () => {
+    vi.mocked(runMcpProxyBeforeCallTool).mockRejectedValueOnce({
+      _tag: "ClawQLError",
+      reason:
+        "CAPABILITY_WRITE_INTERCEPTED: tool outside three-bucket catalog (not in session_catalog∩S and no PROMOTION_ACCEPTED skillId with scope ⊆ S)",
+      message: "",
+    });
+
+    const wrapped = wrapRegisteredMcpToolHandler("execute", async () => ({
+      content: [{ type: "text" as const, text: "ok" }],
+    }));
+
+    const result = await wrapped({ operationId: "listPets", args: {} });
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toContain("CAPABILITY_WRITE_INTERCEPTED");
+  });
+
   it("auto-appends mcp_tool audit after a successful search call", async () => {
     const wrapped = wrapRegisteredMcpToolHandler("search", async () => ({
       content: [{ type: "text" as const, text: "hits" }],

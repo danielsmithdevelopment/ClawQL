@@ -2,11 +2,12 @@
 
 Minimal **Workers / Durable Objects** bundle for [ClawQL Streams](https://docs.clawql.com/streams/clawql-streams) on **[celld v0.4.0](https://github.com/denoland/celld/releases/tag/v0.4.0)**, with in-process **`clawql-core/streams-slim`**, optional **`fetch(CLAWQL_MCP_URL)`**, and optional **`fetch(CLAWQL_MCP_ADAPTER_URL)`**.
 
-| DO class         | Role                                                                                    |
-| ---------------- | --------------------------------------------------------------------------------------- |
-| `GatewayDO`      | Webhook ingress (`POST /webhook/{subscriptionId}`), spawn sessions                      |
-| `SubscriptionDO` | Significance filter stub (`sub:{id}` naming)                                            |
-| `AgentSessionDO` | Session + ring/LTX bookkeeping + optional MCP / adapter / inference / host WORM fetches |
+| DO class         | Role                                                                                                      |
+| ---------------- | --------------------------------------------------------------------------------------------------------- |
+| `GatewayDO`      | Webhook ingress (`POST /webhook/{subscriptionId}`), spawn sessions                                        |
+| `SubscriptionDO` | Significance filter (`always`/`never`/`threshold`/`pattern`/`rate`/`composite`; `sub:{id}`)               |
+| `AgentSessionDO` | Session + TTL `setAlarm` + ring/LTX + optional MCP / adapter / multi-turn inference (vk bind) / host WORM |
+| `CoreToolsDO`    | **Default** in-isolate slim Core `search`/`execute` (`POST /mcp`; escape → Bun host MCP)                  |
 
 **Learn walkthrough:** [Streams getting started — Lab 5b](https://docs.clawql.com/learn/streams-getting-started#lab-5b--clawql-streams-wrangler-skeleton--bundle-check-30-min)  
 **Evidence matrix:** [`docs/streams/streams-celld-evidence.md`](../../streams/streams-celld-evidence.md)
@@ -17,33 +18,44 @@ celld/Workers cannot host Express, gRPC, stdio MCP, or `node:fs` vault IO. Putti
 
 The right demo is the **production shape**: slim cell + real sidecars.
 
-| Mode                 | What runs                                                                                   | Command                                                |
-| -------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| Contract smoke       | celld + **mock** MCP + **mock** adapter                                                     | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke`         |
-| **Full-stack smoke** | celld + **real** `clawql-mcp-http` + **real** `mcp-api-adapter` + inference `/healthz` stub | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:full`    |
-| Containers           | MCP + adapter images (celld on host)                                                        | `docker compose -f docker-compose.full.yml up --build` |
+| Mode                   | What runs                                                                                                         | Command                                                      |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Contract smoke         | celld + **mock** MCP + **mock** adapter                                                                           | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke`               |
+| **Core in celld**      | celld `CoreToolsDO` handles `search`/`execute` (no host MCP) + mock pets upstream                                 | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:core-in-celld` |
+| **Full-stack smoke**   | celld + **real** `clawql-mcp-http` (Lab 5b OpenAPI pack) + **real** `mcp-api-adapter` + inference multi-turn stub | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:full`          |
+| **Host MCP pack**      | Real `clawql-mcp-http` + Lab 5b OpenAPI pack — `execute(streams.session.noop)` without celld                      | `npm run smoke:host-mcp-pack`                                |
+| **VK budget / expire** | Inference stub only — bind → 402 ceiling → expire → 401 (no celld / no provider keys)                             | `npm run smoke:vk-budget`                                    |
+| Containers             | MCP + adapter images (celld on host)                                                                              | `docker compose -f docker-compose.full.yml up --build`       |
 
 ## In-process vs out-of-process
 
-| Surface                            | Status                                                                                 |
-| ---------------------------------- | -------------------------------------------------------------------------------------- |
-| `audit` ring (session bookkeeping) | **In-process** + **LTX flush** — not compliance; snapshot `audit:ring` + `audit:seq:*` |
-| Host `clawql-audit` (compliance)   | **Out-of-process** — `fetch(CLAWQL_AUDIT_WORM_URL)` → tip-loaded `WORMAuditTrail`      |
-| `cache` (session scratch)          | **In-process** — `clawql-core/streams-slim`                                            |
-| Hash-chain verify                  | **In-process** — via clawql-merkle (needs `nodejs_compat`)                             |
-| Inference                          | **Out-of-process** — `fetch(INFERENCE_URL)`                                            |
-| `search` / `execute` / `memory_*`  | **Out-of-process** — `fetch(CLAWQL_MCP_URL)` Streamable HTTP                           |
-| `mcp-api-adapter`                  | **Out-of-process** — `fetch(CLAWQL_MCP_ADAPTER_URL)` REST `POST /{tool}`               |
+| Surface                            | Status                                                                                                                               |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `audit` ring (session bookkeeping) | **In-process** + **LTX flush** — not compliance; snapshot `audit:ring` + `audit:seq:*`                                               |
+| Host `clawql-audit` (compliance)   | **Out-of-process** — `fetch(CLAWQL_AUDIT_WORM_URL)` → tip-loaded `WORMAuditTrail`                                                    |
+| `cache` (session scratch)          | **In-process** — `clawql-core/streams-slim`                                                                                          |
+| Hash-chain verify                  | **In-process** — via clawql-merkle (needs `nodejs_compat`)                                                                           |
+| Inference (multi-turn skeleton)    | **Out-of-process** — bind `POST /v1/keys/bind` + `/healthz` + 2× `POST /v1/messages` (vk Bearer); TTL alarm → `POST /v1/keys/expire` |
+| `search` / `execute` (slim)        | **In-process default** — `CoreToolsDO` (`CLAWQL_CORE_IN_CELLD=0` → Bun host MCP)                                                     |
+| `memory_*` (and host escape Core)  | **Out-of-process** — `fetch(CLAWQL_MCP_URL)` Streamable HTTP (Bun host / full Core)                                                  |
+| `mcp-api-adapter`                  | **Out-of-process** — `fetch(CLAWQL_MCP_ADAPTER_URL)` REST `POST /{tool}`                                                             |
 
 Do **not** embed `clawql-api`, `clawql-memory`, or `mcp-api-adapter` (Express/gRPC/`node:fs`).
 
-| Env                                                           | Meaning                                                |
-| ------------------------------------------------------------- | ------------------------------------------------------ |
-| `CLAWQL_MCP_URL`                                              | Streamable HTTP MCP endpoint (usually `…/mcp`)         |
-| `CLAWQL_MCP_ADAPTER_URL`                                      | Adapter **origin** only (e.g. `http://127.0.0.1:8090`) |
-| `CLAWQL_MCP_BEARER_TOKEN` / `CLAWQL_MCP_ADAPTER_BEARER_TOKEN` | Optional Bearer                                        |
-| `CLAWQL_AUDIT_WORM_URL`                                       | Host `clawql-audit` HTTP origin (`POST /entries`)      |
-| `CLAWQL_AUDIT_API_KEY`                                        | ApiKey for host WORM HTTP (optional if open)           |
+| Env                                                           | Meaning                                                                    |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `CLAWQL_MCP_URL`                                              | Streamable HTTP MCP endpoint (usually `…/mcp`)                             |
+| `CLAWQL_MCP_ADAPTER_URL`                                      | Adapter **origin** only (e.g. `http://127.0.0.1:8090`)                     |
+| `CLAWQL_MCP_BEARER_TOKEN` / `CLAWQL_MCP_ADAPTER_BEARER_TOKEN` | Optional Bearer                                                            |
+| `CLAWQL_CORE_IN_CELLD`                                        | Default `1`; set `0` / `CLAWQL_DECLINE_CELLD=1` to skip celld → Bun ladder |
+| `CLAWQL_DECLINE_BUN`                                          | Skip Bun → Node (legacy) with improve-performance message                  |
+| `CLAWQL_CORE_UPSTREAM`                                        | REST origin for in-cell `execute` (e.g. mock `/pets`)                      |
+| `CLAWQL_AUDIT_WORM_URL`                                       | Host `clawql-audit` HTTP origin (`POST /entries`)                          |
+| `CLAWQL_AUDIT_API_KEY`                                        | ApiKey for host WORM HTTP (optional if open)                               |
+| `CLAWQL_LAB_VK_BUDGET_USD`                                    | Lab stub budget at bind (default `1`; not DeductionService)                |
+| `INFERENCE_URL`                                               | Inference stub/gateway origin (`/v1/keys/bind\|expire`, `/v1/messages`)    |
+
+**Point any MCP client at celld for Core tools:** `POST http://127.0.0.1:<port>/mcp` (Streamable HTTP). Responses stamp `transport: "celld-isolate"`. This is the slim catalog (pets + Streams noop), not full production Core — see honesty string on every payload.
 
 MCP protocol header from the cell client is **`2025-11-25`** (SDK allow-list). Point cells at a clawql-mcp with **`CLAWQL_MCP_STATELESS=1`** (or send `mcp-protocol-version: 2026-07-28` once the SDK allow-list includes it) so tools/call does not require session affinity.
 

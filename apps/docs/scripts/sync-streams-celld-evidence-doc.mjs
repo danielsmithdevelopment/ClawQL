@@ -17,7 +17,8 @@ const srcRelative = path.join('docs', 'streams', 'streams-celld-evidence.md')
 function findRepoRootWithDocs() {
   let dir = websiteRoot
   for (let i = 0; i < 10; i++) {
-    if (fs.existsSync(path.join(dir, 'docs'))) {
+    // Prefer the monorepo root (docs/streams/…), not apps/docs itself.
+    if (fs.existsSync(path.join(dir, srcRelative))) {
       return dir
     }
     const parent = path.dirname(dir)

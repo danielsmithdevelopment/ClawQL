@@ -90,7 +90,7 @@ Avoid "best IDP on the planet" until earned. Prefer: _best IDP for teams that ne
 
 ## Part 3 — The Standalone IDP GTM Motion
 
-The IDP buyer is often a VP of Ops, Legal Ops Manager, transaction coordinator, controller, or compliance officer — not a developer optimizing PAL routing. Lead with documents, cost, auditability, and time-to-value in their language.
+The IDP buyer is often a VP of Ops, Legal Ops Manager, transaction coordinator, controller, or compliance officer — not a developer optimizing model escalation. Lead with documents, cost, auditability, and time-to-value in their language.
 
 ### Entry Points
 
@@ -139,7 +139,7 @@ The IDP buyer is often a VP of Ops, Legal Ops Manager, transaction coordinator, 
 
 ## Part 4 — clawql.com/idp Landing Page Brief
 
-Convert an IDP buyer who has never heard of ClawQL. Answer "Is this the document platform I've been looking for?" in ~10 seconds; trial/demo in ~60. Do not lead with PAL, Flywheel, WORM, or developer framing.
+Convert an IDP buyer who has never heard of ClawQL. Answer "Is this the document platform I've been looking for?" in ~10 seconds; trial/demo in ~60. Do not lead with model escalation, Flywheel, WORM, or developer framing.
 
 ### Above the Fold (Test Both Headlines)
 

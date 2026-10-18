@@ -11,11 +11,12 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REPO="$(cd "$ROOT/../../.." && pwd)"
-PORT="${CELLD_DEV_PORT:-9883}"
+PORT="${CELLD_DEV_PORT:-9888}"
 MCP_PORT="${FULL_STACK_MCP_PORT:-9881}"
 ADAPTER_PORT="${FULL_STACK_ADAPTER_PORT:-9882}"
 INFER_PORT="${FULL_STACK_INFER_PORT:-9884}"
 WORM_PORT="${FULL_STACK_WORM_PORT:-9885}"
+PETS_PORT="${FULL_STACK_PETS_PORT:-9886}"
 WORM_API_KEY="${FULL_STACK_WORM_API_KEY:-streams-celld-smoke-worm-key}"
 BASE="http://127.0.0.1:${PORT}"
 SMOKE_CFG="$ROOT/wrangler.full-stack.jsonc"
@@ -47,13 +48,25 @@ node "$ROOT/scripts/mcp-fetch.test.mjs"
 node "$ROOT/scripts/adapter-fetch.test.mjs"
 node "$ROOT/scripts/worm-fetch.test.mjs"
 
-# Real clawql-mcp (empty OpenAPI catalog is fine — skills + memory still register).
+# Pets upstream for CoreToolsDO + Lab 5b OpenAPI pack (listPets + streams.session.noop).
+node "$ROOT/scripts/mock-pets-upstream.mjs" "$PETS_PORT" &
+PETS_PID=$!
+
+LAB5B_OPENAPI="$ROOT/openapi/streams-lab5b.openapi.json"
+if [[ ! -f "$LAB5B_OPENAPI" ]]; then
+  echo "full-stack-smoke: FAIL — missing Lab 5b OpenAPI pack: $LAB5B_OPENAPI" >&2
+  exit 1
+fi
+node "$ROOT/scripts/openapi-pack.test.mjs"
+
+# Real clawql-mcp with Lab 5b OpenAPI pack (closes empty-catalog noop honesty gap).
 # Process WORM (clawql-audit) exposes HTTP /entries for the cell dual-write.
 (
   cd "$REPO"
   export PORT="$MCP_PORT"
   export MCP_PATH=/mcp
   export CLAWQL_ALLOW_NO_ENFORCEMENT=1
+  export CLAWQL_CAPABILITY_LIFECYCLE=0
   export CLAWQL_ENABLE_MEMORY=1
   export CLAWQL_OBSIDIAN_VAULT_PATH="$VAULT_DIR"
   export CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE=1
@@ -67,14 +80,16 @@ node "$ROOT/scripts/worm-fetch.test.mjs"
   export CLAWQL_WORM_HTTP_PORT="$WORM_PORT"
   export CLAWQL_AUDIT_API_KEY="$WORM_API_KEY"
   export CLAWQL_WORM_DEBUG=1
-  # Prefer empty catalog unless the operator set a pack.
+  export CLAWQL_SPEC_PATH="${CLAWQL_SPEC_PATH:-$LAB5B_OPENAPI}"
+  export CLAWQL_API_BASE_URL="${CLAWQL_API_BASE_URL:-http://127.0.0.1:${PETS_PORT}}"
+  export CLAWQL_OPENAPI_EXECUTE_PATH="${CLAWQL_OPENAPI_EXECUTE_PATH:-rest}"
   export CLAWQL_PROVIDER="${CLAWQL_PROVIDER:-}"
   unset CLAWQL_BUNDLED_PROVIDERS || true
   exec node bin/clawql-mcp-http.mjs
 ) >"$MCP_LOG" 2>&1 &
 MCP_PID=$!
 
-# Inference health stub (completions remain out of scope for this smoke).
+# Inference stub: /healthz + multi-turn POST /v1/messages (bind-on-create vk Bearer).
 node "$ROOT/scripts/inference-health-stub.mjs" "$INFER_PORT" >/dev/null 2>&1 &
 INFER_PID=$!
 
@@ -95,7 +110,7 @@ wait_http() {
 }
 
 cleanup() {
-  local pids=("$CELLD_PID" "$ADAPTER_PID" "$MCP_PID" "$INFER_PID")
+  local pids=("$CELLD_PID" "$ADAPTER_PID" "$MCP_PID" "$INFER_PID" "$PETS_PID")
   for p in "${pids[@]}"; do
     [[ -n "${p:-}" ]] || continue
     kill "$p" 2>/dev/null || true
@@ -182,14 +197,17 @@ if [[ "$ready_adapter" != "1" ]]; then
   exit 1
 fi
 
-python3 - "$ROOT/wrangler.jsonc" "$SMOKE_CFG" "$MCP_PORT" "$ADAPTER_PORT" "$INFER_PORT" "$WORM_PORT" "$WORM_API_KEY" <<'PY'
+python3 - "$ROOT/wrangler.jsonc" "$SMOKE_CFG" "$MCP_PORT" "$ADAPTER_PORT" "$INFER_PORT" "$WORM_PORT" "$WORM_API_KEY" "$PETS_PORT" <<'PY'
 import json, re, sys
-src, dst, mcp_port, adapter_port, infer_port, worm_port, worm_key = sys.argv[1:8]
+src, dst, mcp_port, adapter_port, infer_port, worm_port, worm_key, pets_port = sys.argv[1:9]
 text = open(src, encoding="utf-8").read()
 text = re.sub(r"/\*[\s\S]*?\*/", "", text)
 text = re.sub(r"^\s*//.*$", "", text, flags=re.M)
 cfg = json.loads(text)
 cfg.setdefault("vars", {})
+# Default Core-in-celld: search/execute in CoreToolsDO; memory_* on real MCP.
+cfg["vars"]["CLAWQL_CORE_IN_CELLD"] = "1"
+cfg["vars"]["CLAWQL_CORE_UPSTREAM"] = f"http://127.0.0.1:{pets_port}"
 cfg["vars"]["CLAWQL_MCP_URL"] = f"http://127.0.0.1:{mcp_port}/mcp"
 cfg["vars"]["CLAWQL_MCP_ADAPTER_URL"] = f"http://127.0.0.1:{adapter_port}"
 cfg["vars"]["INFERENCE_URL"] = f"http://127.0.0.1:{infer_port}"
@@ -241,7 +259,34 @@ else
 fi
 sleep 2
 wait_http "$BASE/health" "celld-after-rebuild" "$CELLD_PID" 80
-sleep 2
+# Quiet window: another watcher rebuild mid-webhook NodeFences nested fetches
+# (adapter_search) even when SESSION_START already tip-extended.
+quiet_deadline=$((SECONDS + 20))
+last_restart_mark="$(grep -c 'restarting the application' "$CELLD_LOG" 2>/dev/null || true)"
+while ((SECONDS < quiet_deadline)); do
+  sleep 1
+  now_mark="$(grep -c 'restarting the application' "$CELLD_LOG" 2>/dev/null || true)"
+  if [[ "$now_mark" == "$last_restart_mark" ]]; then
+    # No new restart for 1s — require 3 consecutive quiet seconds.
+    quiet_ok=1
+    for _ in 1 2 3; do
+      sleep 1
+      check_mark="$(grep -c 'restarting the application' "$CELLD_LOG" 2>/dev/null || true)"
+      if [[ "$check_mark" != "$last_restart_mark" ]]; then
+        last_restart_mark="$check_mark"
+        quiet_ok=0
+        break
+      fi
+    done
+    if ((quiet_ok == 1)); then
+      echo "full-stack-smoke: celld watcher quiet — posting webhook" >&2
+      break
+    fi
+  else
+    last_restart_mark="$now_mark"
+  fi
+done
+wait_http "$BASE/health" "celld-quiet" "$CELLD_PID" 40
 curl -sf "$BASE/health" | grep -q clawql-streams-celld-skeleton
 
 post_webhook() {
@@ -254,12 +299,31 @@ post_webhook() {
 
 EVENT_ID="full-stack-$(date +%s)-$$"
 RESP="$(post_webhook "$EVENT_ID")"
-# One retry if the startup rebuild still fenced Durable Object writes mid-flight.
-if printf '%s' "$RESP" | grep -Fq 'NodeFenced'; then
-  echo "full-stack-smoke: NodeFenced on first webhook — retrying after settle" >&2
+# Retry only when the *webhook spawn* failed. A nested tool error that mentions
+# NodeFenced (e.g. adapter_search after a mid-handler storage.put) must NOT force
+# a new eventId — that orphans the first SESSION_START tip-extend and breaks the
+# host WORM continuity assertion (spawnCount=2 / chainIndex≫tip+1).
+if printf '%s' "$RESP" | python3 -c '
+import json, sys
+raw = sys.stdin.read()
+try:
+    r = json.loads(raw)
+except Exception:
+    # Non-JSON body: retry only if the fence string is present.
+    raise SystemExit(0 if "NodeFenced" in raw else 1)
+if r.get("ok") is True and r.get("action") == "spawn":
+    sess = r.get("session") or {}
+    body = sess if isinstance(sess, dict) and "audit" in sess else r
+    cw = ((body.get("audit") or {}).get("compliance") or {})
+    # Compliance SESSION_START already tip-extended — do not retry.
+    raise SystemExit(1 if cw.get("ok") is True else 0)
+# Top-level spawn failure / bare fence page.
+raise SystemExit(0 if (r.get("ok") is False or "NodeFenced" in raw) else 1)
+'; then
+  echo "full-stack-smoke: top-level spawn fence/failure — retrying same eventId after settle" >&2
   sleep 3
   wait_http "$BASE/health" "celld-before-retry" "$CELLD_PID" 40
-  EVENT_ID="full-stack-$(date +%s)-$$"
+  # Same eventId → same AgentSessionDO (idempotent if first attempt finished).
   RESP="$(post_webhook "$EVENT_ID")"
 fi
 
@@ -277,7 +341,9 @@ echo "$RESP" | grep -q '"action":"spawn"' || fail "expected action spawn"
 echo "$RESP" | grep -q 'clawql-core/streams-slim' || fail "expected clawql-core/streams-slim"
 echo "$RESP" | grep -q '"hash":' || fail "expected hash-chained audit append"
 echo "$RESP" | grep -q 'streams:session:' || fail "expected cache session key"
-echo "$RESP" | grep -q 'streamable-http' || fail "expected MCP streamable-http transport"
+echo "$RESP" | grep -q 'celld-isolate' || fail "expected CoreToolsDO celld-isolate (default Core-in-celld)"
+echo "$RESP" | grep -q '"coreInCelld":true' || fail "expected coreInCelld true"
+echo "$RESP" | grep -q 'streamable-http' || fail "expected streamable-http for memory_* MCP"
 echo "$RESP" | grep -q '"mcpUrlConfigured":true' || fail "expected mcpUrlConfigured true"
 echo "$RESP" | grep -q '"adapterUrlConfigured":true' || fail "expected adapterUrlConfigured true"
 echo "$RESP" | grep -q 'mcp-api-adapter-rest' || fail "expected adapter REST transport"
@@ -285,11 +351,11 @@ echo "$RESP" | grep -q '"snapshotKey":"audit:ring"' || fail "expected audit LTX 
 echo "$RESP" | grep -q 'audit:seq:' || fail "expected audit:seq WORM keys"
 echo "$RESP" | grep -q '"durable"' || fail "expected core.durable surfaces"
 
-# Must be real hosts — not Lab mocks.
+# Must be real hosts — not Lab mocks (memory / adapter).
 echo "$RESP" | grep -q '"source":"mock-mcp"' && fail "unexpected mock-mcp (expected real clawql-mcp)"
 echo "$RESP" | grep -q '"source":"mock-adapter"' && fail "unexpected mock-adapter (expected real mcp-api-adapter)"
 
-# Real MCP search / memory + host clawql-audit SESSION_START (not just cell ring).
+# CoreToolsDO search/execute + real MCP memory + host clawql-audit SESSION_START.
 echo "$RESP" | python3 -c '
 import json,sys,urllib.request
 r=json.load(sys.stdin)
@@ -298,9 +364,13 @@ tools=body.get("tools") or {}
 search=tools.get("search") or {}
 if search.get("ok") is not True:
   raise SystemExit(f"search not ok: {search!r}"[:800])
+if search.get("transport") != "celld-isolate":
+  raise SystemExit(f"search expected celld-isolate: {search!r}"[:800])
 mi=tools.get("memory_ingest") or {}
 if mi.get("ok") is not True:
   raise SystemExit(f"memory_ingest not ok: {mi!r}"[:800])
+if mi.get("transport") != "streamable-http":
+  raise SystemExit(f"memory_ingest expected streamable-http: {mi!r}"[:800])
 mr=tools.get("memory_recall") or {}
 if mr.get("ok") is not True:
   raise SystemExit(f"memory_recall not ok: {mr!r}"[:800])
@@ -308,11 +378,21 @@ ad=tools.get("adapter_search") or {}
 if ad.get("ok") is not True:
   raise SystemExit(f"adapter_search not ok: {ad!r}"[:800])
 inf=body.get("inference") or {}
-if inf.get("ok") is not True:
-  raise SystemExit(f"inference health probe not ok: {inf!r}"[:400])
+if inf.get("skipped") is True:
+  raise SystemExit(f"inference unexpectedly skipped: {inf!r}"[:400])
+if inf.get("ok") is not True or (inf.get("turns") or 0) < 2:
+  raise SystemExit(f"inference multi-turn not ok: {inf!r}"[:400])
+if inf.get("virtualKeyBound") is not True:
+  raise SystemExit(f"inference virtualKeyBound missing: {inf!r}"[:400])
+bind=inf.get("bind") or {}
+if bind.get("ok") is not True:
+  raise SystemExit(f"inference bind-on-create not ok: {inf!r}"[:400])
+turn=inf.get("turn") or {}
+if turn.get("ok") is not True:
+  raise SystemExit(f"inference turn not ok: {inf!r}"[:400])
 ex=tools.get("execute") or {}
-if ex.get("deferred") is True or ex.get("transport") != "streamable-http":
-  raise SystemExit(f"execute did not hit streamable-http: {ex!r}"[:800])
+if ex.get("deferred") is True or ex.get("transport") != "celld-isolate":
+  raise SystemExit(f"execute did not hit celld-isolate: {ex!r}"[:800])
 cw=(body.get("audit") or {}).get("compliance") or {}
 if cw.get("ok") is not True:
   raise SystemExit(f"compliance WORM SESSION_START not ok: {cw!r}"[:800])
@@ -321,24 +401,33 @@ if cw.get("transport") != "clawql-audit-http":
 core=body.get("core") or {}
 if core.get("wormUrlConfigured") is not True:
   raise SystemExit("wormUrlConfigured expected true")
+if core.get("coreInCelld") is not True:
+  raise SystemExit("coreInCelld expected true")
 event_id=r.get("eventId") or (body.get("session") or {}).get("eventId")
-print("full-stack assertions: search/memory/adapter/inference/compliance-WORM OK")
+print("full-stack assertions: CoreToolsDO+memory/adapter/inference/compliance-WORM OK")
 print(f"event_id={event_id}")
 ' || fail "python assertions failed"
 
 EVENT_ID=$(echo "$RESP" | python3 -c 'import json,sys; r=json.load(sys.stdin); print(r.get("eventId") or "")')
+# Full trail (not session-filtered): prove tip-extend against the seeded tip and
+# that SESSION_START's prevHash matches the prior chain entry (no fork).
 WORM_JSON=$(curl -sf -H "Authorization: ApiKey ${WORM_API_KEY}" \
-  "http://127.0.0.1:${WORM_PORT}/entries?sessionId=${EVENT_ID}")
-echo "$WORM_JSON" | TIP_HASH="$TIP_HASH" TIP_INDEX="$TIP_INDEX" python3 -c '
+  "http://127.0.0.1:${WORM_PORT}/entries")
+echo "$WORM_JSON" | TIP_HASH="$TIP_HASH" TIP_INDEX="$TIP_INDEX" EVENT_ID="$EVENT_ID" python3 -c '
 import json,os,sys
 data=json.load(sys.stdin)
 tip_hash=os.environ["TIP_HASH"]
 tip_index=int(os.environ["TIP_INDEX"])
+event_id=os.environ["EVENT_ID"]
 entries=data.get("entries") or []
-starts=[e for e in entries if e.get("type")=="SESSION_START"]
+starts=[e for e in entries if e.get("type")=="SESSION_START" and e.get("sessionId")==event_id]
 if not starts:
-  raise SystemExit(("no SESSION_START in host clawql-audit for session: %r" % (data,))[:800])
-e=starts[-1]
+  raise SystemExit(("no SESSION_START in host clawql-audit for session %r: %r" % (event_id, data))[:800])
+if len(starts) != 1:
+  raise SystemExit(
+    "expected exactly one SESSION_START for eventId=%r got %s (orphan retry?)" % (event_id, len(starts))
+  )
+e=starts[0]
 if "hash" not in e or "chainIndex" not in e or "prevHash" not in e:
   raise SystemExit(("SESSION_START missing chain fields: %r" % (e,))[:800])
 # Exact continuity: cell dual-write must extend the pre-seeded host tip, not genesis.
@@ -352,6 +441,14 @@ if e.get("chainIndex") != expected_index:
   raise SystemExit(
     "SESSION_START chainIndex=%s expected %s (tip was %s)"
     % (e.get("chainIndex"), expected_index, tip_index)
+  )
+# Structural: prevHash must equal the entry immediately before this one on the host trail.
+by_index={en.get("chainIndex"): en for en in entries if isinstance(en.get("chainIndex"), int)}
+prev=by_index.get(e.get("chainIndex") - 1)
+if not prev or prev.get("hash") != e.get("prevHash"):
+  raise SystemExit(
+    "SESSION_START prevHash does not match prior chain entry (index %s): prev=%r"
+    % (e.get("chainIndex") - 1, prev)
   )
 print(
   "host WORM verify: SESSION_START extends tip chainIndex=%s prevHash=%s… hash=%s…"

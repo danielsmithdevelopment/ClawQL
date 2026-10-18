@@ -197,13 +197,14 @@ export function StreamsLanding() {
       <Section
         id="scale"
         className="streams-section-band"
-        eyebrow="celld · Cloudflare · Kubernetes"
+        eyebrow="Builds on celld · Cloudflare · Kubernetes"
         headline="Infinite session scale without losing the audit trail"
         subheadline={
           <p>
-            Write-once Durable Object code runs on Cloudflare or <Link href={CELLD_SPEC}>celld</Link> — Deno&apos;s
-            self-hosted DO runtime with LTX replication to your bucket (~$0.05 per resident cell-month). Regulated
-            tenants keep <Link href={DO_SPEC}>Kubernetes HPA</Link> until celld is production-stable.
+            Streams is built on <Link href={CELLD_SPEC}>celld</Link> — Deno&apos;s self-hosted Durable Objects runtime
+            with LTX replication to your own bucket — or Cloudflare&apos;s hosted DOs. Regulated tenants keep{' '}
+            <Link href={DO_SPEC}>Kubernetes HPA</Link> until celld is production-stable. Slim Core search/execute runs
+            in-isolate via CoreToolsDO by default; Bun host MCP remains the escape for full catalog and vault.
           </p>
         }
       >
@@ -211,8 +212,8 @@ export function StreamsLanding() {
           <li>
             <h3 className="streams-scale-title">Virtual-key budgets</h3>
             <p className="streams-mode__detail">
-              Keys bind on session create and expire on destroy — every autonomous wake has a hard spend ceiling through{' '}
-              <code className="font-mono text-[0.9em]">clawql-inference</code>.
+              Lab sessions bind a virtual key at create and send it on every model turn; production spend ceilings land
+              through <code className="font-mono text-[0.9em]">clawql-inference</code> model escalation.
             </p>
           </li>
           <li>

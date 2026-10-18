@@ -285,9 +285,15 @@ export function tokenize(text: string): string[] {
     .filter((t) => t.length > 1);
 }
 
-function mapHitForResponse(r: RankedSearchHit): Record<string, unknown> {
+/** compact = signature-level catalog (default); full = parameters/schemas for deep inspect. */
+export type SearchResultDetail = "compact" | "full";
+
+function mapHitForResponse(
+  r: RankedSearchHit,
+  detail: SearchResultDetail = "compact"
+): Record<string, unknown> {
   if (r.kind === "skill") {
-    return {
+    const base = {
       kind: "skill" as const,
       skillId: r.skill.skillId,
       name: r.skill.name,
@@ -297,22 +303,22 @@ function mapHitForResponse(r: RankedSearchHit): Record<string, unknown> {
       applicability: r.skill.applicability,
       source: r.skill.source,
       score: r.score,
-      matchedOn: r.matchedOn,
       /** Fetch full body via MCP `skills_get`. */
       fetch: { tool: "skills_get", skillId: r.skill.skillId },
     };
+    return detail === "full" ? { ...base, matchedOn: r.matchedOn } : base;
   }
   if (r.kind === "doc") {
     const href = `${r.baseUrl.replace(/\/$/, "")}${r.url.startsWith("/") ? r.url : `/${r.url}`}`;
-    return {
+    const base = {
       kind: "doc" as const,
       url: r.url,
       href,
       title: r.title,
       pageTitle: r.pageTitle ?? null,
       score: r.score,
-      matchedOn: r.matchedOn,
     };
+    return detail === "full" ? { ...base, matchedOn: r.matchedOn } : base;
   }
   const parameters = Object.entries(r.operation.parameters).map(([name, p]) => ({
     name,
@@ -325,7 +331,7 @@ function mapHitForResponse(r: RankedSearchHit): Record<string, unknown> {
     .map((p) => `${p.name}${p.required ? "" : "?"}: ${p.type ?? "unknown"}`)
     .join(", ");
   const signature = `${r.operation.method.toUpperCase()} ${r.operation.flatPath}(${paramSig})`;
-  return {
+  const base = {
     kind: "operation" as const,
     id: r.operation.id,
     method: r.operation.method,
@@ -334,13 +340,19 @@ function mapHitForResponse(r: RankedSearchHit): Record<string, unknown> {
     signature,
     description: r.operation.description,
     resource: r.operation.resource,
+    score: r.score,
+    specLabel: r.operation.specLabel ?? null,
+    risk: r.operation.risk ?? null,
+  };
+  if (detail === "compact") {
+    return base;
+  }
+  return {
+    ...base,
     parameters,
     requestBody: r.operation.requestBody ?? null,
     responseSchema: r.operation.responseBody ?? null,
-    score: r.score,
-    specLabel: r.operation.specLabel ?? null,
     matchedOn: r.matchedOn,
-    risk: r.operation.risk ?? null,
   };
 }
 
@@ -348,10 +360,12 @@ function mapHitForResponse(r: RankedSearchHit): Record<string, unknown> {
  * Format unified search hits for MCP tool response.
  * Includes catalog completeness (`COMPLETE` / `PARTIAL, N of M`) while keeping
  * a backward-compatible `results[]` array.
+ * Compact JSON (no pretty-print) — indentation is pure context tax for agents.
  */
 export const formatSearchResultsEffect = (
   results: readonly RankedSearchHit[],
-  catalog?: SearchCatalogMeta
+  catalog?: SearchCatalogMeta,
+  detail: SearchResultDetail = "compact"
 ): Effect.Effect<string> =>
   Effect.gen(function* () {
     const countsBySource = catalog?.countsBySource ?? {
@@ -374,24 +388,21 @@ export const formatSearchResultsEffect = (
       });
     }
 
-    return JSON.stringify(
-      {
-        catalogStatus: meta.catalogStatus,
-        matchedCount: meta.matchedCount,
-        totalCount: meta.totalCount,
-        countsBySource: meta.countsBySource,
-        message: meta.message,
-        results: results.map(mapHitForResponse),
-      },
-      null,
-      2
-    );
+    return JSON.stringify({
+      catalogStatus: meta.catalogStatus,
+      matchedCount: meta.matchedCount,
+      totalCount: meta.totalCount,
+      countsBySource: meta.countsBySource,
+      message: meta.message,
+      results: results.map((hit) => mapHitForResponse(hit, detail)),
+    });
   });
 
 /** Sync façade — prefer {@link formatSearchResultsEffect} inside Effect programs. */
 export function formatSearchResults(
   results: readonly RankedSearchHit[],
-  catalog?: SearchCatalogMeta
+  catalog?: SearchCatalogMeta,
+  detail: SearchResultDetail = "compact"
 ): string {
-  return Effect.runSync(formatSearchResultsEffect(results, catalog));
+  return Effect.runSync(formatSearchResultsEffect(results, catalog, detail));
 }

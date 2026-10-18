@@ -5,7 +5,6 @@
 
 import { Effect } from "effect";
 import { ArgsHash, ExecutionId, name, type Named } from "clawql-gdp";
-import { executeOperationGraphQL } from "../graphql/in-process-execute.js";
 import { loadSpec, resolveApiBaseUrlForOperation, type OpenAPIDoc } from "../spec/spec-loader.js";
 import type { Operation } from "../spec/operation-types.js";
 import type { LoadSpecFn } from "../search/search-core.js";
@@ -18,6 +17,7 @@ import {
 } from "../pending/pending-execution-service.js";
 import { mandateArgsMatchEffect, type MandateArgsMatch } from "../proofs/mandate-args-match.js";
 import { defaultFields, executeOutputFields } from "./field-projection.js";
+import { preferRestOpenApiExecuteEffect } from "./openapi-execute-path.js";
 import { serializeExecuteResultEffect } from "./result-truncation.js";
 import { unknownOperationIdErrorEffect } from "./suggest-operation-ids.js";
 import { shapeExecuteDataEffect, WhereFilterError } from "./where-filter.js";
@@ -366,12 +366,35 @@ export function executeClawqlOperationEffect(
         return yield* shapedSuccessContent(rest.data, outputFields, where);
       }
 
+      // Plain `fields` keys: REST (same shaping as multi-spec). Nested GraphQL
+      // selection sets still use Omnigraph; schemas are cached per openapi+baseUrl.
+      const useRest = yield* preferRestOpenApiExecuteEffect(operationId, outputFields);
+      if (useRest) {
+        const rest = yield* fromPromise(() =>
+          executeRestOperation(op as Operation, args, openapiForOp)
+        );
+        if (!rest.ok) {
+          return yield* textContentEffect(
+            JSON.stringify({
+              error: rest.error,
+              specLabel: op.specLabel ?? null,
+              hint: "OpenAPI execute used REST (CLAWQL_OPENAPI_EXECUTE_PATH=auto|rest).",
+            })
+          );
+        }
+        return yield* shapedSuccessContent(rest.data, outputFields, where);
+      }
+
       const selectedFields = outputFields?.length
         ? outputFields.join("\n        ")
         : defaultFields(operationId);
       const baseUrl = resolveApiBaseUrlForOperation(openapiForOp, op as Operation);
 
       return yield* Effect.gen(function* () {
+        // Dynamic import: REST-prefer / equal-arm never loads Omnigraph + graphql execute.
+        const { executeOperationGraphQL } = yield* fromPromise(
+          () => import("../graphql/in-process-execute.js")
+        );
         const inProc = yield* fromPromise(() =>
           executeOperationGraphQL(openapiForOp, baseUrl, op as Operation, args, selectedFields)
         );

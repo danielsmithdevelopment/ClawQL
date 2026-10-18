@@ -13,6 +13,11 @@ import { inferSpecMode } from "./spec-mode.js";
 import { probeHashicorpVault } from "./hashicorp-vault.js";
 import { runReleaseDoctorCheck } from "./release-doctor-check.js";
 import { runOntologyDoctorChecks } from "./ontology-doctor-check.js";
+import { runCelldDoctorChecks } from "./celld-doctor-check.js";
+import {
+  doctorChecksFromRuntimeLadder,
+  runRuntimeLadderInteractive,
+} from "./runtime-ladder-prompt.js";
 import { runMcpSmoke } from "./smoke.js";
 import { sandboxDoctorCheck } from "clawql-sandbox/init";
 import { networkDoctorCheck } from "clawql-network/init";
@@ -182,6 +187,12 @@ export async function runDoctor(
 
   checks.push({ level: "ok", message: `Spec mode: ${inferSpecModeFromEnv()}` });
   checks.push(...(await runOntologyDoctorChecks()));
+  // celld → Bun → Node ladder (TTY prompts install; non-TTY prints hints)
+  const { decision: runtimeLadder } = await runRuntimeLadderInteractive(process.env, {
+    interactive: Boolean(process.stdin.isTTY) && !options.smoke,
+  });
+  checks.push(...doctorChecksFromRuntimeLadder(runtimeLadder));
+  checks.push(...(await runCelldDoctorChecks()));
   checks.push(await Effect.runPromise(networkDoctorCheck(home)));
 
   if (options.smoke) {
@@ -223,6 +234,7 @@ export function formatDoctorReport(report: DoctorReport, verbose = false): strin
     "Next:",
     "  npx clawql init --interactive",
     "  npx clawql doctor --smoke",
+    "  npx clawql security celld --json",
     "  npx clawql mcp-config --write cursor",
     "  https://docs.clawql.com/agent-setup",
     ""

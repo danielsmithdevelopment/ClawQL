@@ -158,7 +158,7 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
           </pre>
           <p>
             This developer is immediately inside ClawQL’s ecosystem. Their inference calls hit the WORM call store. The
-            12-layer efficiency stack begins working. PAL routing starts building data on which tier each task type
+            12-layer efficiency stack begins working. model escalation starts building data on which tier each task type
             needs. The Intelligence Flywheel accumulates training signal.
           </p>
           <p>
@@ -225,7 +225,7 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
             the spend report, with every hit recorded in the same WORM-backed trail.
           </p>
 
-          <h3>Week 3: Infrastructure optimization — PAL routing</h3>
+          <h3>Week 3: Infrastructure optimization — model escalation</h3>
           <p>
             Enable routing (<code>CLAWQL_INFERENCE_ROUTING_ENABLED=1</code>). Decomposed sub-tasks start routing to
             Frugal tier (local Ollama or Phi-4). Top-level orchestration stays on Standard. Frontier only fires on
@@ -255,7 +255,7 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
   --provider openai`}</code>
           </pre>
           <p>
-            The fine-tuned model registers back to <code>tier-map.json</code> as a custom Frugal tier. PAL routing uses
+            The fine-tuned model registers back to <code>tier-map.json</code> as a custom Frugal tier. model escalation uses
             it automatically for matching task types. This is <strong>model provenance for auditable production</strong>{' '}
             — not only efficiency. The Frugal tier is more accurate than the generic model it replaced because it was
             trained on this developer’s actual production traces, with WORM-recorded lineage of what entered the
@@ -865,7 +865,7 @@ clawql sources add https://your-nextcloud-instance/api
           <p>
             <strong>Migration pitch:</strong> Same model access pattern (OpenRouter’s 100+ provider breadth is broader
             today — acknowledged; ClawQL’s plugin API closes this over time). ClawQL adds what OpenRouter can’t:
-            pre-inference budget caps, WORM call store, semantic cache, PAL routing, memory vault, and the Flywheel. The{' '}
+            pre-inference budget caps, WORM call store, semantic cache, model escalation, memory vault, and the Flywheel. The{' '}
             <code>clawql inference spend --group-by team</code> report is often the first value delivered.
           </p>
           <p>
@@ -960,7 +960,7 @@ clawql sources add https://your-nextcloud-instance/api
                   </td>
                 </tr>
                 <tr>
-                  <td>Semantic cache + PAL</td>
+                  <td>Semantic cache + model escalation</td>
                   <td>Low–medium</td>
                   <td>Savings are visible and real; mechanism is still recreatable</td>
                 </tr>
@@ -1036,7 +1036,7 @@ clawql sources add https://your-nextcloud-instance/api
               adopters (<Link href={pv.series}>Hardened Agentic Stack</Link>)
             </li>
             <li>
-              Anchor tweet: drop-in OpenAI replacement, semantic cache, PAL routing, Flywheel, virtual keys, plus{' '}
+              Anchor tweet: drop-in OpenAI replacement, semantic cache, model escalation, Flywheel, virtual keys, plus{' '}
               <code>/mcp</code> for Cursor — everything else additive
             </li>
             <li>
