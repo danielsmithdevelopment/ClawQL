@@ -294,18 +294,80 @@ export class AgentSessionDO {
       }
 
       // All outbound fetches before any further storage.put (celld durability gate).
-      // Fan-out tools in parallel so no hop waits behind another under the output gate.
+      // Fan-out tools+inference in ONE Promise.all wave: a later sequential fetch
+      // after prior hops complete is NodeFenced under celld's output gate (even
+      // with no explicit mid-handler storage.put).
       const mcp = resolveMcpConfig(this.env);
       const adapter = resolveAdapterConfig(this.env);
       const memoryTitle = `streams-celld session ${eventId.slice(0, 8)}`;
+      const inferenceUrl = resolveInferenceUrl(this.env);
+
+      async function runInferenceProbe() {
+        if (!inferenceUrl) {
+          return { skipped: true, reason: "no INFERENCE_URL" };
+        }
+        const base = inferenceUrl.replace(/\/$/, "");
+        try {
+          // Kick both hops without awaiting between them so healthz+turn share
+          // the same output-gate window as sibling tool fetches.
+          const healthP = fetch(`${base}/healthz`, {
+            method: "GET",
+            headers: { accept: "application/json" },
+          });
+          const turnP = fetch(`${base}/v1/messages`, {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              accept: "application/json",
+              authorization: `Bearer ${virtualKeyId}`,
+            },
+            body: JSON.stringify({
+              model: "stub-frugal",
+              prompt: `streams session ${eventId} subscription ${subscriptionId}`,
+              max_tokens: 64,
+            }),
+            signal: AbortSignal.timeout(10_000),
+          });
+          const [health, turnRes] = await Promise.all([healthP, turnP]);
+          const turnText = await turnRes.text();
+          let turnBody = null;
+          try {
+            turnBody = turnText ? JSON.parse(turnText) : null;
+          } catch {
+            turnBody = { raw: turnText.slice(0, 300) };
+          }
+          return {
+            skipped: false,
+            ok: health.ok && turnRes.ok,
+            healthz: { status: health.status, ok: health.ok },
+            turn: {
+              status: turnRes.status,
+              ok: turnRes.ok,
+              id: turnBody?.id ?? null,
+              turn: turnBody?.turn ?? 1,
+              source: turnBody?.source ?? null,
+            },
+            turns: turnRes.ok ? 1 : 0,
+          };
+        } catch (err) {
+          return {
+            skipped: false,
+            ok: false,
+            turns: 0,
+            error: err instanceof Error ? err.message : String(err),
+          };
+        }
+      }
+
       // #region agent log
-      dbg("C", "agent-session-do.js:tools-start", "Promise.all tools+adapter", {
+      dbg("C", "agent-session-do.js:tools-start", "Promise.all tools+adapter+inference", {
         mcpUrl: Boolean(mcp.url),
         adapterUrl: Boolean(adapter.url),
         coreInCelld: Boolean(mcp.preferCoreInCelld),
+        inferenceUrl: Boolean(inferenceUrl),
       });
       // #endregion
-      const [search, execute, memory_ingest, memory_recall, adapter_search] =
+      const [search, execute, memory_ingest, memory_recall, adapter_search, inference] =
         await Promise.all([
           searchViaMcp(
             mcp,
@@ -330,6 +392,7 @@ export class AgentSessionDO {
             query: `adapter:${subscriptionId}`,
             limit: 1,
           }),
+          runInferenceProbe(),
         ]);
       const tools = {
         search,
@@ -339,82 +402,20 @@ export class AgentSessionDO {
         adapter_search,
       };
       // #region agent log
-      dbg("C", "agent-session-do.js:tools-done", "tool hop results", {
+      dbg("C", "agent-session-do.js:tools-done", "tool+inference hop results", {
         searchOk: search?.ok === true,
         executeOk: execute?.ok === true,
         memoryIngestOk: memory_ingest?.ok === true,
         memoryRecallOk: memory_recall?.ok === true,
         adapterOk: adapter_search?.ok === true,
         adapterErr: String(adapter_search?.error || "").slice(0, 120),
-        searchFenced: String(search?.error || "").includes("NodeFenced"),
         adapterFenced: String(adapter_search?.error || "").includes("NodeFenced"),
+        inferenceOk: inference?.ok === true,
+        inferenceTurns: inference?.turns ?? 0,
+        inferenceFenced: String(inference?.error || "").includes("NodeFenced"),
+        inferenceErr: String(inference?.error || "").slice(0, 120),
       });
       // #endregion
-
-      let inference = { skipped: true, reason: "no INFERENCE_URL" };
-      const inferenceUrl = resolveInferenceUrl(this.env);
-      if (inferenceUrl) {
-        const base = inferenceUrl.replace(/\/$/, "");
-        try {
-          // #region agent log
-          dbg("D", "agent-session-do.js:inference-start", "healthz+turn", { base });
-          // #endregion
-          const health = await fetch(`${base}/healthz`, {
-            method: "GET",
-            headers: { accept: "application/json" },
-          });
-          // Streams §3.5 skeleton: one model turn via fetch (not healthz-only).
-          const turnRes = await fetch(`${base}/v1/messages`, {
-            method: "POST",
-            headers: {
-              "content-type": "application/json",
-              accept: "application/json",
-              authorization: `Bearer ${virtualKeyId}`,
-            },
-            body: JSON.stringify({
-              model: "stub-frugal",
-              prompt: `streams session ${eventId} subscription ${subscriptionId}`,
-              max_tokens: 64,
-            }),
-            signal: AbortSignal.timeout(10_000),
-          });
-          const turnText = await turnRes.text();
-          let turnBody = null;
-          try {
-            turnBody = turnText ? JSON.parse(turnText) : null;
-          } catch {
-            turnBody = { raw: turnText.slice(0, 300) };
-          }
-          inference = {
-            skipped: false,
-            ok: health.ok && turnRes.ok,
-            healthz: { status: health.status, ok: health.ok },
-            turn: {
-              status: turnRes.status,
-              ok: turnRes.ok,
-              id: turnBody?.id ?? null,
-              turn: turnBody?.turn ?? 1,
-              source: turnBody?.source ?? null,
-            },
-            turns: turnRes.ok ? 1 : 0,
-          };
-        } catch (err) {
-          inference = {
-            skipped: false,
-            ok: false,
-            turns: 0,
-            error: err instanceof Error ? err.message : String(err),
-          };
-        }
-        // #region agent log
-        dbg("D", "agent-session-do.js:inference-done", "inference result", {
-          ok: inference?.ok === true,
-          turns: inference?.turns ?? 0,
-          fenced: String(inference?.error || "").includes("NodeFenced"),
-          err: String(inference?.error || "").slice(0, 120),
-        });
-        // #endregion
-      }
 
       const inProcess = ["audit", "cache", "hash-chain"];
       if (mcp.preferCoreInCelld) inProcess.push("search", "execute");
