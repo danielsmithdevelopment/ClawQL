@@ -10,6 +10,7 @@ import {
   appendComplianceWorm,
   appendSessionCreatedAudit,
   cacheSessionMeta,
+  coreInCelldEnabled,
   executeViaMcp,
   listAuditEntries,
   memoryIngestViaMcp,
@@ -24,7 +25,13 @@ function resolveMcpConfig(env) {
   const url =
     (env.CLAWQL_MCP_URL || env.CLAWQL_MCP_HTTP_URL || "").trim() || undefined;
   const bearer = (env.CLAWQL_MCP_BEARER_TOKEN || "").trim() || undefined;
-  return { url, bearer };
+  const preferCoreInCelld = coreInCelldEnabled(env);
+  return {
+    url,
+    bearer,
+    preferCoreInCelld,
+    coreTools: preferCoreInCelld ? env.CORE_TOOLS : undefined,
+  };
 }
 
 function resolveAdapterConfig(env) {
@@ -243,9 +250,12 @@ export class AgentSessionDO {
       const adapter = resolveAdapterConfig(this.env);
       const memoryTitle = `streams-celld session ${eventId.slice(0, 8)}`;
       const tools = {
-        search: await searchViaMcp(mcp, `subscription:${subscriptionId}`, {
-          limit: 3,
-        }),
+        search: await searchViaMcp(
+          mcp,
+          mcp.preferCoreInCelld ? "listPets pets openapi" : `subscription:${subscriptionId}`,
+          { limit: 3 }
+        ),
+        // Prefer in-cell noop (no upstream). listPets REST is exercised via Worker POST /mcp.
         execute: await executeViaMcp(mcp, "streams.session.noop", { eventId }),
         memory_ingest: await memoryIngestViaMcp(mcp, {
           title: memoryTitle,
@@ -265,13 +275,21 @@ export class AgentSessionDO {
         }),
       };
 
+      const inProcess = ["audit", "cache", "hash-chain"];
+      if (mcp.preferCoreInCelld) inProcess.push("search", "execute");
+
       const outOfProcess = ["inference"];
-      if (mcp.url) outOfProcess.unshift("search", "execute", "memory_*");
+      if (mcp.url && !mcp.preferCoreInCelld) {
+        outOfProcess.unshift("search", "execute", "memory_*");
+      } else if (mcp.url) {
+        outOfProcess.unshift("memory_*");
+      }
       if (adapter.url) outOfProcess.push("mcp-api-adapter");
       if (wormCfg.url) outOfProcess.push("clawql-audit-worm");
 
       const deferred = [];
-      if (!mcp.url) deferred.push("search", "execute", "memory_*");
+      if (!mcp.preferCoreInCelld && !mcp.url) deferred.push("search", "execute", "memory_*");
+      else if (mcp.preferCoreInCelld && !mcp.url) deferred.push("memory_*");
       if (!adapter.url) deferred.push("mcp-api-adapter");
       if (!wormCfg.url) deferred.push("clawql-audit-worm");
 
@@ -303,10 +321,11 @@ export class AgentSessionDO {
         tools,
         core: {
           package: "clawql-core/streams-slim",
-          inProcess: ["audit", "cache", "hash-chain"],
-          durable: ["audit:ring", "audit:seq:*", "worm:*"],
+          inProcess,
+          durable: ["audit:ring", "audit:seq:*", "worm:*", "CoreToolsDO"],
           outOfProcess,
           deferred,
+          coreInCelld: Boolean(mcp.preferCoreInCelld),
           mcpUrlConfigured: Boolean(mcp.url),
           adapterUrlConfigured: Boolean(adapter.url),
           wormUrlConfigured: Boolean(wormCfg.url),

@@ -5,8 +5,11 @@
  * - audit append / list / verify (hash-chained ring buffer, isolate-local)
  * - cache get / set / delete / list (session scratch)
  *
+ * In-cell via CoreToolsDO (when CLAWQL_CORE_IN_CELLD=1):
+ * - search / execute → slim catalog + fetch upstream (transport=celld-isolate)
+ *
  * Out-of-process via fetch(CLAWQL_MCP_URL) Streamable HTTP:
- * - search / execute / memory_* → clawql-mcp
+ * - search / execute / memory_* → clawql-mcp (sidecar mode)
  *
  * Out-of-process via fetch(CLAWQL_MCP_ADAPTER_URL) REST:
  * - POST /{tool} → mcp-api-adapter (protocol fan-out host; not embedded)
@@ -16,6 +19,7 @@
  *
  * Still deferred:
  * - inference completions → fetch(INFERENCE_URL)
+ * - memory_* inside isolate (vault / node:fs)
  */
 
 import {
@@ -23,8 +27,17 @@ import {
   runCacheOperation,
 } from "clawql-core/streams-slim";
 import { callAdapterTool } from "./adapter-fetch.js";
+import { callCoreToolsDo } from "./core-tools-do.js";
 import { callMcpTool } from "./mcp-fetch.js";
 import { appendWormEntry } from "./worm-fetch.js";
+
+/** @param {Record<string, unknown> | undefined} env */
+export function coreInCelldEnabled(env) {
+  const v = String(env?.CLAWQL_CORE_IN_CELLD ?? "")
+    .trim()
+    .toLowerCase();
+  return v === "1" || v === "true" || v === "on" || v === "yes";
+}
 
 /**
  * @param {{ subscriptionId: string, eventId: string, doInstanceId: string, virtualKeyId: string }} ctx
@@ -56,11 +69,17 @@ export async function cacheSessionMeta(eventId, meta) {
 }
 
 /**
- * @param {{ url?: string, bearer?: string }} mcp
+ * @param {{ url?: string, bearer?: string, coreTools?: unknown, preferCoreInCelld?: boolean }} mcp
  * @param {string} query
  * @param {{ limit?: number }} [opts]
  */
 export async function searchViaMcp(mcp, query, opts = {}) {
+  if (mcp.preferCoreInCelld && mcp.coreTools) {
+    return callCoreToolsDo(mcp.coreTools, "search", {
+      query,
+      limit: opts.limit ?? 5,
+    });
+  }
   return callMcpTool(
     { url: mcp.url ?? "", bearer: mcp.bearer },
     "search",
@@ -69,11 +88,17 @@ export async function searchViaMcp(mcp, query, opts = {}) {
 }
 
 /**
- * @param {{ url?: string, bearer?: string }} mcp
+ * @param {{ url?: string, bearer?: string, coreTools?: unknown, preferCoreInCelld?: boolean }} mcp
  * @param {string} operationId
  * @param {Record<string, unknown>} [args]
  */
 export async function executeViaMcp(mcp, operationId, args = {}) {
+  if (mcp.preferCoreInCelld && mcp.coreTools) {
+    return callCoreToolsDo(mcp.coreTools, "execute", {
+      operationId,
+      args,
+    });
+  }
   return callMcpTool(
     { url: mcp.url ?? "", bearer: mcp.bearer },
     "execute",

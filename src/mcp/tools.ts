@@ -21,6 +21,8 @@ import { isAbsolute, resolve as resolvePath } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Effect } from "effect";
 import {
+  callCoreCelldToolEffect,
+  coreCelldProxyEnabled,
   decodeExecuteInput,
   decodeResumeInput,
   decodeSearchInput,
@@ -195,6 +197,14 @@ export async function handleClawqlSearchToolInput(
   return getClawqlApi().run(
     Effect.gen(function* () {
       const params = yield* decodeSearchInput(raw);
+      // Opt-in: every search handled inside celld CoreToolsDO (CLAWQL_CORE_CELLD_URL).
+      if (coreCelldProxyEnabled()) {
+        const proxied = yield* callCoreCelldToolEffect("search", {
+          query: params.query,
+          ...(params.limit != null ? { limit: params.limit } : {}),
+        });
+        return { content: [...proxied.content] };
+      }
       const search = yield* SearchService;
       const { formattedText } = yield* search.search(params);
       return { content: [{ type: "text" as const, text: formattedText }] };
@@ -209,6 +219,14 @@ export async function handleClawqlExecuteToolInput(
   return getClawqlApi().run(
     Effect.gen(function* () {
       const params = yield* decodeExecuteInput(raw);
+      if (coreCelldProxyEnabled()) {
+        const proxied = yield* callCoreCelldToolEffect("execute", {
+          operationId: params.operationId,
+          args: params.args ?? {},
+          ...(params.fields != null ? { fields: params.fields } : {}),
+        });
+        return { content: [...proxied.content] };
+      }
       const execute = yield* ExecuteService;
       const { content } = yield* execute.execute(params);
       return { content: [...content] };
