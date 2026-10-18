@@ -1,6 +1,9 @@
 # ProgramCellDO isolate kill-node evidence
 
-Local proof that a **ProgramCellDO** durable journal in celld DO storage survives `SIGKILL` of the celld binary and resumes with write `outcome_unknown` (ADR 0015 at-most-once).
+Local proof that a **ProgramCellDO** durable journal in celld DO storage survives `SIGKILL` of the celld binary:
+
+1. **Write arm** — pause after write intent → SIGKILL → resume `outcome_unknown` (at-most-once)
+2. **Read arm** — pause before interrupted read → SIGKILL → resume re-runs the read once
 
 ```bash
 STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke-program-cell-kill.sh
