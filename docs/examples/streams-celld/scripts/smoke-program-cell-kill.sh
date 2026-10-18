@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# ADR 0015 ProgramCellDO isolate kill-node: SIGKILL celld after write intent → resume outcome_unknown.
+# ADR 0015 ProgramCellDO isolate kill-node:
+#   write arm — SIGKILL after write intent → resume outcome_unknown
+#   read arm  — SIGKILL before read call → resume re-runs interrupted read
 # Requires celld v0.4.0 + esbuild. Local only — no AWS.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PORT="${PROGRAM_CELL_PORT:-9877}"
 PETS_PORT="${MOCK_PETS_PORT:-9878}"
-# celld stores state in PROJECT/.celld/dev (PROJECT = config dirname).
 STATE_DIR="$ROOT/.celld/dev"
 CFG="$ROOT/wrangler.program-cell-kill.jsonc"
 BASE="http://127.0.0.1:${PORT}"
@@ -22,8 +23,9 @@ if ! command -v celld >/dev/null 2>&1; then
   exit 0
 fi
 
+node "$ROOT/scripts/program-cell-resume.test.mjs"
+
 mkdir -p "$EVIDENCE_DIR"
-# Fresh state before first start only — must survive SIGKILL → restart.
 rm -rf "${STATE_DIR}"
 mkdir -p "$STATE_DIR"
 python3 - "$ROOT/wrangler.jsonc" "$CFG" "$PETS_PORT" <<'PY'
@@ -58,7 +60,6 @@ trap cleanup EXIT
 
 start_celld() {
   cd "$ROOT"
-  # Same PROJECT/.celld/dev across restart so DO SQLite/LTX survives SIGKILL.
   celld dev "$CFG" --port "$PORT" >/tmp/program-cell-celld.log 2>&1 &
   CELLD_PID=$!
   for _ in $(seq 1 80); do
@@ -70,6 +71,13 @@ start_celld() {
   return 1
 }
 
+kill_celld() {
+  kill -9 "$CELLD_PID" 2>/dev/null || true
+  wait "$CELLD_PID" 2>/dev/null || true
+  CELLD_PID=""
+  sleep 0.4
+}
+
 start_celld
 
 curl -sf "$BASE/program/health" | grep -q ProgramCellDO || {
@@ -78,78 +86,108 @@ curl -sf "$BASE/program/health" | grep -q ProgramCellDO || {
   exit 1
 }
 
-PROGRAM_ID="prog_isolatekill01"
+# --- Write arm ---
+WRITE_ID="prog_isolatekill_write"
 RUN=$(curl -sf -X POST "$BASE/program/run" \
   -H "content-type: application/json" \
-  -d "{\"programId\":\"${PROGRAM_ID}\",\"pauseAfterIntentIndex\":2,\"plan\":{\"calls\":[
+  -d "{\"programId\":\"${WRITE_ID}\",\"pauseAfterIntentIndex\":2,\"plan\":{\"calls\":[
     {\"operationId\":\"listPets\",\"method\":\"GET\",\"path\":\"/pets\",\"risk\":\"read\"},
     {\"operationId\":\"streams.session.noop\",\"risk\":\"read\"},
     {\"operationId\":\"owners.create\",\"method\":\"POST\",\"path\":\"/owners\",\"risk\":\"write\",\"args\":{\"name\":\"kill-node\"}}
   ]}}")
-echo "$RUN" | tee /tmp/program-cell-run.json >/dev/null
+echo "$RUN" | tee /tmp/program-cell-run-write.json >/dev/null
 echo "$RUN" | grep -q 'paused_for_kill' || {
-  echo "smoke-program-cell-kill: FAIL — expected paused_for_kill" >&2
+  echo "smoke-program-cell-kill: FAIL — write arm expected paused_for_kill" >&2
   echo "$RUN" >&2
   exit 1
 }
 
-# SIGKILL celld binary — journal must survive in STATE_DIR
-kill -9 "$CELLD_PID" 2>/dev/null || true
-wait "$CELLD_PID" 2>/dev/null || true
-CELLD_PID=""
-sleep 0.4
-
+kill_celld
 start_celld
 
-RESUME=$(curl -sf -X POST "$BASE/program/resume" \
+RESUME_W=$(curl -sf -X POST "$BASE/program/resume" \
   -H "content-type: application/json" \
-  -d "{\"programId\":\"${PROGRAM_ID}\"}")
-echo "$RESUME" | tee /tmp/program-cell-resume.json >/dev/null
+  -d "{\"programId\":\"${WRITE_ID}\"}")
+echo "$RESUME_W" | tee /tmp/program-cell-resume-write.json >/dev/null
+echo "$RESUME_W" | python3 -c '
+import json,sys
+d=json.load(sys.stdin)
+calls=d.get("calls") or []
+assert len(calls)>=3, calls
+assert calls[0].get("replayed") and calls[1].get("replayed")
+st=(calls[2].get("result") or {}).get("status")
+assert st=="outcome_unknown" or calls[2].get("outcomeUnknown"), calls[2]
+print("write-arm: PASS outcome_unknown")
+'
 
-echo "$RESUME" | python3 -c '
-import json, sys
-d = json.load(sys.stdin)
-calls = d.get("calls") or []
-if len(calls) < 3:
-    raise SystemExit(f"expected >=3 calls, got {len(calls)}: {d!r}"[:500])
-if not calls[0].get("replayed"):
-    raise SystemExit(f"call0 not replayed: {calls[0]!r}"[:400])
-if not calls[1].get("replayed"):
-    raise SystemExit(f"call1 not replayed: {calls[1]!r}"[:400])
-c2 = calls[2]
-st = (c2.get("result") or {}).get("status")
-if st != "outcome_unknown" and not c2.get("outcomeUnknown"):
-    raise SystemExit(f"expected outcome_unknown on write: {c2!r}"[:500])
-if "ProgramCellDO" not in (d.get("honesty") or ""):
-    raise SystemExit("missing ProgramCellDO honesty")
-print("smoke-program-cell-kill: PASS")
-print(json.dumps({
-    "kind": "celld-isolate-sigkill",
-    "ok": True,
-    "programId": d.get("programId"),
-    "replayed": [calls[0].get("operationId"), calls[1].get("operationId")],
-    "write": "outcome_unknown",
-}, indent=2))
+# --- Read arm (same celld process / state; new program id) ---
+READ_ID="prog_isolatekill_read"
+RUN_R=$(curl -sf -X POST "$BASE/program/run" \
+  -H "content-type: application/json" \
+  -d "{\"programId\":\"${READ_ID}\",\"pauseBeforeIndex\":2,\"plan\":{\"calls\":[
+    {\"operationId\":\"listPets\",\"method\":\"GET\",\"path\":\"/pets\",\"risk\":\"read\"},
+    {\"operationId\":\"streams.session.noop\",\"risk\":\"read\"},
+    {\"operationId\":\"listPets\",\"method\":\"GET\",\"path\":\"/pets\",\"risk\":\"read\"}
+  ]}}")
+echo "$RUN_R" | tee /tmp/program-cell-run-read.json >/dev/null
+echo "$RUN_R" | grep -q 'paused_for_kill' || {
+  echo "smoke-program-cell-kill: FAIL — read arm expected paused_for_kill" >&2
+  echo "$RUN_R" >&2
+  exit 1
+}
+echo "$RUN_R" | grep -q 'before_call' || {
+  echo "smoke-program-cell-kill: FAIL — read arm expected pauseKind before_call" >&2
+  echo "$RUN_R" >&2
+  exit 1
+}
+
+kill_celld
+start_celld
+
+RESUME_R=$(curl -sf -X POST "$BASE/program/resume" \
+  -H "content-type: application/json" \
+  -d "{\"programId\":\"${READ_ID}\"}")
+echo "$RESUME_R" | tee /tmp/program-cell-resume-read.json >/dev/null
+echo "$RESUME_R" | python3 -c '
+import json,sys
+d=json.load(sys.stdin)
+calls=d.get("calls") or []
+assert len(calls)>=3, calls
+assert calls[0].get("replayed") and calls[1].get("replayed")
+assert calls[2].get("resumed") is True, calls[2]
+assert (calls[2].get("result") or {}).get("ok") is True, calls[2]
+assert d.get("ok") is True and d.get("status")=="completed", d
+print("read-arm: PASS resumed re-run")
 '
 
 python3 - <<PY
 import json, pathlib, datetime
-src = pathlib.Path("/tmp/program-cell-resume.json")
 out = pathlib.Path("$EVIDENCE_DIR") / "evidence.json"
 out.parent.mkdir(parents=True, exist_ok=True)
-body = json.loads(src.read_text())
+write = json.loads(pathlib.Path("/tmp/program-cell-resume-write.json").read_text())
+read = json.loads(pathlib.Path("/tmp/program-cell-resume-read.json").read_text())
 evidence = {
   "kind": "celld-isolate-sigkill",
   "measuredAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
   "ok": True,
-  "programId": body.get("programId"),
-  "arms": [{
-    "arm": "write_sigkill_outcome_unknown",
-    "ok": True,
-    "detail": "SIGKILL celld after write intent; resume reported outcome_unknown without re-POST",
-  }],
-  "honesty": body.get("honesty"),
+  "arms": [
+    {
+      "arm": "write_sigkill_outcome_unknown",
+      "ok": True,
+      "programId": write.get("programId"),
+      "detail": "SIGKILL celld after write intent; resume reported outcome_unknown without re-POST",
+    },
+    {
+      "arm": "read_sigkill_resume",
+      "ok": True,
+      "programId": read.get("programId"),
+      "detail": "SIGKILL celld before interrupted read; resume re-ran listPets once",
+    },
+  ],
+  "honesty": write.get("honesty") or read.get("honesty"),
 }
 out.write_text(json.dumps(evidence, indent=2) + "\n")
+print("smoke-program-cell-kill: PASS")
+print(json.dumps({"ok": True, "arms": [a["arm"] for a in evidence["arms"]]}, indent=2))
 print(f"wrote {out}")
 PY

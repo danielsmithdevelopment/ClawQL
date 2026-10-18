@@ -12,9 +12,12 @@
  */
 
 import { CORE_IN_CELLD_HONESTY, resolveSlimExecute } from "./core-catalog.js";
+import { decideCallResume, isWriteCall } from "./program-cell-resume.js";
 
 export const PROGRAM_CELL_HONESTY =
   "ProgramCellDO: durable plan journal in celld DO storage (LTX). SIGKILL of celld binary + resume proves isolate crash survival for this journal — not fleet diagnose, not host file-journal stand-in.";
+
+export { decideCallResume, isWriteCall } from "./program-cell-resume.js";
 
 function metaKey(programId) {
   return `program:${programId}:meta`;
@@ -96,13 +99,6 @@ async function executeCall(upstream, call) {
       value: null,
     };
   }
-}
-
-function isWriteCall(call) {
-  if (call.risk === "write") return true;
-  if (call.risk === "read") return false;
-  const method = String(call.method || "").toUpperCase();
-  return method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
 }
 
 export class ProgramCellDO {
@@ -191,9 +187,9 @@ export class ProgramCellDO {
     }
 
     /**
-     * Lab kill-node: after journaling write intent at this index, return
-     * `paused_for_kill` without calling the host. Smoke SIGKILLs celld, then
-     * /resume → outcome_unknown. (DOs are single-threaded — no forever-hang.)
+     * Lab kill-node pauses (DOs are single-threaded — no forever-hang):
+     * - pauseBeforeIndex: stop before host call (no intent) → resume re-runs reads
+     * - pauseAfterIntentIndex: journal write intent then stop → resume outcome_unknown
      */
     const pauseAfterIntentIndex =
       typeof body.pauseAfterIntentIndex === "number"
@@ -201,6 +197,8 @@ export class ProgramCellDO {
         : typeof body.hangAfterIndex === "number"
           ? body.hangAfterIndex
           : -1;
+    const pauseBeforeIndex =
+      typeof body.pauseBeforeIndex === "number" ? body.pauseBeforeIndex : -1;
     const now = new Date().toISOString();
     const meta = {
       programId,
@@ -217,6 +215,24 @@ export class ProgramCellDO {
     for (let i = 0; i < calls.length; i++) {
       const call = calls[i] || {};
       const write = isWriteCall(call);
+      if (pauseBeforeIndex === i) {
+        meta.status = "paused_for_kill";
+        meta.pausedAtIndex = i;
+        meta.pauseKind = "before_call";
+        meta.updatedAt = new Date().toISOString();
+        await this.state.storage.put(metaKey(programId), meta);
+        return Response.json({
+          ok: true,
+          do: "ProgramCellDO",
+          programId,
+          status: meta.status,
+          pausedAtIndex: i,
+          pauseKind: "before_call",
+          calls: results,
+          honesty: PROGRAM_CELL_HONESTY,
+          note: "No intent; SIGKILL celld then POST /program/resume (reads re-run)",
+        });
+      }
       if (write) {
         await this.state.storage.put(intentKey(programId, i), {
           index: i,
@@ -228,6 +244,7 @@ export class ProgramCellDO {
       if (pauseAfterIntentIndex === i) {
         meta.status = "paused_for_kill";
         meta.pausedAtIndex = i;
+        meta.pauseKind = "after_write_intent";
         meta.updatedAt = new Date().toISOString();
         await this.state.storage.put(metaKey(programId), meta);
         return Response.json({
@@ -236,6 +253,7 @@ export class ProgramCellDO {
           programId,
           status: meta.status,
           pausedAtIndex: i,
+          pauseKind: "after_write_intent",
           calls: results,
           honesty: PROGRAM_CELL_HONESTY,
           note: "Write intent durable; SIGKILL celld then POST /program/resume",
@@ -307,12 +325,17 @@ export class ProgramCellDO {
       const call = calls[i] || {};
       const write = isWriteCall(call);
       const existing = await this.state.storage.get(entryKey(programId, i));
-      if (existing) {
+      const intent = await this.state.storage.get(intentKey(programId, i));
+      const decision = decideCallResume({
+        hasEntry: Boolean(existing),
+        hasIntent: Boolean(intent),
+        isWrite: write,
+      });
+      if (decision.action === "replay") {
         results.push({ ...existing, replayed: true });
         continue;
       }
-      const intent = await this.state.storage.get(intentKey(programId, i));
-      if (intent && write) {
+      if (decision.action === "outcome_unknown") {
         const unk = {
           index: i,
           callId: `c${i}`,
