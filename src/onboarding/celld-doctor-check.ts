@@ -21,7 +21,10 @@ export type CelldDoctorOptions = {
 };
 
 /** Map pin/kill-node report → doctor checks (testable without spawning celld). */
-export function celldDoctorChecksFromReport(report: CelldKillNodeDemoReport): DoctorCheck[] {
+export function celldDoctorChecksFromReport(
+  report: CelldKillNodeDemoReport,
+  env: NodeJS.ProcessEnv = process.env
+): DoctorCheck[] {
   const { pin } = report;
   const checks: DoctorCheck[] = [];
 
@@ -58,11 +61,13 @@ export function celldDoctorChecksFromReport(report: CelldKillNodeDemoReport): Do
   const binaryNote = pin.binaryPresent
     ? ` binary ${pin.binaryVersion ?? "unknown"} on PATH`
     : "";
+  const coreProxy = env.CLAWQL_CORE_CELLD_URL?.trim();
   checks.push({
     level: "ok",
     message: `celld pin: stand-in (file journal; pin ${CELLD_PINNED_VERSION} optional)`,
-    detail:
-      `Core search/execute does not load celld.${binaryNote}. For Streams / isolate eligibility: install celld v0.4.0, set CELLD_VERSION + CLAWQL_PROGRAM_CELLD_ISOLATE=1, then clawql security celld`,
+    detail: coreProxy
+      ? `CLAWQL_CORE_CELLD_URL=${coreProxy} — Node search/execute proxy into CoreToolsDO.${binaryNote}`
+      : `Default Core is Node; opt-in Core-in-celld: celld POST /mcp or CLAWQL_CORE_CELLD_URL.${binaryNote}. Streams/isolate pin: CELLD_VERSION + CLAWQL_PROGRAM_CELLD_ISOLATE=1`,
   });
   return checks;
 }
@@ -76,5 +81,5 @@ export async function runCelldDoctorChecks(
       ? celldKillNodeDemoReportEffect(env, options.probe)
       : celldKillNodeDemoReportEffect(env)
   );
-  return celldDoctorChecksFromReport(report);
+  return celldDoctorChecksFromReport(report, env);
 }

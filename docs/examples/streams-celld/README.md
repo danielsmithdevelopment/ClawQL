@@ -7,6 +7,7 @@ Minimal **Workers / Durable Objects** bundle for [ClawQL Streams](https://docs.c
 | `GatewayDO`      | Webhook ingress (`POST /webhook/{subscriptionId}`), spawn sessions                      |
 | `SubscriptionDO` | Significance filter stub (`sub:{id}` naming)                                            |
 | `AgentSessionDO` | Session + ring/LTX bookkeeping + optional MCP / adapter / inference / host WORM fetches |
+| `CoreToolsDO`    | **In-isolate** slim Core `search`/`execute` (`POST /mcp`, `CLAWQL_CORE_IN_CELLD=1`)     |
 
 **Learn walkthrough:** [Streams getting started — Lab 5b](https://docs.clawql.com/learn/streams-getting-started#lab-5b--clawql-streams-wrangler-skeleton--bundle-check-30-min)  
 **Evidence matrix:** [`docs/streams/streams-celld-evidence.md`](../../streams/streams-celld-evidence.md)
@@ -20,6 +21,7 @@ The right demo is the **production shape**: slim cell + real sidecars.
 | Mode                 | What runs                                                                                   | Command                                                |
 | -------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | Contract smoke       | celld + **mock** MCP + **mock** adapter                                                     | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke`         |
+| **Core in celld**    | celld `CoreToolsDO` handles `search`/`execute` (no Node MCP) + mock pets upstream           | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:core-in-celld` |
 | **Full-stack smoke** | celld + **real** `clawql-mcp-http` + **real** `mcp-api-adapter` + inference `/healthz` stub | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:full`    |
 | Containers           | MCP + adapter images (celld on host)                                                        | `docker compose -f docker-compose.full.yml up --build` |
 
@@ -32,7 +34,8 @@ The right demo is the **production shape**: slim cell + real sidecars.
 | `cache` (session scratch)          | **In-process** — `clawql-core/streams-slim`                                            |
 | Hash-chain verify                  | **In-process** — via clawql-merkle (needs `nodejs_compat`)                             |
 | Inference                          | **Out-of-process** — `fetch(INFERENCE_URL)`                                            |
-| `search` / `execute` / `memory_*`  | **Out-of-process** — `fetch(CLAWQL_MCP_URL)` Streamable HTTP                           |
+| `search` / `execute` (slim)        | **In-process** — `CoreToolsDO` when `CLAWQL_CORE_IN_CELLD=1` (or `POST /mcp` on Worker) |
+| `search` / `execute` / `memory_*`  | **Out-of-process** — `fetch(CLAWQL_MCP_URL)` Streamable HTTP (sidecar / full Core)     |
 | `mcp-api-adapter`                  | **Out-of-process** — `fetch(CLAWQL_MCP_ADAPTER_URL)` REST `POST /{tool}`               |
 
 Do **not** embed `clawql-api`, `clawql-memory`, or `mcp-api-adapter` (Express/gRPC/`node:fs`).
@@ -42,8 +45,12 @@ Do **not** embed `clawql-api`, `clawql-memory`, or `mcp-api-adapter` (Express/gR
 | `CLAWQL_MCP_URL`                                              | Streamable HTTP MCP endpoint (usually `…/mcp`)         |
 | `CLAWQL_MCP_ADAPTER_URL`                                      | Adapter **origin** only (e.g. `http://127.0.0.1:8090`) |
 | `CLAWQL_MCP_BEARER_TOKEN` / `CLAWQL_MCP_ADAPTER_BEARER_TOKEN` | Optional Bearer                                        |
+| `CLAWQL_CORE_IN_CELLD`                                        | `1` → AgentSession search/execute via `CoreToolsDO`    |
+| `CLAWQL_CORE_UPSTREAM`                                        | REST origin for in-cell `execute` (e.g. mock `/pets`)  |
 | `CLAWQL_AUDIT_WORM_URL`                                       | Host `clawql-audit` HTTP origin (`POST /entries`)      |
 | `CLAWQL_AUDIT_API_KEY`                                        | ApiKey for host WORM HTTP (optional if open)           |
+
+**Point any MCP client at celld for Core tools:** `POST http://127.0.0.1:<port>/mcp` (Streamable HTTP). Responses stamp `transport: "celld-isolate"`. This is the slim catalog (pets + Streams noop), not full production Core — see honesty string on every payload.
 
 MCP protocol header from the cell client is **`2025-11-25`** (SDK allow-list). Point cells at a clawql-mcp with **`CLAWQL_MCP_STATELESS=1`** (or send `mcp-protocol-version: 2026-07-28` once the SDK allow-list includes it) so tools/call does not require session affinity.
 

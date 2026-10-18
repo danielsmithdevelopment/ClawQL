@@ -2,6 +2,7 @@ export * from "./batch-merkle.js";
 export * from "./celld-pin.js";
 export * from "./celld-kill-node-demo.js";
 export * from "./celld-program-cell.js";
+export * from "./core-celld-proxy.js";
 export * from "./durable-runner.js";
 export * from "./program-caps.js";
 export * from "./program-ifc.js";
