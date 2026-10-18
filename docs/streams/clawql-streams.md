@@ -53,9 +53,9 @@ ClawQL Streams is that pattern as a platform: any event source, any trigger type
 
 On the **celld / Cloudflare** path, each agent cell is a **Workers-safe slim core** plus **out-of-process** MCP/adapter/inference — not a sidecar fleet of containers, and **not** a full Express `mcp-api-adapter` embed (that would blow the 64 MiB budget and pull Node APIs).
 
-**Shipped today** ([`docs/examples/streams-celld`](../../docs/examples/streams-celld/)): Gateway / Subscription / AgentSession DOs, in-process `clawql-core/streams-slim`, significance filter (`always` / `never` / `threshold` / `pattern` / `rate` / `composite`), session TTL via `setAlarm`, **CoreToolsDO** in-isolate slim search/execute **by default** (`CLAWQL_CORE_IN_CELLD=0` escapes to host MCP — **Bun** preferred; Worker `POST /mcp` always hits CoreToolsDO), optional `fetch(CLAWQL_MCP_URL)` for `memory_*` + `fetch(CLAWQL_MCP_ADAPTER_URL)`, one-turn `fetch(INFERENCE_URL)` stub path, LTX audit flush + host WORM dual-write. Evidence matrix: [`streams-celld-evidence.md`](./streams-celld-evidence.md).
+**Shipped today** ([`docs/examples/streams-celld`](../../docs/examples/streams-celld/)): Gateway / Subscription / AgentSession DOs, in-process `clawql-core/streams-slim`, significance filter (`always` / `never` / `threshold` / `pattern` / `rate` / `composite`), session TTL via `setAlarm`, **CoreToolsDO** in-isolate slim search/execute **by default** (`CLAWQL_CORE_IN_CELLD=0` escapes to host MCP — **Bun** preferred; Worker `POST /mcp` always hits CoreToolsDO), optional `fetch(CLAWQL_MCP_URL)` for `memory_*` + `fetch(CLAWQL_MCP_ADAPTER_URL)`, multi-turn `fetch(INFERENCE_URL)` stub path (bind-on-create `vk_lab_*`), LTX audit flush + host WORM dual-write. Evidence matrix: [`streams-celld-evidence.md`](./streams-celld-evidence.md).
 
-**Still planned:** the `clawql-streams` coordination package (`stream_*` MCP tools), multi-turn agent loop + PAL virtual keys, and a fuller Workers-safe `clawql-api` slim beyond CoreToolsDO.
+**Still planned:** the `clawql-streams` coordination package (`stream_*` MCP tools), full PAL DeductionService spend ceilings (Lab 5b already runs a **multi-turn** inference skeleton with bind-on-create `vk_lab_*`), and a fuller Workers-safe `clawql-api` slim beyond CoreToolsDO.
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -179,7 +179,8 @@ export class AgentSessionDO extends DurableObject {
       context: body.context,
       tools: body.allowedTools,
       maxTurns: body.maxTurns,
-      // Tools: fetch(CLAWQL_MCP_URL) / fetch(CLAWQL_MCP_ADAPTER_URL) — not Express embed
+      // Tools: CoreToolsDO for slim search/execute; fetch(CLAWQL_MCP_URL) for memory_* /
+      // full catalog escape; fetch(CLAWQL_MCP_ADAPTER_URL) — not Express embed
       mcp: env.MCP_FETCH,
       // Model: fetch only — never child_process
       inference: async (req) =>
@@ -716,7 +717,7 @@ Operational detail: [`clawql-celld.md`](./clawql-celld.md) §7.
 | `clawql-streams`     | Coordination: subscriptions, filter, spawn, MCP `stream_*` (**planned**)                 |
 | `clawql-core`        | **In-process** `streams-slim` (audit/cache/hash-chain); full barrel stays off-Worker     |
 | `mcp-api-adapter`    | **Out of process** — `fetch(CLAWQL_MCP_ADAPTER_URL)` REST `POST /{tool}`                 |
-| `clawql-mcp` / Core  | **Out of process** — `fetch(CLAWQL_MCP_URL)` Streamable HTTP for search/execute/memory_* |
+| `clawql-mcp` / Core  | **Default in-isolate** slim search/execute via **CoreToolsDO**; `memory_*` + full catalog via `fetch(CLAWQL_MCP_URL)` (Bun host preferred when escaped) |
 | `clawql-inference`   | **Out of process** — `fetch()` only; PAL, virtual keys, call store, cache                |
 | celld                | Self-hosted Durable Objects runtime (Apache 2.0, Workers API)                            |
 | `clawql-cellrt`      | ClawQL-owned Rust + Wasmtime cell runtime (planned)                                      |
@@ -730,10 +731,11 @@ Operational detail: [`clawql-celld.md`](./clawql-celld.md) §7.
 ```text
 clawql-streams coordination (planned package; Lab 5b skeleton today)
   ├─ DO / cell bundle
-  │     └─ clawql-core/streams-slim (in-process audit/cache/hash-chain)
-  ├─ fetch → clawql-mcp (search / execute / memory_*)
+  │     ├─ clawql-core/streams-slim (in-process audit/cache/hash-chain)
+  │     └─ CoreToolsDO (default slim search/execute in-isolate)
+  ├─ fetch → clawql-mcp (memory_*; full catalog / escape host — Bun preferred)
   ├─ fetch → mcp-api-adapter (optional REST tool surface)
-  ├─ fetch → clawql-inference
+  ├─ fetch → clawql-inference (multi-turn + vk bind skeleton)
   ├─ celld | cellrt (planned) | Cloudflare | K8s HPA
   ├─ clawql-payments (optional holds)
   └─ clawql-ouroboros (optional ensemble)
@@ -769,7 +771,7 @@ Streams + Core + mcp-api-adapter is the **Protocol Fabric with an event loop**: 
 
 ## 15. Open questions
 
-1. **Bundle size.** **Resolved for core + MCP tools path:** `clawql-core/streams-slim` + Effect ≈ **0.4 MiB** in [`docs/examples/streams-celld`](../../docs/examples/streams-celld/); `search` / `execute` use thin `fetch(CLAWQL_MCP_URL)` (no `clawql-api` in the Worker). Remaining question: can a future offline Workers-safe `clawql-api` slim + Streams router still fit with aggressive tree-shaking?
+1. **Bundle size.** **Resolved for core + MCP tools path:** `clawql-core/streams-slim` + Effect ≈ **0.4 MiB** in [`docs/examples/streams-celld`](../../docs/examples/streams-celld/); slim `search` / `execute` run in-isolate via **CoreToolsDO** (no `clawql-api` in the Worker); `memory_*` and full catalog still `fetch(CLAWQL_MCP_URL)`. Remaining question: can a future offline Workers-safe `clawql-api` slim + Streams router still fit with aggressive tree-shaking?
 2. **celld alpha vs cellrt.** When is celld production-stable enough to prefer over K8s HPA? When does Helm default self-hosted Streams to **`cellrt`** instead of (or alongside) celld?
 3. **Replay and idempotency.** On buffer replay, significance may re-fire. Idempotency keys: `eventId + subscriptionId` (and stable DO/cell names — see celld / cellrt naming).
 4. **Kafka / Kinesis.** First-class `StreamSourceType` in v0.2 or defer to enterprise add-on?

@@ -23,7 +23,7 @@ const loopSteps = [
     index: '01',
     title: 'Listen',
     kit: 'clawql-streams',
-    body: 'A stream_subscribe call points at any event source — WebSocket feed, NATS subject, webhook, cron, API on an interval, or QR stream from an air-gapped system. The agent waits.',
+    body: 'A Streams subscription points at any event source — WebSocket feed, NATS subject, webhook, cron, API on an interval, or QR stream from an air-gapped system. The agent waits. (The stream_subscribe MCP package is still shipping; Lab 5b proves the celld path today.)',
   },
   {
     index: '02',
