@@ -23,12 +23,13 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 | mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)                                 | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real                                                                                        |
 | Inference multi-turn skeleton                                                   | **No** — `fetch`     | Smoke + full-stack: bind `POST /v1/keys/bind` + 2× `POST /v1/messages` (`turns:2`, `virtualKeyBound`); TTL expire-on-destroy → `virtualKeyExpired` |
 | Lab VK budget / expire stub (local DeductionService stand-in)                   | **No** — stub HTTP   | `bash docs/examples/streams-celld/scripts/smoke-vk-budget.sh` → bind → 402 ceiling → expire → 401                                                  |
-| ADR 0015 kill-node stand-in (file-journal SIGKILL)                              | **Host Node**        | `npm run demo:kill-node-standin` → `docs/benchmarks/program-kill-node-standin/evidence.json` — **not** celld isolate crash survival                |
+| ADR 0015 kill-node stand-in (file-journal SIGKILL)                              | **Host Node**        | `npm run demo:kill-node-standin` → `docs/benchmarks/program-kill-node-standin/evidence.json` — host process only                                   |
+| ADR 0015 ProgramCellDO isolate kill-node                                        | **Yes** (DO journal) | `smoke-program-cell-kill.sh` — write arm `outcome_unknown` + read arm resume re-run after SIGKILL celld                                            |
 | Helm celld StatefulSet / probes                                                 | Chart only           | `make helm-celld-template-tests`                                                                                                                   |
 | Fleet LTX / multi-node diagnose                                                 | Manual               | `docs/examples/idp/streams-celld/README.md`                                                                                                        |
 | `clawql-streams` package / `stream_*` tools                                     | **Not shipped**      | Spec-only — see Streams §15                                                                                                                        |
 | Full DeductionService / model-escalation spend ceilings                         | **Not shipped**      | Lab stub bind/budget/expire only; real ledger + model escalation on clawql-inference / clawql-payments                                             |
-| celld isolate kill-node (ProgramCellDO + SIGKILL celld)                         | **Not shipped**      | Stand-in proves file-journal resume only — do not claim V8-isolate / LTX crash survival                                                            |
+| celld isolate kill-node (fleet / three-arm product gate)                        | **Partial**          | Lab ProgramCellDO write-arm local smoke shipped; fleet LTX diagnose + full three-arm product gate still open                                       |
 | Operator mesh denial → host WORM                                                | **Package unit**     | `clawql-k8s-operator` `worm-append` + `appendMeshDenialToHostWorm` (no live Istio)                                                                 |
 | cellrt / TEE / QR stream source                                                 | **Not shipped**      | Spec drafts under `docs/streams/`                                                                                                                  |
 | AWS Cost Explorer / live cloud cost measurement                                 | **Deferred**         | Local-only closeout; no paid AWS keys in Lab 5b gates                                                                                              |
@@ -82,6 +83,14 @@ npm run demo:kill-node-standin
 ```
 
 Expected: exit 0; writes `docs/benchmarks/program-kill-node-standin/evidence.json` with both arms `ok: true`. Honesty string must say this is **not** celld isolate kill-node.
+
+ProgramCellDO isolate kill-node (requires celld; SIGKILL binary):
+
+```bash
+STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke-program-cell-kill.sh
+```
+
+Expected: `smoke-program-cell-kill: PASS`; evidence at `docs/benchmarks/program-cell-isolate-kill/evidence.json` with write arm `outcome_unknown` after celld restart.
 
 ### Local E2E smoke (requires celld v0.4.0 + esbuild)
 

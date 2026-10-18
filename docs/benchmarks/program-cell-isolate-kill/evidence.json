@@ -1,0 +1,20 @@
+{
+  "kind": "celld-isolate-sigkill",
+  "measuredAt": "2026-10-18T06:03:13.160291+00:00",
+  "ok": true,
+  "arms": [
+    {
+      "arm": "write_sigkill_outcome_unknown",
+      "ok": true,
+      "programId": "prog_isolatekill_write",
+      "detail": "SIGKILL celld after write intent; resume reported outcome_unknown without re-POST"
+    },
+    {
+      "arm": "read_sigkill_resume",
+      "ok": true,
+      "programId": "prog_isolatekill_read",
+      "detail": "SIGKILL celld before interrupted read; resume re-ran listPets once"
+    }
+  ],
+  "honesty": "ProgramCellDO: durable plan journal in celld DO storage (LTX). SIGKILL of celld binary + resume proves isolate crash survival for this journal \u2014 not fleet diagnose, not host file-journal stand-in."
+}

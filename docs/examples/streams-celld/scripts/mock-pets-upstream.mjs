@@ -41,6 +41,25 @@ const server = createServer(async (req, res) => {
     );
     return;
   }
+  if (req.method === "POST" && url.pathname === "/owners") {
+    const chunks = [];
+    for await (const c of req) chunks.push(c);
+    let body = {};
+    try {
+      body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+    } catch {
+      body = {};
+    }
+    res.writeHead(201, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({
+        id: `owner_${Date.now()}`,
+        name: body.name || "lab",
+        host: "mock-pets-upstream",
+      })
+    );
+    return;
+  }
   if (req.method === "GET" && url.pathname === "/healthz") {
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify({ ok: true }));

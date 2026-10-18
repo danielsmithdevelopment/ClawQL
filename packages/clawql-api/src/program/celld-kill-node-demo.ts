@@ -16,11 +16,20 @@ import {
   type CelldPinStatus,
   defaultCelldBinaryProbe,
 } from "./celld-pin.js";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   defaultKillNodeEvidencePath,
   loadKillNodeStandinEvidence,
   type KillNodeStandinEvidence,
 } from "./kill-node-standin-demo.js";
+
+export type IsolateKillNodeEvidence = {
+  readonly kind: "celld-isolate-sigkill";
+  readonly ok: boolean;
+  readonly arms?: readonly { readonly arm: string; readonly ok: boolean }[];
+  readonly honesty?: string;
+};
 
 export type CelldKillNodeDemoReport = {
   readonly pinnedVersion: typeof CELLD_PINNED_VERSION;
@@ -38,9 +47,31 @@ export type CelldKillNodeDemoReport = {
   /** Latest stand-in evidence JSON if present (npm run demo:kill-node-standin). */
   readonly standInEvidence: KillNodeStandinEvidence | null;
   readonly standInEvidencePassed: boolean;
+  /** Lab ProgramCellDO isolate evidence if present (smoke-program-cell-kill). */
+  readonly isolateEvidence: IsolateKillNodeEvidence | null;
+  readonly isolateEvidencePassed: boolean;
   readonly honesty: string;
   readonly nextSteps: readonly string[];
 };
+
+function defaultIsolateEvidencePath(env: NodeJS.ProcessEnv = process.env): string {
+  if (env.CLAWQL_ISOLATE_KILL_EVIDENCE_PATH?.trim()) {
+    return env.CLAWQL_ISOLATE_KILL_EVIDENCE_PATH.trim();
+  }
+  return join(process.cwd(), "docs/benchmarks/program-cell-isolate-kill/evidence.json");
+}
+
+function loadIsolateKillEvidence(
+  path: string = defaultIsolateEvidencePath()
+): IsolateKillNodeEvidence | null {
+  try {
+    const raw = JSON.parse(readFileSync(path, "utf8")) as IsolateKillNodeEvidence;
+    if (raw?.kind !== "celld-isolate-sigkill") return null;
+    return raw;
+  } catch {
+    return null;
+  }
+}
 
 export function celldKillNodeDemoReportEffect(
   env: NodeJS.ProcessEnv = process.env,
@@ -52,9 +83,16 @@ export function celldKillNodeDemoReportEffect(
     const isolateKillNodeEligible = pin.isolateReady;
     const standInEvidence = loadKillNodeStandinEvidence(defaultKillNodeEvidencePath(env));
     const standInEvidencePassed = standInEvidence?.ok === true;
+    const isolateEvidence = loadIsolateKillEvidence(defaultIsolateEvidencePath(env));
+    const isolateEvidencePassed = isolateEvidence?.ok === true;
     const nextSteps: string[] = [];
     if (!standInEvidencePassed) {
       nextSteps.push("Run npm run demo:kill-node-standin to publish file-journal SIGKILL evidence");
+    }
+    if (!isolateEvidencePassed) {
+      nextSteps.push(
+        "Run STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke-program-cell-kill.sh"
+      );
     }
     if (!pin.versionMatches) {
       nextSteps.push(`Set CELLD_VERSION=${CELLD_PINNED_VERSION}`);
@@ -69,21 +107,22 @@ export function celldKillNodeDemoReportEffect(
     }
     if (pin.isolateReady) {
       nextSteps.push(
-        "Pin ready: still need ProgramCellDO + SIGKILL of celld binary before isolate crash-survival claims"
+        "Pin ready: Lab ProgramCellDO kill smoke exists; fleet LTX / three-arm product gate still open"
       );
     } else {
       nextSteps.push(
-        "Until isolateReady: file-journal stand-in is the earned local crash/resume path — do not claim celld isolate crash survival"
+        "Until isolateReady pin: file-journal stand-in + Lab ProgramCellDO smoke are the earned local crash/resume paths"
       );
     }
 
-    const honesty = standInEvidencePassed
-      ? pin.isolateReady
-        ? `Stand-in SIGKILL evidence PASS; pin ready (${CELLD_PINNED_VERSION}) but isolate kill-node still not wired`
-        : `Stand-in SIGKILL evidence PASS — ${pin.honesty}`
-      : pin.isolateReady
-        ? `Pin ready for isolate host (${CELLD_PINNED_VERSION}); run demo:kill-node-standin for stand-in evidence`
-        : `File-journal stand-in only — ${pin.honesty}`;
+    const honesty =
+      standInEvidencePassed && isolateEvidencePassed
+        ? `Stand-in + Lab ProgramCellDO isolate evidence PASS — ${pin.honesty}`
+        : standInEvidencePassed
+          ? `Stand-in SIGKILL evidence PASS; isolate Lab smoke ${isolateEvidencePassed ? "PASS" : "pending"} — ${pin.honesty}`
+          : isolateEvidencePassed
+            ? `Lab ProgramCellDO isolate evidence PASS; stand-in pending — ${pin.honesty}`
+            : `File-journal stand-in + Lab ProgramCellDO path — ${pin.honesty}`;
 
     return {
       pinnedVersion: CELLD_PINNED_VERSION,
@@ -92,6 +131,8 @@ export function celldKillNodeDemoReportEffect(
       isolateKillNodeEligible,
       standInEvidence,
       standInEvidencePassed,
+      isolateEvidence,
+      isolateEvidencePassed,
       honesty,
       nextSteps,
     };
