@@ -45,7 +45,8 @@ Do **not** embed `clawql-api`, `clawql-memory`, or `mcp-api-adapter` (Express/gR
 | `CLAWQL_MCP_URL`                                              | Streamable HTTP MCP endpoint (usually `…/mcp`)         |
 | `CLAWQL_MCP_ADAPTER_URL`                                      | Adapter **origin** only (e.g. `http://127.0.0.1:8090`) |
 | `CLAWQL_MCP_BEARER_TOKEN` / `CLAWQL_MCP_ADAPTER_BEARER_TOKEN` | Optional Bearer                                        |
-| `CLAWQL_CORE_IN_CELLD`                                        | Default `1`; set `0` to force host MCP (Bun) for search/execute |
+| `CLAWQL_CORE_IN_CELLD`                                        | Default `1`; set `0` / `CLAWQL_DECLINE_CELLD=1` to skip celld → Bun ladder |
+| `CLAWQL_DECLINE_BUN`                                          | Skip Bun → Node (legacy) with improve-performance message         |
 | `CLAWQL_CORE_UPSTREAM`                                        | REST origin for in-cell `execute` (e.g. mock `/pets`)  |
 | `CLAWQL_AUDIT_WORM_URL`                                       | Host `clawql-audit` HTTP origin (`POST /entries`)      |
 | `CLAWQL_AUDIT_API_KEY`                                        | ApiKey for host WORM HTTP (optional if open)           |
