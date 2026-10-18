@@ -21,6 +21,26 @@ import {
 } from "./streams-core-facade.js";
 import { requireComplianceWorm } from "./worm-fetch.js";
 
+// #region agent log
+function dbg(hypothesisId, location, message, data = {}) {
+  // celld isolate: log via fetch to host loopback so NDJSON lands on the smoke host.
+  // Fire-and-forget; never await (would itself be an outbound hop under the output gate).
+  try {
+    const line = JSON.stringify({
+      hypothesisId,
+      location,
+      message,
+      data,
+      timestamp: Date.now(),
+    });
+    // Prefer sync console — full-stack-smoke captures celld stderr; also best-effort file via worker.
+    console.log(`[agent-dbg] ${line}`);
+  } catch {
+    /* ignore */
+  }
+}
+// #endregion
+
 function resolveMcpConfig(env) {
   const url =
     (env.CLAWQL_MCP_URL || env.CLAWQL_MCP_HTTP_URL || "").trim() || undefined;
@@ -182,10 +202,12 @@ export class AgentSessionDO {
       let audit = { ok: false };
       let cache = { ok: false };
       let auditVerify = { ok: false };
-      let auditPersisted = { ok: false };
+      let auditPersisted = { ok: false, deferred: true };
       let complianceWorm = { deferred: true };
       const wormCfg = resolveWormConfig(this.env);
 
+      // In-process ring/cache only — DO LTX flush is deferred until AFTER all
+      // outbound fetches (celld output gate: storage.put mid-handler fences later fetch).
       try {
         audit = await appendSessionCreatedAudit({
           subscriptionId,
@@ -195,11 +217,13 @@ export class AgentSessionDO {
         });
         cache = await cacheSessionMeta(eventId, meta);
         auditVerify = await verifyAuditChain();
-        auditPersisted = await persistAuditRingToLtx(this.state, {
-          verify: auditVerify,
+        // #region agent log
+        dbg("A", "agent-session-do.js:pre-compliance", "in-process audit/cache done; LTX deferred", {
           eventId,
-          startedAt,
+          auditOk: audit?.ok === true,
+          verifyOk: auditVerify?.ok === true,
         });
+        // #endregion
       } catch (err) {
         audit = {
           ok: false,
@@ -209,6 +233,9 @@ export class AgentSessionDO {
 
       try {
         // Compliance trail: host clawql-audit (tip-load). Ring/LTX is bookkeeping only.
+        // #region agent log
+        dbg("B", "agent-session-do.js:compliance-start", "starting SESSION_START fetch", { eventId });
+        // #endregion
         complianceWorm = await appendComplianceWorm(wormCfg, {
           type: "SESSION_START",
           sessionId: eventId,
@@ -222,6 +249,13 @@ export class AgentSessionDO {
             source: "streams-celld",
           },
         });
+        // #region agent log
+        dbg("B", "agent-session-do.js:compliance-done", "SESSION_START result", {
+          ok: complianceWorm?.ok === true,
+          chainIndex: complianceWorm?.chainIndex ?? null,
+          fenced: String(complianceWorm?.error || "").includes("NodeFenced"),
+        });
+        // #endregion
       } catch (err) {
         complianceWorm = {
           ok: false,
@@ -259,57 +293,128 @@ export class AgentSessionDO {
         );
       }
 
+      // All outbound fetches before any further storage.put (celld durability gate).
+      // Fan-out tools in parallel so no hop waits behind another under the output gate.
+      const mcp = resolveMcpConfig(this.env);
+      const adapter = resolveAdapterConfig(this.env);
+      const memoryTitle = `streams-celld session ${eventId.slice(0, 8)}`;
+      // #region agent log
+      dbg("C", "agent-session-do.js:tools-start", "Promise.all tools+adapter", {
+        mcpUrl: Boolean(mcp.url),
+        adapterUrl: Boolean(adapter.url),
+        coreInCelld: Boolean(mcp.preferCoreInCelld),
+      });
+      // #endregion
+      const [search, execute, memory_ingest, memory_recall, adapter_search] =
+        await Promise.all([
+          searchViaMcp(
+            mcp,
+            mcp.preferCoreInCelld
+              ? "listPets pets openapi"
+              : `subscription:${subscriptionId}`,
+            { limit: 3 }
+          ),
+          // Prefer in-cell noop (no upstream). listPets REST is exercised via Worker POST /mcp.
+          executeViaMcp(mcp, "streams.session.noop", { eventId }),
+          memoryIngestViaMcp(mcp, {
+            title: memoryTitle,
+            insights: `AgentSessionDO spawned subscription=${subscriptionId} event=${eventId}`,
+            sessionId: eventId,
+            type: "context",
+            tags: ["streams", "celld"],
+          }),
+          memoryRecallViaMcp(mcp, `streams-celld ${subscriptionId}`, {
+            limit: 3,
+          }),
+          toolViaAdapter(adapter, "search", {
+            query: `adapter:${subscriptionId}`,
+            limit: 1,
+          }),
+        ]);
+      const tools = {
+        search,
+        execute,
+        memory_ingest,
+        memory_recall,
+        adapter_search,
+      };
+      // #region agent log
+      dbg("C", "agent-session-do.js:tools-done", "tool hop results", {
+        searchOk: search?.ok === true,
+        executeOk: execute?.ok === true,
+        memoryIngestOk: memory_ingest?.ok === true,
+        memoryRecallOk: memory_recall?.ok === true,
+        adapterOk: adapter_search?.ok === true,
+        adapterErr: String(adapter_search?.error || "").slice(0, 120),
+        searchFenced: String(search?.error || "").includes("NodeFenced"),
+        adapterFenced: String(adapter_search?.error || "").includes("NodeFenced"),
+      });
+      // #endregion
+
       let inference = { skipped: true, reason: "no INFERENCE_URL" };
       const inferenceUrl = resolveInferenceUrl(this.env);
       if (inferenceUrl) {
+        const base = inferenceUrl.replace(/\/$/, "");
         try {
-          const res = await fetch(`${inferenceUrl.replace(/\/$/, "")}/healthz`, {
+          // #region agent log
+          dbg("D", "agent-session-do.js:inference-start", "healthz+turn", { base });
+          // #endregion
+          const health = await fetch(`${base}/healthz`, {
             method: "GET",
             headers: { accept: "application/json" },
           });
+          // Streams §3.5 skeleton: one model turn via fetch (not healthz-only).
+          const turnRes = await fetch(`${base}/v1/messages`, {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              accept: "application/json",
+              authorization: `Bearer ${virtualKeyId}`,
+            },
+            body: JSON.stringify({
+              model: "stub-frugal",
+              prompt: `streams session ${eventId} subscription ${subscriptionId}`,
+              max_tokens: 64,
+            }),
+            signal: AbortSignal.timeout(10_000),
+          });
+          const turnText = await turnRes.text();
+          let turnBody = null;
+          try {
+            turnBody = turnText ? JSON.parse(turnText) : null;
+          } catch {
+            turnBody = { raw: turnText.slice(0, 300) };
+          }
           inference = {
             skipped: false,
-            status: res.status,
-            ok: res.ok,
+            ok: health.ok && turnRes.ok,
+            healthz: { status: health.status, ok: health.ok },
+            turn: {
+              status: turnRes.status,
+              ok: turnRes.ok,
+              id: turnBody?.id ?? null,
+              turn: turnBody?.turn ?? 1,
+              source: turnBody?.source ?? null,
+            },
+            turns: turnRes.ok ? 1 : 0,
           };
-          await this.state.storage.put("inference_probe", inference);
         } catch (err) {
           inference = {
             skipped: false,
             ok: false,
+            turns: 0,
             error: err instanceof Error ? err.message : String(err),
           };
         }
+        // #region agent log
+        dbg("D", "agent-session-do.js:inference-done", "inference result", {
+          ok: inference?.ok === true,
+          turns: inference?.turns ?? 0,
+          fenced: String(inference?.error || "").includes("NodeFenced"),
+          err: String(inference?.error || "").slice(0, 120),
+        });
+        // #endregion
       }
-
-      const mcp = resolveMcpConfig(this.env);
-      const adapter = resolveAdapterConfig(this.env);
-      const memoryTitle = `streams-celld session ${eventId.slice(0, 8)}`;
-      const tools = {
-        search: await searchViaMcp(
-          mcp,
-          mcp.preferCoreInCelld ? "listPets pets openapi" : `subscription:${subscriptionId}`,
-          { limit: 3 }
-        ),
-        // Prefer in-cell noop (no upstream). listPets REST is exercised via Worker POST /mcp.
-        execute: await executeViaMcp(mcp, "streams.session.noop", { eventId }),
-        memory_ingest: await memoryIngestViaMcp(mcp, {
-          title: memoryTitle,
-          insights: `AgentSessionDO spawned subscription=${subscriptionId} event=${eventId}`,
-          sessionId: eventId,
-          type: "context",
-          tags: ["streams", "celld"],
-        }),
-        memory_recall: await memoryRecallViaMcp(
-          mcp,
-          `streams-celld ${subscriptionId}`,
-          { limit: 3 }
-        ),
-        adapter_search: await toolViaAdapter(adapter, "search", {
-          query: `adapter:${subscriptionId}`,
-          limit: 1,
-        }),
-      };
 
       const inProcess = ["audit", "cache", "hash-chain"];
       if (mcp.preferCoreInCelld) inProcess.push("search", "execute");
@@ -329,6 +434,36 @@ export class AgentSessionDO {
       if (!adapter.url) deferred.push("mcp-api-adapter");
       if (!wormCfg.url) deferred.push("clawql-audit-worm");
 
+      // Final durable writes only after all outbound fetches (celld output gate).
+      // Include deferred LTX audit ring flush here — never mid-handler before fetch.
+      try {
+        auditPersisted = await persistAuditRingToLtx(this.state, {
+          verify: auditVerify,
+          eventId,
+          startedAt,
+        });
+      } catch (err) {
+        auditPersisted = {
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
+      // #region agent log
+      dbg("A", "agent-session-do.js:final-puts", "LTX+tool_calls after fetches", {
+        ltxOk: auditPersisted?.ok === true,
+        entryCount: auditPersisted?.entryCount ?? null,
+      });
+      // #endregion
+      if (inference && inference.skipped === false) {
+        await this.state.storage.put("inference_probe", inference);
+        await this.state.storage.put(`worm:inference:${startedAt}`, {
+          kind: "INFERENCE_TURN",
+          virtualKeyId,
+          eventId,
+          ok: inference.ok === true,
+          inferenceId: inference.turn?.id ?? null,
+        });
+      }
       await this.state.storage.put(`tool_calls:${startedAt}`, {
         searchOk: tools.search?.ok === true,
         executeOk: tools.execute?.ok === true,
