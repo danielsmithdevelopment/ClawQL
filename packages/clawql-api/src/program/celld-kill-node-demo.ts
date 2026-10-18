@@ -67,23 +67,26 @@ export function celldKillNodeDemoReportEffect(
         `Install celld ${CELLD_PINNED_VERSION} on PATH (or CLAWQL_CELLD_BIN) — see docs/streams/clawql-celld.md`
       );
     }
+    nextSteps.push(
+      "Lab isolate write-arm: STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke-program-cell-kill.sh"
+    );
     if (pin.isolateReady) {
       nextSteps.push(
-        "Pin ready: still need ProgramCellDO + SIGKILL of celld binary before isolate crash-survival claims"
+        "Pin ready: Lab ProgramCellDO kill smoke exists; fleet LTX / three-arm product gate still open"
       );
     } else {
       nextSteps.push(
-        "Until isolateReady: file-journal stand-in is the earned local crash/resume path — do not claim celld isolate crash survival"
+        "Until isolateReady pin: file-journal stand-in + Lab ProgramCellDO smoke are the earned local crash/resume paths"
       );
     }
 
     const honesty = standInEvidencePassed
       ? pin.isolateReady
-        ? `Stand-in SIGKILL evidence PASS; pin ready (${CELLD_PINNED_VERSION}) but isolate kill-node still not wired`
+        ? `Stand-in SIGKILL evidence PASS; pin ready (${CELLD_PINNED_VERSION}); Lab ProgramCellDO isolate kill smoke available`
         : `Stand-in SIGKILL evidence PASS — ${pin.honesty}`
       : pin.isolateReady
-        ? `Pin ready for isolate host (${CELLD_PINNED_VERSION}); run demo:kill-node-standin for stand-in evidence`
-        : `File-journal stand-in only — ${pin.honesty}`;
+        ? `Pin ready for isolate host (${CELLD_PINNED_VERSION}); run demo:kill-node-standin + smoke-program-cell-kill`
+        : `File-journal stand-in + Lab ProgramCellDO path — ${pin.honesty}`;
 
     return {
       pinnedVersion: CELLD_PINNED_VERSION,

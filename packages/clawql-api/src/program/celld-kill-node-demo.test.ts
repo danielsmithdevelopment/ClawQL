@@ -22,7 +22,7 @@ describe("celld kill-node demo report", () => {
     expect(report.isolateKillNodeEligible).toBe(false);
     expect(report.honesty).toContain("File-journal stand-in");
     expect(report.nextSteps.some((s) => s.includes("CELLD_VERSION"))).toBe(true);
-    expect(report.nextSteps.some((s) => s.includes("do not claim celld isolate crash"))).toBe(true);
+    expect(report.nextSteps.some((s) => s.includes("smoke-program-cell-kill"))).toBe(true);
     expect(report.standInEvidencePassed).toBe(false);
   });
 
