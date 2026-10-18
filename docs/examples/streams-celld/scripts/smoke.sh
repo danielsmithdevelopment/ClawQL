@@ -7,6 +7,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PORT="${CELLD_DEV_PORT:-9880}"
 MCP_PORT="${MOCK_MCP_PORT:-9891}"
 ADAPTER_PORT="${MOCK_ADAPTER_PORT:-9892}"
+INFER_PORT="${MOCK_INFERENCE_PORT:-9893}"
 BASE="http://127.0.0.1:${PORT}"
 SMOKE_CFG="$ROOT/wrangler.smoke.jsonc"
 
@@ -26,16 +27,18 @@ node "$ROOT/scripts/adapter-fetch.test.mjs"
 node "$ROOT/scripts/significance-filter.test.mjs"
 node "$ROOT/scripts/core-catalog.test.mjs"
 
-# Mock MCP + mcp-api-adapter REST.
+# Mock MCP + mcp-api-adapter REST + inference one-turn stub.
 node "$ROOT/scripts/mock-mcp-server.mjs" "$MCP_PORT" &
 MCP_PID=$!
 node "$ROOT/scripts/mock-adapter-server.mjs" "$ADAPTER_PORT" &
 ADAPTER_PID=$!
+node "$ROOT/scripts/inference-health-stub.mjs" "$INFER_PORT" >/dev/null 2>&1 &
+INFER_PID=$!
 
 # Point Worker vars at mocks (celld accepts a Wrangler config path).
-python3 - "$ROOT/wrangler.jsonc" "$SMOKE_CFG" "$MCP_PORT" "$ADAPTER_PORT" <<'PY'
+python3 - "$ROOT/wrangler.jsonc" "$SMOKE_CFG" "$MCP_PORT" "$ADAPTER_PORT" "$INFER_PORT" <<'PY'
 import json, re, sys
-src, dst, mcp_port, adapter_port = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+src, dst, mcp_port, adapter_port, infer_port = sys.argv[1:6]
 text = open(src, encoding="utf-8").read()
 text = re.sub(r"/\*[\s\S]*?\*/", "", text)
 text = re.sub(r"^\s*//.*$", "", text, flags=re.M)
@@ -43,7 +46,7 @@ cfg = json.loads(text)
 cfg.setdefault("vars", {})
 cfg["vars"]["CLAWQL_MCP_URL"] = f"http://127.0.0.1:{mcp_port}/mcp"
 cfg["vars"]["CLAWQL_MCP_ADAPTER_URL"] = f"http://127.0.0.1:{adapter_port}"
-cfg["vars"]["INFERENCE_URL"] = cfg["vars"].get("INFERENCE_URL") or "http://127.0.0.1:8080"
+cfg["vars"]["INFERENCE_URL"] = f"http://127.0.0.1:{infer_port}"
 open(dst, "w", encoding="utf-8").write(json.dumps(cfg, indent=2) + "\n")
 PY
 
@@ -54,9 +57,11 @@ cleanup() {
   kill "$PID" 2>/dev/null || true
   kill "$MCP_PID" 2>/dev/null || true
   kill "$ADAPTER_PID" 2>/dev/null || true
+  kill "$INFER_PID" 2>/dev/null || true
   wait "$PID" 2>/dev/null || true
   wait "$MCP_PID" 2>/dev/null || true
   wait "$ADAPTER_PID" 2>/dev/null || true
+  wait "$INFER_PID" 2>/dev/null || true
   rm -f "$SMOKE_CFG"
 }
 trap cleanup EXIT
@@ -97,6 +102,54 @@ echo "$FILTERED" | grep -q '"filterType":"never"' || {
   exit 1
 }
 
+# Rate filter: first two events below threshold → filtered; third → spawn
+RATE_SUB="smoke-rate-$$"
+RATE_BODY='{"significance":{"type":"rate","windowSec":60,"count":3},"probe":true}'
+R1=$(curl -sf -X POST "$BASE/webhook/${RATE_SUB}" \
+  -H 'content-type: application/json' \
+  -H "x-clawql-event-id: rate1-$(date +%s)-$$" \
+  -d "$RATE_BODY")
+echo "$R1" | grep -q '"action":"filtered"' || {
+  echo "smoke: FAIL - rate event 1 expected filtered" >&2
+  echo "$R1" >&2
+  exit 1
+}
+R2=$(curl -sf -X POST "$BASE/webhook/${RATE_SUB}" \
+  -H 'content-type: application/json' \
+  -H "x-clawql-event-id: rate2-$(date +%s)-$$" \
+  -d "$RATE_BODY")
+echo "$R2" | grep -q '"action":"filtered"' || {
+  echo "smoke: FAIL - rate event 2 expected filtered" >&2
+  echo "$R2" >&2
+  exit 1
+}
+R3=$(curl -sf -X POST "$BASE/webhook/${RATE_SUB}" \
+  -H 'content-type: application/json' \
+  -H "x-clawql-event-id: rate3-$(date +%s)-$$" \
+  -H 'x-clawql-session-ttl-ms: 800' \
+  -d "$RATE_BODY")
+echo "$R3" | grep -q '"action":"spawn"' || {
+  echo "smoke: FAIL - rate event 3 expected spawn" >&2
+  echo "$R3" >&2
+  exit 1
+}
+echo "$R3" | grep -q '"filterType":"rate"' || {
+  echo "smoke: FAIL - expected filterType rate on spawn" >&2
+  echo "$R3" >&2
+  exit 1
+}
+
+# Composite AND fail → filtered
+COMP_FAIL=$(curl -sf -X POST "$BASE/webhook/smoke-comp-fail" \
+  -H 'content-type: application/json' \
+  -H "x-clawql-event-id: comp-fail-$(date +%s)-$$" \
+  -d '{"significance":{"type":"composite","op":"and","filters":[{"type":"never"},{"type":"always"}]},"probe":true}')
+echo "$COMP_FAIL" | grep -q '"action":"filtered"' || {
+  echo "smoke: FAIL - composite AND with never expected filtered" >&2
+  echo "$COMP_FAIL" >&2
+  exit 1
+}
+
 EVENT_ID="smoke-mcp-$(date +%s)-$$"
 RESP=$(curl -sf -X POST "$BASE/webhook/smoke" \
   -H 'content-type: application/json' \
@@ -127,6 +180,8 @@ echo "$RESP" | grep -q '"adapterUrlConfigured":true' || fail "expected adapterUr
 echo "$RESP" | grep -q '"snapshotKey":"audit:ring"' || fail "expected audit LTX snapshotKey"
 echo "$RESP" | grep -q 'audit:seq:' || fail "expected audit:seq WORM keys"
 echo "$RESP" | grep -q '"durable"' || fail "expected core.durable surfaces"
+echo "$RESP" | grep -q '"turns":1' || fail "expected inference one-turn (turns:1)"
+echo "$RESP" | grep -q 'streams-celld-inference-stub' || fail "expected inference stub source"
 
 # TTL alarm: wait past 1500ms then confirm exitReason=timeout
 sleep 2
