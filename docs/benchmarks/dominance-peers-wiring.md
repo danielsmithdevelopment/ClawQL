@@ -76,7 +76,47 @@ Until then status stays **Not on board** with an explicit credentials blocker.
 
 ## Celld + injection (earned claims, parallel track)
 
-- `clawql security celld` — pin readiness / kill-node eligibility (file-journal stand-in until isolate host).
-- `clawql security inject --mode direct|indirect|multistep` — in-process Panguard drills (§24).
+**What “builds on celld” means today**
+
+| Surface | Relationship to celld | Claimable now? |
+| --- | --- | --- |
+| **ClawQL Streams** | Self-hosted Durable Objects on pinned **celld v0.4.0** (LTX → your bucket) | **Yes** — install/dev/deploy docs + Labs |
+| **Durable programs** | celld-shaped file (JSONL) journal stand-in; pin/readiness CLI | **Yes** as stand-in — not isolate crash survival |
+| **Core search/execute** (pets publish boards) | Never loads celld / `execute_program` | Hot path **independent** of celld |
+
+**CLI**
+
+```bash
+CELLD_VERSION=v0.4.0 curl -fsSL https://celld.dev/install.sh | CELLD_VERSION=v0.4.0 sh
+export PATH="$HOME/.local/bin:$PATH"
+
+# Pin readiness (isolateReady when CELLD_VERSION + CLAWQL_PROGRAM_CELLD_ISOLATE=1 + binary match)
+CELLD_VERSION=v0.4.0 CLAWQL_PROGRAM_CELLD_ISOLATE=1 \
+  clawql security celld --json
+
+clawql security inject --mode direct|indirect|multistep [--json]
+```
+
+- `clawql security celld` — pin readiness / kill-node *eligibility* (does not spawn celld).
+- `clawql security inject` — in-process Panguard drills (§24).
 - Live MCP: openbench `memory-injection-attempt`.
-- Crash claim: only after pin.isolateReady **and** three-arm celld kill-node demo (ADR 0015).
+- Crash claim: only after `pin.isolateReady` **and** three-arm celld kill-node demo (ADR 0015).
+
+### Hot-path A/B — celld env does not hurt publish boards
+
+Artifact: [`celld-hotpath-ab/celld-hotpath-ab.json`](./celld-hotpath-ab/celld-hotpath-ab.json) (remeasured 2026-10-18, n=2000).
+
+Same equal-arm OpenAPI `execute` → `listPets` as the gateway-multi publish board:
+
+| Variant | e2e p50 / p99 (ms) | gateway_cost p50 / p99 | vs baseline gateway p50 |
+| --- | ---: | ---: | ---: |
+| **A** baseline (publish shape) | 1.16 / 2.51 | **0.84 / 2.16** | — |
+| **B** + `CLAWQL_ENABLE_DURABLE_PROGRAMS=1` | 1.09 / 2.29 | 0.86 / 1.96 | **+3.0%** |
+| **C** + celld pin + `CLAWQL_PROGRAM_CELLD_ISOLATE=1` | 1.05 / 2.23 | 0.87 / 1.93 | **+3.7%** |
+
+Gate (≤15% p50 / ≤25% p99 gateway regress): **PASS**. Enabling durable programs and the celld pin/isolate env on the Core process does **not** move publish latency outside noise — the pets board never calls celld.
+
+```bash
+MULTI_ITERS=2000 CLAWQL_CELLD_BIN=$HOME/.local/bin/celld \
+  npm run benchmark:celld-hotpath-ab
+```

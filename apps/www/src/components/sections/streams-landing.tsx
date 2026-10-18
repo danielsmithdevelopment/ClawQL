@@ -182,13 +182,14 @@ export function StreamsLanding() {
       <Section
         id="scale"
         className="streams-section-band"
-        eyebrow="celld · Cloudflare · Kubernetes"
+        eyebrow="Builds on celld · Cloudflare · Kubernetes"
         headline="Infinite session scale without losing the audit trail"
         subheadline={
           <p>
-            Write-once Durable Object code runs on Cloudflare or <Link href={CELLD_SPEC}>celld</Link> — Deno&apos;s
-            self-hosted DO runtime with LTX replication to your bucket (~$0.05 per resident cell-month). Regulated
-            tenants keep <Link href={DO_SPEC}>Kubernetes HPA</Link> until celld is production-stable.
+            Streams is built on <Link href={CELLD_SPEC}>celld</Link> — Deno&apos;s self-hosted Durable Objects runtime
+            with LTX replication to your bucket (~$0.05 per resident cell-month) — or Cloudflare&apos;s hosted DOs.
+            Regulated tenants keep <Link href={DO_SPEC}>Kubernetes HPA</Link> until celld is production-stable. Core
+            search/execute publish boards stay on the Node hot path; enabling the celld pin does not move those numbers.
           </p>
         }
       >

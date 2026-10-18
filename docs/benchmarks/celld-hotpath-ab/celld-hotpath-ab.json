@@ -1,0 +1,109 @@
+{
+  "measuredAt": "2026-10-18T02:02:40.011Z",
+  "iters": 2000,
+  "warmup": 50,
+  "gate": {
+    "p50_max_regress": 0.15,
+    "p99_max_regress": 0.25,
+    "passed": true,
+    "fails": []
+  },
+  "honesty": [
+    "Equal-arm OpenAPI execute listPets — same call as gateway-multi publish board.",
+    "Variants only change env; hot path never calls execute_program / celld spawn.",
+    "Pass means celld pin + durable-program registration does not hurt Core search/execute boards.",
+    "Does NOT prove isolate-hosted kill-node crash survival (separate earned claim)."
+  ],
+  "variants": [
+    {
+      "id": "A_baseline",
+      "env_extra_keys": [],
+      "errors": 0,
+      "latency": {
+        "e2e": {
+          "n": 2000,
+          "p50_ms": 1.159,
+          "p95_ms": 1.831,
+          "p99_ms": 2.506,
+          "mean_ms": 1.254
+        },
+        "gateway_cost": {
+          "n": 2000,
+          "p50_ms": 0.839,
+          "p95_ms": 1.425,
+          "p99_ms": 2.155,
+          "mean_ms": 0.941
+        },
+        "note": "gateway_cost = e2e − paired direct HTTP /pets"
+      }
+    },
+    {
+      "id": "B_durable_programs",
+      "env_extra_keys": [
+        "CLAWQL_ENABLE_DURABLE_PROGRAMS"
+      ],
+      "errors": 0,
+      "latency": {
+        "e2e": {
+          "n": 2000,
+          "p50_ms": 1.091,
+          "p95_ms": 1.724,
+          "p99_ms": 2.287,
+          "mean_ms": 1.167
+        },
+        "gateway_cost": {
+          "n": 2000,
+          "p50_ms": 0.864,
+          "p95_ms": 1.398,
+          "p99_ms": 1.961,
+          "mean_ms": 0.937
+        },
+        "note": "gateway_cost = e2e − paired direct HTTP /pets"
+      }
+    },
+    {
+      "id": "C_celld_pin_isolate",
+      "env_extra_keys": [
+        "CELLD_VERSION",
+        "CLAWQL_CELLD_BIN",
+        "CLAWQL_ENABLE_DURABLE_PROGRAMS",
+        "CLAWQL_PROGRAM_CELLD_ISOLATE",
+        "PATH"
+      ],
+      "errors": 0,
+      "latency": {
+        "e2e": {
+          "n": 2000,
+          "p50_ms": 1.052,
+          "p95_ms": 1.591,
+          "p99_ms": 2.227,
+          "mean_ms": 1.131
+        },
+        "gateway_cost": {
+          "n": 2000,
+          "p50_ms": 0.87,
+          "p95_ms": 1.361,
+          "p99_ms": 1.929,
+          "mean_ms": 0.946
+        },
+        "note": "gateway_cost = e2e − paired direct HTTP /pets"
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "id": "B_durable_programs",
+      "e2e_p50_regress": -0.0587,
+      "e2e_p99_regress": -0.0874,
+      "gateway_p50_regress": 0.0298,
+      "gateway_p99_regress": -0.09
+    },
+    {
+      "id": "C_celld_pin_isolate",
+      "e2e_p50_regress": -0.0923,
+      "e2e_p99_regress": -0.1113,
+      "gateway_p50_regress": 0.0369,
+      "gateway_p99_regress": -0.1049
+    }
+  ]
+}

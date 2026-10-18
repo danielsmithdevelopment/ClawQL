@@ -40,6 +40,7 @@ Live table: [clawql.com/benchmarks#dominance](https://clawql.com/benchmarks/#dom
 
 - Pets multiturn + latency: [gateway-multi-comparison](./gateway-multi-comparison/README.md)
 - Peer install recipes: [dominance-peers-wiring](./dominance-peers-wiring.md)
+- celld env vs Core hot path: [celld-hotpath-ab](./celld-hotpath-ab/README.md)
 - Cloudflare zone-audit + fan-out: [cloudflare-multiturn](./cloudflare-multiturn/README.md)
 - Marketing surface: `apps/www/src/lib/dominance-roadmap.ts`
 - Celld pin + injection drills: `clawql security celld` / `clawql security inject`
