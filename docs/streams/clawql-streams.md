@@ -53,9 +53,9 @@ ClawQL Streams is that pattern as a platform: any event source, any trigger type
 
 On the **celld / Cloudflare** path, each agent cell is a **Workers-safe slim core** plus **out-of-process** MCP/adapter/inference — not a sidecar fleet of containers, and **not** a full Express `mcp-api-adapter` embed (that would blow the 64 MiB budget and pull Node APIs).
 
-**Shipped today** ([`docs/examples/streams-celld`](../../docs/examples/streams-celld/)): Gateway / Subscription / AgentSession DOs, in-process `clawql-core/streams-slim`, significance filter (`always` / `never` / `threshold` / `pattern`), session TTL via `setAlarm`, optional **CoreToolsDO** in-isolate slim search/execute (`CLAWQL_CORE_IN_CELLD=1` or Worker `POST /mcp`), optional `fetch(CLAWQL_MCP_URL)` + `fetch(CLAWQL_MCP_ADAPTER_URL)`, LTX audit flush + host WORM dual-write. Evidence matrix: [`streams-celld-evidence.md`](./streams-celld-evidence.md).
+**Shipped today** ([`docs/examples/streams-celld`](../../docs/examples/streams-celld/)): Gateway / Subscription / AgentSession DOs, in-process `clawql-core/streams-slim`, significance filter (`always` / `never` / `threshold` / `pattern` / `rate` / `composite`), session TTL via `setAlarm`, optional **CoreToolsDO** in-isolate slim search/execute (`CLAWQL_CORE_IN_CELLD=1` or Worker `POST /mcp`), optional `fetch(CLAWQL_MCP_URL)` + `fetch(CLAWQL_MCP_ADAPTER_URL)`, one-turn `fetch(INFERENCE_URL)` stub path, LTX audit flush + host WORM dual-write. Evidence matrix: [`streams-celld-evidence.md`](./streams-celld-evidence.md).
 
-**Still planned:** the `clawql-streams` coordination package (`stream_*` MCP tools), multi-turn agent loop + PAL virtual keys, significance `rate` / `composite`, and a fuller Workers-safe `clawql-api` slim beyond CoreToolsDO.
+**Still planned:** the `clawql-streams` coordination package (`stream_*` MCP tools), multi-turn agent loop + PAL virtual keys, and a fuller Workers-safe `clawql-api` slim beyond CoreToolsDO.
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -145,12 +145,14 @@ Filter types (configurable per subscription — Lab 5b `SubscriptionDO` / body `
 - **Pattern** — event content matches a regex or JSON path expression — **shipped**
 - **Always** — every event spawns an agent (high-value, low-volume sources) — **shipped**
 - **Never** — buffer and ambient delivery only (high-volume, audit-only sources) — **shipped**
-- **Rate** — N events within T seconds (burst detection) — **deferred** (returns `filter_deferred:rate`)
-- **Composite** — AND/OR of the above — **deferred**
+- **Rate** — N events within T seconds (burst detection) — **shipped** (SubscriptionDO sliding window)
+- **Composite** — AND/OR of the above — **shipped**
 
 ### 3.5 Agent DO session
 
 When the significance filter passes, Streams spawns an `AgentSessionDO`. The **model layer is always [`clawql-inference`](../inference/clawql-inference.md)** via `fetch()` — not a raw Anthropic/OpenAI credential and not a subprocess. The `model` field on `stream_subscribe` is a **policy alias** that resolves through PAL routing (`Frugal` → `Standard` → `Frontier`).
+
+**Lab 5b honesty:** the skeleton proves **one** `POST /v1/messages` turn against `INFERENCE_URL` (smoke stub or real gateway). Multi-turn `runAgentLoop`, PAL virtual-key bind-on-create, and budget enforcement remain the target shape below — not yet the smoke path.
 
 ```ts
 import { DurableObject } from "cloudflare:workers";
