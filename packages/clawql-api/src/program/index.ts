@@ -1,6 +1,7 @@
 export * from "./batch-merkle.js";
 export * from "./celld-pin.js";
 export * from "./celld-kill-node-demo.js";
+export * from "./kill-node-standin-demo.js";
 export * from "./celld-program-cell.js";
 export * from "./core-celld-proxy.js";
 export * from "./runtime-preference-ladder.js";

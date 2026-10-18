@@ -16,6 +16,11 @@ import {
   type CelldPinStatus,
   defaultCelldBinaryProbe,
 } from "./celld-pin.js";
+import {
+  defaultKillNodeEvidencePath,
+  loadKillNodeStandinEvidence,
+  type KillNodeStandinEvidence,
+} from "./kill-node-standin-demo.js";
 
 export type CelldKillNodeDemoReport = {
   readonly pinnedVersion: typeof CELLD_PINNED_VERSION;
@@ -30,6 +35,9 @@ export type CelldKillNodeDemoReport = {
    * kill-node load-test. This module does not spawn celld.
    */
   readonly isolateKillNodeEligible: boolean;
+  /** Latest stand-in evidence JSON if present (npm run demo:kill-node-standin). */
+  readonly standInEvidence: KillNodeStandinEvidence | null;
+  readonly standInEvidencePassed: boolean;
   readonly honesty: string;
   readonly nextSteps: readonly string[];
 };
@@ -42,7 +50,14 @@ export function celldKillNodeDemoReportEffect(
     const pin = yield* celldPinStatusEffect(env, probe);
     const standInDemoAvailable = true;
     const isolateKillNodeEligible = pin.isolateReady;
+    const standInEvidence = loadKillNodeStandinEvidence(
+      defaultKillNodeEvidencePath(env)
+    );
+    const standInEvidencePassed = standInEvidence?.ok === true;
     const nextSteps: string[] = [];
+    if (!standInEvidencePassed) {
+      nextSteps.push("Run npm run demo:kill-node-standin to publish file-journal SIGKILL evidence");
+    }
     if (!pin.versionMatches) {
       nextSteps.push(`Set CELLD_VERSION=${CELLD_PINNED_VERSION}`);
     }
@@ -56,23 +71,29 @@ export function celldKillNodeDemoReportEffect(
     }
     if (pin.isolateReady) {
       nextSteps.push(
-        "Run three-arm load-test kill-node against the pinned isolate; publish resume+audit evidence before crash claims"
+        "Pin ready: still need ProgramCellDO + SIGKILL of celld binary before isolate crash-survival claims"
       );
     } else {
       nextSteps.push(
-        "Until isolateReady: rely on file-journal SIGKILL tests (durable-runner) — do not claim celld crash survival"
+        "Until isolateReady: file-journal stand-in is the earned local crash/resume path — do not claim celld isolate crash survival"
       );
     }
 
-    const honesty = pin.isolateReady
-      ? `Pin ready for isolate host (${CELLD_PINNED_VERSION}); file-journal stand-in still the default until kill-node demo ships`
-      : `File-journal stand-in only — ${pin.honesty}`;
+    const honesty = standInEvidencePassed
+      ? pin.isolateReady
+        ? `Stand-in SIGKILL evidence PASS; pin ready (${CELLD_PINNED_VERSION}) but isolate kill-node still not wired`
+        : `Stand-in SIGKILL evidence PASS — ${pin.honesty}`
+      : pin.isolateReady
+        ? `Pin ready for isolate host (${CELLD_PINNED_VERSION}); run demo:kill-node-standin for stand-in evidence`
+        : `File-journal stand-in only — ${pin.honesty}`;
 
     return {
       pinnedVersion: CELLD_PINNED_VERSION,
       pin,
       standInDemoAvailable,
       isolateKillNodeEligible,
+      standInEvidence,
+      standInEvidencePassed,
       honesty,
       nextSteps,
     };
