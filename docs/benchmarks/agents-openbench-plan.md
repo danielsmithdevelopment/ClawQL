@@ -12,7 +12,7 @@ Companion to [`agents-openbench-spec-v0.1.md`](agents-openbench-spec-v0.1.md) an
 
 ## Goal
 
-Measure **infrastructure lift** (Panguard, vault memory, WORM completeness, PAL routing) across RockYourLobster catalog agents — same model weights, baseline vs ClawQL-augmented arms.
+Measure **infrastructure lift** (Panguard, vault memory, WORM completeness, model escalation) across RockYourLobster catalog agents — same model weights, baseline vs ClawQL-augmented arms.
 
 This is **not** the MCP Track A/B harness under [`benchmarks/openbench/`](../../benchmarks/openbench/) (opencode / ClawQL-as-harness). Agents OpenBench wraps the seven catalog agents via `clawql-agents`.
 

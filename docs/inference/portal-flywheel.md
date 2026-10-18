@@ -31,7 +31,7 @@ Production traffic
   → Presidio PII scrub + WORM dataset manifest
   → Fine-tuning job (OpenAI / Anthropic / local QLoRA)
   → Custom model registered in tier-map.json (Frugal)
-  → PAL routing prefers the custom model for matching tasks
+  → model escalation prefers the custom model for matching tasks
 ```
 
 **With PorTAL (intended):**
@@ -48,7 +48,7 @@ Production traffic
 
 | Layer                        | Unchanged?                 |
 | ---------------------------- | -------------------------- |
-| Gateway / PAL routing (TS)   | Yes                        |
+| Gateway / model escalation (TS)   | Yes                        |
 | vLLM / PEFT serving          | Yes — standard LoRA load   |
 | WORM audit for inference     | Yes — richer, not replaced |
 | OKF vault as training source | Yes — gains v0.2 filters   |

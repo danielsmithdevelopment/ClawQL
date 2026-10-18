@@ -473,7 +473,7 @@ export function EnterpriseGtmPlaybook() {
             independently computable.
           </p>
           <p className="text-xs text-mist-500">
-            Credit: PAL framing from JQ Lee / Q00/ouroboros; NSV/SGDOP design iterations with independent ensemble
+            Credit: model-escalation framing from JQ Lee / Q00/ouroboros; NSV/SGDOP design iterations with independent ensemble
             validation references in the broader research community.
           </p>
 

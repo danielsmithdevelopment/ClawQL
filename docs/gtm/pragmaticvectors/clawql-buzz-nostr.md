@@ -60,7 +60,7 @@ When ClawQL's Virtual Gateway joins a Buzz relay as a member, it holds a Nostr k
       ├─ ATRClaims validation
       ├─ WORM audit write
       ├─ memory_recall from channel-scoped vault
-      ├─ PAL routing to correct model tier
+      ├─ model escalation to correct model tier
       ├─ entitlement enforcement
       │
       └─ signed response back to Buzz channel
@@ -346,7 +346,7 @@ An agent in #legal recalls #legal context. Cross-channel access requires ATRClai
 
 ## Governed Inference Routing
 
-Every inference call an agent makes through ClawQL's gateway gets PAL routing, semantic cache, fallback chains, entitlement enforcement, and a WORM-audited routing decision.
+Every inference call an agent makes through ClawQL's gateway gets model escalation, semantic cache, fallback chains, entitlement enforcement, and a WORM-audited routing decision.
 
 ```
 @agent-hermes in #engineering: @clawql infer "summarize changes in PR #4821"

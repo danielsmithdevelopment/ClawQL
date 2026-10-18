@@ -48,7 +48,7 @@ Vault / inference
 
 External sidecars / HTTP
 
-Embedded dynamic secrets + PAL + virtual keys
+Embedded dynamic secrets + model escalation + virtual keys
 
 Observability
 
@@ -168,7 +168,7 @@ clawql-cellrt binary (Rust, static, ~50–80 MB target)
 
 ├─ Inference layer (clawql-inference embedded)
 
-│ ├─ PAL router (Frugal → Standard → Frontier based on policy.yaml)
+│ ├─ model-escalation router (Frugal → Standard → Frontier based on policy.yaml)
 
 │ ├─ Virtual key manager (issue on spawn, expire on drop)
 
@@ -232,7 +232,7 @@ cellrt-security/ — eBPF, capability enforcer, Cosign startup
 
 cellrt-attestation/ — SEV-SNP/TDX remote attestation (tee path)
 
-cellrt-inference/ — PAL, virtual keys, call store
+cellrt-inference/ — model escalation, virtual keys, call store
 
 cellrt-vault/ — AppRole bootstrap; attestation auth for tee
 
@@ -270,7 +270,7 @@ AMD SEV-SNP / Intel TDX reports, VCEK/PCS chain, JWT delivery, QR frame bind
 
 cellrt-inference
 
-PAL router, virtual key issue/expire, budget, WORM call store
+model-escalation router, virtual key issue/expire, budget, WORM call store
 
 cellrt-vault
 
@@ -488,7 +488,7 @@ import clawql:polyfills/node-crypto // subset — maps to clawql:crypto/*
 
 // Inference — model calls via virtual key
 
-import clawql:inference/call // PAL-routed, budget-enforced
+import clawql:inference/call // model-escalated, budget-enforced
 
 // Audit — WORM writes via host (not direct SQLite)
 
@@ -822,7 +822,7 @@ Inference
 
 External HTTP
 
-Embedded PAL routing + virtual keys
+Embedded model escalation + virtual keys
 
 Observability
 
@@ -1014,7 +1014,7 @@ docs/streams/clawql-tee-airgap-audit.md — QR air-gap audit transport
 
 docs/streams/clawql-durable-objects.md — session / sidecar / virtual key contract
 
-docs/inference/clawql-inference.md — PAL, virtual keys, call store
+docs/inference/clawql-inference.md — model escalation, virtual keys, call store
 
 docs/mcp/mcp-api-adapter.md — six protocol surfaces
 

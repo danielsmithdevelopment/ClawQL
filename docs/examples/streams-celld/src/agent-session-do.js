@@ -265,58 +265,113 @@ export class AgentSessionDO {
       const memoryTitle = `streams-celld session ${eventId.slice(0, 8)}`;
       const inferenceUrl = resolveInferenceUrl(this.env);
 
+      async function parseTurnBody(res) {
+        const turnText = await res.text();
+        try {
+          return turnText ? JSON.parse(turnText) : null;
+        } catch {
+          return { raw: turnText.slice(0, 300) };
+        }
+      }
+
+      /**
+       * Lab 5b multi-turn skeleton (§3.5): healthz + turn1 co-scheduled with
+       * tools; turn2 immediately after (still before any further storage.put).
+       * Virtual key is bound at session create (`vk_lab_*`) and sent as Bearer.
+       * Full DeductionService / model-escalation spend ceilings remain on clawql-inference.
+       */
       async function runInferenceProbe() {
         if (!inferenceUrl) {
           return { skipped: true, reason: "no INFERENCE_URL" };
         }
         const base = inferenceUrl.replace(/\/$/, "");
+        const authHeaders = {
+          "content-type": "application/json",
+          accept: "application/json",
+          authorization: `Bearer ${virtualKeyId}`,
+          "x-clawql-virtual-key": virtualKeyId,
+        };
         try {
-          // Kick both hops without awaiting between them so healthz+turn share
+          // Kick healthz+turn1 without awaiting between them so they share
           // the same output-gate window as sibling tool fetches.
           const healthP = fetch(`${base}/healthz`, {
             method: "GET",
             headers: { accept: "application/json" },
           });
-          const turnP = fetch(`${base}/v1/messages`, {
+          const turn1P = fetch(`${base}/v1/messages`, {
             method: "POST",
-            headers: {
-              "content-type": "application/json",
-              accept: "application/json",
-              authorization: `Bearer ${virtualKeyId}`,
-            },
+            headers: authHeaders,
             body: JSON.stringify({
               model: "stub-frugal",
               prompt: `streams session ${eventId} subscription ${subscriptionId}`,
               max_tokens: 64,
+              turn: 1,
+              virtualKeyId,
             }),
             signal: AbortSignal.timeout(10_000),
           });
-          const [health, turnRes] = await Promise.all([healthP, turnP]);
-          const turnText = await turnRes.text();
-          let turnBody = null;
-          try {
-            turnBody = turnText ? JSON.parse(turnText) : null;
-          } catch {
-            turnBody = { raw: turnText.slice(0, 300) };
+          const [health, turn1Res] = await Promise.all([healthP, turn1P]);
+          const turn1Body = await parseTurnBody(turn1Res);
+
+          // Second model turn before any further DO storage (celld output gate).
+          let turn2Res = null;
+          let turn2Body = null;
+          if (turn1Res.ok) {
+            turn2Res = await fetch(`${base}/v1/messages`, {
+              method: "POST",
+              headers: authHeaders,
+              body: JSON.stringify({
+                model: "stub-frugal",
+                prompt: `follow-up session ${eventId} after ${turn1Body?.id ?? "turn1"}`,
+                max_tokens: 64,
+                turn: 2,
+                priorId: turn1Body?.id ?? null,
+                virtualKeyId,
+              }),
+              signal: AbortSignal.timeout(10_000),
+            });
+            turn2Body = await parseTurnBody(turn2Res);
           }
+
+          const turns =
+            (turn1Res.ok ? 1 : 0) + (turn2Res && turn2Res.ok ? 1 : 0);
+          const virtualKeyBound =
+            turn1Body?.virtualKeyBound === true ||
+            turn2Body?.virtualKeyBound === true ||
+            Boolean(virtualKeyId);
+
           return {
             skipped: false,
-            ok: health.ok && turnRes.ok,
+            ok: health.ok && turns >= 2,
             healthz: { status: health.status, ok: health.ok },
+            virtualKeyId,
+            virtualKeyBound,
             turn: {
-              status: turnRes.status,
-              ok: turnRes.ok,
-              id: turnBody?.id ?? null,
-              turn: turnBody?.turn ?? 1,
-              source: turnBody?.source ?? null,
+              status: turn1Res.status,
+              ok: turn1Res.ok,
+              id: turn1Body?.id ?? null,
+              turn: turn1Body?.turn ?? 1,
+              source: turn1Body?.source ?? null,
             },
-            turns: turnRes.ok ? 1 : 0,
+            turn2: turn2Res
+              ? {
+                  status: turn2Res.status,
+                  ok: turn2Res.ok,
+                  id: turn2Body?.id ?? null,
+                  turn: turn2Body?.turn ?? 2,
+                  priorId: turn2Body?.priorId ?? turn1Body?.id ?? null,
+                  source: turn2Body?.source ?? null,
+                }
+              : null,
+            turns,
           };
         } catch (err) {
           return {
             skipped: false,
             ok: false,
             turns: 0,
+            virtualKeyId,
+            virtualKeyBound: false,
             error: err instanceof Error ? err.message : String(err),
           };
         }
@@ -392,11 +447,14 @@ export class AgentSessionDO {
       if (inference && inference.skipped === false) {
         await this.state.storage.put("inference_probe", inference);
         await this.state.storage.put(`worm:inference:${startedAt}`, {
-          kind: "INFERENCE_TURN",
+          kind: "INFERENCE_MULTI_TURN",
           virtualKeyId,
+          virtualKeyBound: inference.virtualKeyBound === true,
           eventId,
           ok: inference.ok === true,
+          turns: inference.turns ?? 0,
           inferenceId: inference.turn?.id ?? null,
+          inferenceId2: inference.turn2?.id ?? null,
         });
       }
       await this.state.storage.put(`tool_calls:${startedAt}`, {

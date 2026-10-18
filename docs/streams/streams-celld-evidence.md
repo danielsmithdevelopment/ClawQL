@@ -20,11 +20,11 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 | Host `clawql-audit` via `CLAWQL_AUDIT_WORM_URL`         | **No** — `fetch`     | `worm-fetch.test.mjs` + full-stack `SESSION_START` + `/chain/verify`       |
 | Streamable HTTP MCP (`CLAWQL_MCP_URL`)                  | **No** — `fetch`     | `mcp-fetch.test.mjs` + mock smoke + **full-stack** real MCP                |
 | mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)         | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real                |
-| Inference one-turn                                      | **No** — `fetch`     | Smoke + full-stack stub `POST /v1/messages` (`turns:1`); real gateway via compose |
+| Inference multi-turn skeleton                           | **No** — `fetch`     | Smoke + full-stack stub 2× `POST /v1/messages` (`turns:2`, `virtualKeyBound`); real gateway via compose |
 | Helm celld StatefulSet / probes                         | Chart only           | `make helm-celld-template-tests`                                           |
 | Fleet LTX / multi-node diagnose                         | Manual               | `docs/examples/idp/streams-celld/README.md`                                |
 | `clawql-streams` package / `stream_*` tools             | **Not shipped**      | Spec-only — see Streams §15                                                |
-| Multi-turn agent loop + PAL virtual keys                | **Not shipped**      | One-turn stub only — full `runAgentLoop` / bind-on-create still planned    |
+| Full DeductionService / model-escalation spend ceilings             | **Not shipped**      | Lab binds `vk_lab_*` at session create + Bearer; real model escalation on clawql-inference |
 | Operator mesh denial → host WORM                        | **Package unit**     | `clawql-k8s-operator` `worm-append` + `appendMeshDenialToHostWorm` (no live Istio) |
 | cellrt / TEE / QR stream source                         | **Not shipped**      | Spec drafts under `docs/streams/`                                          |
 
@@ -64,7 +64,7 @@ STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke-co
 
 Without `STREAMS_CELLD_SMOKE_REQUIRED=1`, missing `celld` **exits 0 with a skip message** (developer convenience). CI and release gates must set the env var (or install celld and require the smoke).
 
-Smoke covers: bundle-check → unit fetch/filter tests → mock MCP + mock adapter + inference stub → `celld dev` → significance `never`/`rate`/`composite` → webhook spawn → one-turn inference → TTL `exitReason:timeout` → streams-slim / MCP / adapter / LTX. Compliance WORM is **deferred** unless `CLAWQL_AUDIT_WORM_URL` is set (full-stack smoke sets it). Core-in-celld smoke asserts `transport: celld-isolate` for search/execute.
+Smoke covers: bundle-check → unit fetch/filter tests → mock MCP + mock adapter + inference stub → `celld dev` → significance `never`/`rate`/`composite` → webhook spawn → multi-turn inference (`turns:2`, `virtualKeyBound`) → TTL `exitReason:timeout` → streams-slim / MCP / adapter / LTX. Compliance WORM is **deferred** unless `CLAWQL_AUDIT_WORM_URL` is set (full-stack smoke sets it). Core-in-celld smoke asserts `transport: celld-isolate` for search/execute.
 
 ### Full-stack E2E — real clawql-mcp + adapter + host clawql-audit (CI **Streams celld full-stack**)
 
@@ -77,7 +77,7 @@ STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/full-sta
 
 Boots **real** `clawql-mcp-http` with **`CLAWQL_WORM_ENABLED=1`** + `CLAWQL_WORM_HTTP_PORT` (host `WORMAuditTrail` HTTP), **real** `mcp-api-adapter`, points celld at MCP + adapter + **`CLAWQL_AUDIT_WORM_URL`**, and asserts:
 
-- search / memory_* / adapter REST / inference **one-turn** (`turns:1`, stub or gateway)
+- search / memory_* / adapter REST / inference **multi-turn** (`turns:2`, `virtualKeyBound`, stub or gateway)
 - spawn writes **`SESSION_START`** via `audit.compliance` (`clawql-audit-http`)
 - `GET /entries?sessionId=…` returns that entry with `hash` / `prevHash` / `chainIndex`
 - `GET /chain/verify?sessionId=…` returns **`valid: true`**

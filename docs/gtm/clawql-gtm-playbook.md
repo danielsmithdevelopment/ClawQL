@@ -376,7 +376,7 @@ clawql inference export --verdict passed --scrub-pii presidio --format openai-js
 clawql inference finetune register --tier frugal
 ```
 
-Every export writes a TrainingLineage WORM manifest. No manifest → no production registration. After Unsloth QLoRA on RTX 5090, merged NVFP4 registers as Frugal in `tier-map.json`; PAL routes automatically.
+Every export writes a TrainingLineage WORM manifest. No manifest → no production registration. After Unsloth QLoRA on RTX 5090, merged NVFP4 registers as Frugal in `tier-map.json`; model escalation routes automatically.
 
 **Substrate prep (mandatory order):** refusal ablation → desperation-direction ablation → custom policy via LoRA + PorTAL. Policy last = dominant behavioral control.
 
@@ -630,7 +630,7 @@ OpenBench: Panguard policy-deny and search-first-discovery 1.0 vs 0.0 (run `3087
 
 Three deliverables from one engagement: scored report, labeled training dataset with provenance, optional PorTAL adapter registered in customer `tier-map.json`.
 
-Scale AI labels; Confident AI evals; Unsloth trains. Nobody runs the full loop as one managed engagement. Gateway unlock: `clawql-inference` already writes WORM traces — benchmarks, export, PorTAL, PAL registration reuse that chokepoint.
+Scale AI labels; Confident AI evals; Unsloth trains. Nobody runs the full loop as one managed engagement. Gateway unlock: `clawql-inference` already writes WORM traces — benchmarks, export, PorTAL, model escalation registration reuse that chokepoint.
 
 | Tier                        | Price             | Deliverable                                                                                           |
 | --------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------- |
