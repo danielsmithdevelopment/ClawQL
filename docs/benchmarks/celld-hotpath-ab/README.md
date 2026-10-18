@@ -28,4 +28,11 @@ Gate defaults: gateway_cost p50 regress ≤15%, p99 ≤25% vs A (`CELLD_AB_P50_R
 
 ## Latest
 
-See [`celld-hotpath-ab.json`](./celld-hotpath-ab.json). Related: [`../dominance-peers-wiring.md`](../dominance-peers-wiring.md) § Celld.
+| Artifact | n | Gate |
+| --- | ---: | --- |
+| [`celld-hotpath-ab-10k.json`](./celld-hotpath-ab-10k.json) | 10000 | **PASS** (publish-grade) |
+| [`celld-hotpath-ab.json`](./celld-hotpath-ab.json) | 2000 | PASS (smoke) |
+
+Publish-grade (2026-10-18, n=10k) gateway_cost vs A: B **+2.7%** p50 / **+5.9%** p99; C **+2.7%** p50 / **+0.4%** p99 — well inside ≤15% / ≤25%.
+
+Doctor: `clawql doctor` surfaces celld pin readiness (stand-in vs `isolateReady`). Related: [`../dominance-peers-wiring.md`](../dominance-peers-wiring.md) § Celld.
