@@ -3,12 +3,12 @@
 Program-mode promotion board (ADR 0015): six independent Cloudflare reads plus a
 **workers ⋈ routes** join that no single `where` can express.
 
-| Doc | Role |
-| --- | --- |
-| [`SPEC.md`](./SPEC.md) | Task, arms, token policy, pre-committed claim |
-| `run-fanout-board.mjs` | Harness |
-| `lib/fanout-join-shapes.mjs` | Plan + join assembly |
-| `lib/fanout-join-checks.mjs` | Success checks |
+| Doc                          | Role                                          |
+| ---------------------------- | --------------------------------------------- |
+| [`SPEC.md`](./SPEC.md)       | Task, arms, token policy, pre-committed claim |
+| `run-fanout-board.mjs`       | Harness                                       |
+| `lib/fanout-join-shapes.mjs` | Plan + join assembly                          |
+| `lib/fanout-join-checks.mjs` | Success checks                                |
 
 ```bash
 # Unit checks

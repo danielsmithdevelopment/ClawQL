@@ -31,14 +31,14 @@ It makes no claims about live API performance, and no claims about writes beyond
 
 Cloudflare documents what exposing the whole API natively costs: 2,594 tools at about 1,170,000 tokens with full schemas, or about 244,000 with required parameters only, against about 1,000 tokens for its two-tool code-mode server ([Cloudflare docs](https://developers.cloudflare.com/agents/model-context-protocol/cloudflare/servers-for-cloudflare/)). Pass-through aggregators therefore cannot run the full spec within any model's context. The board reports that as a finding rather than a gap.
 
-| Arm | Transport | Full spec | Curated subset | Notes |
-| --- | --- | --- | --- | --- |
-| ClawQL, default | Streamable HTTP | Yes | Yes | Search then execute, SQLite catalog on |
-| ClawQL, known-op | Streamable HTTP | Yes | Yes | Execute by ID; steady-state mode |
-| [Cloudflare code-mode server](https://github.com/cloudflare/mcp) | Streamable HTTP | Yes | Yes | Self-hosted if possible; otherwise tokens only, no latency |
-| Executor v2 | Streamable HTTP | Yes | Yes | Record the exact beta version |
-| MCPJungle | Streamable HTTP | No | Yes | Fronts a REST-to-MCP server; measure the process tree |
-| agentgateway | Streamable HTTP | No | Yes | Same REST-to-MCP server as MCPJungle |
+| Arm                                                              | Transport       | Full spec | Curated subset | Notes                                                      |
+| ---------------------------------------------------------------- | --------------- | --------- | -------------- | ---------------------------------------------------------- |
+| ClawQL, default                                                  | Streamable HTTP | Yes       | Yes            | Search then execute, SQLite catalog on                     |
+| ClawQL, known-op                                                 | Streamable HTTP | Yes       | Yes            | Execute by ID; steady-state mode                           |
+| [Cloudflare code-mode server](https://github.com/cloudflare/mcp) | Streamable HTTP | Yes       | Yes            | Self-hosted if possible; otherwise tokens only, no latency |
+| Executor v2                                                      | Streamable HTTP | Yes       | Yes            | Record the exact beta version                              |
+| MCPJungle                                                        | Streamable HTTP | No        | Yes            | Fronts a REST-to-MCP server; measure the process tree      |
+| agentgateway                                                     | Streamable HTTP | No        | Yes            | Same REST-to-MCP server as MCPJungle                       |
 
 A no-gateway baseline runs on the curated subset only: all subset tool definitions in context, raw responses back.
 
@@ -62,18 +62,18 @@ Until a live recording exists, the repo ships [`recording.synthetic.json`](../..
 
 **Eleven reads and one gated proposal.** Scripted checks: `lib/success-checks.mjs`.
 
-1. **List zones** → audit zone ID  
-2. **Zone details** → status + plan name  
-3. **SSL/TLS mode** → setting value  
-4. **List DNS records** → count of A records  
-5. **A records at a given IP** → names  
-6. **Which of those are not proxied** → unproxied names  
-7. **List Workers scripts** → script names  
-8. **One script's settings** → compatibility date  
-9. **Zone Worker routes** → route for that script  
-10. **List R2 buckets** → names + creation dates  
-11. **Custom firewall rules** → count of enabled rules  
-12. **Propose proxy on** for one unproxied record → gated proposal (`proxied: true`), never sent  
+1. **List zones** → audit zone ID
+2. **Zone details** → status + plan name
+3. **SSL/TLS mode** → setting value
+4. **List DNS records** → count of A records
+5. **A records at a given IP** → names
+6. **Which of those are not proxied** → unproxied names
+7. **List Workers scripts** → script names
+8. **One script's settings** → compatibility date
+9. **Zone Worker routes** → route for that script
+10. **List R2 buckets** → names + creation dates
+11. **Custom firewall rules** → count of enabled rules
+12. **Propose proxy on** for one unproxied record → gated proposal (`proxied: true`), never sent
 
 ## Measurements and run protocol
 
@@ -95,13 +95,13 @@ These rules are committed **before the first session**. Blog / explainer claims 
 
 #### Models and settings
 
-| Knob | Pre-commit |
-| --- | --- |
-| Frontier model | **`gpt-5.6-sol-medium`** (OpenAI family via Cursor) |
-| Small model | **`composer-2.5-fast`** (Composer family via Cursor; smaller / faster) |
-| Temperature | Cursor Task defaults (temperature not exposed on this transport); same shared workflow prompt for every arm |
-| System prompt | Shared workflow across arms (tool descriptions differ per gateway `listTools` only) |
-| Sessions | `CF_MT_REAL_ITERS=50` per arm per model |
+| Knob           | Pre-commit                                                                                                  |
+| -------------- | ----------------------------------------------------------------------------------------------------------- |
+| Frontier model | **`gpt-5.6-sol-medium`** (OpenAI family via Cursor)                                                         |
+| Small model    | **`composer-2.5-fast`** (Composer family via Cursor; smaller / faster)                                      |
+| Temperature    | Cursor Task defaults (temperature not exposed on this transport); same shared workflow prompt for every arm |
+| System prompt  | Shared workflow across arms (tool descriptions differ per gateway `listTools` only)                         |
+| Sessions       | `CF_MT_REAL_ITERS=50` per arm per model                                                                     |
 
 **Why these IDs (revision `2026-10-15-cursor-native`, before any gate session):** operator preference is Cursor-native models with no secrets. Pins must be Task-available slugs from **different families**, one smaller. Prior API pins (`gpt-4.1` + `claude-haiku-4-5-20251001`) are retired for this gate because they require provider keys.
 
@@ -115,12 +115,12 @@ The orchestrator freezes these IDs into `precommit.models` before the first sess
 
 Primary head-to-head: **`clawql_known_op` vs `executor_v2`**, using:
 
-| Metric | Definition |
-| --- | --- |
+| Metric                 | Definition                                                                                                           |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | Median weighted tokens | Session `weighted = definition + observation + 5×code` (same code bucket as the scripted board: `where` / plan / JS) |
-| p90 weighted tokens | 90th percentile of the same |
-| Sessions over 10,000 | Count of sessions with `observation_tokens > 10_000` (`CF_MT_REAL_TOKEN_CEILING`) |
-| Task success | Fraction of sessions that pass all 12 scripted checks |
+| p90 weighted tokens    | 90th percentile of the same                                                                                          |
+| Sessions over 10,000   | Count of sessions with `observation_tokens > 10_000` (`CF_MT_REAL_TOKEN_CEILING`)                                    |
+| Task success           | Fraction of sessions that pass all 12 scripted checks                                                                |
 
 `clawql_program` is reported for context; it does not decide the headline claim.
 (Known-op answers “which op / one call”; program answers “several ops in one turn” —
@@ -130,13 +130,13 @@ see [`measured-defaults.md`](./measured-defaults.md).)
 
 Let **win** on a model mean: known-op is strictly better on **median weighted** and **p90 weighted**, has **task success ≥** Executor, and has **sessions-over-ceiling ≤** Executor.
 
-| Outcome | Allowed claim |
-| --- | --- |
-| Win on **both** frontier and small | “known-op beats code mode for real models” (this gate) |
-| Win on exactly one model | Report that one model only — e.g. “wins on frontier; mixed/loss on small” — **not** the dual-model claim |
-| Win on median but lose p90 (or vice versa) on a model | No win on that model; report the split metrics |
-| Task success lower than Executor on a model | No win on that model, even if tokens look better |
-| Any other mix | State the metrics; no stronger claim than the table allows |
+| Outcome                                               | Allowed claim                                                                                            |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Win on **both** frontier and small                    | “known-op beats code mode for real models” (this gate)                                                   |
+| Win on exactly one model                              | Report that one model only — e.g. “wins on frontier; mixed/loss on small” — **not** the dual-model claim |
+| Win on median but lose p90 (or vice versa) on a model | No win on that model; report the split metrics                                                           |
+| Task success lower than Executor on a model           | No win on that model, even if tokens look better                                                         |
+| Any other mix                                         | State the metrics; no stronger claim than the table allows                                               |
 
 The harness writes `precommit.verdict_rules` (copy of this section’s rule IDs) and `verdict` (computed only from those rules) into the result artifact. Do not hand-edit `verdict` after the run.
 
