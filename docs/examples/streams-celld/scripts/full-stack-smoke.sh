@@ -75,7 +75,7 @@ node "$ROOT/scripts/worm-fetch.test.mjs"
 ) >"$MCP_LOG" 2>&1 &
 MCP_PID=$!
 
-# Inference stub: /healthz + one-turn POST /v1/messages (PAL/virtual keys still deferred).
+# Inference stub: /healthz + multi-turn POST /v1/messages (bind-on-create vk Bearer).
 node "$ROOT/scripts/inference-health-stub.mjs" "$INFER_PORT" >/dev/null 2>&1 &
 INFER_PID=$!
 
@@ -370,8 +370,10 @@ if ad.get("ok") is not True:
 inf=body.get("inference") or {}
 if inf.get("skipped") is True:
   raise SystemExit(f"inference unexpectedly skipped: {inf!r}"[:400])
-if inf.get("ok") is not True or (inf.get("turns") or 0) < 1:
-  raise SystemExit(f"inference one-turn not ok: {inf!r}"[:400])
+if inf.get("ok") is not True or (inf.get("turns") or 0) < 2:
+  raise SystemExit(f"inference multi-turn not ok: {inf!r}"[:400])
+if inf.get("virtualKeyBound") is not True:
+  raise SystemExit(f"inference virtualKeyBound missing: {inf!r}"[:400])
 turn=inf.get("turn") or {}
 if turn.get("ok") is not True:
   raise SystemExit(f"inference turn not ok: {inf!r}"[:400])

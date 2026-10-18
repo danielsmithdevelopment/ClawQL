@@ -1,13 +1,33 @@
 #!/usr/bin/env node
 /**
- * Inference stub for Lab 5b: /healthz + one-turn chat completions.
- * Real PAL / virtual keys stay on clawql-inference; this proves AgentSession
- * fetch()es a model turn (Streams §3.5 skeleton).
+ * Inference stub for Lab 5b: /healthz + multi-turn chat completions.
+ * Proves AgentSession fetch()es ≥2 model turns with a bind-on-create
+ * virtual key Bearer. Real PAL / DeductionService stay on clawql-inference.
  */
 import { createServer } from "node:http";
 
 const port = Number(process.env.INFERENCE_STUB_PORT || process.argv[2] || 19082);
+/** @type {Map<string, { turns: number, boundAt: number }>} */
+const keys = new Map();
 let turnCount = 0;
+
+function bindVirtualKey(req, body) {
+  const auth = req.headers.authorization || "";
+  const headerKey = (req.headers["x-clawql-virtual-key"] || "").toString().trim();
+  const bearer =
+    auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : "";
+  const virtualKeyId =
+    headerKey || bearer || (typeof body.virtualKeyId === "string" ? body.virtualKeyId : "");
+  if (!virtualKeyId) {
+    return { ok: false, error: "missing_virtual_key" };
+  }
+  if (!keys.has(virtualKeyId)) {
+    keys.set(virtualKeyId, { turns: 0, boundAt: Date.now() });
+  }
+  const rec = keys.get(virtualKeyId);
+  rec.turns += 1;
+  return { ok: true, virtualKeyId, turnsForKey: rec.turns, boundAt: rec.boundAt };
+}
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://127.0.0.1:${port}`);
@@ -19,6 +39,7 @@ const server = createServer(async (req, res) => {
         source: "streams-celld-inference-stub",
         transport: "http",
         turnCount,
+        keysBound: keys.size,
       })
     );
     return;
@@ -38,6 +59,12 @@ const server = createServer(async (req, res) => {
     } catch {
       body = {};
     }
+    const bound = bindVirtualKey(req, body);
+    if (!bound.ok) {
+      res.writeHead(401, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: bound.error }));
+      return;
+    }
     turnCount += 1;
     const text =
       typeof body.prompt === "string"
@@ -49,8 +76,12 @@ const server = createServer(async (req, res) => {
         ok: true,
         source: "streams-celld-inference-stub",
         id: `inf_stub_${turnCount}`,
-        turn: turnCount,
+        turn: typeof body.turn === "number" ? body.turn : turnCount,
+        priorId: body.priorId ?? null,
         model: body.model || "stub-frugal",
+        virtualKeyId: bound.virtualKeyId,
+        virtualKeyBound: true,
+        turnsForKey: bound.turnsForKey,
         content: [{ type: "text", text }],
         usage: { input_tokens: 8, output_tokens: 12 },
       })
@@ -62,5 +93,7 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(port, "127.0.0.1", () => {
-  console.error(`inference-stub: http://127.0.0.1:${port}/healthz (+ POST /v1/messages)`);
+  console.error(
+    `inference-stub: http://127.0.0.1:${port}/healthz (+ POST /v1/messages multi-turn + vk bind)`
+  );
 });

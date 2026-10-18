@@ -190,7 +190,8 @@ echo "$RESP" | grep -q '"adapterUrlConfigured":true' || fail "expected adapterUr
 echo "$RESP" | grep -q '"snapshotKey":"audit:ring"' || fail "expected audit LTX snapshotKey"
 echo "$RESP" | grep -q 'audit:seq:' || fail "expected audit:seq WORM keys"
 echo "$RESP" | grep -q '"durable"' || fail "expected core.durable surfaces"
-echo "$RESP" | grep -q '"turns":1' || fail "expected inference one-turn (turns:1)"
+echo "$RESP" | grep -q '"turns":2' || fail "expected inference multi-turn (turns:2)"
+echo "$RESP" | grep -q '"virtualKeyBound":true' || fail "expected virtualKeyBound on inference"
 echo "$RESP" | grep -q 'streams-celld-inference-stub' || fail "expected inference stub source"
 
 # TTL alarm: wait past 1500ms then confirm exitReason=timeout

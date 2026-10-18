@@ -6,7 +6,7 @@ Minimal **Workers / Durable Objects** bundle for [ClawQL Streams](https://docs.c
 | ---------------- | --------------------------------------------------------------------------------------- |
 | `GatewayDO`      | Webhook ingress (`POST /webhook/{subscriptionId}`), spawn sessions                      |
 | `SubscriptionDO` | Significance filter (`always`/`never`/`threshold`/`pattern`/`rate`/`composite`; `sub:{id}`) |
-| `AgentSessionDO` | Session + TTL `setAlarm` + ring/LTX + optional MCP / adapter / one-turn inference / host WORM |
+| `AgentSessionDO` | Session + TTL `setAlarm` + ring/LTX + optional MCP / adapter / multi-turn inference (vk bind) / host WORM |
 | `CoreToolsDO`    | **Default** in-isolate slim Core `search`/`execute` (`POST /mcp`; escape → Bun host MCP) |
 
 **Learn walkthrough:** [Streams getting started — Lab 5b](https://docs.clawql.com/learn/streams-getting-started#lab-5b--clawql-streams-wrangler-skeleton--bundle-check-30-min)  
@@ -22,7 +22,7 @@ The right demo is the **production shape**: slim cell + real sidecars.
 | -------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | Contract smoke       | celld + **mock** MCP + **mock** adapter                                                     | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke`         |
 | **Core in celld**    | celld `CoreToolsDO` handles `search`/`execute` (no host MCP) + mock pets upstream           | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:core-in-celld` |
-| **Full-stack smoke** | celld + **real** `clawql-mcp-http` + **real** `mcp-api-adapter` + inference one-turn stub | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:full`    |
+| **Full-stack smoke** | celld + **real** `clawql-mcp-http` + **real** `mcp-api-adapter` + inference multi-turn stub | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:full`    |
 | Containers           | MCP + adapter images (celld on host)                                                        | `docker compose -f docker-compose.full.yml up --build` |
 
 ## In-process vs out-of-process
@@ -33,7 +33,7 @@ The right demo is the **production shape**: slim cell + real sidecars.
 | Host `clawql-audit` (compliance)   | **Out-of-process** — `fetch(CLAWQL_AUDIT_WORM_URL)` → tip-loaded `WORMAuditTrail`      |
 | `cache` (session scratch)          | **In-process** — `clawql-core/streams-slim`                                            |
 | Hash-chain verify                  | **In-process** — via clawql-merkle (needs `nodejs_compat`)                             |
-| Inference (one-turn)               | **Out-of-process** — `fetch(INFERENCE_URL)` `/healthz` + `POST /v1/messages`           |
+| Inference (multi-turn skeleton)    | **Out-of-process** — `fetch(INFERENCE_URL)` `/healthz` + 2× `POST /v1/messages` (vk Bearer) |
 | `search` / `execute` (slim)        | **In-process default** — `CoreToolsDO` (`CLAWQL_CORE_IN_CELLD=0` → Bun host MCP)       |
 | `memory_*` (and host escape Core)  | **Out-of-process** — `fetch(CLAWQL_MCP_URL)` Streamable HTTP (Bun host / full Core)    |
 | `mcp-api-adapter`                  | **Out-of-process** — `fetch(CLAWQL_MCP_ADAPTER_URL)` REST `POST /{tool}`               |
