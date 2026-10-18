@@ -25,6 +25,7 @@ The right demo is the **production shape**: slim cell + real sidecars.
 | **Full-stack smoke**   | celld + **real** `clawql-mcp-http` (Lab 5b OpenAPI pack) + **real** `mcp-api-adapter` + inference multi-turn stub | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:full`          |
 | **Host MCP pack**      | Real `clawql-mcp-http` + Lab 5b OpenAPI pack — `execute(streams.session.noop)` without celld                      | `npm run smoke:host-mcp-pack`                                |
 | **VK budget / expire** | Inference stub only — bind → 402 ceiling → expire → 401 (no celld / no provider keys)                             | `npm run smoke:vk-budget`                                    |
+| **ProgramCellDO kill** | SIGKILL celld after write intent → resume `outcome_unknown` (DO journal)                                          | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:program-cell-kill` |
 | Containers             | MCP + adapter images (celld on host)                                                                              | `docker compose -f docker-compose.full.yml up --build`       |
 
 ## In-process vs out-of-process
