@@ -145,6 +145,7 @@ export async function runStreamsCelldDev(
 ): Promise<number> {
   requireCelld();
   const project = resolve(opts.project ?? defaultProjectDir());
-  const port = opts.port ?? 9876;
+  // Align with DEFAULT_CORE_CELLD_MCP_URL (packages/clawql-api core-celld-proxy).
+  const port = opts.port ?? 9888;
   return runCelld(["dev", "--port", String(port)], { cwd: project });
 }

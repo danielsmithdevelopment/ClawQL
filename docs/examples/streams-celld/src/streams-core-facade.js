@@ -5,11 +5,11 @@
  * - audit append / list / verify (hash-chained ring buffer, isolate-local)
  * - cache get / set / delete / list (session scratch)
  *
- * In-cell via CoreToolsDO (when CLAWQL_CORE_IN_CELLD=1):
+ * In-cell via CoreToolsDO (default; escape CLAWQL_CORE_IN_CELLD=0):
  * - search / execute → slim catalog + fetch upstream (transport=celld-isolate)
  *
  * Out-of-process via fetch(CLAWQL_MCP_URL) Streamable HTTP:
- * - search / execute / memory_* → clawql-mcp (sidecar mode)
+ * - memory_* always; search/execute when Core-in-celld disabled (sidecar mode)
  *
  * Out-of-process via fetch(CLAWQL_MCP_ADAPTER_URL) REST:
  * - POST /{tool} → mcp-api-adapter (protocol fan-out host; not embedded)
@@ -31,11 +31,17 @@ import { callCoreToolsDo } from "./core-tools-do.js";
 import { callMcpTool } from "./mcp-fetch.js";
 import { appendWormEntry } from "./worm-fetch.js";
 
-/** @param {Record<string, unknown> | undefined} env */
+/**
+ * Prefer CoreToolsDO unless explicitly disabled.
+ * Unset / empty → on (product default). `0` / `false` / `off` / `no` → Node MCP.
+ * @param {Record<string, unknown> | undefined} env
+ */
 export function coreInCelldEnabled(env) {
   const v = String(env?.CLAWQL_CORE_IN_CELLD ?? "")
     .trim()
     .toLowerCase();
+  if (v === "" || v === "undefined") return true;
+  if (v === "0" || v === "false" || v === "off" || v === "no") return false;
   return v === "1" || v === "true" || v === "on" || v === "yes";
 }
 

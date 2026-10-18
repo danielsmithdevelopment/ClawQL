@@ -11,11 +11,12 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REPO="$(cd "$ROOT/../../.." && pwd)"
-PORT="${CELLD_DEV_PORT:-9883}"
+PORT="${CELLD_DEV_PORT:-9888}"
 MCP_PORT="${FULL_STACK_MCP_PORT:-9881}"
 ADAPTER_PORT="${FULL_STACK_ADAPTER_PORT:-9882}"
 INFER_PORT="${FULL_STACK_INFER_PORT:-9884}"
 WORM_PORT="${FULL_STACK_WORM_PORT:-9885}"
+PETS_PORT="${FULL_STACK_PETS_PORT:-9886}"
 WORM_API_KEY="${FULL_STACK_WORM_API_KEY:-streams-celld-smoke-worm-key}"
 BASE="http://127.0.0.1:${PORT}"
 SMOKE_CFG="$ROOT/wrangler.full-stack.jsonc"
@@ -78,6 +79,10 @@ MCP_PID=$!
 node "$ROOT/scripts/inference-health-stub.mjs" "$INFER_PORT" >/dev/null 2>&1 &
 INFER_PID=$!
 
+# Pets upstream for default CoreToolsDO execute (celld-isolate).
+node "$ROOT/scripts/mock-pets-upstream.mjs" "$PETS_PORT" &
+PETS_PID=$!
+
 wait_http() {
   local url="$1" name="$2" pid="$3" tries="${4:-60}"
   for _ in $(seq 1 "$tries"); do
@@ -95,7 +100,7 @@ wait_http() {
 }
 
 cleanup() {
-  local pids=("$CELLD_PID" "$ADAPTER_PID" "$MCP_PID" "$INFER_PID")
+  local pids=("$CELLD_PID" "$ADAPTER_PID" "$MCP_PID" "$INFER_PID" "$PETS_PID")
   for p in "${pids[@]}"; do
     [[ -n "${p:-}" ]] || continue
     kill "$p" 2>/dev/null || true
@@ -182,14 +187,17 @@ if [[ "$ready_adapter" != "1" ]]; then
   exit 1
 fi
 
-python3 - "$ROOT/wrangler.jsonc" "$SMOKE_CFG" "$MCP_PORT" "$ADAPTER_PORT" "$INFER_PORT" "$WORM_PORT" "$WORM_API_KEY" <<'PY'
+python3 - "$ROOT/wrangler.jsonc" "$SMOKE_CFG" "$MCP_PORT" "$ADAPTER_PORT" "$INFER_PORT" "$WORM_PORT" "$WORM_API_KEY" "$PETS_PORT" <<'PY'
 import json, re, sys
-src, dst, mcp_port, adapter_port, infer_port, worm_port, worm_key = sys.argv[1:8]
+src, dst, mcp_port, adapter_port, infer_port, worm_port, worm_key, pets_port = sys.argv[1:9]
 text = open(src, encoding="utf-8").read()
 text = re.sub(r"/\*[\s\S]*?\*/", "", text)
 text = re.sub(r"^\s*//.*$", "", text, flags=re.M)
 cfg = json.loads(text)
 cfg.setdefault("vars", {})
+# Default Core-in-celld: search/execute in CoreToolsDO; memory_* on real MCP.
+cfg["vars"]["CLAWQL_CORE_IN_CELLD"] = "1"
+cfg["vars"]["CLAWQL_CORE_UPSTREAM"] = f"http://127.0.0.1:{pets_port}"
 cfg["vars"]["CLAWQL_MCP_URL"] = f"http://127.0.0.1:{mcp_port}/mcp"
 cfg["vars"]["CLAWQL_MCP_ADAPTER_URL"] = f"http://127.0.0.1:{adapter_port}"
 cfg["vars"]["INFERENCE_URL"] = f"http://127.0.0.1:{infer_port}"
@@ -323,7 +331,9 @@ echo "$RESP" | grep -q '"action":"spawn"' || fail "expected action spawn"
 echo "$RESP" | grep -q 'clawql-core/streams-slim' || fail "expected clawql-core/streams-slim"
 echo "$RESP" | grep -q '"hash":' || fail "expected hash-chained audit append"
 echo "$RESP" | grep -q 'streams:session:' || fail "expected cache session key"
-echo "$RESP" | grep -q 'streamable-http' || fail "expected MCP streamable-http transport"
+echo "$RESP" | grep -q 'celld-isolate' || fail "expected CoreToolsDO celld-isolate (default Core-in-celld)"
+echo "$RESP" | grep -q '"coreInCelld":true' || fail "expected coreInCelld true"
+echo "$RESP" | grep -q 'streamable-http' || fail "expected streamable-http for memory_* MCP"
 echo "$RESP" | grep -q '"mcpUrlConfigured":true' || fail "expected mcpUrlConfigured true"
 echo "$RESP" | grep -q '"adapterUrlConfigured":true' || fail "expected adapterUrlConfigured true"
 echo "$RESP" | grep -q 'mcp-api-adapter-rest' || fail "expected adapter REST transport"
@@ -331,11 +341,11 @@ echo "$RESP" | grep -q '"snapshotKey":"audit:ring"' || fail "expected audit LTX 
 echo "$RESP" | grep -q 'audit:seq:' || fail "expected audit:seq WORM keys"
 echo "$RESP" | grep -q '"durable"' || fail "expected core.durable surfaces"
 
-# Must be real hosts — not Lab mocks.
+# Must be real hosts — not Lab mocks (memory / adapter).
 echo "$RESP" | grep -q '"source":"mock-mcp"' && fail "unexpected mock-mcp (expected real clawql-mcp)"
 echo "$RESP" | grep -q '"source":"mock-adapter"' && fail "unexpected mock-adapter (expected real mcp-api-adapter)"
 
-# Real MCP search / memory + host clawql-audit SESSION_START (not just cell ring).
+# CoreToolsDO search/execute + real MCP memory + host clawql-audit SESSION_START.
 echo "$RESP" | python3 -c '
 import json,sys,urllib.request
 r=json.load(sys.stdin)
@@ -344,9 +354,13 @@ tools=body.get("tools") or {}
 search=tools.get("search") or {}
 if search.get("ok") is not True:
   raise SystemExit(f"search not ok: {search!r}"[:800])
+if search.get("transport") != "celld-isolate":
+  raise SystemExit(f"search expected celld-isolate: {search!r}"[:800])
 mi=tools.get("memory_ingest") or {}
 if mi.get("ok") is not True:
   raise SystemExit(f"memory_ingest not ok: {mi!r}"[:800])
+if mi.get("transport") != "streamable-http":
+  raise SystemExit(f"memory_ingest expected streamable-http: {mi!r}"[:800])
 mr=tools.get("memory_recall") or {}
 if mr.get("ok") is not True:
   raise SystemExit(f"memory_recall not ok: {mr!r}"[:800])
@@ -362,8 +376,8 @@ turn=inf.get("turn") or {}
 if turn.get("ok") is not True:
   raise SystemExit(f"inference turn not ok: {inf!r}"[:400])
 ex=tools.get("execute") or {}
-if ex.get("deferred") is True or ex.get("transport") != "streamable-http":
-  raise SystemExit(f"execute did not hit streamable-http: {ex!r}"[:800])
+if ex.get("deferred") is True or ex.get("transport") != "celld-isolate":
+  raise SystemExit(f"execute did not hit celld-isolate: {ex!r}"[:800])
 cw=(body.get("audit") or {}).get("compliance") or {}
 if cw.get("ok") is not True:
   raise SystemExit(f"compliance WORM SESSION_START not ok: {cw!r}"[:800])
@@ -372,8 +386,10 @@ if cw.get("transport") != "clawql-audit-http":
 core=body.get("core") or {}
 if core.get("wormUrlConfigured") is not True:
   raise SystemExit("wormUrlConfigured expected true")
+if core.get("coreInCelld") is not True:
+  raise SystemExit("coreInCelld expected true")
 event_id=r.get("eventId") or (body.get("session") or {}).get("eventId")
-print("full-stack assertions: search/memory/adapter/inference/compliance-WORM OK")
+print("full-stack assertions: CoreToolsDO+memory/adapter/inference/compliance-WORM OK")
 print(f"event_id={event_id}")
 ' || fail "python assertions failed"
 
