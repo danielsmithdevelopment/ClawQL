@@ -119,9 +119,14 @@ numbers go public (same courtesy as the token board).
 | CF HTTP heap A/B ([`http-concurrency-heap-ab.json`](./http-concurrency-heap-ab.json))                                           | Cloudflare DNS lists (peers unfiltered; ClawQL `where`) | All arms: **HTTP multiplex** 1×                      |              **26** | **72** (Bun) / **31** (Node 256) |
 
 **204 and 26 are not contradictory** — different payloads (and ClawQL’s topology
-differs on the pets board). State both when either number appears. NATS 4-replica
-~**135** remains the near-term multi-instance capacity answer; the open HTTP tail
-(300–700 ms stalls) is the same investigation as raising per-instance HTTP ceilings.
+differs on the pets board). State both when either number appears.
+
+**NATS scale-out (current Bun build, CF known-op):** sweep workers — do not assume 4×.
+On a 4-core host, best sustained clients were **134 @100 ms (4×)**, **322 @250 ms (2×)**,
+**596 @500 ms (4×)** — see [`nats-scaleout-bun-curves.md`](./nats-scaleout-bun-curves.md).
+**8× was worse than 4×** here (core contention). The older pets/Node ~**135 @100 ms**
+(`executor-cmp-chaos-clawql-ceiling-refine.json`) is a different workflow/runtime/build —
+label it or retire it beside Bun **434**; do not imply scale-out regresses capacity.
 
 ## Why program mode is not the core _yet_
 

@@ -179,7 +179,7 @@ Latest board (`executor-cmp-comprehensive.json`):
 
 | Arm          | Model                        | Last ok |          First break | Artifact                                          |
 | ------------ | ---------------------------- | ------: | -------------------: | ------------------------------------------------- |
-| **ClawQL**   | 4× HTTP + NATS sticky assign | **135** | **136** (p99 ~126ms) | `executor-cmp-chaos-clawql-ceiling-refine.json`   |
+| **ClawQL**   | 4× HTTP + NATS sticky assign (Node, pets board, older build) | **135** | **136** (p99 ~126ms) | `executor-cmp-chaos-clawql-ceiling-refine.json` — **historical**; current Bun+CF scale-out: [`../cloudflare-multiturn/nats-scaleout-bun-curves.md`](../cloudflare-multiturn/nats-scaleout-bun-curves.md) (**134 @100 / 596 @500**, workers swept) |
 | **Executor** | N× stdio process-per-client  |  **19** |  **20** (p99 ~115ms) | `executor-cmp-chaos-executor-ceiling-refine.json` |
 
 Boundary noise is ~±1 client near the SLO. (8 ClawQL replicas broke earlier here — host RSS/CPU contention.)

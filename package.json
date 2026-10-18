@@ -105,6 +105,7 @@
     "benchmark:executor-comparison:latency": "npm run build && node scripts/benchmarks/executor-comparison-latency.mjs",
     "benchmark:executor-comparison:latency-fair": "node scripts/benchmarks/executor-comparison-latency-fair.mjs",
     "benchmark:executor-comparison:comprehensive": "node scripts/benchmarks/executor-comparison-comprehensive.mjs",
+    "benchmark:nats-scaleout-bun-curves": "node scripts/benchmarks/clawql-nats-scaleout-curves.mjs",
     "benchmark:gateway-multi-comparison": "node scripts/benchmarks/gateway-multi-comparison.mjs",
     "benchmark:celld-hotpath-ab": "node scripts/benchmarks/celld-hotpath-ab.mjs",
     "demo:kill-node-standin": "node scripts/program/kill-node-standin-demo.mjs",

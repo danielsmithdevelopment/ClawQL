@@ -121,6 +121,20 @@ Method: climb until p99/errors break (loop guard 8192 only — no predetermined 
 
 † AG host OOM (exit 137) at 128 clients before p99 cleared 500 ms; @500 is last measured sustained (112, p99≈346 ms), not an invented cap.
 
+### NATS scale-out (Bun --smol, worker sweep — not assumed 4×)
+
+Artifact: [`nats-scaleout-bun-curves.json`](./nats-scaleout-bun-curves.json) · [`nats-scaleout-bun-curves.md`](./nats-scaleout-bun-curves.md)  
+Same CF known-op as the multiplex table. Host `nproc=4`. Workers tried: **1, 2, 4, 8**.
+
+| Workers | @100 ms | @250 ms | @500 ms | Peak RPS |
+| ------: | ------: | ------: | ------: | -------: |
+|       1 |      85 |     202 |     430 |    1 824 |
+|       2 |     107 | **322** |     507 | **3 004** |
+|   **4** | **134** |     283 | **596** |    2 623 |
+|       8 |     128 |     289 |     415 |    2 179 |
+
+**Best:** 4× @100 → **134** · 2× @250 → **322** · 4× @500 → **596**. Scale-out beats 1× at every cutoff. **8× loses to 4× on this 4-core host** (contention). Do not cite historical Node/pets ~135 beside Bun 434 without labels.
+
 `executor_v1` is omitted from HTTP curves (stdio MCP, process-per-client) — see [`http-concurrency-curves.md`](./http-concurrency-curves.md) note and [`executor-v1/`](./executor-v1/).
 
 **Page takeaway:** Loosening the cutoff does not close the gap — Bun still leads at 250 ms (**211** vs AG **88** / MJ **92**) and at 500 ms (**434** vs Node **224** / MJ **192** / AG **112**). Peak RPS: Bun **~1850** vs AG **~830** vs Executor **~73**.
