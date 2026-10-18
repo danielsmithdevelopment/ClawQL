@@ -58,7 +58,7 @@ Expected: all exit **0**; bundle size printed ≈ **0.4 MiB** (must be &lt; **64
 CELLD_VERSION=v0.4.0 curl -fsSL https://celld.dev/install.sh | sh
 npm run build -w clawql-merkle -w clawql-core
 STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke.sh
-# Core-in-celld (no Node MCP for search/execute):
+# Core-in-celld (no host MCP for search/execute):
 STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke-core-in-celld.sh
 ```
 

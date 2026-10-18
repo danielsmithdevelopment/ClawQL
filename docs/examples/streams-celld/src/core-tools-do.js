@@ -6,7 +6,7 @@
  * - AgentSessionDO when CLAWQL_CORE_IN_CELLD=1 routes search/execute here via DO stub
  *
  * Execute egress uses isolate `fetch` to CLAWQL_CORE_UPSTREAM (e.g. mock /pets).
- * memory_* stays on the Node MCP host (not Workers-safe vault IO).
+ * memory_* stays on the Bun/host MCP process (not Workers-safe vault IO).
  */
 
 import {
@@ -177,7 +177,7 @@ export class CoreToolsDO {
       host: "CoreToolsDO",
       honesty: CORE_IN_CELLD_HONESTY,
       error: name.startsWith("memory_")
-        ? "memory_* stays on Node MCP host (vault / node:fs) — not in CoreToolsDO"
+        ? "memory_* stays on Bun/host MCP (vault / node:fs) — not in CoreToolsDO"
         : `unsupported tool in CoreToolsDO: ${name}`,
     };
   }
