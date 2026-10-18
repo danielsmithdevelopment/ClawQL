@@ -13,7 +13,10 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 | Layer                                                   | In cell bundle?      | How it is proven                                                           |
 | ------------------------------------------------------- | -------------------- | -------------------------------------------------------------------------- |
 | `clawql-core/streams-slim` (audit / cache / hash-chain) | **Yes**              | Unit tests + webhook smoke assertions                                      |
+| Significance filter (`always`/`never`/`threshold`/`pattern`) | **Yes**         | `significance-filter.test.mjs` + smoke `action:filtered`                   |
+| Session TTL `setAlarm` / `alarm()`                      | **Yes**              | Smoke `exitReason:timeout` after short TTL                                 |
 | Audit LTX flush (`audit:ring`, `audit:seq:*`)           | **Yes** (DO storage) | Smoke keys — **session bookkeeping only**, not compliance WORM (see below) |
+| **CoreToolsDO** slim search/execute                     | **Yes** (opt-in)     | `smoke:core-in-celld` + `core-catalog.test.mjs` (`transport: celld-isolate`) |
 | Host `clawql-audit` via `CLAWQL_AUDIT_WORM_URL`         | **No** — `fetch`     | `worm-fetch.test.mjs` + full-stack `SESSION_START` + `/chain/verify`       |
 | Streamable HTTP MCP (`CLAWQL_MCP_URL`)                  | **No** — `fetch`     | `mcp-fetch.test.mjs` + mock smoke + **full-stack** real MCP                |
 | mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)         | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real                |
@@ -21,6 +24,8 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 | Helm celld StatefulSet / probes                         | Chart only           | `make helm-celld-template-tests`                                           |
 | Fleet LTX / multi-node diagnose                         | Manual               | `docs/examples/idp/streams-celld/README.md`                                |
 | `clawql-streams` package / `stream_*` tools             | **Not shipped**      | Spec-only — see Streams §15                                                |
+| Full significance (`rate` / `composite`)                | **Deferred**         | Filter returns `filter_deferred:*`                                         |
+| Multi-turn agent loop + PAL virtual keys                | **Not shipped**      | §3.5 scaffold only (healthz probe)                                         |
 | cellrt / TEE / QR stream source                         | **Not shipped**      | Spec drafts under `docs/streams/`                                          |
 
 ### Why full product is out-of-process (not “missing”)
@@ -39,6 +44,8 @@ npx vitest run packages/clawql-core/src/streams-slim.test.ts
 node docs/examples/streams-celld/scripts/mcp-fetch.test.mjs
 node docs/examples/streams-celld/scripts/adapter-fetch.test.mjs
 node docs/examples/streams-celld/scripts/worm-fetch.test.mjs
+node docs/examples/streams-celld/scripts/significance-filter.test.mjs
+node docs/examples/streams-celld/scripts/core-catalog.test.mjs
 node docs/examples/streams-celld/scripts/bundle-check.mjs
 make helm-celld-template-tests
 ```
@@ -51,11 +58,13 @@ Expected: all exit **0**; bundle size printed ≈ **0.4 MiB** (must be &lt; **64
 CELLD_VERSION=v0.4.0 curl -fsSL https://celld.dev/install.sh | sh
 npm run build -w clawql-merkle -w clawql-core
 STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke.sh
+# Core-in-celld (no Node MCP for search/execute):
+STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke-core-in-celld.sh
 ```
 
 Without `STREAMS_CELLD_SMOKE_REQUIRED=1`, missing `celld` **exits 0 with a skip message** (developer convenience). CI and release gates must set the env var (or install celld and require the smoke).
 
-Smoke covers: bundle-check → unit fetch tests → mock MCP + mock adapter → `celld dev` → webhook spawn → assertions on streams-slim, hash, MCP transport, adapter probe, LTX keys. Compliance WORM is **deferred** unless `CLAWQL_AUDIT_WORM_URL` is set (full-stack smoke sets it).
+Smoke covers: bundle-check → unit fetch/filter tests → mock MCP + mock adapter → `celld dev` → significance `filtered` → webhook spawn → TTL `exitReason:timeout` → streams-slim / MCP / adapter / LTX. Compliance WORM is **deferred** unless `CLAWQL_AUDIT_WORM_URL` is set (full-stack smoke sets it). Core-in-celld smoke asserts `transport: celld-isolate` for search/execute.
 
 ### Full-stack E2E — real clawql-mcp + adapter + host clawql-audit (CI **Streams celld full-stack**)
 
@@ -86,8 +95,8 @@ Follow [`docs/examples/idp/streams-celld/README.md`](../../docs/examples/idp/str
 | Check                                     | Where                                                    |
 | ----------------------------------------- | -------------------------------------------------------- |
 | Helm celld templates                      | `make lint-k8s-manifests` → CI `ShellCheck & actionlint` |
-| streams-slim + fetch tests + bundle-check | CI job **Streams celld evidence**                        |
-| Mock `smoke.sh` with celld                | CI job **Streams celld smoke (celld)**                   |
+| streams-slim + fetch/filter/catalog tests + bundle-check | CI job **Streams celld evidence**                 |
+| Mock `smoke.sh` + `smoke:core-in-celld` with celld | CI job **Streams celld smoke (celld)**                  |
 | Real MCP + adapter + host WORM            | CI job **Streams celld full-stack** (permanent)          |
 
 ---

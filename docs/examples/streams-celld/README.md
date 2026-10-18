@@ -5,8 +5,8 @@ Minimal **Workers / Durable Objects** bundle for [ClawQL Streams](https://docs.c
 | DO class         | Role                                                                                    |
 | ---------------- | --------------------------------------------------------------------------------------- |
 | `GatewayDO`      | Webhook ingress (`POST /webhook/{subscriptionId}`), spawn sessions                      |
-| `SubscriptionDO` | Significance filter stub (`sub:{id}` naming)                                            |
-| `AgentSessionDO` | Session + ring/LTX bookkeeping + optional MCP / adapter / inference / host WORM fetches |
+| `SubscriptionDO` | Significance filter (`always`/`never`/`threshold`/`pattern`; `sub:{id}`)                |
+| `AgentSessionDO` | Session + TTL `setAlarm` + ring/LTX + optional MCP / adapter / inference / host WORM    |
 | `CoreToolsDO`    | **In-isolate** slim Core `search`/`execute` (`POST /mcp`, `CLAWQL_CORE_IN_CELLD=1`)     |
 
 **Learn walkthrough:** [Streams getting started — Lab 5b](https://docs.clawql.com/learn/streams-getting-started#lab-5b--clawql-streams-wrangler-skeleton--bundle-check-30-min)  

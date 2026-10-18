@@ -10,6 +10,7 @@
     "test:adapter-fetch": "node scripts/adapter-fetch.test.mjs",
     "test:worm-fetch": "node scripts/worm-fetch.test.mjs",
     "test:core-catalog": "node scripts/core-catalog.test.mjs",
+    "test:significance": "node scripts/significance-filter.test.mjs",
     "dev": "celld dev --port 9876",
     "smoke": "bash scripts/smoke.sh",
     "smoke:full": "bash scripts/full-stack-smoke.sh",

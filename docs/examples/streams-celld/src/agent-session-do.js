@@ -104,6 +104,26 @@ export class AgentSessionDO {
     this.env = env;
   }
 
+  /** Streams §3.5 — hard TTL via setAlarm (no setInterval on celld). */
+  async alarm() {
+    const intent = await this.state.storage.get("alarm_intent");
+    const meta = await this.state.storage.get("session_meta");
+    if (!meta || typeof meta !== "object") return;
+    if (meta.exitReason) return;
+    if (intent?.kind === "session_ttl" || !intent) {
+      const closed = {
+        ...meta,
+        exitReason: "timeout",
+        closedAt: Date.now(),
+      };
+      await this.state.storage.put("session_meta", closed);
+      await this.state.storage.put("alarm_fired", {
+        at: Date.now(),
+        kind: "session_ttl",
+      });
+    }
+  }
+
   async fetch(request) {
     const url = new URL(request.url);
     if (url.pathname.endsWith("/start") && request.method === "POST") {
@@ -112,6 +132,13 @@ export class AgentSessionDO {
       const startedAt = Date.now();
       const doInstanceId = crypto.randomUUID();
       const virtualKeyId = `vk_lab_${eventId.slice(0, 8)}`;
+      const ttlMsRaw = Number(
+        request.headers.get("x-clawql-session-ttl-ms") ||
+          this.env.CLAWQL_SESSION_TTL_MS ||
+          0
+      );
+      const ttlMs =
+        Number.isFinite(ttlMsRaw) && ttlMsRaw > 0 ? Math.min(ttlMsRaw, 3_600_000) : 0;
 
       const existing = await this.state.storage.get("session_meta");
       if (existing) {
@@ -130,6 +157,7 @@ export class AgentSessionDO {
         virtualKeyId,
         startedAt,
         exitReason: null,
+        ttlMs: ttlMs || null,
       };
 
       // All durable DO writes before outbound fetch() — avoids celld NodeFenced
@@ -142,6 +170,14 @@ export class AgentSessionDO {
         subscriptionId,
         eventId,
       });
+      if (ttlMs > 0) {
+        await this.state.storage.put("alarm_intent", {
+          kind: "session_ttl",
+          ttlMs,
+          scheduledAt: startedAt,
+        });
+        await this.state.storage.setAlarm(startedAt + ttlMs);
+      }
 
       let audit = { ok: false };
       let cache = { ok: false };
@@ -308,6 +344,7 @@ export class AgentSessionDO {
       return Response.json({
         do: "AgentSessionDO",
         session: meta,
+        alarm: ttlMs > 0 ? { kind: "session_ttl", ttlMs, scheduled: true } : { scheduled: false },
         inference,
         audit: {
           wormKey: `worm:${startedAt}`,
@@ -322,7 +359,7 @@ export class AgentSessionDO {
         core: {
           package: "clawql-core/streams-slim",
           inProcess,
-          durable: ["audit:ring", "audit:seq:*", "worm:*", "CoreToolsDO"],
+          durable: ["audit:ring", "audit:seq:*", "worm:*", "CoreToolsDO", "alarm_intent"],
           outOfProcess,
           deferred,
           coreInCelld: Boolean(mcp.preferCoreInCelld),
@@ -335,10 +372,12 @@ export class AgentSessionDO {
 
     const meta = await this.state.storage.get("session_meta");
     const auditRing = await this.state.storage.get("audit:ring");
+    const alarmFired = await this.state.storage.get("alarm_fired");
     return Response.json({
       do: "AgentSessionDO",
       session: meta ?? null,
       auditRing: auditRing ?? null,
+      alarmFired: alarmFired ?? null,
     });
   }
 }

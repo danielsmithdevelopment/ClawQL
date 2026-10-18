@@ -23,6 +23,8 @@ fi
 node "$ROOT/scripts/bundle-check.mjs"
 node "$ROOT/scripts/mcp-fetch.test.mjs"
 node "$ROOT/scripts/adapter-fetch.test.mjs"
+node "$ROOT/scripts/significance-filter.test.mjs"
+node "$ROOT/scripts/core-catalog.test.mjs"
 
 # Mock MCP + mcp-api-adapter REST.
 node "$ROOT/scripts/mock-mcp-server.mjs" "$MCP_PORT" &
@@ -79,10 +81,27 @@ fi
 
 curl -sf "$BASE/health" | grep -q clawql-streams-celld-skeleton
 
+# Significance filter: never → filtered (no spawn)
+FILTERED=$(curl -sf -X POST "$BASE/webhook/smoke-filter" \
+  -H 'content-type: application/json' \
+  -H "x-clawql-event-id: filter-$(date +%s)-$$" \
+  -d '{"significance":{"type":"never"},"probe":true}')
+echo "$FILTERED" | grep -q '"action":"filtered"' || {
+  echo "smoke: FAIL - expected filtered for significance=never" >&2
+  echo "$FILTERED" >&2
+  exit 1
+}
+echo "$FILTERED" | grep -q '"filterType":"never"' || {
+  echo "smoke: FAIL - expected filterType never" >&2
+  echo "$FILTERED" >&2
+  exit 1
+}
+
 EVENT_ID="smoke-mcp-$(date +%s)-$$"
 RESP=$(curl -sf -X POST "$BASE/webhook/smoke" \
   -H 'content-type: application/json' \
   -H "x-clawql-event-id: ${EVENT_ID}" \
+  -H 'x-clawql-session-ttl-ms: 1500' \
   -d '{"probe":true}')
 
 fail() {
@@ -92,6 +111,7 @@ fail() {
 }
 
 echo "$RESP" | grep -q '"action":"spawn"' || fail "expected action spawn"
+echo "$RESP" | grep -q '"scheduled":true' || fail "expected session TTL alarm scheduled"
 echo "$RESP" | grep -q 'clawql-core/streams-slim' || fail "expected clawql-core/streams-slim"
 echo "$RESP" | grep -q '"hash":' || fail "expected hash-chained audit append"
 echo "$RESP" | grep -q 'streams:session:' || fail "expected cache session key"
@@ -107,5 +127,22 @@ echo "$RESP" | grep -q '"adapterUrlConfigured":true' || fail "expected adapterUr
 echo "$RESP" | grep -q '"snapshotKey":"audit:ring"' || fail "expected audit LTX snapshotKey"
 echo "$RESP" | grep -q 'audit:seq:' || fail "expected audit:seq WORM keys"
 echo "$RESP" | grep -q '"durable"' || fail "expected core.durable surfaces"
+
+# TTL alarm: wait past 1500ms then confirm exitReason=timeout
+sleep 2
+SESSION=$(curl -sf "$BASE/admin/session/smoke/${EVENT_ID}")
+echo "$SESSION" | tee /tmp/streams-session-ttl.json | grep -q '"exitReason":"timeout"' || {
+  echo "smoke: FAIL - expected session TTL exitReason=timeout" >&2
+  echo "$SESSION" >&2
+  exit 1
+}
+echo "$SESSION" | grep -q 'session_ttl' || {
+  echo "smoke: FAIL - expected alarm_fired session_ttl" >&2
+  echo "$SESSION" >&2
+  exit 1
+}
+
+mkdir -p /opt/cursor/artifacts 2>/dev/null || true
+cp /tmp/streams-session-ttl.json /opt/cursor/artifacts/ 2>/dev/null || true
 
 echo "smoke: PASS"
