@@ -32,7 +32,7 @@ docker run -d --name obot -p 8080:8080 \
 # 3) Register a multi-user remote catalog entry (v0.26+: POST /api/mcp-servers is gone;
 #    create an entry; Obot materializes ms* + connectURL). Docker bridge → host: 172.17.0.1
 curl -sS -X POST http://127.0.0.1:8080/api/mcp-catalogs/default/entries \
-  -H "Authorization: Bearer clawql-bench-token" \
+  -H "Authorization: Bearer ${OBOT_BOOTSTRAP_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "equal-arm-catalog",

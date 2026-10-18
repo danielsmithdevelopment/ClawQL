@@ -195,11 +195,11 @@ export function runKillNodeStandinDemoEffect(
     const readArm = yield* Effect.tryPromise({
       try: () => armReadSigkill(),
       catch: (e) => (e instanceof Error ? e : new Error(String(e))),
-    });
+    }).pipe(Effect.orDie);
     const writeArm = yield* Effect.tryPromise({
       try: () => armWriteSigkill(),
       catch: (e) => (e instanceof Error ? e : new Error(String(e))),
-    });
+    }).pipe(Effect.orDie);
     const arms = [readArm, writeArm] as const;
     const ok = arms.every((a) => a.ok);
     return {
