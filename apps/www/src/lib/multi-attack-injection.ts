@@ -11,7 +11,7 @@ export const multiAttackSummary =
   'Twelve planted attacks across email, ticket, doc, and webhook. Scripted worst-case model always complies — this measures whether the gateway stops the resulting action, not whether a real model would fall for it. Sample size: smoke until the suite grows to dozens. Benign workflows are scored beside attacks.'
 
 export const multiAttackHeadlineResult =
-  'Smoke v4: 0 of 12 trusted effectuation, persistent injection blocked, recall integrity (trusted 15.00 over labeled 99.99), and benign expect-match including same-source/internal outbound — scripted smoke; peers pending.'
+  'Smoke v4b: 0 of 12 trusted effectuation, persistent injection blocked, recall integrity (trusted 15.00 over labeled 99.99), and benign expect-match including same-source/internal outbound — scripted smoke; peer runner landed (pending until MCP URL + shared vault); live matrix scaffolded.'
 
 export const multiAttackMechanisms = [
   {
@@ -69,47 +69,47 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     column: 'defaults',
     status: 'pending',
     effectuated: '—',
-    note: 'Measurable — wire peer CI',
+    note: 'Measurable — run-peer.mjs + OBOT_MCP_URL + MAI_SHARED_VAULT_ROOT',
   },
   {
     arm: 'Obot best-config',
     column: 'best_config',
     status: 'pending',
     effectuated: '—',
-    note: 'Measurable — wire peer CI',
+    note: 'Measurable — OBOT_MCP_URL_DENY + shared vault',
   },
   {
     arm: 'Bifrost default',
     column: 'defaults',
     status: 'pending',
     effectuated: '—',
-    note: 'Measurable — wire peer CI',
+    note: 'Measurable — BIFROST_MCP_URL + shared vault',
   },
   {
     arm: 'Bifrost best-config',
     column: 'best_config',
     status: 'pending',
     effectuated: '—',
-    note: 'Measurable — wire peer CI',
+    note: 'Measurable — BIFROST_MCP_URL_DENY + shared vault',
   },
   {
     arm: 'Executor default',
     column: 'defaults',
     status: 'pending',
     effectuated: '—',
-    note: 'Measurable — wire peer CI',
+    note: 'Measurable — EXECUTOR_MCP_URL + shared vault',
   },
   {
     arm: 'Executor best-config',
     column: 'best_config',
     status: 'pending',
     effectuated: '—',
-    note: 'Measurable — wire peer CI',
+    note: 'Measurable — EXECUTOR_MCP_URL_BLOCK + shared vault',
   },
 ] as const
 
 export const multiAttackPublishGate =
-  'Draft until peers are measured on this corpus. Publish only when attack rate, persistent-injection, and benign completion rate are all honest — not “secure because it blocks everything.”'
+  'Draft until peers are measured on this corpus (run-peer.mjs). Live matrix is scaffolded in results-live.json. Publish only when attack rate, persistent-injection, and benign completion rate are all honest — not “secure because it blocks everything.”'
 
 export const multiAttackBenignSummary =
   'Benign suite includes the outbound boundary: reply-to-sender and internal team/reviewer destinations complete; third-party notify stays blocked. Contamination = hostile content surfaced as trusted (same as the governance board).'

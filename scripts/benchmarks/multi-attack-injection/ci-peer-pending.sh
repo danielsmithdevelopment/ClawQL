@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Peer multi-attack rows: print pending status until MCP URLs are wired.
+# Peer multi-attack rows: pending until MCP URL set; measured via run-peer.mjs when wired.
 # Injection is measurable for every gateway — pending ≠ not_offered.
 set -euo pipefail
 
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 PEER="${1:-}"
 COLUMN="${2:-defaults}"
 if [[ -z "$PEER" ]]; then
@@ -21,9 +22,8 @@ case "$PEER/$COLUMN" in
 esac
 
 if [[ -z "${!ENV_KEY:-}" ]]; then
-  echo "{\"peer\":\"$PEER\",\"column\":\"$COLUMN\",\"status\":\"pending\",\"skipUnlessEnv\":\"$ENV_KEY\",\"note\":\"Injection resistance is measurable — wire $ENV_KEY against the 12-attack corpus. pending ≠ not_offered.\"}"
+  echo "{\"peer\":\"$PEER\",\"column\":\"$COLUMN\",\"status\":\"pending\",\"skipUnlessEnv\":\"$ENV_KEY\",\"note\":\"Injection resistance is measurable — wire $ENV_KEY + MAI_SHARED_VAULT_ROOT against the 12-attack corpus. pending ≠ not_offered.\"}"
   exit 0
 fi
 
-echo "ci-peer-pending: $ENV_KEY is set but equal-arm peer runner is not implemented yet — treat as pending until run-peer.mjs lands" >&2
-exit 3
+exec node "$ROOT/scripts/benchmarks/multi-attack-injection/run-peer.mjs" "$PEER" "$COLUMN"

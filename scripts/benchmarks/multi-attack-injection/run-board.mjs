@@ -8,7 +8,8 @@
  *   - block untrusted→external / privileged sinks
  *
  * Passthrough still writes files with no gateway (control).
- * Peers: pending until wired.
+ * Peers: measured when OBOT_/BIFROST_/EXECUTOR_ MCP URLs + MAI_SHARED_VAULT_ROOT
+ * are set (see run-peer.mjs); otherwise pending ≠ not_offered.
  *
  * Also runs benign suite + persistent-injection + recall-integrity cells.
  *
@@ -33,6 +34,7 @@ import {
 } from "./grade.mjs";
 import { MECHANISM_NAMES, MECHANISMS_OFF, gateScriptedAttack } from "./mechanisms.mjs";
 import { makeProductInvoke, resetSessionLabels } from "./product-gate.mjs";
+import { runPeerArm } from "./run-peer.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../../..");
@@ -256,33 +258,6 @@ async function runPersistentInjection(env) {
   };
 }
 
-function pendingPeer(id, column) {
-  const envKey =
-    id === "obot"
-      ? column === "defaults"
-        ? "OBOT_MCP_URL"
-        : "OBOT_MCP_URL_DENY"
-      : id === "bifrost"
-        ? column === "defaults"
-          ? "BIFROST_MCP_URL"
-          : "BIFROST_MCP_URL_DENY"
-        : column === "defaults"
-          ? "EXECUTOR_MCP_URL"
-          : "EXECUTOR_MCP_URL_BLOCK";
-  return {
-    id: `${id}_${column === "defaults" ? "default" : "best_config"}`,
-    peer: id,
-    column,
-    skipped: true,
-    status: "pending",
-    skipUnlessEnv: envKey,
-    attacks_planted: MANIFEST.attacks.length,
-    attacks_effectuated: null,
-    rate: null,
-    detail: `Peer ${id} ${column} not measured yet — pending ≠ not_offered.`,
-  };
-}
-
 async function main() {
   mkdirSync(dirname(OUT), { recursive: true });
   const arms = [];
@@ -413,8 +388,14 @@ async function main() {
   }
 
   for (const peer of ["obot", "bifrost", "executor"]) {
-    arms.push(pendingPeer(peer, "defaults"));
-    arms.push(pendingPeer(peer, "best_config"));
+    for (const column of ["defaults", "best_config"]) {
+      const arm = await runPeerArm(peer, column);
+      // Drop internal exit hints from board artifact
+      const row = { ...arm };
+      delete row.exitHint;
+      delete row.error;
+      arms.push(row);
+    }
   }
 
   // Benign suite on product defaults
@@ -458,20 +439,40 @@ async function main() {
     recall_integrity.pass === true;
   const clawqlDefault = measured.find((a) => a.id === "clawql_default");
 
+  const peerArms = arms.filter((a) =>
+    ["obot", "bifrost", "executor"].includes(a.peer)
+  );
+  const peersMeasured = peerArms.filter((a) => a.status === "measured").length;
+  const peersPending = peerArms.filter((a) => a.status === "pending").length;
+  const peersIncomplete = peerArms.filter(
+    (a) => a.status === "incomplete"
+  ).length;
+  const peerHonesty =
+    peersMeasured === peerArms.length
+      ? "measured"
+      : peersMeasured > 0
+        ? "partial"
+        : "pending";
+
   const honestyLabels = {
     model: "scripted_worst_case",
     sample: "smoke_n12",
-    peers: "pending",
+    peers: peerHonesty,
+    peers_measured: peersMeasured,
+    peers_pending: peersPending,
+    peers_incomplete: peersIncomplete,
     next: [
-      "Peer runs on the same twelve attacks (defaults + best-config)",
-      "Real-model matrix — models decide whether to follow injections",
+      peersMeasured < peerArms.length
+        ? "Wire remaining peer MCP URLs + MAI_SHARED_VAULT_ROOT for defaults + best-config"
+        : "Peers measured — publish equal-arm table",
+      "Real-model matrix — npm run benchmark:multi-attack-injection:live (scaffold until MAI_LIVE=1)",
     ],
     note: "Keep these labels on the page until peers + live models land. Do not market as a lead yet.",
   };
 
   const report = {
     measuredAt: new Date().toISOString(),
-    kind: "multi_attack_injection_smoke_v4",
+    kind: "multi_attack_injection_smoke_v4b",
     sample: {
       attacks_planted: MANIFEST.attacks.length,
       label: "smoke",

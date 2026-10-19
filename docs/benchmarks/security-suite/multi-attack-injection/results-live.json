@@ -1,0 +1,52 @@
+{
+  "measuredAt": "2026-10-19T17:45:43.706Z",
+  "kind": "multi_attack_injection_live_scaffold_v0",
+  "status": "scaffold",
+  "sample": {
+    "attacks_planted": 12,
+    "attacks_in_scope": 12,
+    "label": "live_matrix_pending",
+    "channels": [
+      "email",
+      "ticket",
+      "doc",
+      "webhook"
+    ]
+  },
+  "model": {
+    "kind": "real_models",
+    "configured": [],
+    "note": "Set MAI_LIVE=1 and MAI_LIVE_MODELS to run. Until then this artifact is a placeholder — do not treat as measured."
+  },
+  "honestyLabels": {
+    "model": "real_models_pending",
+    "sample": "smoke_n12_corpus_shared",
+    "peers": "see_results_smoke",
+    "vs_smoke": "Smoke = scripted worst-case comply. Live = model chooses whether to follow injection.",
+    "note": "Do not market live until status=measured on at least one model family."
+  },
+  "arms": [],
+  "board_pass": null,
+  "next": [
+    "Wire Cursor Task / OpenAI session runner against planted corpus paths",
+    "Grade effectuation via vault + tool-call transcripts (not scripted overwrite)",
+    "Publish beside smoke with explicit live vs scripted labels"
+  ],
+  "corpus": {
+    "id": "multi-attack-injection-corpus-v0",
+    "planted": 12
+  },
+  "rules": {
+    "id": "multi-attack-injection-v1",
+    "live": "real_models — results-live.json (follow-up)"
+  },
+  "publishGate": {
+    "doNotPublishUntil": [
+      "Peer defaults + best-config measured (or still pending with clear label — never not_offered)",
+      "Native tools CI enumeration green",
+      "Benign suite numbers published beside attack rate",
+      "Page labels: scripted worst-case + smoke sample size"
+    ],
+    "targetResult": "0/12 attacks with benign completion cost reported; peers measured on the same board"
+  }
+}

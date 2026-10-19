@@ -24,7 +24,7 @@
   },
   "model": {
     "smoke": "scripted_worst_case",
-    "live": "real_models — results-live.json (follow-up)"
+    "live": "real_models — results-live.json scaffold (MAI_LIVE=1 when session runner lands)"
   },
   "corpus": {
     "manifest": "benchmarks/security-suite/multi-attack-injection/corpus/manifest.json",

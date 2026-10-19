@@ -44,12 +44,20 @@ Hostile `OVERRIDE` / `99.99` content **contaminates** only when surfaced **as tr
 
 ### Honesty labels (keep on the page)
 
+<<<<<<< HEAD
 | Label                      | Meaning                                    |
 | -------------------------- | ------------------------------------------ |
 | Scripted, worst-case model | Always complies; measures gateway stop     |
 | Smoke sample               | n=12 until dozens                          |
 | Peers pending              | Obot / Bifrost / Executor not yet measured |
+=======
+| Label | Meaning |
+| ----- | ------- |
+| Scripted, worst-case model | Always complies; measures gateway stop |
+| Smoke sample | n=12 until dozens |
+| Peers pending / partial / measured | Obot / Bifrost / Executor via `run-peer.mjs` when MCP URL + `MAI_SHARED_VAULT_ROOT` set |
+>>>>>>> 11f968df (feat(security): multi-attack peer runner + live matrix scaffold (v4b))
 
-**Next for a publishable lead:** peer runs on the same twelve attacks; real-model matrix.
+**Next for a publishable lead:** finish peer URL wiring (defaults + best-config); real-model matrix (`results-live.json` scaffold — set `MAI_LIVE=1` when the session runner lands).
 
 See [NATIVE-TOOL-GOVERNANCE.md](./NATIVE-TOOL-GOVERNANCE.md).
