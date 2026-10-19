@@ -1,0 +1,94 @@
+{
+  "id": "security-suite-roadmap-v0",
+  "frozenAt": "2026-10-19T04:00:00.000Z",
+  "claim": "Boards that prove properties block lists cannot express, under fair defaults + best-config columns. Peers without a capability are not_offered, never scored 0.",
+  "format": {
+    "columns": ["defaults", "best_config"],
+    "required": [
+      "frozenRulesBeforeRun",
+      "publishedHarness",
+      "rawJsonArtifact",
+      "maintainerInvite"
+    ],
+    "credibility": "Capability not offered by a peer → status not_offered (never numeric 0)."
+  },
+  "buildFirst": [
+    {
+      "id": "multi_attack_suite",
+      "priority": 1,
+      "group": "injection",
+      "status": "planned",
+      "metric": "attacks_effectuated / attacks_planted (real models)",
+      "harnessHint": "Extend openbench memory-injection-attempt across email/ticket/doc/webhook corpora"
+    },
+    {
+      "id": "approval_integrity",
+      "priority": 2,
+      "group": "approvals",
+      "status": "partial",
+      "cells": [
+        "self_approval",
+        "arg_tamper",
+        "approval_replay",
+        "approver_collusion",
+        "concurrent_crash"
+      ],
+      "note": "Harness resume probe exists on governance board; full integrity cells pending"
+    },
+    {
+      "id": "allowed_tool_exfil",
+      "priority": 3,
+      "group": "injection",
+      "status": "planned",
+      "metric": "exfil_blocked && vault_or_secret_not_sent"
+    },
+    {
+      "id": "secret_visibility",
+      "priority": 4,
+      "group": "credentials",
+      "status": "planned",
+      "metric": "agent_code_secret_bytes_readable == 0"
+    },
+    {
+      "id": "kill_mid_write",
+      "priority": 5,
+      "group": "approvals",
+      "status": "planned",
+      "metric": "duplicate_side_effects == 0 across N crash injections",
+      "related": "TLA+ / ProgramCellDO crash-survival evidence"
+    }
+  ],
+  "groups": {
+    "approvals": [
+      "self_approval",
+      "arg_tamper",
+      "approval_replay",
+      "approver_collusion",
+      "concurrent_crash"
+    ],
+    "injection": [
+      "multi_attack_suite",
+      "allowed_tool_exfil",
+      "persistent_injection",
+      "tool_desc_rug_pull"
+    ],
+    "credentials": [
+      "secret_visibility",
+      "key_exfiltration",
+      "token_confusion",
+      "revocation_latency",
+      "stolen_key_blast"
+    ],
+    "containment": ["sandbox_escape", "ssrf", "cross_tenant"],
+    "audit": ["tamper_detect", "completeness", "reconstruction"],
+    "fail_safe": ["dep_outage", "emergency_brake", "runaway_loop"]
+  },
+  "productDefaultsTrack": {
+    "note": "Not a peer board — close ClawQL clawql_default gap without BLOCK_TOOLS",
+    "levers": [
+      "destructiveHint writes park for a person by default",
+      "untrusted reads taint session so later internal writes require approval"
+    ]
+  },
+  "maintainerInvite": "Peer maintainers: for each cell, publish defaults + your recommended best-config against the published harness. Missing capabilities → not_offered."
+}

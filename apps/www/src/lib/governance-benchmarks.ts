@@ -318,6 +318,11 @@ export const governanceBenchmarkLinks = [
     detail: 'Pause + harness resume probe',
   },
   {
+    label: 'Security suite roadmap',
+    href: '/benchmarks/#security-suite',
+    detail: 'Injection, approvals, secrets — beyond block lists',
+  },
+  {
     label: 'Dominance roadmap',
     href: '/benchmarks/#dominance',
     detail: 'Criterion #7 — governance / policy-bound writes',
