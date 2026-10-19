@@ -281,46 +281,46 @@ Subpath: `clawql-inference/plugin` for builtin factories and compose helpers.
 
 ### Environment
 
-| Variable                                      | Default                      | Purpose                                              |
-| --------------------------------------------- | ---------------------------- | ---------------------------------------------------- |
-| `CLAWQL_INFERENCE_PROVIDERS`                  | all builtins                 | Allowlist provider plugins (comma-separated ids)     |
+| Variable                                      | Default                      | Purpose                                                               |
+| --------------------------------------------- | ---------------------------- | --------------------------------------------------------------------- |
+| `CLAWQL_INFERENCE_PROVIDERS`                  | all builtins                 | Allowlist provider plugins (comma-separated ids)                      |
 | `CLAWQL_INFERENCE_DISABLE_PROVIDERS`          | —                            | Denylist provider plugins (also seeds provenance deny for `deepseek`) |
-| `CLAWQL_INFERENCE_PROVENANCE_PROFILE`         | `general`                    | `general` (denylist) or `federal` (allowlist fail-closed) |
-| `CLAWQL_INFERENCE_DENIED_VENDORS`             | —                            | Weight vendors denied after alias resolve (e.g. `deepseek`) |
-| `CLAWQL_INFERENCE_ALLOWED_VENDORS`            | federal defaults             | Allowlist vendors when mode=`allow` / federal profile |
-| `CLAWQL_INFERENCE_ALLOWED_MODELS`             | —                            | Allowlist exact resolved/canonical model ids         |
-| `CLAWQL_INFERENCE_PROVENANCE`                 | auto                         | `0` disables; `1` forces enable; else auto from policy |
-| `OPENAI_API_KEY`                              | —                            | OpenAI chat completions                              |
-| `ANTHROPIC_API_KEY`                           | —                            | Anthropic messages API                               |
-| `OLLAMA_BASE_URL`                             | `http://127.0.0.1:11434`     | Local Ollama runtime                                 |
-| `CLAWQL_INFERENCE_PORT`                       | `8080`                       | `clawql inference serve` listen port                 |
-| `CLAWQL_INFERENCE_ROUTING_ENABLED`            | off                          | Enable frugal → standard → frontier escalation       |
-| `CLAWQL_INFERENCE_MODEL_FRUGAL`               | `ollama/phi4`                | Frugal tier model id                                 |
-| `CLAWQL_INFERENCE_MODEL_STANDARD`             | `groq/llama-3.3-70b`         | Standard tier model id                               |
-| `CLAWQL_INFERENCE_MODEL_FRONTIER`             | `anthropic/claude-sonnet-4`  | Frontier tier model id                               |
-| `CLAWQL_INFERENCE_MODEL_PIN`                  | —                            | Pin a single model (bypasses ladder)                 |
-| `CLAWQL_INFERENCE_SEMANTIC_CACHE`             | off                          | Enable embedding similarity cache                    |
-| `CLAWQL_INFERENCE_CACHE_THRESHOLD`            | `0.92`                       | Cosine similarity floor for cache hits               |
-| `CLAWQL_INFERENCE_CACHE_TTL`                  | `24h`                        | Cache entry TTL (`24h`, `7d`, or `_MS` variant)      |
-| `CLAWQL_INFERENCE_CACHE_MAX_ENTRIES`          | `1000`                       | In-memory cache size cap                             |
-| `CLAWQL_EMBEDDING_MODEL`                      | `text-embedding-3-small`     | Embeddings model for semantic cache                  |
-| `CLAWQL_INFERENCE_FALLBACK_ENABLED`           | off                          | Enable per-tier / per-model fallback chains          |
-| `CLAWQL_INFERENCE_FALLBACK_FRUGAL`            | —                            | Comma-separated fallback chain for frugal tier       |
-| `CLAWQL_INFERENCE_FALLBACK_STANDARD`          | —                            | Fallback chain for standard tier                     |
-| `CLAWQL_INFERENCE_FALLBACK_FRONTIER`          | —                            | Fallback chain for frontier tier                     |
-| `CLAWQL_INFERENCE_KEYS_ENABLED`               | off                          | Require virtual keys on `/v1/*` (or when keys exist) |
-| `CLAWQL_INFERENCE_VIRTUAL_KEYS_PATH`          | `$CLAWQL_HOME/Inference/…`   | Override path to `virtual-keys.json` (shared mounts) |
-| `CLAWQL_INFERENCE_STORE`                      | jsonl when `CLAWQL_HOME` set | Inference call store: memory, jsonl, postgres        |
-| `CLAWQL_INFERENCE_DATABASE_URL`               | —                            | Postgres URL when store=postgres                     |
-| `CLAWQL_INFERENCE_PIPELINE_WORKER`            | off                          | Start cron worker with `inference serve`             |
-| `CLAWQL_PAYMENTS_ENFORCE_INFERENCE`           | off                          | Enforce managed plan inference caps                  |
-| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER`         | off                          | Report inference calls to Stripe Billing Meters      |
-| `STRIPE_METER_EVENT_NAME`                     | —                            | Dashboard meter event name                           |
-| `STRIPE_CUSTOMER_ID`                          | —                            | Stripe customer for meter events                     |
-| `CLAWQL_X402_ENFORCE`                         | off                          | x402 402 gate on configured routes                   |
-| `CLAWQL_X402_FACILITATOR_URL`                 | x402.org testnet facilitator | x402 verify/settle endpoint                          |
-| `CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED` | off                          | Enable Hermes coordination stub (#562)               |
-| `HERMES_BASE_URL`                             | —                            | Hermes MoA endpoint when coordination enabled        |
+| `CLAWQL_INFERENCE_PROVENANCE_PROFILE`         | `general`                    | `general` (denylist) or `federal` (allowlist fail-closed)             |
+| `CLAWQL_INFERENCE_DENIED_VENDORS`             | —                            | Weight vendors denied after alias resolve (e.g. `deepseek`)           |
+| `CLAWQL_INFERENCE_ALLOWED_VENDORS`            | federal defaults             | Allowlist vendors when mode=`allow` / federal profile                 |
+| `CLAWQL_INFERENCE_ALLOWED_MODELS`             | —                            | Allowlist exact resolved/canonical model ids                          |
+| `CLAWQL_INFERENCE_PROVENANCE`                 | auto                         | `0` disables; `1` forces enable; else auto from policy                |
+| `OPENAI_API_KEY`                              | —                            | OpenAI chat completions                                               |
+| `ANTHROPIC_API_KEY`                           | —                            | Anthropic messages API                                                |
+| `OLLAMA_BASE_URL`                             | `http://127.0.0.1:11434`     | Local Ollama runtime                                                  |
+| `CLAWQL_INFERENCE_PORT`                       | `8080`                       | `clawql inference serve` listen port                                  |
+| `CLAWQL_INFERENCE_ROUTING_ENABLED`            | off                          | Enable frugal → standard → frontier escalation                        |
+| `CLAWQL_INFERENCE_MODEL_FRUGAL`               | `ollama/phi4`                | Frugal tier model id                                                  |
+| `CLAWQL_INFERENCE_MODEL_STANDARD`             | `groq/llama-3.3-70b`         | Standard tier model id                                                |
+| `CLAWQL_INFERENCE_MODEL_FRONTIER`             | `anthropic/claude-sonnet-4`  | Frontier tier model id                                                |
+| `CLAWQL_INFERENCE_MODEL_PIN`                  | —                            | Pin a single model (bypasses ladder)                                  |
+| `CLAWQL_INFERENCE_SEMANTIC_CACHE`             | off                          | Enable embedding similarity cache                                     |
+| `CLAWQL_INFERENCE_CACHE_THRESHOLD`            | `0.92`                       | Cosine similarity floor for cache hits                                |
+| `CLAWQL_INFERENCE_CACHE_TTL`                  | `24h`                        | Cache entry TTL (`24h`, `7d`, or `_MS` variant)                       |
+| `CLAWQL_INFERENCE_CACHE_MAX_ENTRIES`          | `1000`                       | In-memory cache size cap                                              |
+| `CLAWQL_EMBEDDING_MODEL`                      | `text-embedding-3-small`     | Embeddings model for semantic cache                                   |
+| `CLAWQL_INFERENCE_FALLBACK_ENABLED`           | off                          | Enable per-tier / per-model fallback chains                           |
+| `CLAWQL_INFERENCE_FALLBACK_FRUGAL`            | —                            | Comma-separated fallback chain for frugal tier                        |
+| `CLAWQL_INFERENCE_FALLBACK_STANDARD`          | —                            | Fallback chain for standard tier                                      |
+| `CLAWQL_INFERENCE_FALLBACK_FRONTIER`          | —                            | Fallback chain for frontier tier                                      |
+| `CLAWQL_INFERENCE_KEYS_ENABLED`               | off                          | Require virtual keys on `/v1/*` (or when keys exist)                  |
+| `CLAWQL_INFERENCE_VIRTUAL_KEYS_PATH`          | `$CLAWQL_HOME/Inference/…`   | Override path to `virtual-keys.json` (shared mounts)                  |
+| `CLAWQL_INFERENCE_STORE`                      | jsonl when `CLAWQL_HOME` set | Inference call store: memory, jsonl, postgres                         |
+| `CLAWQL_INFERENCE_DATABASE_URL`               | —                            | Postgres URL when store=postgres                                      |
+| `CLAWQL_INFERENCE_PIPELINE_WORKER`            | off                          | Start cron worker with `inference serve`                              |
+| `CLAWQL_PAYMENTS_ENFORCE_INFERENCE`           | off                          | Enforce managed plan inference caps                                   |
+| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER`         | off                          | Report inference calls to Stripe Billing Meters                       |
+| `STRIPE_METER_EVENT_NAME`                     | —                            | Dashboard meter event name                                            |
+| `STRIPE_CUSTOMER_ID`                          | —                            | Stripe customer for meter events                                      |
+| `CLAWQL_X402_ENFORCE`                         | off                          | x402 402 gate on configured routes                                    |
+| `CLAWQL_X402_FACILITATOR_URL`                 | x402.org testnet facilitator | x402 verify/settle endpoint                                           |
+| `CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED` | off                          | Enable Hermes coordination stub (#562)                                |
+| `HERMES_BASE_URL`                             | —                            | Hermes MoA endpoint when coordination enabled                         |
 
 Model ids use `provider/model` (e.g. `ollama/phi4`, `anthropic/claude-sonnet-4`).  
 Cheap aliases (`clawql/cheap-chat`, `clawql/code`) default to origin-neutral frugal targets; DeepSeek is opt-in via `clawql/deepseek-chat` or explicit ids. Model provenance gate: [`docs/security/model-provenance-gate.md`](../../docs/security/model-provenance-gate.md).

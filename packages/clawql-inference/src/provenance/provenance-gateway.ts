@@ -12,10 +12,7 @@ import {
   isModelProvenanceDeniedError,
   type ModelProvenanceDeniedError,
 } from "./gate.js";
-import {
-  loadModelProvenancePolicyEffect,
-  type ModelProvenancePolicy,
-} from "./policy.js";
+import { loadModelProvenancePolicyEffect, type ModelProvenancePolicy } from "./policy.js";
 import type { ModelIdentity } from "./identity.js";
 
 function resolveAttemptModelId(request: InferenceRequest): string {

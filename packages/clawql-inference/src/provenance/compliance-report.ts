@@ -9,10 +9,7 @@
 import { Effect } from "effect";
 import type { InferenceRecord, InferenceStore } from "../store/types.js";
 import { identifyModelEffect } from "./identity.js";
-import {
-  loadModelProvenancePolicyEffect,
-  type ModelProvenancePolicy,
-} from "./policy.js";
+import { loadModelProvenancePolicyEffect, type ModelProvenancePolicy } from "./policy.js";
 
 export type ProvenanceServedModel = {
   readonly resolvedId: string;
