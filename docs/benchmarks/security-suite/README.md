@@ -9,10 +9,10 @@ Equal-arm security boards beyond a single tool-name deny.
 
 ## Build first
 
-1. Multi-attack injection suite  
-2. Approval-integrity cells  
-3. Allowed-tool exfiltration  
-4. Secret visibility from agent code  
-5. Kill-mid-write duplicates  
+1. Multi-attack injection suite
+2. Approval-integrity cells
+3. Allowed-tool exfiltration
+4. Secret visibility from agent code
+5. Kill-mid-write duplicates
 
 Credibility: peers that don’t offer a capability are **`not_offered`**, never scored `0`.
