@@ -17,6 +17,19 @@ On the shared OVERRIDE pricing fixture, ClawQL blocks hostile vault writes with 
 
 Content-aware classifiers; JWT ATR mesh HA; that every peer binary was measured in this environment (see `skipped` arms).
 
+## CI results (2026-10-19)
+
+Run: [39181888666](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39181888666)
+
+| Arm | security_score | Notes |
+|-----|----------------|-------|
+| clawql_panguard | **5/5** | blocked + clean vault |
+| passthrough | **2/5** | OVERRIDE written |
+| **obot** | **2/5** | live Docker peer — ingest allowed (no per-tool deny configured) |
+| bifrost | skipped | URL unset |
+
+ClawQL beats default Obot mcp-connect on this fixture. Obot can tie if maintainers configure a deny on `memory_ingest`.
+
 ## Next step
 
 1. **CI Obot peer** (Docker, no LLM) — workflow `Governance policy-depth` → publish `results-obot.json`.

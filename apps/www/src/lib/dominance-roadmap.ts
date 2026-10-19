@@ -118,9 +118,9 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     howToProve:
       'Measure definitions + discovery tokens with their catalog model; compare audit/policy on the same workflow.',
     status: 'partial',
-    statusLabel: 'Tokens measured',
+    statusLabel: 'Tokens + gov measured',
     nextStep:
-      'Tokens: classic 3.95× @N=12. Governance board smoke: ClawQL 5/5 vs passthrough 2/5 (npm run benchmark:governance-policy-depth). Land live Obot row with OBOT_MCP_URL + vault-mcp.',
+      'Tokens 3.95× @N=12. Governance CI: ClawQL 5/5 vs Obot 2/5 (default mcp-connect allows OVERRIDE ingest). Obot can tie with per-tool deny; Bifrost peer still open.',
   },
   {
     id: 'executor',
