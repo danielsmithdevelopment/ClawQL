@@ -49,7 +49,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     status: 'partial',
     statusLabel: 'Tokens + gov measured',
     nextStep:
-      'Tokens on N=12/C=40 (Code Mode 2.25× / classic 3.95×). Governance: default allow-all VK 2/5 (results-bifrost.json); VK deny can tie. Still need p99 concurrency for category claim.',
+      'Tokens on N=12/C=40. Governance v2: defaults tied (Bifrost allow-all 2/5); best-config VK deny invited (expect tie). Category claim → design cells + p99 concurrency.',
   },
   {
     id: 'truefoundry',
@@ -120,7 +120,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     status: 'partial',
     statusLabel: 'Tokens + gov measured',
     nextStep:
-      'Tokens 3.95× @N=12. Governance CI: ClawQL 5/5 vs Obot 2/5 and Bifrost allow-all 2/5 (both contaminate on default). Either peer can tie with per-tool / VK deny.',
+      'Tokens 3.95× @N=12. Governance v2: defaults tied at 2/5; best-config Obot deny invited (expect 5/5 tie). Design cells next.',
   },
   {
     id: 'executor',

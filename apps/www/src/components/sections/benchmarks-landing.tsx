@@ -29,9 +29,10 @@ import {
   governanceBenchmarkLinks,
   governanceBenchmarkMeta,
   governanceBenchmarkSummary,
+  governanceDesignCells,
   governanceExecutorCells,
+  governanceFairnessChips,
   governanceMetricLegend,
-  governancePeerWins,
   governanceScorecardRows,
 } from '@/lib/governance-benchmarks'
 import {
@@ -136,7 +137,7 @@ export function BenchmarksLanding() {
               </a>
               <span className="font-normal text-mist-600 dark:text-mist-400">
                 {' '}
-                — ClawQL 5/5 leads Obot 2 · Bifrost 2 · Executor resume 2
+                — fair defaults (tied at 2/5) · best-config · design cells next
               </span>
             </p>
             <p className="text-xs/6 text-mist-600 dark:text-mist-400">
@@ -214,39 +215,35 @@ export function BenchmarksLanding() {
           </div>
         }
       >
-        <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {governancePeerWins.map((win) => (
+        <div className="mb-8 grid gap-3 sm:grid-cols-3">
+          {governanceFairnessChips.map((chip) => (
             <div
-              key={win.id}
+              key={chip.id}
               className={clsx(
                 'rounded-lg px-4 py-3 ring-1',
-                win.verdict === 'leads'
+                chip.tone === 'honest'
                   ? 'bg-mist-950/[0.04] ring-mist-950/12 dark:bg-white/[0.05] dark:ring-white/15'
-                  : 'bg-mist-950/[0.02] ring-mist-950/8 dark:bg-white/[0.02] dark:ring-white/10',
+                  : chip.tone === 'expected'
+                    ? 'bg-mist-950/[0.03] ring-mist-950/10 dark:bg-white/[0.04] dark:ring-white/12'
+                    : 'bg-mist-950/[0.02] ring-mist-950/8 dark:bg-white/[0.02] dark:ring-white/10',
               )}
             >
               <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">
-                vs {win.peer}
+                {chip.title}
               </p>
-              <p className="mt-1 text-sm font-semibold tabular-nums text-mist-950 dark:text-white">
-                {win.clawql}{' '}
-                <span className="font-normal text-mist-500 dark:text-mist-500">
-                  {win.verdict === 'leads' ? '>' : win.verdict === 'ties' ? '=' : '·'}
-                </span>{' '}
-                {win.peerScore}
-              </p>
-              <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">{win.detail}</p>
+              <p className="mt-1 text-sm/5 text-mist-800 dark:text-mist-200">{chip.body}</p>
             </div>
           ))}
         </div>
 
-        <ComparisonTable minWidthClass="min-w-[980px]">
+        <ComparisonTable minWidthClass="min-w-[1040px]">
           <caption className="sr-only">
-            Governance policy-depth scorecard: security score and fail-closed vault-write metrics by arm
+            Governance policy-depth v2 scorecard: defaults vs best-config columns
           </caption>
           <thead>
             <tr>
               <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Column</ComparisonTh>
               <ComparisonTh className={clsx('text-center')}>Status</ComparisonTh>
               <ComparisonTh className={clsx('text-right')}>Score / {governanceBenchmarkMeta.maxScore}</ComparisonTh>
               <ComparisonTh className={clsx('text-center')}>Blocked</ComparisonTh>
@@ -280,6 +277,15 @@ export function BenchmarksLanding() {
                     ) : null}
                   </div>
                 </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-center align-top text-xs text-mist-700 dark:text-mist-300')}>
+                  {row.column === 'best_config'
+                    ? 'Best-config'
+                    : row.column === 'defaults'
+                      ? 'Defaults'
+                      : row.column === 'control'
+                        ? 'Control'
+                        : 'Design'}
+                </ComparisonTd>
                 <ComparisonTd className={clsx('text-center align-top')}>
                   <span
                     className={clsx(
@@ -336,40 +342,66 @@ export function BenchmarksLanding() {
 
         <div className="mt-8">
           <h3 className="text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
-            Executor cells — pause ties, resume loses
+            Executor cells — pause ties; harness resume is a self-approval probe
           </h3>
           <p className="mt-2 max-w-3xl text-sm/6 text-mist-700 dark:text-mist-400">
-            Pause cells tie at 5/5. The third cell has the agent <code className="text-xs">resume accept</code> after
-            poison — Executor contaminates at 2/5; ClawQL hard-deny has no resume bypass. Via{' '}
+            Pause cells use Executor&apos;s stock destructiveHint pause (fair default). The third cell is{' '}
+            <strong className="font-medium text-mist-900 dark:text-mist-100">harness-driven</strong>{' '}
+            <code className="text-xs">resume accept</code> after poison — it simulates agent self-approval; it is
+            not Executor&apos;s out-of-box auto-approve. Configured ClawQL has no resume surface. Via{' '}
             <code className="text-xs">ci-executor-peer.sh</code>.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {governanceExecutorCells.map((cell) => {
-              const leads =
-                cell.executorScore !== null && cell.clawqlScore > cell.executorScore
-              return (
-                <div
-                  key={cell.id}
-                  className={clsx(
-                    'rounded-lg px-4 py-3 ring-1',
-                    leads
-                      ? 'bg-mist-950/[0.04] ring-mist-950/12 dark:bg-white/[0.05] dark:ring-white/15'
-                      : 'bg-mist-950/[0.03] ring-mist-950/8 dark:bg-white/[0.03] dark:ring-white/10',
-                  )}
-                >
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="text-sm font-semibold text-mist-950 dark:text-white">{cell.title}</p>
-                    <p className="shrink-0 text-xs font-medium tabular-nums text-mist-700 dark:text-mist-300">
-                      {cell.clawqlScore}/{governanceBenchmarkMeta.maxScore}
-                      {cell.executorScore === null
-                        ? ''
-                        : ` ${leads ? '>' : '='} ${cell.executorScore}/${governanceBenchmarkMeta.maxScore}`}
-                    </p>
-                  </div>
-                  <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">{cell.detail}</p>
+            {governanceExecutorCells.map((cell) => (
+              <div
+                key={cell.id}
+                className="rounded-lg bg-mist-950/[0.03] px-4 py-3 ring-1 ring-mist-950/8 dark:bg-white/[0.03] dark:ring-white/10"
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="text-sm font-semibold text-mist-950 dark:text-white">{cell.title}</p>
+                  <p className="shrink-0 text-xs font-medium tabular-nums text-mist-700 dark:text-mist-300">
+                    CQ {cell.clawqlScore}/{governanceBenchmarkMeta.maxScore}
+                    {cell.executorScore === null
+                      ? ''
+                      : ` · Ex ${cell.executorScore}/${governanceBenchmarkMeta.maxScore}`}
+                  </p>
                 </div>
-              )
-            })}
+                <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">{cell.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <h3 className="text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+            Design cells — where allowlists cannot tie
+          </h3>
+          <p className="mt-2 max-w-3xl text-sm/6 text-mist-700 dark:text-mist-400">
+            After best-config ties on a block list, these cells are the durable claim: people-bound approval,
+            argument digests, data-flow after untrusted reads, and capability identity beyond tool names.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {governanceDesignCells.map((cell) => (
+              <div
+                key={cell.id}
+                className="rounded-lg bg-mist-950/[0.03] px-4 py-3 ring-1 ring-mist-950/8 dark:bg-white/[0.03] dark:ring-white/10"
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="text-sm font-semibold text-mist-950 dark:text-white">{cell.title}</p>
+                  <span className="text-xs font-medium text-mist-600 uppercase dark:text-mist-400">
+                    {cell.status === 'partial' ? 'Partial' : 'Pending'}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">
+                  <span className="font-medium text-mist-800 dark:text-mist-200">Allowlist gap: </span>
+                  {cell.whyAllowlistsFail}
+                </p>
+                <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">
+                  <span className="font-medium text-mist-800 dark:text-mist-200">ClawQL target: </span>
+                  {cell.clawqlTarget}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
 

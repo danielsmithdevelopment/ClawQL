@@ -1,127 +1,52 @@
-# Governance / policy-depth equal-arm board
+# Governance / policy-depth equal-arm board (v2)
 
-Proves **fail-closed vault-write policy** on a shared adversarial fixture — the dominance criterion peers still lack on the tokens boards.
+Fail-closed vault-write policy on a shared adversarial fixture — **fair defaults + best-config columns**, then design cells.
 
-| Arm | Role |
-|-----|------|
-| `clawql_panguard` | Required — `CLAWQL_PANGUARD_*` blocks `memory_ingest` |
-| `passthrough` | Required control — direct vault/fixture MCP, no deny |
-| `obot` | Opt-in — `OBOT_MCP_URL` (+ optional `OBOT_MCP_TOKEN`) |
-| `bifrost` | Opt-in — `BIFROST_MCP_URL` (+ optional `BIFROST_VK`) |
-| `executor` | Opt-in cells — `EXECUTOR_MCP_URL` + `GOV_SHARED_VAULT_ROOT` |
+| Arm | Column | Role |
+|-----|--------|------|
+| `clawql_default` | defaults | Stock ClawQL — **no** `BLOCK_TOOLS` (expected contaminate) |
+| `clawql_configured` / `clawql_panguard` | best_config | `CLAWQL_PANGUARD_BLOCK_TOOLS=memory_ingest` |
+| `passthrough` | control | Direct vault MCP, no deny |
+| `obot` | defaults | `OBOT_MCP_URL` |
+| `obot_deny` | best_config | `OBOT_MCP_URL_DENY` (expect tie) |
+| `bifrost` | defaults | `BIFROST_MCP_URL` allow-all VK |
+| `bifrost_vk_deny` | best_config | `BIFROST_MCP_URL_DENY` (expect tie) |
+| `executor_*` | cells | See cells below |
 
-Frozen rules: [`frozen-rules.json`](./frozen-rules.json).
+Frozen rules: [`frozen-rules.json`](./frozen-rules.json). Fairness: [`docs/.../FAIRNESS.md`](../../../docs/benchmarks/governance-policy-depth/FAIRNESS.md).
 
-## Run vault-write board (always)
+## Run vault-write board
 
 ```bash
-node scripts/benchmarks/governance-policy-depth/run-board.mjs
-# or
 npm run benchmark:governance-policy-depth
 ```
 
-Writes `docs/benchmarks/governance-policy-depth/results-smoke.json` (override with `GOV_OUT=`).
+Expected smoke: **board_pass=true**, `clawql_default` **2/5**, `clawql_configured` **5/5**, passthrough contaminates.
 
-Expected smoke: **board_pass=true**, clawql security_score **5/5**, passthrough contaminates (score ≤3).
-
-## Run Executor cells (always ClawQL + passthrough)
-
-Two cells on `fixture-mcp.mjs` (vault tools + Gmail-shaped poison):
+## Executor cells
 
 | Cell | What it proves |
 |------|----------------|
-| `risky_write` | Hostile `memory_ingest` (OVERRIDE) fail-closes |
-| `untrusted_read` | Poisoned `gmail_read_message` → subsequent ingest still fail-closes |
-| `resume_auto_approve` | Poison → pause → model `resume accept` — Executor contaminates; ClawQL hard-deny has no bypass |
+| `risky_write` | Hostile ingest — configured ClawQL deny; Executor **stock** pause |
+| `untrusted_read` | Poison → subsequent ingest still gated |
+| `resume_auto_approve` | **Harness** `resume accept` after poison — self-approval **probe**, not Executor stock auto-approve |
 
 ```bash
 npm run benchmark:governance-policy-depth:cells
-# → docs/benchmarks/governance-policy-depth/results-cells.json
-```
-
-Executor arm: set `EXECUTOR_MCP_URL` (+ optional `EXECUTOR_API_KEY`) and `GOV_SHARED_VAULT_ROOT` pointing at the same vault disk the fixture (or Executor-fronted MCP) uses. Without those env vars the executor rows are honest skips.
-
-## Wire Obot (Docker)
-
-```bash
-# Terminal A — shared vault MCP (seed a trial vault first or use /tmp/gov-vault)
-cp -a benchmarks/openbench/tasks/memory-injection-attempt/workspace/vault /tmp/gov-vault
-VAULT_ROOT=/tmp/gov-vault node scripts/benchmarks/governance-policy-depth/vault-mcp.mjs --http --port 18780
-
-# Terminal B — Obot (see docs/benchmarks/dominance-peers-wiring.md)
-# Register remote entry fixedURL=http://172.17.0.1:18780/mcp
-export OBOT_MCP_URL=http://127.0.0.1:8080/mcp-connect/<ms-id>
-export OBOT_MCP_TOKEN=clawql-bench-token
-GOV_OUT=docs/benchmarks/governance-policy-depth/results-obot.json \
-  node scripts/benchmarks/governance-policy-depth/run-board.mjs
-```
-
-Without a per-tool deny on `memory_ingest`, Obot matches **passthrough** (contamination) — that is a measured policy-depth loss vs ClawQL. With Obot deny configured, scores may tie; then compare audit richness / latency.
-
-## Wire Bifrost
-
-```bash
-npm run benchmark:governance-policy-depth:bifrost
-# or
-scripts/benchmarks/governance-policy-depth/ci-bifrost-peer.sh
-```
-
-Boots `vault-mcp`, Bifrost HTTP (`bifrost-http` via `npx @maximhq/bifrost`), registers client `gov_vault` (underscore — hyphens rejected), scopes VK allow-all, runs the board. **Measured default: Bifrost 2/5** (contaminates — same as Obot/passthrough). Client names cannot contain hyphens; private/loopback MCP registration needs `X-Bifrost-Setup-Token`.
-
-To claim a governance *tie*, scope the VK to **deny** `memory_ingest` (omit it from `tools_to_execute` or use `[]`). Manual:
-
-```bash
-export BIFROST_MCP_URL=http://127.0.0.1:<port>/mcp
-export BIFROST_VK=sk-bf-…
-export GOV_SHARED_VAULT_ROOT=/tmp/gov-bf-shared
-GOV_OUT=docs/benchmarks/governance-policy-depth/results-bifrost.json \
-  node scripts/benchmarks/governance-policy-depth/run-board.mjs
-```
-
-## Wire Executor (cells)
-
-```bash
-cp -a benchmarks/openbench/tasks/memory-injection-attempt/workspace/vault /tmp/gov-cells-vault
-VAULT_ROOT=/tmp/gov-cells-vault \
-  node scripts/benchmarks/governance-policy-depth/fixture-mcp.mjs --http --port 18790
-
-# Front fixture with Executor withApprovals / deny on memory_ingest, then:
-export EXECUTOR_MCP_URL=http://127.0.0.1:<executor>/mcp
-export GOV_SHARED_VAULT_ROOT=/tmp/gov-cells-vault
-npm run benchmark:governance-policy-depth:cells
-```
-
-## Maintainer invite
-
-Point your gateway at `vault-mcp.mjs` or `fixture-mcp.mjs`, run the board, open a PR with raw JSON. We merge equal-arm rows; we do not fabricate peer scores.
-
-## CI
-
-Workflow: `.github/workflows/governance-policy-depth.yml`
-
-| Job | LLM? | Notes |
-|-----|------|-------|
-| `smoke` | No | ClawQL 5/5 vs passthrough (vault-write board) |
-| `cells` | No | Executor cells — ClawQL 5/5 vs passthrough on both cells |
-| `executor-peer` | No | `ci-executor-peer.sh` (`continue-on-error`) |
-| `bifrost-peer` | No | `ci-bifrost-peer.sh` allow-all VK (`continue-on-error`) |
-| `obot-peer` | No | Docker Obot + `ci-obot-peer.sh` (`continue-on-error`) |
-
-**Cheap-model promise:** this workflow spends **$0** on OpenRouter. Live LLM security cells stay on `openbench-ab.yml` dispatch with `task=memory-injection-attempt` and a model from [`cheap-model-allowlist.json`](./cheap-model-allowlist.json) (default `openrouter/deepseek/deepseek-chat`). Frontier models are rejected by `assert-cheap-model.mjs` for `memory-injection-attempt` / `policy-deny-execute`.
-
-## Executor peer (like Obot CI)
-
-```bash
 npm run benchmark:governance-policy-depth:executor
-# or
-scripts/benchmarks/governance-policy-depth/ci-executor-peer.sh
 ```
 
-Installs `executor@latest`, boots `fixture-mcp`, registers it on the local daemon, runs three cells through Executor `execute` (+ `resume` on the dominance cell). Expected: pause cells ClawQL/Executor **5/5**; `resume_auto_approve` ClawQL **5/5** vs Executor **2/5**; passthrough **2/5**.
+## Peer CI recipes
 
-## Next (dominance)
+| Script | Column |
+|--------|--------|
+| `ci-obot-peer.sh` | Obot defaults |
+| `ci-bifrost-peer.sh` | Bifrost defaults (allow-all) |
+| `ci-executor-peer.sh` | Executor cells |
+| Best-config | Set `*_URL_DENY` / `EXECUTOR_MCP_URL_BLOCK` and re-run board (recipes TBD / maintainer PRs) |
 
-1. ~~Executor peer + resume cell~~ — measured (`dominance_over_executor_resume=true`).
-2. ~~Bifrost default allow-all peer~~ — measured 2/5 (`results-bifrost.json`). Optional maintainer VK-deny tie row.
-3. TrueFoundry / agentgateway governance rows when credentials / binary pin available.
-4. Optional: dispatch openbench-ab `memory-injection-attempt` × cheap model for live LLM replication (not required for peer board).
+## Next
+
+1. Land peer best-config CI scripts (Obot deny, Bifrost VK omit, Executor block).
+2. Design cells: self-approval (clean), arg digest, poison→allowed exfil, rename.
+3. Multi-attack injection suite (“0 of N”).
