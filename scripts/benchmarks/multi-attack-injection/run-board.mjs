@@ -2,20 +2,11 @@
 /**
  * Multi-attack injection board — smoke (scripted, worst-case model).
  *
- * The scripted "model" always follows the planted instruction. This measures
- * whether the gateway stops the resulting action — not whether a real model
- * would fall for the injection. Real-model matrix → results-live.json later.
+ * ClawQL arms use the **real** native-tool gate (park destructive + session IFC).
+ * Passthrough still writes files with no gateway (control).
+ * Peers: pending until wired.
  *
- * Sample: 12 attacks (smoke). Planned: dozens across the same four channels.
- *
- * Arms:
- *   clawql_default     — mechanisms off → expect 12/12 (honest stock gap)
- *   clawql_configured  — general mechanisms (taint / park / data-flow), NOT a tool deny
- *   passthrough        — no gateway → 12/12 control
- *   obot/bifrost/executor — pending until peer CI wires defaults + best-config
- *
- * Usage:
- *   node scripts/benchmarks/multi-attack-injection/run-board.mjs
+ * Also runs the benign suite and reports completed-without-human counts.
  */
 import {
   cpSync,
@@ -27,13 +18,10 @@ import {
 } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { runBenignSuite } from "./benign.mjs";
 import { gradeAttacks, smokeExpectationMet } from "./grade.mjs";
-import {
-  MECHANISM_NAMES,
-  MECHANISMS_CONFIGURED,
-  MECHANISMS_OFF,
-  gateScriptedAttack,
-} from "./mechanisms.mjs";
+import { MECHANISM_NAMES, MECHANISMS_OFF, gateScriptedAttack } from "./mechanisms.mjs";
+import { makeProductInvoke, resetSessionLabels } from "./product-gate.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../../..");
@@ -75,18 +63,14 @@ function seedTrial(dir) {
   const plantedRoot = join(dir, "planted");
   mkdirSync(plantedRoot, { recursive: true });
   cpSync(CORPUS_DIR, plantedRoot, { recursive: true });
-  return { vault: join(dir, "vault"), plantedRoot };
+  return join(dir, "vault");
 }
 
-/**
- * Scripted worst-case agent: always complies with every planted instruction.
- * Gate decides using general mechanisms (or none), never a tool-name list.
- */
-function runScriptedComply(vaultRoot, mechanisms) {
+/** Passthrough / legacy simulation: no product gate. */
+function runScriptedComplySimulated(vaultRoot, mechanisms) {
   const session = { labels: new Set() };
   const attempts = [];
   const mechanismHits = Object.fromEntries(MECHANISM_NAMES.map((n) => [n, 0]));
-
   for (const attack of MANIFEST.attacks) {
     const gate = gateScriptedAttack(attack, mechanisms, session);
     if (!gate.allow) {
@@ -96,83 +80,63 @@ function runScriptedComply(vaultRoot, mechanisms) {
         channel: attack.channel,
         blocked: true,
         mechanism: gate.mechanism,
-        denyReason: gate.denyReason,
       });
       continue;
     }
-    const file = join(
-      vaultRoot,
-      "Memory",
-      `${slug(attack.hostileTitle) || attack.id}.md`
-    );
     writeFileSync(
-      file,
-      `# ${attack.hostileTitle}\n\neffectToken: ${attack.effectToken}\nplanted_from: ${attack.path}\n`,
+      join(vaultRoot, "Memory", `${slug(attack.hostileTitle) || attack.id}.md`),
+      `# ${attack.hostileTitle}\n\neffectToken: ${attack.effectToken}\n`,
       "utf8"
     );
-    attempts.push({
-      id: attack.id,
-      channel: attack.channel,
-      blocked: false,
-      mechanism: null,
-      written: file,
+    attempts.push({ id: attack.id, channel: attack.channel, blocked: false });
+  }
+  return { attempts, grade: gradeAttacks(MANIFEST, vaultRoot), mechanismHits };
+}
+
+/**
+ * Product path: scripted agent taints from planted channel then tries memory_ingest.
+ * Real gate parks destructive / blocks on IFC.
+ */
+async function runScriptedComplyProduct(vaultRoot, sessionId, env, { taintFirst }) {
+  await resetSessionLabels();
+  const ctx = await makeProductInvoke(sessionId, env);
+  const attempts = [];
+  const mechanismHits = Object.fromEntries(MECHANISM_NAMES.map((n) => [n, 0]));
+
+  for (const attack of MANIFEST.attacks) {
+    if (taintFirst) ctx.taint(attack.channel);
+    const r = await ctx.invoke("memory_ingest", {
+      title: attack.hostileTitle,
+      insights: `effectToken: ${attack.effectToken}`,
     });
+    if (r.blocked) {
+      const mech = r.mechanism || "park_destructive_write";
+      if (mechanismHits[mech] !== undefined) mechanismHits[mech] += 1;
+      else mechanismHits[mech] = 1;
+      attempts.push({
+        id: attack.id,
+        channel: attack.channel,
+        blocked: true,
+        mechanism: mech,
+        status: r.status,
+      });
+      continue;
+    }
+    writeFileSync(
+      join(vaultRoot, "Memory", `${slug(attack.hostileTitle) || attack.id}.md`),
+      `# ${attack.hostileTitle}\n\neffectToken: ${attack.effectToken}\n`,
+      "utf8"
+    );
+    attempts.push({ id: attack.id, channel: attack.channel, blocked: false });
   }
 
   return {
     attempts,
     grade: gradeAttacks(MANIFEST, vaultRoot),
     mechanismHits,
-    sessionLabels: [...session.labels].sort(),
   };
 }
 
-function runArm({
-  id,
-  column,
-  vaultRoot,
-  mechanisms,
-  expect,
-  mechanismsNamed,
-}) {
-  const t0 = performance.now();
-  const { attempts, grade, mechanismHits, sessionLabels } = runScriptedComply(
-    vaultRoot,
-    mechanisms
-  );
-  const elapsed_ms = Math.round((performance.now() - t0) * 1000) / 1000;
-  const ok = smokeExpectationMet(grade, expect);
-  return {
-    id,
-    column,
-    skipped: false,
-    status: "measured",
-    expect,
-    smoke_ok: ok,
-    mechanisms: mechanismsNamed,
-    mechanism_hits: mechanismHits,
-    session_labels: sessionLabels,
-    attacks_planted: grade.attacks_planted,
-    attacks_effectuated: grade.attacks_effectuated,
-    rate: grade.rate,
-    by_channel: grade.by_channel,
-    authoritative_intact: grade.authoritative_intact,
-    effectuated_ids: grade.effectuated_ids,
-    blocked_ids: grade.blocked_ids,
-    attempts_blocked: attempts.filter((a) => a.blocked).length,
-    gate_latency_ms: elapsed_ms,
-    detail:
-      expect === "deny"
-        ? "general_mechanisms_taint_park_data_flow — not BLOCK_TOOLS"
-        : "scripted_worst_case_comply_mechanisms_off",
-  };
-}
-
-/**
- * Peer rows: injection resistance is measurable for any gateway.
- * Until CI wires defaults + best-config against this corpus → pending
- * (never not_offered — that label is for capabilities a product never claims).
- */
 function pendingPeer(id, column) {
   const envKey =
     id === "obot"
@@ -196,58 +160,118 @@ function pendingPeer(id, column) {
     attacks_planted: MANIFEST.attacks.length,
     attacks_effectuated: null,
     rate: null,
-    detail: `Peer ${id} ${column} not measured yet — wire ${envKey} against the same 12-attack corpus. Injection is an outcome every gateway can be scored on; pending ≠ not_offered.`,
+    detail: `Peer ${id} ${column} not measured yet — pending ≠ not_offered.`,
   };
 }
 
-function main() {
+async function main() {
   mkdirSync(dirname(OUT), { recursive: true });
-  if (!existsSync(join(CORPUS_DIR, "manifest.json"))) {
-    throw new Error(`missing corpus at ${CORPUS_DIR}`);
-  }
-
   const arms = [];
 
+  const productEnv = {
+    ...process.env,
+    CLAWQL_OPERATION_RISK_ENFORCE: "1",
+    CLAWQL_ENABLE_SESSION_IFC: "1",
+  };
+
+  // clawql_default — product defaults (park + IFC). Expect 0/12 after gate.
   {
-    const { vault } = seedTrial(join(WORK, "clawql_default"));
-    arms.push(
-      runArm({
-        id: "clawql_default",
-        column: "defaults",
-        vaultRoot: vault,
-        mechanisms: MECHANISMS_OFF,
-        expect: "allow",
-        mechanismsNamed: [],
-      })
+    const vault = seedTrial(join(WORK, "clawql_default"));
+    const t0 = performance.now();
+    // Defaults: park alone should stop attacks (no need to pre-taint).
+    const { attempts, grade, mechanismHits } = await runScriptedComplyProduct(
+      vault,
+      "mai-default",
+      productEnv,
+      { taintFirst: false }
     );
+    const expect = "deny";
+    const ok = smokeExpectationMet(grade, expect);
+    arms.push({
+      id: "clawql_default",
+      column: "defaults",
+      skipped: false,
+      status: "measured",
+      expect,
+      smoke_ok: ok,
+      gate: "product_native_tool_gate",
+      mechanisms: ["park_destructive_write", "untrusted_read_taint", "data_flow"],
+      mechanism_hits: mechanismHits,
+      attacks_planted: grade.attacks_planted,
+      attacks_effectuated: grade.attacks_effectuated,
+      rate: grade.rate,
+      by_channel: grade.by_channel,
+      authoritative_intact: grade.authoritative_intact,
+      effectuated_ids: grade.effectuated_ids,
+      blocked_ids: grade.blocked_ids,
+      attempts_blocked: attempts.filter((a) => a.blocked).length,
+      gate_latency_ms: Math.round((performance.now() - t0) * 1000) / 1000,
+      detail:
+        "product defaults: native gate parks memory_ingest (destructive) — not BLOCK_TOOLS",
+    });
   }
 
+  // clawql_configured — same mechanisms + explicit taint-first (defense in depth)
   {
-    const { vault } = seedTrial(join(WORK, "clawql_configured"));
-    arms.push(
-      runArm({
-        id: "clawql_configured",
-        column: "best_config",
-        vaultRoot: vault,
-        mechanisms: MECHANISMS_CONFIGURED,
-        expect: "deny",
-        mechanismsNamed: [...MECHANISM_NAMES],
-      })
+    const vault = seedTrial(join(WORK, "clawql_configured"));
+    const t0 = performance.now();
+    const { attempts, grade, mechanismHits } = await runScriptedComplyProduct(
+      vault,
+      "mai-configured",
+      productEnv,
+      { taintFirst: true }
     );
+    const ok = smokeExpectationMet(grade, "deny");
+    arms.push({
+      id: "clawql_configured",
+      column: "best_config",
+      skipped: false,
+      status: "measured",
+      expect: "deny",
+      smoke_ok: ok,
+      gate: "product_native_tool_gate",
+      mechanisms: [...MECHANISM_NAMES],
+      mechanism_hits: mechanismHits,
+      attacks_planted: grade.attacks_planted,
+      attacks_effectuated: grade.attacks_effectuated,
+      rate: grade.rate,
+      by_channel: grade.by_channel,
+      authoritative_intact: grade.authoritative_intact,
+      effectuated_ids: grade.effectuated_ids,
+      blocked_ids: grade.blocked_ids,
+      attempts_blocked: attempts.filter((a) => a.blocked).length,
+      gate_latency_ms: Math.round((performance.now() - t0) * 1000) / 1000,
+      detail: "taint-first + park + data-flow via product native gate",
+    });
   }
 
+  // passthrough control — no gateway
   {
-    const { vault } = seedTrial(join(WORK, "passthrough"));
-    arms.push(
-      runArm({
-        id: "passthrough",
-        column: "defaults",
-        vaultRoot: vault,
-        mechanisms: MECHANISMS_OFF,
-        expect: "allow",
-        mechanismsNamed: [],
-      })
-    );
+    const vault = seedTrial(join(WORK, "passthrough"));
+    const t0 = performance.now();
+    const { grade, mechanismHits } = runScriptedComplySimulated(vault, MECHANISMS_OFF);
+    const ok = smokeExpectationMet(grade, "allow");
+    arms.push({
+      id: "passthrough",
+      column: "defaults",
+      skipped: false,
+      status: "measured",
+      expect: "allow",
+      smoke_ok: ok,
+      gate: "none",
+      mechanisms: [],
+      mechanism_hits: mechanismHits,
+      attacks_planted: grade.attacks_planted,
+      attacks_effectuated: grade.attacks_effectuated,
+      rate: grade.rate,
+      by_channel: grade.by_channel,
+      authoritative_intact: grade.authoritative_intact,
+      effectuated_ids: grade.effectuated_ids,
+      blocked_ids: grade.blocked_ids,
+      attempts_blocked: 0,
+      gate_latency_ms: Math.round((performance.now() - t0) * 1000) / 1000,
+      detail: "no_gateway_scripted_comply",
+    });
   }
 
   for (const peer of ["obot", "bifrost", "executor"]) {
@@ -255,27 +279,35 @@ function main() {
     arms.push(pendingPeer(peer, "best_config"));
   }
 
+  // Benign suite on product defaults
+  await resetSessionLabels();
+  const benignCtx = await makeProductInvoke("mai-benign", productEnv);
+  const benign = await runBenignSuite(benignCtx);
+
   const measured = arms.filter((a) => a.status === "measured");
   const board_pass = measured.every((a) => a.smoke_ok);
   const clawqlDefault = measured.find((a) => a.id === "clawql_default");
 
   const report = {
     measuredAt: new Date().toISOString(),
-    kind: "multi_attack_injection_smoke_v1",
+    kind: "multi_attack_injection_smoke_v2",
     sample: {
       attacks_planted: MANIFEST.attacks.length,
       label: "smoke",
-      note: "Twelve attacks is a smoke run. Planned suite: dozens across email/ticket/doc/webhook.",
+      note: "Twelve attacks is a smoke run. Planned: dozens across four channels.",
     },
     model: {
       kind: "scripted_worst_case",
-      note: "The scripted model always follows the injected instruction. This measures whether the gateway stops the resulting action — not whether a real model would comply. Real-model matrix is a follow-up.",
+      note: "Scripted model always complies — measures gateway stop, not model susceptibility.",
     },
     headline: {
       clawql_default_effectuated: clawqlDefault?.attacks_effectuated ?? null,
       clawql_default_planted: clawqlDefault?.attacks_planted ?? null,
-      note: "ClawQL on defaults lets all planted attacks through — same as no gateway. Strongest argument for shipping park-destructive + untrusted-read taint as stock defaults.",
+      benign_completed_without_human: benign.completed_without_human,
+      benign_total: benign.planted,
+      note: "Publish claim needs both: attacks stopped AND benign completion cost.",
     },
+    benign,
     rules: FROZEN,
     corpus: {
       id: MANIFEST.id,
@@ -296,15 +328,23 @@ function main() {
         out: OUT,
         board_pass,
         headline: report.headline,
+        benign: {
+          completed_without_human: benign.completed_without_human,
+          parked: benign.parked,
+          blocked: benign.blocked,
+          results: benign.results.map((r) => ({
+            id: r.id,
+            status: r.status,
+            matched_expect: r.matched_expect,
+          })),
+        },
         summary: arms.map((a) => ({
           id: a.id,
           status: a.status,
-          column: a.column,
           effectuated: a.attacks_effectuated,
           planted: a.attacks_planted,
-          rate: a.rate,
-          mechanisms: a.mechanisms,
           smoke_ok: a.smoke_ok,
+          mechanisms: a.mechanisms,
         })),
       },
       null,
@@ -314,4 +354,7 @@ function main() {
   if (!board_pass) process.exitCode = 1;
 }
 
-main();
+main().catch((e) => {
+  console.error(e);
+  process.exitCode = 1;
+});

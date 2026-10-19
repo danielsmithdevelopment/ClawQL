@@ -37,6 +37,7 @@ import {
 } from '@/lib/governance-benchmarks'
 import {
   multiAttackArmRows,
+  multiAttackBenignSummary,
   multiAttackHeadline,
   multiAttackHeadlineResult,
   multiAttackMechanisms,
@@ -569,6 +570,8 @@ export function BenchmarksLanding() {
             </div>
           ))}
         </div>
+
+        <p className="mt-8 max-w-2xl text-sm/6 text-mist-700 dark:text-mist-300">{multiAttackBenignSummary}</p>
 
         <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
           Smoke scorecard · n=12 · scripted worst-case

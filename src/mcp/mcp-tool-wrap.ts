@@ -1,4 +1,9 @@
 import { Effect } from "effect";
+import {
+  accumulateNativeToolReadAfterSuccess,
+  gateNativeToolBeforeInvoke,
+  NATIVE_TOOL_GOVERNANCE_MODULE_ID,
+} from "clawql-api";
 import { runMcpProxyBeforeCallTool } from "../composition/clawql-api-adapters.js";
 import { recordMcpToolCallAudit, type McpToolAuditOutcome } from "./mcp-tool-audit.js";
 import { wrapMcpToolHandler } from "../observability/otel-tracing.js";
@@ -6,6 +11,9 @@ import { getMcpRequestContext } from "./mcp-request-context.js";
 
 /** Meta tools — ring buffer only; skip durable WORM to avoid noise/recursion. */
 export const WORM_AUDIT_SKIP_TOOLS = new Set(["audit", "cache"]);
+
+/** CI / audits: prove wrap imports the native governance choke point. */
+export const MCP_TOOL_WRAP_GOVERNANCE_ID = NATIVE_TOOL_GOVERNANCE_MODULE_ID;
 
 function clawqlPolicyBlockMessage(err: unknown): string | null {
   if (!err || typeof err !== "object") return null;
@@ -175,9 +183,39 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
       throw err;
     }
 
+    // Native-tool choke point: session IFC + park destructive (same properties as execute).
+    // Catalog execute-path tools skip this body; they are gated inside execute-core.
+    try {
+      const mcpCtxGate = getMcpRequestContext();
+      const nativeBlock = await gateNativeToolBeforeInvoke({
+        toolName,
+        args: args[0],
+        sessionId: mcpCtxGate?.sessionId,
+      });
+      if (nativeBlock) {
+        const detail = JSON.stringify(nativeBlock).slice(0, 500);
+        await Effect.runPromise(appendMcpToolResultEffect(toolName, false, detail));
+        await auditWrappedTool(toolName, args[0], "blocked", nativeBlock as TResult, detail);
+        return nativeBlock as TResult;
+      }
+    } catch (err: unknown) {
+      const errDetail = err instanceof Error ? err.message : String(err);
+      await Effect.runPromise(appendMcpToolResultEffect(toolName, false, errDetail));
+      await auditWrappedTool(toolName, args[0], "thrown", undefined, errDetail);
+      throw err;
+    }
+
     try {
       const result = await handler(...args);
       const ok = toolResultLooksOk(result);
+      const mcpCtxAfter = getMcpRequestContext();
+      if (ok) {
+        accumulateNativeToolReadAfterSuccess({
+          toolName,
+          success: true,
+          sessionId: mcpCtxAfter?.sessionId,
+        });
+      }
       await Effect.runPromise(
         appendMcpToolResultEffect(
           toolName,

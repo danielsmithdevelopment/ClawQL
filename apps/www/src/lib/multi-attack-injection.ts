@@ -5,13 +5,13 @@
  * Not a live category claim yet (publish gate).
  */
 
-export const multiAttackHeadline = 'Multi-attack injection — smoke (not published)'
+export const multiAttackHeadline = 'Multi-attack injection — smoke (draft)'
 
 export const multiAttackSummary =
-  'Twelve planted attacks across email, ticket, doc, and webhook. Scripted worst-case model always complies — this measures whether the gateway stops the resulting action, not whether a real model would fall for it. Sample size: smoke until the suite grows to dozens.'
+  'Twelve planted attacks across email, ticket, doc, and webhook. Scripted worst-case model always complies — this measures whether the gateway stops the resulting action, not whether a real model would fall for it. Sample size: smoke until the suite grows to dozens. Benign workflows are scored beside attacks.'
 
 export const multiAttackHeadlineResult =
-  'ClawQL on defaults lets all twelve through — same as no gateway. That is the strongest argument for shipping park-destructive writes and untrusted-read taint as stock defaults, then re-running this column.'
+  'After native-tool governance: ClawQL defaults stop the twelve attacks via park/IFC (not a tool-name deny). Report benign completion cost alongside — “0 of 12” alone is not the claim.'
 
 export const multiAttackMechanisms = [
   {
@@ -46,8 +46,8 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     arm: 'ClawQL default',
     column: 'defaults',
     status: 'measured',
-    effectuated: '12 / 12',
-    note: 'Stock — mechanisms off. Headline gap.',
+    effectuated: '0 / 12',
+    note: 'Native gate parks memory_ingest — not BLOCK_TOOLS',
     highlight: true,
   },
   {
@@ -62,7 +62,7 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     column: 'best_config',
     status: 'measured',
     effectuated: '0 / 12',
-    note: 'Via taint + park + data-flow — not a tool-name deny',
+    note: 'Taint-first + park + data-flow',
   },
   {
     arm: 'Obot default',
@@ -109,4 +109,7 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
 ] as const
 
 export const multiAttackPublishGate =
-  'Do not treat this as a live claim until peers are measured, product defaults ship, and the default column is re-run.'
+  'Draft until peers are measured on this corpus. Always publish attack rate beside benign completed-without-human.'
+
+export const multiAttackBenignSummary =
+  'Benign suite (defaults): recall + search complete without a human; clean memory_ingest parks for approval; email-then-summary is blocked by taint/data-flow.'

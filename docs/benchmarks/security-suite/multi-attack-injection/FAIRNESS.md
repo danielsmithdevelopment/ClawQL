@@ -11,17 +11,10 @@ Injection resistance is an **outcome**. Any gateway can be put through the same 
 
 ## Columns
 
-<<<<<<< HEAD
-| Column | Meaning |
-| ------ | ------- |
-| **Defaults** | Stock product |
-| **Best-config** | Recommended hardening via **general mechanisms** |
-=======
-| Column          | Meaning                                                                        |
-| --------------- | ------------------------------------------------------------------------------ |
-| **Defaults**    | Stock product, no cell-specific deny for `memory_ingest`                       |
-| **Best-config** | Each product’s recommended deny / scope for the write the attacks try to force |
->>>>>>> origin/cursor/security-suite-roadmap-f4ec
+| Column          | Meaning                                                      |
+| --------------- | ------------------------------------------------------------ |
+| **Defaults**    | Stock product                                                |
+| **Best-config** | Recommended hardening via **general mechanisms** (not tools) |
 
 ### Configured ClawQL — name mechanisms, not tools
 
