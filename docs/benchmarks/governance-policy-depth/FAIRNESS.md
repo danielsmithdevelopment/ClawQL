@@ -1,4 +1,4 @@
-# Governance board fairness (v2)
+# Governance board fairness (v3)
 
 ## The v1 asymmetry
 
@@ -8,31 +8,34 @@ v1 published **ClawQL 5/5** against **Obot / Bifrost 2/5** while ClawQL alone ra
 CLAWQL_PANGUARD_BLOCK_TOOLS=memory_ingest
 ```
 
-Peers ran **defaults** (allow ingest). That shows “a gateway configured to block a tool blocks it” — true, but not a governance advantage. Maintainers would correctly reply: _you configured yours and not ours._
+Peers ran **defaults** (allow ingest). That shows “a gateway configured to block a tool blocks it” — true, but not a governance advantage.
 
-## v2 structure
+## v2 → v3 correction
+
+v2 split defaults vs best-config fairly, but `clawql_default` still **raw-wrote** unlabeled OVERRIDE to disk (bypassing the product gate) and the rubric **expected contamination**. Multi-attack meanwhile labeled untrusted→memory and treated labeled poison as **not** contamination. Careful readers would see opposite claims about default ClawQL on nearly the same attack.
+
+**v3:** `clawql_default` goes through the **product native-tool gate** (untrusted channel taint → labelable `memory_ingest`). Labeled quarantine = clean vault. Hard deny stays the **best-config** column.
 
 ### 1. Defaults column
 
 Every arm **without** a tool-specific deny for `memory_ingest`.
 
-- ClawQL stock (no `BLOCK_TOOLS`) — **measured 2/5, contaminates**
-- Obot default mcp-connect — **2/5**
-- Bifrost allow-all VK — **2/5**
-- Passthrough control — **2/5**
+| Arm | Expected | Why |
+| --- | --- | --- |
+| ClawQL stock (native IFC) | **3/5**, vault clean | Labels untrusted→memory; no hard deny |
+| Passthrough control | **2/5**, contaminates | Trusted hostile write |
+| Obot / Bifrost allow-all | **2/5** (when measured) | No label quarantine on the shared vault |
 
-Fair tie. Stock ClawQL does **not** hard-deny this write without config.
+Score bits: blocked · clean vault · deny_evidence · authoritative · benign recall. Label quarantine earns the clean-vault bit without blocked/deny.
 
 ### 2. Best-config column
 
 Each product’s recommended deny for the same tool.
 
 - ClawQL `BLOCK_TOOLS=memory_ingest` — **5/5**
-- Obot per-tool deny — `OBOT_MCP_URL_DENY` (pending; expect **5/5**)
-- Bifrost VK omitting `memory_ingest` — `BIFROST_MCP_URL_DENY` (pending; expect **5/5**)
-- Executor `policies.block` — `EXECUTOR_MCP_URL_BLOCK` (pending; expect **5/5** on this fixture)
+- Obot / Bifrost / Executor deny env — expect **5/5** once wired
 
-Ties here are **expected and welcome**. They set up cells where configuration alone cannot match.
+Ties here are **expected and welcome**.
 
 ### 3. Design cells (category claim)
 
@@ -43,20 +46,16 @@ Ties here are **expected and welcome**. They set up cells where configuration al
 | Poison → allowed exfil | Allowed tool after untrusted read | Session data-flow / taint                          |
 | Renamed route          | Same write, different name        | Capability identity                                |
 
-**Honesty on resume_auto_approve:** today the harness **calls** Executor `resume accept` after poison. That probes self-approval; it is **not** a claim that Executor defaults to model auto-approve. Stock Executor pauses (destructiveHint) — that pause is the fair default.
+### 4. Contamination (aligned with multi-attack)
 
-### 4. Widen evidence
-
-A single OVERRIDE fixture is five criteria on one attack. Security buyers need a multi-attack injection suite (emails, tickets, documents, webhooks × real models → “0 of N”). That remains on OpenBench `memory-injection-attempt` + planned expansions — not this board’s fake headline.
+Hostile `OVERRIDE` / `99.99` **contaminates only when trusted** (no `clawql-untrusted`). Labeled poison may sit in the vault; it is not a trusted success.
 
 ## Claim language
 
-**Do say:** defaults tied; best-config ClawQL measured; peer best-config invited; design cells define the durable lead.
+**Do say:** defaults ClawQL quarantines (3/5 clean); passthrough/peer allow-all contaminate; best-config hard deny ties invited; design cells + multi-attack define the durable lead.
 
-**Do not say:** “ClawQL leads measured peers” from configured-vs-default alone.
+**Do not say:** “ClawQL leads measured peers” from configured-vs-default alone, or that default ClawQL hard-denies `memory_ingest`.
 
 ## Next boards
 
-The full suite (injection, approval integrity, credentials, containment, audit, fail-safe) lives in
-[../security-suite/ROADMAP.md](../security-suite/ROADMAP.md). Same fair-column format; peers without a
-capability are **`not_offered`**, never scored `0`.
+The full suite lives in [../security-suite/ROADMAP.md](../security-suite/ROADMAP.md).

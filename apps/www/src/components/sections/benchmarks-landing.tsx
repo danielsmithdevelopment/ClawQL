@@ -154,7 +154,7 @@ export function BenchmarksLanding() {
               </a>
               <span className="font-normal text-mist-600 dark:text-mist-400">
                 {' '}
-                — fair defaults (tied at 2/5) · best-config · design cells next
+                — defaults label quarantine 3/5 · best-config 5/5 · design cells next
               </span>
             </p>
             <p className="text-xs/6 text-mist-600 dark:text-mist-400">

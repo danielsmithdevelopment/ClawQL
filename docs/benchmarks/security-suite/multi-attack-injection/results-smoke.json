@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-19T18:53:53.956Z",
+  "measuredAt": "2026-10-19T18:59:11.798Z",
   "kind": "multi_attack_injection_smoke_v4c",
   "sample": {
     "attacks_planted": 12,
@@ -441,7 +441,7 @@
       ],
       "labeled_only_ids": [],
       "attempts_blocked": 12,
-      "gate_latency_ms": 419.342,
+      "gate_latency_ms": 384.742,
       "detail": "product defaults: park memory_ingest overwrite; label untrusted→memory appends — not BLOCK_TOOLS"
     },
     {
@@ -506,7 +506,7 @@
       ],
       "labeled_only_ids": [],
       "attempts_blocked": 12,
-      "gate_latency_ms": 17.665,
+      "gate_latency_ms": 7.071,
       "detail": "taint-first + overwrite-park + labelable memory / blocking external via product gate"
     },
     {
@@ -567,7 +567,7 @@
       "blocked_ids": [],
       "labeled_only_ids": [],
       "attempts_blocked": 0,
-      "gate_latency_ms": 1.039,
+      "gate_latency_ms": 1.008,
       "detail": "no_gateway_scripted_comply"
     },
     {

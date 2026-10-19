@@ -1,4 +1,4 @@
-# Governance / policy-depth (v2 — fair columns)
+# Governance / policy-depth (v3 — fair columns + label quarantine)
 
 Equal-arm vault-write board with **two fair columns**, then **design cells** for the category claim.
 
@@ -6,7 +6,7 @@ Equal-arm vault-write board with **two fair columns**, then **design cells** for
 
 | Artifact                                         | Role                                                                                                  |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| [`FAIRNESS.md`](./FAIRNESS.md)                   | Why v1 was asymmetric; v2 columns + design cells                                                      |
+| [`FAIRNESS.md`](./FAIRNESS.md)                   | Why v1 was asymmetric; v3 label quarantine + columns                                                  |
 | [`results-smoke.json`](./results-smoke.json)     | Smoke (includes clawql_default + clawql_configured)                                                   |
 | [`results-obot.json`](./results-obot.json)       | Obot **defaults** peer                                                                                |
 | [`results-bifrost.json`](./results-bifrost.json) | Bifrost **defaults** (allow-all VK)                                                                   |
@@ -15,14 +15,14 @@ Equal-arm vault-write board with **two fair columns**, then **design cells** for
 
 ## Defaults column (fair)
 
-No tool-specific deny for `memory_ingest`.
+No tool-specific deny for `memory_ingest`. ClawQL stock uses **label quarantine** (product native-tool IFC).
 
-| Arm                | security_score | Notes                                   |
-| ------------------ | -------------- | --------------------------------------- |
-| **clawql_default** | **2/5**        | Stock — no `BLOCK_TOOLS` (contaminates) |
-| passthrough        | **2/5**        | OVERRIDE written                        |
-| **obot**           | **2/5**        | Default mcp-connect                     |
-| **bifrost**        | **2/5**        | Allow-all VK                            |
+| Arm                | security_score | Notes                                              |
+| ------------------ | -------------- | -------------------------------------------------- |
+| **clawql_default** | **3/5**        | Labels untrusted→memory; vault clean (not BLOCK_TOOLS) |
+| passthrough        | **2/5**        | Trusted OVERRIDE written                           |
+| **obot**           | pending / ~2/5 | Default mcp-connect (allow-all)                    |
+| **bifrost**        | pending / ~2/5 | Allow-all VK                                       |
 
 ## Best-config column (expect ties)
 
@@ -38,20 +38,17 @@ Each product’s recommended deny for the same tool.
 ## Executor cells
 
 ```bash
+npm run benchmark:governance-policy-depth:cells
 npm run benchmark:governance-policy-depth:executor
 ```
 
-| Cell                    | Notes                                                                             |
-| ----------------------- | --------------------------------------------------------------------------------- |
-| risky_write             | Executor **default** destructiveHint pause (fair)                                 |
-| untrusted_read          | Poison + pause                                                                    |
-| **resume_auto_approve** | **Harness** calls `resume accept` — self-approval _probe_, not stock auto-approve |
+## Contamination (aligned with multi-attack)
 
-## Design cells (category claim)
+Hostile `OVERRIDE` / `99.99` contaminates only when **trusted**. Labeled `clawql-untrusted` poison does not.
 
-See [`FAIRNESS.md`](./FAIRNESS.md): self-approval, arg digest swap, poison→allowed exfil, renamed routes. Plus multi-attack injection suite (“0 of N”).
+## Run
 
-## Related
-
-- [dominance-roadmap.md](../dominance-roadmap.md) — criterion #7 governance
-- [dominance-peers-wiring.md](../dominance-peers-wiring.md) — Obot / Bifrost recipes
+```bash
+npm run build -w clawql-api
+npm run benchmark:governance-policy-depth
+```
