@@ -94,8 +94,12 @@ Independent research: [Datadog — Jev as a judge](https://securitylabs.datadogh
 
 No harness stand-in. Until live arms run, **cite Datadog**. See [COUNTERFEIT-POLICY.md](./COUNTERFEIT-POLICY.md).
 
-## Next — before a lead claim
+## Live (`MAI_LIVE=1`)
 
-`MAI_LIVE=1` real-model run: same twelve attacks and fourteen benign with real models deciding what to do, plus the harder recall queries. Hard-recall vault cell is already measured. If real models land the same way, it becomes the lead claim on the page.
+Hard-recall vault cell: labeled keeps **15.00**; unlabeled surfaces **99.99**.
 
-See [NATIVE-TOOL-GOVERNANCE.md](./NATIVE-TOOL-GOVERNANCE.md) · [MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md).
+Cursor Task matrix (`composer-2.5-fast`, naturalistic ops prompts): the model **refused all 12** planted instructions on **both** ClawQL and passthrough (0 trusted effectuation either arm). ClawQL benign suite still **14 of 14** on a fresh vault. That is a measured model-resistance finding — **not** a live ClawQL-vs-passthrough gateway split. Smoke remains the complying-agent claim. A live lead claim needs a model that attempts ingest on passthrough (or keep the headline as scripted).
+
+Reproduce: `MAI_LIVE=1 MAI_LIVE_MODELS=composer-2.5-fast npm run benchmark:multi-attack-injection:live` → Cursor Task each `AGENT_PROMPT.md` → `MAI_LIVE_GRADE=1 npm run benchmark:multi-attack-injection:live`.
+
+See [NATIVE-TOOL-GOVERNANCE.md](./NATIVE-TOOL-GOVERNANCE.md) · [MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md) · [MAINTAINER-INVITE.md](./MAINTAINER-INVITE.md).

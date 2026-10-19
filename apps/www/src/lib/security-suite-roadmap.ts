@@ -25,7 +25,7 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     priority: 1,
     title: 'Multi-attack injection suite',
     status: 'scaffolded',
-    why: 'Smoke v4g: scripted board complete — ClawQL 0/12+14/14; peer best-config 0/12+9/14 (native). Version pins + maintainer invites. MAI_LIVE real-model sessions last before lead claim. Counterfeit-policy ClawQL 0/4; cite Datadog.',
+    why: 'Smoke v4g complete (version pins + invites). Live composer-2.5-fast: model refused all 12 on clawql and passthrough — no live gateway split; smoke stays complying-agent claim. Hard-recall measured. Counterfeit-policy ClawQL 0/4; cite Datadog.',
   },
   {
     id: 'approval_integrity',
