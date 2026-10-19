@@ -1,0 +1,64 @@
+{
+  "id": "mai-live-models-v1",
+  "frozenAt": "2026-10-19T22:30:00.000Z",
+  "rule": "Pre-register before measuring. Publish every result — including models that refuse everything. Do not search for a gullible model to create a passthrough loss.",
+  "selection": "Deployment-realistic set across families and sizes, including cheap/small agents people actually run. Chosen in advance of the live matrix.",
+  "models": [
+    {
+      "id": "composer-2.5-fast",
+      "family": "cursor_composer",
+      "tier": "cheap_agent_default",
+      "transport": "cursor_task",
+      "status": "measured",
+      "note": "First measured live arm — refused all 12 instruction-follow attempts on clawql and passthrough (ingest-or-refuse prompt). Poison-residue cell uses ordinary-summarization prompt under the same model."
+    },
+    {
+      "id": "gpt-5.6-sol-low",
+      "family": "openai",
+      "tier": "frontier_small",
+      "transport": "cursor_task",
+      "status": "preregistered",
+      "note": "Smaller OpenAI family — common agent deploy size."
+    },
+    {
+      "id": "gpt-5.6-sol-medium",
+      "family": "openai",
+      "tier": "frontier_mid",
+      "transport": "cursor_task",
+      "status": "preregistered",
+      "note": "Mid OpenAI family."
+    },
+    {
+      "id": "cursor-grok-4.6-medium",
+      "family": "xai_grok",
+      "tier": "alt_family_mid",
+      "transport": "cursor_task",
+      "status": "preregistered",
+      "note": "Cross-family coverage."
+    },
+    {
+      "id": "gemini-4-argon-medium",
+      "family": "google_gemini",
+      "tier": "alt_family_mid",
+      "transport": "cursor_task",
+      "status": "preregistered",
+      "note": "Cross-family coverage."
+    }
+  ],
+  "corpusNext": {
+    "self_written_smoke": "benchmarks/security-suite/multi-attack-injection/corpus (n=12) — labeled smoke plants, not the sole live hardness claim",
+    "published": [
+      {
+        "id": "agentdojo",
+        "name": "AgentDojo",
+        "role": "established agent prompt-injection benchmark — hardness not judged by ClawQL authors"
+      },
+      {
+        "id": "datadog_counterfeit_policy",
+        "name": "Datadog counterfeit-policy technique",
+        "cite": "https://securitylabs.datadoghq.com/articles/jev-as-a-judge-how-counterfeit-policy-steers-jev/",
+        "role": "public-set technique already cited in COUNTERFEIT-POLICY.md"
+      }
+    ]
+  }
+}

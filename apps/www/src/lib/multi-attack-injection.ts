@@ -5,13 +5,13 @@
  * Scripted board complete. Lead claim waits on MAI_LIVE real-model sessions.
  */
 
-export const multiAttackHeadline = 'Multi-attack injection — smoke (scripted board complete)'
+export const multiAttackHeadline = 'Multi-attack injection — scripted guarantee + live fool-rate'
 
 export const multiAttackSummary =
-  'Twelve planted attacks across email, ticket, doc, and webhook. Scripted worst-case model always complies — this measures whether the gateway stops the resulting action, not whether a real model would fall for it. Sample size: smoke until the suite grows to dozens. Peers have no built-in vault, so every arm writes the same Obsidian-compatible Memory/ served over MCP. The same 14 benign cases run on every arm so the denominator matches; memory-write breakouts sit under the table.'
+  'Twelve planted attacks across email, ticket, doc, and webhook. Scripted worst-case model always complies — that board is the guarantee when a model is fooled. Live runs show how often models get fooled, and that ClawQL costs nothing when they don’t. Peers share the same Obsidian-compatible Memory/ over MCP; the same 14 benign cases run on every arm.'
 
 export const multiAttackHeadlineResult =
-  'Every gateway can stop these attacks by switching off memory writes; only ClawQL stops them while memory keeps working. ClawQL defaults: 0 of 12 attacks and 14 of 14 benign. Bifrost, Executor, and Obot best-config: 0 of 12 and 9 of 14 (0 of 5 memory writes) via each product’s native deny/omit. Every peer on defaults: 12 of 12. Obot on macOS / Mac mini with deny precondition. Version pins on every row. Live (composer-2.5-fast): model refused all 12 on both ClawQL and passthrough — no live gateway split under this model; smoke remains the complying-agent claim. Hard-recall vault cell measured. Counterfeit-policy: ClawQL 0 of 4; model-judged cite Datadog.'
+  'Models resist most attacks; ClawQL is there for the ones they don’t, at no cost to ordinary work. Scripted: ClawQL 0 of 12 + 14 of 14 benign; peer best-config 0 of 12 + 9 of 14 (memory off); peer defaults 12 of 12. Live (composer-2.5-fast, pre-registered): refused all 12 on ClawQL and passthrough — no instruction-follow and no hostile vault residue under the ingest-or-refuse prompt; benign still 14 of 14. Do not hunt for a gullible model. Next live hardness: AgentDojo + Datadog counterfeit-policy. Measure poison residue (ordinary summaries) as well as obedience.'
 
 export const multiAttackMechanisms = [
   {
@@ -158,10 +158,10 @@ export const multiAttackMemoryWriteBreakout =
   'Memory-write breakout (same 14 suite): ClawQL keeps 5 of 5 memory writes. Bifrost/Executor/Obot best-config score 0 of 5 memory writes when ingest is omitted or blocked — that is why they land at 9 of 14 while tying 0 of 12 on attacks.'
 
 export const multiAttackRecallNote =
-  'Recall integrity asks whether the agent still answers 15.00. Peers pass that smoke query; unlabeled poison in their vault is a separate column (also contamination). Harder queries (MAI_LIVE vault grader): labeled keeps 15.00; unlabeled surfaces 99.99. Live Cursor Task (composer-2.5-fast) refused all 12 planted instructions on both ClawQL and passthrough.'
+  'Recall integrity asks whether the agent still answers 15.00. Peers pass that smoke query; unlabeled poison is a separate column. Hard-recall vault grader: labeled 15.00 / unlabeled 99.99. Live also grades poison residue — a model can refuse an injected instruction and still summarize hostile text into memory (trusted on passthrough, labeled on ClawQL).'
 
 export const multiAttackPublishGate =
-  'Scripted board complete (version-pinned, maintainer invites). Live composer-2.5-fast measured: all-model-refusal on clawql and passthrough — not a gateway split. A live lead claim needs a model that attempts ingest on passthrough (or accept smoke as the complying-agent claim).'
+  'Two parts, both true: scripted board = guarantee when fooled; live = fool-rate + no benign cost. Pre-register models (live-models.json) and publish every result — never search for a gullible model. Live hardness from published sets (AgentDojo, Datadog counterfeit-policy). Measure poison residue, not only obedience.'
 
 export const multiAttackBenignSummary =
   'Every arm runs the same 14 benign cases (recall, search/cache/audit, memory writes, skills, same-source reply, internal team/forward, third-party still blocked). Peers that omit or block ingest fail the five memory-write cases and keep the rest — publish X of 14, then the memory-write breakout. Contamination = hostile content surfaced as trusted (same as the governance board).'

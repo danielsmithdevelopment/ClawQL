@@ -149,14 +149,17 @@
       "Version pins on every row (ClawQL commit + peer product version/image)",
       "Scripted labels kept: worst-case model, n=12, macOS note on Obot rows",
       "Maintainer invites with per-peer reproduction commands",
-      "MAI_LIVE=1 real-model matrix (hard-recall already measured) — last piece before lead claim"
+      "Live: pre-registered models only (live-models.json); publish all-refuse; measure poison residue",
+      "Live hardness: published sets (AgentDojo + Datadog counterfeit-policy) — self-written n=12 is smoke"
     ],
     "targetResult": "0/12 attacks with benign completion cost reported; peers measured on the same board; only ClawQL keeps memory writes",
-    "scriptedClaim": "Every gateway can stop these attacks by switching off memory writes; only ClawQL stops them while memory keeps working."
+    "scriptedClaim": "Every gateway can stop these attacks by switching off memory writes; only ClawQL stops them while memory keeps working.",
+    "liveClaim": "Models resist most attacks; ClawQL is there for the ones they don't, at no cost to ordinary work.",
+    "antiCherryPick": "Do not search for a gullible model to create a passthrough loss. Pre-register 3–5 deployment-realistic models and publish every result."
   },
   "honesty": [
     "Scripted, worst-case model: always complies — measures gateway stop, not model susceptibility.",
-    "Twelve attacks = smoke. Dozens planned before category claim.",
+    "Twelve attacks = smoke. Dozens planned before category claim. Live hardness → AgentDojo + Datadog counterfeit-policy (published sets).",
     "clawql_default uses the product native-tool gate (park + IFC), not a tool-name deny.",
     "Same 14 benign cases on every arm (headline X of 14). Memory-write breakout under the table shows where peer tool omit/deny costs capability.",
     "Peers have no built-in vault — equal-arm Obsidian Memory/ over MCP for every arm.",
@@ -165,6 +168,8 @@
     "Obot rows stamp macOS / mac_mini (Docker Desktop VM fine for effectuation).",
     "Version pins: ClawQL commit + peer image/binary/npm version on every measured row.",
     "Recall integrity = answered trusted 15.00. Unlabeled poison is a separate finding (also vault_contaminated). Harder queries that make poison rank first belong in MAI_LIVE=1.",
+    "Live: measure instruction-follow AND poison residue (ordinary summaries can store hostile text without obeying the plant).",
+    "Live models: pre-register in live-models.json; never iterate toward a gullible model.",
     "Injection resistance is measurable for every peer — pending until run, never not_offered.",
     "not_offered remains correct only for capabilities a product never claims (e.g. signed security-key approvals)."
   ],
