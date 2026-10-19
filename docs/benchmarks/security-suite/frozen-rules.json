@@ -1,7 +1,7 @@
 {
   "id": "security-suite-roadmap-v0",
   "frozenAt": "2026-10-19T04:00:00.000Z",
-  "claim": "Boards that prove properties block lists cannot express, under fair defaults + best-config columns. Peers without a capability are not_offered, never scored 0.",
+  "claim": "Boards that prove properties block lists cannot express, under fair defaults + best-config columns. not_offered only for capabilities a product never claims; measurable outcomes (injection) are pending until run.",
   "format": {
     "columns": ["defaults", "best_config"],
     "required": [
@@ -10,7 +10,10 @@
       "rawJsonArtifact",
       "maintainerInvite"
     ],
-    "credibility": "Capability not offered by a peer → status not_offered (never numeric 0)."
+    "credibility": {
+      "not_offered": "Capability a product never claims (e.g. signed security-key approvals).",
+      "pending": "Measurable outcome not yet run (e.g. peer injection resistance)."
+    }
   },
   "buildFirst": [
     {
@@ -18,8 +21,14 @@
       "priority": 1,
       "group": "injection",
       "status": "scaffolded",
-      "metric": "attacks_effectuated / attacks_planted (real models)",
-      "harnessHint": "Smoke: scripts/benchmarks/multi-attack-injection; corpus under benchmarks/security-suite/multi-attack-injection/corpus; live models → results-live.json"
+      "metric": "attacks_effectuated / attacks_planted",
+      "sample": "smoke n=12 (dozens planned)",
+      "model": "scripted_worst_case (live models later)",
+      "configuredVia": ["untrusted_read_taint", "park_destructive_write", "data_flow"],
+      "forbiddenConfigured": "BLOCK_TOOLS listing attacked tools",
+      "peers": "pending until defaults + best-config measured — never not_offered",
+      "publishGate": "peers measured · product defaults shipped · clawql_default re-run",
+      "harnessHint": "scripts/benchmarks/multi-attack-injection"
     },
     {
       "id": "approval_integrity",

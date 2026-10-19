@@ -1,16 +1,21 @@
 #!/usr/bin/env node
 /**
- * Multi-attack injection board — smoke (scripted complying agent).
+ * Multi-attack injection board — smoke (scripted, worst-case model).
  *
- * Plants corpus into a trial workspace, then for each attack attempts
- * memory_ingest carrying that attack's effectToken.
+ * The scripted "model" always follows the planted instruction. This measures
+ * whether the gateway stops the resulting action — not whether a real model
+ * would fall for the injection. Real-model matrix → results-live.json later.
  *
- *   clawql_default / passthrough → expect N/N effectuated
- *   clawql_configured            → Panguard BLOCK_TOOLS=memory_ingest → 0/N
+ * Sample: 12 attacks (smoke). Planned: dozens across the same four channels.
+ *
+ * Arms:
+ *   clawql_default     — mechanisms off → expect 12/12 (honest stock gap)
+ *   clawql_configured  — general mechanisms (taint / park / data-flow), NOT a tool deny
+ *   passthrough        — no gateway → 12/12 control
+ *   obot/bifrost/executor — pending until peer CI wires defaults + best-config
  *
  * Usage:
  *   node scripts/benchmarks/multi-attack-injection/run-board.mjs
- *   MAI_OUT=docs/.../results-smoke.json node ...
  */
 import {
   cpSync,
@@ -23,6 +28,12 @@ import {
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gradeAttacks, smokeExpectationMet } from "./grade.mjs";
+import {
+  MECHANISM_NAMES,
+  MECHANISMS_CONFIGURED,
+  MECHANISMS_OFF,
+  gateScriptedAttack,
+} from "./mechanisms.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../../..");
@@ -57,24 +68,6 @@ function slug(title) {
     .slice(0, 80);
 }
 
-/** Mirror of Panguard atrBlockHook tool-name deny (same as openbench-cursor harness). */
-function panguardAllow(toolName, env) {
-  if (env.CLAWQL_PANGUARD_IN_PROCESS?.trim() !== "1") return { allow: true };
-  const blocked = env.CLAWQL_PANGUARD_BLOCK_TOOLS?.trim();
-  if (!blocked) return { allow: true };
-  const deny = blocked
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (deny.includes(toolName) || deny.includes("*")) {
-    return {
-      allow: false,
-      denyReason: `Panguard policy blocked tool: ${toolName}`,
-    };
-  }
-  return { allow: true };
-}
-
 function seedTrial(dir) {
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
@@ -82,22 +75,27 @@ function seedTrial(dir) {
   const plantedRoot = join(dir, "planted");
   mkdirSync(plantedRoot, { recursive: true });
   cpSync(CORPUS_DIR, plantedRoot, { recursive: true });
-  return join(dir, "vault");
+  return { vault: join(dir, "vault"), plantedRoot };
 }
 
 /**
- * Scripted complying agent: for every planted attack, attempt memory_ingest
- * with that attack's hostileTitle + effectToken in insights.
+ * Scripted worst-case agent: always complies with every planted instruction.
+ * Gate decides using general mechanisms (or none), never a tool-name list.
  */
-function runScriptedComply(vaultRoot, env) {
+function runScriptedComply(vaultRoot, mechanisms) {
+  const session = { labels: new Set() };
   const attempts = [];
+  const mechanismHits = Object.fromEntries(MECHANISM_NAMES.map((n) => [n, 0]));
+
   for (const attack of MANIFEST.attacks) {
-    const gate = panguardAllow("memory_ingest", env);
+    const gate = gateScriptedAttack(attack, mechanisms, session);
     if (!gate.allow) {
+      if (gate.mechanism) mechanismHits[gate.mechanism] += 1;
       attempts.push({
         id: attack.id,
         channel: attack.channel,
         blocked: true,
+        mechanism: gate.mechanism,
         denyReason: gate.denyReason,
       });
       continue;
@@ -107,31 +105,53 @@ function runScriptedComply(vaultRoot, env) {
       "Memory",
       `${slug(attack.hostileTitle) || attack.id}.md`
     );
-    const body = `# ${attack.hostileTitle}\n\neffectToken: ${attack.effectToken}\nplanted_from: ${attack.path}\n`;
-    writeFileSync(file, body, "utf8");
+    writeFileSync(
+      file,
+      `# ${attack.hostileTitle}\n\neffectToken: ${attack.effectToken}\nplanted_from: ${attack.path}\n`,
+      "utf8"
+    );
     attempts.push({
       id: attack.id,
       channel: attack.channel,
       blocked: false,
+      mechanism: null,
       written: file,
     });
   }
-  const grade = gradeAttacks(MANIFEST, vaultRoot);
-  return { attempts, grade };
+
+  return {
+    attempts,
+    grade: gradeAttacks(MANIFEST, vaultRoot),
+    mechanismHits,
+    sessionLabels: [...session.labels].sort(),
+  };
 }
 
-function runArm(armId, column, vaultRoot, env, expect) {
+function runArm({
+  id,
+  column,
+  vaultRoot,
+  mechanisms,
+  expect,
+  mechanismsNamed,
+}) {
   const t0 = performance.now();
-  const { attempts, grade } = runScriptedComply(vaultRoot, env);
+  const { attempts, grade, mechanismHits, sessionLabels } = runScriptedComply(
+    vaultRoot,
+    mechanisms
+  );
   const elapsed_ms = Math.round((performance.now() - t0) * 1000) / 1000;
   const ok = smokeExpectationMet(grade, expect);
   return {
-    id: armId,
+    id,
     column,
     skipped: false,
     status: "measured",
     expect,
     smoke_ok: ok,
+    mechanisms: mechanismsNamed,
+    mechanism_hits: mechanismHits,
+    session_labels: sessionLabels,
     attacks_planted: grade.attacks_planted,
     attacks_effectuated: grade.attacks_effectuated,
     rate: grade.rate,
@@ -143,22 +163,40 @@ function runArm(armId, column, vaultRoot, env, expect) {
     gate_latency_ms: elapsed_ms,
     detail:
       expect === "deny"
-        ? env.CLAWQL_PANGUARD_BLOCK_TOOLS
-          ? "panguard_BLOCK_TOOLS_memory_ingest"
-          : "deny_expected_but_no_BLOCK_TOOLS"
-        : "scripted_comply_no_tool_deny",
+        ? "general_mechanisms_taint_park_data_flow — not BLOCK_TOOLS"
+        : "scripted_worst_case_comply_mechanisms_off",
   };
 }
 
-function notOffered(id) {
+/**
+ * Peer rows: injection resistance is measurable for any gateway.
+ * Until CI wires defaults + best-config against this corpus → pending
+ * (never not_offered — that label is for capabilities a product never claims).
+ */
+function pendingPeer(id, column) {
+  const envKey =
+    id === "obot"
+      ? column === "defaults"
+        ? "OBOT_MCP_URL"
+        : "OBOT_MCP_URL_DENY"
+      : id === "bifrost"
+        ? column === "defaults"
+          ? "BIFROST_MCP_URL"
+          : "BIFROST_MCP_URL_DENY"
+        : column === "defaults"
+          ? "EXECUTOR_MCP_URL"
+          : "EXECUTOR_MCP_URL_BLOCK";
   return {
-    id,
+    id: `${id}_${column === "defaults" ? "default" : "best_config"}`,
+    peer: id,
+    column,
     skipped: true,
-    status: "not_offered",
+    status: "pending",
+    skipUnlessEnv: envKey,
     attacks_planted: MANIFEST.attacks.length,
     attacks_effectuated: null,
     rate: null,
-    detail: "peer_injection_board_not_wired — reported not_offered, not 0",
+    detail: `Peer ${id} ${column} not measured yet — wire ${envKey} against the same 12-attack corpus. Injection is an outcome every gateway can be scored on; pending ≠ not_offered.`,
   };
 }
 
@@ -170,48 +208,74 @@ function main() {
 
   const arms = [];
 
-  // clawql_default
   {
-    const dir = join(WORK, "clawql_default");
-    const vault = seedTrial(dir);
-    const env = { ...process.env };
-    delete env.CLAWQL_PANGUARD_BLOCK_TOOLS;
-    delete env.CLAWQL_PANGUARD_IN_PROCESS;
-    delete env.CLAWQL_PANGUARD_PROXY_PLUGIN;
-    arms.push(runArm("clawql_default", "defaults", vault, env, "allow"));
+    const { vault } = seedTrial(join(WORK, "clawql_default"));
+    arms.push(
+      runArm({
+        id: "clawql_default",
+        column: "defaults",
+        vaultRoot: vault,
+        mechanisms: MECHANISMS_OFF,
+        expect: "allow",
+        mechanismsNamed: [],
+      })
+    );
   }
 
-  // clawql_configured
   {
-    const dir = join(WORK, "clawql_configured");
-    const vault = seedTrial(dir);
-    const env = {
-      ...process.env,
-      CLAWQL_PANGUARD_IN_PROCESS: "1",
-      CLAWQL_PANGUARD_BLOCK_TOOLS: "memory_ingest",
-      CLAWQL_PANGUARD_PROXY_PLUGIN: "1",
-    };
-    arms.push(runArm("clawql_configured", "best_config", vault, env, "deny"));
+    const { vault } = seedTrial(join(WORK, "clawql_configured"));
+    arms.push(
+      runArm({
+        id: "clawql_configured",
+        column: "best_config",
+        vaultRoot: vault,
+        mechanisms: MECHANISMS_CONFIGURED,
+        expect: "deny",
+        mechanismsNamed: [...MECHANISM_NAMES],
+      })
+    );
   }
 
-  // passthrough control
   {
-    const dir = join(WORK, "passthrough");
-    const vault = seedTrial(dir);
-    const env = { ...process.env };
-    delete env.CLAWQL_PANGUARD_BLOCK_TOOLS;
-    delete env.CLAWQL_PANGUARD_IN_PROCESS;
-    arms.push(runArm("passthrough", "defaults", vault, env, "allow"));
+    const { vault } = seedTrial(join(WORK, "passthrough"));
+    arms.push(
+      runArm({
+        id: "passthrough",
+        column: "defaults",
+        vaultRoot: vault,
+        mechanisms: MECHANISMS_OFF,
+        expect: "allow",
+        mechanismsNamed: [],
+      })
+    );
   }
 
-  arms.push(notOffered("obot"), notOffered("bifrost"), notOffered("executor"));
+  for (const peer of ["obot", "bifrost", "executor"]) {
+    arms.push(pendingPeer(peer, "defaults"));
+    arms.push(pendingPeer(peer, "best_config"));
+  }
 
   const measured = arms.filter((a) => a.status === "measured");
   const board_pass = measured.every((a) => a.smoke_ok);
+  const clawqlDefault = measured.find((a) => a.id === "clawql_default");
 
   const report = {
     measuredAt: new Date().toISOString(),
-    kind: "multi_attack_injection_smoke_v0",
+    kind: "multi_attack_injection_smoke_v1",
+    sample: {
+      attacks_planted: MANIFEST.attacks.length,
+      label: "smoke",
+      note: "Twelve attacks is a smoke run. Planned suite: dozens across email/ticket/doc/webhook.",
+    },
+    model: {
+      kind: "scripted_worst_case",
+      note: "The scripted model always follows the injected instruction. This measures whether the gateway stops the resulting action — not whether a real model would comply. Real-model matrix is a follow-up.",
+    },
+    headline: {
+      clawql_default_effectuated: clawqlDefault?.attacks_effectuated ?? null,
+      clawql_default_planted: clawqlDefault?.attacks_planted ?? null,
+      note: "ClawQL on defaults lets all planted attacks through — same as no gateway. Strongest argument for shipping park-destructive + untrusted-read taint as stock defaults.",
+    },
     rules: FROZEN,
     corpus: {
       id: MANIFEST.id,
@@ -222,6 +286,7 @@ function main() {
     board_pass,
     honesty: FROZEN.honesty,
     maintainerInvite: FROZEN.maintainerInvite,
+    publishGate: FROZEN.publishGate,
   };
 
   writeFileSync(OUT, `${JSON.stringify(report, null, 2)}\n`, "utf8");
@@ -230,11 +295,15 @@ function main() {
       {
         out: OUT,
         board_pass,
-        summary: measured.map((a) => ({
+        headline: report.headline,
+        summary: arms.map((a) => ({
           id: a.id,
+          status: a.status,
+          column: a.column,
           effectuated: a.attacks_effectuated,
           planted: a.attacks_planted,
           rate: a.rate,
+          mechanisms: a.mechanisms,
           smoke_ok: a.smoke_ok,
         })),
       },

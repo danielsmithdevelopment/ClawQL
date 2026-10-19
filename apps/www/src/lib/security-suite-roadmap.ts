@@ -6,10 +6,10 @@
 export const securitySuiteHeadline = 'Security suite — beyond block lists'
 
 export const securitySuiteSummary =
-  'Boards that hit what a tool-name deny cannot express, and that matter even with no peer present. Same format as governance: defaults column, best-config column, frozen rules, published harness, maintainer invite. Peers without a capability are reported as not offered — never as a zero.'
+  'Boards that hit what a tool-name deny cannot express, and that matter even with no peer present. Same format as governance: defaults column, best-config column, frozen rules, published harness, maintainer invite. not_offered is only for capabilities a product never claims — measurable outcomes (like injection resistance) stay pending until run.'
 
 export const securitySuiteCredibility =
-  'Nobody can dispute a measured failure of something a product claims. Scoring a product down for something it never claims looks like a rigged test.'
+  'Nobody can dispute a measured failure of something a product claims. Scoring a product down for something it never claims looks like a rigged test. Hiding a measurable peer outcome as not offered looks like avoiding the comparison.'
 
 export type SecuritySuitePriority = {
   id: string
@@ -25,7 +25,7 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     priority: 1,
     title: 'Multi-attack injection suite',
     status: 'scaffolded',
-    why: '12 planted attacks across email, ticket, doc, webhook — smoke harness counts effectuated/planted. Live models next.',
+    why: 'Smoke: 12 attacks, scripted worst-case. Defaults 12/12 (honest gap). Configured via taint/park/data-flow. Peers pending. Not published yet.',
   },
   {
     id: 'approval_integrity',
@@ -241,7 +241,12 @@ export const securitySuiteLinks = [
     detail: 'Defaults vs best-config — the format every suite board inherits',
   },
   {
-    label: 'Multi-attack smoke harness',
+    label: 'Multi-attack board',
+    href: '/benchmarks/#multi-attack',
+    detail: 'Smoke scorecard — not a live claim yet',
+  },
+  {
+    label: 'Multi-attack harness',
     href: 'https://github.com/danielsmithdevelopment/ClawQL/tree/main/scripts/benchmarks/multi-attack-injection',
     detail: 'npm run benchmark:multi-attack-injection',
   },

@@ -14,19 +14,26 @@ Live overview: [clawql.com/benchmarks#security-suite](https://clawql.com/benchma
 
 ## Credibility rule
 
-Where a peer **does not offer** a capability (e.g. signed mandate digests), report **`not_offered`** — never score it as `0`. Measured failure of something a product claims is fair; scoring it down for something it never claims looks rigged.
+| Label | Use when |
+| ----- | -------- |
+| **`not_offered`** | Product never claims the capability (e.g. signed mandate digests / security-key approvals) |
+| **`pending`** | Outcome is measurable but not yet run |
+
+**Injection resistance is an outcome** — every gateway can be scored on the same corpus. Marking Obot / Bifrost / Executor `not_offered` on injection hides a measurable result. Use **`pending`** until defaults + best-config are measured.
+
+Measured failure of something a product claims is fair; scoring it down for something it never claims looks rigged.
 
 ## Build first (signal per effort)
 
 | Priority | Board                             | Why                                                                             |
 | -------- | --------------------------------- | ------------------------------------------------------------------------------- |
-| **1**    | Multi-attack injection suite      | Lands with every buyer; “0 of N” with real models                               |
+| **1**    | Multi-attack injection suite      | Peers → configured via general mechanisms → ship product defaults → publish     |
 | **2**    | Approval-integrity cells          | No peer config can tie (self-approval, digests, replay, collusion, crash races) |
 | **3**    | Exfil through an allowed tool     | Proves data-flow / taint after untrusted reads                                  |
 | **4**    | Secret visibility from agent code | Timely post-OpenCode; vault injection should yield nothing                      |
 | **5**    | Kill-mid-write duplicates         | Turns TLA+ “zero duplicate side effects” into a measured number                 |
 
-Parallel product track (not a peer board): make **ClawQL defaults** close the governance gap — destructive writes park for a person; untrusted reads taint later internal writes — so `clawql_default` can reach 5/5 without `BLOCK_TOOLS`.
+Parallel product track (required before publishing multi-attack): make **ClawQL defaults** close the gap — **park destructive writes** for a person; **taint sessions after untrusted reads** — so `clawql_default` can go from 12/12 → 0/12 on the smoke board via those general mechanisms (not `BLOCK_TOOLS`).
 
 ## Property groups
 
@@ -85,24 +92,15 @@ Parallel product track (not a peer board): make **ClawQL defaults** close the go
 
 ## Board status
 
-| Id                         | Status      | Notes                                            |
-| -------------------------- | ----------- | ------------------------------------------------ |
-| governance-policy-depth v2 | **Shipped** | Fair defaults + best-config; design cells listed |
-<<<<<<< HEAD
-| multi_attack_suite | **Scaffolded** | Smoke harness + 12-attack corpus (`npm run benchmark:multi-attack-injection`); live models → `results-live.json` |
-| approval_integrity | Partial | Harness resume probe only; full cells pending |
-| allowed_tool_exfil | Planned | |
-| secret_visibility | Planned | |
-| kill_mid_write | Planned | Ties to ProgramCellDO / TLA+ evidence |
-| Remaining groups | Backlog | After top five |
-=======
-| multi_attack_suite         | Planned     | Extends OpenBench `memory-injection-attempt`     |
-| approval_integrity         | Partial     | Harness resume probe only; full cells pending    |
-| allowed_tool_exfil         | Planned     |                                                  |
-| secret_visibility          | Planned     |                                                  |
-| kill_mid_write             | Planned     | Ties to ProgramCellDO / TLA+ evidence            |
-| Remaining groups           | Backlog     | After top five                                   |
->>>>>>> origin/cursor/security-suite-roadmap-f4ec
+| Id                         | Status         | Notes                                                                                          |
+| -------------------------- | -------------- | ---------------------------------------------------------------------------------------------- |
+| governance-policy-depth v2 | **Shipped**    | Fair defaults + best-config; design cells listed                                               |
+| multi_attack_suite         | **Scaffolded** | Smoke n=12, scripted worst-case; configured = taint/park/data-flow; peers **pending**; **not published** until defaults ship |
+| approval_integrity         | Partial        | Harness resume probe only; full cells pending                                                  |
+| allowed_tool_exfil         | Planned        |                                                                                                |
+| secret_visibility          | Planned        |                                                                                                |
+| kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                          |
+| Remaining groups           | Backlog        | After top five                                                                                 |
 
 ## Related
 

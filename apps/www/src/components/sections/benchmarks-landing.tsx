@@ -36,6 +36,14 @@ import {
   governanceScorecardRows,
 } from '@/lib/governance-benchmarks'
 import {
+  multiAttackArmRows,
+  multiAttackHeadline,
+  multiAttackHeadlineResult,
+  multiAttackMechanisms,
+  multiAttackPublishGate,
+  multiAttackSummary,
+} from '@/lib/multi-attack-injection'
+import {
   securitySuiteBuildFirst,
   securitySuiteCredibility,
   securitySuiteGroups,
@@ -162,6 +170,13 @@ export function BenchmarksLanding() {
                 className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
               >
                 security suite
+              </a>
+              {' · '}
+              <a
+                href="#multi-attack"
+                className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
+              >
+                multi-attack smoke
               </a>
               {' · '}
               <a
@@ -522,6 +537,89 @@ export function BenchmarksLanding() {
             </li>
           ))}
         </ul>
+      </Section>
+
+      <Section
+        id="multi-attack"
+        className="pt-10 sm:pt-14"
+        eyebrow="Build-first #1 · smoke"
+        headline={multiAttackHeadline}
+        subheadline={<p>{multiAttackSummary}</p>}
+        cta={
+          <div className="flex flex-col gap-2">
+            <p className="max-w-2xl text-sm/6 text-mist-800 dark:text-mist-200">
+              <span className="font-medium text-mist-950 dark:text-white">Headline: </span>
+              {multiAttackHeadlineResult}
+            </p>
+            <p className="max-w-2xl text-xs/6 text-mist-600 dark:text-mist-400">{multiAttackPublishGate}</p>
+          </div>
+        }
+      >
+        <h3 className="text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Configured column — mechanisms, not tools
+        </h3>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {multiAttackMechanisms.map((m) => (
+            <div
+              key={m.id}
+              className="rounded-lg bg-mist-950/[0.03] px-4 py-3 ring-1 ring-mist-950/8 dark:bg-white/[0.03] dark:ring-white/10"
+            >
+              <p className="text-sm font-semibold text-mist-950 dark:text-white">{m.title}</p>
+              <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">{m.detail}</p>
+            </div>
+          ))}
+        </div>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Smoke scorecard · n=12 · scripted worst-case
+        </h3>
+        <ComparisonTable minWidthClass="min-w-[720px]" className="mt-4">
+          <caption className="sr-only">
+            Multi-attack injection smoke: effectuated over planted by arm
+          </caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Column</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Status</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Effectuated</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Note</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {multiAttackArmRows.map((row) => (
+              <tr
+                key={`${row.arm}-${row.column}`}
+                className={clsx(
+                  'border-t border-mist-950/5 dark:border-white/10',
+                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                )}
+              >
+                <ComparisonRowTh
+                  className={clsx(
+                    'font-normal',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
+                  )}
+                >
+                  {row.arm}
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-mist-700 dark:text-mist-400')}>{row.column}</ComparisonTd>
+                <ComparisonTd className={clsx('text-center text-mist-700 dark:text-mist-400')}>
+                  {row.status}
+                </ComparisonTd>
+                <ComparisonTd
+                  className={clsx(
+                    'text-right font-semibold tabular-nums',
+                    row.highlight ? 'text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
+                  )}
+                >
+                  {row.effectuated}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-xs/5 text-mist-600 dark:text-mist-400')}>{row.note}</ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
       </Section>
 
       <Section

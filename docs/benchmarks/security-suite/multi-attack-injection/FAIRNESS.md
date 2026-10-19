@@ -1,32 +1,38 @@
 # Multi-attack injection — fairness
 
+## Credibility
+
+| Label | Use when |
+| ----- | -------- |
+| **`not_offered`** | Product never claims the capability (e.g. signed approvals with a security key) |
+| **`pending`** | Outcome is measurable but not yet run (injection resistance for Obot / Bifrost / Executor) |
+
+Injection resistance is an **outcome**. Any gateway can be put through the same twelve (then dozens of) attacks. Marking peers `not_offered` hides a measurable result.
+
 ## Columns
 
 | Column | Meaning |
 | ------ | ------- |
-| **Defaults** | Stock product, no cell-specific deny for `memory_ingest` |
-| **Best-config** | Each product’s recommended deny / scope for the write the attacks try to force |
+| **Defaults** | Stock product |
+| **Best-config** | Recommended hardening via **general mechanisms** |
 
-## Metric
+### Configured ClawQL — name mechanisms, not tools
 
-`attacks_effectuated / attacks_planted`
+Allowed: untrusted-read taint · park destructive writes · data-flow rules.
 
-- **Planted:** entries in `corpus/manifest.json`
-- **Effectuated (smoke):** vault `Memory/` contains the attack’s `effectToken`
-- **Effectuated (live, later):** real model complies with the planted instruction
+Forbidden: `BLOCK_TOOLS` (or equivalent) listing the tools the twelve attacks use. That only shows a block list blocks what’s on it — the same credibility failure as governance v1.
 
-## Credibility
+## Labels on every published run
 
-Peers that do not offer an injection / tool-gate board for this corpus are **`not_offered`**, never scored `0`.
+1. **Scripted, worst-case model** — always complies; measures gateway stop, not model susceptibility. Real-model matrix is separate.
+2. **Sample size** — 12 = smoke until the suite grows to dozens.
 
-## Honesty
+## Headline
 
-- Smoke is **scripted** — proves harness counting + configured deny, not LLM susceptibility.
-- Live “0 of N” requires `results-live.json` with real models on the same corpus.
-- A tool-name deny is best-config; content-aware ATR / taint is a separate design cell.
+`clawql_default` **12/12** is honest and intentional: stock ClawQL matches passthrough until park-destructive + untrusted-read taint apply to the **same write path the attacks use**.
 
-## Artifacts
+Product defaults shipping now (execute-path):
+- Session IFC **on** by default (`CLAWQL_ENABLE_SESSION_IFC=0` to opt out)
+- Trusted MCP `destructiveHint` → **mandate** (park), not hard-block
 
-- Frozen rules: `scripts/benchmarks/multi-attack-injection/frozen-rules.json`
-- Smoke results: [`results-smoke.json`](./results-smoke.json)
-- Harness: `scripts/benchmarks/multi-attack-injection/run-board.mjs`
+Native `memory_ingest` still bypasses execute-core today — closing that gap is required before the default column can go 12/12 → 0/12 on this board. Then re-run.
