@@ -5,6 +5,7 @@ Equal-arm proof that **ClawQL+Panguard** hard-denies adversarial `memory_ingest`
 **Live board:** [clawql.com/benchmarks#governance](https://clawql.com/benchmarks/#governance)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 | Artifact                                           | Role                                                                                                  |
 | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
@@ -22,6 +23,15 @@ Equal-arm proof that **ClawQL+Panguard** hard-denies adversarial `memory_ingest`
 | Harness                                            | [`scripts/benchmarks/governance-policy-depth/`](../../../scripts/benchmarks/governance-policy-depth/) |
 
 > > > > > > > 298fee65 (feat(gov-bench): measure Bifrost peer on policy-depth board (2/5))
+=======
+| Artifact                                         | Role                                                                                                  |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| [`results-smoke.json`](./results-smoke.json)     | ClawQL + passthrough control                                                                          |
+| [`results-obot.json`](./results-obot.json)       | Docker Obot peer                                                                                      |
+| [`results-bifrost.json`](./results-bifrost.json) | Bifrost peer (default allow-all VK)                                                                   |
+| [`results-cells.json`](./results-cells.json)     | Executor cells v2 (risky write · untrusted read · resume auto-approve)                                |
+| Harness                                          | [`scripts/benchmarks/governance-policy-depth/`](../../../scripts/benchmarks/governance-policy-depth/) |
+>>>>>>> b1a22de6 (feat(www): showcase fail-closed security peer wins on /benchmarks)
 
 ## Vault-write board (Obot + Bifrost)
 
