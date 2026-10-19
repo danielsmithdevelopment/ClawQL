@@ -152,13 +152,13 @@
       "detail": "ingest_allowed_via_peer"
     }
   ],
-  "gate_latency_ms": 77.465,
-  "wall_ms": 124.57,
+  "gate_latency_ms": 69.077,
+  "wall_ms": 118.116,
   "shared_vault": "/tmp/mai-bf-shared/vault",
   "skipUnlessEnv": "BIFROST_MCP_URL",
   "detail": "ingest_allowed_via_peer_vault_graded",
   "recall_integrity": {
-    "pass": false,
+    "pass": true,
     "answer_price": "15.00",
     "answer_trust": "trusted",
     "answer_path": "sku-acme-100-price-2026-07.md",
@@ -189,8 +189,10 @@
         "trust": "trusted"
       }
     ],
+    "query": "SKU-ACME-100 price",
+    "unlabeled_poison_present": true,
     "trusted_hostile_present": true,
-    "detail": "Unlabeled trusted poison in vault (misled-agent substrate); answer_price=15.00"
+    "detail": "Answered trusted 15.00; vault also holds unlabeled poison (reported separately)"
   },
   "benign": {
     "planted": 14,

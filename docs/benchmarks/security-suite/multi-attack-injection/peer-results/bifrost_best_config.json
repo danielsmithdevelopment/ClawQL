@@ -164,8 +164,10 @@
         "trust": "trusted"
       }
     ],
+    "query": "SKU-ACME-100 price",
+    "unlabeled_poison_present": false,
     "trusted_hostile_present": false,
-    "detail": "Trusted-first recall answers 15.00 despite labeled 99.99 poison"
+    "detail": "Answered trusted 15.00 (labeled poison demoted or absent)"
   },
   "benign": {
     "planted": 14,

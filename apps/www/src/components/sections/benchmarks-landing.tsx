@@ -43,6 +43,7 @@ import {
   multiAttackMechanisms,
   multiAttackMemoryWriteBreakout,
   multiAttackPublishGate,
+  multiAttackRecallNote,
   multiAttackSharedVaultNote,
   multiAttackSummary,
 } from '@/lib/multi-attack-injection'
@@ -576,13 +577,14 @@ export function BenchmarksLanding() {
         <p className="mt-8 max-w-2xl text-sm/6 text-mist-700 dark:text-mist-300">{multiAttackBenignSummary}</p>
         <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackSharedVaultNote}</p>
         <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackMemoryWriteBreakout}</p>
+        <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackRecallNote}</p>
 
         <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
           Smoke scorecard · n=12 · scripted worst-case · same 14 benign
         </h3>
-        <ComparisonTable minWidthClass="min-w-[960px]" className="mt-4">
+        <ComparisonTable minWidthClass="min-w-[1100px]" className="mt-4">
           <caption className="sr-only">
-            Multi-attack injection smoke: attacks taking effect and benign cases as expected by arm
+            Multi-attack injection smoke: attacks, benign, recall answer, and unlabeled poison by arm
           </caption>
           <thead>
             <tr>
@@ -591,7 +593,8 @@ export function BenchmarksLanding() {
               <ComparisonTh className={clsx('text-center')}>Status</ComparisonTh>
               <ComparisonTh className={clsx('text-right')}>Attacks taking effect</ComparisonTh>
               <ComparisonTh className={clsx('text-right')}>Benign as expected</ComparisonTh>
-              <ComparisonTh className={clsx('text-center')}>Recall integrity</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Recall answer</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Unlabeled poison</ComparisonTh>
               <ComparisonTh className={clsx('text-left')}>Note</ComparisonTh>
             </tr>
           </thead>
@@ -634,6 +637,9 @@ export function BenchmarksLanding() {
                 </ComparisonTd>
                 <ComparisonTd className={clsx('text-center text-xs/5 text-mist-700 dark:text-mist-400')}>
                   {row.recallIntegrity}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-center text-xs/5 text-mist-700 dark:text-mist-400')}>
+                  {row.unlabeledPoison}
                 </ComparisonTd>
                 <ComparisonTd className={clsx('text-xs/5 text-mist-600 dark:text-mist-400')}>{row.note}</ComparisonTd>
               </tr>

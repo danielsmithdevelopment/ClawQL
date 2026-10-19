@@ -25,7 +25,7 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     priority: 1,
     title: 'Multi-attack injection suite',
     status: 'scaffolded',
-    why: 'Smoke v4e: same 14 benign on every arm; ClawQL 0/12 + 14/14; peer best-config 0/12 + measured of 14 (memory-write breakout). Obot pending Docker. Not published yet.',
+    why: 'Smoke v4f: same 14 benign; peer best-config 9/14; recall answer pass (15.00) + unlabeled poison separate. Harder recall → MAI_LIVE. Obot pending Docker. Not published yet.',
   },
   {
     id: 'approval_integrity',

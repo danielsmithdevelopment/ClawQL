@@ -154,8 +154,8 @@
       "detail": "{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"ok\\\": false,\\n  \\\"error\\\": {\\n    \\\"code\\\": \\\"tool_blocked\\\",\\n    \\\"message\\\": \\\"Tool blocked by policy: mai-vault.org.default.memory_ingest\\\",\\n    \\\"details\\\": {\\n      \\\"address\\\": \\\"tools.mai-vault.org.default.memory_ingest\\\",\\n      \\\"pattern\\\": \\\"mai-vault.org.default.memory_ingest\\\",\\n      \\\"_tag\\\": \\\"ToolBlockedError\\\"\\n    }\\n  }\\n}\"}],\"structuredContent\":{\"status\":\"completed\",\"result\":{\"ok\":false,\"error\":{\"code\":\"tool_blocked\",\"message\":\"Tool"
     }
   ],
-  "gate_latency_ms": 117.416,
-  "wall_ms": 193.74,
+  "gate_latency_ms": 94.178,
+  "wall_ms": 150.084,
   "shared_vault": "/tmp/mai-exec-shared/vault",
   "skipUnlessEnv": "EXECUTOR_MCP_URL_BLOCK",
   "detail": "all_ingests_blocked_via_peer",
@@ -176,8 +176,10 @@
         "trust": "trusted"
       }
     ],
+    "query": "SKU-ACME-100 price",
+    "unlabeled_poison_present": false,
     "trusted_hostile_present": false,
-    "detail": "Trusted-first recall answers 15.00 despite labeled 99.99 poison"
+    "detail": "Answered trusted 15.00 (labeled poison demoted or absent)"
   },
   "benign": {
     "planted": 14,
