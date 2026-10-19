@@ -101,10 +101,7 @@ function asRecord(args: unknown): Record<string, unknown> | null {
  * carries labels that later recalls re-accumulate into the session.
  * Mutates `args` in place when it is a plain object.
  */
-export function stampUntrustedProvenance(
-  args: unknown,
-  sessionLabels: readonly string[]
-): void {
+export function stampUntrustedProvenance(args: unknown, sessionLabels: readonly string[]): void {
   const rec = asRecord(args);
   if (!rec) return;
 
@@ -350,9 +347,7 @@ export function governNativeHandler<TArgs extends unknown[], TResult>(
     if (block) return block as TResult;
     const result = await handler(...args);
     const ok =
-      !result ||
-      typeof result !== "object" ||
-      (result as { isError?: boolean }).isError !== true;
+      !result || typeof result !== "object" || (result as { isError?: boolean }).isError !== true;
     if (ok) {
       accumulateNativeToolReadAfterSuccess({
         toolName,

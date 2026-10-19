@@ -18,12 +18,12 @@ ChatGPT extension tools use `governNativeHandler` from `clawql-api` (same gate; 
 
 Blocking every untrusted→memory write made ordinary work (“read an email, write a summary”) fail, which pushes operators to turn protection off. Defaults now:
 
-| Move | Default behavior |
-| ---- | ---------------- |
-| Untrusted → **memory** (labelable sink) | **Allow**, stamp `clawql-untrusted` + provenance; later recall re-taints |
-| Untrusted → **external / privileged** (blocking sink) | **Block** (`untrusted_read_taint` / `data_flow`) |
-| `memory_ingest` **append** | Allow (not parked) |
-| `memory_ingest` **overwrite** (`append: false`) | **Park** for mandate (`park_destructive_write`) |
+| Move                                                  | Default behavior                                                         |
+| ----------------------------------------------------- | ------------------------------------------------------------------------ |
+| Untrusted → **memory** (labelable sink)               | **Allow**, stamp `clawql-untrusted` + provenance; later recall re-taints |
+| Untrusted → **external / privileged** (blocking sink) | **Block** (`untrusted_read_taint` / `data_flow`)                         |
+| `memory_ingest` **append**                            | Allow (not parked)                                                       |
+| `memory_ingest` **overwrite** (`append: false`)       | **Park** for mandate (`park_destructive_write`)                          |
 
 Unknown tools remain **destructive** + **blocking** (fail closed).
 

@@ -33,7 +33,7 @@ Measured failure of something a product claims is fair; scoring it down for some
 | **4**    | Secret visibility from agent code | Timely post-OpenCode; vault injection should yield nothing                      |
 | **5**    | Kill-mid-write duplicates         | Turns TLA+ “zero duplicate side effects” into a measured number                 |
 
-Parallel product track (required before publishing multi-attack): make **ClawQL defaults** close the gap via general mechanisms (not `BLOCK_TOOLS`) — **park overwrites** of authoritative facts; **label** untrusted→memory writes; **block** untrusted→external/privileged — so `clawql_default` is **0/12** trusted effectuation *and* benign workflows complete without a human (plus persistent-injection blocked).
+Parallel product track (required before publishing multi-attack): make **ClawQL defaults** close the gap via general mechanisms (not `BLOCK_TOOLS`) — **park overwrites** of authoritative facts; **label** untrusted→memory writes; **block** untrusted→external/privileged — so `clawql_default` is **0/12** trusted effectuation _and_ benign workflows complete without a human (plus persistent-injection blocked).
 
 ## Property groups
 
@@ -92,15 +92,15 @@ Parallel product track (required before publishing multi-attack): make **ClawQL 
 
 ## Board status
 
-| Id                         | Status         | Notes                                                                                          |
-| -------------------------- | -------------- | ---------------------------------------------------------------------------------------------- |
-| governance-policy-depth v2 | **Shipped**    | Fair defaults + best-config; design cells listed                                               |
+| Id                         | Status         | Notes                                                                                                |
+| -------------------------- | -------------- | ---------------------------------------------------------------------------------------------------- |
+| governance-policy-depth v2 | **Shipped**    | Fair defaults + best-config; design cells listed                                                     |
 | multi_attack_suite         | **Scaffolded** | Smoke v3: 0/12 + persistent blocked + benign rate 1.0; peers **pending**; draft until peers measured |
-| approval_integrity         | Partial        | Harness resume probe only; full cells pending                                                  |
-| allowed_tool_exfil         | Planned        |                                                                                                |
-| secret_visibility          | Planned        |                                                                                                |
-| kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                          |
-| Remaining groups           | Backlog        | After top five                                                                                 |
+| approval_integrity         | Partial        | Harness resume probe only; full cells pending                                                        |
+| allowed_tool_exfil         | Planned        |                                                                                                      |
+| secret_visibility          | Planned        |                                                                                                      |
+| kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                                |
+| Remaining groups           | Backlog        | After top five                                                                                       |
 
 ## Related
 
