@@ -336,6 +336,25 @@
     "measured_on": "mac_mini",
     "peer": "obot",
     "column": "defaults",
-    "equal_arm": "shared Obsidian Memory/ vault-mcp · same 12 attacks · same 14 benign"
+    "equal_arm": "shared Obsidian Memory/ vault-mcp \u00b7 same 12 attacks \u00b7 same 14 benign"
+  },
+  "versions": {
+    "clawql": {
+      "package": "8.0.0",
+      "commit": "1a3620192d3de690da835eaa21c5293a876902d2",
+      "commit_short": "1a362019",
+      "branch": "cursor/multi-attack-injection-f4ec"
+    },
+    "peer": {
+      "peer": "obot",
+      "image": "ghcr.io/obot-platform/obot:latest",
+      "kind": "container_image",
+      "digest": null,
+      "label": "Obot gateway (mcp-webhook-validations)"
+    },
+    "stamped_at": "2026-10-19T21:53:18.572Z",
+    "pin_source": "board_complete_backfill",
+    "peer_results_commit": "5dde7d06",
+    "note": "Peer product version pinned at board-complete; re-run peer CI to refresh digest/binary. peer-results file last measured at ClawQL commit 5dde7d06."
   }
 }

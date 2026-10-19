@@ -329,5 +329,25 @@
     "measured_on": null,
     "docker_vm_note": null,
     "equal_arm": "shared Obsidian Memory/ vault-mcp \u00b7 same 12 attacks \u00b7 same 14 benign"
+  },
+  "versions": {
+    "clawql": {
+      "package": "8.0.0",
+      "commit": "1a3620192d3de690da835eaa21c5293a876902d2",
+      "commit_short": "1a362019",
+      "branch": "cursor/multi-attack-injection-f4ec"
+    },
+    "peer": {
+      "peer": "bifrost",
+      "binary": "/home/ubuntu/.cache/bifrost/v2.3.1/bin/bifrost-http-0",
+      "kind": "bifrost_http_binary",
+      "package": "@maximhq/bifrost",
+      "version": "2.3.1",
+      "label": "Bifrost MCP (virtual-key tool scoping)"
+    },
+    "stamped_at": "2026-10-19T21:53:18.642Z",
+    "pin_source": "board_complete_backfill",
+    "peer_results_commit": "dbb173ba",
+    "note": "Peer product version pinned at board-complete; re-run peer CI to refresh digest/binary. peer-results file last measured at ClawQL commit dbb173ba."
   }
 }

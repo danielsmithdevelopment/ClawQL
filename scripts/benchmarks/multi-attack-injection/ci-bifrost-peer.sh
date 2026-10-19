@@ -157,6 +157,8 @@ export BIFROST_MCP_URL="http://127.0.0.1:${BF_PORT}/mcp"
 export BIFROST_VK="$VK_ALLOW"
 unset BIFROST_MCP_URL_DENY || true
 node "$HARNESS/run-peer.mjs" bifrost defaults | tee "$RESULTS_DIR/bifrost_default.json"
+node "$HARNESS/stamp-peer-version.mjs" "$RESULTS_DIR/bifrost_default.json" \
+  --peer bifrost --binary "$BF_BIN"
 
 echo "== measure bifrost best_config (omit memory_ingest) =="
 mai_seed_shared_vault "$SHARED"
@@ -164,5 +166,7 @@ unset BIFROST_MCP_URL || true
 export BIFROST_MCP_URL_DENY="http://127.0.0.1:${BF_PORT}/mcp"
 export BIFROST_VK="$VK_DENY"
 node "$HARNESS/run-peer.mjs" bifrost best_config | tee "$RESULTS_DIR/bifrost_best_config.json"
+node "$HARNESS/stamp-peer-version.mjs" "$RESULTS_DIR/bifrost_best_config.json" \
+  --peer bifrost --binary "$BF_BIN"
 
 echo "wrote $RESULTS_DIR/bifrost_*.json"

@@ -161,10 +161,13 @@ export EXECUTOR_API_KEY="$TOKEN"
 export EXECUTOR_FIXTURE_NS="$NS"
 export POLICY_PATTERN
 
-echo "== measure executor defaults (no policy block) =="
+EXEC_VER="$(node -p "require('$EXEC_HOME/node_modules/executor/package.json').version" 2>/dev/null || echo "")"
+echo "== measure executor defaults (no policy block) executor@$EXEC_VER =="
 mai_seed_shared_vault "$SHARED"
 unset EXECUTOR_MCP_URL_BLOCK || true
 node "$HARNESS/run-peer.mjs" executor defaults | tee "$RESULTS_DIR/executor_default.json"
+node "$HARNESS/stamp-peer-version.mjs" "$RESULTS_DIR/executor_default.json" \
+  --peer executor --version "${EXEC_VER:-unknown}"
 
 echo "== create native Executor policy block on $POLICY_PATTERN =="
 CREATE_JSON="$(exec_call executor coreTools policies create "$(python3 -c "
@@ -215,6 +218,8 @@ else
   export EXECUTOR_MCP_URL_BLOCK="${BASE}/mcp"
   unset EXECUTOR_MCP_URL || true
   node "$HARNESS/run-peer.mjs" executor best_config | tee "$RESULTS_DIR/executor_best_config.json"
+  node "$HARNESS/stamp-peer-version.mjs" "$RESULTS_DIR/executor_best_config.json" \
+    --peer executor --version "${EXEC_VER:-unknown}"
 
   # Honesty gate: if policy did not stop trusted effectuation, mark pending rather
   # than publish a false best-config win under Executor's name.

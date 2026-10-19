@@ -60,6 +60,11 @@ import {
 import { MECHANISM_NAMES, MECHANISMS_OFF, gateScriptedAttack } from "./mechanisms.mjs";
 import { makeProductInvoke, resetSessionLabels } from "./product-gate.mjs";
 import { runPeerArm } from "./run-peer.mjs";
+import {
+  clawqlVersionPin,
+  maintainerInvites,
+  peerVersionPin,
+} from "./versions.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../../..");
@@ -608,18 +613,25 @@ async function main() {
     peers_incomplete: peersIncomplete,
     next: [
       peersPending > 0
-        ? "Obot best-config: pass deny precondition (one refused memory_ingest outside corpus), then one 12+14 run — see MAC-MINI-OBOT.md"
-        : "Peers measured — publish equal-arm table with attacks+benign",
-      "MAI_LIVE=1 hard-recall measured; real-model sessions when transport lands — after Obot best-config",
+        ? "Remaining pending peer rows — see peer-results/"
+        : "Scripted peer board complete (Obot/Bifrost/Executor defaults + best-config measured)",
+      "Pin versions on every row (clawql commit + peer product) — see versions / peer-results *.versions",
+      "Maintainer invites with per-peer reproduce commands — frozen-rules.maintainerInvites",
+      "MAI_LIVE=1 real-model sessions (hard-recall vault cell already measured) — last piece before lead claim",
     ],
     shared_vault:
       "Peers have no built-in vault — every arm writes the same Obsidian-compatible Memory/ served over MCP (vault-mcp).",
-    note: "Same 14 benign on every arm. Recall integrity = answered 15.00; unlabeled poison is a separate column (also vault_contaminated). Hard-recall → MAI_LIVE. Obot defaults measured on macOS / mac_mini.",
+    note: "Same 14 benign on every arm. Recall integrity = answered 15.00; unlabeled poison is a separate column (also vault_contaminated). Hard-recall → MAI_LIVE. Obot measured on macOS / mac_mini.",
+    scripted_labels: [
+      "Scripted, worst-case model — always complies; measures gateway stop",
+      "Smoke sample n=12",
+      "Obot rows stamp macOS / mac_mini",
+    ],
   };
 
   const report = {
     measuredAt: new Date().toISOString(),
-    kind: "multi_attack_injection_smoke_v4f",
+    kind: "multi_attack_injection_smoke_v4g",
     sample: {
       attacks_planted: MANIFEST.attacks.length,
       label: "smoke",
@@ -649,6 +661,24 @@ async function main() {
     persistent_injection: persistent,
     recall_integrity,
     honestyLabels,
+    versions: {
+      clawql: clawqlVersionPin(),
+      arms: Object.fromEntries(
+        arms
+          .filter((a) => a.status === "measured")
+          .map((a) => {
+            const peerName = a.peer || (a.id?.startsWith("clawql") ? "clawql" : a.id === "passthrough" ? "passthrough" : null);
+            const fromFile = a.versions || null;
+            return [
+              a.id,
+              fromFile || {
+                clawql: clawqlVersionPin(),
+                peer: peerVersionPin(peerName || "clawql"),
+              },
+            ];
+          })
+      ),
+    },
     rules: FROZEN,
     corpus: {
       id: MANIFEST.id,
@@ -659,7 +689,10 @@ async function main() {
     board_pass,
     honesty: FROZEN.honesty,
     maintainerInvite: FROZEN.maintainerInvite,
+    maintainerInvites: maintainerInvites(),
     publishGate: FROZEN.publishGate,
+    claim_scripted:
+      "Every gateway can stop these attacks by switching off memory writes; only ClawQL stops them while memory keeps working. Native peer configs, deny precondition (Obot), same 14 benign.",
   };
 
   writeFileSync(OUT, `${JSON.stringify(report, null, 2)}\n`, "utf8");

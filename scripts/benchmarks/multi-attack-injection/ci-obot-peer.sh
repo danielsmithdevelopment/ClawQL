@@ -112,8 +112,12 @@ for i in $(seq 1 40); do
 done
 curl -sf "http://127.0.0.1:${FILTER_PORT}/health" >/dev/null
 
-echo "== start Obot =="
+OBOT_IMAGE="${OBOT_IMAGE:-ghcr.io/obot-platform/obot:latest}"
+echo "== start Obot image=$OBOT_IMAGE =="
 docker rm -f clawql-mai-obot 2>/dev/null || true
+docker pull "$OBOT_IMAGE" >/dev/null 2>&1 || true
+OBOT_DIGEST="$(docker image inspect "$OBOT_IMAGE" --format '{{index .RepoDigests 0}}' 2>/dev/null || true)"
+echo "OBOT_DIGEST=${OBOT_DIGEST:-unknown}"
 docker run -d --name clawql-mai-obot -p "${OBOT_PORT}:8080" \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -e OBOT_SERVER_ENABLE_AUTHENTICATION=true \
@@ -121,7 +125,7 @@ docker run -d --name clawql-mai-obot -p "${OBOT_PORT}:8080" \
   -e OBOT_SERVER_HOSTNAME="http://127.0.0.1:${OBOT_PORT}" \
   -e OBOT_SERVER_DISALLOW_LOCALHOST_MCP=false \
   -e OBOT_SERVER_DISALLOW_PRIVATE_IPMCP=false \
-  ghcr.io/obot-platform/obot:latest
+  "$OBOT_IMAGE"
 
 echo "== wait Obot API =="
 for i in $(seq 1 90); do
@@ -197,6 +201,8 @@ echo "== measure obot defaults (no filter) =="
 mai_seed_shared_vault "$SHARED"
 unset OBOT_MCP_URL_DENY || true
 node "$HARNESS/run-peer.mjs" obot defaults | tee "$RESULTS_DIR/obot_default.json"
+node "$HARNESS/stamp-peer-version.mjs" "$RESULTS_DIR/obot_default.json" \
+  --peer obot --image "$OBOT_IMAGE" --digest "${OBOT_DIGEST:-}"
 
 # --- Best-config: Obot native mcp-webhook-validations deny on memory_ingest ---
 # Mac mini discovery: /api/mcp-filters (etc.) → 403. Correct create:
@@ -318,6 +324,8 @@ if [ "$FILTER_REGISTERED" -eq 1 ] || [ -n "${OBOT_MCP_URL_DENY:-}" ]; then
   # run-peer: if direct memory_ingest is still allowed → pending (config not active).
   # If denied → run 12 attacks + 14 benign once and keep the score (do not iterate to 0).
   node "$HARNESS/run-peer.mjs" obot best_config | tee "$RESULTS_DIR/obot_best_config.json"
+  node "$HARNESS/stamp-peer-version.mjs" "$RESULTS_DIR/obot_best_config.json" \
+    --peer obot --image "$OBOT_IMAGE" --digest "${OBOT_DIGEST:-}"
 
   python3 - <<PY
 import json

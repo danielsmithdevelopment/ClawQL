@@ -43,4 +43,4 @@ Counterfeit-policy cell: [COUNTERFEIT-POLICY.md](../../../docs/benchmarks/securi
 
 ## Publish gate
 
-Do **not** publish until: Obot best-config passes deny precondition then one measured corpus run on the Mac mini (platform-stamped), configured arm uses only general mechanisms, product defaults shipped and `clawql_default` re-run, benign completion rate is honest (not “secure because it blocks everything”), then `MAI_LIVE=1` (hard-recall measured; real-model sessions when transport exists).
+Scripted board is complete (Obot/Bifrost/Executor defaults + best-config). Before a lead claim: version pins on every row, scripted honesty labels, [maintainer invites](../../../docs/benchmarks/security-suite/multi-attack-injection/MAINTAINER-INVITE.md), then `MAI_LIVE=1` real-model sessions (hard-recall vault cell already measured).

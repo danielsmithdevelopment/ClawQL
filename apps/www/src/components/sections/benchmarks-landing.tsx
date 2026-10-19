@@ -40,6 +40,7 @@ import {
   multiAttackBenignSummary,
   multiAttackHeadline,
   multiAttackHeadlineResult,
+  multiAttackMaintainerInvite,
   multiAttackMechanisms,
   multiAttackMemoryWriteBreakout,
   multiAttackCounterfeitPolicyNote,
@@ -49,6 +50,7 @@ import {
   multiAttackRecallNote,
   multiAttackSharedVaultNote,
   multiAttackSummary,
+  multiAttackVersionNote,
 } from '@/lib/multi-attack-injection'
 import {
   securitySuiteBuildFirst,
@@ -580,9 +582,28 @@ export function BenchmarksLanding() {
         <p className="mt-8 max-w-2xl text-sm/6 text-mist-700 dark:text-mist-300">{multiAttackBenignSummary}</p>
         <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackSharedVaultNote}</p>
         <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackPlatformNote}</p>
+        <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackVersionNote}</p>
         <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackMemoryWriteBreakout}</p>
         <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackRecallNote}</p>
         <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackCounterfeitPolicyNote}</p>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Maintainer invite · reproduce per peer
+        </h3>
+        <p className="mt-3 max-w-2xl text-sm/6 text-mist-700 dark:text-mist-300">
+          {multiAttackMaintainerInvite.framing}
+        </p>
+        <ul className="mt-4 max-w-2xl space-y-2 text-sm/6 text-mist-700 dark:text-mist-300">
+          {multiAttackMaintainerInvite.peers.map((p) => (
+            <li key={p.product}>
+              <span className="font-medium text-mist-950 dark:text-white">{p.product}</span>
+              {' — '}
+              {p.mechanism}
+              {': '}
+              <code className="text-xs text-mist-800 dark:text-mist-200">{p.command}</code>
+            </li>
+          ))}
+        </ul>
 
         <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
           Counterfeit-policy cell · Datadog cite · model advises, never is the gate
@@ -636,11 +657,11 @@ export function BenchmarksLanding() {
         </ComparisonTable>
 
         <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
-          Smoke scorecard · n=12 · scripted worst-case · same 14 benign
+          Smoke scorecard · n=12 · scripted worst-case · same 14 benign · version-pinned
         </h3>
-        <ComparisonTable minWidthClass="min-w-[1100px]" className="mt-4">
+        <ComparisonTable minWidthClass="min-w-[1280px]" className="mt-4">
           <caption className="sr-only">
-            Multi-attack injection smoke: attacks, benign, recall answer, and unlabeled poison by arm
+            Multi-attack injection smoke: attacks, benign, recall answer, unlabeled poison, and version pin by arm
           </caption>
           <thead>
             <tr>
@@ -651,6 +672,7 @@ export function BenchmarksLanding() {
               <ComparisonTh className={clsx('text-right')}>Benign as expected</ComparisonTh>
               <ComparisonTh className={clsx('text-center')}>Recall answer</ComparisonTh>
               <ComparisonTh className={clsx('text-center')}>Unlabeled poison</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Version</ComparisonTh>
               <ComparisonTh className={clsx('text-left')}>Note</ComparisonTh>
             </tr>
           </thead>
@@ -697,6 +719,7 @@ export function BenchmarksLanding() {
                 <ComparisonTd className={clsx('text-center text-xs/5 text-mist-700 dark:text-mist-400')}>
                   {row.unlabeledPoison}
                 </ComparisonTd>
+                <ComparisonTd className={clsx('text-xs/5 text-mist-600 dark:text-mist-400')}>{row.version}</ComparisonTd>
                 <ComparisonTd className={clsx('text-xs/5 text-mist-600 dark:text-mist-400')}>{row.note}</ComparisonTd>
               </tr>
             ))}

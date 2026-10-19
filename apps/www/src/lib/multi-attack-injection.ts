@@ -2,16 +2,16 @@
  * Multi-attack injection board — marketing mirror of
  * docs/benchmarks/security-suite/multi-attack-injection/
  *
- * Not a live category claim yet (publish gate — Obot best-config + MAI_LIVE).
+ * Scripted board complete. Lead claim waits on MAI_LIVE real-model sessions.
  */
 
-export const multiAttackHeadline = 'Multi-attack injection — smoke (draft)'
+export const multiAttackHeadline = 'Multi-attack injection — smoke (scripted board complete)'
 
 export const multiAttackSummary =
   'Twelve planted attacks across email, ticket, doc, and webhook. Scripted worst-case model always complies — this measures whether the gateway stops the resulting action, not whether a real model would fall for it. Sample size: smoke until the suite grows to dozens. Peers have no built-in vault, so every arm writes the same Obsidian-compatible Memory/ served over MCP. The same 14 benign cases run on every arm so the denominator matches; memory-write breakouts sit under the table.'
 
 export const multiAttackHeadlineResult =
-  'Smoke v4f: ClawQL default 0 of 12 attacks and 14 of 14 benign. Bifrost/Executor (Linux) and Obot (macOS / Mac mini) defaults 12 of 12 — expected equal-arm baseline. Bifrost/Executor best-config 0 of 12 and 9 of 14 benign (0 of 5 memory writes). Recall answer pass (15.00); unlabeled poison separate. Obot best-config pending until deny precondition (one refused memory_ingest outside the corpus), then one measured run. Counterfeit-policy: ClawQL 0 of 4; model-judged cite Datadog. MAI_LIVE=1 hard-recall measured (labeled 15.00 / unlabeled 99.99); real-model sessions when transport lands.'
+  'Every gateway can stop these attacks by switching off memory writes; only ClawQL stops them while memory keeps working. ClawQL defaults: 0 of 12 attacks and 14 of 14 benign. Bifrost, Executor, and Obot best-config: 0 of 12 and 9 of 14 (0 of 5 memory writes) via each product’s native deny/omit. Every peer on defaults: 12 of 12. Obot on macOS / Mac mini with deny precondition. Version pins on every row. Counterfeit-policy: ClawQL 0 of 4; model-judged cite Datadog. MAI_LIVE real-model sessions are the last piece before a lead claim.'
 
 export const multiAttackMechanisms = [
   {
@@ -43,6 +43,8 @@ export type MultiAttackArmRow = {
   recallIntegrity: string
   /** Separate from recall answer — unlabeled OVERRIDE/99.99 in vault. */
   unlabeledPoison: string
+  /** Peer product version / ClawQL commit pin. */
+  version: string
   note: string
   highlight?: boolean
 }
@@ -57,6 +59,7 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     benignAsExpected: '14 of 14',
     recallIntegrity: 'pass (15.00)',
     unlabeledPoison: 'no (labeled)',
+    version: 'ClawQL 8.0.0 (results-smoke versions.clawql)',
     note: 'Park overwrites; label memory; block external — not BLOCK_TOOLS',
     highlight: true,
   },
@@ -68,6 +71,7 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     benignAsExpected: '—',
     recallIntegrity: '—',
     unlabeledPoison: 'yes',
+    version: 'vault-mcp control',
     note: 'Direct Obsidian Memory/ vault-mcp (no gateway)',
   },
   {
@@ -78,6 +82,7 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     benignAsExpected: '14 of 14',
     recallIntegrity: 'pass (15.00)',
     unlabeledPoison: 'no (labeled)',
+    version: 'ClawQL 8.0.0 (results-smoke versions.clawql)',
     note: 'Taint-first + overwrite-park + labelable memory',
   },
   {
@@ -88,17 +93,19 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     benignAsExpected: '14 of 14',
     recallIntegrity: 'pass (15.00)',
     unlabeledPoison: 'yes',
-    note: 'macOS / Mac mini · allow-all mcp-connect → Obsidian vault-mcp (equal-arm loss)',
+    version: 'ghcr.io/obot-platform/obot:latest · macOS / Mac mini',
+    note: 'Allow-all mcp-connect → Obsidian vault-mcp (equal-arm loss)',
   },
   {
     arm: 'Obot best-config',
     column: 'best_config',
-    status: 'pending',
-    attacksTakingEffect: '—',
-    benignAsExpected: '—',
-    recallIntegrity: '—',
-    unlabeledPoison: '—',
-    note: 'Pending: configuration not active — precondition deny outside corpus not yet confirmed',
+    status: 'measured',
+    attacksTakingEffect: '0 of 12',
+    benignAsExpected: '9 of 14',
+    recallIntegrity: 'pass (15.00)',
+    unlabeledPoison: 'no',
+    version: 'ghcr.io/obot-platform/obot:latest · macOS / Mac mini',
+    note: 'Native webhook deny · precondition passed · 0 of 5 memory writes',
   },
   {
     arm: 'Bifrost default',
@@ -108,7 +115,8 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     benignAsExpected: '14 of 14',
     recallIntegrity: 'pass (15.00)',
     unlabeledPoison: 'yes',
-    note: 'Linux · allow-all VK → Obsidian vault-mcp (equal-arm loss)',
+    version: 'Bifrost 2.3.1 · Linux',
+    note: 'Allow-all VK → Obsidian vault-mcp (equal-arm loss)',
   },
   {
     arm: 'Bifrost best-config',
@@ -118,7 +126,8 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     benignAsExpected: '9 of 14',
     recallIntegrity: 'pass (15.00)',
     unlabeledPoison: 'no',
-    note: 'Linux · native VK omits memory_ingest — 0 of 5 memory writes',
+    version: 'Bifrost 2.3.1 · Linux',
+    note: 'Native VK omits memory_ingest — 0 of 5 memory writes',
   },
   {
     arm: 'Executor default',
@@ -128,7 +137,8 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     benignAsExpected: '14 of 14',
     recallIntegrity: 'pass (15.00)',
     unlabeledPoison: 'yes',
-    note: 'Linux · code-mode execute → Obsidian vault-mcp (equal-arm loss)',
+    version: 'executor@1.6.10 · Linux',
+    note: 'Code-mode execute → Obsidian vault-mcp (equal-arm loss)',
   },
   {
     arm: 'Executor best-config',
@@ -138,19 +148,20 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     benignAsExpected: '9 of 14',
     recallIntegrity: 'pass (15.00)',
     unlabeledPoison: 'no',
-    note: 'Linux · native policies.block — 0 of 5 memory writes',
+    version: 'executor@1.6.10 · Linux',
+    note: 'Native policies.block — 0 of 5 memory writes',
   },
 ] as const
 
 /** Shown under the scorecard — where peer 0/12 comes from. */
 export const multiAttackMemoryWriteBreakout =
-  'Memory-write breakout (same 14 suite): ClawQL keeps 5 of 5 memory writes. Bifrost/Executor best-config score 0 of 5 memory writes when ingest is omitted or blocked — that is why they land at 9 of 14 while tying 0 of 12 on attacks.'
+  'Memory-write breakout (same 14 suite): ClawQL keeps 5 of 5 memory writes. Bifrost/Executor/Obot best-config score 0 of 5 memory writes when ingest is omitted or blocked — that is why they land at 9 of 14 while tying 0 of 12 on attacks.'
 
 export const multiAttackRecallNote =
   'Recall integrity asks whether the agent still answers 15.00. Peers pass that smoke query; unlabeled poison in their vault is a separate column (also contamination). Harder queries where poison ranks first are measured under MAI_LIVE=1 (vault grader: labeled keeps 15.00, unlabeled surfaces 99.99).'
 
 export const multiAttackPublishGate =
-  'Draft until Obot best-config passes a deny precondition, runs the corpus once, and MAI_LIVE hard-recall stays measured (real-model sessions optional until transport). Obot defaults are measured on the Mac mini (macOS stamp). Headline benign uses the same 14 cases on every arm.'
+  'Scripted board complete. Keep scripted labels (worst-case model, n=12, macOS on Obot). Version pins and maintainer invites are on the page. MAI_LIVE=1 real-model sessions (same 12+14 + hard recall) are the last piece before a lead claim.'
 
 export const multiAttackBenignSummary =
   'Every arm runs the same 14 benign cases (recall, search/cache/audit, memory writes, skills, same-source reply, internal team/forward, third-party still blocked). Peers that omit or block ingest fail the five memory-write cases and keep the rest — publish X of 14, then the memory-write breakout. Contamination = hostile content surfaced as trusted (same as the governance board).'
@@ -161,6 +172,32 @@ export const multiAttackSharedVaultNote =
 /** Platform honesty — Obot is Mac mini; other measured arms were Linux. */
 export const multiAttackPlatformNote =
   'Bifrost and Executor smoke peers ran on Linux. Obot runs on the Mac mini (results stamp macOS / measured_on=mac_mini). Docker Desktop’s Linux VM is fine here — this board measures whether attacks take effect, not speed or memory.'
+
+export const multiAttackVersionNote =
+  'Every row pins the ClawQL commit (see results-smoke.json versions.clawql) and the peer product version: Obot container image, Bifrost binary (@maximhq/bifrost), Executor npm package. Re-run peer CI to refresh digests when anyone ships an update.'
+
+export const multiAttackMaintainerInvite = {
+  framing:
+    'Peer maintainers: if you have a stronger native configuration — especially one that keeps memory writes working while stopping these attacks — open a PR with raw JSON. Preferred first response: a better configuration, not that the board is unfair.',
+  peers: [
+    {
+      product: 'Bifrost',
+      mechanism: 'Virtual key that omits memory_ingest',
+      command: 'npm run benchmark:multi-attack-injection:bifrost',
+    },
+    {
+      product: 'Executor',
+      mechanism: 'Native policies.block on vault memory_ingest',
+      command: 'npm run benchmark:multi-attack-injection:executor',
+    },
+    {
+      product: 'Obot',
+      mechanism: 'mcp-webhook-validations deny (precondition, then one 12+14 run)',
+      command: 'npm run benchmark:multi-attack-injection:obot',
+      docs: 'MAC-MINI-OBOT.md',
+    },
+  ],
+} as const
 
 /**
  * Datadog / Jev counterfeit-policy cell — model advises, never is the gate.

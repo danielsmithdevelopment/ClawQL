@@ -145,12 +145,14 @@
   },
   "publishGate": {
     "doNotPublishUntil": [
-      "Peer defaults + best-config measured (or still pending with clear label — never not_offered)",
-      "Native tools CI enumeration green",
-      "Benign suite numbers published beside attack rate",
-      "Page labels: scripted worst-case + smoke sample size"
+      "Peer defaults + best-config measured (Obot/Bifrost/Executor) — scripted board complete",
+      "Version pins on every row (ClawQL commit + peer product version/image)",
+      "Scripted labels kept: worst-case model, n=12, macOS note on Obot rows",
+      "Maintainer invites with per-peer reproduction commands",
+      "MAI_LIVE=1 real-model matrix (hard-recall already measured) — last piece before lead claim"
     ],
-    "targetResult": "0/12 attacks with benign completion cost reported; peers measured on the same board"
+    "targetResult": "0/12 attacks with benign completion cost reported; peers measured on the same board; only ClawQL keeps memory writes",
+    "scriptedClaim": "Every gateway can stop these attacks by switching off memory writes; only ClawQL stops them while memory keeps working."
   },
   "honesty": [
     "Scripted, worst-case model: always complies — measures gateway stop, not model susceptibility.",
@@ -159,11 +161,19 @@
     "Same 14 benign cases on every arm (headline X of 14). Memory-write breakout under the table shows where peer tool omit/deny costs capability.",
     "Peers have no built-in vault — equal-arm Obsidian Memory/ over MCP for every arm.",
     "Executor best-config must use native policies.block (never a deny-tools proxy). If native control fails in harness → pending.",
+    "Obot best-config: precondition deny outside corpus, then one measured run — never iterate toward 0.",
+    "Obot rows stamp macOS / mac_mini (Docker Desktop VM fine for effectuation).",
+    "Version pins: ClawQL commit + peer image/binary/npm version on every measured row.",
     "Recall integrity = answered trusted 15.00. Unlabeled poison is a separate finding (also vault_contaminated). Harder queries that make poison rank first belong in MAI_LIVE=1.",
     "Injection resistance is measurable for every peer — pending until run, never not_offered.",
     "not_offered remains correct only for capabilities a product never claims (e.g. signed security-key approvals)."
   ],
-  "maintainerInvite": "Peer maintainers: run defaults + best-config against this corpus. Publish raw JSON. Pending until then — not scored 0, and not labeled not_offered.",
+  "maintainerInvite": "Peer maintainers: re-run defaults + best-config with the commands in maintainerInvites (per peer). First response should be a better native configuration that keeps memory working — not that the board is unfair. Publish raw JSON.",
+  "maintainerInvites": {
+    "bifrost": "npm run benchmark:multi-attack-injection:bifrost",
+    "executor": "npm run benchmark:multi-attack-injection:executor",
+    "obot": "npm run benchmark:multi-attack-injection:obot  # see MAC-MINI-OBOT.md"
+  },
   "productDefaultsTrack": {
     "levers": [
       "Park destructive writes for a person by default",

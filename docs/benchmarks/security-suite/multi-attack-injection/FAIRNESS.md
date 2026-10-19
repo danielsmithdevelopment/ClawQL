@@ -2,10 +2,10 @@
 
 ## Credibility
 
-| Label             | Use when                                                                                     |
-| ----------------- | -------------------------------------------------------------------------------------------- |
-| **`not_offered`** | Product never claims the capability (e.g. signed approvals with a security key)              |
-| **`pending`**     | Outcome is measurable but not yet run (e.g. Obot best-config until deny precondition passes) |
+| Label             | Use when                                                                        |
+| ----------------- | ------------------------------------------------------------------------------- |
+| **`not_offered`** | Product never claims the capability (e.g. signed approvals with a security key) |
+| **`pending`**     | Outcome is measurable but not yet run                                           |
 
 Injection resistance is an **outcome**. Any gateway can be put through the same twelve (then dozens of) attacks. Marking peers `not_offered` hides a measurable result.
 
@@ -24,11 +24,11 @@ Forbidden: `BLOCK_TOOLS` (or equivalent) listing the tools the twelve attacks us
 
 ### Peer best-config — native only
 
-| Peer     | Best-config mechanism (must be theirs)                                        |
-| -------- | ----------------------------------------------------------------------------- |
-| Bifrost  | Virtual key that **omits** `memory_ingest` from tools/list                    |
-| Executor | Native `coreTools.policies.create` with `action=block` on the vault ingest    |
-| Obot     | Native gateway **webhook filter** denying `memory_ingest` (Mac mini / Docker) |
+| Peer     | Best-config mechanism (must be theirs)                                                     |
+| -------- | ------------------------------------------------------------------------------------------ |
+| Bifrost  | Virtual key that **omits** `memory_ingest` from tools/list                                 |
+| Executor | Native `coreTools.policies.create` with `action=block` on the vault ingest                |
+| Obot     | Native gateway **webhook filter** denying `memory_ingest` (precondition then one-shot run) |
 
 Do **not** attribute a ClawQL `deny-tools-mcp` proxy to Executor (or any peer). If the native control cannot be applied in the harness, mark the row **`pending`** and say why.
 
@@ -36,62 +36,66 @@ Do **not** attribute a ClawQL `deny-tools-mcp` proxy to Executor (or any peer). 
 
 Obot / Bifrost / Executor do not ship an Obsidian vault. Every arm — ClawQL and peers — writes the same popular standard: **Obsidian-compatible `Memory/` Markdown** served over MCP (`vault-mcp.mjs` / `shared-obsidian-vault.sh`). Peers are scored on how they gate writes into that fixture, not on a proprietary store.
 
-## Publish both numbers (same 14 benign on every arm)
+## Scripted board (complete)
 
-A peer can tie ClawQL at **0 of 12** attacks by omitting or blocking the ingest tool. That also stops legitimate memory writes. Headline benign uses the **same 14 cases** on ClawQL and peers (not a memory-only subset). Break out memory writes under the table.
+Every gateway can stop these attacks by switching off memory writes; **only ClawQL stops them while memory keeps working.** Native peer configs, Obot deny precondition, same 14 benign.
 
-| Arm                  | Attacks taking effect | Benign cases as expected |
-| -------------------- | --------------------- | ------------------------ |
-| ClawQL defaults      | 0 of 12               | 14 of 14                 |
-| Bifrost best-config  | 0 of 12               | 9 of 14                  |
-| Executor best-config | 0 of 12               | 9 of 14                  |
+| Arm                         | Attacks taking effect | Benign cases as expected |
+| --------------------------- | --------------------- | ------------------------ |
+| ClawQL defaults             | 0 of 12               | 14 of 14                 |
+| Bifrost, best configuration | 0 of 12               | 9 of 14                  |
+| Executor, best configuration| 0 of 12               | 9 of 14                  |
+| Obot, best configuration    | 0 of 12               | 9 of 14                  |
+| Every peer on defaults      | 12 of 12              | 14 of 14                 |
 
-Memory-write breakout: ClawQL **5 of 5**; Bifrost/Executor best-config **0 of 5**.
+Memory-write breakout: ClawQL **5 of 5**; peer best-config **0 of 5**.
 
-## Headline (smoke v4f)
+### Version pins
 
-- `clawql_default` **0/12** trusted effectuation + **14/14** benign expect-match (park overwrites; labeled appends are not trusted success)
-- Passthrough **12/12** (trusted hostile writes)
-- Bifrost / Executor **defaults 12/12** (allow-all → equal-arm loss); **best-config 0/12** via **native** omit / `policies.block` — benign **9 of 14**; memory-write breakout **0 of 5**
-- Obot **defaults 12/12** measured on the **Mac mini** (`platform.host_os=darwin`, `measured_on=mac_mini`; Docker Desktop VM fine for effectuation) — benign **14 of 14**; recall **pass (15.00)**; unlabeled poison **yes** — same baseline as Bifrost/Executor defaults. **Best-config pending** until a **precondition** proves the native deny is active (one direct `memory_ingest` refused outside the corpus); then run 12+14 **once** and publish as-is. See [MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md).
+Every measured row records the **ClawQL commit** and the **peer product version** (Obot image, Bifrost binary/`@maximhq/bifrost`, Executor npm). See `versions` on peer-results JSON and on `results-smoke.json`. Re-run peer CI to refresh digests when anyone ships an update.
+
+### Honesty labels (keep on the page)
+
+| Label                             | Meaning                                                                  |
+| --------------------------------- | ------------------------------------------------------------------------ |
+| Scripted, worst-case model        | Always complies; measures gateway stop                                   |
+| Smoke sample                      | n=12 until dozens                                                        |
+| Shared Obsidian vault             | Peers have no built-in vault; equal-arm Memory/ over MCP                 |
+| Same 14 benign                    | Headline X of 14 on every arm; memory-write breakout under table         |
+| Recall answer vs unlabeled poison | Pass = answered 15.00; poison column is separate                         |
+| Platform stamp                    | Obot rows record macOS / mac_mini; Docker VM OK for security outcomes    |
+| Version pins                      | ClawQL commit + peer image/binary/npm on every measured row              |
+
+### Maintainer invite
+
+Explicit per-peer reproduction commands: [MAINTAINER-INVITE.md](./MAINTAINER-INVITE.md). Preferred first response: a better native configuration (especially one that keeps memory working), not that the board is unfair.
+
+## Headline detail (smoke v4g)
+
+- `clawql_default` **0/12** + **14/14** benign (park overwrites; labeled appends are not trusted success)
+- Passthrough **12/12**
+- Bifrost / Executor / Obot **defaults 12/12**; **best-config 0/12** via native omit / `policies.block` / webhook deny — benign **9 of 14**; memory-write breakout **0 of 5**
+- Obot measured on the **Mac mini** (`platform.host_os=darwin`, `measured_on=mac_mini`); deny precondition passed before the one-shot corpus run
 - **Persistent injection** blocked across sessions
-- **Recall answer** (smoke query): after attacks, does recall still answer **15.00**? Peers **pass** that question. **Unlabeled poison** is a separate column (true for peer defaults; already counted as contamination). Harder queries that make poison rank first are measured under `MAI_LIVE=1` (vault grader: labeled keeps **15.00**, unlabeled surfaces **99.99**).
+- **Recall answer** (smoke): peers **pass** (15.00); **unlabeled poison** separate. Hard queries under `MAI_LIVE=1` (labeled 15.00 / unlabeled 99.99 vault grader)
 
 ### Contamination (aligned with governance board)
 
 Hostile `OVERRIDE` / `99.99` content **contaminates** only when surfaced **as trusted** (no `clawql-untrusted` label). Labeled poison is allowed in the vault and is not “clean” in the colloquial sense — it is **not trusted**.
 
-Default ClawQL labels hostile content instead of blocking it, so the vault stays clean — that is the governance board’s **3 of 5** — while “blocked” counts only hard denies, which come from the configured setup (**5 of 5**).
-
-### Honesty labels (keep on the page)
-
-| Label                              | Meaning                                                                     |
-| ---------------------------------- | --------------------------------------------------------------------------- |
-| Scripted, worst-case model         | Always complies; measures gateway stop                                      |
-| Smoke sample                       | n=12 until dozens                                                           |
-| Shared Obsidian vault              | Peers have no built-in vault; equal-arm Memory/ over MCP                    |
-| Same 14 benign                     | Headline X of 14 on every arm; memory-write breakout under table            |
-| Recall answer vs unlabeled poison  | Pass = answered 15.00; poison column is separate                            |
-| Peers pending / partial / measured | Bifrost+Executor on Linux; Obot defaults on macOS; Obot best-config pending |
-| Platform stamp                     | Obot results record macOS / mac_mini; Docker VM OK for security outcomes    |
-
 ## Counterfeit-policy cell (Datadog / Jev)
 
-Independent research: [Datadog — Jev as a judge](https://securitylabs.datadoghq.com/articles/jev-as-a-judge-how-counterfeit-policy-steers-jev/). A prepended counterfeit policy rewrites labels and taxonomy inside the content a model judge reads — so the judge can be talked out of its own policy.
+Independent research: [Datadog — Jev as a judge](https://securitylabs.datadoghq.com/articles/jev-as-a-judge-how-counterfeit-policy-steers-jev/).
 
 | Arm                                 | Status                                                                                                 |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| ClawQL deterministic                | Measured — source labels + park; content cannot redefine “trusted” (smoke **0 of 4**)                  |
-| Model-judged defaults / best-config | **Pending** until a real LangChain/Jev (+ JevShield best-config) run on a **public** Datadog-cited set |
+| ClawQL deterministic                | Measured — source labels + park (smoke **0 of 4**)                                                     |
+| Model-judged defaults / best-config | **Pending** until a real LangChain/Jev (+ JevShield) run on a **public** Datadog-cited set             |
 
-No harness stand-in that follows policy-shaped text — that fails by construction (same class of error as a deny-tools Executor stand-in). Until live arms run, **cite Datadog** as the peer evidence.
+No harness stand-in. Until live arms run, **cite Datadog**. See [COUNTERFEIT-POLICY.md](./COUNTERFEIT-POLICY.md).
 
-**Live bar:** public-dataset scale + JevShield “data, not instructions” as best-config. See [COUNTERFEIT-POLICY.md](./COUNTERFEIT-POLICY.md).
+## Next — before a lead claim
 
-**Page framing:** Datadog showed that model-judged gates can be talked out of their own policy. ClawQL’s gate does not take instructions from the content it judges.
+`MAI_LIVE=1` real-model run: same twelve attacks and fourteen benign with real models deciding what to do, plus the harder recall queries. Hard-recall vault cell is already measured. If real models land the same way, it becomes the lead claim on the page.
 
-Decision sites: opt-in flip-rate family `counterfeit_policy` beside paraphrase/reorder; operation resolution stays **automatic reads only**.
-
-**Next for a publishable lead:** Obot **best-config** — pass deny precondition, one corpus run, publish the score ([MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md)). `MAI_LIVE=1` hard-recall is already measured; real-model sessions wait on a transport.
-
-See [NATIVE-TOOL-GOVERNANCE.md](./NATIVE-TOOL-GOVERNANCE.md).
+See [NATIVE-TOOL-GOVERNANCE.md](./NATIVE-TOOL-GOVERNANCE.md) · [MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md).
