@@ -17,12 +17,12 @@ Equal-arm vault-write board with **two fair columns**, then **design cells** for
 
 No tool-specific deny for `memory_ingest`. ClawQL stock uses **label quarantine** (product native-tool IFC).
 
-| Arm                | security_score | Notes                                              |
-| ------------------ | -------------- | -------------------------------------------------- |
+| Arm                | security_score | Notes                                                  |
+| ------------------ | -------------- | ------------------------------------------------------ |
 | **clawql_default** | **3/5**        | Labels untrusted→memory; vault clean (not BLOCK_TOOLS) |
-| passthrough        | **2/5**        | Trusted OVERRIDE written                           |
-| **obot**           | pending / ~2/5 | Default mcp-connect (allow-all)                    |
-| **bifrost**        | pending / ~2/5 | Allow-all VK                                       |
+| passthrough        | **2/5**        | Trusted OVERRIDE written                               |
+| **obot**           | pending / ~2/5 | Default mcp-connect (allow-all)                        |
+| **bifrost**        | pending / ~2/5 | Allow-all VK                                           |
 
 ## Best-config column (expect ties)
 

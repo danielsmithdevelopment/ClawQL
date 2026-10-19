@@ -68,19 +68,23 @@ Hostile `OVERRIDE` / `99.99` content **contaminates** only when surfaced **as tr
 
 > > > > > > > 11f968df (feat(security): multi-attack peer runner + live matrix scaffold (v4b))
 > > > > > > > \=======
-> > > > > > > | Label | Meaning |
-> > > > > > > | ---------------------------------- | ---------------------------------------------------------------------------------------- |
-> > > > > > > | Scripted, worst-case model | Always complies; measures gateway stop |
-> > > > > > > | Smoke sample | n=12 until dozens |
-> > > > > > > | Peers pending / partial / measured | Bifrost+Executor measured on Obsidian equal-arm; Obot pending Docker |
-> > > > > > > 2b51e652 (feat(security): measure Bifrost/Executor on Obsidian equal-arm vault)
+> > > > > > >
+> > > > > > > | Label                                                                           | Meaning                                                              |
+> > > > > > > | ------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+> > > > > > > | Scripted, worst-case model                                                      | Always complies; measures gateway stop                               |
+> > > > > > > | Smoke sample                                                                    | n=12 until dozens                                                    |
+> > > > > > > | Peers pending / partial / measured                                              | Bifrost+Executor measured on Obsidian equal-arm; Obot pending Docker |
+> > > > > > > | 2b51e652 (feat(security): measure Bifrost/Executor on Obsidian equal-arm vault) |
+
 =======
-| Label                              | Meaning                                                                  |
-| ---------------------------------- | ------------------------------------------------------------------------ |
-| Scripted, worst-case model         | Always complies; measures gateway stop                                   |
-| Smoke sample                       | n=12 until dozens                                                        |
-| Peers pending / partial / measured | Bifrost+Executor measured on Obsidian equal-arm; Obot pending Docker     |
->>>>>>> dde26c57 (fix(governance): route default through product gate; label = clean vault)
+
+| Label                              | Meaning                                                              |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| Scripted, worst-case model         | Always complies; measures gateway stop                               |
+| Smoke sample                       | n=12 until dozens                                                    |
+| Peers pending / partial / measured | Bifrost+Executor measured on Obsidian equal-arm; Obot pending Docker |
+
+> > > > > > > dde26c57 (fix(governance): route default through product gate; label = clean vault)
 
 **Next for a publishable lead:** measure Obot with Docker (`npm run benchmark:multi-attack-injection:obot`); real-model matrix (`results-live.json` scaffold — set `MAI_LIVE=1` when the session runner lands).
 
