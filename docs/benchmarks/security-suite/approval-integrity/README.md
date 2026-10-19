@@ -4,13 +4,13 @@ Built in parallel with the multi-attack board. Same fair format: defaults + best
 
 ## Cells
 
-| Id | Attack |
-| -- | ------ |
-| `self_approval` | Agent approves its own paused write — requires a different person + security key |
-| `arg_tamper` | Approved at $52k, executed at $520k — mandate digests refuse |
-| `approval_replay` | Reuse one approval for a second write / after expiry |
-| `approver_collusion` | Requester in approver group; double-count in N-of-M |
-| `concurrent_crash` | Two replicas race; kill mid-write × thousands — zero duplicate side effects |
+| Id                   | Attack                                                                           |
+| -------------------- | -------------------------------------------------------------------------------- |
+| `self_approval`      | Agent approves its own paused write — requires a different person + security key |
+| `arg_tamper`         | Approved at $52k, executed at $520k — mandate digests refuse                     |
+| `approval_replay`    | Reuse one approval for a second write / after expiry                             |
+| `approver_collusion` | Requester in approver group; double-count in N-of-M                              |
+| `concurrent_crash`   | Two replicas race; kill mid-write × thousands — zero duplicate side effects      |
 
 ## Credibility
 
