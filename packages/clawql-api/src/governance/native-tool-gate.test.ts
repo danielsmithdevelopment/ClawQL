@@ -101,7 +101,7 @@ describe("native tool gate", () => {
     expect(String(args.insights)).toContain(CLAWQL_TRUST_BODY_MARKER);
   });
 
-  it("blocks untrusted→notify (external sink) even when park opt-out", async () => {
+  it("blocks untrusted→notify to third-party external sink", async () => {
     process.env.CLAWQL_OPERATION_RISK_ENFORCE = "0";
     process.env.CLAWQL_ENABLE_SESSION_IFC = "1";
     process.env.CLAWQL_SESSION_ID = "gate-exfil";
@@ -115,6 +115,28 @@ describe("native tool gate", () => {
     const body = JSON.parse((block as { content: { text: string }[] }).content[0]!.text);
     expect(body.status).toBe("blocked");
     expect(["untrusted_read_taint", "data_flow"]).toContain(body.mechanism);
+  });
+
+  it("allows reply-to-sender and internal destinations after untrusted taint", async () => {
+    process.env.CLAWQL_OPERATION_RISK_ENFORCE = "0";
+    process.env.CLAWQL_ENABLE_SESSION_IFC = "1";
+    process.env.CLAWQL_SESSION_ID = "gate-reply";
+    taintSessionFromUntrustedChannel("email", "gate-reply");
+    const reply = await gateNativeToolBeforeInvoke({
+      toolName: "notify",
+      args: { channel: "reply:email", reply_to_source: true, text: "Thanks" },
+      sessionId: "gate-reply",
+    });
+    expect(reply).toBeNull();
+
+    clearAllSessionLabelsSync();
+    taintSessionFromUntrustedChannel("ticket", "gate-reply");
+    const team = await gateNativeToolBeforeInvoke({
+      toolName: "notify",
+      args: { channel: "#team-support", destination: "internal", text: "summary" },
+      sessionId: "gate-reply",
+    });
+    expect(team).toBeNull();
   });
 
   it("re-taints session when recalling labeled-untrusted vault text", () => {

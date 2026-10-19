@@ -97,6 +97,66 @@ function asRecord(args: unknown): Record<string, unknown> | null {
 }
 
 /**
+ * Where untrusted content is headed on a blocking sink (notify / send).
+ * - same_source: reply to the channel that produced the taint (not exfil)
+ * - internal: team / internal audience
+ * - external: third party — refuse when session is tainted
+ */
+export type OutboundDestClass = "same_source" | "internal" | "external";
+
+export function classifyOutboundDestination(
+  args: unknown,
+  sessionLabels: readonly string[]
+): OutboundDestClass {
+  const rec = asRecord(args) ?? {};
+  if (rec.reply_to_source === true || rec.destination === "same_source") {
+    return "same_source";
+  }
+  if (
+    rec.destination === "internal" ||
+    rec.audience === "internal" ||
+    rec.internal === true
+  ) {
+    return "internal";
+  }
+  if (rec.reply_to != null && String(rec.reply_to).trim() !== "") {
+    return "same_source";
+  }
+
+  const channel = String(rec.channel ?? rec.to ?? rec.recipient ?? "")
+    .trim()
+    .toLowerCase();
+  if (channel.startsWith("reply:")) return "same_source";
+
+  const sourceChannels = sessionLabels
+    .map((l) => {
+      const m = l.match(/source:untrusted-([a-z0-9_-]+)/i);
+      return m?.[1]?.toLowerCase();
+    })
+    .filter((c): c is string => Boolean(c));
+  for (const ch of sourceChannels) {
+    if (
+      channel === ch ||
+      channel.includes(`reply-${ch}`) ||
+      channel.includes(`${ch}-sender`) ||
+      channel.endsWith(`@${ch}`)
+    ) {
+      return "same_source";
+    }
+  }
+
+  if (/^#(team|eng|internal|ops|security)\b/.test(channel)) return "internal";
+  if (channel.startsWith("internal:") || channel.includes("@internal.")) {
+    return "internal";
+  }
+  if (typeof rec.reviewer === "string" && /@internal\./i.test(rec.reviewer)) {
+    return "internal";
+  }
+
+  return "external";
+}
+
+/**
  * Stamp untrusted provenance onto a memory write payload so the vault note
  * carries labels that later recalls re-accumulate into the session.
  * Mutates `args` in place when it is a plain object.
@@ -208,24 +268,38 @@ export async function gateNativeToolBeforeInvoke(opts: {
       // Gentler default: store with untrusted label instead of blocking the write.
       stampUntrustedProvenance(opts.args, ifcBlock.sessionLabels);
     } else {
-      const mechanism = taintedUntrusted
-        ? ("untrusted_read_taint" as const)
-        : ("data_flow" as const);
-      return mcpErrorResult({
-        ok: false,
-        status: "blocked",
-        reason: ifcBlock.reason,
-        toolName,
-        mechanism,
-      });
+      // Same-source reply and internal destinations are ordinary work, not exfil.
+      const dest = classifyOutboundDestination(opts.args, ifcBlock.sessionLabels);
+      if (dest === "same_source" || dest === "internal") {
+        // allow through
+      } else {
+        const mechanism = taintedUntrusted
+          ? ("untrusted_read_taint" as const)
+          : ("data_flow" as const);
+        return mcpErrorResult({
+          ok: false,
+          status: "blocked",
+          reason: ifcBlock.reason,
+          toolName,
+          mechanism,
+        });
+      }
     }
   }
 
   // Park destructive natives when risk enforce is on — same as execute mandate.
   // memory_ingest: only overwrite (append:false) is destructive; appends proceed.
+  // notify: same-source / internal destinations are ordinary work (do not park).
   const enforce = await Effect.runPromise(operationRiskEnforceEnabledEffect(env));
   if (!enforce) return null;
   if (parkKind !== "destructive") return null;
+
+  if (toolName === "notify") {
+    const sessionKey = resolveSessionLabelKey(sessionId, env);
+    const labels = [...getSessionLabelsSync(sessionKey)];
+    const dest = classifyOutboundDestination(opts.args, labels);
+    if (dest === "same_source" || dest === "internal") return null;
+  }
 
   const approvedId =
     opts.approvedExecutionId?.trim() ||

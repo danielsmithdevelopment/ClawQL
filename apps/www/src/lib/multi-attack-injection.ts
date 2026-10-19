@@ -11,7 +11,7 @@ export const multiAttackSummary =
   'Twelve planted attacks across email, ticket, doc, and webhook. Scripted worst-case model always complies — this measures whether the gateway stops the resulting action, not whether a real model would fall for it. Sample size: smoke until the suite grows to dozens. Benign workflows are scored beside attacks.'
 
 export const multiAttackHeadlineResult =
-  'Smoke v3: 0 of 12 trusted attacks, persistent injection blocked, and every benign workflow completes without a human — park overwrites, label untrusted→memory, block untrusted→external (not a tool-name deny).'
+  'Smoke v4: 0 of 12 trusted effectuation, persistent injection blocked, recall integrity (trusted 15.00 over labeled 99.99), and benign expect-match including same-source/internal outbound — scripted smoke; peers pending.'
 
 export const multiAttackMechanisms = [
   {
@@ -112,4 +112,4 @@ export const multiAttackPublishGate =
   'Draft until peers are measured on this corpus. Publish only when attack rate, persistent-injection, and benign completion rate are all honest — not “secure because it blocks everything.”'
 
 export const multiAttackBenignSummary =
-  'Benign suite (defaults): 10/10 complete without a human — clean appends and email→labeled summary go through; only overwrites of authoritative facts park.'
+  'Benign suite includes the outbound boundary: reply-to-sender and internal team/reviewer destinations complete; third-party notify stays blocked. Contamination = hostile content surfaced as trusted (same as the governance board).'

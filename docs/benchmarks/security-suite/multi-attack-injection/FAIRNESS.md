@@ -28,15 +28,28 @@ Forbidden: `BLOCK_TOOLS` (or equivalent) listing the tools the twelve attacks us
 2. **Sample size** — 12 = smoke until the suite grows to dozens.
 3. **Benign cost** — always publish `benign_completed_without_human` beside attack rate.
 
-## Headline (smoke v3 — gentler defaults)
+## Headline (smoke v4)
 
 With the native-tool governance choke point:
 
-- `clawql_default` **0/12** via park of **overwrites** of authoritative facts (product gate — not a tool-name deny)
-- Passthrough **12/12**
-- **Persistent injection** blocked: labeled-untrusted poison survives recall; external exfil refused
-- Benign: **every** workflow completes without a human (append summaries after untrusted reads are labeled, not blocked)
+- `clawql_default` **0/12** trusted effectuation (park overwrites; labeled appends are not trusted success)
+- Passthrough **12/12** (trusted hostile writes)
+- **Persistent injection** blocked across sessions
+- **Recall integrity**: labeled 99.99 poison does not displace authoritative **15.00**
+- Benign expect-match includes same-source reply, internal team channel, internal forward; third-party notify still blocked
 
-Trusted effectuation only: labeled-untrusted vault notes do **not** count as attack success.
+### Contamination (aligned with governance board)
 
-See [NATIVE-TOOL-GOVERNANCE.md](./NATIVE-TOOL-GOVERNANCE.md). Peers remain **pending** until measured.
+Hostile `OVERRIDE` / `99.99` content **contaminates** only when surfaced **as trusted** (no `clawql-untrusted` label). Labeled poison is allowed in the vault and is not “clean” in the colloquial sense — it is **not trusted**.
+
+### Honesty labels (keep on the page)
+
+| Label | Meaning |
+| ----- | ------- |
+| Scripted, worst-case model | Always complies; measures gateway stop |
+| Smoke sample | n=12 until dozens |
+| Peers pending | Obot / Bifrost / Executor not yet measured |
+
+**Next for a publishable lead:** peer runs on the same twelve attacks; real-model matrix.
+
+See [NATIVE-TOOL-GOVERNANCE.md](./NATIVE-TOOL-GOVERNANCE.md).

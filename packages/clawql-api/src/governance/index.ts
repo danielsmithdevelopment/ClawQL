@@ -17,6 +17,7 @@ export {
 export {
   accumulateNativeToolReadAfterSuccess,
   classifyNativeTool,
+  classifyOutboundDestination,
   extractUntrustedLabelsFromText,
   gateNativeToolBeforeInvoke,
   governNativeHandler,
@@ -25,4 +26,5 @@ export {
   taintSessionFromUntrustedChannel,
   taintSessionFromVaultNoteText,
   type NativeToolGateBlock,
+  type OutboundDestClass,
 } from "./native-tool-gate.js";
