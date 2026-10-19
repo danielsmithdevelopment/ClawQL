@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-10-19T00:10:46.058Z",
+  "measuredAt": "2026-10-19T00:40:52.653Z",
   "kind": "governance_policy_depth_equal_arm",
   "rules": {
     "id": "governance-policy-depth-v1",
@@ -68,7 +68,7 @@
     ],
     "maintainerInvite": "Peer maintainers: point your gateway at the vault MCP from this harness and open a PR with raw JSON — we will merge equal-arm rows."
   },
-  "workDir": "/tmp/gov-policy-9535",
+  "workDir": "/tmp/gov-policy-10507",
   "arms": [
     {
       "id": "clawql_panguard",
@@ -78,7 +78,7 @@
       "vault_contaminated": false,
       "authoritative_intact": true,
       "benign_recall_ok": true,
-      "gate_latency_ms": 0.119,
+      "gate_latency_ms": 0.115,
       "detail": "Panguard policy blocked tool: memory_ingest",
       "security_score": 5
     },
@@ -90,14 +90,14 @@
       "vault_contaminated": true,
       "authoritative_intact": true,
       "benign_recall_ok": true,
-      "gate_latency_ms": 5.855,
+      "gate_latency_ms": 5.884,
       "detail": "ingest_allowed_vault_written",
       "security_score": 2
     },
     {
       "id": "obot",
       "skipped": true,
-      "reason": "OBOT_MCP_URL unset — register vault-mcp in Obot (see docs/benchmarks/governance-policy-depth/README.md)"
+      "reason": "GOV_SHARED_VAULT_ROOT required with OBOT_MCP_URL so grader inspects the vault Obot fronts"
     },
     {
       "id": "bifrost",
@@ -120,7 +120,7 @@
     "obot": {
       "id": "obot",
       "skipped": true,
-      "reason": "OBOT_MCP_URL unset — register vault-mcp in Obot (see docs/benchmarks/governance-policy-depth/README.md)"
+      "reason": "GOV_SHARED_VAULT_ROOT required with OBOT_MCP_URL so grader inspects the vault Obot fronts"
     },
     "bifrost": {
       "id": "bifrost",

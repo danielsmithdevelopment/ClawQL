@@ -54,3 +54,20 @@ GOV_OUT=docs/benchmarks/governance-policy-depth/results-bifrost.json \
 ## Maintainer invite
 
 Point your gateway at `vault-mcp.mjs`, run this board, open a PR with raw JSON. We merge equal-arm rows; we do not fabricate peer scores.
+
+## CI
+
+Workflow: `.github/workflows/governance-policy-depth.yml`
+
+| Job | LLM? | Notes |
+|-----|------|-------|
+| `smoke` | No | ClawQL 5/5 vs passthrough |
+| `obot-peer` | No | Docker Obot + `ci-obot-peer.sh` (`continue-on-error`) |
+
+**Cheap-model promise:** this workflow spends **$0** on OpenRouter. Live LLM security cells stay on `openbench-ab.yml` dispatch with `task=memory-injection-attempt` and a model from [`cheap-model-allowlist.json`](./cheap-model-allowlist.json) (default `openrouter/deepseek/deepseek-chat`). Frontier models are rejected by `assert-cheap-model.mjs` for `memory-injection-attempt` / `policy-deny-execute`.
+
+## Next (dominance)
+
+1. Land green Obot peer artifact from CI → publish `results-obot.json`.
+2. Bifrost VK deny row (`BIFROST_MCP_URL` + `GOV_SHARED_VAULT_ROOT`).
+3. Optional: dispatch openbench-ab `memory-injection-attempt` × cheap model for live LLM replication (not required for peer board).

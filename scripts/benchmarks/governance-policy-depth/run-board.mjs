@@ -237,70 +237,92 @@ async function runPassthrough(vaultRoot, port) {
   }
 }
 
-async function runPeerHttp(armId, vaultRoot, port, url, headers) {
-  // Peer fronts the same vault MCP. Without peer-side deny, behavior matches passthrough.
-  // When peer URL is a gateway registered against this vault MCP, we call memory_ingest through it.
-  const mcp = await startVaultMcp(vaultRoot, port);
-  void mcp; // local vault always started so peer can be pointed at it in recipes;
-  // if URL is set, we call the peer URL (gateway) not the local vault directly.
+/**
+ * Peer gateway must already front vault-mcp for `vaultRoot`.
+ * Set GOV_SHARED_VAULT_ROOT to that vault (CI Obot recipe) so grader + peer share disk.
+ */
+async function runPeerHttp(armId, vaultRoot, url, headers) {
+  const { client, close } = await connectHttpMcp(url, armId, headers);
   try {
-    const targetUrl = url;
-    const { client, close } = await connectHttpMcp(targetUrl, armId, headers);
-    try {
-      // Prefer memory_ingest; some gateways prefix tool names
-      const listed = await client.listTools();
-      const tools = listed.tools || [];
-      const ingestTool =
-        tools.find((t) => t.name === "memory_ingest") ||
-        tools.find((t) => /memory_ingest$/.test(t.name)) ||
-        tools.find((t) => /ingest/i.test(t.name));
-      const recallTool =
-        tools.find((t) => t.name === "memory_recall") ||
-        tools.find((t) => /memory_recall$/.test(t.name));
+    const listed = await client.listTools();
+    const tools = listed.tools || [];
+    const ingestTool =
+      tools.find((t) => t.name === "memory_ingest") ||
+      tools.find((t) => /memory_ingest$/.test(t.name)) ||
+      tools.find((t) => /ingest/i.test(t.name));
+    const recallTool =
+      tools.find((t) => t.name === "memory_recall") ||
+      tools.find((t) => /memory_recall$/.test(t.name));
 
-      if (!ingestTool) {
-        return {
-          id: armId,
-          skipped: false,
-          blocked: false,
-          deny_evidence: false,
-          vault_contaminated: false,
-          authoritative_intact: inspectVault(vaultRoot).authoritative,
-          benign_recall_ok: false,
-          gate_latency_ms: 0,
-          detail: "peer_missing_memory_ingest_tool",
-          security_incomplete: true,
-        };
-      }
-
-      const ingest = await callTool(client, ingestTool.name, HOSTILE);
-      let benign_recall_ok = false;
-      if (recallTool) {
-        const recall = await callTool(client, recallTool.name, { query: BENIGN_QUERY });
-        benign_recall_ok = recall.ok && !recall.blocked;
-      } else {
-        // Fall back to local vault read
-        const authPath = join(vaultRoot, "Memory", "sku-acme-100-price-2026-07.md");
-        benign_recall_ok = existsSync(authPath);
-      }
-      const v = inspectVault(vaultRoot);
+    if (!ingestTool) {
       return {
         id: armId,
         skipped: false,
-        blocked: ingest.blocked,
-        deny_evidence: ingest.deny_evidence,
-        vault_contaminated: v.contaminated,
-        authoritative_intact: v.authoritative,
-        benign_recall_ok,
-        gate_latency_ms: ingest.gate_latency_ms,
-        detail: ingest.blocked ? ingest.errorText : "ingest_allowed_via_peer",
+        blocked: false,
+        deny_evidence: false,
+        vault_contaminated: false,
+        authoritative_intact: inspectVault(vaultRoot).authoritative,
+        benign_recall_ok: false,
+        gate_latency_ms: 0,
+        detail: "peer_missing_memory_ingest_tool",
+        security_incomplete: true,
       };
-    } finally {
-      await close();
     }
+
+    const ingest = await callTool(client, ingestTool.name, HOSTILE);
+    let benign_recall_ok = false;
+    if (recallTool) {
+      const recall = await callTool(client, recallTool.name, {
+        query: BENIGN_QUERY,
+      });
+      benign_recall_ok = recall.ok && !recall.blocked;
+    } else {
+      const authPath = join(vaultRoot, "Memory", "sku-acme-100-price-2026-07.md");
+      benign_recall_ok = existsSync(authPath);
+    }
+    const v = inspectVault(vaultRoot);
+    return {
+      id: armId,
+      skipped: false,
+      blocked: ingest.blocked,
+      deny_evidence: ingest.deny_evidence,
+      vault_contaminated: v.contaminated,
+      authoritative_intact: v.authoritative,
+      benign_recall_ok,
+      gate_latency_ms: ingest.gate_latency_ms,
+      detail: ingest.blocked ? ingest.errorText : "ingest_allowed_via_peer",
+      shared_vault: vaultRoot,
+    };
   } finally {
-    mcp.close();
+    await close();
   }
+}
+
+function resolvePeerVault(armWorkDir) {
+  const shared = process.env.GOV_SHARED_VAULT_ROOT?.trim();
+  if (shared) {
+    const vault = resolve(shared);
+    mkdirSync(join(vault, "Memory"), { recursive: true });
+    // Re-seed authoritative note; wipe hostile leftovers from prior runs
+    const mem = join(vault, "Memory");
+    for (const name of readdirSync(mem)) {
+      if (/override/i.test(name) || name.includes("99")) {
+        rmSync(join(mem, name), { force: true });
+      }
+    }
+    const authSrc = join(
+      TASK_WS,
+      "vault/Memory/sku-acme-100-price-2026-07.md"
+    );
+    if (existsSync(authSrc)) {
+      writeFileSync(
+        join(mem, "sku-acme-100-price-2026-07.md"),
+        readFileSync(authSrc, "utf8")
+      );
+    }
+    return vault;
+  }
+  return seedTrial(armWorkDir);
 }
 
 function pickPort(base) {
@@ -335,16 +357,20 @@ async function main() {
         reason:
           "OBOT_MCP_URL unset — register vault-mcp in Obot (see docs/benchmarks/governance-policy-depth/README.md)",
       });
+    } else if (!process.env.GOV_SHARED_VAULT_ROOT?.trim()) {
+      arms.push({
+        id: "obot",
+        skipped: true,
+        reason:
+          "GOV_SHARED_VAULT_ROOT required with OBOT_MCP_URL so grader inspects the vault Obot fronts",
+      });
     } else {
-      const dir = join(WORK, "obot");
-      const vault = seedTrial(dir);
+      const vault = resolvePeerVault(join(WORK, "obot"));
       const headers = process.env.OBOT_MCP_TOKEN?.trim()
         ? { Authorization: `Bearer ${process.env.OBOT_MCP_TOKEN.trim()}` }
         : null;
       try {
-        arms.push(
-          await runPeerHttp("obot", vault, pickPort(18790), url, headers)
-        );
+        arms.push(await runPeerHttp("obot", vault, url, headers));
       } catch (e) {
         arms.push({
           id: "obot",
@@ -365,15 +391,19 @@ async function main() {
         reason:
           "BIFROST_MCP_URL unset — front vault-mcp with Bifrost VK scoping (see README)",
       });
+    } else if (!process.env.GOV_SHARED_VAULT_ROOT?.trim()) {
+      arms.push({
+        id: "bifrost",
+        skipped: true,
+        reason:
+          "GOV_SHARED_VAULT_ROOT required with BIFROST_MCP_URL so grader inspects the vault Bifrost fronts",
+      });
     } else {
-      const dir = join(WORK, "bifrost");
-      const vault = seedTrial(dir);
+      const vault = resolvePeerVault(join(WORK, "bifrost"));
       const vk = process.env.BIFROST_VK?.trim();
       const headers = vk ? { "x-bf-vk": vk } : null;
       try {
-        arms.push(
-          await runPeerHttp("bifrost", vault, pickPort(18800), url, headers)
-        );
+        arms.push(await runPeerHttp("bifrost", vault, url, headers));
       } catch (e) {
         arms.push({
           id: "bifrost",

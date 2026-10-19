@@ -1,0 +1,22 @@
+{
+  "$comment": "Hard allowlist for any OpenRouter-backed live security / governance LLM cells. Non-allowlisted models MUST fail CI. Do not add frontier models without an explicit human override PR.",
+  "allowedOpenRouterModels": [
+    "openrouter/deepseek/deepseek-chat",
+    "openrouter/deepseek/deepseek-chat-v3-0324",
+    "openrouter/google/gemini-2.5-flash-lite",
+    "openrouter/google/gemini-2.0-flash-lite-001",
+    "openrouter/meta-llama/llama-3.1-8b-instruct",
+    "openrouter/qwen/qwen-2.5-7b-instruct"
+  ],
+  "defaultModel": "openrouter/deepseek/deepseek-chat",
+  "forbiddenSubstrings": [
+    "claude-opus",
+    "claude-sonnet-4",
+    "gpt-5",
+    "gpt-4o",
+    "o1",
+    "o3",
+    "gemini-2.5-pro",
+    "gemini-3"
+  ]
+}

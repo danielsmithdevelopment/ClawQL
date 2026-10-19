@@ -17,6 +17,12 @@ On the shared OVERRIDE pricing fixture, ClawQL blocks hostile vault writes with 
 
 Content-aware classifiers; JWT ATR mesh HA; that every peer binary was measured in this environment (see `skipped` arms).
 
+## Next step
+
+1. **CI Obot peer** (Docker, no LLM) — workflow `Governance policy-depth` → publish `results-obot.json`.
+2. **Bifrost** peer with ingest-deny VK.
+3. **Live LLM** (optional): dispatch OpenBench A/B `memory-injection-attempt` with **cheap** OpenRouter only (`openrouter/deepseek/deepseek-chat`). Allowlist: `scripts/benchmarks/governance-policy-depth/cheap-model-allowlist.json`.
+
 ## Related
 
 - [dominance-roadmap.md](../dominance-roadmap.md) — criterion #7 governance
