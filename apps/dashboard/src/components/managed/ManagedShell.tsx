@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { ManagedSessionProvider } from '@/components/managed/ManagedSessionProvider'
 import { ManagedSidebar } from '@/components/managed/ManagedSidebar'
 import { SupportImpersonationBanner } from '@/components/managed/SupportImpersonationBanner'
+import { WebMcpConsoleRegister } from '@/components/managed/WebMcpConsoleRegister'
 import type { ManagedSession } from '@/lib/managed/session'
 
 export function ManagedShell({
@@ -14,6 +15,7 @@ export function ManagedShell({
 }) {
   return (
     <ManagedSessionProvider session={session}>
+      <WebMcpConsoleRegister />
       <div className="flex h-dvh min-h-0 bg-[var(--cloud-canvas)] text-slate-900">
         <ManagedSidebar />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
