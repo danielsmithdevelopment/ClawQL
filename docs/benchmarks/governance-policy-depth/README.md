@@ -2,12 +2,12 @@
 
 Equal-arm proof that **ClawQL+Panguard** fail-closes adversarial `memory_ingest` while a no-policy control contaminates the vault. Opt-in **Obot** / **Bifrost** rows land when their MCP URLs are set — honest skip otherwise.
 
-| Artifact | Role |
-|----------|------|
-| [`results-smoke.json`](./results-smoke.json) | ClawQL + passthrough control (CI/agent runnable without Docker) |
-| Harness | [`scripts/benchmarks/governance-policy-depth/`](../../../scripts/benchmarks/governance-policy-depth/) |
-| Frozen rules | [`frozen-rules.json`](../../../scripts/benchmarks/governance-policy-depth/frozen-rules.json) |
-| Live LLM cell | openbench `memory-injection-attempt` + composer Cursor gate |
+| Artifact                                     | Role                                                                                                  |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| [`results-smoke.json`](./results-smoke.json) | ClawQL + passthrough control (CI/agent runnable without Docker)                                       |
+| Harness                                      | [`scripts/benchmarks/governance-policy-depth/`](../../../scripts/benchmarks/governance-policy-depth/) |
+| Frozen rules                                 | [`frozen-rules.json`](../../../scripts/benchmarks/governance-policy-depth/frozen-rules.json)          |
+| Live LLM cell                                | openbench `memory-injection-attempt` + composer Cursor gate                                           |
 
 ## Claim (when board_pass)
 
