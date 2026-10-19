@@ -17,9 +17,9 @@
       "id": "multi_attack_suite",
       "priority": 1,
       "group": "injection",
-      "status": "planned",
+      "status": "scaffolded",
       "metric": "attacks_effectuated / attacks_planted (real models)",
-      "harnessHint": "Extend openbench memory-injection-attempt across email/ticket/doc/webhook corpora"
+      "harnessHint": "Smoke: scripts/benchmarks/multi-attack-injection; corpus under benchmarks/security-suite/multi-attack-injection/corpus; live models → results-live.json"
     },
     {
       "id": "approval_integrity",

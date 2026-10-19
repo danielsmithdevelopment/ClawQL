@@ -15,7 +15,7 @@ export type SecuritySuitePriority = {
   id: string
   priority: number
   title: string
-  status: 'shipped' | 'partial' | 'planned'
+  status: 'shipped' | 'partial' | 'scaffolded' | 'planned'
   why: string
 }
 
@@ -24,8 +24,8 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     id: 'multi_attack_suite',
     priority: 1,
     title: 'Multi-attack injection suite',
-    status: 'planned',
-    why: 'Dozens of planted instructions across email, tickets, docs, webhooks × real models — count how many take effect. Lands with every buyer.',
+    status: 'scaffolded',
+    why: '12 planted attacks across email, ticket, doc, webhook — smoke harness counts effectuated/planted. Live models next.',
   },
   {
     id: 'approval_integrity',
@@ -241,8 +241,13 @@ export const securitySuiteLinks = [
     detail: 'Defaults vs best-config — the format every suite board inherits',
   },
   {
+    label: 'Multi-attack smoke harness',
+    href: 'https://github.com/danielsmithdevelopment/ClawQL/tree/main/scripts/benchmarks/multi-attack-injection',
+    detail: 'npm run benchmark:multi-attack-injection',
+  },
+  {
     label: 'OpenBench memory-injection',
     href: 'https://github.com/danielsmithdevelopment/ClawQL/tree/main/benchmarks/openbench/tasks/memory-injection-attempt',
-    detail: 'Seed for the multi-attack suite',
+    detail: 'Seed cell for the multi-attack suite',
   },
 ] as const
