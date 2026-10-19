@@ -2,6 +2,8 @@
 
 Equal-arm proof that **ClawQL+Panguard** fail-closes adversarial `memory_ingest` while a no-policy control contaminates the vault. Opt-in **Obot** / **Bifrost** rows land when their MCP URLs are set — honest skip otherwise.
 
+**Live board:** [clawql.com/benchmarks#governance](https://clawql.com/benchmarks/#governance) (scorecard extends as peer artifacts land).
+
 | Artifact                                     | Role                                                                                                  |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | [`results-smoke.json`](./results-smoke.json) | ClawQL + passthrough control (CI/agent runnable without Docker)                                       |
