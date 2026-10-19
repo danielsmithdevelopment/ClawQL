@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
- * Equal-arm vault MCP with optional tool deny — peer best-config stand-in.
+ * Equal-arm vault MCP with optional tool deny — local harness utility only.
  *
- * Same Obsidian Memory/ surface as governance vault-mcp.mjs, but tools listed
- * in DENY_TOOLS (comma-separated) return isError. Used when a peer has no
- * built-in vault deny of its own (Executor) or as a local deny target.
+ * Same Obsidian Memory/ surface as vault-mcp.mjs, but tools listed in DENY_TOOLS
+ * return isError. Do **not** publish this under Executor (or any peer) as their
+ * best-config — Executor best-config must use native `policies.block` (see
+ * ci-executor-peer.sh). Keep this file for local debugging of deny surfaces.
  *
  *   VAULT_ROOT=/tmp/... DENY_TOOLS=memory_ingest node deny-tools-mcp.mjs --http --port 18794
  */

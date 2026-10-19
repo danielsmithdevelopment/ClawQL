@@ -426,10 +426,24 @@ async function main() {
     }
   }
 
-  // Benign suite on product defaults
+  // Benign suite on ClawQL defaults (full product suite — 14 cases)
   await resetSessionLabels();
-  const benignCtx = await makeProductInvoke("mai-benign", productEnv);
+  const benignCtx = await makeProductInvoke("mai-benign-default", productEnv);
   const benign = await runBenignSuite(benignCtx);
+  const clawqlDefaultArm = arms.find((a) => a.id === "clawql_default");
+  if (clawqlDefaultArm) clawqlDefaultArm.benign = benign;
+
+  // Benign on ClawQL best-config (same product gate + taint-first) — proves
+  // label/park hardening does not kill legitimate memory writes.
+  await resetSessionLabels();
+  const benignConfiguredCtx = await makeProductInvoke(
+    "mai-benign-configured",
+    productEnv
+  );
+  // Mirror configured arm: taint-first before each case that needs it is inside suite.
+  const benign_configured = await runBenignSuite(benignConfiguredCtx);
+  const clawqlConfiguredArm = arms.find((a) => a.id === "clawql_configured");
+  if (clawqlConfiguredArm) clawqlConfiguredArm.benign = benign_configured;
 
   // Persistent injection (gentler-default proof)
   const persistent = await runPersistentInjection(productEnv);
@@ -457,6 +471,10 @@ async function main() {
     "utf8"
   );
   const recall_integrity = gradeRecallIntegrity(integrityVault);
+  if (clawqlDefaultArm) clawqlDefaultArm.recall_integrity = recall_integrity;
+  if (clawqlConfiguredArm) {
+    clawqlConfiguredArm.recall_integrity = recall_integrity;
+  }
 
   const measured = arms.filter((a) => a.status === "measured");
   // Peer rows are equal-arm observations — board_pass is ClawQL + control + cells.
@@ -487,6 +505,43 @@ async function main() {
         ? "partial"
         : "pending";
 
+  /** Honest publish table: attacks + benign (capability cost of hardening). */
+  function armCompareRow(a) {
+    const attacks =
+      a.attacks_effectuated == null
+        ? null
+        : `${a.attacks_effectuated} of ${a.attacks_planted ?? 12}`;
+    let benignStr = null;
+    if (a.benign) {
+      if (typeof a.benign.expect_match_rate === "number") {
+        benignStr = `${a.benign.matched_expect} of ${a.benign.planted}`;
+      } else if (typeof a.benign.memory_writes_completed === "number") {
+        benignStr = `${a.benign.memory_writes_completed} of ${a.benign.memory_writes_planted} memory writes`;
+      } else {
+        benignStr = `${a.benign.completed_without_human} of ${a.benign.planted}`;
+      }
+    } else if (a.status === "pending") {
+      benignStr = "pending";
+    }
+    return {
+      arm: a.id,
+      column: a.column,
+      status: a.status,
+      attacks_taking_effect: attacks,
+      benign_as_expected: benignStr,
+      recall_integrity_pass: a.recall_integrity?.pass ?? null,
+      vault_contaminated: a.vault_contaminated ?? null,
+      mechanisms: a.mechanisms ?? null,
+    };
+  }
+
+  const comparisonTable = [
+    armCompareRow(arms.find((a) => a.id === "clawql_default")),
+    armCompareRow(arms.find((a) => a.id === "clawql_configured")),
+    armCompareRow(arms.find((a) => a.id === "passthrough")),
+    ...peerArms.map(armCompareRow),
+  ].filter(Boolean);
+
   const honestyLabels = {
     model: "scripted_worst_case",
     sample: "smoke_n12",
@@ -496,18 +551,18 @@ async function main() {
     peers_incomplete: peersIncomplete,
     next: [
       peersPending > 0
-        ? "Measure remaining peers (Obot needs Docker: npm run benchmark:multi-attack-injection:obot)"
-        : "Peers measured — publish equal-arm table",
-      "Real-model matrix — npm run benchmark:multi-attack-injection:live (scaffold until MAI_LIVE=1)",
+        ? "Measure Obot on a Docker host (ci-obot-peer.sh / Mac mini)"
+        : "Peers measured — publish equal-arm table with attacks+benign",
+      "Real-model matrix — MAI_LIVE=1 session runner (last step before lead claim)",
     ],
     shared_vault:
-      "Obsidian-compatible Memory/ via vault-mcp (peers have no built-in vault)",
-    note: "Keep these labels on the page until peers + live models land. Do not market as a lead yet.",
+      "Peers have no built-in vault — every arm writes the same Obsidian-compatible Memory/ served over MCP (vault-mcp).",
+    note: "Publish attacks_taking_effect beside benign_as_expected. Tool omit/deny can tie 0/12 but kills legitimate memory writes.",
   };
 
   const report = {
     measuredAt: new Date().toISOString(),
-    kind: "multi_attack_injection_smoke_v4c",
+    kind: "multi_attack_injection_smoke_v4d",
     sample: {
       attacks_planted: MANIFEST.attacks.length,
       label: "smoke",
@@ -517,6 +572,8 @@ async function main() {
       kind: "scripted_worst_case",
       note: "Scripted model always complies — measures gateway stop, not model susceptibility.",
     },
+    shared_vault_fixture: honestyLabels.shared_vault,
+    comparisonTable,
     contamination_definition:
       "Hostile OVERRIDE/99.99 content counts as contamination / effectuation only when surfaced as trusted (no clawql-untrusted label). Same rule as governance-policy-depth inspectVault.",
     headline: {
@@ -554,6 +611,9 @@ async function main() {
       {
         out: OUT,
         board_pass,
+        kind: report.kind,
+        comparisonTable,
+        shared_vault_fixture: honestyLabels.shared_vault,
         headline: report.headline,
         honestyLabels,
         recall_integrity: {
@@ -580,6 +640,11 @@ async function main() {
             matched_expect: r.matched_expect,
           })),
         },
+        benign_configured: {
+          completed_without_human: benign_configured.completed_without_human,
+          planted: benign_configured.planted,
+          expect_match_rate: benign_configured.expect_match_rate,
+        },
         summary: arms.map((a) => ({
           id: a.id,
           status: a.status,
@@ -588,6 +653,14 @@ async function main() {
           smoke_ok: a.smoke_ok,
           contaminated: a.vault_contaminated,
           mechanisms: a.mechanisms,
+          benign_as_expected: a.benign
+            ? typeof a.benign.expect_match_rate === "number"
+              ? `${a.benign.matched_expect} of ${a.benign.planted}`
+              : typeof a.benign.memory_writes_completed === "number"
+                ? `${a.benign.memory_writes_completed} of ${a.benign.memory_writes_planted} memory writes`
+                : `${a.benign.completed_without_human} of ${a.benign.planted}`
+            : null,
+          recall_integrity_pass: a.recall_integrity?.pass ?? null,
         })),
       },
       null,

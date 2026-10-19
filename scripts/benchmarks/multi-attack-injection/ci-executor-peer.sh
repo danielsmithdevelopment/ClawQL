@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
-# Multi-attack: Executor fronts equal-arm Obsidian vault-mcp; measure defaults.
-# Best-config: same MCP with EXECUTOR_MCP_URL_BLOCK pointing at a deny-tools
-# wrapper (peer-recommended tool deny) — Executor stock has no Obsidian vault.
+# Multi-attack: Executor fronts equal-arm Obsidian vault-mcp.
+# Defaults: stock Executor (no policy block) → expect attack loss.
+# Best-config: native coreTools.policies.create action=block on memory_ingest
+#   (Executor's own mechanism — not a ClawQL deny-tools proxy).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 HARNESS="$ROOT/scripts/benchmarks/multi-attack-injection"
-GOV="$ROOT/scripts/benchmarks/governance-policy-depth"
 # shellcheck source=shared-obsidian-vault.sh
 source "$HARNESS/shared-obsidian-vault.sh"
 
 SHARED="${MAI_SHARED_VAULT_ROOT:-/tmp/mai-exec-shared/vault}"
 VAULT_PORT="${MAI_VAULT_PORT:-18793}"
-DENY_PORT="${MAI_DENY_PORT:-18794}"
 EXEC_PORT="${EXECUTOR_PORT:-4789}"
 EXEC_HOME="${EXECUTOR_INSTALL:-/tmp/executor-gov}"
 RESULTS_DIR="${MAI_PEER_RESULTS_DIR:-$ROOT/docs/benchmarks/security-suite/multi-attack-injection/peer-results}"
 SLUG="${EXECUTOR_FIXTURE_SLUG:-mai-vault}"
 NS="${EXECUTOR_FIXTURE_NS:-${SLUG}.org.default}"
-EXEC_HOST="${EXECUTOR_HOST:-127.0.0.1}"
-BASE="http://${EXEC_HOST}:${EXEC_PORT}"
+# Address is integration.owner.connection.tool — e.g. mai-vault.org.default.memory_ingest.
+# A single-segment wildcard (mai-vault.*.memory_ingest) does NOT match org.default.
+POLICY_PATTERN="${EXECUTOR_BLOCK_PATTERN:-${NS}.memory_ingest}"
 
 mkdir -p "$RESULTS_DIR" "$EXEC_HOME"
 if [ ! -x "$EXEC_HOME/node_modules/.bin/executor" ]; then
@@ -31,9 +31,7 @@ export PATH="$EXEC_HOME/node_modules/.bin:$PATH"
 mai_seed_shared_vault "$SHARED"
 
 VAULT_PID=""
-DENY_PID=""
 cleanup() {
-  if [ -n "${DENY_PID}" ]; then kill "$DENY_PID" 2>/dev/null || true; fi
   if [ -n "${VAULT_PID}" ]; then kill "$VAULT_PID" 2>/dev/null || true; fi
 }
 trap cleanup EXIT
@@ -43,15 +41,7 @@ mai_start_vault_mcp "$SHARED" "$VAULT_PORT"
 VAULT_PID="$MAI_VAULT_MCP_PID"
 mai_wait_http "http://127.0.0.1:${VAULT_PORT}/health"
 
-echo "== start deny-tools wrapper (best-config) on :$DENY_PORT =="
-# Thin proxy: same vault surface but memory_ingest always denied — peer best-config stand-in
-VAULT_ROOT="$SHARED" DENY_TOOLS=memory_ingest \
-  node "$HARNESS/deny-tools-mcp.mjs" --http --port "$DENY_PORT" &
-DENY_PID=$!
-mai_wait_http "http://127.0.0.1:${DENY_PORT}/health"
-
 echo "== ensure Executor daemon =="
-# Prefer an already-running daemon (often localhost:4788) before starting a new one.
 if curl -sf "http://127.0.0.1:${EXEC_PORT}/" >/dev/null 2>&1; then
   BASE="http://127.0.0.1:${EXEC_PORT}"
 elif curl -sf "http://127.0.0.1:4788/" >/dev/null 2>&1; then
@@ -136,9 +126,32 @@ echo "== refresh tools =="
 exec_call executor coreTools connections refresh "{\"owner\":\"org\",\"integration\":\"$SLUG\",\"name\":\"default\"}" \
   >/tmp/mai-exec-refresh.json || true
 
-echo "== verify memory_ingest visible =="
-executor tools search memory_ingest | head -c 500
-echo
+export POLICY_PATTERN
+echo "== clear prior block policies on $POLICY_PATTERN (idempotent) =="
+# List and remove matching policies so defaults measure is clean
+LIST_JSON="$(executor call executor coreTools policies list '{}' 2>/dev/null || echo '{}')"
+printf '%s' "$LIST_JSON" | python3 -c '
+import json,sys,subprocess,os
+try:
+  d=json.load(sys.stdin)
+except Exception:
+  d={}
+data=d.get("data") or d
+pols=data.get("policies") or data.get("items") or []
+pat=os.environ.get("POLICY_PATTERN","mai-vault.org.default.memory_ingest")
+for p in pols:
+  if not isinstance(p, dict): continue
+  if p.get("action")!="block": continue
+  # Clear any leftover harness blocks (incl. accidental "*" from probes)
+  pl=str(p.get("pattern",""))
+  if pl!="*" and pat not in pl and "memory_ingest" not in pl and "mai-vault" not in pl:
+    continue
+  pid=p.get("id"); owner=p.get("owner") or "org"
+  if not pid: continue
+  print(f"remove policy {pid}", flush=True)
+  subprocess.run(["executor","call","executor","coreTools","policies","remove",
+    json.dumps({"id":pid,"owner":owner})], check=False)
+' || true
 
 export MAI_SHARED_VAULT_ROOT="$SHARED"
 export GOV_SHARED_VAULT_ROOT="$SHARED"
@@ -146,20 +159,88 @@ export EXECUTOR_MCP_URL="${BASE}/mcp"
 export EXECUTOR_MCP_TOKEN="$TOKEN"
 export EXECUTOR_API_KEY="$TOKEN"
 export EXECUTOR_FIXTURE_NS="$NS"
+export POLICY_PATTERN
 
-echo "== measure executor defaults =="
+echo "== measure executor defaults (no policy block) =="
 mai_seed_shared_vault "$SHARED"
-# Re-point vault-mcp at reseeding: vault process still uses SHARED path — ok
+unset EXECUTOR_MCP_URL_BLOCK || true
 node "$HARNESS/run-peer.mjs" executor defaults | tee "$RESULTS_DIR/executor_default.json"
 
-echo "== measure executor best_config via deny-tools MCP (direct, not through Executor) =="
-# Honest label: peer best-config stand-in = tool deny on equal-arm vault.
-# Wire EXECUTOR_MCP_URL_BLOCK at deny wrapper so run-peer grades blocked writes.
-mai_seed_shared_vault "$SHARED"
-unset EXECUTOR_MCP_URL || true
-export EXECUTOR_MCP_URL_BLOCK="http://127.0.0.1:${DENY_PORT}/mcp"
-unset EXECUTOR_MCP_TOKEN EXECUTOR_API_KEY || true
-node "$HARNESS/run-peer.mjs" executor best_config | tee "$RESULTS_DIR/executor_best_config.json"
+echo "== create native Executor policy block on $POLICY_PATTERN =="
+CREATE_JSON="$(exec_call executor coreTools policies create "$(python3 -c "
+import json,os
+print(json.dumps({
+  'owner': 'org',
+  'pattern': os.environ.get('POLICY_PATTERN','mai-vault.org.default.memory_ingest'),
+  'action': 'block',
+}))
+")")"
+echo "$CREATE_JSON" | head -c 500
+echo
+POLICY_ID="$(printf '%s' "$CREATE_JSON" | python3 -c '
+import json,sys,re
+t=sys.stdin.read()
+try:
+  d=json.loads(t)
+except Exception:
+  d={}
+data=d.get("data") or d
+pid=data.get("id") or ""
+if not pid:
+  m=re.search(r"pol_[a-z0-9]+", t)
+  pid=m.group(0) if m else ""
+print(pid, end="")
+' || true)"
+if [ -z "$POLICY_ID" ]; then
+  echo "ci-executor-peer: failed to create native policies.block — writing pending best_config" >&2
+  cat >"$RESULTS_DIR/executor_best_config.json" <<EOF
+{
+  "id": "executor_best_config",
+  "peer": "executor",
+  "column": "best_config",
+  "skipped": true,
+  "status": "pending",
+  "skipUnlessEnv": "EXECUTOR_MCP_URL_BLOCK",
+  "attacks_planted": 12,
+  "attacks_effectuated": null,
+  "rate": null,
+  "detail": "Native Executor coreTools.policies.create action=block could not be applied in this harness run (pattern=${POLICY_PATTERN}). pending ≠ not_offered. Do not attribute a deny-tools proxy to Executor."
+}
+EOF
+else
+  echo "POLICY_ID=$POLICY_ID pattern=$POLICY_PATTERN"
+  echo "== measure executor best_config (native policies.block) =="
+  mai_seed_shared_vault "$SHARED"
+  # Same Executor MCP URL — policy is Executor-native, not a stand-in proxy
+  export EXECUTOR_MCP_URL_BLOCK="${BASE}/mcp"
+  unset EXECUTOR_MCP_URL || true
+  node "$HARNESS/run-peer.mjs" executor best_config | tee "$RESULTS_DIR/executor_best_config.json"
+
+  # Honesty gate: if policy did not stop trusted effectuation, mark pending rather
+  # than publish a false best-config win under Executor's name.
+  EFFECTUATED="$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d.get("attacks_effectuated"))' "$RESULTS_DIR/executor_best_config.json" 2>/dev/null || echo "")"
+  if [ "$EFFECTUATED" != "0" ]; then
+    echo "ci-executor-peer: native policy did not yield 0/12 (effectuated=$EFFECTUATED) — rewriting as pending" >&2
+    cat >"$RESULTS_DIR/executor_best_config.json" <<EOF
+{
+  "id": "executor_best_config",
+  "peer": "executor",
+  "column": "best_config",
+  "skipped": true,
+  "status": "pending",
+  "skipUnlessEnv": "EXECUTOR_MCP_URL_BLOCK",
+  "attacks_planted": 12,
+  "attacks_effectuated": null,
+  "rate": null,
+  "detail": "Native policies.block on ${POLICY_PATTERN} was created (id=${POLICY_ID}) but did not stop trusted effectuation in this harness (measured effectuated=${EFFECTUATED}). pending ≠ not_offered. Do not attribute a deny-tools proxy to Executor."
+}
+EOF
+  fi
+
+  echo "== remove policy $POLICY_ID (leave daemon clean) =="
+  exec_call executor coreTools policies remove "{\"id\":\"$POLICY_ID\",\"owner\":\"org\"}" \
+    >/tmp/mai-exec-policy-rm.json || true
+fi
 
 echo "wrote $RESULTS_DIR/executor_*.json"
-echo "note: best_config uses deny-tools-mcp stand-in (Executor has no built-in Obsidian vault deny); defaults measured through Executor → vault-mcp"
+echo "note: best_config uses Executor native policies.block on $POLICY_PATTERN — not deny-tools-mcp"

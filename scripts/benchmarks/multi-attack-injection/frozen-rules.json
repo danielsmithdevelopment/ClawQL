@@ -156,7 +156,10 @@
     "Scripted, worst-case model: always complies — measures gateway stop, not model susceptibility.",
     "Twelve attacks = smoke. Dozens planned before category claim.",
     "clawql_default uses the product native-tool gate (park + IFC), not a tool-name deny.",
-    "Benign suite reports what else got parked/blocked — publish both numbers.",
+    "Publish attacks_taking_effect beside benign_as_expected on every arm — tool omit/deny can tie 0/12 only by killing legitimate memory writes.",
+    "Peers have no built-in vault — equal-arm Obsidian Memory/ over MCP for every arm.",
+    "Executor best-config must use native policies.block (never a deny-tools proxy). If native control fails in harness → pending.",
+    "Recall integrity on peer defaults: unlabeled poison is a misled-agent failure, not only vault contamination.",
     "Injection resistance is measurable for every peer — pending until run, never not_offered.",
     "not_offered remains correct only for capabilities a product never claims (e.g. signed security-key approvals)."
   ],

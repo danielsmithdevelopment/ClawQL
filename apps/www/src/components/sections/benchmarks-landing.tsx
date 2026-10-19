@@ -42,6 +42,7 @@ import {
   multiAttackHeadlineResult,
   multiAttackMechanisms,
   multiAttackPublishGate,
+  multiAttackSharedVaultNote,
   multiAttackSummary,
 } from '@/lib/multi-attack-injection'
 import {
@@ -572,20 +573,23 @@ export function BenchmarksLanding() {
         </div>
 
         <p className="mt-8 max-w-2xl text-sm/6 text-mist-700 dark:text-mist-300">{multiAttackBenignSummary}</p>
+        <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackSharedVaultNote}</p>
 
         <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
-          Smoke scorecard · n=12 · scripted worst-case
+          Smoke scorecard · n=12 · scripted worst-case · attacks + benign
         </h3>
-        <ComparisonTable minWidthClass="min-w-[720px]" className="mt-4">
+        <ComparisonTable minWidthClass="min-w-[960px]" className="mt-4">
           <caption className="sr-only">
-            Multi-attack injection smoke: effectuated over planted by arm
+            Multi-attack injection smoke: attacks taking effect and benign cases as expected by arm
           </caption>
           <thead>
             <tr>
               <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
               <ComparisonTh className={clsx('text-left')}>Column</ComparisonTh>
               <ComparisonTh className={clsx('text-center')}>Status</ComparisonTh>
-              <ComparisonTh className={clsx('text-right')}>Effectuated</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Attacks taking effect</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Benign as expected</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Recall integrity</ComparisonTh>
               <ComparisonTh className={clsx('text-left')}>Note</ComparisonTh>
             </tr>
           </thead>
@@ -616,7 +620,18 @@ export function BenchmarksLanding() {
                     row.highlight ? 'text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
                   )}
                 >
-                  {row.effectuated}
+                  {row.attacksTakingEffect}
+                </ComparisonTd>
+                <ComparisonTd
+                  className={clsx(
+                    'text-right tabular-nums',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
+                  )}
+                >
+                  {row.benignAsExpected}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-center text-xs/5 text-mist-700 dark:text-mist-400')}>
+                  {row.recallIntegrity}
                 </ComparisonTd>
                 <ComparisonTd className={clsx('text-xs/5 text-mist-600 dark:text-mist-400')}>{row.note}</ComparisonTd>
               </tr>
