@@ -27,6 +27,30 @@ import {
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runBenignSuite } from "./benign.mjs";
+import { MEMORY_INGEST_CASE_IDS } from "./peer-benign.mjs";
+
+function withMemoryWriteBreakout(suite) {
+  const writeResults = (suite.results || []).filter((r) =>
+    MEMORY_INGEST_CASE_IDS.includes(r.id)
+  );
+  const memory_writes_planted = writeResults.length;
+  const memory_writes_completed = writeResults.filter(
+    (r) => r.status === "complete"
+  ).length;
+  const memory_writes_matched_expect = writeResults.filter(
+    (r) => r.matched_expect
+  ).length;
+  return {
+    ...suite,
+    memory_writes_planted,
+    memory_writes_completed,
+    memory_writes_matched_expect,
+    memory_write_completion_rate:
+      memory_writes_planted === 0
+        ? 0
+        : memory_writes_completed / memory_writes_planted,
+  };
+}
 import {
   gradeAttacks,
   gradeRecallIntegrity,
@@ -429,7 +453,7 @@ async function main() {
   // Benign suite on ClawQL defaults (full product suite — 14 cases)
   await resetSessionLabels();
   const benignCtx = await makeProductInvoke("mai-benign-default", productEnv);
-  const benign = await runBenignSuite(benignCtx);
+  const benign = withMemoryWriteBreakout(await runBenignSuite(benignCtx));
   const clawqlDefaultArm = arms.find((a) => a.id === "clawql_default");
   if (clawqlDefaultArm) clawqlDefaultArm.benign = benign;
 
@@ -441,7 +465,9 @@ async function main() {
     productEnv
   );
   // Mirror configured arm: taint-first before each case that needs it is inside suite.
-  const benign_configured = await runBenignSuite(benignConfiguredCtx);
+  const benign_configured = withMemoryWriteBreakout(
+    await runBenignSuite(benignConfiguredCtx)
+  );
   const clawqlConfiguredArm = arms.find((a) => a.id === "clawql_configured");
   if (clawqlConfiguredArm) clawqlConfiguredArm.benign = benign_configured;
 
@@ -505,23 +531,35 @@ async function main() {
         ? "partial"
         : "pending";
 
-  /** Honest publish table: attacks + benign (capability cost of hardening). */
+  /** Honest publish table: attacks + benign (same 14 cases every arm). */
   function armCompareRow(a) {
     const attacks =
       a.attacks_effectuated == null
         ? null
         : `${a.attacks_effectuated} of ${a.attacks_planted ?? 12}`;
     let benignStr = null;
+    let memoryWriteBreakout = null;
     if (a.benign) {
-      if (typeof a.benign.expect_match_rate === "number") {
-        benignStr = `${a.benign.matched_expect} of ${a.benign.planted}`;
-      } else if (typeof a.benign.memory_writes_completed === "number") {
-        benignStr = `${a.benign.memory_writes_completed} of ${a.benign.memory_writes_planted} memory writes`;
-      } else {
-        benignStr = `${a.benign.completed_without_human} of ${a.benign.planted}`;
+      const planted = a.benign.planted ?? 14;
+      const matched =
+        typeof a.benign.matched_expect === "number"
+          ? a.benign.matched_expect
+          : a.benign.completed_without_human;
+      benignStr = `${matched} of ${planted}`;
+      if (typeof a.benign.memory_writes_planted === "number") {
+        memoryWriteBreakout = `${a.benign.memory_writes_matched_expect ?? a.benign.memory_writes_completed} of ${a.benign.memory_writes_planted} memory writes`;
       }
     } else if (a.status === "pending") {
       benignStr = "pending";
+    }
+    const ri = a.recall_integrity;
+    let recallStr = null;
+    if (ri && typeof ri.pass === "boolean") {
+      recallStr = ri.pass
+        ? `pass (${ri.answer_price ?? "15.00"})`
+        : `fail (answer ${ri.answer_price ?? "?"}${ri.trusted_hostile_present ? "; unlabeled poison" : ""})`;
+    } else if (a.status === "pending") {
+      recallStr = "pending";
     }
     return {
       arm: a.id,
@@ -529,7 +567,10 @@ async function main() {
       status: a.status,
       attacks_taking_effect: attacks,
       benign_as_expected: benignStr,
-      recall_integrity_pass: a.recall_integrity?.pass ?? null,
+      memory_writes_breakout: memoryWriteBreakout,
+      recall_integrity: recallStr,
+      recall_integrity_pass: ri?.pass ?? null,
+      recall_answer_price: ri?.answer_price ?? null,
       vault_contaminated: a.vault_contaminated ?? null,
       mechanisms: a.mechanisms ?? null,
     };
@@ -557,12 +598,12 @@ async function main() {
     ],
     shared_vault:
       "Peers have no built-in vault — every arm writes the same Obsidian-compatible Memory/ served over MCP (vault-mcp).",
-    note: "Publish attacks_taking_effect beside benign_as_expected. Tool omit/deny can tie 0/12 but kills legitimate memory writes.",
+    note: "Same 14 benign cases on every arm (headline X of 14). Memory-write breakout shows where peer tool omit/deny costs capability.",
   };
 
   const report = {
     measuredAt: new Date().toISOString(),
-    kind: "multi_attack_injection_smoke_v4d",
+    kind: "multi_attack_injection_smoke_v4e",
     sample: {
       attacks_planted: MANIFEST.attacks.length,
       label: "smoke",
@@ -654,13 +695,14 @@ async function main() {
           contaminated: a.vault_contaminated,
           mechanisms: a.mechanisms,
           benign_as_expected: a.benign
-            ? typeof a.benign.expect_match_rate === "number"
-              ? `${a.benign.matched_expect} of ${a.benign.planted}`
-              : typeof a.benign.memory_writes_completed === "number"
-                ? `${a.benign.memory_writes_completed} of ${a.benign.memory_writes_planted} memory writes`
-                : `${a.benign.completed_without_human} of ${a.benign.planted}`
+            ? `${a.benign.matched_expect ?? a.benign.completed_without_human} of ${a.benign.planted}`
             : null,
+          memory_writes_breakout:
+            a.benign && typeof a.benign.memory_writes_planted === "number"
+              ? `${a.benign.memory_writes_matched_expect ?? a.benign.memory_writes_completed} of ${a.benign.memory_writes_planted} memory writes`
+              : null,
           recall_integrity_pass: a.recall_integrity?.pass ?? null,
+          recall_answer_price: a.recall_integrity?.answer_price ?? null,
         })),
       },
       null,

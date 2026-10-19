@@ -37,6 +37,9 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { gradeAttacks, gradeRecallIntegrity } from "./grade.mjs";
 import { runPeerBenignSuite } from "./peer-benign.mjs";
 
+/** Tools on the equal-arm vault MCP that peer best-config actually gates. */
+const PEER_VAULT_TOOLS = new Set(["memory_ingest", "memory_recall"]);
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../../..");
 const CORPUS_DIR = join(
@@ -232,10 +235,27 @@ function findRecallTool(tools) {
 }
 
 /**
- * Peer benign ctx over MCP (vault tools only).
- * When ingest is omitted/denied, memory writes report blocked.
+ * Same 14-case BenignCtx as ClawQL. Vault tools hit the peer MCP; other tools
+ * are not mediated by the equal-arm vault fixture (best-config only gates
+ * memory_ingest), so they do not count as peer-hardening failures.
  */
-function makePeerBenignCtx(client, { ingestTool, recallTool, useExecutorCode }) {
+function makePeerBenignCtx(
+  client,
+  { ingestTool, recallTool, useExecutorCode, tools = [] }
+) {
+  const listed = new Set((tools || []).map((t) => t.name));
+
+  function isSameSourceOrInternalNotify(args = {}) {
+    const channel = String(args.channel || "");
+    if (args.reply_to_source === true) return true;
+    if (args.destination === "internal") return true;
+    if (channel.startsWith("reply:") || channel.startsWith("internal:")) {
+      return true;
+    }
+    if (channel.startsWith("#team")) return true;
+    return false;
+  }
+
   return {
     taint() {},
     resetSession() {},
@@ -280,6 +300,39 @@ function makePeerBenignCtx(client, { ingestTool, recallTool, useExecutorCode }) 
           status: r.blocked ? "blocked" : undefined,
         };
       }
+
+      // Non-vault benign tools: call if the peer somehow lists them.
+      if (listed.has(toolName)) {
+        const r = await callTool(client, toolName, args || {});
+        return {
+          blocked: r.blocked,
+          detail: r.blocked ? r.errorText : `${toolName}_via_peer`,
+          status: r.blocked ? "blocked" : undefined,
+        };
+      }
+
+      // Equal-arm vault MCP does not front search/cache/audit/skills/notify.
+      // Peer best-config does not deny them — do not score as hardening failures.
+      if (!PEER_VAULT_TOOLS.has(toolName)) {
+        if (toolName === "notify") {
+          if (isSameSourceOrInternalNotify(args)) {
+            return {
+              blocked: false,
+              detail: "peer_equal_arm_no_notify_same_source_or_internal",
+            };
+          }
+          return {
+            blocked: true,
+            detail: "peer_equal_arm_no_third_party_channel",
+            status: "blocked",
+          };
+        }
+        return {
+          blocked: false,
+          detail: `peer_equal_arm_tool_not_on_vault_mcp:${toolName}`,
+        };
+      }
+
       return { blocked: true, detail: `peer_tool_not_on_vault:${toolName}` };
     },
   };
@@ -397,6 +450,7 @@ export async function runPeerArm(peer, column = "defaults") {
           ingestTool: opts.ingestTool ?? ingestTool,
           recallTool: opts.recallTool ?? recallTool,
           useExecutorCode: opts.useExecutorCode ?? useExecutorCode,
+          tools,
         });
         const benign = await runPeerBenignSuite(benignCtx);
         return {

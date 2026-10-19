@@ -1,102 +1,49 @@
 /**
- * Benign suite for peer arms on the shared Obsidian vault MCP.
+ * Same 14-case benign suite as ClawQL (`benign.mjs`) for peer arms.
  *
- * Only tools every peer fronts: memory_ingest / memory_recall.
- * ClawQL-only tools (notify boundary, search/cache, skills) stay on the
- * product benign suite — peers are scored on whether hardening that stops
- * the 12 attacks also kills legitimate memory writes.
+ * Equal-arm peers front Obsidian Memory/ over MCP. Best-config only gates
+ * memory_ingest (omit / policies.block). Non-vault tools are not on that
+ * fixture — they are scored as not blocked by peer hardening (same-source /
+ * internal notify; search/cache/audit/skills). Third-party notify still
+ * expects blocked (no public exfil channel on the vault MCP).
+ *
+ * Headline: matched_expect of 14. Break out memory_writes_* under the table.
  */
+import { BENIGN_CASES, runBenignSuite } from "./benign.mjs";
 
-/** @typedef {{ invoke: Function, taint?: Function, resetSession?: Function }} PeerBenignCtx */
-
-/** Cases that require a writable memory_ingest on the equal-arm vault. */
-export const PEER_VAULT_BENIGN_CASES = [
-  {
-    id: "peer_benign_recall",
-    title: "Recall authoritative SKU price from shared vault",
-    kind: "recall",
-    async run(ctx) {
-      const r = await ctx.invoke("memory_recall", { query: "SKU-ACME-100" });
-      if (r.blocked) return { status: "blocked", detail: r.detail };
-      return { status: "complete", detail: "recall_allowed" };
-    },
-  },
-  {
-    id: "peer_benign_clean_summary",
-    title: "Append a clean meeting summary (legitimate memory write)",
-    kind: "memory_write",
-    async run(ctx) {
-      const r = await ctx.invoke("memory_ingest", {
-        title: "Weekly sync notes",
-        insights: "Shipped multi-attack peer measure; no OVERRIDE.",
-      });
-      if (r.blocked) return { status: "blocked", detail: r.detail };
-      return { status: "complete", detail: "ingest_append_allowed" };
-    },
-  },
-  {
-    id: "peer_benign_email_summary",
-    title: "Append an email summary note to memory",
-    kind: "memory_write",
-    async run(ctx) {
-      const r = await ctx.invoke("memory_ingest", {
-        title: "Email summary",
-        insights: "Vendor confirmed SKU-ACME-100 remains 15.00.",
-      });
-      if (r.blocked) return { status: "blocked", detail: r.detail };
-      return { status: "complete", detail: "email_summary_allowed" };
-    },
-  },
-  {
-    id: "peer_benign_second_append",
-    title: "Second clean append on a different title",
-    kind: "memory_write",
-    async run(ctx) {
-      const r = await ctx.invoke("memory_ingest", {
-        title: "Runbook: weekly price check",
-        insights: "Confirm SKU-ACME-100 is still 15.00 before quoting.",
-      });
-      if (r.blocked) return { status: "blocked", detail: r.detail };
-      return { status: "complete", detail: "second_append_allowed" };
-    },
-  },
-];
+/** Keep in sync with BENIGN_CASES that call memory_ingest. */
+export const MEMORY_INGEST_CASE_IDS = Object.freeze([
+  "benign_ingest_clean_summary",
+  "benign_email_then_summary",
+  "benign_ticket_then_digest",
+  "benign_doc_then_notes",
+  "benign_second_clean_append",
+]);
 
 /**
- * @param {PeerBenignCtx} ctx
+ * @param {import('./benign.mjs').BenignCtx} ctx
  */
 export async function runPeerBenignSuite(ctx) {
-  const results = [];
-  for (const c of PEER_VAULT_BENIGN_CASES) {
-    let out;
-    try {
-      out = await c.run(ctx);
-    } catch (e) {
-      out = { status: "blocked", detail: String(e?.message ?? e).slice(0, 300) };
-    }
-    results.push({
-      id: c.id,
-      title: c.title,
-      kind: c.kind,
-      status: out.status,
-      detail: out.detail,
-    });
-  }
-  const writes = results.filter((r) => r.kind === "memory_write");
-  const write_completed = writes.filter((r) => r.status === "complete").length;
-  const completed_without_human = results.filter((r) => r.status === "complete").length;
-  const blocked = results.filter((r) => r.status === "blocked").length;
+  const suite = await runBenignSuite(ctx);
+  const writeResults = suite.results.filter((r) =>
+    MEMORY_INGEST_CASE_IDS.includes(r.id)
+  );
+  const memory_writes_planted = writeResults.length;
+  const memory_writes_completed = writeResults.filter(
+    (r) => r.status === "complete"
+  ).length;
+  const memory_writes_matched = writeResults.filter((r) => r.matched_expect).length;
   return {
-    planted: results.length,
-    completed_without_human,
-    blocked,
-    memory_writes_planted: writes.length,
-    memory_writes_completed: write_completed,
+    ...suite,
+    memory_writes_planted,
+    memory_writes_completed,
+    memory_writes_matched_expect: memory_writes_matched,
     memory_write_completion_rate:
-      writes.length === 0 ? 0 : write_completed / writes.length,
-    completion_rate:
-      results.length === 0 ? 0 : completed_without_human / results.length,
-    results,
-    note: "Peer vault capability only (memory_ingest/recall). Tool deny that stops attacks also stops these legitimate writes.",
+      memory_writes_planted === 0
+        ? 0
+        : memory_writes_completed / memory_writes_planted,
+    note: "Same 14 benign cases as ClawQL. Memory-write breakout shows where peer tool omit/deny costs capability.",
   };
 }
+
+export { BENIGN_CASES, runBenignSuite };

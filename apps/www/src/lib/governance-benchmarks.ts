@@ -28,15 +28,15 @@ export const governanceBenchmarkHeadline =
   'Fail-closed vault writes — fair columns, then design cells'
 
 export const governanceBenchmarkSummary =
-  'Two columns on the same OVERRIDE fixture: defaults (no tool-specific deny) and best-config (each product’s recommended deny). Stock ClawQL labels untrusted→memory — clean vault at 3/5 — same contamination rule as multi-attack. Hard deny stays best-config (5/5). Category lead is reserved for design cells + multi-attack allowlists cannot express.'
+  'Two columns on the same OVERRIDE fixture: defaults (no tool-specific deny) and best-config (each product’s recommended deny). Default ClawQL labels hostile content instead of blocking it, so the vault stays clean — that is the 3 of 5 — while “blocked” counts only hard denies, which come from the configured setup (5 of 5). Category lead is reserved for design cells + multi-attack allowlists cannot express.'
 
 export const governanceBenchmarkClaim =
-  'Measured defaults: ClawQL stock labels untrusted→memory (3/5, vault clean); passthrough and peer allow-all still contaminate at 2/5 with trusted writes. Measured best-config: ClawQL+Panguard BLOCK_TOOLS=memory_ingest scores 5/5; peer best-config rows invited and expected to tie. resume_auto_approve is harness-driven Executor resume accept (simulates self-approval), not Executor’s out-of-box auto-approve default.'
+  'Default ClawQL labels hostile content instead of blocking it, so the vault stays clean; “blocked” counts only hard denies, which come from the configured setup — that is why defaults read 3 of 5 and best-config 5 of 5. Passthrough and peer allow-all still contaminate at 2/5 with trusted writes. Peer best-config rows invited and expected to tie on hard deny. resume_auto_approve is harness-driven Executor resume accept (simulates self-approval), not Executor’s out-of-box auto-approve default.'
 
 export const governanceBenchmarkMeta = {
   measuredAt: '2026-10-19',
   boardLabel: 'governance-policy-depth-v3',
-  measuredLabel: 'Fair columns · default label quarantine 3/5 · best-config 5/5 · design cells next',
+  measuredLabel: 'Fair columns · defaults label (3/5 clean) · best-config hard deny (5/5) · design cells next',
   ciRunUrl: 'https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39181888666',
   artifactObot: 'docs/benchmarks/governance-policy-depth/results-obot.json',
   artifactBifrost: 'docs/benchmarks/governance-policy-depth/results-bifrost.json',
@@ -59,7 +59,7 @@ export const governanceFairnessChips: readonly GovernanceFairnessChip[] = [
   {
     id: 'defaults',
     title: 'Defaults column',
-    body: 'ClawQL stock labels untrusted→memory (3/5 clean). Passthrough / peer allow-all still 2/5 (trusted write).',
+    body: 'Default ClawQL labels hostile content instead of blocking it — vault clean at 3/5. “Blocked” is only the hard-deny metric. Passthrough / peer allow-all still 2/5.',
     tone: 'honest',
   },
   {
@@ -290,7 +290,7 @@ export const governanceMetricLegend = [
 export const governanceBenchmarkHonesty = [
   {
     title: 'What we claim',
-    body: 'On defaults, ClawQL stock labels untrusted→memory (3/5, vault clean) — same contamination rule as multi-attack. Passthrough / peer allow-all still contaminate at 2/5. On best-config, ClawQL with a tool-name deny scores 5/5; peers with an equivalent deny are expected to tie. Design cells + injection suite are where we aim for a durable category lead.',
+    body: 'Default ClawQL labels hostile content instead of blocking it, so the vault stays clean; “blocked” counts only hard denies from the configured setup — that is the 3 of 5 vs 5 of 5. Passthrough / peer allow-all still contaminate at 2/5. Peers with an equivalent hard deny are expected to tie on best-config. Design cells + injection suite are where we aim for a durable category lead.',
   },
   {
     title: 'What we do not claim',

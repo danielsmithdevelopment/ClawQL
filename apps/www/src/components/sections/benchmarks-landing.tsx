@@ -41,6 +41,7 @@ import {
   multiAttackHeadline,
   multiAttackHeadlineResult,
   multiAttackMechanisms,
+  multiAttackMemoryWriteBreakout,
   multiAttackPublishGate,
   multiAttackSharedVaultNote,
   multiAttackSummary,
@@ -155,7 +156,7 @@ export function BenchmarksLanding() {
               </a>
               <span className="font-normal text-mist-600 dark:text-mist-400">
                 {' '}
-                — defaults label quarantine 3/5 · best-config 5/5 · design cells next
+                — defaults label (3/5 clean) · best-config hard deny (5/5) · design cells next
               </span>
             </p>
             <p className="text-xs/6 text-mist-600 dark:text-mist-400">
@@ -574,9 +575,10 @@ export function BenchmarksLanding() {
 
         <p className="mt-8 max-w-2xl text-sm/6 text-mist-700 dark:text-mist-300">{multiAttackBenignSummary}</p>
         <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackSharedVaultNote}</p>
+        <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackMemoryWriteBreakout}</p>
 
         <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
-          Smoke scorecard · n=12 · scripted worst-case · attacks + benign
+          Smoke scorecard · n=12 · scripted worst-case · same 14 benign
         </h3>
         <ComparisonTable minWidthClass="min-w-[960px]" className="mt-4">
           <caption className="sr-only">

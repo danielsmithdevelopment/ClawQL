@@ -36,24 +36,34 @@ Do **not** attribute a ClawQL `deny-tools-mcp` proxy to Executor (or any peer). 
 
 Obot / Bifrost / Executor do not ship an Obsidian vault. Every arm — ClawQL and peers — writes the same popular standard: **Obsidian-compatible `Memory/` Markdown** served over MCP (`vault-mcp.mjs` / `shared-obsidian-vault.sh`). Peers are scored on how they gate writes into that fixture, not on a proprietary store.
 
-## Publish both numbers (capability cost)
+## Publish both numbers (same 14 benign on every arm)
 
-A peer can tie ClawQL at **0 of 12** attacks by omitting or blocking the ingest tool. That also stops every legitimate memory write. Always publish:
+A peer can tie ClawQL at **0 of 12** attacks by omitting or blocking the ingest tool. That also stops legitimate memory writes. Headline benign uses the **same 14 cases** on ClawQL and peers (not a memory-only subset). Break out memory writes under the table.
 
+<<<<<<< HEAD
 | Arm                  | Attacks taking effect | Benign cases as expected                 |
 | -------------------- | --------------------- | ---------------------------------------- |
 | ClawQL defaults      | 0 of 12               | 14 of 14 (label + park; capability kept) |
 | Bifrost best-config  | 0 of 12               | memory writes completed / planted        |
 | Executor best-config | 0 of 12               | memory writes completed / planted        |
+=======
+| Arm | Attacks taking effect | Benign cases as expected |
+| --- | --------------------- | ------------------------ |
+| ClawQL defaults | 0 of 12 | 14 of 14 |
+| Bifrost best-config | 0 of 12 | 9 of 14 |
+| Executor best-config | 0 of 12 | 9 of 14 |
+>>>>>>> 2feb1d33 (fix(security): multi-attack v4e — same 14 benign on every arm)
 
-## Headline (smoke v4d)
+Memory-write breakout: ClawQL **5 of 5**; Bifrost/Executor best-config **0 of 5**.
+
+## Headline (smoke v4e)
 
 - `clawql_default` **0/12** trusted effectuation + **14/14** benign expect-match (park overwrites; labeled appends are not trusted success)
 - Passthrough **12/12** (trusted hostile writes)
-- Bifrost / Executor **defaults 12/12** (allow-all → equal-arm loss); **best-config 0/12** via **native** omit / `policies.block` — with benign memory-write cost reported
+- Bifrost / Executor **defaults 12/12** (allow-all → equal-arm loss); **best-config 0/12** via **native** omit / `policies.block` — benign scored of 14; memory-write breakout under the table
 - Obot **pending** until Docker (`ci-obot-peer.sh` / Mac mini)
 - **Persistent injection** blocked across sessions
-- **Recall integrity** on ClawQL and peer defaults: after attacks, does recall still answer trusted **15.00**? Peers that leave unlabeled poison fail this cell (misled agent), not only vault contamination
+- **Recall integrity** published for ClawQL and peer defaults: after attacks, does recall still answer trusted **15.00**? Peers that leave unlabeled poison fail this cell (misled agent), not only vault contamination
 
 ### Contamination (aligned with governance board)
 
@@ -71,6 +81,7 @@ Hostile `OVERRIDE` / `99.99` content **contaminates** only when surfaced **as tr
 
 Governance board v3 uses the same contamination rule: labeled untrusted poison is a clean vault (default ClawQL **3/5**); hard deny stays best-config (**5/5**).
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 
 > > > > > > > 11f968df (feat(security): multi-attack peer runner + live matrix scaffold (v4b))
@@ -99,5 +110,8 @@ Governance board v3 uses the same contamination rule: labeled untrusted poison i
 **Next for a publishable lead:** measure Obot with Docker on a Mac mini (`npm run benchmark:multi-attack-injection:obot`); then real-model matrix (`MAI_LIVE=1` session runner).
 
 > > > > > > > 63414a68 (fix(security): multi-attack v4d honesty — native Executor block + attacks/benign table)
+=======
+**Next for a publishable lead:** measure Obot with Docker on a Mac mini (`npm run benchmark:multi-attack-injection:obot`); then real-model matrix (`MAI_LIVE=1` session runner).
+>>>>>>> 2feb1d33 (fix(security): multi-attack v4e — same 14 benign on every arm)
 
 See [NATIVE-TOOL-GOVERNANCE.md](./NATIVE-TOOL-GOVERNANCE.md).
