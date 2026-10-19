@@ -125,13 +125,16 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
   {
     id: 'executor',
     name: 'Executor (v1/v2)',
-    whyItMatters: 'Closest prior peer; sandbox code execution; already on published boards.',
-    criteriaToBeat: 'Confirm leads hold after their updates; multi-turn + concurrency.',
-    howToProve: 'Re-run full board with latest versions; include real-model validation under pre-committed rules.',
-    status: 'measured',
-    statusLabel: 'Measured',
+    whyItMatters:
+      'Closest prior peer; sandbox code execution; per-tool approvals + MCP proxy (Gmail wrappers) — already on published boards.',
+    criteriaToBeat:
+      'Token lead + governance cells: risky-write approval/deny + untrusted-read→hostile follow-up.',
+    howToProve:
+      'Tokens: re-pin latest. Governance: front fixture-mcp with EXECUTOR_MCP_URL + GOV_SHARED_VAULT_ROOT; publish results-cells.json peer row.',
+    status: 'partial',
+    statusLabel: 'Tokens measured · cells harness ready',
     nextStep:
-      'Tokens/latency measured (v2 β 3.38×). Governance next: equal-arm risky-write approval + untrusted-read→hostile follow-up (Gmail-shaped) on /benchmarks#governance — not N/A; their approval docs put them in scope.',
+      'Tokens/latency measured (v2 β 3.38×). Governance cells: ClawQL 5/5 vs passthrough 2/5 on both cells (results-cells.json); Executor peer row pending EXECUTOR_MCP_URL — approvals/Gmail in scope, not N/A.',
   },
   {
     id: 'celld-durability',

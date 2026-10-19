@@ -29,7 +29,7 @@ import {
   governanceBenchmarkLinks,
   governanceBenchmarkMeta,
   governanceBenchmarkSummary,
-  governanceExecutorPlannedCells,
+  governanceExecutorCells,
   governanceMetricLegend,
   governanceScorecardRows,
 } from '@/lib/governance-benchmarks'
@@ -745,19 +745,27 @@ export function BenchmarksLanding() {
 
         <div className="mt-8">
           <h3 className="text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
-            Executor cells (planned — equal-arm)
+            Executor cells (harness ready — equal-arm)
           </h3>
           <p className="mt-2 max-w-3xl text-sm/6 text-mist-700 dark:text-mist-400">
-            Executor advertises per-tool allow / approval / deny and Gmail-style wrappers. That puts them on this board —
-            not as a sandbox-only peer. Two cells before a measured row:
+            Same fixture family as the scorecard above, plus a Gmail-shaped poisoned read. ClawQL and passthrough are
+            measured; Executor fills when their gateway fronts{' '}
+            <code className="text-xs">fixture-mcp</code> with approvals/deny.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {governanceExecutorPlannedCells.map((cell) => (
+            {governanceExecutorCells.map((cell) => (
               <div
                 key={cell.id}
                 className="rounded-lg bg-mist-950/[0.03] px-4 py-3 ring-1 ring-mist-950/8 dark:bg-white/[0.03] dark:ring-white/10"
               >
-                <p className="text-sm font-semibold text-mist-950 dark:text-white">{cell.title}</p>
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="text-sm font-semibold text-mist-950 dark:text-white">{cell.title}</p>
+                  <p className="shrink-0 text-xs font-medium tabular-nums text-mist-700 dark:text-mist-300">
+                    ClawQL {cell.clawqlScore}/{governanceBenchmarkMeta.maxScore} · PT{' '}
+                    {cell.passthroughScore}/{governanceBenchmarkMeta.maxScore} · Executor{' '}
+                    {cell.executorStatus === 'measured' ? 'measured' : 'pending'}
+                  </p>
+                </div>
                 <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">{cell.detail}</p>
               </div>
             ))}
@@ -789,7 +797,8 @@ export function BenchmarksLanding() {
           ))}
         </ul>
         <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
-          Artifacts: {governanceBenchmarkMeta.artifactObot} · {governanceBenchmarkMeta.artifactSmoke} · CI{' '}
+          Artifacts: {governanceBenchmarkMeta.artifactObot} · {governanceBenchmarkMeta.artifactSmoke} ·{' '}
+          {governanceBenchmarkMeta.artifactCells} · CI{' '}
           <a
             href={governanceBenchmarkMeta.ciRunUrl}
             className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
