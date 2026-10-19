@@ -34,9 +34,12 @@ ClawQL beats default Obot mcp-connect on this fixture. Obot can tie if maintaine
 
 ## Next step
 
-1. **CI Obot peer** (Docker, no LLM) — workflow `Governance policy-depth` → publish `results-obot.json`.
-2. **Bifrost** peer with ingest-deny VK.
-3. **Live LLM** (optional): dispatch OpenBench A/B `memory-injection-attempt` with **cheap** OpenRouter only (`openrouter/deepseek/deepseek-chat`). Allowlist: `scripts/benchmarks/governance-policy-depth/cheap-model-allowlist.json`.
+1. ~~**CI Obot peer**~~ — measured ([39181888666](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39181888666)): ClawQL 5/5 vs Obot 2/5.
+2. **Executor (v1/v2)** — in scope (approvals + Gmail wrappers). Two equal-arm cells before a scorecard row:
+   - **Risky write / approval** — OVERRIDE (or `destructiveHint`) must deny or pause-for-deny with evidence.
+   - **Untrusted read → hostile follow-up** — mock mailbox returns poison; subsequent `memory_ingest` must still fail-close. Approvals on writes help; they do not sanitize read content.
+3. **Bifrost** peer with ingest-deny VK.
+4. **Live LLM** (optional): OpenBench `memory-injection-attempt` with cheap OpenRouter only.
 
 ## Related
 

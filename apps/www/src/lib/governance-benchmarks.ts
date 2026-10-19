@@ -154,11 +154,11 @@ export const governanceBenchmarkHonesty = [
   },
   {
     title: 'What we do not claim',
-    body: 'Content-aware prompt classification. That Obot cannot tie — they can, with a per-tool deny on memory_ingest. Bifrost / TrueFoundry scores until their rows are measured. Category-wide security supremacy beyond this fixture.',
+    body: 'That Obot or Executor cannot improve — Obot ties with a per-tool deny; Executor’s approval API is real and in scope once measured. Bifrost / TrueFoundry / Executor scores until JSON artifacts land. Category-wide supremacy beyond published fixtures. Approvals alone do not sanitize malicious content inside read results (Gmail-shaped indirect injection).',
   },
   {
     title: 'How peers get on the board',
-    body: 'Point your gateway at scripts/benchmarks/governance-policy-depth/vault-mcp.mjs, set GOV_SHARED_VAULT_ROOT + peer MCP URL, run npm run benchmark:governance-policy-depth, open a PR with the JSON artifact. We merge equal-arm rows; we do not fabricate peer scores.',
+    body: 'Point your gateway at scripts/benchmarks/governance-policy-depth/vault-mcp.mjs (or the planned mock-mailbox cell for Executor), set GOV_SHARED_VAULT_ROOT + peer MCP URL, run the board, open a PR with raw JSON. We merge equal-arm rows; we do not fabricate peer scores.',
   },
 ] as const
 
