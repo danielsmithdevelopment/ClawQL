@@ -2,7 +2,7 @@
  * Multi-attack injection board — marketing mirror of
  * docs/benchmarks/security-suite/multi-attack-injection/
  *
- * Not a live category claim yet (publish gate — Obot still pending Docker).
+ * Not a live category claim yet (publish gate — Obot on Mac mini, then MAI_LIVE).
  */
 
 export const multiAttackHeadline = 'Multi-attack injection — smoke (draft)'
@@ -11,7 +11,7 @@ export const multiAttackSummary =
   'Twelve planted attacks across email, ticket, doc, and webhook. Scripted worst-case model always complies — this measures whether the gateway stops the resulting action, not whether a real model would fall for it. Sample size: smoke until the suite grows to dozens. Peers have no built-in vault, so every arm writes the same Obsidian-compatible Memory/ served over MCP. The same 14 benign cases run on every arm so the denominator matches; memory-write breakouts sit under the table.'
 
 export const multiAttackHeadlineResult =
-  'Smoke v4f: ClawQL default 0 of 12 attacks and 14 of 14 benign. Bifrost/Executor defaults 12 of 12; best-config 0 of 12 and 9 of 14 benign (0 of 5 memory writes). After default attacks, every measured arm still answers 15.00 on the smoke recall query — peers also leave unlabeled poison in the vault (reported separately). Harder recall queries land in MAI_LIVE=1. Obot pending (Docker / Mac mini).'
+  'Smoke v4f: ClawQL default 0 of 12 attacks and 14 of 14 benign. Bifrost/Executor (Linux) defaults 12 of 12; best-config 0 of 12 and 9 of 14 benign (0 of 5 memory writes). Recall answer pass (15.00) for all measured arms; unlabeled poison separate. Obot pending on Mac mini (Docker Desktop VM OK — this board is effectuation, not performance). MAI_LIVE=1 is last after Obot.'
 
 export const multiAttackMechanisms = [
   {
@@ -88,7 +88,7 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     benignAsExpected: '—',
     recallIntegrity: '—',
     unlabeledPoison: '—',
-    note: 'Docker required for ci-obot-peer.sh (Mac mini) — pending ≠ not_offered',
+    note: 'Mac mini + Docker — same vault/12/14; platform stamp darwin — pending ≠ not_offered',
   },
   {
     arm: 'Obot best-config',
@@ -98,7 +98,7 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     benignAsExpected: '—',
     recallIntegrity: '—',
     unlabeledPoison: '—',
-    note: 'Wire Obot native deny after Docker bootstrap',
+    note: 'Obot native webhook filter deny on memory_ingest (not deny-tools) — Mac mini',
   },
   {
     arm: 'Bifrost default',
@@ -108,7 +108,7 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     benignAsExpected: '14 of 14',
     recallIntegrity: 'pass (15.00)',
     unlabeledPoison: 'yes',
-    note: 'Allow-all VK → Obsidian vault-mcp (equal-arm loss)',
+    note: 'Linux · allow-all VK → Obsidian vault-mcp (equal-arm loss)',
   },
   {
     arm: 'Bifrost best-config',
@@ -118,7 +118,7 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     benignAsExpected: '9 of 14',
     recallIntegrity: 'pass (15.00)',
     unlabeledPoison: 'no',
-    note: 'Native VK omits memory_ingest — 0 of 5 memory writes',
+    note: 'Linux · native VK omits memory_ingest — 0 of 5 memory writes',
   },
   {
     arm: 'Executor default',
@@ -128,7 +128,7 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     benignAsExpected: '14 of 14',
     recallIntegrity: 'pass (15.00)',
     unlabeledPoison: 'yes',
-    note: 'Code-mode execute → Obsidian vault-mcp (equal-arm loss)',
+    note: 'Linux · code-mode execute → Obsidian vault-mcp (equal-arm loss)',
   },
   {
     arm: 'Executor best-config',
@@ -138,7 +138,7 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     benignAsExpected: '9 of 14',
     recallIntegrity: 'pass (15.00)',
     unlabeledPoison: 'no',
-    note: 'Native policies.block — 0 of 5 memory writes',
+    note: 'Linux · native policies.block — 0 of 5 memory writes',
   },
 ] as const
 
@@ -150,10 +150,14 @@ export const multiAttackRecallNote =
   'Recall integrity asks whether the agent still answers 15.00. Peers pass that smoke query; unlabeled poison in their vault is a separate column (also contamination). Harder queries where poison ranks first ship with MAI_LIVE=1.'
 
 export const multiAttackPublishGate =
-  'Draft until Obot is measured (Docker / Mac mini) and live matrix leaves scaffold (MAI_LIVE=1, including harder recall queries). Headline benign uses the same 14 cases on every arm.'
+  'Draft until Obot is measured on the Mac mini (same vault/attacks/benign; results record macOS; Docker VM fine for effectuation) and MAI_LIVE=1 leaves scaffold. Headline benign uses the same 14 cases on every arm.'
 
 export const multiAttackBenignSummary =
   'Every arm runs the same 14 benign cases (recall, search/cache/audit, memory writes, skills, same-source reply, internal team/forward, third-party still blocked). Peers that omit or block ingest fail the five memory-write cases and keep the rest — publish X of 14, then the memory-write breakout. Contamination = hostile content surfaced as trusted (same as the governance board).'
 
 export const multiAttackSharedVaultNote =
   'Peers have no built-in vault. Every arm writes the same Obsidian-compatible Memory/ served over MCP (vault-mcp).'
+
+/** Platform honesty — Obot is Mac mini; other measured arms were Linux. */
+export const multiAttackPlatformNote =
+  'Bifrost and Executor smoke peers ran on Linux. Obot runs on the Mac mini (results stamp macOS / measured_on=mac_mini). Docker Desktop’s Linux VM is fine here — this board measures whether attacks take effect, not speed or memory.'

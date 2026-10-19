@@ -567,6 +567,7 @@ async function main() {
       // Attack arms without a dedicated recall cell still expose contamination.
       unlabeledPoison = a.vault_contaminated;
     }
+    const plat = a.platform || null;
     return {
       arm: a.id,
       column: a.column,
@@ -580,6 +581,14 @@ async function main() {
       unlabeled_poison_in_vault: unlabeledPoison,
       vault_contaminated: a.vault_contaminated ?? null,
       mechanisms: a.mechanisms ?? null,
+      platform: plat
+        ? {
+            host_os: plat.host_os ?? null,
+            host_os_label: plat.host_os_label ?? null,
+            measured_on: plat.measured_on ?? null,
+            docker_vm_note: plat.docker_vm_note ?? null,
+          }
+        : null,
     };
   }
 
@@ -599,9 +608,9 @@ async function main() {
     peers_incomplete: peersIncomplete,
     next: [
       peersPending > 0
-        ? "Measure Obot on a Docker host (ci-obot-peer.sh / Mac mini)"
+        ? "Measure Obot on the Mac mini (npm run benchmark:multi-attack-injection:obot — Docker Desktop VM OK for effectuation; stamp host_os=darwin)"
         : "Peers measured — publish equal-arm table with attacks+benign",
-      "Real-model matrix — MAI_LIVE=1 session runner (last step before lead claim)",
+      "Real-model matrix — MAI_LIVE=1 (+ harder recall queries) last step before publish",
     ],
     shared_vault:
       "Peers have no built-in vault — every arm writes the same Obsidian-compatible Memory/ served over MCP (vault-mcp).",

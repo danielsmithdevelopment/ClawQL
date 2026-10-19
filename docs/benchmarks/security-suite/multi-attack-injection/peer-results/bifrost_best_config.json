@@ -297,5 +297,12 @@
     "memory_write_completion_rate": 0,
     "note": "Same 14 benign cases as ClawQL. Memory-write breakout shows where peer tool omit/deny costs capability."
   },
-  "shared_vault_fixture": "Equal-arm Obsidian Memory/ via vault-mcp (peers have no built-in vault)"
+  "shared_vault_fixture": "Equal-arm Obsidian Memory/ via vault-mcp (peers have no built-in vault)",
+  "platform": {
+    "host_os": "linux",
+    "host_os_label": "Linux",
+    "measured_on": null,
+    "docker_vm_note": null,
+    "equal_arm": "shared Obsidian Memory/ vault-mcp \u00b7 same 12 attacks \u00b7 same 14 benign"
+  }
 }

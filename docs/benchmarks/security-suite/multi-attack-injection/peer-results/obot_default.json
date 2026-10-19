@@ -8,5 +8,12 @@
   "attacks_planted": 12,
   "attacks_effectuated": null,
   "rate": null,
-  "detail": "Obot peer CI requires Docker to bootstrap the gateway in front of the Obsidian equal-arm vault-mcp. pending ≠ not_offered. Re-run ci-obot-peer.sh where Docker is available."
+  "detail": "Obot peer CI requires Docker. Prefer Mac mini (Docker Desktop VM OK for security outcomes). pending \u2260 not_offered. Re-run: npm run benchmark:multi-attack-injection:obot",
+  "platform": {
+    "host_os": "linux",
+    "host_os_label": "Linux",
+    "measured_on": null,
+    "docker_vm_note": "Docker Desktop Linux VM is fine for this board (attack effectuation, not performance).",
+    "equal_arm": "shared Obsidian Memory/ vault-mcp · same 12 attacks · same 14 benign"
+  }
 }

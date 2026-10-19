@@ -36,6 +36,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { gradeAttacks, gradeRecallIntegrity } from "./grade.mjs";
 import { runPeerBenignSuite } from "./peer-benign.mjs";
+import { peerPlatformStamp } from "./peer-platform.mjs";
 
 /** Tools on the equal-arm vault MCP that peer best-config actually gates. */
 const PEER_VAULT_TOOLS = new Set(["memory_ingest", "memory_recall"]);
@@ -484,7 +485,9 @@ export async function runPeerArm(peer, column = "defaults") {
           mechanisms:
             peer === "bifrost"
               ? ["bifrost_vk_omit_ingest"]
-              : ["peer_tool_omit"],
+              : peer === "obot"
+                ? ["obot_webhook_filter_deny"]
+                : ["peer_tool_omit"],
           attacks_planted: grade.attacks_planted,
           attacks_effectuated: grade.attacks_effectuated,
           rate: grade.rate,
@@ -594,7 +597,9 @@ export async function runPeerArm(peer, column = "defaults") {
             ? ["executor_policies_block"]
             : peer === "bifrost"
               ? ["bifrost_vk_omit_ingest"]
-              : ["peer_best_config"]
+              : peer === "obot"
+                ? ["obot_webhook_filter_deny"]
+                : ["peer_best_config"]
           : approvalPauses > 0
             ? ["executor_destructive_approval"]
             : [],
@@ -633,7 +638,18 @@ async function main() {
   }
 
   const arm = await runPeerArm(peer, column);
-  process.stdout.write(`${JSON.stringify(arm, null, 2)}\n`);
+  const stamped = {
+    ...arm,
+    platform: peerPlatformStamp({
+      peer,
+      column,
+      equal_arm:
+        "shared Obsidian Memory/ vault-mcp · same 12 attacks · same 14 benign",
+    }),
+  };
+  process.stdout.write(`${JSON.stringify(stamped, null, 2)}\n`);
+  // keep exit logic on underlying arm
+  Object.assign(arm, stamped);
 
   if (arm.status === "pending") process.exit(0);
   if (arm.status === "incomplete" || arm.status === "error") {

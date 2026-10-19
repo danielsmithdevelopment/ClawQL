@@ -29,11 +29,13 @@ npm run benchmark:multi-attack-injection:peers
 # Or individually:
 npm run benchmark:multi-attack-injection:bifrost
 npm run benchmark:multi-attack-injection:executor
-npm run benchmark:multi-attack-injection:obot   # Docker required; pending without it
+npm run benchmark:multi-attack-injection:obot   # Mac mini + Docker; stamps host_os=darwin
 # Live scaffold (placeholder until MAI_LIVE=1):
 npm run benchmark:multi-attack-injection:live
 ```
 
+Obot equal-arm runbook: [MAC-MINI-OBOT.md](../../../docs/benchmarks/security-suite/multi-attack-injection/MAC-MINI-OBOT.md). Best-config = Obot native webhook filter deny on `memory_ingest` (not deny-tools). Docker Desktop VM is fine for effectuation outcomes.
+
 ## Publish gate
 
-Do **not** publish until: peers measured (or clearly pending), configured arm uses only general mechanisms, product defaults shipped and `clawql_default` re-run, benign completion rate is honest (not “secure because it blocks everything”).
+Do **not** publish until: Obot measured on the Mac mini (platform-stamped), configured arm uses only general mechanisms, product defaults shipped and `clawql_default` re-run, benign completion rate is honest (not “secure because it blocks everything”), then `MAI_LIVE=1` real-model matrix (including harder recall queries).

@@ -42,6 +42,7 @@ import {
   multiAttackHeadlineResult,
   multiAttackMechanisms,
   multiAttackMemoryWriteBreakout,
+  multiAttackPlatformNote,
   multiAttackPublishGate,
   multiAttackRecallNote,
   multiAttackSharedVaultNote,
@@ -576,6 +577,7 @@ export function BenchmarksLanding() {
 
         <p className="mt-8 max-w-2xl text-sm/6 text-mist-700 dark:text-mist-300">{multiAttackBenignSummary}</p>
         <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackSharedVaultNote}</p>
+        <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackPlatformNote}</p>
         <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackMemoryWriteBreakout}</p>
         <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackRecallNote}</p>
 
