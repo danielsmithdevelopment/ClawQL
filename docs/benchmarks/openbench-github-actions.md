@@ -80,7 +80,7 @@ OpenRouter examples (prefer cheaper for CI):
 Direct BYOK (when you have vendor keys):
 
 - `deepseek/deepseek-chat`
-- `clawql/cheap-chat` (alias → DeepSeek)
+- `clawql/cheap-chat` (alias → origin-neutral frugal; use `clawql/deepseek-chat` or `openrouter/deepseek/deepseek-chat` for DeepSeek)
 - `groq/llama-3.3-70b-versatile`
 - `anthropic/claude-sonnet-4-6`
 

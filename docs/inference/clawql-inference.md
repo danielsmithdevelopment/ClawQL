@@ -69,14 +69,15 @@ clawql inference complete --model ollama/phi4 --message "hello"
 Each `complete()` call passes outward through these layers before reaching a provider:
 
 1. **`ConfiguredInferenceGateway`** — resolves `provider/model`, invokes the provider adapter
-2. **`FallbackChainGateway`** — tries alternate models on primary failure (when fallback enabled)
-3. **`SemanticCachedGateway`** — embedding-similarity cache lookup (when semantic cache enabled)
-4. **`TokenEfficiencyGateway`** — Layers 3–11 (terse, compress, route, prompt-cache, structured/prefill markers)
-5. **`EntitlementEnforcedGateway`** — plan limit checks via `clawql-payments` (when enforcement enabled)
-6. **`ObservedInferenceGateway`** — appends an `InferenceRecord` to the call store
-7. **`TracedInferenceGateway`** — OTLP spans to infra + Langfuse when configured
+2. **`ProvenanceGuardedInferenceGateway`** — denies by **resolved** model identity / weight vendor (inside fallback so every attempt is checked); see [`model-provenance-gate.md`](../security/model-provenance-gate.md)
+3. **`FallbackChainGateway`** — tries alternate models on primary failure (when fallback enabled)
+4. **`SemanticCachedGateway`** — embedding-similarity cache lookup (when semantic cache enabled)
+5. **`TokenEfficiencyGateway`** — Layers 3–11 (terse, compress, route, prompt-cache, structured/prefill markers)
+6. **`EntitlementEnforcedGateway`** — plan limit checks via `clawql-payments` (when enforcement enabled)
+7. **`ObservedInferenceGateway`** — appends an `InferenceRecord` to the call store
+8. **`TracedInferenceGateway`** — OTLP spans to infra + Langfuse when configured
 
-Call order from outside in: **Traced → Observed → Entitlement → Efficiency → Cache → Fallback → Configured → provider**.
+Call order from outside in: **Traced → Observed → Entitlement → Efficiency → Cache → Fallback → Provenance → Configured → provider**.
 
 ### Data Flow Summary
 

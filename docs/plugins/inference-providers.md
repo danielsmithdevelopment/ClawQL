@@ -42,10 +42,16 @@ required.
 
 Model ids use `provider/model` (e.g. `deepseek/deepseek-chat`,
 `anthropic/claude-sonnet-4`, `ollama/phi4`). Catalog aliases such as
-`clawql/cheap-chat` resolve to direct BYOK models.
+`clawql/cheap-chat` resolve to origin-neutral frugal BYOK targets
+(`groq/llama-3.1-8b-instant` by default). DeepSeek is opt-in:
+`clawql/deepseek-chat` or an explicit `deepseek/…` / `openrouter/deepseek/…` id.
 
 OpenRouter catalog ids keep the vendor path only when you opt in:
 `openrouter/deepseek/deepseek-chat`, `openrouter/qwen/qwen3.6-plus`.
+
+**Provenance:** `CLAWQL_INFERENCE_DISABLE_PROVIDERS=deepseek` alone does not block
+aggregator routes. Use the [model provenance gate](../security/model-provenance-gate.md)
+(`CLAWQL_INFERENCE_DENIED_VENDORS` / federal profile) so resolved identity is enforced.
 
 ### Direct BYOK quick start (preferred)
 
