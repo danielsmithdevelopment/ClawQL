@@ -2,9 +2,9 @@
 
 ## Columns
 
-| Column | Meaning |
-| ------ | ------- |
-| **Defaults** | Stock product, no cell-specific deny for `memory_ingest` |
+| Column          | Meaning                                                                        |
+| --------------- | ------------------------------------------------------------------------------ |
+| **Defaults**    | Stock product, no cell-specific deny for `memory_ingest`                       |
 | **Best-config** | Each product’s recommended deny / scope for the write the attacks try to force |
 
 ## Metric

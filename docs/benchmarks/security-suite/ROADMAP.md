@@ -85,24 +85,25 @@ Parallel product track (not a peer board): make **ClawQL defaults** close the go
 
 ## Board status
 
-| Id                         | Status      | Notes                                            |
-| -------------------------- | ----------- | ------------------------------------------------ |
-| governance-policy-depth v2 | **Shipped** | Fair defaults + best-config; design cells listed |
-<<<<<<< HEAD
-| multi_attack_suite | **Scaffolded** | Smoke harness + 12-attack corpus (`npm run benchmark:multi-attack-injection`); live models → `results-live.json` |
-| approval_integrity | Partial | Harness resume probe only; full cells pending |
-| allowed_tool_exfil | Planned | |
-| secret_visibility | Planned | |
-| kill_mid_write | Planned | Ties to ProgramCellDO / TLA+ evidence |
-| Remaining groups | Backlog | After top five |
-=======
-| multi_attack_suite         | Planned     | Extends OpenBench `memory-injection-attempt`     |
-| approval_integrity         | Partial     | Harness resume probe only; full cells pending    |
-| allowed_tool_exfil         | Planned     |                                                  |
-| secret_visibility          | Planned     |                                                  |
-| kill_mid_write             | Planned     | Ties to ProgramCellDO / TLA+ evidence            |
-| Remaining groups           | Backlog     | After top five                                   |
->>>>>>> origin/cursor/security-suite-roadmap-f4ec
+| Id                         | Status         | Notes                                                                                                            |
+| -------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------- |
+| governance-policy-depth v2 | **Shipped**    | Fair defaults + best-config; design cells listed                                                                 |
+| <<<<<<< HEAD               |
+| multi_attack_suite         | **Scaffolded** | Smoke harness + 12-attack corpus (`npm run benchmark:multi-attack-injection`); live models → `results-live.json` |
+| approval_integrity         | Partial        | Harness resume probe only; full cells pending                                                                    |
+| allowed_tool_exfil         | Planned        |                                                                                                                  |
+| secret_visibility          | Planned        |                                                                                                                  |
+| kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                                            |
+| Remaining groups           | Backlog        | After top five                                                                                                   |
+| =======                    |
+| multi_attack_suite         | Planned        | Extends OpenBench `memory-injection-attempt`                                                                     |
+| approval_integrity         | Partial        | Harness resume probe only; full cells pending                                                                    |
+| allowed_tool_exfil         | Planned        |                                                                                                                  |
+| secret_visibility          | Planned        |                                                                                                                  |
+| kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                                            |
+| Remaining groups           | Backlog        | After top five                                                                                                   |
+
+> > > > > > > origin/cursor/security-suite-roadmap-f4ec
 
 ## Related
 
