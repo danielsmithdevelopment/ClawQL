@@ -2,26 +2,28 @@
 
 ## Credibility
 
-| Label | Use when |
-| ----- | -------- |
-| **`not_offered`** | Product never claims the capability (e.g. signed approvals with a security key) |
-| **`pending`** | Outcome is measurable but not yet run (injection resistance for Obot / Bifrost / Executor) |
+| Label             | Use when                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------ |
+| **`not_offered`** | Product never claims the capability (e.g. signed approvals with a security key)            |
+| **`pending`**     | Outcome is measurable but not yet run (injection resistance for Obot / Bifrost / Executor) |
 
 Injection resistance is an **outcome**. Any gateway can be put through the same twelve (then dozens of) attacks. Marking peers `not_offered` hides a measurable result.
 
 ## Columns
 
 <<<<<<< HEAD
-| Column | Meaning |
-| ------ | ------- |
-| **Defaults** | Stock product |
-| **Best-config** | Recommended hardening via **general mechanisms** |
-=======
+
+| Column          | Meaning                                                                        |
+| --------------- | ------------------------------------------------------------------------------ |
+| **Defaults**    | Stock product                                                                  |
+| **Best-config** | Recommended hardening via **general mechanisms**                               |
+| =======         |
 | Column          | Meaning                                                                        |
 | --------------- | ------------------------------------------------------------------------------ |
 | **Defaults**    | Stock product, no cell-specific deny for `memory_ingest`                       |
 | **Best-config** | Each product’s recommended deny / scope for the write the attacks try to force |
->>>>>>> origin/cursor/security-suite-roadmap-f4ec
+
+> > > > > > > origin/cursor/security-suite-roadmap-f4ec
 
 ### Configured ClawQL — name mechanisms, not tools
 
@@ -39,6 +41,7 @@ Forbidden: `BLOCK_TOOLS` (or equivalent) listing the tools the twelve attacks us
 `clawql_default` **12/12** is honest and intentional: stock ClawQL matches passthrough until park-destructive + untrusted-read taint apply to the **same write path the attacks use**.
 
 Product defaults shipping now (execute-path):
+
 - Session IFC **on** by default (`CLAWQL_ENABLE_SESSION_IFC=0` to opt out)
 - Trusted MCP `destructiveHint` → **mandate** (park), not hard-block
 

@@ -14,10 +14,10 @@ Live overview: [clawql.com/benchmarks#security-suite](https://clawql.com/benchma
 
 ## Credibility rule
 
-| Label | Use when |
-| ----- | -------- |
+| Label             | Use when                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------ |
 | **`not_offered`** | Product never claims the capability (e.g. signed mandate digests / security-key approvals) |
-| **`pending`** | Outcome is measurable but not yet run |
+| **`pending`**     | Outcome is measurable but not yet run                                                      |
 
 **Injection resistance is an outcome** — every gateway can be scored on the same corpus. Marking Obot / Bifrost / Executor `not_offered` on injection hides a measurable result. Use **`pending`** until defaults + best-config are measured.
 
@@ -93,36 +93,37 @@ Parallel product track (required before publishing multi-attack): make **ClawQL 
 ## Board status
 
 <<<<<<< HEAD
-| Id                         | Status         | Notes                                                                                          |
-| -------------------------- | -------------- | ---------------------------------------------------------------------------------------------- |
-| governance-policy-depth v2 | **Shipped**    | Fair defaults + best-config; design cells listed                                               |
+
+| Id                         | Status         | Notes                                                                                                                        |
+| -------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| governance-policy-depth v2 | **Shipped**    | Fair defaults + best-config; design cells listed                                                                             |
 | multi_attack_suite         | **Scaffolded** | Smoke n=12, scripted worst-case; configured = taint/park/data-flow; peers **pending**; **not published** until defaults ship |
-| approval_integrity         | Partial        | Harness resume probe only; full cells pending                                                  |
-| allowed_tool_exfil         | Planned        |                                                                                                |
-| secret_visibility          | Planned        |                                                                                                |
-| kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                          |
-| Remaining groups           | Backlog        | After top five                                                                                 |
-=======
-| Id                         | Status         | Notes                                                                                                            |
-| -------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------- |
-| governance-policy-depth v2 | **Shipped**    | Fair defaults + best-config; design cells listed                                                                 |
-| <<<<<<< HEAD               |
-| multi_attack_suite         | **Scaffolded** | Smoke harness + 12-attack corpus (`npm run benchmark:multi-attack-injection`); live models → `results-live.json` |
-| approval_integrity         | Partial        | Harness resume probe only; full cells pending                                                                    |
-| allowed_tool_exfil         | Planned        |                                                                                                                  |
-| secret_visibility          | Planned        |                                                                                                                  |
-| kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                                            |
-| Remaining groups           | Backlog        | After top five                                                                                                   |
+| approval_integrity         | Partial        | Harness resume probe only; full cells pending                                                                                |
+| allowed_tool_exfil         | Planned        |                                                                                                                              |
+| secret_visibility          | Planned        |                                                                                                                              |
+| kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                                                        |
+| Remaining groups           | Backlog        | After top five                                                                                                               |
 | =======                    |
-| multi_attack_suite         | Planned        | Extends OpenBench `memory-injection-attempt`                                                                     |
-| approval_integrity         | Partial        | Harness resume probe only; full cells pending                                                                    |
-| allowed_tool_exfil         | Planned        |                                                                                                                  |
-| secret_visibility          | Planned        |                                                                                                                  |
-| kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                                            |
-| Remaining groups           | Backlog        | After top five                                                                                                   |
+| Id                         | Status         | Notes                                                                                                                        |
+| -------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------             |
+| governance-policy-depth v2 | **Shipped**    | Fair defaults + best-config; design cells listed                                                                             |
+| <<<<<<< HEAD               |
+| multi_attack_suite         | **Scaffolded** | Smoke harness + 12-attack corpus (`npm run benchmark:multi-attack-injection`); live models → `results-live.json`             |
+| approval_integrity         | Partial        | Harness resume probe only; full cells pending                                                                                |
+| allowed_tool_exfil         | Planned        |                                                                                                                              |
+| secret_visibility          | Planned        |                                                                                                                              |
+| kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                                                        |
+| Remaining groups           | Backlog        | After top five                                                                                                               |
+| =======                    |
+| multi_attack_suite         | Planned        | Extends OpenBench `memory-injection-attempt`                                                                                 |
+| approval_integrity         | Partial        | Harness resume probe only; full cells pending                                                                                |
+| allowed_tool_exfil         | Planned        |                                                                                                                              |
+| secret_visibility          | Planned        |                                                                                                                              |
+| kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                                                        |
+| Remaining groups           | Backlog        | After top five                                                                                                               |
 
 > > > > > > > origin/cursor/security-suite-roadmap-f4ec
->>>>>>> origin/cursor/security-suite-roadmap-f4ec
+> > > > > > > origin/cursor/security-suite-roadmap-f4ec
 
 ## Related
 
