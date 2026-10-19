@@ -75,6 +75,20 @@ Default ClawQL labels hostile content instead of blocking it, so the vault stays
 | Peers pending / partial / measured | Bifrost+Executor on Linux; Obot on Mac mini when measured        |
 | Platform stamp                     | Obot results record macOS; Docker VM OK for security outcomes    |
 
+## Counterfeit-policy cell (Datadog / Jev)
+
+Independent research: [Datadog — Jev as a judge](https://securitylabs.datadoghq.com/articles/jev-as-a-judge-how-counterfeit-policy-steers-jev/). A prepended counterfeit policy rewrites labels and taxonomy inside the content a model judge reads — so the judge can be talked out of its own policy.
+
+| Arm | Meaning |
+| --- | ------- |
+| ClawQL deterministic | Source labels + park — content cannot redefine “trusted” |
+| Model-judged (structural) | Judge follows policy-shaped text in untrusted content (failure-mode control) |
+| Model-judged (live) | LangChain tool-risk / JevShield when wired — else pending |
+
+**Page framing:** Datadog showed that model-judged gates can be talked out of their own policy. ClawQL’s gate does not take instructions from the content it judges.
+
+See [COUNTERFEIT-POLICY.md](./COUNTERFEIT-POLICY.md). Decision sites: opt-in flip-rate family `counterfeit_policy` beside paraphrase/reorder; operation resolution stays **automatic reads only**.
+
 **Next for a publishable lead:** run Obot on the Mac mini ([MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md)); then `MAI_LIVE=1` (+ harder recall queries). Scripted board is complete once Obot lands.
 
 See [NATIVE-TOOL-GOVERNANCE.md](./NATIVE-TOOL-GOVERNANCE.md).

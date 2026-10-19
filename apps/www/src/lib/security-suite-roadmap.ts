@@ -25,7 +25,7 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     priority: 1,
     title: 'Multi-attack injection suite',
     status: 'scaffolded',
-    why: 'Smoke v4f: same 14 benign; peer best-config 9/14; recall answer pass + unlabeled poison separate. Obot next on Mac mini (platform-stamped). Then MAI_LIVE. Not published yet.',
+    why: 'Smoke v4f + counterfeit-policy cell (Datadog/Jev): deterministic vs model-judged. Obot next on Mac mini. Then MAI_LIVE. Not published yet.',
   },
   {
     id: 'approval_integrity',
@@ -106,6 +106,12 @@ export const securitySuiteGroups: readonly SecuritySuiteGroup[] = [
         id: 'multi_attack',
         title: 'Multi-attack suite',
         detail: 'Planted instructions in emails, tickets, documents, webhooks — real models, count take-effect rate.',
+      },
+      {
+        id: 'counterfeit_policy',
+        title: 'Counterfeit-policy vs model judge',
+        detail:
+          'Datadog/Jev: prepended policy rewrites taxonomy inside content. Deterministic ClawQL vs model-judged arm on the same attacks — a model advises the gate, never is the gate.',
       },
       {
         id: 'allowed_exfil',

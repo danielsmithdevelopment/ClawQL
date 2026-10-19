@@ -42,6 +42,8 @@ import {
   multiAttackHeadlineResult,
   multiAttackMechanisms,
   multiAttackMemoryWriteBreakout,
+  multiAttackCounterfeitPolicyNote,
+  multiAttackCounterfeitRows,
   multiAttackPlatformNote,
   multiAttackPublishGate,
   multiAttackRecallNote,
@@ -580,6 +582,56 @@ export function BenchmarksLanding() {
         <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackPlatformNote}</p>
         <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackMemoryWriteBreakout}</p>
         <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackRecallNote}</p>
+        <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackCounterfeitPolicyNote}</p>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Counterfeit-policy cell · Datadog / Jev · model advises, never is the gate
+        </h3>
+        <ComparisonTable minWidthClass="min-w-[720px]" className="mt-4">
+          <caption className="sr-only">
+            Counterfeit-policy cell: deterministic ClawQL versus model-judged arms
+          </caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Status</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Attacks taking effect</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Note</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {multiAttackCounterfeitRows.map((row) => (
+              <tr
+                key={row.arm}
+                className={clsx(
+                  'border-t border-mist-950/5 dark:border-white/10',
+                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                )}
+              >
+                <ComparisonRowTh
+                  className={clsx(
+                    'font-normal',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
+                  )}
+                >
+                  {row.arm}
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-center text-mist-700 dark:text-mist-400')}>
+                  {row.status}
+                </ComparisonTd>
+                <ComparisonTd
+                  className={clsx(
+                    'text-right tabular-nums',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
+                  )}
+                >
+                  {row.attacksTakingEffect}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-xs/5 text-mist-600 dark:text-mist-400')}>{row.note}</ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
 
         <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
           Smoke scorecard · n=12 · scripted worst-case · same 14 benign

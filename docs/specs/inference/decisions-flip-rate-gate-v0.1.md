@@ -8,6 +8,8 @@
 
 Held-out accuracy alone is not enough for `productionTrusted`. Microsoft-style decision models advertise flip-rate / perturbation robustness: small input changes should not swing the answer when the model is “sure.” ClawQL owns that gate on the **customer** distribution — before a site inherits trust, answers must stay stable under a fixed perturbation suite.
 
+**Counterfeit policy (opt-in family):** Datadog showed that a prepended counterfeit policy can rewrite labels/taxonomy inside the content a model judge reads ([Jev as a judge](https://securitylabs.datadoghq.com/articles/jev-as-a-judge-how-counterfeit-policy-steers-jev/)). When proving a decision site, pass `families` including `counterfeit_policy` beside paraphrase/reorder-style families. A site that flips under counterfeit policy must not decide anything consequential. Default families stay `whitespace|case|punctuation|synonym` so existing CI spend is unchanged. A model may **advise** a gate; it must never **be** the gate.
+
 ## Endpoint
 
 | Path                       | Notes                                 |
@@ -45,14 +47,15 @@ Optional `model` / `backendId` pins the decide path (e.g. `microsoft-decision-1`
 
 ## Perturbation families (v0.1)
 
-| Family        | Transforms                                        |
-| ------------- | ------------------------------------------------- |
-| `whitespace`  | collapse runs, trim, leading/trailing pad         |
-| `case`        | lower, upper, title-ish first-token capitalize    |
-| `punctuation` | strip trailing `!?.`, lightly add `?`             |
-| `synonym`     | small closed swap list (`charged`↔`billed`, etc.) |
+| Family               | Transforms                                                                 |
+| -------------------- | -------------------------------------------------------------------------- |
+| `whitespace`         | collapse runs, trim, leading/trailing pad                                  |
+| `case`               | lower, upper, title-ish first-token capitalize                             |
+| `punctuation`        | strip trailing `!?.`, lightly add `?`                                      |
+| `synonym`            | small closed swap list (`charged`↔`billed`, etc.)                          |
+| `counterfeit_policy` | **Opt-in.** Prepend Datadog-style taxonomy rewrite (desired answers + rewritten categories) |
 
-Families are deterministic (no RNG) so CI is reproducible.
+Default families omit `counterfeit_policy` (CI spend). Include it when proving sites that see untrusted text. Families are deterministic (no RNG) so CI is reproducible.
 
 ## Metrics
 

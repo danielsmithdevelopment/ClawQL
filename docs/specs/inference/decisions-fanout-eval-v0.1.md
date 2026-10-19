@@ -125,7 +125,7 @@ Even in `bulk`, cases where selected answers differ across backends are listed u
 
 ## Gate caution
 
-Fan-out metrics may **advise** which backend to pin for a site. Deterministic gates and spec-derived risk stay authoritative. Flip-rate attach on mining does **not** replace held-out `productionTrusted` (see [decisions-flip-rate-gate-v0.1](./decisions-flip-rate-gate-v0.1.md)).
+Fan-out metrics may **advise** which backend to pin for a site. Deterministic gates and spec-derived risk stay authoritative — a model can advise a gate but never be the gate ([Datadog counterfeit-policy finding](https://securitylabs.datadoghq.com/articles/jev-as-a-judge-how-counterfeit-policy-steers-jev/); board cell [COUNTERFEIT-POLICY.md](../../benchmarks/security-suite/multi-attack-injection/COUNTERFEIT-POLICY.md)). Flip-rate attach on mining does **not** replace held-out `productionTrusted` (see [decisions-flip-rate-gate-v0.1](./decisions-flip-rate-gate-v0.1.md)); include `counterfeit_policy` when proving sites that see untrusted text.
 
 ## Ensemble
 

@@ -30,11 +30,14 @@ npm run benchmark:multi-attack-injection:peers
 npm run benchmark:multi-attack-injection:bifrost
 npm run benchmark:multi-attack-injection:executor
 npm run benchmark:multi-attack-injection:obot   # Mac mini + Docker; stamps host_os=darwin
+npm run benchmark:multi-attack-injection:counterfeit-policy  # Datadog/Jev cell
 # Live scaffold (placeholder until MAI_LIVE=1):
 npm run benchmark:multi-attack-injection:live
 ```
 
 Obot equal-arm runbook: [MAC-MINI-OBOT.md](../../../docs/benchmarks/security-suite/multi-attack-injection/MAC-MINI-OBOT.md). Best-config = Obot native webhook filter deny on `memory_ingest` (not deny-tools). Docker Desktop VM is fine for effectuation outcomes.
+
+Counterfeit-policy cell: [COUNTERFEIT-POLICY.md](../../../docs/benchmarks/security-suite/multi-attack-injection/COUNTERFEIT-POLICY.md) — deterministic ClawQL vs model-judged (structural + live pending).
 
 ## Publish gate
 

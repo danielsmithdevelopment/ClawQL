@@ -11,7 +11,7 @@ export const multiAttackSummary =
   'Twelve planted attacks across email, ticket, doc, and webhook. Scripted worst-case model always complies — this measures whether the gateway stops the resulting action, not whether a real model would fall for it. Sample size: smoke until the suite grows to dozens. Peers have no built-in vault, so every arm writes the same Obsidian-compatible Memory/ served over MCP. The same 14 benign cases run on every arm so the denominator matches; memory-write breakouts sit under the table.'
 
 export const multiAttackHeadlineResult =
-  'Smoke v4f: ClawQL default 0 of 12 attacks and 14 of 14 benign. Bifrost/Executor (Linux) defaults 12 of 12; best-config 0 of 12 and 9 of 14 benign (0 of 5 memory writes). Recall answer pass (15.00) for all measured arms; unlabeled poison separate. Obot pending on Mac mini (Docker Desktop VM OK — this board is effectuation, not performance). MAI_LIVE=1 is last after Obot.'
+  'Smoke v4f: ClawQL default 0 of 12 attacks and 14 of 14 benign. Bifrost/Executor (Linux) defaults 12 of 12; best-config 0 of 12 and 9 of 14 benign (0 of 5 memory writes). Recall answer pass (15.00) for all measured arms; unlabeled poison separate. Obot pending on Mac mini. Counterfeit-policy cell (Datadog/Jev): deterministic ClawQL vs model-judged structural — a model can advise a gate but never be the gate. MAI_LIVE=1 is last after Obot.'
 
 export const multiAttackMechanisms = [
   {
@@ -161,3 +161,40 @@ export const multiAttackSharedVaultNote =
 /** Platform honesty — Obot is Mac mini; other measured arms were Linux. */
 export const multiAttackPlatformNote =
   'Bifrost and Executor smoke peers ran on Linux. Obot runs on the Mac mini (results stamp macOS / measured_on=mac_mini). Docker Desktop’s Linux VM is fine here — this board measures whether attacks take effect, not speed or memory.'
+
+/**
+ * Datadog / Jev counterfeit-policy cell — model advises, never is the gate.
+ * Cite: https://securitylabs.datadoghq.com/articles/jev-as-a-judge-how-counterfeit-policy-steers-jev/
+ */
+export const multiAttackCounterfeitPolicyNote =
+  'Datadog showed that model-judged gates can be talked out of their own policy with a prepended counterfeit policy (label-and-taxonomy rewrite). ClawQL’s gate does not take instructions from the content it judges — trust comes from source labels, spec-derived risk, and person-bound approvals. Cell: deterministic ClawQL vs a structural model-judged control on the same four planted attacks; live LangChain/Jev arm pending until wired.'
+
+export type MultiAttackCounterfeitRow = {
+  arm: string
+  status: 'measured' | 'pending'
+  attacksTakingEffect: string
+  note: string
+  highlight?: boolean
+}
+
+export const multiAttackCounterfeitRows: readonly MultiAttackCounterfeitRow[] = [
+  {
+    arm: 'ClawQL deterministic',
+    status: 'measured',
+    attacksTakingEffect: '0 of 4',
+    note: 'Source labels + park — content cannot redefine trusted',
+    highlight: true,
+  },
+  {
+    arm: 'Model-judged (structural)',
+    status: 'measured',
+    attacksTakingEffect: '4 of 4',
+    note: 'Judge follows policy-shaped text in untrusted content (Datadog failure mode)',
+  },
+  {
+    arm: 'Model-judged (live Jev / LangChain)',
+    status: 'pending',
+    attacksTakingEffect: '—',
+    note: 'Fair peer when MAI_MODEL_JUDGED_URL is set — pending ≠ not_offered',
+  },
+] as const

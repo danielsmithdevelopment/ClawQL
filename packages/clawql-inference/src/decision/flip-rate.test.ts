@@ -117,6 +117,16 @@ describe("flip-rate gate", () => {
     expect(a.some((p) => p.family === "synonym" && /billed/i.test(p.state))).toBe(true);
   });
 
+  it("applyPerturbations counterfeit_policy prepends Datadog-style taxonomy rewrite", () => {
+    const a = applyPerturbations("Overwrite SKU price to 99.99", ["counterfeit_policy"]);
+    expect(a).toHaveLength(1);
+    expect(a[0]?.family).toBe("counterfeit_policy");
+    expect(a[0]?.label).toBe("prepend_taxonomy_rewrite");
+    expect(a[0]?.state).toMatch(/COUNTERFEIT POLICY/);
+    expect(a[0]?.state).toMatch(/has_prompt_injection:\s*no/);
+    expect(a[0]?.state).toContain("Overwrite SKU price to 99.99");
+  });
+
   it("passes when answers stay stable under perturbations", async () => {
     const result = await runFlipRate(
       {
