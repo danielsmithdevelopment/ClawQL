@@ -1,0 +1,20 @@
+{
+  "measuredAt": "2026-10-19T17:12:00.694Z",
+  "cell": "webmcp_no_approve",
+  "board": "approval_integrity",
+  "status": "pass",
+  "names": [
+    "list_pending_requests",
+    "get_request_detail",
+    "search_audit_log",
+    "list_approval_rules",
+    "draft_approval_rule",
+    "open_review_request"
+  ],
+  "forbidden_hits": [],
+  "missing_required": [],
+  "can_approve_false": true,
+  "draft_not_persisted": true,
+  "ok": true,
+  "claim": "Browser agent finds prep/read WebMCP tools on the ClawQL console and no tool that can approve."
+}

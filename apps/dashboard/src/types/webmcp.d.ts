@@ -1,0 +1,70 @@
+/**
+ * WebMCP (Model Context) — https://webmachinelearning.github.io/webmcp/
+ * Chrome 149+: document.modelContext is canonical; navigator is deprecated alias.
+ *
+ * Aligns with @mcp-b/webmcp-types shape (InputSchema + annotations) without
+ * taking a hard runtime dependency on that package yet.
+ */
+export {}
+
+declare global {
+  interface Document {
+    readonly modelContext?: ModelContext
+  }
+  interface Navigator {
+    /** @deprecated Prefer document.modelContext (Chrome 150+) */
+    readonly modelContext?: ModelContext
+  }
+}
+
+interface ModelContext {
+  registerTool(
+    tool: ModelContextTool,
+    options?: ModelContextRegisterToolOptions,
+  ): void | Promise<void>
+  getTools?(options?: { fromOrigins?: string[] }): Promise<RegisteredTool[]>
+  executeTool?(
+    tool: RegisteredTool,
+    inputJson: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<string | null>
+  addEventListener?(type: 'toolchange', listener: (ev: Event) => void): void
+}
+
+interface RegisteredTool {
+  name: string
+  title?: string
+  description?: string
+  inputSchema?: object
+  origin?: string
+  annotations?: ToolAnnotations
+}
+
+interface ModelContextTool {
+  name: string
+  title?: string
+  description: string
+  inputSchema?: object
+  /** Chrome Imperative API expects a DOMString return (often JSON text). */
+  execute: (input: object, client?: ModelContextClient) => Promise<unknown>
+  annotations?: ToolAnnotations
+}
+
+interface ToolAnnotations {
+  readOnlyHint?: boolean
+  /** Significant / irreversible — host should require human confirmation. */
+  consequentialHint?: boolean
+  /** Output includes UGC / third-party text — host should spotlight. */
+  untrustedContentHint?: boolean
+  debugging?: boolean
+}
+
+interface ModelContextRegisterToolOptions {
+  signal?: AbortSignal
+  exposedTo?: string[]
+}
+
+interface ModelContextClient {
+  signal?: AbortSignal
+  requestUserInteraction?: (callback: () => Promise<unknown>) => Promise<unknown>
+}

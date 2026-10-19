@@ -1,0 +1,47 @@
+{
+  "id": "clawql-console-webmcp-v0",
+  "origin": "clawql-managed-console",
+  "notes": [
+    "Read-only and preparation tools only.",
+    "No approve/decline/commit tool — approval stays behind a security key in Review UI.",
+    "Annotations are opt-in true only (Chrome webmcp-skills)."
+  ],
+  "tools": [
+    {
+      "name": "list_pending_requests",
+      "description": "Lists items waiting on a person in the ClawQL Review queue. Use when the user asks what is pending, waiting, or needs approval.",
+      "annotations": { "readOnlyHint": true }
+    },
+    {
+      "name": "get_request_detail",
+      "description": "Returns the exact fields and digest for one pending request. Use when reviewing what would change before a person approves.",
+      "annotations": { "readOnlyHint": true, "untrustedContentHint": true }
+    },
+    {
+      "name": "search_audit_log",
+      "description": "Searches recent audit entries by actor, action, or outcome. Use when investigating what agents or people did.",
+      "annotations": { "readOnlyHint": true, "untrustedContentHint": true }
+    },
+    {
+      "name": "list_approval_rules",
+      "description": "Lists who must approve which agent writes and whether a security key is required. Use when explaining or drafting approval policy.",
+      "annotations": { "readOnlyHint": true }
+    },
+    {
+      "name": "draft_approval_rule",
+      "description": "Builds a non-persisted approval-rule draft for a person to review. Use when proposing policy wording; never claims the rule is saved."
+    },
+    {
+      "name": "open_review_request",
+      "description": "Navigates to the Review UI so a person can approve with their security key. Use when the user is ready to hand off; this does not approve."
+    }
+  ],
+  "forbidden": [
+    "approve_*",
+    "decline_*",
+    "confirm_approval",
+    "sign_mandate",
+    "resume_execution",
+    "apply_change"
+  ]
+}

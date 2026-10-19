@@ -109,6 +109,7 @@
     "benchmark:celld-hotpath-ab": "node scripts/benchmarks/celld-hotpath-ab.mjs",
     "demo:kill-node-standin": "node scripts/program/kill-node-standin-demo.mjs",
     "benchmark:gateway-multi-multiturn": "node scripts/benchmarks/gateway-multi-multiturn.mjs",
+    "benchmark:approval-integrity:webmcp-no-approve": "node scripts/benchmarks/approval-integrity/webmcp-no-approve.mjs",
     "benchmark:governance-policy-depth": "node scripts/benchmarks/governance-policy-depth/run-board.mjs",
     "benchmark:governance-policy-depth:cells": "node scripts/benchmarks/governance-policy-depth/run-cells.mjs",
     "benchmark:governance-policy-depth:executor": "scripts/benchmarks/governance-policy-depth/ci-executor-peer.sh",
