@@ -79,10 +79,10 @@ Default ClawQL labels hostile content instead of blocking it, so the vault stays
 
 Independent research: [Datadog — Jev as a judge](https://securitylabs.datadoghq.com/articles/jev-as-a-judge-how-counterfeit-policy-steers-jev/). A prepended counterfeit policy rewrites labels and taxonomy inside the content a model judge reads — so the judge can be talked out of its own policy.
 
-| Arm                                 | Status                                                                                                                         |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| ClawQL deterministic                | Measured — source labels + park; content cannot redefine “trusted” (smoke **0 of 4**)                                          |
-| Model-judged defaults / best-config | **Pending** until a real LangChain/Jev (+ JevShield best-config) run on a **public** Datadog-cited set                         |
+| Arm                                 | Status                                                                                                 |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| ClawQL deterministic                | Measured — source labels + park; content cannot redefine “trusted” (smoke **0 of 4**)                  |
+| Model-judged defaults / best-config | **Pending** until a real LangChain/Jev (+ JevShield best-config) run on a **public** Datadog-cited set |
 
 No harness stand-in that follows policy-shaped text — that fails by construction (same class of error as a deny-tools Executor stand-in). Until live arms run, **cite Datadog** as the peer evidence.
 

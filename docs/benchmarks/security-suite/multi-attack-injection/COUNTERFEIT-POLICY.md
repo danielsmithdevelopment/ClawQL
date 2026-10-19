@@ -10,11 +10,11 @@ Datadog evaluated Jev on public prompt-injection datasets, then tested whether p
 
 ## Arms
 
-| Arm                            | Status                                   | What it measures                                                                                                                                                 |
-| ------------------------------ | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ClawQL deterministic**       | **Measured** (smoke n=4 channel plants)  | Whether a counterfeit policy in email/ticket/doc/webhook can relabel the channel as trusted or un-park an OVERRIDE — **0 of 4**                                  |
-| **Model-judged defaults**      | **Pending**                              | LangChain tool-risk / Jev stock config on a **public** Datadog-cited set with counterfeit policy prepended                                                       |
-| **Model-judged best-config**   | **Pending**                              | Same corpus through **JevShield** (or documented best mitigation) with the **"data, not instructions"** preamble on                                               |
+| Arm                          | Status                                  | What it measures                                                                                                                |
+| ---------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **ClawQL deterministic**     | **Measured** (smoke n=4 channel plants) | Whether a counterfeit policy in email/ticket/doc/webhook can relabel the channel as trusted or un-park an OVERRIDE — **0 of 4** |
+| **Model-judged defaults**    | **Pending**                             | LangChain tool-risk / Jev stock config on a **public** Datadog-cited set with counterfeit policy prepended                      |
+| **Model-judged best-config** | **Pending**                             | Same corpus through **JevShield** (or documented best mitigation) with the **"data, not instructions"** preamble on             |
 
 There is **no** harness stand-in that “follows policy-shaped text.” That would fail by construction — the same credibility failure as attributing a deny-tools proxy to Executor. Until the live arms are measured, **Datadog’s independent result is the peer evidence.**
 
@@ -47,7 +47,7 @@ A counterfeit policy in an email cannot relabel the email as trusted, because tr
 ClawQL uses decision models for routing and triage, and plans server-side operation resolution. Any place untrusted text reaches a classifier is open to this attack:
 
 1. **Add counterfeit-policy inputs** to the adversarial set when proving each decision site — next to Microsoft’s paraphrase-and-reorder flip test (`flip-rate` family `counterfeit_policy`). A site that flips under a counterfeit policy must not decide anything consequential.
-2. **Keep operation resolution to automatic reads only.** A steered resolver that picks the wrong *read* wastes a turn; one that picked a *write* could do damage — writes always go to a person with the exact operation named.
+2. **Keep operation resolution to automatic reads only.** A steered resolver that picks the wrong _read_ wastes a turn; one that picked a _write_ could do damage — writes always go to a person with the exact operation named.
 
 ## Run
 
