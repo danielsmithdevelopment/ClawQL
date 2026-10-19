@@ -6,8 +6,8 @@ How to put the remaining [dominance roadmap](./dominance-roadmap.md) peers on a 
 
 | Peer                        | Ship form                                                                       | Equal-arm path                                                                             | Blocker                                                                                                    |
 | --------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| **Bifrost**                 | OSS binary (`npx @maximhq/bifrost`)                                             | `MT_ARMS=…,bifrost,bifrost_codemode` on pets multiturn                                     | Tokens **measured** (Code Mode 2.25× / classic 3.95×). Still need p99 concurrency + governance depth.      |
-| **Obot**                    | OSS Docker / Helm ([obot-platform/obot](https://github.com/obot-platform/obot)) | Equal-arm catalog Streamable HTTP → catalog entry → `OBOT_MCP_URL=/mcp-connect/…`          | **On board** — classic **3.95×** vs ClawQL (same fat aggregator path as agentgateway); PASS task_success.  |
+| **Bifrost**                 | OSS binary (`npx @maximhq/bifrost`)                                             | `MT_ARMS=…,bifrost,bifrost_codemode` on pets multiturn; governance: `BIFROST_MCP_URL` → vault-mcp | Tokens **measured**. Governance harness ready — peer row skip until VK fronts vault-mcp with ingest deny. |
+| **Obot**                    | OSS Docker / Helm ([obot-platform/obot](https://github.com/obot-platform/obot)) | Equal-arm catalog → `OBOT_MCP_URL`; governance: register vault-mcp then same URL env        | Tokens **on board** (3.95×). Governance harness ready — land live row with Docker (see below).            |
 | **TrueFoundry**             | Enterprise / private Helm (`tfy-llm-gateway`)                                   | Needs tenant + `TFY_API_KEY` gateway plane                                                 | **SaaS/credentials** — cannot smoke without a TF org. Document governance bake-off once credentials exist. |
 | **Uber MCP Gateway**        | Internal only (blog design)                                                     | Technique bake-off: Omni discovery + response projection vs ClawQL search/`where`/`fields` | **Not OSS** — implement a _technique peer_ harness (projection field trim), not their binary.              |
 | **ContextForge**            | Prior nested boards                                                             | Direct `/pets` virtualization (no MCPJungle nest)                                          | Nested adapter still inflates; direct arm next.                                                            |
@@ -73,6 +73,30 @@ Enterprise MCP Gateway (control plane hosted). When a tenant + gateway token are
 4. Score tokens + policy-bound write audit completeness.
 
 Until then status stays **Not on board** with an explicit credentials blocker.
+
+## Governance / policy-depth (vault-write deny)
+
+Shared adversarial fixture (OVERRIDE `memory_ingest` → vault contamination grader). Harness:
+
+```bash
+npm run benchmark:governance-policy-depth
+# → docs/benchmarks/governance-policy-depth/results-smoke.json
+```
+
+Smoke (no Docker): **ClawQL+Panguard 5/5** vs **passthrough 2/5** (contaminates). Obot/Bifrost honest-skip unless env set.
+
+**Obot:** register `vault-mcp.mjs` (`VAULT_ROOT=… --http --port 18780`) as a remote catalog entry (same recipe as equal-arm catalog above), then:
+
+```bash
+export OBOT_MCP_URL=http://127.0.0.1:8080/mcp-connect/<ms-id>
+export OBOT_MCP_TOKEN=clawql-bench-token
+GOV_OUT=docs/benchmarks/governance-policy-depth/results-obot.json \
+  npm run benchmark:governance-policy-depth
+```
+
+**Bifrost:** front the same vault-mcp; set `BIFROST_MCP_URL` + `BIFROST_VK`. A VK with `tools_to_execute: ["*"]` / allow-all is the passthrough-equivalent **loss**. Deny or omit `memory_ingest` to compete on security_score.
+
+Docs: [`governance-policy-depth/README.md`](./governance-policy-depth/README.md).
 
 ## Celld + injection (earned claims, parallel track)
 

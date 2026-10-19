@@ -49,7 +49,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     status: 'partial',
     statusLabel: 'Tokens measured',
     nextStep:
-      'Equal-arm N=12/C=40 board landed (Code Mode 2.25× / classic 3.95× vs ClawQL after compact JSON). Still need p99 concurrency + governance-depth criteria for a category claim.',
+      'Tokens on N=12/C=40 (Code Mode 2.25× / classic 3.95×). Governance/policy-depth harness shipped (vault OVERRIDE fixture); set BIFROST_MCP_URL to land peer row. Still need p99 concurrency for category claim.',
   },
   {
     id: 'truefoundry',
@@ -61,7 +61,8 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
       'Same multi-turn board with their MCP proxy; measure weighted tokens + p99 clients before SLO break; compare approval binding + trail.',
     status: 'not_on_board',
     statusLabel: 'Not on board',
-    nextStep: 'Next unmeasured peer after Bifrost/Obot token boards — governance-depth equal-arm.',
+    nextStep:
+      'Credentials blocker. Same governance-policy-depth board accepts TRUEFOUNDRY_MCP_URL-style peer once tenant gateway exists.',
   },
   {
     id: 'cloudflare-code-mode',
@@ -119,7 +120,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     status: 'partial',
     statusLabel: 'Tokens measured',
     nextStep:
-      'Equal-arm N=12/C=40 via Obot mcp-connect catalog: classic 3.95× vs ClawQL (same fat aggregator path). Still need policy-overhead + governance-depth criteria.',
+      'Tokens: classic 3.95× @N=12. Governance board smoke: ClawQL 5/5 vs passthrough 2/5 (npm run benchmark:governance-policy-depth). Land live Obot row with OBOT_MCP_URL + vault-mcp.',
   },
   {
     id: 'executor',

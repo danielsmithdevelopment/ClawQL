@@ -109,6 +109,7 @@
     "benchmark:celld-hotpath-ab": "node scripts/benchmarks/celld-hotpath-ab.mjs",
     "demo:kill-node-standin": "node scripts/program/kill-node-standin-demo.mjs",
     "benchmark:gateway-multi-multiturn": "node scripts/benchmarks/gateway-multi-multiturn.mjs",
+    "benchmark:governance-policy-depth": "node scripts/benchmarks/governance-policy-depth/run-board.mjs",
     "generate:executor-cmp-latency-html": "node scripts/benchmarks/generate-executor-cmp-latency-html.mjs",
     "generate:executor-cmp-static": "npm run generate:executor-cmp-static -w mcp-api-adapter",
     "openbench:validate": "python3 benchmarks/openbench/validate_tasks.py",

@@ -1,0 +1,56 @@
+# Governance / policy-depth equal-arm board
+
+Proves **fail-closed vault-write policy** on a shared adversarial fixture — the dominance criterion peers still lack on the tokens boards.
+
+| Arm | Role |
+|-----|------|
+| `clawql_panguard` | Required — `CLAWQL_PANGUARD_*` blocks `memory_ingest` |
+| `passthrough` | Required control — direct vault MCP, no deny (aggregator-without-policy) |
+| `obot` | Opt-in — `OBOT_MCP_URL` (+ optional `OBOT_MCP_TOKEN`) |
+| `bifrost` | Opt-in — `BIFROST_MCP_URL` (+ optional `BIFROST_VK`) |
+
+Frozen rules: [`frozen-rules.json`](./frozen-rules.json).
+
+## Run (always)
+
+```bash
+node scripts/benchmarks/governance-policy-depth/run-board.mjs
+# or
+npm run benchmark:governance-policy-depth
+```
+
+Writes `docs/benchmarks/governance-policy-depth/results-smoke.json` (override with `GOV_OUT=`).
+
+Expected smoke: **board_pass=true**, clawql security_score **5/5**, passthrough contaminates (score ≤3).
+
+## Wire Obot (Docker)
+
+```bash
+# Terminal A — shared vault MCP (seed a trial vault first or use /tmp/gov-vault)
+cp -a benchmarks/openbench/tasks/memory-injection-attempt/workspace/vault /tmp/gov-vault
+VAULT_ROOT=/tmp/gov-vault node scripts/benchmarks/governance-policy-depth/vault-mcp.mjs --http --port 18780
+
+# Terminal B — Obot (see docs/benchmarks/dominance-peers-wiring.md)
+# Register remote entry fixedURL=http://172.17.0.1:18780/mcp
+export OBOT_MCP_URL=http://127.0.0.1:8080/mcp-connect/<ms-id>
+export OBOT_MCP_TOKEN=clawql-bench-token
+GOV_OUT=docs/benchmarks/governance-policy-depth/results-obot.json \
+  node scripts/benchmarks/governance-policy-depth/run-board.mjs
+```
+
+Without a per-tool deny on `memory_ingest`, Obot matches **passthrough** (contamination) — that is a measured policy-depth loss vs ClawQL. With Obot deny configured, scores may tie; then compare audit richness / latency.
+
+## Wire Bifrost
+
+Front the same `vault-mcp` with a Bifrost virtual key. To claim governance win, scope the VK to **deny** `memory_ingest` (or omit it from `tools_to_execute`). `allow_by_default: true` + `tools_to_execute: ["*"]` is the passthrough-equivalent loss.
+
+```bash
+export BIFROST_MCP_URL=http://127.0.0.1:<port>/mcp
+export BIFROST_VK=sk-bf-…
+GOV_OUT=docs/benchmarks/governance-policy-depth/results-bifrost.json \
+  node scripts/benchmarks/governance-policy-depth/run-board.mjs
+```
+
+## Maintainer invite
+
+Point your gateway at `vault-mcp.mjs`, run this board, open a PR with raw JSON. We merge equal-arm rows; we do not fabricate peer scores.
