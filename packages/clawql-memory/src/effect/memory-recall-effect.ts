@@ -20,10 +20,7 @@ import {
   scoreWithVaultRanker,
   type VaultRankerStats,
 } from "../recall/vault-ranker.js";
-import {
-  annotateSnippetWithTrust,
-  applyTrustRankAdjust,
-} from "../recall/trust-provenance.js";
+import { annotateSnippetWithTrust, applyTrustRankAdjust } from "../recall/trust-provenance.js";
 import { MemoryError } from "./memory-errors.js";
 import { EmbeddingService } from "./embedding-service.js";
 import { MemoryDbService } from "./memory-db-service.js";

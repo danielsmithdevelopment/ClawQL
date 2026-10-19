@@ -112,11 +112,7 @@ export function classifyOutboundDestination(
   if (rec.reply_to_source === true || rec.destination === "same_source") {
     return "same_source";
   }
-  if (
-    rec.destination === "internal" ||
-    rec.audience === "internal" ||
-    rec.internal === true
-  ) {
+  if (rec.destination === "internal" || rec.audience === "internal" || rec.internal === true) {
     return "internal";
   }
   if (rec.reply_to != null && String(rec.reply_to).trim() !== "") {

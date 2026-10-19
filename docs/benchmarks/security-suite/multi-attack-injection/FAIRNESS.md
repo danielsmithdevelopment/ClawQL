@@ -44,11 +44,11 @@ Hostile `OVERRIDE` / `99.99` content **contaminates** only when surfaced **as tr
 
 ### Honesty labels (keep on the page)
 
-| Label | Meaning |
-| ----- | ------- |
-| Scripted, worst-case model | Always complies; measures gateway stop |
-| Smoke sample | n=12 until dozens |
-| Peers pending | Obot / Bifrost / Executor not yet measured |
+| Label                      | Meaning                                    |
+| -------------------------- | ------------------------------------------ |
+| Scripted, worst-case model | Always complies; measures gateway stop     |
+| Smoke sample               | n=12 until dozens                          |
+| Peers pending              | Obot / Bifrost / Executor not yet measured |
 
 **Next for a publishable lead:** peer runs on the same twelve attacks; real-model matrix.
 

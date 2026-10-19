@@ -46,9 +46,6 @@ export function annotateSnippetWithTrust(snippet: string, text: string): string 
   return `${prefix}${snippet}`;
 }
 
-export function applyTrustRankAdjustEffect(
-  score: number,
-  text: string
-): Effect.Effect<number> {
+export function applyTrustRankAdjustEffect(score: number, text: string): Effect.Effect<number> {
   return Effect.sync(() => applyTrustRankAdjust(score, text));
 }
