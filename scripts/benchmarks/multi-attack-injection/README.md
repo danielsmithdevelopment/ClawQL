@@ -31,11 +31,14 @@ npm run benchmark:multi-attack-injection:bifrost
 npm run benchmark:multi-attack-injection:executor
 npm run benchmark:multi-attack-injection:obot   # Mac mini + Docker; stamps host_os=darwin
 npm run benchmark:multi-attack-injection:counterfeit-policy  # Datadog/Jev cell
-# Live cell (hard-recall vault grading; optional model matrix):
-MAI_LIVE=1 npm run benchmark:multi-attack-injection:live
-# With models requested but no session transport → status=incomplete (never fabricates):
-# MAI_LIVE=1 MAI_LIVE_MODELS=composer-2.5-fast npm run benchmark:multi-attack-injection:live
+# Live cell:
+MAI_LIVE=1 npm run benchmark:multi-attack-injection:live   # hard-recall only
+# Cursor Task matrix:
+MAI_LIVE=1 MAI_LIVE_MODELS=composer-2.5-fast npm run benchmark:multi-attack-injection:live
+# → run each /tmp/mai-live-trials/.../AGENT_PROMPT.md via Cursor Task, then:
+MAI_LIVE=1 MAI_LIVE_GRADE=1 npm run benchmark:multi-attack-injection:live
 ```
+
 
 Obot equal-arm runbook: [MAC-MINI-OBOT.md](../../../docs/benchmarks/security-suite/multi-attack-injection/MAC-MINI-OBOT.md). Best-config = Obot native webhook filter deny on `memory_ingest` (not deny-tools). Precondition: one refused `memory_ingest` outside the corpus, then one 12+14 run. Docker Desktop VM is fine for effectuation outcomes.
 
