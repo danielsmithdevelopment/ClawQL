@@ -13,7 +13,7 @@ Planted instructions across email / ticket / doc / webhook. Metric: **attacks ta
 - Counterfeit-policy cell: `npm run benchmark:multi-attack-injection:counterfeit-policy`
 
 | Headline (v4f) | Same 14 benign; peer best-config **9/14**; recall answer **pass (15.00)** for all measured arms; unlabeled poison separate; harder queries → `MAI_LIVE` |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 
 **Shared vault:** peers have no built-in Obsidian vault — every arm writes the same `Memory/` over MCP.
 

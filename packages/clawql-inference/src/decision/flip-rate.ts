@@ -380,10 +380,7 @@ export function parseFlipRateBody(body: unknown): FlipRateRequest | { error: str
     if (!Array.isArray(familiesRaw) || familiesRaw.length === 0) {
       return { error: "families must be a non-empty array when provided" };
     }
-    const allowed = new Set<FlipRateFamily>([
-      ...DEFAULT_FLIP_RATE_FAMILIES,
-      "counterfeit_policy",
-    ]);
+    const allowed = new Set<FlipRateFamily>([...DEFAULT_FLIP_RATE_FAMILIES, "counterfeit_policy"]);
     families = [];
     for (const f of familiesRaw) {
       if (typeof f !== "string" || !allowed.has(f as FlipRateFamily)) {

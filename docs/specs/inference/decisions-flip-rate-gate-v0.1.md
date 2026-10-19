@@ -47,12 +47,12 @@ Optional `model` / `backendId` pins the decide path (e.g. `microsoft-decision-1`
 
 ## Perturbation families (v0.1)
 
-| Family               | Transforms                                                                 |
-| -------------------- | -------------------------------------------------------------------------- |
-| `whitespace`         | collapse runs, trim, leading/trailing pad                                  |
-| `case`               | lower, upper, title-ish first-token capitalize                             |
-| `punctuation`        | strip trailing `!?.`, lightly add `?`                                      |
-| `synonym`            | small closed swap list (`charged`↔`billed`, etc.)                          |
+| Family               | Transforms                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| `whitespace`         | collapse runs, trim, leading/trailing pad                                                   |
+| `case`               | lower, upper, title-ish first-token capitalize                                              |
+| `punctuation`        | strip trailing `!?.`, lightly add `?`                                                       |
+| `synonym`            | small closed swap list (`charged`↔`billed`, etc.)                                           |
 | `counterfeit_policy` | **Opt-in.** Prepend Datadog-style taxonomy rewrite (desired answers + rewritten categories) |
 
 Default families omit `counterfeit_policy` (CI spend). Include it when proving sites that see untrusted text. Families are deterministic (no RNG) so CI is reproducible.

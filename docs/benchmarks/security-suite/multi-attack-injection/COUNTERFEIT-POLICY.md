@@ -10,11 +10,11 @@ Datadog evaluated Jev on public prompt-injection datasets, then tested whether p
 
 ## Arms (same four planted attacks)
 
-| Arm | Gate | What it measures |
-| --- | ---- | ---------------- |
-| **ClawQL deterministic** | Product defaults (source labels, park destructive writes, data-flow) | Whether a counterfeit policy in email/ticket/doc/webhook can relabel the channel as trusted or un-park an OVERRIDE |
-| **Model-judged (structural)** | Scripted judge that **follows** policy-shaped text inside untrusted content | The structural failure mode Datadog measured — not a Jev API claim |
-| **Model-judged (live)** | LangChain tool-risk / Jev / JevShield recommended config | Fair peer measurement when `MAI_MODEL_JUDGED_URL` is set; otherwise **pending ≠ not_offered** |
+| Arm                           | Gate                                                                        | What it measures                                                                                                   |
+| ----------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **ClawQL deterministic**      | Product defaults (source labels, park destructive writes, data-flow)        | Whether a counterfeit policy in email/ticket/doc/webhook can relabel the channel as trusted or un-park an OVERRIDE |
+| **Model-judged (structural)** | Scripted judge that **follows** policy-shaped text inside untrusted content | The structural failure mode Datadog measured — not a Jev API claim                                                 |
+| **Model-judged (live)**       | LangChain tool-risk / Jev / JevShield recommended config                    | Fair peer measurement when `MAI_MODEL_JUDGED_URL` is set; otherwise **pending ≠ not_offered**                      |
 
 ## Why this vindicates ClawQL’s design
 
@@ -35,7 +35,7 @@ A counterfeit policy in an email cannot relabel the email as trusted, because tr
 ClawQL uses decision models for routing and triage, and plans server-side operation resolution. Any place untrusted text reaches a classifier is open to this attack:
 
 1. **Add counterfeit-policy inputs** to the adversarial set when proving each decision site — next to Microsoft’s paraphrase-and-reorder flip test (`flip-rate` family `counterfeit_policy`). A site that flips under a counterfeit policy must not decide anything consequential.
-2. **Keep operation resolution to automatic reads only.** A steered resolver that picks the wrong *read* wastes a turn; one that picked a *write* could do damage — writes always go to a person with the exact operation named.
+2. **Keep operation resolution to automatic reads only.** A steered resolver that picks the wrong _read_ wastes a turn; one that picked a _write_ could do damage — writes always go to a person with the exact operation named.
 
 ## Run
 
