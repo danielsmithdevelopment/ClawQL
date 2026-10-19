@@ -455,6 +455,11 @@ export const gatewayBenchmarkHonesty = [
 
 export const gatewayBenchmarkLinks = [
   {
+    label: 'Fail-closed security (governance)',
+    href: '/benchmarks/#governance',
+    detail: 'Panguard vault-write deny — ClawQL 5/5 vs Obot 2/5 on equal-arm fixture',
+  },
+  {
     label: 'Dominance roadmap',
     href: '/benchmarks/#dominance',
     detail: 'Peers not yet on the board + minimum criteria for a category claim',

@@ -5,7 +5,7 @@ export const metadata = pageMetadata({
   title: 'Benchmarks',
   absoluteTitle: 'Benchmarks · ClawQL vs MCP gateways',
   description:
-    'Cloudflare zone-audit and fan-out/join boards plus equal-arm multi-gateway benchmarks: ClawQL vs Executor v1/v2, MCPJungle, and agentgateway — tokens, memory, concurrency, real-model program gate.',
+    'Fail-closed security: ClawQL 5/5 vs Obot 2, Bifrost 2, and Executor resume 2 on equal-arm vault-write — plus Cloudflare zone-audit, fan-out, and multi-gateway token boards.',
   path: '/benchmarks',
 })
 

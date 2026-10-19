@@ -23,6 +23,18 @@ import {
   dominanceRoadmapSummary,
 } from '@/lib/dominance-roadmap'
 import {
+  governanceBenchmarkClaim,
+  governanceBenchmarkHonesty,
+  governanceBenchmarkHeadline,
+  governanceBenchmarkLinks,
+  governanceBenchmarkMeta,
+  governanceBenchmarkSummary,
+  governanceExecutorCells,
+  governanceMetricLegend,
+  governancePeerWins,
+  governanceScorecardRows,
+} from '@/lib/governance-benchmarks'
+import {
   BENCHMARK_VIDEO_META,
   BENCHMARK_VIDEO_SRC,
   gatewayBenchmarkClaim,
@@ -115,8 +127,27 @@ export function BenchmarksLanding() {
               {cfBenchmarkMeta.measuredLabel}{' '}
               <span className="font-normal text-mist-600 dark:text-mist-400">· {cfBenchmarkMeta.boardLabel}</span>
             </p>
+            <p className="text-sm/6 text-mist-800 dark:text-mist-200">
+              <a
+                href="#governance"
+                className="font-semibold text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
+              >
+                Fail-closed security
+              </a>
+              <span className="font-normal text-mist-600 dark:text-mist-400">
+                {' '}
+                — ClawQL 5/5 leads Obot 2 · Bifrost 2 · Executor resume 2
+              </span>
+            </p>
             <p className="text-xs/6 text-mist-600 dark:text-mist-400">
               Jump:{' '}
+              <a
+                href="#governance"
+                className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
+              >
+                security scorecard
+              </a>
+              {' · '}
               <a
                 href="#cf-tokens"
                 className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
@@ -163,6 +194,219 @@ export function BenchmarksLanding() {
         }
       >
         {BENCHMARK_VIDEO_SRC ? <BenchmarkVideoSlot /> : null}
+      </Section>
+
+      <Section
+        id="governance"
+        className="pt-10 sm:pt-14"
+        eyebrow="Security · fail-closed policy depth"
+        headline={governanceBenchmarkHeadline}
+        subheadline={<p>{governanceBenchmarkSummary}</p>}
+        cta={
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-medium text-mist-800 dark:text-mist-200">
+              {governanceBenchmarkMeta.measuredLabel}{' '}
+              <span className="font-normal text-mist-600 dark:text-mist-400">
+                · {governanceBenchmarkMeta.measuredAt} · {governanceBenchmarkMeta.boardLabel}
+              </span>
+            </p>
+            <p className="max-w-2xl text-sm/6 text-mist-700 dark:text-mist-300">{governanceBenchmarkClaim}</p>
+          </div>
+        }
+      >
+        <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {governancePeerWins.map((win) => (
+            <div
+              key={win.id}
+              className={clsx(
+                'rounded-lg px-4 py-3 ring-1',
+                win.verdict === 'leads'
+                  ? 'bg-mist-950/[0.04] ring-mist-950/12 dark:bg-white/[0.05] dark:ring-white/15'
+                  : 'bg-mist-950/[0.02] ring-mist-950/8 dark:bg-white/[0.02] dark:ring-white/10',
+              )}
+            >
+              <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">
+                vs {win.peer}
+              </p>
+              <p className="mt-1 text-sm font-semibold tabular-nums text-mist-950 dark:text-white">
+                {win.clawql}{' '}
+                <span className="font-normal text-mist-500 dark:text-mist-500">
+                  {win.verdict === 'leads' ? '>' : win.verdict === 'ties' ? '=' : '·'}
+                </span>{' '}
+                {win.peerScore}
+              </p>
+              <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">{win.detail}</p>
+            </div>
+          ))}
+        </div>
+
+        <ComparisonTable minWidthClass="min-w-[980px]">
+          <caption className="sr-only">
+            Governance policy-depth scorecard: security score and fail-closed vault-write metrics by arm
+          </caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Status</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Score / {governanceBenchmarkMeta.maxScore}</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Blocked</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Clean vault</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Deny evidence</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Auth intact</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Benign recall</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {governanceScorecardRows.map((row) => (
+              <tr
+                key={row.id}
+                className={clsx(
+                  'border-t border-mist-950/5 dark:border-white/10',
+                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                )}
+              >
+                <ComparisonRowTh
+                  className={clsx(
+                    'align-top font-normal',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
+                  )}
+                >
+                  <div className="flex flex-col gap-1">
+                    <span>{row.arm}</span>
+                    {row.note ? (
+                      <span className="max-w-xs text-xs/5 font-normal text-mist-600 dark:text-mist-500">
+                        {row.note}
+                      </span>
+                    ) : null}
+                  </div>
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-center align-top')}>
+                  <span
+                    className={clsx(
+                      'inline-flex rounded-md px-2 py-1 text-xs font-medium',
+                      row.status === 'measured'
+                        ? 'bg-mist-950/8 text-mist-900 dark:bg-white/10 dark:text-mist-100'
+                        : row.status === 'control'
+                          ? 'bg-mist-950/4 text-mist-700 dark:bg-white/5 dark:text-mist-300'
+                          : 'bg-amber-500/10 text-amber-900 dark:bg-amber-400/15 dark:text-amber-100',
+                    )}
+                  >
+                    {row.status === 'measured' ? 'Measured' : row.status === 'control' ? 'Control' : 'Pending'}
+                  </span>
+                </ComparisonTd>
+                <ComparisonTd
+                  className={clsx(
+                    'text-right align-top font-semibold tabular-nums',
+                    row.highlight ? 'text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
+                  )}
+                >
+                  {row.securityScore === null ? '—' : row.securityScore}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-center align-top text-mist-800 dark:text-mist-200')}>
+                  {row.blocked === null ? '—' : row.blocked ? 'Yes' : 'No'}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-center align-top text-mist-800 dark:text-mist-200')}>
+                  {row.vaultContaminated === null ? '—' : row.vaultContaminated ? 'No' : 'Yes'}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-center align-top text-mist-800 dark:text-mist-200')}>
+                  {row.denyEvidence === null ? '—' : row.denyEvidence ? 'Yes' : 'No'}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-center align-top text-mist-800 dark:text-mist-200')}>
+                  {row.authoritativeIntact === null ? '—' : row.authoritativeIntact ? 'Yes' : 'No'}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-center align-top text-mist-800 dark:text-mist-200')}>
+                  {row.benignRecallOk === null ? '—' : row.benignRecallOk ? 'Yes' : 'No'}
+                </ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {governanceMetricLegend.map((m) => (
+            <div
+              key={m.id}
+              className="rounded-lg bg-mist-950/[0.03] px-4 py-3 ring-1 ring-mist-950/8 dark:bg-white/[0.03] dark:ring-white/10"
+            >
+              <p className="text-sm font-semibold text-mist-950 dark:text-white">{m.label}</p>
+              <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">{m.detail}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8">
+          <h3 className="text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+            Executor cells — pause ties, resume loses
+          </h3>
+          <p className="mt-2 max-w-3xl text-sm/6 text-mist-700 dark:text-mist-400">
+            Pause cells tie at 5/5. The third cell has the agent <code className="text-xs">resume accept</code> after
+            poison — Executor contaminates at 2/5; ClawQL hard-deny has no resume bypass. Via{' '}
+            <code className="text-xs">ci-executor-peer.sh</code>.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {governanceExecutorCells.map((cell) => {
+              const leads =
+                cell.executorScore !== null && cell.clawqlScore > cell.executorScore
+              return (
+                <div
+                  key={cell.id}
+                  className={clsx(
+                    'rounded-lg px-4 py-3 ring-1',
+                    leads
+                      ? 'bg-mist-950/[0.04] ring-mist-950/12 dark:bg-white/[0.05] dark:ring-white/15'
+                      : 'bg-mist-950/[0.03] ring-mist-950/8 dark:bg-white/[0.03] dark:ring-white/10',
+                  )}
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="text-sm font-semibold text-mist-950 dark:text-white">{cell.title}</p>
+                    <p className="shrink-0 text-xs font-medium tabular-nums text-mist-700 dark:text-mist-300">
+                      {cell.clawqlScore}/{governanceBenchmarkMeta.maxScore}
+                      {cell.executorScore === null
+                        ? ''
+                        : ` ${leads ? '>' : '='} ${cell.executorScore}/${governanceBenchmarkMeta.maxScore}`}
+                    </p>
+                  </div>
+                  <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">{cell.detail}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="mt-8 grid gap-6 sm:grid-cols-3">
+          {governanceBenchmarkHonesty.map((item) => (
+            <div key={item.title}>
+              <h3 className="text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+                {item.title}
+              </h3>
+              <p className="mt-2 text-sm/6 text-mist-700 dark:text-mist-400">{item.body}</p>
+            </div>
+          ))}
+        </div>
+
+        <ul className="mt-8 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
+          {governanceBenchmarkLinks.map((link) => (
+            <li key={link.href}>
+              <a
+                href={link.href}
+                className="text-sm font-medium text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
+              >
+                {link.label}
+              </a>
+              <span className="ml-2 text-xs text-mist-600 dark:text-mist-500">{link.detail}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
+          Artifacts: {governanceBenchmarkMeta.artifactSmoke} · {governanceBenchmarkMeta.artifactObot} ·{' '}
+          {governanceBenchmarkMeta.artifactBifrost} · {governanceBenchmarkMeta.artifactCells} · CI{' '}
+          <a
+            href={governanceBenchmarkMeta.ciRunUrl}
+            className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
+          >
+            {governanceBenchmarkMeta.ciRunUrl.split('/').pop()}
+          </a>
+        </p>
       </Section>
 
       <Section

@@ -47,9 +47,9 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     howToProve:
       'Interleaved multi-step OpenAPI/pets workflow vs their Code Mode; publish harness + raw results; invite maintainer config fixes.',
     status: 'partial',
-    statusLabel: 'Tokens measured',
+    statusLabel: 'Tokens + gov measured',
     nextStep:
-      'Equal-arm N=12/C=40 board landed (Code Mode 2.25× / classic 3.95× vs ClawQL after compact JSON). Still need p99 concurrency + governance-depth criteria for a category claim.',
+      'Tokens on N=12/C=40 (Code Mode 2.25× / classic 3.95×). Governance: default allow-all VK 2/5 (results-bifrost.json); VK deny can tie. Still need p99 concurrency for category claim.',
   },
   {
     id: 'truefoundry',
@@ -61,7 +61,8 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
       'Same multi-turn board with their MCP proxy; measure weighted tokens + p99 clients before SLO break; compare approval binding + trail.',
     status: 'not_on_board',
     statusLabel: 'Not on board',
-    nextStep: 'Next unmeasured peer after Bifrost/Obot token boards — governance-depth equal-arm.',
+    nextStep:
+      'Credentials blocker. Same governance-policy-depth board accepts TRUEFOUNDRY_MCP_URL-style peer once tenant gateway exists.',
   },
   {
     id: 'cloudflare-code-mode',
@@ -117,20 +118,23 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     howToProve:
       'Measure definitions + discovery tokens with their catalog model; compare audit/policy on the same workflow.',
     status: 'partial',
-    statusLabel: 'Tokens measured',
+    statusLabel: 'Tokens + gov measured',
     nextStep:
-      'Equal-arm N=12/C=40 via Obot mcp-connect catalog: classic 3.95× vs ClawQL (same fat aggregator path). Still need policy-overhead + governance-depth criteria.',
+      'Tokens 3.95× @N=12. Governance CI: ClawQL 5/5 vs Obot 2/5 and Bifrost allow-all 2/5 (both contaminate on default). Either peer can tie with per-tool / VK deny.',
   },
   {
     id: 'executor',
     name: 'Executor (v1/v2)',
-    whyItMatters: 'Closest prior peer; sandbox code execution; already on published boards.',
-    criteriaToBeat: 'Confirm leads hold after their updates; multi-turn + concurrency.',
-    howToProve: 'Re-run full board with latest versions; include real-model validation under pre-committed rules.',
+    whyItMatters:
+      'Closest prior peer; sandbox code execution; per-tool approvals + MCP proxy (Gmail wrappers) — already on published boards.',
+    criteriaToBeat:
+      'Token lead + governance cells: risky-write approval/deny + untrusted-read→hostile follow-up.',
+    howToProve:
+      'Tokens: re-pin latest. Governance: ci-executor-peer.sh → results-cells.json.',
     status: 'measured',
-    statusLabel: 'Measured',
+    statusLabel: 'Tokens + cells · resume dominance',
     nextStep:
-      'Keep version-scoped claims; v2 β multiturn 29 927 (3.38× vs ClawQL) + HTTP chaos 29/30 remasured 2026-10-17. Re-run when Executor ships tooling changes.',
+      'Tokens/latency measured (v2 β 3.38×). Governance: pause cells tie 5/5; resume_auto_approve ClawQL 5/5 vs Executor 2/5 (model resume accept contaminates). Re-pin v2 when stable.',
   },
   {
     id: 'celld-durability',

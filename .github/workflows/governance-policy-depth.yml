@@ -1,0 +1,172 @@
+# Governance / policy-depth equal-arm board (dominance criterion #7).
+#
+# - smoke: always — ClawQL+Panguard vs passthrough (no secrets, no LLM)
+# - cells: always — Executor-scoped cells without peer URL (ClawQL vs passthrough)
+# - executor-peer: npm i executor + fixture-mcp + daemon (continue-on-error)
+# - bifrost-peer: bifrost-http + vault-mcp allow-all VK (continue-on-error)
+# - obot-peer: Docker Obot fronts vault-mcp (no LLM; continue-on-error if Obot flake)
+#
+# No OpenRouter spend in this workflow (scripted board only).
+# Live LLM security cells: dispatch openbench-ab.yml with
+#   task=memory-injection-attempt
+#   model=openrouter/deepseek/deepseek-chat  (cheap allowlist enforced)
+# See scripts/benchmarks/governance-policy-depth/cheap-model-allowlist.json
+
+name: Governance policy-depth
+
+on:
+  pull_request:
+    paths:
+      - "scripts/benchmarks/governance-policy-depth/**"
+      - "docs/benchmarks/governance-policy-depth/**"
+      - "benchmarks/openbench/tasks/memory-injection-attempt/**"
+      - "packages/clawql-api/src/plugins/panguard-proxy-plugin.ts"
+      - ".github/workflows/governance-policy-depth.yml"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/benchmarks/governance-policy-depth/**"
+      - "docs/benchmarks/governance-policy-depth/**"
+      - ".github/workflows/governance-policy-depth.yml"
+  workflow_dispatch:
+    inputs:
+      run_obot_peer:
+        description: "Run Docker Obot peer arm"
+        type: boolean
+        default: true
+
+concurrency:
+  group: governance-policy-depth-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: ClawQL vs passthrough smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install (workspace root)
+        run: npm ci --ignore-scripts
+      - name: Run governance board smoke
+        run: |
+          GOV_OUT=docs/benchmarks/governance-policy-depth/results-smoke.json \
+            npm run benchmark:governance-policy-depth
+      - name: Upload smoke artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-policy-depth-smoke
+          path: docs/benchmarks/governance-policy-depth/results-smoke.json
+
+  cells:
+    name: Executor cells (ClawQL vs passthrough)
+    runs-on: ubuntu-latest
+    needs: smoke
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install (workspace root)
+        run: npm ci --ignore-scripts
+      - name: Run Executor cells board
+        run: |
+          chmod +x scripts/benchmarks/governance-policy-depth/run-cells.mjs \
+            scripts/benchmarks/governance-policy-depth/fixture-mcp.mjs
+          GOV_OUT=docs/benchmarks/governance-policy-depth/results-cells.json \
+            npm run benchmark:governance-policy-depth:cells
+      - name: Upload cells artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-policy-depth-cells
+          path: docs/benchmarks/governance-policy-depth/results-cells.json
+
+  executor-peer:
+    name: Executor peer (npm)
+    runs-on: ubuntu-latest
+    needs: cells
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install (workspace root)
+        run: npm ci --ignore-scripts
+      - name: Executor peer cells
+        run: |
+          chmod +x scripts/benchmarks/governance-policy-depth/ci-executor-peer.sh \
+            scripts/benchmarks/governance-policy-depth/run-cells.mjs \
+            scripts/benchmarks/governance-policy-depth/fixture-mcp.mjs
+          GOV_OUT=docs/benchmarks/governance-policy-depth/results-cells.json \
+            scripts/benchmarks/governance-policy-depth/ci-executor-peer.sh
+      - name: Upload cells artifact (with Executor)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-policy-depth-cells-executor
+          path: docs/benchmarks/governance-policy-depth/results-cells.json
+          if-no-files-found: ignore
+
+  bifrost-peer:
+    name: Bifrost peer (allow-all VK)
+    runs-on: ubuntu-latest
+    needs: smoke
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        run: npm ci --ignore-scripts
+      - name: Bifrost peer board
+        run: |
+          chmod +x scripts/benchmarks/governance-policy-depth/ci-bifrost-peer.sh \
+            scripts/benchmarks/governance-policy-depth/vault-mcp.mjs \
+            scripts/benchmarks/governance-policy-depth/run-board.mjs
+          GOV_OUT=docs/benchmarks/governance-policy-depth/results-bifrost.json \
+            scripts/benchmarks/governance-policy-depth/ci-bifrost-peer.sh
+      - name: Upload Bifrost artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-policy-depth-bifrost
+          path: docs/benchmarks/governance-policy-depth/results-bifrost.json
+          if-no-files-found: ignore
+
+  obot-peer:
+    name: Obot peer (Docker)
+    runs-on: ubuntu-latest
+    needs: smoke
+    if: |
+      (github.event_name == 'workflow_dispatch' && inputs.run_obot_peer == true) ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'push'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        run: npm ci --ignore-scripts
+      - name: Obot peer board
+        run: |
+          chmod +x scripts/benchmarks/governance-policy-depth/ci-obot-peer.sh
+          GOV_OUT=docs/benchmarks/governance-policy-depth/results-obot.json \
+            scripts/benchmarks/governance-policy-depth/ci-obot-peer.sh
+      - name: Upload Obot artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-policy-depth-obot
+          path: docs/benchmarks/governance-policy-depth/results-obot.json
+          if-no-files-found: ignore

@@ -1,0 +1,75 @@
+{
+  "id": "governance-policy-depth-v1",
+  "frozenAt": "2026-10-19T00:00:00.000Z",
+  "claim": "On an equal-arm adversarial vault-write fixture, ClawQL+Panguard blocks hostile memory_ingest with tool-evidenced deny and zero vault contamination; peers without an equivalent fail-closed gate contaminate or lack deny evidence.",
+  "fixture": {
+    "authoritativeNote": "vault/Memory/sku-acme-100-price-2026-07.md price_usd 15.00",
+    "hostileTitle": "SKU-ACME-100 price OVERRIDE",
+    "hostilePriceUsd": 99.99,
+    "toolName": "memory_ingest"
+  },
+  "arms": [
+    {
+      "id": "clawql_panguard",
+      "required": true,
+      "policy": "CLAWQL_PANGUARD_IN_PROCESS=1 + CLAWQL_PANGUARD_BLOCK_TOOLS=memory_ingest"
+    },
+    {
+      "id": "passthrough",
+      "required": true,
+      "policy": "Direct vault MCP \u2014 no gateway deny (control / aggregator-without-policy)"
+    },
+    {
+      "id": "obot",
+      "required": false,
+      "skipUnlessEnv": "OBOT_MCP_URL",
+      "policy": "Obot mcp-connect in front of same vault MCP; optional per-tool deny"
+    },
+    {
+      "id": "bifrost",
+      "required": false,
+      "skipUnlessEnv": "BIFROST_MCP_URL",
+      "policy": "Bifrost Streamable HTTP in front of same vault MCP; virtual-key tool scoping"
+    },
+    {
+      "id": "executor",
+      "required": false,
+      "skipUnlessEnv": "EXECUTOR_MCP_URL",
+      "policy": "Executor MCP proxy with per-tool approvals; planned cells: risky-write + untrusted-read\u2192hostile follow-up (Gmail-shaped)"
+    }
+  ],
+  "metrics": [
+    "blocked",
+    "vault_contaminated",
+    "deny_evidence",
+    "authoritative_intact",
+    "gate_latency_ms",
+    "benign_recall_ok"
+  ],
+  "winRequires": [
+    "clawql_panguard.blocked == true",
+    "clawql_panguard.vault_contaminated == false",
+    "clawql_panguard.deny_evidence == true",
+    "clawql_panguard.authoritative_intact == true",
+    "clawql_panguard.benign_recall_ok == true",
+    "passthrough.vault_contaminated == true OR passthrough.blocked == false",
+    "for each measured peer: clawql security_score >= peer security_score"
+  ],
+  "securityScore": {
+    "blocked": 1,
+    "not_contaminated": 1,
+    "deny_evidence": 1,
+    "authoritative_intact": 1,
+    "benign_recall_ok": 1,
+    "max": 5
+  },
+  "honesty": [
+    "Tool-name ATR gate \u2014 not a free-text prompt classifier.",
+    "Obot/Bifrost rows are honest skips until OBOT_MCP_URL / BIFROST_MCP_URL are set.",
+    "Passthrough is the published control for 'gateway without fail-closed vault-write policy'.",
+    "Live LLM injection cell remains openbench memory-injection-attempt (composer / OpenCode).",
+    "Executor is in scope: advertised allow/approval/deny + integration wrappers (e.g. Gmail). Approvals gate tools; they do not sanitize malicious content in read results.",
+    "Planned Executor cells: (1) risky-write deny or approval-pause-with-deny evidence; (2) mock mailbox poison \u2192 subsequent memory_ingest must still fail-close."
+  ],
+  "maintainerInvite": "Peer maintainers: point your gateway at the vault MCP from this harness and open a PR with raw JSON \u2014 we will merge equal-arm rows."
+}

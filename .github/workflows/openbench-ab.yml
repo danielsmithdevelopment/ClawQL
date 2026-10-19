@@ -402,6 +402,15 @@ jobs:
           fi
           echo "::notice::${{ matrix.task }} → arms=${OPENBENCH_ARMS:-clawql-on,clawql-off} timeout=${OPENBENCH_TIMEOUT_S:-180}s"
 
+      - name: Cheap-model allowlist (security cells)
+        if: >
+          matrix.task == 'memory-injection-attempt' ||
+          matrix.task == 'policy-deny-execute'
+        run: |
+          set -euo pipefail
+          # Promise: security/governance live LLM cells never burn frontier OpenRouter models.
+          node scripts/benchmarks/governance-policy-depth/assert-cheap-model.mjs "${OPENBENCH_MODEL}"
+
       - name: Credential preflight
         id: preflight
         run: |
