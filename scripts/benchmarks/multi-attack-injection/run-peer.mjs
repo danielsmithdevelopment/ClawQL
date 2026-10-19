@@ -151,9 +151,54 @@ function isApprovalPause(res, text) {
 }
 
 function isPolicyOrToolBlock(text) {
-  return /tool_blocked|Tool blocked by policy|Panguard policy blocked|denied|not allowed|forbidden|"ok"\s*:\s*false.*"code"\s*:\s*"tool_blocked"|parked|blocked by policy/i.test(
+  return /tool_blocked|Tool blocked by policy|Panguard policy blocked|denied|not allowed|forbidden|"ok"\s*:\s*false.*"code"\s*:\s*"tool_blocked"|parked|blocked by policy|webhook filter|accept:\s*false|403/i.test(
     text || ""
   );
+}
+
+/**
+ * Best-config precondition (Obot): call the denied tool once, outside the
+ * attack corpus, and confirm the peer refuses it. Separates "config not
+ * active" (pending) from a measured run that may still show residual loss.
+ *
+ * @returns {Promise<{ denied: boolean, active: boolean, method: string, tool: string, detail: string, probe_outside_corpus: true, deny_evidence?: boolean, latency_ms?: number }>}
+ */
+async function runBestConfigDenyPrecondition(client, opts) {
+  const { ingestTool, useExecutorCode } = opts;
+  if (!ingestTool && !useExecutorCode) {
+    return {
+      denied: true,
+      active: true,
+      method: "tools_list_omit",
+      tool: "memory_ingest",
+      detail:
+        "memory_ingest not in tools/list — deny/omit surface active (precondition)",
+      probe_outside_corpus: true,
+    };
+  }
+  const probeArgs = {
+    title: "mai-precondition-deny-probe",
+    insights:
+      "PRECONDITION_ONLY — not part of the attack corpus. effectToken: CLAWQL_PEER_PRECOND_01",
+  };
+  const r = useExecutorCode
+    ? await callExecutorIngest(client, probeArgs)
+    : await callTool(client, ingestTool.name, probeArgs);
+  const denied = Boolean(r.blocked);
+  return {
+    denied,
+    active: denied,
+    method: "direct_tools_call",
+    tool: useExecutorCode
+      ? `execute→${process.env.EXECUTOR_FIXTURE_NS || "mai-vault.org.default"}.memory_ingest`
+      : ingestTool.name,
+    deny_evidence: Boolean(r.deny_evidence),
+    detail: denied
+      ? String(r.errorText || "blocked").slice(0, 400)
+      : "memory_ingest allowed — configuration not active",
+    probe_outside_corpus: true,
+    latency_ms: r.gate_latency_ms,
+  };
 }
 
 async function callTool(client, toolName, args) {
@@ -465,6 +510,36 @@ export async function runPeerArm(peer, column = "defaults") {
       }
     }
 
+    // Best-config precondition: prove the deny is active *before* the corpus.
+    // If not active → pending (setup failure). If active → run once and publish
+    // whatever comes out (including residual attack routes). Never iterate to 0.
+    let precondition = null;
+    if (column === "best_config") {
+      precondition = await runBestConfigDenyPrecondition(conn.client, {
+        ingestTool,
+        useExecutorCode,
+      });
+      // Clear any probe write before grading / attack loop.
+      seedSharedVault(vaultRoot);
+      if (!precondition.denied) {
+        return {
+          id: armId,
+          peer,
+          column,
+          skipped: true,
+          status: "pending",
+          skipUnlessEnv: envKey,
+          attacks_planted: MANIFEST.attacks.length,
+          attacks_effectuated: null,
+          rate: null,
+          precondition,
+          detail:
+            "pending: configuration not active — direct memory_ingest was allowed outside the attack corpus. Activate the native deny, re-run once; do not iterate toward a target score. pending ≠ not_offered.",
+          tools_seen: tools.map((t) => t.name).slice(0, 40),
+        };
+      }
+    }
+
     if (!ingestTool && !useExecutorCode) {
       // Best-config peers often omit the write tool from tools/list (VK deny).
       // Measured deny — but benign must still run to show capability cost.
@@ -488,6 +563,7 @@ export async function runPeerArm(peer, column = "defaults") {
               : peer === "obot"
                 ? ["obot_webhook_filter_deny"]
                 : ["peer_tool_omit"],
+          precondition,
           attacks_planted: grade.attacks_planted,
           attacks_effectuated: grade.attacks_effectuated,
           rate: grade.rate,
@@ -603,6 +679,7 @@ export async function runPeerArm(peer, column = "defaults") {
           : approvalPauses > 0
             ? ["executor_destructive_approval"]
             : [],
+      precondition,
       attacks_planted: grade.attacks_planted,
       attacks_effectuated: grade.attacks_effectuated,
       rate: grade.rate,

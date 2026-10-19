@@ -197,8 +197,10 @@ node "$HARNESS/run-peer.mjs" obot defaults | tee "$RESULTS_DIR/obot_default.json
 # Mac mini discovery: /api/mcp-filters (etc.) → 403. Correct create:
 #   POST /api/mcp-webhook-validations
 #   selectors: [{ method: "tools/call", identifiers: ["memory_ingest"] }]
-# Obot wraps the URL in a containerized system MCP adapter. HTTP 200 with
-# configured=false (or a remeasure that still effectuates) must stay pending.
+# Obot wraps the URL in a containerized system MCP adapter. Best-config
+# measurement requires a precondition: one direct memory_ingest outside the
+# corpus must be refused. If not, row stays pending (configuration not active).
+# Once the deny is confirmed, run the 12+14 once and publish whatever comes out.
 FILTER_URL="http://${HOST_IP}:${FILTER_PORT}/webhook"
 FILTER_REGISTERED=0
 FILTER_CONFIGURED=0
@@ -268,30 +270,72 @@ else:
 done
 
 if [ "$FILTER_REGISTERED" -eq 1 ] || [ -n "${OBOT_MCP_URL_DENY:-}" ]; then
-  echo "== measure obot best_config (native webhook validation) =="
+  echo "== measure obot best_config (precondition deny, then one corpus run) =="
   mai_seed_shared_vault "$SHARED"
   export OBOT_MCP_URL_DENY="${OBOT_MCP_URL_DENY:-$CONNECT_URL}"
   unset OBOT_MCP_URL || true
+  # run-peer: if direct memory_ingest is still allowed → pending (config not active).
+  # If denied → run 12 attacks + 14 benign once and keep the score (do not iterate to 0).
   node "$HARNESS/run-peer.mjs" obot best_config | tee "$RESULTS_DIR/obot_best_config.json"
 
-  EFFECTUATED="$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d.get("attacks_effectuated"))' \
-    "$RESULTS_DIR/obot_best_config.json" 2>/dev/null || echo "")"
-  # Honesty: only keep a measured best_config when effectuated is exactly 0.
-  # configured=false or still-effectuating means the system MCP adapter is not live.
-  if [ "$EFFECTUATED" != "0" ]; then
-    echo "ci-obot-peer: best_config not live (effectuated=${EFFECTUATED} configured=${FILTER_CONFIGURED} path=${FILTER_PATH_USED:-none}) — rewriting pending" >&2
-    write_pending obot_best_config best_config OBOT_MCP_URL_DENY \
-      "Defaults measured on ${HOST_LABEL} (${HOST_OS}, ${MEASURED_ON:-unset}). POST ${FILTER_PATH_USED:-unknown} returned HTTP 2xx but attacks still effectuated (${EFFECTUATED}). Obot wraps the webhook in a containerized system MCP adapter — configure that adapter until tools/call memory_ingest is denied, then re-run. pending ≠ not_offered. Do not attribute a deny-tools proxy."
-  elif [ "$FILTER_CONFIGURED" -eq 0 ] && [ -z "${OBOT_MCP_URL_DENY_FORCE:-}" ]; then
-    echo "ci-obot-peer: effectuated=0 but API reported configured=false — keeping measured score (deny observed)" >&2
-  fi
+  python3 - <<PY
+import json
+from pathlib import Path
+p = Path("$RESULTS_DIR/obot_best_config.json")
+d = json.loads(p.read_text())
+pre = d.get("precondition") or {}
+# Stamp registration metadata alongside precondition for rerunners.
+d["webhook_registration"] = {
+  "path": "${FILTER_PATH_USED}" or None,
+  "registered": ${FILTER_REGISTERED} == 1,
+  "api_configured_flag": ${FILTER_CONFIGURED} == 1,
+  "filter_url": "${FILTER_URL}",
+}
+if "precondition" not in d:
+  d["precondition"] = {
+    "denied": False,
+    "active": False,
+    "method": "not_run",
+    "detail": "run-peer did not emit precondition",
+    "probe_outside_corpus": True,
+  }
+p.write_text(json.dumps(d, indent=2) + "\n")
+status = d.get("status")
+denied = (d.get("precondition") or {}).get("denied")
+eff = d.get("attacks_effectuated")
+print(f"ci-obot-peer: best_config status={status} precondition.denied={denied} effectuated={eff}", flush=True)
+if status == "pending":
+  print("ci-obot-peer: configuration not active — fix adapter, then one re-run (do not tune toward 0)", flush=True)
+elif status == "measured":
+  print("ci-obot-peer: deny precondition passed; published one-shot corpus result as-is", flush=True)
+PY
 else
   echo "ci-obot-peer: could not register webhook validation via API — writing pending best_config" >&2
-  echo "  Manual: POST /api/mcp-webhook-validations → ${FILTER_URL} (secret=${FILTER_SECRET}), selectors tools/call memory_ingest; configure system MCP adapter; then OBOT_MCP_URL_DENY=\$CONNECT_URL re-run." >&2
+  echo "  Manual: POST /api/mcp-webhook-validations → ${FILTER_URL} (secret=${FILTER_SECRET}), selectors tools/call memory_ingest; configure system MCP adapter; confirm one direct memory_ingest is refused; then OBOT_MCP_URL_DENY=\$CONNECT_URL re-run once." >&2
   write_pending obot_best_config best_config OBOT_MCP_URL_DENY \
-    "Defaults measured on ${HOST_LABEL}. Best-config needs Obot native mcp-webhook-validations deny on memory_ingest (helper at ${FILTER_URL}) with the system MCP adapter configured. pending ≠ not_offered. Do not use deny-tools-mcp."
+    "Defaults measured on ${HOST_LABEL}. Best-config needs Obot native mcp-webhook-validations deny on memory_ingest (helper at ${FILTER_URL}). Precondition: one direct memory_ingest outside the corpus must be refused before measuring. pending ≠ not_offered. Do not use deny-tools-mcp."
+  python3 - <<PY
+import json
+from pathlib import Path
+p = Path("$RESULTS_DIR/obot_best_config.json")
+d = json.loads(p.read_text())
+d["precondition"] = {
+  "denied": False,
+  "active": False,
+  "method": "not_run",
+  "detail": "pending: configuration not active — webhook validation not registered via API",
+  "probe_outside_corpus": True,
+}
+d["webhook_registration"] = {
+  "path": None,
+  "registered": False,
+  "api_configured_flag": False,
+  "filter_url": "${FILTER_URL}",
+}
+p.write_text(json.dumps(d, indent=2) + "\n")
+PY
 fi
 
 echo "wrote $RESULTS_DIR/obot_*.json"
 echo "note: equal-arm Obsidian vault · same 12 attacks · same 14 benign · platform=${HOST_LABEL}"
-echo "note: best-config mechanism = Obot webhook filter (native), not deny-tools-mcp"
+echo "note: best-config = native webhook validation; precondition deny outside corpus; one corpus run; not deny-tools-mcp"

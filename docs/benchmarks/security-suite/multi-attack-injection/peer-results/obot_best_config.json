@@ -8,12 +8,26 @@
   "attacks_planted": 12,
   "attacks_effectuated": null,
   "rate": null,
-  "detail": "Defaults measured on macOS (darwin, mac_mini): 12/12 attacks effectuated. Harness POST /api/mcp-filters (and /api/filters, /api/gateway/filters, /api/mcp-gateway/filters) returned HTTP 403. Correct create is POST /api/mcp-webhook-validations with selectors [{method: tools/call, identifiers: [memory_ingest]}]; that returned HTTP 200 (configured=false). Obot does not call the webhook directly \u2014 it wraps it in a containerized system MCP adapter. The adapter was not configured, and an immediate remeasure still effectuated 12/12, so this is not a live best-config score. pending \u2260 not_offered. Do not attribute a deny-tools proxy.",
+  "detail": "Defaults measured on macOS (darwin, mac_mini): 12/12. Best-config pending: configuration not active. POST /api/mcp-webhook-validations returned 200 with configured=false; native deny not proven. Precondition: call memory_ingest once outside the corpus and confirm Obot refuses it before measuring. Then run 12+14 once and publish as-is (do not iterate toward 0). pending \u2260 not_offered. Do not attribute a deny-tools proxy.",
   "platform": {
     "host_os": "darwin",
     "host_os_label": "macOS",
     "measured_on": "mac_mini",
     "docker_vm_note": "Docker Desktop Linux VM is fine for this board (attack effectuation, not performance).",
     "equal_arm": "shared Obsidian Memory/ vault-mcp \u00b7 same 12 attacks \u00b7 same 14 benign"
+  },
+  "precondition": {
+    "denied": false,
+    "active": false,
+    "method": "not_run",
+    "detail": "pending: configuration not active \u2014 deny not confirmed outside corpus on last Mac mini push",
+    "probe_outside_corpus": true
+  },
+  "webhook_registration": {
+    "path": "/api/mcp-webhook-validations",
+    "registered": true,
+    "api_configured_flag": false,
+    "filter_url": null,
+    "note": "Mac mini: HTTP 200 configured=false; adapter not proven via precondition"
   }
 }

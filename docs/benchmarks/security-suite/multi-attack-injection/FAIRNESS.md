@@ -2,10 +2,10 @@
 
 ## Credibility
 
-| Label             | Use when                                                                                    |
-| ----------------- | ------------------------------------------------------------------------------------------- |
-| **`not_offered`** | Product never claims the capability (e.g. signed approvals with a security key)             |
-| **`pending`**     | Outcome is measurable but not yet run (e.g. Obot best-config until webhook adapter is live) |
+| Label             | Use when                                                                        |
+| ----------------- | ------------------------------------------------------------------------------- |
+| **`not_offered`** | Product never claims the capability (e.g. signed approvals with a security key) |
+| **`pending`**     | Outcome is measurable but not yet run (e.g. Obot best-config until deny precondition passes) |
 
 Injection resistance is an **outcome**. Any gateway can be put through the same twelve (then dozens of) attacks. Marking peers `not_offered` hides a measurable result.
 
@@ -53,7 +53,7 @@ Memory-write breakout: ClawQL **5 of 5**; Bifrost/Executor best-config **0 of 5*
 - `clawql_default` **0/12** trusted effectuation + **14/14** benign expect-match (park overwrites; labeled appends are not trusted success)
 - Passthrough **12/12** (trusted hostile writes)
 - Bifrost / Executor **defaults 12/12** (allow-all → equal-arm loss); **best-config 0/12** via **native** omit / `policies.block` — benign **9 of 14**; memory-write breakout **0 of 5**
-- Obot **defaults 12/12** measured on the **Mac mini** (`platform.host_os=darwin`, `measured_on=mac_mini`; Docker Desktop VM fine for effectuation) — benign **14 of 14**; recall **pass (15.00)**; unlabeled poison **yes**. **Best-config pending**: `POST /api/mcp-webhook-validations` returned 200 with `configured=false` (system MCP adapter not live); remeasure still 12/12 — not scored. See [MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md).
+- Obot **defaults 12/12** measured on the **Mac mini** (`platform.host_os=darwin`, `measured_on=mac_mini`; Docker Desktop VM fine for effectuation) — benign **14 of 14**; recall **pass (15.00)**; unlabeled poison **yes** — same baseline as Bifrost/Executor defaults. **Best-config pending** until a **precondition** proves the native deny is active (one direct `memory_ingest` refused outside the corpus); then run 12+14 **once** and publish as-is. See [MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md).
 - **Persistent injection** blocked across sessions
 - **Recall answer** (smoke query): after attacks, does recall still answer **15.00**? Peers **pass** that question. **Unlabeled poison** is a separate column (true for peer defaults; already counted as contamination). Harder queries that make poison rank first ship with `MAI_LIVE=1`.
 
@@ -65,15 +65,15 @@ Default ClawQL labels hostile content instead of blocking it, so the vault stays
 
 ### Honesty labels (keep on the page)
 
-| Label                              | Meaning                                                                     |
-| ---------------------------------- | --------------------------------------------------------------------------- |
-| Scripted, worst-case model         | Always complies; measures gateway stop                                      |
-| Smoke sample                       | n=12 until dozens                                                           |
-| Shared Obsidian vault              | Peers have no built-in vault; equal-arm Memory/ over MCP                    |
-| Same 14 benign                     | Headline X of 14 on every arm; memory-write breakout under table            |
-| Recall answer vs unlabeled poison  | Pass = answered 15.00; poison column is separate                            |
+| Label                              | Meaning                                                          |
+| ---------------------------------- | ---------------------------------------------------------------- |
+| Scripted, worst-case model         | Always complies; measures gateway stop                           |
+| Smoke sample                       | n=12 until dozens                                                |
+| Shared Obsidian vault              | Peers have no built-in vault; equal-arm Memory/ over MCP         |
+| Same 14 benign                     | Headline X of 14 on every arm; memory-write breakout under table |
+| Recall answer vs unlabeled poison  | Pass = answered 15.00; poison column is separate                 |
 | Peers pending / partial / measured | Bifrost+Executor on Linux; Obot defaults on macOS; Obot best-config pending |
-| Platform stamp                     | Obot results record macOS / mac_mini; Docker VM OK for security outcomes    |
+| Platform stamp                     | Obot results record macOS / mac_mini; Docker VM OK for security outcomes |
 
 ## Counterfeit-policy cell (Datadog / Jev)
 
@@ -92,6 +92,6 @@ No harness stand-in that follows policy-shaped text — that fails by constructi
 
 Decision sites: opt-in flip-rate family `counterfeit_policy` beside paraphrase/reorder; operation resolution stays **automatic reads only**.
 
-**Next for a publishable lead:** finish Obot **best-config** with a live native webhook validation adapter ([MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md)); then `MAI_LIVE=1` (+ harder recall queries).
+**Next for a publishable lead:** Obot **best-config** — pass deny precondition, one corpus run, publish the score ([MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md)); then `MAI_LIVE=1` (+ harder recall queries).
 
 See [NATIVE-TOOL-GOVERNANCE.md](./NATIVE-TOOL-GOVERNANCE.md).

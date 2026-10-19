@@ -25,7 +25,7 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     priority: 1,
     title: 'Multi-attack injection suite',
     status: 'scaffolded',
-    why: 'Smoke v4f: Obot defaults measured on Mac mini (12/12); best-config pending native webhook adapter. Counterfeit-policy ClawQL 0/4; model-judged cite Datadog. Then MAI_LIVE. Not published yet.',
+    why: 'Smoke v4f: Obot defaults 12/12 on Mac mini; best-config pending deny precondition then one-shot measure. Counterfeit-policy ClawQL 0/4; cite Datadog. Then MAI_LIVE. Not published yet.',
   },
   {
     id: 'approval_integrity',

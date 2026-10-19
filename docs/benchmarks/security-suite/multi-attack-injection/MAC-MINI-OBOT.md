@@ -1,6 +1,6 @@
 # Obot on the Mac mini
 
-Equal-arm multi-attack peer. Defaults are measured; best-config needs a live native webhook validation adapter.
+Equal-arm multi-attack peer. Defaults are measured; best-config needs a **live** native deny, proven before the corpus runs.
 
 ## What stays the same
 
@@ -15,30 +15,39 @@ Record macOS in the result `platform` block. Every other measured arm ran on Lin
 
 **Docker Desktop’s Linux VM is fine** for this board. We measure whether attacks take effect, not speed or memory.
 
-## Status (Mac mini push)
+## Status (Mac mini)
 
-| Column          | Status       | Notes                                                                                                                                  |
-| --------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **Defaults**    | **Measured** | **12 of 12** attacks; **14 of 14** benign; recall **pass (15.00)**; unlabeled poison **yes**; `host_os=darwin`, `measured_on=mac_mini` |
-| **Best-config** | **Pending**  | Native create path found; adapter not live — not scored                                                                                |
+| Column | Status | Notes |
+| ------ | ------ | ----- |
+| **Defaults** | **Measured** | **12 of 12** attacks; **14 of 14** benign; recall **pass (15.00)**; unlabeled poison **yes**; `host_os=darwin`, `measured_on=mac_mini` — matches Bifrost/Executor defaults |
+| **Best-config** | **Pending** | Webhook validation API found; deny not yet proven active via precondition |
 
-## One command (re-run / best-config)
+## One command
 
 ```bash
 cd /path/to/ClawQL
-git checkout cursor/multi-attack-injection-f4ec   # or main after merge
+git checkout cursor/multi-attack-injection-f4ec
 npm run benchmark:multi-attack-injection:obot
-npm run benchmark:multi-attack-injection         # merge into smoke board
+npm run benchmark:multi-attack-injection
 ```
 
 Artifacts:
 
-- `docs/benchmarks/security-suite/multi-attack-injection/peer-results/obot_default.json`
-- `docs/benchmarks/security-suite/multi-attack-injection/peer-results/obot_best_config.json`
+- `peer-results/obot_default.json`
+- `peer-results/obot_best_config.json` (includes `precondition` + `webhook_registration`)
 
-## Best-config (native webhook validation)
+## Best-config: precondition, then one run
 
-Obot does **not** call the filter webhook directly from those older `/api/mcp-filters` paths (they returned HTTP 403 on this build). The correct create API is:
+Do **not** re-run the corpus until the effectuated count is 0. That looks like tuning toward a result. Separate setup from measurement:
+
+1. **Precondition (outside the corpus).** Call `memory_ingest` once through Obot. If Obot allows it, the configuration is not active → leave the row `pending: configuration not active`. Record that probe in `precondition` on the results file.
+2. **Once the deny is confirmed,** run the twelve attacks and fourteen benign cases **once**. Publish whatever comes out — including if some attacks still get through by another route. That is a real finding about Obot’s controls, not a setup failure.
+
+Expect something like Bifrost/Executor best-config (**0 of 12** attacks, memory writes fail → around **9 of 14** benign). If Obot differs, publish that too. Then `MAI_LIVE=1`.
+
+### Native API (Mac mini discovery)
+
+Older `/api/mcp-filters` paths returned HTTP 403. Create with:
 
 ```http
 POST /api/mcp-webhook-validations
@@ -55,16 +64,16 @@ Content-Type: application/json
 }
 ```
 
-That returned **HTTP 200** with `configured=false` on the Mac mini run: Obot wraps the webhook in a **containerized system MCP adapter**. Until that adapter is configured and actually intercepts `tools/call` / `memory_ingest`, attacks still effectuate (**12/12** on an honest remeasure). Keep the row **pending ≠ not_offered**. Do **not** attribute a deny-tools proxy.
+Obot wraps the webhook in a **containerized system MCP adapter**. HTTP 200 with `configured=false` is not enough — the precondition must see a refused `memory_ingest`.
 
-Manual checklist if the harness still leaves best-config pending:
+### Checklist
 
-1. Confirm `obot-deny-memory-ingest-webhook.mjs` is listening (`/health` → 200)
-2. Create/verify the webhook validation via API or Obot UI (URL `http://host.docker.internal:18796/webhook`)
-3. Ensure the system MCP adapter for that validation is **configured/running**
-4. Re-run with `OBOT_MCP_URL_DENY` set to the same mcp-connect URL as defaults
-5. Only publish best-config when `attacks_effectuated` is **0** under that native path
+1. `obot-deny-memory-ingest-webhook.mjs` healthy (`/health` → 200)
+2. Webhook validation created (API or UI)
+3. System MCP adapter for that validation running
+4. **Precondition:** one direct `memory_ingest` refused (harness does this automatically)
+5. One corpus run; commit the JSON as-is
 
-## After Obot best-config lands
+## After Obot best-config is measured
 
 Scripted peer board is complete. Last step before publishing: `MAI_LIVE=1` real-model runner (including harder recall queries).

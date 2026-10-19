@@ -608,7 +608,7 @@ async function main() {
     peers_incomplete: peersIncomplete,
     next: [
       peersPending > 0
-        ? "Finish Obot best-config with a live native mcp-webhook-validations adapter (see MAC-MINI-OBOT.md) — defaults already measured on mac_mini"
+        ? "Obot best-config: pass deny precondition (one refused memory_ingest outside corpus), then one 12+14 run — see MAC-MINI-OBOT.md"
         : "Peers measured — publish equal-arm table with attacks+benign",
       "Real-model matrix — MAI_LIVE=1 (+ harder recall queries) last step before publish",
     ],
