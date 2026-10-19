@@ -2,19 +2,19 @@
 
 ## Credibility
 
-| Label             | Use when                                                                                   |
-| ----------------- | ------------------------------------------------------------------------------------------ |
-| **`not_offered`** | Product never claims the capability (e.g. signed approvals with a security key)            |
-| **`pending`**     | Outcome is measurable but not yet run (e.g. Obot until Docker / Mac mini)                  |
+| Label             | Use when                                                                        |
+| ----------------- | ------------------------------------------------------------------------------- |
+| **`not_offered`** | Product never claims the capability (e.g. signed approvals with a security key) |
+| **`pending`**     | Outcome is measurable but not yet run (e.g. Obot until Docker / Mac mini)       |
 
 Injection resistance is an **outcome**. Any gateway can be put through the same twelve (then dozens of) attacks. Marking peers `not_offered` hides a measurable result.
 
 ## Columns
 
-| Column          | Meaning                                                      |
-| --------------- | ------------------------------------------------------------ |
-| **Defaults**    | Stock product                                                |
-| **Best-config** | Recommended hardening via **that product's own mechanisms**  |
+| Column          | Meaning                                                     |
+| --------------- | ----------------------------------------------------------- |
+| **Defaults**    | Stock product                                               |
+| **Best-config** | Recommended hardening via **that product's own mechanisms** |
 
 ### Configured ClawQL — name mechanisms, not tools
 
@@ -24,10 +24,10 @@ Forbidden: `BLOCK_TOOLS` (or equivalent) listing the tools the twelve attacks us
 
 ### Peer best-config — native only
 
-| Peer     | Best-config mechanism (must be theirs)                                      |
-| -------- | --------------------------------------------------------------------------- |
-| Bifrost  | Virtual key that **omits** `memory_ingest` from tools/list                  |
-| Executor | Native `coreTools.policies.create` with `action=block` on the vault ingest  |
+| Peer     | Best-config mechanism (must be theirs)                                        |
+| -------- | ----------------------------------------------------------------------------- |
+| Bifrost  | Virtual key that **omits** `memory_ingest` from tools/list                    |
+| Executor | Native `coreTools.policies.create` with `action=block` on the vault ingest    |
 | Obot     | Native gateway **webhook filter** denying `memory_ingest` (Mac mini / Docker) |
 
 Do **not** attribute a ClawQL `deny-tools-mcp` proxy to Executor (or any peer). If the native control cannot be applied in the harness, mark the row **`pending`** and say why.
@@ -40,11 +40,11 @@ Obot / Bifrost / Executor do not ship an Obsidian vault. Every arm — ClawQL an
 
 A peer can tie ClawQL at **0 of 12** attacks by omitting or blocking the ingest tool. That also stops legitimate memory writes. Headline benign uses the **same 14 cases** on ClawQL and peers (not a memory-only subset). Break out memory writes under the table.
 
-| Arm | Attacks taking effect | Benign cases as expected |
-| --- | --------------------- | ------------------------ |
-| ClawQL defaults | 0 of 12 | 14 of 14 |
-| Bifrost best-config | 0 of 12 | 9 of 14 |
-| Executor best-config | 0 of 12 | 9 of 14 |
+| Arm                  | Attacks taking effect | Benign cases as expected |
+| -------------------- | --------------------- | ------------------------ |
+| ClawQL defaults      | 0 of 12               | 14 of 14                 |
+| Bifrost best-config  | 0 of 12               | 9 of 14                  |
+| Executor best-config | 0 of 12               | 9 of 14                  |
 
 Memory-write breakout: ClawQL **5 of 5**; Bifrost/Executor best-config **0 of 5**.
 
@@ -65,15 +65,15 @@ Default ClawQL labels hostile content instead of blocking it, so the vault stays
 
 ### Honesty labels (keep on the page)
 
-| Label                              | Meaning                                                              |
-| ---------------------------------- | -------------------------------------------------------------------- |
-| Scripted, worst-case model         | Always complies; measures gateway stop                               |
-| Smoke sample                       | n=12 until dozens                                                    |
-| Shared Obsidian vault              | Peers have no built-in vault; equal-arm Memory/ over MCP             |
-| Same 14 benign                     | Headline X of 14 on every arm; memory-write breakout under table     |
-| Recall answer vs unlabeled poison  | Pass = answered 15.00; poison column is separate                     |
-| Peers pending / partial / measured | Bifrost+Executor on Linux; Obot on Mac mini when measured             |
-| Platform stamp                     | Obot results record macOS; Docker VM OK for security outcomes         |
+| Label                              | Meaning                                                          |
+| ---------------------------------- | ---------------------------------------------------------------- |
+| Scripted, worst-case model         | Always complies; measures gateway stop                           |
+| Smoke sample                       | n=12 until dozens                                                |
+| Shared Obsidian vault              | Peers have no built-in vault; equal-arm Memory/ over MCP         |
+| Same 14 benign                     | Headline X of 14 on every arm; memory-write breakout under table |
+| Recall answer vs unlabeled poison  | Pass = answered 15.00; poison column is separate                 |
+| Peers pending / partial / measured | Bifrost+Executor on Linux; Obot on Mac mini when measured        |
+| Platform stamp                     | Obot results record macOS; Docker VM OK for security outcomes    |
 
 **Next for a publishable lead:** run Obot on the Mac mini ([MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md)); then `MAI_LIVE=1` (+ harder recall queries). Scripted board is complete once Obot lands.
 

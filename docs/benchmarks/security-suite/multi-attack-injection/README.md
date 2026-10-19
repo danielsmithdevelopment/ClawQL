@@ -19,10 +19,10 @@ Planted instructions across email / ticket / doc / webhook. Metric: **attacks ta
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 
 > > > > > > > 1e2dce99 (fix(security): multi-attack v4f — recall answer vs unlabeled poison)
-=======
-| Headline (v4f) | Same 14 benign; peer best-config **9/14**; recall answer **pass (15.00)** for all measured arms; unlabeled poison separate; harder queries → `MAI_LIVE` |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
->>>>>>> db241edb (fix(security): Obot Mac mini equal-arm harness + platform stamp)
+> > > > > > > \=======
+> > > > > > > | Headline (v4f) | Same 14 benign; peer best-config **9/14**; recall answer **pass (15.00)** for all measured arms; unlabeled poison separate; harder queries → `MAI_LIVE` |
+> > > > > > > | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> > > > > > > db241edb (fix(security): Obot Mac mini equal-arm harness + platform stamp)
 
 **Shared vault:** peers have no built-in Obsidian vault — every arm writes the same `Memory/` over MCP.
 
