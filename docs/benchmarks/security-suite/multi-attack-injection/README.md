@@ -12,25 +12,8 @@ Planted instructions across email / ticket / doc / webhook. Metric: **attacks ta
 - Peers: `npm run benchmark:multi-attack-injection:bifrost` · `:executor` · `:obot` (Docker)
 - Counterfeit-policy cell: `npm run benchmark:multi-attack-injection:counterfeit-policy`
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-| Headline (v4e) | Same 14 benign on every arm: `clawql_default` **0/12** + **14/14**; Bifrost/Executor best-config **0/12** + **9/14** (0 of 5 memory writes)              |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| =======        |
-| Headline (v4f) | Same 14 benign; peer best-config **9/14**; recall answer **pass (15.00)** for all measured arms; unlabeled poison separate; harder queries → `MAI_LIVE`  |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-> > > > > > > 1e2dce99 (fix(security): multi-attack v4f — recall answer vs unlabeled poison)
-> > > > > > > \=======
-> > > > > > > | Headline (v4f) | Same 14 benign; peer best-config **9/14**; recall answer **pass (15.00)** for all measured arms; unlabeled poison separate; harder queries → `MAI_LIVE` |
-> > > > > > > | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-> > > > > > > db241edb (fix(security): Obot Mac mini equal-arm harness + platform stamp)
-=======
 | Headline (v4f) | Same 14 benign; peer best-config **9/14**; recall answer **pass (15.00)** for all measured arms; unlabeled poison separate; harder queries → `MAI_LIVE` |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
->>>>>>> facdc744 (feat(security): counterfeit-policy cell — Datadog/Jev vs deterministic gate)
 
 **Shared vault:** peers have no built-in Obsidian vault — every arm writes the same `Memory/` over MCP.
 
