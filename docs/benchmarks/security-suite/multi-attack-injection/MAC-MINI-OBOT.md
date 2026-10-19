@@ -17,9 +17,9 @@ Record macOS in the result `platform` block. Every other measured arm ran on Lin
 
 ## Status (Mac mini)
 
-| Column          | Status       | Notes                                                                                                                                                                      |
-| --------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Defaults**    | **Measured** | **12 of 12** attacks; **14 of 14** benign; recall **pass (15.00)**; unlabeled poison **yes**; `host_os=darwin`, `measured_on=mac_mini` — matches Bifrost/Executor defaults |
+| Column          | Status       | Notes                                                                                                                                                                                                                                         |
+| --------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Defaults**    | **Measured** | **12 of 12** attacks; **14 of 14** benign; recall **pass (15.00)**; unlabeled poison **yes**; `host_os=darwin`, `measured_on=mac_mini` — matches Bifrost/Executor defaults                                                                    |
 | **Best-config** | **Measured** | **0 of 12** attacks; **9 of 14** benign; memory writes **0 of 5**; recall **pass (15.00)**; unlabeled poison **no**. Native webhook validation deny on `memory_ingest` (`obot_webhook_filter_deny`). `host_os=darwin`, `measured_on=mac_mini` |
 
 ## One command
