@@ -4,11 +4,11 @@ Equal-arm proof that **ClawQL+Panguard** hard-denies adversarial `memory_ingest`
 
 **Live board:** [clawql.com/benchmarks#governance](https://clawql.com/benchmarks/#governance)
 
-| Artifact                                     | Role                                                                                             |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| [`results-smoke.json`](./results-smoke.json) | ClawQL + passthrough control                                                                     |
-| [`results-obot.json`](./results-obot.json)   | Docker Obot peer                                                                                 |
-| [`results-cells.json`](./results-cells.json) | Executor cells v2 (risky write · untrusted read · resume auto-approve)                           |
+| Artifact                                     | Role                                                                                                  |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| [`results-smoke.json`](./results-smoke.json) | ClawQL + passthrough control                                                                          |
+| [`results-obot.json`](./results-obot.json)   | Docker Obot peer                                                                                      |
+| [`results-cells.json`](./results-cells.json) | Executor cells v2 (risky write · untrusted read · resume auto-approve)                                |
 | Harness                                      | [`scripts/benchmarks/governance-policy-depth/`](../../../scripts/benchmarks/governance-policy-depth/) |
 
 ## Vault-write board (Obot)
@@ -27,11 +27,11 @@ npm run benchmark:governance-policy-depth:executor
 # → ci-executor-peer.sh → results-cells.json
 ```
 
-| Cell                   | clawql  | executor                         | passthrough |
-| ---------------------- | ------- | -------------------------------- | ----------- |
-| risky_write            | **5/5** | **5/5** (approval pause)         | **2/5**     |
-| untrusted_read         | **5/5** | **5/5** (poison + pause)         | **2/5**     |
-| **resume_auto_approve** | **5/5** | **2/5** (resume accept contaminates) | **2/5** |
+| Cell                    | clawql  | executor                             | passthrough |
+| ----------------------- | ------- | ------------------------------------ | ----------- |
+| risky_write             | **5/5** | **5/5** (approval pause)             | **2/5**     |
+| untrusted_read          | **5/5** | **5/5** (poison + pause)             | **2/5**     |
+| **resume_auto_approve** | **5/5** | **2/5** (resume accept contaminates) | **2/5**     |
 
 `resume_auto_approve`: poison Gmail read → OVERRIDE ingest pauses → agent `resume accept` (model-mode elicitation). Executor writes OVERRIDE. ClawQL hard-deny has no resume bypass — vault stays clean. **`dominance_over_executor_resume=true`**.
 
