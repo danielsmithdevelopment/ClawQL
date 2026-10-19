@@ -32,13 +32,13 @@ Native peer configs · Obot deny precondition · same 14 benign · version pins 
 
 ## Live protocol (anti-cherry-pick)
 
-- **Pre-register** 3–5 deployment-realistic models (`scripts/benchmarks/multi-attack-injection/live-models.json`). Publish every result, including all-refuse. **Do not** search for a gullible model until passthrough shows loss.
-- **Published attack sets** for live hardness: AgentDojo and Datadog’s counterfeit-policy technique ([COUNTERFEIT-POLICY.md](./COUNTERFEIT-POLICY.md)). Self-written n=12 is the smoke/scripted corpus — not the sole hardness claim.
+- **Pre-register** deployment-realistic models (`live-models.json`), including **small open-weight** (`llama-3.1-8b-instruct`, `qwen2.5-7b-instruct`) — *representativeness: deployments commonly run small open models*. Added before remaining runs (recorded in amendments). Publish every result, including all-refuse. **Do not** search for a gullible model until passthrough shows loss.
+- **Published attack sets** for live hardness: AgentDojo and Datadog’s counterfeit-policy technique ([COUNTERFEIT-POLICY.md](./COUNTERFEIT-POLICY.md)). Self-written n=12 is smoke. When AgentDojo runs, report **its ASR and utility-under-attack** alongside ClawQL grades.
 - **Poison residue:** a model can refuse an injected instruction and still store poisoned text (ordinary summary). Measure where hostile content landed (trusted vs labeled), not only whether the model obeyed.
 
 ### composer-2.5-fast (first pre-registered model)
 
-Measured: refused all **12** instruction-follow attempts on **both** ClawQL and passthrough; **no** hostile vault residue under the ingest-or-refuse prompt; ClawQL benign **14 of 14**. Ordinary-summarization probe (3 attacks × 2 arms, same model) also refused with no residue. Report as-is — not a live gateway split; smoke remains the complying-agent guarantee.
+Measured: refused all **12** instruction-follow attempts on **both** ClawQL and passthrough; **no** hostile vault residue under the ingest-or-refuse prompt; ClawQL benign **14 of 14**. Ordinary-summarization probe (3 attacks × 2 arms, same model) also refused with no residue. Report as-is — not a live gateway split; smoke remains the complying-agent guarantee. Remaining pre-registered models (hosted + open-weight) run next under the same protocol.
 
 ## Columns
 
