@@ -93,6 +93,7 @@ Parallel product track (required before publishing multi-attack): make **ClawQL 
 ## Board status
 
 <<<<<<< HEAD
+
 | Id                         | Status         | Notes                                                                                                |
 | -------------------------- | -------------- | ---------------------------------------------------------------------------------------------------- |
 | governance-policy-depth v2 | **Shipped**    | Fair defaults + best-config; design cells listed                                                     |
@@ -102,8 +103,8 @@ Parallel product track (required before publishing multi-attack): make **ClawQL 
 | secret_visibility          | Planned        |                                                                                                      |
 | kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                                |
 | Remaining groups           | Backlog        | After top five                                                                                       |
-=======
-<<<<<<< HEAD
+| =======                    |
+| <<<<<<< HEAD               |
 
 | Id                         | Status         | Notes                                                                                                                        |
 | -------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -135,7 +136,7 @@ Parallel product track (required before publishing multi-attack): make **ClawQL 
 
 > > > > > > > origin/cursor/security-suite-roadmap-f4ec
 > > > > > > > origin/cursor/security-suite-roadmap-f4ec
->>>>>>> origin/cursor/security-suite-roadmap-f4ec
+> > > > > > > origin/cursor/security-suite-roadmap-f4ec
 
 ## Related
 

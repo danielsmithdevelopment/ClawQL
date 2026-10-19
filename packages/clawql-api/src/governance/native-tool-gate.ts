@@ -59,7 +59,8 @@ function syntheticOperation(
       mcpDestructiveHint: policy.kind === "destructive",
     },
     risk: {
-      policy: policy.kind === "destructive" ? "mandate" : policy.kind === "write" ? "mandate" : "allow",
+      policy:
+        policy.kind === "destructive" ? "mandate" : policy.kind === "write" ? "mandate" : "allow",
       level: policy.kind === "destructive" ? "HIGH" : policy.kind === "write" ? "MEDIUM" : "LOW",
       source: "mcp-annotation",
       reason: `native tool ${toolName} (${policy.kind})`,
@@ -107,10 +108,9 @@ export async function gateNativeToolBeforeInvoke(opts: {
     env,
   });
   if (ifcBlock) {
-    const mechanism =
-      ifcBlock.sessionLabels.some((l) => l.includes("untrusted"))
-        ? ("untrusted_read_taint" as const)
-        : ("data_flow" as const);
+    const mechanism = ifcBlock.sessionLabels.some((l) => l.includes("untrusted"))
+      ? ("untrusted_read_taint" as const)
+      : ("data_flow" as const);
     return mcpErrorResult({
       ok: false,
       status: "blocked",
@@ -234,9 +234,7 @@ export function governNativeHandler<TArgs extends unknown[], TResult>(
     if (block) return block as TResult;
     const result = await handler(...args);
     const ok =
-      !result ||
-      typeof result !== "object" ||
-      (result as { isError?: boolean }).isError !== true;
+      !result || typeof result !== "object" || (result as { isError?: boolean }).isError !== true;
     if (ok) {
       accumulateNativeToolReadAfterSuccess({
         toolName,
