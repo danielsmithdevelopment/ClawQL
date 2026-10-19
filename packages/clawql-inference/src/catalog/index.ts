@@ -46,7 +46,10 @@ export async function loadInferenceModelCatalog(
   return Effect.runPromise(loadInferenceModelCatalogEffect(env));
 }
 
-export function resolveCatalogAlias(modelId: string, catalog: InferenceModelCatalog): string {
+export function resolveCatalogAlias(
+  modelId: string,
+  catalog: InferenceModelCatalog = DEFAULT_INFERENCE_MODEL_CATALOG
+): string {
   const trimmed = modelId.trim();
   return catalog.aliases[trimmed] ?? trimmed;
 }

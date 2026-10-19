@@ -22,6 +22,7 @@ This section tracks ClawQL security architecture, shipped controls, and roadmap 
 - **HTTP security headers** (CSP / HSTS on MCP + dashboard; managed API org-spoof IDOR guard): [`http-security-headers.md`](http-security-headers.md)
 - **Email `+` normalization** (IdP owns login; opt-in ClawQL directory keys): [`email-plus-normalization.md`](email-plus-normalization.md)
 - **Security ↔ ontology knowledge loop** (ATR gates as grammar-adversarial validation, `SecurityEvent` / `FailedStrategy`, capability Gate 3, one loop with WORM): [`security-ontology-knowledge-loop.md`](security-ontology-knowledge-loop.md)
+- **Model provenance gate** (resolved-model identity deny/allowlist; federal checklist; not weight-origin attestation): [`model-provenance-gate.md`](model-provenance-gate.md) · [`model-provenance-federal-checklist.md`](model-provenance-federal-checklist.md)
 
 ## Supply-chain pipeline (summary)
 

@@ -26,8 +26,15 @@ describe("resolveRequestModel", () => {
     expect(resolved?.gatewayModelId).toBe("deepseek/deepseek-chat");
   });
 
-  it("resolves catalog aliases to direct BYOK providers", () => {
+  it("resolves catalog aliases to origin-neutral cheap defaults", () => {
     const resolved = resolveRequestModel("clawql/cheap-chat", registry);
+    expect(resolved?.provider).toBe("groq");
+    expect(resolved?.model).toBe("llama-3.1-8b-instant");
+    expect(resolved?.gatewayModelId).toBe("groq/llama-3.1-8b-instant");
+  });
+
+  it("resolves explicit DeepSeek opt-in alias", () => {
+    const resolved = resolveRequestModel("clawql/deepseek-chat", registry);
     expect(resolved?.provider).toBe("deepseek");
     expect(resolved?.model).toBe("deepseek-chat");
     expect(resolved?.gatewayModelId).toBe("deepseek/deepseek-chat");

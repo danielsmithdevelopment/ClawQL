@@ -1,9 +1,12 @@
 import { Effect } from "effect";
+import { assertModelProvenanceFromEnvEffect } from "../provenance/gate.js";
 
 export type EmbeddingConfig = {
   baseUrl: string;
   model: string;
   apiKey: string;
+  /** Optional env for provenance policy (defaults to process.env). */
+  env?: NodeJS.ProcessEnv;
 };
 
 const DEFAULT_BASE = "https://api.openai.com/v1";
@@ -46,6 +49,9 @@ export function embedTextsEffect(
 ): Effect.Effect<Float32Array[], Error> {
   return Effect.gen(function* () {
     if (!texts.length) return [];
+    // Embeddings are model calls — same provenance gate as chat / decisions.
+    const modelId = config.model.includes("/") ? config.model : `openai/${config.model}`;
+    yield* assertModelProvenanceFromEnvEffect(modelId, config.env ?? process.env);
     const res = yield* Effect.tryPromise({
       try: () =>
         fetch(`${config.baseUrl}/embeddings`, {

@@ -21,6 +21,7 @@ import type { CacheIntent } from "./efficiency/types.js";
 import { resolveInferenceEffectiveEnv } from "./policy/manifest.js";
 import { withModelLifecycleHooks } from "./hooks/hooked-gateway.js";
 import type { HookedInferenceGatewayOptions } from "./hooks/hooked-gateway.js";
+import { withModelProvenance } from "./provenance/provenance-gateway.js";
 
 export type ChatRole = "system" | "user" | "assistant" | "tool" | "function";
 
@@ -132,12 +133,15 @@ function composeInferenceGateway(
   options: CreateInferenceGatewayOptions
 ): InferenceGateway {
   const env = options.env;
+  // Provenance wraps the provider gateway *inside* the fallback chain so every
+  // attempt (primary + failover) is checked against the resolved model identity.
+  const provenanceGuarded = withModelProvenance(inner, { env });
   const fallbackConfig =
     options.fallback === false ? null : (options.fallback?.config ?? loadFallbackConfig(env));
   const withFallback =
     options.fallback === false || !fallbackConfig
-      ? inner
-      : withFallbackChain(inner, { config: fallbackConfig });
+      ? provenanceGuarded
+      : withFallbackChain(provenanceGuarded, { config: fallbackConfig });
 
   let semanticOptions = options.semanticCache;
   if (semanticOptions !== false && !semanticOptions?.cache) {

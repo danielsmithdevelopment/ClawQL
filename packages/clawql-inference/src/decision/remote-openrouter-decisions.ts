@@ -11,6 +11,7 @@ import type {
   OpenAiDecisionAnswer,
 } from "./openai-types.js";
 import { isMicrosoftDecision1ModelId } from "./openai-adapt.js";
+import { assertModelProvenanceFromEnvEffect } from "../provenance/gate.js";
 
 export const DEFAULT_OPENROUTER_DECISIONS_MODEL = "microsoft/microsoft-decision-1";
 export const DEFAULT_OPENROUTER_DECISIONS_BASE = "https://openrouter.ai/api/alpha";
@@ -219,6 +220,8 @@ export function callRemoteOpenRouterDecisionsEffect(
     const base = (options.baseUrl ?? cfg.baseUrl).replace(/\/$/, "");
     const url = base.endsWith("/decisions") ? base : `${base}/decisions`;
     const model = resolveOpenRouterDecisionsModel(body.model);
+    // Same provenance choke point as chat — decisions are model calls too.
+    yield* assertModelProvenanceFromEnvEffect(model, env);
     const state =
       typeof body.input === "string"
         ? body.input
