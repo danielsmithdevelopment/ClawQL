@@ -131,7 +131,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     status: 'measured',
     statusLabel: 'Measured',
     nextStep:
-      'Keep version-scoped claims; v2 β multiturn 29 927 (3.38× vs ClawQL) + HTTP chaos 29/30 remasured 2026-10-17. Re-run when Executor ships tooling changes.',
+      'Tokens/latency measured (v2 β 3.38×). Governance next: equal-arm risky-write approval + untrusted-read→hostile follow-up (Gmail-shaped) on /benchmarks#governance — not N/A; their approval docs put them in scope.',
   },
   {
     id: 'celld-durability',
