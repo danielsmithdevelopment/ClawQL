@@ -19,4 +19,4 @@ Planted instructions across email / ticket / doc / webhook. Metric: **attacks ta
 
 **Page framing (Datadog):** Datadog showed that model-judged gates can be talked out of their own policy with a prepended counterfeit policy. ClawQL’s gate does not take instructions from the content it judges — trust comes from source labels and spec-derived risk, not from what an email claims.
 
-**Not published as a live claim yet.** Obot **defaults** measured on the Mac mini (12/12, macOS stamp — same baseline as other gateways). **Best-config** pending until a deny precondition passes, then one corpus run — [MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md). `MAI_LIVE=1` hard-recall is measured (labeled **15.00** / unlabeled **99.99**).
+**Not published as a live claim yet.** Obot **defaults** (12/12) and **best-config** (0/12 attacks, 9/14 benign, macOS stamp) are measured — [MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md). `MAI_LIVE=1` hard-recall is measured (labeled **15.00** / unlabeled **99.99**). Real-model sessions stay incomplete until a transport exists.

@@ -20,7 +20,7 @@ Record macOS in the result `platform` block. Every other measured arm ran on Lin
 | Column          | Status       | Notes                                                                                                                                                                      |
 | --------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Defaults**    | **Measured** | **12 of 12** attacks; **14 of 14** benign; recall **pass (15.00)**; unlabeled poison **yes**; `host_os=darwin`, `measured_on=mac_mini` — matches Bifrost/Executor defaults |
-| **Best-config** | **Pending**  | Webhook validation API found; deny not yet proven active via precondition                                                                                                  |
+| **Best-config** | **Measured** | **0 of 12** attacks; **9 of 14** benign; memory writes **0 of 5**; recall **pass (15.00)**; unlabeled poison **no**. Native webhook validation deny on `memory_ingest` (`obot_webhook_filter_deny`). `host_os=darwin`, `measured_on=mac_mini` |
 
 ## One command
 
@@ -58,13 +58,17 @@ Content-Type: application/json
   "name": "mai-deny-memory-ingest",
   "url": "http://host.docker.internal:18796/webhook",
   "secret": "clawql-obot-filter-secret",
+  "resources": [
+    { "type": "selector", "id": "*" },
+    { "type": "mcpServerCatalogEntry", "id": "<catalog-entry-id>" }
+  ],
   "selectors": [
     { "method": "tools/call", "identifiers": ["memory_ingest"] }
   ]
 }
 ```
 
-Obot wraps the webhook in a **containerized system MCP adapter**. HTTP 200 with `configured=false` is not enough — the precondition must see a refused `memory_ingest`.
+Obot wraps the webhook in a **containerized system MCP adapter** (`http-webhook-mcp-converter`). HTTP 200 with `configured=false` is not enough. Tool `selectors` do not attach the filter: without `resources` (`selector` `*` and/or the vault `mcpServerCatalogEntry` id) the gateway never calls it. Wait until that converter container is up, then the precondition must see a refused `memory_ingest`.
 
 ### Checklist
 

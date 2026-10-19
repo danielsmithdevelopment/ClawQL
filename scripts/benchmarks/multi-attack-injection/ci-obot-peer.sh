@@ -153,6 +153,11 @@ d=json.load(sys.stdin)
 u=d.get("connectURL") or d.get("connectUrl") or ""
 print(u if str(u).startswith("http") else "", end="")
 ')"
+ENTRY_ID="$(printf '%s' "$ENTRY_JSON" | python3 -c '
+import json,sys
+d=json.load(sys.stdin)
+print(d.get("id") or "", end="")
+')"
 
 if [ -z "$CONNECT_URL" ]; then
   SERVERS="$(curl -sS -H "Authorization: Bearer $TOKEN" \
@@ -216,10 +221,17 @@ for path in \
   "/api/mcp-gateway/filters"
 do
   if [ "$path" = "/api/mcp-webhook-validations" ]; then
+    # Obot only invokes a webhook validation for servers it is attached to.
+    # Tool selectors alone do not attach it. selector=* is the global index;
+    # mcpServerCatalogEntry binds this vault entry.
     PAYLOAD="{
       \"name\": \"mai-deny-memory-ingest\",
       \"url\": \"${FILTER_URL}\",
       \"secret\": \"${FILTER_SECRET}\",
+      \"resources\": [
+        { \"type\": \"selector\", \"id\": \"*\" },
+        { \"type\": \"mcpServerCatalogEntry\", \"id\": \"${ENTRY_ID}\" }
+      ],
       \"selectors\": [
         { \"method\": \"tools/call\", \"identifiers\": [\"memory_ingest\"] }
       ]
@@ -268,6 +280,35 @@ else:
     break
   fi
 done
+
+# Create returns configured=false. Obot then starts a containerized
+# http-webhook-mcp-converter (~3s on Docker Desktop). Probing memory_ingest
+# before that container is up is a setup miss, not a corpus result.
+if [ "$FILTER_REGISTERED" -eq 1 ] && [ "$FILTER_CONFIGURED" -ne 1 ]; then
+  echo "== wait for webhook validation configured + converter container =="
+  for i in $(seq 1 30); do
+    LIST="$(curl -sS -H "Authorization: Bearer $TOKEN" \
+      "http://127.0.0.1:${OBOT_PORT}/api/mcp-webhook-validations" 2>/dev/null || true)"
+    READY="$(printf '%s' "$LIST" | python3 -c '
+import json,sys
+try:
+  d=json.load(sys.stdin)
+except Exception:
+  d={}
+items=d.get("items") or []
+print("1" if any(it.get("configured") is True for it in items) else "0")
+' 2>/dev/null || echo 0)"
+    CONVERTER="$(docker ps --format '{{.Image}} {{.Status}}' | grep 'http-webhook-mcp-converter' || true)"
+    echo "wait ${i}: api_configured=${READY} converter=${CONVERTER:-absent}"
+    if [ "$READY" = "1" ] && [ -n "$CONVERTER" ]; then
+      FILTER_CONFIGURED=1
+      # Converter process is up; give the MCP session a moment before the probe.
+      sleep 5
+      break
+    fi
+    sleep 2
+  done
+fi
 
 if [ "$FILTER_REGISTERED" -eq 1 ] || [ -n "${OBOT_MCP_URL_DENY:-}" ]; then
   echo "== measure obot best_config (precondition deny, then one corpus run) =="

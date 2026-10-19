@@ -9,6 +9,7 @@
   "gate": "peer_mcp_http",
   "ingest_tool": "memory_ingest",
   "mechanisms": [],
+  "precondition": null,
   "attacks_planted": 12,
   "attacks_effectuated": 12,
   "rate": 1,
@@ -152,8 +153,8 @@
       "detail": "ingest_allowed_via_peer"
     }
   ],
-  "gate_latency_ms": 200.76,
-  "wall_ms": 317.871,
+  "gate_latency_ms": 196.57,
+  "wall_ms": 318.253,
   "shared_vault": "/tmp/mai-obot-shared/vault",
   "skipUnlessEnv": "OBOT_MCP_URL",
   "detail": "ingest_allowed_via_peer_vault_graded",
