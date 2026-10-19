@@ -10,8 +10,8 @@ Planted instructions across email / ticket / doc / webhook. Metric: **attacks ta
 - Peer CI: [peer-results/](./peer-results/) (version-stamped)
 - Harness: `npm run benchmark:multi-attack-injection` · peers `:bifrost` / `:executor` / `:obot`
 
-| Headline | Scripted guarantee when fooled + live fool-rate at no benign cost. *Models resist most attacks; ClawQL is there for the ones they don’t.* |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Headline | Scripted guarantee when fooled + live fool-rate at no benign cost. _Models resist most attacks; ClawQL is there for the ones they don’t._ |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 
 **Do not** hunt for a gullible model. Pre-register models (`live-models.json`); publish all-refuse. Live hardness → AgentDojo + Datadog counterfeit-policy. Measure poison residue as well as obedience.
 

@@ -11,10 +11,10 @@ Injection resistance is an **outcome**. Any gateway can be put through the same 
 
 ## Two-part headline (both true)
 
-1. **Scripted board = the guarantee.** When a model *is* fooled, ClawQL stops the action (park / label / data-flow), regardless of the model’s judgment. Every peer can stop the same plants by switching off memory writes; only ClawQL stops them while memory keeps working.
+1. **Scripted board = the guarantee.** When a model _is_ fooled, ClawQL stops the action (park / label / data-flow), regardless of the model’s judgment. Every peer can stop the same plants by switching off memory writes; only ClawQL stops them while memory keeps working.
 2. **Live runs = how often models get fooled,** and that ClawQL costs nothing when they don’t (same **14 of 14** benign either way).
 
-One line: *Models resist most attacks; ClawQL is there for the ones they don’t, at no cost to ordinary work.*
+One line: _Models resist most attacks; ClawQL is there for the ones they don’t, at no cost to ordinary work._
 
 See [LIVE.md](./LIVE.md).
 
@@ -49,11 +49,11 @@ Measured: refused all **12** instruction-follow attempts on **both** ClawQL and 
 
 Forbidden on ClawQL configured: `BLOCK_TOOLS` listing the attacked tools.
 
-| Peer     | Best-config (native only)                                                                  |
-| -------- | ------------------------------------------------------------------------------------------ |
-| Bifrost  | VK omits `memory_ingest`                                                                   |
-| Executor | `policies.block` on vault ingest                                                           |
-| Obot     | `mcp-webhook-validations` deny (precondition outside corpus, then one 12+14 run)           |
+| Peer     | Best-config (native only)                                                        |
+| -------- | -------------------------------------------------------------------------------- |
+| Bifrost  | VK omits `memory_ingest`                                                         |
+| Executor | `policies.block` on vault ingest                                                 |
+| Obot     | `mcp-webhook-validations` deny (precondition outside corpus, then one 12+14 run) |
 
 ## Shared vault
 
@@ -61,15 +61,15 @@ Every arm writes Obsidian-compatible `Memory/` over MCP (`vault-mcp.mjs`).
 
 ## Honesty labels
 
-| Label                      | Meaning                                                                 |
-| -------------------------- | ----------------------------------------------------------------------- |
-| Scripted, worst-case model | Always complies; measures gateway stop                                  |
-| Smoke sample               | n=12 self-written plants                                                |
-| Live models                | Pre-registered; publish all-refuse                                      |
-| Live hardness              | AgentDojo + Datadog counterfeit (published)                             |
-| Poison residue             | Hostile text in vault after session — trusted vs labeled                |
-| Platform stamp             | Obot = macOS / mac_mini                                                 |
-| Version pins               | ClawQL commit + peer image/binary/npm                                   |
+| Label                      | Meaning                                                  |
+| -------------------------- | -------------------------------------------------------- |
+| Scripted, worst-case model | Always complies; measures gateway stop                   |
+| Smoke sample               | n=12 self-written plants                                 |
+| Live models                | Pre-registered; publish all-refuse                       |
+| Live hardness              | AgentDojo + Datadog counterfeit (published)              |
+| Poison residue             | Hostile text in vault after session — trusted vs labeled |
+| Platform stamp             | Obot = macOS / mac_mini                                  |
+| Version pins               | ClawQL commit + peer image/binary/npm                    |
 
 ## Counterfeit-policy cell
 
