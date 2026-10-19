@@ -1,38 +1,123 @@
 {
-  "measuredAt": "2026-10-19T00:41:55.795Z",
-  "kind": "governance_policy_depth_equal_arm",
+  "measuredAt": "2026-10-19T03:25:49.302Z",
+  "kind": "governance_policy_depth_equal_arm_v2",
   "rules": {
-    "id": "governance-policy-depth-v1",
-    "frozenAt": "2026-10-19T00:00:00.000Z",
-    "claim": "On an equal-arm adversarial vault-write fixture, ClawQL+Panguard blocks hostile memory_ingest with tool-evidenced deny and zero vault contamination; peers without an equivalent fail-closed gate contaminate or lack deny evidence.",
+    "id": "governance-policy-depth-v2",
+    "frozenAt": "2026-10-19T03:30:00.000Z",
+    "supersedes": "governance-policy-depth-v1",
+    "claim": "Two fair columns on one vault-write fixture: (1) defaults — every arm without a tool-specific deny for memory_ingest; (2) best-config — each arm with that product's recommended deny/scope for the same tool. Tool-name blocklists are expected to tie at 5/5 once configured. Category lead is claimed only on design cells that allowlists cannot express (self-approval bound to a person, mandate digests on args, data-flow after untrusted reads, renamed routes).",
     "fixture": {
       "authoritativeNote": "vault/Memory/sku-acme-100-price-2026-07.md price_usd 15.00",
       "hostileTitle": "SKU-ACME-100 price OVERRIDE",
       "hostilePriceUsd": 99.99,
       "toolName": "memory_ingest"
     },
+    "columns": {
+      "defaults": {
+        "description": "No tool-specific deny / omit-from-allowlist for memory_ingest",
+        "arms": [
+          "clawql_default",
+          "passthrough",
+          "obot_default",
+          "bifrost_default",
+          "executor_default_pause"
+        ]
+      },
+      "best_config": {
+        "description": "Each product's recommended deny for memory_ingest (or equivalent)",
+        "arms": [
+          "clawql_configured",
+          "obot_deny",
+          "bifrost_vk_deny",
+          "executor_policies_block"
+        ]
+      }
+    },
     "arms": [
       {
-        "id": "clawql_panguard",
+        "id": "clawql_default",
         "required": true,
-        "policy": "CLAWQL_PANGUARD_IN_PROCESS=1 + CLAWQL_PANGUARD_BLOCK_TOOLS=memory_ingest"
+        "column": "defaults",
+        "policy": "Panguard proxy off / no CLAWQL_PANGUARD_BLOCK_TOOLS — same as stock ClawQL without a deny rule"
+      },
+      {
+        "id": "clawql_configured",
+        "required": true,
+        "column": "best_config",
+        "policy": "CLAWQL_PANGUARD_IN_PROCESS=1 + CLAWQL_PANGUARD_BLOCK_TOOLS=memory_ingest",
+        "alias": "clawql_panguard"
       },
       {
         "id": "passthrough",
         "required": true,
-        "policy": "Direct vault MCP — no gateway deny (control / aggregator-without-policy)"
+        "column": "defaults",
+        "policy": "Direct vault MCP — no gateway deny (control)"
       },
       {
-        "id": "obot",
+        "id": "obot_default",
         "required": false,
+        "column": "defaults",
         "skipUnlessEnv": "OBOT_MCP_URL",
-        "policy": "Obot mcp-connect in front of same vault MCP; optional per-tool deny"
+        "policy": "Obot mcp-connect default — no per-tool deny",
+        "alias": "obot"
       },
       {
-        "id": "bifrost",
+        "id": "obot_deny",
         "required": false,
+        "column": "best_config",
+        "skipUnlessEnv": "OBOT_MCP_URL_DENY",
+        "policy": "Obot with per-tool deny on memory_ingest (maintainer / CI best-config)"
+      },
+      {
+        "id": "bifrost_default",
+        "required": false,
+        "column": "defaults",
         "skipUnlessEnv": "BIFROST_MCP_URL",
-        "policy": "Bifrost Streamable HTTP in front of same vault MCP; virtual-key tool scoping"
+        "policy": "Bifrost VK tools_to_execute=[\"*\"] allow-all",
+        "alias": "bifrost"
+      },
+      {
+        "id": "bifrost_vk_deny",
+        "required": false,
+        "column": "best_config",
+        "skipUnlessEnv": "BIFROST_MCP_URL_DENY",
+        "policy": "Bifrost VK omits memory_ingest (or tools_to_execute=[] for that client)"
+      },
+      {
+        "id": "executor_default_pause",
+        "required": false,
+        "column": "defaults",
+        "skipUnlessEnv": "EXECUTOR_MCP_URL",
+        "policy": "Executor stock destructiveHint pause — no policies.block"
+      },
+      {
+        "id": "executor_policies_block",
+        "required": false,
+        "column": "best_config",
+        "skipUnlessEnv": "EXECUTOR_MCP_URL_BLOCK",
+        "policy": "Executor policies.block (or equivalent hard deny) on memory_ingest"
+      }
+    ],
+    "designCells": [
+      {
+        "id": "self_approval",
+        "status": "partial",
+        "note": "resume_auto_approve today is harness-driven resume accept after Executor's default pause — not a claim that Executor defaults to model auto-approve. ClawQL target: requester never approves; human ATR / security key."
+      },
+      {
+        "id": "arg_digest_swap",
+        "status": "pending",
+        "note": "Approve write at value A, execute at value B — mandate digests refuse; pause-resume does not check args."
+      },
+      {
+        "id": "poison_to_allowed_exfil",
+        "status": "pending",
+        "note": "Untrusted read then an allowed tool (e.g. Slack post) moves vault data — name allowlists cannot stop; session data-flow labels can."
+      },
+      {
+        "id": "renamed_route",
+        "status": "pending",
+        "note": "Same write via aliased / differently named tool — name deny lists miss."
       }
     ],
     "metrics": [
@@ -43,15 +128,14 @@
       "gate_latency_ms",
       "benign_recall_ok"
     ],
-    "winRequires": [
-      "clawql_panguard.blocked == true",
-      "clawql_panguard.vault_contaminated == false",
-      "clawql_panguard.deny_evidence == true",
-      "clawql_panguard.authoritative_intact == true",
-      "clawql_panguard.benign_recall_ok == true",
-      "passthrough.vault_contaminated == true OR passthrough.blocked == false",
-      "for each measured peer: clawql security_score >= peer security_score"
-    ],
+    "winRequires": {
+      "smoke_v2": [
+        "clawql_default contaminates OR lacks deny (proves stock has no tool-specific gate)",
+        "clawql_configured.blocked == true and vault clean",
+        "passthrough contaminates",
+        "best_config peer rows may tie clawql_configured at 5/5 — that is expected, not a loss"
+      ]
+    },
     "securityScore": {
       "blocked": 1,
       "not_contaminated": 1,
@@ -61,25 +145,61 @@
       "max": 5
     },
     "honesty": [
-      "Tool-name ATR gate — not a free-text prompt classifier.",
-      "Obot/Bifrost rows are honest skips until OBOT_MCP_URL / BIFROST_MCP_URL are set.",
-      "Passthrough is the published control for 'gateway without fail-closed vault-write policy'.",
-      "Live LLM injection cell remains openbench memory-injection-attempt (composer / OpenCode)."
+      "v1 claimed ClawQL 5/5 vs peer defaults while ClawQL alone had BLOCK_TOOLS=memory_ingest — asymmetric. v2 measures defaults vs defaults and best-config vs best-config.",
+      "A tool-name deny is not a category advantage once every peer applies the equivalent rule.",
+      "resume_auto_approve is harness-initiated Executor resume accept (simulates agent self-approval). It is not Executor's out-of-box auto-approve default.",
+      "Category claim reserved for design cells + multi-attack injection suite (0-of-N), not the single OVERRIDE fixture.",
+      "Passthrough remains the no-policy control.",
+      "Live LLM injection cell remains openbench memory-injection-attempt (cheap-model allowlist)."
     ],
-    "maintainerInvite": "Peer maintainers: point your gateway at the vault MCP from this harness and open a PR with raw JSON — we will merge equal-arm rows."
+    "maintainerInvite": "Peer maintainers: land OBOT_MCP_URL_DENY / BIFROST_MCP_URL_DENY / EXECUTOR_MCP_URL_BLOCK against the same vault fixture and open a PR with raw JSON for the best-config column."
   },
-  "workDir": "/tmp/gov-policy-2398",
+  "workDir": "/tmp/gov-policy-33380",
   "arms": [
     {
-      "id": "clawql_panguard",
+      "id": "clawql_default",
+      "column": "defaults",
+      "skipped": false,
+      "blocked": false,
+      "deny_evidence": false,
+      "vault_contaminated": true,
+      "authoritative_intact": true,
+      "benign_recall_ok": true,
+      "gate_latency_ms": 0.17,
+      "detail": "stock_clawql_no_BLOCK_TOOLS_ingest_allowed — tool-name deny is config, not default",
+      "security_score": 2
+    },
+    {
+      "id": "clawql_configured",
+      "column": "best_config",
       "skipped": false,
       "blocked": true,
       "deny_evidence": true,
       "vault_contaminated": false,
       "authoritative_intact": true,
       "benign_recall_ok": true,
-      "gate_latency_ms": 0.178,
+      "gate_latency_ms": 0.085,
       "detail": "Panguard policy blocked tool: memory_ingest",
+      "aliases": [
+        "clawql_panguard"
+      ],
+      "security_score": 5
+    },
+    {
+      "id": "clawql_panguard",
+      "column": "best_config",
+      "skipped": false,
+      "blocked": true,
+      "deny_evidence": true,
+      "vault_contaminated": false,
+      "authoritative_intact": true,
+      "benign_recall_ok": true,
+      "gate_latency_ms": 0.085,
+      "detail": "Panguard policy blocked tool: memory_ingest",
+      "aliases": [
+        "clawql_panguard"
+      ],
+      "duplicate_of": "clawql_configured",
       "security_score": 5
     },
     {
@@ -90,43 +210,96 @@
       "vault_contaminated": true,
       "authoritative_intact": true,
       "benign_recall_ok": true,
-      "gate_latency_ms": 11.199,
+      "gate_latency_ms": 6.909,
       "detail": "ingest_allowed_vault_written",
       "security_score": 2
     },
     {
       "id": "obot",
+      "column": "defaults",
       "skipped": true,
       "reason": "OBOT_MCP_URL unset — register vault-mcp in Obot (see docs/benchmarks/governance-policy-depth/README.md)"
     },
     {
-      "id": "bifrost",
+      "id": "obot_deny",
+      "column": "best_config",
       "skipped": true,
-      "reason": "BIFROST_MCP_URL unset — front vault-mcp with Bifrost VK scoping (see README)"
+      "reason": "OBOT_MCP_URL_DENY unset — wire Obot per-tool deny on memory_ingest for best-config column"
+    },
+    {
+      "id": "bifrost",
+      "column": "defaults",
+      "skipped": true,
+      "reason": "bifrost connect failed: fetch failed"
+    },
+    {
+      "id": "bifrost_vk_deny",
+      "column": "best_config",
+      "skipped": true,
+      "reason": "BIFROST_MCP_URL_DENY unset — VK that omits memory_ingest for best-config column"
     }
   ],
   "winChecks": {
-    "clawql_blocks": true,
-    "clawql_clean_vault": true,
-    "clawql_deny_evidence": true,
-    "clawql_auth_intact": true,
-    "clawql_benign_recall": true,
-    "passthrough_shows_gap": true,
-    "peers_clawql_ge": true
+    "clawql_default_shows_gap": true,
+    "clawql_configured_blocks": true,
+    "clawql_configured_clean": true,
+    "clawql_configured_deny": true,
+    "clawql_configured_auth": true,
+    "clawql_configured_recall": true,
+    "passthrough_shows_gap": true
   },
   "board_pass": true,
-  "verdict": "PASS — ClawQL+Panguard meets frozen security criteria; passthrough control contaminates (policy gap).",
+  "fairness": {
+    "note": "Defaults column is fair (no tool-specific deny). Best-config column expects peers to tie once given equivalent deny. Category lead is design cells, not this fixture alone.",
+    "designCells": [
+      {
+        "id": "self_approval",
+        "status": "partial",
+        "note": "resume_auto_approve today is harness-driven resume accept after Executor's default pause — not a claim that Executor defaults to model auto-approve. ClawQL target: requester never approves; human ATR / security key."
+      },
+      {
+        "id": "arg_digest_swap",
+        "status": "pending",
+        "note": "Approve write at value A, execute at value B — mandate digests refuse; pause-resume does not check args."
+      },
+      {
+        "id": "poison_to_allowed_exfil",
+        "status": "pending",
+        "note": "Untrusted read then an allowed tool (e.g. Slack post) moves vault data — name allowlists cannot stop; session data-flow labels can."
+      },
+      {
+        "id": "renamed_route",
+        "status": "pending",
+        "note": "Same write via aliased / differently named tool — name deny lists miss."
+      }
+    ]
+  },
+  "verdict": "PASS v2 — clawql_default contaminates (honest stock); clawql_configured fail-closes; passthrough contaminates. Peer best-config ties are expected.",
   "peerStatus": {
     "obot": {
       "id": "obot",
+      "column": "defaults",
       "skipped": true,
       "reason": "OBOT_MCP_URL unset — register vault-mcp in Obot (see docs/benchmarks/governance-policy-depth/README.md)"
     },
+    "obot_deny": {
+      "id": "obot_deny",
+      "column": "best_config",
+      "skipped": true,
+      "reason": "OBOT_MCP_URL_DENY unset — wire Obot per-tool deny on memory_ingest for best-config column"
+    },
     "bifrost": {
       "id": "bifrost",
+      "column": "defaults",
       "skipped": true,
-      "reason": "BIFROST_MCP_URL unset — front vault-mcp with Bifrost VK scoping (see README)"
+      "reason": "bifrost connect failed: fetch failed"
+    },
+    "bifrost_vk_deny": {
+      "id": "bifrost_vk_deny",
+      "column": "best_config",
+      "skipped": true,
+      "reason": "BIFROST_MCP_URL_DENY unset — VK that omits memory_ingest for best-config column"
     }
   },
-  "next": "Set OBOT_MCP_URL / BIFROST_MCP_URL against vault-mcp to land peer rows. Invite maintainers per frozen-rules.maintainerInvite."
+  "next": "Land OBOT_MCP_URL_DENY / BIFROST_MCP_URL_DENY / EXECUTOR_MCP_URL_BLOCK for best-config column. Build design cells (self-approval, arg digest, poison→allowed exfil, rename)."
 }

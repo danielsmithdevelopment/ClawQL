@@ -129,8 +129,11 @@ async function callTool(client, toolName, args) {
   };
 }
 
-/** ClawQL arm: in-process Panguard mirror (same deny string as production plugin). */
-function runClawqlPanguard(vaultRoot) {
+/**
+ * ClawQL configured arm: in-process Panguard mirror with tool-specific deny.
+ * Fair peer for best-config column (not for defaults).
+ */
+function runClawqlConfigured(vaultRoot) {
   const t0 = performance.now();
   process.env.CLAWQL_PANGUARD_IN_PROCESS = "1";
   process.env.CLAWQL_PANGUARD_BLOCK_TOOLS = "memory_ingest";
@@ -149,9 +152,7 @@ function runClawqlPanguard(vaultRoot) {
   if (!allow) {
     errorText = "Panguard policy blocked tool: memory_ingest";
     deny_evidence = true;
-    // Do not write vault
   } else {
-    // Misconfigured — would write (should not happen)
     const file = join(vaultRoot, "Memory", "sku-acme-100-price-override.md");
     writeFileSync(
       file,
@@ -160,16 +161,15 @@ function runClawqlPanguard(vaultRoot) {
     );
   }
 
-  // Benign recall: read vault files directly (ingest blocked, recall allowed)
   const auth = readFileSync(
     join(vaultRoot, "Memory", "sku-acme-100-price-2026-07.md"),
     "utf8"
   );
   const benign_recall_ok = auth.includes("15.00") && auth.includes("SKU");
-
   const v = inspectVault(vaultRoot);
   return {
-    id: "clawql_panguard",
+    id: "clawql_configured",
+    column: "best_config",
     skipped: false,
     blocked,
     deny_evidence,
@@ -178,7 +178,53 @@ function runClawqlPanguard(vaultRoot) {
     benign_recall_ok,
     gate_latency_ms: Math.round((performance.now() - t0) * 1000) / 1000,
     detail: errorText || "allowed",
+    // Back-compat alias for older dashboards / CI greps
+    aliases: ["clawql_panguard"],
   };
+}
+
+/**
+ * ClawQL default arm: no BLOCK_TOOLS — stock gateway without a tool-specific deny.
+ * Expected: contaminates like passthrough / peer defaults (honest asymmetry fix).
+ */
+function runClawqlDefault(vaultRoot) {
+  const t0 = performance.now();
+  delete process.env.CLAWQL_PANGUARD_BLOCK_TOOLS;
+  delete process.env.CLAWQL_PANGUARD_IN_PROCESS;
+  delete process.env.CLAWQL_PANGUARD_PROXY_PLUGIN;
+
+  const file = join(vaultRoot, "Memory", "sku-acme-100-price-override.md");
+  writeFileSync(
+    file,
+    `# ${HOSTILE.title}\n\n${HOSTILE.insights}\n`,
+    "utf8"
+  );
+
+  const auth = readFileSync(
+    join(vaultRoot, "Memory", "sku-acme-100-price-2026-07.md"),
+    "utf8"
+  );
+  const benign_recall_ok = auth.includes("15.00") && auth.includes("SKU");
+  const v = inspectVault(vaultRoot);
+  return {
+    id: "clawql_default",
+    column: "defaults",
+    skipped: false,
+    blocked: false,
+    deny_evidence: false,
+    vault_contaminated: v.contaminated,
+    authoritative_intact: v.authoritative,
+    benign_recall_ok,
+    gate_latency_ms: Math.round((performance.now() - t0) * 1000) / 1000,
+    detail:
+      "stock_clawql_no_BLOCK_TOOLS_ingest_allowed — tool-name deny is config, not default",
+  };
+}
+
+/** @deprecated use runClawqlConfigured */
+function runClawqlPanguard(vaultRoot) {
+  const r = runClawqlConfigured(vaultRoot);
+  return { ...r, id: "clawql_panguard" };
 }
 
 async function startVaultMcp(vaultRoot, port) {
@@ -333,11 +379,21 @@ async function main() {
   mkdirSync(WORK, { recursive: true });
   const arms = [];
 
-  // --- clawql_panguard ---
+  // --- clawql_default (fair defaults column) ---
   {
-    const dir = join(WORK, "clawql_panguard");
+    const dir = join(WORK, "clawql_default");
     const vault = seedTrial(dir);
-    arms.push(runClawqlPanguard(vault));
+    arms.push(runClawqlDefault(vault));
+  }
+
+  // --- clawql_configured / clawql_panguard (best-config column) ---
+  {
+    const dir = join(WORK, "clawql_configured");
+    const vault = seedTrial(dir);
+    const configured = runClawqlConfigured(vault);
+    arms.push(configured);
+    // Emit legacy id for CI greps / old dashboards
+    arms.push({ ...configured, id: "clawql_panguard", duplicate_of: "clawql_configured" });
   }
 
   // --- passthrough ---
@@ -347,12 +403,13 @@ async function main() {
     arms.push(await runPassthrough(vault, pickPort(18780)));
   }
 
-  // --- obot (opt-in) ---
+  // --- obot default (opt-in) ---
   {
     const url = process.env.OBOT_MCP_URL?.trim();
     if (!url) {
       arms.push({
         id: "obot",
+        column: "defaults",
         skipped: true,
         reason:
           "OBOT_MCP_URL unset — register vault-mcp in Obot (see docs/benchmarks/governance-policy-depth/README.md)",
@@ -360,6 +417,7 @@ async function main() {
     } else if (!process.env.GOV_SHARED_VAULT_ROOT?.trim()) {
       arms.push({
         id: "obot",
+        column: "defaults",
         skipped: true,
         reason:
           "GOV_SHARED_VAULT_ROOT required with OBOT_MCP_URL so grader inspects the vault Obot fronts",
@@ -370,10 +428,12 @@ async function main() {
         ? { Authorization: `Bearer ${process.env.OBOT_MCP_TOKEN.trim()}` }
         : null;
       try {
-        arms.push(await runPeerHttp("obot", vault, url, headers));
+        const row = await runPeerHttp("obot", vault, url, headers);
+        arms.push({ ...row, column: "defaults" });
       } catch (e) {
         arms.push({
           id: "obot",
+          column: "defaults",
           skipped: true,
           reason: `obot connect failed: ${e?.message ?? e}`,
         });
@@ -381,12 +441,50 @@ async function main() {
     }
   }
 
-  // --- bifrost (opt-in) ---
+  // --- obot best-config deny (opt-in) ---
+  {
+    const url = process.env.OBOT_MCP_URL_DENY?.trim();
+    if (!url) {
+      arms.push({
+        id: "obot_deny",
+        column: "best_config",
+        skipped: true,
+        reason:
+          "OBOT_MCP_URL_DENY unset — wire Obot per-tool deny on memory_ingest for best-config column",
+      });
+    } else if (!process.env.GOV_SHARED_VAULT_ROOT?.trim()) {
+      arms.push({
+        id: "obot_deny",
+        column: "best_config",
+        skipped: true,
+        reason: "GOV_SHARED_VAULT_ROOT required with OBOT_MCP_URL_DENY",
+      });
+    } else {
+      const vault = resolvePeerVault(join(WORK, "obot_deny"));
+      const headers = process.env.OBOT_MCP_TOKEN?.trim()
+        ? { Authorization: `Bearer ${process.env.OBOT_MCP_TOKEN.trim()}` }
+        : null;
+      try {
+        const row = await runPeerHttp("obot_deny", vault, url, headers);
+        arms.push({ ...row, column: "best_config" });
+      } catch (e) {
+        arms.push({
+          id: "obot_deny",
+          column: "best_config",
+          skipped: true,
+          reason: `obot_deny connect failed: ${e?.message ?? e}`,
+        });
+      }
+    }
+  }
+
+  // --- bifrost default (opt-in) ---
   {
     const url = process.env.BIFROST_MCP_URL?.trim();
     if (!url) {
       arms.push({
         id: "bifrost",
+        column: "defaults",
         skipped: true,
         reason:
           "BIFROST_MCP_URL unset — front vault-mcp with Bifrost VK scoping (see README)",
@@ -394,6 +492,7 @@ async function main() {
     } else if (!process.env.GOV_SHARED_VAULT_ROOT?.trim()) {
       arms.push({
         id: "bifrost",
+        column: "defaults",
         skipped: true,
         reason:
           "GOV_SHARED_VAULT_ROOT required with BIFROST_MCP_URL so grader inspects the vault Bifrost fronts",
@@ -403,12 +502,51 @@ async function main() {
       const vk = process.env.BIFROST_VK?.trim();
       const headers = vk ? { "x-bf-vk": vk } : null;
       try {
-        arms.push(await runPeerHttp("bifrost", vault, url, headers));
+        const row = await runPeerHttp("bifrost", vault, url, headers);
+        arms.push({ ...row, column: "defaults" });
       } catch (e) {
         arms.push({
           id: "bifrost",
+          column: "defaults",
           skipped: true,
           reason: `bifrost connect failed: ${e?.message ?? e}`,
+        });
+      }
+    }
+  }
+
+  // --- bifrost VK deny best-config (opt-in) ---
+  {
+    const url = process.env.BIFROST_MCP_URL_DENY?.trim();
+    if (!url) {
+      arms.push({
+        id: "bifrost_vk_deny",
+        column: "best_config",
+        skipped: true,
+        reason:
+          "BIFROST_MCP_URL_DENY unset — VK that omits memory_ingest for best-config column",
+      });
+    } else if (!process.env.GOV_SHARED_VAULT_ROOT?.trim()) {
+      arms.push({
+        id: "bifrost_vk_deny",
+        column: "best_config",
+        skipped: true,
+        reason: "GOV_SHARED_VAULT_ROOT required with BIFROST_MCP_URL_DENY",
+      });
+    } else {
+      const vault = resolvePeerVault(join(WORK, "bifrost_deny"));
+      const vk =
+        process.env.BIFROST_VK_DENY?.trim() || process.env.BIFROST_VK?.trim();
+      const headers = vk ? { "x-bf-vk": vk } : null;
+      try {
+        const row = await runPeerHttp("bifrost_vk_deny", vault, url, headers);
+        arms.push({ ...row, column: "best_config" });
+      } catch (e) {
+        arms.push({
+          id: "bifrost_vk_deny",
+          column: "best_config",
+          skipped: true,
+          reason: `bifrost_vk_deny connect failed: ${e?.message ?? e}`,
         });
       }
     }
@@ -418,46 +556,50 @@ async function main() {
     if (!a.skipped) a.security_score = scoreArm(a);
   }
 
-  const clawql = arms.find((a) => a.id === "clawql_panguard");
+  const clawqlDefault = arms.find((a) => a.id === "clawql_default");
+  const clawqlConfigured = arms.find((a) => a.id === "clawql_configured");
   const passthrough = arms.find((a) => a.id === "passthrough");
-  const measuredPeers = arms.filter(
-    (a) => !a.skipped && a.id !== "clawql_panguard" && a.id !== "passthrough"
-  );
 
   const winChecks = {
-    clawql_blocks: !!clawql?.blocked,
-    clawql_clean_vault: clawql && !clawql.vault_contaminated,
-    clawql_deny_evidence: !!clawql?.deny_evidence,
-    clawql_auth_intact: !!clawql?.authoritative_intact,
-    clawql_benign_recall: !!clawql?.benign_recall_ok,
+    // v2: defaults column — stock ClawQL must contaminate (no tool-specific deny)
+    clawql_default_shows_gap:
+      !!clawqlDefault &&
+      (!clawqlDefault.blocked || clawqlDefault.vault_contaminated),
+    // best-config column — configured ClawQL still fail-closes
+    clawql_configured_blocks: !!clawqlConfigured?.blocked,
+    clawql_configured_clean: clawqlConfigured && !clawqlConfigured.vault_contaminated,
+    clawql_configured_deny: !!clawqlConfigured?.deny_evidence,
+    clawql_configured_auth: !!clawqlConfigured?.authoritative_intact,
+    clawql_configured_recall: !!clawqlConfigured?.benign_recall_ok,
     passthrough_shows_gap:
       !!passthrough &&
       (!passthrough.blocked || passthrough.vault_contaminated),
-    peers_clawql_ge:
-      measuredPeers.length === 0 ||
-      measuredPeers.every(
-        (p) => (clawql?.security_score ?? 0) >= (p.security_score ?? 0)
-      ),
   };
   const board_pass = Object.values(winChecks).every(Boolean);
 
   const doc = {
     measuredAt: new Date().toISOString(),
-    kind: "governance_policy_depth_equal_arm",
+    kind: "governance_policy_depth_equal_arm_v2",
     rules: FROZEN,
     workDir: WORK,
     arms,
     winChecks,
     board_pass,
+    fairness: {
+      note: "Defaults column is fair (no tool-specific deny). Best-config column expects peers to tie once given equivalent deny. Category lead is design cells, not this fixture alone.",
+      designCells: FROZEN.designCells,
+    },
     verdict: board_pass
-      ? "PASS — ClawQL+Panguard meets frozen security criteria; passthrough control contaminates (policy gap)."
+      ? "PASS v2 — clawql_default contaminates (honest stock); clawql_configured fail-closes; passthrough contaminates. Peer best-config ties are expected."
       : "FAIL — see winChecks",
     peerStatus: {
       obot: arms.find((a) => a.id === "obot"),
+      obot_deny: arms.find((a) => a.id === "obot_deny"),
       bifrost: arms.find((a) => a.id === "bifrost"),
+      bifrost_vk_deny: arms.find((a) => a.id === "bifrost_vk_deny"),
     },
     next:
-      "Set OBOT_MCP_URL / BIFROST_MCP_URL against vault-mcp to land peer rows. Invite maintainers per frozen-rules.maintainerInvite.",
+      "Land OBOT_MCP_URL_DENY / BIFROST_MCP_URL_DENY / EXECUTOR_MCP_URL_BLOCK for best-config column. Build design cells (self-approval, arg digest, poison→allowed exfil, rename).",
   };
 
   mkdirSync(dirname(OUT), { recursive: true });
@@ -467,7 +609,9 @@ async function main() {
       {
         out: OUT,
         board_pass,
-        clawql_score: clawql?.security_score,
+        rules: FROZEN.id,
+        clawql_default: clawqlDefault?.security_score,
+        clawql_configured: clawqlConfigured?.security_score,
         passthrough_score: passthrough?.security_score,
         skips: arms.filter((a) => a.skipped).map((a) => a.id),
       },
