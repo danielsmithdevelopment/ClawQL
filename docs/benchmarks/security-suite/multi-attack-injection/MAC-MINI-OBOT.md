@@ -17,10 +17,10 @@ Record macOS in the result `platform` block. Every other measured arm ran on Lin
 
 ## Status (Mac mini push)
 
-| Column | Status | Notes |
-| ------ | ------ | ----- |
-| **Defaults** | **Measured** | **12 of 12** attacks; **14 of 14** benign; recall **pass (15.00)**; unlabeled poison **yes**; `host_os=darwin`, `measured_on=mac_mini` |
-| **Best-config** | **Pending** | Native create path found; adapter not live — not scored |
+| Column          | Status       | Notes                                                                                                                                  |
+| --------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Defaults**    | **Measured** | **12 of 12** attacks; **14 of 14** benign; recall **pass (15.00)**; unlabeled poison **yes**; `host_os=darwin`, `measured_on=mac_mini` |
+| **Best-config** | **Pending**  | Native create path found; adapter not live — not scored                                                                                |
 
 ## One command (re-run / best-config)
 

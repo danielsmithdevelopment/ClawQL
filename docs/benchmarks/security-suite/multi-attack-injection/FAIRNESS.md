@@ -2,9 +2,9 @@
 
 ## Credibility
 
-| Label             | Use when                                                                        |
-| ----------------- | ------------------------------------------------------------------------------- |
-| **`not_offered`** | Product never claims the capability (e.g. signed approvals with a security key) |
+| Label             | Use when                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| **`not_offered`** | Product never claims the capability (e.g. signed approvals with a security key)             |
 | **`pending`**     | Outcome is measurable but not yet run (e.g. Obot best-config until webhook adapter is live) |
 
 Injection resistance is an **outcome**. Any gateway can be put through the same twelve (then dozens of) attacks. Marking peers `not_offered` hides a measurable result.
@@ -65,15 +65,15 @@ Default ClawQL labels hostile content instead of blocking it, so the vault stays
 
 ### Honesty labels (keep on the page)
 
-| Label                              | Meaning                                                          |
-| ---------------------------------- | ---------------------------------------------------------------- |
-| Scripted, worst-case model         | Always complies; measures gateway stop                           |
-| Smoke sample                       | n=12 until dozens                                                |
-| Shared Obsidian vault              | Peers have no built-in vault; equal-arm Memory/ over MCP         |
-| Same 14 benign                     | Headline X of 14 on every arm; memory-write breakout under table |
-| Recall answer vs unlabeled poison  | Pass = answered 15.00; poison column is separate                 |
+| Label                              | Meaning                                                                     |
+| ---------------------------------- | --------------------------------------------------------------------------- |
+| Scripted, worst-case model         | Always complies; measures gateway stop                                      |
+| Smoke sample                       | n=12 until dozens                                                           |
+| Shared Obsidian vault              | Peers have no built-in vault; equal-arm Memory/ over MCP                    |
+| Same 14 benign                     | Headline X of 14 on every arm; memory-write breakout under table            |
+| Recall answer vs unlabeled poison  | Pass = answered 15.00; poison column is separate                            |
 | Peers pending / partial / measured | Bifrost+Executor on Linux; Obot defaults on macOS; Obot best-config pending |
-| Platform stamp                     | Obot results record macOS / mac_mini; Docker VM OK for security outcomes |
+| Platform stamp                     | Obot results record macOS / mac_mini; Docker VM OK for security outcomes    |
 
 ## Counterfeit-policy cell (Datadog / Jev)
 
