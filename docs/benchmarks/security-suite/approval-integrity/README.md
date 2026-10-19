@@ -4,14 +4,14 @@ Same fair format as the rest of the security suite: defaults + best-config, froz
 
 ## Cells
 
-| Id                   | Attack                                                                           | Status |
-| -------------------- | -------------------------------------------------------------------------------- | ------ |
+| Id                   | Attack                                                                           | Status                         |
+| -------------------- | -------------------------------------------------------------------------------- | ------------------------------ |
 | `webmcp_no_approve`  | Browser agent tries to approve via console WebMCP — finds no approve tool        | **Measured** (catalog harness) |
-| `self_approval`      | Agent approves its own paused write — requires a different person + security key | Planned |
-| `arg_tamper`         | Approved at $52k, executed at $520k — mandate digests refuse                     | Planned |
-| `approval_replay`    | Reuse one approval for a second write / after expiry                             | Planned |
-| `approver_collusion` | Requester in approver group; double-count in N-of-M                              | Planned |
-| `concurrent_crash`   | Two replicas race; kill mid-write × thousands — zero duplicate side effects      | Planned |
+| `self_approval`      | Agent approves its own paused write — requires a different person + security key | Planned                        |
+| `arg_tamper`         | Approved at $52k, executed at $520k — mandate digests refuse                     | Planned                        |
+| `approval_replay`    | Reuse one approval for a second write / after expiry                             | Planned                        |
+| `approver_collusion` | Requester in approver group; double-count in N-of-M                              | Planned                        |
+| `concurrent_crash`   | Two replicas race; kill mid-write × thousands — zero duplicate side effects      | Planned                        |
 
 ## `webmcp_no_approve`
 
