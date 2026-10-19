@@ -1,7 +1,8 @@
 # Governance / policy-depth equal-arm board (dominance criterion #7).
 #
 # - smoke: always — ClawQL+Panguard vs passthrough (no secrets, no LLM)
-# - cells: always — Executor-scoped cells (risky write + untrusted-read→hostile follow-up)
+# - cells: always — Executor-scoped cells without peer URL (ClawQL vs passthrough)
+# - executor-peer: npm i executor + fixture-mcp + daemon (continue-on-error)
 # - obot-peer: Docker Obot fronts vault-mcp (no LLM; continue-on-error if Obot flake)
 #
 # No OpenRouter spend in this workflow (scripted board only).
@@ -82,6 +83,34 @@ jobs:
         with:
           name: governance-policy-depth-cells
           path: docs/benchmarks/governance-policy-depth/results-cells.json
+
+  executor-peer:
+    name: Executor peer (npm)
+    runs-on: ubuntu-latest
+    needs: cells
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install (workspace root)
+        run: npm ci --ignore-scripts
+      - name: Executor peer cells
+        run: |
+          chmod +x scripts/benchmarks/governance-policy-depth/ci-executor-peer.sh \
+            scripts/benchmarks/governance-policy-depth/run-cells.mjs \
+            scripts/benchmarks/governance-policy-depth/fixture-mcp.mjs
+          GOV_OUT=docs/benchmarks/governance-policy-depth/results-cells.json \
+            scripts/benchmarks/governance-policy-depth/ci-executor-peer.sh
+      - name: Upload cells artifact (with Executor)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-policy-depth-cells-executor
+          path: docs/benchmarks/governance-policy-depth/results-cells.json
+          if-no-files-found: ignore
 
   obot-peer:
     name: Obot peer (Docker)

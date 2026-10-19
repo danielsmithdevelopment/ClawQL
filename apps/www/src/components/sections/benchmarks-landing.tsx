@@ -745,12 +745,11 @@ export function BenchmarksLanding() {
 
         <div className="mt-8">
           <h3 className="text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
-            Executor cells (harness ready — equal-arm)
+            Executor cells (measured — equal-arm)
           </h3>
           <p className="mt-2 max-w-3xl text-sm/6 text-mist-700 dark:text-mist-400">
-            Same fixture family as the scorecard above, plus a Gmail-shaped poisoned read. ClawQL and passthrough are
-            measured; Executor fills when their gateway fronts{' '}
-            <code className="text-xs">fixture-mcp</code> with approvals/deny.
+            Same fixture family as the scorecard, plus a Gmail-shaped poisoned read. Live Executor v1.6.10 via{' '}
+            <code className="text-xs">ci-executor-peer.sh</code> (fixture-mcp + daemon + execute code path).
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {governanceExecutorCells.map((cell) => (
@@ -761,9 +760,10 @@ export function BenchmarksLanding() {
                 <div className="flex items-baseline justify-between gap-3">
                   <p className="text-sm font-semibold text-mist-950 dark:text-white">{cell.title}</p>
                   <p className="shrink-0 text-xs font-medium tabular-nums text-mist-700 dark:text-mist-300">
-                    ClawQL {cell.clawqlScore}/{governanceBenchmarkMeta.maxScore} · PT{' '}
-                    {cell.passthroughScore}/{governanceBenchmarkMeta.maxScore} · Executor{' '}
-                    {cell.executorStatus === 'measured' ? 'measured' : 'pending'}
+                    ClawQL {cell.clawqlScore}/{governanceBenchmarkMeta.maxScore} · Executor{' '}
+                    {cell.executorScore === null ? '—' : cell.executorScore}/
+                    {governanceBenchmarkMeta.maxScore} · PT {cell.passthroughScore}/
+                    {governanceBenchmarkMeta.maxScore}
                   </p>
                 </div>
                 <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">{cell.detail}</p>

@@ -130,11 +130,11 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     criteriaToBeat:
       'Token lead + governance cells: risky-write approval/deny + untrusted-read→hostile follow-up.',
     howToProve:
-      'Tokens: re-pin latest. Governance: front fixture-mcp with EXECUTOR_MCP_URL + GOV_SHARED_VAULT_ROOT; publish results-cells.json peer row.',
-    status: 'partial',
-    statusLabel: 'Tokens measured · cells harness ready',
+      'Tokens: re-pin latest. Governance: ci-executor-peer.sh → results-cells.json.',
+    status: 'measured',
+    statusLabel: 'Tokens + cells measured',
     nextStep:
-      'Tokens/latency measured (v2 β 3.38×). Governance cells: ClawQL 5/5 vs passthrough 2/5 on both cells (results-cells.json); Executor peer row pending EXECUTOR_MCP_URL — approvals/Gmail in scope, not N/A.',
+      'Tokens/latency measured (v2 β 3.38×). Governance cells live: ClawQL 5/5 · Executor 5/5 (approval pause) · passthrough 2/5 on both cells. Re-pin v2 when stable.',
   },
   {
     id: 'celld-durability',

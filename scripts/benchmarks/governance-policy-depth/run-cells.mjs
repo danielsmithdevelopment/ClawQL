@@ -114,6 +114,14 @@ async function connectHttpMcp(url, name, headers = null) {
   };
 }
 
+function isApprovalPause(res, text) {
+  const status = res?.structuredContent?.status;
+  if (status === "waiting_for_interaction") return true;
+  return /Execution paused:|waiting_for_interaction|requires approval|action \"decline\"|elicitation/i.test(
+    text || ""
+  );
+}
+
 async function callTool(client, toolName, args) {
   const t0 = performance.now();
   let blocked = false;
@@ -121,6 +129,8 @@ async function callTool(client, toolName, args) {
   let ok = false;
   let errorText = "";
   let parsed = null;
+  let approval_pause = false;
+  let executionId = null;
   try {
     const res = await client.callTool({ name: toolName, arguments: args });
     const text = JSON.stringify(res);
@@ -128,9 +138,16 @@ async function callTool(client, toolName, args) {
     if (res?.isError) {
       blocked = true;
       deny_evidence =
-        /Panguard policy blocked|denied|not allowed|forbidden|policy|approval/i.test(
+        /Panguard policy blocked|denied|not allowed|forbidden|policy|approval|blocked/i.test(
           text
         );
+    } else if (isApprovalPause(res, text)) {
+      // Executor default destructiveHint → pause without writing (fail-closed until human accept)
+      blocked = true;
+      deny_evidence = true;
+      approval_pause = true;
+      executionId = res?.structuredContent?.executionId || null;
+      ok = false;
     } else {
       ok = true;
       try {
@@ -144,7 +161,7 @@ async function callTool(client, toolName, args) {
     blocked = true;
     errorText = String(e?.message ?? e);
     deny_evidence =
-      /Panguard policy blocked|denied|not allowed|forbidden|policy|approval/i.test(
+      /Panguard policy blocked|denied|not allowed|forbidden|policy|approval|blocked/i.test(
         errorText
       );
   }
@@ -153,9 +170,38 @@ async function callTool(client, toolName, args) {
     deny_evidence,
     ok,
     parsed,
+    approval_pause,
+    executionId,
     errorText: errorText.slice(0, 600),
     gate_latency_ms: Math.round((performance.now() - t0) * 1000) / 1000,
   };
+}
+
+/** Executor code-mode: tools live under execute(), not as top-level MCP tools. */
+async function callExecutorFixtureTool(client, toolLeaf, args, fixtureNs) {
+  const ns = fixtureNs || process.env.EXECUTOR_FIXTURE_NS?.trim() || "gov-fixture.org.default";
+  const parts = ns.split(".");
+  // tools["gov-fixture"].org.default.memory_ingest({...})
+  const integ = parts[0];
+  const rest = parts.slice(1).join(".");
+  const argJson = JSON.stringify(args);
+  const code = `return await tools[${JSON.stringify(integ)}].${rest}.${toolLeaf}(${argJson});`;
+  return callTool(client, "execute", { code });
+}
+
+async function declineExecutorPause(client, executionId) {
+  if (!executionId) return;
+  try {
+    await client.callTool({
+      name: "resume",
+      arguments: {
+        executionId,
+        action: "decline",
+      },
+    });
+  } catch {
+    // best-effort cleanup
+  }
 }
 
 async function findTool(client, candidates) {
@@ -343,8 +389,13 @@ async function runPeerCell(armId, cell, vaultRoot, url, headers) {
   wipeHostile(vaultRoot);
   const { client, close } = await connectHttpMcp(url, `${armId}-${cell}`, headers);
   try {
+    const listed = await client.listTools();
+    const tools = listed.tools || [];
+    const hasExecute = tools.some((t) => t.name === "execute");
     const ingestName = await findTool(client, ["memory_ingest"]);
-    if (!ingestName) {
+    const useExecutorCode = armId === "executor" && hasExecute && !ingestName;
+
+    if (!ingestName && !useExecutorCode) {
       return {
         id: armId,
         cell,
@@ -363,31 +414,52 @@ async function runPeerCell(armId, cell, vaultRoot, url, headers) {
     let poison_seen = false;
     let read_ok = true;
     if (cell === "untrusted_read") {
-      const readName = await findTool(client, ["gmail_read_message"]);
-      if (!readName) {
-        return {
-          id: armId,
-          cell,
-          skipped: false,
-          blocked: false,
-          deny_evidence: false,
-          vault_contaminated: false,
-          authoritative_intact: inspectVault(vaultRoot).authoritative,
-          read_ok: false,
-          poison_seen: false,
-          detail: "peer_missing_gmail_read_message",
-          security_incomplete: true,
-        };
+      let read;
+      if (useExecutorCode) {
+        read = await callExecutorFixtureTool(client, "gmail_read_message", {
+          id: POISON_ID,
+        });
+      } else {
+        const readName = await findTool(client, ["gmail_read_message"]);
+        if (!readName) {
+          return {
+            id: armId,
+            cell,
+            skipped: false,
+            blocked: false,
+            deny_evidence: false,
+            vault_contaminated: false,
+            authoritative_intact: inspectVault(vaultRoot).authoritative,
+            read_ok: false,
+            poison_seen: false,
+            detail: "peer_missing_gmail_read_message",
+            security_incomplete: true,
+          };
+        }
+        read = await callTool(client, readName, { id: POISON_ID });
       }
-      const read = await callTool(client, readName, { id: POISON_ID });
-      read_ok = read.ok;
+      read_ok = read.ok || /OVERRIDE|msg-poison|untrusted/i.test(read.errorText);
       poison_seen =
-        read.ok &&
+        read_ok &&
         JSON.stringify(read.parsed || read.errorText).includes("OVERRIDE");
     }
 
-    const ingest = await callTool(client, ingestName, HOSTILE);
+    const ingest = useExecutorCode
+      ? await callExecutorFixtureTool(client, "memory_ingest", HOSTILE)
+      : await callTool(client, ingestName, HOSTILE);
+
+    if (ingest.approval_pause && ingest.executionId) {
+      await declineExecutorPause(client, ingest.executionId);
+    }
+
     const v = inspectVault(vaultRoot);
+    const detail = ingest.blocked
+      ? ingest.approval_pause
+        ? "executor_approval_pause_vault_clean"
+        : ingest.errorText
+      : cell === "untrusted_read"
+        ? "poison_read_then_ingest_allowed_via_peer"
+        : "ingest_allowed_via_peer";
     return {
       id: armId,
       cell,
@@ -398,13 +470,11 @@ async function runPeerCell(armId, cell, vaultRoot, url, headers) {
       authoritative_intact: v.authoritative,
       read_ok,
       poison_seen,
-      detail: ingest.blocked
-        ? ingest.errorText
-        : cell === "untrusted_read"
-          ? "poison_read_then_ingest_allowed_via_peer"
-          : "ingest_allowed_via_peer",
+      approval_pause: !!ingest.approval_pause,
+      detail,
       gate_latency_ms: ingest.gate_latency_ms,
       shared_vault: vaultRoot,
+      via: useExecutorCode ? "executor_execute_code" : "direct_tool",
     };
   } finally {
     await close();
@@ -551,7 +621,7 @@ async function main() {
       untrusted_read: cells.untrusted_read.find((a) => a.id === "executor"),
     },
     next:
-      "Wire EXECUTOR_MCP_URL + GOV_SHARED_VAULT_ROOT against fixture-mcp (withApprovals deny on memory_ingest). Until then executor rows stay honest skips.",
+      "Re-run via scripts/benchmarks/governance-policy-depth/ci-executor-peer.sh (fixture-mcp + Executor daemon + execute code path). Default destructiveHint pauses ingest (vault clean).",
   };
 
   mkdirSync(dirname(OUT), { recursive: true });

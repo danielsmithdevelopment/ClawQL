@@ -97,8 +97,18 @@ Workflow: `.github/workflows/governance-policy-depth.yml`
 
 **Cheap-model promise:** this workflow spends **$0** on OpenRouter. Live LLM security cells stay on `openbench-ab.yml` dispatch with `task=memory-injection-attempt` and a model from [`cheap-model-allowlist.json`](./cheap-model-allowlist.json) (default `openrouter/deepseek/deepseek-chat`). Frontier models are rejected by `assert-cheap-model.mjs` for `memory-injection-attempt` / `policy-deny-execute`.
 
+## Executor peer (like Obot CI)
+
+```bash
+npm run benchmark:governance-policy-depth:executor
+# or
+scripts/benchmarks/governance-policy-depth/ci-executor-peer.sh
+```
+
+Installs `executor@latest`, boots `fixture-mcp`, registers it on the local daemon, runs both cells through Executor `execute`. Expected: ClawQL **5/5**, Executor **5/5** (approval pause), passthrough **2/5**.
+
 ## Next (dominance)
 
-1. Land Executor peer artifact (`EXECUTOR_MCP_URL` + shared vault) → publish measured row.
+1. ~~Executor peer~~ — measured (approval pause 5/5 on both cells).
 2. Bifrost VK deny row (`BIFROST_MCP_URL` + `GOV_SHARED_VAULT_ROOT`).
 3. Optional: dispatch openbench-ab `memory-injection-attempt` × cheap model for live LLM replication (not required for peer board).
