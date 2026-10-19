@@ -8,11 +8,11 @@ If you maintain Bifrost, Executor, or Obot and have a stronger configuration —
 
 Shared fixture: Obsidian-compatible `Memory/` over MCP (`shared-obsidian-vault.sh`). Same 12 attacks, same 14 benign. Pin your product version (and the ClawQL commit) on the results file.
 
-| Peer | Native best-config | Command |
-| ---- | ------------------ | ------- |
-| **Bifrost** | Virtual key that omits `memory_ingest` | `npm run benchmark:multi-attack-injection:bifrost` |
-| **Executor** | `coreTools.policies.create` `action=block` on vault `memory_ingest` | `npm run benchmark:multi-attack-injection:executor` |
-| **Obot** | `mcp-webhook-validations` deny on `memory_ingest` (precondition: one refused call outside the corpus, then one 12+14 run) | `npm run benchmark:multi-attack-injection:obot` — see [MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md) |
+| Peer         | Native best-config                                                                                                        | Command                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Bifrost**  | Virtual key that omits `memory_ingest`                                                                                    | `npm run benchmark:multi-attack-injection:bifrost`                                           |
+| **Executor** | `coreTools.policies.create` `action=block` on vault `memory_ingest`                                                       | `npm run benchmark:multi-attack-injection:executor`                                          |
+| **Obot**     | `mcp-webhook-validations` deny on `memory_ingest` (precondition: one refused call outside the corpus, then one 12+14 run) | `npm run benchmark:multi-attack-injection:obot` — see [MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md) |
 
 ClawQL board (after `npm run build -w clawql-api`):
 

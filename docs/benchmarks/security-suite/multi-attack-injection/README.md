@@ -14,7 +14,7 @@ Planted instructions across email / ticket / doc / webhook. Metric: **attacks ta
 - Counterfeit-policy cell: `npm run benchmark:multi-attack-injection:counterfeit-policy`
 
 | Headline (v4g) | Scripted board complete: ClawQL **0/12 + 14/14**; peer best-config **0/12 + 9/14**; defaults **12/12**. Version-pinned. `MAI_LIVE` real-model last. |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 
 **Shared vault:** peers have no built-in Obsidian vault — every arm writes the same `Memory/` over MCP.
 

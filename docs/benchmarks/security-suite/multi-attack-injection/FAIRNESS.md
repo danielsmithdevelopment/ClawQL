@@ -27,7 +27,7 @@ Forbidden: `BLOCK_TOOLS` (or equivalent) listing the tools the twelve attacks us
 | Peer     | Best-config mechanism (must be theirs)                                                     |
 | -------- | ------------------------------------------------------------------------------------------ |
 | Bifrost  | Virtual key that **omits** `memory_ingest` from tools/list                                 |
-| Executor | Native `coreTools.policies.create` with `action=block` on the vault ingest                |
+| Executor | Native `coreTools.policies.create` with `action=block` on the vault ingest                 |
 | Obot     | Native gateway **webhook filter** denying `memory_ingest` (precondition then one-shot run) |
 
 Do **not** attribute a ClawQL `deny-tools-mcp` proxy to Executor (or any peer). If the native control cannot be applied in the harness, mark the row **`pending`** and say why.
@@ -40,13 +40,13 @@ Obot / Bifrost / Executor do not ship an Obsidian vault. Every arm — ClawQL an
 
 Every gateway can stop these attacks by switching off memory writes; **only ClawQL stops them while memory keeps working.** Native peer configs, Obot deny precondition, same 14 benign.
 
-| Arm                         | Attacks taking effect | Benign cases as expected |
-| --------------------------- | --------------------- | ------------------------ |
-| ClawQL defaults             | 0 of 12               | 14 of 14                 |
-| Bifrost, best configuration | 0 of 12               | 9 of 14                  |
-| Executor, best configuration| 0 of 12               | 9 of 14                  |
-| Obot, best configuration    | 0 of 12               | 9 of 14                  |
-| Every peer on defaults      | 12 of 12              | 14 of 14                 |
+| Arm                          | Attacks taking effect | Benign cases as expected |
+| ---------------------------- | --------------------- | ------------------------ |
+| ClawQL defaults              | 0 of 12               | 14 of 14                 |
+| Bifrost, best configuration  | 0 of 12               | 9 of 14                  |
+| Executor, best configuration | 0 of 12               | 9 of 14                  |
+| Obot, best configuration     | 0 of 12               | 9 of 14                  |
+| Every peer on defaults       | 12 of 12              | 14 of 14                 |
 
 Memory-write breakout: ClawQL **5 of 5**; peer best-config **0 of 5**.
 
@@ -56,15 +56,15 @@ Every measured row records the **ClawQL commit** and the **peer product version*
 
 ### Honesty labels (keep on the page)
 
-| Label                             | Meaning                                                                  |
-| --------------------------------- | ------------------------------------------------------------------------ |
-| Scripted, worst-case model        | Always complies; measures gateway stop                                   |
-| Smoke sample                      | n=12 until dozens                                                        |
-| Shared Obsidian vault             | Peers have no built-in vault; equal-arm Memory/ over MCP                 |
-| Same 14 benign                    | Headline X of 14 on every arm; memory-write breakout under table         |
-| Recall answer vs unlabeled poison | Pass = answered 15.00; poison column is separate                         |
-| Platform stamp                    | Obot rows record macOS / mac_mini; Docker VM OK for security outcomes    |
-| Version pins                      | ClawQL commit + peer image/binary/npm on every measured row              |
+| Label                             | Meaning                                                               |
+| --------------------------------- | --------------------------------------------------------------------- |
+| Scripted, worst-case model        | Always complies; measures gateway stop                                |
+| Smoke sample                      | n=12 until dozens                                                     |
+| Shared Obsidian vault             | Peers have no built-in vault; equal-arm Memory/ over MCP              |
+| Same 14 benign                    | Headline X of 14 on every arm; memory-write breakout under table      |
+| Recall answer vs unlabeled poison | Pass = answered 15.00; poison column is separate                      |
+| Platform stamp                    | Obot rows record macOS / mac_mini; Docker VM OK for security outcomes |
+| Version pins                      | ClawQL commit + peer image/binary/npm on every measured row           |
 
 ### Maintainer invite
 
@@ -87,10 +87,10 @@ Hostile `OVERRIDE` / `99.99` content **contaminates** only when surfaced **as tr
 
 Independent research: [Datadog — Jev as a judge](https://securitylabs.datadoghq.com/articles/jev-as-a-judge-how-counterfeit-policy-steers-jev/).
 
-| Arm                                 | Status                                                                                                 |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| ClawQL deterministic                | Measured — source labels + park (smoke **0 of 4**)                                                     |
-| Model-judged defaults / best-config | **Pending** until a real LangChain/Jev (+ JevShield) run on a **public** Datadog-cited set             |
+| Arm                                 | Status                                                                                     |
+| ----------------------------------- | ------------------------------------------------------------------------------------------ |
+| ClawQL deterministic                | Measured — source labels + park (smoke **0 of 4**)                                         |
+| Model-judged defaults / best-config | **Pending** until a real LangChain/Jev (+ JevShield) run on a **public** Datadog-cited set |
 
 No harness stand-in. Until live arms run, **cite Datadog**. See [COUNTERFEIT-POLICY.md](./COUNTERFEIT-POLICY.md).
 
