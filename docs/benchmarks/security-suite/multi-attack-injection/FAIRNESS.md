@@ -32,7 +32,7 @@ Native peer configs · Obot deny precondition · same 14 benign · version pins 
 
 ## Live protocol (anti-cherry-pick)
 
-- **Pre-register** deployment-realistic models (`live-models.json`), including **small open-weight** (`llama-3.1-8b-instruct`, `qwen2.5-7b-instruct`) — *representativeness: deployments commonly run small open models*. Added before remaining runs (recorded in amendments). Publish every result, including all-refuse. **Do not** search for a gullible model until passthrough shows loss.
+- **Pre-register** deployment-realistic models (`live-models.json`), including **small open-weight** (`llama-3.1-8b-instruct`, `qwen2.5-7b-instruct`) — _representativeness: deployments commonly run small open models_. Added before remaining runs (recorded in amendments). Publish every result, including all-refuse. **Do not** search for a gullible model until passthrough shows loss.
 - **Published attack sets** for live hardness: AgentDojo and Datadog’s counterfeit-policy technique ([COUNTERFEIT-POLICY.md](./COUNTERFEIT-POLICY.md)). Self-written n=12 is smoke. When AgentDojo runs, report **its ASR and utility-under-attack** alongside ClawQL grades.
 - **Poison residue:** a model can refuse an injected instruction and still store poisoned text (ordinary summary). Measure where hostile content landed (trusted vs labeled), not only whether the model obeyed.
 
