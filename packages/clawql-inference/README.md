@@ -284,7 +284,12 @@ Subpath: `clawql-inference/plugin` for builtin factories and compose helpers.
 | Variable                                      | Default                      | Purpose                                              |
 | --------------------------------------------- | ---------------------------- | ---------------------------------------------------- |
 | `CLAWQL_INFERENCE_PROVIDERS`                  | all builtins                 | Allowlist provider plugins (comma-separated ids)     |
-| `CLAWQL_INFERENCE_DISABLE_PROVIDERS`          | —                            | Denylist provider plugins                            |
+| `CLAWQL_INFERENCE_DISABLE_PROVIDERS`          | —                            | Denylist provider plugins (also seeds provenance deny for `deepseek`) |
+| `CLAWQL_INFERENCE_PROVENANCE_PROFILE`         | `general`                    | `general` (denylist) or `federal` (allowlist fail-closed) |
+| `CLAWQL_INFERENCE_DENIED_VENDORS`             | —                            | Weight vendors denied after alias resolve (e.g. `deepseek`) |
+| `CLAWQL_INFERENCE_ALLOWED_VENDORS`            | federal defaults             | Allowlist vendors when mode=`allow` / federal profile |
+| `CLAWQL_INFERENCE_ALLOWED_MODELS`             | —                            | Allowlist exact resolved/canonical model ids         |
+| `CLAWQL_INFERENCE_PROVENANCE`                 | auto                         | `0` disables; `1` forces enable; else auto from policy |
 | `OPENAI_API_KEY`                              | —                            | OpenAI chat completions                              |
 | `ANTHROPIC_API_KEY`                           | —                            | Anthropic messages API                               |
 | `OLLAMA_BASE_URL`                             | `http://127.0.0.1:11434`     | Local Ollama runtime                                 |
@@ -317,7 +322,8 @@ Subpath: `clawql-inference/plugin` for builtin factories and compose helpers.
 | `CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED` | off                          | Enable Hermes coordination stub (#562)               |
 | `HERMES_BASE_URL`                             | —                            | Hermes MoA endpoint when coordination enabled        |
 
-Model ids use `provider/model` (e.g. `ollama/phi4`, `anthropic/claude-sonnet-4`).
+Model ids use `provider/model` (e.g. `ollama/phi4`, `anthropic/claude-sonnet-4`).  
+Cheap aliases (`clawql/cheap-chat`, `clawql/code`) default to origin-neutral frugal targets; DeepSeek is opt-in via `clawql/deepseek-chat` or explicit ids. Model provenance gate: [`docs/security/model-provenance-gate.md`](../../docs/security/model-provenance-gate.md).
 
 ## Consumers
 

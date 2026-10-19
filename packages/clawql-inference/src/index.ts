@@ -419,6 +419,38 @@ export {
   type CacheIntent,
 } from "./efficiency/index.js";
 
+export {
+  DEFAULT_MODEL_IDENTITY_TABLE,
+  extractVendorHint,
+  identifyModel,
+  identifyModelEffect,
+  FEDERAL_DEFAULT_ALLOWED_VENDORS,
+  loadModelProvenancePolicy,
+  loadModelProvenancePolicyEffect,
+  ModelProvenancePolicyService,
+  modelProvenancePolicyLiveLayer,
+  ModelProvenanceDeniedError,
+  ModelProvenanceGateService,
+  assertModelProvenanceEffect,
+  assertModelProvenanceFromEnvEffect,
+  evaluateModelProvenanceEffect,
+  isModelProvenanceDeniedError,
+  modelProvenanceGateLiveLayer,
+  ProvenanceGuardedInferenceGateway,
+  withModelProvenance,
+  buildModelProvenanceComplianceReport,
+  buildModelProvenanceComplianceReportEffect,
+  type IdentityEntry,
+  type ModelIdentity,
+  type ModelProvenancePolicy,
+  type ProvenanceMode,
+  type ProvenanceProfile,
+  type ProvenanceDecision,
+  type WithModelProvenanceOptions,
+  type ModelProvenanceComplianceReport,
+  type ProvenanceServedModel,
+} from "./provenance/index.js";
+
 /** Optional context passed to host engines (Wonder / Reflect / Execute). */
 export interface EngineCallContext {
   seedId: string;

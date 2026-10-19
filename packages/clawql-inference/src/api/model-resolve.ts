@@ -58,7 +58,7 @@ export function resolveRequestModel(
     };
   }
 
-  // Catalog aliases (clawql/cheap-chat → deepseek/deepseek-chat) and entries
+  // Catalog aliases (clawql/cheap-chat → origin-neutral frugal target) and entries
   // that remap display ids to upstream model strings.
   const aliased = resolveCatalogAlias(trimmed, catalog);
   const catalogEntry = findCatalogModel(aliased, catalog);

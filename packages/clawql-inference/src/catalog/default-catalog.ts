@@ -29,9 +29,12 @@ export type InferenceModelCatalog = {
 export const DEFAULT_INFERENCE_MODEL_CATALOG: InferenceModelCatalog = {
   version: 1,
   aliases: {
-    "clawql/cheap-chat": "deepseek/deepseek-chat",
+    // Origin-neutral frugal default (Meta weights via Groq). DeepSeek is opt-in only.
+    "clawql/cheap-chat": "groq/llama-3.1-8b-instant",
     "clawql/fast-chat": "groq/llama-3.3-70b-versatile",
-    "clawql/code": "deepseek/deepseek-chat",
+    "clawql/code": "groq/llama-3.1-8b-instant",
+    /** Explicit DeepSeek opt-in — not a default; subject to provenance deny/allowlist. */
+    "clawql/deepseek-chat": "deepseek/deepseek-chat",
     "ornith-1.5-35b-a3b": "mlx/ornith-1.5-35b-a3b",
     "openai/ornith-1.5-35b-a3b": "mlx/ornith-1.5-35b-a3b",
   },

@@ -10,6 +10,12 @@ describe("inference model catalog", () => {
   it("ships BYOK models and clawql aliases", () => {
     expect(DEFAULT_INFERENCE_MODEL_CATALOG.version).toBe(1);
     expect(DEFAULT_INFERENCE_MODEL_CATALOG.aliases["clawql/cheap-chat"]).toBe(
+      "groq/llama-3.1-8b-instant"
+    );
+    expect(DEFAULT_INFERENCE_MODEL_CATALOG.aliases["clawql/code"]).toBe(
+      "groq/llama-3.1-8b-instant"
+    );
+    expect(DEFAULT_INFERENCE_MODEL_CATALOG.aliases["clawql/deepseek-chat"]).toBe(
       "deepseek/deepseek-chat"
     );
     expect(
@@ -18,6 +24,9 @@ describe("inference model catalog", () => {
   });
 
   it("resolves aliases before lookup", () => {
+    expect(resolveCatalogAlias("clawql/cheap-chat", DEFAULT_INFERENCE_MODEL_CATALOG)).toBe(
+      "groq/llama-3.1-8b-instant"
+    );
     expect(resolveCatalogAlias("clawql/fast-chat", DEFAULT_INFERENCE_MODEL_CATALOG)).toBe(
       "groq/llama-3.3-70b-versatile"
     );
