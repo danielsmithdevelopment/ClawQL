@@ -132,9 +132,9 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     howToProve:
       'Tokens: re-pin latest. Governance: ci-executor-peer.sh → results-cells.json.',
     status: 'measured',
-    statusLabel: 'Tokens + cells measured',
+    statusLabel: 'Tokens + cells · resume dominance',
     nextStep:
-      'Tokens/latency measured (v2 β 3.38×). Governance cells live: ClawQL 5/5 · Executor 5/5 (approval pause) · passthrough 2/5 on both cells. Re-pin v2 when stable.',
+      'Tokens/latency measured (v2 β 3.38×). Governance: pause cells tie 5/5; resume_auto_approve ClawQL 5/5 vs Executor 2/5 (model resume accept contaminates). Re-pin v2 when stable.',
   },
   {
     id: 'celld-durability',

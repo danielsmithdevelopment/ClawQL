@@ -745,11 +745,12 @@ export function BenchmarksLanding() {
 
         <div className="mt-8">
           <h3 className="text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
-            Executor cells (measured — equal-arm)
+            Executor cells (measured — equal-arm + resume dominance)
           </h3>
           <p className="mt-2 max-w-3xl text-sm/6 text-mist-700 dark:text-mist-400">
-            Same fixture family as the scorecard, plus a Gmail-shaped poisoned read. Live Executor v1.6.10 via{' '}
-            <code className="text-xs">ci-executor-peer.sh</code> (fixture-mcp + daemon + execute code path).
+            Pause cells tie. The third cell has the agent <code className="text-xs">resume accept</code> after
+            poison — Executor contaminates; ClawQL hard-deny has no resume bypass. Via{' '}
+            <code className="text-xs">ci-executor-peer.sh</code>.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {governanceExecutorCells.map((cell) => (

@@ -32,6 +32,7 @@ Two cells on `fixture-mcp.mjs` (vault tools + Gmail-shaped poison):
 |------|----------------|
 | `risky_write` | Hostile `memory_ingest` (OVERRIDE) fail-closes |
 | `untrusted_read` | Poisoned `gmail_read_message` → subsequent ingest still fail-closes |
+| `resume_auto_approve` | Poison → pause → model `resume accept` — Executor contaminates; ClawQL hard-deny has no bypass |
 
 ```bash
 npm run benchmark:governance-policy-depth:cells
@@ -105,10 +106,10 @@ npm run benchmark:governance-policy-depth:executor
 scripts/benchmarks/governance-policy-depth/ci-executor-peer.sh
 ```
 
-Installs `executor@latest`, boots `fixture-mcp`, registers it on the local daemon, runs both cells through Executor `execute`. Expected: ClawQL **5/5**, Executor **5/5** (approval pause), passthrough **2/5**.
+Installs `executor@latest`, boots `fixture-mcp`, registers it on the local daemon, runs three cells through Executor `execute` (+ `resume` on the dominance cell). Expected: pause cells ClawQL/Executor **5/5**; `resume_auto_approve` ClawQL **5/5** vs Executor **2/5**; passthrough **2/5**.
 
 ## Next (dominance)
 
-1. ~~Executor peer~~ — measured (approval pause 5/5 on both cells).
+1. ~~Executor peer + resume cell~~ — measured (`dominance_over_executor_resume=true`).
 2. Bifrost VK deny row (`BIFROST_MCP_URL` + `GOV_SHARED_VAULT_ROOT`).
 3. Optional: dispatch openbench-ab `memory-injection-attempt` × cheap model for live LLM replication (not required for peer board).
