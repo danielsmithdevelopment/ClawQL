@@ -17,10 +17,10 @@ Record macOS in the result `platform` block. Every other measured arm ran on Lin
 
 ## Status (Mac mini)
 
-| Column | Status | Notes |
-| ------ | ------ | ----- |
-| **Defaults** | **Measured** | **12 of 12** attacks; **14 of 14** benign; recall **pass (15.00)**; unlabeled poison **yes**; `host_os=darwin`, `measured_on=mac_mini` — matches Bifrost/Executor defaults |
-| **Best-config** | **Pending** | Webhook validation API found; deny not yet proven active via precondition |
+| Column          | Status       | Notes                                                                                                                                                                      |
+| --------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Defaults**    | **Measured** | **12 of 12** attacks; **14 of 14** benign; recall **pass (15.00)**; unlabeled poison **yes**; `host_os=darwin`, `measured_on=mac_mini` — matches Bifrost/Executor defaults |
+| **Best-config** | **Pending**  | Webhook validation API found; deny not yet proven active via precondition                                                                                                  |
 
 ## One command
 
