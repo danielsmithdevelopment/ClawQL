@@ -614,7 +614,7 @@ async function main() {
     winChecks: win,
     board_pass,
     verdict: board_pass
-      ? "PASS — ClawQL fail-closes risky write and post-poison ingest; passthrough contaminates on both cells."
+      ? "PASS — ClawQL fail-closes risky write and post-poison ingest; passthrough contaminates; Executor (when measured) approval-pauses without contaminating."
       : "FAIL — see winChecks",
     executorStatus: {
       risky_write: cells.risky_write.find((a) => a.id === "executor"),
