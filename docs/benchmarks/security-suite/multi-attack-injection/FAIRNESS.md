@@ -79,15 +79,26 @@ Default ClawQL labels hostile content instead of blocking it, so the vault stays
 
 Independent research: [Datadog — Jev as a judge](https://securitylabs.datadoghq.com/articles/jev-as-a-judge-how-counterfeit-policy-steers-jev/). A prepended counterfeit policy rewrites labels and taxonomy inside the content a model judge reads — so the judge can be talked out of its own policy.
 
+<<<<<<< HEAD
 | Arm                       | Meaning                                                                      |
 | ------------------------- | ---------------------------------------------------------------------------- |
 | ClawQL deterministic      | Source labels + park — content cannot redefine “trusted”                     |
 | Model-judged (structural) | Judge follows policy-shaped text in untrusted content (failure-mode control) |
 | Model-judged (live)       | LangChain tool-risk / JevShield when wired — else pending                    |
+=======
+| Arm | Status |
+| --- | ------ |
+| ClawQL deterministic | Measured — source labels + park; content cannot redefine “trusted” (smoke **0 of 4**) |
+| Model-judged defaults / best-config | **Pending** until a real LangChain/Jev (+ JevShield best-config) run on a **public** Datadog-cited set |
+
+No harness stand-in that follows policy-shaped text — that fails by construction (same class of error as a deny-tools Executor stand-in). Until live arms run, **cite Datadog** as the peer evidence.
+
+**Live bar:** public-dataset scale + JevShield “data, not instructions” as best-config. See [COUNTERFEIT-POLICY.md](./COUNTERFEIT-POLICY.md).
+>>>>>>> 8e69b600 (fix(security): drop counterfeit-policy stand-in; require live peer bar)
 
 **Page framing:** Datadog showed that model-judged gates can be talked out of their own policy. ClawQL’s gate does not take instructions from the content it judges.
 
-See [COUNTERFEIT-POLICY.md](./COUNTERFEIT-POLICY.md). Decision sites: opt-in flip-rate family `counterfeit_policy` beside paraphrase/reorder; operation resolution stays **automatic reads only**.
+Decision sites: opt-in flip-rate family `counterfeit_policy` beside paraphrase/reorder; operation resolution stays **automatic reads only**.
 
 **Next for a publishable lead:** run Obot on the Mac mini ([MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md)); then `MAI_LIVE=1` (+ harder recall queries). Scripted board is complete once Obot lands.
 

@@ -585,7 +585,7 @@ export function BenchmarksLanding() {
         <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackCounterfeitPolicyNote}</p>
 
         <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
-          Counterfeit-policy cell · Datadog / Jev · model advises, never is the gate
+          Counterfeit-policy cell · Datadog cite · model advises, never is the gate
         </h3>
         <ComparisonTable minWidthClass="min-w-[720px]" className="mt-4">
           <caption className="sr-only">
@@ -594,6 +594,7 @@ export function BenchmarksLanding() {
           <thead>
             <tr>
               <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Column</ComparisonTh>
               <ComparisonTh className={clsx('text-center')}>Status</ComparisonTh>
               <ComparisonTh className={clsx('text-right')}>Attacks taking effect</ComparisonTh>
               <ComparisonTh className={clsx('text-left')}>Note</ComparisonTh>
@@ -616,6 +617,7 @@ export function BenchmarksLanding() {
                 >
                   {row.arm}
                 </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-mist-700 dark:text-mist-400')}>{row.column}</ComparisonTd>
                 <ComparisonTd className={clsx('text-center text-mist-700 dark:text-mist-400')}>
                   {row.status}
                 </ComparisonTd>

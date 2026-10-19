@@ -25,7 +25,7 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     priority: 1,
     title: 'Multi-attack injection suite',
     status: 'scaffolded',
-    why: 'Smoke v4f + counterfeit-policy cell (Datadog/Jev): deterministic vs model-judged. Obot next on Mac mini. Then MAI_LIVE. Not published yet.',
+    why: 'Smoke v4f + counterfeit-policy cell: ClawQL 0/4 measured; model-judged peers pending (cite Datadog, no stand-in). Obot next on Mac mini. Then MAI_LIVE. Not published yet.',
   },
   {
     id: 'approval_integrity',
@@ -111,7 +111,7 @@ export const securitySuiteGroups: readonly SecuritySuiteGroup[] = [
         id: 'counterfeit_policy',
         title: 'Counterfeit-policy vs model judge',
         detail:
-          'Datadog/Jev: prepended policy rewrites taxonomy inside content. Deterministic ClawQL vs model-judged arm on the same attacks — a model advises the gate, never is the gate.',
+          'Datadog/Jev: prepended policy rewrites taxonomy. ClawQL deterministic measured; model-judged peers pending on a public set + JevShield best-config — no harness stand-in. A model advises the gate, never is the gate.',
       },
       {
         id: 'allowed_exfil',

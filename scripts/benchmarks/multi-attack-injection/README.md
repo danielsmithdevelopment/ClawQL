@@ -37,7 +37,7 @@ npm run benchmark:multi-attack-injection:live
 
 Obot equal-arm runbook: [MAC-MINI-OBOT.md](../../../docs/benchmarks/security-suite/multi-attack-injection/MAC-MINI-OBOT.md). Best-config = Obot native webhook filter deny on `memory_ingest` (not deny-tools). Docker Desktop VM is fine for effectuation outcomes.
 
-Counterfeit-policy cell: [COUNTERFEIT-POLICY.md](../../../docs/benchmarks/security-suite/multi-attack-injection/COUNTERFEIT-POLICY.md) — deterministic ClawQL vs model-judged (structural + live pending).
+Counterfeit-policy cell: [COUNTERFEIT-POLICY.md](../../../docs/benchmarks/security-suite/multi-attack-injection/COUNTERFEIT-POLICY.md) — ClawQL deterministic measured; model-judged peers pending (cite Datadog; public-set + JevShield best-config; no stand-in).
 
 ## Publish gate
 
