@@ -3,6 +3,7 @@
 # - smoke: always — ClawQL+Panguard vs passthrough (no secrets, no LLM)
 # - cells: always — Executor-scoped cells without peer URL (ClawQL vs passthrough)
 # - executor-peer: npm i executor + fixture-mcp + daemon (continue-on-error)
+# - bifrost-peer: bifrost-http + vault-mcp allow-all VK (continue-on-error)
 # - obot-peer: Docker Obot fronts vault-mcp (no LLM; continue-on-error if Obot flake)
 #
 # No OpenRouter spend in this workflow (scripted board only).
@@ -110,6 +111,34 @@ jobs:
         with:
           name: governance-policy-depth-cells-executor
           path: docs/benchmarks/governance-policy-depth/results-cells.json
+          if-no-files-found: ignore
+
+  bifrost-peer:
+    name: Bifrost peer (allow-all VK)
+    runs-on: ubuntu-latest
+    needs: smoke
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        run: npm ci --ignore-scripts
+      - name: Bifrost peer board
+        run: |
+          chmod +x scripts/benchmarks/governance-policy-depth/ci-bifrost-peer.sh \
+            scripts/benchmarks/governance-policy-depth/vault-mcp.mjs \
+            scripts/benchmarks/governance-policy-depth/run-board.mjs
+          GOV_OUT=docs/benchmarks/governance-policy-depth/results-bifrost.json \
+            scripts/benchmarks/governance-policy-depth/ci-bifrost-peer.sh
+      - name: Upload Bifrost artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-policy-depth-bifrost
+          path: docs/benchmarks/governance-policy-depth/results-bifrost.json
           if-no-files-found: ignore
 
   obot-peer:

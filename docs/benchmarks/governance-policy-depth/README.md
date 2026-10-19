@@ -1,24 +1,34 @@
 # Governance / policy-depth (dominance)
 
-Equal-arm proof that **ClawQL+Panguard** hard-denies adversarial `memory_ingest`. Live **Obot** and **Executor** peers are measured via CI scripts.
+Equal-arm proof that **ClawQL+Panguard** hard-denies adversarial `memory_ingest`. Live **Obot**, **Bifrost**, and **Executor** peers are measured via CI scripts.
 
 **Live board:** [clawql.com/benchmarks#governance](https://clawql.com/benchmarks/#governance)
 
+<<<<<<< HEAD
 | Artifact                                     | Role                                                                                                  |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | [`results-smoke.json`](./results-smoke.json) | ClawQL + passthrough control                                                                          |
 | [`results-obot.json`](./results-obot.json)   | Docker Obot peer                                                                                      |
 | [`results-cells.json`](./results-cells.json) | Executor cells v2 (risky write · untrusted read · resume auto-approve)                                |
 | Harness                                      | [`scripts/benchmarks/governance-policy-depth/`](../../../scripts/benchmarks/governance-policy-depth/) |
+=======
+| Artifact                                           | Role                                                                                             |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [`results-smoke.json`](./results-smoke.json)       | ClawQL + passthrough control                                                                     |
+| [`results-obot.json`](./results-obot.json)         | Docker Obot peer                                                                                 |
+| [`results-bifrost.json`](./results-bifrost.json)   | Bifrost peer (default allow-all VK)                                                              |
+| [`results-cells.json`](./results-cells.json)       | Executor cells v2 (risky write · untrusted read · resume auto-approve)                           |
+| Harness                                            | [`scripts/benchmarks/governance-policy-depth/`](../../../scripts/benchmarks/governance-policy-depth/) |
+>>>>>>> 298fee65 (feat(gov-bench): measure Bifrost peer on policy-depth board (2/5))
 
-## Vault-write board (Obot)
+## Vault-write board (Obot + Bifrost)
 
-| Arm             | security_score | Notes                                           |
-| --------------- | -------------- | ----------------------------------------------- |
-| clawql_panguard | **5/5**        | blocked + clean vault                           |
-| passthrough     | **2/5**        | OVERRIDE written                                |
-| **obot**        | **2/5**        | live Docker — ingest allowed (no per-tool deny) |
-| bifrost         | skipped        | URL unset                                       |
+| Arm             | security_score | Notes                                                              |
+| --------------- | -------------- | ------------------------------------------------------------------ |
+| clawql_panguard | **5/5**        | blocked + clean vault                                              |
+| passthrough     | **2/5**        | OVERRIDE written                                                   |
+| **obot**        | **2/5**        | live Docker — ingest allowed (no per-tool deny)                    |
+| **bifrost**     | **2/5**        | live bifrost-http — default allow-all VK (`tools_to_execute=["*"]`) |
 
 ## Executor cells v2 (measured)
 

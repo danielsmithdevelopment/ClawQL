@@ -60,11 +60,20 @@ Without a per-tool deny on `memory_ingest`, Obot matches **passthrough** (contam
 
 ## Wire Bifrost
 
-Front the same `vault-mcp` with a Bifrost virtual key. To claim governance win, scope the VK to **deny** `memory_ingest` (or omit it from `tools_to_execute`). `allow_by_default: true` + `tools_to_execute: ["*"]` is the passthrough-equivalent loss.
+```bash
+npm run benchmark:governance-policy-depth:bifrost
+# or
+scripts/benchmarks/governance-policy-depth/ci-bifrost-peer.sh
+```
+
+Boots `vault-mcp`, Bifrost HTTP (`bifrost-http` via `npx @maximhq/bifrost`), registers client `gov_vault` (underscore — hyphens rejected), scopes VK allow-all, runs the board. **Measured default: Bifrost 2/5** (contaminates — same as Obot/passthrough). Client names cannot contain hyphens; private/loopback MCP registration needs `X-Bifrost-Setup-Token`.
+
+To claim a governance *tie*, scope the VK to **deny** `memory_ingest` (omit it from `tools_to_execute` or use `[]`). Manual:
 
 ```bash
 export BIFROST_MCP_URL=http://127.0.0.1:<port>/mcp
 export BIFROST_VK=sk-bf-…
+export GOV_SHARED_VAULT_ROOT=/tmp/gov-bf-shared
 GOV_OUT=docs/benchmarks/governance-policy-depth/results-bifrost.json \
   node scripts/benchmarks/governance-policy-depth/run-board.mjs
 ```
@@ -94,6 +103,8 @@ Workflow: `.github/workflows/governance-policy-depth.yml`
 |-----|------|-------|
 | `smoke` | No | ClawQL 5/5 vs passthrough (vault-write board) |
 | `cells` | No | Executor cells — ClawQL 5/5 vs passthrough on both cells |
+| `executor-peer` | No | `ci-executor-peer.sh` (`continue-on-error`) |
+| `bifrost-peer` | No | `ci-bifrost-peer.sh` allow-all VK (`continue-on-error`) |
 | `obot-peer` | No | Docker Obot + `ci-obot-peer.sh` (`continue-on-error`) |
 
 **Cheap-model promise:** this workflow spends **$0** on OpenRouter. Live LLM security cells stay on `openbench-ab.yml` dispatch with `task=memory-injection-attempt` and a model from [`cheap-model-allowlist.json`](./cheap-model-allowlist.json) (default `openrouter/deepseek/deepseek-chat`). Frontier models are rejected by `assert-cheap-model.mjs` for `memory-injection-attempt` / `policy-deny-execute`.
@@ -111,5 +122,6 @@ Installs `executor@latest`, boots `fixture-mcp`, registers it on the local daemo
 ## Next (dominance)
 
 1. ~~Executor peer + resume cell~~ — measured (`dominance_over_executor_resume=true`).
-2. Bifrost VK deny row (`BIFROST_MCP_URL` + `GOV_SHARED_VAULT_ROOT`).
-3. Optional: dispatch openbench-ab `memory-injection-attempt` × cheap model for live LLM replication (not required for peer board).
+2. ~~Bifrost default allow-all peer~~ — measured 2/5 (`results-bifrost.json`). Optional maintainer VK-deny tie row.
+3. TrueFoundry / agentgateway governance rows when credentials / binary pin available.
+4. Optional: dispatch openbench-ab `memory-injection-attempt` × cheap model for live LLM replication (not required for peer board).

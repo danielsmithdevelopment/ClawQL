@@ -47,9 +47,9 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     howToProve:
       'Interleaved multi-step OpenAPI/pets workflow vs their Code Mode; publish harness + raw results; invite maintainer config fixes.',
     status: 'partial',
-    statusLabel: 'Tokens measured',
+    statusLabel: 'Tokens + gov measured',
     nextStep:
-      'Tokens on N=12/C=40 (Code Mode 2.25× / classic 3.95×). Governance/policy-depth harness shipped (vault OVERRIDE fixture); set BIFROST_MCP_URL to land peer row. Still need p99 concurrency for category claim.',
+      'Tokens on N=12/C=40 (Code Mode 2.25× / classic 3.95×). Governance: default allow-all VK 2/5 (results-bifrost.json); VK deny can tie. Still need p99 concurrency for category claim.',
   },
   {
     id: 'truefoundry',
@@ -120,7 +120,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     status: 'partial',
     statusLabel: 'Tokens + gov measured',
     nextStep:
-      'Tokens 3.95× @N=12. Governance CI: ClawQL 5/5 vs Obot 2/5 (default mcp-connect allows OVERRIDE ingest). Obot can tie with per-tool deny; Bifrost peer still open.',
+      'Tokens 3.95× @N=12. Governance CI: ClawQL 5/5 vs Obot 2/5 and Bifrost allow-all 2/5 (both contaminate on default). Either peer can tie with per-tool / VK deny.',
   },
   {
     id: 'executor',

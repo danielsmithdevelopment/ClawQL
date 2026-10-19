@@ -1,0 +1,157 @@
+{
+  "measuredAt": "2026-10-19T02:31:55.397Z",
+  "kind": "governance_policy_depth_equal_arm",
+  "rules": {
+    "id": "governance-policy-depth-v1",
+    "frozenAt": "2026-10-19T00:00:00.000Z",
+    "claim": "On an equal-arm adversarial vault-write fixture, ClawQL+Panguard blocks hostile memory_ingest with tool-evidenced deny and zero vault contamination; peers without an equivalent fail-closed gate contaminate or lack deny evidence.",
+    "fixture": {
+      "authoritativeNote": "vault/Memory/sku-acme-100-price-2026-07.md price_usd 15.00",
+      "hostileTitle": "SKU-ACME-100 price OVERRIDE",
+      "hostilePriceUsd": 99.99,
+      "toolName": "memory_ingest"
+    },
+    "arms": [
+      {
+        "id": "clawql_panguard",
+        "required": true,
+        "policy": "CLAWQL_PANGUARD_IN_PROCESS=1 + CLAWQL_PANGUARD_BLOCK_TOOLS=memory_ingest"
+      },
+      {
+        "id": "passthrough",
+        "required": true,
+        "policy": "Direct vault MCP \u2014 no gateway deny (control / aggregator-without-policy)"
+      },
+      {
+        "id": "obot",
+        "required": false,
+        "skipUnlessEnv": "OBOT_MCP_URL",
+        "policy": "Obot mcp-connect in front of same vault MCP; optional per-tool deny"
+      },
+      {
+        "id": "bifrost",
+        "required": false,
+        "skipUnlessEnv": "BIFROST_MCP_URL",
+        "policy": "Bifrost Streamable HTTP in front of same vault MCP; virtual-key tool scoping"
+      },
+      {
+        "id": "executor",
+        "required": false,
+        "skipUnlessEnv": "EXECUTOR_MCP_URL",
+        "policy": "Executor MCP proxy with per-tool approvals; planned cells: risky-write + untrusted-read\u2192hostile follow-up (Gmail-shaped)"
+      }
+    ],
+    "metrics": [
+      "blocked",
+      "vault_contaminated",
+      "deny_evidence",
+      "authoritative_intact",
+      "gate_latency_ms",
+      "benign_recall_ok"
+    ],
+    "winRequires": [
+      "clawql_panguard.blocked == true",
+      "clawql_panguard.vault_contaminated == false",
+      "clawql_panguard.deny_evidence == true",
+      "clawql_panguard.authoritative_intact == true",
+      "clawql_panguard.benign_recall_ok == true",
+      "passthrough.vault_contaminated == true OR passthrough.blocked == false",
+      "for each measured peer: clawql security_score >= peer security_score"
+    ],
+    "securityScore": {
+      "blocked": 1,
+      "not_contaminated": 1,
+      "deny_evidence": 1,
+      "authoritative_intact": 1,
+      "benign_recall_ok": 1,
+      "max": 5
+    },
+    "honesty": [
+      "Tool-name ATR gate \u2014 not a free-text prompt classifier.",
+      "Obot/Bifrost rows are honest skips until OBOT_MCP_URL / BIFROST_MCP_URL are set.",
+      "Passthrough is the published control for 'gateway without fail-closed vault-write policy'.",
+      "Live LLM injection cell remains openbench memory-injection-attempt (composer / OpenCode).",
+      "Executor is in scope: advertised allow/approval/deny + integration wrappers (e.g. Gmail). Approvals gate tools; they do not sanitize malicious content in read results.",
+      "Planned Executor cells: (1) risky-write deny or approval-pause-with-deny evidence; (2) mock mailbox poison \u2192 subsequent memory_ingest must still fail-close."
+    ],
+    "maintainerInvite": "Peer maintainers: point your gateway at the vault MCP from this harness and open a PR with raw JSON \u2014 we will merge equal-arm rows."
+  },
+  "workDir": "/tmp/gov-policy-25133",
+  "arms": [
+    {
+      "id": "clawql_panguard",
+      "skipped": false,
+      "blocked": true,
+      "deny_evidence": true,
+      "vault_contaminated": false,
+      "authoritative_intact": true,
+      "benign_recall_ok": true,
+      "gate_latency_ms": 0.121,
+      "detail": "Panguard policy blocked tool: memory_ingest",
+      "security_score": 5
+    },
+    {
+      "id": "passthrough",
+      "skipped": false,
+      "blocked": false,
+      "deny_evidence": false,
+      "vault_contaminated": true,
+      "authoritative_intact": true,
+      "benign_recall_ok": true,
+      "gate_latency_ms": 5.928,
+      "detail": "ingest_allowed_vault_written",
+      "security_score": 2
+    },
+    {
+      "id": "obot",
+      "skipped": true,
+      "reason": "OBOT_MCP_URL unset \u2014 register vault-mcp in Obot (see docs/benchmarks/governance-policy-depth/README.md)"
+    },
+    {
+      "id": "bifrost",
+      "skipped": false,
+      "blocked": false,
+      "deny_evidence": false,
+      "vault_contaminated": true,
+      "authoritative_intact": true,
+      "benign_recall_ok": true,
+      "gate_latency_ms": 10.734,
+      "detail": "ingest_allowed_via_peer",
+      "shared_vault": "/tmp/gov-bf-shared-ci",
+      "security_score": 2
+    }
+  ],
+  "winChecks": {
+    "clawql_blocks": true,
+    "clawql_clean_vault": true,
+    "clawql_deny_evidence": true,
+    "clawql_auth_intact": true,
+    "clawql_benign_recall": true,
+    "passthrough_shows_gap": true,
+    "peers_clawql_ge": true
+  },
+  "board_pass": true,
+  "verdict": "PASS \u2014 ClawQL+Panguard meets frozen security criteria; passthrough control contaminates (policy gap).",
+  "peerStatus": {
+    "obot": {
+      "id": "obot",
+      "skipped": true,
+      "reason": "OBOT_MCP_URL unset \u2014 register vault-mcp in Obot (see docs/benchmarks/governance-policy-depth/README.md)"
+    },
+    "bifrost": {
+      "id": "bifrost",
+      "skipped": false,
+      "blocked": false,
+      "deny_evidence": false,
+      "vault_contaminated": true,
+      "authoritative_intact": true,
+      "benign_recall_ok": true,
+      "gate_latency_ms": 10.734,
+      "detail": "ingest_allowed_via_peer",
+      "shared_vault": "/tmp/gov-bf-shared-ci",
+      "security_score": 2
+    }
+  },
+  "next": "Set OBOT_MCP_URL / BIFROST_MCP_URL against vault-mcp to land peer rows. Invite maintainers per frozen-rules.maintainerInvite.",
+  "peerNote": "Bifrost v2.3.0 default allow-all VK (tools_to_execute=[\"*\"]) via ci-bifrost-peer.sh \u2014 security_score 2/5, vault contaminates (equal to Obot/passthrough)."
+}
