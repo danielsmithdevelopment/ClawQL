@@ -25,7 +25,7 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     priority: 1,
     title: 'Multi-attack injection suite',
     status: 'scaffolded',
-    why: 'Smoke: 12 attacks, scripted worst-case. Defaults 12/12 (honest gap). Configured via taint/park/data-flow. Peers pending. Not published yet.',
+    why: 'Smoke v3: 0/12 + persistent injection blocked + benign rate 1.0 (label memory / park overwrites). Peers pending. Not published yet.',
   },
   {
     id: 'approval_integrity',

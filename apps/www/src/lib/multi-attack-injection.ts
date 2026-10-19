@@ -11,23 +11,23 @@ export const multiAttackSummary =
   'Twelve planted attacks across email, ticket, doc, and webhook. Scripted worst-case model always complies — this measures whether the gateway stops the resulting action, not whether a real model would fall for it. Sample size: smoke until the suite grows to dozens. Benign workflows are scored beside attacks.'
 
 export const multiAttackHeadlineResult =
-  'After native-tool governance: ClawQL defaults stop the twelve attacks via park/IFC (not a tool-name deny). Report benign completion cost alongside — “0 of 12” alone is not the claim.'
+  'Smoke v3: 0 of 12 trusted attacks, persistent injection blocked, and every benign workflow completes without a human — park overwrites, label untrusted→memory, block untrusted→external (not a tool-name deny).'
 
 export const multiAttackMechanisms = [
   {
     id: 'untrusted_read_taint',
     title: 'Untrusted-read tainting',
-    detail: 'Reading planted channel content taints the session so later writes fail closed.',
+    detail: 'Reading planted channel content taints the session; later external/privileged sinks fail closed.',
   },
   {
     id: 'park_destructive_write',
     title: 'Park destructive writes',
-    detail: 'Destructive writes park for a person — no side effect until approval.',
+    detail: 'Overwrites of existing facts park for a person; clean appends proceed.',
   },
   {
     id: 'data_flow',
     title: 'Data-flow rules',
-    detail: 'Tainted labels may not flow to vault (or other) sinks.',
+    detail: 'Untrusted labels may not flow to external sinks; vault writes are allowed with an untrusted provenance label.',
   },
 ] as const
 
@@ -47,7 +47,7 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     column: 'defaults',
     status: 'measured',
     effectuated: '0 / 12',
-    note: 'Native gate parks memory_ingest — not BLOCK_TOOLS',
+    note: 'Park overwrites; label memory; block external — not BLOCK_TOOLS',
     highlight: true,
   },
   {
@@ -62,7 +62,7 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     column: 'best_config',
     status: 'measured',
     effectuated: '0 / 12',
-    note: 'Taint-first + park + data-flow',
+    note: 'Taint-first + overwrite-park + labelable memory',
   },
   {
     arm: 'Obot default',
@@ -109,7 +109,7 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
 ] as const
 
 export const multiAttackPublishGate =
-  'Draft until peers are measured on this corpus. Always publish attack rate beside benign completed-without-human.'
+  'Draft until peers are measured on this corpus. Publish only when attack rate, persistent-injection, and benign completion rate are all honest — not “secure because it blocks everything.”'
 
 export const multiAttackBenignSummary =
-  'Benign suite (defaults): recall + search complete without a human; clean memory_ingest parks for approval; email-then-summary is blocked by taint/data-flow.'
+  'Benign suite (defaults): 10/10 complete without a human — clean appends and email→labeled summary go through; only overwrites of authoritative facts park.'

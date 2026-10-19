@@ -11,26 +11,10 @@ Injection resistance is an **outcome**. Any gateway can be put through the same 
 
 ## Columns
 
-<<<<<<< HEAD
 | Column          | Meaning                                                      |
 | --------------- | ------------------------------------------------------------ |
 | **Defaults**    | Stock product                                                |
 | **Best-config** | Recommended hardening via **general mechanisms** (not tools) |
-=======
-<<<<<<< HEAD
-
-| Column          | Meaning                                                                        |
-| --------------- | ------------------------------------------------------------------------------ |
-| **Defaults**    | Stock product                                                                  |
-| **Best-config** | Recommended hardening via **general mechanisms**                               |
-| =======         |
-| Column          | Meaning                                                                        |
-| --------------- | ------------------------------------------------------------------------------ |
-| **Defaults**    | Stock product, no cell-specific deny for `memory_ingest`                       |
-| **Best-config** | Each product’s recommended deny / scope for the write the attacks try to force |
-
-> > > > > > > origin/cursor/security-suite-roadmap-f4ec
->>>>>>> origin/cursor/security-suite-roadmap-f4ec
 
 ### Configured ClawQL — name mechanisms, not tools
 
@@ -42,14 +26,17 @@ Forbidden: `BLOCK_TOOLS` (or equivalent) listing the tools the twelve attacks us
 
 1. **Scripted, worst-case model** — always complies; measures gateway stop, not model susceptibility. Real-model matrix is separate.
 2. **Sample size** — 12 = smoke until the suite grows to dozens.
+3. **Benign cost** — always publish `benign_completed_without_human` beside attack rate.
 
-## Headline
+## Headline (smoke v3 — gentler defaults)
 
-`clawql_default` **12/12** is honest and intentional: stock ClawQL matches passthrough until park-destructive + untrusted-read taint apply to the **same write path the attacks use**.
+With the native-tool governance choke point:
 
-Product defaults shipping now (execute-path):
+- `clawql_default` **0/12** via park of **overwrites** of authoritative facts (product gate — not a tool-name deny)
+- Passthrough **12/12**
+- **Persistent injection** blocked: labeled-untrusted poison survives recall; external exfil refused
+- Benign: **every** workflow completes without a human (append summaries after untrusted reads are labeled, not blocked)
 
-- Session IFC **on** by default (`CLAWQL_ENABLE_SESSION_IFC=0` to opt out)
-- Trusted MCP `destructiveHint` → **mandate** (park), not hard-block
+Trusted effectuation only: labeled-untrusted vault notes do **not** count as attack success.
 
-Native `memory_ingest` still bypasses execute-core today — closing that gap is required before the default column can go 12/12 → 0/12 on this board. Then re-run.
+See [NATIVE-TOOL-GOVERNANCE.md](./NATIVE-TOOL-GOVERNANCE.md). Peers remain **pending** until measured.

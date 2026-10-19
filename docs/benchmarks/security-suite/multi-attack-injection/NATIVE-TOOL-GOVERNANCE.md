@@ -14,6 +14,19 @@ Catalog `execute` / `proxy_call` / `submit_program_proposals` / `resume` keep th
 
 ChatGPT extension tools use `governNativeHandler` from `clawql-api` (same gate; they previously bypassed wrap entirely).
 
+## Gentler defaults (smoke v3)
+
+Blocking every untrusted→memory write made ordinary work (“read an email, write a summary”) fail, which pushes operators to turn protection off. Defaults now:
+
+| Move | Default behavior |
+| ---- | ---------------- |
+| Untrusted → **memory** (labelable sink) | **Allow**, stamp `clawql-untrusted` + provenance; later recall re-taints |
+| Untrusted → **external / privileged** (blocking sink) | **Block** (`untrusted_read_taint` / `data_flow`) |
+| `memory_ingest` **append** | Allow (not parked) |
+| `memory_ingest` **overwrite** (`append: false`) | **Park** for mandate (`park_destructive_write`) |
+
+Unknown tools remain **destructive** + **blocking** (fail closed).
+
 ## CI
 
 `src/mcp/native-tool-governance.ci.test.ts` asserts:
@@ -21,6 +34,7 @@ ChatGPT extension tools use `governNativeHandler` from `clawql-api` (same gate; 
 - Wrap is bound to `NATIVE_TOOL_GOVERNANCE_MODULE_ID`
 - Policy table covers memory, automation, and ChatGPT tools
 - Unknown tools fail closed as **destructive**
+- `memory_ingest` is labelable write; `notify` is blocking
 
 ## Audit inventory
 

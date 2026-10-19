@@ -35,12 +35,15 @@ export async function makeProductInvoke(sessionId, env) {
     );
   }
 
+  const PASSTHROUGH_SMOKE = new Set(["search", "cache", "audit"]);
+
   return {
     async invoke(toolName, args) {
-      if (toolName === "search") {
-        return { blocked: false, detail: "search_passthrough_smoke" };
+      if (PASSTHROUGH_SMOKE.has(toolName)) {
+        return { blocked: false, detail: `${toolName}_passthrough_smoke` };
       }
-      if (toolName === "memory_recall") {
+
+      if (toolName === "skills_list" || toolName === "skills_get") {
         const block = await api.gateNativeToolBeforeInvoke({
           toolName,
           args,
@@ -62,16 +65,57 @@ export async function makeProductInvoke(sessionId, env) {
           sessionId,
           env,
         });
+        return { blocked: false, detail: `${toolName}_allowed` };
+      }
+
+      if (toolName === "memory_recall" || toolName === "read_around") {
+        const block = await api.gateNativeToolBeforeInvoke({
+          toolName,
+          args,
+          sessionId,
+          env,
+        });
+        if (block) {
+          const body = JSON.parse(block.content[0].text);
+          return {
+            blocked: true,
+            status: body.status,
+            mechanism: body.mechanism,
+            detail: body.reason,
+          };
+        }
+        const plantedText =
+          typeof args?.__plantedRecallText === "string" ? args.__plantedRecallText : "";
+        api.accumulateNativeToolReadAfterSuccess({
+          toolName,
+          success: true,
+          sessionId,
+          env,
+          result: plantedText
+            ? { content: [{ type: "text", text: plantedText }] }
+            : undefined,
+        });
         return { blocked: false, detail: "recall_allowed" };
       }
 
+      // Mutating tools — mutate a copy so stamps are visible to the harness.
+      const argsCopy =
+        args && typeof args === "object" && !Array.isArray(args)
+          ? { ...args }
+          : args;
       const block = await api.gateNativeToolBeforeInvoke({
         toolName,
-        args,
+        args: argsCopy,
         sessionId,
         env,
       });
-      if (!block) return { blocked: false, detail: "allowed" };
+      if (!block) {
+        return {
+          blocked: false,
+          detail: "allowed",
+          args: argsCopy && typeof argsCopy === "object" ? argsCopy : undefined,
+        };
+      }
       const body = JSON.parse(block.content[0].text);
       return {
         blocked: true,
@@ -79,10 +123,28 @@ export async function makeProductInvoke(sessionId, env) {
         mechanism: body.mechanism,
         detail: body.reason ?? body.status,
         executionId: body.executionId,
+        args: argsCopy && typeof argsCopy === "object" ? argsCopy : undefined,
       };
     },
     taint(channel) {
       api.taintSessionFromUntrustedChannel(channel, sessionId, env);
+    },
+    resetSession() {
+      if (typeof api.clearAllSessionLabelsSync === "function") {
+        api.clearAllSessionLabelsSync();
+      }
+    },
+    peekLabels() {
+      if (typeof api.peekSessionLabels === "function") {
+        return api.peekSessionLabels(sessionId, env);
+      }
+      return [];
+    },
+    taintFromNote(text) {
+      if (typeof api.taintSessionFromVaultNoteText === "function") {
+        return api.taintSessionFromVaultNoteText(text, sessionId, env);
+      }
+      return [];
     },
   };
 }
