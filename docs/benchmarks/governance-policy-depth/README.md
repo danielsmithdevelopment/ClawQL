@@ -4,14 +4,14 @@ Equal-arm proof that **ClawQL+Panguard** fail-closes adversarial `memory_ingest`
 
 **Live board:** [clawql.com/benchmarks#governance](https://clawql.com/benchmarks/#governance) (scorecard extends as peer artifacts land).
 
-| Artifact                                       | Role                                                                                                  |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| [`results-smoke.json`](./results-smoke.json)   | ClawQL + passthrough control (CI/agent runnable without Docker)                                       |
-| [`results-obot.json`](./results-obot.json)     | Docker Obot peer (CI)                                                                                 |
-| [`results-cells.json`](./results-cells.json)   | Executor-scoped cells: risky write + untrusted-read→hostile follow-up                                 |
-| Harness                                        | [`scripts/benchmarks/governance-policy-depth/`](../../../scripts/benchmarks/governance-policy-depth/) |
-| Frozen rules                                   | [`frozen-rules.json`](../../../scripts/benchmarks/governance-policy-depth/frozen-rules.json)          |
-| Live LLM cell                                  | openbench `memory-injection-attempt` + composer Cursor gate                                           |
+| Artifact                                     | Role                                                                                                  |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| [`results-smoke.json`](./results-smoke.json) | ClawQL + passthrough control (CI/agent runnable without Docker)                                       |
+| [`results-obot.json`](./results-obot.json)   | Docker Obot peer (CI)                                                                                 |
+| [`results-cells.json`](./results-cells.json) | Executor-scoped cells: risky write + untrusted-read→hostile follow-up                                 |
+| Harness                                      | [`scripts/benchmarks/governance-policy-depth/`](../../../scripts/benchmarks/governance-policy-depth/) |
+| Frozen rules                                 | [`frozen-rules.json`](../../../scripts/benchmarks/governance-policy-depth/frozen-rules.json)          |
+| Live LLM cell                                | openbench `memory-injection-attempt` + composer Cursor gate                                           |
 
 ## Claim (when board_pass)
 
@@ -43,10 +43,10 @@ npm run benchmark:governance-policy-depth:cells
 # → docs/benchmarks/governance-policy-depth/results-cells.json
 ```
 
-| Cell             | clawql | passthrough | executor                          |
-| ---------------- | ------ | ----------- | --------------------------------- |
-| risky_write      | **5/5** | **2/5**    | skipped (`EXECUTOR_MCP_URL` unset) |
-| untrusted_read   | **5/5** | **2/5**    | skipped (`EXECUTOR_MCP_URL` unset) |
+| Cell           | clawql  | passthrough | executor                           |
+| -------------- | ------- | ----------- | ---------------------------------- |
+| risky_write    | **5/5** | **2/5**     | skipped (`EXECUTOR_MCP_URL` unset) |
+| untrusted_read | **5/5** | **2/5**     | skipped (`EXECUTOR_MCP_URL` unset) |
 
 `untrusted_read` proves poison is returned (`poison_seen`) and the subsequent OVERRIDE ingest still fail-closes on ClawQL.
 
