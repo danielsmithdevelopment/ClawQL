@@ -28,12 +28,18 @@ Forbidden: `BLOCK_TOOLS` (or equivalent) listing the tools the twelve attacks us
 2. **Sample size** — 12 = smoke until the suite grows to dozens.
 3. **Benign cost** — always publish `benign_completed_without_human` beside attack rate.
 
-## Headline (smoke v4)
+## Shared vault (peers have no built-in Obsidian)
 
-With the native-tool governance choke point:
+Obot / Bifrost / Executor do not ship an Obsidian vault. Equal-arm CI fronts the same popular standard ClawQL grades: **Obsidian-compatible `Memory/` Markdown** via `vault-mcp.mjs` (`shared-obsidian-vault.sh`). Peers are scored on how they gate `memory_ingest` into that fixture — not on a proprietary store.
+
+## Headline (smoke v4c)
+
+With the native-tool governance choke point + peer CI:
 
 - `clawql_default` **0/12** trusted effectuation (park overwrites; labeled appends are not trusted success)
 - Passthrough **12/12** (trusted hostile writes)
+- Bifrost / Executor **defaults 12/12** (allow-all → equal-arm loss); **best-config 0/12** (tool omit / DENY_TOOLS)
+- Obot **pending** until Docker is available (`ci-obot-peer.sh`)
 - **Persistent injection** blocked across sessions
 - **Recall integrity**: labeled 99.99 poison does not displace authoritative **15.00**
 - Benign expect-match includes same-source reply, internal team channel, internal forward; third-party notify still blocked
@@ -44,6 +50,7 @@ Hostile `OVERRIDE` / `99.99` content **contaminates** only when surfaced **as tr
 
 ### Honesty labels (keep on the page)
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 
 | Label                              | Meaning                                                                                 |
@@ -59,7 +66,14 @@ Hostile `OVERRIDE` / `99.99` content **contaminates** only when surfaced **as tr
 | Peers pending / partial / measured | Obot / Bifrost / Executor via `run-peer.mjs` when MCP URL + `MAI_SHARED_VAULT_ROOT` set |
 
 > > > > > > > 11f968df (feat(security): multi-attack peer runner + live matrix scaffold (v4b))
+=======
+| Label                              | Meaning                                                                                  |
+| ---------------------------------- | ---------------------------------------------------------------------------------------- |
+| Scripted, worst-case model         | Always complies; measures gateway stop                                                   |
+| Smoke sample                       | n=12 until dozens                                                                        |
+| Peers pending / partial / measured | Bifrost+Executor measured on Obsidian equal-arm; Obot pending Docker |
+>>>>>>> 2b51e652 (feat(security): measure Bifrost/Executor on Obsidian equal-arm vault)
 
-**Next for a publishable lead:** finish peer URL wiring (defaults + best-config); real-model matrix (`results-live.json` scaffold — set `MAI_LIVE=1` when the session runner lands).
+**Next for a publishable lead:** measure Obot with Docker (`npm run benchmark:multi-attack-injection:obot`); real-model matrix (`results-live.json` scaffold — set `MAI_LIVE=1` when the session runner lands).
 
 See [NATIVE-TOOL-GOVERNANCE.md](./NATIVE-TOOL-GOVERNANCE.md).

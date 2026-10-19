@@ -18,6 +18,7 @@
  */
 import {
   cpSync,
+  existsSync,
   mkdirSync,
   readFileSync,
   rmSync,
@@ -38,6 +39,32 @@ import { runPeerArm } from "./run-peer.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../../..");
+const PEER_RESULTS_DIR =
+  process.env.MAI_PEER_RESULTS_DIR?.trim() ||
+  join(
+    ROOT,
+    "docs/benchmarks/security-suite/multi-attack-injection/peer-results"
+  );
+
+/**
+ * Prefer on-disk peer CI artifacts (ci-*-peer.sh) over live env, so the smoke
+ * board can merge measured Bifrost/Executor/Obot rows without leaving gateways up.
+ */
+function loadPeerResultFile(peer, column) {
+  const id = `${peer}_${column === "defaults" ? "default" : "best_config"}`;
+  const path = join(PEER_RESULTS_DIR, `${id}.json`);
+  if (!existsSync(path)) return null;
+  try {
+    const row = JSON.parse(readFileSync(path, "utf8"));
+    if (row && row.id === id && row.status) {
+      return { ...row, from_peer_results: path };
+    }
+  } catch {
+    /* ignore corrupt */
+  }
+  return null;
+}
+
 const CORPUS_DIR = join(
   ROOT,
   "benchmarks/security-suite/multi-attack-injection/corpus"
@@ -389,7 +416,8 @@ async function main() {
 
   for (const peer of ["obot", "bifrost", "executor"]) {
     for (const column of ["defaults", "best_config"]) {
-      const arm = await runPeerArm(peer, column);
+      const fromFile = loadPeerResultFile(peer, column);
+      const arm = fromFile || (await runPeerArm(peer, column));
       // Drop internal exit hints from board artifact
       const row = { ...arm };
       delete row.exitHint;
@@ -431,9 +459,14 @@ async function main() {
   const recall_integrity = gradeRecallIntegrity(integrityVault);
 
   const measured = arms.filter((a) => a.status === "measured");
+  // Peer rows are equal-arm observations — board_pass is ClawQL + control + cells.
+  const requiredMeasured = measured.filter((a) =>
+    ["clawql_default", "clawql_configured", "passthrough"].includes(a.id)
+  );
   const benign_expect_ok = benign.expect_match_rate === 1;
   const board_pass =
-    measured.every((a) => a.smoke_ok) &&
+    requiredMeasured.every((a) => a.smoke_ok) &&
+    requiredMeasured.length === 3 &&
     benign_expect_ok &&
     persistent.blocked === true &&
     recall_integrity.pass === true;
@@ -462,17 +495,19 @@ async function main() {
     peers_pending: peersPending,
     peers_incomplete: peersIncomplete,
     next: [
-      peersMeasured < peerArms.length
-        ? "Wire remaining peer MCP URLs + MAI_SHARED_VAULT_ROOT for defaults + best-config"
+      peersPending > 0
+        ? "Measure remaining peers (Obot needs Docker: npm run benchmark:multi-attack-injection:obot)"
         : "Peers measured — publish equal-arm table",
       "Real-model matrix — npm run benchmark:multi-attack-injection:live (scaffold until MAI_LIVE=1)",
     ],
+    shared_vault:
+      "Obsidian-compatible Memory/ via vault-mcp (peers have no built-in vault)",
     note: "Keep these labels on the page until peers + live models land. Do not market as a lead yet.",
   };
 
   const report = {
     measuredAt: new Date().toISOString(),
-    kind: "multi_attack_injection_smoke_v4b",
+    kind: "multi_attack_injection_smoke_v4c",
     sample: {
       attacks_planted: MANIFEST.attacks.length,
       label: "smoke",

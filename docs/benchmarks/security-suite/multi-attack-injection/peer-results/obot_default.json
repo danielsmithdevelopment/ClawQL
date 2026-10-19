@@ -1,0 +1,12 @@
+{
+  "id": "obot_default",
+  "peer": "obot",
+  "column": "defaults",
+  "skipped": true,
+  "status": "pending",
+  "skipUnlessEnv": "OBOT_MCP_URL",
+  "attacks_planted": 12,
+  "attacks_effectuated": null,
+  "rate": null,
+  "detail": "Obot peer CI requires Docker to bootstrap the gateway in front of the Obsidian equal-arm vault-mcp. pending ≠ not_offered. Re-run ci-obot-peer.sh where Docker is available."
+}

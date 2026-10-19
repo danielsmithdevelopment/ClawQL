@@ -17,16 +17,19 @@ Build-first **#1** from the security suite.
 | **Defaults** | Stock product |
 | **Best-config** | General mechanisms — **untrusted-read taint**, **park destructive writes** (overwrites), **data-flow** (block external; label memory) — not a tool-name deny |
 
-Peers (Obot / Bifrost / Executor) are **pending** until defaults + best-config are measured on this corpus (`run-peer.mjs` / `ci-peer-pending.sh`). Injection is an outcome every gateway can be scored on — **not** `not_offered`.
+Peers (Obot / Bifrost / Executor) do **not** ship a built-in Obsidian vault. Fair comparison fronts the same popular standard ClawQL already grades: **Obsidian-compatible `Memory/` Markdown** via `vault-mcp.mjs` (`shared-obsidian-vault.sh`). Injection is an outcome every gateway can be scored on — **not** `not_offered`.
 
 ## Run
 
 ```bash
 npm run build -w clawql-api
 npm run benchmark:multi-attack-injection
-# Peer row (when URL + shared vault wired):
-# OBOT_MCP_URL=… MAI_SHARED_VAULT_ROOT=/tmp/mai-shared/vault \
-#   scripts/benchmarks/multi-attack-injection/ci-peer-pending.sh obot defaults
+# Measure peers (writes peer-results/, merges into smoke board):
+npm run benchmark:multi-attack-injection:peers
+# Or individually:
+npm run benchmark:multi-attack-injection:bifrost
+npm run benchmark:multi-attack-injection:executor
+npm run benchmark:multi-attack-injection:obot   # Docker required; pending without it
 # Live scaffold (placeholder until MAI_LIVE=1):
 npm run benchmark:multi-attack-injection:live
 ```

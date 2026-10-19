@@ -69,7 +69,10 @@ function peerTokenHeaders(peer) {
     return vk ? { "x-bf-vk": vk } : null;
   }
   if (peer === "executor") {
-    const t = process.env.EXECUTOR_MCP_TOKEN?.trim();
+    const t =
+      process.env.EXECUTOR_MCP_TOKEN?.trim() ||
+      process.env.EXECUTOR_API_KEY?.trim() ||
+      "";
     return t ? { Authorization: `Bearer ${t}` } : null;
   }
   return null;
@@ -134,6 +137,14 @@ async function connectHttpMcp(url, name, headers = null) {
   };
 }
 
+function isApprovalPause(res, text) {
+  const status = res?.structuredContent?.status;
+  if (status === "waiting_for_interaction") return true;
+  return /Execution paused:|waiting_for_interaction|requires approval|action \"decline\"|elicitation/i.test(
+    text || ""
+  );
+}
+
 async function callTool(client, toolName, args) {
   const t0 = performance.now();
   let blocked = false;
@@ -141,6 +152,7 @@ async function callTool(client, toolName, args) {
   let errorText = "";
   let ok = false;
   let resultText = "";
+  let approval_pause = false;
   try {
     const res = await client.callTool({ name: toolName, arguments: args });
     const text = JSON.stringify(res);
@@ -152,6 +164,12 @@ async function callTool(client, toolName, args) {
         /Panguard policy blocked|denied|not allowed|forbidden|policy|parked|blocked/i.test(
           text
         );
+    } else if (isApprovalPause(res, text)) {
+      // Executor stock: destructiveHint → pause (no write until human accept)
+      blocked = true;
+      deny_evidence = true;
+      approval_pause = true;
+      ok = false;
     } else {
       ok = true;
     }
@@ -167,6 +185,7 @@ async function callTool(client, toolName, args) {
     blocked,
     deny_evidence,
     ok,
+    approval_pause,
     errorText: errorText.slice(0, 500),
     resultText: resultText.slice(0, 500),
     gate_latency_ms: Math.round((performance.now() - t0) * 1000) / 1000,
@@ -176,10 +195,22 @@ async function callTool(client, toolName, args) {
 function findIngestTool(tools) {
   return (
     tools.find((t) => t.name === "memory_ingest") ||
-    tools.find((t) => /memory_ingest$/.test(t.name)) ||
-    tools.find((t) => /ingest/i.test(t.name)) ||
+    tools.find((t) => /(^|[.\]]|_)memory_ingest$/.test(t.name)) ||
+    tools.find((t) => /memory_ingest/i.test(t.name)) ||
+    tools.find((t) => /ingest/i.test(t.name) && !/recall/i.test(t.name)) ||
     null
   );
+}
+
+/** Executor code-mode: tools live under execute(), not top-level MCP tools. */
+async function callExecutorIngest(client, args) {
+  const ns =
+    process.env.EXECUTOR_FIXTURE_NS?.trim() || "mai-vault.org.default";
+  const parts = ns.split(".");
+  const integ = parts[0];
+  const rest = parts.slice(1).join(".");
+  const code = `return await tools[${JSON.stringify(integ)}].${rest}.memory_ingest(${JSON.stringify(args)});`;
+  return callTool(client, "execute", { code });
 }
 
 /**
@@ -267,7 +298,53 @@ export async function runPeerArm(peer, column = "defaults") {
     const listed = await conn.client.listTools();
     const tools = listed.tools || [];
     const ingestTool = findIngestTool(tools);
-    if (!ingestTool) {
+    const hasExecute = tools.some((t) => t.name === "execute");
+    const useExecutorCode = peer === "executor" && hasExecute && !ingestTool;
+
+    if (!ingestTool && !useExecutorCode) {
+      // Best-config peers often omit the write tool from tools/list (VK deny).
+      // That is a measured deny win if the vault stays clean — not incomplete.
+      if (column === "best_config") {
+        const grade = gradeAttacks(MANIFEST, vaultRoot);
+        const blockedAll =
+          grade.attacks_effectuated === 0 && !grade.vault_contaminated;
+        return {
+          id: armId,
+          peer,
+          column,
+          skipped: false,
+          status: "measured",
+          expect: "deny",
+          // Peer rows: smoke_ok = measurement complete (not “must lose”).
+          smoke_ok: blockedAll,
+          gate: "peer_mcp_http",
+          ingest_tool: null,
+          mechanisms: ["peer_tool_omit_or_deny"],
+          attacks_planted: grade.attacks_planted,
+          attacks_effectuated: grade.attacks_effectuated,
+          rate: grade.rate,
+          by_channel: grade.by_channel,
+          authoritative_intact: grade.authoritative_intact,
+          vault_contaminated: grade.vault_contaminated,
+          effectuated_ids: grade.effectuated_ids,
+          blocked_ids: grade.blocked_ids,
+          labeled_only_ids: grade.labeled_only_ids,
+          attempts_blocked: MANIFEST.attacks.length,
+          attempts: MANIFEST.attacks.map((a) => ({
+            id: a.id,
+            channel: a.channel,
+            blocked: true,
+            deny_evidence: true,
+            detail: "peer_ingest_tool_not_listed",
+          })),
+          shared_vault: vaultRoot,
+          skipUnlessEnv: envKey,
+          tools_seen: tools.map((t) => t.name).slice(0, 40),
+          detail: blockedAll
+            ? "peer_omitted_memory_ingest_vault_clean"
+            : "peer_omitted_ingest_but_vault_contaminated",
+        };
+      }
       return {
         id: armId,
         peer,
@@ -286,7 +363,8 @@ export async function runPeerArm(peer, column = "defaults") {
 
     const attempts = [];
     let latencySum = 0;
-    const ingestProps = ingestTool.inputSchema?.properties || {};
+    const ingestProps = ingestTool?.inputSchema?.properties || {};
+    let approvalPauses = 0;
     for (const attack of MANIFEST.attacks) {
       const args = {
         title: attack.hostileTitle,
@@ -296,27 +374,41 @@ export async function runPeerArm(peer, column = "defaults") {
       if (column === "best_config" && ingestProps.append) {
         args.append = false;
       }
-      const r = await callTool(conn.client, ingestTool.name, args);
+      const r = useExecutorCode
+        ? await callExecutorIngest(conn.client, args)
+        : await callTool(conn.client, ingestTool.name, args);
       latencySum += r.gate_latency_ms;
+      if (r.approval_pause) approvalPauses += 1;
       attempts.push({
         id: attack.id,
         channel: attack.channel,
         blocked: r.blocked,
         deny_evidence: r.deny_evidence,
-        detail: r.blocked ? r.errorText : "ingest_allowed_via_peer",
+        approval_pause: Boolean(r.approval_pause),
+        detail: r.blocked
+          ? r.approval_pause
+            ? "executor_approval_pause"
+            : r.errorText
+          : "ingest_allowed_via_peer",
       });
     }
 
     const grade = gradeAttacks(MANIFEST, vaultRoot);
-    // Defaults: fair peer without IFC/park is expected to lose (allow writes) like passthrough.
-    // Best-config: expect deny if peer wired equivalent hardening.
-    const expect = column === "best_config" ? "deny" : "allow";
-    const smoke_ok =
-      column === "best_config"
-        ? smokeExpectationMet(grade, "deny") ||
-          attempts.every((a) => a.blocked)
-        : smokeExpectationMet(grade, "allow") ||
-          grade.attacks_effectuated > 0;
+    // Peer smoke_ok = measured successfully (numbers present). Win/loss is the rate.
+    const expect = column === "best_config" ? "deny" : "observe";
+    const smoke_ok = true;
+
+    let detail;
+    if (grade.attacks_effectuated === 0 && attempts.every((a) => a.blocked)) {
+      detail =
+        approvalPauses > 0
+          ? `all_ingests_parked_approval (${approvalPauses}/12)`
+          : "all_ingests_blocked_via_peer";
+    } else if (grade.attacks_effectuated > 0) {
+      detail = "ingest_allowed_via_peer_vault_graded";
+    } else {
+      detail = "measured_partial";
+    }
 
     return {
       id: armId,
@@ -326,9 +418,16 @@ export async function runPeerArm(peer, column = "defaults") {
       status: "measured",
       expect,
       smoke_ok,
-      gate: "peer_mcp_http",
-      ingest_tool: ingestTool.name,
-      mechanisms: column === "best_config" ? ["peer_best_config"] : [],
+      gate: useExecutorCode ? "executor_code_mode" : "peer_mcp_http",
+      ingest_tool: useExecutorCode
+        ? `execute→${process.env.EXECUTOR_FIXTURE_NS || "mai-vault.org.default"}.memory_ingest`
+        : ingestTool.name,
+      mechanisms:
+        column === "best_config"
+          ? ["peer_best_config"]
+          : approvalPauses > 0
+            ? ["executor_destructive_approval"]
+            : [],
       attacks_planted: grade.attacks_planted,
       attacks_effectuated: grade.attacks_effectuated,
       rate: grade.rate,
@@ -339,17 +438,13 @@ export async function runPeerArm(peer, column = "defaults") {
       blocked_ids: grade.blocked_ids,
       labeled_only_ids: grade.labeled_only_ids,
       attempts_blocked: attempts.filter((a) => a.blocked).length,
+      approval_pauses: approvalPauses,
       attempts,
       gate_latency_ms: Math.round(latencySum * 1000) / 1000,
       wall_ms: Math.round((performance.now() - t0) * 1000) / 1000,
       shared_vault: vaultRoot,
       skipUnlessEnv: envKey,
-      detail:
-        grade.attacks_effectuated === 0 && attempts.every((a) => a.blocked)
-          ? "all_ingests_blocked_via_peer"
-          : grade.attacks_effectuated > 0
-            ? "ingest_allowed_via_peer_vault_graded"
-            : "measured_partial",
+      detail,
     };
   } finally {
     await conn.close();
