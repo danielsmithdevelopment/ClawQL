@@ -193,21 +193,37 @@ mai_seed_shared_vault "$SHARED"
 unset OBOT_MCP_URL_DENY || true
 node "$HARNESS/run-peer.mjs" obot defaults | tee "$RESULTS_DIR/obot_default.json"
 
-# --- Best-config: register Obot native webhook filter denying memory_ingest ---
+# --- Best-config: Obot native mcp-webhook-validations deny on memory_ingest ---
+# Mac mini discovery: /api/mcp-filters (etc.) → 403. Correct create:
+#   POST /api/mcp-webhook-validations
+#   selectors: [{ method: "tools/call", identifiers: ["memory_ingest"] }]
+# Obot wraps the URL in a containerized system MCP adapter. HTTP 200 with
+# configured=false (or a remeasure that still effectuates) must stay pending.
 FILTER_URL="http://${HOST_IP}:${FILTER_PORT}/webhook"
 FILTER_REGISTERED=0
-echo "== register Obot webhook filter deny memory_ingest url=$FILTER_URL =="
-# Try common Obot API shapes; succeed if any returns 2xx with an id.
+FILTER_CONFIGURED=0
+FILTER_PATH_USED=""
+echo "== register Obot webhook validation deny memory_ingest url=$FILTER_URL =="
+
+# Preferred path first (Mac mini–verified), then older guesses.
 for path in \
+  "/api/mcp-webhook-validations" \
   "/api/mcp-filters" \
   "/api/filters" \
   "/api/gateway/filters" \
   "/api/mcp-gateway/filters"
 do
-  RESP="$(curl -sS -w '\n%{http_code}' -X POST "http://127.0.0.1:${OBOT_PORT}${path}" \
-    -H "Authorization: Bearer $TOKEN" \
-    -H "Content-Type: application/json" \
-    -d "{
+  if [ "$path" = "/api/mcp-webhook-validations" ]; then
+    PAYLOAD="{
+      \"name\": \"mai-deny-memory-ingest\",
+      \"url\": \"${FILTER_URL}\",
+      \"secret\": \"${FILTER_SECRET}\",
+      \"selectors\": [
+        { \"method\": \"tools/call\", \"identifiers\": [\"memory_ingest\"] }
+      ]
+    }"
+  else
+    PAYLOAD="{
       \"name\": \"mai-deny-memory-ingest\",
       \"url\": \"${FILTER_URL}\",
       \"secret\": \"${FILTER_SECRET}\",
@@ -215,39 +231,65 @@ do
         \"mcpToolCallMethods\": [\"tools/call\"],
         \"mcpToolNames\": [\"memory_ingest\"]
       }
-    }" 2>/dev/null || echo -e '\n000')"
+    }"
+  fi
+  RESP="$(curl -sS -w '\n%{http_code}' -X POST "http://127.0.0.1:${OBOT_PORT}${path}" \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "$PAYLOAD" 2>/dev/null || echo -e '\n000')"
   CODE="$(printf '%s' "$RESP" | tail -n1)"
   BODY="$(printf '%s' "$RESP" | sed '$d')"
   echo "POST ${path} → HTTP ${CODE}"
-  echo "$BODY" | head -c 400
+  echo "$BODY" | head -c 500
   echo
   if [[ "$CODE" =~ ^2 ]]; then
     FILTER_REGISTERED=1
-    echo "filter registered via ${path}"
+    FILTER_PATH_USED="$path"
+    CONFIGURED_FLAG="$(printf '%s' "$BODY" | python3 -c '
+import json,sys
+try:
+  d=json.load(sys.stdin)
+except Exception:
+  d={}
+v=d.get("configured")
+if v is True or str(v).lower()=="true":
+  print("1")
+elif v is False or str(v).lower()=="false":
+  print("0")
+else:
+  print("unknown")
+' 2>/dev/null || echo "unknown")"
+    if [ "$CONFIGURED_FLAG" = "1" ]; then
+      FILTER_CONFIGURED=1
+    fi
+    echo "webhook validation posted via ${path} configured_flag=${CONFIGURED_FLAG}"
     break
   fi
 done
 
 if [ "$FILTER_REGISTERED" -eq 1 ] || [ -n "${OBOT_MCP_URL_DENY:-}" ]; then
-  echo "== measure obot best_config (native webhook filter) =="
+  echo "== measure obot best_config (native webhook validation) =="
   mai_seed_shared_vault "$SHARED"
   export OBOT_MCP_URL_DENY="${OBOT_MCP_URL_DENY:-$CONNECT_URL}"
   unset OBOT_MCP_URL || true
   node "$HARNESS/run-peer.mjs" obot best_config | tee "$RESULTS_DIR/obot_best_config.json"
 
-  # Honesty: if filter registration claimed success but attacks still effectuated, pending
   EFFECTUATED="$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d.get("attacks_effectuated"))' \
     "$RESULTS_DIR/obot_best_config.json" 2>/dev/null || echo "")"
-  if [ "$FILTER_REGISTERED" -eq 1 ] && [ "$EFFECTUATED" != "0" ] && [ "$EFFECTUATED" != "null" ] && [ -n "$EFFECTUATED" ]; then
-    echo "ci-obot-peer: filter registered but effectuated=${EFFECTUATED} — rewriting best_config pending" >&2
+  # Honesty: only keep a measured best_config when effectuated is exactly 0.
+  # configured=false or still-effectuating means the system MCP adapter is not live.
+  if [ "$EFFECTUATED" != "0" ]; then
+    echo "ci-obot-peer: best_config not live (effectuated=${EFFECTUATED} configured=${FILTER_CONFIGURED} path=${FILTER_PATH_USED:-none}) — rewriting pending" >&2
     write_pending obot_best_config best_config OBOT_MCP_URL_DENY \
-      "Obot webhook filter was posted but did not stop trusted effectuation (effectuated=${EFFECTUATED}). Confirm filter UI/API for this Obot version; do not attribute a deny-tools proxy. pending ≠ not_offered."
+      "Defaults measured on ${HOST_LABEL} (${HOST_OS}, ${MEASURED_ON:-unset}). POST ${FILTER_PATH_USED:-unknown} returned HTTP 2xx but attacks still effectuated (${EFFECTUATED}). Obot wraps the webhook in a containerized system MCP adapter — configure that adapter until tools/call memory_ingest is denied, then re-run. pending ≠ not_offered. Do not attribute a deny-tools proxy."
+  elif [ "$FILTER_CONFIGURED" -eq 0 ] && [ -z "${OBOT_MCP_URL_DENY_FORCE:-}" ]; then
+    echo "ci-obot-peer: effectuated=0 but API reported configured=false — keeping measured score (deny observed)" >&2
   fi
 else
-  echo "ci-obot-peer: could not register filter via API — writing pending best_config" >&2
-  echo "  Manual: in Obot UI, add HTTP webhook filter → ${FILTER_URL} (secret=${FILTER_SECRET}), selector tools/call memory_ingest; then OBOT_MCP_URL_DENY=\$CONNECT_URL re-run." >&2
+  echo "ci-obot-peer: could not register webhook validation via API — writing pending best_config" >&2
+  echo "  Manual: POST /api/mcp-webhook-validations → ${FILTER_URL} (secret=${FILTER_SECRET}), selectors tools/call memory_ingest; configure system MCP adapter; then OBOT_MCP_URL_DENY=\$CONNECT_URL re-run." >&2
   write_pending obot_best_config best_config OBOT_MCP_URL_DENY \
-    "Defaults measured on ${HOST_LABEL}. Best-config needs Obot native webhook filter deny on memory_ingest (filter helper listening at ${FILTER_URL}). API registration failed for this Obot build — configure filter in UI then set OBOT_MCP_URL_DENY. pending ≠ not_offered. Do not use deny-tools-mcp."
+    "Defaults measured on ${HOST_LABEL}. Best-config needs Obot native mcp-webhook-validations deny on memory_ingest (helper at ${FILTER_URL}) with the system MCP adapter configured. pending ≠ not_offered. Do not use deny-tools-mcp."
 fi
 
 echo "wrote $RESULTS_DIR/obot_*.json"

@@ -5,7 +5,7 @@
 | Label             | Use when                                                                        |
 | ----------------- | ------------------------------------------------------------------------------- |
 | **`not_offered`** | Product never claims the capability (e.g. signed approvals with a security key) |
-| **`pending`**     | Outcome is measurable but not yet run (e.g. Obot until Docker / Mac mini)       |
+| **`pending`**     | Outcome is measurable but not yet run (e.g. Obot best-config until webhook adapter is live) |
 
 Injection resistance is an **outcome**. Any gateway can be put through the same twelve (then dozens of) attacks. Marking peers `not_offered` hides a measurable result.
 
@@ -53,7 +53,7 @@ Memory-write breakout: ClawQL **5 of 5**; Bifrost/Executor best-config **0 of 5*
 - `clawql_default` **0/12** trusted effectuation + **14/14** benign expect-match (park overwrites; labeled appends are not trusted success)
 - Passthrough **12/12** (trusted hostile writes)
 - Bifrost / Executor **defaults 12/12** (allow-all → equal-arm loss); **best-config 0/12** via **native** omit / `policies.block` — benign **9 of 14**; memory-write breakout **0 of 5**
-- Obot **pending** until measured on the **Mac mini** (`npm run benchmark:multi-attack-injection:obot` — see [MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md)). Docker Desktop’s Linux VM is fine for this board (attack effectuation, not performance). Results record `platform.host_os=darwin`.
+- Obot **defaults 12/12** measured on the **Mac mini** (`platform.host_os=darwin`, `measured_on=mac_mini`; Docker Desktop VM fine for effectuation) — benign **14 of 14**; recall **pass (15.00)**; unlabeled poison **yes**. **Best-config pending**: `POST /api/mcp-webhook-validations` returned 200 with `configured=false` (system MCP adapter not live); remeasure still 12/12 — not scored. See [MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md).
 - **Persistent injection** blocked across sessions
 - **Recall answer** (smoke query): after attacks, does recall still answer **15.00**? Peers **pass** that question. **Unlabeled poison** is a separate column (true for peer defaults; already counted as contamination). Harder queries that make poison rank first ship with `MAI_LIVE=1`.
 
@@ -72,8 +72,8 @@ Default ClawQL labels hostile content instead of blocking it, so the vault stays
 | Shared Obsidian vault              | Peers have no built-in vault; equal-arm Memory/ over MCP         |
 | Same 14 benign                     | Headline X of 14 on every arm; memory-write breakout under table |
 | Recall answer vs unlabeled poison  | Pass = answered 15.00; poison column is separate                 |
-| Peers pending / partial / measured | Bifrost+Executor on Linux; Obot on Mac mini when measured        |
-| Platform stamp                     | Obot results record macOS; Docker VM OK for security outcomes    |
+| Peers pending / partial / measured | Bifrost+Executor on Linux; Obot defaults on macOS; Obot best-config pending |
+| Platform stamp                     | Obot results record macOS / mac_mini; Docker VM OK for security outcomes |
 
 ## Counterfeit-policy cell (Datadog / Jev)
 
@@ -92,6 +92,6 @@ No harness stand-in that follows policy-shaped text — that fails by constructi
 
 Decision sites: opt-in flip-rate family `counterfeit_policy` beside paraphrase/reorder; operation resolution stays **automatic reads only**.
 
-**Next for a publishable lead:** run Obot on the Mac mini ([MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md)); then `MAI_LIVE=1` (+ harder recall queries). Scripted board is complete once Obot lands.
+**Next for a publishable lead:** finish Obot **best-config** with a live native webhook validation adapter ([MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md)); then `MAI_LIVE=1` (+ harder recall queries).
 
 See [NATIVE-TOOL-GOVERNANCE.md](./NATIVE-TOOL-GOVERNANCE.md).

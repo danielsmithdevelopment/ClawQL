@@ -2,7 +2,7 @@
  * Multi-attack injection board — marketing mirror of
  * docs/benchmarks/security-suite/multi-attack-injection/
  *
- * Not a live category claim yet (publish gate — Obot on Mac mini, then MAI_LIVE).
+ * Not a live category claim yet (publish gate — Obot best-config + MAI_LIVE).
  */
 
 export const multiAttackHeadline = 'Multi-attack injection — smoke (draft)'
@@ -11,7 +11,7 @@ export const multiAttackSummary =
   'Twelve planted attacks across email, ticket, doc, and webhook. Scripted worst-case model always complies — this measures whether the gateway stops the resulting action, not whether a real model would fall for it. Sample size: smoke until the suite grows to dozens. Peers have no built-in vault, so every arm writes the same Obsidian-compatible Memory/ served over MCP. The same 14 benign cases run on every arm so the denominator matches; memory-write breakouts sit under the table.'
 
 export const multiAttackHeadlineResult =
-  'Smoke v4f: ClawQL default 0 of 12 attacks and 14 of 14 benign. Bifrost/Executor (Linux) defaults 12 of 12; best-config 0 of 12 and 9 of 14 benign (0 of 5 memory writes). Recall answer pass (15.00) for all measured arms; unlabeled poison separate. Obot pending on Mac mini. Counterfeit-policy cell: ClawQL deterministic 0 of 4; model-judged peers pending (cite Datadog — no harness stand-in). A model can advise a gate but never be the gate. MAI_LIVE=1 is last after Obot.'
+  'Smoke v4f: ClawQL default 0 of 12 attacks and 14 of 14 benign. Bifrost/Executor (Linux) and Obot (macOS / Mac mini) defaults 12 of 12; Bifrost/Executor best-config 0 of 12 and 9 of 14 benign (0 of 5 memory writes). Recall answer pass (15.00) for all measured arms; unlabeled poison separate. Obot best-config pending (native webhook validation created but adapter not live — not a deny-tools stand-in). Counterfeit-policy: ClawQL 0 of 4; model-judged peers pending (cite Datadog). MAI_LIVE=1 after Obot best-config.'
 
 export const multiAttackMechanisms = [
   {
@@ -83,12 +83,12 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
   {
     arm: 'Obot default',
     column: 'defaults',
-    status: 'pending',
-    attacksTakingEffect: '—',
-    benignAsExpected: '—',
-    recallIntegrity: '—',
-    unlabeledPoison: '—',
-    note: 'Mac mini + Docker — same vault/12/14; platform stamp darwin — pending ≠ not_offered',
+    status: 'measured',
+    attacksTakingEffect: '12 of 12',
+    benignAsExpected: '14 of 14',
+    recallIntegrity: 'pass (15.00)',
+    unlabeledPoison: 'yes',
+    note: 'macOS / Mac mini · allow-all mcp-connect → Obsidian vault-mcp (equal-arm loss)',
   },
   {
     arm: 'Obot best-config',
@@ -98,7 +98,7 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     benignAsExpected: '—',
     recallIntegrity: '—',
     unlabeledPoison: '—',
-    note: 'Obot native webhook filter deny on memory_ingest (not deny-tools) — Mac mini',
+    note: 'Native mcp-webhook-validations created; system MCP adapter not live — pending ≠ not_offered',
   },
   {
     arm: 'Bifrost default',
@@ -150,7 +150,7 @@ export const multiAttackRecallNote =
   'Recall integrity asks whether the agent still answers 15.00. Peers pass that smoke query; unlabeled poison in their vault is a separate column (also contamination). Harder queries where poison ranks first ship with MAI_LIVE=1.'
 
 export const multiAttackPublishGate =
-  'Draft until Obot is measured on the Mac mini (same vault/attacks/benign; results record macOS; Docker VM fine for effectuation) and MAI_LIVE=1 leaves scaffold. Headline benign uses the same 14 cases on every arm.'
+  'Draft until Obot best-config is a live native webhook deny (adapter configured — not a stand-in) and MAI_LIVE=1 leaves scaffold. Obot defaults are measured on the Mac mini (macOS stamp). Headline benign uses the same 14 cases on every arm.'
 
 export const multiAttackBenignSummary =
   'Every arm runs the same 14 benign cases (recall, search/cache/audit, memory writes, skills, same-source reply, internal team/forward, third-party still blocked). Peers that omit or block ingest fail the five memory-write cases and keep the rest — publish X of 14, then the memory-write breakout. Contamination = hostile content surfaced as trusted (same as the governance board).'

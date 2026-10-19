@@ -608,13 +608,13 @@ async function main() {
     peers_incomplete: peersIncomplete,
     next: [
       peersPending > 0
-        ? "Measure Obot on the Mac mini (npm run benchmark:multi-attack-injection:obot — Docker Desktop VM OK for effectuation; stamp host_os=darwin)"
+        ? "Finish Obot best-config with a live native mcp-webhook-validations adapter (see MAC-MINI-OBOT.md) — defaults already measured on mac_mini"
         : "Peers measured — publish equal-arm table with attacks+benign",
       "Real-model matrix — MAI_LIVE=1 (+ harder recall queries) last step before publish",
     ],
     shared_vault:
       "Peers have no built-in vault — every arm writes the same Obsidian-compatible Memory/ served over MCP (vault-mcp).",
-    note: "Same 14 benign on every arm. Recall integrity = answered 15.00; unlabeled poison is a separate column (also vault_contaminated). Harder queries → MAI_LIVE.",
+    note: "Same 14 benign on every arm. Recall integrity = answered 15.00; unlabeled poison is a separate column (also vault_contaminated). Harder queries → MAI_LIVE. Obot defaults measured on macOS / mac_mini.",
   };
 
   const report = {
