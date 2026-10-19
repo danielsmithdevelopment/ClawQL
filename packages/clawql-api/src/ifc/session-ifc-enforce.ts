@@ -1,7 +1,8 @@
 /**
  * Execute-path session IFC gate (ADR 0015 § Information flow / Session-level labeling).
  *
- * Gated by `CLAWQL_ENABLE_SESSION_IFC=1` (default off for safe rollout).
+ * Default **on** (product default: taint after untrusted reads). Opt out with
+ * `CLAWQL_ENABLE_SESSION_IFC=0`.
  */
 
 import { Effect } from "effect";
@@ -25,11 +26,21 @@ function envTruthy(v: string | undefined): boolean {
   return t === "1" || t === "true" || t === "yes";
 }
 
-/** Whether session IFC is active. Default off; set `CLAWQL_ENABLE_SESSION_IFC=1`. */
+/**
+ * Whether session IFC is active.
+ * Unset → enabled; `0` / `false` / `no` → disabled.
+ */
+export function sessionIfcEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  const raw = env.CLAWQL_ENABLE_SESSION_IFC;
+  if (raw === undefined) return true;
+  return envTruthy(raw);
+}
+
+/** Effect wrapper for {@link sessionIfcEnabled}. */
 export function sessionIfcEnabledEffect(
   env: NodeJS.ProcessEnv = process.env
 ): Effect.Effect<boolean> {
-  return Effect.sync(() => envTruthy(env.CLAWQL_ENABLE_SESSION_IFC));
+  return Effect.sync(() => sessionIfcEnabled(env));
 }
 
 /**
@@ -98,7 +109,7 @@ export function checkSessionIfcWriteSync(opts: {
   readonly destLabels?: ReadonlySet<Label>;
 }): SessionIfcBlock | null {
   const env = opts.env ?? process.env;
-  if (!envTruthy(env.CLAWQL_ENABLE_SESSION_IFC)) return null;
+  if (!sessionIfcEnabled(env)) return null;
   if (isReadOperation(opts.operation)) return null;
 
   const sessionKey = resolveSessionLabelKey(opts.sessionId, env);
@@ -119,7 +130,7 @@ export function checkSessionIfcWriteSync(opts: {
     sessionLabels: [...sessionLabels].sort(),
     ...(programLabels ? { programLabels: [...programLabels].sort() } : {}),
     destLabels: [...destLabels].sort(),
-    fix: "Use a destination that accepts these labels, clear the session, or disable CLAWQL_ENABLE_SESSION_IFC (not recommended in production).",
+    fix: "Use a destination that accepts these labels, clear the session, or set CLAWQL_ENABLE_SESSION_IFC=0 (not recommended in production).",
   };
 }
 
@@ -134,7 +145,7 @@ export function accumulateSessionIfcReadSync(opts: {
   readonly env?: NodeJS.ProcessEnv;
 }): ReadonlySet<Label> | null {
   const env = opts.env ?? process.env;
-  if (!envTruthy(env.CLAWQL_ENABLE_SESSION_IFC)) return null;
+  if (!sessionIfcEnabled(env)) return null;
   if (!opts.success) return null;
   if (!isReadOperation(opts.operation)) return null;
 

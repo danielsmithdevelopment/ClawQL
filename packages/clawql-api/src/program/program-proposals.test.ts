@@ -64,10 +64,11 @@ const OPS: Record<string, MockOp> = {
   "slack.post": { policy: "mandate", specLabel: "slack" },
 };
 
+/** Default env opts out of product-default session IFC; IFC tests pass IFC_ON. */
 const run = (
   plan: unknown,
   host: ProgramHost,
-  env: NodeJS.ProcessEnv = {}
+  env: NodeJS.ProcessEnv = { CLAWQL_ENABLE_SESSION_IFC: "0" }
 ): Promise<ExecuteProgramResult> =>
   Effect.runPromise(
     runProgramEffect({ source: JSON.stringify(plan) }, host, env).pipe(
@@ -396,9 +397,9 @@ describe("execute_program — session IFC on proposals (ADR 0015 § Program memo
     expect(proposalsOf(configured).map((p) => p.status)).toEqual(["ready", "ready"]);
   });
 
-  it("is off unless CLAWQL_ENABLE_SESSION_IFC=1", async () => {
+  it("opts out when CLAWQL_ENABLE_SESSION_IFC=0", async () => {
     const { host } = proposalHost(OPS, { "crm.contract.get": { summary: "s" } });
-    const out = await run(laundering, host, {});
+    const out = await run(laundering, host, { CLAWQL_ENABLE_SESSION_IFC: "0" });
     expect(proposalsOf(out).map((p) => p.status)).toEqual(["ready", "ready"]);
   });
 

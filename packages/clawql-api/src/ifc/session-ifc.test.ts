@@ -142,8 +142,8 @@ describe("session IFC enforce", () => {
     expect(block).toBeNull();
   });
 
-  it("no-ops when flag off", () => {
-    delete process.env.CLAWQL_ENABLE_SESSION_IFC;
+  it("no-ops when CLAWQL_ENABLE_SESSION_IFC=0", () => {
+    process.env.CLAWQL_ENABLE_SESSION_IFC = "0";
     process.env.CLAWQL_SESSION_ID = "ifc-test-off";
     expect(
       accumulateSessionIfcReadSync({
@@ -152,5 +152,17 @@ describe("session IFC enforce", () => {
       })
     ).toBeNull();
     expect(checkSessionIfcWriteSync({ operation: writeOp("slack") })).toBeNull();
+  });
+
+  it("defaults on when CLAWQL_ENABLE_SESSION_IFC is unset", () => {
+    delete process.env.CLAWQL_ENABLE_SESSION_IFC;
+    process.env.CLAWQL_SESSION_ID = "ifc-test-default-on";
+    const afterRead = accumulateSessionIfcReadSync({
+      operation: readOp("github-internal"),
+      success: true,
+    });
+    expect(afterRead).toBeTruthy();
+    const block = checkSessionIfcWriteSync({ operation: writeOp("slack") });
+    expect(block).not.toBeNull();
   });
 });

@@ -146,7 +146,7 @@ describe("classifyOperationRisk defaults by source kind", () => {
     });
     expect(
       classifyOperationRisk({ operation: trustedDest, trustedMcpSourceIds: trusted })
-    ).toMatchObject({ policy: "block", source: "mcp-annotation" });
+    ).toMatchObject({ policy: "mandate", source: "mcp-annotation" });
   });
 });
 

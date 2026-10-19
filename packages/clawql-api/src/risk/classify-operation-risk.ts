@@ -68,10 +68,12 @@ function classifyMcp(op: Operation, trustedMcpSourceIds: ReadonlySet<string>): O
   const destructive = op.riskHints?.mcpDestructiveHint === true;
   const readOnly = op.riskHints?.mcpReadOnlyHint === true;
   if (destructive) {
+    // Product default: park for a person (mandate), not hard-block.
+    // Hard block hid the human-approval path buyers expect for destructive writes.
     return risk(
-      "block",
+      "mandate",
       "mcp-annotation",
-      `Trusted MCP source "${sourceId}" marked destructiveHint`
+      `Trusted MCP source "${sourceId}" marked destructiveHint → park for approval`
     );
   }
   if (readOnly) {

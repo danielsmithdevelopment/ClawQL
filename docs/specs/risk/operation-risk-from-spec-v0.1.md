@@ -17,7 +17,7 @@ Every imported operation gets a **risk** classification at load time. Agents see
 | OpenAPI / Discovery    | `GET`, `HEAD`                                      | `POST`, `PUT`, `PATCH`           | `DELETE`          |
 | GraphQL                | `QUERY`                                            | `MUTATION`                       | —                 |
 | gRPC                   | methods with `idempotency_level = NO_SIDE_EFFECTS` | all other unary RPCs             | —                 |
-| MCP (trusted only)     | `readOnlyHint`                                     | no hint / ambiguous              | `destructiveHint` |
+| MCP (trusted only)     | `readOnlyHint`                                     | no hint / ambiguous / `destructiveHint` (park) | —                 |
 | MCP (untrusted)        | —                                                  | **always** (annotations ignored) | —                 |
 | CLI / WebMCP / unknown | —                                                  | **always**                       | —                 |
 
