@@ -31,14 +31,16 @@ npm run benchmark:multi-attack-injection:bifrost
 npm run benchmark:multi-attack-injection:executor
 npm run benchmark:multi-attack-injection:obot   # Mac mini + Docker; stamps host_os=darwin
 npm run benchmark:multi-attack-injection:counterfeit-policy  # Datadog/Jev cell
-# Live scaffold (placeholder until MAI_LIVE=1):
-npm run benchmark:multi-attack-injection:live
+# Live cell (hard-recall vault grading; optional model matrix):
+MAI_LIVE=1 npm run benchmark:multi-attack-injection:live
+# With models requested but no session transport → status=incomplete (never fabricates):
+# MAI_LIVE=1 MAI_LIVE_MODELS=composer-2.5-fast npm run benchmark:multi-attack-injection:live
 ```
 
-Obot equal-arm runbook: [MAC-MINI-OBOT.md](../../../docs/benchmarks/security-suite/multi-attack-injection/MAC-MINI-OBOT.md). Best-config = Obot native webhook filter deny on `memory_ingest` (not deny-tools). Docker Desktop VM is fine for effectuation outcomes.
+Obot equal-arm runbook: [MAC-MINI-OBOT.md](../../../docs/benchmarks/security-suite/multi-attack-injection/MAC-MINI-OBOT.md). Best-config = Obot native webhook filter deny on `memory_ingest` (not deny-tools). Precondition: one refused `memory_ingest` outside the corpus, then one 12+14 run. Docker Desktop VM is fine for effectuation outcomes.
 
 Counterfeit-policy cell: [COUNTERFEIT-POLICY.md](../../../docs/benchmarks/security-suite/multi-attack-injection/COUNTERFEIT-POLICY.md) — ClawQL deterministic measured; model-judged peers pending (cite Datadog; public-set + JevShield best-config; no stand-in).
 
 ## Publish gate
 
-Do **not** publish until: Obot measured on the Mac mini (platform-stamped), configured arm uses only general mechanisms, product defaults shipped and `clawql_default` re-run, benign completion rate is honest (not “secure because it blocks everything”), then `MAI_LIVE=1` real-model matrix (including harder recall queries).
+Do **not** publish until: Obot best-config passes deny precondition then one measured corpus run on the Mac mini (platform-stamped), configured arm uses only general mechanisms, product defaults shipped and `clawql_default` re-run, benign completion rate is honest (not “secure because it blocks everything”), then `MAI_LIVE=1` (hard-recall measured; real-model sessions when transport exists).

@@ -24,7 +24,7 @@
   },
   "model": {
     "smoke": "scripted_worst_case",
-    "live": "real_models — results-live.json scaffold (MAI_LIVE=1 when session runner lands)"
+    "live": "real_models + hard_recall — results-live.json (MAI_LIVE=1; hard-recall vault cell measured; model sessions when transport lands)"
   },
   "corpus": {
     "manifest": "benchmarks/security-suite/multi-attack-injection/corpus/manifest.json",

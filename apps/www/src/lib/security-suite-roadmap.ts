@@ -25,7 +25,7 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     priority: 1,
     title: 'Multi-attack injection suite',
     status: 'scaffolded',
-    why: 'Smoke v4f: Obot defaults 12/12 on Mac mini; best-config pending deny precondition then one-shot measure. Counterfeit-policy ClawQL 0/4; cite Datadog. Then MAI_LIVE. Not published yet.',
+    why: 'Smoke v4f: Obot defaults 12/12 on Mac mini; best-config pending deny precondition then one-shot measure. MAI_LIVE hard-recall measured (labeled 15.00 / unlabeled 99.99). Counterfeit-policy ClawQL 0/4; cite Datadog. Not published yet.',
   },
   {
     id: 'approval_integrity',

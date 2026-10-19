@@ -610,11 +610,11 @@ async function main() {
       peersPending > 0
         ? "Obot best-config: pass deny precondition (one refused memory_ingest outside corpus), then one 12+14 run — see MAC-MINI-OBOT.md"
         : "Peers measured — publish equal-arm table with attacks+benign",
-      "Real-model matrix — MAI_LIVE=1 (+ harder recall queries) last step before publish",
+      "MAI_LIVE=1 hard-recall measured; real-model sessions when transport lands — after Obot best-config",
     ],
     shared_vault:
       "Peers have no built-in vault — every arm writes the same Obsidian-compatible Memory/ served over MCP (vault-mcp).",
-    note: "Same 14 benign on every arm. Recall integrity = answered 15.00; unlabeled poison is a separate column (also vault_contaminated). Harder queries → MAI_LIVE. Obot defaults measured on macOS / mac_mini.",
+    note: "Same 14 benign on every arm. Recall integrity = answered 15.00; unlabeled poison is a separate column (also vault_contaminated). Hard-recall → MAI_LIVE. Obot defaults measured on macOS / mac_mini.",
   };
 
   const report = {

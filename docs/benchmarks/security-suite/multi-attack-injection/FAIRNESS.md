@@ -55,7 +55,7 @@ Memory-write breakout: ClawQL **5 of 5**; Bifrost/Executor best-config **0 of 5*
 - Bifrost / Executor **defaults 12/12** (allow-all → equal-arm loss); **best-config 0/12** via **native** omit / `policies.block` — benign **9 of 14**; memory-write breakout **0 of 5**
 - Obot **defaults 12/12** measured on the **Mac mini** (`platform.host_os=darwin`, `measured_on=mac_mini`; Docker Desktop VM fine for effectuation) — benign **14 of 14**; recall **pass (15.00)**; unlabeled poison **yes** — same baseline as Bifrost/Executor defaults. **Best-config pending** until a **precondition** proves the native deny is active (one direct `memory_ingest` refused outside the corpus); then run 12+14 **once** and publish as-is. See [MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md).
 - **Persistent injection** blocked across sessions
-- **Recall answer** (smoke query): after attacks, does recall still answer **15.00**? Peers **pass** that question. **Unlabeled poison** is a separate column (true for peer defaults; already counted as contamination). Harder queries that make poison rank first ship with `MAI_LIVE=1`.
+- **Recall answer** (smoke query): after attacks, does recall still answer **15.00**? Peers **pass** that question. **Unlabeled poison** is a separate column (true for peer defaults; already counted as contamination). Harder queries that make poison rank first are measured under `MAI_LIVE=1` (vault grader: labeled keeps **15.00**, unlabeled surfaces **99.99**).
 
 ### Contamination (aligned with governance board)
 
@@ -92,6 +92,6 @@ No harness stand-in that follows policy-shaped text — that fails by constructi
 
 Decision sites: opt-in flip-rate family `counterfeit_policy` beside paraphrase/reorder; operation resolution stays **automatic reads only**.
 
-**Next for a publishable lead:** Obot **best-config** — pass deny precondition, one corpus run, publish the score ([MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md)); then `MAI_LIVE=1` (+ harder recall queries).
+**Next for a publishable lead:** Obot **best-config** — pass deny precondition, one corpus run, publish the score ([MAC-MINI-OBOT.md](./MAC-MINI-OBOT.md)). `MAI_LIVE=1` hard-recall is already measured; real-model sessions wait on a transport.
 
 See [NATIVE-TOOL-GOVERNANCE.md](./NATIVE-TOOL-GOVERNANCE.md).

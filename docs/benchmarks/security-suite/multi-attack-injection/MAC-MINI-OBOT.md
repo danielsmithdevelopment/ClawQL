@@ -76,4 +76,4 @@ Obot wraps the webhook in a **containerized system MCP adapter**. HTTP 200 with 
 
 ## After Obot best-config is measured
 
-Scripted peer board is complete. Last step before publishing: `MAI_LIVE=1` real-model runner (including harder recall queries).
+Scripted peer board is complete. Last step before publishing: `MAI_LIVE=1` (`npm run benchmark:multi-attack-injection:live`) — hard-recall vault cell is measured offline (labeled keeps 15.00; unlabeled fails hard probes); real-model session matrix stays incomplete until a transport + `MAI_LIVE_MODELS` exist.
