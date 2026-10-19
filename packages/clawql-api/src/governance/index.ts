@@ -1,18 +1,28 @@
 export {
+  CLAWQL_TRUST_BODY_MARKER,
+  CLAWQL_UNTRUSTED_TAG,
   EXECUTE_PATH_TOOL_NAMES,
   NATIVE_TOOL_GOVERNANCE_MODULE_ID,
   NATIVE_TOOL_POLICY,
   UNTRUSTED_SPEC_LABELS,
+  effectiveNativeParkKind,
   isExecutePathTool,
+  isMemoryIngestOverwrite,
+  resolveNativeIfcSink,
   resolveNativeToolPolicy,
+  type NativeIfcSink,
   type NativeToolKind,
   type NativeToolPolicy,
 } from "./native-tool-policy.js";
 export {
   accumulateNativeToolReadAfterSuccess,
   classifyNativeTool,
+  extractUntrustedLabelsFromText,
   gateNativeToolBeforeInvoke,
   governNativeHandler,
+  peekSessionLabels,
+  stampUntrustedProvenance,
   taintSessionFromUntrustedChannel,
+  taintSessionFromVaultNoteText,
   type NativeToolGateBlock,
 } from "./native-tool-gate.js";

@@ -6,16 +6,39 @@
  * Security finding: tools that skip this policy bypass the same choke point
  * as `execute` (policy / data-flow / park). CI enumerates registered tools
  * against this table.
+ *
+ * Gentler defaults (multi-attack v2):
+ * - **labelable** sinks (vault memory): untrusted data may be written, but must
+ *   carry an untrusted provenance label so later reads re-taint the session.
+ * - **blocking** sinks (external / privileged): untrusted labels may not flow.
+ * - `memory_ingest` parks only on **overwrite** of existing facts (append:false),
+ *   not on clean appends.
  */
 
 export type NativeToolKind = "passthrough" | "read" | "write" | "destructive";
+
+/**
+ * How session IFC treats this tool as a write sink when the session is tainted.
+ * - `labelable` — allow the write; stamp untrusted provenance onto the payload
+ * - `blocking` — refuse (external destination or privileged action)
+ */
+export type NativeIfcSink = "labelable" | "blocking";
 
 export type NativeToolPolicy = {
   readonly kind: NativeToolKind;
   /** IFC / risk sink label (source:<label>). */
   readonly specLabel: string;
+  /**
+   * Write-sink IFC class. Defaults: memory tools → labelable; other mutating
+   * tools → blocking. Reads/passthrough ignore this field.
+   */
+  readonly ifcSink?: NativeIfcSink;
   readonly notes?: string;
 };
+
+/** Frontmatter / body marker stamped onto labeled-untrusted vault writes. */
+export const CLAWQL_UNTRUSTED_TAG = "clawql-untrusted";
+export const CLAWQL_TRUST_BODY_MARKER = "**clawql_trust:** untrusted";
 
 /**
  * Tools whose handlers already invoke execute-core (or resume) for the
@@ -53,23 +76,50 @@ export const NATIVE_TOOL_POLICY: Readonly<Record<string, NativeToolPolicy>> = {
     specLabel: "clawql-program",
     notes: "nested execute; proposals deferred",
   },
-  memory_sync: { kind: "write", specLabel: "clawql-memory" },
-
-  // Memory — previously bypassed execute-core (security finding)
-  memory_ingest: {
-    kind: "destructive",
+  memory_sync: {
+    kind: "write",
     specLabel: "clawql-memory",
-    notes: "vault write — park + IFC required",
+    ifcSink: "labelable",
+  },
+
+  // Memory — previously bypassed execute-core (security finding).
+  // Appends are ordinary writes (label-on-untrusted); overwrites park (see gate).
+  memory_ingest: {
+    kind: "write",
+    specLabel: "clawql-memory",
+    ifcSink: "labelable",
+    notes: "append allows; overwrite of existing facts parks; untrusted→label",
   },
   memory_recall: { kind: "read", specLabel: "clawql-memory" },
   read_around: { kind: "read", specLabel: "clawql-memory" },
 
-  // Automation
-  schedule: { kind: "destructive", specLabel: "clawql-automation" },
-  notify: { kind: "destructive", specLabel: "clawql-automation" },
-  workflow: { kind: "destructive", specLabel: "clawql-automation" },
-  argocd: { kind: "destructive", specLabel: "clawql-automation" },
-  hitl_enqueue_label_studio: { kind: "write", specLabel: "clawql-automation" },
+  // Automation — external / privileged sinks (block untrusted flow)
+  schedule: {
+    kind: "destructive",
+    specLabel: "clawql-automation",
+    ifcSink: "blocking",
+  },
+  notify: {
+    kind: "destructive",
+    specLabel: "clawql-automation",
+    ifcSink: "blocking",
+    notes: "external destination — untrusted may not flow",
+  },
+  workflow: {
+    kind: "destructive",
+    specLabel: "clawql-automation",
+    ifcSink: "blocking",
+  },
+  argocd: {
+    kind: "destructive",
+    specLabel: "clawql-automation",
+    ifcSink: "blocking",
+  },
+  hitl_enqueue_label_studio: {
+    kind: "write",
+    specLabel: "clawql-automation",
+    ifcSink: "blocking",
+  },
 
   // Documents / knowledge
   ingest_external_knowledge: {
@@ -163,12 +213,49 @@ export const UNTRUSTED_SPEC_LABELS = new Set([
 export function resolveNativeToolPolicy(toolName: string): NativeToolPolicy {
   const known = NATIVE_TOOL_POLICY[toolName];
   if (known) return known;
-  // Fail closed: unknown native tools are treated as destructive.
+  // Fail closed: unknown native tools are treated as destructive + blocking.
   return {
     kind: "destructive",
     specLabel: "clawql-unknown",
+    ifcSink: "blocking",
     notes: "unclassified native tool — default destructive",
   };
+}
+
+/**
+ * IFC sink class for a mutating native tool.
+ * Memory vault tools are labelable; everything else that mutates is blocking.
+ */
+export function resolveNativeIfcSink(policy: NativeToolPolicy): NativeIfcSink {
+  if (policy.ifcSink) return policy.ifcSink;
+  if (policy.specLabel === "clawql-memory") return "labelable";
+  if (policy.kind === "passthrough" || policy.kind === "read") return "labelable";
+  return "blocking";
+}
+
+/**
+ * Whether this `memory_ingest` call is an overwrite of existing facts.
+ * Default `append !== false` is a non-destructive append (or create-new).
+ * Explicit `append: false` is replace-intent and parks for approval.
+ */
+export function isMemoryIngestOverwrite(args: unknown): boolean {
+  if (!args || typeof args !== "object" || Array.isArray(args)) return false;
+  return (args as { append?: unknown }).append === false;
+}
+
+/**
+ * Effective park class for a native tool invocation.
+ * `memory_ingest` is destructive only on overwrite; other tools use table kind.
+ */
+export function effectiveNativeParkKind(
+  toolName: string,
+  args: unknown,
+  policy: NativeToolPolicy = resolveNativeToolPolicy(toolName)
+): NativeToolKind {
+  if (toolName === "memory_ingest") {
+    return isMemoryIngestOverwrite(args) ? "destructive" : "write";
+  }
+  return policy.kind;
 }
 
 export function isExecutePathTool(toolName: string): boolean {

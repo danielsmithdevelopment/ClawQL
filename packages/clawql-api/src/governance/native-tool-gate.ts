@@ -4,6 +4,11 @@
  *
  * Called from `wrapRegisteredMcpToolHandler` so every registered tool hits this
  * choke point (proxy hooks already run first).
+ *
+ * Gentler defaults:
+ * - Untrusted → **labelable** sinks (memory): allow write, stamp untrusted provenance.
+ * - Untrusted → **blocking** sinks (external / privileged): refuse.
+ * - `memory_ingest` parks only on overwrite (`append: false`), not clean appends.
  */
 
 import { Effect } from "effect";
@@ -13,12 +18,20 @@ import {
   checkSessionIfcWriteSync,
   sessionIfcEnabled,
 } from "../ifc/session-ifc-enforce.js";
-import { accumulateSessionLabelsSync, resolveSessionLabelKey } from "../ifc/session-label-store.js";
+import {
+  accumulateSessionLabelsSync,
+  getSessionLabelsSync,
+  resolveSessionLabelKey,
+} from "../ifc/session-label-store.js";
 import { operationRiskEnforceEnabledEffect } from "../risk/operation-risk-enforce.js";
 import { parkMandateExecute } from "../pending/pending-execution-service.js";
 import {
+  CLAWQL_TRUST_BODY_MARKER,
+  CLAWQL_UNTRUSTED_TAG,
+  effectiveNativeParkKind,
   isExecutePathTool,
   NATIVE_TOOL_GOVERNANCE_MODULE_ID,
+  resolveNativeIfcSink,
   resolveNativeToolPolicy,
   UNTRUSTED_SPEC_LABELS,
   type NativeToolKind,
@@ -40,7 +53,8 @@ export type NativeToolGateBlock = {
 function syntheticOperation(
   toolName: string,
   policy: NativeToolPolicy,
-  method: "GET" | "POST"
+  method: "GET" | "POST",
+  parkKind: NativeToolKind = policy.kind
 ): Operation {
   return {
     id: `native.${toolName}`,
@@ -56,13 +70,13 @@ function syntheticOperation(
     riskHints: {
       mcpSourceId: "clawql-native",
       mcpReadOnlyHint: policy.kind === "read" || policy.kind === "passthrough",
-      mcpDestructiveHint: policy.kind === "destructive",
+      mcpDestructiveHint: parkKind === "destructive",
     },
     risk: {
-      policy: policy.kind === "destructive" ? "mandate" : policy.kind === "write" ? "mandate" : "allow",
-      level: policy.kind === "destructive" ? "HIGH" : policy.kind === "write" ? "MEDIUM" : "LOW",
+      policy: parkKind === "destructive" ? "mandate" : parkKind === "write" ? "allow" : "allow",
+      level: parkKind === "destructive" ? "HIGH" : parkKind === "write" ? "MEDIUM" : "LOW",
       source: "mcp-annotation",
-      reason: `native tool ${toolName} (${policy.kind})`,
+      reason: `native tool ${toolName} (${parkKind})`,
     },
   } as Operation;
 }
@@ -77,9 +91,92 @@ function mcpErrorResult(block: NativeToolGateBlock): {
   };
 }
 
+function asRecord(args: unknown): Record<string, unknown> | null {
+  if (!args || typeof args !== "object" || Array.isArray(args)) return null;
+  return args as Record<string, unknown>;
+}
+
+/**
+ * Stamp untrusted provenance onto a memory write payload so the vault note
+ * carries labels that later recalls re-accumulate into the session.
+ * Mutates `args` in place when it is a plain object.
+ */
+export function stampUntrustedProvenance(
+  args: unknown,
+  sessionLabels: readonly string[]
+): void {
+  const rec = asRecord(args);
+  if (!rec) return;
+
+  const tags = Array.isArray(rec.tags)
+    ? rec.tags.filter((t): t is string => typeof t === "string")
+    : [];
+  if (!tags.includes(CLAWQL_UNTRUSTED_TAG)) tags.push(CLAWQL_UNTRUSTED_TAG);
+  rec.tags = tags;
+
+  const sources = Array.isArray(rec.sources)
+    ? [...(rec.sources as Array<Record<string, string | number>>)]
+    : [];
+  sources.push({
+    trust: "untrusted",
+    labels: [...sessionLabels].sort().join(","),
+  });
+  rec.sources = sources;
+
+  const labelLine = `**clawql_trust_labels:** ${[...sessionLabels].sort().join(", ")}`;
+  if (typeof rec.insights === "string") {
+    if (!rec.insights.includes(CLAWQL_TRUST_BODY_MARKER)) {
+      rec.insights = `${rec.insights}\n\n${CLAWQL_TRUST_BODY_MARKER}\n${labelLine}`;
+    }
+  } else {
+    rec.insights = `${CLAWQL_TRUST_BODY_MARKER}\n${labelLine}`;
+  }
+}
+
+/** Detect untrusted provenance markers in vault recall / note text. */
+export function extractUntrustedLabelsFromText(text: string): string[] {
+  if (!text) return [];
+  const found: string[] = [];
+  if (text.includes(CLAWQL_UNTRUSTED_TAG) || text.includes(CLAWQL_TRUST_BODY_MARKER)) {
+    found.push("source:untrusted");
+  }
+  const m = text.match(/\*\*clawql_trust_labels:\*\*\s*([^\n]+)/);
+  if (m?.[1]) {
+    for (const part of m[1].split(",")) {
+      const lbl = part.trim().replace(/^\*+\s*/, "");
+      if (lbl.startsWith("source:")) found.push(lbl);
+    }
+  }
+  // OKF sources row: `labels: source:untrusted-email,...` (avoid matching clawql_trust_labels)
+  const src = text.match(/(?:^|\n)\s*labels:\s*["']?([^"'\n]+)/);
+  if (src?.[1] && src[1].includes("untrusted")) {
+    for (const part of src[1].split(",")) {
+      const lbl = part.trim().replace(/^\*+\s*/, "");
+      if (lbl.startsWith("source:")) found.push(lbl);
+    }
+  }
+  return [...new Set(found)];
+}
+
+function toolResultToText(result: unknown): string {
+  if (result == null) return "";
+  if (typeof result === "string") return result;
+  if (typeof result !== "object") return String(result);
+  const rec = result as { content?: Array<{ text?: string }>; text?: string };
+  if (typeof rec.text === "string") return rec.text;
+  if (Array.isArray(rec.content)) {
+    return rec.content.map((c) => (typeof c?.text === "string" ? c.text : "")).join("\n");
+  }
+  try {
+    return JSON.stringify(result);
+  } catch {
+    return "";
+  }
+}
+
 /**
  * Pre-invoke gate for native tools. Returns an MCP error result to short-circuit
- * the handler, or null to proceed.
+ * the handler, or null to proceed (possibly after stamping untrusted provenance).
  */
 export async function gateNativeToolBeforeInvoke(opts: {
   readonly toolName: string;
@@ -94,36 +191,44 @@ export async function gateNativeToolBeforeInvoke(opts: {
   const env = opts.env ?? process.env;
   const policy = resolveNativeToolPolicy(toolName);
   const sessionId = opts.sessionId;
+  const parkKind = effectiveNativeParkKind(toolName, opts.args, policy);
 
   if (policy.kind === "passthrough" || policy.kind === "read") {
     return null;
   }
 
   // Data-flow / untrusted-read taint: mutating sinks checked against session labels
-  const writeOp = syntheticOperation(toolName, policy, "POST");
+  const writeOp = syntheticOperation(toolName, policy, "POST", parkKind);
   const ifcBlock = checkSessionIfcWriteSync({
     operation: writeOp,
     sessionId,
     env,
   });
   if (ifcBlock) {
-    const mechanism =
-      ifcBlock.sessionLabels.some((l) => l.includes("untrusted"))
+    const sink = resolveNativeIfcSink(policy);
+    const taintedUntrusted = ifcBlock.sessionLabels.some((l) => l.includes("untrusted"));
+    if (sink === "labelable") {
+      // Gentler default: store with untrusted label instead of blocking the write.
+      stampUntrustedProvenance(opts.args, ifcBlock.sessionLabels);
+    } else {
+      const mechanism = taintedUntrusted
         ? ("untrusted_read_taint" as const)
         : ("data_flow" as const);
-    return mcpErrorResult({
-      ok: false,
-      status: "blocked",
-      reason: ifcBlock.reason,
-      toolName,
-      mechanism,
-    });
+      return mcpErrorResult({
+        ok: false,
+        status: "blocked",
+        reason: ifcBlock.reason,
+        toolName,
+        mechanism,
+      });
+    }
   }
 
-  // Park destructive (and write) natives when risk enforce is on — same as execute mandate.
+  // Park destructive natives when risk enforce is on — same as execute mandate.
+  // memory_ingest: only overwrite (append:false) is destructive; appends proceed.
   const enforce = await Effect.runPromise(operationRiskEnforceEnabledEffect(env));
   if (!enforce) return null;
-  if (policy.kind !== "destructive" && policy.kind !== "write") return null;
+  if (parkKind !== "destructive") return null;
 
   const approvedId =
     opts.approvedExecutionId?.trim() ||
@@ -134,40 +239,38 @@ export async function gateNativeToolBeforeInvoke(opts: {
       : "");
 
   if (approvedId) {
-    // Resume path for native tools is follow-up; for now require fresh park without auto-consume
-    // unless approvedExecutionId is present — leave consume to execute-core for catalog ops.
     // Native approved resume: allow through (simplest honest path until native resume lands).
     return null;
   }
 
-  if (policy.kind === "destructive") {
-    const risk = writeOp.risk!;
-    const args =
-      opts.args && typeof opts.args === "object" && !Array.isArray(opts.args)
-        ? ({ ...(opts.args as Record<string, unknown>) } as Record<string, unknown>)
-        : {};
-    const parked = await parkMandateExecute({
-      operationId: `native.${toolName}`,
-      args,
-      risk,
-    });
-    return mcpErrorResult({
-      ok: false,
-      status: "mandate_required",
-      reason: parked.reason,
-      toolName,
-      mechanism: "park_destructive_write",
-      executionId: parked.executionId,
-      risk,
-    });
-  }
-
-  return null;
+  const risk = writeOp.risk!;
+  const args =
+    opts.args && typeof opts.args === "object" && !Array.isArray(opts.args)
+      ? ({ ...(opts.args as Record<string, unknown>) } as Record<string, unknown>)
+      : {};
+  const parked = await parkMandateExecute({
+    operationId: `native.${toolName}`,
+    args,
+    risk,
+  });
+  return mcpErrorResult({
+    ok: false,
+    status: "mandate_required",
+    reason:
+      toolName === "memory_ingest"
+        ? "Overwrite of an existing memory note requires a mandate before execute"
+        : parked.reason,
+    toolName,
+    mechanism: "park_destructive_write",
+    executionId: parked.executionId,
+    risk,
+  });
 }
 
 /**
  * After a successful native read: accumulate session IFC labels.
- * Untrusted sources taint the session so later writes fail closed.
+ * Untrusted sources taint the session so later blocking sinks fail closed.
+ * Vault notes carrying `clawql-untrusted` re-taint on recall (persistent injection).
  */
 export function accumulateNativeToolReadAfterSuccess(opts: {
   readonly toolName: string;
@@ -176,6 +279,8 @@ export function accumulateNativeToolReadAfterSuccess(opts: {
   readonly env?: NodeJS.ProcessEnv;
   /** Optional extra labels (e.g. channel:email from planted corpus readers). */
   readonly extraLabels?: readonly string[];
+  /** Tool result body — scanned for vault untrusted provenance on recall. */
+  readonly result?: unknown;
 }): void {
   const { toolName, success } = opts;
   if (!success || isExecutePathTool(toolName)) return;
@@ -193,12 +298,20 @@ export function accumulateNativeToolReadAfterSuccess(opts: {
     env,
   });
 
+  const key = resolveSessionLabelKey(opts.sessionId, env);
   if (opts.extraLabels?.length) {
-    const key = resolveSessionLabelKey(opts.sessionId, env);
     accumulateSessionLabelsSync(key, opts.extraLabels);
   } else if (UNTRUSTED_SPEC_LABELS.has(policy.specLabel)) {
-    const key = resolveSessionLabelKey(opts.sessionId, env);
     accumulateSessionLabelsSync(key, [`source:${policy.specLabel}`]);
+  }
+
+  // Persistent injection: labeled-untrusted vault content re-taints the reader.
+  if (toolName === "memory_recall" || toolName === "read_around") {
+    const text = toolResultToText(opts.result);
+    const fromNote = extractUntrustedLabelsFromText(text);
+    if (fromNote.length) {
+      accumulateSessionLabelsSync(key, fromNote);
+    }
   }
 }
 
@@ -207,11 +320,14 @@ export function classifyNativeTool(toolName: string): {
   kind: NativeToolKind;
   executePath: boolean;
   policy: NativeToolPolicy;
+  ifcSink: ReturnType<typeof resolveNativeIfcSink>;
 } {
+  const policy = resolveNativeToolPolicy(toolName);
   return {
-    kind: resolveNativeToolPolicy(toolName).kind,
+    kind: policy.kind,
     executePath: isExecutePathTool(toolName),
-    policy: resolveNativeToolPolicy(toolName),
+    policy,
+    ifcSink: resolveNativeIfcSink(policy),
   };
 }
 
@@ -243,6 +359,7 @@ export function governNativeHandler<TArgs extends unknown[], TResult>(
         success: true,
         sessionId: opts?.sessionId,
         env: opts?.env,
+        result,
       });
     }
     return result;
@@ -261,4 +378,27 @@ export function taintSessionFromUntrustedChannel(
   if (!sessionIfcEnabled(env)) return;
   const key = resolveSessionLabelKey(sessionId, env);
   accumulateSessionLabelsSync(key, [`source:untrusted-${channel}`, `source:untrusted`]);
+}
+
+/** Re-taint a session from vault note text (harness / later-session recall). */
+export function taintSessionFromVaultNoteText(
+  text: string,
+  sessionId?: string,
+  env: NodeJS.ProcessEnv = process.env
+): string[] {
+  if (!sessionIfcEnabled(env)) return [];
+  const labels = extractUntrustedLabelsFromText(text);
+  if (!labels.length) return [];
+  const key = resolveSessionLabelKey(sessionId, env);
+  accumulateSessionLabelsSync(key, labels);
+  return labels;
+}
+
+/** Snapshot session labels (harness / tests). */
+export function peekSessionLabels(
+  sessionId?: string,
+  env: NodeJS.ProcessEnv = process.env
+): string[] {
+  const key = resolveSessionLabelKey(sessionId, env);
+  return [...getSessionLabelsSync(key)].sort();
 }
