@@ -3,7 +3,7 @@
 **Status:** Positioning · October 2026  
 **Related:** [Harness² (Google Research)](https://github.com/google-research/harness2) · [arXiv:2610.14224](https://arxiv.org/abs/2610.14224) · [governance / policy-depth board](../benchmarks/governance-policy-depth/README.md) · [adversarial gate benchmark (spec)](../benchmarks/harness2-gate-adversarial/SPEC.md)
 
-Google’s open-sourced **Harness²** turns the agent *harness* — system prompt, tools, memory, skills, subagents, orchestration — into something the agent can refine per task without touching model weights. On each task it proposes harness edits, runs candidates, and composes a better harness from **behavioral contrasts** (no grader required). Adopted harnesses and evidence-backed lessons carry into the next task.
+Google’s open-sourced **Harness²** turns the agent _harness_ — system prompt, tools, memory, skills, subagents, orchestration — into something the agent can refine per task without touching model weights. On each task it proposes harness edits, runs candidates, and composes a better harness from **behavioral contrasts** (no grader required). Adopted harnesses and evidence-backed lessons carry into the next task.
 
 That idea **extends ClawQL’s thesis rather than threatening it.** A harness that edits itself is the strongest argument yet for **authority that sits outside the harness**.
 
@@ -21,17 +21,17 @@ Production repair loops (failing trace → proposed fix → regression test — 
 
 ## How ClawQL answers them
 
-| Risk | ClawQL control |
-| ---- | -------------- |
-| Persistent injection into harness / lessons | Policies, approval rules, and key groups live in the **gateway**, outside the harness the agent optimizes. Untrusted content stamped at ingest cannot later drive privileged sinks without re-taint / park. |
-| Grader-free shortcut around safety | Every call still hits the same choke point. Latency of approval is not a success signal the gateway honors. Unknown or renamed tools **fail closed**. |
-| Permission creep | New tools and skills go through the lifecycle: proposed → proven on held-out + adversarial runs → reviewed → active. Widening reach is a **write to permissions** and parks for a person, like any other consequential change. |
+| Risk                                        | ClawQL control                                                                                                                                                                                                                 |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Persistent injection into harness / lessons | Policies, approval rules, and key groups live in the **gateway**, outside the harness the agent optimizes. Untrusted content stamped at ingest cannot later drive privileged sinks without re-taint / park.                    |
+| Grader-free shortcut around safety          | Every call still hits the same choke point. Latency of approval is not a success signal the gateway honors. Unknown or renamed tools **fail closed**.                                                                          |
+| Permission creep                            | New tools and skills go through the lifecycle: proposed → proven on held-out + adversarial runs → reviewed → active. Widening reach is a **write to permissions** and parks for a person, like any other consequential change. |
 
-**Principle (same as improving how vs what):** let the agent improve *how* it works; never *what* it is allowed to do.
+**Principle (same as improving how vs what):** let the agent improve _how_ it works; never _what_ it is allowed to do.
 
 ## Positioning note
 
-Harness²’s editable surface includes **guardrails** as a harness component. In ClawQL language those belong *outside* the improvable harness when they encode authority (ATR, key groups, approval, provenance). Soft behavioral guidance in a system prompt may be refined; hard policy must not be.
+Harness²’s editable surface includes **guardrails** as a harness component. In ClawQL language those belong _outside_ the improvable harness when they encode authority (ATR, key groups, approval, provenance). Soft behavioral guidance in a system prompt may be refined; hard policy must not be.
 
 Do **not** claim that Harness² is “defeated” or that ClawQL is certified against recursive harnessing. The claim is architectural: **self-improving harnesses increase the value of an external choke point**, and ClawQL was built for that choke point.
 
