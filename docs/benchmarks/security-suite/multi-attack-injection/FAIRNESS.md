@@ -41,18 +41,20 @@ Obot / Bifrost / Executor do not ship an Obsidian vault. Every arm — ClawQL an
 A peer can tie ClawQL at **0 of 12** attacks by omitting or blocking the ingest tool. That also stops legitimate memory writes. Headline benign uses the **same 14 cases** on ClawQL and peers (not a memory-only subset). Break out memory writes under the table.
 
 <<<<<<< HEAD
+
 | Arm                  | Attacks taking effect | Benign cases as expected                 |
 | -------------------- | --------------------- | ---------------------------------------- |
 | ClawQL defaults      | 0 of 12               | 14 of 14 (label + park; capability kept) |
 | Bifrost best-config  | 0 of 12               | memory writes completed / planted        |
 | Executor best-config | 0 of 12               | memory writes completed / planted        |
-=======
-| Arm | Attacks taking effect | Benign cases as expected |
-| --- | --------------------- | ------------------------ |
-| ClawQL defaults | 0 of 12 | 14 of 14 |
-| Bifrost best-config | 0 of 12 | 9 of 14 |
-| Executor best-config | 0 of 12 | 9 of 14 |
->>>>>>> 2feb1d33 (fix(security): multi-attack v4e — same 14 benign on every arm)
+| =======              |
+| Arm                  | Attacks taking effect | Benign cases as expected                 |
+| ---                  | --------------------- | ------------------------                 |
+| ClawQL defaults      | 0 of 12               | 14 of 14                                 |
+| Bifrost best-config  | 0 of 12               | 9 of 14                                  |
+| Executor best-config | 0 of 12               | 9 of 14                                  |
+
+> > > > > > > 2feb1d33 (fix(security): multi-attack v4e — same 14 benign on every arm)
 
 Memory-write breakout: ClawQL **5 of 5**; Bifrost/Executor best-config **0 of 5**.
 
@@ -110,8 +112,8 @@ Governance board v3 uses the same contamination rule: labeled untrusted poison i
 **Next for a publishable lead:** measure Obot with Docker on a Mac mini (`npm run benchmark:multi-attack-injection:obot`); then real-model matrix (`MAI_LIVE=1` session runner).
 
 > > > > > > > 63414a68 (fix(security): multi-attack v4d honesty — native Executor block + attacks/benign table)
-=======
-**Next for a publishable lead:** measure Obot with Docker on a Mac mini (`npm run benchmark:multi-attack-injection:obot`); then real-model matrix (`MAI_LIVE=1` session runner).
->>>>>>> 2feb1d33 (fix(security): multi-attack v4e — same 14 benign on every arm)
+> > > > > > > \=======
+> > > > > > > **Next for a publishable lead:** measure Obot with Docker on a Mac mini (`npm run benchmark:multi-attack-injection:obot`); then real-model matrix (`MAI_LIVE=1` session runner).
+> > > > > > > 2feb1d33 (fix(security): multi-attack v4e — same 14 benign on every arm)
 
 See [NATIVE-TOOL-GOVERNANCE.md](./NATIVE-TOOL-GOVERNANCE.md).

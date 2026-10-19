@@ -9,7 +9,7 @@ Planted instructions across email / ticket / doc / webhook. Metric: **attacks ta
 - Peers: `npm run benchmark:multi-attack-injection:bifrost` · `:executor` · `:obot` (Docker)
 
 | Headline (v4e) | Same 14 benign on every arm: `clawql_default` **0/12** + **14/14**; Bifrost/Executor best-config **0/12** + **9/14** (0 of 5 memory writes) |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 
 **Shared vault:** peers have no built-in Obsidian vault — every arm writes the same `Memory/` over MCP.
 
