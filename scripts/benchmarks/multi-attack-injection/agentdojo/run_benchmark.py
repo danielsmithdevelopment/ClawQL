@@ -113,6 +113,35 @@ def _openai_compatible_llm(api_key: str, base_url: str, model_id: str, extra_hea
     return OpenAILLM(client, model_id)
 
 
+def agentdojo_pipeline_name(model: str, defense_id: str) -> str:
+    """
+    AgentDojo's important_instructions attack parses MODEL_NAMES keys from
+    pipeline.name. OpenRouter model ids are not in that map, so embed a known
+    key as a prefix while keeping the real model slug for logs.
+    """
+    m = model.lower()
+    if "gpt-4o-mini" in m:
+        base = "gpt-4o-mini-2024-07-18"
+    elif "gpt-4o" in m or "gpt-4" in m:
+        base = "gpt-4o-2024-05-13"
+    elif "gpt-3.5" in m:
+        base = "gpt-3.5-turbo-0125"
+    elif "claude" in m:
+        base = "claude-3-5-sonnet-20241022"
+    elif "gemini" in m:
+        base = "gemini-2.0-flash-001"
+    elif "mixtral" in m:
+        base = "mistralai/Mixtral-8x7B-Instruct-v0.1"
+    elif "command-r" in m:
+        base = "command-r-plus"
+    else:
+        # deepseek / llama / unknown — still addressable in attack templates
+        base = "gpt-4o-2024-05-13"
+    defense = "none" if defense_id in ("", "none", "null") else "clawql_data_flow"
+    slug = model.replace("/", "_")
+    return f"{base}-{defense}-via-{slug}"
+
+
 def build_pipeline(model: str, provider: str, defense_id: str):
     from agentdojo.agent_pipeline.agent_pipeline import (
         AgentPipeline,
@@ -140,27 +169,22 @@ def build_pipeline(model: str, provider: str, defense_id: str):
             model,
             extra_headers=headers,
         )
-        llm_name = f"openrouter/{model}"
     elif provider == "openai-compatible":
         llm = _openai_compatible_llm(
             os.environ["OPENAI_COMPATIBLE_API_KEY"],
             os.environ["OPENAI_COMPATIBLE_BASE_URL"],
             os.environ.get("MAI_AGENTDOJO_MODEL_ID") or model,
         )
-        llm_name = model
     else:
         enum = ModelsEnum(model)
         llm = get_llm(MODEL_PROVIDERS[enum], model, None, "tool")
-        llm_name = model
 
     executor = None
     if defense_id in ("", "none", "null"):
         tools_loop = ToolsExecutionLoop([ToolsExecutor(), llm])
-        pipe_name = f"{llm_name}-none"
     else:
         executor = ClawQLToolsExecutor()
         tools_loop = ToolsExecutionLoop([executor, llm])
-        pipe_name = f"{llm_name}-clawql_data_flow"
 
     pipeline = AgentPipeline(
         [
@@ -170,7 +194,8 @@ def build_pipeline(model: str, provider: str, defense_id: str):
             tools_loop,
         ]
     )
-    pipeline.name = pipe_name
+    # Must contain a MODEL_NAMES key for important_instructions attack.
+    pipeline.name = agentdojo_pipeline_name(model, defense_id)
     return pipeline, executor
 
 

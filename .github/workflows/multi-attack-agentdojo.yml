@@ -231,14 +231,19 @@ jobs:
 
       - name: Aggregate
         run: |
+          set +e
           python3 scripts/benchmarks/multi-attack-injection/agentdojo/aggregate_matrix.py \
             agentdojo-cells-agg \
             docs/benchmarks/security-suite/multi-attack-injection/results-agentdojo.json
+          agg_rc=$?
+          set -e
           python3 - <<'PY'
           import json
           r = json.load(open("docs/benchmarks/security-suite/multi-attack-injection/results-agentdojo.json"))
           print(json.dumps({"status": r["status"], "n_measured": r["n_measured"], "rows": r["rows"]}, indent=2))
           PY
+          # Incomplete (no measured cells) still uploads the report; fail the job so CI is red.
+          exit "$agg_rc"
 
       - uses: actions/upload-artifact@v4
         with:
