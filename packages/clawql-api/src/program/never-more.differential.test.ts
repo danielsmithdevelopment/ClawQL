@@ -153,7 +153,8 @@ function makeGateway(task: Task, env: NodeJS.ProcessEnv, latencySeed: number): G
   const readsAttempted: string[] = [];
   const writesRan: string[] = [];
   const expectedLabels = new Set<string>();
-  const ifcOn = env.CLAWQL_ENABLE_SESSION_IFC === "1";
+  // Unset means enabled (product default); only "0"/"false"/"no" disables.
+  const ifcOn = env.CLAWQL_ENABLE_SESSION_IFC !== "0" && env.CLAWQL_ENABLE_SESSION_IFC !== "false";
 
   // Seeded scheduler yields stand in for spec-load and provider latency, so
   // parallel plans interleave the way concurrent network calls do.
@@ -214,7 +215,8 @@ function makeGateway(task: Task, env: NodeJS.ProcessEnv, latencySeed: number): G
 function envFor(task: Task, ifc: boolean, sessionId: string): NodeJS.ProcessEnv {
   return {
     CLAWQL_SESSION_ID: sessionId,
-    ...(ifc ? { CLAWQL_ENABLE_SESSION_IFC: "1" } : {}),
+    // Explicit 0 when off — unset now means session IFC is on (product default).
+    CLAWQL_ENABLE_SESSION_IFC: ifc ? "1" : "0",
     ...(task.ifcAllowed ? { CLAWQL_SESSION_IFC_ALLOWED: task.ifcAllowed } : {}),
   };
 }
