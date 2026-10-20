@@ -92,51 +92,15 @@ Parallel product track (required before publishing multi-attack): make **ClawQL 
 
 ## Board status
 
-<<<<<<< HEAD
-
-| Id                         | Status         | Notes                                                                                                |
-| -------------------------- | -------------- | ---------------------------------------------------------------------------------------------------- |
-| governance-policy-depth v2 | **Shipped**    | Fair defaults + best-config; design cells listed                                                     |
-| multi_attack_suite         | **Scaffolded** | Smoke n=12, scripted worst-case; configured = taint/park/data-flow; peers **pending**; not published |
-| approval_integrity         | Partial        | Harness resume probe only; full cells pending                                                        |
-| allowed_tool_exfil         | Planned        |                                                                                                      |
-| secret_visibility          | Planned        |                                                                                                      |
-| kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                                |
-| Remaining groups           | Backlog        | After top five                                                                                       |
-| =======                    |
-| <<<<<<< HEAD               |
-
-| Id                         | Status         | Notes                                                                                                                        |
-| -------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| governance-policy-depth v2 | **Shipped**    | Fair defaults + best-config; design cells listed                                                                             |
-| multi_attack_suite         | **Scaffolded** | Smoke n=12, scripted worst-case; configured = taint/park/data-flow; peers **pending**; **not published** until defaults ship |
-| approval_integrity         | Partial        | Harness resume probe only; full cells pending                                                                                |
-| allowed_tool_exfil         | Planned        |                                                                                                                              |
-| secret_visibility          | Planned        |                                                                                                                              |
-| kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                                                        |
-| Remaining groups           | Backlog        | After top five                                                                                                               |
-| =======                    |
-| Id                         | Status         | Notes                                                                                                                        |
-| -------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------             |
-| governance-policy-depth v2 | **Shipped**    | Fair defaults + best-config; design cells listed                                                                             |
-| <<<<<<< HEAD               |
-| multi_attack_suite         | **Scaffolded** | Smoke harness + 12-attack corpus (`npm run benchmark:multi-attack-injection`); live models → `results-live.json`             |
-| approval_integrity         | Partial        | Harness resume probe only; full cells pending                                                                                |
-| allowed_tool_exfil         | Planned        |                                                                                                                              |
-| secret_visibility          | Planned        |                                                                                                                              |
-| kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                                                        |
-| Remaining groups           | Backlog        | After top five                                                                                                               |
-| =======                    |
-| multi_attack_suite         | Planned        | Extends OpenBench `memory-injection-attempt`                                                                                 |
-| approval_integrity         | Partial        | Harness resume probe only; full cells pending                                                                                |
-| allowed_tool_exfil         | Planned        |                                                                                                                              |
-| secret_visibility          | Planned        |                                                                                                                              |
-| kill_mid_write             | Planned        | Ties to ProgramCellDO / TLA+ evidence                                                                                        |
-| Remaining groups           | Backlog        | After top five                                                                                                               |
-
-> > > > > > > origin/cursor/security-suite-roadmap-f4ec
-> > > > > > > origin/cursor/security-suite-roadmap-f4ec
-> > > > > > > origin/cursor/security-suite-roadmap-f4ec
+| Id                         | Status      | Notes                                                                                                          |
+| -------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------- |
+| governance-policy-depth v2 | **Shipped** | Fair defaults + best-config; design cells listed                                                               |
+| multi_attack_suite         | **Partial** | Smoke n=12: ClawQL defaults **0/12** via native park/IFC; passthrough 12/12; peers **pending**; draft until peers |
+| approval_integrity         | Partial     | Harness resume probe only; full cells pending                                                                  |
+| allowed_tool_exfil         | Planned     |                                                                                                                |
+| secret_visibility          | Planned     |                                                                                                                |
+| kill_mid_write             | Planned     | Ties to ProgramCellDO / TLA+ evidence                                                                          |
+| Remaining groups           | Backlog     | After top five                                                                                                 |
 
 ## Related
 
