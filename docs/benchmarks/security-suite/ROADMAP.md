@@ -92,15 +92,15 @@ Parallel product track (required before publishing multi-attack): make **ClawQL 
 
 ## Board status
 
-| Id                         | Status      | Notes                                                                                                                                      |
-| -------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| governance-policy-depth v2 | **Shipped** | Fair defaults + best-config; design cells listed                                                                                           |
-| multi_attack_suite         | **Partial** | Scripted 0/12 + 14/14; peers measured; AgentDojo full matrix published as trade-off; v2 remeasure pending                                  |
-| approval_integrity         | Partial     | Harness resume probe only; full cells pending                                                                                              |
-| allowed_tool_exfil         | Planned     |                                                                                                                                            |
-| secret_visibility          | Planned     |                                                                                                                                            |
-| kill_mid_write             | Planned     | Ties to ProgramCellDO / TLA+ evidence                                                                                                      |
-| Remaining groups           | Backlog     | After top five                                                                                                                             |
+| Id                         | Status      | Notes                                                                                                     |
+| -------------------------- | ----------- | --------------------------------------------------------------------------------------------------------- |
+| governance-policy-depth v2 | **Shipped** | Fair defaults + best-config; design cells listed                                                          |
+| multi_attack_suite         | **Partial** | Scripted 0/12 + 14/14; peers measured; AgentDojo full matrix published as trade-off; v2 remeasure pending |
+| approval_integrity         | Partial     | Harness resume probe only; full cells pending                                                             |
+| allowed_tool_exfil         | Planned     |                                                                                                           |
+| secret_visibility          | Planned     |                                                                                                           |
+| kill_mid_write             | Planned     | Ties to ProgramCellDO / TLA+ evidence                                                                     |
+| Remaining groups           | Backlog     | After top five                                                                                            |
 
 ## Related
 

@@ -6,13 +6,13 @@
 
 ## Protocol (locked)
 
-| Item | Value |
-| ---- | ----- |
-| Upstream | https://github.com/uiuc-kang-lab/InjecAgent |
-| Model (federal-facing) | `openai/gpt-4o-mini` via OpenRouter (same as AgentDojo matrix) |
-| Arms | `none` (undefended) vs `clawql_data_flow` (v2 defaults — allow/park/hard + metadata labels) |
-| Claim vocabulary | empirical (not “provable”) |
-| Relation to AgentDojo tune | **none** — results interpreted only after AgentDojo Slack ASR and util_without_attack |
+| Item                       | Value                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------- |
+| Upstream                   | https://github.com/uiuc-kang-lab/InjecAgent                                                 |
+| Model (federal-facing)     | `openai/gpt-4o-mini` via OpenRouter (same as AgentDojo matrix)                              |
+| Arms                       | `none` (undefended) vs `clawql_data_flow` (v2 defaults — allow/park/hard + metadata labels) |
+| Claim vocabulary           | empirical (not “provable”)                                                                  |
+| Relation to AgentDojo tune | **none** — results interpreted only after AgentDojo Slack ASR and util_without_attack       |
 
 ## How this fits the readout order
 

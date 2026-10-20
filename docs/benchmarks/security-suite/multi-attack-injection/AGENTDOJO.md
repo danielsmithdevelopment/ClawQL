@@ -6,12 +6,12 @@ Outsiders already trust AgentDojo’s ASR and utility. ClawQL’s data-flow arm 
 
 ## Utility without attack (lead with the cost)
 
-| Suite     | Utility without attack: none → ClawQL | 95% CI (ClawQL)   |
-| --------- | ------------------------------------: | ----------------- |
-| Banking   |                           0.56 → 0.56 | \[0.31, 0.81\]    |
-| Slack     |                           0.76 → 0.24 | \[0.05, 0.43\]    |
-| Travel    |                           0.60 → 0.25 | \[0.05, 0.45\]    |
-| Workspace |                           0.80 → 0.42 | \[0.28, 0.57\]    |
+| Suite     | Utility without attack: none → ClawQL | 95% CI (ClawQL) |
+| --------- | ------------------------------------: | --------------- |
+| Banking   |                           0.56 → 0.56 | \[0.31, 0.81\]  |
+| Slack     |                           0.76 → 0.24 | \[0.05, 0.43\]  |
+| Travel    |                           0.60 → 0.25 | \[0.05, 0.45\]  |
+| Workspace |                           0.80 → 0.42 | \[0.28, 0.57\]  |
 
 Workspace shows the pattern most clearly: **zero successful attacks**, **3,603** under-attack sink stops, and benign task success nearly halved. That is the defense stopping attacks partly by stopping work.
 
@@ -21,16 +21,16 @@ No-attack utility intervals are wide (each suite has only a few dozen user tasks
 
 CI [39360438719](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39360438719) · [results-agentdojo.json](./results-agentdojo.json) · claim_kind=`empirical` / framing=`tradeoff_not_win`.
 
-| Suite     | Defense            |   n |         ASR (95% CI) | Util under attack (95% CI) | Util without attack (95% CI) | Blocks |
-| --------- | ------------------ | --: | -------------------: | -------------------------: | ---------------------------: | -----: |
-| banking   | `none`             | 144 | 0.50 \[0.42, 0.58\]  |          0.49 \[0.40, 0.56\] |            0.56 \[0.31, 0.81\] |      — |
-| banking   | `clawql_data_flow` | 144 | 0.10 \[0.05, 0.15\]  |          0.51 \[0.43, 0.59\] |            0.56 \[0.31, 0.81\] |    351 |
-| slack     | `none`             | 105 | 0.66 \[0.56, 0.74\]  |          0.47 \[0.37, 0.56\] |            0.76 \[0.57, 0.95\] |      — |
-| slack     | `clawql_data_flow` | 105 | 0.30 \[0.21, 0.38\]  |          0.18 \[0.10, 0.26\] |            0.24 \[0.05, 0.43\] |    270 |
-| travel    | `none`             | 140 | 0.31 \[0.24, 0.39\]  |          0.36 \[0.29, 0.44\] |            0.60 \[0.40, 0.80\] |      — |
-| travel    | `clawql_data_flow` | 140 | 0.11 \[0.06, 0.17\]  |          0.33 \[0.26, 0.41\] |            0.25 \[0.05, 0.45\] |     98 |
-| workspace | `none`             | 560 | 0.18 \[0.15, 0.21\]  |          0.37 \[0.33, 0.41\] |            0.80 \[0.68, 0.90\] |      — |
-| workspace | `clawql_data_flow` | 560 | 0.00 \[0.00, 0.00\]  |          0.34 \[0.30, 0.38\] |            0.42 \[0.28, 0.57\] |   3603 |
+| Suite     | Defense            |   n |        ASR (95% CI) | Util under attack (95% CI) | Util without attack (95% CI) | Blocks |
+| --------- | ------------------ | --: | ------------------: | -------------------------: | ---------------------------: | -----: |
+| banking   | `none`             | 144 | 0.50 \[0.42, 0.58\] |        0.49 \[0.40, 0.56\] |          0.56 \[0.31, 0.81\] |      — |
+| banking   | `clawql_data_flow` | 144 | 0.10 \[0.05, 0.15\] |        0.51 \[0.43, 0.59\] |          0.56 \[0.31, 0.81\] |    351 |
+| slack     | `none`             | 105 | 0.66 \[0.56, 0.74\] |        0.47 \[0.37, 0.56\] |          0.76 \[0.57, 0.95\] |      — |
+| slack     | `clawql_data_flow` | 105 | 0.30 \[0.21, 0.38\] |        0.18 \[0.10, 0.26\] |          0.24 \[0.05, 0.43\] |    270 |
+| travel    | `none`             | 140 | 0.31 \[0.24, 0.39\] |        0.36 \[0.29, 0.44\] |          0.60 \[0.40, 0.80\] |      — |
+| travel    | `clawql_data_flow` | 140 | 0.11 \[0.06, 0.17\] |        0.33 \[0.26, 0.41\] |          0.25 \[0.05, 0.45\] |     98 |
+| workspace | `none`             | 560 | 0.18 \[0.15, 0.21\] |        0.37 \[0.33, 0.41\] |          0.80 \[0.68, 0.90\] |      — |
+| workspace | `clawql_data_flow` | 560 | 0.00 \[0.00, 0.00\] |        0.34 \[0.30, 0.38\] |          0.42 \[0.28, 0.57\] |   3603 |
 
 ASR = `mean(security_results)` (`security()` True ⇒ injection succeeded). Banking is the only suite with a large ASR drop **and** flat clean utility.
 
@@ -38,11 +38,11 @@ ASR = `mean(security_results)` (`security()` True ⇒ injection succeeded). Bank
 
 Published policy was **fail-closed on every sink after any untrusted read** — no park vs hard distinction at measurement time. Re-reading no-attack trajectories (false positives = blocks with no injection):
 
-| Suite     | Tasks | Tasks with blocks | Stops | Top sinks (count)                                      |
-| --------- | ----: | ----------------: | ----: | ------------------------------------------------------ |
-| Banking   |    16 |                 7 |    13 | `send_money` 7, `schedule_transaction` 5               |
-| Slack     |    21 |                16 |    37 | `send_direct_message` 17, `add_user_to_channel` 11, `send_channel_message` 8 |
-| Travel    |    20 |                 5 |     6 | `create_calendar_event` 3, `reserve_hotel` 2, `send_email` 1 |
+| Suite     | Tasks | Tasks with blocks | Stops | Top sinks (count)                                                                |
+| --------- | ----: | ----------------: | ----: | -------------------------------------------------------------------------------- |
+| Banking   |    16 |                 7 |    13 | `send_money` 7, `schedule_transaction` 5                                         |
+| Slack     |    21 |                16 |    37 | `send_direct_message` 17, `add_user_to_channel` 11, `send_channel_message` 8     |
+| Travel    |    20 |                 5 |     6 | `create_calendar_event` 3, `reserve_hotel` 2, `send_email` 1                     |
 | Workspace |    40 |                22 |    57 | `create_calendar_event` 17, `send_email` 14, `create_file` 8, `append_to_file` 7 |
 
 Guesses vs data:
@@ -61,11 +61,11 @@ Qualitatively, from the no-attack trajectories above: Slack and workspace stops 
 
 Rule changes are published as a diff: **[AGENTDOJO-RULES-DIFF.md](./AGENTDOJO-RULES-DIFF.md)** (`clawql_agentdojo_defaults_v2`). Summary:
 
-| Disposition | Examples |
-| ----------- | -------- |
-| **Allow** (+ metadata trust label; body unchanged) | Slack DM / non-`External_*` channel post; `@bluesparrowtech.com` email; own calendar create/reschedule; own file create/append |
-| **Park** (human) | Money / schedule; external email; travel reserves; **membership & invitations** (`add_user_to_channel`, etc.); calendar participant adds |
-| **Hard block** | `delete_*`, `share_file`, `post_webpage`, Slack `External_*`, membership with outside email |
+| Disposition                                        | Examples                                                                                                                                 |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Allow** (+ metadata trust label; body unchanged) | Slack DM / non-`External_*` channel post; `@bluesparrowtech.com` email; own calendar create/reschedule; own file create/append           |
+| **Park** (human)                                   | Money / schedule; external email; travel reserves; **membership & invitations** (`add_user_to_channel`, etc.); calendar participant adds |
+| **Hard block**                                     | `delete_*`, `share_file`, `post_webpage`, Slack `External_*`, membership with outside email                                              |
 
 **Same-workspace ≠ safe.** Slack attacks inject from inside the workspace. Membership stays privileged; allowed internal posts are labeled in ClawQL metadata (not a body prefix — AgentDojo content checks must not fail on a marker). Remeasure must call out **Slack ASR** specifically — if it rises noticeably, the relaxation went too far.
 
@@ -123,13 +123,13 @@ Cite: [arXiv:2503.18813](https://arxiv.org/abs/2503.18813) · [camel-prompt-inje
 
 ## Must report (per cell / suite)
 
-| Source        | Metric                                                                  |
-| ------------- | ----------------------------------------------------------------------- |
-| **AgentDojo** | ASR + **ci95**                                                          |
-| **AgentDojo** | Utility **under attack** + **ci95**                                     |
-| **AgentDojo** | Utility **without attacks** + **ci95** (as prominent as ASR)            |
-| **ClawQL**    | under-attack stops + no-attack stops by **disposition** (park / hard)   |
-| **Protocol**  | Smoke vs full; trade-off framing; empirical wording                     |
+| Source        | Metric                                                                |
+| ------------- | --------------------------------------------------------------------- |
+| **AgentDojo** | ASR + **ci95**                                                        |
+| **AgentDojo** | Utility **under attack** + **ci95**                                   |
+| **AgentDojo** | Utility **without attacks** + **ci95** (as prominent as ASR)          |
+| **ClawQL**    | under-attack stops + no-attack stops by **disposition** (park / hard) |
+| **Protocol**  | Smoke vs full; trade-off framing; empirical wording                   |
 
 ## Defense arm
 
