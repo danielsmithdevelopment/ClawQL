@@ -261,7 +261,7 @@ export const multiAttackLiveRows: readonly MultiAttackLiveRow[] = [
 ] as const
 
 export const multiAttackAgentDojoNote =
-  'AgentDojo smoke (n=12) is harness OpenRouter outside live-models.json; DeepSeek lab-only. Full publish gates: bootstrap CI over pairs; utility under attack and without attacks; CaMeL (arXiv:2503.18813) cited as related work with its own models/numbers — not a row in our table until same-model head-to-head; ClawQL claims stay empirical (“no attack succeeded across N pairs as a drop-in gateway”), not “provable.” See AGENTDOJO.md.'
+  'AgentDojo v1‖v2 (n=949): v1 cut ASR ~80% at severe clean-util cost; v2 recovered util on Slack/workspace/travel but Slack ASR rose 0.30→0.40 (watchpoint). Scripted OOS holds; InjecAgent pending. See AGENTDOJO.md + RULES-DIFF.'
 
 export const multiAttackBenignSummary =
   'Every arm runs the same 14 benign cases (recall, search/cache/audit, memory writes, skills, same-source reply, internal team/forward, third-party still blocked). Peers that omit or block ingest fail the five memory-write cases and keep the rest — publish X of 14, then the memory-write breakout. Open-weight live models also run benign on passthrough so both-arms-fail reads as model capability, not ClawQL cost. Contamination = hostile content surfaced as trusted (same as the governance board).'

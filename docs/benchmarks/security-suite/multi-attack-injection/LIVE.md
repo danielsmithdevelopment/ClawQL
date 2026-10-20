@@ -43,7 +43,7 @@ Open-weight pins added `2026-10-19T23:14Z` (_representativeness: deployments com
 
 ## Run order
 
-1. **AgentDojo** — full gpt-4o-mini matrix published as a **trade-off** (n=949; ASR down ~80%, clean utility down hard in 3/4 suites; harness OpenRouter, **not** live-models pre-reg) — [AGENTDOJO.md](./AGENTDOJO.md). CaMeL remains related work until same-model.
+1. **AgentDojo** — v1 ‖ v2 published ([AGENTDOJO.md](./AGENTDOJO.md)): v1 severe util cost; v2 recovers util but Slack ASR rose (0.30→0.40). Scripted OOS holds; InjecAgent pending. CaMeL related work until same-model.
 2. Remaining hosted models (pre-registered)
 3. Open-weight with dual-arm benign
 

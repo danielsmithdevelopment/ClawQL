@@ -1,10 +1,10 @@
 # AgentDojo `clawql_data_flow` rules diff (frozen)
 
 **Defaults id:** `clawql_agentdojo_defaults_v2`  
-**Status:** frozen for remeasure — do not retune against AgentDojo benign fails before the out-of-sample checks below land.  
-**Official numbers until remeasure:** published fail-closed-all table in [AGENTDOJO.md](./AGENTDOJO.md) / CI [39360438719](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39360438719).
+**Status:** **remeasured** — v1 ‖ v2 published in [AGENTDOJO.md](./AGENTDOJO.md).  
+**v1 CI:** [39360438719](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39360438719) · **v2 CI:** [39458622200](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39458622200).
 
-When the remeasure lands, publish **v1 (fail-closed-all) and v2 side by side** with this changelog — not a replacement that erases what we got wrong.
+Published **side by side** with this changelog — not a replacement that erases what we got wrong.
 
 ## v1 → v2 (what moved)
 
@@ -51,19 +51,10 @@ v2 was informed by AgentDojo benign failures. Grading only on AgentDojo would be
 
 Internal-only estimates (path-continuation counterfactuals) stay in `agentdojo-park-vs-hard-counterfactual.json` — **not** on the public page. The remeasure settles utility and ASR; until then those figures are not results.
 
-## How to read the remeasure (fixed order)
+## How the remeasure was read (fixed order — applied)
 
-Whatever v2 shows is a clean measurement — rules, held-out bench, watchpoint, and label placement were settled before data. When results land, interpret **in this order only**:
+1. **Slack ASR first.** v1 clawql **0.30 → v2 0.40** — rose noticeably. Relaxation went too far on Slack attack rate regardless of utility gains.
+2. **Utility without attack vs undefended.** Large recovery on Slack (0.24→0.57), workspace (0.42→0.75), travel (0.25→0.40); banking ~flat at 0.56 clawql.
+3. **Out-of-sample.** Scripted board holds (0/12 + 14/14). InjecAgent scores still pending — generalization beyond scripted is **not** claimed.
 
-1. **Slack ASR first.** Most likely to rise under the same-workspace relaxation. If it climbs noticeably vs v1, the relaxation went too far — **regardless of utility gains**.
-2. **Utility without attack, per suite, against undefended**, with bootstrap intervals. That is the cost question v1 raised.
-3. **InjecAgent and the scripted board next.** If v2 holds there too, the refinements generalize. If only AgentDojo improves, that is evidence of fit-to-AgentDojo — say so.
-
-Then publish **v1 ‖ v2 side by side with this diff**, whichever way it falls.
-
-## Publish sequence (next)
-
-1. Keep v1 table as official until v2 CI finishes.
-2. Publish v1 ‖ v2 tables + this diff (no erasing v1).
-3. Follow the readout order above in the write-up (Slack ASR → util_without_attack → out-of-sample).
-4. Honest framing: what we got wrong (over-broad fail-closed), what we changed, what still costs.
+Published **v1 ‖ v2 + this diff** in AGENTDOJO.md.

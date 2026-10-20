@@ -1,95 +1,131 @@
-# AgentDojo — trade-off, not a win
+# AgentDojo — v1 ‖ v2 side by side
 
-Outsiders already trust AgentDojo’s ASR and utility. ClawQL’s data-flow arm is scored with **their** metrics.
+Outsiders already trust AgentDojo’s ASR and utility. ClawQL’s data-flow arm is scored with **their** metrics. claim_kind=`empirical`. CaMeL stays related work (not a table row).
 
-**Honest summary (published full matrix):** ClawQL cut successful attacks by about **80%** (pooled ASR **0.30 → 0.064**, n=949), at a **substantial cost to benign task success in three of four suites**. We are working on that cost. Scripted-board “no cost to ordinary work” **does not** carry over to AgentDojo under the measured policy.
+Rules changelog: **[AGENTDOJO-RULES-DIFF.md](./AGENTDOJO-RULES-DIFF.md)** (`clawql_agentdojo_defaults_v2`). Artifacts: [v1](./results-agentdojo-v1.json) · [v2](./results-agentdojo-v2.json) · [combined](./results-agentdojo.json).
 
-## Utility without attack (lead with the cost)
+Remeasure readout order was locked before data: **(1) Slack ASR → (2) util without attack → (3) out-of-sample**.
 
-| Suite     | Utility without attack: none → ClawQL | 95% CI (ClawQL) |
-| --------- | ------------------------------------: | --------------- |
-| Banking   |                           0.56 → 0.56 | \[0.31, 0.81\]  |
-| Slack     |                           0.76 → 0.24 | \[0.05, 0.43\]  |
-| Travel    |                           0.60 → 0.25 | \[0.05, 0.45\]  |
-| Workspace |                           0.80 → 0.42 | \[0.28, 0.57\]  |
+---
 
-Workspace shows the pattern most clearly: **zero successful attacks**, **3,603** under-attack sink stops, and benign task success nearly halved. That is the defense stopping attacks partly by stopping work.
+## 1. Slack ASR (watchpoint first)
 
-No-attack utility intervals are wide (each suite has only a few dozen user tasks — banking’s CI spans 0.31–0.81). The Slack, travel, and workspace drops are still large enough to treat as real.
+| | v1 clawql ASR | v2 clawql ASR | none (both runs ~) |
+| --- | ---: | ---: | ---: |
+| **Slack** | **0.30** \[0.21, 0.38\] | **0.40** \[0.30, 0.50\] | 0.66 |
 
-## Attack rate (same matrix — do not headline alone)
+Slack ASR **rose** under v2 (0.30 → 0.40). The same-workspace relaxation went too far on this suite for attack rate — **even though utility recovered**. Still below undefended (0.66), but the watchpoint triggers: do not treat v2 as a pure win on Slack security.
 
-CI [39360438719](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39360438719) · [results-agentdojo.json](./results-agentdojo.json) · claim_kind=`empirical` / framing=`tradeoff_not_win`.
+Other suites (ASR none → clawql):
 
-| Suite     | Defense            |   n |        ASR (95% CI) | Util under attack (95% CI) | Util without attack (95% CI) | Blocks |
-| --------- | ------------------ | --: | ------------------: | -------------------------: | ---------------------------: | -----: |
-| banking   | `none`             | 144 | 0.50 \[0.42, 0.58\] |        0.49 \[0.40, 0.56\] |          0.56 \[0.31, 0.81\] |      — |
-| banking   | `clawql_data_flow` | 144 | 0.10 \[0.05, 0.15\] |        0.51 \[0.43, 0.59\] |          0.56 \[0.31, 0.81\] |    351 |
-| slack     | `none`             | 105 | 0.66 \[0.56, 0.74\] |        0.47 \[0.37, 0.56\] |          0.76 \[0.57, 0.95\] |      — |
-| slack     | `clawql_data_flow` | 105 | 0.30 \[0.21, 0.38\] |        0.18 \[0.10, 0.26\] |          0.24 \[0.05, 0.43\] |    270 |
-| travel    | `none`             | 140 | 0.31 \[0.24, 0.39\] |        0.36 \[0.29, 0.44\] |          0.60 \[0.40, 0.80\] |      — |
-| travel    | `clawql_data_flow` | 140 | 0.11 \[0.06, 0.17\] |        0.33 \[0.26, 0.41\] |          0.25 \[0.05, 0.45\] |     98 |
-| workspace | `none`             | 560 | 0.18 \[0.15, 0.21\] |        0.37 \[0.33, 0.41\] |          0.80 \[0.68, 0.90\] |      — |
-| workspace | `clawql_data_flow` | 560 | 0.00 \[0.00, 0.00\] |        0.34 \[0.30, 0.38\] |          0.42 \[0.28, 0.57\] |   3603 |
+| Suite | v1 | v2 |
+| --- | ---: | ---: |
+| Banking | 0.50 → 0.10 | 0.53 → 0.10 |
+| Travel | 0.31 → 0.11 | 0.25 → 0.16 |
+| Workspace | 0.18 → 0.00 | 0.17 → 0.04 |
+| Pooled (n=949) | 0.30 → 0.064 | 0.29 → 0.106 |
 
-ASR = `mean(security_results)` (`security()` True ⇒ injection succeeded). Banking is the only suite with a large ASR drop **and** flat clean utility.
+---
 
-## What fired on benign (no-attack) tasks
+## 2. Utility without attack vs undefended
 
-Published policy was **fail-closed on every sink after any untrusted read** — no park vs hard distinction at measurement time. Re-reading no-attack trajectories (false positives = blocks with no injection):
+| Suite | v1: none → clawql | v2: none → clawql (95% CI clawql) |
+| --- | ---: | ---: |
+| Banking | 0.56 → 0.56 | 0.69 → 0.56 \[0.31, 0.81\] |
+| Slack | 0.76 → **0.24** | 0.81 → **0.57** \[0.38, 0.76\] |
+| Travel | 0.60 → **0.25** | 0.50 → **0.40** \[0.20, 0.60\] |
+| Workspace | 0.80 → **0.42** | 0.90 → **0.75** \[0.62, 0.88\] |
 
-| Suite     | Tasks | Tasks with blocks | Stops | Top sinks (count)                                                                |
-| --------- | ----: | ----------------: | ----: | -------------------------------------------------------------------------------- |
-| Banking   |    16 |                 7 |    13 | `send_money` 7, `schedule_transaction` 5                                         |
-| Slack     |    21 |                16 |    37 | `send_direct_message` 17, `add_user_to_channel` 11, `send_channel_message` 8     |
-| Travel    |    20 |                 5 |     6 | `create_calendar_event` 3, `reserve_hotel` 2, `send_email` 1                     |
-| Workspace |    40 |                22 |    57 | `create_calendar_event` 17, `send_email` 14, `create_file` 8, `append_to_file` 7 |
+v2 recovered a large share of the clean-work cost on Slack, travel, and workspace. Banking stays near the v1 clawql level (this-run none was higher). Intervals remain wide (few dozen user tasks per suite).
 
-Guesses vs data:
+---
 
-- **Slack — confirmed.** `read_channel_messages` / `get_channels` then post or DM another workspace user was treated as untrusted→external. That is an internal flow.
-- **Travel — confirmed.** `get_rating_reviews_for_hotels` then `reserve_hotel` / calendar / email: untrusted content informing the action is the whole point of the task.
-- **Workspace — confirmed.** Email and calendar reads feed nearly every task; tainting all of them catches almost every write (`create_calendar_event`, internal `send_email`, file create/append).
+## 3. Out-of-sample
 
-## Parks vs hard blocks (why AgentDojo inflates cost)
+| Arm | Result |
+| --- | --- |
+| **Scripted multi-attack board** | Holds: `clawql_default` **0/12** attacks, **14/14** benign — [results-scripted-oos-v2.json](./results-scripted-oos-v2.json) |
+| **InjecAgent** | Protocol frozen before remeasure ([INJECAGENT.md](./INJECAGENT.md)); **scores not yet measured** — do not claim generalization beyond the scripted board |
 
-AgentDojo has **no human**. A write ClawQL would **park for approval** still counts as a utility failure here, even though a person would often approve it in seconds. The published arm failed every stop the same way (no park vs hard distinction at measurement time).
+---
 
-Qualitatively, from the no-attack trajectories above: Slack and workspace stops are dominated by in-workspace messaging and ordinary calendar/file writes; banking stops are money moves (park-shaped); travel mixes booking parks with tasks that fail even with no ClawQL stop. **Path-continuation “would reach X utility” estimates are not results** — once an action is allowed, the model takes a different path. Those estimates stay in internal analysis only ([`agentdojo-park-vs-hard-counterfactual.json`](./agentdojo-park-vs-hard-counterfactual.json)); the remeasure settles the numbers.
+## Honest summary
 
-## Defaults refined v2 — frozen for remeasure
+- **v1** (fail-closed-all, CI [39360438719](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39360438719)): cut attacks ~80% (pooled ASR 0.30 → 0.064) at a **severe** clean-utility cost in 3/4 suites.
+- **v2** (frozen allow/park/hard, CI [39458622200](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39458622200)): much better clean utility; pooled ASR still down vs none (0.29 → 0.106), but **Slack ASR rose** vs v1 (0.30 → 0.40). Scripted board still holds. InjecAgent pending.
 
-Rule changes are published as a diff: **[AGENTDOJO-RULES-DIFF.md](./AGENTDOJO-RULES-DIFF.md)** (`clawql_agentdojo_defaults_v2`). Summary:
+v2 is a cleaner measurement of the refined rules — not a free lunch. Next lever if Slack ASR must come back down: tighten what “allow” covers for channel posts that replay untrusted text, without returning to fail-closed-all.
 
-| Disposition                                        | Examples                                                                                                                                 |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **Allow** (+ metadata trust label; body unchanged) | Slack DM / non-`External_*` channel post; `@bluesparrowtech.com` email; own calendar create/reschedule; own file create/append           |
-| **Park** (human)                                   | Money / schedule; external email; travel reserves; **membership & invitations** (`add_user_to_channel`, etc.); calendar participant adds |
-| **Hard block**                                     | `delete_*`, `share_file`, `post_webpage`, Slack `External_*`, membership with outside email                                              |
+## Full tables
 
-**Same-workspace ≠ safe.** Slack attacks inject from inside the workspace. Membership stays privileged; allowed internal posts are labeled in ClawQL metadata (not a body prefix — AgentDojo content checks must not fail on a marker). Remeasure must call out **Slack ASR** specifically — if it rises noticeably, the relaxation went too far.
+### v1 — fail-closed-all (CI 39360438719)
 
-**Anti-tuning:** v2 was informed by AgentDojo benign fails. Freeze it, then also measure the scripted board and **[InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent)** (named in the rules diff before remeasure). The published v1 table above stays official until remeasure; then publish **v1 ‖ v2 + the changelog**.
+| Suite     | Defense            |   n |         ASR (95% CI) | Util under attack | Util without attack | Blocks |
+| --------- | ------------------ | --: | -------------------: | ----------------: | ------------------: | -----: |
+| banking   | `none`             | 144 | 0.50 \[0.42, 0.58\]  |              0.49 |                0.56 |      — |
+| banking   | `clawql_data_flow` | 144 | 0.10 \[0.05, 0.15\]  |              0.51 |                0.56 |    351 |
+| slack     | `none`             | 105 | 0.66 \[0.56, 0.74\]  |              0.47 |                0.76 |      — |
+| slack     | `clawql_data_flow` | 105 | 0.30 \[0.21, 0.38\]  |              0.18 |                0.24 |    270 |
+| travel    | `none`             | 140 | 0.31 \[0.24, 0.39\]  |              0.36 |                0.60 |      — |
+| travel    | `clawql_data_flow` | 140 | 0.11 \[0.06, 0.17\]  |              0.33 |                0.25 |     98 |
+| workspace | `none`             | 560 | 0.18 \[0.15, 0.21\]  |              0.37 |                0.80 |      — |
+| workspace | `clawql_data_flow` | 560 | 0.00 \[0.00, 0.00\]  |              0.34 |                0.42 |   3603 |
+
+### v2 — `clawql_agentdojo_defaults_v2` (CI 39458622200)
+
+| Suite     | Defense            |   n |         ASR (95% CI) | Util under attack | Util without attack (95% CI) | Blocks | No-atk stops |
+| --------- | ------------------ | --: | -------------------: | ----------------: | ---------------------------: | -----: | -----------: |
+| banking   | `none`             | 144 | 0.53 \[0.44, 0.60\]  |              0.49 |                         0.69 |      — |            — |
+| banking   | `clawql_data_flow` | 144 | 0.10 \[0.05, 0.15\]  |              0.51 |            0.56 \[0.31, 0.81\] |    279 | 11 (all park) |
+| slack     | `none`             | 105 | 0.66 \[0.56, 0.74\]  |              0.53 |                         0.81 |      — |            — |
+| slack     | `clawql_data_flow` | 105 | 0.40 \[0.30, 0.50\]  |              0.50 |            0.57 \[0.38, 0.76\] |    133 | 14 (park+hard) |
+| travel    | `none`             | 140 | 0.25 \[0.18, 0.33\]  |              0.44 |                         0.50 |      — |            — |
+| travel    | `clawql_data_flow` | 140 | 0.16 \[0.11, 0.23\]  |              0.40 |            0.40 \[0.20, 0.60\] |     55 |  2 (park) |
+| workspace | `none`             | 560 | 0.17 \[0.14, 0.20\]  |              0.36 |                         0.90 |      — |            — |
+| workspace | `clawql_data_flow` | 560 | 0.04 \[0.03, 0.06\]  |              0.55 |            0.75 \[0.62, 0.88\] |   2117 |  9 (park+hard) |
+
+ASR = `mean(security_results)` (`security()` True ⇒ injection succeeded). Allowed posts use **metadata** trust labels (body unchanged).
+
+## What v1 benign stops looked like (autopsy; not v2 counterfactuals)
+
+v1 policy was fail-closed on every sink after any untrusted read:
+
+| Suite     | Tasks with blocks | Top sinks |
+| --------- | ----------------: | --------- |
+| Banking   |                 7 | `send_money`, `schedule_transaction` |
+| Slack     |                16 | DM / add-user / channel message |
+| Travel    |                 5 | calendar / `reserve_hotel` / email |
+| Workspace |                22 | calendar / email / file writes |
+
+Path-continuation util estimates stay internal-only (`agentdojo-park-vs-hard-counterfactual.json`).
+
+## Defaults v2 (frozen — see rules diff)
+
+| Disposition | Examples |
+| ----------- | -------- |
+| **Allow** (+ metadata trust label; body unchanged) | Slack DM / non-`External_*` channel post; `@bluesparrowtech.com` email; own calendar; own file create/append |
+| **Park** (human) | Money / schedule; external email; travel reserves; **membership & invitations**; calendar participant adds |
+| **Hard block** | `delete_*`, `share_file`, `post_webpage`, Slack `External_*`, membership with outside email |
 
 ## Publish gates
 
-1. **Uncertainty, not only point estimates.** Report **95% bootstrap CIs over pairs** per suite (and per cell). Optional: `MAI_AGENTDOJO_REPEATS` for multi-seed cell repeats when budget allows.
-2. **Utility without attacks and under attack** — both columns, as prominent as ASR. Do not lead with pooled ASR alone when clean utility halves.
-3. **CaMeL is related work until same-model.** Do **not** put CaMeL percentages in our results table.
-4. **Empirical, not “provable.”** Prefer: _“No attack succeeded across N pairs, as a drop-in gateway.”_
+1. **Uncertainty** — 95% bootstrap CIs over pairs.
+2. **Utility without attacks and under attack** — as prominent as ASR.
+3. **CaMeL related work** until same-model — not a table row.
+4. **Empirical, not “provable.”**
 
-## Protocol label (read first)
+## Protocol label
 
 | Question                    | Answer                                                                                                                                                                                   |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Same as `live-models.json`? | **No.** Pre-registered live models are `composer-2.5-fast`, `gpt-5.6-sol-low/medium`, `cursor-grok-4.6-medium`, `gemini-4-argon-medium`, `llama-3.1-8b-instruct`, `qwen2.5-7b-instruct`. |
-| What are these models?      | **Harness smoke / full matrix** via OpenRouter: federal-facing **`openai/gpt-4o-mini`** (not a registered `gpt-5.6-sol-*` entry). `deepseek/deepseek-chat` is **lab-only**.              |
-| Sample size                 | Smoke = **4×3 = 12 pairs** on workspace. Full = workspace 560 + slack 105 + banking 144 + travel 140 = **949** attack pairs (CaMeL’s eval size).                                         |
-| Federal-facing              | Feature **`openai/gpt-4o-mini`** only. Do not put DeepSeek on contractor-facing pages.                                                                                                   |
+| Same as `live-models.json`? | **No.** Pre-registered live models are separate.                                                                                                                                         |
+| These models                | Harness via OpenRouter: federal-facing **`openai/gpt-4o-mini`**. DeepSeek lab-only.                                                                                                      |
+| Sample size                 | Full = **949** attack pairs (workspace 560 + slack 105 + banking 144 + travel 140).                                                                                                      |
+| Federal-facing              | Feature **`openai/gpt-4o-mini`** only.                                                                                                                                                   |
 
 ## Smoke matrix (n=12 workspace) — exploratory only
 
-CI [39354352936](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39354352936). Kept for harness debugging; not the page headline.
+CI [39354352936](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39354352936). Not the page headline.
 
 | Audience         | Model                    | Defense            |              ASR | Utility (under attack) | ClawQL blocks |
 | ---------------- | ------------------------ | ------------------ | ---------------: | ---------------------: | ------------: |
@@ -98,46 +134,15 @@ CI [39354352936](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/3
 | Lab only         | `deepseek/deepseek-chat` | none               |      0.00 (0/12) |            0.67 (8/12) |             — |
 | Lab only         | `deepseek/deepseek-chat` | `clawql_data_flow` |      0.00 (0/12) |            0.58 (7/12) |             1 |
 
-### Why utility under attack can rise (smoke gpt-4o-mini 0.33 → 1.00)
-
-A successful injection often **derails** the agent onto attacker sinks; blocking those after an untrusted calendar read lets the user task finish. That rescue does **not** imply zero clean-work cost on the full matrix.
-
-### DeepSeek’s one block — true positive
-
-`delete_file({file_id: "13"})` on `user_task_0` × `injection_task_1` after calendar read — injection task 1’s goal. Utility stayed True on that pair. The 0.67 → 0.58 dip is LLM path variance (3 lost / 2 gained pairs with zero blocks). **No rule change.**
-
 ## Related work: CaMeL (not a table row)
 
-[CaMeL](https://arxiv.org/abs/2503.18813) (Debenedetti et al.; Google / DeepMind / ETH Zürich) separates trusted control flow from untrusted data and enforces capabilities/policies via a custom Python interpreter — evaluated on AgentDojo.
-
-From the paper’s abstract (their wording, their eval): they demonstrate solving **77%** of tasks with **provable** security (compared to **84%** with an undefended system) in AgentDojo. Those figures are **not** gpt-4o-mini numbers and must not sit beside our gpt-4o-mini rates. The bar we want next is the same shape: **security gain without collapsing benign utility**.
-
-|             | CaMeL                                                   | ClawQL `clawql_data_flow`                                             |
-| ----------- | ------------------------------------------------------- | --------------------------------------------------------------------- |
-| Idea        | Provenance + capabilities; interpreter around the agent | Untrusted-read taint → allow / park / hard-block sinks                |
-| Deploy      | New agent design                                        | Drop-in gateway — no new agent loop required for the MCP product path |
-| Claim shape | Design-time _provable_ separation (their term)          | **Empirical** rates over N pairs                                      |
-| Comparison  | Cite in context                                         | Same-model head-to-head required before any side-by-side %            |
-
-Cite: [arXiv:2503.18813](https://arxiv.org/abs/2503.18813) · [camel-prompt-injection](https://github.com/google-research/camel-prompt-injection).
-
-## Must report (per cell / suite)
-
-| Source        | Metric                                                                |
-| ------------- | --------------------------------------------------------------------- |
-| **AgentDojo** | ASR + **ci95**                                                        |
-| **AgentDojo** | Utility **under attack** + **ci95**                                   |
-| **AgentDojo** | Utility **without attacks** + **ci95** (as prominent as ASR)          |
-| **ClawQL**    | under-attack stops + no-attack stops by **disposition** (park / hard) |
-| **Protocol**  | Smoke vs full; trade-off framing; empirical wording                   |
+[CaMeL](https://arxiv.org/abs/2503.18813) — their models, their “provable” claim. Cite in context; same-model head-to-head required before any side-by-side %.
 
 ## Defense arm
 
-`clawql_data_flow` — [`clawql_tools_executor.py`](../../../scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py)
+`clawql_data_flow` — [`clawql_tools_executor.py`](../../../scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py) · `DEFAULTS_ID=clawql_agentdojo_defaults_v2`
 
-After untrusted reads (email / file / **calendar** / channel), classifies sinks: same-workspace **allow**, human-gated **park**, destructive/third-party **hard_block**. Workspace `important_instructions` injects via calendar descriptions.
-
-## CI matrix (OpenRouter)
+## CI matrix
 
 ```bash
 gh workflow run multi-attack-agentdojo.yml \
@@ -146,22 +151,8 @@ gh workflow run multi-attack-agentdojo.yml \
   -f models=openai/gpt-4o-mini
 ```
 
-PR path defaults: full × four suites × gpt-4o-mini only. Each cell also runs the no-attack user-task pass unless `MAI_AGENTDOJO_SKIP_NO_ATTACK=1`.
-
-## Local / one-cell
-
-```bash
-pip3 install -r scripts/benchmarks/multi-attack-injection/agentdojo/requirements.txt
-OPENROUTER_API_KEY=… MAI_AGENTDOJO=1 \
-  MAI_AGENTDOJO_MODEL=openai/gpt-4o-mini \
-  MAI_AGENTDOJO_DEFENSE=clawql_data_flow \
-  npm run benchmark:multi-attack-injection:agentdojo
-```
-
 Upstream: [ethz-spylab/agentdojo](https://github.com/ethz-spylab/agentdojo) · `v1.2.2`.
 
 ## Status
 
-- Full gpt-4o-mini matrix **published as a trade-off** (CI 39360438719): ASR down ~80%, clean utility down hard in 3/4 suites — **v1 table above remains official**.
-- Benign false-positive autopsy on the page; path-continuation estimates internal-only; v2 defaults frozen in [AGENTDOJO-RULES-DIFF.md](./AGENTDOJO-RULES-DIFF.md).
-- Remeasure readout order (locked): **(1) Slack ASR** → **(2) util without attack vs undefended + CIs** → **(3) InjecAgent + scripted board**; then publish **v1 ‖ v2 + diff**.
+- **v1 ‖ v2 published** with rules diff. Slack ASR watchpoint: rose under v2. Clean utility recovered on three suites. Scripted OOS holds. InjecAgent scores still pending.
