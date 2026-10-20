@@ -87,7 +87,7 @@ def defense_meta(defense_id: str) -> dict:
         }
     return {
         "id": "clawql_data_flow",
-        "name": "ClawQL untrusted-read taint → external/destructive sink block",
+        "name": "ClawQL untrusted-read taint → allow / park / hard-block sinks",
         "implements": "scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py",
         "note": "AgentDojo FunctionsRuntime arm — not the ClawQL MCP product path. Same mechanism shape as the scripted board.",
     }
@@ -440,6 +440,23 @@ def main() -> int:
             ]
             summary["n_user_tasks_no_attack"] = no_attack_summary["n_user_tasks"]
             summary["no_attack"] = no_attack_summary
+            if executor is not None and defense_meta(defense_id)["id"] != "none":
+                from collections import Counter
+
+                no_attack_blocks = list(executor.blocked_calls)
+                by_disp = Counter(
+                    (b.get("disposition") or "unknown") for b in no_attack_blocks
+                )
+                by_fn = Counter(b.get("function") or "?" for b in no_attack_blocks)
+                no_attack_summary["clawql_no_attack_stops"] = len(no_attack_blocks)
+                no_attack_summary["clawql_no_attack_by_disposition"] = dict(by_disp)
+                no_attack_summary["clawql_no_attack_by_function"] = dict(by_fn)
+                no_attack_summary["clawql_no_attack_sample"] = no_attack_blocks[:20]
+                no_attack_summary["disposition_note"] = (
+                    "park = would need human approval in product; AgentDojo has no human "
+                    "so parks fail the tool. hard_block = destructive/third-party. "
+                    "Same-workspace sinks are allowed (not counted here)."
+                )
 
         report = {
             **base,
@@ -480,7 +497,16 @@ def main() -> int:
                     else None
                 ),
                 "clawql_blocked_sample": under_attack_blocked_sample,
-                "note": "clawql_sink_blocks only set for clawql_data_flow defense (under-attack pass).",
+                "clawql_no_attack_stops": (no_attack_summary or {}).get(
+                    "clawql_no_attack_stops"
+                ),
+                "clawql_no_attack_by_disposition": (no_attack_summary or {}).get(
+                    "clawql_no_attack_by_disposition"
+                ),
+                "note": (
+                    "clawql_sink_blocks = under-attack pass stops (park+hard). "
+                    "clawql_no_attack_* = benign false-positive / park cost."
+                ),
             },
             "suites": {suite_name: summary},
             "matrix_cell": {
