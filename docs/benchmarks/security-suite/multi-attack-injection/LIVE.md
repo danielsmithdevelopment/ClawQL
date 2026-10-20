@@ -43,8 +43,8 @@ Open-weight pins added `2026-10-19T23:14Z` (_representativeness: deployments com
 
 ## Run order
 
-1. **AgentDojo** — **measured** (smoke): gpt-4o-mini ASR 0.92 → 0.00 under ClawQL, utility 0.33 → 1.00, 27 sink blocks — [AGENTDOJO.md](./AGENTDOJO.md) · [results-agentdojo.json](./results-agentdojo.json)
-2. Remaining hosted models
+1. **AgentDojo** — smoke measured (n=12, harness OpenRouter, **not** live-models pre-reg); **full suites in flight before headline** — [AGENTDOJO.md](./AGENTDOJO.md). Compare to CaMeL when full numbers land.
+2. Remaining hosted models (pre-registered)
 3. Open-weight with dual-arm benign
 
 ## AgentDojo scoring

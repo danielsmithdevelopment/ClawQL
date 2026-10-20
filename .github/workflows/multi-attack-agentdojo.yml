@@ -21,21 +21,22 @@ on:
       - ".github/workflows/multi-attack-agentdojo.yml"
       - "scripts/benchmarks/multi-attack-injection/agentdojo/**"
       - "docs/benchmarks/security-suite/multi-attack-injection/AGENTDOJO.md"
+      - "docs/benchmarks/security-suite/multi-attack-injection/results-agentdojo.json"
   workflow_dispatch:
     inputs:
       mode:
         description: "smoke = small task subset; full = all user×injection pairs per suite"
         type: choice
         options: [smoke, full]
-        default: smoke
+        default: full
       suites:
         description: "Comma-separated AgentDojo suites"
         type: string
-        default: workspace
+        default: workspace,slack,banking,travel
       models:
-        description: "Comma-separated OpenRouter model ids (no openrouter/ prefix needed)"
+        description: "Comma-separated OpenRouter model ids (no openrouter/ prefix needed). Federal-facing default excludes DeepSeek."
         type: string
-        default: deepseek/deepseek-chat,openai/gpt-4o-mini
+        default: openai/gpt-4o-mini
       attack:
         description: "AgentDojo attack"
         type: string
@@ -90,10 +91,12 @@ jobs:
       - id: matrix
         if: steps.gate.outputs.can_run == 'true'
         env:
-          # PR events always smoke; workflow_dispatch honors inputs.
-          MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'smoke' }}
-          SUITES: ${{ github.event_name == 'workflow_dispatch' && inputs.suites || 'workspace' }}
-          MODELS: ${{ github.event_name == 'workflow_dispatch' && inputs.models || 'deepseek/deepseek-chat,openai/gpt-4o-mini' }}
+          # PR path (until workflow is on main): full suites × gpt-4o-mini only.
+          # DeepSeek is lab-only — not in the default federal-facing matrix.
+          # workflow_dispatch honors inputs when available on main.
+          MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'full' }}
+          SUITES: ${{ github.event_name == 'workflow_dispatch' && inputs.suites || 'workspace,slack,banking,travel' }}
+          MODELS: ${{ github.event_name == 'workflow_dispatch' && inputs.models || 'openai/gpt-4o-mini' }}
           ATTACK: ${{ github.event_name == 'workflow_dispatch' && inputs.attack || 'important_instructions' }}
         run: |
           python3 <<'PY'
@@ -125,7 +128,8 @@ jobs:
     needs: gate
     if: needs.gate.outputs.can_run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    # Full workspace alone is ~560 pairs; allow long OpenRouter runs.
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       # Serialize: OpenRouter rate limits (same pattern as openbench-ab).
@@ -161,6 +165,11 @@ jobs:
             echo "MAI_AGENTDOJO_INJECTION_TASKS=injection_task_0,injection_task_1,injection_task_2"
           } >>"$GITHUB_ENV"
           echo "::notice::smoke subset — 4 user × 3 injection tasks"
+
+      - name: Full suite notice
+        if: matrix.mode == 'full'
+        run: |
+          echo "::notice::FULL AgentDojo — all user×injection pairs for suite=${{ matrix.suite }} defense=${{ matrix.defense }} model=${{ matrix.model }}"
 
       - name: OpenRouter key probe
         run: |

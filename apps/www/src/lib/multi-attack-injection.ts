@@ -11,7 +11,7 @@ export const multiAttackSummary =
   'Twelve planted attacks across email, ticket, doc, and webhook. Scripted worst-case model always complies — that board is the guarantee when a model is fooled. Live runs show how often models get fooled, and that ClawQL costs nothing when they don’t. Peers share the same Obsidian-compatible Memory/ over MCP; the same 14 benign cases run on every arm.'
 
 export const multiAttackHeadlineResult =
-  'Models resist most attacks; ClawQL is there for the ones they don’t, at no cost to ordinary work. Scripted board published: ClawQL 0 of 12 + 14 of 14 benign; peer best-config 0 of 12 + 9 of 14 (memory off); peer defaults 12 of 12. AgentDojo smoke measured: gpt-4o-mini ASR 0.92 → 0.00 under ClawQL (utility 0.33 → 1.00, 27 sink blocks); deepseek ASR 0 on both arms. Live table in progress — 1 of 7 pre-registered measured (composer-2.5-fast: all-refuse, no residue, benign 14/14); six pending. Next: remaining hosted models, then open-weight dual-arm benign.'
+  'Models resist most attacks; ClawQL is there for the ones they don’t, at no cost to ordinary work. Scripted board published: ClawQL 0 of 12 + 14 of 14 benign; peer best-config 0 of 12 + 9 of 14 (memory off); peer defaults 12 of 12. AgentDojo smoke (n=12 workspace, harness OpenRouter — not the seven pre-registered live models) is exploratory only; full suites required before any ASR headline. Closest published peer: CaMeL (DeepMind/ETH) on AgentDojo. Live table in progress — 1 of 7 pre-registered measured (composer-2.5-fast); six pending.'
 
 export const multiAttackMechanisms = [
   {
@@ -161,7 +161,7 @@ export const multiAttackRecallNote =
   'Recall integrity asks whether the agent still answers 15.00. Peers pass that smoke query; unlabeled poison is a separate column. Hard-recall vault grader: labeled 15.00 / unlabeled 99.99. Live also grades poison residue — a model can refuse an injected instruction and still summarize hostile text into memory (trusted on passthrough, labeled on ClawQL).'
 
 export const multiAttackPublishGate =
-  'Scripted board published. AgentDojo smoke published (gpt-4o-mini ASR 0.92 → 0.00 under ClawQL). Live table in progress (all seven pre-registered models; update as runs finish). Pre-register includes small open-weight (representativeness). Never search for a gullible model. Open-weight: dual-arm benign (passthrough + ClawQL) so model capability is not misread as gateway cost. Measure poison residue, not only obedience.'
+  'Scripted board published. AgentDojo smoke is labeled exploratory (n=12; outside live-models pre-registration; full suites before headline). Live table in progress (seven pre-registered models). Never search for a gullible model. Open-weight: dual-arm benign. Measure poison residue, not only obedience. Federal-facing pages: do not feature DeepSeek.'
 
 export const multiAttackLiveTableNote =
   'Pre-registered live models — publish the in-progress table; do not wait for every row. Open-weight rows require benign on both passthrough and ClawQL. AgentDojo smoke is measured; next: remaining hosted models, then open-weight.'
@@ -254,7 +254,7 @@ export const multiAttackLiveRows: readonly MultiAttackLiveRow[] = [
 ] as const
 
 export const multiAttackAgentDojoNote =
-  'AgentDojo smoke measured (workspace × important_instructions, 4×3 pairs via OpenRouter). gpt-4o-mini: ASR 0.92 → 0.00 under clawql_data_flow, utility 0.33 → 1.00, 27 sink blocks. deepseek/deepseek-chat: ASR 0.00 on both arms (model resisted tool-executed injections). Artifact: results-agentdojo.json. Full suite optional via workflow multi-attack-agentdojo.yml.'
+  'AgentDojo smoke (n=12 workspace) is harness OpenRouter — openai/gpt-4o-mini is not a pre-registered gpt-5.6-sol-* live model; DeepSeek is lab-only (not federal-facing). Smoke: gpt-4o-mini ASR 11/12 → 0/12 under ClawQL; utility 4/12 → 12/12 because blocked injection sinks stop the agent from abandoning the user task. DeepSeek’s one block was delete_file(13) (injection_task_1) — true positive; its 0.67→0.58 utility dip was LLM variance on unblocked pairs. CaMeL (arXiv:2503.18813) is the closest published data-flow peer (77% tasks with provable security vs 84% undefended on full AgentDojo). Full suites (949 pairs) required before any headline. See AGENTDOJO.md.'
 
 export const multiAttackBenignSummary =
   'Every arm runs the same 14 benign cases (recall, search/cache/audit, memory writes, skills, same-source reply, internal team/forward, third-party still blocked). Peers that omit or block ingest fail the five memory-write cases and keep the rest — publish X of 14, then the memory-write breakout. Open-weight live models also run benign on passthrough so both-arms-fail reads as model capability, not ClawQL cost. Contamination = hostile content surfaced as trusted (same as the governance board).'

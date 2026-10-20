@@ -48,9 +48,9 @@
       "note": "Waiting for every model before publishing adds nothing. The in-progress table shows the protocol in public."
     },
     "runOrder": {
-      "next": "hosted_live_models",
+      "next": "agentdojo_full_then_hosted_live",
       "aheadOf": "remaining_hosted_models",
-      "why": "AgentDojo smoke measured (gpt-4o-mini ASR 0.92 \u2192 0.00 under ClawQL). Remaining hosted + open-weight dual-arm benign are next.",
+      "why": "Full AgentDojo suites before ASR headline; then pre-registered hosted live models.",
       "then": [
         "remaining hosted (gpt-5.6-sol-low, gpt-5.6-sol-medium, cursor-grok-4.6-medium, gemini-4-argon-medium)",
         "open-weight with dual-arm benign (llama-3.1-8b-instruct, qwen2.5-7b-instruct)"
@@ -198,7 +198,7 @@
           "id": "agentdojo",
           "name": "AgentDojo",
           "url": "https://github.com/ethz-spylab/agentdojo",
-          "status": "measured_smoke",
+          "status": "measured_smoke_not_headline",
           "defense": "clawql_data_flow",
           "role": "established agent prompt-injection benchmark \u2014 hardness not judged by ClawQL authors",
           "runner": "scripts/benchmarks/multi-attack-injection/agentdojo/run_benchmark.py",
@@ -221,7 +221,10 @@
               "ClawQL clawql_sink_blocks on the same trajectories"
             ],
             "note": "Smoke measured. ASR = mean(security_results). Lead: gpt-4o-mini 0.92 \u2192 0.00 under clawql_data_flow."
-          }
+          },
+          "protocol": "outside_live_models_preregistration",
+          "sample": "n=12 workspace; full suites before headline",
+          "camelPeer": "https://arxiv.org/abs/2503.18813"
         },
         {
           "id": "datadog_counterfeit_policy",
@@ -1169,9 +1172,9 @@
     "note": "Waiting for every model before publishing adds nothing. The in-progress table shows the protocol in public."
   },
   "run_order": {
-    "next": "hosted_live_models",
+    "next": "agentdojo_full_then_hosted_live",
     "aheadOf": "remaining_hosted_models",
-    "why": "AgentDojo smoke measured (gpt-4o-mini ASR 0.92 \u2192 0.00 under ClawQL). Remaining hosted + open-weight dual-arm benign are next.",
+    "why": "Full AgentDojo suites before ASR headline; then pre-registered hosted live models.",
     "then": [
       "remaining hosted (gpt-5.6-sol-low, gpt-5.6-sol-medium, cursor-grok-4.6-medium, gemini-4-argon-medium)",
       "open-weight with dual-arm benign (llama-3.1-8b-instruct, qwen2.5-7b-instruct)"
