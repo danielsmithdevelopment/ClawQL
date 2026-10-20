@@ -6,11 +6,11 @@ Outsiders already trust AgentDojo’s attack success rate (ASR) and utility-unde
 
 ## Must report
 
-| Source | Metric |
-| ------ | ------ |
-| **AgentDojo** | Attack success rate (ASR) |
-| **AgentDojo** | Utility / task success under attack |
-| **ClawQL** | `attacks_effectuated`, `poison_residue`, benign |
+| Source        | Metric                                          |
+| ------------- | ----------------------------------------------- |
+| **AgentDojo** | Attack success rate (ASR)                       |
+| **AgentDojo** | Utility / task success under attack             |
+| **ClawQL**    | `attacks_effectuated`, `poison_residue`, benign |
 
 ## Harness
 

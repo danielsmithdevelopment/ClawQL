@@ -38,13 +38,16 @@ Native peer configs · Obot deny precondition · same 14 benign · version pins 
 ## Live protocol (anti-cherry-pick)
 
 <<<<<<< HEAD
+
 - **Pre-register** deployment-realistic models (`live-models.json`), including **small open-weight** (`llama-3.1-8b-instruct`, `qwen2.5-7b-instruct`) — _representativeness: deployments commonly run small open models_. Added before remaining runs (recorded in amendments). Publish every result, including all-refuse. **Do not** search for a gullible model until passthrough shows loss.
 - **Published attack sets** for live hardness: AgentDojo and Datadog’s counterfeit-policy technique ([COUNTERFEIT-POLICY.md](./COUNTERFEIT-POLICY.md)). Self-written n=12 is smoke. When AgentDojo runs, report **its ASR and utility-under-attack** alongside ClawQL grades.
-=======
-- **Pre-register** deployment-realistic models (`live-models.json`), including **small open-weight** (`llama-3.1-8b-instruct`, `qwen2.5-7b-instruct`) — *representativeness: deployments commonly run small open models*. Added before remaining runs (recorded in amendments). Publish every result, including all-refuse. **Do not** search for a gullible model until passthrough shows loss.
+  \=======
+- **Pre-register** deployment-realistic models (`live-models.json`), including **small open-weight** (`llama-3.1-8b-instruct`, `qwen2.5-7b-instruct`) — _representativeness: deployments commonly run small open models_. Added before remaining runs (recorded in amendments). Publish every result, including all-refuse. **Do not** search for a gullible model until passthrough shows loss.
 - **AgentDojo next** — ahead of remaining hosted models ([AGENTDOJO.md](./AGENTDOJO.md)). Report **its ASR and utility-under-attack** alongside ClawQL grades. Datadog counterfeit-policy remains the other published hardness set.
 - **Open-weight dual-arm benign:** run benign on passthrough **and** ClawQL. Both-arms fail → model capability (weak tool calling); ClawQL-only fail → gateway cost. Do not misread a lower ClawQL benign score as ClawQL’s cost.
->>>>>>> bae7e59b (docs(security): publish scripted board + in-progress live table)
+
+> > > > > > > bae7e59b (docs(security): publish scripted board + in-progress live table)
+
 - **Poison residue:** a model can refuse an injected instruction and still store poisoned text (ordinary summary). Measure where hostile content landed (trusted vs labeled), not only whether the model obeyed.
 
 ### Live table (1 measured · 6 pending)
