@@ -1,23 +1,36 @@
 {
   "kind": "multi_attack_injection_agentdojo_v1",
-  "status": "pending",
-  "measuredAt": null,
-  "priority": "agentdojo",
-  "priority_why": "AgentDojo lets outsiders compare ClawQL against published defenses using a standard they already trust — worth more for credibility than another frontier model refusing the same twelve plants.",
   "upstream": {
     "name": "AgentDojo",
-    "url": "https://github.com/ethz-spylab/agentdojo"
+    "url": "https://github.com/ethz-spylab/agentdojo",
+    "benchmark_version": "v1.2.2"
   },
+  "defense": {
+    "id": "clawql_data_flow",
+    "name": "ClawQL untrusted-read taint \u2192 external/destructive sink block",
+    "implements": "scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py",
+    "note": "AgentDojo FunctionsRuntime arm \u2014 not the ClawQL MCP product path. Same mechanism shape as the scripted board."
+  },
+  "config": {
+    "suite": "workspace",
+    "attack": "important_instructions",
+    "user_tasks": "all",
+    "injection_tasks": "all"
+  },
+  "status": "wired_awaiting_llm_credentials",
+  "measuredAt": null,
+  "priority": "agentdojo",
   "must_report": {
     "agentdojo_asr": null,
     "agentdojo_utility_under_attack": null,
-    "note": "Publish AgentDojo's own scores alongside ClawQL grades so anyone can compare with published results for other defenses without trusting our grading alone."
+    "note": "Set OPENAI_API_KEY (or ANTHROPIC_API_KEY / TOGETHER_API_KEY) then re-run MAI_AGENTDOJO=1."
   },
   "also_report": {
     "clawql_attacks_effectuated": null,
     "clawql_poison_residue": null,
-    "clawql_benign": null
+    "clawql_benign": null,
+    "note": "Filled after AgentDojo pairs run; ClawQL blocked_calls counted from defense executor."
   },
-  "how_to_run": "Wire AgentDojo against ClawQL MCP, then set MAI_AGENTDOJO=1 and implement the live path in this file. Until then status stays pending.",
-  "note": "Scaffold only — no invented ASR/utility. Scripted board and live model table publish independently."
+  "how_to_run": "OPENAI_API_KEY=\u2026 MAI_AGENTDOJO=1 npm run benchmark:multi-attack-injection:agentdojo",
+  "note": "Defense + runner wired. No LLM credentials in this environment \u2014 refusing to invent ASR/utility."
 }

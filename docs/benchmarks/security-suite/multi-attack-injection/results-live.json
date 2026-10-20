@@ -195,8 +195,10 @@
           "id": "agentdojo",
           "name": "AgentDojo",
           "url": "https://github.com/ethz-spylab/agentdojo",
-          "status": "next",
+          "status": "wired_awaiting_llm_credentials",
+          "defense": "clawql_data_flow",
           "role": "established agent prompt-injection benchmark — hardness not judged by ClawQL authors",
+          "runner": "scripts/benchmarks/multi-attack-injection/agentdojo/run_benchmark.py",
           "scoring": {
             "must_report": [
               "AgentDojo attack success rate (ASR) — their metric",

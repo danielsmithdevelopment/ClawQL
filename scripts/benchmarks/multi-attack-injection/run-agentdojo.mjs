@@ -2,19 +2,21 @@
 /**
  * AgentDojo cell — next live hardness (ahead of remaining hosted models).
  *
- * When measured, must publish AgentDojo ASR + utility-under-attack alongside
- * ClawQL grades. This entrypoint is a scaffold until the AgentDojo env and
- * ClawQL MCP defense arm are wired for a real run.
+ * Spawns the Python AgentDojo runner with ClawQL data-flow ToolsExecutor.
+ * Must publish AgentDojo ASR + utility-under-attack; never invents scores.
  *
  *   npm run benchmark:multi-attack-injection:agentdojo
- *   MAI_AGENTDOJO=1 node run-agentdojo.mjs   # reserved for live run
+ *   MAI_AGENTDOJO=1 npm run benchmark:multi-attack-injection:agentdojo
+ *   OPENAI_API_KEY=… MAI_AGENTDOJO=1 npm run benchmark:multi-attack-injection:agentdojo
  */
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../../..");
+const PY = join(__dirname, "agentdojo", "run_benchmark.py");
 const OUT =
   process.env.MAI_AGENTDOJO_OUT?.trim() ||
   join(
@@ -25,78 +27,80 @@ const LIVE_MODELS = JSON.parse(
   readFileSync(join(__dirname, "live-models.json"), "utf8")
 );
 
-const agentdojoSpec =
-  LIVE_MODELS.corpusNext?.published?.find((p) => p.id === "agentdojo") || {};
+function ensureAgentdojoInstalled() {
+  const check = spawnSync("python3", ["-c", "import agentdojo"], {
+    encoding: "utf8",
+  });
+  if (check.status === 0) return true;
+  process.stderr.write("agentdojo not installed — attempting pip install…\n");
+  const inst = spawnSync("pip3", ["install", "-q", "agentdojo"], {
+    encoding: "utf8",
+    stdio: "inherit",
+  });
+  return inst.status === 0;
+}
 
-const report = {
-  kind: "multi_attack_injection_agentdojo_v1",
-  status: "pending",
-  measuredAt: null,
-  priority: LIVE_MODELS.runOrder?.next || "agentdojo",
-  priority_why: LIVE_MODELS.runOrder?.why || null,
-  upstream: {
-    name: "AgentDojo",
-    url: agentdojoSpec.url || "https://github.com/ethz-spylab/agentdojo",
-  },
-  must_report: {
-    agentdojo_asr: null,
-    agentdojo_utility_under_attack: null,
-    note: agentdojoSpec.scoring?.note || null,
-  },
-  also_report: {
-    clawql_attacks_effectuated: null,
-    clawql_poison_residue: null,
-    clawql_benign: null,
-  },
-  how_to_run:
-    "Wire AgentDojo against ClawQL MCP, then set MAI_AGENTDOJO=1 and implement the live path in this file. Until then status stays pending.",
-  note: "Scaffold only — no invented ASR/utility. Scripted board and live model table publish independently.",
-};
+if (!existsSync(PY)) {
+  console.error(`missing ${PY}`);
+  process.exit(2);
+}
 
-if (process.env.MAI_AGENTDOJO === "1") {
-  report.status = "incomplete";
-  report.note =
-    "MAI_AGENTDOJO=1 set but AgentDojo defense arm is not wired yet — refusing to invent scores.";
+if (!ensureAgentdojoInstalled()) {
+  const report = {
+    kind: "multi_attack_injection_agentdojo_v1",
+    status: "error",
+    error: "agentdojo_python_package_missing",
+    note: "pip install agentdojo failed — cannot run.",
+    priority: LIVE_MODELS.runOrder?.next || "agentdojo",
+  };
   mkdirSync(dirname(OUT), { recursive: true });
-  writeFileSync(OUT, `${JSON.stringify(report, null, 2)}\n`, "utf8");
-  process.stdout.write(`${JSON.stringify({ out: OUT, status: report.status }, null, 2)}\n`);
-  process.exitCode = 3;
-  process.exit();
+  writeFileSync(OUT, `${JSON.stringify(report, null, 2)}\n`);
+  process.exit(1);
 }
 
-// Default: refresh pending artifact from registry (idempotent).
-const existing = existsSync(OUT)
-  ? JSON.parse(readFileSync(OUT, "utf8"))
-  : null;
-if (existing?.status === "measured") {
-  process.stdout.write(
-    JSON.stringify(
-      {
-        out: OUT,
-        status: existing.status,
-        note: "Measured artifact present — not overwriting.",
-        agentdojo_asr: existing.must_report?.agentdojo_asr ?? null,
-        agentdojo_utility: existing.must_report?.agentdojo_utility_under_attack ?? null,
-      },
-      null,
-      2
-    ) + "\n"
-  );
-  process.exit(0);
+const env = {
+  ...process.env,
+  MAI_AGENTDOJO_OUT: OUT,
+  // Default: allow the Python runner to report credential gate without requiring MAI_AGENTDOJO
+  // unless the caller set it. When unset, runner still writes wired_awaiting_llm_credentials.
+};
+if (process.env.MAI_AGENTDOJO === undefined) {
+  // Explicit dry/status path — Python treats missing MAI_AGENTDOJO with creds as ready,
+  // without creds as wired_awaiting.
 }
 
-mkdirSync(dirname(OUT), { recursive: true });
-writeFileSync(OUT, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+const r = spawnSync("python3", [PY], {
+  env,
+  encoding: "utf8",
+  cwd: join(__dirname, "agentdojo"),
+});
+if (r.stdout) process.stdout.write(r.stdout);
+if (r.stderr) process.stderr.write(r.stderr);
+
+let status = "unknown";
+try {
+  status = JSON.parse(readFileSync(OUT, "utf8")).status;
+} catch {
+  /* ignore */
+}
+
 process.stdout.write(
   JSON.stringify(
     {
       out: OUT,
-      status: report.status,
-      priority: report.priority,
-      must_report: Object.keys(report.must_report).filter((k) => k !== "note"),
-      note: "AgentDojo is next — ahead of remaining hosted models.",
+      status,
+      exit: r.status,
+      priority: LIVE_MODELS.runOrder?.next || "agentdojo",
+      note:
+        status === "wired_awaiting_llm_credentials"
+          ? "ClawQL AgentDojo defense is wired. Provide OPENAI_API_KEY (or ANTHROPIC_API_KEY) and re-run with MAI_AGENTDOJO=1."
+          : status === "measured"
+            ? "AgentDojo ASR + utility published alongside ClawQL sink-block grades."
+            : undefined,
     },
     null,
     2
   ) + "\n"
 );
+
+process.exitCode = r.status === null ? 1 : r.status;
