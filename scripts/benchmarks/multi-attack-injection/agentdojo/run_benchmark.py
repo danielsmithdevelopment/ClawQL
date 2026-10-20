@@ -286,22 +286,27 @@ def main() -> int:
     try:
         from agentdojo.attacks.attack_registry import load_attack
         from agentdojo.benchmark import benchmark_suite_with_injections
+        from agentdojo.logging import OutputLogger
         from agentdojo.task_suite.load_suites import get_suite
 
         suite = get_suite(version, suite_name)
         pipeline, executor = build_pipeline(model, provider or "openai", defense_id)
         attacker = load_attack(attack_name, suite, pipeline)
 
-        results = benchmark_suite_with_injections(
-            pipeline,
-            suite,
-            attacker,
-            user_tasks=user_tasks or None,
-            injection_tasks=injection_tasks or None,
-            logdir=logdir,
-            force_rerun=force,
-            benchmark_version=version,
-        )
+        # AgentDojo's TaskLogger reads Logger.get().logdir; without an
+        # OutputLogger on the stack, Logger.get() returns NullLogger and
+        # crashes with AttributeError: 'NullLogger' object has no attribute 'logdir'.
+        with OutputLogger(str(logdir)):
+            results = benchmark_suite_with_injections(
+                pipeline,
+                suite,
+                attacker,
+                user_tasks=user_tasks or None,
+                injection_tasks=injection_tasks or None,
+                logdir=logdir,
+                force_rerun=force,
+                benchmark_version=version,
+            )
         summary = summarize_suite(results)
         blocked = len(executor.blocked_calls) if executor is not None else 0
 
