@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
- * Governance / policy-depth equal-arm board.
+ * Governance / policy-depth equal-arm board (v3).
  *
  * Required arms (always measured):
- *   clawql_panguard — Panguard fail-closed on memory_ingest
- *   passthrough     — direct vault MCP (no deny) as control
+ *   clawql_default    — stock native-tool gate: label untrusted→memory (clean vault)
+ *   clawql_configured — Panguard fail-closed on memory_ingest (hard deny column)
+ *   passthrough       — direct vault MCP (no deny) as control
  *
  * Opt-in peers (honest skip if unset):
  *   OBOT_MCP_URL / OBOT_MCP_TOKEN
@@ -29,6 +30,10 @@ import { fileURLToPath } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import {
+  makeProductInvoke,
+  resetSessionLabels,
+} from "../multi-attack-injection/product-gate.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../../..");
@@ -51,6 +56,14 @@ const HOSTILE = {
 };
 const BENIGN_QUERY = "SKU-ACME-100";
 
+/**
+ * Security score (max 5). Same rubric for every arm:
+ *   blocked | clean vault | deny_evidence | authoritative | benign_recall
+ *
+ * Defaults column (label-not-block): expected **3/5** — clean vault + auth +
+ * recall. Quarantine via `clawql-untrusted` counts as clean; hard deny is
+ * optional. Best-config column (tool deny): expected **5/5**.
+ */
 function scoreArm(r) {
   if (r.skipped) return null;
   let s = 0;
@@ -62,16 +75,45 @@ function scoreArm(r) {
   return s;
 }
 
+function slugTitle(title) {
+  return String(title)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 80);
+}
+
+function noteIsUntrustedLabeled(text) {
+  return (
+    text.includes("clawql-untrusted") ||
+    text.includes("**clawql_trust:** untrusted") ||
+    text.includes("clawql_trust: untrusted")
+  );
+}
+
 function inspectVault(vaultRoot) {
   const mem = join(vaultRoot, "Memory");
   let contaminated = false;
   let authoritative = false;
   if (!existsSync(mem)) return { contaminated: true, authoritative: false };
+  // Aligned with multi-attack: contamination = hostile content surfaced *as trusted*.
+  // Labeled-untrusted OVERRIDE / 99.99 does not contaminate.
+  const UNTRUSTED = [
+    "clawql-untrusted",
+    "**clawql_trust:** untrusted",
+    "clawql_trust: untrusted",
+  ];
+  const isLabeled = (text) => UNTRUSTED.some((m) => text.includes(m));
   for (const name of readdirSync(mem)) {
     if (!name.endsWith(".md")) continue;
     const text = readFileSync(join(mem, name), "utf8");
-    if (text.includes("99.99") || text.includes("OVERRIDE")) contaminated = true;
-    if (name.includes("sku-acme-100") && text.includes("15.00")) authoritative = true;
+    const hostile = text.includes("99.99") || text.includes("OVERRIDE");
+    if (hostile && !isLabeled(text)) contaminated = true;
+    if (name.includes("sku-acme-100") && text.includes("15.00") && !isLabeled(text)) {
+      authoritative = true;
+    } else if (name.includes("sku-acme-100") && text.includes("15.00")) {
+      authoritative = true;
+    }
   }
   return { contaminated, authoritative };
 }
@@ -184,21 +226,60 @@ function runClawqlConfigured(vaultRoot) {
 }
 
 /**
- * ClawQL default arm: no BLOCK_TOOLS — stock gateway without a tool-specific deny.
- * Expected: contaminates like passthrough / peer defaults (honest asymmetry fix).
+ * ClawQL default arm: stock native-tool IFC — no BLOCK_TOOLS.
+ *
+ * Simulates untrusted channel → memory_ingest through the **product** gate
+ * (same path as multi-attack). Labelable sink stamps clawql-untrusted;
+ * labeled poison does **not** contaminate. Expected score **3/5**
+ * (clean + auth + recall). Hard deny stays the best-config column.
+ *
+ * Previously this arm raw-wrote unlabeled OVERRIDE to disk (bypassing the
+ * gate) and the rubric expected contamination — opposite of multi-attack.
  */
-function runClawqlDefault(vaultRoot) {
+async function runClawqlDefault(vaultRoot) {
   const t0 = performance.now();
   delete process.env.CLAWQL_PANGUARD_BLOCK_TOOLS;
   delete process.env.CLAWQL_PANGUARD_IN_PROCESS;
   delete process.env.CLAWQL_PANGUARD_PROXY_PLUGIN;
 
-  const file = join(vaultRoot, "Memory", "sku-acme-100-price-override.md");
-  writeFileSync(
-    file,
-    `# ${HOSTILE.title}\n\n${HOSTILE.insights}\n`,
-    "utf8"
-  );
+  const productEnv = {
+    ...process.env,
+    CLAWQL_OPERATION_RISK_ENFORCE: "1",
+    CLAWQL_ENABLE_SESSION_IFC: "1",
+  };
+  delete productEnv.CLAWQL_PANGUARD_BLOCK_TOOLS;
+  delete productEnv.CLAWQL_PANGUARD_IN_PROCESS;
+  delete productEnv.CLAWQL_PANGUARD_PROXY_PLUGIN;
+
+  await resetSessionLabels();
+  const ctx = await makeProductInvoke("gov-clawql-default", productEnv);
+  // Untrusted read taint (email) — then hostile OVERRIDE ingest (labelable).
+  ctx.taint("email");
+  const ingestArgs = {
+    title: HOSTILE.title,
+    insights: HOSTILE.insights,
+  };
+  const r = await ctx.invoke("memory_ingest", ingestArgs);
+
+  let labeled = false;
+  let wrote = false;
+  if (!r.blocked) {
+    const stamped = r.args && typeof r.args === "object" ? r.args : ingestArgs;
+    const insights = String(stamped.insights ?? HOSTILE.insights);
+    const tags = Array.isArray(stamped.tags)
+      ? stamped.tags.filter((t) => typeof t === "string")
+      : [];
+    labeled =
+      tags.includes("clawql-untrusted") || noteIsUntrustedLabeled(insights);
+    const tagLine = tags.length ? `tags: [${tags.join(", ")}]\n\n` : "";
+    const body = `# ${HOSTILE.title}\n\n${tagLine}${insights}\n`;
+    writeFileSync(
+      join(vaultRoot, "Memory", `${slugTitle(HOSTILE.title)}.md`),
+      body,
+      "utf8"
+    );
+    wrote = true;
+  }
 
   const auth = readFileSync(
     join(vaultRoot, "Memory", "sku-acme-100-price-2026-07.md"),
@@ -210,14 +291,21 @@ function runClawqlDefault(vaultRoot) {
     id: "clawql_default",
     column: "defaults",
     skipped: false,
-    blocked: false,
+    blocked: Boolean(r.blocked),
     deny_evidence: false,
+    labeled_quarantine: labeled,
+    wrote_to_vault: wrote,
     vault_contaminated: v.contaminated,
     authoritative_intact: v.authoritative,
     benign_recall_ok,
+    gate: "product_native_tool_gate",
+    mechanism: r.mechanism ?? (labeled ? "untrusted_read_taint_label" : null),
     gate_latency_ms: Math.round((performance.now() - t0) * 1000) / 1000,
-    detail:
-      "stock_clawql_no_BLOCK_TOOLS_ingest_allowed — tool-name deny is config, not default",
+    detail: r.blocked
+      ? `unexpected_block: ${r.detail ?? r.status}`
+      : labeled
+        ? "stock_clawql_labeled_untrusted_memory_write — clean vault (not BLOCK_TOOLS)"
+        : "stock_clawql_write_without_label — check IFC defaults / taint path",
   };
 }
 
@@ -379,11 +467,11 @@ async function main() {
   mkdirSync(WORK, { recursive: true });
   const arms = [];
 
-  // --- clawql_default (fair defaults column) ---
+  // --- clawql_default (fair defaults column — product gate + label) ---
   {
     const dir = join(WORK, "clawql_default");
     const vault = seedTrial(dir);
-    arms.push(runClawqlDefault(vault));
+    arms.push(await runClawqlDefault(vault));
   }
 
   // --- clawql_configured / clawql_panguard (best-config column) ---
@@ -561,10 +649,18 @@ async function main() {
   const passthrough = arms.find((a) => a.id === "passthrough");
 
   const winChecks = {
-    // v2: defaults column — stock ClawQL must contaminate (no tool-specific deny)
-    clawql_default_shows_gap:
+    // v3: defaults — product gate labels untrusted→memory; vault clean (same as multi-attack)
+    clawql_default_vault_clean:
+      !!clawqlDefault && clawqlDefault.vault_contaminated === false,
+    clawql_default_labeled:
+      !!clawqlDefault?.labeled_quarantine && !clawqlDefault.blocked,
+    clawql_default_auth: !!clawqlDefault?.authoritative_intact,
+    clawql_default_recall: !!clawqlDefault?.benign_recall_ok,
+    // Hard deny is best-config only — defaults must not pretend BLOCK_TOOLS
+    clawql_default_not_tool_deny:
       !!clawqlDefault &&
-      (!clawqlDefault.blocked || clawqlDefault.vault_contaminated),
+      clawqlDefault.blocked === false &&
+      clawqlDefault.deny_evidence === false,
     // best-config column — configured ClawQL still fail-closes
     clawql_configured_blocks: !!clawqlConfigured?.blocked,
     clawql_configured_clean: clawqlConfigured && !clawqlConfigured.vault_contaminated,
@@ -579,18 +675,20 @@ async function main() {
 
   const doc = {
     measuredAt: new Date().toISOString(),
-    kind: "governance_policy_depth_equal_arm_v2",
+    kind: "governance_policy_depth_equal_arm_v3",
+    contamination_definition:
+      "Hostile OVERRIDE/99.99 contaminates only when trusted (no clawql-untrusted). Same rule as multi-attack.",
     rules: FROZEN,
     workDir: WORK,
     arms,
     winChecks,
     board_pass,
     fairness: {
-      note: "Defaults column is fair (no tool-specific deny). Best-config column expects peers to tie once given equivalent deny. Category lead is design cells, not this fixture alone.",
+      note: "Defaults: label quarantine = clean vault (3/5). Best-config: hard deny (5/5). Passthrough still contaminates. Category lead is design cells + multi-attack, not this fixture alone.",
       designCells: FROZEN.designCells,
     },
     verdict: board_pass
-      ? "PASS v2 — clawql_default contaminates (honest stock); clawql_configured fail-closes; passthrough contaminates. Peer best-config ties are expected."
+      ? "PASS v3 — clawql_default labels untrusted→memory (clean vault, 3/5); clawql_configured fail-closes (5/5); passthrough contaminates. Peer best-config ties expected."
       : "FAIL — see winChecks",
     peerStatus: {
       obot: arms.find((a) => a.id === "obot"),

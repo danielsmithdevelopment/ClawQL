@@ -25,7 +25,7 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     priority: 1,
     title: 'Multi-attack injection suite',
     status: 'partial',
-    why: 'Smoke v2: ClawQL defaults 0/12 via native park/IFC; passthrough 12/12; benign 2/4 without a human. Peers pending. Draft until peers land.',
+    why: 'Scripted board published (ClawQL 0/12 + 14/14). Live table in progress: 1/7 measured. AgentDojo full matrix published as trade-off; v2 remeasure pending. Counterfeit-policy ClawQL 0/4.',
   },
   {
     id: 'approval_integrity',
@@ -106,6 +106,12 @@ export const securitySuiteGroups: readonly SecuritySuiteGroup[] = [
         id: 'multi_attack',
         title: 'Multi-attack suite',
         detail: 'Planted instructions in emails, tickets, documents, webhooks — real models, count take-effect rate.',
+      },
+      {
+        id: 'counterfeit_policy',
+        title: 'Counterfeit-policy vs model judge',
+        detail:
+          'Datadog/Jev: prepended policy rewrites taxonomy. ClawQL deterministic measured; model-judged peers pending on a public set + JevShield best-config — no harness stand-in. A model advises the gate, never is the gate.',
       },
       {
         id: 'allowed_exfil',

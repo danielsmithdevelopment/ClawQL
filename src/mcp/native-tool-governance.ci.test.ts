@@ -43,7 +43,10 @@ describe("native tool governance CI", () => {
     for (const name of required) {
       expect(NATIVE_TOOL_POLICY[name], `missing policy for ${name}`).toBeDefined();
     }
-    expect(resolveNativeToolPolicy("memory_ingest").kind).toBe("destructive");
+    // Appends are ordinary writes; overwrites park via effectiveNativeParkKind.
+    expect(resolveNativeToolPolicy("memory_ingest").kind).toBe("write");
+    expect(resolveNativeToolPolicy("memory_ingest").ifcSink).toBe("labelable");
+    expect(resolveNativeToolPolicy("notify").ifcSink).toBe("blocking");
   });
 
   it("execute-path tools are explicitly listed (skip double native park)", () => {

@@ -4,9 +4,9 @@ Fail-closed vault-write policy on a shared adversarial fixture — **fair defaul
 
 | Arm | Column | Role |
 |-----|--------|------|
-| `clawql_default` | defaults | Stock ClawQL — **no** `BLOCK_TOOLS` (expected contaminate) |
-| `clawql_configured` / `clawql_panguard` | best_config | `CLAWQL_PANGUARD_BLOCK_TOOLS=memory_ingest` |
-| `passthrough` | control | Direct vault MCP, no deny |
+| `clawql_default` | defaults | Stock native IFC — label untrusted→memory (**3/5**, clean vault) |
+| `clawql_configured` / `clawql_panguard` | best_config | `CLAWQL_PANGUARD_BLOCK_TOOLS=memory_ingest` (**5/5**) |
+| `passthrough` | control | Direct vault MCP, trusted hostile write (**2/5**) |
 | `obot` | defaults | `OBOT_MCP_URL` |
 | `obot_deny` | best_config | `OBOT_MCP_URL_DENY` (expect tie) |
 | `bifrost` | defaults | `BIFROST_MCP_URL` allow-all VK |
@@ -21,7 +21,7 @@ Frozen rules: [`frozen-rules.json`](./frozen-rules.json). Fairness: [`docs/.../F
 npm run benchmark:governance-policy-depth
 ```
 
-Expected smoke: **board_pass=true**, `clawql_default` **2/5**, `clawql_configured` **5/5**, passthrough contaminates.
+Expected smoke (v3): **board_pass=true**, `clawql_default` **3/5** (labeled quarantine), `clawql_configured` **5/5**, passthrough contaminates.
 
 ## Executor cells
 

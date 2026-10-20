@@ -45,14 +45,25 @@ import {
   harness2Summary,
 } from '@/lib/harness2-gate-adversarial'
 import {
+  multiAttackAgentDojoNote,
   multiAttackArmRows,
   multiAttackBenignSummary,
+  multiAttackCounterfeitPolicyNote,
+  multiAttackCounterfeitRows,
   multiAttackHeadline,
   multiAttackHeadlineResult,
+  multiAttackLiveRows,
+  multiAttackLiveTableNote,
+  multiAttackMaintainerInvite,
   multiAttackMechanisms,
+  multiAttackMemoryWriteBreakout,
   multiAttackMeta,
+  multiAttackPlatformNote,
   multiAttackPublishGate,
+  multiAttackRecallNote,
+  multiAttackSharedVaultNote,
   multiAttackSummary,
+  multiAttackVersionNote,
 } from '@/lib/multi-attack-injection'
 import {
   securitySuiteBuildFirst,
@@ -164,7 +175,7 @@ export function BenchmarksLanding() {
               </a>
               <span className="font-normal text-mist-600 dark:text-mist-400">
                 {' '}
-                — fair defaults (tied at 2/5) · best-config · design cells next
+                — defaults label (3/5 clean) · best-config hard deny (5/5) · design cells next
               </span>
             </p>
             <p className="text-xs/6 text-mist-600 dark:text-mist-400">
@@ -560,7 +571,7 @@ export function BenchmarksLanding() {
       <Section
         id="multi-attack"
         className="pt-10 sm:pt-14"
-        eyebrow="Build-first #1 · smoke"
+        eyebrow="Build-first #1 · scripted published · live in progress"
         headline={multiAttackHeadline}
         subheadline={<p>{multiAttackSummary}</p>}
         cta={
@@ -595,20 +606,99 @@ export function BenchmarksLanding() {
         </div>
 
         <p className="mt-8 max-w-2xl text-sm/6 text-mist-700 dark:text-mist-300">{multiAttackBenignSummary}</p>
+        <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackSharedVaultNote}</p>
+        <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackPlatformNote}</p>
+        <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackVersionNote}</p>
+        <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackMemoryWriteBreakout}</p>
+        <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackRecallNote}</p>
+        <p className="mt-3 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackCounterfeitPolicyNote}</p>
 
         <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
-          Smoke scorecard · n=12 · scripted worst-case
+          Maintainer invite · reproduce per peer
+        </h3>
+        <p className="mt-3 max-w-2xl text-sm/6 text-mist-700 dark:text-mist-300">
+          {multiAttackMaintainerInvite.framing}
+        </p>
+        <ul className="mt-4 max-w-2xl space-y-2 text-sm/6 text-mist-700 dark:text-mist-300">
+          {multiAttackMaintainerInvite.peers.map((p) => (
+            <li key={p.product}>
+              <span className="font-medium text-mist-950 dark:text-white">{p.product}</span>
+              {' — '}
+              {p.mechanism}
+              {': '}
+              <code className="text-xs text-mist-800 dark:text-mist-200">{p.command}</code>
+            </li>
+          ))}
+        </ul>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Counterfeit-policy cell · Datadog cite · model advises, never is the gate
         </h3>
         <ComparisonTable minWidthClass="min-w-[720px]" className="mt-4">
           <caption className="sr-only">
-            Multi-attack injection smoke: effectuated over planted by arm
+            Counterfeit-policy cell: deterministic ClawQL versus model-judged arms
           </caption>
           <thead>
             <tr>
               <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
               <ComparisonTh className={clsx('text-left')}>Column</ComparisonTh>
               <ComparisonTh className={clsx('text-center')}>Status</ComparisonTh>
-              <ComparisonTh className={clsx('text-right')}>Effectuated</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Attacks taking effect</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Note</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {multiAttackCounterfeitRows.map((row) => (
+              <tr
+                key={row.arm}
+                className={clsx(
+                  'border-t border-mist-950/5 dark:border-white/10',
+                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                )}
+              >
+                <ComparisonRowTh
+                  className={clsx(
+                    'font-normal',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
+                  )}
+                >
+                  {row.arm}
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-mist-700 dark:text-mist-400')}>{row.column}</ComparisonTd>
+                <ComparisonTd className={clsx('text-center text-mist-700 dark:text-mist-400')}>
+                  {row.status}
+                </ComparisonTd>
+                <ComparisonTd
+                  className={clsx(
+                    'text-right tabular-nums',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
+                  )}
+                >
+                  {row.attacksTakingEffect}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-xs/5 text-mist-600 dark:text-mist-400')}>{row.note}</ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Scripted board · published · n=12 · same 14 benign · version-pinned
+        </h3>
+        <ComparisonTable minWidthClass="min-w-[1280px]" className="mt-4">
+          <caption className="sr-only">
+            Multi-attack injection scripted board: attacks, benign, recall answer, unlabeled poison, and version pin by arm
+          </caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Column</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Status</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Attacks taking effect</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Benign as expected</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Recall answer</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Unlabeled poison</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Version</ComparisonTh>
               <ComparisonTh className={clsx('text-left')}>Note</ComparisonTh>
             </tr>
           </thead>
@@ -639,7 +729,87 @@ export function BenchmarksLanding() {
                     row.highlight ? 'text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
                   )}
                 >
-                  {row.effectuated}
+                  {row.attacksTakingEffect}
+                </ComparisonTd>
+                <ComparisonTd
+                  className={clsx(
+                    'text-right tabular-nums',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
+                  )}
+                >
+                  {row.benignAsExpected}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-center text-xs/5 text-mist-700 dark:text-mist-400')}>
+                  {row.recallIntegrity}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-center text-xs/5 text-mist-700 dark:text-mist-400')}>
+                  {row.unlabeledPoison}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-xs/5 text-mist-600 dark:text-mist-400')}>{row.version}</ComparisonTd>
+                <ComparisonTd className={clsx('text-xs/5 text-mist-600 dark:text-mist-400')}>{row.note}</ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Live models · pre-registered · in progress
+        </h3>
+        <p className="mt-3 max-w-2xl text-sm/6 text-mist-700 dark:text-mist-300">{multiAttackLiveTableNote}</p>
+        <p className="mt-2 max-w-2xl text-xs/5 text-mist-600 dark:text-mist-400">{multiAttackAgentDojoNote}</p>
+        <ComparisonTable minWidthClass="min-w-[1100px]" className="mt-4">
+          <caption className="sr-only">
+            Live multi-attack models: status, attacks, poison residue, and dual-arm benign
+          </caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Model</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Weight</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Status</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Attacks effectuated</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Poison residue</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Benign ClawQL</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Benign passthrough</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Note</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {multiAttackLiveRows.map((row) => (
+              <tr
+                key={row.model}
+                className={clsx(
+                  'border-t border-mist-950/5 dark:border-white/10',
+                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                )}
+              >
+                <ComparisonRowTh
+                  className={clsx(
+                    'font-normal',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
+                  )}
+                >
+                  {row.model}
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-mist-700 dark:text-mist-400')}>{row.weight}</ComparisonTd>
+                <ComparisonTd className={clsx('text-center text-mist-700 dark:text-mist-400')}>
+                  {row.status}
+                </ComparisonTd>
+                <ComparisonTd
+                  className={clsx(
+                    'text-right tabular-nums',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
+                  )}
+                >
+                  {row.attacksEffectuated}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-center text-xs/5 text-mist-700 dark:text-mist-400')}>
+                  {row.poisonResidue}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right tabular-nums text-mist-800 dark:text-mist-200')}>
+                  {row.benignClawql}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right tabular-nums text-mist-800 dark:text-mist-200')}>
+                  {row.benignPassthrough}
                 </ComparisonTd>
                 <ComparisonTd className={clsx('text-xs/5 text-mist-600 dark:text-mist-400')}>{row.note}</ComparisonTd>
               </tr>

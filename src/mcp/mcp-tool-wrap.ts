@@ -214,6 +214,7 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
           toolName,
           success: true,
           sessionId: mcpCtxAfter?.sessionId,
+          result,
         });
       }
       await Effect.runPromise(

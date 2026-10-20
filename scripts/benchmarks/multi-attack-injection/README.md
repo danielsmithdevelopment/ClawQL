@@ -8,23 +8,45 @@ Build-first **#1** from the security suite.
 | ----- | ------- |
 | **Scripted, worst-case model** | The agent always follows the planted instruction. Measures whether the gateway stops the resulting action — not whether a real model would fall for it. |
 | **Smoke sample** | **12** attacks. Planned: dozens across email / ticket / doc / webhook before a category claim. |
-| **Headline** | `clawql_default` **12/12** — stock ClawQL lets every attack through, same as no gateway. |
+| **Headline (v4)** | `clawql_default` **0/12** trusted effectuation + persistent blocked + recall integrity + benign expect-match — gentler defaults (label untrusted→memory; park overwrites only). |
 
 ## Columns
 
 | Column | What it means |
 | ------ | ------------- |
 | **Defaults** | Stock product |
-| **Best-config** | General mechanisms — **untrusted-read taint**, **park destructive writes**, **data-flow** — not a tool-name deny of the attacked tools |
+| **Best-config** | General mechanisms — **untrusted-read taint**, **park destructive writes** (overwrites), **data-flow** (block external; label memory) — not a tool-name deny |
 
-Peers (Obot / Bifrost / Executor) are **pending** until defaults + best-config are measured on this corpus. Injection is an outcome every gateway can be scored on — **not** `not_offered`.
+Peers (Obot / Bifrost / Executor) do **not** ship a built-in Obsidian vault. Fair comparison fronts the same popular standard ClawQL already grades: **Obsidian-compatible `Memory/` Markdown** via `vault-mcp.mjs` (`shared-obsidian-vault.sh`). Injection is an outcome every gateway can be scored on — **not** `not_offered`.
 
 ## Run
 
 ```bash
+npm run build -w clawql-api
 npm run benchmark:multi-attack-injection
+# Measure peers (writes peer-results/, merges into smoke board):
+npm run benchmark:multi-attack-injection:peers
+# Or individually:
+npm run benchmark:multi-attack-injection:bifrost
+npm run benchmark:multi-attack-injection:executor
+npm run benchmark:multi-attack-injection:obot   # Mac mini + Docker; stamps host_os=darwin
+npm run benchmark:multi-attack-injection:counterfeit-policy  # Datadog/Jev cell
+npm run benchmark:multi-attack-injection:agentdojo           # next hardness (ASR+utility)
+# Live cell:
+MAI_LIVE=1 npm run benchmark:multi-attack-injection:live   # hard-recall only
+# Cursor Task matrix:
+MAI_LIVE=1 MAI_LIVE_MODELS=composer-2.5-fast npm run benchmark:multi-attack-injection:live
+# → run each /tmp/mai-live-trials/.../AGENT_PROMPT.md via Cursor Task, then:
+MAI_LIVE=1 MAI_LIVE_GRADE=1 npm run benchmark:multi-attack-injection:live
 ```
+
+
+Obot equal-arm runbook: [MAC-MINI-OBOT.md](../../../docs/benchmarks/security-suite/multi-attack-injection/MAC-MINI-OBOT.md). Best-config = Obot native webhook filter deny on `memory_ingest` (not deny-tools). Precondition: one refused `memory_ingest` outside the corpus, then one 12+14 run. Docker Desktop VM is fine for effectuation outcomes.
+
+Counterfeit-policy cell: [COUNTERFEIT-POLICY.md](../../../docs/benchmarks/security-suite/multi-attack-injection/COUNTERFEIT-POLICY.md) — ClawQL deterministic measured; model-judged peers pending (cite Datadog; public-set + JevShield best-config; no stand-in).
+
+AgentDojo: [AGENTDOJO.md](../../../docs/benchmarks/security-suite/multi-attack-injection/AGENTDOJO.md) — run before remaining hosted models; publish ASR + utility alongside ClawQL grades. Open-weight live models require dual-arm benign (passthrough + ClawQL).
 
 ## Publish gate
 
-Do **not** publish until: peers measured (or clearly pending), configured arm uses only general mechanisms, product defaults shipped and `clawql_default` re-run.
+**Scripted board published** (Obot/Bifrost/Executor defaults + best-config). **Live table published in progress** (7 pre-registered; 1 measured). Next: AgentDojo, then remaining hosted, then open-weight with dual-arm benign. Version pins + [maintainer invites](../../../docs/benchmarks/security-suite/multi-attack-injection/MAINTAINER-INVITE.md) remain required.

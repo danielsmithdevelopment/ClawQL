@@ -20,6 +20,7 @@ import {
   scoreWithVaultRanker,
   type VaultRankerStats,
 } from "../recall/vault-ranker.js";
+import { annotateSnippetWithTrust, applyTrustRankAdjust } from "../recall/trust-provenance.js";
 import { MemoryError } from "./memory-errors.js";
 import { EmbeddingService } from "./embedding-service.js";
 import { MemoryDbService } from "./memory-db-service.js";
@@ -305,6 +306,8 @@ export function executeMemoryRecallCoreEffect(
           const cat = catalogScoreByPath.get(relNorm);
           if (cat && cat > 0) score += cat * 2;
           if (isOkfStale(fm)) score = Math.max(0, score - 3);
+          // Trusted facts outrank labeled-untrusted poison (integrity cell).
+          score = applyTrustRankAdjust(score, f.text);
         }
         f.score = score;
       }
@@ -399,6 +402,7 @@ export function executeMemoryRecallCoreEffect(
             if (/(^|\/)index\.md$/i.test(relNorm)) score += 8;
             if (/ontology/i.test(relNorm) || /type:\s*["']?ontology_/i.test(f.text)) score += 5;
             if (isOkfStale(fm)) score = Math.max(0, score - 3);
+            score = applyTrustRankAdjust(score, f.text);
             f.score = score;
           }
         }
@@ -506,7 +510,7 @@ export function executeMemoryRecallCoreEffect(
           depth: cur.depth,
           reason: cur.reason,
           linkFrom: cur.from,
-          snippet: buildSnippet(t, query, snippetChars),
+          snippet: annotateSnippetWithTrust(buildSnippet(t, query, snippetChars), t),
         });
       }
 

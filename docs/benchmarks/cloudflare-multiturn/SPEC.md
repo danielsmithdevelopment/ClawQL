@@ -151,6 +151,8 @@ Known-op’s lead (1,743 weighted vs default’s 17,731) is mostly **discovery**
 
 Constraints: auto-resolve **reads only** (writes still proposal-gated); missing args return the chosen op’s compact signature for one retry; re-prove routing on a held-out Cloudflare (description → op) set before trusting; measure GLiNER memory (prefer a shared decision service if RSS regresses). Prove with a `clawql_routed` board arm beside known-op and default.
 
+**Why reads only (Datadog / counterfeit policy):** Decision models that classify untrusted text can be steered by a prepended counterfeit policy ([Datadog — Jev as a judge](https://securitylabs.datadoghq.com/articles/jev-as-a-judge-how-counterfeit-policy-steers-jev/)). A steered resolver that picks the wrong _read_ wastes a turn; one that picked a _write_ could do damage. Writes always go to a person with the exact operation named. When proving each decision site, include counterfeit-policy inputs in the adversarial set (`flip-rate` family `counterfeit_policy`) beside paraphrase/reorder flips.
+
 ## Fairness rules
 
 - Label every mode and setting; invite maintainers to submit config fixes; version-scope claims; never mix zero-latency with recorded-latency or scripted with real-model in one table.
