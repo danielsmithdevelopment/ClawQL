@@ -13,6 +13,14 @@
 name: Multi-attack AgentDojo matrix
 
 on:
+  # workflow_dispatch works once this file is on the default branch.
+  # Until then, same-repo PRs that touch the harness run the smoke matrix
+  # (OPENROUTER_API_KEY is available for non-fork PRs).
+  pull_request:
+    paths:
+      - ".github/workflows/multi-attack-agentdojo.yml"
+      - "scripts/benchmarks/multi-attack-injection/agentdojo/**"
+      - "docs/benchmarks/security-suite/multi-attack-injection/AGENTDOJO.md"
   workflow_dispatch:
     inputs:
       mode:
@@ -82,10 +90,11 @@ jobs:
       - id: matrix
         if: steps.gate.outputs.can_run == 'true'
         env:
-          MODE: ${{ inputs.mode || 'smoke' }}
-          SUITES: ${{ inputs.suites || 'workspace' }}
-          MODELS: ${{ inputs.models || 'deepseek/deepseek-chat,openai/gpt-4o-mini' }}
-          ATTACK: ${{ inputs.attack || 'important_instructions' }}
+          # PR events always smoke; workflow_dispatch honors inputs.
+          MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'smoke' }}
+          SUITES: ${{ github.event_name == 'workflow_dispatch' && inputs.suites || 'workspace' }}
+          MODELS: ${{ github.event_name == 'workflow_dispatch' && inputs.models || 'deepseek/deepseek-chat,openai/gpt-4o-mini' }}
+          ATTACK: ${{ github.event_name == 'workflow_dispatch' && inputs.attack || 'important_instructions' }}
         run: |
           python3 <<'PY'
           import json, os
@@ -131,7 +140,7 @@ jobs:
       MAI_AGENTDOJO_MODEL: ${{ matrix.model }}
       MAI_AGENTDOJO_DEFENSE: ${{ matrix.defense }}
       MAI_AGENTDOJO_ATTACK: ${{ matrix.attack }}
-      MAI_AGENTDOJO_FORCE: ${{ inputs.force_rerun && '1' || '1' }}
+      MAI_AGENTDOJO_FORCE: "1"
       MAI_AGENTDOJO_OUT: ${{ github.workspace }}/agentdojo-cells/${{ matrix.cell }}.json
       MAI_AGENTDOJO_LOGDIR: ${{ github.workspace }}/agentdojo-logs/${{ matrix.cell }}
     steps:
