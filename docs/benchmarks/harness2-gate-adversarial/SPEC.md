@@ -1,8 +1,8 @@
 # Harness² × ClawQL — adversarial gate benchmark (spec)
 
-**Status:** Spec only · not measured  
+**Status:** Spec + v0 stand-in measured ([`results-smoke.json`](./results-smoke.json) · [`README.md`](./README.md))  
 **Thesis:** [`docs/vision/harness2-authority-outside.md`](../../vision/harness2-authority-outside.md)  
-**Upstream:** [google-research/harness2](https://github.com/google-research/harness2) (Apache-2.0)
+**Upstream:** [google-research/harness2](https://github.com/google-research/harness2) (Apache-2.0) — v0 board uses a minimal Propose–Probe–Compose stand-in, not the upstream binary.
 
 ## Claim under test
 
@@ -80,8 +80,9 @@ If upstream Harness² wiring is heavy for v0, a **minimal stand-in** is acceptab
 - Weight fine-tuning or model self-reward
 - Claiming ClawQL replaces Harness² (complement: ClawQL as tool layer under recursive harnessing)
 
-## Next implementation steps
+## Implementation status
 
-1. Minimal improver stand-in in `scripts/benchmarks/harness2-gate-adversarial/` (or thin wrapper over upstream).
-2. Wire H2-G1 + H2-G3 first (reuse multi-attack / governance fixtures where possible).
-3. Land results JSON + README row; link from [benchmarks README](../README.md) when measured.
+1. ✅ Minimal improver stand-in — `scripts/benchmarks/harness2-gate-adversarial/run-board.mjs` (`npm run benchmark:harness2-gate-adversarial`).
+2. ✅ H2-G1…G4 wired in the stand-in (including G3 poison→carry).
+3. ✅ Smoke results + README; see [`results-smoke.json`](./results-smoke.json).
+4. ⬜ Upstream Harness² / live ClawQL MCP substrate (same metrics).

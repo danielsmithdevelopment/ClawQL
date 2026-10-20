@@ -41,7 +41,7 @@ Harness² (or an equivalent Propose–Probe–Compose loop) with ClawQL as the t
 
 If the gate holds while the optimizer actively searches for shortcuts, that is a sharp, novel result: **the gate holds even against an agent optimizing to get past it.**
 
-Spec: [`docs/benchmarks/harness2-gate-adversarial/SPEC.md`](../benchmarks/harness2-gate-adversarial/SPEC.md).
+Board (v0 stand-in measured): [`docs/benchmarks/harness2-gate-adversarial/README.md`](../benchmarks/harness2-gate-adversarial/README.md) · [`SPEC.md`](../benchmarks/harness2-gate-adversarial/SPEC.md).
 
 ## Related ClawQL surfaces
 

@@ -113,7 +113,11 @@
     "benchmark:governance-policy-depth:cells": "node scripts/benchmarks/governance-policy-depth/run-cells.mjs",
     "benchmark:governance-policy-depth:executor": "scripts/benchmarks/governance-policy-depth/ci-executor-peer.sh",
     "benchmark:governance-policy-depth:bifrost": "scripts/benchmarks/governance-policy-depth/ci-bifrost-peer.sh",
+<<<<<<< HEAD
     "benchmark:multi-attack-injection": "node scripts/benchmarks/multi-attack-injection/run-board.mjs",
+=======
+    "benchmark:harness2-gate-adversarial": "node scripts/benchmarks/harness2-gate-adversarial/run-board.mjs",
+>>>>>>> 28d04ae88 (feat(benchmarks): Harness²×gate adversarial v0 stand-in board)
     "generate:executor-cmp-latency-html": "node scripts/benchmarks/generate-executor-cmp-latency-html.mjs",
     "generate:executor-cmp-static": "npm run generate:executor-cmp-static -w mcp-api-adapter",
     "openbench:validate": "python3 benchmarks/openbench/validate_tasks.py",
