@@ -157,10 +157,15 @@
         "id": "agentdojo",
         "name": "AgentDojo",
         "url": "https://github.com/ethz-spylab/agentdojo",
-        "status": "wired_awaiting_llm_credentials",
+        "status": "ci_matrix_wired",
         "defense": "clawql_data_flow",
         "role": "established agent prompt-injection benchmark — hardness not judged by ClawQL authors",
         "runner": "scripts/benchmarks/multi-attack-injection/agentdojo/run_benchmark.py",
+        "ci": {
+          "workflow": ".github/workflows/multi-attack-agentdojo.yml",
+          "secret": "OPENROUTER_API_KEY",
+          "dispatch": "gh workflow run multi-attack-agentdojo.yml -f mode=smoke"
+        },
 
         "scoring": {
           "must_report": [

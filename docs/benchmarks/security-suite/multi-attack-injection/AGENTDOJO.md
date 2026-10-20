@@ -18,22 +18,35 @@ Outsiders already trust AgentDojo’s attack success rate (ASR) and utility-unde
 
 After untrusted reads (email / file / channel), blocks external and destructive sinks (`send_email`, `share_file`, `send_money`, …). Same mechanism shape as the scripted multi-attack board (taint → fail-closed), implemented on AgentDojo’s `FunctionsRuntime` so **their** ASR and utility are the headline scores.
 
-## Harness
+Matrix also runs `none` (no defense) for comparison.
+
+## CI matrix (OpenRouter)
+
+Uses repository secret **`OPENROUTER_API_KEY`** (same as OpenBench / Decision-1).
 
 ```bash
-pip3 install agentdojo   # once
-# Status / credential gate:
-npm run benchmark:multi-attack-injection:agentdojo
-# Live measure (needs LLM key):
-OPENAI_API_KEY=… MAI_AGENTDOJO=1 npm run benchmark:multi-attack-injection:agentdojo
-# Optional subset / model:
-MAI_AGENTDOJO_SUITE=workspace MAI_AGENTDOJO_ATTACK=important_instructions \
-  MAI_AGENTDOJO_USER_TASKS=user_task_0,user_task_1 \
-  MAI_AGENTDOJO_MODEL=gpt-4o-mini-2024-07-18 \
-  OPENAI_API_KEY=… MAI_AGENTDOJO=1 npm run benchmark:multi-attack-injection:agentdojo
+# Default smoke: workspace × {none, clawql_data_flow} × {deepseek/deepseek-chat, openai/gpt-4o-mini}
+gh workflow run multi-attack-agentdojo.yml -f mode=smoke
+
+# Full pairs on workspace only:
+gh workflow run multi-attack-agentdojo.yml -f mode=full -f suites=workspace
 ```
 
-Also accepts `ANTHROPIC_API_KEY` or `TOGETHER_API_KEY`.
+Workflow: [`.github/workflows/multi-attack-agentdojo.yml`](../../../.github/workflows/multi-attack-agentdojo.yml).
+
+Artifacts: per-cell JSON + aggregated `results-agentdojo.json`.
+
+## Local / one-cell
+
+```bash
+pip3 install -r scripts/benchmarks/multi-attack-injection/agentdojo/requirements.txt
+OPENROUTER_API_KEY=… MAI_AGENTDOJO=1 \
+  MAI_AGENTDOJO_MODEL=deepseek/deepseek-chat \
+  MAI_AGENTDOJO_DEFENSE=clawql_data_flow \
+  npm run benchmark:multi-attack-injection:agentdojo
+```
+
+Also accepts `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `TOGETHER_API_KEY`.
 
 Upstream: [ethz-spylab/agentdojo](https://github.com/ethz-spylab/agentdojo) · benchmark `v1.2.2`.
 
@@ -41,4 +54,4 @@ Artifact: [results-agentdojo.json](./results-agentdojo.json).
 
 ## Status
 
-`wired_awaiting_llm_credentials` — ClawQL defense + runner wired and unit-tested; no invented ASR/utility. Re-run with an API key to measure. Scripted board and live model table publish independently.
+Harness + OpenRouter CI matrix wired. Measure by dispatching `multi-attack-agentdojo.yml` (needs `OPENROUTER_API_KEY`). No invented ASR/utility.

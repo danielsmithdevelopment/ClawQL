@@ -7,30 +7,28 @@
   },
   "defense": {
     "id": "clawql_data_flow",
-    "name": "ClawQL untrusted-read taint \u2192 external/destructive sink block",
+    "name": "ClawQL untrusted-read taint → external/destructive sink block",
     "implements": "scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py",
-    "note": "AgentDojo FunctionsRuntime arm \u2014 not the ClawQL MCP product path. Same mechanism shape as the scripted board."
+    "note": "AgentDojo FunctionsRuntime arm — not the ClawQL MCP product path. Same mechanism shape as the scripted board."
   },
   "config": {
     "suite": "workspace",
     "attack": "important_instructions",
+    "defense": "clawql_data_flow",
     "user_tasks": "all",
     "injection_tasks": "all"
   },
-  "status": "wired_awaiting_llm_credentials",
+  "status": "ci_matrix_wired",
   "measuredAt": null,
-  "priority": "agentdojo",
   "must_report": {
     "agentdojo_asr": null,
     "agentdojo_utility_under_attack": null,
-    "note": "Set OPENAI_API_KEY (or ANTHROPIC_API_KEY / TOGETHER_API_KEY) then re-run MAI_AGENTDOJO=1."
+    "note": "Set OPENROUTER_API_KEY in Actions and dispatch multi-attack-agentdojo.yml"
   },
-  "also_report": {
-    "clawql_attacks_effectuated": null,
-    "clawql_poison_residue": null,
-    "clawql_benign": null,
-    "note": "Filled after AgentDojo pairs run; ClawQL blocked_calls counted from defense executor."
-  },
-  "how_to_run": "OPENAI_API_KEY=\u2026 MAI_AGENTDOJO=1 npm run benchmark:multi-attack-injection:agentdojo",
-  "note": "Defense + runner wired. No LLM credentials in this environment \u2014 refusing to invent ASR/utility."
+  "note": "OpenRouter CI matrix wired (multi-attack-agentdojo.yml). Dispatch to measure — no invented ASR/utility.",
+  "provider": "openrouter",
+  "ci": {
+    "workflow": ".github/workflows/multi-attack-agentdojo.yml",
+    "secret": "OPENROUTER_API_KEY"
+  }
 }

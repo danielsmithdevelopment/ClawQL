@@ -1,0 +1,250 @@
+# AgentDojo matrix — ClawQL data-flow defense vs none, via OpenRouter.
+#
+# Publishes AgentDojo ASR + utility-under-attack (their metrics) alongside
+# ClawQL sink-block counts. Never invents scores when the secret is missing.
+#
+# Secrets:
+#   OPENROUTER_API_KEY — required (same secret as OpenBench / Decision-1)
+#
+# Trigger:
+#   workflow_dispatch (default smoke subset)
+#   Optional path filter on agentdojo harness changes (dispatch still needed for keys)
+
+name: Multi-attack AgentDojo matrix
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "smoke = small task subset; full = all user×injection pairs per suite"
+        type: choice
+        options: [smoke, full]
+        default: smoke
+      suites:
+        description: "Comma-separated AgentDojo suites"
+        type: string
+        default: workspace
+      models:
+        description: "Comma-separated OpenRouter model ids (no openrouter/ prefix needed)"
+        type: string
+        default: deepseek/deepseek-chat,openai/gpt-4o-mini
+      attack:
+        description: "AgentDojo attack"
+        type: string
+        default: important_instructions
+      force_rerun:
+        description: "Force re-run cached AgentDojo logs"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: multi-attack-agentdojo-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Credential gate
+    runs-on: ubuntu-latest
+    outputs:
+      can_run: ${{ steps.gate.outputs.can_run }}
+      skip_reason: ${{ steps.gate.outputs.skip_reason }}
+      matrix_json: ${{ steps.matrix.outputs.matrix_json }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - id: secret
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+            echo "has_openrouter=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "has_openrouter=false" >>"$GITHUB_OUTPUT"
+          fi
+
+      - id: gate
+        env:
+          HAS_OR: ${{ steps.secret.outputs.has_openrouter }}
+        run: |
+          if [ "$HAS_OR" = "true" ]; then
+            echo "can_run=true" >>"$GITHUB_OUTPUT"
+            echo "skip_reason=" >>"$GITHUB_OUTPUT"
+          else
+            echo "can_run=false" >>"$GITHUB_OUTPUT"
+            echo "skip_reason=Repository secret OPENROUTER_API_KEY is not set." >>"$GITHUB_OUTPUT"
+            echo "::notice::AgentDojo matrix skipped — add OPENROUTER_API_KEY (same secret as OpenBench)."
+          fi
+
+      - id: matrix
+        if: steps.gate.outputs.can_run == 'true'
+        env:
+          MODE: ${{ inputs.mode || 'smoke' }}
+          SUITES: ${{ inputs.suites || 'workspace' }}
+          MODELS: ${{ inputs.models || 'deepseek/deepseek-chat,openai/gpt-4o-mini' }}
+          ATTACK: ${{ inputs.attack || 'important_instructions' }}
+        run: |
+          python3 <<'PY'
+          import json, os
+          suites = [s.strip() for s in os.environ["SUITES"].split(",") if s.strip()]
+          models = [m.strip().removeprefix("openrouter/") for m in os.environ["MODELS"].split(",") if m.strip()]
+          defenses = ["none", "clawql_data_flow"]
+          attack = os.environ["ATTACK"]
+          mode = os.environ["MODE"]
+          include = []
+          for suite in suites:
+            for model in models:
+              for defense in defenses:
+                include.append({
+                  "suite": suite,
+                  "model": model,
+                  "defense": defense,
+                  "attack": attack,
+                  "mode": mode,
+                  "cell": f"{suite}__{defense}__{model.replace('/', '_')}",
+                })
+          print(f"cells={len(include)}")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+            fh.write("matrix_json=" + json.dumps({"include": include}) + "\n")
+          PY
+
+  agentdojo:
+    name: ${{ matrix.cell }}
+    needs: gate
+    if: needs.gate.outputs.can_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      # Serialize: OpenRouter rate limits (same pattern as openbench-ab).
+      max-parallel: 1
+      matrix: ${{ fromJson(needs.gate.outputs.matrix_json) }}
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
+      CLAWQL_OPENROUTER_APP_TITLE: ClawQL AgentDojo
+      MAI_AGENTDOJO: "1"
+      MAI_AGENTDOJO_SUITE: ${{ matrix.suite }}
+      MAI_AGENTDOJO_MODEL: ${{ matrix.model }}
+      MAI_AGENTDOJO_DEFENSE: ${{ matrix.defense }}
+      MAI_AGENTDOJO_ATTACK: ${{ matrix.attack }}
+      MAI_AGENTDOJO_FORCE: ${{ inputs.force_rerun && '1' || '1' }}
+      MAI_AGENTDOJO_OUT: ${{ github.workspace }}/agentdojo-cells/${{ matrix.cell }}.json
+      MAI_AGENTDOJO_LOGDIR: ${{ github.workspace }}/agentdojo-logs/${{ matrix.cell }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install AgentDojo
+        run: pip install -r scripts/benchmarks/multi-attack-injection/agentdojo/requirements.txt
+
+      - name: Smoke task subset
+        if: matrix.mode == 'smoke'
+        run: |
+          {
+            echo "MAI_AGENTDOJO_USER_TASKS=user_task_0,user_task_1,user_task_2,user_task_3"
+            echo "MAI_AGENTDOJO_INJECTION_TASKS=injection_task_0,injection_task_1,injection_task_2"
+          } >>"$GITHUB_ENV"
+          echo "::notice::smoke subset — 4 user × 3 injection tasks"
+
+      - name: OpenRouter key probe
+        run: |
+          set -euo pipefail
+          code="$(curl -sS -o /tmp/or-key.json -w '%{http_code}' \
+            -H "Authorization: Bearer ${OPENROUTER_API_KEY}" \
+            https://openrouter.ai/api/v1/key || true)"
+          echo "openrouter_key_http=${code}"
+          if [ "$code" != "200" ]; then
+            echo "::error::OpenRouter key probe failed (HTTP ${code})"
+            cat /tmp/or-key.json || true
+            exit 1
+          fi
+
+      - name: Run AgentDojo cell
+        working-directory: scripts/benchmarks/multi-attack-injection/agentdojo
+        run: |
+          mkdir -p "$(dirname "$MAI_AGENTDOJO_OUT")" "$MAI_AGENTDOJO_LOGDIR"
+          python3 run_benchmark.py
+          python3 - <<'PY'
+          import json, os
+          p = os.environ["MAI_AGENTDOJO_OUT"]
+          r = json.load(open(p))
+          print("status", r.get("status"))
+          mr = r.get("must_report") or {}
+          print("asr", mr.get("agentdojo_asr"), "utility", mr.get("agentdojo_utility_under_attack"))
+          if r.get("status") != "measured":
+            raise SystemExit(f"cell not measured: {r.get('status')} {r.get('error')}")
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agentdojo-cell-${{ matrix.cell }}
+          path: |
+            agentdojo-cells/${{ matrix.cell }}.json
+            agentdojo-logs/${{ matrix.cell }}/
+          if-no-files-found: warn
+          retention-days: 14
+
+  aggregate:
+    name: Aggregate matrix
+    needs: [gate, agentdojo]
+    if: always() && needs.gate.outputs.can_run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: agentdojo-cell-*
+          path: agentdojo-download
+          merge-multiple: true
+
+      - name: Collect cell JSON
+        run: |
+          set -euo pipefail
+          mkdir -p agentdojo-cells-agg
+          find agentdojo-download -name '*.json' -print0 | while IFS= read -r -d '' f; do
+            base="$(basename "$f")"
+            cp "$f" "agentdojo-cells-agg/$base"
+          done
+          ls -la agentdojo-cells-agg || true
+
+      - name: Aggregate
+        run: |
+          python3 scripts/benchmarks/multi-attack-injection/agentdojo/aggregate_matrix.py \
+            agentdojo-cells-agg \
+            docs/benchmarks/security-suite/multi-attack-injection/results-agentdojo.json
+          python3 - <<'PY'
+          import json
+          r = json.load(open("docs/benchmarks/security-suite/multi-attack-injection/results-agentdojo.json"))
+          print(json.dumps({"status": r["status"], "n_measured": r["n_measured"], "rows": r["rows"]}, indent=2))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agentdojo-matrix-results
+          path: |
+            docs/benchmarks/security-suite/multi-attack-injection/results-agentdojo.json
+            agentdojo-cells-agg/
+          retention-days: 30
+
+  skip-notice:
+    name: Skip notice
+    needs: gate
+    if: needs.gate.outputs.can_run != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::notice::${{ needs.gate.outputs.skip_reason }}"
+          echo "AgentDojo matrix not run."

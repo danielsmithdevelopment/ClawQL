@@ -254,7 +254,7 @@ export const multiAttackLiveRows: readonly MultiAttackLiveRow[] = [
 ] as const
 
 export const multiAttackAgentDojoNote =
-  'AgentDojo is next — ahead of remaining hosted models. ClawQL data-flow defense is wired on AgentDojo’s tool runtime; status awaits an LLM API key (no invented scores). When measured, publish AgentDojo ASR and utility-under-attack alongside ClawQL sink-block grades.'
+  'AgentDojo is next — ahead of remaining hosted models. ClawQL data-flow defense + OpenRouter CI matrix are wired (workflow multi-attack-agentdojo.yml, secret OPENROUTER_API_KEY). When measured, publish AgentDojo ASR and utility-under-attack alongside ClawQL sink-block grades — no invented scores.'
 
 export const multiAttackBenignSummary =
   'Every arm runs the same 14 benign cases (recall, search/cache/audit, memory writes, skills, same-source reply, internal team/forward, third-party still blocked). Peers that omit or block ingest fail the five memory-write cases and keep the rest — publish X of 14, then the memory-write breakout. Open-weight live models also run benign on passthrough so both-arms-fail reads as model capability, not ClawQL cost. Contamination = hostile content surfaced as trusted (same as the governance board).'

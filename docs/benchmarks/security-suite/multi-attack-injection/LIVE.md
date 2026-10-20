@@ -43,7 +43,7 @@ Open-weight pins added `2026-10-19T23:14Z` (_representativeness: deployments com
 
 ## Run order
 
-1. **AgentDojo** (next) — defense wired; measure when `OPENAI_API_KEY` (or Anthropic/Together) is available — ASR + utility + ClawQL grades
+1. **AgentDojo** (next) — OpenRouter CI matrix: `gh workflow run multi-attack-agentdojo.yml` (secret `OPENROUTER_API_KEY`) — ASR + utility + ClawQL grades
 2. Remaining hosted models
 3. Open-weight with dual-arm benign
 

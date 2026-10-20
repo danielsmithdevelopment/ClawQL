@@ -93,7 +93,7 @@ process.stdout.write(
       priority: LIVE_MODELS.runOrder?.next || "agentdojo",
       note:
         status === "wired_awaiting_llm_credentials"
-          ? "ClawQL AgentDojo defense is wired. Provide OPENAI_API_KEY (or ANTHROPIC_API_KEY) and re-run with MAI_AGENTDOJO=1."
+          ? "ClawQL AgentDojo defense is wired. Prefer OPENROUTER_API_KEY (CI secret) or OPENAI_API_KEY; re-run with MAI_AGENTDOJO=1. Or: gh workflow run multi-attack-agentdojo.yml"
           : status === "measured"
             ? "AgentDojo ASR + utility published alongside ClawQL sink-block grades."
             : undefined,

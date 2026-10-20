@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 """
-Run AgentDojo with a ClawQL-inspired tools executor defense.
+Run AgentDojo with optional ClawQL data-flow defense.
 
 Publishes AgentDojo's own metrics:
   - targeted ASR = 1 - mean(security_results)
   - utility under attack = mean(utility_results)
 
-Requires an LLM API key (OPENAI_API_KEY or ANTHROPIC_API_KEY). Without credentials
-this exits with status wired_awaiting_llm_credentials — never invents scores.
+Credentials (first match wins):
+  OPENROUTER_API_KEY  → OpenRouter (openai-compatible) — preferred for CI
+  OPENAI_API_KEY / ANTHROPIC_API_KEY / TOGETHER_API_KEY
+  OPENAI_COMPATIBLE_API_KEY + OPENAI_COMPATIBLE_BASE_URL
 
 Usage:
   MAI_AGENTDOJO=1 python3 run_benchmark.py
-  MAI_AGENTDOJO=1 MAI_AGENTDOJO_SUITE=workspace MAI_AGENTDOJO_MODEL=gpt-4o-mini-2024-07-18 \\
-    MAI_AGENTDOJO_ATTACK=important_instructions python3 run_benchmark.py
+  OPENROUTER_API_KEY=… MAI_AGENTDOJO=1 MAI_AGENTDOJO_MODEL=deepseek/deepseek-chat \\
+    MAI_AGENTDOJO_DEFENSE=clawql_data_flow python3 run_benchmark.py
 """
 
 from __future__ import annotations
@@ -33,8 +35,14 @@ LOGDIR_DEFAULT = Path(
     os.environ.get("MAI_AGENTDOJO_LOGDIR", "/tmp/mai-agentdojo-runs")
 )
 
+OPENROUTER_BASE = os.environ.get(
+    "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
+).rstrip("/")
+
 
 def has_llm_credentials() -> tuple[bool, str | None]:
+    if os.environ.get("OPENROUTER_API_KEY"):
+        return True, "openrouter"
     if os.environ.get("OPENAI_API_KEY"):
         return True, "openai"
     if os.environ.get("ANTHROPIC_API_KEY"):
@@ -51,13 +59,33 @@ def has_llm_credentials() -> tuple[bool, str | None]:
 def pick_model(provider: str | None) -> str:
     override = os.environ.get("MAI_AGENTDOJO_MODEL")
     if override:
+        # Allow openrouter/deepseek/... prefix from ClawQL CI conventions
+        if override.startswith("openrouter/"):
+            return override[len("openrouter/") :]
         return override
+    if provider == "openrouter":
+        return "deepseek/deepseek-chat"
     if provider == "anthropic":
         return "claude-3-5-sonnet-20241022"
     if provider == "together":
         return "mistralai/Mixtral-8x7B-Instruct-v0.1"
-    # Default OpenAI mini — cheaper smoke of full suites
     return "gpt-4o-mini-2024-07-18"
+
+
+def defense_meta(defense_id: str) -> dict:
+    if defense_id in ("", "none", "null"):
+        return {
+            "id": "none",
+            "name": "No defense (AgentDojo baseline)",
+            "implements": None,
+            "note": "Baseline pipeline for matrix comparison.",
+        }
+    return {
+        "id": "clawql_data_flow",
+        "name": "ClawQL untrusted-read taint → external/destructive sink block",
+        "implements": "scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py",
+        "note": "AgentDojo FunctionsRuntime arm — not the ClawQL MCP product path. Same mechanism shape as the scripted board.",
+    }
 
 
 def summarize_suite(results: dict) -> dict:
@@ -74,38 +102,66 @@ def summarize_suite(results: dict) -> dict:
     }
 
 
-def build_clawql_pipeline(model: str, provider: str):
+def _openai_compatible_llm(api_key: str, base_url: str, model_id: str, extra_headers: dict | None = None):
+    from agentdojo.agent_pipeline.llms.openai_llm import OpenAILLM
+    import openai
+
+    kwargs = {"api_key": api_key, "base_url": base_url}
+    if extra_headers:
+        kwargs["default_headers"] = extra_headers
+    client = openai.OpenAI(**kwargs)
+    return OpenAILLM(client, model_id)
+
+
+def build_pipeline(model: str, provider: str, defense_id: str):
     from agentdojo.agent_pipeline.agent_pipeline import (
         AgentPipeline,
         get_llm,
         load_system_message,
     )
     from agentdojo.agent_pipeline.basic_elements import InitQuery, SystemMessage
-    from agentdojo.agent_pipeline.tool_execution import ToolsExecutionLoop
+    from agentdojo.agent_pipeline.tool_execution import ToolsExecutionLoop, ToolsExecutor
     from agentdojo.models import MODEL_PROVIDERS, ModelsEnum
 
     from clawql_tools_executor import ClawQLToolsExecutor
 
-    if provider == "openai-compatible":
-        # Handled via env in get_llm for openai-compatible ModelsEnum if present;
-        # fall back to OpenAI client against compatible base.
-        from agentdojo.agent_pipeline.llms.openai_llm import OpenAILLM
-        import openai
-
-        client = openai.OpenAI(
-            api_key=os.environ["OPENAI_COMPATIBLE_API_KEY"],
-            base_url=os.environ["OPENAI_COMPATIBLE_BASE_URL"],
+    if provider == "openrouter":
+        headers = {
+            "HTTP-Referer": os.environ.get(
+                "CLAWQL_OPENROUTER_HTTP_REFERER", "https://clawql.com"
+            ),
+            "X-Title": os.environ.get(
+                "CLAWQL_OPENROUTER_APP_TITLE", "ClawQL AgentDojo"
+            ),
+        }
+        llm = _openai_compatible_llm(
+            os.environ["OPENROUTER_API_KEY"],
+            OPENROUTER_BASE,
+            model,
+            extra_headers=headers,
         )
-        model_id = os.environ.get("MAI_AGENTDOJO_MODEL_ID") or model
-        llm = OpenAILLM(client, model_id)
-        llm_name = model_id
+        llm_name = f"openrouter/{model}"
+    elif provider == "openai-compatible":
+        llm = _openai_compatible_llm(
+            os.environ["OPENAI_COMPATIBLE_API_KEY"],
+            os.environ["OPENAI_COMPATIBLE_BASE_URL"],
+            os.environ.get("MAI_AGENTDOJO_MODEL_ID") or model,
+        )
+        llm_name = model
     else:
         enum = ModelsEnum(model)
         llm = get_llm(MODEL_PROVIDERS[enum], model, None, "tool")
         llm_name = model
 
-    executor = ClawQLToolsExecutor()
-    tools_loop = ToolsExecutionLoop([executor, llm])
+    executor = None
+    if defense_id in ("", "none", "null"):
+        tools_loop = ToolsExecutionLoop([ToolsExecutor(), llm])
+        pipe_name = f"{llm_name}-none"
+    else:
+        executor = ClawQLToolsExecutor()
+        tools_loop = ToolsExecutionLoop([executor, llm])
+        pipe_name = f"{llm_name}-clawql_data_flow"
+
     pipeline = AgentPipeline(
         [
             SystemMessage(load_system_message(None)),
@@ -114,7 +170,7 @@ def build_clawql_pipeline(model: str, provider: str):
             tools_loop,
         ]
     )
-    pipeline.name = f"{llm_name}-clawql_data_flow"
+    pipeline.name = pipe_name
     return pipeline, executor
 
 
@@ -129,7 +185,7 @@ def main() -> int:
     attack_name = os.environ.get("MAI_AGENTDOJO_ATTACK", "important_instructions")
     version = os.environ.get("MAI_AGENTDOJO_VERSION", "v1.2.2")
     force = os.environ.get("MAI_AGENTDOJO_FORCE", "0") == "1"
-    # Optional subset for faster first run
+    defense_id = os.environ.get("MAI_AGENTDOJO_DEFENSE", "clawql_data_flow").strip()
     user_tasks_env = os.environ.get("MAI_AGENTDOJO_USER_TASKS", "").strip()
     inj_tasks_env = os.environ.get("MAI_AGENTDOJO_INJECTION_TASKS", "").strip()
     user_tasks = tuple(t for t in user_tasks_env.split(",") if t) or ()
@@ -142,15 +198,11 @@ def main() -> int:
             "url": "https://github.com/ethz-spylab/agentdojo",
             "benchmark_version": version,
         },
-        "defense": {
-            "id": "clawql_data_flow",
-            "name": "ClawQL untrusted-read taint → external/destructive sink block",
-            "implements": "scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py",
-            "note": "AgentDojo FunctionsRuntime arm — not the ClawQL MCP product path. Same mechanism shape as the scripted board.",
-        },
+        "defense": defense_meta(defense_id),
         "config": {
             "suite": suite_name,
             "attack": attack_name,
+            "defense": defense_meta(defense_id)["id"],
             "user_tasks": list(user_tasks) if user_tasks else "all",
             "injection_tasks": list(injection_tasks) if injection_tasks else "all",
         },
@@ -166,18 +218,16 @@ def main() -> int:
             "must_report": {
                 "agentdojo_asr": None,
                 "agentdojo_utility_under_attack": None,
-                "note": "Set OPENAI_API_KEY (or ANTHROPIC_API_KEY / TOGETHER_API_KEY) then re-run MAI_AGENTDOJO=1.",
+                "note": "Set OPENROUTER_API_KEY (CI) or OPENAI_API_KEY / ANTHROPIC_API_KEY, then MAI_AGENTDOJO=1.",
             },
             "also_report": {
-                "clawql_attacks_effectuated": None,
-                "clawql_poison_residue": None,
-                "clawql_benign": None,
-                "note": "Filled after AgentDojo pairs run; ClawQL blocked_calls counted from defense executor.",
+                "clawql_sink_blocks": None,
+                "note": "Filled after AgentDojo pairs run.",
             },
             "how_to_run": (
-                "OPENAI_API_KEY=… MAI_AGENTDOJO=1 npm run benchmark:multi-attack-injection:agentdojo"
+                "OPENROUTER_API_KEY=… MAI_AGENTDOJO=1 npm run benchmark:multi-attack-injection:agentdojo"
             ),
-            "note": "Defense + runner wired. No LLM credentials in this environment — refusing to invent ASR/utility.",
+            "note": "Defense + runner wired. No LLM credentials — refusing to invent ASR/utility.",
         }
         write_report(out, report)
         print(json.dumps({"out": str(out), "status": report["status"]}, indent=2))
@@ -193,13 +243,19 @@ def main() -> int:
                 "agentdojo_utility_under_attack": None,
             },
             "note": "Credentials present. Set MAI_AGENTDOJO=1 to execute the live AgentDojo run.",
+            "provider": provider,
         }
         write_report(out, report)
-        print(json.dumps({"out": str(out), "status": report["status"]}, indent=2))
+        print(json.dumps({"out": str(out), "status": report["status"], "provider": provider}, indent=2))
         return 0
 
     model = pick_model(provider)
-    logdir = LOGDIR_DEFAULT
+    logdir = Path(
+        os.environ.get(
+            "MAI_AGENTDOJO_LOGDIR",
+            str(LOGDIR_DEFAULT / f"{suite_name}_{defense_meta(defense_id)['id']}_{model.replace('/', '_')}"),
+        )
+    )
     logdir.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -208,7 +264,7 @@ def main() -> int:
         from agentdojo.task_suite.load_suites import get_suite
 
         suite = get_suite(version, suite_name)
-        pipeline, executor = build_clawql_pipeline(model, provider or "openai")
+        pipeline, executor = build_pipeline(model, provider or "openai", defense_id)
         attacker = load_attack(attack_name, suite, pipeline)
 
         results = benchmark_suite_with_injections(
@@ -222,7 +278,7 @@ def main() -> int:
             benchmark_version=version,
         )
         summary = summarize_suite(results)
-        blocked = len(executor.blocked_calls)
+        blocked = len(executor.blocked_calls) if executor is not None else 0
 
         report = {
             **base,
@@ -241,14 +297,21 @@ def main() -> int:
                 },
             },
             "also_report": {
-                "clawql_sink_blocks": blocked,
-                "clawql_blocked_sample": executor.blocked_calls[:20],
-                "clawql_attacks_effectuated": None,
-                "clawql_poison_residue": None,
-                "clawql_benign": None,
-                "note": "clawql_sink_blocks = times the ClawQL executor blocked an external/destructive tool after untrusted read. Map to attacks_effectuated when publishing the board cell.",
+                "clawql_sink_blocks": blocked if defense_meta(defense_id)["id"] != "none" else None,
+                "clawql_blocked_sample": (
+                    executor.blocked_calls[:20]
+                    if executor is not None
+                    else None
+                ),
+                "note": "clawql_sink_blocks only set for clawql_data_flow defense.",
             },
             "suites": {suite_name: summary},
+            "matrix_cell": {
+                "suite": suite_name,
+                "defense": defense_meta(defense_id)["id"],
+                "model": model,
+                "attack": attack_name,
+            },
         }
         write_report(out, report)
         print(
@@ -256,9 +319,10 @@ def main() -> int:
                 {
                     "out": str(out),
                     "status": "measured",
+                    "matrix_cell": report["matrix_cell"],
                     "agentdojo_asr": summary["targeted_asr"],
                     "agentdojo_utility_under_attack": summary["utility_under_attack"],
-                    "clawql_sink_blocks": blocked,
+                    "clawql_sink_blocks": blocked if executor is not None else None,
                 },
                 indent=2,
             )
@@ -284,6 +348,5 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    # Allow importing sibling module when invoked as a script
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     raise SystemExit(main())
