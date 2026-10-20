@@ -1,0 +1,23 @@
+{
+  "kind": "multi_attack_injection_agentdojo_v1",
+  "status": "pending",
+  "measuredAt": null,
+  "priority": "agentdojo",
+  "priority_why": "AgentDojo lets outsiders compare ClawQL against published defenses using a standard they already trust — worth more for credibility than another frontier model refusing the same twelve plants.",
+  "upstream": {
+    "name": "AgentDojo",
+    "url": "https://github.com/ethz-spylab/agentdojo"
+  },
+  "must_report": {
+    "agentdojo_asr": null,
+    "agentdojo_utility_under_attack": null,
+    "note": "Publish AgentDojo's own scores alongside ClawQL grades so anyone can compare with published results for other defenses without trusting our grading alone."
+  },
+  "also_report": {
+    "clawql_attacks_effectuated": null,
+    "clawql_poison_residue": null,
+    "clawql_benign": null
+  },
+  "how_to_run": "Wire AgentDojo against ClawQL MCP, then set MAI_AGENTDOJO=1 and implement the live path in this file. Until then status stays pending.",
+  "note": "Scaffold only — no invented ASR/utility. Scripted board and live model table publish independently."
+}

@@ -24,8 +24,8 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     id: 'multi_attack_suite',
     priority: 1,
     title: 'Multi-attack injection suite',
-    status: 'scaffolded',
-    why: 'Two-part headline: scripted guarantee when fooled + live fool-rate at no benign cost. composer-2.5-fast refused all 12 both arms (no residue). Pre-register models; AgentDojo/Datadog for live hardness; measure poison residue. Counterfeit-policy ClawQL 0/4; cite Datadog.',
+    status: 'partial',
+    why: 'Scripted board published (ClawQL 0/12 + 14/14). Live table in progress: 1/7 measured (composer all-refuse). AgentDojo next (ASR+utility) before remaining hosted; open-weight dual-arm benign. Counterfeit-policy ClawQL 0/4.',
   },
   {
     id: 'approval_integrity',

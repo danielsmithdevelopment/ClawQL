@@ -31,6 +31,7 @@ npm run benchmark:multi-attack-injection:bifrost
 npm run benchmark:multi-attack-injection:executor
 npm run benchmark:multi-attack-injection:obot   # Mac mini + Docker; stamps host_os=darwin
 npm run benchmark:multi-attack-injection:counterfeit-policy  # Datadog/Jev cell
+npm run benchmark:multi-attack-injection:agentdojo           # next hardness (ASR+utility)
 # Live cell:
 MAI_LIVE=1 npm run benchmark:multi-attack-injection:live   # hard-recall only
 # Cursor Task matrix:
@@ -44,6 +45,8 @@ Obot equal-arm runbook: [MAC-MINI-OBOT.md](../../../docs/benchmarks/security-sui
 
 Counterfeit-policy cell: [COUNTERFEIT-POLICY.md](../../../docs/benchmarks/security-suite/multi-attack-injection/COUNTERFEIT-POLICY.md) — ClawQL deterministic measured; model-judged peers pending (cite Datadog; public-set + JevShield best-config; no stand-in).
 
+AgentDojo: [AGENTDOJO.md](../../../docs/benchmarks/security-suite/multi-attack-injection/AGENTDOJO.md) — run before remaining hosted models; publish ASR + utility alongside ClawQL grades. Open-weight live models require dual-arm benign (passthrough + ClawQL).
+
 ## Publish gate
 
-Scripted board is complete (Obot/Bifrost/Executor defaults + best-config). Before a lead claim: version pins on every row, scripted honesty labels, [maintainer invites](../../../docs/benchmarks/security-suite/multi-attack-injection/MAINTAINER-INVITE.md), then `MAI_LIVE=1` real-model sessions (hard-recall vault cell already measured).
+**Scripted board published** (Obot/Bifrost/Executor defaults + best-config). **Live table published in progress** (7 pre-registered; 1 measured). Next: AgentDojo, then remaining hosted, then open-weight with dual-arm benign. Version pins + [maintainer invites](../../../docs/benchmarks/security-suite/multi-attack-injection/MAINTAINER-INVITE.md) remain required.
