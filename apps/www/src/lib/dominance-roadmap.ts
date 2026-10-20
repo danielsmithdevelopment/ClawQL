@@ -138,13 +138,13 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
   },
   {
     id: 'celld-durability',
-    name: 'celld durability (ProgramCellDO)',
+    name: 'celld program journal (ProgramCellDO)',
     whyItMatters:
-      'Crash-survival / isolate-hosted programs claim — ADR 0015 kill-node gate for “code mode that survives a crash.”',
+      'Journaled program resume on celld — an earned claim only after the fleet kill gate. Not a durable execution engine (see docs/gtm/golem-overlap-and-durability-honesty.md).',
     criteriaToBeat:
-      'Lab isolate SIGKILL resume on DO journal, then fleet LTX diagnose + three-arm product gate.',
+      'Lab isolate SIGKILL resume on DO journal, then fleet LTX diagnose + three-arm product gate. Optional Golem arm as shipped durability yardstick (maintainer invite before any named publish).',
     howToProve:
-      'ProgramCellDO write+read smoke after SIGKILL celld; publish evidence.json; keep fleet three-arm Partial until measured.',
+      'ProgramCellDO write+read smoke after SIGKILL celld; publish evidence.json; keep fleet three-arm Partial until measured — no wild “survives a crash” copy until then.',
     status: 'partial',
     statusLabel: 'Lab Yes · fleet Partial',
     nextStep:

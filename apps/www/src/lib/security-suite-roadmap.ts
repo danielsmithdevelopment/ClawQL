@@ -68,7 +68,7 @@ export const securitySuiteGroups: readonly SecuritySuiteGroup[] = [
   {
     id: 'approvals',
     title: 'Approvals that can’t be gamed',
-    property: 'People-bound, digest-bound, crash-safe mandates',
+    property: 'People-bound, digest-bound, at-most-once mandates',
     cells: [
       {
         id: 'self_approval',
