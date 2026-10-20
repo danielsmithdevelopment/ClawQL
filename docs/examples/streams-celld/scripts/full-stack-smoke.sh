@@ -291,10 +291,24 @@ curl -sf "$BASE/health" | grep -q clawql-streams-celld-skeleton
 
 post_webhook() {
   local event_id="$1"
-  curl -sf -X POST "$BASE/webhook/full-stack" \
-    -H 'content-type: application/json' \
-    -H "x-clawql-event-id: ${event_id}" \
-    -d '{"probe":true,"mode":"full-stack"}'
+  # Transient celld watcher / connect resets show up as curl exit 22 (-f HTTP fail).
+  local attempt=1
+  local body=""
+  while ((attempt <= 5)); do
+    if body="$(curl -sf -X POST "$BASE/webhook/full-stack" \
+      -H 'content-type: application/json' \
+      -H "x-clawql-event-id: ${event_id}" \
+      -d '{"probe":true,"mode":"full-stack"}')"; then
+      printf '%s' "$body"
+      return 0
+    fi
+    echo "full-stack-smoke: webhook POST attempt ${attempt}/5 failed — settle and retry" >&2
+    sleep $((attempt))
+    wait_http "$BASE/health" "celld-webhook-retry-${attempt}" "$CELLD_PID" 40 || true
+    attempt=$((attempt + 1))
+  done
+  echo "full-stack-smoke: FAIL — webhook POST exhausted retries" >&2
+  return 22
 }
 
 EVENT_ID="full-stack-$(date +%s)-$$"
