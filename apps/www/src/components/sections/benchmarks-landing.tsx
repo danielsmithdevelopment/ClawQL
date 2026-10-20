@@ -36,21 +36,11 @@ import {
   governanceScorecardRows,
 } from '@/lib/governance-benchmarks'
 import {
-  harness2ArmRows,
-  harness2Headline,
-  harness2HeadlineResult,
-  harness2Honesty,
-  harness2Links,
-  harness2Meta,
-  harness2Summary,
-} from '@/lib/harness2-gate-adversarial'
-import {
   multiAttackArmRows,
   multiAttackBenignSummary,
   multiAttackHeadline,
   multiAttackHeadlineResult,
   multiAttackMechanisms,
-  multiAttackMeta,
   multiAttackPublishGate,
   multiAttackSummary,
 } from '@/lib/multi-attack-injection'
@@ -187,14 +177,7 @@ export function BenchmarksLanding() {
                 href="#multi-attack"
                 className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
               >
-                multi-attack 0/12
-              </a>
-              {' · '}
-              <a
-                href="#harness2"
-                className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
-              >
-                Harness² gate
+                multi-attack smoke
               </a>
               {' · '}
               <a
@@ -565,12 +548,6 @@ export function BenchmarksLanding() {
         subheadline={<p>{multiAttackSummary}</p>}
         cta={
           <div className="flex flex-col gap-2">
-            <p className="text-sm font-medium text-mist-800 dark:text-mist-200">
-              {multiAttackMeta.measuredAt}{' '}
-              <span className="font-normal text-mist-600 dark:text-mist-400">
-                · {multiAttackMeta.boardLabel}
-              </span>
-            </p>
             <p className="max-w-2xl text-sm/6 text-mist-800 dark:text-mist-200">
               <span className="font-medium text-mist-950 dark:text-white">Headline: </span>
               {multiAttackHeadlineResult}
@@ -646,116 +623,6 @@ export function BenchmarksLanding() {
             ))}
           </tbody>
         </ComparisonTable>
-        <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
-          Artifact: {multiAttackMeta.artifact}
-        </p>
-      </Section>
-
-      <Section
-        id="harness2"
-        className="pt-10 sm:pt-14"
-        eyebrow="Optimizer vs gate · step 1"
-        headline={harness2Headline}
-        subheadline={<p>{harness2Summary}</p>}
-        cta={
-          <div className="flex flex-col gap-2">
-            <p className="text-sm font-medium text-mist-800 dark:text-mist-200">
-              {harness2Meta.measuredLabel}{' '}
-              <span className="font-normal text-mist-600 dark:text-mist-400">
-                · {harness2Meta.measuredAt} · {harness2Meta.boardLabel}
-              </span>
-            </p>
-            <p className="max-w-2xl text-sm/6 text-mist-800 dark:text-mist-200">
-              <span className="font-medium text-mist-950 dark:text-white">Headline: </span>
-              {harness2HeadlineResult}
-            </p>
-          </div>
-        }
-      >
-        <h3 className="text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
-          Scorecard · evade attempts → effectuated · adapt · utility
-        </h3>
-        <ComparisonTable minWidthClass="min-w-[720px]" className="mt-4">
-          <caption className="sr-only">
-            Harness² adversarial gate step 1: evade, adapt, and utility by arm
-          </caption>
-          <thead>
-            <tr>
-              <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
-              <ComparisonTh className={clsx('text-center')}>Status</ComparisonTh>
-              <ComparisonTh className={clsx('text-right')}>Evade → effectuated</ComparisonTh>
-              <ComparisonTh className={clsx('text-right')}>Adapt succeeded</ComparisonTh>
-              <ComparisonTh className={clsx('text-right')}>Utility</ComparisonTh>
-              <ComparisonTh className={clsx('text-left')}>Note</ComparisonTh>
-            </tr>
-          </thead>
-          <tbody>
-            {harness2ArmRows.map((row) => (
-              <tr
-                key={row.arm}
-                className={clsx(
-                  'border-t border-mist-950/5 dark:border-white/10',
-                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
-                )}
-              >
-                <ComparisonRowTh
-                  className={clsx(
-                    'font-normal',
-                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
-                  )}
-                >
-                  {row.arm}
-                </ComparisonRowTh>
-                <ComparisonTd className={clsx('text-center text-mist-700 dark:text-mist-400')}>
-                  {row.status}
-                </ComparisonTd>
-                <ComparisonTd
-                  className={clsx(
-                    'text-right font-semibold tabular-nums',
-                    row.highlight ? 'text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
-                  )}
-                >
-                  {row.evade}
-                </ComparisonTd>
-                <ComparisonTd className={clsx('text-right tabular-nums text-mist-800 dark:text-mist-200')}>
-                  {row.adaptSucceeded}
-                </ComparisonTd>
-                <ComparisonTd className={clsx('text-right tabular-nums text-mist-800 dark:text-mist-200')}>
-                  {row.utility}
-                </ComparisonTd>
-                <ComparisonTd className={clsx('text-xs/5 text-mist-600 dark:text-mist-400')}>{row.note}</ComparisonTd>
-              </tr>
-            ))}
-          </tbody>
-        </ComparisonTable>
-
-        <div className="mt-8 grid gap-6 sm:grid-cols-3">
-          {harness2Honesty.map((item) => (
-            <div key={item.title}>
-              <h3 className="text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
-                {item.title}
-              </h3>
-              <p className="mt-2 text-sm/6 text-mist-700 dark:text-mist-400">{item.body}</p>
-            </div>
-          ))}
-        </div>
-
-        <ul className="mt-8 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
-          {harness2Links.map((link) => (
-            <li key={link.href}>
-              <a
-                href={link.href}
-                className="text-sm font-medium text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
-              >
-                {link.label}
-              </a>
-              <span className="ml-2 text-xs text-mist-600 dark:text-mist-500">{link.detail}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
-          Artifact: {harness2Meta.artifact} · Spec: {harness2Meta.spec}
-        </p>
       </Section>
 
       <Section
