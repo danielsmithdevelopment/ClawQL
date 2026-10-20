@@ -1,9 +1,9 @@
 ## clawql-mcp 8.0.0
 
 **npm:** [`clawql-mcp@8.0.0`](https://www.npmjs.com/package/clawql-mcp/v/8.0.0) (publish on tag `v8.0.0`)  
-**Full changelog:** [CHANGELOG.md#800---2026-10-03](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#800---2026-10-03)  
-**Release date:** 2026-10-03 (prep; tag when checklist clears)  
-**Since:** `v7.2.0` (2026-08-04) — **~1878 commits**, **~262 merge PRs**
+**Full changelog:** [CHANGELOG.md#800---2026-10-20](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#800---2026-10-20)  
+**Release date:** 2026-10-20 (prep; tag when checklist clears)  
+**Since:** `v7.2.0` (2026-08-04) — **~2675 commits**, **~373 merge PRs**
 
 ---
 
@@ -15,7 +15,7 @@
 2. **`ProviderPlugin` only** — legacy `Plugin` bridge removed ([#999](https://github.com/danielsmithdevelopment/ClawQL/pull/999))
 3. **Tool-scope enforcement default off** — Panguard proxy is opt-in; boot warns if none active
 
-On top of that, 8.0 ships skills-unified search, Agent Seer scenarios, Managed Edge Gateway / enterprise control plane, payments/Effect hardening, **Effect v4.0.0** cutover (singular `effect` + `@effect/opentelemetry`; `Context.Service` / `Result` / Schema v4), `clawql-web` / `clawql-data` / MCP UI, **`clawql-observability`** LGTM+/Faro, **`clawql-network`** / **`clawql-analytics`**, audit/TEE wedge, meta-ontology + ExtractBench, **Streams celld**, **Fast Decision** + unified capability lifecycle, inference gateway ladder (`/v1`→`/mcp`→`/memory`→`/decision`→`/events`), operation-risk + execute pause/resume, toolkits + self-serve Stripe, product-surface purge (PageIndex/CodeGraph out), repo layout (`apps/` / `manifests/`), security status page, Learn/docs wave, workspace **`0.1.0`** first-publish policy, OpenBench B-7, and Protocol Fabric / personal-agent surfaces.
+On top of that, 8.0 ships skills-unified search, Agent Seer scenarios, Managed Edge Gateway / enterprise control plane, payments/Effect hardening, **Effect v4.0.0** cutover, `clawql-web` / `clawql-data` / MCP UI, **`clawql-observability`** LGTM+/Faro, **`clawql-network`** / **`clawql-analytics`**, audit/TEE wedge, meta-ontology + ExtractBench, **Streams celld** + **Program mode**, **Fast Decision / Decision-1** + decisions fanout (`gliner-decide`), inference gateway ladder (`/v1`→`/mcp`→`/memory`→`/decision`→`/events`), operation-risk + execute pause/resume + formal mandate TLA+/atomic consume, e2e Keycloak/WebAuthn/Stripe catalog, SOC2 packaging, mobile/desktop native stores, Harness², toolkits + self-serve Stripe, product-surface purge (PageIndex/CodeGraph out), repo layout (`apps/` / `manifests/`), security status page, Learn/docs wave, workspace **`0.1.0`** first-publish policy, OpenBench B-7, and Protocol Fabric / personal-agent surfaces.
 
 **ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.**
 
@@ -80,6 +80,26 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 **Removed:** `pageindex_*`, `codegraph_*` / `clawql-codegraph`, `CLAWQL_MEMORY_RECALL_HYBRID` master, `CLAWQL_MEMORY_VAULT_RANKER=bm25`. Default IDP converters = **Docling only**. Agent `ouroboros_*` / `clawql_think` default **off**.
 
 → [`docs/getting-started/migrate-to-8.0.md`](../getting-started/migrate-to-8.0.md) · [`docs/releases/8.0.0-purge-inventory-spec-v0.1.md`](../releases/8.0.0-purge-inventory-spec-v0.1.md)
+
+### 7. Decide scorer family id
+
+Live backend id is **`gliner-decide`** (not `gliner2`). No alias — update WORM/scorer consumers.
+
+---
+
+## What’s new since the Oct 3 refresh (through #1366)
+
+| Area | What landed | PRs |
+| ---- | ----------- | --- |
+| **Decision-1 / fanout** | OpenAI decisions compat; fanout eval; flip-rate → productionTrusted; ensemble quorum; OpenRouter Decision-1; held-out measure; Laya vs GLiNER; `gliner-decide` id | [#1236](https://github.com/danielsmithdevelopment/ClawQL/pull/1236)–[#1289](https://github.com/danielsmithdevelopment/ClawQL/pull/1289) |
+| **E2E catalog** | Scenario catalog; WebAuthn/Keycloak/TOTP; Okta; Stripe multi-gw compose; honesty sweep | [#1217](https://github.com/danielsmithdevelopment/ClawQL/pull/1217)–[#1232](https://github.com/danielsmithdevelopment/ClawQL/pull/1232) |
+| **Formal / mandate** | ADR 0014 TLA+/Lean; atomic Postgres mandate consume; concurrent consume regression | [#1227](https://github.com/danielsmithdevelopment/ClawQL/pull/1227) |
+| **Program / celld** | Program mode ADR; celld closeout; isolate kill; Streams honesty sync | [#1235](https://github.com/danielsmithdevelopment/ClawQL/pull/1235), [#1349](https://github.com/danielsmithdevelopment/ClawQL/pull/1349)–[#1351](https://github.com/danielsmithdevelopment/ClawQL/pull/1351) |
+| **Console / native / mobile** | shadcn cloud console; desktop store; push/camera; IAP/biometrics; AI elements trace | [#1204](https://github.com/danielsmithdevelopment/ClawQL/pull/1204), [#1216](https://github.com/danielsmithdevelopment/ClawQL/pull/1216), [#1276](https://github.com/danielsmithdevelopment/ClawQL/pull/1276), [#1286](https://github.com/danielsmithdevelopment/ClawQL/pull/1286), [#1312](https://github.com/danielsmithdevelopment/ClawQL/pull/1312), [#1320](https://github.com/danielsmithdevelopment/ClawQL/pull/1320) |
+| **SOC2 / prod / billing** | SOC2 Type 2 packaging; security headers/IDOR; Stripe dunning; Uptime Kuma; Postgres rollback; prod-readiness critical | [#1321](https://github.com/danielsmithdevelopment/ClawQL/pull/1321), [#1328](https://github.com/danielsmithdevelopment/ClawQL/pull/1328), [#1331](https://github.com/danielsmithdevelopment/ClawQL/pull/1331), [#1334](https://github.com/danielsmithdevelopment/ClawQL/pull/1334)–[#1336](https://github.com/danielsmithdevelopment/ClawQL/pull/1336) |
+| **Security drills / Harness²** | Inject drills; gov fair board; security suite roadmap; Harness² step2 + STATUS; www outdated audit | [#1353](https://github.com/danielsmithdevelopment/ClawQL/pull/1353)–[#1355](https://github.com/danielsmithdevelopment/ClawQL/pull/1355), [#1363](https://github.com/danielsmithdevelopment/ClawQL/pull/1363)–[#1366](https://github.com/danielsmithdevelopment/ClawQL/pull/1366) |
+| **Supabase / sources / grants** | Supabase ProviderPlugin + auth; sources approve human gate; OAuth grant/revoke admin; Effect v4 evidence | [#1199](https://github.com/danielsmithdevelopment/ClawQL/pull/1199)–[#1202](https://github.com/danielsmithdevelopment/ClawQL/pull/1202), [#1241](https://github.com/danielsmithdevelopment/ClawQL/pull/1241)–[#1245](https://github.com/danielsmithdevelopment/ClawQL/pull/1245) |
+| **Attacks attempts** | Multi-day attacks-attempts campaign (entry → day 18) | [#1237](https://github.com/danielsmithdevelopment/ClawQL/pull/1237)–[#1277](https://github.com/danielsmithdevelopment/ClawQL/pull/1277) |
 
 ---
 
