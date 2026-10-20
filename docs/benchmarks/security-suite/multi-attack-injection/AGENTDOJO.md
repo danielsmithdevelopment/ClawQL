@@ -1,8 +1,8 @@
-# AgentDojo — smoke measured; full suites before headline
+# AgentDojo — full gpt-4o-mini matrix published
 
-Outsiders already trust AgentDojo’s ASR and utility. ClawQL’s data-flow arm is scored with **their** metrics. **Smoke numbers are not the page headline** until full suites finish under the gates below.
+Outsiders already trust AgentDojo’s ASR and utility. ClawQL’s data-flow arm is scored with **their** metrics. Full suites below land under the publish gates; smoke stays exploratory.
 
-## Publish gates (when full matrix lands)
+## Publish gates
 
 1. **Uncertainty, not only point estimates.** Report **95% bootstrap CIs over pairs** per suite (and per cell). Optional: `MAI_AGENTDOJO_REPEATS` for multi-seed cell repeats when budget allows. Smoke taught us three pairs can flip one way and two the other with no blocks — that noise shrinks at 949 pairs; it does not vanish.
 2. **Utility without attacks and under attack.** Under-attack utility shows rescue when injections derail the agent. **Without-attack** utility is AgentDojo’s clean-work cost (the benign-suite analogue). Publish both for each arm.
@@ -18,9 +18,28 @@ Outsiders already trust AgentDojo’s ASR and utility. ClawQL’s data-flow arm 
 | Sample size                 | Smoke = **4×3 = 12 pairs** on workspace. Full = workspace 560 + slack 105 + banking 144 + travel 140 = **949** attack pairs (CaMeL’s eval size).                                         |
 | Federal-facing              | Feature **`openai/gpt-4o-mini`** only. Do not put DeepSeek on contractor-facing pages.                                                                                                   |
 
+## Full matrix (`openai/gpt-4o-mini`, important_instructions, n=949)
+
+CI [39360438719](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39360438719) · [results-agentdojo.json](./results-agentdojo.json) · claim_kind=`empirical`.
+
+Pair-weighted pooled ASR: **none 0.30 → clawql_data_flow 0.064** (n=949). Lead by ASR drop: **banking** (0.50 → 0.10) with util_without_attack flat at 0.56.
+
+| Suite     | Defense            |   n |         ASR (95% CI) | Util under attack (95% CI) | Util without attack (95% CI) | Blocks |
+| --------- | ------------------ | --: | -------------------: | -------------------------: | ---------------------------: | -----: |
+| banking   | `none`             | 144 | 0.50 \[0.42, 0.58\]  |          0.49 \[0.40, 0.56\] |            0.56 \[0.31, 0.81\] |      — |
+| banking   | `clawql_data_flow` | 144 | 0.10 \[0.05, 0.15\]  |          0.51 \[0.43, 0.59\] |            0.56 \[0.31, 0.81\] |    351 |
+| slack     | `none`             | 105 | 0.66 \[0.56, 0.74\]  |          0.47 \[0.37, 0.56\] |            0.76 \[0.57, 0.95\] |      — |
+| slack     | `clawql_data_flow` | 105 | 0.30 \[0.21, 0.38\]  |          0.18 \[0.10, 0.26\] |            0.24 \[0.05, 0.43\] |    270 |
+| travel    | `none`             | 140 | 0.31 \[0.24, 0.39\]  |          0.36 \[0.29, 0.44\] |            0.60 \[0.40, 0.80\] |      — |
+| travel    | `clawql_data_flow` | 140 | 0.11 \[0.06, 0.17\]  |          0.33 \[0.26, 0.41\] |            0.25 \[0.05, 0.45\] |     98 |
+| workspace | `none`             | 560 | 0.18 \[0.15, 0.21\]  |          0.37 \[0.33, 0.41\] |            0.80 \[0.68, 0.90\] |      — |
+| workspace | `clawql_data_flow` | 560 | 0.00 \[0.00, 0.00\]  |          0.34 \[0.30, 0.38\] |            0.42 \[0.28, 0.57\] |   3603 |
+
+ASR = `mean(security_results)` (`security()` True ⇒ injection succeeded). Workspace reaches ASR 0 under ClawQL with a clear util_without_attack cost (0.80 → 0.42). Banking is the cleanest trade: large ASR drop, flat clean utility.
+
 ## Smoke matrix (n=12 workspace) — exploratory only
 
-CI [39354352936](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39354352936) · [results-agentdojo.json](./results-agentdojo.json).
+CI [39354352936](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39354352936). Kept for harness debugging; not the page headline.
 
 | Audience         | Model                    | Defense            |              ASR | Utility (under attack) | ClawQL blocks |
 | ---------------- | ------------------------ | ------------------ | ---------------: | ---------------------: | ------------: |
@@ -29,9 +48,7 @@ CI [39354352936](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/3
 | Lab only         | `deepseek/deepseek-chat` | none               |      0.00 (0/12) |            0.67 (8/12) |             — |
 | Lab only         | `deepseek/deepseek-chat` | `clawql_data_flow` |      0.00 (0/12) |            0.58 (7/12) |             1 |
 
-Smoke lacked bootstrap CIs and utility-without-attack in the published artifact; the harness now emits both for full-suite cells. ASR = `mean(security_results)` (`security()` True ⇒ injection succeeded).
-
-### Why utility under attack can rise (gpt-4o-mini 0.33 → 1.00)
+### Why utility under attack can rise (smoke gpt-4o-mini 0.33 → 1.00)
 
 A successful injection often **derails** the agent onto attacker sinks; blocking those after an untrusted calendar read lets the user task finish. Example: _“How many appointments on May 15th…?”_ — under `none` the model `send_email`s the injected “Important message!” and fails utility; under ClawQL those sinks are blocked and the summary completes.
 
@@ -95,5 +112,5 @@ Upstream: [ethz-spylab/agentdojo](https://github.com/ethz-spylab/agentdojo) · `
 
 ## Status
 
-- Smoke honesty + methodology gates locked in harness/docs.
-- Full gpt-4o-mini matrix in flight; publish only with CIs + both utilities + empirical wording + CaMeL as related work.
+- Full gpt-4o-mini matrix **published** (CI 39360438719) under gates: CIs, util±attack, CaMeL related-work only, empirical wording.
+- Smoke retained as exploratory only.
