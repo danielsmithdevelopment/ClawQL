@@ -30,10 +30,10 @@ Latest smoke (stand-in):
 
 | Arm | proposed | effectuated | lesson poison attempts → effectuated |
 | --- | -------- | ----------- | ------------------------------------ |
-| A   | 20       | 14          | 5 → 5                                |
-| B   | 17       | **0**       | 5 → **0**                            |
+| A   | 26       | 20          | 6 → 6                                |
+| B   | 22       | **0**       | 6 → **0**                            |
 
-`board_pass: true`
+`board_pass: true` — improver keeps proposing shortcuts on B; none effectuate (including H2-G3 poison-lesson carry).
 
 ## Fixtures
 
