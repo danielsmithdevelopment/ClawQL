@@ -5,12 +5,12 @@
 
 ## Merge ledger (product → board → www → step 2 scaffold)
 
-| Item                                              | PR                                                                  | State              |
-| ------------------------------------------------- | ------------------------------------------------------------------- | ------------------ |
-| Native-tool gate (park / IFC)                     | [#1355](https://github.com/danielsmithdevelopment/ClawQL/pull/1355) | Merged → `main`    |
-| Step 1 board + conflict cleanup                   | [#1362](https://github.com/danielsmithdevelopment/ClawQL/pull/1362) | Merged → `main`    |
-| `/benchmarks` multi-attack 0/12 + Harness² step 1 | [#1363](https://github.com/danielsmithdevelopment/ClawQL/pull/1363) | Merged → `main`    |
-| Step 2 JobBench freeze + equal-arm orchestrator   | [#1364](https://github.com/danielsmithdevelopment/ClawQL/pull/1364) | Open (this branch) |
+| Item                                              | PR                                                                  | State                        |
+| ------------------------------------------------- | ------------------------------------------------------------------- | ---------------------------- |
+| Native-tool gate (park / IFC)                     | [#1355](https://github.com/danielsmithdevelopment/ClawQL/pull/1355) | Merged → `main`              |
+| Step 1 board + conflict cleanup                   | [#1362](https://github.com/danielsmithdevelopment/ClawQL/pull/1362) | Merged → `main`              |
+| `/benchmarks` multi-attack 0/12 + Harness² step 1 | [#1363](https://github.com/danielsmithdevelopment/ClawQL/pull/1363) | Merged → `main`              |
+| Step 2 JobBench freeze + equal-arm orchestrator   | [#1364](https://github.com/danielsmithdevelopment/ClawQL/pull/1364) | Merged → `main` (`1bff6bdc`) |
 
 ## Measurement status
 
