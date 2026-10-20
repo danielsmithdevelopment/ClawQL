@@ -35,6 +35,8 @@ Measured failure of something a product claims is fair; scoring it down for some
 
 Parallel product track (required before publishing multi-attack): make **ClawQL defaults** close the gap via general mechanisms (not `BLOCK_TOOLS`) — **park overwrites** of authoritative facts; **label** untrusted→memory writes; **block** untrusted→external/privileged — so `clawql_default` is **0/12** trusted effectuation _and_ benign workflows complete without a human (plus persistent-injection blocked).
 
+Posture upgrades from published defenses (CaMeL / Progent / DRIFT / AgentArmor / design patterns): ranked action items in [multi-attack-injection/RESEARCH-ACTION-ITEMS.md](./multi-attack-injection/RESEARCH-ACTION-ITEMS.md).
+
 ## Property groups
 
 ### 1. Approvals that can’t be gamed

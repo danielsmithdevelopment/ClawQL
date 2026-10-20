@@ -2,7 +2,7 @@
 
 Outsiders already trust AgentDojo’s ASR and utility. ClawQL’s data-flow arm is scored with **their** metrics. claim_kind=`empirical`. CaMeL stays related work (not a table row).
 
-Rules changelog: **[AGENTDOJO-RULES-DIFF.md](./AGENTDOJO-RULES-DIFF.md)** (`clawql_agentdojo_defaults_v2`). Artifacts: [v1](./results-agentdojo-v1.json) · [v2](./results-agentdojo-v2.json) · [combined](./results-agentdojo.json).
+Rules changelog: **[AGENTDOJO-RULES-DIFF.md](./AGENTDOJO-RULES-DIFF.md)** (`clawql_agentdojo_defaults_v2`). Artifacts: [v1](./results-agentdojo-v1.json) · [v2](./results-agentdojo-v2.json) · [combined](./results-agentdojo.json). Research → posture upgrades: **[RESEARCH-ACTION-ITEMS.md](./RESEARCH-ACTION-ITEMS.md)**.
 
 Remeasure readout order was locked before data: **(1) Slack ASR → (2) util without attack → (3) out-of-sample**.
 
