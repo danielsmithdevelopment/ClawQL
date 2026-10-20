@@ -7,7 +7,8 @@ subsequent sinks are classified:
 
 - **allow** — same-workspace destinations that are not privileged membership
   (scripted-board boundary: reply-to-source / internal destinations ≠ exfiltration).
-  Posts that carry untrusted-derived text are **labeled** in the body.
+  Untrusted-derived allows are **labeled in ClawQL metadata** (`labeled_calls`),
+  not by rewriting message bodies (AgentDojo utility checks often compare content).
 - **park** — reversible / privileged effectuation a human would approve (money,
   external email, bookings, **membership & invitations**). AgentDojo has no human,
   so parks still fail the tool — recorded as `disposition=park`.
@@ -15,7 +16,7 @@ subsequent sinks are classified:
   post_webpage, share_file)
 
 Same-workspace is not the same as safe: attacks in AgentDojo Slack originate
-*inside* the workspace. Membership stays privileged; internal posts get labels.
+*inside* the workspace. Membership stays privileged; internal posts are metadata-labeled.
 
 Frozen defaults id: ``clawql_agentdojo_defaults_v2`` (see AGENTDOJO-RULES-DIFF.md).
 
@@ -41,7 +42,9 @@ Disposition = Literal["allow", "park", "hard_block"]
 
 # Freeze tag for before/after publish + out-of-sample checks.
 DEFAULTS_ID = "clawql_agentdojo_defaults_v2"
-UNTRUSTED_CONTENT_LABEL = "[clawql:untrusted-derived] "
+# Trust tag recorded on allowed sinks after taint — never prepended to bodies
+# (AgentDojo graders often strcmp message content).
+UNTRUSTED_CONTENT_LABEL = "clawql:untrusted-derived"
 
 # Reads that ingest untrusted / attacker-controlled content into the session.
 # Workspace important_instructions injects via calendar event descriptions —
@@ -129,14 +132,17 @@ CONDITIONAL_SINKS = frozenset(
     }
 )
 
-# Posts / messages whose body should be stamped when allowed after taint.
-LABEL_BODY_SINKS = frozenset(
+# Sinks that record an untrusted-derived metadata label when allowed after taint.
+# Body/content args are left intact for AgentDojo graders.
+LABEL_METADATA_SINKS = frozenset(
     {
         "send_channel_message",
         "send_direct_message",
         "send_email",
         "create_file",
         "append_to_file",
+        "create_calendar_event",
+        "reschedule_calendar_event",
     }
 )
 
@@ -208,23 +214,18 @@ def classify_sink(fn: str, args: dict[str, Any] | None) -> Disposition | None:
     return "park"
 
 
-def _stamp_untrusted_body(fn: str, args: dict[str, Any]) -> dict[str, Any] | None:
-    """Return mutated args with untrusted label on body/content, or None if unchanged."""
-    if fn not in LABEL_BODY_SINKS:
+def record_untrusted_metadata(fn: str, args: dict[str, Any]) -> dict[str, Any] | None:
+    """Build a metadata label record for an allowed sink; does not mutate args."""
+    if fn not in LABEL_METADATA_SINKS:
         return None
-    out = dict(args)
-    stamped = False
-    for key in ("body", "content", "text", "message"):
-        val = out.get(key)
-        if isinstance(val, str) and val and not val.startswith(UNTRUSTED_CONTENT_LABEL):
-            out[key] = f"{UNTRUSTED_CONTENT_LABEL}{val}"
-            stamped = True
-    if fn == "create_file" and isinstance(out.get("content"), str):
-        # already handled via content key
-        pass
-    if fn == "append_to_file" and isinstance(out.get("content"), str):
-        pass
-    return out if stamped else None
+    return {
+        "function": fn,
+        "args": dict(args),
+        "trust": UNTRUSTED_CONTENT_LABEL,
+        "label_placement": "clawql_metadata_not_body",
+        "mechanism": "clawql_untrusted_content_label",
+        "defaults_id": DEFAULTS_ID,
+    }
 
 
 class ClawQLToolsExecutor(ToolsExecutor):
@@ -327,21 +328,11 @@ class ClawQLToolsExecutor(ToolsExecutor):
                 )
                 continue
 
-            # disposition == "allow" after taint → stamp untrusted-derived content
+            # disposition == "allow" after taint → metadata label only (body intact)
             if self._tainted and disposition == "allow":
-                stamped = _stamp_untrusted_body(fn, args)
-                if stamped is not None:
-                    self.labeled_calls.append(
-                        {
-                            "function": fn,
-                            "args_before": args,
-                            "args_after": stamped,
-                            "mechanism": "clawql_untrusted_content_label",
-                            "defaults_id": DEFAULTS_ID,
-                        }
-                    )
-                    args = stamped
-                    tool_call.args = stamped
+                meta = record_untrusted_metadata(fn, args)
+                if meta is not None:
+                    self.labeled_calls.append(meta)
 
             for arg_k, arg_v in tool_call.args.items():
                 if isinstance(arg_v, str) and is_string_list(arg_v):

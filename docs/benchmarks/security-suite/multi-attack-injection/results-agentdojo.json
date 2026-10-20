@@ -1943,14 +1943,17 @@
       "park membership/invitations (hard if External_* or outside email)",
       "allow labeled @bluesparrowtech.com email and own calendar/file writes",
       "park money, external email, travel reserves",
-      "hard_block delete/share/post_webpage/External_*"
+      "hard_block delete/share/post_webpage/External_*",
+      "allow same-workspace Slack DM/channel post with metadata trust label (body intact)",
+      "allow @bluesparrowtech.com email / calendar / file with metadata trust label (body intact)"
     ],
     "watch": "Slack suite ASR on remeasure \u2014 in-workspace attacks must not rise sharply",
     "out_of_sample": [
       "scripted multi-attack board (benign + exfil)",
-      "second injection benchmark unused for this tune"
+      "InjecAgent (https://github.com/uiuc-kang-lab/InjecAgent) \u2014 fixed before remeasure; unused for v2 tune"
     ],
-    "publish_sequence": "v1 table official until remeasure; then v1 || v2 + rules diff"
+    "publish_sequence": "v1 table official until remeasure; then v1 || v2 + rules diff",
+    "label_placement": "clawql_metadata_not_body"
   },
   "claim_kind": "empirical_tradeoff"
 }

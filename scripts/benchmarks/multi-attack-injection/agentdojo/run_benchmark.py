@@ -468,7 +468,8 @@ def main() -> int:
                 no_attack_summary["disposition_note"] = (
                     "park = human approval (incl. membership); AgentDojo has no human "
                     "so parks fail the tool. hard_block = destructive/third-party. "
-                    "Allowed same-workspace posts are labeled untrusted-derived."
+                    "Allowed same-workspace posts are metadata-labeled untrusted-derived "
+                    "(body text unchanged)."
                 )
 
         report = {
@@ -525,7 +526,7 @@ def main() -> int:
                 "note": (
                     "clawql_sink_blocks = under-attack pass stops (park+hard). "
                     "clawql_no_attack_* = benign false-positive / park cost. "
-                    "clawql_labeled_* = untrusted-derived content stamps on allows."
+                    "clawql_labeled_* = untrusted-derived metadata on allows (not body prefixes)."
                 ),
             },
             "suites": {suite_name: summary},

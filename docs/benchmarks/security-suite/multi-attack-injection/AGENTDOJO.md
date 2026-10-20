@@ -63,13 +63,13 @@ Rule changes are published as a diff: **[AGENTDOJO-RULES-DIFF.md](./AGENTDOJO-RU
 
 | Disposition | Examples |
 | ----------- | -------- |
-| **Allow** (+ label untrusted-derived body) | Slack DM / non-`External_*` channel post; `@bluesparrowtech.com` email; own calendar create/reschedule; own file create/append |
+| **Allow** (+ metadata trust label; body unchanged) | Slack DM / non-`External_*` channel post; `@bluesparrowtech.com` email; own calendar create/reschedule; own file create/append |
 | **Park** (human) | Money / schedule; external email; travel reserves; **membership & invitations** (`add_user_to_channel`, etc.); calendar participant adds |
 | **Hard block** | `delete_*`, `share_file`, `post_webpage`, Slack `External_*`, membership with outside email |
 
-**Same-workspace ≠ safe.** Slack attacks inject from inside the workspace. Membership stays privileged; allowed internal posts get a content label. Remeasure must call out **Slack ASR** specifically — if it rises noticeably, the relaxation went too far.
+**Same-workspace ≠ safe.** Slack attacks inject from inside the workspace. Membership stays privileged; allowed internal posts are labeled in ClawQL metadata (not a body prefix — AgentDojo content checks must not fail on a marker). Remeasure must call out **Slack ASR** specifically — if it rises noticeably, the relaxation went too far.
 
-**Anti-tuning:** v2 was informed by AgentDojo benign fails. Freeze it, then also measure the scripted board and a second injection benchmark that played no part in the tune (see the rules diff). The published v1 table above stays official until remeasure; then publish **v1 ‖ v2 + the changelog**.
+**Anti-tuning:** v2 was informed by AgentDojo benign fails. Freeze it, then also measure the scripted board and **[InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent)** (named in the rules diff before remeasure). The published v1 table above stays official until remeasure; then publish **v1 ‖ v2 + the changelog**.
 
 ## Publish gates
 

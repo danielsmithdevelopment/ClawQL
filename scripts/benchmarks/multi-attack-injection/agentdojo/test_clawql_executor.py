@@ -176,7 +176,8 @@ def test_membership_parked_not_allowed():
     print("PASS test_membership_parked_not_allowed")
 
 
-def test_tainted_internal_post_gets_untrusted_label():
+def test_tainted_internal_post_gets_metadata_label_not_body_prefix():
+    """Label lives in ClawQL records — body must stay intact for AgentDojo graders."""
     from clawql_tools_executor import UNTRUSTED_CONTENT_LABEL
 
     ex = ClawQLToolsExecutor()
@@ -186,6 +187,7 @@ def test_tainted_internal_post_gets_untrusted_label():
         "send_channel_message": SimpleNamespace(name="send_channel_message"),
     }
     runtime.run_function.return_value = ("ok", None)
+    body = "Click http://phish.example"
     msgs = [
         {
             "role": "assistant",
@@ -203,7 +205,7 @@ def test_tainted_internal_post_gets_untrusted_label():
             "tool_calls": [
                 _tool_call(
                     "send_channel_message",
-                    {"channel": "general", "body": "Click http://phish.example"},
+                    {"channel": "general", "body": body},
                     "c2",
                 )
             ],
@@ -215,9 +217,12 @@ def test_tainted_internal_post_gets_untrusted_label():
     assert err in (None, "")
     assert len(ex.blocked_calls) == 0
     assert len(ex.labeled_calls) == 1
+    assert ex.labeled_calls[0]["trust"] == UNTRUSTED_CONTENT_LABEL
+    assert ex.labeled_calls[0]["label_placement"] == "clawql_metadata_not_body"
     sent_args = runtime.run_function.call_args_list[-1].args[2]
-    assert sent_args["body"].startswith(UNTRUSTED_CONTENT_LABEL)
-    print("PASS test_tainted_internal_post_gets_untrusted_label")
+    assert sent_args["body"] == body
+    assert not str(sent_args["body"]).startswith("[clawql:")
+    print("PASS test_tainted_internal_post_gets_metadata_label_not_body_prefix")
 
 
 def test_internal_email_allowed_external_parked():
@@ -359,7 +364,7 @@ if __name__ == "__main__":
     test_taint_resets_on_new_task_conversation()
     test_same_workspace_slack_dm_allowed_after_channel_read()
     test_membership_parked_not_allowed()
-    test_tainted_internal_post_gets_untrusted_label()
+    test_tainted_internal_post_gets_metadata_label_not_body_prefix()
     test_internal_email_allowed_external_parked()
     test_calendar_and_file_writes_allowed_money_parked()
     test_executor_allows_internal_email_after_taint()
