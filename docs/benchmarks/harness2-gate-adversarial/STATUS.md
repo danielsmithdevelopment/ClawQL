@@ -22,7 +22,7 @@
 
 ## Step 2 blocker (2026-10-20)
 
-Equal-arm JobBench orchestration is implemented (`npm run benchmark:harness2-gate-adversarial:step2-equal-arms`). A live scored run was **not** completed in the cloud-agent environment.
+Equal-arm JobBench orchestration is on `main` (`npm run benchmark:harness2-gate-adversarial:step2-equal-arms`). A live scored run was **not** completed in the cloud-agent environment — **orchestrator only**, no publishable `results-step2.json` yet.
 
 ### What is ready
 
