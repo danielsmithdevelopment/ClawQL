@@ -16,9 +16,12 @@ trap 'rm -rf "${INSTALL_ROOT}" "${PACK_DIR}"' EXIT
 node scripts/release/pack-workspace-packages.mjs "${PACK_DIR}"
 
 npm pack --pack-destination "${PACK_DIR}" >/dev/null 2>&1
-MCP_TARBALL="$(find "${PACK_DIR}" -maxdepth 1 -name 'clawql-mcp-*.tgz' -print -quit)"
+# Prefer versioned root pack (clawql-mcp-0.x.tgz). Do not match clawql-mcp-events-*.tgz.
+MCP_TARBALL="$(find "${PACK_DIR}" -maxdepth 1 -regextype posix-extended \
+  -regex '.*/clawql-mcp-[0-9][^/]*\.tgz' -print -quit)"
 if [[ -z "${MCP_TARBALL}" || ! -f "${MCP_TARBALL}" ]]; then
-  echo "ERROR: npm pack did not produce clawql-mcp-*.tgz" >&2
+  echo "ERROR: npm pack did not produce clawql-mcp-<version>.tgz (got clawql-mcp-events only?)" >&2
+  ls -1 "${PACK_DIR}"/clawql-mcp*.tgz 2>/dev/null || true
   exit 1
 fi
 

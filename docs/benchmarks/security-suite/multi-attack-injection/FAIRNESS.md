@@ -11,27 +11,10 @@ Injection resistance is an **outcome**. Any gateway can be put through the same 
 
 ## Columns
 
-<<<<<<< HEAD
-
-| Column          | Meaning                                                      |
-| --------------- | ------------------------------------------------------------ |
-| **Defaults**    | Stock product                                                |
-| **Best-config** | Recommended hardening via **general mechanisms** (not tools) |
-| =======         |
-| <<<<<<< HEAD    |
-
-| Column          | Meaning                                                                        |
-| --------------- | ------------------------------------------------------------------------------ |
-| **Defaults**    | Stock product                                                                  |
-| **Best-config** | Recommended hardening via **general mechanisms**                               |
-| =======         |
-| Column          | Meaning                                                                        |
-| --------------- | ------------------------------------------------------------------------------ |
-| **Defaults**    | Stock product, no cell-specific deny for `memory_ingest`                       |
-| **Best-config** | Each product’s recommended deny / scope for the write the attacks try to force |
-
-> > > > > > > origin/cursor/security-suite-roadmap-f4ec
-> > > > > > > origin/cursor/security-suite-roadmap-f4ec
+| Column          | Meaning                                                                    |
+| --------------- | -------------------------------------------------------------------------- |
+| **Defaults**    | Stock product                                                              |
+| **Best-config** | Recommended hardening via **general mechanisms** (not tool-name denylists) |
 
 ### Configured ClawQL — name mechanisms, not tools
 
@@ -46,11 +29,4 @@ Forbidden: `BLOCK_TOOLS` (or equivalent) listing the tools the twelve attacks us
 
 ## Headline
 
-`clawql_default` **12/12** is honest and intentional: stock ClawQL matches passthrough until park-destructive + untrusted-read taint apply to the **same write path the attacks use**.
-
-Product defaults shipping now (execute-path):
-
-- Session IFC **on** by default (`CLAWQL_ENABLE_SESSION_IFC=0` to opt out)
-- Trusted MCP `destructiveHint` → **mandate** (park), not hard-block
-
-Native `memory_ingest` still bypasses execute-core today — closing that gap is required before the default column can go 12/12 → 0/12 on this board. Then re-run.
+`clawql_default` **0/12** after native-tool gate (park + session IFC on the same write path the attacks use). Passthrough remains **12/12**. Publish beside benign completion cost (`2/4` without a human under defaults). Draft until peer columns are measured.
