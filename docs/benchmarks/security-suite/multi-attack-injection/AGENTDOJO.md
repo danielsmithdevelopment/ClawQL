@@ -6,11 +6,11 @@ Outsiders already trust AgentDojo’s attack success rate (ASR) and utility-unde
 
 ## Must report
 
-| Source        | Metric                                                                      |
-| ------------- | --------------------------------------------------------------------------- |
+| Source        | Metric                                                                                  |
+| ------------- | --------------------------------------------------------------------------------------- |
 | **AgentDojo** | Targeted ASR (`mean(security_results)` — `security()` is True when injection succeeded) |
-| **AgentDojo** | Utility under attack (`mean(utility_results)`)                              |
-| **ClawQL**    | Sink blocks after untrusted read (`clawql_sink_blocks`); later board grades |
+| **AgentDojo** | Utility under attack (`mean(utility_results)`)                                          |
+| **ClawQL**    | Sink blocks after untrusted read (`clawql_sink_blocks`); later board grades             |
 
 ## Defense arm
 
