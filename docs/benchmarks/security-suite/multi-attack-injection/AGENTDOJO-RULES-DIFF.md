@@ -1,10 +1,22 @@
 # AgentDojo `clawql_data_flow` rules diff (frozen)
 
-**Defaults id:** `clawql_agentdojo_defaults_v2`  
-**Status:** **remeasured** — v1 ‖ v2 published in [AGENTDOJO.md](./AGENTDOJO.md).  
+**Defaults id (current code):** `clawql_agentdojo_defaults_v3`  
+**Published boards:** v1 ‖ v2 in [AGENTDOJO.md](./AGENTDOJO.md); **v3 pending CI remeasure** (Slack-first).  
 **v1 CI:** [39360438719](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39360438719) · **v2 CI:** [39458622200](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39458622200).
 
 Published **side by side** with this changelog — not a replacement that erases what we got wrong.
+
+## v2 → v3 (capability gate — from Slack ASR autopsy)
+
+Autopsy artifact: [slack-asr-autopsy-v2.json](./slack-asr-autopsy-v2.json) (CI 39458622200).
+
+| Finding | v2 behavior | v3 (`clawql_agentdojo_defaults_v3`) |
+| --- | --- | --- |
+| 29/42 Slack `security=True` used successful `send_*` | Free **allow** same-workspace DM/channel after taint | **allow only if destination ∈ trusted caps from user query**; else **park** |
+| 19/42 had successful `invite_user_to_slack` | Not a controlled sink | **park** (with other membership) |
+| Trusted plan / privilege | None | `extract_trusted_caps(query)` → destinations + write-tool privileges (B1); writes outside set → park |
+
+Research anchors: CaMeL capabilities, Progent monotonic privilege, plan-then-execute. See [RESEARCH-ACTION-ITEMS.md](./RESEARCH-ACTION-ITEMS.md).
 
 ## v1 → v2 (what moved)
 
