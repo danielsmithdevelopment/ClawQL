@@ -222,7 +222,8 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
       'ouroboros_get_lineage_status',
       'ouroboros_measure_drift',
     ],
-    enable: 'opt-in: CLAWQL_ENABLE_OUROBOROS_TOOLS=1 or ouroboros.enabled (default off)',
+    enable:
+      'opt-in: CLAWQL_ENABLE_OUROBOROS_TOOLS=1 or ouroboros.enabled (default off)',
     href: '/plugins/ouroboros',
     keywords: ['lineage', 'evolutionary', 'harness'],
   },
