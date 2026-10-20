@@ -437,7 +437,7 @@ Smoke with a mock MCP + mock adapter (requires celld):
 STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke.sh
 ```
 
-**Verified by (CI):** streams-slim unit tests, `mcp-fetch` / `adapter-fetch` units, `bundle-check`, Helm celld template tests, and (when celld installs) the smoke script above. Full matrix: [Streams + celld evidence](/streams/streams-celld-evidence).
+**Verified by (CI):** path-filtered [Streams celld](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.github/workflows/streams-celld.yml) workflow (not every PR) — streams-slim unit tests, `mcp-fetch` / `adapter-fetch` units, `bundle-check`, Helm celld template tests, and (when celld installs) the smoke script above. Full matrix: [Streams + celld evidence](/streams/streams-celld-evidence).
 
 CI and local release gates fail closed when the bundled Worker exceeds **67108864** bytes ([celld integration §5](/streams/clawql-celld)).
 

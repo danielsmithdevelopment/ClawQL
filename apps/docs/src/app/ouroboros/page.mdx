@@ -2,7 +2,7 @@
 
 ClawQL ships a TypeScript workspace package **`clawql-ouroboros`** for **specification-first** multi-generation workflows: validated **Seeds**, **Wonder / Reflect** hooks, pluggable **Executor** and **Evaluator**, **ontology convergence** (similarity, stagnation, oscillation, regression gates), an **`EvolutionaryLoop`**, and helpers for **MCP-style tool registration** and a **background seed poller**. {{ className: 'lead' }}
 
-It is a **library** you `import` from Node ≥ 22. In **`clawql-mcp`**, Ouroboros MCP tools **always register** via **`clawql-harness`** (`createOuroborosHarnessPlugin` / `makeHarnessLayer`): **`clawql_think`**, **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**, and **`ouroboros_measure_drift`**. For durable lineages, configure Postgres with **`CLAWQL_OUROBOROS_DATABASE_URL`** (or split **`CLAWQL_OUROBOROS_DB_*`** env vars). **`CLAWQL_ENABLE_OUROBOROS`** is **deprecated** as a registration gate (ignored for tool load). Langfuse eval remains opt-in via **`CLAWQL_ENABLE_LANGFUSE_EVAL`**.
+It is a **library** you `import` from Node ≥ 22. In **`clawql-mcp`**, agent-facing Ouroboros tools are **opt-in as of 8.0** — set **`CLAWQL_ENABLE_OUROBOROS_TOOLS=1`** or instance/tier **`ouroboros.enabled: true`** (default **off**). When enabled, **`clawql-harness`** registers **`clawql_think`**, **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**, and **`ouroboros_measure_drift`**. For durable lineages, configure Postgres with **`CLAWQL_OUROBOROS_DATABASE_URL`** (or split **`CLAWQL_OUROBOROS_DB_*`** env vars). The old name **`CLAWQL_ENABLE_OUROBOROS`** is **deleted** (not a gate). Langfuse eval remains nested opt-in via **`CLAWQL_ENABLE_LANGFUSE_EVAL`**.
 
 **Learn walkthrough** (three tools together, benefits, full MCP example): [Ouroboros tools (seed, loop, lineage)](/learn/ouroboros-tools).
 
@@ -189,7 +189,7 @@ For route-hinted runs, `execution_output` contains route metadata (for example `
 ### 7) Troubleshooting
 
 - **Tools missing from ListTools**
-  - Confirm you are on **clawql-mcp 8.0+** (harness always registers Ouroboros tools). Older docs that required `CLAWQL_ENABLE_OUROBOROS=1` are obsolete for registration.
+  - Confirm you are on **clawql-mcp 8.0+** and that **`CLAWQL_ENABLE_OUROBOROS_TOOLS=1`** (or instance/tier **`ouroboros.enabled: true`**) is set — default is **off**. The old name **`CLAWQL_ENABLE_OUROBOROS`** is deleted (not a gate).
 
 - **Lineage lost after restart**
   - Configure `CLAWQL_OUROBOROS_DATABASE_URL` (or split DB vars)

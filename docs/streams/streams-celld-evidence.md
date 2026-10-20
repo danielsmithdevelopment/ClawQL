@@ -42,7 +42,9 @@ Embedding Express `mcp-api-adapter` / vault `clawql-memory` / full `clawql-api` 
 
 ## Commands (run from repo root)
 
-### Always — CI (`Streams celld evidence` job)
+### Path-filtered CI (`Streams celld evidence` job)
+
+Runs from [`.github/workflows/streams-celld.yml`](../../.github/workflows/streams-celld.yml) when Streams/celld paths change — **not** on every PR in `ci.yml`.
 
 ```bash
 npm run build -w clawql-merkle -w clawql-core
@@ -132,12 +134,14 @@ Follow [`docs/examples/idp/streams-celld/README.md`](../../docs/examples/idp/str
 
 ## CI wiring
 
-| Check                                                    | Where                                                    |
-| -------------------------------------------------------- | -------------------------------------------------------- |
-| Helm celld templates                                     | `make lint-k8s-manifests` → CI `ShellCheck & actionlint` |
-| streams-slim + fetch/filter/catalog tests + bundle-check | CI job **Streams celld evidence**                        |
-| Mock `smoke.sh` + `smoke:core-in-celld` with celld       | CI job **Streams celld smoke (celld)**                   |
-| Real MCP + adapter + host WORM                           | CI job **Streams celld full-stack** (permanent)          |
+Workflow: [`.github/workflows/streams-celld.yml`](../../.github/workflows/streams-celld.yml) (path-filtered + `workflow_dispatch`). Not part of always-on `ci.yml`.
+
+| Check                                                    | Where                                                                  |
+| -------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Helm celld templates                                     | `make lint-k8s-manifests` → CI `ShellCheck & actionlint`               |
+| streams-slim + fetch/filter/catalog tests + bundle-check | **Streams celld evidence** (path-filtered)                             |
+| Mock `smoke.sh` + `smoke:core-in-celld` with celld       | **Streams celld smoke (celld)** (path-filtered)                        |
+| Real MCP + adapter + host WORM                           | **Streams celld full-stack** (path-filtered / dispatch — not every PR) |
 
 ---
 

@@ -3,6 +3,7 @@
  * docs/benchmarks/harness2-gate-adversarial/
  *
  * Step 1 is a ClawQL claim under a stand-in optimizer — not a Harness² result.
+ * Docs on main after #1355 (gate), #1362 (board), #1363 (www), #1364 (step 2 scaffold).
  */
 
 export const harness2Headline = 'Harness² × ClawQL — adversarial gate (step 1)'
@@ -64,19 +65,28 @@ export const harness2Honesty = [
     body: 'Not a Harness² integration result. Not “defeated Harness².” v0 dual-sim numbers are illustrative only.',
   },
   {
-    title: 'Step 2 (next)',
-    body: 'Upstream Harness² + WorkBuddy / JobBench / LAB scorers; equal arms except gateway; lesson-poison cell. Publish when passthrough shows effectuated evasions + poisoned lessons and ClawQL shows neither with matching task scores.',
+    title: 'Step 2 (orchestrator ready)',
+    body: 'JobBench equal-arm harness is on main (#1364). Live scores need HARNESS2_SOLVER_MODEL + judge credentials — no results-step2.json yet. WorkBuddy deferred (license); LAB is a follow-up.',
   },
 ] as const
 
-/** Docs live on main after #1355 (gate) + #1362 (board). */
 const H2_DOCS_REF = 'main'
 
 export const harness2Links = [
   {
+    label: 'Status ledger',
+    href: `https://github.com/danielsmithdevelopment/ClawQL/blob/${H2_DOCS_REF}/docs/benchmarks/harness2-gate-adversarial/STATUS.md`,
+    detail: 'Merges · credential block',
+  },
+  {
     label: 'Board SPEC',
     href: `https://github.com/danielsmithdevelopment/ClawQL/blob/${H2_DOCS_REF}/docs/benchmarks/harness2-gate-adversarial/SPEC.md`,
-    detail: 'Publish bar · step 2 plan',
+    detail: 'JobBench freeze · publish bar',
+  },
+  {
+    label: 'Step 2 runbook',
+    href: `https://github.com/danielsmithdevelopment/ClawQL/blob/${H2_DOCS_REF}/docs/benchmarks/harness2-gate-adversarial/STEP2.md`,
+    detail: 'Equal-arm JobBench',
   },
   {
     label: 'Step 1 artifact',
@@ -89,8 +99,8 @@ export const harness2Links = [
     detail: 'Authority outside the harness',
   },
   {
-    label: 'Step 1 board PR',
-    href: 'https://github.com/danielsmithdevelopment/ClawQL/pull/1362',
-    detail: '#1362 — merged',
+    label: 'Step 2 scaffold PR',
+    href: 'https://github.com/danielsmithdevelopment/ClawQL/pull/1364',
+    detail: '#1364 — merged',
   },
 ] as const

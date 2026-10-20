@@ -211,9 +211,9 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
     id: 'clawql-ouroboros',
     name: 'Ouroboros',
     description:
-      'Evolutionary-loop MCP tools via clawql-harness (always registered) with optional Postgres lineage.',
+      'Evolutionary-loop MCP tools via clawql-harness (opt-in as of 8.0) with optional Postgres lineage.',
     category: 'horizontal',
-    status: 'shipped',
+    status: 'opt-in',
     package: 'clawql-harness',
     tools: [
       'clawql_think',
@@ -222,7 +222,7 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
       'ouroboros_get_lineage_status',
       'ouroboros_measure_drift',
     ],
-    enable: 'always on (clawql-harness); CLAWQL_ENABLE_OUROBOROS deprecated',
+    enable: 'opt-in: CLAWQL_ENABLE_OUROBOROS_TOOLS=1 or ouroboros.enabled (default off)',
     href: '/plugins/ouroboros',
     keywords: ['lineage', 'evolutionary', 'harness'],
   },

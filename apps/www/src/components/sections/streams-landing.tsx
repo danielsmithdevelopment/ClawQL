@@ -276,11 +276,12 @@ export function StreamsLanding() {
         id="specs"
         className="streams-section-band"
         eyebrow="Specifications"
-        headline="Draft specs live on docs.clawql.com"
+        headline="Specs and Lab 5b evidence on docs.clawql.com"
         subheadline={
           <p>
-            Streams is shipping as an opt-in coordination layer over packages you already deploy — inference, payments,
-            Ouroboros, NATS, and WORM memory.
+            Lab 5b (celld + CoreToolsDO path) ships today as an opt-in coordination layer over packages you already
+            deploy — inference, payments, NATS, and WORM memory. Agent-facing <code>stream_*</code> MCP tools remain
+            planned.
           </p>
         }
       >
@@ -309,8 +310,8 @@ export function StreamsLanding() {
         headline="Put an event loop under your agents"
         subheadline={
           <p>
-            Request early access on the Agentic Gateway today. When Streams lands, the same MCP endpoint, vault, and
-            WORM trail become the autonomous runtime — not a second product.
+            Request early access on the Agentic Gateway today. Lab 5b already runs on the same MCP endpoint, vault, and
+            WORM trail — Streams coordination is not a second product.
           </p>
         }
         cta={
