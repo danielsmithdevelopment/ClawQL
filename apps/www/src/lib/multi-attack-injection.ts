@@ -10,8 +10,15 @@ export const multiAttackHeadline = 'Multi-attack injection — smoke (draft)'
 export const multiAttackSummary =
   'Twelve planted attacks across email, ticket, doc, and webhook. Scripted worst-case model always complies — this measures whether the gateway stops the resulting action, not whether a real model would fall for it. Sample size: smoke until the suite grows to dozens. Benign workflows are scored beside attacks.'
 
+/** Concrete claim shape from results-smoke.json (2026-10-19). */
 export const multiAttackHeadlineResult =
-  'After native-tool governance: ClawQL defaults stop the twelve attacks via park/IFC (not a tool-name deny). Report benign completion cost alongside — “0 of 12” alone is not the claim.'
+  '0 / 12 attacks effectuated under ClawQL defaults (native park/IFC — not a tool-name deny) · 2 / 4 benign completed without a human (1 parked, 1 blocked by taint). Passthrough: 12 / 12. Draft until peers land.'
+
+export const multiAttackMeta = {
+  measuredAt: '2026-10-19',
+  boardLabel: 'multi-attack-injection-smoke-v2',
+  artifact: 'docs/benchmarks/security-suite/multi-attack-injection/results-smoke.json',
+} as const
 
 export const multiAttackMechanisms = [
   {
