@@ -11,10 +11,10 @@ Injection resistance is an **outcome**. Any gateway can be put through the same 
 
 ## Columns
 
-| Column          | Meaning                                                                        |
-| --------------- | ------------------------------------------------------------------------------ |
-| **Defaults**    | Stock product                                                                  |
-| **Best-config** | Recommended hardening via **general mechanisms** (not tool-name denylists)     |
+| Column          | Meaning                                                                    |
+| --------------- | -------------------------------------------------------------------------- |
+| **Defaults**    | Stock product                                                              |
+| **Best-config** | Recommended hardening via **general mechanisms** (not tool-name denylists) |
 
 ### Configured ClawQL — name mechanisms, not tools
 

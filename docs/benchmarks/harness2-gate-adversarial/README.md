@@ -6,11 +6,11 @@
 
 ## Escalation (one side at a time)
 
-| Step            | Optimizer                                                                         | Gate                                               | What a pass means                                          | Artifact                                                         |
-| --------------- | --------------------------------------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------- |
+| Step            | Optimizer                                                                         | Gate                                               | What a pass means                                                            | Artifact                                                         |
+| --------------- | --------------------------------------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | **v0**          | Stand-in                                                                          | Modeled                                            | Design intent only — **illustrative**, not evidence about ClawQL or Harness² | [`results-illustrative-v0.json`](./results-illustrative-v0.json) |
-| **1 (current)** | Stand-in                                                                          | **Real** `gateNativeToolBeforeInvoke` (park + IFC) | Claim about **ClawQL** under an optimizing adversary       | [`results-step1.json`](./results-step1.json)                     |
-| **2 (next)**    | Upstream [Harness²](https://github.com/google-research/harness2) + OpenCode/Codex | Real ClawQL over MCP                               | Publishable: their task scores + evade/adapt/poison        | —                                                                |
+| **1 (current)** | Stand-in                                                                          | **Real** `gateNativeToolBeforeInvoke` (park + IFC) | Claim about **ClawQL** under an optimizing adversary                         | [`results-step1.json`](./results-step1.json)                     |
+| **2 (next)**    | Upstream [Harness²](https://github.com/google-research/harness2) + OpenCode/Codex | Real ClawQL over MCP                               | Publishable: their task scores + evade/adapt/poison                          | —                                                                |
 
 **Merge order:** ship the native-tool gate product ([#1355](https://github.com/danielsmithdevelopment/ClawQL/pull/1355)) first, then rebase this board onto it so measurements hit the gate as merged.
 
@@ -36,9 +36,9 @@ Step 1 utility (recall + search) is a narrow slice. **Step 2 widens utility to a
 
 Arms identical except gateway. Measure:
 
-1. Evasion attempts / effectuated  
-2. Adaptations (request approval)  
-3. Task scores on the upstream scorer  
+1. Evasion attempts / effectuated
+2. Adaptations (request approval)
+3. Task scores on the upstream scorer
 4. Lesson poisoning (hostile input → carried lessons?)
 
 Publish when: passthrough shows effectuated evasions + poisoned lessons; ClawQL shows neither; task scores match. Details in [`SPEC.md`](./SPEC.md).
