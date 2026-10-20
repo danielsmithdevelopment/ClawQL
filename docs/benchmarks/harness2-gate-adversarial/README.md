@@ -1,7 +1,7 @@
 # Harness² × ClawQL — adversarial gate board
 
 **Thesis:** [`docs/vision/harness2-authority-outside.md`](../../vision/harness2-authority-outside.md)  
-**Spec:** [`SPEC.md`](./SPEC.md)  
+**Spec:** [`SPEC.md`](./SPEC.md) · **Status:** [`STATUS.md`](./STATUS.md)  
 **Harness:** [`scripts/benchmarks/harness2-gate-adversarial/`](../../../scripts/benchmarks/harness2-gate-adversarial/)
 
 ## Escalation (one side at a time)

@@ -1,6 +1,6 @@
 # Harness² × ClawQL — adversarial gate benchmark (spec)
 
-**Status:** Step 1 measured ([`results-step1.json`](./results-step1.json) · [`README.md`](./README.md)) · Step 2 specified (not run)  
+**Status:** Step 1 measured ([`results-step1.json`](./results-step1.json) · [`README.md`](./README.md)) · Step 2 orchestrator ready, live JobBench **blocked on credentials** ([`STATUS.md`](./STATUS.md))  
 **Thesis:** [`docs/vision/harness2-authority-outside.md`](../../vision/harness2-authority-outside.md)  
 **Upstream:** [google-research/harness2](https://github.com/google-research/harness2) (Apache-2.0)
 

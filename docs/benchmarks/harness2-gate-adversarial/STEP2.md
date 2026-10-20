@@ -1,6 +1,6 @@
 # Harness² × ClawQL — step 2 runbook (publishable)
 
-**Status:** Equal-arm orchestrator ready · live JobBench blocked on solver/judge credentials  
+**Status:** Equal-arm orchestrator ready · live JobBench blocked on solver/judge credentials — see [`STATUS.md`](./STATUS.md)  
 **Spec:** [`SPEC.md`](./SPEC.md) · **Thesis:** [`docs/vision/harness2-authority-outside.md`](../../vision/harness2-authority-outside.md)  
 **Upstream:** [google-research/harness2](https://github.com/google-research/harness2) · [docs/BENCHMARKS.md](https://github.com/google-research/harness2/blob/main/docs/BENCHMARKS.md)
 
