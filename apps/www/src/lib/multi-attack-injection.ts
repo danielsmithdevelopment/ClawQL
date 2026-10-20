@@ -11,7 +11,7 @@ export const multiAttackSummary =
   'Twelve planted attacks across email, ticket, doc, and webhook. Scripted worst-case model always complies — that board is the guarantee when a model is fooled. Live runs show how often models get fooled, and that ClawQL costs nothing when they don’t. Peers share the same Obsidian-compatible Memory/ over MCP; the same 14 benign cases run on every arm.'
 
 export const multiAttackHeadlineResult =
-  'Models resist most attacks; ClawQL is there for the ones they don’t, at no cost to ordinary work. Scripted board published: ClawQL 0 of 12 + 14 of 14 benign; peer best-config 0 of 12 + 9 of 14 (memory off); peer defaults 12 of 12. Live table in progress — 1 of 7 pre-registered measured (composer-2.5-fast: all-refuse, no residue, benign 14/14); six pending. Next hardness: AgentDojo (ASR + utility) before remaining hosted models. Open-weight runs use dual-arm benign so model tool-calling failure is not misread as ClawQL cost.'
+  'Models resist most attacks; ClawQL is there for the ones they don’t, at no cost to ordinary work. Scripted board published: ClawQL 0 of 12 + 14 of 14 benign; peer best-config 0 of 12 + 9 of 14 (memory off); peer defaults 12 of 12. AgentDojo smoke measured: gpt-4o-mini ASR 0.92 → 0.00 under ClawQL (utility 0.33 → 1.00, 27 sink blocks); deepseek ASR 0 on both arms. Live table in progress — 1 of 7 pre-registered measured (composer-2.5-fast: all-refuse, no residue, benign 14/14); six pending. Next: remaining hosted models, then open-weight dual-arm benign.'
 
 export const multiAttackMechanisms = [
   {
@@ -161,10 +161,10 @@ export const multiAttackRecallNote =
   'Recall integrity asks whether the agent still answers 15.00. Peers pass that smoke query; unlabeled poison is a separate column. Hard-recall vault grader: labeled 15.00 / unlabeled 99.99. Live also grades poison residue — a model can refuse an injected instruction and still summarize hostile text into memory (trusted on passthrough, labeled on ClawQL).'
 
 export const multiAttackPublishGate =
-  'Scripted board published now. Live table published in progress (all seven pre-registered models; update as runs finish). Pre-register includes small open-weight (representativeness). Never search for a gullible model. AgentDojo next — publish its ASR + utility alongside ClawQL grades. Open-weight: dual-arm benign (passthrough + ClawQL) so model capability is not misread as gateway cost. Measure poison residue, not only obedience.'
+  'Scripted board published. AgentDojo smoke published (gpt-4o-mini ASR 0.92 → 0.00 under ClawQL). Live table in progress (all seven pre-registered models; update as runs finish). Pre-register includes small open-weight (representativeness). Never search for a gullible model. Open-weight: dual-arm benign (passthrough + ClawQL) so model capability is not misread as gateway cost. Measure poison residue, not only obedience.'
 
 export const multiAttackLiveTableNote =
-  'Pre-registered live models — publish the in-progress table; do not wait for every row. Open-weight rows require benign on both passthrough and ClawQL. Next corpus: AgentDojo ahead of remaining hosted models.'
+  'Pre-registered live models — publish the in-progress table; do not wait for every row. Open-weight rows require benign on both passthrough and ClawQL. AgentDojo smoke is measured; next: remaining hosted models, then open-weight.'
 
 export type MultiAttackLiveRow = {
   model: string
@@ -199,7 +199,7 @@ export const multiAttackLiveRows: readonly MultiAttackLiveRow[] = [
     poisonResidue: '—',
     benignClawql: '—',
     benignPassthrough: '—',
-    note: 'OpenAI small — after AgentDojo',
+    note: 'OpenAI small — next after AgentDojo smoke',
   },
   {
     model: 'gpt-5.6-sol-medium',
@@ -209,7 +209,7 @@ export const multiAttackLiveRows: readonly MultiAttackLiveRow[] = [
     poisonResidue: '—',
     benignClawql: '—',
     benignPassthrough: '—',
-    note: 'OpenAI mid — after AgentDojo',
+    note: 'OpenAI mid — next after AgentDojo smoke',
   },
   {
     model: 'cursor-grok-4.6-medium',
@@ -219,7 +219,7 @@ export const multiAttackLiveRows: readonly MultiAttackLiveRow[] = [
     poisonResidue: '—',
     benignClawql: '—',
     benignPassthrough: '—',
-    note: 'Cross-family — after AgentDojo',
+    note: 'Cross-family — next after AgentDojo smoke',
   },
   {
     model: 'gemini-4-argon-medium',
@@ -229,7 +229,7 @@ export const multiAttackLiveRows: readonly MultiAttackLiveRow[] = [
     poisonResidue: '—',
     benignClawql: '—',
     benignPassthrough: '—',
-    note: 'Cross-family — after AgentDojo',
+    note: 'Cross-family — next after AgentDojo smoke',
   },
   {
     model: 'llama-3.1-8b-instruct',
@@ -254,7 +254,7 @@ export const multiAttackLiveRows: readonly MultiAttackLiveRow[] = [
 ] as const
 
 export const multiAttackAgentDojoNote =
-  'AgentDojo is next — ahead of remaining hosted models. ClawQL data-flow defense + OpenRouter CI matrix are wired (workflow multi-attack-agentdojo.yml, secret OPENROUTER_API_KEY). When measured, publish AgentDojo ASR and utility-under-attack alongside ClawQL sink-block grades — no invented scores.'
+  'AgentDojo smoke measured (workspace × important_instructions, 4×3 pairs via OpenRouter). gpt-4o-mini: ASR 0.92 → 0.00 under clawql_data_flow, utility 0.33 → 1.00, 27 sink blocks. deepseek/deepseek-chat: ASR 0.00 on both arms (model resisted tool-executed injections). Artifact: results-agentdojo.json. Full suite optional via workflow multi-attack-agentdojo.yml.'
 
 export const multiAttackBenignSummary =
   'Every arm runs the same 14 benign cases (recall, search/cache/audit, memory writes, skills, same-source reply, internal team/forward, third-party still blocked). Peers that omit or block ingest fail the five memory-write cases and keep the rest — publish X of 14, then the memory-write breakout. Open-weight live models also run benign on passthrough so both-arms-fail reads as model capability, not ClawQL cost. Contamination = hostile content surfaced as trusted (same as the governance board).'

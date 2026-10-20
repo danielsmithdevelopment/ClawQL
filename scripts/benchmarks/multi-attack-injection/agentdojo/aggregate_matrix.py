@@ -51,15 +51,44 @@ def main() -> int:
             }
         )
 
-    # Lead cell: clawql_data_flow on preferred model if present
-    lead = next(
-        (
-            r
-            for r in rows
-            if r.get("status") == "measured" and r.get("defense") == "clawql_data_flow"
-        ),
-        next((r for r in rows if r.get("status") == "measured"), None),
-    )
+    # Lead: clawql_data_flow cell with the largest ASR drop vs matching none arm
+    # (clearest defense signal). Fall back to first clawql, then any measured.
+    def _none_asr(row: dict) -> float | None:
+        for r in rows:
+            if (
+                r.get("status") == "measured"
+                and r.get("defense") == "none"
+                and r.get("model") == row.get("model")
+                and r.get("suite") == row.get("suite")
+                and isinstance(r.get("agentdojo_asr"), (int, float))
+            ):
+                return float(r["agentdojo_asr"])
+        return None
+
+    clawql_rows = [
+        r
+        for r in rows
+        if r.get("status") == "measured" and r.get("defense") == "clawql_data_flow"
+    ]
+    lead = None
+    best_delta = -1.0
+    for r in clawql_rows:
+        asr = r.get("agentdojo_asr")
+        if not isinstance(asr, (int, float)):
+            continue
+        none_asr = _none_asr(r)
+        delta = (none_asr - float(asr)) if none_asr is not None else -float(asr)
+        if delta > best_delta:
+            best_delta = delta
+            lead = {
+                **r,
+                "none_arm_asr": none_asr,
+                "asr_reduction_vs_none": delta if none_asr is not None else None,
+            }
+    if lead is None:
+        lead = next(iter(clawql_rows), None) or next(
+            (r for r in rows if r.get("status") == "measured"), None
+        )
 
     report = {
         "kind": "multi_attack_injection_agentdojo_matrix_v1",
@@ -75,7 +104,10 @@ def main() -> int:
                 lead.get("agentdojo_utility_under_attack") if lead else None
             ),
             "lead_cell": lead,
-            "note": "Lead row = first measured clawql_data_flow cell (else first measured). Full matrix in rows[].",
+            "note": (
+                "Lead = clawql_data_flow cell with largest ASR drop vs matching none arm. "
+                "Full matrix in rows[]."
+            ),
         },
         "rows": rows,
         "cells": cells,

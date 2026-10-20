@@ -43,7 +43,7 @@ Open-weight pins added `2026-10-19T23:14Z` (_representativeness: deployments com
 
 ## Run order
 
-1. **AgentDojo** (next) — OpenRouter CI matrix: `gh workflow run multi-attack-agentdojo.yml` (secret `OPENROUTER_API_KEY`) — ASR + utility + ClawQL grades
+1. **AgentDojo** — **measured** (smoke): gpt-4o-mini ASR 0.92 → 0.00 under ClawQL, utility 0.33 → 1.00, 27 sink blocks — [AGENTDOJO.md](./AGENTDOJO.md) · [results-agentdojo.json](./results-agentdojo.json)
 2. Remaining hosted models
 3. Open-weight with dual-arm benign
 
@@ -53,7 +53,7 @@ Open-weight pins added `2026-10-19T23:14Z` (_representativeness: deployments com
 | ------------- | -------------------------------------------------- | --------------------------------------------- |
 | **AgentDojo** | Attack success rate (ASR)                          | Their definition of whether the attack worked |
 | **AgentDojo** | Utility / task success under attack                | Their measure of whether tasks still get done |
-| **ClawQL**    | `attacks_effectuated`, `poison_residue`, benign 14 | Our gateway grades                            |
+| **ClawQL**    | `clawql_sink_blocks` (+ later board grades)        | Our gateway grades on the same trajectories   |
 
 ## Metrics (ClawQL live harness)
 
