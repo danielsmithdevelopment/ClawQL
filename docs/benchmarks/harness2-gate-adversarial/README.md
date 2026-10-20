@@ -12,7 +12,7 @@
 | **1 (current)** | Stand-in                                                                          | **Real** `gateNativeToolBeforeInvoke` (park + IFC) | Claim about **ClawQL** under an optimizing adversary                         | [`results-step1.json`](./results-step1.json)                     |
 | **2 (next)**    | Upstream [Harness²](https://github.com/google-research/harness2) + OpenCode/Codex | Real ClawQL over MCP                               | Publishable: their task scores + evade/adapt/poison                          | —                                                                |
 
-**Merge order:** ship the native-tool gate product ([#1355](https://github.com/danielsmithdevelopment/ClawQL/pull/1355)) first, then rebase this board onto it so measurements hit the gate as merged.
+**Merge order (done):** native-tool gate ([#1355](https://github.com/danielsmithdevelopment/ClawQL/pull/1355)) then board ([#1362](https://github.com/danielsmithdevelopment/ClawQL/pull/1362)) — both on `main`. Next is step 2 (upstream Harness² + paper scorers).
 
 ## Step 1 smoke
 

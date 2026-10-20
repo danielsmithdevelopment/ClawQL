@@ -24,8 +24,8 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     id: 'multi_attack_suite',
     priority: 1,
     title: 'Multi-attack injection suite',
-    status: 'scaffolded',
-    why: 'Smoke: 12 attacks, scripted worst-case. Defaults 12/12 (honest gap). Configured via taint/park/data-flow. Peers pending. Not published yet.',
+    status: 'partial',
+    why: 'Smoke v2: ClawQL defaults 0/12 via native park/IFC; passthrough 12/12; benign 2/4 without a human. Peers pending. Draft until peers land.',
   },
   {
     id: 'approval_integrity',
@@ -243,7 +243,12 @@ export const securitySuiteLinks = [
   {
     label: 'Multi-attack board',
     href: '/benchmarks/#multi-attack',
-    detail: 'Smoke scorecard — not a live claim yet',
+    detail: '0/12 ClawQL · draft until peers',
+  },
+  {
+    label: 'Harness² adversarial gate',
+    href: '/benchmarks/#harness2',
+    detail: 'Step 1: evade 0 · adapt 6 · utility 1.0',
   },
   {
     label: 'Multi-attack harness',
