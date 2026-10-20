@@ -23,35 +23,35 @@ ClawQL is **not** trying to be that runtime.
 
 ## Public claim inventory (say only this)
 
-| Allowed claim | Basis | Forbidden paraphrase |
-| ------------- | ----- | -------------------- |
-| **Approved writes run at most once** across concurrent replicas / crash races | TLA+ model + single-use mandate implementation; kill-mid-write board when published | “Durable execution,” “exactly-once delivery over HTTP,” “fault-tolerant agent runtime” |
-| **Events are delivered at least once with stable IDs**; receivers that dedupe process once | Events formal model / launch caption honesty | “Delivered exactly once” |
-| **Erasure jobs resume** after interruption | Product behavior | “Agents resume mid-function” |
-| **Program-mode crash recovery passes in the lab** (file-journal SIGKILL stand-in + ProgramCellDO isolate kill smoke) | Lab evidence; fleet LTX diagnose + three-arm gate still open | “Programs survive a crash” / “code mode that survives a crash” **in the wild** until the fleet gate passes |
-| **Durable Object / celld / LTX** as Streams session substrate | Spec + Lab 5b | Equating Cloudflare/celld DO session state with Golem-class durable execution |
+| Allowed claim                                                                                                        | Basis                                                                               | Forbidden paraphrase                                                                                       |
+| -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Approved writes run at most once** across concurrent replicas / crash races                                        | TLA+ model + single-use mandate implementation; kill-mid-write board when published | “Durable execution,” “exactly-once delivery over HTTP,” “fault-tolerant agent runtime”                     |
+| **Events are delivered at least once with stable IDs**; receivers that dedupe process once                           | Events formal model / launch caption honesty                                        | “Delivered exactly once”                                                                                   |
+| **Erasure jobs resume** after interruption                                                                           | Product behavior                                                                    | “Agents resume mid-function”                                                                               |
+| **Program-mode crash recovery passes in the lab** (file-journal SIGKILL stand-in + ProgramCellDO isolate kill smoke) | Lab evidence; fleet LTX diagnose + three-arm gate still open                        | “Programs survive a crash” / “code mode that survives a crash” **in the wild** until the fleet gate passes |
+| **Durable Object / celld / LTX** as Streams session substrate                                                        | Spec + Lab 5b                                                                       | Equating Cloudflare/celld DO session state with Golem-class durable execution                              |
 
 **ClawQL is not a durable execution engine.** Prefer “journaled program resume (lab)” and “at-most-once approved side effects” over “durable agents.”
 
-Env flag **`CLAWQL_ENABLE_DURABLE_PROGRAMS`** means *journaled program resume*, not Golem-style durable execution. Keep that distinction in every sentence that mentions the flag.
+Env flag **`CLAWQL_ENABLE_DURABLE_PROGRAMS`** means _journaled program resume_, not Golem-style durable execution. Keep that distinction in every sentence that mentions the flag.
 
 ---
 
 ## Overlap (honest)
 
-| Surface | Golem | ClawQL today |
-| ------- | ----- | ------------ |
-| Crash-surviving agent code | Shipped production mid-function resume | Program mode: lab kill tests; fleet proof pending |
-| Permissions agents can’t bypass | Host choke point + log | Gateway park/IFC + people-bound mandates |
-| Secrets as handles | Opaque handles + grant to reveal | Capability / grant surfaces (narrower product story) |
-| Exactly-once tool side effects | Idempotency keys + callee cooperation | At-most-once **approved** writes; interrupted non-reads → `outcome_unknown`, never auto-resent |
-| Hosted artifacts | First-class | Adjacent to Executor-style apps direction — not ClawQL’s core wedge |
+| Surface                         | Golem                                  | ClawQL today                                                                                   |
+| ------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Crash-surviving agent code      | Shipped production mid-function resume | Program mode: lab kill tests; fleet proof pending                                              |
+| Permissions agents can’t bypass | Host choke point + log                 | Gateway park/IFC + people-bound mandates                                                       |
+| Secrets as handles              | Opaque handles + grant to reveal       | Capability / grant surfaces (narrower product story)                                           |
+| Exactly-once tool side effects  | Idempotency keys + callee cooperation  | At-most-once **approved** writes; interrupted non-reads → `outcome_unknown`, never auto-resent |
+| Hosted artifacts                | First-class                            | Adjacent to Executor-style apps direction — not ClawQL’s core wedge                            |
 
 ---
 
 ## Where ClawQL is different (and should stay ahead)
 
-1. **Agents you already use** — Claude Code, Cursor, ChatGPT, any MCP client; OpenAPI → tools from specs. Golem asks you to run agents *inside* its runtime.
+1. **Agents you already use** — Claude Code, Cursor, ChatGPT, any MCP client; OpenAPI → tools from specs. Golem asks you to run agents _inside_ its runtime.
 2. **Approvals as a primitive** — requester can’t approve; person + security key; digests bind exact args. Golem approval is typically “await a webhook” left to each app.
 3. **Content-level safety + token efficiency** — IFC / injection data-flow, `where`, known ops, decision sites.
 4. **Tamper-evident audit** — WORM chain with customer-held roots, not only a per-agent recovery log.
