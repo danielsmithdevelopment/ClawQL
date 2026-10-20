@@ -223,10 +223,17 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p agentdojo-cells-agg
-          find agentdojo-download -name '*.json' -print0 | while IFS= read -r -d '' f; do
+          # Only per-cell reports under agentdojo-cells/ — not nested log trajectories.
+          find agentdojo-download -path '*/agentdojo-cells/*.json' -print0 | while IFS= read -r -d '' f; do
             base="$(basename "$f")"
             cp "$f" "agentdojo-cells-agg/$base"
           done
+          # Fallback: top-level suite__defense__model.json if layout differs
+          if [ -z "$(ls -A agentdojo-cells-agg 2>/dev/null || true)" ]; then
+            find agentdojo-download -maxdepth 2 -name '*__*__*.json' -print0 | while IFS= read -r -d '' f; do
+              cp "$f" "agentdojo-cells-agg/$(basename "$f")"
+            done
+          fi
           ls -la agentdojo-cells-agg || true
 
       - name: Aggregate

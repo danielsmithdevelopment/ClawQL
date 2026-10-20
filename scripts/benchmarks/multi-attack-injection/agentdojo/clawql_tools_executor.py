@@ -24,17 +24,23 @@ from agentdojo.functions_runtime import EmptyEnv, Env, FunctionReturnType, Funct
 from agentdojo.types import ChatMessage, ChatToolResultMessage, text_content_block_from_string
 
 # Reads that ingest untrusted / attacker-controlled content into the session.
+# Workspace important_instructions injects via calendar event descriptions —
+# search_calendar_events / get_day_calendar_events must taint or the defense is a no-op.
 UNTRUSTED_READ_TOOLS = frozenset(
     {
-        # workspace
+        # workspace — email / drive
         "get_unread_emails",
         "get_received_emails",
+        "get_sent_emails",
         "get_draft_emails",
         "search_emails",
         "get_file_by_id",
         "search_files",
         "list_files",
         "search_files_by_filename",
+        # workspace — calendar (primary injection vector for important_instructions)
+        "search_calendar_events",
+        "get_day_calendar_events",
         # slack
         "get_channels",
         "read_channel_messages",
@@ -122,6 +128,11 @@ class ClawQLToolsExecutor(ToolsExecutor):
             return query, runtime, env, messages, extra_args
         if messages[-1]["tool_calls"] is None or len(messages[-1]["tool_calls"]) == 0:
             return query, runtime, env, messages, extra_args
+
+        # Pipeline reuses one executor across user×injection pairs. Clear taint at
+        # the start of each task (no prior tool results in this conversation).
+        if not any(m.get("role") == "tool" for m in messages):
+            self._tainted = False
 
         from ast import literal_eval
         from agentdojo.agent_pipeline.llms.google_llm import EMPTY_FUNCTION_NAME

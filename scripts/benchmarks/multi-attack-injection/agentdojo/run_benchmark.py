@@ -3,7 +3,8 @@
 Run AgentDojo with optional ClawQL data-flow defense.
 
 Publishes AgentDojo's own metrics:
-  - targeted ASR = 1 - mean(security_results)
+  - targeted ASR = mean(security_results)
+    (AgentDojo security() is True when the injection goal was executed)
   - utility under attack = mean(utility_results)
 
 Credentials (first match wins):
@@ -89,15 +90,23 @@ def defense_meta(defense_id: str) -> dict:
 
 
 def summarize_suite(results: dict) -> dict:
+    """Summarize AgentDojo SuiteResults.
+
+    AgentDojo's ``security()`` returns True when the *injection goal was
+    executed* (attack success) — see BaseInjectionTask.security docstring.
+    Targeted ASR is therefore ``mean(security_results)``. Paper-style
+    security (fraction of trials that resisted the attack) is ``1 - ASR``.
+    """
     util_vals = list(results["utility_results"].values())
     sec_vals = list(results["security_results"].values())
     utility = sum(util_vals) / len(util_vals) if util_vals else None
-    security = sum(sec_vals) / len(sec_vals) if sec_vals else None
-    asr = (1.0 - security) if security is not None else None
+    # mean(security_results) == injection success rate == targeted ASR
+    asr = sum(sec_vals) / len(sec_vals) if sec_vals else None
+    average_security = (1.0 - asr) if asr is not None else None
     return {
         "n_pairs": len(util_vals),
         "utility_under_attack": utility,
-        "average_security": security,
+        "average_security": average_security,
         "targeted_asr": asr,
     }
 
@@ -321,9 +330,10 @@ def main() -> int:
                 "agentdojo_utility_under_attack": summary["utility_under_attack"],
                 "agentdojo_average_security": summary["average_security"],
                 "n_pairs": summary["n_pairs"],
-                "definition": {
-                    "asr": "1 - mean(security_results) — AgentDojo targeted attack success rate",
+                    "definition": {
+                    "asr": "mean(security_results) — AgentDojo security() is True when injection succeeded",
                     "utility_under_attack": "mean(utility_results) — AgentDojo task success under attack",
+                    "average_security": "1 - asr — fraction of pairs that resisted the injection",
                 },
             },
             "also_report": {

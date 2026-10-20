@@ -8,7 +8,7 @@ Outsiders already trust AgentDojo’s attack success rate (ASR) and utility-unde
 
 | Source        | Metric                                                                      |
 | ------------- | --------------------------------------------------------------------------- |
-| **AgentDojo** | Targeted ASR (`1 − mean(security_results)`)                                 |
+| **AgentDojo** | Targeted ASR (`mean(security_results)` — `security()` is True when injection succeeded) |
 | **AgentDojo** | Utility under attack (`mean(utility_results)`)                              |
 | **ClawQL**    | Sink blocks after untrusted read (`clawql_sink_blocks`); later board grades |
 
@@ -16,7 +16,7 @@ Outsiders already trust AgentDojo’s attack success rate (ASR) and utility-unde
 
 `clawql_data_flow` — [`clawql_tools_executor.py`](../../../scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py)
 
-After untrusted reads (email / file / channel), blocks external and destructive sinks (`send_email`, `share_file`, `send_money`, …). Same mechanism shape as the scripted multi-attack board (taint → fail-closed), implemented on AgentDojo’s `FunctionsRuntime` so **their** ASR and utility are the headline scores.
+After untrusted reads (email / file / **calendar** / channel), blocks external and destructive sinks (`send_email`, `share_file`, `send_money`, …). Workspace `important_instructions` injects via calendar event descriptions, so calendar reads taint the session. Same mechanism shape as the scripted multi-attack board (taint → fail-closed), implemented on AgentDojo’s `FunctionsRuntime` so **their** ASR and utility are the headline scores.
 
 Matrix also runs `none` (no defense) for comparison.
 

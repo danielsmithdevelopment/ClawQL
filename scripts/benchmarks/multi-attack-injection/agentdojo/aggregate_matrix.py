@@ -18,13 +18,19 @@ def main() -> int:
         return 2
     src = Path(sys.argv[1])
     out = Path(sys.argv[2])
-    files = sorted(src.glob("*.json")) if src.is_dir() else sorted(Path().glob(sys.argv[1]))
+    raw = sorted(src.glob("*.json")) if src.is_dir() else sorted(Path().glob(sys.argv[1]))
     cells = []
-    for f in files:
+    for f in raw:
         try:
-            cells.append(json.loads(f.read_text(encoding="utf-8")))
+            payload = json.loads(f.read_text(encoding="utf-8"))
         except Exception as e:
             cells.append({"status": "error", "error": str(e), "path": str(f)})
+            continue
+        # Cell reports carry must_report / matrix_cell. Skip AgentDojo log
+        # trajectories (injection_task_*.json, none.json) that share the dir.
+        if "must_report" not in payload and "matrix_cell" not in payload:
+            continue
+        cells.append(payload)
 
     measured = [c for c in cells if c.get("status") == "measured"]
     rows = []
