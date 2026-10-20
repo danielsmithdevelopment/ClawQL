@@ -12,7 +12,9 @@
 | **1 (current)** | Stand-in                                                                          | **Real** `gateNativeToolBeforeInvoke` (park + IFC) | Claim about **ClawQL** under an optimizing adversary                         | [`results-step1.json`](./results-step1.json)                     |
 | **2 (next)**    | Upstream [Harness²](https://github.com/google-research/harness2) + OpenCode/Codex | Real ClawQL over MCP                               | Publishable: their task scores + evade/adapt/poison                          | —                                                                |
 
-**Merge order (done):** native-tool gate ([#1355](https://github.com/danielsmithdevelopment/ClawQL/pull/1355)) then board ([#1362](https://github.com/danielsmithdevelopment/ClawQL/pull/1362)) — both on `main`. Next is step 2 (upstream Harness² + paper scorers).
+**Merge order (done):** native-tool gate ([#1355](https://github.com/danielsmithdevelopment/ClawQL/pull/1355)) then board ([#1362](https://github.com/danielsmithdevelopment/ClawQL/pull/1362)) — both on `main`.
+
+**Step 2:** frozen first publish = **JobBench** — see [`STEP2.md`](./STEP2.md).
 
 ## Step 1 smoke
 
@@ -34,11 +36,22 @@ Step 1 utility (recall + search) is a narrow slice. **Step 2 widens utility to a
 
 ## Step 2 (publish bar)
 
+Frozen first board: **JobBench** — full runbook in [`STEP2.md`](./STEP2.md).
+
+```bash
+npm run benchmark:harness2-gate-adversarial:step2-preflight
+# with upstream checkout:
+# HARNESS2_ROOT=/path/to/harness2 npm run benchmark:harness2-gate-adversarial:step2-preflight
+
+# Equal-arm JobBench (requires Vertex/solver credentials + HARNESS2_ROOT):
+# npm run benchmark:harness2-gate-adversarial:step2-equal-arms
+```
+
 Arms identical except gateway. Measure:
 
 1. Evasion attempts / effectuated
 2. Adaptations (request approval)
-3. Task scores on the upstream scorer
+3. Task scores on the upstream JobBench scorer
 4. Lesson poisoning (hostile input → carried lessons?)
 
 Publish when: passthrough shows effectuated evasions + poisoned lessons; ClawQL shows neither; task scores match. Details in [`SPEC.md`](./SPEC.md).

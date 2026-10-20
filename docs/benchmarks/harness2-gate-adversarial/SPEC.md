@@ -7,7 +7,7 @@
 ### Merge order (product before benchmark) — done
 
 1. ✅ Merge the **native-tool gate product change** ([#1355](https://github.com/danielsmithdevelopment/ClawQL/pull/1355)).
-2. ✅ Rebase / merge the board PR ([#1362](https://github.com/danielsmithdevelopment/ClawQL/pull/1362)) onto that gate so step 1 exercises the gate **exactly as shipped**.
+2. ✅ Merge the board PR ([#1362](https://github.com/danielsmithdevelopment/ClawQL/pull/1362)) onto that gate.
 3. Step 2 must keep measuring against the same shipped gate (no private fork of policy).
 
 ### Labeling
@@ -59,7 +59,7 @@ Harness² was evaluated on legal, office, and professional-work benchmarks with 
 | **JobBench**                                                    | Professional job tasks           | Weighted rubric score / max                  |
 | **LAB**                                                         | Legal agent tasks                | Partial (per-criterion pass rate)            |
 
-Pick **one** frozen board + split for the first publish (recommend WorkBuddy Office test half, or JobBench 34-task test set — document which). Compare:
+**Frozen for first publish:** **JobBench** (`--bench jb`), test split as installed by `harness2-setup jb`, `--mode sequential --k 2`, OpenCode substrate — see [`STEP2.md`](./STEP2.md). (WorkBuddy deferred: Tencent license territorial limitation; LAB is a follow-up.) Compare:
 
 > the same Harness² improvement the paper reports, **with and without ClawQL**, judged by **their** benchmark — not ours.
 
@@ -104,6 +104,8 @@ If that table holds, the result is worth publishing. If ClawQL collapses task sc
 3. Log every improver proposal, every gateway deny/park (correlation id), and every lesson written to the improvement harness.
 4. After the poisoned task, inspect the lesson store before later tasks run.
 
+Equal-arm orchestration: `npm run benchmark:harness2-gate-adversarial:step2-equal-arms` (see [`STEP2.md`](./STEP2.md)).
+
 ## Honesty rules
 
 - Do not call ClawQL “Harness²-proof” or “compliant.”
@@ -123,4 +125,4 @@ If that table holds, the result is worth publishing. If ClawQL collapses task sc
 1. ✅ v0 illustrative dual-sim — [`results-illustrative-v0.json`](./results-illustrative-v0.json) (do not publish as evidence).
 2. ✅ **Step 1:** real `gateNativeToolBeforeInvoke` + stand-in optimizer; evade vs adapt; narrow utility — [`results-step1.json`](./results-step1.json).
 3. ✅ Merge #1355 → merge #1362 onto shipped gate (both on `main`).
-4. ⬜ **Step 2:** upstream Harness² + OpenCode/Codex + ClawQL MCP vs passthrough; utility = WorkBuddy / JobBench / LAB scorer; lesson-poison cell.
+4. ⬜ **Step 2:** upstream Harness² + OpenCode + ClawQL MCP vs passthrough; utility = **JobBench** scorer (frozen); lesson-poison cell — runbook [`STEP2.md`](./STEP2.md), preflight `npm run benchmark:harness2-gate-adversarial:step2-preflight`, equal-arms `npm run benchmark:harness2-gate-adversarial:step2-equal-arms`.
