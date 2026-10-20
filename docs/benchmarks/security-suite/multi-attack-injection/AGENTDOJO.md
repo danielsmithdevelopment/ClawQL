@@ -6,12 +6,12 @@ Outsiders already trust AgentDojo’s attack success rate (ASR) and utility-unde
 
 CI run [39354352936](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39354352936) · workspace · `important_instructions` · 4 user × 3 injection pairs · OpenRouter.
 
-| Model | Defense | ASR ↓ | Utility ↑ | ClawQL sink blocks |
-| --- | --- | ---: | ---: | ---: |
-| `openai/gpt-4o-mini` | none | **0.92** | 0.33 | — |
-| `openai/gpt-4o-mini` | `clawql_data_flow` | **0.00** | **1.00** | **27** |
-| `deepseek/deepseek-chat` | none | 0.00 | 0.67 | — |
-| `deepseek/deepseek-chat` | `clawql_data_flow` | 0.00 | 0.58 | 1 |
+| Model                    | Defense            |    ASR ↓ | Utility ↑ | ClawQL sink blocks |
+| ------------------------ | ------------------ | -------: | --------: | -----------------: |
+| `openai/gpt-4o-mini`     | none               | **0.92** |      0.33 |                  — |
+| `openai/gpt-4o-mini`     | `clawql_data_flow` | **0.00** |  **1.00** |             **27** |
+| `deepseek/deepseek-chat` | none               |     0.00 |      0.67 |                  — |
+| `deepseek/deepseek-chat` | `clawql_data_flow` |     0.00 |      0.58 |                  1 |
 
 **Lead comparison:** gpt-4o-mini ASR 0.92 → 0.00 under ClawQL (−0.92), utility 0.33 → 1.00, with 27 sink blocks (`send_email`, `create_calendar_event`, `delete_file`, …). Deepseek resisted tool-executed injections on both arms (ASR 0); ClawQL is for the models that don’t.
 

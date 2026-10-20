@@ -49,11 +49,11 @@ Open-weight pins added `2026-10-19T23:14Z` (_representativeness: deployments com
 
 ## AgentDojo scoring
 
-| Source        | Metric                                             | Why                                           |
-| ------------- | -------------------------------------------------- | --------------------------------------------- |
-| **AgentDojo** | Attack success rate (ASR)                          | Their definition of whether the attack worked |
-| **AgentDojo** | Utility / task success under attack                | Their measure of whether tasks still get done |
-| **ClawQL**    | `clawql_sink_blocks` (+ later board grades)        | Our gateway grades on the same trajectories   |
+| Source        | Metric                                      | Why                                           |
+| ------------- | ------------------------------------------- | --------------------------------------------- |
+| **AgentDojo** | Attack success rate (ASR)                   | Their definition of whether the attack worked |
+| **AgentDojo** | Utility / task success under attack         | Their measure of whether tasks still get done |
+| **ClawQL**    | `clawql_sink_blocks` (+ later board grades) | Our gateway grades on the same trajectories   |
 
 ## Metrics (ClawQL live harness)
 
