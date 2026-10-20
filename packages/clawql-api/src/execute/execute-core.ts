@@ -149,7 +149,7 @@ export function executeClawqlOperationEffect(
     }
 
     // Session IFC (ADR 0015): within-session-only — labels do not cross session keys.
-    // Gated by CLAWQL_ENABLE_SESSION_IFC=1 (default off).
+    // Session IFC default on; opt out with CLAWQL_ENABLE_SESSION_IFC=0.
     const ifcBlock = checkSessionIfcWriteSync({
       operation: op as Operation,
       sessionId: params.sessionId,

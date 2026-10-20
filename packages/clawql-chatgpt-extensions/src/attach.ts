@@ -1,5 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { OpenAIExtensions } from "@openai/mcp-extensions/server";
+import { governNativeHandler } from "clawql-api";
 import { z } from "zod";
 import {
   buildOpenAiDiscoverExtensions,
@@ -101,7 +102,9 @@ function registerSettingsTools(server: McpServer): void {
       annotations: { readOnlyHint: true },
       _meta: settingsToolMeta(),
     },
-    async () => textResult(settingsReadPayload("default"))
+    governNativeHandler("clawql_settings_read", async () =>
+      textResult(settingsReadPayload("default"))
+    )
   );
 
   server.registerTool(
@@ -120,14 +123,14 @@ function registerSettingsTools(server: McpServer): void {
       },
       _meta: settingsToolMeta(),
     },
-    async (args) => {
+    governNativeHandler("clawql_settings_update", async (args) => {
       const set = (args as { set?: Record<string, unknown> }).set ?? {};
       if (Object.keys(set).length === 0) {
         return textResult({ error: "Set at least one setting." });
       }
       const next = updateUserSettings("default", set as Parameters<typeof updateUserSettings>[1]);
       return textResult({ values: next });
-    }
+    })
   );
 }
 
@@ -143,11 +146,11 @@ function registerUiTools(server: McpServer, env: NodeJS.ProcessEnv): void {
       annotations: { readOnlyHint: true },
       _meta: mentionsSearchMeta(),
     },
-    async (args) => {
+    governNativeHandler("clawql_mentions_search", async (args) => {
       const query = String((args as { query?: string }).query ?? "");
       const sources = [...loadVaultMentionSources(env), ...demoMentionSources()];
       return textResult(searchMentions(query, sources));
-    }
+    })
   );
 
   server.registerTool(
@@ -162,7 +165,7 @@ function registerUiTools(server: McpServer, env: NodeJS.ProcessEnv): void {
       annotations: { readOnlyHint: true },
       _meta: evidenceToolMeta(),
     },
-    async (args) => {
+    governNativeHandler("clawql_evidence", async (args) => {
       const a = args as { action?: string; threadId?: string };
       const userId = "default";
       const threadId = a.threadId?.trim() || "session";
@@ -180,7 +183,7 @@ function registerUiTools(server: McpServer, env: NodeJS.ProcessEnv): void {
         entries,
         consoleHint: consoleUrlForAuditEntry(entries[0]?.id ?? "none"),
       });
-    }
+    })
   );
 
   server.registerTool(
@@ -194,7 +197,7 @@ function registerUiTools(server: McpServer, env: NodeJS.ProcessEnv): void {
       annotations: { readOnlyHint: true },
       _meta: consoleToolMeta(),
     },
-    async (args) => {
+    governNativeHandler("clawql_console", async (args) => {
       const path = (args as { path?: string }).path;
       const deep = resolveConsoleDeepLink(path);
       return textResult({
@@ -203,7 +206,7 @@ function registerUiTools(server: McpServer, env: NodeJS.ProcessEnv): void {
         sections: sectionsForUser({ isAdmin: false }),
         deepLink: deep,
       });
-    }
+    })
   );
 
   server.registerTool(
@@ -220,7 +223,7 @@ function registerUiTools(server: McpServer, env: NodeJS.ProcessEnv): void {
       },
       _meta: openFileToolMeta(),
     },
-    async (args, extra) => {
+    governNativeHandler("clawql_open_file", async (args, extra) => {
       const a = args as {
         file: { name: string; resourceUri: string };
         content?: string;
@@ -230,7 +233,7 @@ function registerUiTools(server: McpServer, env: NodeJS.ProcessEnv): void {
       const absolutePath = resourceMeta?.path;
       const result = openClawqlFile({ file: a.file, absolutePath }, a.content ?? "{}");
       return textResult(result);
-    }
+    })
   );
 }
 

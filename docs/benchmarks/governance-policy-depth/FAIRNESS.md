@@ -54,3 +54,9 @@ A single OVERRIDE fixture is five criteria on one attack. Security buyers need a
 **Do say:** defaults tied; best-config ClawQL measured; peer best-config invited; design cells define the durable lead.
 
 **Do not say:** “ClawQL leads measured peers” from configured-vs-default alone.
+
+## Next boards
+
+The full suite (injection, approval integrity, credentials, containment, audit, fail-safe) lives in
+[../security-suite/ROADMAP.md](../security-suite/ROADMAP.md). Same fair-column format; peers without a
+capability are **`not_offered`**, never scored `0`.

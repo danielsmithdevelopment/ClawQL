@@ -94,9 +94,10 @@ describe("program-level session IFC (ADR 0015 program memory)", () => {
 
   it("leaves the host and the program alone when session IFC is off", async () => {
     const { host, executed } = fakeHost();
+    const ifcOff: NodeJS.ProcessEnv = { CLAWQL_ENABLE_SESSION_IFC: "0" };
     const emptyPlan = { v: 1, mode: "parallel", calls: [], kind: "plan" } as const;
-    expect(await Effect.runPromise(programIfcHostEffect(emptyPlan, host, {}))).toBe(host);
-    const out = await run("parallel", ["chat.postMessage", "contracts.get"], host, {});
+    expect(await Effect.runPromise(programIfcHostEffect(emptyPlan, host, ifcOff))).toBe(host);
+    const out = await run("parallel", ["chat.postMessage", "contracts.get"], host, ifcOff);
     expect(out.ok).toBe(true);
     expect(executed.sort()).toEqual(["chat.postMessage", "contracts.get"]);
   });

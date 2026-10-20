@@ -32,11 +32,11 @@ Live table: [clawql.com/benchmarks#dominance](https://clawql.com/benchmarks/#dom
 
 ## Priority order (next proofs)
 
-1. **Bifrost / Obot** — tokens on board; governance/policy-depth harness shipped ([governance-policy-depth](./governance-policy-depth/README.md) — ClawQL 5/5 vs passthrough control); Obot peer **2/5** measured (ClawQL **5/5**); Bifrost peer + p99 concurrency still open for category claim.
-2. **Cloudflare Code Mode** — finish blind small/dual fan-out under frozen rules (plan.c constants landed).
-3. **celld durability** — Lab ProgramCellDO isolate kill shipped; close fleet three-arm / LTX diagnose before product crash-survival claim.
-4. **Executor** — resume dominance measured (`resume_auto_approve`); re-pin v2 + agentgateway so leads do not rot.
-5. **Uber technique bake-off / ContextForge (direct) / TrueFoundry (when credentials)** — see wiring doc.
+1. **Security suite (beyond block lists)** — [security-suite/ROADMAP.md](./security-suite/ROADMAP.md): multi-attack injection → approval integrity → allowed-tool exfil → secret visibility → kill-mid-write. Peers without a capability = `not_offered`.
+2. **Governance v2 follow-through** — peer best-config CI rows; ClawQL product defaults (destructive park + untrusted taint) so `clawql_default` can reach 5/5 without `BLOCK_TOOLS`.
+3. **Bifrost / Obot tokens + p99** — governance defaults already tied; concurrency still open for category claim.
+4. **Cloudflare Code Mode** — finish blind small/dual fan-out under frozen rules.
+5. **celld durability / Executor re-pin / Uber·ContextForge·TrueFoundry** — see wiring doc.
 
 ## Related boards
 

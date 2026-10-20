@@ -36,6 +36,23 @@ import {
   governanceScorecardRows,
 } from '@/lib/governance-benchmarks'
 import {
+  multiAttackArmRows,
+  multiAttackBenignSummary,
+  multiAttackHeadline,
+  multiAttackHeadlineResult,
+  multiAttackMechanisms,
+  multiAttackPublishGate,
+  multiAttackSummary,
+} from '@/lib/multi-attack-injection'
+import {
+  securitySuiteBuildFirst,
+  securitySuiteCredibility,
+  securitySuiteGroups,
+  securitySuiteHeadline,
+  securitySuiteLinks,
+  securitySuiteSummary,
+} from '@/lib/security-suite-roadmap'
+import {
   BENCHMARK_VIDEO_META,
   BENCHMARK_VIDEO_SRC,
   gatewayBenchmarkClaim,
@@ -147,6 +164,20 @@ export function BenchmarksLanding() {
                 className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
               >
                 security scorecard
+              </a>
+              {' · '}
+              <a
+                href="#security-suite"
+                className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
+              >
+                security suite
+              </a>
+              {' · '}
+              <a
+                href="#multi-attack"
+                className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
+              >
+                multi-attack smoke
               </a>
               {' · '}
               <a
@@ -439,6 +470,159 @@ export function BenchmarksLanding() {
             {governanceBenchmarkMeta.ciRunUrl.split('/').pop()}
           </a>
         </p>
+      </Section>
+
+      <Section
+        id="security-suite"
+        className="pt-10 sm:pt-14"
+        eyebrow="Security suite roadmap"
+        headline={securitySuiteHeadline}
+        subheadline={<p>{securitySuiteSummary}</p>}
+        cta={
+          <p className="max-w-2xl text-sm/6 text-mist-700 dark:text-mist-300">
+            <span className="font-medium text-mist-900 dark:text-mist-100">Credibility: </span>
+            {securitySuiteCredibility}
+          </p>
+        }
+      >
+        <h3 className="text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Build first — most signal per effort
+        </h3>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {securitySuiteBuildFirst.map((item) => (
+            <div
+              key={item.id}
+              className="rounded-lg bg-mist-950/[0.03] px-4 py-3 ring-1 ring-mist-950/8 dark:bg-white/[0.03] dark:ring-white/10"
+            >
+              <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">
+                #{item.priority} · {item.status}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-mist-950 dark:text-white">{item.title}</p>
+              <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">{item.why}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 space-y-8">
+          {securitySuiteGroups.map((group) => (
+            <div key={group.id}>
+              <h3 className="text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+                {group.title}
+              </h3>
+              <p className="mt-1 text-sm/6 text-mist-600 dark:text-mist-400">{group.property}</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {group.cells.map((cell) => (
+                  <div
+                    key={cell.id}
+                    className="rounded-lg bg-mist-950/[0.02] px-4 py-3 ring-1 ring-mist-950/8 dark:bg-white/[0.02] dark:ring-white/10"
+                  >
+                    <p className="text-sm font-semibold text-mist-950 dark:text-white">{cell.title}</p>
+                    <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">{cell.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <ul className="mt-8 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
+          {securitySuiteLinks.map((link) => (
+            <li key={link.href}>
+              <a
+                href={link.href}
+                className="text-sm font-medium text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
+              >
+                {link.label}
+              </a>
+              <span className="ml-2 text-xs text-mist-600 dark:text-mist-500">{link.detail}</span>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section
+        id="multi-attack"
+        className="pt-10 sm:pt-14"
+        eyebrow="Build-first #1 · smoke"
+        headline={multiAttackHeadline}
+        subheadline={<p>{multiAttackSummary}</p>}
+        cta={
+          <div className="flex flex-col gap-2">
+            <p className="max-w-2xl text-sm/6 text-mist-800 dark:text-mist-200">
+              <span className="font-medium text-mist-950 dark:text-white">Headline: </span>
+              {multiAttackHeadlineResult}
+            </p>
+            <p className="max-w-2xl text-xs/6 text-mist-600 dark:text-mist-400">{multiAttackPublishGate}</p>
+          </div>
+        }
+      >
+        <h3 className="text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Configured column — mechanisms, not tools
+        </h3>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {multiAttackMechanisms.map((m) => (
+            <div
+              key={m.id}
+              className="rounded-lg bg-mist-950/[0.03] px-4 py-3 ring-1 ring-mist-950/8 dark:bg-white/[0.03] dark:ring-white/10"
+            >
+              <p className="text-sm font-semibold text-mist-950 dark:text-white">{m.title}</p>
+              <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">{m.detail}</p>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-8 max-w-2xl text-sm/6 text-mist-700 dark:text-mist-300">{multiAttackBenignSummary}</p>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Smoke scorecard · n=12 · scripted worst-case
+        </h3>
+        <ComparisonTable minWidthClass="min-w-[720px]" className="mt-4">
+          <caption className="sr-only">
+            Multi-attack injection smoke: effectuated over planted by arm
+          </caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Column</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Status</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Effectuated</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Note</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {multiAttackArmRows.map((row) => (
+              <tr
+                key={`${row.arm}-${row.column}`}
+                className={clsx(
+                  'border-t border-mist-950/5 dark:border-white/10',
+                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                )}
+              >
+                <ComparisonRowTh
+                  className={clsx(
+                    'font-normal',
+                    row.highlight ? 'font-semibold text-mist-950 dark:text-white' : 'text-mist-700 dark:text-mist-400',
+                  )}
+                >
+                  {row.arm}
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-mist-700 dark:text-mist-400')}>{row.column}</ComparisonTd>
+                <ComparisonTd className={clsx('text-center text-mist-700 dark:text-mist-400')}>
+                  {row.status}
+                </ComparisonTd>
+                <ComparisonTd
+                  className={clsx(
+                    'text-right font-semibold tabular-nums',
+                    row.highlight ? 'text-mist-950 dark:text-white' : 'text-mist-800 dark:text-mist-200',
+                  )}
+                >
+                  {row.effectuated}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-xs/5 text-mist-600 dark:text-mist-400')}>{row.note}</ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
       </Section>
 
       <Section
