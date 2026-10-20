@@ -4,11 +4,11 @@
 **Thesis:** [`docs/vision/harness2-authority-outside.md`](../../vision/harness2-authority-outside.md)  
 **Upstream:** [google-research/harness2](https://github.com/google-research/harness2) (Apache-2.0)
 
-### Merge order (product before benchmark)
+### Merge order (product before benchmark) — done
 
-1. Merge the **native-tool gate product change** ([#1355](https://github.com/danielsmithdevelopment/ClawQL/pull/1355)) first.
-2. Rebase this board PR ([#1362](https://github.com/danielsmithdevelopment/ClawQL/pull/1362)) onto that merge so step 1 / step 2 exercise the gate **exactly as shipped**.
-3. A benchmark that runs against code that differs from what merged undermines its own claim.
+1. ✅ Merge the **native-tool gate product change** ([#1355](https://github.com/danielsmithdevelopment/ClawQL/pull/1355)).
+2. ✅ Rebase / merge the board PR ([#1362](https://github.com/danielsmithdevelopment/ClawQL/pull/1362)) onto that gate so step 1 exercises the gate **exactly as shipped**.
+3. Step 2 must keep measuring against the same shipped gate (no private fork of policy).
 
 ### Labeling
 
@@ -122,5 +122,5 @@ If that table holds, the result is worth publishing. If ClawQL collapses task sc
 
 1. ✅ v0 illustrative dual-sim — [`results-illustrative-v0.json`](./results-illustrative-v0.json) (do not publish as evidence).
 2. ✅ **Step 1:** real `gateNativeToolBeforeInvoke` + stand-in optimizer; evade vs adapt; narrow utility — [`results-step1.json`](./results-step1.json).
-3. ⬜ Merge #1355 → rebase this branch onto shipped gate.
+3. ✅ Merge #1355 → merge #1362 onto shipped gate (both on `main`).
 4. ⬜ **Step 2:** upstream Harness² + OpenCode/Codex + ClawQL MCP vs passthrough; utility = WorkBuddy / JobBench / LAB scorer; lesson-poison cell.
