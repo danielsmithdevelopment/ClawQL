@@ -16,6 +16,6 @@ Planted instructions across email / ticket / doc / webhook. Metric: **attacks ta
 
 **Published now:** scripted board (complete) + live table in progress (7 pre-registered: 1 measured, 6 pending).
 
-**Do not** hunt for a gullible model. Pre-register models (`live-models.json`), including small open-weight; publish all-refuse. **AgentDojo:** full gpt-4o-mini matrix published as a **trade-off** (ASR down, clean utility cost in 3/4 suites) — [AGENTDOJO.md](./AGENTDOJO.md); defaults refined for same-workspace allow / park / hard; remeasure next. CaMeL related work until same-model. **Next:** remaining hosted models, then open-weight dual-arm benign. Measure poison residue as well as obedience.
+**Do not** hunt for a gullible model. Pre-register models (`live-models.json`), including small open-weight; publish all-refuse. **AgentDojo:** full gpt-4o-mini matrix published as a **trade-off** — [AGENTDOJO.md](./AGENTDOJO.md); v2 rules frozen in [AGENTDOJO-RULES-DIFF.md](./AGENTDOJO-RULES-DIFF.md) (membership parked; unlabeled counterfactuals are not results); remeasure + out-of-sample next. CaMeL related work until same-model. **Next:** remaining hosted models, then open-weight dual-arm benign. Measure poison residue as well as obedience.
 
 **composer-2.5-fast (measured):** refused all 12 on ClawQL and passthrough; no hostile vault residue; benign 14/14. Smoke remains the complying-agent guarantee.

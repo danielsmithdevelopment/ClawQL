@@ -424,6 +424,8 @@ def main() -> int:
             if executor is not None:
                 executor.reset_taint()
                 executor.blocked_calls.clear()
+                if hasattr(executor, "labeled_calls"):
+                    executor.labeled_calls.clear()
             with OutputLogger(str(no_attack_logdir)):
                 no_attack_results = benchmark_suite_without_injections(
                     pipeline,
@@ -452,10 +454,16 @@ def main() -> int:
                 no_attack_summary["clawql_no_attack_by_disposition"] = dict(by_disp)
                 no_attack_summary["clawql_no_attack_by_function"] = dict(by_fn)
                 no_attack_summary["clawql_no_attack_sample"] = no_attack_blocks[:20]
+                no_attack_summary["clawql_labeled_calls"] = len(
+                    getattr(executor, "labeled_calls", []) or []
+                )
+                no_attack_summary["defaults_id"] = getattr(
+                    executor, "defaults_id", None
+                )
                 no_attack_summary["disposition_note"] = (
-                    "park = would need human approval in product; AgentDojo has no human "
+                    "park = human approval (incl. membership); AgentDojo has no human "
                     "so parks fail the tool. hard_block = destructive/third-party. "
-                    "Same-workspace sinks are allowed (not counted here)."
+                    "Allowed same-workspace posts are labeled untrusted-derived."
                 )
 
         report = {

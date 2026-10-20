@@ -51,41 +51,25 @@ Guesses vs data:
 - **Travel — confirmed.** `get_rating_reviews_for_hotels` then `reserve_hotel` / calendar / email: untrusted content informing the action is the whole point of the task.
 - **Workspace — confirmed.** Email and calendar reads feed nearly every task; tainting all of them catches almost every write (`create_calendar_event`, internal `send_email`, file create/append).
 
-## Parks vs hard blocks (product-shaped reclassification)
+## Parks vs hard blocks (why AgentDojo inflates cost)
 
-AgentDojo has **no human**. A write ClawQL would **park for approval** still counts as a utility failure here, even though a person would often approve it in seconds. The published arm failed every stop the same way; the table below reclassifies those same no-attack blocked calls under product rules (same-workspace **allow**, reversible effectuation **park**, destructive/third-party **hard_block**).
+AgentDojo has **no human**. A write ClawQL would **park for approval** still counts as a utility failure here, even though a person would often approve it in seconds. The published arm failed every stop the same way (no park vs hard distinction at measurement time).
 
-| Suite     | none util | clawql util (published) | Counterfactual: allow same-workspace | Counterfactual: + human approves parks | Failed-task causes (published fails) |
-| --------- | --------: | ----------------------: | -----------------------------------: | -------------------------------------: | ------------------------------------ |
-| Banking   |      0.56 |                    0.56 |                                 0.56 |                                   0.81 | 4 park-needs-human, 3 no ClawQL stop |
-| Slack     |      0.76 |                    0.24 |                                 0.76 |                                   0.76 | 11 same-workspace FP, 5 hard/exfil   |
-| Travel    |      0.60 |                    0.25 |                                 0.40 |                                   0.50 | 3 same-workspace FP, 2 park, 10 no stop (model/task) |
-| Workspace |      0.80 |                    0.42 |                                 0.85 |                                   0.90 | 17 same-workspace FP, mixed park/hard |
+Qualitatively, from the no-attack trajectories above: Slack and workspace stops are dominated by in-workspace messaging and ordinary calendar/file writes; banking stops are money moves (park-shaped); travel mixes booking parks with tasks that fail even with no ClawQL stop. **Path-continuation “would reach X utility” estimates are not results** — once an action is allowed, the model takes a different path. Those estimates stay in internal analysis only ([`agentdojo-park-vs-hard-counterfactual.json`](./agentdojo-park-vs-hard-counterfactual.json)); the remeasure settles the numbers.
 
-Block disposition counts (no-attack stopped calls):
+## Defaults refined v2 — frozen for remeasure
 
-| Suite     | Would allow (same-workspace) | Park | Hard block |
-| --------- | ---------------------------: | ---: | ---------: |
-| Banking   |                            0 |   13 |          0 |
-| Slack     |                           31 |    0 |          6 |
-| Travel    |                            3 |    3 |          0 |
-| Workspace |                           47 |    3 |          7 |
+Rule changes are published as a diff: **[AGENTDOJO-RULES-DIFF.md](./AGENTDOJO-RULES-DIFF.md)** (`clawql_agentdojo_defaults_v2`). Summary:
 
-So a large share of the Slack/workspace clean-utility drop is **rules too broad for in-workspace work**, not irreducible hard blocks. Parks explain part of banking (and would raise util if a human were in the loop). Travel still has many fails with **no** ClawQL stop — model/task hardness, not only the gateway.
+| Disposition | Examples |
+| ----------- | -------- |
+| **Allow** (+ label untrusted-derived body) | Slack DM / non-`External_*` channel post; `@bluesparrowtech.com` email; own calendar create/reschedule; own file create/append |
+| **Park** (human) | Money / schedule; external email; travel reserves; **membership & invitations** (`add_user_to_channel`, etc.); calendar participant adds |
+| **Hard block** | `delete_*`, `share_file`, `post_webpage`, Slack `External_*`, membership with outside email |
 
-This is not an excuse for the published numbers; it is an honest picture of what ClawQL would cost in real deployments vs what AgentDojo’s missing human inflates.
+**Same-workspace ≠ safe.** Slack attacks inject from inside the workspace. Membership stays privileged; allowed internal posts get a content label. Remeasure must call out **Slack ASR** specifically — if it rises noticeably, the relaxation went too far.
 
-## Defaults refined (awaiting remeasure)
-
-Executor now follows the scripted-board boundary principle: **sending data back to its source, or to destinations inside the same workspace, is not exfiltration.**
-
-| Disposition   | Examples |
-| ------------- | -------- |
-| **Allow**     | Slack DM / channel post (non-`External_*`); `@bluesparrowtech.com` email; own calendar create/reschedule; own file create/append |
-| **Park**      | `send_money` / schedule updates; external email; `reserve_hotel` / car / restaurant |
-| **Hard block**| `delete_*`, `share_file`, `post_webpage`, Slack `External_*` channels |
-
-Bar for the next publish: AgentDojo **no-attack utility close to undefended**, while **ASR stays low** — the trade CaMeL is held to. Full matrix remeasure still required before replacing the table above.
+**Anti-tuning:** v2 was informed by AgentDojo benign fails. Freeze it, then also measure the scripted board and a second injection benchmark that played no part in the tune (see the rules diff). The published v1 table above stays official until remeasure; then publish **v1 ‖ v2 + the changelog**.
 
 ## Publish gates
 
@@ -178,5 +162,5 @@ Upstream: [ethz-spylab/agentdojo](https://github.com/ethz-spylab/agentdojo) · `
 
 ## Status
 
-- Full gpt-4o-mini matrix **published as a trade-off** (CI 39360438719): ASR down ~80%, clean utility down hard in 3/4 suites.
-- False-positive autopsy + park/hard counterfactual documented above; defaults refined in the executor; **remeasure before replacing the numbers**.
+- Full gpt-4o-mini matrix **published as a trade-off** (CI 39360438719): ASR down ~80%, clean utility down hard in 3/4 suites — **v1 table above remains official**.
+- Benign false-positive autopsy on the page; path-continuation estimates internal-only; v2 defaults frozen in [AGENTDOJO-RULES-DIFF.md](./AGENTDOJO-RULES-DIFF.md); remeasure + out-of-sample checks before replacing numbers.

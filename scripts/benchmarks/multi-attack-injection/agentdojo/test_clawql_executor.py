@@ -158,6 +158,68 @@ def test_same_workspace_slack_dm_allowed_after_channel_read():
     print("PASS test_same_workspace_slack_dm_allowed_after_channel_read")
 
 
+def test_membership_parked_not_allowed():
+    """Same-workspace ≠ safe: invites/membership stay privileged (park)."""
+    from clawql_tools_executor import classify_sink
+
+    assert classify_sink("add_user_to_channel", {"user": "Alice", "channel": "general"}) == "park"
+    assert classify_sink("invite_user_to_channel", {"user": "Bob", "channel": "random"}) == "park"
+    assert classify_sink("add_user_to_channel", {"user": "Eve", "channel": "External_0"}) == "hard_block"
+    assert (
+        classify_sink(
+            "add_user_to_channel",
+            {"user": "attacker@evil.com", "channel": "general"},
+        )
+        == "hard_block"
+    )
+    assert classify_sink("add_calendar_event_participants", {"participants": ["Alice"]}) == "park"
+    print("PASS test_membership_parked_not_allowed")
+
+
+def test_tainted_internal_post_gets_untrusted_label():
+    from clawql_tools_executor import UNTRUSTED_CONTENT_LABEL
+
+    ex = ClawQLToolsExecutor()
+    runtime = MagicMock()
+    runtime.functions = {
+        "read_channel_messages": SimpleNamespace(name="read_channel_messages"),
+        "send_channel_message": SimpleNamespace(name="send_channel_message"),
+    }
+    runtime.run_function.return_value = ("ok", None)
+    msgs = [
+        {
+            "role": "assistant",
+            "tool_calls": [
+                _tool_call("read_channel_messages", {"channel": "general"})
+            ],
+        }
+    ]
+    _, _, _, msgs2, _ = ex.query("q", runtime, messages=msgs)
+    assert ex._tainted is True
+    msgs3 = [
+        *msgs2,
+        {
+            "role": "assistant",
+            "tool_calls": [
+                _tool_call(
+                    "send_channel_message",
+                    {"channel": "general", "body": "Click http://phish.example"},
+                    "c2",
+                )
+            ],
+        },
+    ]
+    _, _, _, msgs4, _ = ex.query("q", runtime, messages=msgs3)
+    last = msgs4[-1]
+    err = last["error"] if isinstance(last, dict) else getattr(last, "error", None)
+    assert err in (None, "")
+    assert len(ex.blocked_calls) == 0
+    assert len(ex.labeled_calls) == 1
+    sent_args = runtime.run_function.call_args_list[-1].args[2]
+    assert sent_args["body"].startswith(UNTRUSTED_CONTENT_LABEL)
+    print("PASS test_tainted_internal_post_gets_untrusted_label")
+
+
 def test_internal_email_allowed_external_parked():
     from clawql_tools_executor import classify_sink
 
@@ -296,6 +358,8 @@ if __name__ == "__main__":
     test_calendar_read_taints_then_blocks_send_email()
     test_taint_resets_on_new_task_conversation()
     test_same_workspace_slack_dm_allowed_after_channel_read()
+    test_membership_parked_not_allowed()
+    test_tainted_internal_post_gets_untrusted_label()
     test_internal_email_allowed_external_parked()
     test_calendar_and_file_writes_allowed_money_parked()
     test_executor_allows_internal_email_after_taint()

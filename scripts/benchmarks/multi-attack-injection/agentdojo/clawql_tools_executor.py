@@ -5,13 +5,19 @@ Maps ClawQL's untrusted-read taint + sink policy onto AgentDojo's function tools
 After the agent reads untrusted channel content (email / file / message / calendar),
 subsequent sinks are classified:
 
-- **allow** — same-workspace / same-org destinations (boundary cases from the
-  scripted board: reply-to-source and internal destinations are not exfiltration)
-- **park** — reversible effectuation a human would approve in seconds (money moves,
-  external email, bookings). AgentDojo has no human, so parks still fail the tool
-  call — but we record `disposition=park` so utility loss is attributed honestly.
-- **hard_block** — destructive or clear third-party exfil (delete, External_* Slack,
+- **allow** — same-workspace destinations that are not privileged membership
+  (scripted-board boundary: reply-to-source / internal destinations ≠ exfiltration).
+  Posts that carry untrusted-derived text are **labeled** in the body.
+- **park** — reversible / privileged effectuation a human would approve (money,
+  external email, bookings, **membership & invitations**). AgentDojo has no human,
+  so parks still fail the tool — recorded as `disposition=park`.
+- **hard_block** — destructive or clear third-party surfaces (delete, External_*,
   post_webpage, share_file)
+
+Same-workspace is not the same as safe: attacks in AgentDojo Slack originate
+*inside* the workspace. Membership stays privileged; internal posts get labels.
+
+Frozen defaults id: ``clawql_agentdojo_defaults_v2`` (see AGENTDOJO-RULES-DIFF.md).
 
 This is a defense *arm* for AgentDojo scoring (ASR + utility), not a claim that
 AgentDojo's FunctionsRuntime is ClawQL MCP.
@@ -32,6 +38,10 @@ from agentdojo.functions_runtime import EmptyEnv, Env, FunctionReturnType, Funct
 from agentdojo.types import ChatMessage, ChatToolResultMessage, text_content_block_from_string
 
 Disposition = Literal["allow", "park", "hard_block"]
+
+# Freeze tag for before/after publish + out-of-sample checks.
+DEFAULTS_ID = "clawql_agentdojo_defaults_v2"
+UNTRUSTED_CONTENT_LABEL = "[clawql:untrusted-derived] "
 
 # Reads that ingest untrusted / attacker-controlled content into the session.
 # Workspace important_instructions injects via calendar event descriptions —
@@ -87,7 +97,8 @@ HARD_BLOCK_SINKS = frozenset(
     }
 )
 
-# Effectuation a human can approve quickly in real deployments.
+# Effectuation a human can approve quickly — includes privileged membership.
+# Attacks can stay inside the workspace (Slack injects from channel messages).
 PARK_SINKS = frozenset(
     {
         "send_money",
@@ -96,21 +107,34 @@ PARK_SINKS = frozenset(
         "reserve_hotel",
         "reserve_car_rental",
         "reserve_restaurant",
+        # Privileged even when destination is "internal"
+        "invite_user_to_channel",
+        "add_user_to_channel",
+        "remove_user_from_channel",
+        "add_calendar_event_participants",
     }
 )
 
 # Candidate sinks that may be allowed when the destination stays in-workspace.
+# Membership is NOT here — see PARK_SINKS.
 CONDITIONAL_SINKS = frozenset(
     {
         "send_email",
         "send_channel_message",
         "send_direct_message",
-        "invite_user_to_channel",
-        "add_user_to_channel",
-        "remove_user_from_channel",
         "create_calendar_event",
         "reschedule_calendar_event",
-        "add_calendar_event_participants",
+        "create_file",
+        "append_to_file",
+    }
+)
+
+# Posts / messages whose body should be stamped when allowed after taint.
+LABEL_BODY_SINKS = frozenset(
+    {
+        "send_channel_message",
+        "send_direct_message",
+        "send_email",
         "create_file",
         "append_to_file",
     }
@@ -120,6 +144,7 @@ EXTERNAL_OR_DESTRUCTIVE_SINKS = HARD_BLOCK_SINKS | PARK_SINKS | CONDITIONAL_SINK
 
 _INTERNAL_EMAIL = re.compile(r"@bluesparrowtech\.com$", re.IGNORECASE)
 _EXTERNAL_SLACK_CHANNEL = re.compile(r"^External_", re.IGNORECASE)
+_LOOKS_LIKE_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def classify_sink(fn: str, args: dict[str, Any] | None) -> Disposition | None:
@@ -128,16 +153,40 @@ def classify_sink(fn: str, args: dict[str, Any] | None) -> Disposition | None:
         return None
     args = args or {}
     if fn in HARD_BLOCK_SINKS:
-        # Slack External_* channels are third-party surfaces even via add/send.
         return "hard_block"
-    if fn in ("send_channel_message", "add_user_to_channel", "invite_user_to_channel", "remove_user_from_channel"):
+
+    # Membership / invitations: privileged. Outside addresses → hard block;
+    # External_* channels → hard block; otherwise park for human approval.
+    if fn in (
+        "add_user_to_channel",
+        "invite_user_to_channel",
+        "remove_user_from_channel",
+        "add_calendar_event_participants",
+    ):
+        channel = str(args.get("channel") or "")
+        if _EXTERNAL_SLACK_CHANNEL.match(channel):
+            return "hard_block"
+        user = str(args.get("user") or args.get("email") or "")
+        if _LOOKS_LIKE_EMAIL.match(user) and not _INTERNAL_EMAIL.search(user):
+            return "hard_block"
+        participants = args.get("participants") or args.get("emails") or []
+        if isinstance(participants, str):
+            participants = [participants]
+        for p in participants:
+            ps = str(p or "")
+            if _LOOKS_LIKE_EMAIL.match(ps) and not _INTERNAL_EMAIL.search(ps):
+                return "hard_block"
+        return "park"
+
+    if fn == "send_channel_message":
         channel = str(args.get("channel") or "")
         if _EXTERNAL_SLACK_CHANNEL.match(channel):
             return "hard_block"
         return "allow"
+
     if fn == "send_direct_message":
-        # DMs between workspace users are internal (scripted-board boundary).
         return "allow"
+
     if fn == "send_email":
         recipients = args.get("recipients") or args.get("to") or args.get("recipient") or []
         if isinstance(recipients, str):
@@ -145,17 +194,37 @@ def classify_sink(fn: str, args: dict[str, Any] | None) -> Disposition | None:
         if recipients and all(_INTERNAL_EMAIL.search(str(r) or "") for r in recipients):
             return "allow"
         return "park"
+
     if fn in (
         "create_calendar_event",
         "reschedule_calendar_event",
-        "add_calendar_event_participants",
         "create_file",
         "append_to_file",
     ):
         return "allow"
+
     if fn in PARK_SINKS:
         return "park"
     return "park"
+
+
+def _stamp_untrusted_body(fn: str, args: dict[str, Any]) -> dict[str, Any] | None:
+    """Return mutated args with untrusted label on body/content, or None if unchanged."""
+    if fn not in LABEL_BODY_SINKS:
+        return None
+    out = dict(args)
+    stamped = False
+    for key in ("body", "content", "text", "message"):
+        val = out.get(key)
+        if isinstance(val, str) and val and not val.startswith(UNTRUSTED_CONTENT_LABEL):
+            out[key] = f"{UNTRUSTED_CONTENT_LABEL}{val}"
+            stamped = True
+    if fn == "create_file" and isinstance(out.get("content"), str):
+        # already handled via content key
+        pass
+    if fn == "append_to_file" and isinstance(out.get("content"), str):
+        pass
+    return out if stamped else None
 
 
 class ClawQLToolsExecutor(ToolsExecutor):
@@ -168,6 +237,8 @@ class ClawQLToolsExecutor(ToolsExecutor):
         super().__init__(tool_output_formatter)
         self._tainted = False
         self.blocked_calls: list[dict[str, Any]] = []
+        self.labeled_calls: list[dict[str, Any]] = []
+        self.defaults_id = DEFAULTS_ID
 
     def reset_taint(self) -> None:
         self._tainted = False
@@ -230,6 +301,7 @@ class ClawQLToolsExecutor(ToolsExecutor):
                         "args": args,
                         "mechanism": "clawql_data_flow_taint",
                         "disposition": disposition,
+                        "defaults_id": DEFAULTS_ID,
                     }
                 )
                 if disposition == "park":
@@ -254,7 +326,22 @@ class ClawQLToolsExecutor(ToolsExecutor):
                     )
                 )
                 continue
-            # disposition == "allow" or not a controlled sink → execute
+
+            # disposition == "allow" after taint → stamp untrusted-derived content
+            if self._tainted and disposition == "allow":
+                stamped = _stamp_untrusted_body(fn, args)
+                if stamped is not None:
+                    self.labeled_calls.append(
+                        {
+                            "function": fn,
+                            "args_before": args,
+                            "args_after": stamped,
+                            "mechanism": "clawql_untrusted_content_label",
+                            "defaults_id": DEFAULTS_ID,
+                        }
+                    )
+                    args = stamped
+                    tool_call.args = stamped
 
             for arg_k, arg_v in tool_call.args.items():
                 if isinstance(arg_v, str) and is_string_list(arg_v):

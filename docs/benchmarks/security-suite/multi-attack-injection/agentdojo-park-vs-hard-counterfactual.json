@@ -1,105 +1,112 @@
 {
-  "banking": {
-    "n_user_tasks": 16,
-    "util_none_baseline": 0.5625,
-    "util_clawql_observed": 0.5625,
-    "util_cf_same_workspace_allow": 0.5625,
-    "util_cf_parks_human_approved": 0.8125,
-    "failed_task_causes": {
-      "park_needs_human": 4,
-      "no_clawql_block": 3
-    },
-    "n_failed": 7,
-    "blocks_by_disposition": {
-      "park": 13
-    },
-    "fn_disposition_top": {
-      "send_money|park": 7,
-      "schedule_transaction|park": 5,
-      "update_scheduled_transaction|park": 1
-    },
-    "note": "Published run used fail-closed-all; dispositions are product-shaped reclassification of the same blocked calls. cf_* are counterfactual upper bounds assuming model still completes after allow/approve."
+  "_meta": {
+    "visibility": "internal_analysis_only",
+    "not_results": true,
+    "note": "Path-continuation estimates after reclassifying published fail-closed stops. Remeasure required. Do not put util_cf_* on the public page."
   },
-  "slack": {
-    "n_user_tasks": 21,
-    "util_none_baseline": 0.7619047619047619,
-    "util_clawql_observed": 0.23809523809523808,
-    "util_cf_same_workspace_allow": 0.7619047619047619,
-    "util_cf_parks_human_approved": 0.7619047619047619,
-    "failed_task_causes": {
-      "same_workspace_false_positive": 11,
-      "hard_block_only": 3,
-      "includes_hard_block": 2
+  "suites": {
+    "banking": {
+      "n_user_tasks": 16,
+      "util_none_baseline": 0.5625,
+      "util_clawql_observed": 0.5625,
+      "util_cf_same_workspace_allow": 0.5625,
+      "util_cf_parks_human_approved": 0.8125,
+      "failed_task_causes": {
+        "park_needs_human": 4,
+        "no_clawql_block": 3
+      },
+      "n_failed": 7,
+      "blocks_by_disposition": {
+        "park": 13
+      },
+      "fn_disposition_top": {
+        "send_money|park": 7,
+        "schedule_transaction|park": 5,
+        "update_scheduled_transaction|park": 1
+      },
+      "note": "Published run used fail-closed-all; dispositions are product-shaped reclassification of the same blocked calls. cf_* are counterfactual upper bounds assuming model still completes after allow/approve."
     },
-    "n_failed": 16,
-    "blocks_by_disposition": {
-      "allow_same_workspace": 31,
-      "hard_block": 6
+    "slack": {
+      "n_user_tasks": 21,
+      "util_none_baseline": 0.7619047619047619,
+      "util_clawql_observed": 0.23809523809523808,
+      "util_cf_same_workspace_allow": 0.7619047619047619,
+      "util_cf_parks_human_approved": 0.7619047619047619,
+      "failed_task_causes": {
+        "same_workspace_false_positive": 11,
+        "hard_block_only": 3,
+        "includes_hard_block": 2
+      },
+      "n_failed": 16,
+      "blocks_by_disposition": {
+        "allow_same_workspace": 31,
+        "hard_block": 6
+      },
+      "fn_disposition_top": {
+        "send_direct_message|allow_same_workspace": 17,
+        "send_channel_message|allow_same_workspace": 7,
+        "add_user_to_channel|allow_same_workspace": 7,
+        "add_user_to_channel|hard_block": 4,
+        "post_webpage|hard_block": 1,
+        "send_channel_message|hard_block": 1
+      },
+      "note": "Published run used fail-closed-all; dispositions are product-shaped reclassification of the same blocked calls. cf_* are counterfactual upper bounds assuming model still completes after allow/approve."
     },
-    "fn_disposition_top": {
-      "send_direct_message|allow_same_workspace": 17,
-      "send_channel_message|allow_same_workspace": 7,
-      "add_user_to_channel|allow_same_workspace": 7,
-      "add_user_to_channel|hard_block": 4,
-      "post_webpage|hard_block": 1,
-      "send_channel_message|hard_block": 1
+    "travel": {
+      "n_user_tasks": 20,
+      "util_none_baseline": 0.6,
+      "util_clawql_observed": 0.25,
+      "util_cf_same_workspace_allow": 0.4,
+      "util_cf_parks_human_approved": 0.5,
+      "failed_task_causes": {
+        "same_workspace_false_positive": 3,
+        "no_clawql_block": 10,
+        "park_needs_human": 2
+      },
+      "n_failed": 15,
+      "blocks_by_disposition": {
+        "allow_same_workspace": 3,
+        "park": 3
+      },
+      "fn_disposition_top": {
+        "create_calendar_event|allow_same_workspace": 3,
+        "reserve_hotel|park": 2,
+        "send_email|park": 1
+      },
+      "note": "Published run used fail-closed-all; dispositions are product-shaped reclassification of the same blocked calls. cf_* are counterfactual upper bounds assuming model still completes after allow/approve."
     },
-    "note": "Published run used fail-closed-all; dispositions are product-shaped reclassification of the same blocked calls. cf_* are counterfactual upper bounds assuming model still completes after allow/approve."
-  },
-  "travel": {
-    "n_user_tasks": 20,
-    "util_none_baseline": 0.6,
-    "util_clawql_observed": 0.25,
-    "util_cf_same_workspace_allow": 0.4,
-    "util_cf_parks_human_approved": 0.5,
-    "failed_task_causes": {
-      "same_workspace_false_positive": 3,
-      "no_clawql_block": 10,
-      "park_needs_human": 2
-    },
-    "n_failed": 15,
-    "blocks_by_disposition": {
-      "allow_same_workspace": 3,
-      "park": 3
-    },
-    "fn_disposition_top": {
-      "create_calendar_event|allow_same_workspace": 3,
-      "reserve_hotel|park": 2,
-      "send_email|park": 1
-    },
-    "note": "Published run used fail-closed-all; dispositions are product-shaped reclassification of the same blocked calls. cf_* are counterfactual upper bounds assuming model still completes after allow/approve."
-  },
-  "workspace": {
-    "n_user_tasks": 40,
-    "util_none_baseline": 0.8,
-    "util_clawql_observed": 0.425,
-    "util_cf_same_workspace_allow": 0.85,
-    "util_cf_parks_human_approved": 0.9,
-    "failed_task_causes": {
-      "same_workspace_false_positive": 17,
-      "no_clawql_block": 1,
-      "same_workspace_fp_and_park": 1,
-      "includes_hard_block": 2,
-      "hard_block_only": 1,
-      "park_needs_human": 1
-    },
-    "n_failed": 23,
-    "blocks_by_disposition": {
-      "allow_same_workspace": 47,
-      "park": 3,
-      "hard_block": 7
-    },
-    "fn_disposition_top": {
-      "create_calendar_event|allow_same_workspace": 17,
-      "send_email|allow_same_workspace": 11,
-      "create_file|allow_same_workspace": 8,
-      "append_to_file|allow_same_workspace": 7,
-      "delete_file|hard_block": 6,
-      "send_email|park": 3,
-      "reschedule_calendar_event|allow_same_workspace": 2,
-      "add_calendar_event_participants|allow_same_workspace": 2,
-      "share_file|hard_block": 1
-    },
-    "note": "Published run used fail-closed-all; dispositions are product-shaped reclassification of the same blocked calls. cf_* are counterfactual upper bounds assuming model still completes after allow/approve."
+    "workspace": {
+      "n_user_tasks": 40,
+      "util_none_baseline": 0.8,
+      "util_clawql_observed": 0.425,
+      "util_cf_same_workspace_allow": 0.85,
+      "util_cf_parks_human_approved": 0.9,
+      "failed_task_causes": {
+        "same_workspace_false_positive": 17,
+        "no_clawql_block": 1,
+        "same_workspace_fp_and_park": 1,
+        "includes_hard_block": 2,
+        "hard_block_only": 1,
+        "park_needs_human": 1
+      },
+      "n_failed": 23,
+      "blocks_by_disposition": {
+        "allow_same_workspace": 47,
+        "park": 3,
+        "hard_block": 7
+      },
+      "fn_disposition_top": {
+        "create_calendar_event|allow_same_workspace": 17,
+        "send_email|allow_same_workspace": 11,
+        "create_file|allow_same_workspace": 8,
+        "append_to_file|allow_same_workspace": 7,
+        "delete_file|hard_block": 6,
+        "send_email|park": 3,
+        "reschedule_calendar_event|allow_same_workspace": 2,
+        "add_calendar_event_participants|allow_same_workspace": 2,
+        "share_file|hard_block": 1
+      },
+      "note": "Published run used fail-closed-all; dispositions are product-shaped reclassification of the same blocked calls. cf_* are counterfactual upper bounds assuming model still completes after allow/approve."
+    }
   }
 }
