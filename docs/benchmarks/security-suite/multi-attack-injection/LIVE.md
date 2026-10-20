@@ -43,7 +43,7 @@ Open-weight pins added `2026-10-19T23:14Z` (_representativeness: deployments com
 
 ## Run order
 
-1. **AgentDojo** — smoke measured (n=12, harness OpenRouter, **not** live-models pre-reg); **full suites in flight before headline** — [AGENTDOJO.md](./AGENTDOJO.md). Compare to CaMeL when full numbers land.
+1. **AgentDojo** — full gpt-4o-mini matrix published (n=949, CIs + util±attack; harness OpenRouter, **not** live-models pre-reg) — [AGENTDOJO.md](./AGENTDOJO.md). CaMeL remains related work until same-model.
 2. Remaining hosted models (pre-registered)
 3. Open-weight with dual-arm benign
 
