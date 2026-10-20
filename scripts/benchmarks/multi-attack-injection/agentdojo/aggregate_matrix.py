@@ -45,8 +45,19 @@ def main() -> int:
                 "attack": (c.get("matrix_cell") or c.get("config") or {}).get("attack"),
                 "status": c.get("status"),
                 "agentdojo_asr": mr.get("agentdojo_asr"),
+                "agentdojo_asr_ci95": mr.get("agentdojo_asr_ci95"),
                 "agentdojo_utility_under_attack": mr.get("agentdojo_utility_under_attack"),
+                "agentdojo_utility_under_attack_ci95": mr.get(
+                    "agentdojo_utility_under_attack_ci95"
+                ),
+                "agentdojo_utility_without_attack": mr.get(
+                    "agentdojo_utility_without_attack"
+                ),
+                "agentdojo_utility_without_attack_ci95": mr.get(
+                    "agentdojo_utility_without_attack_ci95"
+                ),
                 "n_pairs": mr.get("n_pairs"),
+                "claim_kind": mr.get("claim_kind", "empirical"),
                 "clawql_sink_blocks": (c.get("also_report") or {}).get("clawql_sink_blocks"),
             }
         )
@@ -100,14 +111,35 @@ def main() -> int:
         },
         "must_report": {
             "agentdojo_asr": lead.get("agentdojo_asr") if lead else None,
+            "agentdojo_asr_ci95": lead.get("agentdojo_asr_ci95") if lead else None,
             "agentdojo_utility_under_attack": (
                 lead.get("agentdojo_utility_under_attack") if lead else None
             ),
+            "agentdojo_utility_under_attack_ci95": (
+                lead.get("agentdojo_utility_under_attack_ci95") if lead else None
+            ),
+            "agentdojo_utility_without_attack": (
+                lead.get("agentdojo_utility_without_attack") if lead else None
+            ),
+            "agentdojo_utility_without_attack_ci95": (
+                lead.get("agentdojo_utility_without_attack_ci95") if lead else None
+            ),
             "lead_cell": lead,
+            "claim_kind": "empirical",
             "note": (
                 "Lead = clawql_data_flow cell with largest ASR drop vs matching none arm. "
-                "Full matrix in rows[]."
+                "Report ASR/utility with ci95; publish utility_without_attack alongside "
+                "utility_under_attack. Empirical rates — not 'provable' security. "
+                "CaMeL is related work (own models/numbers), not a same-table row until "
+                "same-model head-to-head. Full matrix in rows[]."
             ),
+        },
+        "methodology_gates": {
+            "bootstrap_ci_over_pairs": True,
+            "utility_without_and_under_attack": True,
+            "camel_same_model_required_for_table": True,
+            "claim_vocabulary": "empirical_not_provable",
+            "optional_cell_repeats": "MAI_AGENTDOJO_REPEATS (not default)",
         },
         "rows": rows,
         "cells": cells,

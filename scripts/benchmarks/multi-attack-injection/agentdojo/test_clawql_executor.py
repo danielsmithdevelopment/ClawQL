@@ -158,7 +158,34 @@ def test_summarize_suite_asr_is_mean_security():
     assert summary["targeted_asr"] == 0.5
     assert summary["average_security"] == 0.5
     assert summary["utility_under_attack"] == 0.5
+    assert summary["targeted_asr_ci95"] is not None
+    assert len(summary["targeted_asr_ci95"]) == 2
+    assert summary["targeted_asr_ci95"][0] <= 0.5 <= summary["targeted_asr_ci95"][1]
     print("PASS test_summarize_suite_asr_is_mean_security")
+
+
+def test_bootstrap_mean_ci_bounds():
+    import run_benchmark
+
+    all_true = run_benchmark.bootstrap_mean_ci([True] * 20, seed=0)
+    assert all_true["mean"] == 1.0
+    assert all_true["ci95"] == [1.0, 1.0]
+    mixed = run_benchmark.bootstrap_mean_ci([True, False] * 50, seed=0)
+    assert abs(mixed["mean"] - 0.5) < 1e-9
+    assert mixed["ci95"][0] < 0.5 < mixed["ci95"][1]
+    print("PASS test_bootstrap_mean_ci_bounds")
+
+
+def test_summarize_no_attack():
+    import run_benchmark
+
+    s = run_benchmark.summarize_no_attack(
+        {"utility_results": {("u0", ""): True, ("u1", ""): True, ("u2", ""): False}}
+    )
+    assert abs(s["utility_without_attack"] - (2 / 3)) < 1e-9
+    assert s["n_user_tasks"] == 3
+    assert s["utility_without_attack_ci95"] is not None
+    print("PASS test_summarize_no_attack")
 
 
 if __name__ == "__main__":
@@ -167,4 +194,6 @@ if __name__ == "__main__":
     test_calendar_read_taints_then_blocks_send_email()
     test_taint_resets_on_new_task_conversation()
     test_summarize_suite_asr_is_mean_security()
+    test_bootstrap_mean_ci_bounds()
+    test_summarize_no_attack()
     print("OK")

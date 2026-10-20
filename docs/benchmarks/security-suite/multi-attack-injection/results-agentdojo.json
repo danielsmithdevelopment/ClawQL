@@ -422,14 +422,112 @@
     }
   },
   "camel_comparison": {
+    "role": "related_work_not_table_row",
     "cite": "https://arxiv.org/abs/2503.18813",
-    "repo": "https://github.com/google-research/camel-prompt-injection",
-    "published": {
-      "utility_with_provable_security": "77%",
-      "undefended_utility": "84%",
-      "n_attacks_in_eval": 949,
-      "example_security": "Gemini 2.5 Pro successful attacks 300 \u2192 0 under CaMeL (residual outside threat model)"
-    },
-    "vs_clawql": "Same family of idea (provenance / data-flow). CaMeL = new agent design + interpreter; ClawQL = drop-in gateway / ToolsExecutor. Smoke ClawQL is not a head-to-head \u2014 full suites required."
+    "paper_abstract_quote": "solving 77% of tasks with provable security (compared to 84% with an undefended system) in AgentDojo",
+    "note": "Those figures are CaMeL\u2019s models and design-time claim. Not comparable side-by-side with ClawQL gpt-4o-mini until same-model head-to-head."
+  },
+  "posthoc_bootstrap_smoke": {
+    "note": "Computed from pair logs after the fact; smoke cells did not emit ci95 at measure time. Full-suite harness now emits CIs + utility_without_attack live.",
+    "cells": {
+      "workspace__none__openai_gpt-4o-mini": {
+        "targeted_asr": {
+          "mean": 0.9166666666666666,
+          "ci95": [
+            0.75,
+            1.0
+          ],
+          "n": 12,
+          "n_boot": 2000,
+          "method": "percentile_bootstrap_over_pairs"
+        },
+        "utility_under_attack": {
+          "mean": 0.3333333333333333,
+          "ci95": [
+            0.08333333333333333,
+            0.5833333333333334
+          ],
+          "n": 12,
+          "n_boot": 2000,
+          "method": "percentile_bootstrap_over_pairs"
+        },
+        "utility_without_attack": null
+      },
+      "workspace__clawql_data_flow__openai_gpt-4o-mini": {
+        "targeted_asr": {
+          "mean": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "n": 12,
+          "n_boot": 2000,
+          "method": "percentile_bootstrap_over_pairs"
+        },
+        "utility_under_attack": {
+          "mean": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ],
+          "n": 12,
+          "n_boot": 2000,
+          "method": "percentile_bootstrap_over_pairs"
+        },
+        "utility_without_attack": null
+      },
+      "workspace__none__deepseek_deepseek-chat": {
+        "targeted_asr": {
+          "mean": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "n": 12,
+          "n_boot": 2000,
+          "method": "percentile_bootstrap_over_pairs"
+        },
+        "utility_under_attack": {
+          "mean": 0.6666666666666666,
+          "ci95": [
+            0.4166666666666667,
+            0.9166666666666666
+          ],
+          "n": 12,
+          "n_boot": 2000,
+          "method": "percentile_bootstrap_over_pairs"
+        },
+        "utility_without_attack": null
+      },
+      "workspace__clawql_data_flow__deepseek_deepseek-chat": {
+        "targeted_asr": {
+          "mean": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "n": 12,
+          "n_boot": 2000,
+          "method": "percentile_bootstrap_over_pairs"
+        },
+        "utility_under_attack": {
+          "mean": 0.5833333333333334,
+          "ci95": [
+            0.3333333333333333,
+            0.8333333333333334
+          ],
+          "n": 12,
+          "n_boot": 2000,
+          "method": "percentile_bootstrap_over_pairs"
+        },
+        "utility_without_attack": null
+      }
+    }
+  },
+  "methodology_gates": {
+    "bootstrap_ci_over_pairs": true,
+    "utility_without_and_under_attack": "required_on_full_cells",
+    "camel_same_model_required_for_table": true,
+    "claim_vocabulary": "empirical_not_provable"
   }
 }

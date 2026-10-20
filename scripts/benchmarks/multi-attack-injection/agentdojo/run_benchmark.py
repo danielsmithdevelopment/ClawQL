@@ -3,9 +3,13 @@
 Run AgentDojo with optional ClawQL data-flow defense.
 
 Publishes AgentDojo's own metrics:
-  - targeted ASR = mean(security_results)
+  - targeted ASR = mean(security_results) + bootstrap CI
     (AgentDojo security() is True when the injection goal was executed)
-  - utility under attack = mean(utility_results)
+  - utility under attack = mean(utility_results) + bootstrap CI
+  - utility without attacks = mean(user-task utility, no injection) + CI
+    (AgentDojo clean-work cost — peer to our benign suite)
+
+ClawQL results are empirical (N pairs), not "provable" security.
 
 Credentials (first match wins):
   OPENROUTER_API_KEY  → OpenRouter (openai-compatible) — preferred for CI
@@ -89,6 +93,45 @@ def defense_meta(defense_id: str) -> dict:
     }
 
 
+def bootstrap_mean_ci(
+    values: list[bool | int | float],
+    *,
+    n_boot: int = 2000,
+    alpha: float = 0.05,
+    seed: int = 0,
+) -> dict:
+    """Percentile bootstrap CI for a Bernoulli / rate mean over pairs.
+
+    Captures pair-sampling uncertainty (the run-to-run flips we saw on smoke).
+    Does not replace multi-seed cell repeats — those are optional and separate.
+    """
+    import random
+
+    n = len(values)
+    if n == 0:
+        return {"mean": None, "ci95": None, "n": 0, "n_boot": n_boot}
+    xs = [1.0 if bool(v) else 0.0 for v in values]
+    point = sum(xs) / n
+    rng = random.Random(seed)
+    boots: list[float] = []
+    for _ in range(n_boot):
+        s = 0.0
+        for _i in range(n):
+            s += xs[rng.randrange(n)]
+        boots.append(s / n)
+    boots.sort()
+    lo_i = int((alpha / 2) * n_boot)
+    hi_i = int((1 - alpha / 2) * n_boot) - 1
+    hi_i = max(0, min(n_boot - 1, hi_i))
+    return {
+        "mean": point,
+        "ci95": [boots[lo_i], boots[hi_i]],
+        "n": n,
+        "n_boot": n_boot,
+        "method": "percentile_bootstrap_over_pairs",
+    }
+
+
 def summarize_suite(results: dict) -> dict:
     """Summarize AgentDojo SuiteResults.
 
@@ -96,18 +139,64 @@ def summarize_suite(results: dict) -> dict:
     executed* (attack success) — see BaseInjectionTask.security docstring.
     Targeted ASR is therefore ``mean(security_results)``. Paper-style
     security (fraction of trials that resisted the attack) is ``1 - ASR``.
+
+    Always attach bootstrap CIs — point estimates alone hid smoke variance.
     """
-    util_vals = list(results["utility_results"].values())
-    sec_vals = list(results["security_results"].values())
-    utility = sum(util_vals) / len(util_vals) if util_vals else None
-    # mean(security_results) == injection success rate == targeted ASR
-    asr = sum(sec_vals) / len(sec_vals) if sec_vals else None
+    util_items = list(results.get("utility_results", {}).items())
+    sec_items = list(results.get("security_results", {}).items())
+    util_vals = [v for _, v in util_items]
+    sec_vals = [v for _, v in sec_items]
+    util_ci = bootstrap_mean_ci(util_vals, seed=1)
+    asr_ci = bootstrap_mean_ci(sec_vals, seed=2)
+    asr = asr_ci["mean"]
     average_security = (1.0 - asr) if asr is not None else None
     return {
         "n_pairs": len(util_vals),
-        "utility_under_attack": utility,
+        "utility_under_attack": util_ci["mean"],
+        "utility_under_attack_ci95": util_ci["ci95"],
         "average_security": average_security,
         "targeted_asr": asr,
+        "targeted_asr_ci95": asr_ci["ci95"],
+        "pair_results": {
+            "utility_under_attack": [
+                {"user_task": k[0], "injection_task": k[1], "ok": bool(v)}
+                for k, v in util_items
+            ],
+            "security_injection_succeeded": [
+                {"user_task": k[0], "injection_task": k[1], "ok": bool(v)}
+                for k, v in sec_items
+            ],
+        },
+        "uncertainty": {
+            "note": (
+                "ci95 = percentile bootstrap over pairs (n_boot=2000). "
+                "Optional multi-seed cell repeats are separate (MAI_AGENTDOJO_REPEATS)."
+            ),
+            "utility_under_attack": util_ci,
+            "targeted_asr": asr_ci,
+        },
+    }
+
+
+def summarize_no_attack(results: dict) -> dict:
+    """Utility without attacks — AgentDojo clean user-task success."""
+    util_items = list(results.get("utility_results", {}).items())
+    util_vals = [v for _, v in util_items]
+    ci = bootstrap_mean_ci(util_vals, seed=3)
+    return {
+        "n_user_tasks": len(util_vals),
+        "utility_without_attack": ci["mean"],
+        "utility_without_attack_ci95": ci["ci95"],
+        "pair_results": {
+            "utility_without_attack": [
+                {
+                    "user_task": k[0] if isinstance(k, tuple) else k,
+                    "ok": bool(v),
+                }
+                for k, v in util_items
+            ],
+        },
+        "uncertainty": {"utility_without_attack": ci},
     }
 
 
@@ -294,7 +383,10 @@ def main() -> int:
 
     try:
         from agentdojo.attacks.attack_registry import load_attack
-        from agentdojo.benchmark import benchmark_suite_with_injections
+        from agentdojo.benchmark import (
+            benchmark_suite_with_injections,
+            benchmark_suite_without_injections,
+        )
         from agentdojo.logging import OutputLogger
         from agentdojo.task_suite.load_suites import get_suite
 
@@ -317,7 +409,37 @@ def main() -> int:
                 benchmark_version=version,
             )
         summary = summarize_suite(results)
-        blocked = len(executor.blocked_calls) if executor is not None else 0
+        # Snapshot under-attack blocks before the clean (no-attack) pass.
+        under_attack_blocks = len(executor.blocked_calls) if executor is not None else 0
+        under_attack_blocked_sample = (
+            list(executor.blocked_calls[:20]) if executor is not None else None
+        )
+
+        # Utility without attacks = AgentDojo clean-work cost (benign analogue).
+        # Skip only if explicitly opted out (emergency / cost).
+        no_attack_summary = None
+        if os.environ.get("MAI_AGENTDOJO_SKIP_NO_ATTACK", "0") != "1":
+            no_attack_logdir = logdir / "no_attack"
+            no_attack_logdir.mkdir(parents=True, exist_ok=True)
+            if executor is not None:
+                executor.reset_taint()
+                executor.blocked_calls.clear()
+            with OutputLogger(str(no_attack_logdir)):
+                no_attack_results = benchmark_suite_without_injections(
+                    pipeline,
+                    suite,
+                    user_tasks=user_tasks or None,
+                    logdir=no_attack_logdir,
+                    force_rerun=force,
+                    benchmark_version=version,
+                )
+            no_attack_summary = summarize_no_attack(no_attack_results)
+            summary["utility_without_attack"] = no_attack_summary["utility_without_attack"]
+            summary["utility_without_attack_ci95"] = no_attack_summary[
+                "utility_without_attack_ci95"
+            ]
+            summary["n_user_tasks_no_attack"] = no_attack_summary["n_user_tasks"]
+            summary["no_attack"] = no_attack_summary
 
         report = {
             **base,
@@ -327,23 +449,38 @@ def main() -> int:
             "logdir": str(logdir),
             "must_report": {
                 "agentdojo_asr": summary["targeted_asr"],
+                "agentdojo_asr_ci95": summary.get("targeted_asr_ci95"),
                 "agentdojo_utility_under_attack": summary["utility_under_attack"],
+                "agentdojo_utility_under_attack_ci95": summary.get(
+                    "utility_under_attack_ci95"
+                ),
+                "agentdojo_utility_without_attack": summary.get(
+                    "utility_without_attack"
+                ),
+                "agentdojo_utility_without_attack_ci95": summary.get(
+                    "utility_without_attack_ci95"
+                ),
                 "agentdojo_average_security": summary["average_security"],
                 "n_pairs": summary["n_pairs"],
-                    "definition": {
-                    "asr": "mean(security_results) — AgentDojo security() is True when injection succeeded",
-                    "utility_under_attack": "mean(utility_results) — AgentDojo task success under attack",
-                    "average_security": "1 - asr — fraction of pairs that resisted the injection",
+                "claim_kind": "empirical",
+                "definition": {
+                    "asr": "mean(security_results) — security() True when injection succeeded",
+                    "utility_under_attack": "mean(utility_results) under injection",
+                    "utility_without_attack": (
+                        "mean(user-task utility) with no injection — clean-work cost"
+                    ),
+                    "average_security": "1 - asr — empirical fraction that resisted (not 'provable')",
+                    "ci95": "percentile bootstrap over pairs (n_boot=2000)",
                 },
             },
             "also_report": {
-                "clawql_sink_blocks": blocked if defense_meta(defense_id)["id"] != "none" else None,
-                "clawql_blocked_sample": (
-                    executor.blocked_calls[:20]
-                    if executor is not None
+                "clawql_sink_blocks": (
+                    under_attack_blocks
+                    if defense_meta(defense_id)["id"] != "none"
                     else None
                 ),
-                "note": "clawql_sink_blocks only set for clawql_data_flow defense.",
+                "clawql_blocked_sample": under_attack_blocked_sample,
+                "note": "clawql_sink_blocks only set for clawql_data_flow defense (under-attack pass).",
             },
             "suites": {suite_name: summary},
             "matrix_cell": {
@@ -351,6 +488,12 @@ def main() -> int:
                 "defense": defense_meta(defense_id)["id"],
                 "model": model,
                 "attack": attack_name,
+            },
+            "methodology": {
+                "uncertainty": "bootstrap_ci_over_pairs",
+                "utility_without_attack": no_attack_summary is not None,
+                "same_model_camel_head_to_head": False,
+                "claim_vocabulary": "empirical_not_provable",
             },
         }
         write_report(out, report)
@@ -361,8 +504,14 @@ def main() -> int:
                     "status": "measured",
                     "matrix_cell": report["matrix_cell"],
                     "agentdojo_asr": summary["targeted_asr"],
+                    "agentdojo_asr_ci95": summary.get("targeted_asr_ci95"),
                     "agentdojo_utility_under_attack": summary["utility_under_attack"],
-                    "clawql_sink_blocks": blocked if executor is not None else None,
+                    "agentdojo_utility_without_attack": summary.get(
+                        "utility_without_attack"
+                    ),
+                    "clawql_sink_blocks": (
+                        under_attack_blocks if executor is not None else None
+                    ),
                 },
                 indent=2,
             )
