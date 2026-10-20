@@ -41,11 +41,11 @@ Harness² (or an equivalent Propose–Probe–Compose loop) with ClawQL as the t
 
 If the gate holds while the optimizer actively searches for shortcuts, that is a sharp, novel result: **the gate holds even against an agent optimizing to get past it.**
 
-Board: [`docs/benchmarks/harness2-gate-adversarial/README.md`](../benchmarks/harness2-gate-adversarial/README.md) · [`SPEC.md`](../benchmarks/harness2-gate-adversarial/SPEC.md).
+Board: [`README.md`](../benchmarks/harness2-gate-adversarial/README.md) · [`SPEC.md`](../benchmarks/harness2-gate-adversarial/SPEC.md) · [`STATUS.md`](../benchmarks/harness2-gate-adversarial/STATUS.md) · [`STEP2.md`](../benchmarks/harness2-gate-adversarial/STEP2.md).
 
 - **v0** dual-sim = illustrative only.
-- **Step 1** = real ClawQL park/IFC vs stand-in optimizer (claim about ClawQL; evade≠adapt; narrow utility). Measured: gate teaches good habits (`adapt_succeeded` > 0, `evade_effectuated` = 0).
-- **Step 2** (publishable) = real Harness² + MCP vs passthrough; utility = WorkBuddy / JobBench / LAB **their** scores; lesson-poison cell. Merge native-tool gate ([#1355](https://github.com/danielsmithdevelopment/ClawQL/pull/1355)) before trusting board numbers against shipped code.
+- **Step 1** = real ClawQL park/IFC vs stand-in optimizer (claim about ClawQL; evade≠adapt; narrow utility). Measured: gate teaches good habits (`adapt_succeeded` > 0, `evade_effectuated` = 0). Gate product ([#1355](https://github.com/danielsmithdevelopment/ClawQL/pull/1355)) and board ([#1362](https://github.com/danielsmithdevelopment/ClawQL/pull/1362)) are on `main`.
+- **Step 2** (publishable) = real Harness² + MCP vs passthrough; first frozen board = **JobBench** ([#1364](https://github.com/danielsmithdevelopment/ClawQL/pull/1364) scaffold). WorkBuddy deferred (license); LAB is a follow-up. Equal-arm orchestrator is ready; live scores are **blocked on solver/judge credentials** — no `results-step2.json` yet.
 
 ## Related ClawQL surfaces
 

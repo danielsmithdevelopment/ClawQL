@@ -25,14 +25,14 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     priority: 1,
     title: 'Multi-attack injection suite',
     status: 'partial',
-    why: 'Smoke v2: ClawQL defaults 0/12 via native park/IFC; passthrough 12/12; benign 2/4 without a human. Peers pending. Draft until peers land.',
+    why: 'Smoke v2 published: ClawQL defaults 0/12 via native park/IFC; passthrough 12/12; benign 2/4 without a human. Category claim pending peer arms.',
   },
   {
     id: 'approval_integrity',
     priority: 2,
     title: 'Approval-integrity cells',
     status: 'partial',
-    why: 'Self-approval, arg digests, replay, collusion, crash races. No peer’s configuration can tie these.',
+    why: 'Harness resume probe today; digests / replay / collusion / crash cells still pending. No peer configuration can tie the people-bound cells.',
   },
   {
     id: 'allowed_tool_exfil',
@@ -105,7 +105,8 @@ export const securitySuiteGroups: readonly SecuritySuiteGroup[] = [
       {
         id: 'multi_attack',
         title: 'Multi-attack suite',
-        detail: 'Planted instructions in emails, tickets, documents, webhooks — real models, count take-effect rate.',
+        detail:
+          'Planted instructions in emails, tickets, documents, webhooks — scripted worst-case for smoke; real-model matrix is a separate follow-up.',
       },
       {
         id: 'allowed_exfil',
@@ -243,12 +244,12 @@ export const securitySuiteLinks = [
   {
     label: 'Multi-attack board',
     href: '/benchmarks/#multi-attack',
-    detail: '0/12 ClawQL · draft until peers',
+    detail: '0/12 ClawQL smoke · peers pending',
   },
   {
     label: 'Harness² adversarial gate',
     href: '/benchmarks/#harness2',
-    detail: 'Step 1: evade 0 · adapt 6 · utility 1.0',
+    detail: 'Step 1 measured · step 2 JobBench ready',
   },
   {
     label: 'Multi-attack harness',
