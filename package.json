@@ -122,6 +122,7 @@
     "benchmark:multi-attack-injection:executor": "scripts/benchmarks/multi-attack-injection/ci-executor-peer.sh",
     "benchmark:multi-attack-injection:counterfeit-policy": "node scripts/benchmarks/multi-attack-injection/run-counterfeit-policy-cell.mjs",
     "benchmark:multi-attack-injection:agentdojo": "node scripts/benchmarks/multi-attack-injection/run-agentdojo.mjs",
+    "benchmark:multi-attack-injection:injecagent": "node scripts/benchmarks/multi-attack-injection/run-injecagent.mjs",
     "generate:executor-cmp-latency-html": "node scripts/benchmarks/generate-executor-cmp-latency-html.mjs",
     "generate:executor-cmp-static": "npm run generate:executor-cmp-static -w mcp-api-adapter",
     "openbench:validate": "python3 benchmarks/openbench/validate_tasks.py",

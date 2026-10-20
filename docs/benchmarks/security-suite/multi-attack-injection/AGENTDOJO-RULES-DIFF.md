@@ -47,13 +47,23 @@ v2 was informed by AgentDojo benign failures. Grading only on AgentDojo would be
 | --- | ---- | ---------------- |
 | **AgentDojo full matrix** (gpt-4o-mini, same protocol) | In-sample remeasure — CIs, util±attack, **Slack ASR** callout | Yes — same suites/attack as v1 |
 | **Scripted multi-attack board** (`clawql_default` / product gate) | Out-of-sample — benign expect-match + block exfil | Yes — existing board |
-| **[InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent)** (Zhan et al.; tool-using agent prompt-injection) | Out-of-sample second benchmark — **played no part in tuning v2** | **Yes — chosen before remeasure** (`injecagent` / UIUC Kang Lab). If only AgentDojo improves, say so. |
+| **[InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent)** (Zhan et al.; tool-using agent prompt-injection) | Out-of-sample second benchmark — **played no part in tuning v2** | **Yes — chosen before remeasure** — protocol in [INJECAGENT.md](./INJECAGENT.md). If only AgentDojo improves, say so. |
 
 Internal-only estimates (path-continuation counterfactuals) stay in `agentdojo-park-vs-hard-counterfactual.json` — **not** on the public page. The remeasure settles utility and ASR; until then those figures are not results.
+
+## How to read the remeasure (fixed order)
+
+Whatever v2 shows is a clean measurement — rules, held-out bench, watchpoint, and label placement were settled before data. When results land, interpret **in this order only**:
+
+1. **Slack ASR first.** Most likely to rise under the same-workspace relaxation. If it climbs noticeably vs v1, the relaxation went too far — **regardless of utility gains**.
+2. **Utility without attack, per suite, against undefended**, with bootstrap intervals. That is the cost question v1 raised.
+3. **InjecAgent and the scripted board next.** If v2 holds there too, the refinements generalize. If only AgentDojo improves, that is evidence of fit-to-AgentDojo — say so.
+
+Then publish **v1 ‖ v2 side by side with this diff**, whichever way it falls.
 
 ## Publish sequence (next)
 
 1. Keep v1 table as official until v2 CI finishes.
-2. Publish v1 ‖ v2 tables + this diff.
-3. Call out Slack ASR delta, scripted-board outcomes, and **InjecAgent** outcomes.
+2. Publish v1 ‖ v2 tables + this diff (no erasing v1).
+3. Follow the readout order above in the write-up (Slack ASR → util_without_attack → out-of-sample).
 4. Honest framing: what we got wrong (over-broad fail-closed), what we changed, what still costs.

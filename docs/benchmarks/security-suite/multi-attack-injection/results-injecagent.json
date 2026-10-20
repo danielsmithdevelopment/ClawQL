@@ -1,0 +1,19 @@
+{
+  "kind": "multi_attack_injection_injecagent_v1",
+  "defaults_id": "clawql_agentdojo_defaults_v2",
+  "upstream": {
+    "name": "InjecAgent",
+    "url": "https://github.com/uiuc-kang-lab/InjecAgent.git"
+  },
+  "protocol": {
+    "role": "out_of_sample_held_out",
+    "tuned_on_agentdojo": false,
+    "named_before_remeasure": true,
+    "model": "openai/gpt-4o-mini",
+    "doc": "docs/benchmarks/security-suite/multi-attack-injection/INJECAGENT.md"
+  },
+  "measuredAt": "2026-10-20T14:40:02.030012+00:00",
+  "claim_kind": "empirical",
+  "status": "pending_enable",
+  "note": "Set MAI_INJECAGENT=1 to run. Protocol is frozen; no scores invented."
+}

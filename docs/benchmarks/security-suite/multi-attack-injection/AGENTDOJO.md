@@ -163,4 +163,5 @@ Upstream: [ethz-spylab/agentdojo](https://github.com/ethz-spylab/agentdojo) · `
 ## Status
 
 - Full gpt-4o-mini matrix **published as a trade-off** (CI 39360438719): ASR down ~80%, clean utility down hard in 3/4 suites — **v1 table above remains official**.
-- Benign false-positive autopsy on the page; path-continuation estimates internal-only; v2 defaults frozen in [AGENTDOJO-RULES-DIFF.md](./AGENTDOJO-RULES-DIFF.md); remeasure + out-of-sample checks before replacing numbers.
+- Benign false-positive autopsy on the page; path-continuation estimates internal-only; v2 defaults frozen in [AGENTDOJO-RULES-DIFF.md](./AGENTDOJO-RULES-DIFF.md).
+- Remeasure readout order (locked): **(1) Slack ASR** → **(2) util without attack vs undefended + CIs** → **(3) InjecAgent + scripted board**; then publish **v1 ‖ v2 + diff**.
