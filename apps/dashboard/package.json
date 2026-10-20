@@ -56,6 +56,7 @@
     "vitest": "4.1.11"
   },
   "overrides": {
+    "vite": "8.3.4",
     "@babel/core": "7.29.6",
     "js-yaml": "4.3.2",
     "@types/react": "19.2.14",
