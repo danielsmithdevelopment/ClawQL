@@ -38,6 +38,7 @@
 12. **Purge honesty** — PageIndex + CodeGraph removed; ouroboros agent tools opt-in; Docling-default converters.
 13. **Credits / Effect** — hosted compliance (P2P off by default), HATEOAS auth gate, Effect-primary auth/payments; self-serve Stripe.
 14. **Effect v4.0.0** — singular `effect` + `@effect/opentelemetry`; `Context.Service` / `Result` / Schema v4 ([#1197](https://github.com/danielsmithdevelopment/ClawQL/pull/1197)).
+15. **Decision-1 / Program / e2e** — decisions fanout + `gliner-decide`; Program mode + celld closeout; Keycloak/WebAuthn/Stripe e2e catalog; SOC2 packaging; Harness².
 
 ### Why it matters
 
