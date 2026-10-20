@@ -1,6 +1,6 @@
 # Harness² × ClawQL — step 2 runbook (publishable)
 
-**Status:** Scaffolded (not measured)  
+**Status:** Equal-arm orchestrator ready · live JobBench blocked on solver/judge credentials  
 **Spec:** [`SPEC.md`](./SPEC.md) · **Thesis:** [`docs/vision/harness2-authority-outside.md`](../../vision/harness2-authority-outside.md)  
 **Upstream:** [google-research/harness2](https://github.com/google-research/harness2) · [docs/BENCHMARKS.md](https://github.com/google-research/harness2/blob/main/docs/BENCHMARKS.md)
 
@@ -54,14 +54,33 @@ export HARNESS2_ROOT="$PWD"
 
 ClawQL arm: point the OpenCode/Codex MCP tool surface at a running ClawQL MCP with frozen policy (session IFC on, park destructive writes). Passthrough arm uses the same substrate without that choke.
 
-## Preflight (this repo)
+## Preflight + equal arms (this repo)
 
 ```bash
-# Optional: HARNESS2_ROOT=/path/to/harness2
+# Docs checklist (+ optional upstream CLI when HARNESS2_ROOT is set)
 npm run benchmark:harness2-gate-adversarial:step2-preflight
+
+# Equal-arm probe (default --dry-run). Writes results-step2-blocked.json or
+# results-step2-ready.json — never invents JobBench scores.
+HARNESS2_ROOT=/path/to/harness2 \
+  npm run benchmark:harness2-gate-adversarial:step2-equal-arms
+
+# Live scored run (requires HARNESS2_SOLVER_MODEL + Vertex or HARNESS2_JUDGE_*):
+HARNESS2_ROOT=/path/to/harness2 \
+  npm run benchmark:harness2-gate-adversarial:step2-equal-arms -- --run
 ```
 
-Exit **0** when the frozen-board checklist is documented and (if `HARNESS2_ROOT` is set) upstream CLI + JobBench setup look present. Preflight does **not** run tasks or write a publishable scoreboard.
+### Credentials (upstream SETUP.md)
+
+| Variable | Role |
+| -------- | ---- |
+| `HARNESS2_SOLVER_MODEL` | OpenCode `provider/model` for executor |
+| `HARNESS2_IMPROVER_MODEL` | Improver (defaults to solver) |
+| `HARNESS2_JUDGE_MODEL` | JobBench judge model id |
+| `GOOGLE_CLOUD_PROJECT` **or** `HARNESS2_JUDGE_BASE_URL` + `HARNESS2_JUDGE_API_KEY` | Judge auth |
+| `CLAWQL_MCP_URL` | ClawQL arm MCP endpoint (default `http://127.0.0.1:8080/mcp`) |
+
+Preflight / dry-run do **not** spend model tokens. `--run` invokes `harness2` + `harness2-judge` + `harness2-report` per arm.
 
 ## After a real run
 

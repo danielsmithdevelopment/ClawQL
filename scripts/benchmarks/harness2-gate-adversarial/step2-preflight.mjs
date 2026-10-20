@@ -82,17 +82,34 @@ if (which.status !== 0 || !harness2Bin) {
 }
 ok(`harness2 on PATH: ${harness2Bin}`);
 
+const jbDataset = join(root, "dependencies/job-bench-eval/dataset/main");
+if (!existsSync(jbDataset)) {
+  fail("JobBench dataset missing — run: harness2-setup jb");
+}
+ok(`JobBench dataset present: ${jbDataset}`);
+
 const check = spawnSync(
   "harness2-check",
   ["--bench", FROZEN.bench],
   { encoding: "utf8", cwd: root, env: process.env },
 );
-if (check.status !== 0) {
-  console.error(check.stdout || "");
-  console.error(check.stderr || "");
+const checkOut = `${check.stdout || ""}${check.stderr || ""}`;
+const credOnly =
+  check.status !== 0 &&
+  /HARNESS2_SOLVER_MODEL|GOOGLE_CLOUD_PROJECT|HARNESS2_JUDGE/.test(checkOut) &&
+  !/not installed|No such file|job-bench-eval/.test(checkOut);
+
+if (check.status !== 0 && !credOnly) {
+  console.error(checkOut);
   fail(`harness2-check --bench ${FROZEN.bench} failed (run harness2-setup jb)`);
 }
-ok(`harness2-check --bench ${FROZEN.bench} passed`);
+if (credOnly) {
+  console.log(
+    "WARN: harness2-check failed on credentials only (solver/judge). JobBench install looks present.",
+  );
+} else {
+  ok(`harness2-check --bench ${FROZEN.bench} passed`);
+}
 
 // Best-effort: ensure we can read the checkout (permissions).
 try {
@@ -106,10 +123,13 @@ console.log(
     {
       kind: "harness2_gate_adversarial_step2_preflight",
       upstream_checked: true,
+      credentials_ready: check.status === 0,
       harness2_root: root,
       harness2_bin: harness2Bin,
       frozen: FROZEN,
-      next: "Equal-arm runs: passthrough vs ClawQL MCP; then harness2-judge + harness2-report; write results-step2.json",
+      next: check.status === 0
+        ? "Equal-arm runs: npm run benchmark:harness2-gate-adversarial:step2-equal-arms -- --run"
+        : "Set HARNESS2_SOLVER_MODEL + judge credentials (SETUP.md), then step2-equal-arms -- --run",
     },
     null,
     2,
