@@ -1,0 +1,363 @@
+{
+  "kind": "kill-mid-write-file-journal",
+  "measuredAt": "2026-10-20T23:56:06.066Z",
+  "n": 50,
+  "duplicateSideEffects": 0,
+  "trialsOk": 50,
+  "trialsFailed": 0,
+  "boardPass": true,
+  "metric": "duplicate_side_effects == 0",
+  "honesty": "File-journal kill-mid-write board (Tier D). Counts write re-sends after SIGKILL+resume. Not mandate park/consume across replicas; not celld fleet LTX.",
+  "trials": [
+    {
+      "i": 0,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 1,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 2,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 3,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 4,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 5,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 6,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 7,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 8,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 9,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 10,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 11,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 12,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 13,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 14,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 15,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 16,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 17,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 18,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 19,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 20,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 21,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 22,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 23,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 24,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 25,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 26,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 27,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 28,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 29,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 30,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 31,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 32,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 33,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 34,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 35,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 36,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 37,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 38,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 39,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 40,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 41,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 42,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 43,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 44,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 45,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 46,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 47,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 48,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    },
+    {
+      "i": 49,
+      "ok": true,
+      "duplicateSideEffects": 0,
+      "childSignal": "SIGKILL",
+      "detail": "SIGKILL mid-write; resume outcome_unknown; write not re-sent"
+    }
+  ]
+}

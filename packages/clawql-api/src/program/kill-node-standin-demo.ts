@@ -206,7 +206,7 @@ export function runKillNodeStandinDemoEffect(
       kind: "file-journal-sigkill-standin" as const,
       measuredAt: new Date().toISOString(),
       honesty:
-        "File-journal SIGKILL stand-in for ADR 0015. Not celld isolate kill-node — ProgramCellDO + SIGKILL celld binary still required for crash-survival claims.",
+        "File-journal SIGKILL stand-in for ADR 0015 (Tier A). Not ProgramCellDO isolate kill (Tier B) or fleet LTX (Tier C) — see docs/benchmarks/durability-proof/STATUS.md.",
       arms,
       pin: {
         isolateReady: pin.isolateReady,
