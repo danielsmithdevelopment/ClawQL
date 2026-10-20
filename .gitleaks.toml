@@ -20,6 +20,8 @@ paths = [
   '''(^|/)coverage/''',
   '''(^|/)packages/mcp-grpc-transport/test-fixtures/''',
   '''(^|/)benchmarks/openbench/tasks/''',
+  # Multi-attack injection corpus uses deliberate effectTokens (CLAWQL_INJECT_*), not secrets.
+  '''(^|/)benchmarks/security-suite/multi-attack-injection/corpus/''',
   # Public IETF RFCs used as pageindex-ab hard-candidate docs (OAuth examples etc.).
   '''(^|/)benchmarks/pageindex-ab/corpus/hard-candidate/docs/rfc''',
   '''(^|/)benchmarks/pageindex-ab/corpus/seed/rfc''',

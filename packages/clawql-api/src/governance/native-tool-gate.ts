@@ -73,7 +73,8 @@ function syntheticOperation(
       mcpDestructiveHint: parkKind === "destructive",
     },
     risk: {
-      policy: parkKind === "destructive" ? "mandate" : parkKind === "write" ? "allow" : "allow",
+      // Park overwrites only: non-destructive writes stay allow (labelable memory path).
+      policy: parkKind === "destructive" ? "mandate" : "allow",
       level: parkKind === "destructive" ? "HIGH" : parkKind === "write" ? "MEDIUM" : "LOW",
       source: "mcp-annotation",
       reason: `native tool ${toolName} (${parkKind})`,

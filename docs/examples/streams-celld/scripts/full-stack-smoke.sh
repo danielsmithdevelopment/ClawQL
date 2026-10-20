@@ -291,10 +291,24 @@ curl -sf "$BASE/health" | grep -q clawql-streams-celld-skeleton
 
 post_webhook() {
   local event_id="$1"
-  curl -sf -X POST "$BASE/webhook/full-stack" \
-    -H 'content-type: application/json' \
-    -H "x-clawql-event-id: ${event_id}" \
-    -d '{"probe":true,"mode":"full-stack"}'
+  # Transient celld watcher / connect resets show up as curl exit 22 (-f HTTP fail).
+  local attempt=1
+  local body=""
+  while ((attempt <= 5)); do
+    if body="$(curl -sf -X POST "$BASE/webhook/full-stack" \
+      -H 'content-type: application/json' \
+      -H "x-clawql-event-id: ${event_id}" \
+      -d '{"probe":true,"mode":"full-stack"}')"; then
+      printf '%s' "$body"
+      return 0
+    fi
+    echo "full-stack-smoke: webhook POST attempt ${attempt}/5 failed — settle and retry" >&2
+    sleep $((attempt))
+    wait_http "$BASE/health" "celld-webhook-retry-${attempt}" "$CELLD_PID" 40 || true
+    attempt=$((attempt + 1))
+  done
+  echo "full-stack-smoke: FAIL — webhook POST exhausted retries" >&2
+  return 22
 }
 
 EVENT_ID="full-stack-$(date +%s)-$$"
@@ -367,10 +381,23 @@ if search.get("ok") is not True:
 if search.get("transport") != "celld-isolate":
   raise SystemExit(f"search expected celld-isolate: {search!r}"[:800])
 mi=tools.get("memory_ingest") or {}
-if mi.get("ok") is not True:
-  raise SystemExit(f"memory_ingest not ok: {mi!r}"[:800])
 if mi.get("transport") != "streamable-http":
   raise SystemExit(f"memory_ingest expected streamable-http: {mi!r}"[:800])
+# Native-tool gate parks destructive memory_ingest (fail-closed) — must not complete unchecked.
+park=None
+for src in (mi.get("error"), mi.get("text")):
+  if isinstance(src, str) and src.lstrip().startswith("{"):
+    try:
+      park=json.loads(src)
+      break
+    except Exception:
+      pass
+if mi.get("ok") is True:
+  raise SystemExit(f"memory_ingest must not complete without mandate: {mi!r}"[:800])
+if not park or park.get("status") != "mandate_required" or park.get("mechanism") != "park_destructive_write":
+  raise SystemExit(f"memory_ingest expected park (mandate_required/park_destructive_write): {mi!r}"[:800])
+if not park.get("executionId"):
+  raise SystemExit(f"memory_ingest park missing executionId: {mi!r}"[:800])
 mr=tools.get("memory_recall") or {}
 if mr.get("ok") is not True:
   raise SystemExit(f"memory_recall not ok: {mr!r}"[:800])
@@ -404,7 +431,7 @@ if core.get("wormUrlConfigured") is not True:
 if core.get("coreInCelld") is not True:
   raise SystemExit("coreInCelld expected true")
 event_id=r.get("eventId") or (body.get("session") or {}).get("eventId")
-print("full-stack assertions: CoreToolsDO+memory/adapter/inference/compliance-WORM OK")
+print("full-stack assertions: CoreToolsDO+memory_park/adapter/inference/compliance-WORM OK")
 print(f"event_id={event_id}")
 ' || fail "python assertions failed"
 

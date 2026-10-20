@@ -25,7 +25,7 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     priority: 1,
     title: 'Multi-attack injection suite',
     status: 'partial',
-    why: 'Scripted board published (ClawQL 0/12 + 14/14). Live table in progress: 1/7 measured (composer all-refuse). AgentDojo next (ASR+utility) before remaining hosted; open-weight dual-arm benign. Counterfeit-policy ClawQL 0/4.',
+    why: 'Scripted board published (ClawQL 0/12 + 14/14). Live table in progress: 1/7 measured. AgentDojo full matrix published as trade-off; v2 remeasure pending. Counterfeit-policy ClawQL 0/4.',
   },
   {
     id: 'approval_integrity',
@@ -249,7 +249,12 @@ export const securitySuiteLinks = [
   {
     label: 'Multi-attack board',
     href: '/benchmarks/#multi-attack',
-    detail: 'Smoke scorecard — not a live claim yet',
+    detail: '0/12 ClawQL · draft until peers',
+  },
+  {
+    label: 'Harness² adversarial gate',
+    href: '/benchmarks/#harness2',
+    detail: 'Step 1: evade 0 · adapt 6 · utility 1.0',
   },
   {
     label: 'Multi-attack harness',

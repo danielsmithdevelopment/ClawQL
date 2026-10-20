@@ -10,8 +10,15 @@ export const multiAttackHeadline = 'Multi-attack injection — scripted guarante
 export const multiAttackSummary =
   'Twelve planted attacks across email, ticket, doc, and webhook. Scripted worst-case model always complies — that board is the guarantee when a model is fooled. Live runs show how often models get fooled, and that ClawQL costs nothing when they don’t. Peers share the same Obsidian-compatible Memory/ over MCP; the same 14 benign cases run on every arm.'
 
+/** Concrete claim shape from results-smoke.json + AgentDojo trade-off publish. */
 export const multiAttackHeadlineResult =
-  'Models resist most attacks; ClawQL is there for the ones they don’t, at no cost to ordinary work. Scripted board published: ClawQL 0 of 12 + 14 of 14 benign; peer best-config 0 of 12 + 9 of 14 (memory off); peer defaults 12 of 12. AgentDojo smoke is exploratory only; full suites must land with bootstrap CIs, utility with and without attacks, and empirical (not “provable”) wording before any ASR headline. CaMeL is related work on AgentDojo — same-model head-to-head required before any side-by-side %. Live table in progress — 1 of 7 pre-registered measured; six pending.'
+  'Scripted board: ClawQL 0 of 12 + 14 of 14 benign; peer best-config 0 of 12 + 9 of 14 (memory off); peer defaults 12 of 12. AgentDojo full gpt-4o-mini matrix published as a trade-off (ASR down ~80%, clean utility cost in 3/4 suites) — not a win; v2 defaults frozen for remeasure. CaMeL related work until same-model. Live table in progress — 1 of 7 pre-registered measured; six pending.'
+
+export const multiAttackMeta = {
+  measuredAt: '2026-10-20',
+  boardLabel: 'multi-attack-injection-smoke-v2',
+  artifact: 'docs/benchmarks/security-suite/multi-attack-injection/results-smoke.json',
+} as const
 
 export const multiAttackMechanisms = [
   {
