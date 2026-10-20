@@ -52,8 +52,8 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     id: 'kill_mid_write',
     priority: 5,
     title: 'Kill-mid-write duplicates',
-    status: 'planned',
-    why: 'Race replicas and kill mid-write thousands of times. Count duplicate side effects — TLA+ predicts zero.',
+    status: 'partial',
+    why: 'File-journal N-trial board shipped (CI N=50, duplicate_side_effects=0). Mandate multi-replica / fleet cell still open — see durability-proof/STATUS.md.',
   },
 ] as const
 
@@ -68,7 +68,7 @@ export const securitySuiteGroups: readonly SecuritySuiteGroup[] = [
   {
     id: 'approvals',
     title: 'Approvals that can’t be gamed',
-    property: 'People-bound, digest-bound, crash-safe mandates',
+    property: 'People-bound, digest-bound, at-most-once mandates',
     cells: [
       {
         id: 'self_approval',

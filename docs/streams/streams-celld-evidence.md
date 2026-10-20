@@ -29,7 +29,7 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 | Fleet LTX / multi-node diagnose                                                 | Manual               | `docs/examples/idp/streams-celld/README.md`                                                                                                        |
 | `clawql-streams` package / `stream_*` tools                                     | **Not shipped**      | Spec-only — see Streams §15                                                                                                                        |
 | Full DeductionService / model-escalation spend ceilings                         | **Not shipped**      | Lab stub bind/budget/expire only; real ledger + model escalation on clawql-inference / clawql-payments                                             |
-| celld isolate kill-node (fleet / three-arm product gate)                        | **Partial**          | Lab ProgramCellDO write-arm local smoke shipped; fleet LTX diagnose + full three-arm product gate still open                                       |
+| celld isolate kill-node (fleet / three-arm product gate)                        | **Partial**          | Lab ProgramCellDO smoke + CI gate on `streams-celld.yml`; fleet LTX diagnose + three-arm product gate still open — ladder: [`durability-proof/STATUS`](../benchmarks/durability-proof/STATUS.md) |
 | Operator mesh denial → host WORM                                                | **Package unit**     | `clawql-k8s-operator` `worm-append` + `appendMeshDenialToHostWorm` (no live Istio)                                                                 |
 | cellrt / TEE / QR stream source                                                 | **Not shipped**      | Spec drafts under `docs/streams/`                                                                                                                  |
 | AWS Cost Explorer / live cloud cost measurement                                 | **Deferred**         | Local-only closeout; no paid AWS keys in Lab 5b gates                                                                                              |
@@ -86,13 +86,14 @@ npm run demo:kill-node-standin
 
 Expected: exit 0; writes `docs/benchmarks/program-kill-node-standin/evidence.json` with both arms `ok: true`. Honesty string must say this is **not** celld isolate kill-node.
 
-ProgramCellDO isolate kill-node (requires celld; SIGKILL binary):
+ProgramCellDO isolate kill-node (requires celld; SIGKILL binary) — also CI on **Streams celld smoke**:
 
 ```bash
 STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke-program-cell-kill.sh
+# File-journal stand-in + kill-mid-write (no celld): npm run demo:kill-node-standin && npm run benchmark:kill-mid-write
 ```
 
-Expected: `smoke-program-cell-kill: PASS`; evidence at `docs/benchmarks/program-cell-isolate-kill/evidence.json` with write arm `outcome_unknown` after celld restart.
+Expected: `smoke-program-cell-kill: PASS`; evidence at `docs/benchmarks/program-cell-isolate-kill/evidence.json` with write arm `outcome_unknown` after celld restart. Ladder: [`docs/benchmarks/durability-proof/STATUS.md`](../benchmarks/durability-proof/STATUS.md).
 
 ### Local E2E smoke (requires celld v0.4.0 + esbuild)
 

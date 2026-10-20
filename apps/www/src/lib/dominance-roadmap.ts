@@ -138,17 +138,17 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
   },
   {
     id: 'celld-durability',
-    name: 'celld durability (ProgramCellDO)',
+    name: 'celld program journal (ProgramCellDO)',
     whyItMatters:
-      'Crash-survival / isolate-hosted programs claim — ADR 0015 kill-node gate for “code mode that survives a crash.”',
+      'Journaled program resume on celld — see docs/benchmarks/durability-proof/STATUS.md. Not a durable execution engine.',
     criteriaToBeat:
-      'Lab isolate SIGKILL resume on DO journal, then fleet LTX diagnose + three-arm product gate.',
+      'Tiers A/B/D (file journal, ProgramCellDO, kill-mid-write) CI-gated; Tier C fleet LTX still open.',
     howToProve:
-      'ProgramCellDO write+read smoke after SIGKILL celld; publish evidence.json; keep fleet three-arm Partial until measured.',
+      'Publish evidence under docs/benchmarks/durability-proof/STATUS.md; no wild survives-a-crash copy until Tier C.',
     status: 'partial',
     statusLabel: 'Lab Yes · fleet Partial',
     nextStep:
-      'Lab ProgramCellDO isolate kill shipped (#1350, evidence ok). Fleet three-arm / LTX diagnose still open. Hot-path A/B 10k PASS (+2.7% p50) — env flags do not regress pets board.',
+      'Tiers A/B/D CI-gated (see docs/benchmarks/durability-proof/STATUS.md). Fleet three-arm / LTX (Tier C) + MCP→ProgramCellDO (Tier E) still open. Hot-path A/B 10k PASS.',
   },
 ] as const
 
