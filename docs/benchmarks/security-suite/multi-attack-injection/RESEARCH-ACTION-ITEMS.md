@@ -99,11 +99,23 @@ Success metric for every item: **Slack ASR → pooled ASR → util_without_attac
 
 ---
 
+## Implementation status (this branch)
+
+| ID | Status | Evidence |
+| --- | --- | --- |
+| **A1** | done | [slack-asr-autopsy-v2.json](./slack-asr-autopsy-v2.json) — 29/42 via `send_*`; `invite_user_to_slack` uncontrolled |
+| **A2+B1** | coded (`defaults_v3`) | Trusted dest + write-tool privileges; unit tests green; **AgentDojo CI remeasure pending** |
+| **A3** | measured_pass | [results-allowed-tool-exfil.json](./results-allowed-tool-exfil.json) — secret internal notify blocked; benign allowed |
+| **A4** | harness wired | `attack=injecagent` via `run_injecagent.py`; scores pending OpenRouter CI |
+| **B2** | shipped (product) | `isolateInjectionInstructions` on untrusted `memory_ingest` stamp |
+| **B3** | shipped (product) | `payloadLooksLikeSecretExfil` blocks secret-bearing internal notify after taint |
+| **B4** | deferred | Optional plan-deviation mode — wait for v3 util tax (AgentDyn caution) |
+
 ## Recommended sequence (next 3 moves)
 
-1. **A1 Slack autopsy** → decide exact A2 predicate (trusted dest vs park-all-messaging).
-2. **A2 + A4 in parallel** — tighten messaging capability; land InjecAgent scores.
-3. **B1 privilege set** once A2’s util tax is known — avoid stacking two util hits blind.
+1. ~~**A1 Slack autopsy**~~ → trusted-dest capability (not park-all).
+2. ~~**A2 + B1 coded**~~ + **A4** CI scores; Slack/full AgentDojo remeasure for v3.
+3. **B4** only if v3 Slack util_clean stays ≥ ~0.45.
 
 ---
 

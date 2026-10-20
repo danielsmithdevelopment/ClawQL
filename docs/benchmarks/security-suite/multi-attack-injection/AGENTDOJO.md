@@ -140,7 +140,7 @@ CI [39354352936](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/3
 
 ## Defense arm
 
-`clawql_data_flow` — [`clawql_tools_executor.py`](../../../scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py) · `DEFAULTS_ID=clawql_agentdojo_defaults_v2`
+`clawql_data_flow` — [`clawql_tools_executor.py`](../../../scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py) · code `DEFAULTS_ID=clawql_agentdojo_defaults_v3` (capability gate; published board still v1 ‖ v2 until CI remeasure)
 
 ## CI matrix
 

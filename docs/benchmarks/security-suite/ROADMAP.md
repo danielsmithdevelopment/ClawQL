@@ -54,7 +54,7 @@ Posture upgrades from published defenses (CaMeL / Progent / DRIFT / AgentArmor /
 | Cell                   | Attack                                                                  | ClawQL property                                     |
 | ---------------------- | ----------------------------------------------------------------------- | --------------------------------------------------- |
 | `multi_attack_suite`   | Dozens of planted instructions across email/ticket/doc/webhook × models | Count how many take effect                          |
-| `allowed_tool_exfil`   | Poisoned read → permitted Slack (etc.) moves vault data                 | Session taint / data-flow labels                    |
+| `allowed_tool_exfil`   | Poisoned read → permitted Slack (etc.) moves vault data                 | Session taint / secret-payload block on internal notify ([results](./multi-attack-injection/results-allowed-tool-exfil.json)) |
 | `persistent_injection` | Poison in memory/skill → fires in a _later_ session                     | Untrusted labels survive storage                    |
 | `tool_desc_rug_pull`   | Upstream changes tool description after approval                        | Diff / quarantine / owner review (cf. Uber gateway) |
 
