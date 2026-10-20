@@ -1,6 +1,6 @@
 {
   "kind": "file-journal-sigkill-standin",
-  "measuredAt": "2026-10-20T23:56:12.503Z",
+  "measuredAt": "2026-10-20T23:56:54.772Z",
   "honesty": "File-journal SIGKILL stand-in for ADR 0015 (Tier A). Not ProgramCellDO isolate kill (Tier B) or fleet LTX (Tier C) — see docs/benchmarks/durability-proof/STATUS.md.",
   "arms": [
     {

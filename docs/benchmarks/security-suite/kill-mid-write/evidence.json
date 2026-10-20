@@ -1,6 +1,6 @@
 {
   "kind": "kill-mid-write-file-journal",
-  "measuredAt": "2026-10-20T23:56:06.066Z",
+  "measuredAt": "2026-10-20T23:57:18.537Z",
   "n": 50,
   "duplicateSideEffects": 0,
   "trialsOk": 50,
