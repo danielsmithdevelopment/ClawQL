@@ -173,8 +173,12 @@ Live backend id is **`gliner-decide`** (not `gliner2`). No alias — update WORM
 - Helm `managedGateway` hardening (#870)
 - Enterprise control plane (#849)
 - **Inference gateway ladder** — `/v1`→`/mcp`→`/memory`→`/decision`→`/events` (#1183, #1196)
-- Operation-risk-from-spec + execute pause/resume (#1185, #1187)
-- Self-serve Stripe checkout + toolkits packaging (#1189, #1190)
+- Operation-risk-from-spec + execute pause/resume (#1185, #1187); atomic Postgres mandate consume + formal TLA (#1227)
+- Self-serve Stripe checkout + toolkits packaging (#1189, #1190); Stripe dunning/proration (#1334)
+- **Decision-1 / fanout** — OpenAI decisions compat, flip-rate gates, ensemble quorum, `gliner-decide` (#1236–#1289)
+- Cloud console (shadcn) + OAuth grant/revoke admin (#1204, #1216, #1241–#1245)
+- E2E Keycloak/WebAuthn/Stripe/Okta catalog (#1217–#1232)
+- SOC2 Type 2 packaging + security headers/IDOR (#1328, #1331)
 
 ### Web / data / MCP UI
 
@@ -214,8 +218,11 @@ Live backend id is **`gliner-decide`** (not `gliner2`). No alias — update WORM
 - PV anything-to-MCP (#911)
 - Streams + Protocol Fabric site (#962, #966)
 - **Streams celld v0.4.0** — Lab 5 + Helm stack; AgentSessionDO MCP/adapter/audit-LTX path (#1041–#1047)
+- **Program mode** + celld closeout + isolate kill (#1235, #1349–#1351)
+- Harness² step2 scaffold (#1364–#1365)
+- Native desktop store + mobile push/camera/IAP (#1276, #1286, #1312)
 - IDP NATS agent bridge; WebMCP provenance
-- Learn wave for 8.0 migration (#1025–#1032, #1036); site audit (#1028)
+- Learn wave for 8.0 migration (#1025–#1032, #1036); site audit (#1028); www outdated audit (#1366)
 
 ### Docs / Learn (8.0 migration)
 
