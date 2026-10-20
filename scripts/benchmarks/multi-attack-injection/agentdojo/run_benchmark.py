@@ -414,6 +414,11 @@ def main() -> int:
         under_attack_blocked_sample = (
             list(executor.blocked_calls[:20]) if executor is not None else None
         )
+        under_attack_labeled = (
+            len(getattr(executor, "labeled_calls", []) or [])
+            if executor is not None
+            else None
+        )
 
         # Utility without attacks = AgentDojo clean-work cost (benign analogue).
         # Skip only if explicitly opted out (emergency / cost).
@@ -511,9 +516,16 @@ def main() -> int:
                 "clawql_no_attack_by_disposition": (no_attack_summary or {}).get(
                     "clawql_no_attack_by_disposition"
                 ),
+                "clawql_labeled_under_attack": under_attack_labeled,
+                "defaults_id": (
+                    getattr(executor, "defaults_id", None)
+                    if executor is not None
+                    else None
+                ),
                 "note": (
                     "clawql_sink_blocks = under-attack pass stops (park+hard). "
-                    "clawql_no_attack_* = benign false-positive / park cost."
+                    "clawql_no_attack_* = benign false-positive / park cost. "
+                    "clawql_labeled_* = untrusted-derived content stamps on allows."
                 ),
             },
             "suites": {suite_name: summary},
