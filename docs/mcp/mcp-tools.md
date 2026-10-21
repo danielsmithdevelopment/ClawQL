@@ -497,7 +497,7 @@ Stored proposals are per process and per session, and live as long as a parked m
 
 ### Durable programs
 
-**`CLAWQL_ENABLE_DURABLE_PROGRAMS=1`** turns programs on and journals each one, so a later `execute_program` can resume it — after a timeout, or in a new server process that sees the same journal directory — without re-calling journaled tools ([ADR 0015](../adr/0015-program-mode-alongside-search-execute.md) § Durable code mode on celld, program mode step 2). **Honesty: the durable journal is a celld-shaped file (JSONL) stand-in until the celld pin hosts the isolate** — the same plan runner and JSON `source`, no V8 isolate yet.
+**`CLAWQL_ENABLE_DURABLE_PROGRAMS=1`** turns programs on and journals each one, so a later `execute_program` can resume it — after a timeout, or in a new server process that sees the same journal directory — without re-calling journaled tools ([ADR 0015](../adr/0015-program-mode-alongside-search-execute.md) § Durable code mode on celld, program mode step 2). **Honesty: “durable programs” means journaled resume, not a durable execution engine** (no mid-function WASM/agent runtime claim — [golem honesty](../gtm/golem-overlap-and-durability-honesty.md)). **The durable journal is a celld-shaped file (JSONL) stand-in until the celld pin hosts the isolate** — the same plan runner and JSON `source`, no V8 isolate yet.
 
 Arguments become `{ source?, programId?, timeoutMs? }`:
 

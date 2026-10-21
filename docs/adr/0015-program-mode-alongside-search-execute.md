@@ -208,7 +208,7 @@ See [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md) (`execute_program`, `submit_p
 
 OpenCode’s `@opencode-ai/codemode` is an elegant **in-process** AST interpreter; their README leaves durable pause/resume, replay, and exactly-once to the host. ClawQL’s advantage is not a second hand-written subset interpreter — it is **ordinary JavaScript in a celld V8 isolate**, with the program journal in the cell’s **SQLite** (LTX → operator bucket, **RPO=0**: celld does not ack a durable write until it reaches the bucket). That solves OpenCode non-goals by construction.
 
-**Lead claim (only when earned):** “code mode that survives a crash” — not “a competitor to OpenCode.”
+**Lead claim (only when earned):** “code mode that survives a crash” — not “a competitor to OpenCode,” and **not** “ClawQL is a durable execution engine” ([Golem overlap & claim honesty](../gtm/golem-overlap-and-durability-honesty.md)). Until the fleet three-arm / LTX gate passes, public copy stays at **lab** / **Partial**.
 
 **Stand-in today:** with `CLAWQL_ENABLE_DURABLE_PROGRAMS=1` the v0 plan runner journals to a celld-shaped file (JSONL) stand-in with the same replay contract (Program mode v0 → Durable / Journal rows). `ProgramCellService` (`celld-program-cell.ts`) is the cell-shaped façade over that journal (run/resume); `celld-pin.ts` reports pin readiness only when `CELLD_VERSION=v0.4.0`, `CLAWQL_PROGRAM_CELLD_ISOLATE=1`, **and** `celld --version` matches the pin (fail-closed if the binary is missing) — it does not spawn an isolate. Not a pinned celld V8 / SQLite/LTX path yet; the earned-claim sequence below still gates any crash claim.
 
