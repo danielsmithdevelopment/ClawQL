@@ -342,16 +342,19 @@ async function main() {
 
   /**
    * @param {string} name
-   * @param {{ requireProgram?: boolean, programAttempts?: number }} [opts]
+   * @param {{ requireProgram?: boolean, programAttempts?: number, cell?: string }} [opts]
    */
   async function waitNode(name, opts = {}) {
     const requireProgram = opts.requireProgram !== false;
     const programAttempts = opts.programAttempts ?? 180; // ~45s — match smoke wait_program
+    // Probe a dedicated cell — never the trial DO — so readiness does not fight
+    // ownership of the program under test (worker defaults cell=default otherwise).
+    const cell = opts.cell || "health";
     const base = `http://127.0.0.1:${nodes[name].port}`;
     await waitUrl(`${base}/health`, (r) => r.ok, 240, 250);
     if (!requireProgram) return;
     await waitUrl(
-      `${base}/program/health`,
+      `${base}/program/health?cell=${encodeURIComponent(cell)}`,
       (r) => r.ok && /ProgramCellDO/.test(JSON.stringify(r.body)),
       programAttempts,
       250
@@ -458,6 +461,8 @@ async function main() {
     const victim = primary;
     const survivor = primary === "A" ? "B" : "A";
     const programId = `phased_${phase}_${i}_${Date.now()}`;
+    // Per-trial DO cell — avoids thrashing a single program:default owner across kills.
+    const cellQ = `cell=${encodeURIComponent(programId)}`;
     const baseV = `http://127.0.0.1:${nodes[victim].port}`;
     const baseS = `http://127.0.0.1:${nodes[survivor].port}`;
 
