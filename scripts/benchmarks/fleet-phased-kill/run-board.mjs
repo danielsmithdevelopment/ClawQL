@@ -81,16 +81,25 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function fetchJson(url, init) {
-  const res = await fetch(url, init);
-  const text = await res.text();
-  let body;
+async function fetchJson(url, init = {}, timeoutMs = 15_000) {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), timeoutMs);
   try {
-    body = text ? JSON.parse(text) : null;
-  } catch {
-    body = { raw: text.slice(0, 200) };
+    const res = await fetch(url, { ...init, signal: ac.signal });
+    const text = await res.text();
+    let body;
+    try {
+      body = text ? JSON.parse(text) : null;
+    } catch {
+      body = { raw: text.slice(0, 200) };
+    }
+    return { ok: res.ok, status: res.status, body };
+  } catch (err) {
+    const msg = err?.name === "AbortError" ? `timeout ${timeoutMs}ms` : String(err?.message || err);
+    return { ok: false, status: 0, body: { error: msg }, fetchError: true };
+  } finally {
+    clearTimeout(timer);
   }
-  return { ok: res.ok, status: res.status, body };
 }
 
 function spawnLogged(cmd, args, logPath) {
@@ -355,16 +364,38 @@ async function main() {
     // races celld ownership (409 Conflict on peer tunnels) and stalls /program/health.
     const postKillMs = Math.max(0, Number(process.env.FLEET_PHASED_POST_KILL_MS || 600));
     await sleep(postKillMs);
-    await waitNode(survivor);
+    // Survivor can self-fence (lease TTL) under R2 load — restart if dead.
+    if (!nodes[survivor].pid) {
+      console.warn(`fleet-phased: survivor ${survivor} dead before resume; restarting`);
+      await restartNode(survivor);
+    } else {
+      try {
+        await waitNode(survivor);
+      } catch {
+        console.warn(`fleet-phased: survivor ${survivor} unhealthy; restarting`);
+        await restartNode(survivor);
+      }
+    }
 
     const resumeStart = Date.now();
-    let resume;
-    for (let a = 0; a < 60; a++) {
-      resume = await fetchJson(`${baseS}/program/resume`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ programId }),
-      });
+    let resume = { ok: false, status: 0, body: null, fetchError: true };
+    for (let a = 0; a < 80; a++) {
+      if (!nodes[survivor].pid) {
+        await restartNode(survivor);
+      }
+      resume = await fetchJson(
+        `${baseS}/program/resume`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ programId }),
+        },
+        20_000
+      );
+      if (resume.fetchError) {
+        await sleep(200);
+        continue;
+      }
       if (resume.ok || resume.status !== 404) break;
       await sleep(100);
     }
