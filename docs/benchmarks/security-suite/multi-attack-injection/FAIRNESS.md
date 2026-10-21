@@ -38,7 +38,7 @@ Native peer configs · Obot deny precondition · same 14 benign · version pins 
 ## Live protocol (anti-cherry-pick)
 
 - **Pre-register** deployment-realistic models (`live-models.json`), including **small open-weight** (`llama-3.1-8b-instruct`, `qwen2.5-7b-instruct`) — _representativeness: deployments commonly run small open models_. Added before remaining runs (recorded in amendments). Publish every result, including all-refuse. **Do not** search for a gullible model until passthrough shows loss.
-- **AgentDojo** — v1 ‖ v2 published (n=949; outside `live-models.json`): v1 trade-off (ASR down, util cost); v2 recovers util but Slack ASR rose — [AGENTDOJO.md](./AGENTDOJO.md) + [RULES-DIFF](./AGENTDOJO-RULES-DIFF.md). **CaMeL** related work until same-model. Empirical wording only. Datadog counterfeit-policy remains the other published hardness set.
+- **AgentDojo** — v1 ‖ v2 ‖ v3 published (n=949; outside `live-models.json`): v1 trade-off; v2 util recovery + Slack ASR rise; v3 Slack ASR back down but util_clean collapsed — [AGENTDOJO.md](./AGENTDOJO.md) + [RULES-DIFF](./AGENTDOJO-RULES-DIFF.md). **CaMeL** related work until same-model. Empirical wording only. Datadog counterfeit-policy remains the other published hardness set.
 - **Open-weight dual-arm benign:** run benign on passthrough **and** ClawQL. Both-arms fail → model capability (weak tool calling); ClawQL-only fail → gateway cost. Do not misread a lower ClawQL benign score as ClawQL’s cost.
 - **Poison residue:** a model can refuse an injected instruction and still store poisoned text (ordinary summary). Measure where hostile content landed (trusted vs labeled), not only whether the model obeyed.
 

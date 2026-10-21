@@ -43,7 +43,7 @@ Open-weight pins added `2026-10-19T23:14Z` (_representativeness: deployments com
 
 ## Run order
 
-1. **AgentDojo** — v1 ‖ v2 published ([AGENTDOJO.md](./AGENTDOJO.md)): v1 severe util cost; v2 recovers util but Slack ASR rose (0.30→0.40). Scripted OOS holds; InjecAgent pending. CaMeL related work until same-model.
+1. **AgentDojo** — v1 ‖ v2 ‖ v3 published ([AGENTDOJO.md](./AGENTDOJO.md)): v1 severe util cost; v2 util↑ + Slack ASR 0.30→0.40; v3 Slack ASR→0.29 but util_clean→0.24 (trade-off). Scripted OOS holds; InjecAgent pending. CaMeL related work until same-model.
 2. Remaining hosted models (pre-registered)
 3. Open-weight with dual-arm benign
 

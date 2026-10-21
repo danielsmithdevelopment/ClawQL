@@ -12,7 +12,7 @@ export const multiAttackSummary =
 
 /** Concrete claim shape from results-smoke.json + AgentDojo trade-off publish. */
 export const multiAttackHeadlineResult =
-  'Scripted board: ClawQL 0 of 12 + 14 of 14 benign; peer best-config 0 of 12 + 9 of 14 (memory off); peer defaults 12 of 12. AgentDojo full gpt-4o-mini matrix published as a trade-off (ASR down ~80%, clean utility cost in 3/4 suites) — not a win; v2 defaults frozen for remeasure. CaMeL related work until same-model. Live table in progress — 1 of 7 pre-registered measured; six pending.'
+  'Scripted board: ClawQL 0 of 12 + 14 of 14 benign; peer best-config 0 of 12 + 9 of 14 (memory off); peer defaults 12 of 12. AgentDojo v1‖v2‖v3 (n=949): v3 cut Slack ASR vs v2 (0.40→0.29) but Slack util_clean collapsed (0.57→0.24) — trade-off, not a Pareto win. CaMeL related work until same-model. Live table in progress — 1 of 7 pre-registered measured; six pending.'
 
 export const multiAttackMeta = {
   measuredAt: '2026-10-20',
@@ -261,7 +261,7 @@ export const multiAttackLiveRows: readonly MultiAttackLiveRow[] = [
 ] as const
 
 export const multiAttackAgentDojoNote =
-  'AgentDojo v1‖v2 (n=949): v1 cut ASR ~80% at severe clean-util cost; v2 recovered util on Slack/workspace/travel but Slack ASR rose 0.30→0.40 (watchpoint). Scripted OOS holds; InjecAgent pending. See AGENTDOJO.md + RULES-DIFF.'
+  'AgentDojo v1‖v2‖v3 (n=949): v1 ASR↓/util cost; v2 util↑ but Slack ASR 0.30→0.40; v3 Slack ASR→0.29 with util_clean→0.24 (not Pareto). Scripted OOS holds; InjecAgent pending. See AGENTDOJO.md + RULES-DIFF.'
 
 export const multiAttackBenignSummary =
   'Every arm runs the same 14 benign cases (recall, search/cache/audit, memory writes, skills, same-source reply, internal team/forward, third-party still blocked). Peers that omit or block ingest fail the five memory-write cases and keep the rest — publish X of 14, then the memory-write breakout. Open-weight live models also run benign on passthrough so both-arms-fail reads as model capability, not ClawQL cost. Contamination = hostile content surfaced as trusted (same as the governance board).'

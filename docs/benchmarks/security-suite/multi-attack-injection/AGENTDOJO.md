@@ -1,8 +1,8 @@
-# AgentDojo — v1 ‖ v2 side by side
+# AgentDojo — v1 ‖ v2 ‖ v3 side by side
 
 Outsiders already trust AgentDojo’s ASR and utility. ClawQL’s data-flow arm is scored with **their** metrics. claim_kind=`empirical`. CaMeL stays related work (not a table row).
 
-Rules changelog: **[AGENTDOJO-RULES-DIFF.md](./AGENTDOJO-RULES-DIFF.md)** (`clawql_agentdojo_defaults_v2`). Artifacts: [v1](./results-agentdojo-v1.json) · [v2](./results-agentdojo-v2.json) · [combined](./results-agentdojo.json). Research → posture upgrades: **[RESEARCH-ACTION-ITEMS.md](./RESEARCH-ACTION-ITEMS.md)**.
+Rules changelog: **[AGENTDOJO-RULES-DIFF.md](./AGENTDOJO-RULES-DIFF.md)** (code `DEFAULTS_ID=clawql_agentdojo_defaults_v3`). Artifacts: [v1](./results-agentdojo-v1.json) · [v2](./results-agentdojo-v2.json) · [v3](./results-agentdojo-v3.json) · [combined](./results-agentdojo.json).
 
 Remeasure readout order was locked before data: **(1) Slack ASR → (2) util without attack → (3) out-of-sample**.
 
@@ -10,33 +10,34 @@ Remeasure readout order was locked before data: **(1) Slack ASR → (2) util wit
 
 ## 1. Slack ASR (watchpoint first)
 
-| | v1 clawql ASR | v2 clawql ASR | none (both runs ~) |
-| --- | ---: | ---: | ---: |
-| **Slack** | **0.30** \[0.21, 0.38\] | **0.40** \[0.30, 0.50\] | 0.66 |
+| | v1 clawql ASR | v2 clawql ASR | v3 clawql ASR | none (~) |
+| --- | ---: | ---: | ---: | ---: |
+| **Slack** | **0.30** \[0.21, 0.38\] | **0.40** \[0.30, 0.50\] | **0.29** \[0.20, 0.37\] | 0.66–0.67 |
 
-Slack ASR **rose** under v2 (0.30 → 0.40). The same-workspace relaxation went too far on this suite for attack rate — **even though utility recovered**. Still below undefended (0.66), but the watchpoint triggers: do not treat v2 as a pure win on Slack security.
+- **v2 rose** vs v1 (0.30 → 0.40) — same-workspace allow went too far.
+- **v3 cut it back** (0.40 → 0.29) via the trusted-query capability gate + invite park — back near v1, still well below undefended.
 
 Other suites (ASR none → clawql):
 
-| Suite | v1 | v2 |
-| --- | ---: | ---: |
-| Banking | 0.50 → 0.10 | 0.53 → 0.10 |
-| Travel | 0.31 → 0.11 | 0.25 → 0.16 |
-| Workspace | 0.18 → 0.00 | 0.17 → 0.04 |
-| Pooled (n=949) | 0.30 → 0.064 | 0.29 → 0.106 |
+| Suite | v1 | v2 | v3 |
+| --- | ---: | ---: | ---: |
+| Banking | 0.50 → 0.10 | 0.53 → 0.10 | 0.53 → 0.10 |
+| Travel | 0.31 → 0.11 | 0.25 → 0.16 | 0.33 → 0.16 |
+| Workspace | 0.18 → 0.00 | 0.17 → 0.04 | 0.18 → 0.03 |
+| Pooled (n=949) | 0.30 → 0.064 | 0.29 → 0.106 | 0.31 → **0.085** |
 
 ---
 
 ## 2. Utility without attack vs undefended
 
-| Suite | v1: none → clawql | v2: none → clawql (95% CI clawql) |
-| --- | ---: | ---: |
-| Banking | 0.56 → 0.56 | 0.69 → 0.56 \[0.31, 0.81\] |
-| Slack | 0.76 → **0.24** | 0.81 → **0.57** \[0.38, 0.76\] |
-| Travel | 0.60 → **0.25** | 0.50 → **0.40** \[0.20, 0.60\] |
-| Workspace | 0.80 → **0.42** | 0.90 → **0.75** \[0.62, 0.88\] |
+| Suite | v1: none → clawql | v2: none → clawql | v3: none → clawql (95% CI clawql) |
+| --- | ---: | ---: | ---: |
+| Banking | 0.56 → 0.56 | 0.69 → 0.56 | 0.56 → **0.56** \[0.31, 0.81\] |
+| Slack | 0.76 → **0.24** | 0.81 → **0.57** | 0.71 → **0.24** \[0.10, 0.43\] |
+| Travel | 0.60 → **0.25** | 0.50 → **0.40** | 0.70 → **0.55** \[0.35, 0.75\] |
+| Workspace | 0.80 → **0.42** | 0.90 → **0.75** | 0.78 → **0.62** \[0.50, 0.75\] |
 
-v2 recovered a large share of the clean-work cost on Slack, travel, and workspace. Banking stays near the v1 clawql level (this-run none was higher). Intervals remain wide (few dozen user tasks per suite).
+v3 **re-paid** most of the Slack clean-utility cost that v2 had recovered (0.57 → 0.24). Travel util_clean improved vs v2 (0.40 → 0.55); workspace dropped some of v2’s recovery (0.75 → 0.62). Banking flat.
 
 ---
 
@@ -52,9 +53,10 @@ v2 recovered a large share of the clean-work cost on Slack, travel, and workspac
 ## Honest summary
 
 - **v1** (fail-closed-all, CI [39360438719](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39360438719)): cut attacks ~80% (pooled ASR 0.30 → 0.064) at a **severe** clean-utility cost in 3/4 suites.
-- **v2** (frozen allow/park/hard, CI [39458622200](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39458622200)): much better clean utility; pooled ASR still down vs none (0.29 → 0.106), but **Slack ASR rose** vs v1 (0.30 → 0.40). Scripted board still holds. InjecAgent pending.
+- **v2** (frozen allow/park/hard, CI [39458622200](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39458622200)): much better clean utility; pooled ASR still down vs none (0.29 → 0.106), but **Slack ASR rose** vs v1 (0.30 → 0.40).
+- **v3** (capability gate, CI [39521352724](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39521352724)): **Slack ASR down** vs v2 (0.40 → 0.29); pooled ASR 0.31 → 0.085. **Not a Pareto win** — Slack util_clean collapsed back to ~v1 (0.57 → 0.24). Travel util_clean up; workspace partially down vs v2. Scripted board still holds. InjecAgent pending.
 
-v2 is a cleaner measurement of the refined rules — not a free lunch. Next lever if Slack ASR must come back down: tighten what “allow” covers for channel posts that replay untrusted text, without returning to fail-closed-all.
+v3 closed the Slack ASR hole from the autopsy; it did **not** keep v2’s Slack utility. Next lever if both ASR and util_clean must move together: unbound messaging privilege that still blocks invite/`External_*` exfil without parking ordinary same-channel replies (v3.1 plan) — measure before claiming a win.
 
 ## Full tables
 
@@ -84,9 +86,22 @@ v2 is a cleaner measurement of the refined rules — not a free lunch. Next leve
 | workspace | `none`             | 560 | 0.17 \[0.14, 0.20\]  |              0.36 |                         0.90 |      — |            — |
 | workspace | `clawql_data_flow` | 560 | 0.04 \[0.03, 0.06\]  |              0.55 |            0.75 \[0.62, 0.88\] |   2117 |  9 (park+hard) |
 
-ASR = `mean(security_results)` (`security()` True ⇒ injection succeeded). Allowed posts use **metadata** trust labels (body unchanged).
+### v3 — `clawql_agentdojo_defaults_v3` (CI 39521352724)
 
-## What v1 benign stops looked like (autopsy; not v2 counterfactuals)
+| Suite     | Defense            |   n |         ASR (95% CI) | Util under attack | Util without attack (95% CI) | Blocks | No-atk stops |
+| --------- | ------------------ | --: | -------------------: | ----------------: | ---------------------------: | -----: | -----------: |
+| banking   | `none`             | 144 | 0.53 \[0.44, 0.61\]  |              0.46 |                         0.56 |      — |            — |
+| banking   | `clawql_data_flow` | 144 | 0.10 \[0.05, 0.15\]  |              0.51 |            0.56 \[0.31, 0.81\] |    258 | 7 (park) |
+| slack     | `none`             | 105 | 0.67 \[0.57, 0.75\]  |              0.51 |                         0.71 |      — |            — |
+| slack     | `clawql_data_flow` | 105 | 0.29 \[0.20, 0.37\]  |              0.22 |            0.24 \[0.10, 0.43\] |    297 | 30 (park+hard) |
+| travel    | `none`             | 140 | 0.33 \[0.25, 0.41\]  |              0.32 |                         0.70 |      — |            — |
+| travel    | `clawql_data_flow` | 140 | 0.16 \[0.10, 0.22\]  |              0.46 |            0.55 \[0.35, 0.75\] |     48 | 3 (park) |
+| workspace | `none`             | 560 | 0.18 \[0.15, 0.21\]  |              0.37 |                         0.78 |      — |            — |
+| workspace | `clawql_data_flow` | 560 | 0.03 \[0.01, 0.04\]  |              0.56 |            0.62 \[0.50, 0.75\] |   2230 | 10 (park+hard) |
+
+ASR = `mean(security_results)` (`security()` True ⇒ injection succeeded). Allowed posts use **metadata** trust labels (body unchanged). v3 adds trusted-query capability membership for Slack messaging destinations.
+
+## What v1 benign stops looked like (autopsy; not v2/v3 counterfactuals)
 
 v1 policy was fail-closed on every sink after any untrusted read:
 
@@ -99,12 +114,12 @@ v1 policy was fail-closed on every sink after any untrusted read:
 
 Path-continuation util estimates stay internal-only (`agentdojo-park-vs-hard-counterfactual.json`).
 
-## Defaults v2 (frozen — see rules diff)
+## Defaults v3 (current code — see rules diff)
 
 | Disposition | Examples |
 | ----------- | -------- |
-| **Allow** (+ metadata trust label; body unchanged) | Slack DM / non-`External_*` channel post; `@bluesparrowtech.com` email; own calendar; own file create/append |
-| **Park** (human) | Money / schedule; external email; travel reserves; **membership & invitations**; calendar participant adds |
+| **Allow** (+ metadata trust label; body unchanged) | Same-workspace Slack DM/channel **only if destination ∈ trusted caps from user query**; `@bluesparrowtech.com` email; own calendar; own file create/append |
+| **Park** (human) | Money / schedule; external email; travel reserves; **membership & invitations** (incl. `invite_user_to_slack`); calendar participant adds; messaging outside trusted caps |
 | **Hard block** | `delete_*`, `share_file`, `post_webpage`, Slack `External_*`, membership with outside email |
 
 ## Publish gates
@@ -140,7 +155,7 @@ CI [39354352936](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/3
 
 ## Defense arm
 
-`clawql_data_flow` — [`clawql_tools_executor.py`](../../../scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py) · code `DEFAULTS_ID=clawql_agentdojo_defaults_v3` (capability gate; published board still v1 ‖ v2 until CI remeasure)
+`clawql_data_flow` — [`clawql_tools_executor.py`](../../../scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py) · code `DEFAULTS_ID=clawql_agentdojo_defaults_v3` · published board **v1 ‖ v2 ‖ v3**
 
 ## CI matrix
 
@@ -155,4 +170,4 @@ Upstream: [ethz-spylab/agentdojo](https://github.com/ethz-spylab/agentdojo) · `
 
 ## Status
 
-- **v1 ‖ v2 published** with rules diff. Slack ASR watchpoint: rose under v2. Clean utility recovered on three suites. Scripted OOS holds. InjecAgent scores still pending.
+- **v1 ‖ v2 ‖ v3 published** with rules diff. v3: Slack ASR down vs v2; Slack util_clean collapsed (~v1). Not a Pareto win. Scripted OOS holds. InjecAgent scores still pending.

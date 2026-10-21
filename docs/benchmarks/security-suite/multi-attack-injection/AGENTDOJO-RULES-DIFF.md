@@ -1,8 +1,8 @@
 # AgentDojo `clawql_data_flow` rules diff (frozen)
 
 **Defaults id (current code):** `clawql_agentdojo_defaults_v3`  
-**Published boards:** v1 ‖ v2 in [AGENTDOJO.md](./AGENTDOJO.md); **v3 pending CI remeasure** (Slack-first).  
-**v1 CI:** [39360438719](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39360438719) · **v2 CI:** [39458622200](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39458622200).
+**Published boards:** v1 ‖ v2 ‖ v3 in [AGENTDOJO.md](./AGENTDOJO.md).  
+**v1 CI:** [39360438719](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39360438719) · **v2 CI:** [39458622200](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39458622200) · **v3 CI:** [39521352724](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39521352724).
 
 Published **side by side** with this changelog — not a replacement that erases what we got wrong.
 
@@ -65,8 +65,8 @@ Internal-only estimates (path-continuation counterfactuals) stay in `agentdojo-p
 
 ## How the remeasure was read (fixed order — applied)
 
-1. **Slack ASR first.** v1 clawql **0.30 → v2 0.40** — rose noticeably. Relaxation went too far on Slack attack rate regardless of utility gains.
-2. **Utility without attack vs undefended.** Large recovery on Slack (0.24→0.57), workspace (0.42→0.75), travel (0.25→0.40); banking ~flat at 0.56 clawql.
+1. **Slack ASR first.** v1 clawql **0.30 → v2 0.40** (rose) → **v3 0.29** (cut back via capability gate). Still below undefended (~0.67).
+2. **Utility without attack vs undefended.** v2 recovered Slack/workspace/travel; **v3 re-collapsed Slack util_clean to ~0.24** (near v1) while travel util_clean rose (0.40→0.55) and workspace partially gave back (0.75→0.62). Banking flat at 0.56 clawql.
 3. **Out-of-sample.** Scripted board holds (0/12 + 14/14). InjecAgent scores still pending — generalization beyond scripted is **not** claimed.
 
-Published **v1 ‖ v2 + this diff** in AGENTDOJO.md.
+Published **v1 ‖ v2 ‖ v3 + this diff** in AGENTDOJO.md. v3 is an ASR fix for Slack, **not** a Pareto win over v2.
