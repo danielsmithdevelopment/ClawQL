@@ -25,16 +25,16 @@ unclear, what is missing is **discovery**, not a plan runner.
 
 ## What ships as the default path now
 
-| Lever                                                                              | Status                                            | Evidence                                                                                   |
-| ---------------------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **SQLite catalog, OOP build** (`CLAWQL_CATALOG_SQLITE` on, `BUILD=oop`)            | **Default on**                                    | Spec-size RSS independent of OAS parse; board homes show `oop-build` → `LOAD=db`           |
-| **Lazy horizontal plugins** (require-on-flag; k8s dynamic import)                  | **Shipped**                                       | Ready maps free of k8s/xenova/stripe when tiers off; first k8s import ~363 ms; fail-closed |
-| **Server-side `where`** + examples in tool schema + fix-named `where_invalid`      | **Default product**                               | Scripted known-op **1743** weighted; dual-model gate win vs Executor                       |
-| **Observation budget** (`totalCount` in truncated list notes; `full:true` opt-out) | **Default on** (~8k chars)                        | Stops blind models from eating ~60k DNS dumps                                              |
-| **Bun + `--smol`, ≥2 CPUs**                                                        | **Preferred deploy runtime**                      | Plateau ~**130 MB** anon; faster than uncapped Node at p50/p99/p999 — see heap table below |
-| **Node `--max-old-space-size=256`**                                                | **Lean Node default**                             | Caps plateau ~**132 MB**; costs ~**3.5 ms** at p99 vs uncapped                             |
-| **Compact search** (`CLAWQL_SEARCH_COMPACT`)                                       | **Labeled arm only** until routing eval clears it | Cuts first-session discovery; not product default yet                                      |
-| **Known-op reuse** (skills / memory → steady-state execute-by-id)                  | **Product intent**                                | Cheapest arm on this workflow                                                              |
+| Lever                                                                              | Status                                                                        | Evidence                                                                                   |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **SQLite catalog, OOP build** (`CLAWQL_CATALOG_SQLITE` on, `BUILD=oop`)            | **Default on**                                                                | Spec-size RSS independent of OAS parse; board homes show `oop-build` → `LOAD=db`           |
+| **Lazy horizontal plugins** (require-on-flag; k8s dynamic import)                  | **Shipped**                                                                   | Ready maps free of k8s/xenova/stripe when tiers off; first k8s import ~363 ms; fail-closed |
+| **Server-side `where`** + examples in tool schema + fix-named `where_invalid`      | **Default product**                                                           | Scripted known-op **1743** weighted; dual-model gate win vs Executor                       |
+| **Observation budget** (`totalCount` in truncated list notes; `full:true` opt-out) | **Default on** (~8k chars)                                                    | Stops blind models from eating ~60k DNS dumps                                              |
+| **Bun + `--smol`, ≥2 CPUs**                                                        | **Default host MCP** (Helm `hostRuntime: bun`, image `runtime`)               | Plateau ~**130 MB** anon; faster than uncapped Node at p50/p99/p999 — see heap table below |
+| **Node `--max-old-space-size=256`**                                                | **Legacy minority host** (Helm `hostRuntime: node` + `--target runtime-node`) | Caps plateau ~**132 MB**; costs ~**3.5 ms** at p99 vs uncapped                             |
+| **Compact search** (`CLAWQL_SEARCH_COMPACT`)                                       | **Labeled arm only** until routing eval clears it                             | Cuts first-session discovery; not product default yet                                      |
+| **Known-op reuse** (skills / memory → steady-state execute-by-id)                  | **Product intent**                                                            | Cheapest arm on this workflow                                                              |
 
 **Flag:** `CLAWQL_ENABLE_PROGRAMS` stays **off** by default. When on, programs sit
 beside `execute`; agents choose them for multi-call work.

@@ -91,7 +91,17 @@ clawql-mcp-grpc:
 obsidianVaultPath: /vault
 port: "8080"
 mcpPath: /mcp
-nodeOptions: "--max-old-space-size=1536"
+# Host MCP process in this Deployment (celld is preferred isolate deploy via Streams/Workers).
+# Product ladder: celld → Bun (default host) → Node (legacy minority).
+# Default image (`ghcr.io/.../clawql-mcp`) is Bun distroless with ENTRYPOINT `bun --smol`.
+# For hostRuntime=node, build/publish `--target runtime-node` (or pin a Node tag) before switching.
+hostRuntime: bun # bun | node
+bun:
+  smol: true
+  script: dist/server-http.js
+# Node V8 heap — used when hostRuntime=node and by Node-based chart sidecars (e.g. NATS worker).
+# Lean default matches docs/benchmarks/cloudflare-multiturn/measured-defaults.md (was 1536).
+nodeOptions: "--max-old-space-size=256"
 
 # Max protobuf send/receive per frame for MCP gRPC (`GRPC_MAX_MESSAGE_LENGTH`). Large `execute` bodies
 # (e.g. base64 PDF → Tika) should use **`model_context_protocol.Mcp/CallTool`** on the gRPC port, not Streamable HTTP JSON.

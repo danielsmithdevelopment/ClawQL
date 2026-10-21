@@ -91,6 +91,24 @@ spec:
             {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- $hostRuntime := .Values.hostRuntime | default "bun" }}
+          {{- $mcpScript := "dist/server-http.js" }}
+          {{- if and .Values.bun .Values.bun.script }}
+          {{- $mcpScript = .Values.bun.script }}
+          {{- end }}
+          {{- if eq $hostRuntime "bun" }}
+          command: ["/usr/local/bin/bun"]
+          args:
+            {{- /* Default on when bun.smol omitted; sprig `default` treats false as empty — use toString. */}}
+            {{- if ne (toString .Values.bun.smol) "false" }}
+            - "--smol"
+            {{- end }}
+            - {{ $mcpScript | quote }}
+          {{- else if eq $hostRuntime "node" }}
+          # Distroless nodejs ENTRYPOINT is `node`; replace CMD with the script path.
+          args:
+            - {{ $mcpScript | quote }}
+          {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.http.targetPort | int }}
@@ -112,8 +130,13 @@ spec:
               value: {{ .Values.mcpPath | quote }}
             - name: CLAWQL_BUNDLED_OFFLINE
               value: {{ .Values.bundledOffline | quote }}
+            {{- if eq $hostRuntime "bun" }}
+            - name: BUN_RUNTIME_TRANSPILER_CACHE_PATH
+              value: "0"
+            {{- else }}
             - name: NODE_OPTIONS
               value: {{ .Values.nodeOptions | quote }}
+            {{- end }}
             # Authoritative plugin + provider composition (ClawQLInstance).
             - name: CLAWQL_INSTANCE_SPEC
               value: {{ include "clawql-mcp.instanceSpecJson" . | quote }}
