@@ -26,7 +26,7 @@ Do **not** put provider tokens in **`extraEnv`** or chart-managed **`documentPip
 
 ## Vault Transit encrypt-at-rest (recommended for SecretStore)
 
-When ClawQL persists secrets in a database or local store (SQLite `SecretStore`, inference credential rows, etc.), prefer **Vault Transit** so a stealer that dumps the store gets ciphertext only — the encryption key never leaves Vault. This is the same failure mode as the October 2026 LiteLLM `1.107.0` supply-chain payload (which queried plaintext credential tables).
+When ClawQL persists secrets in a database or local store (SQLite `SecretStore`, inference credential rows, etc.), prefer **Vault Transit** so a stealer that dumps the store gets ciphertext only — the encryption key never leaves Vault. That closes the common failure mode where malware or a compromised dependency reads plaintext credential tables from disk.
 
 **Claim:** a database dump yields only ciphertext that **cannot be moved between tenants** (derived-key context binds tenant ID + secret path). Non-ciphertext rows are always rejected.
 
@@ -53,16 +53,16 @@ Library entry points (`clawql-auth`): `VaultTransitProvider`, `TransitEncryptedS
 3. **Fail closed on Vault outage** — decrypt errors emit `VAULT_TRANSIT_DECRYPT_FAILED`. A short in-memory cache (`CLAWQL_VAULT_TRANSIT_CACHE_TTL_MS`, default 30s) rides out brief blips; plaintext is never written to disk. **Vault is on the critical path for SecretStore-backed inference.**
 4. **Rotation / rewrap** — on a schedule: `vault write -f transit/keys/clawql-secrets/rotate`, then `rewrapAllSecretsEffect(store)`, then raise `min_decryption_version` once rewrap is clean.
 
-### LiteLLM IoCs outside the repo
+### Python environments outside the repo lockfiles
 
-The ClawQL lockfiles do not pull `litellm`, but AgentDojo harnesses, `pipx` tools, and Python envs on the Mac mini / laptops have their own site-packages. Scan those hosts:
+Repo lockfiles are not the only install surface. Harnesses, `pipx` tools, and developer laptops have their own site-packages. After a public package compromise, scan those hosts with:
 
 ```bash
 bash scripts/security/scan-litellm-ioc.sh
-# optional: bash scripts/security/scan-litellm-ioc.sh /path/to/agentdojo/.venv/lib/python3.x/site-packages
+# optional: bash scripts/security/scan-litellm-ioc.sh /path/to/venv/lib/python3.x/site-packages
 ```
 
-Look for `cook.pth` / `cook.py`, `litellm-1.107.0*.dist-info`, and `/tmp/remote_code_loader.lock` / `/tmp/.pc_once_*`.
+The script looks for known site-packages droppers (`cook.pth` / `cook.py`) and `/tmp` persistence markers. Broader supply-chain posture: [`docs/security/supply-chain-posture.md`](../security/supply-chain-posture.md).
 
 **KV vs Transit:** Helm + ESO still sync **KV** `secret/clawql/providers` into `clawql-provider-env` for process env. Transit protects **application SecretStore** values at rest. Use both: KV for injection, Transit for anything ClawQL writes to a DB.
 

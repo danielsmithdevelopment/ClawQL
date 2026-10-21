@@ -48,6 +48,10 @@ At a glance:
 
 **Important limits:** the Kyverno rule matches **ClawQL’s two GHCR image patterns** only; other containers in the same namespace (databases, Onyx stack, etc.) are **not** covered by that policy. CI signing does not stop arbitrary **`kubectl`** if someone bypasses admission—**Kyverno** (or equivalent) is what ties **deployed** ClawQL images to the **signed** digests from this pipeline.
 
+## Supply-chain posture (how to verify)
+
+**One-pager for reviewers:** **[supply-chain-posture.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/supply-chain-posture.md)** — signed releases with npm provenance, lockfile integrity hashes, images pinned by digest, SBOM gates, Vault Transit for provider keys at rest, and an operator IoC scanner for hosts outside the repo lockfile. Honest about limits; not a claim of immunity.
+
 ## npm and other artifacts
 
 Container images are not npm packages. **npm** publish hardening (pack → scan → publish, OIDC provenance): **[npm-supply-chain.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/npm-supply-chain.md)** ([#156](https://github.com/danielsmithdevelopment/ClawQL/issues/156)).
@@ -55,6 +59,7 @@ Container images are not npm packages. **npm** publish hardening (pack → scan 
 ## Security references (repo)
 
 - [Security status (verifiable scan history)](/security/status)
+- [Supply-chain posture](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/supply-chain-posture.md)
 - [Defense in depth — full MCP + k3s guide (this site)](/security/defense-in-depth)
 - [Security docs index](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/README.md)
 - [Golden image pipeline (full E2E + enforcement)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)

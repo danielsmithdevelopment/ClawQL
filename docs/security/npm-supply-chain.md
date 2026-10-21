@@ -24,6 +24,6 @@ This complements the **container** golden-image flow in [`.github/workflows/dock
 - Publishing from a maintainer laptop **without** the same gates that `main` enforces.
 - Long-lived **`NPM_TOKEN`** in many places when **OIDC trusted publishing** is available for GitHub-hosted releases.
 
-## Optional next step in this repo
+## Shipped in this repo
 
-Add a **`npm-publish.yml`** workflow (tag / manual `workflow_dispatch`) that: **`needs`** **`supply-chain`** → **`npm pack`** → **Trivy on `.tgz`** → **`npm publish --provenance`** (OIDC). Wire **`permissions: id-token: write, contents: read`** and configure the package on npmjs.com for **trusted publishers** pointing at this GitHub repo.
+[`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml) runs on version tags / `workflow_dispatch`: **`repo-supply-chain`** → pack → Trivy on artifacts → **`npm publish --provenance`** with **`permissions: id-token: write`**. Configure each package on npmjs.com for **trusted publishers** pointing at this GitHub repository. Operator-facing summary: [supply-chain-posture.md](supply-chain-posture.md).

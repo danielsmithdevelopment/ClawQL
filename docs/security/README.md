@@ -5,6 +5,7 @@ This section tracks ClawQL security architecture, shipped controls, and roadmap 
 ## Golden image pipeline (start here)
 
 - **End-to-end** (CI gates → single OCI build → Trivy → skopeo → Cosign → tag promotion) **and** how **Kyverno + Helm** enforce signatures at deploy: **[`golden-image-pipeline.md`](golden-image-pipeline.md)**
+- **Supply-chain posture (verify-what-we-claim):** **[`supply-chain-posture.md`](supply-chain-posture.md)** — npm provenance, lockfile integrity, digest pins, SBOM, Vault Transit, host IoC scan — without naming third-party incidents
 
 ## Core references
 
