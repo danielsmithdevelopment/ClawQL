@@ -6,7 +6,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Session information-flow control (IFC)',
   description:
-    'What session IFC is, where it is defined, how and when it is called on native tools and catalog execute, mayFlow rules, env knobs, and what it is not (Panguard, park).',
+    'Layer 5 information-flow: OpenAPPA on the security stack, ClawQL session IFC call sites (mayFlow), vs Panguard Layer 4 and mandate park.',
   path: '/security/session-ifc',
   ogType: 'article',
 })

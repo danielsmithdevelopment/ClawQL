@@ -73,6 +73,14 @@ function rewriteLinksForSite(body) {
           `](${GH_MAIN}/docs/adr/0015-program-mode-alongside-search-execute.md)`,
         )
         .replaceAll(
+          '](../adr/0013-gdp-ts-compile-time-auth-proofs.md)',
+          `](${GH_MAIN}/docs/adr/0013-gdp-ts-compile-time-auth-proofs.md)`,
+        )
+        .replaceAll(
+          '](../../apps/www/src/lib/security-stack.ts)',
+          `](${GH_MAIN}/apps/www/src/lib/security-stack.ts)`,
+        )
+        .replaceAll(
           '](../benchmarks/security-suite/multi-attack-injection/NATIVE-TOOL-GOVERNANCE.md)',
           `](${GH_MAIN}/docs/benchmarks/security-suite/multi-attack-injection/NATIVE-TOOL-GOVERNANCE.md)`,
         )
