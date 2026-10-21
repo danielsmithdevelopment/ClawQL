@@ -8,18 +8,18 @@ How we reduce risk that a compromised dependency, registry upload, or image tag 
 
 ## What you can verify today
 
-| Control | What it does | Where to look |
-| ------- | ------------ | ------------- |
-| **CI supply-chain gates** | OSV-Scanner + Trivy (HIGH/CRITICAL) + Syft CycloneDX SBOM on every merge path | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) job `supply-chain` |
-| **Lockfiles with integrity** | `package-lock.json` records resolved URLs and SHA-512 integrity hashes; installs use `npm ci` | Root lockfile; CI and Docker builds |
-| **npm trusted publishing + provenance** | Releases publish from GitHub Actions OIDC (`id-token: write`); `npm publish --provenance` attaches build attestations | [`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml) · [npm-supply-chain.md](npm-supply-chain.md) |
-| **One scanned OCI layout → registry** | BuildKit writes a local OCI layout; Trivy scans those bytes; `skopeo copy` pushes the same layout — no second “release” build | [golden-image-pipeline.md](golden-image-pipeline.md) · [docker-publish.yml](../../.github/workflows/docker-publish.yml) |
-| **Cosign keyless signatures** | Digests signed with GitHub Actions OIDC (Fulcio/Rekor); `cosign verify` out-of-band | [docker/README.md](../../docker/README.md) |
-| **Images pinned by digest at admit** | Kyverno `verifyImages` defaults on for ClawQL GHCR patterns; rolling tags move only after sign+verify | [image-signature-enforcement.md](image-signature-enforcement.md) |
-| **SBOM artifacts** | Syft CycloneDX on repo gates and image builds (BuildKit SBOM attestations where attached) | CI artifacts `sbom-cyclonedx-*`; release pipeline |
-| **Provider keys ciphertext-at-rest** | Vault / OpenBao Transit wraps `SecretStore`; tenant+path derived-key context; fail-closed decrypt | [vault-provider-secrets.md](../deployment/vault-provider-secrets.md) · `clawql-auth` Transit |
-| **Host IoC scan (operator)** | Script scans site-packages / pipx / `/tmp` markers on machines the lockfile cannot see | [`scripts/security/scan-litellm-ioc.sh`](../../scripts/security/scan-litellm-ioc.sh) |
-| **Secret leak gates** | Gitleaks on the working tree in CI; pre-commit hook; scheduled TruffleHog on history | [security README](README.md) · `.gitleaks.toml` |
+| Control                                 | What it does                                                                                                                  | Where to look                                                                                                               |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **CI supply-chain gates**               | OSV-Scanner + Trivy (HIGH/CRITICAL) + Syft CycloneDX SBOM on every merge path                                                 | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) job `supply-chain`                                             |
+| **Lockfiles with integrity**            | `package-lock.json` records resolved URLs and SHA-512 integrity hashes; installs use `npm ci`                                 | Root lockfile; CI and Docker builds                                                                                         |
+| **npm trusted publishing + provenance** | Releases publish from GitHub Actions OIDC (`id-token: write`); `npm publish --provenance` attaches build attestations         | [`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml) · [npm-supply-chain.md](npm-supply-chain.md) |
+| **One scanned OCI layout → registry**   | BuildKit writes a local OCI layout; Trivy scans those bytes; `skopeo copy` pushes the same layout — no second “release” build | [golden-image-pipeline.md](golden-image-pipeline.md) · [docker-publish.yml](../../.github/workflows/docker-publish.yml)     |
+| **Cosign keyless signatures**           | Digests signed with GitHub Actions OIDC (Fulcio/Rekor); `cosign verify` out-of-band                                           | [docker/README.md](../../docker/README.md)                                                                                  |
+| **Images pinned by digest at admit**    | Kyverno `verifyImages` defaults on for ClawQL GHCR patterns; rolling tags move only after sign+verify                         | [image-signature-enforcement.md](image-signature-enforcement.md)                                                            |
+| **SBOM artifacts**                      | Syft CycloneDX on repo gates and image builds (BuildKit SBOM attestations where attached)                                     | CI artifacts `sbom-cyclonedx-*`; release pipeline                                                                           |
+| **Provider keys ciphertext-at-rest**    | Vault / OpenBao Transit wraps `SecretStore`; tenant+path derived-key context; fail-closed decrypt                             | [vault-provider-secrets.md](../deployment/vault-provider-secrets.md) · `clawql-auth` Transit                                |
+| **Host IoC scan (operator)**            | Script scans site-packages / pipx / `/tmp` markers on machines the lockfile cannot see                                        | [`scripts/security/scan-litellm-ioc.sh`](../../scripts/security/scan-litellm-ioc.sh)                                        |
+| **Secret leak gates**                   | Gitleaks on the working tree in CI; pre-commit hook; scheduled TruffleHog on history                                          | [security README](README.md) · `.gitleaks.toml`                                                                             |
 
 Evidence of gate outcomes (not marketing badges): **[Security status](https://docs.clawql.com/security/status)** — append-only Trivy/OSV history from `main` CI.
 
