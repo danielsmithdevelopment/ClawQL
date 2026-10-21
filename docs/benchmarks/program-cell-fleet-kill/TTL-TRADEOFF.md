@@ -14,13 +14,12 @@ Resume p50 under stock settings is **~12s** because the survivor waits for the d
 
 ### Latest lab numbers (three columns)
 
-| Row              | n                     | dups | outcome_unknown rate | self-fences | deadline misses | resume p50  | resume p99 | failover claim |
-| ---------------- | --------------------- | ---- | -------------------- | ----------- | --------------- | ----------- | ---------- | -------------- |
-| stock_r2_ttl_10s | **1000** (complete) | 0 | 0.481 | **6** | **9** | **11908ms** | 34292ms | **~12s** |
-| ttl_only_30s     | 40                    | 0    | 0.55                 | 0           | 0               | **31939ms** | 46488ms | **~32s** |
+| Row              | n                   | dups | outcome_unknown rate | self-fences | deadline misses | resume p50  | resume p99 | failover claim |
+| ---------------- | ------------------- | ---- | -------------------- | ----------- | --------------- | ----------- | ---------- | -------------- |
+| stock_r2_ttl_10s | **1000** (complete) | 0    | 0.481                | **6**       | **9**           | **11908ms** | 34292ms    | **~12s**       |
+| ttl_only_30s     | 40                  | 0    | 0.55                 | 0           | 0               | **31939ms** | 46488ms    | **~32s**       |
 
 Duplicates stay zero in both. Stretching TTL to 30s moves failover from ~12s to ~32s — the pause customers feel. Stock has **6 self-fences** and **9 resumeDeadlineMisses** (availability) — not hidden. Rule-of-three duplicate upper bound 0.3% @95%. Preferred production keeps the ~10s budget and fixes renew cadence / lease store, not the TTL alone.
-
 
 ## Claim (per row)
 
