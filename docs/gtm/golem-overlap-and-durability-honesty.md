@@ -106,9 +106,9 @@ Do **not** put Golem on the MCP token/governance pets board as if it were Bifros
 
 He is publicly pressure-testing frameworks that overclaim durability. Order:
 
-1. Fleet LTX / Tier C numbers with precise wording (A/B/D already CI-gated — [STATUS](../benchmarks/durability-proof/STATUS.md)).
+1. Fleet LTX / Tier C numbers with precise wording (A/B/D already CI-gated — [STATUS](../benchmarks/durability-proof/STATUS.md)). Scoped claim: *A program killed mid-run on one node resumed on another and never repeated a write; a write interrupted in flight is marked outcome unknown for a person to resolve.* (two nodes, one storage provider — R2 phased board).
 2. Private note first: harness + proposed Golem config — “Is this how you’d set it up?”
-3. Then results in context: name what Golem does well (shipped durability); state ClawQL’s **narrow** at-most-once write claim + TLA+ + crash evidence; invite him to break it.
+3. Then results in context: name what Golem does well (shipped durability); state ClawQL’s **narrow** “never repeated a write” claim + TLA+ + crash evidence; invite him to break it. Avoid “durable execution” / “exactly once.”
 4. Lead with interoperability / joint demo (Golem agent → ClawQL MCP tools → park risky writes → survive crash).
 5. Short note with links — not a wall of numbers. **No Golem-named public board before that conversation.**
 

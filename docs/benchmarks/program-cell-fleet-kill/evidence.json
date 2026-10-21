@@ -1,17 +1,19 @@
 {
   "kind": "celld-fleet-peer-sigkill",
-  "measuredAt": "2026-10-21T02:29:16.483235+00:00",
+  "measuredAt": "2026-10-21T02:29:16.483Z",
   "ok": true,
   "status": "measured",
-  "bucket": "s3://clawql-streams-state/tier-c-20261021022850",
-  "diagnoseLines": 6,
+  "storageProvider": "cloudflare-r2",
+  "nodeCount": 2,
+  "bucketRedacted": true,
+  "diagnoseConditionalWrite": "ok",
   "arms": [
     {
       "arm": "write_sigkill_peer_resume_outcome_unknown",
       "ok": true,
-      "programId": "prog_fleetkill_write_1792549742",
-      "detail": "SIGKILL node A after write intent; resume on node B reported outcome_unknown"
+      "detail": "SIGKILL node A after write intent; resume on node B reported outcome_unknown; write not re-sent"
     }
   ],
-  "honesty": "Tier C lab on Cloudflare R2 (clawql-streams-state): two celld fleet nodes, diagnose conditional-write ok, SIGKILL node A → resume on B with outcome_unknown. Not a three-arm AWS load-test cost board; host WORM continuity still separate. Not a durable execution engine."
+  "claim": "A program killed mid-run on one node resumed on another and never repeated a write; a write interrupted in flight is marked outcome unknown for a person to resolve.",
+  "honesty": "Tier C lab: two celld nodes, one object-storage provider that passed diagnose conditional-write. Not a durable execution engine; not exactly-once delivery. Not the AWS three-arm cost board; host WORM continuity still separate."
 }

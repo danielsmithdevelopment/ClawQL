@@ -46,7 +46,7 @@ if [[ -z "${CELLD_BUCKET:-}" && -n "${CLAWQL_R2_ACCOUNT_ID:-}" && -n "${CLAWQL_S
   export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-$CLAWQL_SYNC_SECRET_ACCESS_KEY}"
   export AWS_REGION="${AWS_REGION:-auto}"
   export AWS_EC2_METADATA_DISABLED="${AWS_EC2_METADATA_DISABLED:-true}"
-  echo "smoke-program-cell-fleet-kill: using R2 via CLAWQL_SYNC_* → $CELLD_BUCKET"
+  echo "smoke-program-cell-fleet-kill: using R2 via CLAWQL_SYNC_* (bucket redacted in evidence)"
 fi
 
 if [[ -z "${CELLD_BUCKET:-}" ]]; then
@@ -232,15 +232,18 @@ evidence = {
   "measuredAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
   "ok": True,
   "status": "measured",
-  "bucket": "$CELLD_BUCKET",
+  "storageProvider": "cloudflare-r2",
+  "nodeCount": 2,
+  "bucketRedacted": True,
+  "diagnoseConditionalWrite": "ok",
   "diagnoseLines": len(diag),
   "arms": [{
     "arm": "write_sigkill_peer_resume_outcome_unknown",
     "ok": True,
-    "programId": write.get("programId"),
-    "detail": "SIGKILL node A after write intent; resume on node B reported outcome_unknown",
+    "detail": "SIGKILL node A after write intent; resume on node B reported outcome_unknown; write not re-sent",
   }],
-  "honesty": "Tier C lab: two celld fleet nodes sharing one bucket that passed diagnose conditional-write. Not a three-arm AWS load-test cost board; host WORM continuity still separate.",
+  "claim": "A program killed mid-run on one node resumed on another and never repeated a write; a write interrupted in flight is marked outcome unknown for a person to resolve.",
+  "honesty": "Tier C lab: two celld nodes, one object-storage provider that passed diagnose conditional-write. Not a durable execution engine; not exactly-once. Not the AWS three-arm cost board; host WORM continuity still separate.",
 }
 out.write_text(json.dumps(evidence, indent=2) + "\n")
 print("smoke-program-cell-fleet-kill: PASS")

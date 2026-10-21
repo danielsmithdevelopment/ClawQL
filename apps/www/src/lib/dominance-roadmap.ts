@@ -142,13 +142,13 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     whyItMatters:
       'Journaled program resume on celld — see docs/benchmarks/durability-proof/STATUS.md. Not a durable execution engine.',
     criteriaToBeat:
-      'Tiers A/B/D (file journal, ProgramCellDO, kill-mid-write) CI-gated; Tier C fleet LTX still open.',
+      'Tiers A/B/D CI-gated; Tier C two-node R2 peer kill + phased board (never repeated a write; in-flight → outcome unknown).',
     howToProve:
-      'Publish evidence under docs/benchmarks/durability-proof/STATUS.md; no wild survives-a-crash copy until Tier C.',
+      'Publish evidence under docs/benchmarks/durability-proof/STATUS.md and program-cell-fleet-kill/. Avoid “exactly once.”',
     status: 'partial',
     statusLabel: 'Lab Yes · fleet Yes (R2)',
     nextStep:
-      'Tiers A/B/C/D measured (C = R2 two-node peer kill). Dual-column comparison for ClawQL arms. Pi Durable/Golem named boards pending invite. Not a durable execution engine. Hot-path A/B 10k PASS.',
+      'Tiers A/B/C/D measured (C = R2 two-node peer kill + phased kills). Dual-column ClawQL arms; Pi Durable/Golem pending invite. Not durable execution. Hot-path A/B 10k PASS.',
   },
 ] as const
 
