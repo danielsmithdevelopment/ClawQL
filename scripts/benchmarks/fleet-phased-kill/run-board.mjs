@@ -506,7 +506,7 @@ async function main() {
       }
       runRes = { body: { status: "paused_for_kill", pauseKind: "during_call" } };
     } else {
-      runRes = await fetchJson(`${baseV}/program/run?${cellQ}`, {
+      runRes = await fetchJson(`${baseV}/program/run`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
@@ -539,19 +539,21 @@ async function main() {
     const postKillMs = Math.max(0, Number(process.env.FLEET_PHASED_POST_KILL_MS || 600));
     await sleep(postKillMs);
 
-    // Resume clock: ownership transfer + HTTP resume, plus any survivor restart.
-    // Do not charge the fixed post-kill sleep; do charge orchestrator recovery.
+    // Resume clock includes ownership transfer (/program/health) + any survivor
+    // restart + the resume HTTP call (availability cost visible in p99/p999).
     const resumeStart = Date.now();
     if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
       await ensureSurvivor(survivor, avail);
-    } else {
-      // Soft probe — only restart (and count) if survivor is actually unhealthy.
-      try {
-        const h = await fetchJson(`http://127.0.0.1:${nodes[survivor].port}/health`, {}, 3_000);
-        if (!h.ok) await ensureSurvivor(survivor, avail);
-      } catch {
+    }
+
+    // Smoke parity: wait until survivor can route ProgramCellDO before resume.
+    while (Date.now() - resumeStart < RESUME_DEADLINE_MS) {
+      if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
         await ensureSurvivor(survivor, avail);
       }
+      const ph = await fetchJson(`${baseS}/program/health`, {}, 5_000);
+      if (ph.ok && /ProgramCellDO/.test(JSON.stringify(ph.body))) break;
+      await sleep(250);
     }
 
     let resume = { ok: false, status: 0, body: null, fetchError: true };
@@ -560,7 +562,7 @@ async function main() {
         await ensureSurvivor(survivor, avail);
       }
       resume = await fetchJson(
-        `${baseS}/program/resume?${cellQ}`,
+        `${baseS}/program/resume`,
         {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -572,11 +574,25 @@ async function main() {
         await sleep(200);
         continue;
       }
-      if (resume.ok || (resume.status !== 404 && resume.status !== 0)) break;
+      // 500 DurableObjectRoutingError → keep waiting for ownership
+      if (resume.status === 500 && /unreachable|ResolveFailed/i.test(JSON.stringify(resume.body))) {
+        await sleep(250);
+        continue;
+      }
+      if (resume.ok || resume.status === 404 || (resume.status && resume.status !== 0)) break;
       await sleep(100);
     }
-    if (!(resume.ok || (resume.status && resume.status !== 404 && !resume.fetchError))) {
-      avail.resumeDeadlineMiss = true;
+    if (
+      !(
+        resume.ok ||
+        (resume.status === 404 && resume.body?.error === "not_found") ||
+        (resume.status && resume.status !== 500 && !resume.fetchError)
+      )
+    ) {
+      // Deadline miss if we never got a definitive program response.
+      if (!resume.ok && (resume.fetchError || resume.status === 500 || resume.status === 0)) {
+        avail.resumeDeadlineMiss = true;
+      }
     }
     const resumeMs = Date.now() - resumeStart;
 
@@ -652,8 +668,11 @@ async function main() {
       resumeError: resume.body?.error ?? resume.body?.raw ?? null,
     });
 
+    // Victim only needs /health before the next flip; program routing is checked
+    // on the survivor path above for the following trial.
     try {
-      await restartNode(victim);
+      startNode(victim);
+      await waitNode(victim, { requireProgram: false });
     } catch (err) {
       console.warn(`fleet-phased: victim ${victim} restart failed (${err.message}); rebuild fleet`);
       await rebuildFleet();
