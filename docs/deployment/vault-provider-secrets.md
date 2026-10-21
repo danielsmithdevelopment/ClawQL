@@ -24,11 +24,32 @@ Do **not** put provider tokens in **`extraEnv`** or chart-managed **`documentPip
 
 ---
 
+## Vault Transit encrypt-at-rest (recommended for SecretStore)
+
+When ClawQL persists secrets in a database or local store (SQLite `SecretStore`, inference credential rows, etc.), prefer **Vault Transit** so a stealer that dumps the store gets ciphertext only — the encryption key never leaves Vault. This is the same failure mode as the October 2026 LiteLLM `1.107.0` supply-chain payload (which queried plaintext credential tables).
+
+```bash
+# Enable Transit on Vault / OpenBao, then create a key:
+vault secrets enable transit
+vault write -f transit/keys/clawql-secrets
+
+# ClawQL wraps any SecretStore backend when this is set:
+export CLAWQL_VAULT_TRANSIT_KEY=clawql-secrets
+export CLAWQL_VAULT_TRANSIT_MOUNT=transit   # optional, default
+export VAULT_ADDR=https://vault.example:8200
+export VAULT_TOKEN=…                       # prefer K8s/AppRole/JWT — short-lived
+```
+
+Library entry points: `VaultTransitProvider` / `TransitEncryptedSecretStore` / `resolveSecretStore({ vaultTransit: true })` in **`clawql-auth`**. Legacy plaintext rows remain readable until the next write re-encrypts them; after Transit key rotation call `rewrapSecret(path)` (or Transit `rewrap`) without re-entering provider keys.
+
+**KV vs Transit:** Helm + ESO still sync **KV** `secret/clawql/providers` into `clawql-provider-env` for process env. Transit protects **application SecretStore** values at rest. Use both: KV for injection, Transit for anything ClawQL writes to a DB.
+
 ## Vault KV shape
 
 | Mount            | Path               | Purpose                                             |
 | ---------------- | ------------------ | --------------------------------------------------- |
 | `secret` (KV v2) | `clawql/providers` | All bundled provider credentials (camelCase fields) |
+| `transit`        | `keys/clawql-secrets` | Encryption key for SecretStore ciphertext (optional) |
 
 ### Field catalog
 
