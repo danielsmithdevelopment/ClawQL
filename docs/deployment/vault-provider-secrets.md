@@ -46,9 +46,9 @@ Library entry points: `VaultTransitProvider` / `TransitEncryptedSecretStore` / `
 
 ## Vault KV shape
 
-| Mount            | Path               | Purpose                                             |
-| ---------------- | ------------------ | --------------------------------------------------- |
-| `secret` (KV v2) | `clawql/providers` | All bundled provider credentials (camelCase fields) |
+| Mount            | Path                  | Purpose                                              |
+| ---------------- | --------------------- | ---------------------------------------------------- |
+| `secret` (KV v2) | `clawql/providers`    | All bundled provider credentials (camelCase fields)  |
 | `transit`        | `keys/clawql-secrets` | Encryption key for SecretStore ciphertext (optional) |
 
 ### Field catalog

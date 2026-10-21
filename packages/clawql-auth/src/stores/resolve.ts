@@ -85,13 +85,9 @@ export function wrapSecretStoreWithVaultTransit(
   options: WrapSecretStoreWithVaultTransitOptions
 ): SecretStore {
   const endpoint =
-    options.vaultAddr?.trim() ||
-    process.env.VAULT_ADDR?.trim() ||
-    process.env.BAO_ADDR?.trim();
+    options.vaultAddr?.trim() || process.env.VAULT_ADDR?.trim() || process.env.BAO_ADDR?.trim();
   const token =
-    options.vaultToken?.trim() ||
-    process.env.VAULT_TOKEN?.trim() ||
-    process.env.BAO_TOKEN?.trim();
+    options.vaultToken?.trim() || process.env.VAULT_TOKEN?.trim() || process.env.BAO_TOKEN?.trim();
   if (!endpoint || !token) {
     throw new Error("vault_transit_requires_VAULT_ADDR_and_VAULT_TOKEN");
   }
@@ -111,8 +107,7 @@ function maybeWrapVaultTransit(
 ): SecretStore {
   const keyName = options.vaultTransitKey?.trim() || process.env.CLAWQL_VAULT_TRANSIT_KEY?.trim();
   const enabled =
-    options.vaultTransit === true ||
-    (options.vaultTransit !== false && Boolean(keyName));
+    options.vaultTransit === true || (options.vaultTransit !== false && Boolean(keyName));
   if (!enabled) return store;
   if (!keyName) {
     throw new Error("vault_transit_requires_CLAWQL_VAULT_TRANSIT_KEY");
