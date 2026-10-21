@@ -1,7 +1,12 @@
-# AgentDojo matrix — ClawQL data-flow defense vs none, via OpenRouter.
+# AgentDojo matrix — stacked OpenAPPA Layer 5 + session IFC vs none, via OpenRouter.
 #
 # Publishes AgentDojo ASR + utility-under-attack (their metrics) alongside
-# ClawQL sink-block counts. Never invents scores when the secret is missing.
+# ClawQL sink-block / OpenAPPA deny counts. Never invents scores when the secret
+# is missing.
+#
+# Default defended arm: clawql_data_flow_openappa (sidecar + IFC).
+# IFC-only ablation (clawql_data_flow) available via workflow_dispatch defenses=.
+# Panguard is MCP-gateway only — not in this FunctionsRuntime harness.
 #
 # Secrets:
 #   OPENROUTER_API_KEY — required (same secret as OpenBench / Decision-1)
@@ -20,6 +25,7 @@ on:
     paths:
       - ".github/workflows/multi-attack-agentdojo.yml"
       - "scripts/benchmarks/multi-attack-injection/agentdojo/**"
+      - "packages/clawql-api/openappa/**"
       - "docs/benchmarks/security-suite/multi-attack-injection/AGENTDOJO.md"
       - "docs/benchmarks/security-suite/multi-attack-injection/results-agentdojo.json"
   workflow_dispatch:
@@ -33,6 +39,10 @@ on:
         description: "Comma-separated AgentDojo suites"
         type: string
         default: workspace,slack,banking,travel
+      defenses:
+        description: "Comma-separated defense arms (none, clawql_data_flow, clawql_data_flow_openappa)"
+        type: string
+        default: none,clawql_data_flow_openappa
       models:
         description: "Comma-separated OpenRouter model ids (no openrouter/ prefix needed). Federal-facing default excludes DeepSeek."
         type: string
@@ -91,11 +101,12 @@ jobs:
       - id: matrix
         if: steps.gate.outputs.can_run == 'true'
         env:
-          # PR path (until workflow is on main): full suites × gpt-4o-mini only.
+          # PR path: full suites × gpt-4o-mini × (none + stacked OpenAPPA+IFC).
           # DeepSeek is lab-only — not in the default federal-facing matrix.
           # workflow_dispatch honors inputs when available on main.
           MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'full' }}
           SUITES: ${{ github.event_name == 'workflow_dispatch' && inputs.suites || 'workspace,slack,banking,travel' }}
+          DEFENSES: ${{ github.event_name == 'workflow_dispatch' && inputs.defenses || 'none,clawql_data_flow_openappa' }}
           MODELS: ${{ github.event_name == 'workflow_dispatch' && inputs.models || 'openai/gpt-4o-mini' }}
           ATTACK: ${{ github.event_name == 'workflow_dispatch' && inputs.attack || 'important_instructions' }}
         run: |
@@ -103,7 +114,11 @@ jobs:
           import json, os
           suites = [s.strip() for s in os.environ["SUITES"].split(",") if s.strip()]
           models = [m.strip().removeprefix("openrouter/") for m in os.environ["MODELS"].split(",") if m.strip()]
-          defenses = ["none", "clawql_data_flow"]
+          defenses = [d.strip() for d in os.environ["DEFENSES"].split(",") if d.strip()]
+          allowed = {"none", "clawql_data_flow", "clawql_data_flow_openappa", "clawql_stack"}
+          bad = [d for d in defenses if d not in allowed]
+          if bad:
+            raise SystemExit(f"unknown defenses: {bad}; allowed={sorted(allowed)}")
           attack = os.environ["ATTACK"]
           mode = os.environ["MODE"]
           include = []
@@ -118,7 +133,7 @@ jobs:
                   "mode": mode,
                   "cell": f"{suite}__{defense}__{model.replace('/', '_')}",
                 })
-          print(f"cells={len(include)}")
+          print(f"cells={len(include)} defenses={defenses}")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
             fh.write("matrix_json=" + json.dumps({"include": include}) + "\n")
           PY
@@ -147,6 +162,12 @@ jobs:
       MAI_AGENTDOJO_FORCE: "1"
       MAI_AGENTDOJO_OUT: ${{ github.workspace }}/agentdojo-cells/${{ matrix.cell }}.json
       MAI_AGENTDOJO_LOGDIR: ${{ github.workspace }}/agentdojo-logs/${{ matrix.cell }}
+      # Stacked arm: OpenAPPA sidecar (bench timeout > production 250ms — long trajectories).
+      CLAWQL_OPENAPPA_URL: http://127.0.0.1:8789
+      CLAWQL_OPENAPPA_MCP_SERVER: agentdojo
+      CLAWQL_OPENAPPA_TIMEOUT_MS: "2000"
+      CLAWQL_OPENAPPA_POLICY_EPOCH: agentdojo-v1
+      APPA_VERSION: "0.37.0"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -156,6 +177,53 @@ jobs:
 
       - name: Install AgentDojo
         run: pip install -r scripts/benchmarks/multi-attack-injection/agentdojo/requirements.txt
+
+      - name: Install OpenAPPA appa
+        if: matrix.defense == 'clawql_data_flow_openappa' || matrix.defense == 'clawql_stack'
+        run: |
+          set -euo pipefail
+          curl -fsSL https://github.com/archestra-ai/OpenAPPA/releases/download/v${APPA_VERSION}/appa-install.sh \
+            | APPA_VERSION="v${APPA_VERSION}" APPA_INSTALL_DIR="$HOME/.local/bin" sh
+          echo "$HOME/.local/bin" >>"$GITHUB_PATH"
+          appa --version
+
+      - name: Start OpenAPPA sidecar
+        if: matrix.defense == 'clawql_data_flow_openappa' || matrix.defense == 'clawql_stack'
+        run: |
+          set -euo pipefail
+          rm -f /tmp/clawql-appa-agentdojo.db
+          appa runtime --adapter opencode --listen 127.0.0.1:8789 \
+            --config packages/clawql-api/openappa/appa-agentdojo.toml \
+            --db /tmp/clawql-appa-agentdojo.db \
+            > /tmp/appa-agentdojo.log 2>&1 &
+          echo $! > /tmp/appa-agentdojo.pid
+          # Wait until session_start ack
+          for i in $(seq 1 60); do
+            if python3 - <<'PY'
+          import json, urllib.request
+          body=json.dumps({
+            "protocol":1,"adapter":"opencode","event":"session_start",
+            "root_id":"ci-health"
+          }).encode()
+          req=urllib.request.Request(
+            "http://127.0.0.1:8789/hook", data=body,
+            headers={"Content-Type":"application/json"}, method="POST")
+          try:
+            with urllib.request.urlopen(req, timeout=2) as r:
+              d=json.loads(r.read().decode())
+            raise SystemExit(0 if d.get("decision") in ("ack","context") else 1)
+          except Exception:
+            raise SystemExit(1)
+          PY
+            then
+              echo "OpenAPPA sidecar ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::OpenAPPA sidecar failed to become ready"
+          cat /tmp/appa-agentdojo.log || true
+          exit 1
 
       - name: Smoke task subset
         if: matrix.mode == 'smoke'
@@ -195,10 +263,21 @@ jobs:
           r = json.load(open(p))
           print("status", r.get("status"))
           mr = r.get("must_report") or {}
+          ar = r.get("also_report") or {}
           print("asr", mr.get("agentdojo_asr"), "utility", mr.get("agentdojo_utility_under_attack"))
+          print("openappa_denies", ar.get("openappa_denies"), "sink_blocks", ar.get("clawql_sink_blocks"))
           if r.get("status") != "measured":
             raise SystemExit(f"cell not measured: {r.get('status')} {r.get('error')}")
           PY
+
+      - name: Stop OpenAPPA sidecar
+        if: always() && (matrix.defense == 'clawql_data_flow_openappa' || matrix.defense == 'clawql_stack')
+        run: |
+          if [ -f /tmp/appa-agentdojo.pid ]; then
+            kill "$(cat /tmp/appa-agentdojo.pid)" 2>/dev/null || true
+          fi
+          appa runtime stop --listen 127.0.0.1:8789 2>/dev/null || true
+          tail -n 80 /tmp/appa-agentdojo.log || true
 
       - uses: actions/upload-artifact@v4
         if: always()

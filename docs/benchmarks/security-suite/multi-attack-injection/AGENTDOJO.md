@@ -6,6 +6,10 @@ Rules changelog: **[AGENTDOJO-RULES-DIFF.md](./AGENTDOJO-RULES-DIFF.md)** (`claw
 
 Remeasure readout order was locked before data: **(1) Slack ASR → (2) util without attack → (3) out-of-sample**.
 
+## Stacked arm (current CI default)
+
+Default matrix defense is **`clawql_data_flow_openappa`**: OpenAPPA Layer 5 sidecar (`appa-agentdojo.toml` / `batteries/agentdojo`) **before** session IFC (`clawql_tools_executor.py`), most-restrictive-wins. Panguard is MCP-gateway only — **not** in this FunctionsRuntime harness. IFC-only (`clawql_data_flow`) remains for ablation via `workflow_dispatch` `defenses=`.
+
 ---
 
 ## 1. Slack ASR (watchpoint first)
@@ -138,9 +142,15 @@ CI [39354352936](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/3
 
 [CaMeL](https://arxiv.org/abs/2503.18813) — their models, their “provable” claim. Cite in context; same-model head-to-head required before any side-by-side %.
 
-## Defense arm
+## Defense arms
 
-`clawql_data_flow` — [`clawql_tools_executor.py`](../../../scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py) · `DEFAULTS_ID=clawql_agentdojo_defaults_v2`
+| Id | Layers | Notes |
+| --- | --- | --- |
+| `none` | — | Undefended baseline |
+| `clawql_data_flow_openappa` | OpenAPPA L5 → session IFC | **CI default** defended arm |
+| `clawql_data_flow` | session IFC only | Ablation / published v1‖v2 |
+
+Executor: [`clawql_tools_executor.py`](../../../scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py) · `DEFAULTS_ID=clawql_agentdojo_defaults_v2` · OpenAPPA battery: [`batteries/agentdojo/appa.toml`](../../../packages/clawql-api/openappa/batteries/agentdojo/appa.toml)
 
 ## CI matrix
 
@@ -148,6 +158,7 @@ CI [39354352936](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/3
 gh workflow run multi-attack-agentdojo.yml \
   -f mode=full \
   -f suites=workspace,slack,banking,travel \
+  -f defenses=none,clawql_data_flow_openappa \
   -f models=openai/gpt-4o-mini
 ```
 
