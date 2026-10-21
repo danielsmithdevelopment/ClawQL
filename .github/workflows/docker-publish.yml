@@ -23,7 +23,7 @@ on:
       - "docker/**"
       - "apps/docs/Dockerfile"
       - "apps/dashboard/Dockerfile"
-      - "packages/panguard-mcp-bridge/Dockerfile"
+      - "docker/panguard-mcp-bridge/Dockerfile"
       - "deploy/helm/clawql-mcp/**"
       - ".github/workflows/docker-publish.yml"
 
