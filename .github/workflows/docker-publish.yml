@@ -1,5 +1,6 @@
 # Build and push ClawQL container images (MCP, website, dashboard, Panguard bridge) to GitHub Container Registry (GHCR).
-# Daily schedule keeps `latest` / `nightly` fresh; manual runs via workflow_dispatch.
+# Daily schedule keeps `latest` / `nightly` fresh; manual runs via workflow_dispatch; path-filtered
+# pushes to `main` (Docker/Helm packaging) also publish so Kyverno verifyImages can pull without waiting on cron.
 #
 # Golden-image pipeline (this workflow): same **repo** supply-chain gates as CI (**OSV-Scanner**, **Trivy** fs,
 # **Syft** SBOM artifact); **one BuildKit build** exports a **local OCI image layout** → **Trivy** scans it → **skopeo copy**
@@ -16,6 +17,15 @@ on:
   schedule:
     - cron: "0 6 * * *"
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "docker/**"
+      - "apps/docs/Dockerfile"
+      - "apps/dashboard/Dockerfile"
+      - "docker/panguard-mcp-bridge/Dockerfile"
+      - "deploy/helm/clawql-mcp/**"
+      - ".github/workflows/docker-publish.yml"
 
 concurrency:
   group: docker-publish-${{ github.workflow }}
