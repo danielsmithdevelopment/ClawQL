@@ -1,6 +1,7 @@
 # Upstream: OpenAPPA per-call latency grows with session length
 
-Ready-to-file bug report / patch brief for [archestra-ai/OpenAPPA](https://github.com/archestra-ai/OpenAPPA).
+Filed upstream: [archestra-ai/OpenAPPA#711](https://github.com/archestra-ai/OpenAPPA/issues/711).
+
 Measured against OpenAPPA **0.37.0** (opencode adapter, PROTOCOL=1 `POST /hook`).
 
 ## Summary

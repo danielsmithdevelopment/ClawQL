@@ -163,7 +163,7 @@ Declared in [`packages/clawql-api/openappa/batteries/clawql/appa.toml`](../../pa
 
 **Still undeclared (refuse while OpenAPPA is on):** niche plugin surfaces in `NATIVE_TOOL_POLICY` that are not in the battery — e.g. documents IDP (`run_idp_pipeline`, `inspect_pdf`, …), data (`data_query`, `clawql_sql`, …), web browse (`web_search` / `web_fetch` / …), ontology matters, observability_*, network_*, webmcp_*, `workflow` / `argocd` / `hitl_enqueue_label_studio`, `clawql_think`. Add a `[[policy.tool]]` row before enabling those plugins with OpenAPPA.
 
-**Draft hold closed:** required operator set is in the battery; remaining gaps are intentional refuse-by-default for rare plugins. Upstream trajectory-growth brief: [`docs/benchmarks/openappa/UPSTREAM-TRAJECTORY-GROWTH.md`](../benchmarks/openappa/UPSTREAM-TRAJECTORY-GROWTH.md).
+**Draft hold closed:** required operator set is in the battery; remaining gaps are intentional refuse-by-default for rare plugins. Upstream: [OpenAPPA#711](https://github.com/archestra-ai/OpenAPPA/issues/711) ([brief](../benchmarks/openappa/UPSTREAM-TRAJECTORY-GROWTH.md)).
 
 ## 5. Audit chain
 
