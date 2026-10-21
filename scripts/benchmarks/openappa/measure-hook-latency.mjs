@@ -5,6 +5,12 @@
  * Default n=10000 so p999 is meaningful. For smaller samples, prefer p99 —
  * with n=200, "p999" is just the max.
  *
+ * IMPORTANT: optional root rotation (`CLAWQL_OPENAPPA_LATENCY_ROOT_ROTATE`) is a
+ * **synthetic short-session** amortization only. It is NOT a ClawQL product
+ * setting — production keeps one `root_id` per MCP session for the whole life
+ * of the session (denials/approvals/labels must not reset). For production-
+ * relevant cost see `measure-session-length-curve.mjs`.
+ *
  *   CLAWQL_OPENAPPA_URL=http://127.0.0.1:8790 \
  *     node scripts/benchmarks/openappa/measure-hook-latency.mjs
  *
@@ -50,7 +56,11 @@ function percentile(sorted, p) {
 }
 
 const samples = [];
-/** Rotate roots so trajectory growth does not dominate the overhead sample. */
+/**
+ * Optional synthetic short-session amortization (default 50). Set 0 for a single
+ * root (same shape as production — prefer the session-length curve script).
+ * Never wire this into ClawQL runtime config.
+ */
 const ROOT_ROTATE_EVERY = Number(process.env.CLAWQL_OPENAPPA_LATENCY_ROOT_ROTATE || "50");
 let rootId = root;
 let inRoot = 0;
@@ -110,6 +120,10 @@ const out = {
   tool: "mcp__clawql__search",
   keep_alive: true,
   root_rotate_every: ROOT_ROTATE_EVERY,
+  root_rotate_note:
+    ROOT_ROTATE_EVERY > 0
+      ? "Synthetic short-session amortization only — not a product setting. See results-session-length-curve.json for one-root production shape."
+      : "Single root for entire sample (production shape).",
   n: samples.length,
   timeout_ms_budget: timeoutMs,
   latency_ms: {

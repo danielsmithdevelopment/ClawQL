@@ -42,6 +42,7 @@ export {
   type NativeLayerInput,
 } from "./compose.js";
 export {
+  buildOpenAppaAllowCacheKeyEffect,
   invalidateOpenAppaAllowCacheEffect,
   openAppaAfterToolResultEffect,
   openAppaBeforeToolCallEffect,
@@ -56,6 +57,12 @@ export {
   openAppaHttpAgentEffect,
   resetOpenAppaHttpAgentsForTests,
 } from "./http-agent.js";
+export {
+  openAppaMaybeWarnTrajectoryGrowthEffect,
+  openAppaRecordSessionCallEffect,
+  openAppaSessionDepthEffect,
+  resetOpenAppaSessionDepthForTests,
+} from "./session-depth.js";
 export { OpenAppaLive, OpenAppaService, type OpenAppaServiceApi } from "./openappa-service.js";
 export {
   OPENAPPA_PROTOCOL,

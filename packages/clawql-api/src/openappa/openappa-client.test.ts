@@ -238,23 +238,19 @@ describe("OpenAPPA Layer 5 client", () => {
     });
     const config = cfg(mock.url, { allowCacheMs: 5_000, policyEpoch: "epoch-a" });
     const args = { query: "same" };
+    const baseInput = {
+      toolName: "search" as const,
+      args,
+      sessionId: "cache-1",
+      callerId: "caller-a",
+      sessionLabels: ["source:internal"],
+      config,
+    };
     const first = await Effect.runPromise(
-      openAppaBeforeToolCallEffect({
-        toolName: "search",
-        args,
-        sessionId: "cache-1",
-        callId: "c1",
-        config,
-      })
+      openAppaBeforeToolCallEffect({ ...baseInput, callId: "c1" })
     );
     const second = await Effect.runPromise(
-      openAppaBeforeToolCallEffect({
-        toolName: "search",
-        args,
-        sessionId: "cache-1",
-        callId: "c2",
-        config,
-      })
+      openAppaBeforeToolCallEffect({ ...baseInput, callId: "c2" })
     );
     expect(first.allow).toBe(true);
     expect(second.allow).toBe(true);
@@ -262,15 +258,94 @@ describe("OpenAPPA Layer 5 client", () => {
 
     const afterEpoch = await Effect.runPromise(
       openAppaBeforeToolCallEffect({
-        toolName: "search",
-        args,
-        sessionId: "cache-1",
+        ...baseInput,
         callId: "c3",
         config: { ...config, policyEpoch: "epoch-b" },
       })
     );
     expect(afterEpoch.allow).toBe(true);
     expect(toolCalls).toBe(2);
+  });
+
+  it("allow-cache never reuses an allow across session, caller, or labels", async () => {
+    let toolCalls = 0;
+    mock = await startMockOpenAppa((body) => {
+      if (body.event === "session_start") {
+        return { status: 200, body: { protocol: 1, decision: "ack" } };
+      }
+      if (body.event === "tool_call") toolCalls += 1;
+      return { status: 200, body: { protocol: 1, decision: "allow_call" } };
+    });
+    const config = cfg(mock.url, { allowCacheMs: 5_000 });
+    const args = { query: "shared-args" };
+    await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "search",
+        args,
+        sessionId: "sess-a",
+        callerId: "caller-a",
+        sessionLabels: ["source:hr"],
+        callId: "iso-1",
+        config,
+      })
+    );
+    expect(toolCalls).toBe(1);
+
+    // Different session — must not reuse.
+    await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "search",
+        args,
+        sessionId: "sess-b",
+        callerId: "caller-a",
+        sessionLabels: ["source:hr"],
+        callId: "iso-2",
+        config,
+      })
+    );
+    expect(toolCalls).toBe(2);
+
+    // Same session, different caller — must not reuse.
+    await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "search",
+        args,
+        sessionId: "sess-a",
+        callerId: "caller-b",
+        sessionLabels: ["source:hr"],
+        callId: "iso-3",
+        config,
+      })
+    );
+    expect(toolCalls).toBe(3);
+
+    // Same session+caller, different data-flow labels — must not reuse.
+    await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "search",
+        args,
+        sessionId: "sess-a",
+        callerId: "caller-a",
+        sessionLabels: ["source:hr", "untrusted"],
+        callId: "iso-4",
+        config,
+      })
+    );
+    expect(toolCalls).toBe(4);
+
+    // Exact same context again — cache hit.
+    await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "search",
+        args,
+        sessionId: "sess-a",
+        callerId: "caller-a",
+        sessionLabels: ["source:hr"],
+        callId: "iso-5",
+        config,
+      })
+    );
+    expect(toolCalls).toBe(4);
   });
 
   it("circuit opens after consecutive failures and skips wait", async () => {

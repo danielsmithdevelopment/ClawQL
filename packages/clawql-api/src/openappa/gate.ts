@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { Effect } from "effect";
+import { getSessionLabelsSync } from "../ifc/session-label-store.js";
 import {
   loadOpenAppaConfigEffect,
   openAppaMayFailOpenEffect,
@@ -19,6 +20,11 @@ import {
   resetOpenAppaCircuitBreakersForTests,
 } from "./circuit-breaker.js";
 import { resetOpenAppaHttpAgentsForTests } from "./http-agent.js";
+import {
+  openAppaMaybeWarnTrajectoryGrowthEffect,
+  openAppaRecordSessionCallEffect,
+  resetOpenAppaSessionDepthForTests,
+} from "./session-depth.js";
 import type {
   OpenAppaGateVerdict,
   OpenAppaToolOutcome,
@@ -52,6 +58,7 @@ export function resetOpenAppaSessionCacheForTests(): void {
   allowCacheEpoch = "";
   resetOpenAppaCircuitBreakersForTests();
   resetOpenAppaHttpAgentsForTests();
+  resetOpenAppaSessionDepthForTests();
 }
 
 function feedbackOf(decision: OpenAppaWireDecision): string {
@@ -128,6 +135,57 @@ function argsDigest(args: unknown): string {
   }
 }
 
+function digestParts(parts: readonly string[]): string {
+  if (!parts.length) return "empty";
+  return createHash("sha256").update([...parts].sort().join("\0")).digest("hex").slice(0, 16);
+}
+
+/**
+ * Allow-cache key must include everything the decision depended on:
+ * policy epoch, session (root), caller, session data-flow labels, tool, args.
+ * Omitting caller/session/labels would let an allow leak across contexts.
+ */
+export function buildOpenAppaAllowCacheKeyEffect(input: {
+  readonly policyEpoch: string;
+  readonly sessionId: string;
+  readonly callerId?: string;
+  readonly atrScopeTokens?: readonly string[];
+  readonly sessionLabels?: readonly string[];
+  readonly wireTool: string;
+  readonly args: unknown;
+}): Effect.Effect<string> {
+  return Effect.sync(() => {
+    const callerParts = [
+      ...(input.callerId?.trim() ? [input.callerId.trim()] : []),
+      ...(input.atrScopeTokens ?? []).map((t) => t.trim()).filter(Boolean),
+    ];
+    const caller = digestParts(callerParts.length ? callerParts : ["anon"]);
+    const labels = digestParts(
+      (input.sessionLabels ?? []).map((l) => String(l).trim()).filter(Boolean)
+    );
+    return [
+      input.policyEpoch,
+      input.sessionId,
+      `c:${caller}`,
+      `l:${labels}`,
+      input.wireTool,
+      argsDigest(input.args),
+    ].join("|");
+  });
+}
+
+function resolveSessionLabelsForCache(
+  sessionId: string,
+  explicit?: readonly string[]
+): readonly string[] {
+  if (explicit !== undefined) return [...explicit].map(String);
+  try {
+    return [...getSessionLabelsSync(sessionId)].map(String);
+  } catch {
+    return [];
+  }
+}
+
 function ensureSessionStartedEffect(
   config: OpenAppaConfig,
   rootId: string
@@ -153,6 +211,15 @@ export type OpenAppaBeforeCallInput = {
   readonly toolName: string;
   readonly args: unknown;
   readonly sessionId?: string;
+  /** Authenticated caller / principal id when the host has one. */
+  readonly callerId?: string;
+  /** ATR / scope tokens that identify the caller identity surface. */
+  readonly atrScopeTokens?: readonly string[];
+  /**
+   * Session data-flow (IFC) labels at decision time. When omitted, loaded from
+   * the session label store so cache keys track taint that changed mid-session.
+   */
+  readonly sessionLabels?: readonly string[];
   readonly callId?: string;
   readonly config?: OpenAppaConfig | null;
 };
@@ -205,7 +272,16 @@ export function openAppaBeforeToolCallEffect(
     const callId =
       input.callId?.trim() ||
       `clawql-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-    const cacheKey = `${config.policyEpoch}|${rootId}|${wireTool}|${argsDigest(input.args)}`;
+    const sessionLabels = resolveSessionLabelsForCache(rootId, input.sessionLabels);
+    const cacheKey = yield* buildOpenAppaAllowCacheKeyEffect({
+      policyEpoch: config.policyEpoch,
+      sessionId: rootId,
+      callerId: input.callerId,
+      atrScopeTokens: input.atrScopeTokens,
+      sessionLabels,
+      wireTool,
+      args: input.args,
+    });
 
     if (config.allowCacheMs > 0) {
       const hit = allowCache.get(cacheKey);
@@ -216,6 +292,7 @@ export function openAppaBeforeToolCallEffect(
 
     const program = Effect.gen(function* () {
       yield* ensureSessionStartedEffect(config, rootId);
+      const t0 = yield* Effect.sync(() => performance.now());
       const decision = yield* postOpenAppaHookEffect(config, {
         event: "tool_call",
         root_id: rootId,
@@ -223,6 +300,9 @@ export function openAppaBeforeToolCallEffect(
         arguments: input.args ?? {},
         call_id: callId,
       });
+      const elapsedMs = yield* Effect.sync(() => performance.now() - t0);
+      const depth = yield* openAppaRecordSessionCallEffect(rootId);
+      yield* openAppaMaybeWarnTrajectoryGrowthEffect(rootId, depth, elapsedMs);
       yield* openAppaCircuitRecordSuccessEffect(circuitKey);
       if (
         config.allowCacheMs > 0 &&

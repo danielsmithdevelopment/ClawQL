@@ -45,6 +45,37 @@ Severity: `blocked` > `mandate_required` > `allow`. Dual mandates → one `compo
 
 OpenAPPA adds a network hop. **Publish its overhead as its own metric** — do not fold it into existing ClawQL per-call figures (~1.3 ms p50 baseline).
 
+### Production shape: one root per session
+
+ClawQL maps `root_id` to the MCP session id for the **entire** session. **Do not rotate roots mid-session** as a latency trick — a new root drops trajectory context (earlier denials, approvals, and label narrowing) and weakens policy.
+
+Measure cost against session length (single root, paired `tool_call` + `tool_result`):
+
+```bash
+CLAWQL_OPENAPPA_URL=http://127.0.0.1:8790 \
+  node scripts/benchmarks/openappa/measure-session-length-curve.mjs
+# milestones: call 10, 100, 1000, 5000
+```
+
+Results: [`docs/benchmarks/openappa/results-session-length-curve.json`](../benchmarks/openappa/results-session-length-curve.json).
+
+Measured (keep-alive, **one root**, paired `tool_call`+`tool_result`, OpenAPPA 0.37.0, loopback):
+
+| Call index (one root) | tool_call p50 | call+result p50 |
+| --- | ---: | ---: |
+| 10 | **1.8 ms** | 4.5 ms |
+| 100 | **5.3 ms** | 11.6 ms |
+| 1,000 | **36 ms** | 83 ms |
+| 5,000 | **179 ms** | 415 ms |
+
+Growth ratio (p50 at 5k / p50 at 10) ≈ **98×**. Cost is roughly linear in session length. OpenAPPA 0.35+ caches label folds in-process, but the HTTP sidecar path still slows as the per-root event log grows.
+
+**Do not fix this by rotating `root_id`.** A new root drops denials, approvals, and label narrowing — a weaker policy. Bound history inside OpenAPPA (sliding window over the event log, incremental label summary, or indexed projection) so per-call cost stays flat. Until that lands upstream, long sessions will approach `CLAWQL_OPENAPPA_TIMEOUT_MS` (250) and fail closed via the circuit breaker; raise the budget only with eyes open. ClawQL logs a stderr warning at power-of-two depths when hook time is elevated.
+
+### Short-session amortized (synthetic only)
+
+Optional root rotation in the latency script is a **benchmark amortization** for short sessions, not a product setting:
+
 ```bash
 CLAWQL_OPENAPPA_URL=http://127.0.0.1:8790 \
   node scripts/benchmarks/openappa/measure-hook-latency.mjs
@@ -53,12 +84,12 @@ CLAWQL_OPENAPPA_URL=http://127.0.0.1:8790 \
 
 Results: [`docs/benchmarks/openappa/results-latency.json`](../benchmarks/openappa/results-latency.json) (`metric: openappa_hook_overhead_ms`).
 
-Measured (keep-alive, root rotation every 50, `n=10000`, loopback): **p50 ≈ 1.9 ms**, **p99 ≈ 3.6 ms**, **p999 ≈ 6.4 ms** — report as OpenAPPA overhead only; ClawQL gateway baseline remains ~1.3 ms p50. With `n=200`, prefer **p99** (p999 is essentially the max).
+Measured short-session amortized (keep-alive, root rotation every 50, `n=10000`, loopback): **p50 ≈ 1.9 ms**, **p99 ≈ 3.6 ms**, **p999 ≈ 6.4 ms**. Always publish the session-length curve beside these numbers — the amortized figure understates long-session cost.
 
 Mitigations shipped:
 
 - **Persistent keep-alive** undici `Agent` per sidecar URL (not a new connection per call).
-- **Brief allow-cache** for identical requests (`CLAWQL_OPENAPPA_ALLOW_CACHE_MS` default `250`). Cleared when `CLAWQL_OPENAPPA_POLICY_EPOCH` changes, on circuit open, or on non-allow decisions.
+- **Brief allow-cache** for identical requests (`CLAWQL_OPENAPPA_ALLOW_CACHE_MS` default `250`). Key includes **policy epoch + session + caller + session data-flow labels + tool + args**. Cleared when `CLAWQL_OPENAPPA_POLICY_EPOCH` changes, on circuit open, or on non-allow decisions. A cached allow for one caller/session/label set never applies to another.
 
 ## 4. Covered tools (battery)
 

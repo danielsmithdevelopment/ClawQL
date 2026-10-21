@@ -23,3 +23,7 @@ See [`batteries/clawql/appa.toml`](./batteries/clawql/appa.toml). Undeclared too
 ## Wire order
 
 Panguard → OpenAPPA `tool_call` → session IFC / park (composed) → handler → OpenAPPA `tool_result`.
+
+## Session root (do not rotate)
+
+`root_id` is the MCP session id for the **whole** session. Rotating it mid-session would drop trajectory context (denials, approvals, label narrowing) and weaken policy. If per-call latency grows with session length, fix the OpenAPPA sidecar (incremental label projection / sliding window) — see `docs/benchmarks/openappa/results-session-length-curve.json`.

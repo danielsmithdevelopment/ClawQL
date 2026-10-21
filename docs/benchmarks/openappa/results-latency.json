@@ -1,7 +1,8 @@
 {
   "measured_at": "2026-10-21T03:33:15.986Z",
   "metric": "openappa_hook_overhead_ms",
-  "note": "OpenAPPA sidecar overhead only (keep-alive undici Agent). Do not fold into published ClawQL per-call latency; report separately when OpenAPPA is enabled.",
+  "note": "OpenAPPA sidecar overhead only (keep-alive undici Agent). Do not fold into published ClawQL per-call latency; report separately when OpenAPPA is enabled. root_rotate_every>0 is synthetic short-session amortization — not a product setting. For production-shaped cost see results-session-length-curve.json (grows ~linearly with session length).",
+  "see_also": "results-session-length-curve.json",
   "clawql_baseline_p50_ms": 1.3,
   "openappa_vs_clawql_p50_ratio": 1.45,
   "base_url": "http://127.0.0.1:8790",
@@ -9,6 +10,7 @@
   "tool": "mcp__clawql__search",
   "keep_alive": true,
   "root_rotate_every": 50,
+  "root_rotate_note": "Synthetic short-session amortization only — ClawQL never rotates root_id mid-session.",
   "n": 10000,
   "timeout_ms_budget": 250,
   "latency_ms": {

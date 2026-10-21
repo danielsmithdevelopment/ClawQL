@@ -254,6 +254,8 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
           toolName,
           args: args[0],
           sessionId: mcpCtxOpen?.sessionId,
+          // Caller surface for allow-cache isolation (opencode wire has no principal).
+          atrScopeTokens: mcpCtxOpen?.atrScopeTokens,
           callId: openAppaCallId,
         })
       );
