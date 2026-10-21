@@ -11,6 +11,10 @@
 
 Zero duplicates across the first 60 trials means fencing did its job: a node that could not confirm its lease stopped rather than risk dual writers. Customers would still see an **outage** until an orchestrator restarts the fenced node and retries resume.
 
+## Harness note (same-DO thrash)
+
+`/program/*` defaults to Durable Object `program:default` unless `?cell=` is set. Running every kill against that one owner made ownership transfer the dominant failure mode. The phased board now uses `?cell=<programId>` per trial and probes readiness on `?cell=health`.
+
 ## Lease timing (celld 0.4.0 defaults)
 
 | Knob                              | Value                                                            |
