@@ -1,8 +1,13 @@
 # syntax=docker/dockerfile:1
-# ClawQL MCP server — stdio transport. Bundled OpenAPI/Discovery under /app/providers.
+# ClawQL MCP server — Streamable HTTP by default. Bundled OpenAPI/Discovery under /app/providers.
 #
-# Build (repo root):  docker build -f docker/Dockerfile -t clawql-mcp .
-# Run (stdio):        docker run -i --rm clawql-mcp
+# Host runtime ladder (product):
+#   celld (preferred isolate deploy) → Bun (default host MCP, this image) → Node (legacy minority)
+#
+# Build (repo root):
+#   docker build -f docker/Dockerfile --target runtime -t clawql-mcp .
+#   docker build -f docker/Dockerfile --target runtime-node -t clawql-mcp:node .   # minority escape
+# Run:  docker run --rm -p 8080:8080 clawql-mcp
 
 FROM node:25-bookworm-slim AS builder
 WORKDIR /app
@@ -59,12 +64,16 @@ COPY bin ./bin
 # Writable Obsidian vault mount (memory tools); nonroot must own the tree.
 RUN mkdir -p /vault && chown 65532:65532 /vault
 
-# Distroless Node: no shell; only Node + minimal libc / CA bundle for HTTPS fetches.
-# Runtime uses Node 24 (LTS); no nodejs26 image yet. Build stage above may use a newer major.
-# Pin digest — bump when rebuilding images (Trivy gate + Debian base refreshes).
-# Digest bump: debian 13.7 base clears libssl3t64 CVE-2026-75804 / CVE-2026-84782
-# (prior pin had 3.5.7-1~deb13u2; latest scans clean HIGH/CRITICAL as of 2026-10-06).
-FROM gcr.io/distroless/nodejs24-debian13@sha256:96df910f65fdd8a21d00d14d4cc046adcfcf3ced2d5e96be4b39ebde9f4866c6 AS runtime
+# ---------------------------------------------------------------------------
+# Bun binary source (glibc). oven/bun distroless is base-nossl (no CA) — we
+# copy only the bun binary into distroless/base-debian13 so HTTPS works.
+# Pin: oven/bun:1.4 → 1.4.3 (bump with CI Bun matrix / measured defaults).
+# Digest bump: 2026-10-21
+FROM oven/bun@sha256:ec06c3b6cea04192ae6770c434f668ca41d343ad19fa6472216c7b48be39c598 AS bun-bin
+
+# Default host MCP runtime: Bun --smol on Distroless (CA + glibc, no shell).
+# Digest bump: debian 13 base (2026-10-21 pull).
+FROM gcr.io/distroless/base-debian13@sha256:44a80dc28b49f47396e72ab2dc644b3f849880335de09625762faed207bb891d AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -72,10 +81,13 @@ ENV NODE_ENV=production
 ENV CLAWQL_BUNDLED_OFFLINE=1
 # Writable mount for memory_* tools; override at runtime if your orchestrator mounts elsewhere.
 ENV CLAWQL_OBSIDIAN_VAULT_PATH=/vault
+# Ephemeral containers: disable Bun transpiler cache (matches oven/bun distroless default).
+ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=0
 # Optional at runtime (not baked in): CLAWQL_SANDBOX_BRIDGE_URL, CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN for sandbox_exec.
 
+COPY --from=bun-bin /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=builder --chown=nonroot:nonroot /app/node_modules ./node_modules
-# Workspace deps are symlinked from `node_modules` → `packages/*`; copy all built package trees for distroless.
+# Workspace deps are symlinked from `node_modules` → `packages/*`; copy all built package trees.
 COPY --from=builder --chown=nonroot:nonroot /app/packages ./packages
 COPY --from=builder --chown=nonroot:nonroot /app/dist ./dist
 COPY --from=builder --chown=nonroot:nonroot /app/bin ./bin
@@ -85,15 +97,42 @@ COPY --from=builder --chown=nonroot:nonroot /vault /vault
 
 USER nonroot:nonroot
 
-# Default container mode: remote MCP over Streamable HTTP (/mcp).
+# Default container mode: remote MCP over Streamable HTTP (/mcp) under Bun --smol.
 # Use `dist/server.js` if you specifically need stdio transport.
+ENTRYPOINT ["/usr/local/bin/bun", "--smol"]
 CMD ["dist/server-http.js"]
 
-# --- Local dev: same app + static Docker CLI (mount host /var/run/docker.sock; CLAWQL_SANDBOX_BACKEND=docker).
+# ---------------------------------------------------------------------------
+# Minority escape: Node distroless (legacy host). Build with --target runtime-node.
+# Digest bump: debian 13.7 base clears libssl3t64 CVE-2026-75804 / CVE-2026-84782
+# (prior pin had 3.5.7-1~deb13u2; latest scans clean HIGH/CRITICAL as of 2026-10-06).
+FROM gcr.io/distroless/nodejs24-debian13@sha256:96df910f65fdd8a21d00d14d4cc046adcfcf3ced2d5e96be4b39ebde9f4866c6 AS runtime-node
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV CLAWQL_BUNDLED_OFFLINE=1
+ENV CLAWQL_OBSIDIAN_VAULT_PATH=/vault
+
+COPY --from=builder --chown=nonroot:nonroot /app/node_modules ./node_modules
+COPY --from=builder --chown=nonroot:nonroot /app/packages ./packages
+COPY --from=builder --chown=nonroot:nonroot /app/dist ./dist
+COPY --from=builder --chown=nonroot:nonroot /app/bin ./bin
+COPY --from=builder --chown=nonroot:nonroot /app/providers ./providers
+COPY --from=builder --chown=nonroot:nonroot /app/package.json ./package.json
+COPY --from=builder --chown=nonroot:nonroot /vault /vault
+
+USER nonroot:nonroot
+
+CMD ["dist/server-http.js"]
+
+# ---------------------------------------------------------------------------
+# Local dev: Bun host + static Docker CLI (mount host /var/run/docker.sock;
+# CLAWQL_SANDBOX_BACKEND=docker). Not the GHCR publish target.
 # Build: docker build -f docker/Dockerfile --target runtime-with-docker-cli -t clawql-mcp:local .
-FROM node:25-bookworm-slim AS runtime-with-docker-cli
+FROM oven/bun@sha256:ec06c3b6cea04192ae6770c434f668ca41d343ad19fa6472216c7b48be39c598 AS runtime-with-docker-cli
 ARG DOCKER_STATIC_VERSION=27.4.1
 WORKDIR /app
+USER root
 RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends \
   && apt-get install -y --no-install-recommends ca-certificates curl \
@@ -106,6 +145,7 @@ RUN apt-get update \
 ENV NODE_ENV=production
 ENV CLAWQL_BUNDLED_OFFLINE=1
 ENV CLAWQL_OBSIDIAN_VAULT_PATH=/vault
+ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=0
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/dist ./dist
@@ -114,4 +154,5 @@ COPY --from=builder /app/providers ./providers
 COPY --from=builder /app/package.json ./package.json
 RUN mkdir -p /vault && chmod 1777 /vault
 USER root
+ENTRYPOINT ["/usr/local/bin/bun", "--smol"]
 CMD ["dist/server-http.js"]

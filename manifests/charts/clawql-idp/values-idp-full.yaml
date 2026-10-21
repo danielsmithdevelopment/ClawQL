@@ -14,7 +14,8 @@ clawql-mcp:
     type: Recreate
 
   provider: all-providers
-  nodeOptions: "--max-old-space-size=768"
+  hostRuntime: bun
+  nodeOptions: "--max-old-space-size=256"
 
   enableMemory: true
   enableDocuments: true

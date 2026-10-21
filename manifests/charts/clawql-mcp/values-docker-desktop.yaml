@@ -50,7 +50,10 @@ ingress:
 
 # Heap vs cgroup request: all-providers loads 60+ discovery specs; 512Mi heap reliably OOMs during startup.
 # If the pod stays Pending, raise Rancher VM RAM or scale flink taskmanager to 0 temporarily.
-nodeOptions: "--max-old-space-size=768"
+# Bun --smol is the default host (values.yaml hostRuntime=bun). Keep lean Node options for
+# Node sidecars / hostRuntime=node escape hatch (see measured-defaults.md).
+hostRuntime: bun
+nodeOptions: "--max-old-space-size=256"
 
 # Istio ambient (namespace istio.io/dataplane-mode=ambient): keep legacy Envoy sidecars off the MCP pod so
 # ztunnel owns mesh traffic and kubelet probes hit the app container directly.
@@ -381,7 +384,8 @@ hashicorpvault:
         cpu: "1"
         memory: 768Mi
 
-# sandbox_exec via host Docker daemon (docker run …). InitContainer installs static docker CLI into distroless MCP image.
+# sandbox_exec via host Docker daemon (docker run …). InitContainer installs static docker CLI;
+# compose/local builds often use Dockerfile target runtime-with-docker-cli (Bun + docker binary).
 sandboxDocker:
   enabled: true
   runAsRootForDockerSocket: true

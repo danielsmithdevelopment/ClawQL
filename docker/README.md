@@ -2,6 +2,8 @@
 
 Slim [Distroless](https://github.com/GoogleContainerTools/distroless) image with production dependencies, compiled `dist/`, `bin/`, and bundled `providers/` for offline spec lookup.
 
+**Default host runtime is Bun `--smol`** (product ladder: celld preferred isolate deploy → Bun default host MCP → Node legacy minority). Build target **`runtime`** (GHCR publish) copies a pinned Bun 1.4 binary onto Distroless `base-debian13` (CA certs for HTTPS). Minority Node: `--target runtime-node`. Local sandbox sock: `--target runtime-with-docker-cli`.
+
 ## GHCR visibility — anonymous pull (users + Kubernetes admission)
 
 Upstream **ClawQL** ships four container images under **`ghcr.io/danielsmithdevelopment/`**:
@@ -81,7 +83,9 @@ Use the same **`cosign verify`** pattern for **`ghcr.io/danielsmithdevelopment/c
 From the repository root:
 
 ```bash
-docker build -f docker/Dockerfile -t clawql-mcp .
+docker build -f docker/Dockerfile --target runtime -t clawql-mcp .
+# Minority Node: --target runtime-node
+# Local Docker-socket sandbox: --target runtime-with-docker-cli
 ```
 
 ## Run (remote MCP over HTTP)
@@ -117,14 +121,15 @@ Full MCP tool list and JSON examples: **[`docs/mcp/mcp-tools.md`](../docs/mcp/mc
 If you specifically want stdio mode in a container:
 
 ```bash
-docker run -i --rm --entrypoint node clawql-mcp dist/server.js
+docker run -i --rm --entrypoint /usr/local/bin/bun clawql-mcp --smol dist/server.js
+# Minority Node image: docker build -f docker/Dockerfile --target runtime-node -t clawql-mcp:node .
 ```
 
 ## Layout
 
 | Path                             | Purpose                                                                                                                                         |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docker/Dockerfile`              | Multi-stage build → distroless runtime                                                                                                          |
+| `docker/Dockerfile`              | Multi-stage build → Distroless **Bun** `runtime` (default); `runtime-node`; `runtime-with-docker-cli`                                              |
 | `.dockerignore`                  | Keeps build context small (root; used by `docker build` from `.`)                                                                               |
 | `docker/docker-compose.yml`      | Local stack (`clawql-mcp-http` only)                                                                                                            |
 | `docker/compose/`                | Vertical IDP stacks ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) — start with [`compose/README.md`](compose/README.md) |
