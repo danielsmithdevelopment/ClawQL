@@ -2,6 +2,8 @@
 
 `memory_ingest` (and other ClawQL-owned MCP tools) previously skipped `execute-core` operation risk, mandate park, and session IFC. That is a security finding: a native write path is exactly where persistent injection survives into later sessions.
 
+**Product IFC reference:** [`docs/security/session-information-flow-control.md`](../../../security/session-information-flow-control.md) · site [`/security/session-ifc`](https://docs.clawql.com/security/session-ifc).
+
 ## Choke point
 
 Every registered tool must pass through:

@@ -389,13 +389,27 @@ export const learnRelatedGuideSiteCards: Array<ReferenceCard> = [
     href: '/security',
     name: 'Security',
     description:
-      'Golden image pipeline, Kyverno, Cosign keyless signing, Trivy/OSV gates, and supply-chain references.',
+      'Session IFC, golden image pipeline, Kyverno, Cosign, Trivy/OSV gates, and supply-chain references.',
     icon: ShapesIcon,
     pattern: {
       y: 8,
       squares: [
         [0, 2],
         [2, 0],
+      ],
+    },
+  },
+  {
+    href: '/security/session-ifc',
+    name: 'Session IFC',
+    description:
+      'What session information-flow control is, how it is called, when it runs, and where it is defined.',
+    icon: ShapesIcon,
+    pattern: {
+      y: 12,
+      squares: [
+        [1, 0],
+        [0, 2],
       ],
     },
   },
@@ -589,7 +603,7 @@ export const referenceSiteCards: Array<ReferenceCard> = [
     href: '/security',
     name: 'Security',
     description:
-      'SBOM/provenance attestations, keyless Cosign signing, Trivy and OSV gates, and defense-in-depth deliverables.',
+      'Session IFC, SBOM/provenance, Cosign, Trivy/OSV gates, and defense-in-depth deliverables.',
     icon: ShapesIcon,
     pattern: {
       y: 10,

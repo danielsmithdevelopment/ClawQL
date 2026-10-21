@@ -72,7 +72,12 @@ export const DOCS_HUB_ROUTES: ReadonlyArray<DocsHubRoute> = [
   {
     path: '/security',
     title: 'Security',
-    summary: 'Defense in depth, status, and training curriculum',
+    summary: 'Session IFC, defense in depth, status, and training curriculum',
+  },
+  {
+    path: '/security/session-ifc',
+    title: 'Session IFC',
+    summary: 'Information-flow control: labels, call sites, mayFlow',
   },
   {
     path: '/streams/clawql-streams',

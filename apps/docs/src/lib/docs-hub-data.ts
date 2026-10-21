@@ -343,6 +343,13 @@ export const guidesHubCards: Array<ReferenceCard> = [
     icon: BookIcon,
   }),
   card({
+    href: '/security/session-ifc',
+    name: 'Session IFC',
+    description:
+      'Information-flow control: session labels, call sites, mayFlow, vs Panguard/park.',
+    icon: ShapesIcon,
+  }),
+  card({
     href: '/security/defense-in-depth',
     name: 'Defense in depth',
     description: 'Deployment security reference — supply chain through audit.',

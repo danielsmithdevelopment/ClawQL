@@ -110,6 +110,11 @@ export const docsNavigation: Array<NavGroup> = [
       { title: 'Overview', href: '/security' },
       { title: 'Security status', href: '/security/status', tag: 'Evidence' },
       {
+        title: 'Session IFC',
+        href: '/security/session-ifc',
+        tag: 'Core',
+      },
+      {
         title: 'Defense in depth',
         href: '/security/defense-in-depth',
       },

@@ -109,6 +109,7 @@ export const DOC_SITE_ROUTES = {
     '/architecture/agentic-fabric',
   'docs/security/clawql-security-defense-in-depth.md':
     '/security/defense-in-depth',
+  'docs/security/session-information-flow-control.md': '/security/session-ifc',
   'docs/security/security-best-practices-series/README.md':
     '/security/best-practices',
 }

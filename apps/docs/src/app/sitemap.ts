@@ -364,6 +364,11 @@ const ENTRIES: Array<Entry> = [
     priority: 0.89,
   },
   {
+    path: '/security/session-ifc',
+    changeFrequency: 'weekly',
+    priority: 0.92,
+  },
+  {
     path: '/hitl-label-studio',
     changeFrequency: 'monthly',
     priority: 0.8,

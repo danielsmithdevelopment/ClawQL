@@ -129,6 +129,11 @@ const SECTIONS = [
         '/security/status',
         'Append-only Trivy/OSV scan history, SBOM, Cosign verify',
       ],
+      [
+        'Session IFC',
+        '/security/session-ifc',
+        'Session information-flow control: labels, call sites, mayFlow',
+      ],
       ['Defense in depth', '/security/defense-in-depth', 'Layered MCP security model'],
       [
         'Security best practices',

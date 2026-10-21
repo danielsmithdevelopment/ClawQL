@@ -34,6 +34,7 @@ export const GENERATED_BODY_ROUTES = {
   'clawql-hybrid-decentralized-body.mdx': '/vision/immutable-releases',
   'clawql-slides-body.mdx': '/vision/slide-deck',
   'clawql-defense-in-depth-body.mdx': '/security/defense-in-depth',
+  'session-ifc-body.mdx': '/security/session-ifc',
   'clawql-idp-platform-body.mdx': '/vision/idp-platform',
   'clawql-operator-target-architecture-body.mdx':
     '/design/operator-target-architecture',

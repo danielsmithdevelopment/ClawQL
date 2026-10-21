@@ -99,6 +99,8 @@ WORM / Sessions list the program id, the signed root, and each leaf’s digest a
 
 ### Information flow
 
+**Product reference (operators / security reviewers):** [`docs/security/session-information-flow-control.md`](../security/session-information-flow-control.md) — published on the docs site at [`/security/session-ifc`](https://docs.clawql.com/security/session-ifc). That page states what IFC is, where it is defined, how and when it is called, and how it differs from Panguard and mandate park.
+
 #### Program memory
 
 Inside a program, data from one source sits in memory and can flow into another proposal. Without care, a program is a laundering channel (read an internal contract; propose a Slack post containing it).

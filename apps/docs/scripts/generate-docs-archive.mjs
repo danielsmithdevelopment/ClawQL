@@ -159,6 +159,7 @@ function parseSidebarHrefs(source) {
   // Security training modules come from the generated registry (not string literals).
   if (hrefs.has('/security') || hrefs.has('/security/best-practices')) {
     hrefs.add('/security/defense-in-depth')
+    hrefs.add('/security/session-ifc')
     for (const p of loadJsonArray(
       'src/generated/security-training/sitemap-paths.json',
     )) {

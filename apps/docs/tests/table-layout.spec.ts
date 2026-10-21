@@ -40,6 +40,7 @@ test.describe('mobile table layout', () => {
     },
     { path: '/specs/cq-extensions', name: 'cq extensions' },
     { path: '/security/defense-in-depth', name: 'defense in depth' },
+    { path: '/security/session-ifc', name: 'session IFC' },
     { path: '/plugins', name: 'plugin registry' },
     { path: '/plugins/bundled-providers', name: 'bundled providers plugin' },
     { path: '/vision/roadmap', name: 'vision roadmap' },
