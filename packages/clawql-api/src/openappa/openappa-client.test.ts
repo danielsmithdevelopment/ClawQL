@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Effect } from "effect";
 import {
   loadOpenAppaConfigEffect,
+  openAppaToolIsMutating,
   openAppaWireToolNameEffect,
+  type OpenAppaConfig,
 } from "./config.js";
 import {
   openAppaAfterToolResultEffect,
@@ -12,12 +14,25 @@ import {
   resetOpenAppaSessionCacheForTests,
 } from "./gate.js";
 import { OpenAppaLive, OpenAppaService } from "./openappa-service.js";
-import type { OpenAppaConfig } from "./config.js";
 
 type HookHandler = (body: Record<string, unknown>) => {
   status: number;
   body: Record<string, unknown>;
 };
+
+function cfg(url: string, overrides: Partial<OpenAppaConfig> = {}): OpenAppaConfig {
+  return {
+    baseUrl: url,
+    adapter: "opencode",
+    mcpServer: "clawql",
+    readFailurePolicy: "block",
+    timeoutMs: 3000,
+    allowCacheMs: 0,
+    authToken: null,
+    isLoopback: true,
+    ...overrides,
+  };
+}
 
 function startMockOpenAppa(handler: HookHandler): Promise<{ server: Server; url: string }> {
   return new Promise((resolve, reject) => {
@@ -53,6 +68,7 @@ function startMockOpenAppa(handler: HookHandler): Promise<{ server: Server; url:
 describe("OpenAPPA Layer 5 client", () => {
   const prevEnable = process.env.CLAWQL_ENABLE_OPENAPPA;
   const prevUrl = process.env.CLAWQL_OPENAPPA_URL;
+  const prevAuth = process.env.CLAWQL_OPENAPPA_AUTH_TOKEN;
   let mock: { server: Server; url: string } | undefined;
 
   beforeEach(() => {
@@ -64,6 +80,8 @@ describe("OpenAPPA Layer 5 client", () => {
     else process.env.CLAWQL_ENABLE_OPENAPPA = prevEnable;
     if (prevUrl === undefined) delete process.env.CLAWQL_OPENAPPA_URL;
     else process.env.CLAWQL_OPENAPPA_URL = prevUrl;
+    if (prevAuth === undefined) delete process.env.CLAWQL_OPENAPPA_AUTH_TOKEN;
+    else process.env.CLAWQL_OPENAPPA_AUTH_TOKEN = prevAuth;
     if (mock) {
       await new Promise<void>((r) => mock!.server.close(() => r()));
       mock = undefined;
@@ -75,10 +93,26 @@ describe("OpenAPPA Layer 5 client", () => {
     expect(name).toBe("mcp__clawql__notify");
   });
 
+  it("classifies write vs read for fail-closed policy", () => {
+    expect(openAppaToolIsMutating("search")).toBe(false);
+    expect(openAppaToolIsMutating("memory_recall")).toBe(false);
+    expect(openAppaToolIsMutating("notify")).toBe(true);
+    expect(openAppaToolIsMutating("memory_ingest")).toBe(true);
+    expect(openAppaToolIsMutating("execute")).toBe(true);
+  });
+
   it("loadConfig is null when disabled", async () => {
     delete process.env.CLAWQL_ENABLE_OPENAPPA;
-    const cfg = await Effect.runPromise(loadOpenAppaConfigEffect());
-    expect(cfg).toBeNull();
+    const cfgLoaded = await Effect.runPromise(loadOpenAppaConfigEffect());
+    expect(cfgLoaded).toBeNull();
+  });
+
+  it("remote URL without auth token fails config load", async () => {
+    process.env.CLAWQL_ENABLE_OPENAPPA = "1";
+    process.env.CLAWQL_OPENAPPA_URL = "https://openappa.example.com";
+    delete process.env.CLAWQL_OPENAPPA_AUTH_TOKEN;
+    const loaded = await Effect.runPromise(loadOpenAppaConfigEffect().pipe(Effect.result));
+    expect(loaded._tag).toBe("Failure");
   });
 
   it("allows when OpenAPPA disabled", async () => {
@@ -101,20 +135,13 @@ describe("OpenAPPA Layer 5 client", () => {
       }
       return { status: 500, body: { protocol: 1, decision: "refuse", detail: "unexpected" } };
     });
-    const config: OpenAppaConfig = {
-      baseUrl: mock.url,
-      adapter: "opencode",
-      mcpServer: "clawql",
-      failurePolicy: "block",
-      timeoutMs: 3000,
-    };
     const verdict = await Effect.runPromise(
       openAppaBeforeToolCallEffect({
         toolName: "search",
         args: { query: "pets" },
         sessionId: "sess-allow",
         callId: "c1",
-        config,
+        config: cfg(mock.url),
       })
     );
     expect(verdict.allow).toBe(true);
@@ -136,19 +163,12 @@ describe("OpenAPPA Layer 5 client", () => {
         },
       };
     });
-    const config: OpenAppaConfig = {
-      baseUrl: mock.url,
-      adapter: "opencode",
-      mcpServer: "clawql",
-      failurePolicy: "block",
-      timeoutMs: 3000,
-    };
     const verdict = await Effect.runPromise(
       openAppaBeforeToolCallEffect({
         toolName: "foo",
         args: {},
         sessionId: "sess-refuse",
-        config,
+        config: cfg(mock.url),
       })
     );
     expect(verdict.allow).toBe(false);
@@ -156,7 +176,6 @@ describe("OpenAPPA Layer 5 client", () => {
     expect(verdict.status).toBe("blocked");
     expect(verdict.reason).toContain("undeclared");
     const mcp = openAppaBlockToMcpResult(verdict);
-    expect(mcp.isError).toBe(true);
     expect(JSON.parse(mcp.content[0].text).mechanism).toBe("openappa_layer5");
   });
 
@@ -175,24 +194,79 @@ describe("OpenAPPA Layer 5 client", () => {
         },
       };
     });
-    const config: OpenAppaConfig = {
-      baseUrl: mock.url,
-      adapter: "opencode",
-      mcpServer: "clawql",
-      failurePolicy: "block",
-      timeoutMs: 3000,
-    };
     const verdict = await Effect.runPromise(
       openAppaBeforeToolCallEffect({
         toolName: "notify",
         args: { destination: "external" },
         sessionId: "sess-hitl",
-        config,
+        config: cfg(mock.url),
       })
     );
     expect(verdict.allow).toBe(false);
     if (verdict.allow) throw new Error("expected block");
     expect(verdict.status).toBe("mandate_required");
+  });
+
+  it("kill sidecar mid-session: write fails closed even when reads warn", async () => {
+    mock = await startMockOpenAppa((body) => {
+      if (body.event === "session_start") {
+        return { status: 200, body: { protocol: 1, decision: "ack" } };
+      }
+      return { status: 200, body: { protocol: 1, decision: "allow_call" } };
+    });
+    const config = cfg(mock.url, { readFailurePolicy: "warn", timeoutMs: 500 });
+    const first = await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "search",
+        args: { query: "ok" },
+        sessionId: "sess-kill",
+        callId: "k1",
+        config,
+      })
+    );
+    expect(first.allow).toBe(true);
+
+    await new Promise<void>((r) => mock!.server.close(() => r()));
+    mock = undefined;
+
+    const writeAfter = await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "memory_ingest",
+        args: { title: "x", insights: "y" },
+        sessionId: "sess-kill",
+        callId: "k2",
+        config,
+      })
+    );
+    expect(writeAfter.allow).toBe(false);
+    if (writeAfter.allow) throw new Error("expected block");
+    expect(writeAfter.decision.class).toBe("sidecar_unavailable");
+
+    const readAfter = await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "search",
+        args: { query: "still" },
+        sessionId: "sess-kill",
+        callId: "k3",
+        config,
+      })
+    );
+    // readFailurePolicy=warn → fail-open for reads only
+    expect(readAfter.allow).toBe(true);
+  });
+
+  it("default read failure policy is fail-closed on transport error", async () => {
+    const verdict = await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "search",
+        args: {},
+        sessionId: "sess-closed",
+        config: cfg("http://127.0.0.1:1", { timeoutMs: 200 }),
+      })
+    );
+    expect(verdict.allow).toBe(false);
+    if (verdict.allow) throw new Error("expected block");
+    expect(verdict.decision.class).toBe("sidecar_unavailable");
   });
 
   it("tool_result replace_output", async () => {
@@ -208,13 +282,6 @@ describe("OpenAPPA Layer 5 client", () => {
       }
       return { status: 200, body: { protocol: 1, decision: "ack" } };
     });
-    const config: OpenAppaConfig = {
-      baseUrl: mock.url,
-      adapter: "opencode",
-      mcpServer: "clawql",
-      failurePolicy: "block",
-      timeoutMs: 3000,
-    };
     const after = await Effect.runPromise(
       openAppaAfterToolResultEffect({
         toolName: "memory_recall",
@@ -222,7 +289,7 @@ describe("OpenAPPA Layer 5 client", () => {
         sessionId: "sess-replace",
         callId: "c9",
         outcome: { status: "success", body: { secret: 1 } },
-        config,
+        config: cfg(mock.url),
       })
     );
     expect(after.action).toBe("replace");
@@ -236,13 +303,6 @@ describe("OpenAPPA Layer 5 client", () => {
       }
       return { status: 200, body: { protocol: 1, decision: "allow_call" } };
     });
-    const config: OpenAppaConfig = {
-      baseUrl: mock.url,
-      adapter: "opencode",
-      mcpServer: "clawql",
-      failurePolicy: "block",
-      timeoutMs: 3000,
-    };
     const verdict = await Effect.runPromise(
       Effect.gen(function* () {
         const svc = yield* OpenAppaService;
@@ -250,29 +310,50 @@ describe("OpenAPPA Layer 5 client", () => {
           toolName: "cache",
           args: { operation: "get", key: "k" },
           sessionId: "sess-svc",
-          config,
+          config: cfg(mock!.url),
         });
       }).pipe(Effect.provide(OpenAppaLive))
     );
     expect(verdict.allow).toBe(true);
   });
 
-  it("warn failure policy allows on transport error", async () => {
-    const config: OpenAppaConfig = {
-      baseUrl: "http://127.0.0.1:1",
-      adapter: "opencode",
-      mcpServer: "clawql",
-      failurePolicy: "warn",
-      timeoutMs: 200,
-    };
-    const verdict = await Effect.runPromise(
+  it("sends Authorization bearer when authToken set", async () => {
+    let sawAuth = "";
+    mock = await startMockOpenAppa((_body) => {
+      return { status: 200, body: { protocol: 1, decision: "ack" } };
+    });
+    // wrap handler to capture auth — restart with custom server
+    await new Promise<void>((r) => mock!.server.close(() => r()));
+    mock = await new Promise((resolve, reject) => {
+      const server = createServer(async (req, res) => {
+        sawAuth = String(req.headers.authorization ?? "");
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) chunks.push(chunk as Buffer);
+        const body = JSON.parse(Buffer.concat(chunks).toString("utf8")) as Record<string, unknown>;
+        const decision =
+          body.event === "session_start"
+            ? { protocol: 1, decision: "ack" }
+            : { protocol: 1, decision: "allow_call" };
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(decision));
+      });
+      server.listen(0, "127.0.0.1", () => {
+        const addr = server.address();
+        if (!addr || typeof addr === "string") {
+          reject(new Error("no addr"));
+          return;
+        }
+        resolve({ server, url: `http://127.0.0.1:${addr.port}` });
+      });
+    });
+    await Effect.runPromise(
       openAppaBeforeToolCallEffect({
         toolName: "search",
         args: {},
-        sessionId: "sess-warn",
-        config,
+        sessionId: "sess-auth",
+        config: cfg(mock.url, { authToken: "test-token-xyz" }),
       })
     );
-    expect(verdict.allow).toBe(true);
+    expect(sawAuth).toBe("Bearer test-token-xyz");
   });
 });

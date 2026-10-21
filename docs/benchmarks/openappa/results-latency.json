@@ -1,0 +1,18 @@
+{
+  "measured_at": "2026-10-21T03:03:14.750Z",
+  "base_url": "http://127.0.0.1:8790",
+  "adapter": "opencode",
+  "tool": "mcp__clawql__search",
+  "n": 200,
+  "timeout_ms_budget": 2000,
+  "latency_ms": {
+    "min": 1.6915690000000012,
+    "p50": 4.488907999999981,
+    "p90": 8.07249800000011,
+    "p99": 10.804724999999962,
+    "p999": 17.496755000000007,
+    "max": 17.496755000000007,
+    "mean": 4.987003074999995
+  },
+  "notes": "Hard timeout budget is CLAWQL_OPENAPPA_TIMEOUT_MS (default 2000). Exceeded → sidecar_unavailable fail-closed for writes; reads default closed."
+}
