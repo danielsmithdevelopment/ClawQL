@@ -3,11 +3,7 @@ import type { OpenAppaGateVerdict } from "./types.js";
 
 /** Layer attribution for audit / investigator trails. */
 export type GateLayerId =
-  | "panguard_layer4"
-  | "openappa_layer5"
-  | "session_ifc"
-  | "park_destructive_write"
-  | "composed";
+  "panguard_layer4" | "openappa_layer5" | "session_ifc" | "park_destructive_write" | "composed";
 
 export type LayerDecision = {
   readonly layer: GateLayerId;
@@ -25,7 +21,12 @@ export type ComposedGateResult =
       readonly status: "blocked" | "mandate_required";
       readonly reason: string;
       readonly layers: readonly LayerDecision[];
-      readonly mechanism: "openappa_layer5" | "session_ifc" | "park_destructive_write" | "composed_mandate" | "composed_block";
+      readonly mechanism:
+        | "openappa_layer5"
+        | "session_ifc"
+        | "park_destructive_write"
+        | "composed_mandate"
+        | "composed_block";
       readonly executionId?: string;
       readonly openappaOfferIds?: readonly string[];
     };
@@ -36,9 +37,7 @@ function severity(status: LayerDecision["status"]): number {
   return 0;
 }
 
-export function openAppaVerdictToLayerDecision(
-  verdict: OpenAppaGateVerdict
-): LayerDecision {
+export function openAppaVerdictToLayerDecision(verdict: OpenAppaGateVerdict): LayerDecision {
   if (verdict.allow) {
     return {
       layer: "openappa_layer5",

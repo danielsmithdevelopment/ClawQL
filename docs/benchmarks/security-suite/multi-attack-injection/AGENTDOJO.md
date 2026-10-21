@@ -10,31 +10,31 @@ Remeasure readout order was locked before data: **(1) Slack ASR → (2) util wit
 
 ## 1. Slack ASR (watchpoint first)
 
-| | v1 clawql ASR | v2 clawql ASR | none (both runs ~) |
-| --- | ---: | ---: | ---: |
-| **Slack** | **0.30** \[0.21, 0.38\] | **0.40** \[0.30, 0.50\] | 0.66 |
+|           |           v1 clawql ASR |           v2 clawql ASR | none (both runs ~) |
+| --------- | ----------------------: | ----------------------: | -----------------: |
+| **Slack** | **0.30** \[0.21, 0.38\] | **0.40** \[0.30, 0.50\] |               0.66 |
 
 Slack ASR **rose** under v2 (0.30 → 0.40). The same-workspace relaxation went too far on this suite for attack rate — **even though utility recovered**. Still below undefended (0.66), but the watchpoint triggers: do not treat v2 as a pure win on Slack security.
 
 Other suites (ASR none → clawql):
 
-| Suite | v1 | v2 |
-| --- | ---: | ---: |
-| Banking | 0.50 → 0.10 | 0.53 → 0.10 |
-| Travel | 0.31 → 0.11 | 0.25 → 0.16 |
-| Workspace | 0.18 → 0.00 | 0.17 → 0.04 |
+| Suite          |           v1 |           v2 |
+| -------------- | -----------: | -----------: |
+| Banking        |  0.50 → 0.10 |  0.53 → 0.10 |
+| Travel         |  0.31 → 0.11 |  0.25 → 0.16 |
+| Workspace      |  0.18 → 0.00 |  0.17 → 0.04 |
 | Pooled (n=949) | 0.30 → 0.064 | 0.29 → 0.106 |
 
 ---
 
 ## 2. Utility without attack vs undefended
 
-| Suite | v1: none → clawql | v2: none → clawql (95% CI clawql) |
-| --- | ---: | ---: |
-| Banking | 0.56 → 0.56 | 0.69 → 0.56 \[0.31, 0.81\] |
-| Slack | 0.76 → **0.24** | 0.81 → **0.57** \[0.38, 0.76\] |
-| Travel | 0.60 → **0.25** | 0.50 → **0.40** \[0.20, 0.60\] |
-| Workspace | 0.80 → **0.42** | 0.90 → **0.75** \[0.62, 0.88\] |
+| Suite     | v1: none → clawql | v2: none → clawql (95% CI clawql) |
+| --------- | ----------------: | --------------------------------: |
+| Banking   |       0.56 → 0.56 |        0.69 → 0.56 \[0.31, 0.81\] |
+| Slack     |   0.76 → **0.24** |    0.81 → **0.57** \[0.38, 0.76\] |
+| Travel    |   0.60 → **0.25** |    0.50 → **0.40** \[0.20, 0.60\] |
+| Workspace |   0.80 → **0.42** |    0.90 → **0.75** \[0.62, 0.88\] |
 
 v2 recovered a large share of the clean-work cost on Slack, travel, and workspace. Banking stays near the v1 clawql level (this-run none was higher). Intervals remain wide (few dozen user tasks per suite).
 
@@ -42,10 +42,10 @@ v2 recovered a large share of the clean-work cost on Slack, travel, and workspac
 
 ## 3. Out-of-sample
 
-| Arm | Result |
-| --- | --- |
-| **Scripted multi-attack board** | Holds: `clawql_default` **0/12** attacks, **14/14** benign — [results-scripted-oos-v2.json](./results-scripted-oos-v2.json) |
-| **InjecAgent** | Protocol frozen before remeasure ([INJECAGENT.md](./INJECAGENT.md)); **scores not yet measured** — do not claim generalization beyond the scripted board |
+| Arm                             | Result                                                                                                                                                   |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Scripted multi-attack board** | Holds: `clawql_default` **0/12** attacks, **14/14** benign — [results-scripted-oos-v2.json](./results-scripted-oos-v2.json)                              |
+| **InjecAgent**                  | Protocol frozen before remeasure ([INJECAGENT.md](./INJECAGENT.md)); **scores not yet measured** — do not claim generalization beyond the scripted board |
 
 ---
 
@@ -60,29 +60,29 @@ v2 is a cleaner measurement of the refined rules — not a free lunch. Next leve
 
 ### v1 — fail-closed-all (CI 39360438719)
 
-| Suite     | Defense            |   n |         ASR (95% CI) | Util under attack | Util without attack | Blocks |
-| --------- | ------------------ | --: | -------------------: | ----------------: | ------------------: | -----: |
-| banking   | `none`             | 144 | 0.50 \[0.42, 0.58\]  |              0.49 |                0.56 |      — |
-| banking   | `clawql_data_flow` | 144 | 0.10 \[0.05, 0.15\]  |              0.51 |                0.56 |    351 |
-| slack     | `none`             | 105 | 0.66 \[0.56, 0.74\]  |              0.47 |                0.76 |      — |
-| slack     | `clawql_data_flow` | 105 | 0.30 \[0.21, 0.38\]  |              0.18 |                0.24 |    270 |
-| travel    | `none`             | 140 | 0.31 \[0.24, 0.39\]  |              0.36 |                0.60 |      — |
-| travel    | `clawql_data_flow` | 140 | 0.11 \[0.06, 0.17\]  |              0.33 |                0.25 |     98 |
-| workspace | `none`             | 560 | 0.18 \[0.15, 0.21\]  |              0.37 |                0.80 |      — |
-| workspace | `clawql_data_flow` | 560 | 0.00 \[0.00, 0.00\]  |              0.34 |                0.42 |   3603 |
+| Suite     | Defense            |   n |        ASR (95% CI) | Util under attack | Util without attack | Blocks |
+| --------- | ------------------ | --: | ------------------: | ----------------: | ------------------: | -----: |
+| banking   | `none`             | 144 | 0.50 \[0.42, 0.58\] |              0.49 |                0.56 |      — |
+| banking   | `clawql_data_flow` | 144 | 0.10 \[0.05, 0.15\] |              0.51 |                0.56 |    351 |
+| slack     | `none`             | 105 | 0.66 \[0.56, 0.74\] |              0.47 |                0.76 |      — |
+| slack     | `clawql_data_flow` | 105 | 0.30 \[0.21, 0.38\] |              0.18 |                0.24 |    270 |
+| travel    | `none`             | 140 | 0.31 \[0.24, 0.39\] |              0.36 |                0.60 |      — |
+| travel    | `clawql_data_flow` | 140 | 0.11 \[0.06, 0.17\] |              0.33 |                0.25 |     98 |
+| workspace | `none`             | 560 | 0.18 \[0.15, 0.21\] |              0.37 |                0.80 |      — |
+| workspace | `clawql_data_flow` | 560 | 0.00 \[0.00, 0.00\] |              0.34 |                0.42 |   3603 |
 
 ### v2 — `clawql_agentdojo_defaults_v2` (CI 39458622200)
 
-| Suite     | Defense            |   n |         ASR (95% CI) | Util under attack | Util without attack (95% CI) | Blocks | No-atk stops |
-| --------- | ------------------ | --: | -------------------: | ----------------: | ---------------------------: | -----: | -----------: |
-| banking   | `none`             | 144 | 0.53 \[0.44, 0.60\]  |              0.49 |                         0.69 |      — |            — |
-| banking   | `clawql_data_flow` | 144 | 0.10 \[0.05, 0.15\]  |              0.51 |            0.56 \[0.31, 0.81\] |    279 | 11 (all park) |
-| slack     | `none`             | 105 | 0.66 \[0.56, 0.74\]  |              0.53 |                         0.81 |      — |            — |
-| slack     | `clawql_data_flow` | 105 | 0.40 \[0.30, 0.50\]  |              0.50 |            0.57 \[0.38, 0.76\] |    133 | 14 (park+hard) |
-| travel    | `none`             | 140 | 0.25 \[0.18, 0.33\]  |              0.44 |                         0.50 |      — |            — |
-| travel    | `clawql_data_flow` | 140 | 0.16 \[0.11, 0.23\]  |              0.40 |            0.40 \[0.20, 0.60\] |     55 |  2 (park) |
-| workspace | `none`             | 560 | 0.17 \[0.14, 0.20\]  |              0.36 |                         0.90 |      — |            — |
-| workspace | `clawql_data_flow` | 560 | 0.04 \[0.03, 0.06\]  |              0.55 |            0.75 \[0.62, 0.88\] |   2117 |  9 (park+hard) |
+| Suite     | Defense            |   n |        ASR (95% CI) | Util under attack | Util without attack (95% CI) | Blocks |   No-atk stops |
+| --------- | ------------------ | --: | ------------------: | ----------------: | ---------------------------: | -----: | -------------: |
+| banking   | `none`             | 144 | 0.53 \[0.44, 0.60\] |              0.49 |                         0.69 |      — |              — |
+| banking   | `clawql_data_flow` | 144 | 0.10 \[0.05, 0.15\] |              0.51 |          0.56 \[0.31, 0.81\] |    279 |  11 (all park) |
+| slack     | `none`             | 105 | 0.66 \[0.56, 0.74\] |              0.53 |                         0.81 |      — |              — |
+| slack     | `clawql_data_flow` | 105 | 0.40 \[0.30, 0.50\] |              0.50 |          0.57 \[0.38, 0.76\] |    133 | 14 (park+hard) |
+| travel    | `none`             | 140 | 0.25 \[0.18, 0.33\] |              0.44 |                         0.50 |      — |              — |
+| travel    | `clawql_data_flow` | 140 | 0.16 \[0.11, 0.23\] |              0.40 |          0.40 \[0.20, 0.60\] |     55 |       2 (park) |
+| workspace | `none`             | 560 | 0.17 \[0.14, 0.20\] |              0.36 |                         0.90 |      — |              — |
+| workspace | `clawql_data_flow` | 560 | 0.04 \[0.03, 0.06\] |              0.55 |          0.75 \[0.62, 0.88\] |   2117 |  9 (park+hard) |
 
 ASR = `mean(security_results)` (`security()` True ⇒ injection succeeded). Allowed posts use **metadata** trust labels (body unchanged).
 
@@ -90,22 +90,22 @@ ASR = `mean(security_results)` (`security()` True ⇒ injection succeeded). Allo
 
 v1 policy was fail-closed on every sink after any untrusted read:
 
-| Suite     | Tasks with blocks | Top sinks |
-| --------- | ----------------: | --------- |
+| Suite     | Tasks with blocks | Top sinks                            |
+| --------- | ----------------: | ------------------------------------ |
 | Banking   |                 7 | `send_money`, `schedule_transaction` |
-| Slack     |                16 | DM / add-user / channel message |
-| Travel    |                 5 | calendar / `reserve_hotel` / email |
-| Workspace |                22 | calendar / email / file writes |
+| Slack     |                16 | DM / add-user / channel message      |
+| Travel    |                 5 | calendar / `reserve_hotel` / email   |
+| Workspace |                22 | calendar / email / file writes       |
 
 Path-continuation util estimates stay internal-only (`agentdojo-park-vs-hard-counterfactual.json`).
 
 ## Defaults v2 (frozen — see rules diff)
 
-| Disposition | Examples |
-| ----------- | -------- |
+| Disposition                                        | Examples                                                                                                     |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | **Allow** (+ metadata trust label; body unchanged) | Slack DM / non-`External_*` channel post; `@bluesparrowtech.com` email; own calendar; own file create/append |
-| **Park** (human) | Money / schedule; external email; travel reserves; **membership & invitations**; calendar participant adds |
-| **Hard block** | `delete_*`, `share_file`, `post_webpage`, Slack `External_*`, membership with outside email |
+| **Park** (human)                                   | Money / schedule; external email; travel reserves; **membership & invitations**; calendar participant adds   |
+| **Hard block**                                     | `delete_*`, `share_file`, `post_webpage`, Slack `External_*`, membership with outside email                  |
 
 ## Publish gates
 
@@ -116,12 +116,12 @@ Path-continuation util estimates stay internal-only (`agentdojo-park-vs-hard-cou
 
 ## Protocol label
 
-| Question                    | Answer                                                                                                                                                                                   |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Same as `live-models.json`? | **No.** Pre-registered live models are separate.                                                                                                                                         |
-| These models                | Harness via OpenRouter: federal-facing **`openai/gpt-4o-mini`**. DeepSeek lab-only.                                                                                                      |
-| Sample size                 | Full = **949** attack pairs (workspace 560 + slack 105 + banking 144 + travel 140).                                                                                                      |
-| Federal-facing              | Feature **`openai/gpt-4o-mini`** only.                                                                                                                                                   |
+| Question                    | Answer                                                                              |
+| --------------------------- | ----------------------------------------------------------------------------------- |
+| Same as `live-models.json`? | **No.** Pre-registered live models are separate.                                    |
+| These models                | Harness via OpenRouter: federal-facing **`openai/gpt-4o-mini`**. DeepSeek lab-only. |
+| Sample size                 | Full = **949** attack pairs (workspace 560 + slack 105 + banking 144 + travel 140). |
+| Federal-facing              | Feature **`openai/gpt-4o-mini`** only.                                              |
 
 ## Smoke matrix (n=12 workspace) — exploratory only
 

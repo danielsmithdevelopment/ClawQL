@@ -6,12 +6,12 @@ ClawQL wires [OpenAPPA](https://github.com/archestra-ai/OpenAPPA) as an **opt-in
 
 ## Ownership split (complements, not alternatives)
 
-| | OpenAPPA (Layer 5) | Session data-flow labels (IFC) |
-| --- | --- | --- |
-| **The question** | May this caller do this call at all? | Given what this session has read, may this data go there? |
-| **Looks at** | Tool identity, arguments, declared contracts, attention | Data history / taint across the session (and into memory) |
-| **Stops** | Undeclared tools, least-privilege denials, approval-gated calls | Untrusted content reaching external / privileged sinks |
-| **Misses** | Allowed tool used to exfiltrate poisoned-session data | Dangerous but permitted action in a clean session |
+|                  | OpenAPPA (Layer 5)                                              | Session data-flow labels (IFC)                            |
+| ---------------- | --------------------------------------------------------------- | --------------------------------------------------------- |
+| **The question** | May this caller do this call at all?                            | Given what this session has read, may this data go there? |
+| **Looks at**     | Tool identity, arguments, declared contracts, attention         | Data history / taint across the session (and into memory) |
+| **Stops**        | Undeclared tools, least-privilege denials, approval-gated calls | Untrusted content reaching external / privileged sinks    |
+| **Misses**       | Allowed tool used to exfiltrate poisoned-session data           | Dangerous but permitted action in a clean session         |
 
 **Design rule:** session IFC owns “where may this data go”. OpenAPPA owns “may this caller do this at all”. Both feed **one outcome**, with **most restrictive wins**, and **one approval request** (never two), with both reasons shown.
 
@@ -28,10 +28,10 @@ wrapRegisteredMcpToolHandler
 
 ## 1. Sidecar down / timeout — fail closed
 
-| Kind | Default | Override |
-| --- | --- | --- |
-| **Writes** / destructive / execute-path | Always **fail closed** (`class: sidecar_unavailable`) | None — `warn` is ignored |
-| **Reads** | **Fail closed** | `CLAWQL_OPENAPPA_READ_FAILURE_POLICY=warn` (fail-open for reads only) |
+| Kind                                    | Default                                               | Override                                                              |
+| --------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------- |
+| **Writes** / destructive / execute-path | Always **fail closed** (`class: sidecar_unavailable`) | None — `warn` is ignored                                              |
+| **Reads**                               | **Fail closed**                                       | `CLAWQL_OPENAPPA_READ_FAILURE_POLICY=warn` (fail-open for reads only) |
 
 **Timeout budget: `CLAWQL_OPENAPPA_TIMEOUT_MS` default `250` (low hundreds of ms).** A 2s wait makes a stalled sidecar look like a ClawQL outage.
 
@@ -62,11 +62,11 @@ Results: [`docs/benchmarks/openappa/results-session-length-curve.json`](../bench
 Measured (keep-alive, **one root**, paired `tool_call`+`tool_result`, OpenAPPA 0.37.0, loopback):
 
 | Call index (one root) | tool_call p50 | call+result p50 |
-| --- | ---: | ---: |
-| 10 | **1.8 ms** | 4.5 ms |
-| 100 | **5.3 ms** | 11.6 ms |
-| 1,000 | **36 ms** | 83 ms |
-| 5,000 | **179 ms** | 415 ms |
+| --------------------- | ------------: | --------------: |
+| 10                    |    **1.8 ms** |          4.5 ms |
+| 100                   |    **5.3 ms** |         11.6 ms |
+| 1,000                 |     **36 ms** |           83 ms |
+| 5,000                 |    **179 ms** |          415 ms |
 
 Growth ratio (p50 at 5k / p50 at 10) ≈ **98×**. Cost is roughly linear in session length. OpenAPPA 0.35+ caches label folds in-process, but the HTTP sidecar path still slows as the per-root event log grows.
 
@@ -74,11 +74,11 @@ Growth ratio (p50 at 5k / p50 at 10) ≈ **98×**. Cost is roughly linear in ses
 
 **OpenAPPA is supported for sessions up to `OPENAPPA_SUPPORTED_SESSION_CALLS` = 2,000** OpenAPPA-gated tool calls per MCP session.
 
-| | Value | Basis |
-| --- | --- | --- |
-| Documented support | **2,000 calls** | ~2.5× margin under the 250ms per-hook budget on the measured curve |
-| Budget cliff (approx.) | ~5,000–7,000 calls | tool_call p50 → 180ms at 5k; tool_result component nears 250ms |
-| Timeout | `CLAWQL_OPENAPPA_TIMEOUT_MS` = 250 | Fail closed + circuit |
+|                        | Value                              | Basis                                                              |
+| ---------------------- | ---------------------------------- | ------------------------------------------------------------------ |
+| Documented support     | **2,000 calls**                    | ~2.5× margin under the 250ms per-hook budget on the measured curve |
+| Budget cliff (approx.) | ~5,000–7,000 calls                 | tool_call p50 → 180ms at 5k; tool_result component nears 250ms     |
+| Timeout                | `CLAWQL_OPENAPPA_TIMEOUT_MS` = 250 | Fail closed + circuit                                              |
 
 Beyond 2,000 calls the deployment stays **secure** (fail closed) but a long-running agent may simply stop working. Prefer a new MCP session for a new task rather than rotating `root_id` inside one session (rotation drops denials/approvals/labels).
 
@@ -106,11 +106,11 @@ Attach [`results-session-length-curve.json`](../benchmarks/openappa/results-sess
 
 These layers answer different questions. Present the curves that way — not as a dig at OpenAPPA:
 
-| | ClawQL session IFC | OpenAPPA Layer 5 |
-| --- | --- | --- |
-| **Question** | Where may this data go? | May this caller do this call at all? |
-| **State** | Deliberately **bounded** label set | Full trajectory / policy history (more expressive) |
-| **Cost shape** | Flat when state stays bounded | Grows with history unless incrementalized |
+|                | ClawQL session IFC                 | OpenAPPA Layer 5                                   |
+| -------------- | ---------------------------------- | -------------------------------------------------- |
+| **Question**   | Where may this data go?            | May this caller do this call at all?               |
+| **State**      | Deliberately **bounded** label set | Full trajectory / policy history (more expressive) |
+| **Cost shape** | Flat when state stays bounded      | Grows with history unless incrementalized          |
 
 ```bash
 node scripts/benchmarks/openappa/measure-session-ifc-curve.mjs
@@ -118,11 +118,11 @@ node scripts/benchmarks/openappa/measure-session-ifc-curve.mjs
 
 Results: [`docs/benchmarks/openappa/results-session-ifc-curve.json`](../benchmarks/openappa/results-session-ifc-curve.json).
 
-| Arm | Call 10 p50 | Call 5,000 p50 | Ratio |
-| --- | ---: | ---: | ---: |
-| OpenAPPA `/hook` tool_call | 1.8 **ms** | 179 **ms** | ~98× (history) |
-| ClawQL IFC capped (≤32 sources) | ~120 **µs** | ~11 **µs** | flat |
-| ClawQL IFC unique/call (safe-merge) | ~10 **µs** | ~12 **µs** | flat (cardinality bounded) |
+| Arm                                 | Call 10 p50 | Call 5,000 p50 |                      Ratio |
+| ----------------------------------- | ----------: | -------------: | -------------------------: |
+| OpenAPPA `/hook` tool_call          |  1.8 **ms** |     179 **ms** |             ~98× (history) |
+| ClawQL IFC capped (≤32 sources)     | ~120 **µs** |     ~11 **µs** |                       flat |
+| ClawQL IFC unique/call (safe-merge) |  ~10 **µs** |     ~12 **µs** | flat (cardinality bounded) |
 
 **Bounded data-flow state stays flat; history-based policy evaluation grows unless incrementalized.**
 
@@ -163,7 +163,7 @@ Declared in [`packages/clawql-api/openappa/batteries/clawql/appa.toml`](../../pa
 
 **Declared (operator + common opt-ins):** Core (`search` / `execute` / `resume` / `cache` / `audit` / skills), memory (`memory_*` / `read_around`), sources + settings/ChatGPT surfaces, ADR aliases (`console_link` / `docs_search` / `proxy_call` / `execute_program` / `submit_program_proposals`), automation (`notify` / `schedule`), sandbox, Onyx/documents ingest, Ouroboros.
 
-**Still undeclared (refuse while OpenAPPA is on):** niche plugin surfaces in `NATIVE_TOOL_POLICY` that are not in the battery — e.g. documents IDP (`run_idp_pipeline`, `inspect_pdf`, …), data (`data_query`, `clawql_sql`, …), web browse (`web_search` / `web_fetch` / …), ontology matters, observability_*, network_*, webmcp_*, `workflow` / `argocd` / `hitl_enqueue_label_studio`, `clawql_think`. Add a `[[policy.tool]]` row before enabling those plugins with OpenAPPA.
+**Still undeclared (refuse while OpenAPPA is on):** niche plugin surfaces in `NATIVE_TOOL_POLICY` that are not in the battery — e.g. documents IDP (`run_idp_pipeline`, `inspect_pdf`, …), data (`data_query`, `clawql_sql`, …), web browse (`web_search` / `web_fetch` / …), ontology matters, observability__, network__, webmcp_*, `workflow` / `argocd` / `hitl_enqueue_label_studio`, `clawql_think`. Add a `[[policy.tool]]` row before enabling those plugins with OpenAPPA.
 
 **Draft hold closed:** required operator set is in the battery; remaining gaps are intentional refuse-by-default for rare plugins. Upstream: [OpenAPPA#711](https://github.com/archestra-ai/OpenAPPA/issues/711) ([brief](../benchmarks/openappa/UPSTREAM-TRAJECTORY-GROWTH.md)).
 
@@ -175,9 +175,9 @@ Declared in [`packages/clawql-api/openappa/batteries/clawql/appa.toml`](../../pa
 
 Loopback may run without a token. Any other URL **requires** a token from the **SecretStore**:
 
-| Secret path | Env store mapping | Role |
-| --- | --- | --- |
-| `openappa/auth_token` | `CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN` | Current token |
+| Secret path                    | Env store mapping                            | Role             |
+| ------------------------------ | -------------------------------------------- | ---------------- |
+| `openappa/auth_token`          | `CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN`          | Current token    |
 | `openappa/auth_token_previous` | `CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN_PREVIOUS` | Rotation overlap |
 
 Legacy `CLAWQL_OPENAPPA_AUTH_TOKEN` is still accepted as a last-resort fallback and is **never logged**.
@@ -193,19 +193,19 @@ Prefer **mutual TLS** for remote deployment; a bearer alone is the minimum bar.
 
 ## Opt-in env
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `CLAWQL_ENABLE_OPENAPPA` | off | Enable client |
-| `CLAWQL_OPENAPPA_URL` | `http://127.0.0.1:8789` | Sidecar base |
-| `CLAWQL_OPENAPPA_TIMEOUT_MS` | `250` | Hard timeout budget |
-| *(constant)* `OPENAPPA_SUPPORTED_SESSION_CALLS` | `2000` | Documented max gated calls/session until upstream O(1) |
-| `CLAWQL_OPENAPPA_CIRCUIT_FAILURES` | `3` | Consecutive failures before open |
-| `CLAWQL_OPENAPPA_CIRCUIT_COOLDOWN_MS` | `2000` | Fail-closed cooldown |
-| `CLAWQL_OPENAPPA_ALLOW_CACHE_MS` | `250` | Brief allow-cache (`0` disables) |
-| `CLAWQL_OPENAPPA_POLICY_EPOCH` | `default` | Bump to invalidate allow-cache on policy deploy |
-| `CLAWQL_OPENAPPA_READ_FAILURE_POLICY` | `block` | `warn` = fail-open **reads only** |
-| `CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN` | — | Preferred secret (or SecretStore path) |
-| `CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN_PREVIOUS` | — | Rotation overlap |
+| Variable                                        | Default                 | Meaning                                                |
+| ----------------------------------------------- | ----------------------- | ------------------------------------------------------ |
+| `CLAWQL_ENABLE_OPENAPPA`                        | off                     | Enable client                                          |
+| `CLAWQL_OPENAPPA_URL`                           | `http://127.0.0.1:8789` | Sidecar base                                           |
+| `CLAWQL_OPENAPPA_TIMEOUT_MS`                    | `250`                   | Hard timeout budget                                    |
+| _(constant)_ `OPENAPPA_SUPPORTED_SESSION_CALLS` | `2000`                  | Documented max gated calls/session until upstream O(1) |
+| `CLAWQL_OPENAPPA_CIRCUIT_FAILURES`              | `3`                     | Consecutive failures before open                       |
+| `CLAWQL_OPENAPPA_CIRCUIT_COOLDOWN_MS`           | `2000`                  | Fail-closed cooldown                                   |
+| `CLAWQL_OPENAPPA_ALLOW_CACHE_MS`                | `250`                   | Brief allow-cache (`0` disables)                       |
+| `CLAWQL_OPENAPPA_POLICY_EPOCH`                  | `default`               | Bump to invalidate allow-cache on policy deploy        |
+| `CLAWQL_OPENAPPA_READ_FAILURE_POLICY`           | `block`                 | `warn` = fail-open **reads only**                      |
+| `CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN`             | —                       | Preferred secret (or SecretStore path)                 |
+| `CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN_PREVIOUS`    | —                       | Rotation overlap                                       |
 
 ## Sidecar
 

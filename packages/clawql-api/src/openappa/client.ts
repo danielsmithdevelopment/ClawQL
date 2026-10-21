@@ -3,11 +3,7 @@ import { fetch as undiciFetch, type Agent } from "undici";
 import type { OpenAppaConfig } from "./config.js";
 import { redactOpenAppaSecretsEffect } from "./config.js";
 import { openAppaHttpAgentEffect } from "./http-agent.js";
-import {
-  OPENAPPA_PROTOCOL,
-  type OpenAppaHookRequest,
-  type OpenAppaWireDecision,
-} from "./types.js";
+import { OPENAPPA_PROTOCOL, type OpenAppaHookRequest, type OpenAppaWireDecision } from "./types.js";
 
 export class OpenAppaTransportError extends Error {
   readonly _tag = "OpenAppaTransportError";

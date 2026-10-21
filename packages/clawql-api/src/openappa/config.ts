@@ -126,16 +126,19 @@ export function loadOpenAppaAuthTokensEffect(
 ): Effect.Effect<readonly string[], Error> {
   return Effect.gen(function* () {
     const secretStore = store ?? resolveSecretStore();
-    const currentFromStore = yield* secretStore.getSecret(OPENAPPA_AUTH_TOKEN_SECRET_PATH).pipe(
-      Effect.mapError(
-        (e) => new Error(`OpenAPPA auth token secret read failed: ${e.reason ?? "unknown"}`)
-      )
-    );
+    const currentFromStore = yield* secretStore
+      .getSecret(OPENAPPA_AUTH_TOKEN_SECRET_PATH)
+      .pipe(
+        Effect.mapError(
+          (e) => new Error(`OpenAPPA auth token secret read failed: ${e.reason ?? "unknown"}`)
+        )
+      );
     const previousFromStore = yield* secretStore
       .getSecret(OPENAPPA_AUTH_TOKEN_PREVIOUS_SECRET_PATH)
       .pipe(
         Effect.mapError(
-          (e) => new Error(`OpenAPPA previous auth token secret read failed: ${e.reason ?? "unknown"}`)
+          (e) =>
+            new Error(`OpenAPPA previous auth token secret read failed: ${e.reason ?? "unknown"}`)
         )
       );
 
@@ -163,9 +166,10 @@ export function loadOpenAppaConfigEffect(
   return Effect.gen(function* () {
     const enabled = yield* openAppaEnabledEffect();
     if (!enabled) return null;
-    const baseUrl = (
-      process.env.CLAWQL_OPENAPPA_URL?.trim() || "http://127.0.0.1:8789"
-    ).replace(/\/$/, "");
+    const baseUrl = (process.env.CLAWQL_OPENAPPA_URL?.trim() || "http://127.0.0.1:8789").replace(
+      /\/$/,
+      ""
+    );
     const isLoopback = yield* isLoopbackOpenAppaUrlEffect(baseUrl);
     const authTokens = yield* loadOpenAppaAuthTokensEffect(options.secretStore);
     if (!isLoopback && authTokens.length === 0) {

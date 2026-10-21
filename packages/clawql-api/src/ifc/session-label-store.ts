@@ -37,9 +37,7 @@ export function resolveSessionLabelKey(
 }
 
 /** Resolve fine-label cap from env (default {@link SESSION_IFC_MAX_FINE_SOURCE_LABELS}). */
-export function resolveSessionIfcMaxFineLabels(
-  env: NodeJS.ProcessEnv = process.env
-): number {
+export function resolveSessionIfcMaxFineLabels(env: NodeJS.ProcessEnv = process.env): number {
   const raw = Number(env.CLAWQL_SESSION_IFC_MAX_FINE_LABELS?.trim());
   if (Number.isFinite(raw) && raw > 0) return Math.min(Math.floor(raw), 10_000);
   return SESSION_IFC_MAX_FINE_SOURCE_LABELS;

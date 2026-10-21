@@ -126,9 +126,7 @@ function appendOpenAppaDecisionEffect(
     const input = yield* audit.wormInputFromOpenAppaDecision({
       toolName,
       status,
-      reason: verdict.allow
-        ? `OpenAPPA ${verdict.decision.decision}`
-        : verdict.reason,
+      reason: verdict.allow ? `OpenAPPA ${verdict.decision.decision}` : verdict.reason,
       decision: verdict.decision.decision,
       class: verdict.decision.class,
       sessionId,
