@@ -1,9 +1,11 @@
 /**
  * Runtime preference ladder (product default):
- *   celld → (install prompt) → Bun → (install prompt) → Node (legacy) + improve message
+ *   celld (preferred deploy) → (install prompt) → Bun (default host MCP) →
+ *   (install prompt) → Node (legacy minority) + improve message
  *
  * Interactive prompts live in the CLI (`clawql doctor`); this module is Effect-first
  * decision + messaging. Env refuse flags: CLAWQL_DECLINE_CELLD / CLAWQL_DECLINE_BUN.
+ * CI gates both Bun and Node matrices in parallel (`.github/workflows/ci.yml`).
  */
 
 import { Context, Effect, Layer } from "effect";
@@ -57,9 +59,9 @@ export const INSTALL_BUN_HINT =
   "Install Bun: curl -fsSL https://bun.sh/install | bash  (then: bun run bin/clawql-mcp-http.mjs)";
 
 export const NODE_IMPROVE_HINT =
-  "On Node (legacy host). You can improve isolation and performance with the preceding " +
-  "options: install celld (CoreToolsDO / Durable Object isolation) and/or install Bun " +
-  "(`bun run bin/clawql-mcp-http.mjs` — equal-arm boards: ~22–28% lower RSS, ~25%+ better p50 vs Node).";
+  "On Node (legacy minority host). Default host MCP is Bun; preferred deploy is celld. " +
+  "Improve isolation/performance: install celld (CoreToolsDO / Durable Object isolation) and/or " +
+  "Bun (`bun run bin/clawql-mcp-http.mjs` — equal-arm boards: ~22–28% lower RSS, ~25%+ better p50 vs Node).";
 
 function envFlag(name: string, env: NodeJS.ProcessEnv): boolean {
   const v = env[name]?.trim().toLowerCase();

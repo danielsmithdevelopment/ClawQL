@@ -18,6 +18,7 @@
     "clawql": "bin/clawql.mjs"
   },
   "engines": {
+    "bun": ">=1.2",
     "node": ">=22"
   },
   "workspaces": [

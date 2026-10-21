@@ -177,15 +177,15 @@ Helm `openclaw.image.repository` defaults to `ghcr.io/danielsmithdevelopment/ope
 
 ## Quick reference
 
-| Layer           | Mechanism                                                    | Artifact / outcome                                       |
-| --------------- | ------------------------------------------------------------ | -------------------------------------------------------- |
-| Merge / CI      | `ci.yml` `supply-chain` + `secret-scan` (Gitleaks)           | OSV + Trivy fs + SBOM + secret scan; gates `test`        |
-| Publish         | `docker-publish.yml` `repo-supply-chain`                     | Same repo gates + SBOM artifact for the publish run      |
-| Image integrity | Single OCI layout + Trivy + `skopeo copy`                    | Scanned bytes = pushed bytes                             |
-| Identity        | Cosign keyless on digest                                     | Signature in Rekor / Sigstore ecosystem                  |
-| Mutability      | `imagetools` promotion                                       | `latest` / `nightly` only after success                  |
-| Cluster         | Kyverno `verifyImages` (Helm default) + optional digest pins | Unsigned / wrong-identity ClawQL images blocked at admit |
-| Scheduled audit | `trufflehog-scheduled.yml`                                   | TruffleHog git history; `providers/` excluded            |
+| Layer           | Mechanism                                                    | Artifact / outcome                                             |
+| --------------- | ------------------------------------------------------------ | -------------------------------------------------------------- |
+| Merge / CI      | `ci.yml` `supply-chain` + `secret-scan` (Gitleaks)           | OSV + Trivy fs + SBOM + secret scan; gates `test-bun` + `test` |
+| Publish         | `docker-publish.yml` `repo-supply-chain`                     | Same repo gates + SBOM artifact for the publish run            |
+| Image integrity | Single OCI layout + Trivy + `skopeo copy`                    | Scanned bytes = pushed bytes                                   |
+| Identity        | Cosign keyless on digest                                     | Signature in Rekor / Sigstore ecosystem                        |
+| Mutability      | `imagetools` promotion                                       | `latest` / `nightly` only after success                        |
+| Cluster         | Kyverno `verifyImages` (Helm default) + optional digest pins | Unsigned / wrong-identity ClawQL images blocked at admit       |
+| Scheduled audit | `trufflehog-scheduled.yml`                                   | TruffleHog git history; `providers/` excluded                  |
 
 ---
 
