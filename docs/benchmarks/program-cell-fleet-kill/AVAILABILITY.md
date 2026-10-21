@@ -1,47 +1,55 @@
-# Tier C availability finding — survivor self-fence
+# Tier C availability — lease TTL, failover, and three columns
 
-**Context:** During `FLEET_PHASED_N=1000` on Cloudflare R2 (2026-10-21), the board stalled at **60/1000** with **duplicates=0**. Safety held; liveness did not.
+**Context:** During `FLEET_PHASED_N=1000` on Cloudflare R2, a survivor self-fenced (`node_lease_watchdog_fence`, exit **code=3**) while **duplicates stayed 0**. Safety held; liveness needed an orchestrator. The board now counts that as its own column.
 
-## What happened
+## The 12-second median is mostly the lease
 
-1. Victim node SIGKILL’d (intentional).
-2. Survivor stayed up and began / continued lease renewals against R2.
-3. Survivor emitted `SELF-FENCE: node lease not renewed within TTL` and exited **code=3** (`node_lease_watchdog_fence`).
-4. The board’s `/program/resume` fetch had **no timeout**, so the trial hung until intervened — a harness liveness bug on top of the substrate fence.
+A survivor can take over a Durable Object only after the dead node's lease expires. With stock `CELLD_TTL_MS=10000`, failover cannot be much faster than **~10s + detection**, which matches measured resume p50 (~12s) once ownership wait is included in `resumeMs`.
 
-Zero duplicates across the first 60 trials means fencing did its job: a node that could not confirm its lease stopped rather than risk dual writers. Customers would still see an **outage** until an orchestrator restarts the fenced node and retries resume.
+So the TTL pulls two ways:
 
-## Harness note (DO ownership)
+| Longer TTL                         | Shorter TTL                          |
+| ---------------------------------- | ------------------------------------ |
+| More room for slow R2 renewals → fewer false self-fences | Faster lease expiry → faster failover |
+| Every crash pauses programs for ~TTL or more             | Less headroom → more false fences under storage latency |
 
-Trials use the worker default DO (`program:default`), matching the proven fleet smoke. After SIGKILL the board waits for survivor `/program/health` before `/program/resume`; that ownership-transfer wait is included in `resumeMs`. Victim restart only requires `/health` so readiness probes do not prolong DO owner fights.
+**Raising TTL alone trades one availability problem for another.** At 30s, every node kill pauses programs for ~30s+.
 
-## Lease timing (celld 0.4.0 defaults)
+## Preferred levers (not “just make TTL bigger”)
 
-| Knob                              | Value                                                            |
+1. **Renew more often inside the same TTL** — e.g. every **⅕** of the TTL (stock celld 0.4.0 renews near **⅓**, `prior_authority_headroom_ms ≈ 6665` on a 10s lease), with retry on a slow renewal. Headroom rises; failover floor stays ~TTL.
+2. **Keep leases on lower-latency storage** — R2 renew RTT of **270–560ms** is high for a lease. A regional DB or coordination service for leases (program state can stay on R2) would cut false fences at any TTL.
+
+**celld 0.4.0 knobs:** only `CELLD_TTL_MS` is exposed. There is no `CELLD_RENEW_*` env. Renew cadence and lease-store placement are production asks / future celld surfaces — do not pretend a 30s TTL is the preferred production tune.
+
+## Stall forensics (stock 10s / R2)
+
+| Knob / observation                | Value                                                            |
 | --------------------------------- | ---------------------------------------------------------------- |
-| `CELLD_TTL_MS`                    | **10000** (10s node lease lifetime)                              |
-| Observed renew start              | `prior_authority_headroom_ms ≈ 6665` (~⅓ of TTL consumed)        |
-| Observed renew RTT (`elapsed_ms`) | typically **270–560ms**; spikes ≥559ms seen under peer-down load |
-| Fence                             | Watchdog halts if lease not renewed within TTL                   |
+| `CELLD_TTL_MS`                    | **10000**                                                        |
+| Observed renew start              | `prior_authority_headroom_ms ≈ 6665` (~⅓ TTL consumed)           |
+| Observed renew RTT (`elapsed_ms`) | typically **270–560ms** under peer-down load                     |
+| Fence                             | Watchdog if lease not renewed within TTL                         |
 
-Renewals are meant to land well inside the TTL. Under R2 latency + peer-tunnel retry storms (victim down → `Connection refused` on `/peer/tunnel`), a delayed renew cycle can burn the remaining headroom and trip the fence even though individual renew RTTs look “fine” relative to 10s when measured in isolation.
+## Three columns
 
-## Production implication
+| Column                                                         | Property                                              |
+| -------------------------------------------------------------- | ----------------------------------------------------- |
+| `duplicates`                                                   | Safety — never repeated a write                       |
+| `outcomeUnknown`                                               | Honest uncertainty — person resolves                  |
+| `survivorSelfFences` / `survivorRestarts` + recovery in `resumeMs` | Availability — orchestrator work made visible     |
+| `resumeDeadlineMisses`                                         | Resumes past `FLEET_PHASED_RESUME_DEADLINE_MS` (want 0) |
 
-This is an **availability** risk on slow object stores, not a safety regression:
+## Comparison rows
 
-- **Safety:** fence prevents split-brain writes.
-- **Availability:** without an orchestrator that restarts a code=3 node and retries resume, programs stall.
+See [`ttl-tradeoff-evidence.json`](./ttl-tradeoff-evidence.json) and [`TTL-TRADEOFF.md`](./TTL-TRADEOFF.md):
 
-**Tuning:** raise `CELLD_TTL_MS` so renew headroom ≫ p99 R2 renew RTT (e.g. **30000** when p99 renew is hundreds of ms). Re-measure fence rate; do not claim the stall “went away” without the column.
+- **stock** — `CELLD_TTL_MS=10000`, leases on R2, celld default renew (~⅓ TTL). Failover ≈ TTL.
+- **ttl_only_30s** — same renew fraction and R2, TTL stretched to 30s. Tradeoff demo: expect fewer fences, slower failover. **Not** the preferred sole production lever.
+- **production_preferred** — keep failover TTL at the pause budget you accept; renew every ⅕ + regional lease store (pending celld knobs). Expected: stock-like resume p50, lower fence rate.
 
-## Board columns (phased evidence)
+## Claim shape
 
-| Column                                                                      | Property                                                                                                  |
-| --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `duplicates`                                                                | Safety — never repeated a write                                                                           |
-| `outcomeUnknown`                                                            | Honest uncertainty — person resolves                                                                      |
-| `survivorSelfFences` / `survivorRestarts` + recovery folded into `resumeMs` | Availability — orchestrator work made visible                                                             |
-| `resumeDeadlineMisses`                                                      | Resumes that did not complete within `FLEET_PHASED_RESUME_DEADLINE_MS` (should be 0 after fetch timeouts) |
+> Programs survive a node crash, resuming on another node in about **N** seconds, with no repeated writes; a write interrupted in flight is marked outcome unknown for a person to resolve.
 
-Harness restarts of a fenced survivor are **counted**, not hidden. Recovery time is included in that trial’s `resumeMs` (feeds p99 / p999).
+**N** is the measured resume p50 for that row (includes lease wait). Not durable execution / exactly-once. Two nodes, one object-storage provider unless the row says otherwise.

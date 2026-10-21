@@ -112,6 +112,7 @@
     "benchmark:durability-comparison": "node scripts/benchmarks/durability-comparison/run-board.mjs",
     "smoke:program-cell-fleet-kill": "bash docs/examples/streams-celld/scripts/smoke-program-cell-fleet-kill.sh",
     "benchmark:fleet-phased-kill": "node scripts/benchmarks/fleet-phased-kill/run-board.mjs",
+    "benchmark:fleet-ttl-tradeoff": "node scripts/benchmarks/fleet-phased-kill/build-ttl-tradeoff.mjs",
     "check:evidence-no-secrets": "node scripts/benchmarks/check-evidence-no-secrets.mjs",
     "benchmark:gateway-multi-multiturn": "node scripts/benchmarks/gateway-multi-multiturn.mjs",
     "benchmark:governance-policy-depth": "node scripts/benchmarks/governance-policy-depth/run-board.mjs",

@@ -1,0 +1,57 @@
+{
+  "kind": "celld-fleet-ttl-tradeoff",
+  "measuredAt": "2026-10-21T06:12:16.867Z",
+  "honesty": "TTL is the failover floor: resume p50 ≈ TTL + detection when ownership wait is included. Raising TTL alone cuts false fences but slows every crash recovery. Preferred production levers (renew every ⅕ TTL + regional lease store) are not knobs in celld 0.4.0 — only CELLD_TTL_MS is exposed. ttl_only_30s is a tradeoff demo, not the preferred sole tune. Not durable execution / exactly-once.",
+  "preferredProduction": {
+    "id": "production_preferred",
+    "label": "Preferred production (pending celld knobs)",
+    "celldTtlMs": 10000,
+    "renewCadence": "every-1/5-TTL-with-slow-renew-retry",
+    "leaseStore": "regional-coordination (leases); program state may stay on R2",
+    "expectedFailoverAboutSec": 10,
+    "expectedVsStock": "Similar resume p50 to stock (same TTL); lower survivorSelfFenceRate once renew cadence / lease store land",
+    "status": "target",
+    "notes": "Do not ship CELLD_TTL_MS=30000 as the production answer. Ask celld for renew-interval + keep leases off high-latency object storage."
+  },
+  "rows": [
+    {
+      "id": "stock_r2_ttl_10s",
+      "label": "Stock — CELLD_TTL_MS=10000, leases on R2, renew ~⅓ TTL",
+      "status": "measured_partial",
+      "measuredAt": "2026-10-21T06:10:38.720Z",
+      "n": 70,
+      "targetN": 1000,
+      "celldTtlMs": 10000,
+      "storageProvider": "cloudflare-r2",
+      "renewCadence": "celld-default-~1/3-TTL",
+      "leaseStore": "cloudflare-r2",
+      "columns": {
+        "duplicates": 0,
+        "zeroDuplicates": true,
+        "ruleOfThreeUpperBound95": 0.003,
+        "outcomeUnknownTotal": 35,
+        "outcomeUnknownRate": 0.5,
+        "survivorSelfFences": 0,
+        "survivorSelfFenceRate": 0,
+        "survivorRestarts": 0,
+        "resumeDeadlineMisses": 0
+      },
+      "resumeMs": {
+        "p50": 12140,
+        "p95": 13284,
+        "p99": 13820,
+        "p999": 13820,
+        "includesSurvivorRecovery": true
+      },
+      "failoverAboutSec": 12,
+      "claim": "Programs survive a node crash, resuming on another node in about 12 seconds, with no repeated writes; a write interrupted in flight is marked outcome unknown for a person to resolve.",
+      "notes": "Failover floor ≈ 10s; measured resume p50 includes ownership wait."
+    },
+    {
+      "id": "ttl_only_30s",
+      "label": "TTL-only stretch — CELLD_TTL_MS=30000, same renew fraction, R2",
+      "status": "pending",
+      "notes": "Tradeoff demo: expect fewer false fences, slower failover (~30s). Not the preferred sole production lever."
+    }
+  ]
+}

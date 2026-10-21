@@ -780,10 +780,17 @@ async function main() {
       totalSurvivorSelfFences: totalSelfFences,
       totalSurvivorRestarts: totalSurvivorRestarts,
       totalResumeDeadlineMisses: totalDeadlineMisses,
-      claim:
-        "A program killed mid-run on one node resumed on another and never repeated a write; a write interrupted in flight is marked outcome unknown for a person to resolve.",
+      claim: (() => {
+        const p50 = percentile(allResume, 50);
+        const aboutSec = p50 != null ? Math.round(p50 / 1000) : null;
+        const failover =
+          aboutSec != null
+            ? `resuming on another node in about ${aboutSec} seconds`
+            : "resuming on another node";
+        return `Programs survive a node crash, ${failover}, with no repeated writes; a write interrupted in flight is marked outcome unknown for a person to resolve.`;
+      })(),
       honesty:
-        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Three columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability). Harness restarts of a fenced survivor are counted; recovery time is included in resumeMs. See AVAILABILITY.md for the lease-TTL / R2 finding.",
+        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Three columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability). Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers: renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md.",
       resumeMs: {
         p50: percentile(allResume, 50),
         p95: percentile(allResume, 95),
@@ -791,6 +798,10 @@ async function main() {
         p999: percentile(allResume, 99.9),
         includesSurvivorRecovery: true,
       },
+      failoverAboutSec: (() => {
+        const p50 = percentile(allResume, 50);
+        return p50 != null ? Math.round(p50 / 1000) : null;
+      })(),
       lease,
       byPhase,
       trialFailures: trials.filter((t) => !t.ok).slice(0, 50),
