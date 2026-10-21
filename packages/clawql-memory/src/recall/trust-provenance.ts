@@ -30,11 +30,15 @@ export function noteTrustClass(text: string): NoteTrustClass {
 /**
  * Adjust a lexical/vector score so trusted notes outrank labeled poison.
  * Large enough to beat typical keyword ties; untrusted still searchable.
+ *
+ * Do **not** boost a zero score — that would push irrelevant trusted notes past
+ * `minScore` and crowd out wikilink BFS (they show up as spurious "keyword" seeds).
  */
 export function applyTrustRankAdjust(score: number, text: string): number {
   if (noteIsUntrustedLabeled(text)) {
     return Math.max(0, score * 0.15 - 5);
   }
+  if (score <= 0) return score;
   return score + 2;
 }
 
