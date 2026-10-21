@@ -102,9 +102,15 @@ OpenAPPA is upstream ([archestra-ai/OpenAPPA](https://github.com/archestra-ai/Op
 
 Attach [`results-session-length-curve.json`](../benchmarks/openappa/results-session-length-curve.json) as the bug report. **Do not fix this by rotating `root_id` in ClawQL.**
 
-### ClawQL session IFC contrast
+### Bounded data-flow vs history-based policy (fair contrast)
 
-ClawQL’s in-process data-flow labels (`mayFlow` + session label set) are measured the same way:
+These layers answer different questions. Present the curves that way — not as a dig at OpenAPPA:
+
+| | ClawQL session IFC | OpenAPPA Layer 5 |
+| --- | --- | --- |
+| **Question** | Where may this data go? | May this caller do this call at all? |
+| **State** | Deliberately **bounded** label set | Full trajectory / policy history (more expressive) |
+| **Cost shape** | Flat when state stays bounded | Grows with history unless incrementalized |
 
 ```bash
 node scripts/benchmarks/openappa/measure-session-ifc-curve.mjs
@@ -114,11 +120,21 @@ Results: [`docs/benchmarks/openappa/results-session-ifc-curve.json`](../benchmar
 
 | Arm | Call 10 p50 | Call 5,000 p50 | Ratio |
 | --- | ---: | ---: | ---: |
-| OpenAPPA `/hook` tool_call | 1.8 **ms** | 179 **ms** | ~98× |
-| ClawQL IFC `capped_sources` (≤32 labels) | ~100 **µs** | ~12 **µs** | flat |
-| ClawQL IFC `growing_unique` (1 label/call) | ~11 **µs** | ~600 **µs** | ~54× in \|labels\| |
+| OpenAPPA `/hook` tool_call | 1.8 **ms** | 179 **ms** | ~98× (history) |
+| ClawQL IFC capped (≤32 sources) | ~120 **µs** | ~11 **µs** | flat |
+| ClawQL IFC unique/call (safe-merge) | ~10 **µs** | ~12 **µs** | flat (cardinality bounded) |
 
-Production-like IFC (bounded source channels) stays flat and three orders of magnitude under OpenAPPA. The unique-label stress arm grows with set size (copy/sort over the label set) but remains **sub-millisecond** at 5k — not an availability cliff. Still prefer bounded label cardinality.
+**Bounded data-flow state stays flat; history-based policy evaluation grows unless incrementalized.**
+
+#### Session IFC label cap (safe merge)
+
+`CLAWQL_SESSION_IFC_MAX_FINE_LABELS` (default **32**) bounds the session label set:
+
+1. Under the cap — keep every fine-grained `source:*` label.
+2. Over the cap — collapse to **category** buckets (`source:github-pr-99` → `source:github`; any `*untrusted*` → `source:untrusted`).
+3. Still over — keep `public` if present and merge **everything else** into `source:untrusted`.
+
+**Unsafe (not done):** drop the oldest labels. A session that read a poisoned email first, then touched 32 other sources, would lose the untrusted mark and could exfiltrate. **Safe (shipped):** merge overflow toward broader / untrusted — accuracy may drop, nothing is wrongly trusted. Test: 40 sources with untrusted first still blocks unrelated writes.
 
 ### Short-session amortized (synthetic only)
 

@@ -2,10 +2,14 @@
 /**
  * Measure ClawQL session IFC (data-flow labels) per-call overhead vs session length.
  *
- * Contrast with OpenAPPA's growing /hook cost: a label set that only unions should
- * stay roughly flat. Two arms:
- *   - capped_sources: ≤32 rotating sources (production-like)
- *   - growing_unique: one new label per call (stress Set size)
+ * Fair framing vs OpenAPPA:
+ *   Bounded data-flow state stays flat; history-based policy evaluation grows
+ *   unless incrementalized. IFC answers "where may this data go" with a capped
+ *   label set (safe-merge overflow → categories → source:untrusted).
+ *
+ * Arms:
+ *   - capped_sources: ≤32 rotating sources (under the product cap)
+ *   - growing_unique: one new label per call (hits safe-merge; set stays bounded)
  *
  *   node scripts/benchmarks/openappa/measure-session-ifc-curve.mjs
  *
@@ -29,6 +33,8 @@ const {
   clearAllSessionLabelsSync,
   accumulateSessionIfcReadSync,
   checkSessionIfcWriteSync,
+  getSessionLabelsSync,
+  SESSION_IFC_MAX_FINE_SOURCE_LABELS,
 } = api;
 
 function percentile(sorted, p) {
@@ -55,14 +61,8 @@ function windowStats(samples, callIndex) {
 function runArm(armName, labelForCall) {
   clearAllSessionLabelsSync();
   const sessionId = `ifc-curve-${armName}-${Date.now()}`;
-  const samples = []; // microseconds per call (accumulate read + check write)
+  const samples = [];
 
-  const readOp = {
-    id: "bench.read",
-    method: "GET",
-    specLabel: "source:bench-read",
-    riskHints: { mcpReadOnlyHint: true },
-  };
   const writeOp = {
     id: "bench.write",
     method: "POST",
@@ -70,22 +70,26 @@ function runArm(armName, labelForCall) {
   };
 
   for (let i = 1; i <= maxN; i++) {
-    // Grow / rotate labels on the session the way a real host does after reads.
     const extra = labelForCall(i);
     const t0 = performance.now();
     accumulateSessionIfcReadSync({
-      operation: { ...readOp, specLabel: extra },
+      operation: {
+        id: "bench.read",
+        method: "GET",
+        specLabel: extra,
+        riskHints: { mcpReadOnlyHint: true },
+      },
       sessionId,
       success: true,
     });
-    // Write check against a compatible dest (same source family) so mayFlow runs fully.
     checkSessionIfcWriteSync({
       operation: { ...writeOp, specLabel: extra },
       sessionId,
     });
-    samples.push((performance.now() - t0) * 1000); // µs
+    samples.push((performance.now() - t0) * 1000);
   }
 
+  const labelCount = getSessionLabelsSync(sessionId).size;
   const curve = milestones.map((m) => windowStats(samples, m));
   const first = curve[0]?.p50_us;
   const last = curve[curve.length - 1]?.p50_us;
@@ -94,6 +98,8 @@ function runArm(armName, labelForCall) {
     arm: armName,
     session_id: sessionId,
     max_calls: maxN,
+    final_label_cardinality: labelCount,
+    max_fine_labels: SESSION_IFC_MAX_FINE_SOURCE_LABELS ?? 32,
     curve_us: curve,
     growth: {
       p50_ratio_last_over_first: ratio,
@@ -102,16 +108,18 @@ function runArm(armName, labelForCall) {
   };
 }
 
-const capped = runArm("capped_sources", (i) => `source:cap-${i % 32}`);
-const growing = runArm("growing_unique", (i) => `source:uniq-${i}`);
+const capped = runArm("capped_sources", (i) => `cap-${i % 32}`);
+const growing = runArm("growing_unique", (i) => `uniq${i}`);
 
 const out = {
   measured_at: new Date().toISOString(),
   metric: "clawql_session_ifc_overhead_vs_session_length",
   note:
-    "In-process session IFC (accumulate read labels + mayFlow write check) within one session. Contrast with OpenAPPA results-session-length-curve.json. Times in microseconds.",
+    "In-process session IFC (accumulate + mayFlow) within one session. Fair contrast: bounded data-flow state stays flat; OpenAPPA history-based evaluation grows unless incrementalized. Label overflow uses safe-merge (categories → source:untrusted), never dropping oldest.",
   openappa_contrast:
-    "OpenAPPA tool_call p50 grew ~98× by call 5000; ClawQL IFC should stay near-flat when labels are a compact set.",
+    "OpenAPPA tool_call p50 grew ~98× by call 5000 (full trajectory). ClawQL IFC stays µs-scale with bounded labels after safe-merge.",
+  framing:
+    "bounded data-flow state stays flat; history-based policy evaluation grows unless incrementalized",
   window: WINDOW,
   arms: [capped, growing],
 };
