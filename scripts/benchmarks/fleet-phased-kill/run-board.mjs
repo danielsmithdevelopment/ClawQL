@@ -229,19 +229,39 @@ async function main() {
       n.log
     );
     n.pid = child.pid;
+    child.on("exit", (code, signal) => {
+      if (n.pid === child.pid) n.pid = null;
+      console.warn(`fleet-phased: node ${name} exited code=${code} signal=${signal}`);
+    });
     return child;
   }
 
   async function waitNode(name) {
     const base = `http://127.0.0.1:${nodes[name].port}`;
-    await waitUrl(`${base}/health`, (r) => r.ok);
-    await waitUrl(`${base}/program/health`, (r) => r.ok && /ProgramCellDO/.test(JSON.stringify(r.body)));
+    // Cold lease / ready-gate can exceed 30s after SIGKILL+restart on R2.
+    await waitUrl(`${base}/health`, (r) => r.ok, 240, 250);
+    await waitUrl(
+      `${base}/program/health`,
+      (r) => r.ok && /ProgramCellDO/.test(JSON.stringify(r.body)),
+      240,
+      250
+    );
   }
 
-  startNode("A");
-  startNode("B");
-  await waitNode("A");
-  await waitNode("B");
+  async function restartNode(name) {
+    startNode(name);
+    try {
+      await waitNode(name);
+    } catch (err) {
+      console.warn(`fleet-phased: waitNode(${name}) failed (${err.message}); retry once`);
+      startNode(name);
+      await sleep(1000);
+      await waitNode(name);
+    }
+  }
+
+  await restartNode("A");
+  await restartNode("B");
 
   const phaseStats = emptyPhaseStats();
   const trials = [];
@@ -320,8 +340,7 @@ async function main() {
         });
         // ensure victim still up
         if (!nodes[victim].pid) {
-          startNode(victim);
-          await waitNode(victim);
+          await restartNode(victim);
         }
         continue;
       }
@@ -401,8 +420,7 @@ async function main() {
       writesBefore,
     });
 
-    // Victim restart already kicked off after kill; wait before next trial.
-    await waitNode(victim);
+    await restartNode(victim);
     primary = survivor;
 
     if ((i + 1) % 10 === 0 || i === N - 1) {
