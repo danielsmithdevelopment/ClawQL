@@ -16,10 +16,11 @@ Resume p50 under stock settings is **~12s** because the survivor waits for the d
 
 | Row              | n                     | dups | outcome_unknown rate | self-fences | deadline misses | resume p50  | resume p99 | failover claim |
 | ---------------- | --------------------- | ---- | -------------------- | ----------- | --------------- | ----------- | ---------- | -------------- |
-| stock_r2_ttl_10s | 380 (partial of 1000) | 0    | 0.48947368421052634  | **1**       | **3**           | **12089ms** | 34292ms    | **~12s**       |
-| ttl_only_30s     | 40                    | 0    | 0.55                 | 0           | 0               | **31939ms** | 46488ms    | **~32s**       |
+| stock_r2_ttl_10s | 440 (partial of 1000) | 0 | 0.48863636363636365 | **1** | **3** | **12089ms** | 18945ms | **~12s** |
+| ttl_only_30s     | 40                    | 0    | 0.55                 | 0           | 0               | **31939ms** | 46488ms | **~32s** |
 
-Duplicates stay zero in both. Stretching TTL to 30s moves failover from ~12s to ~32s — the pause customers feel. Fence-rate comparison is not fair at n=40 vs n=380; stock already showed a counted self-fence under R2. Stock also has **3 resumeDeadlineMisses** (availability) — not hidden. Preferred production keeps the ~10s budget and fixes renew cadence / lease store, not the TTL alone.
+Duplicates stay zero in both. Stretching TTL to 30s moves failover from ~12s to ~32s — the pause customers feel. Fence-rate comparison is not fair at n=40 vs n=440; stock already showed a counted self-fence under R2. Stock also has **3 resumeDeadlineMisses** (availability) — not hidden. Preferred production keeps the ~10s budget and fixes renew cadence / lease store, not the TTL alone.
+
 
 ## Claim (per row)
 
