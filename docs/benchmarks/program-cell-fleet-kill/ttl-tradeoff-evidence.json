@@ -1,6 +1,6 @@
 {
   "kind": "celld-fleet-ttl-tradeoff",
-  "measuredAt": "2026-10-21T06:12:16.867Z",
+  "measuredAt": "2026-10-21T06:38:34.925Z",
   "honesty": "TTL is the failover floor: resume p50 ≈ TTL + detection when ownership wait is included. Raising TTL alone cuts false fences but slows every crash recovery. Preferred production levers (renew every ⅕ TTL + regional lease store) are not knobs in celld 0.4.0 — only CELLD_TTL_MS is exposed. ttl_only_30s is a tradeoff demo, not the preferred sole tune. Not durable execution / exactly-once.",
   "preferredProduction": {
     "id": "production_preferred",
@@ -18,8 +18,8 @@
       "id": "stock_r2_ttl_10s",
       "label": "Stock — CELLD_TTL_MS=10000, leases on R2, renew ~⅓ TTL",
       "status": "measured_partial",
-      "measuredAt": "2026-10-21T06:10:38.720Z",
-      "n": 70,
+      "measuredAt": "2026-10-21T06:35:46.146Z",
+      "n": 160,
       "targetN": 1000,
       "celldTtlMs": 10000,
       "storageProvider": "cloudflare-r2",
@@ -29,18 +29,18 @@
         "duplicates": 0,
         "zeroDuplicates": true,
         "ruleOfThreeUpperBound95": 0.003,
-        "outcomeUnknownTotal": 35,
-        "outcomeUnknownRate": 0.5,
-        "survivorSelfFences": 0,
-        "survivorSelfFenceRate": 0,
-        "survivorRestarts": 0,
+        "outcomeUnknownTotal": 79,
+        "outcomeUnknownRate": 0.49375,
+        "survivorSelfFences": 1,
+        "survivorSelfFenceRate": 0.00625,
+        "survivorRestarts": 1,
         "resumeDeadlineMisses": 0
       },
       "resumeMs": {
-        "p50": 12140,
-        "p95": 13284,
-        "p99": 13820,
-        "p999": 13820,
+        "p50": 12117,
+        "p95": 13089,
+        "p99": 13945,
+        "p999": 34292,
         "includesSurvivorRecovery": true
       },
       "failoverAboutSec": 12,
@@ -50,7 +50,34 @@
     {
       "id": "ttl_only_30s",
       "label": "TTL-only stretch — CELLD_TTL_MS=30000, same renew fraction, R2",
-      "status": "pending",
+      "status": "measured",
+      "measuredAt": "2026-10-21T06:35:55.677Z",
+      "n": 40,
+      "targetN": 40,
+      "celldTtlMs": 30000,
+      "storageProvider": "cloudflare-r2",
+      "renewCadence": "celld-default-~1/3-TTL",
+      "leaseStore": "cloudflare-r2",
+      "columns": {
+        "duplicates": 0,
+        "zeroDuplicates": true,
+        "ruleOfThreeUpperBound95": 0.075,
+        "outcomeUnknownTotal": 22,
+        "outcomeUnknownRate": 0.55,
+        "survivorSelfFences": 0,
+        "survivorSelfFenceRate": 0,
+        "survivorRestarts": 0,
+        "resumeDeadlineMisses": 0
+      },
+      "resumeMs": {
+        "p50": 31939,
+        "p95": 32814,
+        "p99": 46488,
+        "p999": 46488,
+        "includesSurvivorRecovery": true
+      },
+      "failoverAboutSec": 32,
+      "claim": "Programs survive a node crash, resuming on another node in about 32 seconds, with no repeated writes; a write interrupted in flight is marked outcome unknown for a person to resolve.",
       "notes": "Tradeoff demo: expect fewer false fences, slower failover (~30s). Not the preferred sole production lever."
     }
   ]
