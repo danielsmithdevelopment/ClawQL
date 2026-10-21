@@ -501,8 +501,6 @@ async function main() {
       }
     }
 
-    // Resume clock starts after kill — includes survivor recovery (availability cost).
-    const resumeStart = Date.now();
     const avail = {
       survivorSelfFence: false,
       survivorRestart: false,
@@ -513,7 +511,20 @@ async function main() {
     const postKillMs = Math.max(0, Number(process.env.FLEET_PHASED_POST_KILL_MS || 600));
     await sleep(postKillMs);
 
-    await ensureSurvivor(survivor, avail);
+    // Resume clock: ownership transfer + HTTP resume, plus any survivor restart.
+    // Do not charge the fixed post-kill sleep; do charge orchestrator recovery.
+    const resumeStart = Date.now();
+    if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
+      await ensureSurvivor(survivor, avail);
+    } else {
+      // Soft probe — only restart (and count) if survivor is actually unhealthy.
+      try {
+        const h = await fetchJson(`http://127.0.0.1:${nodes[survivor].port}/health`, {}, 3_000);
+        if (!h.ok) await ensureSurvivor(survivor, avail);
+      } catch {
+        await ensureSurvivor(survivor, avail);
+      }
+    }
 
     let resume = { ok: false, status: 0, body: null, fetchError: true };
     while (Date.now() - resumeStart < RESUME_DEADLINE_MS) {
