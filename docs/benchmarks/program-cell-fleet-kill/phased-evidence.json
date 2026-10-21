@@ -1,6 +1,6 @@
 {
   "kind": "celld-fleet-phased-kill",
-  "measuredAt": "2026-10-21T02:53:26.264Z",
+  "measuredAt": "2026-10-21T03:21:45.346Z",
   "ok": true,
   "status": "measured",
   "n": 8,
@@ -14,10 +14,10 @@
   "claim": "A program killed mid-run on one node resumed on another and never repeated a write; a write interrupted in flight is marked outcome unknown for a person to resolve.",
   "honesty": "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Phases: before_intent (complete clean), after_intent_before_call + during_call (outcome_unknown; person resolves), after_call_before_journal (finalize stashed upstream result — no re-send, no unknown). Zero duplicates is the safety claim; outcome_unknown rate is the human-cost claim.",
   "resumeMs": {
-    "p50": 500,
-    "p95": 582,
-    "p99": 582,
-    "p999": 582
+    "p50": 571,
+    "p95": 907,
+    "p99": 907,
+    "p999": 907
   },
   "byPhase": {
     "before_intent": {
@@ -29,10 +29,10 @@
       "outcomeUnknownRate": 0,
       "completedClean": 2,
       "resumeMs": {
-        "p50": 448,
-        "p95": 497,
-        "p99": 497,
-        "p999": 497
+        "p50": 474,
+        "p95": 684,
+        "p99": 684,
+        "p999": 684
       }
     },
     "after_intent_before_call": {
@@ -44,40 +44,40 @@
       "outcomeUnknownRate": 1,
       "completedClean": 0,
       "resumeMs": {
-        "p50": 461,
-        "p95": 558,
-        "p99": 558,
-        "p999": 558
+        "p50": 571,
+        "p95": 595,
+        "p99": 595,
+        "p999": 595
       }
     },
     "during_call": {
-      "n": 2,
-      "ok": 2,
+      "n": 3,
+      "ok": 3,
       "failures": 0,
       "duplicates": 0,
-      "outcomeUnknown": 2,
+      "outcomeUnknown": 3,
       "outcomeUnknownRate": 1,
       "completedClean": 0,
       "resumeMs": {
-        "p50": 524,
-        "p95": 553,
-        "p99": 553,
-        "p999": 553
+        "p50": 826,
+        "p95": 907,
+        "p99": 907,
+        "p999": 907
       }
     },
     "after_call_before_journal": {
-      "n": 2,
-      "ok": 2,
+      "n": 1,
+      "ok": 1,
       "failures": 0,
       "duplicates": 0,
       "outcomeUnknown": 0,
       "outcomeUnknownRate": 0,
-      "completedClean": 2,
+      "completedClean": 1,
       "resumeMs": {
-        "p50": 500,
-        "p95": 582,
-        "p99": 582,
-        "p999": 582
+        "p50": 471,
+        "p95": 471,
+        "p99": 471,
+        "p999": 471
       }
     }
   },

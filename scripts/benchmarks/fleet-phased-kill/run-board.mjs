@@ -231,7 +231,10 @@ async function main() {
     n.pid = child.pid;
     child.on("exit", (code, signal) => {
       if (n.pid === child.pid) n.pid = null;
-      console.warn(`fleet-phased: node ${name} exited code=${code} signal=${signal}`);
+      // SIGKILL is the board's intentional victim path — only warn on unexpected exits.
+      if (signal !== "SIGKILL") {
+        console.warn(`fleet-phased: node ${name} exited code=${code} signal=${signal}`);
+      }
     });
     return child;
   }
