@@ -8,6 +8,7 @@ How we reduce risk that a compromised dependency, registry upload, or image tag 
 
 ## What you can verify today
 
+<<<<<<< Updated upstream
 <<<<<<< HEAD
 <<<<<<< HEAD
 
@@ -63,12 +64,33 @@ How we reduce risk that a compromised dependency, registry upload, or image tag 
 > > > > > > > | **Registry re-fetch after publish** | Download each published version from npm and compare SHA-256 to the local pack (post-upload / replacement detection) | [`verify-npm-registry-matches-pack.mjs`](../../scripts/security/verify-npm-registry-matches-pack.mjs) |
 > > > > > > > | **OCI / Helm artifact secrets** | Trivy **secret** scanner on golden-image OCI layouts before push; Gitleaks on `manifests/charts` | [`scan-oci-artifact-secrets.sh`](../../scripts/security/scan-oci-artifact-secrets.sh) · [`scan-helm-artifact-secrets.sh`](../../scripts/security/scan-helm-artifact-secrets.sh) · `docker-publish` / `ci` `secret-scan` |
 > > > > > > > bf029a929 (feat(security): registry re-fetch, independent rebuild, strip pack maps)
+=======
+| Control | What it does | Where to look |
+| ------- | ------------ | ------------- |
+| **CI supply-chain gates** | OSV-Scanner + Trivy (HIGH/CRITICAL) + Syft CycloneDX SBOM on every merge path | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) job `supply-chain` |
+| **Lockfiles with integrity** | `package-lock.json` records resolved URLs and SHA-512 integrity hashes; installs use `npm ci` | Root lockfile; CI and Docker builds |
+| **npm trusted publishing + provenance** | Releases publish from GitHub Actions OIDC (`id-token: write`); `npm publish --provenance` on every package; long-lived `NPM_TOKEN` is fallback-only once packages are linked on npmjs.com | [`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml) · [npm-supply-chain.md](npm-supply-chain.md) |
+| **One scanned OCI layout → registry** | BuildKit writes a local OCI layout; Trivy scans those bytes; `skopeo copy` pushes the same layout — no second “release” build | [golden-image-pipeline.md](golden-image-pipeline.md) · [docker-publish.yml](../../.github/workflows/docker-publish.yml) |
+| **Cosign keyless signatures** | Digests signed with GitHub Actions OIDC (Fulcio/Rekor); `cosign verify` out-of-band | [docker/README.md](../../docker/README.md) |
+| **Images pinned by digest at admit** | Kyverno `verifyImages` defaults on for ClawQL GHCR patterns; rolling tags move only after sign+verify | [image-signature-enforcement.md](image-signature-enforcement.md) |
+| **SBOM artifacts** | Syft CycloneDX on repo gates and image builds (BuildKit SBOM attestations where attached) | CI artifacts `sbom-cyclonedx-*`; release pipeline |
+| **Provider keys ciphertext-at-rest** | Vault / OpenBao Transit wraps `SecretStore`; tenant+path derived-key context; fail-closed decrypt | [vault-provider-secrets.md](../deployment/vault-provider-secrets.md) · `clawql-auth` Transit |
+| **Host IoC scan (operator)** | Script scans site-packages / pipx / `/tmp` markers on machines the lockfile cannot see | [`scripts/security/scan-litellm-ioc.sh`](../../scripts/security/scan-litellm-ioc.sh) |
+| **Secret leak gates** | Gitleaks on the working tree in CI; pre-commit hook; scheduled TruffleHog on history | [security README](README.md) · `.gitleaks.toml` |
+| **Release matches source (npm packs)** | After build + `npm pack`, every file in each `.tgz` must byte-match the workspace (package.json compared after `workspace:*` pin) | [`scripts/security/verify-release-matches-source.mjs`](../../scripts/security/verify-release-matches-source.mjs) · CI `distribution-npm-pack-smoke` · [`npm-publish.yml`](../../.github/workflows/npm-publish.yml) |
+| **Artifact secret scan** | Gitleaks on *unpacked* release tarballs (dist included — not allowlisted) | [`scripts/security/scan-artifact-secrets.sh`](../../scripts/security/scan-artifact-secrets.sh) · `gitleaks-artifacts.toml` |
+| **Bundle / stray-file budget** | Max `.tgz` sizes; forbid `.env`, key material; **source maps forbidden in packs** (`!dist/**/*.map` in `files`) | [`scripts/security/bundle-budgets.json`](../../scripts/security/bundle-budgets.json) · `check-bundle-budgets.mjs` |
+| **Pack inventory BOM (+ baseline diff)** | Per-tarball name/version/sha256/contentId inventory; optional diff vs committed baseline | Artifact `npm-pack-inventory` · [`build-pack-inventory.mjs`](../../scripts/security/build-pack-inventory.mjs) · [baselines README](baselines/README.md) |
+| **Independent rebuild** | Second clean job rebuilds the same commit and compares pack `contentId`s (not gzip tarball bytes) | [`independent-rebuild-compare.sh`](../../scripts/security/independent-rebuild-compare.sh) · `npm-publish` job `independent-rebuild` |
+| **Registry re-fetch after publish** | Download each published version from npm and compare SHA-256 to the local pack | [`verify-npm-registry-matches-pack.mjs`](../../scripts/security/verify-npm-registry-matches-pack.mjs) |
+| **OCI / Helm artifact secrets** | Trivy **secret** scanner on golden-image OCI layouts before push; Gitleaks on `manifests/charts` | [`scan-oci-artifact-secrets.sh`](../../scripts/security/scan-oci-artifact-secrets.sh) · [`scan-helm-artifact-secrets.sh`](../../scripts/security/scan-helm-artifact-secrets.sh) |
+>>>>>>> Stashed changes
 
 Evidence of gate outcomes (not marketing badges): **[Security status](https://docs.clawql.com/security/status)** — append-only Trivy/OSV history from `main` CI.
 
 ### Why reverse-engineer our own artifacts
 
-Reading your own source finds logic bugs faster than decompiling. What reverse engineering of **shipped** artifacts uniquely shows is **what actually left the build** and **what an attacker sees** — which can diverge from the tagged tree. The gates above turn that check into CI: rebuild/pack from the commit under test, then compare digests, scan the bytes customers install, budget size/surface, and track SBOM drift between releases. Containers already use the same idea on the golden path (one OCI layout → Trivy → `skopeo copy` of those bytes → Cosign).
+Reading your own source finds logic bugs faster than decompiling. What reverse engineering of **shipped** artifacts uniquely shows is **what actually left the build** and **what an attacker sees** — which can diverge from the tagged tree. The gates above turn that check into CI: rebuild/pack from the commit under test, then compare digests, scan the bytes customers install, budget size/surface, and track BOM drift between releases. Containers already use the same idea on the golden path (one OCI layout → Trivy → `skopeo copy` of those bytes → Cosign).
 
 ---
 
@@ -128,6 +150,7 @@ Optionally pass extra `site-packages` directories. Treat any hit as compromise u
 - **Provenance** proves which workflow built an npm package or image digest; it does not prove the dependency graph is free of future zero-days.
 - **Transit** protects SecretStore-backed secrets; process env injected via Kubernetes Secrets remains readable to anything that can read that Secret or the pod environment — prefer short-lived Vault auth (K8s / AppRole / JWT) and tight RBAC.
 - **No stack is uncompromisable.** Reviewers should prefer reproducible gates and digests over slogans.
+- Independent rebuild compares **contentId** (sorted path=file digests), not raw `.tgz` bytes — gzip headers need `SOURCE_DATE_EPOCH` for bit-identical archives.
 
 ---
 

@@ -3,7 +3,7 @@
 #   1. release-matches-source (byte digests)
 #   2. bundle-size + forbid stray files / source maps
 #   3. secret scan on unpacked packs (Gitleaks)
-#   4. Syft SBOM of packs (+ optional diff vs baseline)
+#   4. pack inventory BOM (+ optional baseline diff)
 #
 # Usage:
 #   bash scripts/security/run-artifact-release-gates.sh [pack-dir]
@@ -17,10 +17,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT}"
 
 PACK_DIR="${1:-}"
-OWN_PACK=0
 if [[ -z "${PACK_DIR}" ]]; then
   PACK_DIR="$(mktemp -d)"
-  OWN_PACK=1
   trap 'rm -rf "${PACK_DIR}"' EXIT
   echo "Packing workspace packages into ${PACK_DIR}..."
   node scripts/release/pack-workspace-packages.mjs "${PACK_DIR}"
