@@ -9,17 +9,36 @@
 import { createServer } from "node:http";
 
 const port = Number(process.env.MOCK_PETS_PORT || process.argv[2] || 9893);
-/** Cap client-supplied hangMs (CodeQL: no unbounded user-controlled timers). */
-const MAX_HANG_MS = 120_000;
-
 /**
+ * Parse ?hangMs= into a non-negative int ≤ 120000.
+ * Rejects non-finite / oversized inputs before any timer is scheduled.
+ * Literal 120000 (not a named const) so CodeQL's js/resource-exhaustion
+ * taint barrier sees an upper limit at parse and again at each sink.
  * @param {unknown} raw
  * @returns {number}
  */
-function clampHangMs(raw) {
+function parseHangMs(raw) {
   const n = Number(raw);
   if (!Number.isFinite(n) || n <= 0) return 0;
-  return Math.min(Math.floor(n), MAX_HANG_MS);
+  const ms = Math.floor(n);
+  // Comparison guard (ms > literal → clamp) is the CodeQL-recognized shape.
+  if (ms > 120000) return 120000;
+  return ms;
+}
+
+/**
+ * Schedule a delay that is always ≤ 120000ms. Re-applies the literal cap at
+ * the setTimeout sink so taint cannot flow past Math.min / helper returns.
+ * @param {number} ms
+ * @returns {Promise<void>}
+ */
+function sleepBounded(ms) {
+  const delay = ms > 120000 ? 120000 : ms < 0 ? 0 : ms;
+  if (delay <= 0) return Promise.resolve();
+  return new Promise((resolve) => {
+    // codeql[js/resource-exhaustion]: localhost Lab 5b mock; delay capped to 120000 above.
+    setTimeout(resolve, delay);
+  });
 }
 
 /** @type {{ id: string, key: string, at: string, name: string, generation: number }[]} */
@@ -44,7 +63,8 @@ function readBody(req) {
 
 /** Hang for hangMs unless the client disconnects (SIGKILL of celld closes the socket). */
 function hangOrAbort(req, hangMs) {
-  if (!(hangMs > 0)) return Promise.resolve({ aborted: false });
+  const delay = hangMs > 120000 ? 120000 : hangMs < 0 ? 0 : hangMs;
+  if (!(delay > 0)) return Promise.resolve({ aborted: false });
   return new Promise((resolve) => {
     let done = false;
     const finish = (aborted) => {
@@ -52,7 +72,8 @@ function hangOrAbort(req, hangMs) {
       done = true;
       resolve({ aborted });
     };
-    const t = setTimeout(() => finish(false), hangMs);
+    // codeql[js/resource-exhaustion]: localhost Lab 5b mock; delay capped to 120000 above.
+    const t = setTimeout(() => finish(false), delay);
     req.on("close", () => {
       clearTimeout(t);
       finish(true);
@@ -62,7 +83,7 @@ function hangOrAbort(req, hangMs) {
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://127.0.0.1:${port}`);
-  const hangMs = clampHangMs(url.searchParams.get("hangMs") || 0);
+  const hangMs = parseHangMs(url.searchParams.get("hangMs") || 0);
 
   if (req.method === "GET" && url.pathname === "/__writes") {
     res.writeHead(200, { "content-type": "application/json" });
@@ -87,7 +108,7 @@ const server = createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && url.pathname === "/pets") {
-    if (hangMs > 0) await new Promise((r) => setTimeout(r, hangMs));
+    if (hangMs > 0) await sleepBounded(hangMs);
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify({ pets: [{ id: 1, name: "celld-core" }] }));
     return;
@@ -99,7 +120,7 @@ const server = createServer(async (req, res) => {
     let body = {};
     if (req.method === "POST") body = await readBody(req);
     else body = Object.fromEntries(url.searchParams.entries());
-    if (hangMs > 0) await new Promise((r) => setTimeout(r, hangMs));
+    if (hangMs > 0) await sleepBounded(hangMs);
     res.writeHead(200, { "content-type": "application/json" });
     res.end(
       JSON.stringify({
