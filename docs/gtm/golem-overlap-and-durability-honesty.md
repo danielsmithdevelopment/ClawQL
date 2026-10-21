@@ -23,13 +23,13 @@ ClawQL is **not** trying to be that runtime.
 
 ## Public claim inventory (say only this)
 
-| Allowed claim                                                                                                        | Basis                                                                                                                                         | Forbidden paraphrase                                                                                       |
-| -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **Approved writes run at most once** across concurrent replicas / crash races                                        | TLA+ model + single-use mandate implementation; file-journal kill-mid-write board ([STATUS](../benchmarks/durability-proof/STATUS.md) Tier D) | “Durable execution,” “exactly-once delivery over HTTP,” “fault-tolerant agent runtime”                     |
-| **Events are delivered at least once with stable IDs**; receivers that dedupe process once                           | Events formal model / launch caption honesty                                                                                                  | “Delivered exactly once”                                                                                   |
-| **Erasure jobs resume** after interruption                                                                           | Product behavior                                                                                                                              | “Agents resume mid-function”                                                                               |
-| **Program-mode crash recovery passes in the lab** (file-journal SIGKILL stand-in + ProgramCellDO isolate kill smoke) | Lab evidence; fleet LTX diagnose + three-arm gate still open                                                                                  | “Programs survive a crash” / “code mode that survives a crash” **in the wild** until the fleet gate passes |
-| **Durable Object / celld / LTX** as Streams session substrate                                                        | Spec + Lab 5b                                                                                                                                 | Equating Cloudflare/celld DO session state with Golem-class durable execution                              |
+| Allowed claim                                                                              | Basis                                                                                                                                         | Forbidden paraphrase                                                                                   |
+| ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Approved writes run at most once** across concurrent replicas / crash races              | TLA+ model + single-use mandate implementation; file-journal kill-mid-write board ([STATUS](../benchmarks/durability-proof/STATUS.md) Tier D) | “Durable execution,” “exactly-once delivery over HTTP,” “fault-tolerant agent runtime”                 |
+| **Events are delivered at least once with stable IDs**; receivers that dedupe process once | Events formal model / launch caption honesty                                                                                                  | “Delivered exactly once”                                                                               |
+| **Erasure jobs resume** after interruption                                                 | Product behavior                                                                                                                              | “Agents resume mid-function”                                                                           |
+| **Program-mode crash recovery** (file-journal + isolate + fleet phased kill on R2)         | Lab + fleet evidence ([STATUS](../benchmarks/durability-proof/STATUS.md) Tier C); scoped claim with failover seconds + availability costs     | “Durable execution engine,” “exactly once,” or hiding the ~12s lease failover / stock self-fence rates |
+| **Durable Object / celld / LTX** as Streams session substrate                              | Spec + Lab 5b                                                                                                                                 | Equating Cloudflare/celld DO session state with Golem-class durable execution                          |
 
 **ClawQL is not a durable execution engine.** Prefer “journaled program resume (lab)” and “at-most-once approved side effects” over “durable agents.”
 
@@ -41,7 +41,7 @@ Env flag **`CLAWQL_ENABLE_DURABLE_PROGRAMS`** means _journaled program resume_, 
 
 | Surface                         | Golem                                  | ClawQL today                                                                                   |
 | ------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Crash-surviving agent code      | Shipped production mid-function resume | Program mode: lab kill tests; fleet proof pending                                              |
+| Crash-surviving agent code      | Shipped production mid-function resume | Program mode: lab + fleet phased kill (R2); no shared crash board vs Golem yet                 |
 | Permissions agents can’t bypass | Host choke point + log                 | Gateway park/IFC + people-bound mandates                                                       |
 | Secrets as handles              | Opaque handles + grant to reveal       | Capability / grant surfaces (narrower product story)                                           |
 | Exactly-once tool side effects  | Idempotency keys + callee cooperation  | At-most-once **approved** writes; interrupted non-reads → `outcome_unknown`, never auto-resent |
@@ -77,7 +77,7 @@ Skip Scala / MoonBit-style breadth unless a customer asks.
 
 ## Gaps to close (order)
 
-1. **Durability, shipped** — finish celld fleet crash test (three-arm + LTX diagnose); until then no wild “survives a crash” claim.
+1. **Durability, shipped** — Tier C fleet phased kill on R2 is measured (N=1000, 0 dups); preferred renew/lease tune still planned. Head-to-head Golem arm still open.
 2. **Delegated permissions that narrow and cascade** — time-limited sub-agent slices; revoke parent → revoke children.
 3. **Read-only result caching** — specs already mark reads; gateway cache until next write.
 4. **Awaitable approvals in SDKs** — same strength as today, easier to code against.
@@ -96,7 +96,7 @@ Full board plan: [`docs/benchmarks/durability-proof/COMPARISON.md`](../benchmark
 - **Pi Durable** (harness) and **Golem** (execution runtime) are the peer arms.
 - Score **duplicates** and **lost / `outcome_unknown`** under kill-mid-write; run idempotency-honoring **and** non-idempotent upstreams.
 - Include **Pi Durable + ClawQL** and **Golem + ClawQL** combination arms (runtime keeps the agent alive; ClawQL keeps writes at most once).
-- Named public boards need maintainer invitation first. Program-mode numbers vs peers wait for **Tier C**.
+- Named public boards need maintainer invitation first. ClawQL-only Tier C numbers are ready for private outreach; named peer boards still wait on invite.
 
 Do **not** put Golem on the MCP token/governance pets board as if it were Bifrost/Obot — wrong product shape.
 
@@ -106,9 +106,9 @@ Do **not** put Golem on the MCP token/governance pets board as if it were Bifros
 
 He is publicly pressure-testing frameworks that overclaim durability. Order:
 
-1. Fleet LTX / Tier C numbers with precise wording (A/B/D already CI-gated — [STATUS](../benchmarks/durability-proof/STATUS.md)). Scoped claim: _A program killed mid-run on one node resumed on another and never repeated a write; a write interrupted in flight is marked outcome unknown for a person to resolve._ (two nodes, one storage provider — R2 phased board).
-2. Private note first: harness + proposed Golem config — “Is this how you’d set it up?”
-3. Then results in context: name what Golem does well (shipped durability); state ClawQL’s **narrow** “never repeated a write” claim + TLA+ + crash evidence; invite him to break it. Avoid “durable execution” / “exactly once.”
+1. Send the measured Tier C claim + evidence now (A/B/D CI-gated; C N=1000 on R2 — [STATUS](../benchmarks/durability-proof/STATUS.md)). Claim: _Across 1,000 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under stock settings, 0.6% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline._ Include the per-phase outcome_unknown table (outer phases 0; aggregate ~48% is targeting), harness, and invitation to break it. Do **not** wait for the preferred TTL/renew tune.
+2. Private note: harness + proposed Golem config — “Is this how you’d set it up?” Admit costs up front (12s failover, stock availability rates) — that is what separates this from overclaimed durability.
+3. Honest comparison: Golem has no published crash/failover numbers like yours; you are likely ahead on never repeating a write without upstream idempotency, probably behind on failover speed, unmeasured on cold start/density until a shared board. Do not overclaim the comparison.
 4. Lead with interoperability / joint demo (Golem agent → ClawQL MCP tools → park risky writes → survive crash).
 5. Short note with links — not a wall of numbers. **No Golem-named public board before that conversation.**
 
@@ -117,6 +117,7 @@ He is publicly pressure-testing frameworks that overclaim durability. Order:
 ## Copy checklist before publish
 
 - [ ] No “durable agents” / “durable execution” on clawql.com, docs landing, README, or benchmarks unless clearly about vault memory, WORM, DO session state, or journaled programs **with lab/fleet honesty**.
-- [ ] “Survives a crash” only after fleet three-arm gate; until then “lab” / “Partial” / “stand-in.”
+- [ ] “Survives a crash” only with the scoped Tier C claim (failover seconds + availability costs); never without the per-phase unknown framing if quoting the ~48% rate.
+- [ ] Preferred production row stays **planned** until measured at stock N; TTL-only 30s always labeled **n=40**.
 - [ ] Prefer “at most once” for approved writes; “at least once + stable id” for events.
 - [ ] Streams “Durable Objects” always means Cloudflare/celld DO substrate, not Golem.

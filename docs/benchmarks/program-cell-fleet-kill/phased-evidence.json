@@ -15,12 +15,12 @@
       "total": 0,
       "zeroDuplicates": true,
       "ruleOfThreeUpperBound95": 0.003,
-      "meaning": "safety \u2014 never repeated a write"
+      "meaning": "safety — never repeated a write"
     },
     "outcomeUnknown": {
       "total": 481,
       "rate": 0.481,
-      "meaning": "honest uncertainty \u2014 person resolves"
+      "meaning": "honest uncertainty — person resolves"
     },
     "availability": {
       "survivorSelfFences": 6,
@@ -33,7 +33,7 @@
         "p95": 11701,
         "p99": 11701
       },
-      "meaning": "availability \u2014 lease self-fence + orchestrator restart counted; recovery folded into resumeMs"
+      "meaning": "availability — lease self-fence + orchestrator restart counted; recovery folded into resumeMs"
     }
   },
   "totalDuplicates": 0,
@@ -42,8 +42,8 @@
   "totalSurvivorSelfFences": 6,
   "totalSurvivorRestarts": 2,
   "totalResumeDeadlineMisses": 9,
-  "claim": "Programs survive a node crash, resuming on another node in about 12 seconds, with no repeated writes; a write interrupted in flight is marked outcome unknown for a person to resolve.",
-  "honesty": "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Three columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability). Resume p50 \u2248 lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers: renew more often within the same TTL, regional lease store \u2014 see AVAILABILITY.md / TTL-TRADEOFF.md. N=1000: zeroDuplicates with rule-of-three upper bound 0.3%; survivorSelfFences=6; resumeDeadlineMisses=9.",
+  "claim": "Across 1000 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under stock settings, 0.6% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline.",
+  "honesty": "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Three columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md. N=1000: zeroDuplicates with rule-of-three upper bound 0.3%; survivorSelfFences=6; resumeDeadlineMisses=9.",
   "resumeMs": {
     "p50": 11908,
     "p95": 13316,
@@ -65,7 +65,7 @@
       "min": null
     },
     "selfFenceLogHits": 0,
-    "note": "Renewals should complete with headroom \u226b R2 RTT. Stock CELLD_TTL_MS=10000 renews near ~6665ms headroom; slow renew cycles under peer-down storms can fence. See AVAILABILITY.md."
+    "note": "Renewals should complete with headroom ≫ R2 RTT. Stock CELLD_TTL_MS=10000 renews near ~6665ms headroom; slow renew cycles under peer-down storms can fence. See AVAILABILITY.md."
   },
   "byPhase": {
     "before_intent": {
@@ -742,5 +742,36 @@
     }
   ],
   "failoverAboutSec": 12,
-  "boardOk": false
+  "boardOk": false,
+  "outcomeUnknownFraming": {
+    "note": "Aggregate ~48% is a design artifact of even phase targeting; two of four phases are the in-flight window where unknown is the only honest answer. In real operation, crashes mostly land outside that brief window, so unknown outcomes are far rarer than this targeted test shows. Nonzero rate on outer phases is a bug, not a number to explain.",
+    "byPhase": {
+      "before_intent": {
+        "label": "Before the approval is consumed",
+        "n": 252,
+        "outcomeUnknown": 0,
+        "outcomeUnknownRate": 0,
+        "expect": 0
+      },
+      "after_intent_before_call": {
+        "label": "After intent recorded",
+        "n": 248,
+        "outcomeUnknown": 240,
+        "outcomeUnknownRate": 0.967741935483871
+      },
+      "during_call": {
+        "label": "During the call",
+        "n": 251,
+        "outcomeUnknown": 241,
+        "outcomeUnknownRate": 0.9601593625498008
+      },
+      "after_call_before_journal": {
+        "label": "After the call, before journaling",
+        "n": 249,
+        "outcomeUnknown": 0,
+        "outcomeUnknownRate": 0,
+        "expect": 0
+      }
+    }
+  }
 }

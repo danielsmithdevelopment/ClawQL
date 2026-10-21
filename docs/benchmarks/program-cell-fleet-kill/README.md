@@ -1,6 +1,6 @@
 # ProgramCellDO fleet peer kill (Tier C)
 
-**Status:** measured on Cloudflare R2 (`clawql-streams-state`) — see [`evidence.json`](./evidence.json).
+**Status:** measured on Cloudflare R2 (`clawql-streams-state`) — PoC [`evidence.json`](./evidence.json); phased board N=1000 [`phased-evidence.json`](./phased-evidence.json); framing [`AVAILABILITY.md`](./AVAILABILITY.md) · [`TTL-TRADEOFF.md`](./TTL-TRADEOFF.md).
 
 ## Run (R2)
 

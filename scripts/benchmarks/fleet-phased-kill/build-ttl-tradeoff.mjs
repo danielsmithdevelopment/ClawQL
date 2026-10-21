@@ -88,10 +88,15 @@ function rowFrom(evidence, id, label, notes) {
       includesSurvivorRecovery: resume.includesSurvivorRecovery === true,
     },
     failoverAboutSec,
-    claim:
-      failoverAboutSec != null
+    // Prefer the measured claim from evidence (includes availability costs).
+    claim: evidence.claim ||
+      (failoverAboutSec != null
         ? `Programs survive a node crash, resuming on another node in about ${failoverAboutSec} seconds, with no repeated writes; a write interrupted in flight is marked outcome unknown for a person to resolve.`
-        : evidence.claim,
+        : null),
+    sampleSizeNote:
+      id === "ttl_only_30s"
+        ? `Small sample (n=${completed ?? "—"}) — label n when publishing; not comparable to stock N=1000.`
+        : null,
     notes,
   };
 }
@@ -103,19 +108,20 @@ const doc = {
   kind: "celld-fleet-ttl-tradeoff",
   measuredAt: new Date().toISOString(),
   honesty:
-    "TTL is the failover floor: resume p50 ≈ TTL + detection when ownership wait is included. Raising TTL alone cuts false fences but slows every crash recovery. Preferred production levers (renew every ⅕ TTL + regional lease store) are not knobs in celld 0.4.0 — only CELLD_TTL_MS is exposed. ttl_only_30s is a tradeoff demo, not the preferred sole tune. Not durable execution / exactly-once.",
+    "TTL is the failover floor: resume p50 ≈ TTL + detection when ownership wait is included. Raising TTL alone cuts false fences but slows every crash recovery. production_preferred is planned (not a measured result) until run at the same sample size as stock — knobs (renew every ⅕ TTL + regional lease store) are not in celld 0.4.0. ttl_only_30s is a small-n tradeoff demo (label sample size), not the preferred sole tune. Not durable execution / exactly-once.",
   preferredProduction: {
     id: "production_preferred",
-    label: "Preferred production (pending celld knobs)",
+    label: "Preferred production (planned — not measured)",
     celldTtlMs: 10_000,
     renewCadence: "every-1/5-TTL-with-slow-renew-retry",
     leaseStore: "regional-coordination (leases); program state may stay on R2",
     expectedFailoverAboutSec: 10,
     expectedVsStock:
       "Similar resume p50 to stock (same TTL); lower survivorSelfFenceRate once renew cadence / lease store land",
-    status: "target",
+    status: "planned",
+    targetSampleSize: stock?.n ?? 1000,
     notes:
-      "Do not ship CELLD_TTL_MS=30000 as the production answer. Ask celld for renew-interval + keep leases off high-latency object storage.",
+      "Target, not a result. Do not publish as measured. Run at the same N as stock before claiming numbers. Do not ship CELLD_TTL_MS=30000 as the production answer.",
   },
   rows: [
     rowFrom(
@@ -127,8 +133,8 @@ const doc = {
     rowFrom(
       ttl30,
       "ttl_only_30s",
-      "TTL-only stretch — CELLD_TTL_MS=30000, same renew fraction, R2",
-      "Tradeoff demo: expect fewer false fences, slower failover (~30s). Not the preferred sole production lever."
+      "TTL-only stretch — CELLD_TTL_MS=30000, same renew fraction, R2 (n=40)",
+      "Tradeoff demo at small sample (n=40). Expect fewer false fences, slower failover (~30s). Not the preferred sole production lever. Label n when publishing."
     ),
   ],
 };

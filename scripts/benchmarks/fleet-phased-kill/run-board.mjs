@@ -783,14 +783,26 @@ async function main() {
       claim: (() => {
         const p50 = percentile(allResume, 50);
         const aboutSec = p50 != null ? Math.round(p50 / 1000) : null;
-        const failover =
+        const fenceRate = trials.length ? totalSelfFences / trials.length : 0;
+        const deadlineRate = trials.length
+          ? totalDeadlineMisses / trials.length
+          : 0;
+        const upperPct =
+          upper95 != null ? `${(upper95 * 100).toFixed(1)}%` : "n/a";
+        const median =
           aboutSec != null
-            ? `resuming on another node in about ${aboutSec} seconds`
-            : "resuming on another node";
-        return `Programs survive a node crash, ${failover}, with no repeated writes; a write interrupted in flight is marked outcome unknown for a person to resolve.`;
+            ? `The median resume took about ${aboutSec} seconds, set by the lease timeout.`
+            : "Resume latency is set by the lease timeout.";
+        return (
+          `Across ${trials.length} crashes injected at every phase of a write, programs resumed on another node with no repeated writes` +
+          (zeroDup && upper95 != null
+            ? ` (the 95% upper bound on the duplicate rate is ${upperPct})`
+            : "") +
+          `. ${median} Writes caught mid-flight are marked outcome unknown for a person to resolve. Under these settings, ${(fenceRate * 100).toFixed(1)}% of surviving nodes paused themselves for safety, and ${(deadlineRate * 100).toFixed(1)}% of resumes missed the recovery deadline.`
+        );
       })(),
       honesty:
-        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Three columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability). Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers: renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md.",
+        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Three columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md.",
       resumeMs: {
         p50: percentile(allResume, 50),
         p95: percentile(allResume, 95),

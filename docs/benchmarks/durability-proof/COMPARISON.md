@@ -60,12 +60,28 @@ Golem’s public claim is that retries take effect once **if the service honors*
 
 ## Publish timing
 
-| Artifact                                                  | When                                                                                                                                   |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Kill-mid-write **gateway / mandate** numbers (Tier **D**) | Ready now (CI N=50); can share privately as ClawQL-only                                                                                |
-| Program-mode durability vs Pi Durable / Golem             | Tier **C** fleet peer kill measured on R2 — peer **named** boards still need maintainer invite                                         |
-| Named public board with “Pi Durable” / “Golem”            | After maintainer invitation (same rule as other peer boards)                                                                           |
-| De Goes / CEO outreach with numbers                       | After Tier C + private config check — [outreach order](../../gtm/golem-overlap-and-durability-honesty.md#outreach-timing-ceo--de-goes) |
+| Artifact                                                  | When                                                                                                                                                                                                     |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Kill-mid-write **gateway / mandate** numbers (Tier **D**) | Ready now (CI N=50); can share privately as ClawQL-only                                                                                                                                                  |
+| Program-mode durability vs Pi Durable / Golem             | Tier **C** fleet peer kill measured on R2 — peer **named** boards still need maintainer invite                                                                                                           |
+| Named public board with “Pi Durable” / “Golem”            | After maintainer invitation (same rule as other peer boards)                                                                                                                                             |
+| De Goes / CEO outreach with numbers                       | **Ready for private contact now** (stock N=1000 claim + evidence) — [outreach order](../../gtm/golem-overlap-and-durability-honesty.md#outreach-timing-ceo--de-goes); do not wait for preferred TTL tune |
+
+---
+
+## Public numbers vs Golem today (not a shared board)
+
+Golem’s published figures and ClawQL’s Tier C crash board measure different things. Until both arms run the kill-mid-write harness against idempotent and non-idempotent mocks, do not declare a winner on duplicates or failover.
+
+| What's measured               | Golem (public claims)   | ClawQL (measured)              |
+| ----------------------------- | ----------------------- | ------------------------------ |
+| Cold start                    | 2 ms                    | Not yet measured (celld cells) |
+| Memory per unit               | 1 MB min                | ~471 KB / celld cell (earlier) |
+| Density                       | 10,000+ agents / node   | Not yet measured               |
+| Duplicated writes after crash | No published crash test | 0 / 1000 phased kills          |
+| Failover after node crash     | No published figure     | ~12 s median (lease TTL)       |
+
+See [STATUS — How do our numbers compare to Golem?](./STATUS.md#how-do-our-numbers-compare-to-golem).
 
 ---
 

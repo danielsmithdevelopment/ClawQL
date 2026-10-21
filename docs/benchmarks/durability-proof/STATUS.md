@@ -4,9 +4,38 @@
 
 **Live marketing:** clawql.com/benchmarks can say **Lab Yes · fleet Yes (R2 peer kill)** for program journal; still not a durable execution engine. Peer boards vs Pi Durable / Golem wait on maintainer invite.
 
-**Scoped Tier C claim (measured):** Programs survive a node crash, resuming on another node in about **12 seconds** (stock `CELLD_TTL_MS=10000` — failover ≈ lease TTL + detection), with no repeated writes; a write interrupted in flight is marked outcome unknown for a person to resolve. Scope: two celld nodes, one storage provider (Cloudflare R2). Avoid “durable execution” and “exactly once.”
+## Scoped Tier C claim (measured — stock R2)
 
-**Three columns + TTL tradeoff (N=1000 stock complete):** duplicates=0 (rule-of-three ≤0.3% @95%); outcome_unknown ~0.48; **6** survivor self-fences; **9** resumeDeadlineMisses; failover ~12s. TTL-only 30s arm: failover ~32s, dups=0. Prefer renew-every-⅕ + regional leases over TTL stretch — [`AVAILABILITY.md`](../program-cell-fleet-kill/AVAILABILITY.md), [`TTL-TRADEOFF.md`](../program-cell-fleet-kill/TTL-TRADEOFF.md), [`phased-evidence.json`](../program-cell-fleet-kill/phased-evidence.json).
+> Across 1,000 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under stock settings, 0.6% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline.
+
+Every number is measured. Availability costs are stated rather than left for the reader to discover. Scope: two celld nodes, one storage provider (Cloudflare R2). Avoid “durable execution” and “exactly once.”
+
+### Outcome unknown ~48% — read the per-phase table
+
+Aggregate “about half unknown” is a targeting artifact: kills are aimed evenly at four phases; two are the in-flight window. Evidence: [`phased-evidence.json`](../program-cell-fleet-kill/phased-evidence.json) · narrative [`AVAILABILITY.md`](../program-cell-fleet-kill/AVAILABILITY.md).
+
+| Kill phase                        | Outcome unknown        |
+| --------------------------------- | ---------------------- |
+| Before the approval is consumed   | **0** / 252            |
+| After intent recorded             | **240** / 248 (~96.8%) |
+| During the call                   | **241** / 251 (~96.0%) |
+| After the call, before journaling | **0** / 249            |
+
+In real operation, crashes mostly land outside the brief in-flight window, so unknown outcomes are far rarer than this targeted test shows. Nonzero on either outer phase is a bug, not a number to explain.
+
+### TTL tradeoff rows
+
+| Row                  | Status                                | Evidence                                                                                                                      |
+| -------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| stock (`TTL=10s`)    | **Measured** N=1000                   | [`phased-evidence.json`](../program-cell-fleet-kill/phased-evidence.json)                                                     |
+| TTL-only 30s         | **Measured** n=40 (label sample size) | [`ttl30-evidence.json`](../program-cell-fleet-kill/ttl30-evidence.json) — failover ~32s                                       |
+| production_preferred | **Planned** — not a result            | Same N as stock before any claim; renew ⅕ + regional leases — [`TTL-TRADEOFF.md`](../program-cell-fleet-kill/TTL-TRADEOFF.md) |
+
+Prefer renew-every-⅕ + regional leases over TTL stretch. Do not publish preferred as measured.
+
+### Enough to contact John
+
+Send the claim above, the evidence JSON, the per-phase table, the harness, the honest caveats (12-second failover; stock 0.6% self-fence / 0.9% deadline miss), and an invitation to try breaking it. Do not wait for the tuned configuration.
 
 ---
 
@@ -31,6 +60,28 @@
 | **D**  | Kill-mid-write board (N trials)       | **Yes** (lab harness; CI N=50)                   | [`security-suite/kill-mid-write/`](../security-suite/kill-mid-write/) · `npm run benchmark:kill-mid-write`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | **D+** | Comparison board (dual columns)       | **Yes** (ClawQL arms; peers pending invite)      | [`comparison/`](./comparison/) · `npm run benchmark:durability-comparison` — duplicates + `outcome_unknown` × idempotent/non_idempotent                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | **E**  | MCP `execute_program` → ProgramCellDO | **Open**                                         | Today `CLAWQL_PROGRAM_CELLD_ISOLATE` is pin/readiness only; Lab HTTP `/program/*` is separate from Core MCP                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+
+---
+
+## How do our numbers compare to Golem?
+
+We cannot say yet on a shared board — Golem has not published the kind of crash measurement above. Public Golem figures describe different things:
+
+| What's measured                  | Golem (their claims)           | ClawQL (your measurements)                         |
+| -------------------------------- | ------------------------------ | -------------------------------------------------- |
+| Starting a unit of work          | 2 ms Agent cold start          | Not yet measured for celld cells                   |
+| Memory per unit                  | 1 MB Min memory per agent      | About 471 KB per celld cell (earlier measurements) |
+| Density                          | 10,000+ Active agents per node | Not yet measured                                   |
+| Duplicated writes after a crash  | No published crash test        | **0 in 1,000** phased kills                        |
+| Failover time after a node crash | No published figure            | About **12 seconds** median, set by the lease      |
+
+**Where ClawQL is likely ahead:** never repeating a write even against an API that ignores idempotency keys. Golem’s wording is that interrupted requests retry with idempotency keys and take effect once if the service honors them. ClawQL’s single-use approvals do not depend on the upstream. “Likely” until both run against the non-idempotent mock. Trade-off: where Golem retries, ClawQL marks the write outcome unknown for a person to resolve.
+
+**Where ClawQL is probably behind:** failover speed (~12s lease floor). A mature durable runtime may recover faster — renew more often and keep leases on regional storage.
+
+**Where unmeasured:** celld cold start and agents per node. Memory per cell already looks competitive with their minimum.
+
+**Overall for his critique:** yes — a published crash test with real sample size, a statistical bound, and availability costs stated openly is exactly what he demands. The head-to-head waits for a Golem arm on the dual-column board ([`COMPARISON.md`](./COMPARISON.md)), ideally with his input on configuration.
 
 ---
 
