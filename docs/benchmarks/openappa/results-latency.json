@@ -1,18 +1,24 @@
 {
-  "measured_at": "2026-10-21T03:03:14.750Z",
+  "measured_at": "2026-10-21T03:33:15.986Z",
+  "metric": "openappa_hook_overhead_ms",
+  "note": "OpenAPPA sidecar overhead only (keep-alive undici Agent). Do not fold into published ClawQL per-call latency; report separately when OpenAPPA is enabled.",
+  "clawql_baseline_p50_ms": 1.3,
+  "openappa_vs_clawql_p50_ratio": 1.45,
   "base_url": "http://127.0.0.1:8790",
   "adapter": "opencode",
   "tool": "mcp__clawql__search",
-  "n": 200,
-  "timeout_ms_budget": 2000,
+  "keep_alive": true,
+  "root_rotate_every": 50,
+  "n": 10000,
+  "timeout_ms_budget": 250,
   "latency_ms": {
-    "min": 1.6915690000000012,
-    "p50": 4.488907999999981,
-    "p90": 8.07249800000011,
-    "p99": 10.804724999999962,
-    "p999": 17.496755000000007,
-    "max": 17.496755000000007,
-    "mean": 4.987003074999995
+    "min": 0.6505899999992835,
+    "p50": 1.8870769999994081,
+    "p90": 2.7296150000001944,
+    "p99": 3.5745659999993222,
+    "p999": 6.440666999999962,
+    "max": 13.163216999999975,
+    "mean": 1.9244228806999986
   },
-  "notes": "Hard timeout budget is CLAWQL_OPENAPPA_TIMEOUT_MS (default 2000). Exceeded → sidecar_unavailable fail-closed for writes; reads default closed."
+  "operational": "Hard timeout default 250ms + circuit breaker (CLAWQL_OPENAPPA_CIRCUIT_FAILURES / COOLDOWN_MS). Exceeded → sidecar_unavailable fail-closed for writes; reads default closed."
 }

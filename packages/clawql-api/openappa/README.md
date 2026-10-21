@@ -11,7 +11,9 @@ appa runtime --adapter opencode --listen 127.0.0.1:8789 \
 
 export CLAWQL_ENABLE_OPENAPPA=1
 export CLAWQL_OPENAPPA_URL=http://127.0.0.1:8789
-# writes always fail closed if the sidecar dies; reads default closed too
+# timeout default 250ms + circuit breaker; writes always fail closed
+# remote: store token at SecretStore path openappa/auth_token
+#   (or CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN); never log it
 ```
 
 ## Covered tools

@@ -110,10 +110,13 @@ describe("OpenAPPA benign suite (declared tools)", () => {
       adapter: "opencode",
       mcpServer: "clawql",
       readFailurePolicy: "block",
-      timeoutMs: 3000,
+      timeoutMs: 250,
       allowCacheMs: 0,
-      authToken: null,
+      authTokens: [],
       isLoopback: true,
+      circuitFailureThreshold: 3,
+      circuitCooldownMs: 2000,
+      policyEpoch: "benign",
     };
 
     const results: { tool: string; ok: boolean; status: string }[] = [];

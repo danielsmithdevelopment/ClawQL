@@ -11,6 +11,14 @@ import {
   OpenAppaTransportError,
   postOpenAppaHookEffect,
 } from "./client.js";
+import {
+  openAppaCircuitBeforeCallEffect,
+  openAppaCircuitKey,
+  openAppaCircuitRecordFailureEffect,
+  openAppaCircuitRecordSuccessEffect,
+  resetOpenAppaCircuitBreakersForTests,
+} from "./circuit-breaker.js";
+import { resetOpenAppaHttpAgentsForTests } from "./http-agent.js";
 import type {
   OpenAppaGateVerdict,
   OpenAppaToolOutcome,
@@ -21,11 +29,29 @@ const startedRoots = new Set<string>();
 
 type AllowCacheEntry = { readonly expiresAt: number; readonly decision: OpenAppaWireDecision };
 const allowCache = new Map<string, AllowCacheEntry>();
+let allowCacheEpoch = "";
 
-/** Test helper — clear session_start + allow caches. */
+function syncAllowCacheEpoch(epoch: string): void {
+  if (allowCacheEpoch !== epoch) {
+    allowCache.clear();
+    allowCacheEpoch = epoch;
+  }
+}
+
+/** Invalidate brief allow-cache (policy reload / epoch bump / circuit open). */
+export function invalidateOpenAppaAllowCacheEffect(): Effect.Effect<void> {
+  return Effect.sync(() => {
+    allowCache.clear();
+  });
+}
+
+/** Test helper — clear session_start + allow caches + circuit + agents. */
 export function resetOpenAppaSessionCacheForTests(): void {
   startedRoots.clear();
   allowCache.clear();
+  allowCacheEpoch = "";
+  resetOpenAppaCircuitBreakersForTests();
+  resetOpenAppaHttpAgentsForTests();
 }
 
 function feedbackOf(decision: OpenAppaWireDecision): string {
@@ -161,12 +187,25 @@ export function openAppaBeforeToolCallEffect(
       } satisfies OpenAppaGateVerdict;
     }
 
+    syncAllowCacheEpoch(config.policyEpoch);
+
+    const circuitKey = openAppaCircuitKey(config.baseUrl);
+    const circuitCfg = {
+      failureThreshold: config.circuitFailureThreshold,
+      cooldownMs: config.circuitCooldownMs,
+    };
+    const circuitBlock = yield* openAppaCircuitBeforeCallEffect(circuitKey, circuitCfg);
+    if (circuitBlock) {
+      yield* invalidateOpenAppaAllowCacheEffect();
+      return sidecarUnavailableVerdict(circuitBlock);
+    }
+
     const rootId = (input.sessionId?.trim() || "clawql-anon").slice(0, 200);
     const wireTool = yield* openAppaWireToolNameEffect(input.toolName, config.mcpServer);
     const callId =
       input.callId?.trim() ||
       `clawql-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-    const cacheKey = `${rootId}|${wireTool}|${argsDigest(input.args)}`;
+    const cacheKey = `${config.policyEpoch}|${rootId}|${wireTool}|${argsDigest(input.args)}`;
 
     if (config.allowCacheMs > 0) {
       const hit = allowCache.get(cacheKey);
@@ -184,6 +223,7 @@ export function openAppaBeforeToolCallEffect(
         arguments: input.args ?? {},
         call_id: callId,
       });
+      yield* openAppaCircuitRecordSuccessEffect(circuitKey);
       if (
         config.allowCacheMs > 0 &&
         (decision.decision === "allow_call" || decision.decision === "pass_control")
@@ -192,6 +232,9 @@ export function openAppaBeforeToolCallEffect(
           expiresAt: Date.now() + config.allowCacheMs,
           decision,
         });
+      } else {
+        // Non-allow decisions must not linger as stale allows after policy change.
+        allowCache.delete(cacheKey);
       }
       return verdictFromToolCallDecision(decision);
     });
@@ -200,6 +243,8 @@ export function openAppaBeforeToolCallEffect(
       Effect.catch((err): Effect.Effect<OpenAppaGateVerdict> => {
         const msg = err instanceof Error ? err.message : String(err);
         return Effect.gen(function* () {
+          const { opened } = yield* openAppaCircuitRecordFailureEffect(circuitKey, circuitCfg);
+          if (opened) yield* invalidateOpenAppaAllowCacheEffect();
           const mayOpen = yield* openAppaMayFailOpenEffect(config, input.toolName);
           if (mayOpen) {
             process.stderr.write(`[clawql-openappa] warning (read fail-open): ${msg}\n`);
@@ -274,6 +319,26 @@ export function openAppaAfterToolResultEffect(
       } satisfies OpenAppaAfterResultVerdict;
     }
 
+    syncAllowCacheEpoch(config.policyEpoch);
+    const circuitKey = openAppaCircuitKey(config.baseUrl);
+    const circuitCfg = {
+      failureThreshold: config.circuitFailureThreshold,
+      cooldownMs: config.circuitCooldownMs,
+    };
+    const circuitBlock = yield* openAppaCircuitBeforeCallEffect(circuitKey, circuitCfg);
+    if (circuitBlock) {
+      return {
+        action: "error" as const,
+        reason: `OpenAPPA policy blocked tool result: sidecar unavailable — ${circuitBlock}`,
+        decision: {
+          protocol: 1 as const,
+          decision: "refuse" as const,
+          detail: circuitBlock,
+          class: "sidecar_unavailable",
+        },
+      };
+    }
+
     const rootId = (input.sessionId?.trim() || "clawql-anon").slice(0, 200);
     const wireTool = yield* openAppaWireToolNameEffect(input.toolName, config.mcpServer);
     const callId =
@@ -290,6 +355,7 @@ export function openAppaAfterToolResultEffect(
         call_id: callId,
         outcome: input.outcome,
       });
+      yield* openAppaCircuitRecordSuccessEffect(circuitKey);
       if (decision.decision === "ack") {
         return { action: "passthrough" as const, decision };
       }
@@ -316,6 +382,7 @@ export function openAppaAfterToolResultEffect(
       Effect.catch((err): Effect.Effect<OpenAppaAfterResultVerdict> => {
         const msg = err instanceof Error ? err.message : String(err);
         return Effect.gen(function* () {
+          yield* openAppaCircuitRecordFailureEffect(circuitKey, circuitCfg);
           const mayOpen = yield* openAppaMayFailOpenEffect(config, input.toolName);
           if (mayOpen) {
             process.stderr.write(`[clawql-openappa] warning (tool_result read fail-open): ${msg}\n`);

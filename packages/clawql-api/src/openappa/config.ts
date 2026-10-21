@@ -1,6 +1,11 @@
 import { Effect } from "effect";
+import { resolveSecretStore, type SecretStore } from "clawql-auth";
 import type { OpenAppaAdapter } from "./types.js";
 import { isExecutePathTool, resolveNativeToolPolicy } from "../governance/native-tool-policy.js";
+
+/** SecretStore paths — never log values. Env store maps to CLAWQL_SECRET_OPENAPPA_*. */
+export const OPENAPPA_AUTH_TOKEN_SECRET_PATH = "openappa/auth_token";
+export const OPENAPPA_AUTH_TOKEN_PREVIOUS_SECRET_PATH = "openappa/auth_token_previous";
 
 export type OpenAppaConfig = {
   readonly baseUrl: string;
@@ -12,16 +17,22 @@ export type OpenAppaConfig = {
    * on sidecar outage or timeout — never allowed.
    */
   readonly readFailurePolicy: "block" | "warn";
-  /** Hard timeout budget for `POST /hook` (ms). Exceeded → same as sidecar down. */
+  /** Hard timeout budget for `POST /hook` (ms). Default 250. Exceeded → fail closed. */
   readonly timeoutMs: number;
-  /** Brief allow-decision cache TTL (ms). `0` disables. */
+  /** Brief allow-decision cache TTL (ms). Default 250. Invalidated on deny / circuit open / policy epoch bump. */
   readonly allowCacheMs: number;
   /**
-   * Bearer token for non-loopback sidecars (`CLAWQL_OPENAPPA_AUTH_TOKEN`).
-   * Required when `baseUrl` is not loopback.
+   * Bearer tokens for non-loopback sidecars: [current, previous?].
+   * Loaded from SecretStore; never logged. Previous enables rotation overlap.
    */
-  readonly authToken: string | null;
+  readonly authTokens: readonly string[];
   readonly isLoopback: boolean;
+  readonly circuitFailureThreshold: number;
+  readonly circuitCooldownMs: number;
+  /**
+   * Operator-bumped epoch (or battery fingerprint). Changing it clears allow-cache.
+   */
+  readonly policyEpoch: string;
 };
 
 function envTruthy(v: string | undefined): boolean {
@@ -89,7 +100,57 @@ export function openAppaMayFailOpenEffect(
   });
 }
 
-export function loadOpenAppaConfigEffect(): Effect.Effect<OpenAppaConfig | null, Error> {
+/**
+ * Load auth tokens from SecretStore (preferred) with safe env fallbacks.
+ * Never returns values into logs — callers must not stringify config wholesale.
+ *
+ * Resolution order for current token:
+ * 1. SecretStore `openappa/auth_token`
+ * 2. Env `CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN` (env store mapping)
+ * 3. Legacy `CLAWQL_OPENAPPA_AUTH_TOKEN` (deprecated; still accepted, never logged)
+ *
+ * Previous (rotation overlap): SecretStore `openappa/auth_token_previous`
+ * or `CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN_PREVIOUS`.
+ */
+export function loadOpenAppaAuthTokensEffect(
+  store?: SecretStore
+): Effect.Effect<readonly string[], Error> {
+  return Effect.gen(function* () {
+    const secretStore = store ?? resolveSecretStore();
+    const currentFromStore = yield* secretStore.getSecret(OPENAPPA_AUTH_TOKEN_SECRET_PATH).pipe(
+      Effect.mapError(
+        (e) => new Error(`OpenAPPA auth token secret read failed: ${e.reason ?? "unknown"}`)
+      )
+    );
+    const previousFromStore = yield* secretStore
+      .getSecret(OPENAPPA_AUTH_TOKEN_PREVIOUS_SECRET_PATH)
+      .pipe(
+        Effect.mapError(
+          (e) => new Error(`OpenAPPA previous auth token secret read failed: ${e.reason ?? "unknown"}`)
+        )
+      );
+
+    const current =
+      currentFromStore?.trim() ||
+      process.env.CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN?.trim() ||
+      process.env.CLAWQL_OPENAPPA_AUTH_TOKEN?.trim() ||
+      null;
+    const previous =
+      previousFromStore?.trim() ||
+      process.env.CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN_PREVIOUS?.trim() ||
+      process.env.CLAWQL_OPENAPPA_AUTH_TOKEN_PREVIOUS?.trim() ||
+      null;
+
+    const tokens: string[] = [];
+    if (current) tokens.push(current);
+    if (previous && previous !== current) tokens.push(previous);
+    return tokens;
+  });
+}
+
+export function loadOpenAppaConfigEffect(
+  options: { readonly secretStore?: SecretStore } = {}
+): Effect.Effect<OpenAppaConfig | null, Error> {
   return Effect.gen(function* () {
     const enabled = yield* openAppaEnabledEffect();
     if (!enabled) return null;
@@ -97,11 +158,11 @@ export function loadOpenAppaConfigEffect(): Effect.Effect<OpenAppaConfig | null,
       process.env.CLAWQL_OPENAPPA_URL?.trim() || "http://127.0.0.1:8789"
     ).replace(/\/$/, "");
     const isLoopback = yield* isLoopbackOpenAppaUrlEffect(baseUrl);
-    const authToken = process.env.CLAWQL_OPENAPPA_AUTH_TOKEN?.trim() || null;
-    if (!isLoopback && !authToken) {
+    const authTokens = yield* loadOpenAppaAuthTokensEffect(options.secretStore);
+    if (!isLoopback && authTokens.length === 0) {
       return yield* Effect.fail(
         new Error(
-          "CLAWQL_OPENAPPA_URL is not loopback; set CLAWQL_OPENAPPA_AUTH_TOKEN (or use mTLS) before enabling OpenAPPA"
+          "CLAWQL_OPENAPPA_URL is not loopback; store token at SecretStore path openappa/auth_token (or CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN)"
         )
       );
     }
@@ -113,12 +174,31 @@ export function loadOpenAppaConfigEffect(): Effect.Effect<OpenAppaConfig | null,
       process.env.CLAWQL_OPENAPPA_FAILURE_POLICY?.trim().toLowerCase();
     const readFailurePolicy = readRaw === "warn" ? "warn" : "block";
 
-    // Hard timeout budget — exceeded → sidecar-down path (fail closed for writes).
-    const timeoutRaw = Number(process.env.CLAWQL_OPENAPPA_TIMEOUT_MS?.trim() || "2000");
-    const timeoutMs = Number.isFinite(timeoutRaw) && timeoutRaw > 0 ? Math.min(timeoutRaw, 30_000) : 2000;
+    // Tight timeout — stalled sidecar must not look like a ClawQL outage.
+    const timeoutRaw = Number(process.env.CLAWQL_OPENAPPA_TIMEOUT_MS?.trim() || "250");
+    const timeoutMs =
+      Number.isFinite(timeoutRaw) && timeoutRaw > 0 ? Math.min(timeoutRaw, 5_000) : 250;
 
-    const cacheRaw = Number(process.env.CLAWQL_OPENAPPA_ALLOW_CACHE_MS?.trim() || "0");
-    const allowCacheMs = Number.isFinite(cacheRaw) && cacheRaw > 0 ? Math.min(cacheRaw, 5_000) : 0;
+    // Brief allow-cache for identical requests (default on).
+    const cacheRaw = Number(process.env.CLAWQL_OPENAPPA_ALLOW_CACHE_MS?.trim() || "250");
+    const allowCacheMs =
+      cacheRaw === 0
+        ? 0
+        : Number.isFinite(cacheRaw) && cacheRaw > 0
+          ? Math.min(cacheRaw, 5_000)
+          : 250;
+
+    const failThreshRaw = Number(process.env.CLAWQL_OPENAPPA_CIRCUIT_FAILURES?.trim() || "3");
+    const circuitFailureThreshold =
+      Number.isFinite(failThreshRaw) && failThreshRaw > 0 ? Math.min(failThreshRaw, 100) : 3;
+    const coolRaw = Number(process.env.CLAWQL_OPENAPPA_CIRCUIT_COOLDOWN_MS?.trim() || "2000");
+    const circuitCooldownMs =
+      Number.isFinite(coolRaw) && coolRaw > 0 ? Math.min(coolRaw, 60_000) : 2000;
+
+    const policyEpoch =
+      process.env.CLAWQL_OPENAPPA_POLICY_EPOCH?.trim() ||
+      process.env.CLAWQL_OPENAPPA_CONFIG_HASH?.trim() ||
+      "default";
 
     return {
       baseUrl,
@@ -127,8 +207,11 @@ export function loadOpenAppaConfigEffect(): Effect.Effect<OpenAppaConfig | null,
       readFailurePolicy,
       timeoutMs,
       allowCacheMs,
-      authToken,
+      authTokens,
       isLoopback,
+      circuitFailureThreshold,
+      circuitCooldownMs,
+      policyEpoch,
     } satisfies OpenAppaConfig;
   });
 }
@@ -150,4 +233,19 @@ export function openAppaWireToolNameEffect(
 
 export function openAppaWireToolName(toolName: string, mcpServer: string): string {
   return Effect.runSync(openAppaWireToolNameEffect(toolName, mcpServer));
+}
+
+/** Redact secrets from free-text error surfaces (never log tokens). */
+export function redactOpenAppaSecretsEffect(
+  text: string,
+  tokens: readonly string[]
+): Effect.Effect<string> {
+  return Effect.sync(() => {
+    let out = text;
+    for (const t of tokens) {
+      if (t.length >= 4) out = out.split(t).join("[redacted]");
+    }
+    out = out.replace(/Bearer\s+\S+/gi, "Bearer [redacted]");
+    return out;
+  });
 }

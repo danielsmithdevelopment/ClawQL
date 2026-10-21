@@ -26,10 +26,13 @@ function cfg(url: string, overrides: Partial<OpenAppaConfig> = {}): OpenAppaConf
     adapter: "opencode",
     mcpServer: "clawql",
     readFailurePolicy: "block",
-    timeoutMs: 3000,
+    timeoutMs: 250,
     allowCacheMs: 0,
-    authToken: null,
+    authTokens: [],
     isLoopback: true,
+    circuitFailureThreshold: 3,
+    circuitCooldownMs: 2000,
+    policyEpoch: "test",
     ...overrides,
   };
 }
@@ -111,8 +114,25 @@ describe("OpenAPPA Layer 5 client", () => {
     process.env.CLAWQL_ENABLE_OPENAPPA = "1";
     process.env.CLAWQL_OPENAPPA_URL = "https://openappa.example.com";
     delete process.env.CLAWQL_OPENAPPA_AUTH_TOKEN;
-    const loaded = await Effect.runPromise(loadOpenAppaConfigEffect().pipe(Effect.result));
+    delete process.env.CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN;
+    const { createMemorySecretStore } = await import("clawql-auth");
+    const loaded = await Effect.runPromise(
+      loadOpenAppaConfigEffect({ secretStore: createMemorySecretStore() }).pipe(Effect.result)
+    );
     expect(loaded._tag).toBe("Failure");
+  });
+
+  it("loads auth token from SecretStore path openappa/auth_token", async () => {
+    process.env.CLAWQL_ENABLE_OPENAPPA = "1";
+    process.env.CLAWQL_OPENAPPA_URL = "https://openappa.example.com";
+    delete process.env.CLAWQL_OPENAPPA_AUTH_TOKEN;
+    delete process.env.CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN;
+    const { createMemorySecretStore } = await import("clawql-auth");
+    const store = createMemorySecretStore();
+    await Effect.runPromise(store.setSecret("openappa/auth_token", "store-token-abc"));
+    await Effect.runPromise(store.setSecret("openappa/auth_token_previous", "old-token-xyz"));
+    const loaded = await Effect.runPromise(loadOpenAppaConfigEffect({ secretStore: store }));
+    expect(loaded?.authTokens).toEqual(["store-token-abc", "old-token-xyz"]);
   });
 
   it("allows when OpenAPPA disabled", async () => {
@@ -207,6 +227,92 @@ describe("OpenAPPA Layer 5 client", () => {
     expect(verdict.status).toBe("mandate_required");
   });
 
+  it("brief allow-cache skips sidecar for identical allow requests", async () => {
+    let toolCalls = 0;
+    mock = await startMockOpenAppa((body) => {
+      if (body.event === "session_start") {
+        return { status: 200, body: { protocol: 1, decision: "ack" } };
+      }
+      if (body.event === "tool_call") toolCalls += 1;
+      return { status: 200, body: { protocol: 1, decision: "allow_call" } };
+    });
+    const config = cfg(mock.url, { allowCacheMs: 5_000, policyEpoch: "epoch-a" });
+    const args = { query: "same" };
+    const first = await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "search",
+        args,
+        sessionId: "cache-1",
+        callId: "c1",
+        config,
+      })
+    );
+    const second = await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "search",
+        args,
+        sessionId: "cache-1",
+        callId: "c2",
+        config,
+      })
+    );
+    expect(first.allow).toBe(true);
+    expect(second.allow).toBe(true);
+    expect(toolCalls).toBe(1);
+
+    const afterEpoch = await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "search",
+        args,
+        sessionId: "cache-1",
+        callId: "c3",
+        config: { ...config, policyEpoch: "epoch-b" },
+      })
+    );
+    expect(afterEpoch.allow).toBe(true);
+    expect(toolCalls).toBe(2);
+  });
+
+  it("circuit opens after consecutive failures and skips wait", async () => {
+    const config = cfg("http://127.0.0.1:1", {
+      timeoutMs: 50,
+      circuitFailureThreshold: 2,
+      circuitCooldownMs: 5_000,
+    });
+    const first = await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "notify",
+        args: {},
+        sessionId: "circ-1",
+        config,
+      })
+    );
+    expect(first.allow).toBe(false);
+    const second = await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "notify",
+        args: {},
+        sessionId: "circ-1",
+        config,
+      })
+    );
+    expect(second.allow).toBe(false);
+    const t0 = performance.now();
+    const third = await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "notify",
+        args: {},
+        sessionId: "circ-1",
+        config,
+      })
+    );
+    const elapsed = performance.now() - t0;
+    expect(third.allow).toBe(false);
+    expect(third.reason).toMatch(/circuit open/i);
+    // Must not wait on the tight timeout again once the circuit is open.
+    expect(elapsed).toBeLessThan(40);
+  });
+
   it("kill sidecar mid-session: write fails closed even when reads warn", async () => {
     mock = await startMockOpenAppa((body) => {
       if (body.event === "session_start") {
@@ -214,7 +320,7 @@ describe("OpenAPPA Layer 5 client", () => {
       }
       return { status: 200, body: { protocol: 1, decision: "allow_call" } };
     });
-    const config = cfg(mock.url, { readFailurePolicy: "warn", timeoutMs: 500 });
+    const config = cfg(mock.url, { readFailurePolicy: "warn", timeoutMs: 250 });
     const first = await Effect.runPromise(
       openAppaBeforeToolCallEffect({
         toolName: "search",
@@ -256,12 +362,17 @@ describe("OpenAPPA Layer 5 client", () => {
   });
 
   it("default read failure policy is fail-closed on transport error", async () => {
+    resetOpenAppaSessionCacheForTests();
     const verdict = await Effect.runPromise(
       openAppaBeforeToolCallEffect({
         toolName: "search",
         args: {},
         sessionId: "sess-closed",
-        config: cfg("http://127.0.0.1:1", { timeoutMs: 200 }),
+        config: cfg("http://127.0.0.1:1", {
+          timeoutMs: 80,
+          circuitFailureThreshold: 99,
+          circuitCooldownMs: 1,
+        }),
       })
     );
     expect(verdict.allow).toBe(false);
@@ -351,9 +462,54 @@ describe("OpenAPPA Layer 5 client", () => {
         toolName: "search",
         args: {},
         sessionId: "sess-auth",
-        config: cfg(mock.url, { authToken: "test-token-xyz" }),
+        config: cfg(mock.url, { authTokens: ["test-token-xyz"] }),
       })
     );
     expect(sawAuth).toBe("Bearer test-token-xyz");
+  });
+
+  it("retries previous auth token on 401 (rotation overlap)", async () => {
+    const tokensSeen: string[] = [];
+    mock = await new Promise((resolve, reject) => {
+      const server = createServer(async (req, res) => {
+        const auth = String(req.headers.authorization ?? "");
+        tokensSeen.push(auth);
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) chunks.push(chunk as Buffer);
+        const body = JSON.parse(Buffer.concat(chunks).toString("utf8")) as { event?: string };
+        if (body.event === "session_start") {
+          // Accept either token for session_start so the retry path is exercised on tool_call.
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ protocol: 1, decision: "ack" }));
+          return;
+        }
+        if (auth === "Bearer old-token") {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ protocol: 1, decision: "allow_call" }));
+          return;
+        }
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ protocol: 1, decision: "refuse", detail: "unauthorized" }));
+      });
+      server.listen(0, "127.0.0.1", () => {
+        const addr = server.address();
+        if (!addr || typeof addr === "string") {
+          reject(new Error("no addr"));
+          return;
+        }
+        resolve({ server, url: `http://127.0.0.1:${addr.port}` });
+      });
+    });
+    const verdict = await Effect.runPromise(
+      openAppaBeforeToolCallEffect({
+        toolName: "search",
+        args: {},
+        sessionId: "sess-rotate",
+        config: cfg(mock.url, { authTokens: ["new-token", "old-token"] }),
+      })
+    );
+    expect(verdict.allow).toBe(true);
+    expect(tokensSeen.some((t) => t === "Bearer new-token")).toBe(true);
+    expect(tokensSeen.some((t) => t === "Bearer old-token")).toBe(true);
   });
 });

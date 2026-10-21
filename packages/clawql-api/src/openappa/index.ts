@@ -1,5 +1,6 @@
 export {
   isLoopbackOpenAppaUrlEffect,
+  loadOpenAppaAuthTokensEffect,
   loadOpenAppaConfig,
   loadOpenAppaConfigEffect,
   openAppaEnabled,
@@ -9,6 +10,9 @@ export {
   openAppaToolIsMutatingEffect,
   openAppaWireToolName,
   openAppaWireToolNameEffect,
+  redactOpenAppaSecretsEffect,
+  OPENAPPA_AUTH_TOKEN_PREVIOUS_SECRET_PATH,
+  OPENAPPA_AUTH_TOKEN_SECRET_PATH,
   type OpenAppaConfig,
 } from "./config.js";
 export {
@@ -16,6 +20,16 @@ export {
   OpenAppaTransportError,
   postOpenAppaHookEffect,
 } from "./client.js";
+export {
+  openAppaCircuitBeforeCallEffect,
+  openAppaCircuitKey,
+  openAppaCircuitRecordFailureEffect,
+  openAppaCircuitRecordSuccessEffect,
+  openAppaCircuitStateEffect,
+  resetOpenAppaCircuitBreakersForTests,
+  type CircuitBreakerConfig,
+  type CircuitState,
+} from "./circuit-breaker.js";
 export {
   composeMostRestrictive,
   composeMostRestrictiveEffect,
@@ -28,6 +42,7 @@ export {
   type NativeLayerInput,
 } from "./compose.js";
 export {
+  invalidateOpenAppaAllowCacheEffect,
   openAppaAfterToolResultEffect,
   openAppaBeforeToolCallEffect,
   openAppaBlockToMcpResult,
@@ -36,6 +51,11 @@ export {
   type OpenAppaAfterResultVerdict,
   type OpenAppaBeforeCallInput,
 } from "./gate.js";
+export {
+  closeOpenAppaHttpAgentsEffect,
+  openAppaHttpAgentEffect,
+  resetOpenAppaHttpAgentsForTests,
+} from "./http-agent.js";
 export { OpenAppaLive, OpenAppaService, type OpenAppaServiceApi } from "./openappa-service.js";
 export {
   OPENAPPA_PROTOCOL,
