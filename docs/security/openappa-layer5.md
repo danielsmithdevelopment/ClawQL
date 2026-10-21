@@ -110,7 +110,15 @@ ClawQL’s in-process data-flow labels (`mayFlow` + session label set) are measu
 node scripts/benchmarks/openappa/measure-session-ifc-curve.mjs
 ```
 
-Results: [`docs/benchmarks/openappa/results-session-ifc-curve.json`](../benchmarks/openappa/results-session-ifc-curve.json). A compact growing label set should stay near-flat across 10 → 5,000 calls; publish beside the OpenAPPA curve.
+Results: [`docs/benchmarks/openappa/results-session-ifc-curve.json`](../benchmarks/openappa/results-session-ifc-curve.json).
+
+| Arm | Call 10 p50 | Call 5,000 p50 | Ratio |
+| --- | ---: | ---: | ---: |
+| OpenAPPA `/hook` tool_call | 1.8 **ms** | 179 **ms** | ~98× |
+| ClawQL IFC `capped_sources` (≤32 labels) | ~100 **µs** | ~12 **µs** | flat |
+| ClawQL IFC `growing_unique` (1 label/call) | ~11 **µs** | ~600 **µs** | ~54× in \|labels\| |
+
+Production-like IFC (bounded source channels) stays flat and three orders of magnitude under OpenAPPA. The unique-label stress arm grows with set size (copy/sort over the label set) but remains **sub-millisecond** at 5k — not an availability cliff. Still prefer bounded label cardinality.
 
 ### Short-session amortized (synthetic only)
 
@@ -166,6 +174,7 @@ Prefer **mutual TLS** for remote deployment; a bearer alone is the minimum bar.
 | `CLAWQL_ENABLE_OPENAPPA` | off | Enable client |
 | `CLAWQL_OPENAPPA_URL` | `http://127.0.0.1:8789` | Sidecar base |
 | `CLAWQL_OPENAPPA_TIMEOUT_MS` | `250` | Hard timeout budget |
+| *(constant)* `OPENAPPA_SUPPORTED_SESSION_CALLS` | `2000` | Documented max gated calls/session until upstream O(1) |
 | `CLAWQL_OPENAPPA_CIRCUIT_FAILURES` | `3` | Consecutive failures before open |
 | `CLAWQL_OPENAPPA_CIRCUIT_COOLDOWN_MS` | `2000` | Fail-closed cooldown |
 | `CLAWQL_OPENAPPA_ALLOW_CACHE_MS` | `250` | Brief allow-cache (`0` disables) |
