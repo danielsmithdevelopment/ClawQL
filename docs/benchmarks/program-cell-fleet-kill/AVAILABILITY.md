@@ -11,14 +11,9 @@
 
 Zero duplicates across the first 60 trials means fencing did its job: a node that could not confirm its lease stopped rather than risk dual writers. Customers would still see an **outage** until an orchestrator restarts the fenced node and retries resume.
 
-## Harness note (DO cell choice)
+## Harness note (DO ownership)
 
-`/program/*` defaults to Durable Object `program:default` unless `?cell=` is set. The phased board uses:
-
-- `?cell=phased-board-<run>` for all trials (one warm DO; program journals keyed by `programId`)
-- `?cell=health` for readiness probes so `/program/health` does not fight the board DO owner
-
-Per-trial cells were tried and rejected: brand-new DOs often had not completed an LTX ship before SIGKILL, so peer resume saw empty state (safety still held — no duplicates — but phase expectations failed).
+Trials use the worker default DO (`program:default`), matching the proven fleet smoke. After SIGKILL the board waits for survivor `/program/health` before `/program/resume`; that ownership-transfer wait is included in `resumeMs`. Victim restart only requires `/health` so readiness probes do not prolong DO owner fights.
 
 ## Lease timing (celld 0.4.0 defaults)
 

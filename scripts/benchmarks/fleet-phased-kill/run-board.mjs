@@ -429,12 +429,9 @@ async function main() {
   let totalDeadlineMisses = 0;
   let primary = "A";
   const boardStarted = Date.now();
-  // One warm DO for all trials (keys namespaced by programId). Per-trial cells
-  // raced LTX before the first ship and broke peer resume. Health probes use
-  // a separate cell so readiness checks do not fight the board DO owner.
-  const BOARD_CELL = `phased-board-${boardStarted}`;
-  const boardCellQ = `cell=${encodeURIComponent(BOARD_CELL)}`;
-  console.log(`fleet-phased: board cell=${BOARD_CELL} (redacted from evidence)`);
+  // Trials use the worker default DO (program:default) — same as the proven
+  // smoke + N=8 PASS. After SIGKILL, wait for survivor /program/health before
+  // resume (ownership transfer); that wait is inside resumeMs.
 
   const cleanup = () => {
     for (const n of Object.values(nodes)) {
@@ -467,7 +464,6 @@ async function main() {
     const victim = primary;
     const survivor = primary === "A" ? "B" : "A";
     const programId = `phased_${phase}_${i}_${Date.now()}`;
-    const cellQ = boardCellQ;
     const baseV = `http://127.0.0.1:${nodes[victim].port}`;
     const baseS = `http://127.0.0.1:${nodes[survivor].port}`;
 
@@ -485,7 +481,7 @@ async function main() {
 
     if (phase === "during_call") {
       const ac = new AbortController();
-      const runPromise = fetch(`${baseV}/program/run?${cellQ}`, {
+      const runPromise = fetch(`${baseV}/program/run`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
