@@ -1,0 +1,8 @@
+{
+  "kind": "celld-fleet-peer-sigkill",
+  "measuredAt": "2026-10-21T02:14:37.687078+00:00",
+  "ok": false,
+  "status": "not_measured",
+  "reason": "CELLD_BUCKET unset",
+  "honesty": "Tier C fleet LTX peer kill not measured. Requires a bucket that passes celld diagnose conditional-write. Lab isolate kill (Tier B) is separate."
+}

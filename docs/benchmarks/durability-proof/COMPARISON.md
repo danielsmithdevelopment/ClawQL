@@ -1,6 +1,6 @@
 # Durability comparison board — celld · Pi Durable · Golem
 
-**Status:** plan (not measured)  
+**Status:** ClawQL arms measured (see [`comparison/evidence.json`](./comparison/evidence.json)); peer arms pending invite  
 **Parent:** [STATUS.md](./STATUS.md) · [Golem honesty](../../gtm/golem-overlap-and-durability-honesty.md)
 
 ---
@@ -69,9 +69,20 @@ Golem’s public claim is that retries take effect once **if the service honors*
 
 ---
 
-## Implementation notes (next engineering)
+## Implementation status
 
-1. Generalize `kill-mid-write-board` to emit `{ duplicates, outcome_unknown, lost }` per trial and per upstream mode.
-2. Adapter interface: `startArm` / `killMidWrite` / `resume` / `sideEffectCount` — file-journal and ProgramCellDO first; Pi/Golem adapters behind feature flags + invite.
-3. Evidence path: `docs/benchmarks/durability-proof/comparison/evidence.json` (schema TBD); do not overwrite Tier D file-journal evidence.
-4. CI: ClawQL arms only until peers are invited; optional workflow_dispatch for combination arms.
+| Piece                                           | Status                                                                                   |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Dual columns + both upstream modes              | **Shipped** — `npm run benchmark:durability-comparison`                                  |
+| `clawql-file-journal` + `naive-retry` reference | **Measured** in CI                                                                       |
+| `clawql-program-celld`                          | Tier B/C harnesses (isolate + fleet scripts); skipped inside Node board                  |
+| Pi Durable / Golem (+ combinations)             | `pending_invite` stubs                                                                   |
+| Evidence                                        | [`comparison/evidence.json`](./comparison/evidence.json) — does **not** overwrite Tier D |
+
+### Commands
+
+```bash
+DURABILITY_COMPARISON_N=20 npm run benchmark:durability-comparison
+# Tier C when you have a conforming bucket:
+CELLD_BUCKET=s3://… STREAMS_CELLD_FLEET_REQUIRED=1 npm run smoke:program-cell-fleet-kill
+```

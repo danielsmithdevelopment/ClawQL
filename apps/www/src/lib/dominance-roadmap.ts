@@ -148,7 +148,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     status: 'partial',
     statusLabel: 'Lab Yes · fleet Partial',
     nextStep:
-      'Tiers A/B/D CI-gated (see docs/benchmarks/durability-proof/STATUS.md). Fleet three-arm / LTX (Tier C) + MCP→ProgramCellDO (Tier E) still open. Hot-path A/B 10k PASS.',
+      'Tiers A/B/D CI-gated; dual-column comparison board measured for ClawQL. Tier C fleet harness shipped (needs conforming bucket). Peers (Pi Durable/Golem) pending invite. Hot-path A/B 10k PASS.',
   },
 ] as const
 
