@@ -459,6 +459,32 @@ def main() -> int:
             else None
         )
 
+        def _openappa_reason_hist(decisions: list) -> dict[str, int]:
+            from collections import Counter
+
+            c: Counter[str] = Counter()
+            for d in decisions:
+                if d.get("allow"):
+                    continue
+                reason = f"{d.get('decision') or ''} {d.get('reason') or ''}".lower()
+                if "undeclared" in reason or "not declared" in reason:
+                    c["undeclared_tool"] += 1
+                elif "human-approval" in reason or "requires attention" in reason:
+                    c["attention_human_approval"] += 1
+                elif "sidecar" in reason or d.get("decision") == "transport_error":
+                    c["sidecar_fail_closed"] += 1
+                elif "trust" in reason:
+                    c["trust_requirement"] += 1
+                else:
+                    c[f"other:{(d.get('decision') or 'unknown')}"] += 1
+            return dict(c)
+
+        under_attack_openappa_by_reason = (
+            _openappa_reason_hist(list(getattr(executor, "openappa_decisions", []) or []))
+            if executor is not None
+            else None
+        )
+
         # Utility without attacks = AgentDojo clean-work cost (benign analogue).
         # Skip only if explicitly opted out (emergency / cost).
         no_attack_summary = None
@@ -561,6 +587,7 @@ def main() -> int:
                 "clawql_labeled_under_attack": under_attack_labeled,
                 "openappa_hook_calls": under_attack_openappa,
                 "openappa_denies": under_attack_openappa_denies,
+                "openappa_denies_by_reason": under_attack_openappa_by_reason,
                 "defaults_id": (
                     getattr(executor, "defaults_id", None)
                     if executor is not None
