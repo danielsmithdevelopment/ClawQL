@@ -49,7 +49,8 @@ jobs:
         run: npm ci
 
       - name: Build program workspace deps
-        run: npm run build -w clawql-merkle -w clawql-core -w clawql-audit -w clawql-api
+        # clawql-api re-exports clawql-auth; match ci.yml workspace build order.
+        run: npm run build -w clawql-merkle -w clawql-gdp -w clawql-core -w clawql-audit -w clawql-auth -w clawql-api
 
       - name: Durable-runner real process kill (vitest)
         run: npx vitest run packages/clawql-api/src/program/durable-runner.test.ts -t "real process kill"
