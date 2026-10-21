@@ -99,7 +99,7 @@ Parallel product track (required before publishing multi-attack): make **ClawQL 
 | approval_integrity         | Partial     | Harness resume probe only; full cells pending                                                                     |
 | allowed_tool_exfil         | Planned     |                                                                                                                   |
 | secret_visibility          | Planned     |                                                                                                                   |
-| kill_mid_write             | Partial     | File-journal N-trial board shipped (`npm run benchmark:kill-mid-write`); mandate multi-replica cell still open   |
+| kill_mid_write             | Partial     | File-journal N-trial board shipped (`npm run benchmark:kill-mid-write`); mandate multi-replica cell still open    |
 | Remaining groups           | Backlog     | After top five                                                                                                    |
 
 ## Related

@@ -8,24 +8,24 @@
 
 ## Claim inventory (what we are proving)
 
-| Claim | Tier that earns it |
-| ----- | ------------------ |
-| File-journal program: SIGKILL → resume, writes `outcome_unknown` (no re-send) | **A** |
-| ProgramCellDO (celld DO journal): SIGKILL celld → same contract | **B** |
-| Same as B on multi-node fleet + LTX diagnose + host WORM audit continuity | **C** (wild “survives a crash”) |
+| Claim                                                                               | Tier that earns it                      |
+| ----------------------------------------------------------------------------------- | --------------------------------------- |
+| File-journal program: SIGKILL → resume, writes `outcome_unknown` (no re-send)       | **A**                                   |
+| ProgramCellDO (celld DO journal): SIGKILL celld → same contract                     | **B**                                   |
+| Same as B on multi-node fleet + LTX diagnose + host WORM audit continuity           | **C** (wild “survives a crash”)         |
 | Mandate / approved-write: kill mid-consume → zero duplicate side effects (N trials) | **D** (security suite `kill_mid_write`) |
 
 ---
 
 ## Ladder
 
-| Tier | Name | Status | Evidence / command |
-| ---- | ---- | ------ | ------------------ |
-| **A** | File-journal SIGKILL stand-in | **Yes** (CI-gated) | [`program-kill-node-standin/evidence.json`](../program-kill-node-standin/evidence.json) · `npm run demo:kill-node-standin` · workflow `program-durability.yml` |
-| **B** | ProgramCellDO isolate SIGKILL | **Yes** (CI-gated when streams-celld paths fire) | [`program-cell-isolate-kill/evidence.json`](../program-cell-isolate-kill/evidence.json) · `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:program-cell-kill -w …` · job on `streams-celld.yml` |
-| **C** | Fleet LTX + three-arm product kill | **Partial / open** | Manual: [`docs/examples/idp/streams-celld/README.md`](../../examples/idp/streams-celld/README.md) diagnose on 2+ nodes → SIGKILL one node → resume peer. Not automated in GHA. |
-| **D** | Kill-mid-write board (N trials) | **Yes** (lab harness; CI N=50) | [`security-suite/kill-mid-write/`](../security-suite/kill-mid-write/) · `npm run benchmark:kill-mid-write` |
-| **E** | MCP `execute_program` → ProgramCellDO | **Open** | Today `CLAWQL_PROGRAM_CELLD_ISOLATE` is pin/readiness only; Lab HTTP `/program/*` is separate from Core MCP |
+| Tier  | Name                                  | Status                                           | Evidence / command                                                                                                                                                                           |
+| ----- | ------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A** | File-journal SIGKILL stand-in         | **Yes** (CI-gated)                               | [`program-kill-node-standin/evidence.json`](../program-kill-node-standin/evidence.json) · `npm run demo:kill-node-standin` · workflow `program-durability.yml`                               |
+| **B** | ProgramCellDO isolate SIGKILL         | **Yes** (CI-gated when streams-celld paths fire) | [`program-cell-isolate-kill/evidence.json`](../program-cell-isolate-kill/evidence.json) · `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:program-cell-kill -w …` · job on `streams-celld.yml` |
+| **C** | Fleet LTX + three-arm product kill    | **Partial / open**                               | Manual: [`docs/examples/idp/streams-celld/README.md`](../../examples/idp/streams-celld/README.md) diagnose on 2+ nodes → SIGKILL one node → resume peer. Not automated in GHA.               |
+| **D** | Kill-mid-write board (N trials)       | **Yes** (lab harness; CI N=50)                   | [`security-suite/kill-mid-write/`](../security-suite/kill-mid-write/) · `npm run benchmark:kill-mid-write`                                                                                   |
+| **E** | MCP `execute_program` → ProgramCellDO | **Open**                                         | Today `CLAWQL_PROGRAM_CELLD_ISOLATE` is pin/readiness only; Lab HTTP `/program/*` is separate from Core MCP                                                                                  |
 
 ---
 
