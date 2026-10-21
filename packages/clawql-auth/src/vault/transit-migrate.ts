@@ -61,69 +61,6 @@ export function scanPlaintextSecretsEffect(
 }
 
 /**
-<<<<<<< HEAD
- * Encrypt every legacy plaintext row in place (tenant+path context). Ciphertext
- * rows are left untouched. Does not delete pre-migration DB backups — rotate
- * provider keys or purge backups after a clean scan.
- */
-export function migratePlaintextSecretsEffect(
-  store: TransitEncryptedSecretStore,
-  options: { prefix?: string; eventSink?: AuthEventSink; now?: () => number } = {}
-): Effect.Effect<TransitMigrateReport, never> {
-  const eventSink = options.eventSink ?? noopAuthEventSink;
-  const now = options.now ?? Date.now;
-  const prefix = options.prefix ?? "";
-  return Effect.gen(function* () {
-    const inner = store.getInnerStore();
-    let migrated = 0;
-    let alreadyCiphertext = 0;
-    let failed = 0;
-    const failures: Array<{ path: string; reason: string }> = [];
-
-    const paths = yield* inner.listSecrets(prefix).pipe(
-      Effect.catch((e: unknown) => {
-        failures.push({ path: prefix || "*", reason: errReason(e) });
-        failed += 1;
-        return Effect.succeed([] as string[]);
-      })
-    );
-
-    for (const path of paths) {
-      const raw = yield* inner
-        .getSecret(path)
-        .pipe(Effect.catch(() => Effect.succeed(null as string | null)));
-      if (raw == null) continue;
-      if (isVaultTransitCiphertext(raw)) {
-        alreadyCiphertext += 1;
-        continue;
-      }
-      // Read via outer store would return plaintext; setSecret encrypts with context.
-      const wrote = yield* store.setSecret(path, raw).pipe(
-        Effect.as(true as const),
-        Effect.catch((e: unknown) => {
-          failed += 1;
-          failures.push({ path, reason: errReason(e) });
-          return Effect.succeed(false as const);
-        })
-      );
-      if (wrote) migrated += 1;
-    }
-
-    const report: TransitMigrateReport = { migrated, alreadyCiphertext, failed, failures };
-    yield* emitAuthEventEffect(eventSink, {
-      type: "VAULT_TRANSIT_MIGRATE_COMPLETED",
-      migrated,
-      alreadyCiphertext,
-      failed,
-      timestamp: new Date(now()).toISOString(),
-    });
-    return report;
-  });
-}
-
-/**
-=======
->>>>>>> 53c1c91c1 (refactor(clawql-auth): drop Transit plaintext migration path)
  * Rewrap all ciphertext under `prefix` onto the latest Transit key version
  * (after `vault write -f transit/keys/NAME/rotate`). Schedule regularly so old
  * key versions can be retired (`min_decryption_version`). Non-ciphertext rows
