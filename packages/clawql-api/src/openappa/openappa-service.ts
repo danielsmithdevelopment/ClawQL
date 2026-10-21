@@ -16,7 +16,7 @@ import type { OpenAppaGateVerdict } from "./types.js";
 
 export type OpenAppaServiceApi = {
   readonly enabled: () => Effect.Effect<boolean>;
-  readonly loadConfig: () => Effect.Effect<OpenAppaConfig | null>;
+  readonly loadConfig: () => Effect.Effect<OpenAppaConfig | null, Error>;
   readonly wireToolName: (toolName: string, mcpServer: string) => Effect.Effect<string>;
   readonly beforeToolCall: (
     input: OpenAppaBeforeCallInput
@@ -26,7 +26,7 @@ export type OpenAppaServiceApi = {
   ) => Effect.Effect<OpenAppaAfterResultVerdict, never>;
 };
 
-/** Layer 5 — OpenAPPA information-flow policy (beside Panguard Layer 4). */
+/** Layer 5 — OpenAPPA declared-tool / approval gate (beside Panguard Layer 4). */
 export class OpenAppaService extends Context.Service<OpenAppaService, OpenAppaServiceApi>()(
   "clawql/OpenAppaService"
 ) {}

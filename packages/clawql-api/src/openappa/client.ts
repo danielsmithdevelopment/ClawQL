@@ -34,6 +34,7 @@ function isWireDecision(body: unknown): body is OpenAppaWireDecision {
 
 /**
  * PROTOCOL=1 `POST {baseUrl}/hook` — absolute IO inside Effect.
+ * Sends `Authorization: Bearer` when `config.authToken` is set (required off-loopback).
  */
 export function postOpenAppaHookEffect(
   config: OpenAppaConfig,
@@ -55,9 +56,13 @@ export function postOpenAppaHookEffect(
 
   return Effect.tryPromise({
     try: async () => {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (config.authToken) {
+        headers.Authorization = `Bearer ${config.authToken}`;
+      }
       const res = await fetch(`${config.baseUrl}/hook`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(config.timeoutMs),
         redirect: "error",
@@ -91,8 +96,11 @@ export function postOpenAppaHookEffect(
       if (cause instanceof OpenAppaTransportError || cause instanceof OpenAppaProtocolError) {
         return cause;
       }
+      const name = cause && typeof cause === "object" && "name" in cause ? String(cause.name) : "";
+      const msg = cause instanceof Error ? cause.message : String(cause);
+      const timedOut = name === "TimeoutError" || /aborted|timeout/i.test(msg);
       return new OpenAppaTransportError(
-        cause instanceof Error ? cause.message : String(cause),
+        timedOut ? `OpenAPPA /hook timed out after ${config.timeoutMs}ms` : msg,
         undefined,
         cause
       );

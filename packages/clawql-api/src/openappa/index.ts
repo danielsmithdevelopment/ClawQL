@@ -1,8 +1,12 @@
 export {
+  isLoopbackOpenAppaUrlEffect,
   loadOpenAppaConfig,
   loadOpenAppaConfigEffect,
   openAppaEnabled,
   openAppaEnabledEffect,
+  openAppaMayFailOpenEffect,
+  openAppaToolIsMutating,
+  openAppaToolIsMutatingEffect,
   openAppaWireToolName,
   openAppaWireToolNameEffect,
   type OpenAppaConfig,
@@ -12,6 +16,17 @@ export {
   OpenAppaTransportError,
   postOpenAppaHookEffect,
 } from "./client.js";
+export {
+  composeMostRestrictive,
+  composeMostRestrictiveEffect,
+  composedGateToMcpResult,
+  nativeBlockToLayerDecision,
+  openAppaVerdictToLayerDecision,
+  type ComposedGateResult,
+  type GateLayerId,
+  type LayerDecision,
+  type NativeLayerInput,
+} from "./compose.js";
 export {
   openAppaAfterToolResultEffect,
   openAppaBeforeToolCallEffect,

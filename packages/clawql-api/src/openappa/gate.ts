@@ -1,5 +1,11 @@
+import { createHash } from "node:crypto";
 import { Effect } from "effect";
-import { loadOpenAppaConfigEffect, openAppaWireToolNameEffect, type OpenAppaConfig } from "./config.js";
+import {
+  loadOpenAppaConfigEffect,
+  openAppaMayFailOpenEffect,
+  openAppaWireToolNameEffect,
+  type OpenAppaConfig,
+} from "./config.js";
 import {
   OpenAppaProtocolError,
   OpenAppaTransportError,
@@ -13,9 +19,13 @@ import type {
 
 const startedRoots = new Set<string>();
 
-/** Test helper — clear session_start cache. */
+type AllowCacheEntry = { readonly expiresAt: number; readonly decision: OpenAppaWireDecision };
+const allowCache = new Map<string, AllowCacheEntry>();
+
+/** Test helper — clear session_start + allow caches. */
 export function resetOpenAppaSessionCacheForTests(): void {
   startedRoots.clear();
+  allowCache.clear();
 }
 
 function feedbackOf(decision: OpenAppaWireDecision): string {
@@ -49,10 +59,7 @@ function verdictFromToolCallDecision(decision: OpenAppaWireDecision): OpenAppaGa
       decision,
     };
   }
-  if (
-    decision.decision === "deny_call" ||
-    decision.decision === "block"
-  ) {
+  if (decision.decision === "deny_call" || decision.decision === "block") {
     const offerIds = (decision.offers ?? [])
       .map((o) => o.offer_id)
       .filter((id): id is string => typeof id === "string" && id.length > 0);
@@ -71,6 +78,28 @@ function verdictFromToolCallDecision(decision: OpenAppaWireDecision): OpenAppaGa
     reason: `OpenAPPA unexpected tool_call decision: ${decision.decision}`,
     decision,
   };
+}
+
+function sidecarUnavailableVerdict(msg: string): OpenAppaGateVerdict {
+  return {
+    allow: false,
+    status: "blocked",
+    reason: `OpenAPPA policy blocked tool: sidecar unavailable — ${msg}`,
+    decision: {
+      protocol: 1,
+      decision: "refuse",
+      detail: msg,
+      class: "sidecar_unavailable",
+    },
+  };
+}
+
+function argsDigest(args: unknown): string {
+  try {
+    return createHash("sha256").update(JSON.stringify(args ?? {})).digest("hex").slice(0, 24);
+  } catch {
+    return "unhashable";
+  }
 }
 
 function ensureSessionStartedEffect(
@@ -104,13 +133,27 @@ export type OpenAppaBeforeCallInput = {
 
 /**
  * Layer 5 pre-call gate. When OpenAPPA is disabled, always allows.
- * Transport failures honor `failurePolicy` (block | warn).
+ *
+ * Sidecar down / timeout:
+ * - **Writes** (and execute-path): always fail closed (`sidecar_unavailable`).
+ * - **Reads**: fail closed by default; `CLAWQL_OPENAPPA_READ_FAILURE_POLICY=warn` may fail open.
  */
 export function openAppaBeforeToolCallEffect(
   input: OpenAppaBeforeCallInput
 ): Effect.Effect<OpenAppaGateVerdict, never> {
   return Effect.gen(function* () {
-    const config = input.config !== undefined ? input.config : yield* loadOpenAppaConfigEffect();
+    let config: OpenAppaConfig | null;
+    if (input.config !== undefined) {
+      config = input.config;
+    } else {
+      const loaded = yield* loadOpenAppaConfigEffect().pipe(Effect.result);
+      if (loaded._tag === "Failure") {
+        const err = loaded.failure;
+        return sidecarUnavailableVerdict(err instanceof Error ? err.message : String(err));
+      }
+      config = loaded.success;
+    }
+
     if (!config) {
       return {
         allow: true,
@@ -123,6 +166,14 @@ export function openAppaBeforeToolCallEffect(
     const callId =
       input.callId?.trim() ||
       `clawql-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    const cacheKey = `${rootId}|${wireTool}|${argsDigest(input.args)}`;
+
+    if (config.allowCacheMs > 0) {
+      const hit = allowCache.get(cacheKey);
+      if (hit && hit.expiresAt > Date.now()) {
+        return verdictFromToolCallDecision(hit.decision);
+      }
+    }
 
     const program = Effect.gen(function* () {
       yield* ensureSessionStartedEffect(config, rootId);
@@ -133,29 +184,31 @@ export function openAppaBeforeToolCallEffect(
         arguments: input.args ?? {},
         call_id: callId,
       });
+      if (
+        config.allowCacheMs > 0 &&
+        (decision.decision === "allow_call" || decision.decision === "pass_control")
+      ) {
+        allowCache.set(cacheKey, {
+          expiresAt: Date.now() + config.allowCacheMs,
+          decision,
+        });
+      }
       return verdictFromToolCallDecision(decision);
     });
 
     return yield* program.pipe(
       Effect.catch((err): Effect.Effect<OpenAppaGateVerdict> => {
         const msg = err instanceof Error ? err.message : String(err);
-        if (config.failurePolicy === "warn") {
-          process.stderr.write(`[clawql-openappa] warning: ${msg}\n`);
-          return Effect.succeed({
-            allow: true,
-            decision: { protocol: 1, decision: "allow_call" },
-          });
-        }
-        return Effect.succeed({
-          allow: false,
-          status: "blocked",
-          reason: `OpenAPPA policy blocked tool: ${msg}`,
-          decision: {
-            protocol: 1,
-            decision: "refuse",
-            detail: msg,
-            class: "transport",
-          },
+        return Effect.gen(function* () {
+          const mayOpen = yield* openAppaMayFailOpenEffect(config, input.toolName);
+          if (mayOpen) {
+            process.stderr.write(`[clawql-openappa] warning (read fail-open): ${msg}\n`);
+            return {
+              allow: true,
+              decision: { protocol: 1, decision: "allow_call" },
+            } satisfies OpenAppaGateVerdict;
+          }
+          return sidecarUnavailableVerdict(msg);
         });
       })
     );
@@ -186,13 +239,34 @@ export type OpenAppaAfterResultVerdict =
 
 /**
  * Layer 5 post-result hook — surfaces replace_output / deliver_value / refuse.
- * Disabled / warn-on-transport → passthrough.
+ * Transport failures: writes fail closed; reads honor readFailurePolicy.
  */
 export function openAppaAfterToolResultEffect(
   input: OpenAppaAfterResultInput
 ): Effect.Effect<OpenAppaAfterResultVerdict, never> {
   return Effect.gen(function* () {
-    const config = input.config !== undefined ? input.config : yield* loadOpenAppaConfigEffect();
+    let config: OpenAppaConfig | null;
+    if (input.config !== undefined) {
+      config = input.config;
+    } else {
+      const loaded = yield* loadOpenAppaConfigEffect().pipe(Effect.result);
+      if (loaded._tag === "Failure") {
+        const err = loaded.failure;
+        const msg = err instanceof Error ? err.message : String(err);
+        return {
+          action: "error" as const,
+          reason: `OpenAPPA policy blocked tool result: sidecar unavailable — ${msg}`,
+          decision: {
+            protocol: 1 as const,
+            decision: "refuse" as const,
+            detail: msg,
+            class: "sidecar_unavailable",
+          },
+        };
+      }
+      config = loaded.success;
+    }
+
     if (!config) {
       return {
         action: "passthrough",
@@ -241,22 +315,25 @@ export function openAppaAfterToolResultEffect(
     return yield* program.pipe(
       Effect.catch((err): Effect.Effect<OpenAppaAfterResultVerdict> => {
         const msg = err instanceof Error ? err.message : String(err);
-        if (config.failurePolicy === "warn") {
-          process.stderr.write(`[clawql-openappa] warning (tool_result): ${msg}\n`);
-          return Effect.succeed({
-            action: "passthrough",
-            decision: { protocol: 1, decision: "ack" },
-          });
-        }
-        return Effect.succeed({
-          action: "error",
-          reason: `OpenAPPA policy blocked tool result: ${msg}`,
-          decision: {
-            protocol: 1,
-            decision: "refuse",
-            detail: msg,
-            class: "transport",
-          },
+        return Effect.gen(function* () {
+          const mayOpen = yield* openAppaMayFailOpenEffect(config, input.toolName);
+          if (mayOpen) {
+            process.stderr.write(`[clawql-openappa] warning (tool_result read fail-open): ${msg}\n`);
+            return {
+              action: "passthrough" as const,
+              decision: { protocol: 1 as const, decision: "ack" as const },
+            };
+          }
+          return {
+            action: "error" as const,
+            reason: `OpenAPPA policy blocked tool result: sidecar unavailable — ${msg}`,
+            decision: {
+              protocol: 1 as const,
+              decision: "refuse" as const,
+              detail: msg,
+              class: "sidecar_unavailable",
+            },
+          };
         });
       })
     );
@@ -273,6 +350,14 @@ export function openAppaBlockToMcpResult(verdict: Extract<OpenAppaGateVerdict, {
     status: verdict.status,
     reason: verdict.reason,
     mechanism: "openappa_layer5",
+    layers: [
+      {
+        layer: "openappa_layer5",
+        status: verdict.status,
+        reason: verdict.reason,
+        ...(verdict.decision.class ? { class: verdict.decision.class } : {}),
+      },
+    ],
     ...(verdict.offerIds?.length ? { openappaOfferIds: verdict.offerIds } : {}),
     decision: verdict.decision.decision,
     ...(verdict.decision.class ? { class: verdict.decision.class } : {}),

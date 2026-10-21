@@ -19,6 +19,7 @@ export {
   classifyNativeTool,
   classifyOutboundDestination,
   extractUntrustedLabelsFromText,
+  evaluateNativeToolGate,
   gateNativeToolBeforeInvoke,
   governNativeHandler,
   peekSessionLabels,
