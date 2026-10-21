@@ -329,9 +329,9 @@ async function main() {
       nodes[victim].pid = null;
     }
 
-    // Overlap victim restart with peer resume (biggest wall-clock cost).
-    startNode(victim);
-    const postKillMs = Math.max(0, Number(process.env.FLEET_PHASED_POST_KILL_MS || 400));
+    // Do not restart the victim until after peer resume — overlapping restart
+    // races celld ownership (409 Conflict on peer tunnels) and stalls /program/health.
+    const postKillMs = Math.max(0, Number(process.env.FLEET_PHASED_POST_KILL_MS || 600));
     await sleep(postKillMs);
     await waitNode(survivor);
 
