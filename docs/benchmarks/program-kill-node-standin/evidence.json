@@ -1,7 +1,7 @@
 {
   "kind": "file-journal-sigkill-standin",
-  "measuredAt": "2026-10-18T05:20:22.154Z",
-  "honesty": "File-journal SIGKILL stand-in for ADR 0015. Not celld isolate kill-node — ProgramCellDO + SIGKILL celld binary still required for crash-survival claims.",
+  "measuredAt": "2026-10-20T23:56:54.772Z",
+  "honesty": "File-journal SIGKILL stand-in for ADR 0015 (Tier A). Not ProgramCellDO isolate kill (Tier B) or fleet LTX (Tier C) — see docs/benchmarks/durability-proof/STATUS.md.",
   "arms": [
     {
       "arm": "read_sigkill_resume",

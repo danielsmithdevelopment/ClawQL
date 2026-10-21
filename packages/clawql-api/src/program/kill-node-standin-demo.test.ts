@@ -17,7 +17,8 @@ describe("kill-node stand-in demo", () => {
       })
     );
     expect(evidence.kind).toBe("file-journal-sigkill-standin");
-    expect(evidence.honesty).toMatch(/Not celld isolate kill-node/i);
+    expect(evidence.honesty).toMatch(/Tier A/i);
+    expect(evidence.honesty).toMatch(/durability-proof\/STATUS/i);
     expect(evidence.arms).toHaveLength(2);
     for (const arm of evidence.arms) {
       expect(arm.ok, arm.detail).toBe(true);

@@ -61,6 +61,7 @@ jobs:
           node docs/examples/streams-celld/scripts/significance-filter.test.mjs
           node docs/examples/streams-celld/scripts/core-catalog.test.mjs
           node docs/examples/streams-celld/scripts/openapi-pack.test.mjs
+          node docs/examples/streams-celld/scripts/program-cell-resume.test.mjs
 
       - name: Bundle size gate (≤64 MiB)
         run: node docs/examples/streams-celld/scripts/bundle-check.mjs
@@ -110,6 +111,19 @@ jobs:
         env:
           STREAMS_CELLD_SMOKE_REQUIRED: "1"
         run: bash docs/examples/streams-celld/scripts/smoke-core-in-celld.sh
+
+      - name: ProgramCellDO isolate kill-node (ADR 0015)
+        env:
+          STREAMS_CELLD_SMOKE_REQUIRED: "1"
+        run: bash docs/examples/streams-celld/scripts/smoke-program-cell-kill.sh
+
+      - name: Upload ProgramCellDO kill evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: program-cell-isolate-kill-evidence
+          path: docs/benchmarks/program-cell-isolate-kill/evidence.json
+          if-no-files-found: warn
 
   streams-celld-full-stack:
     name: Streams celld full-stack

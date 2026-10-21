@@ -1,0 +1,74 @@
+# File-journal durability boards — path-filtered (no celld install).
+# ProgramCellDO isolate kill stays on streams-celld.yml (needs celld binary).
+
+name: Program durability
+
+on:
+  pull_request:
+    paths:
+      - "packages/clawql-api/src/program/**"
+      - "scripts/program/**"
+      - "scripts/benchmarks/kill-mid-write/**"
+      - "docs/benchmarks/program-kill-node-standin/**"
+      - "docs/benchmarks/security-suite/kill-mid-write/**"
+      - "docs/benchmarks/durability-proof/**"
+      - ".github/workflows/program-durability.yml"
+  push:
+    branches: [main]
+    paths:
+      - "packages/clawql-api/src/program/**"
+      - "scripts/program/**"
+      - "scripts/benchmarks/kill-mid-write/**"
+      - "docs/benchmarks/program-kill-node-standin/**"
+      - "docs/benchmarks/security-suite/kill-mid-write/**"
+      - "docs/benchmarks/durability-proof/**"
+      - ".github/workflows/program-durability.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: program-durability-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  file-journal-kill:
+    name: File-journal SIGKILL + kill-mid-write
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build program workspace deps
+        # clawql-api re-exports clawql-auth; match ci.yml workspace build order.
+        run: npm run build -w clawql-merkle -w clawql-gdp -w clawql-core -w clawql-audit -w clawql-auth -w clawql-api
+
+      - name: Durable-runner real process kill (vitest)
+        run: npx vitest run packages/clawql-api/src/program/durable-runner.test.ts -t "real process kill"
+
+      - name: Kill-node stand-in demo
+        run: npm run demo:kill-node-standin
+
+      - name: Kill-mid-write board (N=50)
+        env:
+          KILL_MID_WRITE_N: "50"
+        run: npm run benchmark:kill-mid-write
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: program-durability-evidence
+          path: |
+            docs/benchmarks/program-kill-node-standin/evidence.json
+            docs/benchmarks/security-suite/kill-mid-write/evidence.json
+          if-no-files-found: warn
