@@ -1,6 +1,6 @@
 {
   "kind": "celld-fleet-phased-kill",
-  "measuredAt": "2026-10-21T03:21:45.346Z",
+  "measuredAt": "2026-10-21T04:51:30.504Z",
   "ok": true,
   "status": "measured",
   "n": 8,
@@ -8,16 +8,64 @@
   "storageProvider": "cloudflare-r2",
   "bucketRedacted": true,
   "diagnoseConditionalWrite": "ok",
+  "celldTtlMs": 10000,
+  "resumeDeadlineMs": 60000,
+  "columns": {
+    "duplicates": {
+      "total": 0,
+      "zeroDuplicates": true,
+      "ruleOfThreeUpperBound95": 0.375,
+      "meaning": "safety — never repeated a write"
+    },
+    "outcomeUnknown": {
+      "total": 4,
+      "rate": 0.5,
+      "meaning": "honest uncertainty — person resolves"
+    },
+    "availability": {
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      },
+      "meaning": "availability — lease self-fence + orchestrator restart counted; recovery folded into resumeMs"
+    }
+  },
   "totalDuplicates": 0,
   "zeroDuplicates": true,
   "ruleOfThreeUpperBound95": 0.375,
+  "totalSurvivorSelfFences": 0,
+  "totalSurvivorRestarts": 0,
+  "totalResumeDeadlineMisses": 0,
   "claim": "A program killed mid-run on one node resumed on another and never repeated a write; a write interrupted in flight is marked outcome unknown for a person to resolve.",
-  "honesty": "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Phases: before_intent (complete clean), after_intent_before_call + during_call (outcome_unknown; person resolves), after_call_before_journal (finalize stashed upstream result — no re-send, no unknown). Zero duplicates is the safety claim; outcome_unknown rate is the human-cost claim.",
+  "honesty": "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Three columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability). Harness restarts of a fenced survivor are counted; recovery time is included in resumeMs. See AVAILABILITY.md for the lease-TTL / R2 finding.",
   "resumeMs": {
-    "p50": 571,
-    "p95": 907,
-    "p99": 907,
-    "p999": 907
+    "p50": 11969,
+    "p95": 13477,
+    "p99": 13477,
+    "p999": 13477,
+    "includesSurvivorRecovery": true
+  },
+  "lease": {
+    "celldTtlMs": 10000,
+    "renewSamples": 0,
+    "renewElapsedMs": {
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "renewPriorHeadroomMs": {
+      "p50": null,
+      "min": null
+    },
+    "selfFenceLogHits": 0,
+    "note": "Renewals should complete with headroom ≫ R2 RTT. Stock CELLD_TTL_MS=10000 renews near ~6665ms headroom; slow renew cycles under peer-down storms can fence. See AVAILABILITY.md."
   },
   "byPhase": {
     "before_intent": {
@@ -28,11 +76,21 @@
       "outcomeUnknown": 0,
       "outcomeUnknownRate": 0,
       "completedClean": 2,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
       "resumeMs": {
-        "p50": 474,
-        "p95": 684,
-        "p99": 684,
-        "p999": 684
+        "p50": 11969,
+        "p95": 12437,
+        "p99": 12437,
+        "p999": 12437
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
       }
     },
     "after_intent_before_call": {
@@ -43,43 +101,74 @@
       "outcomeUnknown": 2,
       "outcomeUnknownRate": 1,
       "completedClean": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
       "resumeMs": {
-        "p50": 571,
-        "p95": 595,
-        "p99": 595,
-        "p999": 595
+        "p50": 11892,
+        "p95": 12815,
+        "p99": 12815,
+        "p999": 12815
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
       }
     },
     "during_call": {
-      "n": 3,
-      "ok": 3,
+      "n": 2,
+      "ok": 2,
       "failures": 0,
       "duplicates": 0,
-      "outcomeUnknown": 3,
+      "outcomeUnknown": 2,
       "outcomeUnknownRate": 1,
       "completedClean": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
       "resumeMs": {
-        "p50": 826,
-        "p95": 907,
-        "p99": 907,
-        "p999": 907
+        "p50": 9382,
+        "p95": 9740,
+        "p99": 9740,
+        "p999": 9740
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
       }
     },
     "after_call_before_journal": {
-      "n": 1,
-      "ok": 1,
+      "n": 2,
+      "ok": 2,
       "failures": 0,
       "duplicates": 0,
       "outcomeUnknown": 0,
       "outcomeUnknownRate": 0,
-      "completedClean": 1,
+      "completedClean": 2,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
       "resumeMs": {
-        "p50": 471,
-        "p95": 471,
-        "p99": 471,
-        "p999": 471
+        "p50": 12809,
+        "p95": 13477,
+        "p99": 13477,
+        "p999": 13477
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
       }
     }
   },
-  "trialFailures": []
+  "trialFailures": [],
+  "availabilityIncidents": []
 }
