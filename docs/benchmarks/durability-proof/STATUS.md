@@ -8,7 +8,6 @@
 
 **Three-column phased N=8 (R2):** duplicates=0; outcome_unknown only after_intent/during_call; survivorSelfFences=0, resumeDeadlineMisses=0. Resume p50 includes ownership-transfer wait (~12s). N=1000 in progress for rule-of-three. See [`AVAILABILITY.md`](../program-cell-fleet-kill/AVAILABILITY.md).
 
-
 ---
 
 ## Claim inventory (what we are proving)
