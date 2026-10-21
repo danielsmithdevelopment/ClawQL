@@ -429,6 +429,12 @@ async function main() {
   let totalDeadlineMisses = 0;
   let primary = "A";
   const boardStarted = Date.now();
+  // One warm DO for all trials (keys namespaced by programId). Per-trial cells
+  // raced LTX before the first ship and broke peer resume. Health probes use
+  // a separate cell so readiness checks do not fight the board DO owner.
+  const BOARD_CELL = `phased-board-${boardStarted}`;
+  const boardCellQ = `cell=${encodeURIComponent(BOARD_CELL)}`;
+  console.log(`fleet-phased: board cell=${BOARD_CELL} (redacted from evidence)`);
 
   const cleanup = () => {
     for (const n of Object.values(nodes)) {
@@ -461,8 +467,7 @@ async function main() {
     const victim = primary;
     const survivor = primary === "A" ? "B" : "A";
     const programId = `phased_${phase}_${i}_${Date.now()}`;
-    // Per-trial DO cell — avoids thrashing a single program:default owner across kills.
-    const cellQ = `cell=${encodeURIComponent(programId)}`;
+    const cellQ = boardCellQ;
     const baseV = `http://127.0.0.1:${nodes[victim].port}`;
     const baseS = `http://127.0.0.1:${nodes[survivor].port}`;
 
@@ -480,7 +485,7 @@ async function main() {
 
     if (phase === "during_call") {
       const ac = new AbortController();
-      const runPromise = fetch(`${baseV}/program/run`, {
+      const runPromise = fetch(`${baseV}/program/run?${cellQ}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
@@ -505,7 +510,7 @@ async function main() {
       }
       runRes = { body: { status: "paused_for_kill", pauseKind: "during_call" } };
     } else {
-      runRes = await fetchJson(`${baseV}/program/run`, {
+      runRes = await fetchJson(`${baseV}/program/run?${cellQ}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
@@ -559,7 +564,7 @@ async function main() {
         await ensureSurvivor(survivor, avail);
       }
       resume = await fetchJson(
-        `${baseS}/program/resume`,
+        `${baseS}/program/resume?${cellQ}`,
         {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -645,6 +650,10 @@ async function main() {
       survivorRestart: avail.survivorRestart,
       resumeDeadlineMiss: avail.resumeDeadlineMiss,
       writesBefore,
+      resumeStatus: resume.status,
+      resumeBodyStatus: resume.body?.status ?? null,
+      resumeOk: resume.body?.ok ?? null,
+      resumeError: resume.body?.error ?? resume.body?.raw ?? null,
     });
 
     try {
