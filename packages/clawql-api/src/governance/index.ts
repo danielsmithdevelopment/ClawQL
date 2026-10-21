@@ -21,6 +21,8 @@ export {
   extractUntrustedLabelsFromText,
   gateNativeToolBeforeInvoke,
   governNativeHandler,
+  isolateInjectionInstructions,
+  payloadLooksLikeSecretExfil,
   peekSessionLabels,
   stampUntrustedProvenance,
   taintSessionFromUntrustedChannel,

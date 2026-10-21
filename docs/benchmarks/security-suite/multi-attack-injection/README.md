@@ -16,6 +16,6 @@ Planted instructions across email / ticket / doc / webhook. Metric: **attacks ta
 
 **Published now:** scripted board (complete) + live table in progress (7 pre-registered: 1 measured, 6 pending).
 
-**Do not** hunt for a gullible model. Pre-register models (`live-models.json`), including small open-weight; publish all-refuse. **AgentDojo:** v1 ‖ v2 side by side — [AGENTDOJO.md](./AGENTDOJO.md) + [RULES-DIFF](./AGENTDOJO-RULES-DIFF.md) (Slack ASR rose under v2; util recovered; scripted OOS holds; InjecAgent pending). CaMeL related work until same-model. **Next:** remaining hosted models, then open-weight dual-arm benign. Measure poison residue as well as obedience.
+**Do not** hunt for a gullible model. Pre-register models (`live-models.json`), including small open-weight; publish all-refuse. **AgentDojo:** v1 ‖ v2 ‖ v3 — [AGENTDOJO.md](./AGENTDOJO.md) + [RULES-DIFF](./AGENTDOJO-RULES-DIFF.md) (v3: Slack ASR↓ vs v2, util_clean collapsed; scripted OOS holds; InjecAgent pending). CaMeL related work until same-model. **Next:** remaining hosted models, then open-weight dual-arm benign. Measure poison residue as well as obedience.
 
 **composer-2.5-fast (measured):** refused all 12 on ClawQL and passthrough; no hostile vault residue; benign 14/14. Smoke remains the complying-agent guarantee.

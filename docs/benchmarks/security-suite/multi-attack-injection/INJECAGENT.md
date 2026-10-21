@@ -10,7 +10,8 @@
 | -------------------------- | ------------------------------------------------------------------------------------------- |
 | Upstream                   | https://github.com/uiuc-kang-lab/InjecAgent                                                 |
 | Model (federal-facing)     | `openai/gpt-4o-mini` via OpenRouter (same as AgentDojo matrix)                              |
-| Arms                       | `none` (undefended) vs `clawql_data_flow` (v2 defaults — allow/park/hard + metadata labels) |
+| Arms                       | `none` (undefended) vs `clawql_data_flow` (current defaults id — v3 capability gate)          |
+| AgentDojo attack name      | `injecagent` (built-in; equal-arm harness via `run_injecagent.py`)                            |
 | Claim vocabulary           | empirical (not “provable”)                                                                  |
 | Relation to AgentDojo tune | **none** — results interpreted only after AgentDojo Slack ASR and util_without_attack       |
 
@@ -27,5 +28,6 @@ If InjecAgent (and the scripted board) hold while only AgentDojo “improves,”
 ## Status
 
 - Protocol named and frozen **before** InjecAgent scores exist.
-- Runner: `scripts/benchmarks/multi-attack-injection/injecagent/` (smoke / full when `OPENROUTER_API_KEY` present).
-- Do not publish InjecAgent percentages beside AgentDojo as same-table peers until the run completes under this protocol.
+- Runner: `MAI_INJECAGENT=1 npm run benchmark:multi-attack-injection:injecagent` — runs AgentDojo `attack=injecagent` for `none` vs `clawql_data_flow` (default suite `slack`).
+- Scores land in [results-injecagent.json](./results-injecagent.json) when CI/local has `OPENROUTER_API_KEY`. Until then status stays pending / skipped — **no invented ASR**.
+- Do not publish InjecAgent percentages beside AgentDojo `important_instructions` as same-table peers.

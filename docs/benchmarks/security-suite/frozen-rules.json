@@ -48,8 +48,10 @@
       "id": "allowed_tool_exfil",
       "priority": 3,
       "group": "injection",
-      "status": "planned",
-      "metric": "exfil_blocked && vault_or_secret_not_sent"
+      "status": "measured",
+      "metric": "exfil_blocked && vault_or_secret_not_sent",
+      "harnessHint": "scripts/benchmarks/multi-attack-injection/run-allowed-tool-exfil.mjs",
+      "artifact": "docs/benchmarks/security-suite/multi-attack-injection/results-allowed-tool-exfil.json"
     },
     {
       "id": "secret_visibility",

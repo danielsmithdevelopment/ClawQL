@@ -154,13 +154,75 @@ export function classifyOutboundDestination(
 }
 
 /**
+ * DRIFT-style injection isolator: strip instruction-like spans that conflict
+ * with ordinary note content before they persist in memory. Audit labels still
+ * stamp via {@link stampUntrustedProvenance}.
+ */
+const INJECTION_ISOLATOR_PATTERNS: readonly RegExp[] = [
+  /\bignore\s+(all\s+)?(previous|prior|above)\s+instructions?\b/gi,
+  /\bdisregard\s+(all\s+)?(previous|prior)\b/gi,
+  /\byou\s+are\s+now\s+(in\s+)?(developer|DAN|unrestricted)\s*mode\b/gi,
+  /\bsystem\s+override\b/gi,
+  /\bOVERRIDE\b/g,
+  /\bdo\s+not\s+follow\s+(your|the)\s+(system|safety)\s+(prompt|rules?)\b/gi,
+];
+
+export function isolateInjectionInstructions(text: string): {
+  readonly text: string;
+  readonly stripped: boolean;
+} {
+  if (!text) return { text, stripped: false };
+  let out = text;
+  let stripped = false;
+  for (const re of INJECTION_ISOLATOR_PATTERNS) {
+    const next = out.replace(re, "[clawql-isolated-instruction]");
+    if (next !== out) stripped = true;
+    out = next;
+  }
+  return { text: out, stripped };
+}
+
+/**
+ * B3 — argument provenance: detect secret-bearing payloads that must not ride
+ * an "internal" notify after untrusted taint (allowed-tool exfil).
+ */
+export function payloadLooksLikeSecretExfil(args: unknown): boolean {
+  let blob = "";
+  try {
+    blob = JSON.stringify(args ?? {});
+  } catch {
+    blob = String(args ?? "");
+  }
+  return (
+    /vault[_-]?secret/i.test(blob) ||
+    /CLAWQL_SECRET/i.test(blob) ||
+    /\bsk-[a-zA-Z0-9]{16,}\b/.test(blob) ||
+    /api[_-]?key\s*[:=]\s*['"]?[A-Za-z0-9_\-]{12,}/i.test(blob) ||
+    /BEGIN (RSA |OPENSSH )?PRIVATE KEY/.test(blob) ||
+    /password\s*[:=]\s*['"]?[^\s'"]{8,}/i.test(blob)
+  );
+}
+
+/**
  * Stamp untrusted provenance onto a memory write payload so the vault note
  * carries labels that later recalls re-accumulate into the session.
  * Mutates `args` in place when it is a plain object.
+ * Also runs the injection isolator on `insights` / string bodies (B2).
  */
 export function stampUntrustedProvenance(args: unknown, sessionLabels: readonly string[]): void {
   const rec = asRecord(args);
   if (!rec) return;
+
+  if (typeof rec.insights === "string") {
+    const iso = isolateInjectionInstructions(rec.insights);
+    rec.insights = iso.text;
+    if (iso.stripped) rec.clawql_injection_isolated = true;
+  }
+  if (typeof rec.text === "string") {
+    const iso = isolateInjectionInstructions(rec.text);
+    rec.text = iso.text;
+    if (iso.stripped) rec.clawql_injection_isolated = true;
+  }
 
   const tags = Array.isArray(rec.tags)
     ? rec.tags.filter((t): t is string => typeof t === "string")
@@ -265,18 +327,24 @@ export async function gateNativeToolBeforeInvoke(opts: {
       // Gentler default: store with untrusted label instead of blocking the write.
       stampUntrustedProvenance(opts.args, ifcBlock.sessionLabels);
     } else {
-      // Same-source reply and internal destinations are ordinary work, not exfil.
+      // Same-source reply and internal destinations are ordinary work, not exfil —
+      // unless the payload looks like secret exfil through an allowed tool (B3).
       const dest = classifyOutboundDestination(opts.args, ifcBlock.sessionLabels);
-      if (dest === "same_source" || dest === "internal") {
+      if (dest === "same_source") {
+        // allow through
+      } else if (dest === "internal" && !payloadLooksLikeSecretExfil(opts.args)) {
         // allow through
       } else {
         const mechanism = taintedUntrusted
           ? ("untrusted_read_taint" as const)
           : ("data_flow" as const);
+        const secret = payloadLooksLikeSecretExfil(opts.args);
         return mcpErrorResult({
           ok: false,
           status: "blocked",
-          reason: ifcBlock.reason,
+          reason: secret
+            ? "Blocked secret-bearing payload on outbound sink after untrusted read (allowed-tool exfil)"
+            : ifcBlock.reason,
           toolName,
           mechanism,
         });

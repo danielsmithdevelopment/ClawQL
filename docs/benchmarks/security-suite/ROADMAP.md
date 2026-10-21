@@ -35,6 +35,8 @@ Measured failure of something a product claims is fair; scoring it down for some
 
 Parallel product track (required before publishing multi-attack): make **ClawQL defaults** close the gap via general mechanisms (not `BLOCK_TOOLS`) — **park overwrites** of authoritative facts; **label** untrusted→memory writes; **block** untrusted→external/privileged — so `clawql_default` is **0/12** trusted effectuation _and_ benign workflows complete without a human (plus persistent-injection blocked).
 
+Posture upgrades from published defenses (CaMeL / Progent / DRIFT / AgentArmor / design patterns): ranked action items in [multi-attack-injection/RESEARCH-ACTION-ITEMS.md](./multi-attack-injection/RESEARCH-ACTION-ITEMS.md).
+
 ## Property groups
 
 ### 1. Approvals that can’t be gamed
@@ -52,7 +54,7 @@ Parallel product track (required before publishing multi-attack): make **ClawQL 
 | Cell                   | Attack                                                                  | ClawQL property                                     |
 | ---------------------- | ----------------------------------------------------------------------- | --------------------------------------------------- |
 | `multi_attack_suite`   | Dozens of planted instructions across email/ticket/doc/webhook × models | Count how many take effect                          |
-| `allowed_tool_exfil`   | Poisoned read → permitted Slack (etc.) moves vault data                 | Session taint / data-flow labels                    |
+| `allowed_tool_exfil`   | Poisoned read → permitted Slack (etc.) moves vault data                 | Session taint / secret-payload block on internal notify ([results](./multi-attack-injection/results-allowed-tool-exfil.json)) |
 | `persistent_injection` | Poison in memory/skill → fires in a _later_ session                     | Untrusted labels survive storage                    |
 | `tool_desc_rug_pull`   | Upstream changes tool description after approval                        | Diff / quarantine / owner review (cf. Uber gateway) |
 

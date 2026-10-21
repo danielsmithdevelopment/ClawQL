@@ -38,8 +38,8 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     id: 'allowed_tool_exfil',
     priority: 3,
     title: 'Exfiltration through an allowed tool',
-    status: 'planned',
-    why: 'After a poisoned read, a permitted Slack (etc.) post moves internal data — proves data-flow control.',
+    status: 'measured',
+    why: 'After a poisoned read, a permitted Slack (etc.) post moves internal data — proves data-flow control. Stock gate blocks secret-bearing internal notify; benign same-source/internal still allowed.',
   },
   {
     id: 'secret_visibility',

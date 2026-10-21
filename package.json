@@ -123,6 +123,7 @@
     "benchmark:multi-attack-injection:counterfeit-policy": "node scripts/benchmarks/multi-attack-injection/run-counterfeit-policy-cell.mjs",
     "benchmark:multi-attack-injection:agentdojo": "node scripts/benchmarks/multi-attack-injection/run-agentdojo.mjs",
     "benchmark:multi-attack-injection:injecagent": "node scripts/benchmarks/multi-attack-injection/run-injecagent.mjs",
+    "benchmark:multi-attack-injection:allowed-tool-exfil": "node scripts/benchmarks/multi-attack-injection/run-allowed-tool-exfil.mjs",
     "benchmark:harness2-gate-adversarial": "node scripts/benchmarks/harness2-gate-adversarial/run-board.mjs",
     "benchmark:harness2-gate-adversarial:step2-preflight": "node scripts/benchmarks/harness2-gate-adversarial/step2-preflight.mjs",
     "benchmark:harness2-gate-adversarial:step2-equal-arms": "node scripts/benchmarks/harness2-gate-adversarial/step2-equal-arms.mjs",
