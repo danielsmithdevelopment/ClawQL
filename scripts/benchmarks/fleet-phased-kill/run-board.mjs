@@ -393,8 +393,12 @@ async function main() {
     }
   }
 
-  await restartNode("A");
-  await restartNode("B");
+  // Start both nodes before waiting — a solo node with fleet durability may
+  // never open ready_gate /program/health until a peer exists.
+  startNode("A");
+  startNode("B");
+  await waitNode("A");
+  await waitNode("B");
 
   const phaseStats = emptyPhaseStats();
   const trials = [];
