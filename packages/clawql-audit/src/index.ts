@@ -115,6 +115,8 @@ export {
   wormInputFromMemoryEvent,
   wormInputFromPanguardAllow,
   wormInputFromPanguardDeny,
+  wormInputFromOpenAppaDecision,
+  wormInputFromLayerCompose,
   wormInputFromPaymentEvent,
   wormInputFromToolAttempt,
   wormInputFromToolResult,

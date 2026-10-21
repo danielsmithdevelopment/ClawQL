@@ -274,6 +274,61 @@ export const wormInputFromPanguardAllow = (input: {
     },
   }));
 
+/** OpenAPPA Layer 5 decision — every allow / deny / mandate lands on the audit chain. */
+export const wormInputFromOpenAppaDecision = (input: {
+  toolName: string;
+  status: "allow" | "blocked" | "mandate_required";
+  reason: string;
+  decision?: string;
+  class?: string;
+  sessionId?: string;
+}): Effect.Effect<WORMAppendInput> =>
+  Effect.sync(() => {
+    const type =
+      input.status === "allow"
+        ? "OPENAPPA_ALLOW"
+        : input.status === "mandate_required"
+          ? "OPENAPPA_MANDATE"
+          : "OPENAPPA_DENY";
+    return {
+      type,
+      timestamp: new Date().toISOString(),
+      sessionId: input.sessionId ?? "",
+      metadata: {
+        source: "openappa",
+        layer: "openappa_layer5",
+        toolName: input.toolName,
+        status: input.status,
+        reason: input.reason,
+        ...(input.decision ? { decision: input.decision } : {}),
+        ...(input.class ? { class: input.class } : {}),
+      },
+    };
+  });
+
+/** Composed multi-layer gate outcome (most-restrictive wins). */
+export const wormInputFromLayerCompose = (input: {
+  toolName: string;
+  status: "allow" | "blocked" | "mandate_required";
+  reason: string;
+  mechanism: string;
+  layers: readonly { layer: string; status: string; reason: string }[];
+  sessionId?: string;
+}): Effect.Effect<WORMAppendInput> =>
+  Effect.sync(() => ({
+    type: "LAYER_COMPOSE",
+    timestamp: new Date().toISOString(),
+    sessionId: input.sessionId ?? "",
+    metadata: {
+      source: "layer_compose",
+      toolName: input.toolName,
+      status: input.status,
+      reason: input.reason,
+      mechanism: input.mechanism,
+      layers: input.layers,
+    },
+  }));
+
 export const appendAuthEventToWormEffect = (
   event: AuthWormEvent
 ): Effect.Effect<WORMEntry | null> =>

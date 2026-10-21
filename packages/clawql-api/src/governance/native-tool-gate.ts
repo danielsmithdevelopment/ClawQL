@@ -229,16 +229,16 @@ function toolResultToText(result: unknown): string {
 }
 
 /**
- * Pre-invoke gate for native tools. Returns an MCP error result to short-circuit
- * the handler, or null to proceed (possibly after stamping untrusted provenance).
+ * Decision-level native gate (session IFC + park). Prefer this when composing
+ * with OpenAPPA under most-restrictive-wins.
  */
-export async function gateNativeToolBeforeInvoke(opts: {
+export async function evaluateNativeToolGate(opts: {
   readonly toolName: string;
   readonly args: unknown;
   readonly sessionId?: string;
   readonly env?: NodeJS.ProcessEnv;
   readonly approvedExecutionId?: string;
-}): Promise<ReturnType<typeof mcpErrorResult> | null> {
+}): Promise<NativeToolGateBlock | null> {
   const { toolName } = opts;
   if (isExecutePathTool(toolName)) return null;
 
@@ -273,13 +273,13 @@ export async function gateNativeToolBeforeInvoke(opts: {
         const mechanism = taintedUntrusted
           ? ("untrusted_read_taint" as const)
           : ("data_flow" as const);
-        return mcpErrorResult({
+        return {
           ok: false,
           status: "blocked",
           reason: ifcBlock.reason,
           toolName,
           mechanism,
-        });
+        };
       }
     }
   }
@@ -321,7 +321,7 @@ export async function gateNativeToolBeforeInvoke(opts: {
     args,
     risk,
   });
-  return mcpErrorResult({
+  return {
     ok: false,
     status: "mandate_required",
     reason:
@@ -332,7 +332,22 @@ export async function gateNativeToolBeforeInvoke(opts: {
     mechanism: "park_destructive_write",
     executionId: parked.executionId,
     risk,
-  });
+  };
+}
+
+/**
+ * Pre-invoke gate for native tools. Returns an MCP error result to short-circuit
+ * the handler, or null to proceed (possibly after stamping untrusted provenance).
+ */
+export async function gateNativeToolBeforeInvoke(opts: {
+  readonly toolName: string;
+  readonly args: unknown;
+  readonly sessionId?: string;
+  readonly env?: NodeJS.ProcessEnv;
+  readonly approvedExecutionId?: string;
+}): Promise<ReturnType<typeof mcpErrorResult> | null> {
+  const block = await evaluateNativeToolGate(opts);
+  return block ? mcpErrorResult(block) : null;
 }
 
 /**

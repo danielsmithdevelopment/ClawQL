@@ -3,6 +3,12 @@
  *
  * Default **on** (product default: taint after untrusted reads). Opt out with
  * `CLAWQL_ENABLE_SESSION_IFC=0`.
+ *
+ * **Label cardinality (safe merge):** the session label set is bounded
+ * (`CLAWQL_SESSION_IFC_MAX_FINE_LABELS`, default 32). Overflow never drops the
+ * oldest labels (that would lose an early untrusted mark). Instead fine-grained
+ * sources collapse into category buckets, then into `source:untrusted`. Accuracy
+ * may drop; nothing is wrongly trusted.
  */
 
 import { Effect } from "effect";

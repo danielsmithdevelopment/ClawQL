@@ -1,0 +1,70 @@
+{
+  "measured_at": "2026-10-21T04:21:00.238Z",
+  "metric": "openappa_hook_overhead_vs_session_length",
+  "note": "Single root_id (production shape). Samples tool_call latency in a window ending at each milestone; pairs each call with tool_result. Publish alongside short-session amortized numbers — do not treat root rotation as a product setting.",
+  "clawql_baseline_p50_ms": 1.3,
+  "base_url": "http://127.0.0.1:8791",
+  "adapter": "opencode",
+  "tool": "mcp__clawql__search",
+  "keep_alive": true,
+  "root_id_policy": "single_root_for_entire_curve — ClawQL never rotates root_id mid-session",
+  "root_id": "curve-1792555387965",
+  "max_calls_requested": 5000,
+  "calls_completed": 5000,
+  "window": 20,
+  "production_timeout_ms": 250,
+  "measure_timeout_ms": 5000,
+  "first_exceeds_production_timeout": null,
+  "stopped_early": null,
+  "curve_tool_call_ms": [
+    {
+      "call_index": 10,
+      "window": 10,
+      "p50": 1.8338360000000051,
+      "p90": 2.7914289999999937,
+      "mean": 2.1988811999999998,
+      "min": 1.5639690000000002,
+      "max": 3.933675000000008,
+      "exceeds_production_timeout_ms": false,
+      "pair_p50": 4.532482999999999
+    },
+    {
+      "call_index": 100,
+      "window": 20,
+      "p50": 5.284593000000086,
+      "p90": 5.63279399999999,
+      "mean": 5.223218399999996,
+      "min": 4.524851000000012,
+      "max": 5.649306000000024,
+      "exceeds_production_timeout_ms": false,
+      "pair_p50": 11.62843399999997
+    },
+    {
+      "call_index": 1000,
+      "window": 20,
+      "p50": 36.07630799999606,
+      "p90": 36.5294470000008,
+      "mean": 36.08250614999888,
+      "min": 35.01972599999863,
+      "max": 37.39297400000214,
+      "exceeds_production_timeout_ms": false,
+      "pair_p50": 83.177297000002
+    },
+    {
+      "call_index": 5000,
+      "window": 20,
+      "p50": 178.91119699995033,
+      "p90": 179.35240600001998,
+      "mean": 178.9180970999645,
+      "min": 178.25753599987365,
+      "max": 179.57933599990793,
+      "exceeds_production_timeout_ms": false,
+      "pair_p50": 415.00140599999577
+    }
+  ],
+  "growth": {
+    "p50_ratio_last_over_first": 97.56,
+    "grows_with_session_length": true,
+    "remediation": "OpenAPPA trajectory cost grows ~linearly with session length (HTTP sidecar). Do not hide via root rotation (drops denials/approvals/labels). Fix in OpenAPPA: keep warm incremental label projection / sliding window over the event log so per-call cost stays flat. Until then, long sessions will breach CLAWQL_OPENAPPA_TIMEOUT_MS and fail closed (circuit). ClawQL keeps one root_id per MCP session."
+  }
+}

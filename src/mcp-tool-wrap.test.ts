@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { Effect } from "effect";
 import { X402McpPaymentRequiredError } from "clawql-payments/x402";
 import { handleAuditToolInput, resetClawqlAuditBufferForTests } from "./mcp/clawql-audit.js";
 import { runMcpProxyBeforeCallTool } from "./composition/clawql-api-adapters.js";
@@ -12,9 +13,29 @@ vi.mock("./composition/clawql-api-adapters.js", async (importOriginal) => {
   };
 });
 
+vi.mock("clawql-api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("clawql-api")>();
+  return {
+    ...actual,
+    openAppaEnabled: vi.fn(() => false),
+    openAppaBeforeToolCallEffect: vi.fn(),
+    openAppaAfterToolResultEffect: vi.fn(),
+    evaluateNativeToolGate: vi.fn(async () => null),
+  };
+});
+
+import {
+  evaluateNativeToolGate,
+  openAppaAfterToolResultEffect,
+  openAppaBeforeToolCallEffect,
+  openAppaEnabled,
+} from "clawql-api";
+
 describe("wrapRegisteredMcpToolHandler", () => {
   afterEach(() => {
     resetClawqlAuditBufferForTests();
+    vi.mocked(openAppaEnabled).mockReturnValue(false);
+    vi.mocked(evaluateNativeToolGate).mockResolvedValue(null);
   });
 
   it("returns x402 payment required tool result instead of throwing", async () => {
@@ -49,6 +70,101 @@ describe("wrapRegisteredMcpToolHandler", () => {
     const result = await wrapped({ operationId: "x", dry_run: true });
     expect(result.isError).toBe(true);
     expect(result.content[0]?.text).toContain("Panguard policy blocked tool: execute");
+  });
+
+  it("returns OpenAPPA Layer 5 hard block after Panguard allows", async () => {
+    vi.mocked(runMcpProxyBeforeCallTool).mockResolvedValueOnce(undefined);
+    vi.mocked(openAppaEnabled).mockReturnValue(true);
+    vi.mocked(openAppaBeforeToolCallEffect).mockReturnValueOnce(
+      Effect.succeed({
+        allow: false,
+        status: "blocked",
+        reason: "OpenAPPA policy blocked tool: undeclared",
+        decision: {
+          protocol: 1,
+          decision: "refuse",
+          class: "undeclared_tool",
+        },
+      })
+    );
+
+    const handler = vi.fn(async () => ({
+      content: [{ type: "text" as const, text: "should-not-run" }],
+    }));
+    const wrapped = wrapRegisteredMcpToolHandler("sandbox_exec", handler);
+
+    const result = await wrapped({});
+    expect(handler).not.toHaveBeenCalled();
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toContain("openappa_layer5");
+    expect(evaluateNativeToolGate).not.toHaveBeenCalled();
+  });
+
+  it("coalesces OpenAPPA mandate + native park into one approval", async () => {
+    vi.mocked(runMcpProxyBeforeCallTool).mockResolvedValueOnce(undefined);
+    vi.mocked(openAppaEnabled).mockReturnValue(true);
+    vi.mocked(openAppaBeforeToolCallEffect).mockReturnValueOnce(
+      Effect.succeed({
+        allow: false,
+        status: "mandate_required",
+        reason: "OpenAPPA requires attention: human-approval",
+        decision: { protocol: 1, decision: "deny_call" },
+      })
+    );
+    vi.mocked(evaluateNativeToolGate).mockResolvedValueOnce({
+      ok: false,
+      status: "mandate_required",
+      reason: "park destructive notify",
+      toolName: "notify",
+      mechanism: "park_destructive_write",
+      executionId: "exec-coalesce",
+    });
+
+    const handler = vi.fn(async () => ({
+      content: [{ type: "text" as const, text: "should-not-run" }],
+    }));
+    const wrapped = wrapRegisteredMcpToolHandler("notify", handler);
+    const result = await wrapped({ destination: "external" });
+    expect(handler).not.toHaveBeenCalled();
+    expect(result.isError).toBe(true);
+    const body = JSON.parse(result.content[0]?.text ?? "{}") as {
+      mechanism: string;
+      status: string;
+      layers: unknown[];
+      executionId?: string;
+    };
+    expect(body.mechanism).toBe("composed_mandate");
+    expect(body.status).toBe("mandate_required");
+    expect(body.layers).toHaveLength(2);
+    expect(body.executionId).toBe("exec-coalesce");
+    expect(openAppaAfterToolResultEffect).not.toHaveBeenCalled();
+  });
+
+  it("OpenAPPA allow + native IFC block → IFC wins", async () => {
+    vi.mocked(runMcpProxyBeforeCallTool).mockResolvedValueOnce(undefined);
+    vi.mocked(openAppaEnabled).mockReturnValue(true);
+    vi.mocked(openAppaBeforeToolCallEffect).mockReturnValueOnce(
+      Effect.succeed({
+        allow: true,
+        decision: { protocol: 1, decision: "allow_call" },
+      })
+    );
+    vi.mocked(evaluateNativeToolGate).mockResolvedValueOnce({
+      ok: false,
+      status: "blocked",
+      reason: "untrusted may not flow to external",
+      toolName: "notify",
+      mechanism: "untrusted_read_taint",
+    });
+
+    const handler = vi.fn(async () => ({
+      content: [{ type: "text" as const, text: "nope" }],
+    }));
+    const wrapped = wrapRegisteredMcpToolHandler("notify", handler);
+    const result = await wrapped({ destination: "external" });
+    expect(handler).not.toHaveBeenCalled();
+    const body = JSON.parse(result.content[0]?.text ?? "{}") as { mechanism: string };
+    expect(body.mechanism).toBe("session_ifc");
   });
 
   it("surfaces CAPABILITY_WRITE_INTERCEPTED reason when Error.message is empty", async () => {

@@ -1,8 +1,14 @@
 import { Effect } from "effect";
 import {
   accumulateNativeToolReadAfterSuccess,
-  gateNativeToolBeforeInvoke,
+  composeMostRestrictiveEffect,
+  composedGateToMcpResult,
+  evaluateNativeToolGate,
   NATIVE_TOOL_GOVERNANCE_MODULE_ID,
+  openAppaAfterToolResultEffect,
+  openAppaBeforeToolCallEffect,
+  openAppaEnabled,
+  type OpenAppaGateVerdict,
 } from "clawql-api";
 import { runMcpProxyBeforeCallTool } from "../composition/clawql-api-adapters.js";
 import { recordMcpToolCallAudit, type McpToolAuditOutcome } from "./mcp-tool-audit.js";
@@ -105,6 +111,58 @@ function appendMcpToolResultEffect(
   }).pipe(Effect.catch(() => Effect.void));
 }
 
+function appendOpenAppaDecisionEffect(
+  toolName: string,
+  verdict: OpenAppaGateVerdict,
+  sessionId?: string
+): Effect.Effect<void> {
+  return Effect.gen(function* () {
+    const audit = yield* Effect.promise(() => import("clawql-audit"));
+    const status = verdict.allow
+      ? ("allow" as const)
+      : verdict.status === "mandate_required"
+        ? ("mandate_required" as const)
+        : ("blocked" as const);
+    const input = yield* audit.wormInputFromOpenAppaDecision({
+      toolName,
+      status,
+      reason: verdict.allow
+        ? `OpenAPPA ${verdict.decision.decision}`
+        : verdict.reason,
+      decision: verdict.decision.decision,
+      class: verdict.decision.class,
+      sessionId,
+    });
+    yield* audit.appendProcessWormEffect(input);
+  }).pipe(Effect.catch(() => Effect.void));
+}
+
+function appendLayerComposeEffect(
+  toolName: string,
+  composed: {
+    readonly allow: boolean;
+    readonly status?: "blocked" | "mandate_required";
+    readonly reason?: string;
+    readonly mechanism?: string;
+    readonly layers: readonly { layer: string; status: string; reason: string }[];
+  },
+  sessionId?: string
+): Effect.Effect<void> {
+  if (composed.allow && composed.layers.length === 0) return Effect.void;
+  return Effect.gen(function* () {
+    const audit = yield* Effect.promise(() => import("clawql-audit"));
+    const input = yield* audit.wormInputFromLayerCompose({
+      toolName,
+      status: composed.allow ? "allow" : (composed.status ?? "blocked"),
+      reason: composed.reason ?? (composed.allow ? "all layers allow" : "composed deny"),
+      mechanism: composed.mechanism ?? (composed.allow ? "allow" : "composed_block"),
+      layers: composed.layers,
+      sessionId,
+    });
+    yield* audit.appendProcessWormEffect(input);
+  }).pipe(Effect.catch(() => Effect.void));
+}
+
 type PaymentToolResultErr = {
   toToolResult: () => unknown;
 };
@@ -118,8 +176,10 @@ function looksLikePaymentToolResultError(err: unknown): err is PaymentToolResult
 }
 
 /**
- * Wrap MCP tool handlers with mcp-proxy pipeline hooks (Panguard, x402, …),
+ * Wrap MCP tool handlers with mcp-proxy pipeline hooks (Panguard, OpenAPPA, x402, …),
  * durable WORM audit (when CLAWQL_WORM_ENABLED), ephemeral ring audit, and OTEL spans.
+ *
+ * Order: Panguard (Layer 4) → OpenAPPA (Layer 5) → session IFC / handler → OpenAPPA tool_result.
  *
  * Heavy packages (payments, observability, audit append) load only on the paths that need them
  * so equal-arm / Core-only compositions keep a smaller cold RSS (§11.1).
@@ -183,20 +243,79 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
       throw err;
     }
 
+    // Layer 5 OpenAPPA (opt-in) + session IFC / park — most restrictive wins.
+    // OpenAPPA allow never overrides a later IFC block/park; dual mandates coalesce.
+    const openAppaCallId = `clawql-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    let openAppaVerdict: OpenAppaGateVerdict | null = null;
+    if (openAppaEnabled()) {
+      const mcpCtxOpen = getMcpRequestContext();
+      openAppaVerdict = await Effect.runPromise(
+        openAppaBeforeToolCallEffect({
+          toolName,
+          args: args[0],
+          sessionId: mcpCtxOpen?.sessionId,
+          // Caller surface for allow-cache isolation (opencode wire has no principal).
+          atrScopeTokens: mcpCtxOpen?.atrScopeTokens,
+          callId: openAppaCallId,
+        })
+      );
+      await Effect.runPromise(
+        appendOpenAppaDecisionEffect(toolName, openAppaVerdict, mcpCtxOpen?.sessionId)
+      );
+      // Hard OpenAPPA block stops before IFC (deny from any layer stops the call).
+      if (!openAppaVerdict.allow && openAppaVerdict.status === "blocked") {
+        const composed = await Effect.runPromise(
+          composeMostRestrictiveEffect(openAppaVerdict, null)
+        );
+        if (!composed.allow) {
+          const blockedResult = composedGateToMcpResult(composed) as TResult;
+          const detail = composed.reason.slice(0, 500);
+          await Effect.runPromise(
+            appendLayerComposeEffect(toolName, composed, mcpCtxOpen?.sessionId)
+          );
+          await Effect.runPromise(appendMcpToolResultEffect(toolName, false, detail));
+          await auditWrappedTool(toolName, args[0], "blocked", blockedResult, detail);
+          return blockedResult;
+        }
+      }
+    }
+
     // Native-tool choke point: session IFC + park destructive (same properties as execute).
     // Catalog execute-path tools skip this body; they are gated inside execute-core.
     try {
       const mcpCtxGate = getMcpRequestContext();
-      const nativeBlock = await gateNativeToolBeforeInvoke({
+      const nativeDecision = await evaluateNativeToolGate({
         toolName,
         args: args[0],
         sessionId: mcpCtxGate?.sessionId,
       });
-      if (nativeBlock) {
-        const detail = JSON.stringify(nativeBlock).slice(0, 500);
+      const composed = await Effect.runPromise(
+        composeMostRestrictiveEffect(
+          openAppaVerdict,
+          nativeDecision
+            ? {
+                status: nativeDecision.status,
+                reason: nativeDecision.reason,
+                mechanism: nativeDecision.mechanism,
+                executionId: nativeDecision.executionId,
+              }
+            : null
+        )
+      );
+      if (!composed.allow) {
+        const blockedResult = composedGateToMcpResult(composed) as TResult;
+        const detail = composed.reason.slice(0, 500);
+        await Effect.runPromise(
+          appendLayerComposeEffect(toolName, composed, mcpCtxGate?.sessionId)
+        );
         await Effect.runPromise(appendMcpToolResultEffect(toolName, false, detail));
-        await auditWrappedTool(toolName, args[0], "blocked", nativeBlock as TResult, detail);
-        return nativeBlock as TResult;
+        await auditWrappedTool(toolName, args[0], "blocked", blockedResult, detail);
+        return blockedResult;
+      }
+      if (openAppaVerdict || nativeDecision) {
+        await Effect.runPromise(
+          appendLayerComposeEffect(toolName, composed, mcpCtxGate?.sessionId)
+        );
       }
     } catch (err: unknown) {
       const errDetail = err instanceof Error ? err.message : String(err);
@@ -217,17 +336,65 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
           result,
         });
       }
+
+      let finalResult = result;
+      if (openAppaEnabled()) {
+        const after = await Effect.runPromise(
+          openAppaAfterToolResultEffect({
+            toolName,
+            args: args[0],
+            sessionId: mcpCtxAfter?.sessionId,
+            callId: openAppaCallId,
+            outcome: ok
+              ? { status: "success", body: result }
+              : {
+                  status: "failure",
+                  message: JSON.stringify(result).slice(0, 2000),
+                },
+          })
+        );
+        if (after.action === "replace") {
+          finalResult = {
+            content: [{ type: "text" as const, text: after.value }],
+            isError: false,
+          } as TResult;
+        } else if (after.action === "error") {
+          finalResult = {
+            content: [{ type: "text" as const, text: after.reason }],
+            isError: true,
+          } as TResult;
+        }
+      }
+
+      const finalOk = toolResultLooksOk(finalResult);
       await Effect.runPromise(
         appendMcpToolResultEffect(
           toolName,
-          ok,
-          ok ? undefined : JSON.stringify(result).slice(0, 500)
+          finalOk,
+          finalOk ? undefined : JSON.stringify(finalResult).slice(0, 500)
         )
       );
-      await auditWrappedTool(toolName, args[0], resultLooksError(result) ? "error" : "ok", result);
-      return result;
+      await auditWrappedTool(
+        toolName,
+        args[0],
+        resultLooksError(finalResult) ? "error" : "ok",
+        finalResult
+      );
+      return finalResult;
     } catch (err: unknown) {
       const errDetail = err instanceof Error ? err.message : String(err);
+      if (openAppaEnabled()) {
+        const mcpCtxFail = getMcpRequestContext();
+        await Effect.runPromise(
+          openAppaAfterToolResultEffect({
+            toolName,
+            args: args[0],
+            sessionId: mcpCtxFail?.sessionId,
+            callId: openAppaCallId,
+            outcome: { status: "failure", message: errDetail.slice(0, 2000) },
+          })
+        );
+      }
       await Effect.runPromise(appendMcpToolResultEffect(toolName, false, errDetail));
       await auditWrappedTool(toolName, args[0], "thrown", undefined, errDetail);
       throw err;

@@ -1,0 +1,189 @@
+# ClawQL MCP tool contracts for OpenAPPA (canonical ids: mcp/clawql/<tool>).
+# Host wire spelling (opencode adapter): mcp__clawql__<tool>.
+#
+# Deny-by-default: tools not listed here are refused (`undeclared_tool`).
+# Empty `delta` keeps the session label — first call is `allow_call`.
+# Trust / attention requirements surface as `deny_call` (attention → mandate_required).
+
+[policy]
+version = 2
+
+# --- Core read / meta (no label narrowing) ---
+
+[[policy.tool]]
+name = "mcp/clawql/search"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/cache"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/audit"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/skills_list"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/skills_get"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/clawql_settings_read"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/clawql_evidence"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/clawql_console"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/clawql_mentions_search"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/read_around"
+delta = {}
+
+# --- Memory: untrusted reads lower trust; writes need trusted internal data ---
+
+[[policy.tool]]
+name = "mcp/clawql/memory_recall"
+delta = { trust = "suspicious" }
+
+[[policy.tool]]
+name = "mcp/clawql/memory_ingest"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.memory"]
+
+[[policy.tool]]
+name = "mcp/clawql/memory_sync"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.memory"]
+
+# --- Catalog execute / resume: trusted trajectory ---
+
+[[policy.tool]]
+name = "mcp/clawql/execute"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.execute"]
+
+[[policy.tool]]
+name = "mcp/clawql/resume"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.execute"]
+
+# --- External / privileged sinks: human attention (HITL → mandate_required) ---
+
+[[policy.tool]]
+name = "mcp/clawql/notify"
+requires = { trust = "trusted", attention = ["human-approval"] }
+delta = {}
+effects = ["clawql.egress"]
+
+[[policy.tool]]
+name = "mcp/clawql/sources_propose"
+requires = { trust = "trusted", attention = ["human-approval"] }
+delta = {}
+effects = ["clawql.sources"]
+
+[[policy.tool]]
+name = "mcp/clawql/clawql_settings_update"
+requires = { trust = "trusted", attention = ["human-approval"] }
+delta = {}
+effects = ["clawql.settings"]
+
+[[policy.tool]]
+name = "mcp/clawql/clawql_open_file"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.files"]
+
+# --- ADR 0015 / Core opt-in aliases (same wire path when flags enable them) ---
+
+[[policy.tool]]
+name = "mcp/clawql/console_link"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/docs_search"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/proxy_call"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.execute"]
+
+[[policy.tool]]
+name = "mcp/clawql/execute_program"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.execute"]
+
+[[policy.tool]]
+name = "mcp/clawql/submit_program_proposals"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.execute"]
+
+# --- Common optional plugins (enable flags; undeclared → refuse) ---
+
+[[policy.tool]]
+name = "mcp/clawql/schedule"
+requires = { trust = "trusted", attention = ["human-approval"] }
+delta = {}
+effects = ["clawql.automation"]
+
+[[policy.tool]]
+name = "mcp/clawql/sandbox_exec"
+requires = { trust = "trusted", attention = ["human-approval"] }
+delta = {}
+effects = ["clawql.sandbox"]
+
+[[policy.tool]]
+name = "mcp/clawql/knowledge_search_onyx"
+delta = { trust = "suspicious" }
+
+[[policy.tool]]
+name = "mcp/clawql/ingest_external_knowledge"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.documents"]
+
+# --- Ouroboros (when CLAWQL_ENABLE_OUROBOROS / plugin on) ---
+
+[[policy.tool]]
+name = "mcp/clawql/ouroboros_get_lineage_status"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/ouroboros_measure_drift"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/ouroboros_create_seed_from_document"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.ouroboros"]
+
+[[policy.tool]]
+name = "mcp/clawql/ouroboros_run_evolutionary_loop"
+requires = { trust = "trusted", attention = ["human-approval"] }
+delta = {}
+effects = ["clawql.ouroboros"]
+
+[[policy.tool]]
+name = "mcp/clawql/ouroboros_propose_seed_revision_from_eval"
+requires = { trust = "trusted", attention = ["human-approval"] }
+delta = {}
+effects = ["clawql.ouroboros"]

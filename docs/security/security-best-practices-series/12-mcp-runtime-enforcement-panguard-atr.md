@@ -207,3 +207,9 @@ Key Takeaways (Memorize These!)
 - Prompt guard libraries add behavioral depth but cannot substitute for structural enforcement at the gateway layer.
 
 You now have a runtime enforcement engine that makes malicious tool execution structurally impossible. Even if the model is fully compromised or the prompt is perfectly injected, the agent cannot perform actions it is not explicitly allowed to do. This is the enforcement layer that turns the rest of the security stack into a complete, working system.
+
+---
+
+## Layer 5 beside Panguard: OpenAPPA
+
+Panguard answers “may this tool run?” OpenAPPA answers “may this labeled data go there?” ClawQL wires OpenAPPA as an opt-in Layer 5 hook after Panguard in `wrapRegisteredMcpToolHandler`. See [OpenAPPA Layer 5](../openappa-layer5.md).

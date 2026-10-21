@@ -1,0 +1,108 @@
+{
+  "measured_at": "2026-10-21T05:09:05.716Z",
+  "metric": "clawql_session_ifc_overhead_vs_session_length",
+  "note": "In-process session IFC (accumulate + mayFlow) within one session. Fair contrast: bounded data-flow state stays flat; OpenAPPA history-based evaluation grows unless incrementalized. Label overflow uses safe-merge (categories → source:untrusted), never dropping oldest.",
+  "openappa_contrast": "OpenAPPA tool_call p50 grew ~98× by call 5000 (full trajectory). ClawQL IFC stays µs-scale with bounded labels after safe-merge.",
+  "framing": "bounded data-flow state stays flat; history-based policy evaluation grows unless incrementalized",
+  "window": 20,
+  "arms": [
+    {
+      "arm": "capped_sources",
+      "session_id": "ifc-curve-capped_sources-1792559345534",
+      "max_calls": 5000,
+      "final_label_cardinality": 32,
+      "max_fine_labels": 32,
+      "curve_us": [
+        {
+          "call_index": 10,
+          "window": 10,
+          "p50_us": 126.81699999995999,
+          "p90_us": 223.5170000000153,
+          "mean_us": 192.62549999998555,
+          "min_us": 51.78799999998773,
+          "max_us": 776.9419999999627
+        },
+        {
+          "call_index": 100,
+          "window": 20,
+          "p50_us": 35.2619999999888,
+          "p90_us": 37.71000000006097,
+          "mean_us": 36.51139999998918,
+          "min_us": 33.86000000000422,
+          "max_us": 50.80499999996846
+        },
+        {
+          "call_index": 1000,
+          "window": 20,
+          "p50_us": 19.882999999936146,
+          "p90_us": 27.79400000008536,
+          "mean_us": 21.843150000000833,
+          "min_us": 18.980000000055952,
+          "max_us": 34.828000000061365
+        },
+        {
+          "call_index": 5000,
+          "window": 20,
+          "p50_us": 11.304999999993015,
+          "p90_us": 26.18599999993876,
+          "mean_us": 14.79364999999575,
+          "min_us": 10.960000000068248,
+          "max_us": 34.64899999994486
+        }
+      ],
+      "growth": {
+        "p50_ratio_last_over_first": 0.09,
+        "grows_with_session_length": false
+      }
+    },
+    {
+      "arm": "growing_unique",
+      "session_id": "ifc-curve-growing_unique-1792559345648",
+      "max_calls": 5000,
+      "final_label_cardinality": 8,
+      "max_fine_labels": 32,
+      "curve_us": [
+        {
+          "call_index": 10,
+          "window": 10,
+          "p50_us": 10.366999999973814,
+          "p90_us": 22.527999999965687,
+          "mean_us": 14.240399999982856,
+          "min_us": 8.74599999997372,
+          "max_us": 33.81799999999657
+        },
+        {
+          "call_index": 100,
+          "window": 20,
+          "p50_us": 12.428999999997359,
+          "p90_us": 20.321000000080858,
+          "mean_us": 13.973550000002888,
+          "min_us": 8.71699999993325,
+          "max_us": 25.085999999987507
+        },
+        {
+          "call_index": 1000,
+          "window": 20,
+          "p50_us": 12.62300000007599,
+          "p90_us": 18.91000000000531,
+          "mean_us": 13.21035000000279,
+          "min_us": 8.614999999963402,
+          "max_us": 23.92900000006648
+        },
+        {
+          "call_index": 5000,
+          "window": 20,
+          "p50_us": 11.568000000124812,
+          "p90_us": 20.408000000088578,
+          "mean_us": 48.881150000022444,
+          "min_us": 8.764999999812062,
+          "max_us": 689.0230000001338
+        }
+      ],
+      "growth": {
+        "p50_ratio_last_over_first": 1.12,
+        "grows_with_session_length": false
+      }
+    }
+  ]
+}

@@ -14,7 +14,11 @@
  */
 
 import { Context, Effect, Layer } from "effect";
-import type { Label } from "./labels.js";
+import {
+  mergeSessionLabelsBounded,
+  SESSION_IFC_MAX_FINE_SOURCE_LABELS,
+  type Label,
+} from "./labels.js";
 
 /** Process-global map: sessionKey → accumulated label set. */
 const globalSessionLabels = new Map<string, Set<Label>>();
@@ -32,6 +36,15 @@ export function resolveSessionLabelKey(
   return "default";
 }
 
+/** Resolve fine-label cap from env (default {@link SESSION_IFC_MAX_FINE_SOURCE_LABELS}). */
+export function resolveSessionIfcMaxFineLabels(
+  env: NodeJS.ProcessEnv = process.env
+): number {
+  const raw = Number(env.CLAWQL_SESSION_IFC_MAX_FINE_LABELS?.trim());
+  if (Number.isFinite(raw) && raw > 0) return Math.min(Math.floor(raw), 10_000);
+  return SESSION_IFC_MAX_FINE_SOURCE_LABELS;
+}
+
 export type SessionLabelStoreApi = {
   readonly get: (sessionKey: string) => Effect.Effect<ReadonlySet<Label>>;
   readonly accumulate: (
@@ -43,7 +56,10 @@ export type SessionLabelStoreApi = {
   readonly clearAll: () => Effect.Effect<void>;
 };
 
-function makeStore(map: Map<string, Set<Label>>): SessionLabelStoreApi {
+function makeStore(
+  map: Map<string, Set<Label>>,
+  maxFine: () => number = () => resolveSessionIfcMaxFineLabels()
+): SessionLabelStoreApi {
   return {
     get: (sessionKey) =>
       Effect.sync(() => {
@@ -52,15 +68,11 @@ function makeStore(map: Map<string, Set<Label>>): SessionLabelStoreApi {
       }),
     accumulate: (sessionKey, labels) =>
       Effect.sync(() => {
-        let set = map.get(sessionKey);
-        if (!set) {
-          set = new Set();
-          map.set(sessionKey, set);
-        }
-        for (const lbl of labels) {
-          if (lbl.trim()) set.add(lbl);
-        }
-        return new Set(set);
+        const prev = map.get(sessionKey) ?? new Set<Label>();
+        // Safe cardinality bound — never drop untrusted/poison marks (merge toward broader).
+        const merged = mergeSessionLabelsBounded(prev, labels, maxFine());
+        map.set(sessionKey, merged);
+        return new Set(merged);
       }),
     clear: (sessionKey) =>
       Effect.sync(() => {
@@ -85,9 +97,10 @@ export const SessionLabelStoreLive = Layer.succeed(
 
 /** Fresh in-memory store for unit tests (isolated Map). */
 export const makeSessionLabelStoreLayer = (
-  map: Map<string, Set<Label>> = new Map()
+  map: Map<string, Set<Label>> = new Map(),
+  maxFine: () => number = () => resolveSessionIfcMaxFineLabels()
 ): Layer.Layer<SessionLabelStore> =>
-  Layer.succeed(SessionLabelStore, SessionLabelStore.of(makeStore(map)));
+  Layer.succeed(SessionLabelStore, SessionLabelStore.of(makeStore(map, maxFine)));
 
 /** Sync façades for execute-core host boundary. */
 export function getSessionLabelsSync(sessionKey: string): ReadonlySet<Label> {
