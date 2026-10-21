@@ -28,10 +28,55 @@ function declaredTools(): string[] {
 }
 
 /** Tools that require human-approval in the battery (expect mandate, not allow). */
-const ATTENTION_TOOLS = new Set(["notify", "sources_propose", "clawql_settings_update"]);
+const ATTENTION_TOOLS = new Set([
+  "notify",
+  "sources_propose",
+  "clawql_settings_update",
+  "schedule",
+  "sandbox_exec",
+  "ouroboros_run_evolutionary_loop",
+  "ouroboros_propose_seed_revision_from_eval",
+]);
 
 /** Tools that require trusted trajectory — first call on a fresh session may still allow. */
-const TRUSTED_TOOLS = new Set(["memory_ingest", "memory_sync", "execute", "resume", "clawql_open_file"]);
+const TRUSTED_TOOLS = new Set([
+  "memory_ingest",
+  "memory_sync",
+  "execute",
+  "resume",
+  "clawql_open_file",
+  "proxy_call",
+  "execute_program",
+  "submit_program_proposals",
+  "ingest_external_knowledge",
+  "ouroboros_create_seed_from_document",
+]);
+
+/** Operator-facing tools that must be declared before leaving draft (core + common opt-ins). */
+const REQUIRED_OPERATOR_TOOLS = [
+  "search",
+  "execute",
+  "resume",
+  "cache",
+  "audit",
+  "skills_list",
+  "skills_get",
+  "sources_propose",
+  "memory_recall",
+  "memory_ingest",
+  "memory_sync",
+  "read_around",
+  "notify",
+  "schedule",
+  "console_link",
+  "docs_search",
+  "proxy_call",
+  "execute_program",
+  "submit_program_proposals",
+  "sandbox_exec",
+  "knowledge_search_onyx",
+  "ingest_external_knowledge",
+] as const;
 
 function startMock(handler: (tool: string) => { decision: string; feedback?: string }): Promise<{
   server: Server;
@@ -92,6 +137,12 @@ describe("OpenAPPA benign suite (declared tools)", () => {
     expect(tools).toContain("execute");
     expect(tools).toContain("notify");
     expect(tools.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it("battery declares required operator tools (draft-exit coverage)", () => {
+    const tools = new Set(declaredTools());
+    const missing = REQUIRED_OPERATOR_TOOLS.filter((t) => !tools.has(t));
+    expect(missing).toEqual([]);
   });
 
   it("every declared tool's benign path passes the gate (allow or expected mandate)", async () => {

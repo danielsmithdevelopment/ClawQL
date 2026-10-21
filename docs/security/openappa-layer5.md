@@ -157,7 +157,13 @@ Mitigations shipped:
 
 ## 4. Covered tools (battery)
 
-Declared in [`packages/clawql-api/openappa/batteries/clawql/appa.toml`](../../packages/clawql-api/openappa/batteries/clawql/appa.toml). Benign suite: `packages/clawql-api/src/openappa/benign-suite.test.ts`.
+Declared in [`packages/clawql-api/openappa/batteries/clawql/appa.toml`](../../packages/clawql-api/openappa/batteries/clawql/appa.toml). Benign suite: `packages/clawql-api/src/openappa/benign-suite.test.ts` (asserts **draft-exit** `REQUIRED_OPERATOR_TOOLS`).
+
+**Declared (operator + common opt-ins):** Core (`search` / `execute` / `resume` / `cache` / `audit` / skills), memory (`memory_*` / `read_around`), sources + settings/ChatGPT surfaces, ADR aliases (`console_link` / `docs_search` / `proxy_call` / `execute_program` / `submit_program_proposals`), automation (`notify` / `schedule`), sandbox, Onyx/documents ingest, Ouroboros.
+
+**Still undeclared (refuse while OpenAPPA is on):** niche plugin surfaces in `NATIVE_TOOL_POLICY` that are not in the battery — e.g. documents IDP (`run_idp_pipeline`, `inspect_pdf`, …), data (`data_query`, `clawql_sql`, …), web browse (`web_search` / `web_fetch` / …), ontology matters, observability_*, network_*, webmcp_*, `workflow` / `argocd` / `hitl_enqueue_label_studio`, `clawql_think`. Add a `[[policy.tool]]` row before enabling those plugins with OpenAPPA.
+
+**Draft hold closed:** required operator set is in the battery; remaining gaps are intentional refuse-by-default for rare plugins. Upstream trajectory-growth brief: [`docs/benchmarks/openappa/UPSTREAM-TRAJECTORY-GROWTH.md`](../benchmarks/openappa/UPSTREAM-TRAJECTORY-GROWTH.md).
 
 ## 5. Audit chain
 

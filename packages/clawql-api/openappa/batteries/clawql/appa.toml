@@ -107,3 +107,83 @@ name = "mcp/clawql/clawql_open_file"
 requires = { trust = "trusted" }
 delta = {}
 effects = ["clawql.files"]
+
+# --- ADR 0015 / Core opt-in aliases (same wire path when flags enable them) ---
+
+[[policy.tool]]
+name = "mcp/clawql/console_link"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/docs_search"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/proxy_call"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.execute"]
+
+[[policy.tool]]
+name = "mcp/clawql/execute_program"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.execute"]
+
+[[policy.tool]]
+name = "mcp/clawql/submit_program_proposals"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.execute"]
+
+# --- Common optional plugins (enable flags; undeclared → refuse) ---
+
+[[policy.tool]]
+name = "mcp/clawql/schedule"
+requires = { trust = "trusted", attention = ["human-approval"] }
+delta = {}
+effects = ["clawql.automation"]
+
+[[policy.tool]]
+name = "mcp/clawql/sandbox_exec"
+requires = { trust = "trusted", attention = ["human-approval"] }
+delta = {}
+effects = ["clawql.sandbox"]
+
+[[policy.tool]]
+name = "mcp/clawql/knowledge_search_onyx"
+delta = { trust = "suspicious" }
+
+[[policy.tool]]
+name = "mcp/clawql/ingest_external_knowledge"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.documents"]
+
+# --- Ouroboros (when CLAWQL_ENABLE_OUROBOROS / plugin on) ---
+
+[[policy.tool]]
+name = "mcp/clawql/ouroboros_get_lineage_status"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/ouroboros_measure_drift"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/ouroboros_create_seed_from_document"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.ouroboros"]
+
+[[policy.tool]]
+name = "mcp/clawql/ouroboros_run_evolutionary_loop"
+requires = { trust = "trusted", attention = ["human-approval"] }
+delta = {}
+effects = ["clawql.ouroboros"]
+
+[[policy.tool]]
+name = "mcp/clawql/ouroboros_propose_seed_revision_from_eval"
+requires = { trust = "trusted", attention = ["human-approval"] }
+delta = {}
+effects = ["clawql.ouroboros"]

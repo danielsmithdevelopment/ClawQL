@@ -23,7 +23,9 @@ Until OpenAPPA decisions are constant-time in session length, ClawQL documents s
 
 ## Covered tools
 
-See [`batteries/clawql/appa.toml`](./batteries/clawql/appa.toml). Undeclared tools are refused. Keep OpenAPPA **off** until every tool you need is listed — the benign suite (`src/openappa/benign-suite.test.ts`) checks declared tools still pass.
+See [`batteries/clawql/appa.toml`](./batteries/clawql/appa.toml). Undeclared tools are refused.
+
+The battery covers **Core**, common ADR opt-ins (`console_link`, `docs_search`, `proxy_call`, `execute_program`, …), memory, automation (`schedule` / `notify`), sandbox, documents/Onyx, and Ouroboros. The benign suite asserts a required operator set is declared (`draft-exit coverage`). Niche plugins (IDP documents, data SQL, web browse, ontology, observability, network, webmcp, …) stay **undeclared** → refuse until you add a `[[policy.tool]]` row. Upstream O(1) latency ask: [`docs/benchmarks/openappa/UPSTREAM-TRAJECTORY-GROWTH.md`](../../../docs/benchmarks/openappa/UPSTREAM-TRAJECTORY-GROWTH.md).
 
 ## Wire order
 
