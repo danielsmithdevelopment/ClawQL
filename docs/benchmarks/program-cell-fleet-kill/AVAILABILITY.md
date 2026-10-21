@@ -8,9 +8,9 @@ A survivor can take over a Durable Object only after the dead node's lease expir
 
 So the TTL pulls two ways:
 
-| Longer TTL                         | Shorter TTL                          |
-| ---------------------------------- | ------------------------------------ |
-| More room for slow R2 renewals → fewer false self-fences | Faster lease expiry → faster failover |
+| Longer TTL                                               | Shorter TTL                                             |
+| -------------------------------------------------------- | ------------------------------------------------------- |
+| More room for slow R2 renewals → fewer false self-fences | Faster lease expiry → faster failover                   |
 | Every crash pauses programs for ~TTL or more             | Less headroom → more false fences under storage latency |
 
 **Raising TTL alone trades one availability problem for another.** At 30s, every node kill pauses programs for ~30s+.
@@ -24,21 +24,21 @@ So the TTL pulls two ways:
 
 ## Stall forensics (stock 10s / R2)
 
-| Knob / observation                | Value                                                            |
-| --------------------------------- | ---------------------------------------------------------------- |
-| `CELLD_TTL_MS`                    | **10000**                                                        |
-| Observed renew start              | `prior_authority_headroom_ms ≈ 6665` (~⅓ TTL consumed)           |
-| Observed renew RTT (`elapsed_ms`) | typically **270–560ms** under peer-down load                     |
-| Fence                             | Watchdog if lease not renewed within TTL                         |
+| Knob / observation                | Value                                                  |
+| --------------------------------- | ------------------------------------------------------ |
+| `CELLD_TTL_MS`                    | **10000**                                              |
+| Observed renew start              | `prior_authority_headroom_ms ≈ 6665` (~⅓ TTL consumed) |
+| Observed renew RTT (`elapsed_ms`) | typically **270–560ms** under peer-down load           |
+| Fence                             | Watchdog if lease not renewed within TTL               |
 
 ## Three columns
 
-| Column                                                         | Property                                              |
-| -------------------------------------------------------------- | ----------------------------------------------------- |
-| `duplicates`                                                   | Safety — never repeated a write                       |
-| `outcomeUnknown`                                               | Honest uncertainty — person resolves                  |
-| `survivorSelfFences` / `survivorRestarts` + recovery in `resumeMs` | Availability — orchestrator work made visible     |
-| `resumeDeadlineMisses`                                         | Resumes past `FLEET_PHASED_RESUME_DEADLINE_MS` (want 0) |
+| Column                                                             | Property                                                |
+| ------------------------------------------------------------------ | ------------------------------------------------------- |
+| `duplicates`                                                       | Safety — never repeated a write                         |
+| `outcomeUnknown`                                                   | Honest uncertainty — person resolves                    |
+| `survivorSelfFences` / `survivorRestarts` + recovery in `resumeMs` | Availability — orchestrator work made visible           |
+| `resumeDeadlineMisses`                                             | Resumes past `FLEET_PHASED_RESUME_DEADLINE_MS` (want 0) |
 
 ## Comparison rows
 

@@ -6,11 +6,11 @@ Machine-readable rows: [`ttl-tradeoff-evidence.json`](./ttl-tradeoff-evidence.js
 
 Resume p50 under stock settings is **~12s** because the survivor waits for the dead node's **10s lease** to expire, plus detection. TTL is the failover floor.
 
-| Row                    | What it is                                                                 | Measure?                          |
-| ---------------------- | -------------------------------------------------------------------------- | --------------------------------- |
-| `stock_r2_ttl_10s`     | `CELLD_TTL_MS=10000`, R2 leases, celld renew ~⅓ TTL                        | Yes (phased board)                |
-| `ttl_only_30s`         | Same renew + R2, TTL=30000 — **tradeoff demo only**                        | Yes (short arm)                   |
-| `production_preferred` | Keep ~10s failover budget; renew every ⅕ TTL; regional lease store         | Target — knobs not in celld 0.4.0 |
+| Row                    | What it is                                                         | Measure?                          |
+| ---------------------- | ------------------------------------------------------------------ | --------------------------------- |
+| `stock_r2_ttl_10s`     | `CELLD_TTL_MS=10000`, R2 leases, celld renew ~⅓ TTL                | Yes (phased board)                |
+| `ttl_only_30s`         | Same renew + R2, TTL=30000 — **tradeoff demo only**                | Yes (short arm)                   |
+| `production_preferred` | Keep ~10s failover budget; renew every ⅕ TTL; regional lease store | Target — knobs not in celld 0.4.0 |
 
 ## Claim (per row)
 
