@@ -66,14 +66,15 @@ RUN mkdir -p /vault && chown 65532:65532 /vault
 
 # ---------------------------------------------------------------------------
 # Bun binary source (glibc). oven/bun distroless is base-nossl (no CA) — we
-# copy only the bun binary into distroless/base-debian13 so HTTPS works.
+# copy only the bun binary into distroless/cc-debian13 so HTTPS + libstdc++ work
+# (DuckDB `@duckdb/node-bindings` needs libstdc++.so.6; plain base-debian13 lacks it).
 # Pin: oven/bun:1.4 → 1.4.3 (bump with CI Bun matrix / measured defaults).
 # Digest bump: 2026-10-21
 FROM oven/bun@sha256:ec06c3b6cea04192ae6770c434f668ca41d343ad19fa6472216c7b48be39c598 AS bun-bin
 
-# Default host MCP runtime: Bun --smol on Distroless (CA + glibc, no shell).
-# Digest bump: debian 13 base (2026-10-21 pull).
-FROM gcr.io/distroless/base-debian13@sha256:44a80dc28b49f47396e72ab2dc644b3f849880335de09625762faed207bb891d AS runtime
+# Default host MCP runtime: Bun --smol on Distroless cc (CA + glibc + libstdc++, no shell).
+# Digest bump: debian 13 cc (2026-10-21 pull).
+FROM gcr.io/distroless/cc-debian13@sha256:b2e43dc72acf58a146ed6feaf350806ae3bf4243eb5c68062d06bc13228ca2bd AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production

@@ -2,7 +2,7 @@
 
 Slim [Distroless](https://github.com/GoogleContainerTools/distroless) image with production dependencies, compiled `dist/`, `bin/`, and bundled `providers/` for offline spec lookup.
 
-**Default host runtime is Bun `--smol`** (product ladder: celld preferred isolate deploy → Bun default host MCP → Node legacy minority). Build target **`runtime`** (GHCR publish) copies a pinned Bun 1.4 binary onto Distroless `base-debian13` (CA certs for HTTPS). Minority Node: `--target runtime-node`. Local sandbox sock: `--target runtime-with-docker-cli`.
+**Default host runtime is Bun `--smol`** (product ladder: celld preferred isolate deploy → Bun default host MCP → Node legacy minority). Build target **`runtime`** (GHCR publish) copies a pinned Bun 1.4 binary onto Distroless `cc-debian13` (CA certs + `libstdc++` for DuckDB native bindings). Minority Node: `--target runtime-node`. Local sandbox sock: `--target runtime-with-docker-cli`.
 
 ## GHCR visibility — anonymous pull (users + Kubernetes admission)
 
