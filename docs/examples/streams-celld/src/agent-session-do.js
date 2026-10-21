@@ -282,26 +282,37 @@ export class AgentSessionDO {
         };
       }
 
-      try {
-        // Compliance trail: host clawql-audit (tip-load). Ring/LTX is bookkeeping only.
-        complianceWorm = await appendComplianceWorm(wormCfg, {
-          type: "SESSION_START",
-          sessionId: eventId,
-          agentName: "streams-celld-AgentSessionDO",
-          virtualKeyId,
-          cellId: doInstanceId,
-          metadata: {
-            subscriptionId,
-            eventId,
-            kind: "DO_CREATED",
-            source: "streams-celld",
-          },
-        });
-      } catch (err) {
-        complianceWorm = {
-          ok: false,
-          error: err instanceof Error ? err.message : String(err),
-        };
+      // Same-eventId retry after fence must not tip-extend twice (full-stack continuity).
+      const priorCompliance = await this.state.storage.get(
+        `compliance_session_start:${eventId}`
+      );
+      if (priorCompliance && priorCompliance.ok === true) {
+        complianceWorm = priorCompliance;
+      } else {
+        try {
+          // Compliance trail: host clawql-audit (tip-load). Ring/LTX is bookkeeping only.
+          complianceWorm = await appendComplianceWorm(wormCfg, {
+            type: "SESSION_START",
+            sessionId: eventId,
+            agentName: "streams-celld-AgentSessionDO",
+            virtualKeyId,
+            cellId: doInstanceId,
+            metadata: {
+              subscriptionId,
+              eventId,
+              kind: "DO_CREATED",
+              source: "streams-celld",
+            },
+          });
+          if (complianceWorm && complianceWorm.ok === true) {
+            await this.state.storage.put(`compliance_session_start:${eventId}`, complianceWorm);
+          }
+        } catch (err) {
+          complianceWorm = {
+            ok: false,
+            error: err instanceof Error ? err.message : String(err),
+          };
+        }
       }
 
       const complianceGate = requireComplianceWorm(wormCfg, complianceWorm);

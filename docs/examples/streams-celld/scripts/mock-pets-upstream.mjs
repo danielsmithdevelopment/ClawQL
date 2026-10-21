@@ -9,6 +9,18 @@
 import { createServer } from "node:http";
 
 const port = Number(process.env.MOCK_PETS_PORT || process.argv[2] || 9893);
+/** Cap client-supplied hangMs (CodeQL: no unbounded user-controlled timers). */
+const MAX_HANG_MS = 120_000;
+
+/**
+ * @param {unknown} raw
+ * @returns {number}
+ */
+function clampHangMs(raw) {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(Math.floor(n), MAX_HANG_MS);
+}
 
 /** @type {{ id: string, key: string, at: string, name: string, generation: number }[]} */
 const writes = [];
@@ -50,7 +62,7 @@ function hangOrAbort(req, hangMs) {
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://127.0.0.1:${port}`);
-  const hangMs = Number(url.searchParams.get("hangMs") || 0);
+  const hangMs = clampHangMs(url.searchParams.get("hangMs") || 0);
 
   if (req.method === "GET" && url.pathname === "/__writes") {
     res.writeHead(200, { "content-type": "application/json" });
