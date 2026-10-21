@@ -13,6 +13,7 @@ export {
   redactOpenAppaSecretsEffect,
   OPENAPPA_AUTH_TOKEN_PREVIOUS_SECRET_PATH,
   OPENAPPA_AUTH_TOKEN_SECRET_PATH,
+  OPENAPPA_SUPPORTED_SESSION_CALLS,
   type OpenAppaConfig,
 } from "./config.js";
 export {
@@ -58,6 +59,9 @@ export {
   resetOpenAppaHttpAgentsForTests,
 } from "./http-agent.js";
 export {
+  openAppaAlertLatencyBudgetExceededEffect,
+  openAppaIsTimeoutErrorEffect,
+  openAppaMaybeWarnSupportedLimitEffect,
   openAppaMaybeWarnTrajectoryGrowthEffect,
   openAppaRecordSessionCallEffect,
   openAppaSessionDepthEffect,

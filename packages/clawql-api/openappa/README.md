@@ -12,9 +12,14 @@ appa runtime --adapter opencode --listen 127.0.0.1:8789 \
 export CLAWQL_ENABLE_OPENAPPA=1
 export CLAWQL_OPENAPPA_URL=http://127.0.0.1:8789
 # timeout default 250ms + circuit breaker; writes always fail closed
+# supported: ≤2000 OpenAPPA-gated tool calls per MCP session (see docs)
 # remote: store token at SecretStore path openappa/auth_token
 #   (or CLAWQL_SECRET_OPENAPPA_AUTH_TOKEN); never log it
 ```
+
+## Supported session length
+
+Until OpenAPPA decisions are constant-time in session length, ClawQL documents support for **≤ 2,000** OpenAPPA-gated tool calls per MCP session (~2.5× margin under the 250ms budget on the published curve). Past that, fail-closed stays correct but long agents may stop; alerts say `policy latency exceeded budget at call N`. Details: [`docs/security/openappa-layer5.md`](../../../docs/security/openappa-layer5.md).
 
 ## Covered tools
 
@@ -26,4 +31,4 @@ Panguard → OpenAPPA `tool_call` → session IFC / park (composed) → handler 
 
 ## Session root (do not rotate)
 
-`root_id` is the MCP session id for the **whole** session. Rotating it mid-session would drop trajectory context (denials, approvals, label narrowing) and weaken policy. If per-call latency grows with session length, fix the OpenAPPA sidecar (incremental label projection / sliding window) — see `docs/benchmarks/openappa/results-session-length-curve.json`.
+`root_id` is the MCP session id for the **whole** session. Rotating it mid-session would drop trajectory context (denials, approvals, label narrowing) and weaken policy. If per-call latency grows with session length, fix the OpenAPPA sidecar (incremental policy state + snapshots) — see `docs/benchmarks/openappa/results-session-length-curve.json`.

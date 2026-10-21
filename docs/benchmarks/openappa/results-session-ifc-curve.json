@@ -1,0 +1,103 @@
+{
+  "measured_at": "2026-10-21T04:41:48.866Z",
+  "metric": "clawql_session_ifc_overhead_vs_session_length",
+  "note": "In-process session IFC (accumulate read labels + mayFlow write check) within one session. Contrast with OpenAPPA results-session-length-curve.json. Times in microseconds.",
+  "openappa_contrast": "OpenAPPA tool_call p50 grew ~98× by call 5000; ClawQL IFC should stay near-flat when labels are a compact set.",
+  "window": 20,
+  "arms": [
+    {
+      "arm": "capped_sources",
+      "session_id": "ifc-curve-capped_sources-1792557706320",
+      "max_calls": 5000,
+      "curve_us": [
+        {
+          "call_index": 10,
+          "window": 10,
+          "p50_us": 101.03600000002189,
+          "p90_us": 248.51400000000012,
+          "mean_us": 189.12429999999176,
+          "min_us": 48.68999999996504,
+          "max_us": 738.189000000034
+        },
+        {
+          "call_index": 100,
+          "window": 20,
+          "p50_us": 32.35299999994368,
+          "p90_us": 37.759999999934735,
+          "mean_us": 33.96224999999049,
+          "min_us": 31.367000000045664,
+          "max_us": 48.075000000039836
+        },
+        {
+          "call_index": 1000,
+          "window": 20,
+          "p50_us": 20.730000000071414,
+          "p90_us": 26.76999999994223,
+          "mean_us": 21.56944999999837,
+          "min_us": 17.96999999999116,
+          "max_us": 27.302999999960775
+        },
+        {
+          "call_index": 5000,
+          "window": 20,
+          "p50_us": 12.242000000014741,
+          "p90_us": 23.33000000010088,
+          "mean_us": 110.58684999998718,
+          "min_us": 9.842999999932545,
+          "max_us": 1946.3109999999233
+        }
+      ],
+      "growth": {
+        "p50_ratio_last_over_first": 0.12,
+        "grows_with_session_length": false
+      }
+    },
+    {
+      "arm": "growing_unique",
+      "session_id": "ifc-curve-growing_unique-1792557706467",
+      "max_calls": 5000,
+      "curve_us": [
+        {
+          "call_index": 10,
+          "window": 10,
+          "p50_us": 11.032000000000153,
+          "p90_us": 17.92000000000371,
+          "mean_us": 15.166500000009364,
+          "min_us": 10.122000000023945,
+          "max_us": 40.23300000005747
+        },
+        {
+          "call_index": 100,
+          "window": 20,
+          "p50_us": 18.275000000016917,
+          "p90_us": 27.195000000006075,
+          "mean_us": 23.498400000011088,
+          "min_us": 17.079999999964457,
+          "max_us": 83.18399999996018
+        },
+        {
+          "call_index": 1000,
+          "window": 20,
+          "p50_us": 72.56499999994048,
+          "p90_us": 107.75499999999738,
+          "mean_us": 100.30299999999102,
+          "min_us": 64.76099999997587,
+          "max_us": 356.58999999998287
+        },
+        {
+          "call_index": 5000,
+          "window": 20,
+          "p50_us": 596.5300000002571,
+          "p90_us": 672.2920000001977,
+          "mean_us": 623.7967000000481,
+          "min_us": 547.9810000001635,
+          "max_us": 959.0970000003836
+        }
+      ],
+      "growth": {
+        "p50_ratio_last_over_first": 54.07,
+        "grows_with_session_length": true
+      }
+    }
+  ]
+}

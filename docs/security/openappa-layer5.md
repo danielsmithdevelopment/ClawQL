@@ -70,7 +70,47 @@ Measured (keep-alive, **one root**, paired `tool_call`+`tool_result`, OpenAPPA 0
 
 Growth ratio (p50 at 5k / p50 at 10) ≈ **98×**. Cost is roughly linear in session length. OpenAPPA 0.35+ caches label folds in-process, but the HTTP sidecar path still slows as the per-root event log grows.
 
-**Do not fix this by rotating `root_id`.** A new root drops denials, approvals, and label narrowing — a weaker policy. Bound history inside OpenAPPA (sliding window over the event log, incremental label summary, or indexed projection) so per-call cost stays flat. Until that lands upstream, long sessions will approach `CLAWQL_OPENAPPA_TIMEOUT_MS` (250) and fail closed via the circuit breaker; raise the budget only with eyes open. ClawQL logs a stderr warning at power-of-two depths when hook time is elevated.
+### Supported session length (until growth is fixed)
+
+**OpenAPPA is supported for sessions up to `OPENAPPA_SUPPORTED_SESSION_CALLS` = 2,000** OpenAPPA-gated tool calls per MCP session.
+
+| | Value | Basis |
+| --- | --- | --- |
+| Documented support | **2,000 calls** | ~2.5× margin under the 250ms per-hook budget on the measured curve |
+| Budget cliff (approx.) | ~5,000–7,000 calls | tool_call p50 → 180ms at 5k; tool_result component nears 250ms |
+| Timeout | `CLAWQL_OPENAPPA_TIMEOUT_MS` = 250 | Fail closed + circuit |
+
+Beyond 2,000 calls the deployment stays **secure** (fail closed) but a long-running agent may simply stop working. Prefer a new MCP session for a new task rather than rotating `root_id` inside one session (rotation drops denials/approvals/labels).
+
+### Fail-closed is visible
+
+When a hook hits the latency budget, operators see a clear alert — not a silent refuse:
+
+```text
+[clawql-openappa] ALERT: policy latency exceeded budget at call N (OpenAPPA /hook timed out after 250ms; …)
+```
+
+The MCP error carries `class: "policy_latency_budget"` and the same reason string. Crossing the 2,000-call support line also emits a one-shot `ALERT: session exceeded supported OpenAPPA call count`.
+
+### Upstream fix (constant-time decisions)
+
+OpenAPPA is upstream ([archestra-ai/OpenAPPA](https://github.com/archestra-ai/OpenAPPA)). The durable fix is making each decision **O(1) in session length**:
+
+1. **Incremental policy state** — update compact current state (labels, denials, approvals) on each event; decide from that state, not a full history replay.
+2. **Periodic snapshots** — recovery replays only from the last snapshot.
+3. **Acceptance test** — re-run `measure-session-length-curve.mjs`; done when call 5,000 costs about what call 10 does.
+
+Attach [`results-session-length-curve.json`](../benchmarks/openappa/results-session-length-curve.json) as the bug report. **Do not fix this by rotating `root_id` in ClawQL.**
+
+### ClawQL session IFC contrast
+
+ClawQL’s in-process data-flow labels (`mayFlow` + session label set) are measured the same way:
+
+```bash
+node scripts/benchmarks/openappa/measure-session-ifc-curve.mjs
+```
+
+Results: [`docs/benchmarks/openappa/results-session-ifc-curve.json`](../benchmarks/openappa/results-session-ifc-curve.json). A compact growing label set should stay near-flat across 10 → 5,000 calls; publish beside the OpenAPPA curve.
 
 ### Short-session amortized (synthetic only)
 

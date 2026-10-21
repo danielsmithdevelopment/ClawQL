@@ -7,6 +7,15 @@ import { isExecutePathTool, resolveNativeToolPolicy } from "../governance/native
 export const OPENAPPA_AUTH_TOKEN_SECRET_PATH = "openappa/auth_token";
 export const OPENAPPA_AUTH_TOKEN_PREVIOUS_SECRET_PATH = "openappa/auth_token_previous";
 
+/**
+ * Max OpenAPPA-gated tool calls per MCP session ClawQL supports until upstream
+ * trajectory cost is O(1). Derived from `results-session-length-curve.json`
+ * (OpenAPPA 0.37.0): per-hook latency approaches the 250ms budget near ~5k
+ * calls; we publish **2000** (~2.5× margin). Beyond this, expect fail-closed
+ * on legitimate work — not a security hole, an availability cliff.
+ */
+export const OPENAPPA_SUPPORTED_SESSION_CALLS = 2000;
+
 export type OpenAppaConfig = {
   readonly baseUrl: string;
   readonly adapter: OpenAppaAdapter;

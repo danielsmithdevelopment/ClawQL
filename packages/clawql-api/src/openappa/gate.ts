@@ -21,8 +21,12 @@ import {
 } from "./circuit-breaker.js";
 import { resetOpenAppaHttpAgentsForTests } from "./http-agent.js";
 import {
+  openAppaAlertLatencyBudgetExceededEffect,
+  openAppaIsTimeoutErrorEffect,
+  openAppaMaybeWarnSupportedLimitEffect,
   openAppaMaybeWarnTrajectoryGrowthEffect,
   openAppaRecordSessionCallEffect,
+  openAppaSessionDepthEffect,
   resetOpenAppaSessionDepthForTests,
 } from "./session-depth.js";
 import type {
@@ -113,16 +117,19 @@ function verdictFromToolCallDecision(decision: OpenAppaWireDecision): OpenAppaGa
   };
 }
 
-function sidecarUnavailableVerdict(msg: string): OpenAppaGateVerdict {
+function sidecarUnavailableVerdict(
+  msg: string,
+  klass: string = "sidecar_unavailable"
+): OpenAppaGateVerdict {
   return {
     allow: false,
     status: "blocked",
-    reason: `OpenAPPA policy blocked tool: sidecar unavailable — ${msg}`,
+    reason: `OpenAPPA policy blocked tool: ${msg}`,
     decision: {
       protocol: 1,
       decision: "refuse",
       detail: msg,
-      class: "sidecar_unavailable",
+      class: klass,
     },
   };
 }
@@ -302,7 +309,13 @@ export function openAppaBeforeToolCallEffect(
       });
       const elapsedMs = yield* Effect.sync(() => performance.now() - t0);
       const depth = yield* openAppaRecordSessionCallEffect(rootId);
-      yield* openAppaMaybeWarnTrajectoryGrowthEffect(rootId, depth, elapsedMs);
+      yield* openAppaMaybeWarnSupportedLimitEffect(rootId, depth);
+      yield* openAppaMaybeWarnTrajectoryGrowthEffect(
+        rootId,
+        depth,
+        elapsedMs,
+        config.timeoutMs
+      );
       yield* openAppaCircuitRecordSuccessEffect(circuitKey);
       if (
         config.allowCacheMs > 0 &&
@@ -323,6 +336,9 @@ export function openAppaBeforeToolCallEffect(
       Effect.catch((err): Effect.Effect<OpenAppaGateVerdict> => {
         const msg = err instanceof Error ? err.message : String(err);
         return Effect.gen(function* () {
+          const depth = yield* openAppaRecordSessionCallEffect(rootId);
+          yield* openAppaMaybeWarnSupportedLimitEffect(rootId, depth);
+          const timedOut = yield* openAppaIsTimeoutErrorEffect(err);
           const { opened } = yield* openAppaCircuitRecordFailureEffect(circuitKey, circuitCfg);
           if (opened) yield* invalidateOpenAppaAllowCacheEffect();
           const mayOpen = yield* openAppaMayFailOpenEffect(config, input.toolName);
@@ -333,7 +349,18 @@ export function openAppaBeforeToolCallEffect(
               decision: { protocol: 1, decision: "allow_call" },
             } satisfies OpenAppaGateVerdict;
           }
-          return sidecarUnavailableVerdict(msg);
+          if (timedOut) {
+            const alert = yield* openAppaAlertLatencyBudgetExceededEffect(
+              rootId,
+              depth,
+              config.timeoutMs
+            );
+            return sidecarUnavailableVerdict(alert, "policy_latency_budget");
+          }
+          return sidecarUnavailableVerdict(
+            `sidecar unavailable — ${msg}`,
+            "sidecar_unavailable"
+          );
         });
       })
     );
@@ -469,6 +496,25 @@ export function openAppaAfterToolResultEffect(
             return {
               action: "passthrough" as const,
               decision: { protocol: 1 as const, decision: "ack" as const },
+            };
+          }
+          const timedOut = yield* openAppaIsTimeoutErrorEffect(err);
+          const depth = yield* openAppaSessionDepthEffect(rootId);
+          if (timedOut) {
+            const alert = yield* openAppaAlertLatencyBudgetExceededEffect(
+              rootId,
+              depth || 1,
+              config.timeoutMs
+            );
+            return {
+              action: "error" as const,
+              reason: `OpenAPPA policy blocked tool result: ${alert}`,
+              decision: {
+                protocol: 1 as const,
+                decision: "refuse" as const,
+                detail: alert,
+                class: "policy_latency_budget",
+              },
             };
           }
           return {

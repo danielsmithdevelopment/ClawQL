@@ -348,6 +348,52 @@ describe("OpenAPPA Layer 5 client", () => {
     expect(toolCalls).toBe(4);
   });
 
+  it("timeout fail-closed surfaces policy latency exceeded budget at call N", async () => {
+    const stderrChunks: string[] = [];
+    const origWrite = process.stderr.write.bind(process.stderr);
+    process.stderr.write = ((chunk: string | Uint8Array, ...args: unknown[]) => {
+      stderrChunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
+      return (origWrite as (c: string | Uint8Array, ...a: unknown[]) => boolean)(chunk, ...args);
+    }) as typeof process.stderr.write;
+    try {
+      // Hang on every /hook so AbortSignal.timeout fires (not ECONNREFUSED).
+      mock = await new Promise<{ server: Server; url: string }>((resolve, reject) => {
+        const server = createServer((_req, res) => {
+          // never end — client timeout aborts
+          void res;
+        });
+        server.listen(0, "127.0.0.1", () => {
+          const addr = server.address();
+          if (!addr || typeof addr === "string") {
+            reject(new Error("no listen address"));
+            return;
+          }
+          resolve({ server, url: `http://127.0.0.1:${addr.port}` });
+        });
+      });
+      const config = cfg(mock.url, {
+        timeoutMs: 40,
+        circuitFailureThreshold: 99,
+        circuitCooldownMs: 1,
+      });
+      const verdict = await Effect.runPromise(
+        openAppaBeforeToolCallEffect({
+          toolName: "notify",
+          args: {},
+          sessionId: "budget-alert-1",
+          config,
+        })
+      );
+      expect(verdict.allow).toBe(false);
+      if (verdict.allow) throw new Error("expected block");
+      expect(verdict.decision.class).toBe("policy_latency_budget");
+      expect(verdict.reason).toMatch(/policy latency exceeded budget at call \d+/i);
+      expect(stderrChunks.join("")).toMatch(/ALERT: policy latency exceeded budget at call/i);
+    } finally {
+      process.stderr.write = origWrite;
+    }
+  });
+
   it("circuit opens after consecutive failures and skips wait", async () => {
     const config = cfg("http://127.0.0.1:1", {
       timeoutMs: 50,
