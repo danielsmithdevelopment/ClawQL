@@ -249,6 +249,9 @@ jobs:
           docker run --rm -v "$PWD:/repo" -w /repo zricethezav/gitleaks:v8.24.2 \
             detect --source /repo --no-git --verbose --no-banner --redact
 
+      - name: Gitleaks (Helm charts we ship)
+        run: bash scripts/security/scan-helm-artifact-secrets.sh
+
   supply-chain:
     name: Supply chain (OSV + Trivy + SBOM)
     needs: [lint, workflow-scripts]
@@ -453,6 +456,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Source-map publish policy (files field negation)
+        run: node scripts/security/strip-sourcemaps-from-files-field.mjs --check
 
       - name: npm pack → clean install smoke
         env:

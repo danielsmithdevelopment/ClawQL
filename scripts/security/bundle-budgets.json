@@ -29,7 +29,7 @@
   "forbidExtensions": [".pem", ".p12", ".pfx"],
   "allowBasenames": [".env.example", "mcp.json.example"],
   "sourceMaps": {
-    "forbidInProductionPacks": false,
-    "comment": "Most clawql-* packs still emit tsup/esbuild .map under dist/. Set true (or CLAWQL_FORBID_SOURCE_MAPS=1) once packages exclude maps from the files field — maps expose internal paths to attackers."
+    "forbidInProductionPacks": true,
+    "comment": "Policy: strip maps from published packs via files negation (!dist/**/*.map). Local tsup may still emit .map for debugging; they must not ship."
   }
 }

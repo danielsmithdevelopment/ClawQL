@@ -9,6 +9,7 @@ How we reduce risk that a compromised dependency, registry upload, or image tag 
 ## What you can verify today
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 | Control                                  | What it does                                                                                                                                                                                 | Where to look                                                                                                                                                                                                                         |
 | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -41,6 +42,27 @@ How we reduce risk that a compromised dependency, registry upload, or image tag 
 | **Pack inventory BOM (+ baseline diff)** | Per-tarball name/version/sha256/contentId inventory of what `npm pack` produced; optional diff vs committed baseline                                                                         | Artifact `npm-pack-inventory` · [`build-pack-inventory.mjs`](../../scripts/security/build-pack-inventory.mjs) · [`diff-pack-inventory.mjs`](../../scripts/security/diff-pack-inventory.mjs) · [baselines README](baselines/README.md) |
 
 > > > > > > > e476a79ba (feat(security): CI gates for reverse-engineering own npm packs)
+=======
+| Control                                  | What it does                                                                                                                                                                              | Where to look                                                                                                                                                                                                            |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **CI supply-chain gates**                | OSV-Scanner + Trivy (HIGH/CRITICAL) + Syft CycloneDX SBOM on every merge path                                                                                                             | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) job `supply-chain`                                                                                                                                          |
+| **Lockfiles with integrity**             | `package-lock.json` records resolved URLs and SHA-512 integrity hashes; installs use `npm ci`                                                                                             | Root lockfile; CI and Docker builds                                                                                                                                                                                      |
+| **npm trusted publishing + provenance**  | Releases publish from GitHub Actions OIDC (`id-token: write`); `npm publish --provenance` on every package; long-lived `NPM_TOKEN` is fallback-only once packages are linked on npmjs.com | [`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml) · [npm-supply-chain.md](npm-supply-chain.md)                                                                                              |
+| **One scanned OCI layout → registry**    | BuildKit writes a local OCI layout; Trivy scans those bytes; `skopeo copy` pushes the same layout — no second “release” build                                                             | [golden-image-pipeline.md](golden-image-pipeline.md) · [docker-publish.yml](../../.github/workflows/docker-publish.yml)                                                                                                  |
+| **Cosign keyless signatures**            | Digests signed with GitHub Actions OIDC (Fulcio/Rekor); `cosign verify` out-of-band                                                                                                       | [docker/README.md](../../docker/README.md)                                                                                                                                                                               |
+| **Images pinned by digest at admit**     | Kyverno `verifyImages` defaults on for ClawQL GHCR patterns; rolling tags move only after sign+verify                                                                                     | [image-signature-enforcement.md](image-signature-enforcement.md)                                                                                                                                                         |
+| **SBOM artifacts**                       | Syft CycloneDX on repo gates and image builds (BuildKit SBOM attestations where attached)                                                                                                 | CI artifacts `sbom-cyclonedx-*`; release pipeline                                                                                                                                                                        |
+| **Provider keys ciphertext-at-rest**     | Vault / OpenBao Transit wraps `SecretStore`; tenant+path derived-key context; fail-closed decrypt                                                                                         | [vault-provider-secrets.md](../deployment/vault-provider-secrets.md) · `clawql-auth` Transit                                                                                                                             |
+| **Host IoC scan (operator)**             | Script scans site-packages / pipx / `/tmp` markers on machines the lockfile cannot see                                                                                                    | [`scripts/security/scan-litellm-ioc.sh`](../../scripts/security/scan-litellm-ioc.sh)                                                                                                                                     |
+| **Secret leak gates**                    | Gitleaks on the working tree in CI; pre-commit hook; scheduled TruffleHog on history                                                                                                      | [security README](README.md) · `.gitleaks.toml`                                                                                                                                                                          |
+| **Release matches source (npm packs)**   | After build + `npm pack`, every file in each `.tgz` must byte-match the workspace (package.json compared after `workspace:*` pin). Catches “published ≠ tagged” drift before registry upload | [`scripts/security/verify-release-matches-source.mjs`](../../scripts/security/verify-release-matches-source.mjs) · CI `distribution-npm-pack-smoke` · [`npm-publish.yml`](../../.github/workflows/npm-publish.yml) |
+| **Artifact secret scan**                 | Gitleaks on *unpacked* release tarballs (dist included — not allowlisted). Finds credentials that only appear in built output                                                             | [`scripts/security/scan-artifact-secrets.sh`](../../scripts/security/scan-artifact-secrets.sh) · `gitleaks-artifacts.toml`                                                                                               |
+| **Bundle / stray-file budget**           | Max `.tgz` sizes; forbid `.env`, key material; **source maps forbidden in packs** (`!dist/**/*.map` in `files`)                                                                            | [`scripts/security/bundle-budgets.json`](../../scripts/security/bundle-budgets.json) · `check-bundle-budgets.mjs`                                                                                                        |
+| **Pack inventory BOM (+ baseline diff)** | Per-tarball name/version/sha256/contentId inventory of what `npm pack` produced; optional diff vs committed baseline                                                                      | Artifact `npm-pack-inventory` · [`build-pack-inventory.mjs`](../../scripts/security/build-pack-inventory.mjs) · [`diff-pack-inventory.mjs`](../../scripts/security/diff-pack-inventory.mjs) · [baselines README](baselines/README.md) |
+| **Independent rebuild**                  | Second clean job rebuilds the same commit and compares pack `contentId`s (not gzip tarball bytes)                                                                                         | [`independent-rebuild-compare.sh`](../../scripts/security/independent-rebuild-compare.sh) · `npm-publish` job `independent-rebuild`                                                                                      |
+| **Registry re-fetch after publish**      | Download each published version from npm and compare SHA-256 to the local pack (post-upload / replacement detection)                                                                      | [`verify-npm-registry-matches-pack.mjs`](../../scripts/security/verify-npm-registry-matches-pack.mjs)                                                                                                                     |
+| **OCI / Helm artifact secrets**          | Trivy **secret** scanner on golden-image OCI layouts before push; Gitleaks on `manifests/charts`                                                                                          | [`scan-oci-artifact-secrets.sh`](../../scripts/security/scan-oci-artifact-secrets.sh) · [`scan-helm-artifact-secrets.sh`](../../scripts/security/scan-helm-artifact-secrets.sh) · `docker-publish` / `ci` `secret-scan` |
+>>>>>>> bf029a929 (feat(security): registry re-fetch, independent rebuild, strip pack maps)
 
 Evidence of gate outcomes (not marketing badges): **[Security status](https://docs.clawql.com/security/status)** — append-only Trivy/OSV history from `main` CI.
 
@@ -54,11 +76,12 @@ Reading your own source finds logic bugs faster than decompiling. What reverse e
 
 1. Tag or `workflow_dispatch` starts **`npm-publish`**.
 2. Job **`repo-supply-chain`** must pass (OSV + Trivy fs + Syft SBOM).
-3. Packages are packed; **artifact release gates** assert packs match source digests, pass secret scan + size budgets, and emit a pack SBOM.
-4. **Trivy** scans the clawql-mcp tarball root; then packages are published **once** with **`--provenance`** under OIDC trusted publishing (short-lived token; prefer this over a long-lived `NPM_TOKEN` in many places).
-5. Semver is immutable; dist-tags move only after the same gates.
+3. Job **`pack-and-gate`**: pack, release-matches-source, artifact secrets, budgets (no source maps), pack inventory.
+4. Job **`independent-rebuild`**: clean rebuild; `contentId` must match the primary pack inventory.
+5. Job **`publish`**: Trivy on clawql-mcp tarball → **`npm publish --provenance`** (OIDC) → **registry re-fetch** SHA-256 compare.
+6. Semver is immutable; dist-tags move only after the same gates.
 
-Details and “what not to do”: [npm-supply-chain.md](npm-supply-chain.md).
+Details: [npm-supply-chain.md](npm-supply-chain.md).
 
 ---
 
@@ -66,12 +89,14 @@ Details and “what not to do”: [npm-supply-chain.md](npm-supply-chain.md).
 
 1. **`repo-supply-chain`** (same family of gates as CI).
 2. One BuildKit build per image → **local OCI layout** (with provenance/SBOM attestations where BuildKit attaches them).
-3. **Trivy** on that layout; failure blocks push.
+3. **Trivy vuln** + **Trivy secret** scan on that layout; failure blocks push.
 4. **`skopeo copy`** of the scanned layout to GHCR (`sha-*` digests first).
 5. **Cosign sign** + **`cosign verify`** on the digest.
 6. Only then promote `latest` / `nightly` / date tags.
 
 Full narrative: [golden-image-pipeline.md](golden-image-pipeline.md). Cluster enforcement: [image-signature-enforcement.md](image-signature-enforcement.md).
+
+Helm charts under `manifests/charts` are Gitleaks-scanned in CI (`secret-scan`). Mobile store builds: run MobSF / equivalent secret+endpoint scan before each App Store / Play submission (see [`apps/mobile/store/DAY0-CHECKLIST.md`](../../apps/mobile/store/DAY0-CHECKLIST.md)).
 
 ---
 

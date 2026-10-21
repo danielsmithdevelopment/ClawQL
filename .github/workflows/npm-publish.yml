@@ -1,7 +1,9 @@
 # Publish clawql-* workspace packages + clawql-mcp to npmjs.com after supply-chain gates.
 # Order: scripts/release/npm-publish-order.json (dependencies before dependents).
 # Trigger: annotated tag v<package.json version> (e.g. v7.0.0) or manual workflow_dispatch.
-# Requires npm trusted publishing (OIDC) and/or NPM_TOKEN secret on the repo.
+#
+# Auth: prefer npm trusted publishing (OIDC, id-token: write) — no long-lived NPM_TOKEN.
+# Optional secrets.NPM_TOKEN remains a fallback for packages not yet linked on npmjs.com.
 name: npm publish
 
 on:
@@ -55,8 +57,8 @@ jobs:
           path: sbom-cyclonedx-npm-publish.cdx.json
           if-no-files-found: error
 
-  publish:
-    name: Pack, scan, and publish workspace packages + clawql-mcp
+  pack-and-gate:
+    name: Pack + artifact RE gates
     needs: [repo-supply-chain]
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -79,29 +81,119 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: "25"
-          registry-url: https://registry.npmjs.org
           cache: npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Source-map publish policy (files field negation)
+        run: node scripts/security/strip-sourcemaps-from-files-field.mjs --check
 
       - name: npm pack install smoke (+ keep packs)
         env:
           CLAWQL_PACK_KEEP_DIR: ${{ runner.temp }}/clawql-packs
         run: bash scripts/dev/test-npm-pack-install.sh
 
-      - name: Artifact release gates (release-matches-source, secrets, budgets, inventory)
+      - name: Artifact release gates
         env:
-          CLAWQL_PACK_INVENTORY_KEEP: ${{ runner.temp }}/npm-pack-inventory.json
+          CLAWQL_PACK_INVENTORY_KEEP: ${{ runner.temp }}/clawql-packs/npm-pack-inventory.json
         run: bash scripts/security/run-artifact-release-gates.sh "${{ runner.temp }}/clawql-packs"
+
+      - name: Upload packs + inventory
+        uses: actions/upload-artifact@v7
+        with:
+          name: clawql-npm-packs-${{ github.run_id }}
+          path: ${{ runner.temp }}/clawql-packs/
+          if-no-files-found: error
+
+  independent-rebuild:
+    name: Independent rebuild (contentId compare)
+    needs: [pack-and-gate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Download primary-builder inventory
+        uses: actions/download-artifact@v7
+        with:
+          name: clawql-npm-packs-${{ github.run_id }}
+          path: ${{ runner.temp }}/primary-packs
+
+      - name: Independent rebuild + compare contentIds
+        env:
+          CLAWQL_REBUILD_INPLACE: "1"
+          CLAWQL_PACK_INVENTORY_KEEP: ${{ runner.temp }}/npm-pack-inventory-rebuild.json
+        run: |
+          set -euo pipefail
+          BASELINE="$(find "${{ runner.temp }}/primary-packs" -name 'npm-pack-inventory.json' -print -quit)"
+          if [[ -z "${BASELINE}" || ! -f "${BASELINE}" ]]; then
+            echo "ERROR: missing primary inventory artifact" >&2
+            find "${{ runner.temp }}/primary-packs" -type f | head -50 >&2 || true
+            exit 1
+          fi
+          bash scripts/security/independent-rebuild-compare.sh "${BASELINE}"
+
+      - name: Upload rebuild inventory
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-pack-inventory-rebuild-${{ github.ref_name }}
+          path: ${{ runner.temp }}/npm-pack-inventory-rebuild.json
+          if-no-files-found: warn
+
+  publish:
+    name: Trivy, publish with provenance, registry re-fetch
+    needs: [pack-and-gate, independent-rebuild]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          registry-url: https://registry.npmjs.org
+          cache: npm
+        # NODE_AUTH_TOKEN only if NPM_TOKEN secret exists — trusted publishing uses OIDC.
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Install dependencies (publish scripts)
+        run: npm ci
+
+      - name: Download packs
+        uses: actions/download-artifact@v7
+        with:
+          name: clawql-npm-packs-${{ github.run_id }}
+          path: ${{ runner.temp }}/clawql-packs-dl
+
+      - name: Locate pack dir
+        id: packs
+        run: |
+          set -euo pipefail
+          # Artifact may nest inventory + tarballs
+          PACK_DIR="$(find "${{ runner.temp }}/clawql-packs-dl" -type d -name 'clawql-packs' -print -quit || true)"
+          if [[ -z "${PACK_DIR}" ]]; then
+            PACK_DIR="${{ runner.temp }}/clawql-packs-dl"
+          fi
+          # Flatten if tarballs are at nested root
+          if ! ls "${PACK_DIR}"/*.tgz >/dev/null 2>&1; then
+            PACK_DIR="$(dirname "$(find "${{ runner.temp }}/clawql-packs-dl" -name 'clawql-mcp-*.tgz' -print -quit)")"
+          fi
+          echo "dir=${PACK_DIR}" >> "$GITHUB_OUTPUT"
+          ls -la "${PACK_DIR}" | head -40
 
       - name: Select clawql-mcp release tarball
         id: pack
         run: |
           set -euo pipefail
-          PACK_DIR="${RUNNER_TEMP}/clawql-packs"
+          PACK_DIR="${{ steps.packs.outputs.dir }}"
           TARBALL="$(find "${PACK_DIR}" -maxdepth 1 -regextype posix-extended \
             -regex '.*/clawql-mcp-[0-9][^/]*\.tgz' -print -quit)"
           if [[ -z "${TARBALL}" || ! -f "${TARBALL}" ]]; then
@@ -109,7 +201,6 @@ jobs:
             exit 1
           fi
           echo "tarball=${TARBALL}" >> "$GITHUB_OUTPUT"
-          echo "Packed ${TARBALL}"
 
       - name: Trivy scan packed tarball root (HIGH / CRITICAL)
         run: |
@@ -130,17 +221,24 @@ jobs:
             --ignorefile /repo/.trivyignore \
             /work/unpack/package
 
-      - name: Upload npm-pack inventory
-        uses: actions/upload-artifact@v7
-        with:
-          name: npm-pack-inventory-${{ github.ref_name }}
-          path: ${{ runner.temp }}/npm-pack-inventory.json
-          if-no-files-found: warn
-
-      - name: Publish workspace packages then clawql-mcp (provenance)
+      - name: Publish workspace packages then clawql-mcp (OIDC provenance)
         run: node scripts/release/npm-publish-workspace.mjs
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Re-fetch from registry and compare tarball SHA-256
+        env:
+          CLAWQL_REGISTRY_VERIFY_REPORT: ${{ runner.temp }}/registry-verify.json
+          CLAWQL_REGISTRY_VERIFY_DELAY_MS: "8000"
+        run: node scripts/security/verify-npm-registry-matches-pack.mjs "${{ steps.packs.outputs.dir }}"
+
+      - name: Upload registry verify report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-registry-verify-${{ github.ref_name }}
+          path: ${{ runner.temp }}/registry-verify.json
+          if-no-files-found: warn
 
       - name: Build immutable release manifest (Layer 0 MVP)
         if: startsWith(github.ref, 'refs/tags/')
