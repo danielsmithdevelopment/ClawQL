@@ -4,6 +4,10 @@ This page summarizes how ClawQL **builds**, **proves**, and **enforces** contain
 
 **Looking for OAuth / MCP authentication?** See **[Authentication](/auth)** — inbound vs outbound, token refresh, EMA / ID-JAG, and how that differs from supply-chain controls on this page.
 
+## Session information-flow control (IFC)
+
+**On this site:** [Session IFC](/security/session-ifc) — what it is, where it is defined, how and when it is called on native tools and catalog `execute`, the `mayFlow` rule, env knobs, and how it differs from Panguard ATR and mandate park. Canonical source: [`session-information-flow-control.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/session-information-flow-control.md).
+
 ## Formal methods (mandates & approval policy)
 
 The mandate protocol is model-checked with TLA+, including crash and expiry boundaries, and the approval policy rules are proved in Lean and differential-tested against production. Managed multi-node gateways consume mandates through a **Postgres** conditional update (same semantics as the model), not per-node SQLite. Evidence: [ADR 0014](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0014-formal-methods-tla-lean.md), [`formal/tla/mandate/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/formal/tla/mandate), [`formal/lean/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/formal/lean).
@@ -55,6 +59,7 @@ Container images are not npm packages. **npm** publish hardening (pack → scan 
 ## Security references (repo)
 
 - [Security status (verifiable scan history)](/security/status)
+- [Session IFC — information-flow control (this site)](/security/session-ifc)
 - [Defense in depth — full MCP + k3s guide (this site)](/security/defense-in-depth)
 - [Security docs index](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/README.md)
 - [Golden image pipeline (full E2E + enforcement)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md)

@@ -28,6 +28,7 @@ export const HEAVY_HTML_ROUTE_SOURCES = [
   '/contributing/technical-specification',
   '/ouroboros/specification',
   '/security/defense-in-depth',
+  '/security/session-ifc',
   '/security/best-practices/:path*',
   '/architecture/token-efficiency',
   '/architecture/enterprise-ontology',

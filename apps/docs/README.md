@@ -67,6 +67,7 @@ Long pages under `src/generated/` are copied from repo `docs/` at **prebuild** /
 | `/vision/immutable-releases`   | `docs/vision/clawql-hybrid-decentralized-github-alternative.md` (Layer 0) | `scripts/sync-clawql-hybrid-decentralized-doc.mjs` |
 | `/vision/slide-deck`           | `docs/presentations/clawql-slides.md`                                     | `scripts/sync-clawql-slides-doc.mjs`            |
 | `/security/defense-in-depth`   | `docs/security/clawql-defense-in-depth-security-guide.md` (deployment reference) | `scripts/sync-clawql-defense-in-depth-doc.mjs`  |
+| `/security/session-ifc`        | `docs/security/session-information-flow-control.md` (session IFC product reference) | `scripts/sync-session-ifc-doc.mjs`           |
 | `/security/best-practices/*`   | `docs/security/security-best-practices-series/*.md`                       | `scripts/sync-security-training-modules.mjs`    |
 
 Edit the **Markdown sources**, then run `npm run dev` or `npm run build` so generated fragments stay in sync.

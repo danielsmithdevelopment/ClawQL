@@ -80,8 +80,8 @@ export const securityStackPhases: readonly SecurityStackPhase[] = [
       {
         n: 5,
         title: 'Information-flow policy',
-        body: 'Data flows only where its label allows.',
-        tags: ['OpenAPPA', 'Deny-by-default rules'],
+        body: 'Data flows only where its label allows. OpenAPPA is the named Layer 5 engine (audience × trust, tool contracts, remedies); ClawQL session IFC is the in-gateway control that answers the same question on every tool call.',
+        tags: ['OpenAPPA', 'Deny-by-default rules', 'Session IFC'],
       },
     ],
   },

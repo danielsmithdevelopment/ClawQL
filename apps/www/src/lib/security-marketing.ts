@@ -15,6 +15,13 @@ export const securityPillars = [
     linkLabel: 'Defense in depth',
   },
   {
+    slug: 'session-ifc',
+    title: 'Session information-flow control',
+    body: 'After an untrusted read, ClawQL accumulates session labels and checks whether that data may flow to a later write sink (native tools and catalog execute). Same-source work can proceed; cross-source exfil fails closed. Full call-site map on the docs site.',
+    href: 'https://docs.clawql.com/security/session-ifc',
+    linkLabel: 'Session IFC reference',
+  },
+  {
     slug: 'agentic-ai',
     title: 'Built for agentic AI',
     body: '32-module security curriculum from supply chain through runtime. MCP gateway ATR scoping limits what agents can do regardless of prompt injection; audit trails, sandbox isolation, and distroless images are documented for self-hosted k3s.',
