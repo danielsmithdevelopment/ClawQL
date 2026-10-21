@@ -82,12 +82,12 @@ Look for `cook.pth` / `cook.py`, `litellm-1.107.0*.dist-info`, and `/tmp/remote_
 | `transit`        | `keys/clawql-secrets` (`derived=true`) | Encryption key for SecretStore ciphertext + tenant/path context |
 
 > > > > > > > 3c41478ac (feat(clawql-auth): Transit context binding, migrate/rewrap, fail-closed cache)
-=======
-| Mount            | Path                                   | Purpose                                                                |
-| ---------------- | -------------------------------------- | ---------------------------------------------------------------------- |
-| `secret` (KV v2) | `clawql/providers`                     | All bundled provider credentials (camelCase fields)                    |
-| `transit`        | `keys/clawql-secrets` (`derived=true`) | Encryption key for SecretStore ciphertext + tenant/path context        |
->>>>>>> 53c1c91c1 (refactor(clawql-auth): drop Transit plaintext migration path)
+> > > > > > > \=======
+> > > > > > > | Mount | Path | Purpose |
+> > > > > > > | ---------------- | -------------------------------------- | ---------------------------------------------------------------------- |
+> > > > > > > | `secret` (KV v2) | `clawql/providers` | All bundled provider credentials (camelCase fields) |
+> > > > > > > | `transit` | `keys/clawql-secrets` (`derived=true`) | Encryption key for SecretStore ciphertext + tenant/path context |
+> > > > > > > 53c1c91c1 (refactor(clawql-auth): drop Transit plaintext migration path)
 
 ### Field catalog
 
