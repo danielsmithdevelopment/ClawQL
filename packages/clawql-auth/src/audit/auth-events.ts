@@ -148,6 +148,33 @@ export type AuthEvent =
       timestamp: string;
     }
   | {
+      /** Transit decrypt failed (Vault down, wrong context, revoked key, …). Fail closed. */
+      type: "VAULT_TRANSIT_DECRYPT_FAILED";
+      path: string;
+      reason: string;
+      timestamp: string;
+    }
+  | {
+      /** Legacy plaintext row rejected after migration (`rejectPlaintext`). */
+      type: "VAULT_TRANSIT_PLAINTEXT_REJECTED";
+      path: string;
+      timestamp: string;
+    }
+  | {
+      type: "VAULT_TRANSIT_MIGRATE_COMPLETED";
+      migrated: number;
+      alreadyCiphertext: number;
+      failed: number;
+      timestamp: string;
+    }
+  | {
+      type: "VAULT_TRANSIT_REWRAP_COMPLETED";
+      rewrapped: number;
+      skipped: number;
+      failed: number;
+      timestamp: string;
+    }
+  | {
       type: "DOMAIN_TXT_VERIFIED";
       domain: string;
       timestamp: string;

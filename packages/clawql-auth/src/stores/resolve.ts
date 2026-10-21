@@ -6,7 +6,9 @@
  * - SQLite path: `CLAWQL_SECRET_STORE_PATH` (default `~/.clawql/secrets.db` or `$CLAWQL_HOME/secrets.db`)
  * - Vault/OpenBao: `VAULT_ADDR` / `BAO_ADDR`, `VAULT_TOKEN` / `BAO_TOKEN`, optional `CLAWQL_VAULT_MOUNT`
  * - Transit (encrypt-at-rest over any backend): set `CLAWQL_VAULT_TRANSIT_KEY` (+ addr/token);
- *   optional `CLAWQL_VAULT_TRANSIT_MOUNT` (default `transit`)
+ *   optional `CLAWQL_VAULT_TRANSIT_MOUNT` (default `transit`),
+ *   `CLAWQL_VAULT_TRANSIT_TENANT`, `CLAWQL_VAULT_TRANSIT_REJECT_PLAINTEXT=1`,
+ *   `CLAWQL_VAULT_TRANSIT_CACHE_TTL_MS` (default 30000)
  *
  * `resolveSecretStore` is a sync construction helper (no IO — it just picks and
  * `new`s a backend, each of which is Effect-primary on its own methods). The env
@@ -39,6 +41,12 @@ export type ResolveSecretStoreOptions = {
   vaultTransit?: boolean;
   /** Transit key name override (default `CLAWQL_VAULT_TRANSIT_KEY`). */
   vaultTransitKey?: string;
+  /** Fallback tenant for Transit derived-key context. */
+  vaultTransitTenantId?: string;
+  /** Refuse legacy plaintext after migration. */
+  vaultTransitRejectPlaintext?: boolean;
+  /** In-memory decrypt cache TTL (ms); 0 disables. */
+  vaultTransitCacheTtlMs?: number;
 };
 
 export type WrapSecretStoreWithVaultTransitOptions = {
@@ -46,6 +54,9 @@ export type WrapSecretStoreWithVaultTransitOptions = {
   vaultToken?: string;
   mountPath?: string;
   keyName: string;
+  tenantId?: string;
+  rejectPlaintext?: boolean;
+  decryptCacheTtlMs?: number;
 };
 
 /** Effect: resolve the configured store kind from `explicit` or `CLAWQL_SECRET_STORE`. */
@@ -98,7 +109,13 @@ export function wrapSecretStoreWithVaultTransit(
       options.mountPath?.trim() || process.env.CLAWQL_VAULT_TRANSIT_MOUNT?.trim() || "transit",
     keyName: options.keyName.trim(),
   });
-  return createTransitEncryptedSecretStore({ inner, transit });
+  return createTransitEncryptedSecretStore({
+    inner,
+    transit,
+    tenantId: options.tenantId,
+    rejectPlaintext: options.rejectPlaintext,
+    decryptCacheTtlMs: options.decryptCacheTtlMs,
+  });
 }
 
 function maybeWrapVaultTransit(
@@ -112,7 +129,12 @@ function maybeWrapVaultTransit(
   if (!keyName) {
     throw new Error("vault_transit_requires_CLAWQL_VAULT_TRANSIT_KEY");
   }
-  return wrapSecretStoreWithVaultTransit(store, { keyName });
+  return wrapSecretStoreWithVaultTransit(store, {
+    keyName,
+    tenantId: options.vaultTransitTenantId,
+    rejectPlaintext: options.vaultTransitRejectPlaintext,
+    decryptCacheTtlMs: options.vaultTransitCacheTtlMs,
+  });
 }
 
 /**

@@ -28,28 +28,58 @@ Do **not** put provider tokens in **`extraEnv`** or chart-managed **`documentPip
 
 When ClawQL persists secrets in a database or local store (SQLite `SecretStore`, inference credential rows, etc.), prefer **Vault Transit** so a stealer that dumps the store gets ciphertext only — the encryption key never leaves Vault. This is the same failure mode as the October 2026 LiteLLM `1.107.0` supply-chain payload (which queried plaintext credential tables).
 
+**Precise claim once the checklist below is done:** a database dump yields only ciphertext that **cannot be moved between tenants** (derived-key context binds tenant ID + secret path).
+
 ```bash
-# Enable Transit on Vault / OpenBao, then create a key:
+# Enable Transit; derived=true is required for context binding:
 vault secrets enable transit
-vault write -f transit/keys/clawql-secrets
+vault write -f transit/keys/clawql-secrets derived=true
 
 # ClawQL wraps any SecretStore backend when this is set:
 export CLAWQL_VAULT_TRANSIT_KEY=clawql-secrets
-export CLAWQL_VAULT_TRANSIT_MOUNT=transit   # optional, default
+export CLAWQL_VAULT_TRANSIT_MOUNT=transit          # optional
+export CLAWQL_VAULT_TRANSIT_TENANT=acme           # fallback tenant (or CLAWQL_DEFAULT_ORG_ID)
+export CLAWQL_VAULT_TRANSIT_CACHE_TTL_MS=30000    # brief in-memory decrypt cache; never disk
 export VAULT_ADDR=https://vault.example:8200
-export VAULT_TOKEN=…                       # prefer K8s/AppRole/JWT — short-lived
+export VAULT_TOKEN=…                              # prefer K8s/AppRole/JWT — short-lived
 ```
 
-Library entry points: `VaultTransitProvider` / `TransitEncryptedSecretStore` / `resolveSecretStore({ vaultTransit: true })` in **`clawql-auth`**. Legacy plaintext rows remain readable until the next write re-encrypts them; after Transit key rotation call `rewrapSecret(path)` (or Transit `rewrap`) without re-entering provider keys.
+Library entry points (`clawql-auth`): `VaultTransitProvider`, `TransitEncryptedSecretStore`, `migratePlaintextSecretsEffect` / `scanPlaintextSecretsEffect` / `rewrapAllSecretsEffect`, `resolveSecretStore({ vaultTransit: true })`.
+
+### Checklist before turning Transit on by default
+
+1. **Context binding** — encrypt/decrypt/rewrap always send Transit `context` = base64(`v1\ntenant=…\npath=…`). Paths under `tenants/{id}/…` use `{id}` as tenant; otherwise `CLAWQL_VAULT_TRANSIT_TENANT`. A ciphertext copied to another tenant/path fails to decrypt.
+2. **Migrate existing plaintext** — enabling Transit only protects new writes. Run `migratePlaintextSecretsEffect(store)`, then `scanPlaintextSecretsEffect(store)` until `plaintextPaths` is empty, then set `CLAWQL_VAULT_TRANSIT_REJECT_PLAINTEXT=1`.
+3. **Backups** — DB dumps taken before migration still hold plaintext. Purge them **or** rotate every provider key that lived in that store.
+4. **Fail closed** — when Vault is unreachable, ciphertext rows do **not** decrypt (inference fails). A short in-memory cache (`CLAWQL_VAULT_TRANSIT_CACHE_TTL_MS`, default 30s) rides out brief blips; plaintext is never written to disk. Decrypt failures emit `VAULT_TRANSIT_DECRYPT_FAILED`. **Vault is on the critical path for SecretStore-backed inference.**
+5. **Rotation / rewrap** — on a schedule: `vault write -f transit/keys/clawql-secrets/rotate`, then `rewrapAllSecretsEffect(store)`, then raise `min_decryption_version` once rewrap is clean so old key versions can be retired.
+
+### LiteLLM IoCs outside the repo
+
+The ClawQL lockfiles do not pull `litellm`, but AgentDojo harnesses, `pipx` tools, and Python envs on the Mac mini / laptops have their own site-packages. Scan those hosts:
+
+```bash
+bash scripts/security/scan-litellm-ioc.sh
+# optional: bash scripts/security/scan-litellm-ioc.sh /path/to/agentdojo/.venv/lib/python3.x/site-packages
+```
+
+Look for `cook.pth` / `cook.py`, `litellm-1.107.0*.dist-info`, and `/tmp/remote_code_loader.lock` / `/tmp/.pc_once_*`.
 
 **KV vs Transit:** Helm + ESO still sync **KV** `secret/clawql/providers` into `clawql-provider-env` for process env. Transit protects **application SecretStore** values at rest. Use both: KV for injection, Transit for anything ClawQL writes to a DB.
 
 ## Vault KV shape
 
+<<<<<<< HEAD
 | Mount            | Path                  | Purpose                                              |
 | ---------------- | --------------------- | ---------------------------------------------------- |
 | `secret` (KV v2) | `clawql/providers`    | All bundled provider credentials (camelCase fields)  |
 | `transit`        | `keys/clawql-secrets` | Encryption key for SecretStore ciphertext (optional) |
+=======
+| Mount            | Path               | Purpose                                             |
+| ---------------- | ------------------ | --------------------------------------------------- |
+| `secret` (KV v2) | `clawql/providers` | All bundled provider credentials (camelCase fields) |
+| `transit`        | `keys/clawql-secrets` (`derived=true`) | Encryption key for SecretStore ciphertext + tenant/path context |
+>>>>>>> 3c41478ac (feat(clawql-auth): Transit context binding, migrate/rewrap, fail-closed cache)
 
 ### Field catalog
 

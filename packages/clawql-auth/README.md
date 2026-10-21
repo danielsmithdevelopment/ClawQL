@@ -77,15 +77,32 @@ createClawQLAuth({
 // Or resolve from CLAWQL_SECRET_STORE=openbao|hashicorp-vault|infisical|…
 createClawQLAuth({ secretStore: resolveSecretStore() });
 
-// Encrypt-at-rest with Vault Transit (key never leaves Vault; DB/KV holds ciphertext only)
+// Encrypt-at-rest with Vault Transit (derived-key context binds tenant + path)
 createClawQLAuth({
   secretStore: resolveSecretStore({
     kind: "sqlite",
     vaultTransit: true,
     vaultTransitKey: "clawql-secrets",
+    vaultTransitTenantId: "acme",
+    vaultTransitRejectPlaintext: true, // after migratePlaintextSecretsEffect + clean scan
   }),
 });
-// Equivalent: CLAWQL_VAULT_TRANSIT_KEY=clawql-secrets (+ VAULT_ADDR / VAULT_TOKEN)
+// Env: CLAWQL_VAULT_TRANSIT_KEY (+ VAULT_ADDR / VAULT_TOKEN), derived=true on the Transit key
+```
+
+Migrate / scan / rewrap (Effect-primary):
+
+```ts
+import {
+  migratePlaintextSecretsEffect,
+  scanPlaintextSecretsEffect,
+  rewrapAllSecretsEffect,
+} from "clawql-auth";
+
+await Effect.runPromise(migratePlaintextSecretsEffect(store));
+const scan = await Effect.runPromise(scanPlaintextSecretsEffect(store));
+// scan.plaintextPaths must be [] before rejectPlaintext / default-on
+await Effect.runPromise(rewrapAllSecretsEffect(store)); // after vault key rotate
 ```
 
 | Backend                             | Role                                               |
@@ -261,6 +278,9 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 | `CLAWQL_SECRET_STORE`                            | `sqlite` (default) \| `memory` \| `env` \| `hashicorp-vault` \| `openbao` \| …             |
 | `CLAWQL_VAULT_TRANSIT_KEY`                       | When set, wrap SecretStore with Vault Transit encrypt-at-rest (needs `VAULT_ADDR`+token)   |
 | `CLAWQL_VAULT_TRANSIT_MOUNT`                     | Transit mount path (default `transit`)                                                     |
+| `CLAWQL_VAULT_TRANSIT_TENANT`                    | Fallback tenant for derived-key context (or `CLAWQL_DEFAULT_ORG_ID`)                       |
+| `CLAWQL_VAULT_TRANSIT_REJECT_PLAINTEXT`          | `1` = fail closed on legacy plaintext rows (after migration)                               |
+| `CLAWQL_VAULT_TRANSIT_CACHE_TTL_MS`              | In-memory decrypt cache TTL (default `30000`; `0` disables). Never persisted.              |
 
 Setting `CLAWQL_AUTH_AUDIT_STORE=off` while MCP OAuth is enabled logs a **SECURITY WARNING** at `server-http` boot — auth is live but issuance is not persisted.
 

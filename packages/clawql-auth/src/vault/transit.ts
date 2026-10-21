@@ -3,6 +3,10 @@
  * Keeps encryption keys inside Vault; ClawQL (or an inner SecretStore) holds
  * only ciphertext. Distinct from KV SecretStore and from dynamic leases.
  *
+ * Ciphertexts are bound to a **derived-key context** (tenant + secret path) so a
+ * row copied between tenants fails to decrypt. Create the Transit key with
+ * `derived=true` (required for context).
+ *
  * Effect-primary; uses the same Vault HTTP client shape as HashiCorpVaultStore.
  */
 
@@ -15,6 +19,12 @@ export class VaultTransitError extends Data.TaggedError("VaultTransitError")<{
   readonly cause?: unknown;
 }> {}
 
+/** Stable binding for Transit key derivation (`context` field). */
+export type TransitCryptoContext = {
+  readonly tenantId: string;
+  readonly secretPath: string;
+};
+
 export type VaultTransitProviderOptions = {
   vaultAddr: string;
   vaultToken: string;
@@ -22,6 +32,11 @@ export type VaultTransitProviderOptions = {
   mountPath?: string;
   /** Named encryption key in the mount (required for encrypt/decrypt/rewrap). */
   keyName: string;
+  /**
+   * When true (default), every encrypt/decrypt/rewrap requires a context.
+   * Disable only for migration from non-derived keys.
+   */
+  requireContext?: boolean;
   http?: VaultHttpClient;
 };
 
@@ -60,6 +75,32 @@ export function isVaultTransitCiphertext(value: string): boolean {
   return /^vault:v\d+:/.test(value);
 }
 
+/**
+ * Canonical Transit `context` (base64). Same tenant+path → same derived key;
+ * a ciphertext moved to another tenant/path will not decrypt.
+ */
+export function encodeTransitContext(ctx: TransitCryptoContext): string {
+  const tenantId = ctx.tenantId.trim();
+  const secretPath = ctx.secretPath.replace(/^\/+|\/+$/g, "");
+  if (!tenantId) {
+    throw new Error("transit_context_requires_tenantId");
+  }
+  if (!secretPath) {
+    throw new Error("transit_context_requires_secretPath");
+  }
+  // Versioned line protocol — keep stable; do not JSON-stringify (key order).
+  return Buffer.from(`v1\ntenant=${tenantId}\npath=${secretPath}`, "utf8").toString("base64");
+}
+
+/**
+ * Resolve tenant for a secret path. Paths under `tenants/{id}/…` use `{id}`;
+ * otherwise the fallback (often `CLAWQL_DEFAULT_ORG_ID` or `default`).
+ */
+export function resolveTransitTenantId(secretPath: string, fallbackTenantId: string): string {
+  const m = /^tenants\/([^/]+)\//.exec(secretPath.replace(/^\/+/, ""));
+  return m?.[1] ?? fallbackTenantId;
+}
+
 function toBase64Utf8(plaintext: string): string {
   return Buffer.from(plaintext, "utf8").toString("base64");
 }
@@ -74,6 +115,7 @@ export class VaultTransitProvider {
   private readonly token: string;
   private readonly mount: string;
   private readonly keyName: string;
+  private readonly requireContext: boolean;
 
   constructor(private readonly options: VaultTransitProviderOptions) {
     this.http = options.http ?? defaultHttp();
@@ -81,6 +123,7 @@ export class VaultTransitProvider {
     this.token = options.vaultToken;
     this.mount = trimSlashes(options.mountPath ?? "transit");
     this.keyName = trimSlashes(options.keyName);
+    this.requireContext = options.requireContext !== false;
     if (!this.keyName) {
       throw new Error("vault_transit_requires_keyName");
     }
@@ -95,6 +138,32 @@ export class VaultTransitProvider {
 
   private keyUrl(op: "encrypt" | "decrypt" | "rewrap"): string {
     return `${this.addr}/v1/${this.mount}/${op}/${this.keyName}`;
+  }
+
+  private resolveContextB64(
+    context: TransitCryptoContext | string | undefined
+  ): Effect.Effect<string | undefined, VaultTransitError> {
+    return Effect.gen({ self: this }, function* () {
+      if (context == null || context === "") {
+        if (this.requireContext) {
+          return yield* Effect.fail(
+            new VaultTransitError({ reason: "vault_transit_context_required" })
+          );
+        }
+        return undefined;
+      }
+      if (typeof context === "string") return context;
+      try {
+        return encodeTransitContext(context);
+      } catch (cause) {
+        return yield* Effect.fail(
+          new VaultTransitError({
+            reason: `vault_transit_context_invalid: ${errMsg(cause)}`,
+            cause,
+          })
+        );
+      }
+    });
   }
 
   private request(input: {
@@ -115,13 +184,19 @@ export class VaultTransitProvider {
     });
   }
 
-  /** Encrypt plaintext → Vault Transit ciphertext (`vault:vN:…`). */
-  encrypt(plaintext: string): Effect.Effect<string, VaultTransitError> {
+  /** Encrypt plaintext → Vault Transit ciphertext (`vault:vN:…`), bound to context. */
+  encrypt(
+    plaintext: string,
+    context?: TransitCryptoContext | string
+  ): Effect.Effect<string, VaultTransitError> {
     return Effect.gen({ self: this }, function* () {
+      const contextB64 = yield* this.resolveContextB64(context);
+      const body: Record<string, string> = { plaintext: toBase64Utf8(plaintext) };
+      if (contextB64) body.context = contextB64;
       const res = yield* this.request({
         method: "POST",
         url: this.keyUrl("encrypt"),
-        body: JSON.stringify({ plaintext: toBase64Utf8(plaintext) }),
+        body: JSON.stringify(body),
       });
       if (res.status < 200 || res.status >= 300) {
         return yield* Effect.fail(
@@ -138,13 +213,19 @@ export class VaultTransitProvider {
     });
   }
 
-  /** Decrypt Vault Transit ciphertext → UTF-8 plaintext. */
-  decrypt(ciphertext: string): Effect.Effect<string, VaultTransitError> {
+  /** Decrypt Vault Transit ciphertext → UTF-8 plaintext (same context as encrypt). */
+  decrypt(
+    ciphertext: string,
+    context?: TransitCryptoContext | string
+  ): Effect.Effect<string, VaultTransitError> {
     return Effect.gen({ self: this }, function* () {
+      const contextB64 = yield* this.resolveContextB64(context);
+      const body: Record<string, string> = { ciphertext };
+      if (contextB64) body.context = contextB64;
       const res = yield* this.request({
         method: "POST",
         url: this.keyUrl("decrypt"),
-        body: JSON.stringify({ ciphertext }),
+        body: JSON.stringify(body),
       });
       if (res.status < 200 || res.status >= 300) {
         return yield* Effect.fail(
@@ -163,14 +244,20 @@ export class VaultTransitProvider {
 
   /**
    * Re-wrap ciphertext under the latest key version (after Transit key rotation).
-   * Does not expose plaintext to the caller.
+   * Does not expose plaintext to the caller. Requires the same context as encrypt.
    */
-  rewrap(ciphertext: string): Effect.Effect<string, VaultTransitError> {
+  rewrap(
+    ciphertext: string,
+    context?: TransitCryptoContext | string
+  ): Effect.Effect<string, VaultTransitError> {
     return Effect.gen({ self: this }, function* () {
+      const contextB64 = yield* this.resolveContextB64(context);
+      const body: Record<string, string> = { ciphertext };
+      if (contextB64) body.context = contextB64;
       const res = yield* this.request({
         method: "POST",
         url: this.keyUrl("rewrap"),
-        body: JSON.stringify({ ciphertext }),
+        body: JSON.stringify(body),
       });
       if (res.status < 200 || res.status >= 300) {
         return yield* Effect.fail(
@@ -197,9 +284,18 @@ export function createVaultTransitProvider(
 export class VaultTransitService extends Context.Service<
   VaultTransitService,
   {
-    readonly encrypt: (plaintext: string) => Effect.Effect<string, VaultTransitError>;
-    readonly decrypt: (ciphertext: string) => Effect.Effect<string, VaultTransitError>;
-    readonly rewrap: (ciphertext: string) => Effect.Effect<string, VaultTransitError>;
+    readonly encrypt: (
+      plaintext: string,
+      context?: TransitCryptoContext | string
+    ) => Effect.Effect<string, VaultTransitError>;
+    readonly decrypt: (
+      ciphertext: string,
+      context?: TransitCryptoContext | string
+    ) => Effect.Effect<string, VaultTransitError>;
+    readonly rewrap: (
+      ciphertext: string,
+      context?: TransitCryptoContext | string
+    ) => Effect.Effect<string, VaultTransitError>;
   }
 >()("clawql/VaultTransitService") {}
 
@@ -208,8 +304,8 @@ export function createVaultTransitServiceLayer(
 ): Layer.Layer<VaultTransitService> {
   const provider = createVaultTransitProvider(options);
   return Layer.succeed(VaultTransitService, {
-    encrypt: (plaintext) => provider.encrypt(plaintext),
-    decrypt: (ciphertext) => provider.decrypt(ciphertext),
-    rewrap: (ciphertext) => provider.rewrap(ciphertext),
+    encrypt: (plaintext, context) => provider.encrypt(plaintext, context),
+    decrypt: (ciphertext, context) => provider.decrypt(ciphertext, context),
+    rewrap: (ciphertext, context) => provider.rewrap(ciphertext, context),
   });
 }
