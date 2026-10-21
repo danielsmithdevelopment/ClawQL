@@ -247,6 +247,7 @@ async function main() {
   const trials = [];
   let totalDuplicates = 0;
   let primary = "A";
+  const boardStarted = Date.now();
 
   const cleanup = () => {
     for (const n of Object.values(nodes)) {
@@ -328,19 +329,22 @@ async function main() {
       nodes[victim].pid = null;
     }
 
-    await sleep(1200);
+    // Overlap victim restart with peer resume (biggest wall-clock cost).
+    startNode(victim);
+    const postKillMs = Math.max(0, Number(process.env.FLEET_PHASED_POST_KILL_MS || 400));
+    await sleep(postKillMs);
     await waitNode(survivor);
 
     const resumeStart = Date.now();
     let resume;
-    for (let a = 0; a < 40; a++) {
+    for (let a = 0; a < 60; a++) {
       resume = await fetchJson(`${baseS}/program/resume`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ programId }),
       });
       if (resume.ok || resume.status !== 404) break;
-      await sleep(250);
+      await sleep(100);
     }
     const resumeMs = Date.now() - resumeStart;
 
@@ -397,14 +401,16 @@ async function main() {
       writesBefore,
     });
 
-    // Restart victim for next trial; flip primary
-    startNode(victim);
+    // Victim restart already kicked off after kill; wait before next trial.
     await waitNode(victim);
     primary = survivor;
 
-    if ((i + 1) % 25 === 0 || i === N - 1) {
+    if ((i + 1) % 10 === 0 || i === N - 1) {
+      const elapsedSec = (Date.now() - boardStarted) / 1000;
+      const rate = (i + 1) / Math.max(1, elapsedSec);
+      const etaMin = ((N - i - 1) / Math.max(0.01, rate) / 60).toFixed(1);
       console.log(
-        `fleet-phased: ${i + 1}/${N} duplicates=${totalDuplicates} last=${phase} ok=${expectOk} resumeMs=${resumeMs}`
+        `fleet-phased: ${i + 1}/${N} duplicates=${totalDuplicates} last=${phase} ok=${expectOk} resumeMs=${resumeMs} rate=${rate.toFixed(2)}/s eta=${etaMin}m`
       );
       writeEvidencePartial();
     }
