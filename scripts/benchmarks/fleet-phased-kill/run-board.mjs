@@ -340,35 +340,33 @@ async function main() {
     return child;
   }
 
-  async function waitNode(name) {
+  /**
+   * @param {string} name
+   * @param {{ requireProgram?: boolean, programAttempts?: number }} [opts]
+   */
+  async function waitNode(name, opts = {}) {
+    const requireProgram = opts.requireProgram !== false;
+    const programAttempts = opts.programAttempts ?? 180; // ~45s — match smoke wait_program
     const base = `http://127.0.0.1:${nodes[name].port}`;
-    // /health is the liveness gate. /program/health routes through ProgramCellDO and
-    // often 500s with DurableObjectRoutingError during ownership transfer / 409 peer
-    // tunnels — treat it as best-effort so availability work is counted, not wedged.
     await waitUrl(`${base}/health`, (r) => r.ok, 240, 250);
-    try {
-      await waitUrl(
-        `${base}/program/health`,
-        (r) => r.ok && /ProgramCellDO/.test(JSON.stringify(r.body)),
-        40,
-        250
-      );
-    } catch {
-      console.warn(
-        `fleet-phased: node ${name} /program/health unsettled (ownership race); proceeding on /health`
-      );
-    }
+    if (!requireProgram) return;
+    await waitUrl(
+      `${base}/program/health`,
+      (r) => r.ok && /ProgramCellDO/.test(JSON.stringify(r.body)),
+      programAttempts,
+      250
+    );
   }
 
   async function restartNode(name) {
     startNode(name);
     try {
-      await waitNode(name);
+      await waitNode(name, { requireProgram: true, programAttempts: 120 });
     } catch (err) {
       console.warn(`fleet-phased: waitNode(${name}) failed (${err.message}); retry once`);
       startNode(name);
-      await sleep(1000);
-      await waitNode(name);
+      await sleep(1500);
+      await waitNode(name, { requireProgram: true, programAttempts: 180 });
     }
   }
 
@@ -376,8 +374,9 @@ async function main() {
     console.warn("fleet-phased: rebuilding both nodes after ownership/ready stall");
     startNode("A");
     startNode("B");
-    await waitNode("A");
-    await waitNode("B");
+    await sleep(2000);
+    await waitNode("A", { requireProgram: true, programAttempts: 180 });
+    await waitNode("B", { requireProgram: true, programAttempts: 180 });
   }
 
   /**
@@ -414,8 +413,10 @@ async function main() {
   // never open ready_gate /program/health until a peer exists.
   startNode("A");
   startNode("B");
-  await waitNode("A");
-  await waitNode("B");
+  await sleep(2000);
+  await waitNode("A", { requireProgram: true, programAttempts: 180 });
+  await waitNode("B", { requireProgram: true, programAttempts: 180 });
+  console.log("fleet-phased: both nodes /health + /program/health ready");
 
   const phaseStats = emptyPhaseStats();
   const trials = [];
