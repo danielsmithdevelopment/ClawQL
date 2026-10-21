@@ -5,7 +5,7 @@ export const metadata = pageMetadata({
   title: 'Benchmarks',
   absoluteTitle: 'Benchmarks · ClawQL vs MCP gateways',
   description:
-    'Fair governance columns, a security suite beyond block lists (injection, approvals, secrets), and equal-arm Cloudflare / multi-gateway boards.',
+    'Durability crash boards (N=1000 fleet kill, zero duplicates), fair governance columns, a security suite beyond block lists, and equal-arm Cloudflare / multi-gateway boards.',
   path: '/benchmarks',
 })
 

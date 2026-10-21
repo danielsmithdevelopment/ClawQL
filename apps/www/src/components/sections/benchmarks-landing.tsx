@@ -23,9 +23,37 @@ import {
   dominanceRoadmapSummary,
 } from '@/lib/dominance-roadmap'
 import {
+  durabilityBenchmarkClaim,
+  durabilityBenchmarkHeadline,
+  durabilityBenchmarkLinks,
+  durabilityBenchmarkMeta,
+  durabilityBenchmarkSummary,
+  durabilityColumnChips,
+  durabilityComparisonArms,
+  durabilityHonestyNotes,
+  durabilityLadderRows,
+  durabilityPhaseFraming,
+  durabilityPhaseRows,
+  durabilityTtlRows,
+} from '@/lib/durability-benchmarks'
+import {
+  BENCHMARK_VIDEO_META,
+  BENCHMARK_VIDEO_SRC,
+  gatewayBenchmarkClaim,
+  gatewayBenchmarkHeadline,
+  gatewayBenchmarkHonesty,
+  gatewayBenchmarkLinks,
+  gatewayBenchmarkMeta,
+  gatewayBenchmarkSummary,
+  gatewayCompetitorColumns,
+  gatewayFeatureRows,
+  latencyScorecardRows,
+  tokenScorecardRows,
+} from '@/lib/gateway-benchmarks'
+import {
   governanceBenchmarkClaim,
-  governanceBenchmarkHonesty,
   governanceBenchmarkHeadline,
+  governanceBenchmarkHonesty,
   governanceBenchmarkLinks,
   governanceBenchmarkMeta,
   governanceBenchmarkSummary,
@@ -62,20 +90,6 @@ import {
   securitySuiteLinks,
   securitySuiteSummary,
 } from '@/lib/security-suite-roadmap'
-import {
-  BENCHMARK_VIDEO_META,
-  BENCHMARK_VIDEO_SRC,
-  gatewayBenchmarkClaim,
-  gatewayBenchmarkHeadline,
-  gatewayBenchmarkHonesty,
-  gatewayBenchmarkLinks,
-  gatewayBenchmarkMeta,
-  gatewayBenchmarkSummary,
-  gatewayCompetitorColumns,
-  gatewayFeatureRows,
-  latencyScorecardRows,
-  tokenScorecardRows,
-} from '@/lib/gateway-benchmarks'
 import { site } from '@/lib/site'
 import { clsx } from 'clsx/lite'
 import NextLink from 'next/link'
@@ -167,6 +181,18 @@ export function BenchmarksLanding() {
                 — fair defaults (tied at 2/5) · best-config · design cells next
               </span>
             </p>
+            <p className="text-sm/6 text-mist-800 dark:text-mist-200">
+              <a
+                href="#durability"
+                className="font-semibold text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
+              >
+                Durability
+              </a>
+              <span className="font-normal text-mist-600 dark:text-mist-400">
+                {' '}
+                — N=1000 fleet kill · 0 duplicates · ~12s failover · outcome unknown
+              </span>
+            </p>
             <p className="text-xs/6 text-mist-600 dark:text-mist-400">
               Jump:{' '}
               <a
@@ -181,6 +207,13 @@ export function BenchmarksLanding() {
                 className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
               >
                 security suite
+              </a>
+              {' · '}
+              <a
+                href="#durability"
+                className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
+              >
+                durability N=1000
               </a>
               {' · '}
               <a
@@ -285,9 +318,7 @@ export function BenchmarksLanding() {
         </div>
 
         <ComparisonTable minWidthClass="min-w-[1040px]">
-          <caption className="sr-only">
-            Governance policy-depth v2 scorecard: defaults vs best-config columns
-          </caption>
+          <caption className="sr-only">Governance policy-depth v2 scorecard: defaults vs best-config columns</caption>
           <thead>
             <tr>
               <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
@@ -395,8 +426,8 @@ export function BenchmarksLanding() {
           <p className="mt-2 max-w-3xl text-sm/6 text-mist-700 dark:text-mist-400">
             Pause cells use Executor&apos;s stock destructiveHint pause (fair default). The third cell is{' '}
             <strong className="font-medium text-mist-900 dark:text-mist-100">harness-driven</strong>{' '}
-            <code className="text-xs">resume accept</code> after poison — it simulates agent self-approval; it is
-            not Executor&apos;s out-of-box auto-approve. Configured ClawQL has no resume surface. Via{' '}
+            <code className="text-xs">resume accept</code> after poison — it simulates agent self-approval; it is not
+            Executor&apos;s out-of-box auto-approve. Configured ClawQL has no resume surface. Via{' '}
             <code className="text-xs">ci-executor-peer.sh</code>.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -407,7 +438,7 @@ export function BenchmarksLanding() {
               >
                 <div className="flex items-baseline justify-between gap-3">
                   <p className="text-sm font-semibold text-mist-950 dark:text-white">{cell.title}</p>
-                  <p className="shrink-0 text-xs font-medium tabular-nums text-mist-700 dark:text-mist-300">
+                  <p className="shrink-0 text-xs font-medium text-mist-700 tabular-nums dark:text-mist-300">
                     CQ {cell.clawqlScore}/{governanceBenchmarkMeta.maxScore}
                     {cell.executorScore === null
                       ? ''
@@ -425,8 +456,8 @@ export function BenchmarksLanding() {
             Design cells — where allowlists cannot tie
           </h3>
           <p className="mt-2 max-w-3xl text-sm/6 text-mist-700 dark:text-mist-400">
-            After best-config ties on a block list, these cells are the durable claim: people-bound approval,
-            argument digests, data-flow after untrusted reads, and capability identity beyond tool names.
+            After best-config ties on a block list, these cells are the durable claim: people-bound approval, argument
+            digests, data-flow after untrusted reads, and capability identity beyond tool names.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {governanceDesignCells.map((cell) => (
@@ -558,6 +589,217 @@ export function BenchmarksLanding() {
       </Section>
 
       <Section
+        id="durability"
+        className="pt-10 sm:pt-14"
+        eyebrow="Durability · program journal + at-most-once writes"
+        headline={durabilityBenchmarkHeadline}
+        subheadline={<p>{durabilityBenchmarkSummary}</p>}
+        cta={
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-medium text-mist-800 dark:text-mist-200">
+              {durabilityBenchmarkMeta.measuredLabel}{' '}
+              <span className="font-normal text-mist-600 dark:text-mist-400">
+                · {durabilityBenchmarkMeta.measuredAt} · {durabilityBenchmarkMeta.boardLabel}
+              </span>
+            </p>
+            <p className="max-w-3xl text-sm/6 text-mist-800 dark:text-mist-200">
+              <span className="font-medium text-mist-950 dark:text-white">Claim: </span>
+              {durabilityBenchmarkClaim}
+            </p>
+          </div>
+        }
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          {durabilityColumnChips.map((chip) => (
+            <div
+              key={chip.id}
+              className="rounded-lg bg-mist-950/[0.03] px-4 py-3 ring-1 ring-mist-950/8 dark:bg-white/[0.03] dark:ring-white/10"
+            >
+              <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">
+                {chip.title}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-mist-950 dark:text-white">{chip.value}</p>
+              <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">{chip.body}</p>
+            </div>
+          ))}
+        </div>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Outcome unknown by kill phase
+        </h3>
+        <p className="mt-2 max-w-3xl text-sm/6 text-mist-700 dark:text-mist-400">{durabilityPhaseFraming}</p>
+        <ComparisonTable minWidthClass="min-w-[720px]" className="mt-4">
+          <caption className="sr-only">Outcome unknown rate by kill phase on the N=1000 Tier C board</caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Kill phase</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>n</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Unknown</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Rate</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Note</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {durabilityPhaseRows.map((row) => (
+              <tr key={row.phase} className="border-t border-mist-950/10 dark:border-white/10">
+                <ComparisonRowTh className={clsx('text-left font-medium text-mist-950 dark:text-white')}>
+                  {row.phase}
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-right')}>{row.n}</ComparisonTd>
+                <ComparisonTd className={clsx('text-right')}>{row.outcomeUnknown}</ComparisonTd>
+                <ComparisonTd className={clsx('text-right')}>{row.rateLabel}</ComparisonTd>
+                <ComparisonTd className={clsx('text-left text-mist-700 dark:text-mist-400')}>{row.note}</ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Proof ladder
+        </h3>
+        <ComparisonTable minWidthClass="min-w-[800px]" className="mt-4">
+          <caption className="sr-only">Durability proof ladder tiers and status</caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Tier</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Name</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Status</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Detail</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {durabilityLadderRows.map((row) => (
+              <tr key={row.tier} className="border-t border-mist-950/10 dark:border-white/10">
+                <ComparisonRowTh className={clsx('font-semibold text-mist-950 dark:text-white')}>
+                  {row.tier}
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-left')}>{row.name}</ComparisonTd>
+                <ComparisonTd className={clsx('text-left')}>
+                  <span
+                    className={clsx(
+                      'inline-flex rounded-md px-2 py-1 text-xs font-medium',
+                      row.status === 'measured'
+                        ? 'bg-mist-950/8 text-mist-900 dark:bg-white/10 dark:text-mist-100'
+                        : row.status === 'planned'
+                          ? 'bg-amber-500/10 text-amber-900 dark:bg-amber-400/15 dark:text-amber-100'
+                          : 'bg-mist-950/4 text-mist-600 dark:bg-white/5 dark:text-mist-400',
+                    )}
+                  >
+                    {row.statusLabel}
+                  </span>
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-left text-mist-700 dark:text-mist-400')}>{row.detail}</ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          TTL / failover rows
+        </h3>
+        <ComparisonTable minWidthClass="min-w-[800px]" className="mt-4">
+          <caption className="sr-only">Stock vs TTL-only vs preferred production durability rows</caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Row</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Status</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>n</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Dups</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Failover</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Note</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {durabilityTtlRows.map((row) => (
+              <tr key={row.id} className="border-t border-mist-950/10 dark:border-white/10">
+                <ComparisonRowTh className={clsx('text-left font-medium text-mist-950 dark:text-white')}>
+                  {row.label}
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-left')}>
+                  <span
+                    className={clsx(
+                      'inline-flex rounded-md px-2 py-1 text-xs font-medium',
+                      row.status === 'measured'
+                        ? 'bg-mist-950/8 text-mist-900 dark:bg-white/10 dark:text-mist-100'
+                        : 'bg-amber-500/10 text-amber-900 dark:bg-amber-400/15 dark:text-amber-100',
+                    )}
+                  >
+                    {row.status}
+                  </span>
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right')}>{row.nLabel}</ComparisonTd>
+                <ComparisonTd className={clsx('text-right')}>
+                  {row.duplicates == null ? '—' : row.duplicates}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-right')}>
+                  {row.failoverAboutSec == null ? '—' : `~${row.failoverAboutSec}s`}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-left text-mist-700 dark:text-mist-400')}>{row.note}</ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Dual-column comparison (ClawQL arms)
+        </h3>
+        <ComparisonTable minWidthClass="min-w-[800px]" className="mt-4">
+          <caption className="sr-only">Kill-mid-write duplicates and outcome_unknown by upstream mode</caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Status</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Idempotent upstream</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Non-idempotent upstream</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {durabilityComparisonArms.map((row) => (
+              <tr key={row.arm} className="border-t border-mist-950/10 dark:border-white/10">
+                <ComparisonRowTh className={clsx('text-left font-medium text-mist-950 dark:text-white')}>
+                  {row.arm}
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-left')}>{row.status}</ComparisonTd>
+                <ComparisonTd className={clsx('text-left text-mist-700 dark:text-mist-400')}>
+                  {row.idempotent}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-left text-mist-700 dark:text-mist-400')}>
+                  {row.nonIdempotent}
+                </ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
+
+        <div className="mt-10 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {durabilityHonestyNotes.map((note) => (
+            <div key={note.title} className="flex flex-col gap-2 rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
+              <h3 className="text-base font-semibold text-mist-950 dark:text-white">{note.title}</h3>
+              <p className="text-sm/7 text-mist-700 dark:text-mist-400">{note.body}</p>
+            </div>
+          ))}
+        </div>
+
+        <ul className="mt-8 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
+          {durabilityBenchmarkLinks.map((link) => (
+            <li key={link.href}>
+              <a
+                href={link.href}
+                className="text-sm font-medium text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
+              >
+                {link.label}
+              </a>
+              <span className="ml-2 text-xs text-mist-600 dark:text-mist-500">{link.detail}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
+          Artifacts: {durabilityBenchmarkMeta.artifactPhased} · {durabilityBenchmarkMeta.artifactKillMid} ·{' '}
+          {durabilityBenchmarkMeta.artifactComparison} · {durabilityBenchmarkMeta.statusDoc}
+        </p>
+      </Section>
+
+      <Section
         id="multi-attack"
         className="pt-10 sm:pt-14"
         eyebrow="Build-first #1 · smoke"
@@ -567,9 +809,7 @@ export function BenchmarksLanding() {
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium text-mist-800 dark:text-mist-200">
               {multiAttackMeta.measuredAt}{' '}
-              <span className="font-normal text-mist-600 dark:text-mist-400">
-                · {multiAttackMeta.boardLabel}
-              </span>
+              <span className="font-normal text-mist-600 dark:text-mist-400">· {multiAttackMeta.boardLabel}</span>
             </p>
             <p className="max-w-2xl text-sm/6 text-mist-800 dark:text-mist-200">
               <span className="font-medium text-mist-950 dark:text-white">Headline: </span>
@@ -600,9 +840,7 @@ export function BenchmarksLanding() {
           Smoke scorecard · n=12 · scripted worst-case
         </h3>
         <ComparisonTable minWidthClass="min-w-[720px]" className="mt-4">
-          <caption className="sr-only">
-            Multi-attack injection smoke: effectuated over planted by arm
-          </caption>
+          <caption className="sr-only">Multi-attack injection smoke: effectuated over planted by arm</caption>
           <thead>
             <tr>
               <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
@@ -646,9 +884,7 @@ export function BenchmarksLanding() {
             ))}
           </tbody>
         </ComparisonTable>
-        <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
-          Artifact: {multiAttackMeta.artifact}
-        </p>
+        <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">Artifact: {multiAttackMeta.artifact}</p>
       </Section>
 
       <Section
@@ -676,9 +912,7 @@ export function BenchmarksLanding() {
           Scorecard · evade attempts → effectuated · adapt · utility
         </h3>
         <ComparisonTable minWidthClass="min-w-[720px]" className="mt-4">
-          <caption className="sr-only">
-            Harness² adversarial gate step 1: evade, adapt, and utility by arm
-          </caption>
+          <caption className="sr-only">Harness² adversarial gate step 1: evade, adapt, and utility by arm</caption>
           <thead>
             <tr>
               <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
@@ -717,10 +951,10 @@ export function BenchmarksLanding() {
                 >
                   {row.evade}
                 </ComparisonTd>
-                <ComparisonTd className={clsx('text-right tabular-nums text-mist-800 dark:text-mist-200')}>
+                <ComparisonTd className={clsx('text-right text-mist-800 tabular-nums dark:text-mist-200')}>
                   {row.adaptSucceeded}
                 </ComparisonTd>
-                <ComparisonTd className={clsx('text-right tabular-nums text-mist-800 dark:text-mist-200')}>
+                <ComparisonTd className={clsx('text-right text-mist-800 tabular-nums dark:text-mist-200')}>
                   {row.utility}
                 </ComparisonTd>
                 <ComparisonTd className={clsx('text-xs/5 text-mist-600 dark:text-mist-400')}>{row.note}</ComparisonTd>
@@ -1259,13 +1493,13 @@ export function BenchmarksLanding() {
                     {row.statusLabel}
                   </span>
                 </ComparisonTd>
-                <ComparisonTd className={clsx('align-top text-left text-mist-700 dark:text-mist-400')}>
+                <ComparisonTd className={clsx('text-left align-top text-mist-700 dark:text-mist-400')}>
                   {row.whyItMatters}
                 </ComparisonTd>
-                <ComparisonTd className={clsx('align-top text-left text-mist-700 dark:text-mist-400')}>
+                <ComparisonTd className={clsx('text-left align-top text-mist-700 dark:text-mist-400')}>
                   {row.criteriaToBeat}
                 </ComparisonTd>
-                <ComparisonTd className={clsx('align-top text-left text-mist-700 dark:text-mist-400')}>
+                <ComparisonTd className={clsx('text-left align-top text-mist-700 dark:text-mist-400')}>
                   {row.howToProve}
                 </ComparisonTd>
               </tr>

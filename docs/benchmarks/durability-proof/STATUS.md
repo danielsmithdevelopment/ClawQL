@@ -2,7 +2,7 @@
 
 **Goal:** Earn a defensible claim that **journaled programs survive SIGKILL without repeating writes**, plus the twin claim that **approved writes are at most once** under crash races — without claiming ClawQL is a durable execution engine ([Golem honesty](../../gtm/golem-overlap-and-durability-honesty.md)).
 
-**Live marketing:** clawql.com/benchmarks can say **Lab Yes · fleet Yes (R2 peer kill)** for program journal; still not a durable execution engine. Peer boards vs Pi Durable / Golem wait on maintainer invite.
+**Live marketing:** [clawql.com/benchmarks#durability](https://clawql.com/benchmarks#durability) publishes the measured Tier C claim, per-phase table, three columns, and ladder. Chip elsewhere: **Lab Yes · fleet Yes (R2 peer kill)**. Still not a durable execution engine. Peer boards vs Pi Durable / Golem wait on maintainer invite.
 
 ## Scoped Tier C claim (measured — stock R2)
 

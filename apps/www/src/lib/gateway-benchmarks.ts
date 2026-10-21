@@ -80,12 +80,7 @@ export const gatewayBenchmarkClaim =
   'Fewest I/O tokens among measured MCP aggregators and live Executor (v1 and v2 β), same harness, equal task success.'
 export type GatewayCompetitorColumn = 'ClawQL' | 'Executor' | 'MCPJungle' | 'agentgateway'
 
-export const gatewayCompetitorColumns: GatewayCompetitorColumn[] = [
-  'ClawQL',
-  'Executor',
-  'MCPJungle',
-  'agentgateway',
-]
+export const gatewayCompetitorColumns: GatewayCompetitorColumn[] = ['ClawQL', 'Executor', 'MCPJungle', 'agentgateway']
 
 export type GatewayFeatureRow = {
   feature: string
@@ -458,6 +453,11 @@ export const gatewayBenchmarkLinks = [
     label: 'Fail-closed security (governance)',
     href: '/benchmarks/#governance',
     detail: 'Panguard vault-write deny — ClawQL 5/5 vs Obot 2/5 on equal-arm fixture',
+  },
+  {
+    label: 'Durability · crash boards',
+    href: '/benchmarks/#durability',
+    detail: 'N=1000 fleet kill · 0 duplicates · outcome unknown · ~12s failover',
   },
   {
     label: 'Dominance roadmap',

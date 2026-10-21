@@ -68,8 +68,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     id: 'cloudflare-code-mode',
     name: 'Cloudflare Code Mode',
     whyItMatters: 'Entire ~2.5k-endpoint API in ~1k tokens via code execution.',
-    criteriaToBeat:
-      'Known-ops / filtered path tokens on realistic zone-audit style workflow; real-model turns.',
+    criteriaToBeat: 'Known-ops / filtered path tokens on realistic zone-audit style workflow; real-model turns.',
     howToProve:
       'Replay identical Cloudflare fixture; report weighted tokens + turns; show ClawQL known-ops or program mode still lower.',
     status: 'partial',
@@ -127,10 +126,8 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     name: 'Executor (v1/v2)',
     whyItMatters:
       'Closest prior peer; sandbox code execution; per-tool approvals + MCP proxy (Gmail wrappers) — already on published boards.',
-    criteriaToBeat:
-      'Token lead + governance cells: risky-write approval/deny + untrusted-read→hostile follow-up.',
-    howToProve:
-      'Tokens: re-pin latest. Governance: ci-executor-peer.sh → results-cells.json.',
+    criteriaToBeat: 'Token lead + governance cells: risky-write approval/deny + untrusted-read→hostile follow-up.',
+    howToProve: 'Tokens: re-pin latest. Governance: ci-executor-peer.sh → results-cells.json.',
     status: 'measured',
     statusLabel: 'Tokens + cells · resume dominance',
     nextStep:
@@ -140,15 +137,14 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     id: 'celld-durability',
     name: 'celld program journal (ProgramCellDO)',
     whyItMatters:
-      'Journaled program resume on celld — see docs/benchmarks/durability-proof/STATUS.md. Not a durable execution engine.',
+      'Journaled program resume on celld — public numbers on /benchmarks#durability. Not a durable execution engine.',
     criteriaToBeat:
       'Tiers A/B/D CI-gated; Tier C two-node R2 peer kill + phased board (never repeated a write; in-flight → outcome unknown).',
-    howToProve:
-      'Publish evidence under docs/benchmarks/durability-proof/STATUS.md and program-cell-fleet-kill/. Avoid “exactly once.”',
+    howToProve: 'Publish on /benchmarks#durability + docs/benchmarks/durability-proof/. Avoid “exactly once.”',
     status: 'partial',
     statusLabel: 'Lab Yes · fleet Yes (R2)',
     nextStep:
-      'Tiers A/B/C/D measured (C = R2 two-node peer kill + phased kills). Dual-column ClawQL arms; Pi Durable/Golem pending invite. Not durable execution. Hot-path A/B 10k PASS.',
+      'Public: /benchmarks#durability (N=1000, 0 dups, ~12s). Dual-column ClawQL arms; Pi Durable/Golem pending invite. Not durable execution.',
   },
 ] as const
 
