@@ -23,8 +23,7 @@ export type GovernanceScorecardRow = {
   note?: string
 }
 
-export const governanceBenchmarkHeadline =
-  'Fail-closed vault writes — fair columns, then design cells'
+export const governanceBenchmarkHeadline = 'Fail-closed vault writes — fair columns, then design cells'
 
 export const governanceBenchmarkSummary =
   'We stopped claiming a lead from “ClawQL with a deny rule vs peers on defaults.” v2 measures two columns on the same OVERRIDE fixture: defaults (no tool-specific deny) and best-config (each product’s recommended deny). Tool-name blocklists are expected to tie once configured. Category lead is reserved for design cells allowlists cannot express.'
@@ -106,8 +105,7 @@ export const governanceExecutorCells: readonly GovernanceCellRow[] = [
     passthroughScore: 2,
     executorScore: 5,
     executorStatus: 'measured',
-    detail:
-      'Poison returns; configured ClawQL still deny; Executor pause. Passthrough contaminates.',
+    detail: 'Poison returns; configured ClawQL still deny; Executor pause. Passthrough contaminates.',
   },
   {
     id: 'resume_auto_approve',
@@ -316,6 +314,11 @@ export const governanceBenchmarkLinks = [
     label: 'Executor cells',
     href: 'https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/governance-policy-depth/results-cells.json',
     detail: 'Pause + harness resume probe',
+  },
+  {
+    label: 'Durability boards',
+    href: '/benchmarks/#durability',
+    detail: 'N=1000 fleet kill · 0 duplicates · ~12s failover',
   },
   {
     label: 'Security suite roadmap',

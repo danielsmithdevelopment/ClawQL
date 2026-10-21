@@ -117,12 +117,18 @@ jobs:
           STREAMS_CELLD_SMOKE_REQUIRED: "1"
         run: bash docs/examples/streams-celld/scripts/smoke-program-cell-kill.sh
 
+      - name: ProgramCellDO fleet peer kill (Tier C soft-skip without bucket)
+        # Measures only when CELLD_BUCKET + conforming store; otherwise writes not_measured evidence.
+        run: bash docs/examples/streams-celld/scripts/smoke-program-cell-fleet-kill.sh
+
       - name: Upload ProgramCellDO kill evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: program-cell-isolate-kill-evidence
-          path: docs/benchmarks/program-cell-isolate-kill/evidence.json
+          path: |
+            docs/benchmarks/program-cell-isolate-kill/evidence.json
+            docs/benchmarks/program-cell-fleet-kill/evidence.json
           if-no-files-found: warn
 
   streams-celld-full-stack:

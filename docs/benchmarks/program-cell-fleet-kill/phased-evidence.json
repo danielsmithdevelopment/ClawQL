@@ -1,0 +1,777 @@
+{
+  "kind": "celld-fleet-phased-kill",
+  "measuredAt": "2026-10-21T11:34:59.165Z",
+  "ok": false,
+  "status": "measured",
+  "n": 1000,
+  "nodeCount": 2,
+  "storageProvider": "cloudflare-r2",
+  "bucketRedacted": true,
+  "diagnoseConditionalWrite": "ok",
+  "celldTtlMs": 10000,
+  "resumeDeadlineMs": 60000,
+  "columns": {
+    "duplicates": {
+      "total": 0,
+      "zeroDuplicates": true,
+      "ruleOfThreeUpperBound95": 0.003,
+      "meaning": "safety — never repeated a write"
+    },
+    "outcomeUnknown": {
+      "total": 481,
+      "rate": 0.481,
+      "meaning": "honest uncertainty — person resolves"
+    },
+    "availability": {
+      "survivorSelfFences": 6,
+      "survivorSelfFenceRate": 0.006,
+      "survivorRestarts": 2,
+      "resumeDeadlineMisses": 9,
+      "recoveryMs": {
+        "n": 2,
+        "p50": 4455,
+        "p95": 11701,
+        "p99": 11701
+      },
+      "meaning": "availability — lease self-fence + orchestrator restart counted; recovery folded into resumeMs"
+    }
+  },
+  "totalDuplicates": 0,
+  "zeroDuplicates": true,
+  "ruleOfThreeUpperBound95": 0.003,
+  "totalSurvivorSelfFences": 6,
+  "totalSurvivorRestarts": 2,
+  "totalResumeDeadlineMisses": 9,
+  "claim": "Across 1000 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under stock settings, 0.6% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline.",
+  "honesty": "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Three columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md. N=1000: zeroDuplicates with rule-of-three upper bound 0.3%; survivorSelfFences=6; resumeDeadlineMisses=9.",
+  "resumeMs": {
+    "p50": 11908,
+    "p95": 13316,
+    "p99": 34292,
+    "p999": 421439,
+    "includesSurvivorRecovery": true
+  },
+  "lease": {
+    "celldTtlMs": 10000,
+    "renewSamples": 0,
+    "renewElapsedMs": {
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "renewPriorHeadroomMs": {
+      "p50": null,
+      "min": null
+    },
+    "selfFenceLogHits": 0,
+    "note": "Renewals should complete with headroom ≫ R2 RTT. Stock CELLD_TTL_MS=10000 renews near ~6665ms headroom; slow renew cycles under peer-down storms can fence. See AVAILABILITY.md."
+  },
+  "byPhase": {
+    "before_intent": {
+      "n": 252,
+      "ok": 242,
+      "failures": 10,
+      "duplicates": 0,
+      "outcomeUnknown": 0,
+      "outcomeUnknownRate": 0,
+      "completedClean": 242,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 3,
+      "resumeMs": {
+        "p50": 12173,
+        "p95": 13213,
+        "p99": 278167,
+        "p999": 318451
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    },
+    "after_intent_before_call": {
+      "n": 248,
+      "ok": 240,
+      "failures": 8,
+      "duplicates": 0,
+      "outcomeUnknown": 240,
+      "outcomeUnknownRate": 0.967741935483871,
+      "completedClean": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 1,
+      "resumeMs": {
+        "p50": 12073,
+        "p95": 13372,
+        "p99": 16083,
+        "p999": 298765
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    },
+    "during_call": {
+      "n": 251,
+      "ok": 241,
+      "failures": 10,
+      "duplicates": 0,
+      "outcomeUnknown": 241,
+      "outcomeUnknownRate": 0.9601593625498008,
+      "completedClean": 0,
+      "survivorSelfFences": 2,
+      "survivorSelfFenceRate": 0.00796812749003984,
+      "survivorRestarts": 2,
+      "resumeDeadlineMisses": 3,
+      "resumeMs": {
+        "p50": 9184,
+        "p95": 10529,
+        "p99": 280795,
+        "p999": 295426
+      },
+      "recoveryMs": {
+        "n": 2,
+        "p50": 4455,
+        "p95": 11701,
+        "p99": 11701
+      }
+    },
+    "after_call_before_journal": {
+      "n": 249,
+      "ok": 242,
+      "failures": 7,
+      "duplicates": 0,
+      "outcomeUnknown": 0,
+      "outcomeUnknownRate": 0,
+      "completedClean": 242,
+      "survivorSelfFences": 4,
+      "survivorSelfFenceRate": 0.01606425702811245,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 2,
+      "resumeMs": {
+        "p50": 12468,
+        "p95": 13644,
+        "p99": 16493,
+        "p999": 421439
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    }
+  },
+  "trialFailures": [
+    {
+      "i": 70,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 2667,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "writesBefore": 0,
+      "resumeStatus": 404,
+      "resumeBodyStatus": null,
+      "resumeOk": false,
+      "resumeError": "not_found"
+    },
+    {
+      "i": 223,
+      "phase": "after_call_before_journal",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 1,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 421439,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 224,
+      "phase": "before_intent",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 225,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 279,
+      "phase": "after_call_before_journal",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 1,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 305698,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 280,
+      "phase": "before_intent",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 281,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 334,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 295426,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 335,
+      "phase": "after_call_before_journal",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 336,
+      "phase": "before_intent",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 389,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 441,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 442,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 8094,
+      "recoveryMs": 4455,
+      "survivorSelfFence": true,
+      "survivorRestart": true,
+      "resumeDeadlineMiss": false,
+      "writesBefore": 0,
+      "resumeStatus": 404,
+      "resumeBodyStatus": null,
+      "resumeOk": false,
+      "resumeError": "not_found"
+    },
+    {
+      "i": 493,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 298765,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 494,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 2464,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "writesBefore": 0,
+      "resumeStatus": 404,
+      "resumeBodyStatus": null,
+      "resumeOk": false,
+      "resumeError": "not_found"
+    },
+    {
+      "i": 550,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 2947,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "writesBefore": 0,
+      "resumeStatus": 404,
+      "resumeBodyStatus": null,
+      "resumeOk": false,
+      "resumeError": "not_found"
+    },
+    {
+      "i": 606,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 280795,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 607,
+      "phase": "after_call_before_journal",
+      "ok": false,
+      "detail": "pause failed: {\"raw\":\"Worker failed: rejected: DurableObjectRoutingError: The Durable Object owner is currently unreachable [at __dura"
+    },
+    {
+      "i": 608,
+      "phase": "before_intent",
+      "ok": false,
+      "detail": "pause failed: {\"raw\":\"Worker failed: rejected: DurableObjectRoutingError: The Durable Object owner is currently unreachable [at __dura"
+    },
+    {
+      "i": 609,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "detail": "pause failed: {\"raw\":\"Worker failed: rejected: DurableObjectRoutingError: The Durable Object owner is currently unreachable [at __dura"
+    },
+    {
+      "i": 610,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 33500,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "writesBefore": 0,
+      "resumeStatus": 404,
+      "resumeBodyStatus": null,
+      "resumeOk": false,
+      "resumeError": "not_found"
+    },
+    {
+      "i": 664,
+      "phase": "before_intent",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 291898,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 665,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 666,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 2579,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "writesBefore": 0,
+      "resumeStatus": 404,
+      "resumeBodyStatus": null,
+      "resumeOk": false,
+      "resumeError": "not_found"
+    },
+    {
+      "i": 722,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 283143,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 723,
+      "phase": "after_call_before_journal",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 724,
+      "phase": "before_intent",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 780,
+      "phase": "before_intent",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 278167,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 781,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 782,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 2597,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "writesBefore": 0,
+      "resumeStatus": 404,
+      "resumeBodyStatus": null,
+      "resumeOk": false,
+      "resumeError": "not_found"
+    },
+    {
+      "i": 837,
+      "phase": "before_intent",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "resumeMs": 318451,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 838,
+      "phase": "after_call_before_journal",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 839,
+      "phase": "before_intent",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 896,
+      "phase": "before_intent",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 952,
+      "phase": "after_call_before_journal",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    }
+  ],
+  "availabilityIncidents": [
+    {
+      "i": 114,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": true,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 34292,
+      "recoveryMs": 11701,
+      "ok": true
+    },
+    {
+      "i": 223,
+      "phase": "after_call_before_journal",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 421439,
+      "recoveryMs": 0,
+      "ok": false
+    },
+    {
+      "i": 279,
+      "phase": "after_call_before_journal",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 305698,
+      "recoveryMs": 0,
+      "ok": false
+    },
+    {
+      "i": 334,
+      "phase": "during_call",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 295426,
+      "recoveryMs": 0,
+      "ok": false
+    },
+    {
+      "i": 442,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": true,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 8094,
+      "recoveryMs": 4455,
+      "ok": false
+    },
+    {
+      "i": 443,
+      "phase": "after_call_before_journal",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 12839,
+      "recoveryMs": 0,
+      "ok": true
+    },
+    {
+      "i": 493,
+      "phase": "after_intent_before_call",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 298765,
+      "recoveryMs": 0,
+      "ok": false
+    },
+    {
+      "i": 606,
+      "phase": "during_call",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 280795,
+      "recoveryMs": 0,
+      "ok": false
+    },
+    {
+      "i": 611,
+      "phase": "after_call_before_journal",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 12726,
+      "recoveryMs": 0,
+      "ok": true
+    },
+    {
+      "i": 664,
+      "phase": "before_intent",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 291898,
+      "recoveryMs": 0,
+      "ok": false
+    },
+    {
+      "i": 667,
+      "phase": "after_call_before_journal",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 8784,
+      "recoveryMs": 0,
+      "ok": true
+    },
+    {
+      "i": 722,
+      "phase": "during_call",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 283143,
+      "recoveryMs": 0,
+      "ok": false
+    },
+    {
+      "i": 780,
+      "phase": "before_intent",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 278167,
+      "recoveryMs": 0,
+      "ok": false
+    },
+    {
+      "i": 783,
+      "phase": "after_call_before_journal",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10441,
+      "recoveryMs": 0,
+      "ok": true
+    },
+    {
+      "i": 837,
+      "phase": "before_intent",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 318451,
+      "recoveryMs": 0,
+      "ok": false
+    }
+  ],
+  "failoverAboutSec": 12,
+  "boardOk": false,
+  "outcomeUnknownFraming": {
+    "note": "Aggregate ~48% is a design artifact of even phase targeting; two of four phases are the in-flight window where unknown is the only honest answer. In real operation, crashes mostly land outside that brief window, so unknown outcomes are far rarer than this targeted test shows. Nonzero rate on outer phases is a bug, not a number to explain.",
+    "byPhase": {
+      "before_intent": {
+        "label": "Before the approval is consumed",
+        "n": 252,
+        "outcomeUnknown": 0,
+        "outcomeUnknownRate": 0,
+        "expect": 0
+      },
+      "after_intent_before_call": {
+        "label": "After intent recorded",
+        "n": 248,
+        "outcomeUnknown": 240,
+        "outcomeUnknownRate": 0.967741935483871
+      },
+      "during_call": {
+        "label": "During the call",
+        "n": 251,
+        "outcomeUnknown": 241,
+        "outcomeUnknownRate": 0.9601593625498008
+      },
+      "after_call_before_journal": {
+        "label": "After the call, before journaling",
+        "n": 249,
+        "outcomeUnknown": 0,
+        "outcomeUnknownRate": 0,
+        "expect": 0
+      }
+    }
+  }
+}

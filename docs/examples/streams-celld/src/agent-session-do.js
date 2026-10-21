@@ -209,12 +209,22 @@ export class AgentSessionDO {
 
       const existing = await this.state.storage.get("session_meta");
       if (existing) {
-        return Response.json({
-          do: "AgentSessionDO",
-          idempotent: true,
-          session: existing,
-          core: { clawqlCore: "streams-slim", note: "idempotent wake — no re-audit" },
-        });
+        // Only short-circuit when start finished. A fence after session_meta put
+        // leaves an incomplete DO — clear and re-run so same-eventId retries work.
+        const startDone = await this.state.storage.get(`tool_calls:${existing.startedAt}`);
+        if (startDone) {
+          return Response.json({
+            do: "AgentSessionDO",
+            idempotent: true,
+            session: existing,
+            core: {
+              clawqlCore: "streams-slim",
+              package: "clawql-core/streams-slim",
+              note: "idempotent wake — no re-audit",
+            },
+          });
+        }
+        await this.state.storage.delete("session_meta");
       }
 
       const meta = {
@@ -272,26 +282,37 @@ export class AgentSessionDO {
         };
       }
 
-      try {
-        // Compliance trail: host clawql-audit (tip-load). Ring/LTX is bookkeeping only.
-        complianceWorm = await appendComplianceWorm(wormCfg, {
-          type: "SESSION_START",
-          sessionId: eventId,
-          agentName: "streams-celld-AgentSessionDO",
-          virtualKeyId,
-          cellId: doInstanceId,
-          metadata: {
-            subscriptionId,
-            eventId,
-            kind: "DO_CREATED",
-            source: "streams-celld",
-          },
-        });
-      } catch (err) {
-        complianceWorm = {
-          ok: false,
-          error: err instanceof Error ? err.message : String(err),
-        };
+      // Same-eventId retry after fence must not tip-extend twice (full-stack continuity).
+      const priorCompliance = await this.state.storage.get(
+        `compliance_session_start:${eventId}`
+      );
+      if (priorCompliance && priorCompliance.ok === true) {
+        complianceWorm = priorCompliance;
+      } else {
+        try {
+          // Compliance trail: host clawql-audit (tip-load). Ring/LTX is bookkeeping only.
+          complianceWorm = await appendComplianceWorm(wormCfg, {
+            type: "SESSION_START",
+            sessionId: eventId,
+            agentName: "streams-celld-AgentSessionDO",
+            virtualKeyId,
+            cellId: doInstanceId,
+            metadata: {
+              subscriptionId,
+              eventId,
+              kind: "DO_CREATED",
+              source: "streams-celld",
+            },
+          });
+          if (complianceWorm && complianceWorm.ok === true) {
+            await this.state.storage.put(`compliance_session_start:${eventId}`, complianceWorm);
+          }
+        } catch (err) {
+          complianceWorm = {
+            ok: false,
+            error: err instanceof Error ? err.message : String(err),
+          };
+        }
       }
 
       const complianceGate = requireComplianceWorm(wormCfg, complianceWorm);

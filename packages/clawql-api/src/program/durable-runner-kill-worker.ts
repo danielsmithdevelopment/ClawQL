@@ -4,6 +4,9 @@
  * Runs a sequential plan on a file journal and SIGKILLs itself inside the host call
  * for `KILL_AT_OPERATION`, after the calls before it are journaled. Every host call
  * is logged to `HOST_LOG` first, so the parent can count calls across processes.
+ *
+ * Optional `UPSTREAM_MODE=idempotent|non_idempotent` controls effect-id logging
+ * (JSON lines) for the durability comparison board.
  */
 
 import { appendFileSync } from "node:fs";
@@ -21,11 +24,36 @@ function required(name: string): string {
 const hostLog = required("HOST_LOG");
 const killAt = required("KILL_AT_OPERATION");
 const writes = new Set((process.env.WRITE_OPERATIONS ?? "").split(",").filter(Boolean));
+const upstreamMode = (process.env.UPSTREAM_MODE ?? "non_idempotent").trim();
+const seenIdem = new Set<string>();
+let onceCounter = 0;
+
+function logCall(operationId: string, args: Record<string, unknown> | undefined): void {
+  const isWrite = writes.has(operationId);
+  let effectId = operationId;
+  let applied = true;
+  if (isWrite) {
+    const key =
+      typeof args?.idempotencyKey === "string" ? args.idempotencyKey : `anon-${onceCounter + 1}`;
+    if (upstreamMode === "idempotent") {
+      effectId = `idem:${key}`;
+      if (seenIdem.has(effectId)) {
+        applied = false;
+      } else {
+        seenIdem.add(effectId);
+      }
+    } else {
+      onceCounter += 1;
+      effectId = `once:${onceCounter}`;
+    }
+  }
+  appendFileSync(hostLog, `${JSON.stringify({ operationId, effectId, applied })}\n`);
+}
 
 const host: ProgramHost = {
   execute: (input) =>
     Effect.sync(() => {
-      appendFileSync(hostLog, `${input.operationId}\n`);
+      logCall(input.operationId, input.args as Record<string, unknown> | undefined);
       if (input.operationId === killAt) process.kill(process.pid, "SIGKILL");
       const body = { ok: true, operationId: input.operationId, args: input.args };
       return { content: [{ type: "text" as const, text: JSON.stringify(body) }] };

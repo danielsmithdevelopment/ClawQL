@@ -1,0 +1,87 @@
+{
+  "kind": "celld-fleet-ttl-tradeoff",
+  "measuredAt": "2026-10-21T12:48:20.839Z",
+  "honesty": "TTL is the failover floor: resume p50 ≈ TTL + detection when ownership wait is included. Raising TTL alone cuts false fences but slows every crash recovery. production_preferred is planned (not a measured result) until run at the same sample size as stock — knobs (renew every ⅕ TTL + regional lease store) are not in celld 0.4.0. ttl_only_30s is a small-n tradeoff demo (label sample size), not the preferred sole tune. Not durable execution / exactly-once.",
+  "preferredProduction": {
+    "id": "production_preferred",
+    "label": "Preferred production (planned — not measured)",
+    "celldTtlMs": 10000,
+    "renewCadence": "every-1/5-TTL-with-slow-renew-retry",
+    "leaseStore": "regional-coordination (leases); program state may stay on R2",
+    "expectedFailoverAboutSec": 10,
+    "expectedVsStock": "Similar resume p50 to stock (same TTL); lower survivorSelfFenceRate once renew cadence / lease store land",
+    "status": "planned",
+    "targetSampleSize": 1000,
+    "notes": "Target, not a result. Do not publish as measured. Run at the same N as stock before claiming numbers. Do not ship CELLD_TTL_MS=30000 as the production answer."
+  },
+  "rows": [
+    {
+      "id": "stock_r2_ttl_10s",
+      "label": "Stock — CELLD_TTL_MS=10000, leases on R2, renew ~⅓ TTL",
+      "status": "measured",
+      "measuredAt": "2026-10-21T11:34:59.165Z",
+      "n": 1000,
+      "targetN": 1000,
+      "celldTtlMs": 10000,
+      "storageProvider": "cloudflare-r2",
+      "renewCadence": "celld-default-~1/3-TTL",
+      "leaseStore": "cloudflare-r2",
+      "columns": {
+        "duplicates": 0,
+        "zeroDuplicates": true,
+        "ruleOfThreeUpperBound95": 0.003,
+        "outcomeUnknownTotal": 481,
+        "outcomeUnknownRate": 0.481,
+        "survivorSelfFences": 6,
+        "survivorSelfFenceRate": 0.006,
+        "survivorRestarts": 2,
+        "resumeDeadlineMisses": 9
+      },
+      "resumeMs": {
+        "p50": 11908,
+        "p95": 13316,
+        "p99": 34292,
+        "p999": 421439,
+        "includesSurvivorRecovery": true
+      },
+      "failoverAboutSec": 12,
+      "claim": "Across 1000 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under stock settings, 0.6% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline.",
+      "sampleSizeNote": null,
+      "notes": "Failover floor ≈ 10s; measured resume p50 includes ownership wait."
+    },
+    {
+      "id": "ttl_only_30s",
+      "label": "TTL-only stretch — CELLD_TTL_MS=30000, same renew fraction, R2 (n=40)",
+      "status": "measured",
+      "measuredAt": "2026-10-21T06:35:55.677Z",
+      "n": 40,
+      "targetN": 40,
+      "celldTtlMs": 30000,
+      "storageProvider": "cloudflare-r2",
+      "renewCadence": "celld-default-~1/3-TTL",
+      "leaseStore": "cloudflare-r2",
+      "columns": {
+        "duplicates": 0,
+        "zeroDuplicates": true,
+        "ruleOfThreeUpperBound95": 0.075,
+        "outcomeUnknownTotal": 22,
+        "outcomeUnknownRate": 0.55,
+        "survivorSelfFences": 0,
+        "survivorSelfFenceRate": 0,
+        "survivorRestarts": 0,
+        "resumeDeadlineMisses": 0
+      },
+      "resumeMs": {
+        "p50": 31939,
+        "p95": 32814,
+        "p99": 46488,
+        "p999": 46488,
+        "includesSurvivorRecovery": true
+      },
+      "failoverAboutSec": 32,
+      "claim": "Programs survive a node crash, resuming on another node in about 32 seconds, with no repeated writes; a write interrupted in flight is marked outcome unknown for a person to resolve.",
+      "sampleSizeNote": "Small sample (n=40) — label n when publishing; not comparable to stock N=1000.",
+      "notes": "Tradeoff demo at small sample (n=40). Expect fewer false fences, slower failover (~30s). Not the preferred sole production lever. Label n when publishing."
+    }
+  ]
+}

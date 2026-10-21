@@ -16,6 +16,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Effect } from "effect";
 import { resumeProgramEffect } from "./durable-runner.js";
+import { hostLogOperationIds } from "./host-log.js";
 import { programJournalFileLayer } from "./program-journal.js";
 import type { ProgramHost } from "./program-runner.js";
 
@@ -121,7 +122,9 @@ async function oneTrial(i: number): Promise<KillMidWriteTrial> {
       KILL_AT_OPERATION: WRITE_OP,
       WRITE_OPERATIONS: WRITE_OP,
     });
-    const before = (await readFile(hostLog, "utf8")).trim().split("\n").filter(Boolean);
+    const before = [
+      ...(await Effect.runPromise(hostLogOperationIds(await readFile(hostLog, "utf8")))),
+    ];
     const parent = recordingHost();
     const resumed = await Effect.runPromise(
       resumeProgramEffect(programId, parent.host, {}, { sessionId }).pipe(

@@ -9,9 +9,13 @@ on:
       - "packages/clawql-api/src/program/**"
       - "scripts/program/**"
       - "scripts/benchmarks/kill-mid-write/**"
+      - "scripts/benchmarks/durability-comparison/**"
+      - "scripts/benchmarks/fleet-phased-kill/**"
+      - "scripts/benchmarks/check-evidence-no-secrets.mjs"
       - "docs/benchmarks/program-kill-node-standin/**"
       - "docs/benchmarks/security-suite/kill-mid-write/**"
       - "docs/benchmarks/durability-proof/**"
+      - "docs/benchmarks/program-cell-fleet-kill/**"
       - ".github/workflows/program-durability.yml"
   push:
     branches: [main]
@@ -19,9 +23,13 @@ on:
       - "packages/clawql-api/src/program/**"
       - "scripts/program/**"
       - "scripts/benchmarks/kill-mid-write/**"
+      - "scripts/benchmarks/durability-comparison/**"
+      - "scripts/benchmarks/fleet-phased-kill/**"
+      - "scripts/benchmarks/check-evidence-no-secrets.mjs"
       - "docs/benchmarks/program-kill-node-standin/**"
       - "docs/benchmarks/security-suite/kill-mid-write/**"
       - "docs/benchmarks/durability-proof/**"
+      - "docs/benchmarks/program-cell-fleet-kill/**"
       - ".github/workflows/program-durability.yml"
   workflow_dispatch:
 
@@ -63,6 +71,16 @@ jobs:
           KILL_MID_WRITE_N: "50"
         run: npm run benchmark:kill-mid-write
 
+      - name: Durability comparison board (dual columns, N=20)
+        env:
+          DURABILITY_COMPARISON_N: "20"
+        run: npm run benchmark:durability-comparison
+
+      - name: Evidence must not contain credentials
+        run: |
+          node scripts/benchmarks/check-evidence-no-secrets.mjs --self-test
+          npm run check:evidence-no-secrets
+
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -71,4 +89,7 @@ jobs:
           path: |
             docs/benchmarks/program-kill-node-standin/evidence.json
             docs/benchmarks/security-suite/kill-mid-write/evidence.json
+            docs/benchmarks/durability-proof/comparison/evidence.json
+            docs/benchmarks/program-cell-fleet-kill/evidence.json
+            docs/benchmarks/program-cell-fleet-kill/phased-evidence.json
           if-no-files-found: warn

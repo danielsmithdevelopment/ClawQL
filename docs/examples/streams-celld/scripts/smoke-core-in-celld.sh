@@ -66,10 +66,41 @@ for _ in $(seq 1 40); do
 done
 [[ "$ready" == "1" ]] || { echo "smoke-core-in-celld: FAIL — health never ready" >&2; exit 1; }
 
+# Smoke cfg write triggers watcher rebuilds — wait until /health + /core/health stay up.
+stable=0
+for _ in $(seq 1 40); do
+  if ! kill -0 "$PID" 2>/dev/null; then
+    echo "smoke-core-in-celld: FAIL — celld exited during settle" >&2
+    exit 1
+  fi
+  if curl -sf "$BASE/health" >/dev/null 2>&1 && curl -sf "$BASE/core/health" >/dev/null 2>&1; then
+    stable=$((stable + 1))
+    if [[ "$stable" -ge 3 ]]; then
+      break
+    fi
+  else
+    stable=0
+  fi
+  sleep 1
+done
+[[ "$stable" -ge 3 ]] || { echo "smoke-core-in-celld: FAIL — health never settled" >&2; exit 1; }
+
 curl -sf "$BASE/core/health" | tee /tmp/core-tools-health.json | grep -q CoreToolsDO
 
+curl_retry() {
+  local out="" i=0
+  for i in $(seq 1 8); do
+    if out=$(curl -sf "$@" 2>/dev/null); then
+      printf '%s' "$out"
+      return 0
+    fi
+    sleep 1
+  done
+  return 22
+}
+
 # Direct MCP tools/call into the isolate
-SEARCH=$(curl -sf -X POST "$BASE/mcp" \
+SEARCH=$(curl_retry -X POST "$BASE/mcp" \
   -H 'content-type: application/json' \
   -H 'accept: application/json' \
   -H 'mcp-protocol-version: 2025-11-25' \
@@ -78,7 +109,7 @@ echo "$SEARCH" | tee /tmp/core-in-celld-search.json | grep -q celld-isolate
 echo "$SEARCH" | grep -q listPets
 echo "$SEARCH" | grep -q CoreToolsDO
 
-EXEC=$(curl -sf -X POST "$BASE/mcp" \
+EXEC=$(curl_retry -X POST "$BASE/mcp" \
   -H 'content-type: application/json' \
   -H 'accept: application/json' \
   -H 'mcp-protocol-version: 2025-11-25' \
@@ -88,7 +119,7 @@ echo "$EXEC" | grep -q celld-core
 
 # AgentSession path also uses CoreToolsDO for search/execute
 EVENT_ID="core-in-celld-$(date +%s)-$$"
-RESP=$(curl -sf -X POST "$BASE/webhook/core-in-celld" \
+RESP=$(curl_retry -X POST "$BASE/webhook/core-in-celld" \
   -H 'content-type: application/json' \
   -H "x-clawql-event-id: ${EVENT_ID}" \
   -d '{"probe":true}')

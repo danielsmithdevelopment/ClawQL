@@ -17,6 +17,7 @@ import {
   runDurableProgramEffect,
   type DurableProgramInput,
 } from "./durable-runner.js";
+import { hostLogOperationIds } from "./host-log.js";
 import {
   makeFileProgramJournalEffect,
   programJournalFileLayer,
@@ -609,7 +610,9 @@ describe("durable programs: real process kill", () => {
       KILL_AT_OPERATION: "owners.list",
     });
     expect(child.signal, child.stderr).toBe("SIGKILL");
-    expect((await readFile(hostLog, "utf8")).trim().split("\n")).toEqual([...OPS]);
+    expect([
+      ...(await Effect.runPromise(hostLogOperationIds(await readFile(hostLog, "utf8")))),
+    ]).toEqual([...OPS]);
     const killed = await loadJournal(dir);
     expect(killed).toMatchObject({ status: "running", intents: [] });
     expect(killed?.entries.map((e) => e.index)).toEqual([0, 1]);
@@ -635,7 +638,9 @@ describe("durable programs: real process kill", () => {
       WRITE_OPERATIONS: "owners.create",
     });
     expect(child.signal, child.stderr).toBe("SIGKILL");
-    expect((await readFile(hostLog, "utf8")).trim().split("\n")).toEqual([...WRITE_PLAN_OPS]);
+    expect([
+      ...(await Effect.runPromise(hostLogOperationIds(await readFile(hostLog, "utf8")))),
+    ]).toEqual([...WRITE_PLAN_OPS]);
     expect((await loadJournal(dir))?.intents.map((i) => i.operationId)).toEqual(["owners.create"]);
 
     const parent = recordingHost({ writes: ["owners.create"] });

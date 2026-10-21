@@ -53,7 +53,7 @@ export const securitySuiteBuildFirst: readonly SecuritySuitePriority[] = [
     priority: 5,
     title: 'Kill-mid-write duplicates',
     status: 'partial',
-    why: 'File-journal N-trial board shipped (CI N=50, duplicate_side_effects=0). Mandate multi-replica / fleet cell still open — see durability-proof/STATUS.md.',
+    why: 'File-journal N-trial board shipped (CI N=50, duplicate_side_effects=0). Fleet Tier C N=1000 on /benchmarks#durability. Peer invite still open for named Golem/Pi boards.',
   },
 ] as const
 

@@ -70,13 +70,25 @@ async function executeCall(upstream, call) {
       value: null,
     };
   }
-  const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  const hangMs = Number(call.args?.hangMs || 0);
+  const timeoutMs = hangMs > 0 ? Math.min(120_000, hangMs + 5_000) : 10_000;
+  const qs =
+    hangMs > 0
+      ? `${path.includes("?") ? "&" : "?"}hangMs=${encodeURIComponent(String(hangMs))}`
+      : "";
+  const url = `${base}${path.startsWith("/") ? path : `/${path}`}${qs}`;
   try {
     const res = await fetch(url, {
       method,
-      headers: { accept: "application/json", "content-type": "application/json" },
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        ...(call.args?.idempotencyKey
+          ? { "idempotency-key": String(call.args.idempotencyKey) }
+          : {}),
+      },
       body: method === "GET" || method === "HEAD" ? undefined : JSON.stringify(call.args || {}),
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
     const text = await res.text();
     let body;
@@ -188,8 +200,10 @@ export class ProgramCellDO {
 
     /**
      * Lab kill-node pauses (DOs are single-threaded — no forever-hang):
-     * - pauseBeforeIndex: stop before host call (no intent) → resume re-runs reads
+     * - pauseBeforeIndex: stop before host call (no intent) → resume re-runs
      * - pauseAfterIntentIndex: journal write intent then stop → resume outcome_unknown
+     * - pauseDuringCallIndex: journal intent, start hanging upstream call (client SIGKILLs mid-flight)
+     * - pauseAfterUpstreamBeforeJournalIndex: upstream returned; pause before entry journal
      */
     const pauseAfterIntentIndex =
       typeof body.pauseAfterIntentIndex === "number"
@@ -199,6 +213,12 @@ export class ProgramCellDO {
           : -1;
     const pauseBeforeIndex =
       typeof body.pauseBeforeIndex === "number" ? body.pauseBeforeIndex : -1;
+    const pauseDuringCallIndex =
+      typeof body.pauseDuringCallIndex === "number" ? body.pauseDuringCallIndex : -1;
+    const pauseAfterUpstreamBeforeJournalIndex =
+      typeof body.pauseAfterUpstreamBeforeJournalIndex === "number"
+        ? body.pauseAfterUpstreamBeforeJournalIndex
+        : -1;
     const now = new Date().toISOString();
     const meta = {
       programId,
@@ -218,7 +238,7 @@ export class ProgramCellDO {
       if (pauseBeforeIndex === i) {
         meta.status = "paused_for_kill";
         meta.pausedAtIndex = i;
-        meta.pauseKind = "before_call";
+        meta.pauseKind = "before_intent";
         meta.updatedAt = new Date().toISOString();
         await this.state.storage.put(metaKey(programId), meta);
         return Response.json({
@@ -227,10 +247,10 @@ export class ProgramCellDO {
           programId,
           status: meta.status,
           pausedAtIndex: i,
-          pauseKind: "before_call",
+          pauseKind: "before_intent",
           calls: results,
           honesty: PROGRAM_CELL_HONESTY,
-          note: "No intent; SIGKILL celld then POST /program/resume (reads re-run)",
+          note: "No intent; SIGKILL celld then POST /program/resume (re-run once — nothing sent yet)",
         });
       }
       if (write) {
@@ -244,7 +264,7 @@ export class ProgramCellDO {
       if (pauseAfterIntentIndex === i) {
         meta.status = "paused_for_kill";
         meta.pausedAtIndex = i;
-        meta.pauseKind = "after_write_intent";
+        meta.pauseKind = "after_intent_before_call";
         meta.updatedAt = new Date().toISOString();
         await this.state.storage.put(metaKey(programId), meta);
         return Response.json({
@@ -253,13 +273,77 @@ export class ProgramCellDO {
           programId,
           status: meta.status,
           pausedAtIndex: i,
-          pauseKind: "after_write_intent",
+          pauseKind: "after_intent_before_call",
           calls: results,
           honesty: PROGRAM_CELL_HONESTY,
           note: "Write intent durable; SIGKILL celld then POST /program/resume",
         });
       }
+      if (pauseDuringCallIndex === i) {
+        meta.status = "paused_for_kill";
+        meta.pausedAtIndex = i;
+        meta.pauseKind = "during_call";
+        meta.updatedAt = new Date().toISOString();
+        await this.state.storage.put(metaKey(programId), meta);
+        // Hang inside upstream fetch — client SIGKILLs celld while this awaits.
+        const hungCall = {
+          ...call,
+          args: { ...(call.args || {}), hangMs: Number(call.args?.hangMs || 30_000) },
+        };
+        const outcome = await executeCall(this.env.CLAWQL_CORE_UPSTREAM, hungCall);
+        // If we somehow return (hang cancelled), treat like normal completion.
+        const entry = {
+          index: i,
+          callId: `c${i}`,
+          tool: "execute",
+          operationId: call.operationId,
+          args: call.args || {},
+          result: outcome,
+          completedAt: new Date().toISOString(),
+          replayed: false,
+        };
+        await this.state.storage.put(entryKey(programId, i), entry);
+        if (write) await this.state.storage.delete(intentKey(programId, i));
+        results.push(entry);
+        continue;
+      }
       const outcome = await executeCall(this.env.CLAWQL_CORE_UPSTREAM, call);
+      if (pauseAfterUpstreamBeforeJournalIndex === i) {
+        // Stash upstream result on intent AND meta. Meta is the discovery key after
+        // peer ownership transfer — if meta is visible, finalizeResult is too
+        // (intent-only stash was missing on peer → unsafe re-send / duplicates).
+        if (write) {
+          const prev = (await this.state.storage.get(intentKey(programId, i))) || {
+            index: i,
+            callId: `c${i}`,
+            operationId: call.operationId,
+          };
+          await this.state.storage.put(intentKey(programId, i), {
+            ...prev,
+            upstreamResult: outcome,
+            upstreamCompletedAt: new Date().toISOString(),
+          });
+        }
+        meta.status = "paused_for_kill";
+        meta.pausedAtIndex = i;
+        meta.pauseKind = "after_call_before_journal";
+        meta.finalizeAtIndex = i;
+        meta.finalizeResult = outcome;
+        meta.updatedAt = new Date().toISOString();
+        await this.state.storage.put(metaKey(programId), meta);
+        return Response.json({
+          ok: true,
+          do: "ProgramCellDO",
+          programId,
+          status: meta.status,
+          pausedAtIndex: i,
+          pauseKind: "after_call_before_journal",
+          upstreamOk: outcome.ok,
+          calls: results,
+          honesty: PROGRAM_CELL_HONESTY,
+          note: "Upstream returned; result stashed on intent+meta; SIGKILL then resume finalizes without re-send",
+        });
+      }
       const entry = {
         index: i,
         callId: `c${i}`,
@@ -326,13 +410,59 @@ export class ProgramCellDO {
       const write = isWriteCall(call);
       const existing = await this.state.storage.get(entryKey(programId, i));
       const intent = await this.state.storage.get(intentKey(programId, i));
+      const metaFinalize =
+        meta.finalizeAtIndex === i && meta.finalizeResult != null
+          ? meta.finalizeResult
+          : null;
+      const intentHasUpstreamResult = Boolean(intent?.upstreamResult) || Boolean(metaFinalize);
       const decision = decideCallResume({
         hasEntry: Boolean(existing),
-        hasIntent: Boolean(intent),
+        hasIntent: Boolean(intent) || Boolean(metaFinalize),
         isWrite: write,
+        intentHasUpstreamResult,
+        pauseKind: meta.pauseKind,
+        pausedAtIndex: meta.pausedAtIndex,
+        callIndex: i,
       });
       if (decision.action === "replay") {
         results.push({ ...existing, replayed: true });
+        continue;
+      }
+      if (decision.action === "finalize_upstream") {
+        const outcome = intent?.upstreamResult ?? metaFinalize;
+        const entry = {
+          index: i,
+          callId: `c${i}`,
+          tool: "execute",
+          operationId: call.operationId,
+          args: call.args || {},
+          result: outcome,
+          completedAt: new Date().toISOString(),
+          replayed: false,
+          resumed: true,
+          finalizedFromIntent: true,
+        };
+        await this.state.storage.put(entryKey(programId, i), entry);
+        if (intent) await this.state.storage.delete(intentKey(programId, i));
+        if (meta.finalizeAtIndex === i) {
+          delete meta.finalizeAtIndex;
+          delete meta.finalizeResult;
+        }
+        results.push(entry);
+        if (!outcome?.ok) {
+          meta.status = "failed";
+          meta.lastError = outcome?.error;
+          meta.updatedAt = new Date().toISOString();
+          await this.state.storage.put(metaKey(programId), meta);
+          return Response.json({
+            ok: false,
+            do: "ProgramCellDO",
+            programId,
+            status: meta.status,
+            calls: results,
+            honesty: PROGRAM_CELL_HONESTY,
+          });
+        }
         continue;
       }
       if (decision.action === "outcome_unknown") {
@@ -354,7 +484,7 @@ export class ProgramCellDO {
           outcomeUnknown: true,
         };
         await this.state.storage.put(entryKey(programId, i), unk);
-        await this.state.storage.delete(intentKey(programId, i));
+        if (intent) await this.state.storage.delete(intentKey(programId, i));
         results.push(unk);
         outcomeUnknown = true;
         meta.status = "failed";

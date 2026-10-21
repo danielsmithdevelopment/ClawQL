@@ -2,7 +2,44 @@
 
 **Goal:** Earn a defensible claim that **journaled programs survive SIGKILL without repeating writes**, plus the twin claim that **approved writes are at most once** under crash races — without claiming ClawQL is a durable execution engine ([Golem honesty](../../gtm/golem-overlap-and-durability-honesty.md)).
 
-**Live marketing:** clawql.com/benchmarks dominance row stays **Lab Yes · fleet Partial** until Tier C passes.
+**Live marketing:** [clawql.com/benchmarks#durability](https://clawql.com/benchmarks#durability) publishes the measured Tier C claim, per-phase table, three columns, and ladder. Chip elsewhere: **Lab Yes · fleet Yes (R2 peer kill)**. Still not a durable execution engine. Peer boards vs Pi Durable / Golem wait on maintainer invite.
+
+## Scoped Tier C claim (measured — stock R2)
+
+> Across 1,000 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under stock settings, 0.6% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline.
+
+Every number is measured. Availability costs are stated rather than left for the reader to discover. Scope: two celld nodes, one storage provider (Cloudflare R2). Avoid “durable execution” and “exactly once.”
+
+### Outcome unknown ~48% — read the per-phase table
+
+Aggregate “about half unknown” is a targeting artifact: kills are aimed evenly at four phases; two are the in-flight window. Evidence: [`phased-evidence.json`](../program-cell-fleet-kill/phased-evidence.json) · narrative [`AVAILABILITY.md`](../program-cell-fleet-kill/AVAILABILITY.md).
+
+| Kill phase                        | Outcome unknown        |
+| --------------------------------- | ---------------------- |
+| Before the approval is consumed   | **0** / 252            |
+| After intent recorded             | **240** / 248 (~96.8%) |
+| During the call                   | **241** / 251 (~96.0%) |
+| After the call, before journaling | **0** / 249            |
+
+In real operation, crashes mostly land outside the brief in-flight window, so unknown outcomes are far rarer than this targeted test shows. Nonzero on either outer phase is a bug, not a number to explain.
+
+### TTL tradeoff rows
+
+| Row                  | Status                                | Evidence                                                                                                                      |
+| -------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| stock (`TTL=10s`)    | **Measured** N=1000                   | [`phased-evidence.json`](../program-cell-fleet-kill/phased-evidence.json)                                                     |
+| TTL-only 30s         | **Measured** n=40 (label sample size) | [`ttl30-evidence.json`](../program-cell-fleet-kill/ttl30-evidence.json) — failover ~32s                                       |
+| production_preferred | **Planned** — not a result            | Same N as stock before any claim; renew ⅕ + regional leases — [`TTL-TRADEOFF.md`](../program-cell-fleet-kill/TTL-TRADEOFF.md) |
+
+Prefer renew-every-⅕ + regional leases over TTL stretch. Do not publish preferred as measured.
+
+### Enough to contact John
+
+Send the claim above, the evidence JSON, the per-phase table, the harness, the honest caveats (12-second failover; stock 0.6% self-fence / 0.9% deadline miss), and an invitation to try breaking it. Do not wait for the tuned configuration.
+
+**Engage privately, not in the public thread.** Both sides of the “is Pi magically durable?” fight are right about different meanings — [execution vs effect durability](../../gtm/golem-overlap-and-durability-honesty.md#two-kinds-of-durable-do-not-conflate). DM John with: Golem makes execution durable; ClawQL governs remote effects neither runtime claims to make durable alone — at most once, approved, audited; crash numbers; check our setup. Later: own calm post on the two kinds, with data, no dunk. Pitch text: [collaboration pitch](../../gtm/golem-overlap-and-durability-honesty.md#collaboration-pitch-private--not-the-public-thread).
+
+**Also planned (not a gate for outreach):** resume time vs journal length; snapshots if growth is material — [honesty § measure](../../gtm/golem-overlap-and-durability-honesty.md#measure-resume-vs-journal-length-planned--find-it-yourself).
 
 ---
 
@@ -19,13 +56,39 @@
 
 ## Ladder
 
-| Tier  | Name                                  | Status                                           | Evidence / command                                                                                                                                                                           |
-| ----- | ------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A** | File-journal SIGKILL stand-in         | **Yes** (CI-gated)                               | [`program-kill-node-standin/evidence.json`](../program-kill-node-standin/evidence.json) · `npm run demo:kill-node-standin` · workflow `program-durability.yml`                               |
-| **B** | ProgramCellDO isolate SIGKILL         | **Yes** (CI-gated when streams-celld paths fire) | [`program-cell-isolate-kill/evidence.json`](../program-cell-isolate-kill/evidence.json) · `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:program-cell-kill -w …` · job on `streams-celld.yml` |
-| **C** | Fleet LTX + three-arm product kill    | **Partial / open**                               | Manual: [`docs/examples/idp/streams-celld/README.md`](../../examples/idp/streams-celld/README.md) diagnose on 2+ nodes → SIGKILL one node → resume peer. Not automated in GHA.               |
-| **D** | Kill-mid-write board (N trials)       | **Yes** (lab harness; CI N=50)                   | [`security-suite/kill-mid-write/`](../security-suite/kill-mid-write/) · `npm run benchmark:kill-mid-write`                                                                                   |
-| **E** | MCP `execute_program` → ProgramCellDO | **Open**                                         | Today `CLAWQL_PROGRAM_CELLD_ISOLATE` is pin/readiness only; Lab HTTP `/program/*` is separate from Core MCP                                                                                  |
+| Tier   | Name                                  | Status                                           | Evidence / command                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------ | ------------------------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A**  | File-journal SIGKILL stand-in         | **Yes** (CI-gated)                               | [`program-kill-node-standin/evidence.json`](../program-kill-node-standin/evidence.json) · `npm run demo:kill-node-standin` · workflow `program-durability.yml`                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **B**  | ProgramCellDO isolate SIGKILL         | **Yes** (CI-gated when streams-celld paths fire) | [`program-cell-isolate-kill/evidence.json`](../program-cell-isolate-kill/evidence.json) · `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke:program-cell-kill -w …` · job on `streams-celld.yml`                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **C**  | Fleet LTX + peer kill                 | **Yes** (lab fleet on R2)                        | PoC: [`program-cell-fleet-kill/evidence.json`](../program-cell-fleet-kill/evidence.json). Phased board: [`phased-evidence.json`](../program-cell-fleet-kill/phased-evidence.json). **Three columns** + failover in claim (~resume p50 seconds). TTL tradeoff rows: [`ttl-tradeoff-evidence.json`](../program-cell-fleet-kill/ttl-tradeoff-evidence.json) · [`TTL-TRADEOFF.md`](../program-cell-fleet-kill/TTL-TRADEOFF.md) · [`AVAILABILITY.md`](../program-cell-fleet-kill/AVAILABILITY.md). Prefer renew cadence + regional leases over TTL-only stretch. Not the AWS three-arm cost board. |
+| **D**  | Kill-mid-write board (N trials)       | **Yes** (lab harness; CI N=50)                   | [`security-suite/kill-mid-write/`](../security-suite/kill-mid-write/) · `npm run benchmark:kill-mid-write`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **D+** | Comparison board (dual columns)       | **Yes** (ClawQL arms; peers pending invite)      | [`comparison/`](./comparison/) · `npm run benchmark:durability-comparison` — duplicates + `outcome_unknown` × idempotent/non_idempotent                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **E**  | MCP `execute_program` → ProgramCellDO | **Open**                                         | Today `CLAWQL_PROGRAM_CELLD_ISOLATE` is pin/readiness only; Lab HTTP `/program/*` is separate from Core MCP                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **F**  | Resume vs journal length              | **Planned**                                      | Measure resume wall time at short vs long journals; add periodic snapshots if growth is material ([honesty](../../gtm/golem-overlap-and-durability-honesty.md#measure-resume-vs-journal-length-planned--find-it-yourself)) — not required before John outreach                                                                                                                                                                                                                                                                                                                                |
+
+---
+
+## How do our numbers compare to Golem?
+
+We cannot say yet on a shared board — Golem has not published the kind of crash measurement above. Public Golem figures describe different things:
+
+| What's measured                  | Golem (their claims)           | ClawQL (your measurements)                         |
+| -------------------------------- | ------------------------------ | -------------------------------------------------- |
+| Starting a unit of work          | 2 ms Agent cold start          | Not yet measured for celld cells                   |
+| Memory per unit                  | 1 MB Min memory per agent      | About 471 KB per celld cell (earlier measurements) |
+| Density                          | 10,000+ Active agents per node | Not yet measured                                   |
+| Duplicated writes after a crash  | No published crash test        | **0 in 1,000** phased kills                        |
+| Failover time after a node crash | No published figure            | About **12 seconds** median, set by the lease      |
+
+**Trade-off (now in his words):** Golem favors completing the work — retry; without upstream keys an interrupted POST can happen twice. ClawQL favors never repeating a consequential action — consume the approval first; cost is `outcome_unknown` for a person. Same unavoidable limit; opposite choices.
+
+**Where ClawQL is likely ahead:** never repeating a write even against an API that ignores idempotency keys. Confirmed by his “at least once unless keys” framing. “Likely” until both run against the non-idempotent mock on the dual-mode board.
+
+**Where ClawQL is probably behind:** failover speed (~12s lease floor). A mature durable runtime may recover faster — renew more often and keep leases on regional storage.
+
+**Where unmeasured / planned:** celld cold start and agents per node; ClawQL attaching mandate-derived idempotency keys on Stripe-class APIs (planned — would cut in-flight unknowns without dropping at-most-once elsewhere).
+
+**Overall for his critique:** yes — a published crash test with real sample size, a statistical bound, and availability costs stated openly is exactly what he demands. Collaboration angle: Golem + ClawQL covers both sides of _his_ model. Head-to-head waits for a Golem arm on [`COMPARISON.md`](./COMPARISON.md), ideally with his input on configuration.
 
 ---
 
@@ -34,8 +97,9 @@
 Minimum before private outreach with numbers:
 
 1. Tiers **A + B + D** green in CI on `main`
-2. Tier **C** measured once on a real 2-node bucket (required before publishing program-mode numbers vs Pi Durable / Golem)
-3. Public copy still says journaled resume / at-most-once — not “durable execution engine”
+2. Tier **C** measured on a 2-node fleet bucket that passes diagnose (**done** — R2 peer kill + phased board; see `phased-evidence.json`)
+3. Public copy uses the scoped claim above — not “durable execution engine” / “exactly once”
+4. Named Pi Durable / Golem boards still need maintainer invite before public numbers
 
 Peer comparison design (celld = own substrate; Pi Durable + Golem = peers; dual columns + idempotency modes): [`COMPARISON.md`](./COMPARISON.md).
 
