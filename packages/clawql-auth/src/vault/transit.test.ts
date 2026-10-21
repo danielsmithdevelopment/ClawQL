@@ -19,7 +19,10 @@ import {
 } from "./transit.js";
 
 function mockHttp(
-  handlers: Record<string, { status: number; json: unknown } | ((body?: string) => { status: number; json: unknown })>
+  handlers: Record<
+    string,
+    { status: number; json: unknown } | ((body?: string) => { status: number; json: unknown })
+  >
 ): VaultHttpClient {
   return {
     async request({ method, url, body }) {
@@ -161,9 +164,9 @@ describe("TransitEncryptedSecretStore", () => {
         }),
       }),
     });
-    await expect(Effect.runPromise(failStore.getSecret("providers/openai/key"))).rejects.toBeInstanceOf(
-      Error
-    );
+    await expect(
+      Effect.runPromise(failStore.getSecret("providers/openai/key"))
+    ).rejects.toBeInstanceOf(Error);
     expect(events.some((e) => e.type === "VAULT_TRANSIT_DECRYPT_FAILED")).toBe(true);
   });
 

@@ -97,9 +97,9 @@ export function migratePlaintextSecretsEffect(
     );
 
     for (const path of paths) {
-      const raw = yield* inner.getSecret(path).pipe(
-        Effect.catch(() => Effect.succeed(null as string | null))
-      );
+      const raw = yield* inner
+        .getSecret(path)
+        .pipe(Effect.catch(() => Effect.succeed(null as string | null)));
       if (raw == null) continue;
       if (isVaultTransitCiphertext(raw)) {
         alreadyCiphertext += 1;
