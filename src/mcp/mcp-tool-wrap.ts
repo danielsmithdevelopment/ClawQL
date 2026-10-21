@@ -335,7 +335,8 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
         });
       }
 
-      let finalResult = result;
+      // `await handler` yields Awaited<TResult>; keep that type for OpenAPPA replacements.
+      let finalResult: Awaited<TResult> = result;
       if (openAppaEnabled()) {
         const after = await Effect.runPromise(
           openAppaAfterToolResultEffect({
@@ -355,12 +356,12 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
           finalResult = {
             content: [{ type: "text" as const, text: after.value }],
             isError: false,
-          } as TResult;
+          } as Awaited<TResult>;
         } else if (after.action === "error") {
           finalResult = {
             content: [{ type: "text" as const, text: after.reason }],
             isError: true,
-          } as TResult;
+          } as Awaited<TResult>;
         }
       }
 
