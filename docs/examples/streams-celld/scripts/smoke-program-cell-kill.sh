@@ -135,8 +135,8 @@ echo "$RUN_R" | grep -q 'paused_for_kill' || {
   echo "$RUN_R" >&2
   exit 1
 }
-echo "$RUN_R" | grep -q 'before_call' || {
-  echo "smoke-program-cell-kill: FAIL — read arm expected pauseKind before_call" >&2
+echo "$RUN_R" | grep -q 'before_intent' || {
+  echo "smoke-program-cell-kill: FAIL — read arm expected pauseKind before_intent" >&2
   echo "$RUN_R" >&2
   exit 1
 }

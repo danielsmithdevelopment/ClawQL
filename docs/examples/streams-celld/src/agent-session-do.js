@@ -209,12 +209,22 @@ export class AgentSessionDO {
 
       const existing = await this.state.storage.get("session_meta");
       if (existing) {
-        return Response.json({
-          do: "AgentSessionDO",
-          idempotent: true,
-          session: existing,
-          core: { clawqlCore: "streams-slim", note: "idempotent wake — no re-audit" },
-        });
+        // Only short-circuit when start finished. A fence after session_meta put
+        // leaves an incomplete DO — clear and re-run so same-eventId retries work.
+        const startDone = await this.state.storage.get(`tool_calls:${existing.startedAt}`);
+        if (startDone) {
+          return Response.json({
+            do: "AgentSessionDO",
+            idempotent: true,
+            session: existing,
+            core: {
+              clawqlCore: "streams-slim",
+              package: "clawql-core/streams-slim",
+              note: "idempotent wake — no re-audit",
+            },
+          });
+        }
+        await this.state.storage.delete("session_meta");
       }
 
       const meta = {
