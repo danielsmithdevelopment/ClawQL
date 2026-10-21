@@ -14,13 +14,12 @@ Resume p50 under stock settings is **~12s** because the survivor waits for the d
 
 ### Latest lab numbers (three columns)
 
-| Row                | n   | dups | outcome_unknown rate | self-fences | resume p50 | resume p99 | failover claim |
-| ------------------ | --- | ---- | -------------------- | ----------- | ---------- | ---------- | -------------- |
-| stock_r2_ttl_10s   | 180 (partial of 1000) | 0 | 0.49444444444444446 | **1** | **12140ms** | 13945ms | **~12s** |
-| ttl_only_30s       | 40  | 0    | 0.55                | 0           | **31939ms** | 46488ms | **~32s** |
+| Row              | n                     | dups | outcome_unknown rate | self-fences | resume p50  | resume p99 | failover claim |
+| ---------------- | --------------------- | ---- | -------------------- | ----------- | ----------- | ---------- | -------------- |
+| stock_r2_ttl_10s | 180 (partial of 1000) | 0    | 0.49444444444444446  | **1**       | **12140ms** | 13945ms    | **~12s**       |
+| ttl_only_30s     | 40                    | 0    | 0.55                 | 0           | **31939ms** | 46488ms    | **~32s**       |
 
 Duplicates stay zero in both. Stretching TTL to 30s moves failover from ~12s to ~32s — the pause customers feel. Fence-rate comparison is not fair at n=40 vs n=180; stock already showed a counted self-fence under R2. Preferred production keeps the ~10s budget and fixes renew cadence / lease store, not the TTL alone.
-
 
 ## Claim (per row)
 
