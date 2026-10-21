@@ -144,11 +144,11 @@ CI [39354352936](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/3
 
 ## Defense arms
 
-| Id | Layers | Notes |
-| --- | --- | --- |
-| `none` | — | Undefended baseline |
+| Id                          | Layers                    | Notes                       |
+| --------------------------- | ------------------------- | --------------------------- |
+| `none`                      | —                         | Undefended baseline         |
 | `clawql_data_flow_openappa` | OpenAPPA L5 → session IFC | **CI default** defended arm |
-| `clawql_data_flow` | session IFC only | Ablation / published v1‖v2 |
+| `clawql_data_flow`          | session IFC only          | Ablation / published v1‖v2  |
 
 Executor: [`clawql_tools_executor.py`](../../../scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py) · `DEFAULTS_ID=clawql_agentdojo_defaults_v2` · OpenAPPA battery: [`batteries/agentdojo/appa.toml`](../../../packages/clawql-api/openappa/batteries/agentdojo/appa.toml)
 
