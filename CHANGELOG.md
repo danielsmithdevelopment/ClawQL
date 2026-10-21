@@ -4,6 +4,8 @@
 
 - **Decide family id `gliner-decide`** — live Fast Decision / WORM backend id is now `gliner-decide` (stub `gliner-decide-stub`, HTTP fallback `gliner-decide-http-fallback-heuristic`) so the name matches GLiNER2.5-Decide. The old `gliner2` family id is **removed** (no alias). `PRODUCTION_TRUSTED_SCORER_BACKEND` is `gliner-decide`. Frozen historical fixtures may still say `scorerBackend: "gliner2"`; that is archival only. Docs / docs.clawql.com closeout hub + `/v1/decisions` model table updated to match.
 
+- **Host runtime CI: Bun default** — Wave 2 of [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs **`Test (Bun 1.2 / 1.3 / 1.4)`** in parallel with **`Test (Node 22 / 24 / 25)`**. Install stays `npm ci` (lockfile); Vitest executes under Bun via `bunx --bun`. Product ladder unchanged: **celld** preferred deploy → **Bun** default host MCP → **Node** legacy minority. `package.json` `engines.bun` is `>=1.2`.
+
 ### Added
 
 - **Formal methods (ADR 0014)** — adopt TLA+/Quint for protocol races and Lean for the policy-kernel oracle (differential tests; not production runtime). Starter TLA+ mandate lifecycle under [`formal/tla/mandate/`](formal/tla/mandate/) (target atomic consume; `WeakConsume` mode exposes the historical double-execute race). gdp-ts remains layer 1. TLC dual CI (atomic pass + weak counterexample): `.github/workflows/formal-mandate-tlc.yml` / `scripts/formal/run-mandate-tlc.sh`. Audit hunt: `scripts/formal/audit-mandate-double-execute.mjs`. Lean approval-policy oracle + differential tests under `formal/lean/` / `packages/clawql-api/src/policy/`. Concurrent consume regression (50 parallel → exactly one win).

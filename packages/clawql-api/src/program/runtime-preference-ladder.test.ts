@@ -68,7 +68,8 @@ describe("runtime preference ladder", () => {
     expect(d.bunDeclined).toBe(false);
     expect(d.messages.join("\n")).toContain(INSTALL_BUN_HINT);
     expect(d.messages.join("\n")).toContain(NODE_IMPROVE_HINT);
-    expect(d.messages.join("\n")).toMatch(/isolation and performance/);
+    expect(d.messages.join("\n")).toMatch(/legacy minority host/);
+    expect(d.messages.join("\n")).toMatch(/Default host MCP is Bun/);
   });
 
   it("node when both declined", () => {
