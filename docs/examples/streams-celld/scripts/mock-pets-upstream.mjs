@@ -4,39 +4,17 @@
  * - GET /pets, POST /streams/session/noop, POST /owners
  * - ?hangMs=N delays response (during_call phase)
  * - GET /__writes returns write ledger for duplicate counting
+ * - POST /__reset bumps generation so late hang completions are ignored
  */
-import { appendFileSync, mkdirSync } from "node:fs";
-import { dirname } from "node:path";
 import { createServer } from "node:http";
 
 const port = Number(process.env.MOCK_PETS_PORT || process.argv[2] || 9893);
-const DEBUG_LOG = "/opt/cursor/logs/debug.log";
 
 /** @type {{ id: string, key: string, at: string, name: string, generation: number }[]} */
 const writes = [];
 let inFlight = 0;
 /** Bumped on /__reset so late hang completions from prior trials are ignored. */
 let generation = 1;
-
-// #region agent log
-function dbg(hypothesisId, location, message, data = {}) {
-  try {
-    mkdirSync(dirname(DEBUG_LOG), { recursive: true });
-    appendFileSync(
-      DEBUG_LOG,
-      JSON.stringify({
-        hypothesisId,
-        location,
-        message,
-        data,
-        timestamp: Date.now(),
-      }) + "\n"
-    );
-  } catch {
-    /* ignore */
-  }
-}
-// #endregion
 
 function readBody(req) {
   return new Promise((resolve) => {
@@ -52,6 +30,7 @@ function readBody(req) {
   });
 }
 
+/** Hang for hangMs unless the client disconnects (SIGKILL of celld closes the socket). */
 function hangOrAbort(req, hangMs) {
   if (!(hangMs > 0)) return Promise.resolve({ aborted: false });
   return new Promise((resolve) => {
@@ -90,22 +69,10 @@ const server = createServer(async (req, res) => {
     writes.length = 0;
     inFlight = 0;
     generation += 1;
-    // #region agent log
-    dbg("B", "mock-pets:reset", "ledger reset", { generation, inFlight });
-    // #endregion
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify({ ok: true, generation }));
     return;
   }
-  // #region agent log
-  if (req.method === "POST" && url.pathname === "/__dbg") {
-    const body = await readBody(req);
-    dbg(body.hypothesisId || "D", body.location || "remote", body.message || "dbg", body.data || {});
-    res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ ok: true }));
-    return;
-  }
-  // #endregion
 
   if (req.method === "GET" && url.pathname === "/pets") {
     if (hangMs > 0) await new Promise((r) => setTimeout(r, hangMs));
@@ -141,26 +108,9 @@ const server = createServer(async (req, res) => {
       body.idempotencyKey ||
       body.name ||
       `anon_${writes.length + 1}`;
-    // #region agent log
-    dbg("B", "mock-pets:owners-start", "write accepted", {
-      key: String(key),
-      hangMs,
-      genAtStart,
-      generation,
-      inFlight,
-    });
-    // #endregion
     const hang = await hangOrAbort(req, hangMs);
     if (hang.aborted || genAtStart !== generation) {
       inFlight = Math.max(0, inFlight - 1);
-      // #region agent log
-      dbg("B", "mock-pets:owners-drop", "late/aborted hang not counted", {
-        key: String(key),
-        aborted: hang.aborted,
-        genAtStart,
-        generation,
-      });
-      // #endregion
       if (!res.headersSent) {
         res.writeHead(499, { "content-type": "application/json" });
         res.end(JSON.stringify({ ok: false, dropped: true, aborted: hang.aborted }));
@@ -176,14 +126,6 @@ const server = createServer(async (req, res) => {
       generation: genAtStart,
     });
     inFlight = Math.max(0, inFlight - 1);
-    // #region agent log
-    dbg("A", "mock-pets:owners-commit", "write counted", {
-      key: String(key),
-      id,
-      count: writes.length,
-      generation: genAtStart,
-    });
-    // #endregion
     res.writeHead(201, { "content-type": "application/json" });
     res.end(JSON.stringify({ id, name: body.name || "lab", host: "mock-pets-upstream", key }));
     return;

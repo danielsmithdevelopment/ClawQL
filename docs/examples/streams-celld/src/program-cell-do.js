@@ -404,10 +404,6 @@ export class ProgramCellDO {
     const calls = Array.isArray(meta.plan?.calls) ? meta.plan.calls : [];
     const results = [];
     let outcomeUnknown = false;
-    // #region agent log
-    /** @type {object[]} */
-    const resumeTrace = [];
-    // #endregion
 
     for (let i = 0; i < calls.length; i++) {
       const call = calls[i] || {};
@@ -428,19 +424,6 @@ export class ProgramCellDO {
         pausedAtIndex: meta.pausedAtIndex,
         callIndex: i,
       });
-      // #region agent log
-      resumeTrace.push({
-        i,
-        write,
-        hasEntry: Boolean(existing),
-        hasIntent: Boolean(intent),
-        intentHasUpstreamResult: Boolean(intent?.upstreamResult),
-        metaFinalize: Boolean(metaFinalize),
-        pauseKind: meta.pauseKind ?? null,
-        pausedAtIndex: meta.pausedAtIndex ?? null,
-        action: decision.action,
-      });
-      // #endregion
       if (decision.action === "replay") {
         results.push({ ...existing, replayed: true });
         continue;
@@ -477,9 +460,6 @@ export class ProgramCellDO {
             programId,
             status: meta.status,
             calls: results,
-            // #region agent log
-            resumeTrace,
-            // #endregion
             honesty: PROGRAM_CELL_HONESTY,
           });
         }
@@ -518,9 +498,6 @@ export class ProgramCellDO {
           status: meta.status,
           calls: results,
           outcomeUnknown: true,
-          // #region agent log
-          resumeTrace,
-          // #endregion
           honesty: PROGRAM_CELL_HONESTY,
         });
       }
@@ -551,9 +528,6 @@ export class ProgramCellDO {
           programId,
           status: meta.status,
           calls: results,
-          // #region agent log
-          resumeTrace,
-          // #endregion
           honesty: PROGRAM_CELL_HONESTY,
         });
       }
@@ -568,9 +542,6 @@ export class ProgramCellDO {
       programId,
       status: meta.status,
       calls: results,
-      // #region agent log
-      resumeTrace,
-      // #endregion
       honesty: PROGRAM_CELL_HONESTY,
     });
   }

@@ -19,25 +19,10 @@ import {
   readFileSync,
   openSync,
   unlinkSync,
-  appendFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const DEBUG_LOG = "/opt/cursor/logs/debug.log";
-// #region agent log
-function dbg(hypothesisId, location, message, data = {}) {
-  try {
-    mkdirSync(dirname(DEBUG_LOG), { recursive: true });
-    appendFileSync(
-      DEBUG_LOG,
-      JSON.stringify({ hypothesisId, location, message, data, timestamp: Date.now() }) + "\n"
-    );
-  } catch {
-    /* ignore */
-  }
-}
-// #endregion
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, "../../..");
@@ -373,21 +358,6 @@ async function main() {
     const completedClean =
       resume.body?.status === "completed" && resume.body?.ok === true && !outcomeUnknown;
 
-    // #region agent log
-    dbg("C", "run-board:trial", "trial result", {
-      i,
-      phase,
-      writeCount,
-      duplicates,
-      outcomeUnknown,
-      completedClean,
-      resumeStatus: resume.body?.status ?? null,
-      resumeTrace: resume.body?.resumeTrace ?? null,
-      writeKeys: (ledger.body?.writes || []).map((w) => w.key),
-      generation: ledger.body?.generation ?? null,
-      inFlight: ledger.body?.inFlight ?? null,
-    });
-    // #endregion
 
     let expectOk = false;
     if (phase === "before_intent") {
