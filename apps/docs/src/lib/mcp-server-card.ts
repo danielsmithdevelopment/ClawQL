@@ -15,14 +15,17 @@ const SERVER_CARD_SCHEMA =
   'https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json'
 
 /**
- * Streamable HTTP URL for remote MCP. Defaults to `{site origin}/mcp` when unset — override in
- * production if MCP is hosted elsewhere (docs and MCP are often separate deployments).
+ * Public Streamable HTTP MCP URL for the server card `remotes` array.
+ *
+ * Only advertise a remote when an explicit env URL is set. Defaulting to
+ * `{docs origin}/mcp` previously published a dead endpoint (404) and failed
+ * AgentReady AR-ACT honesty checks — the docs Worker serves documentation, not
+ * the product MCP binary. Self-host: `npx -p clawql-mcp clawql-mcp-http`.
  */
-function streamableHttpUrl(origin: string): string {
+function streamableHttpUrl(): string | undefined {
   return (
     envString('NEXT_PUBLIC_MCP_STREAMABLE_HTTP_URL') ??
-    envString('MCP_SERVER_CARD_STREAMABLE_HTTP_URL') ??
-    `${origin.replace(/\/$/, '')}/mcp`
+    envString('MCP_SERVER_CARD_STREAMABLE_HTTP_URL')
   )
 }
 
@@ -48,8 +51,9 @@ export function getMcpServerCard(): Record<string, unknown> {
   const cardName =
     envString('MCP_SERVER_CARD_NAME') ??
     'io.github.danielsmithdevelopment/clawql-mcp'
+  const remoteUrl = streamableHttpUrl()
 
-  return {
+  const card: Record<string, unknown> = {
     $schema: SERVER_CARD_SCHEMA,
     name: cardName,
     version,
@@ -69,10 +73,13 @@ export function getMcpServerCard(): Record<string, unknown> {
       resources: {},
       prompts: {},
     },
-    remotes: [
+  }
+
+  if (remoteUrl) {
+    card.remotes = [
       {
         type: 'streamable-http',
-        url: streamableHttpUrl(origin),
+        url: remoteUrl,
         supportedProtocolVersions: [
           '2025-03-12',
           '2025-06-18',
@@ -80,6 +87,8 @@ export function getMcpServerCard(): Record<string, unknown> {
           '2026-07-28',
         ],
       },
-    ],
+    ]
   }
+
+  return card
 }

@@ -66,7 +66,9 @@ function buildAuthMd() {
 
 Agent authentication and registration discovery for **${origin}**.
 
-ClawQL is an MCP platform. Production MCP Streamable HTTP is hosted at **${docs}/mcp**.
+ClawQL is an MCP platform. **Self-host Streamable HTTP** with \`npx -p clawql-mcp clawql-mcp-http\` (path \`/mcp\`). This site publishes discovery metadata. A public hosted MCP URL appears on the server card only when \`NEXT_PUBLIC_MCP_STREAMABLE_HTTP_URL\` is set at build time — \`${docs}/mcp\` is documentation HTML, not the product MCP binary.
+
+MCP docs: ${docs}/mcp/mcp-tools · Getting started: ${docs}/getting-started
 
 ## Audience
 
@@ -200,32 +202,41 @@ writeText(path.join(publicDir, 'robots.txt'), buildRobotsTxt())
 writeText(path.join(publicDir, 'auth.md'), buildAuthMd())
 writeJson(path.join(publicDir, 'agent-markdown.json'), getAgentMarkdownMap())
 
-writeJson(path.join(publicDir, '.well-known/mcp/server-card.json'), {
+const publicMcpUrl = (
+  process.env.NEXT_PUBLIC_MCP_STREAMABLE_HTTP_URL ||
+  process.env.MCP_SERVER_CARD_STREAMABLE_HTTP_URL ||
+  ''
+).trim()
+
+const serverCard = {
   $schema: 'https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json',
   name: 'io.github.danielsmithdevelopment/clawql-mcp',
   version: '8.0.0',
   description:
-    'Agentic Gateway / Protocol Fabric MCP server — search, execute, skills, vault memory, and optional automation/IDP over an empty-by-default provider catalog',
+    'Agentic Gateway / Protocol Fabric MCP server — search, execute, skills, vault memory, and optional automation/IDP over an empty-by-default provider catalog. Run locally with npx -p clawql-mcp clawql-mcp-http (Streamable HTTP at /mcp).',
   title: 'ClawQL',
   websiteUrl: origin,
   repository: { type: 'git', url: 'https://github.com/danielsmithdevelopment/ClawQL.git' },
   serverInfo: { name: 'clawql-mcp', version: '8.0.0' },
   capabilities: { tools: { listChanged: true }, resources: {}, prompts: {} },
-  remotes: [
+}
+if (publicMcpUrl) {
+  serverCard.remotes = [
     {
       type: 'streamable-http',
-      url: `${docs}/mcp`,
+      url: publicMcpUrl,
       supportedProtocolVersions: ['2025-03-12', '2025-06-18', '2025-11-25', '2026-07-28'],
     },
-  ],
-})
+  ]
+}
+writeJson(path.join(publicDir, '.well-known/mcp/server-card.json'), serverCard)
 
 writeJson(path.join(publicDir, '.well-known/agent-card.json'), {
   name: 'ClawQL',
   description:
     'Agentic Gateway for Auditable Production AI — MCP search, execute, vault memory, optional IDP, and agentic commerce discovery (Stripe + x402 + MPP + AP2 + ACP).',
   version: '8.0.0',
-  url: `${docs}/mcp`,
+  url: `${docs}/getting-started`,
   provider: { organization: 'ClawQL', url: origin },
   capabilities: {
     streaming: true,
@@ -341,12 +352,16 @@ writeJson(path.join(publicDir, '.well-known/ucp'), {
           endpoint: origin,
           schema: 'https://ucp.dev/2026-04-08/services/shopping/rest.openapi.json',
         },
-        {
-          version: '2026-04-08',
-          transport: 'mcp',
-          endpoint: `${docs}/mcp`,
-          schema: 'https://ucp.dev/2026-04-08/services/shopping/mcp.openrpc.json',
-        },
+        ...(publicMcpUrl
+          ? [
+              {
+                version: '2026-04-08',
+                transport: 'mcp',
+                endpoint: publicMcpUrl,
+                schema: 'https://ucp.dev/2026-04-08/services/shopping/mcp.openrpc.json',
+              },
+            ]
+          : []),
       ],
     },
   },

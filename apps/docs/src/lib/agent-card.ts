@@ -12,11 +12,11 @@ function envString(key: string): string | undefined {
   return typeof v === 'string' && v.trim().length > 0 ? v.trim() : undefined
 }
 
-function streamableHttpUrl(origin: string): string {
+/** Only when a live public MCP URL is configured — see mcp-server-card.ts. */
+function streamableHttpUrl(): string | undefined {
   return (
     envString('NEXT_PUBLIC_MCP_STREAMABLE_HTTP_URL') ??
-    envString('MCP_SERVER_CARD_STREAMABLE_HTTP_URL') ??
-    `${origin}/mcp`
+    envString('MCP_SERVER_CARD_STREAMABLE_HTTP_URL')
   )
 }
 
@@ -28,8 +28,33 @@ export function getAgentCard(): Record<string, unknown> {
   const origin = getSiteOrigin().origin.replace(/\/$/, '')
   const mcp = getMcpServerCard()
   const version = String(mcp.version ?? '0.0.0')
-  const mcpUrl = streamableHttpUrl(origin)
+  const mcpUrl = streamableHttpUrl()
   const a2aUrl = a2aJsonRpcUrl(origin)
+
+  const baseInterfaces: Array<Record<string, string>> = [
+    {
+      url: a2aUrl,
+      protocol_binding: 'JSONRPC',
+      protocol_version: '1.0',
+    },
+    {
+      url: `${origin}/openapi.json`,
+      protocol_binding: 'REST',
+      protocol_version: '3.1',
+    },
+    {
+      url: origin,
+      protocol_binding: 'HTTPS',
+      protocol_version: '1.1',
+    },
+  ]
+  if (mcpUrl) {
+    baseInterfaces.splice(1, 0, {
+      url: mcpUrl,
+      protocol_binding: 'HTTP',
+      protocol_version: '2025-11-25',
+    })
+  }
 
   return {
     name: 'ClawQL',
@@ -45,50 +70,8 @@ export function getAgentCard(): Record<string, unknown> {
     iconUrl: `${origin}/ClawQL-logo.jpeg`,
     defaultInputModes: ['text/plain', 'application/json'],
     defaultOutputModes: ['text/plain', 'application/json'],
-    supported_interfaces: [
-      {
-        url: a2aUrl,
-        protocol_binding: 'JSONRPC',
-        protocol_version: '1.0',
-      },
-      {
-        url: mcpUrl,
-        protocol_binding: 'HTTP',
-        protocol_version: '2025-11-25',
-      },
-      {
-        url: `${origin}/openapi.json`,
-        protocol_binding: 'REST',
-        protocol_version: '3.1',
-      },
-      {
-        url: origin,
-        protocol_binding: 'HTTPS',
-        protocol_version: '1.1',
-      },
-    ],
-    supportedInterfaces: [
-      {
-        url: a2aUrl,
-        protocol_binding: 'JSONRPC',
-        protocol_version: '1.0',
-      },
-      {
-        url: mcpUrl,
-        protocol_binding: 'HTTP',
-        protocol_version: '2025-11-25',
-      },
-      {
-        url: `${origin}/openapi.json`,
-        protocol_binding: 'REST',
-        protocol_version: '3.1',
-      },
-      {
-        url: origin,
-        protocol_binding: 'HTTPS',
-        protocol_version: '1.1',
-      },
-    ],
+    supported_interfaces: baseInterfaces,
+    supportedInterfaces: baseInterfaces,
     capabilities: {
       streaming: false,
       pushNotifications: false,
