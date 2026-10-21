@@ -1,22 +1,23 @@
 # ProgramCellDO fleet peer kill (Tier C)
 
-**Status:** harness shipped; measure when `CELLD_BUCKET` passes `celld diagnose` conditional-write.
+**Status:** measured on Cloudflare R2 (`clawql-streams-state`) — see [`evidence.json`](./evidence.json).
 
-## Run
+## Run (R2)
 
 ```bash
-export CELLD_BUCKET=s3://your-fleet-bucket
-export AWS_ACCESS_KEY_ID=…
-export AWS_SECRET_ACCESS_KEY=…
-# optional: export S3_ENDPOINT=https://…   # R2 / S3-compatible
+export CELLD_BUCKET="s3://clawql-streams-state/tier-c-$(date +%Y%m%d%H%M%S)"  # fresh prefix recommended
+export S3_ENDPOINT="https://${CLAWQL_R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+export AWS_ACCESS_KEY_ID="${CLAWQL_SYNC_ACCESS_KEY_ID}"
+export AWS_SECRET_ACCESS_KEY="${CLAWQL_SYNC_SECRET_ACCESS_KEY}"
+export AWS_REGION=auto AWS_EC2_METADATA_DISABLED=true
 export STREAMS_CELLD_FLEET_REQUIRED=1
-bash docs/examples/streams-celld/scripts/smoke-program-cell-fleet-kill.sh
+npm run smoke:program-cell-fleet-kill
 ```
 
 Soft-skips (evidence `status: not_measured`) when bucket unset or diagnose fails — unless `STREAMS_CELLD_FLEET_REQUIRED=1`.
 
 ## Honesty
 
-- Requires a store that **enforces** `If-None-Match` / conditional writes. Local s3rver-class mocks fail diagnose by design.
+- Requires a store that **enforces** `If-None-Match` / conditional writes. Local s3rver-class mocks fail diagnose by design; R2 passes.
 - Proves peer resume after SIGKILL of one fleet node — not the AWS three-arm cost board in `aws-celld-burst` §13.
 - Lab isolate kill (Tier B) remains `smoke-program-cell-kill.sh`.

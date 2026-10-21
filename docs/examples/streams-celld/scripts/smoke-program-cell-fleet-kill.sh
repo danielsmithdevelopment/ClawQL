@@ -38,6 +38,17 @@ print(f"wrote {out}")
 PY
 }
 
+# Auto-wire Cloudflare R2 from ClawQL sync secrets when CELLD_BUCKET unset.
+if [[ -z "${CELLD_BUCKET:-}" && -n "${CLAWQL_R2_ACCOUNT_ID:-}" && -n "${CLAWQL_SYNC_ACCESS_KEY_ID:-}" && -n "${CLAWQL_SYNC_SECRET_ACCESS_KEY:-}" ]]; then
+  export CELLD_BUCKET="${CELLD_BUCKET:-s3://clawql-streams-state/tier-c-$(date +%Y%m%d%H%M%S)}"
+  export S3_ENDPOINT="${S3_ENDPOINT:-https://${CLAWQL_R2_ACCOUNT_ID}.r2.cloudflarestorage.com}"
+  export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-$CLAWQL_SYNC_ACCESS_KEY_ID}"
+  export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-$CLAWQL_SYNC_SECRET_ACCESS_KEY}"
+  export AWS_REGION="${AWS_REGION:-auto}"
+  export AWS_EC2_METADATA_DISABLED="${AWS_EC2_METADATA_DISABLED:-true}"
+  echo "smoke-program-cell-fleet-kill: using R2 via CLAWQL_SYNC_* → $CELLD_BUCKET"
+fi
+
 if [[ -z "${CELLD_BUCKET:-}" ]]; then
   if [[ "${STREAMS_CELLD_FLEET_REQUIRED:-0}" == "1" ]]; then
     echo "smoke-program-cell-fleet-kill: FAIL — CELLD_BUCKET required" >&2
@@ -122,9 +133,21 @@ start_node() {
 
 wait_health() {
   local base="$1"
-  for _ in $(seq 1 100); do
+  for _ in $(seq 1 150); do
     curl -sf "$base/health" >/dev/null 2>&1 && return 0
     sleep 0.2
+  done
+  return 1
+}
+
+# Worker routes (ProgramCellDO) can lag /health while the fleet settles + adopts deploy.
+wait_program() {
+  local base="$1"
+  for _ in $(seq 1 150); do
+    if curl -sf "$base/program/health" 2>/dev/null | grep -q ProgramCellDO; then
+      return 0
+    fi
+    sleep 0.25
   done
   return 1
 }
@@ -137,13 +160,18 @@ BASE_B="http://127.0.0.1:${PORT_B}"
 
 wait_health "$BASE_A" || { cat /tmp/celld-fleet-a.log >&2; echo "node A not ready" >&2; exit 1; }
 wait_health "$BASE_B" || { cat /tmp/celld-fleet-b.log >&2; echo "node B not ready" >&2; exit 1; }
-
-curl -sf "$BASE_A/program/health" | grep -q ProgramCellDO || {
-  echo "smoke-program-cell-fleet-kill: FAIL — ProgramCellDO on A" >&2
+wait_program "$BASE_A" || {
+  cat /tmp/celld-fleet-a.log >&2
+  echo "smoke-program-cell-fleet-kill: FAIL — ProgramCellDO on A not ready" >&2
+  exit 1
+}
+wait_program "$BASE_B" || {
+  cat /tmp/celld-fleet-b.log >&2
+  echo "smoke-program-cell-fleet-kill: FAIL — ProgramCellDO on B not ready" >&2
   exit 1
 }
 
-WRITE_ID="prog_fleetkill_write"
+WRITE_ID="prog_fleetkill_write_$(date +%s)"
 RUN=$(curl -sf -X POST "$BASE_A/program/run" \
   -H "content-type: application/json" \
   -d "{\"programId\":\"${WRITE_ID}\",\"pauseAfterIntentIndex\":2,\"plan\":{\"calls\":[
@@ -161,12 +189,29 @@ echo "$RUN" | grep -q 'paused_for_kill' || {
 kill -9 "$PID_A"
 wait "$PID_A" 2>/dev/null || true
 PID_A=""
-sleep 0.5
+# Ownership / LTX catch-up on peer before resume
+sleep 2
+wait_program "$BASE_B" || {
+  echo "smoke-program-cell-fleet-kill: FAIL — ProgramCellDO on B after A kill" >&2
+  cat /tmp/celld-fleet-b.log >&2
+  exit 1
+}
 
-RESUME=$(curl -sf -X POST "$BASE_B/program/resume" \
-  -H "content-type: application/json" \
-  -d "{\"programId\":\"${WRITE_ID}\"}")
+RESUME=""
+for _ in $(seq 1 40); do
+  if RESUME=$(curl -sf -X POST "$BASE_B/program/resume" \
+    -H "content-type: application/json" \
+    -d "{\"programId\":\"${WRITE_ID}\"}"); then
+    break
+  fi
+  sleep 0.5
+done
 echo "$RESUME" | tee /tmp/celld-fleet-resume-write.json >/dev/null
+[[ -n "$RESUME" ]] || {
+  echo "smoke-program-cell-fleet-kill: FAIL — resume on B empty" >&2
+  cat /tmp/celld-fleet-b.log >&2
+  exit 1
+}
 echo "$RESUME" | python3 -c '
 import json,sys
 d=json.load(sys.stdin)

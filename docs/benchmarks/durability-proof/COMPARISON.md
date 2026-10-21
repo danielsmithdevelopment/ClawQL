@@ -63,7 +63,7 @@ Golem’s public claim is that retries take effect once **if the service honors*
 | Artifact                                                  | When                                                                                                                                   |
 | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Kill-mid-write **gateway / mandate** numbers (Tier **D**) | Ready now (CI N=50); can share privately as ClawQL-only                                                                                |
-| Program-mode durability vs Pi Durable / Golem             | **Only after Tier C** (fleet LTX + three-arm) passes                                                                                   |
+| Program-mode durability vs Pi Durable / Golem             | Tier **C** fleet peer kill measured on R2 — peer **named** boards still need maintainer invite                                         |
 | Named public board with “Pi Durable” / “Golem”            | After maintainer invitation (same rule as other peer boards)                                                                           |
 | De Goes / CEO outreach with numbers                       | After Tier C + private config check — [outreach order](../../gtm/golem-overlap-and-durability-honesty.md#outreach-timing-ceo--de-goes) |
 

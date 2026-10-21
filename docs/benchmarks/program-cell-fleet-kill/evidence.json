@@ -1,8 +1,17 @@
 {
   "kind": "celld-fleet-peer-sigkill",
-  "measuredAt": "2026-10-21T02:14:37.687078+00:00",
-  "ok": false,
-  "status": "not_measured",
-  "reason": "CELLD_BUCKET unset",
-  "honesty": "Tier C fleet LTX peer kill not measured. Requires a bucket that passes celld diagnose conditional-write. Lab isolate kill (Tier B) is separate."
+  "measuredAt": "2026-10-21T02:29:16.483235+00:00",
+  "ok": true,
+  "status": "measured",
+  "bucket": "s3://clawql-streams-state/tier-c-20261021022850",
+  "diagnoseLines": 6,
+  "arms": [
+    {
+      "arm": "write_sigkill_peer_resume_outcome_unknown",
+      "ok": true,
+      "programId": "prog_fleetkill_write_1792549742",
+      "detail": "SIGKILL node A after write intent; resume on node B reported outcome_unknown"
+    }
+  ],
+  "honesty": "Tier C lab on Cloudflare R2 (clawql-streams-state): two celld fleet nodes, diagnose conditional-write ok, SIGKILL node A → resume on B with outcome_unknown. Not a three-arm AWS load-test cost board; host WORM continuity still separate. Not a durable execution engine."
 }

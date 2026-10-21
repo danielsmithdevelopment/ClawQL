@@ -146,9 +146,9 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     howToProve:
       'Publish evidence under docs/benchmarks/durability-proof/STATUS.md; no wild survives-a-crash copy until Tier C.',
     status: 'partial',
-    statusLabel: 'Lab Yes · fleet Partial',
+    statusLabel: 'Lab Yes · fleet Yes (R2)',
     nextStep:
-      'Tiers A/B/D CI-gated; dual-column comparison board measured for ClawQL. Tier C fleet harness shipped (needs conforming bucket). Peers (Pi Durable/Golem) pending invite. Hot-path A/B 10k PASS.',
+      'Tiers A/B/C/D measured (C = R2 two-node peer kill). Dual-column comparison for ClawQL arms. Pi Durable/Golem named boards pending invite. Not a durable execution engine. Hot-path A/B 10k PASS.',
   },
 ] as const
 
