@@ -6,7 +6,7 @@
 
 **Scoped Tier C claim (measured):** Programs survive a node crash, resuming on another node in about **12 seconds** (stock `CELLD_TTL_MS=10000` — failover ≈ lease TTL + detection), with no repeated writes; a write interrupted in flight is marked outcome unknown for a person to resolve. Scope: two celld nodes, one storage provider (Cloudflare R2). Avoid “durable execution” and “exactly once.”
 
-**Three columns + TTL tradeoff:** duplicates / outcome_unknown / self-fences. Stock resume p50 ~12s is mostly the lease. Prefer renew-every-⅕ + regional leases over TTL-only stretch — [`AVAILABILITY.md`](../program-cell-fleet-kill/AVAILABILITY.md), [`TTL-TRADEOFF.md`](../program-cell-fleet-kill/TTL-TRADEOFF.md).
+**Three columns + TTL tradeoff (N=1000 stock complete):** duplicates=0 (rule-of-three ≤0.3% @95%); outcome_unknown ~0.48; **6** survivor self-fences; **9** resumeDeadlineMisses; failover ~12s. TTL-only 30s arm: failover ~32s, dups=0. Prefer renew-every-⅕ + regional leases over TTL stretch — [`AVAILABILITY.md`](../program-cell-fleet-kill/AVAILABILITY.md), [`TTL-TRADEOFF.md`](../program-cell-fleet-kill/TTL-TRADEOFF.md), [`phased-evidence.json`](../program-cell-fleet-kill/phased-evidence.json).
 
 ---
 

@@ -1,6 +1,6 @@
 {
   "kind": "celld-fleet-ttl-tradeoff",
-  "measuredAt": "2026-10-21T11:20:43.049Z",
+  "measuredAt": "2026-10-21T11:41:05.211Z",
   "honesty": "TTL is the failover floor: resume p50 ≈ TTL + detection when ownership wait is included. Raising TTL alone cuts false fences but slows every crash recovery. Preferred production levers (renew every ⅕ TTL + regional lease store) are not knobs in celld 0.4.0 — only CELLD_TTL_MS is exposed. ttl_only_30s is a tradeoff demo, not the preferred sole tune. Not durable execution / exactly-once.",
   "preferredProduction": {
     "id": "production_preferred",
@@ -17,9 +17,9 @@
     {
       "id": "stock_r2_ttl_10s",
       "label": "Stock — CELLD_TTL_MS=10000, leases on R2, renew ~⅓ TTL",
-      "status": "measured_partial",
-      "measuredAt": "2026-10-21T11:15:11.226Z",
-      "n": 950,
+      "status": "measured",
+      "measuredAt": "2026-10-21T11:34:59.165Z",
+      "n": 1000,
       "targetN": 1000,
       "celldTtlMs": 10000,
       "storageProvider": "cloudflare-r2",
@@ -29,16 +29,16 @@
         "duplicates": 0,
         "zeroDuplicates": true,
         "ruleOfThreeUpperBound95": 0.003,
-        "outcomeUnknownTotal": 457,
-        "outcomeUnknownRate": 0.48105263157894734,
+        "outcomeUnknownTotal": 481,
+        "outcomeUnknownRate": 0.481,
         "survivorSelfFences": 6,
-        "survivorSelfFenceRate": 0.00631578947368421,
+        "survivorSelfFenceRate": 0.006,
         "survivorRestarts": 2,
         "resumeDeadlineMisses": 9
       },
       "resumeMs": {
-        "p50": 11913,
-        "p95": 13270,
+        "p50": 11908,
+        "p95": 13316,
         "p99": 34292,
         "p999": 421439,
         "includesSurvivorRecovery": true
