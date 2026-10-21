@@ -26,11 +26,11 @@ Artifact: [`results-session-length-curve.json`](./results-session-length-curve.j
 ## Measured curve (loopback, keep-alive, n=5000)
 
 | Call index | tool_call p50 | call+result p50 |
-| ---: | ---: | ---: |
-| 10 | 1.8 ms | 4.5 ms |
-| 100 | 5.3 ms | 11.6 ms |
-| 1,000 | 36 ms | 83 ms |
-| 5,000 | 179 ms | 415 ms |
+| ---------: | ------------: | --------------: |
+|         10 |        1.8 ms |          4.5 ms |
+|        100 |        5.3 ms |         11.6 ms |
+|      1,000 |         36 ms |           83 ms |
+|      5,000 |        179 ms |          415 ms |
 
 Growth ratio (5k / 10) ≈ **98×**. Hosts using a ~250 ms per-hook budget approach fail-closed around a few thousand calls.
 

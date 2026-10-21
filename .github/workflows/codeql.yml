@@ -4,9 +4,10 @@ name: CodeQL
 
 on:
   push:
-    branches: [main]
+    branches: [main, "cursor/**"]
   pull_request:
-    branches: [main]
+    # Stacked security PRs (any base) — same scan as main.
+    branches: ["**"]
   schedule:
     - cron: "0 6 * * 1"
 

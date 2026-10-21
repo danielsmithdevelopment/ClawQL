@@ -22,6 +22,8 @@ paths = [
   '''(^|/)benchmarks/openbench/tasks/''',
   # Multi-attack injection corpus uses deliberate effectTokens (CLAWQL_INJECT_*), not secrets.
   '''(^|/)benchmarks/security-suite/multi-attack-injection/corpus/''',
+  # Harmful-eval runners use synthetic poisonToken / effectToken fixture strings (CLAWQL_*_01).
+  '''(^|/)scripts/benchmarks/multi-attack-injection/''',
   # Public IETF RFCs used as pageindex-ab hard-candidate docs (OAuth examples etc.).
   '''(^|/)benchmarks/pageindex-ab/corpus/hard-candidate/docs/rfc''',
   '''(^|/)benchmarks/pageindex-ab/corpus/seed/rfc''',

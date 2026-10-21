@@ -2,6 +2,10 @@
  * Benign suite — every tool declared in the ClawQL OpenAPPA battery must
  * receive allow_call (or an expected mandate) under a mock that mirrors
  * the deny-by-default battery.
+ *
+ * Session IFC long-trajectory utility cost (label-cap → `source:untrusted`)
+ * lives in `src/ifc/session-ifc.test.ts` (“long session past threshold”) —
+ * rerun that suite whenever changing the overflow policy.
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";

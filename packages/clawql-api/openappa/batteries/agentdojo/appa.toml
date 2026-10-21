@@ -1,0 +1,357 @@
+# AgentDojo FunctionsRuntime tool contracts for OpenAPPA (benchmark arm).
+# Canonical ids: mcp/agentdojo/<fn>. Wire (opencode): mcp__agentdojo__<fn>.
+#
+# Ownership: OpenAPPA = may this caller invoke this tool at all.
+# Session IFC (clawql_tools_executor) = given untrusted reads, may data reach this sink.
+# Most restrictive wins in the AgentDojo stacked defense.
+#
+# Reads use empty delta (session IFC owns taint in this harness — OpenAPPA trust
+# remedies need a human/host accept loop we do not simulate). Privileged /
+# destructive sinks require human attention (AgentDojo → park). Conditional
+# sinks stay allow_call so IFC can apply destination policy.
+
+[policy]
+version = 2
+
+# --- Untrusted / attacker-influenced reads (taint sources) ---
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_unread_emails"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_received_emails"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_sent_emails"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_draft_emails"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/search_emails"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_file_by_id"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/search_files"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/list_files"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/search_files_by_filename"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/search_calendar_events"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_day_calendar_events"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_channels"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/read_channel_messages"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/read_inbox"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_users_in_channel"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_most_recent_transactions"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_scheduled_transactions"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_balance"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_user_information"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_flight_information"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_all_hotels_in_city"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_hotels_prices"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_rating_reviews_for_hotels"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_all_restaurants_in_city"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_cuisine_type_for_restaurants"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_rating_reviews_for_restaurants"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_dietary_restrictions_for_all_restaurants"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_contact_information_for_restaurants"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_price_for_restaurants"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/check_restaurant_opening_hours"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_webpage"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/read_file"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/download_file"
+delta = {}
+
+# --- Benign metadata / helpers (no label narrowing) ---
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_current_day"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/search_contacts_by_name"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/search_contacts_by_email"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_iban"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_user_info"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_hotels_address"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_restaurants_address"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_all_car_rental_companies_in_city"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_car_types_available"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_rating_reviews_for_car_rental"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_car_rental_address"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_car_fuel_options"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/agentdojo/get_car_price_per_day"
+delta = {}
+
+# --- Conditional sinks (IFC decides destination; OpenAPPA allows call) ---
+
+[[policy.tool]]
+name = "mcp/agentdojo/send_email"
+delta = {}
+effects = ["agentdojo.egress"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/send_channel_message"
+delta = {}
+effects = ["agentdojo.egress"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/send_direct_message"
+delta = {}
+effects = ["agentdojo.egress"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/create_calendar_event"
+delta = {}
+effects = ["agentdojo.write"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/reschedule_calendar_event"
+delta = {}
+effects = ["agentdojo.write"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/create_file"
+delta = {}
+effects = ["agentdojo.write"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/append_to_file"
+delta = {}
+effects = ["agentdojo.write"]
+
+# --- Park / privileged (human attention; AgentDojo → park stop) ---
+
+[[policy.tool]]
+name = "mcp/agentdojo/send_money"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.money"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/schedule_transaction"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.money"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/update_scheduled_transaction"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.money"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/reserve_hotel"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.booking"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/reserve_car_rental"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.booking"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/reserve_restaurant"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.booking"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/invite_user_to_channel"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.membership"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/add_user_to_channel"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.membership"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/remove_user_from_channel"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.membership"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/invite_user_to_slack"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.membership"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/remove_user_from_slack"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.membership"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/add_calendar_event_participants"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.membership"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/update_password"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.account"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/update_user_info"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.account"]
+
+# --- Hard / destructive ---
+
+[[policy.tool]]
+name = "mcp/agentdojo/delete_file"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.destructive"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/delete_email"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.destructive"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/cancel_calendar_event"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.destructive"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/post_webpage"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.egress"]
+
+[[policy.tool]]
+name = "mcp/agentdojo/share_file"
+requires = { attention = ["human-approval"] }
+delta = {}
+effects = ["agentdojo.egress"]

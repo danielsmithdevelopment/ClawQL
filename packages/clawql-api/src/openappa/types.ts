@@ -8,11 +8,7 @@ export const OPENAPPA_PROTOCOL = 1 as const;
 export type OpenAppaAdapter = "opencode" | "claude-code" | "kagent";
 
 export type OpenAppaEventName =
-  | "session_start"
-  | "tool_call"
-  | "tool_result"
-  | "spawn_result"
-  | "child_end";
+  "session_start" | "tool_call" | "tool_result" | "spawn_result" | "child_end";
 
 /** Decisions observed / handled by the ClawQL client. */
 export type OpenAppaDecisionName =

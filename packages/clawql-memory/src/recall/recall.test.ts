@@ -11,6 +11,12 @@ describe("memory-recall helpers", () => {
     expect(keywordScore("hello world", "Hello hello WORLD")).toBeGreaterThan(0);
   });
 
+  it("keywordScore does not substring-match inside longer tokens", () => {
+    // Regression: query "pat" must not score "# Beta Page" (pat ⊂ page).
+    expect(keywordScore("github pat", "# Beta Page\n\nSecondary note body.")).toBe(0);
+    expect(keywordScore("github pat", "GitHub API patterns for PAT rotation.")).toBeGreaterThan(0);
+  });
+
   it("extractWikilinkTargets parses Obsidian links", () => {
     expect(extractWikilinkTargets("See [[Foo Bar]] and [[x|alias]]")).toEqual(["Foo Bar", "x"]);
   });

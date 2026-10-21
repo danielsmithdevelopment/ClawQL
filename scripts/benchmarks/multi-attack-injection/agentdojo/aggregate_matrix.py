@@ -62,8 +62,7 @@ def main() -> int:
             }
         )
 
-    # Lead: clawql_data_flow cell with the largest ASR drop vs matching none arm
-    # (clearest defense signal). Fall back to first clawql, then any measured.
+    # Lead: prefer stacked OpenAPPA+IFC arm, else IFC-only, largest ASR drop vs none.
     def _none_asr(row: dict) -> float | None:
         for r in rows:
             if (
@@ -76,21 +75,36 @@ def main() -> int:
                 return float(r["agentdojo_asr"])
         return None
 
+    DEFENSE_PREF = (
+        "clawql_data_flow_openappa",
+        "clawql_stack",
+        "clawql_data_flow",
+    )
+
+    def _defense_rank(defense: str | None) -> int:
+        try:
+            return DEFENSE_PREF.index(defense or "")
+        except ValueError:
+            return 99
+
     clawql_rows = [
         r
         for r in rows
-        if r.get("status") == "measured" and r.get("defense") == "clawql_data_flow"
+        if r.get("status") == "measured"
+        and r.get("defense") in DEFENSE_PREF
     ]
     lead = None
-    best_delta = -1.0
+    best_key: tuple[int, float] | None = None
     for r in clawql_rows:
         asr = r.get("agentdojo_asr")
         if not isinstance(asr, (int, float)):
             continue
         none_asr = _none_asr(r)
         delta = (none_asr - float(asr)) if none_asr is not None else -float(asr)
-        if delta > best_delta:
-            best_delta = delta
+        # Prefer stacked arm; within same preference, largest ASR drop.
+        key = (_defense_rank(r.get("defense")), -delta)
+        if best_key is None or key < best_key:
+            best_key = key
             lead = {
                 **r,
                 "none_arm_asr": none_asr,
@@ -127,11 +141,13 @@ def main() -> int:
             "lead_cell": lead,
             "claim_kind": "empirical",
             "note": (
-                "Lead = clawql_data_flow cell with largest ASR drop vs matching none arm. "
+                "Lead = clawql_data_flow_openappa (stacked) preferred, else clawql_data_flow, "
+                "largest ASR drop vs matching none arm. "
                 "Report ASR/utility with ci95; publish utility_without_attack alongside "
                 "utility_under_attack. Empirical rates — not 'provable' security. "
                 "CaMeL is related work (own models/numbers), not a same-table row until "
-                "same-model head-to-head. Full matrix in rows[]."
+                "same-model head-to-head. Full matrix in rows[]. "
+                "Panguard is MCP-gateway only — not in this FunctionsRuntime harness."
             ),
         },
         "methodology_gates": {
@@ -140,6 +156,8 @@ def main() -> int:
             "camel_same_model_required_for_table": True,
             "claim_vocabulary": "empirical_not_provable",
             "optional_cell_repeats": "MAI_AGENTDOJO_REPEATS (not default)",
+            "stacked_openappa_layer5": True,
+            "panguard_in_agentdojo": False,
         },
         "rows": rows,
         "cells": cells,

@@ -20,6 +20,11 @@ Same-workspace is not the same as safe: attacks in AgentDojo Slack originate
 
 Frozen defaults id: ``clawql_agentdojo_defaults_v2`` (see AGENTDOJO-RULES-DIFF.md).
 
+Stacked arm ``clawql_data_flow_openappa`` adds OpenAPPA Layer 5 before IFC
+(product order minus Panguard — ATR/Panguard is MCP-gateway only):
+
+  OpenAPPA tool_call → session IFC / park → run → OpenAPPA tool_result
+
 This is a defense *arm* for AgentDojo scoring (ASR + utility), not a claim that
 AgentDojo's FunctionsRuntime is ClawQL MCP.
 """
@@ -29,6 +34,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Sequence
 from typing import Any, Literal
+from uuid import uuid4
 
 from agentdojo.agent_pipeline.tool_execution import (
     ToolsExecutor,
@@ -37,6 +43,8 @@ from agentdojo.agent_pipeline.tool_execution import (
 )
 from agentdojo.functions_runtime import EmptyEnv, Env, FunctionReturnType, FunctionsRuntime
 from agentdojo.types import ChatMessage, ChatToolResultMessage, text_content_block_from_string
+
+from openappa_client import OpenAppaClient, OpenAppaClientError, OpenAppaVerdict
 
 Disposition = Literal["allow", "park", "hard_block"]
 
@@ -228,21 +236,65 @@ def record_untrusted_metadata(fn: str, args: dict[str, Any]) -> dict[str, Any] |
     }
 
 
+def _openappa_to_disposition(verdict: OpenAppaVerdict) -> Disposition | None:
+    if verdict.allow:
+        return None
+    if verdict.status == "mandate_required":
+        return "park"
+    return "hard_block"
+
+
+def _compose_disposition(
+    openappa: Disposition | None, ifc: Disposition | None
+) -> tuple[Disposition | None, str]:
+    """Most restrictive wins: hard_block > park > allow/None."""
+    rank = {None: 0, "allow": 0, "park": 1, "hard_block": 2}
+
+    def norm(d: Disposition | None) -> Disposition | None:
+        return d if d in ("park", "hard_block") else None
+
+    o, i = norm(openappa), norm(ifc)
+    if rank[o] == 0 and rank[i] == 0:
+        return None, "allow"
+    if o is not None and rank[o] > rank[i]:
+        return o, "openappa_layer5"
+    if i is not None and rank[i] > rank[o]:
+        return i, "clawql_data_flow_taint"
+    if o is not None and i is not None and rank[o] == rank[i]:
+        return o, "composed"
+    if o is not None:
+        return o, "openappa_layer5"
+    if i is not None:
+        return i, "clawql_data_flow_taint"
+    return None, "allow"
+
+
 class ClawQLToolsExecutor(ToolsExecutor):
-    """ToolsExecutor that applies ClawQL-style taint → allow / park / hard_block."""
+    """ToolsExecutor: OpenAPPA (opt-in) then ClawQL taint → allow / park / hard_block."""
 
     def __init__(
         self,
         tool_output_formatter: Callable[[FunctionReturnType], str] = tool_result_to_str,
+        *,
+        openappa: OpenAppaClient | None = None,
     ) -> None:
         super().__init__(tool_output_formatter)
         self._tainted = False
+        self._openappa = openappa
+        self._root_id: str | None = None
         self.blocked_calls: list[dict[str, Any]] = []
         self.labeled_calls: list[dict[str, Any]] = []
+        self.openappa_decisions: list[dict[str, Any]] = []
         self.defaults_id = DEFAULTS_ID
 
     def reset_taint(self) -> None:
         self._tainted = False
+        self._root_id = None
+
+    def _task_root(self) -> str:
+        if self._root_id is None:
+            self._root_id = f"agentdojo-task-{uuid4()}"
+        return self._root_id
 
     def query(
         self,
@@ -259,10 +311,11 @@ class ClawQLToolsExecutor(ToolsExecutor):
         if messages[-1]["tool_calls"] is None or len(messages[-1]["tool_calls"]) == 0:
             return query, runtime, env, messages, extra_args
 
-        # Pipeline reuses one executor across user×injection pairs. Clear taint at
-        # the start of each task (no prior tool results in this conversation).
+        # Pipeline reuses one executor across user×injection pairs. Clear taint +
+        # OpenAPPA root at the start of each task (no prior tool results).
         if not any(m.get("role") == "tool" for m in messages):
             self._tainted = False
+            self._root_id = None
 
         from ast import literal_eval
         from agentdojo.agent_pipeline.llms.google_llm import EMPTY_FUNCTION_NAME
@@ -294,29 +347,96 @@ class ClawQLToolsExecutor(ToolsExecutor):
                 continue
 
             args = dict(tool_call.args)
-            disposition = classify_sink(fn, args) if self._tainted else None
+            call_id = str(tool_call.id or uuid4())
+            openappa_disp: Disposition | None = None
+            openappa_verdict: OpenAppaVerdict | None = None
+
+            if self._openappa is not None:
+                try:
+                    openappa_verdict = self._openappa.tool_call(
+                        root_id=self._task_root(),
+                        tool=fn,
+                        arguments=args,
+                        call_id=call_id,
+                    )
+                except OpenAppaClientError as e:
+                    openappa_verdict = OpenAppaVerdict(
+                        allow=False,
+                        status="blocked",
+                        reason=f"OpenAPPA sidecar unavailable (fail closed): {e}",
+                        decision="transport_error",
+                        raw={},
+                    )
+                openappa_disp = _openappa_to_disposition(openappa_verdict)
+                self.openappa_decisions.append(
+                    {
+                        "function": fn,
+                        "decision": openappa_verdict.decision,
+                        "status": openappa_verdict.status,
+                        "allow": openappa_verdict.allow,
+                        "reason": openappa_verdict.reason,
+                    }
+                )
+
+            ifc_disp = classify_sink(fn, args) if self._tainted else None
+            disposition, mechanism = _compose_disposition(openappa_disp, ifc_disp)
+
             if disposition in ("park", "hard_block"):
                 self.blocked_calls.append(
                     {
                         "function": fn,
                         "args": args,
-                        "mechanism": "clawql_data_flow_taint",
+                        "mechanism": mechanism,
                         "disposition": disposition,
                         "defaults_id": DEFAULTS_ID,
+                        "openappa": (
+                            {
+                                "decision": openappa_verdict.decision,
+                                "status": openappa_verdict.status,
+                                "reason": openappa_verdict.reason,
+                            }
+                            if openappa_verdict is not None
+                            else None
+                        ),
                     }
                 )
                 if disposition == "park":
-                    msg = (
-                        f"Parked by ClawQL data-flow: untrusted read may not flow to "
-                        f"sink `{fn}` without human approval (AgentDojo has no human)."
-                    )
-                    err = "clawql_parked_data_flow"
+                    if mechanism == "openappa_layer5":
+                        reason = openappa_verdict.reason if openappa_verdict else ""
+                        msg = (
+                            f"Parked by OpenAPPA Layer 5: `{fn}` requires human "
+                            f"approval (AgentDojo has no human). {reason}"
+                        ).strip()
+                        err = "clawql_parked_openappa"
+                    elif mechanism == "composed":
+                        msg = (
+                            f"Parked by composed OpenAPPA + ClawQL data-flow: "
+                            f"sink `{fn}` requires human approval."
+                        )
+                        err = "clawql_parked_composed"
+                    else:
+                        msg = (
+                            f"Parked by ClawQL data-flow: untrusted read may not flow to "
+                            f"sink `{fn}` without human approval (AgentDojo has no human)."
+                        )
+                        err = "clawql_parked_data_flow"
                 else:
-                    msg = (
-                        f"Blocked by ClawQL data-flow: untrusted read may not flow "
-                        f"to sink `{fn}` (hard block)."
-                    )
-                    err = "clawql_blocked_data_flow"
+                    if mechanism == "openappa_layer5":
+                        reason = openappa_verdict.reason if openappa_verdict else ""
+                        msg = f"Blocked by OpenAPPA Layer 5: `{fn}`. {reason}".strip()
+                        err = "clawql_blocked_openappa"
+                    elif mechanism == "composed":
+                        msg = (
+                            f"Blocked by composed OpenAPPA + ClawQL data-flow: "
+                            f"sink `{fn}`."
+                        )
+                        err = "clawql_blocked_composed"
+                    else:
+                        msg = (
+                            f"Blocked by ClawQL data-flow: untrusted read may not flow "
+                            f"to sink `{fn}` (hard block)."
+                        )
+                        err = "clawql_blocked_data_flow"
                 tool_call_results.append(
                     ChatToolResultMessage(
                         role="tool",
@@ -326,10 +446,21 @@ class ClawQLToolsExecutor(ToolsExecutor):
                         error=err,
                     )
                 )
+                if self._openappa is not None:
+                    try:
+                        self._openappa.tool_result(
+                            root_id=self._task_root(),
+                            tool=fn,
+                            arguments=args,
+                            call_id=call_id,
+                            outcome={"status": "failure", "message": err},
+                        )
+                    except OpenAppaClientError:
+                        pass
                 continue
 
-            # disposition == "allow" after taint → metadata label only (body intact)
-            if self._tainted and disposition == "allow":
+            # IFC allow after taint → metadata label only (body intact)
+            if self._tainted and ifc_disp == "allow":
                 meta = record_untrusted_metadata(fn, args)
                 if meta is not None:
                     self.labeled_calls.append(meta)
@@ -349,6 +480,42 @@ class ClawQLToolsExecutor(ToolsExecutor):
                     error=error,
                 )
             )
+
+            if self._openappa is not None:
+                try:
+                    if error is None:
+                        outcome: dict[str, Any] = {
+                            "status": "success",
+                            "body": formatted[:4000],
+                        }
+                    else:
+                        outcome = {"status": "failure", "message": str(error)}
+                    result_decision = self._openappa.tool_result(
+                        root_id=self._task_root(),
+                        tool=fn,
+                        arguments=args,
+                        call_id=call_id,
+                        outcome=outcome,
+                    )
+                    if str(result_decision.get("decision") or "") in (
+                        "replace_output",
+                        "deliver_value",
+                    ):
+                        replacement = (
+                            result_decision.get("output")
+                            or result_decision.get("value")
+                            or result_decision.get("text")
+                        )
+                        if isinstance(replacement, str) and replacement:
+                            tool_call_results[-1] = ChatToolResultMessage(
+                                role="tool",
+                                content=[text_content_block_from_string(replacement)],
+                                tool_call_id=tool_call.id,
+                                tool_call=tool_call,
+                                error=error,
+                            )
+                except OpenAppaClientError:
+                    pass
 
             if fn in UNTRUSTED_READ_TOOLS and error is None:
                 self._tainted = True

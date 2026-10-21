@@ -12,6 +12,11 @@ describe("trust-provenance", () => {
     expect(noteTrustClass("price_usd: 15.00")).toBe("trusted");
   });
 
+  it("does not boost zero scores (avoids spurious keyword seeds)", () => {
+    expect(applyTrustRankAdjust(0, "unrelated trusted note")).toBe(0);
+    expect(applyTrustRankAdjust(1, "weak match")).toBe(3);
+  });
+
   it("ranks trusted above labeled poison on equal keyword strength", () => {
     const trusted = applyTrustRankAdjust(10, "SKU-ACME-100 price_usd: 15.00");
     const poison = applyTrustRankAdjust(

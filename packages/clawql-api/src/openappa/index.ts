@@ -16,11 +16,7 @@ export {
   OPENAPPA_SUPPORTED_SESSION_CALLS,
   type OpenAppaConfig,
 } from "./config.js";
-export {
-  OpenAppaProtocolError,
-  OpenAppaTransportError,
-  postOpenAppaHookEffect,
-} from "./client.js";
+export { OpenAppaProtocolError, OpenAppaTransportError, postOpenAppaHookEffect } from "./client.js";
 export {
   openAppaCircuitBeforeCallEffect,
   openAppaCircuitKey,

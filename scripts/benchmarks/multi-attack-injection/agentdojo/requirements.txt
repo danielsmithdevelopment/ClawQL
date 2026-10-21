@@ -1,1 +1,6 @@
+# Offline AgentDojo matrix runner (CI / local). Pin transitive HTTP stack so
+# OSV-Scanner does not resolve vulnerable certifi/httpx2/httpcore2 from PyPI.
 agentdojo>=0.1.35
+certifi>=2026.10.19
+httpcore2>=2.10.0
+httpx2>=2.12.0

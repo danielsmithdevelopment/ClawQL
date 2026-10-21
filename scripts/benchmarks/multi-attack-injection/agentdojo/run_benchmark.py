@@ -85,11 +85,23 @@ def defense_meta(defense_id: str) -> dict:
             "implements": None,
             "note": "Baseline pipeline for matrix comparison.",
         }
+    if defense_id in ("clawql_data_flow_openappa", "clawql_stack"):
+        return {
+            "id": "clawql_data_flow_openappa",
+            "name": "OpenAPPA Layer 5 + ClawQL session IFC (stacked)",
+            "implements": "scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py",
+            "openappa_battery": "packages/clawql-api/openappa/batteries/agentdojo/appa.toml",
+            "note": (
+                "Product order minus Panguard (MCP-gateway only): "
+                "OpenAPPA tool_call → session IFC → run → OpenAPPA tool_result. "
+                "AgentDojo FunctionsRuntime arm — not the ClawQL MCP product path."
+            ),
+        }
     return {
         "id": "clawql_data_flow",
         "name": "ClawQL untrusted-read taint → allow / park / hard-block sinks",
         "implements": "scripts/benchmarks/multi-attack-injection/agentdojo/clawql_tools_executor.py",
-        "note": "AgentDojo FunctionsRuntime arm — not the ClawQL MCP product path. Same mechanism shape as the scripted board.",
+        "note": "AgentDojo FunctionsRuntime arm — not the ClawQL MCP product path. Same mechanism shape as the scripted board. IFC-only ablation; prefer clawql_data_flow_openappa for stacked measurement.",
     }
 
 
@@ -235,7 +247,12 @@ def agentdojo_pipeline_name(model: str, defense_id: str) -> str:
     else:
         # deepseek / llama / unknown — still addressable in attack templates
         base = "gpt-4o-2024-05-13"
-    defense = "none" if defense_id in ("", "none", "null") else "clawql_data_flow"
+    if defense_id in ("", "none", "null"):
+        defense = "none"
+    elif defense_id in ("clawql_data_flow_openappa", "clawql_stack"):
+        defense = "clawql_data_flow_openappa"
+    else:
+        defense = "clawql_data_flow"
     slug = model.replace("/", "_")
     return f"{base}-{defense}-via-{slug}"
 
@@ -251,6 +268,7 @@ def build_pipeline(model: str, provider: str, defense_id: str):
     from agentdojo.models import MODEL_PROVIDERS, ModelsEnum
 
     from clawql_tools_executor import ClawQLToolsExecutor
+    from openappa_client import OpenAppaClientError, require_openappa_client
 
     if provider == "openrouter":
         headers = {
@@ -281,7 +299,14 @@ def build_pipeline(model: str, provider: str, defense_id: str):
     if defense_id in ("", "none", "null"):
         tools_loop = ToolsExecutionLoop([ToolsExecutor(), llm])
     else:
-        executor = ClawQLToolsExecutor()
+        try:
+            openappa = require_openappa_client(defense_id)
+        except OpenAppaClientError as e:
+            raise RuntimeError(
+                f"Stacked defense {defense_id!r} requires a live OpenAPPA sidecar "
+                f"(CLAWQL_OPENAPPA_URL). Probe failed: {e}"
+            ) from e
+        executor = ClawQLToolsExecutor(openappa=openappa)
         tools_loop = ToolsExecutionLoop([executor, llm])
 
     pipeline = AgentPipeline(
@@ -419,6 +444,46 @@ def main() -> int:
             if executor is not None
             else None
         )
+        under_attack_openappa = (
+            len(getattr(executor, "openappa_decisions", []) or [])
+            if executor is not None
+            else None
+        )
+        under_attack_openappa_denies = (
+            sum(
+                1
+                for d in (getattr(executor, "openappa_decisions", []) or [])
+                if not d.get("allow")
+            )
+            if executor is not None
+            else None
+        )
+
+        def _openappa_reason_hist(decisions: list) -> dict[str, int]:
+            from collections import Counter
+
+            c: Counter[str] = Counter()
+            for d in decisions:
+                if d.get("allow"):
+                    continue
+                reason = f"{d.get('decision') or ''} {d.get('reason') or ''}".lower()
+                if "undeclared" in reason or "not declared" in reason:
+                    c["undeclared_tool"] += 1
+                elif "human-approval" in reason or "requires attention" in reason:
+                    c["attention_human_approval"] += 1
+                elif "sidecar" in reason or d.get("decision") == "transport_error":
+                    c["sidecar_fail_closed"] += 1
+                elif "trust" in reason:
+                    c["trust_requirement"] += 1
+                else:
+                    c[f"other:{(d.get('decision') or 'unknown')}"] += 1
+            return dict(c)
+
+        under_attack_openappa_by_reason = (
+            _openappa_reason_hist(list(getattr(executor, "openappa_decisions", []) or []))
+            if executor is not None
+            else None
+        )
 
         # Utility without attacks = AgentDojo clean-work cost (benign analogue).
         # Skip only if explicitly opted out (emergency / cost).
@@ -431,6 +496,8 @@ def main() -> int:
                 executor.blocked_calls.clear()
                 if hasattr(executor, "labeled_calls"):
                     executor.labeled_calls.clear()
+                if hasattr(executor, "openappa_decisions"):
+                    executor.openappa_decisions.clear()
             with OutputLogger(str(no_attack_logdir)):
                 no_attack_results = benchmark_suite_without_injections(
                     pipeline,
@@ -518,13 +585,17 @@ def main() -> int:
                     "clawql_no_attack_by_disposition"
                 ),
                 "clawql_labeled_under_attack": under_attack_labeled,
+                "openappa_hook_calls": under_attack_openappa,
+                "openappa_denies": under_attack_openappa_denies,
+                "openappa_denies_by_reason": under_attack_openappa_by_reason,
                 "defaults_id": (
                     getattr(executor, "defaults_id", None)
                     if executor is not None
                     else None
                 ),
                 "note": (
-                    "clawql_sink_blocks = under-attack pass stops (park+hard). "
+                    "clawql_sink_blocks = under-attack pass stops (park+hard; IFC and/or OpenAPPA). "
+                    "openappa_denies = Layer 5 non-allow tool_call decisions. "
                     "clawql_no_attack_* = benign false-positive / park cost. "
                     "clawql_labeled_* = untrusted-derived metadata on allows (not body prefixes)."
                 ),

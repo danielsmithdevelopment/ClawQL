@@ -6,11 +6,15 @@
 
 name: CI
 
+# Stacked feature PRs (e.g. into cursor/*) must get the same suite as main —
+# security layers must not land combined-but-unchecked. Failures on stack heads
+# are blocking before the stack merges to main.
 on:
   push:
-    branches: [main]
+    branches: [main, "cursor/**"]
   pull_request:
-    branches: [main]
+    # Any target branch (stacked PRs into cursor/*, not only main).
+    branches: ["**"]
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}

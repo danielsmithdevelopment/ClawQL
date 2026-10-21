@@ -138,13 +138,15 @@ export function tokenizeQuery(text: string): string[] {
   return tokenize(text);
 }
 
-function countOccurrences(hay: string, needle: string): number {
-  if (needle.length < 2) return 0;
+/**
+ * Count whole-token matches of `term` in `text` (same tokenization as {@link tokenize}).
+ * Substring matches are intentionally rejected — e.g. query `pat` must not hit `page`.
+ */
+function countTokenOccurrences(text: string, term: string): number {
+  if (term.length < 2) return 0;
   let c = 0;
-  let i = 0;
-  while ((i = hay.indexOf(needle, i)) !== -1) {
-    c++;
-    i += needle.length;
+  for (const t of tokenize(text)) {
+    if (t === term) c++;
   }
   return c;
 }
@@ -183,10 +185,9 @@ export function buildCorpusIdf(documents: readonly string[]): Map<string, number
 export function keywordScore(query: string, text: string, idf?: TermIdf): number {
   const terms = tokenize(query);
   if (terms.length === 0) return 0;
-  const lower = text.toLowerCase();
   let s = 0;
   for (const t of terms) {
-    const tf = Math.min(countOccurrences(lower, t), 25);
+    const tf = Math.min(countTokenOccurrences(text, t), 25);
     if (tf === 0) continue;
     if (idf) {
       const w = idf.get(t) ?? Math.log(2); // unseen query term: mild default

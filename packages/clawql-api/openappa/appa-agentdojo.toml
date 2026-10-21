@@ -1,0 +1,18 @@
+# OpenAPPA root config for AgentDojo stacked defense (Layer 5 + session IFC).
+# Used by multi-attack AgentDojo CI — not the product MCP battery.
+#
+#   appa runtime --adapter opencode --listen 127.0.0.1:8789 \
+#     --config packages/clawql-api/openappa/appa-agentdojo.toml \
+#     --db /tmp/clawql-appa-agentdojo.db
+
+include = ["batteries/agentdojo/appa.toml"]
+
+[policy]
+version = 2
+
+[policy.deployment]
+context_control = true
+
+[externals]
+timeout_ms = 2000
+max_body_bytes = 65536

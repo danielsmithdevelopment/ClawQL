@@ -7,11 +7,7 @@ import {
   openAppaWireToolNameEffect,
   type OpenAppaConfig,
 } from "./config.js";
-import {
-  OpenAppaProtocolError,
-  OpenAppaTransportError,
-  postOpenAppaHookEffect,
-} from "./client.js";
+import { OpenAppaProtocolError, OpenAppaTransportError, postOpenAppaHookEffect } from "./client.js";
 import {
   openAppaCircuitBeforeCallEffect,
   openAppaCircuitKey,
@@ -29,11 +25,7 @@ import {
   openAppaSessionDepthEffect,
   resetOpenAppaSessionDepthForTests,
 } from "./session-depth.js";
-import type {
-  OpenAppaGateVerdict,
-  OpenAppaToolOutcome,
-  OpenAppaWireDecision,
-} from "./types.js";
+import type { OpenAppaGateVerdict, OpenAppaToolOutcome, OpenAppaWireDecision } from "./types.js";
 
 const startedRoots = new Set<string>();
 
@@ -136,7 +128,10 @@ function sidecarUnavailableVerdict(
 
 function argsDigest(args: unknown): string {
   try {
-    return createHash("sha256").update(JSON.stringify(args ?? {})).digest("hex").slice(0, 24);
+    return createHash("sha256")
+      .update(JSON.stringify(args ?? {}))
+      .digest("hex")
+      .slice(0, 24);
   } catch {
     return "unhashable";
   }
@@ -144,7 +139,10 @@ function argsDigest(args: unknown): string {
 
 function digestParts(parts: readonly string[]): string {
   if (!parts.length) return "empty";
-  return createHash("sha256").update([...parts].sort().join("\0")).digest("hex").slice(0, 16);
+  return createHash("sha256")
+    .update([...parts].sort().join("\0"))
+    .digest("hex")
+    .slice(0, 16);
 }
 
 /**
@@ -310,12 +308,7 @@ export function openAppaBeforeToolCallEffect(
       const elapsedMs = yield* Effect.sync(() => performance.now() - t0);
       const depth = yield* openAppaRecordSessionCallEffect(rootId);
       yield* openAppaMaybeWarnSupportedLimitEffect(rootId, depth);
-      yield* openAppaMaybeWarnTrajectoryGrowthEffect(
-        rootId,
-        depth,
-        elapsedMs,
-        config.timeoutMs
-      );
+      yield* openAppaMaybeWarnTrajectoryGrowthEffect(rootId, depth, elapsedMs, config.timeoutMs);
       yield* openAppaCircuitRecordSuccessEffect(circuitKey);
       if (
         config.allowCacheMs > 0 &&
@@ -357,10 +350,7 @@ export function openAppaBeforeToolCallEffect(
             );
             return sidecarUnavailableVerdict(alert, "policy_latency_budget");
           }
-          return sidecarUnavailableVerdict(
-            `sidecar unavailable — ${msg}`,
-            "sidecar_unavailable"
-          );
+          return sidecarUnavailableVerdict(`sidecar unavailable — ${msg}`, "sidecar_unavailable");
         });
       })
     );
@@ -492,7 +482,9 @@ export function openAppaAfterToolResultEffect(
           yield* openAppaCircuitRecordFailureEffect(circuitKey, circuitCfg);
           const mayOpen = yield* openAppaMayFailOpenEffect(config, input.toolName);
           if (mayOpen) {
-            process.stderr.write(`[clawql-openappa] warning (tool_result read fail-open): ${msg}\n`);
+            process.stderr.write(
+              `[clawql-openappa] warning (tool_result read fail-open): ${msg}\n`
+            );
             return {
               action: "passthrough" as const,
               decision: { protocol: 1 as const, decision: "ack" as const },
