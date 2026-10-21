@@ -37,6 +37,8 @@ Prefer renew-every-⅕ + regional leases over TTL stretch. Do not publish prefer
 
 Send the claim above, the evidence JSON, the per-phase table, the harness, the honest caveats (12-second failover; stock 0.6% self-fence / 0.9% deadline miss), and an invitation to try breaking it. Do not wait for the tuned configuration.
 
+**Reply shape (after his Golem 1.6 trade-off post):** acknowledge his three conditions; state that ClawQL chooses the opposite side for governed writes (at most once / `outcome_unknown`); point at the dual-mode board that measures both upstreams; ask him to check the Golem arm setup. Pitch: _Here’s how ClawQL closes the non-idempotent case in your model, measured._ Full wording: [Golem honesty — collaboration pitch](../../gtm/golem-overlap-and-durability-honesty.md#collaboration-pitch-reply-shape).
+
 ---
 
 ## Claim inventory (what we are proving)
@@ -75,13 +77,15 @@ We cannot say yet on a shared board — Golem has not published the kind of cras
 | Duplicated writes after a crash  | No published crash test        | **0 in 1,000** phased kills                        |
 | Failover time after a node crash | No published figure            | About **12 seconds** median, set by the lease      |
 
-**Where ClawQL is likely ahead:** never repeating a write even against an API that ignores idempotency keys. Golem’s wording is that interrupted requests retry with idempotency keys and take effect once if the service honors them. ClawQL’s single-use approvals do not depend on the upstream. “Likely” until both run against the non-idempotent mock. Trade-off: where Golem retries, ClawQL marks the write outcome unknown for a person to resolve.
+**Trade-off (now in his words):** Golem favors completing the work — retry; without upstream keys an interrupted POST can happen twice. ClawQL favors never repeating a consequential action — consume the approval first; cost is `outcome_unknown` for a person. Same unavoidable limit; opposite choices.
+
+**Where ClawQL is likely ahead:** never repeating a write even against an API that ignores idempotency keys. Confirmed by his “at least once unless keys” framing. “Likely” until both run against the non-idempotent mock on the dual-mode board.
 
 **Where ClawQL is probably behind:** failover speed (~12s lease floor). A mature durable runtime may recover faster — renew more often and keep leases on regional storage.
 
-**Where unmeasured:** celld cold start and agents per node. Memory per cell already looks competitive with their minimum.
+**Where unmeasured / planned:** celld cold start and agents per node; ClawQL attaching mandate-derived idempotency keys on Stripe-class APIs (planned — would cut in-flight unknowns without dropping at-most-once elsewhere).
 
-**Overall for his critique:** yes — a published crash test with real sample size, a statistical bound, and availability costs stated openly is exactly what he demands. The head-to-head waits for a Golem arm on the dual-column board ([`COMPARISON.md`](./COMPARISON.md)), ideally with his input on configuration.
+**Overall for his critique:** yes — a published crash test with real sample size, a statistical bound, and availability costs stated openly is exactly what he demands. Collaboration angle: Golem + ClawQL covers both sides of _his_ model. Head-to-head waits for a Golem arm on [`COMPARISON.md`](./COMPARISON.md), ideally with his input on configuration.
 
 ---
 

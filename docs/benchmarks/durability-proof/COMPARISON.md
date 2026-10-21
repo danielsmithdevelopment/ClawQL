@@ -26,7 +26,14 @@ All arms resume after a crash. They differ on the **in-flight write**. Count bot
 | **Duplicates**               | Same side effect applied twice (e.g. payment charged twice).       |
 | **Lost / `outcome_unknown`** | Write never applied, or nobody can tell — human/operator resolves. |
 
-**Trade-off (honest framing):** ClawQL consumes the approval **before** the write → duplicates stay at zero; an interrupted write can land in `outcome_unknown`. A retry-first system can avoid lost writes but may duplicate when the upstream is not idempotent.
+**Trade-off (honest framing — matches De Goes / Golem 1.6):**
+
+| System     | Favors                                | Interrupted third-party POST without keys   |
+| ---------- | ------------------------------------- | ------------------------------------------- |
+| **Golem**  | Completing the work                   | At least once → possible **duplicate**      |
+| **ClawQL** | Never repeating a consequential write | **At most once** → may be `outcome_unknown` |
+
+ClawQL consumes the approval **before** the write → duplicates stay at zero; an interrupted write can land in `outcome_unknown`. Golem retries and adds idempotency keys; when the callee honors them, effect is once. Neither is wrong — they pick opposite sides of the same distributed-systems limit.
 
 Publish **both** columns on every arm.
 
@@ -34,12 +41,12 @@ Publish **both** columns on every arm.
 
 ## Upstream modes (required for Golem’s claim)
 
-Run every arm against **two** mock upstreams:
+Run every arm against **two** mock upstreams — the same split he named:
 
 1. **Idempotency-honoring** — Stripe-class: same key → one effect.
 2. **No idempotency** — retries can multiply effects.
 
-Golem’s public claim is that retries take effect once **if the service honors** idempotency keys. ClawQL’s single-use mandate does **not** depend on that. Both modes show where each guarantee comes from.
+Golem’s public model: retries take effect once **if** the service honors keys; otherwise at least once. ClawQL’s single-use mandate does **not** depend on that. Both modes show where each guarantee comes from. **Planned product:** ClawQL attaches mandate-derived keys when the upstream supports them ([honesty doc](../../gtm/golem-overlap-and-durability-honesty.md#product-improvement-mandate-derived-idempotency-keys-planned)) so Stripe-class APIs can auto-resolve instead of `outcome_unknown` — still at-most-once when keys are absent.
 
 ---
 
@@ -54,7 +61,7 @@ Golem’s public claim is that retries take effect once **if the service honors*
 | `pi-durable+clawql`    | Pi Durable agent → ClawQL MCP tools                                 |
 | `golem+clawql`         | Golem agent → ClawQL MCP tools                                      |
 
-**Story for combinations:** durable runtime/harness keeps the agent alive; ClawQL keeps approved writes at most once — even when the upstream has **no** idempotency support.
+**Story for combinations:** Golem (or Pi Durable) keeps the agent and its tools durable; ClawQL as the tool layer keeps approved writes at most once. On APIs **without** idempotency keys, a Golem retry becomes a ClawQL **refusal** instead of a duplicate — closing the non-idempotent case in his model. On APIs **with** keys, both can converge on one effect (ClawQL keys still planned).
 
 ---
 
