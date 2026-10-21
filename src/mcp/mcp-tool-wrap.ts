@@ -3,6 +3,10 @@ import {
   accumulateNativeToolReadAfterSuccess,
   gateNativeToolBeforeInvoke,
   NATIVE_TOOL_GOVERNANCE_MODULE_ID,
+  openAppaAfterToolResultEffect,
+  openAppaBeforeToolCallEffect,
+  openAppaBlockToMcpResult,
+  openAppaEnabled,
 } from "clawql-api";
 import { runMcpProxyBeforeCallTool } from "../composition/clawql-api-adapters.js";
 import { recordMcpToolCallAudit, type McpToolAuditOutcome } from "./mcp-tool-audit.js";
@@ -118,8 +122,10 @@ function looksLikePaymentToolResultError(err: unknown): err is PaymentToolResult
 }
 
 /**
- * Wrap MCP tool handlers with mcp-proxy pipeline hooks (Panguard, x402, …),
+ * Wrap MCP tool handlers with mcp-proxy pipeline hooks (Panguard, OpenAPPA, x402, …),
  * durable WORM audit (when CLAWQL_WORM_ENABLED), ephemeral ring audit, and OTEL spans.
+ *
+ * Order: Panguard (Layer 4) → OpenAPPA (Layer 5) → session IFC / handler → OpenAPPA tool_result.
  *
  * Heavy packages (payments, observability, audit append) load only on the paths that need them
  * so equal-arm / Core-only compositions keep a smaller cold RSS (§11.1).
@@ -183,6 +189,27 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
       throw err;
     }
 
+    // Layer 5 — OpenAPPA information-flow (opt-in; after Panguard, before session IFC).
+    const openAppaCallId = `clawql-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    if (openAppaEnabled()) {
+      const mcpCtxOpen = getMcpRequestContext();
+      const openAppaVerdict = await Effect.runPromise(
+        openAppaBeforeToolCallEffect({
+          toolName,
+          args: args[0],
+          sessionId: mcpCtxOpen?.sessionId,
+          callId: openAppaCallId,
+        })
+      );
+      if (!openAppaVerdict.allow) {
+        const blockedResult = openAppaBlockToMcpResult(openAppaVerdict) as TResult;
+        const detail = openAppaVerdict.reason.slice(0, 500);
+        await Effect.runPromise(appendMcpToolResultEffect(toolName, false, detail));
+        await auditWrappedTool(toolName, args[0], "blocked", blockedResult, detail);
+        return blockedResult;
+      }
+    }
+
     // Native-tool choke point: session IFC + park destructive (same properties as execute).
     // Catalog execute-path tools skip this body; they are gated inside execute-core.
     try {
@@ -217,17 +244,65 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
           result,
         });
       }
+
+      let finalResult = result;
+      if (openAppaEnabled()) {
+        const after = await Effect.runPromise(
+          openAppaAfterToolResultEffect({
+            toolName,
+            args: args[0],
+            sessionId: mcpCtxAfter?.sessionId,
+            callId: openAppaCallId,
+            outcome: ok
+              ? { status: "success", body: result }
+              : {
+                  status: "failure",
+                  message: JSON.stringify(result).slice(0, 2000),
+                },
+          })
+        );
+        if (after.action === "replace") {
+          finalResult = {
+            content: [{ type: "text" as const, text: after.value }],
+            isError: false,
+          } as TResult;
+        } else if (after.action === "error") {
+          finalResult = {
+            content: [{ type: "text" as const, text: after.reason }],
+            isError: true,
+          } as TResult;
+        }
+      }
+
+      const finalOk = toolResultLooksOk(finalResult);
       await Effect.runPromise(
         appendMcpToolResultEffect(
           toolName,
-          ok,
-          ok ? undefined : JSON.stringify(result).slice(0, 500)
+          finalOk,
+          finalOk ? undefined : JSON.stringify(finalResult).slice(0, 500)
         )
       );
-      await auditWrappedTool(toolName, args[0], resultLooksError(result) ? "error" : "ok", result);
-      return result;
+      await auditWrappedTool(
+        toolName,
+        args[0],
+        resultLooksError(finalResult) ? "error" : "ok",
+        finalResult
+      );
+      return finalResult;
     } catch (err: unknown) {
       const errDetail = err instanceof Error ? err.message : String(err);
+      if (openAppaEnabled()) {
+        const mcpCtxFail = getMcpRequestContext();
+        await Effect.runPromise(
+          openAppaAfterToolResultEffect({
+            toolName,
+            args: args[0],
+            sessionId: mcpCtxFail?.sessionId,
+            callId: openAppaCallId,
+            outcome: { status: "failure", message: errDetail.slice(0, 2000) },
+          })
+        );
+      }
       await Effect.runPromise(appendMcpToolResultEffect(toolName, false, errDetail));
       await auditWrappedTool(toolName, args[0], "thrown", undefined, errDetail);
       throw err;

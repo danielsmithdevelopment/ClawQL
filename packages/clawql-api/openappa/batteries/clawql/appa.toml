@@ -1,0 +1,109 @@
+# ClawQL MCP tool contracts for OpenAPPA (canonical ids: mcp/clawql/<tool>).
+# Host wire spelling (opencode adapter): mcp__clawql__<tool>.
+#
+# Deny-by-default: tools not listed here are refused (`undeclared_tool`).
+# Empty `delta` keeps the session label — first call is `allow_call`.
+# Trust / attention requirements surface as `deny_call` (attention → mandate_required).
+
+[policy]
+version = 2
+
+# --- Core read / meta (no label narrowing) ---
+
+[[policy.tool]]
+name = "mcp/clawql/search"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/cache"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/audit"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/skills_list"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/skills_get"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/clawql_settings_read"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/clawql_evidence"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/clawql_console"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/clawql_mentions_search"
+delta = {}
+
+[[policy.tool]]
+name = "mcp/clawql/read_around"
+delta = {}
+
+# --- Memory: untrusted reads lower trust; writes need trusted internal data ---
+
+[[policy.tool]]
+name = "mcp/clawql/memory_recall"
+delta = { trust = "suspicious" }
+
+[[policy.tool]]
+name = "mcp/clawql/memory_ingest"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.memory"]
+
+[[policy.tool]]
+name = "mcp/clawql/memory_sync"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.memory"]
+
+# --- Catalog execute / resume: trusted trajectory ---
+
+[[policy.tool]]
+name = "mcp/clawql/execute"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.execute"]
+
+[[policy.tool]]
+name = "mcp/clawql/resume"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.execute"]
+
+# --- External / privileged sinks: human attention (HITL → mandate_required) ---
+
+[[policy.tool]]
+name = "mcp/clawql/notify"
+requires = { trust = "trusted", attention = ["human-approval"] }
+delta = {}
+effects = ["clawql.egress"]
+
+[[policy.tool]]
+name = "mcp/clawql/sources_propose"
+requires = { trust = "trusted", attention = ["human-approval"] }
+delta = {}
+effects = ["clawql.sources"]
+
+[[policy.tool]]
+name = "mcp/clawql/clawql_settings_update"
+requires = { trust = "trusted", attention = ["human-approval"] }
+delta = {}
+effects = ["clawql.settings"]
+
+[[policy.tool]]
+name = "mcp/clawql/clawql_open_file"
+requires = { trust = "trusted" }
+delta = {}
+effects = ["clawql.files"]

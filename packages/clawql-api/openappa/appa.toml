@@ -1,0 +1,19 @@
+# ClawQL OpenAPPA root — Layer 5 information-flow policy (beside Panguard Layer 4).
+# Opt-in: CLAWQL_ENABLE_OPENAPPA=1 CLAWQL_OPENAPPA_URL=http://127.0.0.1:8789
+#
+# Start a sidecar:
+#   appa runtime --adapter opencode --listen 127.0.0.1:8789 \
+#     --config packages/clawql-api/openappa/appa.toml \
+#     --db /tmp/clawql-appa.db
+
+include = ["batteries/clawql/appa.toml"]
+
+[policy]
+version = 2
+
+[policy.deployment]
+context_control = true
+
+[externals]
+timeout_ms = 2000
+max_body_bytes = 65536

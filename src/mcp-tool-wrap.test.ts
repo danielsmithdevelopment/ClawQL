@@ -12,9 +12,28 @@ vi.mock("./composition/clawql-api-adapters.js", async (importOriginal) => {
   };
 });
 
+vi.mock("clawql-api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("clawql-api")>();
+  return {
+    ...actual,
+    openAppaEnabled: vi.fn(() => false),
+    openAppaBeforeToolCallEffect: vi.fn(),
+    openAppaAfterToolResultEffect: vi.fn(),
+    openAppaBlockToMcpResult: actual.openAppaBlockToMcpResult,
+  };
+});
+
+import {
+  openAppaAfterToolResultEffect,
+  openAppaBeforeToolCallEffect,
+  openAppaEnabled,
+} from "clawql-api";
+import { Effect } from "effect";
+
 describe("wrapRegisteredMcpToolHandler", () => {
   afterEach(() => {
     resetClawqlAuditBufferForTests();
+    vi.mocked(openAppaEnabled).mockReturnValue(false);
   });
 
   it("returns x402 payment required tool result instead of throwing", async () => {
@@ -49,6 +68,35 @@ describe("wrapRegisteredMcpToolHandler", () => {
     const result = await wrapped({ operationId: "x", dry_run: true });
     expect(result.isError).toBe(true);
     expect(result.content[0]?.text).toContain("Panguard policy blocked tool: execute");
+  });
+
+  it("returns OpenAPPA Layer 5 block after Panguard allows", async () => {
+    vi.mocked(runMcpProxyBeforeCallTool).mockResolvedValueOnce(undefined);
+    vi.mocked(openAppaEnabled).mockReturnValue(true);
+    vi.mocked(openAppaBeforeToolCallEffect).mockReturnValueOnce(
+      Effect.succeed({
+        allow: false,
+        status: "mandate_required",
+        reason: "OpenAPPA policy blocked tool: requires attention: human-approval",
+        decision: {
+          protocol: 1,
+          decision: "deny_call",
+          feedback: "requires attention: human-approval",
+        },
+      })
+    );
+
+    const handler = vi.fn(async () => ({
+      content: [{ type: "text" as const, text: "should-not-run" }],
+    }));
+    const wrapped = wrapRegisteredMcpToolHandler("notify", handler);
+
+    const result = await wrapped({ destination: "external" });
+    expect(handler).not.toHaveBeenCalled();
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toContain("openappa_layer5");
+    expect(result.content[0]?.text).toContain("mandate_required");
+    expect(openAppaAfterToolResultEffect).not.toHaveBeenCalled();
   });
 
   it("surfaces CAPABILITY_WRITE_INTERCEPTED reason when Error.message is empty", async () => {
