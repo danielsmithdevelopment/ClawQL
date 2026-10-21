@@ -4,7 +4,7 @@
 **Date:** 2026-10-21  
 **Authors:** ClawQL (reference implementation + measured boards)  
 **Parent spec:** [agentready.org](https://agentready.org) v2.0 — find / read / **act**  
-**Why:** Act covers whether an agent *can* act (auth, API, MCP, payments). It does not yet say what must be true when the action is **consequential**. Businesses fail open on that gap.
+**Why:** Act covers whether an agent _can_ act (auth, API, MCP, payments). It does not yet say what must be true when the action is **consequential**. Businesses fail open on that gap.
 
 This file is the in-repo working text. File an issue (and optionally a PR adding `spec/categories/ar-safe.md`) on the AgentReady standard repo using the issue body at the end.
 
@@ -14,26 +14,26 @@ This file is the in-repo working text. File an issue (and optionally a PR adding
 
 AgentReady’s act section (AR-ACT-01…10) is correctly scoped to **reachability of action**:
 
-- Auth an agent can finish  
-- Public API + OpenAPI  
-- MCP or CLI (MUST when the product should complete tasks)  
-- WebMCP, payments, NLWeb as SHOULD/MAY  
+- Auth an agent can finish
+- Public API + OpenAPI
+- MCP or CLI (MUST when the product should complete tasks)
+- WebMCP, payments, NLWeb as SHOULD/MAY
 
 Ora’s scanner numbers that motivate act are about **presence** of those surfaces (~3% MCP, ~1% OAuth metadata + PKCE). They do not measure:
 
-1. Whether a write is previewable before it commits  
-2. Whether a crash mid-call duplicates a side effect  
-3. Whether content the agent *read* can steer tools it *calls*
+1. Whether a write is previewable before it commits
+2. Whether a crash mid-call duplicates a side effect
+3. Whether content the agent _read_ can steer tools it _calls_
 
 Those three failure modes are already deciding production trust for agentic products. They belong in the standard as a separate layer — **after** act — so AgentReady does not imply “MCP present ⇒ safe to automate money / infra / PII.”
 
 Proposed strength model (matches AgentReady’s evidence bar):
 
-| Strength | Meaning here |
-| -------- | ------------ |
-| **MUST** | Without it, consequential automation is unsafe even if AR-ACT passes |
+| Strength   | Meaning here                                                                             |
+| ---------- | ---------------------------------------------------------------------------------------- |
+| **MUST**   | Without it, consequential automation is unsafe even if AR-ACT passes                     |
 | **SHOULD** | Measurably reduces duplicate / injection / unbound-approval failures in published boards |
-| **MAY** | Emerging; enter when studies exist |
+| **MAY**    | Emerging; enter when studies exist                                                       |
 
 New identifiers use **`AR-SAFE-*`** so they do not collide with AR-ACT. Applicability: **conditional** — products whose agents can mutate state, move money, send messages, or change access. Read-only docs sites remain out of scope (act MAY not apply either).
 
@@ -47,8 +47,8 @@ New identifiers use **`AR-SAFE-*`** so they do not collide with AR-ACT. Applicab
 
 **Best practice:**
 
-- Default dry-run / propose for state-changing tools  
-- Commit (or park-for-approval) only on an explicit flag or separate tool  
+- Default dry-run / propose for state-changing tools
+- Commit (or park-for-approval) only on an explicit flag or separate tool
 - Preview returns the same schema the commit will use (operation id, args, risk class)
 
 **Evidence we can attach (ClawQL):** [sources propose](../specs/risk/sources-propose-v0.1.md) — `dryRun: true` default; commit parks a proposal; approve is **operator-only, not an agent MCP tool**.
@@ -63,9 +63,9 @@ New identifiers use **`AR-SAFE-*`** so they do not collide with AR-ACT. Applicab
 
 **Best practice:**
 
-- Canonicalize `{ operation, args, … }` → `argsHash`  
-- Persist pending intent; approval consumes **that** hash  
-- Atomic consume before the side effect so concurrent resumes cannot double-fire  
+- Canonicalize `{ operation, args, … }` → `argsHash`
+- Persist pending intent; approval consumes **that** hash
+- Atomic consume before the side effect so concurrent resumes cannot double-fire
 - Resume never accepts alternate args
 
 **Evidence (ClawQL):** [execute pause/resume](../specs/risk/execute-pause-resume-v0.1.md) — `argsHash`, atomic consume to `outcome_unknown`, formal model under `formal/tla/mandate/`.
@@ -80,8 +80,8 @@ New identifiers use **`AR-SAFE-*`** so they do not collide with AR-ACT. Applicab
 
 **Best practice:**
 
-- Consume approval **before** the remote call  
-- On uncertainty, mark unknown; do not auto-replay without an idempotency key the upstream honors  
+- Consume approval **before** the remote call
+- On uncertainty, mark unknown; do not auto-replay without an idempotency key the upstream honors
 - Publish a crash board (N kills across phases) with duplicate rate and unknown rate
 
 **Evidence (ClawQL):** [durability proof STATUS](../benchmarks/durability-proof/STATUS.md) — Tier C: 1,000 phased crashes, **0 repeated writes**, unknowns concentrated in in-flight phases; honesty frame in [golem overlap](../gtm/golem-overlap-and-durability-honesty.md) (execution durability ≠ effect durability).
@@ -96,8 +96,8 @@ New identifiers use **`AR-SAFE-*`** so they do not collide with AR-ACT. Applicab
 
 **Best practice:**
 
-- Advertise which operations are idempotency-capable in OpenAPI / tool metadata  
-- Attach key on approved execute / resume  
+- Advertise which operations are idempotency-capable in OpenAPI / tool metadata
+- Attach key on approved execute / resume
 - Document retry_with_key vs human resolution for `outcome_unknown`
 
 **Evidence (ClawQL):** Partial — key derivation `clawql-mandate:<executionId>` and capability hints exist; **do not** claim universal auto-attach on all connectors until measured. Proposal should allow SHOULD with “where the contract supports it.”
@@ -110,8 +110,8 @@ New identifiers use **`AR-SAFE-*`** so they do not collide with AR-ACT. Applicab
 
 **Best practice:**
 
-- Capability / ATR style gates on tools independent of retrieved text  
-- Redaction / extract-then-reason on untrusted corpora where applicable  
+- Capability / ATR style gates on tools independent of retrieved text
+- Redaction / extract-then-reason on untrusted corpora where applicable
 - Publish an injection evaluation (suite + methodology), not only a blog claim
 
 **Evidence (ClawQL):** In-house [multi-attack injection](../benchmarks/security-suite/multi-attack-injection/) harness and OpenBench memory-injection work — **not yet a published category claim**; **no AgentDojo citation in-tree**. The standard entry should demand **reproducible boards**, and ClawQL should only attach numbers once published.
@@ -129,16 +129,16 @@ WORM / append-only decision log for propose, approve, consume, finalize. Support
 ## Suggested category blurb (for agentready.org)
 
 > **Act safely** — when agents should change something that matters  
-> Applies after *act*. Preview consequential writes; bind human approval to an exact digest; prefer at-most-once under crash; pass idempotency keys when the API supports them; keep untrusted content from steering tools. MUST/SHOULD only where measured boards show agents fail without them.
+> Applies after _act_. Preview consequential writes; bind human approval to an exact digest; prefer at-most-once under crash; pass idempotency keys when the API supports them; keep untrusted content from steering tools. MUST/SHOULD only where measured boards show agents fail without them.
 
 ---
 
 ## What this is not
 
-- Not a replacement for AR-ACT (you still need MCP/CLI/auth)  
-- Not a vendor scorecard or badge  
-- Not “ClawQL-only” — requirements are behavioral; any product can implement  
-- Not claiming AgentDojo or universal exactly-once  
+- Not a replacement for AR-ACT (you still need MCP/CLI/auth)
+- Not a vendor scorecard or badge
+- Not “ClawQL-only” — requirements are behavioral; any product can implement
+- Not claiming AgentDojo or universal exactly-once
 
 ---
 
@@ -152,13 +152,16 @@ ClawQL documents and boards above are offered as **one** reference path, same sp
 
 ```markdown
 ## Title
+
 Proposal: AR-SAFE — “act safely” (preview/commit, digest-bound approval, at-most-once writes, injection)
 
 ## Summary
-AgentReady **act** (AR-ACT-*) correctly covers whether an agent *can* act. It does not yet cover what must hold when the action is consequential. We propose a conditional category **AR-SAFE** with draft identifiers AR-SAFE-01…06, strength assignments, and an evidence bar matching the rest of the spec (studies / reproducible boards before MUST).
+
+AgentReady **act** (AR-ACT-*) correctly covers whether an agent _can_ act. It does not yet cover what must hold when the action is consequential. We propose a conditional category **AR-SAFE** with draft identifiers AR-SAFE-01…06, strength assignments, and an evidence bar matching the rest of the spec (studies / reproducible boards before MUST).
 
 ## Motivation
-Ora’s act gap numbers (~3% MCP, ~1% OAuth+PKCE) explain *reachability*. Production failures we and others see after MCP exists are different:
+
+Ora’s act gap numbers (~3% MCP, ~1% OAuth+PKCE) explain _reachability_. Production failures we and others see after MCP exists are different:
 
 1. Writes that commit without a preview
 2. Approvals that do not bind to exact args (agent retries something else)
@@ -168,6 +171,7 @@ Ora’s act gap numbers (~3% MCP, ~1% OAuth+PKCE) explain *reachability*. Produc
 Businesses need the standard to name these so “AgentReady act” is not mistaken for “safe to automate wire transfers.”
 
 ## Draft requirements
+
 Full text: (link to ClawQL `docs/proposals/agentready-act-safely.md` or inline PR adding `spec/categories/ar-safe.md`)
 
 - AR-SAFE-01 SHOULD Preview before commit
@@ -178,6 +182,7 @@ Full text: (link to ClawQL `docs/proposals/agentready-act-safely.md` or inline P
 - AR-SAFE-06 MAY Durable audit of act decisions
 
 ## Evidence we can contribute
+
 - Digest-bound mandate park/resume + formal notes
 - Durability / kill-mid-write boards (at-most-once, outcome_unknown)
 - Injection suite methodology (publish-gated; no AgentDojo claim)
@@ -185,6 +190,7 @@ Full text: (link to ClawQL `docs/proposals/agentready-act-safely.md` or inline P
 Happy to split: category prose first, then schemas, then study design with Ora.
 
 ## Non-goals
+
 No badges/weights in the spec. No requirement that every docs site implement AR-SAFE. No “exactly-once remote POST” as MUST.
 ```
 
@@ -192,7 +198,7 @@ No badges/weights in the spec. No requirement that every docs site implement AR-
 
 ## Next steps for ClawQL
 
-1. Open the issue above on `agentready-org/standard` (human or bot with write access).  
-2. Land P0 public MCP URL honesty from the [score note](../gtm/agentready-score-2026-10.md) so act claims stay credible while proposing act safely.  
-3. Publish injection board numbers before citing AR-SAFE-05 externally.  
+1. Open the issue above on `agentready-org/standard` (human or bot with write access).
+2. Land P0 public MCP URL honesty from the [score note](../gtm/agentready-score-2026-10.md) so act claims stay credible while proposing act safely.
+3. Publish injection board numbers before citing AR-SAFE-05 externally.
 4. Optionally PR `spec/categories/ar-safe.md` once editors confirm category layout (repo currently holds `spec/` + prior AR-PROV-style contributions).
