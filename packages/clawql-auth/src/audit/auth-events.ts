@@ -155,16 +155,9 @@ export type AuthEvent =
       timestamp: string;
     }
   | {
-      /** Legacy plaintext row rejected after migration (`rejectPlaintext`). */
+      /** Non-ciphertext row in a Transit-backed store (integrity failure). */
       type: "VAULT_TRANSIT_PLAINTEXT_REJECTED";
       path: string;
-      timestamp: string;
-    }
-  | {
-      type: "VAULT_TRANSIT_MIGRATE_COMPLETED";
-      migrated: number;
-      alreadyCiphertext: number;
-      failed: number;
       timestamp: string;
     }
   | {

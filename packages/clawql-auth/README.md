@@ -84,24 +84,19 @@ createClawQLAuth({
     vaultTransit: true,
     vaultTransitKey: "clawql-secrets",
     vaultTransitTenantId: "acme",
-    vaultTransitRejectPlaintext: true, // after migratePlaintextSecretsEffect + clean scan
   }),
 });
 // Env: CLAWQL_VAULT_TRANSIT_KEY (+ VAULT_ADDR / VAULT_TOKEN), derived=true on the Transit key
+// Non-ciphertext rows always fail closed.
 ```
 
-Migrate / scan / rewrap (Effect-primary):
+Integrity scan / rewrap (Effect-primary):
 
 ```ts
-import {
-  migratePlaintextSecretsEffect,
-  scanPlaintextSecretsEffect,
-  rewrapAllSecretsEffect,
-} from "clawql-auth";
+import { scanPlaintextSecretsEffect, rewrapAllSecretsEffect } from "clawql-auth";
 
-await Effect.runPromise(migratePlaintextSecretsEffect(store));
 const scan = await Effect.runPromise(scanPlaintextSecretsEffect(store));
-// scan.plaintextPaths must be [] before rejectPlaintext / default-on
+// scan.plaintextPaths must stay empty
 await Effect.runPromise(rewrapAllSecretsEffect(store)); // after vault key rotate
 ```
 
@@ -279,7 +274,6 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 | `CLAWQL_VAULT_TRANSIT_KEY`                       | When set, wrap SecretStore with Vault Transit encrypt-at-rest (needs `VAULT_ADDR`+token)   |
 | `CLAWQL_VAULT_TRANSIT_MOUNT`                     | Transit mount path (default `transit`)                                                     |
 | `CLAWQL_VAULT_TRANSIT_TENANT`                    | Fallback tenant for derived-key context (or `CLAWQL_DEFAULT_ORG_ID`)                       |
-| `CLAWQL_VAULT_TRANSIT_REJECT_PLAINTEXT`          | `1` = fail closed on legacy plaintext rows (after migration)                               |
 | `CLAWQL_VAULT_TRANSIT_CACHE_TTL_MS`              | In-memory decrypt cache TTL (default `30000`; `0` disables). Never persisted.              |
 
 Setting `CLAWQL_AUTH_AUDIT_STORE=off` while MCP OAuth is enabled logs a **SECURITY WARNING** at `server-http` boot — auth is live but issuance is not persisted.

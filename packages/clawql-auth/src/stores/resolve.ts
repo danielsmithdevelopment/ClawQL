@@ -7,8 +7,7 @@
  * - Vault/OpenBao: `VAULT_ADDR` / `BAO_ADDR`, `VAULT_TOKEN` / `BAO_TOKEN`, optional `CLAWQL_VAULT_MOUNT`
  * - Transit (encrypt-at-rest over any backend): set `CLAWQL_VAULT_TRANSIT_KEY` (+ addr/token);
  *   optional `CLAWQL_VAULT_TRANSIT_MOUNT` (default `transit`),
- *   `CLAWQL_VAULT_TRANSIT_TENANT`, `CLAWQL_VAULT_TRANSIT_REJECT_PLAINTEXT=1`,
- *   `CLAWQL_VAULT_TRANSIT_CACHE_TTL_MS` (default 30000)
+ *   `CLAWQL_VAULT_TRANSIT_TENANT`, `CLAWQL_VAULT_TRANSIT_CACHE_TTL_MS` (default 30000)
  *
  * `resolveSecretStore` is a sync construction helper (no IO — it just picks and
  * `new`s a backend, each of which is Effect-primary on its own methods). The env
@@ -43,8 +42,6 @@ export type ResolveSecretStoreOptions = {
   vaultTransitKey?: string;
   /** Fallback tenant for Transit derived-key context. */
   vaultTransitTenantId?: string;
-  /** Refuse legacy plaintext after migration. */
-  vaultTransitRejectPlaintext?: boolean;
   /** In-memory decrypt cache TTL (ms); 0 disables. */
   vaultTransitCacheTtlMs?: number;
 };
@@ -55,7 +52,6 @@ export type WrapSecretStoreWithVaultTransitOptions = {
   mountPath?: string;
   keyName: string;
   tenantId?: string;
-  rejectPlaintext?: boolean;
   decryptCacheTtlMs?: number;
 };
 
@@ -113,7 +109,6 @@ export function wrapSecretStoreWithVaultTransit(
     inner,
     transit,
     tenantId: options.tenantId,
-    rejectPlaintext: options.rejectPlaintext,
     decryptCacheTtlMs: options.decryptCacheTtlMs,
   });
 }
@@ -132,7 +127,6 @@ function maybeWrapVaultTransit(
   return wrapSecretStoreWithVaultTransit(store, {
     keyName,
     tenantId: options.vaultTransitTenantId,
-    rejectPlaintext: options.vaultTransitRejectPlaintext,
     decryptCacheTtlMs: options.vaultTransitCacheTtlMs,
   });
 }

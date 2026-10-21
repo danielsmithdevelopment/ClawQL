@@ -1,7 +1,6 @@
 /**
- * One-time plaintext → Transit migration, plaintext scan, and bulk rewrap.
- * Effect-primary. Operates on {@link TransitEncryptedSecretStore} so encrypt
- * uses the same tenant+path context as live reads/writes.
+ * Transit ops — integrity scan (ciphertext-only) and bulk rewrap after key rotation.
+ * Effect-primary. Operates on {@link TransitEncryptedSecretStore}.
  */
 
 import { Effect } from "effect";
@@ -14,13 +13,6 @@ import {
 import type { TransitEncryptedSecretStore } from "../stores/transit-encrypted.js";
 import { SecretStoreError } from "../stores/types.js";
 import { isVaultTransitCiphertext } from "./transit.js";
-
-export type TransitMigrateReport = {
-  readonly migrated: number;
-  readonly alreadyCiphertext: number;
-  readonly failed: number;
-  readonly failures: ReadonlyArray<{ path: string; reason: string }>;
-};
 
 export type TransitScanReport = {
   readonly plaintextPaths: ReadonlyArray<string>;
@@ -42,9 +34,8 @@ function errReason(err: unknown): string {
 }
 
 /**
- * List paths under `prefix` whose stored value is still plaintext (not `vault:vN:`).
- * Use after migration to confirm zero plaintext remains before enabling
- * `CLAWQL_VAULT_TRANSIT_REJECT_PLAINTEXT=1`.
+ * Integrity scan: list paths under `prefix` that are not Transit ciphertext.
+ * A healthy store has `plaintextPaths.length === 0`.
  */
 export function scanPlaintextSecretsEffect(
   store: TransitEncryptedSecretStore,
@@ -70,6 +61,7 @@ export function scanPlaintextSecretsEffect(
 }
 
 /**
+<<<<<<< HEAD
  * Encrypt every legacy plaintext row in place (tenant+path context). Ciphertext
  * rows are left untouched. Does not delete pre-migration DB backups — rotate
  * provider keys or purge backups after a clean scan.
@@ -130,9 +122,12 @@ export function migratePlaintextSecretsEffect(
 }
 
 /**
+=======
+>>>>>>> 53c1c91c1 (refactor(clawql-auth): drop Transit plaintext migration path)
  * Rewrap all ciphertext under `prefix` onto the latest Transit key version
  * (after `vault write -f transit/keys/NAME/rotate`). Schedule regularly so old
- * key versions can be retired (`min_decryption_version`).
+ * key versions can be retired (`min_decryption_version`). Non-ciphertext rows
+ * count as failures (store must be ciphertext-only).
  */
 export function rewrapAllSecretsEffect(
   store: TransitEncryptedSecretStore,

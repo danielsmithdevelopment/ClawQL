@@ -5,11 +5,7 @@ import type { AuthEvent } from "../audit/auth-events.js";
 import type { VaultHttpClient } from "../stores/hashicorp-vault.js";
 import { createMemorySecretStore } from "../stores/memory.js";
 import { createTransitEncryptedSecretStore } from "../stores/transit-encrypted.js";
-import {
-  migratePlaintextSecretsEffect,
-  rewrapAllSecretsEffect,
-  scanPlaintextSecretsEffect,
-} from "./transit-migrate.js";
+import { rewrapAllSecretsEffect, scanPlaintextSecretsEffect } from "./transit-migrate.js";
 import {
   VaultTransitError,
   createVaultTransitProvider,
@@ -100,7 +96,6 @@ describe("TransitEncryptedSecretStore", () => {
       },
     });
     const inner = createMemorySecretStore();
-    // Seed ciphertext without going through setSecret (which also warms the cache).
     await Effect.runPromise(inner.setSecret("providers/slack/token", "vault:v1:ct"));
     const store = createTransitEncryptedSecretStore({
       inner,
@@ -116,18 +111,16 @@ describe("TransitEncryptedSecretStore", () => {
     });
 
     expect(await Effect.runPromise(store.getSecret("providers/slack/token"))).toBe("xoxb-secret");
-    // Second read hits cache even though Vault would 503
     expect(await Effect.runPromise(store.getSecret("providers/slack/token"))).toBe("xoxb-secret");
     expect(decryptCalls).toBe(1);
   });
 
-  it("rejects plaintext when rejectPlaintext is set and alerts on decrypt failure", async () => {
+  it("always rejects non-ciphertext and alerts on decrypt failure", async () => {
     const events: AuthEvent[] = [];
     const inner = createMemorySecretStore();
     await Effect.runPromise(inner.setSecret("providers/openai/key", "sk-legacy"));
     const store = createTransitEncryptedSecretStore({
       inner,
-      rejectPlaintext: true,
       eventSink: (e) =>
         Effect.sync(() => {
           events.push(e);
@@ -170,16 +163,13 @@ describe("TransitEncryptedSecretStore", () => {
     expect(events.some((e) => e.type === "VAULT_TRANSIT_DECRYPT_FAILED")).toBe(true);
   });
 
-  it("migrates plaintext, scans clean, and rewraps ciphertext", async () => {
+  it("scans integrity and rewraps ciphertext", async () => {
     const events: AuthEvent[] = [];
     const inner = createMemorySecretStore();
-    await Effect.runPromise(inner.setSecret("a", "plain-a"));
+    await Effect.runPromise(inner.setSecret("a", "vault:v1:a"));
     await Effect.runPromise(inner.setSecret("b", "vault:v1:old"));
+    await Effect.runPromise(inner.setSecret("bad", "plain"));
     const http = mockHttp({
-      "POST https://vault.test/v1/transit/encrypt/clawql-secrets": {
-        status: 200,
-        json: { data: { ciphertext: "vault:v1:new" } },
-      },
       "POST https://vault.test/v1/transit/rewrap/clawql-secrets": {
         status: 200,
         json: { data: { ciphertext: "vault:v2:rewrapped" } },
@@ -200,24 +190,9 @@ describe("TransitEncryptedSecretStore", () => {
       }),
     });
 
-    const before = await Effect.runPromise(scanPlaintextSecretsEffect(store));
-    expect(before.plaintextPaths).toContain("a");
-    expect(before.ciphertextPaths).toContain("b");
-
-    const mig = await Effect.runPromise(
-      migratePlaintextSecretsEffect(store, {
-        eventSink: (e) =>
-          Effect.sync(() => {
-            events.push(e);
-          }),
-      })
-    );
-    expect(mig.migrated).toBe(1);
-    expect(mig.alreadyCiphertext).toBe(1);
-    expect(await Effect.runPromise(inner.getSecret("a"))).toBe("vault:v1:new");
-
-    const after = await Effect.runPromise(scanPlaintextSecretsEffect(store));
-    expect(after.plaintextPaths).toEqual([]);
+    const scan = await Effect.runPromise(scanPlaintextSecretsEffect(store));
+    expect(scan.plaintextPaths).toContain("bad");
+    expect(scan.ciphertextPaths).toEqual(expect.arrayContaining(["a", "b"]));
 
     const rewrap = await Effect.runPromise(
       rewrapAllSecretsEffect(store, {
@@ -227,9 +202,9 @@ describe("TransitEncryptedSecretStore", () => {
           }),
       })
     );
-    expect(rewrap).toMatchObject({ rewrapped: 2, skipped: 0, failed: 0 });
+    expect(rewrap.rewrapped).toBe(2);
+    expect(rewrap.failed).toBe(1);
     expect(await Effect.runPromise(inner.getSecret("b"))).toBe("vault:v2:rewrapped");
-    expect(events.some((e) => e.type === "VAULT_TRANSIT_MIGRATE_COMPLETED")).toBe(true);
     expect(events.some((e) => e.type === "VAULT_TRANSIT_REWRAP_COMPLETED")).toBe(true);
     expect(isVaultTransitCiphertext("vault:v2:rewrapped")).toBe(true);
   });

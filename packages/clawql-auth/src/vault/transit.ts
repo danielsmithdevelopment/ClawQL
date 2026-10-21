@@ -32,11 +32,6 @@ export type VaultTransitProviderOptions = {
   mountPath?: string;
   /** Named encryption key in the mount (required for encrypt/decrypt/rewrap). */
   keyName: string;
-  /**
-   * When true (default), every encrypt/decrypt/rewrap requires a context.
-   * Disable only for migration from non-derived keys.
-   */
-  requireContext?: boolean;
   http?: VaultHttpClient;
 };
 
@@ -115,7 +110,6 @@ export class VaultTransitProvider {
   private readonly token: string;
   private readonly mount: string;
   private readonly keyName: string;
-  private readonly requireContext: boolean;
 
   constructor(private readonly options: VaultTransitProviderOptions) {
     this.http = options.http ?? defaultHttp();
@@ -123,7 +117,6 @@ export class VaultTransitProvider {
     this.token = options.vaultToken;
     this.mount = trimSlashes(options.mountPath ?? "transit");
     this.keyName = trimSlashes(options.keyName);
-    this.requireContext = options.requireContext !== false;
     if (!this.keyName) {
       throw new Error("vault_transit_requires_keyName");
     }
@@ -142,15 +135,12 @@ export class VaultTransitProvider {
 
   private resolveContextB64(
     context: TransitCryptoContext | string | undefined
-  ): Effect.Effect<string | undefined, VaultTransitError> {
-    return Effect.gen({ self: this }, function* () {
+  ): Effect.Effect<string, VaultTransitError> {
+    return Effect.gen(function* () {
       if (context == null || context === "") {
-        if (this.requireContext) {
-          return yield* Effect.fail(
-            new VaultTransitError({ reason: "vault_transit_context_required" })
-          );
-        }
-        return undefined;
+        return yield* Effect.fail(
+          new VaultTransitError({ reason: "vault_transit_context_required" })
+        );
       }
       if (typeof context === "string") return context;
       try {
@@ -191,12 +181,10 @@ export class VaultTransitProvider {
   ): Effect.Effect<string, VaultTransitError> {
     return Effect.gen({ self: this }, function* () {
       const contextB64 = yield* this.resolveContextB64(context);
-      const body: Record<string, string> = { plaintext: toBase64Utf8(plaintext) };
-      if (contextB64) body.context = contextB64;
       const res = yield* this.request({
         method: "POST",
         url: this.keyUrl("encrypt"),
-        body: JSON.stringify(body),
+        body: JSON.stringify({ plaintext: toBase64Utf8(plaintext), context: contextB64 }),
       });
       if (res.status < 200 || res.status >= 300) {
         return yield* Effect.fail(
@@ -220,12 +208,10 @@ export class VaultTransitProvider {
   ): Effect.Effect<string, VaultTransitError> {
     return Effect.gen({ self: this }, function* () {
       const contextB64 = yield* this.resolveContextB64(context);
-      const body: Record<string, string> = { ciphertext };
-      if (contextB64) body.context = contextB64;
       const res = yield* this.request({
         method: "POST",
         url: this.keyUrl("decrypt"),
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ciphertext, context: contextB64 }),
       });
       if (res.status < 200 || res.status >= 300) {
         return yield* Effect.fail(
@@ -252,12 +238,10 @@ export class VaultTransitProvider {
   ): Effect.Effect<string, VaultTransitError> {
     return Effect.gen({ self: this }, function* () {
       const contextB64 = yield* this.resolveContextB64(context);
-      const body: Record<string, string> = { ciphertext };
-      if (contextB64) body.context = contextB64;
       const res = yield* this.request({
         method: "POST",
         url: this.keyUrl("rewrap"),
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ciphertext, context: contextB64 }),
       });
       if (res.status < 200 || res.status >= 300) {
         return yield* Effect.fail(

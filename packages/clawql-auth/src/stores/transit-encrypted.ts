@@ -5,10 +5,10 @@
  * Each ciphertext is bound to tenant + secret path via Transit derived-key
  * context, so a dump that copies a row between tenants cannot decrypt it.
  *
- * Fail-closed: Vault unreachable / decrypt errors surface as SecretStoreError
- * (never return ciphertext as if it were plaintext). A short in-memory cache
- * of recently decrypted values rides out brief Vault blips; plaintext is never
- * written to disk or logs.
+ * Fail-closed: non-ciphertext rows and Vault decrypt errors surface as
+ * SecretStoreError (never treat stored bytes as plaintext). A short in-memory
+ * cache of recently decrypted values rides out brief Vault blips; plaintext is
+ * never written to disk or logs.
  */
 
 import { Effect } from "effect";
@@ -30,7 +30,7 @@ import { SecretStoreError } from "./types.js";
 import type { SecretStore } from "./types.js";
 
 export type TransitEncryptedSecretStoreOptions = {
-  /** Persistence backend that stores ciphertext (or legacy plaintext). */
+  /** Persistence backend that stores Transit ciphertext only. */
   inner: SecretStore;
   /** Transit client (encrypt / decrypt / rewrap). */
   transit: VaultTransitProvider;
@@ -39,11 +39,6 @@ export type TransitEncryptedSecretStoreOptions = {
    * Default: `CLAWQL_VAULT_TRANSIT_TENANT` / `CLAWQL_DEFAULT_ORG_ID` / `default`.
    */
   tenantId?: string;
-  /**
-   * After migration: refuse to return legacy plaintext rows (fail closed).
-   * Default: env `CLAWQL_VAULT_TRANSIT_REJECT_PLAINTEXT=1`.
-   */
-  rejectPlaintext?: boolean;
   /**
    * Brief in-memory plaintext cache TTL (ms) to survive short Vault outages.
    * Default 30_000; set 0 to disable. Never persisted.
@@ -78,7 +73,6 @@ export class TransitEncryptedSecretStore extends PathSecretStore {
   private readonly inner: SecretStore;
   private readonly transit: VaultTransitProvider;
   private readonly fallbackTenantId: string;
-  private readonly rejectPlaintext: boolean;
   private readonly decryptCacheTtlMs: number;
   private readonly eventSink: AuthEventSink;
   private readonly now: () => number;
@@ -89,8 +83,6 @@ export class TransitEncryptedSecretStore extends PathSecretStore {
     this.inner = options.inner;
     this.transit = options.transit;
     this.fallbackTenantId = defaultTenantId(options.tenantId);
-    this.rejectPlaintext =
-      options.rejectPlaintext ?? process.env.CLAWQL_VAULT_TRANSIT_REJECT_PLAINTEXT === "1";
     const ttl =
       options.decryptCacheTtlMs ??
       Number(process.env.CLAWQL_VAULT_TRANSIT_CACHE_TTL_MS?.trim() || "30000");
@@ -99,7 +91,7 @@ export class TransitEncryptedSecretStore extends PathSecretStore {
     this.now = options.now ?? Date.now;
   }
 
-  /** Expose inner store for migration/scan jobs (ciphertext / plaintext inspection). */
+  /** Expose inner store for integrity scan / rewrap jobs (ciphertext inspection). */
   getInnerStore(): SecretStore {
     return this.inner;
   }
@@ -146,20 +138,16 @@ export class TransitEncryptedSecretStore extends PathSecretStore {
       const raw = yield* this.inner.getSecret(path);
       if (raw == null) return null;
       if (!isVaultTransitCiphertext(raw)) {
-        if (this.rejectPlaintext) {
-          yield* emitAuthEventEffect(this.eventSink, {
-            type: "VAULT_TRANSIT_PLAINTEXT_REJECTED",
-            path,
-            timestamp: new Date(this.now()).toISOString(),
-          });
-          return yield* Effect.fail(
-            new SecretStoreError({
-              reason: `vault_transit_plaintext_rejected:${path}`,
-            })
-          );
-        }
-        // Pre-migration plaintext — usable until migratePlaintextSecrets runs.
-        return raw;
+        yield* emitAuthEventEffect(this.eventSink, {
+          type: "VAULT_TRANSIT_PLAINTEXT_REJECTED",
+          path,
+          timestamp: new Date(this.now()).toISOString(),
+        });
+        return yield* Effect.fail(
+          new SecretStoreError({
+            reason: `vault_transit_plaintext_rejected:${path}`,
+          })
+        );
       }
 
       const cached = this.readCache(path, raw);
@@ -207,12 +195,22 @@ export class TransitEncryptedSecretStore extends PathSecretStore {
 
   /**
    * Re-wrap a single path under the latest Transit key version without exposing
-   * plaintext to the caller. No-op when the stored value is legacy plaintext.
+   * plaintext to the caller. Fails if the stored value is not Transit ciphertext.
    */
   rewrapSecret(path: string): Effect.Effect<boolean, SecretStoreError> {
     return Effect.gen({ self: this }, function* () {
       const raw = yield* this.inner.getSecret(path);
-      if (raw == null || !isVaultTransitCiphertext(raw)) return false;
+      if (raw == null) return false;
+      if (!isVaultTransitCiphertext(raw)) {
+        yield* emitAuthEventEffect(this.eventSink, {
+          type: "VAULT_TRANSIT_PLAINTEXT_REJECTED",
+          path,
+          timestamp: new Date(this.now()).toISOString(),
+        });
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `vault_transit_plaintext_rejected:${path}` })
+        );
+      }
       const ctx = this.cryptoContextFor(path);
       const next = yield* this.transit.rewrap(raw, ctx).pipe(Effect.mapError(mapTransitError));
       yield* this.inner.setSecret(path, next);
