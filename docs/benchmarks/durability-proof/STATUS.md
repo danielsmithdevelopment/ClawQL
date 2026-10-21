@@ -33,14 +33,17 @@
 
 Minimum before private outreach with numbers:
 
-1. Tiers **A + B + D** green in CI on `main` (this PR)
-2. Tier **C** either measured once on a real 2-node bucket **or** explicitly deferred with a dated Partial (no wild claim)
+1. Tiers **A + B + D** green in CI on `main`
+2. Tier **C** measured once on a real 2-node bucket (required before publishing program-mode numbers vs Pi Durable / Golem)
 3. Public copy still says journaled resume / at-most-once — not “durable execution engine”
+
+Peer comparison design (celld = own substrate; Pi Durable + Golem = peers; dual columns + idempotency modes): [`COMPARISON.md`](./COMPARISON.md).
 
 ---
 
 ## Related
 
+- Comparison board plan — [`COMPARISON.md`](./COMPARISON.md)
 - ADR 0015 — [`docs/adr/0015-program-mode-alongside-search-execute.md`](../../adr/0015-program-mode-alongside-search-execute.md)
 - Streams evidence — [`docs/streams/streams-celld-evidence.md`](../../streams/streams-celld-evidence.md)
 - Security suite roadmap — [`docs/benchmarks/security-suite/ROADMAP.md`](../security-suite/ROADMAP.md)

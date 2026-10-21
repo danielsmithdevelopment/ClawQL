@@ -88,9 +88,15 @@ Skip Scala / MoonBit-style breadth unless a customer asks.
 
 ---
 
-## Benchmark use of Golem
+## Benchmark use of Golem (and Pi Durable)
 
-Add a **Golem arm** on the kill-mid-write / program crash board when ready — strongest shipped baseline for “survives a crash without repeating a call.” Matching it is meaningful; publishing with Golem’s name requires maintainer invitation **before** anything public (same as other boards).
+Full board plan: [`docs/benchmarks/durability-proof/COMPARISON.md`](../benchmarks/durability-proof/COMPARISON.md).
+
+- **celld** is ClawQL’s substrate (Tiers B/C), not a third rival.
+- **Pi Durable** (harness) and **Golem** (execution runtime) are the peer arms.
+- Score **duplicates** and **lost / `outcome_unknown`** under kill-mid-write; run idempotency-honoring **and** non-idempotent upstreams.
+- Include **Pi Durable + ClawQL** and **Golem + ClawQL** combination arms (runtime keeps the agent alive; ClawQL keeps writes at most once).
+- Named public boards need maintainer invitation first. Program-mode numbers vs peers wait for **Tier C**.
 
 Do **not** put Golem on the MCP token/governance pets board as if it were Bifrost/Obot — wrong product shape.
 
