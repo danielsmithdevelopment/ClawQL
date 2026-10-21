@@ -237,4 +237,44 @@ describe("session IFC enforce", () => {
     // 100 distinct categories → stage-2 merge to source:untrusted.
     expect(labels.has(SOURCE_UNTRUSTED_LABEL)).toBe(true);
   });
+
+  /**
+   * Utility cost of safe merge: a long session with only *trusted* fine-grained
+   * reads can still lose precision when it crosses the cap. With an allow-list
+   * that names those fine labels, a cross-sink write is allowed under the cap
+   * and blocked after stage-2 merge to `source:untrusted`. Safety over utility.
+   */
+  it("safe label cap: long session past threshold treats later writes as risky", () => {
+    process.env.CLAWQL_ENABLE_SESSION_IFC = "1";
+    process.env.CLAWQL_SESSION_ID = "ifc-cap-utility-cost";
+    const cap = SESSION_IFC_MAX_FINE_SOURCE_LABELS;
+    const vendors = Array.from({ length: cap }, (_, i) => `prov${i}`);
+    process.env.CLAWQL_SESSION_IFC_ALLOWED = JSON.stringify({
+      allowedSourcesByDest: {
+        "source:slack": vendors.map((v) => `source:${v}`),
+      },
+    });
+
+    for (const v of vendors) {
+      accumulateSessionIfcReadSync({ operation: readOp(v), success: true });
+    }
+    const underCap = getSessionLabelsSync("ifc-cap-utility-cost");
+    expect(underCap.size).toBe(cap);
+    expect(underCap.has(SOURCE_UNTRUSTED_LABEL)).toBe(false);
+    // Same allow-listed write succeeds while fine labels are preserved.
+    expect(checkSessionIfcWriteSync({ operation: writeOp("slack") })).toBeNull();
+
+    // 33rd distinct source → stage-2 safe merge (categories > cap).
+    accumulateSessionIfcReadSync({ operation: readOp(`prov${cap}`), success: true });
+    const overCap = getSessionLabelsSync("ifc-cap-utility-cost");
+    expect(overCap.has(SOURCE_UNTRUSTED_LABEL)).toBe(true);
+    expect([...overCap].every((l) => l === SOURCE_UNTRUSTED_LABEL || l === PUBLIC_LABEL)).toBe(
+      true
+    );
+
+    const block = checkSessionIfcWriteSync({ operation: writeOp("slack") });
+    expect(block).not.toBeNull();
+    expect(block?.status).toBe("blocked");
+    expect(block?.sessionLabels).toContain(SOURCE_UNTRUSTED_LABEL);
+  });
 });

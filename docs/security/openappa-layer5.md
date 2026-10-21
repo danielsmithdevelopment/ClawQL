@@ -136,6 +136,8 @@ Results: [`docs/benchmarks/openappa/results-session-ifc-curve.json`](../benchmar
 
 **Unsafe (not done):** drop the oldest labels. A session that read a poisoned email first, then touched 32 other sources, would lose the untrusted mark and could exfiltrate. **Safe (shipped):** merge overflow toward broader / untrusted — accuracy may drop, nothing is wrongly trusted. Test: 40 sources with untrusted first still blocks unrelated writes.
 
+**Utility cost (expected):** once a long session stage-2-merges non-public sources into `source:untrusted`, later writes that would have been allow-listed under fine-grained labels become blocked / treated as risky. That is the right direction for safety; prefer a new MCP session for a new task rather than accumulating dozens of distinct sources in one trajectory. Covered by `session-ifc.test.ts` (“long session past threshold”).
+
 ### Short-session amortized (synthetic only)
 
 Optional root rotation in the latency script is a **benchmark amortization** for short sessions, not a product setting:
