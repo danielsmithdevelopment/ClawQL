@@ -237,8 +237,7 @@ function summarizeMode(
   const uniqueWriteEffects = trials.reduce((s, t) => s + t.uniqueWriteEffects, 0);
   const trialsOk = trials.filter((t) => t.ok).length;
   const trialsFailed = n - trialsOk;
-  const boardPass =
-    trialsFailed === 0 && (!requireZeroDuplicates || duplicates === 0);
+  const boardPass = trialsFailed === 0 && (!requireZeroDuplicates || duplicates === 0);
   return {
     upstreamMode,
     n,

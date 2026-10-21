@@ -16,8 +16,6 @@ const clawql = evidence.arms.find((a) => a.armId === "clawql-file-journal");
 const modes = clawql?.modes
   .map((m) => `${m.upstreamMode}:dup=${m.duplicates}/unk=${m.outcomeUnknown}/pass=${m.boardPass}`)
   .join(" ");
-console.log(
-  `durability-comparison: clawqlBoardPass=${evidence.clawqlBoardPass} ${modes ?? ""}`
-);
+console.log(`durability-comparison: clawqlBoardPass=${evidence.clawqlBoardPass} ${modes ?? ""}`);
 console.log(`wrote ${path}`);
 if (!evidence.clawqlBoardPass) process.exit(1);

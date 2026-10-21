@@ -47,10 +47,7 @@ function logCall(operationId: string, args: Record<string, unknown> | undefined)
       effectId = `once:${onceCounter}`;
     }
   }
-  appendFileSync(
-    hostLog,
-    `${JSON.stringify({ operationId, effectId, applied })}\n`
-  );
+  appendFileSync(hostLog, `${JSON.stringify({ operationId, effectId, applied })}\n`);
 }
 
 const host: ProgramHost = {

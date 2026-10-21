@@ -14,11 +14,7 @@ describe("host-log", () => {
       }),
     ].join("\n");
     const lines = await Effect.runPromise(parseHostLogLines(raw));
-    expect(lines.map((l) => l.operationId)).toEqual([
-      "pets.get",
-      "owners.list",
-      "owners.create",
-    ]);
+    expect(lines.map((l) => l.operationId)).toEqual(["pets.get", "owners.list", "owners.create"]);
     expect(lines[2]?.applied).toBe(false);
     expect(await Effect.runPromise(hostLogOperationIds(raw))).toEqual([
       "pets.get",
