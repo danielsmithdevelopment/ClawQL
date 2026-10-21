@@ -3,6 +3,8 @@
 **Status:** ClawQL arms measured (see [`comparison/evidence.json`](./comparison/evidence.json)); peer arms pending invite  
 **Parent:** [STATUS.md](./STATUS.md) · [Golem honesty](../../gtm/golem-overlap-and-durability-honesty.md)
 
+This board measures **effect** outcomes under crashes (duplicates + `outcome_unknown`), not whether a runtime’s in-process execution is durable. See [two kinds of durable](../../gtm/golem-overlap-and-durability-honesty.md#two-kinds-of-durable-do-not-conflate).
+
 ---
 
 ## What is being compared (and what is not)
