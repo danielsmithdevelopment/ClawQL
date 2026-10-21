@@ -663,11 +663,13 @@ async function main() {
     const zeroDup = totalDuplicates === 0;
     const upper95 = zeroDup && N > 0 ? 3 / N : null;
     const lease = scrapeLeaseRenewals([nodes.A.log, nodes.B.log]);
+    const allPhaseOk = trials.length > 0 && trials.every((t) => t.ok === true);
     return {
       kind: "celld-fleet-phased-kill",
       measuredAt: new Date().toISOString(),
-      ok: zeroDup && totalDeadlineMisses === 0 && trials.every((t) => t.ok !== false || t.ok),
-      // ok means: no dups, no deadline misses, every trial met phase expectOk
+      // Safety + liveness: zero dups, zero deadline misses, every phase expectation met.
+      // Self-fence with counted recovery does not fail ok by itself.
+      ok: zeroDup && totalDeadlineMisses === 0 && allPhaseOk,
       status: "measured",
       n: N,
       nodeCount: 2,
@@ -743,18 +745,11 @@ async function main() {
 
   function writeEvidencePartial() {
     const evidence = summarize();
-    // Fix ok computation: every trial must have ok===true
-    evidence.ok =
-      evidence.zeroDuplicates &&
-      evidence.totalResumeDeadlineMisses === 0 &&
-      trials.length === N &&
-      trials.every((t) => t.ok === true);
     mkdirSync(dirname(OUT), { recursive: true });
     writeFileSync(OUT, JSON.stringify(evidence, null, 2) + "\n");
     return evidence;
   }
 
-  writeEvidencePartial();
   const evidence = writeEvidencePartial();
   console.log(
     `fleet-phased: done n=${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} zeroDuplicates=${evidence.zeroDuplicates} upper95=${evidence.ruleOfThreeUpperBound95}`
