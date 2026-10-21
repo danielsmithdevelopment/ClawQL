@@ -87,18 +87,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: npm pack install smoke
+      - name: npm pack install smoke (+ keep packs)
+        env:
+          CLAWQL_PACK_KEEP_DIR: ${{ runner.temp }}/clawql-packs
         run: bash scripts/dev/test-npm-pack-install.sh
 
-      - name: Pack release tarball
+      - name: Artifact release gates (release-matches-source, secrets, budgets, inventory)
+        env:
+          CLAWQL_PACK_INVENTORY_KEEP: ${{ runner.temp }}/npm-pack-inventory.json
+        run: bash scripts/security/run-artifact-release-gates.sh "${{ runner.temp }}/clawql-packs"
+
+      - name: Select clawql-mcp release tarball
         id: pack
         run: |
           set -euo pipefail
-          PACK_DIR="${RUNNER_TEMP}/clawql-mcp-pack"
-          rm -rf "${PACK_DIR}"
-          mkdir -p "${PACK_DIR}"
-          npm pack --pack-destination "${PACK_DIR}" >/dev/null
-          TARBALL="$(find "${PACK_DIR}" -maxdepth 1 -name 'clawql-mcp-*.tgz' -print -quit)"
+          PACK_DIR="${RUNNER_TEMP}/clawql-packs"
+          TARBALL="$(find "${PACK_DIR}" -maxdepth 1 -regextype posix-extended \
+            -regex '.*/clawql-mcp-[0-9][^/]*\.tgz' -print -quit)"
           if [[ -z "${TARBALL}" || ! -f "${TARBALL}" ]]; then
             echo "ERROR: npm pack did not produce clawql-mcp-*.tgz" >&2
             exit 1
@@ -124,6 +129,13 @@ jobs:
             --exit-code 1 \
             --ignorefile /repo/.trivyignore \
             /work/unpack/package
+
+      - name: Upload npm-pack inventory
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-pack-inventory-${{ github.ref_name }}
+          path: ${{ runner.temp }}/npm-pack-inventory.json
+          if-no-files-found: warn
 
       - name: Publish workspace packages then clawql-mcp (provenance)
         run: node scripts/release/npm-publish-workspace.mjs

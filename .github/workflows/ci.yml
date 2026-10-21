@@ -442,7 +442,7 @@ jobs:
     name: npm pack install smoke
     needs: [lint, workflow-scripts]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -455,7 +455,24 @@ jobs:
         run: npm ci
 
       - name: npm pack → clean install smoke
+        env:
+          CLAWQL_PACK_KEEP_DIR: ${{ runner.temp }}/clawql-packs
         run: bash scripts/dev/test-npm-pack-install.sh
+
+      # Reverse-engineering-of-own-artifacts: what ships vs workspace digests, secret scan on
+      # unpacked packs, bundle budgets, pack inventory BOM (+ optional baseline diff).
+      - name: Artifact release gates (packs)
+        env:
+          CLAWQL_PACK_INVENTORY_KEEP: ${{ runner.temp }}/npm-pack-inventory.json
+        run: bash scripts/security/run-artifact-release-gates.sh "${{ runner.temp }}/clawql-packs"
+
+      - name: Upload npm-pack inventory
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-pack-inventory
+          path: ${{ runner.temp }}/npm-pack-inventory.json
+          if-no-files-found: warn
 
   mcp-docker-workspace-smoke:
     name: MCP Docker workspace deps smoke

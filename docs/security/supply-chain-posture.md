@@ -8,6 +8,7 @@ How we reduce risk that a compromised dependency, registry upload, or image tag 
 
 ## What you can verify today
 
+<<<<<<< HEAD
 | Control                                 | What it does                                                                                                                  | Where to look                                                                                                               |
 | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | **CI supply-chain gates**               | OSV-Scanner + Trivy (HIGH/CRITICAL) + Syft CycloneDX SBOM on every merge path                                                 | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) job `supply-chain`                                             |
@@ -20,8 +21,30 @@ How we reduce risk that a compromised dependency, registry upload, or image tag 
 | **Provider keys ciphertext-at-rest**    | Vault / OpenBao Transit wraps `SecretStore`; tenant+path derived-key context; fail-closed decrypt                             | [vault-provider-secrets.md](../deployment/vault-provider-secrets.md) · `clawql-auth` Transit                                |
 | **Host IoC scan (operator)**            | Script scans site-packages / pipx / `/tmp` markers on machines the lockfile cannot see                                        | [`scripts/security/scan-litellm-ioc.sh`](../../scripts/security/scan-litellm-ioc.sh)                                        |
 | **Secret leak gates**                   | Gitleaks on the working tree in CI; pre-commit hook; scheduled TruffleHog on history                                          | [security README](README.md) · `.gitleaks.toml`                                                                             |
+=======
+| Control | What it does | Where to look |
+| ------- | ------------ | ------------- |
+| **CI supply-chain gates** | OSV-Scanner + Trivy (HIGH/CRITICAL) + Syft CycloneDX SBOM on every merge path | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) job `supply-chain` |
+| **Lockfiles with integrity** | `package-lock.json` records resolved URLs and SHA-512 integrity hashes; installs use `npm ci` | Root lockfile; CI and Docker builds |
+| **npm trusted publishing + provenance** | Releases publish from GitHub Actions OIDC (`id-token: write`); `npm publish --provenance` attaches build attestations | [`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml) · [npm-supply-chain.md](npm-supply-chain.md) |
+| **One scanned OCI layout → registry** | BuildKit writes a local OCI layout; Trivy scans those bytes; `skopeo copy` pushes the same layout — no second “release” build | [golden-image-pipeline.md](golden-image-pipeline.md) · [docker-publish.yml](../../.github/workflows/docker-publish.yml) |
+| **Cosign keyless signatures** | Digests signed with GitHub Actions OIDC (Fulcio/Rekor); `cosign verify` out-of-band | [docker/README.md](../../docker/README.md) |
+| **Images pinned by digest at admit** | Kyverno `verifyImages` defaults on for ClawQL GHCR patterns; rolling tags move only after sign+verify | [image-signature-enforcement.md](image-signature-enforcement.md) |
+| **SBOM artifacts** | Syft CycloneDX on repo gates and image builds (BuildKit SBOM attestations where attached) | CI artifacts `sbom-cyclonedx-*`; release pipeline |
+| **Provider keys ciphertext-at-rest** | Vault / OpenBao Transit wraps `SecretStore`; tenant+path derived-key context; fail-closed decrypt | [vault-provider-secrets.md](../deployment/vault-provider-secrets.md) · `clawql-auth` Transit |
+| **Host IoC scan (operator)** | Script scans site-packages / pipx / `/tmp` markers on machines the lockfile cannot see | [`scripts/security/scan-litellm-ioc.sh`](../../scripts/security/scan-litellm-ioc.sh) |
+| **Secret leak gates** | Gitleaks on the working tree in CI; pre-commit hook; scheduled TruffleHog on history | [security README](README.md) · `.gitleaks.toml` |
+| **Release matches source (npm packs)** | After build + `npm pack`, every file in each `.tgz` must byte-match the workspace (package.json compared after `workspace:*` pin). Catches “published ≠ tagged” drift before registry upload | [`scripts/security/verify-release-matches-source.mjs`](../../scripts/security/verify-release-matches-source.mjs) · CI `distribution-npm-pack-smoke` · [`npm-publish.yml`](../../.github/workflows/npm-publish.yml) |
+| **Artifact secret scan** | Gitleaks on *unpacked* release tarballs (dist included — not allowlisted). Finds credentials that only appear in built output | [`scripts/security/scan-artifact-secrets.sh`](../../scripts/security/scan-artifact-secrets.sh) · `gitleaks-artifacts.toml` |
+| **Bundle / stray-file budget** | Max `.tgz` sizes; forbid `.env`, key material, and production source maps in packs | [`scripts/security/bundle-budgets.json`](../../scripts/security/bundle-budgets.json) · `check-bundle-budgets.mjs` |
+| **Pack inventory BOM (+ baseline diff)** | Per-tarball name/version/sha256/contentId inventory of what `npm pack` produced; optional diff vs committed baseline | Artifact `npm-pack-inventory` · [`build-pack-inventory.mjs`](../../scripts/security/build-pack-inventory.mjs) · [`diff-pack-inventory.mjs`](../../scripts/security/diff-pack-inventory.mjs) · [baselines README](baselines/README.md) |
+>>>>>>> e476a79ba (feat(security): CI gates for reverse-engineering own npm packs)
 
 Evidence of gate outcomes (not marketing badges): **[Security status](https://docs.clawql.com/security/status)** — append-only Trivy/OSV history from `main` CI.
+
+### Why reverse-engineer our own artifacts
+
+Reading your own source finds logic bugs faster than decompiling. What reverse engineering of **shipped** artifacts uniquely shows is **what actually left the build** and **what an attacker sees** — which can diverge from the tagged tree. The gates above turn that check into CI: rebuild/pack from the commit under test, then compare digests, scan the bytes customers install, budget size/surface, and track SBOM drift between releases. Containers already use the same idea on the golden path (one OCI layout → Trivy → `skopeo copy` of those bytes → Cosign).
 
 ---
 
@@ -29,8 +52,9 @@ Evidence of gate outcomes (not marketing badges): **[Security status](https://do
 
 1. Tag or `workflow_dispatch` starts **`npm-publish`**.
 2. Job **`repo-supply-chain`** must pass (OSV + Trivy fs + Syft SBOM).
-3. Packages are packed, scanned, then published **once** with **`--provenance`** under OIDC trusted publishing (short-lived token; prefer this over a long-lived `NPM_TOKEN` in many places).
-4. Semver is immutable; dist-tags move only after the same gates.
+3. Packages are packed; **artifact release gates** assert packs match source digests, pass secret scan + size budgets, and emit a pack SBOM.
+4. **Trivy** scans the clawql-mcp tarball root; then packages are published **once** with **`--provenance`** under OIDC trusted publishing (short-lived token; prefer this over a long-lived `NPM_TOKEN` in many places).
+5. Semver is immutable; dist-tags move only after the same gates.
 
 Details and “what not to do”: [npm-supply-chain.md](npm-supply-chain.md).
 
