@@ -23,9 +23,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Default proxy=auto: orange-cloud only when apex still points at GitHub Pages IPs.
 # Set CLAWQL_AGENT_EDGE_PROXY=0|1 to force.
-PROXY="${CLAWQL_AGENT_EDGE_PROXY:-auto}"
+# Default: force orange-cloud for GitHub Pages origins so Transform Rules apply
+# while Pages custom-domain attachment (ensure-clawql-com-pages-domain.sh) moves
+# apex traffic onto functions/.
+PROXY="${CLAWQL_AGENT_EDGE_PROXY:-1}"
 MARKDOWN="${CLAWQL_AGENT_EDGE_MARKDOWN:-1}"
 LINK_HEADER="${CLAWQL_AGENT_EDGE_LINK_HEADER:-1}"
+PAGES_DOMAIN="${CLAWQL_AGENT_EDGE_PAGES_DOMAIN:-1}"
 
 if [[ -z "${TOKEN// }" ]]; then
   echo "SKIP: CLOUDFLARE_API_TOKEN unset — agent edge not configured."
@@ -55,10 +59,17 @@ link_header_value() {
   printf '%s' \
     "<https://${APEX}/sitemap.xml>; rel=\"sitemap\", " \
     "</llms.txt>; rel=\"alternate\"; type=\"text/plain\", " \
+    "</index.md>; rel=\"alternate\"; type=\"text/markdown\", " \
+    "</pricing.md>; rel=\"alternate\"; type=\"text/markdown\", " \
     "</auth.md>; rel=\"alternate\"; type=\"text/markdown\", " \
     "</.well-known/api-catalog>; rel=\"api-catalog\", " \
+    "</.well-known/ai-catalog.json>; rel=\"ai-catalog\"; type=\"application/json\", " \
+    "</.well-known/ard.json>; rel=\"ard-catalog\"; type=\"application/json\", " \
     "</.well-known/mcp/server-card.json>; rel=\"service-desc\", " \
+    "</.well-known/mcp/server.json>; rel=\"describedby\"; type=\"application/json\", " \
     "</.well-known/agent-card.json>; rel=\"agent-card\"; type=\"application/json\", " \
+    "</openapi.json>; rel=\"service-desc\"; type=\"application/openapi+json\", " \
+    "<${DOCS}/openapi.json>; rel=\"service-desc\"; type=\"application/openapi+json\", " \
     "</.well-known/payments.json>; rel=\"payment-method\", " \
     "<${DOCS}>; rel=\"service-doc\", " \
     "</auth.md>; rel=\"describedby\", " \
@@ -161,6 +172,11 @@ fi
 echo "==> DNS-AID records"
 bash "${SCRIPT_DIR}/ensure-dns-aid-records.sh" || echo "    WARN: DNS-AID step reported errors"
 
+if [[ "$PAGES_DOMAIN" == "1" ]]; then
+  echo "==> Cloudflare Pages custom domain (functions/ for markdown + /mcp)"
+  bash "${SCRIPT_DIR}/ensure-clawql-com-pages-domain.sh" || echo "    WARN: Pages domain step reported errors"
+fi
+
 echo "Done. Agent edge configuration attempted for ${APEX}."
-echo "If traffic still hits GitHub Pages directly (server: GitHub.com), orange-cloud failed or DNS cache remains."
-echo "Recommended for full score: attach ${APEX} to Cloudflare Pages project clawql-website (functions/ ship Link + markdown)."
+echo "If traffic still hits GitHub Pages directly (server: GitHub.com), Pages domain attach failed or DNS cache remains."
+echo "Target: apex CNAME → clawql-website.pages.dev (proxied) so functions/ ship Link + markdown + /mcp."

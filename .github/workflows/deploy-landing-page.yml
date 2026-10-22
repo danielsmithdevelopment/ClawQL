@@ -14,6 +14,7 @@ on:
       - "packages/mcp-api-adapter/scripts/generate-executor-cmp-compare-static.mjs"
       - "scripts/deploy/ensure-dns-aid-records.sh"
       - "scripts/deploy/ensure-clawql-com-agent-edge.sh"
+      - "scripts/deploy/ensure-clawql-com-pages-domain.sh"
       - "scripts/deploy/ensure-cloudflare-pages-project.sh"
       - ".github/workflows/deploy-landing-page.yml"
   workflow_dispatch:
@@ -51,6 +52,8 @@ jobs:
           # Custom domain at repo root. For project Pages only, set to /ClawQL in repo vars.
           NEXT_PUBLIC_BASE_PATH: ${{ vars.LANDING_PAGE_BASE_PATH || '' }}
           NEXT_PUBLIC_SITE_URL: https://clawql.com
+          # Advertise discovery MCP served by Cloudflare Pages Function (functions/mcp.ts).
+          NEXT_PUBLIC_MCP_STREAMABLE_HTTP_URL: https://clawql.com/mcp
           NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
         run: npm run build
 
@@ -98,8 +101,15 @@ jobs:
           test -f out/contact.md
           test -f out/openapi.json
           test -f out/.well-known/ai-catalog.json
+          test -f out/.well-known/ard.json
           test -f out/.well-known/mcp/server.json
           test -f out/contact/index.html
+          # ARD / AI Catalog scanners require specVersion + entries[]
+          node -e "const a=require('./out/.well-known/ard.json'); if(a.specVersion!=='1.0'||!Array.isArray(a.entries)||!a.entries.length) process.exit(1)"
+          node -e "const a=require('./out/.well-known/ai-catalog.json'); if(a.specVersion!=='1.0'||!Array.isArray(a.entries)||!a.entries.length) process.exit(1)"
+          node -e "const c=require('./out/.well-known/mcp/server-card.json'); if(!c.remotes||!c.remotes.length) { console.error('server-card missing remotes'); process.exit(1) }"
+          grep -q 'agent_auth' out/auth.md
+          grep -q 'specVersion' out/.well-known/ard.json
           # Ensure install script is shell, not HTML
           head -1 out/install | grep -q '^#!/usr/bin/env bash'
           # Guard against reintroducing the hidden-file Pages artifact bug
@@ -231,11 +241,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         if: steps.cf.outputs.enabled == 'true'
 
-      - name: Ensure agent edge (proxy, markdown, Link, DNS-AID)
+      - name: Ensure agent edge (proxy, markdown, Link, DNS-AID, Pages domain)
         if: steps.cf.outputs.enabled == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLAWQL_APEX_DOMAIN: clawql.com
+          CLAWQL_AGENT_EDGE_PROXY: "1"
+          CLAWQL_AGENT_EDGE_PAGES_DOMAIN: "1"
         run: bash scripts/deploy/ensure-clawql-com-agent-edge.sh
         continue-on-error: true

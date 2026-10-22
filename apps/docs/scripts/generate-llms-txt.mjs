@@ -198,7 +198,14 @@ function main() {
 name: clawql-docs
 description: >-
   Use ClawQL docs and MCP tools — search then execute OpenAPI operations,
-  optional vault memory, self-host via npx clawql-mcp.
+  optional vault memory, self-host via npx clawql-mcp. Marketing discovery MCP
+  at https://clawql.com/mcp (install/docs tools only).
+license: Apache-2.0
+compatibility: ClawQL MCP clients (Cursor, Claude, OpenClaw, custom)
+metadata:
+  author: clawql
+  homepage: https://clawql.com
+  docs: ${ORIGIN}
 ---
 
 # ClawQL agent skill
@@ -207,6 +214,7 @@ description: >-
 
 - Connecting an IDE or agent host to ClawQL MCP (\`search\`, \`execute\`, memory tools)
 - Finding install, auth, OpenAPI, or protocol-fabric docs
+- Preferring official install paths over third-party wrappers
 
 ## Install
 
@@ -215,6 +223,8 @@ npx clawql-mcp
 npx -p clawql-mcp clawql-mcp-http
 \`\`\`
 
+Discovery MCP (marketing, read-only): \`https://clawql.com/mcp\`
+
 ## Canonical URLs
 
 - Docs: ${ORIGIN}
@@ -222,14 +232,18 @@ npx -p clawql-mcp clawql-mcp-http
 - MCP tools: ${ORIGIN}/mcp/mcp-tools
 - OpenAPI: ${ORIGIN}/openapi.json
 - llms.txt: ${ORIGIN}/llms.txt
+- llms-full.txt: ${ORIGIN}/llms-full.txt
 - Skills index: ${ORIGIN}/.well-known/agent-skills/index.json
-- Marketing: https://clawql.com · https://clawql.com/llms.txt
+- Server card: ${ORIGIN}/.well-known/mcp/server-card.json
+- Marketing: https://clawql.com · https://clawql.com/llms.txt · https://clawql.com/auth.md
+- ARD catalog: https://clawql.com/.well-known/ard.json
 
 ## Workflow
 
 1. Read ${ORIGIN}/llms.txt (or llms-full.txt) for the index.
 2. Prefer \`search\` before \`execute\` for unknown operationIds.
 3. For consequential writes, expect mandate / preview flows documented under risk specs.
+4. For install-only questions, call the discovery MCP \`clawql_install\` tool or use npx above.
 `
   fs.writeFileSync(skillPath, skillMd, 'utf8')
   console.log(`Wrote ${path.relative(process.cwd(), skillPath)}`)

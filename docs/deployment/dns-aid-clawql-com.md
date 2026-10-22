@@ -21,7 +21,8 @@ Workflow [`.github/workflows/deploy-landing-page.yml`](../../.github/workflows/d
 2. Deploys **GitHub Pages** (always).
 3. Deploys **Cloudflare Pages** (`clawql-website`) when `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are set (opt out with `LANDING_PAGE_CLOUDFLARE_DEPLOY=false`).
 4. Runs `scripts/deploy/ensure-clawql-com-agent-edge.sh` when the API token is present:
-   - Orange-clouds apex only if records still point at GitHub Pages
+   - Attaches **clawql.com** to Cloudflare Pages (`ensure-clawql-com-pages-domain.sh`) so `functions/` (markdown + `/mcp`) serve on the apex
+   - Orange-clouds / CNAME-flattens apex toward Pages (not bare GitHub Pages)
    - Enables Markdown for Agents (`content_converter`) when the plan allows
    - Upserts a **Link** response header transform
    - Ensures DNS-AID records (same family as [dns-aid-docs-clawql.md](./dns-aid-docs-clawql.md))

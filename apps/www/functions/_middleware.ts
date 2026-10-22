@@ -62,6 +62,10 @@ export async function onRequest(context: { request: Request; next: () => Promise
   headers.set('Link', linkHeader(origin))
   headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   headers.set('X-Content-Type-Options', 'nosniff')
+  // Advertise content negotiation for Markdown for Agents / Accept probes.
+  const vary = headers.get('Vary')
+  if (!vary) headers.set('Vary', 'Accept')
+  else if (!/\bAccept\b/i.test(vary)) headers.set('Vary', `${vary}, Accept`)
 
   const pathname = url.pathname.replace(/\/+$/, '') || '/'
   const jsonType = WELL_KNOWN_JSON_TYPES[pathname] ?? WELL_KNOWN_JSON_TYPES[url.pathname]

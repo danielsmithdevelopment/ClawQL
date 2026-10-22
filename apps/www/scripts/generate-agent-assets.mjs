@@ -32,11 +32,107 @@ const ROBOTS_AGENTS = [
   'Applebot-Extended',
 ]
 
+// Production marketing host ships a discovery MCP at /mcp (Cloudflare Pages Function).
+// Local/CI builds (127.0.0.1) omit remotes unless explicitly set.
 const publicMcpUrl = (
   process.env.NEXT_PUBLIC_MCP_STREAMABLE_HTTP_URL ||
   process.env.MCP_SERVER_CARD_STREAMABLE_HTTP_URL ||
-  ''
+  (/\bclawql\.com$/i.test(new URL(origin.includes('://') ? origin : `https://${origin}`).hostname)
+    ? `${origin}/mcp`
+    : '')
 ).trim()
+
+function withMarkdownFrontmatter(title, body, extra = {}) {
+  const lines = ['---', `title: ${JSON.stringify(title)}`, `canonical: ${JSON.stringify(extra.canonical || origin)}`]
+  if (extra.description) lines.push(`description: ${JSON.stringify(extra.description)}`)
+  for (const [k, v] of Object.entries(extra.fields || {})) {
+    lines.push(`${k}: ${typeof v === 'string' ? JSON.stringify(v) : JSON.stringify(v)}`)
+  }
+  lines.push('---', '', body.replace(/^\n+/, ''))
+  return `${lines.join('\n')}\n`
+}
+
+function buildArdEntries() {
+  const trust = {
+    identity: `https://${new URL(origin.includes('://') ? origin : `https://${origin}`).hostname}`,
+    identityType: 'https',
+    trustSchema: {
+      identifier: 'clawql-marketing-discovery',
+      version: '1.0',
+      governanceUri: `${docs}/security/best-practices`,
+    },
+  }
+  const host = new URL(origin.includes('://') ? origin : `https://${origin}`).hostname
+  return [
+    {
+      identifier: `urn:air:${host}:mcp:server-card`,
+      displayName: 'ClawQL MCP server card',
+      type: 'application/mcp-server-card+json',
+      url: `${origin}/.well-known/mcp/server-card.json`,
+      description: 'SEP server-card for ClawQL MCP (stdio + optional Streamable HTTP).',
+      capabilities: ['search', 'execute', 'memory_ingest', 'memory_recall'],
+      tags: ['mcp', 'openapi', 'gateway'],
+      version: VERSION,
+      representativeQueries: [
+        'how do I install ClawQL MCP',
+        'OpenAPI to MCP search and execute',
+        'self-host clawql streamable http',
+      ],
+      trustManifest: trust,
+    },
+    {
+      identifier: `urn:air:${host}:mcp:server-json`,
+      displayName: 'ClawQL MCP Registry server.json',
+      type: 'application/json',
+      url: `${origin}/.well-known/mcp/server.json`,
+      description: 'MCP Registry–shaped server.json for npm clawql-mcp packages.',
+      tags: ['mcp', 'registry'],
+      version: VERSION,
+      representativeQueries: ['clawql mcp registry server.json', 'clawql-mcp npm package'],
+      trustManifest: trust,
+    },
+    {
+      identifier: `urn:air:${host}:api:openapi`,
+      displayName: 'ClawQL OpenAPI (docs)',
+      type: 'application/openapi+json',
+      url: `${docs}/openapi.json`,
+      description: 'Canonical docs OpenAPI; marketing /openapi.json is a discovery pointer.',
+      tags: ['openapi', 'docs'],
+      representativeQueries: ['clawql openapi spec', 'clawql api schema'],
+      trustManifest: trust,
+    },
+    {
+      identifier: `urn:air:${host}:docs:llms`,
+      displayName: 'ClawQL llms.txt',
+      type: 'text/plain',
+      url: `${origin}/llms.txt`,
+      description: 'Agent site index for clawql.com.',
+      tags: ['llms.txt', 'discovery'],
+      representativeQueries: ['clawql llms.txt', 'clawql agent documentation index'],
+      trustManifest: trust,
+    },
+    {
+      identifier: `urn:air:${host}:skills:index`,
+      displayName: 'ClawQL agent skills index',
+      type: 'application/json',
+      url: `${origin}/.well-known/agent-skills/index.json`,
+      description: 'Agent Skills index with digests for core ClawQL workflows.',
+      tags: ['skills', 'agents'],
+      representativeQueries: ['clawql agent skills', 'clawql search execute skill'],
+      trustManifest: trust,
+    },
+    {
+      identifier: `urn:air:${host}:docs:site`,
+      displayName: 'ClawQL documentation',
+      type: 'text/html',
+      url: docs,
+      description: 'Primary documentation host (docs.clawql.com).',
+      tags: ['docs'],
+      representativeQueries: ['clawql getting started', 'clawql mcp tools documentation'],
+      trustManifest: trust,
+    },
+  ]
+}
 
 function writeJson(filePath, data) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true })
@@ -84,11 +180,32 @@ function getLinkHeaderValue() {
 }
 
 function buildAuthMd() {
-  return `# auth.md
+  const agentAuth = {
+    skill: 'clawql-mcp-client',
+    register_uri: `${origin}/signup/`,
+    ...(publicMcpUrl ? { mcp_url: publicMcpUrl } : {}),
+    methods: [
+      {
+        type: 'human_provisioning',
+        description:
+          'Operator creates account or self-hosts; MCP URL and tokens configured in the client.',
+      },
+    ],
+    identity_types_supported: ['anonymous', 'identity_assertion'],
+    identity_assertion: {
+      assertion_types_supported: [
+        'urn:ietf:params:oauth:token-type:id-jag',
+        'verified_email',
+      ],
+      credential_types_supported: ['bearer'],
+    },
+  }
+  const discoveryMcp = publicMcpUrl || `${origin}/mcp`
+  const body = `# auth.md
 
 Agent authentication and registration discovery for **${origin}**.
 
-ClawQL is an MCP platform. **Self-host Streamable HTTP** with \`npx -p ${NPM_PKG} clawql-mcp-http\` (path \`/mcp\`, OAuth + RFC 9728 when enabled). This marketing site publishes discovery metadata. A public hosted MCP URL appears on the server card **only** when \`NEXT_PUBLIC_MCP_STREAMABLE_HTTP_URL\` is set at build time — \`${docs}/mcp\` is documentation HTML, not the product MCP binary.
+ClawQL is an MCP platform. **Self-host Streamable HTTP** with \`npx -p ${NPM_PKG} clawql-mcp-http\` (path \`/mcp\`, OAuth + RFC 9728 when enabled). Public discovery MCP (install/docs tools only): \`${discoveryMcp}\`. Full product MCP is self-hosted — \`${docs}/mcp\` is documentation HTML, not the product binary.
 
 ## Install (CLI)
 
@@ -101,6 +218,7 @@ curl -fsSL ${origin}/install | bash
 npm: https://www.npmjs.com/package/${NPM_PKG}
 MCP docs: ${docs}/mcp/mcp-tools · Getting started: ${docs}/getting-started
 OpenAPI (docs commerce / discovery): ${docs}/openapi.json · Marketing pointer: ${origin}/openapi.json
+Public discovery MCP: ${discoveryMcp}
 
 ## Audience
 
@@ -124,32 +242,18 @@ Software agents connecting to ClawQL MCP tools (\`search\`, \`execute\`, \`memor
 Hosted accounts: [${origin}/signup/](${origin}/signup/) (early access waitlist). Self-hosted: \`npx ${NPM_PKG}\` — see [${docs}/getting-started](${docs}/getting-started).
 
 \`\`\`json
-{
-  "agent_auth": {
-    "skill": "clawql-mcp-client",
-    "register_uri": "${origin}/signup/",
-    "methods": [
-      {
-        "type": "human_provisioning",
-        "description": "Operator creates account or self-hosts; MCP URL and tokens configured in the client."
-      }
-    ],
-    "identity_types_supported": ["anonymous", "identity_assertion"],
-    "identity_assertion": {
-      "assertion_types_supported": [
-        "urn:ietf:params:oauth:token-type:id-jag",
-        "verified_email"
-      ],
-      "credential_types_supported": ["bearer"]
-    }
-  }
-}
+${JSON.stringify({ agent_auth: agentAuth }, null, 2)}
 \`\`\`
 `
+  return withMarkdownFrontmatter('auth.md · ClawQL', body, {
+    canonical: `${origin}/auth.md`,
+    description: 'Agent authentication and MCP registration discovery for ClawQL.',
+    fields: { agent_auth: agentAuth },
+  })
 }
 
 function buildPricingMd() {
-  return `# Pricing · ClawQL
+  const body = `# Pricing · ClawQL
 
 > Open source self-host is free forever (Apache 2.0). Managed tiers share one MCP endpoint URL.
 
@@ -174,10 +278,14 @@ function buildPricingMd() {
 
 See also: ${origin}/llms.txt · ${docs}/llms.txt
 `
+  return withMarkdownFrontmatter('Pricing · ClawQL', body, {
+    canonical: `${origin}/pricing.md`,
+    description: 'ClawQL pricing — open source free forever; managed early access.',
+  })
 }
 
 function buildHomeMd() {
-  return `# ClawQL — Agentic Infrastructure for Regulated Industries
+  const body = `# ClawQL — Agentic Infrastructure for Regulated Industries
 
 ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric (anything to MCP to anything), Streams, structured memory, and TEE-ready WORM audit. Self-host free on Apache 2.0 or request early access.
 
@@ -217,10 +325,15 @@ One-line installer: \`curl -fsSL ${origin}/install | bash\`
 - GitHub: https://github.com/danielsmithdevelopment/ClawQL
 - npm: https://www.npmjs.com/package/${NPM_PKG}
 `
+  return withMarkdownFrontmatter('ClawQL', body, {
+    canonical: `${origin}/index.md`,
+    description:
+      'ClawQL — Agentic Gateway for Auditable Production AI. OpenAPI → MCP, CLI, Streams, vault memory.',
+  })
 }
 
 function buildContactMd() {
-  return `# Contact · ClawQL
+  const body = `# Contact · ClawQL
 
 Email: [hello@clawql.com](mailto:hello@clawql.com)
 
@@ -231,6 +344,10 @@ Email: [hello@clawql.com](mailto:hello@clawql.com)
 
 Postal / legal correspondence is handled via email for early-access operations. There is no public walk-in office.
 `
+  return withMarkdownFrontmatter('Contact · ClawQL', body, {
+    canonical: `${origin}/contact.md`,
+    description: 'Contact ClawQL — product, partnerships, and security.',
+  })
 }
 
 function getAgentMarkdownMap() {
@@ -421,12 +538,32 @@ writeJson(path.join(publicDir, '.well-known/mcp/server.json'), serverJson)
 // Root convenience copy scanners sometimes probe
 writeJson(path.join(publicDir, 'server.json'), serverJson)
 
+const agentInterfaces = [
+  {
+    url: `${docs}/getting-started`,
+    protocol_binding: 'HTTPS',
+    protocol_version: '1.1',
+  },
+  {
+    url: `${docs}/openapi.json`,
+    protocol_binding: 'REST',
+    protocol_version: '3.1',
+  },
+]
+if (publicMcpUrl) {
+  agentInterfaces.unshift({
+    url: publicMcpUrl,
+    protocol_binding: 'HTTP',
+    protocol_version: '2025-03-26',
+  })
+}
+
 writeJson(path.join(publicDir, '.well-known/agent-card.json'), {
   name: 'ClawQL',
   description:
     'Agentic Gateway for Auditable Production AI — MCP search, execute, vault memory, optional IDP, and agentic commerce discovery.',
   version: VERSION,
-  url: `${docs}/getting-started`,
+  url: publicMcpUrl || `${docs}/getting-started`,
   provider: { organization: 'ClawQL', url: origin },
   capabilities: {
     streaming: true,
@@ -442,6 +579,8 @@ writeJson(path.join(publicDir, '.well-known/agent-card.json'), {
   },
   defaultInputModes: ['text/plain'],
   defaultOutputModes: ['text/plain', 'application/json'],
+  supportedInterfaces: agentInterfaces,
+  supported_interfaces: agentInterfaces,
   skills: [
     {
       id: 'search-execute',
@@ -463,6 +602,12 @@ writeJson(path.join(publicDir, '.well-known/api-catalog'), {
   linkset: [
     {
       anchor: `${origin}/`,
+      item: [
+        { href: `${origin}/openapi.json`, type: 'application/openapi+json' },
+        { href: `${docs}/openapi.json`, type: 'application/openapi+json' },
+        { href: `${origin}/.well-known/mcp/server-card.json`, type: 'application/json' },
+        { href: `${origin}/.well-known/mcp/server.json`, type: 'application/json' },
+      ],
       'service-desc': [
         { href: `${origin}/.well-known/mcp/server-card.json`, type: 'application/json' },
         { href: `${origin}/openapi.json`, type: 'application/openapi+json' },
@@ -478,59 +623,32 @@ writeJson(path.join(publicDir, '.well-known/api-catalog'), {
   ],
 })
 
+const ardEntries = buildArdEntries()
 const aiCatalog = {
-  version: '0.1',
+  specVersion: '1.0',
   name: 'ClawQL',
   description: 'Agent-facing resources for ClawQL (MCP, docs, OpenAPI, skills, payments discovery).',
   homepage: origin,
-  resources: [
-    {
-      type: 'mcp-server-card',
-      url: `${origin}/.well-known/mcp/server-card.json`,
-      mediaType: 'application/json',
-    },
-    {
-      type: 'mcp-server-json',
-      url: `${origin}/.well-known/mcp/server.json`,
-      mediaType: 'application/json',
-    },
-    {
-      type: 'openapi',
-      url: `${docs}/openapi.json`,
-      mediaType: 'application/openapi+json',
-    },
-    {
-      type: 'llms-txt',
-      url: `${origin}/llms.txt`,
-      mediaType: 'text/plain',
-    },
-    {
-      type: 'docs',
-      url: docs,
-      mediaType: 'text/html',
-    },
-    {
-      type: 'agent-skills',
-      url: `${origin}/.well-known/agent-skills/index.json`,
-      mediaType: 'application/json',
-    },
-    {
-      type: 'auth-md',
-      url: `${origin}/auth.md`,
-      mediaType: 'text/markdown',
-    },
-    {
-      type: 'pricing',
-      url: `${origin}/pricing.md`,
-      mediaType: 'text/markdown',
-    },
-  ],
+  host: {
+    displayName: 'ClawQL',
+    identifier: `did:web:${new URL(origin.includes('://') ? origin : `https://${origin}`).hostname}`,
+    documentationUrl: docs,
+  },
+  // Legacy alias kept for older probes; scanners require `entries`.
+  resources: ardEntries.map((e) => ({
+    type: e.type,
+    url: e.url,
+    mediaType: e.type,
+    name: e.displayName,
+  })),
+  entries: ardEntries,
 }
 writeJson(path.join(publicDir, '.well-known/ai-catalog.json'), aiCatalog)
 writeJson(path.join(publicDir, '.well-known/ard.json'), {
-  ...aiCatalog,
-  $schema: 'https://agenticresourcediscovery.org/schemas/ard-catalog.json',
-  catalog: aiCatalog.resources,
+  $schema: 'https://raw.githubusercontent.com/ards-project/ard-spec/main/spec/schemas/ard-entry.schema.json',
+  specVersion: '1.0',
+  host: aiCatalog.host,
+  entries: ardEntries,
 })
 
 writeJson(path.join(publicDir, '.well-known/oauth-authorization-server'), {
