@@ -9,8 +9,10 @@ import {
   createMemoryWormSink,
   stopProcessWormEffect,
 } from "clawql-audit";
-import { registerMemoryWormSink } from "clawql-memory/okf";
+import { createRequire } from "node:module";
 import { Effect } from "effect";
+
+const requireFromHere = createRequire(import.meta.url);
 
 let memoryUnsub: (() => void) | undefined;
 let booted = false;
@@ -18,6 +20,9 @@ let booted = false;
 /**
  * Best-effort boot. Safe when WORM is disabled. Idempotent.
  * Prefer {@link ensureProcessWormHostBootedEffect} for Effect callers.
+ *
+ * Loads `clawql-memory/okf` only when the trail actually boots — keep slim
+ * listen (memory=off, WORM off) off the embedding / ONNX graph.
  */
 export function ensureProcessWormHostBootedEffect(
   env: NodeJS.ProcessEnv = process.env
@@ -29,7 +34,14 @@ export function ensureProcessWormHostBootedEffect(
       Effect.catch(() => Effect.succeed(null))
     );
     if (!svc) return;
-    memoryUnsub = registerMemoryWormSink(createMemoryWormSink());
+    try {
+      const { registerMemoryWormSink } = requireFromHere(
+        "clawql-memory/okf"
+      ) as typeof import("clawql-memory/okf");
+      memoryUnsub = registerMemoryWormSink(createMemoryWormSink());
+    } catch {
+      /* memory package optional */
+    }
     if (env.CLAWQL_WORM_DEBUG?.trim() === "1") {
       process.stderr.write("[clawql] process WORM trail ready (clawql-audit)\n");
     }
