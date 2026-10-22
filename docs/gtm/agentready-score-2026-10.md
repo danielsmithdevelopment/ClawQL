@@ -112,7 +112,7 @@ Ordered by AgentReady failure modes and honesty, not by ranker points:
 | API catalog `item`        | RFC 9727 linkset includes `item` entries for OpenAPI + server-card                           |
 | Markdown frontmatter      | `auth.md` / `pricing.md` / `index.md` / `contact.md` YAML + `agent_auth`                     |
 | Agent card interfaces     | `supportedInterfaces` / `supported_interfaces` on marketing agent-card                       |
-| Apex CF Pages             | `ensure-clawql-com-pages-domain.sh` attaches domain + CNAME to `clawql-website.pages.dev`     |
+| Apex CF Pages             | `ensure-clawql-com-pages-domain.sh` attaches domain + CNAME to `clawql-website.pages.dev`    |
 | DNS-AID / Link headers    | Agent-edge script forces proxy + synced Link transform + DNS-AID upserts                     |
 | Skills digests            | sha256 digests on www skills index                                                           |
 | MCP `server.json`         | Registry-shaped packages + optional remotes                                                  |
@@ -125,13 +125,13 @@ Ordered by AgentReady failure modes and honesty, not by ranker points:
 
 ## Operator follow-ups
 
-| Priority | Action                                                              | Owner hint    |
-| -------- | ------------------------------------------------------------------- | ------------- |
-| P0       | **Deploy** www so Pages domain + DNS-AID + `/mcp` go live           | infra         |
-| P0       | Confirm apex resolves via CF Pages (`server` ≠ bare GitHub.com)     | infra         |
-| P1       | Official MCP Registry publish + Smithery account listing            | GTM + release |
-| P1       | Full product Streamable HTTP MCP (beyond discovery tools)           | product       |
-| P2       | Confirm CF Bot settings + crawler IP 200s in logs for docs          | infra         |
-| P3       | Wikipedia/Wikidata brand discoverability                            | GTM           |
+| Priority | Action                                                          | Owner hint    |
+| -------- | --------------------------------------------------------------- | ------------- |
+| P0       | **Deploy** www so Pages domain + DNS-AID + `/mcp` go live       | infra         |
+| P0       | Confirm apex resolves via CF Pages (`server` ≠ bare GitHub.com) | infra         |
+| P1       | Official MCP Registry publish + Smithery account listing        | GTM + release |
+| P1       | Full product Streamable HTTP MCP (beyond discovery tools)       | product       |
+| P2       | Confirm CF Bot settings + crawler IP 200s in logs for docs      | infra         |
+| P3       | Wikipedia/Wikidata brand discoverability                        | GTM           |
 
 Do not claim “AgentReady compliant” as a badge — the spec has none. Prefer: “scored with is-agentic / ora / Mintlify on \<date\>; MUST find/read pass on marketing HTML; act via CLI + self-hosted MCP.”
