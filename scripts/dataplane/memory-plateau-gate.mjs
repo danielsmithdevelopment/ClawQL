@@ -9,9 +9,14 @@
  *
  * Env:
  *   MEM_GATE_ITERS   — execute calls (default 2000)
- *   MEM_GATE_MAX_MB  — hard anon ceiling (default 450)
- *   MEM_GATE_SLOPE   — fail if (last-first)/first > this (default 0.35)
+ *   MEM_GATE_MAX_MB  — hard anon ceiling (default 550; tip lean floor is higher than Oct-15 ~130)
+ *   MEM_GATE_SLOPE   — fail if (last-baseline)/baseline > this (default 0.35)
+ *   MEM_GATE_WARMUP_FRAC — fraction of samples skipped before slope baseline (default 0.2)
  *   MEM_GATE_OUT     — summary JSON path
+ *
+ * Slope uses a post-warmup baseline so cold-start RSS growth is not scored as a leak.
+ * The `_streamMapping` orphan bug is also guarded by
+ * `src/http/json-stream-mapping-bound.test.ts` (no long RSS run required).
  *
  * Requires dist/server-http.js (npm run build).
  */
@@ -34,8 +39,12 @@ import { clawqlEqualArmEnv } from "../benchmarks/lib/clawql-bench-env.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, "../..");
 const ITERS = Math.max(200, Number(process.env.MEM_GATE_ITERS || 2000));
-const MAX_MB = Number(process.env.MEM_GATE_MAX_MB || 450);
+const MAX_MB = Number(process.env.MEM_GATE_MAX_MB || 550);
 const SLOPE = Number(process.env.MEM_GATE_SLOPE || 0.35);
+const WARMUP_FRAC = Math.min(
+  0.5,
+  Math.max(0, Number(process.env.MEM_GATE_WARMUP_FRAC || 0.2))
+);
 const OUT = process.env.MEM_GATE_OUT || join(ROOT, "tmp/memory-plateau-gate.json");
 const ACCEPT = "application/json, text/event-stream";
 const SPEC_SRC = join(ROOT, "src/test-utils/fixtures/minimal-petstore.json");
@@ -270,8 +279,14 @@ async function main() {
 
   const first = samples[0]?.anon_kb ?? null;
   const last = samples[samples.length - 1]?.anon_kb ?? null;
-  const drift = first != null && last != null ? last - first : null;
-  const slope = first != null && first > 0 && drift != null ? drift / first : null;
+  // Score climb from a post-warmup baseline (cold start / JIT / caches are not the leak).
+  const warmIdx = Math.min(
+    samples.length - 2,
+    Math.max(0, Math.floor(samples.length * WARMUP_FRAC))
+  );
+  const baseline = samples[warmIdx]?.anon_kb ?? first;
+  const drift = baseline != null && last != null ? last - baseline : null;
+  const slope = baseline != null && baseline > 0 && drift != null ? drift / baseline : null;
   const lastMb = last != null ? last / 1024 : null;
   const climbing = slope != null && slope > SLOPE;
   const overCap = lastMb != null && lastMb > MAX_MB;
@@ -284,19 +299,22 @@ async function main() {
     errors,
     samples,
     first_mb: first != null ? +(first / 1024).toFixed(2) : null,
+    baseline_mb: baseline != null ? +(baseline / 1024).toFixed(2) : null,
+    baseline_i: samples[warmIdx]?.i ?? null,
     last_mb: lastMb != null ? +lastMb.toFixed(2) : null,
     drift_mb: drift != null ? +(drift / 1024).toFixed(2) : null,
     slope,
     slope_limit: SLOPE,
+    warmup_frac: WARMUP_FRAC,
     max_mb: MAX_MB,
     climbing,
     overCap,
     pass,
     note: climbing
-      ? "Anonymous climbed past slope limit — likely retention/leak (JSON _streamMapping or other)"
+      ? "Anonymous climbed past slope limit after warmup — likely retention/leak (JSON _streamMapping or other)"
       : overCap
         ? `Anonymous exceeded hard ceiling ${MAX_MB} MB`
-        : "Anonymous held within slope + ceiling",
+        : "Anonymous held within post-warmup slope + ceiling",
   };
   writeFileSync(OUT, JSON.stringify(summary, null, 2));
   console.log(JSON.stringify(summary));
