@@ -8,6 +8,7 @@
 
 use crate::catalog::SharedCatalog;
 use crate::execute::{execute_rest, ExecuteRequest};
+use crate::risk::{classify_http_operation, governance_enabled, RiskPolicy};
 use axum::extract::State;
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
@@ -289,6 +290,57 @@ async fn handle_tools_call(state: &AppState, params: Option<&Value>) -> Result<V
                 })
             });
 
+            let op = state
+                .catalog
+                .get(&operation_id)
+                .ok_or_else(|| rpc_error(-32602, format!("unknown operationId {operation_id}")))?;
+            let risk = classify_http_operation(op);
+            let gov_on = governance_enabled();
+            let mandate_token = args
+                .get("mandate")
+                .or_else(|| args.get("mandateToken"))
+                .and_then(|v| v.as_str())
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty());
+
+            if gov_on {
+                match risk.policy {
+                    RiskPolicy::Block => {
+                        return Ok(tool_text(json!({
+                            "ok": false,
+                            "parked": false,
+                            "denied": true,
+                            "operationId": operation_id,
+                            "risk": {
+                                "policy": "block",
+                                "reason": risk.reason,
+                                "source": risk.source
+                            },
+                            "governance": "phase-b",
+                            "comparisonLabel": "governance"
+                        })));
+                    }
+                    RiskPolicy::Mandate if mandate_token.is_none() => {
+                        // Phase B stub: park without Postgres consume yet.
+                        return Ok(tool_text(json!({
+                            "ok": false,
+                            "parked": true,
+                            "denied": false,
+                            "operationId": operation_id,
+                            "risk": {
+                                "policy": "mandate",
+                                "reason": risk.reason,
+                                "source": risk.source
+                            },
+                            "governance": "phase-b-park-stub",
+                            "comparisonLabel": "governance",
+                            "note": "Mandate consume (Postgres UPDATE…WHERE) lands in a later Phase B slice"
+                        })));
+                    }
+                    RiskPolicy::Allow | RiskPolicy::Mandate => {}
+                }
+            }
+
             match execute_rest(
                 &state.http,
                 &state.catalog,
@@ -308,8 +360,17 @@ async fn handle_tools_call(state: &AppState, params: Option<&Value>) -> Result<V
                     "url": result.url,
                     "body": result.body,
                     "operationId": operation_id,
-                    "governance": "phase-a-none",
-                    "comparisonLabel": "fast-path-only"
+                    "risk": {
+                        "policy": match risk.policy {
+                            RiskPolicy::Allow => "allow",
+                            RiskPolicy::Mandate => "mandate",
+                            RiskPolicy::Block => "block",
+                        },
+                        "reason": risk.reason,
+                        "source": risk.source
+                    },
+                    "governance": if gov_on { "phase-b" } else { "phase-a-none" },
+                    "comparisonLabel": if gov_on { "governance" } else { "fast-path-only" }
                 }))),
                 Err(e) => {
                     // Domain execute failure: stay in result with isError (MCP tool convention).

@@ -5,6 +5,7 @@ mod execute;
 mod mcp;
 mod mock_upstream;
 mod policy;
+mod risk;
 mod where_filter;
 
 use anyhow::Context;
@@ -109,7 +110,12 @@ async fn main() -> anyhow::Result<()> {
         .await
         .with_context(|| format!("bind {}", args.bind))?;
     let addr = listener.local_addr()?;
-    tracing::info!(%addr, "clawql-dataplane listening (Phase A — no governance, fast-path-only)");
+    let gov = crate::risk::governance_enabled();
+    tracing::info!(
+        %addr,
+        governance = gov,
+        "clawql-dataplane listening"
+    );
     tracing::info!("MCP POST http://{addr}/mcp  healthz http://{addr}/healthz");
 
     axum::serve(listener, app)

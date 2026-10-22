@@ -6,13 +6,13 @@
 
 ## Status
 
-| Phase            | Status          | Notes                                                     |
-| ---------------- | --------------- | --------------------------------------------------------- |
-| 0 Freeze         | **Done**        | Memory go bar = ≤65 MB anon; see BARS.md                  |
-| A Bare path      | **In progress** | SQLite catalog + Streamable HTTP JSON mode; no governance |
-| B Governance     | Pending         | Week-2 candidate after week-1 memory gap                  |
-| C Verus + boards | Pending         | `policy.rs` is the first Verus candidate                  |
-| D Go/no-go       | Pending         |                                                           |
+| Phase            | Status                                           | Notes                                                                                          |
+| ---------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| 0 Freeze         | **Done**                                         | Memory go bar = ≤65 MB anon; see BARS.md                                                       |
+| A Bare path      | **Done** (week-1 `fast-path-only`)               | SQLite catalog + Streamable HTTP JSON mode                                                     |
+| B Governance     | **In progress**                                  | HTTP risk classify + park/block stub (`CLAWQL_DATAPLANE_GOVERNANCE=1`); IFC/consume/WORM next |
+| C Verus + boards | Pending                                          | `policy.rs` is the first Verus candidate                                                       |
+| D Go/no-go       | Pending                                          |                                                                                                |
 
 ## Honesty — do not quote idle toy RSS
 

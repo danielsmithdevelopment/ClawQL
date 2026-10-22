@@ -19,9 +19,10 @@ Harness: `scripts/dataplane/week1-cf-known-op.sh`
 | ------------------------------------------------------ | ------------------------------------------ |
 | Published cite (2026-10-15 heap-vs-anon Bun `--smol`)  | ~**130 MB**                                |
 | This tip, same single-op lean probe (before 10k board) | ~**173 MB** (start ~105 MB)                |
-| This tip, after 30k full known-op sessions             | **climbs ~200 → ~3444 MB** (not a plateau) |
+| Tip **before** JSON `_streamMapping` prune             | **climbs ~200 → ~3444 MB** (not a plateau) |
+| Tip **after** prune (PR #1390 / merged into Phase B)   | Climb fixed; remasure week-1 for plateau   |
 
-The Oct-15 **130 MB** number is **not reproducible on this tip** under the published probe. Tip Bun equal-arm + `--smol` + LOAD=db is the honest lean baseline (~170–260 MB on the single-op probe). Under the full 11-step board at 10k×3, Bun Anonymous **keeps climbing** (leak or unbounded retention) — do not treat last-5 median as plateau. Rust stays flat.
+The Oct-15 **130 MB** number is **not reproducible on this tip** under the published probe (lean floor ~170–260 MB is a **separate** open item). The GB-scale board climb was MCP SDK JSON `_streamMapping` retention — host prune + bound unit test land in [#1390](https://github.com/danielsmithdevelopment/ClawQL/pull/1390). Remasure Bun on this branch before quoting week-2 memory deltas.
 
 ## Results (10k × 3, 0 errors both arms)
 

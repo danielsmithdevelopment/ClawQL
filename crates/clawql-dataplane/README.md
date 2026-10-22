@@ -1,6 +1,9 @@
 # clawql-dataplane (ADR 0016 spike)
 
-Rust Streamable-HTTP **execute** hot path. Phase A = bare path (SQLite catalog → REST → `where`), **no governance**. Comparisons are labeled **`fast-path-only`**.
+Rust Streamable-HTTP **execute** hot path.
+
+- **Phase A** (default): bare path (SQLite catalog → REST → `where`), label **`fast-path-only`**.
+- **Phase B** (opt-in): set `CLAWQL_DATAPLANE_GOVERNANCE=1` for HTTP risk classify + park/block stub.
 
 ## Quick start
 
@@ -43,6 +46,7 @@ Week-1 interleaved Bun vs Rust: `scripts/dataplane/week1-cf-known-op.sh`
 | `execute` | REST call + fields projection |
 | `where_filter` | JMESPath |
 | `mcp` | Streamable HTTP (session + JSON mode) |
+| `risk` | HTTP method → allow / mandate / block (Phase B) |
 | `policy` | Lean-shaped approval oracle (Verus later) |
 | `mock_upstream` | In-process REST for pets smoke |
 
