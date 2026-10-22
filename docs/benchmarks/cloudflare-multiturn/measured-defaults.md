@@ -176,9 +176,10 @@ Three measured claims, same workflow family, each labeled for what it covers:
 
 1. **Tokens (steady state):** fewest weighted tokens vs code-mode peers — dual-model
    gate, pre-registered (`known_op_beats_code_mode_for_real_models`).
-2. **Memory:** Tip Bun `--smol` equal-arm lean plateaus near **~142 MB** after
-   lazy-listen restore (Oct-15 side-branch cite was ~130 MB). Node 256 heap A/B on
-   that older build was **132 MB** at ~**3.5 ms** p99 vs uncapped.
+2. **Memory:** Tip Bun `--smol` equal-arm lean plateaus near **~139–142 MB** after
+   lazy-listen restore (Oct-15 side-branch cite was ~130 MB). CF known-op board under
+   that host is **~129 MB** anon vs Rust dataplane **~15 MB** (~**8.4×**). Node 256
+   heap A/B on the older build was **132 MB** at ~**3.5 ms** p99 vs uncapped.
 3. **HTTP concurrency (this workflow):** Bun sustains median **84** clients
    (`REPS=3`, range **[79, 87]**) at p99 ≤ 100 ms vs MCPJungle **31** / agentgateway
    **38** — ClawQL moves answers (`where`), peers move full DNS lists. (Pets-board MJ

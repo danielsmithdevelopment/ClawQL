@@ -29,6 +29,17 @@
 | Memory | **climbs ~200→~3444 MB** | **plateaus ~235 MB** | ~15–16 MB flat |
 | call p999 | 9.75 ms | **4.86 ms** | ~5.6 → **4.89 ms** |
 
-Climb fix confirmed under CF known-op load. Memory gap vs tip Bun ≈ **15×** (235 / 15.3). Per-call p999 is now near-parity; Rust still wins session p999. Go/no-go still waits Phase B governance on both sides.
+Climb fix confirmed under CF known-op load. Memory gap vs tip Bun was ≈ **15×** (235 / 15.3) on the **pre-lazy-port** host. Per-call p999 is near-parity; Rust still wins session p999. Go/no-go still waits Phase B governance on both sides.
 
-**Density, not speed:** with the leak fixed, Bun call p999 **4.86 ms** vs Rust **4.89 ms** — latency is a dead heat. The Rust case for ClawQL Cloud is tenant density / cost per isolate. Against tip Bun after lazy-listen restore: ~**9–10×** at lean (~142 MB) and ~**15×** at the post-prune board plateau (~235 MB) until the board is remasured under the restored host. Lean: [LEAN-BISECT.md](./LEAN-BISECT.md). HTTP 300–700 ms stalls: **not** fixed by prune — [HTTP-TAIL-POST-PRUNE.md](./HTTP-TAIL-POST-PRUNE.md).
+### Post-lazy board remasure (2026-10-22)
+
+Same recipe (`CF_DP_REPS=1` `CF_DP_ITERS=5000`) after restoring lazy listen:
+
+| Arm | call p50 / p99 / **p999** (ms) | Plateau anon |
+| --- | --- | ---: |
+| Bun tip + prune + lazy | 1.05 / 3.11 / **7.00** | **~128.9 MB** |
+| Rust dataplane | 0.55 / 3.91 / **5.64** | **~15.3 MB** |
+
+Lean-confirm on that Bun host: **~138.5 MB**. Density vs Rust ≈ **8.4×** (board) / **~9×** (lean). The old **~15×** figure was the eager-listen board — **do not quote**. Artifacts: `/opt/cursor/artifacts/dataplane-week1-post-lazy/` · [`artifacts/week1-post-lazy-5k.json`](./artifacts/week1-post-lazy-5k.json).
+
+**Density, not speed:** latency stays in-band; the Rust case for ClawQL Cloud is tenant density / cost per isolate (~**8–9×** less anon at lean/board under the restored host). Lean bisect: [LEAN-BISECT.md](./LEAN-BISECT.md). HTTP 300–700 ms stalls: **not** fixed by prune — [HTTP-TAIL-POST-PRUNE.md](./HTTP-TAIL-POST-PRUNE.md).

@@ -72,6 +72,6 @@ Ruled out for the ≥300 ms class on this round:
 
 TS `x-clawql-server-ms` is often missing on Streamable JSON responses (headers flush before the Express finally hook), but `[clawql-http-slow]` never exceeded **27 ms** while clients still saw 300–500 ms TTFB with `server_t0 ≈ client t0` — same client/transport-gap shape as Rust.
 
-**Stop here** (time-box). Density framing stands: latency dead heat at the median, ~9–10× lean RSS vs Rust (~142 MB Bun tip vs ~15 MB), board figure to remasure under restored lazy listen.
+**Stop here** (time-box). Density framing (post-lazy remasure): latency in-band; ~**8–9×** RSS vs Rust (board ~129 MB / lean ~139–142 MB vs ~15 MB) — [LEAN-BISECT](./LEAN-BISECT.md).
 
 Related: climb fix [WEEK1-POST-PRUNE.md](./WEEK1-POST-PRUNE.md); lean floor restore [LEAN-BISECT.md](./LEAN-BISECT.md) / [memory-plateau.md](../../benchmarks/cloudflare-multiturn/memory-plateau.md).

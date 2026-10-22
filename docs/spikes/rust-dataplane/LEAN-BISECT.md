@@ -32,11 +32,14 @@ With catalog on (product default), restored tip still plateaus ~142 MB under t
 
 ## Week-2 density baseline (reproducible)
 
+Remasured CF known-op board under restored lazy listen (`CF_DP_REPS=1` `CF_DP_ITERS=5000`, same recipe as [WEEK1-POST-PRUNE](./WEEK1-POST-PRUNE.md)):
+
 | Arm | Anon | vs Rust ~15 MB |
 | --- | ---: | ---: |
-| Tip Bun `--smol` lean (heap-vs-anon N=2000) | **~142 MB** | **~9–10×** |
-| Tip Bun CF known-op board (post-prune, pre-lazy-port remasure) | **~235 MB** | **~15×** — remasure board under restored lazy host before quoting |
+| Tip Bun `--smol` lean (heap-vs-anon / lean-confirm N=2000) | **~139–142 MB** | **~9×** |
+| Tip Bun CF known-op board (post-lazy, 1×5k) | **~129 MB** | **~8.4×** |
+| Prior board (post-prune, pre-lazy-port) | ~235 MB | ~15× — **superseded**; do not quote |
 
-Latency remains a dead heat (call p999 ~4.9 ms). Rust’s case is density.
+Latency stays in the same band (this remasure: Bun call p999 **7.0 ms** / Rust **5.6 ms**; p50/p99 near-parity). Rust’s case is density.
 
-Artifacts: `/opt/cursor/artifacts/lean-bisect/` (incl. `tip-after-adapters-lazy/`).
+Artifacts: `/opt/cursor/artifacts/dataplane-week1-post-lazy/` · [`artifacts/week1-post-lazy-5k.json`](./artifacts/week1-post-lazy-5k.json).
