@@ -16,7 +16,7 @@ ClawQL’s formal stack today proves **models**, not the production TypeScript t
 
 Microsoft Research’s **Proof Driven Development Kit (PDD Kit)** + **Verus** (GitHub Universe, Oct 2026) aims at a different claim: prove that **the Rust code that runs** meets a formal spec for every input. Where proof is not possible, it falls back to tests and computer-use agents. That only applies if security-critical pieces are actually written in Rust.
 
-Separately, Bun/`--smol` already plateaus near **~130 MB** anon under lean listen, within ~35–45 MB of peer Go/Rust gateways ([measured defaults](../benchmarks/cloudflare-multiturn/measured-defaults.md)). Tail latency and residual gateway overhead on the execute path remain open levers ([executor side-by-side](../benchmarks/executor-comparison/), [hot-path RSS map](../../Memory/execute-hotpath-rss-growth-sources-ranking.md) in vault). A Rust **data plane** for the known-operation execute path is the natural place to try both: memory/tail gains **and** Verus-backed policy kernels.
+Separately, Bun/`--smol` plateaus near **~130 MB** anon under lean listen **on the October 15 build**, within ~35–45 MB of peer Go/Rust gateways ([measured defaults](../benchmarks/cloudflare-multiturn/measured-defaults.md)). Tip lean probe is higher (~170–260 MB) until the host memory regression is closed — use tip Bun with the leak fixed as the week-2 baseline, not the leaking climb. Tail latency and residual gateway overhead on the execute path remain open levers ([executor side-by-side](../benchmarks/executor-comparison/), [hot-path RSS map](../../Memory/execute-hotpath-rss-growth-sources-ranking.md) in vault). A Rust **data plane** for the known-operation execute path is the natural place to try both: memory/tail gains **and** Verus-backed policy kernels.
 
 This is **not** [`clawql-cellrt`](../streams/clawql-cellrt.md) (owned Durable-Objects-style Rust + Wasmtime cell runtime). The spike is a thin Streamable-HTTP gateway in front of today’s TypeScript host. cellrt remains the Streams/cell substrate plan.
 
@@ -87,7 +87,7 @@ Baselines from Bun lean listen / peer boards ([measured defaults](../benchmarks/
 
 | Metric                  | Baseline (today)                                  | Spike go bar (proposed)                                                                                          |
 | ----------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| **Anon RSS under load** | Bun ~**125–130 MB**; peers ~**99–103 MB**         | ≤ **half of Bun** (≤ ~65 MB) **or** within peer band with clear headroom — pick one bar in Phase 0 and freeze it |
+| **Anon RSS under load** | Bun ~**125–130 MB** (**Oct 15 build**); tip lean ~**173 MB**; peers ~**99–103 MB** | ≤ **half of tip Bun after leak fix** **or** within peer band with clear headroom — pick one bar in Phase 0 and freeze it |
 | **Latency**             | p50 / p99 / p999 on equal-arm REST execute        | Clearly better **p999** than Bun host on the same board; unexplained HTTP stalls gone or explained               |
 | **Clients / instance**  | Bun median **84** @ p99 ≤ 100 ms (HTTP multiplex) | Meet or beat Bun on the same workflow                                                                            |
 | **Correctness**         | —                                                 | **Zero** differential mismatches on the agreed suite                                                             |

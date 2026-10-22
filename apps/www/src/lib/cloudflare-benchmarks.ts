@@ -2,7 +2,9 @@
  * Cloudflare zone-audit multiturn board for clawql.com/benchmarks.
  * Source: docs/benchmarks/cloudflare-multiturn (publish 10k×3 + concurrency curves).
  * Host-bound — token cells from 2026-10-17 post–compact-execute remasure.
- * Concurrency curves unchanged by JSON pretty-print; Node-256 memory cites from prior rep4.
+ * Concurrency curves unchanged by JSON pretty-print; Anon MB cells are
+ * **measured on the October 15 build** (Node-256 / Bun --smol plateau era) — tip
+ * lean probe is higher until the host memory regression is remasured.
  */
 
 export const cfTokenBoardProvenance = {
@@ -18,7 +20,8 @@ export const cfBenchmarkSummary =
   'Zone-audit: ClawQL known-op leads tokens on a curated OpenAPI → replay mock — post–compact-execute remasure 2026-10-17: known_op 1 710 weighted (−123). Fan-out/join: scripted program claim cleared; blind real-model gate is frontier-only so far. Executor v2 is the promoted Executor column. HTTP concurrency is multiplex; stdio is process-per-client.'
 
 export const cfBenchmarkMeta = {
-  measuredLabel: 'Tokens remasured Oct 2026 (compact execute) · host-bound',
+  measuredLabel:
+    'Tokens remasured Oct 2026 (compact execute) · Anon MB measured on the October 15 build · host-bound',
   boardLabel: '10 000 sessions × 3 reps · curated Cloudflare OpenAPI',
   artifactBoard: 'docs/benchmarks/cloudflare-multiturn/board-final-summary.md',
   artifactHttp: 'docs/benchmarks/cloudflare-multiturn/http-concurrency-curves.json',
@@ -45,8 +48,8 @@ export const cfTokenRows: CfTokenRow[] = [
     taskSuccess: '1.0',
     sessionP50: '24.6 ms',
     transport: 'HTTP',
-    anonMb: '~121',
-    note: 'Execute by operationId + where — primary ClawQL path (−123 vs pre-compact)',
+    anonMb: '~121*',
+    note: 'Execute by operationId + where — primary ClawQL path (−123 vs pre-compact). *Anon MB: October 15 build',
   },
   {
     arm: 'ClawQL program',
@@ -55,8 +58,8 @@ export const cfTokenRows: CfTokenRow[] = [
     taskSuccess: '1.0',
     sessionP50: '11.8 ms',
     transport: 'HTTP',
-    anonMb: '~126',
-    note: 'One execute_program plan (ADR 0015 v0)',
+    anonMb: '~126*',
+    note: 'One execute_program plan (ADR 0015 v0). *Anon MB: October 15 build',
   },
   {
     arm: 'ClawQL compact search',
@@ -64,8 +67,8 @@ export const cfTokenRows: CfTokenRow[] = [
     taskSuccess: '1.0',
     sessionP50: '46.8 ms',
     transport: 'HTTP',
-    anonMb: '~123',
-    note: '−123 vs pre-compact 5 925',
+    anonMb: '~123*',
+    note: '−123 vs pre-compact 5 925. *Anon MB: October 15 build',
   },
   {
     arm: 'ClawQL default search',
@@ -73,8 +76,8 @@ export const cfTokenRows: CfTokenRow[] = [
     taskSuccess: '1.0',
     sessionP50: '58.9 ms',
     transport: 'HTTP',
-    anonMb: '~125',
-    note: '−123 vs pre-compact 17 821',
+    anonMb: '~125*',
+    note: '−123 vs pre-compact 17 821. *Anon MB: October 15 build',
   },
   {
     arm: 'Executor v2 (promoted)',
