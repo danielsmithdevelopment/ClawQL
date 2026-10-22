@@ -118,11 +118,11 @@ Skip Scala / MoonBit-style breadth unless a customer asks.
 
 Default: **never guess, never silent-drop, never blind-retry**. When the catalog shows a way to find out, find out.
 
-| Capability | Status | Behavior |
-| ---------- | ------ | -------- |
-| **Idempotency keys** (Stripe-class) | **Shipped (REST)** | OpenAPI ops that declare header `Idempotency-Key` (or `x-clawql-idempotencyCapable`) park as `idempotencyCapable`. After mandate consume, REST sends `Idempotency-Key: clawql-mandate:<executionId>`. Review **Keyed retry** redrives without a second consume ([execute-pause-resume](../specs/risk/execute-pause-resume-v0.1.md)). |
-| **Check-then-decide (lookup by reference)** | **Planned** | Spec-driven “is there an effect with *this* reference?” after the original can no longer land; then record success or one safe resend. Exact match only — not “similar recent charge.” |
-| **Neither** | Shipped | Stay **at most once**; person marks applied / not applied. |
+| Capability                                  | Status             | Behavior                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Idempotency keys** (Stripe-class)         | **Shipped (REST)** | OpenAPI ops that declare header `Idempotency-Key` (or `x-clawql-idempotencyCapable`) park as `idempotencyCapable`. After mandate consume, REST sends `Idempotency-Key: clawql-mandate:<executionId>`. Review **Keyed retry** redrives without a second consume ([execute-pause-resume](../specs/risk/execute-pause-resume-v0.1.md)). |
+| **Check-then-decide (lookup by reference)** | **Planned**        | Spec-driven “is there an effect with _this_ reference?” after the original can no longer land; then record success or one safe resend. Exact match only — not “similar recent charge.”                                                                                                                                               |
+| **Neither**                                 | Shipped            | Stay **at most once**; person marks applied / not applied.                                                                                                                                                                                                                                                                           |
 
 Program durable-runner still hard-stops at `outcome_unknown` (never re-sends) until keyed resume is measured there. Do **not** claim board unknowns → 0 until an idempotent-mock board is re-run.
 

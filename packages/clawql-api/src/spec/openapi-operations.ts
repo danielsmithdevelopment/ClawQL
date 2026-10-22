@@ -71,9 +71,7 @@ export function operationsFromOpenAPI(doc: OpenAPIDocLike): Operation[] {
         requestBody: rb.schemaName,
         requestBodyContentType: rb.contentType,
         responseBody,
-        ...(idempotencyCapable
-          ? { riskHints: { idempotencyCapable: true as const } }
-          : {}),
+        ...(idempotencyCapable ? { riskHints: { idempotencyCapable: true as const } } : {}),
       });
     }
   }

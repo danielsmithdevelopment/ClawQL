@@ -9,7 +9,9 @@ describe("openApiDeclaresIdempotencyCapable", () => {
   it("detects Idempotency-Key header parameter", () => {
     expect(
       openApiDeclaresIdempotencyCapable({
-        parameters: [{ name: "Idempotency-Key", in: "header", required: false, schema: { type: "string" } }],
+        parameters: [
+          { name: "Idempotency-Key", in: "header", required: false, schema: { type: "string" } },
+        ],
       })
     ).toBe(true);
   });
@@ -37,7 +39,12 @@ describe("operationsFromOpenAPI riskHints.idempotencyCapable", () => {
           post: {
             operationId: "createCharge",
             parameters: [
-              { name: "Idempotency-Key", in: "header", required: false, schema: { type: "string" } },
+              {
+                name: "Idempotency-Key",
+                in: "header",
+                required: false,
+                schema: { type: "string" },
+              },
             ],
             responses: { "200": { description: "ok" } },
           },
