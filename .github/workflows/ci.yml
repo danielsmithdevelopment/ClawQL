@@ -148,7 +148,9 @@ jobs:
   workflow-scripts:
     name: ShellCheck & actionlint
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # Helm/kustomize are fast; packer + cold `infra/pulumi` npm install can exceed 5m
+    # when the registry is slow (job then cancels mid-step → UNSTABLE PR checks).
+    timeout-minutes: 15
     steps:
       # actions/checkout@v7.0.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
