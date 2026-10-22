@@ -53,6 +53,8 @@ Read alone, “about half of crashes leave an unknown outcome” sounds alarming
 
 In real operation, crashes mostly land outside the brief in-flight window, so unknown outcomes are far rarer than this targeted test shows. If the two outer phases ever show a nonzero rate, that is a bug to fix, not a number to explain.
 
+**Does unknown undermine durability?** No. Durability here means the program survives, nothing is repeated, and nothing disappears silently. The in-flight case is the one place the callee’s truth is unavailable; marking it unknown is honesty, not weakness. Recovery is not limited to “retry / do nothing / ask a person” — **check by unique reference, then decide** (after the original can no longer land) is the preferred path when the API allows it; idempotency keys are the other. Person only when neither exists. Framing and product plan: [golem-overlap honesty § outcome unknown](../../gtm/golem-overlap-and-durability-honesty.md#why-outcome-unknown-and-why-that-does-not-undermine-durability).
+
 ## Comparison rows
 
 See [`ttl-tradeoff-evidence.json`](./ttl-tradeoff-evidence.json) and [`TTL-TRADEOFF.md`](./TTL-TRADEOFF.md):

@@ -35,7 +35,7 @@ All arms resume after a crash. They differ on the **in-flight write**. Count bot
 | **Golem**  | Completing the work                   | At least once → possible **duplicate**      |
 | **ClawQL** | Never repeating a consequential write | **At most once** → may be `outcome_unknown` |
 
-ClawQL consumes the approval **before** the write → duplicates stay at zero; an interrupted write can land in `outcome_unknown`. Golem retries and adds idempotency keys; when the callee honors them, effect is once. Neither is wrong — they pick opposite sides of the same distributed-systems limit.
+ClawQL consumes the approval **before** the write → duplicates stay at zero; an interrupted write can land in `outcome_unknown`. That unknown is explicit and limited to the in-flight window — it does not mean ClawQL “gave up”; see [why outcome unknown](../../gtm/golem-overlap-and-durability-honesty.md#why-outcome-unknown-and-why-that-does-not-undermine-durability) (check-then-decide and keys are the planned auto-resolve path). Golem retries and adds idempotency keys; when the callee honors them, effect is once. Neither is wrong — they pick opposite sides of the same distributed-systems limit.
 
 Publish **both** columns on every arm.
 
@@ -48,7 +48,7 @@ Run every arm against **two** mock upstreams — the same split he named:
 1. **Idempotency-honoring** — Stripe-class: same key → one effect.
 2. **No idempotency** — retries can multiply effects.
 
-Golem’s public model: retries take effect once **if** the service honors keys; otherwise at least once. ClawQL’s single-use mandate does **not** depend on that. Both modes show where each guarantee comes from. **Planned product:** ClawQL attaches mandate-derived keys when the upstream supports them ([honesty doc](../../gtm/golem-overlap-and-durability-honesty.md#product-improvement-mandate-derived-idempotency-keys-planned)) so Stripe-class APIs can auto-resolve instead of `outcome_unknown` — still at-most-once when keys are absent.
+Golem’s public model: retries take effect once **if** the service honors keys; otherwise at least once. ClawQL’s single-use mandate does **not** depend on that. Both modes show where each guarantee comes from. **Planned product:** mandate-derived keys **and** spec-driven check-then-decide ([honesty](../../gtm/golem-overlap-and-durability-honesty.md#product-improvement-resolve-in-flight-unknowns-automatically-planned)) so lookup-capable / Stripe-class APIs auto-resolve instead of leaving `outcome_unknown` — still at-most-once when neither exists.
 
 ---
 
