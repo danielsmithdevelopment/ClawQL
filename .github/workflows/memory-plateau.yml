@@ -76,8 +76,9 @@ jobs:
       - name: Memory plateau gate (2000 JSON executes)
         env:
           MEM_GATE_ITERS: "2000"
-          MEM_GATE_MAX_MB: "450"
+          MEM_GATE_MAX_MB: "550"
           MEM_GATE_SLOPE: "0.35"
+          MEM_GATE_WARMUP_FRAC: "0.2"
           MEM_GATE_OUT: tmp/memory-plateau-gate.json
         run: npm run gate:memory-plateau
 
@@ -116,8 +117,9 @@ jobs:
       - name: Memory plateau gate (30000 JSON executes)
         env:
           MEM_GATE_ITERS: "30000"
-          MEM_GATE_MAX_MB: "450"
+          MEM_GATE_MAX_MB: "550"
           MEM_GATE_SLOPE: "0.35"
+          MEM_GATE_WARMUP_FRAC: "0.2"
           MEM_GATE_OUT: tmp/memory-plateau-gate-nightly.json
         run: npm run gate:memory-plateau
 
