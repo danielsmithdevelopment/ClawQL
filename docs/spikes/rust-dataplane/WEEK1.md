@@ -15,20 +15,20 @@ Harness: `scripts/dataplane/week1-cf-known-op.sh`
 
 ## Bun memory honesty
 
-| Measurement | Anon |
-| ----------- | ---- |
-| Published cite (2026-10-15 heap-vs-anon Bun `--smol`) | ~**130 MB** |
-| This tip, same single-op lean probe (before 10k board) | ~**173 MB** (start ~105 MB) |
-| This tip, after 30k full known-op sessions | **climbs ~200 → ~3444 MB** (not a plateau) |
+| Measurement                                            | Anon                                       |
+| ------------------------------------------------------ | ------------------------------------------ |
+| Published cite (2026-10-15 heap-vs-anon Bun `--smol`)  | ~**130 MB**                                |
+| This tip, same single-op lean probe (before 10k board) | ~**173 MB** (start ~105 MB)                |
+| This tip, after 30k full known-op sessions             | **climbs ~200 → ~3444 MB** (not a plateau) |
 
 The Oct-15 **130 MB** number is **not reproducible on this tip** under the published probe. Tip Bun equal-arm + `--smol` + LOAD=db is the honest lean baseline (~170–260 MB on the single-op probe). Under the full 11-step board at 10k×3, Bun Anonymous **keeps climbing** (leak or unbounded retention) — do not treat last-5 median as plateau. Rust stays flat.
 
 ## Results (10k × 3, 0 errors both arms)
 
-| Arm | per-call p50 / p99 / **p999** (ms) | session p99 / **p999** (ms) | Memory |
-| --- | ---------------------------------- | --------------------------- | ------ |
-| Bun tip lean | 1.12 / 3.61 / **9.75** | 27.0 / **40.8** | Lean-probe ~**173 MB**; board run **climbs** (not plateau) |
-| Rust dataplane | 0.54 / 3.90 / **5.58** | 20.1 / **37.6** | **~15.7 MB flat** |
+| Arm            | per-call p50 / p99 / **p999** (ms) | session p99 / **p999** (ms) | Memory                                                     |
+| -------------- | ---------------------------------- | --------------------------- | ---------------------------------------------------------- |
+| Bun tip lean   | 1.12 / 3.61 / **9.75**             | 27.0 / **40.8**             | Lean-probe ~**173 MB**; board run **climbs** (not plateau) |
+| Rust dataplane | 0.54 / 3.90 / **5.58**             | 20.1 / **37.6**             | **~15.7 MB flat**                                          |
 
 Sessions/arm = 30 000 → p999 ≈ 30th-worst session (real tail sample).
 
