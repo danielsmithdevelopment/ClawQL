@@ -263,8 +263,12 @@ jobs:
           if dig +short clawql.com A | grep -q '^185\.199\.'; then
             echo "::warning::clawql.com still resolves to GitHub Pages A records — Pages domain CNAME may need manual DNS."
           fi
-          code="$(curl -sfI -o /dev/null -w '%{http_code}' https://clawql.com/mcp || echo 000)"
-          echo "GET /mcp => ${code}"
-          if [[ "$code" != "200" ]]; then
-            echo "::warning::https://clawql.com/mcp not 200 yet (got ${code}); check Pages custom domain."
+          # Use GET (not HEAD): Pages /mcp returns 200 JSON on GET; HEAD is 405.
+          hdrs="$(mktemp)"
+          code="$(curl -sS -o /dev/null -D "$hdrs" -w '%{http_code}' https://clawql.com/mcp || echo 000)"
+          server="$(grep -i '^server:' "$hdrs" | awk '{print $2}' | tr -d '\r' || true)"
+          rm -f "$hdrs"
+          echo "GET /mcp => ${code} (server: ${server:-unknown})"
+          if [[ "$code" != "200" ]] || [[ "${server}" == "GitHub.com" ]]; then
+            echo "::warning::https://clawql.com/mcp not on Cloudflare Pages yet (got ${code}, server=${server:-unknown}); check Pages custom domain."
           fi
