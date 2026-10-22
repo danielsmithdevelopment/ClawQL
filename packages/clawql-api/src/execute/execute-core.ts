@@ -177,7 +177,7 @@ export function executeClawqlOperationEffect(
                 ok: false,
                 status: "blocked",
                 reason:
-                  "Keyed redrive refused: operationId/args digest does not match parked mandate",
+                  "Keyed redrive refused: parked mandate does not match this operation or argument hash",
                 operationId,
                 risk,
                 executionId: approvedId,
