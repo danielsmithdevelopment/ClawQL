@@ -27,7 +27,7 @@ John agrees he would never claim every remote tool is made durable automatically
 - **At most once**, whether or not the upstream supports idempotency
 - **Approved by a person** when risky
 - **Recorded** on a tamper-evident trail
-- **Exactly once** where the upstream honors keys — once mandate-derived keys ship (planned)
+- **Exactly once** where the upstream honors keys — REST mandate `Idempotency-Key` is shipped; program-runner keyed resume still planned
 
 Never write “ClawQL makes agents durable.” Prefer “governs remote effects” / “at-most-once approved writes” / “journaled program resume (lab).”
 
@@ -114,16 +114,17 @@ Skip Scala / MoonBit-style breadth unless a customer asks.
 
 ---
 
-## Product improvement: mandate-derived idempotency keys (planned)
+## Product improvement: resolve in-flight unknowns
 
-When the upstream supports idempotency keys, ClawQL should attach a key derived from the mandate / execution id (spec sketch: `clawql-mandate:<executionId>` in [execute-pause-resume](../specs/risk/execute-pause-resume-v0.1.md)). Then an interrupted call can be **safely retried with the same key** and resolved automatically instead of becoming `outcome_unknown`.
+Default: **never guess, never silent-drop, never blind-retry**. When the catalog shows a way to find out, find out.
 
-| Upstream                   | Behavior after ClawQL ships keys                                                   |
-| -------------------------- | ---------------------------------------------------------------------------------- |
-| Honors keys (Stripe-class) | Exactly-once effect on retry — same class of outcome as Golem on that API          |
-| No keys / ignores them     | Stay **at most once** (consume approval; refuse re-send); person resolves unknowns |
+| Capability                                  | Status             | Behavior                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Idempotency keys** (Stripe-class)         | **Shipped (REST)** | OpenAPI ops that declare header `Idempotency-Key` (or `x-clawql-idempotencyCapable`) park as `idempotencyCapable`. After mandate consume, REST sends `Idempotency-Key: clawql-mandate:<executionId>`. Review **Keyed retry** redrives without a second consume ([execute-pause-resume](../specs/risk/execute-pause-resume-v0.1.md)). |
+| **Check-then-decide (lookup by reference)** | **Planned**        | Spec-driven “is there an effect with _this_ reference?” after the original can no longer land; then record success or one safe resend. Exact match only — not “similar recent charge.”                                                                                                                                               |
+| **Neither**                                 | Shipped            | Stay **at most once**; person marks applied / not applied.                                                                                                                                                                                                                                                                           |
 
-That cuts in-flight `outcome_unknown` on the phased board for idempotent mocks, without giving up the non-idempotent guarantee. **Do not claim this until implemented and measured.**
+Program durable-runner still hard-stops at `outcome_unknown` (never re-sends) until keyed resume is measured there. Do **not** claim board unknowns → 0 until an idempotent-mock board is re-run.
 
 ---
 
@@ -143,7 +144,7 @@ If resume time grows with journal length, add **periodic snapshots** so resume r
 ## Gaps to close (order)
 
 1. **Durability, shipped** — Tier C fleet phased kill on R2 is measured (N=1000, 0 dups); preferred renew/lease tune still planned. Head-to-head Golem arm still open.
-2. **Mandate-derived idempotency keys** — attach + safe retry when upstream honors keys; keep at-most-once elsewhere (above).
+2. **Check-then-decide lookup** — pair write ops with lookup-by-reference from the spec (above); keys already on the REST wire.
 3. **Resume vs journal length** — measure; snapshot if growth is material (above).
 4. **Delegated permissions that narrow and cascade** — time-limited sub-agent slices; revoke parent → revoke children.
 5. **Read-only result caching** — specs already mark reads; gateway cache until next write.
@@ -202,6 +203,6 @@ He is publicly pressure-testing frameworks that overclaim durability. Use his fr
 - [ ] “Survives a crash” only with the scoped Tier C claim (failover seconds + availability costs); never without the per-phase unknown framing if quoting the ~48% rate.
 - [ ] Preferred production row stays **planned** until measured at stock N; TTL-only 30s always labeled **n=40**.
 - [ ] Prefer “at most once” for approved writes; “at least once + stable id” for events.
-- [ ] When quoting Golem 1.6, keep his three conditions intact; never imply ClawQL is a durable execution engine or that we already attach mandate idempotency keys.
+- [ ] When quoting Golem 1.6, keep his three conditions intact; never imply ClawQL is a durable execution engine. REST mandate keys are shipped; do not claim program-runner keyed resume or lookup reconciliation until measured.
 - [ ] Do not claim constant resume cost until journal-length board exists.
 - [ ] Streams “Durable Objects” always means Cloudflare/celld DO substrate, not Golem.

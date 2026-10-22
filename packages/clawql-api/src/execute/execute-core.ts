@@ -11,10 +11,13 @@ import type { LoadSpecFn } from "../search/search-core.js";
 import { gatewayRedactionEnabled, maybeGatewayRedactText } from "../redaction/gateway-redact.js";
 import { hashPendingArgsEffect } from "../pending/args-hash.js";
 import {
+  loadPendingExecution,
   markPendingCompleted,
+  mayAutoRetryOutcomeUnknown,
   parkMandateExecute,
   tryConsumeApprovedMandate,
 } from "../pending/pending-execution-service.js";
+import { mandateIdempotencyKey } from "../pending/pending-execution-types.js";
 import { mandateArgsMatchEffect, type MandateArgsMatch } from "../proofs/mandate-args-match.js";
 import { defaultFields, executeOutputFields } from "./field-projection.js";
 import { preferRestOpenApiExecuteEffect } from "./openapi-execute-path.js";
@@ -31,7 +34,7 @@ import {
   accumulateSessionIfcReadSync,
   checkSessionIfcWriteSync,
 } from "../ifc/session-ifc-enforce.js";
-import { executeRestOperation } from "./rest-operation.js";
+import { executeRestOperation, type ExecuteRestOptions } from "./rest-operation.js";
 import type { ExecuteClawqlOperationParams, McpTextContent } from "./types.js";
 
 function fromPromise<A>(fn: () => Promise<A>): Effect.Effect<A, Error> {
@@ -164,72 +167,115 @@ export function executeClawqlOperationEffect(
       if (approvedId) {
         const livePayload = { operationId, args, fields, where };
         const argsHash = yield* hashPendingArgsEffect(livePayload);
-        // Atomic consume before any side effect (CAS: approved + digest + not expired).
-        const consumed = yield* fromPromise(() =>
-          tryConsumeApprovedMandate({
-            executionId: approvedId,
-            argsHash,
-          })
-        );
-        if (!consumed) {
-          return yield* textContentEffect(
-            JSON.stringify({
-              ok: false,
-              status: "mandate_required",
-              reason: `No consumable approved mandate for ${approvedId} (already used, digest mismatch, or expired)`,
-              operationId,
-              risk,
+        const existing = yield* fromPromise(() => loadPendingExecution(approvedId));
+        // Keyed redrive: already consumed (outcome_unknown) + connector honors Idempotency-Key.
+        // Never a second consume — same clawql-mandate:<id> on the wire.
+        if (existing && mayAutoRetryOutcomeUnknown(existing)) {
+          if (existing.operationId !== operationId || existing.argsHash !== argsHash) {
+            return yield* textContentEffect(
+              JSON.stringify({
+                ok: false,
+                status: "blocked",
+                reason:
+                  "Keyed redrive refused: parked mandate does not match this operation or argument hash",
+                operationId,
+                risk,
+                executionId: approvedId,
+              })
+            );
+          }
+          const mandateOk = yield* name(
+            ExecutionId(approvedId),
+            ArgsHash(existing.argsHash),
+            (execution, expectedHash) =>
+              Effect.gen(function* () {
+                const proof = yield* mandateArgsMatchEffect(execution, expectedHash, livePayload);
+                if (!proof) return false;
+                yield* acknowledgeMandateArgsMatchEffect(execution, expectedHash, proof);
+                return true;
+              })
+          );
+          if (!mandateOk) {
+            return yield* textContentEffect(
+              JSON.stringify({
+                ok: false,
+                status: "blocked",
+                reason: "MandateArgsMatch proof failed on keyed redrive",
+                operationId,
+                risk,
+                executionId: approvedId,
+              })
+            );
+          }
+          consumedMandateId = approvedId;
+        } else {
+          // Atomic consume before any side effect (CAS: approved + digest + not expired).
+          const consumed = yield* fromPromise(() =>
+            tryConsumeApprovedMandate({
               executionId: approvedId,
+              argsHash,
             })
           );
+          if (!consumed) {
+            return yield* textContentEffect(
+              JSON.stringify({
+                ok: false,
+                status: "mandate_required",
+                reason: `No consumable approved mandate for ${approvedId} (already used, digest mismatch, or expired)`,
+                operationId,
+                risk,
+                executionId: approvedId,
+              })
+            );
+          }
+          if (consumed.operationId !== operationId) {
+            yield* fromPromise(() =>
+              markPendingCompleted(approvedId, {
+                ok: false,
+                error: "approved executionId is bound to a different operationId",
+              })
+            );
+            return yield* textContentEffect(
+              JSON.stringify({
+                ok: false,
+                status: "blocked",
+                reason: "approved executionId is bound to a different operationId",
+                operationId,
+                risk,
+              })
+            );
+          }
+          const mandateOk = yield* name(
+            ExecutionId(approvedId),
+            ArgsHash(consumed.argsHash),
+            (execution, expectedHash) =>
+              Effect.gen(function* () {
+                const proof = yield* mandateArgsMatchEffect(execution, expectedHash, livePayload);
+                if (!proof) return false;
+                yield* acknowledgeMandateArgsMatchEffect(execution, expectedHash, proof);
+                return true;
+              })
+          );
+          if (!mandateOk) {
+            yield* fromPromise(() =>
+              markPendingCompleted(approvedId, {
+                ok: false,
+                error: "MandateArgsMatch proof failed",
+              })
+            );
+            return yield* textContentEffect(
+              JSON.stringify({
+                ok: false,
+                status: "blocked",
+                reason: "MandateArgsMatch proof failed",
+                operationId,
+                risk,
+                executionId: approvedId,
+              })
+            );
+          }
+          consumedMandateId = approvedId;
         }
-        if (consumed.operationId !== operationId) {
-          yield* fromPromise(() =>
-            markPendingCompleted(approvedId, {
-              ok: false,
-              error: "approved executionId is bound to a different operationId",
-            })
-          );
-          return yield* textContentEffect(
-            JSON.stringify({
-              ok: false,
-              status: "blocked",
-              reason: "approved executionId is bound to a different operationId",
-              operationId,
-              risk,
-            })
-          );
-        }
-        const mandateOk = yield* name(
-          ExecutionId(approvedId),
-          ArgsHash(consumed.argsHash),
-          (execution, expectedHash) =>
-            Effect.gen(function* () {
-              const proof = yield* mandateArgsMatchEffect(execution, expectedHash, livePayload);
-              if (!proof) return false;
-              yield* acknowledgeMandateArgsMatchEffect(execution, expectedHash, proof);
-              return true;
-            })
-        );
-        if (!mandateOk) {
-          yield* fromPromise(() =>
-            markPendingCompleted(approvedId, {
-              ok: false,
-              error: "MandateArgsMatch proof failed",
-            })
-          );
-          return yield* textContentEffect(
-            JSON.stringify({
-              ok: false,
-              status: "blocked",
-              reason: "MandateArgsMatch proof failed",
-              operationId,
-              risk,
-              executionId: approvedId,
-            })
-          );
-        }
-        consumedMandateId = approvedId;
       } else {
         const parked = yield* fromPromise(() =>
           parkMandateExecute({
@@ -244,6 +290,10 @@ export function executeClawqlOperationEffect(
         return yield* textContentEffect(JSON.stringify(parked));
       }
     }
+
+    const restOptions: ExecuteRestOptions | undefined = consumedMandateId
+      ? { idempotencyKey: mandateIdempotencyKey(consumedMandateId) }
+      : undefined;
 
     const runSideEffect = Effect.gen(function* () {
       const openapiForOp = (
@@ -333,7 +383,7 @@ export function executeClawqlOperationEffect(
 
       if (multi) {
         const fallback = yield* fromPromise(() =>
-          executeRestOperation(op as Operation, args, openapiForOp)
+          executeRestOperation(op as Operation, args, openapiForOp, restOptions)
         );
         if (!fallback.ok) {
           return yield* textContentEffect(
@@ -352,7 +402,7 @@ export function executeClawqlOperationEffect(
         op.requestBodyContentType?.toLowerCase() === "application/octet-stream"
       ) {
         const rest = yield* fromPromise(() =>
-          executeRestOperation(op as Operation, args, openapiForOp)
+          executeRestOperation(op as Operation, args, openapiForOp, restOptions)
         );
         if (!rest.ok) {
           return yield* textContentEffect(
@@ -371,7 +421,7 @@ export function executeClawqlOperationEffect(
       const useRest = yield* preferRestOpenApiExecuteEffect(operationId, outputFields);
       if (useRest) {
         const rest = yield* fromPromise(() =>
-          executeRestOperation(op as Operation, args, openapiForOp)
+          executeRestOperation(op as Operation, args, openapiForOp, restOptions)
         );
         if (!rest.ok) {
           return yield* textContentEffect(
@@ -406,7 +456,7 @@ export function executeClawqlOperationEffect(
         Effect.catch((err) =>
           Effect.gen(function* () {
             const fallback = yield* fromPromise(() =>
-              executeRestOperation(op as Operation, args, openapiForOp)
+              executeRestOperation(op as Operation, args, openapiForOp, restOptions)
             );
             if (!fallback.ok) {
               const reason = err instanceof Error ? err.message : String(err);

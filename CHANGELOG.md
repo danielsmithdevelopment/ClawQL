@@ -8,6 +8,8 @@
 
 ### Added
 
+- **Mandate Idempotency-Key on REST** — OpenAPI ops that declare header `Idempotency-Key` (or `x-clawql-idempotencyCapable`) set `riskHints.idempotencyCapable`. After atomic mandate consume, REST execute sends `Idempotency-Key: clawql-mandate:<executionId>`. Review **Keyed retry** redrives `outcome_unknown` without a second consume. Check-then-decide lookup + program-runner keyed resume still planned.
+
 - **Formal methods (ADR 0014)** — adopt TLA+/Quint for protocol races and Lean for the policy-kernel oracle (differential tests; not production runtime). Starter TLA+ mandate lifecycle under [`formal/tla/mandate/`](formal/tla/mandate/) (target atomic consume; `WeakConsume` mode exposes the historical double-execute race). gdp-ts remains layer 1. TLC dual CI (atomic pass + weak counterexample): `.github/workflows/formal-mandate-tlc.yml` / `scripts/formal/run-mandate-tlc.sh`. Audit hunt: `scripts/formal/audit-mandate-double-execute.mjs`. Lean approval-policy oracle + differential tests under `formal/lean/` / `packages/clawql-api/src/policy/`. Concurrent consume regression (50 parallel → exactly one win).
 
 - **Security: atomic mandate consume** — **Postgres** conditional update for managed multi-node (`CLAWQL_PENDING_DATABASE_URL`); SQLite for single-node self-host; file-lock opt-in only. Two-process race tests for SQLite and Postgres. `outcome_unknown` Review after 60s; idempotency-gated retry. Event model: at-least-once + stable ID + receiver dedup (“processed once”). WORM hunt owner Daniel Smith, due 2026-10-09 (ADR 0014). Security page claim linked to ADR.

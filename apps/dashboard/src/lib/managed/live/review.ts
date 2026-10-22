@@ -7,6 +7,7 @@ import {
   mandateIdempotencyKey,
   OUTCOME_UNKNOWN_ATTENTION_MS,
   readPendingSourceEffect,
+  redriveOutcomeUnknownWithKey,
   resolvePendingOutcomeUnknown,
   type OutcomeUnknownResolve,
 } from "clawql-api";
@@ -170,7 +171,10 @@ export const decideManagedReviewEffect = (input: {
         // Narrow before the Promise closure — TS does not carry the union guard into tryPromise.
         const resolution: OutcomeUnknownResolve = input.decision;
         const record = yield* Effect.tryPromise({
-          try: () => resolvePendingOutcomeUnknown(input.id, resolution, home),
+          try: () =>
+            resolution === "retry_with_key"
+              ? redriveOutcomeUnknownWithKey(input.id, undefined, home)
+              : resolvePendingOutcomeUnknown(input.id, resolution, home),
           catch: asReviewError,
         });
         return { ok: true as const, id: record.executionId, status: record.status };

@@ -18,12 +18,14 @@ Depends on [operation risk from the spec](./operation-risk-from-spec-v0.1.md). W
    - **Atomic consume** before the side effect: conditional update
      `approved` → `outcome_unknown` where `argsHash` matches and `expiresAt` is still in the future
      (store clock — Postgres `now()`, never each replica’s wall clock). Zero rows → refuse.
-   - WORM: `MANDATE_CONSUMED` (outcome unknown). Downstream calls should use
-     idempotency key `clawql-mandate:<executionId>` where the API supports it (e.g. Stripe).
+   - WORM: `MANDATE_CONSUMED` (outcome unknown). REST execute attaches
+     `Idempotency-Key: clawql-mandate:<executionId>` on the wire.
    - Run **exactly** the parked `operationId`/`args`/`fields`.
    - Finalize `outcome_unknown` → `completed` | `failed` (`MANDATE_FINALIZED`).
-   - If the replica dies after consume, status stays **`outcome_unknown`** — surfaced in Review /
-     audit; do **not** silently retry without the idempotency key.
+   - If the replica dies after consume, status stays **`outcome_unknown`**. OpenAPI ops that
+     declare `Idempotency-Key` (or `x-clawql-idempotencyCapable`) may **Keyed retry** from Review
+     (redrive with the same key; never a second consume). Otherwise mark applied / not applied.
+     Do **not** blind-retry without the key.
 
 ## Pending record
 

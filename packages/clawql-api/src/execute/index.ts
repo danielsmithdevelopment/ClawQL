@@ -2,6 +2,7 @@ export * from "./execute-core.js";
 export * from "./execute-live.js";
 export * from "./resume-core.js";
 export * from "./mandate-execute.js";
+export * from "./outcome-unknown-redrive.js";
 export * from "./field-projection.js";
 export * from "./openapi-execute-path.js";
 export * from "./where-filter.js";

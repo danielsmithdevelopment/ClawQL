@@ -108,6 +108,24 @@ describe("rest-operation helpers", () => {
 });
 
 describe("executeRestOperation", () => {
+  it("sends Idempotency-Key when options.idempotencyKey is set", async () => {
+    await withFetchServer(
+      async (req) => {
+        expect(req.headers.get("idempotency-key")).toBe("clawql-mandate:pex_test");
+        return Response.json({ ok: true });
+      },
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp({ method: "POST", requestBody: "CreateReq" }),
+          { itemId: "abc", note: "x" },
+          makeOpenApi(origin),
+          { idempotencyKey: "clawql-mandate:pex_test" }
+        );
+        expect(out).toEqual({ ok: true, data: { ok: true } });
+      }
+    );
+  });
+
   it("executes GET and sends non-path args as query params", async () => {
     await withFetchServer(
       async (req) => {
