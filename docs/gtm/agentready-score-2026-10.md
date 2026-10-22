@@ -102,16 +102,33 @@ Ordered by AgentReady failure modes and honesty, not by ranker points:
 
 ---
 
+## In-repo remediations (this branch)
+
+| Gap | Fix |
+| --- | --- |
+| Dead `/mcp` remote | Remotes only when `NEXT_PUBLIC_MCP_STREAMABLE_HTTP_URL` set |
+| `pricing.md` / `index.md` | Generated static markdown + Content-Type in `_headers` |
+| Skills digests | sha256 digests on www skills index (3 core skills) |
+| AI Catalog / ARD | `/.well-known/ai-catalog.json` + `ard.json` |
+| MCP `server.json` | `/.well-known/mcp/server.json` (npm packages; remotes only if public URL) |
+| OpenAPI on marketing host | `/openapi.json` pointer + Link headers to docs OpenAPI |
+| CLI discoverability | Richer `llms.txt`, `auth.md`, home markdown, JSON-LD `SoftwareApplication` |
+| Organization schema | `contactPoint` + `address` + email |
+| Contact trust page | `/contact/` + `/contact.md` |
+| Markdown 404 | CF `[[path]].ts` returns markdown 404 on `Accept: text/markdown` |
+| Docs Mintlify gaps | `llms-full.txt` + root `skill.md` + routes |
+
+**Deploy required** for live scanner deltas (GitHub Pages / Cloudflare Pages + docs Worker).
+
 ## Operator follow-ups
 
 | Priority | Action | Owner hint |
 | -------- | ------ | ---------- |
-| P0 | ~~Fix or unpublish dead `docs.clawql.com/mcp` remote~~ **Done in-repo** (remotes env-gated; auth.md honesty). **Deploy** www + docs so production cards match. | docs + www |
+| P0 | **Deploy** www + docs so production matches this branch | infra |
 | P0 | Confirm CF Bot settings + crawler IP 200s in logs for docs | infra |
-| P1 | Publish MCP Registry `server.json` + Smithery/official registry listing | GTM + release |
-| P1 | Split **public docs MCP** vs **OAuth-gated product MCP** per AR-ACT-03 | product |
-| P2 | Link OpenAPI / CLI install from homepage + llms.txt; add `pricing.md` twin | www |
-| P2 | Finish DNS-AID / markdown edge on clawql.com (existing runbook) | infra |
-| P3 | AI Catalog, skill digests, Wikipedia/Wikidata (scanner hygiene) | GTM |
+| P1 | Official MCP Registry publish + Smithery listing (needs accounts) | GTM + release |
+| P1 | Public docs Streamable HTTP MCP (product infra) | product |
+| P2 | Apex Cloudflare Pages so Accept-markdown negotiation always applies | infra |
+| P3 | Wikipedia/Wikidata brand discoverability | GTM |
 
-Do not claim “AgentReady compliant” as a badge — the spec has none. Prefer: “scored with is-agentic / ora / Mintlify on \<date\>; MUST find/read pass on marketing HTML; act via CLI + self-hosted MCP; public Streamable HTTP URL remediation tracked.”
+Do not claim “AgentReady compliant” as a badge — the spec has none. Prefer: “scored with is-agentic / ora / Mintlify on \<date\>; MUST find/read pass on marketing HTML; act via CLI + self-hosted MCP.”

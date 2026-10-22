@@ -76,6 +76,21 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: '/ClawQL-logo.jpeg', type: 'image/jpeg' }],
   },
+  alternates: {
+    types: {
+      'text/plain': [{ url: '/llms.txt', title: 'llms.txt' }],
+      'text/markdown': [
+        { url: '/index.md', title: 'Home (Markdown)' },
+        { url: '/pricing.md', title: 'Pricing (Markdown)' },
+        { url: '/auth.md', title: 'auth.md' },
+      ],
+      'application/json': [
+        { url: '/.well-known/ai-catalog.json', title: 'AI Catalog' },
+        { url: '/.well-known/mcp/server-card.json', title: 'MCP Server Card' },
+        { url: '/openapi.json', title: 'OpenAPI' },
+      ],
+    },
+  },
 }
 
 export const viewport: Viewport = {

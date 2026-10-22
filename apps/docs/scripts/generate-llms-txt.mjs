@@ -168,12 +168,71 @@ function main() {
   }
 
   content += `## Optional\n\n`
+  content += `- [llms-full.txt](${ORIGIN}/llms-full.txt): expanded documentation index for agents\n`
+  content += `- [skill.md](${ORIGIN}/skill.md): ClawQL agent entrypoints skill\n`
+  content += `- [OpenAPI](${ORIGIN}/openapi.json): docs/commerce discovery OpenAPI\n`
+  content += `- [Agent skills index](${ORIGIN}/.well-known/agent-skills/index.json): digests for SKILL.md packs\n`
   content += `- [GitHub repository](https://github.com/danielsmithdevelopment/ClawQL): source code and issues\n`
   content += `- [Sitemap](${ORIGIN}/sitemap.xml): all indexed documentation URLs\n`
+  content += `- [Marketing llms.txt](https://clawql.com/llms.txt): clawql.com install + pricing\n`
 
   fs.mkdirSync(path.dirname(outFile), { recursive: true })
   fs.writeFileSync(outFile, content, 'utf8')
   console.log(`Wrote ${path.relative(process.cwd(), outFile)}`)
+
+  // llms-full.txt — same sections plus install/auth pointers (Mintlify / AgentReady scanners)
+  const fullPath = path.join(websiteRoot, 'public/llms-full.txt')
+  let full = content
+  full += `\n## Install\n\n`
+  full += `- CLI: \`npx clawql-mcp\`\n`
+  full += `- HTTP: \`npx -p clawql-mcp clawql-mcp-http\`\n`
+  full += `- Marketing install: https://clawql.com/install\n`
+  full += `- auth.md: ${ORIGIN}/auth.md\n`
+  full += `- MCP tools: ${ORIGIN}/mcp/mcp-tools\n`
+  fs.writeFileSync(fullPath, full, 'utf8')
+  console.log(`Wrote ${path.relative(process.cwd(), fullPath)}`)
+
+  // Root skill.md — Mintlify Agent Score expects a site-level skill
+  const skillPath = path.join(websiteRoot, 'public/skill.md')
+  const skillMd = `---
+name: clawql-docs
+description: >-
+  Use ClawQL docs and MCP tools — search then execute OpenAPI operations,
+  optional vault memory, self-host via npx clawql-mcp.
+---
+
+# ClawQL agent skill
+
+## When to use
+
+- Connecting an IDE or agent host to ClawQL MCP (\`search\`, \`execute\`, memory tools)
+- Finding install, auth, OpenAPI, or protocol-fabric docs
+
+## Install
+
+\`\`\`bash
+npx clawql-mcp
+npx -p clawql-mcp clawql-mcp-http
+\`\`\`
+
+## Canonical URLs
+
+- Docs: ${ORIGIN}
+- Getting started: ${ORIGIN}/getting-started
+- MCP tools: ${ORIGIN}/mcp/mcp-tools
+- OpenAPI: ${ORIGIN}/openapi.json
+- llms.txt: ${ORIGIN}/llms.txt
+- Skills index: ${ORIGIN}/.well-known/agent-skills/index.json
+- Marketing: https://clawql.com · https://clawql.com/llms.txt
+
+## Workflow
+
+1. Read ${ORIGIN}/llms.txt (or llms-full.txt) for the index.
+2. Prefer \`search\` before \`execute\` for unknown operationIds.
+3. For consequential writes, expect mandate / preview flows documented under risk specs.
+`
+  fs.writeFileSync(skillPath, skillMd, 'utf8')
+  console.log(`Wrote ${path.relative(process.cwd(), skillPath)}`)
 
   if (fs.existsSync(agentsSrc)) {
     fs.copyFileSync(agentsSrc, agentsOut)
