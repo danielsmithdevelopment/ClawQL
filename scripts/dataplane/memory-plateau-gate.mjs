@@ -147,6 +147,9 @@ async function main() {
     CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE: "1",
     CLAWQL_ENABLE_PROGRAMS: "0",
     CLAWQL_CATALOG_SQLITE: "0",
+    // Bun CI images lack node:sqlite / `sqlite` — keep auth stores in-memory.
+    CLAWQL_SECRET_STORE: "memory",
+    CLAWQL_AUTH_AUDIT_STORE: "memory",
     // Keep idle off — reuse one session; prune must hold the plateau.
     CLAWQL_MCP_SESSION_IDLE_MS: "0",
   });
