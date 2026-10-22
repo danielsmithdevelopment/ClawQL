@@ -1,0 +1,130 @@
+# Sustained Bun --smol JSON Streamable HTTP run — fails if Anonymous climbs.
+# Catches JSON `_streamMapping` retention and similar per-call leaks.
+# PR/push: 2k sessions (fast merge gate). Nightly / manual full: 30k (slow leaks).
+# Uses in-tree minimal-petstore (no Cloudflare dataplane fixtures required).
+# See docs/benchmarks/cloudflare-multiturn/memory-plateau.md
+
+name: Memory plateau gate
+
+on:
+  pull_request:
+    paths:
+      - "src/http/**"
+      - "src/mcp/**"
+      - "src/server-http.ts"
+      - "packages/clawql-api/src/execute/**"
+      - "packages/clawql-api/src/ifc/**"
+      - "scripts/dataplane/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/memory-plateau.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/http/**"
+      - "src/mcp/**"
+      - "src/server-http.ts"
+      - "packages/clawql-api/src/execute/**"
+      - "packages/clawql-api/src/ifc/**"
+      - "scripts/dataplane/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/memory-plateau.yml"
+  schedule:
+    # Daily — full 30k catch slow leaks the PR gate can hide
+    - cron: "15 6 * * *"
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Run 30k-session nightly gate (default: PR-sized 2k)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: memory-plateau-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  bun-json-plateau:
+    name: Bun --smol JSON memory plateau (PR 2k)
+    if: github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || github.event.inputs.full != 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          cache: npm
+
+      # oven-sh/setup-bun — Bun is the default host MCP runtime
+      # oven-sh/setup-bun@v2.0.2
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76
+        with:
+          bun-version: "1.2.23"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build host (dist/server-http.js)
+        run: npm run build
+
+      - name: Memory plateau gate (2000 JSON executes)
+        env:
+          MEM_GATE_ITERS: "2000"
+          MEM_GATE_MAX_MB: "450"
+          MEM_GATE_SLOPE: "0.35"
+          MEM_GATE_OUT: tmp/memory-plateau-gate.json
+        run: npm run gate:memory-plateau
+
+      - name: Upload gate summary
+        if: always()
+        # actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: memory-plateau-gate
+          path: tmp/memory-plateau-gate.json
+          if-no-files-found: ignore
+
+  bun-json-plateau-nightly:
+    name: Bun --smol JSON memory plateau (nightly 30k)
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.full == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          cache: npm
+
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76
+        with:
+          bun-version: "1.2.23"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build host (dist/server-http.js)
+        run: npm run build
+
+      - name: Memory plateau gate (30000 JSON executes)
+        env:
+          MEM_GATE_ITERS: "30000"
+          MEM_GATE_MAX_MB: "450"
+          MEM_GATE_SLOPE: "0.35"
+          MEM_GATE_OUT: tmp/memory-plateau-gate-nightly.json
+        run: npm run gate:memory-plateau
+
+      - name: Upload nightly gate summary
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: memory-plateau-gate-nightly
+          path: tmp/memory-plateau-gate-nightly.json
+          if-no-files-found: ignore

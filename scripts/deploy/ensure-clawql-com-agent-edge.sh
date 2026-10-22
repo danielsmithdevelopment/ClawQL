@@ -85,6 +85,8 @@ is_github_pages_origin() {
 if [[ "$PROXY" != "0" ]]; then
   echo "==> Orange-cloud apex DNS records when origin is GitHub Pages"
   RECORDS="$(cf "${API}/zones/${ZONE_ID}/dns_records?name=${APEX}&per_page=100")"
+  COUNT="$(echo "$RECORDS" | jq '[.result[]? | select(.type=="A" or .type=="AAAA" or .type=="CNAME")] | length')"
+  echo "    found ${COUNT} A/AAAA/CNAME record(s) for ${APEX}"
   echo "$RECORDS" | jq -c '.result[]? | select(.type=="A" or .type=="AAAA" or .type=="CNAME")' | while IFS= read -r row; do
     rid="$(echo "$row" | jq -r '.id')"
     rtype="$(echo "$row" | jq -r '.type')"
@@ -124,9 +126,10 @@ fi
 
 if [[ "$LINK_HEADER" == "1" ]]; then
   echo "==> Upsert Link response header transform rule"
+  set +e
   LINK_VALUE="$(link_header_value)"
   RULESETS="$(cf "${API}/zones/${ZONE_ID}/rulesets")"
-  PHASE_ID="$(echo "$RULESETS" | jq -r '.result[] | select(.phase=="http_response_headers_transform") | .id' | head -1)"
+  PHASE_ID="$(echo "$RULESETS" | jq -r '(.result // [])[] | select(.phase=="http_response_headers_transform") | .id' | head -1)"
 
   RULE_JSON="$(jq -n \
     --arg link "$LINK_VALUE" \
@@ -154,27 +157,37 @@ if [[ "$LINK_HEADER" == "1" ]]; then
     resp="$(cf -X POST "${API}/zones/${ZONE_ID}/rulesets" -d "$body")"
   else
     existing="$(cf "${API}/zones/${ZONE_ID}/rulesets/${PHASE_ID}")"
-    # Replace our rule by ref; keep others.
+    # Replace our rule by ref; keep others. rules may be null on empty rulesets.
     merged="$(echo "$existing" | jq --argjson rule "$RULE_JSON" '
-      .result.rules |= ((map(select(.ref != "clawql_agent_link_header" and .description != "isitagentready Link discovery headers for clawql.com")) + [$rule]))
-    ' | jq '{rules: .result.rules}')"
+      {
+        rules: (
+          ((.result.rules // [])
+            | map(select(.ref != "clawql_agent_link_header" and .description != "isitagentready Link discovery headers for clawql.com"))
+          ) + [$rule]
+        )
+      }
+    ')"
     resp="$(cf -X PUT "${API}/zones/${ZONE_ID}/rulesets/${PHASE_ID}" -d "$merged")"
   fi
 
   if [[ "$(echo "$resp" | jq -r '.success')" != "true" ]]; then
-    echo "$resp" | jq .
+    echo "$resp" | jq . 2>/dev/null || echo "$resp"
     echo "    WARN: Link header transform not applied (token may lack Transform Rules Edit)."
   else
     echo "    Link header transform upserted"
   fi
+  set -e
 fi
 
 echo "==> DNS-AID records"
 bash "${SCRIPT_DIR}/ensure-dns-aid-records.sh" || echo "    WARN: DNS-AID step reported errors"
 
+# Pages custom domain MUST run even when Link/transform fails — functions/ (markdown + /mcp)
+# only apply when apex traffic hits Cloudflare Pages, not bare GitHub Pages.
 if [[ "$PAGES_DOMAIN" == "1" ]]; then
   echo "==> Cloudflare Pages custom domain (functions/ for markdown + /mcp)"
-  bash "${SCRIPT_DIR}/ensure-clawql-com-pages-domain.sh" || echo "    WARN: Pages domain step reported errors"
+  # Fail hard: without DNS CNAME to Pages, apex stays on GitHub Pages and /mcp + markdown never ship.
+  bash "${SCRIPT_DIR}/ensure-clawql-com-pages-domain.sh"
 fi
 
 echo "Done. Agent edge configuration attempted for ${APEX}."

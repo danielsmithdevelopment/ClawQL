@@ -25,16 +25,16 @@ unclear, what is missing is **discovery**, not a plan runner.
 
 ## What ships as the default path now
 
-| Lever                                                                              | Status                                                                        | Evidence                                                                                   |
-| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **SQLite catalog, OOP build** (`CLAWQL_CATALOG_SQLITE` on, `BUILD=oop`)            | **Default on**                                                                | Spec-size RSS independent of OAS parse; board homes show `oop-build` → `LOAD=db`           |
-| **Lazy horizontal plugins** (require-on-flag; k8s dynamic import)                  | **Shipped**                                                                   | Ready maps free of k8s/xenova/stripe when tiers off; first k8s import ~363 ms; fail-closed |
-| **Server-side `where`** + examples in tool schema + fix-named `where_invalid`      | **Default product**                                                           | Scripted known-op **1743** weighted; dual-model gate win vs Executor                       |
-| **Observation budget** (`totalCount` in truncated list notes; `full:true` opt-out) | **Default on** (~8k chars)                                                    | Stops blind models from eating ~60k DNS dumps                                              |
-| **Bun + `--smol`, ≥2 CPUs**                                                        | **Default host MCP** (Helm `hostRuntime: bun`, image `runtime`)               | Plateau ~**130 MB** anon; faster than uncapped Node at p50/p99/p999 — see heap table below |
-| **Node `--max-old-space-size=256`**                                                | **Legacy minority host** (Helm `hostRuntime: node` + `--target runtime-node`) | Caps plateau ~**132 MB**; costs ~**3.5 ms** at p99 vs uncapped                             |
-| **Compact search** (`CLAWQL_SEARCH_COMPACT`)                                       | **Labeled arm only** until routing eval clears it                             | Cuts first-session discovery; not product default yet                                      |
-| **Known-op reuse** (skills / memory → steady-state execute-by-id)                  | **Product intent**                                                            | Cheapest arm on this workflow                                                              |
+| Lever                                                                              | Status                                                                        | Evidence                                                                                                             |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **SQLite catalog, OOP build** (`CLAWQL_CATALOG_SQLITE` on, `BUILD=oop`)            | **Default on**                                                                | Spec-size RSS independent of OAS parse; board homes show `oop-build` → `LOAD=db`                                     |
+| **Lazy horizontal plugins** (require-on-flag; k8s dynamic import)                  | **Shipped**                                                                   | Ready maps free of k8s/xenova/stripe when tiers off; first k8s import ~363 ms; fail-closed                           |
+| **Server-side `where`** + examples in tool schema + fix-named `where_invalid`      | **Default product**                                                           | Scripted known-op **1743** weighted; dual-model gate win vs Executor                                                 |
+| **Observation budget** (`totalCount` in truncated list notes; `full:true` opt-out) | **Default on** (~8k chars)                                                    | Stops blind models from eating ~60k DNS dumps                                                                        |
+| **Bun + `--smol`, ≥2 CPUs**                                                        | **Default host MCP** (Helm `hostRuntime: bun`, image `runtime`)               | Plateau ~**130 MB** anon (**measured on the October 15 build**); tip lean probe is higher — see honesty note         |
+| **Node `--max-old-space-size=256`**                                                | **Legacy minority host** (Helm `hostRuntime: node` + `--target runtime-node`) | Caps plateau ~**132 MB** (**October 15 build**); tip lean probe is higher; ~**3.5 ms** p99 vs uncapped on that build |
+| **Compact search** (`CLAWQL_SEARCH_COMPACT`)                                       | **Labeled arm only** until routing eval clears it                             | Cuts first-session discovery; not product default yet                                                                |
+| **Known-op reuse** (skills / memory → steady-state execute-by-id)                  | **Product intent**                                                            | Cheapest arm on this workflow                                                                                        |
 
 **Flag:** `CLAWQL_ENABLE_PROGRAMS` stays **off** by default. When on, programs sit
 beside `execute`; agents choose them for multi-call work.
@@ -44,19 +44,19 @@ beside `execute`; agents choose them for multi-call work.
 Do **not** run memory ingest (or other heavy in-process features) on the lean 256 MB
 Node setting. Pick the row that matches what the pod actually enables:
 
-| Feature profile                                                                        | What is on                         | Node `NODE_OPTIONS` / Helm `nodeOptions`                       | Bun                                 | Notes                                                                                                                                      |
-| -------------------------------------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Lean listen** (search/execute, SQLite OOP, no vault memory, no documents, pack none) | Core MCP only                      | **`--max-old-space-size=256`** (Helm / kustomize base default) | **`--smol`**                        | Plateau ~**132 MB** (Node) / ~**130 MB** (Bun). No OOM on `full:true` / program fan-out.                                                   |
-| **ClawQL Cloud / HTTP multiplex** (managed serving path)                               | Lean listen over Streamable HTTP   | **256** lean Node default                                      | **`--smol` (Cloud default)**        | Bun median **84** vs Node256 **27** / MJ **31** / AG **38** (`REPS=3`) — see HTTP table.                                                   |
-| **Memory-enabled** (`enableMemory` / vault ingest, embeddings rebuild)                 | + `memory_ingest` / recall         | **`--max-old-space-size=384`**                                 | `--smol` (raise host RAM if needed) | Long ingest (~305 KB doc) hit **~255–261 MB** anon under a 256 cap. Prefer **384** for ingest headroom. Do **not** run ingest on lean 256. |
-| **Docker Desktop / all-providers demo**                                                | memory + documents + large catalog | **768** (`values-docker-desktop.yaml`)                         | —                                   | Catalog startup OOMs at 512.                                                                                                               |
-| **Heavy prod overlay** (kustomize `overlays/prod`)                                     | site-specific                      | **3072** (existing overlay; leave unless remeasured)           | —                                   | Not the lean product claim.                                                                                                                |
+| Feature profile                                                                        | What is on                         | Node `NODE_OPTIONS` / Helm `nodeOptions`                       | Bun                                 | Notes                                                                                                                                                                                     |
+| -------------------------------------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lean listen** (search/execute, SQLite OOP, no vault memory, no documents, pack none) | Core MCP only                      | **`--max-old-space-size=256`** (Helm / kustomize base default) | **`--smol`**                        | Plateau ~**132 MB** (Node) / ~**130 MB** (Bun) — **measured on the October 15 build**. Tip host is higher until the memory regression is closed. No OOM on `full:true` / program fan-out. |
+| **ClawQL Cloud / HTTP multiplex** (managed serving path)                               | Lean listen over Streamable HTTP   | **256** lean Node default                                      | **`--smol` (Cloud default)**        | Bun median **84** vs Node256 **27** / MJ **31** / AG **38** (`REPS=3`) — see HTTP table.                                                                                                  |
+| **Memory-enabled** (`enableMemory` / vault ingest, embeddings rebuild)                 | + `memory_ingest` / recall         | **`--max-old-space-size=384`**                                 | `--smol` (raise host RAM if needed) | Long ingest (~305 KB doc) hit **~255–261 MB** anon under a 256 cap. Prefer **384** for ingest headroom. Do **not** run ingest on lean 256.                                                |
+| **Docker Desktop / all-providers demo**                                                | memory + documents + large catalog | **768** (`values-docker-desktop.yaml`)                         | —                                   | Catalog startup OOMs at 512.                                                                                                                                                              |
+| **Heavy prod overlay** (kustomize `overlays/prod`)                                     | site-specific                      | **3072** (existing overlay; leave unless remeasured)           | —                                   | Not the lean product claim.                                                                                                                                                               |
 
 Helm lean default: `manifests/charts/clawql-mcp/values.yaml` →
 `nodeOptions: "--max-old-space-size=256"`. Board harness:
 `CLAWQL_NODE_MAX_OLD_SPACE_MB` defaults to **256** (`=0` uncapped).
 
-### Heap A/B (N=4000 known-op) — interim until capped publish board
+### Heap A/B (N=4000 known-op) — measured on the October 15 build
 
 | Arm                             | Anon plateau |   p50 / p99 / p999 ms | vs uncapped Node                        |
 | ------------------------------- | -----------: | --------------------: | --------------------------------------- |
@@ -68,6 +68,14 @@ Helm lean default: `manifests/charts/clawql-mcp/values.yaml` →
 agentgateway **99** (gap ~**20–30 MB**). Rep1–2 were ~**282–292 MB** (uncapped-like) —
 quote rep3 or heap A/B (**132 MB** / +**3.5 ms** p99), not an r1–r3 average. See
 [`board-final-summary.md`](./board-final-summary.md).
+
+**Honesty (post–October 15 tip):** the same lean probe on current tip measures ~**173 MB**
+(Bun `--smol`) / ~**236 MB** (Node 256) — not the October 15 plateau. This **lean floor**
+regression (~130→~170–260 MB) is **separate** from the JSON `_streamMapping` climb
+(fixed via host prune + gates). Track the lean bisect as an open item in
+[`memory-plateau.md`](./memory-plateau.md). Until lean is remasured, treat
+**~130 MB / ~132 MB** as **version-scoped to the October 15 build**, not as a claim
+about tip releases.
 
 ### HTTP concurrency (Cloud-shaped) — cap tax retracted
 
@@ -90,8 +98,8 @@ Node ranges: [`http-concurrency-node-variance-3x.json`](./http-concurrency-node-
 **Heap cap vs concurrency:** same-session `REPS=3` puts uncapped at **30–31**, not 44.
 256 is **1–4** clients under that band — **not** ~30%. 384 overlaps uncapped (should be
 unbound vs ~296 MB plateau). Do **not** claim a cap concurrency tax. **Bun `--smol`**
-remains the Cloud HTTP default: median **84** clients (`REPS=3`) and ~130 MB plateau —
-still well above MJ **31** / AG **38**.
+remains the Cloud HTTP default: median **84** clients (`REPS=3`) and ~130 MB plateau
+(**October 15 build**) — still well above MJ **31** / AG **38**.
 
 **Peers over HTTP (this workflow):** ClawQL moves answers (`where`); peers move full
 DNS lists. Framing: fair, specific — not “peers are slower gateways.”
@@ -162,8 +170,9 @@ Three measured claims, same workflow family, each labeled for what it covers:
 
 1. **Tokens (steady state):** fewest weighted tokens vs code-mode peers — dual-model
    gate, pre-registered (`known_op_beats_code_mode_for_real_models`).
-2. **Memory:** Bun plateaus near **130 MB** under sustained load (Node 256 → **132 MB**
-   at ~**3.5 ms** p99 cost vs uncapped).
+2. **Memory:** Bun plateaus near **130 MB** under sustained load (**measured on the
+   October 15 build**; Node 256 → **132 MB** at ~**3.5 ms** p99 cost vs uncapped). Tip
+   lean probe is higher until remasured.
 3. **HTTP concurrency (this workflow):** Bun sustains median **84** clients
    (`REPS=3`, range **[79, 87]**) at p99 ≤ 100 ms vs MCPJungle **31** / agentgateway
    **38** — ClawQL moves answers (`where`), peers move full DNS lists. (Pets-board MJ
@@ -171,9 +180,9 @@ Three measured claims, same workflow family, each labeled for what it covers:
 
 **Node lean (when Bun is not the runtime):**
 
-> On Node with `--max-old-space-size=256`, ClawQL plateaus near **132 MB**, within about
-> **35–45 MB** of the Go and Rust gateways, at about **3.5 ms** p99 versus uncapped.
-> HTTP clients land near uncapped on this workflow (median **27** vs **31**; not a ~30%
-> cap tax).
+> On Node with `--max-old-space-size=256`, ClawQL plateaus near **132 MB** (**October 15
+> build**), within about **35–45 MB** of the Go and Rust gateways, at about **3.5 ms**
+> p99 versus uncapped. HTTP clients land near uncapped on this workflow (median **27**
+> vs **31**; not a ~30% cap tax).
 
-Publish board same-run (rep3): ClawQL **~122–129 MB** anon vs MJ **103** / AG **99**.
+Publish board same-run (rep3, October 15 era): ClawQL **~122–129 MB** anon vs MJ **103** / AG **99**.
