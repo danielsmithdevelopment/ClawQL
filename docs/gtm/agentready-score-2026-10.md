@@ -102,33 +102,36 @@ Ordered by AgentReady failure modes and honesty, not by ranker points:
 
 ---
 
-## In-repo remediations (this branch)
+## In-repo remediations (this branch + score-pass follow-up)
 
-| Gap                       | Fix                                                                        |
-| ------------------------- | -------------------------------------------------------------------------- |
-| Dead `/mcp` remote        | Remotes only when `NEXT_PUBLIC_MCP_STREAMABLE_HTTP_URL` set                |
-| `pricing.md` / `index.md` | Generated static markdown + Content-Type in `_headers`                     |
-| Skills digests            | sha256 digests on www skills index (3 core skills)                         |
-| AI Catalog / ARD          | `/.well-known/ai-catalog.json` + `ard.json`                                |
-| MCP `server.json`         | `/.well-known/mcp/server.json` (npm packages; remotes only if public URL)  |
-| OpenAPI on marketing host | `/openapi.json` pointer + Link headers to docs OpenAPI                     |
-| CLI discoverability       | Richer `llms.txt`, `auth.md`, home markdown, JSON-LD `SoftwareApplication` |
-| Organization schema       | `contactPoint` + `address` + email                                         |
-| Contact trust page        | `/contact/` + `/contact.md`                                                |
-| Markdown 404              | CF `[[path]].ts` returns markdown 404 on `Accept: text/markdown`           |
-| Docs Mintlify gaps        | `llms-full.txt` + root `skill.md` + routes                                 |
+| Gap                       | Fix                                                                                          |
+| ------------------------- | -------------------------------------------------------------------------------------------- |
+| Dead `/mcp` remote        | Remotes only when public URL set; production advertises `https://clawql.com/mcp`             |
+| Public discovery MCP      | Cloudflare Pages Function `functions/mcp.ts` (install/docs/llms tools; not full product MCP) |
+| ARD / AI Catalog schema   | `specVersion: 1.0` + `entries[]` with `urn:air:…`, media `type`, `trustManifest`             |
+| API catalog `item`        | RFC 9727 linkset includes `item` entries for OpenAPI + server-card                           |
+| Markdown frontmatter      | `auth.md` / `pricing.md` / `index.md` / `contact.md` YAML + `agent_auth`                     |
+| Agent card interfaces     | `supportedInterfaces` / `supported_interfaces` on marketing agent-card                       |
+| Apex CF Pages             | `ensure-clawql-com-pages-domain.sh` attaches domain + CNAME to `clawql-website.pages.dev`    |
+| DNS-AID / Link headers    | Agent-edge script forces proxy + synced Link transform + DNS-AID upserts                     |
+| Skills digests            | sha256 digests on www skills index                                                           |
+| MCP `server.json`         | Registry-shaped packages + optional remotes                                                  |
+| OpenAPI on marketing host | `/openapi.json` pointer + Link headers                                                       |
+| Contact / org schema      | `/contact/` + JSON-LD `contactPoint` / `address`                                             |
+| Docs Mintlify gaps        | Richer `skill.md` + `llms-full.txt`                                                          |
+| Smithery stub             | Root `smithery.yaml` for registry listing                                                    |
 
-**Deploy required** for live scanner deltas (GitHub Pages / Cloudflare Pages + docs Worker).
+**Deploy required** for live scanner deltas (GitHub Pages / Cloudflare Pages + docs Worker). After deploy: `npx ax audit --force https://clawql.com` and isitagentready scan.
 
 ## Operator follow-ups
 
-| Priority | Action                                                              | Owner hint    |
-| -------- | ------------------------------------------------------------------- | ------------- |
-| P0       | **Deploy** www + docs so production matches this branch             | infra         |
-| P0       | Confirm CF Bot settings + crawler IP 200s in logs for docs          | infra         |
-| P1       | Official MCP Registry publish + Smithery listing (needs accounts)   | GTM + release |
-| P1       | Public docs Streamable HTTP MCP (product infra)                     | product       |
-| P2       | Apex Cloudflare Pages so Accept-markdown negotiation always applies | infra         |
-| P3       | Wikipedia/Wikidata brand discoverability                            | GTM           |
+| Priority | Action                                                          | Owner hint    |
+| -------- | --------------------------------------------------------------- | ------------- |
+| P0       | **Deploy** www so Pages domain + DNS-AID + `/mcp` go live       | infra         |
+| P0       | Confirm apex resolves via CF Pages (`server` ≠ bare GitHub.com) | infra         |
+| P1       | Official MCP Registry publish + Smithery account listing        | GTM + release |
+| P1       | Full product Streamable HTTP MCP (beyond discovery tools)       | product       |
+| P2       | Confirm CF Bot settings + crawler IP 200s in logs for docs      | infra         |
+| P3       | Wikipedia/Wikidata brand discoverability                        | GTM           |
 
 Do not claim “AgentReady compliant” as a badge — the spec has none. Prefer: “scored with is-agentic / ora / Mintlify on \<date\>; MUST find/read pass on marketing HTML; act via CLI + self-hosted MCP.”

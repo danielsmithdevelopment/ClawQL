@@ -1,0 +1,25 @@
+# Smithery / MCP registry discovery for ClawQL.
+# @see https://smithery.ai/
+name: clawql
+description: >-
+  Agentic Gateway — OpenAPI → MCP search + execute with optional vault memory,
+  skills, and governance. Self-host via npx clawql-mcp.
+homepage: https://clawql.com
+repository: https://github.com/danielsmithdevelopment/ClawQL
+license: Apache-2.0
+keywords:
+  - mcp
+  - openapi
+  - agentic
+  - gateway
+  - audit
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties: {}
+  commandFunction: |-
+    (config) => ({
+      command: 'npx',
+      args: ['-y', 'clawql-mcp']
+    })
