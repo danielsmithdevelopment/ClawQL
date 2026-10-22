@@ -24,7 +24,9 @@ This file helps AI agents and crawlers find canonical documentation. For full-te
 - [.cq* file extensions](https://docs.clawql.com/specs/cq-extensions): Draft specs for .cqe, .cqm, .cqk, .cqw (ADR 0010)
 - [Token efficiency](https://docs.clawql.com/architecture/token-efficiency): Twelve compounding layers for cost and reasoning quality
 - [Agentic Gateway (inference)](https://docs.clawql.com/inference/clawql-inference): OpenAI drop-in, flywheel, WORM path to Auditable Production AI
-- [ClawQL Streams](https://docs.clawql.com/streams/clawql-streams): Event-driven autonomous agents — draft spec (WORM, NATS, DO/K8s)
+- [ClawQL Streams](https://docs.clawql.com/streams/clawql-streams): Event-driven autonomous agents — Lab 5b shipped slim+fetch; package TBD
+- [celld (DO-compatible runtime)](https://docs.clawql.com/streams/clawql-celld): Open-source Workers/DO runtime for Lab 5b cells — install, smoke, Helm
+- [Streams + celld evidence](https://docs.clawql.com/streams/streams-celld-evidence): Commands and CI jobs that prove Lab 5b docs match shipped behavior
 - [Durable Objects runtime](https://docs.clawql.com/streams/clawql-durable-objects): Streams DO sidecars — audit, inference virtual keys, RTP/OBT
 - [Plugins](https://docs.clawql.com/plugins): Searchable registry — horizontal plugins and domain verticals
 - [Protocol](https://docs.clawql.com/reference/protocol): Uniform envelope and approval flows
@@ -44,5 +46,10 @@ This file helps AI agents and crawlers find canonical documentation. For full-te
 
 ## Optional
 
+- [llms-full.txt](https://docs.clawql.com/llms-full.txt): expanded documentation index for agents
+- [skill.md](https://docs.clawql.com/skill.md): ClawQL agent entrypoints skill
+- [OpenAPI](https://docs.clawql.com/openapi.json): docs/commerce discovery OpenAPI
+- [Agent skills index](https://docs.clawql.com/.well-known/agent-skills/index.json): digests for SKILL.md packs
 - [GitHub repository](https://github.com/danielsmithdevelopment/ClawQL): source code and issues
 - [Sitemap](https://docs.clawql.com/sitemap.xml): all indexed documentation URLs
+- [Marketing llms.txt](https://clawql.com/llms.txt): clawql.com install + pricing

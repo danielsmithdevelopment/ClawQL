@@ -122,15 +122,29 @@ export function getApiCatalogLinkset(origin = getSiteOriginString()): {
   }
 }
 
-export function getMcpServerCard(origin = getSiteOriginString()): Record<string, unknown> {
-  const docs = site.urls.docs.replace(/\/$/, '')
+/**
+ * Public Streamable HTTP MCP URL for server-card remotes.
+ * Only set when a live gateway is reachable — do not default to docs.clawql.com/mcp
+ * (docs Worker is documentation, not the product MCP binary; was 404).
+ */
+function publicMcpStreamableHttpUrl(): string | undefined {
+  const fromEnv =
+    (typeof process !== 'undefined' &&
+      (process.env.NEXT_PUBLIC_MCP_STREAMABLE_HTTP_URL?.trim() ||
+        process.env.MCP_SERVER_CARD_STREAMABLE_HTTP_URL?.trim())) ||
+    undefined
+  return fromEnv || undefined
+}
 
-  return {
+export function getMcpServerCard(origin = getSiteOriginString()): Record<string, unknown> {
+  const remoteUrl = publicMcpStreamableHttpUrl()
+
+  const card: Record<string, unknown> = {
     $schema: SERVER_CARD_SCHEMA,
     name: 'io.github.danielsmithdevelopment/clawql-mcp',
     version: '8.0.0',
     description:
-      'Agentic Gateway / Protocol Fabric MCP server — search, execute, skills, vault memory, and optional automation/IDP over an empty-by-default provider catalog',
+      'Agentic Gateway / Protocol Fabric MCP server — search, execute, skills, vault memory, and optional automation/IDP over an empty-by-default provider catalog. Run locally with npx -p clawql-mcp clawql-mcp-http (Streamable HTTP at /mcp).',
     title: 'ClawQL',
     websiteUrl: origin,
     repository: {
@@ -146,14 +160,19 @@ export function getMcpServerCard(origin = getSiteOriginString()): Record<string,
       resources: {},
       prompts: {},
     },
-    remotes: [
+  }
+
+  if (remoteUrl) {
+    card.remotes = [
       {
         type: 'streamable-http',
-        url: `${docs}/mcp`,
+        url: remoteUrl,
         supportedProtocolVersions: ['2025-03-12', '2025-06-18', '2025-11-25', '2026-07-28'],
       },
-    ],
+    ]
   }
+
+  return card
 }
 
 export function getOpenIdConfiguration(): Record<string, unknown> {
@@ -202,7 +221,8 @@ export function getA2aAgentCard(origin = getSiteOriginString()): Record<string, 
     description:
       'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Regional Hubs, Dedicated Virtual Gateways, Edge swarm, and agentic commerce discovery.',
     version: '8.0.0',
-    url: `${docs}/mcp`,
+    // Discovery URL for the agent card surface — not a Streamable HTTP MCP endpoint.
+    url: `${docs}/getting-started`,
     provider: {
       organization: 'ClawQL',
       url: origin,
@@ -286,7 +306,9 @@ export function buildAuthMd(origin = getSiteOriginString()): string {
 
 Agent authentication and registration discovery for **${origin}**.
 
-ClawQL is an MCP platform. Production MCP Streamable HTTP is hosted at **${docs}/mcp**. This marketing site publishes discovery metadata; credentials are issued by the configured OAuth authorization server.
+ClawQL is an MCP platform. **Self-host Streamable HTTP** with \`npx -p clawql-mcp clawql-mcp-http\` (path \`/mcp\`, OAuth + RFC 9728 when enabled). This marketing site publishes discovery metadata (server card, OAuth well-known stubs). A public hosted MCP URL is advertised in the server card **only** when \`NEXT_PUBLIC_MCP_STREAMABLE_HTTP_URL\` is set at build time — do not assume \`${docs}/mcp\` speaks MCP (docs are HTML).
+
+MCP docs: [${docs}/mcp/mcp-tools](${docs}/mcp/mcp-tools) · Getting started: [${docs}/getting-started](${docs}/getting-started)
 
 ## Audience
 

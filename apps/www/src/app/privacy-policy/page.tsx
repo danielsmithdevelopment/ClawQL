@@ -71,7 +71,8 @@ export default function Page() {
         <p>
           <strong>ClawQL</strong>
           <br />
-          Email: <Link href={site.urls.contact}>hello@clawql.com</Link>
+          Email:{' '}
+          <a href={site.urls.contactEmail}>hello@clawql.com</a> · <Link href={site.urls.contact}>Contact page</Link>
         </p>
       </DocumentCentered>
     </>

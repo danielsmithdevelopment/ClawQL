@@ -43,7 +43,9 @@ export const site = {
     /** Secondary enterprise / Palantir-facing GTM motion. */
     enterpriseGtm: '/enterprise/gtm',
     privacy: '/privacy-policy',
-    contact: 'mailto:hello@clawql.com',
+    /** HTML contact page (agents: also /contact.md). */
+    contact: '/contact',
+    contactEmail: 'mailto:hello@clawql.com',
   },
   installCommand: 'npx clawql-mcp',
   /** Example providers — catalog is empty by default; opt in via CLAWQL_PROVIDER / providers.pack / CLAWQL_TIER. */

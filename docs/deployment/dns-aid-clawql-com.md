@@ -2,6 +2,8 @@
 
 [isitagentready.com/clawql.com](https://isitagentready.com/clawql.com) scores the marketing site. Static discovery files ship from `apps/www` (GitHub Pages and/or Cloudflare Pages). **Link headers**, **Accept: text/markdown**, and **DNS-AID** need Cloudflare DNS/edge.
 
+**AgentReady (2026-10):** full score + act honesty notes — [`docs/gtm/agentready-score-2026-10.md`](../gtm/agentready-score-2026-10.md) · positioning [`agentready-act-positioning.md`](../gtm/agentready-act-positioning.md) · contribution draft [`docs/proposals/agentready-act-safely.md`](../proposals/agentready-act-safely.md). Server-card `remotes` only when `NEXT_PUBLIC_MCP_STREAMABLE_HTTP_URL` is set (do not default to `docs.clawql.com/mcp`).
+
 ## What the code deploys
 
 | Surface                                            | Where                         | Notes                                                                      |
