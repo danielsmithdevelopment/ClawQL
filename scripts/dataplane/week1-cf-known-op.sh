@@ -135,7 +135,7 @@ if [ "$SKIP_LEAN" != "1" ]; then
   CLAWQL_TS_PID="$BUN_PID" \
   CF_DP_LEAN_N="$LEAN_N" \
   CF_DP_LEAN_OUT="$OUT_DIR/lean-confirm.json" \
-  CF_DP_LEAN_MAX_MB="${CF_DP_LEAN_MAX_MB:-160}" \
+  CF_DP_LEAN_MAX_MB="${CF_DP_LEAN_MAX_MB:-350}" \
     node "$LEAN_CONFIRM"
 fi
 

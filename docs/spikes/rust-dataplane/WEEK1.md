@@ -43,3 +43,7 @@ Sessions/arm = 30 000 → p999 ≈ 30th-worst session (real tail sample).
 ## Proceed
 
 Week 2 (governance pipeline on Rust) is justified on the memory gap. Fix or explain the Bun board-run climb separately; do not inflate Rust’s win with Bun’s leak endpoint.
+
+## Post-prune remasure (2026-10-22)
+
+See **[WEEK1-POST-PRUNE.md](./WEEK1-POST-PRUNE.md)**. After the host `_streamMapping` prune, Bun **plateaus ~235 MB** on a 1×5k CF known-op board (no GB climb). Rust ~**15.3 MB**. Per-call p999 near parity (~4.9 ms both).

@@ -34,7 +34,7 @@ CF_DP_REPS=3 CF_DP_ITERS=10000 ./scripts/dataplane/week1-cf-known-op.sh
 
 See [WEEK1.md](./WEEK1.md). **Label: `fast-path-only`.**
 
-**Bun tip note:** the Oct-15 ~130 MB Bun `--smol` cite is not reproducible on this tip (~170–260 MB on the same single-op probe). Full 10k board runs also show Bun Anonymous climbing (not a plateau); Rust stays flat ~16 MB.
+**Bun tip note:** Oct-15 ~130 MB cite is not tip. Post-prune remasure ([WEEK1-POST-PRUNE](./WEEK1-POST-PRUNE.md)): Bun **plateaus ~235 MB** on 1×5k known-op; lean-confirm ~244 MB; Rust ~15 MB flat. GB climb was `_streamMapping` (fixed).
 
 ## Differential harness
 
