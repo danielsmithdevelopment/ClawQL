@@ -2,12 +2,11 @@
 /**
  * Confirm Bun host is on the tip equal-arm lean profile (LOAD=db + --smol).
  *
- * Published Oct-15 cite was ~130 MB anon; this tip's host currently plateaus
- * higher under the same single known-op probe (~270–300 MB). We gate on the
- * tip-reproducible band and record both numbers for honesty.
+ * Tip equal-arm Bun `--smol` after lazy-listen restore plateaus ~142 MB anon
+ * (Oct-15 side-branch cite was ~130 MB). Gate on the tip-reproducible band.
  *
  * Env: CLAWQL_TS_MCP_URL, CLAWQL_TS_PID, CF_DP_LEAN_N (default 4000),
- *      CF_DP_LEAN_OUT, CF_DP_LEAN_MAX_MB (default 320 — tip band)
+ *      CF_DP_LEAN_OUT, CF_DP_LEAN_MAX_MB (default 180 — tip lean band)
  */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
@@ -15,8 +14,9 @@ const URL = process.env.CLAWQL_TS_MCP_URL;
 const PID = Number(process.env.CLAWQL_TS_PID || 0);
 const N = Math.max(100, Number(process.env.CF_DP_LEAN_N || 4000));
 const OUT = process.env.CF_DP_LEAN_OUT || "/tmp/lean-confirm.json";
-const MAX_MB = Number(process.env.CF_DP_LEAN_MAX_MB || 320);
-const PUBLISHED_CITE_MB = 130;
+const MAX_MB = Number(process.env.CF_DP_LEAN_MAX_MB || 180);
+/** Tip-reproducible equal-arm lean after lazy-listen restore (not the unreproducible Oct-15 side-branch 130). */
+const PUBLISHED_CITE_MB = 142;
 const ACCEPT = "application/json, text/event-stream";
 
 if (!URL || !PID) {
@@ -142,7 +142,7 @@ const out = {
   published_cite_mb: PUBLISHED_CITE_MB,
   matches_published_cite: matchesPublishedCite,
   tip_band_note:
-    "Oct-15 published Bun --smol cite was ~130 MB. This tip's host under the same probe plateaus higher; gate uses tip band.",
+    "Tip equal-arm Bun --smol lean after lazy-listen restore ≈142 MB. Oct-15 ~130 MB was a side-branch config cite.",
   pass: plateauMed != null && plateauMed <= MAX_MB,
   max_mb_gate: MAX_MB,
   series_tail: series.slice(-8),
@@ -157,8 +157,8 @@ if (!out.pass) {
 }
 if (!matchesPublishedCite) {
   console.error(
-    `lean-confirm WARN: Bun plateau ${plateauMed.toFixed(1)} MB ≠ published ~${PUBLISHED_CITE_MB} MB cite — comparing against tip lean, not the old board number`
+    `lean-confirm WARN: Bun plateau ${plateauMed.toFixed(1)} MB ≠ tip cite ~${PUBLISHED_CITE_MB} MB`
   );
 } else {
-  console.error(`lean-confirm OK: Bun plateau ${plateauMed.toFixed(1)} MB ≈ published cite`);
+  console.error(`lean-confirm OK: Bun plateau ${plateauMed.toFixed(1)} MB ≈ tip lean cite`);
 }

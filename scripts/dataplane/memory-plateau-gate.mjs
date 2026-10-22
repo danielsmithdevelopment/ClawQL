@@ -9,7 +9,7 @@
  *
  * Env:
  *   MEM_GATE_ITERS   — execute calls (default 2000)
- *   MEM_GATE_MAX_MB  — hard anon ceiling (default 550; tip lean floor is higher than Oct-15 ~130)
+ *   MEM_GATE_MAX_MB  — hard anon ceiling (default 550; tip lean ~142 MB after lazy restore)
  *   MEM_GATE_SLOPE   — fail if (last-baseline)/baseline > this (default 0.35)
  *   MEM_GATE_WARMUP_FRAC — fraction of samples skipped before slope baseline (default 0.2)
  *   MEM_GATE_OUT     — summary JSON path

@@ -52,6 +52,7 @@
  *   clawql / clawql_bun — stdio
  *   clawql_http / clawql_http_bun — Streamable HTTP (JSON response; standalone SSE GET disabled for bench)
  *   clawql_http_bun_known / clawql_http_known — execute-by-ID only (skip search; agent already knows op)
+ *   clawql_dataplane — Rust Streamable HTTP execute-only (same catalog mock + client; stall control)
  *   clawql_grpc / clawql_grpc_bun — ClawQL-only gRPC MCP (peers have no gRPC MCP on this board)
  *
  * MT_CLAWQL_SKIP_SEARCH=1 forces skip-search for all ClawQL arms (or use *_known arm ids).
@@ -1422,6 +1423,172 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
   return conn;
 }
 
+/**
+ * Rust clawql-dataplane over Streamable HTTP — same equal-arm catalog mock + MCP client
+ * as clawql_http. Execute-only (Phase A has no search). Use as stall control: if Node/Bun
+ * keep n≥300ms flows and Rust stays clean, the stalls are in the TS server path/runtime.
+ */
+async function connectClawqlDataplane(mock, { id = "clawql_dataplane" } = {}) {
+  const bin = join(ROOT, "crates", "target", "release", "clawql-dataplane");
+  if (!existsSync(bin)) {
+    throw new Error(
+      "crates/target/release/clawql-dataplane missing — run: cargo build -p clawql-dataplane --release (in crates/)"
+    );
+  }
+  const home = join("/tmp", `clawql-mt-${id}-${process.pid}`);
+  await mkdir(home, { recursive: true });
+  const catalogPath = join(home, "catalog.sqlite");
+  const compile = spawnSync(
+    process.execPath,
+    [
+      join(ROOT, "scripts", "dataplane", "compile-catalog-sqlite.mjs"),
+      "--spec",
+      mock.specPath,
+      "--out",
+      catalogPath,
+    ],
+    { cwd: ROOT, encoding: "utf8" }
+  );
+  if (compile.status !== 0) {
+    throw new Error(
+      `dataplane catalog compile failed: ${(compile.stderr || compile.stdout || "").slice(0, 800)}`
+    );
+  }
+  const port = await pickFreePort();
+  const t0 = performance.now();
+  let spawnCmd = bin;
+  let spawnArgs = ["--bind", `127.0.0.1:${port}`, "--catalog", catalogPath];
+  {
+    const pinned = withTaskset(spawnCmd, spawnArgs, "gateway");
+    spawnCmd = pinned.command;
+    spawnArgs = pinned.args;
+  }
+  const child = spawn(spawnCmd, spawnArgs, {
+    cwd: ROOT,
+    env: {
+      ...process.env,
+      CLAWQL_API_BASE_URL: mock.baseUrl,
+      RUST_LOG: process.env.RUST_LOG || "warn",
+    },
+    stdio: ["ignore", "pipe", "pipe"],
+    detached: true,
+  });
+  let earlyExit = null;
+  const onEarlyExit = (code, signal) => {
+    earlyExit = { code, signal };
+  };
+  child.on("exit", onEarlyExit);
+  const stderrChunks = [];
+  let listenResolved = false;
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${id} listening timeout`)), 60_000);
+    const onData = (chunk) => {
+      const s = String(chunk);
+      stderrChunks.push(s);
+      if (!listenResolved && (s.includes("listening") || s.includes("/mcp") || s.includes("healthz"))) {
+        listenResolved = true;
+        clearTimeout(timer);
+        setTimeout(resolve, 50);
+      }
+    };
+    child.stderr?.on("data", onData);
+    child.stdout?.on("data", onData);
+    child.on("error", reject);
+    child.on("exit", (code, signal) => {
+      if (!listenResolved) {
+        clearTimeout(timer);
+        reject(
+          new Error(
+            `${id} exited before listen code=${code} signal=${signal}: ${stderrChunks.join("").slice(0, 500)}`
+          )
+        );
+      }
+    });
+  });
+  if (earlyExit) {
+    killProcessGroup(child);
+    throw new Error(`${id} exited early code=${earlyExit.code} signal=${earlyExit.signal}`);
+  }
+  {
+    const net = await import("node:net");
+    const deadline = Date.now() + 15_000;
+    while (Date.now() < deadline) {
+      const ok = await new Promise((resolve) => {
+        const s = net.createConnection({ host: "127.0.0.1", port }, () => {
+          s.end();
+          resolve(true);
+        });
+        s.on("error", () => resolve(false));
+      });
+      if (ok) break;
+      await sleep(40);
+    }
+  }
+  const mcpUrl = `http://127.0.0.1:${port}/mcp`;
+  let transport = new StreamableHTTPClientTransport(
+    new URL(mcpUrl),
+    streamableHttpClientOpts()
+  );
+  let client = new Client({ name: `mt-${id}`, version: "1" }, {});
+  await client.connect(transport);
+  const fetchBench = async () => {
+    try {
+      const r = await fetch(`http://127.0.0.1:${port}/healthz`);
+      return await r.json();
+    } catch {
+      return null;
+    }
+  };
+  return {
+    get client() {
+      return client;
+    },
+    pid: child.pid,
+    runtime: "rust",
+    runtimeVersion: "clawql-dataplane",
+    transport: "streamable_http_dataplane",
+    mcpUrl,
+    port,
+    ready_ms: Number((performance.now() - t0).toFixed(1)),
+    rss_mb_ready: child.pid != null ? readProcRssMb(child.pid) : null,
+    _stderrChunks: stderrChunks,
+    fetchBench,
+    recycleSession: async () => {
+      try {
+        await transport.terminateSession?.();
+      } catch {
+        /* ignore */
+      }
+      await client.close().catch(() => {});
+      transport = new StreamableHTTPClientTransport(
+        new URL(mcpUrl),
+        streamableHttpClientOpts()
+      );
+      client = new Client({ name: `mt-${id}-recycle`, version: "1" }, {});
+      await client.connect(transport);
+    },
+    close: async () => {
+      try {
+        await transport.terminateSession?.();
+      } catch {
+        /* ignore */
+      }
+      await client.close().catch(() => {});
+      child.off("exit", onEarlyExit);
+      killProcessGroup(child, "SIGTERM");
+      const exited = await new Promise((resolve) => {
+        const t = setTimeout(() => resolve(false), 1500);
+        child.once("exit", () => {
+          clearTimeout(t);
+          resolve(true);
+        });
+      });
+      if (!exited) killProcessGroup(child, "SIGKILL");
+      await sleep(100);
+    },
+  };
+}
+
 /** Parse `[clawql-http-perf]` stderr lines into GC / event-loop delay stats. */
 function parseHttpPerfStderr(chunks) {
   const text = Array.isArray(chunks) ? chunks.join("") : String(chunks || "");
@@ -2073,15 +2240,18 @@ async function runClawqlArm(
 ) {
   const skip =
     skipSearch ||
+    transport === "dataplane" ||
     ["1", "true", "yes"].includes((process.env.MT_CLAWQL_SKIP_SEARCH ?? "").trim().toLowerCase()) ||
     /_known$/.test(id);
   const conn =
-    transport === "http"
-      ? await connectClawqlHttp(mock, { id, runtime })
-      : await connectClawql(mock, { runtime, id });
+    transport === "dataplane"
+      ? await connectClawqlDataplane(mock, { id })
+      : transport === "http"
+        ? await connectClawqlHttp(mock, { id, runtime })
+        : await connectClawql(mock, { runtime, id });
   const sampler = new ResourceSampler(id, conn.pid);
   // HTTP serve is a single long-lived process — sample that PID (not a stdio tree).
-  if (transport === "http" && conn.pid) {
+  if ((transport === "http" || transport === "dataplane") && conn.pid) {
     sampler.start = function start(intervalMs = 200) {
       if (!this.pid) return;
       this._t0 = performance.now();
@@ -2103,7 +2273,7 @@ async function runClawqlArm(
   sampler.start(ITERS > 1 ? 500 : 200);
   const slowFlowMs = Number(process.env.MT_SLOW_FLOW_MS || 80) || 80;
   const sessionPerFlow =
-    transport === "http" &&
+    (transport === "http" || transport === "dataplane") &&
     ["1", "true", "yes"].includes(
       (process.env.MT_HTTP_SESSION_PER_FLOW ?? "").trim().toLowerCase()
     );
@@ -2242,7 +2412,10 @@ async function runClawqlArm(
 
     const resources = sampler.stop();
     let httpLayer = null;
-    if (transport === "http" && typeof conn.fetchBench === "function") {
+    if (
+      (transport === "http" || transport === "dataplane") &&
+      typeof conn.fetchBench === "function"
+    ) {
       // fetchBench hits /healthz — also carries http_layer flags for bisect.
       try {
         const r = await fetch(`http://127.0.0.1:${conn.port}/healthz`);
@@ -2984,6 +3157,20 @@ async function main() {
             id: arm,
             transport: "http",
             skipSearch: arm.endsWith("_known"),
+          });
+        } else if (arm === "clawql_dataplane" || arm === "clawql_rust_http") {
+          if (!existsSync(join(ROOT, "crates", "target", "release", "clawql-dataplane"))) {
+            rawArms[arm] = {
+              skipped: true,
+              reason: "clawql-dataplane release binary missing (cargo build -p clawql-dataplane --release)",
+            };
+            continue;
+          }
+          rawArms[arm] = await runClawqlArm(mock, turns, {
+            runtime: "rust",
+            id: arm,
+            transport: "dataplane",
+            skipSearch: true,
           });
         } else if (arm === "clawql_grpc" || arm === "clawql_grpc_bun") {
           if (!existsSync(join(ROOT, "dist", "server-http.js"))) {

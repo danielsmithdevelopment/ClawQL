@@ -31,8 +31,8 @@ unclear, what is missing is **discovery**, not a plan runner.
 | **Lazy horizontal plugins** (require-on-flag; k8s dynamic import)                  | **Shipped**                                                                   | Ready maps free of k8s/xenova/stripe when tiers off; first k8s import ~363 ms; fail-closed                           |
 | **Server-side `where`** + examples in tool schema + fix-named `where_invalid`      | **Default product**                                                           | Scripted known-op **1743** weighted; dual-model gate win vs Executor                                                 |
 | **Observation budget** (`totalCount` in truncated list notes; `full:true` opt-out) | **Default on** (~8k chars)                                                    | Stops blind models from eating ~60k DNS dumps                                                                        |
-| **Bun + `--smol`, ≥2 CPUs**                                                        | **Default host MCP** (Helm `hostRuntime: bun`, image `runtime`)               | Plateau ~**130 MB** anon (**measured on the October 15 build**); tip lean probe is higher — see honesty note         |
-| **Node `--max-old-space-size=256`**                                                | **Legacy minority host** (Helm `hostRuntime: node` + `--target runtime-node`) | Caps plateau ~**132 MB** (**October 15 build**); tip lean probe is higher; ~**3.5 ms** p99 vs uncapped on that build |
+| **Bun + `--smol`, ≥2 CPUs**                                                        | **Default host MCP** (Helm `hostRuntime: bun`, image `runtime`)               | Equal-arm lean plateau ~**142 MB** anon on tip after lazy-listen restore (Oct-15 side-branch cite was ~130 MB)         |
+| **Node `--max-old-space-size=256`**                                                | **Legacy minority host** (Helm `hostRuntime: node` + `--target runtime-node`) | Oct-15 heap A/B ~**132 MB**; remasure Node under the restored lazy host before quoting tip                            |
 | **Compact search** (`CLAWQL_SEARCH_COMPACT`)                                       | **Labeled arm only** until routing eval clears it                             | Cuts first-session discovery; not product default yet                                                                |
 | **Known-op reuse** (skills / memory → steady-state execute-by-id)                  | **Product intent**                                                            | Cheapest arm on this workflow                                                                                        |
 
@@ -46,7 +46,7 @@ Node setting. Pick the row that matches what the pod actually enables:
 
 | Feature profile                                                                        | What is on                         | Node `NODE_OPTIONS` / Helm `nodeOptions`                       | Bun                                 | Notes                                                                                                                                                                                     |
 | -------------------------------------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Lean listen** (search/execute, SQLite OOP, no vault memory, no documents, pack none) | Core MCP only                      | **`--max-old-space-size=256`** (Helm / kustomize base default) | **`--smol`**                        | Plateau ~**132 MB** (Node) / ~**130 MB** (Bun) — **measured on the October 15 build**. Tip host is higher until the memory regression is closed. No OOM on `full:true` / program fan-out. |
+| **Lean listen** (search/execute, SQLite OOP, no vault memory, no documents, pack none) | Core MCP only                      | **`--max-old-space-size=256`** (Helm / kustomize base default) | **`--smol`**                        | Tip Bun plateau ~**142 MB** after lazy-listen restore (`heap-vs-anon` N=2000). Oct-15 side-branch cite ~130 MB. No OOM on `full:true` / program fan-out. |
 | **ClawQL Cloud / HTTP multiplex** (managed serving path)                               | Lean listen over Streamable HTTP   | **256** lean Node default                                      | **`--smol` (Cloud default)**        | Bun median **84** vs Node256 **27** / MJ **31** / AG **38** (`REPS=3`) — see HTTP table.                                                                                                  |
 | **Memory-enabled** (`enableMemory` / vault ingest, embeddings rebuild)                 | + `memory_ingest` / recall         | **`--max-old-space-size=384`**                                 | `--smol` (raise host RAM if needed) | Long ingest (~305 KB doc) hit **~255–261 MB** anon under a 256 cap. Prefer **384** for ingest headroom. Do **not** run ingest on lean 256.                                                |
 | **Docker Desktop / all-providers demo**                                                | memory + documents + large catalog | **768** (`values-docker-desktop.yaml`)                         | —                                   | Catalog startup OOMs at 512.                                                                                                                                                              |
@@ -69,13 +69,12 @@ agentgateway **99** (gap ~**20–30 MB**). Rep1–2 were ~**282–292 MB** (
 quote rep3 or heap A/B (**132 MB** / +**3.5 ms** p99), not an r1–r3 average. See
 [`board-final-summary.md`](./board-final-summary.md).
 
-**Honesty (post–October 15 tip):** the same lean probe on current tip measures ~**173 MB**
-(Bun `--smol`) / ~**236 MB** (Node 256) — not the October 15 plateau. This **lean floor**
-regression (~130→~170–260 MB) is **separate** from the JSON `_streamMapping` climb
-(fixed via host prune + gates). Track the lean bisect as an open item in
-[`memory-plateau.md`](./memory-plateau.md). Until lean is remasured, treat
-**~130 MB / ~132 MB** as **version-scoped to the October 15 build**, not as a claim
-about tip releases.
+**Honesty (tip releases):** the ~130 MB Oct-15 cite lived on a **side-branch**
+(`95015461b`) that tip never shipped. Tip briefly measured ~290–313 MB when payments
+and memory/ONNX were eager at listen — that was **configuration**, not a feature
+floor. After restoring lazy listen on tip, Bun `--smol` equal-arm lean plateaus at
+~**142 MB** (reproducible from this release line). See
+[`memory-plateau.md`](./memory-plateau.md) and [`LEAN-BISECT`](../../spikes/rust-dataplane/LEAN-BISECT.md).
 
 ### HTTP concurrency (Cloud-shaped) — cap tax retracted
 
@@ -98,8 +97,8 @@ Node ranges: [`http-concurrency-node-variance-3x.json`](./http-concurrency-node-
 **Heap cap vs concurrency:** same-session `REPS=3` puts uncapped at **30–31**, not 44.
 256 is **1–4** clients under that band — **not** ~30%. 384 overlaps uncapped (should be
 unbound vs ~296 MB plateau). Do **not** claim a cap concurrency tax. **Bun `--smol`**
-remains the Cloud HTTP default: median **84** clients (`REPS=3`) and ~130 MB plateau
-(**October 15 build**) — still well above MJ **31** / AG **38**.
+remains the Cloud HTTP default: median **84** clients (`REPS=3`) and ~**142 MB**
+tip lean plateau after lazy-listen restore — still well above MJ **31** / AG **38**.
 
 **Peers over HTTP (this workflow):** ClawQL moves answers (`where`); peers move full
 DNS lists. Framing: fair, specific — not “peers are slower gateways.”
@@ -173,9 +172,9 @@ Three measured claims, same workflow family, each labeled for what it covers:
 
 1. **Tokens (steady state):** fewest weighted tokens vs code-mode peers — dual-model
    gate, pre-registered (`known_op_beats_code_mode_for_real_models`).
-2. **Memory:** Bun plateaus near **130 MB** under sustained load (**measured on the
-   October 15 build**; Node 256 → **132 MB** at ~**3.5 ms** p99 cost vs uncapped). Tip
-   lean probe is higher until remasured.
+2. **Memory:** Tip Bun `--smol` equal-arm lean plateaus near **~142 MB** after
+   lazy-listen restore (Oct-15 side-branch cite was ~130 MB). Node 256 heap A/B on
+   that older build was **132 MB** at ~**3.5 ms** p99 vs uncapped.
 3. **HTTP concurrency (this workflow):** Bun sustains median **84** clients
    (`REPS=3`, range **[79, 87]**) at p99 ≤ 100 ms vs MCPJungle **31** / agentgateway
    **38** — ClawQL moves answers (`where`), peers move full DNS lists. (Pets-board MJ

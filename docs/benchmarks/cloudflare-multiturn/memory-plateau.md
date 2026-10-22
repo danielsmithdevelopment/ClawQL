@@ -7,9 +7,9 @@ Gates and honesty notes for Streamable HTTP memory under sessionful load.
 | #                 | Symptom                                                      | Cause class                                                                                                                                                | Status                                                                                                                     |
 | ----------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | **1. Climb**      | Anonymous ~200→~3444 MB over ~30k same-session JSON executes | MCP SDK JSON mode orphans `_streamMapping` after `resolveJson` ([typescript-sdk#2559](https://github.com/modelcontextprotocol/typescript-sdk/issues/2559)) | **Fixed in host** via `pruneOrphanJsonStreamMappings` after each POST; PR gate + nightly + unit bound test                 |
-| **2. Lean floor** | Same `heap-vs-anon` Bun `--smol` probe: Oct 15 **131 MB** (cf-mt branch) → tip **~313 MB**; tip already **~293 MB** at #1323 merge | Mostly **lineage**, not tip creep after the board — see [`LEAN-BISECT`](../../spikes/rust-dataplane/LEAN-BISECT.md) | **Open env-diff** (cf-mt `95015461b` vs tip `f06c1080b`). Week-2 uses tip Bun after climb fix (~235 MB board / ~290–315 MB lean), not the 130 MB cite. |
+| **2. Lean floor** | Same `heap-vs-anon` Bun `--smol` probe: Oct 15 **131 MB** (cf-mt branch) → tip was **~313 MB** with eager payments/memory | **Configuration** — tip lost Oct-15 lazy listen (static payments + pgvector/ONNX on Ready) | **Closed on this branch:** restored lazy listen → tip plateau **~142 MB** (idle ~83 MB, no onnx/sharp maps). Cite tip equal-arm lean, not the unreproducible side-branch-only 130 MB and not the pre-port ~313 MB. See [`LEAN-BISECT`](../../spikes/rust-dataplane/LEAN-BISECT.md). |
 
-Week-2 Rust dataplane comparison waits until tip Bun plateaus (#1) and uses the build TypeScript can actually reach after #2 is understood.
+Week-2 Rust dataplane comparison uses tip Bun **after** the climb fix (#1) and the lazy-listen restore (#2).
 
 ## How the Oct 12 prune was lost
 
@@ -63,13 +63,13 @@ npx vitest run src/http/json-stream-mapping-bound.test.ts
 
 Bench stats on `/healthz` (opt-in): `CLAWQL_BENCH_STATS=1` → `stream_mapping_entries`, `request_to_stream_entries`.
 
-## Open item: lean floor regression (not the climb)
+## Lean floor (closed — configuration port)
 
-Track separately from `_streamMapping`:
+Separate from `_streamMapping`:
 
-- **Oct 15 board / heap A/B:** Bun `--smol` ~**130 MB**, Node 256 ~**132 MB** anon plateau ([measured-defaults](./measured-defaults.md)) — reproduced at `95015461b` as **131.4 MB**.
-- **Tip same probe (2026-10-22):** Bun `--smol` **~313 MB** anon plateau; dataplane lean-confirm **~295 MB**; CF known-op board after prune **~235 MB**.
-- **Action:** continue tip first-parent bisect + catalog A/B ([`LEAN-BISECT`](../../spikes/rust-dataplane/LEAN-BISECT.md)). Do **not** fold this into the climb fix or the plateau CI gate.
-- **Rust week-2:** density case vs tip Bun after climb fix (~235 MB board / ~300 MB lean). Expect ~**8–15×** memory advantage for Rust (~15 MB), not a latency story (post-prune call p999 ~4.9 ms both).
+- **Oct 15 board / heap A/B:** Bun `--smol` ~**130 MB** on `95015461b` (cf-mt side branch) — not an ancestor of tip.
+- **Tip before port (2026-10-22):** Bun `--smol` **~313 MB** (eager payments + memory/ONNX at listen).
+- **Tip after lazy port (this branch):** Bun `--smol` **~142 MB** plateau (`N=2000`); idle **~83 MB**; **0** onnx/sharp maps. Equal-arm profile: `CLAWQL_HTTP_SKIP_PAYMENTS=1`, memory off, SQLite catalog OOP.
+- **Rust week-2 density:** vs tip lean **~9–10×** (142 / ~15); vs post-prune board **~15×** until the board is remasured under the restored lazy host. Latency remains a dead heat (~4.9 ms call p999).
 
-See also vault notes: [[Bun JSON streamMapping memory climb fixed]], [[Bun smol lean board 130MB anon plateau config]].
+See [`LEAN-BISECT`](../../spikes/rust-dataplane/LEAN-BISECT.md); vault: [[Bun JSON streamMapping memory climb fixed]], [[Density baseline post-prune stalls and lean floor]].

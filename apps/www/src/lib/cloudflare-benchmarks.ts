@@ -2,9 +2,10 @@
  * Cloudflare zone-audit multiturn board for clawql.com/benchmarks.
  * Source: docs/benchmarks/cloudflare-multiturn (publish 10k×3 + concurrency curves).
  * Host-bound — token cells from 2026-10-17 post–compact-execute remasure.
- * Concurrency curves unchanged by JSON pretty-print; Anon MB cells are
- * **measured on the October 15 build** (Node-256 / Bun --smol plateau era) — tip
- * lean probe is higher until the host memory regression is remasured.
+ * Concurrency curves unchanged by JSON pretty-print. Anon MB cells on the
+ * publish board were measured on the October 15 side-branch; tip equal-arm
+ * Bun `--smol` lean after lazy-listen restore is ~142 MB — cite that for
+ * release-reproducible memory (see docs/spikes/rust-dataplane/LEAN-BISECT.md).
  */
 
 export const cfTokenBoardProvenance = {
@@ -21,7 +22,7 @@ export const cfBenchmarkSummary =
 
 export const cfBenchmarkMeta = {
   measuredLabel:
-    'Tokens remasured Oct 2026 (compact execute) · Anon MB measured on the October 15 build · host-bound',
+    'Tokens remasured Oct 2026 (compact execute) · Tip Bun lean ~142 MB anon after lazy-listen restore · host-bound',
   boardLabel: '10 000 sessions × 3 reps · curated Cloudflare OpenAPI',
   artifactBoard: 'docs/benchmarks/cloudflare-multiturn/board-final-summary.md',
   artifactHttp: 'docs/benchmarks/cloudflare-multiturn/http-concurrency-curves.json',
