@@ -85,12 +85,12 @@ One process boundary. If the spike fails, delete the Rust process; Helm/Bun host
 
 Baselines from Bun lean listen / peer boards ([measured defaults](../benchmarks/cloudflare-multiturn/measured-defaults.md)):
 
-| Metric                  | Baseline (today)                                  | Spike go bar (proposed)                                                                                          |
-| ----------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Metric                  | Baseline (today)                                                                   | Spike go bar (proposed)                                                                                                  |
+| ----------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | **Anon RSS under load** | Bun ~**125–130 MB** (**Oct 15 build**); tip lean ~**173 MB**; peers ~**99–103 MB** | ≤ **half of tip Bun after leak fix** **or** within peer band with clear headroom — pick one bar in Phase 0 and freeze it |
-| **Latency**             | p50 / p99 / p999 on equal-arm REST execute        | Clearly better **p999** than Bun host on the same board; unexplained HTTP stalls gone or explained               |
-| **Clients / instance**  | Bun median **84** @ p99 ≤ 100 ms (HTTP multiplex) | Meet or beat Bun on the same workflow                                                                            |
-| **Correctness**         | —                                                 | **Zero** differential mismatches on the agreed suite                                                             |
+| **Latency**             | p50 / p99 / p999 on equal-arm REST execute                                         | Clearly better **p999** than Bun host on the same board; unexplained HTTP stalls gone or explained                       |
+| **Clients / instance**  | Bun median **84** @ p99 ≤ 100 ms (HTTP multiplex)                                  | Meet or beat Bun on the same workflow                                                                                    |
+| **Correctness**         | —                                                                                  | **Zero** differential mismatches on the agreed suite                                                                     |
 
 **Proposed go criterion (freeze in Phase 0):** memory ≤ half Bun **or** ≤ peer gateway band with ≥20 MB headroom; clearly better p999; zero differential diffs; Verus proves at least the policy evaluator (label merge + digests are stretch). Otherwise TypeScript/Bun stays, and the write-up records why cheaply.
 

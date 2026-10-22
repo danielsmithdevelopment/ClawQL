@@ -13,9 +13,7 @@ import type { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/se
 const DEFAULT_IDLE_MS = 1_800_000;
 const DEFAULT_SESSION_MAX = 1024;
 
-export const resolveSessionIdleMs = (
-  env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<number> =>
+export const resolveSessionIdleMs = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<number> =>
   Effect.sync(() => {
     const raw = env.CLAWQL_MCP_SESSION_IDLE_MS;
     if (raw === undefined) return DEFAULT_IDLE_MS;
@@ -65,9 +63,7 @@ export const startSessionIdleWatcher = (
         const touched = lastTouch.get(sid) ?? now;
         if (now - touched < idleMs) continue;
         lastTouch.delete(sid);
-        log(
-          `[clawql-mcp-http] session idle eviction sid=${sid.slice(0, 8)}… idle_ms=${idleMs}`
-        );
+        log(`[clawql-mcp-http] session idle eviction sid=${sid.slice(0, 8)}… idle_ms=${idleMs}`);
         void transport.close().catch(() => undefined);
         if (transports.get(sid) === transport) transports.delete(sid);
         evicted += 1;
