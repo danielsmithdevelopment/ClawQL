@@ -40,6 +40,6 @@ Same recipe (`CF_DP_REPS=1` `CF_DP_ITERS=5000`) after restoring lazy listen:
 | Bun tip + prune + lazy | 1.05 / 3.11 / **7.00** | **~128.9 MB** |
 | Rust dataplane | 0.55 / 3.91 / **5.64** | **~15.3 MB** |
 
-Lean-confirm on that Bun host: **~138.5 MB**. Density vs Rust ≈ **8.4×** (board) / **~9×** (lean). The old **~15×** figure was the eager-listen board — **do not quote**. Artifacts: `/opt/cursor/artifacts/dataplane-week1-post-lazy/` · [`artifacts/week1-post-lazy-5k.json`](./artifacts/week1-post-lazy-5k.json).
+Lean-confirm on that Bun host: **~138.5 MB**. Density vs Rust ≈ **8.4×** (board) / **~9×** (lean). The old **~15×** figure was the eager-listen board — **do not quote**. Artifacts: `/opt/cursor/artifacts/dataplane-week1-post-lazy/` · [`dataplane-week1-post-lazy-5k.json`](../../benchmarks/gateway-multi-comparison/dataplane-week1-post-lazy-5k.json).
 
 **Density, not speed:** latency stays in-band; the Rust case for ClawQL Cloud is tenant density / cost per isolate (~**8–9×** less anon at lean/board under the restored host). Lean bisect: [LEAN-BISECT.md](./LEAN-BISECT.md). HTTP 300–700 ms stalls: **not** fixed by prune — [HTTP-TAIL-POST-PRUNE.md](./HTTP-TAIL-POST-PRUNE.md).

@@ -42,4 +42,4 @@ Remasured CF known-op board under restored lazy listen (`CF_DP_REPS=1` `CF_DP_IT
 
 Latency stays in the same band (this remasure: Bun call p999 **7.0 ms** / Rust **5.6 ms**; p50/p99 near-parity). Rust’s case is density.
 
-Artifacts: `/opt/cursor/artifacts/dataplane-week1-post-lazy/` · [`artifacts/week1-post-lazy-5k.json`](./artifacts/week1-post-lazy-5k.json).
+Artifacts: `/opt/cursor/artifacts/dataplane-week1-post-lazy/` · [`dataplane-week1-post-lazy-5k.json`](../../benchmarks/gateway-multi-comparison/dataplane-week1-post-lazy-5k.json).
