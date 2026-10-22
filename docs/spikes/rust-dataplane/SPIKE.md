@@ -34,7 +34,7 @@ CF_DP_REPS=3 CF_DP_ITERS=10000 ./scripts/dataplane/week1-cf-known-op.sh
 
 See [WEEK1.md](./WEEK1.md). **Label: `fast-path-only`.**
 
-**Bun tip note:** Oct-15 ~130 MB was a side-branch config cite. Tip after lazy-listen restore plateaus ~**139–142 MB** lean ([LEAN-BISECT](./LEAN-BISECT.md)). Post-lazy CF known-op board ([WEEK1-POST-PRUNE](./WEEK1-POST-PRUNE.md)): Bun **~129 MB** / Rust ~15 MB (~**8.4×**); lean density ~**9×**. Latency in-band (call p999 ~5–7 ms). GB climb was `_streamMapping` (fixed). HTTP 300–700 ms stalls remain ([HTTP-TAIL-POST-PRUNE](./HTTP-TAIL-POST-PRUNE.md)).
+**Week-2 density (settled):** tip Bun after lazy-listen restore plateaus ~**130 MB** on the main line (lean ~139–142 MB; CF known-op confirmation ~129 MB) vs Rust ~15 MB — about **8–9×** ([LEAN-BISECT](./LEAN-BISECT.md), [WEEK1-POST-PRUNE](./WEEK1-POST-PRUNE.md)). Latency is **effectively equal** (median gap ~0.5 ms; do not cite “Rust 2× faster”). Publish cites need **3×10k with ranges**. Oct-15 ~130 MB was a side-branch-only config cite; tip now reproduces it. GB climb was `_streamMapping` (fixed). HTTP 300–700 ms stalls remain ([HTTP-TAIL-POST-PRUNE](./HTTP-TAIL-POST-PRUNE.md)). Next: Phase B governance on Rust, then fair full-work comparison.
 ## Differential harness
 
 `scripts/dataplane/diff-harness.md` — expand after Streamable HTTP client parity is proven by week-1.

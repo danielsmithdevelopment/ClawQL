@@ -31,15 +31,17 @@
 
 Climb fix confirmed under CF known-op load. Memory gap vs tip Bun was ≈ **15×** (235 / 15.3) on the **pre-lazy-port** host. Per-call p999 is near-parity; Rust still wins session p999. Go/no-go still waits Phase B governance on both sides.
 
-### Post-lazy board remasure (2026-10-22)
+### Post-lazy confirmation (2026-10-22) — not a publish board
 
-Same recipe (`CF_DP_REPS=1` `CF_DP_ITERS=5000`) after restoring lazy listen:
+One run (`CF_DP_REPS=1` `CF_DP_ITERS=5000`) after restoring lazy listen. Confirms the ~130 MB Bun plateau is tip-reproducible. **Publish cites need the usual 3×10k with ranges** (see SPIKE runbook); do not treat single-run p999 as a headline.
 
-| Arm | call p50 / p99 / **p999** (ms) | Plateau anon |
+| Arm | call p50 / p99 / p999 (ms) | Plateau anon |
 | --- | --- | ---: |
-| Bun tip + prune + lazy | 1.05 / 3.11 / **7.00** | **~128.9 MB** |
-| Rust dataplane | 0.55 / 3.91 / **5.64** | **~15.3 MB** |
+| Bun tip + prune + lazy | 1.05 / 3.11 / 7.00 | **~128.9 MB** |
+| Rust dataplane | 0.55 / 3.91 / 5.64 | **~15.3 MB** |
 
-Lean-confirm on that Bun host: **~138.5 MB**. Density vs Rust ≈ **8.4×** (board) / **~9×** (lean). The old **~15×** figure was the eager-listen board — **do not quote**. Artifacts: `/opt/cursor/artifacts/dataplane-week1-post-lazy/` · [`dataplane-week1-post-lazy-5k.json`](../../benchmarks/gateway-multi-comparison/dataplane-week1-post-lazy-5k.json).
+**Latency (precise):** Rust median per call is about half of Bun’s (0.55 vs 1.05 ms — **~0.5 ms absolute**). Bun is slightly better at p99; Rust slightly better at p999. All of that is well under a real upstream API call, so **latency is effectively equal**. Do **not** summarize the median as “Rust is 2× faster.”
 
-**Density, not speed:** latency stays in-band; the Rust case for ClawQL Cloud is tenant density / cost per isolate (~**8–9×** less anon at lean/board under the restored host). Lean bisect: [LEAN-BISECT.md](./LEAN-BISECT.md). HTTP 300–700 ms stalls: **not** fixed by prune — [HTTP-TAIL-POST-PRUNE.md](./HTTP-TAIL-POST-PRUNE.md).
+Lean-confirm on that Bun host: **~138.5 MB**. Density vs Rust ≈ **8–9×** (board ~8.4× / lean ~9×). The old **~15×** figure was the eager-listen board — **do not quote**. Artifacts: `/opt/cursor/artifacts/dataplane-week1-post-lazy/` · [`dataplane-week1-post-lazy-5k.json`](../../benchmarks/gateway-multi-comparison/dataplane-week1-post-lazy-5k.json).
+
+**Week-2 framing (settled):** same effective latency, about **8–9×** less memory, TypeScript Bun build stable near **~130 MB** on the main line. Next: governance pipeline on Rust, then a fair comparison with both sides doing the full work. Lean bisect: [LEAN-BISECT.md](./LEAN-BISECT.md). HTTP 300–700 ms stalls: **not** fixed by prune — [HTTP-TAIL-POST-PRUNE.md](./HTTP-TAIL-POST-PRUNE.md).

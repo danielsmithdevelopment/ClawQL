@@ -46,4 +46,4 @@ Week 2 (governance pipeline on Rust) is justified on the memory gap. Fix or expl
 
 ## Post-prune remasure (2026-10-22)
 
-See **[WEEK1-POST-PRUNE.md](./WEEK1-POST-PRUNE.md)**. After the host `_streamMapping` prune, Bun plateaus (no GB climb). Pre-lazy-port board was ~235 MB; **post-lazy remasure ~129 MB** vs Rust ~**15.3 MB** (~8.4×). Latency in-band.
+See **[WEEK1-POST-PRUNE.md](./WEEK1-POST-PRUNE.md)**. After the host `_streamMapping` prune, Bun plateaus (no GB climb). Pre-lazy-port board was ~235 MB; post-lazy confirmation ~**129 MB** vs Rust ~**15 MB** (~8–9×). Latency effectively equal (~0.5 ms median gap). Publish: 3×10k with ranges.

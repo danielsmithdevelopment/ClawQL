@@ -24,7 +24,7 @@ Lineages diverge at merge-base `66f003479`. The Oct-15 cite lived on the cf-mt s
 
 **Ported back to tip (this branch):** skip-payments plugins, lazy vault-seed / dispose / static composer, lazy WORM memory sink, HTTP route lazy-loads, bench env `CLAWQL_HTTP_SKIP_PAYMENTS` + `SKIP_GRAPHQL` + catalog SQLITE defaults.
 
-**Verdict:** the ~180 MB gap was **configuration**. After the port, tip reproduces a main-line lean floor (~**142 MB**) close to the Oct-15 cite. Public pages should cite **this tip number** (equal-arm lean profile), not an unreproducible side-branch figure and not the pre-port ~313 MB as the product floor.
+**Verdict:** the ~180 MB gap was **configuration**. After the port, tip reproduces a main-line lean floor (~**142 MB**) close to the Oct-15 cite — essentially the originally published ~130 MB band, rebuildable from a release. Public pages should cite **this tip number** (equal-arm lean / board ~130 MB), not an unreproducible side-branch-only figure and not the pre-port ~313 MB as the product floor.
 
 ## Catalog note
 
@@ -32,14 +32,14 @@ With catalog on (product default), restored tip still plateaus ~142 MB under t
 
 ## Week-2 density baseline (reproducible)
 
-Remasured CF known-op board under restored lazy listen (`CF_DP_REPS=1` `CF_DP_ITERS=5000`, same recipe as [WEEK1-POST-PRUNE](./WEEK1-POST-PRUNE.md)):
+**Settled framing:** same effective latency, about **8–9×** less memory, Bun TypeScript build stable near **~130 MB** on tip. Confirmation run (1×5k) under restored lazy listen — **publish boards still use 3×10k with ranges**.
 
 | Arm | Anon | vs Rust ~15 MB |
 | --- | ---: | ---: |
 | Tip Bun `--smol` lean (heap-vs-anon / lean-confirm N=2000) | **~139–142 MB** | **~9×** |
-| Tip Bun CF known-op board (post-lazy, 1×5k) | **~129 MB** | **~8.4×** |
+| Tip Bun CF known-op (post-lazy confirmation, 1×5k) | **~129 MB** | **~8.4×** |
 | Prior board (post-prune, pre-lazy-port) | ~235 MB | ~15× — **superseded**; do not quote |
 
-Latency stays in the same band (this remasure: Bun call p999 **7.0 ms** / Rust **5.6 ms**; p50/p99 near-parity). Rust’s case is density.
+**Latency (precise, confirmation run):** Rust call p50 **0.55 ms** vs Bun **1.05 ms** (~0.5 ms absolute — not a “2× faster” product claim). Bun slightly better at p99; Rust slightly better at p999. Effectively equal vs any real API. Rust’s case is density.
 
 Artifacts: `/opt/cursor/artifacts/dataplane-week1-post-lazy/` · [`dataplane-week1-post-lazy-5k.json`](../../benchmarks/gateway-multi-comparison/dataplane-week1-post-lazy-5k.json).
