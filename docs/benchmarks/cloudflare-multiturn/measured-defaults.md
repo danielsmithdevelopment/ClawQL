@@ -128,9 +128,10 @@ numbers go public (same courtesy as the token board).
 **204 and 26 are not contradictory** — different payloads (and ClawQL’s topology
 differs on the pets board). State both when either number appears. NATS 4-replica
 ~**135** remains the near-term multi-instance capacity answer. The open HTTP tail
-(300–700 ms stalls) is **not** explained by JSON `_streamMapping` growth — post-prune
-10k remasure still shows Bun flow p999 **565 ms** / n≥300 ms **17** (Node **513 ms** /
-**21**). See [`HTTP-TAIL-POST-PRUNE`](../../spikes/rust-dataplane/HTTP-TAIL-POST-PRUNE.md).
+(300–700 ms stalls) is **not** explained by JSON `_streamMapping` growth — 3×10k
+post-prune remasures keep Bun n≥300 ms at **17** and Node at **18–19**. Rust
+`clawql_dataplane` on the same mock/client still sees **7–8** ≥300 ms flows (p999
+much cleaner). See [`HTTP-TAIL-POST-PRUNE`](../../spikes/rust-dataplane/HTTP-TAIL-POST-PRUNE.md).
 Raising per-instance HTTP ceilings remains a separate investigation.
 
 ## Why program mode is not the core _yet_
