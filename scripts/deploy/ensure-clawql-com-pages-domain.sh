@@ -78,10 +78,13 @@ if [[ "$HAS_PAGES_CNAME" == "0" ]]; then
   resp="$(cf -X POST "${API}/zones/${ZONE_ID}/dns_records" -d "$body")"
   if [[ "$(echo "$resp" | jq -r '.success')" != "true" ]]; then
     echo "$resp" | jq .
-    echo "    WARN: could not create CNAME ${APEX} → ${PAGES_TARGET}"
-  else
-    echo "    Created proxied CNAME ${APEX} → ${PAGES_TARGET}"
+    echo "ERROR: could not create CNAME ${APEX} → ${PAGES_TARGET}"
+    echo "  CLOUDFLARE_API_TOKEN needs Zone DNS Edit (and usually Zone Read)."
+    echo "  Docs: docs/deployment/dns-aid-clawql-com.md — or set manually in CF DNS:"
+    echo "    CNAME ${APEX} → ${PAGES_TARGET} (proxied / orange-cloud), remove GitHub Pages A/AAAA."
+    exit 1
   fi
+  echo "    Created proxied CNAME ${APEX} → ${PAGES_TARGET}"
 else
   echo "    Pages CNAME already present for ${APEX}"
 fi

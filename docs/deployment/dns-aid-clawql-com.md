@@ -30,7 +30,9 @@ Workflow [`.github/workflows/deploy-landing-page.yml`](../../.github/workflows/d
 ## One-time operator checklist
 
 1. Repo secrets: `CLOUDFLARE_API_TOKEN` (Zone DNS Edit, Zone Settings Edit, Transform Rules Edit, Pages Edit) and `CLOUDFLARE_ACCOUNT_ID`.
-2. Prefer attaching custom domain **clawql.com** to Cloudflare Pages project **clawql-website** so `functions/` serve Link + markdown without relying on Pro-only `content_converter`.
+   - **Required for apex AgentReady:** Zone **DNS Edit**. Without it, Pages can attach `clawql.com` to `clawql-website` but CI cannot replace GitHub Pages A records with a proxied CNAME → `clawql-website.pages.dev`. Apex stays `server: GitHub.com`, so `/mcp`, Link headers, and markdown negotiation never apply on the live hostname.
+   - Manual unblock (same effect): in Cloudflare DNS, remove apex `185.199.*` / `2606:50c0:*` A/AAAA, add proxied CNAME `clawql.com` → `clawql-website.pages.dev`, then re-run **Deploy landing page**.
+2. Prefer attaching custom domain **clawql.com** to Cloudflare Pages project **clawql-website** so `functions/` serve Link + markdown without relying on Pro-only `content_converter` (CI does this via `ensure-clawql-com-pages-domain.sh`).
 3. Enable **DNSSEC** on the zone (scanners report `dnssecValidated`; docs already reach level 5 without it, but DNSSEC clears the remaining dnsAid warning).
 4. Re-run deploy (`workflow_dispatch` or push under `apps/www/**`), wait for propagation, then:
 
