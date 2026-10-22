@@ -85,6 +85,8 @@ is_github_pages_origin() {
 if [[ "$PROXY" != "0" ]]; then
   echo "==> Orange-cloud apex DNS records when origin is GitHub Pages"
   RECORDS="$(cf "${API}/zones/${ZONE_ID}/dns_records?name=${APEX}&per_page=100")"
+  COUNT="$(echo "$RECORDS" | jq '[.result[]? | select(.type=="A" or .type=="AAAA" or .type=="CNAME")] | length')"
+  echo "    found ${COUNT} A/AAAA/CNAME record(s) for ${APEX}"
   echo "$RECORDS" | jq -c '.result[]? | select(.type=="A" or .type=="AAAA" or .type=="CNAME")' | while IFS= read -r row; do
     rid="$(echo "$row" | jq -r '.id')"
     rtype="$(echo "$row" | jq -r '.type')"
