@@ -30,3 +30,5 @@
 | call p999 | 9.75 ms | **4.86 ms** | ~5.6 → **4.89 ms** |
 
 Climb fix confirmed under CF known-op load. Memory gap vs tip Bun ≈ **15×** (235 / 15.3). Per-call p999 is now near-parity; Rust still wins session p999. Go/no-go still waits Phase B governance on both sides.
+
+**Density, not speed:** with the leak fixed, Bun call p999 **4.86 ms** vs Rust **4.89 ms** — latency is a dead heat. The Rust case for ClawQL Cloud is tenant density / cost per isolate. Self-host Bun at 130–240 MB remains workable; managed multi-tenant 15× (or ~8–9× if lean returns toward ~130 MB) is real money. Lean bisect: [LEAN-BISECT.md](./LEAN-BISECT.md). HTTP 300–700 ms stalls: **not** fixed by prune — [HTTP-TAIL-POST-PRUNE.md](./HTTP-TAIL-POST-PRUNE.md).

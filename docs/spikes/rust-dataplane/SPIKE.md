@@ -34,7 +34,7 @@ CF_DP_REPS=3 CF_DP_ITERS=10000 ./scripts/dataplane/week1-cf-known-op.sh
 
 See [WEEK1.md](./WEEK1.md). **Label: `fast-path-only`.**
 
-**Bun tip note:** Oct-15 ~130 MB cite is not tip. Post-prune remasure ([WEEK1-POST-PRUNE](./WEEK1-POST-PRUNE.md)): Bun **plateaus ~235 MB** on 1×5k known-op; lean-confirm ~244 MB; Rust ~15 MB flat. GB climb was `_streamMapping` (fixed).
+**Bun tip note:** Oct-15 ~130 MB cite is not tip (same probe on tip ≈ **313 MB**; [LEAN-BISECT](./LEAN-BISECT.md)). Post-prune remasure ([WEEK1-POST-PRUNE](./WEEK1-POST-PRUNE.md)): Bun **plateaus ~235 MB** on 1×5k known-op; Rust ~15 MB flat. Call p999 dead heat (~4.9 ms). GB climb was `_streamMapping` (fixed). HTTP 300–700 ms stalls remain ([HTTP-TAIL-POST-PRUNE](./HTTP-TAIL-POST-PRUNE.md)).
 
 ## Differential harness
 

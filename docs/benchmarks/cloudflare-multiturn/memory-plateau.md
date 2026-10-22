@@ -7,7 +7,7 @@ Gates and honesty notes for Streamable HTTP memory under sessionful load.
 | #                 | Symptom                                                      | Cause class                                                                                                                                                | Status                                                                                                                     |
 | ----------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | **1. Climb**      | Anonymous ~200→~3444 MB over ~30k same-session JSON executes | MCP SDK JSON mode orphans `_streamMapping` after `resolveJson` ([typescript-sdk#2559](https://github.com/modelcontextprotocol/typescript-sdk/issues/2559)) | **Fixed in host** via `pruneOrphanJsonStreamMappings` after each POST; PR gate + nightly + unit bound test                 |
-| **2. Lean floor** | Lean listen probe ~130 MB (Oct 15) → ~170–260 MB on tip      | Different from the climb — baseline RSS regression since Oct 15                                                                                            | **Open** — bisect with lean probe from Oct 15; do not use tip lean as week-2 Rust baseline until tip Bun plateaus after #1 |
+| **2. Lean floor** | Same `heap-vs-anon` Bun `--smol` probe: Oct 15 **131 MB** → tip **~313 MB** | Different from the climb — baseline RSS regression since Oct 15 (cf-mt lineage vs tip; merge-base 2026-10-10) | **Open** — endpoints reproduced; tip catalog A/B + first-parent bisect in [`LEAN-BISECT`](../../spikes/rust-dataplane/LEAN-BISECT.md). Week-2 Rust density uses tip Bun after climb fix (~235 MB board / ~300 MB lean probe), not the 130 MB cite, until #2 names a floor. |
 
 Week-2 Rust dataplane comparison waits until tip Bun plateaus (#1) and uses the build TypeScript can actually reach after #2 is understood.
 
@@ -67,9 +67,9 @@ Bench stats on `/healthz` (opt-in): `CLAWQL_BENCH_STATS=1` → `stream_mapping_e
 
 Track separately from `_streamMapping`:
 
-- **Oct 15 board / heap A/B:** Bun `--smol` ~**130 MB**, Node 256 ~**132 MB** anon plateau ([measured-defaults](./measured-defaults.md)).
-- **Tip lean probe:** ~**170–260 MB** (Bun ~173 / Node ~236 in recent honesty notes) with the same equal-arm slim env.
-- **Action:** bisect from the Oct 15 commit with `scripts/benchmarks/heap-vs-anon-plateau.mjs` (or equivalent lean listen probe). Do **not** fold this into the climb fix or the plateau CI gate.
-- **Rust week-2:** compare against tip Bun **after** climb is fixed and lean bisect has a named culprit (or an accepted new floor).
+- **Oct 15 board / heap A/B:** Bun `--smol` ~**130 MB**, Node 256 ~**132 MB** anon plateau ([measured-defaults](./measured-defaults.md)) — reproduced at `95015461b` as **131.4 MB**.
+- **Tip same probe (2026-10-22):** Bun `--smol` **~313 MB** anon plateau; dataplane lean-confirm **~295 MB**; CF known-op board after prune **~235 MB**.
+- **Action:** continue tip first-parent bisect + catalog A/B ([`LEAN-BISECT`](../../spikes/rust-dataplane/LEAN-BISECT.md)). Do **not** fold this into the climb fix or the plateau CI gate.
+- **Rust week-2:** density case vs tip Bun after climb fix (~235 MB board / ~300 MB lean). Expect ~**8–15×** memory advantage for Rust (~15 MB), not a latency story (post-prune call p999 ~4.9 ms both).
 
 See also vault notes: [[Bun JSON streamMapping memory climb fixed]], [[Bun smol lean board 130MB anon plateau config]].

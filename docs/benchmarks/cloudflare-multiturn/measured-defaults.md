@@ -128,8 +128,11 @@ numbers go public (same courtesy as the token board).
 
 **204 and 26 are not contradictory** — different payloads (and ClawQL’s topology
 differs on the pets board). State both when either number appears. NATS 4-replica
-~**135** remains the near-term multi-instance capacity answer; the open HTTP tail
-(300–700 ms stalls) is the same investigation as raising per-instance HTTP ceilings.
+~**135** remains the near-term multi-instance capacity answer. The open HTTP tail
+(300–700 ms stalls) is **not** explained by JSON `_streamMapping` growth — post-prune
+10k remasure still shows Bun flow p999 **565 ms** / n≥300 ms **17** (Node **513 ms** /
+**21**). See [`HTTP-TAIL-POST-PRUNE`](../../spikes/rust-dataplane/HTTP-TAIL-POST-PRUNE.md).
+Raising per-instance HTTP ceilings remains a separate investigation.
 
 ## Why program mode is not the core _yet_
 
