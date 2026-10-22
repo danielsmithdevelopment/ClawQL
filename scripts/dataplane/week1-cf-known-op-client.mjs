@@ -18,7 +18,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ACCEPT = "application/json, text/event-stream";
 const LABEL = process.env.COMPARISON_LABEL || "fast-path-only";
 const REPS = Math.max(1, Number(process.env.CF_DP_REPS || 3));
-const ITERS = Math.max(1, Number(process.env.CF_DP_ITERS || 200));
+const ITERS = Math.max(1, Number(process.env.CF_DP_ITERS || 10000));
 const OUT = process.env.CF_DP_OUT || join(HERE, "../../tmp/dataplane-week1-summary.json");
 
 const ARMS = [
@@ -193,7 +193,23 @@ function plateau(samples) {
   if (!last.length) return null;
   const sorted = [...last].sort((a, b) => a - b);
   const mid = sorted[Math.floor(sorted.length / 2)];
-  return { median_kb: mid, median_mb: mid != null ? +(mid / 1024).toFixed(2) : null, n: last.length };
+  const first = samples[0];
+  const end = samples[samples.length - 1];
+  const drift_kb = first != null && end != null ? end - first : null;
+  const climbing =
+    drift_kb != null && first > 0 ? drift_kb / first > 0.25 && samples.length >= 10 : false;
+  return {
+    median_kb: mid,
+    median_mb: mid != null ? +(mid / 1024).toFixed(2) : null,
+    n: last.length,
+    first_kb: first ?? null,
+    last_kb: end ?? null,
+    drift_kb,
+    climbing,
+    note: climbing
+      ? "Anonymous climbed >25% over the run — last-5 median is not a stable plateau"
+      : null,
+  };
 }
 
 const sessions = {};

@@ -403,7 +403,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     })();
   }
 
-  if (!options.skipGraphqlAttach) {
+  const skipGraphqlFromEnv = ["1", "true", "yes"].includes(
+    (process.env.CLAWQL_HTTP_SKIP_GRAPHQL ?? "").trim().toLowerCase()
+  );
+  if (!options.skipGraphqlAttach && !skipGraphqlFromEnv) {
     await attachGraphqlHttpToMcpApp(app);
   }
 
