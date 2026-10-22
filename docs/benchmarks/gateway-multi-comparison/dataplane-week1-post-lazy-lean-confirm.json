@@ -1,0 +1,46 @@
+{
+  "profile": "heap-vs-anon single known-op (dns list + where)",
+  "n": 2000,
+  "pid": 1605407,
+  "anonymous_mb_start": 85.12890625,
+  "anonymous_mb_plateau_median": 138.5390625,
+  "published_cite_mb": 142,
+  "matches_published_cite": true,
+  "tip_band_note": "Tip equal-arm Bun --smol lean after lazy-listen restore ≈142 MB. Oct-15 ~130 MB was a side-branch config cite.",
+  "pass": true,
+  "max_mb_gate": 350,
+  "series_tail": [
+    {
+      "i": 1650,
+      "anonymous_mb": 136.828125
+    },
+    {
+      "i": 1700,
+      "anonymous_mb": 136.78125
+    },
+    {
+      "i": 1750,
+      "anonymous_mb": 137.765625
+    },
+    {
+      "i": 1800,
+      "anonymous_mb": 137.28515625
+    },
+    {
+      "i": 1850,
+      "anonymous_mb": 137.078125
+    },
+    {
+      "i": 1900,
+      "anonymous_mb": 138.5390625
+    },
+    {
+      "i": 1950,
+      "anonymous_mb": 140.08203125
+    },
+    {
+      "i": 2000,
+      "anonymous_mb": 138.7734375
+    }
+  ]
+}
