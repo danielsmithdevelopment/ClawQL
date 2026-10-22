@@ -70,9 +70,12 @@ quote rep3 or heap A/B (**132 MB** / +**3.5 ms** p99), not an r1–r3 averag
 [`board-final-summary.md`](./board-final-summary.md).
 
 **Honesty (post–October 15 tip):** the same lean probe on current tip measures ~**173 MB**
-(Bun `--smol`) / ~**236 MB** (Node 256) — not the October 15 plateau. Until the host
-memory regression is closed and remasured, treat **~130 MB / ~132 MB** as
-**version-scoped to the October 15 build**, not as a claim about tip releases.
+(Bun `--smol`) / ~**236 MB** (Node 256) — not the October 15 plateau. This **lean floor**
+regression (~130→~170–260 MB) is **separate** from the JSON `_streamMapping` climb
+(fixed via host prune + gates). Track the lean bisect as an open item in
+[`memory-plateau.md`](./memory-plateau.md). Until lean is remasured, treat
+**~130 MB / ~132 MB** as **version-scoped to the October 15 build**, not as a claim
+about tip releases.
 
 ### HTTP concurrency (Cloud-shaped) — cap tax retracted
 
