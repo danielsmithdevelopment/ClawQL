@@ -122,7 +122,6 @@ Ordered by AgentReady failure modes and honesty, not by ranker points:
 
 ## Operator follow-ups
 
-<<<<<<< HEAD
 | Priority | Action | Owner hint |
 | -------- | ------ | ---------- |
 | P0 | **Deploy** www + docs so production matches this branch | infra |
@@ -131,16 +130,5 @@ Ordered by AgentReady failure modes and honesty, not by ranker points:
 | P1 | Public docs Streamable HTTP MCP (product infra) | product |
 | P2 | Apex Cloudflare Pages so Accept-markdown negotiation always applies | infra |
 | P3 | Wikipedia/Wikidata brand discoverability | GTM |
-=======
-| Priority | Action                                                                                                                                                         | Owner hint    |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| P0       | ~~Fix or unpublish dead `docs.clawql.com/mcp` remote~~ **Done in-repo** (remotes env-gated; auth.md honesty). **Deploy** www + docs so production cards match. | docs + www    |
-| P0       | Confirm CF Bot settings + crawler IP 200s in logs for docs                                                                                                     | infra         |
-| P1       | Publish MCP Registry `server.json` + Smithery/official registry listing                                                                                        | GTM + release |
-| P1       | Split **public docs MCP** vs **OAuth-gated product MCP** per AR-ACT-03                                                                                         | product       |
-| P2       | Link OpenAPI / CLI install from homepage + llms.txt; add `pricing.md` twin                                                                                     | www           |
-| P2       | Finish DNS-AID / markdown edge on clawql.com (existing runbook)                                                                                                | infra         |
-| P3       | AI Catalog, skill digests, Wikipedia/Wikidata (scanner hygiene)                                                                                                | GTM           |
->>>>>>> 2655d8e14328f4fdc2cd082290c5e3a600c9dee4
 
 Do not claim “AgentReady compliant” as a badge — the spec has none. Prefer: “scored with is-agentic / ora / Mintlify on \<date\>; MUST find/read pass on marketing HTML; act via CLI + self-hosted MCP.”
