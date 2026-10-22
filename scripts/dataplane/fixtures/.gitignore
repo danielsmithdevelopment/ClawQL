@@ -1,0 +1,6 @@
+# Generated catalogs (compile from curated OpenAPI)
+*.catalog.sqlite
+*.catalog.meta.json
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal

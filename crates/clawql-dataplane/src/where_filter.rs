@@ -99,9 +99,55 @@ pub fn validate_where(expression: &str) -> Result<(), WhereFilterError> {
     Ok(())
 }
 
+/// jmespath.js accepts unquoted backtick tokens (`A`, `audit-target.example`) as
+/// string literals. The Rust `jmespath` crate requires valid JSON inside backticks
+/// (`"A"`, `1`, `true`). Rewrite non-JSON backtick bodies to JSON strings so CF
+/// known-op shapes match the TypeScript host.
+fn normalize_jmespath_js_literals(expression: &str) -> String {
+    let mut out = String::with_capacity(expression.len());
+    let mut chars = expression.chars().peekable();
+    let mut in_single = false;
+    while let Some(ch) = chars.next() {
+        if ch == '\'' && !in_single {
+            // entering/leaving handled below — track only outside backticks
+        }
+        if ch == '\'' {
+            in_single = !in_single;
+            out.push(ch);
+            continue;
+        }
+        if ch == '`' && !in_single {
+            let mut body = String::new();
+            for c in chars.by_ref() {
+                if c == '`' {
+                    break;
+                }
+                body.push(c);
+            }
+            let trimmed = body.trim();
+            let is_json = serde_json::from_str::<serde_json::Value>(trimmed).is_ok();
+            if is_json {
+                out.push('`');
+                out.push_str(trimmed);
+                out.push('`');
+            } else {
+                out.push('`');
+                out.push_str(&serde_json::to_string(trimmed).unwrap_or_else(|_| {
+                    format!("\"{}\"", trimmed.replace('\\', "\\\\").replace('"', "\\\""))
+                }));
+                out.push('`');
+            }
+            continue;
+        }
+        out.push(ch);
+    }
+    out
+}
+
 pub fn apply_where(body: &serde_json::Value, expression: &str) -> Result<serde_json::Value, WhereFilterError> {
     validate_where(expression)?;
-    let expr = jmespath::compile(expression.trim())
+    let normalized = normalize_jmespath_js_literals(expression.trim());
+    let expr = jmespath::compile(&normalized)
         .map_err(|e| WhereFilterError::Invalid(e.to_string()))?;
     let data = body
         .to_jmespath()
@@ -122,6 +168,13 @@ mod tests {
         let body = json!({"pets":[{"id":1,"name":"a"},{"id":2,"name":"b"}]});
         let out = apply_where(&body, "pets[?id==`1`]").unwrap();
         assert_eq!(out, json!([{"id":1,"name":"a"}]));
+    }
+
+    #[test]
+    fn accepts_js_style_backtick_strings() {
+        let body = json!({"result":[{"type":"A","name":"x"},{"type":"AAAA","name":"y"}]});
+        let out = apply_where(&body, "result[?type==`A`].name").unwrap();
+        assert_eq!(out, json!(["x"]));
     }
 
     #[test]

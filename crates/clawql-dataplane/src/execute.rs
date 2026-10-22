@@ -101,9 +101,10 @@ pub async fn execute_rest(
     };
     let (path, used_path) = substitute_path(path_template, &req.args)?;
 
+    let base = catalog.base_url_for(op)?;
     let mut url = format!(
         "{}{}",
-        catalog.base_url.trim_end_matches('/'),
+        base.trim_end_matches('/'),
         if path.starts_with('/') {
             path
         } else {
