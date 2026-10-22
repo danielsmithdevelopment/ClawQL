@@ -15,6 +15,10 @@ import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
 import { pruneOrphanJsonStreamMappings } from "./prune-json-stream-mappings.js";
 import {
+  benchStatsEnabled,
+  collectStreamMappingStats,
+} from "./mcp-stream-mapping-stats.js";
+import {
   resolveSessionIdleMs,
   resolveSessionMax,
   startSessionIdleWatcher,
@@ -447,6 +451,12 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     };
     if (nativeProtocolMetricsEnabled()) {
       base.nativeProtocolMetrics = getNativeProtocolMetricsSnapshot();
+    }
+    // Opt-in: expose SDK `_streamMapping` sizes for regression / bench (see memory-plateau.md).
+    if (Effect.runSync(benchStatsEnabled())) {
+      const stats = Effect.runSync(collectStreamMappingStats(transports));
+      base.stream_mapping_entries = stats.stream_mapping_entries;
+      base.request_to_stream_entries = stats.request_to_stream_entries;
     }
     if (process.env.CLAWQL_HEALTHZ_MEMORY_ARTIFACTS?.trim() === "1") {
       try {

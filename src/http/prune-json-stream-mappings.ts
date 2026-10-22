@@ -3,6 +3,12 @@
  * entries after `resolveJson` (SSE mode calls `cleanup()`; JSON mode does not).
  * Sessionful multiturn otherwise grows one map entry per POST.
  *
+ * Upstream: modelcontextprotocol/typescript-sdk#2559 (still open on published
+ * v1.x through 1.32.1; main fixed the completed-request half; v1.x PR #2747).
+ * Host prune reaches into private `_streamMapping` — pin the SDK and keep
+ * `json-stream-mapping-bound.test.ts` green on every upgrade. Drop this module
+ * only after a published SDK release that cleans up after `resolveJson`.
+ *
  * Safe with concurrent POSTs: only removes streams no longer referenced by
  * `_requestToStreamMapping` (in-flight batches still listed there).
  *
