@@ -54,6 +54,7 @@ export function operationsFromOpenAPI(doc: OpenAPIDocLike): Operation[] {
       const rb = extractRequestBodyMetadata(rbRaw);
       const responseBody = extractResponseSchemaName(operation.responses);
       const scopes = extractScopes(operation.security, doc);
+      const idempotencyCapable = openApiDeclaresIdempotencyCapable(operation, pi);
 
       ops.push({
         id: operationId,
@@ -70,11 +71,37 @@ export function operationsFromOpenAPI(doc: OpenAPIDocLike): Operation[] {
         requestBody: rb.schemaName,
         requestBodyContentType: rb.contentType,
         responseBody,
+        ...(idempotencyCapable
+          ? { riskHints: { idempotencyCapable: true as const } }
+          : {}),
       });
     }
   }
 
   return ops;
+}
+
+/**
+ * True when the OpenAPI operation (or path item) declares support for safe replay:
+ * header parameter `Idempotency-Key`, or extension `x-clawql-idempotencyCapable: true`.
+ */
+export function openApiDeclaresIdempotencyCapable(
+  operation: Record<string, unknown>,
+  pathItem?: Record<string, unknown>
+): boolean {
+  if (operation["x-clawql-idempotencyCapable"] === true) return true;
+  if (pathItem?.["x-clawql-idempotencyCapable"] === true) return true;
+  const params = [
+    ...(Array.isArray(pathItem?.parameters) ? pathItem.parameters : []),
+    ...(Array.isArray(operation.parameters) ? operation.parameters : []),
+  ];
+  for (const p of params) {
+    if (!p || typeof p !== "object") continue;
+    const param = p as Record<string, unknown>;
+    if (param.in !== "header") continue;
+    if (String(param.name ?? "").toLowerCase() === "idempotency-key") return true;
+  }
+  return false;
 }
 
 function slugPath(pathKey: string): string {

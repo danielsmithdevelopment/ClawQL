@@ -180,10 +180,17 @@ export function renderPath(template: string, args: Record<string, unknown>): str
 /**
  * Perform the HTTP call for `op` with `args` (path + query + JSON body for non-GET with body).
  */
+/** Optional execute knobs (mandate idempotency, etc.). */
+export type ExecuteRestOptions = {
+  /** When set, sent as HTTP `Idempotency-Key` (Stripe-class safe replay). */
+  readonly idempotencyKey?: string;
+};
+
 async function executeRestOperationImpl(
   op: Operation,
   args: Record<string, unknown>,
-  openapi: OpenAPIDoc
+  openapi: OpenAPIDoc,
+  options?: ExecuteRestOptions
 ): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
   let baseUrl: string;
   try {
@@ -235,6 +242,10 @@ async function executeRestOperationImpl(
             : "application/json",
     ...Effect.runSync(mergedAuthHeadersEffect(op.specLabel)),
   };
+  const idempotencyKey = options?.idempotencyKey?.trim();
+  if (idempotencyKey) {
+    headers["Idempotency-Key"] = idempotencyKey;
+  }
   if (isNextcloudPropfind) {
     headers.Depth =
       typeof args.depth === "string" && args.depth.trim() ? String(args.depth).trim() : "1";
@@ -383,10 +394,11 @@ async function executeRestOperationImpl(
 export function executeRestOperationEffect(
   op: Operation,
   args: Record<string, unknown>,
-  openapi: OpenAPIDoc
+  openapi: OpenAPIDoc,
+  options?: ExecuteRestOptions
 ): Effect.Effect<{ ok: true; data: unknown } | { ok: false; error: string }, Error> {
   return Effect.tryPromise({
-    try: () => executeRestOperationImpl(op, args, openapi),
+    try: () => executeRestOperationImpl(op, args, openapi, options),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
   });
 }
@@ -395,7 +407,8 @@ export function executeRestOperationEffect(
 export async function executeRestOperation(
   op: Operation,
   args: Record<string, unknown>,
-  openapi: OpenAPIDoc
+  openapi: OpenAPIDoc,
+  options?: ExecuteRestOptions
 ): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
-  return Effect.runPromise(executeRestOperationEffect(op, args, openapi));
+  return Effect.runPromise(executeRestOperationEffect(op, args, openapi, options));
 }
