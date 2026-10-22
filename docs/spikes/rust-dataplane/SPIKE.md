@@ -6,22 +6,22 @@
 
 ## Status
 
-| Phase | Status | Notes |
-| ----- | ------ | ----- |
-| 0 Freeze | **Done** | Memory go bar = ≤65 MB anon; see BARS.md |
-| A Bare path | **Done (scaffold)** | JSON catalog + minimal MCP + mock upstream; smoke green |
-| B Governance | Pending | |
-| C Verus + boards | Pending | `policy.rs` is the first Verus candidate |
-| D Go/no-go | Pending | |
+| Phase            | Status              | Notes                                                   |
+| ---------------- | ------------------- | ------------------------------------------------------- |
+| 0 Freeze         | **Done**            | Memory go bar = ≤65 MB anon; see BARS.md                |
+| A Bare path      | **Done (scaffold)** | JSON catalog + minimal MCP + mock upstream; smoke green |
+| B Governance     | Pending             |                                                         |
+| C Verus + boards | Pending             | `policy.rs` is the first Verus candidate                |
+| D Go/no-go       | Pending             |                                                         |
 
 ### Phase A smoke signal (local, self-mock)
 
 Not a multiplex board — lean listen + 10× `execute` with JMESPath `where`:
 
-| Build | VmRSS after warm execute |
-| ----- | ------------------------ |
-| debug | ~14 MB |
-| **release** | **~6.7 MB** |
+| Build       | VmRSS after warm execute |
+| ----------- | ------------------------ |
+| debug       | ~14 MB                   |
+| **release** | **~6.7 MB**              |
 
 Bun lean baseline in BARS is ~125–130 MB. Release dataplane is already under the ≤65 MB go bar on this toy path; Phase B+ must re-check under governance + real catalog load before claiming the bar.
 
