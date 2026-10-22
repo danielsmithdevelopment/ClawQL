@@ -250,4 +250,21 @@ jobs:
           CLAWQL_AGENT_EDGE_PROXY: "1"
           CLAWQL_AGENT_EDGE_PAGES_DOMAIN: "1"
         run: bash scripts/deploy/ensure-clawql-com-agent-edge.sh
-        continue-on-error: true
+        # Do not continue-on-error: Pages domain attach is required for /mcp + markdown on apex.
+
+      - name: Verify apex agent edge (best-effort DNS /mcp)
+        if: steps.cf.outputs.enabled == 'true'
+        run: |
+          set -euo pipefail
+          echo "Waiting briefly for DNS…"
+          sleep 15
+          dig +short clawql.com A || true
+          # Prefer Pages/CF; warn (do not fail build) if still on bare GitHub Pages IPs.
+          if dig +short clawql.com A | grep -q '^185\.199\.'; then
+            echo "::warning::clawql.com still resolves to GitHub Pages A records — Pages domain CNAME may need manual DNS."
+          fi
+          code="$(curl -sfI -o /dev/null -w '%{http_code}' https://clawql.com/mcp || echo 000)"
+          echo "GET /mcp => ${code}"
+          if [[ "$code" != "200" ]]; then
+            echo "::warning::https://clawql.com/mcp not 200 yet (got ${code}); check Pages custom domain."
+          fi
