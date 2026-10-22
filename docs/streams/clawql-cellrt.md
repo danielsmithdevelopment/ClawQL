@@ -17,6 +17,8 @@
 
 It is **not** a general-purpose DO runtime and **not** a Node `worker_threads` reimplementation. It is the ClawQL-specific production runtime that celld would need to be if ClawQL owned it end-to-end.
 
+**Not the execute data-plane spike.** A separate proposal ([ADR 0016](../adr/0016-rust-dataplane-spike.md)) scopes a thin Rust Streamable-HTTP gateway for known-operation `execute` (memory/tail + Verus trial on policy kernels). That spike forwards everything else to today’s TypeScript host; it does **not** authorize building cellrt.
+
 ### Why build rather than only use celld
 
 | Concern            | celld (adopt)                             | clawql-cellrt (own)                                                           |
