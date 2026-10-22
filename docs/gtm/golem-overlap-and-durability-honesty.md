@@ -114,6 +114,22 @@ Skip Scala / MoonBit-style breadth unless a customer asks.
 
 ---
 
+## Why “outcome unknown” (and why that does not undermine durability)
+
+When a program sends a charge and the cell dies before the reply arrives, two cases look identical from ClawQL’s side: the API processed the charge and the reply was lost, or the request never arrived. The answer lives on the API’s side. That is a distributed-systems fact, not a ClawQL limitation.
+
+**Durability claim (what the board proves today):** the program survives, the write is **never repeated**, and the in-flight case is **never lost silently** — it is recorded as `outcome_unknown`. That is the honest version of a limit every system faces. Blind retry (“at least once”) is the other side of the same trade-off (Golem when the API has no keys).
+
+**Do not frame recovery as only three options** (retry / stay silent / mark unknown). **Check, then decide** is the preferred strategy when the API allows it — and it must be careful, not a guess:
+
+1. **Match by unique reference, not by “looks similar.”** Tag every write with a stable id before send (approval / execution id). Ask “is there a charge with _this_ reference?”, not “is there a recent successful charge for this customer/amount?” — the latter can match a different legitimate charge and skip a needed write.
+2. **“Not found” ≠ “failed” yet.** The original may still be in flight, or search may lag. Retrying too soon can double-charge when the original lands later. Treat not-found as failure only after the original can no longer succeed: wait out the API’s max lifetime, cancel/void if the API allows, or read from a source the API guarantees is current.
+3. **Then decide.** Found by reference → record success. Not found and the original can no longer land → safe to send once more with the same reference. Still ambiguous (no lookup by reference, no fresh read, no cancel) → person.
+
+**Where `outcome_unknown` belongs:** only the moment a call is in flight **and** neither idempotency keys nor a sound verify path exist. The board aims half its kills at that window on purpose; in production the window is milliseconds, so unknowns are rare. Aggregate “~48% unknown” is a targeting artifact — see [AVAILABILITY.md](../benchmarks/program-cell-fleet-kill/AVAILABILITY.md).
+
+---
+
 ## Product improvement: resolve in-flight unknowns
 
 Default: **never guess, never silent-drop, never blind-retry**. When the catalog shows a way to find out, find out.
@@ -178,7 +194,7 @@ Do **not** put Golem on the MCP token/governance pets board as if it were Bifros
 
 > Golem makes **execution** durable; ClawQL governs the **remote effects** you both agree no runtime can make durable on its own — at most once, approved, audited, and exactly once where idempotency keys exist. Here are the crash-test numbers. Want to check our setup and show the combination together?
 
-Body: (1) execution vs effect durability; (2) his three conditions, acknowledged; (3) Tier C claim + evidence + dual-mode board; (4) invite Golem-arm config; (5) optional planned mandate keys (not claimed).
+Body: (1) execution vs effect durability; (2) his three conditions, acknowledged; (3) Tier C claim + evidence + dual-mode board; (4) invite Golem-arm config; (5) REST mandate keys shipped + check-then-decide lookup still planned (not overclaimed).
 
 **Later — own calm public post** on the two kinds of durability with measured data, without referencing the argument. Readers following the debate will find it; it answers the question both left open. Not a dunk.
 
@@ -204,5 +220,6 @@ He is publicly pressure-testing frameworks that overclaim durability. Use his fr
 - [ ] Preferred production row stays **planned** until measured at stock N; TTL-only 30s always labeled **n=40**.
 - [ ] Prefer “at most once” for approved writes; “at least once + stable id” for events.
 - [ ] When quoting Golem 1.6, keep his three conditions intact; never imply ClawQL is a durable execution engine. REST mandate keys are shipped; do not claim program-runner keyed resume or lookup reconciliation until measured.
+- [ ] Do not frame in-flight recovery as only “retry / silent / person” — lead with check-by-reference (exact match; not-found ≠ failed yet), then keys, then person.
 - [ ] Do not claim constant resume cost until journal-length board exists.
 - [ ] Streams “Durable Objects” always means Cloudflare/celld DO substrate, not Golem.

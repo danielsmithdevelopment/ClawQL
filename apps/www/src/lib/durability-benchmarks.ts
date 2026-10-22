@@ -51,7 +51,7 @@ export const durabilityColumnChips: readonly DurabilityColumnChip[] = [
     id: 'uncertainty',
     title: 'Uncertainty',
     value: '481 outcome unknown',
-    body: 'Aggregate ~48% is a targeting artifact — see per-phase table. Person resolves.',
+    body: 'Aggregate ~48% is a targeting artifact — see per-phase table. Explicit, not silent; auto-resolve via keys/lookup is planned.',
   },
   {
     id: 'availability',
@@ -101,7 +101,7 @@ export const durabilityPhaseRows: readonly DurabilityPhaseRow[] = [
 ] as const
 
 export const durabilityPhaseFraming =
-  'Kills are aimed evenly at four phases; two are the brief in-flight window where unknown is the only honest answer. In real operation, crashes mostly land outside that window, so unknown outcomes are far rarer than this targeted test shows.'
+  'Kills are aimed evenly at four phases; two are the brief in-flight window where the API’s reply never arrived — unknown is honesty, not a durability failure. In real operation that window is milliseconds, so unknowns are far rarer than this targeted test shows. Prefer check-by-reference or idempotency keys before involving a person (planned).'
 
 export type DurabilityLadderRow = {
   tier: string
@@ -238,8 +238,12 @@ export const durabilityHonestyNotes: readonly { title: string; body: string }[] 
     body: 'A runtime can make the program survive a crash. Remote POSTs still need upstream idempotency — or at-most-once governance. ClawQL chooses at most once for consequential writes.',
   },
   {
-    title: 'No “exactly once” over HTTP',
-    body: 'Prefer at-most-once approved writes. Mandate-derived idempotency keys for Stripe-class APIs are planned — not claimed until shipped and measured.',
+    title: 'Outcome unknown does not undermine durability',
+    body: 'When a cell dies mid-call, success and “never arrived” look the same from ClawQL’s side. We never blind-retry and never drop silently — the unknown is recorded. Recovery is not only “retry / do nothing / ask a person”: check by unique reference (after the original can no longer land), then decide; or resend with an idempotency key. Person only when neither exists.',
+  },
+  {
+    title: 'No “exactly once” over HTTP (yet)',
+    body: 'Prefer at-most-once approved writes today. Mandate-derived keys and spec-driven lookup are planned so Stripe-class / lookup-capable APIs auto-resolve in-flight unknowns — not claimed until shipped and measured.',
   },
   {
     title: 'Peer boards pending invite',

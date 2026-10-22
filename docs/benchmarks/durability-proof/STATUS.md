@@ -80,13 +80,13 @@ We cannot say yet on a shared board — Golem has not published the kind of cras
 | Duplicated writes after a crash  | No published crash test        | **0 in 1,000** phased kills                        |
 | Failover time after a node crash | No published figure            | About **12 seconds** median, set by the lease      |
 
-**Trade-off (now in his words):** Golem favors completing the work — retry; without upstream keys an interrupted POST can happen twice. ClawQL favors never repeating a consequential action — consume the approval first; cost is `outcome_unknown` for a person. Same unavoidable limit; opposite choices.
+**Trade-off (now in his words):** Golem favors completing the work — retry; without upstream keys an interrupted POST can happen twice. ClawQL favors never repeating a consequential action — consume the approval first; cost is an explicit `outcome_unknown` instead of a silent miss or a blind retry. Same unavoidable limit; opposite choices. That does **not** mean “person forever”: when the API supports idempotency keys or lookup-by-reference, the unknown should resolve automatically ([check-then-decide](../../gtm/golem-overlap-and-durability-honesty.md#why-outcome-unknown-and-why-that-does-not-undermine-durability)) — planned, not claimed.
 
 **Where ClawQL is likely ahead:** never repeating a write even against an API that ignores idempotency keys. Confirmed by his “at least once unless keys” framing. “Likely” until both run against the non-idempotent mock on the dual-mode board.
 
 **Where ClawQL is probably behind:** failover speed (~12s lease floor). A mature durable runtime may recover faster — renew more often and keep leases on regional storage.
 
-**Where unmeasured / planned:** celld cold start and agents per node; ClawQL attaching mandate-derived idempotency keys on Stripe-class APIs (planned — would cut in-flight unknowns without dropping at-most-once elsewhere).
+**Where unmeasured / planned:** celld cold start and agents per node; mandate-derived keys **and** reconciliation-by-lookup so Stripe-class (and lookup-capable) APIs auto-resolve in-flight unknowns without dropping at-most-once elsewhere.
 
 **Overall for his critique:** yes — a published crash test with real sample size, a statistical bound, and availability costs stated openly is exactly what he demands. Collaboration angle: Golem + ClawQL covers both sides of _his_ model. Head-to-head waits for a Golem arm on [`COMPARISON.md`](./COMPARISON.md), ideally with his input on configuration.
 
