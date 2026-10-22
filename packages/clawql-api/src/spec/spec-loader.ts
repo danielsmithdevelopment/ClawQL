@@ -948,9 +948,8 @@ async function loadSpecUncached(): Promise<LoadedSpec> {
  * 3. Fallback `CLAWQL_CATALOG_SQLITE_BUILD=inprocess` → parse here, persist-then-slim.
  */
 async function maybeLoadOrPersistCatalogSqlite(loaded: LoadedSpec): Promise<LoadedSpec> {
-  const { catalogSqliteEnabled, persistLoadedSpecToCatalogSqliteEffect } = await import(
-    "../catalog/catalog-sqlite.js"
-  );
+  const { catalogSqliteEnabled, persistLoadedSpecToCatalogSqliteEffect } =
+    await import("../catalog/catalog-sqlite.js");
   if (!Effect.runSync(catalogSqliteEnabled())) return loaded;
   try {
     return await Effect.runPromise(persistLoadedSpecToCatalogSqliteEffect(loaded));
@@ -962,11 +961,8 @@ async function maybeLoadOrPersistCatalogSqlite(loaded: LoadedSpec): Promise<Load
 }
 
 async function tryLoadCatalogSqliteOnly(): Promise<LoadedSpec | null> {
-  const {
-    catalogSqliteEnabled,
-    resolveCatalogSqlitePath,
-    catalogSqliteNeedsRebuild,
-  } = await import("../catalog/catalog-sqlite.js");
+  const { catalogSqliteEnabled, resolveCatalogSqlitePath, catalogSqliteNeedsRebuild } =
+    await import("../catalog/catalog-sqlite.js");
   if (!Effect.runSync(catalogSqliteEnabled())) return null;
   // Builder child must parse sources itself — never short-circuit to DB.
   if ((process.env.CLAWQL_CATALOG_SQLITE_OOP_CHILD ?? "").trim() === "1") return null;
@@ -981,9 +977,7 @@ async function tryLoadCatalogSqliteOnly(): Promise<LoadedSpec | null> {
   if (!loadDbRequested && needsRebuild) return null;
   if (!existsSync(path)) {
     if (loadDbRequested) {
-      throw new Error(
-        `[catalog-sqlite] CLAWQL_CATALOG_SQLITE_LOAD=db but missing file: ${path}`
-      );
+      throw new Error(`[catalog-sqlite] CLAWQL_CATALOG_SQLITE_LOAD=db but missing file: ${path}`);
     }
     return null;
   }
@@ -997,9 +991,7 @@ async function tryLoadCatalogSqliteOnly(): Promise<LoadedSpec | null> {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     if (loadDbRequested) {
-      throw new Error(
-        `[catalog-sqlite] CLAWQL_CATALOG_SQLITE_LOAD=db failed for ${path}: ${msg}`
-      );
+      throw new Error(`[catalog-sqlite] CLAWQL_CATALOG_SQLITE_LOAD=db failed for ${path}: ${msg}`);
     }
     console.error(`[catalog-sqlite] optional DB load failed, falling back to OpenAPI: ${msg}`);
     return null;
@@ -1021,9 +1013,7 @@ async function tryBuildCatalogSqliteOutOfProcess(): Promise<LoadedSpec | null> {
     return await Effect.runPromise(buildCatalogSqliteOutOfProcessEffect());
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error(
-      `[catalog-sqlite] oop-build failed (${msg}); falling back to in-process persist`
-    );
+    console.error(`[catalog-sqlite] oop-build failed (${msg}); falling back to in-process persist`);
     return null;
   }
 }

@@ -13,10 +13,10 @@
 
 ## Results (local, 2026-10-22)
 
-| Arm | Errors | per-call p50 / p99 / **p999** (ms) | per-session p999 (ms) | Anon plateau (last-5 median) |
-| --- | ------ | ---------------------------------- | --------------------- | ---------------------------- |
-| Bun host | 0 | 1.29 / 4.66 / **12.15** | 272 | **~296 MB** |
-| Rust dataplane | 0 | 0.64 / 4.09 / **7.63** | 34 | **~15 MB** |
+| Arm            | Errors | per-call p50 / p99 / **p999** (ms) | per-session p999 (ms) | Anon plateau (last-5 median) |
+| -------------- | ------ | ---------------------------------- | --------------------- | ---------------------------- |
+| Bun host       | 0      | 1.29 / 4.66 / **12.15**            | 272                   | **~296 MB**                  |
+| Rust dataplane | 0      | 0.64 / 4.09 / **7.63**             | 34                    | **~15 MB**                   |
 
 Raw: `/opt/cursor/artifacts/dataplane-week1/week1-summary.json` (agent run) — re-run the harness to regenerate.
 
