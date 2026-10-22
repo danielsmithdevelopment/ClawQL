@@ -664,6 +664,41 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   });
 
   app.post(mcpPath, applyGatewayAuth, async (req, res) => {
+    const slowMs = Number.parseInt(process.env.CLAWQL_HTTP_SLOW_MS ?? "0", 10) || 0;
+    const timingOn =
+      slowMs > 0 ||
+      ["1", "true", "yes"].includes((process.env.CLAWQL_HTTP_TIMING ?? "").trim().toLowerCase());
+    const tRoute0 = timingOn ? performance.now() : 0;
+    const tRouteIso = timingOn ? new Date().toISOString() : "";
+    if (timingOn && !res.headersSent) {
+      // Echo request start so the client can compare without log merges.
+      res.setHeader("x-clawql-server-t0", tRouteIso);
+    }
+    const logSlowRoute = (phase: string): void => {
+      if (!timingOn) return;
+      const dt = performance.now() - tRoute0;
+      if (!res.headersSent) {
+        res.setHeader("x-clawql-server-ms", dt.toFixed(3));
+      }
+      if (slowMs <= 0 || dt < slowMs) return;
+      const body =
+        req.body && typeof req.body === "object" && !Array.isArray(req.body)
+          ? (req.body as {
+              method?: unknown;
+              params?: { name?: unknown };
+            })
+          : null;
+      const method = body ? String(body.method ?? "?") : "?";
+      const tool =
+        method === "tools/call" && body?.params && typeof body.params.name === "string"
+          ? body.params.name
+          : "-";
+      console.error(
+        `[clawql-http-slow] ${dt.toFixed(1)}ms phase=${phase} method=${method} tool=${tool} ` +
+          `t0=${tRouteIso} t1=${new Date().toISOString()} session=${req.header("mcp-session-id") ?? "-"}`
+      );
+    };
+
     const protocolVersion = resolveHttpMcpProtocolVersion(req.header("mcp-protocol-version"));
     res.setHeader("mcp-protocol-version", protocolVersion);
 
@@ -837,6 +872,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
             transport!.handleRequest(req, res, req.body)
           )
         );
+        logSlowRoute("handleRequest");
       } finally {
         // SDK JSON-response mode leaves `_streamMapping` entries after resolveJson;
         // prune orphans so sessionful multiturn does not retain one entry per POST.
@@ -846,8 +882,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         if (closeTransportAfter) {
           await transport.close().catch(() => undefined);
         }
+        logSlowRoute("finally");
       }
     } catch (err: unknown) {
+      logSlowRoute("error");
       console.error("[clawql-mcp-http] POST /mcp error:", err);
       if (!res.headersSent) {
         res.status(500).json({

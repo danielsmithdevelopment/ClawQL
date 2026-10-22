@@ -881,13 +881,19 @@ function fetchSkipStandaloneSse(baseFetch = undiciFetch) {
         const serverT0 = res?.headers?.get?.("x-clawql-server-t0") ?? "-";
         const parseT0 = res?.headers?.get?.("x-clawql-parse-t0") ?? "-";
         const queueMs = res?.headers?.get?.("x-clawql-queue-ms") ?? "-";
+        const upstreamMs = res?.headers?.get?.("x-clawql-upstream-ms") ?? "-";
         const holdMs =
           ttfbMs != null && completeMs != null ? Number((completeMs - ttfbMs).toFixed(1)) : null;
+        const gapMs =
+          serverMs !== "-" && Number.isFinite(Number(serverMs))
+            ? Number((dt - Number(serverMs)).toFixed(1))
+            : "-";
         console.error(
           `[mt-client-slow] ${dt.toFixed(1)}ms ${method} ${url} t0=${t0Iso} t1=${new Date().toISOString()} ` +
             `ttfb_ms=${ttfbMs != null ? ttfbMs.toFixed(1) : "-"} complete_ms=${completeMs != null ? completeMs.toFixed(1) : "-"} ` +
             `hold_ms=${holdMs ?? "-"} content_type=${contentType} body_bytes=${bodyBytes} ` +
             `server_ms=${serverMs} server_t0=${serverT0} parse_t0=${parseT0} queue_ms=${queueMs} ` +
+            `upstream_ms=${upstreamMs} client_minus_server_ms=${gapMs} ` +
             `connects_delta=${streamableHttpConnects - connectsBefore} ` +
             `connects_total=${streamableHttpConnects}`
         );
@@ -1284,6 +1290,7 @@ async function connectClawqlHttp(mock, { id = "clawql_http", runtime = "node" } 
       if (
         s.includes("[clawql-http-perf]") ||
         s.includes("[clawql-http-slow]") ||
+        s.includes("[clawql-upstream-fetch]") ||
         s.includes("[clawql-timer-trace]") ||
         s.includes("Scavenge") ||
         s.includes("Mark-")
@@ -1463,13 +1470,22 @@ async function connectClawqlDataplane(mock, { id = "clawql_dataplane" } = {}) {
     spawnCmd = pinned.command;
     spawnArgs = pinned.args;
   }
+  const dpEnv = {
+    ...process.env,
+    CLAWQL_API_BASE_URL: mock.baseUrl,
+    RUST_LOG: process.env.RUST_LOG || "warn",
+  };
+  // Same stall-diag knobs as clawql_http (MT_STALL_DIAG sets these in connectClawqlHttp).
+  if (stallDiagEnabled()) {
+    if (dpEnv.CLAWQL_HTTP_TIMING == null) dpEnv.CLAWQL_HTTP_TIMING = "1";
+    if (dpEnv.CLAWQL_HTTP_SLOW_MS == null) dpEnv.CLAWQL_HTTP_SLOW_MS = "5";
+  }
+  for (const key of ["CLAWQL_HTTP_TIMING", "CLAWQL_HTTP_SLOW_MS", "CLAWQL_DATAPLANE_SLOW_MS"]) {
+    if (process.env[key] != null && process.env[key] !== "") dpEnv[key] = process.env[key];
+  }
   const child = spawn(spawnCmd, spawnArgs, {
     cwd: ROOT,
-    env: {
-      ...process.env,
-      CLAWQL_API_BASE_URL: mock.baseUrl,
-      RUST_LOG: process.env.RUST_LOG || "warn",
-    },
+    env: dpEnv,
     stdio: ["ignore", "pipe", "pipe"],
     detached: true,
   });
@@ -1485,6 +1501,7 @@ async function connectClawqlDataplane(mock, { id = "clawql_dataplane" } = {}) {
     const onData = (chunk) => {
       const s = String(chunk);
       stderrChunks.push(s);
+      if (s.includes("[clawql-dataplane-slow]")) process.stderr.write(s);
       if (!listenResolved && (s.includes("listening") || s.includes("/mcp") || s.includes("healthz"))) {
         listenResolved = true;
         clearTimeout(timer);

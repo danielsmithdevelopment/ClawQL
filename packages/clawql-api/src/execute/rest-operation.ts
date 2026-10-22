@@ -343,7 +343,14 @@ async function executeRestOperationImpl(
       };
     }
 
+    const fetchDiag = ["1", "true", "yes", "on"].includes(
+      (process.env.CLAWQL_UPSTREAM_FETCH_DIAG ?? "").trim().toLowerCase()
+    );
+    const fetchSlowMs = Number(process.env.CLAWQL_UPSTREAM_FETCH_SLOW_MS || 5) || 5;
+    const tFetch0 = fetchDiag ? performance.now() : 0;
+    const tFetchIso = fetchDiag ? new Date().toISOString() : "";
     const res = await getFetchImplForRest()(url.toString(), init);
+    const ttfbMs = fetchDiag ? performance.now() - tFetch0 : 0;
     // Optional chaining: unit-test fetch stubs often omit Headers.
     const contentType = res.headers?.get?.("content-type") ?? "";
     const binary =
@@ -373,6 +380,14 @@ async function executeRestOperationImpl(
     }
 
     const text = await res.text();
+    const completeMs = fetchDiag ? performance.now() - tFetch0 : 0;
+    if (fetchDiag && completeMs >= fetchSlowMs) {
+      console.error(
+        `[clawql-upstream-fetch] ${completeMs.toFixed(1)}ms ttfb_ms=${ttfbMs.toFixed(1)} ` +
+          `t0=${tFetchIso} t1=${new Date().toISOString()} status=${res.status} ` +
+          `url=${url.toString().slice(0, 180)} body_bytes=${Buffer.byteLength(text)}`
+      );
+    }
     let payload: unknown = text;
     try {
       payload = JSON.parse(text);
