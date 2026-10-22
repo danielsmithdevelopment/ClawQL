@@ -43,8 +43,14 @@ next-env.d.ts
 # Generated at prebuild (see scripts/generate-agent-assets.mjs)
 /public/robots.txt
 /public/auth.md
+/public/pricing.md
+/public/index.md
+/public/contact.md
 /public/agent-markdown.json
 /public/llms.txt
+/public/openapi.json
+/public/server.json
+/public/api/
 /public/_headers
 /public/_redirects
 /public/install
