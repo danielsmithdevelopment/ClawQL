@@ -56,19 +56,33 @@ jobs:
         run: |
           set -euo pipefail
           cd apps/www
-          npx --yes serve@14 out -l 4321 &
+          test -d out
+          test -f out/index.html
+          # Prefetch so the background start is not racing a cold npm registry
+          # download (30s wait previously timed out under slow npx).
+          npm install --no-save --no-package-lock --prefix /tmp/lh-serve serve@14
+          SERVE_BIN=/tmp/lh-serve/node_modules/.bin/serve
+          test -x "$SERVE_BIN"
+          # Bind loopback explicitly; -n skips clipboard (can hang in headless CI).
+          "$SERVE_BIN" out -l tcp://127.0.0.1:4321 -n >serve.log 2>&1 &
           PID=$!
           cleanup() { kill "$PID" 2>/dev/null || true; }
           trap cleanup EXIT
 
-          for i in $(seq 1 30); do
+          for i in $(seq 1 60); do
             if curl -sf "http://127.0.0.1:4321/" >/dev/null; then
               echo "Server ready."
               break
             fi
+            if ! kill -0 "$PID" 2>/dev/null; then
+              echo "serve exited early. Log:"
+              cat serve.log || true
+              exit 1
+            fi
             sleep 1
-            if [ "$i" -eq 30 ]; then
-              echo "Timeout waiting for static server"
+            if [ "$i" -eq 60 ]; then
+              echo "Timeout waiting for static server. Log:"
+              cat serve.log || true
               exit 1
             fi
           done

@@ -83,10 +83,23 @@ jobs:
           test -f out/benchmarks/executor-comparison/index.html
           test -f out/benchmarks/executor-comparison/latency.html
           test -f out/benchmarks/executor-comparison/latency.json
-          grep -qi 'Agentic Gateway for Auditable Production AI' out/llms.txt
-          grep -q 'inference/gtm' out/llms.txt
+          grep -qi 'Agentic Gateway for Auditable Production AI' out/llms.txt || {
+            echo '::error::out/llms.txt missing Agentic Gateway tagline'
+            exit 1
+          }
+          grep -q 'inference/gtm' out/llms.txt || {
+            echo '::error::out/llms.txt missing inference/gtm link'
+            exit 1
+          }
           grep -q 'inference/gtm' out/sitemap.xml
           grep -q 'enterprise/gtm' out/sitemap.xml
+          test -f out/pricing.md
+          test -f out/index.md
+          test -f out/contact.md
+          test -f out/openapi.json
+          test -f out/.well-known/ai-catalog.json
+          test -f out/.well-known/mcp/server.json
+          test -f out/contact/index.html
           # Ensure install script is shell, not HTML
           head -1 out/install | grep -q '^#!/usr/bin/env bash'
           # Guard against reintroducing the hidden-file Pages artifact bug

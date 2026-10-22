@@ -787,6 +787,8 @@ writeText(
 - [Pricing](${origin}/pricing/) · [pricing.md](${origin}/pricing.md)
 - [Benchmarks](${origin}/benchmarks/)
 - [Contact](${origin}/contact/)
+- [Inference-first GTM playbook](${origin}/inference/gtm/)
+- [Enterprise GTM playbook](${origin}/enterprise/gtm/)
 - [index.md](${origin}/index.md)
 - [auth.md](${origin}/auth.md)
 - [MCP server card](${origin}/.well-known/mcp/server-card.json)
