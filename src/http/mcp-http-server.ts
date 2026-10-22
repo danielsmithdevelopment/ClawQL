@@ -14,10 +14,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
 import { pruneOrphanJsonStreamMappings } from "./prune-json-stream-mappings.js";
-import {
-  benchStatsEnabled,
-  collectStreamMappingStats,
-} from "./mcp-stream-mapping-stats.js";
+import { benchStatsEnabled, collectStreamMappingStats } from "./mcp-stream-mapping-stats.js";
 import {
   resolveSessionIdleMs,
   resolveSessionMax,
