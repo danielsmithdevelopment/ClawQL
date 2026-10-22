@@ -131,7 +131,10 @@ differs on the pets board). State both when either number appears. NATS 4-replic
 (300–700 ms stalls) is **not** explained by JSON `_streamMapping` growth — 3×10k
 post-prune remasures keep Bun n≥300 ms at **17** and Node at **18–19**. Rust
 `clawql_dataplane` on the same mock/client still sees **7–8** ≥300 ms flows (p999
-much cleaner). See [`HTTP-TAIL-POST-PRUNE`](../../spikes/rust-dataplane/HTTP-TAIL-POST-PRUNE.md).
+much cleaner). Phase timing on known-op puts that shared floor in the
+**harness/client/host gap** (Rust `server_ms`≈1 ms / `upstream_ms`≈0.5 ms while
+client TTFB is 500–700 ms; mock ≤18 ms; GC ≤14 ms) — not product execute. See
+[`HTTP-TAIL-POST-PRUNE`](../../spikes/rust-dataplane/HTTP-TAIL-POST-PRUNE.md).
 Raising per-instance HTTP ceilings remains a separate investigation.
 
 ## Why program mode is not the core _yet_
