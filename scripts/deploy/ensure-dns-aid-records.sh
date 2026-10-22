@@ -42,7 +42,7 @@ upsert_txt() {
   local existing
   existing="$(cf "${API}/zones/${ZONE_ID}/dns_records?type=TXT&name=${name}")"
   local id
-  id="$(echo "$existing" | jq -r --arg c "$content" '.result[] | select(.content == $c) | .id' | head -1)"
+  id="$(echo "$existing" | jq -r --arg c "$content" '(.result // [])[] | select(.content == $c) | .id' | head -1)"
   if [[ -n "$id" && "$id" != "null" ]]; then
     echo "    TXT ${name} already present"
     return 0
@@ -64,7 +64,7 @@ upsert_https() {
   local existing
   existing="$(cf "${API}/zones/${ZONE_ID}/dns_records?type=HTTPS&name=${name}")"
   local id
-  id="$(echo "$existing" | jq -r --arg t "$target" '.result[] | select(.data.target == $t) | .id' | head -1)"
+  id="$(echo "$existing" | jq -r --arg t "$target" '(.result // [])[] | select(.data.target == $t) | .id' | head -1)"
   if [[ -n "$id" && "$id" != "null" ]]; then
     echo "    HTTPS ${name} already present"
     return 0
@@ -103,14 +103,14 @@ upsert_cname_www() {
   local target="${APEX}"
   local existing id
   existing="$(cf "${API}/zones/${ZONE_ID}/dns_records?type=CNAME&name=${name}")"
-  id="$(echo "$existing" | jq -r --arg t "$target" '.result[] | select(.content == $t) | .id' | head -1)"
+  id="$(echo "$existing" | jq -r --arg t "$target" '(.result // [])[] | select(.content == $t) | .id' | head -1)"
   if [[ -n "$id" && "$id" != "null" ]]; then
     echo "    CNAME ${name} already present"
     return 0
   fi
   # Prefer upsert: delete mismatched www records then create
   local stale
-  stale="$(echo "$existing" | jq -r '.result[].id // empty')"
+  stale="$(echo "$existing" | jq -r '(.result // [])[].id // empty')"
   if [[ -n "$stale" ]]; then
     while IFS= read -r rid; do
       [[ -z "$rid" ]] && continue

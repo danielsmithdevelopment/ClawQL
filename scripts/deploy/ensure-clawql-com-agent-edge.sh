@@ -186,7 +186,8 @@ bash "${SCRIPT_DIR}/ensure-dns-aid-records.sh" || echo "    WARN: DNS-AID step r
 # only apply when apex traffic hits Cloudflare Pages, not bare GitHub Pages.
 if [[ "$PAGES_DOMAIN" == "1" ]]; then
   echo "==> Cloudflare Pages custom domain (functions/ for markdown + /mcp)"
-  bash "${SCRIPT_DIR}/ensure-clawql-com-pages-domain.sh" || echo "    WARN: Pages domain step reported errors"
+  # Fail hard: without DNS CNAME to Pages, apex stays on GitHub Pages and /mcp + markdown never ship.
+  bash "${SCRIPT_DIR}/ensure-clawql-com-pages-domain.sh"
 fi
 
 echo "Done. Agent edge configuration attempted for ${APEX}."
