@@ -24,7 +24,8 @@ jobs:
   lint:
     name: Lint & format
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Cold npm ci (root + apps/docs Prettier plugins) can exceed 10m under slow registry.
+    timeout-minutes: 20
     steps:
       # actions/checkout@v7.0.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -148,7 +149,9 @@ jobs:
   workflow-scripts:
     name: ShellCheck & actionlint
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # Helm/kustomize are fast; packer + cold `infra/pulumi` npm install can exceed 5m
+    # when the registry is slow (job then cancels mid-step → UNSTABLE PR checks).
+    timeout-minutes: 15
     steps:
       # actions/checkout@v7.0.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -527,7 +530,8 @@ jobs:
         secret-scan,
       ]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Cold npm + full unit/coverage matrix can exceed 15m under slow registry (Node 22 cancelled at ~15m).
+    timeout-minutes: 25
     strategy:
       fail-fast: true
       matrix:
