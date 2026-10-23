@@ -5,6 +5,10 @@
  * Effect-primary: `resolveClaimsEffect` / `assertToolAccessEffect` + Effect step-up.
  * Hosts that need a Promise call `Effect.runPromise` at their own Express/MCP edge —
  * this package does not ship convenience Promise façades.
+ *
+ * Ready density: default SecretStore and step-up wiring are constructed lazily so
+ * equal-arm apiKey/noAuth listen does not open SQLite or build TOTP store layers.
+ * (`jose` is separately deferred inside oidc verify.)
  */
 
 import { Effect, type Layer } from "effect";
@@ -36,11 +40,8 @@ import {
 } from "./step-up/index.js";
 import { createIssuedApiKeyStore, type IssuedApiKeyStore } from "./api-keys/index.js";
 import type { AuthEventSink } from "./audit/auth-events.js";
-import {
-  resolveSecretStore,
-  type ResolveSecretStoreOptions,
-  type SecretStore,
-} from "./stores/index.js";
+import { resolveSecretStore, type ResolveSecretStoreOptions } from "./stores/resolve.js";
+import type { SecretStore } from "./stores/types.js";
 
 export type CreateClawQLAuthOptions = {
   mode?: AuthMode;
@@ -71,7 +72,7 @@ export type ClawQLAuth = {
   readonly config: GatewayAuthConfig;
   /** Issued API key registry when `apiKeyStorePath` was provided. */
   readonly apiKeys: IssuedApiKeyStore | undefined;
-  /** Pluggable secret backend (OAuth tokens, keys, nonces). */
+  /** Pluggable secret backend (OAuth tokens, keys, nonces). Lazy-default SQLite. */
   readonly secretStore: SecretStore;
   /** Sync claim resolution for `noAuth` / `apiKey`; `oidc` / `mcpOAuth` require Effect. */
   resolveClaims(
@@ -130,7 +131,6 @@ export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLA
         eventSink: options.authEventSink,
       })
     : undefined;
-  const secretStore = resolveAuthSecretStore(options.secretStore);
 
   const config: GatewayAuthConfig = {
     mode: options.mode ?? base.mode,
@@ -142,15 +142,41 @@ export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLA
     oidc: options.oidc ?? base.oidc,
   };
 
-  const storeLayer = options.stepUpStorePath
-    ? createStepUpStoreLayer(options.stepUpStorePath)
-    : undefined;
+  let secretStoreCache: SecretStore | undefined;
+  const getSecretStore = (): SecretStore => {
+    if (!secretStoreCache) {
+      secretStoreCache = resolveAuthSecretStore(options.secretStore);
+    }
+    return secretStoreCache;
+  };
+
+  let stepUpCache: ClawQLAuth["stepUp"] | undefined;
+  const getStepUp = (): ClawQLAuth["stepUp"] => {
+    if (!stepUpCache) {
+      const storeLayer = options.stepUpStorePath
+        ? createStepUpStoreLayer(options.stepUpStorePath)
+        : undefined;
+      stepUpCache = {
+        totp: {
+          generateSecret: generateTotpSecretEffect,
+          generate: generateTotpEffect,
+          verify: verifyTotpEffect,
+          otpauthUrl: totpOtpauthUrlEffect,
+        },
+        storeLayer,
+        webauthn: options.webauthnVerifier ?? createUnimplementedWebAuthnVerifier(),
+      };
+    }
+    return stepUpCache;
+  };
 
   return {
     mode: config.mode,
     config,
     apiKeys,
-    secretStore,
+    get secretStore() {
+      return getSecretStore();
+    },
     resolveClaims(headers = {}) {
       return resolveAtrClaimsFromHeaders(headers, config);
     },
@@ -161,15 +187,8 @@ export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLA
       if (options.rbac?.enabled === false) return Effect.void;
       return assertToolPolicyEffect(claims, toolName, policyOptions);
     },
-    stepUp: {
-      totp: {
-        generateSecret: generateTotpSecretEffect,
-        generate: generateTotpEffect,
-        verify: verifyTotpEffect,
-        otpauthUrl: totpOtpauthUrlEffect,
-      },
-      storeLayer,
-      webauthn: options.webauthnVerifier ?? createUnimplementedWebAuthnVerifier(),
+    get stepUp() {
+      return getStepUp();
     },
   };
 }
