@@ -15,6 +15,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "proto",
     "CHANGELOG.md"
   ],

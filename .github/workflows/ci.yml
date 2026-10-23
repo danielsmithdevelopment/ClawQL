@@ -252,6 +252,9 @@ jobs:
           docker run --rm -v "$PWD:/repo" -w /repo zricethezav/gitleaks:v8.24.2 \
             detect --source /repo --no-git --verbose --no-banner --redact
 
+      - name: Gitleaks (Helm charts we ship)
+        run: bash scripts/security/scan-helm-artifact-secrets.sh
+
   supply-chain:
     name: Supply chain (OSV + Trivy + SBOM)
     needs: [lint, workflow-scripts]
@@ -445,7 +448,7 @@ jobs:
     name: npm pack install smoke
     needs: [lint, workflow-scripts]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -457,8 +460,28 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Source-map publish policy (files field negation)
+        run: node scripts/security/strip-sourcemaps-from-files-field.mjs --check
+
       - name: npm pack → clean install smoke
+        env:
+          CLAWQL_PACK_KEEP_DIR: ${{ runner.temp }}/clawql-packs
         run: bash scripts/dev/test-npm-pack-install.sh
+
+      # Reverse-engineering-of-own-artifacts: what ships vs workspace digests, secret scan on
+      # unpacked packs, bundle budgets, pack inventory BOM (+ optional baseline diff).
+      - name: Artifact release gates (packs)
+        env:
+          CLAWQL_PACK_INVENTORY_KEEP: ${{ runner.temp }}/npm-pack-inventory.json
+        run: bash scripts/security/run-artifact-release-gates.sh "${{ runner.temp }}/clawql-packs"
+
+      - name: Upload npm-pack inventory
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-pack-inventory
+          path: ${{ runner.temp }}/npm-pack-inventory.json
+          if-no-files-found: warn
 
   mcp-docker-workspace-smoke:
     name: MCP Docker workspace deps smoke

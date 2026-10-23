@@ -110,6 +110,11 @@ export const docsNavigation: Array<NavGroup> = [
       { title: 'Overview', href: '/security' },
       { title: 'Security status', href: '/security/status', tag: 'Evidence' },
       {
+        title: 'Supply-chain posture',
+        href: 'https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/supply-chain-posture.md',
+        tag: 'Verify',
+      },
+      {
         title: 'Defense in depth',
         href: '/security/defense-in-depth',
       },
