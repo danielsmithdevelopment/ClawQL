@@ -186,9 +186,7 @@ function openDb(path: string, readOnly: boolean): DatabaseSyncInstance {
     mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
   }
   const DatabaseSync = loadDatabaseSync();
-  const db = readOnly
-    ? new DatabaseSync(path, { readOnly: true })
-    : new DatabaseSync(path);
+  const db = readOnly ? new DatabaseSync(path, { readOnly: true }) : new DatabaseSync(path);
   if (!readOnly) db.exec(SCHEMA_SQL);
   return db;
 }
@@ -215,16 +213,12 @@ export const writeCatalogSqliteEffect = (
         insMeta.run("docs", String(input.openapis.length));
         insMeta.run("written_at", new Date().toISOString());
 
-        const insOp = db.prepare(
-          "INSERT INTO operations(id, spec_index, json) VALUES (?, ?, ?)"
-        );
+        const insOp = db.prepare("INSERT INTO operations(id, spec_index, json) VALUES (?, ?, ?)");
         for (const op of input.operations) {
           insOp.run(op.id, op.specIndex ?? 0, JSON.stringify(op));
         }
 
-        const insDoc = db.prepare(
-          "INSERT INTO openapi_docs(spec_index, json_gz) VALUES (?, ?)"
-        );
+        const insDoc = db.prepare("INSERT INTO openapi_docs(spec_index, json_gz) VALUES (?, ?)");
         input.openapis.forEach((doc, i) => {
           const gz = gzipSync(Buffer.from(JSON.stringify(doc), "utf8"), { level: 6 });
           insDoc.run(i, gz);
@@ -243,8 +237,7 @@ export function writeCatalogSqlite(path: string, input: CatalogSqliteWriteInput)
 
 function readMeta(db: DatabaseSyncInstance, key: string): string | null {
   const row = db.prepare("SELECT value FROM meta WHERE key = ?").get(key) as
-    | { value?: string }
-    | undefined;
+    { value?: string } | undefined;
   return typeof row?.value === "string" ? row.value : null;
 }
 
@@ -256,9 +249,8 @@ function readOperations(db: DatabaseSyncInstance): Operation[] {
 }
 
 function readOpenapiDoc(db: DatabaseSyncInstance, specIndex: number): OpenAPIDoc {
-  const row = db
-    .prepare("SELECT json_gz FROM openapi_docs WHERE spec_index = ?")
-    .get(specIndex) as { json_gz?: Buffer | Uint8Array } | undefined;
+  const row = db.prepare("SELECT json_gz FROM openapi_docs WHERE spec_index = ?").get(specIndex) as
+    { json_gz?: Buffer | Uint8Array } | undefined;
   if (!row?.json_gz) {
     throw new Error(`[catalog-sqlite] missing openapi_docs spec_index=${specIndex}`);
   }
@@ -378,9 +370,7 @@ export const buildCatalogSqliteOutOfProcessEffect = (
             if (code === 0) resolve();
             else {
               reject(
-                new Error(
-                  `[catalog-sqlite] oop-build exited code=${code} signal=${signal ?? ""}`
-                )
+                new Error(`[catalog-sqlite] oop-build exited code=${code} signal=${signal ?? ""}`)
               );
             }
           });
@@ -434,10 +424,7 @@ export type CatalogSqliteApi = {
   readonly resolvePath: (env?: NodeJS.ProcessEnv) => Effect.Effect<string>;
   readonly buildOutOfProcess: (env?: NodeJS.ProcessEnv) => Effect.Effect<boolean>;
   readonly needsRebuild: (env?: NodeJS.ProcessEnv) => Effect.Effect<boolean>;
-  readonly write: (
-    path: string,
-    input: CatalogSqliteWriteInput
-  ) => Effect.Effect<void, Error>;
+  readonly write: (path: string, input: CatalogSqliteWriteInput) => Effect.Effect<void, Error>;
   readonly loadSlim: (path: string) => Effect.Effect<CatalogSqliteSlim, Error>;
   readonly persistLoaded: (
     loaded: LoadedSpec,
@@ -448,10 +435,9 @@ export type CatalogSqliteApi = {
   ) => Effect.Effect<CatalogSqliteSlim, Error>;
 };
 
-export class CatalogSqliteService extends Context.Service<
-  CatalogSqliteService,
-  CatalogSqliteApi
->()("clawql/CatalogSqliteService") {}
+export class CatalogSqliteService extends Context.Service<CatalogSqliteService, CatalogSqliteApi>()(
+  "clawql/CatalogSqliteService"
+) {}
 
 export const CatalogSqliteLive = Layer.succeed(CatalogSqliteService, {
   enabled: catalogSqliteEnabled,
