@@ -4,15 +4,12 @@
 
 import { writeFile } from "node:fs/promises";
 import { resolve, sep } from "node:path";
-import { convertObj } from "swagger2openapi";
 import type { LoadedSpec } from "./spec-loader.js";
 import { loadOpenAPIFromAbsolutePath } from "./spec-loader.js";
 import type { Operation } from "./operation-types.js";
 import { loadCliSourceOperations } from "./cli-source-loader.js";
 import { loadMcpSourceOperations } from "./mcp-source-loader.js";
 import { loadWebmcpSourceOperations } from "./webmcp-source-loader.js";
-import { loadGraphqlNativeOperationsFromConfigs } from "./graphql-native-loader.js";
-import { loadGrpcNativeOperationsFromConfigs } from "./grpc-native-loader.js";
 import {
   readCustomSourcesFile,
   resolveClawqlHome,
@@ -127,11 +124,13 @@ async function loadOperationsForCustomSourceEntryImpl(
   if (entry.kind === "graphql") {
     const cfg = toGraphqlConfig(entry, home);
     if (!cfg) return [];
+    const { loadGraphqlNativeOperationsFromConfigs } = await import("./graphql-native-loader.js");
     return loadGraphqlNativeOperationsFromConfigs([cfg]);
   }
   if (entry.kind === "grpc") {
     const cfg = toGrpcConfig(entry, home);
     if (!cfg) return [];
+    const { loadGrpcNativeOperationsFromConfigs } = await import("./grpc-native-loader.js");
     return loadGrpcNativeOperationsFromConfigs([cfg]);
   }
   if (entry.kind === "mcp") {
@@ -192,6 +191,7 @@ async function mergeCustomSourceOperationsImpl(loaded: LoadedSpec): Promise<Load
       .map((e) => toGraphqlConfig(e, home))
       .filter((c): c is GraphQLSourceConfig => c !== null);
     if (gqlConfigs.length) {
+      const { loadGraphqlNativeOperationsFromConfigs } = await import("./graphql-native-loader.js");
       const gqlOps = await loadGraphqlNativeOperationsFromConfigs(gqlConfigs);
       operations = mergeOps(operations, gqlOps);
     }
@@ -201,6 +201,7 @@ async function mergeCustomSourceOperationsImpl(loaded: LoadedSpec): Promise<Load
       .map((e) => toGrpcConfig(e, home))
       .filter((c): c is GrpcSourceConfig => c !== null);
     if (grpcConfigs.length) {
+      const { loadGrpcNativeOperationsFromConfigs } = await import("./grpc-native-loader.js");
       const grpcOps = await loadGrpcNativeOperationsFromConfigs(grpcConfigs);
       operations = mergeOps(operations, grpcOps);
     }
@@ -277,6 +278,7 @@ async function cacheCustomSourceBodyImpl(
 
   let toWrite = bodyText;
   if (entry.kind === "openapi" && bodyText.includes('"swagger": "2.0"')) {
+    const { convertObj } = await import("swagger2openapi");
     const { openapi } = await convertObj(JSON.parse(bodyText) as object, {
       patch: true,
       warnOnly: true,
