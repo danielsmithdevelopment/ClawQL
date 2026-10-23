@@ -13,7 +13,7 @@ import {
   type GatewayAuthConfig,
 } from "clawql-auth";
 import { Effect } from "effect";
-import { validateVirtualKey } from "clawql-inference";
+import { validateVirtualKey } from "clawql-inference/keys";
 import { resolveHostAuthEventSink } from "./auth-process-worm-sink.js";
 
 let gatewayAuth: ClawQLAuth | undefined;

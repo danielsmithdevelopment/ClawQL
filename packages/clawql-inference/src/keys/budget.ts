@@ -1,12 +1,13 @@
 import { Effect } from "effect";
 import type { InferenceUsage } from "../gateway.js";
+import { isBudgetExceeded } from "./budget-check.js";
 import {
   DEFAULT_INPUT_USD_PER_TOKEN,
   DEFAULT_OUTPUT_USD_PER_TOKEN,
   estimateCostUsdEffect,
 } from "./pricing.js";
 
-export { DEFAULT_INPUT_USD_PER_TOKEN, DEFAULT_OUTPUT_USD_PER_TOKEN };
+export { DEFAULT_INPUT_USD_PER_TOKEN, DEFAULT_OUTPUT_USD_PER_TOKEN, isBudgetExceeded };
 
 /**
  * Host-boundary façade for VK spend recording.
@@ -17,9 +18,4 @@ export function estimateCostUsd(
   modelOrProviderKey?: string
 ): number {
   return Effect.runSync(estimateCostUsdEffect(usage, modelOrProviderKey));
-}
-
-export function isBudgetExceeded(spentUsd: number, budgetUsd: number | undefined): boolean {
-  if (budgetUsd === undefined || budgetUsd <= 0) return false;
-  return spentUsd >= budgetUsd;
 }

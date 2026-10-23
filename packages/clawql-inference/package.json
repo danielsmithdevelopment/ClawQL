@@ -18,6 +18,11 @@
       "import": "./dist/routing/index.js",
       "require": "./dist/routing/index.cjs"
     },
+    "./keys": {
+      "types": "./dist/keys/index.d.ts",
+      "import": "./dist/keys/index.js",
+      "require": "./dist/keys/index.cjs"
+    },
     "./plugin": {
       "types": "./dist/plugin/index.d.ts",
       "import": "./dist/plugin/index.js",
