@@ -984,10 +984,14 @@ async function tryLoadCatalogSqliteOnly(): Promise<LoadedSpec | null> {
   const { loadCatalogSqliteSlimEffect } = await import("../catalog/catalog-sqlite.js");
   try {
     const slim = await Effect.runPromise(loadCatalogSqliteSlimEffect(path));
+    // LOAD=db skips OpenAPI parse + mergeCustomSourceOperations — still classify risk
+    // so execute mandate/block matches the normal load path (ADR operation-risk-from-spec).
+    const { applyOperationRiskToLoadedOps } = await import("../risk/operation-risk-service.js");
+    const withRisk = await applyOperationRiskToLoadedOps(slim.operations);
     console.error(
-      `[catalog-sqlite] loaded ${slim.operations.length} operations from ${path} (LOAD=db)`
+      `[catalog-sqlite] loaded ${withRisk.length} operations from ${path} (LOAD=db)`
     );
-    return slim;
+    return { ...slim, operations: withRisk };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     if (loadDbRequested) {

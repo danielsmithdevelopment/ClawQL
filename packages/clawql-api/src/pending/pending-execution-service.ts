@@ -141,6 +141,8 @@ export const PendingExecutionLive = Layer.succeed(
         return {
           ok: false as const,
           status: "mandate_required" as const,
+          parked: true as const,
+          denied: false as const,
           reason: "Operation risk policy requires a mandate before execute",
           operationId: input.operationId,
           executionId,

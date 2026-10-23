@@ -38,13 +38,19 @@ const api = await import(apiUrl);
 const { loadOpenAPIFromAbsolutePath } = api;
 
 const loaded = await loadOpenAPIFromAbsolutePath(specPath);
+// Bake operation-risk into the board catalog so Bun LOAD=db and Rust share the same
+// policy surface (GET allow / POST mandate / DELETE block) without a second merge pass.
+const operations =
+  typeof api.applyOperationRiskToLoadedOps === "function"
+    ? await api.applyOperationRiskToLoadedOps(loaded.operations)
+    : loaded.operations;
 const openapis =
   loaded.openapis && loaded.openapis.length > 0 ? loaded.openapis : [loaded.openapi];
 mkdirSync(dirname(outPath), { recursive: true });
 
 if (typeof api.writeCatalogSqlite === "function") {
   api.writeCatalogSqlite(outPath, {
-    operations: loaded.operations,
+    operations,
     openapis,
     multi: loaded.multi,
   });
@@ -70,13 +76,13 @@ if (typeof api.writeCatalogSqlite === "function") {
   const insMeta = db.prepare("INSERT INTO meta(key, value) VALUES (?, ?)");
   insMeta.run("version", "1");
   insMeta.run("multi", loaded.multi || openapis.length > 1 ? "1" : "0");
-  insMeta.run("ops", String(loaded.operations.length));
+  insMeta.run("ops", String(operations.length));
   insMeta.run("docs", String(openapis.length));
   insMeta.run("written_at", new Date().toISOString());
   const insOp = db.prepare(
     "INSERT INTO operations(id, spec_index, json) VALUES (?, ?, ?)"
   );
-  for (const op of loaded.operations) {
+  for (const op of operations) {
     insOp.run(op.id, op.specIndex ?? 0, JSON.stringify(op));
   }
   const insDoc = db.prepare(
@@ -91,11 +97,12 @@ if (typeof api.writeCatalogSqlite === "function") {
 
 const meta = {
   out: outPath,
-  ops: loaded.operations.length,
+  ops: operations.length,
   docs: openapis.length,
   spec: specPath,
   spec_bytes: readFileSync(specPath).byteLength,
   schema: "catalog-sqlite/v1",
+  riskApplied: typeof api.applyOperationRiskToLoadedOps === "function",
 };
 writeFileSync(outPath.replace(/\.sqlite$/i, "") + ".meta.json", JSON.stringify(meta, null, 2));
 console.log(JSON.stringify(meta, null, 2));
