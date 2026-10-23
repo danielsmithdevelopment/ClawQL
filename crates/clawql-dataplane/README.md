@@ -3,7 +3,8 @@
 Rust Streamable-HTTP **execute** hot path.
 
 - **Phase A** (default): bare path (SQLite catalog → REST → `where`), label **`fast-path-only`**.
-- **Phase B** (opt-in): set `CLAWQL_DATAPLANE_GOVERNANCE=1` for HTTP risk classify + park/block stub.
+- **Phase B** (in progress): HTTP risk classify + park/block stub (`CLAWQL_DATAPLANE_GOVERNANCE=1`); **session IFC** (ADR 0015, default on — `CLAWQL_ENABLE_SESSION_IFC=0` to opt out). Mandate consume + WORM next.
+- **Ownership:** Rust = known-op execute + governance hot path; TypeScript = search/plugins/memory/programs/OAuth. See [`DUAL-PROCESS.md`](../../docs/spikes/rust-dataplane/DUAL-PROCESS.md).
 
 ## Quick start
 
@@ -47,6 +48,7 @@ Week-1 interleaved Bun vs Rust: `scripts/dataplane/week1-cf-known-op.sh`
 | `where_filter` | JMESPath |
 | `mcp` | Streamable HTTP (session + JSON mode) |
 | `risk` | HTTP method → allow / mandate / block (Phase B) |
+| `ifc` | Session label accumulate + write gate (ADR 0015) |
 | `policy` | Lean-shaped approval oracle (Verus later) |
 | `mock_upstream` | In-process REST for pets smoke |
 
