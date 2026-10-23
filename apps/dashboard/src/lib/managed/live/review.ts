@@ -1,16 +1,18 @@
 import {
-  approveSourceEffect,
   decidePendingExecution,
-  getPendingSourcesDir,
   listPendingExecutionIdsEffect,
   loadPendingExecution,
   mandateIdempotencyKey,
   OUTCOME_UNKNOWN_ATTENTION_MS,
-  readPendingSourceEffect,
   redriveOutcomeUnknownWithKey,
   resolvePendingOutcomeUnknown,
   type OutcomeUnknownResolve,
 } from "clawql-api";
+import {
+  approveSourceEffect,
+  getPendingSourcesDir,
+  readPendingSourceEffect,
+} from "clawql-api/sources";
 import { Effect } from "effect";
 import { readdir } from "node:fs/promises";
 

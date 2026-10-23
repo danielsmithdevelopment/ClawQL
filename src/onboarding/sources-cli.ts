@@ -6,20 +6,22 @@ import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { Effect } from "effect";
 import {
-  approveSourceEffect,
   cacheCustomSourceBody,
   detectSourceFromUrl,
   ensureSourceCacheDir,
-  proposeSourceEffect,
   readCustomSourcesFile,
   removeCustomSource,
   resetSpecCache,
-  resolveOperatorPrincipalEffect,
   slugifySourceId,
   upsertCustomSource,
   type CustomSourceEntry,
   type CustomSourceKind,
 } from "clawql-api";
+import {
+  approveSourceEffect,
+  proposeSourceEffect,
+  resolveOperatorPrincipalEffect,
+} from "clawql-api/sources";
 import { getClawqlHome } from "./paths.js";
 
 export type SourcesAddOptions = {

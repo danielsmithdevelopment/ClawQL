@@ -23,6 +23,21 @@
       "import": "./dist/graphql/in-process-execute.js",
       "require": "./dist/graphql/in-process-execute.cjs"
     },
+    "./program": {
+      "types": "./dist/program/index.d.ts",
+      "import": "./dist/program/index.js",
+      "require": "./dist/program/index.cjs"
+    },
+    "./sources": {
+      "types": "./dist/sources/index.d.ts",
+      "import": "./dist/sources/index.js",
+      "require": "./dist/sources/index.cjs"
+    },
+    "./security/injection-drills": {
+      "types": "./dist/security/injection-drills.d.ts",
+      "import": "./dist/security/injection-drills.js",
+      "require": "./dist/security/injection-drills.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

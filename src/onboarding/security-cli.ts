@@ -3,12 +3,12 @@
  */
 
 import { Effect } from "effect";
+import { celldKillNodeDemoReportEffect } from "clawql-api/program";
 import {
-  celldKillNodeDemoReportEffect,
   parseInjectionMode,
   runInjectionDrillsEffect,
   type InjectionMode,
-} from "clawql-api";
+} from "clawql-api/security/injection-drills";
 
 export async function runSecurityInject(options: {
   readonly mode?: string;

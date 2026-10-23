@@ -52,24 +52,15 @@ import {
   defaultFields,
   executeOutputFields,
   projectRestByFields,
-  agentPrincipalFromSessionIdEffect,
-  proposeSourceEffect,
   buildConsoleLinkEffect,
   consoleLinkEnabled,
   plainProxyEnabled,
-  parkedMandateStatusEffect,
-  PendingExecutionLive,
   programsEnabled,
   durableProgramsEnabled,
-  runProgramEffect,
-  executeDurableProgramEffect,
+  searchClawqlDocsEffect,
   accumulateSessionIfcReadEffect,
   sessionIfcEnabledEffect,
-  searchClawqlDocsEffect,
-  submitProgramProposalsEffect,
-  type CustomSourceKind,
-  type ProgramHost,
-  type ProgramSubmitHost,
+  PendingExecutionLive,
 } from "clawql-api";
 import { z } from "zod";
 import { currentLoadSpecEffect, getClawqlApi } from "../composition/clawql-api-adapters.js";
@@ -82,10 +73,24 @@ import { noteProcessRegisteredCapabilityTools } from "clawql-core";
 /** Lazily loaded when INSTANCE_SPEC/tier enables the matching surface (§11.1 zero-import). */
 type ChatgptExtMod = typeof import("clawql-chatgpt-extensions");
 type MemorySyncMod = typeof import("../home-sync/memory-sync.js");
+type SourcesMod = typeof import("clawql-api/sources");
+type ProgramMod = typeof import("clawql-api/program");
 
 let optionalToolDepsWired = false;
 let chatgptExtensionsMod: ChatgptExtMod | null = null;
 let memorySyncMod: MemorySyncMod | null = null;
+let sourcesMod: SourcesMod | null = null;
+let programMod: ProgramMod | null = null;
+
+async function loadSourcesMod(): Promise<SourcesMod> {
+  if (!sourcesMod) sourcesMod = await import("clawql-api/sources");
+  return sourcesMod;
+}
+
+async function loadProgramMod(): Promise<ProgramMod> {
+  if (!programMod) programMod = await import("clawql-api/program");
+  return programMod;
+}
 
 /**
  * Dynamic-import optional packages only when composition flags enable them.
@@ -163,6 +168,8 @@ export function resetOptionalToolDepsForTests(): void {
   optionalToolDepsWired = false;
   chatgptExtensionsMod = null;
   memorySyncMod = null;
+  sourcesMod = null;
+  programMod = null;
 }
 
 export { executeOutputFields, projectRestByFields } from "clawql-api";
@@ -254,6 +261,7 @@ export async function handleClawqlResumeToolInput(
 export async function handleSourcesProposeToolInput(
   raw: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
+  const sources = await loadSourcesMod();
   return getClawqlApi().run(
     Effect.gen(function* () {
       const o = (raw ?? {}) as Record<string, unknown>;
@@ -265,13 +273,16 @@ export async function handleSourcesProposeToolInput(
           ],
         };
       }
-      const proposedBy = yield* agentPrincipalFromSessionIdEffect(
+      const proposedBy = yield* sources.agentPrincipalFromSessionIdEffect(
         typeof o.sessionId === "string" ? o.sessionId : undefined
       );
-      const preview = yield* proposeSourceEffect({
+      const preview = yield* sources.proposeSourceEffect({
         url,
         name: typeof o.name === "string" ? o.name : undefined,
-        kind: typeof o.kind === "string" ? (o.kind as CustomSourceKind) : undefined,
+        kind:
+          typeof o.kind === "string"
+            ? (o.kind as import("clawql-api/sources").CustomSourceKind)
+            : undefined,
         id: typeof o.id === "string" ? o.id : undefined,
         dryRun: o.dryRun !== false,
         proposedBy,
@@ -380,12 +391,31 @@ export const durableExecuteProgramToolZodShape = {
     ),
 } as const;
 
+/** Risk and catalog facts for an operationId, from the same spec execute runs against. */
+function resolveProgramOperationEffect(operationId: string) {
+  return Effect.gen(function* () {
+    const load = yield* currentLoadSpecEffect;
+    const { operations } = yield* Effect.tryPromise({
+      try: () => load(),
+      catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+    });
+    const op = operations.find((o) => o.id === operationId);
+    if (!op) return { found: false as const };
+    return {
+      found: true as const,
+      policy: op.risk?.policy,
+      risk: op.risk,
+      operation: op,
+    };
+  });
+}
+
 /**
  * MCP host wiring: each program tool call goes through the same ExecuteService /
  * SearchService path as the Core MCP tools (gate, session IFC, audit), with
  * programId correlation recorded by the plan runner.
  */
-function makeMcpProgramHost(): ProgramHost {
+async function makeMcpProgramHost(): Promise<import("clawql-api/program").ProgramHost> {
   return {
     execute: (input, _ctx) =>
       Effect.tryPromise({
@@ -425,25 +455,6 @@ function makeMcpProgramHost(): ProgramHost {
   };
 }
 
-/** Risk and catalog facts for an operationId, from the same spec execute runs against. */
-function resolveProgramOperationEffect(operationId: string) {
-  return Effect.gen(function* () {
-    const load = yield* currentLoadSpecEffect;
-    const { operations } = yield* Effect.tryPromise({
-      try: () => load(),
-      catch: (e) => (e instanceof Error ? e : new Error(String(e))),
-    });
-    const op = operations.find((o) => o.id === operationId);
-    if (!op) return { found: false as const };
-    return {
-      found: true as const,
-      policy: op.risk?.policy,
-      risk: op.risk,
-      operation: op,
-    };
-  });
-}
-
 /**
  * MCP `execute_program` — JSON plan runner (ADR 0015 v0). With
  * CLAWQL_ENABLE_DURABLE_PROGRAMS=1 the program is journaled and resumable by `programId`.
@@ -451,6 +462,8 @@ function resolveProgramOperationEffect(operationId: string) {
 export async function handleExecuteProgramToolInput(
   raw: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
+  const program = await loadProgramMod();
+  const host = await makeMcpProgramHost();
   const o = (raw ?? {}) as Record<string, unknown>;
   const source = typeof o.source === "string" ? o.source : undefined;
   const timeoutMs =
@@ -459,16 +472,16 @@ export async function handleExecuteProgramToolInput(
     typeof o.sessionId === "string" ? o.sessionId : process.env.CLAWQL_SESSION_ID?.trim();
   const result = await Effect.runPromise(
     durableProgramsEnabled()
-      ? executeDurableProgramEffect(
+      ? program.executeDurableProgramEffect(
           {
             source,
             programId: typeof o.programId === "string" ? o.programId : undefined,
             timeoutMs,
             sessionId,
           },
-          makeMcpProgramHost()
+          host
         )
-      : runProgramEffect({ source: source ?? "", timeoutMs, sessionId }, makeMcpProgramHost())
+      : program.runProgramEffect({ source: source ?? "", timeoutMs, sessionId }, host)
   );
   return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
 }
@@ -490,7 +503,8 @@ export const submitProgramProposalsToolZodShape = {
  * session IFC, mandate park, audit). Parked leaves are only re-checked here: approval
  * stays with Review / `resume`.
  */
-function makeMcpProgramSubmitHost(): ProgramSubmitHost {
+async function makeMcpProgramSubmitHost(): Promise<import("clawql-api/program").ProgramSubmitHost> {
+  const program = await loadProgramMod();
   return {
     execute: (input, _ctx) =>
       Effect.tryPromise({
@@ -505,7 +519,7 @@ function makeMcpProgramSubmitHost(): ProgramSubmitHost {
       }),
     lookup: resolveProgramOperationEffect,
     pendingStatus: (executionId) =>
-      parkedMandateStatusEffect(executionId).pipe(Effect.provide(PendingExecutionLive)),
+      program.parkedMandateStatusEffect(executionId).pipe(Effect.provide(PendingExecutionLive)),
   };
 }
 
@@ -513,16 +527,18 @@ function makeMcpProgramSubmitHost(): ProgramSubmitHost {
 export async function handleSubmitProgramProposalsToolInput(
   raw: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
+  const program = await loadProgramMod();
+  const host = await makeMcpProgramSubmitHost();
   const o = (raw ?? {}) as Record<string, unknown>;
   const result = await Effect.runPromise(
-    submitProgramProposalsEffect(
+    program.submitProgramProposalsEffect(
       {
         programId: typeof o.programId === "string" ? o.programId : "",
         proposals: o.proposals,
         sessionId:
           typeof o.sessionId === "string" ? o.sessionId : process.env.CLAWQL_SESSION_ID?.trim(),
       },
-      makeMcpProgramSubmitHost()
+      host
     )
   );
   return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };

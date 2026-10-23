@@ -1,3 +1,4 @@
+export type { CustomSourceKind } from "../spec/custom-sources-types.js";
 export * from "./pending-source-types.js";
 export * from "./pending-source-store.js";
 export * from "./source-proposal-principal.js";

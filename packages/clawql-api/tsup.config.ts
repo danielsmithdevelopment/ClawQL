@@ -8,13 +8,17 @@ export default defineConfig({
     "graphql/in-process-execute": "src/graphql/in-process-execute.ts",
     // Short-lived OOP catalog builder (gateway spawns; exits after write).
     "catalog/build-catalog-sqlite-cli": "src/catalog/build-catalog-sqlite-cli.ts",
+    // Optional Ready-deferred surfaces (import only when tools/flags need them).
+    "program/index": "src/program/index.ts",
+    "sources/index": "src/sources/index.ts",
+    "security/injection-drills": "src/security/injection-drills.ts",
   },
   format: ["esm", "cjs"],
   dts: true,
   sourcemap: true,
   clean: true,
-  noExternal: ["clawql-auth"],
-  // Node built-in used by clawql-auth SQLite SecretStore — leave unresolved in the bundle.
+  // clawql-auth stays external (use clawql-auth/provider from auth shims) — do not
+  // noExternal-bundle it or Ready double-loads auth/viem helpers with the host import.
   // express-rate-limit (and express) are clawql-auth HTTP peers — must stay external so
   // clawql-api's ESM bundle does not inline `debug` → dynamic require("tty").
   // clawql-audit (and its cbor/qrcode stack) must stay external — if bundled, cbor's

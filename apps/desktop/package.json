@@ -99,6 +99,7 @@
   "overrides": {
     "tar": "7.5.22",
     "builder-util-runtime": "9.7.0",
+    "fast-uri": "3.1.9",
     "zod": "4.6.7"
   }
 }

@@ -1,9 +1,5 @@
-import {
-  getPendingSourcesDir,
-  readCustomSourcesFileEffect,
-  readPendingSourceEffect,
-  type CustomSourceEntry,
-} from "clawql-api";
+import { readCustomSourcesFileEffect, type CustomSourceEntry } from "clawql-api";
+import { getPendingSourcesDir, readPendingSourceEffect } from "clawql-api/sources";
 import { Effect } from "effect";
 import { readdir } from "node:fs/promises";
 

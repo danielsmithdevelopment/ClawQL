@@ -11,7 +11,7 @@ import {
   type AtrClaims,
   type ClawQLAuth,
   type GatewayAuthConfig,
-} from "clawql-auth";
+} from "clawql-auth/gateway";
 import { Effect } from "effect";
 import { validateVirtualKey } from "clawql-inference/keys";
 import { resolveHostAuthEventSink } from "./auth-process-worm-sink.js";
