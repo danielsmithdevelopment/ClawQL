@@ -10,10 +10,7 @@ import * as protoLoader from "@grpc/proto-loader";
 import protobuf from "protobufjs";
 import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
 import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
-import {
-  ensureClawqlApi,
-  resetClawqlApiForTests,
-} from "../composition/clawql-api-adapters.js";
+import { ensureClawqlApi, resetClawqlApiForTests } from "../composition/clawql-api-adapters.js";
 import { createRegisteredMcpServer } from "../mcp/mcp-server-factory.js";
 import { resetOptionalToolDepsForTests, wireOptionalToolDeps } from "../mcp/tools.js";
 
