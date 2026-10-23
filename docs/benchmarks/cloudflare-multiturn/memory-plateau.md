@@ -4,9 +4,9 @@ Gates and honesty notes for Streamable HTTP memory under sessionful load.
 
 ## Two separate problems
 
-| #                 | Symptom                                                              | Cause class                                                                                                                                                | Status                                                                                                                                              |
-| ----------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1. Climb**      | Anonymous ~200→~3444 MB over ~30k same-session JSON executes         | MCP SDK JSON mode orphans `_streamMapping` after `resolveJson` ([typescript-sdk#2559](https://github.com/modelcontextprotocol/typescript-sdk/issues/2559)) | **Fixed in host** via `pruneOrphanJsonStreamMappings` after each POST; PR gate + nightly + unit bound test                                          |
+| #                 | Symptom                                                              | Cause class                                                                                                                                                | Status                                                                                                                                        |
+| ----------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Climb**      | Anonymous ~200→~3444 MB over ~30k same-session JSON executes         | MCP SDK JSON mode orphans `_streamMapping` after `resolveJson` ([typescript-sdk#2559](https://github.com/modelcontextprotocol/typescript-sdk/issues/2559)) | **Fixed in host** via `pruneOrphanJsonStreamMappings` after each POST; PR gate + nightly + unit bound test                                    |
 | **2. Lean floor** | Lean listen probe ~130 MB (Oct 15) → ~170–313 MB without lazy listen | Eager `clawql-payments` / memory-ONNX at Ready                                                                                                             | **Fixed on tip** — lazy listen + SQLite OOP catalog (`#1397`/`#1398`); Bun `--smol` lean ~**138 MB** anon catalog on / ~**145 MB** off (N=2k) |
 
 Climb (#1) and lean (#2) are on tip after `#1390` + `#1397` + `#1398`. Peer gap (~99–102 MB MCPJungle/agentgateway) remains a further Bun density climb (~36–40 MB), not a Rust dataplane path (ADR 0016 Rejected).
@@ -71,11 +71,11 @@ Separate from `_streamMapping` climb:
 - **Tip without lazy listen:** ~**170–313 MB** (eager payments + pgvector/ONNX at Ready).
 - **Tip after `#1397` lazy listen (pre-catalog):** Bun `--smol` ~**142–150 MB** anon (N=2k).
 - **Tip after `#1398` SQLite OOP catalog (2026-10-23 remasure, curated CF 60-op, N=2k):**
-  | Arm | Plateau anon median | Ready anon (i=0) | Under-load anon (i=N) | Artifact |
-  | --- | ---: | ---: | ---: | --- |
-  | Catalog **on** (default / OOP `LOAD=db`) | **138.4 MB** | 85.0 MB | 138.9 MB | [`heap-vs-anon-bun-smol-catalog-on-n2k.json`](./heap-vs-anon-bun-smol-catalog-on-n2k.json) |
-  | Catalog **off** | **145.4 MB** | 86.9 MB | 145.4 MB | [`heap-vs-anon-bun-smol-catalog-off-n2k.json`](./heap-vs-anon-bun-smol-catalog-off-n2k.json) |
-  Catalog saves ~**7 MB** on this equal-arm board; peers MCPJungle/agentgateway still ~**99–102 MB** (~36–40 MB gap).
+  | Arm                                                                                                                 | Plateau anon median | Ready anon (i=0) | Under-load anon (i=N) | Artifact                                                                                     |
+  | ------------------------------------------------------------------------------------------------------------------- | ------------------: | ---------------: | --------------------: | -------------------------------------------------------------------------------------------- |
+  | Catalog **on** (default / OOP `LOAD=db`)                                                                            |        **138.4 MB** |          85.0 MB |              138.9 MB | [`heap-vs-anon-bun-smol-catalog-on-n2k.json`](./heap-vs-anon-bun-smol-catalog-on-n2k.json)   |
+  | Catalog **off**                                                                                                     |        **145.4 MB** |          86.9 MB |              145.4 MB | [`heap-vs-anon-bun-smol-catalog-off-n2k.json`](./heap-vs-anon-bun-smol-catalog-off-n2k.json) |
+  | Catalog saves ~**7 MB** on this equal-arm board; peers MCPJungle/agentgateway still ~**99–102 MB** (~36–40 MB gap). |
 - **Remasure:** `BUN_RUNTIME=1 BUN_SMOL=1 N=2000 LEAN_CATALOG=1 npm run benchmark:heap-vs-anon-plateau` (A/B: `LEAN_CATALOG=0`).
 - **Next density:** deeper `clawql-api` / host Ready graph (not another catalog pass on this 60-op fixture).
 
