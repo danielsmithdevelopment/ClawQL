@@ -1,6 +1,8 @@
 //! Policy evaluator — Phase C Verus target (Lean: `formal/lean/ApprovalPolicy.lean`).
 //!
-//! Phase A ships a plain Rust port for differential prep; Verus annotations come later.
+//! String-identity exec adapter (trim / drop empty). The **proved** kernel uses
+//! abstract `u64` ids in [`formal/verus/approval-policy`](../../../formal/verus/approval-policy/).
+//! Keep decisions lockstep with Lean `evaluateApproval` and TS `evaluateApprovalPolicy`.
 
 #![allow(dead_code)]
 
@@ -79,35 +81,87 @@ pub fn evaluate_approval(policy: &Policy, request: &Request) -> Decision {
 mod tests {
     use super::*;
 
+    fn pol(n: usize, deny: bool) -> Policy {
+        Policy {
+            required_approvals: n,
+            deny_destructive: deny,
+        }
+    }
+
+    fn req(requester: &str, action: ActionClass, approvers: &[&str]) -> Request {
+        Request {
+            requester_id: requester.into(),
+            action,
+            approver_ids: approvers.iter().map(|s| (*s).into()).collect(),
+        }
+    }
+
     #[test]
     fn denies_self_approval() {
-        let d = evaluate_approval(
-            &Policy {
-                required_approvals: 1,
-                deny_destructive: false,
-            },
-            &Request {
-                requester_id: "alice".into(),
-                action: ActionClass::Write,
-                approver_ids: vec!["alice".into()],
-            },
+        assert_eq!(
+            evaluate_approval(&pol(1, false), &req("alice", ActionClass::Write, &["alice"])),
+            Decision::Deny(DenyReason::SelfApproval)
         );
-        assert_eq!(d, Decision::Deny(DenyReason::SelfApproval));
     }
 
     #[test]
     fn allows_distinct_approver() {
-        let d = evaluate_approval(
-            &Policy {
-                required_approvals: 1,
-                deny_destructive: true,
-            },
-            &Request {
-                requester_id: "alice".into(),
-                action: ActionClass::Write,
-                approver_ids: vec!["bob".into()],
-            },
+        assert_eq!(
+            evaluate_approval(&pol(1, true), &req("alice", ActionClass::Write, &["bob"])),
+            Decision::Allow
         );
-        assert_eq!(d, Decision::Allow);
+    }
+
+    #[test]
+    fn denies_destructive_when_configured() {
+        assert_eq!(
+            evaluate_approval(&pol(1, true), &req("alice", ActionClass::Delete, &["bob"])),
+            Decision::Deny(DenyReason::DestructiveDenied)
+        );
+        assert_eq!(
+            evaluate_approval(&pol(1, true), &req("alice", ActionClass::Payment, &["bob"])),
+            Decision::Deny(DenyReason::DestructiveDenied)
+        );
+    }
+
+    #[test]
+    fn denies_duplicate_approver() {
+        assert_eq!(
+            evaluate_approval(
+                &pol(2, false),
+                &req("alice", ActionClass::Write, &["bob", "bob"])
+            ),
+            Decision::Deny(DenyReason::DuplicateApprover)
+        );
+    }
+
+    #[test]
+    fn denies_insufficient_approvals() {
+        assert_eq!(
+            evaluate_approval(&pol(2, false), &req("alice", ActionClass::Write, &["bob"])),
+            Decision::Deny(DenyReason::InsufficientApprovals)
+        );
+    }
+
+    #[test]
+    fn trims_and_drops_empty_approvers() {
+        assert_eq!(
+            evaluate_approval(
+                &pol(1, false),
+                &req(" alice ", ActionClass::Write, &["  bob  ", "", "   "])
+            ),
+            Decision::Allow
+        );
+    }
+
+    #[test]
+    fn n_of_m_two_distinct() {
+        assert_eq!(
+            evaluate_approval(
+                &pol(2, false),
+                &req("alice", ActionClass::Write, &["bob", "carol"])
+            ),
+            Decision::Allow
+        );
     }
 }

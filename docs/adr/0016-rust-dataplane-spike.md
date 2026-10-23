@@ -1,8 +1,8 @@
 # ADR 0016: Rust data-plane spike (execute hot path + Verus trial)
 
-- Status: Proposed
-- Date: 2026-10-22
-- Related: [ADR 0014 formal methods](./0014-formal-methods-tla-lean.md) · [ADR 0015 program mode](./0015-program-mode-alongside-search-execute.md) · [ADR 0011 isolation](./0011-isolation-agent-substrate-sandbox-celld.md) · [ADR 0013 gdp-ts](./0013-gdp-ts-compile-time-auth-proofs.md) · [correctness by construction](../design/correctness-by-construction.md) · [`clawql-cellrt`](../streams/clawql-cellrt.md) · [dominance roadmap](../benchmarks/dominance-roadmap.md) · [measured defaults](../benchmarks/cloudflare-multiturn/measured-defaults.md) · [`formal/lean/`](../../formal/lean/)
+- Status: **Accepted (conditional)** — 2026-10-23
+- Date: 2026-10-22 (proposed) · Decision: 2026-10-23
+- Related: [ADR 0014 formal methods](./0014-formal-methods-tla-lean.md) · [ADR 0015 program mode](./0015-program-mode-alongside-search-execute.md) · [ADR 0011 isolation](./0011-isolation-agent-substrate-sandbox-celld.md) · [ADR 0013 gdp-ts](./0013-gdp-ts-compile-time-auth-proofs.md) · [correctness by construction](../design/correctness-by-construction.md) · [`clawql-cellrt`](../streams/clawql-cellrt.md) · [dominance roadmap](../benchmarks/dominance-roadmap.md) · [measured defaults](../benchmarks/cloudflare-multiturn/measured-defaults.md) · [`formal/lean/`](../../formal/lean/) · [PHASE-C](../spikes/rust-dataplane/PHASE-C.md) · [DUAL-PROCESS](../spikes/rust-dataplane/DUAL-PROCESS.md)
 
 ## Context
 
@@ -106,12 +106,34 @@ Baselines from Bun lean listen / peer boards ([measured defaults](../benchmarks/
 
 If go: plan for Rust to become the **only** policy-engine implementation (called from TypeScript via FFI/gRPC/WASM as needed). Dual implementations drifting is the long-term risk that kills the win.
 
+## Decision (spike outcome) — 2026-10-23
+
+**Accepted (conditional)** for an **optional Cloud density dataplane**, not a Bun/TS replacement.
+
+| Evidence | Result |
+| --- | --- |
+| Memory | Governed CF 3×10k (Phase C remasure): Rust ~**15.7 MB** vs Bun ~**129 MB** (~**8.2×**) — clears ≤65 MB half-Bun bar |
+| Latency | Call p999 **tied** (~5.0–5.3 ms) — not “clearly better”; density is the go signal (per ADR note on this board) |
+| Differential | Zero Bun/Rust CF governance mismatches (`diff-governance-cf.sh`) |
+| Verus | Policy evaluator **proved** (`formal/verus/approval-policy`, 11 verified); labels + digests stretch **deferred** |
+
+**Conditional means:**
+
+1. Keep Bun/TS as the **default** single-process host.
+2. **Invest** in productionizing dual-process deploy (Rust on known-op execute MCP URL; TS for search/plugins/memory/programs/OAuth).
+3. Migrate Lean approval oracle → Verus kernel as the long-term sole evaluator; string adapters stay differential-tested until proved or retired.
+4. Do **not** claim “mathematically proven policy” for the whole gateway — only the proved kernel + Lean/differential elsewhere (ADR 0014 wording for non-Verus surfaces).
+5. Do **not** delete `crates/clawql-dataplane/`.
+6. Multi-attack / approval-integrity remain **TS-host** boards until execute is forwarded end-to-end (approval-integrity harness still scaffold).
+
+Phase write-up: [PHASE-C.md](../spikes/rust-dataplane/PHASE-C.md). Ownership: [DUAL-PROCESS.md](../spikes/rust-dataplane/DUAL-PROCESS.md).
+
 ## Consequences
 
-- **Accepted go:** invest in productionizing the data plane; keep TLA+ for protocols; migrate Lean oracles → Verus specs as source of truth for the three kernels; retire dual TS evaluators over time.
-- **Rejected / no-go:** delete `crates/clawql-dataplane/`; Bun/TS remains default; keep Lean+differential as the policy story; optional note that Verus was tried and what blocked it.
+- **Accepted (conditional) go:** invest in productionizing the **optional** density dataplane; keep TLA+ for protocols; migrate Lean approval oracle → Verus as source of truth for that kernel; labels/digests remain Lean+differential until proved; Bun/TS stays default host.
+- **Rejected / no-go:** delete `crates/clawql-dataplane/`; Bun/TS remains default; keep Lean+differential as the policy story; optional note that Verus was tried and what blocked it. *(Not chosen.)*
 - **cellrt unchanged:** DO/cell substrate stays [`clawql-cellrt`](../streams/clawql-cellrt.md); this ADR does not authorize building cellrt.
-- **Copy:** do not claim “mathematically proven policy” until Verus proofs land **and** the go decision is Accepted. Until then: “Lean oracle + differential” (ADR 0014 wording).
+- **Copy:** claim Verus only for the **proved policy kernel**. Whole-gateway “mathematically proven policy” remains forbidden until more kernels land **and** they are the sole production evaluators.
 
 ## Out of scope for the spike
 

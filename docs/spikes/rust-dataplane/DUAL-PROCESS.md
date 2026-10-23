@@ -45,10 +45,10 @@
 
 | Arm | Plateau median | Call p50 | Call p999 | Errors |
 | --- | --- | --- | --- | --- |
-| Bun lean | **130.2 MB** | 1.05 ms | 4.72 ms | 0 |
-| Rust dataplane (gov=1) | **14.6 MB** | 0.57 ms | 4.94 ms | 0 |
+| Bun lean | **~129 MB** | ~1.0 ms | ~5.0 ms | 0 |
+| Rust dataplane (gov=1) | **~15.7 MB** | ~0.53 ms | ~5.3 ms | 0 |
 
-Density ~**8.9×**; latency effectively equal at p999. Source: `docs/benchmarks/gateway-multi-comparison/dataplane-week1-gov-3x10k.json`.
+Density ~**8×**; latency effectively equal at p999 (Phase C remasure). Source: `docs/benchmarks/gateway-multi-comparison/dataplane-week1-gov-3x10k.json`. Spike decision: ADR 0016 **Accepted (conditional)**.
 
 ## Honesty
 

@@ -52,7 +52,7 @@ Week-1 interleaved Bun vs Rust: `scripts/dataplane/week1-cf-known-op.sh`
 | `pending` / `pending_pg` | Mandate park / approve / atomic consume (SQLite or Postgres) |
 | `args_hash` | Canonical `sha256:` digest for park/resume binding |
 | `worm` / `cbor_canon` | Process hash-chain audit (CBOR default; env-gated) |
-| `policy` | Lean-shaped approval oracle (Verus later) |
+| `policy` | Lean-shaped string adapter; **proved** kernel in `formal/verus/approval-policy` |
 | `mock_upstream` | In-process REST for pets smoke |
 
 ## Bars
