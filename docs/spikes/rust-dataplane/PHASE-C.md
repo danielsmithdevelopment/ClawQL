@@ -11,7 +11,7 @@
 | Verus on policy evaluator | **Proved** — `formal/verus/approval-policy` (`cargo verus verify` → 11 verified, 0 errors) |
 | Label merge / digests | **Stretch deferred** — not proved this slice; stay Lean + differential |
 | CF governance cross-diff | **Remeasured** — `diff-governance-cf.sh` zero mismatches |
-| Fair governed density board | **Remeasured** — Bun plateau med **128.8 MB** / Rust **15.7 MB** (~**8.2×**); call p999 **5.00** vs **5.30 ms** (tied); 0 errors |
+| Fair governed density board | **Remeasured** (dual-process wire) — Bun plateau med **~127.9 MB** / Rust **~15.8 MB** (~**8.1×**); call p999 **4.88** vs **5.07 ms** (tied); 0 errors |
 | Multi-attack / approval-integrity | **TS host boards** — not remasured through Rust (dual-process: adversarial surface stays Bun/TS until execute is forwarded) |
 
 ## What was proved

@@ -7,6 +7,7 @@ import {
   cfBenchmarkHonesty,
   cfBenchmarkMeta,
   cfBenchmarkSummary,
+  cfDensityBoardProvenance,
   cfHttpConcRows,
   cfStdioConcRows,
   cfTokenBoardProvenance,
@@ -1000,13 +1001,17 @@ export function BenchmarksLanding() {
         subheadline={
           <p>
             Weighted mean tokens (definition + discovery + result + 5× code). Task success 1.0 on every arm below.
-            Memory is process-tree anon MB. Label session transport when comparing latency.
+            Memory is process-tree anon MB — density row is execute-plane RSS only. Label session transport when
+            comparing latency.
           </p>
         }
       >
         <p className="mb-4 text-sm/6 text-mist-600 dark:text-mist-400">
           Provenance: {cfTokenBoardProvenance.measuredAt} · {cfTokenBoardProvenance.note} ·{' '}
           <code className="text-xs">{cfTokenBoardProvenance.artifact}</code>
+          <br />
+          Density: {cfDensityBoardProvenance.measuredAt} · {cfDensityBoardProvenance.note} ·{' '}
+          <code className="text-xs">{cfDensityBoardProvenance.artifact}</code>
         </p>
         <ComparisonTable minWidthClass="min-w-[920px]">
           <caption className="sr-only">

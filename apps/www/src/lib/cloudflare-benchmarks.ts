@@ -5,7 +5,9 @@
  * Concurrency curves unchanged by JSON pretty-print. Anon MB cells on the
  * publish board were measured on the October 15 side-branch; tip equal-arm
  * Bun `--smol` lean after lazy-listen restore is ~142 MB — cite that for
- * release-reproducible memory (see docs/spikes/rust-dataplane/LEAN-BISECT.md).
+ * release-reproducible single-process memory (see docs/spikes/rust-dataplane/LEAN-BISECT.md).
+ * Optional Cloud density path (ADR 0016): Rust clawql-dataplane execute-plane
+ * plateau ~15.8 MB on the governed CF known-op board — cite that row, not Bun+Rust sum.
  */
 
 export const cfTokenBoardProvenance = {
@@ -15,16 +17,26 @@ export const cfTokenBoardProvenance = {
   note: 'Post–compact-execute 3×10k: known_op 1710 (−123 vs 1833); program/Executor/peers unchanged',
 } as const
 
+/** Governed density board — optional Rust execute plane (ADR 0016 dual-process). */
+export const cfDensityBoardProvenance = {
+  status: 'current' as const,
+  measuredAt: '2026-10-23',
+  comparisonLabel: 'governance' as const,
+  artifact: 'docs/benchmarks/gateway-multi-comparison/dataplane-week1-gov-3x10k.json',
+  note: 'Fair CF known-op 3×10k remasure: Bun plateau med ~127.9 MB vs Rust dataplane ~15.8 MB (~8.1×); call p999 tied. Cite execute-plane RSS only.',
+} as const
+
 export const cfBenchmarkHeadline = 'Cloudflare boards — zone-audit, fan-out/join, concurrency.'
 
 export const cfBenchmarkSummary =
-  'Zone-audit: ClawQL known-op leads tokens on a curated OpenAPI → replay mock — post–compact-execute remasure 2026-10-17: known_op 1 710 weighted (−123). Fan-out/join: scripted program claim cleared; blind real-model gate is frontier-only so far. Executor v2 is the promoted Executor column. HTTP concurrency is multiplex; stdio is process-per-client.'
+  'Zone-audit: ClawQL known-op leads tokens on a curated OpenAPI → replay mock — post–compact-execute remasure 2026-10-17: known_op 1 710 weighted (−123). Optional Rust dataplane density path leads memory (~15.8 MB execute-plane vs peers ~99–102 MB). Fan-out/join: scripted program claim cleared; blind real-model gate is frontier-only so far. Executor v2 is the promoted Executor column. HTTP concurrency is multiplex; stdio is process-per-client.'
 
 export const cfBenchmarkMeta = {
   measuredLabel:
-    'Tokens remasured Oct 2026 (compact execute) · Tip Bun lean ~142 MB anon after lazy-listen restore · host-bound',
+    'Tokens remasured Oct 2026 (compact execute) · Density path ~15.8 MB execute-plane (2026-10-23) · Tip Bun lean ~142 MB single-process',
   boardLabel: '10 000 sessions × 3 reps · curated Cloudflare OpenAPI',
   artifactBoard: 'docs/benchmarks/cloudflare-multiturn/board-final-summary.md',
+  artifactDensity: 'docs/benchmarks/gateway-multi-comparison/dataplane-week1-gov-3x10k.json',
   artifactHttp: 'docs/benchmarks/cloudflare-multiturn/http-concurrency-curves.json',
   artifactStdio: 'docs/benchmarks/cloudflare-multiturn/stdio-concurrency-curves.json',
 } as const
@@ -40,8 +52,18 @@ export type CfTokenRow = {
   note?: string
 }
 
-/** Tokens + session latency + single-process memory (headline board). */
+/** Tokens + session latency + memory (headline board). Density row = execute-plane RSS. */
 export const cfTokenRows: CfTokenRow[] = [
+  {
+    arm: 'ClawQL known-op (Rust dataplane)',
+    highlight: true,
+    weighted: '1 710',
+    taskSuccess: '1.0',
+    sessionP50: '~13.9 ms†',
+    transport: 'HTTP',
+    anonMb: '~15.8',
+    note: 'Optional Cloud density path (ADR 0016) — governed execute-plane plateau. Same known-op tokens as Bun host. †Session p50 on density board (11-step CF known-op), not the multiturn fill.',
+  },
   {
     arm: 'ClawQL known-op',
     highlight: true,
@@ -50,7 +72,7 @@ export const cfTokenRows: CfTokenRow[] = [
     sessionP50: '24.6 ms',
     transport: 'HTTP',
     anonMb: '~121*',
-    note: 'Execute by operationId + where — primary ClawQL path (−123 vs pre-compact). *Anon MB: October 15 build',
+    note: 'Default Bun/TS host — execute by operationId + where (−123 vs pre-compact). *Anon MB: October 15 Node-256 fill; tip Bun lean ~128–142 MB',
   },
   {
     arm: 'ClawQL program',
@@ -210,7 +232,11 @@ export const cfStdioConcRows: CfConcRow[] = [
 export const cfBenchmarkHonesty = [
   {
     title: 'What we claim',
-    body: 'On this Cloudflare board, ClawQL known-op has the fewest weighted tokens (1 710 after compact execute, −123 vs 1 833) with ~121 MB anon on the Node-256 fill. Executor v2 is the promoted Executor peer (5 328 tokens, ~2.1 GB). Executor v1 stable on the same mock is 8 236 tokens and ~535 MB — the beta excuse does not reverse the token story.',
+    body: 'On this Cloudflare board, ClawQL known-op has the fewest weighted tokens (1 710 after compact execute, −123 vs 1 833). Optional Rust dataplane density path leads memory at ~15.8 MB execute-plane RSS (governed CF known-op 3×10k) versus MCPJungle ~102 MB and agentgateway ~99 MB — do not add Bun host RSS to that cite. Default Bun/TS host remains ~121 MB on the Node-256 fill (~128–142 MB tip lean). Executor v2 is the promoted Executor peer (5 328 tokens, ~2.1 GB).',
+  },
+  {
+    title: 'Dual-process memory scope',
+    body: 'Density numbers are the Rust clawql-dataplane process only (known-op execute + governance). Search, plugins, and memory stay on the Bun/TS host. Unset CLAWQL_DATAPLANE_EXECUTE_URL for single-process installs.',
   },
   {
     title: 'Two concurrency topologies',
@@ -218,7 +244,7 @@ export const cfBenchmarkHonesty = [
   },
   {
     title: 'Session latency transports',
-    body: 'ClawQL known-op 24.6 ms and program 11.8 ms are HTTP board figures (2026-10-17 remasure). Executor v1 ~84 ms is stdio. Executor v2 ~218 ms is HTTP. Label the transport when comparing.',
+    body: 'ClawQL known-op 24.6 ms and program 11.8 ms are HTTP multiturn board figures (2026-10-17 remasure). Density-row ~13.9 ms is the governed known-op density board session p50. Executor v1 ~84 ms is stdio. Executor v2 ~218 ms is HTTP. Label the transport when comparing.',
   },
 ] as const
 
