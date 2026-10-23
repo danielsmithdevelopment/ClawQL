@@ -8,7 +8,7 @@ import {
   composeAuthEventSinks,
   createAuthEventSinkFromEnv,
   type AuthEventSink,
-} from "clawql-auth";
+} from "clawql-auth/gateway";
 
 /** Auth audit sink for MCP OAuth / ID-JAG — composes process WORM when enabled. */
 export function resolveHostAuthEventSink(env: NodeJS.ProcessEnv = process.env): AuthEventSink {

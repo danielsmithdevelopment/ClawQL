@@ -8,8 +8,8 @@ import {
   type OpenAPIDoc,
   type Operation,
   type OperationRisk,
-  type ResolvedProposal,
 } from "clawql-api";
+import type { ResolvedProposal } from "clawql-api/program";
 import {
   ensureClawqlApi,
   resetClawqlApiForTests,

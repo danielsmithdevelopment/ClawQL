@@ -8,14 +8,16 @@
 
 import { Effect } from "effect";
 import {
-  CELLD_PINNED_VERSION,
   DEFAULT_CORE_CELLD_MCP_URL,
-  celldKillNodeDemoReportEffect,
   preferCoreInCelld,
   resolveCoreCelldProxyConfig,
+} from "clawql-api";
+import {
+  CELLD_PINNED_VERSION,
+  celldKillNodeDemoReportEffect,
   type CelldBinaryProbe,
   type CelldKillNodeDemoReport,
-} from "clawql-api";
+} from "clawql-api/program";
 import type { DoctorCheck } from "./doctor.js";
 
 export type CelldDoctorOptions = {

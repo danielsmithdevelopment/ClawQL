@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Effect } from "effect";
-import {
-  CELLD_PINNED_VERSION,
-  celldKillNodeDemoReportEffect,
-  type CelldBinaryProbeResult,
-} from "clawql-api";
+import { CELLD_PINNED_VERSION, type CelldBinaryProbeResult } from "clawql-api";
+import { celldKillNodeDemoReportEffect } from "clawql-api/program";
 import { celldDoctorChecksFromReport, runCelldDoctorChecks } from "./celld-doctor-check.js";
 
 function probeOf(result: CelldBinaryProbeResult) {

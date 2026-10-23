@@ -54,26 +54,53 @@ import { maybeVerifyReleaseManifestAtStartup } from "../host/release-manifest-st
 import { createWebhookRateLimiter } from "./webhooks/webhook-rate-limit.js";
 import { createMcpOAuthRateLimiter } from "./mcp-oauth-rate-limit.js";
 import {
-  attachMcpOAuthRoutes,
-  createIdJagIssuerFromEnv,
-  createMcpOAuthFromEnv,
-  isIdJagIssuerEnabled,
-  isMcpOAuthEnabled,
   resolveAtrClaimsFromHeadersEffect,
-  resolveSecretStore,
   warnIfMcpOAuthAuditDisabled,
   warnIfMcpOAuthHs256Only,
   warnIfMcpOAuthAdminKeyMissing,
   type AtrClaims,
-  type IdJagIssuerRuntime,
-  type McpOAuthRuntime,
-} from "clawql-auth";
+} from "clawql-auth/gateway";
 import { Effect } from "effect";
 import {
   buildGatewayAuthConfig,
   createInferenceVirtualKeyClaimsResolver,
 } from "../composition/gateway-auth.js";
 import { applySecurityHeadersMiddleware } from "./security-headers.js";
+
+/** Inbound MCP OAuth / ID-JAG runtime — loaded only when env enables AS routes. */
+type McpOAuthRuntime = import("clawql-auth").McpOAuthRuntime;
+type IdJagIssuerRuntime = import("clawql-auth").IdJagIssuerRuntime;
+
+/**
+ * Cheap Ready gate for MCP OAuth AS (mirrors clawql-auth isMcpOAuthEnabled env flags).
+ * Full config (incl. signing-material auto-enable) loads only after dynamic import.
+ */
+function mcpOAuthEnvLikelyEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  const v = (name: string) => {
+    const raw = env[name]?.trim().toLowerCase();
+    return raw === "1" || raw === "true" || raw === "yes";
+  };
+  return (
+    v("CLAWQL_MCP_OAUTH_ENABLED") ||
+    v("CLAWQL_MCP_OAUTH") ||
+    Boolean(env.CLAWQL_MCP_OAUTH_SIGNING_SECRET?.trim()) ||
+    Boolean(env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM?.trim()) ||
+    Boolean(env.CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH?.trim())
+  );
+}
+
+function idJagIssuerEnvLikelyEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  const v = (name: string) => {
+    const raw = env[name]?.trim().toLowerCase();
+    return raw === "1" || raw === "true" || raw === "yes";
+  };
+  return (
+    v("CLAWQL_ID_JAG_ISSUER_ENABLED") ||
+    Boolean(env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM?.trim()) ||
+    Boolean(env.CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH?.trim()) ||
+    Boolean(env.CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET?.trim())
+  );
+}
 
 /** Env truthy — keep local so we do not pull clawql-payments just to read a flag. */
 function envFlagOn(name: string, env: NodeJS.ProcessEnv = process.env): boolean {
@@ -282,22 +309,32 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
   const injectedMcpOAuth = options.mcpOAuthRuntime != null;
   let mcpOAuthRuntime: McpOAuthRuntime | null = options.mcpOAuthRuntime ?? null;
-  if (!options.skipMcpOAuth && !mcpOAuthRuntime && Effect.runSync(isMcpOAuthEnabled(process.env))) {
-    const { resolveHostAuthEventSink } = await import("../composition/auth-process-worm-sink.js");
-    mcpOAuthRuntime = await Effect.runPromise(
-      createMcpOAuthFromEnv({ eventSink: resolveHostAuthEventSink(process.env) })
-    );
+  // Dynamic-import full clawql-auth (inbound OAuth / SIWE) only when AS env is on.
+  let clawqlAuthInbound: typeof import("clawql-auth") | null = null;
+  if (!options.skipMcpOAuth && !mcpOAuthRuntime && mcpOAuthEnvLikelyEnabled(process.env)) {
+    clawqlAuthInbound = await import("clawql-auth");
+    if (Effect.runSync(clawqlAuthInbound.isMcpOAuthEnabled(process.env))) {
+      const { resolveHostAuthEventSink } = await import("../composition/auth-process-worm-sink.js");
+      mcpOAuthRuntime = await Effect.runPromise(
+        clawqlAuthInbound.createMcpOAuthFromEnv({
+          eventSink: resolveHostAuthEventSink(process.env),
+        })
+      );
+    }
   }
 
   let idJagIssuer: IdJagIssuerRuntime | null = mcpOAuthRuntime?.idJagIssuer ?? null;
-  if (!idJagIssuer && Effect.runSync(isIdJagIssuerEnabled(process.env))) {
-    const { resolveHostAuthEventSink } = await import("../composition/auth-process-worm-sink.js");
-    idJagIssuer = await Effect.runPromise(
-      createIdJagIssuerFromEnv({
-        secretStore: resolveSecretStore(),
-        eventSink: resolveHostAuthEventSink(process.env),
-      })
-    );
+  if (!idJagIssuer && idJagIssuerEnvLikelyEnabled(process.env)) {
+    clawqlAuthInbound ??= await import("clawql-auth");
+    if (Effect.runSync(clawqlAuthInbound.isIdJagIssuerEnabled(process.env))) {
+      const { resolveHostAuthEventSink } = await import("../composition/auth-process-worm-sink.js");
+      idJagIssuer = await Effect.runPromise(
+        clawqlAuthInbound.createIdJagIssuerFromEnv({
+          secretStore: clawqlAuthInbound.resolveSecretStore(),
+          eventSink: resolveHostAuthEventSink(process.env),
+        })
+      );
+    }
   }
 
   /**
@@ -321,6 +358,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   const emaAdminConfigured = Boolean(emaAdminAuth.adminApiKey || mcpOAuthRuntime || idJagIssuer);
 
   if (mcpOAuthRuntime || idJagIssuer) {
+    clawqlAuthInbound ??= await import("clawql-auth");
     // createMcpOAuthFromEnv already warns; only re-warn for injected test/runtime hosts.
     if (mcpOAuthRuntime && injectedMcpOAuth) {
       Effect.runSync(warnIfMcpOAuthAuditDisabled(process.env));
@@ -332,7 +370,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         idJagIssuerEnabled: !!idJagIssuer,
       })
     );
-    attachMcpOAuthRoutes(app, mcpOAuthRuntime?.server ?? null, {
+    clawqlAuthInbound.attachMcpOAuthRoutes(app, mcpOAuthRuntime?.server ?? null, {
       wellKnown: mcpOAuthRuntime
         ? {
             issuer: mcpOAuthRuntime.config.issuer,
@@ -373,11 +411,13 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     });
   }
 
-  const { attachHostPasskeyRoutes } = await import("./passkey-http-host.js");
-  attachHostPasskeyRoutes(app, {
-    adminAuth:
-      emaAdminAuth.adminApiKey || mcpOAuthRuntime || idJagIssuer ? emaAdminAuth : undefined,
-  });
+  const { attachHostPasskeyRoutes, isPasskeyHttpEnabled } = await import("./passkey-http-host.js");
+  if (isPasskeyHttpEnabled(process.env)) {
+    await attachHostPasskeyRoutes(app, {
+      adminAuth:
+        emaAdminAuth.adminApiKey || mcpOAuthRuntime || idJagIssuer ? emaAdminAuth : undefined,
+    });
+  }
 
   if (!skipPaymentsAndNetworkRoutes()) {
     const { attachPaymentsWellKnownRoutes } = await import("clawql-payments/discovery");
