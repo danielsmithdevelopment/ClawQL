@@ -22,6 +22,13 @@ export default defineConfig({
     /** Classify risk without refusing execute (Slack/Onyx POST fixtures). */
     env: {
       CLAWQL_OPERATION_RISK_ENFORCE: "0",
+      /**
+       * Catalog defaults on in production (Ready LOAD=db). Vitest must opt out so
+       * a shared `$CLAWQL_HOME/catalog.sqlite` from one fixture does not short-
+       * circuit later suites that change CLAWQL_SPEC_PATHS / providers.
+       * Catalog unit tests set CLAWQL_CATALOG_SQLITE=1 themselves.
+       */
+      CLAWQL_CATALOG_SQLITE: "0",
     },
     include: [
       "src/**/*.test.ts",
