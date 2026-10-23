@@ -28,7 +28,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@duckdb/node-api": "1.5.5-r.4",
+    "@duckdb/node-api": "1.5.5-r.5",
     "clawql-api": "0.1.0",
     "clawql-core": "0.1.0",
     "effect": "4.0.0",
