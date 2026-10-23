@@ -2,6 +2,7 @@
 
 mod args_hash;
 mod catalog;
+mod cbor_canon;
 mod execute;
 mod ifc;
 mod mcp;

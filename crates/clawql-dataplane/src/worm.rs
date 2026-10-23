@@ -1,11 +1,12 @@
 //! Process-scoped hash-chained WORM (ADR 0016 Phase B).
 //!
-//! Format matches `clawql-audit` entry shape. Spike uses the **legacy JSON** hash dialect
-//! (`canonicalJSON` / sorted keys) so unit tests and SQLite verifiers can cross-check without
-//! a CBOR crate; CBOR default parity is a follow-up before go/no-go.
+//! Format matches `clawql-audit` entry shape. Default hash dialect is **CBOR**
+//! (RFC 8949 canonical — same as node `cbor.encodeCanonical`). Set
+//! `CLAWQL_WORM_DIALECT=json` for the legacy JSON dialect.
 //!
 //! Gated by `CLAWQL_WORM_ENABLED=1`. Appends are best-effort — never fail execute.
 
+use crate::cbor_canon::encode_canonical;
 use parking_lot::Mutex;
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
@@ -15,6 +16,33 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WormDialect {
+    Cbor,
+    Json,
+}
+
+impl WormDialect {
+    pub fn from_env() -> Self {
+        match std::env::var("CLAWQL_WORM_DIALECT")
+            .unwrap_or_default()
+            .trim()
+            .to_ascii_lowercase()
+            .as_str()
+        {
+            "json" | "legacy" => Self::Json,
+            _ => Self::Cbor,
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Cbor => "cbor",
+            Self::Json => "json",
+        }
+    }
+}
 
 pub const WORM_GENESIS_PREV_HASH: &str = "0000000000000000000000000000000000000000000000000000000000000000";
 
@@ -88,13 +116,13 @@ pub fn sha256_hex(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
 }
 
-pub fn seal_json(
+pub fn seal_content_map(
     prev_hash: Option<&str>,
     prev_index: Option<u64>,
     body: &WormAppendInput,
     id: &str,
     written_at: &str,
-) -> WormEntry {
+) -> Map<String, Value> {
     let chain_index = prev_index.map(|i| i + 1).unwrap_or(0);
     let prev = prev_hash.unwrap_or(WORM_GENESIS_PREV_HASH);
     let mut content = Map::new();
@@ -111,12 +139,40 @@ pub fn seal_json(
     if let Some(m) = &body.metadata {
         content.insert("metadata".into(), Value::Object(m.clone()));
     }
-    let serialized = canonical_json(&Value::Object(content));
-    let hash = sha256_hex(serialized.as_bytes());
+    content
+}
+
+pub fn hash_content(content: &Map<String, Value>, dialect: WormDialect) -> String {
+    let value = strip_undefined_deep(&Value::Object(content.clone()));
+    match dialect {
+        WormDialect::Cbor => sha256_hex(&encode_canonical(&value)),
+        WormDialect::Json => sha256_hex(canonical_json(&value).as_bytes()),
+    }
+}
+
+pub fn seal_entry(
+    prev_hash: Option<&str>,
+    prev_index: Option<u64>,
+    body: &WormAppendInput,
+    id: &str,
+    written_at: &str,
+    dialect: WormDialect,
+) -> WormEntry {
+    let content = seal_content_map(prev_hash, prev_index, body, id, written_at);
+    let chain_index = content
+        .get("chainIndex")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0);
+    let prev = content
+        .get("prevHash")
+        .and_then(|v| v.as_str())
+        .unwrap_or(WORM_GENESIS_PREV_HASH)
+        .to_string();
+    let hash = hash_content(&content, dialect);
     WormEntry {
         id: id.into(),
         hash,
-        prev_hash: prev.into(),
+        prev_hash: prev,
         chain_index,
         written_at: written_at.into(),
         backend_acks: vec!["local".into()],
@@ -186,6 +242,7 @@ pub struct ProcessWorm {
     tip: Mutex<Option<(String, u64)>>, // hash, chain_index
     default_session: String,
     default_agent: Option<String>,
+    dialect: WormDialect,
 }
 
 impl ProcessWorm {
@@ -195,7 +252,7 @@ impl ProcessWorm {
         }
         match Self::try_boot() {
             Ok(w) => {
-                tracing::info!("process WORM trail ready (json dialect)");
+                tracing::info!(dialect = w.dialect.as_str(), "process WORM trail ready");
                 Some(Arc::new(w))
             }
             Err(e) => {
@@ -237,6 +294,7 @@ impl ProcessWorm {
             tip: Mutex::new(tip),
             default_session: default_session(),
             default_agent: default_agent(),
+            dialect: WormDialect::from_env(),
         })
     }
 
@@ -260,12 +318,13 @@ impl ProcessWorm {
                 None => (None, None),
             }
         };
-        let entry = seal_json(
+        let entry = seal_entry(
             prev_hash.as_deref(),
             prev_idx,
             &input,
             &id,
             &written_at,
+            self.dialect,
         );
         if let Err(e) = self.persist(&entry) {
             if std::env::var("CLAWQL_WORM_DEBUG").ok().as_deref() == Some("1") {
@@ -307,6 +366,7 @@ impl ProcessWorm {
         }
     }
 
+    #[allow(dead_code)] // unit tests + future audit CLI
     pub fn verify_memory_chain(&self) -> bool {
         let be = self.backend.lock();
         let entries = match &*be {
@@ -316,9 +376,10 @@ impl ProcessWorm {
                 Err(_) => return false,
             },
         };
-        verify_entries(&entries)
+        verify_entries(&entries, self.dialect)
     }
 
+    #[allow(dead_code)]
     pub fn len_memory(&self) -> usize {
         let be = self.backend.lock();
         match &*be {
@@ -378,6 +439,7 @@ fn load_tip(conn: &Connection) -> anyhow::Result<Option<(String, u64)>> {
     Ok(row.map(|(h, i)| (h, i as u64)))
 }
 
+#[allow(dead_code)]
 fn load_all(conn: &Connection) -> anyhow::Result<Vec<WormEntry>> {
     let mut stmt =
         conn.prepare("SELECT entry_json FROM worm_entries ORDER BY chain_index ASC")?;
@@ -391,6 +453,7 @@ fn load_all(conn: &Connection) -> anyhow::Result<Vec<WormEntry>> {
     Ok(out)
 }
 
+#[allow(dead_code)]
 fn entry_from_camel(v: &Value) -> anyhow::Result<WormEntry> {
     let o = v
         .as_object()
@@ -437,7 +500,8 @@ fn entry_from_camel(v: &Value) -> anyhow::Result<WormEntry> {
     })
 }
 
-pub fn verify_entries(entries: &[WormEntry]) -> bool {
+#[allow(dead_code)]
+pub fn verify_entries(entries: &[WormEntry], dialect: WormDialect) -> bool {
     for (i, entry) in entries.iter().enumerate() {
         if i == 0 {
             if entry.chain_index == 0 && entry.prev_hash != WORM_GENESIS_PREV_HASH {
@@ -466,7 +530,7 @@ pub fn verify_entries(entries: &[WormEntry]) -> bool {
         if let Some(m) = &entry.metadata {
             content.insert("metadata".into(), Value::Object(m.clone()));
         }
-        let recomputed = sha256_hex(canonical_json(&Value::Object(content)).as_bytes());
+        let recomputed = hash_content(&content, dialect);
         if recomputed != entry.hash {
             return false;
         }
@@ -486,10 +550,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn chain_seals_and_verifies() {
+    fn chain_seals_and_verifies_cbor_default() {
         std::env::set_var("CLAWQL_WORM_ENABLED", "1");
         std::env::set_var("CLAWQL_WORM_LOCAL", "memory");
+        std::env::remove_var("CLAWQL_WORM_DIALECT");
         let w = ProcessWorm::try_boot().unwrap();
+        assert_eq!(w.dialect, WormDialect::Cbor);
         w.append(WormAppendInput {
             entry_type: "HUMAN_DECISION_REQUESTED".into(),
             timestamp: "2026-10-23T00:00:00.000Z".into(),
@@ -508,5 +574,28 @@ mod tests {
         assert!(w.verify_memory_chain());
         std::env::remove_var("CLAWQL_WORM_ENABLED");
         std::env::remove_var("CLAWQL_WORM_LOCAL");
+    }
+
+    #[test]
+    fn seal_cbor_matches_node_golden() {
+        let body = WormAppendInput {
+            entry_type: "SESSION_START".into(),
+            timestamp: "2026-01-01T00:00:00.000Z".into(),
+            session_id: "s1".into(),
+            agent_name: None,
+            metadata: None,
+        };
+        let e = seal_entry(
+            None,
+            None,
+            &body,
+            "00000000-0000-7000-8000-000000000001",
+            "2026-01-01T00:00:00.000Z",
+            WormDialect::Cbor,
+        );
+        assert_eq!(
+            e.hash,
+            "0dcdaa709efa8ec57898029139bb75773f038ccb8d5d7be7690d850004ee95f9"
+        );
     }
 }

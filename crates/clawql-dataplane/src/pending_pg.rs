@@ -2,6 +2,9 @@
 //!
 //! Same consume predicate as TypeScript `POSTGRES_CONSUME_SQL`.
 //! Selected when `CLAWQL_PENDING_DATABASE_URL` is set (or `CLAWQL_PENDING_STORE=postgres`).
+//!
+//! The sync `postgres` Client owns a Tokio runtime; all Client I/O runs on one
+//! dedicated worker thread so axum workers never nest runtimes.
 
 use crate::args_hash::hash_pending_args;
 use crate::pending::{
@@ -10,10 +13,9 @@ use crate::pending::{
 };
 use crate::risk::OperationRisk;
 use anyhow::{anyhow, Context, Result};
-use parking_lot::Mutex;
 use postgres::{Client, NoTls};
 use serde_json::{Map, Value};
-use std::sync::Arc;
+use std::sync::mpsc::{self, Receiver, SyncSender};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 /// Same predicate shape as SQLite / TLA+ Consume / TS `POSTGRES_CONSUME_SQL`.
@@ -66,7 +68,7 @@ pub fn pending_backend_kind() -> &'static str {
         return "sqlite";
     }
     if raw == "file" || raw == "json" {
-        return "sqlite"; // dataplane has no file backend; fall back
+        return "sqlite";
     }
     if pending_database_url().is_some() {
         return "postgres";
@@ -106,22 +108,61 @@ fn env_flag(key: &str) -> bool {
     )
 }
 
+enum PgJob {
+    Upsert {
+        record: PendingRecord,
+        reply: SyncSender<Result<()>>,
+    },
+    Read {
+        execution_id: String,
+        reply: SyncSender<Result<Option<PendingRecord>>>,
+    },
+    TryConsume {
+        execution_id: String,
+        args_hash: String,
+        consumed_by: String,
+        now_param: Option<SystemTime>,
+        reply: SyncSender<Result<Option<PendingRecord>>>,
+    },
+}
+
 #[derive(Clone)]
 pub struct PendingPgStore {
-    client: Arc<Mutex<Client>>,
+    tx: SyncSender<PgJob>,
     url_redacted: String,
 }
 
 impl PendingPgStore {
     pub fn connect(url: &str) -> Result<Self> {
-        let mut client = Client::connect(url, NoTls)
-            .with_context(|| "connect CLAWQL_PENDING_DATABASE_URL")?;
-        client.batch_execute(DDL).context("ensure pending postgres schema")?;
-        let url_redacted = redact_url(url);
-        Ok(Self {
-            client: Arc::new(Mutex::new(client)),
-            url_redacted,
-        })
+        let url = url.to_string();
+        let url_redacted = redact_url(&url);
+        let (tx, rx) = mpsc::sync_channel::<PgJob>(32);
+        let (ready_tx, ready_rx) = mpsc::sync_channel::<Result<()>>(1);
+
+        std::thread::Builder::new()
+            .name("pending-pg-worker".into())
+            .spawn(move || {
+                let mut client = match Client::connect(&url, NoTls) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        let _ = ready_tx.send(Err(anyhow!("connect: {e:#}")));
+                        return;
+                    }
+                };
+                if let Err(e) = client.batch_execute(DDL) {
+                    let _ = ready_tx.send(Err(anyhow!("schema: {e:#}")));
+                    return;
+                }
+                let _ = ready_tx.send(Ok(()));
+                worker_loop(&mut client, rx);
+            })
+            .context("spawn pending-pg-worker")?;
+
+        ready_rx
+            .recv()
+            .map_err(|_| anyhow!("pending-pg-worker died before ready"))??;
+
+        Ok(Self { tx, url_redacted })
     }
 
     pub fn label(&self) -> &str {
@@ -158,7 +199,7 @@ impl PendingPgStore {
             risk: risk_to_pending(risk),
             status: PendingStatus::Pending.as_str().into(),
             created_at,
-            expires_at: expires_at.clone(),
+            expires_at,
             approved_at: None,
             completed_at: None,
             last_error: None,
@@ -166,64 +207,35 @@ impl PendingPgStore {
             consumed_by: None,
             idempotency_capable,
         };
-        self.upsert(&record)?;
+        self.upsert(record.clone())?;
         Ok(record)
     }
 
-    fn upsert(&self, record: &PendingRecord) -> Result<()> {
-        let payload = record.to_payload_json()?;
-        let payload_val: Value = serde_json::from_str(&payload)?;
-        let expires_at = iso_to_system_time(&record.expires_at)
-            .ok_or_else(|| anyhow!("invalid expires_at {}", record.expires_at))?;
-        let consumed_at: Option<SystemTime> = record
-            .consumed_at
-            .as_deref()
-            .and_then(iso_to_system_time);
-        let mut client = self.client.lock();
-        client.execute(
-            r#"
-            INSERT INTO pending_executions (
-              execution_id, payload_json, status, args_hash, expires_at,
-              consumed_at, consumed_by, last_error, updated_at
-            ) VALUES ($1, $2::jsonb, $3, $4, $5, $6, $7, $8, NOW())
-            ON CONFLICT (execution_id) DO UPDATE SET
-              payload_json = EXCLUDED.payload_json,
-              status = EXCLUDED.status,
-              args_hash = EXCLUDED.args_hash,
-              expires_at = EXCLUDED.expires_at,
-              consumed_at = EXCLUDED.consumed_at,
-              consumed_by = EXCLUDED.consumed_by,
-              last_error = EXCLUDED.last_error,
-              updated_at = NOW()
-            "#,
-            &[
-                &record.execution_id,
-                &payload_val,
-                &record.status,
-                &record.args_hash,
-                &expires_at,
-                &consumed_at,
-                &record.consumed_by,
-                &record.last_error,
-            ],
-        )?;
-        Ok(())
+    fn upsert(&self, record: PendingRecord) -> Result<()> {
+        let (reply_tx, reply_rx) = mpsc::sync_channel(1);
+        self.tx
+            .send(PgJob::Upsert {
+                record,
+                reply: reply_tx,
+            })
+            .map_err(|_| anyhow!("pending-pg-worker closed"))?;
+        reply_rx
+            .recv()
+            .map_err(|_| anyhow!("pending-pg-worker dropped reply"))?
     }
 
     pub fn read(&self, execution_id: &str) -> Result<Option<PendingRecord>> {
-        let id = assert_safe_execution_id(execution_id)?;
-        let mut client = self.client.lock();
-        let rows = client.query(
-            "SELECT payload_json FROM pending_executions WHERE execution_id = $1",
-            &[&id],
-        )?;
-        if rows.is_empty() {
-            return Ok(None);
-        }
-        let payload: Value = rows[0].get(0);
-        Ok(Some(PendingRecord::from_payload_json(
-            &serde_json::to_string(&payload)?,
-        )?))
+        let id = assert_safe_execution_id(execution_id)?.to_string();
+        let (reply_tx, reply_rx) = mpsc::sync_channel(1);
+        self.tx
+            .send(PgJob::Read {
+                execution_id: id,
+                reply: reply_tx,
+            })
+            .map_err(|_| anyhow!("pending-pg-worker closed"))?;
+        reply_rx
+            .recv()
+            .map_err(|_| anyhow!("pending-pg-worker dropped reply"))?
     }
 
     pub fn decide(&self, execution_id: &str, approve: bool) -> Result<PendingRecord> {
@@ -241,7 +253,7 @@ impl PendingPgStore {
         if expires_ms <= now_ms() {
             record.status = PendingStatus::Expired.as_str().into();
             record.last_error = Some("pending execution expired".into());
-            self.upsert(&record)?;
+            self.upsert(record.clone())?;
             return Err(anyhow!("Execution {id} expired at {}", record.expires_at));
         }
         let now = iso_now();
@@ -253,7 +265,7 @@ impl PendingPgStore {
             record.approved_at = None;
             record.completed_at = Some(now);
         }
-        self.upsert(&record)?;
+        self.upsert(record.clone())?;
         Ok(record)
     }
 
@@ -264,7 +276,7 @@ impl PendingPgStore {
         consumed_by: Option<&str>,
         now_ms_override: Option<i64>,
     ) -> Result<Option<PendingRecord>> {
-        let id = assert_safe_execution_id(execution_id)?;
+        let id = assert_safe_execution_id(execution_id)?.to_string();
         let consumed_by = consumed_by
             .map(str::trim)
             .filter(|s| !s.is_empty())
@@ -273,32 +285,19 @@ impl PendingPgStore {
         let now_param: Option<SystemTime> = now_ms_override.map(|ms| {
             UNIX_EPOCH + Duration::from_millis(ms.max(0) as u64)
         });
-
-        let mut client = self.client.lock();
-        let mut tx = client.transaction()?;
-        let rows = tx.query(
-            POSTGRES_CONSUME_SQL,
-            &[&consumed_by, &id, &args_hash, &now_param],
-        )?;
-        if rows.is_empty() {
-            tx.rollback()?;
-            return Ok(None);
-        }
-        let payload: Value = rows[0].get(1);
-        let consumed_at: Option<std::time::SystemTime> = rows[0].get(2);
-        let consumed_by_row: String = rows[0].get(3);
-        let mut next = PendingRecord::from_payload_json(&serde_json::to_string(&payload)?)?;
-        next.status = PendingStatus::OutcomeUnknown.as_str().into();
-        next.consumed_at = Some(system_time_to_iso(consumed_at).unwrap_or_else(iso_now));
-        next.consumed_by = Some(consumed_by_row);
-        next.last_error = None;
-        let payload_val: Value = serde_json::from_str(&next.to_payload_json()?)?;
-        tx.execute(
-            "UPDATE pending_executions SET payload_json = $1::jsonb WHERE execution_id = $2",
-            &[&payload_val, &id],
-        )?;
-        tx.commit()?;
-        Ok(Some(next))
+        let (reply_tx, reply_rx) = mpsc::sync_channel(1);
+        self.tx
+            .send(PgJob::TryConsume {
+                execution_id: id,
+                args_hash: args_hash.to_string(),
+                consumed_by,
+                now_param,
+                reply: reply_tx,
+            })
+            .map_err(|_| anyhow!("pending-pg-worker closed"))?;
+        reply_rx
+            .recv()
+            .map_err(|_| anyhow!("pending-pg-worker dropped reply"))?
     }
 
     pub fn mark_completed(&self, execution_id: &str, ok: bool, error: Option<&str>) -> Result<()> {
@@ -317,9 +316,124 @@ impl PendingPgStore {
         };
         record.completed_at = Some(iso_now());
         record.last_error = error.map(|s| s.to_string());
-        self.upsert(&record)?;
+        self.upsert(record)?;
         Ok(())
     }
+}
+
+fn worker_loop(client: &mut Client, rx: Receiver<PgJob>) {
+    while let Ok(job) = rx.recv() {
+        match job {
+            PgJob::Upsert { record, reply } => {
+                let _ = reply.send(upsert_client(client, &record));
+            }
+            PgJob::Read {
+                execution_id,
+                reply,
+            } => {
+                let _ = reply.send(read_client(client, &execution_id));
+            }
+            PgJob::TryConsume {
+                execution_id,
+                args_hash,
+                consumed_by,
+                now_param,
+                reply,
+            } => {
+                let _ = reply.send(try_consume_client(
+                    client,
+                    &execution_id,
+                    &args_hash,
+                    &consumed_by,
+                    now_param,
+                ));
+            }
+        }
+    }
+}
+
+fn upsert_client(client: &mut Client, record: &PendingRecord) -> Result<()> {
+    let payload = record.to_payload_json()?;
+    let payload_val: Value = serde_json::from_str(&payload)?;
+    let expires_at = iso_to_system_time(&record.expires_at)
+        .ok_or_else(|| anyhow!("invalid expires_at {}", record.expires_at))?;
+    let consumed_at: Option<SystemTime> =
+        record.consumed_at.as_deref().and_then(iso_to_system_time);
+    client.execute(
+        r#"
+        INSERT INTO pending_executions (
+          execution_id, payload_json, status, args_hash, expires_at,
+          consumed_at, consumed_by, last_error, updated_at
+        ) VALUES ($1, $2::jsonb, $3, $4, $5, $6, $7, $8, NOW())
+        ON CONFLICT (execution_id) DO UPDATE SET
+          payload_json = EXCLUDED.payload_json,
+          status = EXCLUDED.status,
+          args_hash = EXCLUDED.args_hash,
+          expires_at = EXCLUDED.expires_at,
+          consumed_at = EXCLUDED.consumed_at,
+          consumed_by = EXCLUDED.consumed_by,
+          last_error = EXCLUDED.last_error,
+          updated_at = NOW()
+        "#,
+        &[
+            &record.execution_id,
+            &payload_val,
+            &record.status,
+            &record.args_hash,
+            &expires_at,
+            &consumed_at,
+            &record.consumed_by,
+            &record.last_error,
+        ],
+    )?;
+    Ok(())
+}
+
+fn read_client(client: &mut Client, execution_id: &str) -> Result<Option<PendingRecord>> {
+    let rows = client.query(
+        "SELECT payload_json FROM pending_executions WHERE execution_id = $1",
+        &[&execution_id],
+    )?;
+    if rows.is_empty() {
+        return Ok(None);
+    }
+    let payload: Value = rows[0].get(0);
+    Ok(Some(PendingRecord::from_payload_json(
+        &serde_json::to_string(&payload)?,
+    )?))
+}
+
+fn try_consume_client(
+    client: &mut Client,
+    execution_id: &str,
+    args_hash: &str,
+    consumed_by: &str,
+    now_param: Option<SystemTime>,
+) -> Result<Option<PendingRecord>> {
+    let mut tx = client.transaction()?;
+    let rows = tx.query(
+        POSTGRES_CONSUME_SQL,
+        &[&consumed_by, &execution_id, &args_hash, &now_param],
+    )?;
+    if rows.is_empty() {
+        tx.rollback()?;
+        return Ok(None);
+    }
+    let payload: Value = rows[0].get(1);
+    let consumed_at: Option<SystemTime> = rows[0].get(2);
+    let consumed_by_row: String = rows[0].get(3);
+    let mut next = PendingRecord::from_payload_json(&serde_json::to_string(&payload)?)?;
+    next.status = PendingStatus::OutcomeUnknown.as_str().into();
+    next.consumed_at = Some(system_time_to_iso(consumed_at).unwrap_or_else(iso_now));
+    next.consumed_by = Some(consumed_by_row);
+    next.last_error = None;
+    let payload_val: Value = serde_json::from_str(&next.to_payload_json()?)?;
+    tx.execute(
+        "UPDATE pending_executions SET payload_json = $1::jsonb WHERE execution_id = $2",
+        &[&payload_val, &execution_id],
+    )?;
+    tx.commit()?;
+    Ok(Some(next))
 }
 
 fn iso_to_system_time(iso: &str) -> Option<SystemTime> {
@@ -331,27 +445,21 @@ fn iso_to_system_time(iso: &str) -> Option<SystemTime> {
 }
 
 fn redact_url(url: &str) -> String {
-    // postgres://user:pass@host/db → postgres://user:***@host/db
     if let Some(at) = url.find('@') {
         if let Some(scheme_end) = url.find("://") {
             let after_scheme = scheme_end + 3;
             if let Some(colon) = url[after_scheme..at].find(':') {
                 let user = &url[after_scheme..after_scheme + colon];
-                return format!(
-                    "{}{}:***{}",
-                    &url[..after_scheme],
-                    user,
-                    &url[at..]
-                );
+                return format!("{}{}:***{}", &url[..after_scheme], user, &url[at..]);
             }
         }
     }
     url.to_string()
 }
 
-fn system_time_to_iso(t: Option<std::time::SystemTime>) -> Option<String> {
+fn system_time_to_iso(t: Option<SystemTime>) -> Option<String> {
     let t = t?;
-    let dur = t.duration_since(std::time::UNIX_EPOCH).ok()?;
+    let dur = t.duration_since(UNIX_EPOCH).ok()?;
     Some(crate_iso_now_ms(dur.as_millis() as i64))
 }
 
@@ -384,7 +492,6 @@ mod tests {
         assert_eq!(pending_backend_kind(), "postgres");
         std::env::remove_var("CLAWQL_PENDING_DATABASE_URL");
         assert_eq!(pending_backend_kind(), "sqlite");
-        // Restore so integration tests in the same process keep their URL.
         match prev_url {
             Some(u) => std::env::set_var("CLAWQL_PENDING_DATABASE_URL", u),
             None => std::env::remove_var("CLAWQL_PENDING_DATABASE_URL"),
@@ -395,22 +502,7 @@ mod tests {
         }
     }
 
-    #[test]
-    fn park_approve_consume_postgres_integration() {
-        let url = match pending_database_url() {
-            Some(u) => u,
-            None => {
-                eprintln!("skip: CLAWQL_PENDING_DATABASE_URL unset");
-                return;
-            }
-        };
-        let store = match PendingPgStore::connect(&url) {
-            Ok(s) => s,
-            Err(e) => {
-                eprintln!("skip: postgres connect failed: {e:#}");
-                return;
-            }
-        };
+    fn pg_roundtrip(store: &PendingPgStore) {
         let risk = crate::risk::classify_http_operation(&crate::catalog::Operation {
             id: "pets.create".into(),
             method: "POST".into(),
@@ -435,5 +527,43 @@ mod tests {
             .try_consume(&parked.execution_id, &parked.args_hash, Some("test-pg"), None)
             .expect("consume2");
         assert!(second.is_none());
+    }
+
+    #[test]
+    fn park_approve_consume_postgres_integration() {
+        let url = match pending_database_url() {
+            Some(u) => u,
+            None => {
+                eprintln!("skip: CLAWQL_PENDING_DATABASE_URL unset");
+                return;
+            }
+        };
+        let store = match PendingPgStore::connect(&url) {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("skip: postgres connect failed: {e:#}");
+                return;
+            }
+        };
+        pg_roundtrip(&store);
+    }
+
+    #[tokio::test]
+    async fn postgres_ops_from_tokio_runtime() {
+        let url = match pending_database_url() {
+            Some(u) => u,
+            None => {
+                eprintln!("skip: CLAWQL_PENDING_DATABASE_URL unset");
+                return;
+            }
+        };
+        let store = match PendingPgStore::connect(&url) {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("skip: postgres connect failed: {e:#}");
+                return;
+            }
+        };
+        pg_roundtrip(&store);
     }
 }
