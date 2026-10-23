@@ -10,7 +10,9 @@ import * as protoLoader from "@grpc/proto-loader";
 import protobuf from "protobufjs";
 import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
 import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
+import { ensureClawqlApi, resetClawqlApiForTests } from "../composition/clawql-api-adapters.js";
 import { createRegisteredMcpServer } from "../mcp/mcp-server-factory.js";
+import { resetOptionalToolDepsForTests, wireOptionalToolDeps } from "../mcp/tools.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "../..");
@@ -56,8 +58,17 @@ export function loadMcpClientConstructor(): grpc.ServiceClientConstructor {
   return loaded.model_context_protocol.Mcp;
 }
 
+/** Boot dynamic API after the caller has set CLAWQL_* env / instance spec. */
+async function bootApiForEphemeralGrpc(): Promise<void> {
+  resetClawqlApiForTests();
+  resetOptionalToolDepsForTests();
+  await ensureClawqlApi();
+  await wireOptionalToolDeps();
+}
+
 /** Start an ephemeral gRPC MCP server, ListTools, then shut down. */
 export async function listToolNamesFromEphemeralGrpcServer(): Promise<Set<string>> {
+  await bootApiForEphemeralGrpc();
   const started = await maybeStartGrpcMcpServer({
     createMcpServer: createRegisteredMcpServer,
     bindAddress: "127.0.0.1:0",
@@ -163,6 +174,7 @@ export async function callToolOnEphemeralGrpcServer(
   toolName: string,
   args: Record<string, unknown>
 ): Promise<string> {
+  await bootApiForEphemeralGrpc();
   const started = await maybeStartGrpcMcpServer({
     createMcpServer: createRegisteredMcpServer,
     bindAddress: "127.0.0.1:0",

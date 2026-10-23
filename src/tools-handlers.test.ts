@@ -7,13 +7,25 @@ import { resetSpecCache } from "clawql-api";
 import { handleMemoryIngestToolInput } from "clawql-memory/plugin";
 import { handleMemoryRecallToolInput } from "clawql-memory/plugin";
 import { handleClawqlCodeToolInput } from "clawql-sandbox/plugin";
-import { resetClawqlApiForTests, setLoadSpecForTests } from "./composition/clawql-api-adapters.js";
+import {
+  ensureClawqlApi,
+  resetClawqlApiForTests,
+  setLoadSpecForTests,
+} from "./composition/clawql-api-adapters.js";
 import {
   handleClawqlExecuteToolInput,
   handleClawqlSearchToolInput,
+  resetOptionalToolDepsForTests,
   resetSchemaFieldCache,
+  wireOptionalToolDeps,
 } from "./mcp/tools.js";
 import { withFetchServer } from "./test-utils/fetch-test-server.js";
+
+async function bootApi(): Promise<void> {
+  resetOptionalToolDepsForTests();
+  await ensureClawqlApi();
+  await wireOptionalToolDeps();
+}
 
 describe("MCP tool handlers", () => {
   beforeEach(() => {
@@ -25,6 +37,7 @@ describe("MCP tool handlers", () => {
     resetSchemaFieldCache();
     setLoadSpecForTests(undefined);
     resetClawqlApiForTests();
+    resetOptionalToolDepsForTests();
   });
 
   it("handleClawqlSearchToolInput returns JSON results", async () => {
@@ -49,6 +62,7 @@ describe("MCP tool handlers", () => {
       },
       rawSource: {},
     }));
+    await bootApi();
 
     const out = await handleClawqlSearchToolInput({
       query: "list pets",
@@ -74,6 +88,7 @@ describe("MCP tool handlers", () => {
       },
       rawSource: {},
     }));
+    await bootApi();
     const out = await handleClawqlExecuteToolInput({
       operationId: "missing.op",
       args: {},
@@ -129,6 +144,7 @@ describe("MCP tool handlers", () => {
           multi: true,
           rawSource: {},
         }));
+        await bootApi();
 
         const out = await handleClawqlExecuteToolInput({
           operationId: "alpha::listPets",
@@ -196,6 +212,7 @@ describe("MCP tool handlers", () => {
           multi: false,
           rawSource: {},
         }));
+        await bootApi();
 
         resetSpecCache();
         resetSchemaFieldCache();

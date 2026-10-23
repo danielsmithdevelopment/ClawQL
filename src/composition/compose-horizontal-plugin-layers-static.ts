@@ -1,6 +1,9 @@
 /**
- * Static horizontal tier Layer composition (sync imports every package).
- * Used by tests and sync {@link getClawqlApi} bootstrap for backward compatibility.
+ * Static horizontal tier Layer composition (sync ESM imports every optional package).
+ *
+ * Used by Vitest (`compose-horizontal-plugin-layers.test.ts`) and deprecated sync aliases.
+ * Production hosts must `ensureClawqlApi()` (dynamic composer) and must not import this
+ * module from the Ready graph — keep it out of `clawql-api-adapters` top-level imports.
  */
 import {
   basePluginCompositionFlags,

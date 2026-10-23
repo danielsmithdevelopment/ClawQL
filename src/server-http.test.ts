@@ -9,7 +9,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { recordNativeGraphqlExecute, resetNativeProtocolMetricsForTests } from "clawql-api";
 import { resetMemoryDbArtifactCachesForTests } from "clawql-memory";
 import { syncMemoryDbFromDocuments } from "clawql-memory/db/memory-db";
-import { resetClawqlApiForTests } from "./composition/clawql-api-adapters.js";
+import { disposeClawqlApi, resetClawqlApiForTests } from "./composition/clawql-api-adapters.js";
 import { resetClawqlGatewayAuthForTests } from "./composition/gateway-auth.js";
 import { getClawqlOptionalToolFlags, resetSpecCache } from "clawql-api";
 import { createMcpHttpApp, type CreateMcpHttpAppOptions } from "./server-http.js";
@@ -21,6 +21,24 @@ const FAST_HTTP_APP_OPTS: CreateMcpHttpAppOptions = {
   skipSpecPreload: true,
   skipGraphqlAttach: true,
 };
+
+/** Drop vault writers then rm — healthz/cuckoo can still flush after the HTTP server closes. */
+async function rmTempVaultDir(dir: string): Promise<void> {
+  await disposeClawqlApi().catch(() => undefined);
+  resetClawqlApiForTests();
+  resetMemoryDbArtifactCachesForTests();
+  for (let attempt = 0; attempt < 6; attempt++) {
+    try {
+      await rm(dir, { recursive: true, force: true });
+      return;
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code !== "ENOTEMPTY" && code !== "EBUSY") throw err;
+      await new Promise((r) => setTimeout(r, 40 * (attempt + 1)));
+    }
+  }
+  await rm(dir, { recursive: true, force: true });
+}
 
 /** GraphQL route tests need in-process `/graphql` mounted (slower startup). */
 const GRAPHQL_HTTP_APP_OPTS: CreateMcpHttpAppOptions = { skipSpecPreload: true };
@@ -319,7 +337,7 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
       else process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = savedAllowKw;
       if (savedVec === undefined) delete process.env.CLAWQL_VECTOR_BACKEND;
       else process.env.CLAWQL_VECTOR_BACKEND = savedVec;
-      await rm(dir, { recursive: true, force: true });
+      await rmTempVaultDir(dir);
     }
   });
 
@@ -364,7 +382,7 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
       else process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = savedAllowKw;
       if (savedVec === undefined) delete process.env.CLAWQL_VECTOR_BACKEND;
       else process.env.CLAWQL_VECTOR_BACKEND = savedVec;
-      await rm(dir, { recursive: true, force: true });
+      await rmTempVaultDir(dir);
     }
   });
 

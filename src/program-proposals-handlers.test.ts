@@ -10,12 +10,24 @@ import {
   type OperationRisk,
   type ResolvedProposal,
 } from "clawql-api";
-import { resetClawqlApiForTests, setLoadSpecForTests } from "./composition/clawql-api-adapters.js";
+import {
+  ensureClawqlApi,
+  resetClawqlApiForTests,
+  setLoadSpecForTests,
+} from "./composition/clawql-api-adapters.js";
 import {
   handleExecuteProgramToolInput,
   handleSubmitProgramProposalsToolInput,
+  resetOptionalToolDepsForTests,
+  wireOptionalToolDeps,
 } from "./mcp/tools.js";
 import { withFetchServer } from "./test-utils/fetch-test-server.js";
+
+async function bootApi(): Promise<void> {
+  resetOptionalToolDepsForTests();
+  await ensureClawqlApi();
+  await wireOptionalToolDeps();
+}
 
 const ENV_KEYS = [
   "CLAWQL_HOME",
@@ -138,6 +150,7 @@ describe("execute_program proposals → submit_program_proposals (MCP handlers, 
     }
     setLoadSpecForTests(undefined);
     resetClawqlApiForTests();
+    resetOptionalToolDepsForTests();
     await rm(home, { recursive: true, force: true });
   });
 
@@ -160,6 +173,7 @@ describe("execute_program proposals → submit_program_proposals (MCP handlers, 
       },
       async (origin) => {
         setLoadSpecForTests(async () => spec(origin));
+        await bootApi();
         const submit = async () =>
           textOf(await handleSubmitProgramProposalsToolInput({ programId })) as Submitted;
         const leaf = (out: Submitted, id: string) => out.leaves.find((l) => l.id === id)!;
