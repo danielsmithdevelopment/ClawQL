@@ -18,12 +18,12 @@
 
 ## Phase B exit (before go/no-go)
 
-| Gate | Bar |
-| --- | --- |
-| Governance parity | Risk → IFC → mandate consume → WORM on Rust; `comparisonLabel=governance` |
-| Differential | Zero mismatches on agreed suite vs TS |
-| Density survives | Governed Rust still ≪ Bun (near half-Bun or better) |
-| Latency | Effectively equal (do not claim “2× faster” from ~0.5 ms p50) |
+| Gate | Bar | Status |
+| --- | --- | --- |
+| Governance parity | Risk → IFC → mandate consume → WORM on Rust; `comparisonLabel=governance` | **Met** |
+| Differential | Zero mismatches on agreed suite vs TS | **Met** (`diff-governance-cf.sh`) |
+| Density survives | Governed Rust still ≪ Bun (near half-Bun or better) | **Met** (~8.9×) |
+| Latency | Effectively equal (do not claim “2× faster” from ~0.5 ms p50) | **Met** (p999 tied) |
 
 ## Phase B progress (this branch)
 
@@ -32,13 +32,26 @@
 | Risk + park/block | Done (`CLAWQL_DATAPLANE_GOVERNANCE=1`) |
 | Session IFC | Done (default on) |
 | SQLite mandate park / `resume` / atomic consume | Done (`pending.rs`, same `CONSUME_SQL`) |
-| Process-WORM | Done for spike (`CLAWQL_WORM_ENABLED=1`, JSON dialect) |
+| Process-WORM | Done (`CLAWQL_WORM_ENABLED=1`, default **CBOR**; `CLAWQL_WORM_DIALECT=json` legacy) |
 | Postgres consume | Done (`pending_pg.rs`; integration when `CLAWQL_PENDING_DATABASE_URL` set) |
 | Governance HTTP self-check | Done (`scripts/dataplane/diff-governance.sh`) |
-| CBOR WORM dialect + Bun cross-diff | Pending |
-| Fair governed density board | Pending |
+| CBOR WORM dialect | Done (`cbor_canon.rs` + node golden hashes) |
+| Bun vs Rust CF cross-diff | Done (`diff-governance-cf.sh` — allow / block / park) |
+| Fair governed density board | Done (`week1-gov-cf-known-op.sh`, `comparisonLabel=governance`) |
+
+**Harness note:** put `CLAWQL_HOME` on a real filesystem (`/tmp/…`); the artifacts FUSE store returns SQLite `disk I/O error` for pending/WORM WAL.
+
+## Fair governed density (3×10k CF known-op)
+
+| Arm | Plateau median | Call p50 | Call p999 | Errors |
+| --- | --- | --- | --- | --- |
+| Bun lean | **130.2 MB** | 1.05 ms | 4.72 ms | 0 |
+| Rust dataplane (gov=1) | **14.6 MB** | 0.57 ms | 4.94 ms | 0 |
+
+Density ~**8.9×**; latency effectively equal at p999. Source: `docs/benchmarks/gateway-multi-comparison/dataplane-week1-gov-3x10k.json`.
 
 ## Honesty
 
-- Week-1 boards stay labeled **`fast-path-only`** until both arms run full governance.
+- Week-1 boards labeled **`fast-path-only`** remain the ungated cite; use **`governance`** for fair claims.
 - Do not claim “mathematically proven policy” until Verus + Accepted go (ADR 0016).
+- Do not claim “Rust 2× faster” from ~0.5 ms p50 gaps.
