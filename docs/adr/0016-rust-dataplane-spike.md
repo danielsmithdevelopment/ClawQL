@@ -112,8 +112,9 @@ If go: plan for Rust to become the **only** policy-engine implementation (called
 
 | Evidence | Result |
 | --- | --- |
-| Memory | Governed CF 3×10k (dual-process remasure): Rust ~**15.8 MB** vs Bun ~**128 MB** (~**8.1×**) — clears ≤65 MB half-Bun bar |
-| Latency | Call p999 **tied** (~4.9–5.1 ms) — not “clearly better”; density is the go signal (per ADR note on this board) |
+| Memory (component) | Governed CF 3×10k direct-to-dataplane: Rust ~**15.8 MB** vs Bun ~**128 MB** (~**8.1×**) — clears ≤65 MB half-Bun bar for the execute plane alone |
+| Memory (product / dual-process e2e) | Bun→Rust forward 3×10k: **summed** Anonymous ~**124.8 MB** vs Bun-only ~**124.4 MB** (tied; dataplane-only RSS is not the product cite) |
+| Latency | Direct-plane call p999 **tied**; dual-process e2e pays a forward hop (sess p50 ~21 ms vs Bun-only ~13 ms on the known-op board) |
 | Differential | Zero Bun/Rust CF governance mismatches (`diff-governance-cf.sh`) |
 | Verus | Policy evaluator **proved** (`formal/verus/approval-policy`, 11 verified); labels + digests stretch **deferred** |
 

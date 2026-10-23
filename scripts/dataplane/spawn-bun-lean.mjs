@@ -6,10 +6,11 @@
  *   node scripts/dataplane/spawn-bun-lean.mjs \
  *     --port 12345 --home /tmp/h --catalog /path/c.sqlite \
  *     --spec /path/curated.json --api-base http://127.0.0.1:9 \
- *     --server dist/server-http.js --log /tmp/bun.log --out-meta /tmp/meta.json
+ *     --server dist/server-http.js --log /tmp/bun.log --out-meta /tmp/meta.json \
+ *     [--dataplane-url http://127.0.0.1:8787]
  */
 import { spawn } from "node:child_process";
-import { openSync, existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { openSync, existsSync, writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { clawqlEqualArmEnv } from "./lib/clawql-bench-env.mjs";
@@ -30,10 +31,11 @@ const server = resolve(arg("--server", resolve(ROOT, "dist/server-http.js")));
 const logPath = resolve(arg("--log", resolve(home, "bun.log")));
 const outMeta = resolve(arg("--out-meta", resolve(home, "bun-meta.json")));
 const bunBin = arg("--bun", process.env.BUN_BIN || "bun");
+const dataplaneUrl = arg("--dataplane-url", "").trim();
 
 if (!port || !home || !catalog || !spec || !apiBase) {
   console.error(
-    "usage: spawn-bun-lean.mjs --port N --home DIR --catalog FILE --spec FILE --api-base URL [--server PATH] [--log PATH] [--out-meta PATH]"
+    "usage: spawn-bun-lean.mjs --port N --home DIR --catalog FILE --spec FILE --api-base URL [--server PATH] [--log PATH] [--out-meta PATH] [--dataplane-url URL]"
   );
   process.exit(2);
 }
@@ -75,7 +77,15 @@ Object.assign(env, {
   CLAWQL_HTTP_SKIP_GRAPHQL: "1",
   CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE: "1",
   CLAWQL_ENABLE_PROGRAMS: "0",
+  // Avoid celld probe latency on equal-arm boards.
+  CLAWQL_CORE_IN_CELLD: "0",
+  CLAWQL_FORCE_HOST_CORE: "1",
 });
+if (dataplaneUrl) {
+  const base = dataplaneUrl.replace(/\/$/, "");
+  env.CLAWQL_DATAPLANE_EXECUTE_URL = base.endsWith("/mcp") ? base : base;
+  env.CLAWQL_DATAPLANE_FORWARD = "1";
+}
 
 const fd = openSync(logPath, "w");
 const child = spawn(bunBin, ["--smol", server], {
@@ -94,7 +104,10 @@ const meta = {
   home,
   catalog,
   argv: [bunBin, "--smol", server],
-  profile: "heap-vs-anon-equal-arm-lean",
+  profile: dataplaneUrl
+    ? "heap-vs-anon-equal-arm-lean+dataplane-forward"
+    : "heap-vs-anon-equal-arm-lean",
+  dataplaneUrl: dataplaneUrl || null,
 };
 writeFileSync(outMeta, JSON.stringify(meta, null, 2));
 console.log(JSON.stringify(meta));

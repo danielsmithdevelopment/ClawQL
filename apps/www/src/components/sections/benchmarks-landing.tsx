@@ -1001,7 +1001,7 @@ export function BenchmarksLanding() {
         subheadline={
           <p>
             Weighted mean tokens (definition + discovery + result + 5× code). Task success 1.0 on every arm below.
-            Memory is process-tree anon MB — density row is execute-plane RSS only. Label session transport when
+            Memory is process-tree anon MB — dual-process row sums Bun host + dataplane. Label session transport when
             comparing latency.
           </p>
         }

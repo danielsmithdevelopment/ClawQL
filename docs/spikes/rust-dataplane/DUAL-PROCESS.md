@@ -60,18 +60,31 @@ helm upgrade --install clawql ./manifests/charts/clawql-mcp \
 
 **Harness note:** put `CLAWQL_HOME` on a real filesystem (`/tmp/…`); the artifacts FUSE store returns SQLite `disk I/O error` for pending/WORM WAL.
 
-## Fair governed density (3×10k CF known-op)
+## Fair governed density — component planes (3×10k CF known-op)
+
+Direct MCP to each process (not the dual-process product path):
 
 | Arm | Plateau median | Call p50 | Call p999 | Errors |
 | --- | --- | --- | --- | --- |
 | Bun lean | **~127.9 MB** | ~1.04 ms | ~4.88 ms | 0 |
 | Rust dataplane (gov=1) | **~15.8 MB** | ~0.55 ms | ~5.07 ms | 0 |
 
-Density ~**8.1×**; latency effectively equal at p999 (dual-process remasure 2026-10-23). Source: `docs/benchmarks/gateway-multi-comparison/dataplane-week1-gov-3x10k.json`. Spike decision: ADR 0016 **Accepted (conditional)**.
+Component density ~**8.1×**. Source: `dataplane-week1-gov-3x10k.json`.
+
+## Dual-process e2e (product cite — 3×10k CF known-op)
+
+Client → Bun MCP (optional forward to Rust). Memory = **sum** of both Anonymous RSS; latency = e2e wall-clock.
+
+| Arm | Total plateau med | Sess p50 | Call p999 | Errors |
+| --- | --- | --- | --- | --- |
+| Bun-only | **~124.4 MB** | ~12.6 ms | ~4.9 ms | 0 |
+| Dual-process (Bun→Rust) | **~124.8 MB** (Bun ~109 + DP ~16) | ~21.1 ms | ~6.6 ms | 0 |
+
+Forward verified 330 000 / 330 000 executes. Source: `dataplane-dual-process-e2e-3x10k.json` (`scripts/dataplane/dual-process-e2e-cf-known-op.sh`). Spike decision: ADR 0016 **Accepted (conditional)**.
 
 ## Honesty
 
 - Week-1 boards labeled **`fast-path-only`** remain the ungated cite; use **`governance`** for fair claims.
-- Density cites **execute-plane RSS only** — not Bun host + Rust sum.
+- **Site / dual-process installs:** cite **summed** Bun host + dataplane Anonymous RSS and **e2e** latency through the Bun MCP URL (`scripts/dataplane/dual-process-e2e-cf-known-op.sh`, `comparisonLabel=dual-process-e2e`). Dataplane-only RSS is a component breakdown, not the product cite.
 - Do not claim “mathematically proven policy” until Verus + Accepted go (ADR 0016).
 - Do not claim “Rust 2× faster” from ~0.5 ms p50 gaps.

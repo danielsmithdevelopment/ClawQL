@@ -1,0 +1,596 @@
+{
+  "comparisonLabel": "dual-process-e2e",
+  "note": "dual_process memory = Bun host Anonymous + Rust dataplane Anonymous (both on the e2e path). Latency is client wall-clock through the Bun MCP URL. Do not cite dataplane-only RSS for dual-process product claims. Remasure 2026-10-23 \u00b7 comparisonLabel=dual-process-e2e.",
+  "reps": 3,
+  "iters": 10000,
+  "stepsPerIter": 11,
+  "arms": {
+    "bun_host": {
+      "url": "http://127.0.0.1:48611/mcp",
+      "pids": [
+        1643150
+      ],
+      "memoryMode": "single",
+      "errors": 0,
+      "anon_kb_samples": [
+        95132,
+        128824,
+        127432,
+        124980,
+        124452,
+        128544,
+        127888,
+        124080,
+        125936,
+        128988,
+        130700,
+        129484,
+        128852,
+        125080,
+        128800,
+        126816,
+        133680,
+        124388,
+        126756,
+        128152,
+        125212,
+        122604,
+        129664,
+        136412,
+        128268,
+        127496,
+        128680,
+        125604,
+        121544,
+        128520,
+        127740,
+        122700,
+        128704,
+        129380,
+        127956,
+        132660,
+        126708,
+        127684,
+        125588,
+        129408,
+        127912,
+        120784,
+        118800,
+        128776,
+        131704,
+        124016,
+        128104,
+        127392,
+        125380,
+        124720,
+        129412,
+        135744,
+        124824,
+        123748,
+        130180,
+        124436,
+        122544,
+        128072,
+        122084,
+        127372,
+        131856,
+        128972,
+        126544
+      ],
+      "proxiedFromCount": 0,
+      "by_rep": [
+        {
+          "rep": 1,
+          "errors": 0,
+          "proxiedFromCount": 0,
+          "per_call": {
+            "n": 110000,
+            "p50": 1.0926970000000438,
+            "p99": 3.082045000017388,
+            "p999": 5.233909000002313,
+            "max": 22.670393000000004
+          },
+          "per_session": {
+            "n": 10000,
+            "p50": 13.055139999982202,
+            "p99": 21.520935999998983,
+            "p999": 32.672258,
+            "max": 157.69648700000107
+          },
+          "memory_plateau": {
+            "median_kb": 126756,
+            "median_mb": 123.79,
+            "n": 5,
+            "first_kb": 95132,
+            "last_kb": 125212,
+            "drift_kb": 30080,
+            "climbing": true,
+            "note": "Anonymous climbed >25% over the run \u2014 last-5 median is not a stable plateau"
+          }
+        },
+        {
+          "rep": 2,
+          "errors": 0,
+          "proxiedFromCount": 0,
+          "per_call": {
+            "n": 110000,
+            "p50": 1.0476469999412075,
+            "p99": 2.8670189999975264,
+            "p999": 4.867404000018723,
+            "max": 35.91560900001787
+          },
+          "per_session": {
+            "n": 10000,
+            "p50": 12.590150000003632,
+            "p99": 19.763794999977108,
+            "p999": 28.17569100006949,
+            "max": 71.01454999996349
+          },
+          "memory_plateau": {
+            "median_kb": 127684,
+            "median_mb": 124.69,
+            "n": 5,
+            "first_kb": 122604,
+            "last_kb": 120784,
+            "drift_kb": -1820,
+            "climbing": false,
+            "note": null
+          }
+        },
+        {
+          "rep": 3,
+          "errors": 0,
+          "proxiedFromCount": 0,
+          "per_call": {
+            "n": 110000,
+            "p50": 1.0427009999984875,
+            "p99": 2.86503200000152,
+            "p999": 4.442162999999709,
+            "max": 15.348053999943659
+          },
+          "per_session": {
+            "n": 10000,
+            "p50": 12.520339000038803,
+            "p99": 19.198176999925636,
+            "p999": 27.436785999918357,
+            "max": 47.347435000003316
+          },
+          "memory_plateau": {
+            "median_kb": 127372,
+            "median_mb": 124.39,
+            "n": 5,
+            "first_kb": 118800,
+            "last_kb": 126544,
+            "drift_kb": 7744,
+            "climbing": false,
+            "note": null
+          }
+        }
+      ],
+      "per_call": {
+        "n": 330000,
+        "p50": 1.0610080000478774,
+        "p99": 2.9354680000105873,
+        "p999": 4.899843999999575,
+        "max": 35.91560900001787
+      },
+      "per_session": {
+        "n": 30000,
+        "p50": 12.721902000019327,
+        "p99": 20.111986999982037,
+        "p999": 29.99386899999996,
+        "max": 157.69648700000107
+      },
+      "memory_plateau": {
+        "median_kb": 127372,
+        "median_mb": 124.39,
+        "n": 5,
+        "first_kb": 95132,
+        "last_kb": 126544,
+        "drift_kb": 31412,
+        "climbing": true,
+        "note": "Anonymous climbed >25% over the run \u2014 last-5 median is not a stable plateau"
+      },
+      "ranges": {
+        "call_p50_ms": {
+          "min": 1.0427009999984875,
+          "max": 1.0926970000000438,
+          "median": 1.0476469999412075,
+          "values": [
+            1.0926970000000438,
+            1.0476469999412075,
+            1.0427009999984875
+          ]
+        },
+        "call_p99_ms": {
+          "min": 2.86503200000152,
+          "max": 3.082045000017388,
+          "median": 2.8670189999975264,
+          "values": [
+            3.082045000017388,
+            2.8670189999975264,
+            2.86503200000152
+          ]
+        },
+        "call_p999_ms": {
+          "min": 4.442162999999709,
+          "max": 5.233909000002313,
+          "median": 4.867404000018723,
+          "values": [
+            5.233909000002313,
+            4.867404000018723,
+            4.442162999999709
+          ]
+        },
+        "sess_p50_ms": {
+          "min": 12.520339000038803,
+          "max": 13.055139999982202,
+          "median": 12.590150000003632,
+          "values": [
+            13.055139999982202,
+            12.590150000003632,
+            12.520339000038803
+          ]
+        },
+        "sess_p999_ms": {
+          "min": 27.436785999918357,
+          "max": 32.672258,
+          "median": 28.17569100006949,
+          "values": [
+            32.672258,
+            28.17569100006949,
+            27.436785999918357
+          ]
+        },
+        "plateau_mb": {
+          "min": 123.79,
+          "max": 124.69,
+          "median": 124.39,
+          "values": [
+            123.79,
+            124.69,
+            124.39
+          ]
+        }
+      }
+    },
+    "dual_process": {
+      "url": "http://127.0.0.1:35151/mcp",
+      "pids": [
+        1643181,
+        1643127
+      ],
+      "memoryMode": "sum",
+      "errors": 0,
+      "anon_kb_samples": [
+        95936,
+        124156,
+        121776,
+        129372,
+        124112,
+        129248,
+        124804,
+        131396,
+        122992,
+        128980,
+        123656,
+        129936,
+        124244,
+        129880,
+        121808,
+        121116,
+        126996,
+        124320,
+        130228,
+        125508,
+        131628,
+        131128,
+        125216,
+        132140,
+        124352,
+        120984,
+        127688,
+        125776,
+        131188,
+        125540,
+        128072,
+        129276,
+        127652,
+        133028,
+        126308,
+        130004,
+        136316,
+        129320,
+        126844,
+        132124,
+        127976,
+        127784,
+        127240,
+        126508,
+        129296,
+        127576,
+        133188,
+        126644,
+        130060,
+        135900,
+        128964,
+        133948,
+        127404,
+        127704,
+        127664,
+        129168,
+        137612,
+        130204,
+        127832,
+        123992,
+        133688,
+        127692,
+        133556
+      ],
+      "proxiedFromCount": 330000,
+      "by_rep": [
+        {
+          "rep": 1,
+          "errors": 0,
+          "proxiedFromCount": 110000,
+          "per_call": {
+            "n": 110000,
+            "p50": 1.2749479999765754,
+            "p99": 4.981268000003183,
+            "p999": 7.370966999998927,
+            "max": 22.29191699999501
+          },
+          "per_session": {
+            "n": 10000,
+            "p50": 21.64151600000332,
+            "p99": 30.062286000000313,
+            "p999": 48.99721599998884,
+            "max": 85.78792000000249
+          },
+          "memory_plateau": {
+            "median_kb": 126996,
+            "median_mb": 124.02,
+            "n": 5,
+            "first_kb": 95936,
+            "last_kb": 131628,
+            "drift_kb": 35692,
+            "climbing": true,
+            "note": "Anonymous climbed >25% over the run \u2014 last-5 median is not a stable plateau"
+          },
+          "memory_parts_plateau": {
+            "bun_host": {
+              "median_kb": 114672,
+              "median_mb": 111.98,
+              "n": 5,
+              "first_kb": 88812,
+              "last_kb": 119296,
+              "drift_kb": 30484,
+              "climbing": true,
+              "note": "Anonymous climbed >25% over the run \u2014 last-5 median is not a stable plateau"
+            },
+            "dataplane": {
+              "median_kb": 12328,
+              "median_mb": 12.04,
+              "n": 5,
+              "first_kb": 7124,
+              "last_kb": 12332,
+              "drift_kb": 5208,
+              "climbing": true,
+              "note": "Anonymous climbed >25% over the run \u2014 last-5 median is not a stable plateau"
+            }
+          }
+        },
+        {
+          "rep": 2,
+          "errors": 0,
+          "proxiedFromCount": 110000,
+          "per_call": {
+            "n": 110000,
+            "p50": 1.2319399999687448,
+            "p99": 4.808691999991424,
+            "p999": 6.403995999949984,
+            "max": 21.273242999974173
+          },
+          "per_session": {
+            "n": 10000,
+            "p50": 21.142329999944195,
+            "p99": 28.46282900008373,
+            "p999": 40.84674300003098,
+            "max": 56.882100000046194
+          },
+          "memory_plateau": {
+            "median_kb": 127976,
+            "median_mb": 124.98,
+            "n": 5,
+            "first_kb": 131128,
+            "last_kb": 127784,
+            "drift_kb": -3344,
+            "climbing": false,
+            "note": null
+          },
+          "memory_parts_plateau": {
+            "bun_host": {
+              "median_kb": 111876,
+              "median_mb": 109.25,
+              "n": 5,
+              "first_kb": 118796,
+              "last_kb": 111680,
+              "drift_kb": -7116,
+              "climbing": false,
+              "note": null
+            },
+            "dataplane": {
+              "median_kb": 16096,
+              "median_mb": 15.72,
+              "n": 5,
+              "first_kb": 12332,
+              "last_kb": 16104,
+              "drift_kb": 3772,
+              "climbing": true,
+              "note": "Anonymous climbed >25% over the run \u2014 last-5 median is not a stable plateau"
+            }
+          }
+        },
+        {
+          "rep": 3,
+          "errors": 0,
+          "proxiedFromCount": 110000,
+          "per_call": {
+            "n": 110000,
+            "p50": 1.2212539999745786,
+            "p99": 4.610077999997884,
+            "p999": 6.101649000076577,
+            "max": 51.87369999999646
+          },
+          "per_session": {
+            "n": 10000,
+            "p50": 21.003880000091158,
+            "p99": 26.61642600002233,
+            "p999": 33.37915399996564,
+            "max": 174.24254100001417
+          },
+          "memory_plateau": {
+            "median_kb": 127832,
+            "median_mb": 124.84,
+            "n": 5,
+            "first_kb": 127240,
+            "last_kb": 133556,
+            "drift_kb": 6316,
+            "climbing": false,
+            "note": null
+          },
+          "memory_parts_plateau": {
+            "bun_host": {
+              "median_kb": 111728,
+              "median_mb": 109.11,
+              "n": 5,
+              "first_kb": 111136,
+              "last_kb": 117452,
+              "drift_kb": 6316,
+              "climbing": false,
+              "note": null
+            },
+            "dataplane": {
+              "median_kb": 16104,
+              "median_mb": 15.73,
+              "n": 5,
+              "first_kb": 16104,
+              "last_kb": 16104,
+              "drift_kb": 0,
+              "climbing": false,
+              "note": null
+            }
+          }
+        }
+      ],
+      "per_call": {
+        "n": 330000,
+        "p50": 1.2430869999807328,
+        "p99": 4.822533000000021,
+        "p999": 6.598318999982439,
+        "max": 51.87369999999646
+      },
+      "per_session": {
+        "n": 30000,
+        "p50": 21.2457080000313,
+        "p99": 28.548393000000033,
+        "p999": 40.528389999992214,
+        "max": 174.24254100001417
+      },
+      "memory_plateau": {
+        "median_kb": 127832,
+        "median_mb": 124.84,
+        "n": 5,
+        "first_kb": 95936,
+        "last_kb": 133556,
+        "drift_kb": 37620,
+        "climbing": true,
+        "note": "Anonymous climbed >25% over the run \u2014 last-5 median is not a stable plateau"
+      },
+      "memory_parts_plateau": {
+        "bun_host": {
+          "median_kb": 111728,
+          "median_mb": 109.11,
+          "n": 5,
+          "first_kb": 88812,
+          "last_kb": 117452,
+          "drift_kb": 28640,
+          "climbing": true,
+          "note": "Anonymous climbed >25% over the run \u2014 last-5 median is not a stable plateau"
+        },
+        "dataplane": {
+          "median_kb": 16104,
+          "median_mb": 15.73,
+          "n": 5,
+          "first_kb": 7124,
+          "last_kb": 16104,
+          "drift_kb": 8980,
+          "climbing": true,
+          "note": "Anonymous climbed >25% over the run \u2014 last-5 median is not a stable plateau"
+        }
+      },
+      "ranges": {
+        "call_p50_ms": {
+          "min": 1.2212539999745786,
+          "max": 1.2749479999765754,
+          "median": 1.2319399999687448,
+          "values": [
+            1.2749479999765754,
+            1.2319399999687448,
+            1.2212539999745786
+          ]
+        },
+        "call_p99_ms": {
+          "min": 4.610077999997884,
+          "max": 4.981268000003183,
+          "median": 4.808691999991424,
+          "values": [
+            4.981268000003183,
+            4.808691999991424,
+            4.610077999997884
+          ]
+        },
+        "call_p999_ms": {
+          "min": 6.101649000076577,
+          "max": 7.370966999998927,
+          "median": 6.403995999949984,
+          "values": [
+            7.370966999998927,
+            6.403995999949984,
+            6.101649000076577
+          ]
+        },
+        "sess_p50_ms": {
+          "min": 21.003880000091158,
+          "max": 21.64151600000332,
+          "median": 21.142329999944195,
+          "values": [
+            21.64151600000332,
+            21.142329999944195,
+            21.003880000091158
+          ]
+        },
+        "sess_p999_ms": {
+          "min": 33.37915399996564,
+          "max": 48.99721599998884,
+          "median": 40.84674300003098,
+          "values": [
+            48.99721599998884,
+            40.84674300003098,
+            33.37915399996564
+          ]
+        },
+        "plateau_mb": {
+          "min": 124.02,
+          "max": 124.98,
+          "median": 124.84,
+          "values": [
+            124.02,
+            124.98,
+            124.84
+          ]
+        }
+      }
+    }
+  }
+}
