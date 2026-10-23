@@ -1,14 +1,14 @@
 ---
-title: "Isolation Architecture: Agent Substrate for clawql-sandbox, celld for clawql-cellrt"
+title: "Isolation Architecture: Agent Substrate for clawql-sandbox, celld for durable cells"
 status: "September 2026 — decided, part of 8.0.0"
 version: "0.1"
 adr: "0011"
-package: "packages/clawql-sandbox/ (Agent Substrate adoption) + celld / clawql-cellrt (unchanged V8-isolate model)"
+package: "packages/clawql-sandbox/ (Agent Substrate adoption) + celld (V8-isolate durable cells; clawql-cellrt withdrawn)"
 ---
 
 # ADR 0011: Isolation Architecture
 
-## Agent Substrate for clawql-sandbox, celld for clawql-cellrt
+## Agent Substrate for clawql-sandbox, celld for durable cells
 
 **September 2026 · Decided · Part of 8.0.0**
 
@@ -20,7 +20,7 @@ package: "packages/clawql-sandbox/ (Agent Substrate adoption) + celld / clawql-c
 
 **Implementation honesty (as of this ADR's first code drop):** the tree ships a ClawQL-owned **control-plane adapter** (in-process mock + optional HTTP client to an operator-provided URL). It does **not** yet vendor or depend on Google's Agent Substrate packages/CRDs. Until that integration lands, treat “adopts Agent Substrate” as the architectural decision + selection/WORM scaffolding, not as a claim that Substrate microVMs are running in this repo.
 
-`clawql-cellrt` / **celld** continues to use celld's V8-isolate model, unchanged. **These are not competing choices for the same problem** — they are the correct backend for two genuinely different problems. This ADR exists so that distinction is never silently re-litigated by treating "Agent Substrate is newer/denser/Google-backed" as a reason to also apply it to celld's workload.
+**celld** continues to use the V8-isolate model for durable cells / Streams / ProgramCellDO. A planned owned Rust runtime (`clawql-cellrt`) was **withdrawn** ([ADR 0016](./0016-rust-dataplane-spike.md) Rejected; [`clawql-cellrt.md`](../streams/clawql-cellrt.md)). **Agent Substrate and celld are not competing choices for the same problem** — they are the correct backend for two genuinely different problems. This ADR exists so that distinction is never silently re-litigated by treating "Agent Substrate is newer/denser/Google-backed" as a reason to also apply it to celld's workload.
 
 ---
 
@@ -36,7 +36,7 @@ Adopting Agent Substrate **supersedes** the earlier parked question of whether `
 
 ### 3.1 Different problems
 
-|                   | Agent Substrate / `clawql-sandbox`                                               | celld / `clawql-cellrt`                                                                                |
+|                   | Agent Substrate / `clawql-sandbox`                                               | celld (durable cells)                                                                                  |
 | ----------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | Threat model      | Untrusted / unpredictable code; host-escape, credential theft, exfiltration risk | Fixed-shape TypeScript orchestration; no `child_process`/`fs`/`net` by construction                    |
 | Question answered | How do I safely run code I cannot fully trust or predict?                        | How do I run enormous numbers of small, already-trusted-by-construction pieces as cheaply as possible? |
@@ -60,7 +60,7 @@ uncontained?
   bounded pre-declared actions, still independently enforced by
   Panguard regardless of host isolation
 
-  -> celld / clawql-cellrt (V8 isolate)
+  -> celld (V8 isolate)
 ```
 
 New workloads must classify explicitly against this rule in their introducing specification — never by analogy to "we already use Agent Substrate elsewhere" or "we already use celld elsewhere."
@@ -92,12 +92,12 @@ As of this writing, Agent Substrate is open source and generally available for *
 
 ## 6. Implementation map
 
-| Artifact            | Path                                                                                                |
-| ------------------- | --------------------------------------------------------------------------------------------------- |
-| This ADR            | `docs/adr/0011-isolation-agent-substrate-sandbox-celld.md`                                          |
-| Backend             | `packages/clawql-sandbox/src/agent-substrate/`                                                      |
-| Decision rule       | `packages/clawql-sandbox/src/isolation-decision.ts`                                                 |
-| celld / cellrt note | `docs/streams/clawql-celld.md`, `docs/streams/clawql-cellrt.md` (isolation rule; runtime unchanged) |
+| Artifact      | Path                                                                                         |
+| ------------- | -------------------------------------------------------------------------------------------- |
+| This ADR      | `docs/adr/0011-isolation-agent-substrate-sandbox-celld.md`                                   |
+| Backend       | `packages/clawql-sandbox/src/agent-substrate/`                                               |
+| Decision rule | `packages/clawql-sandbox/src/isolation-decision.ts`                                          |
+| celld note    | `docs/streams/clawql-celld.md` (isolation rule); `docs/streams/clawql-cellrt.md` (withdrawn) |
 
 ---
 
