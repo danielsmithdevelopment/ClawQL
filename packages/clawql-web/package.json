@@ -30,7 +30,7 @@
   "dependencies": {
     "clawql-api": "0.1.0",
     "clawql-core": "0.1.0",
-    "effect": "4.0.0",
+    "effect": "4.0.5",
     "zod": "4.6.7"
   },
   "devDependencies": {
