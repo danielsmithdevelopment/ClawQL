@@ -11,6 +11,8 @@ import { createServer, type Server } from "node:http";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ensureClawqlApi, resetClawqlApiForTests } from "./composition/clawql-api-adapters.js";
+import { resetOptionalToolDepsForTests, wireOptionalToolDeps } from "./mcp/tools.js";
 import { executeOperationGraphQL } from "clawql-api/graphql/in-process-execute";
 import * as restOperation from "clawql-api";
 import { loadSpec, resetSpecCache } from "clawql-api";
@@ -40,7 +42,7 @@ describe("notify GraphQL execute path (#138)", () => {
   const saved: Record<string, string | undefined> = {};
   let restSpy: ReturnType<typeof vi.spyOn<typeof restOperation, "executeRestOperation">>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     for (const k of [
       "CLAWQL_SPEC_PATH",
       "CLAWQL_PROVIDER",
@@ -74,7 +76,11 @@ describe("notify GraphQL execute path (#138)", () => {
     delete process.env.CLAWQL_TEST_ONYX_FETCH_HTTP_OK;
     resetSpecCache();
     resetSchemaFieldCache();
+    resetClawqlApiForTests();
+    resetOptionalToolDepsForTests();
     restSpy = vi.spyOn(restOperation, "executeRestOperation");
+    await ensureClawqlApi();
+    await wireOptionalToolDeps();
   });
 
   afterEach(() => {
@@ -86,6 +92,8 @@ describe("notify GraphQL execute path (#138)", () => {
     }
     resetSpecCache();
     resetSchemaFieldCache();
+    resetClawqlApiForTests();
+    resetOptionalToolDepsForTests();
   });
 
   it("executeOperationGraphQL(chat_postMessage) hits stub without REST (sanity)", async () => {

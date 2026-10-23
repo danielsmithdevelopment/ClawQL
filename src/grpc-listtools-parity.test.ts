@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resetSpecCache } from "clawql-api";
 import { resetClawqlApiForTests } from "./composition/clawql-api-adapters.js";
 import { instanceSpecWith } from "./host/server-stdio-env.js";
-import { resetSchemaFieldCache } from "./mcp/tools.js";
+import { resetOptionalToolDepsForTests, resetSchemaFieldCache } from "./mcp/tools.js";
 import {
   GRPC_PARITY_MINIMAL_SPEC,
   listToolNamesFromEphemeralGrpcServer,
@@ -90,6 +90,7 @@ describe("gRPC ListTools optional-tool parity", () => {
     delete process.env.CLAWQL_SPEC_PATHS;
     delete process.env.CLAWQL_SCHEDULE_DB_PATH;
     resetClawqlApiForTests();
+    resetOptionalToolDepsForTests();
     resetSpecCache();
     resetSchemaFieldCache();
   });
@@ -97,6 +98,7 @@ describe("gRPC ListTools optional-tool parity", () => {
   afterEach(() => {
     process.env = { ...saved };
     resetClawqlApiForTests();
+    resetOptionalToolDepsForTests();
     resetSpecCache();
     resetSchemaFieldCache();
   });

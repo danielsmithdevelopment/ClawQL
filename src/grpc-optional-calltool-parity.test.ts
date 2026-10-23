@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resetSpecCache, resetCapabilityLifecycleRuntimeForTests } from "clawql-api";
 import { resetClawqlApiForTests } from "./composition/clawql-api-adapters.js";
 import { instanceSpecWith } from "./host/server-stdio-env.js";
-import { resetSchemaFieldCache } from "./mcp/tools.js";
+import { resetOptionalToolDepsForTests, resetSchemaFieldCache } from "./mcp/tools.js";
 import {
   GRPC_PARITY_MINIMAL_SPEC,
   callToolOnEphemeralGrpcServer,
@@ -28,6 +28,7 @@ describe("gRPC CallTool optional-tool parity", () => {
     delete process.env.CLAWQL_SPEC_PATHS;
     delete process.env.CLAWQL_SCHEDULE_DB_PATH;
     resetClawqlApiForTests();
+    resetOptionalToolDepsForTests();
     resetSpecCache();
     resetSchemaFieldCache();
     // Fresh capability catalog + process tool surface per case (in-process gRPC).
@@ -37,6 +38,7 @@ describe("gRPC CallTool optional-tool parity", () => {
   afterEach(() => {
     process.env = { ...saved };
     resetClawqlApiForTests();
+    resetOptionalToolDepsForTests();
     resetSpecCache();
     resetSchemaFieldCache();
     resetCapabilityLifecycleRuntimeForTests();
@@ -104,6 +106,7 @@ describe("gRPC CallTool optional-tool parity", () => {
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-grpc-ct-ouro-"));
     delete process.env.CLAWQL_ENABLE_OUROBOROS;
     delete process.env.CLAWQL_INSTANCE_SPEC;
+    process.env.CLAWQL_ENABLE_OUROBOROS_TOOLS = "1";
 
     const text = await callToolOnEphemeralGrpcServer("ouroboros_get_lineage_status", {
       seedId: "missing-seed",

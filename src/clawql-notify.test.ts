@@ -1,6 +1,8 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ensureClawqlApi, resetClawqlApiForTests } from "./composition/clawql-api-adapters.js";
+import { resetOptionalToolDepsForTests, wireOptionalToolDeps } from "./mcp/tools.js";
 import { resetSpecCache } from "clawql-api";
 import { handleNotifyToolInput, resetSchemaFieldCache } from "./mcp/tools.js";
 
@@ -28,7 +30,7 @@ function slackJsonResponse(obj: unknown) {
 describe("handleNotifyToolInput", () => {
   const saved: Record<string, string | undefined> = {};
 
-  beforeEach(() => {
+  beforeEach(async () => {
     saved.CLAWQL_SPEC_PATH = process.env.CLAWQL_SPEC_PATH;
     saved.CLAWQL_PROVIDER = process.env.CLAWQL_PROVIDER;
     saved.CLAWQL_SPEC_PATHS = process.env.CLAWQL_SPEC_PATHS;
@@ -40,6 +42,10 @@ describe("handleNotifyToolInput", () => {
     mockFetch.mockReset();
     resetSpecCache();
     resetSchemaFieldCache();
+    resetClawqlApiForTests();
+    resetOptionalToolDepsForTests();
+    await ensureClawqlApi();
+    await wireOptionalToolDeps();
   });
 
   afterEach(() => {
@@ -51,6 +57,8 @@ describe("handleNotifyToolInput", () => {
     mockFetch.mockReset();
     resetSpecCache();
     resetSchemaFieldCache();
+    resetClawqlApiForTests();
+    resetOptionalToolDepsForTests();
   });
 
   it("returns a clear error when no Slack token is configured", async () => {
@@ -110,12 +118,16 @@ describe("handleNotifyToolInput", () => {
    * without depending on in-process GraphQL for Slack.
    */
   describe("REST path (multi-spec + mocked fetch)", () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       delete process.env.CLAWQL_SPEC_PATH;
       delete process.env.CLAWQL_PROVIDER;
       process.env.CLAWQL_SPEC_PATHS = [slackSpec, minimalSpec].join(",");
       process.env.CLAWQL_SLACK_TOKEN = "xoxb-test-token";
       resetSpecCache();
+      resetClawqlApiForTests();
+      resetOptionalToolDepsForTests();
+      await ensureClawqlApi();
+      await wireOptionalToolDeps();
     });
 
     it("returns trimmed Slack success JSON when Slack responds ok:true", async () => {

@@ -12,6 +12,8 @@ import * as grpc from "@grpc/grpc-js";
 import protobuf from "protobufjs";
 import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { ensureClawqlApi, resetClawqlApiForTests } from "./composition/clawql-api-adapters.js";
+import { resetOptionalToolDepsForTests, wireOptionalToolDeps } from "./mcp/tools.js";
 import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
 import { createRegisteredMcpServer } from "./mcp/mcp-server-factory.js";
 import { resetSpecCache } from "clawql-api";
@@ -124,7 +126,7 @@ async function callToolGrpc(
 describe("gRPC CallTool + memory_ingest / memory_recall", () => {
   const saved: NodeJS.ProcessEnv = {};
 
-  beforeEach(() => {
+  beforeEach(async () => {
     Object.assign(saved, process.env);
     process.env.ENABLE_GRPC = "1";
     process.env.ENABLE_GRPC_REFLECTION = "0";
@@ -134,12 +136,18 @@ describe("gRPC CallTool + memory_ingest / memory_recall", () => {
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-grpc-mem-"));
     resetSpecCache();
     resetSchemaFieldCache();
+    resetClawqlApiForTests();
+    resetOptionalToolDepsForTests();
+    await ensureClawqlApi();
+    await wireOptionalToolDeps();
   });
 
   afterEach(() => {
     process.env = { ...saved };
     resetSpecCache();
     resetSchemaFieldCache();
+    resetClawqlApiForTests();
+    resetOptionalToolDepsForTests();
   });
 
   it("memory_ingest succeeds with Struct args over CallTool", async () => {

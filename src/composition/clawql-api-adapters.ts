@@ -1,5 +1,4 @@
 import {
-  createClawQLApi,
   createClawQLApiAsync,
   composeDefaultPlugins,
   loadSpec,
@@ -11,10 +10,8 @@ import {
   type LoadedSpec,
   type LoadSpecFn,
 } from "clawql-api";
-import { createRequire } from "node:module";
 import { Effect } from "effect";
 import { composeHorizontalPluginLayersDynamicEffect } from "./compose-horizontal-plugin-layers-dynamic.js";
-import { composeHorizontalPluginLayersStatic } from "./compose-horizontal-plugin-layers-static.js";
 import { attachActiveOtelParent, makeEffectOtelTracerLayer } from "./effect-otel-bridge.js";
 import {
   disposeProcessWormHostEffect,
@@ -22,20 +19,10 @@ import {
 } from "./process-worm-host.js";
 import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
 
-const requireFromHere = createRequire(import.meta.url);
-
 /** Match HTTP slim surface — avoid loading clawql-payments (~tens of MB) in equal-arm benches. */
 function skipPaymentsPlugins(env: NodeJS.ProcessEnv = process.env): boolean {
   const raw = env.CLAWQL_HTTP_SKIP_PAYMENTS?.trim().toLowerCase();
   return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
-}
-
-function loadPaymentsProxyPluginsSync(): ReturnType<
-  typeof import("clawql-payments/plugin").defaultPaymentsProxyPlugins
-> {
-  if (skipPaymentsPlugins()) return [];
-  const mod = requireFromHere("clawql-payments/plugin") as typeof import("clawql-payments/plugin");
-  return mod.defaultPaymentsProxyPlugins();
 }
 
 async function loadPaymentsProxyPluginsAsync(): Promise<
@@ -78,7 +65,7 @@ function buildClawqlApiOptions(
   vaultSeedLayer: CreateClawQLApiOptions["vaultSeedLayer"] | undefined,
   paymentsPlugins: ReturnType<typeof import("clawql-payments/plugin").defaultPaymentsProxyPlugins>
 ): CreateClawQLApiOptions {
-  // Omit searchLayer — createClawQLApi wires host.skillRegistry into unified search.
+  // Omit searchLayer — createClawQLApiAsync wires host.skillRegistry into unified search.
   // Pass loadSpecFn so setLoadSpecForTests overrides both search and execute.
   return {
     executeLayer: buildExecuteLive(),
@@ -89,15 +76,6 @@ function buildClawqlApiOptions(
     runtimeLayers: [makeEffectOtelTracerLayer()],
     prepareEffect: attachActiveOtelParent,
   };
-}
-
-function buildClawqlApi(
-  pluginLayers: CreateClawQLApiOptions["pluginLayers"],
-  vaultSeedLayer?: CreateClawQLApiOptions["vaultSeedLayer"]
-): ClawQLApiHandle {
-  return createClawQLApi(
-    buildClawqlApiOptions(pluginLayers, vaultSeedLayer, loadPaymentsProxyPluginsSync())
-  );
 }
 
 async function resolveVaultSeedLayer(): Promise<
@@ -112,20 +90,6 @@ async function resolveVaultSeedLayer(): Promise<
     }
   } catch {
     /* memory package optional at edge */
-  }
-  return undefined;
-}
-
-/** Sync vault-seed for {@link getClawqlApi} — same Layer as async when memory is installed. */
-function resolveVaultSeedLayerSync(): CreateClawQLApiOptions["vaultSeedLayer"] | undefined {
-  if (!resolvePluginCompositionFlags().enableMemory) return undefined;
-  try {
-    const mem = requireFromHere("clawql-memory/plugin") as typeof import("clawql-memory/plugin");
-    if (typeof mem.MemoryVaultSeedLive !== "undefined") {
-      return mem.MemoryVaultSeedLive;
-    }
-  } catch {
-    /* optional */
   }
   return undefined;
 }
@@ -169,17 +133,18 @@ export async function ensureClawqlApi(): Promise<ClawQLApiHandle> {
 }
 
 /** Process-wide ClawQL API runtime (search/execute + plugin registry). */
+/**
+ * Process-wide ClawQL API handle. Production and Vitest must
+ * {@link ensureClawqlApi} (or {@link createRegisteredMcpServerAsync}) first so the
+ * **dynamic** composer builds the runtime — that keeps optional packages out of the
+ * Ready module graph. A sync static-composer fallback would either map those packages
+ * eagerly (density regression) or `createRequire` their CJS dist (Vitest
+ * `import.meta.url` breakage).
+ */
 export function getClawqlApi(): ClawQLApiHandle {
   if (!apiHandle) {
-    // Fire-and-forget: durable WORM when CLAWQL_WORM_ENABLED=1 (does not block API build).
-    void Effect.runPromise(ensureProcessWormHostBootedEffect()).catch(() => undefined);
-    // Static import of the sync composer (local TS) — vitest/CJS cannot resolve a lazy
-    // `./….js` require. Disabled tiers still stay out of the graph: the composer only
-    // `require`s clawql-memory / payments / etc. when composition flags enable them.
-    // Production Ready uses ensureClawqlApi() → dynamic Effect path.
-    apiHandle = buildClawqlApi(
-      composeHorizontalPluginLayersStatic(resolvePluginCompositionFlags()),
-      resolveVaultSeedLayerSync()
+    throw new Error(
+      "ClawQL API not initialized — await ensureClawqlApi() (or createRegisteredMcpServerAsync) before getClawqlApi()/registerTools()"
     );
   }
   return apiHandle;

@@ -5,9 +5,23 @@ import {
   createRegisteredMcpServerAsync,
 } from "./mcp/mcp-server-factory.js";
 import { ensureClawqlApi, resetClawqlApiForTests } from "./composition/clawql-api-adapters.js";
+import { resetOptionalToolDepsForTests, wireOptionalToolDeps } from "./mcp/tools.js";
+
+async function bootApi(): Promise<void> {
+  resetClawqlApiForTests();
+  resetOptionalToolDepsForTests();
+  await ensureClawqlApi();
+  await wireOptionalToolDeps();
+}
 
 describe("createRegisteredMcpServer", () => {
-  it("registers every non-negotiable MCP tool (cache + audit cannot be skipped)", () => {
+  afterEach(() => {
+    resetClawqlApiForTests();
+    resetOptionalToolDepsForTests();
+  });
+
+  it("registers every non-negotiable MCP tool (cache + audit cannot be skipped)", async () => {
+    await bootApi();
     const server = createRegisteredMcpServer();
     const registry = (
       server as unknown as { _registeredTools: Record<string, { enabled?: boolean }> }
@@ -18,7 +32,7 @@ describe("createRegisteredMcpServer", () => {
     }
   });
 
-  it("registers proxy_call only when plain proxy is enabled (ADR 0015)", () => {
+  it("registers proxy_call only when plain proxy is enabled (ADR 0015)", async () => {
     const savedEnable = process.env.CLAWQL_ENABLE_PLAIN_PROXY;
     const savedGroups = process.env.CLAWQL_PLAIN_PROXY_KEY_GROUPS;
     const savedGroup = process.env.CLAWQL_API_KEY_GROUP;
@@ -26,12 +40,14 @@ describe("createRegisteredMcpServer", () => {
       delete process.env.CLAWQL_ENABLE_PLAIN_PROXY;
       delete process.env.CLAWQL_PLAIN_PROXY_KEY_GROUPS;
       delete process.env.CLAWQL_API_KEY_GROUP;
+      await bootApi();
       const off = createRegisteredMcpServer({ name: "clawql-proxy-off", version: "0.0.0" });
       const offReg = (off as unknown as { _registeredTools: Record<string, { enabled?: boolean }> })
         ._registeredTools;
       expect(offReg.proxy_call).toBeUndefined();
 
       process.env.CLAWQL_ENABLE_PLAIN_PROXY = "1";
+      await bootApi();
       const on = createRegisteredMcpServer({ name: "clawql-proxy-on", version: "0.0.0" });
       const onReg = (on as unknown as { _registeredTools: Record<string, { enabled?: boolean }> })
         ._registeredTools;
@@ -47,10 +63,11 @@ describe("createRegisteredMcpServer", () => {
     }
   });
 
-  it("registers execute_program and submit_program_proposals only when programs are enabled (ADR 0015)", () => {
+  it("registers execute_program and submit_program_proposals only when programs are enabled (ADR 0015)", async () => {
     const saved = process.env.CLAWQL_ENABLE_PROGRAMS;
     try {
       delete process.env.CLAWQL_ENABLE_PROGRAMS;
+      await bootApi();
       const off = createRegisteredMcpServer({ name: "clawql-prog-off", version: "0.0.0" });
       const offReg = (off as unknown as { _registeredTools: Record<string, { enabled?: boolean }> })
         ._registeredTools;
@@ -58,6 +75,7 @@ describe("createRegisteredMcpServer", () => {
       expect(offReg.submit_program_proposals).toBeUndefined();
 
       process.env.CLAWQL_ENABLE_PROGRAMS = "1";
+      await bootApi();
       const on = createRegisteredMcpServer({ name: "clawql-prog-on", version: "0.0.0" });
       const onReg = (on as unknown as { _registeredTools: Record<string, { enabled?: boolean }> })
         ._registeredTools;
@@ -71,7 +89,7 @@ describe("createRegisteredMcpServer", () => {
     }
   });
 
-  it("CLAWQL_ENABLE_DURABLE_PROGRAMS registers execute_program resumable by programId, and submit_program_proposals (ADR 0015)", () => {
+  it("CLAWQL_ENABLE_DURABLE_PROGRAMS registers execute_program resumable by programId, and submit_program_proposals (ADR 0015)", async () => {
     const savedPrograms = process.env.CLAWQL_ENABLE_PROGRAMS;
     const savedDurable = process.env.CLAWQL_ENABLE_DURABLE_PROGRAMS;
     type Registered = {
@@ -92,6 +110,7 @@ describe("createRegisteredMcpServer", () => {
     try {
       delete process.env.CLAWQL_ENABLE_PROGRAMS;
       process.env.CLAWQL_ENABLE_DURABLE_PROGRAMS = "1";
+      await bootApi();
       const durableTools = registeredTools("clawql-prog-durable");
       const durable = durableTools.execute_program;
       expect(durable).toBeDefined();
@@ -106,6 +125,7 @@ describe("createRegisteredMcpServer", () => {
 
       delete process.env.CLAWQL_ENABLE_DURABLE_PROGRAMS;
       process.env.CLAWQL_ENABLE_PROGRAMS = "1";
+      await bootApi();
       const v0 = registeredTools("clawql-prog-v0").execute_program;
       expect(v0?.description).not.toContain("durable journal");
       expect(v0?.inputSchema?.safeParse(resumeOnly).success).toBe(false);
@@ -121,10 +141,12 @@ describe("createRegisteredMcpServer", () => {
 describe("ensureClawqlApi / createRegisteredMcpServerAsync", () => {
   beforeEach(() => {
     resetClawqlApiForTests();
+    resetOptionalToolDepsForTests();
   });
 
   afterEach(() => {
     resetClawqlApiForTests();
+    resetOptionalToolDepsForTests();
   });
 
   it("returns the same handle until reset, then rebuilds", async () => {
@@ -150,7 +172,8 @@ describe("ensureClawqlApi / createRegisteredMcpServerAsync", () => {
     const registry = (
       server as unknown as { _registeredTools: Record<string, { enabled?: boolean }> }
     )._registeredTools;
-    expect(registry.cache).toBeDefined();
-    expect(registry.audit).toBeDefined();
+    for (const name of CLAWQL_NONNEGOTIABLE_MCP_TOOL_NAMES) {
+      expect(registry[name], `expected tool ${name}`).toBeDefined();
+    }
   });
 });
