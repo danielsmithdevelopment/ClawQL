@@ -237,33 +237,74 @@ for (const arm of ARMS) {
     session_ms: [],
     errors: 0,
     anon_kb_samples: [],
+    by_rep: [],
   };
 }
 
 for (let rep = 1; rep <= REPS; rep++) {
   console.log(`-- rep ${rep}/${REPS}`);
+  const repBuckets = {};
+  for (const arm of ARMS) {
+    repBuckets[arm.id] = { call_ms: [], session_ms: [], errors: 0, anon_kb_samples: [] };
+  }
   for (let i = 1; i <= ITERS; i++) {
     // Interleave arms each iteration (Bun then Rust).
     for (const arm of ARMS) {
       const bucket = results.arms[arm.id];
+      const rb = repBuckets[arm.id];
       const t0 = performance.now();
       for (const step of STEPS) {
         const r = await sessions[arm.id].execute(step);
         bucket.call_ms.push(r.ms);
+        rb.call_ms.push(r.ms);
         if (!r.ok) {
           bucket.errors += 1;
+          rb.errors += 1;
           if (bucket.errors <= 3) {
             console.error(`${arm.id} error`, r.operationId, r.error || r.body);
           }
         }
       }
-      bucket.session_ms.push(performance.now() - t0);
+      const sessMs = performance.now() - t0;
+      bucket.session_ms.push(sessMs);
+      rb.session_ms.push(sessMs);
       if (i === 1 || i === ITERS || i % Math.max(1, Math.floor(ITERS / 20)) === 0) {
         const anon = readAnonKb(arm.pid);
-        if (anon != null) bucket.anon_kb_samples.push(anon);
+        if (anon != null) {
+          bucket.anon_kb_samples.push(anon);
+          rb.anon_kb_samples.push(anon);
+        }
       }
     }
   }
+  for (const arm of ARMS) {
+    const rb = repBuckets[arm.id];
+    results.arms[arm.id].by_rep.push({
+      rep,
+      errors: rb.errors,
+      per_call: summarizeLatencies(rb.call_ms),
+      per_session: summarizeLatencies(rb.session_ms),
+      memory_plateau: plateau(rb.anon_kb_samples),
+    });
+  }
+}
+
+function rangeOf(byRep, path) {
+  const vals = byRep
+    .map((r) => {
+      const parts = path.split(".");
+      let cur = r;
+      for (const p of parts) cur = cur?.[p];
+      return cur;
+    })
+    .filter((v) => typeof v === "number" && Number.isFinite(v));
+  if (!vals.length) return null;
+  return {
+    min: Math.min(...vals),
+    max: Math.max(...vals),
+    median: [...vals].sort((a, b) => a - b)[Math.floor(vals.length / 2)],
+    values: vals,
+  };
 }
 
 for (const arm of ARMS) {
@@ -271,6 +312,13 @@ for (const arm of ARMS) {
   b.per_call = summarizeLatencies(b.call_ms);
   b.per_session = summarizeLatencies(b.session_ms);
   b.memory_plateau = plateau(b.anon_kb_samples);
+  b.ranges = {
+    call_p50_ms: rangeOf(b.by_rep, "per_call.p50"),
+    call_p99_ms: rangeOf(b.by_rep, "per_call.p99"),
+    call_p999_ms: rangeOf(b.by_rep, "per_call.p999"),
+    sess_p999_ms: rangeOf(b.by_rep, "per_session.p999"),
+    plateau_mb: rangeOf(b.by_rep, "memory_plateau.median_mb"),
+  };
   delete b.call_ms;
   delete b.session_ms;
 }

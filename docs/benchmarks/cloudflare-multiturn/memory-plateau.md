@@ -70,5 +70,5 @@ Separate from `_streamMapping`:
 - **Oct 15 board / heap A/B:** Bun `--smol` ~**130 MB** on `95015461b` (cf-mt side branch) — not an ancestor of tip.
 - **Tip before port (2026-10-22):** Bun `--smol` **~313 MB** (eager payments + memory/ONNX at listen).
 - **Tip after lazy port (this branch):** Bun `--smol` **~142 MB** plateau (`N=2000`); idle **~83 MB**; **0** onnx/sharp maps. Equal-arm profile: `CLAWQL_HTTP_SKIP_PAYMENTS=1`, memory off, SQLite catalog OOP.
-- **Rust week-2 density (settled):** tip Bun stable near **~130 MB** (lean ~139–142; CF known-op confirmation ~129) vs Rust ~15 MB — about **8–9×**. Old ~15× (~235 MB) was pre-lazy-port. Latency **effectively equal** (median gap ~0.5 ms — not “Rust 2× faster”). Publish boards: 3×10k with ranges.
+- **Rust week-2 density (settled):** tip Bun stable near **~130 MB**. Publish CF known-op **3×10k**: Bun **[124.4, 128.5]** med **124.5 MB** vs Rust **[15.5, 15.7]** med **15.6 MB** (~**8×**; lean ~9×). Old ~15× (~235 MB) was pre-lazy-port. Latency **effectively equal** (p50 gap ~0.5 ms; p999 tied — not “Rust 2× faster”).
 See [`LEAN-BISECT`](../../spikes/rust-dataplane/LEAN-BISECT.md); vault: [[Bun JSON streamMapping memory climb fixed]], [[Density baseline post-prune stalls and lean floor]].

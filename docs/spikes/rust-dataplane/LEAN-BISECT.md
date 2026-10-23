@@ -32,14 +32,15 @@ With catalog on (product default), restored tip still plateaus ~142 MB under t
 
 ## Week-2 density baseline (reproducible)
 
-**Settled framing:** same effective latency, about **8–9×** less memory, Bun TypeScript build stable near **~130 MB** on tip. Confirmation run (1×5k) under restored lazy listen — **publish boards still use 3×10k with ranges**.
+**Settled framing:** same effective latency, about **8–9×** less memory, Bun TypeScript build stable near **~130 MB** on tip.
 
 | Arm | Anon | vs Rust ~15 MB |
 | --- | ---: | ---: |
 | Tip Bun `--smol` lean (heap-vs-anon / lean-confirm N=2000) | **~139–142 MB** | **~9×** |
-| Tip Bun CF known-op (post-lazy confirmation, 1×5k) | **~129 MB** | **~8.4×** |
+| Tip Bun CF known-op **publish 3×10k** (per-rep range) | **[124.4, 128.5]** med **124.5** | **~8.0×** (8.0–8.3×) |
+| Tip Bun CF known-op (1×5k confirmation) | ~129 MB | ~8.4× |
 | Prior board (post-prune, pre-lazy-port) | ~235 MB | ~15× — **superseded**; do not quote |
 
-**Latency (precise, confirmation run):** Rust call p50 **0.55 ms** vs Bun **1.05 ms** (~0.5 ms absolute — not a “2× faster” product claim). Bun slightly better at p99; Rust slightly better at p999. Effectively equal vs any real API. Rust’s case is density.
+**Latency (precise, 3×10k):** Rust call p50 ~**0.54 ms** vs Bun ~**1.04 ms** (~0.5 ms absolute — not a “2× faster” product claim). Bun slightly better at p99; call p999 effectively tied ([4.53, 4.95] vs [4.73, 5.05]). Effectively equal vs any real API. Rust’s case is density.
 
-Artifacts: `/opt/cursor/artifacts/dataplane-week1-post-lazy/` · [`dataplane-week1-post-lazy-5k.json`](../../benchmarks/gateway-multi-comparison/dataplane-week1-post-lazy-5k.json).
+Publish artifact: [`dataplane-week1-post-lazy-3x10k.json`](../../benchmarks/gateway-multi-comparison/dataplane-week1-post-lazy-3x10k.json). Confirmation: [`dataplane-week1-post-lazy-5k.json`](../../benchmarks/gateway-multi-comparison/dataplane-week1-post-lazy-5k.json).

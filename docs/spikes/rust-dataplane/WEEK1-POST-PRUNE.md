@@ -44,4 +44,15 @@ One run (`CF_DP_REPS=1` `CF_DP_ITERS=5000`) after restoring lazy listen. Confirm
 
 Lean-confirm on that Bun host: **~138.5 MB**. Density vs Rust ≈ **8–9×** (board ~8.4× / lean ~9×). The old **~15×** figure was the eager-listen board — **do not quote**. Artifacts: `/opt/cursor/artifacts/dataplane-week1-post-lazy/` · [`dataplane-week1-post-lazy-5k.json`](../../benchmarks/gateway-multi-comparison/dataplane-week1-post-lazy-5k.json).
 
+### Publish board — post-lazy 3×10k (2026-10-22)
+
+`CF_DP_REPS=3` `CF_DP_ITERS=10000`, per-rep ranges (0 errors both arms). Artifact: [`dataplane-week1-post-lazy-3x10k.json`](../../benchmarks/gateway-multi-comparison/dataplane-week1-post-lazy-3x10k.json).
+
+| Arm | call p50 range / med | call p99 | call p999 | Plateau anon MB |
+| --- | ---: | ---: | ---: | ---: |
+| Bun tip + prune + lazy | [1.03, 1.04] / **1.04** | [2.73, 2.77] | [4.53, 4.95] / **4.74** | **[124.4, 128.5]** / **124.5** |
+| Rust dataplane | [0.54, 0.55] / **0.54** | [3.61, 3.76] | [4.73, 5.05] / **4.85** | **[15.5, 15.7]** / **15.6** |
+
+Density vs Rust ≈ **8.0×** (med) — range about **8.0–8.3×**. Call p999 is effectively tied; median gap remains ~0.5 ms absolute (not “2× faster”).
+
 **Week-2 framing (settled):** same effective latency, about **8–9×** less memory, TypeScript Bun build stable near **~130 MB** on the main line. Next: governance pipeline on Rust, then a fair comparison with both sides doing the full work. Lean bisect: [LEAN-BISECT.md](./LEAN-BISECT.md). HTTP 300–700 ms stalls: **not** fixed by prune — [HTTP-TAIL-POST-PRUNE.md](./HTTP-TAIL-POST-PRUNE.md).

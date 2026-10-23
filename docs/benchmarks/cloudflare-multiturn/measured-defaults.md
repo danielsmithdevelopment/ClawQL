@@ -178,10 +178,10 @@ Three measured claims, same workflow family, each labeled for what it covers:
    gate, pre-registered (`known_op_beats_code_mode_for_real_models`).
 2. **Memory:** Tip Bun `--smol` equal-arm lean plateaus near **~130–142 MB** after
    lazy-listen restore — the originally published ~130 MB band, now tip-reproducible
-   (Oct-15 side-branch-only cite is retired). CF known-op confirmation under that host
-   is **~129 MB** anon vs Rust dataplane **~15 MB** (~**8–9×**). Latency is effectively
-   equal (~0.5 ms median gap). Publish density boards: 3×10k with ranges. Node 256
-   heap A/B on the older build was **132 MB** at ~**3.5 ms** p99 vs uncapped.
+   (Oct-15 side-branch-only cite is retired). CF known-op **3×10k** under that host:
+   Bun plateau **[124.4, 128.5]** med **124.5 MB** vs Rust **~15.6 MB** (~**8×**).
+   Latency effectively equal (~0.5 ms median gap; p999 tied). Node 256 heap A/B on the
+   older build was **132 MB** at ~**3.5 ms** p99 vs uncapped.
 3. **HTTP concurrency (this workflow):** Bun sustains median **84** clients
    (`REPS=3`, range **[79, 87]**) at p99 ≤ 100 ms vs MCPJungle **31** / agentgateway
    **38** — ClawQL moves answers (`where`), peers move full DNS lists. (Pets-board MJ

@@ -154,10 +154,16 @@ python3 - <<PY
 import json
 p="$OUT_DIR/week1-summary.json"
 d=json.load(open(p))
-print("comparisonLabel:", d.get("comparisonLabel"))
+print("comparisonLabel:", d.get("comparisonLabel"), "reps=", d.get("reps"), "iters=", d.get("iters"))
 for arm,a in d.get("arms",{}).items():
   pc=a.get("per_call") or {}
   ps=a.get("per_session") or {}
   mp=a.get("memory_plateau") or {}
-  print(f"{arm}: errors={a.get('errors')} call_p99={pc.get('p99')} call_p999={pc.get('p999')} sess_p99={ps.get('p99')} sess_p999={ps.get('p999')} plateau_mb={mp.get('median_mb')}")
+  rg=a.get("ranges") or {}
+  def fmt(r, digits=2):
+    if not r: return "-"
+    return f"[{r['min']:.{digits}f}, {r['max']:.{digits}f}] med={r['median']:.{digits}f}"
+  print(f"{arm}: errors={a.get('errors')} call_p50={pc.get('p50')} call_p99={pc.get('p99')} call_p999={pc.get('p999')} sess_p999={ps.get('p999')} plateau_mb={mp.get('median_mb')}")
+  if rg:
+    print(f"  ranges: call_p50={fmt(rg.get('call_p50_ms'))} call_p99={fmt(rg.get('call_p99_ms'))} call_p999={fmt(rg.get('call_p999_ms'))} plateau_mb={fmt(rg.get('plateau_mb'),1)}")
 PY
