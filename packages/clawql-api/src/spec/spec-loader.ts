@@ -993,7 +993,9 @@ async function tryLoadCatalogSqliteOnly(): Promise<LoadedSpec | null> {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     if (loadDbRequested) {
-      throw new Error(`[catalog-sqlite] CLAWQL_CATALOG_SQLITE_LOAD=db failed for ${path}: ${msg}`);
+      throw new Error(`[catalog-sqlite] CLAWQL_CATALOG_SQLITE_LOAD=db failed for ${path}: ${msg}`, {
+        cause: err,
+      });
     }
     console.error(`[catalog-sqlite] optional DB load failed, falling back to OpenAPI: ${msg}`);
     return null;
