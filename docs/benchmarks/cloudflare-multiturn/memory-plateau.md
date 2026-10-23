@@ -4,17 +4,10 @@ Gates and honesty notes for Streamable HTTP memory under sessionful load.
 
 ## Two separate problems
 
-<<<<<<< HEAD
-| #                 | Symptom                                                              | Cause class                                                                                                                                                | Status                                                                                                                   |
-| ----------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **1. Climb**      | Anonymous ~200→~3444 MB over ~30k same-session JSON executes         | MCP SDK JSON mode orphans `_streamMapping` after `resolveJson` ([typescript-sdk#2559](https://github.com/modelcontextprotocol/typescript-sdk/issues/2559)) | **Fixed in host** via `pruneOrphanJsonStreamMappings` after each POST; PR gate + nightly + unit bound test               |
-| **2. Lean floor** | Lean listen probe ~130 MB (Oct 15) → ~170–313 MB without lazy listen | Eager `clawql-payments` / memory-ONNX at Ready                                                                                                             | **Fixed on tip** — lazy listen + SQLite catalog OOP + `clawql-inference/keys`; Bun `--smol` lean ~**136 MB** anon (N=2k) |
-=======
 | #                 | Symptom                                                              | Cause class                                                                                                                                                | Status                                                                                                                                              |
 | ----------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **1. Climb**      | Anonymous ~200→~3444 MB over ~30k same-session JSON executes         | MCP SDK JSON mode orphans `_streamMapping` after `resolveJson` ([typescript-sdk#2559](https://github.com/modelcontextprotocol/typescript-sdk/issues/2559)) | **Fixed in host** via `pruneOrphanJsonStreamMappings` after each POST; PR gate + nightly + unit bound test                                          |
 | **2. Lean floor** | Lean listen probe ~130 MB (Oct 15) → ~170–313 MB without lazy listen | Eager `clawql-payments` / memory-ONNX at Ready                                                                                                             | **Fixed on tip** — lazy listen + catalog OOP + inference/keys + clawql-api grpc/graphql/swagger defer; Bun `--smol` lean ~**128 MB** anon (N=2k) |
->>>>>>> b0d44bd8d (feat(api): defer grpc/graphql/swagger off Ready module graph)
 
 Climb (#1) and lean (#2) are both on tip after `#1390` + lazy-listen restore. Peer gap (~99–102 MB MCPJungle/agentgateway) remains a further Bun density climb, not a Rust dataplane path (ADR 0016 Rejected).
 
