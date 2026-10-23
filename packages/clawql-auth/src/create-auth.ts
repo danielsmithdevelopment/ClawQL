@@ -6,11 +6,13 @@
  * Hosts that need a Promise call `Effect.runPromise` at their own Express/MCP edge —
  * this package does not ship convenience Promise façades.
  *
- * Ready density: default SecretStore and step-up wiring are constructed lazily so
- * equal-arm apiKey/noAuth listen does not open SQLite or build TOTP store layers.
- * (`jose` is separately deferred inside oidc verify.)
+ * Ready density: `clawql-auth/step-up` and `clawql-auth/api-keys` are loaded via
+ * createRequire on first use (same pattern as DuckDB / jose) so equal-arm
+ * apiKey/noAuth listen does not evaluate TOTP/WebAuthn or issued-key store modules.
+ * Default SecretStore is also constructed lazily. (`jose` is deferred inside oidc.)
  */
 
+import { createRequire } from "node:module";
 import { Effect, type Layer } from "effect";
 
 import {
@@ -28,20 +30,25 @@ import {
   type AssertToolPolicyOptions,
   type AuthPolicyError,
 } from "./policy.js";
-import {
-  createStepUpStoreLayer,
-  createUnimplementedWebAuthnVerifier,
-  generateTotpEffect,
-  generateTotpSecretEffect,
-  StepUpStoreService,
-  totpOtpauthUrlEffect,
-  verifyTotpEffect,
-  type WebAuthnStepUpVerifier,
-} from "./step-up/index.js";
-import { createIssuedApiKeyStore, type IssuedApiKeyStore } from "./api-keys/index.js";
+import type { StepUpStoreService } from "./step-up/store.js";
+import type { WebAuthnStepUpVerifier } from "./step-up/webauthn.js";
+import type { IssuedApiKeyStore } from "./api-keys/store.js";
 import type { AuthEventSink } from "./audit/auth-events.js";
 import { resolveSecretStore, type ResolveSecretStoreOptions } from "./stores/resolve.js";
 import type { SecretStore } from "./stores/types.js";
+
+type StepUpMod = typeof import("./step-up/index.js");
+type ApiKeysMod = typeof import("./api-keys/index.js");
+
+const requireFromHere = createRequire(import.meta.url);
+
+function loadStepUp(): StepUpMod {
+  return requireFromHere("clawql-auth/step-up") as StepUpMod;
+}
+
+function loadApiKeys(): ApiKeysMod {
+  return requireFromHere("clawql-auth/api-keys") as ApiKeysMod;
+}
 
 export type CreateClawQLAuthOptions = {
   mode?: AuthMode;
@@ -89,10 +96,10 @@ export type ClawQLAuth = {
   stepUp: {
     /** Effect-primary TOTP surface. */
     totp: {
-      generateSecret: typeof generateTotpSecretEffect;
-      generate: typeof generateTotpEffect;
-      verify: typeof verifyTotpEffect;
-      otpauthUrl: typeof totpOtpauthUrlEffect;
+      generateSecret: StepUpMod["generateTotpSecretEffect"];
+      generate: StepUpMod["generateTotpEffect"];
+      verify: StepUpMod["verifyTotpEffect"];
+      otpauthUrl: StepUpMod["totpOtpauthUrlEffect"];
     };
     /** Layer providing {@link StepUpStoreService} when `stepUpStorePath` was set. */
     storeLayer: Layer.Layer<StepUpStoreService> | undefined;
@@ -126,7 +133,7 @@ function resolveAuthSecretStore(input: CreateClawQLAuthOptions["secretStore"]): 
 export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLAuth {
   const base = Effect.runSync(loadGatewayAuthConfig());
   const apiKeys = options.apiKeyStorePath
-    ? createIssuedApiKeyStore({
+    ? loadApiKeys().createIssuedApiKeyStore({
         path: options.apiKeyStorePath,
         eventSink: options.authEventSink,
       })
@@ -153,18 +160,19 @@ export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLA
   let stepUpCache: ClawQLAuth["stepUp"] | undefined;
   const getStepUp = (): ClawQLAuth["stepUp"] => {
     if (!stepUpCache) {
+      const stepUp = loadStepUp();
       const storeLayer = options.stepUpStorePath
-        ? createStepUpStoreLayer(options.stepUpStorePath)
+        ? stepUp.createStepUpStoreLayer(options.stepUpStorePath)
         : undefined;
       stepUpCache = {
         totp: {
-          generateSecret: generateTotpSecretEffect,
-          generate: generateTotpEffect,
-          verify: verifyTotpEffect,
-          otpauthUrl: totpOtpauthUrlEffect,
+          generateSecret: stepUp.generateTotpSecretEffect,
+          generate: stepUp.generateTotpEffect,
+          verify: stepUp.verifyTotpEffect,
+          otpauthUrl: stepUp.totpOtpauthUrlEffect,
         },
         storeLayer,
-        webauthn: options.webauthnVerifier ?? createUnimplementedWebAuthnVerifier(),
+        webauthn: options.webauthnVerifier ?? stepUp.createUnimplementedWebAuthnVerifier(),
       };
     }
     return stepUpCache;
