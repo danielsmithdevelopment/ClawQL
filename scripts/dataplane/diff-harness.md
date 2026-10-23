@@ -27,7 +27,8 @@ Goal: same `execute` requests through Bun TypeScript host and `clawql-dataplane`
 | --- | --- | --- |
 | HTTP risk allow/mandate/block | `risk.rs` + `CLAWQL_DATAPLANE_GOVERNANCE=1` | Method defaults match `classify-operation-risk` |
 | Session IFC accumulate + write gate | `ifc.rs` (default on; `CLAWQL_ENABLE_SESSION_IFC=0` opt-out) | Lean fixture parity unit tests; full HTTP diff suite next |
-| Mandate consume (Postgres) | stub park only | Pending |
-| Process-WORM audit | — | Pending |
+| Mandate park + consume (SQLite) | `pending.rs` + MCP `resume`; same `CONSUME_SQL` predicate | Unit tests green; HTTP diff suite next |
+| Mandate consume (Postgres) | — | Pending (`CLAWQL_PENDING_DATABASE_URL`) |
+| Process-WORM audit | `worm.rs` (`CLAWQL_WORM_ENABLED=1`, JSON dialect) | Chain verify unit tests; CBOR dialect + cross-verify next |
 
-Ownership boundaries: [DUAL-PROCESS.md](./DUAL-PROCESS.md).
+Ownership boundaries: [DUAL-PROCESS.md](../../docs/spikes/rust-dataplane/DUAL-PROCESS.md).

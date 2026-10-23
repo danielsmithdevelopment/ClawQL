@@ -10,7 +10,7 @@
 | ---------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
 | 0 Freeze         | **Done**                                         | Memory go bar = ≤65 MB anon; see BARS.md                                                       |
 | A Bare path      | **Done** (week-1 `fast-path-only`)               | SQLite catalog + Streamable HTTP JSON mode                                                     |
-| B Governance     | **In progress**                                  | Risk classify + park/block stub; **session IFC** (ADR 0015) on dataplane; consume/WORM next. Ownership: [DUAL-PROCESS.md](./DUAL-PROCESS.md) |
+| B Governance     | **In progress**                                  | Risk → IFC → **SQLite mandate park/consume** + MCP `resume` → **process-WORM** (JSON dialect). Postgres consume + CBOR + fair `governance` board next. Ownership: [DUAL-PROCESS.md](./DUAL-PROCESS.md) |
 | C Verus + boards | Pending                                          | `policy.rs` is the first Verus candidate                                                       |
 | D Go/no-go       | Pending                                          |                                                                                                |
 

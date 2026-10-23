@@ -25,6 +25,18 @@
 | Density survives | Governed Rust still ≪ Bun (near half-Bun or better) |
 | Latency | Effectively equal (do not claim “2× faster” from ~0.5 ms p50) |
 
+## Phase B progress (this branch)
+
+| Slice | Status |
+| --- | --- |
+| Risk + park/block | Done (`CLAWQL_DATAPLANE_GOVERNANCE=1`) |
+| Session IFC | Done (default on) |
+| SQLite mandate park / `resume` / atomic consume | Done (`pending.rs`, same `CONSUME_SQL`) |
+| Process-WORM | Done for spike (`CLAWQL_WORM_ENABLED=1`, JSON dialect) |
+| Postgres consume | Pending |
+| CBOR WORM dialect + HTTP differential suite | Pending |
+| Fair governed density board | Pending |
+
 ## Honesty
 
 - Week-1 boards stay labeled **`fast-path-only`** until both arms run full governance.
