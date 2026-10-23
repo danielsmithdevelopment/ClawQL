@@ -22,7 +22,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Effect } from "effect";
 import {
   callCoreCelldToolEffect,
+  callDataplaneToolEffect,
   coreCelldProxyEnabledAsync,
+  dataplaneForwardEnabled,
   decodeExecuteInput,
   decodeResumeInput,
   decodeSearchInput,
@@ -219,6 +221,16 @@ export async function handleClawqlExecuteToolInput(
   return getClawqlApi().run(
     Effect.gen(function* () {
       const params = yield* decodeExecuteInput(raw);
+      // Dual-process density path (ADR 0016) — preferred over celld when configured.
+      if (dataplaneForwardEnabled()) {
+        const proxied = yield* callDataplaneToolEffect("execute", {
+          operationId: params.operationId,
+          args: params.args ?? {},
+          ...(params.fields != null ? { fields: params.fields } : {}),
+          ...(params.where != null ? { where: params.where } : {}),
+        });
+        return { content: [...proxied.content] };
+      }
       const useCelld = yield* Effect.promise(() => coreCelldProxyEnabledAsync());
       if (useCelld) {
         const proxied = yield* callCoreCelldToolEffect("execute", {
@@ -241,6 +253,13 @@ export async function handleClawqlResumeToolInput(
   return getClawqlApi().run(
     Effect.gen(function* () {
       const params = yield* decodeResumeInput(raw);
+      if (dataplaneForwardEnabled()) {
+        const proxied = yield* callDataplaneToolEffect("resume", {
+          executionId: params.executionId,
+          decision: params.decision,
+        });
+        return { content: [...proxied.content] };
+      }
       const content = yield* resumeClawqlExecutionEffect({
         executionId: params.executionId,
         decision: params.decision,
