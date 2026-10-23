@@ -6,6 +6,8 @@ export default defineConfig({
     "mcp/tool-shape-log": "src/mcp/tool-shape-log.ts",
     // Separate entry so REST-prefer boots do not evaluate Omnigraph execute.
     "graphql/in-process-execute": "src/graphql/in-process-execute.ts",
+    // Short-lived OOP catalog builder (gateway spawns; exits after write).
+    "catalog/build-catalog-sqlite-cli": "src/catalog/build-catalog-sqlite-cli.ts",
   },
   format: ["esm", "cjs"],
   dts: true,

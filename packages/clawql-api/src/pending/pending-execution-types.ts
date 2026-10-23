@@ -46,6 +46,8 @@ export type OutcomeUnknownResolve = "mark_applied" | "mark_not_applied" | "retry
 export type ParkExecuteResult = {
   readonly ok: false;
   readonly status: "mandate_required";
+  readonly parked: true;
+  readonly denied: false;
   readonly reason: string;
   readonly operationId: string;
   readonly executionId: string;
