@@ -3,7 +3,7 @@
 Rust Streamable-HTTP **execute** hot path.
 
 - **Phase A** (default): bare path (SQLite catalog → REST → `where`), label **`fast-path-only`**.
-- **Phase B** (in progress): HTTP risk classify + park/block (`CLAWQL_DATAPLANE_GOVERNANCE=1`); **session IFC** (ADR 0015, default on — `CLAWQL_ENABLE_SESSION_IFC=0` to opt out); **SQLite mandate park/consume** (same `UPDATE…WHERE` as ADR 0014); **process-WORM** (`CLAWQL_WORM_ENABLED=1`, JSON hash dialect). Postgres consume + CBOR dialect next.
+- **Phase B** (in progress): HTTP risk classify + park/block (`CLAWQL_DATAPLANE_GOVERNANCE=1`); **session IFC** (ADR 0015, default on — `CLAWQL_ENABLE_SESSION_IFC=0` to opt out); **mandate park/consume** — SQLite default, **Postgres** when `CLAWQL_PENDING_DATABASE_URL` / `CLAWQL_PENDING_STORE=postgres` (same `UPDATE…WHERE` as ADR 0014); **process-WORM** (`CLAWQL_WORM_ENABLED=1`, JSON hash dialect). CBOR dialect + Bun cross-diff next.
 - **Ownership:** Rust = known-op execute + governance hot path; TypeScript = search/plugins/memory/programs/OAuth. See [`DUAL-PROCESS.md`](../../docs/spikes/rust-dataplane/DUAL-PROCESS.md).
 
 ## Quick start
@@ -49,7 +49,7 @@ Week-1 interleaved Bun vs Rust: `scripts/dataplane/week1-cf-known-op.sh`
 | `mcp` | Streamable HTTP (session + JSON mode) |
 | `risk` | HTTP method → allow / mandate / block (Phase B) |
 | `ifc` | Session label accumulate + write gate (ADR 0015) |
-| `pending` | Mandate park / approve / atomic consume (SQLite) |
+| `pending` / `pending_pg` | Mandate park / approve / atomic consume (SQLite or Postgres) |
 | `args_hash` | Canonical `sha256:` digest for park/resume binding |
 | `worm` | Process hash-chain audit (JSON dialect; env-gated) |
 | `policy` | Lean-shaped approval oracle (Verus later) |

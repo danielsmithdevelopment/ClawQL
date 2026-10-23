@@ -12,7 +12,7 @@ use crate::execute::{execute_rest, ExecuteRequest};
 use crate::ifc::{
     accumulate_session_ifc_read, check_session_ifc_write, SessionLabelStore,
 };
-use crate::pending::{mandate_idempotency_key, PendingStore};
+use crate::pending::{mandate_idempotency_key, PendingBackend};
 use crate::risk::{classify_http_operation, governance_enabled, level_for_policy, RiskPolicy};
 use crate::worm::{append_best_effort, ProcessWorm, WormAppendInput};
 use axum::extract::State;
@@ -58,8 +58,8 @@ pub struct AppState {
     pub sessions: Arc<Mutex<HashSet<String>>>,
     /// Session IFC label sets (ADR 0015) — Phase B.
     pub session_labels: Arc<SessionLabelStore>,
-    /// Mandate park/consume SQLite store (ADR 0014).
-    pub pending: Option<PendingStore>,
+    /// Mandate park/consume store — SQLite or Postgres (ADR 0014).
+    pub pending: Option<PendingBackend>,
     /// Process WORM trail when `CLAWQL_WORM_ENABLED=1`.
     pub worm: Option<Arc<ProcessWorm>>,
     /// When true, skip session affinity (MCP 2026-07-28 / CLAWQL_MCP_STATELESS).

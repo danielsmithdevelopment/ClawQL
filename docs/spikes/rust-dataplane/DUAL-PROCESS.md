@@ -33,8 +33,9 @@
 | Session IFC | Done (default on) |
 | SQLite mandate park / `resume` / atomic consume | Done (`pending.rs`, same `CONSUME_SQL`) |
 | Process-WORM | Done for spike (`CLAWQL_WORM_ENABLED=1`, JSON dialect) |
-| Postgres consume | Pending |
-| CBOR WORM dialect + HTTP differential suite | Pending |
+| Postgres consume | Done (`pending_pg.rs`; integration when `CLAWQL_PENDING_DATABASE_URL` set) |
+| Governance HTTP self-check | Done (`scripts/dataplane/diff-governance.sh`) |
+| CBOR WORM dialect + Bun cross-diff | Pending |
 | Fair governed density board | Pending |
 
 ## Honesty

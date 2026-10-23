@@ -1,8 +1,7 @@
-//! Atomic mandate park / approve / consume — SQLite path matching ADR 0014 / TLA+ Consume.
+//! Atomic mandate park / approve / consume — SQLite + Postgres (ADR 0014 / TLA+ Consume).
 //!
-//! Consume SQL predicate mirrors `packages/clawql-api/src/pending/pending-execution-sqlite.ts`.
-//! Postgres (`CLAWQL_PENDING_DATABASE_URL`) is the multi-node bar; this slice ships SQLite
-//! for self-host differential + unit tests.
+//! SQLite predicate mirrors `pending-execution-sqlite.ts`. Postgres lives in `pending_pg`
+//! (`CLAWQL_PENDING_DATABASE_URL` / `CLAWQL_PENDING_STORE=postgres`).
 
 use crate::args_hash::hash_pending_args;
 use crate::risk::{level_for_policy, OperationRisk, RiskPolicy};
@@ -283,19 +282,18 @@ pub fn mandate_idempotency_key(execution_id: &str) -> String {
     format!("clawql-mandate:{}", execution_id.trim())
 }
 
-fn now_ms() -> i64 {
+pub(crate) fn now_ms() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_millis() as i64)
         .unwrap_or(0)
 }
 
-fn iso_now() -> String {
-    // Reuse mcp-style without chrono — good enough for park timestamps.
+pub(crate) fn iso_now() -> String {
     crate_iso_now_ms(now_ms())
 }
 
-fn crate_iso_now_ms(ms: i64) -> String {
+pub(crate) fn crate_iso_now_ms(ms: i64) -> String {
     let secs = (ms / 1000) as u64;
     let millis = (ms % 1000) as u32;
     let days = secs / 86400;
@@ -316,7 +314,7 @@ fn crate_iso_now_ms(ms: i64) -> String {
     format!("{y:04}-{mo:02}-{d:02}T{h:02}:{m:02}:{s:02}.{millis:03}Z")
 }
 
-fn risk_to_pending(risk: &OperationRisk) -> PendingRisk {
+pub(crate) fn risk_to_pending(risk: &OperationRisk) -> PendingRisk {
     PendingRisk {
         level: level_for_policy(risk.policy).into(),
         policy: match risk.policy {
@@ -578,7 +576,7 @@ impl PendingStore {
     }
 }
 
-fn default_consumed_by() -> String {
+pub(crate) fn default_consumed_by() -> String {
     let host = hostname_best_effort();
     format!("host:{host}:pid:{}", std::process::id())
 }
@@ -589,7 +587,7 @@ fn hostname_best_effort() -> String {
         .unwrap_or_else(|_| "dataplane".into())
 }
 
-fn parse_iso_ms(iso: &str) -> Option<i64> {
+pub(crate) fn parse_iso_ms(iso: &str) -> Option<i64> {
     // Accept …Z with optional fractional seconds — minimal parser via chrono-less path:
     // Prefer Date.parse parity: use `time` crate? Avoid — use known park format only.
     // For expire checks we also store expires_at_ms in the row; decide() uses ISO.
@@ -618,6 +616,98 @@ fn parse_iso_ms(iso: &str) -> Option<i64> {
     let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy as u64;
     let days = (era * 146097 + doe as i64) as i64 - 719468;
     Some(days * 86_400_000 + h * 3_600_000 + mi * 60_000 + sec * 1000 + millis)
+}
+
+/// Unified pending backend (SQLite self-host vs Postgres multi-node).
+#[derive(Clone)]
+pub enum PendingBackend {
+    Sqlite(PendingStore),
+    Postgres(crate::pending_pg::PendingPgStore),
+}
+
+impl PendingBackend {
+    pub fn open_from_env() -> Result<Self> {
+        use crate::pending_pg::{pending_backend_kind, pending_database_url, PendingPgStore};
+        match pending_backend_kind() {
+            "postgres" => {
+                let url = pending_database_url().ok_or_else(|| {
+                    anyhow!(
+                        "pending backend postgres requires CLAWQL_PENDING_DATABASE_URL \
+                         (or unset managed/multi-replica signals)"
+                    )
+                })?;
+                Ok(Self::Postgres(PendingPgStore::connect(&url)?))
+            }
+            _ => Ok(Self::Sqlite(PendingStore::open_default()?)),
+        }
+    }
+
+    pub fn name(&self) -> &'static str {
+        match self {
+            Self::Sqlite(_) => "sqlite",
+            Self::Postgres(_) => "postgres",
+        }
+    }
+
+    pub fn describe(&self) -> String {
+        match self {
+            Self::Sqlite(s) => format!("sqlite:{}", s.home().display()),
+            Self::Postgres(s) => format!("postgres:{}", s.label()),
+        }
+    }
+
+    pub fn park(
+        &self,
+        operation_id: &str,
+        args: &Map<String, Value>,
+        fields: Option<&[String]>,
+        where_expr: Option<&str>,
+        risk: &OperationRisk,
+        idempotency_capable: bool,
+    ) -> Result<PendingRecord> {
+        match self {
+            Self::Sqlite(s) => {
+                s.park(operation_id, args, fields, where_expr, risk, idempotency_capable)
+            }
+            Self::Postgres(s) => {
+                s.park(operation_id, args, fields, where_expr, risk, idempotency_capable)
+            }
+        }
+    }
+
+    pub fn decide(&self, execution_id: &str, approve: bool) -> Result<PendingRecord> {
+        match self {
+            Self::Sqlite(s) => s.decide(execution_id, approve),
+            Self::Postgres(s) => s.decide(execution_id, approve),
+        }
+    }
+
+    pub fn try_consume(
+        &self,
+        execution_id: &str,
+        args_hash: &str,
+        consumed_by: Option<&str>,
+        now_ms_override: Option<i64>,
+    ) -> Result<Option<PendingRecord>> {
+        match self {
+            Self::Sqlite(s) => s.try_consume(execution_id, args_hash, consumed_by, now_ms_override),
+            Self::Postgres(s) => {
+                s.try_consume(execution_id, args_hash, consumed_by, now_ms_override)
+            }
+        }
+    }
+
+    pub fn mark_completed(
+        &self,
+        execution_id: &str,
+        ok: bool,
+        error: Option<&str>,
+    ) -> Result<()> {
+        match self {
+            Self::Sqlite(s) => s.mark_completed(execution_id, ok, error),
+            Self::Postgres(s) => s.mark_completed(execution_id, ok, error),
+        }
+    }
 }
 
 #[cfg(test)]

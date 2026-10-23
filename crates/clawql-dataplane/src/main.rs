@@ -7,6 +7,7 @@ mod ifc;
 mod mcp;
 mod mock_upstream;
 mod pending;
+mod pending_pg;
 mod policy;
 mod risk;
 mod where_filter;
@@ -102,9 +103,9 @@ async fn main() -> anyhow::Result<()> {
         let _ = catalog.base_url_for(op).context("resolve catalog base URL")?;
     }
 
-    let pending = match crate::pending::PendingStore::open_default() {
+    let pending = match crate::pending::PendingBackend::open_from_env() {
         Ok(s) => {
-            tracing::info!(home = %s.home().display(), "pending store (sqlite) ready");
+            tracing::info!(kind = s.name(), backend = %s.describe(), "pending store ready");
             Some(s)
         }
         Err(e) => {

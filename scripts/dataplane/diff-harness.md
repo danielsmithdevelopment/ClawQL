@@ -27,8 +27,18 @@ Goal: same `execute` requests through Bun TypeScript host and `clawql-dataplane`
 | --- | --- | --- |
 | HTTP risk allow/mandate/block | `risk.rs` + `CLAWQL_DATAPLANE_GOVERNANCE=1` | Method defaults match `classify-operation-risk` |
 | Session IFC accumulate + write gate | `ifc.rs` (default on; `CLAWQL_ENABLE_SESSION_IFC=0` opt-out) | Lean fixture parity unit tests; full HTTP diff suite next |
-| Mandate park + consume (SQLite) | `pending.rs` + MCP `resume`; same `CONSUME_SQL` predicate | Unit tests green; HTTP diff suite next |
-| Mandate consume (Postgres) | — | Pending (`CLAWQL_PENDING_DATABASE_URL`) |
+| Mandate park + consume (SQLite) | `pending.rs` + MCP `resume`; same `CONSUME_SQL` predicate | Unit tests + `diff-governance.sh` self-check |
+| Mandate consume (Postgres) | `pending_pg.rs` (`CLAWQL_PENDING_DATABASE_URL`) | SQL shape unit tests; integration when URL set |
 | Process-WORM audit | `worm.rs` (`CLAWQL_WORM_ENABLED=1`, JSON dialect) | Chain verify unit tests; CBOR dialect + cross-verify next |
+
+### Run
+
+```bash
+# Self-check (spawns dataplane with governance=1)
+./scripts/dataplane/diff-governance.sh
+
+# Optional cross-arm (normalize strips ids/latency)
+CLAWQL_TS_MCP_URL=http://127.0.0.1:TS ./scripts/dataplane/diff-governance.sh
+```
 
 Ownership boundaries: [DUAL-PROCESS.md](../../docs/spikes/rust-dataplane/DUAL-PROCESS.md).
