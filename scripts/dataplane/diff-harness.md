@@ -20,3 +20,14 @@ Goal: same `execute` requests through Bun TypeScript host and `clawql-dataplane`
 ## Week-1 precursor
 
 `scripts/dataplane/week1-cf-known-op.sh` — interleaved CF known-ops latency + memory plateau, labeled **`fast-path-only`** (no governance on Rust). Not a differential correctness suite.
+
+## Phase B (governance) — in progress
+
+| Slice | Rust | Diff vs TS |
+| --- | --- | --- |
+| HTTP risk allow/mandate/block | `risk.rs` + `CLAWQL_DATAPLANE_GOVERNANCE=1` | Method defaults match `classify-operation-risk` |
+| Session IFC accumulate + write gate | `ifc.rs` (default on; `CLAWQL_ENABLE_SESSION_IFC=0` opt-out) | Lean fixture parity unit tests; full HTTP diff suite next |
+| Mandate consume (Postgres) | stub park only | Pending |
+| Process-WORM audit | — | Pending |
+
+Ownership boundaries: [DUAL-PROCESS.md](./DUAL-PROCESS.md).

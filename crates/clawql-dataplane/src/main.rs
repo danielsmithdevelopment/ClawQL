@@ -2,6 +2,7 @@
 
 mod catalog;
 mod execute;
+mod ifc;
 mod mcp;
 mod mock_upstream;
 mod policy;
@@ -102,6 +103,7 @@ async fn main() -> anyhow::Result<()> {
         catalog: Arc::new(catalog),
         http: upstream_client(),
         sessions: Arc::new(Mutex::new(HashSet::new())),
+        session_labels: crate::ifc::SessionLabelStore::new(),
         stateless: env_stateless(),
     };
     let app = router(state);
@@ -111,9 +113,11 @@ async fn main() -> anyhow::Result<()> {
         .with_context(|| format!("bind {}", args.bind))?;
     let addr = listener.local_addr()?;
     let gov = crate::risk::governance_enabled();
+    let session_ifc = crate::ifc::session_ifc_enabled();
     tracing::info!(
         %addr,
         governance = gov,
+        session_ifc,
         "clawql-dataplane listening"
     );
     tracing::info!("MCP POST http://{addr}/mcp  healthz http://{addr}/healthz");

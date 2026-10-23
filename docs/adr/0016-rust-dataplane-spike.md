@@ -100,7 +100,7 @@ Baselines from Bun lean listen / peer boards ([measured defaults](../benchmarks/
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
 | **0 — Freeze**             | Bar spreadsheet, board list, crate layout under `crates/clawql-dataplane/`, Verus/PDD Kit toolchain pin, differential harness sketch | Written bars + harness stub merged                  |
 | **A — Bare fast path**     | Endpoint + catalog read + upstream call + `where`/projection; **no** governance                                                      | Latency/RSS vs Bun; if no signal, stop              |
-| **B — Governance + audit** | Risk → IFC → consume → WORM; differential suite green                                                                                | Diff = 0 on suite                                   |
+| **B — Governance + audit** | Risk → IFC → consume → WORM; differential suite green ([DUAL-PROCESS](../spikes/rust-dataplane/DUAL-PROCESS.md) ownership)            | Diff = 0 on suite                                   |
 | **C — Proof + boards**     | Verus on policy (± labels/digests); remasure governance + multi-attack + approval-integrity + one latency/RSS board (3 runs)         | Proofs or honest “could not prove X”; board numbers |
 | **D — Decision**           | Spike report + **go/no-go** recorded in this ADR (status → Accepted/Rejected)                                                        | Single owner decision                               |
 

@@ -8,6 +8,9 @@
 
 use crate::catalog::SharedCatalog;
 use crate::execute::{execute_rest, ExecuteRequest};
+use crate::ifc::{
+    accumulate_session_ifc_read, check_session_ifc_write, SessionLabelStore,
+};
 use crate::risk::{classify_http_operation, governance_enabled, RiskPolicy};
 use axum::extract::State;
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
@@ -50,6 +53,8 @@ pub struct AppState {
     pub catalog: SharedCatalog,
     pub http: Client,
     pub sessions: Arc<Mutex<HashSet<String>>>,
+    /// Session IFC label sets (ADR 0015) — Phase B.
+    pub session_labels: Arc<SessionLabelStore>,
     /// When true, skip session affinity (MCP 2026-07-28 / CLAWQL_MCP_STATELESS).
     pub stateless: bool,
 }
@@ -167,7 +172,10 @@ pub async fn mcp_post(
             ]
         })),
         "tools/call" => {
-            let (value, up) = handle_tools_call(&state, body.get("params")).await;
+            let sess = new_session
+                .as_deref()
+                .or(session_hdr.as_deref());
+            let (value, up) = handle_tools_call(&state, body.get("params"), sess).await;
             upstream_ms = up;
             value
         }
@@ -295,6 +303,7 @@ async fn mcp_delete(State(state): State<AppState>, headers: HeaderMap) -> Respon
         .and_then(|v| v.to_str().ok())
     {
         state.sessions.lock().remove(sid);
+        state.session_labels.clear(sid);
     }
     StatusCode::OK.into_response()
 }
@@ -352,6 +361,7 @@ fn rpc_error(code: i64, message: String) -> Value {
 async fn handle_tools_call(
     state: &AppState,
     params: Option<&Value>,
+    session_id: Option<&str>,
 ) -> (Result<Value, Value>, Option<f64>) {
     let params = match params {
         Some(p) => p,
@@ -465,6 +475,29 @@ async fn handle_tools_call(
                 }
             }
 
+            // Session IFC write gate (ADR 0015) — default on; opt out CLAWQL_ENABLE_SESSION_IFC=0.
+            if let Some(block) =
+                check_session_ifc_write(&state.session_labels, op, session_id)
+            {
+                return (
+                    Ok(tool_text(json!({
+                        "ok": false,
+                        "status": "blocked",
+                        "denied": true,
+                        "parked": false,
+                        "reason": block.reason,
+                        "operationId": block.operation_id,
+                        "sessionKey": block.session_key,
+                        "sessionLabels": block.session_labels,
+                        "destLabels": block.dest_labels,
+                        "fix": "Use a destination that accepts these labels, clear the session, or set CLAWQL_ENABLE_SESSION_IFC=0 (not recommended in production).",
+                        "governance": if gov_on { "phase-b" } else { "phase-b-ifc" },
+                        "comparisonLabel": "governance"
+                    }))),
+                    None,
+                );
+            }
+
             match execute_rest(
                 &state.http,
                 &state.catalog,
@@ -477,28 +510,36 @@ async fn handle_tools_call(
             )
             .await
             {
-                Ok(result) => (
-                    Ok(tool_text(json!({
-                        "ok": result.ok,
-                        "status": result.status,
-                        "latencyMs": result.latency_ms,
-                        "url": result.url,
-                        "body": result.body,
-                        "operationId": operation_id,
-                        "risk": {
-                            "policy": match risk.policy {
-                                RiskPolicy::Allow => "allow",
-                                RiskPolicy::Mandate => "mandate",
-                                RiskPolicy::Block => "block",
+                Ok(result) => {
+                    accumulate_session_ifc_read(
+                        &state.session_labels,
+                        op,
+                        session_id,
+                        result.ok,
+                    );
+                    (
+                        Ok(tool_text(json!({
+                            "ok": result.ok,
+                            "status": result.status,
+                            "latencyMs": result.latency_ms,
+                            "url": result.url,
+                            "body": result.body,
+                            "operationId": operation_id,
+                            "risk": {
+                                "policy": match risk.policy {
+                                    RiskPolicy::Allow => "allow",
+                                    RiskPolicy::Mandate => "mandate",
+                                    RiskPolicy::Block => "block",
+                                },
+                                "reason": risk.reason,
+                                "source": risk.source
                             },
-                            "reason": risk.reason,
-                            "source": risk.source
-                        },
-                        "governance": if gov_on { "phase-b" } else { "phase-a-none" },
-                        "comparisonLabel": if gov_on { "governance" } else { "fast-path-only" }
-                    }))),
-                    Some(result.latency_ms),
-                ),
+                            "governance": if gov_on { "phase-b" } else { "phase-a-none" },
+                            "comparisonLabel": if gov_on { "governance" } else { "fast-path-only" }
+                        }))),
+                        Some(result.latency_ms),
+                    )
+                }
                 Err(e) => {
                     // Domain execute failure: stay in result with isError (MCP tool convention).
                     (
@@ -541,11 +582,14 @@ pub fn router(state: AppState) -> axum::Router {
         .route(
             "/healthz",
             get(|| async {
+                let gov = governance_enabled();
+                let session_ifc = crate::ifc::session_ifc_enabled();
                 Json(json!({
                     "ok": true,
                     "transport": "streamable-http",
-                    "governance": "phase-a-none",
-                    "comparisonLabel": "fast-path-only"
+                    "governance": if gov { "phase-b" } else { "phase-a-none" },
+                    "sessionIfc": session_ifc,
+                    "comparisonLabel": if gov { "governance" } else { "fast-path-only" }
                 }))
             }),
         )

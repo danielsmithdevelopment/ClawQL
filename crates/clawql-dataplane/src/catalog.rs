@@ -47,7 +47,6 @@ pub struct Operation {
     #[serde(default)]
     pub spec_index: i64,
     #[serde(default)]
-    #[allow(dead_code)]
     pub spec_label: Option<String>,
 }
 
