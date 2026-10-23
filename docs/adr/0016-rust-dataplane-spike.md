@@ -21,13 +21,13 @@ ClawQL’s lasting formal stack remains **TLA+** (protocols), **Lean** (policy o
 
 ### Evidence that drove no-go
 
-| Evidence | Result |
-| --- | --- |
-| Component plane (direct MCP → Rust) | Governed CF known-op ~**15.8 MB** vs Bun ~**128 MB** — looks like a large density win **if** you ignore the Bun host |
-| Product path (Bun → Rust forward, e2e) | Summed Anonymous RSS ~**124.8 MB** vs Bun-only ~**124.4 MB** — **tied**; dataplane-only RSS is not a product cite |
-| Latency (e2e) | Forward hop costs session p50 (~**21 ms** dual vs ~**13 ms** Bun-only) and worsens call p999 |
-| Peers | MCPJungle / agentgateway still ~**99–102 MB** — dual-process does not take memory leadership |
-| Ops | Two processes, catalog/version skew, claim complexity — not justified by e2e numbers |
+| Evidence                               | Result                                                                                                               |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Component plane (direct MCP → Rust)    | Governed CF known-op ~**15.8 MB** vs Bun ~**128 MB** — looks like a large density win **if** you ignore the Bun host |
+| Product path (Bun → Rust forward, e2e) | Summed Anonymous RSS ~**124.8 MB** vs Bun-only ~**124.4 MB** — **tied**; dataplane-only RSS is not a product cite    |
+| Latency (e2e)                          | Forward hop costs session p50 (~**21 ms** dual vs ~**13 ms** Bun-only) and worsens call p999                         |
+| Peers                                  | MCPJungle / agentgateway still ~**99–102 MB** — dual-process does not take memory leadership                         |
+| Ops                                    | Two processes, catalog/version skew, claim complexity — not justified by e2e numbers                                 |
 
 Spike branches measured the stack; they are **not** to be merged. Production remains single-process Bun (or celld for the isolate path).
 

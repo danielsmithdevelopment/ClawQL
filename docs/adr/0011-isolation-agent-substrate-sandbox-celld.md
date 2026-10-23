@@ -92,12 +92,12 @@ As of this writing, Agent Substrate is open source and generally available for *
 
 ## 6. Implementation map
 
-| Artifact            | Path                                                                                                |
-| ------------------- | --------------------------------------------------------------------------------------------------- |
-| This ADR            | `docs/adr/0011-isolation-agent-substrate-sandbox-celld.md`                                          |
-| Backend             | `packages/clawql-sandbox/src/agent-substrate/`                                                      |
-| Decision rule       | `packages/clawql-sandbox/src/isolation-decision.ts`                                                 |
-| celld note | `docs/streams/clawql-celld.md` (isolation rule); `docs/streams/clawql-cellrt.md` (withdrawn) |
+| Artifact      | Path                                                                                         |
+| ------------- | -------------------------------------------------------------------------------------------- |
+| This ADR      | `docs/adr/0011-isolation-agent-substrate-sandbox-celld.md`                                   |
+| Backend       | `packages/clawql-sandbox/src/agent-substrate/`                                               |
+| Decision rule | `packages/clawql-sandbox/src/isolation-decision.ts`                                          |
+| celld note    | `docs/streams/clawql-celld.md` (isolation rule); `docs/streams/clawql-cellrt.md` (withdrawn) |
 
 ---
 

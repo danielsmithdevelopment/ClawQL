@@ -7,11 +7,11 @@
 
 ClawQL will **not** build an owned Rust/Wasmtime cell runtime (`crates/clawql-cellrt`).
 
-| Layer | Owner |
-| --- | --- |
+| Layer                                                 | Owner                                                                      |
+| ----------------------------------------------------- | -------------------------------------------------------------------------- |
 | Host MCP (search, execute, plugins, memory, OAuth, …) | **TypeScript + Effect TS v4** on **Bun** (default); Node for compatibility |
-| Durable isolate / Streams / ProgramCellDO | **celld** (self-hosted Durable Objects–compatible runtime) |
-| Formal methods | **TLA+** + **Lean** + **gdp-ts** — not Verus/Rust |
+| Durable isolate / Streams / ProgramCellDO             | **celld** (self-hosted Durable Objects–compatible runtime)                 |
+| Formal methods                                        | **TLA+** + **Lean** + **gdp-ts** — not Verus/Rust                          |
 
 ADR 0016 rejected a Rust execute data plane after dual-process e2e boards showed **no product memory win** (summed Bun+dataplane ≈ Bun-only) and a latency cost. The same product stance applies here: do not introduce a Rust toolchain or `crates/` tree into ClawQL.
 
