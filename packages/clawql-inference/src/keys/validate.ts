@@ -1,4 +1,4 @@
-import { isBudgetExceeded } from "./budget.js";
+import { isBudgetExceeded } from "./budget-check.js";
 import { checkRateLimit } from "./rate-limit.js";
 import { findKeyBySecret, loadVirtualKeyStoreSync } from "./store.js";
 import type { KeyValidationResult } from "./types.js";

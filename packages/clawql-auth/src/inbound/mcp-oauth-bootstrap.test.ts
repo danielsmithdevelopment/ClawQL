@@ -25,12 +25,15 @@ describe("MCP OAuth bootstrap fail-closed", () => {
     stash("CLAWQL_EMA_ORGS_JSON");
     stash("CLAWQL_MCP_OAUTH_BOOTSTRAP_STRICT");
     stash("CLAWQL_SECRET_STORE");
+    stash("CLAWQL_AUTH_AUDIT_STORE");
 
     process.env.CLAWQL_MCP_OAUTH_ENABLED = "1";
     process.env.CLAWQL_MCP_OAUTH_SIGNING_SECRET = "test-mcp-oauth-signing-secret-32b!!";
     process.env.CLAWQL_EMA_ORGS_JSON = "{not-json";
     process.env.CLAWQL_MCP_OAUTH_BOOTSTRAP_STRICT = "1";
     process.env.CLAWQL_SECRET_STORE = "memory";
+    // Avoid shared ~/.clawql/auth-audit.db under parallel vitest forks (database is locked).
+    process.env.CLAWQL_AUTH_AUDIT_STORE = "memory";
 
     const exit = await Effect.runPromiseExit(createMcpOAuthFromEnv());
     expect(exit._tag).toBe("Failure");
@@ -47,12 +50,14 @@ describe("MCP OAuth bootstrap fail-closed", () => {
     stash("CLAWQL_EMA_ORGS_JSON");
     stash("CLAWQL_MCP_OAUTH_BOOTSTRAP_STRICT");
     stash("CLAWQL_SECRET_STORE");
+    stash("CLAWQL_AUTH_AUDIT_STORE");
 
     process.env.CLAWQL_MCP_OAUTH_ENABLED = "1";
     process.env.CLAWQL_MCP_OAUTH_SIGNING_SECRET = "test-mcp-oauth-signing-secret-32b!!";
     process.env.CLAWQL_EMA_ORGS_JSON = "{not-json";
     delete process.env.CLAWQL_MCP_OAUTH_BOOTSTRAP_STRICT;
     process.env.CLAWQL_SECRET_STORE = "memory";
+    process.env.CLAWQL_AUTH_AUDIT_STORE = "memory";
 
     const runtime = await Effect.runPromise(createMcpOAuthFromEnv());
     expect(runtime).toBeTruthy();

@@ -15,9 +15,9 @@ reason = "extract-zip@2.0.1 (symlink path traversal) is transitive via website l
 id = "GHSA-7pqw-9j4j-h8q3"
 reason = "Same extract-zip@2.0.1 symlink path traversal as GHSA-jmr9-qjv8-65gv (new OSV id / CVE-2026-19693); transitive via website lighthouse → puppeteer-core → @puppeteer/browsers; no fixed version. Dev-only browser download path."
 
-[[IgnoredVulns]]
-id = "GHSA-vfj7-8cjw-p6xm"
-reason = "braces@3.0.3 stack-exhaustion DoS via deeply nested patterns; OSV lists no fixed version beyond 3.0.3 (latest). Transitive via micromatch/chokidar in website/dashboard/www tooling; not a production request-path dependency. Remove when upstream ships a patched braces."
+# GHSA-vfj7-8cjw-p6xm (braces@3.0.3) — removed unused ignore; OSV tip now reports
+# alias GHSA-q4gf-8mx6-v5v3 / CVE-2026-93687 (covered in .trivyignore). Unused
+# IgnoredVulns hard-fail osv-scanner:latest.
 
 [[IgnoredVulns]]
 id = "GHSA-qqmp-wf37-98f9"
