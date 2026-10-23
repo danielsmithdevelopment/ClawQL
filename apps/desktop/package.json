@@ -2,7 +2,7 @@
   "name": "clawql-desktop",
   "productName": "ClawQL",
   "version": "7.0.0",
-  "description": "ClawQL Desktop — local provider secrets + Agent Chat (macOS, Windows, Linux)",
+  "description": "ClawQL Desktop \u2014 local provider secrets + Agent Chat (macOS, Windows, Linux)",
   "license": "Apache-2.0",
   "private": true,
   "type": "module",
@@ -25,7 +25,7 @@
   "build": {
     "appId": "com.clawql.desktop",
     "productName": "ClawQL",
-    "copyright": "Copyright © ClawQL",
+    "copyright": "Copyright \u00a9 ClawQL",
     "protocols": [
       {
         "name": "ClawQL",
@@ -83,7 +83,7 @@
       "icon": "build/icon.png",
       "desktop": {
         "Name": "ClawQL",
-        "Comment": "Local ClawQL console — provider secrets and Agent Chat",
+        "Comment": "Local ClawQL console \u2014 provider secrets and Agent Chat",
         "Categories": "Development;Utility;"
       },
       "artifactName": "ClawQL-${version}.${ext}"
@@ -98,6 +98,7 @@
   },
   "overrides": {
     "tar": "7.5.22",
-    "builder-util-runtime": "9.7.0"
+    "builder-util-runtime": "9.7.0",
+    "zod": "4.6.7"
   }
 }
