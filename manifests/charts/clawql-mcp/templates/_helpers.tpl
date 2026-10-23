@@ -455,6 +455,30 @@ app.kubernetes.io/component: streams-celld
 {{- end -}}
 {{- end }}
 
+{{/* Optional Rust clawql-dataplane (ADR 0016 dual-process density path). */}}
+{{- define "clawql-mcp.dataplaneName" -}}
+{{- printf "%s-dataplane" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.dataplaneLabels" -}}
+{{ include "clawql-mcp.labels" . }}
+app.kubernetes.io/component: dataplane
+{{- end }}
+
+{{- define "clawql-mcp.dataplaneSelectorLabels" -}}
+{{ include "clawql-mcp.selectorLabels" . }}
+app.kubernetes.io/component: dataplane
+{{- end }}
+
+{{/* In-cluster Streamable HTTP base for CLAWQL_DATAPLANE_EXECUTE_URL (host appends /mcp). */}}
+{{- define "clawql-mcp.dataplaneExecuteUrl" -}}
+{{- if .Values.dataplane.executeUrl -}}
+{{- .Values.dataplane.executeUrl -}}
+{{- else -}}
+{{- printf "http://%s.%s.svc.cluster.local:%v" (include "clawql-mcp.dataplaneName" .) .Release.Namespace (.Values.dataplane.service.port | int) -}}
+{{- end -}}
+{{- end }}
+
 {{/* Optional Managed Edge Gateway nginx (one hostname for /mcp + /v1). */}}
 {{- define "clawql-mcp.managedGatewayName" -}}
 {{- printf "%s-managed-gateway" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}

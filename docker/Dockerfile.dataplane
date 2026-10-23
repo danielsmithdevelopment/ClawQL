@@ -1,0 +1,39 @@
+# syntax=docker/dockerfile:1
+# clawql-dataplane — optional Rust density execute plane (ADR 0016 dual-process).
+#
+# Build (repo root):
+#   docker build -f docker/Dockerfile.dataplane -t clawql-dataplane .
+# Run:
+#   docker run --rm -p 8787:8787 \
+#     -e CLAWQL_API_BASE_URL=https://api.example \
+#     -e CLAWQL_DATAPLANE_GOVERNANCE=1 \
+#     -v /path/to/catalog.sqlite:/catalog.sqlite:ro \
+#     clawql-dataplane --catalog /catalog.sqlite --bind 0.0.0.0:8787
+
+FROM rust:1.99-bookworm AS builder
+WORKDIR /src
+RUN apt-get update \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+       pkg-config libssl-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY crates/Cargo.toml crates/Cargo.lock ./crates/
+COPY crates/clawql-dataplane ./crates/clawql-dataplane/
+
+WORKDIR /src/crates
+RUN cargo build -p clawql-dataplane --release
+
+FROM gcr.io/distroless/cc-debian13:nonroot
+WORKDIR /app
+COPY --from=builder /src/crates/target/release/clawql-dataplane /app/clawql-dataplane
+# Bundle pets fixture so the image starts without a mount (override --catalog in prod).
+COPY --from=builder /src/crates/clawql-dataplane/fixtures/catalog.sqlite /app/fixtures/catalog.sqlite
+ENV CLAWQL_DATAPLANE_GOVERNANCE=1
+ENV CLAWQL_ENABLE_SESSION_IFC=0
+ENV CLAWQL_WORM_ENABLED=0
+ENV CLAWQL_PENDING_STORE=sqlite
+ENV CLAWQL_DATAPLANE_CATALOG=/app/fixtures/catalog.sqlite
+EXPOSE 8787
+USER nonroot:nonroot
+ENTRYPOINT ["/app/clawql-dataplane"]
+CMD ["--bind", "0.0.0.0:8787"]

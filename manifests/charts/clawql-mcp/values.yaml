@@ -1123,6 +1123,63 @@ streams:
   auditLevel: WORM
   subscriptionStore: postgres
 
+# Optional Rust clawql-dataplane — ADR 0016 dual-process density path (off by default).
+# When enabled, chart injects CLAWQL_DATAPLANE_EXECUTE_URL into the MCP Deployment so
+# host execute/resume forwards to Rust; search/plugins/memory stay on Bun/TS.
+# See values-dataplane.example.yaml and docs/spikes/rust-dataplane/DUAL-PROCESS.md.
+dataplane:
+  enabled: false
+  image:
+    repository: ghcr.io/danielsmithdevelopment/clawql-dataplane
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  # Override injected URL (empty → in-cluster Service).
+  executeUrl: ""
+  governance: true
+  sessionIfc: false
+  worm: false
+  pendingStore: sqlite
+  apiBaseUrl: ""
+  catalog:
+    # Optional ConfigMap containing catalog.sqlite (binary key).
+    existingConfigMap: ""
+    mountDir: /catalog
+    mountPath: /catalog/catalog.sqlite
+  home:
+    mountPath: /tmp/clawql-dataplane
+  service:
+    type: ClusterIP
+    port: 8787
+    targetPort: 8787
+    annotations: {}
+  probes:
+    readiness:
+      initialDelaySeconds: 2
+      periodSeconds: 5
+      timeoutSeconds: 2
+      failureThreshold: 3
+    liveness:
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 2
+      failureThreshold: 3
+  resources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+    limits:
+      cpu: "1"
+      memory: 128Mi
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+  extraEnv: []
+
 # Extra env (e.g. tokens from literal — prefer existing secrets for production).
 extraEnv: []
 

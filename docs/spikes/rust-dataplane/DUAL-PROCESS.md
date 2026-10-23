@@ -16,6 +16,25 @@
 1. **Default (most installs):** Bun/TS only — tip lean ~130 MB, peers ~99–103 MB.
 2. **Cloud density (optional):** Rust dataplane on the execute MCP URL; TS host for everything else (or TS forwards known-op execute to Rust).
 
+### Wiring (shipped)
+
+| Piece | How |
+| --- | --- |
+| Host forward | `CLAWQL_DATAPLANE_EXECUTE_URL` → `packages/clawql-api` `dataplane-forward` (MCP `execute` / `resume` before celld) |
+| Docker image | `docker/Dockerfile.dataplane` → `clawql-dataplane` |
+| Compose overlay | `docker/docker-compose.dataplane.yml` (sets forward URL) |
+| Helm | `dataplane.enabled` → Deployment/Service + injects `CLAWQL_DATAPLANE_EXECUTE_URL` on MCP (`values-dataplane.example.yaml`) |
+
+```bash
+# Local dual-process
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.dataplane.yml up --build
+
+# Helm
+helm upgrade --install clawql ./manifests/charts/clawql-mcp \
+  -f manifests/charts/clawql-mcp/values-dataplane.example.yaml \
+  --set dataplane.apiBaseUrl=https://api.example.com
+```
+
 ## Phase B exit (before go/no-go)
 
 | Gate | Bar | Status |
@@ -45,13 +64,14 @@
 
 | Arm | Plateau median | Call p50 | Call p999 | Errors |
 | --- | --- | --- | --- | --- |
-| Bun lean | **~129 MB** | ~1.0 ms | ~5.0 ms | 0 |
-| Rust dataplane (gov=1) | **~15.7 MB** | ~0.53 ms | ~5.3 ms | 0 |
+| Bun lean | **~127.9 MB** | ~1.04 ms | ~4.88 ms | 0 |
+| Rust dataplane (gov=1) | **~15.8 MB** | ~0.55 ms | ~5.07 ms | 0 |
 
-Density ~**8×**; latency effectively equal at p999 (Phase C remasure). Source: `docs/benchmarks/gateway-multi-comparison/dataplane-week1-gov-3x10k.json`. Spike decision: ADR 0016 **Accepted (conditional)**.
+Density ~**8.1×**; latency effectively equal at p999 (dual-process remasure 2026-10-23). Source: `docs/benchmarks/gateway-multi-comparison/dataplane-week1-gov-3x10k.json`. Spike decision: ADR 0016 **Accepted (conditional)**.
 
 ## Honesty
 
 - Week-1 boards labeled **`fast-path-only`** remain the ungated cite; use **`governance`** for fair claims.
+- Density cites **execute-plane RSS only** — not Bun host + Rust sum.
 - Do not claim “mathematically proven policy” until Verus + Accepted go (ADR 0016).
 - Do not claim “Rust 2× faster” from ~0.5 ms p50 gaps.

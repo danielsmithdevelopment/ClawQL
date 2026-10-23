@@ -5,6 +5,7 @@ Rust Streamable-HTTP **execute** hot path.
 - **Phase A** (default): bare path (SQLite catalog → REST → `where`), label **`fast-path-only`**.
 - **Phase B**: HTTP risk classify + park/block (`CLAWQL_DATAPLANE_GOVERNANCE=1`); **session IFC** (ADR 0015, default on — `CLAWQL_ENABLE_SESSION_IFC=0` to opt out); **mandate park/consume** — SQLite default, **Postgres** when `CLAWQL_PENDING_DATABASE_URL` / `CLAWQL_PENDING_STORE=postgres` (same `UPDATE…WHERE` as ADR 0014); **process-WORM** (`CLAWQL_WORM_ENABLED=1`, default **CBOR** dialect — `CLAWQL_WORM_DIALECT=json` for legacy). Bun cross-diff: `scripts/dataplane/diff-governance-cf.sh`; fair board: `week1-gov-cf-known-op.sh`.
 - **Ownership:** Rust = known-op execute + governance hot path; TypeScript = search/plugins/memory/programs/OAuth. See [`DUAL-PROCESS.md`](../../docs/spikes/rust-dataplane/DUAL-PROCESS.md).
+- **Dual-process host forward:** set `CLAWQL_DATAPLANE_EXECUTE_URL=http://…:8787` on the Bun MCP (Helm `dataplane.enabled`, or `docker/docker-compose.dataplane.yml`).
 
 ## Quick start
 

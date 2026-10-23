@@ -45,6 +45,20 @@ Optional: **`GHCR_PUBLIC_OPEN_BROWSER=1 make ghcr-packages-public`** opens **`ht
 
 **Fix (manual, required today — once per package):** **`https://github.com/danielsmithdevelopment?tab=packages`** (or org profile → **Packages**) → each **`clawql-*`** container → **Package settings** → **Danger zone** → **Change package visibility** → **Public**.
 
+## Optional Rust dataplane (dual-process density)
+
+ADR 0016 Cloud density path — known-op `execute` on Rust; Bun host keeps search/plugins/memory.
+
+```bash
+# Image
+docker build -f docker/Dockerfile.dataplane -t clawql-dataplane .
+
+# Compose overlay (forwards CLAWQL_DATAPLANE_EXECUTE_URL)
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.dataplane.yml up --build
+```
+
+Helm: `dataplane.enabled` + `values-dataplane.example.yaml`. Cite execute-plane RSS (~16 MB), not Bun+Rust sum.
+
 ## Prebuilt image (GHCR)
 
 A **daily** GitHub Actions workflow (`.github/workflows/docker-publish.yml`) builds `main` and pushes to **GitHub Container Registry**:

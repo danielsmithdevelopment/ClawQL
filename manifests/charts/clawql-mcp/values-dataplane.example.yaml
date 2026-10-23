@@ -1,0 +1,37 @@
+# Example: optional Rust clawql-dataplane (ADR 0016 dual-process density path).
+#
+# Bun/TS host keeps search/plugins/memory; known-op execute (+ resume) forwards
+# to the dataplane when CLAWQL_DATAPLANE_EXECUTE_URL is injected.
+#
+#   helm upgrade --install clawql ./manifests/charts/clawql-mcp \
+#     -f manifests/charts/clawql-mcp/values-dataplane.example.yaml \
+#     --set dataplane.apiBaseUrl=https://api.example.com \
+#     --set dataplane.catalog.existingConfigMap=clawql-catalog-sqlite
+#
+# Build image (repo root):
+#   docker build -f docker/Dockerfile.dataplane -t ghcr.io/danielsmithdevelopment/clawql-dataplane:local .
+#
+# Honesty: density boards cite execute-plane RSS (~16 MB), not Bun+Rust sum.
+
+dataplane:
+  enabled: true
+  image:
+    repository: ghcr.io/danielsmithdevelopment/clawql-dataplane
+    tag: latest
+  governance: true
+  sessionIfc: false
+  worm: false
+  # Provide catalog.sqlite via ConfigMap key matching catalog.mountPath basename, e.g.:
+  #   kubectl create configmap clawql-catalog-sqlite --from-file=catalog.sqlite=/path/to/catalog.sqlite
+  catalog:
+    existingConfigMap: clawql-catalog-sqlite
+    mountDir: /catalog
+    mountPath: /catalog/catalog.sqlite
+  apiBaseUrl: "" # required for real upstream; set via --set
+  resources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+    limits:
+      cpu: "1"
+      memory: 128Mi

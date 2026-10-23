@@ -429,6 +429,10 @@ spec:
               value: {{ .Values.teamSync.r2.accountId | quote }}
             {{- end }}
             {{- end }}
+            {{- if .Values.dataplane.enabled }}
+            - name: CLAWQL_DATAPLANE_EXECUTE_URL
+              value: {{ include "clawql-mcp.dataplaneExecuteUrl" . | quote }}
+            {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

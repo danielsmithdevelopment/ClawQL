@@ -1,0 +1,27 @@
+# Optional dual-process overlay (ADR 0016).
+#   docker compose -f docker/docker-compose.yml -f docker/docker-compose.dataplane.yml up --build
+#
+# Host MCP forwards execute/resume to clawql-dataplane; search/plugins/memory stay on Bun.
+
+services:
+  clawql-dataplane:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dataplane
+    image: clawql-dataplane:local
+    container_name: clawql-dataplane
+    restart: unless-stopped
+    environment:
+      CLAWQL_DATAPLANE_GOVERNANCE: "1"
+      CLAWQL_ENABLE_SESSION_IFC: "0"
+      CLAWQL_WORM_ENABLED: "0"
+      CLAWQL_PENDING_STORE: sqlite
+      CLAWQL_API_BASE_URL: ${CLAWQL_API_BASE_URL:-}
+    ports:
+      - "8787:8787"
+
+  clawql-mcp-http:
+    environment:
+      CLAWQL_DATAPLANE_EXECUTE_URL: http://clawql-dataplane:8787
+    depends_on:
+      - clawql-dataplane

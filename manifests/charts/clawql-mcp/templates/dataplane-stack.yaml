@@ -1,0 +1,128 @@
+{{- if .Values.dataplane.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.dataplaneName" . }}
+  labels:
+    {{- include "clawql-mcp.dataplaneLabels" . | nindent 4 }}
+  {{- with .Values.dataplane.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.dataplane.service.type }}
+  selector:
+    {{- include "clawql-mcp.dataplaneSelectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.dataplane.service.port | int }}
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clawql-mcp.dataplaneName" . }}
+  labels:
+    {{- include "clawql-mcp.dataplaneLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.dataplane.replicaCount | int }}
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.dataplaneSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.dataplane.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "clawql-mcp.dataplaneSelectorLabels" . | nindent 8 }}
+        {{- with .Values.dataplane.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.dataplane.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: dataplane
+          image: "{{ .Values.dataplane.image.repository }}:{{ .Values.dataplane.image.tag }}"
+          imagePullPolicy: {{ .Values.dataplane.image.pullPolicy }}
+          args:
+            - --bind
+            - "0.0.0.0:{{ .Values.dataplane.service.targetPort | int }}"
+            {{- if .Values.dataplane.catalog.mountPath }}
+            - --catalog
+            - {{ .Values.dataplane.catalog.mountPath | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.dataplane.service.targetPort | int }}
+              protocol: TCP
+          env:
+            - name: CLAWQL_HOME
+              value: {{ .Values.dataplane.home.mountPath | quote }}
+            - name: CLAWQL_DATAPLANE_GOVERNANCE
+              value: {{ ternary "1" "0" .Values.dataplane.governance | quote }}
+            - name: CLAWQL_ENABLE_SESSION_IFC
+              value: {{ ternary "1" "0" .Values.dataplane.sessionIfc | quote }}
+            - name: CLAWQL_WORM_ENABLED
+              value: {{ ternary "1" "0" .Values.dataplane.worm | quote }}
+            - name: CLAWQL_PENDING_STORE
+              value: {{ .Values.dataplane.pendingStore | quote }}
+            {{- if .Values.dataplane.apiBaseUrl }}
+            - name: CLAWQL_API_BASE_URL
+              value: {{ .Values.dataplane.apiBaseUrl | quote }}
+            {{- end }}
+            {{- if .Values.pendingDatabaseUrl }}
+            - name: CLAWQL_PENDING_DATABASE_URL
+              value: {{ .Values.pendingDatabaseUrl | quote }}
+            {{- end }}
+            {{- with .Values.dataplane.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.dataplane.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: {{ .Values.dataplane.probes.readiness.initialDelaySeconds | int }}
+            periodSeconds: {{ .Values.dataplane.probes.readiness.periodSeconds | int }}
+            timeoutSeconds: {{ .Values.dataplane.probes.readiness.timeoutSeconds | int }}
+            failureThreshold: {{ .Values.dataplane.probes.readiness.failureThreshold | int }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: {{ .Values.dataplane.probes.liveness.initialDelaySeconds | int }}
+            periodSeconds: {{ .Values.dataplane.probes.liveness.periodSeconds | int }}
+            timeoutSeconds: {{ .Values.dataplane.probes.liveness.timeoutSeconds | int }}
+            failureThreshold: {{ .Values.dataplane.probes.liveness.failureThreshold | int }}
+          resources:
+            {{- toYaml .Values.dataplane.resources | nindent 12 }}
+          volumeMounts:
+            - name: clawql-home
+              mountPath: {{ .Values.dataplane.home.mountPath }}
+            {{- if .Values.dataplane.catalog.existingConfigMap }}
+            - name: catalog
+              mountPath: {{ .Values.dataplane.catalog.mountDir | default "/catalog" | quote }}
+              readOnly: true
+            {{- end }}
+      volumes:
+        - name: clawql-home
+          emptyDir: {}
+        {{- if .Values.dataplane.catalog.existingConfigMap }}
+        - name: catalog
+          configMap:
+            name: {{ .Values.dataplane.catalog.existingConfigMap | quote }}
+        {{- end }}
+{{- end }}

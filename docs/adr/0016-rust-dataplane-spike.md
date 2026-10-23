@@ -112,15 +112,15 @@ If go: plan for Rust to become the **only** policy-engine implementation (called
 
 | Evidence | Result |
 | --- | --- |
-| Memory | Governed CF 3×10k (Phase C remasure): Rust ~**15.7 MB** vs Bun ~**129 MB** (~**8.2×**) — clears ≤65 MB half-Bun bar |
-| Latency | Call p999 **tied** (~5.0–5.3 ms) — not “clearly better”; density is the go signal (per ADR note on this board) |
+| Memory | Governed CF 3×10k (dual-process remasure): Rust ~**15.8 MB** vs Bun ~**128 MB** (~**8.1×**) — clears ≤65 MB half-Bun bar |
+| Latency | Call p999 **tied** (~4.9–5.1 ms) — not “clearly better”; density is the go signal (per ADR note on this board) |
 | Differential | Zero Bun/Rust CF governance mismatches (`diff-governance-cf.sh`) |
 | Verus | Policy evaluator **proved** (`formal/verus/approval-policy`, 11 verified); labels + digests stretch **deferred** |
 
 **Conditional means:**
 
 1. Keep Bun/TS as the **default** single-process host.
-2. **Invest** in productionizing dual-process deploy (Rust on known-op execute MCP URL; TS for search/plugins/memory/programs/OAuth).
+2. **Invest** in productionizing dual-process deploy (Rust on known-op execute MCP URL; TS for search/plugins/memory/programs/OAuth). Host forward: `CLAWQL_DATAPLANE_EXECUTE_URL` (`dataplane-forward`); Helm `dataplane.enabled`; `docker/Dockerfile.dataplane` + `docker-compose.dataplane.yml` — see [DUAL-PROCESS.md](../spikes/rust-dataplane/DUAL-PROCESS.md).
 3. Migrate Lean approval oracle → Verus kernel as the long-term sole evaluator; string adapters stay differential-tested until proved or retired.
 4. Do **not** claim “mathematically proven policy” for the whole gateway — only the proved kernel + Lean/differential elsewhere (ADR 0014 wording for non-Verus surfaces).
 5. Do **not** delete `crates/clawql-dataplane/`.
