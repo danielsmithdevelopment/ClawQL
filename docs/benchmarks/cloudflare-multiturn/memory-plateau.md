@@ -7,9 +7,9 @@ Gates and honesty notes for Streamable HTTP memory under sessionful load.
 | #                 | Symptom                                                      | Cause class                                                                                                                                                | Status                                                                                                                     |
 | ----------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | **1. Climb**      | Anonymous ~200→~3444 MB over ~30k same-session JSON executes | MCP SDK JSON mode orphans `_streamMapping` after `resolveJson` ([typescript-sdk#2559](https://github.com/modelcontextprotocol/typescript-sdk/issues/2559)) | **Fixed in host** via `pruneOrphanJsonStreamMappings` after each POST; PR gate + nightly + unit bound test                 |
-| **2. Lean floor** | Lean listen probe ~130 MB (Oct 15) → ~170–260 MB on tip      | Different from the climb — baseline RSS regression since Oct 15                                                                                            | **Open** — bisect with lean probe from Oct 15; do not use tip lean as week-2 Rust baseline until tip Bun plateaus after #1 |
+| **2. Lean floor** | Lean listen probe ~130 MB (Oct 15) → ~170–313 MB without lazy listen | Eager `clawql-payments` / memory-ONNX at Ready                                                                                                             | **Fixed on tip** — restore Oct-15 lazy listen (`CLAWQL_HTTP_SKIP_PAYMENTS`, dynamic plugin composer); Bun `--smol` lean ~**142–150 MB** anon (N=2k) |
 
-Week-2 Rust dataplane comparison waits until tip Bun plateaus (#1) and uses the build TypeScript can actually reach after #2 is understood.
+Climb (#1) and lean (#2) are both on tip after `#1390` + lazy-listen restore. Peer gap (~99–102 MB MCPJungle/agentgateway) remains a further Bun density climb, not a Rust dataplane path (ADR 0016 Rejected).
 
 ## How the Oct 12 prune was lost
 
@@ -63,13 +63,14 @@ npx vitest run src/http/json-stream-mapping-bound.test.ts
 
 Bench stats on `/healthz` (opt-in): `CLAWQL_BENCH_STATS=1` → `stream_mapping_entries`, `request_to_stream_entries`.
 
-## Open item: lean floor regression (not the climb)
+## Lean floor (restored)
 
-Track separately from `_streamMapping`:
+Separate from `_streamMapping` climb:
 
-- **Oct 15 board / heap A/B:** Bun `--smol` ~**130 MB**, Node 256 ~**132 MB** anon plateau ([measured-defaults](./measured-defaults.md)).
-- **Tip lean probe:** ~**170–260 MB** (Bun ~173 / Node ~236 in recent honesty notes) with the same equal-arm slim env.
-- **Action:** bisect from the Oct 15 commit with `scripts/benchmarks/heap-vs-anon-plateau.mjs` (or equivalent lean listen probe). Do **not** fold this into the climb fix or the plateau CI gate.
-- **Rust week-2:** compare against tip Bun **after** climb is fixed and lean bisect has a named culprit (or an accepted new floor).
+- **Oct 15 board / heap A/B:** Bun `--smol` ~**130 MB**, Node 256 ~**132 MB** ([measured-defaults](./measured-defaults.md)).
+- **Tip without lazy listen:** ~**170–313 MB** (eager payments + pgvector/ONNX at Ready).
+- **Tip after lazy listen:** Bun `--smol` equal-arm lean ~**142–150 MB** anon (N=2k `heap-vs-anon-plateau`; catalog flag no-op until SQLite catalog lands on tip).
+- **Remasure:** `BUN_RUNTIME=1 BUN_SMOL=1 N=2000 npm run benchmark:heap-vs-anon-plateau`
+- **Next density:** SQLite catalog OOP + deeper `clawql-api` lazy graph to close ~20–50 MB toward peers (~99–102 MB).
 
-See also vault notes: [[Bun JSON streamMapping memory climb fixed]], [[Bun smol lean board 130MB anon plateau config]].
+See also vault notes: [[Bun JSON streamMapping memory climb fixed]], [[Bun smol lean board 130MB anon plateau config]], [[Density baseline post-prune stalls and lean floor]].

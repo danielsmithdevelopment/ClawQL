@@ -14,6 +14,7 @@ import {
 import { createRequire } from "node:module";
 import { Effect } from "effect";
 import { composeHorizontalPluginLayersDynamicEffect } from "./compose-horizontal-plugin-layers-dynamic.js";
+import { composeHorizontalPluginLayersStatic } from "./compose-horizontal-plugin-layers-static.js";
 import { attachActiveOtelParent, makeEffectOtelTracerLayer } from "./effect-otel-bridge.js";
 import {
   disposeProcessWormHostEffect,
@@ -174,11 +175,10 @@ export function getClawqlApi(): ClawQLApiHandle {
   if (!apiHandle) {
     // Fire-and-forget: durable WORM when CLAWQL_WORM_ENABLED=1 (does not block API build).
     void Effect.runPromise(ensureProcessWormHostBootedEffect()).catch(() => undefined);
-    // Lazy-load the sync composer so HTTP Ready via ensureClawqlApi() never evaluates
-    // the sync module graph when only the dynamic path is used.
-    const { composeHorizontalPluginLayersStatic } = requireFromHere(
-      "./compose-horizontal-plugin-layers-static.js"
-    ) as typeof import("./compose-horizontal-plugin-layers-static.js");
+    // Static import of the sync composer (local TS) — vitest/CJS cannot resolve a lazy
+    // `./….js` require. Disabled tiers still stay out of the graph: the composer only
+    // `require`s clawql-memory / payments / etc. when composition flags enable them.
+    // Production Ready uses ensureClawqlApi() → dynamic Effect path.
     apiHandle = buildClawqlApi(
       composeHorizontalPluginLayersStatic(resolvePluginCompositionFlags()),
       resolveVaultSeedLayerSync()

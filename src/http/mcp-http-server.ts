@@ -233,6 +233,13 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     const { registerMcpX402TransportHooks } = await import("./mcp-x402-transport.js");
     registerMcpX402TransportHooks();
   }
+  // Prefer the async dynamic composer before any sync getClawqlApi() (registerTools).
+  // createRequire() in the sync static composer bypasses Vitest transforms and can
+  // load clawql-api CJS (empty import.meta) when optional tiers are on.
+  const { ensureClawqlApi } = await import("../composition/clawql-api-adapters.js");
+  await ensureClawqlApi();
+  const { wireOptionalToolDeps } = await import("../mcp/tools.js");
+  await wireOptionalToolDeps();
   try {
     const { configureMcpEventsProcessEmitter } = await import("../mcp/mcp-events-host.js");
     configureMcpEventsProcessEmitter();
