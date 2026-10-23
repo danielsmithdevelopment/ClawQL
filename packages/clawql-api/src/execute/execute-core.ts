@@ -24,8 +24,6 @@ import { preferRestOpenApiExecuteEffect } from "./openapi-execute-path.js";
 import { serializeExecuteResultEffect } from "./result-truncation.js";
 import { unknownOperationIdErrorEffect } from "./suggest-operation-ids.js";
 import { shapeExecuteDataEffect, WhereFilterError } from "./where-filter.js";
-import { executeNativeGraphQL } from "./native-graphql.js";
-import { executeNativeGrpc } from "./native-grpc.js";
 import { executeNativeMcp } from "./native-mcp.js";
 import { executeNativeCli } from "./native-cli.js";
 import { executeNativeWebmcp } from "./native-webmcp.js";
@@ -307,9 +305,10 @@ export function executeClawqlOperationEffect(
         const selectedFields = outputFields?.length
           ? outputFields.join("\n        ")
           : "__typename";
-        const exec = yield* fromPromise(() =>
-          executeNativeGraphQL(op as Operation, args, selectedFields)
-        );
+        const exec = yield* fromPromise(async () => {
+          const { executeNativeGraphQL } = await import("./native-graphql.js");
+          return executeNativeGraphQL(op as Operation, args, selectedFields);
+        });
         if (!exec.ok) {
           return yield* textContentEffect(
             JSON.stringify({
@@ -328,7 +327,10 @@ export function executeClawqlOperationEffect(
       }
 
       if (op.protocolKind === "grpc" && op.nativeGrpc) {
-        const exec = yield* fromPromise(() => executeNativeGrpc(op as Operation, args));
+        const exec = yield* fromPromise(async () => {
+          const { executeNativeGrpc } = await import("./native-grpc.js");
+          return executeNativeGrpc(op as Operation, args);
+        });
         if (!exec.ok) {
           return yield* textContentEffect(
             JSON.stringify({

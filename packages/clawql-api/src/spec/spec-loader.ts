@@ -23,9 +23,7 @@ import { Effect } from "effect";
 import fetch from "node-fetch";
 import { parse as parseYaml } from "yaml";
 import { isAwsSpecLabelEffect, resolveAwsApiBaseUrlEffect } from "../auth/aws-auth.js";
-import { convertObj } from "swagger2openapi";
 import type { Operation, ParameterInfo } from "./operation-types.js";
-import { loadGraphqlNativeOperationsFromConfigs } from "./graphql-native-loader.js";
 import { mergeNativeProtocolOperations } from "./native-protocol-merge.js";
 import {
   shouldLoadCustomProvidersOnly,
@@ -477,6 +475,7 @@ async function loadRawDocument(source: SpecSource): Promise<unknown> {
 
 async function normalizeToOpenAPI(raw: unknown): Promise<unknown> {
   if (isSwagger2(raw)) {
+    const { convertObj } = await import("swagger2openapi");
     const { openapi } = await convertObj(raw as object, {
       patch: true,
       /** e.g. Slack Web API spec uses JSON Schema unions Slack’s own generator emits. */
@@ -550,6 +549,7 @@ async function loadBundledGraphqlOperationsFromDiskOrFallback(opts: {
   schemaAbs: string;
   fallbackUrl: string;
 }): Promise<Operation[]> {
+  const { loadGraphqlNativeOperationsFromConfigs } = await import("./graphql-native-loader.js");
   try {
     await readFile(opts.schemaAbs, "utf-8");
     return loadGraphqlNativeOperationsFromConfigs([

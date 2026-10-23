@@ -10,8 +10,7 @@ export * from "./native-protocol-registry.js";
 export * from "./native-protocol-merge.js";
 export * from "./native-protocol-metrics.js";
 export * from "./native-protocol-prometheus.js";
-export * from "./graphql-native-loader.js";
-export * from "./grpc-native-loader.js";
+// graphql-native-loader / grpc-native-loader: dynamic-import only (Ready RSS).
 export * from "./custom-sources-types.js";
 export * from "./custom-sources-store.js";
 export * from "./custom-sources-security.js";

@@ -1,10 +1,10 @@
 /**
  * Merge native GraphQL / gRPC operations into a loaded OpenAPI/Discovery spec (ADR 0002).
+ *
+ * Loaders are dynamic-imported so Ready/LOAD=db never evaluates `graphql` /
+ * `@grpc/grpc-js` / swagger at module init.
  */
 
-import { loadGraphqlNativeOperations } from "./graphql-native-loader.js";
-import { loadGrpcNativeOperations } from "./grpc-native-loader.js";
-import { mergeCustomSourceOperations } from "./custom-sources-merge.js";
 import { recordNativeMergeFromOperations } from "./native-protocol-metrics.js";
 import type { LoadedSpec } from "./spec-loader.js";
 import type { Operation } from "./operation-types.js";
@@ -14,11 +14,13 @@ async function mergeNativeProtocolOperationsImpl(loaded: LoadedSpec): Promise<Lo
   let gql: Operation[] = [];
   let grpc: Operation[] = [];
   try {
+    const { loadGraphqlNativeOperations } = await import("./graphql-native-loader.js");
     gql = await loadGraphqlNativeOperations();
   } catch (e: unknown) {
     console.error("[spec-loader] Native GraphQL merge failed:", e);
   }
   try {
+    const { loadGrpcNativeOperations } = await import("./grpc-native-loader.js");
     grpc = await loadGrpcNativeOperations();
   } catch (e: unknown) {
     console.error("[spec-loader] Native gRPC merge failed:", e);
@@ -26,6 +28,8 @@ async function mergeNativeProtocolOperationsImpl(loaded: LoadedSpec): Promise<Lo
 
   recordNativeMergeFromOperations(gql, grpc);
   const extra = gql.concat(grpc);
+
+  const { mergeCustomSourceOperations } = await import("./custom-sources-merge.js");
 
   if (extra.length === 0) {
     // Still merge ~/.ClawQL/sources.json (CLI / MCP / OpenAPI custom sources).
