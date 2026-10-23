@@ -21,6 +21,15 @@ pub struct OperationRisk {
     pub source: &'static str,
 }
 
+/// Aligns with TS `levelForPolicy`.
+pub fn level_for_policy(policy: RiskPolicy) -> &'static str {
+    match policy {
+        RiskPolicy::Allow => "LOW",
+        RiskPolicy::Mandate => "MEDIUM",
+        RiskPolicy::Block => "HIGH",
+    }
+}
+
 /// Classify OpenAPI/REST ops by HTTP method (same defaults as TypeScript).
 pub fn classify_http_operation(op: &Operation) -> OperationRisk {
     let m = op.method.trim().to_uppercase();

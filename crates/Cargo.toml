@@ -25,3 +25,6 @@ rusqlite = { version = "0.32", features = ["bundled"] }
 flate2 = "1"
 uuid = { version = "1", features = ["v4"] }
 parking_lot = "0.12"
+sha2 = "0.10"
+hex = "0.4"
+rand = "0.8"

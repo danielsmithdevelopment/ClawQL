@@ -6,19 +6,22 @@
 //! - `notifications/initialized` → 202 empty
 //! - Tool domain failures stay in `result` with `isError` / body JSON (not always top-level RPC error)
 
+use crate::args_hash::hash_pending_args;
 use crate::catalog::SharedCatalog;
 use crate::execute::{execute_rest, ExecuteRequest};
 use crate::ifc::{
     accumulate_session_ifc_read, check_session_ifc_write, SessionLabelStore,
 };
-use crate::risk::{classify_http_operation, governance_enabled, RiskPolicy};
+use crate::pending::{mandate_idempotency_key, PendingStore};
+use crate::risk::{classify_http_operation, governance_enabled, level_for_policy, RiskPolicy};
+use crate::worm::{append_best_effort, ProcessWorm, WormAppendInput};
 use axum::extract::State;
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use parking_lot::Mutex;
 use reqwest::Client;
-use serde_json::{json, Value};
+use serde_json::{json, Map, Value};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Instant;
@@ -55,6 +58,10 @@ pub struct AppState {
     pub sessions: Arc<Mutex<HashSet<String>>>,
     /// Session IFC label sets (ADR 0015) — Phase B.
     pub session_labels: Arc<SessionLabelStore>,
+    /// Mandate park/consume SQLite store (ADR 0014).
+    pub pending: Option<PendingStore>,
+    /// Process WORM trail when `CLAWQL_WORM_ENABLED=1`.
+    pub worm: Option<Arc<ProcessWorm>>,
     /// When true, skip session affinity (MCP 2026-07-28 / CLAWQL_MCP_STATELESS).
     pub stateless: bool,
 }
@@ -152,16 +159,31 @@ pub async fn mcp_post(
             "tools": [
                 {
                     "name": "execute",
-                    "description": "Execute a known OpenAPI operation (Phase A bare path — no governance)",
+                    "description": "Execute a known OpenAPI operation (Phase B: risk → IFC → mandate consume → WORM when governance on)",
                     "inputSchema": {
                         "type": "object",
                         "properties": {
                             "operationId": { "type": "string" },
                             "args": { "type": "object" },
                             "where": { "type": "string" },
-                            "fields": { "type": "array", "items": { "type": "string" } }
+                            "fields": { "type": "array", "items": { "type": "string" } },
+                            "approvedExecutionId": { "type": "string" },
+                            "mandate": { "type": "string" },
+                            "mandateToken": { "type": "string" }
                         },
                         "required": ["operationId"]
+                    }
+                },
+                {
+                    "name": "resume",
+                    "description": "Approve or decline a parked mandate (Phase B)",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "executionId": { "type": "string" },
+                            "decline": { "type": "boolean" }
+                        },
+                        "required": ["executionId"]
                     }
                 },
                 {
@@ -382,6 +404,74 @@ async fn handle_tools_call(
                 None,
             )
         }
+        "resume" => {
+            let execution_id = match args.get("executionId").and_then(|v| v.as_str()) {
+                Some(s) => s.trim().to_string(),
+                None => {
+                    return (
+                        Err(rpc_error(-32602, "executionId required".into())),
+                        None,
+                    )
+                }
+            };
+            let decline = args
+                .get("decline")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+            let Some(store) = state.pending.as_ref() else {
+                return (
+                    Ok(tool_text(json!({
+                        "ok": false,
+                        "error": "pending store unavailable"
+                    }))),
+                    None,
+                );
+            };
+            match store.decide(&execution_id, !decline) {
+                Ok(record) => {
+                    let ts = humantime_iso_now();
+                    let mut meta = Map::new();
+                    meta.insert("executionId".into(), json!(record.execution_id));
+                    meta.insert("operationId".into(), json!(record.operation_id));
+                    meta.insert("argsHash".into(), json!(record.args_hash));
+                    append_best_effort(
+                        &state.worm,
+                        WormAppendInput {
+                            entry_type: if decline {
+                                "HUMAN_REJECTION".into()
+                            } else {
+                                "HUMAN_APPROVAL".into()
+                            },
+                            timestamp: ts,
+                            session_id: session_id.unwrap_or("pending-execute").into(),
+                            agent_name: None,
+                            metadata: Some(meta),
+                        },
+                    );
+                    (
+                        Ok(tool_text(json!({
+                            "ok": true,
+                            "executionId": record.execution_id,
+                            "status": record.status,
+                            "operationId": record.operation_id,
+                            "argsHash": record.args_hash,
+                            "approvedAt": record.approved_at,
+                            "governance": "phase-b",
+                            "comparisonLabel": "governance"
+                        }))),
+                        None,
+                    )
+                }
+                Err(e) => (
+                    Ok(tool_text(json!({
+                        "ok": false,
+                        "error": e.to_string(),
+                        "executionId": execution_id
+                    }))),
+                    None,
+                ),
+            }
+        }
         "execute" => {
             let operation_id = match args.get("operationId").and_then(|v| v.as_str()) {
                 Some(s) => s.to_string(),
@@ -393,9 +483,11 @@ async fn handle_tools_call(
                 }
             };
             let mut map = HashMap::new();
+            let mut args_map = Map::new();
             if let Some(Value::Object(obj)) = args.get("args") {
                 for (k, v) in obj {
                     map.insert(k.clone(), v.clone());
+                    args_map.insert(k.clone(), v.clone());
                 }
             }
             let where_expr = args
@@ -424,12 +516,15 @@ async fn handle_tools_call(
             };
             let risk = classify_http_operation(op);
             let gov_on = governance_enabled();
-            let mandate_token = args
-                .get("mandate")
+            let approved_id = args
+                .get("approvedExecutionId")
+                .or_else(|| args.get("mandate"))
                 .or_else(|| args.get("mandateToken"))
                 .and_then(|v| v.as_str())
                 .map(|s| s.trim().to_string())
                 .filter(|s| !s.is_empty());
+
+            let mut consumed_mandate_id: Option<String> = None;
 
             if gov_on {
                 match risk.policy {
@@ -437,10 +532,13 @@ async fn handle_tools_call(
                         return (
                             Ok(tool_text(json!({
                                 "ok": false,
+                                "status": "blocked",
                                 "parked": false,
                                 "denied": true,
+                                "reason": "Destructive operation is blocked unless allowlisted via operation-risk override",
                                 "operationId": operation_id,
                                 "risk": {
+                                    "level": level_for_policy(risk.policy),
                                     "policy": "block",
                                     "reason": risk.reason,
                                     "source": risk.source
@@ -451,27 +549,233 @@ async fn handle_tools_call(
                             None,
                         );
                     }
-                    RiskPolicy::Mandate if mandate_token.is_none() => {
-                        // Phase B stub: park without Postgres consume yet.
-                        return (
-                            Ok(tool_text(json!({
-                                "ok": false,
-                                "parked": true,
-                                "denied": false,
-                                "operationId": operation_id,
-                                "risk": {
-                                    "policy": "mandate",
-                                    "reason": risk.reason,
-                                    "source": risk.source
-                                },
-                                "governance": "phase-b-park-stub",
-                                "comparisonLabel": "governance",
-                                "note": "Mandate consume (Postgres UPDATE…WHERE) lands in a later Phase B slice"
-                            }))),
-                            None,
-                        );
+                    RiskPolicy::Mandate => {
+                        match approved_id.as_deref() {
+                            None => {
+                                let Some(store) = state.pending.as_ref() else {
+                                    return (
+                                        Ok(tool_text(json!({
+                                            "ok": false,
+                                            "status": "mandate_required",
+                                            "error": "pending store unavailable",
+                                            "operationId": operation_id,
+                                            "governance": "phase-b",
+                                            "comparisonLabel": "governance"
+                                        }))),
+                                        None,
+                                    );
+                                };
+                                match store.park(
+                                    &operation_id,
+                                    &args_map,
+                                    fields.as_deref(),
+                                    where_expr.as_deref(),
+                                    &risk,
+                                    false,
+                                ) {
+                                    Ok(parked) => {
+                                        let mut meta = Map::new();
+                                        meta.insert(
+                                            "executionId".into(),
+                                            json!(parked.execution_id),
+                                        );
+                                        meta.insert(
+                                            "operationId".into(),
+                                            json!(parked.operation_id),
+                                        );
+                                        meta.insert("argsHash".into(), json!(parked.args_hash));
+                                        meta.insert(
+                                            "riskPolicy".into(),
+                                            json!(parked.risk.policy),
+                                        );
+                                        meta.insert("riskLevel".into(), json!(parked.risk.level));
+                                        meta.insert("expiresAt".into(), json!(parked.expires_at));
+                                        meta.insert(
+                                            "idempotencyKey".into(),
+                                            json!(mandate_idempotency_key(&parked.execution_id)),
+                                        );
+                                        append_best_effort(
+                                            &state.worm,
+                                            WormAppendInput {
+                                                entry_type: "HUMAN_DECISION_REQUESTED".into(),
+                                                timestamp: parked.created_at.clone(),
+                                                session_id: session_id
+                                                    .unwrap_or("pending-execute")
+                                                    .into(),
+                                                agent_name: None,
+                                                metadata: Some(meta),
+                                            },
+                                        );
+                                        return (
+                                            Ok(tool_text(json!({
+                                                "ok": false,
+                                                "status": "mandate_required",
+                                                "parked": true,
+                                                "denied": false,
+                                                "reason": "Operation risk policy requires a mandate before execute",
+                                                "operationId": operation_id,
+                                                "executionId": parked.execution_id,
+                                                "argsHash": parked.args_hash,
+                                                "risk": {
+                                                    "level": parked.risk.level,
+                                                    "policy": "mandate",
+                                                    "reason": risk.reason,
+                                                    "source": risk.source
+                                                },
+                                                "approval": {
+                                                    "cli": format!("clawql resume {}", parked.execution_id),
+                                                    "tool": "resume",
+                                                    "declineCli": format!("clawql resume --decline {}", parked.execution_id)
+                                                },
+                                                "expiresAt": parked.expires_at,
+                                                "governance": "phase-b",
+                                                "comparisonLabel": "governance"
+                                            }))),
+                                            None,
+                                        );
+                                    }
+                                    Err(e) => {
+                                        return (
+                                            Ok(tool_text(json!({
+                                                "ok": false,
+                                                "status": "mandate_required",
+                                                "error": e.to_string(),
+                                                "operationId": operation_id,
+                                                "governance": "phase-b",
+                                                "comparisonLabel": "governance"
+                                            }))),
+                                            None,
+                                        );
+                                    }
+                                }
+                            }
+                            Some(eid) => {
+                                let Some(store) = state.pending.as_ref() else {
+                                    return (
+                                        Ok(tool_text(json!({
+                                            "ok": false,
+                                            "status": "mandate_required",
+                                            "error": "pending store unavailable",
+                                            "operationId": operation_id,
+                                            "executionId": eid,
+                                            "governance": "phase-b",
+                                            "comparisonLabel": "governance"
+                                        }))),
+                                        None,
+                                    );
+                                };
+                                let args_hash = hash_pending_args(
+                                    &operation_id,
+                                    &args_map,
+                                    fields.as_deref(),
+                                    where_expr.as_deref(),
+                                );
+                                match store.try_consume(eid, &args_hash, None, None) {
+                                    Ok(Some(consumed)) => {
+                                        if consumed.operation_id != operation_id {
+                                            let _ = store.mark_completed(
+                                                eid,
+                                                false,
+                                                Some(
+                                                    "approved executionId is bound to a different operationId",
+                                                ),
+                                            );
+                                            return (
+                                                Ok(tool_text(json!({
+                                                    "ok": false,
+                                                    "status": "blocked",
+                                                    "reason": "approved executionId is bound to a different operationId",
+                                                    "operationId": operation_id,
+                                                    "risk": {
+                                                        "level": level_for_policy(risk.policy),
+                                                        "policy": "mandate",
+                                                        "reason": risk.reason,
+                                                        "source": risk.source
+                                                    },
+                                                    "governance": "phase-b",
+                                                    "comparisonLabel": "governance"
+                                                }))),
+                                                None,
+                                            );
+                                        }
+                                        let mut meta = Map::new();
+                                        meta.insert(
+                                            "executionId".into(),
+                                            json!(consumed.execution_id),
+                                        );
+                                        meta.insert(
+                                            "operationId".into(),
+                                            json!(consumed.operation_id),
+                                        );
+                                        meta.insert("argsHash".into(), json!(consumed.args_hash));
+                                        meta.insert(
+                                            "consumedBy".into(),
+                                            json!(consumed.consumed_by),
+                                        );
+                                        meta.insert("status".into(), json!(consumed.status));
+                                        meta.insert(
+                                            "idempotencyKey".into(),
+                                            json!(mandate_idempotency_key(&consumed.execution_id)),
+                                        );
+                                        meta.insert("outcome".into(), json!("unknown"));
+                                        append_best_effort(
+                                            &state.worm,
+                                            WormAppendInput {
+                                                entry_type: "MANDATE_CONSUMED".into(),
+                                                timestamp: consumed
+                                                    .consumed_at
+                                                    .clone()
+                                                    .unwrap_or_else(humantime_iso_now),
+                                                session_id: session_id
+                                                    .unwrap_or("pending-execute")
+                                                    .into(),
+                                                agent_name: None,
+                                                metadata: Some(meta),
+                                            },
+                                        );
+                                        consumed_mandate_id = Some(consumed.execution_id);
+                                    }
+                                    Ok(None) => {
+                                        return (
+                                            Ok(tool_text(json!({
+                                                "ok": false,
+                                                "status": "mandate_required",
+                                                "reason": format!(
+                                                    "No consumable approved mandate for {eid} (already used, digest mismatch, or expired)"
+                                                ),
+                                                "operationId": operation_id,
+                                                "risk": {
+                                                    "level": level_for_policy(risk.policy),
+                                                    "policy": "mandate",
+                                                    "reason": risk.reason,
+                                                    "source": risk.source
+                                                },
+                                                "executionId": eid,
+                                                "governance": "phase-b",
+                                                "comparisonLabel": "governance"
+                                            }))),
+                                            None,
+                                        );
+                                    }
+                                    Err(e) => {
+                                        return (
+                                            Ok(tool_text(json!({
+                                                "ok": false,
+                                                "status": "mandate_required",
+                                                "error": e.to_string(),
+                                                "executionId": eid,
+                                                "operationId": operation_id,
+                                                "governance": "phase-b",
+                                                "comparisonLabel": "governance"
+                                            }))),
+                                            None,
+                                        );
+                                    }
+                                }
+                            }
+                        }
                     }
-                    RiskPolicy::Allow | RiskPolicy::Mandate => {}
+                    RiskPolicy::Allow => {}
                 }
             }
 
@@ -517,30 +821,75 @@ async fn handle_tools_call(
                         session_id,
                         result.ok,
                     );
-                    (
-                        Ok(tool_text(json!({
-                            "ok": result.ok,
-                            "status": result.status,
-                            "latencyMs": result.latency_ms,
-                            "url": result.url,
-                            "body": result.body,
-                            "operationId": operation_id,
-                            "risk": {
-                                "policy": match risk.policy {
-                                    RiskPolicy::Allow => "allow",
-                                    RiskPolicy::Mandate => "mandate",
-                                    RiskPolicy::Block => "block",
+                    if let Some(ref eid) = consumed_mandate_id {
+                        if let Some(store) = state.pending.as_ref() {
+                            let _ = store.mark_completed(
+                                eid,
+                                result.ok,
+                                if result.ok {
+                                    None
+                                } else {
+                                    Some("upstream execute returned non-ok")
                                 },
-                                "reason": risk.reason,
-                                "source": risk.source
+                            );
+                        }
+                        let mut meta = Map::new();
+                        meta.insert("executionId".into(), json!(eid));
+                        meta.insert("operationId".into(), json!(operation_id));
+                        meta.insert("ok".into(), json!(result.ok));
+                        meta.insert("status".into(), json!(result.status));
+                        append_best_effort(
+                            &state.worm,
+                            WormAppendInput {
+                                entry_type: if result.ok {
+                                    "TOOL_CALL_RESULT".into()
+                                } else {
+                                    "TOOL_CALL_ATTEMPT".into()
+                                },
+                                timestamp: humantime_iso_now(),
+                                session_id: session_id.unwrap_or("clawql-dataplane").into(),
+                                agent_name: None,
+                                metadata: Some(meta),
                             },
-                            "governance": if gov_on { "phase-b" } else { "phase-a-none" },
-                            "comparisonLabel": if gov_on { "governance" } else { "fast-path-only" }
-                        }))),
-                        Some(result.latency_ms),
-                    )
+                        );
+                    }
+                    let mut body = json!({
+                        "ok": result.ok,
+                        "status": result.status,
+                        "latencyMs": result.latency_ms,
+                        "url": result.url,
+                        "body": result.body,
+                        "operationId": operation_id,
+                        "risk": {
+                            "level": level_for_policy(risk.policy),
+                            "policy": match risk.policy {
+                                RiskPolicy::Allow => "allow",
+                                RiskPolicy::Mandate => "mandate",
+                                RiskPolicy::Block => "block",
+                            },
+                            "reason": risk.reason,
+                            "source": risk.source
+                        },
+                        "governance": if gov_on { "phase-b" } else { "phase-a-none" },
+                        "comparisonLabel": if gov_on { "governance" } else { "fast-path-only" }
+                    });
+                    if let Some(eid) = consumed_mandate_id {
+                        if let Some(obj) = body.as_object_mut() {
+                            obj.insert("executionId".into(), json!(eid));
+                            obj.insert(
+                                "idempotencyKey".into(),
+                                json!(mandate_idempotency_key(&eid)),
+                            );
+                        }
+                    }
+                    (Ok(tool_text(body)), Some(result.latency_ms))
                 }
                 Err(e) => {
+                    if let Some(ref eid) = consumed_mandate_id {
+                        if let Some(store) = state.pending.as_ref() {
+                            let _ = store.mark_completed(eid, false, Some(&e.to_string()));
+                        }
+                    }
                     // Domain execute failure: stay in result with isError (MCP tool convention).
                     (
                         Ok(json!({

@@ -1,13 +1,16 @@
 //! clawql-dataplane — ADR 0016 Phase A bare execute path (SQLite catalog + Streamable HTTP).
 
+mod args_hash;
 mod catalog;
 mod execute;
 mod ifc;
 mod mcp;
 mod mock_upstream;
+mod pending;
 mod policy;
 mod risk;
 mod where_filter;
+mod worm;
 
 use anyhow::Context;
 use catalog::Catalog;
@@ -99,11 +102,25 @@ async fn main() -> anyhow::Result<()> {
         let _ = catalog.base_url_for(op).context("resolve catalog base URL")?;
     }
 
+    let pending = match crate::pending::PendingStore::open_default() {
+        Ok(s) => {
+            tracing::info!(home = %s.home().display(), "pending store (sqlite) ready");
+            Some(s)
+        }
+        Err(e) => {
+            tracing::warn!(error = %e, "pending store unavailable — mandate park/consume disabled");
+            None
+        }
+    };
+    let worm = crate::worm::ProcessWorm::boot_from_env();
+
     let state = AppState {
         catalog: Arc::new(catalog),
         http: upstream_client(),
         sessions: Arc::new(Mutex::new(HashSet::new())),
         session_labels: crate::ifc::SessionLabelStore::new(),
+        pending,
+        worm,
         stateless: env_stateless(),
     };
     let app = router(state);
@@ -114,10 +131,12 @@ async fn main() -> anyhow::Result<()> {
     let addr = listener.local_addr()?;
     let gov = crate::risk::governance_enabled();
     let session_ifc = crate::ifc::session_ifc_enabled();
+    let worm_on = crate::worm::worm_enabled();
     tracing::info!(
         %addr,
         governance = gov,
         session_ifc,
+        worm = worm_on,
         "clawql-dataplane listening"
     );
     tracing::info!("MCP POST http://{addr}/mcp  healthz http://{addr}/healthz");
