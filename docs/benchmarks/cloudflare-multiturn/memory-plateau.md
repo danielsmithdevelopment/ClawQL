@@ -7,7 +7,7 @@ Gates and honesty notes for Streamable HTTP memory under sessionful load.
 | #                 | Symptom                                                              | Cause class                                                                                                                                                | Status                                                                                                                                              |
 | ----------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **1. Climb**      | Anonymous ~200→~3444 MB over ~30k same-session JSON executes         | MCP SDK JSON mode orphans `_streamMapping` after `resolveJson` ([typescript-sdk#2559](https://github.com/modelcontextprotocol/typescript-sdk/issues/2559)) | **Fixed in host** via `pruneOrphanJsonStreamMappings` after each POST; PR gate + nightly + unit bound test                                          |
-| **2. Lean floor** | Lean listen probe ~130 MB (Oct 15) → ~170–313 MB without lazy listen | Eager `clawql-payments` / memory-ONNX at Ready                                                                                                             | **Fixed on tip** — restore Oct-15 lazy listen (`CLAWQL_HTTP_SKIP_PAYMENTS`, dynamic plugin composer); Bun `--smol` lean ~**142–150 MB** anon (N=2k) |
+| **2. Lean floor** | Lean listen probe ~130 MB (Oct 15) → ~170–313 MB without lazy listen | Eager `clawql-payments` / memory-ONNX at Ready                                                                                                             | **Fixed on tip** — lazy listen + SQLite catalog OOP + `clawql-inference/keys`; Bun `--smol` lean ~**136 MB** anon (N=2k) |
 
 Climb (#1) and lean (#2) are both on tip after `#1390` + lazy-listen restore. Peer gap (~99–102 MB MCPJungle/agentgateway) remains a further Bun density climb, not a Rust dataplane path (ADR 0016 Rejected).
 
@@ -69,8 +69,9 @@ Separate from `_streamMapping` climb:
 
 - **Oct 15 board / heap A/B:** Bun `--smol` ~**130 MB**, Node 256 ~**132 MB** ([measured-defaults](./measured-defaults.md)).
 - **Tip without lazy listen:** ~**170–313 MB** (eager payments + pgvector/ONNX at Ready).
-- **Tip after lazy listen:** Bun `--smol` equal-arm lean ~**142–150 MB** anon (N=2k `heap-vs-anon-plateau`; catalog flag no-op until SQLite catalog lands on tip).
+- **Tip after lazy listen + catalog OOP (#1398):** Bun `--smol` equal-arm ~**138 MB** anon ([catalog-on N=2k](./heap-vs-anon-bun-smol-catalog-on-n2k.json) on remasure branch; ~145 MB catalog-off).
+- **Tip after `clawql-inference/keys` (Ready skips full inference barrel):** Bun `--smol` equal-arm ~**136.2 MB** anon median ([keys + catalog-on](./heap-vs-anon-bun-smol-keys-catalog-on-n2k.json); [catalog-off](./heap-vs-anon-bun-smol-keys-catalog-off-n2k.json) ~134 MB — N=2k noise band). ESM `keys` entry is an 8 KB chunk (no payments/openai/routing).
 - **Remasure:** `BUN_RUNTIME=1 BUN_SMOL=1 N=2000 npm run benchmark:heap-vs-anon-plateau`
-- **Next density:** SQLite catalog OOP + deeper `clawql-api` lazy graph to close ~20–50 MB toward peers (~99–102 MB).
+- **Next density:** Deeper `clawql-api` lazy graph (grpc/graphql/swagger off Ready) + thin tools barrel to close ~34–37 MB toward peers (~99–102 MB).
 
-See also vault notes: [[Bun JSON streamMapping memory climb fixed]], [[Bun smol lean board 130MB anon plateau config]], [[Density baseline post-prune stalls and lean floor]].
+See also vault notes: [[Bun JSON streamMapping memory climb fixed]], [[Bun smol lean board 130MB anon plateau config]], [[Density baseline post-prune stalls and lean floor]], [[Bun density peer climb tip levers after 1390]].
