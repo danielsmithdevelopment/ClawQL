@@ -28,6 +28,16 @@
       "import": "./dist/siwe/index.js",
       "require": "./dist/siwe/index.cjs"
     },
+    "./step-up": {
+      "types": "./dist/step-up/index.d.ts",
+      "import": "./dist/step-up/index.js",
+      "require": "./dist/step-up/index.cjs"
+    },
+    "./api-keys": {
+      "types": "./dist/api-keys/index.d.ts",
+      "import": "./dist/api-keys/index.js",
+      "require": "./dist/api-keys/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

@@ -74,7 +74,7 @@ export {
   warnIfMcpOAuthBootstrapInvalid,
   warnIfIdJagIssuerSharesMcpOAuthKey,
 } from "../audit/mcp-oauth-startup-warnings.js";
-export * from "../api-keys/index.js";
+// Issued API keys: import `clawql-auth/api-keys` (createClawQLAuth createRequires it).
 export {
   resolveSecretStore,
   resolveSecretStoreKind,
