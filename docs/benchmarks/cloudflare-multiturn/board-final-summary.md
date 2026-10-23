@@ -146,4 +146,4 @@ Artifact: [`stdio-concurrency-curves.json`](./stdio-concurrency-curves.json) · 
 - **Prefer rep 4 (same-run, Executor filled):** ClawQL anon **~121–126 MB**; MJ **102**; AG **99**; Executor **~2103 MB (~2.1 GB)** product-path (motel excluded).
 - **Rep 3** (without Executor sample) matches ClawQL/MJ/AG within a few MB — consistent.
 - **Rep 1–2:** ClawQL ~282–292 uncapped-like — do **not** average into the Cloud memory line.
-- Bun Cloud HTTP path still ~**130 MB** from heap A/B.
+- Bun Cloud HTTP path still ~**130 MB** from heap A/B (**measured on the October 15 build**; tip lean probe is higher until remasured).

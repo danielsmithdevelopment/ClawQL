@@ -111,6 +111,15 @@ export function accumulateSessionLabelsSync(
   );
 }
 
+export function clearSessionLabelsSync(sessionKey: string): void {
+  Effect.runSync(
+    Effect.gen(function* () {
+      const store = yield* SessionLabelStore;
+      yield* store.clear(sessionKey);
+    }).pipe(Effect.provide(SessionLabelStoreLive))
+  );
+}
+
 export function clearAllSessionLabelsSync(): void {
   Effect.runSync(
     Effect.gen(function* () {
