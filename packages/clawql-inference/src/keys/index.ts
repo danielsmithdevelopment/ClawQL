@@ -3,11 +3,7 @@
  * Import `clawql-inference/keys` — not the package root — so listen does not
  * evaluate the full inference barrel (routing, payments, openai, cache, …).
  */
-export {
-  extractPresentedApiKey,
-  validateVirtualKey,
-  type AuthHeaderSource,
-} from "./validate.js";
+export { extractPresentedApiKey, validateVirtualKey, type AuthHeaderSource } from "./validate.js";
 export type {
   KeyValidationResult,
   VirtualKey,
