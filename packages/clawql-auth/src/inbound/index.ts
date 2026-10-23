@@ -234,16 +234,7 @@ export {
   type DomainTxtConfig,
   type DomainTxtResolve,
 } from "./domain-txt.js";
-export {
-  SiweError,
-  buildSiweMessage,
-  issueSiweNonceEffect,
-  parseSiweMessage,
-  verifySiweLoginEffect,
-  type SiweConfig,
-  type SiweNonceIssue,
-  type SiweVerifyInput,
-} from "./siwe.js";
+// SIWE (viem) lives on `clawql-auth/siwe` — keep off the package-root Ready graph.
 export {
   PrimaryTotpError,
   primaryTotpLoginEffect,

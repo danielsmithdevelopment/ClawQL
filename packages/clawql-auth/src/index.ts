@@ -134,6 +134,7 @@ export {
 export * from "./api-keys/index.js";
 export * from "./oauth/index.js";
 export * from "./inbound/index.js";
+// SIWE: import `clawql-auth/siwe` (keeps viem off this barrel).
 export * from "./stores/index.js";
 export * from "./team/index.js";
 export * from "./vault/index.js";
