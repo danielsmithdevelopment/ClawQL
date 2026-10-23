@@ -1,15 +1,15 @@
 ---
-title: "Correctness by construction — NASA Power of 10, SPARK Ada, Effect-TS, Rust + TLA+"
-status: "Draft · August 2026"
-applies_to: "clawql-tee · clawql-cellrt · clawql-streams · clawql-ouroboros · Effect packages · OpenBench / LAB gates"
+title: "Correctness by construction — NASA Power of 10, SPARK Ada, Effect-TS, TLA+/Lean"
+status: "Draft · August 2026 · amended 2026-10-23 (no Rust product path)"
+applies_to: "clawql-streams · clawql-celld · clawql-ouroboros · Effect packages · OpenBench / LAB gates"
 companions: "docs/security/security-ontology-knowledge-loop.md · docs/benchmarks/harvey-lab-campaign-memory.md"
 ---
 
-# Correctness by construction — NASA, SPARK, Effect-TS, Rust
+# Correctness by construction — NASA, SPARK, Effect-TS, TLA+/Lean
 
-**August 2026 · Draft**
+**August 2026 · Draft** (Rust/cellrt product path withdrawn — [ADR 0016](../adr/0016-rust-dataplane-spike.md) Rejected)
 
-**Related:** [clawql-tee](../streams/clawql-tee.md) · [clawql-cellrt](../streams/clawql-cellrt.md) · [clawql-streams](../streams/clawql-streams.md) · [Effect rearchitecture](./effect-ts-modularization-rearchitecture-plan.md) · [Ouroboros](../ouroboros/clawql-ouroboros.md) · [Security↔ontology loop](../security/security-ontology-knowledge-loop.md) · [LAB campaign memory](../benchmarks/harvey-lab-campaign-memory.md)
+**Related:** [clawql-celld](../streams/clawql-celld.md) · [clawql-streams](../streams/clawql-streams.md) · [Effect rearchitecture](./effect-ts-modularization-rearchitecture-plan.md) · [Ouroboros](../ouroboros/clawql-ouroboros.md) · [Security↔ontology loop](../security/security-ontology-knowledge-loop.md) · [LAB campaign memory](../benchmarks/harvey-lab-campaign-memory.md) · [ADR 0014](../adr/0014-formal-methods-tla-lean.md)
 
 This note consolidates transferable lessons from:
 
@@ -17,7 +17,7 @@ This note consolidates transferable lessons from:
 2. **Shuttle-era process discipline** (IBM Federal Systems — extremely low defect density via specs, independent review, defect-driven process)
 3. **Ada / SPARK** — contracts, information flow, Ravenscar-style concurrency
 4. **What Effect-TS already buys on the TypeScript side**
-5. **What safe Rust + TLA+/Alloy buy on the cellrt/tee side**
+5. **What TLA+/Lean + gdp-ts buy for ClawQL protocols and policy** (no Verus/Rust track)
 
 **Thesis (shared with Jane Street / OxCaml-style thinking):** do not rely on programmer discipline. Make incorrect states **unrepresentable**, **uncompilable**, **unpromotable**, or **exhaustively ruled out** — preferably before code exists.
 
@@ -96,35 +96,19 @@ Already in ClawQL’s direction ([Effect rearchitecture](./effect-ts-modularizat
 
 ---
 
-## 5. Rust (cellrt / tee) — three layers
+## 5. Formal models (design time) — TLA+ / Lean / gdp-ts
 
-### Layer 1 — Type system (compile time)
-
-- Ownership: non-`Clone` `VirtualKey` / single-holder semantics
-- `Send` / `Sync` for cross-task safety
-- Exhaustive `enum` cell state machine
-- Newtypes (`Percentage`, `CellId`, …) with validating constructors
-- `Result` + `?` + `#[must_use]` on WORM writes
-
-### Layer 2 — Runtime assertions
-
-- `assert!` on production invariants; `debug_assert!` for expensive checks
-- Checked arithmetic on budgets
-- Explicit collection upper bounds on security-critical paths
-
-### Layer 3 — Formal models (design time)
-
-Per [ADR 0014](../adr/0014-formal-methods-tla-lean.md):
+ClawQL does **not** ship a Rust product plane ([ADR 0016](../adr/0016-rust-dataplane-spike.md) Rejected; `clawql-cellrt` withdrawn). Correctness-by-construction on the host is **Effect-TS + TypeScript types**; protocol/policy proofs stay:
 
 | Tool             | Role                                                                                      |
 | ---------------- | ----------------------------------------------------------------------------------------- |
 | **TLA+ / Quint** | Protocol interleavings — mandates, events, jobs, promotion                                |
-| **Lean**         | Policy kernel oracle + differential tests (follow-on)                                     |
+| **Lean**         | Policy kernel oracle + differential tests vs production TypeScript                        |
 | **gdp-ts**       | Compile-time capability flow ([ADR 0013](../adr/0013-gdp-ts-compile-time-auth-proofs.md)) |
 
 **P0 protocol model (started):** [`formal/tla/mandate/`](../../formal/tla/mandate/) — pending-execution mandate lifecycle (at-most-once side effect, digest bind, approver ≠ requester).
 
-Still planned for tee/cellrt:
+Still useful model targets (implemented in TS/celld, proved in TLA+/Lean as earned):
 
 1. **Key uniqueness** — no two Running cells share an active virtual key
 2. **WORM append-only** — written entries never mutate
@@ -179,12 +163,10 @@ Same loop as [security↔ontology](../security/security-ontology-knowledge-loop.
 
 | Priority | Work                                                                                                            |
 | -------- | --------------------------------------------------------------------------------------------------------------- |
-| **P0**   | Document required caps on streams/Ouroboros APIs; WORM-fail → halt policy in tee/cellrt specs                   |
+| **P0**   | Document required caps on streams/Ouroboros APIs; WORM-fail → halt policy in celld/Streams specs                |
 | **P0**   | Effect Schema at remaining untrusted boundaries; STM/Ref for budget paths in inference/payments                 |
 | **P0**   | TLA+ mandate lifecycle ([`formal/tla/mandate/`](../../formal/tla/mandate/), ADR 0014) — then Lean policy oracle |
-| **P1**   | TLA+ sketches for key uniqueness + WORM append-only + cell liveness (before heavy tee Rust)                     |
-| **P1**   | Rust newtypes + exhaustive cell FSM + `#[must_use]` WORM APIs in cellrt                                         |
-| **P2**   | Preallocated cell pools; Wasmtime memory ceilings after init                                                    |
+| **P1**   | TLA+ sketches for key uniqueness + WORM append-only + cell liveness (celld path)                                |
 | **P2**   | Wire demotion / escalation into ontology FailedStrategy / SecurityEvent (companion specs)                       |
 
 ---
@@ -197,10 +179,10 @@ Same loop as [security↔ontology](../security/security-ontology-knowledge-loop.
 | Unbounded agent loops | **Forbidden** — caps required                                                         |
 | Failed WORM write     | **Fail closed / halt cell**                                                           |
 | Effect-TS role        | Primary DbC/DI/concurrency tool on TS; not a substitute for TLA+ on global invariants |
-| Rust role             | Memory/ownership/FSM; plus asserts; plus TLA+ for three tee invariants                |
+| Language / runtime    | TypeScript + Effect v4 on Bun (default); celld for durable isolates; **no Rust**      |
 | SPARK/Ada             | Inspiration for contracts + info flow + Ravenscar — not “rewrite ClawQL in Ada”       |
 | Process               | Spec-before-code; defects improve gates/ontology/security loop                        |
 
 ---
 
-_Companion to clawql-tee / cellrt · Effect modularization · security↔ontology knowledge loop · LAB campaign memory · Constitutional Ouroboros_
+_Companion to celld / Streams · Effect modularization · security↔ontology knowledge loop · LAB campaign memory · Constitutional Ouroboros_
