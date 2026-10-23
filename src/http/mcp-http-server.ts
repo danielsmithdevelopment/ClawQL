@@ -90,9 +90,7 @@ function skipPaymentsAndNetworkRoutes(env: NodeJS.ProcessEnv = process.env): boo
   return envFlagOn("CLAWQL_HTTP_SKIP_PAYMENTS", env);
 }
 
-async function resolveChatgptDiscoverExtensions(): Promise<
-  Record<string, unknown> | undefined
-> {
+async function resolveChatgptDiscoverExtensions(): Promise<Record<string, unknown> | undefined> {
   if (!resolvePluginCompositionFlags().enableChatgptExtensions) return undefined;
   const { chatgptExtensionsDiscoverFragment } = await import("clawql-chatgpt-extensions");
   return chatgptExtensionsDiscoverFragment();
@@ -106,9 +104,8 @@ async function runWithOptionalX402Context<T>(
   if (!envFlagOn("CLAWQL_X402_ENFORCE")) {
     return await fn();
   }
-  const { runWithMcpX402Context, headersFromExpressRequest } = await import(
-    "./mcp-x402-transport.js"
-  );
+  const { runWithMcpX402Context, headersFromExpressRequest } =
+    await import("./mcp-x402-transport.js");
   return runWithMcpX402Context(headersFromExpressRequest(req), fn);
 }
 
@@ -384,9 +381,8 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
   if (!skipPaymentsAndNetworkRoutes()) {
     const { attachPaymentsWellKnownRoutes } = await import("clawql-payments/discovery");
-    const { attachCreditsHateoasRoutes, attachProvisioningRoutes } = await import(
-      "clawql-payments"
-    );
+    const { attachCreditsHateoasRoutes, attachProvisioningRoutes } =
+      await import("clawql-payments");
     const { attachMppOpenApiRoutes, isMppOpenApiEnabled } = await import("clawql-payments/mpp");
     const { attachGatewayRegistryRoutes } = await import("clawql-network");
     attachPaymentsWellKnownRoutes(app, { serverName: "ClawQL MCP" });
@@ -524,9 +520,8 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (optionalFlags.enableHitlLabelStudio) {
     app.post("/hitl/label-studio/webhook", async (req, res) => {
       try {
-        const { handleLabelStudioWebhookRequest } = await import(
-          "clawql-automation/hitl/label-studio"
-        );
+        const { handleLabelStudioWebhookRequest } =
+          await import("clawql-automation/hitl/label-studio");
         await handleLabelStudioWebhookRequest(req, res);
       } catch (err: unknown) {
         console.error("[clawql-mcp-http] POST /hitl/label-studio/webhook error:", err);
@@ -543,9 +538,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (optionalFlags.enableConeshare) {
     app.post("/idp/coneshare/webhook", createWebhookRateLimiter(), async (req, res) => {
       try {
-        const { handleConeshareWebhookRequest } = await import(
-          "./webhooks/coneshare-webhook.js"
-        );
+        const { handleConeshareWebhookRequest } = await import("./webhooks/coneshare-webhook.js");
         await handleConeshareWebhookRequest(req, res);
       } catch (err: unknown) {
         console.error("[clawql-mcp-http] POST /idp/coneshare/webhook error:", err);
@@ -562,9 +555,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (optionalFlags.enableDocuments) {
     app.post("/idp/nextcloud/webhook", createWebhookRateLimiter(), async (req, res) => {
       try {
-        const { handleNextcloudWebhookRequest } = await import(
-          "./webhooks/nextcloud-webhook.js"
-        );
+        const { handleNextcloudWebhookRequest } = await import("./webhooks/nextcloud-webhook.js");
         await handleNextcloudWebhookRequest(req, res);
       } catch (err: unknown) {
         console.error("[clawql-mcp-http] POST /idp/nextcloud/webhook error:", err);
@@ -598,9 +589,8 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   if (optionalFlags.enableLangfuseEval) {
     app.post("/observability/langfuse/webhook", createWebhookRateLimiter(), async (req, res) => {
       try {
-        const { handleLangfuseEvalWebhookRequest } = await import(
-          "./webhooks/langfuse-eval-webhook.js"
-        );
+        const { handleLangfuseEvalWebhookRequest } =
+          await import("./webhooks/langfuse-eval-webhook.js");
         await handleLangfuseEvalWebhookRequest(req, res);
       } catch (err: unknown) {
         console.error("[clawql-mcp-http] POST /observability/langfuse/webhook error:", err);
@@ -785,14 +775,16 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
             transports.set(sid, transport!);
             sessionIdle?.touch(sid);
             // 8.0 session-scope hooks (spec §5) — fire-and-forget; never block init.
-            void import("../composition/clawql-api-adapters.js").then(({ getClawqlApi }) => {
-              const api = getClawqlApi();
-              return fireSessionStart({
-                hookRegistry: api.hookRegistry,
-                worm: api.worm,
-                sessionId: sid,
-              });
-            }).catch(() => undefined);
+            void import("../composition/clawql-api-adapters.js")
+              .then(({ getClawqlApi }) => {
+                const api = getClawqlApi();
+                return fireSessionStart({
+                  hookRegistry: api.hookRegistry,
+                  worm: api.worm,
+                  sessionId: sid,
+                });
+              })
+              .catch(() => undefined);
           },
           // JSON bodies instead of SSE for each POST — helps some MCP clients / proxies (e.g. Cursor + tight buffering).
           enableJsonResponse: streamableJson,
@@ -802,14 +794,16 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           if (sid) {
             transports.delete(sid);
             clearSessionLabelsSync(sid);
-            void import("../composition/clawql-api-adapters.js").then(({ getClawqlApi }) => {
-              const api = getClawqlApi();
-              return fireSessionEnd({
-                hookRegistry: api.hookRegistry,
-                worm: api.worm,
-                sessionId: sid,
-              });
-            }).catch(() => undefined);
+            void import("../composition/clawql-api-adapters.js")
+              .then(({ getClawqlApi }) => {
+                const api = getClawqlApi();
+                return fireSessionEnd({
+                  hookRegistry: api.hookRegistry,
+                  worm: api.worm,
+                  sessionId: sid,
+                });
+              })
+              .catch(() => undefined);
           }
         };
 

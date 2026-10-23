@@ -36,7 +36,10 @@ function natsConsumerWantedFromEnv(): boolean {
     return t === "1" || t === "true" || t === "yes";
   };
   if (!process.env.CLAWQL_NATS_URL?.trim()) return false;
-  if (!truthy(process.env.CLAWQL_NATS_JETSTREAM) || !truthy(process.env.CLAWQL_NATS_ENABLE_CONSUMER)) {
+  if (
+    !truthy(process.env.CLAWQL_NATS_JETSTREAM) ||
+    !truthy(process.env.CLAWQL_NATS_ENABLE_CONSUMER)
+  ) {
     return false;
   }
   return (

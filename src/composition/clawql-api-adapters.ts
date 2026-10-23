@@ -76,9 +76,7 @@ function asError(cause: unknown): Error {
 function buildClawqlApiOptions(
   pluginLayers: CreateClawQLApiOptions["pluginLayers"],
   vaultSeedLayer: CreateClawQLApiOptions["vaultSeedLayer"] | undefined,
-  paymentsPlugins: ReturnType<
-    typeof import("clawql-payments/plugin").defaultPaymentsProxyPlugins
-  >
+  paymentsPlugins: ReturnType<typeof import("clawql-payments/plugin").defaultPaymentsProxyPlugins>
 ): CreateClawQLApiOptions {
   // Omit searchLayer — createClawQLApi wires host.skillRegistry into unified search.
   // Pass loadSpecFn so setLoadSpecForTests overrides both search and execute.
