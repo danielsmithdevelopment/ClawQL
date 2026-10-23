@@ -80,5 +80,5 @@ export {
   resolveSecretStoreKind,
   resolveSecretStoreKindEffect,
   type ResolveSecretStoreOptions,
-} from "../stores/index.js";
-export type { SecretStore, SecretStoreKind } from "../stores/index.js";
+} from "../stores/resolve.js";
+export type { SecretStore, SecretStoreKind } from "../stores/types.js";
