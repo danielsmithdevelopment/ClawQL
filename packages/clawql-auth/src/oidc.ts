@@ -1,20 +1,26 @@
 /**
  * OIDC / JWT bearer verification for CLAWQL_AUTH_MODE=oidc.
  * ClawQL consumes tokens issued by the customer IdP — it does not issue them.
+ *
+ * `jose` is loaded via createRequire on first verify so Ready apiKey/noAuth
+ * listen does not evaluate the JWT stack (~6–12 MB RSS).
  */
 
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { Data, Effect } from "effect";
-import {
-  createRemoteJWKSet,
-  importSPKI,
-  jwtVerify,
-  type JWTPayload,
-  type JWTVerifyGetKey,
-} from "jose";
+import type { JWTPayload, JWTVerifyGetKey } from "jose";
 
 import type { AtrClaims, AuthHeaderSource } from "./gateway.js";
 import { assertEmailDomainAllowed } from "./policy.js";
+
+const requireJose = createRequire(import.meta.url);
+
+type JoseModule = typeof import("jose");
+
+function loadJose(): JoseModule {
+  return requireJose("jose") as JoseModule;
+}
 
 /** Typed failure for OIDC/JWT verification (Effect failure channel). */
 export class OidcAuthError extends Data.TaggedError("OidcAuthError")<{
@@ -118,6 +124,7 @@ export function resetOidcVerifyCaches(): void {
 }
 
 function resolveVerifyKey(config: OidcAuthConfig): JWTVerifyGetKey {
+  const jose = loadJose();
   if (config.hs256Secret) {
     if (cachedHs256Raw !== config.hs256Secret) {
       cachedHs256Raw = config.hs256Secret;
@@ -129,7 +136,7 @@ function resolveVerifyKey(config: OidcAuthConfig): JWTVerifyGetKey {
   if (config.jwksUrl) {
     if (cachedJwksUrl !== config.jwksUrl || !cachedJwks) {
       cachedJwksUrl = config.jwksUrl;
-      cachedJwks = createRemoteJWKSet(new URL(config.jwksUrl));
+      cachedJwks = jose.createRemoteJWKSet(new URL(config.jwksUrl));
     }
     return cachedJwks;
   }
@@ -143,7 +150,7 @@ function resolveVerifyKey(config: OidcAuthConfig): JWTVerifyGetKey {
       }
       if (!spkiImportPromise) {
         const pem = readFileSync(pemPath, "utf8");
-        spkiImportPromise = importSPKI(pem, "RS256");
+        spkiImportPromise = jose.importSPKI(pem, "RS256");
       }
       return spkiImportPromise;
     };
@@ -298,9 +305,10 @@ export function verifyOidcBearerTokenEffect(
       try: () => resolveVerifyKey(config),
       catch: (cause) => new OidcAuthError({ reason: errorMessage(cause), cause }),
     });
+    const jose = loadJose();
     const { payload } = yield* Effect.tryPromise({
       try: () =>
-        jwtVerify(token, key, {
+        jose.jwtVerify(token, key, {
           ...(config.issuer ? { issuer: config.issuer } : {}),
           ...(config.audience ? { audience: config.audience } : {}),
         }),

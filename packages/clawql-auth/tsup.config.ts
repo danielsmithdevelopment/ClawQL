@@ -14,5 +14,7 @@ export default defineConfig({
   platform: "node",
   // Keep Node builtins out of the bundle. esbuild rewrites `node:sqlite` → `sqlite`
   // unless both are external; clawql-api then fails to resolve when noExternal'ing us.
-  external: ["node:sqlite", "sqlite", "viem"],
+  // jose / viem: createRequire-loaded on first oidc verify / SIWE — must stay external
+  // so Ready gateway chunks do not inline them.
+  external: ["node:sqlite", "sqlite", "viem", "jose"],
 });
