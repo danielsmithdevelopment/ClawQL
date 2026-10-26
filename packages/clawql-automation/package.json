@@ -108,6 +108,7 @@
     "effect": "4.0.0",
     "nats": "^2.29.3",
     "sql.js": "^1.14.1",
+    "undici": "^8.12.3",
     "zod": "4.6.7"
   },
   "devDependencies": {

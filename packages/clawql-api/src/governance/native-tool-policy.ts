@@ -55,11 +55,13 @@ export const NATIVE_TOOL_POLICY: Readonly<Record<string, NativeToolPolicy>> = {
   },
   memory_sync: { kind: "write", specLabel: "clawql-memory" },
 
-  // Memory — previously bypassed execute-core (security finding)
+  // Memory — IFC still gates untrusted→vault; first-party clawql-* may flow in.
+  // Kind is **write** (not destructive): agents must be able to persist lessons
+  // after recall/settings/skills without a mandate park on every note.
   memory_ingest: {
-    kind: "destructive",
+    kind: "write",
     specLabel: "clawql-memory",
-    notes: "vault write — park + IFC required",
+    notes: "vault write — session IFC; no mandate park",
   },
   memory_recall: { kind: "read", specLabel: "clawql-memory" },
   read_around: { kind: "read", specLabel: "clawql-memory" },
