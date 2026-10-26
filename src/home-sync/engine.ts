@@ -10,6 +10,7 @@ import {
 import { objectKeyForRelPath } from "./paths.js";
 import type {
   ResolvedHomeSyncConfig,
+  SyncFileEntry,
   SyncManifest,
   SyncPlanEntry,
   SyncRunResult,
@@ -138,18 +139,39 @@ async function applyDownloads(
   return count;
 }
 
+/**
+ * Build the post-push manifest: local entries win on overlap, but remote-only
+ * paths are retained. Push must not replace the team index with a sparse local
+ * vault (that drops hundreds of notes from pull while leaving R2 objects intact).
+ */
+export function mergeManifestFiles(
+  local: Map<string, SyncFileEntry>,
+  remote: SyncManifest | null
+): Record<string, SyncFileEntry> {
+  const files: Record<string, SyncFileEntry> = {};
+  if (remote?.files) {
+    for (const [path, entry] of Object.entries(remote.files)) {
+      files[path] = entry;
+    }
+  }
+  for (const [path, entry] of local) {
+    files[path] = entry;
+  }
+  return files;
+}
+
 function writeRemoteManifestEffect(
   client: ObjectStorageClient,
   config: ResolvedHomeSyncConfig,
-  home: string,
+  local: Map<string, SyncFileEntry>,
+  remote: SyncManifest | null,
   dryRun: boolean
 ): Effect.Effect<void, Error> {
   return Effect.gen(function* () {
-    const files = yield* collectLocalSyncFilesEffect(home, config.include);
     const manifest: SyncManifest = {
       version: 1,
       updatedAt: new Date().toISOString(),
-      files: Object.fromEntries(files),
+      files: mergeManifestFiles(local, remote),
     };
     if (dryRun) return;
     yield* Effect.tryPromise({
@@ -171,7 +193,7 @@ export function runSyncPushEffect(opts: SyncRunOptions = {}): Effect.Effect<Sync
       try: () => applyUploads(client, config, config.home, actions, dryRun),
       catch: asError,
     });
-    if (!dryRun) yield* writeRemoteManifestEffect(client, config, config.home, false);
+    if (!dryRun) yield* writeRemoteManifestEffect(client, config, local, remote, false);
     return summarize(config, actions, uploaded, 0, dryRun);
   });
 }
