@@ -177,11 +177,13 @@ clawql doctor
 | Command              | Purpose                                                                |
 | -------------------- | ---------------------------------------------------------------------- |
 | `clawql sync init`   | Write `~/.ClawQL/sync.json` (no secrets)                               |
-| `clawql sync push`   | Upload changed local files + update remote manifest                    |
-| `clawql sync pull`   | Download changed remote files                                          |
-| `clawql sync status` | Compare local vs remote (conflicts listed)                             |
-| `--dry-run`          | Show plan without I/O                                                  |
-| `--force`            | Overwrite on conflict (push → remote wins locally; pull → remote wins) |
+| `clawql sync push`   | Upload changed local files + **merge** into remote manifest (keeps remote-only paths) |
+| `clawql sync pull`   | Download files listed in the remote **manifest** (not a raw bucket listing)           |
+| `clawql sync status` | Compare local vs **manifest** (conflicts listed)                                      |
+| `--dry-run`          | Show plan without I/O                                                                 |
+| `--force`            | Overwrite on conflict (push → remote wins locally; pull → remote wins)                |
+
+Deep dive (manifest key, sparse-vault hazard, restore): **[Team vault sync](./team-vault-sync.md)**.
 
 ### memory_sync (MCP tool)
 
@@ -198,6 +200,8 @@ Registered with `memory_ingest` / `memory_recall` (hide all with `CLAWQL_ENABLE_
 ```json
 { "direction": "auto" }
 ```
+
+`statusBefore.remoteCount` is the **manifest** size. If R2 object count ≫ `remoteCount`, rebuild the manifest — see [Team vault sync — troubleshooting](./team-vault-sync.md#troubleshooting).
 
 ### Providers
 
@@ -233,20 +237,23 @@ When the MCP server runs with sync configured, enable automatic background sync:
 
 | Variable                           | Behavior                                                                                                                                                                          |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CLAWQL_SYNC_AUTO=1`               | Auto-push after `memory_ingest` (see debounce + min interval below)                                                                                                               |
+| `CLAWQL_SYNC_AUTO=1`               | Auto-push after `memory_ingest` (see debounce + min interval below). **Opt-in** (default off). When set, also implies pull-before-recall + pull-on-start unless those are `0`.   |
 | `CLAWQL_SYNC_AUTO_DEBOUNCE_MS`     | Quiet period after the last ingest before a push is considered (default `2000`) — coalesces note + index/log                                                                      |
 | `CLAWQL_SYNC_AUTO_PUSH_MIN_MS`     | Minimum gap between successful auto-pushes during sustained ingest (default `30000`) — avoids R2 spam; **shutdown flush ignores this** so short-lived processes do not drop notes |
-| `CLAWQL_SYNC_AUTO_PULL=1`          | Throttled pull before `memory_recall` (default min interval 60s)                                                                                                                  |
+| `CLAWQL_SYNC_AUTO_PULL=1`          | Throttled pull before `memory_recall` (default min interval 60s). Implied by `CLAWQL_SYNC_AUTO=1` when unset; explicit `0` disables.                                              |
 | `CLAWQL_SYNC_AUTO_PULL_MIN_MS`     | Min ms between auto-pulls (default `60000`)                                                                                                                                       |
-| `CLAWQL_SYNC_AUTO_PULL_ON_START=1` | Pull once when MCP starts                                                                                                                                                         |
+| `CLAWQL_SYNC_AUTO_PULL_ON_START=1` | Pull once when MCP starts. Implied by `CLAWQL_SYNC_AUTO=1` when unset; explicit `0` disables.                                                                                     |
+
+Push rewrites the remote manifest with a **merge**: remote-only paths stay indexed; local entries win on overlap. Do not rely on push-only from an empty VM before a pull. Details: [Team vault sync](./team-vault-sync.md).
 
 Auto sync logs to stderr (`[clawql-mcp] team sync auto-push/...`). Failures are non-fatal — ingest/recall still succeed.
 
-Local dev example:
+Local / Cloud Agent example (pull flags optional when `AUTO=1` — still recommended to set explicitly):
 
 ```bash
 export CLAWQL_SYNC_AUTO=1
 export CLAWQL_SYNC_AUTO_PULL=1
+export CLAWQL_SYNC_AUTO_PULL_ON_START=1
 npx clawql-mcp-http
 ```
 

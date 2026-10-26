@@ -6,7 +6,7 @@
 import { Effect, Schema, SchemaIssue } from "effect";
 
 export const MEMORY_SYNC_DIRECTION_DESCRIPTION =
-  "Sync strategy. `auto` (default): pull remote changes then push local changes. `pull` or `push` run one direction only.";
+  "Sync strategy. `auto` (default): pull from the remote sync manifest then push local changes (push merges remote-only manifest paths). `pull` or `push` run one direction only. Status remoteCount is the manifest size, not a raw bucket listing.";
 export const MEMORY_SYNC_FORCE_DESCRIPTION =
   "When true, overwrite on hash conflicts. Default false — conflicts are reported only.";
 export const MEMORY_SYNC_DRY_RUN_DESCRIPTION = "Plan only; do not read or write object storage.";
