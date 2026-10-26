@@ -26,7 +26,12 @@ export type SyncFileEntry = {
   mtimeMs: number;
 };
 
-/** Remote manifest stored at `.clawql/sync/manifest.v1.json` in the bucket. */
+/**
+ * Remote manifest at `{prefix}.clawql/sync/manifest.v1.json`.
+ * Pull / `sync status` / `memory_sync` compare against this index — not a raw
+ * bucket listing. Push must merge remote-only paths (`mergeManifestFiles`) so a
+ * sparse local vault cannot drop team notes from the index while objects remain.
+ */
 export type SyncManifest = {
   version: 1;
   updatedAt: string;

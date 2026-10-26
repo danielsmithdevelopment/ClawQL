@@ -40,6 +40,9 @@ cd "$ROOT"
 export CLAWQL_HOME="${CLAWQL_HOME:-$HOME/.ClawQL}"
 mkdir -p "$CLAWQL_HOME/Memory" "$CLAWQL_HOME/vault"
 
+# Team sync defaults: AUTO push requires a hydrated vault. Install always pairs
+# AUTO with PULL + PULL_ON_START (and runs sync pull below). Runtime also implies
+# pull flags when AUTO=1 and they are unset — see docs/getting-started/team-vault-sync.md.
 if [[ ! -f "$CLAWQL_HOME/clawql.env" ]]; then
   cat >"$CLAWQL_HOME/clawql.env" <<EOF
 CLAWQL_OBSIDIAN_VAULT_PATH=$CLAWQL_HOME
