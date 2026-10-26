@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  ClawQL MCP HTTP server — launchd supervisor (per-user LaunchAgent).
+  TEMPLATE: __CLAWQL_HOME__ and __RUN_MCP__ are substituted by
+  scripts/macos/install-macos-services.sh. Do not edit a rendered copy by hand;
+  re-run the installer.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.clawql.mcp-http</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>__RUN_MCP__</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>__CLAWQL_HOME__</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>HOME</key>
+        <string>__HOME__</string>
+        <key>CLAWQL_HOME</key>
+        <string>__CLAWQL_HOME__</string>
+    </dict>
+    <key>LimitLoadToSessionType</key>
+    <array>
+        <string>Aqua</string>
+        <string>Background</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <!-- throttle crash-loop respawns to a 30s floor (parity with ai.hermes.gateway.plist) -->
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+    <key>ExitTimeOut</key>
+    <integer>25</integer>
+    <key>SoftResourceLimits</key>
+    <dict>
+        <key>NumberOfFiles</key>
+        <integer>4096</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>__LOG_DIR__/mcp-http.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>__LOG_DIR__/mcp-http.err.log</string>
+</dict>
+</plist>
