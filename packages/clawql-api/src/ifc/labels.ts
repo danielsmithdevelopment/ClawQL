@@ -33,14 +33,26 @@ export const labelForSpec = (specLabel: string | undefined): Label =>
   `source:${(specLabel?.trim() || "unknown").toLowerCase()}`;
 
 /**
+ * First-party ClawQL native tools share one confidentiality family
+ * (`source:clawql-*`). Agents routinely `clawql_settings_read` / `skills_get` /
+ * `memory_recall` then `memory_ingest` lessons — those reads must be allowed to
+ * flow into vault sinks. Untrusted / third-party labels stay excluded.
+ */
+export function isClawqlFirstPartyLabel(label: Label): boolean {
+  const t = label.trim().toLowerCase();
+  return t === "source:clawql" || t.startsWith("source:clawql-");
+}
+
+/**
  * Whether `fromUnion` may flow into every destination in `destLabels`.
  *
  * Rules (fail closed):
  * 1. Empty `fromUnion` always flows.
  * 2. If any dest is public (config or well-known), allow.
  * 3. Else for each dest: every label in `fromUnion` must be in that dest's
- *    allow-list (config), or — when no allow-list — must equal a dest label
- *    or `public` (same-source writes only).
+ *    allow-list (config), or — when no allow-list — must equal a dest label,
+ *    `public`, or (when the dest is first-party ClawQL) another `source:clawql-*`
+ *    label (same-family vault / native writes).
  */
 export function mayFlow(
   fromUnion: ReadonlySet<Label>,
@@ -62,9 +74,12 @@ export function mayFlow(
       }
       continue;
     }
-    // No explicit allow-list: only public or labels already on the destination.
+    // No explicit allow-list: public, same-label, or ClawQL first-party family.
+    const destIsClawql = isClawqlFirstPartyLabel(dest);
     for (const lbl of fromUnion) {
-      if (lbl !== PUBLIC_LABEL && !destLabels.has(lbl)) return false;
+      if (lbl === PUBLIC_LABEL || destLabels.has(lbl)) continue;
+      if (destIsClawql && isClawqlFirstPartyLabel(lbl)) continue;
+      return false;
     }
   }
   return true;

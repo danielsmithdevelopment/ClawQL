@@ -20,8 +20,8 @@ describe("native tool policy", () => {
     expect(NATIVE_TOOL_GOVERNANCE_MODULE_ID).toMatch(/native-tool-governance/);
   });
 
-  it("classifies memory_ingest as destructive and memory_recall as read", () => {
-    expect(resolveNativeToolPolicy("memory_ingest").kind).toBe("destructive");
+  it("classifies memory_ingest as write and memory_recall as read", () => {
+    expect(resolveNativeToolPolicy("memory_ingest").kind).toBe("write");
     expect(resolveNativeToolPolicy("memory_recall").kind).toBe("read");
     expect(classifyNativeTool("execute").executePath).toBe(true);
   });
@@ -32,7 +32,7 @@ describe("native tool policy", () => {
 });
 
 describe("native tool gate", () => {
-  it("parks memory_ingest when risk enforce is on (product default)", async () => {
+  it("does not mandate-park memory_ingest (write) when risk enforce is on", async () => {
     process.env.CLAWQL_OPERATION_RISK_ENFORCE = "1";
     process.env.CLAWQL_ENABLE_SESSION_IFC = "1";
     process.env.CLAWQL_SESSION_ID = "gate-park";
@@ -41,11 +41,29 @@ describe("native tool gate", () => {
       args: { title: "x", insights: "y" },
       sessionId: "gate-park",
     });
-    expect(block).not.toBeNull();
-    expect(block?.isError).toBe(true);
-    const body = JSON.parse((block as { content: { text: string }[] }).content[0]!.text);
-    expect(body.status).toBe("mandate_required");
-    expect(body.mechanism).toBe("park_destructive_write");
+    expect(block).toBeNull();
+  });
+
+  it("allows memory_ingest after first-party clawql-chatgpt settings read", async () => {
+    process.env.CLAWQL_OPERATION_RISK_ENFORCE = "1";
+    process.env.CLAWQL_ENABLE_SESSION_IFC = "1";
+    process.env.CLAWQL_SESSION_ID = "gate-chatgpt-to-memory";
+    accumulateNativeToolReadAfterSuccess({
+      toolName: "clawql_settings_read",
+      success: true,
+      sessionId: "gate-chatgpt-to-memory",
+    });
+    accumulateNativeToolReadAfterSuccess({
+      toolName: "memory_recall",
+      success: true,
+      sessionId: "gate-chatgpt-to-memory",
+    });
+    const block = await gateNativeToolBeforeInvoke({
+      toolName: "memory_ingest",
+      args: { title: "lessons", insights: "ok" },
+      sessionId: "gate-chatgpt-to-memory",
+    });
+    expect(block).toBeNull();
   });
 
   it("blocks memory_ingest after untrusted channel taint even when park opt-out", async () => {

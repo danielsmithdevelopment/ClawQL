@@ -65,7 +65,11 @@ Thread **`id`** values (e.g. **`thread-<epoch-ms>`**) are passed to OpenClaw as 
 
 ## OKF-compatible frontmatter (shipped)
 
-ClawQL writes [Open Knowledge Format (OKF) v0.2](https://okf.io)–compatible vault notes: Markdown body + YAML frontmatter with required **`type`** (default `context`), OKF v0.2 trust signals (`generated`, `verified`, `sources`, `stale_after`, `status`, `superseded_by`), and ClawQL extensions (`correlation_id`, `worm_ref`, `agent_id`, `verdict`). Obsidian remains the human UI. Successful ingests also maintain OKF **`Memory/index.md`** and append to **`Memory/log.md`**. For **`type: decision`**, prefer the [rationale template](./okf-decision-rationale.md). Schema definitions (entity types) live in **Git**; dynamic memory instances live in **R2/S3** via `clawql sync` — see [Enterprise Ontology](../architecture/enterprise-ontology.md), [ADR 0009](../adr/0009-enterprise-ontology.md), and the dedicated **[OKF memory guide](./okf.md)**.
+ClawQL writes [Open Knowledge Format (OKF) v0.2](https://okf.io)–compatible vault notes: Markdown body + YAML frontmatter with required **`type`** (default `context`), OKF v0.2 trust signals (`generated`, `verified`, `sources`, `stale_after`, `status`, `superseded_by`), and ClawQL extensions (`correlation_id`, `worm_ref`, `agent_id`, `verdict`). Obsidian remains the human UI. Successful ingests also maintain OKF **`Memory/index.md`** and append to **`Memory/log.md`**. For **`type: decision`**, prefer the [rationale template](./okf-decision-rationale.md). Schema definitions (entity types) live in **Git**; dynamic memory instances live in **R2/S3** via `clawql sync` / MCP **`memory_sync`** — see [Enterprise Ontology](../architecture/enterprise-ontology.md), [ADR 0009](../adr/0009-enterprise-ontology.md), and the dedicated **[OKF memory guide](./okf.md)**.
+
+### Session IFC and `memory_ingest`
+
+Session IFC (ADR 0015, default on) still blocks **untrusted** labels from flowing into the vault. First-party ClawQL native labels (`source:clawql-*`, including ChatGPT extension settings/evidence and vault recall) **may** flow into `memory_ingest` so agents can persist lessons after normal tool use. `memory_ingest` is classified as a **write** (not a destructive mandate park).
 
 ## See also
 

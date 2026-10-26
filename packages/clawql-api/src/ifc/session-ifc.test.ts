@@ -62,6 +62,22 @@ describe("mayFlow (pure)", () => {
     expect(mayFlow(new Set(["source:github"]), new Set(["source:slack"]))).toBe(false);
   });
 
+  it("allows ClawQL first-party family into clawql-memory vault sink", () => {
+    expect(
+      mayFlow(new Set(["source:clawql-chatgpt", "source:clawql-memory"]), new Set(["source:clawql-memory"]))
+    ).toBe(true);
+    expect(
+      mayFlow(new Set(["source:clawql-skills"]), new Set(["source:clawql-memory"]))
+    ).toBe(true);
+  });
+
+  it("still blocks untrusted or third-party into clawql-memory", () => {
+    expect(mayFlow(new Set(["source:untrusted-web"]), new Set(["source:clawql-memory"]))).toBe(
+      false
+    );
+    expect(mayFlow(new Set(["source:github"]), new Set(["source:clawql-memory"]))).toBe(false);
+  });
+
   it("honors allowedSourcesByDest allow-list", () => {
     const config = emptyIfcFlowConfig();
     const allowed = new Map(config.allowedSourcesByDest);
