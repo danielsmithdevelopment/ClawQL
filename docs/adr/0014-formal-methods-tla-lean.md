@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-07
-- Related: [ADR 0013 gdp-ts](./0013-gdp-ts-compile-time-auth-proofs.md), [ADR 0015 program mode](./0015-program-mode-alongside-search-execute.md) (batch Merkle mandates + Lean IFC), [ADR 0016 Rust data-plane spike](./0016-rust-dataplane-spike.md) (Verus trial), [correctness by construction](../design/correctness-by-construction.md), [execute pause/resume](../specs/risk/execute-pause-resume-v0.1.md), [`formal/tla/mandate/`](../../formal/tla/mandate/), [`formal/tla/events/`](../../formal/tla/events/), [`formal/lean/`](../../formal/lean/)
+- Related: [ADR 0013 gdp-ts](./0013-gdp-ts-compile-time-auth-proofs.md), [ADR 0015 program mode](./0015-program-mode-alongside-search-execute.md) (batch Merkle mandates + Lean IFC), [ADR 0016 Rust data-plane spike](./0016-rust-dataplane-spike.md) (**Rejected** — no Verus/Rust track), [correctness by construction](../design/correctness-by-construction.md), [execute pause/resume](../specs/risk/execute-pause-resume-v0.1.md), [`formal/tla/mandate/`](../../formal/tla/mandate/), [`formal/tla/events/`](../../formal/tla/events/), [`formal/lean/`](../../formal/lean/)
 
 ## Context
 
@@ -11,7 +11,7 @@ ClawQL’s risk splits into two classes E2E and gdp-ts do not close:
 1. **Concurrency and protocol bugs** — races across gateway replicas, retries, expiry, resume.
 2. **Decision logic bugs** — risk classification, approval policy, information-flow, mandate binding.
 
-Lean and TLA+ (or Quint) are the mature tools for those halves. Bend is watch-only. **Verus** (PDD Kit trial) is scoped on the Rust data-plane policy kernel in [ADR 0016](./0016-rust-dataplane-spike.md); Kani / celld sandbox proofs remain later.
+Lean and TLA+ (or Quint) are the mature tools for those halves. Bend is watch-only. A Verus / Rust data-plane trial was scoped in [ADR 0016](./0016-rust-dataplane-spike.md) and **Rejected** (2026-10-23): ClawQL stays TypeScript + Effect + Bun + celld; policy oracles remain Lean + differential vs production TS.
 
 ## Decision
 
