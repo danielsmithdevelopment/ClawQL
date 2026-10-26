@@ -6,15 +6,15 @@ stable HTTPS URL — on a Mac, **no k8s / no sudo / no docker**.
 
 The two moving parts:
 
-| Part | What it does | Supervisor |
-|---|---|---|
-| `com.clawql.mcp-http` | runs `node bin/clawql-mcp-http.mjs` with gateway **auth on**, auto-restarts | launchd `KeepAlive` |
+| Part                           | What it does                                                                                | Supervisor                                    |
+| ------------------------------ | ------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `com.clawql.mcp-http`          | runs `node bin/clawql-mcp-http.mjs` with gateway **auth on**, auto-restarts                 | launchd `KeepAlive`                           |
 | `com.clawql.cloudflare-tunnel` | publishes `127.0.0.1:8080` to the internet (durable named tunnel, or quick tunnel fallback) | launchd `KeepAlive`, depends on tunnel + auth |
 
 Auth is the hard requirement: **never** put a tunnel in front of `noAuth`. Both
 launchd plists source the repo `.env` (`CLAWQL_AUTH_MODE=*** + `CLAWQL_API_KEY`)
-at runtime; the secret lives only in `.env` (gitignored) and — for tunnel
-credentials — in `~/.cloudflared/` (600).
+at runtime; the secret lives only in `.env`(gitignored) and — for tunnel
+credentials — in`~/.cloudflared/` (600).
 
 ---
 
@@ -34,7 +34,7 @@ CLAWQL_AUTH_MODE=***
 CLAWQL_API_KEY=clawql_…strong
 ```
 
-Generate a strong key:  `node -p "require('crypto').randomBytes(36).toString('base64url')" | sed 's/^/clawql_/'`
+Generate a strong key: `node -p "require('crypto').randomBytes(36).toString('base64url')" | sed 's/^/clawql_/'`
 
 ## 2. Install the services (renders + loads launchd agents)
 
@@ -108,7 +108,7 @@ grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' ~/Library/Logs/clawql/tunnel.o
 
 ### Track C — Tailscale (private: tailnet only)
 
-Best for *your own* devices (laptop, phone, homelab VMs) that don't need
+Best for _your own_ devices (laptop, phone, homelab VMs) that don't need
 public internet egress. Not an option for cloud agents that can't reach your
 tailnet.
 
@@ -129,7 +129,7 @@ MCP clients that speak HTTP need the header on every request.
 ```yaml
 mcp_servers:
   clawql:
-    url: "http://127.0.0.1:8080/mcp"         # or https://mcp.clawql.com/mcp
+    url: "http://127.0.0.1:8080/mcp" # or https://mcp.clawql.com/mcp
     headers:
       Authorization: "Bearer clawql_…"
     skip_preflight: true
@@ -169,14 +169,14 @@ server and rotate the live one first, then patch clients.
 
 ## 7. Troubleshooting
 
-| Symptom | Check |
-|---|---|
-| `401` from cloud agent on the public URL | Key in the connector doesn't match `CLAWQL_API_KEY`. Compare (length + first 8 chars) on both sides. |
-| Public URL works, `mcp.clawql.com` doesn't (or returns Cloudflare 1xxx) | Named tunnel not configured, or route DNS missing. `cloudflared tunnel list` + `cloudflared tunnel info clawql-mcp`. |
-| Local MCP dead and tunnel is 502-ing | `launchctl kickstart -k "gui/$(id -u)/com.clawql.mcp-http"`; then `tail -n 50 ~/Library/Logs/clawql/mcp-http.err.log`. |
-| `dist/server-http.js` missing (module resolution error) | `cd ClawQL && npm run build`; the runner script does this automatically when missing. |
-| launchd says "5" (SIGKILL) on mcp-http | Memory pressure or `sudo`-only path. Look at `~/Library/Logs/clawql/mcp-http.err.log`. |
-| Both plists in `launchctl list` are `-` (no pid) | `launchctl print "gui/$(id -u)/com.clawql.mcp-http"` for last exit status; rerun `install-macos-services.sh` to re-render plists. |
+| Symptom                                                                 | Check                                                                                                                             |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `401` from cloud agent on the public URL                                | Key in the connector doesn't match `CLAWQL_API_KEY`. Compare (length + first 8 chars) on both sides.                              |
+| Public URL works, `mcp.clawql.com` doesn't (or returns Cloudflare 1xxx) | Named tunnel not configured, or route DNS missing. `cloudflared tunnel list` + `cloudflared tunnel info clawql-mcp`.              |
+| Local MCP dead and tunnel is 502-ing                                    | `launchctl kickstart -k "gui/$(id -u)/com.clawql.mcp-http"`; then `tail -n 50 ~/Library/Logs/clawql/mcp-http.err.log`.            |
+| `dist/server-http.js` missing (module resolution error)                 | `cd ClawQL && npm run build`; the runner script does this automatically when missing.                                             |
+| launchd says "5" (SIGKILL) on mcp-http                                  | Memory pressure or `sudo`-only path. Look at `~/Library/Logs/clawql/mcp-http.err.log`.                                            |
+| Both plists in `launchctl list` are `-` (no pid)                        | `launchctl print "gui/$(id -u)/com.clawql.mcp-http"` for last exit status; rerun `install-macos-services.sh` to re-render plists. |
 
 ## 8. Uninstall
 
