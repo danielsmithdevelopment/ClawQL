@@ -135,8 +135,19 @@ export default function MemoryExplorerScreen() {
       <SectionHeader
         icon="agents"
         title="Memory & documents"
-        subtitle="Search, pipelines, and subject erase — same jobs as the cloud console."
+        subtitle={`Search, pipelines, and subject erase — same jobs as the cloud console.${
+          session.reviewerDemo ? " · reviewer demo" : ""
+        }`}
       />
+      {session.reviewerDemo ? (
+        <SurfaceCard testID="memory-reviewer-demo" tint="soft">
+          <Badge label="Reviewer demo · sample data" tone="warn" />
+          <Meta color={brand.inkFaint}>
+            Sample memory is labeled for App Review. Production builds show empty states when live
+            data is unavailable.
+          </Meta>
+        </SurfaceCard>
+      ) : null}
 
       <Column spacing={space.sm} testID="memory-tabs">
         {(

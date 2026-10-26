@@ -42,6 +42,8 @@ People can **talk to ClawQL on the phone**:
 
 Native mic STT and Siri phrases wait for Day-0 enrollment.
 
+**App Review (v1):** The store binary does **not** listen on the microphone. Keep typed + on-device TTS only. Do not add `NSMicrophoneUsageDescription` / `NSSpeechRecognitionUsageDescription` until native STT ships with specific strings (e.g. “ClawQL listens for commands like ‘read the next request’”) and App Privacy Audio Data is updated if recognition leaves the device. Prefer on-device recognition when available.
+
 ## Phase 2 — Siri / App Intents (your plug-in)
 
 Suggested intents (Swift / `expo-app-intents` when on SDK 58+):

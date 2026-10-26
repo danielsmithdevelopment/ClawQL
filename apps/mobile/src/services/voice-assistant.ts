@@ -1,8 +1,11 @@
 /**
- * In-app voice assistant — parse spoken/typed commands, speak pending reviews,
+ * In-app voice assistant — parse typed/fixture commands, speak pending reviews,
  * decline/open/ask teammate/start workflow (approve still requires security key).
- * Fixture / web: typed commands + Web Speech STT + expo-speech TTS.
- * Siri App Intents land later (see docs/specs/mobile/voice-assistant-v0.1.md).
+ *
+ * Store binary (iOS/Android): typed + fixture only; TTS via expo-speech
+ * (on-device AVSpeechSynthesizer). No microphone — see allowsVoiceMicListening().
+ * Web demo may use browser SpeechRecognition (vendor cloud possible).
+ * Siri App Intents / native mic STT land later (voice-assistant-v0.1.md).
  */
 import * as Speech from "expo-speech";
 import { Context, Data, Effect, Layer } from "effect";
