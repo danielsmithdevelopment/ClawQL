@@ -2,9 +2,16 @@
   "mcpServers": {
     "clawql": {
       "command": "node",
-      "args": ["/workspace/bin/clawql-mcp.mjs"],
+      "args": ["/workspace/bin/clawql-mcp-cloud-agent.mjs"],
       "env": {
-        "CLAWQL_HOME": "/home/ubuntu/.ClawQL"
+        "CLAWQL_HOME": "/home/ubuntu/.ClawQL",
+        "CLAWQL_OBSIDIAN_VAULT_PATH": "/home/ubuntu/.ClawQL",
+        "CLAWQL_ENABLE_MEMORY": "1",
+        "CLAWQL_BUNDLED_OFFLINE": "1",
+        "CLAWQL_SYNC_PROVIDER": "r2",
+        "CLAWQL_SYNC_AUTO": "1",
+        "CLAWQL_SYNC_AUTO_PULL": "1",
+        "CLAWQL_SYNC_AUTO_PULL_ON_START": "1"
       }
     }
   }
