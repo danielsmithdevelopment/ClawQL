@@ -69,6 +69,19 @@ fi
 # Team vault sync — Cursor Secrets inject CLAWQL_SYNC_* + CLAWQL_R2_ACCOUNT_ID
 # Prefer `sync ensure` so ClawQL can create clawql-team-vault when Admin R2 keys
 # or CLOUDFLARE_API_TOKEN (Workers R2 Storage Write) are present.
+#
+# Also accept CLOUDFLARE_* secret names (common Cloudflare dashboard paste) by
+# mapping them onto the CLAWQL_SYNC_* / CLAWQL_R2_* names the sync client reads.
+if [[ -z "${CLAWQL_R2_ACCOUNT_ID:-}" && -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
+  export CLAWQL_R2_ACCOUNT_ID="$CLOUDFLARE_ACCOUNT_ID"
+fi
+if [[ -z "${CLAWQL_SYNC_ACCESS_KEY_ID:-}" && -n "${CLOUDFLARE_ACCESS_KEY_ID:-}" ]]; then
+  export CLAWQL_SYNC_ACCESS_KEY_ID="$CLOUDFLARE_ACCESS_KEY_ID"
+fi
+if [[ -z "${CLAWQL_SYNC_SECRET_ACCESS_KEY:-}" && -n "${CLOUDFLARE_SECRET_ACCESS_KEY:-}" ]]; then
+  export CLAWQL_SYNC_SECRET_ACCESS_KEY="$CLOUDFLARE_SECRET_ACCESS_KEY"
+fi
+
 has_r2_account="${CLAWQL_R2_ACCOUNT_ID:-${CLAWQL_CLOUDFLARE_ACCOUNT_ID:-${CLOUDFLARE_ACCOUNT_ID:-}}}"
 has_sync_keys=false
 if [[ -n "${CLAWQL_SYNC_ACCESS_KEY_ID:-}" && -n "${CLAWQL_SYNC_SECRET_ACCESS_KEY:-}" ]]; then
@@ -121,15 +134,27 @@ fi
 # from the published tarball). Local `node bin/clawql-mcp.mjs` is reliable.
 # `npx -y clawql-mcp` also works for Automations / published-package hosts.
 mkdir -p "$HOME/.cursor"
+# Prefer cloud-agent launcher (maps CLOUDFLARE_* → CLAWQL_SYNC_* for R2).
+MCP_BIN="$ROOT/bin/clawql-mcp.mjs"
+if [[ -f "$ROOT/bin/clawql-mcp-cloud-agent.mjs" ]]; then
+  MCP_BIN="$ROOT/bin/clawql-mcp-cloud-agent.mjs"
+fi
 if [[ -f "$ROOT/dist/server.js" ]]; then
   cat >"$HOME/.cursor/mcp.json" <<EOF
 {
   "mcpServers": {
     "clawql": {
       "command": "node",
-      "args": ["$ROOT/bin/clawql-mcp.mjs"],
+      "args": ["$MCP_BIN"],
       "env": {
-        "CLAWQL_HOME": "$CLAWQL_HOME"
+        "CLAWQL_HOME": "$CLAWQL_HOME",
+        "CLAWQL_OBSIDIAN_VAULT_PATH": "$CLAWQL_HOME",
+        "CLAWQL_ENABLE_MEMORY": "1",
+        "CLAWQL_BUNDLED_OFFLINE": "1",
+        "CLAWQL_SYNC_PROVIDER": "r2",
+        "CLAWQL_SYNC_AUTO": "1",
+        "CLAWQL_SYNC_AUTO_PULL": "1",
+        "CLAWQL_SYNC_AUTO_PULL_ON_START": "1"
       }
     }
   }
@@ -140,15 +165,22 @@ EOF
   "mcpServers": {
     "clawql": {
       "command": "node",
-      "args": ["$ROOT/bin/clawql-mcp.mjs"],
+      "args": ["$MCP_BIN"],
       "env": {
-        "CLAWQL_HOME": "$CLAWQL_HOME"
+        "CLAWQL_HOME": "$CLAWQL_HOME",
+        "CLAWQL_OBSIDIAN_VAULT_PATH": "$CLAWQL_HOME",
+        "CLAWQL_ENABLE_MEMORY": "1",
+        "CLAWQL_BUNDLED_OFFLINE": "1",
+        "CLAWQL_SYNC_PROVIDER": "r2",
+        "CLAWQL_SYNC_AUTO": "1",
+        "CLAWQL_SYNC_AUTO_PULL": "1",
+        "CLAWQL_SYNC_AUTO_PULL_ON_START": "1"
       }
     }
   }
 }
 EOF
-  echo "[cloud-agent-install] Wrote MCP stdio config → node $ROOT/bin/clawql-mcp.mjs"
+  echo "[cloud-agent-install] Wrote MCP stdio config → node $MCP_BIN"
 elif [[ ! -f "$HOME/.cursor/mcp.json" ]]; then
   node "$ROOT/bin/clawql.mjs" mcp-config --write cursor \
     || echo "[cloud-agent-install] mcp-config write skipped"
