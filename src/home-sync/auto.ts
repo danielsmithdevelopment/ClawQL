@@ -26,7 +26,21 @@ export function autoPushExplicitlyEnabled(): boolean {
 
 export function autoPullEnabled(): boolean {
   if (envFlagOff("CLAWQL_SYNC_AUTO_PULL")) return false;
-  return envFlagOn("CLAWQL_SYNC_AUTO_PULL");
+  if (envFlagOn("CLAWQL_SYNC_AUTO_PULL")) return true;
+  // Pair with auto-push: hydrate before recall on ephemeral Cloud Agent VMs.
+  return autoPushExplicitlyEnabled();
+}
+
+/**
+ * Startup pull gate. Explicit `CLAWQL_SYNC_AUTO_PULL_ON_START=0` always wins.
+ * When unset, defaults **on** if `CLAWQL_SYNC_AUTO=1` so the first ingest-triggered
+ * push cannot run against an empty local vault while the team bucket is full
+ * (manifest is authoritative for pull/status — see `mergeManifestFiles`).
+ */
+export function autoPullOnStartupEnabled(): boolean {
+  if (envFlagOff("CLAWQL_SYNC_AUTO_PULL_ON_START")) return false;
+  if (envFlagOn("CLAWQL_SYNC_AUTO_PULL_ON_START")) return true;
+  return autoPushExplicitlyEnabled();
 }
 
 /**
@@ -189,10 +203,10 @@ export async function maybeAutoPullBeforeRecall(): Promise<void> {
   return Effect.runPromise(maybeAutoPullBeforeRecallEffect());
 }
 
-/** Optional pull on MCP startup (CLAWQL_SYNC_AUTO_PULL_ON_START=1). */
+/** Optional pull on MCP startup (`CLAWQL_SYNC_AUTO_PULL_ON_START`, or implied by `CLAWQL_SYNC_AUTO=1`). */
 export function runAutoPullOnStartupEffect(): Effect.Effect<void> {
   return Effect.gen(function* () {
-    if (!envFlagOn("CLAWQL_SYNC_AUTO_PULL_ON_START")) return;
+    if (!autoPullOnStartupEnabled()) return;
     yield* Effect.gen(function* () {
       yield* loadResolvedHomeSyncConfigEffect();
       const result = yield* runSyncPullEffect({});

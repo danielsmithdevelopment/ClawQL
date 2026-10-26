@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   autoPullEnabled,
+  autoPullOnStartupEnabled,
   autoPushExplicitlyEnabled,
   flushPendingAutoPush,
   resetHomeSyncAutoForTests,
@@ -62,6 +63,7 @@ describe("home-sync auto", () => {
     resetHomeSyncAutoForTests();
     delete process.env.CLAWQL_SYNC_AUTO;
     delete process.env.CLAWQL_SYNC_AUTO_PULL;
+    delete process.env.CLAWQL_SYNC_AUTO_PULL_ON_START;
     delete process.env.CLAWQL_SYNC_AUTO_DEBOUNCE_MS;
     delete process.env.CLAWQL_SYNC_AUTO_PUSH_MIN_MS;
   });
@@ -83,6 +85,23 @@ describe("home-sync auto", () => {
     expect(autoPullEnabled()).toBe(false);
     process.env.CLAWQL_SYNC_AUTO_PULL = "1";
     expect(autoPullEnabled()).toBe(true);
+  });
+
+  it("autoPullEnabled defaults on when CLAWQL_SYNC_AUTO=1 unless explicitly off", () => {
+    process.env.CLAWQL_SYNC_AUTO = "1";
+    expect(autoPullEnabled()).toBe(true);
+    process.env.CLAWQL_SYNC_AUTO_PULL = "0";
+    expect(autoPullEnabled()).toBe(false);
+  });
+
+  it("autoPullOnStartupEnabled defaults on when CLAWQL_SYNC_AUTO=1 unless explicitly off", () => {
+    expect(autoPullOnStartupEnabled()).toBe(false);
+    process.env.CLAWQL_SYNC_AUTO = "1";
+    expect(autoPullOnStartupEnabled()).toBe(true);
+    process.env.CLAWQL_SYNC_AUTO_PULL_ON_START = "0";
+    expect(autoPullOnStartupEnabled()).toBe(false);
+    process.env.CLAWQL_SYNC_AUTO_PULL_ON_START = "1";
+    expect(autoPullOnStartupEnabled()).toBe(true);
   });
 
   it("debounces a quiet period before the first push", async () => {

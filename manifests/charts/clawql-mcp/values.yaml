@@ -1230,14 +1230,16 @@ persistence:
 #   r2: r2AccessKeyId, r2SecretAccessKey, cloudflareAccountId
 #   s3: awsAccessKeyId, awsSecretAccessKey (+ CLAWQL_AWS_REGION via extraEnv if needed)
 #   gcs: gcsHmacAccessId, gcsHmacSecret (S3-compatible HMAC interop; endpoint auto-set when provider=gcs)
-# Docs: docs/getting-started/team-vault-sync.md
+# Docs: docs/getting-started/team-vault-sync.md (manifest merge-on-push; AUTO implies pull when unset)
 teamSync:
   enabled: false
   provider: r2 # r2 | s3 | gcs (S3-compatible API)
   bucket: ""
-  prefix: "" # shared key prefix, e.g. teams/engineering/
+  prefix: "" # shared key prefix, e.g. teams/shared/ (default in clawql sync ensure)
   region: auto
   endpoint: "" # optional override (gcs defaults to https://storage.googleapis.com in template)
+  # Prefer enabling autoPull + autoPullOnStart with autoPush. If only autoPush is true, the MCP
+  # process still implies pull-before-recall + pull-on-start unless those env vars are set to 0.
   autoPush: false # CLAWQL_SYNC_AUTO=1 — quiet debounce + min-interval push after memory_ingest; shutdown flush if dirty
   autoPushDebounceMs: 2000
   autoPushMinMs: 30000 # CLAWQL_SYNC_AUTO_PUSH_MIN_MS — min gap between pushes; shutdown flush bypasses

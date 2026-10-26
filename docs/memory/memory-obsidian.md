@@ -65,10 +65,11 @@ Thread **`id`** values (e.g. **`thread-<epoch-ms>`**) are passed to OpenClaw as 
 
 ## OKF-compatible frontmatter (shipped)
 
-ClawQL writes [Open Knowledge Format (OKF) v0.2](https://okf.io)–compatible vault notes: Markdown body + YAML frontmatter with required **`type`** (default `context`), OKF v0.2 trust signals (`generated`, `verified`, `sources`, `stale_after`, `status`, `superseded_by`), and ClawQL extensions (`correlation_id`, `worm_ref`, `agent_id`, `verdict`). Obsidian remains the human UI. Successful ingests also maintain OKF **`Memory/index.md`** and append to **`Memory/log.md`**. For **`type: decision`**, prefer the [rationale template](./okf-decision-rationale.md). Schema definitions (entity types) live in **Git**; dynamic memory instances live in **R2/S3** via `clawql sync` — see [Enterprise Ontology](../architecture/enterprise-ontology.md), [ADR 0009](../adr/0009-enterprise-ontology.md), and the dedicated **[OKF memory guide](./okf.md)**.
+ClawQL writes [Open Knowledge Format (OKF) v0.2](https://okf.io)–compatible vault notes: Markdown body + YAML frontmatter with required **`type`** (default `context`), OKF v0.2 trust signals (`generated`, `verified`, `sources`, `stale_after`, `status`, `superseded_by`), and ClawQL extensions (`correlation_id`, `worm_ref`, `agent_id`, `verdict`). Obsidian remains the human UI. Successful ingests also maintain OKF **`Memory/index.md`** and append to **`Memory/log.md`**. For **`type: decision`**, prefer the [rationale template](./okf-decision-rationale.md). Schema definitions (entity types) live in **Git**; dynamic memory instances live in **R2/S3** via `clawql sync` / MCP **`memory_sync`** — see **[Team vault sync](../getting-started/team-vault-sync.md)** (manifest + merge-on-push), [Enterprise Ontology](../architecture/enterprise-ontology.md), [ADR 0009](../adr/0009-enterprise-ontology.md), and the dedicated **[OKF memory guide](./okf.md)**.
 
 ## See also
 
+- **[team-vault-sync.md](../getting-started/team-vault-sync.md)** — R2/S3/GCS team bucket, sync manifest, Cloud Agent auto-pull defaults.
 - **[okf.md](./okf.md)** — OKF v0.2 frontmatter contract, trust signals, taxonomy, env knobs.
 - Lint vault notes: `npx clawql-memory lint ./vault` (reports OKF trust-signal issues).
 - **[cache-tool.md](../mcp/cache-tool.md)** — optional MCP **`cache`** (ephemeral LRU) vs vault **`memory_*`**.

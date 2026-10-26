@@ -10,7 +10,7 @@ Vault-first onboarding, Cursor iOS Cloud Agents, and the local agent sandbox (ma
 | On Cursor iOS / Cloud Agent          | [Cursor iOS + Cloud Agent](#cursor-ios-cloud-agent)                                                              |
 | Hardening local agent shell on macOS | [Local agent sandbox](#local-agent-sandbox-macos-seatbelt)                                                       |
 | Private mesh / ephemeral transport   | [Networking](#networking-optional) · [clawql-network spec](https://docs.clawql.com/specs/network/clawql-network) |
-| Sharing vault notes with a team      | [For teams — vault sync](https://docs.clawql.com/getting-started/for-teams#team-vault-sync)                      |
+| Sharing vault notes with a team      | [Team vault sync](./team-vault-sync.md) · [For teams](https://docs.clawql.com/getting-started/for-teams#team-vault-sync) |
 
 ---
 
@@ -148,9 +148,9 @@ Add these under **Cursor → Settings → Cloud → Secrets** (or your team's se
 | `CLAWQL_SYNC_PREFIX`             | Shared prefix, e.g. `teams/engineering/`          |
 | `CLAWQL_SYNC_ACCESS_KEY_ID`      | R2 S3 API access key                              |
 | `CLAWQL_SYNC_SECRET_ACCESS_KEY`  | R2 S3 API secret                                  |
-| `CLAWQL_SYNC_AUTO`               | `1` — debounced push after `memory_ingest`        |
-| `CLAWQL_SYNC_AUTO_PULL`          | `1` — throttled pull before `memory_recall`       |
-| `CLAWQL_SYNC_AUTO_PULL_ON_START` | `1` — pull once when MCP starts                   |
+| `CLAWQL_SYNC_AUTO`               | `1` — debounced push after `memory_ingest` (implies pull flags below when unset) |
+| `CLAWQL_SYNC_AUTO_PULL`          | `1` — throttled pull before `memory_recall` (or implied by `AUTO=1`)              |
+| `CLAWQL_SYNC_AUTO_PULL_ON_START` | `1` — pull once when MCP starts (or implied by `AUTO=1`)                         |
 
 For S3 or GCS, use the credential variables from [For teams — Environment](https://docs.clawql.com/getting-started/for-teams#environment) instead of R2 keys.
 
@@ -220,6 +220,8 @@ Teams can add `.cursor/environment.json` with an install script that runs `clawq
 
 Auto sync (`CLAWQL_SYNC_AUTO=1`) waits a short quiet period after ingest (default **2s**), then rate-limits pushes (default **30s** min interval) so sustained sessions do not hammer R2. Pending dirty writes still **flush on MCP shutdown** (SIGINT/SIGTERM/`beforeExit`) so Cloud Agent exits do not drop notes. Call `memory_sync` at the end of important runs to flush immediately and reconcile conflicts.
 
+When `CLAWQL_SYNC_AUTO=1` and the pull flags are **unset**, ClawQL also enables pull-before-recall and pull-on-start so a sparse VM hydrates before the first push. Push **merges** remote-only manifest paths — it must not replace the team index with a nearly empty local `Memory/`. See [Team vault sync](./team-vault-sync.md).
+
 ### 5. Copy-paste prompt (iOS / Cloud Agent)
 
 ```
@@ -247,6 +249,7 @@ Docs: https://docs.clawql.com/agent-setup#cursor-ios-cloud-agent https://docs.cl
 | Symptom                           | Check                                                                                    |
 | --------------------------------- | ---------------------------------------------------------------------------------------- |
 | `memory_recall` empty on a new VM | Secrets set? `memory_sync { "direction": "pull" }` or `CLAWQL_SYNC_AUTO_PULL_ON_START=1` |
+| `memory_sync` / status shows ~dozen remote files but bucket has hundreds | Manifest truncated or never rebuilt — [restore steps](./team-vault-sync.md#troubleshooting) |
 | `memory_sync` errors              | `CLAWQL_SYNC_BUCKET`, prefix, and R2/S3/GCS credentials in dashboard Secrets             |
 | `execute` auth failures           | Provider keys in `vault/providers.json` or matching `CLAWQL_*` env secrets               |
 | MCP tools missing                 | Enable clawql server for the Cloud Agent run; confirm `CLAWQL_ENABLE_MEMORY` is not `0`  |
