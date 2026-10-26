@@ -74,7 +74,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^26.1.1",
     "@types/pg": "^8.20.0",
-    "openai": "^7.32.0",
+    "openai": "^7.43.0",
     "tsup": "^8.3.0",
     "typescript": "^6.0.3",
     "vitest": "^5.0.0"
