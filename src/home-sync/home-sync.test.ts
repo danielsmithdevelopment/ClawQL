@@ -165,14 +165,8 @@ describe("mergeManifestFiles", () => {
   it("keeps remote-only paths when local vault is sparse", async () => {
     const { mergeManifestFiles } = await import("./engine.js");
     const local = new Map([
-      [
-        "Memory/local-only.md",
-        { sha256: "a".repeat(64), size: 10, mtimeMs: 1 },
-      ],
-      [
-        "Memory/shared.md",
-        { sha256: "b".repeat(64), size: 20, mtimeMs: 2 },
-      ],
+      ["Memory/local-only.md", { sha256: "a".repeat(64), size: 10, mtimeMs: 1 }],
+      ["Memory/shared.md", { sha256: "b".repeat(64), size: 20, mtimeMs: 2 }],
     ]);
     const remote = {
       version: 1 as const,
@@ -194,9 +188,7 @@ describe("mergeManifestFiles", () => {
 
   it("uses local-only when remote manifest is missing", async () => {
     const { mergeManifestFiles } = await import("./engine.js");
-    const local = new Map([
-      ["Memory/a.md", { sha256: "d".repeat(64), size: 1, mtimeMs: 1 }],
-    ]);
+    const local = new Map([["Memory/a.md", { sha256: "d".repeat(64), size: 1, mtimeMs: 1 }]]);
     const merged = mergeManifestFiles(local, null);
     expect(merged).toEqual({
       "Memory/a.md": { sha256: "d".repeat(64), size: 1, mtimeMs: 1 },
