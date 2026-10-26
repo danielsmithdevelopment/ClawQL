@@ -160,3 +160,38 @@ describe("sync pull manifest verification", () => {
     ).toThrow(/Team sync verification failed/);
   });
 });
+
+describe("mergeManifestFiles", () => {
+  it("keeps remote-only paths when local vault is sparse", async () => {
+    const { mergeManifestFiles } = await import("./engine.js");
+    const local = new Map([
+      ["Memory/local-only.md", { sha256: "a".repeat(64), size: 10, mtimeMs: 1 }],
+      ["Memory/shared.md", { sha256: "b".repeat(64), size: 20, mtimeMs: 2 }],
+    ]);
+    const remote = {
+      version: 1 as const,
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      files: {
+        "Memory/shared.md": { sha256: "old".padEnd(64, "0"), size: 19, mtimeMs: 0 },
+        "Memory/remote-only.md": { sha256: "c".repeat(64), size: 30, mtimeMs: 3 },
+      },
+    };
+    const merged = mergeManifestFiles(local, remote);
+    expect(Object.keys(merged).sort()).toEqual([
+      "Memory/local-only.md",
+      "Memory/remote-only.md",
+      "Memory/shared.md",
+    ]);
+    expect(merged["Memory/shared.md"].sha256).toBe("b".repeat(64));
+    expect(merged["Memory/remote-only.md"].sha256).toBe("c".repeat(64));
+  });
+
+  it("uses local-only when remote manifest is missing", async () => {
+    const { mergeManifestFiles } = await import("./engine.js");
+    const local = new Map([["Memory/a.md", { sha256: "d".repeat(64), size: 1, mtimeMs: 1 }]]);
+    const merged = mergeManifestFiles(local, null);
+    expect(merged).toEqual({
+      "Memory/a.md": { sha256: "d".repeat(64), size: 1, mtimeMs: 1 },
+    });
+  });
+});
