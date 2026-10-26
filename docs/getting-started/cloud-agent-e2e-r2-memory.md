@@ -83,15 +83,15 @@ Repo **`.cursor/mcp.json`** + the install hook write the **`node …/bin/clawql-
 
 **Cursor → Cloud Agents → Secrets** (injected into every run for the repo):
 
-| Secret                           | Required?   | Notes                                               |
-| -------------------------------- | ----------- | --------------------------------------------------- |
-| `CLAWQL_R2_ACCOUNT_ID`           | Yes         | Cloudflare account id (no spaces/newlines)          |
-| `CLAWQL_SYNC_ACCESS_KEY_ID`      | Yes         | R2 S3 access key — **trim whitespace** when pasting |
-| `CLAWQL_SYNC_SECRET_ACCESS_KEY`  | Yes         | R2 S3 secret                                        |
-| `CLOUDFLARE_API_TOKEN`           | Recommended | Account token with Workers R2 Storage Write         |
-| `CLAWQL_HOME`                    | Optional    | Default `/home/ubuntu/.ClawQL` on Cloud Agent VMs   |
-| `CLAWQL_SYNC_BUCKET`             | Optional    | Default `clawql-team-vault`                         |
-| `CLAWQL_SYNC_PREFIX`             | Optional    | Default `teams/shared/`                             |
+| Secret                           | Required?   | Notes                                                                      |
+| -------------------------------- | ----------- | -------------------------------------------------------------------------- |
+| `CLAWQL_R2_ACCOUNT_ID`           | Yes         | Cloudflare account id (no spaces/newlines)                                 |
+| `CLAWQL_SYNC_ACCESS_KEY_ID`      | Yes         | R2 S3 access key — **trim whitespace** when pasting                        |
+| `CLAWQL_SYNC_SECRET_ACCESS_KEY`  | Yes         | R2 S3 secret                                                               |
+| `CLOUDFLARE_API_TOKEN`           | Recommended | Account token with Workers R2 Storage Write                                |
+| `CLAWQL_HOME`                    | Optional    | Default `/home/ubuntu/.ClawQL` on Cloud Agent VMs                          |
+| `CLAWQL_SYNC_BUCKET`             | Optional    | Default `clawql-team-vault`                                                |
+| `CLAWQL_SYNC_PREFIX`             | Optional    | Default `teams/shared/`                                                    |
 | `CLAWQL_SYNC_AUTO`               | Optional    | `1` — debounced push after `memory_ingest` (implies pull flags when unset) |
 | `CLAWQL_SYNC_AUTO_PULL`          | Optional    | `1` — throttled pull before `memory_recall` (or implied by `AUTO=1`)       |
 | `CLAWQL_SYNC_AUTO_PULL_ON_START` | Optional    | `1` — pull when MCP starts (or implied by `AUTO=1`)                        |
@@ -237,7 +237,7 @@ If TLS to {accountId}.r2.cloudflarestorage.com fails right after enabling R2, wa
 | MCP catalog has no `memory_*` / “not available in this cloud-agent run”                    | **clawql** not enabled in Cloud Agents MCP UI                                                  | Add + toggle **clawql** at [cursor.com/agents](https://cursor.com/agents) (or team Integrations); start a **new** run; repo `mcp.json` alone is not enough |
 | ClawQL MCP “failed during live tool discovery”                                             | Broken stdio launch: `npx -p clawql-mcp clawql-mcp`                                            | Prefer **`node /workspace/bin/clawql-mcp.mjs`** (this repo) or **`npx -y clawql-mcp`** (see §0); re-add MCP; new run                                       |
 | New chat has empty vault / no `mcp.json` yet                                               | Install still running or first boot                                                            | Wait for install; secrets must allow `sync pull`; then `memory_sync` `{ "direction": "pull" }`                                                             |
-| `sync status` / `memory_sync` remote count ≪ R2 object count under `Memory/`               | Truncated or stale **manifest** (pull ignores orphan objects)                                  | Rebuild manifest from object listing — [Team vault sync](./team-vault-sync.md#troubleshooting); ensure build includes merge-on-push                         |
+| `sync status` / `memory_sync` remote count ≪ R2 object count under `Memory/`               | Truncated or stale **manifest** (pull ignores orphan objects)                                  | Rebuild manifest from object listing — [Team vault sync](./team-vault-sync.md#troubleshooting); ensure build includes merge-on-push                        |
 | `doctor` warns about GitHub/Slack/…                                                        | Provider vault empty                                                                           | Optional for memory sync; add tokens via Secrets or `clawql secrets set` for `execute`                                                                     |
 | REST upload to R2 works, S3 SDK fails                                                      | Same as TLS row — ClawQL sync uses the S3-compatible endpoint                                  | Fix S3 endpoint TLS/credentials; REST success only proves the bucket exists                                                                                |
 

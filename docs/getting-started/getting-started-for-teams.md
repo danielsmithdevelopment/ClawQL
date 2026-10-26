@@ -174,9 +174,9 @@ clawql doctor
 
 ### Commands
 
-| Command              | Purpose                                                                |
-| -------------------- | ---------------------------------------------------------------------- |
-| `clawql sync init`   | Write `~/.ClawQL/sync.json` (no secrets)                               |
+| Command              | Purpose                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------- |
+| `clawql sync init`   | Write `~/.ClawQL/sync.json` (no secrets)                                              |
 | `clawql sync push`   | Upload changed local files + **merge** into remote manifest (keeps remote-only paths) |
 | `clawql sync pull`   | Download files listed in the remote **manifest** (not a raw bucket listing)           |
 | `clawql sync status` | Compare local vs **manifest** (conflicts listed)                                      |
@@ -237,7 +237,7 @@ When the MCP server runs with sync configured, enable automatic background sync:
 
 | Variable                           | Behavior                                                                                                                                                                          |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CLAWQL_SYNC_AUTO=1`               | Auto-push after `memory_ingest` (see debounce + min interval below). **Opt-in** (default off). When set, also implies pull-before-recall + pull-on-start unless those are `0`.   |
+| `CLAWQL_SYNC_AUTO=1`               | Auto-push after `memory_ingest` (see debounce + min interval below). **Opt-in** (default off). When set, also implies pull-before-recall + pull-on-start unless those are `0`.    |
 | `CLAWQL_SYNC_AUTO_DEBOUNCE_MS`     | Quiet period after the last ingest before a push is considered (default `2000`) — coalesces note + index/log                                                                      |
 | `CLAWQL_SYNC_AUTO_PUSH_MIN_MS`     | Minimum gap between successful auto-pushes during sustained ingest (default `30000`) — avoids R2 spam; **shutdown flush ignores this** so short-lived processes do not drop notes |
 | `CLAWQL_SYNC_AUTO_PULL=1`          | Throttled pull before `memory_recall` (default min interval 60s). Implied by `CLAWQL_SYNC_AUTO=1` when unset; explicit `0` disables.                                              |
