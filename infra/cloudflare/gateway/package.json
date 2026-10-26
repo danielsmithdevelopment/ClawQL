@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "ClawQL Phase 1 edge gateway Worker \u2014 routing, MCP tools, R2 vault, KV L5, Stripe\u2192D1",
+  "description": "ClawQL Phase 1 edge gateway Worker — routing, MCP tools, R2 vault, KV L5, Stripe→D1",
   "license": "Apache-2.0",
   "scripts": {
     "build": "esbuild src/index.ts --bundle --format=esm --outfile=dist/index.js --platform=neutral --target=es2022 --conditions=worker",
@@ -22,7 +22,7 @@
   "overrides": {
     "vite": "8.3.4",
     "@cloudflare/workers-types": "^4.20250620.0",
-    "undici": "7.29.1",
+    "undici": "7.30.1",
     "nanoid": "3.3.18",
     "sharp": "0.35.5",
     "hono": "4.13.12",
@@ -32,6 +32,6 @@
     "node": ">=22"
   },
   "dependencies": {
-    "undici": "7.29.1"
+    "undici": "7.30.1"
   }
 }
