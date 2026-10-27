@@ -48,9 +48,7 @@ async function appendWorm(entry: WormAppendBody): Promise<void> {
 
   if (!base || !key) {
     if (required) {
-      throw new Error(
-        "CLAWQL_AUDIT_REQUIRED=1 but CLAWQL_AUDIT_URL / CLAWQL_AUDIT_API_KEY unset"
-      );
+      throw new Error("CLAWQL_AUDIT_REQUIRED=1 but CLAWQL_AUDIT_URL / CLAWQL_AUDIT_API_KEY unset");
     }
     return;
   }
