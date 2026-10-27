@@ -20,3 +20,21 @@ export type {
   AcpSpikeChecklistStep,
   CodingAgentRunnerApi,
 } from "./acp-session.js";
+
+export {
+  CodingAgentDrive,
+  CodingAgentDriveLive,
+  makeOntologiqlAcpDuplexStackLayer,
+  makeOntologiqlAcpStackLayer,
+  prepareCodingAgentStackEffect,
+  runCombinedAcpTurnEffect,
+  startCombinedNativeEffect,
+} from "./drive.js";
+export type {
+  CodingAgentDriveApi,
+  DriveAcpTurnInput,
+  DriveAcpTurnResult,
+  DriveNativeStartInput,
+  DriveNativeStartResult,
+  PreparedCodingAgentStack,
+} from "./drive.js";

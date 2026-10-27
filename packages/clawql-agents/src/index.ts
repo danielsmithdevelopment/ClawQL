@@ -223,24 +223,37 @@ export type {
   AcpUpdateHandler,
 } from "./acp/index.js";
 
-/** Ontologiql / runner: ACP-first route + spike-turn orchestration. */
+/** Ontologiql / runner: ACP-first route + combined drive stack. */
 export {
   ACP_SPIKE_CHECKLIST,
+  CodingAgentDrive,
+  CodingAgentDriveLive,
   CodingAgentRunner,
   CodingAgentRunnerLive,
   makeCodingAgentRunnerDuplexLayer,
   makeCodingAgentRunnerLayer,
+  makeOntologiqlAcpDuplexStackLayer,
+  makeOntologiqlAcpStackLayer,
+  prepareCodingAgentStackEffect,
   resolveCodingAgentRoute,
   resolveCodingAgentRouteEffect,
   runAcpSpikeTurnEffect,
+  runCombinedAcpTurnEffect,
+  startCombinedNativeEffect,
 } from "./runner/index.js";
 export type {
   AcpCapableAgentId,
   AcpRunnerTurnInput,
   AcpRunnerTurnResult,
   AcpSpikeChecklistStep,
+  CodingAgentDriveApi,
   CodingAgentRoute,
   CodingAgentRunnerApi,
   CodingAgentTarget,
+  DriveAcpTurnInput,
+  DriveAcpTurnResult,
+  DriveNativeStartInput,
+  DriveNativeStartResult,
+  PreparedCodingAgentStack,
   ResolveCodingAgentRouteInput,
 } from "./runner/index.js";
