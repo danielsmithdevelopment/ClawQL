@@ -48,7 +48,7 @@ Cursor’s **Agent SDK** (`@grok/agent-sdk`, formerly `@cursor/bdk`) is a parall
 - New agent integrations start with an **ACP spike checklist** (initialize → authenticate → session/new → prompt → permission → cancel) before opening a native-adapter design.
 - `docs/agents/` and Ontologiql runner specs should cite this ADR and the naming table above.
 - Homelab / Buzz docs that already use Agent Client Protocol are consistent with this decision; align vocabulary (“Agent Client Protocol”) where they still say bare “ACP” next to payments.
-- Follow-on (not blocked on this ADR): thin shared TypeScript ACP client module used by runner + eval harness; Agent SDK `mcp-connections/clawql.ts` template ([integration guide](../integrations/cursor-agent-sdk.md)).
+- Follow-on landed in-repo: `clawql-agents` `AgentClientProtocol` (stdio NDJSON client + duplex test pair); `resolveCodingAgentRoute` + `CodingAgentRunner` for Ontologiql/runner ACP-first routing; Agent SDK templates under [`docs/examples/agent-sdk/`](../examples/agent-sdk/) ([integration guide](../integrations/cursor-agent-sdk.md)).
 
 ## References
 
