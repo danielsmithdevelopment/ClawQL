@@ -14,7 +14,7 @@ Effect-based hardened adapters for all seven RockYourLobster catalog agents.
 | Live OpenBench A/B     | Gated — see `docs/benchmarks/agents-openbench-plan.md`                            |
 | Agent SDK → WORM       | `agentSdkEventToWormAppend` / `appendAgentSdkHook` (+ HTTP helper)                |
 | Agent Client Protocol  | `AgentClientProtocol` + `makeAgentClientProtocolLayer` (ADR 0017; ≠ payments ACP) |
-| Ontologiql runner      | `resolveCodingAgentRoute` + `CodingAgentRunner` (ACP-first spike turn)            |
+| Ontologiql runner      | `CodingAgentDrive` + `prepareCodingAgentStackEffect` (ACP + native + WORM)        |
 
 ```ts
 import { Effect } from "effect";
