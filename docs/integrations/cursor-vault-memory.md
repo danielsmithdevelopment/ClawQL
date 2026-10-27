@@ -2,6 +2,8 @@
 
 This document explains how **ClawQL’s Obsidian vault tools** (`memory_ingest`, `memory_recall`) connect to **Cursor** via a project **rule** and **skill**, so agents persist and recall context consistently.
 
+For **Agent SDK** bots (versioned Markdown/TypeScript projects with `mcp-connections/` / hooks / evals), see **[cursor-agent-sdk.md](./cursor-agent-sdk.md)** and **[ADR 0017](../adr/0017-agent-client-protocol-first-adapters.md)** (Agent Client Protocol–first adapters).
+
 ---
 
 ## Prerequisites
