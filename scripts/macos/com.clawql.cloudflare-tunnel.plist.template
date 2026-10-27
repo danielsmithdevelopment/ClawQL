@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Cloudflare tunnel — launchd supervisor (per-user LaunchAgent).
+  TEMPLATE: __RUN_TUNNEL__ is substituted by scripts/macos/install-macos-services.sh.
+  Runs scripts/macos/run-tunnel.sh, which prefers a durable named tunnel
+  (https://mcp.clawql.com/mcp) and falls back to a quick tunnel if the named
+  tunnel has not been configured yet.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.clawql.cloudflare-tunnel</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>__RUN_TUNNEL__</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>HOME</key>
+        <string>__HOME__</string>
+    </dict>
+    <key>LimitLoadToSessionType</key>
+    <array>
+        <string>Aqua</string>
+        <string>Background</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <!-- don't restart while the MCP server itself is down (it would 502); small
+         floor keeps a crash-looping cloudflared from hammering launchd -->
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+    <key>SoftResourceLimits</key>
+    <dict>
+        <key>NumberOfFiles</key>
+        <integer>4096</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>__LOG_DIR__/tunnel.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>__LOG_DIR__/tunnel.err.log</string>
+</dict>
+</plist>

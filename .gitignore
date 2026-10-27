@@ -93,3 +93,10 @@ benchmarks/pageindex-ab/results/
 docs/examples/managed-gateway/.env
 docs/examples/managed-gateway/data/
 *.unsuppressed.tmp.ts
+
+# Local per-machine runtime state (Hermes home, ClawQL local runtime, pids) —
+# never commit (may contain API keys / local vault data)
+.local-hermes/
+.local-clawql/
+.local-clawql-mcp.pid
+.hermes-mcp.pid
