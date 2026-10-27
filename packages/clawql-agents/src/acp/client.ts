@@ -86,9 +86,7 @@ const handleIncoming = (
         method,
         params: msg.params as Record<string, unknown> | undefined,
       }) ?? defaultPermission
-    ).then((outcome) =>
-      Effect.runPromise(respondOverTransport(transport, id, { outcome }))
-    );
+    ).then((outcome) => Effect.runPromise(respondOverTransport(transport, id, { outcome })));
     return;
   }
 
@@ -138,8 +136,7 @@ const makeApi = (
       prompt: input.prompt,
     }).pipe(Effect.map((r) => r as AcpPromptResult)),
 
-  cancel: (sessionId) =>
-    notifyOverTransport(transport, "session/cancel", { sessionId }),
+  cancel: (sessionId) => notifyOverTransport(transport, "session/cancel", { sessionId }),
 
   close: () =>
     Effect.gen(function* () {
@@ -225,9 +222,7 @@ export const makeAgentClientProtocolLayer = (
           }),
       };
       const reader = Effect.runSync(
-        attachAcpReader(stdout, stateRef, (msg) =>
-          handleIncoming(transport, config.handlers, msg)
-        )
+        attachAcpReader(stdout, stateRef, (msg) => handleIncoming(transport, config.handlers, msg))
       );
       const clientInfo = config.clientInfo ?? {
         name: "clawql-agent-client-protocol",

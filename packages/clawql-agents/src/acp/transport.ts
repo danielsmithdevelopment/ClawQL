@@ -32,11 +32,7 @@ export type JsonRpcFailure = {
   readonly error: { readonly code: number; readonly message: string; readonly data?: unknown };
 };
 
-export type JsonRpcMessage =
-  | JsonRpcRequest
-  | JsonRpcNotification
-  | JsonRpcSuccess
-  | JsonRpcFailure;
+export type JsonRpcMessage = JsonRpcRequest | JsonRpcNotification | JsonRpcSuccess | JsonRpcFailure;
 
 export type AcpTransport = {
   readonly write: (message: JsonRpcMessage) => Effect.Effect<void, AcpError>;
@@ -166,12 +162,10 @@ export const notifyOverTransport = (
   transport: AcpTransport,
   method: string,
   params?: unknown
-): Effect.Effect<void, AcpError> =>
-  transport.write({ jsonrpc: "2.0", method, params });
+): Effect.Effect<void, AcpError> => transport.write({ jsonrpc: "2.0", method, params });
 
 export const respondOverTransport = (
   transport: AcpTransport,
   id: JsonRpcId,
   result: unknown
-): Effect.Effect<void, AcpError> =>
-  transport.write({ jsonrpc: "2.0", id, result });
+): Effect.Effect<void, AcpError> => transport.write({ jsonrpc: "2.0", id, result });

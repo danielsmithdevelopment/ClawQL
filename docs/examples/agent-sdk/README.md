@@ -2,11 +2,11 @@
 
 Copy-paste snippets for Cursor **Agent SDK** bots (`@grok/agent-sdk`). These are **not** a published npm pack — drop files into an `agent-sdk init` project as named below.
 
-| Path | Copy into Agent SDK project as | Role |
-| ---- | ------------------------------ | ---- |
-| [`mcp-connections/clawql.ts`](mcp-connections/clawql.ts) | `bot/mcp-connections/clawql.ts` | Governed ClawQL MCP connection (HTTP or stdio) |
-| [`hooks/clawql-audit.ts`](hooks/clawql-audit.ts) | `bot/hooks/clawql-audit.ts` | Session/tool events → `clawql-audit` HTTP `/entries` |
-| [`evals/injection.eval.ts`](evals/injection.eval.ts) + [`evals/evals.config.ts`](evals/evals.config.ts) | `evals/` | Injection-corpus eval cases (honesty: Panguard gates / planted prompts — not a published AgentDojo claim) |
+| Path                                                                                                    | Copy into Agent SDK project as  | Role                                                                                                      |
+| ------------------------------------------------------------------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [`mcp-connections/clawql.ts`](mcp-connections/clawql.ts)                                                | `bot/mcp-connections/clawql.ts` | Governed ClawQL MCP connection (HTTP or stdio)                                                            |
+| [`hooks/clawql-audit.ts`](hooks/clawql-audit.ts)                                                        | `bot/hooks/clawql-audit.ts`     | Session/tool events → `clawql-audit` HTTP `/entries`                                                      |
+| [`evals/injection.eval.ts`](evals/injection.eval.ts) + [`evals/evals.config.ts`](evals/evals.config.ts) | `evals/`                        | Injection-corpus eval cases (honesty: Panguard gates / planted prompts — not a published AgentDojo claim) |
 
 **Related:** [`docs/integrations/cursor-agent-sdk.md`](../../integrations/cursor-agent-sdk.md) · [ADR 0017](../../adr/0017-agent-client-protocol-first-adapters.md) · mappers in `clawql-agents` (`agentSdkEventToWormAppend`, `AgentClientProtocol`).
 

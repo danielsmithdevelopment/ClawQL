@@ -75,15 +75,15 @@ Cursor is building toward **agent governance** inside its harness: security-revi
 
 ## Implementation backlog
 
-| Item | Status |
-| ---- | ------ |
-| Docs + ADR 0017 | Done |
-| Example `mcp-connections/clawql.ts` + README | Done — [`docs/examples/agent-sdk/`](../examples/agent-sdk/) |
-| Hook → `clawql-audit` (required = loud fail) | Done — example + `clawql-agents` mappers |
-| Injection eval template | Done — `evals/injection.eval.ts` (smoke; not a published board) |
-| Shared Agent Client Protocol client | Done — `clawql-agents` `AgentClientProtocol` |
-| Optional npm pack `@clawql/agent-sdk-*` | Follow-on if copy-paste friction stays high |
-| Host-connection cookbook + Ontologiql runner wiring | Follow-on |
+| Item                                                | Status                                                          |
+| --------------------------------------------------- | --------------------------------------------------------------- |
+| Docs + ADR 0017                                     | Done                                                            |
+| Example `mcp-connections/clawql.ts` + README        | Done — [`docs/examples/agent-sdk/`](../examples/agent-sdk/)     |
+| Hook → `clawql-audit` (required = loud fail)        | Done — example + `clawql-agents` mappers                        |
+| Injection eval template                             | Done — `evals/injection.eval.ts` (smoke; not a published board) |
+| Shared Agent Client Protocol client                 | Done — `clawql-agents` `AgentClientProtocol`                    |
+| Optional npm pack `@clawql/agent-sdk-*`             | Follow-on if copy-paste friction stays high                     |
+| Host-connection cookbook + Ontologiql runner wiring | Follow-on                                                       |
 
 ## See also
 

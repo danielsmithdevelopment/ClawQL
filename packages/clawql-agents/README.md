@@ -2,17 +2,17 @@
 
 Effect-based hardened adapters for all seven RockYourLobster catalog agents.
 
-| Phase                  | Status                                                                      |
-| ---------------------- | --------------------------------------------------------------------------- |
-| 1–4 Adapters           | Shipped (Cline, OpenClaw, Hermes, Goose, OpenHands, Pi, DeepSeek)           |
-| Personal-agent install | `installPersonalAgentHooks` + `scripts/dev/install-personal-agent-hooks.sh` |
-| OpenClaw live MCP      | `planOpenClawLiveWiring` / `scripts/dev/openclaw-register-clawql.sh`        |
-| Outbound credentials   | `getOutboundCredential` (clawql-auth)                                       |
-| Phase 5 dry bench      | `runAgentBenchmarkDry` + `benchmarks/agents-bench/`                         |
-| Family S stub catalog  | `FAMILY_S_STUB_TOOLS` + ATR deny/allow checkers (`runFamilySScopeChecks`)   |
-| Helm overlays          | `helm/<agent>/values-clawql.yaml`                                           |
-| Live OpenBench A/B     | Gated — see `docs/benchmarks/agents-openbench-plan.md`                      |
-| Agent SDK → WORM       | `agentSdkEventToWormAppend` / `appendAgentSdkHook` (+ HTTP helper)          |
+| Phase                  | Status                                                                            |
+| ---------------------- | --------------------------------------------------------------------------------- |
+| 1–4 Adapters           | Shipped (Cline, OpenClaw, Hermes, Goose, OpenHands, Pi, DeepSeek)                 |
+| Personal-agent install | `installPersonalAgentHooks` + `scripts/dev/install-personal-agent-hooks.sh`       |
+| OpenClaw live MCP      | `planOpenClawLiveWiring` / `scripts/dev/openclaw-register-clawql.sh`              |
+| Outbound credentials   | `getOutboundCredential` (clawql-auth)                                             |
+| Phase 5 dry bench      | `runAgentBenchmarkDry` + `benchmarks/agents-bench/`                               |
+| Family S stub catalog  | `FAMILY_S_STUB_TOOLS` + ATR deny/allow checkers (`runFamilySScopeChecks`)         |
+| Helm overlays          | `helm/<agent>/values-clawql.yaml`                                                 |
+| Live OpenBench A/B     | Gated — see `docs/benchmarks/agents-openbench-plan.md`                            |
+| Agent SDK → WORM       | `agentSdkEventToWormAppend` / `appendAgentSdkHook` (+ HTTP helper)                |
 | Agent Client Protocol  | `AgentClientProtocol` + `makeAgentClientProtocolLayer` (ADR 0017; ≠ payments ACP) |
 
 ```ts

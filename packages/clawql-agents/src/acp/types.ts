@@ -25,7 +25,8 @@ export type AcpTextBlock = {
   readonly text: string;
 };
 
-export type AcpContentBlock = AcpTextBlock | { readonly type: string; readonly [k: string]: unknown };
+export type AcpContentBlock =
+  AcpTextBlock | { readonly type: string; readonly [k: string]: unknown };
 
 export type AcpMcpServerRef = {
   readonly name: string;
@@ -52,7 +53,10 @@ export type AcpPromptResult = {
 
 /** Permission outcome for `session/request_permission` (Cursor option ids). */
 export type AcpPermissionOutcome =
-  | { readonly outcome: "selected"; readonly optionId: "allow-once" | "allow-always" | "reject-once" }
+  | {
+      readonly outcome: "selected";
+      readonly optionId: "allow-once" | "allow-always" | "reject-once";
+    }
   | { readonly outcome: string; readonly [k: string]: unknown };
 
 export type AcpSessionUpdate = {

@@ -173,8 +173,7 @@ export const postWormAppendHttpEffect = (
         }
         return { ok: true as const };
       },
-      catch: (e) =>
-        new AgentSdkAuditHttpError(e instanceof Error ? e.message : String(e)),
+      catch: (e) => new AgentSdkAuditHttpError(e instanceof Error ? e.message : String(e)),
     });
     if (!result.ok) {
       const msg = `clawql-audit HTTP ${result.status}: ${result.text.slice(0, 200)}`;
