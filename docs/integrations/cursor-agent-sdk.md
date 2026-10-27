@@ -13,12 +13,12 @@ Treat Cursor’s Agent SDK as a **platform to plug into**: ClawQL is the governe
 
 Agent SDK defines, tests, and deploys **agents as code**: a folder of Markdown + TypeScript with typed tools, skills, **MCP connections**, subagents, channel triggers (GitHub, Slack, …), **hooks**, and **evals**. It runs on Cursor-managed hosting or your infrastructure. The harness powers Cursor’s own review/approval products.
 
-| Slot in an Agent SDK project | ClawQL fit |
-| ---------------------------- | ---------- |
-| `mcp-connections/` | Drop-in ClawQL MCP connection (governed, token-efficient Core tools) |
-| `hooks/` | Session/event observer → ClawQL tamper-evident audit / WORM |
-| `host-connections/` | Local / self-hosted ClawQL gateway (host-only MCP tools) |
-| `evals/` | Injection-corpus eval template against any Agent SDK bot |
+| Slot in an Agent SDK project | ClawQL fit                                                           |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `mcp-connections/`           | Drop-in ClawQL MCP connection (governed, token-efficient Core tools) |
+| `hooks/`                     | Session/event observer → ClawQL tamper-evident audit / WORM          |
+| `host-connections/`          | Local / self-hosted ClawQL gateway (host-only MCP tools)             |
+| `evals/`                     | Injection-corpus eval template against any Agent SDK bot             |
 
 ## 1. Integration opportunity
 
@@ -57,11 +57,11 @@ Do **not** confuse Agent Client Protocol with payments **ACP** (`CLAWQL_ACP_*`).
 
 Cursor is building toward **agent governance** inside its harness: security-reviewer and owners-policy **templates**, Approval Bot / PR routing, self-hosted machines. That overlaps ClawQL’s direction. The durable differentiation:
 
-| Cursor (harness-native) | ClawQL |
-| ----------------------- | ------ |
+| Cursor (harness-native)                                                      | ClawQL                                                                                |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | Approvals are often **agents judging changes** (or product-tied review bots) | Approvals are **people** bound to **exact** change digests, with deterministic policy |
-| Tied to Cursor’s harness and model routing | Governs **any** agent / model / API as an open MCP + mandate standard |
-| Session hooks without a compliance-grade chain by default | Tamper-evident audit / WORM as a first-class product |
+| Tied to Cursor’s harness and model routing                                   | Governs **any** agent / model / API as an open MCP + mandate standard                 |
+| Session hooks without a compliance-grade chain by default                    | Tamper-evident audit / WORM as a first-class product                                  |
 
 **Posture:** integrate as the governance and audit layer Cursor-built bots plug into — do not race them on “another coding agent.”
 

@@ -6,10 +6,10 @@
 
 ## Naming (do not confuse)
 
-| Abbreviation | Meaning in this ADR | Elsewhere in ClawQL |
-| ------------ | ------------------- | ------------------- |
-| **ACP** | **Agent Client Protocol** — JSON-RPC between an editor/runner (client) and a coding agent | — |
-| **ACP (payments)** | Agentic Commerce Protocol checkout sessions | [`clawql-payments` ACP](../payments/clawql-payments.md) — **unrelated** |
+| Abbreviation       | Meaning in this ADR                                                                       | Elsewhere in ClawQL                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **ACP**            | **Agent Client Protocol** — JSON-RPC between an editor/runner (client) and a coding agent | —                                                                       |
+| **ACP (payments)** | Agentic Commerce Protocol checkout sessions                                               | [`clawql-payments` ACP](../payments/clawql-payments.md) — **unrelated** |
 
 In prose, prefer **“Agent Client Protocol”** on first use in a doc, or **“Agent Client Protocol (ACP)”**. Payment checkout stays **“ACP checkout”** / `CLAWQL_ACP_*`.
 
