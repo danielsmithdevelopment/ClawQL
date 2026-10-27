@@ -7,6 +7,12 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    # Docs / prose-only PRs still hit full CI lint; skip CodeQL there to save minutes.
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "apps/docs/content/**"
+      - "apps/www/**"
   schedule:
     - cron: "0 6 * * 1"
 
