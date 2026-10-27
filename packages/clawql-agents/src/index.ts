@@ -222,3 +222,25 @@ export type {
   AcpTextBlock,
   AcpUpdateHandler,
 } from "./acp/index.js";
+
+/** Ontologiql / runner: ACP-first route + spike-turn orchestration. */
+export {
+  ACP_SPIKE_CHECKLIST,
+  CodingAgentRunner,
+  CodingAgentRunnerLive,
+  makeCodingAgentRunnerDuplexLayer,
+  makeCodingAgentRunnerLayer,
+  resolveCodingAgentRoute,
+  resolveCodingAgentRouteEffect,
+  runAcpSpikeTurnEffect,
+} from "./runner/index.js";
+export type {
+  AcpCapableAgentId,
+  AcpRunnerTurnInput,
+  AcpRunnerTurnResult,
+  AcpSpikeChecklistStep,
+  CodingAgentRoute,
+  CodingAgentRunnerApi,
+  CodingAgentTarget,
+  ResolveCodingAgentRouteInput,
+} from "./runner/index.js";
