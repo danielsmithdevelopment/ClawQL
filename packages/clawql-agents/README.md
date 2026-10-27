@@ -12,10 +12,21 @@ Effect-based hardened adapters for all seven RockYourLobster catalog agents.
 | Family S stub catalog  | `FAMILY_S_STUB_TOOLS` + ATR deny/allow checkers (`runFamilySScopeChecks`)   |
 | Helm overlays          | `helm/<agent>/values-clawql.yaml`                                           |
 | Live OpenBench A/B     | Gated — see `docs/benchmarks/agents-openbench-plan.md`                      |
+| Agent SDK → WORM       | `agentSdkEventToWormAppend` / `appendAgentSdkHook` (+ HTTP helper)          |
+| Agent Client Protocol  | `AgentClientProtocol` + `makeAgentClientProtocolLayer` (ADR 0017; ≠ payments ACP) |
 
 ```ts
 import { Effect } from "effect";
-import { getAdapterBundle, getOutboundCredential, planOpenClawLiveWiring } from "clawql-agents";
+import {
+  getAdapterBundle,
+  getOutboundCredential,
+  planOpenClawLiveWiring,
+  AgentClientProtocol,
+  makeAgentClientProtocolLayer,
+  agentSdkEventToWormAppend,
+} from "clawql-agents";
 ```
 
-Spec: [`docs/agents/clawql-agents-spec-v0.1.md`](../../docs/agents/clawql-agents-spec-v0.1.md)
+Copy-paste Agent SDK bot snippets: [`docs/examples/agent-sdk/`](../../docs/examples/agent-sdk/).
+
+Spec: [`docs/agents/clawql-agents-spec-v0.1.md`](../../docs/agents/clawql-agents-spec-v0.1.md) · [cursor-agent-sdk.md](../../docs/integrations/cursor-agent-sdk.md) · [ADR 0017](../../docs/adr/0017-agent-client-protocol-first-adapters.md)

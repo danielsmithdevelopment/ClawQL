@@ -1,8 +1,9 @@
 # Cursor Agent SDK × ClawQL
 
-**Status:** Strategy + integration map (templates not yet published as an npm pack)  
+**Status:** Strategy + copy-paste examples + `clawql-agents` mappers/ACP client  
 **Package (Cursor):** [`@grok/agent-sdk`](https://www.npmjs.com/package/@grok/agent-sdk) (formerly `@cursor/bdk`)  
 **Docs:** [cursor.com/docs/agent-sdk](https://cursor.com/docs/agent-sdk)  
+**Examples:** [`docs/examples/agent-sdk/`](../examples/agent-sdk/)  
 **Related:** [ADR 0017 — Agent Client Protocol first](../adr/0017-agent-client-protocol-first-adapters.md) · [cursor-vault-memory](./cursor-vault-memory.md) · [agents spec](../agents/clawql-agents-spec-v0.1.md) · [audit / WORM](../security/clawql-audit-standalone.md)
 
 ## One-liner
@@ -30,26 +31,33 @@ Cursor developers scaffolding bots are ClawQL’s audience. A **ready-made conne
 - Document ATR / Panguard / mandate expectations in the connection comments
 - Prefer **narrow tool lists** (token efficiency) over dumping every optional toolkit
 
-**Ship shape (follow-on):** example under `docs/examples/agent-sdk/` or a small `@clawql/agent-sdk-connection` snippet in docs — one file copy into `mcp-connections/`.
+**Shipped:** copy [`docs/examples/agent-sdk/mcp-connections/clawql.ts`](../examples/agent-sdk/mcp-connections/clawql.ts) into `bot/mcp-connections/clawql.ts`. Streamable HTTP by default (`CLAWQL_MCP_URL`); stdio alternative in-file. Narrow Core `tools` allowlist for token efficiency.
 
 ### `hooks/` → ClawQL audit chain
 
-Agent SDK’s example pattern is `hooks/audit.ts` observing session events. Cursor-built bots do not get a **verifiable** record by default. A ClawQL hook package should:
+Agent SDK’s example pattern is `hooks/audit.ts` observing session events. Cursor-built bots do not get a **verifiable** record by default.
 
-- Map session lifecycle + tool-call events into `clawql-audit` / WORM (or `audit` MCP buffer only for ephemeral debug — not compliance-grade alone)
-- Never treat the hook as a substitute for mandate digests on writes
+**Shipped:**
+
+- Copy-paste hook: [`docs/examples/agent-sdk/hooks/clawql-audit.ts`](../examples/agent-sdk/hooks/clawql-audit.ts) → `bot/hooks/clawql-audit.ts` (HTTP `POST /entries` with `ApiKey`)
+- Library mapper: `clawql-agents` `agentSdkEventToWormAppend` / `appendAgentSdkHook` / `appendAgentSdkHookHttpEffect`
+- When `CLAWQL_AUDIT_REQUIRED=1`, missing config or append failure throws (loud fail — hooks are observe-only and cannot veto turns; still refuse silent drop)
+
+Never treat the hook as a substitute for mandate digests on writes.
 
 ### `host-connections/` for self-hosted
 
-For deployments that keep MCP on the host (not Cursor-cloud egress), document wiring a **local ClawQL gateway** as a host connection — same binary/Helm operators already run, with secrets staying on the machine.
+For deployments that keep MCP on the host (not Cursor-cloud egress), document wiring a **local ClawQL gateway** as a host connection — same binary/Helm operators already run, with secrets staying on the machine. Use the stdio block in `clawql.ts` or point HTTP at loopback.
 
 ### `evals/` — injection corpus as community value
 
-Publish an eval template that runs ClawQL’s **injection / AgentDojo-adjacent** corpus against an Agent SDK bot. That is useful to their community and keeps ClawQL’s security work visible. Honesty: cite existing boards under `docs/benchmarks/security-suite/` — do not invent AgentDojo claims ([agentready](../proposals/agentready-act-safely.md)).
+**Shipped:** [`docs/examples/agent-sdk/evals/injection.eval.ts`](../examples/agent-sdk/evals/injection.eval.ts) (+ `evals.config.ts`). Honesty: cite existing boards under `docs/benchmarks/security-suite/` — do not invent AgentDojo claims ([agentready](../proposals/agentready-act-safely.md)). Pair with `clawql security inject` for in-process Panguard drills.
 
 ## 2. Adapter shortcut (Ontologiql runner)
 
 Driving **coding agents** (edit/run loops) is a different plane from MCP tools. Prefer **Agent Client Protocol** as the runner’s primary adapter interface; native adapters only when ACP cannot express a required capability. Full decision: **[ADR 0017](../adr/0017-agent-client-protocol-first-adapters.md)**.
+
+**Shipped:** `clawql-agents` `AgentClientProtocol` + `makeAgentClientProtocolLayer` / duplex test pair (`initialize` → `authenticate` → `session/new` → `session/prompt` → permission/update handlers). Stdio NDJSON JSON-RPC aligned with Cursor `agent acp`.
 
 Do **not** confuse Agent Client Protocol with payments **ACP** (`CLAWQL_ACP_*`).
 
@@ -65,13 +73,17 @@ Cursor is building toward **agent governance** inside its harness: security-revi
 
 **Posture:** integrate as the governance and audit layer Cursor-built bots plug into — do not race them on “another coding agent.”
 
-## Implementation backlog (suggested order)
+## Implementation backlog
 
-1. **Docs + ADR** (this page + ADR 0017) — done in-repo.
-2. **Example `mcp-connections/clawql.ts`** + README for `agent-sdk init` consumers.
-3. **Hook sketch** mapping Agent SDK session events → `clawql-audit` (fail-closed if WORM unavailable when mandated).
-4. **Eval template** packaging a subset of injection fixtures for Agent SDK `evals/`.
-5. **Shared Agent Client Protocol client** for Ontologiql / runner (after ADR 0017 checklist).
+| Item | Status |
+| ---- | ------ |
+| Docs + ADR 0017 | Done |
+| Example `mcp-connections/clawql.ts` + README | Done — [`docs/examples/agent-sdk/`](../examples/agent-sdk/) |
+| Hook → `clawql-audit` (required = loud fail) | Done — example + `clawql-agents` mappers |
+| Injection eval template | Done — `evals/injection.eval.ts` (smoke; not a published board) |
+| Shared Agent Client Protocol client | Done — `clawql-agents` `AgentClientProtocol` |
+| Optional npm pack `@clawql/agent-sdk-*` | Follow-on if copy-paste friction stays high |
+| Host-connection cookbook + Ontologiql runner wiring | Follow-on |
 
 ## See also
 

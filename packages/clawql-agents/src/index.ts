@@ -171,3 +171,54 @@ export type {
 } from "./bench/family-s-checks.js";
 
 export * from "./registry/index.js";
+
+/** Cursor Agent SDK → WORM mappers + HTTP audit append. */
+export {
+  appendAgentSdkHook,
+  agentSdkEventToWormAppend,
+  agentSdkEventToWormAppendEffect,
+  agentSdkEventToWormAppendsEffect,
+  appendAgentSdkHookHttpEffect,
+  postWormAppendHttpEffect,
+  AgentSdkAuditHttpError,
+} from "./agent-sdk/index.js";
+export type {
+  AgentSdkActionCall,
+  AgentSdkAuditHttpConfig,
+  AgentSdkHookEvent,
+  AgentSdkHookKind,
+} from "./agent-sdk/index.js";
+
+/**
+ * Agent Client Protocol client (ADR 0017) — not payments ACP.
+ * Prefer ACP before adding a new native adapter.
+ */
+export {
+  AcpError,
+  AgentClientProtocol,
+  makeAgentClientProtocolDuplexLayer,
+  makeAgentClientProtocolLayer,
+  makeAcpTestPair,
+  ACP_PROTOCOL_VERSION,
+} from "./acp/index.js";
+export type {
+  AgentClientProtocolApi,
+  AcpDuplexConfig,
+  AcpClientCapabilities,
+  AcpClientHandlers,
+  AcpClientInfo,
+  AcpContentBlock,
+  AcpExtensionHandler,
+  AcpIncomingNotification,
+  AcpIncomingRequest,
+  AcpInitializeResult,
+  AcpMcpServerRef,
+  AcpNewSessionResult,
+  AcpPermissionHandler,
+  AcpPermissionOutcome,
+  AcpPromptResult,
+  AcpSessionUpdate,
+  AcpSpawnConfig,
+  AcpTextBlock,
+  AcpUpdateHandler,
+} from "./acp/index.js";

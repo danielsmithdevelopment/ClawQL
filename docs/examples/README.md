@@ -13,5 +13,6 @@ Sample stacks and fixtures for docs and local demos. None of this is a supported
 | [`inference/`](inference/)                                     | `policy.yaml` walkthrough                              |
 | [`operator/`](operator/)                                       | Minimal `ClawQLInstance` CR                            |
 | [`personal-agent/`](personal-agent/)                           | Homelab Loki overlay                                   |
+| [`agent-sdk/`](agent-sdk/)                                     | Cursor Agent SDK: MCP connection, audit hook, injection evals |
 
 The docs site hub [`/examples`](https://docs.clawql.com/examples) is case-study walkthroughs, not a file browser for this folder.
