@@ -1,8 +1,11 @@
 # Fast checks run first (parallel). Test matrix + coverage only after lint + workflow-scripts pass.
+# Expensive Docker / Playwright / npm-pack smokes are path-gated on PRs (still always on main push).
+# Unit tests do NOT wait on those smokes — only lint + workflow-scripts.
 # ESLint/Prettier caches speed repeat runs. Matrix fail-fast cancels other Node versions on first failure.
 # CodeQL stays in codeql.yml so scheduled scans do not run the full CI matrix.
 # Node 20 (EOL) is not tested. Defaults use the latest Current line available on nodejs.org (v25+ here); add v26
 # to the matrix and defaults when v26.0.0 is published to the dist index and `actions/setup-node` resolves it.
+# PR Node matrix is Current only (25); push to main keeps 22/24/25.
 
 name: CI
 
@@ -20,6 +23,93 @@ permissions:
   contents: read
 
 jobs:
+  # Path gates for expensive jobs. Push to main → all true. PR → only matching trees.
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      website: ${{ steps.filter.outputs.website }}
+      dashboard: ${{ steps.filter.outputs.dashboard }}
+      panguard: ${{ steps.filter.outputs.panguard }}
+      mcp_image: ${{ steps.filter.outputs.mcp_image }}
+      npm_pack: ${{ steps.filter.outputs.npm_pack }}
+      ontology: ${{ steps.filter.outputs.ontology }}
+      audit_wedge: ${{ steps.filter.outputs.audit_wedge }}
+      openbench: ${{ steps.filter.outputs.openbench }}
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+
+      - id: filter
+        shell: bash
+        run: |
+          set -euo pipefail
+          out() { echo "$1=$2" >> "$GITHUB_OUTPUT"; }
+
+          # Always full gate on main push (merge / direct push).
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            for k in website dashboard panguard mcp_image npm_pack ontology audit_wedge openbench code; do
+              out "$k" true
+            done
+            exit 0
+          fi
+
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          mapfile -t files < <(git diff --name-only "$BASE" "$HEAD")
+
+          match() {
+            local re="$1"
+            local f
+            for f in "${files[@]+"${files[@]}"}"; do
+              if [[ "$f" =~ $re ]]; then
+                return 0
+              fi
+            done
+            return 1
+          }
+
+          # CI workflow edits must re-run gated jobs so path rules stay honest.
+          if match '^\.github/workflows/ci\.yml$'; then
+            for k in website dashboard panguard mcp_image npm_pack ontology audit_wedge openbench code; do
+              out "$k" true
+            done
+            exit 0
+          fi
+
+          website=false
+          dashboard=false
+          panguard=false
+          mcp_image=false
+          npm_pack=false
+          ontology=false
+          audit_wedge=false
+          openbench=false
+          code=false
+
+          if match '^(apps/docs/|packages/clawql-analytics/|packages/clawql-auth/|packages/clawql-gdp/|packages/clawql-merkle/|packages/clawql-audit/)'; then website=true; fi
+          if match '^(apps/dashboard/|\.dockerignore$|scripts/kubernetes/provider-vault|src/provider-vault/)'; then dashboard=true; fi
+          if match '^(docker/panguard-mcp-bridge/|packages/panguard-mcp-bridge/)'; then panguard=true; fi
+          if match '^(docker/|Dockerfile|bin/|src/|packages/|package\.json$|package-lock\.json$|scripts/dev/test-docker-mcp)'; then mcp_image=true; fi
+          if match '^(packages/|package\.json$|package-lock\.json$|scripts/dev/test-npm-pack|scripts/release/)'; then npm_pack=true; fi
+          if match '^(packages/clawql-ontology/|packages/clawql-memory/|docs/examples/ontology/|scripts/.*ontology)'; then ontology=true; fi
+          if match '^(packages/clawql-audit/|packages/clawql-merkle/)'; then audit_wedge=true; fi
+          if match '^benchmarks/openbench/'; then openbench=true; fi
+          if match '^(src/|packages/|apps/|bin/|scripts/|formal/|vitest\.config|eslint\.config|tsconfig|turbo\.json|package\.json$|package-lock\.json$)'; then code=true; fi
+
+          out website "$website"
+          out dashboard "$dashboard"
+          out panguard "$panguard"
+          out mcp_image "$mcp_image"
+          out npm_pack "$npm_pack"
+          out ontology "$ontology"
+          out audit_wedge "$audit_wedge"
+          out openbench "$openbench"
+          out code "$code"
+
   # Wave 1 — parallel, no npm (except lint)
   lint:
     name: Lint & format
@@ -176,6 +266,8 @@ jobs:
 
   openbench-validate:
     name: OpenBench task validate (offline)
+    needs: [changes]
+    if: needs.changes.outputs.openbench == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -186,7 +278,8 @@ jobs:
 
   ontology-lint:
     name: Ontology lint (examples)
-    needs: [lint, workflow-scripts]
+    needs: [changes, lint, workflow-scripts]
+    if: needs.changes.outputs.ontology == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -212,7 +305,8 @@ jobs:
 
   clawql-audit-standalone:
     name: clawql-audit standalone deps
-    needs: [lint, workflow-scripts]
+    needs: [changes, lint, workflow-scripts]
+    if: needs.changes.outputs.audit_wedge == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -326,7 +420,8 @@ jobs:
 
   website-docker-smoke:
     name: Website Docker smoke
-    needs: [lint, workflow-scripts]
+    needs: [changes, lint, workflow-scripts]
+    if: needs.changes.outputs.website == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -377,7 +472,8 @@ jobs:
 
   panguard-bridge-docker-smoke:
     name: Panguard MCP bridge Docker smoke
-    needs: [lint, workflow-scripts]
+    needs: [changes, lint, workflow-scripts]
+    if: needs.changes.outputs.panguard == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -389,7 +485,8 @@ jobs:
   # Catches .dockerignore / COPY regressions that broke overnight clawql-dashboard publish.
   dashboard-docker-smoke:
     name: Dashboard Docker smoke
-    needs: [lint, workflow-scripts]
+    needs: [changes, lint, workflow-scripts]
+    if: needs.changes.outputs.dashboard == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -443,7 +540,8 @@ jobs:
 
   distribution-npm-pack-smoke:
     name: npm pack install smoke
-    needs: [lint, workflow-scripts]
+    needs: [changes, lint, workflow-scripts]
+    if: needs.changes.outputs.npm_pack == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -462,7 +560,8 @@ jobs:
 
   mcp-docker-workspace-smoke:
     name: MCP Docker workspace deps smoke
-    needs: [lint, workflow-scripts]
+    needs: [changes, lint, workflow-scripts]
+    if: needs.changes.outputs.mcp_image == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -473,7 +572,8 @@ jobs:
 
   website-playwright-smoke:
     name: Website Playwright smoke
-    needs: [lint, workflow-scripts]
+    needs: [changes, lint, workflow-scripts]
+    if: needs.changes.outputs.website == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -513,29 +613,19 @@ jobs:
       - name: Run Playwright smoke tests
         run: npm --prefix apps/docs run test:smoke
 
-  # Wave 2 — only if fast gates pass (fail early: no matrix work when lint/scripts fail)
+  # Wave 2 — after lint + workflow-scripts only (do not serialize behind Docker smokes).
+  # PR: Current Node only. Push to main: LTS + Current matrix.
   test:
     name: Test (Node ${{ matrix.node-version }})
-    needs:
-      [
-        lint,
-        workflow-scripts,
-        website-docker-smoke,
-        panguard-bridge-docker-smoke,
-        dashboard-docker-smoke,
-        distribution-npm-pack-smoke,
-        mcp-docker-workspace-smoke,
-        website-playwright-smoke,
-        supply-chain,
-        secret-scan,
-      ]
+    needs: [changes, lint, workflow-scripts]
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     # Cold npm + full unit/coverage matrix can exceed 15m under slow registry (Node 22 cancelled at ~15m).
     timeout-minutes: 25
     strategy:
       fail-fast: true
       matrix:
-        node-version: [22, 24, 25]
+        node-version: ${{ github.event_name == 'pull_request' && fromJSON('[25]') || fromJSON('[22, 24, 25]') }}
     steps:
       # actions/checkout@v7.0.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -563,20 +653,8 @@ jobs:
 
   ouroboros-postgres-optional:
     name: Ouroboros Postgres integration (optional)
-    needs:
-      [
-        lint,
-        workflow-scripts,
-        website-docker-smoke,
-        panguard-bridge-docker-smoke,
-        dashboard-docker-smoke,
-        distribution-npm-pack-smoke,
-        mcp-docker-workspace-smoke,
-        website-playwright-smoke,
-        supply-chain,
-        secret-scan,
-      ]
-    if: vars.CLAWQL_ENABLE_OUROBOROS_POSTGRES_CI == '1'
+    needs: [changes, lint, workflow-scripts]
+    if: needs.changes.outputs.code == 'true' && vars.CLAWQL_ENABLE_OUROBOROS_POSTGRES_CI == '1'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -613,20 +691,8 @@ jobs:
 
   inference-postgres-optional:
     name: Inference Postgres integration (optional)
-    needs:
-      [
-        lint,
-        workflow-scripts,
-        website-docker-smoke,
-        panguard-bridge-docker-smoke,
-        dashboard-docker-smoke,
-        distribution-npm-pack-smoke,
-        mcp-docker-workspace-smoke,
-        website-playwright-smoke,
-        supply-chain,
-        secret-scan,
-      ]
-    if: vars.CLAWQL_ENABLE_INFERENCE_POSTGRES_CI == '1'
+    needs: [changes, lint, workflow-scripts]
+    if: needs.changes.outputs.code == 'true' && vars.CLAWQL_ENABLE_INFERENCE_POSTGRES_CI == '1'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -663,19 +729,8 @@ jobs:
 
   pending-postgres-consume:
     name: Mandate pending Postgres consume (two-process)
-    needs:
-      [
-        lint,
-        workflow-scripts,
-        website-docker-smoke,
-        panguard-bridge-docker-smoke,
-        dashboard-docker-smoke,
-        distribution-npm-pack-smoke,
-        mcp-docker-workspace-smoke,
-        website-playwright-smoke,
-        supply-chain,
-        secret-scan,
-      ]
+    needs: [changes, lint, workflow-scripts]
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -718,20 +773,8 @@ jobs:
 
   argo-workflows-integration-optional:
     name: Argo Workflows integration (optional)
-    needs:
-      [
-        lint,
-        workflow-scripts,
-        website-docker-smoke,
-        panguard-bridge-docker-smoke,
-        dashboard-docker-smoke,
-        distribution-npm-pack-smoke,
-        mcp-docker-workspace-smoke,
-        website-playwright-smoke,
-        supply-chain,
-        secret-scan,
-      ]
-    if: vars.CLAWQL_ENABLE_ARGO_WORKFLOWS_KIND_CI == '1'
+    needs: [changes, lint, workflow-scripts]
+    if: needs.changes.outputs.code == 'true' && vars.CLAWQL_ENABLE_ARGO_WORKFLOWS_KIND_CI == '1'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:

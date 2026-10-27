@@ -8,6 +8,8 @@ name: Memory plateau gate
 
 on:
   pull_request:
+    # Lockfile-only / Dependabot bumps should not pay for the plateau gate —
+    # nightly schedule still covers slow leaks after dependency merges.
     paths:
       - "src/http/**"
       - "src/mcp/**"
@@ -15,8 +17,6 @@ on:
       - "packages/clawql-api/src/execute/**"
       - "packages/clawql-api/src/ifc/**"
       - "scripts/dataplane/**"
-      - "package.json"
-      - "package-lock.json"
       - ".github/workflows/memory-plateau.yml"
   push:
     branches: [main]
