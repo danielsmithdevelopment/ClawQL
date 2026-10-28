@@ -1,6 +1,6 @@
 # Durable-agent density — cross-system comparison
 
-**Status:** Ontologiql Rust fair row is **publishable**. ClawQL TypeScript is **`measured`** with a **wake-by-id index retained** at limit: first resource exhausted = **`rss` at 750,000** (512 MiB total process RSS). Evidence: [`evidence-fair.json`](./evidence-fair.json). Golem / Infinity: invite before publishing.
+**Status:** Ontologiql Rust fair row is **publishable** on the pre-deadline contract (`deadlineLatenessMs` pending remeasure). ClawQL TypeScript is **`measured`** under **fair-v2**: wake-deadline schedule retained at limit; first resource = **`rss` at 2.25e6**. Evidence: [`evidence-fair.json`](./evidence-fair.json). Golem / Infinity: invite before publishing.
 
 **Related:** [durability-proof STATUS](../durability-proof/STATUS.md) · Ready RSS boards are different ([memory-plateau.md](../cloudflare-multiturn/memory-plateau.md)).
 
@@ -8,70 +8,68 @@
 
 > On one node, Ontologiql held 200,000 parked agents, each with a 20-turn history and a pending tool call, within a 512 MiB process memory ceiling, with state stored on disk at about 30 KiB per agent. A parked agent woke in under 0.6 ms at p99 with a cold cache, and under 35 µs with its state cached. Parked agents survived a restart.
 
-**Shared definitions:** **total process RSS** ceiling; **agents-at-limit** = first resource exhausted (`disk` | `rss` | `latency`); limit runs **must** retain wake-by-id in-memory state for every counted agent (Ontologiql’s per-agent record equivalent).
+**Shared definitions (fair-v2):** total process RSS ceiling; agents-at-limit = first resource exhausted; retained at limit = **wake-deadline schedule** (path derived from agentId — FS is the id index); **deadlineLatenessMs** required.
 
-## Methodology (v4)
+## Methodology (v5)
 
-| Issue                          | Fix in harness                                                                                                                |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| 6e6 “disk” run at ~127 MiB RSS | That run **omitted** the per-agent index (find-sample only). **Not comparable.** Superseded.                                  |
-| Working-system state           | Limit runs retain `Map<agentId, bagPath>` for every counted agent; `idIndexEntries === agentsAtLimit` required for `measured` |
-| Cold p99 varies by wake order  | Untimed warmup + **N×** order alternation; report spread; headline = slower cold order (`coldP99Max`)                         |
-| Disk vs RSS                    | First resource exhausted; with index retained, this host hits **RSS** before disk                                             |
+| Issue | Fix |
+| --- | --- |
+| Id/path Maps are shrinkable | Path is derived; neither side needs to store it. ~0.62 KiB TS Map overhead and ~2 KiB Ontologiql records can both drop toward tens of bytes. **Then capacity is disk-bound and bag size decides** (~30 vs ~32.8 KiB). |
+| Fair agent needed real in-memory state | Every agent has `wakeDeadlineAt` (randomly spread). Systems retain a deadline schedule and must fire on time → **`deadlineLatenessMs` p50/p99**. |
+| Cold p99 jumped 0.68→1.79 ms across runs | Quote **median + range** across order repetitions. **Do not** read cross-system cold gaps until shared-host. |
 
-## ClawQL TypeScript — current evidence (v4, index retained)
+## ClawQL TypeScript — current evidence (v5 / fair-v2)
 
-Host: `clawql-cloud-agent-host`. Bags on disk: 6e6 (~32.8 KiB/agent). **Indexed limit:** load wake-by-id Map until total RSS would exceed 512 MiB → **750k within ceiling** (overshoot checkpoint 1e6 @ ~564 MiB). Status **`measured`**, `limitResource=rss`, `idIndexRetainedAtLimit=true`.
+Host: `clawql-cloud-agent-host`. Bags on disk: 6e6 (~32.8 KiB/agent). Limit run retains a **deadline min-heap** for every counted agent.
 
-| Column / check                                          | Value                                       |
-| ------------------------------------------------------- | ------------------------------------------- |
-| Status                                                  | `measured`                                  |
-| Agents at limit                                         | **750,000** (`limitResource=rss`)           |
-| Id index entries                                        | **750,000** (`agentId → bagPath`)           |
-| Resident KiB/agent (total RSS/N at within-ceiling step) | ~0.62 (~630 B/agent class)                  |
-| heapUsed KiB/agent after GC                             | ~0.44                                       |
-| Disk bytes/agent                                        | ~32.8 KiB                                   |
-| Wake headline order                                     | `warm_then_cold` (slower cold `coldP99Max`) |
-| Wake warm / cold p99 (headline)                         | ~0.14 / ~1.79 ms                            |
-| Cold p99 spread (`warm_then_cold`, 3 reps)              | 1.00–1.79 ms                                |
-| Cold p99 spread (`cold_then_warm`, 3 reps)              | 0.57–1.78 ms                                |
-| Restart survival                                        | **yes**                                     |
+| Column / check | Value |
+| --- | --- |
+| Status | `measured` |
+| Agents at limit | **2,250,000** (`limitResource=rss`) |
+| Deadline schedule entries | **2,250,000** |
+| Resident KiB/agent | ~0.22 |
+| Disk bytes/agent | ~32.8 KiB |
+| Deadline lateness p50/p99 (2000 bag fires) | ~278 / ~526 ms |
+| Wake warm p99 (headline-order **median**) | ~0.19 ms |
+| Wake cold p99 (**median**; range) | ~1.39 ms (1.24–6.05 across `warm_then_cold` reps) |
+| Restart survival | **yes** |
 
-**Superseded (do not quote):** the v3 “disk at 6e6 / ~127 MiB” row — no per-agent index.
+**Superseded:** v3 disk@6e6 without index; v4 id→path Map@750k (index-only resident, no deadline contract).
 
-## Provisional positioning (different hosts — shared-host remeasure before any win)
+## Provisional positioning (different hosts — shared-host before any win)
 
-| Column         | Reading on this evidence                                                                                                                                              |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Capacity**   | TypeScript ahead (750k vs Ontologiql 200k) because resident/agent is ~0.6 KiB vs ~2 KiB. **Trimming Ontologiql’s parked record is the capacity lever**, not a nicety. |
-| **Cold wakes** | Roughly even / disk-bound ballpark (TS headline ~1.8 ms p99 vs Ontologiql ~0.58 ms; order spread is large).                                                           |
-| **Warm wakes** | Ontologiql ahead (~33 µs vs TS ~140 µs here — about 4× on this run; earlier non-index runs showed ~10× at ~360 µs).                                                   |
+| Column | Reading |
+| --- | --- |
+| **Capacity** | Index/path trim on **both** sides likely converges on **disk / bag size** (~30 vs ~32.8 KiB), not the current resident gap. Deadline schedule is the resident that survives that trim. |
+| **Warm wakes** | Still Ontologiql’s clearest edge on published numbers (~33 µs vs TS ~0.19 ms median here). |
+| **Cold wakes** | **Do not compare** until shared-host — host variance dominates (median+range only). |
+| **Deadline accuracy** | New column. TS lateness p99 ~526 ms at 2k fires / 3s horizon under a 2.25e6 schedule — Ontologiql not yet measured. |
 
-**Ontologiql’s case on this board:** warm-wake speed and baseline process RSS. Capacity joins that story only after the per-agent record is trimmed. **No cross-system win copy until shared-host remeasure.**
+**Ontologiql’s case until deadline remeasure:** warm-wake speed and baseline process RSS. Capacity after mutual locator trim is a bag-size race. Invite Ontologiql to fair-v2 deadline + shared-host.
 
 ```bash
 npm run benchmark:program-density-fair   # --expose-gc
-# Indexed measure on existing bags:
 # CLAWQL_DENSITY_REUSE_BAGS=1 CLAWQL_DENSITY_RESUME_FROM=6000000 \
 # CLAWQL_DENSITY_RAMP=6000000 CLAWQL_DENSITY_WAKE_ORDER_REPS=3 \
+# CLAWQL_DENSITY_DEADLINE_HORIZON_MS=3000 CLAWQL_DENSITY_DEADLINE_MAX_FIRES=2000 \
 # CLAWQL_DENSITY_BAG_DIR=/tmp/clawql-density-bags-fair \
 # NODE_OPTIONS=--max-old-space-size=8192 npm run benchmark:program-density-fair
 ```
 
-| Item     | Location                                     |
-| -------- | -------------------------------------------- |
+| Item | Location |
+| --- | --- |
 | Evidence | [`evidence-fair.json`](./evidence-fair.json) |
-| Harness  | `packages/clawql-api/src/program/density/`   |
+| Harness | `packages/clawql-api/src/program/density/` |
 
 ## Golem / Infinity
 
-Same agent + same columns + same host. Invite maintainers before publishing comparison copy.
+Same agent + same columns + same host (fair-v2 deadlines). Invite before publishing.
 
 ## Board snapshot
 
-| System              | Status          | Notes                                                                          |
-| ------------------- | --------------- | ------------------------------------------------------------------------------ |
-| Ontologiql (Rust)   | **Publishable** | Public claim; `limitResource=rss` at 200k; ~2 KiB/agent trim candidate         |
-| ClawQL (TypeScript) | **measured**    | `limitResource=rss` at 750k **with** wake-by-id Map; provisional vs Ontologiql |
-| Golem               | Pending invite  | —                                                                              |
-| Infinity            | Pending invite  | —                                                                              |
+| System | Status | Notes |
+| --- | --- | --- |
+| Ontologiql (Rust) | **Publishable** (pre-deadline) | `deadlineLatenessMs=null` until remeasure |
+| ClawQL (TypeScript) | **measured** (fair-v2) | rss@2.25e6 with deadline schedule; lateness measured |
+| Golem | Pending invite | — |
+| Infinity | Pending invite | — |

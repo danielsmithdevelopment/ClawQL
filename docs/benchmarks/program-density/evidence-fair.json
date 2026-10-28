@@ -1,13 +1,14 @@
 {
-  "kind": "durable-agent-density-fair-v1",
-  "measuredAt": "2026-10-28T18:47:44.671Z",
+  "kind": "durable-agent-density-fair-v2",
+  "measuredAt": "2026-10-28T19:32:54.799Z",
   "contract": {
     "agent": {
       "turns": 20,
-      "turnPairBytesTarget": "~1–2 KiB text each turn pair",
+      "turnPairBytesTarget": "~1\u20132 KiB text each turn pair",
       "pendingToolBytesTarget": "~0.5 KiB JSON",
       "park": "Waiting on that tool (idle durable)",
-      "offload": "Allowed; report residence (RSS / page cache / disk / object store)"
+      "offload": "Allowed; report residence (RSS / page cache / disk / object store)",
+      "wakeDeadline": "Randomly spread wakeDeadlineAt; system must fire on time (lateness p99)"
     },
     "columns": [
       "agentsAtLimit",
@@ -16,14 +17,16 @@
       "pageCacheKiBPerAgent",
       "diskBytesPerAgent",
       "wakeWarmMs.p50/p99",
-      "wakeColdMs.p50/p99",
+      "wakeColdMs.p50/p99 (quote median+range; no cross-system cold until shared-host)",
+      "deadlineLatenessMs.p50/p99",
       "restartSurvival"
     ],
-    "memoryFraming": "Resident (total process RSS / N) is the floor; page cache is reclaimable; heapUsed-after-GC is the GC-runtime check. Limit runs must retain Map<agentId, bagPath> for every counted agent (wake-by-id). Ontologiql's ~2 KiB/agent record is a trim candidate toward id+locator. Provisional positioning (different hosts): TS capacity ahead until that trim; cold wakes roughly even; warm wakes favor Ontologiql. Shared-host remeasure before any win copy.",
+    "memoryFraming": "Retained at limit = wake-deadline schedule (not id\u2192path Map). Path is derived; FS is the id index. Id/path trim on both sides likely makes capacity disk-bound \u2014 bag size decides. Deadline lateness is the approval-relevant accuracy column. Cold wake: report median+range across order reps; do not read cross-system cold gaps until shared-host.",
     "publicClaimScope": "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
     "definitions": {
       "rssCeiling": "total_process_rss",
-      "agentsAtLimit": "first_resource_exhausted"
+      "agentsAtLimit": "first_resource_exhausted",
+      "retainedAtLimit": "wake_deadline_schedule"
     }
   },
   "host": {
@@ -41,7 +44,7 @@
       "systemId": "ontologiql-rust",
       "status": "publishable",
       "hostLabel": "stable-host (Ontologiql published)",
-      "honesty": "Ontologiql Rust fair row is publishable on the stable host. Numbers from the public claim (200k agents @ ≤512 MiB **total** process RSS, ~30 KiB disk/agent, warm wake p99 < 35 µs, cold wake p99 < 0.6 ms, restart survival). ~2 KiB resident/agent is a trim candidate (parked agent needs little more than id + bag locator) — not a Rust memory law. Full evidence-fair.json lives with Ontologiql — this mirror is not a ClawQL re-measurement.",
+      "honesty": "Ontologiql Rust fair row is publishable on the pre-deadline contract (200k @ \u2264512 MiB total RSS, ~30 KiB disk/agent, warm p99 < 35 \u00b5s, cold p99 < 0.6 ms, restart). ~2 KiB resident/agent can likely shrink to tens of bytes if path is derived and the FS is the id index \u2014 same as TS Map overhead. Once both trim, capacity is disk-bound and bag size decides (~30 vs ~32.8 KiB). **deadlineLatenessMs not yet measured** \u2014 invite Ontologiql to remeasure under fair-v2 (wake deadline + on-time fire). Do not read cold-wake gaps until shared-host.",
       "boardColumns": {
         "agentsAtLimit": 200000,
         "limitResource": "rss",
@@ -49,13 +52,14 @@
         "pageCacheKiBPerAgent": null,
         "diskBytesPerAgent": 30720,
         "wakeWarmMs": {
-          "p50": 0.000035,
-          "p99": 0.000035
+          "p50": 3.5e-05,
+          "p99": 3.5e-05
         },
         "wakeColdMs": {
           "p50": 0.6,
           "p99": 0.6
         },
+        "deadlineLatenessMs": null,
         "restartSurvival": true
       },
       "activeDensityLab": null
@@ -64,20 +68,24 @@
       "systemId": "clawql-typescript",
       "status": "measured",
       "hostLabel": "clawql-cloud-agent-host",
-      "honesty": "ClawQL TypeScript fair parked-agent bags (file-backed JSON, offloaded) with **wake-by-id Map retained** (750000 entries = agentsAtLimit). Agents-at-limit = first resource exhausted (**rss** at 750000). Wake protocol: JIT warmup + 3× order alternation; headline = slower cold order (warm_then_cold). Provisional vs Ontologiql (different hosts): capacity may favor TS until Ontologiql trims its ~2 KiB/agent record; cold wakes roughly even (disk-bound); warm wakes favor Ontologiql (~10×). Ontologiql's case on this board: warm-wake speed + baseline process RSS — capacity only after trim. No cross-system win until shared-host remeasure.",
+      "honesty": "ClawQL TypeScript fair-v2 bags with **wake-deadline schedule retained** (2250000 = agentsAtLimit). Limit = first resource exhausted (**rss** at 2250000). Deadline lateness p99=526 ms (2000 fires). Cold p99 median 1.391 ms (range 1.241\u20136.054; do not cross-compare cold until shared-host). Warm p99 median 0.188 ms. Trim of id/path records likely makes both systems disk-bound (bag size ~30 vs ~32.8 KiB); deadline state is the real resident. Provisional vs Ontologiql until shared-host + Ontologiql deadline remeasure. No win copy.",
       "boardColumns": {
-        "agentsAtLimit": 750000,
+        "agentsAtLimit": 2250000,
         "limitResource": "rss",
-        "residentKiBPerAgent": 0.6155,
+        "residentKiBPerAgent": 0.2221,
         "pageCacheKiBPerAgent": 0.09,
         "diskBytesPerAgent": 32817.8,
         "wakeWarmMs": {
-          "p50": 0.087328,
-          "p99": 0.135943
+          "p50": 0.503674,
+          "p99": 0.188135
         },
         "wakeColdMs": {
-          "p50": 0.147964,
-          "p99": 1.794073
+          "p50": 0.169156,
+          "p99": 1.390885
+        },
+        "deadlineLatenessMs": {
+          "p50": 278,
+          "p99": 526
         },
         "restartSurvival": true
       },
@@ -87,7 +95,7 @@
       "systemId": "golem",
       "status": "pending_invite",
       "hostLabel": "stable-host (same host TBD)",
-      "honesty": "Invite maintainers before publishing a Golem comparison row.",
+      "honesty": "Invite maintainers before publishing a Golem comparison row (fair-v2 deadlines).",
       "boardColumns": null,
       "activeDensityLab": null
     },
@@ -95,7 +103,7 @@
       "systemId": "infinity",
       "status": "pending_invite",
       "hostLabel": "stable-host (same host TBD)",
-      "honesty": "Invite maintainers before publishing an Infinity comparison row.",
+      "honesty": "Invite maintainers before publishing an Infinity comparison row (fair-v2 deadlines).",
       "boardColumns": null,
       "activeDensityLab": null
     }
@@ -105,53 +113,131 @@
     "ramp": [
       {
         "agents": 250000,
-        "rssKiB": 237852,
-        "residentKiBPerAgent": 0.951408,
-        "rssDeltaKiBPerAgent": 0.43856,
-        "heapUsedKiBAfterGc": 127403,
-        "heapUsedKiBPerAgentAfterGc": 0.509612,
+        "rssKiB": 179560,
+        "residentKiBPerAgent": 0.71824,
+        "rssDeltaKiBPerAgent": 0.203056,
+        "heapUsedKiBAfterGc": 62029,
+        "heapUsedKiBPerAgentAfterGc": 0.248116,
         "diskBytesTotal": 196906888890,
         "diskBytesPerAgent": 32817.814815,
-        "diskAvailBytes": 40176402432,
+        "diskAvailBytes": 40169693184,
         "pageCacheKiBPerAgent": null,
         "withinRssCeiling": true
       },
       {
         "agents": 500000,
-        "rssKiB": 343824,
-        "residentKiBPerAgent": 0.687648,
-        "rssDeltaKiBPerAgent": 0.431224,
-        "heapUsedKiBAfterGc": 227091,
-        "heapUsedKiBPerAgentAfterGc": 0.454182,
+        "rssKiB": 214520,
+        "residentKiBPerAgent": 0.42904,
+        "rssDeltaKiBPerAgent": 0.171448,
+        "heapUsedKiBAfterGc": 97667,
+        "heapUsedKiBPerAgentAfterGc": 0.195334,
         "diskBytesTotal": 196906888890,
         "diskBytesPerAgent": 32817.814815,
-        "diskAvailBytes": 40176402432,
+        "diskAvailBytes": 40169693184,
         "pageCacheKiBPerAgent": null,
         "withinRssCeiling": true
       },
       {
         "agents": 750000,
-        "rssKiB": 461652,
-        "residentKiBPerAgent": 0.615536,
-        "rssDeltaKiBPerAgent": 0.4445866666666667,
-        "heapUsedKiBAfterGc": 332975,
-        "heapUsedKiBPerAgentAfterGc": 0.4439666666666667,
+        "rssKiB": 251288,
+        "residentKiBPerAgent": 0.33505066666666666,
+        "rssDeltaKiBPerAgent": 0.16332266666666667,
+        "heapUsedKiBAfterGc": 131569,
+        "heapUsedKiBPerAgentAfterGc": 0.17542533333333332,
         "diskBytesTotal": 196906888890,
         "diskBytesPerAgent": 32817.814815,
-        "diskAvailBytes": 40176402432,
-        "pageCacheKiBPerAgent": 0.09,
+        "diskAvailBytes": 40169693184,
+        "pageCacheKiBPerAgent": null,
         "withinRssCeiling": true
       },
       {
         "agents": 1000000,
-        "rssKiB": 577500,
-        "residentKiBPerAgent": 0.5775,
-        "rssDeltaKiBPerAgent": 0.449288,
-        "heapUsedKiBAfterGc": 424879,
-        "heapUsedKiBPerAgentAfterGc": 0.424879,
+        "rssKiB": 288340,
+        "residentKiBPerAgent": 0.28834,
+        "rssDeltaKiBPerAgent": 0.159544,
+        "heapUsedKiBAfterGc": 169770,
+        "heapUsedKiBPerAgentAfterGc": 0.16977,
         "diskBytesTotal": 196906888890,
         "diskBytesPerAgent": 32817.814815,
-        "diskAvailBytes": 40176402432,
+        "diskAvailBytes": 40169693184,
+        "pageCacheKiBPerAgent": null,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 1250000,
+        "rssKiB": 322976,
+        "residentKiBPerAgent": 0.2583808,
+        "rssDeltaKiBPerAgent": 0.155344,
+        "heapUsedKiBAfterGc": 197891,
+        "heapUsedKiBPerAgentAfterGc": 0.1583128,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40169693184,
+        "pageCacheKiBPerAgent": null,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 1500000,
+        "rssKiB": 371016,
+        "residentKiBPerAgent": 0.247344,
+        "rssDeltaKiBPerAgent": 0.16148,
+        "heapUsedKiBAfterGc": 240650,
+        "heapUsedKiBPerAgentAfterGc": 0.16043333333333334,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40169693184,
+        "pageCacheKiBPerAgent": null,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 1750000,
+        "rssKiB": 399624,
+        "residentKiBPerAgent": 0.22835657142857144,
+        "rssDeltaKiBPerAgent": 0.15475885714285714,
+        "heapUsedKiBAfterGc": 268808,
+        "heapUsedKiBPerAgentAfterGc": 0.15360457142857142,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40169693184,
+        "pageCacheKiBPerAgent": null,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 2000000,
+        "rssKiB": 450784,
+        "residentKiBPerAgent": 0.225392,
+        "rssDeltaKiBPerAgent": 0.160994,
+        "heapUsedKiBAfterGc": 319732,
+        "heapUsedKiBPerAgentAfterGc": 0.159866,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40169693184,
+        "pageCacheKiBPerAgent": null,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 2250000,
+        "rssKiB": 499632,
+        "residentKiBPerAgent": 0.22205866666666665,
+        "rssDeltaKiBPerAgent": 0.164816,
+        "heapUsedKiBAfterGc": 347862,
+        "heapUsedKiBPerAgentAfterGc": 0.15460533333333334,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40169693184,
+        "pageCacheKiBPerAgent": 0.09,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 2500000,
+        "rssKiB": 530684,
+        "residentKiBPerAgent": 0.2122736,
+        "rssDeltaKiBPerAgent": 0.1607552,
+        "heapUsedKiBAfterGc": 375917,
+        "heapUsedKiBPerAgentAfterGc": 0.1503668,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40169693184,
         "pageCacheKiBPerAgent": null,
         "withinRssCeiling": false
       }
@@ -159,216 +245,225 @@
     "wakeSampleSize": 200,
     "wakeWarmupCount": 3000,
     "wakeOrderRepetitions": 3,
+    "deadlineHorizonMs": 3000,
+    "deadlineMaxFires": 2000,
     "coldEviction": "posix_fadvise_DONTNEED_sample: advised 200 files",
-    "limitReason": "total process RSS exceeded 512 MiB when indexing past 750000 agents (last within: rss=461652 KiB at 750000; overshoot rss=577500 at 1000000; wake-by-id Map retained for agentsAtLimit)",
+    "limitReason": "total process RSS exceeded 512 MiB when scheduling past 2250000 agents (last within: rss=499632 KiB at 2250000; overshoot rss=530684 at 2500000; wake-deadline schedule retained)",
     "limitHit": true,
     "limitResource": "rss",
     "rssCeilingDefinition": "total_process_rss",
     "baseline": {
-      "rssKiB": 128212,
-      "heapUsedKiB": 27355,
-      "heapTotalKiB": 62640,
-      "externalKiB": 6763,
-      "arrayBuffersKiB": 2175
+      "rssKiB": 128796,
+      "heapUsedKiB": 27414,
+      "heapTotalKiB": 63152,
+      "externalKiB": 6766,
+      "arrayBuffersKiB": 2170
     },
     "atLimit": {
-      "rssKiB": 589888,
-      "heapUsedKiB": 354652,
-      "heapTotalKiB": 398916,
-      "externalKiB": 5937,
-      "arrayBuffersKiB": 2131
+      "rssKiB": 532384,
+      "heapUsedKiB": 353979,
+      "heapTotalKiB": 393068,
+      "externalKiB": 5945,
+      "arrayBuffersKiB": 2139
     },
     "residentAccounting": {
-      "totalRssKiBPerAgent": 0.6155,
-      "heapUsedKiBPerAgentAfterGc": 0.444,
-      "rssDeltaKiBPerAgent": 0.4446,
-      "retainedInProcess": "Map<agentId, bagPath> wake-by-id index retained for every counted agent (working-system state); FairParkedAgent body offloaded to disk JSON. Comparable to Ontologiql's per-agent in-memory record — their ~2 KiB/agent is a trim candidate (id + locator), not a Rust-vs-TS memory law.",
-      "idIndexEntries": 750000,
-      "idIndexShape": "agentId_to_bag_path_map",
-      "estimatedIdIndexBytesPerAgent": 125
+      "totalRssKiBPerAgent": 0.2221,
+      "heapUsedKiBPerAgentAfterGc": 0.1546,
+      "rssDeltaKiBPerAgent": 0.1648,
+      "retainedInProcess": "Wake-deadline min-heap (agentId + deadlineMs) for every counted agent \u2014 approval expiry / reminder schedule. Bag path derived from agentId (FS is the id index). Id/path Maps alone are not the capacity story; once both systems trim locator overhead, capacity is disk-bound and bag size decides.",
+      "deadlineScheduleEntries": 2250000,
+      "scheduleShape": "deadline_min_heap",
+      "estimatedScheduleBytesPerAgent": 77
     },
-    "idIndexRetainedAtLimit": true,
+    "deadlineScheduleRetainedAtLimit": true,
+    "deadlineLateness": {
+      "p50": 278,
+      "p99": 526,
+      "n": 2000,
+      "fired": 2000,
+      "maxLatenessMs": 533
+    },
     "wakeByOrder": [
       {
         "order": "warm_then_cold",
         "repetition": 0,
         "warm": {
-          "p50": 0.087328,
-          "p99": 0.135943,
+          "p50": 0.087455,
+          "p99": 0.188135,
           "n": 200
         },
         "cold": {
-          "p50": 0.147964,
-          "p99": 1.794073,
+          "p50": 0.147965,
+          "p99": 1.240846,
           "n": 200
         },
         "gcWarm": {
-          "count": 1,
-          "totalMs": 2.048858,
-          "maxMs": 2.048858
+          "count": 2,
+          "totalMs": 3.411987,
+          "maxMs": 2.042156
         },
         "gcCold": {
           "count": 2,
-          "totalMs": 3.991553,
-          "maxMs": 2.304241
+          "totalMs": 3.764295,
+          "maxMs": 2.041237
         }
       },
       {
         "order": "cold_then_warm",
         "repetition": 0,
         "warm": {
-          "p50": 0.08448,
-          "p99": 1.006245,
+          "p50": 0.088768,
+          "p99": 0.122608,
           "n": 200
         },
         "cold": {
-          "p50": 0.14064,
-          "p99": 1.784408,
+          "p50": 0.139706,
+          "p99": 1.435173,
           "n": 200
         },
         "gcWarm": {
-          "count": 2,
-          "totalMs": 2.946096,
-          "maxMs": 1.475621
+          "count": 1,
+          "totalMs": 1.908446,
+          "maxMs": 1.908446
         },
         "gcCold": {
           "count": 2,
-          "totalMs": 3.759082,
-          "maxMs": 1.991674
+          "totalMs": 3.860882,
+          "maxMs": 1.973142
         }
       },
       {
         "order": "warm_then_cold",
         "repetition": 1,
         "warm": {
-          "p50": 0.083065,
-          "p99": 0.159837,
+          "p50": 0.080914,
+          "p99": 0.18196,
           "n": 200
         },
         "cold": {
-          "p50": 0.141999,
-          "p99": 1.055714,
+          "p50": 0.137735,
+          "p99": 1.390885,
           "n": 200
         },
         "gcWarm": {
-          "count": 1,
-          "totalMs": 0.774359,
-          "maxMs": 0.774359
+          "count": 2,
+          "totalMs": 2.821302,
+          "maxMs": 1.437008
         },
         "gcCold": {
           "count": 2,
-          "totalMs": 1.734805,
-          "maxMs": 0.944741
+          "totalMs": 3.210674,
+          "maxMs": 1.792665
         }
       },
       {
         "order": "cold_then_warm",
         "repetition": 1,
         "warm": {
-          "p50": 0.088925,
-          "p99": 0.154808,
+          "p50": 0.085323,
+          "p99": 0.213017,
           "n": 200
         },
         "cold": {
-          "p50": 0.136491,
-          "p99": 0.574045,
+          "p50": 0.137699,
+          "p99": 0.405923,
           "n": 200
         },
         "gcWarm": {
-          "count": 1,
-          "totalMs": 0.812993,
-          "maxMs": 0.812993
+          "count": 2,
+          "totalMs": 3.119004,
+          "maxMs": 1.602164
         },
         "gcCold": {
           "count": 1,
-          "totalMs": 1.147719,
-          "maxMs": 1.147719
+          "totalMs": 1.605402,
+          "maxMs": 1.605402
         }
       },
       {
         "order": "warm_then_cold",
         "repetition": 2,
         "warm": {
-          "p50": 0.089306,
-          "p99": 0.127698,
+          "p50": 0.503674,
+          "p99": 2.839739,
           "n": 200
         },
         "cold": {
-          "p50": 0.132311,
-          "p99": 1.001655,
+          "p50": 0.169156,
+          "p99": 6.053622,
           "n": 200
         },
         "gcWarm": {
-          "count": 1,
-          "totalMs": 0.760802,
-          "maxMs": 0.760802
+          "count": 3,
+          "totalMs": 10.497534,
+          "maxMs": 8.222339
         },
         "gcCold": {
           "count": 2,
-          "totalMs": 1.789704,
-          "maxMs": 1.01379
+          "totalMs": 7.34631,
+          "maxMs": 4.492169
         }
       },
       {
         "order": "cold_then_warm",
         "repetition": 2,
         "warm": {
-          "p50": 0.089538,
-          "p99": 0.125431,
+          "p50": 0.092504,
+          "p99": 0.694465,
           "n": 200
         },
         "cold": {
-          "p50": 0.128001,
-          "p99": 0.575618,
+          "p50": 0.142431,
+          "p99": 0.579273,
           "n": 200
         },
         "gcWarm": {
-          "count": 1,
-          "totalMs": 0.834353,
-          "maxMs": 0.834353
+          "count": 2,
+          "totalMs": 3.355089,
+          "maxMs": 1.814143
         },
         "gcCold": {
           "count": 1,
-          "totalMs": 0.884524,
-          "maxMs": 0.884524
+          "totalMs": 2.127839,
+          "maxMs": 2.127839
         }
       }
     ],
     "wakeSpread": [
       {
         "order": "warm_then_cold",
-        "coldP99Min": 1.001655,
-        "coldP99Max": 1.794073,
-        "coldP99Median": 1.055714,
-        "warmP99Min": 0.127698,
-        "warmP99Max": 0.159837,
-        "warmP99Median": 0.135943,
+        "coldP99Min": 1.240846,
+        "coldP99Max": 6.053622,
+        "coldP99Median": 1.390885,
+        "warmP99Min": 0.18196,
+        "warmP99Max": 2.839739,
+        "warmP99Median": 0.188135,
         "repetitions": 3
       },
       {
         "order": "cold_then_warm",
-        "coldP99Min": 0.574045,
-        "coldP99Max": 1.784408,
-        "coldP99Median": 0.575618,
-        "warmP99Min": 0.125431,
-        "warmP99Max": 1.006245,
-        "warmP99Median": 0.154808,
+        "coldP99Min": 0.405923,
+        "coldP99Max": 1.435173,
+        "coldP99Median": 0.579273,
+        "warmP99Min": 0.122608,
+        "warmP99Max": 0.694465,
+        "warmP99Median": 0.213017,
         "repetitions": 3
       }
     ],
     "wakeHeadlineOrder": "warm_then_cold",
     "wakePooled": {
       "warm": {
-        "p50": 0.087107,
-        "p99": 1.006245,
+        "p50": 0.15644,
+        "p99": 2.839739,
         "n": 1200
       },
       "cold": {
-        "p50": 0.137901,
-        "p99": 1.794073,
+        "p50": 0.145782,
+        "p99": 6.053622,
         "n": 1200
       },
-      "coldFasterThanWarmP99": false
+      "coldFasterThanWarmP99": true
     },
     "exposeGc": true,
     "ceilingHit": true

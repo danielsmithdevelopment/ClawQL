@@ -730,18 +730,31 @@ export function runFairDensityBoardEffect(
       readonly maxLatenessMs: number;
     } | null = null;
     if (!options.skipDeadlinePump && schedule.size() > 0) {
+      // Re-stamp sample deadlines from *now* — load can take minutes, so
+      // deadlines assigned at scheduleEpochMs would all be massively overdue.
       const pumpSchedule = yield* makeDeadlineScheduleEffect();
-      const soonest = [...schedule.entries()]
-        .sort((a, b) => a.deadlineMs - b.deadlineMs)
-        .slice(0, Math.min(deadlineMaxFires, schedule.size()));
-      for (const e of soonest) pumpSchedule.schedule(e.agentId, e.deadlineMs);
+      const sampleIds = [
+        ...new Set([
+          ...indexSampleIds,
+          ...schedule
+            .entries()
+            .slice(0, Math.min(deadlineMaxFires, schedule.size()))
+            .map((e) => e.agentId),
+        ]),
+      ].slice(0, Math.min(deadlineMaxFires, schedule.size()));
+      const pumpNow = Date.now();
+      for (const id of sampleIds) {
+        const dl = Effect.runSync(randomDeadlineMsEffect(pumpNow, deadlineHorizonMs));
+        pumpSchedule.schedule(id, dl);
+      }
       const pump = yield* runDeadlinePumpEffect({
         schedule: pumpSchedule,
         wake: async (agentId) => {
+          // Strip any accidental suffix; ids are plain bag_* keys.
           await Effect.runPromise(bags.wake(agentId));
         },
-        maxFires: soonest.length,
-        wallDeadlineMs: Date.now() + deadlineHorizonMs + 5_000,
+        maxFires: sampleIds.length,
+        wallDeadlineMs: pumpNow + deadlineHorizonMs + 5_000,
         percentile: (samples, p) => Effect.runSync(percentileMsEffect(samples, p)),
       });
       deadlineLateness = {
@@ -835,13 +848,17 @@ export function runFairDensityBoardEffect(
       ),
     };
 
-    // Cold board columns: median across headline-order reps (not a single noisy max).
+    // Board wake columns: median across headline-order reps (cold especially
+    // varies >2× run-to-run; do not over-read a single noisy max).
     const headlineSpread = wakeSpread.find((s) => s.order === wakeHeadlineOrder);
     const coldBoard = {
       p50: headline.cold.p50,
       p99: headlineSpread?.coldP99Median ?? headline.cold.p99,
     };
-    const warmBoard = { p50: headline.warm.p50, p99: headline.warm.p99 };
+    const warmBoard = {
+      p50: headline.warm.p50,
+      p99: headlineSpread?.warmP99Median ?? headline.warm.p99,
+    };
 
     let restartSurvival = false;
     const restartProbe = timedIds[0] ?? fromDisk.sampleIds[0];
