@@ -60,4 +60,22 @@ ClawQL ~40–55 ms for **2.5e6** vs Ontologiql **80 ms** for **200k**. If Ontolo
 | noLoss / noDuplicate              | true                                        |
 | overdue prompt                    | 1.0                                         |
 
+## Peer artifact (Ontologiql → merge)
+
+Emit JSON matching ClawQL’s `clawql` object in `shared-host-five-arms.json` (same `arms` keys), then:
+
+```bash
+# ClawQL on the shared host:
+npm run benchmark:program-density-shared-host
+# or:
+node --expose-gc --import tsx scripts/benchmarks/program-density/run-shared-host-five-arms.mjs \
+  --out=docs/benchmarks/program-density/shared-host-five-arms.json
+
+# After Ontologiql writes its peer file on the same host:
+CLAWQL_DENSITY_PEER_JSON=/path/to/ontologiql-five-arms.json \
+  npm run benchmark:program-density-shared-host
+```
+
+Required peer fields: `systemId`, `hostLabel`, `agentsAtLimit`, `flushPolicy`, `scheduleShape`, `scheduleFormat` (onDisk/inMemory/rebuildPath), `arms.{steady,scaledBursts,ramp,crashTest,deadlineRestart}`.
+
 Next: both run all five arms on **one host**. No win copy until then.

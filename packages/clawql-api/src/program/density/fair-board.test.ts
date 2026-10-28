@@ -83,6 +83,8 @@ describe("fair density board (smoke)", () => {
     expect(Array.isArray(run.deadlineAccuracy?.ramp)).toBe(true);
 
     const ont = evidence.rows.find((r) => r.systemId === "ontologiql-rust");
-    expect(ont?.boardColumns?.deadlineAccuracy).toBeNull();
+    // Lab-aligned (#144) until shared-host — not null.
+    expect(ont?.boardColumns?.deadlineAccuracy?.crashTestOk).toBe(true);
+    expect(ont?.boardColumns?.deadlineAccuracy?.sustainablePerSec).toBe(128_000);
   }, 300_000);
 });

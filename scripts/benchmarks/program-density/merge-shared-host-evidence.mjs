@@ -1,74 +1,86 @@
-import { readFileSync, writeFileSync } from "node:fs";
+/**
+ * Merge SHARED_HOST five-arm artifact into evidence-fair.json.
+ *
+ * Does not overwrite Ontologiql #144 peerLab / honesty.
+ * Does not promote single-run ramp numbers over the board's 3-rep floor.
+ *
+ *   node scripts/benchmarks/program-density/merge-shared-host-evidence.mjs \
+ *     [docs/benchmarks/program-density/shared-host-five-arms.json]
+ */
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const evidencePath = "docs/benchmarks/program-density/evidence-fair.json";
-const arms = JSON.parse(readFileSync("/opt/cursor/artifacts/deadline-shared-host-arms.json", "utf8"));
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
+const evidencePath = join(repoRoot, "docs/benchmarks/program-density/evidence-fair.json");
+const defaultArms = join(repoRoot, "docs/benchmarks/program-density/shared-host-five-arms.json");
+const armsPath = process.argv[2] || defaultArms;
+
+if (!existsSync(armsPath)) {
+  console.error(`missing five-arm artifact: ${armsPath}`);
+  process.exit(1);
+}
+
+const arms = JSON.parse(readFileSync(armsPath, "utf8"));
 const evidence = JSON.parse(readFileSync(evidencePath, "utf8"));
 
-const clawql = evidence.rows.find((r) => r.systemId === "clawql-typescript");
-const board = clawql.boardColumns.deadlineAccuracy;
+const clawqlRow = evidence.rows.find((r) => r.systemId === "clawql-typescript");
+const clawqlArms = arms.clawql?.arms;
+if (!clawqlRow || !clawqlArms) {
+  console.error("expected clawql row in evidence and clawql.arms in five-arm artifact");
+  process.exit(1);
+}
 
-board.scaledBurstFirstMissSize = arms.scaledBursts?.firstMissSize ?? null;
-board.deadlineRestartOk = arms.deadlineRestart?.ok ?? null;
-board.deadlineRestartRebuildMs = arms.deadlineRestart?.rebuildMs ?? null;
+evidence.sharedHostFiveArms = {
+  artifact: "docs/benchmarks/program-density/shared-host-five-arms.json",
+  kind: arms.kind,
+  measuredAt: arms.measuredAt,
+  sharedHostComplete: Boolean(arms.reading?.sharedHostComplete),
+  winCopy: Boolean(arms.reading?.winCopy),
+  peerPresent: arms.peer != null,
+  peer: arms.peer,
+  clawql: {
+    hostLabel: arms.clawql.hostLabel,
+    agentsAtLimit: arms.clawql.agentsAtLimit,
+    scheduleShape: arms.clawql.scheduleShape,
+    flushPolicy: arms.clawql.flushPolicy,
+    firstBurstMiss: clawqlArms.scaledBursts?.firstMissSize ?? null,
+    sustainablePerSec: clawqlArms.ramp?.sustainablePerSec ?? null,
+    firstRateMissingSlaPerSec: clawqlArms.ramp?.firstRateMissingSlaPerSec ?? null,
+    rampWentPastFailure: clawqlArms.ramp?.rampWentPastFailure ?? null,
+    crashOk: clawqlArms.crashTest?.ok ?? null,
+    restartOk: clawqlArms.deadlineRestart?.ok ?? null,
+    rebuildMs: clawqlArms.deadlineRestart?.rebuildMs ?? null,
+    scheduleFormat: arms.clawql.scheduleFormat ?? null,
+    note: "Single-run harness snapshot. Board deadlineAccuracy still quotes the conservative 256k 3-rep floor / firstMiss 384k until a multi-rep shared-host campaign.",
+  },
+  reading: arms.reading,
+};
 
-evidence.measuredAt = new Date().toISOString();
-evidence.contract.agent.wakeDeadline =
-  "Randomly spread wakeDeadlineAt; fire within shared SLA (default 1s); identical fired definition (durable_trigger_record); explicit flush policy (default group_commit); lateness stamped after fsync; typed-array schedule; scaled bursts (Ontologiql sizes; first miss); deadline restart (rebuild + overdue catch-up); arrival-rate ramp; SIGKILL flush crash test";
-evidence.contract.columns = evidence.contract.columns.map((c) =>
-  c.startsWith("deadlineAccuracy")
-    ? "deadlineAccuracy (slaMs, firedDefinition, flushPolicy, scheduleShape, scaledBursts, deadlineRestart, crashTest, arrivalRate, steady/burst, sustainablePerSec, gcAb)"
-    : c
-);
 evidence.contract.memoryFraming =
-  "Retained at limit = wake-deadline schedule. See SHARED_HOST.md for the five numbers and required deadline arms (scaled bursts + deadline restart). Fired stamps after flush. Publish typed_arrays best-effort + object_entries GC A/B. Cold wake: median+range only until shared-host.";
+  "Retained at limit = wake-deadline schedule. SHARED_HOST.md: methodology aligned (ClawQL + Ontologiql #144). group_commit sustained rate is disk-fsync bound. RebuildMs requires schedule-format disclosure. ClawQL five-arm harness artifact landed (peer null); shared-host complete only when Ontologiql peer merges on the same host. No win copy.";
 
-clawql.honesty = [
-  "ClawQL TypeScript fair-v2 (methodology v10 / SHARED_HOST arms). Schedule retained at 2.5e6 as typed_arrays.",
+clawqlRow.honesty = [
+  "ClawQL TypeScript fair-v2 (methodology v10). Schedule 2.5e6 typed_arrays; format disclosed (header+live NDJSON+padCount; bulk pad + bottom-up heapify).",
   "Fired=durable_trigger_record; flush=group_commit(64/10ms); crashTest=pass; lateness after fsync.",
-  `Steady ~667/s → 100% met / excess p99 ${board.steadyP99ExcessMs} ms (typed).`,
-  `Scaled bursts (Ontologiql sizes): first miss at N=${arms.scaledBursts.firstMissSize} (512/10k/100k met 100% within 1s; ${arms.scaledBursts.firstMissSize} → ${arms.scaledBursts.arms.at(-1).pctWithinSla}% met).`,
-  `Deadline restart: ok=${arms.deadlineRestart.ok}; rebuildMs=${arms.deadlineRestart.rebuildMs} at capacity ${arms.deadlineRestart.capacity}; overdue ${arms.deadlineRestart.overdueFired}/${arms.deadlineRestart.overdueExpected} prompt-fired; no loss/duplicates.`,
-  `sustainablePerSec=${board.sustainablePerSec} (typed + group_commit floor).`,
-  "Object-heap GC A/B retained (~314 ms / ~121 ms major). Provisional vs Ontologiql until shared-host + their flush disclose/crash-test. No win copy.",
+  "Steady ~667/s → 100% / excess p99 22 ms. Scaled bursts first miss N=250000 (N ≤ agentsAtLimit).",
+  "Ramp board floor: sustainablePerSec=256000; firstRateMissingSlaPerSec=384000; rampWentPastFailure=true.",
+  "Deadline restart pass; rebuildMs~40–55 at 2.5e6. Object-heap GC A/B retained.",
+  "Under group_commit, sustained rate ≈ disk fsync bound (≤64×fsyncs/s) — cross-host gaps are not a language verdict.",
+  "Methodology aligned with Ontologiql #144.",
+  `Five-arm harness artifact ready (${evidence.sharedHostFiveArms.artifact}): firstBurstMiss=${evidence.sharedHostFiveArms.clawql.firstBurstMiss}; single-run ramp pass ${evidence.sharedHostFiveArms.clawql.sustainablePerSec}/miss ${evidence.sharedHostFiveArms.clawql.firstRateMissingSlaPerSec}; crash/restart ok; rebuildMs=${evidence.sharedHostFiveArms.clawql.rebuildMs}. Peer null — sharedHostComplete=false. No win copy.`,
 ].join(" ");
-
-const ont = evidence.rows.find((r) => r.systemId === "ontologiql-rust");
-ont.honesty =
-  "Ontologiql Rust fair row is publishable on the pre-deadline contract. **deadlineAccuracy not yet measured** — invite to fair-v2 / SHARED_HOST.md: identical fired definition + flush policy (disclose + crash test); scaled bursts (512/10k/100k+; first miss); deadline restart (rebuild at full scale, no loss/duplicates, overdue catch-up); arrival-rate ramp. Do not read cold-wake gaps until shared-host.";
-
-if (!evidence.clawqlRun.deadlineAccuracy) evidence.clawqlRun.deadlineAccuracy = {};
-evidence.clawqlRun.deadlineAccuracy.scaledBursts = {
-  sizes: arms.scaledBursts.sizes,
-  firstMissSize: arms.scaledBursts.firstMissSize,
-  note: arms.scaledBursts.note,
-  arms: arms.scaledBursts.arms.map((a) => ({
-    n: a.n,
-    pctWithinSla: a.pctWithinSla,
-    excessOverTickP99Ms: a.excessOverTickP99Ms,
-    wallMs: a.wallMs,
-    arrivalRatePerSec: a.arrivalRatePerSec,
-  })),
-};
-evidence.clawqlRun.deadlineAccuracy.deadlineRestart = {
-  ok: arms.deadlineRestart.ok,
-  capacity: arms.deadlineRestart.capacity,
-  liveCount: arms.deadlineRestart.liveCount,
-  rebuildMs: arms.deadlineRestart.rebuildMs,
-  overdueExpected: arms.deadlineRestart.overdueExpected,
-  overdueFired: arms.deadlineRestart.overdueFired,
-  missingLive: arms.deadlineRestart.missingLive,
-  duplicateFired: arms.deadlineRestart.duplicateFired,
-  note: arms.deadlineRestart.note,
-};
 
 writeFileSync(evidencePath, `${JSON.stringify(evidence, null, 2)}\n`);
 console.log(
   JSON.stringify(
     {
       updated: evidencePath,
-      firstMissSize: board.scaledBurstFirstMissSize,
-      restartOk: board.deadlineRestartOk,
-      rebuildMs: board.deadlineRestartRebuildMs,
+      from: armsPath,
+      sharedHostComplete: evidence.sharedHostFiveArms.sharedHostComplete,
+      peerPresent: evidence.sharedHostFiveArms.peerPresent,
+      firstBurstMiss: evidence.sharedHostFiveArms.clawql.firstBurstMiss,
+      rebuildMs: evidence.sharedHostFiveArms.clawql.rebuildMs,
     },
     null,
     2

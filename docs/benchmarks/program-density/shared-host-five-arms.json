@@ -1,0 +1,132 @@
+{
+  "kind": "durable-agent-density-shared-host-five-arms",
+  "measuredAt": "2026-10-28T21:51:08.196Z",
+  "contract": "docs/benchmarks/program-density/SHARED_HOST.md",
+  "reading": {
+    "sustainedRateNote": "Under group_commit(batchMax=64), durable rate ≲ 64 × disk_fsyncs/sec. Gaps across hosts are not a language verdict.",
+    "rebuildNote": "rebuildMs is a schedule-format column — compare only when both disclose onDisk/inMemory/rebuildPath.",
+    "winCopy": false,
+    "sharedHostComplete": false
+  },
+  "clawql": {
+    "systemId": "clawql-typescript",
+    "hostLabel": "clawql-cloud-agent-host:cursor",
+    "agentsAtLimit": 2500000,
+    "flushPolicy": {
+      "mode": "group_commit",
+      "batchMax": 64,
+      "flushIntervalMs": 10
+    },
+    "scheduleShape": "typed_arrays",
+    "scheduleFormat": {
+      "onDisk": "json_header_plus_live_ndjson_pads_by_count",
+      "inMemory": "float64_deadlines_int32_heap_typed_arrays",
+      "rebuildPath": "load_live_lines_bulk_pad_bottom_up_heapify",
+      "note": "Pads are reconstructed from padCount (not parsed line-by-line). Heap is bottom-up heapified once after bulk fill. A peer that parses/sorts every entry individually will show a different rebuildMs for the same N — disclose format before cross-system rebuild comparison."
+    },
+    "arms": {
+      "steady": {
+        "arrivalRatePerSec": 666.67,
+        "pctWithinSla": 100,
+        "excessP99Ms": 25,
+        "wallMs": 2975
+      },
+      "scaledBursts": {
+        "firstMissSize": 250000,
+        "sizes": [
+          512,
+          10000,
+          100000,
+          250000
+        ],
+        "arms": [
+          {
+            "n": 512,
+            "pctWithinSla": 100,
+            "excessP99Ms": 24,
+            "wallMs": 3,
+            "drainPerSec": 170666.67
+          },
+          {
+            "n": 10000,
+            "pctWithinSla": 100,
+            "excessP99Ms": 51,
+            "wallMs": 45,
+            "drainPerSec": 222222.22
+          },
+          {
+            "n": 100000,
+            "pctWithinSla": 100,
+            "excessP99Ms": 394,
+            "wallMs": 403,
+            "drainPerSec": 248138.96
+          },
+          {
+            "n": 250000,
+            "pctWithinSla": 77.11,
+            "excessP99Ms": 1249,
+            "wallMs": 1283,
+            "drainPerSec": 194855.81
+          }
+        ],
+        "note": "First miss at N=250000: pctWithinSla below 99% (1s SLA)."
+      },
+      "ramp": {
+        "sustainablePerSec": 384000,
+        "firstRateMissingSlaPerSec": 512000,
+        "rampWentPastFailure": true,
+        "steps": [
+          {
+            "arrivalRatePerSec": 128000,
+            "pctWithinSla": 100,
+            "excessP99Ms": 58
+          },
+          {
+            "arrivalRatePerSec": 192000,
+            "pctWithinSla": 100,
+            "excessP99Ms": 102
+          },
+          {
+            "arrivalRatePerSec": 256000,
+            "pctWithinSla": 100,
+            "excessP99Ms": 144
+          },
+          {
+            "arrivalRatePerSec": 384000,
+            "pctWithinSla": 100,
+            "excessP99Ms": 950
+          },
+          {
+            "arrivalRatePerSec": 512000,
+            "pctWithinSla": 84.83,
+            "excessP99Ms": 1030
+          }
+        ]
+      },
+      "crashTest": {
+        "ok": true,
+        "countedFired": 416,
+        "missingFromDisk": 0,
+        "duplicateOnDisk": 0,
+        "note": "SIGKILL after 416 durable acks; all counted fires present on disk exactly once (journal=/tmp/clawql-density-shared-host/.crash/deadline-triggers-20683-1793224253963.ndjson)."
+      },
+      "deadlineRestart": {
+        "ok": true,
+        "rebuildMs": 45,
+        "capacity": 2500000,
+        "overdueFired": 5000,
+        "overdueExpected": 5000,
+        "missingLive": 0,
+        "duplicateFired": 0,
+        "scheduleFormat": {
+          "onDisk": "json_header_plus_live_ndjson_pads_by_count",
+          "inMemory": "float64_deadlines_int32_heap_typed_arrays",
+          "rebuildPath": "load_live_lines_bulk_pad_bottom_up_heapify",
+          "note": "Pads are reconstructed from padCount (not parsed line-by-line). Heap is bottom-up heapified once after bulk fill. A peer that parses/sorts every entry individually will show a different rebuildMs for the same N — disclose format before cross-system rebuild comparison."
+        },
+        "note": "SIGKILL after durable snapshot; downtime 500 ms; rebuild 45 ms at capacity 2500000 (load_live_lines_bulk_pad_bottom_up_heapify); overdue 5000/5000 prompt-fired; no loss/duplicates. RebuildMs is a schedule-format column — disclose peer on-disk/rebuild path before language comparison."
+      }
+    }
+  },
+  "peer": null
+}

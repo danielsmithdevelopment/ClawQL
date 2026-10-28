@@ -145,14 +145,14 @@ const DEFAULT_RAMP: readonly number[] = [
 
 /**
  * Ontologiql public claim (publishable) — mirrored for the comparison table.
- * Deadline lateness is null until Ontologiql remeasures under the v2 contract.
+ * Deadline lab closed in Ontologiql #144 (group_commit); shared-host five arms pending.
  */
 export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
   systemId: "ontologiql-rust",
   status: "publishable",
   hostLabel: "stable-host (Ontologiql published)",
   honesty:
-    "Ontologiql Rust fair row is publishable on the pre-deadline contract (200k @ ≤512 MiB total RSS, ~30 KiB disk/agent, warm p99 < 35 µs, cold p99 < 0.6 ms, restart). **deadlineAccuracy opens (SHARED_HOST.md):** (1) flush policy disclose + SIGKILL crash test; (2) explain 400k burst @ 200k agents or rerun ladder with N ≤ agentsAtLimit; (3) confirm sustained-rate ramp continued past first failure (cliff matched burst exactly — ambiguous); (4) disclose schedule on-disk/rebuild format next to rebuildMs. Then same five arms on one host. Do not read cold-wake gaps or rebuildMs as language until format is disclosed.",
+    "Ontologiql Rust: capacity/wake publishable (200k @ ≤512 MiB, ~30 KiB/agent, warm/cold wakes, restart). Deadline methodology closed in lab (#144): group_commit(64/10ms)+crashTest; bursts N≤agentsAtLimit; ramp past failure; restart rebuild~80ms. Different host — not a shared-host public deadline claim. Sustained rate under group_commit is disk-fsync bound; rebuild format (compact array) still worth one look. Same five arms on one host next (SHARED_HOST.md). No win copy.",
   boardColumns: {
     agentsAtLimit: 200_000,
     limitResource: "rss",
@@ -161,7 +161,35 @@ export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
     diskBytesPerAgent: 30 * 1024,
     wakeWarmMs: { p50: 0.000035, p99: 0.000035 },
     wakeColdMs: { p50: 0.6, p99: 0.6 },
-    deadlineAccuracy: null,
+    deadlineAccuracy: {
+      slaMs: 1_000,
+      slaTargetPct: 99,
+      firedDefinition: "durable_trigger_record",
+      concurrency: 0,
+      flushPolicy: {
+        mode: "group_commit",
+        batchMax: 64,
+        flushIntervalMs: 10,
+        durabilityWindowTriggers: 0,
+        durabilityWindowMs: 0,
+        crashSafe: true,
+        syncPrimitive: "fsync_group_commit",
+      },
+      crashTestOk: true,
+      steadyArrivalRatePerSec: 0,
+      steadyPctMet: 0,
+      steadyP99ExcessMs: 0,
+      burstPctMet: 0,
+      burstP99ExcessMs: 0,
+      burstDrainPerSec: 0,
+      sustainablePerSec: 128_000,
+      firstRateMissingSlaPerSec: 192_000,
+      rampWentPastFailure: true,
+      scaledBurstFirstMissSize: 200_000,
+      deadlineRestartOk: true,
+      deadlineRestartRebuildMs: 80,
+      deadlineScheduleFormat: null,
+    },
     restartSurvival: true,
   },
   activeDensityLab: null,

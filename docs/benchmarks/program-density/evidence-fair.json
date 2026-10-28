@@ -21,7 +21,7 @@
       "deadlineAccuracy (slaMs, firedDefinition, flushPolicy, scheduleShape, scaledBursts, deadlineRestart, crashTest, arrivalRate, steady/burst, sustainablePerSec, gcAb)",
       "restartSurvival"
     ],
-    "memoryFraming": "Retained at limit = wake-deadline schedule. SHARED_HOST.md: methodology aligned (ClawQL + Ontologiql #144). group_commit sustained rate is disk-fsync bound. RebuildMs requires schedule-format disclosure. Shared-host five arms before win copy.",
+    "memoryFraming": "Retained at limit = wake-deadline schedule. SHARED_HOST.md: methodology aligned (ClawQL + Ontologiql #144). group_commit sustained rate is disk-fsync bound. RebuildMs requires schedule-format disclosure. ClawQL five-arm harness artifact landed (peer null); shared-host complete only when Ontologiql peer merges on the same host. No win copy.",
     "publicClaimScope": "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
     "definitions": {
       "rssCeiling": "total_process_rss",
@@ -97,7 +97,7 @@
       "systemId": "clawql-typescript",
       "status": "measured",
       "hostLabel": "clawql-cloud-agent-host",
-      "honesty": "ClawQL TypeScript fair-v2 (methodology v10). Schedule 2.5e6 typed_arrays; format disclosed (header+live NDJSON+padCount; bulk pad + bottom-up heapify). Fired=durable_trigger_record; flush=group_commit(64/10ms); crashTest=pass; lateness after fsync. Steady ~667/s → 100% / excess p99 22 ms. Scaled bursts first miss N=250000 (N ≤ agentsAtLimit). Ramp: sustainablePerSec=256000; firstRateMissingSlaPerSec=384000; rampWentPastFailure=true. Deadline restart pass; rebuildMs~40–55 at 2.5e6. Object-heap GC A/B retained. Under group_commit, sustained rate ≈ disk fsync bound (≤64×fsyncs/s) — cross-host gaps are not a language verdict. Methodology aligned with Ontologiql #144. Shared-host five arms pending. No win copy.",
+      "honesty": "ClawQL TypeScript fair-v2 (methodology v10). Schedule 2.5e6 typed_arrays; format disclosed (header+live NDJSON+padCount; bulk pad + bottom-up heapify). Fired=durable_trigger_record; flush=group_commit(64/10ms); crashTest=pass; lateness after fsync. Steady ~667/s → 100% / excess p99 22 ms. Scaled bursts first miss N=250000 (N ≤ agentsAtLimit). Ramp board floor: sustainablePerSec=256000; firstRateMissingSlaPerSec=384000; rampWentPastFailure=true. Deadline restart pass; rebuildMs~40–55 at 2.5e6. Object-heap GC A/B retained. Under group_commit, sustained rate ≈ disk fsync bound (≤64×fsyncs/s) — cross-host gaps are not a language verdict. Methodology aligned with Ontologiql #144. Five-arm harness artifact ready (docs/benchmarks/program-density/shared-host-five-arms.json): firstBurstMiss=250000; single-run ramp pass 384000/miss 512000; crash/restart ok; rebuildMs=45. Peer null — sharedHostComplete=false. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 2500000,
         "limitResource": "rss",
@@ -1099,6 +1099,45 @@
     "reading": {
       "fsyncBound": "128k ≈ 2k fsync/s × 64; ClawQL 256k ≈ 4k fsync/s × 64 on a different disk",
       "rebuildFormatInvite": "80ms@200k vs ClawQL ~50ms@2.5e6 — compact binary + single-pass heapify likely closes"
+    }
+  },
+  "sharedHostFiveArms": {
+    "artifact": "docs/benchmarks/program-density/shared-host-five-arms.json",
+    "kind": "durable-agent-density-shared-host-five-arms",
+    "measuredAt": "2026-10-28T21:51:08.196Z",
+    "sharedHostComplete": false,
+    "winCopy": false,
+    "peerPresent": false,
+    "peer": null,
+    "clawql": {
+      "hostLabel": "clawql-cloud-agent-host:cursor",
+      "agentsAtLimit": 2500000,
+      "scheduleShape": "typed_arrays",
+      "flushPolicy": {
+        "mode": "group_commit",
+        "batchMax": 64,
+        "flushIntervalMs": 10
+      },
+      "firstBurstMiss": 250000,
+      "sustainablePerSec": 384000,
+      "firstRateMissingSlaPerSec": 512000,
+      "rampWentPastFailure": true,
+      "crashOk": true,
+      "restartOk": true,
+      "rebuildMs": 45,
+      "scheduleFormat": {
+        "onDisk": "json_header_plus_live_ndjson_pads_by_count",
+        "inMemory": "float64_deadlines_int32_heap_typed_arrays",
+        "rebuildPath": "load_live_lines_bulk_pad_bottom_up_heapify",
+        "note": "Pads are reconstructed from padCount (not parsed line-by-line). Heap is bottom-up heapified once after bulk fill. A peer that parses/sorts every entry individually will show a different rebuildMs for the same N — disclose format before cross-system rebuild comparison."
+      },
+      "note": "Single-run harness snapshot. Board deadlineAccuracy still quotes the conservative 256k 3-rep floor / firstMiss 384k until a multi-rep shared-host campaign."
+    },
+    "reading": {
+      "sustainedRateNote": "Under group_commit(batchMax=64), durable rate ≲ 64 × disk_fsyncs/sec. Gaps across hosts are not a language verdict.",
+      "rebuildNote": "rebuildMs is a schedule-format column — compare only when both disclose onDisk/inMemory/rebuildPath.",
+      "winCopy": false,
+      "sharedHostComplete": false
     }
   }
 }

@@ -1,6 +1,6 @@
 # Durable-agent density — cross-system comparison
 
-**Status:** Methodology aligned (ClawQL fair-v2 / v10 + Ontologiql #144). Both sides: group_commit + crash test, bursts within agent count, ramp past failure, deadline restart. **Shared-host five-arm run still pending** — current numbers are different hosts. Evidence: [`evidence-fair.json`](./evidence-fair.json). Contract: [`SHARED_HOST.md`](./SHARED_HOST.md).
+**Status:** Methodology aligned (ClawQL fair-v2 / v10 + Ontologiql #144). ClawQL **five-arm harness artifact** ready ([`shared-host-five-arms.json`](./shared-host-five-arms.json)); merged into evidence as `sharedHostFiveArms` (`peer: null`). Ontologiql peer row **not yet merged** — shared-host complete only when both run on one machine. Evidence: [`evidence-fair.json`](./evidence-fair.json). Contract: [`SHARED_HOST.md`](./SHARED_HOST.md).
 
 **Related:** [durability-proof STATUS](../durability-proof/STATUS.md) · Ready RSS boards are different ([memory-plateau.md](../cloudflare-multiturn/memory-plateau.md)).
 
@@ -43,16 +43,22 @@ Deadline accuracy for Ontologiql is **methodology-closed in lab (#144)** under g
 | rebuildFromDiskMs                 | **80** @ 200k — still worth compact-array rebuild before shared-host |
 | overdue / no loss / no dups       | prompt 1.0; true / true                                              |
 
-## Before / during shared-host
+## Shared-host five arms
 
-1. **Expect sustained rates to be fsync-bound** on the shared disk; the current 2× gap may shrink or vanish.
-2. **Ontologiql rebuild format:** if still per-entry parse/sort, compact binary + single-pass heapify should close 80 ms @ 200k vs ClawQL ~50 ms @ 2.5e6.
-3. Run all **five arms** on one host ([SHARED_HOST.md](./SHARED_HOST.md)). **No win copy** until then.
+| Step | Status |
+| --- | --- |
+| ClawQL five-arm harness (`npm run benchmark:program-density-shared-host`) | **done** on this host → [`shared-host-five-arms.json`](./shared-host-five-arms.json) (`peer: null`) |
+| Ontologiql peer JSON on the **same** host | **pending** — merge via `CLAWQL_DENSITY_PEER_JSON=…` |
+| Win copy | **blocked** until `reading.sharedHostComplete=true` |
+
+ClawQL harness snapshot (this host; single run — board still quotes the conservative 256k 3-rep floor): firstBurstMiss **250k**; ramp pass **384k** / miss **512k** (variance vs 256k floor shows fsync-bound noise); crash **pass**; restart rebuild **45 ms**.
+
+Before peer merge: expect sustained rates to converge under one disk; Ontologiql compact-array rebuild still optional.
 
 ```bash
-npm run benchmark:program-density-fair
-node --expose-gc --import tsx scripts/benchmarks/program-density/measure-shared-host-deadline.mjs
-node --expose-gc --import tsx scripts/benchmarks/program-density/measure-ramp-past-failure.mjs
+npm run benchmark:program-density-shared-host
+# After Ontologiql writes peer JSON on this host:
+CLAWQL_DENSITY_PEER_JSON=/path/to/ontologiql-five-arms.json npm run benchmark:program-density-shared-host
 ```
 
 ## Board snapshot

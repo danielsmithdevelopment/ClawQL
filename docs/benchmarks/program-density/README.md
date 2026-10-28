@@ -4,8 +4,8 @@ Cross-system board for **parked** durable agents with a shared agent shape and s
 
 ```bash
 npm run benchmark:program-density-fair
-# SHARED_HOST deadline arms (scaled bursts + deadline restart):
-node --expose-gc --import tsx scripts/benchmarks/program-density/measure-shared-host-deadline.mjs
+# SHARED_HOST five deadline arms (ClawQL; merge peer with CLAWQL_DENSITY_PEER_JSON):
+npm run benchmark:program-density-shared-host
 ```
 
 Writes [`evidence-fair.json`](./evidence-fair.json).
