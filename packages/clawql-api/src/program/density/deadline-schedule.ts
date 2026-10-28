@@ -264,6 +264,11 @@ export type DeadlineAccuracyReport = {
   readonly crashTest: DeadlineCrashTestResult | null;
   /** SHARED_HOST scaled bursts — first size that misses the 1s SLA. */
   readonly scaledBursts: ScaledBurstLadderResult | null;
+  /**
+   * group_commit runtime accounting (fsyncs/sec + avg batch size) when the
+   * fire path uses TriggerJournal — explains fraction of serial fsync ceiling.
+   */
+  readonly flushStats?: import("./trigger-journal.js").TriggerJournalFlushStats | null;
 };
 
 export type DeadlineCrashTestResult = {

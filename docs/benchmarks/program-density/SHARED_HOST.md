@@ -33,7 +33,18 @@ The artifact keeps **two** modes:
 
 **Ontologiql must run the same serial probe** on the shared host. An earlier ~40k fsync/s figure came from overwrite/parallel-capable probing and **overstated** single-writer capacity — retracted as the group_commit ceiling.
 
-Read each system’s `sustainablePerSec` as a **fraction of the serial ceiling**. Near ceiling ⇒ equal / disk-bound. Well below ⇒ software headroom (profile the drain) — do **not** call a cross-host gap “disk-shaped” without this serial check.
+Read each system’s `sustainablePerSec` as a **fraction of the serial ceiling**. Near ceiling ⇒ equal / disk-bound. Well below ⇒ software headroom — do **not** call a cross-host gap “disk-shaped” without this serial check.
+
+### 2b. Record fsyncs/sec + avg batch size during the run
+
+During each system’s ramp (same window as the rate arms), record:
+
+| Number | If… | Reading |
+| --- | --- | --- |
+| **fsyncsPerSec** near serial ceiling | and **avgBatchSize** ≪ `batchMax` | Disk busy; batches flushing early (10 ms timer / empty queue) |
+| **fsyncsPerSec** well below serial ceiling | and **avgBatchSize** near `batchMax` | Writer idle between syncs (builds next batch only after fsync returns) — double-buffering is the usual fix |
+
+ClawQL surfaces these as `flushStats` on the ramp arm (`npm run benchmark:program-density-flush-stats`). **Ontologiql must emit the same two numbers** against the same serial probe.
 
 ### 3. Refine the ramp (binary search + resolution)
 

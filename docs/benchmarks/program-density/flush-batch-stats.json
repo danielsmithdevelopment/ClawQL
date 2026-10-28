@@ -1,0 +1,66 @@
+{
+  "kind": "durable-agent-density-flush-batch-stats",
+  "measuredAt": "2026-10-28T22:50:17.709Z",
+  "contract": "docs/benchmarks/program-density/SHARED_HOST.md",
+  "flushPolicy": {
+    "mode": "group_commit",
+    "batchMax": 64,
+    "flushIntervalMs": 10
+  },
+  "serialCeiling": {
+    "artifact": "docs/benchmarks/program-density/fsync-ceiling.json",
+    "fsyncsPerSec": 7925,
+    "theoreticalMaxGroupCommitPerSec": 507200
+  },
+  "ramp": {
+    "sustainablePerSec": 384000,
+    "firstRateMissingSlaPerSec": null,
+    "rampResolutionRel": null,
+    "rampResolutionNote": null,
+    "coarseSustainablePerSec": 384000,
+    "coarseFirstRateMissingSlaPerSec": null,
+    "flushStatsAcrossRamp": {
+      "windowMs": 5294.64,
+      "fsyncCount": 15000,
+      "recordsFlushed": 960000,
+      "avgBatchSize": 64,
+      "fsyncsPerSec": 2833.05,
+      "recordsPerSec": 181315.46,
+      "batchMax": 64,
+      "avgBatchFillRatio": 1,
+      "flushReasonBatchFull": 15000,
+      "flushReasonInterval": 0,
+      "flushReasonForced": 0,
+      "fsyncWaitMsTotal": 2766.327,
+      "fsyncWaitMsMean": 0.1844,
+      "reading": "avgBatchSize 64.0/64 (near full). If fsyncsPerSec=2833.05 is well below the serial ceiling, the writer is idle between syncs (likely builds the next batch only after fsync returns) — double-buffering is the usual fix."
+    }
+  },
+  "focus": {
+    "offeredRatePerSec": 384000,
+    "metSla": false,
+    "flushStats": {
+      "windowMs": 3756.88,
+      "fsyncCount": 12000,
+      "recordsFlushed": 768000,
+      "avgBatchSize": 64,
+      "fsyncsPerSec": 3194.14,
+      "recordsPerSec": 204424.87,
+      "batchMax": 64,
+      "avgBatchFillRatio": 1,
+      "flushReasonBatchFull": 12000,
+      "flushReasonInterval": 0,
+      "flushReasonForced": 0,
+      "fsyncWaitMsTotal": 2278.153,
+      "fsyncWaitMsMean": 0.1898,
+      "reading": "avgBatchSize 64.0/64 (near full). If fsyncsPerSec=3194.14 is well below the serial ceiling, the writer is idle between syncs (likely builds the next batch only after fsync returns) — double-buffering is the usual fix."
+    }
+  },
+  "compare": {
+    "fractionOfSerialFsyncs": 0.403,
+    "fractionOfTheoMax": 0.7571,
+    "impliedDurablePerSec": 204424.96,
+    "diagnosis": "writer_idle_between_fsyncs_consider_double_buffer",
+    "note": "Focus window is a sustained drain at the last passing rate. Near-ceiling fsyncs + half-full batches ⇒ early flush. Below-ceiling fsyncs + full batches ⇒ idle writer (double-buffer). Ontologiql should record the same two numbers against the same serial probe."
+  }
+}

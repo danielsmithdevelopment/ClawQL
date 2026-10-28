@@ -21,7 +21,7 @@
       "deadlineAccuracy (slaMs, firedDefinition, flushPolicy, scheduleShape, scaledBursts, deadlineRestart, crashTest, arrivalRate, steady/burst, sustainablePerSec, gcAb)",
       "restartSurvival"
     ],
-    "memoryFraming": "Retained at limit = wake-deadline schedule. SHARED_HOST: serial single-writer fsync ceiling (not parallel); binary-refined ramp with resolution; 3-rep floors; alternate systems; then peer merge. Prior parallel/overwrite fsync reading retracted. Ontologiql rebuild ~2–3ms after compact-array. No win copy until sharedHostComplete.",
+    "memoryFraming": "Retained at limit = wake-deadline schedule. SHARED_HOST: serial fsync ceiling; flushStats (fsyncs/sec + avg batch size) explain fraction-of-ceiling; binary-refined ramp; 3-rep floors; alternate; peer merge. This host: full batches + fsyncs≪serial ceiling ⇒ idle writer / double-buffer candidate. No win copy until sharedHostComplete.",
     "publicClaimScope": "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
     "definitions": {
       "rssCeiling": "total_process_rss",
@@ -97,7 +97,7 @@
       "systemId": "clawql-typescript",
       "status": "measured",
       "hostLabel": "clawql-cloud-agent-host",
-      "honesty": "ClawQL TypeScript fair-v2. Schedule 2.5e6 typed_arrays; format disclosed. Fired=durable_trigger_record; flush=group_commit(64/10ms); crashTest=pass. Scaled bursts first miss N=250000. Coarse ramp 3-rep floor sustainablePerSec=256000 / firstMiss=384000 — binary-refine before campaign; report ±resolution. Deadline restart pass; rebuildMs~40–55 at 2.5e6. Serial fsync ceiling this host ~7925/s → theo ~507k; board 256k ≈ 50% — software headroom, not disk-bound. Prior ~41k/10% reading retracted. SHARED_HOST: serial probe both sides; ramp refine; 3-rep floor; alternate; then peer merge. No win copy.",
+      "honesty": "ClawQL TypeScript fair-v2. group_commit(64/10ms). Coarse ramp floor 256k; serial fsync ceiling ~7925/s → theo ~507k (256k≈50%). flushStats at focus rate: avgBatchSize=64 (full), fsyncsPerSec≈3.2k (~40% of serial) → writer idle between syncs (double-buffer candidate), not early timer flush. Ontologiql must emit the same fsyncs/sec + avgBatchSize against the same serial probe. Ramp refine + 3-rep + alternate before campaign. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 2500000,
         "limitResource": "rss",
@@ -1208,5 +1208,27 @@
       "fsyncProbeCorrection": "Prior ~41k fsync/s / 10%-of-ceiling reading retracted (overwrite/parallel-capable probe).",
       "rampRefineNote": "Coarse ladders are too wide; binary-refine to ±few % and report rampResolutionNote before campaign compare."
     }
+  },
+  "flushBatchStats": {
+    "artifact": "docs/benchmarks/program-density/flush-batch-stats.json",
+    "measuredAt": "2026-10-28T22:50:17.709Z",
+    "serialCeilingFsyncsPerSec": 7925,
+    "theoreticalMaxGroupCommitPerSec": 507200,
+    "focus": {
+      "offeredRatePerSec": 384000,
+      "fsyncsPerSec": 3194.14,
+      "avgBatchSize": 64,
+      "avgBatchFillRatio": 1,
+      "flushReasonBatchFull": 12000,
+      "flushReasonInterval": 0
+    },
+    "compare": {
+      "fractionOfSerialFsyncs": 0.403,
+      "fractionOfTheoMax": 0.7571,
+      "impliedDurablePerSec": 204424.96,
+      "diagnosis": "writer_idle_between_fsyncs_consider_double_buffer",
+      "note": "Focus window is a sustained drain at the last passing rate. Near-ceiling fsyncs + half-full batches ⇒ early flush. Below-ceiling fsyncs + full batches ⇒ idle writer (double-buffer). Ontologiql should record the same two numbers against the same serial probe."
+    },
+    "reading": "Focus window at last passing rate: avgBatchSize=64 (full), fsyncsPerSec≈40% of serial ceiling → writer idle between syncs; double-buffering is the usual fix. Ontologiql must record the same two numbers on the same serial probe."
   }
 }

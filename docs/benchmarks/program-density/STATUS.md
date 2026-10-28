@@ -19,7 +19,9 @@ An earlier ~41k fsync/s figure (and “256k ≈ 10% of ceiling”) used a probe 
 | **Serial board-matched** (append batchMax NDJSON → fsync → wait) | **~7,925** fsync/s → theo max **~507k**/s @ 64 | **PRIMARY** ceiling |
 | Parallel (8 writers)                                             | ~194k fsync/s                                  | Headroom only       |
 
-Board floor **256k ≈ 50%** of this host’s **serial** theo max — **not** disk-bound here; treat remaining gap as software headroom until drain is profiled. Ontologiql lab ~192k on a different host was also well below a parallel-style ceiling (~5.5%) for the same reason: **rerun Ontologiql on the serial probe** before calling either side disk-bound.
+Board floor **256k ≈ 50%** of this host’s **serial** theo max — **not** disk-bound here.
+
+**flushStats (focus window):** avgBatchSize **64** (full), fsyncsPerSec **~3.2k** ≈ **40%** of serial ceiling → **writer idle between syncs** (double-buffer candidate), not early 10ms flushes (`flush-batch-stats.json`). Ontologiql must record the same two numbers against the same serial probe.
 
 ## Shared-host campaign protocol
 

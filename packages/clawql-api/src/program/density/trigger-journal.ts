@@ -91,6 +91,32 @@ export function describeFlushPolicy(policy: TriggerFlushPolicy): TriggerFlushPol
   };
 }
 
+/**
+ * Runtime flush accounting for group_commit — explains fraction-of-serial-ceiling.
+ *
+ * - fsyncsPerSec near the serial ceiling + avgBatchSize ≪ batchMax ⇒ early flush
+ *   (timer / empty queue), disk busy but batches half-full.
+ * - fsyncsPerSec well below the serial ceiling + avgBatchSize near batchMax ⇒
+ *   writer idle between syncs (likely waits for fsync before building the next
+ *   batch; double-buffering is the usual fix).
+ */
+export type TriggerJournalFlushStats = {
+  readonly windowMs: number;
+  readonly fsyncCount: number;
+  readonly recordsFlushed: number;
+  readonly avgBatchSize: number;
+  readonly fsyncsPerSec: number;
+  readonly recordsPerSec: number;
+  readonly batchMax: number | null;
+  readonly avgBatchFillRatio: number | null;
+  readonly flushReasonBatchFull: number;
+  readonly flushReasonInterval: number;
+  readonly flushReasonForced: number;
+  readonly fsyncWaitMsTotal: number;
+  readonly fsyncWaitMsMean: number | null;
+  readonly reading: string;
+};
+
 export type TriggerJournal = {
   readonly path: string;
   readonly policy: TriggerFlushPolicy;
@@ -103,6 +129,10 @@ export type TriggerJournal = {
   /** Force flush of any pending batch; resolves when durable. */
   readonly flush: () => Promise<void>;
   readonly close: () => Promise<void>;
+  /** Start / restart the flush-stats window (call before a ramp arm). */
+  readonly resetFlushStats: () => void;
+  /** Snapshot fsyncs/sec + avg batch size since resetFlushStats (or open). */
+  readonly snapshotFlushStats: () => TriggerJournalFlushStats;
 };
 
 type Waiter = {
@@ -124,6 +154,72 @@ export function openTriggerJournalEffect(
     let timer: ReturnType<typeof setTimeout> | null = null;
     let closed = false;
     let flushing: Promise<void> | null = null;
+    /** Why the next flushNow invocation was scheduled. */
+    let pendingFlushReason: "batch_full" | "interval" | "forced" = "forced";
+
+    let statsWindowStartNs = process.hrtime.bigint();
+    let fsyncCount = 0;
+    let recordsFlushed = 0;
+    let batchSizeSum = 0;
+    let flushReasonBatchFull = 0;
+    let flushReasonInterval = 0;
+    let flushReasonForced = 0;
+    let fsyncWaitMsTotal = 0;
+
+    const resetFlushStats = () => {
+      statsWindowStartNs = process.hrtime.bigint();
+      fsyncCount = 0;
+      recordsFlushed = 0;
+      batchSizeSum = 0;
+      flushReasonBatchFull = 0;
+      flushReasonInterval = 0;
+      flushReasonForced = 0;
+      fsyncWaitMsTotal = 0;
+    };
+
+    const snapshotFlushStats = (): TriggerJournalFlushStats => {
+      const windowMs = Math.max(1, Number(process.hrtime.bigint() - statsWindowStartNs) / 1e6);
+      const windowSec = windowMs / 1000;
+      const avgBatchSize = fsyncCount > 0 ? batchSizeSum / fsyncCount : 0;
+      const batchMax = policy.mode === "group_commit" ? policy.batchMax : policy.mode === "fsync_each" ? 1 : null;
+      const avgBatchFillRatio =
+        batchMax && batchMax > 0 ? Number((avgBatchSize / batchMax).toFixed(4)) : null;
+      const fsyncsPerSec = Number((fsyncCount / windowSec).toFixed(2));
+      const recordsPerSec = Number((recordsFlushed / windowSec).toFixed(2));
+      const fsyncWaitMsMean =
+        fsyncCount > 0 ? Number((fsyncWaitMsTotal / fsyncCount).toFixed(4)) : null;
+
+      let reading: string;
+      if (fsyncCount === 0) {
+        reading = "No fsyncs in window.";
+      } else if (avgBatchFillRatio !== null && avgBatchFillRatio < 0.75) {
+        reading =
+          `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (fill ${(avgBatchFillRatio * 100).toFixed(0)}%) — batches flushing early (10ms timer or queue empty). Compare fsyncsPerSec=${fsyncsPerSec} to the serial fsync ceiling; near ceiling ⇒ disk busy, batches half-full.`;
+      } else if (avgBatchFillRatio !== null && avgBatchFillRatio >= 0.9) {
+        reading =
+          `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (near full). If fsyncsPerSec=${fsyncsPerSec} is well below the serial ceiling, the writer is idle between syncs (likely builds the next batch only after fsync returns) — double-buffering is the usual fix.`;
+      } else {
+        reading =
+          `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax ?? "?"}; fsyncsPerSec=${fsyncsPerSec}. Compare both to serial ceiling × batchMax to split early-flush vs idle-writer.`;
+      }
+
+      return {
+        windowMs: Number(windowMs.toFixed(2)),
+        fsyncCount,
+        recordsFlushed,
+        avgBatchSize: Number(avgBatchSize.toFixed(3)),
+        fsyncsPerSec,
+        recordsPerSec,
+        batchMax,
+        avgBatchFillRatio,
+        flushReasonBatchFull,
+        flushReasonInterval,
+        flushReasonForced,
+        fsyncWaitMsTotal: Number(fsyncWaitMsTotal.toFixed(3)),
+        fsyncWaitMsMean,
+        reading,
+      };
+    };
 
     const clearTimer = () => {
       if (timer) {
@@ -137,6 +233,7 @@ export function openTriggerJournalEffect(
       // Do NOT unref — pending waiters must keep the event loop alive until flush.
       timer = setTimeout(() => {
         timer = null;
+        pendingFlushReason = "interval";
         void flushNow();
       }, policy.flushIntervalMs);
     };
@@ -148,14 +245,24 @@ export function openTriggerJournalEffect(
           if (pendingLines.length === 0) return;
           const lines = pendingLines;
           const batchWaiters = waiters;
+          const reason = pendingFlushReason;
+          pendingFlushReason = "forced";
           pendingLines = [];
           waiters = [];
           clearTimer();
           try {
             writeSync(fd, lines.join(""));
             if (policy.mode !== "os_buffer") {
+              const t0 = process.hrtime.bigint();
               fsyncSync(fd);
+              fsyncWaitMsTotal += Number(process.hrtime.bigint() - t0) / 1e6;
+              fsyncCount += 1;
             }
+            batchSizeSum += lines.length;
+            recordsFlushed += lines.length;
+            if (reason === "batch_full") flushReasonBatchFull += 1;
+            else if (reason === "interval") flushReasonInterval += 1;
+            else flushReasonForced += 1;
             const firedAt = Date.now();
             for (const w of batchWaiters) w.resolve(firedAt);
           } catch (err) {
@@ -168,6 +275,8 @@ export function openTriggerJournalEffect(
             armInterval();
             return;
           }
+          // Full batch already waiting — continue drain without waiting for timer.
+          pendingFlushReason = "batch_full";
         }
       })().finally(() => {
         flushing = null;
@@ -185,8 +294,14 @@ export function openTriggerJournalEffect(
       }
 
       if (policy.mode === "fsync_each") {
+        const t0 = process.hrtime.bigint();
         writeSync(fd, line);
         fsyncSync(fd);
+        fsyncWaitMsTotal += Number(process.hrtime.bigint() - t0) / 1e6;
+        fsyncCount += 1;
+        batchSizeSum += 1;
+        recordsFlushed += 1;
+        flushReasonForced += 1;
         return Promise.resolve(Date.now());
       }
 
@@ -194,6 +309,7 @@ export function openTriggerJournalEffect(
         pendingLines.push(line);
         waiters.push({ resolve, reject });
         if (pendingLines.length >= policy.batchMax) {
+          pendingFlushReason = "batch_full";
           void flushNow();
         } else {
           armInterval();
@@ -202,6 +318,7 @@ export function openTriggerJournalEffect(
     };
 
     const flush = async (): Promise<void> => {
+      pendingFlushReason = "forced";
       await flushNow();
     };
 
@@ -209,6 +326,7 @@ export function openTriggerJournalEffect(
       if (closed) return;
       closed = true;
       clearTimer();
+      pendingFlushReason = "forced";
       await flushNow();
       try {
         closeSync(fd);
@@ -224,6 +342,8 @@ export function openTriggerJournalEffect(
       record,
       flush,
       close,
+      resetFlushStats,
+      snapshotFlushStats,
     };
   });
 }

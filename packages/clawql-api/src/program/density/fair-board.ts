@@ -834,6 +834,7 @@ export function runFairDensityBoardEffect(
         deadlineFiredDefinition === "durable_trigger_record"
           ? yield* openTriggerJournalEffect(bagDir, deadlineFlushPolicy)
           : null;
+      let flushStats: ReturnType<NonNullable<typeof journal>["snapshotFlushStats"]> | null = null;
       try {
         const fire =
           deadlineFiredDefinition === "bag_wake"
@@ -854,6 +855,7 @@ export function runFairDensityBoardEffect(
             : options.skipScaledBursts === false
               ? { skipScaledBursts: false as const }
               : { skipScaledBursts: true as const };
+        if (journal) journal.resetFlushStats();
         deadlineAccuracy = yield* runDeadlineAccuracyEffect({
           agentIds: sampleIds,
           fire,
@@ -873,10 +875,14 @@ export function runFairDensityBoardEffect(
           percentile: (samples, p) => Effect.runSync(percentileMsEffect(samples, p)),
           ...runScaled,
         });
+        if (journal) flushStats = journal.snapshotFlushStats();
       } finally {
         if (journal) {
           yield* Effect.promise(() => journal.close());
         }
+      }
+      if (deadlineAccuracy && flushStats) {
+        deadlineAccuracy = { ...deadlineAccuracy, flushStats };
       }
 
       if (

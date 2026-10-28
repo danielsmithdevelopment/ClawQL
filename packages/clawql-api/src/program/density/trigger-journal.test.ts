@@ -26,10 +26,46 @@ describe("trigger journal flush policy", () => {
       expect(rows).toEqual([{ agentId: "a", deadlineMs: 1 }]);
       expect(journal.policyInfo.crashSafe).toBe(true);
       expect(journal.policyInfo.mode).toBe("group_commit");
+      const stats = journal.snapshotFlushStats();
+      expect(stats.fsyncCount).toBeGreaterThanOrEqual(1);
+      expect(stats.avgBatchSize).toBe(1);
+      expect(stats.flushReasonForced).toBeGreaterThanOrEqual(1);
     } finally {
       await journal.close();
     }
   });
+
+  it("records fsyncsPerSec and avgBatchSize under sustained group_commit load", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "clawql-tj-stats-"));
+    const journal = await Effect.runPromise(
+      openTriggerJournalEffect(dir, { mode: "group_commit", batchMax: 64, flushIntervalMs: 10 })
+    );
+    try {
+      journal.resetFlushStats();
+      const n = 64 * 40;
+      const concurrency = 64;
+      // Await in waves so producers don't pile the whole N into one fsync start.
+      for (let i = 0; i < n; i += concurrency) {
+        const end = Math.min(n, i + concurrency);
+        await Promise.all(
+          Array.from({ length: end - i }, (_, j) => journal.record(`a${i + j}`, i + j))
+        );
+      }
+      await journal.flush();
+      const stats = journal.snapshotFlushStats();
+      expect(stats.recordsFlushed).toBe(n);
+      expect(stats.fsyncCount).toBeGreaterThan(10);
+      expect(stats.avgBatchSize).toBeGreaterThan(1);
+      expect(stats.fsyncsPerSec).toBeGreaterThan(0);
+      expect(stats.avgBatchFillRatio).not.toBeNull();
+      expect(stats.reading.length).toBeGreaterThan(10);
+      expect(stats.flushReasonBatchFull + stats.flushReasonInterval + stats.flushReasonForced).toBe(
+        stats.fsyncCount
+      );
+    } finally {
+      await journal.close();
+    }
+  }, 30_000);
 
   it("fsync_each is durable per record", async () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-tj-"));

@@ -178,6 +178,7 @@ const clawql = await Effect.runPromise(
           note: scaledBursts.note,
         });
 
+        journal.resetFlushStats();
         const ramp = yield* rampSustainableRateEffect({
           agentIds: sampleIds,
           fire,
@@ -190,6 +191,7 @@ const clawql = await Effect.runPromise(
           scheduleShape: "typed_arrays",
           percentile: pct,
         });
+        const flushStats = journal.snapshotFlushStats();
         rampReps.push({
           rep,
           sustainablePerSec: ramp.sustainablePerSec,
@@ -199,6 +201,7 @@ const clawql = await Effect.runPromise(
           coarseFirstRateMissingSlaPerSec: ramp.coarseFirstRateMissingSlaPerSec,
           rampResolutionRel: ramp.rampResolutionRel,
           rampResolutionNote: ramp.rampResolutionNote,
+          flushStats,
           steps: ramp.ramp.map((a) => ({
             arrivalRatePerSec: a.arrivalRatePerSec,
             pctWithinSla: a.pctWithinSla,
@@ -215,6 +218,11 @@ const clawql = await Effect.runPromise(
               hint: "Alternate: run Ontologiql for this same rep before ClawQL's next rep (SHARED_HOST.md).",
               firstBurstMiss: scaledBursts.firstMissSize,
               sustainablePerSec: ramp.sustainablePerSec,
+              flushStats: {
+                fsyncsPerSec: flushStats.fsyncsPerSec,
+                avgBatchSize: flushStats.avgBatchSize,
+                avgBatchFillRatio: flushStats.avgBatchFillRatio,
+              },
             })
           );
         }
@@ -281,6 +289,8 @@ const clawql = await Effect.runPromise(
               ? Math.max(...rampReps.map((r) => r.rampResolutionRel ?? 0))
               : null,
           rampResolutionNote: lastRamp?.rampResolutionNote ?? null,
+          /** Explains fraction-of-serial-ceiling: fsyncs/sec + avg batch size during the ramp. */
+          flushStats: lastRamp?.flushStats ?? null,
           steps: lastRamp?.steps ?? [],
           reps: rampReps,
         },
