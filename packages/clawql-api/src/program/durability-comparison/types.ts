@@ -16,7 +16,7 @@ export type ArmId =
   | "pi-durable+clawql"
   | "golem+clawql";
 
-export type ArmRunStatus = "measured" | "pending_invite" | "skipped" | "failed";
+export type ArmRunStatus = "measured" | "pilot_standin" | "pending_invite" | "skipped" | "failed";
 
 export type ComparisonTrial = {
   readonly i: number;

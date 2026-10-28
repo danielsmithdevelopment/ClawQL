@@ -59,7 +59,7 @@ export function runDurabilityComparisonBoardEffect(
       measuredAt: new Date().toISOString(),
       metric: "duplicates + outcome_unknown (+ lost); both upstream modes" as const,
       honesty:
-        "ClawQL arms measured in-process. celld = own substrate (Tier B/C separate). Pi Durable / Golem pending maintainer invite. Publish program-mode peer numbers only after Tier C.",
+        "ClawQL arms measured in-process. celld = own substrate (Tier B/C separate). Pi Durable / Golem are private pilot stand-ins (published recovery semantics × mock upstreams) — not live peer runtimes; named public boards still need maintainer invite.",
       arms: results,
       clawqlBoardPass,
     } satisfies ComparisonEvidence;

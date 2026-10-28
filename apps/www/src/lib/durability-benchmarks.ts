@@ -145,7 +145,7 @@ export const durabilityLadderRows: readonly DurabilityLadderRow[] = [
     name: 'Dual-column comparison',
     status: 'measured',
     statusLabel: 'ClawQL arms',
-    detail: 'duplicates + outcome_unknown × idempotent/non_idempotent. Peers pending invite.',
+    detail: 'duplicates + outcome_unknown × idempotent/non_idempotent. Peer pilot stand-ins; named boards pending invite.',
   },
   {
     tier: 'F',
@@ -221,10 +221,22 @@ export const durabilityComparisonArms: readonly DurabilityComparisonArm[] = [
     nonIdempotent: 'Duplicates when upstream ignores keys',
   },
   {
-    arm: 'golem / pi-durable (+ combos)',
-    status: 'pending invite',
-    idempotent: '—',
-    nonIdempotent: '—',
+    arm: 'golem (pilot stand-in)',
+    status: 'pilot stand-in · not live',
+    idempotent: 'Re-send + key → 1 effect',
+    nonIdempotent: 'Re-send → duplicate effects',
+  },
+  {
+    arm: 'pi-durable (pilot stand-in)',
+    status: 'pilot stand-in · not live',
+    idempotent: 'Interrupted → unknown, 0 dups',
+    nonIdempotent: 'Interrupted → unknown, 0 dups',
+  },
+  {
+    arm: 'golem/pi + clawql (pilot)',
+    status: 'pilot stand-in · not live',
+    idempotent: 'ClawQL gate → 0 dups + unknown',
+    nonIdempotent: 'ClawQL gate → 0 dups + unknown',
   },
 ] as const
 
@@ -247,7 +259,7 @@ export const durabilityHonestyNotes: readonly { title: string; body: string }[] 
   },
   {
     title: 'Peer boards pending invite',
-    body: 'Named Golem / Pi Durable numbers wait on maintainer config. ClawQL-only crash evidence is public here.',
+    body: 'Private pilot stand-ins encode published Pi Durable / Golem recovery semantics against mock upstreams (N=50). Named public peer boards still wait on maintainer invitation and live arm config. ClawQL-only crash evidence is public here.',
   },
 ] as const
 

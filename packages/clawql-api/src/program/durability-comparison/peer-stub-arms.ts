@@ -1,42 +1,13 @@
 /**
- * Peer / combination arms — pending until maintainer invite + adapters land.
+ * Peer / combination arms — private pilot stand-ins + celld skip.
+ * Live named public boards still need maintainer invite (COMPARISON.md).
  */
 
 import { Effect } from "effect";
-import type { ArmId, ArmResult, DurabilityArm } from "./types.js";
+import { golemArm, golemClawqlArm, piDurableArm, piDurableClawqlArm } from "./peer-pilot-arms.js";
+import type { ArmResult, DurabilityArm } from "./types.js";
 
-function stubArm(id: ArmId, honesty: string): DurabilityArm {
-  return {
-    id,
-    run: () =>
-      Effect.succeed({
-        armId: id,
-        status: "pending_invite" as const,
-        honesty,
-        modes: [],
-      } satisfies ArmResult),
-  };
-}
-
-export const piDurableArm = stubArm(
-  "pi-durable",
-  "Pi Durable peer arm — not run. Named public board requires maintainer invitation (COMPARISON.md)."
-);
-
-export const golemArm = stubArm(
-  "golem",
-  "Golem peer arm — not run. Named public board requires maintainer invitation (COMPARISON.md)."
-);
-
-export const piDurableClawqlArm = stubArm(
-  "pi-durable+clawql",
-  "Combination arm (Pi Durable agent → ClawQL MCP) — pending invite + wiring."
-);
-
-export const golemClawqlArm = stubArm(
-  "golem+clawql",
-  "Combination arm (Golem agent → ClawQL MCP) — pending invite + wiring."
-);
+export { golemArm, golemClawqlArm, piDurableArm, piDurableClawqlArm };
 
 export const programCelldArm: DurabilityArm = {
   id: "clawql-program-celld",
