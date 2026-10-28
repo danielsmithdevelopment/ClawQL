@@ -8,11 +8,7 @@ import type { SandboxCodeToolInput } from "../types.js";
 
 /** Isolation backends ClawQL can drive. Cua is optional — never a hard dependency. */
 export type IsolationBackendId =
-  | "cua"
-  | "agent-substrate"
-  | "firecracker"
-  | "apple-container"
-  | "mock";
+  "cua" | "agent-substrate" | "firecracker" | "apple-container" | "mock";
 
 /**
  * Space / guest isolation tier.
@@ -21,11 +17,7 @@ export type IsolationBackendId =
  */
 export type IsolationTier = "container" | "microvm" | "full-vm";
 
-export type IsolationSessionState =
-  | "admitted"
-  | "running"
-  | "suspended"
-  | "terminated";
+export type IsolationSessionState = "admitted" | "running" | "suspended" | "terminated";
 
 export type IsolationSession = {
   readonly sessionId: string;

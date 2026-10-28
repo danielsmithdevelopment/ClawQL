@@ -4,11 +4,7 @@
 
 import { Effect } from "effect";
 import { IsolationBackendError, IsolationBackendService } from "./interface.js";
-import type {
-  IsolationEscapeProbe,
-  IsolationEscapeProbeResult,
-  IsolationTier,
-} from "./types.js";
+import type { IsolationEscapeProbe, IsolationEscapeProbeResult, IsolationTier } from "./types.js";
 
 const DEFAULT_GATEWAY_PROBES: readonly IsolationEscapeProbe[] = [
   { kind: "direct-ip", target: "1.1.1.1:443" },
@@ -64,7 +60,8 @@ export function runIsolationConformanceEffect(
     if (caps.supportsSnapshot) {
       const snap = yield* backend.snapshot(sessionId);
       const restored = yield* backend.restore(snap.snapshotId);
-      snapshotRestoreOk = restored.state === "running" && restored.parentSnapshotId === snap.snapshotId;
+      snapshotRestoreOk =
+        restored.state === "running" && restored.parentSnapshotId === snap.snapshotId;
       if (caps.supportsFork) {
         const forked = yield* backend.fork(snap.snapshotId, `trial-${tier}`);
         forkOk = forked.trialId === `trial-${tier}` && forked.parentSnapshotId === snap.snapshotId;

@@ -16,12 +16,12 @@ Copy [`evidence.template.json`](./evidence.template.json). Fill `host` via `coll
 
 ## What belongs here
 
-| Arm                         | Source                                      |
-| --------------------------- | ------------------------------------------- |
-| C1 conformance (per tier)   | `runIsolationConformanceEffect`             |
-| C2 N=50 checkpoint forks    | `forkPilotTrialsEffect`                     |
-| C3 replay spike             | `assertReplaySpikeDoneEffect`               |
-| C4 gateway bypass           | `assertNoGatewayBypassEffect`               |
-| O4 / C3 joint snapshot cost | Ontologiql + ClawQL on a real Mac Space     |
+| Arm                         | Source                                  |
+| --------------------------- | --------------------------------------- |
+| C1 conformance (per tier)   | `runIsolationConformanceEffect`         |
+| C2 N=50 checkpoint forks    | `forkPilotTrialsEffect`                 |
+| C3 replay spike             | `assertReplaySpikeDoneEffect`           |
+| C4 gateway bypass           | `assertNoGatewayBypassEffect`           |
+| O4 / C3 joint snapshot cost | Ontologiql + ClawQL on a real Mac Space |
 
 Practical costs (session start p50/p99, shared-folder I/O, memory, concurrency) are **Ontologiql O3** — record them only for usability decisions, never as publish headlines.

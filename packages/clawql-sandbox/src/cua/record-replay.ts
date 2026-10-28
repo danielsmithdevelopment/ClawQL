@@ -63,11 +63,7 @@ export function digestOutboundCallEffect(
   request: unknown
 ): Effect.Effect<CallDigest> {
   return Effect.sync(() =>
-    createHash("sha256")
-      .update(operationId)
-      .update("\0")
-      .update(stableJson(request))
-      .digest("hex")
+    createHash("sha256").update(operationId).update("\0").update(stableJson(request)).digest("hex")
   );
 }
 
@@ -225,16 +221,14 @@ export function assertReplaySpikeDoneEffect(): Effect.Effect<
     const p0 = yield* rr.handleOutbound("model.chat", { n: 0 }, { shouldNotUse: true });
     const p1 = yield* rr.handleOutbound("tools.write", { id: "w1" }, { shouldNotUse: true });
     const p2 = yield* rr.handleOutbound("tools.write", { id: "w2" }, { live: true });
-    const noRepeatedWrite =
-      p0.kind === "replayed" && p1.kind === "replayed" && p2.kind === "live";
+    const noRepeatedWrite = p0.kind === "replayed" && p1.kind === "replayed" && p2.kind === "live";
 
     // Arm B: divergent digest at position 0.
     yield* rr.importTape(tape);
     yield* rr.setCrashSequence(null);
     yield* rr.setMode("replay");
     const bad = yield* rr.handleOutbound("model.chat", { n: 999 }, { x: 1 });
-    const divergentCaught =
-      bad.kind === "digest_mismatch" && bad.writeStatus === "outcome_unknown";
+    const divergentCaught = bad.kind === "digest_mismatch" && bad.writeStatus === "outcome_unknown";
 
     return { noRepeatedWrite, divergentCaught };
   });

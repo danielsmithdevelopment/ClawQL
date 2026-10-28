@@ -50,16 +50,12 @@ export function collectIsolationHostEvidenceEffect(
 }
 
 /** Sync façade for evidence writers at host edges. */
-export function collectIsolationHostEvidence(
-  env?: NodeJS.ProcessEnv
-): IsolationHostEvidence {
+export function collectIsolationHostEvidence(env?: NodeJS.ProcessEnv): IsolationHostEvidence {
   return Effect.runSync(collectIsolationHostEvidenceEffect(env));
 }
 
 export function evidencePayloadDigestEffect(payload: unknown): Effect.Effect<string> {
-  return Effect.sync(() =>
-    createHash("sha256").update(JSON.stringify(payload)).digest("hex")
-  );
+  return Effect.sync(() => createHash("sha256").update(JSON.stringify(payload)).digest("hex"));
 }
 
 export function evidencePayloadDigest(payload: unknown): string {

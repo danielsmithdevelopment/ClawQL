@@ -54,7 +54,10 @@ export function cuaLicenseVerdict(checkedAt?: string): CuaLicenseVerdict {
 /** Fail closed if a future override marks commercial use blocked. */
 export function assertCuaLicenseAllowsWorkEffect(
   env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<CuaLicenseVerdict, { readonly _tag: "CuaLicenseBlocked"; readonly reason: string }> {
+): Effect.Effect<
+  CuaLicenseVerdict,
+  { readonly _tag: "CuaLicenseBlocked"; readonly reason: string }
+> {
   return Effect.gen(function* () {
     const forced = env.CLAWQL_CUA_LICENSE_BLOCK?.trim();
     if (forced === "1" || forced?.toLowerCase() === "true") {

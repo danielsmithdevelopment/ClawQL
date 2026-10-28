@@ -6,10 +6,7 @@
 
 import { createHash } from "node:crypto";
 import { Context, Data, Effect, Layer, Ref } from "effect";
-import {
-  IsolationBackendError,
-  IsolationBackendService,
-} from "../isolation-backend/interface.js";
+import { IsolationBackendError, IsolationBackendService } from "../isolation-backend/interface.js";
 import type {
   IsolationAdmitRequest,
   IsolationBackendCapabilities,
@@ -123,9 +120,7 @@ export function createMockCuaIsolationLayer(
           admit: (request) =>
             Effect.gen(function* () {
               yield* assertCuaLicenseAllowsWorkEffect().pipe(
-                Effect.mapError(
-                  (e) => new IsolationBackendError({ reason: e.reason })
-                )
+                Effect.mapError((e) => new IsolationBackendError({ reason: e.reason }))
               );
               if (!config.enabled) {
                 return yield* Effect.fail(
@@ -359,9 +354,6 @@ export function cuaIsolationLayerFromEnv(
 }
 
 /** Map IsolationTier for callers that only have a string. */
-export function resolveCuaTier(
-  tier: IsolationTier | undefined,
-  config: CuaConfig
-): IsolationTier {
+export function resolveCuaTier(tier: IsolationTier | undefined, config: CuaConfig): IsolationTier {
   return tier ?? config.defaultTier;
 }

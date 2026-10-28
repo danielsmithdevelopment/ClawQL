@@ -47,9 +47,7 @@ export class IsolationBackendService extends Context.Service<
       snapshotId: string,
       trialId: string
     ) => Effect.Effect<IsolationSession, IsolationBackendError>;
-    readonly destroy: (
-      sessionId: string
-    ) => Effect.Effect<IsolationSession, IsolationBackendError>;
+    readonly destroy: (sessionId: string) => Effect.Effect<IsolationSession, IsolationBackendError>;
     /** Escape / bypass probes from inside the Space (C4 / O2). */
     readonly probeEscape: (
       sessionId: string,

@@ -13,10 +13,7 @@ import {
   readCuaConfig,
 } from "./index.js";
 import { assertNoGatewayBypassEffect } from "./gateway-bypass.js";
-import {
-  assertReplaySpikeDoneEffect,
-  createCallRecordReplayLayer,
-} from "./record-replay.js";
+import { assertReplaySpikeDoneEffect, createCallRecordReplayLayer } from "./record-replay.js";
 
 describe("Cua license gate", () => {
   it("allows self-hosted isolation backend under FSL-1.1-MIT", () => {

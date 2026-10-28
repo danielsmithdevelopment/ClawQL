@@ -1,7 +1,4 @@
-export {
-  IsolationBackendError,
-  IsolationBackendService,
-} from "./interface.js";
+export { IsolationBackendError, IsolationBackendService } from "./interface.js";
 export {
   collectIsolationHostEvidence,
   collectIsolationHostEvidenceEffect,

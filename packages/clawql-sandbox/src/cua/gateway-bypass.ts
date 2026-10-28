@@ -5,10 +5,7 @@
  */
 
 import { Effect } from "effect";
-import {
-  IsolationBackendError,
-  IsolationBackendService,
-} from "../isolation-backend/interface.js";
+import { IsolationBackendError, IsolationBackendService } from "../isolation-backend/interface.js";
 import { DEFAULT_GATEWAY_PROBES } from "../isolation-backend/conformance.js";
 import type {
   IsolationEscapeProbe,

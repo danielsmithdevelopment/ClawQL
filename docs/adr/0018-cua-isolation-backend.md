@@ -29,11 +29,11 @@ Nothing else. No density, durability-publish, or latency headlines from Cua runs
 
 Checked against [trycua/cua `LICENSE.md`](https://github.com/trycua/cua/blob/main/LICENSE.md), [`legal/COMMERCIAL.md`](https://github.com/trycua/cua/blob/main/legal/COMMERCIAL.md), and [`legal/LICENSING.md`](https://github.com/trycua/cua/blob/main/legal/LICENSING.md):
 
-| Component                         | License       | ClawQL use                                                         |
-| --------------------------------- | ------------- | ------------------------------------------------------------------ |
-| SDK / Driver / Lume / `cua` CLI   | MIT           | OK                                                                 |
-| Cua Spaces (apps, spacesd, …)     | FSL-1.1-MIT   | Self-host / in-house OK, including commercial internal use         |
-| Offering Spaces as hosted service | Commercial    | **Out of scope** — would need `licensing@trycua.com`               |
+| Component                         | License     | ClawQL use                                                 |
+| --------------------------------- | ----------- | ---------------------------------------------------------- |
+| SDK / Driver / Lume / `cua` CLI   | MIT         | OK                                                         |
+| Cua Spaces (apps, spacesd, …)     | FSL-1.1-MIT | Self-host / in-house OK, including commercial internal use |
+| Offering Spaces as hosted service | Commercial  | **Out of scope** — would need `licensing@trycua.com`       |
 
 **Verdict:** proceed for self-hosted isolation backend. Operator override `CLAWQL_CUA_LICENSE_BLOCK=1` fails closed. Do not productize a competing hosted Spaces offering without a Cua commercial licence.
 
@@ -55,12 +55,12 @@ Checked against [trycua/cua `LICENSE.md`](https://github.com/trycua/cua/blob/mai
 
 ## 4. ClawQL scope (this repo)
 
-| ID  | Deliverable                                                                 | Done when                                      |
-| --- | --------------------------------------------------------------------------- | ---------------------------------------------- |
-| C1  | Optional Cua backend + conformance vs shared interface                      | Mock conformance green per tier                |
-| C2  | Fork durability pilot trials (N=50) from one checkpoint                     | Arms share `parentSnapshotId`                  |
-| C3  | Record-and-replay by sequence + digest; mismatch → `outcome_unknown`         | Crash mid-tool: no repeated write; divergent caught |
-| C4  | Gateway no-bypass (direct IP, DNS, IPv6, hardcoded endpoints)               | Every probe blocked or proxied                 |
+| ID  | Deliverable                                                          | Done when                                           |
+| --- | -------------------------------------------------------------------- | --------------------------------------------------- |
+| C1  | Optional Cua backend + conformance vs shared interface               | Mock conformance green per tier                     |
+| C2  | Fork durability pilot trials (N=50) from one checkpoint              | Arms share `parentSnapshotId`                       |
+| C3  | Record-and-replay by sequence + digest; mismatch → `outcome_unknown` | Crash mid-tool: no repeated write; divergent caught |
+| C4  | Gateway no-bypass (direct IP, DNS, IPv6, hardcoded endpoints)        | Every probe blocked or proxied                      |
 
 **Out of scope here:** governance / injection / AgentDojo / token boards; publish latency or density numbers from Cua.
 

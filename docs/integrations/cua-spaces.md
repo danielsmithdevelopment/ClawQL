@@ -38,10 +38,7 @@ CLAWQL_SANDBOX_BACKEND=cua            # or auto (after Agent Substrate)
 
 ```ts
 import { Effect } from "effect";
-import {
-  createMockCuaIsolationLayer,
-  runIsolationConformanceEffect,
-} from "clawql-sandbox";
+import { createMockCuaIsolationLayer, runIsolationConformanceEffect } from "clawql-sandbox";
 
 const stack = createMockCuaIsolationLayer({
   enabled: true,
@@ -51,9 +48,7 @@ const stack = createMockCuaIsolationLayer({
   keepPresenceAndApprovalsOnHost: true,
 });
 
-await Effect.runPromise(
-  runIsolationConformanceEffect("microvm").pipe(Effect.provide(stack))
-);
+await Effect.runPromise(runIsolationConformanceEffect("microvm").pipe(Effect.provide(stack)));
 ```
 
 Same `IsolationBackendService` is what Ontologiql’s runner should target for shared conformance.

@@ -58,9 +58,7 @@ export function callCuaSandboxEffect(
   );
 }
 
-export async function callCuaSandbox(
-  input: SandboxCodeToolInput
-): Promise<SandboxBridgeResponse> {
+export async function callCuaSandbox(input: SandboxCodeToolInput): Promise<SandboxBridgeResponse> {
   return Effect.runPromise(callCuaSandboxEffect(input));
 }
 
