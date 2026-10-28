@@ -39,9 +39,9 @@ Read each system’s `sustainablePerSec` as a **fraction of the serial ceiling**
 
 During each system’s ramp (same window as the rate arms), record:
 
-| Number | If… | Reading |
-| --- | --- | --- |
-| **fsyncsPerSec** near serial ceiling | and **avgBatchSize** ≪ `batchMax` | Disk busy; batches flushing early (10 ms timer / empty queue) |
+| Number                                     | If…                                  | Reading                                                                                                    |
+| ------------------------------------------ | ------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| **fsyncsPerSec** near serial ceiling       | and **avgBatchSize** ≪ `batchMax`    | Disk busy; batches flushing early (10 ms timer / empty queue)                                              |
 | **fsyncsPerSec** well below serial ceiling | and **avgBatchSize** near `batchMax` | Writer idle between syncs (builds next batch only after fsync returns) — double-buffering is the usual fix |
 
 ClawQL surfaces these as `flushStats` on the ramp arm (`npm run benchmark:program-density-flush-stats`). **Ontologiql must emit the same two numbers** against the same serial probe.

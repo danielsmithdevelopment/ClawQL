@@ -181,7 +181,8 @@ export function openTriggerJournalEffect(
       const windowMs = Math.max(1, Number(process.hrtime.bigint() - statsWindowStartNs) / 1e6);
       const windowSec = windowMs / 1000;
       const avgBatchSize = fsyncCount > 0 ? batchSizeSum / fsyncCount : 0;
-      const batchMax = policy.mode === "group_commit" ? policy.batchMax : policy.mode === "fsync_each" ? 1 : null;
+      const batchMax =
+        policy.mode === "group_commit" ? policy.batchMax : policy.mode === "fsync_each" ? 1 : null;
       const avgBatchFillRatio =
         batchMax && batchMax > 0 ? Number((avgBatchSize / batchMax).toFixed(4)) : null;
       const fsyncsPerSec = Number((fsyncCount / windowSec).toFixed(2));
@@ -193,14 +194,11 @@ export function openTriggerJournalEffect(
       if (fsyncCount === 0) {
         reading = "No fsyncs in window.";
       } else if (avgBatchFillRatio !== null && avgBatchFillRatio < 0.75) {
-        reading =
-          `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (fill ${(avgBatchFillRatio * 100).toFixed(0)}%) — batches flushing early (10ms timer or queue empty). Compare fsyncsPerSec=${fsyncsPerSec} to the serial fsync ceiling; near ceiling ⇒ disk busy, batches half-full.`;
+        reading = `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (fill ${(avgBatchFillRatio * 100).toFixed(0)}%) — batches flushing early (10ms timer or queue empty). Compare fsyncsPerSec=${fsyncsPerSec} to the serial fsync ceiling; near ceiling ⇒ disk busy, batches half-full.`;
       } else if (avgBatchFillRatio !== null && avgBatchFillRatio >= 0.9) {
-        reading =
-          `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (near full). If fsyncsPerSec=${fsyncsPerSec} is well below the serial ceiling, the writer is idle between syncs (likely builds the next batch only after fsync returns) — double-buffering is the usual fix.`;
+        reading = `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (near full). If fsyncsPerSec=${fsyncsPerSec} is well below the serial ceiling, the writer is idle between syncs (likely builds the next batch only after fsync returns) — double-buffering is the usual fix.`;
       } else {
-        reading =
-          `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax ?? "?"}; fsyncsPerSec=${fsyncsPerSec}. Compare both to serial ceiling × batchMax to split early-flush vs idle-writer.`;
+        reading = `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax ?? "?"}; fsyncsPerSec=${fsyncsPerSec}. Compare both to serial ceiling × batchMax to split early-flush vs idle-writer.`;
       }
 
       return {
