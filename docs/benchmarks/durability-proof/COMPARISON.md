@@ -1,6 +1,6 @@
 # Durability comparison board — celld · Pi Durable · Golem
 
-**Status:** ClawQL arms measured; Pi Durable / Golem **private pilot stand-ins** measured (N=50) — named public peer boards still need maintainer invite  
+**Status:** ClawQL arms measured; Pi Durable / Golem **live local peers** available via `DURABILITY_COMPARISON_LIVE_PEERS=1` (real `@earendil-works/pi-durable` + local `golem server`) — named public marketing boards still need maintainer invite  
 **Parent:** [STATUS.md](./STATUS.md) · [Golem honesty](../../gtm/golem-overlap-and-durability-honesty.md)
 
 This board measures **effect** outcomes under crashes (duplicates + `outcome_unknown`), not whether a runtime’s in-process execution is durable. See [two kinds of durable](../../gtm/golem-overlap-and-durability-honesty.md#two-kinds-of-durable-do-not-conflate).
@@ -101,27 +101,27 @@ See [STATUS — How do our numbers compare to Golem?](./STATUS.md#how-do-our-num
 | Dual columns + both upstream modes              | **Shipped** — `npm run benchmark:durability-comparison`                                                                   |
 | `clawql-file-journal` + `naive-retry` reference | **Measured** in CI                                                                                                        |
 | `clawql-program-celld`                          | Tier B/C harnesses (isolate + fleet scripts); skipped inside Node board                                                   |
-| Pi Durable / Golem (+ combinations)             | **Private pilot stand-ins** (`pilot_standin`) — published recovery semantics × mock upstreams; **not** live peer runtimes |
+| Pi Durable / Golem (+ combinations)             | **Live peers** when `DURABILITY_COMPARISON_LIVE_PEERS=1`; otherwise `pending_invite`. Combinations still measure the ClawQL gate side. |
 | Evidence                                        | [`comparison/evidence.json`](./comparison/evidence.json) — does **not** overwrite Tier D                                  |
 
-### Pilot semantics (stand-in)
+### Live peer semantics
 
-| Arm                 | Resume after mid-write kill                                                          | Idempotent upstream      | Non-idempotent upstream      |
-| ------------------- | ------------------------------------------------------------------------------------ | ------------------------ | ---------------------------- |
-| `golem`             | Re-send HTTP with same idempotency key (Golem 1.6 outbound)                          | 1 unique effect (masked) | 2 unique effects (duplicate) |
-| `pi-durable`        | Effectful tool not replay-safe → interrupted / `outcome_unknown`, no auto re-execute | 0 dups + unknown         | 0 dups + unknown             |
-| `golem+clawql`      | ClawQL tool gate: approval consumed → refuse re-send                                 | 0 dups + unknown         | 0 dups + unknown             |
-| `pi-durable+clawql` | Same ClawQL gate                                                                     | 0 dups + unknown         | 0 dups + unknown             |
+| Arm                 | Resume after mid-write kill                                                                 | Idempotent upstream                         | Non-idempotent upstream                |
+| ------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------- | -------------------------------------- |
+| `golem`             | Live `WriteAgent` fetch mid-flight + `golem agent simulate-crash` (outbound HTTP re-sent) | 1 unique effect (key honored)               | 2 unique effects (duplicate)           |
+| `pi-durable`        | Live SIGKILL mid-phase, reopen SQLite, resume phase from top                                | 1 effect (`runtime.memo`)                   | ≥2 effects (phase re-applies write)    |
+| `golem+clawql`      | ClawQL tool gate: approval consumed → refuse re-send                                        | 0 dups + unknown                            | 0 dups + unknown                       |
+| `pi-durable+clawql` | Same ClawQL gate                                                                            | 0 dups + unknown                            | 0 dups + unknown                       |
 
-Do **not** publish these as “Golem measured” / “Pi Durable measured” on the public site. Label **pilot stand-in** until a maintainer-configured live arm exists.
+Do **not** market these as a named public third-party board without maintainer invite. Live local measurement is real; public co-branding is separate.
 
 ### Commands
 
 ```bash
-# CI default
+# CI default (peers stay pending_invite)
 DURABILITY_COMPARISON_N=20 npm run benchmark:durability-comparison
-# Private peer pilot (committed evidence target)
-DURABILITY_COMPARISON_N=50 npm run benchmark:durability-comparison
+# Live local peers (requires golem server + Node ≥24 for the fixture; Pi Durable is an npm dep)
+DURABILITY_COMPARISON_LIVE_PEERS=1 DURABILITY_COMPARISON_N=50 npm run benchmark:durability-comparison
 # Tier C when you have a conforming bucket:
 CELLD_BUCKET=s3://… STREAMS_CELLD_FLEET_REQUIRED=1 npm run smoke:program-cell-fleet-kill
 ```

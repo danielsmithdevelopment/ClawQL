@@ -49,6 +49,9 @@
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",
+    "@earendil-works/chord": "^1.4.0",
+    "@earendil-works/pi-ai": "^1.4.0",
+    "@earendil-works/pi-durable": "^1.4.0",
     "@gdp-ts/core": "^0.1.0",
     "@graphql-mesh/utils": "^0.107.0",
     "@grpc/grpc-js": "^1.14.5",
