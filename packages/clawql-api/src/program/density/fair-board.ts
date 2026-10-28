@@ -77,6 +77,13 @@ export type FairBoardOptions = {
   readonly skipCold?: boolean;
   /** Skip process-restart arm (unit tests). */
   readonly skipRestart?: boolean;
+  /**
+   * Reuse existing bags in bagDir (do not clear). `resumeFromAgents` is the
+   * next agent index to park (usually = existing bag count). Wake samples are
+   * drawn from the directory without loading every id into the heap.
+   */
+  readonly reuseBags?: boolean;
+  readonly resumeFromAgents?: number;
 };
 
 /** Ramp past 200k so a total-RSS 512 MiB ceiling can actually be found. */
@@ -134,6 +141,48 @@ function pickSampleIds(ids: readonly string[], sampleSize: number): string[] {
     out.push(ids[Math.floor((s * ids.length) / n)]!);
   }
   return out;
+}
+
+/**
+ * Sample bag ids via `find`/`awk` — do **not** `readdirSync` multi-million
+ * directories (dentry fault-in alone can push RSS over the fair ceiling).
+ */
+function sampleIdsFromBagDir(bagDir: string, sampleSize: number): {
+  readonly sampleIds: string[];
+  readonly seen: number;
+} {
+  const stride = Math.max(1, Math.floor(50_000 / Math.max(1, sampleSize)));
+  const res = spawnSync(
+    "bash",
+    [
+      "-c",
+      `find "$1" -maxdepth 1 -name 'bag_*.json' -printf '%f\\n' | awk -v n="$2" -v s="$3" '
+        { c++; if (c % s == 1) { sub(/\\.json$/,""); print; if (++k >= n) exit } }
+        END { print "__COUNT__" c }'`,
+      "awk-sample",
+      bagDir,
+      String(sampleSize),
+      String(stride),
+    ],
+    { encoding: "utf8", timeout: 600_000, maxBuffer: 16 * 1024 * 1024 }
+  );
+  if (res.status !== 0) {
+    return { sampleIds: [], seen: 0 };
+  }
+  const lines = (res.stdout || "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  let seen = 0;
+  const sampleIds: string[] = [];
+  for (const line of lines) {
+    if (line.startsWith("__COUNT__")) {
+      seen = Number(line.slice("__COUNT__".length)) || 0;
+      continue;
+    }
+    if (line.startsWith("bag_")) sampleIds.push(line);
+  }
+  return { sampleIds, seen };
 }
 
 async function sampleWakeMs(
@@ -217,7 +266,7 @@ function buildRampTargets(schedule: readonly number[], continueUntilCeiling: boo
   if (!continueUntilCeiling || targets.length === 0) return targets;
   // Seed geometric growth after the last scheduled point; board stops when RSS hits.
   let last = targets[targets.length - 1]!;
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 24; i++) {
     const next = Math.min(last * 2, last + 500_000);
     if (next <= last) break;
     targets.push(next);
@@ -244,7 +293,10 @@ export function runFairDensityBoardEffect(
     const rssCeilingKiB = rssCeilingMiB * 1024;
     const exposeGc = yield* exposeGcAvailableEffect();
 
-    yield* clearBagDirEffect(bagDir);
+    const reuseBags = options.reuseBags === true;
+    if (!reuseBags) {
+      yield* clearBagDirEffect(bagDir);
+    }
     const bags = makeParkedBagApi(bagDir);
     const host = yield* hostIdentityEffect();
     const memTotalKiB = yield* readMemTotalKiBEffect();
@@ -257,15 +309,49 @@ export function runFairDensityBoardEffect(
     let ceilingHit = false;
 
     let prev = 0;
+    if (reuseBags) {
+      const resumeFrom = options.resumeFromAgents ?? 0;
+      prev = resumeFrom;
+      agentsAtLimit = resumeFrom;
+      // Do not seed millions of stub ids — that artificially blows RSS and also
+      // breaks restart (stubs are not on disk). Id-index cost is measured on
+      // fresh ramps that append real ids during parkUpTo.
+      if (resumeFrom > 0) {
+        const heap = yield* readHeapSnapshotEffect();
+        const disk = yield* diskBytesFast(bags);
+        const rssDelta = Math.max(0, heap.rssKiB - baseline.rssKiB);
+        ramp.push({
+          agents: resumeFrom,
+          rssKiB: heap.rssKiB,
+          residentKiBPerAgent: heap.rssKiB / resumeFrom,
+          rssDeltaKiBPerAgent: rssDelta / resumeFrom,
+          heapUsedKiBAfterGc: heap.heapUsedKiB,
+          heapUsedKiBPerAgentAfterGc: heap.heapUsedKiB / resumeFrom,
+          diskBytesTotal: disk,
+          diskBytesPerAgent: disk / resumeFrom,
+          pageCacheKiBPerAgent: null,
+          withinRssCeiling: heap.rssKiB <= rssCeilingKiB,
+        });
+        if (heap.rssKiB > rssCeilingKiB) {
+          ceilingHit = true;
+          limitReason = `reused bags already over ${rssCeilingMiB} MiB total RSS at ${resumeFrom} agents (rss=${heap.rssKiB} KiB)`;
+        } else {
+          limitReason = `reused ${resumeFrom} bags under ${rssCeilingMiB} MiB total RSS; disk headroom on this host prevents further park before the RSS ceiling (agents-at-limit for 512 MiB total RSS still unknown)`;
+        }
+      }
+    }
+
     for (const target of rampSchedule) {
+      if (ceilingHit) break;
       if (target <= prev) continue;
       const batch = parkUpTo(bags, prev, target);
-      allIds.push(...batch);
+      // Do not `push(...batch)` — large batches exceed the call-stack argument limit.
+      for (let i = 0; i < batch.length; i++) allIds.push(batch[i]!);
       prev = target;
 
       const heap = yield* readHeapSnapshotEffect();
       const disk = yield* diskBytesFast(bags);
-      const pageCacheKiB = yield* measureBagPageCacheKiBEffect(bagDir);
+      // Page-cache sampling is expensive at multi-million scale — measure once at limit.
       const within = heap.rssKiB <= rssCeilingKiB;
       const rssDelta = Math.max(0, heap.rssKiB - baseline.rssKiB);
       const step: FairRampStep = {
@@ -277,7 +363,7 @@ export function runFairDensityBoardEffect(
         heapUsedKiBPerAgentAfterGc: heap.heapUsedKiB / target,
         diskBytesTotal: disk,
         diskBytesPerAgent: disk / target,
-        pageCacheKiBPerAgent: pageCacheKiB !== null ? pageCacheKiB / target : null,
+        pageCacheKiBPerAgent: null,
         withinRssCeiling: within,
       };
       ramp.push(step);
@@ -292,11 +378,30 @@ export function runFairDensityBoardEffect(
 
     const atLimit = yield* readHeapSnapshotEffect();
     const last = ramp[ramp.length - 1]!;
-    const pageCacheKiBPerAgent = last.pageCacheKiBPerAgent;
+    const pageCacheKiB = yield* measureBagPageCacheKiBEffect(bagDir, 2_000, agentsAtLimit);
+    const pageCacheKiBPerAgent =
+      pageCacheKiB !== null && agentsAtLimit > 0 ? pageCacheKiB / agentsAtLimit : null;
+    if (ramp.length > 0) {
+      ramp[ramp.length - 1] = {
+        ...last,
+        pageCacheKiBPerAgent,
+      };
+    }
 
     // --- Wake protocol: warmup, then alternate orders ---
-    const timedIds = pickSampleIds(allIds, wakeSampleSize);
-    const warmupIds = pickSampleIds(allIds, Math.min(wakeWarmupCount, allIds.length));
+    // Prefer on-disk samples so reused stub ids are never woken.
+    const fromDisk = sampleIdsFromBagDir(
+      bagDir,
+      Math.max(wakeSampleSize, wakeWarmupCount, 1)
+    );
+    const timedIds =
+      fromDisk.sampleIds.length >= Math.min(wakeSampleSize, 1)
+        ? pickSampleIds(fromDisk.sampleIds, wakeSampleSize)
+        : pickSampleIds(allIds, wakeSampleSize);
+    const warmupIds =
+      fromDisk.sampleIds.length > 0
+        ? pickSampleIds(fromDisk.sampleIds, Math.min(wakeWarmupCount, fromDisk.sampleIds.length))
+        : pickSampleIds(allIds, Math.min(wakeWarmupCount, allIds.length));
     const gcRecorder = yield* createGcRecorderEffect();
 
     // Untimed warmup: pay JIT / optimize wake path before either timed order.
@@ -307,6 +412,7 @@ export function runFairDensityBoardEffect(
     const wakeByOrder: WakeOrderResult[] = [];
     let coldEviction = "skipped";
 
+    const timedPaths = timedIds.map((id) => join(bagDir, `${id}.json`));
     const runWarm = async () => sampleWakeMs(bags, timedIds, gcRecorder);
     const runCold = async () => {
       if (options.skipCold) {
@@ -316,7 +422,9 @@ export function runFairDensityBoardEffect(
           eviction: "skipped",
         };
       }
-      const evict = await Effect.runPromise(evictBagPageCacheEffect(bagDir));
+      // Evict only the timed sample — measures cold wake of those agents without
+      // advising millions of unrelated bag files.
+      const evict = await Effect.runPromise(evictBagPageCacheEffect(bagDir, timedPaths));
       const eviction = `${evict.method}: ${evict.detail}`;
       if (!evict.ok) {
         return { samplesMs: [] as number[], gc: { count: 0, totalMs: 0, maxMs: 0 }, eviction };
@@ -362,8 +470,12 @@ export function runFairDensityBoardEffect(
       cold: poolLatencies(wakeByOrder.map((o) => o.cold)),
       coldFasterThanWarmP99: false,
     };
-    wakePooled.coldFasterThanWarmP99 =
-      wakePooled.cold.n > 0 && wakePooled.warm.n > 0 && wakePooled.cold.p99 < wakePooled.warm.p99;
+    // Headline board columns use warm_then_cold (post-warmup canonical order).
+    const headline =
+      wakeByOrder.find((o) => o.order === "warm_then_cold") ?? wakeByOrder[0]!;
+    wakePooled.coldFasterThanWarmP99 = wakeByOrder.some(
+      (o) => o.cold.n > 0 && o.warm.n > 0 && o.cold.p99 < o.warm.p99
+    );
 
     // Id-index byte estimate: UTF-8 id length + rough V8 string/array slot overhead.
     const sampleId = allIds[0] ?? "";
@@ -378,18 +490,19 @@ export function runFairDensityBoardEffect(
       rssDeltaKiBPerAgent: Number(
         (Math.max(0, atLimit.rssKiB - baseline.rssKiB) / Math.max(1, agentsAtLimit)).toFixed(4)
       ),
-      retainedInProcess:
-        "agentId string in the in-process id index only; FairParkedAgent body is offloaded to disk JSON after park",
+      retainedInProcess: reuseBags
+        ? "reuse/measure run: wakes sampled via find(1) without retaining N ids in-process; bag bodies on disk only. Fresh park ramps retain agentId strings in allIds (id index)."
+        : "agentId string in the in-process id index (allIds) only; FairParkedAgent body is offloaded to disk JSON after park",
       estimatedIdIndexBytesPerAgent,
     };
 
     let restartSurvival = false;
-    if (!options.skipRestart && allIds.length > 0) {
-      const probe = allIds[Math.floor(allIds.length / 2)]!;
+    const restartProbe = timedIds[0] ?? fromDisk.sampleIds[0];
+    if (!options.skipRestart && restartProbe) {
       const result = yield* Effect.promise(() =>
         runRestartWorker({
           CLAWQL_DENSITY_BAG_DIR: bagDir,
-          CLAWQL_DENSITY_RESTART_AGENT_ID: probe,
+          CLAWQL_DENSITY_RESTART_AGENT_ID: restartProbe,
         })
       );
       restartSurvival = result.ok;
@@ -402,8 +515,8 @@ export function runFairDensityBoardEffect(
       pageCacheKiBPerAgent:
         pageCacheKiBPerAgent !== null ? Number(pageCacheKiBPerAgent.toFixed(4)) : null,
       diskBytesPerAgent: Number(last.diskBytesPerAgent.toFixed(1)),
-      wakeWarmMs: { p50: wakePooled.warm.p50, p99: wakePooled.warm.p99 },
-      wakeColdMs: { p50: wakePooled.cold.p50, p99: wakePooled.cold.p99 },
+      wakeWarmMs: { p50: headline.warm.p50, p99: headline.warm.p99 },
+      wakeColdMs: { p50: headline.cold.p50, p99: headline.cold.p99 },
       restartSurvival,
     };
 

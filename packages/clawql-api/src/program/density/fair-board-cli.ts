@@ -56,6 +56,10 @@ async function main(): Promise<void> {
       skipRestart: process.env.CLAWQL_DENSITY_SKIP_RESTART === "1",
       hostLabel: process.env.CLAWQL_DENSITY_HOST_LABEL || "clawql-cloud-agent-host",
       bagDir: process.env.CLAWQL_DENSITY_BAG_DIR,
+      reuseBags: process.env.CLAWQL_DENSITY_REUSE_BAGS === "1",
+      resumeFromAgents: process.env.CLAWQL_DENSITY_RESUME_FROM
+        ? Number(process.env.CLAWQL_DENSITY_RESUME_FROM)
+        : undefined,
     })
   );
 

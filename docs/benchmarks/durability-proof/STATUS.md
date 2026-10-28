@@ -76,7 +76,7 @@ We cannot say yet on a shared board — Golem has not published the kind of cras
 | -------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Starting a unit of work          | 2 ms Agent cold start          | Not yet measured for celld cells                                                                                                                 |
 | Memory per unit                  | 1 MB Min memory per agent      | About 471 KB per celld cell (earlier measurements)                                                                                               |
-| Density                          | 10,000+ Active agents per node | **Parked fair board measured** — [program-density](../program-density/STATUS.md) (not active-at-50ms; Golem invite still open for same-host row) |
+| Density                          | 10,000+ Active agents per node | **Parked fair board `methodology_pending`** — [program-density](../program-density/STATUS.md) (wake protocol fixed; agents-at-limit unknown until total-RSS ceiling hits on a host with enough disk; not active-at-50ms) |
 | Duplicated writes after a crash  | No published crash test        | **0 in 1,000** phased kills                                                                                                                      |
 | Failover time after a node crash | No published figure            | About **12 seconds** median, set by the lease                                                                                                    |
 

@@ -134,7 +134,9 @@ export function createGcRecorderEffect(): Effect.Effect<GcRecorder> {
  */
 export function measureBagPageCacheKiBEffect(
   bagDir: string,
-  sampleFiles = 2_000
+  sampleFiles = 2_000,
+  /** Known population size — avoids a full directory materialization. */
+  knownTotalFiles?: number
 ): Effect.Effect<number | null> {
   return Effect.sync(() => {
     const py = `
@@ -142,16 +144,23 @@ import os, sys, mmap, ctypes, ctypes.util
 from pathlib import Path
 root = Path(${JSON.stringify(bagDir)})
 sample_n = ${Number(sampleFiles)}
+known_total = ${knownTotalFiles == null ? "None" : Number(knownTotalFiles)}
 if not root.is_dir():
     print("null"); sys.exit(0)
-paths = sorted(root.glob("bag_*.json"))
-total_files = len(paths)
-if total_files == 0:
+# Reservoir / stride sample without sorting millions of paths.
+paths = []
+total_seen = 0
+for p in root.glob("bag_*.json"):
+    total_seen += 1
+    if len(paths) < sample_n:
+        paths.append(p)
+    else:
+        # periodic replace to spread across the directory walk
+        if total_seen % max(1, total_seen // sample_n) == 0:
+            paths[total_seen % sample_n] = p
+total_files = known_total if known_total is not None else total_seen
+if total_files == 0 or not paths:
     print(0); sys.exit(0)
-# Evenly spaced sample for large dirs.
-if total_files > sample_n:
-    step = total_files / sample_n
-    paths = [paths[int(i * step)] for i in range(sample_n)]
 libc = ctypes.CDLL(ctypes.util.find_library("c"), use_errno=True)
 pagesize = os.sysconf("SC_PAGE_SIZE")
 resident = 0
@@ -187,7 +196,6 @@ for p in paths:
         os.close(fd)
 if ok == 0:
     print("null"); sys.exit(0)
-# Extrapolate sample resident bytes to full population.
 scale = total_files / ok
 print(int((resident * scale) // 1024))
 `;
@@ -202,19 +210,42 @@ print(int((resident * scale) // 1024))
 
 /**
  * Evict bag pages from the page cache (posix_fadvise DONTNEED). Cold-wake prep.
+ * Prefer `paths` = the timed wake sample only — full-directory eviction at
+ * multi-million scale is not required to measure cold wake of the sample.
  */
-export function evictBagPageCacheEffect(bagDir: string): Effect.Effect<{
+export function evictBagPageCacheEffect(
+  bagDir: string,
+  paths?: readonly string[]
+): Effect.Effect<{
   readonly ok: boolean;
   readonly method: string;
   readonly detail: string;
 }> {
   return Effect.sync(() => {
-    const py = `
+    const pathList = paths && paths.length > 0 ? [...paths] : null;
+    const py = pathList
+      ? `
+import os, sys, json
+paths = json.loads(${JSON.stringify(JSON.stringify(pathList))})
+n = 0
+for p in paths:
+    fd = os.open(p, os.O_RDONLY)
+    try:
+        os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
+        n += 1
+    finally:
+        os.close(fd)
+print(n)
+`
+      : `
 import os, sys
 from pathlib import Path
 root = Path(${JSON.stringify(bagDir)})
 n = 0
-for p in sorted(root.glob("bag_*.json")):
+# Cap full-dir eviction — prefer sample paths for large boards.
+for i, p in enumerate(root.glob("bag_*.json")):
+    if i >= 5000:
+        break
     fd = os.open(p, os.O_RDONLY)
     try:
         os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
@@ -233,7 +264,7 @@ print(n)
     }
     return {
       ok: true,
-      method: "posix_fadvise_DONTNEED",
+      method: pathList ? "posix_fadvise_DONTNEED_sample" : "posix_fadvise_DONTNEED_capped",
       detail: `advised ${(res.stdout || "").trim()} files`,
     };
   });

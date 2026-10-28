@@ -1,10 +1,10 @@
 {
   "kind": "durable-agent-density-fair-v1",
-  "measuredAt": "2026-10-28T05:12:57.947Z",
+  "measuredAt": "2026-10-28T17:18:22.230Z",
   "contract": {
     "agent": {
       "turns": 20,
-      "turnPairBytesTarget": "~1\u20132 KiB text each turn pair",
+      "turnPairBytesTarget": "~1–2 KiB text each turn pair",
       "pendingToolBytesTarget": "~0.5 KiB JSON",
       "park": "Waiting on that tool (idle durable)",
       "offload": "Allowed; report residence (RSS / page cache / disk / object store)"
@@ -18,8 +18,12 @@
       "wakeColdMs.p50/p99",
       "restartSurvival"
     ],
-    "memoryFraming": "Resident is the floor; page cache is reclaimable. Quote the trade-off (cold wake vs warm working set), not RSS alone.",
-    "publicClaimScope": "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim."
+    "memoryFraming": "Resident (total process RSS / N) is the floor; page cache is reclaimable; heapUsed-after-GC is the GC-runtime check. Quote cold wake vs warm working set only after a warmup + both wake orders. Do not write 'fits more agents' comparison copy until shared-host remeasure.",
+    "publicClaimScope": "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
+    "definitions": {
+      "rssCeiling": "total_process_rss",
+      "agentsAtLimit": "first_N_where_total_rss_exceeds_ceiling"
+    }
   },
   "host": {
     "label": "clawql-cloud-agent-host",
@@ -36,15 +40,15 @@
       "systemId": "ontologiql-rust",
       "status": "publishable",
       "hostLabel": "stable-host (Ontologiql published)",
-      "honesty": "Ontologiql Rust fair row is publishable on the stable host. Numbers from the public claim (200k agents @ \u2264512 MiB RSS, ~30 KiB disk/agent, warm wake p99 < 35 \u00b5s, cold wake p99 < 0.6 ms, restart survival). Full evidence-fair.json lives with Ontologiql \u2014 this mirror is not a ClawQL re-measurement.",
+      "honesty": "Ontologiql Rust fair row is publishable on the stable host. Numbers from the public claim (200k agents @ ≤512 MiB **total** process RSS, ~30 KiB disk/agent, warm wake p99 < 35 µs, cold wake p99 < 0.6 ms, restart survival). Full evidence-fair.json lives with Ontologiql — this mirror is not a ClawQL re-measurement.",
       "boardColumns": {
         "agentsAtLimit": 200000,
         "residentKiBPerAgent": 2.621,
         "pageCacheKiBPerAgent": null,
         "diskBytesPerAgent": 30720,
         "wakeWarmMs": {
-          "p50": 3.5e-05,
-          "p99": 3.5e-05
+          "p50": 0.000035,
+          "p99": 0.000035
         },
         "wakeColdMs": {
           "p50": 0.6,
@@ -56,21 +60,21 @@
     },
     {
       "systemId": "clawql-typescript",
-      "status": "measured",
+      "status": "methodology_pending",
       "hostLabel": "clawql-cloud-agent-host",
-      "honesty": "ClawQL TypeScript fair parked-agent bags (file-backed JSON, offloaded). Not Ready-process RSS / memory-plateau. Active-density lab pulse not measured here \u2014 do not quote as active agents. Cross-system win claims wait for Golem/Infinity rows or maintainer invites.",
+      "honesty": "ClawQL TypeScript fair parked-agent bags — **agents-at-limit still unknown**: ramp finished without total process RSS exceeding the ceiling. Do not quote agentsAtLimit as a real ceiling. Wake protocol and resident accounting are recorded for methodology review. No cross-system win / no 'fits more agents' copy.",
       "boardColumns": {
-        "agentsAtLimit": 200000,
-        "residentKiBPerAgent": 0.2681,
-        "pageCacheKiBPerAgent": 16.4,
-        "diskBytesPerAgent": 32816.4,
+        "agentsAtLimit": 6000000,
+        "residentKiBPerAgent": 0.021,
+        "pageCacheKiBPerAgent": 0.208,
+        "diskBytesPerAgent": 32817.8,
         "wakeWarmMs": {
-          "p50": 0.183955,
-          "p99": 2.22843
+          "p50": 0.081437,
+          "p99": 0.119931
         },
         "wakeColdMs": {
-          "p50": 0.16264,
-          "p99": 1.508542
+          "p50": 0.142144,
+          "p99": 1.255153
         },
         "restartSurvival": true
       },
@@ -97,98 +101,106 @@
     "bagDir": "/tmp/clawql-density-bags-fair",
     "ramp": [
       {
-        "agents": 100,
-        "rssKiB": 140948,
-        "residentKiBPerAgent": 98.92,
-        "diskBytesTotal": 3281290,
-        "diskBytesPerAgent": 32812.9,
-        "pageCacheKiBPerAgent": 36,
-        "withinRssCeiling": true
-      },
-      {
-        "agents": 500,
-        "rssKiB": 147456,
-        "residentKiBPerAgent": 32.8,
-        "diskBytesTotal": 16406890,
-        "diskBytesPerAgent": 32813.78,
-        "pageCacheKiBPerAgent": 36,
-        "withinRssCeiling": true
-      },
-      {
-        "agents": 1000,
-        "rssKiB": 147876,
-        "residentKiBPerAgent": 16.82,
-        "diskBytesTotal": 32813890,
-        "diskBytesPerAgent": 32813.89,
-        "pageCacheKiBPerAgent": 36,
-        "withinRssCeiling": true
-      },
-      {
-        "agents": 2000,
-        "rssKiB": 147984,
-        "residentKiBPerAgent": 8.464,
-        "diskBytesTotal": 65628890,
-        "diskBytesPerAgent": 32814.445,
-        "pageCacheKiBPerAgent": 36,
-        "withinRssCeiling": true
-      },
-      {
-        "agents": 5000,
-        "rssKiB": 148956,
-        "residentKiBPerAgent": 3.58,
-        "diskBytesTotal": 164073890,
-        "diskBytesPerAgent": 32814.778,
-        "pageCacheKiBPerAgent": 36,
-        "withinRssCeiling": true
-      },
-      {
-        "agents": 10000,
-        "rssKiB": 154580,
-        "residentKiBPerAgent": 2.3524,
-        "diskBytesTotal": 328148890,
-        "diskBytesPerAgent": 32814.889,
-        "pageCacheKiBPerAgent": 36,
-        "withinRssCeiling": true
-      },
-      {
-        "agents": 25000,
-        "rssKiB": 163220,
-        "residentKiBPerAgent": 1.28656,
-        "diskBytesTotal": 820388890,
-        "diskBytesPerAgent": 32815.5556,
-        "pageCacheKiBPerAgent": 36,
-        "withinRssCeiling": true
-      },
-      {
-        "agents": 50000,
-        "rssKiB": 176128,
-        "residentKiBPerAgent": 0.90144,
-        "diskBytesTotal": 1640788890,
-        "diskBytesPerAgent": 32815.7778,
-        "pageCacheKiBPerAgent": 36,
-        "withinRssCeiling": true
-      },
-      {
-        "agents": 100000,
-        "rssKiB": 182444,
-        "residentKiBPerAgent": 0.51388,
-        "diskBytesTotal": 3281588890,
-        "diskBytesPerAgent": 32815.8889,
-        "pageCacheKiBPerAgent": 34.398,
-        "withinRssCeiling": true
-      },
-      {
-        "agents": 200000,
-        "rssKiB": 184680,
-        "residentKiBPerAgent": 0.26812,
-        "diskBytesTotal": 6563288890,
-        "diskBytesPerAgent": 32816.44445,
-        "pageCacheKiBPerAgent": 16.4,
+        "agents": 6000000,
+        "rssKiB": 128084,
+        "residentKiBPerAgent": 0.021347333333333333,
+        "rssDeltaKiBPerAgent": 0,
+        "heapUsedKiBAfterGc": 27217,
+        "heapUsedKiBPerAgentAfterGc": 0.004536166666666667,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "pageCacheKiBPerAgent": 0.208,
         "withinRssCeiling": true
       }
     ],
     "wakeSampleSize": 200,
-    "coldEviction": "posix_fadvise_DONTNEED: advised 200000 files",
-    "limitReason": "completed ramp through 200000"
+    "wakeWarmupCount": 3000,
+    "coldEviction": "posix_fadvise_DONTNEED_sample: advised 200 files",
+    "limitReason": "reused 6000000 bags under 512 MiB total RSS; disk headroom on this host prevents further park before the RSS ceiling (agents-at-limit for 512 MiB total RSS still unknown)",
+    "ceilingHit": false,
+    "rssCeilingDefinition": "total_process_rss",
+    "baseline": {
+      "rssKiB": 128596,
+      "heapUsedKiB": 27211,
+      "heapTotalKiB": 62128,
+      "externalKiB": 6825,
+      "arrayBuffersKiB": 2157
+    },
+    "atLimit": {
+      "rssKiB": 126172,
+      "heapUsedKiB": 27257,
+      "heapTotalKiB": 30128,
+      "externalKiB": 5685,
+      "arrayBuffersKiB": 2149
+    },
+    "residentAccounting": {
+      "totalRssKiBPerAgent": 0.021,
+      "heapUsedKiBPerAgentAfterGc": 0.0045,
+      "rssDeltaKiBPerAgent": 0,
+      "retainedInProcess": "reuse/measure run: wakes sampled via find(1) without retaining N ids in-process; bag bodies on disk only. Fresh park ramps retain agentId strings in allIds (id index).",
+      "estimatedIdIndexBytesPerAgent": 40
+    },
+    "wakeByOrder": [
+      {
+        "order": "warm_then_cold",
+        "warm": {
+          "p50": 0.081437,
+          "p99": 0.119931,
+          "n": 200
+        },
+        "cold": {
+          "p50": 0.142144,
+          "p99": 1.255153,
+          "n": 200
+        },
+        "gcWarm": {
+          "count": 2,
+          "totalMs": 1.95032,
+          "maxMs": 1.029638
+        },
+        "gcCold": {
+          "count": 2,
+          "totalMs": 2.092978,
+          "maxMs": 1.163556
+        }
+      },
+      {
+        "order": "cold_then_warm",
+        "warm": {
+          "p50": 0.081477,
+          "p99": 0.115494,
+          "n": 200
+        },
+        "cold": {
+          "p50": 0.138399,
+          "p99": 0.558993,
+          "n": 200
+        },
+        "gcWarm": {
+          "count": 1,
+          "totalMs": 0.920647,
+          "maxMs": 0.920647
+        },
+        "gcCold": {
+          "count": 2,
+          "totalMs": 2.21907,
+          "maxMs": 1.109547
+        }
+      }
+    ],
+    "wakePooled": {
+      "warm": {
+        "p50": 0.081457,
+        "p99": 0.119931,
+        "n": 400
+      },
+      "cold": {
+        "p50": 0.140271,
+        "p99": 1.255153,
+        "n": 400
+      },
+      "coldFasterThanWarmP99": false
+    },
+    "exposeGc": true
   }
 }
