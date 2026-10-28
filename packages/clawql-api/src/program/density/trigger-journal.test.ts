@@ -4,10 +4,7 @@ import { join } from "node:path";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { runTriggerJournalCrashTestEffect } from "./trigger-journal-crash.js";
-import {
-  openTriggerJournalEffect,
-  readTriggerJournalEffect,
-} from "./trigger-journal.js";
+import { openTriggerJournalEffect, readTriggerJournalEffect } from "./trigger-journal.js";
 
 describe("trigger journal flush policy", () => {
   it("group_commit resolves only after fsync and survives a forced flush", async () => {

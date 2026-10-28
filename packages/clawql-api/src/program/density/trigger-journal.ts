@@ -234,7 +234,9 @@ export type TriggerJournalLine = {
 };
 
 /** Parse a journal file; skips a trailing partial line (crash mid-write). */
-export function readTriggerJournalEffect(path: string): Effect.Effect<readonly TriggerJournalLine[]> {
+export function readTriggerJournalEffect(
+  path: string
+): Effect.Effect<readonly TriggerJournalLine[]> {
   return Effect.sync(() => {
     let raw = "";
     try {

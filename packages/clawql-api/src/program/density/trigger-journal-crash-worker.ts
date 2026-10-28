@@ -12,7 +12,8 @@ async function main(): Promise<void> {
   const dir = process.env.CLAWQL_CRASH_JOURNAL_DIR;
   if (!dir) throw new Error("CLAWQL_CRASH_JOURNAL_DIR required");
   const policy = JSON.parse(
-    process.env.CLAWQL_CRASH_FLUSH_POLICY || '{"mode":"group_commit","batchMax":64,"flushIntervalMs":10}'
+    process.env.CLAWQL_CRASH_FLUSH_POLICY ||
+      '{"mode":"group_commit","batchMax":64,"flushIntervalMs":10}'
   ) as TriggerFlushPolicy;
   const total = Number(process.env.CLAWQL_CRASH_TOTAL || 2000);
   const concurrency = Number(process.env.CLAWQL_CRASH_CONCURRENCY || 32);

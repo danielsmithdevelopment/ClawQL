@@ -94,7 +94,11 @@ async function main(): Promise<void> {
         if (mode === "os_buffer") return { mode: "os_buffer" as const };
         if (mode === "fsync_each") return { mode: "fsync_each" as const };
         if (mode === "group_commit" || !mode) {
-          if (!mode && !process.env.CLAWQL_DENSITY_FLUSH_BATCH_MAX && !process.env.CLAWQL_DENSITY_FLUSH_INTERVAL_MS) {
+          if (
+            !mode &&
+            !process.env.CLAWQL_DENSITY_FLUSH_BATCH_MAX &&
+            !process.env.CLAWQL_DENSITY_FLUSH_INTERVAL_MS
+          ) {
             return undefined;
           }
           return {
