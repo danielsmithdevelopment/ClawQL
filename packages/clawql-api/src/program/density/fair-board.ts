@@ -237,7 +237,8 @@ export function runFairDensityBoardEffect(
     }
 
     const last = ramp[ramp.length - 1]!;
-    const pageCacheKiB = yield* measureBagPageCacheKiBEffect(bagDir);
+    // Board column = reclaimable hold while parked at the limit (pre-cold eviction).
+    const pageCacheKiBPerAgent = last.pageCacheKiBPerAgent;
 
     let restartSurvival = false;
     if (!options.skipRestart && allIds.length > 0) {
@@ -258,7 +259,7 @@ export function runFairDensityBoardEffect(
       agentsAtLimit,
       residentKiBPerAgent: Number(last.residentKiBPerAgent.toFixed(4)),
       pageCacheKiBPerAgent:
-        pageCacheKiB !== null ? Number((pageCacheKiB / agentsAtLimit).toFixed(4)) : null,
+        pageCacheKiBPerAgent !== null ? Number(pageCacheKiBPerAgent.toFixed(4)) : null,
       diskBytesPerAgent: Number(last.diskBytesPerAgent.toFixed(1)),
       wakeWarmMs: {
         p50: Number(warmP50.toFixed(6)),

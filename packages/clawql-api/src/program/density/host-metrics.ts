@@ -44,46 +44,73 @@ export function readCachedKiBEffect(): Effect.Effect<number | null> {
 
 /**
  * Best-effort page-cache KiB attributable to bag files (mincore via Python).
+ * Samples up to `sampleFiles` bags and extrapolates to the full directory.
  * Returns null when the helper cannot run.
  */
-export function measureBagPageCacheKiBEffect(bagDir: string): Effect.Effect<number | null> {
+export function measureBagPageCacheKiBEffect(
+  bagDir: string,
+  sampleFiles = 2_000
+): Effect.Effect<number | null> {
   return Effect.sync(() => {
     const py = `
 import os, sys, mmap, ctypes, ctypes.util
 from pathlib import Path
 root = Path(${JSON.stringify(bagDir)})
+sample_n = ${Number(sampleFiles)}
 if not root.is_dir():
-    print("0"); sys.exit(0)
+    print("null"); sys.exit(0)
+paths = sorted(root.glob("bag_*.json"))
+total_files = len(paths)
+if total_files == 0:
+    print(0); sys.exit(0)
+# Evenly spaced sample for large dirs.
+if total_files > sample_n:
+    step = total_files / sample_n
+    paths = [paths[int(i * step)] for i in range(sample_n)]
 libc = ctypes.CDLL(ctypes.util.find_library("c"), use_errno=True)
 pagesize = os.sysconf("SC_PAGE_SIZE")
 resident = 0
-for p in sorted(root.glob("bag_*.json")):
+ok = 0
+for p in paths:
     try:
-        fd = os.open(p, os.O_RDONLY)
+        fd = os.open(p, os.O_RDWR)
     except OSError:
         continue
     try:
-        st = os.fstat(fd)
-        size = st.st_size
+        size = os.fstat(fd).st_size
         if size <= 0:
             continue
-        mm = mmap.mmap(fd, size, access=mmap.ACCESS_READ)
+        mm = mmap.mmap(fd, size, access=mmap.ACCESS_WRITE)
         try:
-            vec = (ctypes.c_ubyte * ((size + pagesize - 1) // pagesize))()
-            if libc.mincore(ctypes.c_void_p(ctypes.addressof(ctypes.c_char.from_buffer(mm))), ctypes.c_size_t(size), vec) != 0:
+            vec_len = (size + pagesize - 1) // pagesize
+            vec = (ctypes.c_ubyte * vec_len)()
+            addr = ctypes.addressof(ctypes.c_char.from_buffer(mm))
+            rc = libc.mincore(
+                ctypes.c_void_p(addr),
+                ctypes.c_size_t(size),
+                ctypes.cast(vec, ctypes.POINTER(ctypes.c_ubyte)),
+            )
+            if rc != 0:
                 continue
             for b in vec:
                 if b & 1:
                     resident += pagesize
+            ok += 1
         finally:
             mm.close()
     finally:
         os.close(fd)
-print(resident // 1024)
+if ok == 0:
+    print("null"); sys.exit(0)
+# Extrapolate sample resident bytes to full population.
+scale = total_files / ok
+print(int((resident * scale) // 1024))
 `;
-    const res = spawnSync("python3", ["-c", py], { encoding: "utf8", timeout: 120_000 });
+    const res = spawnSync("python3", ["-c", py], { encoding: "utf8", timeout: 300_000 });
     if (res.status !== 0) return null;
-    const n = Number((res.stdout || "").trim());
+    const out = (res.stdout || "").trim();
+    if (out === "null" || out === "") return null;
+    const n = Number(out);
     return Number.isFinite(n) ? n : null;
   });
 }

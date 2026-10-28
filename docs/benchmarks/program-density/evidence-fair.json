@@ -1,0 +1,194 @@
+{
+  "kind": "durable-agent-density-fair-v1",
+  "measuredAt": "2026-10-28T05:12:57.947Z",
+  "contract": {
+    "agent": {
+      "turns": 20,
+      "turnPairBytesTarget": "~1\u20132 KiB text each turn pair",
+      "pendingToolBytesTarget": "~0.5 KiB JSON",
+      "park": "Waiting on that tool (idle durable)",
+      "offload": "Allowed; report residence (RSS / page cache / disk / object store)"
+    },
+    "columns": [
+      "agentsAtLimit",
+      "residentKiBPerAgent",
+      "pageCacheKiBPerAgent",
+      "diskBytesPerAgent",
+      "wakeWarmMs.p50/p99",
+      "wakeColdMs.p50/p99",
+      "restartSurvival"
+    ],
+    "memoryFraming": "Resident is the floor; page cache is reclaimable. Quote the trade-off (cold wake vs warm working set), not RSS alone.",
+    "publicClaimScope": "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim."
+  },
+  "host": {
+    "label": "clawql-cloud-agent-host",
+    "hostname": "cursor",
+    "platform": "linux",
+    "arch": "x64",
+    "nodeVersion": "v22.23.4",
+    "cpus": 4,
+    "memTotalKiB": 16387280,
+    "rssCeilingMiB": 512
+  },
+  "rows": [
+    {
+      "systemId": "ontologiql-rust",
+      "status": "publishable",
+      "hostLabel": "stable-host (Ontologiql published)",
+      "honesty": "Ontologiql Rust fair row is publishable on the stable host. Numbers from the public claim (200k agents @ \u2264512 MiB RSS, ~30 KiB disk/agent, warm wake p99 < 35 \u00b5s, cold wake p99 < 0.6 ms, restart survival). Full evidence-fair.json lives with Ontologiql \u2014 this mirror is not a ClawQL re-measurement.",
+      "boardColumns": {
+        "agentsAtLimit": 200000,
+        "residentKiBPerAgent": 2.621,
+        "pageCacheKiBPerAgent": null,
+        "diskBytesPerAgent": 30720,
+        "wakeWarmMs": {
+          "p50": 3.5e-05,
+          "p99": 3.5e-05
+        },
+        "wakeColdMs": {
+          "p50": 0.6,
+          "p99": 0.6
+        },
+        "restartSurvival": true
+      },
+      "activeDensityLab": null
+    },
+    {
+      "systemId": "clawql-typescript",
+      "status": "measured",
+      "hostLabel": "clawql-cloud-agent-host",
+      "honesty": "ClawQL TypeScript fair parked-agent bags (file-backed JSON, offloaded). Not Ready-process RSS / memory-plateau. Active-density lab pulse not measured here \u2014 do not quote as active agents. Cross-system win claims wait for Golem/Infinity rows or maintainer invites.",
+      "boardColumns": {
+        "agentsAtLimit": 200000,
+        "residentKiBPerAgent": 0.2681,
+        "pageCacheKiBPerAgent": 16.4,
+        "diskBytesPerAgent": 32816.4,
+        "wakeWarmMs": {
+          "p50": 0.183955,
+          "p99": 2.22843
+        },
+        "wakeColdMs": {
+          "p50": 0.16264,
+          "p99": 1.508542
+        },
+        "restartSurvival": true
+      },
+      "activeDensityLab": null
+    },
+    {
+      "systemId": "golem",
+      "status": "pending_invite",
+      "hostLabel": "stable-host (same host TBD)",
+      "honesty": "Invite maintainers before publishing a Golem comparison row.",
+      "boardColumns": null,
+      "activeDensityLab": null
+    },
+    {
+      "systemId": "infinity",
+      "status": "pending_invite",
+      "hostLabel": "stable-host (same host TBD)",
+      "honesty": "Invite maintainers before publishing an Infinity comparison row.",
+      "boardColumns": null,
+      "activeDensityLab": null
+    }
+  ],
+  "clawqlRun": {
+    "bagDir": "/tmp/clawql-density-bags-fair",
+    "ramp": [
+      {
+        "agents": 100,
+        "rssKiB": 140948,
+        "residentKiBPerAgent": 98.92,
+        "diskBytesTotal": 3281290,
+        "diskBytesPerAgent": 32812.9,
+        "pageCacheKiBPerAgent": 36,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 500,
+        "rssKiB": 147456,
+        "residentKiBPerAgent": 32.8,
+        "diskBytesTotal": 16406890,
+        "diskBytesPerAgent": 32813.78,
+        "pageCacheKiBPerAgent": 36,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 1000,
+        "rssKiB": 147876,
+        "residentKiBPerAgent": 16.82,
+        "diskBytesTotal": 32813890,
+        "diskBytesPerAgent": 32813.89,
+        "pageCacheKiBPerAgent": 36,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 2000,
+        "rssKiB": 147984,
+        "residentKiBPerAgent": 8.464,
+        "diskBytesTotal": 65628890,
+        "diskBytesPerAgent": 32814.445,
+        "pageCacheKiBPerAgent": 36,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 5000,
+        "rssKiB": 148956,
+        "residentKiBPerAgent": 3.58,
+        "diskBytesTotal": 164073890,
+        "diskBytesPerAgent": 32814.778,
+        "pageCacheKiBPerAgent": 36,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 10000,
+        "rssKiB": 154580,
+        "residentKiBPerAgent": 2.3524,
+        "diskBytesTotal": 328148890,
+        "diskBytesPerAgent": 32814.889,
+        "pageCacheKiBPerAgent": 36,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 25000,
+        "rssKiB": 163220,
+        "residentKiBPerAgent": 1.28656,
+        "diskBytesTotal": 820388890,
+        "diskBytesPerAgent": 32815.5556,
+        "pageCacheKiBPerAgent": 36,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 50000,
+        "rssKiB": 176128,
+        "residentKiBPerAgent": 0.90144,
+        "diskBytesTotal": 1640788890,
+        "diskBytesPerAgent": 32815.7778,
+        "pageCacheKiBPerAgent": 36,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 100000,
+        "rssKiB": 182444,
+        "residentKiBPerAgent": 0.51388,
+        "diskBytesTotal": 3281588890,
+        "diskBytesPerAgent": 32815.8889,
+        "pageCacheKiBPerAgent": 34.398,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 200000,
+        "rssKiB": 184680,
+        "residentKiBPerAgent": 0.26812,
+        "diskBytesTotal": 6563288890,
+        "diskBytesPerAgent": 32816.44445,
+        "pageCacheKiBPerAgent": 16.4,
+        "withinRssCeiling": true
+      }
+    ],
+    "wakeSampleSize": 200,
+    "coldEviction": "posix_fadvise_DONTNEED: advised 200000 files",
+    "limitReason": "completed ramp through 200000"
+  }
+}
