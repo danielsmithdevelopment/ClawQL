@@ -653,10 +653,7 @@ async function onePiTrial(input: {
   };
 }
 
-function makePiLiveArm(
-  agentPolicy: PiAgentPolicy,
-  armId: ArmId
-): DurabilityArm {
+function makePiLiveArm(agentPolicy: PiAgentPolicy, armId: ArmId): DurabilityArm {
   if (agentPolicy === "real-model") {
     return {
       id: armId,

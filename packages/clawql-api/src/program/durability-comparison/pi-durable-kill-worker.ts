@@ -33,7 +33,8 @@ const dbPath = required("PI_DB_PATH");
 const signalPath = required("PI_SIGNAL_PATH");
 const effectsPath = required("PI_EFFECTS_PATH");
 const holdMs = Math.max(100, Number(process.env.PI_HOLD_MS || 3000));
-const upstreamMode = process.env.PI_UPSTREAM_MODE === "idempotent" ? "idempotent" : "non_idempotent";
+const upstreamMode =
+  process.env.PI_UPSTREAM_MODE === "idempotent" ? "idempotent" : "non_idempotent";
 const chargeKey = process.env.PI_CHARGE_KEY || "pi-default-key";
 const context = BACKGROUND_CONTEXT;
 
