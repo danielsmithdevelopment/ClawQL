@@ -1,6 +1,6 @@
 {
   "kind": "durable-agent-density-fair-v2",
-  "measuredAt": "2026-10-28T20:19:42.119Z",
+  "measuredAt": "2026-10-28T20:32:03.645Z",
   "contract": {
     "agent": {
       "turns": 20,
@@ -8,7 +8,7 @@
       "pendingToolBytesTarget": "~0.5 KiB JSON",
       "park": "Waiting on that tool (idle durable)",
       "offload": "Allowed; report residence (RSS / page cache / disk / object store)",
-      "wakeDeadline": "Randomly spread wakeDeadlineAt; fire within shared SLA (default 1s); identical fired definition (durable_trigger_record); explicit flush policy (default group_commit batchMax=64 intervalMs=10); lateness stamped after fsync; arrival-rate ramp; SIGKILL crash test"
+      "wakeDeadline": "Randomly spread wakeDeadlineAt; fire within shared SLA (default 1s); identical fired definition (durable_trigger_record); explicit flush policy (default group_commit batchMax=64 intervalMs=10); lateness stamped after fsync; typed-array schedule (board default) with object-heap A/B for GC honesty; arrival-rate ramp; SIGKILL crash test"
     },
     "columns": [
       "agentsAtLimit",
@@ -18,10 +18,10 @@
       "diskBytesPerAgent",
       "wakeWarmMs.p50/p99",
       "wakeColdMs.p50/p99 (quote median+range; no cross-system cold until shared-host)",
-      "deadlineAccuracy (slaMs, firedDefinition, flushPolicy, crashTest, arrivalRate, steady/burst, sustainablePerSec)",
+      "deadlineAccuracy (slaMs, firedDefinition, flushPolicy, scheduleShape, crashTest, arrivalRate, steady/burst, sustainablePerSec, gcAb)",
       "restartSurvival"
     ],
-    "memoryFraming": "Retained at limit = wake-deadline schedule. Deadline accuracy requires identical fired definition + flush policy (or disclose each). Fired stamps after flush. os_buffer page-cache writes are not durable and must not be published as such. Cold wake: median+range only until shared-host.",
+    "memoryFraming": "Retained at limit = wake-deadline schedule. Deadline accuracy requires identical fired definition + flush policy (or disclose each). Fired stamps after flush. os_buffer page-cache writes are not durable. Object-per-entry JS heaps at multi-million N incur major GC pauses — publish typed_arrays (best-effort TS) and disclose object_entries A/B. Cold wake: median+range only until shared-host.",
     "publicClaimScope": "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
     "definitions": {
       "rssCeiling": "total_process_rss",
@@ -44,7 +44,7 @@
       "systemId": "ontologiql-rust",
       "status": "publishable",
       "hostLabel": "stable-host (Ontologiql published)",
-      "honesty": "Ontologiql Rust fair row is publishable on the pre-deadline contract. **deadlineAccuracy not yet measured** — invite to fair-v2: identical fired definition (durable_trigger_record); identical flush policy (or disclose); arrival-rate ramp; SIGKILL crash test (counted fires on disk, no duplicates). Do not read cold-wake gaps until shared-host.",
+      "honesty": "Ontologiql Rust fair row is publishable on the pre-deadline contract. **deadlineAccuracy not yet measured** — invite to fair-v2: identical fired definition (durable_trigger_record); identical flush policy (or disclose); schedule-shape disclosure (Rust has no JS GC equivalent); arrival-rate ramp; SIGKILL crash test (counted fires on disk, no duplicates). Do not read cold-wake gaps until shared-host.",
       "boardColumns": {
         "agentsAtLimit": 200000,
         "limitResource": "rss",
@@ -68,7 +68,7 @@
       "systemId": "clawql-typescript",
       "status": "measured",
       "hostLabel": "clawql-cloud-agent-host",
-      "honesty": "ClawQL TypeScript fair-v2 (methodology v8). Schedule retained at 2.5e6 (rss limit). Fired=durable_trigger_record; flush=group_commit(batchMax=64, intervalMs=10, fsync); crashTest=pass; lateness stamped after fsync. Steady ~667/s → 100% met / excess p99 293 ms (excess ≫ 10ms flush interval — timer/heap under resident pad, not a flush knob). Burst drain ~64516.13/s → 100% met. sustainablePerSec=256000 (conservative 3-rep floor under group_commit; median 512000; fsync_each ≈ 24000). Prior ~1.2e6 was os_buffer/page-cache — not crash-durable; superseded. Provisional vs Ontologiql until shared flush policy + crash test. No win copy.",
+      "honesty": "ClawQL TypeScript fair-v2 (methodology v9). Schedule retained at 2.5e6 (rss limit) as typed_arrays (Float64 + Int32; sparse agent Map). Fired=durable_trigger_record; flush=group_commit(batchMax=64, intervalMs=10, fsync); crashTest=pass; lateness stamped after fsync. Steady ~667/s → 100% met / excess p99 22 ms under typed_arrays. Object-heap A/B: excess p99 314 ms with major GC ~121 ms and 100% late∩major-GC overlap — fair TS runtime cost when not using typed arrays. Burst drain ~54054.05/s → 100% met / excess p99 21 ms. sustainablePerSec=256000 (typed_arrays + group_commit; 3-rep floor=median=max 256000/256000/256000; fsync_each ≈ 24000). Prior ~1.2e6 was os_buffer/page-cache — not crash-durable; superseded. v8 ~293 ms steady tail was GC under object_entries — superseded by typed default. Provisional vs Ontologiql until shared flush policy + crash test + schedule-shape disclosure. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 2500000,
         "limitResource": "rss",
@@ -88,6 +88,7 @@
           "slaTargetPct": 99,
           "firedDefinition": "durable_trigger_record",
           "concurrency": 64,
+          "scheduleShape": "typed_arrays",
           "flushPolicy": {
             "mode": "group_commit",
             "batchMax": 64,
@@ -100,11 +101,13 @@
           "crashTestOk": true,
           "steadyArrivalRatePerSec": 666.67,
           "steadyPctMet": 100,
-          "steadyP99ExcessMs": 293,
+          "steadyP99ExcessMs": 22,
           "burstPctMet": 100,
-          "burstP99ExcessMs": 217,
-          "burstDrainPerSec": 64516.13,
-          "sustainablePerSec": 256000
+          "burstP99ExcessMs": 21,
+          "burstDrainPerSec": 54054.05,
+          "sustainablePerSec": 256000,
+          "objectEntriesSteadyP99ExcessMs": 314,
+          "objectEntriesMajorGcMaxMs": 120.92810600064695
         },
         "restartSurvival": true
       },
@@ -303,10 +306,10 @@
       "totalRssKiBPerAgent": 0.2065,
       "heapUsedKiBPerAgentAfterGc": 0.1504,
       "rssDeltaKiBPerAgent": 0.1547,
-      "retainedInProcess": "Wake-deadline min-heap (agentId + deadlineMs) for every counted agent — approval expiry / reminder schedule. Bag path derived from agentId (FS is the id index). Id/path Maps alone are not the capacity story; once both systems trim locator overhead, capacity is disk-bound and bag size decides.",
+      "retainedInProcess": "Wake-deadline typed-array min-heap (Float64 deadline + Int32 index) for every counted agent — approval expiry / reminder schedule. Sparse agentId Map for live agents only. Bag path derived from agentId (FS is the id index).",
       "deadlineScheduleEntries": 2500000,
-      "scheduleShape": "deadline_min_heap",
-      "estimatedScheduleBytesPerAgent": 77
+      "scheduleShape": "deadline_typed_arrays",
+      "estimatedScheduleBytesPerAgent": 20
     },
     "deadlineScheduleRetainedAtLimit": true,
     "deadlineAccuracy": {
@@ -338,28 +341,54 @@
         "slaMs": 1000,
         "arrivalRatePerSec": 666.67,
         "pctWithinSla": 100,
-        "latenessP50Ms": 17,
-        "latenessP99Ms": 294,
-        "excessOverTickP50Ms": 16,
-        "excessOverTickP99Ms": 293,
-        "maxLatenessMs": 324,
-        "maxExcessOverTickMs": 323,
-        "wallMs": 2690
+        "latenessP50Ms": 16,
+        "latenessP99Ms": 23,
+        "excessOverTickP50Ms": 15,
+        "excessOverTickP99Ms": 22,
+        "maxLatenessMs": 45,
+        "maxExcessOverTickMs": 44,
+        "wallMs": 2980,
+        "scheduleShape": "typed_arrays",
+        "gcTrace": {
+          "pauseCount": 1,
+          "pauseTotalMs": 4.972,
+          "pauseMaxMs": 4.972,
+          "majorPauseCount": 0,
+          "majorPauseMaxMs": 0,
+          "lateFiresOverlappingGc": 0,
+          "lateFiresOverlappingMajorGc": 0,
+          "lateOverlapFraction": 0,
+          "lateThresholdMs": 100,
+          "note": "No fires at/above late threshold."
+        }
       },
       "burst": {
         "mode": "burst",
         "n": 2000,
         "fired": 2000,
         "slaMs": 1000,
-        "arrivalRatePerSec": 64516.13,
+        "arrivalRatePerSec": 54054.05,
         "pctWithinSla": 100,
-        "latenessP50Ms": 209,
-        "latenessP99Ms": 218,
-        "excessOverTickP50Ms": 208,
-        "excessOverTickP99Ms": 217,
-        "maxLatenessMs": 230,
-        "maxExcessOverTickMs": 229,
-        "wallMs": 31
+        "latenessP50Ms": 13,
+        "latenessP99Ms": 22,
+        "excessOverTickP50Ms": 12,
+        "excessOverTickP99Ms": 21,
+        "maxLatenessMs": 33,
+        "maxExcessOverTickMs": 32,
+        "wallMs": 37,
+        "scheduleShape": "typed_arrays",
+        "gcTrace": {
+          "pauseCount": 0,
+          "pauseTotalMs": 0,
+          "pauseMaxMs": 0,
+          "majorPauseCount": 0,
+          "majorPauseMaxMs": 0,
+          "lateFiresOverlappingGc": 0,
+          "lateFiresOverlappingMajorGc": 0,
+          "lateOverlapFraction": 0,
+          "lateThresholdMs": 100,
+          "note": "No fires at/above late threshold."
+        }
       },
       "sustainablePerSec": 256000,
       "ramp": [
@@ -371,12 +400,25 @@
           "arrivalRatePerSec": 50,
           "pctWithinSla": 100,
           "latenessP50Ms": 11,
-          "latenessP99Ms": 269,
+          "latenessP99Ms": 38,
           "excessOverTickP50Ms": 10,
-          "excessOverTickP99Ms": 268,
-          "maxLatenessMs": 269,
-          "maxExcessOverTickMs": 268,
-          "wallMs": 734
+          "excessOverTickP99Ms": 37,
+          "maxLatenessMs": 38,
+          "maxExcessOverTickMs": 37,
+          "wallMs": 966,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 1,
+            "pauseTotalMs": 3.283,
+            "pauseMaxMs": 3.283,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
         },
         {
           "mode": "ramp",
@@ -385,13 +427,26 @@
           "slaMs": 1000,
           "arrivalRatePerSec": 100,
           "pctWithinSla": 100,
-          "latenessP50Ms": 18,
-          "latenessP99Ms": 275,
-          "excessOverTickP50Ms": 17,
-          "excessOverTickP99Ms": 274,
-          "maxLatenessMs": 285,
-          "maxExcessOverTickMs": 284,
-          "wallMs": 734
+          "latenessP50Ms": 16,
+          "latenessP99Ms": 32,
+          "excessOverTickP50Ms": 15,
+          "excessOverTickP99Ms": 31,
+          "maxLatenessMs": 42,
+          "maxExcessOverTickMs": 41,
+          "wallMs": 971,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 0,
+            "pauseTotalMs": 0,
+            "pauseMaxMs": 0,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
         },
         {
           "mode": "ramp",
@@ -400,13 +455,26 @@
           "slaMs": 1000,
           "arrivalRatePerSec": 250,
           "pctWithinSla": 100,
-          "latenessP50Ms": 19,
-          "latenessP99Ms": 274,
-          "excessOverTickP50Ms": 18,
-          "excessOverTickP99Ms": 273,
-          "maxLatenessMs": 282,
-          "maxExcessOverTickMs": 281,
-          "wallMs": 735
+          "latenessP50Ms": 17,
+          "latenessP99Ms": 38,
+          "excessOverTickP50Ms": 16,
+          "excessOverTickP99Ms": 37,
+          "maxLatenessMs": 46,
+          "maxExcessOverTickMs": 45,
+          "wallMs": 981,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 1,
+            "pauseTotalMs": 2.475,
+            "pauseMaxMs": 2.475,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
         },
         {
           "mode": "ramp",
@@ -415,13 +483,26 @@
           "slaMs": 1000,
           "arrivalRatePerSec": 500,
           "pctWithinSla": 100,
-          "latenessP50Ms": 23,
-          "latenessP99Ms": 486,
-          "excessOverTickP50Ms": 22,
-          "excessOverTickP99Ms": 485,
-          "maxLatenessMs": 496,
-          "maxExcessOverTickMs": 495,
-          "wallMs": 523
+          "latenessP50Ms": 17,
+          "latenessP99Ms": 47,
+          "excessOverTickP50Ms": 16,
+          "excessOverTickP99Ms": 46,
+          "maxLatenessMs": 57,
+          "maxExcessOverTickMs": 56,
+          "wallMs": 973,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 1,
+            "pauseTotalMs": 2.051,
+            "pauseMaxMs": 2.051,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
         },
         {
           "mode": "ramp",
@@ -430,13 +511,26 @@
           "slaMs": 1000,
           "arrivalRatePerSec": 1000,
           "pctWithinSla": 100,
-          "latenessP50Ms": 18,
-          "latenessP99Ms": 165,
-          "excessOverTickP50Ms": 17,
-          "excessOverTickP99Ms": 164,
-          "maxLatenessMs": 175,
-          "maxExcessOverTickMs": 174,
-          "wallMs": 847
+          "latenessP50Ms": 17,
+          "latenessP99Ms": 49,
+          "excessOverTickP50Ms": 16,
+          "excessOverTickP99Ms": 48,
+          "maxLatenessMs": 59,
+          "maxExcessOverTickMs": 58,
+          "wallMs": 975,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 2,
+            "pauseTotalMs": 13.779,
+            "pauseMaxMs": 13.212,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
         },
         {
           "mode": "ramp",
@@ -445,13 +539,26 @@
           "slaMs": 1000,
           "arrivalRatePerSec": 2000,
           "pctWithinSla": 100,
-          "latenessP50Ms": 40,
-          "latenessP99Ms": 501,
-          "excessOverTickP50Ms": 39,
-          "excessOverTickP99Ms": 500,
-          "maxLatenessMs": 511,
-          "maxExcessOverTickMs": 510,
-          "wallMs": 504
+          "latenessP50Ms": 17,
+          "latenessP99Ms": 25,
+          "excessOverTickP50Ms": 16,
+          "excessOverTickP99Ms": 24,
+          "maxLatenessMs": 35,
+          "maxExcessOverTickMs": 34,
+          "wallMs": 982,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 2,
+            "pauseTotalMs": 2.589,
+            "pauseMaxMs": 1.974,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
         },
         {
           "mode": "ramp",
@@ -460,13 +567,26 @@
           "slaMs": 1000,
           "arrivalRatePerSec": 4000,
           "pctWithinSla": 100,
-          "latenessP50Ms": 18,
-          "latenessP99Ms": 165,
-          "excessOverTickP50Ms": 17,
-          "excessOverTickP99Ms": 164,
-          "maxLatenessMs": 175,
-          "maxExcessOverTickMs": 174,
-          "wallMs": 846
+          "latenessP50Ms": 16,
+          "latenessP99Ms": 23,
+          "excessOverTickP50Ms": 15,
+          "excessOverTickP99Ms": 22,
+          "maxLatenessMs": 30,
+          "maxExcessOverTickMs": 29,
+          "wallMs": 987,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 1,
+            "pauseTotalMs": 3.004,
+            "pauseMaxMs": 3.004,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
         },
         {
           "mode": "ramp",
@@ -475,13 +595,26 @@
           "slaMs": 1000,
           "arrivalRatePerSec": 8000,
           "pctWithinSla": 100,
-          "latenessP50Ms": 13,
-          "latenessP99Ms": 189,
-          "excessOverTickP50Ms": 12,
-          "excessOverTickP99Ms": 188,
-          "maxLatenessMs": 198,
-          "maxExcessOverTickMs": 197,
-          "wallMs": 810
+          "latenessP50Ms": 10,
+          "latenessP99Ms": 20,
+          "excessOverTickP50Ms": 9,
+          "excessOverTickP99Ms": 19,
+          "maxLatenessMs": 24,
+          "maxExcessOverTickMs": 23,
+          "wallMs": 989,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 3,
+            "pauseTotalMs": 3,
+            "pauseMaxMs": 1.944,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
         },
         {
           "mode": "ramp",
@@ -490,13 +623,26 @@
           "slaMs": 1000,
           "arrivalRatePerSec": 16000,
           "pctWithinSla": 100,
-          "latenessP50Ms": 10,
-          "latenessP99Ms": 171,
-          "excessOverTickP50Ms": 9,
-          "excessOverTickP99Ms": 170,
-          "maxLatenessMs": 178,
-          "maxExcessOverTickMs": 177,
-          "wallMs": 836
+          "latenessP50Ms": 9,
+          "latenessP99Ms": 19,
+          "excessOverTickP50Ms": 8,
+          "excessOverTickP99Ms": 18,
+          "maxLatenessMs": 25,
+          "maxExcessOverTickMs": 24,
+          "wallMs": 994,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 4,
+            "pauseTotalMs": 8.221,
+            "pauseMaxMs": 5.929,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
         },
         {
           "mode": "ramp",
@@ -505,13 +651,26 @@
           "slaMs": 1000,
           "arrivalRatePerSec": 32000,
           "pctWithinSla": 100,
-          "latenessP50Ms": 24,
-          "latenessP99Ms": 217,
-          "excessOverTickP50Ms": 23,
-          "excessOverTickP99Ms": 216,
-          "maxLatenessMs": 224,
-          "maxExcessOverTickMs": 223,
-          "wallMs": 804
+          "latenessP50Ms": 10,
+          "latenessP99Ms": 32,
+          "excessOverTickP50Ms": 9,
+          "excessOverTickP99Ms": 31,
+          "maxLatenessMs": 38,
+          "maxExcessOverTickMs": 37,
+          "wallMs": 978,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 6,
+            "pauseTotalMs": 6.387,
+            "pauseMaxMs": 2.739,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
         },
         {
           "mode": "ramp",
@@ -521,43 +680,49 @@
           "arrivalRatePerSec": 64000,
           "pctWithinSla": 100,
           "latenessP50Ms": 0,
-          "latenessP99Ms": 168,
+          "latenessP99Ms": 24,
           "excessOverTickP50Ms": 0,
-          "excessOverTickP99Ms": 167,
-          "maxLatenessMs": 175,
-          "maxExcessOverTickMs": 174,
-          "wallMs": 829
+          "excessOverTickP99Ms": 23,
+          "maxLatenessMs": 27,
+          "maxExcessOverTickMs": 26,
+          "wallMs": 976,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 25,
+            "pauseTotalMs": 12.188,
+            "pauseMaxMs": 2.916,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
         }
       ],
       "crashTest": {
         "ok": true,
-        "policy": {
-          "mode": "group_commit",
-          "batchMax": 64,
-          "flushIntervalMs": 10,
-          "durabilityWindowTriggers": 0,
-          "durabilityWindowMs": 0,
-          "crashSafe": true,
-          "storage": "append_ndjson_file",
-          "syncPrimitive": "fsync_group_commit",
-          "note": "Group commit: flush when batch reaches 64 or every 10 ms, then fsync. Fired stamps only after fsync — an unflushed batch is never counted, so a crash loses at most in-flight (not-yet-acked) work, not counted fires. Max wait for a fire ≈ flushIntervalMs (or sooner if batch fills)."
-        },
-        "countedFired": 416,
-        "recoveredOnDisk": 416,
-        "missingFromDisk": 0,
-        "duplicateOnDisk": 0,
-        "note": "SIGKILL after 416 durable acks; all counted fires present on disk exactly once (journal=/tmp/clawql-density-bags-fair/.deadline-crash/deadline-triggers-14692-1793218627536.ndjson)."
+        "note": "SIGKILL mid-drain under group_commit + typed_arrays — counted fires on disk, no duplicates"
       },
+      "scheduleShape": "typed_arrays",
       "sustainablePerSecNote": {
         "policy": "group_commit",
         "batchMax": 64,
         "flushIntervalMs": 10,
+        "scheduleShape": "typed_arrays",
         "conservativeFloor": 256000,
-        "threeRepMedian": 512000,
-        "threeRepMax": 512000,
+        "threeRepMedian": 256000,
+        "threeRepMax": 256000,
+        "threeRepValues": [
+          256000,
+          256000,
+          256000
+        ],
+        "crashTestOk": true,
         "fsyncEachSustainablePerSec": 24000,
         "osBufferWasNotCrashDurable": "~1.2e6 prior v7 figure was writeSync/page-cache only — superseded",
-        "steadyP99Note": "Steady excess p99 ~293ms at ~667/s is NOT the 10ms flush interval — flush stamps after fsync; residual is timer/event-loop under the 2.5e6 resident heap pad."
+        "objectHeapSteadyP99WasGc": "v8 object_entries steady excess p99 ~293–314 ms lined up with major GC (~121 ms); typed_arrays is the published best-effort TS column"
       },
       "flushPolicyCompare": {
         "group_commit": {
@@ -570,7 +735,8 @@
             512000,
             512000,
             256000
-          ]
+          ],
+          "scheduleShapeNote": "v8 compare used object_entries; v9 sustainable floor remeasured under typed_arrays = 256k×3"
         },
         "fsync_each": {
           "sustainablePerSec": 24000,
@@ -601,6 +767,23 @@
             }
           ]
         }
+      },
+      "scheduleShapeAb": {
+        "residentHeapSize": 2500000,
+        "object_entries": {
+          "steadyExcessP99Ms": 314,
+          "majorPauseMaxMs": 120.92810600064695,
+          "lateOverlapFraction": 1,
+          "lateFiresOverlappingMajorGc": 205,
+          "note": "Object-per-entry heap under 2.5e6 pad: major GC ~121 ms; 100% of late fires (≥50 ms) overlap that pause."
+        },
+        "typed_arrays": {
+          "steadyExcessP99Ms": 22,
+          "majorPauseMaxMs": 0,
+          "lateOverlapFraction": 0,
+          "note": "Board default. Float64 deadlines + Int32 heap indices; sparse agent Map. Steady excess p99 collapses ~10×."
+        },
+        "reading": "Large GC pauses appear while building/holding the object schedule; typed_arrays cuts steady excess p99 sharply. Fair column: report both shapes; board default typed_arrays."
       }
     },
     "wakeByOrder": [

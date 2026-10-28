@@ -10,7 +10,9 @@
  * under the same fired definition + flush policy.
  */
 
+import { PerformanceObserver } from "node:perf_hooks";
 import { Effect } from "effect";
+import { makeTypedDeadlineScheduleEffect } from "./deadline-schedule-typed.js";
 import {
   DEFAULT_TRIGGER_FLUSH_POLICY,
   describeFlushPolicy,
@@ -25,15 +27,22 @@ export {
   openTriggerJournalEffect,
   readTriggerJournalEffect,
 } from "./trigger-journal.js";
+export { makeTypedDeadlineScheduleEffect } from "./deadline-schedule-typed.js";
+export type { TypedDeadlineSchedule } from "./deadline-schedule-typed.js";
 
 export type DeadlineEntry = {
   readonly agentId: string;
   readonly deadlineMs: number;
 };
 
+export type DeadlineScheduleShape = "object_entries" | "typed_arrays";
+
 export type DeadlineSchedule = {
+  readonly shape?: DeadlineScheduleShape;
   readonly size: () => number;
   readonly schedule: (agentId: string, deadlineMs: number) => void;
+  /** Optional bulk pad without per-entry objects (typed_arrays). */
+  readonly schedulePad?: (count: number, farDeadlineMs: number) => void;
   readonly peekDeadlineMs: () => number | null;
   /** Pop all entries with deadlineMs <= nowMs. O(k log n) for k due. */
   readonly popDue: (nowMs: number) => DeadlineEntry[];
@@ -114,6 +123,7 @@ function siftDown(heap: number[], deadlines: number[], i: number): void {
   }
 }
 
+/** Object-per-entry schedule — diagnostic A/B vs typed_arrays under large N. */
 export function makeDeadlineScheduleEffect(): Effect.Effect<DeadlineSchedule> {
   return Effect.sync(() => {
     const agents: DeadlineEntry[] = [];
@@ -127,6 +137,7 @@ export function makeDeadlineScheduleEffect(): Effect.Effect<DeadlineSchedule> {
     };
 
     return {
+      shape: "object_entries" as const,
       size: () => agents.length,
       schedule: (agentId, deadlineMs) => {
         const idx = agents.length;
@@ -179,6 +190,21 @@ export function randomDeadlineMsEffect(
 
 export type DeadlineArmMode = "steady" | "burst" | "ramp";
 
+export type DeadlineGcTrace = {
+  readonly pauseCount: number;
+  readonly pauseTotalMs: number;
+  readonly pauseMaxMs: number;
+  readonly majorPauseCount: number;
+  readonly majorPauseMaxMs: number;
+  /** Fires whose (deadline→firedAt) window overlapped a GC pause ≥ this ms. */
+  readonly lateFiresOverlappingGc: number;
+  readonly lateFiresOverlappingMajorGc: number;
+  /** Of fires with lateness ≥ lateThresholdMs, fraction overlapping any GC. */
+  readonly lateOverlapFraction: number;
+  readonly lateThresholdMs: number;
+  readonly note: string;
+};
+
 export type DeadlineArmResult = {
   readonly mode: DeadlineArmMode;
   readonly n: number;
@@ -194,6 +220,8 @@ export type DeadlineArmResult = {
   readonly maxLatenessMs: number;
   readonly maxExcessOverTickMs: number;
   readonly wallMs: number;
+  readonly scheduleShape: DeadlineScheduleShape;
+  readonly gcTrace: DeadlineGcTrace | null;
 };
 
 export type DeadlineAccuracyReport = {
@@ -239,7 +267,9 @@ function summarizeArm(
   slaMs: number,
   arrivalRatePerSec: number,
   wallMs: number,
-  percentile: (samples: readonly number[], p: number) => number
+  percentile: (samples: readonly number[], p: number) => number,
+  scheduleShape: DeadlineScheduleShape = "object_entries",
+  gcTrace: DeadlineGcTrace | null = null
 ): DeadlineArmResult {
   const excess = samples.map((l) => Math.max(0, l - tickMs));
   const within = samples.filter((l) => l <= slaMs).length;
@@ -259,6 +289,91 @@ function summarizeArm(
     maxLatenessMs: samples.length ? Number(maxOf(samples).toFixed(3)) : 0,
     maxExcessOverTickMs: excess.length ? Number(maxOf(excess).toFixed(3)) : 0,
     wallMs: Number(wallMs.toFixed(3)),
+    scheduleShape,
+    gcTrace,
+  };
+}
+
+type GcPauseInterval = {
+  readonly startPerfMs: number;
+  readonly endPerfMs: number;
+  readonly durationMs: number;
+  readonly major: boolean;
+};
+
+function attachGcObserver(): {
+  readonly pauses: GcPauseInterval[];
+  readonly disconnect: () => void;
+} {
+  const pauses: GcPauseInterval[] = [];
+  const obs = new PerformanceObserver((list) => {
+    for (const entry of list.getEntries()) {
+      if (entry.entryType !== "gc") continue;
+      const detail = (entry as { detail?: { kind?: number } }).detail;
+      // Node: kind 1=Scavenge, 2=Mark/Sweep/Compact (major-ish), 4=Incremental, 8=WeakCB
+      const kind = detail?.kind ?? 0;
+      const major = kind === 2 || entry.duration >= 50;
+      pauses.push({
+        startPerfMs: entry.startTime,
+        endPerfMs: entry.startTime + entry.duration,
+        durationMs: entry.duration,
+        major,
+      });
+    }
+  });
+  try {
+    obs.observe({ entryTypes: ["gc"], buffered: false });
+  } catch {
+    /* gc entries unavailable */
+  }
+  return {
+    pauses,
+    disconnect: () => {
+      try {
+        obs.disconnect();
+      } catch {
+        /* ignore */
+      }
+    },
+  };
+}
+
+function buildGcTrace(
+  pauses: readonly GcPauseInterval[],
+  fireWindows: readonly { readonly startPerfMs: number; readonly endPerfMs: number; readonly latenessMs: number }[],
+  lateThresholdMs: number
+): DeadlineGcTrace {
+  const late = fireWindows.filter((f) => f.latenessMs >= lateThresholdMs);
+  let lateOverlap = 0;
+  let lateMajorOverlap = 0;
+  for (const f of late) {
+    let hit = false;
+    let hitMajor = false;
+    for (const p of pauses) {
+      if (p.endPerfMs < f.startPerfMs || p.startPerfMs > f.endPerfMs) continue;
+      hit = true;
+      if (p.major) hitMajor = true;
+    }
+    if (hit) lateOverlap += 1;
+    if (hitMajor) lateMajorOverlap += 1;
+  }
+  const major = pauses.filter((p) => p.major);
+  return {
+    pauseCount: pauses.length,
+    pauseTotalMs: Number(pauses.reduce((a, p) => a + p.durationMs, 0).toFixed(3)),
+    pauseMaxMs: pauses.length ? Number(maxOf(pauses.map((p) => p.durationMs)).toFixed(3)) : 0,
+    majorPauseCount: major.length,
+    majorPauseMaxMs: major.length ? Number(maxOf(major.map((p) => p.durationMs)).toFixed(3)) : 0,
+    lateFiresOverlappingGc: lateOverlap,
+    lateFiresOverlappingMajorGc: lateMajorOverlap,
+    lateOverlapFraction: late.length ? Number((lateOverlap / late.length).toFixed(3)) : 0,
+    lateThresholdMs,
+    note:
+      late.length === 0
+        ? "No fires at/above late threshold."
+        : lateOverlap / late.length >= 0.5
+          ? `≥50% of late fires (≥${lateThresholdMs} ms) overlapped a GC pause — GC is a plausible cause of the tail.`
+          : `Only ${(100 * lateOverlap) / late.length}% of late fires overlapped GC — look elsewhere for the tail (timer grain, flush wait, event-loop).`,
   };
 }
 
@@ -319,6 +434,8 @@ export function runDeadlinePumpEffect(args: {
   readonly concurrency?: number;
   readonly mode?: DeadlineArmMode;
   readonly arrivalRatePerSec: number;
+  readonly traceGc?: boolean;
+  readonly lateGcThresholdMs?: number;
   readonly percentile: (samples: readonly number[], p: number) => number;
 }): Effect.Effect<DeadlineArmResult> {
   return Effect.promise(async () => {
@@ -333,35 +450,60 @@ export function runDeadlinePumpEffect(args: {
       slaMs = DEFAULT_DEADLINE_SLA_MS,
       concurrency = DEFAULT_DEADLINE_CONCURRENCY,
       mode = "steady",
+      traceGc = true,
+      lateGcThresholdMs = 100,
     } = args;
     const samples: number[] = [];
+    const fireWindows: { startPerfMs: number; endPerfMs: number; latenessMs: number }[] = [];
+    const scheduleShape: DeadlineScheduleShape = schedule.shape ?? "object_entries";
+    const gc = traceGc ? attachGcObserver() : null;
     let fired = 0;
     const t0 = Date.now();
+    const { performance } = await import("node:perf_hooks");
+    // Map Date.now() ↔ performance.now() so GC pauses can overlap the
+    // full deadline→fired window (including sleepUntil waits), not just fire().
+    const dateToPerfOffset = Date.now() - performance.now();
 
-    while (fired < maxFires && Date.now() < wallDeadlineMs) {
-      const next = schedule.peekDeadlineMs();
-      if (next === null || !Number.isFinite(next)) break;
-      const now = Date.now();
-      if (next > now) {
-        await sleepUntil(next, tickMs, wallDeadlineMs);
-        continue;
+    try {
+      while (fired < maxFires && Date.now() < wallDeadlineMs) {
+        const next = schedule.peekDeadlineMs();
+        if (next === null || !Number.isFinite(next)) break;
+        const now = Date.now();
+        if (next > now) {
+          await sleepUntil(next, tickMs, wallDeadlineMs);
+          continue;
+        }
+        const due = schedule.popDue(Date.now());
+        if (due.length === 0) {
+          await new Promise<void>((r) => setImmediate(r));
+          continue;
+        }
+        const batch = due.slice(0, maxFires - fired);
+        const batchMeta = await mapPool(batch, concurrency, async (entry) => {
+          await fire(entry);
+          const firedAt = Date.now();
+          const latenessMs = Math.max(0, firedAt - entry.deadlineMs);
+          return {
+            latenessMs,
+            // Window from when the deadline fell due through durable fire.
+            startPerfMs: entry.deadlineMs - dateToPerfOffset,
+            endPerfMs: firedAt - dateToPerfOffset,
+          };
+        });
+        for (const m of batchMeta) {
+          samples.push(m.latenessMs);
+          fireWindows.push(m);
+          fired += 1;
+        }
       }
-      const due = schedule.popDue(Date.now());
-      if (due.length === 0) {
-        await new Promise<void>((r) => setImmediate(r));
-        continue;
-      }
-      const batch = due.slice(0, maxFires - fired);
-      const batchLateness = await mapPool(batch, concurrency, async (entry) => {
-        await fire(entry);
-        const firedAt = Date.now();
-        return Math.max(0, firedAt - entry.deadlineMs);
-      });
-      for (const lateness of batchLateness) {
-        samples.push(lateness);
-        fired += 1;
-      }
+    } finally {
+      gc?.disconnect();
     }
+
+    const gcTrace =
+      gc && fireWindows.length > 0
+        ? buildGcTrace(gc.pauses, fireWindows, lateGcThresholdMs)
+        : null;
 
     return summarizeArm(
       mode,
@@ -370,7 +512,9 @@ export function runDeadlinePumpEffect(args: {
       slaMs,
       arrivalRatePerSec,
       Date.now() - t0,
-      percentile
+      percentile,
+      scheduleShape,
+      gcTrace
     );
   });
 }
@@ -395,6 +539,19 @@ function placeSteadyDeadlines(
  * Ramp offered steady arrival rate until pctWithinSla drops below targetPct.
  * Returns the last rate that still met the target (sustainablePerSec).
  */
+export function makeAccuracyScheduleEffect(args: {
+  readonly residentHeapSize: number;
+  readonly scheduleShape?: DeadlineScheduleShape;
+  readonly headroom?: number;
+}): Effect.Effect<DeadlineSchedule> {
+  const shape = args.scheduleShape ?? "typed_arrays";
+  const cap = Math.max(1, args.residentHeapSize) + (args.headroom ?? 10_000);
+  if (shape === "typed_arrays") {
+    return makeTypedDeadlineScheduleEffect(cap);
+  }
+  return makeDeadlineScheduleEffect();
+}
+
 export function rampSustainableRateEffect(args: {
   readonly agentIds: readonly string[];
   readonly fire: (entry: DeadlineEntry) => Promise<void>;
@@ -406,6 +563,7 @@ export function rampSustainableRateEffect(args: {
   readonly ratesPerSec?: readonly number[];
   /** Far-future pad so ramp arms stress the same heap size as agents-at-limit. */
   readonly residentHeapSize?: number;
+  readonly scheduleShape?: DeadlineScheduleShape;
   readonly percentile: (samples: readonly number[], p: number) => number;
 }): Effect.Effect<{
   readonly sustainablePerSec: number;
@@ -419,6 +577,7 @@ export function rampSustainableRateEffect(args: {
     const windowMs = Math.max(200, args.windowMs);
     const windowSec = windowMs / 1000;
     const residentHeapSize = Math.max(0, args.residentHeapSize ?? 0);
+    const scheduleShape = args.scheduleShape ?? "typed_arrays";
     // Defaults sized for fsync / group-commit (not os_buffer page-cache rates).
     const rates =
       args.ratesPerSec ??
@@ -443,7 +602,10 @@ export function rampSustainableRateEffect(args: {
     for (const rate of rates) {
       const count = Math.max(1, Math.min(rampIds.length, Math.floor(rate * windowSec)));
       const offered = count / windowSec;
-      const schedule = yield* makeDeadlineScheduleEffect();
+      const schedule = yield* makeAccuracyScheduleEffect({
+        residentHeapSize: Math.max(count, residentHeapSize),
+        scheduleShape,
+      });
       const now = Date.now();
       placeSteadyDeadlines(schedule, rampIds, now, windowMs, count);
       padResidentHeap(schedule, Math.max(count, residentHeapSize), now + windowMs + 3_600_000);
@@ -474,14 +636,19 @@ export function rampSustainableRateEffect(args: {
 /**
  * Pad a schedule with far-future entries so next-deadline ops run at the
  * claimed resident heap size (avoids measuring a 2k heap while claiming 2.5e6).
- * Pads share one agentId — identity is irrelevant; size is what stresses the heap.
+ * Typed schedules bulk-pad without per-entry objects; object schedules allocate.
  */
-function padResidentHeap(
+export function padResidentHeap(
   schedule: DeadlineSchedule,
   targetSize: number,
   farDeadlineMs: number
 ): void {
   const need = Math.max(0, targetSize - schedule.size());
+  if (need === 0) return;
+  if (typeof schedule.schedulePad === "function") {
+    schedule.schedulePad(need, farDeadlineMs);
+    return;
+  }
   for (let i = 0; i < need; i++) {
     schedule.schedule("__pad__", farDeadlineMs + (i % 1_000));
   }
@@ -506,6 +673,8 @@ export function runDeadlineAccuracyEffect(args: {
    * so next-deadline cost matches the resident schedule at agents-at-limit.
    */
   readonly residentHeapSize?: number;
+  /** object_entries (GC-heavy at large N) vs typed_arrays (board default). */
+  readonly scheduleShape?: DeadlineScheduleShape;
   readonly rampWindowMs?: number;
   readonly rampRatesPerSec?: readonly number[];
   readonly skipRamp?: boolean;
@@ -520,6 +689,7 @@ export function runDeadlineAccuracyEffect(args: {
     const burstOffsetMs = args.burstOffsetMs ?? 50;
     const firedDefinition = args.firedDefinition ?? "durable_trigger_record";
     const flushPolicy = args.flushPolicy ?? DEFAULT_TRIGGER_FLUSH_POLICY;
+    const scheduleShape = args.scheduleShape ?? "typed_arrays";
     const ids = [...args.agentIds];
     const residentHeapSize = Math.max(0, args.residentHeapSize ?? 0);
     const scheduler = makeDeadlineSchedulerInfo({
@@ -549,7 +719,7 @@ export function runDeadlineAccuracyEffect(args: {
       ids.length,
       Math.max(1, Math.floor(steadyRate * (args.horizonMs / 1000)))
     );
-    const steadySched = yield* makeDeadlineScheduleEffect();
+    const steadySched = yield* makeAccuracyScheduleEffect({ residentHeapSize, scheduleShape });
     const steadyNow = Date.now();
     placeSteadyDeadlines(steadySched, ids, steadyNow, args.horizonMs, steadyCount);
     padResidentHeap(steadySched, residentHeapSize, steadyNow + args.horizonMs + 3_600_000);
@@ -567,7 +737,7 @@ export function runDeadlineAccuracyEffect(args: {
       percentile: args.percentile,
     });
 
-    const burstSched = yield* makeDeadlineScheduleEffect();
+    const burstSched = yield* makeAccuracyScheduleEffect({ residentHeapSize, scheduleShape });
     const burstAt = Date.now() + burstOffsetMs;
     const burstN = Math.min(ids.length, steadyCount);
     for (let i = 0; i < burstN; i++) burstSched.schedule(ids[i]!, burstAt);
@@ -605,6 +775,7 @@ export function runDeadlineAccuracyEffect(args: {
         ratesPerSec: args.rampRatesPerSec,
         percentile: args.percentile,
         residentHeapSize,
+        scheduleShape,
       });
       sustainablePerSec = r.sustainablePerSec;
       ramp = r.ramp;

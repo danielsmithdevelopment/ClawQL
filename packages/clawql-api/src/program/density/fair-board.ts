@@ -34,7 +34,7 @@ import {
   DEFAULT_DEADLINE_SLA_MS,
   DEFAULT_SLA_TARGET_PCT,
   DEFAULT_TRIGGER_FLUSH_POLICY,
-  makeDeadlineScheduleEffect,
+  makeTypedDeadlineScheduleEffect,
   openTriggerJournalEffect,
   randomDeadlineMsEffect,
   runDeadlineAccuracyEffect,
@@ -590,7 +590,13 @@ export function runFairDensityBoardEffect(
     const memTotalKiB = yield* readMemTotalKiBEffect();
 
     const baseline = yield* readHeapSnapshotEffect();
-    const schedule = yield* makeDeadlineScheduleEffect();
+    // Typed-array schedule: avoids 1 object/agent under multi-million N (GC tail).
+    const scheduleCapacity = Math.max(
+      3_000_000,
+      ...(options.rampSchedule ?? DEFAULT_RAMP),
+      options.resumeFromAgents ?? 0
+    );
+    const schedule = yield* makeTypedDeadlineScheduleEffect(scheduleCapacity);
     const ramp: FairRampStep[] = [];
     let agentsAtLimit = 0;
     let rssHit = false;
@@ -995,8 +1001,9 @@ export function runFairDensityBoardEffect(
       retainedInProcess:
         "Wake-deadline min-heap (agentId + deadlineMs) for every counted agent — approval expiry / reminder schedule. Bag path derived from agentId (FS is the id index). Id/path Maps alone are not the capacity story; once both systems trim locator overhead, capacity is disk-bound and bag size decides.",
       deadlineScheduleEntries: schedule.size(),
-      scheduleShape: "deadline_min_heap",
-      estimatedScheduleBytesPerAgent: 21 + 8 + 48,
+      scheduleShape: "deadline_typed_arrays",
+      // Float64 deadline + Int32 heap index ≈ 12B + sparse agentId for live agents only.
+      estimatedScheduleBytesPerAgent: 12 + 8,
     };
 
     const boardColumns: BoardColumns = {

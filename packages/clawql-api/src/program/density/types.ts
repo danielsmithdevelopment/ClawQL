@@ -181,7 +181,7 @@ export type ResidentAccounting = {
   readonly retainedInProcess: string;
   /** Must equal agentsAtLimit for a comparable capacity claim. */
   readonly deadlineScheduleEntries: number;
-  readonly scheduleShape: "deadline_min_heap";
+  readonly scheduleShape: "deadline_min_heap" | "deadline_typed_arrays";
   readonly estimatedScheduleBytesPerAgent: number;
 };
 
