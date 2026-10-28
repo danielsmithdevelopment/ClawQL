@@ -196,7 +196,7 @@ Do **not** put Golem on the MCP token/governance pets board as if it were Bifros
 
 > Golem makes **execution** durable; ClawQL governs the **remote effects** you both agree no runtime can make durable on its own — at most once, approved, audited, and exactly once where idempotency keys exist. Here are the crash-test numbers. Want to check our setup and show the combination together?
 
-Body: (1) execution vs effect durability; (2) his three conditions, acknowledged; (3) Tier C claim + evidence + dual-mode board; (4) invite Golem-arm config; (5) REST mandate keys shipped + check-then-decide lookup still planned (not overclaimed).
+Body: (1) execution vs effect durability; (2) his three conditions, acknowledged; (3) Tier C claim + evidence + dual-mode board; (4) invite Golem-arm config; (5) REST mandate keys + check-then-decide shipped (race-safe definitive = named server guarantee only). Ready-to-send copy: [`PILOT-OUTREACH.md`](../benchmarks/durability-proof/PILOT-OUTREACH.md).
 
 **Later — own calm public post** on the two kinds of durability with measured data, without referencing the argument. Readers following the debate will find it; it answers the question both left open. Not a dunk.
 
@@ -221,7 +221,7 @@ He is publicly pressure-testing frameworks that overclaim durability. Use his fr
 - [ ] “Survives a crash” only with the scoped Tier C claim (failover seconds + availability costs); never without the per-phase unknown framing if quoting the ~48% rate.
 - [ ] Preferred production row stays **planned** until measured at stock N; TTL-only 30s always labeled **n=40**.
 - [ ] Prefer “at most once” for approved writes; “at least once + stable id” for events.
-- [ ] When quoting Golem 1.6, keep his three conditions intact; never imply ClawQL is a durable execution engine. REST mandate keys are shipped; do not claim program-runner keyed resume or lookup reconciliation until measured.
+- [ ] When quoting Golem 1.6, keep his three conditions intact; never imply ClawQL is a durable execution engine. REST mandate keys, program keyed resume, and check-then-decide are shipped — cite the board + TLA+; never claim client timeout alone makes not_found definitive.
 - [ ] Do not frame in-flight recovery as only “retry / silent / person” — lead with check-by-reference (exact match; not-found ≠ failed yet), then keys, then person.
 - [ ] Do not claim constant resume cost until journal-length board exists.
 - [ ] Streams “Durable Objects” always means Cloudflare/celld DO substrate, not Golem.

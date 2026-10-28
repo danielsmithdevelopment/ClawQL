@@ -158,7 +158,16 @@ function pausedShop(): PausedShop {
           definitive,
           detail: `inflight=${stillInflight}`,
         });
-        return { status: "not_found" as const, definitive };
+        if (definitive) {
+          // Only when nothing is in flight and nothing applied — mock treats
+          // empty post-cancel as lookup_covers_prior_accepts (named guarantee).
+          return {
+            status: "not_found" as const,
+            definitive: true as const,
+            reason: "lookup_covers_prior_accepts" as const,
+          };
+        }
+        return { status: "not_found" as const, definitive: false as const };
       }),
   };
 

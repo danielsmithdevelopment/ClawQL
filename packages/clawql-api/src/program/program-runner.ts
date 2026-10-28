@@ -97,11 +97,14 @@ export type ProgramHost = {
    * (`clientReference` / `chargeReference` / stable program id). Used only when
    * `resolveRisk.lookupByReferenceCapable` is true.
    *
-   * `not_found.definitive` must be true **only** when the original request can no
-   * longer take effect (deadline passed, or the API guarantees the lookup covers
-   * every earlier request). Early "not found" while a request may still be in
-   * flight must stay non-definitive — the runner then records `outcome_unknown`
-   * and never safe-resends.
+   * `not_found.definitive` must be true **only** when a **server-side guarantee**
+   * says the original can no longer take effect — never a client-side timeout.
+   * Named reasons (match TLA+ `GuaranteeReasons`):
+   * - `server_enforced_expiry` — request carried an expiry the server rejects past
+   * - `lookup_covers_prior_accepts` — API docs: this lookup reflects every accept before it
+   * - `connection_rejected` — connection-level reject proved (not mere silence)
+   * Where the API offers none of these, keep `definitive: false` forever →
+   * `outcome_unknown`, never safe-resend.
    */
   readonly verifyByReference?: (input: {
     readonly operationId: string;
@@ -110,7 +113,16 @@ export type ProgramHost = {
     readonly intentStartedAt: string;
   }) => Effect.Effect<
     | { readonly status: "found"; readonly preview?: string }
-    | { readonly status: "not_found"; readonly definitive: boolean }
+    | {
+        readonly status: "not_found";
+        readonly definitive: false;
+      }
+    | {
+        readonly status: "not_found";
+        readonly definitive: true;
+        readonly reason:
+          "server_enforced_expiry" | "lookup_covers_prior_accepts" | "connection_rejected";
+      }
     | { readonly status: "unsupported" },
     Error
   >;

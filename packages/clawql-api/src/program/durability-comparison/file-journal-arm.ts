@@ -179,11 +179,15 @@ function recordingHost(opts: {
                 };
               }
               // Race-safe default: not_found is non-definitive unless the board
-              // explicitly asserts the original can no longer take effect.
-              return {
-                status: "not_found" as const,
-                definitive: opts.notFoundDefinitive === true,
-              };
+              // names a server guarantee (never a client-side timeout alone).
+              if (opts.notFoundDefinitive === true) {
+                return {
+                  status: "not_found" as const,
+                  definitive: true as const,
+                  reason: "lookup_covers_prior_accepts" as const,
+                };
+              }
+              return { status: "not_found" as const, definitive: false as const };
             })
         : undefined,
   };

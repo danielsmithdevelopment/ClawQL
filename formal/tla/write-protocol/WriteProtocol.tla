@@ -13,8 +13,15 @@
 (*   "lookup" — exact lookup-by-reference                                  *)
 (*   "neither"— no keys, no lookup                                         *)
 (*                                                                         *)
-(* WeakEarlyNotFound = TRUE models trusting "not found" while a request    *)
-(* may still land. TLC must then violate NoDuplicateEffect / NoUnsafeRetry.*)
+(* "Can no longer land" is NOT a client timeout. It is an explicit         *)
+(* ServerGuarantee with a named reason the remote service actually offers: *)
+(*   "server_enforced_expiry"     — signed max-age the server rejects      *)
+(*   "lookup_covers_prior_accepts"— API docs: lookup sees all prior accepts*)
+(*   "connection_rejected"        — connection-level reject (not silence)  *)
+(* Client-side give-up alone never enters canNoLongerLand.                 *)
+(*                                                                         *)
+(* WeakEarlyNotFound = TRUE trusts not_found without a ServerGuarantee.    *)
+(* TLC must then violate NoDuplicateEffect / NoUnsafeRetry.                *)
 (*                                                                         *)
 (* Claim style: model-checked under stated bounds — not "provably correct".*)
 (***************************************************************************)
@@ -24,18 +31,26 @@ EXTENDS Naturals, FiniteSets, Sequences, TLC
 CONSTANTS
   MaxWrites,              \* logical writes to attempt (small for TLC)
   ApiType,                \* "keys" | "lookup" | "neither"
-  WeakEarlyNotFound,      \* TRUE = trust not_found while request may still land
+  WeakEarlyNotFound,      \* TRUE = trust not_found without ServerGuarantee
   AllowBlindAgentRetry    \* TRUE = peer/agent re-sends without a structural gate
 
 ASSUME ApiType \in {"keys", "lookup", "neither"}
 ASSUME WeakEarlyNotFound \in BOOLEAN
 ASSUME AllowBlindAgentRetry \in BOOLEAN
 
+GuaranteeReasons == {
+  "server_enforced_expiry",
+  "lookup_covers_prior_accepts",
+  "connection_rejected"
+}
+
 VARIABLES
   nextWrite,           \* next logical write id
   journal,             \* [wid |-> journal record]
   inflight,            \* set of write ids accepted but not yet applied
   applied,             \* [wid |-> Nat] how many times the server applied wid
+  canNoLongerLand,     \* set of wids for which a ServerGuarantee was recorded
+  guaranteeReason,     \* [wid |-> reason or "none"]
   clawqlDone,          \* [wid |-> {"none","done","unknown","not_done"}]
   crashed,             \* BOOLEAN — node currently down
   clock
@@ -47,14 +62,19 @@ JournalRecord == [
   reference: WriteId \cup {0}
 ]
 
+vars == <<nextWrite, journal, inflight, applied, canNoLongerLand,
+          guaranteeReason, clawqlDone, crashed, clock>>
+
 TypeOK ==
   /\ nextWrite \in 1..(MaxWrites + 1)
   /\ clock \in Nat
   /\ crashed \in BOOLEAN
   /\ inflight \subseteq WriteId
+  /\ canNoLongerLand \subseteq WriteId
   /\ applied \in [WriteId -> Nat]
   /\ clawqlDone \in [WriteId -> {"none", "done", "unknown", "not_done"}]
   /\ journal \in [WriteId -> JournalRecord]
+  /\ guaranteeReason \in [WriteId -> (GuaranteeReasons \cup {"none"})]
 
 -----------------------------------------------------------------------------
 Init ==
@@ -62,6 +82,8 @@ Init ==
   /\ journal = [w \in WriteId |-> [status |-> "none", reference |-> 0]]
   /\ inflight = {}
   /\ applied = [w \in WriteId |-> 0]
+  /\ canNoLongerLand = {}
+  /\ guaranteeReason = [w \in WriteId |-> "none"]
   /\ clawqlDone = [w \in WriteId |-> "none"]
   /\ crashed = FALSE
   /\ clock = 0
@@ -76,31 +98,44 @@ SendWrite ==
        /\ journal' = [journal EXCEPT ![w] = [status |-> "intent", reference |-> w]]
        /\ inflight' = inflight \cup {w}
        /\ nextWrite' = nextWrite + 1
-  /\ UNCHANGED <<applied, clawqlDone, crashed, clock>>
+  /\ UNCHANGED <<applied, canNoLongerLand, guaranteeReason, clawqlDone, crashed, clock>>
 
-\* Network/server eventually applies an in-flight request.
+\* Network/server eventually applies an in-flight request (may be after client gave up).
 ApplyInflight(w) ==
   /\ w \in inflight
+  /\ w \notin canNoLongerLand   \* server-enforced expiry already rejected it
   /\ inflight' = inflight \ {w}
   /\ IF ApiType = "keys" /\ applied[w] >= 1
-       THEN applied' = applied          \* key dedupe
+       THEN applied' = applied
        ELSE applied' = [applied EXCEPT ![w] = @ + 1]
-  /\ UNCHANGED <<nextWrite, journal, clawqlDone, crashed, clock>>
+  /\ UNCHANGED <<nextWrite, journal, canNoLongerLand, guaranteeReason,
+                 clawqlDone, crashed, clock>>
 
-\* Crash: node down; in-flight requests may still apply later.
+\* Named server guarantee: the original can no longer take effect.
+\* Drop from inflight (server will not apply) and record the reason.
+ServerGuarantee(w, reason) ==
+  /\ reason \in GuaranteeReasons
+  /\ journal[w].status = "intent"
+  /\ w \notin canNoLongerLand
+  /\ canNoLongerLand' = canNoLongerLand \cup {w}
+  /\ guaranteeReason' = [guaranteeReason EXCEPT ![w] = reason]
+  /\ inflight' = inflight \ {w}
+  /\ UNCHANGED <<nextWrite, journal, applied, clawqlDone, crashed, clock>>
+
+\* Crash: node down; in-flight requests may still apply later unless guaranteed.
 Crash ==
   /\ ~crashed
   /\ crashed' = TRUE
   /\ clock' = clock + 1
-  /\ UNCHANGED <<nextWrite, journal, inflight, applied, clawqlDone>>
+  /\ UNCHANGED <<nextWrite, journal, inflight, applied, canNoLongerLand,
+                 guaranteeReason, clawqlDone>>
 
-\* Resume node.
 Resume ==
   /\ crashed
   /\ crashed' = FALSE
-  /\ UNCHANGED <<nextWrite, journal, inflight, applied, clawqlDone, clock>>
+  /\ UNCHANGED <<nextWrite, journal, inflight, applied, canNoLongerLand,
+                 guaranteeReason, clawqlDone, clock>>
 
-\* Lookup-capable reconcile when the effect is already applied.
 LookupFound(w) ==
   /\ ~crashed
   /\ ApiType = "lookup"
@@ -108,9 +143,9 @@ LookupFound(w) ==
   /\ applied[w] >= 1
   /\ journal' = [journal EXCEPT ![w] = [status |-> "reconciled", reference |-> w]]
   /\ clawqlDone' = [clawqlDone EXCEPT ![w] = "done"]
-  /\ UNCHANGED <<nextWrite, inflight, applied, crashed, clock>>
+  /\ UNCHANGED <<nextWrite, inflight, applied, canNoLongerLand, guaranteeReason,
+                 crashed, clock>>
 
-\* Keyed redrive after crash (idempotent API).
 KeyedRedrive(w) ==
   /\ ~crashed
   /\ ApiType = "keys"
@@ -118,73 +153,74 @@ KeyedRedrive(w) ==
   /\ applied' = IF applied[w] = 0 THEN [applied EXCEPT ![w] = 1] ELSE applied
   /\ journal' = [journal EXCEPT ![w] = [status |-> "reconciled", reference |-> w]]
   /\ clawqlDone' = [clawqlDone EXCEPT ![w] = "done"]
-  /\ UNCHANGED <<nextWrite, inflight, crashed, clock>>
+  /\ UNCHANGED <<nextWrite, inflight, canNoLongerLand, guaranteeReason, crashed, clock>>
 
-\* Safe path: not_found only definitive when nothing in flight for w.
+\* Safe path: not_found + named ServerGuarantee → one safe resend.
 LookupNotFoundSafe(w) ==
   /\ ~crashed
   /\ ApiType = "lookup"
   /\ journal[w].status = "intent"
   /\ applied[w] = 0
-  /\ w \notin inflight          \* original can no longer land
+  /\ w \in canNoLongerLand      \* MUST name a real server guarantee
   /\ ~WeakEarlyNotFound
-  /\ applied' = [applied EXCEPT ![w] = 1]   \* one safe resend
+  /\ applied' = [applied EXCEPT ![w] = 1]
   /\ journal' = [journal EXCEPT ![w] = [status |-> "reconciled", reference |-> w]]
   /\ clawqlDone' = [clawqlDone EXCEPT ![w] = "done"]
-  /\ UNCHANGED <<nextWrite, inflight, crashed, clock>>
+  /\ UNCHANGED <<nextWrite, inflight, canNoLongerLand, guaranteeReason, crashed, clock>>
 
-\* Weak path: trust not_found while still in flight (UNSAFE — for counterexample).
+\* Weak path: trust not_found WITHOUT a ServerGuarantee (UNSAFE).
 LookupNotFoundWeak(w) ==
   /\ ~crashed
   /\ WeakEarlyNotFound
   /\ ApiType = "lookup"
   /\ journal[w].status = "intent"
   /\ applied[w] = 0
-  /\ w \in inflight             \* still may land
-  /\ applied' = [applied EXCEPT ![w] = @ + 1]  \* unsafe "resend"
+  /\ w \notin canNoLongerLand   \* no named guarantee — client just "gave up"
+  /\ applied' = [applied EXCEPT ![w] = @ + 1]
   /\ journal' = [journal EXCEPT ![w] = [status |-> "reconciled", reference |-> w]]
   /\ clawqlDone' = [clawqlDone EXCEPT ![w] = "done"]
-  /\ UNCHANGED <<nextWrite, inflight, crashed, clock>>
+  /\ UNCHANGED <<nextWrite, inflight, canNoLongerLand, guaranteeReason, crashed, clock>>
 
-\* Neither keys nor lookup (or ambiguous lookup): stay unknown; never resend.
+\* Neither keys nor lookup, or lookup without a guarantee: stay unknown.
 MarkUnknown(w) ==
   /\ ~crashed
   /\ journal[w].status = "intent"
   /\ \/ ApiType = "neither"
      \/ /\ ApiType = "lookup"
         /\ applied[w] = 0
-        /\ w \in inflight
+        /\ w \notin canNoLongerLand
         /\ ~WeakEarlyNotFound
   /\ journal' = [journal EXCEPT ![w] =
        [status |-> "outcome_unknown", reference |-> w]]
   /\ clawqlDone' = [clawqlDone EXCEPT ![w] = "unknown"]
-  /\ UNCHANGED <<nextWrite, inflight, applied, crashed, clock>>
+  /\ UNCHANGED <<nextWrite, inflight, applied, canNoLongerLand, guaranteeReason,
+                 crashed, clock>>
 
-\* Agent always-retries without a structural gate (Pi/Golem out-of-the-box on
-\* ApiType=neither). ClawQL atomic configs set AllowBlindAgentRetry = FALSE.
 AgentBlindRetry(w) ==
   /\ AllowBlindAgentRetry
   /\ ~crashed
   /\ ApiType = "neither"
   /\ journal[w].status \in {"intent", "outcome_unknown"}
   /\ applied' = [applied EXCEPT ![w] = @ + 1]
-  /\ UNCHANGED <<nextWrite, journal, inflight, clawqlDone, crashed, clock>>
+  /\ UNCHANGED <<nextWrite, journal, inflight, canNoLongerLand, guaranteeReason,
+                 clawqlDone, crashed, clock>>
 
-\* ClawQL structural refusal: agent wants to retry; applied unchanged.
 AgentRetryRefused(w) ==
   /\ ~AllowBlindAgentRetry
   /\ ~crashed
   /\ journal[w].status \in {"intent", "outcome_unknown"}
-  /\ UNCHANGED <<nextWrite, journal, inflight, applied, clawqlDone, crashed, clock>>
+  /\ UNCHANGED vars
 
 Tick ==
   /\ clock' = clock + 1
-  /\ UNCHANGED <<nextWrite, journal, inflight, applied, clawqlDone, crashed>>
+  /\ UNCHANGED <<nextWrite, journal, inflight, applied, canNoLongerLand,
+                 guaranteeReason, clawqlDone, crashed>>
 
 -----------------------------------------------------------------------------
 Next ==
   \/ SendWrite
   \/ \E w \in WriteId: ApplyInflight(w)
+  \/ \E w \in WriteId, r \in GuaranteeReasons: ServerGuarantee(w, r)
   \/ Crash
   \/ Resume
   \/ \E w \in WriteId: LookupFound(w)
@@ -196,11 +232,9 @@ Next ==
   \/ \E w \in WriteId: AgentRetryRefused(w)
   \/ Tick
 
-Spec == Init /\ [][Next]_<<nextWrite, journal, inflight, applied, clawqlDone, crashed, clock>>
+Spec == Init /\ [][Next]_vars
 
 -----------------------------------------------------------------------------
-\* Properties (safety — model-checked under cfg bounds)
-
 NoDuplicateEffect ==
   \A w \in WriteId: applied[w] <= 1
 
@@ -208,26 +242,23 @@ NoFalseDone ==
   \A w \in WriteId:
     clawqlDone[w] = "done" => applied[w] >= 1
 
-\* Resend/reconcile-as-done only when not still in flight (unless Weak).
-NoUnsafeRetry ==
-  ~WeakEarlyNotFound =>
-    \A w \in WriteId:
-      journal[w].status = "reconciled" => w \notin inflight \/ applied[w] >= 1
+\* Safe resend is enabled only when w \in canNoLongerLand (see LookupNotFoundSafe).
+\* WeakEarlyNotFound skips that guard; ApplyInflight can then double-apply →
+\* NoDuplicateEffect fails (recorded counterexample).
 
-\* Unknown is the honest floor when we cannot finish: neither keys, or lookup
-\* still ambiguous at decide time (original may apply later — still not "done").
 UnknownOnlyWhenStuck ==
   \A w \in WriteId:
     clawqlDone[w] = "unknown" =>
       ApiType \in {"neither", "lookup"}
 
+\* "Can no longer land" is never a bare client timeout — always a named reason.
+GuaranteeNamed ==
+  \A w \in canNoLongerLand: guaranteeReason[w] \in GuaranteeReasons
+
 Safety ==
   /\ NoDuplicateEffect
   /\ NoFalseDone
-  /\ NoUnsafeRetry
-
-\* Eventual resolution under fairness is checked separately if needed;
-\* for TLC we keep a bounded safety focus.
+  /\ GuaranteeNamed
 
 StateConstraint == clock <= 5
 

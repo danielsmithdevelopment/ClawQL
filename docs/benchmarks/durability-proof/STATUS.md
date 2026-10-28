@@ -35,11 +35,11 @@ In real operation, crashes mostly land outside the brief in-flight window, so un
 
 Prefer renew-every-⅕ + regional leases over TTL stretch. Do not publish preferred as measured.
 
-### Enough to contact John
+### Enough to contact John — **pilot package ready**
 
-Send the claim above, the evidence JSON, the per-phase table, the harness, the honest caveats (12-second failover; stock 0.6% self-fence / 0.9% deadline miss), and an invitation to try breaking it. Do not wait for the tuned configuration.
+Send **now** (N=1000 peer host run waits on feedback): [PILOT-OUTREACH.md](./PILOT-OUTREACH.md) + [PR #1432](https://github.com/danielsmithdevelopment/ClawQL/pull/1432) + [COMPARISON.md](./COMPARISON.md). Also the Tier C claim above, evidence JSON, per-phase table, harness, caveats (12-second failover; stock 0.6% self-fence / 0.9% deadline miss). Do not wait for the tuned configuration or real-model Pi.
 
-**Engage privately, not in the public thread.** Both sides of the “is Pi magically durable?” fight are right about different meanings — [execution vs effect durability](../../gtm/golem-overlap-and-durability-honesty.md#two-kinds-of-durable-do-not-conflate). DM John with: Golem makes execution durable; ClawQL governs remote effects neither runtime claims to make durable alone — at most once, approved, audited; crash numbers; check our setup. Later: own calm post on the two kinds, with data, no dunk. Pitch text: [collaboration pitch](../../gtm/golem-overlap-and-durability-honesty.md#collaboration-pitch-private--not-the-public-thread).
+**Engage privately, not in the public thread.** Both sides of the “is Pi magically durable?” fight are right about different meanings — [execution vs effect durability](../../gtm/golem-overlap-and-durability-honesty.md#two-kinds-of-durable-do-not-conflate). Copy-paste DMs for John and Earendil are in the pilot package. Later: own calm post on the two kinds, with data, no dunk. Pitch: [collaboration pitch](../../gtm/golem-overlap-and-durability-honesty.md#collaboration-pitch-private--not-the-public-thread).
 
 **Also planned (not a gate for outreach):** resume time vs journal length; snapshots if growth is material — [honesty § measure](../../gtm/golem-overlap-and-durability-honesty.md#measure-resume-vs-journal-length-planned--find-it-yourself).
 

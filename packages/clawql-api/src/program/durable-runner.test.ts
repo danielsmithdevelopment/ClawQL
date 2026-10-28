@@ -118,11 +118,14 @@ function recordingHost(options: HostOptions = {}): RecordingHost {
                   preview: JSON.stringify({ ok: true, effectId: known }),
                 };
               }
-              // Race-safe: not_found is non-definitive unless the test opts in.
-              return {
-                status: "not_found" as const,
-                definitive: options.notFoundDefinitive === true,
-              };
+              if (options.notFoundDefinitive === true) {
+                return {
+                  status: "not_found" as const,
+                  definitive: true as const,
+                  reason: "lookup_covers_prior_accepts" as const,
+                };
+              }
+              return { status: "not_found" as const, definitive: false as const };
             })
         : undefined,
     replayed: (call) =>

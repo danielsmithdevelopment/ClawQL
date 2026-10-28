@@ -40,12 +40,24 @@ Until the other rows are measured, **do not** read this table as “Golem and Pi
 
 Numbers only mean something when the remote API’s recovery options are labeled:
 
-| `apiCapability`       | Remote offers                       | ClawQL after crash mid-write      | Peers out of the box                         |
-| --------------------- | ----------------------------------- | --------------------------------- | -------------------------------------------- |
-| `idempotency_keys`    | Honors Idempotency-Key              | **0 / 0 / N** (keyed resume)      | 0 dups if they re-send with the same key     |
-| `lookup_by_reference` | Exact “charge with this reference?” | **0 / 0 / N** (check-then-decide) | No automatic path; custom code possible      |
-| `neither`             | No keys, no lookup                  | **0 / N / 0** (honest floor)      | **N / 0 / 0** if they retry / re-send        |
-| `lookup_race`         | Lookup, but original may still land | **0 / N / 0** until definitive    | (probe) early not_found must not safe-resend |
+| `apiCapability`       | Remote offers                                                            | ClawQL after crash mid-write                     | Peers out of the box                         |
+| --------------------- | ------------------------------------------------------------------------ | ------------------------------------------------ | -------------------------------------------- |
+| `idempotency_keys`    | Honors Idempotency-Key                                                   | **0 / 0 / N** (keyed resume)                     | 0 dups if they re-send with the same key     |
+| `lookup_by_reference` | Exact “charge with this reference?” **and** a definitive guarantee below | **0 / 0 / N** when found or definitive not_found | No automatic path; custom code possible      |
+| `neither`             | No keys, no lookup, **no** definitive guarantee                          | **0 / N / 0** (honest floor)                     | **N / 0 / 0** if they retry / re-send        |
+| `lookup_race`         | Lookup, but no definitive guarantee yet                                  | **0 / N / 0** (must stay unknown)                | (probe) early not_found must not safe-resend |
+
+### What “definitive” / “can no longer land” means
+
+A client-side timeout is **not** enough — the request may still sit in a load balancer, retry queue, or server backlog. `not_found.definitive` requires a **mechanism the remote service actually guarantees**, named in code and in the TLA+ `ServerGuarantee` action:
+
+| `reason`                      | Assumption recorded on the capability                                                        |
+| ----------------------------- | -------------------------------------------------------------------------------------------- |
+| `server_enforced_expiry`      | Request carries an expiry the **server** rejects past a maximum age (e.g. signed timestamp). |
+| `lookup_covers_prior_accepts` | API documents that this lookup reflects **every** request accepted before it.                |
+| `connection_rejected`         | Connection-level response **proved** reject — not silence / unanswered.                      |
+
+Where an API offers **none** of these, early **or late** “not found” stays unknown — never safe to retry. The race arm and `WriteProtocolWeak.cfg` exist to catch trusting not_found without a named guarantee.
 
 ---
 
