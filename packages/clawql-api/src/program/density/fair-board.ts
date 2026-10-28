@@ -1,14 +1,15 @@
 /**
  * Fair parked-agent density board for ClawQL TypeScript.
  *
- * Methodology (v4 — wake-by-id index retained at limit):
+ * Methodology (v5 — wake-deadline schedule at limit):
  * - Ceiling / agents-at-limit = **first resource exhausted** (disk | rss | latency).
- * - Limit runs **must** retain Map<agentId, bagPath> for every counted agent
- *   (working-system wake-by-id state; comparable to Ontologiql's per-agent record).
- * - Resident board column = total process RSS / N (matches Ontologiql).
- * - Wake protocol: JIT warmup → alternate warm_then_cold / cold_then_warm
- *   for several repetitions; report cold/warm p99 spread; headline = slower
- *   cold order (conservative).
+ * - Limit runs **must** retain an in-memory **wake-deadline schedule** for every
+ *   counted agent (approval expiry / reminder). Bag path is derived from agentId
+ *   (filesystem is the id index) — path Maps are not the capacity story.
+ * - Board adds **deadlineLatenessMs** (p50/p99). Cold wake: report median + range
+ *   across order reps; do not cross-compare cold until shared-host.
+ * - Trim of id/path records alone likely makes both systems disk-bound; bag size
+ *   then decides capacity (~30 vs ~32.8 KiB). Deadline state is the real resident.
  *
  * Active-density lab pulse is out of scope for the public parked claim.
  */
@@ -25,7 +26,16 @@ import {
   resolveBagDirEffect,
   type ParkedBagApi,
 } from "./bag-store.js";
-import { buildFairParkedAgentEffect } from "./fair-agent.js";
+import {
+  FAIR_DEADLINE_HORIZON_MS,
+  buildFairParkedAgentEffect,
+} from "./fair-agent.js";
+import {
+  makeDeadlineScheduleEffect,
+  randomDeadlineMsEffect,
+  runDeadlinePumpEffect,
+  type DeadlineSchedule,
+} from "./deadline-schedule.js";
 import {
   createGcRecorderEffect,
   evictBagPageCacheEffect,
@@ -71,33 +81,23 @@ export type FairBoardOptions = {
   readonly bagDir?: string;
   readonly rssCeilingMiB?: number;
   readonly rampSchedule?: readonly number[];
-  /** After the schedule, keep doubling until a resource limit is hit (default true). */
   readonly continueUntilCeiling?: boolean;
   readonly wakeSampleSize?: number;
-  /** Untimed wakes before either timed order (JIT + path warmup). */
   readonly wakeWarmupCount?: number;
-  /**
-   * How many times to alternate warm_then_cold / cold_then_warm after warmup.
-   * Spread across repetitions is reported in clawqlRun.wakeSpread.
-   */
   readonly wakeOrderRepetitions?: number;
-  /** Optional cold-wake p99 ceiling (ms). When set, exceeding it is a latency limit. */
   readonly wakeColdP99CeilingMs?: number;
+  /** Random wake deadlines spread over this horizon (ms). */
+  readonly deadlineHorizonMs?: number;
+  /** Max deadline fires (bag wakes) measured for lateness p99. */
+  readonly deadlineMaxFires?: number;
   readonly hostLabel?: string;
-  /** Skip cold eviction (CI smoke). */
   readonly skipCold?: boolean;
-  /** Skip process-restart arm (unit tests). */
   readonly skipRestart?: boolean;
-  /**
-   * Reuse existing bags in bagDir (do not clear). `resumeFromAgents` is the
-   * next agent index to park (usually = existing bag count). Wake samples are
-   * drawn from the directory without loading every id into the heap.
-   */
+  readonly skipDeadlinePump?: boolean;
   readonly reuseBags?: boolean;
   readonly resumeFromAgents?: number;
 };
 
-/** Ramp past 200k so a total-RSS 512 MiB ceiling can actually be found. */
 const DEFAULT_RAMP: readonly number[] = [
   100, 500, 1_000, 2_000, 5_000, 10_000, 25_000, 50_000, 100_000, 200_000, 300_000, 400_000,
   500_000, 750_000, 1_000_000,
@@ -105,14 +105,14 @@ const DEFAULT_RAMP: readonly number[] = [
 
 /**
  * Ontologiql public claim (publishable) — mirrored for the comparison table.
- * Ceiling definition: total process RSS ≤ 512 MiB (rss is the binding resource).
+ * Deadline lateness is null until Ontologiql remeasures under the v2 contract.
  */
 export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
   systemId: "ontologiql-rust",
   status: "publishable",
   hostLabel: "stable-host (Ontologiql published)",
   honesty:
-    "Ontologiql Rust fair row is publishable on the stable host. Numbers from the public claim (200k agents @ ≤512 MiB **total** process RSS, ~30 KiB disk/agent, warm wake p99 < 35 µs, cold wake p99 < 0.6 ms, restart survival). ~2 KiB resident/agent is a trim candidate (parked agent needs little more than id + bag locator) — not a Rust memory law. Full evidence-fair.json lives with Ontologiql — this mirror is not a ClawQL re-measurement.",
+    "Ontologiql Rust fair row is publishable on the pre-deadline contract (200k @ ≤512 MiB total RSS, ~30 KiB disk/agent, warm p99 < 35 µs, cold p99 < 0.6 ms, restart). ~2 KiB resident/agent can likely shrink to tens of bytes if path is derived and the FS is the id index — same as TS Map overhead. Once both trim, capacity is disk-bound and bag size decides (~30 vs ~32.8 KiB). **deadlineLatenessMs not yet measured** — invite Ontologiql to remeasure under fair-v2 (wake deadline + on-time fire). Do not read cold-wake gaps until shared-host.",
   boardColumns: {
     agentsAtLimit: 200_000,
     limitResource: "rss",
@@ -121,47 +121,103 @@ export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
     diskBytesPerAgent: 30 * 1024,
     wakeWarmMs: { p50: 0.000035, p99: 0.000035 },
     wakeColdMs: { p50: 0.6, p99: 0.6 },
+    deadlineLatenessMs: null,
     restartSurvival: true,
   },
   activeDensityLab: null,
 };
 
-/**
- * Fast ramp park: sync write into bagDir (same on-disk shape as ParkedBagApi.park).
- * Populates the wake-by-id index (required working-system state at limit).
- */
+/** Bag path is derived — not stored in the deadline schedule. */
+function bagPathFor(bagDir: string, agentId: string): string {
+  return join(bagDir, `${agentId}.json`);
+}
+
 function parkUpTo(
   bags: ParkedBagApi,
   fromExclusive: number,
   toInclusive: number,
-  idIndex: Map<string, string>
+  schedule: DeadlineSchedule,
+  nowMs: number,
+  horizonMs: number
 ): string[] {
   mkdirSync(bags.bagDir, { recursive: true, mode: 0o700 });
   const ids: string[] = [];
   for (let i = fromExclusive; i < toInclusive; i++) {
-    const agent = Effect.runSync(buildFairParkedAgentEffect(i));
-    const path = join(bags.bagDir, `${agent.agentId}.json`);
+    const deadlineMs = Effect.runSync(randomDeadlineMsEffect(nowMs, horizonMs));
+    const agent = Effect.runSync(
+      buildFairParkedAgentEffect(i, undefined, {
+        nowMs,
+        deadlineHorizonMs: horizonMs,
+        wakeDeadlineAt: new Date(deadlineMs).toISOString(),
+      })
+    );
+    const path = bagPathFor(bags.bagDir, agent.agentId);
     const tmp = `${path}.tmp`;
-    const body = `${JSON.stringify(agent)}\n`;
-    writeFileSync(tmp, body, { mode: 0o600 });
+    writeFileSync(tmp, `${JSON.stringify(agent)}\n`, { mode: 0o600 });
     renameSync(tmp, path);
-    idIndex.set(agent.agentId, path);
+    schedule.schedule(agent.agentId, deadlineMs);
     ids.push(agent.agentId);
   }
   return ids;
 }
 
+function pickSampleIds(ids: readonly string[], sampleSize: number): string[] {
+  const n = Math.min(sampleSize, ids.length);
+  if (n <= 0) return [];
+  const out: string[] = [];
+  for (let s = 0; s < n; s++) out.push(ids[Math.floor((s * ids.length) / n)]!);
+  return out;
+}
+
+function sampleIdsFromBagDir(bagDir: string, sampleSize: number): {
+  readonly sampleIds: string[];
+  readonly seen: number;
+} {
+  const stride = Math.max(1, Math.floor(50_000 / Math.max(1, sampleSize)));
+  const res = spawnSync(
+    "bash",
+    [
+      "-c",
+      `find "$1" -maxdepth 1 -name 'bag_*.json' -printf '%f\\n' | awk -v n="$2" -v s="$3" '
+        { c++; if (c % s == 1) { sub(/\\.json$/,""); print; if (++k >= n) exit } }
+        END { print "__COUNT__" c }'`,
+      "awk-sample",
+      bagDir,
+      String(sampleSize),
+      String(stride),
+    ],
+    { encoding: "utf8", timeout: 600_000, maxBuffer: 16 * 1024 * 1024 }
+  );
+  if (res.status !== 0) return { sampleIds: [], seen: 0 };
+  const lines = (res.stdout || "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  let seen = 0;
+  const sampleIds: string[] = [];
+  for (const line of lines) {
+    if (line.startsWith("__COUNT__")) {
+      seen = Number(line.slice("__COUNT__".length)) || 0;
+      continue;
+    }
+    if (line.startsWith("bag_")) sampleIds.push(line);
+  }
+  return { sampleIds, seen };
+}
+
 /**
- * Stream bag filenames into a wake-by-id Map, checkpointing RSS so a reuse
- * measure cannot claim capacity without retaining the index Ontologiql includes.
+ * Stream bag ids into the deadline schedule (synthetic deadlines for reuse dirs
+ * that predate fair-v2). Path is not stored — derived on wake.
  */
-function loadIdIndexFromBagDir(args: {
+function loadDeadlineScheduleFromBagDir(args: {
   readonly bagDir: string;
-  readonly idIndex: Map<string, string>;
+  readonly schedule: DeadlineSchedule;
   readonly rssCeilingKiB: number;
   readonly checkpointEvery: number;
   readonly maxIds?: number;
   readonly reservoirSize: number;
+  readonly nowMs: number;
+  readonly horizonMs: number;
   readonly readRssKiB: () => number;
   readonly onCheckpoint: (n: number, rssKiB: number, within: boolean) => void;
 }): Promise<{
@@ -171,11 +227,13 @@ function loadIdIndexFromBagDir(args: {
 }> {
   const {
     bagDir,
-    idIndex,
+    schedule,
     rssCeilingKiB,
     checkpointEvery,
     maxIds,
     reservoirSize,
+    nowMs,
+    horizonMs,
     readRssKiB,
     onCheckpoint,
   } = args;
@@ -211,13 +269,11 @@ function loadIdIndexFromBagDir(args: {
       if (!name.endsWith(".json")) return;
       const id = name.slice(0, -".json".length);
       if (!id.startsWith("bag_")) return;
-      const path = join(bagDir, name);
-      idIndex.set(id, path);
+      const deadlineMs = Effect.runSync(randomDeadlineMsEffect(nowMs, horizonMs));
+      schedule.schedule(id, deadlineMs);
       loaded += 1;
-      // Reservoir sample for wake protocol without materializing all keys later.
-      if (sampleIds.length < reservoirSize) {
-        sampleIds.push(id);
-      } else {
+      if (sampleIds.length < reservoirSize) sampleIds.push(id);
+      else {
         const j = Math.floor(Math.random() * loaded);
         if (j < reservoirSize) sampleIds[j] = id;
       }
@@ -231,17 +287,12 @@ function loadIdIndexFromBagDir(args: {
           finish();
           return;
         }
-        if (maxIds !== undefined && loaded >= maxIds) {
-          finish();
-        }
+        if (maxIds !== undefined && loaded >= maxIds) finish();
       }
     });
     rl.on("close", () => {
       if (settled) return;
-      if (
-        loaded > 0 &&
-        (loaded < nextCheckpoint - checkpointEvery || loaded % checkpointEvery !== 0)
-      ) {
+      if (loaded > 0) {
         const rssKiB = readRssKiB();
         onCheckpoint(loaded, rssKiB, rssKiB <= rssCeilingKiB);
         if (rssKiB > rssCeilingKiB) rssHit = true;
@@ -262,61 +313,6 @@ function loadIdIndexFromBagDir(args: {
   });
 }
 
-function pickSampleIds(ids: readonly string[], sampleSize: number): string[] {
-  const n = Math.min(sampleSize, ids.length);
-  if (n <= 0) return [];
-  const out: string[] = [];
-  for (let s = 0; s < n; s++) {
-    out.push(ids[Math.floor((s * ids.length) / n)]!);
-  }
-  return out;
-}
-
-/**
- * Sample bag ids via `find`/`awk` — do **not** `readdirSync` multi-million
- * directories (dentry fault-in alone can push RSS over the fair ceiling).
- */
-function sampleIdsFromBagDir(
-  bagDir: string,
-  sampleSize: number
-): {
-  readonly sampleIds: string[];
-  readonly seen: number;
-} {
-  const stride = Math.max(1, Math.floor(50_000 / Math.max(1, sampleSize)));
-  const res = spawnSync(
-    "bash",
-    [
-      "-c",
-      `find "$1" -maxdepth 1 -name 'bag_*.json' -printf '%f\\n' | awk -v n="$2" -v s="$3" '
-        { c++; if (c % s == 1) { sub(/\\.json$/,""); print; if (++k >= n) exit } }
-        END { print "__COUNT__" c }'`,
-      "awk-sample",
-      bagDir,
-      String(sampleSize),
-      String(stride),
-    ],
-    { encoding: "utf8", timeout: 600_000, maxBuffer: 16 * 1024 * 1024 }
-  );
-  if (res.status !== 0) {
-    return { sampleIds: [], seen: 0 };
-  }
-  const lines = (res.stdout || "")
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean);
-  let seen = 0;
-  const sampleIds: string[] = [];
-  for (const line of lines) {
-    if (line.startsWith("__COUNT__")) {
-      seen = Number(line.slice("__COUNT__".length)) || 0;
-      continue;
-    }
-    if (line.startsWith("bag_")) sampleIds.push(line);
-  }
-  return { sampleIds, seen };
-}
-
 async function sampleWakeMs(
   bags: ParkedBagApi,
   sampleIds: readonly string[],
@@ -330,8 +326,7 @@ async function sampleWakeMs(
     const t1 = process.hrtime.bigint();
     samples.push(Number(t1 - t0) / 1e6);
   }
-  const gcSummary = gc?.stop() ?? { count: 0, totalMs: 0, maxMs: 0 };
-  return { samplesMs: samples, gc: gcSummary };
+  return { samplesMs: samples, gc: gc?.stop() ?? { count: 0, totalMs: 0, maxMs: 0 } };
 }
 
 async function latencyFromSamples(samplesMs: readonly number[]): Promise<WakeLatency> {
@@ -379,11 +374,7 @@ function computeWakeSpread(wakeByOrder: readonly WakeOrderResult[]): WakeSpread[
   });
 }
 
-/**
- * Pick the slower cold order for conservative headline columns.
- * Rank by coldP99Max (worst observed cold), tie-break by coldP99Median.
- * Board columns use the repetition that hit that max cold p99.
- */
+/** Headline warm uses slower-cold order (by coldP99Max); cold quotes use spread median+range. */
 function pickHeadlineOrder(
   wakeByOrder: readonly WakeOrderResult[],
   wakeSpread: readonly WakeSpread[]
@@ -449,7 +440,6 @@ function buildRampTargets(schedule: readonly number[], continueUntilCeiling: boo
   return targets;
 }
 
-/** Estimate RSS KiB growth per additional agent from the last two ramp steps. */
 function rssGrowthPerAgentKiB(ramp: readonly FairRampStep[]): number {
   if (ramp.length < 2) return 0;
   const a = ramp[ramp.length - 2]!;
@@ -459,11 +449,6 @@ function rssGrowthPerAgentKiB(ramp: readonly FairRampStep[]): number {
   return Math.max(0, (b.rssKiB - a.rssKiB) / dAgents);
 }
 
-/**
- * Classify the binding limit: first of disk | rss | latency that runs out.
- * Disk binds when remaining disk agents < remaining RSS-headroom agents (or
- * the next park batch cannot fit). Flat RSS (reuse / no id index) ⇒ disk first.
- */
 function classifyLimit(args: {
   readonly rssHit: boolean;
   readonly agentsAtLimit: number;
@@ -498,8 +483,8 @@ function classifyLimit(args: {
       : Number.POSITIVE_INFINITY;
   const growth = rssGrowthPerAgentKiB(args.ramp);
   const rssHeadroomKiB = Math.max(0, args.rssCeilingKiB - args.rssKiB);
-  const roomInRss = growth > 1e-6 ? Math.floor(rssHeadroomKiB / growth) : Number.POSITIVE_INFINITY;
-
+  const roomInRss =
+    growth > 1e-6 ? Math.floor(rssHeadroomKiB / growth) : Number.POSITIVE_INFINITY;
   const nextBatch = args.nextParkBatch;
   const nextBatchBlocked =
     nextBatch !== null &&
@@ -513,7 +498,7 @@ function classifyLimit(args: {
     return {
       limitResource: "disk",
       limitHit: true,
-      limitReason: `disk exhausted first at ${args.agentsAtLimit} agents (avail=${args.diskAvailBytes} B ≈ ${roomOnDisk} more agents @ ${bytesPer} B/agent; RSS headroom ≈ ${roomInRss === Number.POSITIVE_INFINITY ? "∞" : roomInRss} agents at measured growth ${growth.toFixed(6)} KiB/agent; total RSS ${args.rssKiB} KiB < ${args.rssCeilingMiB} MiB ceiling)`,
+      limitReason: `disk exhausted first at ${args.agentsAtLimit} agents (avail=${args.diskAvailBytes} B ≈ ${roomOnDisk} more agents @ ${bytesPer} B/agent; RSS headroom ≈ ${roomInRss === Number.POSITIVE_INFINITY ? "∞" : roomInRss} agents at growth ${growth.toFixed(6)} KiB/agent)`,
       agentsAtLimit: args.agentsAtLimit,
     };
   }
@@ -558,6 +543,8 @@ export function runFairDensityBoardEffect(
       options.wakeColdP99CeilingMs != null && Number.isFinite(options.wakeColdP99CeilingMs)
         ? options.wakeColdP99CeilingMs
         : null;
+    const deadlineHorizonMs = options.deadlineHorizonMs ?? FAIR_DEADLINE_HORIZON_MS;
+    const deadlineMaxFires = options.deadlineMaxFires ?? 2_000;
     const hostLabel = options.hostLabel ?? "clawql-cloud-agent-host";
     const rssCeilingKiB = rssCeilingMiB * 1024;
     const exposeGc = yield* exposeGcAvailableEffect();
@@ -571,20 +558,16 @@ export function runFairDensityBoardEffect(
     const memTotalKiB = yield* readMemTotalKiBEffect();
 
     const baseline = yield* readHeapSnapshotEffect();
-    /** Wake-by-id index — required working-system state for a comparable capacity claim. */
-    const idIndex = new Map<string, string>();
+    const schedule = yield* makeDeadlineScheduleEffect();
     const ramp: FairRampStep[] = [];
     let agentsAtLimit = 0;
     let rssHit = false;
     let diskBlockedDuringPark = false;
     let diskBlockDetail = "";
     let indexSampleIds: string[] = [];
-    /**
-     * Bags present on disk (may exceed indexed N when RSS stops index load early).
-     * diskBytesPerAgent = diskBytesTotal / bagsOnDisk — not / indexed N.
-     */
     let bagsOnDisk =
       reuseBags && (options.resumeFromAgents ?? 0) > 0 ? (options.resumeFromAgents as number) : 0;
+    const scheduleEpochMs = Date.now();
 
     const perBagDiskBytes = (diskTotal: number, indexedN: number): number => {
       const denom = Math.max(1, bagsOnDisk > 0 ? bagsOnDisk : indexedN);
@@ -618,18 +601,17 @@ export function runFairDensityBoardEffect(
     let prev = 0;
     if (reuseBags) {
       const resumeFrom = options.resumeFromAgents ?? 0;
-      // Load the wake-by-id index for existing bags before claiming a limit.
-      // Without this, RSS stays near baseline and capacity is not comparable
-      // to Ontologiql (whose published resident includes its per-agent record).
       const loadTarget = resumeFrom > 0 ? resumeFrom : undefined;
       const loaded = yield* Effect.promise(() =>
-        loadIdIndexFromBagDir({
+        loadDeadlineScheduleFromBagDir({
           bagDir,
-          idIndex,
+          schedule,
           rssCeilingKiB,
           checkpointEvery: 250_000,
           maxIds: loadTarget,
           reservoirSize: Math.max(wakeSampleSize, wakeWarmupCount, 1),
+          nowMs: scheduleEpochMs,
+          horizonMs: deadlineHorizonMs,
           readRssKiB: () => Effect.runSync(readHeapSnapshotEffect()).rssKiB,
           onCheckpoint: (n, rssKiB, within) => {
             const heap = Effect.runSync(readHeapSnapshotEffect());
@@ -654,21 +636,20 @@ export function runFairDensityBoardEffect(
         })
       );
       indexSampleIds = loaded.sampleIds;
-      prev = idIndex.size;
-      agentsAtLimit = idIndex.size;
+      prev = schedule.size();
+      agentsAtLimit = schedule.size();
       if (loaded.rssHit) {
         rssHit = true;
-        // Capacity column = last N still within the RSS ceiling (Ontologiql-style).
         const lastWithin = [...ramp].reverse().find((s) => s.withinRssCeiling);
         if (lastWithin) agentsAtLimit = lastWithin.agents;
-      } else if (idIndex.size > 0) {
+      } else if (schedule.size() > 0) {
         const heap = yield* readHeapSnapshotEffect();
         if (heap.rssKiB > rssCeilingKiB) {
           rssHit = true;
           const lastWithin = [...ramp].reverse().find((s) => s.withinRssCeiling);
           if (lastWithin) agentsAtLimit = lastWithin.agents;
-        } else if (ramp.length === 0 || ramp[ramp.length - 1]!.agents !== idIndex.size) {
-          yield* pushRampCheckpoint(idIndex.size, heap.rssKiB, heap.heapUsedKiB);
+        } else if (ramp.length === 0 || ramp[ramp.length - 1]!.agents !== schedule.size()) {
+          yield* pushRampCheckpoint(schedule.size(), heap.rssKiB, heap.heapUsedKiB);
         }
       }
     }
@@ -689,7 +670,7 @@ export function runFairDensityBoardEffect(
 
       let batch: string[];
       try {
-        batch = parkUpTo(bags, prev, target, idIndex);
+        batch = parkUpTo(bags, prev, target, schedule, Date.now(), deadlineHorizonMs);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         if (/ENOSPC|no space/i.test(msg)) {
@@ -699,11 +680,10 @@ export function runFairDensityBoardEffect(
         }
         throw err;
       }
-      // Reservoir into wake samples without retaining a second full id list.
       const reservoirCap = Math.max(wakeSampleSize, wakeWarmupCount, 1);
       for (let i = 0; i < batch.length; i++) {
         const id = batch[i]!;
-        const n = idIndex.size - batch.length + i + 1;
+        const n = schedule.size() - batch.length + i + 1;
         if (indexSampleIds.length < reservoirCap) indexSampleIds.push(id);
         else {
           const j = Math.floor(Math.random() * n);
@@ -722,18 +702,11 @@ export function runFairDensityBoardEffect(
       }
     }
 
-    // Keep idIndex reachable through the wake protocol (working-system resident).
-    if (!rssHit && idIndex.size > 0) {
-      agentsAtLimit = idIndex.size;
+    if (!rssHit && schedule.size() > 0) {
+      agentsAtLimit = schedule.size();
     }
-
-    // If RSS overshot during a checkpoint, trim the Map back to agentsAtLimit
-    // (last N within the ceiling) so retained state matches the capacity claim.
-    if (idIndex.size > agentsAtLimit && agentsAtLimit > 0) {
-      const keys = [...idIndex.keys()];
-      for (let i = keys.length - 1; i >= agentsAtLimit; i--) {
-        idIndex.delete(keys[i]!);
-      }
+    if (schedule.size() > agentsAtLimit && agentsAtLimit > 0) {
+      schedule.trimTo(agentsAtLimit);
     }
 
     const atLimit = yield* readHeapSnapshotEffect();
@@ -746,17 +719,45 @@ export function runFairDensityBoardEffect(
       pageCacheKiB !== null && agentsAtLimit > 0 ? pageCacheKiB / agentsAtLimit : null;
     const lastIdx = ramp.findIndex((s) => s.agents === last.agents);
     if (lastIdx >= 0) {
-      ramp[lastIdx] = {
-        ...ramp[lastIdx]!,
-        pageCacheKiBPerAgent,
+      ramp[lastIdx] = { ...ramp[lastIdx]!, pageCacheKiBPerAgent };
+    }
+
+    // --- Deadline pump on a sample schedule; full schedule stays retained for RSS ---
+    let deadlineLateness: {
+      readonly p50: number;
+      readonly p99: number;
+      readonly n: number;
+      readonly fired: number;
+      readonly maxLatenessMs: number;
+    } | null = null;
+    if (!options.skipDeadlinePump && schedule.size() > 0) {
+      const pumpSchedule = yield* makeDeadlineScheduleEffect();
+      const soonest = [...schedule.entries()]
+        .sort((a, b) => a.deadlineMs - b.deadlineMs)
+        .slice(0, Math.min(deadlineMaxFires, schedule.size()));
+      for (const e of soonest) pumpSchedule.schedule(e.agentId, e.deadlineMs);
+      const pump = yield* runDeadlinePumpEffect({
+        schedule: pumpSchedule,
+        wake: async (agentId) => {
+          await Effect.runPromise(bags.wake(agentId));
+        },
+        maxFires: soonest.length,
+        wallDeadlineMs: Date.now() + deadlineHorizonMs + 5_000,
+        percentile: (samples, p) => Effect.runSync(percentileMsEffect(samples, p)),
+      });
+      deadlineLateness = {
+        p50: pump.p50,
+        p99: pump.p99,
+        n: pump.n,
+        fired: pump.fired,
+        maxLatenessMs: pump.maxLatenessMs,
       };
     }
 
-    // --- Wake protocol: warmup, then alternate orders for N repetitions ---
-    // Prefer reservoir ids collected while building the retained index.
+    // --- Wake protocol ---
     const fromDisk =
       indexSampleIds.length >= Math.min(wakeSampleSize, 1)
-        ? { sampleIds: indexSampleIds, seen: idIndex.size }
+        ? { sampleIds: indexSampleIds, seen: schedule.size() }
         : sampleIdsFromBagDir(bagDir, Math.max(wakeSampleSize, wakeWarmupCount, 1));
     const timedIds = pickSampleIds(fromDisk.sampleIds, wakeSampleSize);
     const warmupIds = pickSampleIds(
@@ -771,8 +772,7 @@ export function runFairDensityBoardEffect(
 
     const wakeByOrder: WakeOrderResult[] = [];
     let coldEviction = "skipped";
-
-    const timedPaths = timedIds.map((id) => join(bagDir, `${id}.json`));
+    const timedPaths = timedIds.map((id) => bagPathFor(bagDir, id));
     const runWarm = async () => sampleWakeMs(bags, timedIds, gcRecorder);
     const runCold = async () => {
       if (options.skipCold) {
@@ -836,13 +836,13 @@ export function runFairDensityBoardEffect(
       ),
     };
 
-    const sampleId = timedIds[0] ?? indexSampleIds[0] ?? "";
-    const samplePath =
-      (sampleId && idIndex.get(sampleId)) || join(bagDir, "bag_00000000_deadbeef.json");
-    const estimatedIdIndexBytesPerAgent =
-      Buffer.byteLength(sampleId, "utf8") +
-      Buffer.byteLength(samplePath, "utf8") +
-      48; /* Map entry / pointer overhead (approx) */
+    // Cold board columns: median across headline-order reps (not a single noisy max).
+    const headlineSpread = wakeSpread.find((s) => s.order === wakeHeadlineOrder);
+    const coldBoard = {
+      p50: headline.cold.p50,
+      p99: headlineSpread?.coldP99Median ?? headline.cold.p99,
+    };
+    const warmBoard = { p50: headline.warm.p50, p99: headline.warm.p99 };
 
     let restartSurvival = false;
     const restartProbe = timedIds[0] ?? fromDisk.sampleIds[0];
@@ -876,7 +876,7 @@ export function runFairDensityBoardEffect(
       diskAvailBytes: diskAvailNow,
       ramp,
       nextParkBatch: diskBlockedDuringPark ? (nextParkBatch ?? 1) : nextParkBatch,
-      coldP99Ms: headline.cold.n > 0 ? headline.cold.p99 : null,
+      coldP99Ms: coldBoard.p99,
       wakeColdP99CeilingMs,
     });
 
@@ -885,7 +885,7 @@ export function runFairDensityBoardEffect(
       classified = {
         limitResource: "rss",
         limitHit: true,
-        limitReason: `total process RSS exceeded ${rssCeilingMiB} MiB when indexing past ${agentsAtLimit} agents (last within: rss=${last.rssKiB} KiB at ${agentsAtLimit}; overshoot rss=${overshoot?.rssKiB ?? atLimit.rssKiB} at ${overshoot?.agents ?? "n/a"}; wake-by-id Map retained for agentsAtLimit)`,
+        limitReason: `total process RSS exceeded ${rssCeilingMiB} MiB when scheduling past ${agentsAtLimit} agents (last within: rss=${last.rssKiB} KiB at ${agentsAtLimit}; overshoot rss=${overshoot?.rssKiB ?? atLimit.rssKiB} at ${overshoot?.agents ?? "n/a"}; wake-deadline schedule retained)`,
         agentsAtLimit,
       };
     }
@@ -910,13 +910,11 @@ export function runFairDensityBoardEffect(
     const limitHit = classified.limitHit;
     const limitReason = classified.limitReason;
     agentsAtLimit = classified.agentsAtLimit;
-    const ceilingHit = limitHit; // deprecated alias
+    const ceilingHit = limitHit;
 
-    const idIndexRetainedAtLimit =
-      idIndex.size > 0 && idIndex.size === agentsAtLimit && agentsAtLimit > 0;
+    const deadlineScheduleRetainedAtLimit =
+      schedule.size() > 0 && schedule.size() === agentsAtLimit && agentsAtLimit > 0;
 
-    // Board resident: when RSS bound, quote the within-ceiling ramp step (V8 may
-    // not return RSS after trimming the overshoot Map entries).
     const boardRssKiB = rssHit && last?.withinRssCeiling ? last.rssKiB : atLimit.rssKiB;
     const boardHeapKiB =
       rssHit && last?.withinRssCeiling ? last.heapUsedKiBAfterGc : atLimit.heapUsedKiB;
@@ -928,10 +926,10 @@ export function runFairDensityBoardEffect(
         (Math.max(0, boardRssKiB - baseline.rssKiB) / Math.max(1, agentsAtLimit)).toFixed(4)
       ),
       retainedInProcess:
-        "Map<agentId, bagPath> wake-by-id index retained for every counted agent (working-system state); FairParkedAgent body offloaded to disk JSON. Comparable to Ontologiql's per-agent in-memory record — their ~2 KiB/agent is a trim candidate (id + locator), not a Rust-vs-TS memory law.",
-      idIndexEntries: idIndex.size,
-      idIndexShape: "agentId_to_bag_path_map",
-      estimatedIdIndexBytesPerAgent,
+        "Wake-deadline min-heap (agentId + deadlineMs) for every counted agent — approval expiry / reminder schedule. Bag path derived from agentId (FS is the id index). Id/path Maps alone are not the capacity story; once both systems trim locator overhead, capacity is disk-bound and bag size decides.",
+      deadlineScheduleEntries: schedule.size(),
+      scheduleShape: "deadline_min_heap",
+      estimatedScheduleBytesPerAgent: 21 + 8 + 48,
     };
 
     const boardColumns: BoardColumns = {
@@ -941,22 +939,30 @@ export function runFairDensityBoardEffect(
       pageCacheKiBPerAgent:
         pageCacheKiBPerAgent !== null ? Number(pageCacheKiBPerAgent.toFixed(4)) : null,
       diskBytesPerAgent: Number((last?.diskBytesPerAgent ?? 0).toFixed(1)),
-      wakeWarmMs: { p50: headline.warm.p50, p99: headline.warm.p99 },
-      wakeColdMs: { p50: headline.cold.p50, p99: headline.cold.p99 },
+      wakeWarmMs: warmBoard,
+      wakeColdMs: coldBoard,
+      deadlineLatenessMs: deadlineLateness
+        ? { p50: deadlineLateness.p50, p99: deadlineLateness.p99 }
+        : null,
       restartSurvival,
     };
 
-    const clawqlStatus = limitHit && idIndexRetainedAtLimit ? "measured" : "methodology_pending";
+    const coldSpreadNote = headlineSpread
+      ? `cold p99 median ${headlineSpread.coldP99Median.toFixed(3)} ms (range ${headlineSpread.coldP99Min.toFixed(3)}–${headlineSpread.coldP99Max.toFixed(3)}; do not cross-compare cold until shared-host)`
+      : "cold spread unmeasured";
+
+    const clawqlStatus =
+      limitHit && deadlineScheduleRetainedAtLimit ? "measured" : "methodology_pending";
     const clawqlRow: DensitySystemRow = {
       systemId: "clawql-typescript",
       status: clawqlStatus,
       hostLabel,
       honesty:
-        limitHit && idIndexRetainedAtLimit
-          ? `ClawQL TypeScript fair parked-agent bags (file-backed JSON, offloaded) with **wake-by-id Map retained** (${idIndex.size} entries = agentsAtLimit). Agents-at-limit = first resource exhausted (**${limitResource}** at ${agentsAtLimit}). Wake protocol: JIT warmup + ${wakeOrderRepetitions}× order alternation; headline = slower cold order (${wakeHeadlineOrder}). Provisional vs Ontologiql (different hosts): capacity may favor TS until Ontologiql trims its ~2 KiB/agent record; cold wakes roughly even (disk-bound); warm wakes favor Ontologiql (~10×). Ontologiql's case on this board: warm-wake speed + baseline process RSS — capacity only after trim. No cross-system win until shared-host remeasure.`
-          : !idIndexRetainedAtLimit
-            ? `ClawQL TypeScript — **methodology_pending**: limit run did not retain a wake-by-id index for every counted agent (idIndex=${idIndex.size}, agentsAtLimit=${agentsAtLimit}). Capacity claims without the index are not comparable to Ontologiql.`
-            : "ClawQL TypeScript fair parked-agent bags — **agents-at-limit still unknown**: no disk, RSS, or latency resource exhausted (id index retained). No cross-system win until shared-host remeasure.",
+        limitHit && deadlineScheduleRetainedAtLimit
+          ? `ClawQL TypeScript fair-v2 bags with **wake-deadline schedule retained** (${schedule.size()} = agentsAtLimit). Limit = first resource exhausted (**${limitResource}** at ${agentsAtLimit}). Deadline lateness p99=${deadlineLateness?.p99 ?? "n/a"} ms (${deadlineLateness?.fired ?? 0} fires). ${coldSpreadNote}. Warm p99=${warmBoard.p99} ms. Trim of id/path records likely makes both systems disk-bound (bag size ~30 vs ~32.8 KiB); deadline state is the real resident. Provisional vs Ontologiql until shared-host + Ontologiql deadline remeasure. No win copy.`
+          : !deadlineScheduleRetainedAtLimit
+            ? `ClawQL TypeScript — **methodology_pending**: deadline schedule not retained for every counted agent (schedule=${schedule.size()}, agentsAtLimit=${agentsAtLimit}).`
+            : "ClawQL TypeScript — agents-at-limit unknown (no resource exhausted; deadline schedule retained). No win copy.",
       boardColumns,
       activeDensityLab: null,
     };
@@ -966,7 +972,7 @@ export function runFairDensityBoardEffect(
         systemId: "golem",
         status: "pending_invite",
         hostLabel: "stable-host (same host TBD)",
-        honesty: "Invite maintainers before publishing a Golem comparison row.",
+        honesty: "Invite maintainers before publishing a Golem comparison row (fair-v2 deadlines).",
         boardColumns: null,
         activeDensityLab: null,
       },
@@ -974,7 +980,7 @@ export function runFairDensityBoardEffect(
         systemId: "infinity",
         status: "pending_invite",
         hostLabel: "stable-host (same host TBD)",
-        honesty: "Invite maintainers before publishing an Infinity comparison row.",
+        honesty: "Invite maintainers before publishing an Infinity comparison row (fair-v2 deadlines).",
         boardColumns: null,
         activeDensityLab: null,
       },
@@ -990,6 +996,7 @@ export function runFairDensityBoardEffect(
           pendingToolBytesTarget: "~0.5 KiB JSON",
           park: "Waiting on that tool (idle durable)",
           offload: "Allowed; report residence (RSS / page cache / disk / object store)",
+          wakeDeadline: "Randomly spread wakeDeadlineAt; system must fire on time (lateness p99)",
         },
         columns: [
           "agentsAtLimit",
@@ -998,16 +1005,18 @@ export function runFairDensityBoardEffect(
           "pageCacheKiBPerAgent",
           "diskBytesPerAgent",
           "wakeWarmMs.p50/p99",
-          "wakeColdMs.p50/p99",
+          "wakeColdMs.p50/p99 (quote median+range; no cross-system cold until shared-host)",
+          "deadlineLatenessMs.p50/p99",
           "restartSurvival",
         ],
         memoryFraming:
-          "Resident (total process RSS / N) is the floor; page cache is reclaimable; heapUsed-after-GC is the GC-runtime check. Limit runs must retain Map<agentId, bagPath> for every counted agent (wake-by-id). Ontologiql's ~2 KiB/agent record is a trim candidate toward id+locator. Provisional positioning (different hosts): TS capacity ahead until that trim; cold wakes roughly even; warm wakes favor Ontologiql. Shared-host remeasure before any win copy.",
+          "Retained at limit = wake-deadline schedule (not id→path Map). Path is derived; FS is the id index. Id/path trim on both sides likely makes capacity disk-bound — bag size decides. Deadline lateness is the approval-relevant accuracy column. Cold wake: report median+range across order reps; do not read cross-system cold gaps until shared-host.",
         publicClaimScope:
           "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
         definitions: {
           rssCeiling: "total_process_rss",
           agentsAtLimit: "first_resource_exhausted",
+          retainedAtLimit: "wake_deadline_schedule",
         },
       },
       host: {
@@ -1027,6 +1036,8 @@ export function runFairDensityBoardEffect(
         wakeSampleSize,
         wakeWarmupCount: warmupIds.length,
         wakeOrderRepetitions,
+        deadlineHorizonMs,
+        deadlineMaxFires,
         coldEviction,
         limitReason,
         limitHit,
@@ -1035,7 +1046,8 @@ export function runFairDensityBoardEffect(
         baseline,
         atLimit,
         residentAccounting,
-        idIndexRetainedAtLimit,
+        deadlineScheduleRetainedAtLimit,
+        deadlineLateness,
         wakeByOrder,
         wakeSpread,
         wakeHeadlineOrder,
@@ -1045,8 +1057,7 @@ export function runFairDensityBoardEffect(
       },
     };
 
-    // Final pin: evidence JSON does not embed the Map; keep it live until return.
-    if (idIndex.size < 0) throw new Error("unreachable");
+    if (schedule.size() < 0) throw new Error("unreachable");
     return evidence;
   });
 }

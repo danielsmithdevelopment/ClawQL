@@ -5,16 +5,22 @@
  * (memory-plateau / Bun host boards). See docs/benchmarks/program-density/.
  */
 
-export const FAIR_CONTRACT_ID = "durable-agent-density-fair-v1" as const;
+/** v2: every parked agent has a wake deadline; systems must fire it on time. */
+export const FAIR_CONTRACT_ID = "durable-agent-density-fair-v2" as const;
 
-/** Fair parked agent: 20 turn pairs + one pending tool, waiting on that tool. */
+/**
+ * Fair parked agent: 20 turn pairs + one pending tool, waiting on that tool,
+ * with a wake deadline (approval expiry / reminder) randomly spread.
+ */
 export type FairParkedAgent = {
   readonly agentId: string;
-  readonly version: 1;
+  readonly version: 2;
   readonly status: "parked";
   readonly turns: readonly FairTurn[];
   readonly pendingTool: FairPendingTool;
   readonly parkedAt: string;
+  /** ISO wake deadline — must be scheduled in-process and fired on time. */
+  readonly wakeDeadlineAt: string;
 };
 
 export type FairTurn = {
@@ -32,6 +38,11 @@ export type FairPendingTool = {
 /** Which resource exhausted first at agents-at-limit. */
 export type LimitResource = "disk" | "rss" | "latency" | "none";
 
+export type LatencyPair = {
+  readonly p50: number;
+  readonly p99: number;
+};
+
 /** Board columns every system must publish. */
 export type BoardColumns = {
   readonly agentsAtLimit: number;
@@ -46,15 +57,26 @@ export type BoardColumns = {
   readonly pageCacheKiBPerAgent: number | null;
   /** Where parked state lives (bytes per agent on disk / object store). */
   readonly diskBytesPerAgent: number;
-  readonly wakeWarmMs: { readonly p50: number; readonly p99: number };
-  readonly wakeColdMs: { readonly p50: number; readonly p99: number };
+  readonly wakeWarmMs: LatencyPair;
+  readonly wakeColdMs: LatencyPair;
+  /**
+   * Deadline fire lateness (ms). Null until the system measures the v2 deadline
+   * contract. Do not cross-compare cold wakes until shared-host; deadline
+   * accuracy is the approval-relevant latency column.
+   */
+  readonly deadlineLatenessMs: LatencyPair | null;
   readonly restartSurvival: boolean;
 };
 
 export type DensitySystemId = "ontologiql-rust" | "clawql-typescript" | "golem" | "infinity";
 
 export type DensityRowStatus =
-  "measured" | "publishable" | "pending_invite" | "not_run" | "lab_only" | "methodology_pending";
+  | "measured"
+  | "publishable"
+  | "pending_invite"
+  | "not_run"
+  | "lab_only"
+  | "methodology_pending";
 
 export type DensitySystemRow = {
   readonly systemId: DensitySystemId;
@@ -116,16 +138,15 @@ export type ResidentAccounting = {
   /** RSS-delta vs empty process / N — diagnostic only; not the board ceiling. */
   readonly rssDeltaKiBPerAgent: number;
   /**
-   * What this implementation retains in-process per parked agent after park.
-   * Working-system shape: Map<agentId, bagPath> so wake-by-id does not scan disk.
-   * Comparable to Ontologiql's per-agent in-memory record (their ~2 KiB/agent is a
-   * trim candidate down toward id + locator).
+   * Working-system in-process state at limit: wake-deadline schedule entries
+   * (agentId + deadlineMs). Bag path is derived from agentId — not stored.
+   * Index-only retention is insufficient for the v2 approval-deadline contract.
    */
   readonly retainedInProcess: string;
   /** Must equal agentsAtLimit for a comparable capacity claim. */
-  readonly idIndexEntries: number;
-  readonly idIndexShape: "agentId_to_bag_path_map";
-  readonly estimatedIdIndexBytesPerAgent: number;
+  readonly deadlineScheduleEntries: number;
+  readonly scheduleShape: "deadline_min_heap";
+  readonly estimatedScheduleBytesPerAgent: number;
 };
 
 export type EvidenceFair = {
@@ -138,6 +159,7 @@ export type EvidenceFair = {
       readonly pendingToolBytesTarget: string;
       readonly park: string;
       readonly offload: string;
+      readonly wakeDeadline: string;
     };
     readonly columns: readonly string[];
     readonly memoryFraming: string;
@@ -147,6 +169,8 @@ export type EvidenceFair = {
       readonly rssCeiling: "total_process_rss";
       /** First resource exhausted: disk, rss, or latency target. */
       readonly agentsAtLimit: "first_resource_exhausted";
+      /** In-process state required at limit. */
+      readonly retainedAtLimit: "wake_deadline_schedule";
     };
   };
   readonly host: {
@@ -167,6 +191,8 @@ export type EvidenceFair = {
     readonly wakeSampleSize: number;
     readonly wakeWarmupCount: number;
     readonly wakeOrderRepetitions: number;
+    readonly deadlineHorizonMs: number;
+    readonly deadlineMaxFires: number;
     readonly coldEviction: string;
     readonly limitReason: string;
     readonly limitHit: boolean;
@@ -175,11 +201,18 @@ export type EvidenceFair = {
     readonly baseline: HeapSnapshot;
     readonly atLimit: HeapSnapshot;
     readonly residentAccounting: ResidentAccounting;
-    /** True when the limit run retained a wake-by-id index for every counted agent. */
-    readonly idIndexRetainedAtLimit: boolean;
+    /** True when the limit run retained a deadline schedule for every counted agent. */
+    readonly deadlineScheduleRetainedAtLimit: boolean;
+    readonly deadlineLateness: {
+      readonly p50: number;
+      readonly p99: number;
+      readonly n: number;
+      readonly fired: number;
+      readonly maxLatenessMs: number;
+    } | null;
     readonly wakeByOrder: readonly WakeOrderResult[];
     readonly wakeSpread: readonly WakeSpread[];
-    /** Headline = slower cold order; conservative (by coldP99Max). */
+    /** Headline warm columns use slower-cold order; cold quote median+range from wakeSpread. */
     readonly wakeHeadlineOrder: WakeOrderId;
     readonly wakePooled: {
       readonly warm: WakeLatency;

@@ -10,6 +10,8 @@
  *   CLAWQL_DENSITY_WAKE_SAMPLE, CLAWQL_DENSITY_WAKE_WARMUP,
  *   CLAWQL_DENSITY_WAKE_ORDER_REPS (default 3),
  *   CLAWQL_DENSITY_COLD_P99_CEILING_MS (optional latency limit),
+ *   CLAWQL_DENSITY_DEADLINE_HORIZON_MS, CLAWQL_DENSITY_DEADLINE_MAX_FIRES,
+ *   CLAWQL_DENSITY_SKIP_DEADLINE=1,
  *   CLAWQL_DENSITY_SKIP_COLD=1, CLAWQL_DENSITY_SKIP_RESTART=1,
  *   CLAWQL_DENSITY_HOST_LABEL,
  *   CLAWQL_DENSITY_REUSE_BAGS=1, CLAWQL_DENSITY_RESUME_FROM
@@ -61,8 +63,15 @@ async function main(): Promise<void> {
       wakeColdP99CeilingMs: process.env.CLAWQL_DENSITY_COLD_P99_CEILING_MS
         ? Number(process.env.CLAWQL_DENSITY_COLD_P99_CEILING_MS)
         : undefined,
+      deadlineHorizonMs: process.env.CLAWQL_DENSITY_DEADLINE_HORIZON_MS
+        ? Number(process.env.CLAWQL_DENSITY_DEADLINE_HORIZON_MS)
+        : undefined,
+      deadlineMaxFires: process.env.CLAWQL_DENSITY_DEADLINE_MAX_FIRES
+        ? Number(process.env.CLAWQL_DENSITY_DEADLINE_MAX_FIRES)
+        : undefined,
       skipCold: process.env.CLAWQL_DENSITY_SKIP_COLD === "1",
       skipRestart: process.env.CLAWQL_DENSITY_SKIP_RESTART === "1",
+      skipDeadlinePump: process.env.CLAWQL_DENSITY_SKIP_DEADLINE === "1",
       hostLabel: process.env.CLAWQL_DENSITY_HOST_LABEL || "clawql-cloud-agent-host",
       bagDir: process.env.CLAWQL_DENSITY_BAG_DIR,
       reuseBags: process.env.CLAWQL_DENSITY_REUSE_BAGS === "1",
@@ -85,8 +94,10 @@ async function main(): Promise<void> {
         limitResource: cols?.limitResource,
         limitHit: run?.limitHit,
         ceilingHit: run?.ceilingHit,
-        idIndexRetainedAtLimit: run?.idIndexRetainedAtLimit,
-        idIndexEntries: run?.residentAccounting.idIndexEntries,
+        deadlineScheduleRetainedAtLimit: run?.deadlineScheduleRetainedAtLimit,
+        deadlineScheduleEntries: run?.residentAccounting.deadlineScheduleEntries,
+        deadlineLatenessMs: cols?.deadlineLatenessMs,
+        deadlineLateness: run?.deadlineLateness,
         rssCeilingDefinition: run?.rssCeilingDefinition,
         residentKiBPerAgent: cols?.residentKiBPerAgent,
         heapUsedKiBPerAgentAfterGc: run?.residentAccounting.heapUsedKiBPerAgentAfterGc,

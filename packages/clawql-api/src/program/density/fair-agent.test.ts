@@ -12,9 +12,11 @@ describe("fair-agent payload", () => {
     expect(turns).toBe(20);
     const agent = await Effect.runPromise(buildFairParkedAgentEffect(7));
     expect(agent.status).toBe("parked");
+    expect(agent.version).toBe(2);
     expect(agent.turns).toHaveLength(40);
     expect(agent.pendingTool.name).toBe("execute");
     expect(agent.pendingTool.approvalId.startsWith("appr_")).toBe(true);
+    expect(Date.parse(agent.wakeDeadlineAt)).toBeGreaterThan(Date.parse(agent.parkedAt) - 1);
 
     const bytes = await Effect.runPromise(fairAgentEncodedBytesEffect(agent));
     // ~30 KiB disk target band (Ontologiql public claim ~30 KiB/agent).

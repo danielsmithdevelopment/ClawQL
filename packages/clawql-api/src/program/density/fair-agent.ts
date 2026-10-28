@@ -84,22 +84,36 @@ export function newFairAgentIdEffect(agentIndex: number): Effect.Effect<string> 
   );
 }
 
+/** Default horizon for random wake deadlines (approval expiry / reminder). */
+export const FAIR_DEADLINE_HORIZON_MS = 3_000;
+
 export function buildFairParkedAgentEffect(
   agentIndex: number,
-  parkedAtIso?: string
+  parkedAtIso?: string,
+  opts?: {
+    readonly nowMs?: number;
+    readonly deadlineHorizonMs?: number;
+    readonly wakeDeadlineAt?: string;
+  }
 ): Effect.Effect<FairParkedAgent> {
   return Effect.gen(function* () {
     const agentId = yield* newFairAgentIdEffect(agentIndex);
     const turns = yield* buildFairTurnsEffect(agentIndex);
     const pendingTool = yield* buildFairPendingToolEffect(agentIndex);
     const parkedAt = parkedAtIso ?? new Date().toISOString();
+    const nowMs = opts?.nowMs ?? Date.now();
+    const horizon = opts?.deadlineHorizonMs ?? FAIR_DEADLINE_HORIZON_MS;
+    const wakeDeadlineAt =
+      opts?.wakeDeadlineAt ??
+      new Date(nowMs + Math.floor(Math.random() * Math.max(1, horizon))).toISOString();
     return {
       agentId,
-      version: 1 as const,
+      version: 2 as const,
       status: "parked" as const,
       turns,
       pendingTool,
       parkedAt,
+      wakeDeadlineAt,
     };
   });
 }

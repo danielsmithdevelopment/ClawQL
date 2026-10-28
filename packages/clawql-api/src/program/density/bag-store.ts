@@ -52,11 +52,23 @@ function validateId(agentId: string): Effect.Effect<string, ParkedBagError> {
   });
 }
 
-function isFairAgent(v: unknown): v is FairParkedAgent {
+function isBagAgentShape(v: unknown): v is {
+  agentId: string;
+  version: 1 | 2;
+  status: "parked";
+  turns: FairParkedAgent["turns"];
+  pendingTool: FairParkedAgent["pendingTool"];
+  parkedAt: string;
+  wakeDeadlineAt?: string;
+} {
   if (!v || typeof v !== "object" || Array.isArray(v)) return false;
   const o = v as Record<string, unknown>;
+  const versionOk = o.version === 1 || o.version === 2;
+  const deadlineOk =
+    o.version === 1 || (o.version === 2 && typeof o.wakeDeadlineAt === "string");
   return (
-    o.version === 1 &&
+    versionOk &&
+    deadlineOk &&
     o.status === "parked" &&
     typeof o.agentId === "string" &&
     Array.isArray(o.turns) &&
@@ -64,6 +76,27 @@ function isFairAgent(v: unknown): v is FairParkedAgent {
     typeof o.pendingTool === "object" &&
     typeof o.parkedAt === "string"
   );
+}
+
+/** Normalize v1 bags (no deadline) to the v2 FairParkedAgent shape for wake. */
+function asFairParkedAgent(bag: {
+  agentId: string;
+  version: 1 | 2;
+  status: "parked";
+  turns: FairParkedAgent["turns"];
+  pendingTool: FairParkedAgent["pendingTool"];
+  parkedAt: string;
+  wakeDeadlineAt?: string;
+}): FairParkedAgent {
+  return {
+    agentId: bag.agentId,
+    version: 2,
+    status: "parked",
+    turns: bag.turns,
+    pendingTool: bag.pendingTool,
+    parkedAt: bag.parkedAt,
+    wakeDeadlineAt: bag.wakeDeadlineAt ?? bag.parkedAt,
+  };
 }
 
 function ioErr(agentId: string, cause: unknown): ParkedBagError {
@@ -142,7 +175,7 @@ export function makeParkedBagApi(bagDir: string): ParkedBagApi {
             })
           );
         }
-        if (!isFairAgent(parsed) || parsed.agentId !== agentId) {
+        if (!isBagAgentShape(parsed) || parsed.agentId !== agentId) {
           return yield* Effect.fail(
             new ParkedBagError({
               agentId,
@@ -151,7 +184,7 @@ export function makeParkedBagApi(bagDir: string): ParkedBagApi {
             })
           );
         }
-        return parsed;
+        return asFairParkedAgent(parsed);
       }),
     listIds: () =>
       Effect.gen(function* () {
