@@ -258,22 +258,22 @@ function computeWakeSpread(wakeByOrder: readonly WakeOrderResult[]): WakeSpread[
   });
 }
 
-/** Pick the slower cold order (higher median cold p99) for conservative headline columns. */
+/**
+ * Pick the slower cold order for conservative headline columns.
+ * Rank by coldP99Max (worst observed cold), tie-break by coldP99Median.
+ * Board columns use the repetition that hit that max cold p99.
+ */
 function pickHeadlineOrder(
   wakeByOrder: readonly WakeOrderResult[],
   wakeSpread: readonly WakeSpread[]
 ): WakeOrderResult {
   const ranked = [...wakeSpread]
     .filter((s) => s.repetitions > 0)
-    .sort((a, b) => b.coldP99Median - a.coldP99Median);
+    .sort((a, b) => b.coldP99Max - a.coldP99Max || b.coldP99Median - a.coldP99Median);
   const slower = ranked[0]?.order ?? "warm_then_cold";
   const reps = wakeByOrder.filter((o) => o.order === slower && o.cold.n > 0);
   if (reps.length === 0) return wakeByOrder[0]!;
-  // Use the repetition whose cold p99 is closest to that order's median.
-  const target = ranked[0]!.coldP99Median;
-  return [...reps].sort(
-    (a, b) => Math.abs(a.cold.p99 - target) - Math.abs(b.cold.p99 - target)
-  )[0]!;
+  return [...reps].sort((a, b) => b.cold.p99 - a.cold.p99)[0]!;
 }
 
 function runRestartWorker(env: Readonly<Record<string, string>>): Promise<{
