@@ -45,11 +45,11 @@ Deadline accuracy for Ontologiql is **methodology-closed in lab (#144)** under g
 
 ## Shared-host five arms
 
-| Step | Status |
-| --- | --- |
+| Step                                                                      | Status                                                                                              |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | ClawQL five-arm harness (`npm run benchmark:program-density-shared-host`) | **done** on this host → [`shared-host-five-arms.json`](./shared-host-five-arms.json) (`peer: null`) |
-| Ontologiql peer JSON on the **same** host | **pending** — merge via `CLAWQL_DENSITY_PEER_JSON=…` |
-| Win copy | **blocked** until `reading.sharedHostComplete=true` |
+| Ontologiql peer JSON on the **same** host                                 | **pending** — merge via `CLAWQL_DENSITY_PEER_JSON=…`                                                |
+| Win copy                                                                  | **blocked** until `reading.sharedHostComplete=true`                                                 |
 
 ClawQL harness snapshot (this host; single run — board still quotes the conservative 256k 3-rep floor): firstBurstMiss **250k**; ramp pass **384k** / miss **512k** (variance vs 256k floor shows fsync-bound noise); crash **pass**; restart rebuild **45 ms**.
 
