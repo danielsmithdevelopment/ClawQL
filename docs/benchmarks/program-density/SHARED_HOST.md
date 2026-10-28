@@ -30,12 +30,12 @@ npm run benchmark:program-density-fsync-ceiling
 
 ### 3. Same conditions + alternating systems
 
-| Constraint | Rule |
-| --- | --- |
-| Agent count | Same `agentsAtLimit` (or agreed shared N) for both |
-| Disk | Same volume the fsync ceiling was measured on |
-| Host | Otherwise idle (no competing heavy IO/CPU) |
-| Order | **Alternate** across repetitions: ClawQL₁ → Ontologiql₁ → ClawQL₂ → Ontologiql₂ → ClawQL₃ → Ontologiql₃ — not all of one then all of the other |
+| Constraint  | Rule                                                                                                                                           |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Agent count | Same `agentsAtLimit` (or agreed shared N) for both                                                                                             |
+| Disk        | Same volume the fsync ceiling was measured on                                                                                                  |
+| Host        | Otherwise idle (no competing heavy IO/CPU)                                                                                                     |
+| Order       | **Alternate** across repetitions: ClawQL₁ → Ontologiql₁ → ClawQL₂ → Ontologiql₂ → ClawQL₃ → Ontologiql₃ — not all of one then all of the other |
 
 Drift in host state must not favor either side.
 
@@ -54,13 +54,13 @@ CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-density/fsync-ceiling.
 
 Once both rows are complete on one host, publish these five under identical definitions:
 
-| #   | Number               | Definition                                                                                                                                                                                                                                                                               |
-| --- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **agentsAtLimit**    | First resource exhausted under the shared RSS ceiling (total process RSS). Retained at limit = wake-deadline schedule.                                                                                                                                                                   |
-| 2   | **wakeWarmMs p99**   | Cached / warm wake.                                                                                                                                                                                                                                                                      |
-| 3   | **wakeColdMs**       | Cold wake — quote **median + range** until orders are locked; no cross-system cold win from a single p99.                                                                                                                                                                                |
+| #   | Number               | Definition                                                                                                                                                                                                                                                                                                                 |
+| --- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **agentsAtLimit**    | First resource exhausted under the shared RSS ceiling (total process RSS). Retained at limit = wake-deadline schedule.                                                                                                                                                                                                     |
+| 2   | **wakeWarmMs p99**   | Cached / warm wake.                                                                                                                                                                                                                                                                                                        |
+| 3   | **wakeColdMs**       | Cold wake — quote **median + range** until orders are locked; no cross-system cold win from a single p99.                                                                                                                                                                                                                  |
 | 4   | **deadlineAccuracy** | Shared 1s SLA, identical **fired definition**, identical **flush policy**, **schedule shape + format**, ramp (`sustainablePerSec` + `firstRateMissingSlaPerSec` + `rampWentPastFailure`), **scaled bursts** (first miss; N ≤ agentsAtLimit), flush **crash test**, **deadline restart**. Headline rates = **3-rep floor**. |
-| 5   | **restartSurvival**  | Parked bags survive process restart (bag wake).                                                                                                                                                                                                                                          |
+| 5   | **restartSurvival**  | Parked bags survive process restart (bag wake).                                                                                                                                                                                                                                                                            |
 
 ## Five deadline arms (shared-host run)
 
@@ -74,13 +74,13 @@ On one host, both systems run:
 
 ## Methodology status (closed)
 
-| Gate                      | ClawQL                                                                | Ontologiql (#144)                                                                                                              |
-| ------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Flush policy + crash test | group_commit 64/10ms; crashTest pass                                  | group_commit 64/10ms; crashTest pass (400 ACK’d, 0 missing/dups). Prior 400k/s was undeclared **os_buffer** — superseded       |
-| Scaled bursts             | first miss **250k** @ 2.5e6 agents; N ≤ agentsAtLimit                 | first miss **200k** @ 200k agents (one deadline/agent). Old 400k-at-200k used synthetic ids — superseded                       |
-| Ramp past failure         | sustainable **256k** (**3-rep floor**); first miss **384k**           | sustainable **128k**; first miss **192k**; `rampWentPastFailure=true` (lab @ 200k)                                             |
-| Deadline restart          | rebuild ~40–55 ms @ 2.5e6; format disclosed                           | rebuild **80 ms** @ 200k; no loss/dups; overdue prompt 1.0 — **format path still worth compact-array look** before shared-host |
-| Shared host               | **pending** (protocol above)                                          | **pending**                                                                                                                    |
+| Gate                      | ClawQL                                                      | Ontologiql (#144)                                                                                                              |
+| ------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Flush policy + crash test | group_commit 64/10ms; crashTest pass                        | group_commit 64/10ms; crashTest pass (400 ACK’d, 0 missing/dups). Prior 400k/s was undeclared **os_buffer** — superseded       |
+| Scaled bursts             | first miss **250k** @ 2.5e6 agents; N ≤ agentsAtLimit       | first miss **200k** @ 200k agents (one deadline/agent). Old 400k-at-200k used synthetic ids — superseded                       |
+| Ramp past failure         | sustainable **256k** (**3-rep floor**); first miss **384k** | sustainable **128k**; first miss **192k**; `rampWentPastFailure=true` (lab @ 200k)                                             |
+| Deadline restart          | rebuild ~40–55 ms @ 2.5e6; format disclosed                 | rebuild **80 ms** @ 200k; no loss/dups; overdue prompt 1.0 — **format path still worth compact-array look** before shared-host |
+| Shared host               | **pending** (protocol above)                                | **pending**                                                                                                                    |
 
 ## Reading gaps before shared-host (not win copy)
 
