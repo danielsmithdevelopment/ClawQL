@@ -40,12 +40,12 @@ Older evidence may still show `outcomeUnknown`; readers should treat it as the i
 
 A never-retry faux model makes Pi Durable look like “0 duplicates, nothing to resolve,” while ClawQL looks like “0 duplicates, N problems.” Both left the charge outcome unknown; only ClawQL labeled it. And Pi’s zero depends on the model choosing not to retry — John’s demos suggest real models often do.
 
-Honest non-idempotent contrast (agent policy × stack):
+Honest non-idempotent contrast (agent policy × stack) — **measured N=50**:
 
-| Arm, non-idempotent API | Model never retries                                                    | Model always retries            |
-| ----------------------- | ---------------------------------------------------------------------- | ------------------------------- |
-| **Pi Durable**          | 0 duplicates (but interrupted/unknown = N; completed-exactly-once = 0) | **N duplicates**                |
-| **ClawQL**              | 0 duplicates (interrupted/unknown = N)                                 | **0 duplicates** (gate refuses) |
+| Arm, non-idempotent API | Model never retries            | Model always retries             |
+| ----------------------- | ------------------------------ | -------------------------------- |
+| **Pi Durable**          | 0 dups · unk=50 · once=0       | **50 dups** · unk=0 · once=0     |
+| **ClawQL**              | 0 dups · unk=50 · once=0       | **0 dups** · unk=50 · once=0     |
 
 ClawQL guarantees at-most-once structurally; Pi Durable leaves the retry decision to the model. That is the question for Earendil — alongside whether the faux-model setup is what they’d want, and whether a live-model arm (`pi-durable-real-model`) matches their preferred demo.
 
